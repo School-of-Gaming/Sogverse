@@ -31,8 +31,7 @@ const LAST_UPDATED = "2026-09-08";
 // Section order is owned here, not in the message files, so the same structure
 // renders for every locale. Each key maps to a flat
 // `robloxSafeguarding.sections.<key>` entry with a `heading` and a `blocks`
-// array (ordered paragraphs and bulleted lists — see `policy-content.ts`). No
-// section is incomplete, so none carries a "pending" notice.
+// array (ordered paragraphs and bulleted lists — see `policy-content.ts`).
 const SECTIONS = [
   "covers",
   "vetting",

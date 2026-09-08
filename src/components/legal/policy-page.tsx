@@ -13,14 +13,6 @@ interface PolicySection {
   blocks: PolicyBlock[];
   /** Second-level headings under this section, in render order. */
   subsections?: PolicySubsection[];
-  /**
-   * Set where the source document has a gap we refuse to invent copy for — a
-   * list that was never written, a section that does not exist yet, a contact
-   * address nobody has decided on. Rendered after the section's own copy as a
-   * visible marker, so a reader can tell "not written yet" apart from "not
-   * applicable" instead of meeting a silently short section.
-   */
-  pending?: string;
 }
 
 interface PolicyPageProps {
@@ -128,23 +120,6 @@ function PolicyBlocks({
 }
 
 /**
- * Marks a heading whose copy the source document has not supplied yet. Quieter
- * than the page-level draft banner and louder than body text: the reader is
- * meant to notice the hole rather than read past it.
- */
-function PendingNotice({ notice }: { notice: string }) {
-  return (
-    <div className="flex items-start gap-2.5 rounded-md border border-dashed border-border px-4 py-3">
-      <TriangleAlert
-        className="mt-0.5 h-4 w-4 shrink-0 text-warning"
-        aria-hidden="true"
-      />
-      <p className="text-sm italic text-muted-foreground">{notice}</p>
-    </div>
-  );
-}
-
-/**
  * Shared layout for our plain-language legal pages (Privacy Policy, Terms &
  * Conditions, Anti-Bullying & Discipline, and the three Roblox Programme
  * documents — its privacy policy, safeguarding policy and terms).
@@ -157,7 +132,7 @@ function PendingNotice({ notice }: { notice: string }) {
  * other legal pages, or one of the supervisory authorities a reader has the
  * right to complain to, through a cross-reference tag that becomes a link here;
  * see `policy-content.ts` for the two allow-lists. Headings, the "last updated" line
- * and the draft/pending notices are structural rather than authored prose, so
+ * and the draft notice are structural rather than authored prose, so
  * they render as plain text.
  */
 export function PolicyPage({
@@ -219,7 +194,6 @@ export function PolicyPage({
                 />
               </div>
             ))}
-            {section.pending && <PendingNotice notice={section.pending} />}
           </section>
         ))}
       </div>

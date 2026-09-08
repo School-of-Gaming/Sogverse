@@ -4,9 +4,10 @@
 
 **This effort is on hold until a lawyer has reviewed the programme copy in full.** Kyle's
 call. Nothing here is being worked until the reviewed copy comes back and has been
-compared against the platform. The one exception so far: on 2026-09-07 Kyle had every
-entry then under *Resolved — ready to apply* applied in one pass, since each was already
-decided and the surface is still unpublished; a new resolved entry waits as before.
+compared against the platform. The one exception so far: on 2026-09-07 and 2026-09-08
+Kyle had every entry then under *Resolved — ready to apply* applied, since each was
+already decided and the surface is still unpublished; a new resolved entry waits as
+before.
 
 *Why pausing is safe:* the whole programme surface is unpublished — noindex, absent from
 the sitemap, no nav links — so none of the copy discussed below is reaching a family. That
@@ -23,29 +24,10 @@ since some may have been answered inside the review itself.
 
 **Outstanding with Lynx when the pause began:**
 
-- Everything Lynx owed was answered on 2026-09-07 and 2026-09-08 — the in-person section
-  (Lynx replaced the draft with a paragraph of their own, now under *Resolved*), the
-  vetting scope, the photography wording and the closing-event release. Nothing is with
-  Lynx right now.
 - The media consent structure. Lynx prefers one combined box "if it's compliant (the lawyer
   will tell us)" — so the direction is chosen and the answer is not. **Kyle decided on
   2026-09-07 to build the one box anyway** and record the unanswered question; see the
   open item under *Features the policies promise*.
-
-**Findings surfaced but deliberately not opened as items,** so the pause does not start
-work. Pick these up on resume:
-
-- **The intention sentence in `robloxSafeguarding.sections.data` is fixed** (2026-09-07,
-  on `feat/gamer-photo-consent`): it now states the mechanism — a child appears in a
-  photograph only where the parent ticked the consent, the parent can change that answer
-  on the child's page in My SOG, and a Gedu asks the child first even where the parent
-  consented. **What remains open is the claim underneath it.** Lynx described Gedus
-  routinely taking photographs for internal records and safety, which in their account
-  consent does not gate; the owner's 2026-09-07 decision is the opposite — a gamer without
-  consent stays out of session photographs *entirely* — and all three documents now say
-  so. **Answered 2026-09-07 by Lynx (Joyce): no such photography is needed**, so the
-  documents stand — with one request, now under *Resolved*: a line allowing
-  non-identifying wide shots of an event taken from a distance.
 
 ---
 
@@ -141,22 +123,6 @@ item and keep going until nothing is left that we can move on our own.
    reviewed as a piece, by people looking at it together — applying a resolution early
    spends that and cannot be given back.
 
-## Placeholder copy waiting on real content
-
-Each gap below renders a visible "still being written" marker on the page rather than
-invented copy or a silently short section, and every programme legal page carries a draft
-banner until its copy is signed off.
-
-Nothing open here right now; the last gap, the in-person section, is under *Resolved*.
-
-## Copy that needs correcting
-
-Wording in the published documents that is wrong or self-contradictory. Now that Sogverse
-owns the copy, most of this is ours to fix outright; what is left here is the exception,
-where the fix would change what we commit to rather than how it reads.
-
-Nothing open here right now.
-
 ## Features the policies promise that the app does not have
 
 - [ ] **The mandatory "I am the parent/legal guardian" checkbox.** The rest of Lynx's
@@ -222,7 +188,7 @@ for *why*, not for what is true now.
   and a hyphen (`lynx-summer-a`, `rblx-launch`). It cannot be retrofitted, because the
   value is immutable once written. It is documented in `src/lib/utm.ts` and on the
   `profiles.utm_campaign` column comment.
-- **`docs/plans/referral-landing-clicks.md` is deleted**, as the knock-on below proposed.
+- **`docs/plans/referral-landing-clicks.md` is deleted.**
 - **The wrong premise is corrected where it was recorded.** "Nothing is written to the
   device, therefore no banner" no longer appears anywhere in the code: the module header
   now says that reading the params off the landing URL is itself what engages Art 5(3),
@@ -401,40 +367,6 @@ basis, Lynx named in the privacy policy, and a data-sharing agreement — flagge
 2026-08-13 as the item "most likely to be missed", and still not started. **If counsel's
 time is rationed, spend it here rather than on the banner.**
 
-### Knock-ons when this resolves
-
-- **`docs/plans/referral-landing-clicks.md` should be deleted, not built.** Its purpose was
-  a click *denominator*, which Lynx never asked for; both its rejected-alternative
-  arguments (device storage needs a banner; UTM needs the Plus add-on we don't want) have
-  collapsed; and it concedes in its own constraints that ad platforms count clicks better
-  than we can. **Rescue one thing first:** the partner code prefix convention
-  (`lynx-summer-a`, `rblx-launch`), which cannot be retrofitted because the value is
-  immutable once written, and which survives the rename as a `utm_campaign` convention.
-  Worth settling before the first Lynx campaign link goes out.
-- **The privacy policy does disclose the attribution value, and the wording now needs to
-  match the rename.** `privacy.sections.infoWeCollect.bullets` carries a bullet in all
-  five locales — "If you came to us through a link shared by a school, club or partner
-  organisation, a short code telling us which one" — so the Art 13 transparency gap
-  claimed here on 2026-08-26 was not real; the bullet had already shipped. What is left is
-  smaller and still worth doing: the copy describes *one* short code, and there are now
-  three UTM fields, so the sentence should be re-read against what is actually stored. It
-  is also written in the register a parent reads, which is why it says "a short code"
-  rather than naming the columns — keep that. *(Done — 2026-09-03. The bullet now names
-  the campaign tag and its three parts, says it is stored once at account creation, and
-  keeps the parent's register; `en`, `fi`, `sv`, `fr`.)*
-- **`privacy.sections.cookies` answers the wrong question.** It says Vercel's analytics is
-  "cookie-free", which is true and irrelevant — Art 5(3) does not care about the mechanism.
-  *(Done — 2026-09-03. The section was rewritten as "Cookies, analytics and advertising":
-  strictly necessary cookies first, then the two purposes a visitor actually consents to,
-  each naming what runs and what it learns. "Cookie-free" is gone from the Vercel bullet
-  under `providers` too, and the answer is now collected by a consent banner rather than
-  asserted by the copy.)*
-- **The `?ref=` note on the since-closed inert-CTAs item goes stale** if
-  the rename happens. It is still correct today, and its underlying point (soft navigation
-  keeps the value alive, a hard load destroys it) holds for any payload name. *(Done — the
-  note named the UTM params, and the item has since closed: the CTAs and the events
-  section are wired, through `next/link`.)*
-
 ## Tone — where the programme documents don't sound like Sogverse
 
 The house standard (set by the existing `/privacy` and `/terms-and-conditions` copy):
@@ -540,127 +472,3 @@ lawyer is not reviewing sections that are about to be restructured.
 Decided, with the exact change written out but not yet applied; entries land together in
 one pass, and each is deleted once its change is in.
 
-### Child Safeguarding Policy — the "During in-person events" section
-
-Decided 2026-09-08 by Lynx (Joyce), replacing the draft that had been with them since
-2026-08-11. The section had been empty on the page, rendering the `pendingSection`
-marker. Lynx's paragraph states Lynx's own obligation in Lynx's words, so it is taken as
-written; it drops the venue-partner detail and the arrival/collection/first-aid list, and
-adds that arrangements vary by venue.
-
-Lynx's replacement also drops the draft's second paragraph (that inside the session the
-group is ours and this policy applies in a room as online). Kyle's ruling on 2026-09-08:
-the programme documents are Lynx's to word, and School of Gaming's voice lives in its own
-policies — so the paragraph is dropped, not restored.
-
-**Final English copy** — `robloxSafeguarding.sections.inPerson.blocks`, one string:
-
-> Our Game Educators run the session; they are not the organisers of the event. Lynx
-> Educate is responsible for making sure the venues it works with are suitable for the
-> session and meet the Programme’s safeguarding requirements. The specific arrangements
-> may vary by venue.
-
-**The subtitle is trimmed in the same change.** `robloxSafeguarding.subtitle` ends
-"…covers Lynx Educate and School of Gaming’s broader safeguarding responsibilities for the
-Programme, including in-person events." The section names who *holds* those
-responsibilities rather than covering them, so the final clause goes:
-
-> This sits alongside School of Gaming’s <linkDiscipline>Anti-Bullying
-> policy</linkDiscipline>, which continues to apply to day-to-day behaviour in sessions.
-> This document covers Lynx Educate and School of Gaming’s broader safeguarding
-> responsibilities for the Programme.
-
-**To apply:**
-
-1. Fill `robloxSafeguarding.sections.inPerson.blocks` (currently `[]`) with that one
-   string in `en`, `fi`, `sv` and `fr` (`tlh` omits the namespace). Curly apostrophes as
-   the file uses them.
-2. Trim `robloxSafeguarding.subtitle` in the same four locales; leave the
-   `<linkDiscipline>` tag and label exactly as they are.
-3. In `src/app/(public)/roblox/safeguarding/page.tsx`, flip the `inPerson` entry in
-   `SECTIONS` from pending to not pending. It is the last pending section, so the page's
-   pending machinery can go the way the terms page's did if that keeps lint clean.
-4. Delete this entry.
-
-### Non-identifying wide shots of an event
-
-Decided 2026-09-08. Lynx's request (Joyce, 2026-09-07), with the wording confirmed by her
-the next day; under the rule at the top the programme documents take Lynx's wording, and
-this is a line Lynx wants in Lynx's documents. It is a carve-out from the promise the
-documents make that a child without the consent is kept out of session photographs
-entirely, so it sits directly after that promise wherever the promise is stated. It passes
-the mechanism test as far as a photograph can — a parent can look at the picture and check
-the claim — and it binds Gedu practice at events: a wide shot from a distance, nobody
-identifiable, and nothing closer without the consent.
-
-**Final English copy** — one sentence, appended to the end of each of these four strings
-after the existing "kept out … entirely" sentence:
-
-> Wide shots of an event or workshop may be taken from a distance, where no child is
-> identifiable.
-
-- `robloxPrivacy.sections.mediaChoice.blocks.3`
-- `robloxPrivacy.sections.mediaChildAgrees.blocks.1`
-- `robloxSafeguarding.sections.data.blocks.0`
-- `robloxTerms.sections.media.blocks.0`
-
-**To apply:**
-
-1. Append the sentence to the four strings in `en`, `fi`, `sv` and `fr` (`tlh` omits all
-   three namespaces). Read each string first: the sentence follows the "kept out …
-   entirely" promise, and in `mediaChildAgrees.blocks.1` that promise is not the final
-   sentence, so place it right after the promise rather than at the string's end.
-2. Delete this entry.
-
-### Safeguarding Policy — the vetting section is School of Gaming's
-
-Decided 2026-09-07 by Lynx (Joyce): "just SOG". "Who this covers" names Lynx Educate's
-staff as well as ours, and the vetting section beneath it describes only School of
-Gaming's process for its Game Educators; the fix is to say so in the heading rather than
-to describe a Lynx process that does not apply.
-
-**Final English copy** — `robloxSafeguarding.sections.vetting.heading`:
-
-> Before a Game Educator works with children
-
-The lead-in paragraph and the five bullets already say whose process it is and are
-unchanged.
-
-**To apply:**
-
-1. Change the heading in `en`, `fi`, `sv` and `fr` (`tlh` omits the namespace). Keep it
-   sentence case.
-2. Delete this entry.
-
-### Privacy Policy — sessions are not recorded, not only routine ones
-
-Decided 2026-09-07 by Lynx (Joyce): "not recorded". The Safeguarding Policy already says
-it flatly, so the Privacy Policy is the document that gets edited, in the three places
-that said "routine". The announced-photography sentence survives, narrowed to events:
-filming at an in-person event with the media consent is a different thing from recording
-a session, and the sentence no longer suggests a "selected session" might be filmed.
-
-**Final English copy:**
-
-> `robloxPrivacy.intro.blocks.6`
->
-> Online sessions are not recorded. A child will not be photographed or filmed where the
-> required permission has not been given or where the child does not want to take part.
-
-> `robloxPrivacy.sections.media.blocks.0`
->
-> Online sessions are not recorded. Where photography or filming is planned for an event,
-> families will be told in advance.
-
-> `robloxPrivacy.sections.childSafety.blocks.1.5`
->
-> Sessions are not recorded.
-
-**To apply:**
-
-1. Change the three strings in `en`, `fi`, `sv` and `fr` (`tlh` omits the namespace):
-   drop the "routine" qualifier from each, and in the media block replace "a selected
-   session or event" with "an event" in each locale's phrasing.
-2. `robloxSafeguarding.sections.online.blocks.0.3` ("Sessions are not recorded.") is
-   already right and is not touched.
-3. Delete this entry.
