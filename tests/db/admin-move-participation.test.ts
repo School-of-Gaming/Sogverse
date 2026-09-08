@@ -22,12 +22,18 @@ import { adminMoveParticipationRpcResult } from "@/services/participations/parti
  * pre-checked, and the lock ordering — two admins switching in opposite
  * directions at the same moment must queue, not deadlock.
  *
- * Product UUIDs 6d0-6d2 (see the product-helpers allocation registry).
+ * Product UUIDs 6d0-6d4 (see the product-helpers allocation registry).
  */
 
 const CLUB_A = "00000000-0000-0000-0000-0000000006d0";
 const CLUB_B = "00000000-0000-0000-0000-0000000006d1";
 const FREE_CLUB = "00000000-0000-0000-0000-0000000006d2";
+
+/** One group on each paid club: the admin's placement, and its opposite. */
+const GROUP_ON_B = "00000000-0000-0000-0000-0000000006d3";
+const GROUP_ON_A = "00000000-0000-0000-0000-0000000006d4";
+/** A group id no product has, for the refusal that is not about the source. */
+const UNKNOWN_GROUP = "00000000-0000-0000-0000-0000000006df";
 
 const PRICE_A = "price_test_move_source";
 const PRICE_B = "price_test_move_target";
@@ -108,7 +114,9 @@ describe("admin_move_participation", () => {
   async function readSeat(participationId: string) {
     const { data } = await admin
       .from("participations")
-      .select("product_id, group_id, status, signed_up_at, stripe_checkout_session_id")
+      .select(
+        "product_id, group_id, group_joined_at, status, signed_up_at, stripe_checkout_session_id",
+      )
       .eq("id", participationId)
       .single();
     return data;
@@ -154,6 +162,15 @@ describe("admin_move_participation", () => {
       billingMode: "free",
       seatCount: null,
     });
+
+    // One group per paid club, which is the whole point of the pair: the
+    // placement argument has to be told apart from a group of the club the seat
+    // is LEAVING, and that is the mistake a dialog opened on the source makes.
+    const { error } = await admin.from("product_groups").insert([
+      { id: GROUP_ON_B, product_id: CLUB_B, name: "Target group" },
+      { id: GROUP_ON_A, product_id: CLUB_A, name: "Source group" },
+    ]);
+    if (error) throw new Error(`group fixtures failed: ${error.message}`);
   });
 
   beforeEach(clearParticipations);
@@ -206,6 +223,69 @@ describe("admin_move_participation", () => {
     );
 
     expect(await readPrice(participationId)).toBe(PRICE_B);
+  });
+
+  it("places the seat in the group the admin names, and the trigger stamps the join", async () => {
+    // The whole reason the argument exists: without it a paid target always
+    // resolves to the unassigned inbox and the admin has a second job.
+    const participationId = await subscribedSeatOnA();
+
+    const { data, error } = await adminAuth.rpc("admin_move_participation", {
+      p_participation_id: participationId,
+      p_target_product_id: CLUB_B,
+      p_stripe_price_id: PRICE_B,
+      p_group_id: GROUP_ON_B,
+    });
+
+    expect(error).toBeNull();
+    const parsed = adminMoveParticipationRpcResult.parse(data);
+    expect(parsed.group_id).toBe(GROUP_ON_B);
+
+    const row = await readSeat(participationId);
+    expect(row?.product_id).toBe(CLUB_B);
+    expect(row?.group_id).toBe(GROUP_ON_B);
+    // Never written by the function: the BEFORE UPDATE trigger stamps it from
+    // group_id, which is what makes it a real join instant.
+    expect(row?.group_joined_at).not.toBeNull();
+  });
+
+  it("refuses a group of the SOURCE club — the mistake a dialog opened there makes", async () => {
+    const participationId = await subscribedSeatOnA();
+
+    const { error } = await adminAuth.rpc("admin_move_participation", {
+      p_participation_id: participationId,
+      p_target_product_id: CLUB_B,
+      p_stripe_price_id: PRICE_B,
+      p_group_id: GROUP_ON_A,
+    });
+
+    expect(error?.code).toBe("23514");
+    expect(error?.message).toContain("not a group of the target");
+    // Both rows as they were: the statement rolled back whole, so the seat did
+    // not move and the subscription was not re-priced either.
+    const row = await readSeat(participationId);
+    expect(row?.product_id).toBe(CLUB_A);
+    expect(row?.group_id).toBeNull();
+    expect(await readPrice(participationId)).toBe(PRICE_A);
+  });
+
+  it("refuses a group id no product has", async () => {
+    const participationId = await subscribedSeatOnA();
+
+    const { error } = await adminAuth.rpc("admin_move_participation", {
+      p_participation_id: participationId,
+      p_target_product_id: CLUB_B,
+      p_stripe_price_id: PRICE_B,
+      p_group_id: UNKNOWN_GROUP,
+    });
+
+    // The same refusal as a foreign group, deliberately: the function asks one
+    // question — is this a group OF THE TARGET — and "no row" is the answer to
+    // it whether the row is elsewhere or nowhere.
+    expect(error?.code).toBe("23514");
+    expect(error?.message).toContain("not a group of the target");
+    expect((await readSeat(participationId))?.product_id).toBe(CLUB_A);
+    expect(await readPrice(participationId)).toBe(PRICE_A);
   });
 
   it("refuses a seat with no subscription row at all", async () => {

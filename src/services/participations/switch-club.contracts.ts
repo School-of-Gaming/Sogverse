@@ -84,9 +84,15 @@ export type SwitchClubCheckResponse = z.infer<typeof switchClubCheckResponse>;
  * target ids it derives the Stripe idempotency key, so a retry after a timeout
  * or a failed database step replays the same Stripe request rather than
  * prorating twice.
+ *
+ * `groupId` is the admin's placement on the target: a group of the target
+ * club, or null to leave the seat in the target's unassigned inbox (which is
+ * where the shared placement rule puts a paid seat anyway). The RPC refuses a
+ * group that is not the target's.
  */
 export const switchClubCommitBody = z.object({
   targetProductId: z.string().uuid(),
+  groupId: z.string().uuid().nullable(),
   requestId: z.string().min(8).max(128),
 });
 

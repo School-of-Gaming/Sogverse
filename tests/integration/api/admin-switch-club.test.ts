@@ -86,6 +86,9 @@ const PARTICIPATION_ID = "44444444-4444-4444-4444-444444444444";
 const CUSTOMER_ID = "66666666-6666-4666-8666-666666666666";
 const GAMER_ID = "77777777-7777-4777-8777-777777777777";
 const OTHER_PARTICIPATION_ID = "88888888-8888-4888-8888-888888888888";
+/** A group of the target club, and one that belongs to some other product. */
+const TARGET_GROUP_ID = "99999999-9999-4999-8999-999999999999";
+const FOREIGN_GROUP_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const SUB_ID = "sub_test_switch";
 const ITEM_ID = "si_test_switch";
 const SOURCE_PRICE_ID = "price_source_club";
@@ -128,6 +131,12 @@ interface TableReads {
   products: unknown;
   family_subscriptions: unknown;
   product_prices: unknown;
+  /**
+   * The placement pre-flight's one read, filtered on group id AND target
+   * product — so "not the target's" and "no such group" reach it as the same
+   * empty answer, which is how the RPC answers them too.
+   */
+  product_groups: unknown;
   profiles: unknown;
 }
 
@@ -152,6 +161,8 @@ function userClient() {
           return chain(reads.family_subscriptions);
         case "product_prices":
           return chain(reads.product_prices);
+        case "product_groups":
+          return chain(reads.product_groups);
         default:
           return chain(reads.profiles);
       }
@@ -255,6 +266,9 @@ function commitRequest(body: unknown): Request {
 
 const commitBody = {
   targetProductId: TARGET_PRODUCT_ID,
+  // The dialog's default placement: leave the seat in the target's unassigned
+  // inbox, which is exactly where the shared rule would have put it.
+  groupId: null,
   requestId: REQUEST_ID,
 };
 
@@ -265,6 +279,7 @@ beforeEach(() => {
     products: paidClub(TARGET_PRODUCT_ID),
     family_subscriptions: liveSubscription(),
     product_prices: { data: { price_cents: 5900 }, error: null },
+    product_groups: { data: { id: TARGET_GROUP_ID }, error: null },
     profiles: {
       data: [
         { id: GAMER_ID, first_name: "Aino", locale: null },
@@ -496,7 +511,16 @@ describe("POST …/participations/[participationId]/switch — the commit", () =
       p_participation_id: PARTICIPATION_ID,
       p_target_product_id: TARGET_PRODUCT_ID,
       p_stripe_price_id: TARGET_PRICE_ID,
+      p_group_id: undefined,
     });
+    // `null` placement reaches the RPC as an OMITTED argument, never a named
+    // group: the SQL DEFAULT is what falls back to the shared placement rule,
+    // and only an absent argument takes it. Asserted through the serialization
+    // PostgREST itself does — which drops an undefined value — because the
+    // matcher above cannot tell an undefined property from an absent one.
+    expect(JSON.stringify(mockRpc.mock.calls[0][1])).not.toContain(
+      "p_group_id",
+    );
 
     const audit = vi
       .mocked(console.info)
@@ -533,6 +557,46 @@ describe("POST …/participations/[participationId]/switch — the commit", () =
     expect(
       mockSendProductConfirmationEmail.mock.invocationCallOrder[0],
     ).toBeGreaterThan(mockRpc.mock.invocationCallOrder[0]);
+  });
+
+  it("passes the admin's chosen group through to the RPC", async () => {
+    mockAuthenticatedAdmin();
+
+    const response = await POST(
+      commitRequest({ ...commitBody, groupId: TARGET_GROUP_ID }),
+      { params },
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockRpc).toHaveBeenCalledWith("admin_move_participation", {
+      p_participation_id: PARTICIPATION_ID,
+      p_target_product_id: TARGET_PRODUCT_ID,
+      p_stripe_price_id: TARGET_PRICE_ID,
+      p_group_id: TARGET_GROUP_ID,
+    });
+  });
+
+  it("answers 400 for a group that is not the target's, before touching Stripe", async () => {
+    mockAuthenticatedAdmin();
+    // The pre-flight read is filtered on the target too, so a group of another
+    // product comes back empty exactly as an unknown id would.
+    reads.product_groups = { data: null, error: null };
+
+    const response = await POST(
+      commitRequest({ ...commitBody, groupId: FOREIGN_GROUP_ID }),
+      { params },
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    // A malformed request from the dialog, not something an admin is told about
+    // this seat — so a plain error and no refusal to word.
+    expect(body.refusals).toBeUndefined();
+    expect(body.stripeUpdated).toBeUndefined();
+    expect(mockGetOrCreateSubscriptionPrice).not.toHaveBeenCalled();
+    expect(mockSubscriptionUpdate).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
+    expect(mockSendProductConfirmationEmail).not.toHaveBeenCalled();
   });
 
   it("answers 500 with stripeUpdated when the database step fails, and never calls Stripe again", async () => {
@@ -610,7 +674,7 @@ describe("POST …/participations/[participationId]/switch — the commit", () =
     mockAuthenticatedAdmin();
 
     const response = await POST(
-      commitRequest({ targetProductId: TARGET_PRODUCT_ID }),
+      commitRequest({ targetProductId: TARGET_PRODUCT_ID, groupId: null }),
       { params },
     );
 

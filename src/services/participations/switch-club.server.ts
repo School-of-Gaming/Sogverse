@@ -86,6 +86,17 @@ export interface SwitchClubCommitFacts {
 export interface SwitchClubCheck extends SwitchClubCheckResponse {
   /** Non-null exactly when `refusals` is empty. */
   commitFacts: SwitchClubCommitFacts | null;
+  /**
+   * The commit named a group that is not the target club's — false whenever no
+   * group was named at all, which is every call the check handler makes.
+   *
+   * Deliberately NOT a refusal: the refusals are answers about this seat and
+   * this target that the dialog words for an admin, whereas a group belonging
+   * to another product is a malformed request from a client the dialog itself
+   * built. It gets a plain 400, and the enum stays the set of things an admin
+   * can be told.
+   */
+  groupNotOnTarget: boolean;
 }
 
 export interface SwitchClubCheckInput {
@@ -95,6 +106,13 @@ export interface SwitchClubCheckInput {
   productId: string;
   participationId: string;
   targetProductId: string;
+  /**
+   * The commit's chosen placement on the target: one of its groups, or null to
+   * leave the seat in its unassigned inbox. The check handler passes none —
+   * there is no group in a GET — so this is the commit's own pre-flight, made
+   * here with the rest of them and therefore before Stripe is touched.
+   */
+  groupId?: string | null;
 }
 
 /**
@@ -112,6 +130,7 @@ export async function checkSwitchClub({
   productId,
   participationId,
   targetProductId,
+  groupId,
 }: SwitchClubCheckInput): Promise<SwitchClubCheck> {
   const refusals: SwitchClubRefusal[] = [];
 
@@ -178,6 +197,22 @@ export async function checkSwitchClub({
     .maybeSingle();
   if (occupiedError) throw occupiedError;
   if (occupied) refusals.push("already_on_target");
+
+  // The admin's placement, pre-flighted with the same plain read that answers
+  // it in the RPC. The RPC refuses a foreign group with `check_violation`, and
+  // reaching that refusal would mean reaching it AFTER the plan change — so it
+  // is checked here, where a wrong group costs nothing but a 400.
+  let groupNotOnTarget = false;
+  if (groupId) {
+    const { data: group, error: groupError } = await supabase
+      .from("product_groups")
+      .select("id")
+      .eq("id", groupId)
+      .eq("product_id", targetProductId)
+      .maybeSingle();
+    if (groupError) throw groupError;
+    groupNotOnTarget = !group;
+  }
 
   // With no subscription there is no currency to price the target in, so the
   // catalogue is read at the platform currency for DISPLAY only and the
@@ -255,6 +290,7 @@ export async function checkSwitchClub({
     targetAmountCents: targetPrice?.price_cents ?? null,
     refusals,
     commitFacts,
+    groupNotOnTarget,
   };
 }
 
@@ -265,6 +301,13 @@ export interface SwitchClubCommitInput {
   request: Request;
   participationId: string;
   targetProductId: string;
+  /**
+   * Where the seat lands on the target: one of its groups, or null for its
+   * unassigned inbox. Already pre-flighted by the check, so the RPC's own
+   * refusal of a foreign group is a race guard rather than the first line of
+   * defence — the same posture the unique index is in.
+   */
+  groupId: string | null;
   /** Minted once per dialog open; derives the Stripe idempotency key. */
   requestId: string;
   facts: SwitchClubCommitFacts;
@@ -302,6 +345,7 @@ export async function commitSwitchClub({
   request,
   participationId,
   targetProductId,
+  groupId,
   requestId,
   facts,
 }: SwitchClubCommitInput): Promise<SwitchClubCommitOutcome> {
@@ -359,6 +403,12 @@ export async function commitSwitchClub({
     p_participation_id: participationId,
     p_target_product_id: targetProductId,
     p_stripe_price_id: priceRow.stripe_price_id,
+    // The argument carries a SQL DEFAULT, so it is optional in the generated
+    // type: `undefined` leaves the placement to the shared rule, which for a
+    // paid target is the unassigned inbox. Passing an explicit null would say
+    // the same thing, but only `undefined` omits the argument, and omitting it
+    // is what keeps this call identical to every pre-00246 one.
+    p_group_id: groupId ?? undefined,
   });
 
   if (error) {

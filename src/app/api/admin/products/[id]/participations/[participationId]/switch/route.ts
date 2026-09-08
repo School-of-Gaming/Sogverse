@@ -104,7 +104,20 @@ export const POST = defineRoute({
       productId,
       participationId,
       targetProductId: body.targetProductId,
+      groupId: body.groupId,
     });
+
+    // Answered first, and separately from the refusals: a group that is not the
+    // target's is a malformed request from a client the dialog itself built,
+    // not something an admin can be told about this seat. Plain 400, no
+    // `refusals` — widening the enum would put a client bug in the vocabulary
+    // the dialog words for a human.
+    if (check.groupNotOnTarget) {
+      return NextResponse.json(
+        { error: "That group is not a group of the target club." },
+        { status: 400 },
+      );
+    }
 
     if (check.refusals.length > 0 || !check.commitFacts) {
       return NextResponse.json(
@@ -128,6 +141,7 @@ export const POST = defineRoute({
       request,
       participationId,
       targetProductId: body.targetProductId,
+      groupId: body.groupId,
       requestId: body.requestId,
       facts: check.commitFacts,
     });
