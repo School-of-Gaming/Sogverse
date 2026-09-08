@@ -11,7 +11,9 @@ because nothing here is currently failing.
 **Status: decision open.** Written 2026-08-25, triggered by a Vercel billing alert that
 turned out to be the symptom, not the subject. One narrow cut has shipped (the four
 footer legal links no longer prefetch — commit `8bf965de` on `dev`); everything else is
-proposed only.
+proposed only. **Probe 1 was settled on 2026-09-08 without any code**: prefetch is
+84–86% of function invocations, measured — see "Probe 1, settled" below. The inference
+the remedy rests on is now a measurement, and it lands at the top of the inferred range.
 
 **How to read this doc.** Like F7 in `docs/architecture/performance.md`, every claim is tagged.
 *Measured* means someone ran the query and the date and instrument are given — the
@@ -105,8 +107,9 @@ two clean isolates show the prefetch share is dominant:
   shows on signed-in chrome: `/parent/unlock` 12,320 invocations / 1,419 views,
   `/select-profile` 12,083 / 834, `/settings` 9,338 / few.
 
-**Inferred (probe below): prefetch is most of the amplification** — plausibly 60–85% of
-all invocations. The bounded evidence is the two isolates above plus F1's measured 24–53
+**Inferred when written, measured since (see "Probe 1, settled"): prefetch is most of
+the amplification** — plausibly 60–85% of all invocations, the 2026-08-25 estimate; the
+2026-09-08 measurement reads 84–86%. The bounded evidence is the two isolates above plus F1's measured 24–53
 prefetches per dashboard navigation. Nothing measured contradicts it; nothing measured
 yet pins it.
 
@@ -275,16 +278,69 @@ them):
   ~10× of) or invocations are billed materially differently, the cost half of the case
   moves accordingly — but the coherence half stands regardless.
 
+## Probe 1, settled (2026-09-08)
+
+*Measured*, production, `vercel metrics` on CLI 59.4.0, triggered by a pair of Vercel
+anomaly alerts ("Function invocations spike, 7.17× increase" and "Edge requests traffic
+spike") that arrived on the Tuesday after the first full weekend of term. The alerts were
+the same symptom as the August billing alert: the Monday school-day ramp measured against a
+weekend trough, on a request stream that is mostly prefetch. Nothing was failing — no
+error statuses, no bot share, one WAF deny in 36 hours, and one busy admin browser as the
+largest single client.
+
+The instrument the probe list did not know about: `vercel.request.count` carries an
+`is_prefetch_request` dimension, and its `path_type eq 'streaming_func'` slice equals
+`vercel.function_invocation.count` request for request (Monday Sep 7: 28,972 + 4,566 =
+33,538 on both metrics). So the prefetch share of function invocations is a zero-code read,
+and the proxy log line the probe proposed is not needed. The runbook
+`docs/runbooks/vercel-analytics.md` records the read.
+
+| Window (Helsinki days) | Prefetch invocations | Real invocations | Prefetch share | Pageviews | Invocations : pageview |
+|---|---|---|---|---|---|
+| Mon Sep 7 | 28,972 | 4,566 | **86.4%** | 2,570 | 13.1 : 1 |
+| 7 days to Sep 8 | 184,248 | 34,069 | **84.4%** | 15,849 | 13.8 : 1 |
+| Tue Aug 25 (control, pre-term) | 39,059 | 4,303 | 90.1% | — | — |
+| Mon Aug 31 (control) | 37,417 | 4,718 | 88.8% | — | — |
+
+Across all edge requests (static assets and external rewrites included) the prefetch share
+is 57%; the rest of the request stream is the assets those pages load. The share has been
+flat since the doc was written — the two August controls sit at 89–90% — so nothing has
+regressed and nothing has improved; the footer-links cut is inside the noise of a term-time
+week.
+
+What the measurement changes:
+
+- **The inference is confirmed at the top of its range**, which strengthens remedy (a) and
+  removes the "under ~30%" escape hatch: with prefetch gone, Monday would have been ~4,600
+  invocations against 2,570 pageviews, a **1.8 : 1** ratio, down from 13.1 : 1. The
+  weekday-over-weekend multiple that trips Vercel's anomaly detector shrinks with it —
+  the alerts are a prefetch-volume phenomenon as much as a traffic one.
+- **The distribution by route is the listing-and-nav shape the doc predicted.** Top prefetch
+  routes in the 36 hours to Sep 8: the club-detail route under `/schools/` (5,746,
+  every card on a municipality listing), the admin municipality-club detail route (5,295,
+  every row of the admin list), `/shop` and `/about` (3,700 each, header nav on every
+  page), then the admin sidebar: every one of its sections — tools, UI components, UI
+  previews, testing, WhatsApp — drew an identical ~350 prefetches from a single admin in
+  36 hours, one per admin page render, for pages nobody opens.
+- **One admin browser was 27% of all invocations in that window** (13,435 of 49,783;
+  12,681 of them prefetch). Term-start admin work on the sidebar-and-list shape multiplies
+  like this by construction; a second admin IP shows the same pattern at a fifth the
+  volume. It is a cost observation, not a misuse one.
+- **Probe 4's regression gauge has its baseline**: 13–14 invocations per pageview in term
+  time, prefetch share 84–86%. Re-run the same three reads after (a) ships.
+
+The remaining open probes are 2 (role-lookup cost) and 3 (click-latency control for (a));
+neither blocks the recommendation, and probe 3 remains the one that could overturn it.
+
 ## Probes that settle the open questions
 
 In the spirit of the cold-probe method and the sibling-route control: specific
 measurements, cheap, each answering exactly one question.
 
-1. **Prefetch share of invocations.** Prefetch requests carry the `Next-Router-Prefetch`
-   header. Log one structured line in the proxy when it is present (temporary, a day or
-   two), then compare counts against total proxy runs in the same window. Settles the
-   60–85% inference exactly, and decomposes the 15:1 into prefetch / navigation / API /
-   crawler. Run it *before* shipping (a) app-wide, so the before/after is clean.
+1. **Prefetch share of invocations — settled 2026-09-08, see the section above.** The
+   temporary proxy log line this probe originally called for is unnecessary: Vercel's
+   request metric already carries the prefetch flag as a dimension, so the share is a
+   one-line `vercel metrics` read, and the same read is the before/after for (a).
 2. **Role-lookup incidence and cost.** Same temporary proxy line records whether the
    request skipped the lookup (PIN short-circuit) or paid it; on the database side,
    `pg_stat_statements` gives the role query's call count and total exec time as a share
@@ -309,6 +365,20 @@ observability*, not invocations, so even perfect amplification removal roughly h
 the credit burn rather than zeroing it. The bill is mostly the 12× traffic year; the
 amplification is the part of it that buys nothing. No limit was exceeded and none is
 near.
+
+**Re-read 2026-09-08 (`vercel usage`).** August closed at $18.95 of metered usage
+(everything except the $20 Pro seat and the $10 Speed Insights base), all of it absorbed
+by the plan's credit — amount due was the two base fees, $20.93. September's first seven
+days ran $5.53 metered, a weekday floor of roughly $1.00 a day against $0.10 on a weekend
+day, which projects to about $23 for the month: a term-time month plausibly overruns the
+credit by single-digit dollars. The prefetch-attributable share of the metered lines is
+roughly $1.50 a week — 85% of the invocation line, about 57% of observability events
+(billed per request, prefetch or not), and a thin slice of CPU, memory and origin
+transfer, since an empty prefetch response is cheap to compute and to send — so remedy
+(a) is worth about $5–7 in a term-time month, roughly the size of the projected overrun.
+The pageview-driven lines (Speed Insights events, Web Analytics events) are the larger
+term and are untouched by it. Urgency on money alone: none; the case for (a) is
+coherence and alert noise, not the bill.
 
 ## Proposed edits to `docs/architecture/performance.md` (not made here)
 

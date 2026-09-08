@@ -26,6 +26,19 @@ How to read traffic/perf *measurements* for the prod app programmatically (team 
 - **Pro serves the latest 30 days only** — `--since 45d` is a hard `bad_request`, not a
   clamp. Compare windows by stepping inside that month (`--since 14d --until 7d`); a
   regression older than 30 days cannot be dated from here at all.
+- **Prefetch share is a zero-code read: `vercel.request.count` carries
+  `is_prefetch_request`.** Its `path_type eq 'streaming_func'` slice equals
+  `vercel.function_invocation.count` request for request (verified 2026-09-08, same
+  number on both metrics for a whole day), so `--group-by is_prefetch_request --group-by
+  path_type` splits function invocations into prefetches and real navigations directly.
+  Term-time reading: prefetch is 84–86% of invocations and 57% of all edge requests
+  (`../investigations/request-amplification.md`). Two consequences for reading alerts:
+  Vercel's "function invocations spike" / "edge requests spike" anomaly mails fire on the
+  Monday-after-weekend ramp (weekend days run 5–12k invocations, weekdays 30–48k), and a
+  single admin browser working the sidebar-and-list pages can be a quarter of a day's
+  invocations without anything being wrong — group by `client_ip` and then by `route`
+  for that IP before concluding abuse; `bot_category`, `waf_action` and `http_status`
+  are the other three reads that clear a spike.
 - **Web Analytics is two metrics, not one — pick deliberately.**
   `vercel.analytics_pageview.count` is **pageviews**, and is what any "where do people go"
   question wants: dimensions `route`, `request_path`, `referrer_hostname`,
