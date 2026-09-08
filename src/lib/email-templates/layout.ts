@@ -1,6 +1,7 @@
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 import { BRAND_LOCKUP_TAIL, SENDER_NAME } from "@/lib/constants";
 import { RADIUS } from "@/lib/constants/radius";
+import { MAIL_FONT_STACK } from "@/lib/constants/typography";
 import { sendableImageOrigin } from "./render-context";
 import { pinnedFill } from "./utils";
 import {
@@ -262,7 +263,7 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
   </style>
 </head>
 <!-- "body" class is required for the "u + .body" Gmail-only selector in the style block above -->
-<body class="body" style="margin:0;padding:0;${pinnedFill(DARK_THEME.bg)}font-family:Arial,Helvetica,sans-serif;">
+<body class="body" style="margin:0;padding:0;${pinnedFill(DARK_THEME.bg)}font-family:${MAIL_FONT_STACK};">
   <!-- The ground on both body and table: body for clients that respect it, table for Gmail which strips body styles -->
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${pinnedFill(DARK_THEME.bg)}">
     <tr>

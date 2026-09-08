@@ -49,6 +49,14 @@ What the 58 are:
 | prose naming `font-display` | 3 | `pixel-art.tsx`, `roblox-hero.tsx`, `gamer-dashboard-page-body.tsx` (comments, not spends) |
 | the `next/font` import and the `<html>` comment | 3 | `src/app/layout.tsx` |
 
+**The count moves as rulings land, and the rows say how.** 59 in 23 after §7 (the
+`font-brand-mono` token and its comment went from `globals.css`, and one call site
+dropped a weight class). 60 in 24 after §9: the mail's row is still one `font-family`,
+now the interpolated form rather than a family literal, and the extra file is
+`src/lib/constants/typography.ts`, the module that derives the stack from the library.
+The command is the enumeration; a hit it returns is a place a face is named, not a
+defect.
+
 ## Standing decisions (already made, not re-opened here)
 
 - **Press Start 2P is retired.** It is loaded as an approved exception outside the
@@ -256,7 +264,53 @@ stays and is not chased. `src/lib/email-templates/CLAUDE.md` currently records t
 Arial stack as "permanent, do not chase" — that line is amended, not deleted: the
 fallback is still permanent.
 
-**Status: open.**
+**Ruled: not the proposal.** The mail is set in the reader's own system sans, declared
+once by the library as the mail face, exclusive to mail, and **no webfont is put in
+front of it** — not Poppins, not a named web-safe face. The stack is the whole face.
+
+Why the preference does not survive contact. The clients that carry most readers —
+Gmail, Outlook, Yahoo — load no web font at all, so a family declared first reaches a
+minority and the mail becomes two designs; Poppins is also much wider than any fallback
+behind it, so line breaks and button widths would differ by client, which is where mail
+layouts break. A webfont in a mail is a request to a third party, or to our own domain,
+on every open — an open-tracking beacon, in a product whose parent-facing copy is about
+trust. Outlook on Windows additionally answers a missing declared web font with Times
+New Roman rather than with the next family in the stack. And a single named web-safe
+face (Verdana, Trebuchet) is not "one face everywhere" either: the archetypal family
+phone in our markets is Android, where every stack ends at Roboto, so it designs for the
+desktop minority and no one else.
+
+What the stack resolves to is a face rather than a fallback — San Francisco on iPhone
+and Mac, Segoe UI in Outlook and on Windows, Roboto on Android, Helvetica or Arial where
+nothing else exists — each a humanist sans, warm and legible at small sizes, so the mail
+reads as native to the client it arrived in. The library's rule for every face is that
+the fallback is the UA's own and never a second webfont; mail is the one surface where
+that fallback is the whole face.
+
+**What landed.** `MAIL_FACE` is exported from `packages/sog-ui/src/tokens/typography.ts`
+beside `FACES` as its own type — a `MailFace` with a `stack` and the two weights every
+system face draws, and no `token` or `variable`, because a mail loads nothing and reads
+no CSS variable. Its doc comment carries the ruling and its reasons, including what was
+decided against, and the file's header says the mail face sits beside the exhaustive list
+rather than in it. The library's `CLAUDE.md` says mail is set in the reader's own system
+sans, that mail alone may spend it, and that no webfont is ever loaded in a mail. The
+demo's foundations floor draws it beside the four loaded faces, in its own stack. Two
+mechanism tests in `tests/unit/sog-ui/typography.test.ts`: the stack names none of the
+loaded families, and the generated theme declares exactly the face tokens `FACES` names
+and no more — the mail face has no token, because it is not a CSS face. In Sogverse the
+stack arrives the way colour does: `src/lib/constants/typography.ts` derives
+`MAIL_FONT_STACK` from `@sog/ui` and nothing is spelled there, and
+`src/lib/email-templates/layout.ts` interpolates it into the shell's `style` attribute in
+place of the `font-family:Arial,Helvetica,sans-serif` literal — the only family literal
+any mail-producing code held. The email directory's `CLAUDE.md` mirror table and its rule
+are rewritten to the mail face and the no-webfont rule. Two lint bans: a `font-family`
+literal in `src/lib/email-templates/**` (a family name after the colon; the interpolated
+form is the only spelling that passes), and `MAIL_FACE` / `MAIL_FONT_STACK` unimportable
+anywhere under `src/` except the deriving module and the mail directory, because the mail
+face is never a screen face. The mail drawing is gone from §3 of the page; the banner's
+SOG stays while §8 is open.
+
+**Status: landed.**
 
 ## 10. The Open Graph family name
 
@@ -380,6 +434,10 @@ adoption that owns it.
    with its own constraints (no download, no CSS variables, a stack rather than a
    family). Whether that is one export or the beginning of a mail-target module is the
    mail's own question, not this adoption's.
+   **Answered by §9:** one typed export, `MAIL_FACE`, exclusive to mail and outside
+   `FACES` — not a mail-target module. Nothing remains: the mail spends one value, and
+   the next mail constraint that needs a library home can decide then whether it has
+   grown into a module.
 4. **`--font-display` as a concept.** The token indirection was right — a component
    asked for "the display face" and never for a family — and it retires with its only
    face. If the library ever wants a display face, this is the shape it takes, and the

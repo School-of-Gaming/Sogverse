@@ -1,9 +1,10 @@
 /**
  * The brand's type, defined once.
  *
- * The faces, the working scale, and the type rules that are values rather than
- * prose. `theme.css` is generated from here and from `brand.ts` together, so a
- * step's size, weight and line height move in one place.
+ * The faces, the mail face, the working scale, and the type rules that are
+ * values rather than prose. `theme.css` is generated from here and from
+ * `brand.ts` together, so a step's size, weight and line height move in one
+ * place.
  *
  * **The package owns the names; the consumer supplies the files.** Nothing here
  * loads a font. A consumer loads each face through `next/font` and exposes it as
@@ -16,6 +17,10 @@
  * face that is not here is not available to the UI, whether or not it exists in
  * the brand's art. The logo's lettering, campaign display faces and anything
  * retired are drawn, not typed, and the UI never recreates them.
+ *
+ * **`MAIL_FACE` sits beside that list and is not part of it.** It is the one
+ * face the library declares without loading, for the one surface that cannot
+ * load anything, and no token is generated for it.
  *
  * ## The type rules that are opinions
  *
@@ -151,6 +156,74 @@ export const FACES = {
 } as const satisfies Record<string, Face>;
 
 export type FaceId = keyof typeof FACES;
+
+// -------------------------------------------------------------- the mail face
+
+/**
+ * The face mail is set in.
+ *
+ * Not a `Face`, and the difference is the whole of it: a `Face` is a family the
+ * consumer loads, named by a token that points at a variable. This has no file,
+ * no token and no variable, because a mail client loads nothing and reads no
+ * CSS variable. The stack *is* the face — the reader's own device answers it —
+ * so there is nothing here for the theme generator to emit.
+ */
+export type MailFace = {
+  /** What it is. It has no family name of its own, because it is not one family. */
+  readonly name: string;
+  /** The `font-family` string, written to survive an inline `style="…"` attribute. */
+  readonly stack: string;
+  /** The weights mail may ask for. Both are drawn by every face in the stack. */
+  readonly weights: readonly number[];
+};
+
+/**
+ * The mail face: the reader's own system sans, with no webfont in front of it.
+ *
+ * **Exclusive to mail, and never a screen face.** On a screen the brand has a
+ * face and the consumer loads it; a page reaching for this one is asking for
+ * the app face and spelling it wrong. Mail is the only surface that spends it,
+ * and the only surface that may.
+ *
+ * **No webfont sits in front of it, and that is a decision rather than a
+ * limitation.** The clients that carry most readers — Gmail, Outlook, Yahoo —
+ * load no web font at all, so a family declared ahead of the stack would reach
+ * a minority and the mail would be two designs rather than one; the brand's own
+ * sans is also markedly wider than anything it could fall back to, so line
+ * breaks and button widths would differ from client to client, which is exactly
+ * where a mail layout comes apart. A webfont in a mail is also a request to a
+ * third party, or to our own domain, on every open — an open-tracking beacon,
+ * in a product whose parent-facing copy is about trust. And Outlook on Windows
+ * answers a missing declared web font with Times New Roman rather than with the
+ * next family in the stack, so declaring one costs a serif mail on the desktop
+ * client least able to recover from it.
+ *
+ * **What the stack resolves to is a face, not a fallback**: San Francisco on
+ * iPhone and Mac, Segoe UI in Outlook and on Windows, Roboto on Android,
+ * Helvetica or Arial where nothing else exists. Each is a humanist sans, warm
+ * and legible at the sizes a mail is read at, so the mail reads as native to
+ * the client it arrived in rather than as a page whose face failed to load. The
+ * library's rule for every face is that the fallback is the UA's own and never
+ * a second webfont; mail is the surface where that fallback is the whole face.
+ *
+ * **Decided against.** The brand sans first with this stack behind it: the
+ * archetypal family phone in our markets is Android, where every stack ends at
+ * Roboto anyway, so a preference honoured by the desktop minority buys one
+ * design for them and a second for everybody else. A single named web-safe face
+ * (Verdana, Trebuchet) fails on the same ground — it is a desktop face with the
+ * same Android ending underneath it, so it is not "one face everywhere" either,
+ * and it trades a face every reader already reads comfortably for one picked
+ * from a list written for a different decade.
+ *
+ * Two weights and no more, because every face the stack can land on draws
+ * exactly these two.
+ */
+export const MAIL_FACE = {
+  name: "The reader's own sans",
+  stack:
+    "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+  weights: [400, 700],
+} as const satisfies MailFace;
 
 // ------------------------------------------------------------- the scale
 

@@ -31,6 +31,48 @@ const noTsExtensionImports = [
 ];
 
 /**
+ * The mail face, banned everywhere except the mail.
+ *
+ * `MAIL_FACE` is the one face the UI package declares without loading: a stack
+ * of whatever sans the reader's own device ships, for the single renderer that
+ * downloads nothing and reads no CSS variable. On a screen the brand has a face
+ * and the layout loads it, so a component reaching for this one is asking for
+ * the app face and spelling it wrong — and spelling it as an inline family, on
+ * a surface where `font-sans` was the whole answer.
+ *
+ * Both spellings are named: the library export, and the constants module that
+ * derives it for the mail. The two files allowed to hold either are the
+ * exemption block below.
+ *
+ * `allowTypeImports`, and it is why every block below states the rule in its
+ * typescript-eslint form with the base rule off: the ban is on *spending* a
+ * face, and a type-position import spends nothing — it renders no character and
+ * emits no code. One module derives a role's ink class from the library's
+ * grammar row through `import type * as`, which the base rule reads as reaching
+ * for every export in the package including this one.
+ *
+ * Held in a const for the same reason `noTsExtensionImports` is — a later block
+ * that sets the rule replaces it outright rather than merging with it, so every
+ * block that sets it has to carry these too.
+ */
+const noMailFaceOutsideMail = [
+  {
+    name: "@sog/ui",
+    importNames: ["MAIL_FACE"],
+    allowTypeImports: true,
+    message:
+      "The mail face is never a screen face — it is the reader's own system sans, for the one renderer that loads nothing. A screen sets a face with the font-sans / font-serif / font-mono / font-cursive utilities.",
+  },
+  {
+    name: "@/lib/constants/typography",
+    importNames: ["MAIL_FONT_STACK"],
+    allowTypeImports: true,
+    message:
+      "The mail face is never a screen face — MAIL_FONT_STACK is for src/lib/email-templates and nothing else. A screen sets a face with the font-sans / font-serif / font-mono / font-cursive utilities.",
+  },
+];
+
+/**
  * A colour spelled as a hex literal, banned wherever the colour is not authored.
  *
  * Written once and spread into every block that bans it, because the selector is
@@ -589,7 +631,11 @@ const eslintConfig = defineConfig([
   {
     files: ["src/**/*.{ts,tsx}"],
     rules: {
-      "no-restricted-imports": ["error", { patterns: noTsExtensionImports }],
+      "no-restricted-imports": "off",
+      "@typescript-eslint/no-restricted-imports": ["error", {
+        paths: noMailFaceOutsideMail,
+        patterns: noTsExtensionImports,
+      }],
     },
   },
   {
@@ -613,7 +659,12 @@ const eslintConfig = defineConfig([
       "src/services/family-product-feed/**/*.ts",
     ],
     rules: {
-      "no-restricted-imports": ["error", {
+      "no-restricted-imports": "off",
+      "@typescript-eslint/no-restricted-imports": ["error", {
+        // Restated rather than inherited, on the same terms as the patterns
+        // below: a family surface is a screen like any other, and the mail face
+        // is never a screen face.
+        paths: noMailFaceOutsideMail,
         patterns: [
           // Restated rather than inherited: this block replaces the rule set by
           // the `src/**` block above, so dropping them here would quietly exempt
@@ -821,7 +872,44 @@ const eslintConfig = defineConfig([
           message:
             "No radius literals in an email. Import RADIUS from @/lib/constants/radius, which mirrors the app's --radius scale.",
         },
+        // A family typed into a mail, on the same terms as the radius above and
+        // for the same reason: a mail has no class to write, so naming Arial in
+        // the markup is the easy path, and it is how the mail's face and the
+        // app's stopped being one decision. The two selectors are the two
+        // spellings — a template literal (what every template here writes) and a
+        // plain string.
+        //
+        // The pattern requires a family *name* after the colon, so the only form
+        // that survives is `font-family:${…}` — an interpolation, whose template
+        // chunk ends at the colon with nothing after it. That is the derived
+        // stack and nothing else can reach the mail.
+        ...["TemplateElement[value.raw", "Literal[value"].map((node) => ({
+          selector: String.raw`${node}=/font-family\s*:\s*['"a-zA-Z-]/]`,
+          message:
+            "No font-family literals in an email. Import MAIL_FONT_STACK from @/lib/constants/typography, which derives the mail face from @sog/ui — and a mail never loads a webfont.",
+        })),
       ],
+    },
+  },
+  {
+    // The two files the mail face may be spelled in, and the reason the ban
+    // above is worth having. `src/lib/constants/typography.ts` is the derivation
+    // — the mail's half of the same seam `colors.ts` holds for the palette, so
+    // a face moves in the package and the mail follows without an edit here.
+    // `src/lib/email-templates/**` is the one renderer that spends it: an email
+    // client downloads nothing and reads no CSS variable, so a stack written
+    // into the shell's `style` attribute is the only way a mail has of naming a
+    // face at all.
+    //
+    // The extension patterns are restated because this block replaces the rule
+    // the `src/**` block sets rather than merging with it.
+    files: [
+      "src/lib/constants/typography.ts",
+      "src/lib/email-templates/**/*.ts",
+    ],
+    rules: {
+      "no-restricted-imports": "off",
+      "@typescript-eslint/no-restricted-imports": ["error", { patterns: noTsExtensionImports }],
     },
   },
   // The same guard, one tier down, for the UI package's own source. The package

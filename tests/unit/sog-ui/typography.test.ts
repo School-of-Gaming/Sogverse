@@ -2,7 +2,11 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { FACES } from "../../../packages/sog-ui/src/tokens/typography";
+import { renderTheme } from "../../../packages/sog-ui/src/tokens/generate";
+import {
+  FACES,
+  MAIL_FACE,
+} from "../../../packages/sog-ui/src/tokens/typography";
 
 /**
  * The face contract, honoured across the seam it spans.
@@ -44,4 +48,39 @@ describe("the face contract", () => {
       ).toBe(true);
     },
   );
+});
+
+/**
+ * The mail face is the reader's own, and stays outside the loaded list.
+ *
+ * Two properties, both of them mechanisms rather than values. "No webfont in
+ * mail" is a rule about the *relationship* between two exports, so it is
+ * checkable: whatever the stack grows to say, it may not name a family the
+ * consumer loads, because a mail client would not fetch it and Outlook on
+ * Windows answers a missing declared web font with a serif. And the mail face
+ * has no CSS existence at all — a token emitted for it would mean a screen
+ * could ask for it by class, which is precisely what "never a screen face"
+ * denies.
+ */
+describe("the mail face", () => {
+  it.each(Object.entries(FACES))(
+    "does not name %s in its stack",
+    (id, face) => {
+      expect(
+        MAIL_FACE.stack.toLowerCase().includes(face.name.toLowerCase()),
+        `the mail face's stack names ${face.name}, which is a face the consumer loads — a mail loads nothing`,
+      ).toBe(false);
+    },
+  );
+
+  it("is not emitted as a theme token", () => {
+    const declared = [...renderTheme().matchAll(/(--font-[a-z-]+)\s*:/g)]
+      .map((match) => match[1])
+      .filter((token) => !token.endsWith("-weight"));
+    expect(
+      new Set(declared),
+      "the theme declares a face token the FACES list does not name — the mail face has no token, because it is not a CSS face",
+    ).toEqual(new Set(Object.values(FACES).map((face) => face.token)));
+    expect(renderTheme().includes(MAIL_FACE.stack)).toBe(false);
+  });
 });

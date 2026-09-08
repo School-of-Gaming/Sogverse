@@ -28,6 +28,7 @@ import { IDENTICON } from "../../src/tokens/identicon";
 import { PICKS } from "../../src/tokens/picks";
 import {
   FACES,
+  MAIL_FACE,
   MOBILE_FLOOR_PX,
   TYPE_SCALE,
 } from "../../src/tokens/typography";
@@ -526,6 +527,22 @@ export default function FoundationsPage() {
               </div>
             </article>
           ))}
+          {/* Drawn in its own stack rather than through a class, because the
+              mail face has no token: it is the reader's own sans and the only
+              way to show it is to name the stack, exactly as a mail does. */}
+          <article>
+            <h3 className="text-h3">{MAIL_FACE.name}</h3>
+            <div className="mt-4 space-y-2" style={{ fontFamily: MAIL_FACE.stack }}>
+              {MAIL_FACE.weights.map((weight) => (
+                <p
+                  key={weight}
+                  className={`text-h3 ${WEIGHT_CLASS[weight] ?? ""}`}
+                >
+                  {SPECIMEN}
+                </p>
+              ))}
+            </div>
+          </article>
         </div>
       </Section>
 

@@ -198,7 +198,10 @@ defined by grammar: Poppins is the app face, body and every heading; Space Mono 
 site, the world voice where the platform names one of its own places and the machine face
 for a room code, a password, an id, a log or an inline code span; Crimson Pro is the
 editorial voice, for quotes and pull-quotes and never for UI or body copy; Dancing Script
-is for a signature line and nothing else. The consumer loads the font files and exposes
+is for a signature line and nothing else. **Mail is set in the reader's own system sans**,
+a face the library declares and mail alone may spend — never a screen face — and **no
+webfont is ever loaded in a mail**, because the clients most readers use load none and a
+face that reaches a minority makes the mail two designs. The consumer loads the font files and exposes
 each face as a CSS variable on `<html>`, never on `<body>`, because the theme emits at
 `:root` and a variable one element lower is invisible there while the page still looks
 styled. The library owns the semantic names and the scale. The demo's layout is the
