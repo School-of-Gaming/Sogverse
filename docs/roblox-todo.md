@@ -3,8 +3,11 @@
 ## PAUSED — 2026-08-12
 
 **This effort is on hold until a lawyer has reviewed the programme copy in full.** Kyle's
-call. Nothing here is being worked, and **nothing in *Resolved — ready to apply* should be
-applied**, until the reviewed copy comes back and has been compared against the platform.
+call. Nothing here is being worked until the reviewed copy comes back and has been
+compared against the platform. The one exception so far: on 2026-09-07 and 2026-09-08
+Kyle had every entry then under *Resolved — ready to apply* applied, since each was
+already decided and the surface is still unpublished; a new resolved entry waits as
+before.
 
 *Why pausing is safe:* the whole programme surface is unpublished — noindex, absent from
 the sitemap, no nav links — so none of the copy discussed below is reaching a family. That
@@ -21,37 +24,10 @@ since some may have been answered inside the review itself.
 
 **Outstanding with Lynx when the pause began:**
 
-- The in-person section's two wording choices, and the vetting-scope question. Our reply
-  was drafted and held: Lynx asked a SOG colleague for her view first.
-- The photography wording, and whether a written release covers projects shown at the
-  closing event.
 - The media consent structure. Lynx prefers one combined box "if it's compliant (the lawyer
   will tell us)" — so the direction is chosen and the answer is not. **Kyle decided on
   2026-09-07 to build the one box anyway** and record the unanswered question; see the
   open item under *Features the policies promise*.
-
-**Findings surfaced but deliberately not opened as items,** so the pause does not start
-work. Pick these up on resume:
-
-- **The intention sentence in `robloxSafeguarding.sections.data` is fixed** (2026-09-07,
-  on `feat/gamer-photo-consent`): it now states the mechanism — a child appears in a
-  photograph only where the parent ticked the consent, the parent can change that answer
-  on the child's page in My SOG, and a Gedu asks the child first even where the parent
-  consented. **What remains open is the claim underneath it.** Lynx described Gedus
-  routinely taking photographs for internal records and safety, which in their account
-  consent does not gate; the owner's 2026-09-07 decision is the opposite — a gamer without
-  consent stays out of session photographs *entirely* — and all three documents now say
-  so. If Lynx's "internal records" photography is real and unavoidable, the documents are
-  wrong again and the difference has to be settled with them before publication.
-- **The landing page overflows a 360px viewport in `fi` (by 1px) and `fr` (by 46px).**
-  Found 2026-09-01 by a headless 360×740 sweep of the public pages; `en`, `sv` and `tlh`
-  fit. The overflowing element is a snap-carousel card (`shrink-0 snap-start w-[85%]` and
-  its descendants reaching ~598px), so the card's content is widening it past its scroll
-  container in the wider locales — locale-copy-driven, and a violation of the 360px
-  design-floor rule (no horizontal document scroll). Pre-existing on `dev`; unrelated to
-  the shared FAQ-accordion adoption, whose diff left the page's rendered DOM byte-identical
-  apart from a spacing wrapper. Layout, not copy, so it does not wait on the lawyer —
-  but the surface is unpublished, so it is not urgent either.
 
 ---
 
@@ -64,9 +40,14 @@ delete the file. The record of what was done lives in git history.
 **Sogverse is the source of truth for this copy.** The Notion documents were the draft.
 They have been accepted one-way, and the published pages are now the document of record —
 so a wording problem in one of these documents is *ours to fix*, not an upstream edit to
-request, and there is no longer an upstream to drift from. Lynx remains a party to the
-joint documents, so changing what someone is **obliged to do** still goes to them; changing
-how a sentence **reads** does not.
+request, and there is no longer an upstream to drift from. **But the programme documents
+are Lynx's to word** (Kyle, 2026-09-08): anything under the `roblox*` namespaces — the
+programme Terms, Privacy Policy and Child Safeguarding Policy — takes the wording Lynx
+gives, and we do not add paragraphs of our own to them. School of Gaming's voice lives in
+School of Gaming's own policies (`/privacy`, `/terms-and-conditions`,
+`/anti-bullying-and-discipline`), which the programme documents link to. What stays ours in
+the programme documents is the mechanics: keys, placeholders, links, translation, and
+correcting a claim about how Sogverse works.
 
 An item has three states. **Open** — still being researched, or carrying a decision
 nobody has been asked for yet; it sits in one of the topic sections below. **Escalated**
@@ -79,7 +60,8 @@ written down, but nothing has been applied to the codebase yet; it moves to
 
 **The objective is an empty open list.** Every item terminates in a decision — Kyle's,
 his team's, or Lynx's — and the work is to drive all of them there, not to pick off the
-tractable ones. Nothing is applied along the way. Once no open or escalated items are
+tractable ones. Nothing is applied along the way (the one exception is recorded in the
+pause banner at the top). Once no open or escalated items are
 left **and Kyle gives the go-ahead**, the whole of *Resolved — ready to apply* lands in
 **one pass**, translated and reviewed together rather than dribbling in item by item.
 Each resolved entry therefore has to be self-contained enough for a fresh session to
@@ -141,130 +123,6 @@ item and keep going until nothing is left that we can move on our own.
    reviewed as a piece, by people looking at it together — applying a resolution early
    spends that and cannot be given back.
 
-## Placeholder copy waiting on real content
-
-Each gap below renders a visible "still being written" marker on the page rather than
-invented copy or a silently short section, and every programme legal page carries a draft
-banner until its copy is signed off.
-
-- [ ] **Child Safeguarding Policy — "During in-person events" section.** Entirely
-      missing (was `xyz` in the draft). **The responsibility split is settled; only two
-      wording choices are open, and the section is publishable whichever way they go.**
-
-      **Escalated 2026-08-11 — Lynx × SOG Slack, awaiting Lynx.** Our reply is drafted
-      and deliberately held (see the two wording choices below): Lynx asked a SOG
-      colleague for her view first. No response as of 2026-08-12.
-
-      *Why nothing existing filled it:* every control in the "During online sessions"
-      section (Sogverse accounts, no child-to-child DMs, no outside invites, sessions not
-      recorded) is a property of our platform and none of it carries to a room, and the
-      Gedu handbook has no in-person safeguarding protocol to reuse despite SOG running
-      plenty of in-person activity. Photography is already handled by the `data` section
-      deferring to the Privacy Policy, and emergencies by the `escalation` section.
-
-      *Settled — SOG's position*, from SOG's CEO on 2026-08-11: SOG is the act, not the
-      organiser. "We are not the organizer of the event. We are the show number." Whoever
-      invites us in owns the venue, arrival and collection, supervision around the
-      session, and first aid. Write this as **who does what, never as a disclaimer** —
-      the policy's own intro promises a child is safe "whether they're joining online or
-      attending an in-person event", so a section that reads as "not our problem"
-      contradicts the document two headings above it. The second paragraph below is what
-      stops it reading as a shrug, and it costs nothing because it is all already true.
-
-      *Settled — who the counterparty is*, from Lynx on 2026-08-11: **Lynx Educate and
-      its venue partners.** Lynx also confirmed that under their contract with Roblox,
-      Lynx is ultimately on the hook for ensuring venues and facilitators comply with
-      safety and child protection requirements. Frances leads venue partnerships once
-      back in office — that gates the venue *negotiations*, not this copy, since the
-      policy states who holds the duty and the contracts implement it.
-
-      *Draft* (Lynx proposed the first sentence; the colon-clause is ours, restored):
-
-      > Our Game Educators run the session; they are not the organisers of the event.
-      > Lynx Educate and its venue partners are responsible for the venue and the
-      > arrangements around it: the space itself and its safety, how children arrive and
-      > are collected, supervision before and after the session, and first aid.
-      >
-      > Inside the session, the group is ours. The standards of behaviour, supervision
-      > and escalation set out in this policy apply in a room exactly as they do online,
-      > and the same trained, background-checked Game Educators lead both.
-
-      *Open — two wording choices, both strengthenings:* (1) Does the colon-clause stay?
-      Lynx's own version stopped at "the arrangements around it", which is the part a
-      parent cannot picture — the section's job is letting them see arrival, collection
-      and first aid are somebody's named responsibility. (2) Do we publish Lynx's
-      backstop? Something like "Lynx Educate is responsible for making sure the venues
-      and facilitators it works with meet the Programme's safety and child protection
-      requirements." It is the most reassuring sentence available and currently exists
-      only in Slack. A reply making both arguments is drafted but **deliberately held**:
-      Lynx asked a SOG colleague for her view first, and posting ahead of her would
-      pre-empt it — the backstop point especially.
-
-      *Also:* the page subtitle says the document covers "Lynx Educate and School of
-      Gaming's broader safeguarding responsibilities for the Programme, including
-      in-person events". With this section that overpromises — it covers who *holds*
-      those responsibilities. Trim it in the same pass.
-- [ ] **Whose vetting does the Safeguarding Policy actually describe?** Surfaced while
-      resolving the vetting list. "Who this covers" says the policy applies to "all Lynx
-      Educate and School of Gaming staff, facilitators …, volunteers, and any contractor",
-      but the section directly beneath it describes **only SOG's** process, and the
-      resolved copy is explicitly scoped to SOG's Gedus. If Lynx staff supervise the
-      French in-person events, either Lynx's equivalent vetting belongs alongside it or
-      the heading needs to say it is SOG-specific.
-
-      **Escalated 2026-08-11 — Lynx × SOG Slack, awaiting Lynx.** Rides on the same held
-      reply as the in-person section above; it has not been put to Lynx separately, and
-      should go in the same message when that thread unblocks.
-- [ ] **/roblox landing page copy.** Open work like everything else here, not a wait —
-      no signoff was ever separately requested for it. Signoff is the **final gate on the
-      whole surface**, taken once with the rest of the list (see the publish-flip note at
-      the top), so the landing page gets researched, proposed and resolved on the same
-      terms as every other item, and joins the same pass. Nothing about it is blocked on
-      anyone today.
-
-      *Reviewed 2026-08-12.* The copy is written and complete — this was a review, not a
-      drafting job, and every factual claim on the page has now been checked against the
-      Terms and the Privacy Policy. Three findings, all written up: the age range
-      (15–18 against the documents' 8–17), Roblox described as a partner rather than a
-      sponsor, and an unconditional publishing promise. All three are in *Resolved*.
-      Verified correct and left alone: "free", "in France", the online/in-person split,
-      and the parent sessions.
-
-      **Escalated 2026-08-12 — Lynx × SOG Slack, awaiting Lynx.** One claim could not be
-      settled here: `why.recognised` sells showcasing at the closing event as a benefit,
-      but the Privacy Policy says the registration media boxes cover "photographs and
-      footage only" and that participant-created content needs a **separate written
-      release**. So the page markets something registration does not consent to. Asked
-      whether a release is collected at the event, and whether the checkbox set should
-      cover participant-created content — raised while their lawyer still has the wording,
-      since adding a consent later means re-review. **This item closes when that answer
-      lands and `why.recognised` is either confirmed or softened.**
-
-## Copy that needs correcting
-
-Wording in the published documents that is wrong or self-contradictory. Now that Sogverse
-owns the copy, most of this is ours to fix outright; what is left here is the exception,
-where the fix would change what we commit to rather than how it reads.
-
-- [ ] **"Sessions are not recorded" wording mismatch.** The Safeguarding Policy says it
-      flatly (`robloxSafeguarding.sections.online.blocks.0.3`); the Privacy Policy says
-      "*Routine* online sessions are not recorded" in three places and contemplates
-      announced photography/filming at selected sessions and events. The two cannot both
-      be read as written.
-
-      *The directions are not equivalent.* Qualifying the safeguarding line to "Routine
-      sessions are not recorded" makes it accurate and matches the Privacy Policy — but it
-      is a **weakening of a safety promise**, and the safeguarding policy is where a parent
-      goes looking for the strong version. Tightening the Privacy Policy the other way
-      would mean committing that nothing is ever recorded, which the announced-filming
-      provision contradicts.
-
-      **Escalated 2026-08-12 — Lynx × SOG Slack, awaiting Lynx.** This one changes what
-      the documents commit us to rather than how a sentence reads, so it is Lynx's call
-      under the rule at the top, not ours. Asked which is the real commitment: routine
-      sessions only, or no recording at all. Whichever comes back, the other document is
-      the one that gets edited.
-
 ## Features the policies promise that the app does not have
 
 - [ ] **The mandatory "I am the parent/legal guardian" checkbox.** The rest of Lynx's
@@ -278,28 +136,13 @@ where the fix would change what we commit to rather than how it reads.
       programme one (every parent account already asserts the relationship implicitly by
       creating the gamer).
 
-      Lynx's set also carried a **non-consent notice** — that photographs may be taken
-      during sessions for internal records, safety and reporting regardless of the box.
-      That notice is **not** built and the documents now say the opposite: a gamer
-      without consent stays out of session photographs entirely. See the finding at the
-      top of this file; the two accounts have to be reconciled with Lynx.
 - [ ] **Facilitator↔parent messaging without exposing parent contact details.** The
-      feature behind the claim removed above. If we ever want the claim back in the
-      policies, the feature has to exist first.
+      programme documents once claimed a facilitator could reach a parent without seeing
+      their contact details; the claim was removed because no such feature exists. If we
+      ever want the claim back in the policies, the feature has to exist first.
 - [ ] **Roblox impact-research data export.** The DPA-limited dataset (Roblox username,
       Roblox User ID, programme-account email, activity attended) has to actually reach
       Roblox somehow. No process or tooling exists for producing that export.
-- [ ] **/roblox CTAs and events are deliberately inert.** Hero CTA, "For parents"
-      button, closing CTA card go nowhere; Upcoming Events renders its empty state.
-      They come alive when programme products + registration exist (the events section
-      is presentational and takes rows — wiring is a data shell fetching Roblox-topic
-      products).
-
-      **When they are wired, they must become in-app `next/link` navigations, not
-      `<a href>` full page loads.** UTM attribution (`utm_source`/`utm_medium`/
-      `utm_campaign` on a partner's link) is held in memory for the visit: a soft
-      navigation keeps it alive, a hard load destroys it silently, with no error and
-      no visible symptom — the values are simply absent at registration.
 
 ## Attribution, cookie consent, and the Lynx data export
 
@@ -341,7 +184,7 @@ for *why*, not for what is true now.
   and a hyphen (`lynx-summer-a`, `rblx-launch`). It cannot be retrofitted, because the
   value is immutable once written. It is documented in `src/lib/utm.ts` and on the
   `profiles.utm_campaign` column comment.
-- **`docs/plans/referral-landing-clicks.md` is deleted**, as the knock-on below proposed.
+- **`docs/plans/referral-landing-clicks.md` is deleted.**
 - **The wrong premise is corrected where it was recorded.** "Nothing is written to the
   device, therefore no banner" no longer appears anywhere in the code: the module header
   now says that reading the params off the landing URL is itself what engages Art 5(3),
@@ -520,49 +363,15 @@ basis, Lynx named in the privacy policy, and a data-sharing agreement — flagge
 2026-08-13 as the item "most likely to be missed", and still not started. **If counsel's
 time is rationed, spend it here rather than on the banner.**
 
-### Knock-ons when this resolves
-
-- **`docs/plans/referral-landing-clicks.md` should be deleted, not built.** Its purpose was
-  a click *denominator*, which Lynx never asked for; both its rejected-alternative
-  arguments (device storage needs a banner; UTM needs the Plus add-on we don't want) have
-  collapsed; and it concedes in its own constraints that ad platforms count clicks better
-  than we can. **Rescue one thing first:** the partner code prefix convention
-  (`lynx-summer-a`, `rblx-launch`), which cannot be retrofitted because the value is
-  immutable once written, and which survives the rename as a `utm_campaign` convention.
-  Worth settling before the first Lynx campaign link goes out.
-- **The privacy policy does disclose the attribution value, and the wording now needs to
-  match the rename.** `privacy.sections.infoWeCollect.bullets` carries a bullet in all
-  five locales — "If you came to us through a link shared by a school, club or partner
-  organisation, a short code telling us which one" — so the Art 13 transparency gap
-  claimed here on 2026-08-26 was not real; the bullet had already shipped. What is left is
-  smaller and still worth doing: the copy describes *one* short code, and there are now
-  three UTM fields, so the sentence should be re-read against what is actually stored. It
-  is also written in the register a parent reads, which is why it says "a short code"
-  rather than naming the columns — keep that. *(Done — 2026-09-03. The bullet now names
-  the campaign tag and its three parts, says it is stored once at account creation, and
-  keeps the parent's register; `en`, `fi`, `sv`, `fr`.)*
-- **`privacy.sections.cookies` answers the wrong question.** It says Vercel's analytics is
-  "cookie-free", which is true and irrelevant — Art 5(3) does not care about the mechanism.
-  *(Done — 2026-09-03. The section was rewritten as "Cookies, analytics and advertising":
-  strictly necessary cookies first, then the two purposes a visitor actually consents to,
-  each naming what runs and what it learns. "Cookie-free" is gone from the Vercel bullet
-  under `providers` too, and the answer is now collected by a consent banner rather than
-  asserted by the copy.)*
-- **The `?ref=` note under "/roblox CTAs and events are deliberately inert" goes stale** if
-  the rename happens. It is still correct today, and its underlying point (soft navigation
-  keeps the value alive, a hard load destroys it) holds for any payload name. *(Done — the
-  note now names the UTM params.)*
-
 ## Tone — where the programme documents don't sound like Sogverse
 
 The house standard (set by the existing `/privacy` and `/terms-and-conditions` copy):
 plain language a parent can read in full without feeling overwhelmed; warm second
 person ("you", "your child"); jargon translated inline the moment it appears ("in legal
 terms, we're the 'data controller'"); every collected item explained with a "— so we
-can…" reason. Tone is ours: the copy has been accepted one-way and Sogverse
-holds it now, so a rewrite that changes how a sentence reads without changing what it
-commits anyone to needs no upstream pass. Where a rewrite would alter an obligation
-rather than its wording, that part goes to Lynx.
+can…" reason. Under the rule at the top the programme documents are Lynx's to word, so
+none of the items below is a rewrite we make ourselves: each is an observation to hand
+Lynx, with the house policy as the example, for them to take or leave.
 
 **Blocked 2026-08-12 by Kyle: none of this starts until a lawyer has reviewed the copy as
 a whole.** Two reasons it has to be that order. A tone pass on text a lawyer may rewrite
@@ -636,16 +445,18 @@ lawyer is not reviewing sections that are about to be restructured.
       photo a Gedu appears in, on Lynx Educate's or Roblox's website. Neither privacy
       policy mentions Gedu images in either direction. If the answer is that it does not,
       the fix is a clause in the Gedu contract, not a line in the parent-facing policies.
-- [ ] **Free products, the FREE price, and the waitlist.** Kyle's flag, 2026-08-30, to
-      look into later: the product cards' FREE display doesn't show a waitlist, and
-      waitlist behaviour is believed to be effectively municipality-club-only today. A
-      first look says the machinery itself is capability-driven rather than type-gated —
-      the full/waitlist registration states key on the product's `waitlist_enabled`
-      column — so the things to verify are where that toggle can actually be switched on
-      (the admin product form may only expose it for municipality clubs), and whether a
-      free programme event that fills can offer a waitlist and have the browse card and
-      signup panel show it. Matters here because the programme's events are free,
-      capacity-capped, and exactly the kind of product that fills.
+- [ ] **Free products, the FREE price, and the waitlist.** Kyle's flag, 2026-08-30.
+      Looked into on 2026-09-07, and the machinery is not the gap. The admin product
+      form shows the waitlist tick for any capped product of any type, and switching a
+      product to free turns the cap on and defaults the waitlist to on — so a free,
+      capacity-capped programme event can offer a waitlist today, and its details page
+      shows the waitlist CTA once it fills. What the browse card shows is a deliberate
+      choice rather than a FREE-specific one: the seat bar is confined to municipality
+      clubs, and every other card says nothing about capacity, so a full product with a
+      waitlist looks open until it is opened (the card shell's own comment accepts this).
+      What is left is Kyle's decision: whether programme events — free, capped, and
+      exactly the kind of product that fills — should carry the seat bar or a waitlist
+      marker on the card after all.
 - [ ] **Draft banners come off** each page as its copy is confirmed final (the banner is
       the "copy pending / in draft" warning added while content is incomplete). Not an
       escalation of its own — it resolves as a consequence of the signoff above, and the
@@ -653,333 +464,6 @@ lawyer is not reviewing sections that are about to be restructured.
 
 ## Resolved — ready to apply
 
-Decided, with the exact change written out. Nothing here has been applied yet; it all
-lands in one pass. Delete an entry once its change is in.
+Decided, with the exact change written out but not yet applied; entries land together in
+one pass, and each is deleted once its change is in.
 
-### Landing page — Roblox is a sponsor, not a partner; and the publishing promise
-
-Decided 2026-08-12. Two findings from the landing page's factual sweep, both ours: they
-change how the page reads, not what anyone is obliged to do, and the legal documents
-already settle the facts.
-
-**Roblox is described wrongly, and it is the page Roblox signs off.** The Terms say
-"Roblox Corporation ("Roblox") sponsors the Programme and provides the platform your child
-will build on. **Roblox is not a party to these Terms.**" The Privacy Policy's subtitle
-says "sponsored by Roblox". The landing page's hero says "in **partnership** with Roblox"
-and the logo lockup is headed "A **partnership** between" over all three marks. The page
-already disagrees with itself — `what.paragraph1` says "supported by Roblox", which is
-fine. Aligning down is the safe direction: understating the relationship cannot offend
-Roblox, overstating it can, and a company whose lawyers wrote "is not a party" into the
-Terms is the one most likely to object to "a partnership between" above its own logo.
-Deliberately not asked of Lynx — the documents are unanimous, and if Roblox's brand team
-did approve "partnership" for promotional use, signoff is the gate that surfaces it.
-
-**The publishing promise is unconditional and the Terms' is not.** The page says
-participants "**will have published** their own original creation"; the Terms say sessions
-culminate "in publishing their own game or item" — a destination, not a guarantee for
-every child.
-
-**Final English copy:**
-
-> `roblox.hero.subtitle`
->
-> A free Roblox game design programme for teens — brought to you by Lynx Educate and
-> School of Gaming, sponsored by Roblox.
-
-> `roblox.lockup.heading`
->
-> Made possible by
-
-> `roblox.what.paragraph2`
->
-> The programme builds towards publishing their own original creation on Roblox. No
-> experience necessary — just curiosity.
-
-**To apply:**
-
-1. Change those three keys in all five locales. `tlh` carries the `roblox` namespace (it
-   is not a legal page), so it is included.
-2. `roblox.what.paragraph1` keeps "supported by Roblox" — it is accurate and claims no
-   partnership. **Do not also edit it here:** the age-range entry below rewrites that same
-   string, and two entries editing one string is how one of them gets silently reverted.
-   The page carrying both "sponsored by" and "supported by" is fine; neither is a false
-   claim.
-3. `roblox.lockup.heading` sits above the three logos, so keep the replacement short —
-   "Made possible by" covers a sponsor and two deliverers without asserting a relationship
-   between them.
-4. Delete this entry.
-
-**Checked and correct, so leave alone:** "free" (matches the Terms' cost section), "in
-France" (matches eligibility), the online/in-person split and the parent sessions (both
-match `robloxTerms.sections.whatsInvolved`).
-
-### Landing page states the wrong age range
-
-Decided 2026-08-12 by Kyle: **8–17 is correct.** The landing page says 15–18 and the legal
-documents say 8–17; the landing page is the one that is wrong.
-
-**Why this outranks a wording fix.** The range is load-bearing in both legal documents —
-it is the Terms' eligibility criterion, and the Privacy Policy leans on it for parent-led
-registration and its child-safety reasoning. The two ranges also disagree at *both* ends,
-so it is not a typo: 15–18 excludes the 8–14s the documents cover and admits 18-year-olds,
-who are adults and cannot be registered by a parent, which is the structure both documents
-assume. And it is the page families meet first, so the error costs real registrations.
-
-**Scope: one string per locale, five in total** — `roblox.what.paragraph1`. Nothing else in
-the catalog states a programme age; the four legal mentions (`robloxPrivacy.intro.blocks.0`,
-`robloxPrivacy.sections.applies.blocks.1` and `.4`, `robloxTerms.sections.eligibility.blocks.0`)
-already say 8–17 and are **not** to be touched.
-
-**Final English copy** — the paragraph is otherwise unchanged:
-
-> This programme gives 8–17 year-olds in France the chance to design, code, and publish
-> their own Roblox game — with the people who matter most cheering them on. Delivered by
-> Lynx Educate and School of Gaming, and supported by Roblox, it is a hands-on introduction
-> to game design, digital creativity, and safe online collaboration.
-
-**"Teens" stays where we speak generally** — Kyle's call. `roblox.hero.subtitle`,
-`roblox.how.step3.title` and `roblox.parents.body` keep it in every locale; they name no
-range, and a general word for the audience is not a claim about eligibility.
-
-**To apply:**
-
-1. Change `15–18` to `8–17` in `roblox.what.paragraph1` in all five locales — `tlh` carries
-   this namespace (it is not a legal page), so it is included. `fi` reads
-   `15–18-vuotiaille`, `sv` `15–18-åringar`, `tlh` `15–18 ben`; each takes the digits only.
-2. **French needs one more word changed.** It reads `aux ados de 15–18 ans` — `ados` means
-   teenagers, which was consistent with 15–18 and is not with 8–17. Use `aux jeunes de 8 à
-   17 ans`. This is the one place a general term sits directly against the explicit range in
-   the same breath, so it is the one place the general/specific split above does not hold.
-3. Delete this entry.
-
-### Programme Terms — drop "available upon request"
-
-Decided 2026-08-12. `robloxTerms.sections.safety.blocks.0` currently invites a reader to
-*request* a document the same sentence is already offering them a click away: the policy
-name is a cross-reference link to `/roblox/safeguarding`, and that page **is** the policy.
-
-**Ours, not Lynx's.** Removing the clause strengthens the commitment rather than weakening
-it — "on request" means you have to ask, a link means you do not — so it changes how the
-sentence reads, not what anyone is obliged to do.
-
-**Final English copy** — the whole block, unchanged but for the deleted trailing clause:
-
-> Every session is supervised by a trained facilitator. Our approach to behaviour and
-> safeguarding is set out in our joint <linkRobloxSafeguarding>Child Safeguarding
-> Policy</linkRobloxSafeguarding>.
-
-Nothing replaces the clause. A "you can read it here" would restate what the link already
-says, and the link is the only pointer these pages ever use.
-
-**To apply:**
-
-1. In each locale, delete the trailing clause and close the sentence after the link tag.
-   Each language phrases it differently, so it is a per-locale deletion, not one string
-   swap — `en` ", available upon request.", `fi` ", joka on saatavilla pyynnöstä.",
-   `sv` ", som finns tillgänglig på begäran.", `fr` ", disponible sur demande.". Leave the
-   `<linkRobloxSafeguarding>` tag and its label exactly as they are. `tlh` omits
-   `robloxTerms` and falls back to English.
-2. Delete this entry.
-
-**Also verified:** this was the only "upon request" anywhere in the programme copy, so
-nothing is left inconsistent with it.
-
-### External references become links — regulators only
-
-Decided 2026-08-12. SOG's CEO was asked and declined the call ("no opinion nor knowledge
-on this, do what Claude thinks is best"), so this is Claude's decision, recorded here so
-it can be overturned by a person rather than rediscovered.
-
-**Decision: the two regulator references become links. Everything else external stays
-plain text.**
-
-**Why the ban does not cover this.** The no-off-site-links rule governs *staff-authored*
-copy shown to families — a gedu typing into a field nobody reviews. Legal copy is ours,
-reviewed, translated and versioned. `/attributions` is already a legal-register page that
-links out, and its own note scopes the rule exactly that way. Its reason for not building
-on `PolicyPage` was that admitting *arbitrary* outbound URLs was a bad trade for one page;
-that does not bite here, because the allow-list holds hrefs in code and only tags in copy,
-so an external entry is a named destination, not an arbitrary one, and the existing
-tag-parity test covers it unchanged.
-
-**Why regulators and nothing else.** The external references are three kinds:
-
-- *Regulators* are **rights-enabling** — the copy grants a right to complain, and a right
-  nobody can act on is decoration. Both are broken today in different ways: the Finnish
-  one renders the bare string `tietosuoja.fi`, which looks like a link and is not, and the
-  French one names no address at all, in the document written for French families.
-- *Third-party documents* (Roblox's own policy and terms, Lynx's standard Terms) sit at
-  URLs we neither control nor watch. A dead link in a binding document is worse than a
-  name the reader can search, and linking them implies we point at the version that
-  applies, which we cannot guarantee.
-- *Legal instruments* (Standard Contractual Clauses, adequacy decisions, the Roblox–Lynx
-  DPA) are not linkable at all — the DPA is a private contract.
-
-**No wording changes anywhere.** Every edit below wraps words already on the page, so
-nothing needs retranslating and no Notion/Lynx pass is involved. Adding a visible address
-("at cnil.fr") to the French sentence *would* be a wording change to a joint document —
-deliberately not done. Link the homepages, not deep paths; both verified 200 on
-2026-08-12:
-
-- `linkTietosuoja` → `https://tietosuoja.fi`
-- `linkCnil` → `https://www.cnil.fr`
-
-**To apply:**
-
-1. `src/components/legal/policy-content.ts`: add a `POLICY_EXTERNAL_HREFS` map beside
-   `POLICY_LINK_HREFS` holding the two URLs above, and give `PolicySegment` a flag marking
-   a segment as outbound. Both maps feed the same tag-matching path, so an unknown tag
-   still unwraps to its words. **Correct the doc comment on the internal allow-list** — it
-   currently says only our own documents are in there and that a regulator's site stays
-   plain text, which this change contradicts. State the new rule and why third-party
-   documents are still excluded.
-2. `src/components/legal/policy-page.tsx`: `PolicyText` renders an outbound segment as
-   `<a target="_blank" rel="noopener noreferrer">` with the `ExternalLink` glyph and an
-   `sr-only` "opens in a new tab" label, matching `/attributions`'s `OutboundLink`
-   exactly; internal segments keep `next/link`. `PolicyPage` takes the label as a required
-   prop so a page cannot silently ship an unlabelled outbound link.
-3. Move `opensInNewTab` from the `attributions` namespace to `legal` (the shared legal
-   chrome) in `en`, `fi`, `sv`, `fr`, and update `/attributions` to read it from `legal`.
-   `tlh` carries neither namespace, so there is nothing to move there.
-4. Pass the label from all six legal pages. The three Roblox pages already pull a `legal`
-   translator for `draftNotice`; `/privacy`, `/terms-and-conditions` and
-   `/anti-bullying-and-discipline` need one added.
-5. Wrap the tags in all four locales — `tlh` omits both namespaces. In
-   `privacy.sections.contact.paragraphs.1`, wrap the existing `tietosuoja.fi` (en "at
-   tietosuoja.fi.", fi/sv "(tietosuoja.fi)", fr "sur tietosuoja.fi."). In
-   `robloxPrivacy.sections.rights.blocks.6`, wrap the existing `CNIL` (the dash before it
-   differs by locale — en/fr em dash, fi/sv en dash — leave it alone).
-6. Tests in `tests/unit/components/policy-cross-links.test.tsx`: the tag catalog and the
-   "turns each known tag into a link to its route" case both need to know a segment can be
-   outbound. Add cases pinning that an outbound segment renders an `<a>` carrying
-   `rel="noopener noreferrer"` while an internal one still renders `next/link`, and that
-   no legal string links a regulator this list did not approve.
-7. Delete this entry.
-
-**Deliberately excluded — do not add without a new decision:** links on Roblox's privacy
-policy or terms, Lynx's standard Terms and Conditions, the Standard Contractual Clauses,
-adequacy decisions, or the Roblox–Lynx DPA.
-
-### The SOG contact address in the two "If you have a concern" sections
-
-Decided 2026-08-12. Two questions, both closed.
-
-**The address is `help@sog.gg`**, decided by the team: one customer-facing address
-everywhere, replacing a three-way split (`help@` in the app chrome, `hello@` in the
-Privacy Policy, `kanslia@` in the Terms and the discipline policy) that was one address
-per document by accident. **That sweep is already applied** across all four locale files
-that carry these strings, and the address is no longer written in `messages/` at all:
-legal copy names it with a `{supportEmail}` placeholder that the policy renderer fills
-from the `SUPPORT_EMAIL` constant, which is now the single source of truth. So the copy
-below writes the placeholder, never the address — a unit test fails any legal string
-that spells one out.
-
-**We add it only where the copy is already asking for it.** Both documents render a
-visible pending notice at "If you have a concern" saying a School of Gaming contact
-address is still being confirmed; that is the gap, and it closes here. Everywhere the
-programme copy names Lynx alone and shows no pending marker, Lynx stays the only
-address — `robloxTerms.intro`'s "If anything's unclear, email support@lynxeducate.com"
-is complete as written and is **not** part of this change. (The list previously recorded
-these as `xxx@sog.gg` / `xx@sog.gg` placeholders in the copy. They are not literals in
-the message files; the pending notices are how the hole is shown.)
-
-**Final English copy.** SOG is named first because the escalation section directly above
-already says concerns are handled by School of Gaming in the first instance; Lynx's
-address is unchanged and stays alongside.
-
-> `robloxSafeguarding.sections.concern.blocks.0`
->
-> If you or your child have a safeguarding concern, please contact School of Gaming at
-> {supportEmail} or Lynx Educate at support@lynxeducate.com.
-
-> `robloxTerms.sections.concern.blocks.0`
->
-> If you’re concerned about your child’s experience in the Programme, contact School of
-> Gaming at {supportEmail} or Lynx Educate at support@lynxeducate.com — we’ll make sure
-> it reaches the right people.
-
-The apostrophes above are curly (’) and the dash is an em dash, matching the surrounding
-message strings — paste them through, don’t retype them straight.
-
-**To apply:**
-
-1. Replace those two strings in each locale file that carries the namespaces. Keep
-   `{supportEmail}` exactly as written — it is filled at render, and the
-   translation-completeness script fails a locale that drops or renames it. `tlh` omits
-   legal pages and falls back to English, so check before translating.
-2. In `src/app/(public)/roblox/safeguarding/page.tsx`, change the `concern` entry in
-   `SECTIONS` from `pending: "pendingContact"` to `pending: null`.
-3. In `src/app/(public)/roblox/terms/page.tsx`, change the `concern` entry in `SECTIONS`
-   from `pending: true` to `pending: false`.
-4. Delete the now-unused `pendingContact` key from `robloxSafeguarding` and `robloxTerms`
-   in every locale file — it is the last thing referencing it, and the completeness
-   script flags a key present in one catalog and absent from another.
-5. Delete this entry.
-
-**Still open upstream:** the Notion originals carry the `xxx@sog.gg` / `xx@sog.gg`
-placeholders these notices stand in for. Resolving them there to `help@sog.gg` keeps the
-document of record matching the published page — same class as the other entries under
-*Claims that need correcting*, and worth folding into the next Lynx/Notion pass.
-
-### Child Safeguarding Policy — vetting & training list
-
-Decided 2026-08-11 by SOG's CEO. The section "Before someone works with children" ended
-on "This includes:" with the list missing (`xxx` in the draft), so the page renders the
-`pendingSection` marker instead.
-
-**Grounding, so nobody re-litigates it:** sog.gg already commits to this publicly —
-"Our educators undergo thorough background checks and are trained by School of Gaming for
-their role" (`/lessons/…`), "trained, background-checked Gedu" (`/partnerships/schools`),
-and over-18 plus "successfully finish School of Gaming's Basic Course" (`/jobs`). The
-mechanics come from the Gedu handbook (`src/data/gedu-docs/Gedun Perusopas 2026.md`):
-framework contract walked through with SOG staff before signing, the written three-step
-warning procedure attached to it, and the criminal record extract shown but not retained.
-
-**Final English copy** — the lead-in paragraph is unchanged; the bullets are new. Plain
-prose with no markup: the policy renderer only understands cross-reference link tags, and
-none apply here.
-
-> All Game Educators (Gedus) are required to complete School of Gaming's own vetting and
-> training process before working with children on Sogverse. This includes:
->
-> - Being over 18. Every Game Educator is an adult.
-> - A background check. Every Gedu shows us a criminal record extract of the kind issued
->   for people who work with children, before they're assigned to any group — so we know
->   who is spending time with your child. We check it ourselves, and we're not allowed to
->   keep a copy, so we don't.
-> - School of Gaming's Basic Course for game educators, which every Gedu has to complete
->   successfully.
-> - Our Game Educator handbook, which sets out how we expect a Gedu to behave and makes
->   the atmosphere of the group their responsibility.
-> - A signed agreement with School of Gaming, talked through with a member of our staff
->   before it's signed. It sets out the written procedure we follow — starting with a
->   warning and a conversation — if a Gedu doesn't meet those expectations.
-
-**To apply:**
-
-1. In each locale file that carries the namespace, append the five bullets as a second
-   entry in `robloxSafeguarding.sections.vetting.blocks` — an array of strings, after the
-   existing lead-in paragraph string. Check whether `tlh` carries `robloxSafeguarding` at
-   all before translating: `tlh` omits legal pages and falls back to English for them.
-2. In `src/app/(public)/roblox/safeguarding/page.tsx`, change the `vetting` entry in
-   `SECTIONS` from `pending: "pendingSection"` to `pending: null`.
-3. Delete this entry.
-
-**Two claims deliberately excluded** — do not add them back without a new decision:
-
-- *Any re-check or ongoing monitoring.* The extract is valid six months and, per the
-  handbook, is never re-shown.
-- *That unverified educators cannot reach the platform.* In Sogverse today `verified`
-  gates only group assignment and instant-voice-room moderation, and the assignment gate
-  is UI-only — `apply_group_changes` does not re-check it.
-
-**Rejected:** a bullet for the *Nepsy-lasten ohjaaminen pelikerhossa* course — the CEO
-confirmed it is optional, mandatory only for ND-specific groups, so it fails the test
-every bullet here must pass (true of every Gedu, before any group). The conditional
-version was rejected too: ND groups are a Finnish municipality arrangement, and raising
-them in a France programme policy poses a question the document never answers.
-
-**Also rejected:** a bullet for the in-Sogverse verification step. It is one admin button
-with no recorded criteria, every pre-existing gedu was bulk-verified with `verified_by`
-NULL, and the gate it controls is UI-only — publishing it would imply a control that is
-not really there.

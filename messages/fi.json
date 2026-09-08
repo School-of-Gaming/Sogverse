@@ -2835,7 +2835,7 @@
   },
   "legal": {
     "draftNotice": "Luonnos – tämän sivun sisältöä viimeistellään edelleen, eikä sitä ole vielä hyväksytty. Yksityiskohdat voivat muuttua.",
-    "pendingSection": "Tätä osiota kirjoitetaan vielä, ja se lisätään ennen Ohjelman alkua."
+    "opensInNewTab": "(avautuu uuteen välilehteen)"
   },
   "privacy": {
     "title": "Tietosuojaseloste",
@@ -2991,7 +2991,7 @@
         "heading": "Yhteydenotto ja oikeutesi tehdä valitus",
         "paragraphs": [
           "Jos haluat käyttää mitä tahansa yllä mainituista oikeuksista tai sinulla on kysyttävää yksityisyydestäsi tai lapsesi tiedoista, lähetä viesti osoitteeseen {supportEmail}. Se on maksutonta, vastaamme aina, ja sähköposti on paras tapa tavoittaa meidät.",
-          "Jos olet tyytymätön siihen, miten olemme käsitelleet tietojasi, sinulla on oikeus tehdä valitus tietosuojavaltuutetun toimistolle (tietosuoja.fi)."
+          "Jos olet tyytymätön siihen, miten olemme käsitelleet tietojasi, sinulla on oikeus tehdä valitus tietosuojavaltuutetun toimistolle (<linkTietosuoja>tietosuoja.fi</linkTietosuoja>)."
         ]
       }
     }
@@ -3180,7 +3180,7 @@
       "eyebrow": "Mistä on kyse",
       "heading": "Opi rakentamaan Robloxissa.",
       "paragraph1": "Ohjelma antaa 13–17-vuotiaille Ranskassa mahdollisuuden suunnitella, koodata ja julkaista oma Roblox-pelinsä – ja tärkeimmät ihmiset kannustavat vierellä. Ohjelman toteuttavat Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa, ja se on käytännönläheinen johdatus pelisuunnitteluun, digitaaliseen luovuuteen ja turvalliseen verkkoyhteistyöhön.",
-      "paragraph2": "Ohjelman päätteeksi osallistujat ovat julkaisseet oman teoksensa Robloxissa. Aiempaa kokemusta ei tarvita – pelkkä kiinnostus riittää."
+      "paragraph2": "Ohjelma tähtää siihen, että osallistujat julkaisevat oman teoksensa Robloxissa. Aiempaa kokemusta ei tarvita – pelkkä kiinnostus riittää."
     },
     "why": {
       "eyebrow": "Miksi mukaan",
@@ -3317,7 +3317,7 @@
     "intro": {
       "heading": "Lyhyesti – vanhemmille ja nuorille",
       "blocks": [
-        "Ohjelma on tarkoitettu 8–17-vuotiaille nuorille Ranskassa. Ilmoittautumisen tekee vanhempi tai muu huoltaja.",
+        "Ohjelma on tarkoitettu 13–17-vuotiaille nuorille Ranskassa. Ilmoittautumisen tekee vanhempi tai muu huoltaja.",
         "Keräämme vain ne tiedot, joita tarvitsemme lapsen ilmoittamiseen, Ohjelman turvalliseen toteuttamiseen ja sen arviointiin, toimiiko Ohjelma. Näihin kuuluvat vanhemman yhteystiedot, rajattu määrä lasta koskevia tietoja, lapsen Roblox-käyttäjätunnus tai Roblox-käyttäjätunniste sekä tiedot osallistumisesta, suorittamisesta ja pelien julkaisemisesta.",
         "School of Gaming käyttää tietoja ilmoittautumis- ja oppimisalustan ylläpitämiseen. Lynx Educate käsittelee Ohjelman tietoja siinä laajuudessa kuin toteutuksen hallinnointi edellyttää. Kullakin organisaatiolla on erilainen vastuu sen mukaan, mistä toiminnasta on kyse ja mihin tarkoitukseen henkilötietoja käytetään.",
         [
@@ -3330,7 +3330,7 @@
           "Lynx Educaten vanhemmalle lähettämät sähköpostit tulevista Roblox-tapahtumista ja pelaamiseen liittyvistä aineistoista.",
           "Lapsesta otetut valokuvat ja videot tapaamisraporteissa, Lynx Educatelle ja Robloxille tehtävässä vaikuttavuusraportoinnissa sekä Lynx Educaten, School of Gamingin ja Robloxin julkisessa käytössä."
         ],
-        "Tavanomaisia verkkotapaamisia ei tallenneta. Lasta ei valokuvata eikä videokuvata, jos tarvittavaa lupaa ei ole annettu tai jos lapsi ei halua osallistua.",
+        "Verkkotapaamisia ei tallenneta. Lasta ei valokuvata eikä videokuvata, jos tarvittavaa lupaa ei ole annettu tai jos lapsi ei halua osallistua.",
         "Lynx Educate ja School of Gaming eivät myy Ohjelman ilmoittautumistietoja eivätkä käytä niitä lapsille suunnattuun mainontaan.",
         "Sinä ja lapsesi voitte pyytää saada nähdä, korjata tai poistaa tietoja, peruuttaa vapaaehtoisen suostumuksen tai vastustaa tiettyä käyttöä ottamalla yhteyttä osoitteeseen support@lynxeducate.com tai {supportEmail}."
       ]
@@ -3340,10 +3340,10 @@
         "heading": "Keitä tämä seloste koskee",
         "blocks": [
           "Tämä seloste koskee vanhempia, huoltajia ja nuoria, jotka ilmoittautuvat Luojien akatemiaan, Ranskassa järjestettävään nuorten digitaalisen luovuuden Ohjelmaan (Ohjelma).",
-          "Ohjelma on tarkoitettu 8–17-vuotiaille nuorille. Vanhemman tai huoltajan on tehtävä ilmoittautuminen ja vahvistettava, että hänellä on oikeus ilmoittaa lapsi mukaan.",
+          "Ohjelma on tarkoitettu 13–17-vuotiaille nuorille. Vanhemman tai huoltajan on tehtävä ilmoittautuminen ja vahvistettava, että hänellä on oikeus ilmoittaa lapsi mukaan.",
           "Seloste kattaa Ohjelmaan ilmoittautumisen, hallinnoinnin, oppimistapaamiset, tapahtumat, tuen, lasten turvallisuuden ja vaikuttavuuden arvioinnin. Se täydentää School of Gamingin <linkPrivacy>yleistä tietosuojaselostetta</linkPrivacy>. Jos selosteet ovat tämän Ohjelman osalta ristiriidassa, sovelletaan tätä Ohjelmaa koskevaa selostetta.",
           "Lapsen omaan Roblox-tilin, Roblox Studion tai muun Roblox-palvelun käyttöön sovelletaan Robloxin omaa tietosuojaselostetta ja käyttöehtoja.",
-          "<linkRobloxTerms>Ohjelman ehdoissa</linkRobloxTerms> määritellään 8–17 vuoden ikäraja, vanhemman tekemä ilmoittautuminen ja Ohjelmaan liittyvä tietojen jakaminen."
+          "<linkRobloxTerms>Ohjelman ehdoissa</linkRobloxTerms> määritellään 13–17 vuoden ikäraja, vanhemman tekemä ilmoittautuminen ja Ohjelmaan liittyvä tietojen jakaminen."
         ]
       },
       "responsible": {
@@ -3528,7 +3528,7 @@
       "media": {
         "heading": "Valokuvaaminen, videokuvaaminen ja julkinen käyttö",
         "blocks": [
-          "Tavanomaisia verkkotapaamisia ei tallenneta. Jos johonkin tapaamiseen tai tapahtumaan on suunniteltu valokuvausta tai videokuvausta, perheille kerrotaan siitä etukäteen.",
+          "Verkkotapaamisia ei tallenneta. Jos johonkin tapaamiseen tai tapahtumaan on suunniteltu valokuvausta tai videokuvausta, perheille kerrotaan siitä etukäteen.",
           "Mediavalintoja on yksi, ja se tehdään lapsikohtaisesti. Valinta tehdään, kun lapsi ilmoitetaan Luojien akatemian toimintaan, ja sen voi muuttaa milloin tahansa lapsen sivulla My SOG -näkymässä."
         ]
       },
@@ -3542,14 +3542,14 @@
             "Käyttää julkisesti Lynx Educaten, School of Gamingin ja Robloxin verkkosivuilla ja sosiaalisen median kanavissa."
           ],
           "Julkinen sisältö voi olla saatavilla maailmanlaajuisesti, ja muut käyttäjät voivat kopioida tai jakaa sitä ilman, että organisaatiot voivat vaikuttaa siihen.",
-          "Jos ruutua ei ole rastitettu, lapsi jätetään kokonaan pois tapaamisten valokuvista ja videomateriaalista. Mitään hänet tunnistettavaksi tekevää ei liitetä tapaamisraporttiin, jaeta Lynx Educatelle tai Robloxille eikä käytetä julkisesti."
+          "Jos ruutua ei ole rastitettu, lapsi jätetään pois tapaamisten valokuvista ja tunnistettavasta materiaalista. Mitään hänet tunnistettavaksi tekevää ei liitetä tapaamisraporttiin, jaeta Lynx Educatelle tai Robloxille eikä käytetä julkisesti. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun yksikään lapsi ei ole tunnistettavissa."
         ]
       },
       "mediaChildAgrees": {
         "heading": "Myös lapsen on suostuttava",
         "blocks": [
           "Vanhemman on hyvä keskustella mediavalinnasta lapsen kanssa ennen sen tekemistä. Selitämme valokuvaamisen tai videokuvaamisen myös lapselle hänen ikätasolleen sopivalla tavalla.",
-          "Pelikasvattaja kysyy lapselta ennen valokuvan ottamista, vaikka vanhempi olisi rastittanut ruudun, eikä lasta valokuvata tai videokuvata tarkoituksellisesti, jos hän vastustaa sitä. Lapsi, jonka vanhempi ei ole rastittanut ruutua, jätetään pois tapaamisten valokuvista ja tunnistettavasta materiaalista."
+          "Pelikasvattaja kysyy lapselta ennen valokuvan ottamista, vaikka vanhempi olisi rastittanut ruudun, eikä lasta valokuvata tai videokuvata tarkoituksellisesti, jos hän vastustaa sitä. Lapsi, jonka vanhempi ei ole rastittanut ruutua, jätetään pois tapaamisten valokuvista ja tunnistettavasta materiaalista. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun yksikään lapsi ei ole tunnistettavissa."
         ]
       },
       "mediaCaseStudies": {
@@ -3585,7 +3585,7 @@
             "Mukaan pääsevät vain ilmoittautuneet osallistujat ja taustatarkistetut pelikasvattajat.",
             "Viestintä tapahtuu ryhmässä ja valvotusti.",
             "Lasten välillä ei ole yksityisiä suoraviestejä.",
-            "Tavanomaisia tapaamisia ei tallenneta.",
+            "Tapaamisia ei tallenneta.",
             "Lynx Educate ja School of Gaming eivät käytä Ohjelman ilmoittautumistietoja lapsille suunnattuun käyttäytymiseen perustuvaan mainontaan."
           ],
           "Turvallisuushuolet käsitellään yhteisen <linkRobloxSafeguarding>lasten turvallisuuden toimintaohjeen</linkRobloxSafeguarding> mukaisesti. School of Gaming hoitaa arjen tilanteet ensisijaisesti ja siirtää vakavat asiat Lynx Educaten käsiteltäviksi. Jos lapsi voi olla välittömässä vaarassa, hätäpalveluihin otetaan yhteyttä ensin.",
@@ -3657,7 +3657,7 @@
           "Lapset voivat ottaa meihin yhteyttä suoraan omia tietojaan koskevissa asioissa. Myös vanhempi tai huoltaja voi tehdä pyynnön lapsen puolesta ottaen huomioon lapsen omat oikeudet, iän ja kehitystason.",
           "Osallistujiin ei kohdisteta pelkästään automaattiseen käsittelyyn perustuvaa päätöksentekoa, jolla on oikeusvaikutuksia tai vastaavalla tavalla merkittäviä vaikutuksia.",
           "Lähetä pyynnöt osoitteeseen support@lynxeducate.com tai {supportEmail}. Organisaatiot sovittavat vastauksensa yhteen ja välittävät Robloxia koskevat pyynnöt Robloxille tarvittaessa.",
-          "Perheillä on myös oikeus tehdä valitus Ranskan tietosuojaviranomaiselle, joka on Commission nationale de l’informatique et des libertés – CNIL."
+          "Perheillä on myös oikeus tehdä valitus Ranskan tietosuojaviranomaiselle, joka on Commission nationale de l’informatique et des libertés – <linkCnil>CNIL</linkCnil>."
         ]
       },
       "security": {
@@ -3701,9 +3701,8 @@
   },
   "robloxSafeguarding": {
     "title": "Luojien akatemian lasten turvallisuuden toimintaohje",
-    "subtitle": "Tämä toimintaohje täydentää School of Gamingin <linkDiscipline>kiusaamisen ehkäisyn ohjetta</linkDiscipline>, jota sovelletaan edelleen tapaamisten arkiseen käyttäytymiseen. Tässä asiakirjassa kuvataan Lynx Educaten ja School of Gamingin laajemmat vastuut lasten turvallisuudesta Ohjelmassa, myös lähitapahtumissa.",
+    "subtitle": "Tämä toimintaohje täydentää School of Gamingin <linkDiscipline>kiusaamisen ehkäisyn ohjetta</linkDiscipline>, jota sovelletaan edelleen tapaamisten arkiseen käyttäytymiseen. Tässä asiakirjassa kuvataan Lynx Educaten ja School of Gamingin laajemmat vastuut lasten turvallisuudesta Ohjelmassa.",
     "lastUpdated": "Tarkistettu viimeksi: {date}",
-    "pendingContact": "School of Gamingin yhteysosoitetta turvallisuushuolia varten vahvistetaan vielä, ja se lisätään tähän.",
     "intro": {
       "heading": "Sitoumuksemme",
       "blocks": [
@@ -3718,9 +3717,16 @@
         ]
       },
       "vetting": {
-        "heading": "Ennen kuin joku työskentelee lasten kanssa",
+        "heading": "Ennen kuin pelikasvattaja työskentelee lasten kanssa",
         "blocks": [
-          "Kaikkien pelikasvattajien (Gedujen) on suoritettava School of Gamingin oma taustatarkistus- ja koulutusprosessi, ennen kuin he työskentelevät lasten kanssa Sogversessa. Tähän kuuluu:"
+          "Kaikkien pelikasvattajien (Gedujen) on suoritettava School of Gamingin oma taustatarkistus- ja koulutusprosessi, ennen kuin he työskentelevät lasten kanssa Sogversessa. Tähän kuuluu:",
+          [
+            "Yli 18 vuoden ikä. Jokainen pelikasvattaja on aikuinen.",
+            "Taustatarkistus. Jokainen Gedu näyttää meille lasten kanssa työskenteleville tarkoitetun rikosrekisteriotteen, ennen kuin hänet nimetään mihinkään ryhmään – näin tiedämme, kuka viettää aikaa lapsesi kanssa. Tarkistamme otteen itse, emmekä saa ottaa siitä kopiota, joten emme ota.",
+            "School of Gamingin pelikasvattajan peruskurssi, joka jokaisen Gedun on suoritettava hyväksytysti.",
+            "Pelikasvattajan oppaamme, jossa kerrotaan, miten odotamme Gedun käyttäytyvän, ja jossa ryhmän ilmapiiri asetetaan hänen vastuulleen.",
+            "Allekirjoitettu sopimus School of Gamingin kanssa, joka käydään läpi henkilökuntamme kanssa ennen allekirjoittamista. Siinä kuvataan kirjallinen menettely – ensin varoitus ja keskustelu – jota noudatamme, jos Gedu ei täytä näitä odotuksia."
+          ]
         ]
       },
       "online": {
@@ -3736,7 +3742,9 @@
       },
       "inPerson": {
         "heading": "Lähitapahtumissa",
-        "blocks": []
+        "blocks": [
+          "Pelikasvattajamme ohjaavat tapaamisen, mutta he eivät ole tapahtuman järjestäjiä. Lynx Educate vastaa siitä, että sen käyttämät tilat soveltuvat tapaamiseen ja täyttävät Ohjelman lasten turvallisuutta koskevat vaatimukset. Käytännön järjestelyt voivat vaihdella tilan mukaan."
+        ]
       },
       "behaviour": {
         "heading": "Käyttäytyminen ja kurinpito",
@@ -3753,13 +3761,13 @@
       "concern": {
         "heading": "Jos sinulla on huoli",
         "blocks": [
-          "Jos sinulla tai lapsellasi on lasten turvallisuutta koskeva huoli, ota yhteyttä osoitteeseen support@lynxeducate.com."
+          "Jos sinulla tai lapsellasi on lasten turvallisuutta koskeva huoli, ota yhteyttä School of Gamingiin osoitteeseen {supportEmail} tai Lynx Educateen osoitteeseen support@lynxeducate.com."
         ]
       },
       "data": {
         "heading": "Tiedot ja valokuvat",
         "blocks": [
-          "Lapsi näkyy valokuvassa vain, jos hänen vanhempansa on rastittanut lasta koskevan vapaaehtoisen mediasuostumuksen ilmoittautumisen yhteydessä. Vanhempi voi muuttaa vastausta milloin tahansa lapsen sivulla My SOG -näkymässä, ja pelikasvattaja kysyy lapselta ennen valokuvan ottamista, vaikka vanhempi olisi antanut suostumuksen. <linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy> kerrotaan, mitä suostumus kattaa."
+          "Lapsi näkyy valokuvassa tunnistettavasti vain, jos hänen vanhempansa on rastittanut lasta koskevan vapaaehtoisen mediasuostumuksen ilmoittautumisen yhteydessä. Vanhempi voi muuttaa vastausta milloin tahansa lapsen sivulla My SOG -näkymässä, ja pelikasvattaja kysyy lapselta ennen valokuvan ottamista, vaikka vanhempi olisi antanut suostumuksen. <linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy> kerrotaan, mitä suostumus kattaa. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun yksikään lapsi ei ole tunnistettavissa."
         ]
       },
       "review": {
@@ -3774,7 +3782,6 @@
     "title": "Luojien akatemian käyttöehdot",
     "subtitle": "Koskee perheitä, jotka ilmoittautuvat Luojien akatemiaan Ranskassa – Lynx Educate × School of Gaming, yhteistyössä Robloxin kanssa.",
     "lastUpdated": "Päivitetty: {date}",
-    "pendingContact": "School of Gamingin yhteysosoitetta vahvistetaan vielä, ja se lisätään tähän.",
     "intro": {
       "heading": "Lyhyesti",
       "blocks": [
@@ -3795,7 +3802,7 @@
       "eligibility": {
         "heading": "Kuka voi osallistua",
         "blocks": [
-          "Ohjelma on tarkoitettu 8–17-vuotiaille nuorille Ranskassa, ja ilmoittautumisen tekee vanhempi tai laillinen huoltaja. Vanhemman tai huoltajan on tehtävä ilmoittautuminen ja annettava suostumus lapsen puolesta."
+          "Ohjelma on tarkoitettu 13–17-vuotiaille nuorille Ranskassa, ja ilmoittautumisen tekee vanhempi tai laillinen huoltaja. Vanhemman tai huoltajan on tehtävä ilmoittautuminen ja annettava suostumus lapsen puolesta."
         ]
       },
       "whatsInvolved": {
@@ -3813,7 +3820,7 @@
       "safety": {
         "heading": "Turvallisuus ja valvonta",
         "blocks": [
-          "Jokaista tapaamista valvoo koulutettu pelikasvattaja. Käyttäytymistä ja lasten turvallisuutta koskeva toimintatapamme on kuvattu yhteisessä <linkRobloxSafeguarding>lasten turvallisuuden toimintaohjeessamme</linkRobloxSafeguarding>, joka on saatavilla pyynnöstä."
+          "Jokaista tapaamista valvoo koulutettu pelikasvattaja. Käyttäytymistä ja lasten turvallisuutta koskeva toimintatapamme on kuvattu yhteisessä <linkRobloxSafeguarding>lasten turvallisuuden toimintaohjeessamme</linkRobloxSafeguarding>."
         ]
       },
       "information": {
@@ -3826,13 +3833,13 @@
       "media": {
         "heading": "Valokuvat, video ja markkinointi",
         "blocks": [
-          "Se, näkyykö lapsesi valokuvissa tai videoissa, on yksi vapaaehtoinen valinta, joka tehdään ilmoittaessasi hänet Luojien akatemian toimintaan. Voit muuttaa sitä milloin tahansa lapsesi sivulla My SOG -näkymässä. Lapsi, jolla ei ole tätä lupaa, jätetään kokonaan pois tapaamisten valokuvista."
+          "Se, näkyykö lapsesi valokuvissa tai videoissa, on yksi vapaaehtoinen valinta, joka tehdään ilmoittaessasi hänet Luojien akatemian toimintaan. Voit muuttaa sitä milloin tahansa lapsesi sivulla My SOG -näkymässä. Lapsi, jolla ei ole tätä lupaa, jätetään pois tapaamisten valokuvista ja tunnistettavasta materiaalista. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun yksikään lapsi ei ole tunnistettavissa."
         ]
       },
       "concern": {
         "heading": "Jos sinulla on huoli",
         "blocks": [
-          "Jos olet huolissasi lapsesi kokemuksesta Ohjelmassa, ota yhteyttä osoitteeseen support@lynxeducate.com – huolehdimme siitä, että viesti tavoittaa oikeat ihmiset."
+          "Jos olet huolissasi lapsesi kokemuksesta Ohjelmassa, ota yhteyttä School of Gamingiin osoitteeseen {supportEmail} tai Lynx Educateen osoitteeseen support@lynxeducate.com – huolehdimme siitä, että viesti tavoittaa oikeat ihmiset."
         ]
       },
       "changes": {
@@ -3853,8 +3860,7 @@
       "geonames": "Maiden, alueiden ja kuntien luettelo, josta valitset, missä perheesi asuu — sama luettelo, jonka avulla etsimme lähelläsi olevia kerhoja. Luettelomme perustuu GeoNamesin aineistoon, mutta se ei ole siitä suora kopio: jätämme pois paikat, joissa emme toimi, ryhmittelemme osan toisin ja nimeämme osan uudelleen siihen muotoon, jota paikalliset käyttävät.",
       "laPoste": "Ranskan postinumerot samassa luettelossa, jotta Ranskassa asuva perhe voi kirjoittaa numeron sen sijaan, että etsisi kuntaansa listalta.",
       "mcHeads": "Piirtää Minecraft-hahmon, joka näkyy liitetyn Minecraft-tilin vieressä. Palvelu ei vaadi mainintaa, joten tämä on kiitos eikä velvollisuus."
-    },
-    "opensInNewTab": "(avautuu uuteen välilehteen)"
+    }
   },
   "seatOffer": {
     "offer": {

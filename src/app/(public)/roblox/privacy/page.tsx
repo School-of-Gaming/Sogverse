@@ -26,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
 // (in messages/*.json) is edited. A date-only value, rendered through the
 // locale-aware, UTC-pinned `formatDateOnly` helper rather than hardcoded per
 // language (a plain calendar date carries no zone).
-const LAST_UPDATED = "2026-09-07";
+const LAST_UPDATED = "2026-09-08";
 
 // Section order *and* hierarchy are owned here, not in the message files, so
 // the same structure renders for every locale. Each key maps to a flat
@@ -90,6 +90,7 @@ export default async function RobloxPrivacyPage() {
       lastUpdated={t("lastUpdated", {
         date: formatDateOnly(LAST_UPDATED, locale, { dateStyle: "long" }),
       })}
+      newTabLabel={tLegal("opensInNewTab")}
       draftNotice={tLegal("draftNotice")}
       intro={{
         heading: t("intro.heading"),

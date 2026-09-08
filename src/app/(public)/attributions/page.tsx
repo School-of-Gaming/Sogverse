@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
-import { ExternalLink } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
+import { OutboundLink } from "@/components/ui/outbound-link";
 import { formatDateOnly } from "@/lib/utils";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -45,8 +44,8 @@ export async function generateMetadata(): Promise<Metadata> {
  * links are internal cross-references drawn from a deliberate allow-list; this
  * page is a list whose whole purpose is external links. Widening that allow-list
  * to admit arbitrary outbound URLs would be the wrong trade for one page, so
- * this one owns its (small) markup and matches the legal pages' visual register
- * instead.
+ * this one owns its (small) markup and renders its credits with the same shared
+ * `OutboundLink` the legal pages use, which is what keeps the register identical.
  *
  * **Names and licence identifiers are literals, not message keys.** "GeoNames",
  * "Licence Ouverte 2.0" and the rest are marks and identifiers — the same
@@ -85,7 +84,10 @@ const RESOURCES: AttributedResource[] = [
   {
     key: "laPoste",
     name: "La Poste — Base officielle des codes postaux",
-    source: { href: "https://datanova.laposte.fr", label: "datanova.laposte.fr" },
+    source: {
+      href: "https://datanova.laposte.fr",
+      label: "datanova.laposte.fr",
+    },
     licence: {
       href: "https://www.etalab.gouv.fr/licence-ouverte-open-licence",
       label: "Licence Ouverte 2.0",
@@ -99,39 +101,14 @@ const RESOURCES: AttributedResource[] = [
   },
 ];
 
-/**
- * An outbound credit link, marked as leaving the site. Every link on this page
- * opens a new tab, so both audiences have to be told: the arrow glyph for a
- * reader who can see it, and `newTabLabel` for one who cannot. The label is
- * passed in rather than read here so this stays a plain synchronous component.
- */
-function OutboundLink({
-  href,
-  newTabLabel,
-  children,
-}: {
-  href: string;
-  newTabLabel: string;
-  children: ReactNode;
-}) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 rounded-sm font-medium text-act underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
-    >
-      {children}
-      <ExternalLink className="h-3 w-3 shrink-0" aria-hidden="true" />
-      <span className="sr-only">{newTabLabel}</span>
-    </a>
-  );
-}
-
 export default async function AttributionsPage() {
   const t = await getTranslations("attributions");
+  // The new-tab label lives in the shared legal chrome rather than here: the
+  // legal pages mark their outbound regulator links with the same component,
+  // and one string is what keeps the two readings identical.
+  const tLegal = await getTranslations("legal");
   const locale = await getLocale();
-  const newTabLabel = t("opensInNewTab");
+  const newTabLabel = tLegal("opensInNewTab");
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
@@ -155,10 +132,7 @@ export default async function AttributionsPage() {
                 <span className="text-muted-foreground">
                   {t("sourceLabel")}{" "}
                 </span>
-                <OutboundLink
-                  href={resource.source.href}
-                  newTabLabel={newTabLabel}
-                >
+                <OutboundLink href={resource.source.href} label={newTabLabel}>
                   {resource.source.label}
                 </OutboundLink>
               </span>
@@ -169,7 +143,7 @@ export default async function AttributionsPage() {
                   </span>
                   <OutboundLink
                     href={resource.licence.href}
-                    newTabLabel={newTabLabel}
+                    label={newTabLabel}
                   >
                     {resource.licence.label}
                   </OutboundLink>

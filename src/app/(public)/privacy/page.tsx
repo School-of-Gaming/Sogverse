@@ -38,6 +38,7 @@ const SECTIONS = [
 
 export default async function PrivacyPage() {
   const t = await getTranslations("privacy");
+  const tLegal = await getTranslations("legal");
   const locale = await getLocale();
 
   return (
@@ -46,6 +47,7 @@ export default async function PrivacyPage() {
       lastUpdated={t("lastUpdated", {
         date: formatDateOnly(LAST_UPDATED, locale, { dateStyle: "long" }),
       })}
+      newTabLabel={tLegal("opensInNewTab")}
       intro={{
         heading: t("intro.heading"),
         blocks: paragraphsThenBullets(

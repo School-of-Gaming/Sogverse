@@ -41,7 +41,7 @@ import { ROUTES } from "@/lib/constants/routes";
  * interactivity and the server's HTML is the whole of what a reader meets.
  */
 
-/** Every tag the catalogs may use, and the page each one must open. */
+/** Every internal tag the catalogs may use, and the page each one must open. */
 const TAG_ROUTES = {
   linkPrivacy: ROUTES.privacy,
   linkTerms: ROUTES.termsAndConditions,
@@ -50,6 +50,24 @@ const TAG_ROUTES = {
   linkRobloxSafeguarding: ROUTES.robloxSafeguarding,
   linkRobloxTerms: ROUTES.robloxTerms,
 } as const;
+
+/**
+ * The outbound tags, and the site each one must open. Supervisory authorities
+ * only: a right to complain nobody can act on is decoration, which is what
+ * earns these an exception no other external reference gets. Adding a tag here
+ * is a decision about who we send families off to, so this list is the approval
+ * and the census below is what keeps the catalogs inside it.
+ */
+const EXTERNAL_TAG_HREFS = {
+  linkTietosuoja: "https://tietosuoja.fi",
+  linkCnil: "https://www.cnil.fr",
+} as const;
+
+/** Both allow-lists together — every tag any legal string may carry. */
+const ALL_TAGS = [
+  ...Object.keys(TAG_ROUTES),
+  ...Object.keys(EXTERNAL_TAG_HREFS),
+];
 
 /** The six documents: the namespace each one's copy lives in, and its own tag. */
 const LEGAL_DOCUMENTS = [
@@ -153,6 +171,23 @@ describe("policy cross-reference tags", () => {
         { text: " for more." },
       ]);
     }
+  });
+
+  it("marks an outbound tag's segment external, and leaves an internal one alone", () => {
+    for (const [tag, href] of Object.entries(EXTERNAL_TAG_HREFS)) {
+      const segments = policyTextSegments(`Complain to <${tag}>the regulator</${tag}>.`);
+      expect(segments).toEqual([
+        { text: "Complain to " },
+        { text: "the regulator", href, external: true },
+        { text: "." },
+      ]);
+    }
+    // The flag is the *only* thing that differs, and it is absent rather than
+    // false on an internal link — the renderer branches on it, so a stray
+    // `external` on a cross-reference would open one of our own pages in a tab.
+    expect(policyTextSegments("<linkPrivacy>Privacy Policy</linkPrivacy>")).toEqual([
+      { text: "Privacy Policy", href: ROUTES.privacy },
+    ]);
   });
 
   /**
@@ -263,7 +298,7 @@ describe("every catalog's legal namespaces", () => {
       for (const { name } of LEGAL_DOCUMENTS) {
         for (const [path, value] of flatStrings(catalog[name])) {
           for (const tag of tagsIn(value)) {
-            expect(Object.keys(TAG_ROUTES), `${locale}: ${name}.${path}`).toContain(tag);
+            expect(ALL_TAGS, `${locale}: ${name}.${path}`).toContain(tag);
           }
         }
       }
@@ -295,6 +330,28 @@ describe("every catalog's legal namespaces", () => {
         }
       }
     }
+  });
+
+  /**
+   * The outbound half of the allow-list is an editorial approval, not a
+   * capability: two supervisory authorities, decided one at a time, because a
+   * link in a binding document is us telling a family where to go. The census
+   * runs over the *whole* of every catalog rather than the legal namespaces
+   * alone — the splitter is what decides a tag is outbound, so asking it about
+   * every tag anywhere is the only census that cannot be sidestepped by adding
+   * the copy somewhere this file forgot to look.
+   */
+  it("links no site this list did not approve, in any catalog", () => {
+    const outbound = new Map<string, string>();
+    for (const catalog of [messages, fi, fr, sv, tlh]) {
+      for (const [, value] of flatStrings(catalog)) {
+        for (const tag of tagsIn(value)) {
+          const [segment] = policyTextSegments(`<${tag}>x</${tag}>`);
+          if (segment.external) outbound.set(tag, segment.href ?? "");
+        }
+      }
+    }
+    expect(Object.fromEntries(outbound)).toEqual(EXTERNAL_TAG_HREFS);
   });
 
   it("actually carries the cross-links the documents promise", () => {
@@ -366,12 +423,17 @@ describe("the rendered page", () => {
       title="Roblox Programme Terms & Conditions"
       subtitle="This sits alongside our <linkDiscipline>Anti-Bullying policy</linkDiscipline>."
       lastUpdated="Last updated: 31 July 2026"
+      newTabLabel="(opens in a new tab)"
       intro={{
         heading: "The short version",
         blocks: [
           {
             paragraph:
               "Explained in our <linkRobloxPrivacy>Roblox Programme Privacy Policy</linkRobloxPrivacy>.",
+          },
+          {
+            paragraph:
+              "You may complain to the <linkCnil>CNIL</linkCnil> at any time.",
           },
         ],
       }}
@@ -400,6 +462,29 @@ describe("the rendered page", () => {
     expect(html).toContain(
       `<a class="rounded-sm font-medium text-act underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act" href="${ROUTES.robloxSafeguarding}">Child Safeguarding Policy</a>, available upon request.`,
     );
+  });
+
+  /** The opening tag of the anchor in `html` that points at `href`. */
+  const openingTagFor = (href: string) => {
+    const at = html.indexOf(`href="${href}"`);
+    expect(at, `no anchor points at ${href}`).toBeGreaterThan(-1);
+    return html.slice(html.lastIndexOf("<a ", at), html.indexOf(">", at) + 1);
+  };
+
+  it("opens an outbound link in a new tab, safely and announced", () => {
+    const anchor = openingTagFor(EXTERNAL_TAG_HREFS.linkCnil);
+    expect(anchor).toContain('target="_blank"');
+    // Never `noopener` alone: the new tab must not reach back through
+    // `window.opener`, and must not carry the referrer of a page a family
+    // reads about their child's data.
+    expect(anchor).toContain('rel="noopener noreferrer"');
+    expect(html).toContain('<span class="sr-only">(opens in a new tab)</span>');
+  });
+
+  it("leaves an internal cross-reference a plain in-app link", () => {
+    const anchor = openingTagFor(ROUTES.robloxPrivacy);
+    expect(anchor).not.toContain("target=");
+    expect(anchor).not.toContain("rel=");
   });
 
   it("ships no tag markup to the reader", () => {
