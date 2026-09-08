@@ -30,14 +30,14 @@ versus spoken language, styling, authored rich text, the UI component reference 
 preview scenes. A nested file loads lazily, so the four app rules that fire *before* any
 file is opened are carried here as one-line reminders, with the full rule in the app file:
 
-- **A new API route** lives under `src/app/api/` and must be classified in the integration
-  suite's route posture registry — auth posture, how it takes its body, and the test that
-  exercises it — or the completeness checks fail the build.
+- **A new API route** lives under `src/app/api/` and is classified in the integration
+  suite's route posture registry — the Testing section below says how.
 - **Admins are trusted**, including trusted to act only through the admin UI: "an admin
-  could reach an invalid state via the raw API" is not a defect worth building for.
+  could reach an invalid state via the raw API" is not a defect worth building for, and a
+  state the UI cannot produce fails loudly at the schema rather than corrupting silently.
 - **Caller-supplied redirect targets** go through `resolveInternalPath()`, and any absolute
   URL built from an incoming request derives its origin from `getOrigin(request)` — never
-  from the raw `Host` header.
+  from `new URL(request.url).origin` or the raw `Host` header.
 - **Any auth state change** — sign-in, sign-out, account switch — ends in a full-page
   navigation that unloads the document; `router.push()` is not enough.
 

@@ -110,8 +110,8 @@ export function GamerSignInCard({
    * screen, cleared, and the button would be live again — a second click would
    * validate three empty strings and tell the parent their own username is
    * required. Holding this until `signIn` catches up is what carries the
-   * disabled state through to the redraw the click actually caused (root
-   * `CLAUDE.md`, "Loading & Disabled State").
+   * disabled state through to the redraw the click actually caused
+   * (`src/CLAUDE.md`, "Loading & Disabled State").
    */
   const [committedMode, setCommittedMode] = useState<GamerSignIn | null>(null);
 

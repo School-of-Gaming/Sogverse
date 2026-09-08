@@ -36,8 +36,8 @@ export async function POST(request: Request) {
  * Where the browser lands after the sign-out. The header's sign-out form sends
  * no body and lands on the home page; the sign-out-to-switch dialog posts
  * `next=/login`, because its whole point is signing in as someone else. The
- * value is caller-supplied, so it goes through `resolveInternalPath()` (root
- * `CLAUDE.md` § Redirects) and anything that is not an internal path — an
+ * value is caller-supplied, so it goes through `resolveInternalPath()`
+ * (`src/CLAUDE.md` § Redirects) and anything that is not an internal path — an
  * absolute URL, a protocol-relative one, a body that is not a form at all —
  * falls back to "/".
  */

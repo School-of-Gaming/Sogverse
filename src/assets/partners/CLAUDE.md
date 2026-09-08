@@ -12,7 +12,8 @@ its School of Gaming mark from there like every other surface does. A copy of ou
 kept here alongside the partner files is how one surface ends up on a stale version of
 the brand while the rest of the app has moved on — so if you need our mark, reach for
 `src/assets/brand/`, and never re-vendor it into this folder. The two constraints below
-are the partners' own and do not apply to our mark; the placement rules in `src/CLAUDE.md` do.
+are the partners' own and do not apply to our mark; the placement rules in
+`src/CLAUDE.md` do.
 
 **Vendored deliberately** rather than served from the `product-images` Supabase bucket:
 that bucket holds *content* an admin uploads at runtime and references by a DB path,

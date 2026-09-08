@@ -193,11 +193,11 @@ interface ParticipantRosterRowProps {
  * rail into a toolbar), but always present rather than revealed on hover, since
  * an affordance that only exists under the cursor doesn't exist on a
  * touchscreen. Opening it swaps the line for a small input *in place*, with
- * Cancel and Save to its right in that order — the app-wide button order (root
- * `CLAUDE.md`, "Button Order") puts the affirmative rightmost. Nothing below
- * moves when the editor opens, because the input is the same height as the line
- * it replaced — and the same is true of the check that follows the save, which
- * lands in a slot that was already holding its space.
+ * Cancel and Save to its right in that order — the app-wide button order
+ * (`src/CLAUDE.md`, "Button Order") puts the affirmative rightmost. Nothing
+ * below moves when the editor opens, because the input is the same height as
+ * the line it replaced — and the same is true of the check that follows the
+ * save, which lands in a slot that was already holding its space.
  * The one thing that does add height is the line saying a save was refused, and
  * that is a direct answer to the button the gedu just pressed rather than
  * something arriving on the data's own schedule.

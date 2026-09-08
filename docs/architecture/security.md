@@ -7,9 +7,9 @@ a new accepted risk or audit finding lands here first.
 
 ## Threat model, in brief
 
-- **Admins are trusted** — including trusted to act only through the admin UI (root
-  `CLAUDE.md`). "An admin could reach an invalid state via the raw API" is not a defect;
-  the schema's own constraints are the accepted loud-failure backstop.
+- **Admins are trusted** — including trusted to act only through the admin UI
+  (`src/CLAUDE.md`). "An admin could reach an invalid state via the raw API" is not a
+  defect; the schema's own constraints are the accepted loud-failure backstop.
 - **Everyone else is not.** Any authenticated role can hand-craft REST/RPC calls, so
   every grant, policy, and route posture is written for a hostile caller — and families
   include children, so safeguarding constraints (e.g. no links in staff-authored copy to

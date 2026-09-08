@@ -34,10 +34,9 @@ Four parts were finished, and each was a sweep rather than a rule:
   lockup, because it is the one title with room for both.
 - **The account possessive moved to the brand.** The verification mail, the password- and
   PIN-reset mails and the auth pages' descriptions were all reworded to "your School of
-  Gaming account" / "password" / "parent PIN", in all five locales. The sweep is complete,
-  so a new account or credential string follows the brand without a fresh decision.
+  Gaming account" / "password" / "parent PIN", in all five locales. The sweep is complete.
 
-## The two cuts that look like omissions
+## Three things that look like omissions
 
 **The product pages' hand-built absolute title was retired.** Product pages used to set an
 absolute `… | School of Gaming` title of their own. That existed only to step around a

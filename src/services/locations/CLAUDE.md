@@ -947,7 +947,8 @@ caption to name the level being picked. Every such caption is wrong for somebody
 viewer's *locale* says which language to render, not which country they live in or what
 that country calls this level, so a Finnish-locale parent picking a French commune gets
 told to pick a kunta. Country-specific vocabulary belongs inside the dialog, below the
-country they chose — this is the locale-vs-spoken-language distinction in `src/CLAUDE.md`, in a third dimension.
+country they chose — this is the locale-vs-spoken-language distinction in
+`src/CLAUDE.md`, in a third dimension.
 
 **Rule: the field distinguishes "nothing chosen" from "not read yet", and shows nothing
 for the second.** Settings knows the saved id before it has the row behind it, and the

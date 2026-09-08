@@ -159,10 +159,10 @@ export function GroupColumn({
                       placeholder={t("group.namePlaceholder")}
                       aria-invalid={!draft.trim() || undefined}
                     />
-                    {/* Cancel then Save — the app-wide button order (root
-                        `CLAUDE.md`, "Button Order") puts the affirmative last,
-                        so it reads rightmost. This row never stacks, so it
-                        needs no `flex-col-reverse`. */}
+                    {/* Cancel then Save — the app-wide button order
+                        (`src/CLAUDE.md`, "Button Order") puts the affirmative
+                        last, so it reads rightmost. This row never stacks, so
+                        it needs no `flex-col-reverse`. */}
                     <Button
                       type="button"
                       variant="ghost"

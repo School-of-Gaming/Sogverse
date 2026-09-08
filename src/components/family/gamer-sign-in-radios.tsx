@@ -32,11 +32,11 @@ const SIGN_IN_MODES = Constants.public.Enums.gamer_sign_in;
  * "Avec son propre e-mail" where English sets "With their own email". A row per
  * option lets both the label and its sentence wrap into the width they have.
  *
- * The sentence under each option is a mechanism, not a reassurance (root
- * `CLAUDE.md`, "Safety copy"): what a parent is told here — that a switch-only
- * child has no password of their own, that a username-mode child needs no
- * mailbox, that an email-mode child sets their own password from a link — is
- * checkable against the account that gets created.
+ * The sentence under each option is a mechanism, not a reassurance
+ * (`src/CLAUDE.md`, "Safety copy"): what a parent is told here — that a
+ * switch-only child has no password of their own, that a username-mode child
+ * needs no mailbox, that an email-mode child sets their own password from a
+ * link — is checkable against the account that gets created.
  */
 export function GamerSignInRadios({
   value,

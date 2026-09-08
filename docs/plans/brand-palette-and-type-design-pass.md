@@ -179,7 +179,8 @@ One branch off `dev` (after the companion plan merges), `feat/brand-palette-desi
    review retired, fixing call sites.
 8. **Apply the display-face decisions** to the live surfaces.
 9. **Codify**: the dark-palette decisions (which variant carries text on dark; where the
-   full palette is welcome vs amber-single-accent) written into the Styling section of `src/CLAUDE.md`; the deviations-log entries for the dark palette, Press Start 2P
+   full palette is welcome vs amber-single-accent) written into the Styling section of
+   `src/CLAUDE.md`; the deviations-log entries for the dark palette, Press Start 2P
    outcomes, and button mapping updated or cleared per the log's lifecycle. The Guidebook's
    colour-rationing rule, restated so this plan stands alone: parent/partner/billing/
    safety surfaces get amber as the single accent on a calm ground; family story surfaces
