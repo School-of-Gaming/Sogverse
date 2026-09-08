@@ -157,7 +157,12 @@ export interface VoiceRoomContextValue {
   deleteZone: (id: string) => Promise<void>;
 
   // --- media ---
+  /** The local user's mic intent — synchronous truth, never Daily's local track
+   *  state; see the "Local mic/camera state: intent, not echo" rule in
+   *  `src/components/voice/CLAUDE.md`. */
   micOn: boolean;
+  /** The local user's camera intent — synchronous truth, never Daily's local
+   *  track state; same rule as `micOn`. */
   cameraOn: boolean;
   cameraAllowed: boolean;
   toggleMic: () => void;
@@ -180,8 +185,10 @@ export interface VoiceRoomContextValue {
   audioInputs: AudioInputDevice[];
   currentAudioInputId: string | null;
   setAudioInput: (deviceId: string) => Promise<void>;
-  /** The current mic/camera acquisition failure (denied/in-use/no-device/…),
-   *  or null when media is working. Surfaced in the mic-settings popover. */
+  /** The local media *health* channel: what is wrong with the device right now
+   *  (denied / in-use / no-device / interrupted / …), or null when media is
+   *  working. Never says whether the mic or camera is on — that is `micOn` /
+   *  `cameraOn`. Surfaced in the mic-settings popover. */
   mediaError: MediaErrorCategory | null;
 
   // --- moderation ---
@@ -197,7 +204,18 @@ export interface VoiceRoomContextValue {
   join: (
     roomUrl: string,
     token: string,
-    meta?: { sessionOpensAt?: string; audioDeviceId?: string | null },
+    meta?: {
+      sessionOpensAt?: string;
+      audioDeviceId?: string | null;
+      /** Initial mic intent, seeded once at join. The token's `start_audio_off`
+       *  is minted from this same value, so the two agree by construction.
+       *  Defaults to on (scheduled rooms); instant rooms pass the lobby's pick. */
+      micOn?: boolean;
+      /** Initial camera intent, seeded once at join — the same shape as
+       *  `micOn`, against the token's `start_video_off`. Defaults to off
+       *  (scheduled rooms); instant rooms pass the lobby's pick. */
+      cameraOn?: boolean;
+    },
   ) => Promise<void>;
   leave: () => Promise<void>;
 }

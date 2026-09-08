@@ -2470,6 +2470,7 @@
       "no-device": "Ingen mikrofon eller kamera hittades. Anslut en och ladda om sidan.",
       "in-use": "Din mikrofon eller kamera används av en annan app eller flik. Stäng den och ladda om sidan.",
       "insecure": "Kamera och mikrofon kräver en säker (https) anslutning.",
+      "interrupted": "Din mikrofon har slutat skicka ljud. Kontrollera att den är ansluten och inte avstängd på din enhet, och välj den sedan igen i listan eller ladda om sidan.",
       "unknown": "Vi kunde inte komma åt din mikrofon eller kamera. Ladda om sidan och försök igen.",
       "reload": "Ladda om"
     },
