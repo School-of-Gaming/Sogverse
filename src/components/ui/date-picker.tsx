@@ -249,8 +249,16 @@ function WeekCalendar({
     value === "" ? today : value,
   );
   const [weekInput, setWeekInput] = useState("");
-  const [previewWeekStart, setPreviewWeekStart] = useState<string | null>(null);
+  // Two sources preview a week and they must not clear each other: the gutter
+  // answers a pointer that is on screen right now, while the box answers text
+  // that stays on screen after the pointer has gone elsewhere. One shared slot
+  // let a gutter `mouseleave` wipe a preview the admin had just typed, so each
+  // owns its own and the gutter — the live one — wins where both are set.
+  const [hoverWeekStart, setHoverWeekStart] = useState<string | null>(null);
+  const [typedWeekStart, setTypedWeekStart] = useState<string | null>(null);
+  const previewWeekStart = hoverWeekStart ?? typedWeekStart;
   const gridRef = useRef<HTMLDivElement>(null);
+  const gridId = useId();
   // Focus follows the roving index only when the *keyboard* moved it. A month
   // step moves the index too — the old cell is about to unmount and something
   // has to own the tab stop — and pulling focus off the nav button the admin is
@@ -338,13 +346,42 @@ function WeekCalendar({
   const bandHigh =
     value !== "" && otherEnd ? (value < otherEnd ? otherEnd : value) : null;
 
-  function submitWeek(text: string) {
-    // Resolved against the month on screen rather than its ISO year alone:
-    // typing `1` in December means the January two weeks ahead, not the one
-    // eleven months back.
+  // Resolved against the month on screen rather than its ISO year alone: typing
+  // `1` in December means the January two weeks ahead, not the one eleven
+  // months back.
+  function typedWeekMonday(text: string): string | null {
     const parsed = resolveNearestIsoWeek(text, month);
-    if (parsed === null) return;
-    onPick(weekTarget(isoWeekStart(parsed)));
+    return parsed === null ? null : isoWeekStart(parsed);
+  }
+
+  /**
+   * The box answers as it is typed, not only on Enter.
+   *
+   * A number resolves to a week, so the grid goes to the month holding that
+   * week's Monday, the row lights and the day the field would be answered with
+   * takes the target ring — the same preview the gutter draws under a pointer.
+   * The roving index moves with it so a Tab out of the box lands on the cell
+   * being previewed, but DOM focus stays in the box: the admin is still typing,
+   * and a caret yanked into the grid mid-number is the one thing this must not
+   * do. A week straddling two months is shown by its Monday's month, because
+   * that is the row's own first cell.
+   */
+  function onWeekInputChange(text: string) {
+    setWeekInput(text);
+    const monday = typedWeekMonday(text);
+    if (monday === null) {
+      setTypedWeekStart(null);
+      return;
+    }
+    goToMonth(firstOfMonth(monday));
+    setTypedWeekStart(monday);
+    setFocusDate(weekTarget(monday));
+  }
+
+  function submitWeek(text: string) {
+    const monday = typedWeekMonday(text);
+    if (monday === null) return;
+    onPick(weekTarget(monday));
   }
 
   function onDayKeyDown(e: React.KeyboardEvent, date: string) {
@@ -389,7 +426,13 @@ function WeekCalendar({
         <button
           type="button"
           aria-label={t("previousMonth")}
-          onClick={() => goToMonth(addCalendarMonths(month, -1))}
+          onClick={() => {
+            // Stepping the month is a new question: a typed preview belongs to
+            // the month it was resolved in, and leaving it set would light a
+            // row the admin is no longer looking at.
+            setTypedWeekStart(null);
+            goToMonth(addCalendarMonths(month, -1));
+          }}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
         >
           <ChevronLeft className="h-4 w-4" aria-hidden />
@@ -400,7 +443,10 @@ function WeekCalendar({
         <button
           type="button"
           aria-label={t("nextMonth")}
-          onClick={() => goToMonth(addCalendarMonths(month, 1))}
+          onClick={() => {
+            setTypedWeekStart(null);
+            goToMonth(addCalendarMonths(month, 1));
+          }}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
         >
           <ChevronRight className="h-4 w-4" aria-hidden />
@@ -416,9 +462,17 @@ function WeekCalendar({
             type="text"
             inputMode="numeric"
             aria-label={t("weekNumber")}
+            aria-controls={gridId}
             title={t("goToWeek")}
+            // The week on screen, so an empty box says what it takes rather
+            // than sitting there as an unexplained hole in the border.
+            placeholder={String(isoWeekOf(month).week)}
             value={weekInput}
-            onChange={(e) => setWeekInput(e.target.value)}
+            onChange={(e) => onWeekInputChange(e.target.value)}
+            // A preview belongs to the box only while the box is being used.
+            // The gutter's own preview is a separate slot, so a pointer that
+            // has moved onto a week number keeps lighting that row.
+            onBlur={() => setTypedWeekStart(null)}
             onKeyDown={(e) => {
               // Always swallowed: this control sits inside the product form, and
               // an un-prevented Enter in a text input submits it. An
@@ -427,7 +481,7 @@ function WeekCalendar({
               e.preventDefault();
               submitWeek(weekInput);
             }}
-            className="h-6 w-10 min-w-0 bg-transparent text-sm tabular-nums text-foreground focus-visible:outline-none"
+            className="h-6 w-12 min-w-0 bg-transparent text-sm tabular-nums text-foreground placeholder:text-muted-foreground focus-visible:outline-none"
           />
         </div>
         <button
@@ -445,6 +499,7 @@ function WeekCalendar({
           pattern expects. */}
       <div
         ref={gridRef}
+        id={gridId}
         role="grid"
         aria-label={formatDateOnly(month, locale, {
           month: "long",
@@ -452,10 +507,14 @@ function WeekCalendar({
         })}
         className="mt-2 tabular-nums"
       >
-        <div role="row" className="grid grid-cols-8">
+        {/* The gutter is furniture, not an eighth day: a narrower column, a
+            divider and a gap hold it apart from the seven, and the template is
+            stated identically on the header and on every week row so the two
+            cannot drift out of alignment. */}
+        <div role="row" className="grid grid-cols-[2rem_repeat(7,minmax(0,1fr))]">
           <div
             role="columnheader"
-            className="flex h-8 items-center justify-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+            className="mr-1 flex h-8 items-center justify-center border-r border-border text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
           >
             {c("weekColumn")}
           </div>
@@ -478,12 +537,12 @@ function WeekCalendar({
             <div
               key={monday}
               role="row"
-              className={cn(
-                "grid grid-cols-8 rounded-sm",
-                previewing && "bg-hover",
-              )}
+              className="grid grid-cols-[2rem_repeat(7,minmax(0,1fr))]"
             >
-              <div role="rowheader" className="flex">
+              <div
+                role="rowheader"
+                className="mr-1 flex border-r border-border"
+              >
                 <button
                   type="button"
                   // Off the tab ring on purpose: seven gutter buttons in one
@@ -494,19 +553,25 @@ function WeekCalendar({
                   tabIndex={-1}
                   aria-label={t("selectWeek", { week })}
                   onClick={() => onPick(target)}
-                  onMouseEnter={() => setPreviewWeekStart(monday)}
+                  onMouseEnter={() => setHoverWeekStart(monday)}
                   onMouseLeave={() =>
-                    setPreviewWeekStart((current) =>
+                    setHoverWeekStart((current) =>
                       current === monday ? null : current,
                     )
                   }
-                  onFocus={() => setPreviewWeekStart(monday)}
+                  onFocus={() => setHoverWeekStart(monday)}
                   onBlur={() =>
-                    setPreviewWeekStart((current) =>
+                    setHoverWeekStart((current) =>
                       current === monday ? null : current,
                     )
                   }
-                  className="flex h-9 w-full items-center justify-center rounded-sm text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
+                  className={cn(
+                    // The row's own hover layer is this button's hover
+                    // affordance — a second one on the numeral would say the
+                    // gutter and the row are two different targets.
+                    "flex h-9 w-full items-center justify-center rounded-sm text-[11px] tabular-nums text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act",
+                    previewing && "bg-hover",
+                  )}
                 >
                   {week}
                 </button>
@@ -519,6 +584,13 @@ function WeekCalendar({
                   bandHigh !== null &&
                   date >= bandLow &&
                   date <= bandHigh;
+                // The band is one bar, not a row of pills: interior cells drop
+                // their corners so neighbours meet, and the run is capped where
+                // it actually ends — at the term's own two dates, and at each
+                // row's Monday and Sunday, where the bar runs off the grid.
+                const capsLeft = inBand && (date === bandLow || offset === 0);
+                const capsRight = inBand && (date === bandHigh || offset === 6);
+                const isTarget = previewing && date === target;
                 return (
                   <button
                     key={date}
@@ -540,19 +612,43 @@ function WeekCalendar({
                     })}
                     aria-current={date === today ? "date" : undefined}
                     aria-selected={selected}
+                    // The one cell a typed or hovered week is offering. Named
+                    // rather than left to a class string, so a test can ask
+                    // which cell is being previewed without reading styling.
+                    data-preview-target={isTarget ? "true" : undefined}
                     onClick={() => onPick(date)}
                     onKeyDown={(e) => onDayKeyDown(e, date)}
                     className={cn(
-                      "flex h-9 items-center justify-center rounded-sm text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
+                      // Every ring here is inset. An outer ring is a box shadow
+                      // painted outside the cell, where the next cell's band
+                      // ground covers it and an act fill swallows it — which is
+                      // how three different marks ended up illegible at once.
+                      "flex h-9 items-center justify-center rounded-sm text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act",
                       date.slice(0, 7) === month.slice(0, 7)
                         ? "text-foreground"
                         : "text-muted-foreground",
-                      inBand && "bg-lifted",
+                      inBand && "rounded-none bg-lifted",
+                      capsLeft && "rounded-l-sm",
+                      capsRight && "rounded-r-sm",
                       !selected && "hover:bg-hover",
-                      date === today && "ring-1 ring-act",
-                      previewing && date === target && "ring-2 ring-act",
-                      selected && "bg-act font-medium text-act-foreground",
-                    )}
+                      // Today is a colour, not a ring: it has to survive being
+                      // banded, hovered and ringed all at once, and only ink
+                      // does.
+                      date === today && "font-semibold text-act",
+                      // Ringing the cell that is already the act fill says
+                      // nothing the fill has not said.
+                      isTarget && !selected && "ring-2 ring-inset ring-act",
+                      selected &&
+                        "rounded-sm bg-act font-medium text-act-foreground focus-visible:ring-act-foreground",
+                    ) +
+                      // The row's hover layer, drawn on the cells rather than
+                      // behind them: it is a background *image*, so it composes
+                      // over the band's ground, where on the row element it sat
+                      // underneath it and the banded cells stayed dark. Joined
+                      // on outside `cn` because tailwind-merge reads every
+                      // `bg-*` as a background colour and would drop whichever
+                      // ground it was passed beside.
+                      (previewing ? " bg-hover" : "")}
                   >
                     {Number(date.slice(8, 10))}
                   </button>

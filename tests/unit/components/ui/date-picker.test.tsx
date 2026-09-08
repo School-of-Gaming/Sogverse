@@ -37,7 +37,12 @@ const WEEK_34_WEDNESDAY = "2026-08-19";
 
 function renderPicker(
   weekPick: WeekPick,
-  overrides: { value?: string } = {},
+  overrides: {
+    value?: string;
+    today?: string;
+    rangeStart?: string;
+    rangeEnd?: string;
+  } = {},
 ) {
   const onChange = vi.fn();
   render(
@@ -50,12 +55,33 @@ function renderPicker(
         id="term-start"
         value={overrides.value ?? WEEK_34_WEDNESDAY}
         onChange={onChange}
-        today="2026-08-19"
+        today={overrides.today ?? "2026-08-19"}
         weekPick={weekPick}
+        rangeStart={overrides.rangeStart ?? null}
+        rangeEnd={overrides.rangeEnd ?? null}
       />
     </NextIntlClientProvider>,
   );
   return { onChange };
+}
+
+/** The open popover, as a node the day cells can be looked up inside. */
+function panel(): HTMLElement {
+  const found = dialog();
+  if (found === null) throw new Error("the calendar is not open");
+  return found;
+}
+
+/** One day cell, by the bare date it carries. */
+function cell(date: string): HTMLElement {
+  const found = panel().querySelector<HTMLElement>(`[data-date="${date}"]`);
+  if (found === null) throw new Error(`no cell for ${date}`);
+  return found;
+}
+
+/** Which classes an element carries, as a set to ask membership questions of. */
+function classes(el: HTMLElement): Set<string> {
+  return new Set(el.className.split(/\s+/).filter(Boolean));
 }
 
 /** The one affordance that opens the calendar. */
@@ -148,6 +174,39 @@ describe("the go-to-week box", () => {
     expect(dialog()).toBeNull();
   });
 
+  /**
+   * The box answers as it is typed. A control that sits inert until Enter reads
+   * as broken — the admin types a number, nothing on screen acknowledges it, and
+   * the only way to find out whether it was understood is to commit it.
+   */
+  it("navigates to the typed week's month and previews its target day", () => {
+    const { onChange } = renderPicker({ edge: "start", weekdays: WEDNESDAY });
+    fireEvent.click(trigger());
+
+    const box = screen.getByRole("textbox", { name: "Week number" });
+    // 2026-W40 is Mon 28 September to Sun 4 October; its Wednesday is the 30th.
+    fireEvent.change(box, { target: { value: "40" } });
+
+    expect(within(panel()).getByText("September 2026")).not.toBeNull();
+    expect(cell("2026-09-30").dataset.previewTarget).toBe("true");
+    // A preview is not an answer: nothing is selected and the field is untouched
+    // until Enter or a click says so.
+    expect(cell("2026-09-30").getAttribute("aria-selected")).toBe("false");
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("clears the preview when the text stops resolving", () => {
+    renderPicker({ edge: "start", weekdays: WEDNESDAY });
+    fireEvent.click(trigger());
+
+    const box = screen.getByRole("textbox", { name: "Week number" });
+    fireEvent.change(box, { target: { value: "40" } });
+    expect(panel().querySelector("[data-preview-target]")).not.toBeNull();
+
+    fireEvent.change(box, { target: { value: "4x" } });
+    expect(panel().querySelector("[data-preview-target]")).toBeNull();
+  });
+
   it("does nothing an unrecognised week could be mistaken for", () => {
     const { onChange } = renderPicker({ edge: "start", weekdays: WEDNESDAY });
     fireEvent.click(trigger());
@@ -219,5 +278,49 @@ describe("the grid", () => {
     for (const day of ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]) {
       expect(within(panel).getAllByText(day).length).toBeGreaterThan(0);
     }
+  });
+});
+
+/**
+ * Three marks share one cell — today, the term's band, and the day a previewed
+ * week would answer with — so what is pinned here is that each is drawn in a
+ * layer the others cannot cover. A ring is a box shadow outside the cell, which
+ * the neighbour's band ground paints over and an act fill swallows, so today is
+ * ink and every ring is inset.
+ */
+describe("how a day cell is marked", () => {
+  it("marks today with ink and no ring", () => {
+    renderPicker(
+      { edge: "start", weekdays: WEDNESDAY },
+      { value: WEEK_34_WEDNESDAY, today: "2026-08-20" },
+    );
+    fireEvent.click(trigger());
+
+    const todayCell = cell("2026-08-20");
+    expect(todayCell.getAttribute("aria-current")).toBe("date");
+    expect(classes(todayCell)).toContain("text-act");
+    expect([...classes(todayCell)].filter((c) => c.startsWith("ring-"))).toEqual(
+      [],
+    );
+  });
+
+  it("draws the band as one bar, capped only where the run ends", () => {
+    renderPicker(
+      { edge: "start", weekdays: WEDNESDAY },
+      { value: WEEK_34_WEDNESDAY, rangeEnd: "2026-08-28" },
+    );
+    fireEvent.click(trigger());
+
+    // Friday the 21st sits inside the run with a banded neighbour either side.
+    const interior = classes(cell("2026-08-21"));
+    expect(interior).toContain("bg-lifted");
+    expect(interior).toContain("rounded-none");
+    expect(interior).not.toContain("rounded-l-sm");
+    expect(interior).not.toContain("rounded-r-sm");
+
+    // Friday the 28th is the far end, so the bar stops there and is capped.
+    const end = classes(cell("2026-08-28"));
+    expect(end).toContain("bg-lifted");
+    expect(end).toContain("rounded-r-sm");
   });
 });
