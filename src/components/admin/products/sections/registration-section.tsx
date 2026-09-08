@@ -1,7 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Input } from "@/components/ui/input";
+import { formatInTimeZone } from "date-fns-tz";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Field } from "@/components/ui/field";
 import { formatTimezoneOptionLabel } from "@/lib/timezone";
 import { cn } from "@/lib/utils";
@@ -34,6 +35,10 @@ export function RegistrationSection({
   // and the chooser is pinned to "Right away" — except on municipality clubs,
   // where the scheduled ticket drop is signed off and the chooser is editable.
   const lockTiming = formLocksFor(config).registrationTiming;
+
+  // Today in the product's own zone — the drop is scheduled against the
+  // product's calendar, not the reader's.
+  const today = formatInTimeZone(now, state.timezone, "yyyy-MM-dd");
 
   return (
     <FormSection
@@ -78,16 +83,18 @@ export function RegistrationSection({
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label={t("labels.date")} htmlFor="p-opens-date">
-              <Input
+              {/* The ticket drop is a moment rather than a term: it has no
+                  other end to band against, and no schedule to snap a week
+                  pick to — an empty `weekdays` makes a week click mean its
+                  Monday, which is what "registration opens in week 34" says. */}
+              <DatePicker
                 id="p-opens-date"
-                type="date"
                 value={state.registrationOpensDate}
-                onChange={(e) =>
-                  setState({
-                    ...state,
-                    registrationOpensDate: e.target.value,
-                  })
+                onChange={(registrationOpensDate) =>
+                  setState({ ...state, registrationOpensDate })
                 }
+                today={today}
+                weekPick={{ edge: "start", weekdays: [] }}
                 required
               />
             </Field>
