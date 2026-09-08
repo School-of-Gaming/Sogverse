@@ -2,8 +2,9 @@
 
 The docs a human deliberately maintains and that don't map to one code directory. A doc
 that *does* map to one directory belongs in that directory's colocated `CLAUDE.md`;
-project-wide rules belong in the root `CLAUDE.md`; open cross-cutting work belongs in
-`TODO.md`. When a topic is in none of these, the code is the source of truth.
+app-wide rules belong in `src/CLAUDE.md` and repo-wide ones in the root `CLAUDE.md`; open
+cross-cutting work belongs in `TODO.md`. When a topic is in none of these, the code is the
+source of truth.
 
 ## Categories
 

@@ -71,7 +71,7 @@ The decision of *who* lives in one shared resolver beside the Brevo wrapper, out
 
 **Rule: a value that needs locale-aware formatting arrives already formatted.** A price, a date, a duration — the caller has the currency config, the product row and the viewer's zone; the builder has a translator and a string template. Passing the formatted string in keeps the builder a pure composer and keeps one formatting rule per value instead of two.
 
-**Rule: All user-facing copy comes from `t(...)`, never string literals.** Add the key to *every* file in `messages/` (see the root CLAUDE.md i18n rules — best-effort translation for all locales, fun takes for `tlh`, no emoji). Compose translated copy with helpers, e.g. `t("x.body", { gamerName: styledName(name) })`.
+**Rule: All user-facing copy comes from `t(...)`, never string literals.** Add the key to *every* file in `messages/` (see the `src/CLAUDE.md` i18n rules — best-effort translation for all locales, fun takes for `tlh`, no emoji). Compose translated copy with helpers, e.g. `t("x.body", { gamerName: styledName(name) })`.
 
 **Rule: Escape every value that originates from user/DB data before putting it in HTML.** Use `escapeHtml()` (or a helper that escapes internally — `styledName`/`styledProductName` already do). The one safe exception is app-generated URLs (reset/setup links): they are embedded unescaped in `href` by design, and the code comments say so. Do not extend that exception to anything a user can influence.
 

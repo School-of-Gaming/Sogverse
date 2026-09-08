@@ -7,9 +7,9 @@ a new accepted risk or audit finding lands here first.
 
 ## Threat model, in brief
 
-- **Admins are trusted** — including trusted to act only through the admin UI (root
-  `CLAUDE.md`). "An admin could reach an invalid state via the raw API" is not a defect;
-  the schema's own constraints are the accepted loud-failure backstop.
+- **Admins are trusted** — including trusted to act only through the admin UI
+  (`src/CLAUDE.md`). "An admin could reach an invalid state via the raw API" is not a
+  defect; the schema's own constraints are the accepted loud-failure backstop.
 - **Everyone else is not.** Any authenticated role can hand-craft REST/RPC calls, so
   every grant, policy, and route posture is written for a hostile caller — and families
   include children, so safeguarding constraints (e.g. no links in staff-authored copy to
@@ -23,10 +23,10 @@ Innermost first. Each layer's own doc is the source of truth; this is the index.
 |---|---|---|
 | Database | RLS on every table; guard-first RPC bodies; private-by-default grants; a verification spine that fails CI when a function or grant escapes classification | `db-authorization.md` |
 | HTTP boundary | Route posture registry: every handler classified (auth posture, body handling, named test), completeness checks fail the build | `route-boundary.md` |
-| Headers & CSP | Per-request nonce-based CSP set in the proxy, static headers in the Next config, both asserted against a served production build by the smoke suite | root `CLAUDE.md` (CSP section) |
-| Redirects & origins | `resolveInternalPath()` for caller-supplied redirect targets; `getOrigin()` for absolute URLs built from a request, emailed links above all | root `CLAUDE.md` (Redirects section) |
-| Stored content / XSS | User-authored markdown rendered only through the shared allow-list React renderer; no `dangerouslySetInnerHTML` anywhere in `src/` | root `CLAUDE.md` (Authored rich text) |
-| Auth flows | Sign-out as form POST answered with a 303 (CSRF-safe); password changes only via the emailed reset flow; role promotion server-side only — signup metadata never decides a role | root `CLAUDE.md` (Auth architecture) |
+| Headers & CSP | Per-request nonce-based CSP set in the proxy, static headers in the Next config, both asserted against a served production build by the smoke suite | `src/CLAUDE.md` (CSP section) |
+| Redirects & origins | `resolveInternalPath()` for caller-supplied redirect targets; `getOrigin()` for absolute URLs built from a request, emailed links above all | `src/CLAUDE.md` (Redirects section) |
+| Stored content / XSS | User-authored markdown rendered only through the shared allow-list React renderer; no `dangerouslySetInnerHTML` anywhere in `src/` | `src/CLAUDE.md` (Authored rich text) |
+| Auth flows | Sign-out as form POST answered with a 303 (CSRF-safe); password changes only via the emailed reset flow; role promotion server-side only — signup metadata never decides a role | `src/CLAUDE.md` (Auth architecture) |
 
 The pattern behind the first two rows — converting correctness-by-convention into
 correctness-by-mechanism with a build-failing completeness check — is codified as the

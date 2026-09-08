@@ -48,8 +48,8 @@ export const SENDER_EMAIL = "sogverse@sog.gg";
  * The brand alone, not the `School of Gaming – Sogverse` lockup: an inbox list
  * truncates the sender column hard, and a lockup cut mid-word is worse than the
  * short name that always fits. The full lockup lives in the email's own header,
- * where there is room for it — see the brand-vs-platform rule in the root
- * CLAUDE.md.
+ * where there is room for it — see the brand-vs-platform rule in
+ * `src/CLAUDE.md`.
  */
 export const SENDER_NAME = "School of Gaming";
 
@@ -89,7 +89,7 @@ export const BRAND_LOCKUP_TAIL = " – Sogverse";
  *
  * Leading with the brand puts the name a stranger already recognises in the
  * position that survives truncation, and leaves the word that needs explaining
- * second. See the brand-vs-platform rule in the root CLAUDE.md for which of the
+ * second. See the brand-vs-platform rule in `src/CLAUDE.md` for which of the
  * two names a given string should reach for in the first place; this constant
  * exists for the cases where the answer is "both".
  *

@@ -110,8 +110,8 @@ export function GamerSignInCard({
    * screen, cleared, and the button would be live again — a second click would
    * validate three empty strings and tell the parent their own username is
    * required. Holding this until `signIn` catches up is what carries the
-   * disabled state through to the redraw the click actually caused (root
-   * `CLAUDE.md`, "Loading & Disabled State").
+   * disabled state through to the redraw the click actually caused
+   * (`src/CLAUDE.md`, "Loading & Disabled State").
    */
   const [committedMode, setCommittedMode] = useState<GamerSignIn | null>(null);
 
@@ -279,7 +279,7 @@ export function GamerSignInCard({
               to the *current* mode and are unmounted the moment the draft
               differs. So there is nothing on screen the reveal could push, and
               a slot held open beside a sentence that may never arrive would be
-              the hole the layout rule warns about instead (root `CLAUDE.md`,
+              the hole the layout rule warns about instead (`src/CLAUDE.md`,
               "Layout & Scrolling"). The change is the parent's own click either
               way. */}
           {modeChanged && draft === "parent" && (

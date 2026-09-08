@@ -98,7 +98,7 @@ export default async function VerifyEmailPage({
         </div>
         {/* One button, and the way in underneath it as a quiet link (a button
             plus an escape hatch is not a two-answer pair and is not reversed —
-            root `CLAUDE.md`, "Button Order").
+            `src/CLAUDE.md`, "Button Order").
 
             The link goes *into* the button component rather than beside it, so
             the "Sent." sentence lands below both: a reveal above the link would

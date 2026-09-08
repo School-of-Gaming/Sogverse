@@ -71,7 +71,7 @@ const MIN_ANCHOR_LEAD_MS = 60 * 60 * 1000;
  *
  * Midnight, product-local — not the first session's slot time. The charge lands
  * on the same calendar day either way, and midnight needs no schedule lookup.
- * This is the one place the root `CLAUDE.md` date rules' entity-local exception
+ * This is the one place the `src/CLAUDE.md` date rules' entity-local exception
  * is taken: a bare date is normally rendered UTC-pinned, but converting one into
  * a billing instant is a question about the product's calendar, not a viewer's.
  */

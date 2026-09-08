@@ -68,7 +68,7 @@ async function readGeduContractSeed(
  * whether the verify line and button do, and whether the password-reset button
  * does — so a value that arrived a round trip after the page would insert a
  * whole field into the middle of a form somebody was already reading. Reading it
- * here is what keeps that from being a shift (root `CLAUDE.md`, "Layout &
+ * here is what keeps that from being a shift (`src/CLAUDE.md`, "Layout &
  * Scrolling"): the body paints once, in its final shape.
  *
  * **A failed or missing read answers `parent`, and that is the conservative

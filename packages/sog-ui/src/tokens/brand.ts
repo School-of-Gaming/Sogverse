@@ -198,7 +198,9 @@
  * Drawn in every construct, one value per family carried every role — fill,
  * edge, ring, mark, label ink, glyph — and a second value bought nothing but a
  * choice repeated at each call site. So the theme emits one token per family,
- * and each entry records the brand's other value rather than shipping it.
+ * and the brand's pair is not held here at all. Where the brand's own words
+ * are still needed they are in the Guidebook excerpt at
+ * `packages/sog-ui/docs/guidebook/`, until the library forgets it.
  * `contrast.ts` holds every pairing the library ships and the floor each one is
  * held to.
  *
@@ -449,11 +451,10 @@ export type BrandId = keyof typeof BRAND;
  * coloured ground. And whichever role a piece takes it carries a glyph and a
  * label, because the colour is never the only copy of the meaning.
  *
- * **The brand fixes two values per family and this theme ships one.** The pair
- * is authored for a white page. Each entry records the value that is not
- * emitted, so nothing is lost by leaving it out of the stylesheet. Three
- * families take the brand's own lighter value unchanged; Valor is the one
- * departure on a hue this theme makes, declared in its own entry.
+ * **The brand fixes two values per family and this library holds one, the
+ * accepted one.** The pair is authored for a white page. Three families take
+ * the brand's own lighter value unchanged; Valor is the one departure on a hue
+ * this theme makes, declared in its own entry.
  */
 export const YTY_FAMILIES = {
   /**
@@ -466,10 +467,7 @@ export const YTY_FAMILIES = {
    * yourself and the people around you takes another family or none, because
    * every decorative use of it costs a real one its meaning.
    *
-   * As type it appears only on the element's own name beside its mark. The
-   * brand's other value is `#F55B9A`, its white-ground half, not emitted: pink
-   * lightens with its chroma intact, so the lighter value carries every role
-   * here and the darker one carries none.
+   * As type it appears only on the element's own name beside its mark.
    */
   harmony: { name: "Harmony", hue: "Pink", hex: "#FA7FA3" },
   /**
@@ -487,8 +485,7 @@ export const YTY_FAMILIES = {
    * carry the difference everywhere the library colour-codes anything.
    *
    * As type it appears only on a label — an element's name, a state's name —
-   * beside a glyph in the same green. The brand's other value is `#1AB061`, its
-   * white-ground half, not emitted.
+   * beside a glyph in the same green.
    */
   glow: { name: "Glow", hue: "Green", hex: "#6AC66B" },
   /**
@@ -503,17 +500,16 @@ export const YTY_FAMILIES = {
    * drawn in it claims a value is being reported.
    *
    * **Declared departure: Valor's orange on the dark ground, derived from the
-   * brand's pair.** The brand authors `#FD700D` and `#FF993D`, both tuned for a
-   * white page, and on `#121212` neither is this family's colour: the darker
-   * value reads as ink that has gone dark, and the lighter one reads as a peach.
-   * The reason is the hue. **Orange loses its chroma when it is lightened, where
-   * pink, green and blue do not** — the sRGB gamut is at its widest for orange
-   * right about where the darker value already sits, so every step toward the
-   * lighter one is a step the colour cannot take without giving up saturation,
-   * which is what a peach is. The value below is OKLCH `L 0.757, C 0.168,
-   * h 55°`: nearly the lighter value's lightness, carrying the most chroma sRGB
-   * allows there, which is exactly what the lighter value gave away. Both
-   * authored values are recorded here and neither is emitted. The departure is
+   * brand's pair.** The brand's two values, both tuned for a white page, are
+   * neither of them this family's colour on `#121212`: the darker one reads as
+   * ink that has gone dark, and the lighter one reads as a peach. The reason is
+   * the hue. **Orange loses its chroma when it is lightened, where pink, green
+   * and blue do not** — the sRGB gamut is at its widest for orange right about
+   * where the darker value already sits, so every step toward the lighter one
+   * is a step the colour cannot take without giving up saturation, which is
+   * what a peach is. The value below is OKLCH `L 0.757, C 0.168, h 55°`:
+   * nearly the lighter value's lightness, carrying the most chroma sRGB allows
+   * there, which is exactly what the lighter value gave away. The departure is
    * on the value and never on the shape — Valor is one colour in every role,
    * like the other three.
    */
@@ -531,10 +527,7 @@ export const YTY_FAMILIES = {
    * family, and a second blue beside this one would be two shades of one hue
    * doing two jobs the glyph and the label already tell apart.
    *
-   * As type it appears only on a label beside a glyph in the same blue. The
-   * brand's other value is `#3A71DE`, its white-ground half, not emitted — it
-   * clears the glyph floor on these grounds and the body floor on none of them,
-   * so it could never have carried the label anyway.
+   * As type it appears only on a label beside a glyph in the same blue.
    */
   wit: { name: "Wit", hue: "Blue", hex: "#4DB3F5" },
 } as const satisfies Record<string, { name: string; hue: string; hex: Hex }>;

@@ -10,14 +10,32 @@ the demo's code as the reference for how the library is meant to be used.
 package alone, and Sogverse takes it whole.** Anything that would need a Sogverse edit to
 follow a brand change is in the wrong place.
 
+**The School of Gaming Brand Voice & Identity Guidebook is this library's input, and this
+is the only `CLAUDE.md` that names it.** It lives as an excerpt in `docs/guidebook/`, one
+file per topic behind that folder's own index, for as long as it is needed. For anything
+the library does not yet cover, the Guidebook is the source of truth, consulted while
+deciding (what else is consulted beside it is in `docs/rollout.md`). For anything the
+library covers, the library is the truth from the moment the value is in it, and the
+Guidebook is not cited beside it. **The change that covers a piece of the Guidebook
+deletes that piece from the excerpt in the same change**, whole paragraphs at a time.
+Covered means the library holds it in its own form — a token, a generated value, a
+component, a test, a lint rule — and so produces it correctly every time; the form is
+rarely the Guidebook's words, and a claim merely restated as prose is not covered. The
+excerpt then only ever holds what is not yet covered, and its size is the measure of what
+remains. When the last paragraph goes, the library has forgotten the
+Guidebook exists: it is the authority, references no external document, and Sogverse
+never needs one.
+
 ## Ownership
 
-**SOG-UI owns every UI opinion, and the two `CLAUDE.md` files never disagree.** The root
-file governs the monorepo: lint, type-check, commits, branching, testing, the database, the
-services. This file governs the UI. Sogverse follows the library one construct at a time,
-as each is adopted (`docs/adoption.md`); for a construct not yet adopted, the root file's
+**SOG-UI owns every UI opinion, and the three `CLAUDE.md` files never disagree.** The root
+file governs the monorepo: lint, type-check, commits, branching, testing, the database. The
+app file (`src/CLAUDE.md`) governs Sogverse the web app: its roles, services, auth and
+copy. This file governs the UI. Sogverse follows the library one construct at a time,
+as each is adopted (`docs/adoption.md`); for a construct not yet adopted, the app file's
 existing rule for it still governs Sogverse's code, and the adoption that retires the
-construct deletes that rule. A rule about the UI is never added to the root file.
+construct deletes that rule. A rule about the UI is never added to the root file or the
+app file.
 
 **If something has a state, SOG-UI owns the system that handles it.** A button's committing
 state across a redirect, a loading affordance, an element that must not move under a

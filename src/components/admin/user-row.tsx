@@ -269,7 +269,7 @@ export function UserRow({
  * The label is what stops `lily2015` reading as a mangled email in a column
  * where every other line is one. It is small and muted furniture rather than
  * prose — a marker an admin scans past, not a sentence — which is why it takes
- * the caps treatment the root file permits for exactly that (root `CLAUDE.md`,
+ * the caps treatment the app file permits for exactly that (`src/CLAUDE.md`,
  * "Styling": eyebrows, pills and field labels may be capped; headings may not).
  */
 function IdentityLine({

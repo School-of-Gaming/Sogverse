@@ -16,7 +16,7 @@ export const contentType = "image/png";
  * two words for those relationships are not interchangeable: School of Gaming
  * *partners with* Lynx Educate and *collaborates with* Roblox, which is why the
  * label above the lockup reads "Une collaboration entre" and nothing on this
- * card says "partenariat". See the partner-brand rules in the root CLAUDE.md.
+ * card says "partenariat". See the partner-brand rules in `src/CLAUDE.md`.
  *
  * Roblox's own constraints shape the bottom half. Their guidelines put a 20px
  * floor under the wordmark, and the floor is about the size it is *seen* at, not

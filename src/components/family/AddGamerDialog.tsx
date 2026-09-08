@@ -408,7 +408,7 @@ export function AddGamerFormCard({
             above and the footer below are the only things that survive the
             swap, and the title does not move — the footer does, because the two
             pages are not the same height. That is a panel replaced by a
-            different panel on the parent's own click (root `CLAUDE.md`,
+            different panel on the parent's own click (`src/CLAUDE.md`,
             "Layout & Scrolling"): nothing a reader was pointing at is still on
             screen somewhere else, so there is nothing to hold still, and
             reserving page one's height behind page two would leave a hole

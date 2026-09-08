@@ -411,8 +411,8 @@ export function RichTextEditor({
               className="h-8 min-w-0 flex-1 rounded-sm bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
             />
             {/* Cancel, Remove link, Apply — the three-or-more spine from the
-                root `CLAUDE.md` "Button Order" rule: negative first,
-                affirmative last, the other action between. */}
+                `src/CLAUDE.md` "Button Order" rule: negative first, affirmative
+                last, the other action between. */}
             <IconButton label={t("linkCancel")} icon={X} onClick={closeLinkRow} />
             <IconButton
               label={t("linkRemove")}

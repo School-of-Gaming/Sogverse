@@ -38,7 +38,7 @@ import { Button } from "@/components/ui/button";
  * forbid, and the page's quiet "Sign in" link was exactly what got pushed. So
  * anything that belongs under the button is handed in here and rendered above
  * the sentence, and the reveal lands in the slack at the bottom where it costs
- * nothing (root `CLAUDE.md`, "Layout & Scrolling").
+ * nothing (`src/CLAUDE.md`, "Layout & Scrolling").
  */
 export function RequestPasswordLinkButton({
   email,
@@ -50,7 +50,7 @@ export function RequestPasswordLinkButton({
 }) {
   const t = useTranslations("verifyEmail");
   const c = useTranslations("common");
-  // Live before any render after the click (root `CLAUDE.md`, "Loading &
+  // Live before any render after the click (`src/CLAUDE.md`, "Loading &
   // Disabled State"), and cleared only on the outcome the reader has to retry.
   // On a send that landed it stays set, which is the lock.
   const [committing, setCommitting] = useState(false);

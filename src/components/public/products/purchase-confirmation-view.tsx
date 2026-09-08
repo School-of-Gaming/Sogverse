@@ -269,7 +269,7 @@ export function PurchaseConfirmationView({
           </CardContent>
         </Card>
 
-        {/* The app-wide button order shape — root `CLAUDE.md`, "Button Order".
+        {/* The app-wide button order shape — `src/CLAUDE.md`, "Button Order".
             My SOG is the affirmative (last in the DOM, so right in a row and
             top in a stack); Keep browsing is the negative, on the left. */}
         <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-center">

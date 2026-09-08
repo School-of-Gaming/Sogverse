@@ -134,7 +134,7 @@ describe("once the link has gone", () => {
   /**
    * The sentence is the last thing in the block. The page's own way out is
    * handed in as a child and rendered above it, so the reveal lands in the
-   * slack at the bottom and moves nothing (root `CLAUDE.md`, "Layout &
+   * slack at the bottom and moves nothing (`src/CLAUDE.md`, "Layout &
    * Scrolling").
    */
   it("reveals the outcome below the page's escape hatch", async () => {
