@@ -190,7 +190,11 @@ subscription, its customer, its card and its billing date.
    `shopProductUrl`, `spoken_language_code` and the two delivery dates (sent as
    `""` where absent, Stripe's spelling for a removal, since a metadata update
    merges); the description is rebuilt as `{target club} — {who holds the seat}`
-   in the payer's locale, the two halves checkout composed it from.
+   in the payer's locale, the two halves checkout composed it from. Once the RPC
+   has succeeded, and before the 200, the commit sends the family the same
+   purchase confirmation a paid club signup sends — for the target club, on the
+   unchanged participation id, so its calendar invitation updates the entry they
+   already hold.
 4. **Webhook.** In the subscription-updated handler, also store the subscription's
    current item price id on the row (the checkout-completed handler already does at
    creation). Three lines; no reconciliation logic. Our own commit fires this event
@@ -262,10 +266,6 @@ subscription, its customer, its card and its billing date.
 
 - A Stripe invoice preview in the dialog, so the admin sees the proration to the cent
   before committing.
-- A confirmation mail to the family for the target club. The existing confirmation
-  template is written for a purchase (first-payment date, price paid), so this is a
-  template variant, not a call; in v1 the admin answers the support conversation they
-  are already in.
 - Switching a subscription that has not yet had its first charge (deferred billing
   anchor). Nothing has been paid, so the family loses nothing by cancelling in the
   portal and buying the other club; the paid-invoice gate refuses these.

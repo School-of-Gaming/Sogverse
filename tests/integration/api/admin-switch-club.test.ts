@@ -52,6 +52,21 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({ from: vi.fn(), rpc: vi.fn() })),
 }));
 
+// --- The confirmation mail ---
+
+/**
+ * The purchase confirmation, mocked at its own boundary rather than at Brevo's.
+ * A switched seat gets the same mail a bought one gets; what this file is about
+ * is *whether* the commit sends it, never what the sender composes — letting it
+ * run would make every assertion here depend on a product row and an `.ics`
+ * this route has no opinion about.
+ */
+const mockSendProductConfirmationEmail = vi.fn();
+vi.mock("@/services/participations/product-confirmation-email.server", () => ({
+  sendProductConfirmationEmail: (...args: unknown[]) =>
+    mockSendProductConfirmationEmail(...args),
+}));
+
 const mockGetOrCreateSubscriptionPrice = vi.fn();
 vi.mock("@/lib/stripe/participation-prices", async (importOriginal) => {
   const actual =
@@ -428,6 +443,8 @@ describe("POST …/participations/[participationId]/switch — the commit", () =
     expect(mockGetOrCreateSubscriptionPrice).not.toHaveBeenCalled();
     expect(mockSubscriptionUpdate).not.toHaveBeenCalled();
     expect(mockRpc).not.toHaveBeenCalled();
+    // Nothing moved, so there is nothing to confirm to the family.
+    expect(mockSendProductConfirmationEmail).not.toHaveBeenCalled();
   });
 
   it("moves Stripe onto the minted price, then the row, and logs the switch", async () => {
@@ -496,6 +513,26 @@ describe("POST …/participations/[participationId]/switch — the commit", () =
       stripe_price_id: TARGET_PRICE_ID,
       request_id: REQUEST_ID,
     });
+
+    // The family is told, with the purchase confirmation for the TARGET club —
+    // same copy, same calendar invitation, on the unchanged participation id so
+    // the invitation updates the entry they already hold.
+    expect(mockSendProductConfirmationEmail).toHaveBeenCalledTimes(1);
+    expect(mockSendProductConfirmationEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        productId: TARGET_PRODUCT_ID,
+        participationId: PARTICIPATION_ID,
+        customerId: CUSTOMER_ID,
+        participantId: GAMER_ID,
+        mode: "subscription",
+        currency: "eur",
+      }),
+    );
+    // Only a seat that actually moved is announced, so the send follows the RPC
+    // rather than racing it.
+    expect(
+      mockSendProductConfirmationEmail.mock.invocationCallOrder[0],
+    ).toBeGreaterThan(mockRpc.mock.invocationCallOrder[0]);
   });
 
   it("answers 500 with stripeUpdated when the database step fails, and never calls Stripe again", async () => {
@@ -516,6 +553,9 @@ describe("POST …/participations/[participationId]/switch — the commit", () =
     expect(asString(body.error)).toContain("press Switch again");
     // The rejected alternative, asserted: no compensating second call.
     expect(mockSubscriptionUpdate).toHaveBeenCalledTimes(1);
+    // The seat did not move, so the family is not told that it did — whatever
+    // Stripe is now billing.
+    expect(mockSendProductConfirmationEmail).not.toHaveBeenCalled();
   });
 
   it("answers 409 when the seat collided on the target under the write", async () => {

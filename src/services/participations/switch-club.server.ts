@@ -26,6 +26,7 @@ import type {
   SpokenLanguageCode,
 } from "@/types";
 import { adminMoveParticipationRpcResult } from "@/services/participations/participations.contracts";
+import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
 import type {
   SwitchClubCheckResponse,
   SwitchClubRefusal,
@@ -382,6 +383,37 @@ export async function commitSwitchClub({
       stripeSubscriptionId: facts.subscriptionId,
     };
   }
+
+  // The seat is on the target now, so the family is told the way a purchase
+  // tells them: the SAME confirmation mail, with the target club's schedule and
+  // its calendar invitation. No variant of its own — the parent asked for this
+  // change, so the mail they expect is the one that arrives when a club is
+  // bought, and `mode: "subscription"` is what a paid club purchase sends.
+  //
+  // The participation id is unchanged by the move, which is what makes the
+  // invitation an UPDATE of the entry the family already holds rather than a
+  // second event beside it.
+  //
+  // Awaited, and safely: the sender never throws by contract — every failure is
+  // logged and swallowed inside it — so a Brevo outage cannot turn a committed
+  // switch into a failed response. Nothing after this line can fail either.
+  await sendProductConfirmationEmail({
+    // The admin's own client, like every other send site hands over the one it
+    // already has; admin RLS covers every row the mail reads.
+    client: supabase,
+    request,
+    customerId: facts.customerId,
+    participantId: facts.participantId,
+    // The TARGET — the club the family is now on.
+    productId: targetProductId,
+    participationId,
+    mode: "subscription",
+    // Already narrowed by the check, and the same value the price was minted
+    // in, so the mail prices the club in the currency the subscription bills.
+    currency: facts.currency,
+    // Only the Stripe webhook passes one; it is the only send site that knows
+    // the first-charge instant without asking Stripe for it.
+  });
 
   return {
     kind: "ok",
