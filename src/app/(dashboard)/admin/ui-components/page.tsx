@@ -6,6 +6,7 @@ import {
   Fragment,
   useContext,
   useEffect,
+  useId,
   useRef,
   useState,
 } from "react";
@@ -4392,11 +4393,16 @@ const CHIP_PEOPLE = {
 } as const;
 
 function ParticipantChipDemo() {
+  // dnd-kit derives its accessibility ids from a module-level counter unless the
+  // context is given an explicit `id`, so the server's and the client's differ
+  // and React logs a hydration mismatch on `aria-describedby`. `useId()` is
+  // stable across both, so pin it.
+  const dndId = useId();
   return (
     // The chip is a dnd-kit draggable, so it needs the context its real parents
     // give it. There are no droppables here — picking one up and letting go puts
     // it back, which is all this demo needs.
-    <DndContext>
+    <DndContext id={dndId}>
       <ParticipantChipRow />
     </DndContext>
   );

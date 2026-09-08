@@ -161,6 +161,42 @@ describe("picking a week", () => {
 });
 
 describe("the go-to-week box", () => {
+  /**
+   * The dialog opens ready for the fastest path there is — an admin reading
+   * "vk 35–49" off a sheet of paper types the number. It also opens *visibly*
+   * ready: the opening focus was on a day cell, which Chrome draws no ring for
+   * when it was set after a pointer click, so the only focused thing on screen
+   * was invisible while the box's placeholder looked like a control waiting for
+   * a number. Digits went to the grid and were swallowed.
+   */
+  it("takes the opening focus", () => {
+    renderPicker({ edge: "start", weekdays: WEDNESDAY });
+    fireEvent.click(trigger());
+
+    expect(document.activeElement).toBe(
+      screen.getByRole("textbox", { name: "Week number" }),
+    );
+  });
+
+  it("takes the digits typed straight after opening", () => {
+    renderPicker({ edge: "start", weekdays: WEDNESDAY });
+    fireEvent.click(trigger());
+
+    const box = screen.getByRole<HTMLInputElement>("textbox", {
+      name: "Week number",
+    });
+    fireEvent.change(box, { target: { value: "37" } });
+
+    // The text is in the box the admin thought they were typing into, and the
+    // week it names is previewed. 2026-W37 is Mon 7 to Sun 13 September; its
+    // Wednesday is the 9th.
+    expect(box.value).toBe("37");
+    expect(cell("2026-09-09").dataset.previewTarget).toBe("true");
+    // Nothing pulls the caret out from under the next keystroke: the roving
+    // index moved with the preview, but DOM focus did not follow it.
+    expect(document.activeElement).toBe(box);
+  });
+
   it("selects the typed week on Enter", () => {
     const { onChange } = renderPicker({ edge: "start", weekdays: WEDNESDAY });
     fireEvent.click(trigger());

@@ -138,7 +138,14 @@ export function DatePicker({
       onBlur={onContainerBlur}
       className={cn("relative", className)}
     >
-      <div className="flex">
+      {/* The input and the week button are one field, so the ring belongs to
+          the pair rather than to whichever half has the caret: a ring around
+          the input alone drew square corners at the seam and left the button
+          outside it. The wrapper carries the pair's own radius and the ring;
+          both halves keep `focus-visible:outline-none` and draw no ring of
+          their own. Disabled still reads on each half, because the dimming is
+          the halves' own. */}
+      <div className="flex rounded-md focus-within:ring-2 focus-within:ring-act focus-within:ring-offset-2 focus-within:ring-offset-background">
         <Input
           id={id}
           type="date"
@@ -148,7 +155,7 @@ export function DatePicker({
           disabled={disabled}
           aria-label={ariaLabel}
           aria-describedby={ariaDescribedBy}
-          className="min-w-0 flex-1 rounded-r-none border-r-0 [&::-webkit-calendar-picker-indicator]:hidden"
+          className="min-w-0 flex-1 rounded-r-none border-r-0 focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-calendar-picker-indicator]:hidden"
         />
         <button
           ref={triggerRef}
@@ -159,7 +166,7 @@ export function DatePicker({
           aria-expanded={open}
           aria-controls={open ? dialogId : undefined}
           onClick={() => (open ? close() : setOpen(true))}
-          className="flex h-10 shrink-0 items-center gap-1.5 rounded-md rounded-l-none border border-border bg-background px-2.5 text-sm text-muted-foreground transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-10 shrink-0 items-center gap-1.5 rounded-md rounded-l-none border border-border bg-background px-2.5 text-sm text-muted-foreground transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
         >
           <CalendarDays className="h-4 w-4 shrink-0" aria-hidden />
           {week !== null && (
@@ -258,6 +265,7 @@ function WeekCalendar({
   const [typedWeekStart, setTypedWeekStart] = useState<string | null>(null);
   const previewWeekStart = hoverWeekStart ?? typedWeekStart;
   const gridRef = useRef<HTMLDivElement>(null);
+  const weekInputRef = useRef<HTMLInputElement>(null);
   const gridId = useId();
   // Focus follows the roving index only when the *keyboard* moved it. A month
   // step moves the index too — the old cell is about to unmount and something
@@ -277,11 +285,16 @@ function WeekCalendar({
   }
 
   useEffect(() => {
-    gridRef.current
-      ?.querySelector<HTMLButtonElement>('[data-day-cell="true"][tabindex="0"]')
-      ?.focus();
-    // The opening focus, once: the dialog takes focus when it appears, and the
-    // roving effect below owns every move after that.
+    weekInputRef.current?.focus();
+    // The opening focus, once, and it goes to the box rather than to a day.
+    // Two reasons. The typed path is the fastest one for an admin working from
+    // "vk 35–49" on paper, so it is the one the dialog should open ready for.
+    // And the focus a mount effect sets follows a pointer click, which Chrome
+    // does not draw a `:focus-visible` ring for — so a focused day cell was
+    // invisible while the box's placeholder looked like a control waiting for a
+    // number, and every digit typed went to the grid and was swallowed. The
+    // roving tab stop stays on the grid, so Tab reaches Today and then the
+    // active cell, and the arrow keys work from there.
   }, []);
 
   useEffect(() => {
@@ -459,6 +472,7 @@ function WeekCalendar({
             {c("weekColumn")}
           </span>
           <input
+            ref={weekInputRef}
             type="text"
             inputMode="numeric"
             aria-label={t("weekNumber")}
@@ -507,14 +521,19 @@ function WeekCalendar({
         })}
         className="mt-2 tabular-nums"
       >
-        {/* The gutter is furniture, not an eighth day: a narrower column, a
-            divider and a gap hold it apart from the seven, and the template is
-            stated identically on the header and on every week row so the two
-            cannot drift out of alignment. */}
+        {/* The gutter is a margin, not an eighth day — the way a Finnish wall
+            calendar draws it: a narrow band running the full height of the
+            rows, sunk to the page ground a step below the popover's card, with
+            a small muted numeral centred on each row. The ground change is the
+            separation, so there is no divider; only the strip's own outer
+            corners are rounded, and no cell inside it carries a radius, or the
+            band would read as a stack of tiles. The gap before Monday stays.
+            The column template is stated identically on the header and on every
+            week row so the two cannot drift out of alignment. */}
         <div role="row" className="grid grid-cols-[2rem_repeat(7,minmax(0,1fr))]">
           <div
             role="columnheader"
-            className="mr-1 flex h-8 items-center justify-center border-r border-border text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+            className="mr-1 flex h-8 items-center justify-center rounded-tl-sm bg-background text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
           >
             {c("weekColumn")}
           </div>
@@ -529,10 +548,12 @@ function WeekCalendar({
           ))}
         </div>
 
-        {weeks.map((monday) => {
+        {weeks.map((monday, row) => {
           const { week } = isoWeekOf(monday);
           const previewing = previewWeekStart === monday;
           const target = weekTarget(monday);
+          // The foot of the strip, and the only row with a corner to round.
+          const lastRow = row === weeks.length - 1;
           return (
             <div
               key={monday}
@@ -541,7 +562,10 @@ function WeekCalendar({
             >
               <div
                 role="rowheader"
-                className="mr-1 flex border-r border-border"
+                className={cn(
+                  "mr-1 flex bg-background",
+                  lastRow && "rounded-bl-sm",
+                )}
               >
                 <button
                   type="button"
@@ -568,8 +592,12 @@ function WeekCalendar({
                   className={cn(
                     // The row's own hover layer is this button's hover
                     // affordance — a second one on the numeral would say the
-                    // gutter and the row are two different targets.
-                    "flex h-9 w-full items-center justify-center rounded-sm text-[11px] tabular-nums text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act",
+                    // gutter and the row are two different targets. It fills
+                    // the strip's whole cell and takes no radius of its own,
+                    // except at the foot, where it has to follow the corner the
+                    // strip is rounded with.
+                    "flex h-9 w-full items-center justify-center text-[11px] tabular-nums text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act",
+                    lastRow && "rounded-bl-sm",
                     previewing && "bg-hover",
                   )}
                 >
