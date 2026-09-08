@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   Calendar,
+  CalendarCheck,
   Camera,
   Check,
   Clock,
@@ -33,13 +34,17 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { municipalityOf } from "@/lib/locations/embedded-chain";
 import { municipalitySlug } from "@/lib/locations/municipality-slug";
-import { cn, formatCurrencyFromCents, formatDate } from "@/lib/utils";
+import { cn, formatCurrencyFromCents, formatDate, formatDateOnly } from "@/lib/utils";
+import { firstSessionDate, lastSessionDate } from "@/lib/session-dates";
 import { formatTimezoneOptionLabel } from "@/lib/timezone";
 import { ProductBanner } from "@/components/ui/product-banner";
 import { productImageSrc } from "@/lib/images/product-image-url";
 import { productAudience } from "@/lib/products/product-audience";
 import { ProductOverviewCard } from "@/components/public/products/product-overview-card";
-import { formatClubTermDates } from "@/lib/products/format-product-term-dates";
+import {
+  formatAdminTermWeeks,
+  formatClubTermDates,
+} from "@/lib/products/format-product-term-dates";
 import { productTagLabelKey } from "@/components/public/products/product-tag";
 import { countryDisplayName } from "@/components/public/products/region-lock/region-gate";
 import {
@@ -287,6 +292,21 @@ function HeaderCard({
 // dates, capacity/waitlist, registration window, billing + prices and topic.
 // One scan answers "is this product set up the way I expect?".
 // ──────────────────────────────────────────────────────────────────────
+
+/**
+ * `Wednesday, August 19, 2026` in en; `keskiviikko 19. elokuuta 2026` in fi —
+ * the weekday spelled out in full and the rest left to `Intl`, because the
+ * whole point of the first/last session facts is *which day of the week* a
+ * family turns up, and an abbreviation is the one part of the answer a reader
+ * has to decode. UTC-pinned like every bare calendar date on this page.
+ */
+const SESSION_DATE_FORMAT: Intl.DateTimeFormatOptions = {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+};
+
 function OperationalFacts({
   product,
   topicName,
@@ -371,6 +391,44 @@ function OperationalFacts({
   // card instead, so the helper returns null for them.
   const termDates = formatClubTermDates(product, uiLocale);
 
+  // `wk 34–50 · 17 weeks`, appended to the term range above — see
+  // `formatAdminTermWeeks` for why it is not part of the range itself.
+  const termWeeks =
+    termDates === null ? null : formatAdminTermWeeks(product, c);
+
+  /**
+   * The first and last days a family actually turns up.
+   *
+   * `start_date`/`end_date` and the weekly pattern are stored independently, so
+   * an admin could save a Monday start for a Wednesday club and every surface
+   * reading the column told families it "starts Monday" when the first session
+   * was two days later. These two facts are the audit: the derived dates are
+   * readable on the details page, so checking what a family is told costs a
+   * glance rather than opening the edit form (a write surface) to infer it.
+   *
+   * Events are excluded because their single date *is* the session — snapping
+   * it to a weekday pattern would restate the term dates fact one row down.
+   */
+  const sessionWeekdays = product.schedule_slots.map((slot) => slot.weekday);
+  const showSessionDates =
+    product.product_type !== "event" && sessionWeekdays.length > 0;
+  const firstSession =
+    showSessionDates && product.start_date
+      ? formatDateOnly(
+          firstSessionDate(product.start_date, sessionWeekdays),
+          uiLocale,
+          SESSION_DATE_FORMAT,
+        )
+      : null;
+  const lastSession =
+    showSessionDates && product.end_date
+      ? formatDateOnly(
+          lastSessionDate(product.end_date, sessionWeekdays),
+          uiLocale,
+          SESSION_DATE_FORMAT,
+        )
+      : null;
+
   // Where a family meets this product. `null` only for a municipality club with
   // no location at all — there is no school page to point at, and a `/shop`
   // link would name a listing that deliberately excludes the type.
@@ -419,6 +477,31 @@ function OperationalFacts({
         {termDates && (
           <Fact icon={Calendar} label={t("detailsPage.fields.termDates")}>
             {termDates}
+            {termWeeks && (
+              <span className="tabular-nums text-muted-foreground">
+                {` · ${termWeeks}`}
+              </span>
+            )}
+          </Fact>
+        )}
+
+        {/* Directly after the term range: the same span, read as the days a
+            family is actually expected. */}
+        {firstSession && (
+          <Fact
+            icon={CalendarCheck}
+            label={t("detailsPage.fields.firstSession")}
+          >
+            {firstSession}
+          </Fact>
+        )}
+
+        {lastSession && (
+          <Fact
+            icon={CalendarCheck}
+            label={t("detailsPage.fields.lastSession")}
+          >
+            {lastSession}
           </Fact>
         )}
 

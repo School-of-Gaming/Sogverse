@@ -1,14 +1,14 @@
 /**
- * Calendar arithmetic for the admin dashboard's schedule views.
+ * Bare calendar-date arithmetic for the whole repo.
  *
- * Every date these views handle is a **bare calendar date** — a term's first
+ * Every date this module handles is a **bare calendar date** — a term's first
  * day, a camp's last day, the Monday a week starts on — so all of it is
  * UTC-pinned end to end: parsed at UTC midnight, stepped with `Date.UTC`, read
  * back through `getUTC*`. UTC has no DST, so day arithmetic there is exact, and
  * a bare date re-anchored to anybody's zone would land a day out for half the
- * planet. Nothing in this module ever sees a clock face; the one time-of-day the
- * grid renders (a chip's `17:00`) is carried through as the string the schedule
- * slot stores.
+ * planet. Nothing in this module ever sees a clock face; the one time-of-day a
+ * schedule grid renders (a chip's `17:00`) is carried through as the string the
+ * schedule slot stores.
  *
  * **It names no day and no month.** A weekday heading and a month divider are
  * date *formatting*, so they come out of `Intl` in the reader's locale at the

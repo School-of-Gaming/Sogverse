@@ -102,7 +102,21 @@
     "roleGamer": "Gamer",
     "roleGedu": "Gedu",
     "gedus": "Gedus",
-    "next": "Next"
+    "next": "Next",
+    "week": "wk {week}",
+    "weekRange": "wk {from}–{to}",
+    "weekRangeAcrossYears": "wk {from}/{fromYear} – wk {to}/{toYear}",
+    "weekCount": "{count, plural, one {# week} other {# weeks}}",
+    "weekColumn": "wk"
+  },
+  "datePicker": {
+    "openCalendar": "Open calendar",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "weekNumber": "Week number",
+    "goToWeek": "Go to week",
+    "selectWeek": "Select week {week}",
+    "today": "Today"
   },
   "about": {
     "pageTitle": "About us",
@@ -416,6 +430,8 @@
           "materialUrl": "Lesson material",
           "startDate": "Start date",
           "endDate": "End date",
+          "firstSession": "First session",
+          "lastSession": "Last session",
           "signupThreshold": "Signup threshold",
           "termDates": "Term dates",
           "billingMode": "Billing",
@@ -656,7 +672,9 @@
         "seatHintNoWaitlist": "When full, new signups are refused.",
         "visibleHint": "Unchecked, the product appears on no public page — but anyone with the direct link can still open it and buy a place. That is what makes it right for unannounced, invite-only or campaign products. It is not a way to stop sign-ups, and it never affects parents and gamers already taking part.",
         "seatLimitHint": "Cap the number of participants, or run with no limit.",
-        "startDateBillingAnchor": "The date the club starts, and the date families are first charged. Changing it later does not move the first charge for anyone who has already signed up — correct those subscriptions in Stripe."
+        "startDateBillingAnchor": "The date the club starts, and the date families are first charged. Changing it later does not move the first charge for anyone who has already signed up — correct those subscriptions in Stripe.",
+        "startNotSessionDay": "No session falls on this date. The first session is {date}.",
+        "endNotSessionDay": "No session falls on this date. The last session is {date}."
       },
       "errors": {
         "translationRequired": "At least one language with name and description is required",

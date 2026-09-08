@@ -18,7 +18,7 @@ import {
   compareComingUpCohorts,
   relativeWait,
 } from "./build-admin-dashboard-data";
-import { addCalendarDays, mondayOf, monthsAfter, weekdayOf } from "./calendar";
+import { addCalendarDays, mondayOf, monthsAfter, weekdayOf } from "@/lib/calendar-date";
 
 /**
  * Fixtures for the admin dashboard preview scene: a plausible autumn term for a

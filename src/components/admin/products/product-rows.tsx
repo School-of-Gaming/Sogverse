@@ -19,6 +19,7 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { formatDate, formatDateOnly, formatDateRange } from "@/lib/utils";
 import { effectiveStatus, pendingHintKey } from "@/lib/products/effective-status";
+import { formatProductWeeks } from "@/lib/products/format-product-term-dates";
 import { ProductStatusChip } from "./product-status-chip";
 import {
   formatProductSchedule,
@@ -96,6 +97,7 @@ interface ProductRowsProps {
 export function ProductRows({ products, productType }: ProductRowsProps) {
   const config = PRODUCT_TYPE_CONFIG[productType];
   const t = useTranslations("admin.products");
+  const c = useTranslations("common");
   const uiLocale = resolveLocale(useLocale());
   const timeZone = useTimezone();
   // One `now` for the whole render so every row derives status from the same
@@ -137,12 +139,24 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
         // the viewer's zone (may differ from the stored start_date). Every
         // other dated value here — a camp's date range, a club term date, a
         // no-time event — is a zoneless calendar date that stays UTC-pinned.
-        const dateChip =
-          schedule.kind === "single" && schedule.time
-            ? schedule.date
-            : p.start_date
-              ? formatDateRange(p.start_date, p.end_date, uiLocale)
-              : null;
+        const timeBearingEvent =
+          schedule.kind === "single" && schedule.time !== null;
+        const dateChip = timeBearingEvent
+          ? schedule.date
+          : p.start_date
+            ? formatDateRange(p.start_date, p.end_date, uiLocale)
+            : null;
+        // The ISO week(s) a term or camp runs across, appended to the date
+        // chip because Finnish admins plan in week numbers — "kerho alkaa
+        // viikolla 34" — and matching a list row against a plan otherwise
+        // means counting weeks off a calendar. Only on the calendar-date
+        // branch: the time-bearing event above renders an instant in the
+        // viewer's zone, and an ISO week belongs to a bare date, so numbering
+        // that one would assert a week the stored date may not be in.
+        const weekChip =
+          !timeBearingEvent && p.start_date
+            ? formatProductWeeks(p.start_date, p.end_date, c)
+            : null;
         return (
           <Link
             key={p.id}
@@ -196,6 +210,16 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
                     <span className="inline-flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       {dateChip}
+                      {/* Appended at the end of the chip's own run, so nothing
+                          already painted moves — and inside the same chip
+                          rather than beside it, because a week number is a
+                          reading of the date it follows, not a fact of its
+                          own. */}
+                      {weekChip && (
+                        <span className="tabular-nums text-muted-foreground">
+                          {` · ${weekChip}`}
+                        </span>
+                      )}
                     </span>
                   )}
                   {scheduleLine && (

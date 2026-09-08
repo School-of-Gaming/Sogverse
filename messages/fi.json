@@ -102,7 +102,21 @@
     "roleGamer": "Pelaaja",
     "roleGedu": "Gedu",
     "gedus": "Gedut",
-    "next": "Seuraava"
+    "next": "Seuraava",
+    "week": "vk {week}",
+    "weekRange": "vk {from}–{to}",
+    "weekRangeAcrossYears": "vk {from}/{fromYear} – vk {to}/{toYear}",
+    "weekCount": "{count, plural, one {# viikko} other {# viikkoa}}",
+    "weekColumn": "vk"
+  },
+  "datePicker": {
+    "openCalendar": "Avaa kalenteri",
+    "previousMonth": "Edellinen kuukausi",
+    "nextMonth": "Seuraava kuukausi",
+    "weekNumber": "Viikon numero",
+    "goToWeek": "Siirry viikkoon",
+    "selectWeek": "Valitse viikko {week}",
+    "today": "Tänään"
   },
   "about": {
     "pageTitle": "Tietoa meistä",
@@ -416,6 +430,8 @@
           "materialUrl": "Oppimateriaali",
           "startDate": "Alkamispäivä",
           "endDate": "Päättymispäivä",
+          "firstSession": "Ensimmäinen kerta",
+          "lastSession": "Viimeinen kerta",
           "signupThreshold": "Ilmoittautumiskynnys",
           "termDates": "Kausi",
           "billingMode": "Laskutus",
@@ -656,7 +672,9 @@
         "seatHintNoWaitlist": "Kun täynnä, uudet ilmoittautumiset hylätään.",
         "visibleHint": "Ilman valintaa tuote ei näy millään julkisella sivulla, mutta jokainen, jolla on suora linkki, voi silti avata sen ja ostaa paikan. Juuri siksi tämä sopii julkistamattomiin, kutsuvieraille tarkoitettuihin ja kampanjatuotteisiin. Tämä ei ole keino lopettaa ilmoittautumisia, eikä se vaikuta jo mukana oleviin vanhempiin ja pelaajiin.",
         "seatLimitHint": "Rajaa osallistujamäärä tai pidä se rajattomana.",
-        "startDateBillingAnchor": "Kerhon aloituspäivä ja samalla perheiden ensimmäisen maksun päivä. Päivän muuttaminen jälkikäteen ei siirrä jo ilmoittautuneiden ensimmäistä maksua — korjaa nuo tilaukset Stripessä."
+        "startDateBillingAnchor": "Kerhon aloituspäivä ja samalla perheiden ensimmäisen maksun päivä. Päivän muuttaminen jälkikäteen ei siirrä jo ilmoittautuneiden ensimmäistä maksua — korjaa nuo tilaukset Stripessä.",
+        "startNotSessionDay": "Tälle päivälle ei osu kertaa. Ensimmäinen kerta on {date}.",
+        "endNotSessionDay": "Tälle päivälle ei osu kertaa. Viimeinen kerta on {date}."
       },
       "errors": {
         "translationRequired": "Vähintään yksi kieli, jossa on nimi ja kuvaus, vaaditaan",

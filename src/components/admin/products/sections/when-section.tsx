@@ -1,12 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useId, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { formatInTimeZone } from "date-fns-tz";
+import { StatusLine } from "@/components/ui/alert";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { PRODUCT_TIMEZONES } from "@/lib/constants";
+import { formatAdminTermWeeks } from "@/lib/products/format-product-term-dates";
+import {
+  firstSessionDate,
+  isSessionDay,
+  lastSessionDate,
+} from "@/lib/session-dates";
 import { formatTimezoneOptionLabel } from "@/lib/timezone";
-import { cn } from "@/lib/utils";
+import { cn, formatDateOnly } from "@/lib/utils";
 import { useNow } from "@/providers";
 import { FormSection } from "../form-primitives";
 import { formLocksFor } from "../form-locks";
@@ -18,6 +27,17 @@ import {
   type FormState,
 } from "../product-form-state";
 import type { ProductTypeConfig } from "../product-type-config";
+
+/**
+ * The ids a control is described by, space-joined, or `undefined` when there
+ * are none — an empty `aria-describedby` is a pointer at nothing, which some
+ * screen readers announce as a missing description rather than as no
+ * description.
+ */
+function describedBy(...ids: readonly (string | undefined)[]): string | undefined {
+  const present = ids.filter((id) => id !== undefined);
+  return present.length === 0 ? undefined : present.join(" ");
+}
 
 interface WhenSectionProps {
   state: FormState;
@@ -38,6 +58,8 @@ export function WhenSection({
   isEdit,
 }: WhenSectionProps) {
   const t = useTranslations("admin.products");
+  const c = useTranslations("common");
+  const locale = useLocale();
   // The clock the offsets are read at, shared with the rest of the dashboard so
   // the server render and the first client render agree on which side of a DST
   // transition "now" is — a label computed from a bare `new Date()` on each end
@@ -80,6 +102,84 @@ export function WhenSection({
   // anchor on subscriptions that already exist (that correction is manual in
   // Stripe; see the checkout route and TODO.md).
   const startDateMovesBilling = productType === "consumer_club";
+
+  // Today in the *product's* zone, not the reader's: these fields are about the
+  // product's own calendar, so the day the picker rings has to be the product's
+  // today. Computed once here and handed to every picker in the section, so the
+  // pickers cannot disagree about which day that is.
+  const today = formatInTimeZone(now, state.timezone, "yyyy-MM-dd");
+
+  // An event's single date derives its own weekday, and a product mid-authoring
+  // may have no slots at all — either way there is no pattern to snap a week
+  // pick to, and `firstSessionDate`/`lastSessionDate` fall through to plain
+  // Monday/Sunday on an empty list.
+  const weekdays =
+    productType === "event"
+      ? []
+      : state.scheduleSlots.map((slot) => slot.weekday);
+
+  // The warning fires only where a pattern exists to contradict the date.
+  // `isSessionDay` already answers true for an empty one; the length check is
+  // what additionally keeps an event — whose slot follows the date rather than
+  // the other way round — out of it entirely.
+  const startWarning =
+    weekdays.length > 0 &&
+    state.startDate !== "" &&
+    !isSessionDay(state.startDate, weekdays)
+      ? t("hints.startNotSessionDay", {
+          date: formatDateOnly(
+            firstSessionDate(state.startDate, weekdays),
+            locale,
+            { weekday: "short", day: "numeric", month: "long" },
+          ),
+        })
+      : null;
+  const endWarning =
+    weekdays.length > 0 &&
+    state.endDate !== "" &&
+    !isSessionDay(state.endDate, weekdays)
+      ? t("hints.endNotSessionDay", {
+          date: formatDateOnly(
+            lastSessionDate(state.endDate, weekdays),
+            locale,
+            { weekday: "short", day: "numeric", month: "long" },
+          ),
+        })
+      : null;
+
+  // A warning rendered as loose text under a control says nothing to anyone not
+  // looking at the screen. Each one carries an id its picker points at with
+  // `aria-describedby`, and `role="status"` so the warning is announced when it
+  // appears rather than only when the field is next visited. Only one end-date
+  // picker is ever mounted (the grid's, or the consumer club's), so the single
+  // end id is never duplicated.
+  const warningIds = useId();
+  const startWarningId = `${warningIds}-start`;
+  const endWarningId = `${warningIds}-end`;
+
+  // The term as an admin planning in weeks reads it. Nothing is reserved for
+  // it: it appears because the admin just picked the second of the two dates,
+  // which is their own action and the one case the layout rule allows to
+  // reflow.
+  //
+  // The string itself is `formatAdminTermWeeks`', not this section's: the
+  // product details page prints the same readout, and the choice between a
+  // same-year range and a year-qualified one is a decision that must be made in
+  // exactly one place or a term crossing New Year reads correctly on one
+  // surface and as "wk 34–2" on the other.
+  const termText =
+    state.startDate !== "" &&
+    state.endDate !== "" &&
+    state.endDate >= state.startDate
+      ? formatAdminTermWeeks(
+          { start_date: state.startDate, end_date: state.endDate },
+          c,
+        )
+      : null;
+  const termLine =
+    termText === null ? null : (
+      <p className="text-xs tabular-nums text-muted-foreground">{termText}</p>
+    );
 
   return (
     <FormSection
@@ -153,15 +253,39 @@ export function WhenSection({
                     : undefined
               }
             >
-              <Input
-                id="p-start-date"
-                type="date"
-                value={state.startDate}
-                onChange={(e) =>
-                  setState({ ...state, startDate: e.target.value })
-                }
-                required
-              />
+              {({ hintId }) => (
+                <>
+                  <DatePicker
+                    id="p-start-date"
+                    value={state.startDate}
+                    onChange={(startDate) => setState({ ...state, startDate })}
+                    today={today}
+                    weekPick={{ edge: "start", weekdays }}
+                    rangeEnd={state.endDate === "" ? null : state.endDate}
+                    aria-describedby={describedBy(
+                      startWarning === null ? undefined : startWarningId,
+                      hintId,
+                    )}
+                    required
+                  />
+                  {/* The warning sits between the control and the field's own
+                      hint, which is the order the two want: the date being
+                      wrong comes before the billing anchor is worth
+                      explaining. It appears as the direct result of the
+                      admin's own pick, so its reflow is the permitted kind. */}
+                  {startWarning !== null && (
+                    <StatusLine
+                      id={startWarningId}
+                      role="status"
+                      status="warning"
+                      size="xs"
+                      muted
+                    >
+                      {startWarning}
+                    </StatusLine>
+                  )}
+                </>
+              )}
             </Field>
             {productType === "event" || productType === "consumer_club" ? null : (
               // Municipality clubs and camps always have a fixed end date.
@@ -173,18 +297,39 @@ export function WhenSection({
                 }
                 htmlFor="p-end-date"
               >
-                <Input
+                <DatePicker
                   id="p-end-date"
-                  type="date"
                   value={state.endDate}
-                  onChange={(e) =>
-                    setState({ ...state, endDate: e.target.value })
-                  }
+                  onChange={(endDate) => setState({ ...state, endDate })}
+                  today={today}
+                  weekPick={{ edge: "end", weekdays }}
+                  rangeStart={state.startDate === "" ? null : state.startDate}
+                  aria-describedby={describedBy(
+                    endWarning === null ? undefined : endWarningId,
+                  )}
                   required
                 />
+                {endWarning !== null && (
+                  <StatusLine
+                    id={endWarningId}
+                    role="status"
+                    status="warning"
+                    size="xs"
+                    muted
+                  >
+                    {endWarning}
+                  </StatusLine>
+                )}
               </Field>
             )}
           </div>
+
+          {/* The term summary belongs under the pair of dates that produce it,
+              so it rides with the grid — except on a consumer club, whose end
+              date is not in the grid at all and carries the line itself. */}
+          {productType === "event" || productType === "consumer_club"
+            ? null
+            : termLine}
 
           {/* Consumer clubs are ongoing by default. The admin picks "no end
               date" or "set an end date"; the date input only shows for the
@@ -233,17 +378,32 @@ export function WhenSection({
                 })}
               </div>
               {state.hasEndDate && (
-                <div className="mt-3 max-w-[240px]">
-                  <Input
+                <div className="mt-3 max-w-[280px] space-y-2">
+                  <DatePicker
                     id="p-end-date"
-                    type="date"
                     aria-label={t("labels.endDate")}
                     value={state.endDate}
-                    onChange={(e) =>
-                      setState({ ...state, endDate: e.target.value })
-                    }
+                    onChange={(endDate) => setState({ ...state, endDate })}
+                    today={today}
+                    weekPick={{ edge: "end", weekdays }}
+                    rangeStart={state.startDate === "" ? null : state.startDate}
+                    aria-describedby={describedBy(
+                      endWarning === null ? undefined : endWarningId,
+                    )}
                     required
                   />
+                  {endWarning !== null && (
+                    <StatusLine
+                      id={endWarningId}
+                      role="status"
+                      status="warning"
+                      size="xs"
+                      muted
+                    >
+                      {endWarning}
+                    </StatusLine>
+                  )}
+                  {termLine}
                 </div>
               )}
             </Field>

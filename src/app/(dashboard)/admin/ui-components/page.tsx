@@ -6,6 +6,7 @@ import {
   Fragment,
   useContext,
   useEffect,
+  useId,
   useRef,
   useState,
 } from "react";
@@ -24,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { ROLE_BADGE_STYLES, ROUTES } from "@/lib/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -375,6 +377,69 @@ function VoiceAvatarDemo() {
 /* ------------------------------------------------------------------ */
 /*  Checkbox Demo                                                      */
 /* ------------------------------------------------------------------ */
+
+/**
+ * A term's two ends, wired to one piece of state so the band between them is
+ * live: pick a start, pick an end, and the days in between are drawn as one
+ * run in both pickers.
+ *
+ * The weekdays are `[2]` — a Wednesday club — because that is what makes the
+ * week gutter worth looking at: hovering a week number on the start picker
+ * previews that week's Wednesday, and on the end picker the same week's
+ * Wednesday as its *last* session. `today` is a literal so the ring lands in a
+ * reproducible place.
+ */
+const DEMO_TODAY = "2026-09-08";
+const DEMO_WEDNESDAY_CLUB = { weekdays: [2] } as const;
+
+function DatePickerDemo() {
+  const [start, setStart] = useState("2026-08-19");
+  const [end, setEnd] = useState("2026-12-09");
+
+  return (
+    <div className="grid gap-6 sm:grid-cols-2 max-w-2xl">
+      <Field label="Start date" htmlFor="demo-date-start">
+        <DatePicker
+          id="demo-date-start"
+          value={start}
+          onChange={setStart}
+          today={DEMO_TODAY}
+          weekPick={{ edge: "start", ...DEMO_WEDNESDAY_CLUB }}
+          rangeEnd={end === "" ? null : end}
+        />
+      </Field>
+      <Field label="End date" htmlFor="demo-date-end">
+        <DatePicker
+          id="demo-date-end"
+          value={end}
+          onChange={setEnd}
+          today={DEMO_TODAY}
+          weekPick={{ edge: "end", ...DEMO_WEDNESDAY_CLUB }}
+          rangeStart={start === "" ? null : start}
+        />
+      </Field>
+      <Field label="Empty" htmlFor="demo-date-empty">
+        <DatePicker
+          id="demo-date-empty"
+          value=""
+          onChange={() => {}}
+          today={DEMO_TODAY}
+          weekPick={{ edge: "start", weekdays: [] }}
+        />
+      </Field>
+      <Field label="Disabled" htmlFor="demo-date-disabled">
+        <DatePicker
+          id="demo-date-disabled"
+          value="2026-08-19"
+          onChange={() => {}}
+          today={DEMO_TODAY}
+          weekPick={{ edge: "start", weekdays: [] }}
+          disabled
+        />
+      </Field>
+    </div>
+  );
+}
 
 /**
  * The primitive's own states, and nothing else. The labelled consent
@@ -2385,6 +2450,10 @@ export default function AdminUIComponentsPage() {
         </SubSection>
       </Section>
 
+      <Section title="Date picker">
+        <DatePickerDemo />
+      </Section>
+
       <Section title="Checkbox">
         <CheckboxDemo />
       </Section>
@@ -4324,11 +4393,16 @@ const CHIP_PEOPLE = {
 } as const;
 
 function ParticipantChipDemo() {
+  // dnd-kit derives its accessibility ids from a module-level counter unless the
+  // context is given an explicit `id`, so the server's and the client's differ
+  // and React logs a hydration mismatch on `aria-describedby`. `useId()` is
+  // stable across both, so pin it.
+  const dndId = useId();
   return (
     // The chip is a dnd-kit draggable, so it needs the context its real parents
     // give it. There are no droppables here — picking one up and letting go puts
     // it back, which is all this demo needs.
-    <DndContext>
+    <DndContext id={dndId}>
       <ParticipantChipRow />
     </DndContext>
   );

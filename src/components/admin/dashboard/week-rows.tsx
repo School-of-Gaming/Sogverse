@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { AlertTriangle } from "lucide-react";
 import { cn, formatDateOnly } from "@/lib/utils";
 import type { ScheduleChip, ScheduleWeek } from "./admin-dashboard-data";
-import { addCalendarDays, formatDayMonth } from "./calendar";
+import { addCalendarDays, formatDayMonth } from "@/lib/calendar-date";
 import { PRODUCT_TYPE_PRESENTATION } from "./product-type-presentation";
 
 /** The seven rows, Monday first — the order, not the names. */

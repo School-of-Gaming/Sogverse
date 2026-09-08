@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn, formatDateOnly } from "@/lib/utils";
 import type { ProductType } from "@/types";
 import type { ComingUpDay, ScheduleWeek } from "./admin-dashboard-data";
-import { addCalendarDays, formatDayMonth } from "./calendar";
+import { addCalendarDays, formatDayMonth } from "@/lib/calendar-date";
+import { isoWeekOf } from "@/lib/iso-week";
 import { ComingUpFeed } from "./coming-up-feed";
 import {
   PRODUCT_TYPE_ORDER,
@@ -89,6 +90,7 @@ function ThisWeek({
 }) {
   const t = useTranslations("admin.dashboard.schedule");
   const tType = useTranslations("admin.products.types");
+  const c = useTranslations("common");
   const locale = useLocale();
   /**
    * Which week is on screen, held as **the week itself** rather than as its
@@ -122,15 +124,28 @@ function ThisWeek({
   const week = weeks[weekIndex];
   const todayIso = formatInTimeZone(now, timeZone, "yyyy-MM-dd");
   const weekEnd = addCalendarDays(week.weekStart, 6);
-  // `17.8. – 23.8.2026`: two numeric dates around an en dash, with the year
-  // carried once, on the end date. On the end date because that is the one it is
-  // true of — the week of 28 December 2026 finishes on 3 January 2027, and a
-  // year lifted off the *start* labelled that week 2026 in full. It is the end
-  // date's own `Intl` render rather than four digits glued on, because where the
-  // year sits inside a numeric date is the reader's convention too. Assembled
-  // here rather than in the JSX because it holds no words in any locale — the
-  // separator is the only literal in it.
-  const weekRange = `${formatDayMonth(week.weekStart, locale)} – ${formatDateOnly(
+  // `vk 34 · 17.8. – 23.8.2026`: the ISO week number, then two numeric dates
+  // around an en dash, with the year carried once, on the end date.
+  //
+  // **The week number leads**, which is the one place on the platform it does.
+  // This panel's unit *is* the week — the stepper either side of this label
+  // moves a week at a time, and the rows below are that week's seven days — so
+  // the number is the label's subject rather than a gloss on a date; a Finnish
+  // admin stepping to "viikko 38" is looking for the number, and the dates then
+  // say which seven days that is. Everywhere else a week number is furniture
+  // appended after a planning date, and putting it first there would be reading
+  // the answer before the question.
+  //
+  // The year sits on the end date because that is the one it is true of — the
+  // week of 28 December 2026 finishes on 3 January 2027, and a year lifted off
+  // the *start* labelled that week 2026 in full. It is the end date's own `Intl`
+  // render rather than four digits glued on, because where the year sits inside
+  // a numeric date is the reader's convention too. Assembled here rather than in
+  // the JSX because the only literal in it is the separator; every word in it
+  // comes from the message catalogue or from `Intl`.
+  const weekRange = `${c("week", {
+    week: isoWeekOf(week.weekStart).week,
+  })} · ${formatDayMonth(week.weekStart, locale)} – ${formatDateOnly(
     weekEnd,
     locale,
     { day: "numeric", month: "numeric", year: "numeric" },

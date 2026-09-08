@@ -10,7 +10,8 @@ import type {
   ComingUpDay,
   ComingUpItem,
 } from "./admin-dashboard-data";
-import { formatDayMonth } from "./calendar";
+import { formatDayMonth } from "@/lib/calendar-date";
+import { isoWeekOf } from "@/lib/iso-week";
 import { PRODUCT_TYPE_PRESENTATION } from "./product-type-presentation";
 
 /**
@@ -87,12 +88,26 @@ export function ComingUpFeed({ days }: { days: readonly ComingUpDay[] }) {
 
 function DayRow({ day }: { day: ComingUpDay }) {
   const locale = useLocale();
+  const c = useTranslations("common");
 
   return (
     <div className="flex flex-col gap-1 py-1 sm:flex-row sm:gap-3">
-      <p className="shrink-0 text-xs font-medium tabular-nums sm:w-24">
+      {/* `sm:w-32` — 128px — rather than the 96 this column used to take,
+          because the week number has to fit on the same line as the date in
+          every locale. The widest is French, whose weekday abbreviation keeps
+          its stop and whose week prefix is a bare letter: `lun. 17/08 · S34`
+          is sixteen characters at 12px, seven of them tabular digits, which
+          measures a little over 100px; Swedish (`mån 17/12 · v. 34`) is the
+          same order. 96 clipped both onto two lines. */}
+      <p className="shrink-0 text-xs font-medium tabular-nums sm:w-32">
         {formatDateOnly(day.date, locale, { weekday: "short" })}{" "}
         {formatDayMonth(day.date, locale)}
+        {/* The ISO week the date falls in — an admin plans in week numbers, and
+            this feed is the one place they read a run of dates months out.
+            Appended after the date, never instead of it. */}
+        <span className="text-muted-foreground">
+          {` · ${c("week", { week: isoWeekOf(day.date).week })}`}
+        </span>
       </p>
       <ul className="min-w-0 flex-1 space-y-1">
         {day.cohorts.map((cohort) => (
