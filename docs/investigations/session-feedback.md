@@ -1,11 +1,16 @@
 # Session Feedback (gamers, parents, Gedus)
 
-**Status: investigation, not committed.** Researched 7 September 2026. Nothing is built —
-there is no session-feedback table, route, or UI; the only feedback in the product is the
-free-text help card and its rate-limited submit path. The claims about our own code were
-checked against the repo on that date. The claims about **email client capability** are
-external, age faster, and are flagged where they need re-verifying before anyone builds on
-them. If this is committed to, it becomes a `docs/plans/` plan and this file is deleted.
+**Status: investigation, not committed.** Researched 7 September 2026; a second pass on
+8 September 2026 measured what prod actually does, which turned *placement* into a real
+question the first pass had assumed away. Nothing is built — there is no session-feedback
+table, route, or UI; the only feedback in the product is the free-text help card and its
+rate-limited submit path. The claims about our own code were checked against the repo on
+those dates. **The traffic and database figures below cover 30- and 90-day windows ending
+8 September 2026 — the very start of the autumn term.** The two windows return almost the
+same counts, so there is nearly no history behind them: re-pull after a full term rather
+than trusting them. The claims about **email client capability** are external, age faster,
+and are flagged where they need re-verifying before anyone builds on them. If this is
+committed to, it becomes a `docs/plans/` plan and this file is deleted.
 
 **The question:** if we ask for feedback at the end of a session, what should we ask each
 of the three audiences, what should we deliberately not ask, and in what format should
@@ -24,13 +29,105 @@ worth much alone; the pairs are:
 - Gamer had fun, parent does not know what happened → the session is fine, the report is not.
 - Gamer reports nobody was friendly, Gedu reports everyone took part → look at that group.
 
+**On roughly half of sessions only two of the three readings are obtainable**, because the
+in-person half offers a child no moment to answer in — see the measurements below. That
+does not weaken the framing; it says which discrepancies exist on which sessions, and it
+has to be visible wherever the readings are eventually shown, or a quieter in-person
+cohort will read as a calmer one.
+
 **Consequence for storage: a session's three answers must be joinable from day one.**
 Retrofitting a join key across three separately-designed instruments is the expensive
 version of this feature. Whatever is built first should be keyed so the other two fit.
 
+Two things found on 8 September that constrain how that key can work:
+
+- **The session row is lazily materialized.** A row exists only once a report, a note or
+  an attendance mark needs somewhere to live — its own table comment says so. In practice
+  almost every past session has one (122 of 123 last month), but an answer must not be the
+  *first* writer to want a session row, or collection has to materialize one itself. A
+  child answering at the end of a session can easily arrive before the register does.
+- **An answer and an inference must not share a table.** Some of what is proposed below
+  is asked, and some is derived from behaviour we already record. Storing both as rows of
+  one instrument guarantees somebody eventually averages them. Keep derived signals as a
+  read over their source and join at the reporting layer.
+
+**Consequence for item keys: one question asked two ways is two items.** The same wording
+put to a child directly and put to them through a parent are different instruments with
+different biases, and a shared key silently blends them. Whatever the storage shape, the
+item identifier has to carry *who was asked and how*, not just what was asked.
+
 **Consequence for item design: each audience gets one short set that never changes.**
 Comparability week over week is the whole value; a rotating question set produces three
 readings that cannot be compared to last week's three readings.
+
+---
+
+## What prod actually does — measured 8 September 2026
+
+The first pass reasoned about instruments without asking where anyone actually is. These
+numbers reorder the conclusions, so they come before them. Traffic is from Web Analytics
+(see `../runbooks/vercel-analytics.md`); session and attendance counts are from prod
+Postgres (`../runbooks/remote-supabase-psql.md`).
+
+### Where people are — 30 days, production
+
+| Route | Pageviews | Unique visitor ids |
+|---|---:|---:|
+| `/parent` | 4,623 | 2,077 |
+| `/parent/unlock` | 4,198 | 2,735 |
+| `/gamer` | 3,322 | 1,533 |
+| `/gedu` | 2,170 | 634 |
+| `/gedu/clubs/[id]` | 1,572 | 496 |
+| `/parent/clubs/[id]` | 939 | 573 |
+| `/gamer/clubs/[id]` | 910 | 521 |
+| `/voice/group/[id]` | 853 | 533 |
+
+Visitor ids are per-device and reset, so treat them as ordering rather than as headcount.
+
+- **The family session feed is not the backwater it looks like.** The two family product
+  pages together out-draw the voice room, and the gamer one alone matches it. It is still
+  not where a gamer mostly is: they hit their own dashboard about 3.6× as often.
+- **The parent PIN gate is nearly 1:1 with the parent dashboard.** Every parent-facing
+  in-app surface is behind it. That is a harder argument for *the mail carries the click*
+  than the email-capability section below makes, and it is about our own product rather
+  than about mail clients.
+- **The gedu workspace has the highest repeat engagement of any authenticated page** —
+  roughly three views per visitor, against about 1.7 for the family pages.
+- **Email → app clickthrough cannot be measured from here.** The session report's button
+  does target the family product page, but essentially every hit on that route reports a
+  blank referrer, which covers both in-app navigation and the many mail clients that strip
+  referrers. Settling it needs a marker on that one link, read back off the request path.
+
+### What sessions look like — 30 days, production
+
+123 sessions ended in the window: **59 online** (`is_remote`) and **64 in-person**. A
+report was written for **122** of them, and mailed to parents for **96 (78%)**.
+
+Attendance over 90 days — which returns nearly the same counts as 30 days, because the
+term had only just begun:
+
+| | Present | Absent | Absence rate |
+|---|---:|---:|---:|
+| In-person | 568 | 177 | 23.8% |
+| Online | 432 | 88 | 16.9% |
+
+- **Gamer-sessions, not sessions, are the denominator for a per-child instrument** — and
+  by that measure the in-person half is the larger one, at roughly 58%.
+- **A report is written for practically every session; a report *mail* goes for 78% of
+  them.** Anything riding the mail inherits that gap, and what the remaining sessions have
+  in common is not yet known.
+- **Attendance varies, and varies more in person.** It is a live per-child signal rather
+  than a formality, which matters for the in-person section below.
+
+### The constraint nobody had written down
+
+**In prod today no child can reach their own account unaided.** The gamer profile table in
+prod carries only the user, date of birth and gender; the sign-in mode column exists in
+`schema.sql` but has not been released. Every gamer in prod is therefore in the switch-only
+shape — a synthetic internal handle, no password, reachable only by an account switch from
+the parent's session. The released sign-in modes are the precondition for any in-person
+gamer instrument, and for reading any gamer answer as the child's own rather than the
+household's.
 
 ---
 
@@ -89,16 +186,58 @@ ideas today* (Valor), *I tried something today I had not tried before* (Wit).
   earliest warning that the instrument has gone stale.
 - **Four taps, one screen, under fifteen seconds, no required fields.** Past that, gamers
   straight-line and the data is worse than none.
-- **It appears on their own dashboard after leaving the voice room** — not inside the room,
-  where a Gedu is on a shared screen and the group is still present. Note that a gamer
-  signing in through the parent's session may be answering with a parent beside them, which
-  degrades items 2 and 3.
+- **The moment is leaving the voice room — not inside it**, where a Gedu is on a shared
+  screen and the group is still present. The first pass said "on their own dashboard
+  afterwards"; the dashboards argue against that. Both family dashboards are dense pages
+  whose cards have an explicit three-part grammar and a corner badge reserved for *this
+  needs attention*, and a survey fits none of those slots. **Leaving the room is already a
+  full-page navigation to a validated internal path** — the voice session components take a
+  back target, default it to the role dashboard, and resolve it through
+  `resolveInternalPath()` — so a question can be interposed on that hand-off and then
+  forward to the destination the child was going to anyway. That costs no dashboard real
+  estate, inherits the redirect rule rather than restating it, and puts the question at the
+  moment of maximum recall. The same hand-off carries Gedus, so it must be role-aware.
+- **It only reaches online sessions**, which is the smaller half — see the in-person
+  section below.
+- Note that a gamer signing in through the parent's session may be answering with a parent
+  beside them, which degrades items 2 and 3. Under the switch-only shape prod is currently
+  in, that is not an edge case but the only way in.
 - **Cadence:** every club session; once per camp *day*, not per activity block; once per
   event.
 - **Yty-Points for completing, never varying with the answers.** Rewarding the act is
   fine; rewarding an answer buys fives.
 - **Labels are icons plus translated words** — the no-emoji rule for `messages/` applies, so
   faces are `lucide-react` icons or nothing. Avoid idiom in the item text: five locales.
+
+### The in-person half, which has no moment at all
+
+The larger half of gamer-sessions happens in a room, and three blockers stack there. None
+of them is a UI problem:
+
+1. **No signed-in device.** Prod is switch-only; see the constraint above.
+2. **No moment.** The child walks out of a hall. There is no navigation, no hand-off, no
+   page to interpose anything on.
+3. **The room is the place this document already refuses to collect in.** A code on the
+   projector answered by nine children with the Gedu present is exactly the shape the
+   gamer format section rules out — so an in-person instrument would be worse data even
+   once built.
+
+**Which suggests not asking.** Attendance is already recorded per child per session, it
+covers every in-person session, it needs no login, no new UI and no new consent
+conversation, and the figures above show it genuinely varies. This document calls *I want
+to come back next week* the best churn predictor obtainable from a child; where the
+question cannot be put, the behaviour it predicts can be observed instead, and observed
+behaviour is the better measurement of the two.
+
+What it cannot do is say **why** — it will not separate boredom from a cold from a house
+move. That is what the Gedu leg covers for those same sessions, and it is the argument for
+treating the three instruments as one set with a known hole rather than as three surveys.
+
+**The alternative, if the child's voice on this half is wanted sooner**, is a
+child-addressed row in the parent's mail — *ask {name} whether they had fun*. It is proxy
+data through an adult, which the parent section refuses on its own terms, and it should
+only be considered against a distinct item key so it can never blend with answers children
+gave themselves. It is a different instrument wearing the same words.
 
 ---
 
@@ -164,6 +303,15 @@ before a family leaves.
 - **Anchors translated once, centrally.** Per-item anchor variants are how a survey becomes
   untranslatable across five locales.
 - **The mail carries the click; the web carries the survey.** See the email section below.
+- **The strongest argument for that is our own PIN gate, not mail clients.** The parent
+  dashboard sits behind an unlock that is hit nearly once per dashboard view, so any
+  parent instrument placed in-app is answered only by a parent willing to pay that toll
+  first. A tokenised link from the mail is the one parent path that does not.
+- **Coverage is 78% of sessions, not all of them** — that is how many get a report mail,
+  against a report being *written* for practically all of them. An instrument riding the
+  mail inherits that ceiling. What the unmailed sessions have in common has not been
+  checked, and it matters: if they skew in-person they are sessions with no gamer
+  instrument either, and nobody would be heard from at all.
 
 ---
 
@@ -248,7 +396,11 @@ child did" score.
 ### Format
 
 - **It lives in the workspace, not in a mail** — at the end of the session they have just
-  completed, which is the moment of maximum recall and minimum remaining obligation.
+  completed, which is the moment of maximum recall and minimum remaining obligation. The
+  traffic supports it: the workspace has the highest repeat engagement of any authenticated
+  page. The write-up a Gedu already owes is the obvious host, since it is the one thing
+  they open for **every** session — which also makes this the only one of the three legs
+  that reaches the in-person half at all.
 - **It must sit outside the completeness ladder.** A session owes three things (four on a
   final session), with a dashboard badge and a SQL derivation that has to agree with the
   client's. Feedback must not become a fifth: an opinion with an owed badge attached is
@@ -346,12 +498,30 @@ interactivity; it is that **the first click is the first answer.**
 
 ## Where we lean, and what would change it
 
-**Lean:** build the gamer set first. It is the cheapest (in-app, no email mechanics, no
-token infrastructure), it is the audience with the most sessions, and it produces the
-signal — within-child change over weeks — that neither of the others can. The parent item
-is second and carries all the email work. The Gedu set is third by volume but first by
-information density per response, and could reasonably be built as a plain form long before
-anything is instrumented.
+**The 8 September measurements changed the shape of this.** The first pass ranked the three
+audiences by cost and picked the gamer set to build first. The right question turned out to
+be *where is each audience already standing*, and each answers it differently — so the
+ordering matters less than it looked, and coverage is the open problem instead.
+
+**Where each leg wants to live, on the evidence above:**
+
+- **Gedus — the session write-up they already owe.** It is the only surface opened for
+  every session, and the one with the highest repeat engagement. It is also the cheapest
+  build of the three, and the only leg that reaches in-person sessions.
+- **Parents — a tokenised link in the report mail.** Our own PIN gate rules out the in-app
+  alternative more decisively than any mail-client argument does. Ceiling: 78% of sessions.
+- **Gamers — the voice-room leave, for online sessions only.** Roughly 42% of
+  gamer-sessions, and the honest answer for the rest is probably not to ask at all.
+
+**Nothing here is decided, and the one that is not settled is the gamer leg.** The other
+two have obvious homes; the in-person half of the gamer population has no moment, no
+signed-in device, and a room this document already refuses to collect in. Whether the
+attendance derivation is an acceptable substitute for a question is the open call.
+
+**What would still be true whatever is decided:** the storage rule at the top, and the fact
+that partial coverage is the design rather than a defect to be engineered away later — a
+set of three instruments with a stated hole beats one instrument stretched until it
+measures nothing.
 
 **What would change the answer:**
 
@@ -363,5 +533,15 @@ anything is instrumented.
 - **If response rates on the gamer set fall below roughly half**, the instrument is being
   ignored rather than answered, and the fix is fewer items or a different moment, not more
   reminders.
+- **If the gamer sign-in modes reach prod**, the in-person half stops being structurally
+  unreachable and every gamer answer stops being potentially the household's rather than
+  the child's. That is the single change that most alters the gamer leg, and it is already
+  written — it just has not been released.
+- **If the report mail's button gains a marker**, the unanswerable question of whether
+  parents click through from the mail becomes answerable in a week, and the parent leg
+  stops being designed against a guess.
+- **The attendance derivation is worth starting whatever else is decided.** It costs
+  nothing, needs no UI, and is the only signal here that gets more valuable the earlier it
+  begins accumulating — and as of this writing there is barely a month of term behind it.
 - **If any of this is committed to**, the storage decision at the top — three readings of
   one session, joinable — is the one that has to be right first.
