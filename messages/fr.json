@@ -932,7 +932,7 @@
           }
         },
         "switchClub": {
-          "chipAction": "Changer {name} de club",
+          "dropZone": "Changer de club",
           "title": "Changer de club",
           "description": "Déplacez {name} vers un autre club. La famille garde son abonnement : nous le basculons sur le prix du nouveau club, et Stripe règle la différence sur la prochaine facture.",
           "picker": {

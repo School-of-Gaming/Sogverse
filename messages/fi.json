@@ -932,7 +932,7 @@
           }
         },
         "switchClub": {
-          "chipAction": "Vaihda {name} toiseen kerhoon",
+          "dropZone": "Vaihda kerhoa",
           "title": "Vaihda kerhoa",
           "description": "{name} siirtyy toiseen kerhoon. Perhe säilyttää tilauksensa: siirrämme sen uuden kerhon hintaan, ja Stripe tasaa erotuksen seuraavalla laskulla.",
           "picker": {

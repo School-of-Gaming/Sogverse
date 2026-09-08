@@ -980,7 +980,7 @@
           }
         },
         "switchClub": {
-          "chipAction": "latlh ghom’a’Daq {name} yIchIj",
+          "dropZone": "ghom’a’ yIchIj",
           "title": "ghom’a’ yIchIj",
           "description": "latlh ghom’a’Daq {name} vIH. Huch nge’ghachDaj poltaH qorDu’: ghom’a’ chu’ HuchvaD wImuvmoH, ’ej ’Iq pIm ghItlh veb Sam Stripe.",
           "picker": {

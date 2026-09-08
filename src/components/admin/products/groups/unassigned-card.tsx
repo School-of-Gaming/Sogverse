@@ -20,11 +20,6 @@ interface UnassignedCardProps {
   gamePlatform: GamePlatform | null;
   /** The panel's one batched Roblox lookup; undefined until it lands. */
   robloxRenders: RobloxRenderMap | undefined;
-  /**
-   * Open the club switch for a seat. Omitted on a surface with no such action
-   * behind it, and each chip then carries no switch control.
-   */
-  onSwitchClub?: (participationId: string) => void;
 }
 
 export function UnassignedCard({
@@ -32,7 +27,6 @@ export function UnassignedCard({
   pendingChipIds,
   gamePlatform,
   robloxRenders,
-  onSwitchClub,
 }: UnassignedCardProps) {
   const t = useTranslations("admin.products.groupsPanel");
   const { setNodeRef, isOver } = useDroppable({
@@ -81,11 +75,6 @@ export function UnassignedCard({
                 parentLastName={p.parent_last_name}
                 {...chipGameIdentity(p, gamePlatform, robloxRenders)}
                 isPending={pendingChipIds.has(p.id)}
-                // Subscribed seats only — the same condition the group columns
-                // apply, and the one the switch route refuses on.
-                onSwitchClub={
-                  p.has_live_subscription ? onSwitchClub : undefined
-                }
               />
             ))}
           </div>

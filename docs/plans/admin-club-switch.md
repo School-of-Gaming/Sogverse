@@ -209,7 +209,12 @@ subscription, its customer, its card and its billing date.
    the check answers without a hard refusal. Inline `committing` flag. On success
    invalidate the groups key root, which cascades to both products' snapshots. Copy in all five locales — admin strings live in the message files like
    every other UI string.
-   *As built:* three of the five picker warnings ship — age range, region lock and
+   *As built:* the dialog is opened by a **drop, not a chip control** — owner's
+   ruling that nothing sits on a draggable chip — so the header's drop zone reads
+   the chip it is offered and says "Switch club" for an active subscribed seat and
+   "Remove gamer" for every other one, and the removal drop rule resolves to the
+   switch for exactly that seat (a waitlisted subscribed row keeps the refusal).
+   Three of the five picker warnings ship — age range, region lock and
    not-started. **Full** and **required consents the family has not accepted** were
    dropped: the admin product list read carries `seat_count` but no taken count, and
    carries no `product_required_consents` embed at all, so neither is derivable from

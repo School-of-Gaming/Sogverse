@@ -207,11 +207,13 @@ describe("resolveDrop — demoting onto the waitlist", () => {
 });
 
 describe("resolveDrop — removing a subscribed member", () => {
-  it("refuses removal while a live subscription stands behind the seat", () => {
-    // The same condition `admin_remove_participation` refuses on, fronted so
-    // the admin reads why instead of confirming a removal that is about to
-    // fail. Removal CASCADEs family_subscriptions, so the subscription would
-    // bill on with nothing in the database left to cancel it.
+  it("offers the club switch instead of removing an active subscribed seat", () => {
+    // Removal is refused by `admin_remove_participation` on exactly this
+    // condition — it CASCADEs family_subscriptions, so the subscription would
+    // bill on with nothing in the database left to cancel it. The switch
+    // exists for precisely the same seat, so the zone the admin dropped on
+    // read "Switch club" and the drop resolves to it. Whatever the product's
+    // own shape: the subscription is the participation's fact, not the club's.
     for (const shape of [SUBSCRIPTION_CLUB, ONE_OFF]) {
       expect(
         resolveDrop(
@@ -219,13 +221,15 @@ describe("resolveDrop — removing a subscribed member", () => {
           { ...member, hasLiveSubscription: true },
           shape,
         ),
-      ).toEqual({ kind: "blocked", reason: "removeSubscribed" });
+      ).toEqual({ kind: "switch" });
     }
   });
 
-  it("refuses it from the waitlist too", () => {
+  it("still refuses it from the waitlist, where there is nothing to switch", () => {
     // A waitlisted row can carry a live subscription: the webhook writes one
-    // without the product lock, so a demote can land in that window.
+    // without the product lock, so a demote can land in that window. The
+    // dialog does not serve that edge — there is no active seat to move — so
+    // the refusal and its manual path stay.
     expect(
       resolveDrop(
         toRemoveZone,
@@ -233,6 +237,19 @@ describe("resolveDrop — removing a subscribed member", () => {
         SUBSCRIPTION_CLUB,
       ),
     ).toEqual({ kind: "blocked", reason: "removeSubscribed" });
+  });
+
+  it("removes an active seat with no subscription behind it", () => {
+    // The other half of the split: the switch is keyed to the subscription,
+    // not to the chip being active, so an unsubscribed member on the same
+    // club still stages the ordinary removal confirm.
+    expect(
+      resolveDrop(
+        toRemoveZone,
+        { ...member, hasLiveSubscription: false },
+        SUBSCRIPTION_CLUB,
+      ),
+    ).toEqual({ kind: "remove" });
   });
 
   it("allows removal once the subscription is no longer live", () => {
@@ -374,7 +391,7 @@ describe("dragSubjectsFrom", () => {
         subjects.get("p-subscribed")!,
         SUBSCRIPTION_CLUB,
       ),
-    ).toEqual({ kind: "blocked", reason: "removeSubscribed" });
+    ).toEqual({ kind: "switch" });
   });
 });
 

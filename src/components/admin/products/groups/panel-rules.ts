@@ -92,13 +92,24 @@ export type BlockedDropReason =
   | "unpaidPromote"
   /** Demoting a member whose seat is behind a live Stripe subscription. */
   | "liveSubscription"
-  /** Removing a member whose seat is behind a live Stripe subscription. */
+  /**
+   * Removing a **waitlisted** row whose seat is behind a live Stripe
+   * subscription — a webhook race, and the one subscribed shape the club
+   * switch cannot serve. An active subscribed seat resolves to the switch
+   * instead of to this refusal.
+   */
   | "removeSubscribed";
 
 export type DropOutcome =
   /** Nothing to do: dropped back where it started, or already there. */
   | { kind: "none" }
   | { kind: "remove" }
+  /**
+   * Not a removal at all: the seat the admin dropped is subscribed, and the
+   * zone they dropped it on said "Switch club" rather than "Remove gamer". The
+   * panel opens the switch dialog; nothing is written by the drop itself.
+   */
+  | { kind: "switch" }
   | { kind: "move"; toGroupId: string | null }
   | { kind: "promote"; toGroupId: string | null }
   | { kind: "demote" }
@@ -198,10 +209,23 @@ export function resolveDrop(
       // Removal CASCADEs family_subscriptions, so a live subscription would go
       // on billing a family with nothing left in the database to cancel it —
       // and `admin_remove_participation` refuses exactly this, whatever the
-      // product type. Fronting it here means the admin reads why instead of
-      // confirming a removal that is about to fail.
+      // product type. So a subscribed seat never removes here; what it does
+      // instead splits on where it sits, because the two are exact opposites:
+      // removal is refused precisely when a subscription stands behind the
+      // seat, and the switch exists precisely then.
+      //
+      //  - An **active** subscribed seat is what the club switch was built
+      //    for, and the zone the admin dropped on said so — it reads "Switch
+      //    club" for exactly this chip. The drop opens the dialog; the drop
+      //    itself still writes nothing.
+      //  - A **waitlisted** subscribed row is an edge the dialog does not
+      //    serve (there is no active seat to move), so it keeps the refusal
+      //    and its explanation of the manual path.
       if (subject.hasLiveSubscription) {
-        return { kind: "blocked", reason: "removeSubscribed" };
+        if (subject.isWaitlisted) {
+          return { kind: "blocked", reason: "removeSubscribed" };
+        }
+        return { kind: "switch" };
       }
       // Otherwise legal from anywhere, including the waitlist (it just cancels
       // the queued family). Confirmed in its own dialog.

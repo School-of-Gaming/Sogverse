@@ -69,12 +69,6 @@ interface GroupColumnProps {
    * one of the panel's own mutations and so is not in that registry.
    */
   busyChipIds: Set<string>;
-  /**
-   * Open the club switch for a seat. Omitted on a surface with no such action
-   * behind it, and each chip then simply carries no switch control — the same
-   * shape the waitlist's Invite takes.
-   */
-  onSwitchClub?: (participationId: string) => void;
 }
 
 export function GroupColumn({
@@ -92,7 +86,6 @@ export function GroupColumn({
   onAddGedu,
   busyChipIds,
   onRemoveGedu,
-  onSwitchClub,
 }: GroupColumnProps) {
   const t = useTranslations("admin.products.groupsPanel");
   const c = useTranslations("common");
@@ -350,13 +343,6 @@ export function GroupColumn({
                     parentLastName={p.parent_last_name}
                     {...chipGameIdentity(p, gamePlatform, robloxRenders)}
                     isPending={busyChipIds.has(p.id)}
-                    // The switch is for a seat a subscription stands behind and
-                    // for no other: an unsubscribed one is moved with a drag
-                    // onto the remove zone and a comp-enrolment on the other
-                    // club, and there is no money to carry across.
-                    onSwitchClub={
-                      p.has_live_subscription ? onSwitchClub : undefined
-                    }
                   />
                 ))}
               </div>

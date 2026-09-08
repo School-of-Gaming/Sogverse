@@ -932,7 +932,7 @@
           }
         },
         "switchClub": {
-          "chipAction": "Switch {name} to another club",
+          "dropZone": "Switch club",
           "title": "Switch club",
           "description": "Move {name} to another club. The family keeps its subscription — we put it on the new club's price, and Stripe settles the difference on the next invoice.",
           "picker": {

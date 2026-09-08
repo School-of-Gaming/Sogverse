@@ -932,7 +932,7 @@
           }
         },
         "switchClub": {
-          "chipAction": "Byt klubb för {name}",
+          "dropZone": "Byt klubb",
           "title": "Byt klubb",
           "description": "Flytta {name} till en annan klubb. Familjen behåller sin prenumeration — vi lägger den på den nya klubbens pris, och Stripe jämnar ut skillnaden på nästa faktura.",
           "picker": {
