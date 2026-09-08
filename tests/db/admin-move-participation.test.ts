@@ -329,6 +329,14 @@ describe("admin_move_participation", () => {
     // Locked in the order each call happens to name them, these two transactions
     // would each hold what the other wants; ordered by id they queue on the same
     // row first and one simply waits.
+    //
+    // This case DOCUMENTS that intent rather than guaranteeing it is exercised:
+    // two fast PostgREST calls under `Promise.all` overlap for microseconds, so
+    // a dropped ORDER BY would pass here nearly always. PostgREST offers no
+    // barrier — no shared session to hold a transaction open across the two
+    // calls — so there is nothing to make the overlap deterministic. It fails
+    // loudly if the ordering is dropped AND the two happen to collide, and it
+    // is here so a reader of the function knows why the ORDER BY is load-bearing.
     const aToB = await subscribedSeatOnA(TEST_IDS.GAMER);
     const bToA = await seat(CLUB_B, TEST_IDS.GAMER_2);
     await subscribe(bToA);

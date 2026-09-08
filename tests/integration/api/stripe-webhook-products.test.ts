@@ -174,6 +174,8 @@ function createSubscriptionUpdatedEvent(overrides: {
   subscription?: string;
   cancelAtPeriodEnd?: boolean;
   currentPeriodEnd?: number;
+  /** An update whose payload carries no subscription item at all. */
+  withoutItems?: boolean;
 }) {
   return {
     id: overrides.id ?? "evt_sub_updated_1",
@@ -184,7 +186,11 @@ function createSubscriptionUpdatedEvent(overrides: {
         status: overrides.status,
         cancel_at_period_end: overrides.cancelAtPeriodEnd ?? false,
         current_period_end: overrides.currentPeriodEnd ?? 1900000000,
-        items: { data: [{ id: "si_1", price: { id: "price_test_1" } }] },
+        items: {
+          data: overrides.withoutItems
+            ? []
+            : [{ id: "si_1", price: { id: "price_test_1" } }],
+        },
       },
     },
   };
@@ -1246,6 +1252,28 @@ describe("POST /api/webhooks/stripe/products", () => {
       expect(inserts.familySubscriptionUpdates[0]).toMatchObject({
         stripe_price_id: "price_test_1",
       });
+    });
+
+    it("leaves the price id out of the write when the payload carries no item", async () => {
+      // An items-less update teaches this handler nothing about the price, and
+      // "nothing" must not be written as null over a good stored id — the rest
+      // of the app reads a null there as a seat that bills for nothing.
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({
+          status: "active",
+          withoutItems: true,
+        }),
+      );
+      const inserts = mockAdmin({ famSubRow: OURS });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.familySubscriptionUpdates[0]).toMatchObject({
+        status: "active",
+      });
+      expect(inserts.familySubscriptionUpdates[0]).not.toHaveProperty(
+        "stripe_price_id",
+      );
     });
 
     it("returns 500 for a status nothing maps to, rather than writing a rejected value", async () => {

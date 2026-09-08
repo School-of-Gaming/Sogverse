@@ -35,12 +35,15 @@ export const switchClubKeys = {
 /**
  * A commit the route refused, carrying the two fields the dialog branches on.
  *
- * `refusals` is a 400 the dialog can word itself — a hard gate the check either
- * missed or that moved underneath it — and the confirm goes dead. `stripeUpdated`
- * is the one 500 the design plans for: the subscription is already on the new
- * price and the database step failed, so pressing again with the same request id
+ * `refusals` is a hard gate the check either missed or that moved underneath the
+ * admin between the check and the press — the dialog words it and the confirm
+ * goes dead, because no number of presses changes the fact behind it.
+ * `stripeUpdated` says the money already moved, which is true of every failure
+ * after the plan change including those races; on its own it is the one case the
+ * design plans a retry for, since pressing again with the same request id
  * replays a Stripe call that prorates nothing and re-runs the database half. The
- * dialog therefore leaves the confirm live for exactly that case.
+ * dialog therefore leaves the confirm live for `stripeUpdated` with no refusals,
+ * and for that pairing alone.
  */
 export class SwitchClubCommitError extends Error {
   readonly refusals: SwitchClubRefusal[];
@@ -79,9 +82,13 @@ async function readCommitError(response: Response): Promise<never> {
  * call reads Stripe, which is the perceptibly-slow category, so the skeleton is
  * immediate and the block it sits in already has its final height.
  *
- * Deliberately no `staleTime`: this is the state of a family's money, read at
- * the moment an admin is about to change it, and a cached answer from earlier in
- * the session is not the same fact.
+ * Deliberately no `staleTime`: this is the state of a family's money, and a
+ * cached answer from earlier in the session is not the same fact, so every open
+ * refetches. That does not mean a stale answer is never *shown* — React Query
+ * serves what it has and refetches behind it — and it does not have to: the
+ * commit re-runs the whole check server-side and refuses on anything it finds,
+ * so a briefly stale client answer can only ever be a display that corrects
+ * itself, never a switch that should not have happened.
  */
 export function useSwitchClubCheck(
   productId: string,

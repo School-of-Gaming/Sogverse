@@ -1012,7 +1012,8 @@
           },
           "commit": {
             "stripeUpdated": "ghom’a’ chu’ HuchDaq ’oHtaH Huch nge’ghach’e’, ’ach vIHbe’ pa’. rInmeH ghom’a’ yIchIj yI’uy’qa’ — cha’logh qorDu’ nge’lu’be’.",
-            "failed": "Qapbe’ chIjghach. pagh choHlu’."
+            "stripeUpdatedStuck": "ghom’a’ chu’ HuchDaq ’oHtaH Huch nge’ghach’e’, ’ach vIHlaHbe’ pa’: ghom’a’Daq pa’ ghajbe’bogh SuvwI’vaD DIl qorDu’. StripeDaq nom yIQIj.",
+            "failed": "rInbe’ chIjghach. ghom’a’ yIchIj yI’uy’qa’ — rap tlhobHa’ghach, vaj not cha’logh DIl qorDu’."
           },
           "confirm": "ghom’a’ yIchIj"
         }

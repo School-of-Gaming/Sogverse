@@ -8,6 +8,7 @@ import {
   switchClubCheckResponse,
   switchClubCommitBody,
   switchClubCommitResponse,
+  type SwitchClubRefusal,
 } from "@/services/participations/switch-club.contracts";
 import {
   checkSwitchClub,
@@ -148,12 +149,22 @@ export const POST = defineRoute({
       );
 
       // Every one of these carries `stripeUpdated: true`, because the money has
-      // already moved. The three codes below are races the check just ruled
-      // out — another admin moving the same seat in the gap — so they are the
-      // caller's answer rather than a fault, and only the status differs.
+      // already moved and the admin has to know that whatever else is true.
+      // The three codes below are races the check just ruled out — another
+      // admin moving the same seat in the gap — so they are the caller's answer
+      // rather than a fault, and the answer is NAMED: a race carries the
+      // matching refusal, which is what tells the dialog to word the reason and
+      // kill the confirm instead of inviting a retry that can never succeed.
+      // Only a genuine outage is retryable, and only that one arrives with no
+      // refusal.
       const status = statusForFailedMove(outcome.code);
+      const refusal = refusalForFailedMove(outcome.code, outcome.message);
       return NextResponse.json(
-        { error: messageForFailedMove(outcome.code), stripeUpdated: true },
+        {
+          error: messageForFailedMove(outcome.code),
+          stripeUpdated: true,
+          ...(refusal ? { refusals: [refusal] } : {}),
+        },
         { status },
       );
     }
@@ -208,13 +219,44 @@ function statusForFailedMove(code: string | null): number {
 }
 
 function messageForFailedMove(code: string | null): string {
-  const tail =
-    "The Stripe subscription is already on the new club's price — press Switch again to finish the move.";
+  // The two shapes are deliberately different sentences. A race is permanent —
+  // pressing again cannot change the fact the write collided with — so its
+  // wording states the state Stripe is in and stops there; only the outage
+  // wording invites a retry.
+  const moved = "The Stripe subscription is already on the new club's price";
   if (code === "23505") {
-    return `This gamer already holds a seat on the target club. ${tail}`;
+    return `This gamer already holds a seat on the target club, so the seat could not be moved. ${moved}, and that has to be sorted out in Stripe.`;
   }
   if (code === "23514" || code === "55000") {
-    return `The seat changed while the switch was running. ${tail}`;
+    return `The seat changed while the switch was running. ${moved}, and that has to be sorted out in Stripe.`;
   }
-  return `The seat could not be moved in the database. ${tail}`;
+  return `The seat could not be moved in the database. ${moved} — press Switch again to finish the move.`;
+}
+
+/**
+ * The race codes, mapped back onto the contract's refusals so the dialog words
+ * the reason itself. Only the RPC's own guards are named here: everything else
+ * is an outage with no refusal to give, which is exactly the case the dialog
+ * offers a retry for.
+ *
+ * `23514` covers three of the RPC's guards, and Postgres gives a raised
+ * `check_violation` no constraint name, so the raised message is what separates
+ * them — the substrings below are the load-bearing halves of those three
+ * `RAISE EXCEPTION` lines (migration 00245). An unrecognised one falls back to
+ * no refusal, which degrades to the generic wording rather than to a wrong one.
+ */
+function refusalForFailedMove(
+  code: string | null,
+  message: string,
+): SwitchClubRefusal | null {
+  if (code === "23505") return "already_on_target";
+  if (code === "55000") return "no_live_subscription";
+  if (code === "23514") {
+    if (message.includes("(same product)")) return "same_product";
+    if (message.includes("not active")) return "participation_not_active";
+    if (message.includes("not a paid subscription club")) {
+      return "target_not_paid_subscription_club";
+    }
+  }
+  return null;
 }

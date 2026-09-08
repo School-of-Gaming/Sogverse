@@ -964,7 +964,8 @@
           },
           "commit": {
             "stripeUpdated": "The subscription is already on the new club's price, but the seat did not move. Press Switch club again to finish — pressing again does not charge the family twice.",
-            "failed": "The switch did not go through. Nothing was changed."
+            "stripeUpdatedStuck": "The subscription is already on the new club's price even though the seat could not move, so the family is billed for a club the gamer holds no place on. Sort this out in Stripe first.",
+            "failed": "The switch did not complete. Press Switch club again — a repeated press replays the same request, so it never charges the family twice."
           },
           "confirm": "Switch club"
         }

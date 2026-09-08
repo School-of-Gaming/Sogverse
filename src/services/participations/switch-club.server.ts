@@ -338,6 +338,14 @@ export async function commitSwitchClub({
       // prorating again. Stripe dedupes byte-identical requests for about a
       // day, which is why the no-op item update (same price, no proration) is
       // the second line of defence for a retry from a fresh dialog.
+      //
+      // The one hole, documented rather than handled: if a first attempt minted
+      // a NEW Stripe price and then the price-cache write failed, a retry from
+      // the same dialog sends this same key with a different `items[0].price`,
+      // and Stripe answers a reused key carrying a different body with an
+      // `idempotency_error` — a plain 500 here. Closing and reopening the
+      // dialog mints a fresh request id and recovers, so the cost of the rare
+      // case is one confusing failure and a reopen.
       idempotencyKey: switchClubIdempotencyKey({
         participationId,
         targetProductId,

@@ -106,12 +106,21 @@ export const switchClubCommitResponse = z.object({
 export type SwitchClubCommitResponse = z.infer<typeof switchClubCommitResponse>;
 
 /**
- * Error body of both handlers (4xx/5xx). `refusals` is present on a 400 that
- * is one of the hard refusals above, so the dialog can word it; `error` is
- * always present and is the fallback wording. `stripeUpdated` is true on the
- * one 500 the plan names — the subscription is already on the new price and
- * the database step failed — telling the dialog to offer a retry rather than a
- * dead end.
+ * Error body of both handlers (4xx/5xx). `error` is always present and is the
+ * fallback wording; the other two are what the dialog branches on, and they are
+ * independent because the two questions they answer are:
+ *
+ * - `refusals` — WHY, in words the dialog owns. Present whenever the answer is
+ *   one of the hard refusals above, whether the check found it or the write
+ *   raced into it. Its presence means pressing again cannot help, so the
+ *   confirm dies.
+ * - `stripeUpdated` — whether the money already moved. True on every failure
+ *   after the plan change, including the races, because an admin has to know
+ *   the subscription is on the new price however the seat ended up.
+ *
+ * Both together is the worst case and a real one: the subscription bills for
+ * the new club while the seat could not follow, and the fix is in Stripe, not
+ * in another press. `stripeUpdated` alone is the retryable case the plan names.
  */
 export const switchClubErrorResponse = z.object({
   error: z.string(),

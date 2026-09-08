@@ -478,6 +478,7 @@ async function handleSubscriptionUpdated(
   if (!ours) return;
 
   const periodEnd = currentPeriodEndOf(sub);
+  const priceId = sub.items.data[0]?.price.id;
   const { error } = await admin
     .from("family_subscriptions")
     .update({
@@ -488,7 +489,12 @@ async function handleSubscriptionUpdated(
       // the family has left. The event payload carries the items inline, so this
       // costs no extra retrieve. Last writer wins between this and the RPC that
       // moves the seat, and both write the same id.
-      stripe_price_id: sub.items.data[0]?.price.id ?? null,
+      //
+      // The key is OMITTED when the payload carries no item, rather than written
+      // as null: an items-less update is this handler learning nothing about the
+      // price, and "I learned nothing" must not overwrite a good stored id with
+      // a null the rest of the app reads as "this seat bills for nothing".
+      ...(priceId ? { stripe_price_id: priceId } : {}),
       current_period_end:
         periodEnd !== null
           ? new Date(periodEnd * 1000).toISOString()

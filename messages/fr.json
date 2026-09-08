@@ -964,7 +964,8 @@
           },
           "commit": {
             "stripeUpdated": "L’abonnement est déjà au prix du nouveau club, mais la place n’a pas bougé. Appuyez de nouveau sur Changer de club pour terminer — appuyer une seconde fois ne facture pas la famille deux fois.",
-            "failed": "Le changement n’a pas abouti. Rien n’a été modifié."
+            "stripeUpdatedStuck": "L’abonnement est déjà au prix du nouveau club alors que la place n’a pas pu être déplacée : la famille est donc facturée pour un club où le joueur n’a aucune place. Réglez cela dans Stripe d’abord.",
+            "failed": "Le changement n’est pas allé jusqu’au bout. Appuyez de nouveau sur Changer de club — un nouvel appui rejoue la même requête, la famille n’est donc jamais facturée deux fois."
           },
           "confirm": "Changer de club"
         }

@@ -135,13 +135,17 @@ export function SwitchClubDialog({
   }, [products, productId, uiLocale, childAge]);
 
   const refusals = check.data?.refusals ?? [];
-  // A 400 carrying refusals is a gate that moved under the admin between the
-  // check and the press; it kills the confirm until they pick another club.
+  // A failure carrying refusals is a gate that moved under the admin between the
+  // check and the press; it kills the confirm until they pick another club,
+  // exactly as a refusal from the check does. Pressing again cannot change the
+  // fact behind it, so it must never be offered as a retry — even when the
+  // money moved first.
   const commitRefusals = failure?.refusals ?? [];
   // The one failure the admin can act on from here: Stripe is already on the
-  // new price and the database step did not run, so pressing again replays the
-  // same request and finishes the move.
-  const retryable = failure?.stripeUpdated === true;
+  // new price, the database step did not run, and nothing refuses the move — so
+  // pressing again replays the same request and finishes it.
+  const retryable =
+    failure?.stripeUpdated === true && commitRefusals.length === 0;
   const answered =
     targetId !== null &&
     check.data !== undefined &&
@@ -328,15 +332,30 @@ export function SwitchClubDialog({
           </div>
 
           {failure && (
-            <Alert variant={failure.stripeUpdated ? "warning" : "destructive"}>
+            <Alert variant={retryable ? "warning" : "destructive"}>
               <AlertDescription>
-                {failure.stripeUpdated
-                  ? t("commit.stripeUpdated")
-                  : commitRefusals.length > 0
-                    ? commitRefusals
-                        .map((refusal) => t(`refusals.${REFUSAL_KEY[refusal]}`))
-                        .join(" ")
-                    : t("commit.failed")}
+                {/* Refusals win the wording: a named reason is what the admin
+                    can act on, and the "press again" line would be a lie beside
+                    one. Where the money moved anyway, the stuck line is added
+                    UNDER the reason rather than replacing it — the reason is
+                    what happened, and the money is what has to be sorted out in
+                    Stripe on top of it. */}
+                {commitRefusals.length > 0 ? (
+                  <>
+                    {commitRefusals
+                      .map((refusal) => t(`refusals.${REFUSAL_KEY[refusal]}`))
+                      .join(" ")}
+                    {failure.stripeUpdated && (
+                      <span className="mt-2 block">
+                        {t("commit.stripeUpdatedStuck")}
+                      </span>
+                    )}
+                  </>
+                ) : failure.stripeUpdated ? (
+                  t("commit.stripeUpdated")
+                ) : (
+                  t("commit.failed")
+                )}
               </AlertDescription>
             </Alert>
           )}
@@ -349,8 +368,10 @@ export function SwitchClubDialog({
           {/* Present from open, so nothing lands in the footer after the fact —
               a late child would push the stacked row down. The check is what
               enables it, and the one exception is the retry: a commit that
-              updated Stripe and then failed to move the row leaves this live so
-              the admin can press again with the same request id. */}
+              updated Stripe and then failed to move the row for no stated
+              reason leaves this live so the admin can press again with the same
+              request id. A failure that DOES name a refusal is permanent, so it
+              kills the confirm however far the money got. */}
           <Button onClick={handleConfirm} disabled={confirmDisabled}>
             {committing && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
             {t("confirm")}

@@ -964,7 +964,8 @@
           },
           "commit": {
             "stripeUpdated": "Prenumerationen ligger redan på den nya klubbens pris, men platsen flyttades inte. Tryck på Byt klubb igen för att slutföra — ett nytt tryck debiterar inte familjen två gånger.",
-            "failed": "Bytet gick inte igenom. Ingenting ändrades."
+            "stripeUpdatedStuck": "Prenumerationen ligger redan på den nya klubbens pris trots att platsen inte kunde flyttas, så familjen faktureras för en klubb där spelaren inte har någon plats. Red ut det i Stripe först.",
+            "failed": "Bytet slutfördes inte. Tryck på Byt klubb igen — ett nytt tryck upprepar samma begäran, så familjen debiteras aldrig två gånger."
           },
           "confirm": "Byt klubb"
         }

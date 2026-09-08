@@ -964,7 +964,8 @@
           },
           "commit": {
             "stripeUpdated": "Tilaus on jo uuden kerhon hinnassa, mutta paikka ei siirtynyt. Paina Vaihda kerhoa uudelleen, niin siirto viedään loppuun. Uusi painallus ei veloita perhettä kahteen kertaan.",
-            "failed": "Vaihto ei mennyt läpi. Mitään ei muutettu."
+            "stripeUpdatedStuck": "Tilaus on jo uuden kerhon hinnassa, vaikka paikka ei siirtynyt, joten perhettä laskutetaan kerhosta, jossa pelaajalla ei ole paikkaa. Selvitä tämä ensin Stripessä.",
+            "failed": "Vaihto ei mennyt loppuun asti. Paina Vaihda kerhoa uudelleen — uusi painallus toistaa saman pyynnön, joten perhettä ei veloiteta kahteen kertaan."
           },
           "confirm": "Vaihda kerhoa"
         }

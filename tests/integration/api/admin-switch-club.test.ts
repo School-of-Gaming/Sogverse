@@ -510,6 +510,9 @@ describe("POST …/participations/[participationId]/switch — the commit", () =
 
     expect(response.status).toBe(500);
     expect(body.stripeUpdated).toBe(true);
+    // No refusal: an outage is the one failure a second press can fix, and the
+    // absent `refusals` is what leaves the dialog's confirm live.
+    expect(body.refusals).toBeUndefined();
     expect(asString(body.error)).toContain("press Switch again");
     // The rejected alternative, asserted: no compensating second call.
     expect(mockSubscriptionUpdate).toHaveBeenCalledTimes(1);
@@ -526,7 +529,11 @@ describe("POST …/participations/[participationId]/switch — the commit", () =
     const body = await response.json();
 
     expect(response.status).toBe(409);
+    // Both, and they answer different questions: the money moved (so the admin
+    // has to know), AND the collision is permanent (so the dialog words the
+    // reason and kills the confirm instead of inviting a retry forever).
     expect(body.stripeUpdated).toBe(true);
+    expect(body.refusals).toEqual(["already_on_target"]);
   });
 
   it("sends the same idempotency key when the same request id is pressed again", async () => {
