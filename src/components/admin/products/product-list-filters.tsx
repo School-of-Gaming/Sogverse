@@ -45,9 +45,13 @@ interface ProductListFiltersProps {
 //
 // What each type gets, left to right:
 //
-//   consumer club      search - day - gedu - language
-//   municipality club  search - day - gedu - municipality
+//   consumer club      search - gedu - day - language
+//   municipality club  search - gedu - day - municipality
 //   camp / event       search - gedu
+//
+// The two controls every type has come first and in the same order, so the
+// columns an admin reaches for without looking are in the same place on all
+// four pages; a type's own filters follow.
 //
 // All filters are single-select; no selection means "all", and active filters
 // AND together — a row must satisfy every one, the search box included.
@@ -267,6 +271,14 @@ export function ProductListFilters({
           </div>
         </div>
 
+        <FilterCombobox
+          label={t("filters.gedu")}
+          placeholder={t("filters.searchGedu")}
+          options={geduOptions}
+          value={geduId}
+          onChange={setGeduId}
+          noResultsLabel={t("filters.noResults")}
+        />
         {hasDay && (
           <FilterDropdown
             label={t("filters.day")}
@@ -276,14 +288,6 @@ export function ProductListFilters({
             onChange={setDay}
           />
         )}
-        <FilterCombobox
-          label={t("filters.gedu")}
-          placeholder={t("filters.searchGedu")}
-          options={geduOptions}
-          value={geduId}
-          onChange={setGeduId}
-          noResultsLabel={t("filters.noResults")}
-        />
         {isConsumer && (
           <FilterDropdown
             label={t("filters.language")}
