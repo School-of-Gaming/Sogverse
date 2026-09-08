@@ -3331,7 +3331,7 @@
           "Lynx Educaten vanhemmalle lähettämät sähköpostit tulevista Roblox-tapahtumista ja pelaamiseen liittyvistä aineistoista.",
           "Lapsesta otetut valokuvat ja videot tapaamisraporteissa, Lynx Educatelle ja Robloxille tehtävässä vaikuttavuusraportoinnissa sekä Lynx Educaten, School of Gamingin ja Robloxin julkisessa käytössä."
         ],
-        "Tavanomaisia verkkotapaamisia ei tallenneta. Lasta ei valokuvata eikä videokuvata, jos tarvittavaa lupaa ei ole annettu tai jos lapsi ei halua osallistua.",
+        "Verkkotapaamisia ei tallenneta. Lasta ei valokuvata eikä videokuvata, jos tarvittavaa lupaa ei ole annettu tai jos lapsi ei halua osallistua.",
         "Lynx Educate ja School of Gaming eivät myy Ohjelman ilmoittautumistietoja eivätkä käytä niitä lapsille suunnattuun mainontaan.",
         "Sinä ja lapsesi voitte pyytää saada nähdä, korjata tai poistaa tietoja, peruuttaa vapaaehtoisen suostumuksen tai vastustaa tiettyä käyttöä ottamalla yhteyttä osoitteeseen support@lynxeducate.com tai {supportEmail}."
       ]
@@ -3529,7 +3529,7 @@
       "media": {
         "heading": "Valokuvaaminen, videokuvaaminen ja julkinen käyttö",
         "blocks": [
-          "Tavanomaisia verkkotapaamisia ei tallenneta. Jos johonkin tapaamiseen tai tapahtumaan on suunniteltu valokuvausta tai videokuvausta, perheille kerrotaan siitä etukäteen.",
+          "Verkkotapaamisia ei tallenneta. Jos tapahtumaan on suunniteltu valokuvausta tai videokuvausta, perheille kerrotaan siitä etukäteen.",
           "Mediavalintoja on yksi, ja se tehdään lapsikohtaisesti. Valinta tehdään, kun lapsi ilmoitetaan Luojien akatemian toimintaan, ja sen voi muuttaa milloin tahansa lapsen sivulla My SOG -näkymässä."
         ]
       },
@@ -3543,14 +3543,14 @@
             "Käyttää julkisesti Lynx Educaten, School of Gamingin ja Robloxin verkkosivuilla ja sosiaalisen median kanavissa."
           ],
           "Julkinen sisältö voi olla saatavilla maailmanlaajuisesti, ja muut käyttäjät voivat kopioida tai jakaa sitä ilman, että organisaatiot voivat vaikuttaa siihen.",
-          "Jos ruutua ei ole rastitettu, lapsi jätetään kokonaan pois tapaamisten valokuvista ja videomateriaalista. Mitään hänet tunnistettavaksi tekevää ei liitetä tapaamisraporttiin, jaeta Lynx Educatelle tai Robloxille eikä käytetä julkisesti."
+          "Jos ruutua ei ole rastitettu, lapsi jätetään kokonaan pois tapaamisten valokuvista ja videomateriaalista. Mitään hänet tunnistettavaksi tekevää ei liitetä tapaamisraporttiin, jaeta Lynx Educatelle tai Robloxille eikä käytetä julkisesti. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun kukaan lapsi ei ole tunnistettavissa."
         ]
       },
       "mediaChildAgrees": {
         "heading": "Myös lapsen on suostuttava",
         "blocks": [
           "Vanhemman on hyvä keskustella mediavalinnasta lapsen kanssa ennen sen tekemistä. Selitämme valokuvaamisen tai videokuvaamisen myös lapselle hänen ikätasolleen sopivalla tavalla.",
-          "Pelikasvattaja kysyy lapselta ennen valokuvan ottamista, vaikka vanhempi olisi rastittanut ruudun, eikä lasta valokuvata tai videokuvata tarkoituksellisesti, jos hän vastustaa sitä. Lapsi, jonka vanhempi ei ole rastittanut ruutua, jätetään pois tapaamisten valokuvista ja tunnistettavasta materiaalista."
+          "Pelikasvattaja kysyy lapselta ennen valokuvan ottamista, vaikka vanhempi olisi rastittanut ruudun, eikä lasta valokuvata tai videokuvata tarkoituksellisesti, jos hän vastustaa sitä. Lapsi, jonka vanhempi ei ole rastittanut ruutua, jätetään pois tapaamisten valokuvista ja tunnistettavasta materiaalista. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun kukaan lapsi ei ole tunnistettavissa."
         ]
       },
       "mediaCaseStudies": {
@@ -3586,7 +3586,7 @@
             "Mukaan pääsevät vain ilmoittautuneet osallistujat ja taustatarkistetut pelikasvattajat.",
             "Viestintä tapahtuu ryhmässä ja valvotusti.",
             "Lasten välillä ei ole yksityisiä suoraviestejä.",
-            "Tavanomaisia tapaamisia ei tallenneta.",
+            "Tapaamisia ei tallenneta.",
             "Lynx Educate ja School of Gaming eivät käytä Ohjelman ilmoittautumistietoja lapsille suunnattuun käyttäytymiseen perustuvaan mainontaan."
           ],
           "Turvallisuushuolet käsitellään yhteisen <linkRobloxSafeguarding>lasten turvallisuuden toimintaohjeen</linkRobloxSafeguarding> mukaisesti. School of Gaming hoitaa arjen tilanteet ensisijaisesti ja siirtää vakavat asiat Lynx Educaten käsiteltäviksi. Jos lapsi voi olla välittömässä vaarassa, hätäpalveluihin otetaan yhteyttä ensin.",
@@ -3702,7 +3702,7 @@
   },
   "robloxSafeguarding": {
     "title": "Luojien akatemian lasten turvallisuuden toimintaohje",
-    "subtitle": "Tämä toimintaohje täydentää School of Gamingin <linkDiscipline>kiusaamisen ehkäisyn ohjetta</linkDiscipline>, jota sovelletaan edelleen tapaamisten arkiseen käyttäytymiseen. Tässä asiakirjassa kuvataan Lynx Educaten ja School of Gamingin laajemmat vastuut lasten turvallisuudesta Ohjelmassa, myös lähitapahtumissa.",
+    "subtitle": "Tämä toimintaohje täydentää School of Gamingin <linkDiscipline>kiusaamisen ehkäisyn ohjetta</linkDiscipline>, jota sovelletaan edelleen tapaamisten arkiseen käyttäytymiseen. Tässä asiakirjassa kuvataan Lynx Educaten ja School of Gamingin laajemmat vastuut lasten turvallisuudesta Ohjelmassa.",
     "lastUpdated": "Tarkistettu viimeksi: {date}",
     "intro": {
       "heading": "Sitoumuksemme",
@@ -3718,7 +3718,7 @@
         ]
       },
       "vetting": {
-        "heading": "Ennen kuin joku työskentelee lasten kanssa",
+        "heading": "Ennen kuin pelikasvattaja työskentelee lasten kanssa",
         "blocks": [
           "Kaikkien pelikasvattajien (Gedujen) on suoritettava School of Gamingin oma taustatarkistus- ja koulutusprosessi, ennen kuin he työskentelevät lasten kanssa Sogversessa. Tähän kuuluu:",
           [
@@ -3743,7 +3743,9 @@
       },
       "inPerson": {
         "heading": "Lähitapahtumissa",
-        "blocks": []
+        "blocks": [
+          "Pelikasvattajamme ohjaavat tapaamisen, mutta he eivät ole tapahtuman järjestäjiä. Lynx Educate vastaa siitä, että sen käyttämät tilat soveltuvat tapaamiseen ja täyttävät Ohjelman lasten turvallisuutta koskevat vaatimukset. Käytännön järjestelyt voivat vaihdella tilan mukaan."
+        ]
       },
       "behaviour": {
         "heading": "Käyttäytyminen ja kurinpito",
@@ -3766,7 +3768,7 @@
       "data": {
         "heading": "Tiedot ja valokuvat",
         "blocks": [
-          "Lapsi näkyy valokuvassa vain, jos hänen vanhempansa on rastittanut lasta koskevan vapaaehtoisen mediasuostumuksen ilmoittautumisen yhteydessä. Vanhempi voi muuttaa vastausta milloin tahansa lapsen sivulla My SOG -näkymässä, ja pelikasvattaja kysyy lapselta ennen valokuvan ottamista, vaikka vanhempi olisi antanut suostumuksen. <linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy> kerrotaan, mitä suostumus kattaa."
+          "Lapsi näkyy valokuvassa vain, jos hänen vanhempansa on rastittanut lasta koskevan vapaaehtoisen mediasuostumuksen ilmoittautumisen yhteydessä. Vanhempi voi muuttaa vastausta milloin tahansa lapsen sivulla My SOG -näkymässä, ja pelikasvattaja kysyy lapselta ennen valokuvan ottamista, vaikka vanhempi olisi antanut suostumuksen. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun kukaan lapsi ei ole tunnistettavissa. <linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy> kerrotaan, mitä suostumus kattaa."
         ]
       },
       "review": {
@@ -3832,7 +3834,7 @@
       "media": {
         "heading": "Valokuvat, video ja markkinointi",
         "blocks": [
-          "Se, näkyykö lapsesi valokuvissa tai videoissa, on yksi vapaaehtoinen valinta, joka tehdään ilmoittaessasi hänet Luojien akatemian toimintaan. Voit muuttaa sitä milloin tahansa lapsesi sivulla My SOG -näkymässä. Lapsi, jolla ei ole tätä lupaa, jätetään kokonaan pois tapaamisten valokuvista."
+          "Se, näkyykö lapsesi valokuvissa tai videoissa, on yksi vapaaehtoinen valinta, joka tehdään ilmoittaessasi hänet Luojien akatemian toimintaan. Voit muuttaa sitä milloin tahansa lapsesi sivulla My SOG -näkymässä. Lapsi, jolla ei ole tätä lupaa, jätetään kokonaan pois tapaamisten valokuvista. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun kukaan lapsi ei ole tunnistettavissa."
         ]
       },
       "concern": {

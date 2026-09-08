@@ -2297,7 +2297,7 @@
           "Emails to the parent from Lynx Educate about future Roblox events and gaming resources.",
           "Photographs and video of the child, used in session reports, in impact reporting to Lynx Educate and Roblox, and publicly by Lynx Educate, School of Gaming and Roblox."
         ],
-        "Routine online sessions are not recorded. A child will not be photographed or filmed where the required permission has not been given or where the child does not want to take part.",
+        "Online sessions are not recorded. A child will not be photographed or filmed where the required permission has not been given or where the child does not want to take part.",
         "Lynx Educate and School of Gaming do not sell Programme registration information or use it to advertise to children.",
         "You and your child may ask to see, correct or delete information, withdraw an optional consent, or object to certain uses by contacting support@lynxeducate.com or {supportEmail}."
       ]
@@ -2495,7 +2495,7 @@
       "media": {
         "heading": "Photography, filming and public use",
         "blocks": [
-          "Routine online sessions are not recorded. Where photography or filming is planned for a selected session or event, families will be told in advance.",
+          "Online sessions are not recorded. Where photography or filming is planned for an event, families will be told in advance.",
           "There is one optional media choice per child. It is made when the child is enrolled in a Creator Academy activity, and it can be changed at any time on the child’s page in My SOG."
         ]
       },
@@ -2509,14 +2509,14 @@
             "Used publicly by Lynx Educate, School of Gaming and Roblox on their websites and social-media channels."
           ],
           "Public content may be accessible worldwide and may be copied or shared by other users beyond the organisations’ control.",
-          "Where the box is not ticked, the child is kept out of session photographs and footage entirely. Nothing identifying them is placed in a session report, shared with Lynx Educate or Roblox, or used publicly."
+          "Where the box is not ticked, the child is kept out of session photographs and footage entirely. Nothing identifying them is placed in a session report, shared with Lynx Educate or Roblox, or used publicly. Wide shots of an event or workshop may be taken from a distance, where no child is identifiable."
         ]
       },
       "mediaChildAgrees": {
         "heading": "The child must also agree",
         "blocks": [
           "The parent should discuss the media choice with the child before selecting it. We will also explain the photography or filming to the child in an age-appropriate way.",
-          "A Game Educator asks the child before taking a photograph, even where the parent has ticked the box, and will not deliberately photograph or film a child who objects. A child whose parent has not ticked the box is kept out of session photographs and identifiable footage."
+          "A Game Educator asks the child before taking a photograph, even where the parent has ticked the box, and will not deliberately photograph or film a child who objects. A child whose parent has not ticked the box is kept out of session photographs and identifiable footage. Wide shots of an event or workshop may be taken from a distance, where no child is identifiable."
         ]
       },
       "mediaCaseStudies": {
@@ -2552,7 +2552,7 @@
             "Only registered participants and vetted Game Educators may join.",
             "Communication is group-based and supervised.",
             "There is no private direct messaging between children.",
-            "Routine sessions are not recorded.",
+            "Sessions are not recorded.",
             "Lynx Educate and School of Gaming do not use Programme registration data for behavioural advertising to children."
           ],
           "Safeguarding concerns are handled under the joint <linkRobloxSafeguarding>Child Safeguarding Policy</linkRobloxSafeguarding>. School of Gaming handles day-to-day concerns in the first instance and escalates serious matters to Lynx Educate. Emergency services are contacted first where a child may be in immediate danger.",
@@ -2668,7 +2668,7 @@
   },
   "robloxSafeguarding": {
     "title": "Creator Academy Child Safeguarding Policy",
-    "subtitle": "This sits alongside School of Gaming’s <linkDiscipline>Anti-Bullying policy</linkDiscipline>, which continues to apply to day-to-day behaviour in sessions. This document covers Lynx Educate and School of Gaming’s broader safeguarding responsibilities for the Programme, including in-person events.",
+    "subtitle": "This sits alongside School of Gaming’s <linkDiscipline>Anti-Bullying policy</linkDiscipline>, which continues to apply to day-to-day behaviour in sessions. This document covers Lynx Educate and School of Gaming’s broader safeguarding responsibilities for the Programme.",
     "lastUpdated": "Last reviewed: {date}",
     "intro": {
       "heading": "Our commitment",
@@ -2684,7 +2684,7 @@
         ]
       },
       "vetting": {
-        "heading": "Before someone works with children",
+        "heading": "Before a Game Educator works with children",
         "blocks": [
           "All Game Educators (Gedus) are required to complete School of Gaming’s own vetting and training process before working with children on Sogverse. This includes:",
           [
@@ -2709,7 +2709,9 @@
       },
       "inPerson": {
         "heading": "During in-person events",
-        "blocks": []
+        "blocks": [
+          "Our Game Educators run the session; they are not the organisers of the event. Lynx Educate is responsible for making sure the venues it works with are suitable for the session and meet the Programme’s safeguarding requirements. The specific arrangements may vary by venue."
+        ]
       },
       "behaviour": {
         "heading": "Behaviour and discipline",
@@ -2732,7 +2734,7 @@
       "data": {
         "heading": "Data and photos",
         "blocks": [
-          "A child appears in a photograph only where their parent has ticked the optional media consent for that child when enrolling them. The parent can change that answer at any time on the child’s page in My SOG, and a Game Educator asks the child before taking a photograph even where the parent has consented. The <linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy> sets out what the consent covers."
+          "A child appears in a photograph only where their parent has ticked the optional media consent for that child when enrolling them. The parent can change that answer at any time on the child’s page in My SOG, and a Game Educator asks the child before taking a photograph even where the parent has consented. Wide shots of an event or workshop may be taken from a distance, where no child is identifiable. The <linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy> sets out what the consent covers."
         ]
       },
       "review": {
@@ -2798,7 +2800,7 @@
       "media": {
         "heading": "Photos, video, and marketing",
         "blocks": [
-          "Whether your child appears in photographs or video is a single optional choice, made when you enrol them in a Creator Academy activity. You can change it at any time on your child’s page in My SOG. A child without that permission is kept out of session photographs entirely."
+          "Whether your child appears in photographs or video is a single optional choice, made when you enrol them in a Creator Academy activity. You can change it at any time on your child’s page in My SOG. A child without that permission is kept out of session photographs entirely. Wide shots of an event or workshop may be taken from a distance, where no child is identifiable."
         ]
       },
       "concern": {

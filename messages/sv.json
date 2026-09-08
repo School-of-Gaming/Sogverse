@@ -3331,7 +3331,7 @@
           "E-post till föräldern från Lynx Educate om kommande Roblox-evenemang och resurser om spel.",
           "Foton och filmer på barnet, i träffrapporter, i effektrapportering till Lynx Educate och Roblox och i offentlig användning av Lynx Educate, School of Gaming och Roblox."
         ],
-        "Vanliga träffar online spelas inte in. Inget barn fotograferas eller filmas om det nödvändiga tillståndet saknas eller om barnet inte vill vara med.",
+        "Träffar online spelas inte in. Inget barn fotograferas eller filmas om det nödvändiga tillståndet saknas eller om barnet inte vill vara med.",
         "Lynx Educate och School of Gaming säljer inte anmälningsuppgifter från Programmet och använder dem inte för reklam riktad till barn.",
         "Du och ditt barn kan begära att få se, rätta eller radera uppgifter, återkalla ett frivilligt samtycke eller invända mot viss användning genom att kontakta support@lynxeducate.com eller {supportEmail}."
       ]
@@ -3529,7 +3529,7 @@
       "media": {
         "heading": "Foto, film och offentlig användning",
         "blocks": [
-          "Vanliga träffar online spelas inte in. Om foto eller film planeras vid en viss träff eller ett visst evenemang får familjerna veta det i förväg.",
+          "Träffar online spelas inte in. Om foto eller film planeras vid ett evenemang får familjerna veta det i förväg.",
           "Det finns ett enda frivilligt mediaval per barn. Det görs när barnet anmäls till en aktivitet i Skaparnas akademi och kan ändras när som helst på barnets sida i My SOG."
         ]
       },
@@ -3543,14 +3543,14 @@
             "Användas offentligt av Lynx Educate, School of Gaming och Roblox på deras webbplatser och kanaler i sociala medier."
           ],
           "Offentligt innehåll kan vara tillgängligt i hela världen och kan kopieras eller delas vidare av andra användare utan att organisationerna kan styra det.",
-          "Är rutan inte ikryssad hålls barnet helt utanför träffarnas foton och filmmaterial. Ingenting som identifierar barnet tas med i en träffrapport, delas med Lynx Educate eller Roblox eller används offentligt."
+          "Är rutan inte ikryssad hålls barnet helt utanför träffarnas foton och filmmaterial. Ingenting som identifierar barnet tas med i en träffrapport, delas med Lynx Educate eller Roblox eller används offentligt. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
         ]
       },
       "mediaChildAgrees": {
         "heading": "Barnet måste också vara med på det",
         "blocks": [
           "Föräldern bör prata med barnet om mediavalet innan det görs. Vi förklarar också fotograferingen eller filmningen för barnet på ett sätt som passar barnets ålder.",
-          "En spelfostrare frågar barnet innan ett foto tas, även när föräldern kryssat i rutan, och vi fotograferar eller filmar aldrig medvetet ett barn som säger nej. Ett barn vars förälder inte kryssat i rutan hålls utanför träffarnas foton och identifierbart material."
+          "En spelfostrare frågar barnet innan ett foto tas, även när föräldern kryssat i rutan, och vi fotograferar eller filmar aldrig medvetet ett barn som säger nej. Ett barn vars förälder inte kryssat i rutan hålls utanför träffarnas foton och identifierbart material. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
         ]
       },
       "mediaCaseStudies": {
@@ -3586,7 +3586,7 @@
             "Endast anmälda deltagare och kontrollerade spelfostrare får delta.",
             "Kommunikationen sker i grupp och under uppsikt.",
             "Det finns inga privata direktmeddelanden mellan barn.",
-            "Vanliga träffar spelas inte in.",
+            "Träffar spelas inte in.",
             "Lynx Educate och School of Gaming använder inte anmälningsuppgifter från Programmet för beteendebaserad reklam riktad till barn."
           ],
           "Oro som rör barns trygghet hanteras enligt den gemensamma <linkRobloxSafeguarding>barnskyddspolicyn</linkRobloxSafeguarding>. School of Gaming hanterar vardagliga ärenden i första hand och för allvarliga ärenden vidare till Lynx Educate. Räddningstjänsten kontaktas först om ett barn kan vara i omedelbar fara.",
@@ -3702,7 +3702,7 @@
   },
   "robloxSafeguarding": {
     "title": "Barnskyddspolicy för Skaparnas akademi",
-    "subtitle": "Det här dokumentet kompletterar School of Gamings <linkDiscipline>policy mot mobbning</linkDiscipline>, som fortsatt gäller för vardagligt beteende under träffarna. Här beskrivs Lynx Educates och School of Gamings bredare ansvar för barns trygghet i Programmet, även vid fysiska evenemang.",
+    "subtitle": "Det här dokumentet kompletterar School of Gamings <linkDiscipline>policy mot mobbning</linkDiscipline>, som fortsatt gäller för vardagligt beteende under träffarna. Här beskrivs Lynx Educates och School of Gamings bredare ansvar för barns trygghet i Programmet.",
     "lastUpdated": "Senast granskad: {date}",
     "intro": {
       "heading": "Vårt åtagande",
@@ -3718,7 +3718,7 @@
         ]
       },
       "vetting": {
-        "heading": "Innan någon arbetar med barn",
+        "heading": "Innan en spelfostrare arbetar med barn",
         "blocks": [
           "Alla spelfostrare (Geduer) måste genomgå School of Gamings egen kontroll- och utbildningsprocess innan de arbetar med barn i Sogverse. Detta omfattar:",
           [
@@ -3743,7 +3743,9 @@
       },
       "inPerson": {
         "heading": "Under fysiska evenemang",
-        "blocks": []
+        "blocks": [
+          "Våra spelfostrare håller i träffen, men de är inte arrangörer av evenemanget. Lynx Educate ansvarar för att de lokaler organisationen samarbetar med är lämpliga för träffen och uppfyller Programmets krav på barns trygghet. De närmare arrangemangen kan variera från lokal till lokal."
+        ]
       },
       "behaviour": {
         "heading": "Beteende och disciplin",
@@ -3766,7 +3768,7 @@
       "data": {
         "heading": "Uppgifter och foton",
         "blocks": [
-          "Ett barn syns på ett foto endast när barnets förälder kryssat i det frivilliga mediasamtycket för barnet vid anmälan. Föräldern kan ändra svaret när som helst på barnets sida i My SOG, och en spelfostrare frågar barnet innan ett foto tas, även när föräldern har samtyckt. <linkRobloxPrivacy>Integritetspolicyn för Skaparnas akademi</linkRobloxPrivacy> beskriver vad samtycket omfattar."
+          "Ett barn syns på ett foto endast när barnets förälder kryssat i det frivilliga mediasamtycket för barnet vid anmälan. Föräldern kan ändra svaret när som helst på barnets sida i My SOG, och en spelfostrare frågar barnet innan ett foto tas, även när föräldern har samtyckt. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera. <linkRobloxPrivacy>Integritetspolicyn för Skaparnas akademi</linkRobloxPrivacy> beskriver vad samtycket omfattar."
         ]
       },
       "review": {
@@ -3832,7 +3834,7 @@
       "media": {
         "heading": "Foto, video och marknadsföring",
         "blocks": [
-          "Om ditt barn syns på foton eller film är ett enda frivilligt val, som du gör när du anmäler barnet till en aktivitet i Skaparnas akademi. Du kan ändra det när som helst på barnets sida i My SOG. Ett barn utan det tillståndet hålls helt utanför träffarnas foton."
+          "Om ditt barn syns på foton eller film är ett enda frivilligt val, som du gör när du anmäler barnet till en aktivitet i Skaparnas akademi. Du kan ändra det när som helst på barnets sida i My SOG. Ett barn utan det tillståndet hålls helt utanför träffarnas foton. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
         ]
       },
       "concern": {

@@ -26,26 +26,23 @@ export async function generateMetadata(): Promise<Metadata> {
 // review cycle, so this is a review date rather than an edit date. A date-only
 // value, rendered through the locale-aware, UTC-pinned `formatDateOnly` helper
 // rather than hardcoded per language (a plain calendar date carries no zone).
-const LAST_UPDATED = "2026-09-07";
+const LAST_UPDATED = "2026-09-08";
 
 // Section order is owned here, not in the message files, so the same structure
 // renders for every locale. Each key maps to a flat
 // `robloxSafeguarding.sections.<key>` entry with a `heading` and a `blocks`
-// array (ordered paragraphs and bulleted lists — see `policy-content.ts`).
-//
-// `pending` marks a section the source document leaves as a hole: we render the
-// generic "this is not written yet" notice rather than inventing the copy or
-// quietly dropping the heading.
+// array (ordered paragraphs and bulleted lists — see `policy-content.ts`). No
+// section is incomplete, so none carries a "pending" notice.
 const SECTIONS = [
-  { key: "covers", pending: false },
-  { key: "vetting", pending: false },
-  { key: "online", pending: false },
-  { key: "inPerson", pending: true },
-  { key: "behaviour", pending: false },
-  { key: "escalation", pending: false },
-  { key: "concern", pending: false },
-  { key: "data", pending: false },
-  { key: "review", pending: false },
+  "covers",
+  "vetting",
+  "online",
+  "inPerson",
+  "behaviour",
+  "escalation",
+  "concern",
+  "data",
+  "review",
 ] as const;
 
 export default async function RobloxSafeguardingPage() {
@@ -69,10 +66,9 @@ export default async function RobloxSafeguardingPage() {
         heading: t("intro.heading"),
         blocks: rawPolicyBlocks(t.raw("intro.blocks")),
       }}
-      sections={SECTIONS.map(({ key, pending }) => ({
+      sections={SECTIONS.map((key) => ({
         heading: t(`sections.${key}.heading`),
         blocks: rawPolicyBlocks(t.raw(`sections.${key}.blocks`)),
-        pending: pending ? tLegal("pendingSection") : undefined,
       }))}
     />
   );
