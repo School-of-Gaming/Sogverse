@@ -306,3 +306,19 @@ export const adminRemoveParticipationRpcResult = z.discriminatedUnion("kind", [
   }),
   z.object({ kind: z.literal("noop") }),
 ]);
+
+/**
+ * `admin_move_participation` RPC result — the ids the club-switch commit route
+ * logs. There is no `kind`: the function either moves the seat or raises, so
+ * every success has one shape. `group_id` is the shared placement rule's answer
+ * for the target, which for the paid target this RPC insists on is always null;
+ * `stripe_subscription_id` is the live subscription the seat carried in, echoed
+ * back so the audit line names it without a second read.
+ */
+export const adminMoveParticipationRpcResult = z.object({
+  participation_id: z.string(),
+  source_product_id: z.string(),
+  target_product_id: z.string(),
+  group_id: z.string().nullable(),
+  stripe_subscription_id: z.string(),
+});

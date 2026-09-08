@@ -121,6 +121,11 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // "no such product" / "no such participation" — an error, but not 42501.
   admin_enroll_participant: { permittedRoles: ["admin"] },
   admin_remove_participation: { permittedRoles: ["admin"] },
+  // The database half of the admin club switch (00245). Past the admin guard,
+  // an all-NULL call hits "no such participation" — an error, but not 42501 —
+  // so the positive half of the matrix is assertable here with no fixture,
+  // exactly as it is for the two RPCs above.
+  admin_move_participation: { permittedRoles: ["admin"] },
 
   // --- customer-gated ------------------------------------------------------
   // Phase 3's grant-plus-guard conversion. Past the role guard, a customer

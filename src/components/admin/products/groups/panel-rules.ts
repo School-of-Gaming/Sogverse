@@ -1,5 +1,8 @@
 import type { GameAccountExternalId } from "@/components/game-account";
-import { isNoChargeBillingMode } from "@/lib/constants/billing";
+import {
+  isNoChargeBillingMode,
+  isSubscriptionShaped,
+} from "@/lib/constants/billing";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { RobloxRenderMap } from "@/services/roblox";
 import type {
@@ -227,25 +230,13 @@ export function resolveDrop(
 // ---------------------------------------------------------------------------
 
 /**
- * A product whose active seat cannot exist without a monthly Stripe
- * subscription: a consumer club that charges. Every other shape is either
- * no-charge or paid once, out of band or through Checkout, and an admin action
- * on it leaves no recurring charge unaccounted for.
- *
- * Two panel decisions ask this one question, deliberately the same one
- * `admin_enroll_participant` refuses on:
- *
- *  - whether the add-gamer affordance is offered at all (`canCompEnroll`), and
- *  - whether promoting a never-paid waitlister needs the dialog. A paid camp or
- *    event is *not* subscription-shaped: its payment is a one-off the admin
- *    settles out of band, so the drag is trusted and goes straight through.
+ * Re-exported, not defined here. The predicate moved to
+ * `src/lib/constants/billing.ts` beside `isNoChargeBillingMode` when the admin
+ * club switch (00245) gave it a SQL twin and a second caller outside this panel:
+ * a rule kept in lockstep with the database belongs with the other one, not in a
+ * panel's rule file. Every existing importer keeps reading it from here.
  */
-export function isSubscriptionShaped(
-  productType: ProductType,
-  billingMode: BillingMode,
-): boolean {
-  return productType === "consumer_club" && billingMode === "paid";
-}
+export { isSubscriptionShaped };
 
 /**
  * Whether the panel offers its add-gamer affordance. Mirrors the enrollment

@@ -145,6 +145,12 @@ import { TEST_IDS } from "./constants";
  *                  product id, backing the case that the ask-set writer refuses
  *                  an unknown product even on a call that clears; declared here
  *                  for the same reason 6ee and 6ff are)
+ *   6d0-6d2        admin-move-participation.test.ts (two PAID consumer clubs
+ *                  6d0 and 6d1 — the switch needs a source and a target, and
+ *                  the pair is also what the opposite-directions deadlock case
+ *                  moves between — plus a FREE club 6d2, the no-charge target
+ *                  the RPC refuses. Three products because no single one can be
+ *                  both ends of a move and the refused shape at once)
  *   6ee            marketing-consents.test.ts's must-NOT-exist product id,
  *                  backing the case that the ask-set writer refuses an unknown
  *                  product even on a call that clears. Declared here for the

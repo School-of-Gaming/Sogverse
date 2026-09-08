@@ -2549,6 +2549,14 @@ export type Database = {
         Args: { p_participant_id: string; p_product_id: string }
         Returns: Json
       }
+      admin_move_participation: {
+        Args: {
+          p_participation_id: string
+          p_stripe_price_id: string
+          p_target_product_id: string
+        }
+        Returns: Json
+      }
       admin_remove_participation: {
         Args: { p_participation_id: string; p_product_id: string }
         Returns: Json
@@ -2885,6 +2893,13 @@ export type Database = {
         Returns: boolean
       }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
+      is_subscription_shaped: {
+        Args: {
+          p_mode: Database["public"]["Enums"]["billing_mode"]
+          p_type: Database["public"]["Enums"]["product_type"]
+        }
+        Returns: boolean
+      }
       is_voice_group_member: { Args: { p_group_id: string }; Returns: boolean }
       is_voice_group_moderator: {
         Args: { p_group_id: string }

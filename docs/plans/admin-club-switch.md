@@ -141,6 +141,13 @@ subscription, its customer, its card and its billing date.
    checked for, never the first line of defence after money moved. Return the ids the
    route logs. Grant to `authenticated`; classify in the spine as role-gated. Push,
    regenerate types.
+   *As built:* the shared predicate had no SQL half, so `00245` adds
+   `public.is_subscription_shaped(product_type, billing_mode)` — granted to nobody,
+   like `is_no_charge` — and the TypeScript twin moved from the groups panel's rule
+   file to `src/lib/constants/billing.ts` beside `isNoChargeBillingMode`, re-exported
+   from the panel so existing importers are untouched. `group_joined_at` is not
+   written at all: the trigger stamps it from `group_id`, and the table comment
+   forbids writing it by hand.
 2. **Check route.** An admin route under
    `/api/admin/products/[id]/participations/[participationId]/` that takes the target
    product id and returns what the dialog shows and whether commit is allowed: the
