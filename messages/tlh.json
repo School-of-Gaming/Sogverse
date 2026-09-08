@@ -983,22 +983,28 @@
           "dropZone": "ghom’a’ yIchIj",
           "title": "ghom’a’ yIchIj",
           "description": "latlh ghom’a’Daq {name} vIH. Huch nge’ghachDaj poltaH qorDu’: ghom’a’ chu’ HuchvaD wImuvmoH, ’ej ’Iq pIm ghItlh veb Sam Stripe.",
+          "searchPlaceholder": "pongDaq ghom’a’ yISam",
           "picker": {
-            "label": "ghom’a’ chu’",
-            "empty": "latlh ghom’a’ tu’lu’be’. jarmey Huch poQnIS ghom’a’, ’ej rInbe’nIS."
+            "empty": "latlh ghom’a’ tu’lu’be’. jarmey Huch poQnIS ghom’a’, ’ej rInbe’nIS.",
+            "noMatch": "ghom’a’ tu’lu’be’ QulmeHvam. rInmoHmeH yIQIt, pagh latlh pong yInID."
           },
           "warnings": {
-            "ageExcluded": "ghom’a’vam ben mI’Daq ’oHbe’ SuvwI’ ben’e’.",
             "regionLocked": "wa’ Sep qorDu’pu’ neH ngIp ghom’a’vam.",
-            "notStarted": "taghbe’ba’ ghom’a’vam. ’ach DaHjaj Huch nItebHa’ poQtaH chIjghach."
+            "notStarted": "taghbe’ba’ ghom’a’vam. ’ach DaHjaj Huch nItebHa’ poQtaH chIjghach.",
+            "full": "buy’choH ghom’a’vam: quS Hoch ngaSlu’. ’ach chIjlu’taH."
           },
           "prices": {
-            "selectPrompt": "ghom’a’ yIwIv; vaj qorDu’vaD chu’bogh Doch Dalegh.",
             "current": "DaH DIl",
             "target": "Huch chu’",
             "proration": "DaH pagh nge’lu’. jar DIlta’bogh chuq nobHa’ Stripe, ’ej ghom’a’ chu’ chuq nge’; ghItlh veb ’oH pIm’e’.",
             "unavailable": "Huch cha’lu’be’",
             "error": "cheghbe’ Huch chov. ghom’a’ yIwIvqa’."
+          },
+          "back": "yIchegh",
+          "group": {
+            "label": "ghom",
+            "unassigned": "ghom yIwIvQo’",
+            "members": "{count, plural, one {# SuvwI’} other {# SuvwI’pu’}}"
           },
           "refusals": {
             "latestInvoiceNotPaid": "DIlbe’lu’ qorDu’ ghItlh Qav, vaj poH DIlta’ tu’lu’be’. StripeDaq nom yIQIj.",

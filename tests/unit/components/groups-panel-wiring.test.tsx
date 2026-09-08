@@ -105,13 +105,13 @@ vi.mock("@/components/admin/products/groups/waitlist-card", () => ({
     return <div data-testid="waitlist-card" />;
   },
 }));
-// The club switch's own dialog: a stub, because what this file is about is
-// whether the drop *opened* it and for which seat. The dialog itself reads the
+// The club switch's own sheet: a stub, because what this file is about is
+// whether the drop *opened* it and for which seat. The sheet itself reads the
 // platform's whole club catalogue and talks to Stripe through the check route,
 // none of which the drag handler knows anything about.
-vi.mock("@/components/admin/products/groups/switch-club-dialog", () => ({
-  SwitchClubDialog: ({ participationId }: { participationId: string }) => (
-    <div data-testid="switch-club-dialog">{participationId}</div>
+vi.mock("@/components/admin/products/groups/switch-club-sheet", () => ({
+  SwitchClubSheet: ({ participationId }: { participationId: string }) => (
+    <div data-testid="switch-club-sheet">{participationId}</div>
   ),
 }));
 vi.mock("@/components/admin/products/participant-picker-sheet", () => ({
@@ -380,12 +380,12 @@ describe("GroupsPanel — the drop zone's answers, none of which write", () => {
     // one product shape whose header carries no Add button — so this also pins
     // that the drop zone is reachable there at all. Removal is refused for
     // this seat by the database, and the switch is what the zone offered
-    // instead; the drop opens the dialog and writes nothing on its own.
+    // instead; the drop opens the sheet and writes nothing on its own.
     renderPanel("consumer_club", "paid");
     drop(IDS.subscribedParticipation, { remove: true });
 
     noMutationFired();
-    expect(screen.getByTestId("switch-club-dialog").textContent).toBe(
+    expect(screen.getByTestId("switch-club-sheet").textContent).toBe(
       IDS.subscribedParticipation,
     );
     // Neither the removal confirm nor the refusal the zone used to answer with.
@@ -425,7 +425,7 @@ describe("GroupsPanel — the drop zone's answers, none of which write", () => {
     ).toBeTruthy();
     // And no switch: the same zone, the same drop, decided by the seat's own
     // subscription and by nothing else.
-    expect(screen.queryByTestId("switch-club-dialog")).toBeNull();
+    expect(screen.queryByTestId("switch-club-sheet")).toBeNull();
   });
 });
 

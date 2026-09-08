@@ -8,6 +8,10 @@ import {
   matchesProductSearch,
   normalizeProductSearch,
 } from "@/components/admin/products/product-name-search";
+import {
+  filterClubProducts,
+  type ClubFilterableProduct,
+} from "@/components/admin/products/club-product-filter";
 import type { Json, ProductType } from "@/types";
 
 const ONLINE = "Online";
@@ -165,5 +169,97 @@ describe("product name search", () => {
     expect(filterProductsBySearch(rows, "club").map((row) => row.id)).toEqual([
       "a",
     ]);
+  });
+});
+
+// The four narrowings the admin club list's bar and the club switch's picker
+// share. Both surfaces call this one predicate, so a rule proved here is the
+// rule on both of them.
+describe("filterClubProducts", () => {
+  function club(
+    overrides: Partial<ClubFilterableProduct> & { id: string },
+  ): ClubFilterableProduct & { id: string } {
+    return {
+      product_translations: [{ name: `Club ${overrides.id}` }],
+      schedule_slots: [{ weekday: 0 }],
+      gedu_group_assignments: [{ gedu_id: "gedu-1" }],
+      spoken_language_code: "en",
+      ...overrides,
+    };
+  }
+
+  // Three clubs differing in exactly the dimensions the bar narrows on, so a
+  // predicate reading the wrong field cannot accidentally pass.
+  const monday = club({ id: "a" });
+  const wednesday = club({
+    id: "b",
+    schedule_slots: [{ weekday: 2 }, { weekday: 4 }],
+    gedu_group_assignments: [{ gedu_id: "gedu-2" }],
+    spoken_language_code: "fi",
+    product_translations: [{ name: "Kerho b" }],
+  });
+  const unstaffed = club({
+    id: "c",
+    schedule_slots: [],
+    gedu_group_assignments: [],
+  });
+  const clubs = [monday, wednesday, unstaffed];
+
+  const ALL = { search: "", weekday: null, geduId: null, language: null };
+
+  it("keeps every club, in order, when nothing is selected", () => {
+    expect(filterClubProducts(clubs, ALL).map((row) => row.id)).toEqual([
+      "a",
+      "b",
+      "c",
+    ]);
+  });
+
+  it("matches a weekday against any of the club's slots", () => {
+    expect(
+      filterClubProducts(clubs, { ...ALL, weekday: 4 }).map((row) => row.id),
+    ).toEqual(["b"]);
+    // A club with no slots at all answers no weekday.
+    expect(
+      filterClubProducts(clubs, { ...ALL, weekday: 0 }).map((row) => row.id),
+    ).toEqual(["a"]);
+  });
+
+  it("matches an educator assigned to any group on the club", () => {
+    expect(
+      filterClubProducts(clubs, { ...ALL, geduId: "gedu-1" }).map(
+        (row) => row.id,
+      ),
+    ).toEqual(["a"]);
+    // A club with nobody assigned anywhere answers no educator.
+    expect(
+      filterClubProducts([unstaffed], { ...ALL, geduId: "gedu-1" }),
+    ).toEqual([]);
+  });
+
+  it("matches the club's own spoken language", () => {
+    expect(
+      filterClubProducts(clubs, { ...ALL, language: "fi" }).map((row) => row.id),
+    ).toEqual(["b"]);
+  });
+
+  it("ANDs every active filter, the search included", () => {
+    expect(
+      filterClubProducts(clubs, {
+        search: "kerho",
+        weekday: 2,
+        geduId: "gedu-2",
+        language: "fi",
+      }).map((row) => row.id),
+    ).toEqual(["b"]);
+    // One filter disagreeing empties the result, however well the rest match.
+    expect(
+      filterClubProducts(clubs, {
+        search: "kerho",
+        weekday: 2,
+        geduId: "gedu-1",
+        language: "fi",
+      }),
+    ).toEqual([]);
   });
 });

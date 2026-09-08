@@ -147,7 +147,11 @@ subscription, its customer, its card and its billing date.
    file to `src/lib/constants/billing.ts` beside `isNoChargeBillingMode`, re-exported
    from the panel so existing importers are untouched. `group_joined_at` is not
    written at all: the trigger stamps it from `group_id`, and the table comment
-   forbids writing it by hand.
+   forbids writing it by hand. Owner's later ruling that the admin places the
+   seat in the same dialog made `00246` replace the function with a fourth
+   argument `p_group_id uuid DEFAULT NULL`: a group of the target places the
+   seat there, a group of any other product is refused with `check_violation`,
+   and an omitted argument leaves the shared placement rule exactly as above.
 2. **Check route.** An admin route under
    `/api/admin/products/[id]/participations/[participationId]/` that takes the target
    product id and returns what the dialog shows and whether commit is allowed: the
@@ -194,7 +198,11 @@ subscription, its customer, its card and its billing date.
    has succeeded, and before the 200, the commit sends the family the same
    purchase confirmation a paid club signup sends — for the target club, on the
    unchanged participation id, so its calendar invitation updates the entry they
-   already hold.
+   already hold. The commit body also carries the admin's chosen `groupId`
+   (null for the unassigned inbox), pre-flighted with a plain `product_groups`
+   read like every other refusal and answered as a plain 400 — a group of
+   another product is a malformed request from the dialog, not one of the hard
+   refusals an admin is told about the seat, so the refusal enum stays as it is.
 4. **Webhook.** In the subscription-updated handler, also store the subscription's
    current item price id on the row (the checkout-completed handler already does at
    creation). Three lines; no reconciliation logic. Our own commit fires this event
@@ -218,12 +226,16 @@ subscription, its customer, its card and its billing date.
    the chip it is offered and says "Switch club" for an active subscribed seat and
    "Remove gamer" for every other one, and the removal drop rule resolves to the
    switch for exactly that seat (a waitlisted subscribed row keeps the refusal).
-   Three of the five picker warnings ship — age range, region lock and
-   not-started. **Full** and **required consents the family has not accepted** were
-   dropped: the admin product list read carries `seat_count` but no taken count, and
-   carries no `product_required_consents` embed at all, so neither is derivable from
-   the two documents already on screen and both would have cost a per-picker server
-   read. Owner's call whether either is worth a widened product query later.
+   The picker is a **sheet** carrying the admin club list's own narrowing — a
+   search box plus the weekday, educator and language filters, through one shared
+   predicate — over rows that state each club's cadence, language, educators and
+   start date, ordered by likeness to the club being left, because clubs are not
+   unique by name and fifty of them cannot be scrolled. Choosing one opens a second
+   stage where the **admin places the seat in a group of the target, or leaves it
+   unassigned**, above the money block; the warnings are region lock, not started
+   and — from the target's own groups snapshot, which that stage already reads —
+   full. The age-range warning was dropped by owner ruling, and required consents
+   stay dropped.
 6. **Tests.** DB: the RPC in the spine; a non-admin refused; a move between two paid
    clubs (row moved, group resolved by the shared rule, price id set); a seat with no
    live subscription refused; a duplicate seat on the target failing on the index; two

@@ -935,22 +935,28 @@
           "dropZone": "Changer de club",
           "title": "Changer de club",
           "description": "Déplacez {name} vers un autre club. La famille garde son abonnement : nous le basculons sur le prix du nouveau club, et Stripe règle la différence sur la prochaine facture.",
+          "searchPlaceholder": "Rechercher un club par son nom",
           "picker": {
-            "label": "Nouveau club",
-            "empty": "Il n’y a aucun autre club vers lequel basculer. La destination doit être un club facturé chaque mois et qui n’est pas terminé."
+            "empty": "Il n’y a aucun autre club vers lequel basculer. La destination doit être un club facturé chaque mois et qui n’est pas terminé.",
+            "noMatch": "Aucun club ne correspond à cette recherche. Effacez les filtres ou essayez un autre nom."
           },
           "warnings": {
-            "ageExcluded": "L’âge de ce joueur est en dehors de la tranche d’âge du club.",
             "regionLocked": "Ce club n’accepte que les familles d’un seul pays.",
-            "notStarted": "Ce club n’a pas encore commencé. Le changement est tout de même facturé au prorata à partir d’aujourd’hui."
+            "notStarted": "Ce club n’a pas encore commencé. Le changement est tout de même facturé au prorata à partir d’aujourd’hui.",
+            "full": "Toutes les places de ce club sont prises. Le changement y installe quand même le joueur."
           },
           "prices": {
-            "selectPrompt": "Choisissez un club pour voir ce qui change pour la famille.",
             "current": "Paie actuellement",
             "target": "Nouveau prix",
             "proration": "Rien n’est prélevé maintenant. Stripe crédite le reste du mois payé et débite la part du nouveau club, et la différence apparaît sur la prochaine facture de la famille.",
             "unavailable": "Aucun prix à afficher",
             "error": "La vérification du prix n’a pas abouti. Choisissez à nouveau le club pour réessayer."
+          },
+          "back": "Retour",
+          "group": {
+            "label": "Groupe",
+            "unassigned": "Laisser sans groupe",
+            "members": "{count, plural, one {# joueur} other {# joueurs}}"
           },
           "refusals": {
             "latestInvoiceNotPaid": "La dernière facture de la famille n’est pas payée, il n’y a donc pas de temps payé à déplacer. Réglez cela dans Stripe d’abord.",

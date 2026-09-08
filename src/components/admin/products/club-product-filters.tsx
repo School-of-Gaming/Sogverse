@@ -14,10 +14,8 @@ import { localizedLocationName } from "@/lib/locations/localized-name";
 import { formatWeekday } from "@/lib/products/format-product-schedule";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useLanguageNames } from "@/hooks/use-language-names";
-import {
-  matchesProductSearch,
-  normalizeProductSearch,
-} from "./product-name-search";
+import { normalizeProductSearch } from "./product-name-search";
+import { filterClubProducts } from "./club-product-filter";
 import { ProductListResults } from "./product-list-results";
 import {
   optionInRange,
@@ -166,24 +164,19 @@ export function ClubProductFilters({
   const municipalityId = optionInRange(municipalityOptions, municipalityParam);
 
   const filtered = useMemo(() => {
-    const dayNum = day === null ? null : Number(day);
-    const needle = normalizeProductSearch(search);
-    return products.filter((p) => {
-      if (!matchesProductSearch(p, needle)) return false;
-      if (dayNum !== null && !p.schedule_slots.some((s) => s.weekday === dayNum))
-        return false;
-      if (
-        geduId !== null &&
-        !p.gedu_group_assignments.some((a) => a.gedu_id === geduId)
-      )
-        return false;
-      if (isConsumer && language !== null && p.spoken_language_code !== language)
-        return false;
-      if (isMunicipality && municipalityId !== null) {
-        if (muniByProduct.get(p.id)?.id !== municipalityId) return false;
-      }
-      return true;
+    // The four shared narrowings first, through the predicate the club switch's
+    // picker also calls; the municipality is applied here because only this
+    // page offers it and it needs the row's resolved location chain.
+    const narrowed = filterClubProducts(products, {
+      search,
+      weekday: day === null ? null : Number(day),
+      geduId,
+      language,
     });
+    if (!isMunicipality || municipalityId === null) return narrowed;
+    return narrowed.filter(
+      (p) => muniByProduct.get(p.id)?.id === municipalityId,
+    );
   }, [
     products,
     search,
@@ -191,7 +184,6 @@ export function ClubProductFilters({
     geduId,
     language,
     municipalityId,
-    isConsumer,
     isMunicipality,
     muniByProduct,
   ]);

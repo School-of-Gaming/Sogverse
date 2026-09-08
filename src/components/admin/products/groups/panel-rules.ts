@@ -530,55 +530,121 @@ export function robloxIdsFrom(
  * panel already takes when an admin promotes a waitlister past the cap. The
  * hard refusals are the money ones, and they come back from the check route.
  *
- * The set is bounded by what the two documents this panel already holds can
- * answer: the admin product list row carries the target's status, its age range
- * and its region lock, and the groups snapshot carries the seated child's date
- * of birth. Nothing here costs a read, which is the constraint — a warning
- * needing its own query would fire once per row of the picker.
+ * Two of the three are answered by the club catalogue row the picker already
+ * lists — its status and its region lock — and cost no read, which is what lets
+ * them be drawn against every row. The third, the seat cap, needs the target's
+ * own groups snapshot and is therefore drawn only once a club is chosen.
+ *
+ * **No age warning.** A club's authored age range is guidance for a family
+ * browsing the shop rather than a rule about who may sit in it, and an admin
+ * moving a seat has already made that judgment about this child. Drawn down a
+ * list of otherwise-fine clubs it taught the admin to skip the warning column,
+ * which cost the other two more than it was worth.
  */
 export type SwitchTargetWarning =
-  /** The child's age falls outside the target's authored range. */
-  | "ageExcluded"
   /** The target admits only families in one country. */
   | "regionLocked"
   /** The target has not started — a switch onto it bills prorated from today. */
-  | "notStarted";
+  | "notStarted"
+  /** Every seat the target caps itself at is taken. */
+  | "full";
 
 /** The target club's own facts, as the admin product list row carries them. */
 export interface SwitchTargetFacts {
   status: ProductStatus;
-  minAge: number | null;
-  maxAge: number | null;
   regionLockCountry: string | null;
 }
 
 /**
- * The warnings one picker row carries, in the order they are drawn.
- *
- * `childAge` is null when the seat holds no date of birth — an adult seat, the
- * one participation shape carrying no gamer profile — and the age warning is
- * then not derivable, so it is not drawn. Guessing either way would be worse: a
- * false "too old" on every parent seat, or a silent pass on a real mismatch. An
- * open-ended range (only a minimum, or only a maximum) is honoured on whichever
- * end is authored, because that is what such a range means.
+ * The warnings one picker row carries, in the order they are drawn — the two
+ * derivable from the catalogue row alone. The cap is {@link isSwitchTargetFull}.
  */
 export function switchTargetWarnings(
   target: SwitchTargetFacts,
-  childAge: number | null,
 ): SwitchTargetWarning[] {
   const warnings: SwitchTargetWarning[] = [];
 
-  if (
-    childAge !== null &&
-    ((target.minAge !== null && childAge < target.minAge) ||
-      (target.maxAge !== null && childAge > target.maxAge))
-  ) {
-    warnings.push("ageExcluded");
-  }
   if (target.regionLockCountry !== null) warnings.push("regionLocked");
   if (target.status === "pending") warnings.push("notStarted");
 
   return warnings;
+}
+
+/**
+ * Whether the target has no seat left: every active seat it holds — grouped and
+ * unassigned alike — counted against its own cap.
+ *
+ * The waitlist is not counted, because a queued family holds no seat; the
+ * snapshot's two active arms are exactly what the cap is about. An uncapped
+ * club (`seatCount` null) is never full, and neither is one whose snapshot has
+ * not arrived: a warning invented from a document nobody has read would be a
+ * claim nothing checked.
+ *
+ * A warning rather than a refusal, like the two above it — the panel already
+ * lets an admin promote a waitlister past the cap, and this is the same trust.
+ */
+export function isSwitchTargetFull(
+  snapshot: ProductGroupsSnapshot | undefined,
+  seatCount: number | null,
+): boolean {
+  if (snapshot === undefined || seatCount === null) return false;
+  const taken =
+    snapshot.groups.reduce((sum, g) => sum + g.participations.length, 0) +
+    snapshot.unassigned.length;
+  return taken >= seatCount;
+}
+
+/** What the ordering reads off a candidate — and off the club the seat leaves. */
+export interface SwitchTargetOrderRow {
+  id: string;
+  spoken_language_code: string;
+  schedule_slots: readonly { weekday: number }[];
+  start_date: string | null;
+}
+
+/**
+ * The picker's order: the clubs most like the one the family is leaving first.
+ *
+ * A family changing club is usually changing one thing about it, so the two
+ * facts that decide whether a club is a candidate for them at all — the
+ * language it is delivered in, and the day of the week it lands on — sort ahead
+ * of everything else. Same spoken language first; within that, a club running
+ * on a day the source club runs on; then the earliest start date, so what is
+ * about to begin sits above what began long ago. The id breaks the final tie,
+ * so the list is stable across renders rather than left to the sort's own hand.
+ *
+ * `source` is null only if the seat's own club is missing from the catalogue
+ * read; the likeness halves then have nothing to compare against and the order
+ * is the start date alone.
+ */
+export function orderSwitchTargets<T extends SwitchTargetOrderRow>(
+  candidates: readonly T[],
+  source: SwitchTargetOrderRow | null,
+): T[] {
+  const sourceWeekdays = new Set(
+    (source?.schedule_slots ?? []).map((slot) => slot.weekday),
+  );
+  const likeness = (row: T): [number, number] => [
+    source !== null && row.spoken_language_code === source.spoken_language_code
+      ? 0
+      : 1,
+    row.schedule_slots.some((slot) => sourceWeekdays.has(slot.weekday)) ? 0 : 1,
+  ];
+
+  return [...candidates].sort((a, b) => {
+    const [aLanguage, aDay] = likeness(a);
+    const [bLanguage, bDay] = likeness(b);
+    if (aLanguage !== bLanguage) return aLanguage - bLanguage;
+    if (aDay !== bDay) return aDay - bDay;
+    // A club with no start date authored sorts after every dated one: there is
+    // nothing to compare it on, and it is the less finished row of the two.
+    if (a.start_date !== b.start_date) {
+      if (a.start_date === null) return 1;
+      if (b.start_date === null) return -1;
+      return a.start_date < b.start_date ? -1 : 1;
+    }
+    return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+  });
 }
 
 /**

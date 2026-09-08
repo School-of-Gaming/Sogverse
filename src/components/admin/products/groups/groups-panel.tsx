@@ -22,13 +22,11 @@ import type { ProductAudience } from "@/lib/products/product-audience";
 import { ParticipantPickerSheet } from "../participant-picker-sheet";
 import { GeduPickerSheet } from "../gedu-picker-sheet";
 import { GroupsPanelView, type GroupsPanelActions } from "./groups-panel-view";
-import { SwitchClubDialog } from "./switch-club-dialog";
+import { SwitchClubSheet } from "./switch-club-sheet";
 import { PRODUCT_TYPE_CONFIG } from "../product-type-config";
 import { robloxIdsFrom } from "./panel-rules";
 import { useRobloxRenders } from "@/services/roblox";
 import { platformForTopic } from "@/lib/products/topics";
-import { computeAge } from "@/lib/utils";
-import { useTimezone } from "@/providers";
 import type { BillingMode, ProductTopic, ProductType } from "@/types";
 
 interface GroupsPanelProps {
@@ -100,7 +98,6 @@ export function GroupsPanel({
   opensTime,
 }: GroupsPanelProps) {
   const t = useTranslations("admin.products.groupsPanel");
-  const timeZone = useTimezone();
   const { data: snapshot, isLoading } = useProductGroups(productId);
   const pending = useGroupPending(productId);
 
@@ -126,17 +123,16 @@ export function GroupsPanel({
   const [pickerForGroupId, setPickerForGroupId] = useState<string | null>(null);
   const [participantPickerOpen, setParticipantPickerOpen] = useState(false);
   // The seat whose club switch is open, and — separately — whether that switch
-  // is currently moving money. The dialog reports the second back rather than
-  // the panel inferring it: React Query's pending flag clears before the dialog
+  // is currently moving money. The sheet reports the second back rather than
+  // the panel inferring it: React Query's pending flag clears before the sheet
   // closes, and a chip that un-greys a frame early is one an admin can start
   // dragging mid-switch.
   const [switchingId, setSwitchingId] = useState<string | null>(null);
   const [switchCommitting, setSwitchCommitting] = useState(false);
 
-  // The seat the switch dialog is about, read off the same snapshot that drew
-  // its chip — so the dialog's age warnings and the chip's age line can only
-  // ever be the same fact. Only active seats are searched: a waitlisted row
-  // never carries a subscription and never offers the control.
+  // The seat the switch sheet is about, read off the same snapshot that drew
+  // its chip. Only active seats are searched: a waitlisted row never carries a
+  // subscription and never offers the control.
   const switching = useMemo(() => {
     if (!snapshot || switchingId === null) return null;
     const active = [
@@ -145,17 +141,8 @@ export function GroupsPanel({
     ];
     const row = active.find((p) => p.id === switchingId);
     if (!row) return null;
-    return {
-      id: row.id,
-      name: row.participant_first_name,
-      // Null on an adult seat, which carries no date of birth — the dialog
-      // draws no age warning rather than guessing one.
-      childAge:
-        row.participant_date_of_birth === null
-          ? null
-          : computeAge(row.participant_date_of_birth, timeZone),
-    };
-  }, [snapshot, switchingId, timeZone]);
+    return { id: row.id, name: row.participant_first_name };
+  }, [snapshot, switchingId]);
 
   // Anyone already holding a seat blocks a re-add via the picker.
   const enrolledParticipantIds = useMemo(() => {
@@ -279,11 +266,10 @@ export function GroupsPanel({
               (every consumer club on the platform) and talks to Stripe, neither
               of which the presentational panel knows anything about. */}
           {switching && (
-            <SwitchClubDialog
+            <SwitchClubSheet
               productId={productId}
               participationId={switching.id}
               gamerName={switching.name}
-              childAge={switching.childAge}
               onCommittingChange={setSwitchCommitting}
               onClose={() => {
                 setSwitchingId(null);

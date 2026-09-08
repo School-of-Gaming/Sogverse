@@ -5,6 +5,8 @@ import {
   dragSubjectsFrom,
   isSubscriptionShaped,
   isSwitchTarget,
+  isSwitchTargetFull,
+  orderSwitchTargets,
   readDropData,
   readChipDragData,
   resolveDrop,
@@ -692,72 +694,183 @@ describe("seatOfferAvailability", () => {
 // The club switch's picker
 // ---------------------------------------------------------------------------
 
-// An ordinary running club with an open age range and no region lock — the
-// boring target each test below bends one field of.
+// An ordinary running club with no region lock — the boring target each test
+// below bends one field of.
 const runningClub: SwitchTargetFacts = {
   status: "running",
-  minAge: 8,
-  maxAge: 12,
   regionLockCountry: null,
 };
 
 describe("switchTargetWarnings", () => {
-  it("flags nothing on a running club the child fits", () => {
-    expect(switchTargetWarnings(runningClub, 10)).toEqual([]);
-  });
-
-  it("flags an age below the minimum and above the maximum alike", () => {
-    expect(switchTargetWarnings(runningClub, 7)).toEqual(["ageExcluded"]);
-    expect(switchTargetWarnings(runningClub, 13)).toEqual(["ageExcluded"]);
-    // The bounds themselves are inside the range.
-    expect(switchTargetWarnings(runningClub, 8)).toEqual([]);
-    expect(switchTargetWarnings(runningClub, 12)).toEqual([]);
-  });
-
-  it("honours an open-ended range on whichever end is authored", () => {
-    const noCeiling = { ...runningClub, maxAge: null };
-    expect(switchTargetWarnings(noCeiling, 40)).toEqual([]);
-    expect(switchTargetWarnings(noCeiling, 7)).toEqual(["ageExcluded"]);
-
-    const noFloor = { ...runningClub, minAge: null };
-    expect(switchTargetWarnings(noFloor, 4)).toEqual([]);
-    expect(switchTargetWarnings(noFloor, 13)).toEqual(["ageExcluded"]);
-  });
-
-  it("draws no age warning when the seat carries no date of birth", () => {
-    // An adult seat has no gamer profile and no birth date, so the question is
-    // unanswerable — and a false "too old" on every parent seat would be worse
-    // than saying nothing.
-    expect(switchTargetWarnings(runningClub, null)).toEqual([]);
+  it("flags nothing on an ordinary running club", () => {
+    expect(switchTargetWarnings(runningClub)).toEqual([]);
   });
 
   it("flags a region lock whatever country it names", () => {
     expect(
-      switchTargetWarnings({ ...runningClub, regionLockCountry: "FI" }, 10),
+      switchTargetWarnings({ ...runningClub, regionLockCountry: "FI" }),
     ).toEqual(["regionLocked"]);
   });
 
   it("flags a club that has not started, and only that status", () => {
-    expect(switchTargetWarnings({ ...runningClub, status: "pending" }, 10)).toEqual(
-      ["notStarted"],
-    );
-    expect(switchTargetWarnings({ ...runningClub, status: "running" }, 10)).toEqual(
+    expect(switchTargetWarnings({ ...runningClub, status: "pending" })).toEqual([
+      "notStarted",
+    ]);
+    expect(switchTargetWarnings({ ...runningClub, status: "running" })).toEqual(
       [],
     );
   });
 
   it("carries every warning that applies, in drawing order", () => {
     expect(
-      switchTargetWarnings(
-        {
-          status: "pending",
-          minAge: 12,
-          maxAge: 15,
-          regionLockCountry: "SE",
-        },
-        9,
-      ),
-    ).toEqual(["ageExcluded", "regionLocked", "notStarted"]);
+      switchTargetWarnings({ status: "pending", regionLockCountry: "SE" }),
+    ).toEqual(["regionLocked", "notStarted"]);
+  });
+});
+
+describe("isSwitchTargetFull", () => {
+  // Seats counted across both active arms of the snapshot; the waitlist holds
+  // nobody's seat and must not count towards the cap.
+  function seat(id: string): GroupParticipationDetail {
+    return {
+      id,
+      participant_id: `gamer-of-${id}`,
+      participant_first_name: "Aino",
+      participant_date_of_birth: null,
+      participant_gender: null,
+      participant_minecraft_username: null,
+      participant_minecraft_uuid: null,
+      participant_roblox_username: null,
+      participant_roblox_user_id: null,
+      parent_first_name: null,
+      parent_last_name: null,
+      participant_email: null,
+      status: "active",
+      signed_up_at: "2026-01-01T00:00:00Z",
+      has_live_subscription: false,
+      has_payment_marker: false,
+      group_joined_at: null,
+      note: null,
+      note_updated_by_first_name: null,
+      seat_offer_sent_at: null,
+      seat_offer_expiry_notified_at: null,
+    };
+  }
+
+  function snapshotOf(
+    grouped: number[],
+    unassigned: number,
+    waitlist = 0,
+  ): ProductGroupsSnapshot {
+    const seats = (n: number, prefix: string) =>
+      Array.from({ length: n }, (_, i) => seat(`${prefix}-${i}`));
+    return {
+      product_id: "target",
+      groups: grouped.map((count, i) => ({
+        id: `group-${i}`,
+        name: `Group ${i}`,
+        created_at: "2026-01-01T00:00:00Z",
+        gedus: [],
+        participations: seats(count, `g${i}`),
+      })),
+      unassigned: seats(unassigned, "inbox"),
+      waitlist: seats(waitlist, "queue").map((row) => ({
+        ...row,
+        status: "waitlisted" as const,
+      })),
+    };
+  }
+
+  it("is full at the cap and above it", () => {
+    expect(isSwitchTargetFull(snapshotOf([4], 2), 6)).toBe(true);
+    expect(isSwitchTargetFull(snapshotOf([4, 3], 0), 6)).toBe(true);
+  });
+
+  it("is not full below the cap", () => {
+    expect(isSwitchTargetFull(snapshotOf([4], 1), 6)).toBe(false);
+    expect(isSwitchTargetFull(snapshotOf([], 0), 1)).toBe(false);
+  });
+
+  it("never counts the waitlist", () => {
+    expect(isSwitchTargetFull(snapshotOf([2], 0, 9), 6)).toBe(false);
+  });
+
+  it("is never full without a cap, and never full without a snapshot", () => {
+    expect(isSwitchTargetFull(snapshotOf([50], 50), null)).toBe(false);
+    expect(isSwitchTargetFull(undefined, 1)).toBe(false);
+  });
+});
+
+describe("orderSwitchTargets", () => {
+  const source = {
+    id: "source",
+    spoken_language_code: "en",
+    schedule_slots: [{ weekday: 1 }],
+    start_date: "2026-01-01",
+  };
+
+  // Four clubs covering each rung of the order, deliberately listed in the
+  // wrong one.
+  const otherLanguage = {
+    id: "c-other-language",
+    spoken_language_code: "fi",
+    schedule_slots: [{ weekday: 1 }],
+    start_date: "2025-01-01",
+  };
+  const sameLanguageOtherDay = {
+    id: "c-other-day",
+    spoken_language_code: "en",
+    schedule_slots: [{ weekday: 4 }],
+    start_date: "2025-01-01",
+  };
+  const sameLanguageSameDayLate = {
+    id: "c-late",
+    spoken_language_code: "en",
+    schedule_slots: [{ weekday: 1 }, { weekday: 3 }],
+    start_date: "2026-09-01",
+  };
+  const sameLanguageSameDayEarly = {
+    id: "c-early",
+    spoken_language_code: "en",
+    schedule_slots: [{ weekday: 1 }],
+    start_date: "2026-02-01",
+  };
+
+  it("puts likeness first: language, then a shared weekday, then start date", () => {
+    expect(
+      orderSwitchTargets(
+        [
+          otherLanguage,
+          sameLanguageOtherDay,
+          sameLanguageSameDayLate,
+          sameLanguageSameDayEarly,
+        ],
+        source,
+      ).map((row) => row.id),
+    ).toEqual(["c-early", "c-late", "c-other-day", "c-other-language"]);
+  });
+
+  it("sorts an undated club last and breaks the final tie on the id", () => {
+    const undated = { ...sameLanguageSameDayEarly, id: "c-b", start_date: null };
+    const twin = { ...sameLanguageSameDayEarly, id: "c-a" };
+    expect(
+      orderSwitchTargets([undated, twin], source).map((row) => row.id),
+    ).toEqual(["c-a", "c-b"]);
+  });
+
+  it("orders by start date alone when the source club is unknown", () => {
+    expect(
+      orderSwitchTargets(
+        [sameLanguageSameDayLate, otherLanguage],
+        null,
+      ).map((row) => row.id),
+    ).toEqual(["c-other-language", "c-late"]);
+  });
+
+  it("leaves the input array untouched", () => {
+    const input = [sameLanguageSameDayLate, sameLanguageSameDayEarly];
+    orderSwitchTargets(input, source);
+    expect(input.map((row) => row.id)).toEqual(["c-late", "c-early"]);
   });
 });
 

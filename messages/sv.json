@@ -935,22 +935,28 @@
           "dropZone": "Byt klubb",
           "title": "Byt klubb",
           "description": "Flytta {name} till en annan klubb. Familjen behåller sin prenumeration — vi lägger den på den nya klubbens pris, och Stripe jämnar ut skillnaden på nästa faktura.",
+          "searchPlaceholder": "Sök klubbar på namn",
           "picker": {
-            "label": "Ny klubb",
-            "empty": "Det finns ingen annan klubb att byta till. Målet måste vara en klubb som faktureras varje månad och som inte har avslutats."
+            "empty": "Det finns ingen annan klubb att byta till. Målet måste vara en klubb som faktureras varje månad och som inte har avslutats.",
+            "noMatch": "Ingen klubb matchar sökningen. Rensa filtren eller pröva ett annat namn."
           },
           "warnings": {
-            "ageExcluded": "Spelarens ålder ligger utanför klubbens åldersspann.",
             "regionLocked": "Den här klubben tar bara emot familjer i ett land.",
-            "notStarted": "Den här klubben har inte startat än. Bytet faktureras ändå proportionellt från i dag."
+            "notStarted": "Den här klubben har inte startat än. Bytet faktureras ändå proportionellt från i dag.",
+            "full": "Alla platser i den här klubben är tagna. Bytet ger spelaren en plats ändå."
           },
           "prices": {
-            "selectPrompt": "Välj en klubb för att se vad som ändras för familjen.",
             "current": "Betalar nu",
             "target": "Nytt pris",
             "proration": "Inget dras nu. Stripe krediterar resten av den betalda månaden och debiterar den nya klubbens andel, och skillnaden hamnar på familjens nästa faktura.",
             "unavailable": "Inget pris att visa",
             "error": "Priskontrollen kom inte tillbaka. Välj klubben igen för att försöka på nytt."
+          },
+          "back": "Tillbaka",
+          "group": {
+            "label": "Grupp",
+            "unassigned": "Lämna utan grupp",
+            "members": "{count, plural, one {# spelare} other {# spelare}}"
           },
           "refusals": {
             "latestInvoiceNotPaid": "Familjens senaste faktura är inte betald, så det finns ingen betald tid att flytta. Red ut det i Stripe först.",

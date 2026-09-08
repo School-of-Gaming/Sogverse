@@ -118,6 +118,12 @@ export function useSwitchClubCheck(
 interface CommitVars {
   targetProductId: string;
   /**
+   * Where on the target the seat lands: one of that club's groups, or null to
+   * leave it in the target's unassigned inbox. The admin chooses it in the
+   * sheet's second stage; the RPC refuses a group that is not the target's.
+   */
+  groupId: string | null;
+  /**
    * Minted once per dialog open and reused for every press in that dialog, so a
    * retry after a timeout or a failed database step replays the same Stripe
    * request rather than prorating a second time.
