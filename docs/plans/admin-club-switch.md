@@ -203,10 +203,29 @@ subscription, its customer, its card and its billing date.
    read like every other refusal and answered as a plain 400 — a group of
    another product is a malformed request from the dialog, not one of the hard
    refusals an admin is told about the seat, so the refusal enum stays as it is.
+   The commit *verifies* the plan change rather than trusting it: Stripe replays
+   a reused idempotency key without touching the subscription, so the returned
+   subscription's single item is checked against the minted price and the RPC is
+   not called when it disagrees — a 409 saying nothing moved and to start again
+   from a fresh open. `00247` gives the RPC two required expected-state
+   arguments (the source product id and the price id the check read) so the
+   write is bound to what the route saw; both refusals are 409s carrying
+   `stripeUpdated: true` and no refusal word. A structured attempt line is
+   written immediately before the Stripe call, so a process killed inside it
+   still leaves a record of who asked for the move. The check also refuses an
+   item billing more than one seat, answers a Stripe/row currency disagreement
+   as a plain 400, states `subscriptionEndsAt` for a family who has cancelled
+   (a fact for the sheet, never a gate), and truncates the description and every
+   metadata value to Stripe's 500-character limits at composition.
 4. **Webhook.** In the subscription-updated handler, also store the subscription's
    current item price id on the row (the checkout-completed handler already does at
    creation). Three lines; no reconciliation logic. Our own commit fires this event
    and the webhook writes the same id the RPC wrote; last writer wins and both agree.
+   *As built:* last writer wins only among events that are not stale — the price
+   key is omitted when the event's `created` predates the row's `updated_at`, so
+   an out-of-order delivery describing the subscription before the switch cannot
+   put the row back on the club the family has left. Status and period end are
+   written either way.
 5. **Groups panel UI.** A control on an **active, subscribed** participant's chip
    (never a waitlist chip; how it is revealed — hover, focus, a small menu — is the
    implementer's call, since the chip is a drag handle today) opens a dialog. The
@@ -226,16 +245,15 @@ subscription, its customer, its card and its billing date.
    the chip it is offered and says "Switch club" for an active subscribed seat and
    "Remove gamer" for every other one, and the removal drop rule resolves to the
    switch for exactly that seat (a waitlisted subscribed row keeps the refusal).
-   The picker is a **sheet** carrying the admin club list's own narrowing — a
-   search box plus the weekday, educator and language filters, through one shared
-   predicate — over rows that state each club's cadence, language, educators and
-   start date, ordered by likeness to the club being left, because clubs are not
-   unique by name and fifty of them cannot be scrolled. Choosing one opens a second
-   stage where the **admin places the seat in a group of the target, or leaves it
-   unassigned**, above the money block; the warnings are region lock, not started
-   and — from the target's own groups snapshot, which that stage already reads —
-   full. The age-range warning was dropped by owner ruling, and required consents
-   stay dropped.
+   The picker is a **sheet** whose first stage is a search box and nothing else,
+   over rows that state each club's schedule and start date, ordered by likeness
+   to the club being left, because clubs are not unique by name and fifty of them
+   cannot be scrolled. Choosing one opens a second stage where the **admin places
+   the seat in a group of the target, or leaves it unassigned**, above the money
+   block, with the target's age range beside the gamer's age, its seats, its
+   region, its start and any already-cancelled subscription's end date stated
+   under the money as plain information rather than as warnings — owner's ruling
+   that nothing in this sheet is toned as a flag. Required consents stay dropped.
 6. **Tests.** DB: the RPC in the spine; a non-admin refused; a move between two paid
    clubs (row moved, group resolved by the shared rule, price id set); a seat with no
    live subscription refused; a duplicate seat on the target failing on the index; two

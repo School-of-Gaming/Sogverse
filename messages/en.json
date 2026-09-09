@@ -934,21 +934,25 @@
         "switchClub": {
           "dropZone": "Switch club",
           "title": "Switch club",
-          "description": "Move {name} to another club. The family keeps its subscription — we put it on the new club's price, and Stripe settles the difference on the next invoice.",
+          "description": "Move {name} to another club. Nothing changes for the family today: the same card is charged on the same date, the next invoice corrects for the rest of this month, and from then on they pay the new club's price.",
           "searchPlaceholder": "Search clubs by name",
           "picker": {
             "empty": "There is no other club to switch to. A target has to be a club billed monthly that has not finished.",
-            "noMatch": "No club matches this search. Clear the filters or try another name."
+            "noMatch": "No club matches this search. Try another name."
           },
-          "warnings": {
-            "regionLocked": "This club admits families in one country only.",
-            "notStarted": "This club has not started yet. The switch still bills prorated from today.",
-            "full": "Every seat in this club is taken. The switch seats the gamer anyway."
+          "facts": {
+            "ageRange": "{ends, select, both {Ages {min}–{max}} from {Ages {min} and up} other {Ages {max} and under}}",
+            "ageRangeWithGamer": "{ends, select, both {Ages {min}–{max}} from {Ages {min} and up} other {Ages {max} and under}} · {name} is {age}",
+            "seats": "{taken} of {capacity} seats taken",
+            "regionLocked": "Families in {country} only",
+            "notStarted": "Starts {date}. The family pays from today, not from the start date.",
+            "notStartedUndated": "No start date yet. The family pays from today.",
+            "subscriptionEnding": "The family has cancelled this subscription; it ends on {date}. This month's price difference will not be invoiced."
           },
           "prices": {
             "current": "Paying now",
             "target": "New price",
-            "proration": "Nothing is charged now. Stripe credits the rest of the paid month and debits the new club's share, and the difference lands on the family's next invoice.",
+            "proration": "The next invoice adds or refunds the difference for the rest of this month.",
             "unavailable": "No price to show",
             "error": "The price check did not come back. Pick the club again to retry."
           },

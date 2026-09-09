@@ -520,78 +520,119 @@ export function robloxIdsFrom(
 }
 
 // ---------------------------------------------------------------------------
-// The club switch's target warnings
+// The club switch's target facts
 // ---------------------------------------------------------------------------
 
 /**
- * What is worth flagging about a club an admin is about to move a subscribed
- * seat onto. Every one is a **warning, never a refusal**: admins are trusted,
- * and the switch RPC deliberately enforces none of them — the same posture the
- * panel already takes when an admin promotes a waitlister past the cap. The
- * hard refusals are the money ones, and they come back from the check route.
+ * What is worth stating about the club an admin is about to move a subscribed
+ * seat onto. Every one is **information, never a refusal and never a warning**:
+ * admins are trusted, the switch RPC enforces none of them, and an admin
+ * moving a seat has already made the judgment each of these facts would
+ * second-guess. The hard refusals are the money ones, and they come back from
+ * the check route.
  *
- * Two of the three are answered by the club catalogue row the picker already
- * lists — its status and its region lock — and cost no read, which is what lets
- * them be drawn against every row. The third, the seat cap, needs the target's
- * own groups snapshot and is therefore drawn only once a club is chosen.
+ * They are stated on the second stage only, about the one club that has been
+ * chosen — the listing above it carries no facts of this kind at all. Drawn
+ * down a list of otherwise-fine clubs they taught an admin to skip the column,
+ * which cost the ones that matter more than it was worth.
  *
- * **No age warning.** A club's authored age range is guidance for a family
- * browsing the shop rather than a rule about who may sit in it, and an admin
- * moving a seat has already made that judgment about this child. Drawn down a
- * list of otherwise-fine clubs it taught the admin to skip the warning column,
- * which cost the other two more than it was worth.
+ * Three of the four are answered by the club catalogue row the picker already
+ * holds — its age range, its region lock and its status. The fourth, the seat
+ * count, needs the target's own groups snapshot, which the second stage reads
+ * anyway to offer the groups.
  */
-export type SwitchTargetWarning =
-  /** The target admits only families in one country. */
-  | "regionLocked"
-  /** The target has not started — a switch onto it bills prorated from today. */
-  | "notStarted"
-  /** Every seat the target caps itself at is taken. */
-  | "full";
+export type SwitchTargetFact =
+  /**
+   * The club's authored range, and the seat holder's age where there is one.
+   * `gamerAge` is null on an adult seat, which carries no date of birth: the
+   * range is stated alone rather than beside a guessed age.
+   */
+  | {
+      kind: "ageRange";
+      minAge: number | null;
+      maxAge: number | null;
+      gamerAge: number | null;
+    }
+  /**
+   * How full the club is, against its own cap. `taken` is null while the
+   * snapshot is still in flight — the line holds its space and says nothing,
+   * because a count invented from a document nobody has read would be a claim
+   * nothing checked.
+   */
+  | { kind: "seats"; taken: number | null; capacity: number }
+  /** The club admits families in one country only. */
+  | { kind: "regionLocked"; country: string }
+  /** The club has not started; a switch onto it bills prorated from today. */
+  | { kind: "notStarted"; startDate: string | null };
 
-/** The target club's own facts, as the admin product list row carries them. */
-export interface SwitchTargetFacts {
+/** The target club's own columns, as the admin product list row carries them. */
+export interface SwitchTargetSource {
   status: ProductStatus;
+  minAge: number | null;
+  maxAge: number | null;
   regionLockCountry: string | null;
+  startDate: string | null;
+  seatCount: number | null;
 }
 
 /**
- * The warnings one picker row carries, in the order they are drawn — the two
- * derivable from the catalogue row alone. The cap is {@link isSwitchTargetFull}.
- */
-export function switchTargetWarnings(
-  target: SwitchTargetFacts,
-): SwitchTargetWarning[] {
-  const warnings: SwitchTargetWarning[] = [];
-
-  if (target.regionLockCountry !== null) warnings.push("regionLocked");
-  if (target.status === "pending") warnings.push("notStarted");
-
-  return warnings;
-}
-
-/**
- * Whether the target has no seat left: every active seat it holds — grouped and
- * unassigned alike — counted against its own cap.
+ * Every active seat the target holds — grouped and unassigned alike — against
+ * its own cap, or null where there is no cap or no snapshot yet.
  *
  * The waitlist is not counted, because a queued family holds no seat; the
- * snapshot's two active arms are exactly what the cap is about. An uncapped
- * club (`seatCount` null) is never full, and neither is one whose snapshot has
- * not arrived: a warning invented from a document nobody has read would be a
- * claim nothing checked.
- *
- * A warning rather than a refusal, like the two above it — the panel already
- * lets an admin promote a waitlister past the cap, and this is the same trust.
+ * snapshot's two active arms are exactly what a cap is about. An uncapped club
+ * states nothing at all: "12 of ∞" is not a fact anyone needs.
  */
-export function isSwitchTargetFull(
+export function switchTargetSeats(
   snapshot: ProductGroupsSnapshot | undefined,
   seatCount: number | null,
-): boolean {
-  if (snapshot === undefined || seatCount === null) return false;
-  const taken =
-    snapshot.groups.reduce((sum, g) => sum + g.participations.length, 0) +
-    snapshot.unassigned.length;
-  return taken >= seatCount;
+): { taken: number | null; capacity: number } | null {
+  if (seatCount === null) return null;
+  if (snapshot === undefined) return { taken: null, capacity: seatCount };
+  return {
+    taken:
+      snapshot.groups.reduce((sum, g) => sum + g.participations.length, 0) +
+      snapshot.unassigned.length,
+    capacity: seatCount,
+  };
+}
+
+/**
+ * The facts about one chosen target, in the order they are stated.
+ *
+ * The age range is stated whenever either end is authored — an open-ended range
+ * is honoured on the end it has — and is silent on a club that authored
+ * neither, where there is nothing to say. Everything else is present only when
+ * it is true of this club: an unlocked club states no region, a running one
+ * states no start.
+ */
+export function switchTargetFacts(
+  target: SwitchTargetSource,
+  gamerAge: number | null,
+  snapshot: ProductGroupsSnapshot | undefined,
+): SwitchTargetFact[] {
+  const facts: SwitchTargetFact[] = [];
+
+  if (target.minAge !== null || target.maxAge !== null) {
+    facts.push({
+      kind: "ageRange",
+      minAge: target.minAge,
+      maxAge: target.maxAge,
+      gamerAge,
+    });
+  }
+
+  const seats = switchTargetSeats(snapshot, target.seatCount);
+  if (seats !== null) facts.push({ kind: "seats", ...seats });
+
+  if (target.regionLockCountry !== null) {
+    facts.push({ kind: "regionLocked", country: target.regionLockCountry });
+  }
+  if (target.status === "pending") {
+    facts.push({ kind: "notStarted", startDate: target.startDate });
+  }
+
+  return facts;
 }
 
 /** What the ordering reads off a candidate — and off the club the seat leaves. */

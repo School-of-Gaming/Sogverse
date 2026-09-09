@@ -27,6 +27,8 @@ import { PRODUCT_TYPE_CONFIG } from "../product-type-config";
 import { robloxIdsFrom } from "./panel-rules";
 import { useRobloxRenders } from "@/services/roblox";
 import { platformForTopic } from "@/lib/products/topics";
+import { computeAge } from "@/lib/utils";
+import { useTimezone } from "@/providers";
 import type { BillingMode, ProductTopic, ProductType } from "@/types";
 
 interface GroupsPanelProps {
@@ -98,6 +100,7 @@ export function GroupsPanel({
   opensTime,
 }: GroupsPanelProps) {
   const t = useTranslations("admin.products.groupsPanel");
+  const timeZone = useTimezone();
   const { data: snapshot, isLoading } = useProductGroups(productId);
   const pending = useGroupPending(productId);
 
@@ -127,12 +130,21 @@ export function GroupsPanel({
   // the panel inferring it: React Query's pending flag clears before the sheet
   // closes, and a chip that un-greys a frame early is one an admin can start
   // dragging mid-switch.
+  //
+  // The seat and the open flag are two pieces of state rather than one nullable
+  // id, because the sheet is always mounted and closes by animating out: the
+  // seat it was about has to stay readable for as long as the exit runs, so
+  // closing clears the flag and leaves the id where it is.
   const [switchingId, setSwitchingId] = useState<string | null>(null);
+  const [switchOpen, setSwitchOpen] = useState(false);
   const [switchCommitting, setSwitchCommitting] = useState(false);
 
   // The seat the switch sheet is about, read off the same snapshot that drew
-  // its chip. Only active seats are searched: a waitlisted row never carries a
-  // subscription and never offers the control.
+  // its chip — so the sheet's age line and the chip are one fact. It outlives
+  // the close on purpose (see above), which is what keeps the gamer's name in
+  // the description from blanking mid-animation. Only active seats are
+  // searched: a waitlisted row never carries a subscription and never offers
+  // the control.
   const switching = useMemo(() => {
     if (!snapshot || switchingId === null) return null;
     const active = [
@@ -141,8 +153,18 @@ export function GroupsPanel({
     ];
     const row = active.find((p) => p.id === switchingId);
     if (!row) return null;
-    return { id: row.id, name: row.participant_first_name };
-  }, [snapshot, switchingId]);
+    return {
+      id: row.id,
+      name: row.participant_first_name,
+      // Null on an adult seat, which carries no date of birth — the sheet then
+      // states the club's age range alone rather than beside a guessed age.
+      age:
+        row.participant_date_of_birth === null
+          ? null
+          : computeAge(row.participant_date_of_birth, timeZone),
+    };
+  }, [snapshot, switchingId, timeZone]);
+
 
   // Anyone already holding a seat blocks a re-add via the picker.
   const enrolledParticipantIds = useMemo(() => {
@@ -198,7 +220,10 @@ export function GroupsPanel({
     // looking exactly as it did and the admin has to be able to press again.
     onSendSeatOffer: (participationId) =>
       sendSeatOffer.mutateAsync({ participationId }),
-    onRequestSwitchClub: setSwitchingId,
+    onRequestSwitchClub: (participationId) => {
+      setSwitchingId(participationId);
+      setSwitchOpen(true);
+    },
   };
 
   const groupBeingStaffed = snapshot?.groups.find(
@@ -264,19 +289,24 @@ export function GroupsPanel({
           {/* The club switch. An overlay like the two pickers above it, and
               here for the same reason: it reads reference data of its own
               (every consumer club on the platform) and talks to Stripe, neither
-              of which the presentational panel knows anything about. */}
-          {switching && (
-            <SwitchClubSheet
-              productId={productId}
-              participationId={switching.id}
-              gamerName={switching.name}
-              onCommittingChange={setSwitchCommitting}
-              onClose={() => {
-                setSwitchingId(null);
+              of which the presentational panel knows anything about. Mounted
+              from the start and driven by `open`, exactly as they are — a sheet
+              mounted already open plays no enter animation and, unmounted on
+              close, no exit one either. */}
+          <SwitchClubSheet
+            open={switchOpen}
+            onOpenChange={(next) => {
+              if (!next) {
+                setSwitchOpen(false);
                 setSwitchCommitting(false);
-              }}
-            />
-          )}
+              }
+            }}
+            productId={productId}
+            participationId={switching?.id ?? ""}
+            gamerName={switching?.name ?? ""}
+            gamerAge={switching?.age ?? null}
+            onCommittingChange={setSwitchCommitting}
+          />
         </>
       }
     />

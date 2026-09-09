@@ -37,13 +37,21 @@ export function useProductDetail(id: string | undefined) {
   });
 }
 
-export function useProductsByType(type: ProductType) {
+// `enabled` defaults to true, so every existing caller is unchanged. It exists
+// for the callers that are mounted long before they are looked at — an overlay
+// that stays in the tree so it can animate — where the whole catalogue of a type
+// would otherwise be read on every page that happens to hold one.
+export function useProductsByType(
+  type: ProductType,
+  options?: { enabled?: boolean },
+) {
   const supabase = getClient();
   const service = new ProductsService(supabase);
 
   return useQuery({
     queryKey: productKeys.listByType(type),
     queryFn: () => service.listByType(type),
+    enabled: options?.enabled ?? true,
   });
 }
 

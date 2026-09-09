@@ -5,7 +5,6 @@ import {
   dragSubjectsFrom,
   isSubscriptionShaped,
   isSwitchTarget,
-  isSwitchTargetFull,
   orderSwitchTargets,
   readDropData,
   readChipDragData,
@@ -13,9 +12,10 @@ import {
   robloxIdsFrom,
   seatOfferAvailability,
   showUnassignedSection,
-  switchTargetWarnings,
+  switchTargetFacts,
+  switchTargetSeats,
   type DragSubject,
-  type SwitchTargetFacts,
+  type SwitchTargetSource,
 } from "@/components/admin/products/groups/panel-rules";
 import type { GroupParticipationDetail, ProductGroupsSnapshot } from "@/types";
 
@@ -694,110 +694,179 @@ describe("seatOfferAvailability", () => {
 // The club switch's picker
 // ---------------------------------------------------------------------------
 
-// An ordinary running club with no region lock — the boring target each test
-// below bends one field of.
-const runningClub: SwitchTargetFacts = {
+// An ordinary running club with no range, no lock and no cap — the boring
+// target each test below bends one field of.
+const runningClub: SwitchTargetSource = {
   status: "running",
+  minAge: null,
+  maxAge: null,
   regionLockCountry: null,
+  startDate: "2026-01-01",
+  seatCount: null,
 };
 
-describe("switchTargetWarnings", () => {
-  it("flags nothing on an ordinary running club", () => {
-    expect(switchTargetWarnings(runningClub)).toEqual([]);
-  });
+// Seats counted across both active arms of the snapshot; the waitlist holds
+// nobody's seat and must not count towards the cap.
+function seat(id: string): GroupParticipationDetail {
+  return {
+    id,
+    participant_id: `gamer-of-${id}`,
+    participant_first_name: "Aino",
+    participant_date_of_birth: null,
+    participant_gender: null,
+    participant_minecraft_username: null,
+    participant_minecraft_uuid: null,
+    participant_roblox_username: null,
+    participant_roblox_user_id: null,
+    parent_first_name: null,
+    parent_last_name: null,
+    participant_email: null,
+    status: "active",
+    signed_up_at: "2026-01-01T00:00:00Z",
+    has_live_subscription: false,
+    has_payment_marker: false,
+    group_joined_at: null,
+    note: null,
+    note_updated_by_first_name: null,
+    seat_offer_sent_at: null,
+    seat_offer_expiry_notified_at: null,
+  };
+}
 
-  it("flags a region lock whatever country it names", () => {
-    expect(
-      switchTargetWarnings({ ...runningClub, regionLockCountry: "FI" }),
-    ).toEqual(["regionLocked"]);
-  });
+function snapshotOf(
+  grouped: number[],
+  unassigned: number,
+  waitlist = 0,
+): ProductGroupsSnapshot {
+  const seats = (n: number, prefix: string) =>
+    Array.from({ length: n }, (_, i) => seat(`${prefix}-${i}`));
+  return {
+    product_id: "target",
+    groups: grouped.map((count, i) => ({
+      id: `group-${i}`,
+      name: `Group ${i}`,
+      created_at: "2026-01-01T00:00:00Z",
+      gedus: [],
+      participations: seats(count, `g${i}`),
+    })),
+    unassigned: seats(unassigned, "inbox"),
+    waitlist: seats(waitlist, "queue").map((row) => ({
+      ...row,
+      status: "waitlisted" as const,
+    })),
+  };
+}
 
-  it("flags a club that has not started, and only that status", () => {
-    expect(switchTargetWarnings({ ...runningClub, status: "pending" })).toEqual([
-      "notStarted",
-    ]);
-    expect(switchTargetWarnings({ ...runningClub, status: "running" })).toEqual(
-      [],
-    );
-  });
-
-  it("carries every warning that applies, in drawing order", () => {
-    expect(
-      switchTargetWarnings({ status: "pending", regionLockCountry: "SE" }),
-    ).toEqual(["regionLocked", "notStarted"]);
-  });
-});
-
-describe("isSwitchTargetFull", () => {
-  // Seats counted across both active arms of the snapshot; the waitlist holds
-  // nobody's seat and must not count towards the cap.
-  function seat(id: string): GroupParticipationDetail {
-    return {
-      id,
-      participant_id: `gamer-of-${id}`,
-      participant_first_name: "Aino",
-      participant_date_of_birth: null,
-      participant_gender: null,
-      participant_minecraft_username: null,
-      participant_minecraft_uuid: null,
-      participant_roblox_username: null,
-      participant_roblox_user_id: null,
-      parent_first_name: null,
-      parent_last_name: null,
-      participant_email: null,
-      status: "active",
-      signed_up_at: "2026-01-01T00:00:00Z",
-      has_live_subscription: false,
-      has_payment_marker: false,
-      group_joined_at: null,
-      note: null,
-      note_updated_by_first_name: null,
-      seat_offer_sent_at: null,
-      seat_offer_expiry_notified_at: null,
-    };
-  }
-
-  function snapshotOf(
-    grouped: number[],
-    unassigned: number,
-    waitlist = 0,
-  ): ProductGroupsSnapshot {
-    const seats = (n: number, prefix: string) =>
-      Array.from({ length: n }, (_, i) => seat(`${prefix}-${i}`));
-    return {
-      product_id: "target",
-      groups: grouped.map((count, i) => ({
-        id: `group-${i}`,
-        name: `Group ${i}`,
-        created_at: "2026-01-01T00:00:00Z",
-        gedus: [],
-        participations: seats(count, `g${i}`),
-      })),
-      unassigned: seats(unassigned, "inbox"),
-      waitlist: seats(waitlist, "queue").map((row) => ({
-        ...row,
-        status: "waitlisted" as const,
-      })),
-    };
-  }
-
-  it("is full at the cap and above it", () => {
-    expect(isSwitchTargetFull(snapshotOf([4], 2), 6)).toBe(true);
-    expect(isSwitchTargetFull(snapshotOf([4, 3], 0), 6)).toBe(true);
-  });
-
-  it("is not full below the cap", () => {
-    expect(isSwitchTargetFull(snapshotOf([4], 1), 6)).toBe(false);
-    expect(isSwitchTargetFull(snapshotOf([], 0), 1)).toBe(false);
+describe("switchTargetSeats", () => {
+  it("counts both active arms against the cap", () => {
+    expect(switchTargetSeats(snapshotOf([4, 3], 2), 12)).toEqual({
+      taken: 9,
+      capacity: 12,
+    });
   });
 
   it("never counts the waitlist", () => {
-    expect(isSwitchTargetFull(snapshotOf([2], 0, 9), 6)).toBe(false);
+    expect(switchTargetSeats(snapshotOf([2], 0, 9), 6)).toEqual({
+      taken: 2,
+      capacity: 6,
+    });
   });
 
-  it("is never full without a cap, and never full without a snapshot", () => {
-    expect(isSwitchTargetFull(snapshotOf([50], 50), null)).toBe(false);
-    expect(isSwitchTargetFull(undefined, 1)).toBe(false);
+  it("states the cap with no count while the snapshot is in flight", () => {
+    expect(switchTargetSeats(undefined, 6)).toEqual({
+      taken: null,
+      capacity: 6,
+    });
+  });
+
+  it("says nothing at all about an uncapped club", () => {
+    expect(switchTargetSeats(snapshotOf([50], 50), null)).toBeNull();
+    expect(switchTargetSeats(undefined, null)).toBeNull();
+  });
+});
+
+describe("switchTargetFacts", () => {
+  it("states nothing about a club with no range, no cap, no lock and a start behind it", () => {
+    expect(switchTargetFacts(runningClub, 11, undefined)).toEqual([]);
+  });
+
+  it("states a closed range beside the gamer's age", () => {
+    expect(
+      switchTargetFacts(
+        { ...runningClub, minAge: 8, maxAge: 12 },
+        14,
+        undefined,
+      ),
+    ).toEqual([{ kind: "ageRange", minAge: 8, maxAge: 12, gamerAge: 14 }]);
+  });
+
+  it("states a range open at either end", () => {
+    expect(
+      switchTargetFacts({ ...runningClub, minAge: 8 }, 11, undefined),
+    ).toEqual([{ kind: "ageRange", minAge: 8, maxAge: null, gamerAge: 11 }]);
+    expect(
+      switchTargetFacts({ ...runningClub, maxAge: 12 }, 11, undefined),
+    ).toEqual([{ kind: "ageRange", minAge: null, maxAge: 12, gamerAge: 11 }]);
+  });
+
+  it("carries no age for an adult seat, which has no date of birth", () => {
+    expect(
+      switchTargetFacts(
+        { ...runningClub, minAge: 8, maxAge: 12 },
+        null,
+        undefined,
+      ),
+    ).toEqual([{ kind: "ageRange", minAge: 8, maxAge: 12, gamerAge: null }]);
+  });
+
+  it("states the seats of a capped club, and holds the line before the snapshot lands", () => {
+    expect(
+      switchTargetFacts({ ...runningClub, seatCount: 12 }, 11, snapshotOf([4], 2)),
+    ).toEqual([{ kind: "seats", taken: 6, capacity: 12 }]);
+    expect(
+      switchTargetFacts({ ...runningClub, seatCount: 12 }, 11, undefined),
+    ).toEqual([{ kind: "seats", taken: null, capacity: 12 }]);
+  });
+
+  it("states a region lock whatever country it names", () => {
+    expect(
+      switchTargetFacts(
+        { ...runningClub, regionLockCountry: "FI" },
+        11,
+        undefined,
+      ),
+    ).toEqual([{ kind: "regionLocked", country: "FI" }]);
+  });
+
+  it("states a start only for a club that has not started", () => {
+    expect(
+      switchTargetFacts(
+        { ...runningClub, status: "pending", startDate: "2026-09-01" },
+        11,
+        undefined,
+      ),
+    ).toEqual([{ kind: "notStarted", startDate: "2026-09-01" }]);
+    expect(
+      switchTargetFacts({ ...runningClub, status: "pending", startDate: null }, 11, undefined),
+    ).toEqual([{ kind: "notStarted", startDate: null }]);
+    expect(switchTargetFacts(runningClub, 11, undefined)).toEqual([]);
+  });
+
+  it("carries every fact that applies, in the order they are stated", () => {
+    expect(
+      switchTargetFacts(
+        {
+          status: "pending",
+          minAge: 8,
+          maxAge: 12,
+          regionLockCountry: "SE",
+          startDate: "2026-09-01",
+          seatCount: 6,
+        },
+        14,
+        snapshotOf([2], 1),
+      ).map((fact) => fact.kind),
+    ).toEqual(["ageRange", "seats", "regionLocked", "notStarted"]);
   });
 });
 

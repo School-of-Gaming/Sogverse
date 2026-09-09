@@ -108,10 +108,20 @@ vi.mock("@/components/admin/products/groups/waitlist-card", () => ({
 // The club switch's own sheet: a stub, because what this file is about is
 // whether the drop *opened* it and for which seat. The sheet itself reads the
 // platform's whole club catalogue and talks to Stripe through the check route,
-// none of which the drag handler knows anything about.
+// none of which the drag handler knows anything about. The stub renders
+// whatever it is handed, open or not — the sheet is always mounted, so "opened"
+// is a prop here rather than a mount.
 vi.mock("@/components/admin/products/groups/switch-club-sheet", () => ({
-  SwitchClubSheet: ({ participationId }: { participationId: string }) => (
-    <div data-testid="switch-club-sheet">{participationId}</div>
+  SwitchClubSheet: ({
+    open,
+    participationId,
+  }: {
+    open: boolean;
+    participationId: string;
+  }) => (
+    <div data-testid="switch-club-sheet" data-open={String(open)}>
+      {participationId}
+    </div>
   ),
 }));
 vi.mock("@/components/admin/products/participant-picker-sheet", () => ({
@@ -385,9 +395,9 @@ describe("GroupsPanel — the drop zone's answers, none of which write", () => {
     drop(IDS.subscribedParticipation, { remove: true });
 
     noMutationFired();
-    expect(screen.getByTestId("switch-club-sheet").textContent).toBe(
-      IDS.subscribedParticipation,
-    );
+    const sheet = screen.getByTestId("switch-club-sheet");
+    expect(sheet.dataset.open).toBe("true");
+    expect(sheet.textContent).toBe(IDS.subscribedParticipation);
     // Neither the removal confirm nor the refusal the zone used to answer with.
     expect(
       screen.queryByText(
@@ -424,8 +434,23 @@ describe("GroupsPanel — the drop zone's answers, none of which write", () => {
       screen.getByText("admin.products.groupsPanel.removeParticipant.confirmCta"),
     ).toBeTruthy();
     // And no switch: the same zone, the same drop, decided by the seat's own
-    // subscription and by nothing else.
-    expect(screen.queryByTestId("switch-club-sheet")).toBeNull();
+    // subscription and by nothing else. The sheet is mounted either way — that
+    // is what lets it animate in and out — so "no switch" is a closed sheet,
+    // not an absent one.
+    expect(
+      screen.getByTestId("switch-club-sheet").dataset.open,
+    ).toBe("false");
+  });
+
+  it("keeps the sheet mounted and closed while nothing is switching", () => {
+    // Mounted from the first render, driven by `open`, exactly as the gedu and
+    // participant pickers are: a sheet mounted already open plays neither its
+    // enter nor its exit animation.
+    renderPanel("consumer_club", "paid");
+
+    expect(
+      screen.getByTestId("switch-club-sheet").dataset.open,
+    ).toBe("false");
   });
 });
 

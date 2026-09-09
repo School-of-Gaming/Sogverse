@@ -934,21 +934,25 @@
         "switchClub": {
           "dropZone": "Changer de club",
           "title": "Changer de club",
-          "description": "Déplacez {name} vers un autre club. La famille garde son abonnement : nous le basculons sur le prix du nouveau club, et Stripe règle la différence sur la prochaine facture.",
+          "description": "Déplacez {name} vers un autre club. Rien ne change pour la famille aujourd’hui : la même carte est débitée à la même date, la prochaine facture régularise le reste du mois, puis la famille paie le prix du nouveau club.",
           "searchPlaceholder": "Rechercher un club par son nom",
           "picker": {
             "empty": "Il n’y a aucun autre club vers lequel basculer. La destination doit être un club facturé chaque mois et qui n’est pas terminé.",
-            "noMatch": "Aucun club ne correspond à cette recherche. Effacez les filtres ou essayez un autre nom."
+            "noMatch": "Aucun club ne correspond à cette recherche. Essayez un autre nom."
           },
-          "warnings": {
-            "regionLocked": "Ce club n’accepte que les familles d’un seul pays.",
-            "notStarted": "Ce club n’a pas encore commencé. Le changement est tout de même facturé au prorata à partir d’aujourd’hui.",
-            "full": "Toutes les places de ce club sont prises. Le changement y installe quand même le joueur."
+          "facts": {
+            "ageRange": "{ends, select, both {Âges {min}–{max}} from {À partir de {min} ans} other {Jusqu’à {max} ans}}",
+            "ageRangeWithGamer": "{ends, select, both {Âges {min}–{max}} from {À partir de {min} ans} other {Jusqu’à {max} ans}} · {name} a {age} ans",
+            "seats": "{taken} places prises sur {capacity}",
+            "regionLocked": "Familles en {country} uniquement",
+            "notStarted": "Commence le {date}. La famille paie à partir d’aujourd’hui, pas de la date de début.",
+            "notStartedUndated": "Pas encore de date de début. La famille paie à partir d’aujourd’hui.",
+            "subscriptionEnding": "La famille a résilié cet abonnement ; il prend fin le {date}. La différence de prix de ce mois ne sera pas facturée."
           },
           "prices": {
             "current": "Paie actuellement",
             "target": "Nouveau prix",
-            "proration": "Rien n’est prélevé maintenant. Stripe crédite le reste du mois payé et débite la part du nouveau club, et la différence apparaît sur la prochaine facture de la famille.",
+            "proration": "La prochaine facture ajoute ou rembourse la différence pour le reste du mois.",
             "unavailable": "Aucun prix à afficher",
             "error": "La vérification du prix n’a pas abouti. Choisissez à nouveau le club pour réessayer."
           },

@@ -1,20 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  AlertTriangle,
-  ArrowLeft,
-  ArrowRight,
-  Loader2,
-  Search,
-} from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Loader2, Search } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { FilterCombobox } from "@/components/ui/filter-combobox";
-import { FilterDropdown } from "@/components/ui/filter-dropdown";
 import { Input } from "@/components/ui/input";
-import { LanguageFlag } from "@/components/ui/language-flag";
 import {
   Sheet,
   SheetBody,
@@ -23,39 +14,37 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { useLanguageNames } from "@/hooks/use-language-names";
-import {
-  resolveLocale,
-  type SupportedLocale,
-} from "@/lib/constants/locales";
+import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { isSupportedCurrency } from "@/lib/constants/currency";
-import { SPOKEN_LANGUAGES } from "@/lib/constants/spoken-languages";
+import { countryDisplayName } from "@/components/public/products/region-lock/region-gate";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { effectiveStatus } from "@/lib/products/effective-status";
 import {
   formatProductSchedule,
-  formatWeekday,
   joinScheduleGroups,
 } from "@/lib/products/format-product-schedule";
-import { cn, formatCurrencyFromCents, formatDateOnly } from "@/lib/utils";
+import {
+  cn,
+  formatCurrencyFromCents,
+  formatDate,
+  formatDateOnly,
+} from "@/lib/utils";
 import { useNow, useTimezone } from "@/providers";
 import { useProductGroups } from "@/services/groups";
 import { useProductsByType, type ProductWithDetails } from "@/services/products";
-import { useUsersByRole } from "@/services/users";
 import {
   SwitchClubCommitError,
   useSwitchClub,
   useSwitchClubCheck,
 } from "@/services/participations";
 import type { SwitchClubRefusal } from "@/services/participations/switch-club.contracts";
-import { filterClubProducts } from "../club-product-filter";
+import { filterProductsBySearch } from "../product-name-search";
 import { ProductStatusChip } from "../product-status-chip";
 import {
   isSwitchTarget,
-  isSwitchTargetFull,
   orderSwitchTargets,
-  switchTargetWarnings,
-  type SwitchTargetWarning,
+  switchTargetFacts,
+  type SwitchTargetFact,
 } from "./panel-rules";
 
 // Refusal → message key. A total map rather than a chain, exactly as the
@@ -82,18 +71,20 @@ function joinFacts(parts: readonly string[]): string {
   return parts.filter((part) => part !== "").join(" · ");
 }
 
-const WARNING_KEY = {
-  regionLocked: "regionLocked",
-  notStarted: "notStarted",
-  full: "full",
-} as const satisfies Record<SwitchTargetWarning, string>;
-
 interface SwitchClubSheetProps {
+  /** Open state, driven by the panel — the sheet stays mounted either way. */
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   /** The product the seat is on today — half of the route's path. */
   productId: string;
   participationId: string;
   /** The seat holder's first name, woven into the sheet's description. */
   gamerName: string;
+  /**
+   * The seat holder's age today, or null on an adult seat, which carries no
+   * date of birth. Stated beside the target's own age range on stage two.
+   */
+  gamerAge: number | null;
   /**
    * Told whenever the commit starts or fails, so the panel can mark the chip
    * busy for as long as money is moving. Not derived from the mutation's own
@@ -101,68 +92,98 @@ interface SwitchClubSheetProps {
    * a frame early is a chip an admin can start dragging mid-switch.
    */
   onCommittingChange: (committing: boolean) => void;
-  onClose: () => void;
 }
 
 /**
- * Move a subscribed seat to another consumer club, swapping the family's Stripe
- * subscription onto that club's canonical price in the same action — and
- * placing the seat in one of the target's groups on the way.
+ * Move a subscribed seat to another consumer club, swapping the family's
+ * monthly price onto that club in the same action — and placing the seat in one
+ * of the target's groups on the way.
  *
  * **Two stages in one sheet.** Finding the club is a search problem: names
  * repeat across languages and terms, fifty clubs run at once, and a scrolling
- * list of names cannot be read. So stage one is the admin club list's own bar —
- * search plus weekday, educator and language, through the predicate that page
- * shares — over rows carrying the facts that tell two same-named clubs apart.
- * Stage two is about one club: its summary, where in it the gamer sits, and
- * what changes for the family's money.
+ * list of names cannot be read. So stage one is a search box over rows carrying
+ * when the club runs and when it starts, which is what tells two same-named
+ * clubs apart. Stage two is about one club: its summary, where in it the gamer
+ * sits, what changes for the family's money, and the club's own facts stated as
+ * information under it.
  *
- * Warnings never disable the confirm; refusals always do, because every one of
- * them is a state that has to be settled in Stripe before a switch can mean
- * anything.
+ * **Always mounted, opened by its `open` prop**, like the gedu and participant
+ * pickers beside it — a sheet mounted already open plays neither its enter nor
+ * its exit animation, and the seat it was about has to stay readable for as
+ * long as the exit runs.
  */
 export function SwitchClubSheet({
+  open,
+  onOpenChange,
   productId,
   participationId,
   gamerName,
+  gamerAge,
   onCommittingChange,
-  onClose,
 }: SwitchClubSheetProps) {
   const t = useTranslations("admin.products.groupsPanel.switchClub");
-  const tProducts = useTranslations("admin.products");
   const c = useTranslations("common");
   const uiLocale = resolveLocale(useLocale());
   const timeZone = useTimezone();
   const now = useNow();
-  const languageName = useLanguageNames();
 
   const [search, setSearch] = useState("");
-  const [weekday, setWeekday] = useState<string | null>(null);
-  const [geduId, setGeduId] = useState<string | null>(null);
-  const [language, setLanguage] = useState<string | null>(null);
   const [targetId, setTargetId] = useState<string | null>(null);
   const [groupId, setGroupId] = useState<string | null>(null);
   const [committing, setCommitting] = useState(false);
   const [failure, setFailure] = useState<SwitchClubCommitError | null>(null);
 
-  // One request id for the life of this sheet, minted in a lazy initializer so
-  // it survives every re-render (and a double-invoked render in development) —
-  // and going back to the list and forward again, which is one open. Every
-  // press carries it, which is what makes a retry after a timeout or a failed
-  // database step replay one Stripe request rather than prorate twice; a fresh
-  // open is a fresh id, and the route's no-op item update is the second line of
-  // defence there.
-  const [requestId] = useState(() => crypto.randomUUID());
+  // One request id for the life of one OPEN — not of the mount, which now
+  // outlives every open the panel makes. Every press carries it, which is what
+  // makes a retry after a timeout or a failed database step replay one payment
+  // request rather than charge twice; going back to the list and forward again
+  // is still the same open and keeps the id, a fresh open mints a new one, and
+  // the route's no-op item update is the second line of defence there.
+  const [requestId, setRequestId] = useState(() => crypto.randomUUID());
 
-  const { data: products, isLoading: productsLoading } =
-    useProductsByType("consumer_club");
-  const { data: gedus } = useUsersByRole("gedu");
+  // The open transition does what unmounting used to: a reopened sheet is a
+  // fresh one. Two things about where this lives. It fires on the false → true
+  // edge rather than on close, because resetting on close would collapse stage
+  // two back to the list underneath the sheet while its exit animation is still
+  // playing. And it adjusts state *during* the render that sees the new prop,
+  // React's own shape for derived-from-props state — an effect doing the same
+  // would paint the stale stage for a frame first, and would be a cascading
+  // render the lint rule exists to stop.
+  //
+  // The same transition latches `hasOpened`, which is what lets the club
+  // catalogue read stay unfired until an admin actually asks for it: the sheet
+  // is in the tree from the panel's first render, and reading every consumer
+  // club on the platform for a page nobody opened a switch on is a cost with no
+  // reader. The latch never clears, so Back and forward between the stages —
+  // and the close animation — keep the data that is already in hand.
+  const [wasOpen, setWasOpen] = useState(open);
+  const [hasOpened, setHasOpened] = useState(open);
+  if (wasOpen !== open) {
+    setWasOpen(open);
+    if (open) {
+      setHasOpened(true);
+      setRequestId(crypto.randomUUID());
+      setSearch("");
+      setTargetId(null);
+      setGroupId(null);
+      setCommitting(false);
+      setFailure(null);
+    }
+  }
+
+  // Disabled until the first open, so `isLoading` is false while the sheet is
+  // shut and true on the frame the catalogue is first asked for — which is
+  // exactly when stage one wants its skeleton.
+  const { data: products, isLoading: productsLoading } = useProductsByType(
+    "consumer_club",
+    { enabled: hasOpened },
+  );
   const check = useSwitchClubCheck(productId, participationId, targetId);
   const commit = useSwitchClub(productId, participationId);
   // The target's own seating, read the moment a club is chosen — the same
   // admin-readable snapshot this panel is drawn from. It answers both of stage
-  // two's questions: which groups the seat can be put in, and whether the club
-  // has a seat left at all.
+  // two's questions: which groups the seat can be put in, and how full the club
+  // already is.
   const targetGroups = useProductGroups(targetId ?? "");
 
   const source = products?.find((p) => p.id === productId) ?? null;
@@ -173,67 +194,12 @@ export function SwitchClubSheet({
     [products, productId],
   );
 
-  // Each filter offers only values some candidate actually carries, exactly as
-  // the club list's bar does — a control that can only empty the list is not
-  // worth a row of the header.
-  const weekdayOptions = useMemo(() => {
-    const present = new Set<number>();
-    for (const p of candidates) {
-      for (const slot of p.schedule_slots) present.add(slot.weekday);
-    }
-    return [...present]
-      .sort((a, b) => a - b)
-      .map((w) => ({
-        value: String(w),
-        label: formatWeekday(w, uiLocale, "long"),
-      }));
-  }, [candidates, uiLocale]);
-
-  const geduOptions = useMemo(() => {
-    const present = new Set<string>();
-    for (const p of candidates) {
-      for (const a of p.gedu_group_assignments) present.add(a.gedu_id);
-    }
-    const nameById = new Map(
-      (gedus ?? []).map((g) => [
-        g.id,
-        [g.first_name, g.last_name].filter(Boolean).join(" ") || g.first_name,
-      ]),
-    );
-    return [...present]
-      .map((id) => ({ value: id, label: nameById.get(id) ?? id }))
-      .sort((a, b) => a.label.localeCompare(b.label, uiLocale));
-  }, [candidates, gedus, uiLocale]);
-
-  const languageOptions = useMemo(() => {
-    const present = new Set(candidates.map((p) => p.spoken_language_code));
-    // The enum's own declaration order, like every other language control,
-    // rather than an alphabetical order that changes with the viewer's locale.
-    return SPOKEN_LANGUAGES.filter((code) => present.has(code)).map((code) => {
-      const name = languageName(code);
-      return {
-        value: code,
-        label: name,
-        adornment: <LanguageFlag code={code} showCode={false} title={name} />,
-      };
-    });
-  }, [candidates, languageName]);
-
-  const geduFirstNames = useMemo(() => {
-    const byId = new Map((gedus ?? []).map((g) => [g.id, g.first_name]));
-    return (product: ProductWithDetails) => {
-      const names = new Set<string>();
-      for (const a of product.gedu_group_assignments) {
-        const name = byId.get(a.gedu_id);
-        if (name) names.add(name);
-      }
-      return [...names];
-    };
-  }, [gedus]);
-
   // One line of facts per row, and the same line again above the group list in
   // stage two — the club an admin picked has to be recognisable as the club
-  // they were reading a moment earlier, so the two are one function.
+  // they were reading a moment earlier, so the two are one function. Only the
+  // schedule and the start date: a gedu's name is not what tells two clubs
+  // apart to the admin doing this, and the schedule formatter already carries
+  // whatever the times need to be read.
   const factsOf = useMemo(() => {
     return (product: ProductWithDetails): string => {
       const schedule = formatProductSchedule({
@@ -244,37 +210,37 @@ export function SwitchClubSheet({
       });
       return joinFacts([
         schedule.kind === "recurring" ? joinScheduleGroups(schedule.groups) : "",
-        languageName(product.spoken_language_code),
-        geduFirstNames(product).join(", "),
         product.start_date === null
           ? ""
           : formatDateOnly(product.start_date, uiLocale),
       ]);
     };
-  }, [uiLocale, timeZone, now, languageName, geduFirstNames]);
+  }, [uiLocale, timeZone, now]);
 
-  const rows = useMemo(() => {
-    const narrowed = filterClubProducts(candidates, {
-      search,
-      weekday: weekday === null ? null : Number(weekday),
-      geduId,
-      language,
-    });
-    return orderSwitchTargets(narrowed, source);
-  }, [candidates, search, weekday, geduId, language, source]);
+  const rows = useMemo(
+    () => orderSwitchTargets(filterProductsBySearch(candidates, search), source),
+    [candidates, search, source],
+  );
 
-  const targetWarnings: SwitchTargetWarning[] =
+  // The chosen club's own facts, stated as information under the money. The
+  // seat count is the only one that arrives after the stage does, and it is
+  // present as a fact from the first render (with nothing in it yet), so the
+  // block stands at its final height before the snapshot lands.
+  const facts: SwitchTargetFact[] =
     target === null
       ? []
-      : [
-          ...switchTargetWarnings({
+      : switchTargetFacts(
+          {
             status: target.status,
+            minAge: target.min_age,
+            maxAge: target.max_age,
             regionLockCountry: target.region_lock_country,
-          }),
-          ...(isSwitchTargetFull(targetGroups.data, target.seat_count)
-            ? (["full"] as const)
-            : []),
-        ];
+            startDate: target.start_date,
+            seatCount: target.seat_count,
+          },
+          gamerAge,
+          targetGroups.data,
+        );
 
   const refusals = check.data?.refusals ?? [];
   // A failure carrying refusals is a gate that moved under the admin between the
@@ -315,11 +281,15 @@ export function SwitchClubSheet({
     (stage === "detail" ? backRef.current : searchRef.current)?.focus();
   }, [stage]);
 
+  const close = () => {
+    if (!committing) onOpenChange(false);
+  };
+
   const handleConfirm = () => {
     if (targetId === null) return;
     // Live before any render after the click, and cleared only where the admin
-    // has to press again — the success path closes the sheet, and the unmount
-    // is what ends the state there.
+    // has to press again — the success path closes the sheet, and the reset on
+    // the next open is what ends the state there.
     setCommitting(true);
     onCommittingChange(true);
     setFailure(null);
@@ -328,7 +298,7 @@ export function SwitchClubSheet({
       {
         onSuccess: () => {
           onCommittingChange(false);
-          onClose();
+          onOpenChange(false);
         },
         onError: (error) => {
           setCommitting(false);
@@ -358,9 +328,9 @@ export function SwitchClubSheet({
   };
 
   return (
-    <Sheet open onOpenChange={(open) => !open && !committing && onClose()}>
+    <Sheet open={open} onOpenChange={(next) => !next && close()}>
       <SheetContent>
-        <SheetHeader onClose={() => !committing && onClose()}>
+        <SheetHeader onClose={close}>
           <SheetTitle>{t("title")}</SheetTitle>
           <SheetDescription>
             {t("description", { name: gamerName })}
@@ -368,7 +338,7 @@ export function SwitchClubSheet({
         </SheetHeader>
 
         {targetId === null ? (
-          <div className="space-y-3 border-b border-border px-6 py-4">
+          <div className="border-b border-border px-6 py-4">
             <div className="relative">
               <Search
                 aria-hidden
@@ -382,30 +352,6 @@ export function SwitchClubSheet({
                 placeholder={t("searchPlaceholder")}
                 aria-label={t("searchPlaceholder")}
                 className="pl-9"
-              />
-            </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <FilterDropdown
-                label={tProducts("filters.day")}
-                allLabel={tProducts("filters.allDays")}
-                options={weekdayOptions}
-                value={weekday}
-                onChange={setWeekday}
-              />
-              <FilterCombobox
-                label={tProducts("filters.gedu")}
-                placeholder={tProducts("filters.searchGedu")}
-                options={geduOptions}
-                value={geduId}
-                onChange={setGeduId}
-                noResultsLabel={tProducts("filters.noResults")}
-              />
-              <FilterDropdown
-                label={tProducts("filters.language")}
-                allLabel={tProducts("filters.allLanguages")}
-                options={languageOptions}
-                value={language}
-                onChange={setLanguage}
               />
             </div>
           </div>
@@ -446,17 +392,11 @@ export function SwitchClubSheet({
                       {resolveTranslation(target.product_translations, uiLocale)
                         ?.name ?? ""}
                     </p>
-                    <ProductStatusChip
-                      status={effectiveStatus(target, now, 0)}
-                    />
+                    <ProductStatusChip status={effectiveStatus(target, now, 0)} />
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {factsOf(target)}
                   </p>
-                  <WarningLines
-                    warnings={targetWarnings}
-                    label={(warning) => t(`warnings.${WARNING_KEY[warning]}`)}
-                  />
                 </div>
               )}
 
@@ -568,6 +508,14 @@ export function SwitchClubSheet({
                 )}
               </div>
 
+              <TargetFactLines
+                facts={facts}
+                locale={uiLocale}
+                timeZone={timeZone}
+                name={gamerName}
+                subscriptionEndsAt={check.data?.subscriptionEndsAt ?? null}
+              />
+
               {failure && (
                 <Alert variant={retryable ? "warning" : "destructive"}>
                   <AlertDescription>
@@ -610,7 +558,7 @@ export function SwitchClubSheet({
         </SheetBody>
 
         <div className="flex flex-col-reverse gap-2 border-t border-border px-6 py-4 sm:flex-row sm:justify-end">
-          <Button variant="outline" onClick={onClose} disabled={committing}>
+          <Button variant="outline" onClick={close} disabled={committing}>
             {c("cancel")}
           </Button>
           {/* Present from the moment the sheet opens, in both stages, so
@@ -634,9 +582,10 @@ export function SwitchClubSheet({
 }
 
 /**
- * Stage one's list. Each row carries what tells two clubs of the same name
- * apart — when it runs, in what language, with whom, and from when — plus the
- * warnings derivable without reading the club's own seating.
+ * Stage one's list: the club's name, where it stands, and the one line that
+ * tells two clubs of the same name apart — when it runs and when it starts.
+ * Nothing is flagged here; what is worth knowing about a club is stated on the
+ * second stage, about the one club that was chosen.
  */
 function ClubList({
   rows,
@@ -655,15 +604,13 @@ function ClubList({
   factsOf: (product: ProductWithDetails) => string;
   onSelect: (id: string) => void;
 }) {
-  const t = useTranslations("admin.products.groupsPanel.switchClub");
-
   if (loading) {
     return (
       <div className="space-y-2">
         {[0, 1, 2, 3].map((i) => (
           <div
             key={i}
-            className="h-20 animate-pulse rounded-lg border border-border bg-lifted"
+            className="h-16 animate-pulse rounded-lg border border-border bg-lifted"
           />
         ))}
       </div>
@@ -678,62 +625,130 @@ function ClubList({
 
   return (
     <ul className="space-y-2">
-      {rows.map((row) => {
-        const warnings = switchTargetWarnings({
-          status: row.status,
-          regionLockCountry: row.region_lock_country,
-        });
-        return (
-          <li key={row.id}>
-            <button
-              type="button"
-              onClick={() => onSelect(row.id)}
-              className="w-full rounded-lg border border-border p-3 text-left transition-colors hover:bg-hover"
-            >
-              <span className="flex items-start justify-between gap-2">
-                <span className="font-medium">
-                  {resolveTranslation(row.product_translations, locale)?.name ??
-                    ""}
-                </span>
-                <ProductStatusChip status={effectiveStatus(row, now, 0)} />
+      {rows.map((row) => (
+        <li key={row.id}>
+          <button
+            type="button"
+            onClick={() => onSelect(row.id)}
+            className="w-full rounded-lg border border-border p-3 text-left transition-colors hover:bg-hover"
+          >
+            <span className="flex items-start justify-between gap-2">
+              <span className="font-medium">
+                {resolveTranslation(row.product_translations, locale)?.name ??
+                  ""}
               </span>
-              <span className="mt-1 block text-xs text-muted-foreground">
-                {factsOf(row)}
-              </span>
-              <WarningLines
-                warnings={warnings}
-                label={(warning) => t(`warnings.${WARNING_KEY[warning]}`)}
-              />
-            </button>
-          </li>
-        );
-      })}
+              <ProductStatusChip status={effectiveStatus(row, now, 0)} />
+            </span>
+            <span className="mt-1 block text-xs text-muted-foreground">
+              {factsOf(row)}
+            </span>
+          </button>
+        </li>
+      ))}
     </ul>
   );
 }
 
-/** The warning run under a club, drawn identically in both stages. */
-function WarningLines({
-  warnings,
-  label,
+/**
+ * The chosen club's own facts, under the money — plain muted lines, not an
+ * alert and not warning-toned. None of them stops anything: the admin knows the
+ * family, and the switch enforces none of these.
+ *
+ * **The block is at its final height from the first render of the stage.** The
+ * seat line is the one fact waiting on a round trip, and it is present with
+ * nothing in it until the snapshot lands, so the count arriving moves no pixel.
+ * Its space is not reserved speculatively: an uncapped club has no seat line at
+ * all and no hole where one would go.
+ */
+function TargetFactLines({
+  facts,
+  locale,
+  timeZone,
+  name,
+  subscriptionEndsAt,
 }: {
-  warnings: SwitchTargetWarning[];
-  label: (warning: SwitchTargetWarning) => string;
+  facts: SwitchTargetFact[];
+  locale: SupportedLocale;
+  timeZone: string;
+  name: string;
+  /**
+   * When the family has already cancelled, the instant the subscription runs
+   * out. Never a refusal — an admin may well be switching the club of a family
+   * who cancelled and changed their mind — so the confirm stays live and this
+   * is one more line of the block.
+   */
+  subscriptionEndsAt: string | null;
 }) {
-  if (warnings.length === 0) return null;
+  const t = useTranslations("admin.products.groupsPanel.switchClub.facts");
+
+  if (facts.length === 0 && subscriptionEndsAt === null) return null;
+
   return (
-    <span className="mt-1 flex flex-col gap-0.5">
-      {warnings.map((warning) => (
-        <span
-          key={warning}
-          className="flex items-center gap-1 text-xs font-normal text-warning"
-        >
-          <AlertTriangle className="h-3 w-3 shrink-0" aria-hidden />
-          {label(warning)}
-        </span>
+    <div className="space-y-1">
+      {facts.map((fact) => (
+        <p key={fact.kind} className="min-h-5 text-sm text-muted-foreground">
+          {factLine(fact, t, locale, name)}
+        </p>
       ))}
-    </span>
+      {/* The one line waiting on the check's round trip, and therefore the LAST
+          one: it joins the end of the run, where the container's slack already
+          sits, so nothing already painted moves when it arrives. Order is
+          load-bearing here — a tidy-up that sorted these lines by topic would
+          reintroduce the shift silently. */}
+      {subscriptionEndsAt !== null && (
+        <p className="text-sm text-muted-foreground">
+          {t("subscriptionEnding", {
+            date: formatDate(subscriptionEndsAt, locale, {
+              dateStyle: "medium",
+              timeZone,
+            }),
+          })}
+        </p>
+      )}
+    </div>
   );
+}
+
+/**
+ * One fact as its sentence. The age range is one message with a `select` on
+ * which ends are authored, so each locale words an open-ended range as its own
+ * grammar wants rather than gluing two translated fragments together.
+ */
+function factLine(
+  fact: SwitchTargetFact,
+  t: ReturnType<typeof useTranslations<"admin.products.groupsPanel.switchClub.facts">>,
+  locale: SupportedLocale,
+  name: string,
+): string {
+  switch (fact.kind) {
+    case "ageRange": {
+      const values = {
+        ends:
+          fact.minAge !== null && fact.maxAge !== null
+            ? "both"
+            : fact.minAge !== null
+              ? "from"
+              : "to",
+        min: fact.minAge ?? 0,
+        max: fact.maxAge ?? 0,
+      };
+      return fact.gamerAge === null
+        ? t("ageRange", values)
+        : t("ageRangeWithGamer", { ...values, name, age: fact.gamerAge });
+    }
+    case "seats":
+      return fact.taken === null
+        ? ""
+        : t("seats", { taken: fact.taken, capacity: fact.capacity });
+    case "regionLocked":
+      return t("regionLocked", {
+        country: countryDisplayName(fact.country, locale),
+      });
+    case "notStarted":
+      return fact.startDate === null
+        ? t("notStartedUndated")
+        : t("notStarted", { date: formatDateOnly(fact.startDate, locale) });
+  }
 }
 
 /** One row of the group radio list, including the unassigned default. */

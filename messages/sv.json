@@ -934,21 +934,25 @@
         "switchClub": {
           "dropZone": "Byt klubb",
           "title": "Byt klubb",
-          "description": "Flytta {name} till en annan klubb. Familjen behåller sin prenumeration — vi lägger den på den nya klubbens pris, och Stripe jämnar ut skillnaden på nästa faktura.",
+          "description": "Flytta {name} till en annan klubb. Inget ändras för familjen i dag: samma kort dras samma datum, nästa faktura justerar för resten av månaden, och därefter betalar familjen den nya klubbens pris.",
           "searchPlaceholder": "Sök klubbar på namn",
           "picker": {
             "empty": "Det finns ingen annan klubb att byta till. Målet måste vara en klubb som faktureras varje månad och som inte har avslutats.",
-            "noMatch": "Ingen klubb matchar sökningen. Rensa filtren eller pröva ett annat namn."
+            "noMatch": "Ingen klubb matchar sökningen. Pröva ett annat namn."
           },
-          "warnings": {
-            "regionLocked": "Den här klubben tar bara emot familjer i ett land.",
-            "notStarted": "Den här klubben har inte startat än. Bytet faktureras ändå proportionellt från i dag.",
-            "full": "Alla platser i den här klubben är tagna. Bytet ger spelaren en plats ändå."
+          "facts": {
+            "ageRange": "{ends, select, both {Åldrar {min}–{max}} from {Från {min} år} other {Upp till {max} år}}",
+            "ageRangeWithGamer": "{ends, select, both {Åldrar {min}–{max}} from {Från {min} år} other {Upp till {max} år}} · {name} är {age}",
+            "seats": "{taken} av {capacity} platser tagna",
+            "regionLocked": "Endast familjer i {country}",
+            "notStarted": "Startar {date}. Familjen betalar från i dag, inte från startdatumet.",
+            "notStartedUndated": "Inget startdatum ännu. Familjen betalar från i dag.",
+            "subscriptionEnding": "Familjen har sagt upp prenumerationen och den slutar {date}. Den här månadens prisskillnad faktureras inte."
           },
           "prices": {
             "current": "Betalar nu",
             "target": "Nytt pris",
-            "proration": "Inget dras nu. Stripe krediterar resten av den betalda månaden och debiterar den nya klubbens andel, och skillnaden hamnar på familjens nästa faktura.",
+            "proration": "Nästa faktura lägger till eller återbetalar skillnaden för resten av månaden.",
             "unavailable": "Inget pris att visa",
             "error": "Priskontrollen kom inte tillbaka. Välj klubben igen för att försöka på nytt."
           },

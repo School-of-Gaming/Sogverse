@@ -982,21 +982,25 @@
         "switchClub": {
           "dropZone": "ghom’a’ yIchIj",
           "title": "ghom’a’ yIchIj",
-          "description": "latlh ghom’a’Daq {name} vIH. Huch nge’ghachDaj poltaH qorDu’: ghom’a’ chu’ HuchvaD wImuvmoH, ’ej ’Iq pIm ghItlh veb Sam Stripe.",
+          "description": "latlh ghom’a’Daq {name} vIH. DaHjaj qorDu’vaD pagh choH: rap nav, rap jaj je; jarvam chuq chIm ghItlh veb; ghIq ghom’a’ chu’ Huch DIl qorDu’.",
           "searchPlaceholder": "pongDaq ghom’a’ yISam",
           "picker": {
             "empty": "latlh ghom’a’ tu’lu’be’. jarmey Huch poQnIS ghom’a’, ’ej rInbe’nIS.",
-            "noMatch": "ghom’a’ tu’lu’be’ QulmeHvam. rInmoHmeH yIQIt, pagh latlh pong yInID."
+            "noMatch": "ghom’a’ tu’lu’be’ QulmeHvam. latlh pong yInID."
           },
-          "warnings": {
-            "regionLocked": "wa’ Sep qorDu’pu’ neH ngIp ghom’a’vam.",
-            "notStarted": "taghbe’ba’ ghom’a’vam. ’ach DaHjaj Huch nItebHa’ poQtaH chIjghach.",
-            "full": "buy’choH ghom’a’vam: quS Hoch ngaSlu’. ’ach chIjlu’taH."
+          "facts": {
+            "ageRange": "{ends, select, both {DIS {min}–{max}} from {DIS {min} pagh nIvbogh} other {DIS {max} pagh puSbogh}}",
+            "ageRangeWithGamer": "{ends, select, both {DIS {min}–{max}} from {DIS {min} pagh nIvbogh} other {DIS {max} pagh puSbogh}} · DIS {age} ghaj {name}",
+            "seats": "{taken}/{capacity} quS ngaSlu’",
+            "regionLocked": "{country} qorDu’pu’ neH",
+            "notStarted": "{date} tagh. DaHjaj DIlchoH qorDu’, taghbogh jaj DIlchoHbe’.",
+            "notStartedUndated": "tagh jaj tu’lu’be’. DaHjaj DIlchoH qorDu’.",
+            "subscriptionEnding": "Huch nge’ghach chIl qorDu’; {date} van rIn. jarvam Huch pIm nge’lu’be’."
           },
           "prices": {
             "current": "DaH DIl",
             "target": "Huch chu’",
-            "proration": "DaH pagh nge’lu’. jar DIlta’bogh chuq nobHa’ Stripe, ’ej ghom’a’ chu’ chuq nge’; ghItlh veb ’oH pIm’e’.",
+            "proration": "jarvam chuq pIm chel pagh nobHa’ ghItlh veb.",
             "unavailable": "Huch cha’lu’be’",
             "error": "cheghbe’ Huch chov. ghom’a’ yIwIvqa’."
           },
