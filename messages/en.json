@@ -938,7 +938,8 @@
           "searchPlaceholder": "Search clubs by name",
           "picker": {
             "empty": "There is no other club to switch to. A target has to be a club billed monthly that has not finished.",
-            "noMatch": "No club matches this search. Try another name."
+            "noMatch": "No club matches this search. Try another name.",
+            "alreadyHolds": "Already has a place here"
           },
           "facts": {
             "ageRange": "{ends, select, both {Ages {min}–{max}} from {Ages {min} and up} other {Ages {max} and under}}",

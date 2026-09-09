@@ -938,7 +938,8 @@
           "searchPlaceholder": "Sök klubbar på namn",
           "picker": {
             "empty": "Det finns ingen annan klubb att byta till. Målet måste vara en klubb som faktureras varje månad och som inte har avslutats.",
-            "noMatch": "Ingen klubb matchar sökningen. Pröva ett annat namn."
+            "noMatch": "Ingen klubb matchar sökningen. Pröva ett annat namn.",
+            "alreadyHolds": "Har redan en plats här"
           },
           "facts": {
             "ageRange": "{ends, select, both {Åldrar {min}–{max}} from {Från {min} år} other {Upp till {max} år}}",

@@ -938,7 +938,8 @@
           "searchPlaceholder": "Rechercher un club par son nom",
           "picker": {
             "empty": "Il n’y a aucun autre club vers lequel basculer. La destination doit être un club facturé chaque mois et qui n’est pas terminé.",
-            "noMatch": "Aucun club ne correspond à cette recherche. Essayez un autre nom."
+            "noMatch": "Aucun club ne correspond à cette recherche. Essayez un autre nom.",
+            "alreadyHolds": "A déjà une place ici"
           },
           "facts": {
             "ageRange": "{ends, select, both {Âges {min}–{max}} from {À partir de {min} ans} other {Jusqu’à {max} ans}}",

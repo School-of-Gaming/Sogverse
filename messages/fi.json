@@ -938,7 +938,8 @@
           "searchPlaceholder": "Hae kerhoja nimellä",
           "picker": {
             "empty": "Muuta kerhoa ei ole tarjolla. Kohteen pitää olla kuukausittain laskutettava kerho, joka ei ole vielä päättynyt.",
-            "noMatch": "Haku ei osu yhteenkään kerhoon. Kokeile toista nimeä."
+            "noMatch": "Haku ei osu yhteenkään kerhoon. Kokeile toista nimeä.",
+            "alreadyHolds": "Paikka jo tässä kerhossa"
           },
           "facts": {
             "ageRange": "{ends, select, both {Ikä {min}–{max} vuotta} from {Ikä vähintään {min} vuotta} other {Ikä enintään {max} vuotta}}",

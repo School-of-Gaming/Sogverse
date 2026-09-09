@@ -155,6 +155,7 @@ export function GroupsPanel({
     if (!row) return null;
     return {
       id: row.id,
+      participantId: row.participant_id,
       name: row.participant_first_name,
       // Null on an adult seat, which carries no date of birth — the sheet then
       // states the club's age range alone rather than beside a guessed age.
@@ -303,6 +304,7 @@ export function GroupsPanel({
             }}
             productId={productId}
             participationId={switching?.id ?? ""}
+            participantId={switching?.participantId ?? ""}
             gamerName={switching?.name ?? ""}
             gamerAge={switching?.age ?? null}
             onCommittingChange={setSwitchCommitting}

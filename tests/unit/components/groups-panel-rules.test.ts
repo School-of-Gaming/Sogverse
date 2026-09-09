@@ -3,6 +3,7 @@ import {
   canCompEnroll,
   chipGameIdentity,
   dragSubjectsFrom,
+  heldProductIds,
   isSubscriptionShaped,
   isSwitchTarget,
   orderSwitchTargets,
@@ -867,6 +868,40 @@ describe("switchTargetFacts", () => {
         snapshotOf([2], 1),
       ).map((fact) => fact.kind),
     ).toEqual(["ageRange", "seats", "regionLocked", "notStarted"]);
+  });
+});
+
+describe("heldProductIds", () => {
+  const row = (status: string, productId: string) => ({
+    status,
+    product: { id: productId },
+  });
+
+  it("covers exactly the statuses the unique index does", () => {
+    // active | waitlisted | completed is the set the (product, participant)
+    // index enforces, and therefore the set the switch would be refused for.
+    expect([
+      ...heldProductIds([
+        row("active", "club-a"),
+        row("waitlisted", "club-b"),
+        row("completed", "club-c"),
+      ]),
+    ]).toEqual(["club-a", "club-b", "club-c"]);
+  });
+
+  it("ignores every other status", () => {
+    // A cancelled seat or a lapsed queue place leaves the pair free, so the
+    // club stays pressable.
+    expect(
+      heldProductIds([
+        row("cancelled", "club-a"),
+        row("offered", "club-b"),
+      ]).size,
+    ).toBe(0);
+  });
+
+  it("answers an empty set for no rows", () => {
+    expect(heldProductIds([]).size).toBe(0);
   });
 });
 

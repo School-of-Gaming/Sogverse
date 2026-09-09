@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, ArrowLeft, ArrowRight, Loader2, Search } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,6 +35,7 @@ import { useProductGroups } from "@/services/groups";
 import { useProductsByType, type ProductWithDetails } from "@/services/products";
 import {
   SwitchClubCommitError,
+  useParticipationsForGamers,
   useSwitchClub,
   useSwitchClubCheck,
 } from "@/services/participations";
@@ -41,6 +43,7 @@ import type { SwitchClubRefusal } from "@/services/participations/switch-club.co
 import { filterProductsBySearch } from "../product-name-search";
 import { ProductStatusChip } from "../product-status-chip";
 import {
+  heldProductIds,
   isSwitchTarget,
   orderSwitchTargets,
   switchTargetFacts,
@@ -78,6 +81,12 @@ interface SwitchClubSheetProps {
   /** The product the seat is on today — half of the route's path. */
   productId: string;
   participationId: string;
+  /**
+   * Who holds the seat — the participant, not the participation. Read for one
+   * thing: the clubs this gamer already has a row on, which the picker draws
+   * disabled rather than letting an admin walk into the refusal.
+   */
+  participantId: string;
   /** The seat holder's first name, woven into the sheet's description. */
   gamerName: string;
   /**
@@ -117,6 +126,7 @@ export function SwitchClubSheet({
   onOpenChange,
   productId,
   participationId,
+  participantId,
   gamerName,
   gamerAge,
   onCommittingChange,
@@ -178,6 +188,22 @@ export function SwitchClubSheet({
     "consumer_club",
     { enabled: hasOpened },
   );
+  // Every place this gamer already holds, in every status — gated on the same
+  // latch, because it is as pointless as the catalogue read on a sheet nobody
+  // has opened. A small, indexed read of one child's rows, so the list waits
+  // for nothing: while it is in flight every row stays pressable and the
+  // route's own refusal is what stands behind them.
+  const heldPlaces = useParticipationsForGamers(
+    useMemo(() => [participantId], [participantId]),
+    // The empty id is the panel's "no seat is being switched" placeholder, and
+    // asking the database about it would be a round trip with no subject.
+    { enabled: hasOpened && participantId !== "" },
+  );
+  const held = useMemo(
+    () => heldProductIds(heldPlaces.data ?? []),
+    [heldPlaces.data],
+  );
+
   const check = useSwitchClubCheck(productId, participationId, targetId);
   const commit = useSwitchClub(productId, participationId);
   // The target's own seating, read the moment a club is chosen — the same
@@ -374,6 +400,7 @@ export function SwitchClubSheet({
           {targetId === null ? (
             <ClubList
               rows={rows}
+              held={held}
               loading={productsLoading}
               empty={
                 candidates.length === 0 ? t("picker.empty") : t("picker.noMatch")
@@ -586,9 +613,16 @@ export function SwitchClubSheet({
  * tells two clubs of the same name apart — when it runs and when it starts.
  * Nothing is flagged here; what is worth knowing about a club is stated on the
  * second stage, about the one club that was chosen.
+ *
+ * The one exception is a club the gamer already holds a place on, which is not
+ * a flag but a dead end: the unique index covers it, the commit refuses it, and
+ * a row that leads only to that refusal is drawn disabled and says why. It
+ * keeps its ordered position — the club is still where the admin expects to
+ * find it, it simply cannot be pressed.
  */
 function ClubList({
   rows,
+  held,
   loading,
   empty,
   locale,
@@ -597,6 +631,7 @@ function ClubList({
   onSelect,
 }: {
   rows: ProductWithDetails[];
+  held: ReadonlySet<string>;
   loading: boolean;
   empty: string;
   locale: SupportedLocale;
@@ -604,6 +639,7 @@ function ClubList({
   factsOf: (product: ProductWithDetails) => string;
   onSelect: (id: string) => void;
 }) {
+  const t = useTranslations("admin.products.groupsPanel.switchClub.picker");
   if (loading) {
     return (
       <div className="space-y-2">
@@ -625,26 +661,44 @@ function ClubList({
 
   return (
     <ul className="space-y-2">
-      {rows.map((row) => (
-        <li key={row.id}>
-          <button
-            type="button"
-            onClick={() => onSelect(row.id)}
-            className="w-full rounded-lg border border-border p-3 text-left transition-colors hover:bg-hover"
-          >
-            <span className="flex items-start justify-between gap-2">
-              <span className="font-medium">
-                {resolveTranslation(row.product_translations, locale)?.name ??
-                  ""}
+      {rows.map((row) => {
+        const isHeld = held.has(row.id);
+        return (
+          <li key={row.id}>
+            <button
+              type="button"
+              disabled={isHeld}
+              aria-disabled={isHeld}
+              onClick={() => onSelect(row.id)}
+              className={cn(
+                "w-full rounded-lg border border-border p-3 text-left transition-colors",
+                isHeld ? "cursor-default opacity-60" : "hover:bg-hover",
+              )}
+            >
+              <span className="flex items-start justify-between gap-2">
+                <span className="min-w-0 truncate font-medium">
+                  {resolveTranslation(row.product_translations, locale)?.name ??
+                    ""}
+                </span>
+                {/* The trailing group, right-packed on purpose: the held label
+                    is the one thing here that lands a round trip after the row
+                    does, and it grows this group leftward into the slack the
+                    truncating name leaves rather than moving the status chip
+                    or the row below. */}
+                <span className="flex shrink-0 items-center gap-2">
+                  {isHeld && (
+                    <Badge variant="outline">{t("alreadyHolds")}</Badge>
+                  )}
+                  <ProductStatusChip status={effectiveStatus(row, now, 0)} />
+                </span>
               </span>
-              <ProductStatusChip status={effectiveStatus(row, now, 0)} />
-            </span>
-            <span className="mt-1 block text-xs text-muted-foreground">
-              {factsOf(row)}
-            </span>
-          </button>
-        </li>
-      ))}
+              <span className="mt-1 block text-xs text-muted-foreground">
+                {factsOf(row)}
+              </span>
+            </button>
+          </li>
+        );
+      })}
     </ul>
   );
 }

@@ -254,6 +254,11 @@ subscription, its customer, its card and its billing date.
    region, its start and any already-cancelled subscription's end date stated
    under the money as plain information rather than as warnings — owner's ruling
    that nothing in this sheet is toned as a flag. Required consents stay dropped.
+   A club the gamer already holds a row on in any status the unique index covers
+   is listed in its ordered position but **disabled**, with a small "already has
+   a place here" label, so the admin never reaches stage two for the
+   `already_on_target` refusal — which stays in the contract and the route as the
+   backstop, since the list is drawn from a snapshot and the index is the truth.
 6. **Tests.** DB: the RPC in the spine; a non-admin refused; a move between two paid
    clubs (row moved, group resolved by the shared rule, price id set); a seat with no
    live subscription refused; a duplicate seat on the target failing on the index; two

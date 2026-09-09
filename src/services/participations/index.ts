@@ -20,6 +20,7 @@ export {
   useMyUpcomingSessionRows,
   useMyWaitlistRows,
   useParticipationCounts,
+  useParticipationsForGamers,
   useCheckoutConfirmation,
   useCreateParticipation,
   useJoinWaitlist,

@@ -986,7 +986,8 @@
           "searchPlaceholder": "pongDaq ghom’a’ yISam",
           "picker": {
             "empty": "latlh ghom’a’ tu’lu’be’. jarmey Huch poQnIS ghom’a’, ’ej rInbe’nIS.",
-            "noMatch": "ghom’a’ tu’lu’be’ QulmeHvam. latlh pong yInID."
+            "noMatch": "ghom’a’ tu’lu’be’ QulmeHvam. latlh pong yInID.",
+            "alreadyHolds": "naDev Dab"
           },
           "facts": {
             "ageRange": "{ends, select, both {DIS {min}–{max}} from {DIS {min} pagh nIvbogh} other {DIS {max} pagh puSbogh}}",

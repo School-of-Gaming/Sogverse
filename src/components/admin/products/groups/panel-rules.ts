@@ -712,3 +712,34 @@ export function isSwitchTarget(
   }
   return candidate.status === "pending" || candidate.status === "running";
 }
+
+/** What the held-place derivation reads off one of the gamer's participations. */
+export interface HeldPlaceRow {
+  status: string;
+  product: { id: string } | null;
+}
+
+/**
+ * The products the gamer already holds a place on, in the sense the unique
+ * index means it: one row per (product, participant) covering `active`,
+ * `waitlisted` and `completed`. Every other status — a row that was cancelled,
+ * a queue place that lapsed — leaves the pair free and is ignored.
+ *
+ * The switch picker draws these clubs disabled, so an admin never reaches the
+ * second stage on a club the move is bound to refuse. The route's refusal stays
+ * the backstop: this is a snapshot, and the index is the truth.
+ */
+export function heldProductIds(rows: readonly HeldPlaceRow[]): Set<string> {
+  const held = new Set<string>();
+  for (const row of rows) {
+    if (row.product === null) continue;
+    if (
+      row.status === "active" ||
+      row.status === "waitlisted" ||
+      row.status === "completed"
+    ) {
+      held.add(row.product.id);
+    }
+  }
+  return held;
+}
