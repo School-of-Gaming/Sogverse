@@ -13,7 +13,8 @@ turned out to be the symptom, not the subject. One narrow cut has shipped (the f
 footer legal links no longer prefetch — commit `8bf965de` on `dev`); everything else is
 proposed only. **Probe 1 was settled on 2026-09-08 without any code**: prefetch is
 84–86% of function invocations, measured — see "Probe 1, settled" below. The inference
-the remedy rests on is now a measurement, and it lands at the top of the inferred range.
+the remedy rests on is now a measurement, and it lands at the top of the inferred range. **On 2026-09-09 the owner's goals and the road to "instant" were walked through** —
+see "The owner's frame" below; the decision is still open.
 
 **How to read this doc.** Like F7 in `docs/architecture/performance.md`, every claim is tagged.
 *Measured* means someone ran the query and the date and instrument are given — the
@@ -183,7 +184,9 @@ Fluid CPU, and an observability event billed per junk request; (ii) risk surface
 opening's peak minute was ~9,000 invocations of which the great majority served no one,
 and every future rate limit, firewall rule, or concurrency ceiling meets that inflated
 number first; and (iii) **analytical pollution** — 60k requests to unread legal pages
-sat in every traffic query this investigation ran, and will sit in every future one.
+sat in every server-side traffic query this investigation ran, and will sit in every
+future one. (Web Analytics pageviews and Speed Insights are browser beacons and are
+unaffected — see "What prefetch pollutes" below.)
 
 **The F8 tension, assessed: real but second-order.** F8's planning rule says
 pre-register families; a pre-registered cohort arrives signed in and fires the signed-in
@@ -331,6 +334,191 @@ What the measurement changes:
 
 The remaining open probes are 2 (role-lookup cost) and 3 (click-latency control for (a));
 neither blocks the recommendation, and probe 3 remains the one that could overturn it.
+
+## The owner's frame, and what "instant" actually takes (2026-09-09)
+
+Walked through with the owner on 2026-09-09, with the question turned around: not "what
+does prefetch cost" but "what would make the site feel the way I want, and where does
+prefetch sit in that". **Nothing below is decided or planned.** The remedy decision is
+still open; this section records the reasoning a later session would otherwise redo.
+
+**The goals the remedy is judged against.** Two, in the owner's words. (1) A click reacts
+near-instantly. (2) No loading state where one can be avoided; where one cannot, only the
+part that needs it loads, what is already known paints early, and the layout never
+rearranges after a load. The second is already the house loading rule (three categories,
+a container that keeps its final size). The two are in tension inside Next's model, and
+the app has so far bought the second by paying the first: with no loading boundary, a
+click leaves the old page on screen for the whole server round trip and then swaps the
+new page in whole — zero loading state, zero shift, and nothing visible until the render
+lands. The app also gives no click acknowledgement at all today (no pending state on any
+link), so the wait reads as the click not registering.
+
+**Next's three prefetch modes** (*measured*: the installed typings and router source).
+
+| Value | Static target | Dynamic target |
+|---|---|---|
+| default (`null` / `"auto"`) | full page data | up to the nearest `loading` boundary; with none, the route tree only — this app |
+| `prefetch={false}` | nothing, not even on hover | nothing, not even on hover |
+| `prefetch={true}` | full page data | full page data, every query, held under the **static** cache lifetime (300s) |
+
+The default is "everything safe to prepare early", with the safe line drawn by the author
+through a loading boundary; the app draws no line, so the safe part is empty. The dynamic
+cache lifetime is 0 (the installed config default) — Next 14 held prefetched dynamic pages
+for 30s and rolled it back after stale-dashboard reports. `prefetch={true}` is the
+behaviour a frontend developer imagines prefetch to be, and is available per link. It is
+not the remedy: it fires for every visible link rather than likely ones, it renders whole
+personalised pages for pages nobody opens, and it serves the result for five minutes with
+no revalidation while it sits there.
+
+**Why Next refuses dynamic prefetch by default** — three reasons, all live here. There is
+no correct answer to prefetch: the page is rendered when the link scrolls into view and
+clicked minutes later, and seats, the chat, the PIN gate and the session itself can all
+have changed between; Next cannot tell which reads tolerate staleness, so it does not
+guess. The cost lands on nobody: at the measured 85% prefetch share, full renders would
+make most of the app's server work serve pages never opened. And a dynamic render runs in a
+request context — session refresh, rate limits, logs — for a visit that never happened;
+the 2026-05-31 outage was this shape with the dial part-way up. Static prefetch is free
+precisely because none of the three apply.
+
+**Remedy (a) is a decision, not a patch.** A patch hides a symptom and leaves the
+mechanism wrong; here the mechanism is Next's own code returning an empty response, and
+turning the default off makes the configuration say what is already true. There are two
+coherent pairings for a fully dynamic Next app: keep default prefetch *and* add route-level
+loading boundaries so it delivers layouts and a skeleton (many dashboards do; they accept a
+skeleton on the router's schedule and a layout render per visible link); or keep the
+loading affordance below the route *and* turn the default off, opting links back in where
+prefetch can deliver (apps that care about layout stability, or that show dozens of links
+per viewport). The app is in the incoherent third state — dynamic, no boundaries, prefetch
+on. The framework's own trajectory points the same way: early 13 prefetched full dynamic
+routes and rolled it back; 14 limited it to the boundary; 15 zeroed the dynamic lifetime;
+16's cache components move the value into static shells. A shared link wrapper is one
+primitive, one default, greppable call sites, opt-in per link — the correctness-by-mechanism
+shape the root rules ask for. What *would* make it a patch is stopping there.
+
+**F1 stands; only the revert was wrong.** Disabling prefetch would not have been the
+quick fix for the auth incidents. Before F1 every protected request paid three network
+round trips to GoTrue — a parent clicking a card, not just a prefetch — and opening-day
+traffic alone, prefetch off, would have put several hundred GoTrue calls a second through
+the auth rate limit. The 2026-05-31 channel was the partially migrated data path still
+calling GoTrue under a registration surge, closed by finishing the migration. Local JWT
+verification is the recommended pattern on asymmetric-key projects, removed a network
+dependency from every layer, and its one trade (a GoTrue-level ban not enforced until token
+expiry) is bounded and unused. The revert of the `prefetch={false}` workarounds rode along
+on a belief — "prefetches warm caches before clicks" — that was never true; F1 made each
+prefetch cheap and never made one useful.
+
+**What prefetch pollutes, and what it does not.** Web Analytics pageviews are a browser
+beacon fired on load and on client-side navigation; a prefetch never navigates, so the
+pageview counts in this doc are clean, and so is Speed Insights. What it pollutes is the
+server side: function invocations, edge requests, per-route counts, observability events,
+logs, and therefore the anomaly detector. On contention: an empty prefetch is ~12ms of
+function time plus a local-verify proxy run; Fluid compute absorbed the peak minute with no
+error statuses and no visible queueing, and the constant trickle keeps instances warm if
+anything. Doing nothing costs little; the case for acting is coherence, alert noise and
+clean numbers, not speed.
+
+**What makes a click instant — two halves, plus feedback.** *Feedback*: a pending state on
+the link itself, within a frame, independent of everything else; most of "reacts
+instantly" to a user while the render is in flight. *The data half*: warm the client cache
+from the page the user is on, targeted at what this user will plausibly open (a family's
+own one-to-three children, not every visible link), one small query each. The browser data
+path already bypasses Vercel — the React Query hooks talk to PostgREST with the user's
+token — so only the page shell forces a click through a function and the proxy. *The shell
+half*: make the layouts static so Next's prefetch has something to deliver, which is F2's
+untangling. After first load this design is a single-page app; on first load it beats one,
+because the HTML is content. A pure SPA (Vite, a client router, React Query, Supabase
+direct, a separate API host) was weighed and set aside: it is the champion of goal 1 and
+the worst option for goal 2 cold — blank until the bundle runs, then a data waterfall,
+public pages needing a separate prerender step — and the opening-day cohort lands cold on
+a listing from a link. The F2 destination is an SPA with a prerendered first paint.
+
+**Stale-while-revalidate meets the layout rule, and loses on variable-height content.**
+Paint-from-cache-then-correct is the standard freshness mechanism and the app already runs
+it (one-minute stale time, server-seeded caches). A value changing in place — a seat count,
+a mark — survives the layout rule. A session report is any number of lines, so a card
+gaining one moves everything below it; on that feed, paint-then-correct is a shift by
+construction. The alternative is verify-then-paint — an ETag, applied at the data layer:
+a **stored** version per participation, bumped by a database trigger when any contributing
+row changes (a hash computed on demand costs the same query as the fetch, so the version
+must be stored, not computed); one small RPC returning the versions of everything a page
+reads; checked at pointer-down (which precedes the click on touch too, by less than hover
+does); paint from cache on a match, block on a fresh read on a miss. Cost: one small round
+trip per navigation, ~10ms from Finland; the first paint is always correct and never
+changes. Not covered: a change while the reader is already on the page — that is a push
+(a Realtime subscription, RLS-scoped) invalidating the key, and under the layout rule the
+arrival becomes an affordance the reader acts on rather than an insertion.
+
+**Times: never paint a guess.** The server's location is irrelevant — it renders in the
+zone it is handed. The risk is a *guessed* zone, and the app takes it today: a first visit
+with no timezone cookie renders in Helsinki and corrects post-mount, the exact wrong-then-
+right flash the owner wants designed out. Three no-flash shapes: keep times out of the
+static shell entirely (on the dashboard, times are data and data renders once from the
+client cache in the browser's own zone); render only the time server-side as a streamed
+hole; or render the product's zone — products carry their own timezone and schedule slots
+are a weekday plus a local start time, so "Mondays at 16:00" for a Helsinki club is static
+per product and identical for every reader. Converting to the reader's zone earns its cost
+only for remote products and readers abroad; whether to do it is the owner's call.
+
+**Hydration needs agreement, not a per-request read.** The root layout's per-request reads
+exist to keep SSR HTML and the first client render in lockstep, and that requirement is
+real. It is met two other ways: put the value in the URL (locale — the locale-prefix plan),
+or defer it to after mount in a container that already has its size. Of the root layout's
+reads, only the locale is needed by the About page's HTML, and only the CSP nonce has no
+static-safe alternative short of a different policy:
+
+| Read | Static-safe alternative |
+|---|---|
+| locale and messages | the URL segment |
+| timezone cookie, initial clock | read where a time renders, or a streamed hole |
+| consent cookie | mount optional scripts after hydration — they load after it anyway |
+| session and profile | the header's user slot from the client cache, or a hole |
+| attribution header, `Accept-Language` | client-side, after mount |
+| CSP nonce | a hash-based policy for the public route group — the real blocker |
+
+**Topology, measured 2026-09-09.** Production answers with `x-vercel-id: arn1::arn1` —
+edge and function both in Stockholm — and the Supabase project is in `eu-north-1`,
+Stockholm. A plain fetch of `/about` from Helsinki took **338ms**: a page of pure copy,
+no data reads, over a ~10ms network hop. Proximity is hiding a ~300ms render tax, not
+removing it (p75 TTFB 232ms desktop says the same). Distance adds one user-to-Stockholm
+round trip per dynamic navigation — ~30–40ms from the UK or France, ~100ms from US East,
+~160ms from US West — so expansion makes a mediocre number somewhat worse and changes
+nothing about the plan. What distance really punishes is sequential browser-side reads
+(a page firing five client queries from Seattle pays ~160ms each; parallel is fine, a
+waterfall is not). For expansion, in order: shells from the edge (~20ms anywhere), data
+warmed during reading time (hides any round trip, and is the mobile answer), no waterfalls,
+and Supabase read replicas near the users once a cohort justifies them. One rule: the
+functions stay beside the database and the CDN goes beside the user — a function region
+moved toward users while the database stays in Stockholm turns every render's several
+sequential Supabase hops transatlantic.
+
+**The four pages the owner names — Home, About, Shop, My SOG.** Two audiences. Home,
+About and Shop are the prospect's pages (the proxy bounces a signed-in visitor off Home);
+My SOG is the customer's and personal to the byte.
+
+| Page | Reads today | Target shape |
+|---|---|---|
+| Home | nothing | fully static on the CDN |
+| About | nothing | fully static; the header's user slot from the client cache, blank at final size until known |
+| Shop | products, prices, translations; live seat counts | static catalogue regenerated on demand from the admin product write; counts into a fixed-width slot per card |
+| My SOG | participations, waitlist, family, billing | stays server-rendered and server-seeded; a click from elsewhere paints from cache; the cold path gets faster by shedding the root layout's reads |
+
+The public three share one prerequisite in three pieces: **the locale-prefix plan**
+(`docs/plans/locale-prefix-routing.md`), which removes the cookie blocker and — by its own
+scope statement — leaves pages dynamic and the CSP untouched; **the root-layout
+untangling** (F2's list, not in the plan); and **a public-route CSP without a per-request
+nonce**, the second blocker the plan names and leaves alone. Only after all three does a
+public page become static, and only then does the wrapper default flip back to prefetch on
+for those routes. The proxy still runs on static paths to make the redirect decision; on
+those paths it must stay an edge cookie check and never read the profile.
+
+**Direction, as walked through — not decided, not planned.** (1) Remedy (a), through the
+shared link wrapper, with probe 3 on the preview and probe 4 a month on. (2) Click
+feedback: a pending state on links and navigation buttons. (3) Warm the data layer from the
+dashboard for the pages one hop away. (4) The structural work: the locale-prefix plan, the
+root-layout untangling, the public CSP, then partial prerendering and the wrapper default
+flipped for static routes. Two decisions along the way are the owner's: whether session
+times render in the product's zone or the reader's, and how a background arrival may
+change the layout.
 
 ## Probes that settle the open questions
 
