@@ -38,8 +38,12 @@ const UNKNOWN_GROUP = "00000000-0000-0000-0000-0000000006df";
 const PRICE_A = "price_test_move_source";
 const PRICE_B = "price_test_move_target";
 
-/** Rows the checkout path writes and a move must leave exactly as it found. */
-const CHECKOUT_SESSION = "cs_test_admin_move";
+/**
+ * Rows the checkout path writes and a move must leave exactly as it found. The
+ * checkout session is unique per participation (`uq_participations_checkout_session`),
+ * so each seat mints its own and the map remembers it for the assertion.
+ */
+const CHECKOUT_SESSION_PREFIX = "cs_test_admin_move_";
 const SIGNED_UP_AT = "2026-01-02T03:04:05Z";
 
 describe("admin_move_participation", () => {
@@ -47,6 +51,8 @@ describe("admin_move_participation", () => {
   let adminAuth: SupabaseClient<Database>;
   let customerAuth: SupabaseClient<Database>;
   let subCounter = 0;
+  let seatCounter = 0;
+  const checkoutSessions = new Map<string, string>();
 
   async function clearParticipations() {
     // family_subscriptions cascade from participations, so this clears both.
@@ -66,6 +72,8 @@ describe("admin_move_participation", () => {
     participantId: string,
     status: Database["public"]["Enums"]["participation_status"] = "active",
   ): Promise<string> {
+    seatCounter += 1;
+    const checkoutSession = `${CHECKOUT_SESSION_PREFIX}${seatCounter}`;
     const { data, error } = await admin
       .from("participations")
       .insert({
@@ -74,11 +82,15 @@ describe("admin_move_participation", () => {
         customer_id: TEST_IDS.CUSTOMER,
         status,
         signed_up_at: SIGNED_UP_AT,
-        stripe_checkout_session_id: CHECKOUT_SESSION,
+        stripe_checkout_session_id: checkoutSession,
+        // `chk_participations_waitlisted_has_timestamp`: a queued row carries
+        // the instant it joined the queue.
+        waitlisted_at: status === "waitlisted" ? SIGNED_UP_AT : null,
       })
       .select("id")
       .single();
     if (error) throw new Error(`seat failed: ${error.message}`);
+    checkoutSessions.set(data.id, checkoutSession);
     return data.id;
   }
 
@@ -221,7 +233,9 @@ describe("admin_move_participation", () => {
     expect(row?.status).toBe("active");
     // The two facts the family bought the seat with. Nothing about a switch
     // makes them untrue, and the payment marker travels with the row.
-    expect(row?.stripe_checkout_session_id).toBe(CHECKOUT_SESSION);
+    expect(row?.stripe_checkout_session_id).toBe(
+      checkoutSessions.get(participationId),
+    );
     expect(new Date(row?.signed_up_at ?? 0).toISOString()).toBe(
       new Date(SIGNED_UP_AT).toISOString(),
     );
