@@ -32,6 +32,16 @@ describe("loadMessages", () => {
     expect(messages.legal).toEqual(en.legal);
   });
 
+  it("fills the cookie banner, buttons included", async () => {
+    const messages = await loadMessages("tlh");
+
+    // Not a page *about* a policy — the instrument that records one. The
+    // buttons are why it is the whole namespace: a refusal has to be as legible
+    // as an acceptance, which a refusal written in character is not.
+    expect(messages.consent).toEqual(en.consent);
+    expect(messages.consent.rejectAll).toBe(en.consent.rejectAll);
+  });
+
   it("fills the labels that name one of those documents too", async () => {
     const messages = await loadMessages("tlh");
 
@@ -84,5 +94,8 @@ describe("loadMessages", () => {
     expect(Object.keys(en.about)).not.toContain("easterEgg");
     expect(en.footer.copyright).not.toBe(tlh.footer.copyright);
     expect(Object.keys(tlh)).not.toContain("privacy");
+    // Absence is the assertion that matters: a namespace merely *equal* to
+    // English is one nothing keeps in step the next time English is edited.
+    expect(Object.keys(tlh)).not.toContain("consent");
   });
 });

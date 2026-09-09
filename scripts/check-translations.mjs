@@ -43,6 +43,14 @@ const ENGLISH_UNDER_KLINGON = [
   "legal",
   "privacy",
   "terms",
+  // The cookie banner, whole — heading, body and all three buttons. It is not
+  // a page describing a policy; it is the instrument that *records* one, and
+  // the answer it stores is only worth storing if the reader understood the
+  // question. The buttons are the reason it is the whole namespace rather than
+  // the body alone: refusing has to be exactly as easy and as legible as
+  // accepting, and a refusal button written in character is not that. An
+  // English question over Klingon buttons would be the worst of both.
+  "consent",
   "discipline",
   "robloxPrivacy",
   "robloxSafeguarding",

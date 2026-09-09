@@ -9,9 +9,10 @@ export type Messages = typeof en;
  * to the English text at runtime.
  *
  * `tlh` omits the legal surface — the policy and terms namespaces, the
- * attributions credit, those pages' metadata titles, and every label that names
- * one of the documents. Binding text and licence conditions are not a place for
- * an in-character rendering, and *omitting* the keys rather than copying the
+ * attributions credit, those pages' metadata titles, every label that names one
+ * of the documents, and the cookie banner. Binding text and licence conditions
+ * are not a place for an in-character rendering, and neither is the question
+ * whose answer we store as a consent; *omitting* the keys rather than copying the
  * English in verbatim is what keeps English their single source of truth: a
  * copy has to be re-mirrored by hand every time the English is edited, and
  * nothing would fail if it were not.
