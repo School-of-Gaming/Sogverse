@@ -4042,7 +4042,7 @@
   },
   "consent": {
     "heading": "Dina integritetsval",
-    "body": "Nödvändiga cookies får webbplatsen att fungera. Analys räknar besök och laddningstider. Den kan inte se vem du är, och annonsörer får den aldrig. Vi annonserar på andra plattformar. Marknadsföring berättar för dem att du varit här, och om du skapade ett konto, så att de kan visa dig våra annonser där. Den är aldrig igång medan en spelare är inloggad. Du kan ändra ditt svar när som helst längst ner på sidan, och detaljerna finns i vår <link>integritetspolicy</link>.",
+    "body": "Nödvändiga cookies får webbplatsen att fungera. Analys räknar besök och laddningstider. Den kan inte se vem du är, och annonsörer får den aldrig. Vi annonserar på andra plattformar. Marknadsföring berättar för dem att du varit här, och om du skapade ett konto, så att de kan visa dig våra annonser där. Marknadsföring är aldrig igång medan en spelare är inloggad. Du kan ändra ditt svar när som helst längst ner på sidan, och detaljerna finns i vår <link>integritetspolicy</link>.",
     "rejectAll": "Neka alla",
     "analyticsOnly": "Endast analys",
     "analyticsAndMarketing": "Marknadsföring och analys"

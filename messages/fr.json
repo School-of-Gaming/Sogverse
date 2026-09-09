@@ -4042,7 +4042,7 @@
   },
   "consent": {
     "heading": "Vos choix de confidentialité",
-    "body": "Les cookies nécessaires font fonctionner le site. Les statistiques comptent les visites et le temps de chargement des pages. Elles ne peuvent pas savoir qui vous êtes, et les annonceurs ne les reçoivent jamais. Nous diffusons des publicités sur d’autres plateformes. Le marketing leur indique votre visite et si vous avez créé un compte, afin qu’elles puissent vous y montrer nos publicités. Il n’est jamais actif pendant qu’un joueur est connecté. Vous pouvez changer votre réponse à tout moment en bas de page, et le détail se trouve dans notre <link>politique de confidentialité</link>.",
+    "body": "Les cookies nécessaires font fonctionner le site. Les statistiques comptent les visites et le temps de chargement des pages. Elles ne peuvent pas savoir qui vous êtes, et les annonceurs ne les reçoivent jamais. Nous diffusons des publicités sur d’autres plateformes. Le marketing leur indique votre visite et si vous avez créé un compte, afin qu’elles puissent vous y montrer nos publicités. Le marketing n’est jamais actif pendant qu’un joueur est connecté. Vous pouvez changer votre réponse à tout moment en bas de page, et le détail se trouve dans notre <link>politique de confidentialité</link>.",
     "rejectAll": "Tout refuser",
     "analyticsOnly": "Statistiques uniquement",
     "analyticsAndMarketing": "Marketing et statistiques"

@@ -4042,7 +4042,7 @@
   },
   "consent": {
     "heading": "Your privacy choices",
-    "body": "Necessary cookies keep the site working. Analytics counts visits and page load times; it cannot tell who you are, and advertisers never see it. We advertise on other platforms. Marketing tells them you visited, and whether you created an account, so they can show you our ads there. It never runs while a gamer is signed in. You can change your answer any time from the footer, and the details are in our <link>privacy policy</link>.",
+    "body": "Necessary cookies keep the site working. Analytics counts visits and page load times. It cannot tell who you are, and advertisers never see it. We advertise on other platforms. Marketing tells them you visited, and whether you created an account, so they can show you our ads there. Marketing never runs while a gamer is signed in. You can change your answer any time from the footer, and the details are in our <link>privacy policy</link>.",
     "rejectAll": "Reject all",
     "analyticsOnly": "Analytics only",
     "analyticsAndMarketing": "Marketing and analytics"
