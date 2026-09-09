@@ -14,6 +14,7 @@ import { ROUTES } from "@/lib/constants";
 import { getOrigin } from "@/lib/url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { stripe } from "@/lib/stripe/client";
+import { currentPeriodEndOf } from "@/lib/stripe/subscription-period";
 import {
   getOrCreateSubscriptionPrice,
   type StripeProductSource,
@@ -62,6 +63,22 @@ const TARGET_PRODUCT_COLUMNS =
  */
 const FALLBACK_PRODUCT_NAME = "School of Gaming product";
 
+/**
+ * Stripe's own ceilings on the two free-text fields the rewrite composes: 500
+ * characters for a metadata value, and 500 for a subscription's description.
+ * Enforced at composition rather than trusted, because both are built from
+ * user-authored text — a product translation, a profile's first name — with no
+ * ceiling of ours, and Stripe answers an over-long value with a 400 that would
+ * land AFTER the check has told the admin the switch is allowed.
+ */
+const STRIPE_METADATA_VALUE_MAX = 500;
+const STRIPE_DESCRIPTION_MAX = 500;
+
+/** Cut to Stripe's ceiling. No ellipsis — these are machine-read fields. */
+function truncateForStripe(value: string, max: number): string {
+  return value.length > max ? value.slice(0, max) : value;
+}
+
 interface TargetProduct extends StripeProductSource {
   product_type: ProductType;
   billing_mode: BillingMode;
@@ -80,6 +97,13 @@ export interface SwitchClubCommitFacts {
   currency: SupportedCurrency;
   subscriptionId: string;
   subscriptionItemId: string;
+  /**
+   * The price id stored on the subscription row at the moment the check read
+   * it. The RPC takes it as its expected state and refuses the move when the
+   * row has since been re-priced — which is what stops a stale dialog moving a
+   * seat under a subscription that is no longer billing what it thought.
+   */
+  stripePriceId: string;
   targetProduct: TargetProduct;
 }
 
@@ -97,6 +121,21 @@ export interface SwitchClubCheck extends SwitchClubCheckResponse {
    * can be told.
    */
   groupNotOnTarget: boolean;
+  /**
+   * The live Stripe subscription's currency is not the one the
+   * `family_subscriptions` row records. Two records disagreeing about one
+   * subscription is not an answer about this seat, so — like a foreign group —
+   * it is not a refusal: the commit answers a plain 400 and the sheet says to
+   * check the subscription in Stripe.
+   */
+  currencyMismatch: boolean;
+  /**
+   * When the family has already cancelled, the instant the subscription runs
+   * out; null otherwise. Stated, never gated on — owner's ruling is that an
+   * admin may switch a cancelling family's club, and what they need is to know
+   * that is what they are doing.
+   */
+  subscriptionEndsAt: string | null;
 }
 
 export interface SwitchClubCheckInput {
@@ -160,7 +199,7 @@ export async function checkSwitchClub({
 
   const { data: subscriptionRow, error: subscriptionError } = await supabase
     .from("family_subscriptions")
-    .select("stripe_subscription_id, currency")
+    .select("stripe_subscription_id, currency, stripe_price_id")
     .eq("participation_id", participationId)
     // "Live" in exactly the sense the RPC means it, and the same predicate
     // admin_remove_participation refuses ON: anything but `cancelled`.
@@ -235,14 +274,25 @@ export async function checkSwitchClub({
   // mints nothing: browsing targets must not create Stripe objects.
   let currentAmountCents: number | null = null;
   let item: Stripe.SubscriptionItem | null = null;
+  let currencyMismatch = false;
+  let subscriptionEndsAt: string | null = null;
   if (subscriptionRow) {
     const subscription = await stripe.subscriptions.retrieve(
       subscriptionRow.stripe_subscription_id,
       { expand: ["latest_invoice"] },
     );
 
-    if (subscription.items.data.length === 1) {
-      item = subscription.items.data[0];
+    const only =
+      subscription.items.data.length === 1 ? subscription.items.data[0] : null;
+    // A quantity above one is several seats billed on one item, and the plan
+    // change swaps the item's PRICE while leaving its quantity alone — so a
+    // switch would move one seat and re-price all of them. `undefined` is
+    // Stripe's answer where a quantity does not apply at all, and counts as the
+    // single seat this feature is about.
+    const singleSeat =
+      only !== null && (only.quantity === undefined || only.quantity === 1);
+    if (singleSeat) {
+      item = only;
       // The item's ACTUAL amount, not the source product's authored price: a
       // subscriber keeps their original amount when an admin later raises a
       // club's price. Null only for a price with no flat amount.
@@ -250,6 +300,23 @@ export async function checkSwitchClub({
     } else {
       refusals.push("subscription_not_single_item");
     }
+
+    // Two records about one subscription, and the currency is the field a swap
+    // cannot reconcile: the target price is minted in the ROW's currency, so a
+    // disagreement would mint in a currency the subscription does not bill.
+    currencyMismatch = subscription.currency !== subscriptionRow.currency;
+
+    // Stated for the sheet, never gated on. `cancel_at` wins where it is set —
+    // it is an explicit instant — and `cancel_at_period_end` otherwise means
+    // the current period's end, read through the same helper the webhook uses
+    // so the two cannot disagree across Stripe's API-version straddle.
+    const endsAtUnix =
+      subscription.cancel_at ??
+      (subscription.cancel_at_period_end
+        ? currentPeriodEndOf(subscription)
+        : null);
+    subscriptionEndsAt =
+      endsAtUnix !== null ? new Date(endsAtUnix * 1000).toISOString() : null;
 
     // Classic billing mode credits unused time at the CURRENT price whether or
     // not it was ever paid, so a subscription whose latest invoice is open,
@@ -264,13 +331,18 @@ export async function checkSwitchClub({
     if (!invoicePaid) refusals.push("latest_invoice_not_paid");
   }
 
-  // `isSupportedCurrency` is the type-level guard the price cache needs, not a
-  // second refusal: products are authored in EUR only, so a subscription in a
-  // currency it cannot narrow has no authored target price either and
-  // `no_target_price_in_currency` has already fired above.
+  // The two narrowings that are NOT refusals. `isSupportedCurrency` is the
+  // type-level guard the price cache needs: products are authored in EUR only,
+  // so a subscription in a currency it cannot narrow has no authored target
+  // price either and `no_target_price_in_currency` has already fired above. A
+  // null stored price id is the same shape from the other side — every
+  // subscription our checkout creates records one, so a row without it gives
+  // the RPC no expected state to be bound to, and the commit declines rather
+  // than moving money against an unknown.
   const commitFacts =
     refusals.length === 0 &&
     subscriptionRow !== null &&
+    subscriptionRow.stripe_price_id !== null &&
     item !== null &&
     isSupportedCurrency(subscriptionRow.currency)
       ? {
@@ -280,6 +352,7 @@ export async function checkSwitchClub({
           currency: subscriptionRow.currency,
           subscriptionId: subscriptionRow.stripe_subscription_id,
           subscriptionItemId: item.id,
+          stripePriceId: subscriptionRow.stripe_price_id,
           targetProduct: target,
         }
       : null;
@@ -289,8 +362,10 @@ export async function checkSwitchClub({
     currentAmountCents,
     targetAmountCents: targetPrice?.price_cents ?? null,
     refusals,
+    subscriptionEndsAt,
     commitFacts,
     groupNotOnTarget,
+    currencyMismatch,
   };
 }
 
@@ -310,6 +385,8 @@ export interface SwitchClubCommitInput {
   groupId: string | null;
   /** Minted once per dialog open; derives the Stripe idempotency key. */
   requestId: string;
+  /** Who is moving the seat — the attempt log line's subject. */
+  adminId: string;
   facts: SwitchClubCommitFacts;
 }
 
@@ -331,6 +408,22 @@ export type SwitchClubCommitOutcome =
       message: string;
       stripePriceId: string;
       stripeSubscriptionId: string;
+    }
+  | {
+      /**
+       * Stripe answered without having applied the change. The way this happens
+       * in practice is an idempotency REPLAY: a reused key with a
+       * byte-identical body returns the stored response of the first request
+       * and never touches the subscription — so a dialog left open while the
+       * seat was switched back would pass every check, get a replay, and then
+       * move the seat under a subscription still on the old price. Nothing has
+       * moved, which is why this outcome is not `stripeUpdated`.
+       */
+      kind: "stripe_not_applied";
+      stripePriceId: string;
+      stripeSubscriptionId: string;
+      /** What the subscription is actually on, for the log. */
+      observedPriceIds: string[];
     };
 
 /**
@@ -347,6 +440,7 @@ export async function commitSwitchClub({
   targetProductId,
   groupId,
   requestId,
+  adminId,
   facts,
 }: SwitchClubCommitInput): Promise<SwitchClubCommitOutcome> {
   const priceRow = await getOrCreateSubscriptionPrice(
@@ -364,7 +458,26 @@ export async function commitSwitchClub({
     );
   }
 
-  await stripe.subscriptions.update(
+  // The one line written BEFORE money moves, and the reason it exists: every
+  // other record of a switch is written after the fact, so a process killed
+  // mid-update would leave no trace that this admin asked for this move at all.
+  // Same field shape as the success line, so the pair reads as one story in the
+  // log search.
+  console.info(
+    JSON.stringify({
+      event: "admin_switch_club_attempt",
+      admin_id: adminId,
+      participation_id: participationId,
+      source_product_id: facts.sourceProductId,
+      target_product_id: targetProductId,
+      stripe_subscription_id: facts.subscriptionId,
+      stripe_price_id: priceRow.stripe_price_id,
+      request_id: requestId,
+      at: new Date().toISOString(),
+    }),
+  );
+
+  const updated = await stripe.subscriptions.update(
     facts.subscriptionId,
     {
       items: [
@@ -399,10 +512,36 @@ export async function commitSwitchClub({
     },
   );
 
+  // THE RETURNED SUBSCRIPTION, not the request we sent. Stripe replays a stored
+  // response for a reused idempotency key with a byte-identical body WITHOUT
+  // touching the subscription, so "the call succeeded" is not evidence that the
+  // subscription moved. Asserting the item we asked for is the only thing that
+  // is, and the RPC must not run without it: a seat moved onto a club the
+  // subscription does not bill for is exactly the state this feature exists to
+  // stop being created.
+  const updatedItems = updated.items.data;
+  if (
+    updatedItems.length !== 1 ||
+    updatedItems[0].price.id !== priceRow.stripe_price_id
+  ) {
+    return {
+      kind: "stripe_not_applied",
+      stripePriceId: priceRow.stripe_price_id,
+      stripeSubscriptionId: facts.subscriptionId,
+      observedPriceIds: updatedItems.map((entry) => entry.price.id),
+    };
+  }
+
   const { data, error } = await supabase.rpc("admin_move_participation", {
     p_participation_id: participationId,
     p_target_product_id: targetProductId,
     p_stripe_price_id: priceRow.stripe_price_id,
+    // The state the check read, carried into the write so the two cannot
+    // disagree: the RPC refuses when the seat has moved off this product, or
+    // when the subscription row has been re-priced since. Required arguments,
+    // because a move with no expectation at all is the hole they close.
+    p_expected_source_product_id: facts.sourceProductId,
+    p_expected_stripe_price_id: facts.stripePriceId,
     // The argument carries a SQL DEFAULT, so it is optional in the generated
     // type: `undefined` leaves the placement to the shared rule, which for a
     // paid target is the unassigned inbox. Passing an explicit null would say
@@ -509,17 +648,26 @@ function rewrittenSubscriptionMetadata(
     resolveTranslation(target.product_translations, DEFAULT_LOCALE)?.name ??
     FALLBACK_PRODUCT_NAME;
 
-  return {
-    productId: target.id,
-    product_id: target.id,
-    productName: defaultLocaleName,
-    productType: target.product_type,
-    adminProductUrl: `${origin}${ROUTES.admin.product(target.product_type, target.id)}`,
-    shopProductUrl: `${origin}${ROUTES.shopProduct(target.id)}`,
-    spoken_language_code: target.spoken_language_code,
-    delivery_start: target.start_date ?? "",
-    delivery_end: target.end_date ?? "",
-  };
+  // Cut to Stripe's ceiling here, at the one place these values are composed,
+  // rather than at each key: `productName` is an authored translation and is
+  // the value with no length ceiling of its own, but a rule that holds for
+  // every value cannot be forgotten when a key is added.
+  return Object.fromEntries(
+    Object.entries({
+      productId: target.id,
+      product_id: target.id,
+      productName: defaultLocaleName,
+      productType: target.product_type,
+      adminProductUrl: `${origin}${ROUTES.admin.product(target.product_type, target.id)}`,
+      shopProductUrl: `${origin}${ROUTES.shopProduct(target.id)}`,
+      spoken_language_code: target.spoken_language_code,
+      delivery_start: target.start_date ?? "",
+      delivery_end: target.end_date ?? "",
+    }).map(([key, value]) => [
+      key,
+      truncateForStripe(value, STRIPE_METADATA_VALUE_MAX),
+    ]),
+  );
 }
 
 /**
@@ -553,5 +701,8 @@ async function rewrittenSubscriptionDescription(
   // reads "your child", a parent holding the seat themselves reads "you".
   const who = participant?.first_name || (isSelfSeat ? "you" : "your child");
 
-  return `${name} — ${who}`;
+  // Both halves are user-authored — a product translation and a profile's first
+  // name — so the composed string is cut to Stripe's ceiling here rather than
+  // discovered to be over it by a 400 arriving after the check said yes.
+  return truncateForStripe(`${name} — ${who}`, STRIPE_DESCRIPTION_MAX);
 }

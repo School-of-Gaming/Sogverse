@@ -185,6 +185,8 @@ describe("admin_move_participation", () => {
       p_participation_id: participationId,
       p_target_product_id: CLUB_B,
       p_stripe_price_id: PRICE_B,
+      p_expected_source_product_id: CLUB_A,
+      p_expected_stripe_price_id: PRICE_A,
     });
 
     expect(error?.code).toBe("42501");
@@ -199,6 +201,8 @@ describe("admin_move_participation", () => {
       p_participation_id: participationId,
       p_target_product_id: CLUB_B,
       p_stripe_price_id: PRICE_B,
+      p_expected_source_product_id: CLUB_A,
+      p_expected_stripe_price_id: PRICE_A,
     });
 
     expect(error).toBeNull();
@@ -234,6 +238,8 @@ describe("admin_move_participation", () => {
       p_participation_id: participationId,
       p_target_product_id: CLUB_B,
       p_stripe_price_id: PRICE_B,
+      p_expected_source_product_id: CLUB_A,
+      p_expected_stripe_price_id: PRICE_A,
       p_group_id: GROUP_ON_B,
     });
 
@@ -256,6 +262,8 @@ describe("admin_move_participation", () => {
       p_participation_id: participationId,
       p_target_product_id: CLUB_B,
       p_stripe_price_id: PRICE_B,
+      p_expected_source_product_id: CLUB_A,
+      p_expected_stripe_price_id: PRICE_A,
       p_group_id: GROUP_ON_A,
     });
 
@@ -276,6 +284,8 @@ describe("admin_move_participation", () => {
       p_participation_id: participationId,
       p_target_product_id: CLUB_B,
       p_stripe_price_id: PRICE_B,
+      p_expected_source_product_id: CLUB_A,
+      p_expected_stripe_price_id: PRICE_A,
       p_group_id: UNKNOWN_GROUP,
     });
 
@@ -288,6 +298,61 @@ describe("admin_move_participation", () => {
     expect(await readPrice(participationId)).toBe(PRICE_A);
   });
 
+  it("refuses a seat that has moved off the product the check read it on", async () => {
+    // The stale-dialog case, and the reason the argument exists: the sheet was
+    // opened while the seat was on CLUB_A, another admin moved it, and the
+    // press arrives naming a source the seat has already left. By then the
+    // route has moved the money, so the only honest answer is a refusal.
+    const participationId = await subscribedSeatOnA();
+    const { error: moveError } = await admin
+      .from("participations")
+      .update({ product_id: CLUB_B })
+      .eq("id", participationId);
+    if (moveError) throw new Error(moveError.message);
+
+    const { error } = await adminAuth.rpc("admin_move_participation", {
+      p_participation_id: participationId,
+      p_target_product_id: CLUB_A,
+      p_stripe_price_id: PRICE_A,
+      p_expected_source_product_id: CLUB_A,
+      p_expected_stripe_price_id: PRICE_A,
+    });
+
+    expect(error?.code).toBe("23514");
+    expect(error?.message).toContain("the seat has moved");
+    // Nothing written: the seat stays where the other admin left it, and the
+    // subscription keeps the price it had.
+    expect((await readSeat(participationId))?.product_id).toBe(CLUB_B);
+    expect(await readPrice(participationId)).toBe(PRICE_A);
+  });
+
+  it("refuses a subscription that has been re-priced since the check", async () => {
+    // What a Stripe idempotency key cannot catch: a replayed update answers
+    // with the FIRST request's stored response without touching the
+    // subscription, so the route can believe it moved a price that has since
+    // become something else. The expected price is what makes the RPC the
+    // second line of that defence.
+    const participationId = await subscribedSeatOnA();
+    const { error: repriceError } = await admin
+      .from("family_subscriptions")
+      .update({ stripe_price_id: "price_somebody_else_moved_it" })
+      .eq("participation_id", participationId);
+    if (repriceError) throw new Error(repriceError.message);
+
+    const { error } = await adminAuth.rpc("admin_move_participation", {
+      p_participation_id: participationId,
+      p_target_product_id: CLUB_B,
+      p_stripe_price_id: PRICE_B,
+      p_expected_source_product_id: CLUB_A,
+      p_expected_stripe_price_id: PRICE_A,
+    });
+
+    expect(error?.code).toBe("23514");
+    expect(error?.message).toContain("the price has changed");
+    expect((await readSeat(participationId))?.product_id).toBe(CLUB_A);
+    expect(await readPrice(participationId)).toBe("price_somebody_else_moved_it");
+  });
+
   it("refuses a seat with no subscription row at all", async () => {
     const participationId = await seat(CLUB_A, TEST_IDS.GAMER);
 
@@ -295,6 +360,8 @@ describe("admin_move_participation", () => {
       p_participation_id: participationId,
       p_target_product_id: CLUB_B,
       p_stripe_price_id: PRICE_B,
+      p_expected_source_product_id: CLUB_A,
+      p_expected_stripe_price_id: PRICE_A,
     });
 
     expect(error?.code).toBe("55000");
@@ -312,6 +379,8 @@ describe("admin_move_participation", () => {
       p_participation_id: participationId,
       p_target_product_id: CLUB_B,
       p_stripe_price_id: PRICE_B,
+      p_expected_source_product_id: CLUB_A,
+      p_expected_stripe_price_id: PRICE_A,
     });
 
     expect(error?.code).toBe("55000");
@@ -326,6 +395,8 @@ describe("admin_move_participation", () => {
       p_participation_id: participationId,
       p_target_product_id: CLUB_A,
       p_stripe_price_id: PRICE_B,
+      p_expected_source_product_id: CLUB_A,
+      p_expected_stripe_price_id: PRICE_A,
     });
 
     expect(error?.code).toBe("23514");
@@ -339,6 +410,8 @@ describe("admin_move_participation", () => {
       p_participation_id: participationId,
       p_target_product_id: FREE_CLUB,
       p_stripe_price_id: PRICE_B,
+      p_expected_source_product_id: CLUB_A,
+      p_expected_stripe_price_id: PRICE_A,
     });
 
     expect(error?.code).toBe("23514");
@@ -352,6 +425,8 @@ describe("admin_move_participation", () => {
       p_participation_id: participationId,
       p_target_product_id: CLUB_B,
       p_stripe_price_id: PRICE_B,
+      p_expected_source_product_id: CLUB_A,
+      p_expected_stripe_price_id: PRICE_A,
     });
 
     expect(error?.code).toBe("23514");
@@ -363,6 +438,8 @@ describe("admin_move_participation", () => {
       p_participation_id: "00000000-0000-0000-0000-00000000dead",
       p_target_product_id: CLUB_B,
       p_stripe_price_id: PRICE_B,
+      p_expected_source_product_id: CLUB_A,
+      p_expected_stripe_price_id: PRICE_A,
     });
 
     expect(error?.code).toBe("P0002");
@@ -375,6 +452,8 @@ describe("admin_move_participation", () => {
       p_participation_id: participationId,
       p_target_product_id: "00000000-0000-0000-0000-00000000dead",
       p_stripe_price_id: PRICE_B,
+      p_expected_source_product_id: CLUB_A,
+      p_expected_stripe_price_id: PRICE_A,
     });
 
     expect(error?.code).toBe("P0002");
@@ -393,6 +472,8 @@ describe("admin_move_participation", () => {
       p_participation_id: participationId,
       p_target_product_id: CLUB_B,
       p_stripe_price_id: PRICE_B,
+      p_expected_source_product_id: CLUB_A,
+      p_expected_stripe_price_id: PRICE_A,
     });
 
     expect(error?.code).toBe("23505");
@@ -426,11 +507,15 @@ describe("admin_move_participation", () => {
         p_participation_id: aToB,
         p_target_product_id: CLUB_B,
         p_stripe_price_id: PRICE_B,
+        p_expected_source_product_id: CLUB_A,
+        p_expected_stripe_price_id: PRICE_A,
       }),
       adminAuth.rpc("admin_move_participation", {
         p_participation_id: bToA,
         p_target_product_id: CLUB_A,
         p_stripe_price_id: PRICE_A,
+        p_expected_source_product_id: CLUB_B,
+        p_expected_stripe_price_id: PRICE_A,
       }),
     ]);
 

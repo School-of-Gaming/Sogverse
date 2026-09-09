@@ -2551,6 +2551,8 @@ export type Database = {
       }
       admin_move_participation: {
         Args: {
+          p_expected_source_product_id: string
+          p_expected_stripe_price_id: string
           p_group_id?: string
           p_participation_id: string
           p_stripe_price_id: string

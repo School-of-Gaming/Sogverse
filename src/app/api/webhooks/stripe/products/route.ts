@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe/client";
+import { currentPeriodEndOf } from "@/lib/stripe/subscription-period";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { confirmPaidParticipationRpcResult } from "@/services/participations/participations.contracts";
 import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
@@ -472,13 +473,26 @@ async function handleSubscriptionUpdated(
   // the account; "do we have a row for this stripe_subscription_id" is the gate.
   const { data: ours } = await admin
     .from("family_subscriptions")
-    .select("id")
+    .select("id, updated_at")
     .eq("stripe_subscription_id", sub.id)
     .maybeSingle();
   if (!ours) return;
 
   const periodEnd = currentPeriodEndOf(sub);
   const priceId = sub.items.data[0]?.price.id;
+  // Stripe delivers and retries out of order, so an event describing the
+  // subscription BEFORE the club switch can arrive after the switch has already
+  // written the target's price. Writing its price id then would silently
+  // downgrade the row back to the club the family has left — the one field on
+  // this row that names a product, and the one a stale payload can get wrong in
+  // a way nothing else notices.
+  //
+  // `event.created` is the instant Stripe built the payload; `updated_at` is
+  // the instant we last wrote the row. Older payload, no price write. Status and
+  // period are unaffected: those are properties of the subscription's own
+  // lifecycle rather than of which club it bills for, and a late arrival there
+  // is corrected by the next event.
+  const eventIsStale = event.created * 1000 < Date.parse(ours.updated_at);
   const { error } = await admin
     .from("family_subscriptions")
     .update({
@@ -494,7 +508,7 @@ async function handleSubscriptionUpdated(
       // as null: an items-less update is this handler learning nothing about the
       // price, and "I learned nothing" must not overwrite a good stored id with
       // a null the rest of the app reads as "this seat bills for nothing".
-      ...(priceId ? { stripe_price_id: priceId } : {}),
+      ...(priceId && !eventIsStale ? { stripe_price_id: priceId } : {}),
       current_period_end:
         periodEnd !== null
           ? new Date(periodEnd * 1000).toISOString()
@@ -654,23 +668,6 @@ function statusForNewSubscription(
     { subscription: sub.id, stripeStatus: sub.status, eventId },
   );
   return "incomplete";
-}
-
-// Stripe API: `current_period_end` lives on the subscription in older API
-// versions and on the subscription items in newer ones. Read whichever side
-// has it. Cast through `unknown` because the active SDK type elides one form.
-function currentPeriodEndOf(sub: Stripe.Subscription): number | null {
-  const item = sub.items.data[0] as
-    | (Stripe.SubscriptionItem & { current_period_end?: number })
-    | undefined;
-  if (item && typeof item.current_period_end === "number") {
-    return item.current_period_end;
-  }
-  const subAny = sub as Stripe.Subscription & { current_period_end?: number };
-  if (typeof subAny.current_period_end === "number") {
-    return subAny.current_period_end;
-  }
-  return null;
 }
 
 async function handleSubscriptionDeleted(

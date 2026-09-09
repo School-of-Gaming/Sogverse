@@ -24,6 +24,8 @@ A family moving a child from one consumer club to another is one admin action on
 
 Two things follow for whoever reads the account afterwards. **A switch adds proration lines to the family's next invoice** — a credit for the unused time on the old club and a debit for the new one — so a club invoice carrying extra lines is expected rather than a defect; nothing is charged at the moment of the switch. And **the panel refuses a switch whose latest invoice is unpaid, or whose subscription bills in a currency the target club has no price in**; both are settled in Stripe first, and the second means an Adaptive Pricing subscription in a non-EUR currency cannot be switched by the tool at all.
 
+The paid-invoice gate reads the **latest** invoice only, so an *earlier* invoice that went uncollectible passes it unnoticed — open the customer's invoice list in Stripe before switching a family with any history of payment trouble.
+
 Refunds stay where they are: the switch never issues one, and a family owed money back is handled by the credit-note procedure above.
 
 ## The monthly VAT audit

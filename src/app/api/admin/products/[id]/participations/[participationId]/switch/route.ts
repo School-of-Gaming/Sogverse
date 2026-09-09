@@ -72,6 +72,14 @@ export const GET = defineRoute({
       currentAmountCents: check.currentAmountCents,
       targetAmountCents: check.targetAmountCents,
       refusals: check.refusals,
+      // Stated, not gated on: a family who cancelled and changed their mind is
+      // exactly who an admin switches, and what the sheet needs is the fact.
+      subscriptionEndsAt: check.subscriptionEndsAt,
+      // Present only when true, like every flag that is normally absent — and
+      // never a refusal, because the two records disagreeing about one
+      // subscription is a thing to fix in Stripe rather than an answer about
+      // this seat.
+      ...(check.currencyMismatch ? { currencyMismatch: true } : {}),
     };
   },
 });
@@ -119,6 +127,21 @@ export const POST = defineRoute({
       );
     }
 
+    // The same posture as the group answer above, for the same reason: the
+    // Stripe subscription and our own row disagreeing about the currency is a
+    // records problem, not one of the things an admin is told about this seat.
+    // It is answered before the refusals because minting a price in a currency
+    // the subscription does not bill is the mistake it prevents.
+    if (check.currencyMismatch) {
+      return NextResponse.json(
+        {
+          error:
+            "Stripe and our records disagree about this subscription's currency — check the subscription in Stripe before switching.",
+        },
+        { status: 400 },
+      );
+    }
+
     if (check.refusals.length > 0 || !check.commitFacts) {
       return NextResponse.json(
         {
@@ -143,8 +166,38 @@ export const POST = defineRoute({
       targetProductId: body.targetProductId,
       groupId: body.groupId,
       requestId: body.requestId,
+      adminId: user.id,
       facts: check.commitFacts,
     });
+
+    // Stripe answered, but the subscription is not on the price we asked for —
+    // an idempotency replay of an earlier, now-stale request is how that
+    // happens. NOTHING has moved, so there is no `stripeUpdated` to report and
+    // the RPC was never called; a fresh dialog mints a new request id and its
+    // request is no longer a replay.
+    if (outcome.kind === "stripe_not_applied") {
+      console.error(
+        JSON.stringify({
+          event: "admin_switch_club_stripe_not_applied",
+          admin_id: user.id,
+          participation_id: participationId,
+          source_product_id: check.commitFacts.sourceProductId,
+          target_product_id: body.targetProductId,
+          stripe_subscription_id: outcome.stripeSubscriptionId,
+          stripe_price_id: outcome.stripePriceId,
+          observed_price_ids: outcome.observedPriceIds,
+          request_id: body.requestId,
+          at: new Date().toISOString(),
+        }),
+      );
+      return NextResponse.json(
+        {
+          error:
+            "Stripe did not apply the price change, so nothing was moved. Close this sheet and start the switch again from a fresh open.",
+        },
+        { status: 409 },
+      );
+    }
 
     if (outcome.kind === "db_failed") {
       console.error(
@@ -172,7 +225,7 @@ export const POST = defineRoute({
       // Only a genuine outage is retryable, and it is the only failure that is
       // BOTH a 500 and refusal-free — the group guard is refusal-free too, and
       // its 400 is what tells the sheet not to offer a press it cannot use.
-      const status = statusForFailedMove(outcome.code);
+      const status = statusForFailedMove(outcome.code, outcome.message);
       const refusal = refusalForFailedMove(outcome.code, outcome.message);
       return NextResponse.json(
         {
@@ -222,10 +275,14 @@ export const POST = defineRoute({
  * pre-flight could not have seen. Everything else is a genuine outage, which is
  * the 500 the plan names.
  */
-function statusForFailedMove(code: string | null): number {
+function statusForFailedMove(code: string | null, message: string): number {
   // 23505 — the unique index over (product, participant): somebody else put
   // this participant on the target between the check and the write.
   if (code === "23505") return 409;
+  // The two expected-state guards (00247). A conflict rather than a bad
+  // request: the seat or the subscription is no longer what the sheet was
+  // looking at, and no press can make it so again.
+  if (isExpectedStateLost(code, message)) return 409;
   // 23514 (check violation) and 55000 (no live subscription) are the RPC's
   // other refusals; reaching one means the seat changed underneath us, which is
   // a bad request rather than a fault.
@@ -239,6 +296,12 @@ function messageForFailedMove(code: string | null, message: string): string {
   // wording states the state Stripe is in and stops there; only the outage
   // wording invites a retry.
   const moved = "The Stripe subscription is already on the new club's price";
+  if (code === "23514" && message.includes("the seat has moved")) {
+    return `The seat is no longer on the club this switch was checked against, so it was not moved. ${moved}, and that has to be sorted out in Stripe.`;
+  }
+  if (code === "23514" && message.includes("the price has changed")) {
+    return `The subscription's price changed underneath this switch, so the seat was not moved. ${moved}, and that has to be sorted out in Stripe.`;
+  }
   if (isGroupNotOnTarget(code, message)) {
     return `That group is not a group of the target club, so the seat could not be moved. ${moved}, and that has to be sorted out in Stripe.`;
   }
@@ -277,6 +340,9 @@ function refusalForFailedMove(
 ): SwitchClubRefusal | null {
   if (code === "23505") return "already_on_target";
   if (code === "55000") return "no_live_subscription";
+  // The expected-state guards, named before the substring matching below so
+  // their wording can never be read as one of the refusals by accident.
+  if (isExpectedStateLost(code, message)) return null;
   if (code === "23514" && !isGroupNotOnTarget(code, message)) {
     if (message.includes("(same product)")) return "same_product";
     if (message.includes("not active")) return "participation_not_active";
@@ -297,4 +363,21 @@ function refusalForFailedMove(
  */
 function isGroupNotOnTarget(code: string | null, message: string): boolean {
   return code === "23514" && message.includes("is not a group of the target");
+}
+
+/**
+ * The RPC's two expected-state guards (00247): the seat is no longer on the
+ * product the check read it on, or the subscription row is no longer on the
+ * price the check read. Both mean the world moved between the check and the
+ * write, and neither has a refusal to give — the refusal vocabulary answers
+ * "why can this seat not be switched", while these answer "what you were
+ * looking at is gone". A 409 with no refusal is that distinction: permanent,
+ * because `statusForFailedMove` reserves the retryable answer for the 500.
+ */
+function isExpectedStateLost(code: string | null, message: string): boolean {
+  return (
+    code === "23514" &&
+    (message.includes("the seat has moved") ||
+      message.includes("the price has changed"))
+  );
 }

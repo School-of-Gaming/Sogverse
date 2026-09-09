@@ -218,22 +218,46 @@ function paidClub(id: string, overrides: Record<string, unknown> = {}) {
 }
 
 /** A live subscription, and the shape the Stripe read answers with. */
-function liveSubscription() {
+function liveSubscription(overrides: Record<string, unknown> = {}) {
   return {
-    data: { stripe_subscription_id: SUB_ID, currency: "eur" },
+    data: {
+      stripe_subscription_id: SUB_ID,
+      currency: "eur",
+      // What the RPC is handed as the expected price: the row's own value at
+      // the moment the check read it, never the one being moved to.
+      stripe_price_id: SOURCE_PRICE_ID,
+      ...overrides,
+    },
     error: null,
   };
 }
 
 function stripeSubscription(
   overrides: {
-    items?: { id: string; price: { id: string; unit_amount: number | null } }[];
+    items?: {
+      id: string;
+      price: { id: string; unit_amount: number | null };
+      quantity?: number;
+    }[];
     invoiceStatus?: string;
     amountPaid?: number;
+    currency?: string;
+    cancelAt?: number | null;
+    cancelAtPeriodEnd?: boolean;
+    currentPeriodEnd?: number;
   } = {},
 ) {
   return {
     id: SUB_ID,
+    // The currency the subscription actually bills in. Stated on the fixture
+    // because the check compares it with the row's: leaving it off would make
+    // every test a currency mismatch.
+    currency: overrides.currency ?? "eur",
+    cancel_at: overrides.cancelAt ?? null,
+    cancel_at_period_end: overrides.cancelAtPeriodEnd ?? false,
+    ...(overrides.currentPeriodEnd !== undefined
+      ? { current_period_end: overrides.currentPeriodEnd }
+      : {}),
     items: {
       data: overrides.items ?? [
         { id: ITEM_ID, price: { id: SOURCE_PRICE_ID, unit_amount: 4900 } },
@@ -244,6 +268,19 @@ function stripeSubscription(
       status: overrides.invoiceStatus ?? "paid",
       amount_paid: overrides.amountPaid ?? 4900,
     },
+  };
+}
+
+/**
+ * What Stripe answers a successful plan change with: the subscription carrying
+ * the item it was asked to carry. The commit reads this back rather than
+ * trusting the call, because a replayed idempotency key answers with the FIRST
+ * request's stored response and touches nothing.
+ */
+function updatedSubscription(priceId: string = TARGET_PRICE_ID) {
+  return {
+    id: SUB_ID,
+    items: { data: [{ id: ITEM_ID, price: { id: priceId } }] },
   };
 }
 
@@ -289,7 +326,7 @@ beforeEach(() => {
     },
   };
   mockSubscriptionRetrieve.mockResolvedValue(stripeSubscription());
-  mockSubscriptionUpdate.mockResolvedValue({ id: SUB_ID });
+  mockSubscriptionUpdate.mockResolvedValue(updatedSubscription());
   mockGetOrCreateSubscriptionPrice.mockResolvedValue({
     product_id: TARGET_PRODUCT_ID,
     currency: "eur",
@@ -334,6 +371,9 @@ describe("GET …/participations/[participationId]/switch — the check", () => 
       currentAmountCents: 4900,
       targetAmountCents: 5900,
       refusals: [],
+      // Nothing cancelled, so nothing to state — and `currencyMismatch` is
+      // absent rather than false, which is what `toEqual` is asserting here.
+      subscriptionEndsAt: null,
     });
     // One Stripe read, with the invoice expanded — the check mints nothing.
     expect(mockSubscriptionRetrieve).toHaveBeenCalledTimes(1);
@@ -431,6 +471,66 @@ describe("GET …/participations/[participationId]/switch — the check", () => 
 
     expect(response.status).toBe(404);
   });
+
+  it("refuses a single item billed for more than one seat", async () => {
+    mockAuthenticatedAdmin();
+    // The plan change swaps the item's PRICE and leaves its quantity alone, so
+    // a two-seat item would move one seat and re-price both.
+    mockSubscriptionRetrieve.mockResolvedValue(
+      stripeSubscription({
+        items: [
+          {
+            id: ITEM_ID,
+            price: { id: SOURCE_PRICE_ID, unit_amount: 4900 },
+            quantity: 2,
+          },
+        ],
+      }),
+    );
+
+    const response = await GET(checkRequest(), { params });
+    const body = await response.json();
+
+    expect(body.refusals).toEqual(["subscription_not_single_item"]);
+    expect(body.currentAmountCents).toBeNull();
+  });
+
+  it("states when a cancelling subscription runs out, and refuses nothing for it", async () => {
+    mockAuthenticatedAdmin();
+    mockSubscriptionRetrieve.mockResolvedValue(
+      stripeSubscription({
+        cancelAtPeriodEnd: true,
+        currentPeriodEnd: 1_800_000_000,
+      }),
+    );
+
+    const response = await GET(checkRequest(), { params });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    // A fact for the sheet to state, never a gate: an admin may well be
+    // switching the club of a family who cancelled and changed their mind.
+    expect(body.subscriptionEndsAt).toBe(
+      new Date(1_800_000_000 * 1000).toISOString(),
+    );
+    expect(body.refusals).toEqual([]);
+  });
+
+  it("reports a currency the two records disagree about", async () => {
+    mockAuthenticatedAdmin();
+    mockSubscriptionRetrieve.mockResolvedValue(
+      stripeSubscription({ currency: "gbp" }),
+    );
+
+    const response = await GET(checkRequest(), { params });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.currencyMismatch).toBe(true);
+    // Not a refusal: the refusal vocabulary answers "why can this seat not be
+    // switched", and this is two records disagreeing about one subscription.
+    expect(body.refusals).toEqual([]);
+  });
 });
 
 describe("POST …/participations/[participationId]/switch — the commit", () => {
@@ -511,6 +611,10 @@ describe("POST …/participations/[participationId]/switch — the commit", () =
       p_participation_id: PARTICIPATION_ID,
       p_target_product_id: TARGET_PRODUCT_ID,
       p_stripe_price_id: TARGET_PRICE_ID,
+      // The state the check read, carried into the write: the RPC refuses if
+      // the seat left this product or the row was re-priced in between.
+      p_expected_source_product_id: PRODUCT_ID,
+      p_expected_stripe_price_id: SOURCE_PRICE_ID,
       p_group_id: undefined,
     });
     // `null` placement reaches the RPC as an OMITTED argument, never a named
@@ -522,10 +626,38 @@ describe("POST …/participations/[participationId]/switch — the commit", () =
       "p_group_id",
     );
 
+    // The attempt line, written BEFORE the money moves: it is the only record
+    // of the request if the process dies inside the Stripe call.
+    const attempt = vi
+      .mocked(console.info)
+      .mock.calls.map((call) => asString(call[0]))
+      .find((line) => line.includes("admin_switch_club_attempt"));
+    expect(attempt).toBeDefined();
+    expect(JSON.parse(attempt ?? "{}")).toMatchObject({
+      event: "admin_switch_club_attempt",
+      admin_id: "admin-user-id",
+      participation_id: PARTICIPATION_ID,
+      source_product_id: PRODUCT_ID,
+      target_product_id: TARGET_PRODUCT_ID,
+      stripe_subscription_id: SUB_ID,
+      stripe_price_id: TARGET_PRICE_ID,
+      request_id: REQUEST_ID,
+    });
+    const attemptCall = vi
+      .mocked(console.info)
+      .mock.calls.findIndex((call) =>
+        asString(call[0]).includes("admin_switch_club_attempt"),
+      );
+    expect(
+      vi.mocked(console.info).mock.invocationCallOrder[attemptCall],
+    ).toBeLessThan(mockSubscriptionUpdate.mock.invocationCallOrder[0]);
+
     const audit = vi
       .mocked(console.info)
       .mock.calls.map((call) => asString(call[0]))
-      .find((line) => line.includes("admin_switch_club"));
+      // Matched on the whole field, not a substring: the attempt line written
+      // before the Stripe call starts with the same prefix.
+      .find((line) => line.includes('"event":"admin_switch_club"'));
     expect(audit).toBeDefined();
     expect(JSON.parse(audit ?? "{}")).toMatchObject({
       event: "admin_switch_club",
@@ -572,6 +704,8 @@ describe("POST …/participations/[participationId]/switch — the commit", () =
       p_participation_id: PARTICIPATION_ID,
       p_target_product_id: TARGET_PRODUCT_ID,
       p_stripe_price_id: TARGET_PRICE_ID,
+      p_expected_source_product_id: PRODUCT_ID,
+      p_expected_stripe_price_id: SOURCE_PRICE_ID,
       p_group_id: TARGET_GROUP_ID,
     });
   });
@@ -698,6 +832,112 @@ describe("POST …/participations/[participationId]/switch — the commit", () =
     expect(firstCall[2]).toEqual(secondCall[2]);
     // Byte-identical is what Stripe dedupes on, so the payload has to match too.
     expect(firstCall[1]).toEqual(secondCall[1]);
+  });
+
+  it("answers 400 without touching Stripe when the two records disagree about the currency", async () => {
+    mockAuthenticatedAdmin();
+    mockSubscriptionRetrieve.mockResolvedValue(
+      stripeSubscription({ currency: "gbp" }),
+    );
+
+    const response = await POST(commitRequest(commitBody), { params });
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(asString(body.error)).toContain("currency");
+    expect(body.refusals).toBeUndefined();
+    expect(mockGetOrCreateSubscriptionPrice).not.toHaveBeenCalled();
+    expect(mockSubscriptionUpdate).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it("answers 409 and never calls the RPC when Stripe did not apply the change", async () => {
+    mockAuthenticatedAdmin();
+    // What a replayed idempotency key looks like from here: Stripe answers with
+    // the stored response of the first request, in which the subscription is
+    // still on the OLD price, and the subscription itself was never touched.
+    mockSubscriptionUpdate.mockResolvedValue(
+      updatedSubscription(SOURCE_PRICE_ID),
+    );
+
+    const response = await POST(commitRequest(commitBody), { params });
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    // Nothing moved, so the admin must NOT be told the money did.
+    expect(body.stripeUpdated).toBeUndefined();
+    expect(asString(body.error)).toContain("Stripe did not apply");
+    expect(mockRpc).not.toHaveBeenCalled();
+    expect(mockSendProductConfirmationEmail).not.toHaveBeenCalled();
+    const logged = vi
+      .mocked(console.error)
+      .mock.calls.map((call) => asString(call[0]))
+      .find((line) => line.includes("admin_switch_club_stripe_not_applied"));
+    expect(JSON.parse(logged ?? "{}")).toMatchObject({
+      participation_id: PARTICIPATION_ID,
+      stripe_subscription_id: SUB_ID,
+      stripe_price_id: TARGET_PRICE_ID,
+      observed_price_ids: [SOURCE_PRICE_ID],
+    });
+  });
+
+  it("answers 409 when the seat moved off the source under the write", async () => {
+    mockAuthenticatedAdmin();
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: {
+        code: "23514",
+        message:
+          "participation … is on product …, not the … the switch was checked against — the seat has moved",
+      },
+    });
+
+    const response = await POST(commitRequest(commitBody), { params });
+    const body = await response.json();
+
+    // Permanent, and the money moved: a 409 with no refusal to word, because
+    // the refusal vocabulary has nothing for "what you were looking at is gone".
+    expect(response.status).toBe(409);
+    expect(body.stripeUpdated).toBe(true);
+    expect(body.refusals).toBeUndefined();
+    expect(asString(body.error)).toContain("no longer on the club");
+    expect(asString(body.error)).toContain("Stripe");
+    expect(mockSubscriptionUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  it("answers 409 when the subscription was re-priced under the write", async () => {
+    mockAuthenticatedAdmin();
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: {
+        code: "23514",
+        message:
+          "subscription … is on price …, not the … the switch was checked against — the price has changed",
+      },
+    });
+
+    const response = await POST(commitRequest(commitBody), { params });
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.stripeUpdated).toBe(true);
+    expect(body.refusals).toBeUndefined();
+    expect(asString(body.error)).toContain("price changed");
+    expect(mockSubscriptionUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects a request id that is not the shape the dialog mints", async () => {
+    mockAuthenticatedAdmin();
+    // The value is concatenated into the Stripe idempotency key, so a colon or
+    // a newline in it could collide two different commits onto one key.
+    const response = await POST(
+      commitRequest({ ...commitBody, requestId: "not:a:valid:id" }),
+      { params },
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockSubscriptionUpdate).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
   });
 
   it("rejects a body without a request id", async () => {

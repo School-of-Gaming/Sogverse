@@ -74,6 +74,25 @@ export const switchClubCheckResponse = z.object({
   targetAmountCents: z.number().int().nullable(),
   /** Empty means the commit is allowed. */
   refusals: z.array(switchClubRefusal),
+  /**
+   * When the family has already cancelled — at period end, or at a named
+   * instant — this is when the subscription runs out; null otherwise.
+   *
+   * Deliberately NOT a refusal: an admin may well be switching the club of a
+   * family who cancelled and changed their mind, and owner's ruling is that the
+   * flexibility stays. It is a FACT the sheet states, so the admin knows the
+   * subscription they are re-pricing is on its way out and can say so to the
+   * parent. The commit does not gate on it.
+   */
+  subscriptionEndsAt: z.string().datetime().nullable(),
+  /**
+   * The live Stripe subscription's currency disagrees with the
+   * `family_subscriptions` row's. Present only when true, and never a refusal:
+   * like a group that is not the target's, it is a records disagreement rather
+   * than an answer about this seat, so the commit answers it with a plain 400
+   * that says to check the subscription in Stripe.
+   */
+  currencyMismatch: z.boolean().optional(),
 });
 
 export type SwitchClubCheckResponse = z.infer<typeof switchClubCheckResponse>;
@@ -93,7 +112,16 @@ export type SwitchClubCheckResponse = z.infer<typeof switchClubCheckResponse>;
 export const switchClubCommitBody = z.object({
   targetProductId: z.string().uuid(),
   groupId: z.string().uuid().nullable(),
-  requestId: z.string().min(8).max(128),
+  // Bounded and alphabet-restricted because this value is concatenated into the
+  // Stripe idempotency key: a caller-supplied string that could carry a colon,
+  // a newline or unbounded length would let two different commits collide on
+  // one key — the one place in this feature where money would move for the
+  // wrong seat. The dialog mints `crypto.randomUUID()`, which conforms.
+  requestId: z
+    .string()
+    .min(8)
+    .max(128)
+    .regex(/^[A-Za-z0-9_-]+$/),
 });
 
 export type SwitchClubCommitBody = z.infer<typeof switchClubCommitBody>;
