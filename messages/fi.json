@@ -1996,27 +1996,27 @@
       "topics": {
         "minecraft_java": {
           "description": "Minecraft on luova rakennuspeli – ajattele digitaalista legoa. Lapset tutkivat palikkamaailmaa, keräävät materiaaleja ja rakentavat mitä mielikuvitus keksii, kodikkaasta talosta kokonaiseen kaupunkiin. Pelissä ei voiteta eikä hävitä; se on rauhallinen ja avoin tila luoda ja ratkaista ongelmia. ”Java” on alkuperäinen versio Windows-, Mac- ja Linux-tietokoneille, ja sitä etäkerhomme käyttävät, koska se tukee pelikasvattajiemme tarvitsemia työkaluja.",
-          "note": "Kerhojamme varten lapsesi tarvitsee Minecraftin tietokoneella. Minecraft.net-sivustolla se myydään nimellä ”Minecraft: Java & Bedrock Edition for PC” – yksi kertaluonteinen osto (ei tilaus), joka sisältää käyttämämme version. Erillinen konsoli-, puhelin- ja tablettiversio ei toimi näissä kerhoissa.",
+          "note": "Etäkerhojamme varten lapsesi tarvitsee Minecraftin tietokoneella. Minecraftin omilla sivuilla se myydään nimellä ”Minecraft: Java & Bedrock Edition for PC” – yksi kertaosto, ei tilaus, ja se sisältää käyttämämme version. Erillinen konsoli-, puhelin- ja tablettiversio ei toimi näissä kerhoissa.",
           "linkLabel": "Hanki Minecraft tietokoneelle"
         },
         "minecraft_bedrock": {
           "description": "Minecraft on luova rakennuspeli – ajattele digitaalista legoa. Lapset tutkivat palikkamaailmaa, keräävät materiaaleja ja rakentavat mitä mielikuvitus keksii, kodikkaasta talosta kokonaiseen kaupunkiin. Pelissä ei voiteta eikä hävitä; se on rauhallinen ja avoin tila luoda ja ratkaista ongelmia. ”Bedrock” on versio, joka toimii konsoleilla (Xbox, PlayStation, Switch), puhelimilla, tableteilla ja Windows-tietokoneilla.",
-          "note": "Lapsesi tarvitsee tähän kerhoon Minecraft Bedrockin. Se ei sisälly hintaan – osta se kaupasta, joka vastaa laitetta, jolla lapsesi pelaa (sama peli, mutta myydään eri paikassa eri laitteille). Pelikonsolilla verkkopelaaminen voi lisäksi vaatia kyseisen konsolin maksullisen verkkojäsenyyden.",
+          "note": "Minecraft Bedrock ei sisälly hintaan. Se on sama peli, mutta se myydään erikseen kullekin laitteelle, eikä yhdelle laitteelle ostettu kappale siirry toiselle – ratkaiseva on se kappale, joka on hankittu sille laitteelle, jolla lapsesi pelaa. Pelikonsolilla verkkopelaaminen vaatii lisäksi kyseisen konsolin maksullisen verkkojäsenyyden.",
           "linkLabel": "Mistä sen saa"
         },
         "minecraft_education": {
           "description": "Minecraft on luova rakennuspeli – ajattele digitaalista legoa. Lapset tutkivat palikkamaailmaa, keräävät materiaaleja ja rakentavat mitä mielikuvitus keksii. Minecraft Education on luokkahuoneeseen tehty versio: samaa mukavaa ja avointa rakentamista, mutta mukana on lisätyökaluja tapaamista vetävälle aikuiselle, ja se on suunniteltu ohjattuun toimintaan eikä yksin pelaamiseen.",
-          "note": "Mitään ei tarvitse ostaa eikä koulun tiliä järjestää – School of Gaming tarjoaa Minecraft Education -tilit, joita osallistujat käyttävät kerhossa. Etäkerhoissa lapsesi tarvitsee lisäksi itse pelin, jonka voi ladata maksutta Microsoft Storesta tai Minecraft Educationin omilta sivuilta.",
+          "note": "Mitään ei tarvitse ostaa eikä koulun tiliä järjestää – School of Gaming tarjoaa Minecraft Education -tilit, joita osallistujat käyttävät kerroilla. Etäkerhoissa itse pelin voi ladata maksutta Microsoft Storesta tai Minecraft Educationin omilta sivuilta, ja se toimii Windows- ja Mac-tietokoneilla sekä iPadeilla ja Chromebookeilla.",
           "linkLabel": "Tietoa Minecraft Educationista"
         },
         "fortnite": {
           "description": "Fortnite on värikäs ja piirrosmainen verkkopeli, jossa pelaajat muodostavat joukkueita ja kilpailevat lyhyissä, eräpohjaisissa otteluissa. Se on erittäin suosittu ja hyvin sosiaalinen, ja lapset pelaavat yhdessä kavereiden kanssa. Ulkoasu on kirkas ja epärealistinen, eikä siinä ole verta eikä väkivaltaa, vaikka ottelut ovat kilpailullisia ja niitä pelataan verkossa muiden kanssa.",
-          "note": "Fortnite on ilmainen ladata ja pelata – itse peliä ei osteta. Lapsesi luo pelaamista varten ilmaisen Epic Games -tilin. Jotkin valinnaiset lisät, kuten asut, maksavat, ja voit rajoittaa niitä lapsilukon asetuksilla.",
+          "note": "Fortnite on ilmainen ladata ja pelata – itse peliä ei osteta. Pelaaminen vaatii ilmaisen Epic Games -tilin. Jotkin valinnaiset lisät, kuten asut, maksavat; Epicin lapsilukko on tilillä eikä laitteessa, ja sillä niitä voi rajoittaa.",
           "linkLabel": "Hanki Fortnite"
         },
         "pokemon_go": {
           "description": "Pokémon GO on ulkona pelattava puhelinpeli. Olennot ilmestyvät kartalle oikeisiin paikkoihin, ja lapset kävelevät puistoihin, kaduille ja nähtävyyksille etsimään ja keräämään niitä. Pelissä keräillään eikä taistella – kiinnostavinta on tutkiminen, Pokédexin täydentäminen ja löytöjen vertailu kavereiden kanssa. Suurin osa pelaamisesta tapahtuu jalan, joten peli saa lapset liikkeelle.",
-          "note": "Pokémon GO on ilmainen ladata ja pelata – itse peliä ei osteta. Lapsesi tarvitsee puhelimen tai tabletin, jossa on GPS ja mobiilidatayhteys, sekä ilmaisen käyttäjätilin. Peli sisältää valinnaisia ostoksia, joita voi rajoittaa lapsilukon asetuksilla. Koska peliä pelataan ulkona oikeissa paikoissa, kannattaa sopia etukäteen, missä lapsi saa liikkua ja kulkeeko aikuinen mukana.",
+          "note": "Pokémon GO on ilmainen ladata ja pelata – itse peliä ei osteta. Se vaatii puhelimen, jossa on GPS ja mobiilidatayhteys, sekä ilmaisen käyttäjätilin; alle 13-vuotiaalle tilin luo vanhempi, ja se pysyy liitettynä vanhemman tiliin. Peli sisältää valinnaisia ostoksia, joita lapsilukolla voi rajoittaa. Sitä pelataan ulkona oikeissa paikoissa, ja se pitää näytön, GPS:n ja datayhteyden päällä koko ajan, joten akku ei kestä kauaa.",
           "linkLabel": "Mistä sen saa"
         },
         "roblox_studio": {
@@ -2026,7 +2026,7 @@
         },
         "rocket_league": {
           "description": "Rocket League on jalkapalloa rakettiautoilla. Kaksi joukkuetta ajaa areenalla ja yrittää työntää ylisuuren pallon vastustajan maaliin noin viiden minuutin otteluissa. Ulkoasu on kirkas ja piirrosmainen, eikä pelissä ole väkivaltaa – kyse on urheilulajista, ei räiskintäpelistä. Peliä on siksi helppo seurata sivustakin, vaikka ei itse pelaisi. Lähes jokainen maali syntyy joukkueen yhteistyöstä, ja siksi peli sopii hyvin kerhotoimintaan.",
-          "note": "Rocket Leaguen lataaminen ja pelaaminen on ilmaista – itse peliä ei osteta. Lapsesi tarvitsee ilmaisen Epic Games -tilin. Peli toimii Windows-tietokoneilla, PlayStationilla, Xboxilla ja Nintendo Switchillä, ja eri laitteiden pelaajat voivat pelata yhdessä, joten lapsesi laitteen ei tarvitse olla sama kuin muilla. Peli sisältää valinnaisia ostoksia, kuten koristeita autoihin, ja niitä voi rajoittaa lapsilukon asetuksilla.",
+          "note": "Rocket Leaguen lataaminen ja pelaaminen on ilmaista – itse peliä ei osteta. Pelaaminen vaatii ilmaisen Epic Games -tilin. Peli toimii Windows-tietokoneilla, PlayStationilla, Xboxilla ja Nintendo Switchillä, ja eri laitteiden pelaajat voivat pelata yhdessä, joten lapsesi laitteen ei tarvitse olla sama kuin muilla. Peli sisältää valinnaisia ostoksia, kuten koristeita autoihin, ja niitä voi rajoittaa lapsilukon asetuksilla.",
           "linkLabel": "Hanki Rocket League"
         }
       }
@@ -2152,6 +2152,151 @@
       "title": "Sivua ei löytynyt",
       "description": "Se on ehkä poistettu tai linkki on virheellinen. Selaa muita vaihtoehtoja alta.",
       "cta": "Takaisin selaamaan"
+    }
+  },
+  "topicPrep": {
+    "heading": "Ennen ensimmäistä kertaa",
+    "dialogTitle": "Ennen ensimmäistä kertaa",
+    "triggerLabel": "Valmistaudu",
+    "readyLabel": "Olen valmis",
+    "closing": "Siinä kaikki, mitä pitää hoitaa etukäteen. Nähdään ensimmäisellä kerralla!",
+    "topics": {
+      "minecraft_java": {
+        "intro": "Näillä kerroilla pelataan Minecraftia tietokoneella, Java-versiolla. Käy alla olevat vaiheet läpi ennen ensimmäistä kertaa, niin itse päivänä ei tarvitse selvitellä mitään."
+      },
+      "minecraft_education": {
+        "intro": "Näillä kerroilla käytetään Minecraft Educationia, joka on ilmainen. School of Gaming jakaa tunnukset ensimmäisellä kerralla, joten etukäteen tarvitsee hoitaa vain yksi asia."
+      },
+      "minecraft_bedrock": {
+        "intro": "Näillä kerroilla pelataan Minecraft Bedrockia yhdessä verkossa. Ennen ensimmäistä kertaa hoidettavana on kolme asiaa."
+      },
+      "fortnite": {
+        "intro": "Fortnite on ilmainen, ja sitä pelataan kerroilla yhdessä. Näin valmistaudut ensimmäiseen kertaan."
+      },
+      "rocket_league": {
+        "intro": "Rocket League on ilmainen, ja jokainen kerta pelataan yhdessä. Ennen ensimmäistä kertaa hoidettavana on kolme asiaa."
+      },
+      "pokemon_go": {
+        "intro": "Pokémon GO:ta pelataan ulkona puhelimella, joten etukäteen hoidetaan kuntoon puhelin ja suunnitelma. Neljä asiaa."
+      },
+      "roblox_studio": {
+        "intro": "Nämä kerrat rakennetaan Roblox Studiolla, Robloxin ilmaisella pelinkehitysohjelmalla. Jokainen osallistuja tarvitsee oman Roblox-tilin ja Studion asennettuna siihen tietokoneeseen, jota käyttää."
+      }
+    },
+    "accountsOnlyIntro": {
+      "minecraft_java": "Näille kerroille tuomme tietokoneet mukanamme, ja Minecraft on niissä valmiina. Tiliä emme voi tuoda – se on siis ainoa asia, joka pitää hoitaa etukäteen.",
+      "minecraft_bedrock": "Näille kerroille tuomme koneet mukanamme, ja Minecraft on niissä valmiina, joten peliä ei tarvitse ostaa eikä asentaa. Tili on se osa, joka tulee teiltä.",
+      "fortnite": "Näille kerroille tuomme koneet mukanamme, ja Fortnite on niissä valmiina – teille jää siis tili ja sen asetukset.",
+      "rocket_league": "Näille kerroille tuomme koneet mukanamme, ja Rocket League on niissä valmiina. Tili on se osa, joka tulee teiltä.",
+      "roblox_studio": "Näille kerroille tuomme tietokoneet mukanamme, ja Roblox Studio on niissä valmiina. Tiliä emme voi tuoda – se on siis ainoa asia, joka pitää hoitaa etukäteen."
+    },
+    "steps": {
+      "minecraftJavaAccount": {
+        "title": "Hanki Microsoft-tili, jolla on Minecraft",
+        "body": "Minecraftiin kirjaudutaan Microsoft-tilillä. Jos sellaista ei vielä ole, vanhempi luo sen ja ostaa sille paketin ”Minecraft: Java & Bedrock Edition for PC” – <b>yksi kertaosto, ei tilaus</b>, ja se kattaa näillä kerroilla käytettävän Java-version. Käyttöönotossa valitaan Java-profiilin nimi: se on käyttäjänimi, jonka tarvitsemme päästääksemme sinut palvelimellemme, joten kirjoita se ylös paikkaan, josta löydät sen uudelleen.",
+        "linkLabel": "Hanki Minecraft tietokoneelle"
+      },
+      "minecraftJavaInstall": {
+        "title": "Asenna Minecraft Launcher",
+        "body": "Asenna Minecraft Launcher siihen tietokoneeseen, jota käytät kerroilla – lataus löytyy samalta Minecraftin sivulta, jolta ostit pelin – ja kirjaudu sisään samalla Microsoft-tilillä."
+      },
+      "minecraftJavaLaunch": {
+        "title": "Avaa Minecraft kerran etukäteen",
+        "body": "Käynnistä launcher, anna sen tehdä päivitykset loppuun, avaa peli päävalikkoon asti ja sulje se. Ensimmäinen päivitys voi kestää hetken, ja kun se on tehty etukäteen, kerta ei ala latauksella."
+      },
+      "minecraftEducationInstall": {
+        "title": "Asenna Minecraft Education",
+        "body": "Minecraft Education on ilmainen lataus Microsoft Storesta tai Minecraft Educationin omilta sivuilta. Asenna se tietokoneeseen, jota käytät, ja avaa se kerran varmistaaksesi, että se käynnistyy. Tiliä ei tarvitse luoda: School of Gaming antaa tunnukset ensimmäisellä kerralla, joten pelkkä peli riittää.",
+        "linkLabel": "Hanki Minecraft Education"
+      },
+      "minecraftBedrockAccount": {
+        "title": "Kirjaudu Microsoft-tilillä",
+        "body": "Minecraft Bedrockia pelataan verkossa Microsoft-tilillä, ja tilin gamertag on se, jolla löydämme sinut ja lisäämme sinut maailmoihimme. Jos tiliä ei vielä ole, vanhempi luo sen ja käyttää oikeaa syntymäaikaa – Microsoft päättää sen perusteella, mitkä verkkotoiminnot ovat käytössä. Kirjoita gamertag ylös; kysymme sitä."
+      },
+      "minecraftBedrockInstall": {
+        "title": "Osta ja asenna Minecraft oikealle laitteelle",
+        "body": "Bedrock on sama peli, mutta se myydään erikseen kullekin laitteelle, eikä yhdelle laitteelle ostettu kappale siirry toiselle – <b>osta se siis sillä laitteella, jolla oikeasti pelaat</b>, olipa se konsoli, puhelin, tabletti tai Windows-tietokone.",
+        "linkLabel": "Valitse laitteesi"
+      },
+      "minecraftBedrockOnline": {
+        "title": "Tarkista, että verkkopelaaminen toimii",
+        "body": "Avaa Minecraft kyseisellä laitteella, kirjaudu sisään Microsoft-tilillä ja varmista, että pääset verkkopelinäkymään. Xboxilla, PlayStationilla ja Nintendo Switchillä muiden kanssa pelaaminen vaatii lisäksi konsolin oman maksullisen verkkojäsenyyden."
+      },
+      "fortniteAccount": {
+        "title": "Luo Epic Games -tili",
+        "body": "Fortnite on ilmainen, ja siihen kirjaudutaan ilmaisella Epic Games -tilillä. Jos sellaista ei vielä ole, vanhempi luo sen ja käyttää oikeaa syntymäaikaa – Epic päättää sen perusteella, mitkä keskustelu- ja yhteisötoiminnot ovat käytössä. Kirjoita näyttönimi ylös; sillä löydämme sinut."
+      },
+      "fortniteControls": {
+        "title": "Aseta lapsilukko",
+        "body": "Epicin lapsilukko on tilillä eikä laitteessa, joten se seuraa pelaajaa laitteesta toiseen. Vanhempi asettaa kuusinumeroisen PIN-koodin ja valitsee, mikä on sallittua – kuka saa keskustella ja vaatiiko ostos PIN-koodin. Itse peli ei maksa mitään; tämä pitää kurissa valinnaiset lisät."
+      },
+      "fortniteInstall": {
+        "title": "Asenna Fortnite",
+        "body": "Asenna Fortnite laitteeseen, jota käytät kerroilla, ja kirjaudu sisään Epic Games -tilillä. Avaa peli kerran ja anna sen päivittyä: ensimmäinen lataus on iso, ja se kannattaa tehdä edellisenä päivänä eikä viisi minuuttia ennen alkua.",
+        "linkLabel": "Hanki Fortnite"
+      },
+      "fortniteCrossplay": {
+        "title": "Jätä ristiinpelaaminen päälle",
+        "body": "Ristiinpelaaminen on se, minkä ansiosta kaikki voivat pelata yhdessä laitteesta riippumatta. Se on oletuksena päällä; jos se on otettu pelin asetuksista pois, laita se takaisin päälle ennen kertaa."
+      },
+      "rocketLeagueAccount": {
+        "title": "Luo Epic Games -tili",
+        "body": "Rocket League on ilmainen, ja siihen kirjaudutaan ilmaisella Epic Games -tilillä – samanlaisella kuin Fortnitessa, joten jo olemassa oleva tili käy tähänkin. Jos tiliä ei ole, vanhempi luo sen ja käyttää oikeaa syntymäaikaa. Kirjoita näyttönimi ylös; sillä löydämme sinut."
+      },
+      "rocketLeagueInstall": {
+        "title": "Asenna Rocket League",
+        "body": "Asenna Rocket League laitteeseen, jota käytät – se on ilmainen Windows-tietokoneella, PlayStationilla, Xboxilla ja Nintendo Switchillä. Avaa se kerran ennen kertaa ja anna päivitysten latautua loppuun.",
+        "linkLabel": "Hanki Rocket League"
+      },
+      "rocketLeagueCrossplay": {
+        "title": "Jätä laitteiden välinen pelaaminen päälle",
+        "body": "Laitteiden välinen pelaaminen tarkoittaa, ettei kenenkään laitteen tarvitse olla sama kuin muilla. Se on oletuksena päällä; jos se on otettu asetuksista pois, laita se takaisin päälle, jotta koko ryhmä mahtuu samaan otteluun."
+      },
+      "pokemonGoInstall": {
+        "title": "Asenna Pokémon GO puhelimeen",
+        "body": "Pokémon GO on ilmainen, ja se asennetaan siihen puhelimeen, joka otetaan mukaan kerralle – App Storesta iPhoneen tai Google Playstä Android-puhelimeen. Peli on pelkästään puhelinpeli: tietokone- tai konsoliversiota ei ole."
+      },
+      "pokemonGoAccount": {
+        "title": "Luo käyttäjätili",
+        "body": "Pelaamiseen tarvitaan tili, jonka peli tarjoutuu luomaan ensimmäisellä avauskerralla. Alle 13-vuotiaalle tilin luo vanhempi ja liittää sen omaansa, jolloin asetukset pysyvät vanhemman käsissä. Kirjoita valmentajanimi ylös; sillä löydämme sinut."
+      },
+      "pokemonGoPhone": {
+        "title": "Lataa puhelin täyteen ja tarkista asetukset",
+        "body": "Peli pitää näytön, GPS:n ja mobiilidatan päällä koko ajan, ja akku kuluu nopeasti. Ennen kertaa: lataa puhelin täyteen, tarkista, että sijainti ja mobiilidata ovat päällä, ja ota varavirtalähde mukaan, jos sellainen kotoa löytyy."
+      },
+      "pokemonGoAgree": {
+        "title": "Sopikaa, minne mennään",
+        "body": "Pokémon GO:ta pelataan ulkona oikeissa paikoissa, joten sopikaa etukäteen, mitkä kadut ja puistot ovat sallittuja, tuleeko aikuinen mukaan ja miten pidätte yhteyttä kerran aikana. Katse ylös ja tie tarkkana – puhelin voi odottaa."
+      },
+      "robloxStudioAccount": {
+        "title": "Varmista, että Roblox-tili on olemassa",
+        "body": "Jokainen osallistuja tarvitsee oman Roblox-tilin. Jos sellainen on jo, käytä sitä. Jos ei ole, vanhempi luo sen ja käyttää oikeaa syntymäaikaa – Roblox päättää sen perusteella, mitkä toiminnot ja sisällöt ovat käytössä. Varmista, että tiedät käyttäjänimen, saat salasanan käsiisi silloin kun sitä tarvitaan, ja pystyt kirjautumaan sisään sillä tietokoneella, jota käytät. <b>Pitäkää salasana omana tietonanne</b>: kukaan School of Gamingista ei koskaan kysy sitä."
+      },
+      "robloxStudioInstall": {
+        "title": "Asenna Roblox Studio",
+        "body": "Roblox Studio on Robloxin oma pelinkehitysohjelma, ja se on ilmainen. Avaa Roblox Creator Hub, kirjaudu sisään Roblox-tilillä ja lataa ja asenna Studio siellä olevien ohjeiden mukaan. Kun asennus on valmis, avaa Studio ja kirjaudu sisään samalla tilillä. Sen jälkeen se toimii kuin mikä tahansa muu ohjelma koneella.",
+        "linkLabel": "Avaa Roblox Creator Hub"
+      },
+      "robloxStudioTest": {
+        "title": "Testaa kaikki ennen ensimmäistä kertaa",
+        "body": "Nopea läpikäynti nyt säästää kerran ensimmäiset kymmenen minuuttia:"
+      }
+    },
+    "platformNotes": {
+      "robloxStudioWindows": {
+        "title": "Windowsilla",
+        "body": "Avaa Käynnistä-valikko tai Windowsin haku, kirjoita Roblox Studio ja valitse se tuloksista."
+      },
+      "robloxStudioMac": {
+        "title": "Macilla",
+        "body": "Avaa Spotlight tai Ohjelmat-kansio ja hae Roblox Studio."
+      }
+    },
+    "checklist": {
+      "robloxStudioTestOpen": "Avaa Roblox Studio.",
+      "robloxStudioTestSignIn": "Kirjaudu sisään Roblox-tilillä.",
+      "robloxStudioTestHome": "Tarkista, että Studion aloitusnäyttö avautuu normaalisti.",
+      "robloxStudioTestClose": "Sulje Roblox Studio."
     }
   },
   "sidebar": {
