@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { ROLE_POST_LOGIN_PATHS } from "@/lib/constants/roles";
 import { resolveInternalPath } from "@/lib/navigation/internal-path";
+import { isSupportedLocale } from "@/lib/constants/locales";
+import {
+  LOCALE_COOKIE_NAME,
+  localeCookieOptions,
+} from "@/lib/locale-cookie";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -24,7 +29,7 @@ export async function GET(request: Request) {
       if (userId) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("role")
+          .select("role, locale")
           .eq("id", userId)
           .single();
 
@@ -39,7 +44,25 @@ export async function GET(request: Request) {
               ? ROLE_POST_LOGIN_PATHS[role]
               : ROLE_POST_LOGIN_PATHS.customer;
 
-        return NextResponse.redirect(`${origin}${redirectPath}`);
+        const response = NextResponse.redirect(`${origin}${redirectPath}`);
+
+        // **Signing in seeds the locale cookie from the profile.** The
+        // redirect above goes to a bare path, which the proxy resolves by the
+        // cookie → `Accept-Language` → English ladder — so without this a
+        // Finnish reader signing in on a fresh device would land on
+        // `/en/parent`. `locale` rides on the profile read that was already
+        // happening; a null value means "auto-detect from the browser" and is
+        // deliberately left unwritten, since the header leg is what that
+        // reader asked for.
+        if (isSupportedLocale(profile?.locale)) {
+          response.cookies.set(
+            LOCALE_COOKIE_NAME,
+            profile.locale,
+            localeCookieOptions(),
+          );
+        }
+
+        return response;
       }
     }
   }

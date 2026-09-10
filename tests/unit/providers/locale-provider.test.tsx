@@ -80,6 +80,8 @@ describe("LocaleProvider", () => {
     mockAuth.user = null;
     mockIntlLocale.value = "en";
     mockRefresh.mockClear();
+    mockRouter.replace.mockClear();
+    mockRouter.push.mockClear();
     mockTrack.mockClear();
   });
 
@@ -200,7 +202,21 @@ describe("LocaleProvider", () => {
 
     expect(mockTrack).not.toHaveBeenCalled();
     expect(getCookieValue("locale")).toBe("en");
-    expect(mockRefresh).toHaveBeenCalled();
+  });
+
+  it("persists without navigating or refreshing — the picker owns the URL", () => {
+    // `setLocale` is persistence and nothing else. The re-issue of the current
+    // route under the new prefix belongs to the picker, which is the only
+    // caller holding the pathname, its params and the query string; a refresh
+    // here would be a second render of the page the reader is leaving.
+    const setLocale = renderWithControl("en");
+
+    act(() => setLocale("sv"));
+
+    expect(getCookieValue("locale")).toBe("sv");
+    expect(mockRefresh).not.toHaveBeenCalled();
+    expect(mockRouter.replace).not.toHaveBeenCalled();
+    expect(mockRouter.push).not.toHaveBeenCalled();
   });
 
   it("reports the locale on screen as `from`, not the profile's", () => {

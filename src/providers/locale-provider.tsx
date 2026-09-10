@@ -25,7 +25,6 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import { useAuth } from "./auth-provider";
 import {
@@ -36,9 +35,8 @@ import {
 } from "@/lib/constants/locales";
 
 import { setCookie } from "@/lib/cookies";
+import { LOCALE_COOKIE_NAME } from "@/lib/locale-cookie";
 import { trackLocaleChange } from "@/lib/analytics";
-
-const COOKIE_NAME = "locale";
 
 interface LocaleContextType {
   locale: SupportedLocale;
@@ -65,7 +63,6 @@ export function LocaleProvider({
   detectedLocale: DetectedLocale;
 }) {
   const { user, refreshProfile } = useAuth();
-  const router = useRouter();
   // **The URL is the authority, and this provider is its consumer.** The
   // locale on screen is the one in the address bar, which next-intl resolves
   // from the `[locale]` segment and exposes here — so a signed-in `fi`-profile
@@ -97,7 +94,7 @@ export function LocaleProvider({
         });
       }
 
-      setCookie(COOKIE_NAME, newLocale);
+      setCookie(LOCALE_COOKIE_NAME, newLocale);
 
       // Persist to profile if logged in
       if (user) {
@@ -110,13 +107,13 @@ export function LocaleProvider({
           .catch((err) => console.error("Failed to persist locale:", err));
       }
 
-      // Re-render the server tree so anything outside the URL's own locale —
-      // and the cookie fallback the contexts with no URL locale read — picks
-      // the new value up. Step 6 adds the navigation to the new prefix beside
-      // it; until then this is what the picker does.
-      router.refresh();
+      // No refresh here, and no navigation either. **Persistence is all this
+      // does**: the picker is what re-issues the current route under the new
+      // prefix, because only the picker has the pathname, its params and the
+      // query string to rebuild the URL from — and that navigation re-renders
+      // the server tree on its own.
     },
-    [user, refreshProfile, router, locale, detectedLocale],
+    [user, refreshProfile, locale, detectedLocale],
   );
 
   return (

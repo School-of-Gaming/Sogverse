@@ -12,6 +12,9 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { getClient } from "@/lib/supabase/client";
 import { identifierToLoginEmail } from "@/lib/gamer-sign-in";
 import { ROLE_POST_LOGIN_PATHS, ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
+import { isSupportedLocale } from "@/lib/constants/locales";
+import { setCookie } from "@/lib/cookies";
+import { LOCALE_COOKIE_NAME } from "@/lib/locale-cookie";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth } from "@/providers";
 
@@ -100,9 +103,27 @@ export function LoginForm({ redirect: redirectParam }: { redirect: string | null
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role, locale")
         .eq("id", data.user.id)
         .single();
+
+      // **Sign-in seeds the locale cookie — the one exception to "persistence
+      // is picker-only".** The navigation below goes to a *bare* dashboard
+      // path, and a bare path is resolved by the cookie → `Accept-Language` →
+      // English ladder; without this, a `fi` reader signing in on a fresh
+      // device would land on `/en/parent` despite their stored preference.
+      //
+      // It rides on the profile read that was already happening, and it is
+      // awaited before navigating for the same reason: the document is about
+      // to unload, and a fire-and-forget write would race it and be lost.
+      //
+      // A null `locale` means "auto-detect from the browser", so it is skipped
+      // rather than written — the ladder's header leg is exactly what that
+      // reader asked for. The cookie is a preference, not a credential, which
+      // is what makes a client-side write fine here.
+      if (isSupportedLocale(profile?.locale)) {
+        setCookie(LOCALE_COOKIE_NAME, profile.locale);
+      }
 
       // Customer (parent) lands on /select-profile so they can pick which
       // family member is entering Sogverse; everyone else goes to their
