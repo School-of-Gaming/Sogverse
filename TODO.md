@@ -163,39 +163,6 @@ The seam exists *because* Stripe subscriptions must reference a persistent Price
 
 **Deferred deliberately** — the customer base is small enough that the English line item is an acceptable edge for now. That judgement was made when this affected subscriptions only; it now affects camps and events too, so the surface is wider than when it was first accepted, and camps are the products families buy in a burst each spring. Recorded so the tradeoff (A1 keeps product-level reporting and the tax code; A2 is less code but trades reporting away and must carry the tax code by hand) is captured when someone revisits.
 
-### Localized, page-specific SEO metadata (descriptions + OG text) for indexable pages
-
-Part of a larger future scope: SEO and AI discoverability. Becomes *visible* once
-locale-prefix routing lands (see `docs/plans/` while that work is open): today crawlers send
-no cookies and can only ever see English, so English metadata is invisible — but once
-`/fi/…` URLs exist with `hreflang` pointing at them, an English meta description or OG block
-on a Finnish URL is a user-visible inconsistency in search snippets and share cards, sitting
-right next to the localized OG image that ships with the routing work.
-
-State of the 33 `generateMetadata` files (audited 2026-08-10):
-
-- **Titles are already translated everywhere** (the `metadata.pages` namespace). No work there.
-- **The auth pages are the worst offenders and ARE indexable** — `/login` and `/register`
-  are in the sitemap, and e.g. the login page carries a fully hardcoded English
-  `description` + `openGraph` block.
-- **Public pages mostly have the opposite gap: no per-page description at all** — e.g. the
-  shop sets only a title and inherits the root layout's generic (already-translated) site
-  description. Their need is page-specific *copywriting*, not just translation.
-- **Login-gated pages (dashboards, voice) have scattered hardcoded English descriptions**
-  (`"Join a voice session"`), but crawlers never fetch them.
-
-The agreed shape when picked up:
-
-- **Indexable pages (public + auth)**: author a page-specific description (+ OG text where a
-  page earns it) through the `metadata` namespace, translated across all locales —
-  roughly 15 pages of real copy × 4 locales, guarded by the completeness CI.
-- **Login-gated pages**: keep the translated title, **delete** the hardcoded
-  `description`/`openGraph` fields rather than translating them — they inherit the root's
-  translated description and serve no crawler.
-- Natural companions in the same sweep: per-route OG images (deliberately left out of the
-  locale-routing scope), and whatever AI-crawler affordances we decide to care about
-  (e.g. `llms.txt`-style surfaces) — scope those when picked up.
-
 The platform is deliberately locked to EUR. Admins author prices in EUR, customers see EUR, and our records (`payments`, `family_subscriptions`) are in EUR. Stripe Checkout's **Adaptive Pricing** (enabled in `src/app/api/checkout/products/create/route.ts`) already presents each customer their local currency and settles us in EUR at the price we set — so "buy in another currency" works today without us modelling other currencies internally.
 
 The **data model was kept currency-agnostic on purpose** so this is reversible: `product_prices`, `payments`, `family_subscriptions`, and `product_subscription_prices` are all still keyed/columned by `currency` (the `IN ('eur','gbp','usd')` CHECKs were left in place), and the service/data layer (`buildPricingOption`, `formatProductPrice`, `getMyFamilySub`, `getOrCreateSubscriptionPrice`, `computeSinglePaymentAmount`, the checkout route, the webhook) all still take/thread a `currency`. What was deleted is only the **selection/authoring layer**.

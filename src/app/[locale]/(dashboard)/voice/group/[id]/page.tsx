@@ -9,7 +9,7 @@ import { getUserWithProfile } from "@/lib/supabase/server";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
-  return { title: t("voiceSession"), description: "Join a voice session" };
+  return { title: t("voiceSession") };
 }
 
 /**

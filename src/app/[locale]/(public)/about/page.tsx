@@ -8,14 +8,11 @@ import { SectionPill } from "@/components/about/section-pill";
 import { YtySection } from "@/components/about/yty-section";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("metadata.pages");
+  const t = await getTranslations("metadata");
   return {
     ...(await localizedPageMetadata("/about", await getLocale())),
-    title: t("about"),
-    // English literal, like every other page description in the app —
-    // localising metadata descriptions is tracked as its own piece of work.
-    description:
-      "Who School of Gaming is, what Yty is, and answers to the questions families ask before they enrol.",
+    title: t("pages.about"),
+    description: t("descriptions.about"),
   };
 }
 

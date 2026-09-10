@@ -16,6 +16,16 @@
         "headlineTail": "Robloxiin",
         "subline": "Ilmainen ohjelma, jota vetävät oikeat pelikasvattajat",
         "collaboration": "Yhteistyössä"
+      },
+      "pages": {
+        "signIn": {
+          "title": "Kirjaudu School of Gamingiin",
+          "description": "Kirjaudu School of Gaming -tilillesi ja hallitse kerhoja, pelaajia ja paljon muuta."
+        },
+        "createAccount": {
+          "title": "Liity School of Gamingiin",
+          "description": "Luo School of Gaming -vanhemman tili ja ilmoita lapsesi kerhoihin, leireille ja tapahtumiin, joita ammattitaitoiset pelikasvattajat vetävät."
+        }
       }
     },
     "pages": {
@@ -29,15 +39,12 @@
       "adminDashboard": "Ylläpidon hallintapaneeli",
       "adminTools": "Työkalut",
       "parentDashboard": "Oma SOG",
-      "parentDashboardDescription": "Hallitse pelaajiasi ja heidän ilmoittautumisiaan",
       "geduDashboard": "Oma SOG",
       "geduSessionDetails": "Session tiedot",
       "familyProduct": "Kerrat ja koosteet",
-      "familyProductDescription": "Tämän ryhmän aikataulu ja jokaisen kerran kooste.",
       "shop": "Kauppa",
       "schools": "Kuntakerhot",
       "gamerDashboard": "Oma SOG",
-      "gamerDashboardDescription": "Kerhosi, leirisi ja tapahtumasi Sogversessa",
       "voiceSession": "Ääni-istunto",
       "unlockPin": "Syötä PIN",
       "resetPin": "Nollaa PIN",
@@ -53,6 +60,20 @@
       "robloxTerms": "Luojien akatemian käyttöehdot",
       "geduContract": "Gedu-sopimus",
       "seatOffer": "Paikkatarjous"
+    },
+    "descriptions": {
+      "signIn": "Kirjaudu School of Gaming -tilillesi. Näet pelaajiesi tulevat kerrat, hallitset ilmoittautumisia ja pidät perheesi tiedot ajan tasalla.",
+      "createAccount": "Luo perheellesi School of Gaming -tili ja ilmoita lapsesi kerhoihin, leireille ja tapahtumiin, joita ammattitaitoiset pelikasvattajat vetävät.",
+      "forgotPassword": "Unohtuiko salasana? Anna sähköpostiosoitteesi, niin lähetämme linkin, jolla asetat uuden salasanan School of Gaming -tilillesi.",
+      "resetPassword": "Aseta uusi salasana School of Gaming -tilillesi sähköpostitse lähettämämme linkin kautta ja kirjaudu heti sisään uudella salasanalla.",
+      "registerGedu": "Hae pelikasvattajaksi School of Gamingiin ja vedä kerhoja, leirejä ja tapahtumia lapsille niissä peleissä, joita he jo pelaavat.",
+      "about": "Keitä School of Gamingissa olemme, mitä Yty tarkoittaa ja vastaukset kysymyksiin, joita perheet miettivät ennen ilmoittautumista.",
+      "shop": "Selaa School of Gamingin kerhoja, leirejä ja tapahtumia Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä ja löydä lapsellesi sopiva.",
+      "resetPin": "Aseta uusi vanhemman PIN-koodi School of Gaming -tilillesi sähköpostilinkin kautta. PIN-koodi pitää vanhemmille tarkoitetut sivut lapsen ulottumattomissa.",
+      "privacy": "Miten School of Gaming kerää, käyttää ja säilyttää perheesi tietoja: mitä lapsesta tallennetaan, kenelle tietoja luovutetaan ja mitä oikeuksia sinulla on.",
+      "terms": "School of Gamingin käyttöehdot: miten ilmoittautuminen, maksut ja peruutukset toimivat ja mistä me ja sinä olemme kumpikin vastuussa.",
+      "antiBullying": "Miten School of Gaming ehkäisee kiusaamista kerhoissa, leireillä ja tapahtumissa, mitä kiusaamistilanteessa tapahtuu ja miten pelikasvattaja puuttuu siihen.",
+      "attributions": "Lähteet ja lisenssit tiedoille, joita School of Gaming käyttää: paikannimet, postinumerot ja pelaajien hahmokuvat, kukin lisenssinsä edellyttämällä tavalla."
     }
   },
   "notFound": {

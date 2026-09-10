@@ -100,7 +100,10 @@ export async function generateMetadata({
   const { municipalityName } = await params;
   const locale = await getLocale();
   // Owner decision (Aug 2026): search engines and AI crawlers may discover
-  // only the /shop browse surface — the entire /schools tree is noindex.
+  // only the /shop browse surface — the entire /schools tree is noindex. These
+  // products are only for families in this municipality; the page is public
+  // so a forwarded link works, not so strangers can find it
+  // (`docs/architecture/discoverability.md`).
   const robots: Metadata["robots"] = { index: false, follow: false };
   const data = await loadMunicipality(municipalityName, locale);
   if (!data) return { robots };

@@ -18,8 +18,10 @@ import { cn } from "@/lib/utils";
  *
  * **No HTML passthrough.** Raw HTML in the source is ignored, which is the
  * library's default and is kept that way on purpose: enabling it would need
- * `rehype-raw` plus a sanitizer, and would put the first `dangerouslySetInnerHTML`
- * in this codebase behind a field that any writer can type into.
+ * `rehype-raw` plus a sanitizer, and would put a `dangerouslySetInnerHTML`
+ * behind a field that any writer can type into. (The codebase has one, in the
+ * JSON-LD data block under `src/components/seo/`, and its content is our own
+ * serialized JSON rather than anyone's markup.)
  *
  * **The variant is a property of the field, never of the reader.** Two things
  * differ between them — whether links survive, and how loud a heading is — and

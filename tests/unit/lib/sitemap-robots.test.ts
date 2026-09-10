@@ -55,6 +55,14 @@ describe("sitemap", () => {
     expect(urls).not.toContain(`${BASE}/fi/privacy`);
   });
 
+  it("claims no lastModified at all", () => {
+    // It used to be `new Date()`, evaluated per request, so every URL said it
+    // had changed on this crawl and on every previous one. A lastmod that is
+    // always today is a lastmod a search engine stops reading; no field at all
+    // sends it to its own change detection, which is where it was going anyway.
+    expect(sitemap().every((entry) => entry.lastModified === undefined)).toBe(true);
+  });
+
   it("carries index pages only — nothing noindex, nothing DB-backed", () => {
     const urls = sitemap().map((entry) => entry.url);
 
@@ -64,12 +72,44 @@ describe("sitemap", () => {
   });
 });
 
-/** The disallow list, whatever shape the metadata type allows it to take. */
-function disallowList(): string[] {
-  const { rules } = robots();
-  const disallow = Array.isArray(rules) ? undefined : rules.disallow;
+// `rules` is typed as "one rule or many", so a single rule and an array of
+// them are the same type as far as the metadata contract is concerned. The
+// generic is what makes the conditional distribute over that union — written
+// against the alias directly it would resolve to the union itself, array
+// included, and every field access below would fail.
+type Unwrap<T> = T extends readonly (infer Element)[] ? Element : T;
+type Rule = Unwrap<ReturnType<typeof robots>["rules"]>;
+
+/** Every rule the file emits, whatever shape the metadata type allows. */
+function rules(): Rule[] {
+  const { rules: emitted } = robots();
+  return Array.isArray(emitted) ? emitted : [emitted];
+}
+
+/** One rule's user agents, normalised to a list. */
+function agentsOf(rule: Rule): string[] {
+  const agent = rule.userAgent;
+  if (agent === undefined) return [];
+  return typeof agent === "string" ? [agent] : agent;
+}
+
+/** One rule's disallow list, normalised the same way. */
+function disallowOf(rule: Rule): string[] {
+  const disallow = rule.disallow;
   if (disallow === undefined) return [];
   return typeof disallow === "string" ? [disallow] : disallow;
+}
+
+/** The wildcard rule — the one every other rule has to agree with. */
+function wildcardRule(): Rule {
+  const rule = rules().find((candidate) => agentsOf(candidate).includes("*"));
+  if (rule === undefined) throw new Error("robots.txt emitted no `*` rule");
+  return rule;
+}
+
+/** The disallow list of the `*` rule. */
+function disallowList(): string[] {
+  return disallowOf(wildcardRule());
 }
 
 describe("robots", () => {
@@ -88,5 +128,53 @@ describe("robots", () => {
 
   it("points at the sitemap", () => {
     expect(robots().sitemap).toBe(`${BASE}/sitemap.xml`);
+  });
+
+  it("still emits a `*` rule", () => {
+    // The catch-all is what covers an agent nobody has heard of yet, and the
+    // named rules below are additions to it, never a replacement.
+    expect(agentsOf(wildcardRule())).toContain("*");
+  });
+
+  it("names every AI crawler explicitly", () => {
+    // The named rules change nothing a crawler may do — `*` already admits all
+    // of them — and that is exactly what is being pinned. Letting AI
+    // assistants read and cite the public site is an owner decision, and a
+    // decision that exists only as the *absence* of a block is one a later
+    // "let's block the scrapers" pass flips without knowing it was ever made.
+    const named = rules().flatMap(agentsOf);
+
+    for (const agent of [
+      "GPTBot",
+      "ChatGPT-User",
+      "OAI-SearchBot",
+      "ClaudeBot",
+      "Claude-User",
+      "Claude-SearchBot",
+      "anthropic-ai",
+      "PerplexityBot",
+      "Perplexity-User",
+      "Google-Extended",
+      "Applebot-Extended",
+      "CCBot",
+      "meta-externalagent",
+      "Amazonbot",
+      "Bytespider",
+    ]) {
+      expect(named).toContain(agent);
+    }
+  });
+
+  it("gives every named agent exactly the wildcard's permissions", () => {
+    // Naming an agent is for stating the stance, never for varying it: a named
+    // rule that drifted from `*` would be a second, quieter policy — and the
+    // one that matters, since a named rule wins over the wildcard for that
+    // agent. A dashboard prefix missing from one of them is the concrete harm.
+    const wildcard = wildcardRule();
+
+    for (const rule of rules()) {
+      expect(rule.allow).toEqual(wildcard.allow);
+      expect(disallowOf(rule)).toEqual(disallowOf(wildcard));
+    }
   });
 });

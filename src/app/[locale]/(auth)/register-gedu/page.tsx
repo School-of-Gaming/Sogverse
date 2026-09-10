@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import { localizedPageMetadata } from "@/lib/metadata/localized-page";
 import { RegisterGeduForm } from "@/components/auth";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("metadata.pages");
+  const t = await getTranslations("metadata");
   return {
-    title: t("registerGedu"),
-    description: "Create your School of Gaming game educator account",
+    ...(await localizedPageMetadata("/register-gedu", await getLocale())),
+    title: t("pages.registerGedu"),
+    description: t("descriptions.registerGedu"),
   };
 }
 

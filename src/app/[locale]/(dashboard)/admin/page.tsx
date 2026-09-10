@@ -12,7 +12,7 @@ import {
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
-  return { title: t("adminDashboard"), description: "Manage users, products, and system settings" };
+  return { title: t("adminDashboard") };
 }
 
 /** The read, or the reason it did not happen. Never both, never neither. */

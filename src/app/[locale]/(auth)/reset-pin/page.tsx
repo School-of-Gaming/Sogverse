@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import { localizedPageMetadata } from "@/lib/metadata/localized-page";
 import { ResetPinForm } from "@/components/pin";
 import { resolvePinResetToken } from "@/lib/pin-session-server";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("metadata.pages");
-  return { title: t("resetPin"), description: "Set a new parent PIN for your School of Gaming account" };
+  const t = await getTranslations("metadata");
+  return {
+    ...(await localizedPageMetadata("/reset-pin", await getLocale())),
+    title: t("pages.resetPin"),
+    description: t("descriptions.resetPin"),
+  };
 }
 
 /**

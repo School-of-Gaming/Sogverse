@@ -40,10 +40,7 @@ import { FamilyProductWorkspace } from "./FamilyProductWorkspace";
  */
 export async function familyProductMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
-  return {
-    title: t("familyProduct"),
-    description: t("familyProductDescription"),
-  };
+  return { title: t("familyProduct") };
 }
 
 /** Build the route component for one audience. */

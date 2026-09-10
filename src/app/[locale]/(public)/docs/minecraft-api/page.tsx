@@ -8,7 +8,6 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
   return {
     title: t("minecraftApi"),
-    description: "API documentation for Sogverse’s Minecraft server join-check endpoint.",
     robots: { index: false, follow: false },
   };
 }

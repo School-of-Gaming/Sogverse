@@ -17,7 +17,7 @@ const baseUrl = process.env.NEXT_PUBLIC_SITE_URL!;
  * pages. Klingon is excluded here as it is from `hreflang`; see
  * `INDEXED_LOCALES`.
  */
-const ROUTES: { pathname: StaticAppHref; entry: Omit<MetadataRoute.Sitemap[number], "url" | "lastModified" | "alternates"> }[] = [
+const ROUTES: { pathname: StaticAppHref; entry: Omit<MetadataRoute.Sitemap[number], "url" | "alternates"> }[] = [
   { pathname: "/", entry: { changeFrequency: "weekly", priority: 1 } },
   { pathname: "/shop", entry: { changeFrequency: "weekly", priority: 0.8 } },
   { pathname: "/about", entry: { changeFrequency: "monthly", priority: 0.7 } },
@@ -48,9 +48,24 @@ function urlFor(pathname: StaticAppHref, locale: (typeof INDEXED_LOCALES)[number
   return `${baseUrl}${getPathname({ href: pathname, locale })}`;
 }
 
+/**
+ * No `lastModified` anywhere, deliberately.
+ *
+ * The only value this function could put there is the build's own timestamp —
+ * it reads nothing request-scoped and declares no `dynamic`/`revalidate`, so
+ * Next prerenders it and every URL gets the same date. That date says a deploy
+ * happened, not that the page changed: a typo fix on one legal page would
+ * restamp the whole site. A search engine that cannot trust a `lastmod` stops
+ * reading it, and one that moves in lockstep across every URL is the clearest
+ * possible signal that it is generated rather than true. We have no per-page
+ * modification time to offer (these are code- and catalog-backed pages, not
+ * rows with an `updated_at`), and omitting the
+ * field is a better answer than a fabricated one: the crawler falls back to
+ * its own change detection, which is what it would do with a `lastmod` it
+ * distrusted anyway. If a real per-page timestamp ever exists, that is the
+ * thing to put here.
+ */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date();
-
   return ROUTES.flatMap(({ pathname, entry }) => {
     const languages = Object.fromEntries(
       INDEXED_LOCALES.map((locale) => [locale, urlFor(pathname, locale)]),
@@ -58,7 +73,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
     return INDEXED_LOCALES.map((locale) => ({
       url: urlFor(pathname, locale),
-      lastModified,
       alternates: { languages },
       ...entry,
     }));

@@ -8,14 +8,16 @@ import {
   type ParticipationCounts,
 } from "@/services/participations";
 import { ShopBrowse } from "@/components/public/products/shop-browse";
+import { ShopItemListJsonLd } from "@/components/public/products/shop-item-list-json-ld";
 import { SHOP_PRODUCT_TYPES } from "@/components/public/products/shop-categories";
 import type { ProductBrowseRow } from "@/types";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("metadata.pages");
+  const t = await getTranslations("metadata");
   return {
     ...(await localizedPageMetadata("/shop", await getLocale())),
-    title: t("shop"),
+    title: t("pages.shop"),
+    description: t("descriptions.shop"),
   };
 }
 
@@ -60,5 +62,14 @@ async function getInitialShopData(): Promise<{
 
 export default async function ShopPage() {
   const { products, counts } = await getInitialShopData();
-  return <ShopBrowse initialProducts={products} initialCounts={counts} />;
+  // The structured-data block reads the same prefetched rows as the grid, so it
+  // can never list a product the page does not show — and only shop-visible
+  // products are ever prefetched here, which is what keeps unlisted ones out
+  // (`docs/architecture/discoverability.md`).
+  return (
+    <>
+      <ShopItemListJsonLd products={products} locale={await getLocale()} />
+      <ShopBrowse initialProducts={products} initialCounts={counts} />
+    </>
+  );
 }

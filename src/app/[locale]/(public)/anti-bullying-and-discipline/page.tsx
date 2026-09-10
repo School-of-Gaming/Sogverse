@@ -7,13 +7,14 @@ import { PolicyPage } from "@/components/legal/policy-page";
 import { paragraphsThenBullets } from "@/components/legal/policy-content";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("metadata.pages");
+  const t = await getTranslations("metadata");
   return {
     ...(await localizedPageMetadata(
       "/anti-bullying-and-discipline",
       await getLocale(),
     )),
-    title: t("antiBullying"),
+    title: t("pages.antiBullying"),
+    description: t("descriptions.antiBullying"),
   };
 }
 

@@ -13,7 +13,10 @@ import { productImageSrc } from "@/lib/images/product-image-url";
  * worth a search result, and an unlisted product's direct link (a campaign, an
  * unannounced cohort) must never turn up in search and become listed after
  * all. One static rule covers every case, so it is set before anything about
- * the product is known.
+ * the product is known. That is what `unlisted` means: hidden from the shop,
+ * never promoted, never findable — and a parent who was sent the link still
+ * gets in. The whole posture, tier by tier, is
+ * `docs/architecture/discoverability.md`.
  *
  * This is a tag, not a robots.txt entry, and that is the point — a disallowed
  * URL is never fetched, so the crawler would never read the tag, and the URL

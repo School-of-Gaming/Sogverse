@@ -7,10 +7,11 @@ import { PolicyPage } from "@/components/legal/policy-page";
 import { paragraphsThenBullets } from "@/components/legal/policy-content";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("metadata.pages");
+  const t = await getTranslations("metadata");
   return {
     ...(await localizedPageMetadata("/privacy", await getLocale())),
-    title: t("privacy"),
+    title: t("pages.privacy"),
+    description: t("descriptions.privacy"),
   };
 }
 

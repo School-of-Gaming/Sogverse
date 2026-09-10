@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
+import { localizedPageMetadata } from "@/lib/metadata/localized-page";
 import { OutboundLink } from "@/components/ui/outbound-link";
 import { formatDateOnly } from "@/lib/utils";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("metadata.pages");
-  return { title: t("attributions") };
+  const t = await getTranslations("metadata");
+  return {
+    ...(await localizedPageMetadata("/attributions", await getLocale())),
+    title: t("pages.attributions"),
+    description: t("descriptions.attributions"),
+  };
 }
 
 /**

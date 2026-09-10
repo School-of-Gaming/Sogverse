@@ -1,7 +1,10 @@
 import { useTranslations } from "next-intl";
 import { FaqAccordion, type FaqAccordionItem } from "@/components/ui/faq-accordion";
 import { FAQ_ANSWER_TAGS } from "@/components/ui/faq-answer";
+import { JsonLd } from "@/components/seo/json-ld";
 import { SUPPORT_EMAIL } from "@/lib/constants";
+import { messageToPlainText } from "@/lib/i18n/plain-text";
+import { rawString } from "@/lib/i18n/raw-messages";
 
 /**
  * The public FAQ's questions, ordered for a parent deciding whether to sign
@@ -15,8 +18,12 @@ import { SUPPORT_EMAIL } from "@/lib/constants";
  *
  * The list grows one question at a time: a new entry costs its message keys
  * plus one line here, and nothing structural.
+ *
+ * **Exported because `llms.txt` writes the same questions out in the same
+ * order.** One list, so the plain-text file for machines and the page for
+ * people cannot come to hold different questions.
  */
-const FAQ_ITEM_KEYS = [
+export const FAQ_ITEM_KEYS = [
   "whatIsSogverse",
   "isItASchool",
   "ages",
@@ -74,6 +81,29 @@ export function AboutFaq({ id }: AboutFaqProps) {
 
   if (items.length === 0) return null;
 
+  // The same questions and answers a search engine or an assistant can read
+  // without parsing the accordion. It is emitted here, inside the early-return
+  // guard, so the structured data and the rendered list are the same set by
+  // construction: a page with no FAQ advertises none. The answers come from
+  // `t.raw` rather than from the rendered nodes — `acceptedAnswer.text` wants
+  // the words, and the tag markup is layout. `t.raw` is untyped, so the house
+  // validator narrows it and a missing or malformed answer fails loudly here
+  // rather than reaching a crawler as `undefined`.
+  const faqPageJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQ_ITEM_KEYS.map((key) => ({
+      "@type": "Question",
+      name: t(`items.${key}.question`),
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: messageToPlainText(rawString(t.raw(`items.${key}.answer`)), {
+          supportEmail: SUPPORT_EMAIL,
+        }),
+      },
+    })),
+  };
+
   return (
     // The `py-16` is what clears the /about section pill on an anchor landing —
     // the scroll offset covers the header only. See `section-pill.tsx`.
@@ -81,6 +111,7 @@ export function AboutFaq({ id }: AboutFaqProps) {
       id={id}
       className="container mx-auto scroll-mt-[var(--header-height)] px-4 py-16 sm:py-24"
     >
+      <JsonLd data={faqPageJsonLd} />
       <div className="mx-auto max-w-3xl">
         <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">
           {t("heading")}
