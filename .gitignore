@@ -96,10 +96,11 @@ logs
 .env*.local
 
 # Working artifacts of scripts/minecraft-edu-accounts.mjs. The plan file and the
-# CSV both carry the *live passwords* of every shared Minecraft Education class
-# login, and the deleted-accounts snapshot is a directory dump — none of the
-# three may ever reach a commit. They are handed to the admin out of band and
-# regenerated on the next reset, so nothing is lost by never tracking them.
+# handout both carry the *live passwords* of every shared Minecraft Education
+# class login, and the deleted-accounts snapshot is a directory dump — none of
+# them may ever reach a commit. They are handed to the admin out of band and
+# regenerated on the next reset, so nothing is lost by never tracking them. The
+# wildcard also covers handouts left from when the script wrote CSV.
 minecraft-edu-plan.json
-minecraft-edu-accounts.csv
+minecraft-edu-accounts.*
 deleted-accounts-*.json
