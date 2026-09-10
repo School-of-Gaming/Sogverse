@@ -16,11 +16,35 @@ import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
  * than guessing. They are written here rather than translated, because a
  * company's registered name is not a string that has a French version.
  *
- * **No `sameAs`.** That property lists the profiles that corroborate the
- * identity — the company's own social accounts — and this codebase holds no
- * social profile URL anywhere. An empty or invented one is worse than its
- * absence: `sameAs` is only worth anything if every URL in it is really ours.
+ * **`sameAs` lists only profiles the owner has confirmed are ours** (below).
+ * The property corroborates the identity, so it is only worth anything if
+ * every URL in it is really ours; a guessed or a dead one is worse than none.
+ * How often a profile is posted to does not matter here — the claim is "this
+ * is the same entity", not "this is active".
  */
+
+/**
+ * The company's own public profiles, confirmed by the owner on 2026-09-10.
+ * The Oulu Facebook page (`facebook.com/sogsuomi`) was left out: it no longer
+ * resolves for a visitor, and a `sameAs` that 404s is a corroboration that
+ * fails. The Discord server is invite-only and has no public URL to list;
+ * there is no TikTok and no X account.
+ *
+ * The legacy marketing site leads the list on purpose. Search engines' notion
+ * of the School of Gaming entity is attached to it today, and this entry says
+ * the Organization published here is that same entity — the hand-over the
+ * discoverability doc's first backlog item is about. It goes when the host is
+ * retired, or stays harmlessly once the host redirects here.
+ */
+export const SAME_AS = [
+  "https://www.sog.gg/",
+  "https://www.instagram.com/sog_suomi/",
+  "https://www.facebook.com/sogversum",
+  "https://www.youtube.com/@SchoolofGamingSuomi",
+  "https://fi.linkedin.com/company/school-of-gaming",
+  "https://www.eventbrite.com/o/school-of-gaming-galactic-oy-107212050481",
+  "https://www.crunchbase.com/organization/school-of-gaming",
+] as const;
 
 /**
  * The company facts, exported because two surfaces state them — this graph and
@@ -74,6 +98,7 @@ interface OrganizationNode {
   email: string;
   address: { "@type": "PostalAddress"; addressCountry: string };
   vatID: string;
+  sameAs: string[];
 }
 
 interface WebSiteNode {
@@ -115,6 +140,7 @@ export function siteJsonLd({ siteUrl, description }: SiteJsonLdInput): {
         email: SUPPORT_EMAIL,
         address: { "@type": "PostalAddress", addressCountry: COUNTRY },
         vatID: VAT_ID,
+        sameAs: [...SAME_AS],
       },
       {
         "@type": "WebSite",

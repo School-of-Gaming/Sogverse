@@ -33,11 +33,24 @@ describe("siteJsonLd", () => {
     expect(organization.logo.endsWith(".png")).toBe(true);
   });
 
-  it("emits no sameAs", () => {
-    // There is no social profile URL anywhere in this codebase. An empty or
-    // invented `sameAs` is worse than none: the property is only worth
-    // anything if every URL in it is really ours.
-    expect(organization).not.toHaveProperty("sameAs");
+  it("corroborates the identity with only owner-confirmed profiles", () => {
+    // The property is only worth anything if every URL in it is really ours,
+    // so the list is pinned to the confirmed set — and a dead page (the Oulu
+    // Facebook page) must never creep back in, because a `sameAs` that 404s
+    // is a corroboration that fails.
+    expect(organization.sameAs).toEqual([
+      "https://www.sog.gg/",
+      "https://www.instagram.com/sog_suomi/",
+      "https://www.facebook.com/sogversum",
+      "https://www.youtube.com/@SchoolofGamingSuomi",
+      "https://fi.linkedin.com/company/school-of-gaming",
+      "https://www.eventbrite.com/o/school-of-gaming-galactic-oy-107212050481",
+      "https://www.crunchbase.com/organization/school-of-gaming",
+    ]);
+    expect(organization.sameAs).not.toContain("https://www.facebook.com/sogsuomi/");
+    for (const url of organization.sameAs) {
+      expect(url.startsWith("https://")).toBe(true);
+    }
   });
 
   it("declares the site in the indexed locales and no others", () => {

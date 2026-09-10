@@ -149,13 +149,15 @@ presence at all. Third parties (the Finnish hobby-model programme site, Autismil
 partner press) rank for our story more reliably than we do. Two open goals nobody has
 claimed: Finnish Roblox camps, and "gaming as a coached hobby".
 
-**Official profiles found** (owner to confirm before they become `sameAs`): Instagram
-`sog_suomi`, Facebook `sogsuomi` and a second, unlinked Facebook page `sogversum`
-("School of Gaming | Helsinki"), YouTube `@SchoolofGamingSuomi`, LinkedIn
-`company/school-of-gaming`, the Eventbrite organiser page, Crunchbase, and the Finnish
-company registries under business ID 3110461-1. No TikTok and no X account exist; the
-Discord server is invite-only and has no public URL. A Google Business Profile could not
-be confirmed either way.
+**Official profiles, confirmed by the owner the same day** and now the `Organization`'s
+`sameAs`: the legacy site `www.sog.gg` itself, so the entity search engines already know
+is tied to this Organization, then Instagram `sog_suomi` (the one posted to regularly), the Helsinki Facebook page
+`sogversum`, YouTube `@SchoolofGamingSuomi`, LinkedIn `company/school-of-gaming`, the
+Eventbrite organiser page and Crunchbase. The Oulu Facebook page `sogsuomi`, the one the
+legacy site links to, no longer resolves for a visitor and is left out. The Finnish
+company registries list the entity under business ID 3110461-1. No TikTok and no X
+account exist; the Discord server is invite-only and has no public URL. A Google
+Business Profile could not be confirmed either way.
 
 ## Open backlog
 
@@ -191,8 +193,8 @@ lands is deleted here and its mechanism is described above.
 - **A factual paragraph on the home page** — what we are, where, for whom, in which
   languages. The hero plus four feature cards is thin for entity recognition.
 - **Off-site signals**: Search Console and Bing Webmaster verification, a Google Business
-  Profile, and `sameAs` links on the `Organization` schema once the official social
-  profiles are confirmed.
+  Profile check, and fixing or replacing the legacy site's link to the dead Oulu Facebook
+  page so the profiles it names agree with the `sameAs` here.
 - **Per-route Open Graph images** (deliberately left out of the locale-routing scope).
 - **A per-locale `llms-full.txt`** mirroring About in each language, if the single
   English file proves too thin for non-English assistants.
