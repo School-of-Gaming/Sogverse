@@ -11,6 +11,14 @@ widths, and compose them into **a handful of images you can drop into a Slack
 thread**. The list of pages is the input — a *preset* — so a second review is a
 second preset, not a second script.
 
+**The composite is not the ideal format, and nobody should build on it as if it
+were.** The owner's verdict on the first real output (2026-09-10): it contains
+everything and is laid out as well as is reasonable, but a stack of full-page
+captures four locales wide is likely too much for a person to review, and it is
+accepted for now rather than chosen. What a reviewer actually needs from this
+tool is still open; a later change that finds a better shape should replace the
+composite, not add a mode beside it.
+
 ## Running it
 
 ```bash
