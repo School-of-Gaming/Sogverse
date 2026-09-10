@@ -1,5 +1,5 @@
 import type { GamerPhotoConsentType, MarketingConsentType } from "@/types";
-import type { PreviewScenario } from "./mock-detail-fixtures";
+import type { AuthKind, PreviewScenario } from "./mock-detail-fixtures";
 import {
   REGION_LOCK_COUNTRY,
   REGION_LOCK_HOME,
@@ -43,6 +43,13 @@ interface RequiredConsentsScenarioMeta {
    */
   description?: string;
   baseScenario: PreviewScenario;
+  /**
+   * Who is looking at it, when that is not the base's own viewer. The base
+   * names a product; a scenario about the same product met by a parent in a
+   * different state overrides only this, rather than becoming a second,
+   * near-identical product in the fixture list.
+   */
+  auth?: AuthKind;
   documentSlugs: readonly string[];
   marketingConsentTypes: readonly MarketingConsentType[];
   gamerPhotoConsentTypes: readonly GamerPhotoConsentType[];
@@ -157,6 +164,31 @@ export const CREATOR_ACADEMY_SCENARIO: RequiredConsentsScenarioMeta = {
 };
 
 /**
+ * **The same product, met by a parent who has not added a child yet.**
+ *
+ * The fullest panel the shop produces, at the moment it asks the most of a
+ * newcomer: an empty picker whose Add Gamer row is the one required step, the
+ * Roblox bundle and the rules beneath it, and the photo rows standing disabled
+ * because there is nobody yet for the permission to be about. What it is for is
+ * judging whether that one required step reads as the first thing to do when
+ * everything else on the panel is already asking for attention — a question
+ * the with-children scenario above cannot pose, because there the picker is
+ * already answered.
+ *
+ * Everything but the viewer is the Creator Academy scenario's, read from it
+ * rather than restated, so the two cannot drift apart on what the product asks.
+ */
+export const CREATOR_ACADEMY_NO_GAMERS_SCENARIO: RequiredConsentsScenarioMeta =
+  {
+    ...CREATOR_ACADEMY_SCENARIO,
+    slug: "creator-academy-no-gamers",
+    /** Link text on the admin UI Previews page. Developer-facing English. */
+    label: "Creator Academy — signed in, no gamers",
+    description: "The fullest panel, before the parent has anyone to enrol.",
+    auth: "signed-in-no-gamers",
+  };
+
+/**
  * **The photo ask on a product whose audience admits adults — the one page
  * where a reader can watch the rows go dead and come back.**
  *
@@ -199,6 +231,7 @@ export const PHOTO_ASK_BOTH_AUDIENCES_SCENARIO: RequiredConsentsScenarioMeta = {
 export const CONSENT_SCENARIOS: readonly RequiredConsentsScenarioMeta[] = [
   REQUIRED_CONSENTS_SCENARIO,
   CREATOR_ACADEMY_SCENARIO,
+  CREATOR_ACADEMY_NO_GAMERS_SCENARIO,
   PHOTO_ASK_BOTH_AUDIENCES_SCENARIO,
 ];
 

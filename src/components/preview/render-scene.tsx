@@ -87,6 +87,7 @@ const SCENE_RENDERERS: Record<
       return (
         <ProductDetailScene
           scenario={consents.baseScenario}
+          auth={consents.auth}
           regionLock={consents.regionLock}
           requiredConsentSlugs={consents.documentSlugs}
           marketingConsentTypes={consents.marketingConsentTypes}

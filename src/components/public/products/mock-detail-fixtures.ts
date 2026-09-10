@@ -101,8 +101,13 @@ export type PreviewScenario =
 // Which signed-in shape the panel renders against. `signed-out` → the auth
 // overlay (sign in / create account); `no-gamers` → a `ready` customer whose
 // gamer picker is empty (just the "Add a child" row); `with-gamers` → a `ready`
-// customer with the two demo children.
-type AuthKind = "signed-in-with-gamers" | "signed-in-no-gamers" | "signed-out";
+// customer with the demo children. Exported because a scenario layered on a
+// base fixture (a consent scenario) may need a different viewer from the base
+// without becoming a second, near-identical product in this list.
+export type AuthKind =
+  | "signed-in-with-gamers"
+  | "signed-in-no-gamers"
+  | "signed-out";
 
 /**
  * Who the product is sold to — the fixture's spelling of the two `products`
@@ -1143,8 +1148,22 @@ interface BuildFixtureResult {
   authState: AuthState;
 }
 
-export function buildScenarioFixture(slug: PreviewScenario): BuildFixtureResult {
-  const config = SCENARIOS[slug];
+export function buildScenarioFixture(
+  slug: PreviewScenario,
+  overrides: {
+    /**
+     * A different viewer from the one the base fixture names. For a scenario
+     * layered on a base — the consent scenarios — whose point is the same
+     * product met by a parent in a different state, so the product stays one
+     * fixture and only the viewer varies.
+     */
+    auth?: AuthKind;
+  } = {},
+): BuildFixtureResult {
+  const config: ScenarioConfig = {
+    ...SCENARIOS[slug],
+    auth: overrides.auth ?? SCENARIOS[slug].auth,
+  };
   const detailHref = `/preview/products/${slug}`;
 
   let state: RegistrationState;
