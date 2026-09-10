@@ -49,6 +49,10 @@ How to read traffic/perf *measurements* for the prod app programmatically (team 
   `--aggregation unique/visitor_id` for uniques on either. Custom events carry
   `request_path`/`route` automatically. The docs' "2 properties per custom event on Pro"
   is **not** observed to truncate — a 3-property event arrives whole.
+- **`route` is one row per page across every language; `request_path` keeps the split.**
+  The app supplies `route` itself as the untranslated, locale-stripped route template, so
+  `-f "route eq '/shop'"` covers `/fi/kauppa` and `/sv/butik` too — group by
+  `request_path` when the question is which language a page was read in.
 - **Unique `visitor_id` is per device and resets — treat it as ordering, not headcount.**
   It routinely exceeds any plausible number of people for an authenticated route.
 - **`referrer_hostname` can neither prove nor disprove inbound clicks from email.**
