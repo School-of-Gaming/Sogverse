@@ -1325,7 +1325,7 @@
       "subscription": "{amount} / kk",
       "upfront": "{amount} (kertamaksu)",
       "free": "Ilmainen",
-      "external": "Kustannettu kunnan toimesta"
+      "external": "Kunnan kustantama"
     },
     "nextTitle": "Mitä seuraavaksi tapahtuu",
     "next": {
@@ -2129,7 +2129,7 @@
       "subscriptionHint": "Laskutetaan kuukausittain · peru milloin tahansa.",
       "free": "Maksuton",
       "freeHint": "Maksua ei tarvita.",
-      "external": "Kustannettu kunnan toimesta",
+      "external": "Kunnan kustantama",
       "upfrontHint": "Kertamaksu.",
       "notAvailable": "Hinta ei vielä saatavilla valuutassa {currency}.",
       "cadenceMonth": "/ kk",
@@ -2782,7 +2782,7 @@
         "subscription": "{amount} / kk",
         "upfront": "{amount} (kertamaksu)",
         "free": "Ilmainen",
-        "external": "Kustannettu kunnan toimesta"
+        "external": "Kunnan kustantama"
       },
       "nextTitle": "Mitä seuraavaksi tapahtuu",
       "next": {
