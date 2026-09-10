@@ -76,12 +76,11 @@ supabase/.temp/
 # migration nobody can order.
 supabase/reconciliations/
 
-# Working artifacts of the observation scripts (scripts/watch-registration.mjs,
-# supabase-compute-metrics.mjs, speed-insights.mjs). These are measurements of a
-# moment — one JSONL row per poll of a live event — so they are worth keeping on
-# disk and reading back later, but they are data rather than source: they never
-# affect a build, they would collide between machines, and a registration
-# opening writes thousands of rows nobody should review in a diff.
+# Working artifacts of every script, each under scripts/output/<script-name>/
+# (see scripts/CLAUDE.md). Output is data rather than source — logs of a live
+# event, raw API dumps, and account handouts carrying live passwords — so none of
+# it may reach a commit. A script writing anywhere else is the bug to fix, not a
+# reason to add another entry here.
 scripts/output/
 
 # Logs
@@ -94,13 +93,3 @@ logs
 
 .vercel
 .env*.local
-
-# Working artifacts of scripts/minecraft-edu-accounts.mjs. The plan file and the
-# handout both carry the *live passwords* of every shared Minecraft Education
-# class login, and the deleted-accounts snapshot is a directory dump — none of
-# them may ever reach a commit. They are handed to the admin out of band and
-# regenerated on the next reset, so nothing is lost by never tracking them. The
-# wildcard also covers handouts left from when the script wrote CSV.
-minecraft-edu-plan.json
-minecraft-edu-accounts.*
-deleted-accounts-*.json

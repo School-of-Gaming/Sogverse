@@ -149,15 +149,16 @@ step, and it means the delete cannot strand the pool half-licensed if seat
 maths were wrong.
 
 **Rule: the plan file and the handout are never committed.** Both carry live
-passwords; both are gitignored. They go to the admin out of band and are
-regenerated on the next reset.
+passwords, so both live in the script's gitignored output folder,
+`scripts/output/minecraft-edu-accounts/`, beside any pre-deletion snapshot. They
+go to the admin out of band and are regenerated on the next reset.
 
 **Rule: the next `plan` overwrites the plan file and the handout — copy both out
 first.** The plan file is the only machine-readable record of the passwords of
 accounts that are already live, and an additive pass leaves those accounts in
 service.
 
-The handout is `minecraft-edu-accounts.xlsx`: a frozen, filterable header, gedu
+The handout is `minecraft-edu-accounts.xlsx` in that folder: a frozen, filterable header, gedu
 pool logins tinted apart from gamer accounts so one is never handed to a child,
 the licence column coloured by status, and highlighted blank *Club* and
 *Student* columns for the admin to fill in as accounts are handed out. Every
