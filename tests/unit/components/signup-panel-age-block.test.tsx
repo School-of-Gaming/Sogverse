@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, renderHook } from "@testing-library/react";
+import { act, render, renderHook } from "@testing-library/react";
 import {
   SignupPanelView,
   type AuthState,
@@ -53,6 +53,7 @@ vi.mock("@/providers", () => ({
 const OONA_ID = "6aaac864-5ea7-451b-8d02-93f9ae6f25b5";
 const ELIAS_ID = "c4f1a9e6-2b7d-4e83-95a1-6d0c3f8b2e57";
 const SOFIA_ID = "9b3e7c25-8d41-4a06-b7f9-1e5a0c6d3842";
+const PARENT_ID = "5b0f2b6d-6ad9-4a02-8f75-3a3d2a4a7c11";
 
 /** In the band, and the row a working panel should land on. */
 const OONA: SignupParticipantChoice = { id: OONA_ID, name: "Oona", age: 10 };
@@ -71,15 +72,32 @@ const SOFIA: SignupParticipantChoice = {
   ageBlock: { kind: "over", bound: 12 },
 };
 
+/** The reader's own row, on a product whose audience admits adults. */
+const SELF: SignupParticipantChoice = {
+  id: PARENT_ID,
+  name: "Marja",
+  age: null,
+  isSelf: true,
+};
+
+/**
+ * The ready state these rows sit in. `gamerCount` is the account's children,
+ * never the picker's rows, so the parent's own row is discounted from it — the
+ * same distinction the adapter draws.
+ */
+const readyWith = (
+  participants: readonly SignupParticipantChoice[],
+): AuthState => ({
+  kind: "ready",
+  participants,
+  gamerCount: participants.filter((p) => p.isSelf !== true).length,
+});
+
 function panel(
   participants: readonly SignupParticipantChoice[],
   selectedParticipantId: string | null,
 ): SignupPanelViewProps {
-  const authState: AuthState = {
-    kind: "ready",
-    participants,
-    gamerCount: participants.length,
-  };
+  const authState: AuthState = readyWith(participants);
   return {
     productType: "municipality_club",
     forGamers: true,
@@ -136,13 +154,8 @@ const PRODUCT: Pick<
 };
 
 function fieldsFor(participants: readonly SignupParticipantChoice[]) {
-  const authState: AuthState = {
-    kind: "ready",
-    participants,
-    gamerCount: participants.length,
-  };
   const { result } = renderHook(() =>
-    useSignupPanelFields(PRODUCT, authState, [], [], []),
+    useSignupPanelFields(PRODUCT, readyWith(participants), [], [], []),
   );
   return result.current;
 }
@@ -212,5 +225,36 @@ describe("preselection skips a refused row", () => {
       fieldsFor([{ ...OONA, signupState: "active" }, SOFIA, ELIAS])
         .selectedParticipantId,
     ).toBeNull();
+  });
+
+  it("drops a user pick the band refuses back to the first selectable row", () => {
+    // The rows are not static: a parent can pick a child, and the panel can
+    // then learn — from a birth date landing, or from the parent editing one —
+    // that the row they picked is out of band. A selection the CTA would
+    // refuse is a panel that looks ready and is not, so the pick is discarded
+    // rather than held, and the default takes over.
+    const inBand: SignupParticipantChoice = { ...ELIAS, ageBlock: undefined };
+    const { result, rerender } = renderHook(
+      ({ participants }: { participants: readonly SignupParticipantChoice[] }) =>
+        useSignupPanelFields(PRODUCT, readyWith(participants), [], [], []),
+      { initialProps: { participants: [OONA, inBand] } },
+    );
+
+    act(() => result.current.onSelectParticipant(ELIAS_ID));
+    expect(result.current.selectedParticipantId).toBe(ELIAS_ID);
+
+    rerender({ participants: [OONA, ELIAS] });
+    expect(result.current.selectedParticipantId).toBe(OONA_ID);
+  });
+
+  it("preselects the parent's own row when every child is refused", () => {
+    // A both-audiences product with an out-of-band roster: the children are
+    // all refused, and the reader's own seat is the one thing left the panel
+    // can offer. It is an ordinary member of the selectable list, so "the
+    // first selectable row" lands on it with no special case — and the CTA is
+    // live rather than pointing at an add-a-child row.
+    expect(fieldsFor([ELIAS, SOFIA, SELF]).selectedParticipantId).toBe(
+      PARENT_ID,
+    );
   });
 });

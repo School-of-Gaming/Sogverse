@@ -296,6 +296,49 @@ describe("both audiences — children and the reader in one picker", () => {
     expect(addRow(container)).not.toBeNull();
   });
 
+  /**
+   * The add row's solid act weight is for the one case where it is the only
+   * move that leads anywhere. An empty roster is not that case on its own: the
+   * reader's own row is in the picker and preselected, so the CTA is live and a
+   * second solid button beside it would be competing with the thing that
+   * actually completes the form.
+   */
+  it("keeps the add row dashed on an empty roster the reader can fill", () => {
+    const { container } = render(
+      <SignupPanelView
+        {...panel({
+          forGamers: true,
+          participants: [SELF],
+          gamerCount: 0,
+          selectedParticipantId: SELF.id,
+        })}
+      />,
+    );
+    const add = addRow(container);
+    expect(add).not.toBeNull();
+    expect(add?.className).toContain("border-dashed");
+    expect(add?.className).not.toContain("bg-act");
+  });
+
+  it("goes solid once nobody is selectable either", () => {
+    // The same empty roster with the reader's seat already taken: nothing is
+    // selectable, the CTA is disabled and pointing at this row, and it is the
+    // parent's required next step.
+    const { container } = render(
+      <SignupPanelView
+        {...panel({
+          forGamers: true,
+          participants: [{ ...SELF, signupState: "active" }],
+          gamerCount: 0,
+          selectedParticipantId: null,
+        })}
+      />,
+    );
+    const add = addRow(container);
+    expect(add?.className).toContain("bg-act");
+    expect(add?.className).not.toContain("border-dashed");
+  });
+
   it("still withdraws the add row at the real cap", () => {
     const children = CHILD_IDS.slice(0, MAX_GAMERS_PER_PARENT).map((id, i) => ({
       id,

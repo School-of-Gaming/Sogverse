@@ -918,6 +918,10 @@ function SignupForm(
   // would create an account that cannot be signed up on this page.
   const canAddGamer =
     props.forGamers && props.gamerCount < MAX_GAMERS_PER_PARENT;
+  // Whether that row is the parent's required next step, which is what decides
+  // its weight — the reasoning is at the row itself, further down.
+  const solidAddGamer =
+    props.gamerCount === 0 && props.selectedParticipantId === null;
   const selectedIsSelf =
     props.participants.find((p) => p.id === props.selectedParticipantId)
       ?.isSelf === true;
@@ -952,12 +956,13 @@ function SignupForm(
   // every step during the pre-open countdown and land on "Ready & waiting",
   // primed to one-tap the instant it opens. Only the final leaf differs by
   // window: the live action label once open (`active`), the holding state until
-  // then. selectedParticipantId is null only when nobody is selectable: there
-  // is still room to add a child (canAddGamer → prompt to add a gamer), every
-  // child is already on the product at the gamer cap, or — on a parents-only
-  // product — the reader already holds the one seat there is. The latter two
-  // both land on ctaAllSet; the picker rows show each person's exact
-  // seat/waitlist status in place.
+  // then. selectedParticipantId is null only when nobody is selectable, which
+  // has four causes: there is still room to add a child (canAddGamer → prompt
+  // to add a gamer), every child is already on the product at the gamer cap,
+  // every child the account has is outside the product's age band, or — on a
+  // parents-only product — the reader already holds the one seat there is. The
+  // last three all land on ctaAllSet; the picker rows show each person's exact
+  // reason — seat, waitlist or bound — in place.
   //
   // The location step is an instruction and nothing more — the button stays
   // disabled and the section above it carries the action, per the grammar note
@@ -1122,39 +1127,50 @@ function SignupForm(
               affordance.
 
               **It has two weights, and which one it wears is decided by whether
-              the parent has any children at all.** With a roster behind it the
-              row is a dashed, muted afterthought, which is right: the picker
-              above it already holds the answer and this is the way to add
-              another. With an empty roster it is not an afterthought — it is
-              the only thing on the panel a parent can do, the picker above it
-              is empty, and the CTA underneath is disabled and pointing straight
-              at it ("Add a gamer to continue"). So it takes the act fill the
-              panel's own CTA wears, through the same `buttonVariants` construct
-              rather than a hand-rolled set of classes, and reverts to the dashed
-              row the moment a child exists.
+              it is the parent's required next step.** Ordinarily the row is a
+              dashed, muted afterthought, which is right: something above it
+              already holds the answer and this is the way to add another
+              option. It takes the act fill the panel's own CTA wears — the real
+              `Button`, not a hand-rolled imitation of one — in exactly the case
+              where it is the only move on the panel that leads anywhere: an
+              empty roster AND nobody selected, so the CTA underneath is
+              disabled and pointing straight at it ("Add a gamer to continue").
+
+              Both halves of that condition are load-bearing. An empty roster on
+              a both-audiences product is not an empty picker — the reader's own
+              row is there and preselected, the CTA is live, and paying is the
+              next step — so a row keyed on the roster count alone would put a
+              second solid act button on the panel competing with the one that
+              actually completes the form.
 
               The flip is a user action either way — a child arrives through the
-              dialog this row opens, and the roster the count comes from cannot
+              dialog this row opens, and neither the roster nor the selection can
               change any other way while this panel is up — so there is nothing
               here on data's own schedule for the layout rule to object to. The
-              filled weight takes the button's own default height rather than the
-              dashed row's padding, which is two pixels taller; the two never
-              coexist, and the row below it is the CTA, which is already that
-              height. */}
-          {canAddGamer && (
-            <button
-              type="button"
-              onClick={props.onAddGamer}
-              className={
-                props.gamerCount === 0
-                  ? buttonVariants({ className: "w-full" })
-                  : "flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
-              }
-            >
-              <Plus className="h-4 w-4" />
-              {tFamily("addGamer")}
-            </button>
-          )}
+              two weights are different heights (the button's own default, h-10,
+              against the dashed row's padding, which is two pixels taller) and
+              that costs nothing: they never coexist, and the CTA below is taller
+              than either (size="lg", h-11), so neither weight is matching it. */}
+          {canAddGamer &&
+            (solidAddGamer ? (
+              <Button
+                type="button"
+                onClick={props.onAddGamer}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4" />
+                {tFamily("addGamer")}
+              </Button>
+            ) : (
+              <button
+                type="button"
+                onClick={props.onAddGamer}
+                className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+              >
+                <Plus className="h-4 w-4" />
+                {tFamily("addGamer")}
+              </button>
+            ))}
         </div>
       </div>
 

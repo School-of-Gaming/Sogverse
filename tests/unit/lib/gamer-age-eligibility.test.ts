@@ -168,6 +168,22 @@ describe("the upper end resolves the unknown day in the child's favour", () => {
     ).toBe("over");
   });
 
+  it("gets a leap February right", () => {
+    // Born some time in February 2016, which had 29 days — so the youngest
+    // they could be was born on the 29th, and the 28th of February 2029 is
+    // still a day on which no day of that month has made them thirteen.
+    // A month taken as 28 days long (2029's own February) would refuse them a
+    // day early; the length has to come from the BIRTH month.
+    expect(
+      gamerAgeBlock({ ...BAND, dateOfBirth: "2016-02-01", today: "2029-02-28" }),
+    ).toBeNull();
+    // The 1st of March is the first day past every possible birthday in that
+    // month, leap day included.
+    expect(
+      gamerAgeBlock({ ...BAND, dateOfBirth: "2016-02-01", today: "2029-03-01" }),
+    ).toBe("over");
+  });
+
   it("is measured today whatever the start date says", () => {
     // A child who turns thirteen before the club starts is not refused for it:
     // the upper end is about who the product is for, and the family has

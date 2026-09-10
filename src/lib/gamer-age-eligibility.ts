@@ -77,12 +77,12 @@ export function gamerAgeBlock({
       startDate !== null && startDate > today ? startDate : today;
     // The oldest they could be: the stored 1st is the earliest day of the month
     // they could have been born on.
-    if (wholeYearsBetween(dateOfBirth, reference) < minAge) return "under";
+    if (ageOnDate(dateOfBirth, reference) < minAge) return "under";
   }
 
   if (maxAge !== null) {
     // The youngest they could be: born on the last day of the stored month.
-    if (wholeYearsBetween(lastDayOfBirthMonth(dateOfBirth), today) > maxAge) {
+    if (ageOnDate(lastDayOfBirthMonth(dateOfBirth), today) > maxAge) {
       return "over";
     }
   }
@@ -91,15 +91,28 @@ export function gamerAgeBlock({
 }
 
 /**
- * Age in whole years on a given calendar date — the same arithmetic
- * `computeAge` in `src/lib/utils.ts` does, with the reference date handed in as
- * digits instead of being read off a clock in a zone.
+ * **Age in whole years on a given calendar date** — the arithmetic behind both
+ * the band above and the age the picker prints beside a child's name, with the
+ * reference date handed in as digits instead of being read off a clock in a
+ * zone.
+ *
+ * Exported because the pill and the block have to be one reading of one clock.
+ * A surface deriving the pill from its own `new Date()` while the block reads a
+ * date resolved elsewhere would, for the minutes around midnight in the
+ * viewer's zone, print an age the refusal beside it contradicts — a page
+ * arguing with itself about a child's birthday. One date string in, both
+ * answers out.
  *
  * Split textually and never parsed as a `Date`: a bare calendar date carries no
  * instant, and `new Date("2017-03-01")` is UTC midnight, which reads back as
  * February for any viewer west of UTC.
+ *
+ * Note what it is *not* generous about: this is the age of somebody born on the
+ * stored day, and the stored day is the 1st of a month nobody was asked the day
+ * of. The band above resolves that ambiguity per end; the pill states the
+ * stored date's own age, which is the only number there is to state.
  */
-function wholeYearsBetween(birth: string, on: string): number {
+export function ageOnDate(birth: string, on: string): number {
   const [birthY, birthM, birthD] = birth.split("-").map(Number);
   const [onY, onM, onD] = on.split("-").map(Number);
   let years = onY - birthY;

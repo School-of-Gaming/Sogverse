@@ -11,8 +11,8 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { formatInTimeZone } from "date-fns-tz";
 import { useNow, useTimezone } from "@/providers";
-import { computeAge } from "@/lib/utils";
 import {
+  ageOnDate,
   gamerAgeBlock,
   type GamerAgeBlock,
 } from "@/lib/gamer-age-eligibility";
@@ -43,6 +43,14 @@ import type {
 // customer / unauthenticated), and forwards everything to the body.
 // The body itself is data-only (no fetching) so the mockup preview
 // route can render it directly with fixture data.
+
+/**
+ * The map a failed birth-date read resolves to: no ages, and so nothing
+ * blocked — the same answer a roster whose children have no stored birth date
+ * gets. Module-level so its identity is stable across renders; a fresh `Map`
+ * each render would be a new one for no reason.
+ */
+const NO_BIRTH_DATES: ReadonlyMap<string, string | null> = new Map();
 
 interface ProductDetailPageProps {
   productId: string;
@@ -91,15 +99,19 @@ export function ProductDetailPage({
   // panel up until the visitor reloaded.
   const now = useNow();
 
-  // The viewer's own zone, and today's calendar date in it. Both feed the age
-  // band: `computeAge` takes the zone, and the eligibility helper takes the
-  // date as digits because a bare calendar date belongs to somebody's zone and
-  // a pure helper has no way to know whose. Never `toISOString().slice(0, 10)`
-  // — that is the date in UTC, which is a day out for half the world at the
-  // wrong hour, and here it would be a day out at exactly the boundary this is
-  // about: a child's birthday. Off the shared server-seeded clock rather than
-  // a bare `new Date()`, so the server render and the first client render
-  // cannot disagree about what day it is.
+  // The viewer's own zone, and today's calendar date in it. **One string feeds
+  // both halves of the age band** — the pill beside a child's name and the
+  // block that refuses their row — because the two are the same fact stated
+  // twice and a midnight rollover between two readings of the clock would have
+  // them disagree in front of the parent. So the zone is resolved once, the
+  // date is derived once, and both go through the age helper as digits: a bare
+  // calendar date belongs to somebody's zone and a pure helper has no way to
+  // know whose. Never `toISOString().slice(0, 10)` — that is the date in UTC,
+  // which is a day out for half the world at the wrong hour, and here it would
+  // be a day out at exactly the boundary this is about: a child's birthday.
+  // Off the shared server-seeded clock rather than a bare `new Date()`, so the
+  // server render and the first client render cannot disagree about what day
+  // it is.
   const timeZone = useTimezone();
   const today = formatInTimeZone(now, timeZone, "yyyy-MM-dd");
 
@@ -134,8 +146,27 @@ export function ProductDetailPage({
     () => (ageBandApplies ? (gamers ?? []).map((g) => g.id) : undefined),
     [ageBandApplies, gamers],
   );
-  const { map: birthDates, isPending: birthDatesPending } =
-    useGamerBirthDates(rosterIds);
+  const {
+    map: birthDatesRead,
+    isPending: birthDatesNeverResolved,
+    failureCount: birthDateFailures,
+  } = useGamerBirthDates(rosterIds);
+
+  // **The fail-open is latched, exactly as the home-location read's is** — see
+  // the block below it, which states the reasoning in full. Same shape, same
+  // reason: sampled per render, a failure that a retry or a focus refetch later
+  // turned into a success would insert age pills beside names already on screen
+  // and flip rows from enabled to disabled under a parent's cursor, which is a
+  // change on data's own schedule. So the first failed attempt is remembered
+  // for the life of the mount and the page settles on "no ages, nothing
+  // blocked" — the same answer a roster with no stored birth dates gets, which
+  // is the honest one when we cannot read them.
+  const [birthDatesEverFailed, setBirthDatesEverFailed] = useState(false);
+  const birthDatesReadFailed = birthDatesEverFailed || birthDateFailures > 0;
+  if (birthDatesReadFailed && !birthDatesEverFailed) {
+    setBirthDatesEverFailed(true);
+  }
+  const birthDates = birthDatesReadFailed ? NO_BIRTH_DATES : birthDatesRead;
 
   const { data: counts, isLoading: countsLoading } = useParticipationCounts(
     product ? [product.id] : [],
@@ -222,7 +253,21 @@ export function ProductDetailPage({
   // per-child reason a row can be refused, the product's age band, and are
   // waited on for exactly the same reason — an age landing after paint would
   // both insert the age pill beside a name already on screen and flip its row
-  // from enabled to disabled. For non-customers the
+  // from enabled to disabled.
+  //
+  // **That wait is "until the read has resolved once", not "whenever it is not
+  // resolved".** The birth-date query is keyed on the roster's ids, and the
+  // roster grows while this page is open: a parent adds a child in the panel's
+  // own dialog, the create invalidates the roster key, the ids change, and the
+  // birth-date query re-keys. Were the gate a live "is it pending" this page
+  // would drop back to its skeleton at that moment and unmount the panel —
+  // taking every ticked box with it, and the preselection the dialog had just
+  // handed the new child. The hook keeps the previous map across a re-key
+  // precisely so this never returns to pending, and the flag read here is
+  // first-resolution only. It also fails open on the read's first failed
+  // attempt, on the same terms the location read below does.
+  //
+  // For non-customers the
   // customer-only queries return fast/empty. Gedus assigned to a product reach
   // the gedu session-details page from /gedu/clubs/[id] (or /camps/[id] /
   // /events/[id]) — the marketing route here shows them the public layout with
@@ -252,7 +297,7 @@ export function ProductDetailPage({
     productLoading ||
     authLoading ||
     (isCustomer && gamersLoading) ||
-    (isCustomer && birthDatesPending) ||
+    (isCustomer && birthDatesNeverResolved && !birthDatesReadFailed) ||
     (isCustomer && countsLoading) ||
     (isCustomer &&
       product?.region_lock_country != null &&
@@ -317,7 +362,7 @@ export function ProductDetailPage({
           return {
             id: g.id,
             name: g.first_name,
-            age: dateOfBirth === null ? null : computeAge(dateOfBirth, timeZone),
+            age: dateOfBirth === null ? null : ageOnDate(dateOfBirth, today),
             ageBlock:
               dateOfBirth === null
                 ? null
@@ -480,6 +525,14 @@ function describeAgeBlock(
  * *behind* the others rather than beside them: the children's birth dates are
  * keyed on ids that only the roster read can supply, so the wait covers two
  * hops on a product with a gamer audience and one on any other.
+ *
+ * **Every one of those waits is a first resolution, and none of them can come
+ * back.** This is the whole page, so returning to it is not a loading state but
+ * an unmount: the signup panel goes with it, and with the panel go the boxes a
+ * parent has ticked and the child they had selected. The birth-date read is the
+ * one that could plausibly re-open — its key is the roster's ids, and adding a
+ * child changes them — so it is the one that carries the previous answer across
+ * a re-key rather than returning to pending. Nothing here waits twice.
  *
  * A sixth read joins them on a narrow slice of visits: the keyed lookup of the
  * family's home location, waited on only where it can change what the signup
