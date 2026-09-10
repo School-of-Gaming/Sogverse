@@ -46,10 +46,20 @@ the guide says the opposite, as a mechanism a reader can hold us to.
 
 **Rule: an `always` step renders on every product; an `ownDevice` step renders only on a
 remote one.** At an in-person product School of Gaming supplies the computers with
-everything already installed, so a family only has to bring the accounts. Account steps
-are `always`; install, sign-in and test steps are `ownDevice`. A guide read on a phone the
-family owns has no `ownDevice` steps at all, because the phone is theirs wherever the
-session happens.
+everything already installed, so an install, sign-in or test step is not the family's to
+do there and is scoped to the device. A guide read on a phone the family owns has no
+device-scoped steps at all, because the phone is theirs wherever the session happens.
+
+**Rule: an account step is scoped by where the login comes from, not by the fact that it
+is an account.** In person we provide the Minecraft login as well as the machine — at our
+own venues the gamers play on School of Gaming's Minecraft accounts and are not allowed to
+sign in with their own on our devices, and municipality clubs run on School of Gaming's
+Minecraft Education accounts. So the Minecraft account steps are scoped to the device
+alongside the installs, and all three Minecraft topics have nothing to say in person: no
+heading, no intro, no closing. The other four topics keep account steps that survive every
+filter, because those accounts are the family's own wherever the sessions happen — the
+family creates them, holds them, and brings them to an in-person session the same way they
+bring them to a remote one.
 
 ## One step belongs to the product, not to the topic
 

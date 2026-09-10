@@ -38,7 +38,10 @@ vi.mock("@/providers", () => ({
 /** A step of the Minecraft Java guide, and the key its title is composed from. */
 const ACCOUNT_STEP = "steps.minecraftJavaAccount.title";
 const INSTALL_STEP = "steps.minecraftJavaInstall.title";
-const ACCOUNTS_ONLY_INTRO = "accountsOnlyIntro.minecraft_java";
+/** The accounts-only form, on a topic whose account is the family's own. */
+const ROBLOX_ACCOUNT_STEP = "steps.robloxStudioAccount.title";
+const ROBLOX_INSTALL_STEP = "steps.robloxStudioInstall.title";
+const ACCOUNTS_ONLY_INTRO = "accountsOnlyIntro.roblox_studio";
 /** The step every remote guide ends on, whatever its topic. */
 const REMOTE_STEP = "steps.remoteSession.title";
 
@@ -100,22 +103,23 @@ describe("the confirmation page's “Before the first session” card", () => {
   /**
    * In person School of Gaming brings the machines with everything installed,
    * so the card shortens to the account steps under the intro written for that
-   * form.
+   * form. Roblox Studio is the shape: the account is the family's own, so it
+   * survives the filter while the install and test steps do not.
    */
   it("draws the accounts-only form for an in-person product", () => {
-    const { getByText, queryByText } = renderConfirmation("minecraft_java", {
+    const { getByText, queryByText } = renderConfirmation("roblox_studio", {
       isRemote: false,
     });
-    getByText(ACCOUNT_STEP);
+    getByText(ROBLOX_ACCOUNT_STEP);
     getByText(ACCOUNTS_ONLY_INTRO);
-    expect(queryByText(INSTALL_STEP)).toBeNull();
+    expect(queryByText(ROBLOX_INSTALL_STEP)).toBeNull();
   });
 
   /**
-   * A topic whose every step belongs to a machine we supply has nothing to say
-   * in person — and the card must not be drawn empty around it, which is why
-   * the page asks the shared resolver rather than trusting the content
-   * component's own early return.
+   * A topic whose every step belongs to something we supply — the machine, and
+   * for Minecraft the login on it — has nothing to say in person, and the card
+   * must not be drawn empty around it. That is why the page asks the shared
+   * resolver rather than trusting the content component's own early return.
    */
   it("leaves no empty card where the filter removes every step", () => {
     const { container } = renderConfirmation("minecraft_education", {
@@ -123,5 +127,22 @@ describe("the confirmation page's “Before the first session” card", () => {
     });
     expect(container.textContent).not.toContain("steps.minecraftEducationInstall");
     expect(container.textContent).not.toContain("closing");
+  });
+
+  /**
+   * The Minecraft topics are the same case: at our own venues the gamers use
+   * School of Gaming's Minecraft accounts and in municipality clubs School of
+   * Gaming's Minecraft Education accounts, so the login is not the family's to
+   * arrange either and nothing renders.
+   */
+  it("draws nothing in person for a Minecraft topic", () => {
+    const { container, queryByText } = renderConfirmation("minecraft_java", {
+      isRemote: false,
+    });
+    expect(queryByText(ACCOUNT_STEP)).toBeNull();
+    expect(queryByText(INSTALL_STEP)).toBeNull();
+    expect(container.textContent).not.toContain("closing");
+    // The rest of the page is untouched — an absent card, not a broken render.
+    expect(queryByText("summaryTitle")).not.toBeNull();
   });
 });

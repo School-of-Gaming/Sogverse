@@ -2184,8 +2184,6 @@
       }
     },
     "accountsOnlyIntro": {
-      "minecraft_java": "Näille kerroille tuomme tietokoneet mukanamme, ja Minecraft on niissä valmiina. Tiliä emme voi tuoda – se on siis ainoa asia, joka pitää hoitaa etukäteen.",
-      "minecraft_bedrock": "Näille kerroille tuomme koneet mukanamme, ja Minecraft on niissä valmiina, joten peliä ei tarvitse ostaa eikä asentaa. Tili on se osa, joka tulee teiltä.",
       "fortnite": "Näille kerroille tuomme koneet mukanamme, ja Fortnite on niissä valmiina – teille jää siis tili ja sen asetukset.",
       "rocket_league": "Näille kerroille tuomme koneet mukanamme, ja Rocket League on niissä valmiina. Tili on se osa, joka tulee teiltä.",
       "roblox_studio": "Näille kerroille tuomme tietokoneet mukanamme, ja Roblox Studio on niissä valmiina. Tiliä emme voi tuoda – se on siis ainoa asia, joka pitää hoitaa etukäteen."

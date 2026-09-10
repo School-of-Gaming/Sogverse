@@ -1793,13 +1793,19 @@ describe("the topic prep scene", () => {
     }
   });
 
-  it("keeps a topic that filters down to nothing in the in-person column", () => {
-    // Minecraft Education is the one, and the scene's muted line is what makes
-    // its emptiness visible instead of it silently dropping out of the page.
+  it("keeps the topics that filter down to nothing in the in-person column", () => {
+    // The three Minecraft topics are the ones — in person we supply the
+    // machines and the Minecraft logins alike — and the scene's muted line is
+    // what makes their emptiness visible instead of them silently dropping out
+    // of the page.
     const emptied = PRODUCT_TOPIC_VALUES.filter(topicHasPrep).filter(
       (topic) => resolveTopicPrep(topic, false) === null,
     );
-    expect(emptied).toContain("minecraft_education");
+    expect([...emptied].sort()).toEqual([
+      "minecraft_bedrock",
+      "minecraft_education",
+      "minecraft_java",
+    ]);
   });
 
   it("has a label-only guide to add to the remote column, and none in person", () => {

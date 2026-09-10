@@ -2184,8 +2184,6 @@
       }
     },
     "accountsOnlyIntro": {
-      "minecraft_java": "Pour ces séances, nous apportons les ordinateurs, avec Minecraft déjà installé. Ce que nous ne pouvons pas apporter, c’est le compte : c’est donc la seule chose à régler à l’avance.",
-      "minecraft_bedrock": "Pour ces séances, nous apportons les machines, avec Minecraft déjà dessus : il n’y a donc aucun jeu à acheter ni à installer. Le compte, lui, doit venir de vous.",
       "fortnite": "Pour ces séances, nous apportons les machines, avec Fortnite déjà installé : il vous reste le compte, et les réglages qui vont avec.",
       "rocket_league": "Pour ces séances, nous apportons les machines, avec Rocket League déjà installé. Le compte, lui, doit venir de vous.",
       "roblox_studio": "Pour ces séances, nous apportons les ordinateurs, avec Roblox Studio déjà installé. Ce que nous ne pouvons pas apporter, c’est le compte : c’est donc la seule chose à régler à l’avance."

@@ -59,12 +59,20 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 //
 // **Every step declares a scope, because an in-person product supplies the
 // machines.** At an in-person session School of Gaming provides computers with
-// everything already installed, so a family only has to bring the accounts:
-// `"always"` steps render on every product, `"ownDevice"` steps only on a
-// remote one (`is_remote`). A topic whose `always` steps come to nothing —
-// Minecraft Education, where School of Gaming provides the login too — renders
-// no guide at all in person, which is what `resolveTopicPrep` returning null
-// means.
+// everything already installed, so a step is the family's to do only where the
+// thing it is about is theirs: `"always"` steps render on every product,
+// `"ownDevice"` steps only on a remote one (`is_remote`).
+//
+// **An account step is scoped by where the login comes from, not by the fact
+// that it is an account.** For the three Minecraft topics the login is ours as
+// well as the machine — at our own venues the gamers play on School of
+// Gaming's Minecraft accounts and may not sign in with their own on our
+// devices, and municipality clubs run on School of Gaming's Minecraft
+// Education accounts — so those account steps are `ownDevice` and all three
+// topics render no guide at all in person. The other four topics keep
+// `always` account steps, because those accounts are the family's own wherever
+// the sessions happen. A topic whose `always` steps come to nothing renders
+// nothing, which is what `resolveTopicPrep` returning null means.
 //
 // **One step belongs to no topic at all.** Getting a microphone and camera
 // ready for the voice room is a fact about a *remote* product — the session
@@ -114,11 +122,12 @@ type GameStore = { name: string; url: string };
 /**
  * Who has to do a step, which decides whether an in-person product renders it.
  *
- * - `always` — an account step. A family holds the account wherever the
- *   sessions happen, so it survives every filter.
- * - `ownDevice` — an install, sign-in or test step against the family's own
- *   machine. At an in-person product School of Gaming supplies the machines
- *   with the software already on them, so the step is not the family's to do.
+ * - `always` — a step about something the family holds wherever the sessions
+ *   happen: their own account, their own phone. It survives every filter.
+ * - `ownDevice` — a step about something School of Gaming supplies at an
+ *   in-person product, so it is not the family's to do there. An install,
+ *   sign-in or test step against the family's own machine is the usual case;
+ *   so is an account step for a topic whose in-person login is ours too.
  */
 export type TopicPrepScope = "always" | "ownDevice";
 
@@ -187,11 +196,17 @@ export const PRODUCT_TOPICS = {
       url: "https://www.minecraft.net/store/minecraft-java-bedrock-edition-pc",
     },
     prep: {
-      accountsOnlyIntro: true,
       steps: [
         {
+          // `ownDevice`, because in person the login is ours as well as the
+          // machine: at our own venue's live clubs the gamers play on School
+          // of Gaming's Minecraft accounts and are not allowed to sign in with
+          // their own on our devices, and municipality clubs run on School of
+          // Gaming's Minecraft Education accounts. So an in-person Minecraft
+          // Java product renders no guide at all, exactly as Minecraft
+          // Education already does.
           key: "minecraftJavaAccount",
-          scope: "always",
+          scope: "ownDevice",
           url: "https://www.minecraft.net/store/minecraft-java-bedrock-edition-pc",
         },
         { key: "minecraftJavaInstall", scope: "ownDevice" },
@@ -276,9 +291,16 @@ export const PRODUCT_TOPICS = {
       ],
     },
     prep: {
-      accountsOnlyIntro: true,
       steps: [
-        { key: "minecraftBedrockAccount", scope: "always" },
+        {
+          // `ownDevice`, for the reason the Java entry states: in person the
+          // Minecraft login is ours too — School of Gaming's own accounts at
+          // our venues, School of Gaming's Minecraft Education accounts in
+          // municipality clubs — so nothing here is the family's to do and an
+          // in-person Bedrock product renders no guide at all.
+          key: "minecraftBedrockAccount",
+          scope: "ownDevice",
+        },
         {
           key: "minecraftBedrockInstall",
           scope: "ownDevice",
@@ -627,9 +649,10 @@ function topicHasAccountsOnlyIntro(
  *
  * `null` covers both ways a surface ends up with nothing to draw, because a
  * caller cannot usefully tell them apart: the topic has no guide, or every one
- * of its steps belongs to a device School of Gaming is supplying. Minecraft
- * Education in person is the second case, and it is why the answer is a
- * predicate over the *filtered* steps rather than over `prep` alone.
+ * of its steps belongs to something School of Gaming is supplying — a device,
+ * or a login. The three Minecraft topics in person are the second case, and it
+ * is why the answer is a predicate over the *filtered* steps rather than over
+ * `prep` alone.
  *
  * **Both ways are now in-person answers.** Every remote product has at least
  * the shared remote-session step, so `null` on a remote product is unreachable

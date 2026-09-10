@@ -2184,8 +2184,6 @@
       }
     },
     "accountsOnlyIntro": {
-      "minecraft_java": "We bring the computers to these sessions, with Minecraft already installed. The one thing we cannot bring is the account, so that is the part to sort out beforehand.",
-      "minecraft_bedrock": "We bring the machines to these sessions, with Minecraft already on them, so there is no game to buy or install. The account is the part that has to come from you.",
       "fortnite": "We bring the machines to these sessions, with Fortnite already installed. What is left for you is the account, and the controls that sit on it.",
       "rocket_league": "We bring the machines to these sessions, with Rocket League already installed. The account is the part that has to come from you.",
       "roblox_studio": "We bring the computers to these sessions, with Roblox Studio already installed. The one thing we cannot bring is the account, so that is the part to sort out beforehand."

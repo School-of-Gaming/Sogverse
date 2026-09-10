@@ -27,10 +27,12 @@ import type { ProductTopic } from "@/types";
  *
  * The two scenarios are the two forms a guide is filtered into, and they are
  * scenarios rather than an axis because no product is both: `remote` renders
- * every step, `in-person` only the account ones. A topic that filters down to
- * nothing says so in a muted line instead of vanishing — Minecraft Education is
- * deliberately empty in person, and a page that simply skipped it would look
- * identical to one where the guide had gone missing.
+ * every step, `in-person` only the steps that are still the family's to do. A
+ * topic that filters down to nothing says so in a muted line instead of
+ * vanishing — the three Minecraft topics are deliberately empty in person,
+ * because the login there is ours as well as the machine, and a page that
+ * simply skipped them would look identical to one where the guides had gone
+ * missing.
  *
  * The `remote` column carries one card the topic registry cannot name: the
  * one-step guide every label-only topic gets, which is the shared
@@ -77,7 +79,7 @@ export function TopicPrepScene({
           <p className="text-sm text-muted-foreground">
             {isRemote
               ? "Every step of every guide, plus the shared voice-room step every remote product ends on."
-              : "Only the account steps: School of Gaming brings the machines with the software already on them."}
+              : "Only what is still the family's to do: School of Gaming brings the machines with the software already on them, and the Minecraft logins as well."}
           </p>
         </div>
 
@@ -94,7 +96,7 @@ export function TopicPrepScene({
                 {plan === null ? (
                   <p className="text-sm italic text-muted-foreground">
                     Nothing renders in this form &mdash; every step belongs to a
-                    machine School of Gaming supplies.
+                    machine or a login School of Gaming supplies.
                   </p>
                 ) : (
                   <TopicPrepContent plan={plan} />

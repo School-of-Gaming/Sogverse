@@ -355,7 +355,8 @@ describe("product topics", () => {
 
         const kept = meta.prep.steps.filter((s) => s.scope === "always");
         // Nothing kept is the third case and needs no intro at all: the guide
-        // does not render in person. Minecraft Education is that case.
+        // does not render in person. The three Minecraft topics are that case
+        // — we supply the machines and the Minecraft logins alike.
         if (kept.length > 0 && kept.length < meta.prep.steps.length) {
           filters.push(topic);
         }
@@ -434,18 +435,43 @@ describe("product topics", () => {
       expect(messages.topicPrep.remoteOnlyIntro.trim().length).toBeGreaterThan(0);
     });
 
-    it("renders nothing in person for a topic with no guide, and none for Minecraft Education", () => {
+    it("renders nothing in person for a topic with no guide, and none for any Minecraft topic", () => {
       expect(resolveTopicPrep("programming", false)).toBeNull();
       expect(resolveTopicPrep("esports", false)).toBeNull();
 
-      // The case the null answer was written for: we supply the machines AND
-      // the logins, so a family has genuinely nothing to do beforehand and a
-      // guide saying so would be furniture. It is now an in-person answer
-      // alone — remotely the room is always there to get ready for.
+      // The case the null answer was written for, and all three Minecraft
+      // topics are in it: we supply the machines AND the logins — School of
+      // Gaming's own Minecraft accounts at our venues, School of Gaming's
+      // Minecraft Education accounts in municipality clubs — so a family has
+      // genuinely nothing to do beforehand and a guide saying so would be
+      // furniture. It is an in-person answer alone: remotely the room is
+      // always there to get ready for, and remotely the accounts are the
+      // family's own.
       expect(resolveTopicPrep("minecraft_education", false)).toBeNull();
+      expect(resolveTopicPrep("minecraft_java", false)).toBeNull();
+      expect(resolveTopicPrep("minecraft_bedrock", false)).toBeNull();
+
       expect(
         resolveTopicPrep("minecraft_education", true)?.steps.map((s) => s.key),
       ).toEqual(["minecraftEducationInstall", REMOTE_SESSION_KEY]);
+      expect(
+        resolveTopicPrep("minecraft_java", true)?.steps.map((s) => s.key),
+      ).toEqual([
+        "minecraftJavaAccount",
+        "minecraftJavaInstall",
+        "minecraftJavaLaunch",
+        REMOTE_SESSION_KEY,
+      ]);
+      expect(resolveTopicPrep("minecraft_java", true)?.form).toBe("full");
+      expect(
+        resolveTopicPrep("minecraft_bedrock", true)?.steps.map((s) => s.key),
+      ).toEqual([
+        "minecraftBedrockAccount",
+        "minecraftBedrockInstall",
+        "minecraftBedrockOnline",
+        REMOTE_SESSION_KEY,
+      ]);
+      expect(resolveTopicPrep("minecraft_bedrock", true)?.form).toBe("full");
     });
 
     it("keeps every Pokémon GO step in person", () => {
