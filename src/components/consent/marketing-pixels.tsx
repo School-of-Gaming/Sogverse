@@ -75,8 +75,10 @@ interface MarketingPixelsProps {
  * ships them to the browser anyway.
  *
  * Deliberately no `<noscript><img>` fallback. Meta's is a bare tracking pixel
- * in markup: it fires on render, before and regardless of any consent logic,
- * which is precisely the thing this component exists to prevent.
+ * in markup, and a browser only loads `<noscript>` content with scripting off —
+ * so its entire audience is visitors who cannot run the consent banner, and
+ * every event it sent would be one nobody agreed to. Gating it on the consent
+ * cookie server-side would not rescue it: it would count, in practice, no one.
  */
 export function MarketingPixels({ nonce }: MarketingPixelsProps) {
   const { consent } = useConsent();
