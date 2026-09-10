@@ -1904,11 +1904,17 @@
       "format": "Muoto",
       "formatOnline": "Verkossa",
       "formatInPerson": "Paikan päällä",
+      "price": "Hinta",
+      "priceFree": "Maksuton",
+      "pricePaid": "Maksullinen",
       "language": "Kieli",
       "age": "Ikä",
       "days": "Päivät",
       "clearAll": "Tyhjennä",
-      "filterBy": "Suodata"
+      "filterBy": "Suodata",
+      "title": "Suodattimet",
+      "activeCount": "{count, plural, one {# suodatin valittuna} other {# suodatinta valittuna}}",
+      "removeFilter": "Poista {label}"
     },
     "card": {
       "ages": "Ikä {min}–{max}",

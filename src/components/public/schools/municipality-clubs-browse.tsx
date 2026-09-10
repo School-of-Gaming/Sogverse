@@ -14,9 +14,11 @@ import { ProductBrowseResults } from "@/components/public/products/product-brows
 
 // The per-municipality clubs page (`/schools/<slug>`). A shop browse page
 // narrowed to one municipality: same filters + card grid (via
-// <ProductBrowseResults>), minus the Clubs|Camps Type row — everything here is
-// a municipality club. One unheaded section, so the grid reads as a plain grid
-// under this page's own h1 rather than repeating "Clubs" beneath it.
+// <ProductBrowseResults>), less the filters a school page withholds — Type,
+// Audience and Price, because everything here is a municipality club; the
+// reasons are written beside that decision in `browse-surface.ts`. One
+// unheaded section, so the grid reads as a plain grid under this page's own h1
+// rather than repeating "Clubs" beneath it.
 //
 // The page only renders for a municipality that runs clubs — the route 404s
 // otherwise (see `[municipalityName]/page.tsx`) — so there's no bespoke empty
@@ -32,7 +34,7 @@ import { ProductBrowseResults } from "@/components/public/products/product-brows
 // this municipality's clubs are anchored at two levels (the municipality itself
 // when online, a site inside it when in-person), and an equality test would
 // keep only the online ones. Delivery mode is filtered separately, by the
-// filter strip's Format row.
+// filters' Format row.
 interface MunicipalityClubsBrowseProps {
   municipalityId: string;
   /** The slug the user is on (the URL param), used to build child detail-page
@@ -92,7 +94,7 @@ export function MunicipalityClubsBrowse({
         <ProductBrowseResults
           sections={sections}
           counts={counts ?? []}
-          showTypeFilter={false}
+          surface="municipality"
           productHref={(id) =>
             ROUTES.schoolMunicipalityProduct(municipalitySlug, id)
           }

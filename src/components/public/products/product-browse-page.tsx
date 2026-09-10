@@ -118,6 +118,7 @@ export function ProductBrowsePage({
 
   return (
     <ProductBrowseBody
+      surface="shop"
       sections={sections}
       counts={counts ?? []}
       // From the un-narrowed fetch: `sections` only cover the selected
