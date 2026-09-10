@@ -105,6 +105,42 @@ Re-run with the same queries when a discoverability change has had time to be cr
 personal Google results page — no personalisation, no location — so the numbers are
 indicative and comparable with each other, not with what a parent in Espoo sees.
 
+### How to re-run
+
+Same tool, same queries, same recording, so two entries compare cleanly:
+
+- **Tool:** an agent's web search tool, one search per query, no follow-up refinement.
+  Record which tool and the date; if the tool changes, say so in the entry, because the
+  numbers then compare only loosely.
+- **Per query, record:** whether any School of Gaming property appears at all; its
+  position in the returned list; **which host** — `sogverse.sog.gg` or `www.sog.gg`
+  matters more than the position, since the goal is that Sogverse takes over; and the
+  top three other results. Keep the table shape below.
+- **The queries, verbatim** (language in brackets where not English):
+  1. `School of Gaming`
+  2. `School of Gaming Finland`
+  3. `Sogverse`
+  4. `school of gaming minecraft club`
+  5. `minecraft club for kids online`
+  6. `minecraft club for kids Finland`
+  7. `roblox summer camp for kids online`
+  8. `online gaming club for children`
+  9. `gaming hobby for children with a coach`
+  10. `game educator children`
+  11. (fi) `minecraft kerho lapsille`
+  12. (fi) `pelikerho lapsille`
+  13. (fi) `School of Gaming pelikoulu`
+  14. (fi) `roblox leiri lapsille`
+  15. (sv) `minecraft klubb för barn`
+  16. (fr) `club minecraft enfants en ligne`
+  17. `safe supervised minecraft server for kids weekly sessions with adult educator`
+  18. `turn screen time into quality time kids gaming club`
+  19. (fi) `harrastamisen suomen malli pelikerho School of Gaming kunta`
+  20. (fi) `ohjattu minecraft harrastus verkossa lapselle maksullinen`
+- **Also check, outside the table:** which host the brand queries resolve to, whether
+  the dead `sogverse-fi.sog.gg` sign-in page is still indexed, and whether a Google
+  Business Profile shows on a real Google search.
+
 ### 2026-09-10 — before
 
 Captured before any of the mechanisms above shipped. Position is the rank in the list the
@@ -139,8 +175,10 @@ this repo does not control, and the estate competes with itself for the same ter
 | (fi) roblox leiri lapsille | — | toy shops and safety pieces; no camp provider at all |
 | (sv) minecraft klubb för barn | — | no commercial Swedish club ranks |
 | (fr) club minecraft enfants en ligne | — | English results only |
-| a plain description of the product (supervised weekly Minecraft sessions with an adult educator) | — | Outschool, Common Sense Media |
-| our own tagline as a query | — | parenting-advice publishers only |
+| safe supervised minecraft server for kids weekly sessions with adult educator | — | Outschool, Common Sense Media |
+| turn screen time into quality time kids gaming club | — | parenting-advice publishers only |
+| (fi) harrastamisen suomen malli pelikerho School of Gaming kunta | ~3, off-domain | the hobby-model programme's page *about* us; competitors incoach and xroc.gg on their own domains |
+| (fi) ohjattu minecraft harrastus verkossa lapselle maksullinen | — | Autismiliitto articles that *describe* us; a gift-voucher camp; unigaming.net |
 
 What it says: brand terms are held but diluted, and the top brand slots belong to our own
 social profiles rather than the site. Finnish-language Minecraft is the one commanding
