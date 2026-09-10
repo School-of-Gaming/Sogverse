@@ -6,6 +6,48 @@ import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
+/**
+ * How long the scrim's fade and the panel's slide take, in milliseconds. It is
+ * the number `duration-200` spells on both of them below, and the two have to
+ * move together: the wait for a close to finish is timed from it.
+ */
+const SLIDE_MS = 200;
+
+/**
+ * How long a close waits for the panel to report the end of its slide before
+ * taking it as finished anyway. A tab in the background, or a panel that never
+ * moved, sends no `transitionend` at all. The margin past the slide is because
+ * the slide starts on the frame after the close rather than on the close
+ * itself, so a timer of exactly its length would fire while the last of the
+ * panel is still on screen; with the margin, the event wins whenever the
+ * browser is going to send one.
+ */
+const EXIT_FALLBACK_MS = SLIDE_MS + 100;
+
+/**
+ * The properties a panel's slide animates. Tailwind's translate utilities set
+ * the standalone `translate` property; `transform` is here so a slide written
+ * the older way is still recognised as one.
+ */
+const SLIDE_PROPERTIES = new Set(["translate", "transform"]);
+
+const subscribeToNothing = () => () => {};
+
+/**
+ * Whether this render is in a browser. A server render, and the hydration
+ * render that has to agree with it, read false; every client render after that
+ * reads true. It is an external store rather than a flag set in an effect so
+ * that the switch is React's own re-render after hydration, not a state update
+ * the component schedules on itself.
+ */
+function useIsClient() {
+  return React.useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false,
+  );
+}
+
 interface SheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -19,10 +61,36 @@ interface SheetProps {
    * narrow viewport.
    */
   side?: "right" | "bottom";
+  /**
+   * Called when a close has finished — the panel has slid off the screen, so
+   * whatever it holds can go without anyone watching it leave. Once per close;
+   * never for a sheet that mounted closed, and not at all for a close that a
+   * reopening interrupted. Pass a stable function: a new one on every render
+   * restarts the wait.
+   */
+  onExitComplete?: () => void;
   children: React.ReactNode;
 }
 
-function Sheet({ open, onOpenChange, side = "right", children }: SheetProps) {
+/**
+ * A panel over the page, meant to stay mounted and be opened and closed by
+ * `open` — that is what lets it slide in and out rather than appear and
+ * vanish. It renders nothing on the server, which has no `document.body` to
+ * portal into, and arrives on the client once hydration has agreed with that.
+ */
+function Sheet({
+  open,
+  onOpenChange,
+  side = "right",
+  onExitComplete,
+  children,
+}: SheetProps) {
+  const isClient = useIsClient();
+  const scrimRef = React.useRef<HTMLDivElement>(null);
+  const panelRef = React.useRef<HTMLDivElement>(null);
+  const settledPanel = React.useRef<HTMLDivElement | null>(null);
+  const hasOpened = React.useRef(false);
+
   React.useEffect(() => {
     if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -32,7 +100,9 @@ function Sheet({ open, onOpenChange, side = "right", children }: SheetProps) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, onOpenChange]);
 
-  // Prevent body scroll when open
+  // Prevent body scroll while open. Keyed on `open` rather than on being
+  // mounted, so a sheet that stays on the page hands the scroll back the
+  // moment it closes, not when its slide ends.
   React.useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -41,6 +111,63 @@ function Sheet({ open, onOpenChange, side = "right", children }: SheetProps) {
       document.body.style.overflow = prev;
     };
   }, [open]);
+
+  // A transition runs from the style the browser last computed for an element
+  // to the one it computes next. A panel that is inserted and opened before
+  // the browser has computed anything for it has no "before" to run from, and
+  // is simply drawn open. Staying mounted closed is what normally avoids that,
+  // but the portal only exists from the render after hydration, and an update
+  // that opens the sheet can land in that same render or the same task — a tap
+  // during hydration is replayed as soon as hydration completes. So the first
+  // time a panel is in the document, its closed position is computed on the
+  // spot: pinned there first if it arrived already open, then released to its
+  // classes, which the browser then sees as a change to slide through.
+  React.useLayoutEffect(() => {
+    const panel = panelRef.current;
+    const scrim = scrimRef.current;
+    if (!isClient || !panel || !scrim || settledPanel.current === panel) return;
+    settledPanel.current = panel;
+    if (open) {
+      panel.style.setProperty("translate", side === "bottom" ? "0 100%" : "100% 0");
+      scrim.style.setProperty("opacity", "0");
+    }
+    // Reading geometry makes the browser compute the panel's style now.
+    panel.getBoundingClientRect();
+    panel.style.removeProperty("translate");
+    scrim.style.removeProperty("opacity");
+  }, [isClient, open, side]);
+
+  // A close is finished when the panel's own slide ends — not a transition on
+  // something inside it, which bubbles here too, and not the scrim's fade.
+  // Reopening before then tears the wait down, so a stale end never reaches a
+  // sheet that is open again.
+  React.useEffect(() => {
+    if (open) {
+      hasOpened.current = true;
+      return;
+    }
+    if (!hasOpened.current || !onExitComplete) return;
+    const panel = panelRef.current;
+    let reported = false;
+    const report = () => {
+      if (reported) return;
+      reported = true;
+      onExitComplete();
+    };
+    const handleTransitionEnd = (event: TransitionEvent) => {
+      if (event.target === panel && SLIDE_PROPERTIES.has(event.propertyName)) {
+        report();
+      }
+    };
+    panel?.addEventListener("transitionend", handleTransitionEnd);
+    const fallback = window.setTimeout(report, EXIT_FALLBACK_MS);
+    return () => {
+      panel?.removeEventListener("transitionend", handleTransitionEnd);
+      window.clearTimeout(fallback);
+    };
+  }, [open, onExitComplete]);
+
+  if (!isClient) return null;
 
   return createPortal(
     <div
@@ -55,7 +182,14 @@ function Sheet({ open, onOpenChange, side = "right", children }: SheetProps) {
       // because the first one to do so would have no warning that it needed it.
       onSubmit={(event) => event.stopPropagation()}
     >
+      {/* The fade and the slide are deliberately not switched off for a
+          reader who prefers reduced motion. They are not decoration: the
+          slide is what shows where the panel came from and where it has gone
+          back to, and a panel that appears over the page with no origin is
+          harder to follow, not calmer. A sweep adding reduced-motion variants
+          here would be taking that away. */}
       <div
+        ref={scrimRef}
         className={cn(
           "fixed inset-0 bg-scrim transition-opacity duration-200 ease-out",
           open ? "opacity-100" : "opacity-0",
@@ -63,6 +197,7 @@ function Sheet({ open, onOpenChange, side = "right", children }: SheetProps) {
         onClick={() => onOpenChange(false)}
       />
       <div
+        ref={panelRef}
         className={cn(
           "fixed z-50 bg-card shadow-xl transition-transform duration-200 ease-out",
           side === "right" &&

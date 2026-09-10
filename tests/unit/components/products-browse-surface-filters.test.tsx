@@ -85,8 +85,9 @@ function renderBar(surface: BrowseSurface) {
     summary: screen
       .queryAllByRole("button", { name: /^Remove / })
       .map((button) => button.getAttribute("aria-label")),
-    // A Clear with nothing to clear stays in the layout but is hidden from
-    // assistive tech, so the role query sees only the ones on offer.
+    // The bar renders its Clear only while there is something to clear; the
+    // rail's stays in the layout but is hidden from assistive tech. Either
+    // way the role query sees only the ones on offer.
     clearButtons: screen.queryAllByRole("button", {
       name: messages.productBrowse.filters.clearAll,
     }).length,
