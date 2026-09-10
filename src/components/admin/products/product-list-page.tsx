@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { useProductsByType } from "@/services/products";
 import { ProductListFilters } from "./product-list-filters";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
+import { ROUTES } from "@/lib/constants";
 
 interface ProductListPageProps {
   productType: ProductType;
@@ -34,7 +35,7 @@ export function ProductListPage({ productType }: ProductListPageProps) {
           </p>
         </div>
         <Link
-          href={`/admin/${config.routeSlug}/new`}
+          href={ROUTES.admin.productNew(productType)}
           className={buttonVariants()}
         >
           <Plus className="mr-1 h-4 w-4" />

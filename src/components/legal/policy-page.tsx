@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { TriangleAlert } from "lucide-react";
 import { OutboundLink } from "@/components/ui/outbound-link";
 import { policyTextSegments, type PolicyBlock } from "./policy-content";

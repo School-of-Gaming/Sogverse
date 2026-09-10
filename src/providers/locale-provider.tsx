@@ -1,9 +1,15 @@
 "use client";
 
 /**
- * LocaleProvider owns the user's UI locale — which translation of the web app
- * they see (English, Finnish, Swedish, ...). It syncs `profiles.locale` with a
- * `locale` cookie so SSR picks up the right translation on the next request.
+ * LocaleProvider carries the UI locale the reader is currently on — which
+ * translation of the web app they see (English, Finnish, Swedish, ...) — and
+ * the one action that changes it.
+ *
+ * **It reads the locale, it does not decide it.** The URL decides, and this is
+ * a consumer of next-intl's context. What the provider owns is persistence in
+ * the other direction: the picker's choice, written to the `locale` cookie and
+ * to `profiles.locale`, which is what the bare-path ladder reads on the
+ * reader's next cold entry.
  *
  * **Not the same as spoken languages.** "Spoken languages" are the human
  * languages a user speaks / a club is delivered in (`profiles.spoken_languages`),
@@ -16,9 +22,7 @@
 import {
   createContext,
   useContext,
-  useState,
   useCallback,
-  useEffect,
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -31,7 +35,7 @@ import {
   type DetectedLocale,
 } from "@/lib/constants/locales";
 
-import { getCookie, setCookie } from "@/lib/cookies";
+import { setCookie } from "@/lib/cookies";
 import { trackLocaleChange } from "@/lib/analytics";
 
 const COOKIE_NAME = "locale";
@@ -60,67 +64,39 @@ export function LocaleProvider({
   children: ReactNode;
   detectedLocale: DetectedLocale;
 }) {
-  const { profile, user, refreshProfile } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const router = useRouter();
-  // Seed from the server-resolved locale so SSR and the first client paint
-  // agree. The server already ran the priority chain (cookie >
-  // Accept-Language > default) in src/i18n/request.ts and exposed the result
-  // via NextIntlClientProvider, so useLocale() returns the same value both
-  // sides see. Re-deriving on the client from navigator.language used to
-  // miss on iOS Safari, where that value can disagree with what the browser
-  // actually sent in Accept-Language (e.g. system language Finnish but
-  // navigator.language reports "en-US") — the page rendered in Finnish but
-  // the LocalePicker showed the EN flag until the user clicked it.
-  const intlLocale = useLocale();
-  const [locale, setLocaleState] = useState<SupportedLocale>(() =>
-    isSupportedLocale(intlLocale) ? intlLocale : DEFAULT_LOCALE,
-  );
-
-  // Derive locale from profile on render rather than using setState in an
-  // effect (which triggers a cascading re-render and violates the
-  // react-hooks/set-state-in-effect lint rule). When the profile has a valid
-  // locale, it takes priority over local state.
-  const profileLocale = profile?.locale;
-  const derivedLocale =
-    profileLocale && isSupportedLocale(profileLocale)
-      ? profileLocale
-      : locale;
-
-  // Reconcile the cookie with profile.locale whenever the profile changes.
-  // Handles the "signed in on a new device" case: the browser has an
-  // Accept-Language cookie (e.g. "en") but the profile says "fi". Without
-  // this, next-intl's getRequestConfig keeps loading the wrong messages
-  // bundle on every SSR render and the user is stuck in the wrong language.
+  // **The URL is the authority, and this provider is its consumer.** The
+  // locale on screen is the one in the address bar, which next-intl resolves
+  // from the `[locale]` segment and exposes here — so a signed-in `fi`-profile
+  // reader following a shared `/fr/…` link sees FR in the picker, and the visit
+  // rewrites nothing.
   //
-  // When the cookie is out of sync, the SSR-rendered messages bundle is
-  // also out of sync (next-intl reads the cookie), so we always refresh
-  // after writing. Early-returns when already in sync, so steady state is
-  // a no-op.
-  useEffect(() => {
-    if (!profileLocale || !isSupportedLocale(profileLocale)) return;
-    if (getCookie(COOKIE_NAME) === profileLocale) return;
-    setCookie(COOKIE_NAME, profileLocale);
-    router.refresh();
-  }, [profileLocale, router]);
+  // This used to derive the locale with `profiles.locale` taking priority, and
+  // to run an effect reconciling the cookie to it (plus a refresh) whenever the
+  // profile loaded. Both contradict URL routing: the first would show the
+  // picker a language the page is not in, and the second would let one click on
+  // somebody else's link silently rewrite the reader's stored preference.
+  // Persistence now flows one way only — picker → cookie + profile — with the
+  // sign-in flows as the single deliberate exception (they seed the cookie from
+  // the profile so the post-login bare path lands prefixed).
+  const intlLocale = useLocale();
+  const locale = isSupportedLocale(intlLocale) ? intlLocale : DEFAULT_LOCALE;
 
   const setLocale = useCallback(
     (newLocale: SupportedLocale) => {
-      // `derivedLocale`, not the raw `locale` state: it's the locale actually
-      // on screen (a profile locale outranks local state), which is what the
-      // user was reading when they reached for the picker. Skipped entirely
-      // when it matches — the picker lets you click the entry that is already
-      // active, and a from === to row would be a no-op cluttering the matrix.
-      // Everything below still runs in that case: this change adds an event, it
-      // does not change what the picker does.
-      if (newLocale !== derivedLocale) {
+      // Skipped entirely when it matches — the picker lets you click the entry
+      // that is already active, and a from === to row would be a no-op
+      // cluttering the matrix. Everything below still runs in that case: this
+      // change adds an event, it does not change what the picker does.
+      if (newLocale !== locale) {
         trackLocaleChange({
           detected: detectedLocale,
-          from: derivedLocale,
+          from: locale,
           to: newLocale,
         });
       }
 
-      setLocaleState(newLocale);
       setCookie(COOKIE_NAME, newLocale);
 
       // Persist to profile if logged in
@@ -134,15 +110,18 @@ export function LocaleProvider({
           .catch((err) => console.error("Failed to persist locale:", err));
       }
 
-      // Trigger server re-render to load new locale's messages
+      // Re-render the server tree so anything outside the URL's own locale —
+      // and the cookie fallback the contexts with no URL locale read — picks
+      // the new value up. Step 6 adds the navigation to the new prefix beside
+      // it; until then this is what the picker does.
       router.refresh();
     },
-    [user, refreshProfile, router, derivedLocale, detectedLocale],
+    [user, refreshProfile, router, locale, detectedLocale],
   );
 
   return (
     <LocaleContext.Provider
-      value={{ locale: derivedLocale, setLocale, detectedLocale }}
+      value={{ locale, setLocale, detectedLocale }}
     >
       {children}
     </LocaleContext.Provider>

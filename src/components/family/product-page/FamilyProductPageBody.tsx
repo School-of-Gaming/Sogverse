@@ -31,6 +31,7 @@ import type {
   FamilyProductSite,
   FamilySessionEntry,
 } from "./types";
+import type { MaybeInertHrefObject } from "@/lib/constants/routes";
 
 /**
  * The **family product page**: one enrollment, one child, everything that has
@@ -182,7 +183,7 @@ export interface FamilyProductPageBodyProps {
   /** The site and its family-facing detail, or `null` for a remote product. */
   site: FamilyProductSite | null;
   /** Where the Join navigates when the window is open. */
-  voiceHref: string;
+  voiceHref: MaybeInertHrefObject;
   /**
    * Intercept the Join instead of navigating. The parent's page **about a
    * child** passes the switch-to-gamer handler (the parent is signed in as

@@ -1,11 +1,12 @@
 "use client";
 
-import Link from "next/link";
+import { MaybeInertLink } from "@/components/ui/maybe-inert-link";
 import { AlertTriangle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { BADGE_FRAME } from "@/components/ui/card-corner-badge";
 import { cn } from "@/lib/utils";
+import type { MaybeInertHref } from "@/lib/constants/routes";
 
 /**
  * "3 sessions need attention" — the aggregate of a group's owed past sessions
@@ -44,7 +45,7 @@ export function SessionFeedAlertBadge({
    * Where the corner badge goes when tapped — the same target the card under it
    * opens, so the two can never send a gedu to different places.
    */
-  href?: string;
+  href?: MaybeInertHref;
   className?: string;
 }) {
   const t = useTranslations("gedu.sessionFeed");
@@ -87,11 +88,8 @@ export function SessionFeedAlertBadge({
     }
 
     return (
-      <Link
+      <MaybeInertLink
         href={href}
-        onClick={(e) => {
-          if (href === "#") e.preventDefault();
-        }}
         aria-label={label}
         title={label}
         className={cn(
@@ -100,7 +98,7 @@ export function SessionFeedAlertBadge({
         )}
       >
         {body}
-      </Link>
+      </MaybeInertLink>
     );
   }
 

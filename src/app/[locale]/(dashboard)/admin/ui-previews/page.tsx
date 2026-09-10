@@ -1,8 +1,8 @@
 /* eslint-disable i18next/no-literal-string -- internal admin-only index of fixture-driven preview scenes; every string here is scene metadata or an explanation of the mechanism, not user-facing copy that ships in any locale */
 import { buttonVariants } from "@/components/ui/button";
+import { previewScenePath } from "@/components/preview/href";
 import {
   PREVIEW_SCENE_LIST,
-  previewSceneHref,
 } from "@/components/preview/scenes";
 
 /**
@@ -77,7 +77,7 @@ export default function AdminUIPreviewsPage() {
                 {scene.scenarios.map((scenario) => (
                   <li key={scenario.slug} className="flex flex-col gap-1.5">
                     <a
-                      href={previewSceneHref(scene.surface, scenario.slug)}
+                      href={previewScenePath(scene.surface, scenario.slug)}
                       target="_blank"
                       rel="noreferrer"
                       className={buttonVariants({
@@ -101,7 +101,7 @@ export default function AdminUIPreviewsPage() {
                 {scene.scenarios.map((scenario) => (
                   <a
                     key={scenario.slug}
-                    href={previewSceneHref(scene.surface, scenario.slug)}
+                    href={previewScenePath(scene.surface, scenario.slug)}
                     target="_blank"
                     rel="noreferrer"
                     className={buttonVariants({

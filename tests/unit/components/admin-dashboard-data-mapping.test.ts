@@ -512,7 +512,7 @@ describe("the attention queue", () => {
     expect(data.products[0]).toMatchObject({
       productId: "club",
       name: "Minecraft-klubi Espoo",
-      href: "/admin/consumer-clubs/club",
+      href: { pathname: "/admin/consumer-clubs/[id]", params: { id: "club" } },
     });
     // Nothing is worded here: the mapping is pure, so an issue leaves as the
     // message key its `kind` names plus the values that key interpolates. The

@@ -347,7 +347,7 @@ describe("every catalog's legal namespaces", () => {
       for (const [, value] of flatStrings(catalog)) {
         for (const tag of tagsIn(value)) {
           const [segment] = policyTextSegments(`<${tag}>x</${tag}>`);
-          if (segment.external) outbound.set(tag, segment.href ?? "");
+          if (segment.external) outbound.set(tag, segment.href);
         }
       }
     }

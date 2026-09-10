@@ -8,6 +8,7 @@ import {
   type SiteDetailsDraft,
   type SiteNotesDraft,
 } from "@/components/group-workspace/SitePanel";
+import type { AppHref } from "@/lib/constants/routes";
 
 /**
  * ============================================================================
@@ -62,7 +63,7 @@ function Harness({
 }: {
   onSaveNotes?: (draft: SiteNotesDraft) => void | Promise<void>;
   onSaveDetails?: (draft: SiteDetailsDraft) => void | Promise<void>;
-  editHref?: string;
+  editHref?: AppHref;
   siteName?: string;
   address?: string | null;
   publicNote?: string | null;
@@ -96,7 +97,7 @@ afterEach(cleanup);
 
 describe("site panel — a page that only shows which site this is", () => {
   it("renders the record with no way to change any of it", () => {
-    render(<Harness editHref="/admin/sites/abc" />);
+    render(<Harness editHref={{ pathname: "/admin/sites/[id]", params: { id: "abc" } }} />);
 
     // Everything stored is readable — this is a view of the site, not a
     // redaction of it.
@@ -125,7 +126,7 @@ describe("site panel — a page that only shows which site this is", () => {
     // load.
     render(
       <Harness
-        editHref="/admin/sites/abc"
+        editHref={{ pathname: "/admin/sites/[id]", params: { id: "abc" } }}
         address={null}
         publicNote={null}
         staffNote={null}
@@ -154,7 +155,7 @@ describe("site panel — a viewer who may write only the notes", () => {
     // The group page's shape: the shared staff content is writable here for gedu
     // and admin alike, and only the admin gets the link, which is a statement
     // about who brought you here rather than a capability.
-    render(<Harness onSaveNotes={vi.fn()} editHref="/admin/sites/abc" />);
+    render(<Harness onSaveNotes={vi.fn()} editHref={{ pathname: "/admin/sites/[id]", params: { id: "abc" } }} />);
 
     expect(screen.getByRole("button", { name: "Edit" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Edit site" })).toBeTruthy();

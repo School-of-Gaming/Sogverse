@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import type {
   GamerPhotoConsentType,
   MarketingConsentType,
@@ -18,6 +18,7 @@ import {
 } from "./signup-panel-view";
 import { useSignupPanelFields } from "./use-signup-panel-fields";
 import type { RegistrationState } from "./derive-registration-state";
+import type { AppHref } from "@/lib/constants/routes";
 
 // Preview-only signup panel. Renders the exact same `SignupPanelView` as
 // production, built from the exact same `useSignupPanelFields` hook — so the
@@ -66,7 +67,7 @@ interface PreviewSignupPanelProps {
   state: RegistrationState;
   authState: AuthState;
   /** Where the CTA lands — the matching `/preview/confirmation/<scenario>`. */
-  summaryHref: string;
+  summaryHref: AppHref;
   /**
    * The region lock's answer for this viewer, derived by the scene exactly as
    * the live route's data shell derives it. Absent on every ordinary product

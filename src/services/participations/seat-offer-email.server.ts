@@ -523,7 +523,7 @@ async function sendStaff({
       timeZoneName: "short",
       timeZone: product.timezone,
     }),
-    adminProductUrl: `${getOrigin(request)}${ROUTES.admin.product(product.product_type, productId)}`,
+    adminProductUrl: `${getOrigin(request)}${ROUTES.admin.productPath(product.product_type, productId)}`,
   };
 
   const t = await getEmailTranslator(locale);

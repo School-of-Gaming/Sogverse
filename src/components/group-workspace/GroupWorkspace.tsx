@@ -46,6 +46,7 @@ import { ParticipantRosterRow } from "./ParticipantRosterRow";
 import { rosterContactEmail } from "./types";
 import { GroupNotesPanel, type GroupNotesDraft } from "./GroupNotesPanel";
 import { SitePanel, type SiteNotesDraft } from "./SitePanel";
+import type { AppHref } from "@/lib/constants/routes";
 
 /**
  * One group of one product, as the people running it work it: the group's
@@ -298,7 +299,7 @@ interface GroupWorkspaceProps {
    * Like the back link and the voice rooms' way back, it is a statement about
    * who brought you here — the one kind of thing a shared body cannot know.
    */
-  siteEditHref?: string;
+  siteEditHref?: AppHref;
   editingEntryId: string | null;
   onEditEntry: (entryId: string | null) => void;
   /**
@@ -403,7 +404,7 @@ interface GroupWorkspaceProps {
    * be bounced through /gedu to /admin instead of back to the group they were
    * looking at. Same ownership rule as {@link backLink}.
    */
-  workspaceHref?: string;
+  workspaceHref?: AppHref;
   /**
    * What the rail's first card is called. Omitted, it is the gedu's "My Group",
    * which is the possessive that makes the pair with "Other groups" read as one
@@ -929,7 +930,7 @@ function OtherGroupsRailCard({
   opensDate: string;
   opensTime: string;
   /** Where leaving a peer's room lands — this workspace, not theirs. */
-  backHref: string;
+  backHref: AppHref;
 }) {
   const t = useTranslations("gedu.sessionDetails");
   const g = useTranslations("common");
@@ -1081,7 +1082,7 @@ function GroupRailCard({
   opensDate: string;
   opensTime: string;
   /** Where leaving this group's room lands — back on this workspace. */
-  backHref: string;
+  backHref: AppHref;
   /** The product's game identity, or `null` for a topic that has none. */
   platform: GamePlatform | null;
   onSaveGameUsername: (

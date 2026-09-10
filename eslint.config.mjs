@@ -75,7 +75,7 @@ const noMailFaceOutsideMail = [
 /**
  * `next/font`, importable by the root layout and nowhere else.
  *
- * A face is loaded once, in one file. `src/app/layout.tsx` loads exactly the
+ * A face is loaded once, in one file. `src/app/[locale]/layout.tsx` loads exactly the
  * faces @sog/ui names — the contract test holds it to that list in both
  * directions — and puts each one's variable on `<html>`, which is where the
  * theme's `--font-*` tokens can see it. A second `next/font` call anywhere else
@@ -94,7 +94,7 @@ const noNextFontOutsideLayout = [
   {
     group: ["next/font", "next/font/*", "next/font/**"],
     message:
-      "Faces are loaded in one place: src/app/layout.tsx, which loads exactly the faces @sog/ui names and defines each one's variable on <html>. Everywhere else a face is *set*, never loaded, with the font-sans / font-serif / font-mono / font-cursive utilities. See packages/sog-ui/src/tokens/typography.ts.",
+      "Faces are loaded in one place: src/app/[locale]/layout.tsx, which loads exactly the faces @sog/ui names and defines each one's variable on <html>. Everywhere else a face is *set*, never loaded, with the font-sans / font-serif / font-mono / font-cursive utilities. See packages/sog-ui/src/tokens/typography.ts.",
   },
 ];
 
@@ -816,7 +816,11 @@ const eslintConfig = defineConfig([
     // The extension patterns and the mail-face paths are restated because this
     // block replaces the rule the `src/**` block sets rather than merging with
     // it.
-    files: ["src/app/layout.tsx"],
+    // A wildcard segment rather than the literal `[locale]`: the brackets are
+    // a glob character class, and escaping them is not honoured here. One
+    // level under `src/app/` there is exactly one layout — the `[locale]` one
+    // that owns the document — so the wildcard names it and nothing else.
+    files: ["src/app/*/layout.tsx"],
     rules: {
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {

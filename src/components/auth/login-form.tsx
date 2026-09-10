@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -187,7 +187,11 @@ export function LoginForm({ redirect: redirectParam }: { redirect: string | null
               {t.rich('login.noAccountSignUp', {
                 link: (chunks) => (
                   <Link
-                    href={redirect ? `${ROUTES.register}?redirect=${encodeURIComponent(redirect)}` : ROUTES.register}
+                    href={
+                      redirect
+                        ? { pathname: ROUTES.register, query: { redirect } }
+                        : ROUTES.register
+                    }
                     className="text-act hover:underline"
                   >
                     {chunks}

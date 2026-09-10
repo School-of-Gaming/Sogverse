@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useNow, useTimezone } from "@/providers";
 import {
@@ -26,10 +26,10 @@ import {
   joinScheduleGroups,
   type ProductScheduleSummary,
 } from "@/lib/products/format-product-schedule";
-import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import { productWhereLine } from "./product-where-line";
 import type { ProductWithDetails } from "@/services/products";
 import type { ProductType } from "@/types";
+import { ROUTES } from "@/lib/constants";
 
 // `pendingHintKey` lives in effective-status.ts (UI-free decision tree). This
 // thin wrapper formats the values for display: dates go through the user's
@@ -95,7 +95,6 @@ interface ProductRowsProps {
 // Shared by the plain list (camps/events) and the filtered club list, so the
 // row layout lives in one place.
 export function ProductRows({ products, productType }: ProductRowsProps) {
-  const config = PRODUCT_TYPE_CONFIG[productType];
   const t = useTranslations("admin.products");
   const c = useTranslations("common");
   const uiLocale = resolveLocale(useLocale());
@@ -160,7 +159,7 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
         return (
           <Link
             key={p.id}
-            href={`/admin/${config.routeSlug}/${p.id}`}
+            href={ROUTES.admin.product(p.product_type, p.id)}
             className="group flex items-center justify-between gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
           >
             <div className="flex min-w-0 flex-1 items-center gap-4">

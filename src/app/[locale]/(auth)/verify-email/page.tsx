@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { MailCheck, MailX } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 

@@ -78,6 +78,7 @@ import {
   type EnrollmentFixtureSpec,
   type FixtureClock,
 } from "@/components/family/mock-enrollment-fixtures";
+import { previewSceneHref } from "@/components/preview/href";
 import { futureSlot, liveNowSlot } from "@/components/preview/fixture-clock";
 import {
   SessionPhotoGallery,
@@ -1860,7 +1861,7 @@ function ScenarioBrowseCard({
     // the state, exactly as it does in the shop. Withholding it here used to
     // double as a way of saying "this one is inert", which was the style guide
     // second-guessing the component about the one thing the component owns.
-    `/preview/products/${slug}`,
+    previewSceneHref("products", slug),
     true,
   );
 

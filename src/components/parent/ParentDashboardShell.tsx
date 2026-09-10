@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { getPathname } from "@/i18n/navigation";
+import { INERT_HREF } from "@/lib/constants/routes";
 import { AddGamerDialog } from "@/components/family/AddGamerDialog";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
 import { useFamilyEnrollments } from "@/components/family/use-family-enrollments";
@@ -63,6 +65,7 @@ export function ParentDashboardShell({
   billingCard: React.ReactNode;
 }) {
   const t = useTranslations("parent");
+  const locale = useLocale();
   const { gamers, self } = useFamilyEnrollments({
     initialSessionRows,
     initialWaitlistRows,
@@ -135,12 +138,14 @@ export function ParentDashboardShell({
     // renders no live Join in either case, so this is a guard against the
     // dialog ever opening with nowhere to land rather than a path a parent
     // can take.
-    if (enrollment.voiceHref === "#") return;
+    if (enrollment.voiceHref === INERT_HREF) return;
     setSwitchTarget({
       gamerId: gamer.id,
       gamerFirstName: gamer.firstName,
       productName: enrollment.productName,
-      redirectUrl: enrollment.voiceHref,
+      // A concrete URL: the switch ends in a full-page navigation, so the
+      // typed href is resolved here, in the locale the parent is reading.
+      redirectUrl: getPathname({ href: enrollment.voiceHref, locale }),
     });
   }
 

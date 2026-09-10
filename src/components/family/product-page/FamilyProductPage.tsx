@@ -18,6 +18,8 @@ import type { SessionAudience } from "@/types";
 import { FamilyProductNotFound } from "./FamilyProductNotFound";
 import { FamilyProductPageBody } from "./FamilyProductPageBody";
 import { FamilyProductPageSkeleton } from "./FamilyProductPageSkeleton";
+import { INERT_HREF, type MaybeInertHrefObject } from "@/lib/constants/routes";
+import { getPathname } from "@/i18n/navigation";
 
 /**
  * The data shell behind `/parent/{clubs,camps,events}/[id]` and its gamer
@@ -278,10 +280,11 @@ function JoinSwitchDialog({
 }: {
   gamer: { id: string; firstName: string };
   productName: string;
-  voiceHref: string;
+  voiceHref: MaybeInertHrefObject;
   onClose: () => void;
 }) {
   const t = useTranslations("parent");
+  const locale = useLocale();
 
   return (
     <SwitchProfileDialog
@@ -290,7 +293,12 @@ function JoinSwitchDialog({
         if (!open) onClose();
       }}
       target={{ id: gamer.id, role: "gamer", first_name: gamer.firstName }}
-      redirectUrl={voiceHref}
+      // The switch is a server round trip ending in a full-page navigation,
+      // so it takes a concrete URL rather than a typed href — resolved in the
+      // locale the parent is reading, so the child lands in the same language.
+      redirectUrl={
+        voiceHref === INERT_HREF ? "" : getPathname({ href: voiceHref, locale })
+      }
       title={t("switchToGamer.title", { name: gamer.firstName, productName })}
       oneWayWarning={t("switchToGamer.oneWayWarning")}
     />

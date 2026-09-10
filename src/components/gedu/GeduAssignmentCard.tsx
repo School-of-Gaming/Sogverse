@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { MaybeInertLink } from "@/components/ui/maybe-inert-link";
 import {
   CalendarClock,
   CalendarOff,
@@ -18,6 +18,7 @@ import { useNow, useTimezone } from "@/providers";
 import { cn, formatDate, formatDateOnly, formatTime } from "@/lib/utils";
 import { runEndedOn, runLiveness } from "@/lib/product-run";
 import type { GeduAssignmentSummary } from "@/lib/gedu-assignment-rollup";
+import { INERT_HREF } from "@/lib/constants/routes";
 
 interface GeduAssignmentCardProps {
   assignment: GeduAssignmentSummary;
@@ -427,7 +428,7 @@ export function GeduAssignmentCard({
                   // on this grid: what a gedu does after a session is write it
                   // up, and the feed is where that happens. It is the same href
                   // the card itself opens, so the two agree by construction.
-                  backHref={openHref}
+                  backHref={openHref === INERT_HREF ? undefined : openHref}
                 />
               </span>
             )}
@@ -445,11 +446,8 @@ export function GeduAssignmentCard({
             own overflow, so keyboard focus lights the card's edge rather than
             being shaved off it. Sits below the Join, which lifts itself with
             `z-10` to keep receiving its own clicks. */}
-        <Link
+        <MaybeInertLink
           href={openHref}
-          onClick={(e) => {
-            if (openHref === "#") e.preventDefault();
-          }}
           aria-label={productName}
           className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act"
         />

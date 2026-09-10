@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useTranslations } from 'next-intl';
 import { ArrowRight, Shield, Users, Sparkles, Gamepad2 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";

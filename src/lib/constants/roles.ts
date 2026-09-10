@@ -69,12 +69,15 @@ export const ROLE_BADGE_STYLES: Record<UserRole, string> = {
   admin: `border-border bg-transparent ${ROLE_INK.admin}`,
 };
 
-export const ROLE_DASHBOARD_PATHS: Record<UserRole, string> = {
+// `as const satisfies` rather than an annotation: the literal types are what
+// make a dashboard path simultaneously a valid typed href and an ordinary
+// string the proxy can prefix-match. Widened to `string`, it is neither.
+export const ROLE_DASHBOARD_PATHS = {
   admin: "/admin",
   customer: "/parent",
   gamer: "/gamer",
   gedu: "/gedu",
-};
+} as const satisfies Record<UserRole, string>;
 
 /**
  * Where each role lands immediately after sign-in when no specific redirect
@@ -84,9 +87,9 @@ export const ROLE_DASHBOARD_PATHS: Record<UserRole, string> = {
  * the proxy's role-access check) must keep using ROLE_DASHBOARD_PATHS — the
  * selector is *not* a parent-only dashboard, it's an interstitial.
  */
-export const ROLE_POST_LOGIN_PATHS: Record<UserRole, string> = {
+export const ROLE_POST_LOGIN_PATHS = {
   admin: "/admin",
   customer: "/select-profile",
   gamer: "/gamer",
   gedu: "/gedu",
-};
+} as const satisfies Record<UserRole, string>;

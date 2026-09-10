@@ -22,11 +22,11 @@ import type { ProductAudience } from "@/lib/products/product-audience";
 import { ParticipantPickerSheet } from "../participant-picker-sheet";
 import { GeduPickerSheet } from "../gedu-picker-sheet";
 import { GroupsPanelView, type GroupsPanelActions } from "./groups-panel-view";
-import { PRODUCT_TYPE_CONFIG } from "../product-type-config";
 import { robloxIdsFrom } from "./panel-rules";
 import { useRobloxRenders } from "@/services/roblox";
 import { platformForTopic } from "@/lib/products/topics";
 import type { BillingMode, ProductTopic, ProductType } from "@/types";
+import { ROUTES } from "@/lib/constants";
 
 interface GroupsPanelProps {
   productId: string;
@@ -200,7 +200,7 @@ export function GroupsPanel({
       // Built from the type's own route slug, exactly as this page's other
       // admin links are: `/admin/<slug>/<product>/groups/<group>`.
       groupHref={(id) =>
-        `/admin/${PRODUCT_TYPE_CONFIG[productType].routeSlug}/${productId}/groups/${id}`
+        ROUTES.admin.productGroup(productType, productId, id)
       }
       actions={actions}
       overlays={

@@ -13,6 +13,11 @@ process.env.PIN_COOKIE_SECRET = "test-pin-cookie-secret";
 
 import { proxy } from "@/proxy";
 import { PIN_COOKIE_NAME, pinTokenFor } from "@/lib/pin-session";
+import {
+  localizeInternalPath,
+  normalizeExternalPath,
+  toInternalPathname,
+} from "@/lib/navigation/locale-path";
 
 const TEST_USER_ID = "test-user-id";
 const TEST_SESSION_ID = "test-session-id";
@@ -48,7 +53,8 @@ vi.mock("@supabase/ssr", () => ({
 
 // --- Helpers ---
 
-function createNextRequest(
+/** A request for exactly the URL given — no locale prefix added. */
+function createBareRequest(
   pathname: string,
   cookie?: string,
   extraHeaders?: Record<string, string>,
@@ -57,6 +63,29 @@ function createNextRequest(
   return new NextRequest(new URL(pathname, "http://localhost:3000"), {
     headers: Object.keys(headers).length > 0 ? headers : undefined,
   });
+}
+
+/**
+ * A request for a page, as a browser inside the app makes it: locale-prefixed.
+ *
+ * Every page URL carries its locale now, so the prefix is applied here rather
+ * than restated in a hundred cases — what those cases are about is the gate,
+ * not the language. A path that already carries a prefix is left alone, and so
+ * is `/api/*`, which is outside the intl system entirely. Tests about the
+ * ladder itself use `createBareRequest`, because a bare path is exactly their
+ * subject.
+ */
+function createNextRequest(
+  pathname: string,
+  cookie?: string,
+  extraHeaders?: Record<string, string>,
+): NextRequest {
+  const [path, search] = pathname.split("?");
+  const url =
+    path.startsWith("/api/") || normalizeExternalPath(path).locale !== null
+      ? pathname
+      : localizeInternalPath(path, "en") + (search ? `?${search}` : "");
+  return createBareRequest(url, cookie, extraHeaders);
 }
 
 function mockUser(role: string) {
@@ -113,7 +142,7 @@ describe("proxy", () => {
 
   // --- (public) route-group ⇄ proxy PUBLIC_ROUTES drift guard ---
   //
-  // A page lives in the `src/app/(public)` route group to declare itself
+  // A page lives in the `src/app/[locale]/(public)` route group to declare itself
   // public, but the proxy gates by URL via its hand-maintained PUBLIC_ROUTES
   // array — the route group means nothing to it. The two drift silently: add a
   // page under (public) and forget to register its path, and it ships behind
@@ -126,7 +155,13 @@ describe("proxy", () => {
   // A page that is deliberately auth-gated despite living in (public) belongs
   // there; anything else must be reachable without a session.
   describe("(public) route group is registered as public in the proxy", () => {
-    const PUBLIC_GROUP_DIR = join(process.cwd(), "src", "app", "(public)");
+    const PUBLIC_GROUP_DIR = join(
+      process.cwd(),
+      "src",
+      "app",
+      "[locale]",
+      "(public)",
+    );
 
     // URL-path prefixes that are in (public) for layout/chrome reasons but are
     // deliberately NOT public — they have their own gate in the proxy.
@@ -143,10 +178,14 @@ describe("proxy", () => {
       });
     }
 
-    // Convert a page.tsx path to the URL the proxy sees: drop route-group dirs
-    // (parenthesized), and substitute a concrete value for dynamic segments so
-    // the prefix matching in PUBLIC_ROUTES still lines up.
-    function toUrlPath(pageFile: string): string {
+    // Convert a page.tsx path to the **internal** pathname: drop route-group
+    // dirs (parenthesized), and substitute a concrete value for dynamic
+    // segments so the prefix matching in PUBLIC_ROUTES still lines up.
+    //
+    // The `[locale]` segment is not walked — it is the parent this walk starts
+    // under — because substituting a sample value there would test a locale
+    // nobody ships. It is put back below, as a real prefix.
+    function toInternalPath(pageFile: string): string {
       const segments = relative(PUBLIC_GROUP_DIR, pageFile)
         .replace(/page\.tsx$/, "")
         .split(/[\\/]/)
@@ -155,10 +194,21 @@ describe("proxy", () => {
       return "/" + segments.join("/");
     }
 
-    const urls = walkPages(PUBLIC_GROUP_DIR).map(toUrlPath);
+    const internalPaths = walkPages(PUBLIC_GROUP_DIR).map(toInternalPath);
     const carvedOut = (url: string) =>
       PUBLIC_GROUP_CARVE_OUTS.some((c) => url === c.prefix || url.startsWith(`${c.prefix}/`));
-    const publicUrls = urls.filter((url) => !carvedOut(url));
+    const publicPaths = internalPaths.filter((url) => !carvedOut(url));
+
+    // **The URL a user actually hits, in one real locale.** The filesystem
+    // yields internal segments (`shop`), and asserting on `/fi/shop` would
+    // green-light a path nobody can reach — so each page is resolved through
+    // the pathnames map to the external URL that locale serves it under.
+    // Finnish rather than English because it is a locale whose public slugs
+    // are all translated: under `en` the internal and external forms coincide,
+    // so an untranslated bug would pass.
+    const publicUrls = publicPaths.map((path) =>
+      localizeInternalPath(path, "fi"),
+    );
 
     it("found the (public) pages on disk", () => {
       // Sanity check so a broken glob doesn't make the suite vacuously pass.
@@ -169,6 +219,19 @@ describe("proxy", () => {
       mockNoUser();
       const response = await proxy(createNextRequest(path));
       expect(response.status).toBe(200);
+    });
+
+    // The other half of the same claim: a **bare** page URL never serves a
+    // document. It is the detector, and it redirects into the reader's locale.
+    // Without this the walk above would still pass if the ladder stopped
+    // firing and bare paths quietly started rendering again.
+    it.each(publicPaths)("redirects the bare %s rather than serving it", async (path) => {
+      mockNoUser();
+      const response = await proxy(createBareRequest(path));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe(
+        localizeInternalPath(path, "en"),
+      );
     });
   });
 
@@ -192,28 +255,28 @@ describe("proxy", () => {
       mockUser("customer");
       const response = await proxy(createNextRequest("/login"));
       expect(response.status).toBe(307);
-      expect(getRedirectUrl(response).pathname).toBe("/parent");
+      expect(getRedirectUrl(response).pathname).toBe("/en/parent");
     });
 
     it("redirects admin from /login to /admin", async () => {
       mockUser("admin");
       const response = await proxy(createNextRequest("/login"));
       expect(response.status).toBe(307);
-      expect(getRedirectUrl(response).pathname).toBe("/admin");
+      expect(getRedirectUrl(response).pathname).toBe("/en/admin");
     });
 
     it("redirects gedu from /register to /gedu", async () => {
       mockUser("gedu");
       const response = await proxy(createNextRequest("/register"));
       expect(response.status).toBe(307);
-      expect(getRedirectUrl(response).pathname).toBe("/gedu");
+      expect(getRedirectUrl(response).pathname).toBe("/en/gedu");
     });
 
     it("redirects gamer from /login to /gamer", async () => {
       mockUser("gamer");
       const response = await proxy(createNextRequest("/login"));
       expect(response.status).toBe(307);
-      expect(getRedirectUrl(response).pathname).toBe("/gamer");
+      expect(getRedirectUrl(response).pathname).toBe("/en/gamer");
     });
   });
 
@@ -268,14 +331,14 @@ describe("proxy", () => {
       mockUser(role);
       const response = await proxy(createNextRequest("/"));
       expect(response.status).toBe(307);
-      expect(getRedirectUrl(response).pathname).toBe(dashboard);
+      expect(getRedirectUrl(response).pathname).toBe(`/en${dashboard}`);
     });
 
     it("redirects an unlocked customer from / to /parent", async () => {
       mockUser("customer");
       const response = await proxy(await unlockedCustomerRequest("/"));
       expect(response.status).toBe(307);
-      expect(getRedirectUrl(response).pathname).toBe("/parent");
+      expect(getRedirectUrl(response).pathname).toBe("/en/parent");
     });
   });
 
@@ -287,8 +350,8 @@ describe("proxy", () => {
       const response = await proxy(createNextRequest("/admin"));
       expect(response.status).toBe(307);
       const url = getRedirectUrl(response);
-      expect(url.pathname).toBe("/login");
-      expect(url.searchParams.get("redirect")).toBe("/admin");
+      expect(url.pathname).toBe("/en/login");
+      expect(url.searchParams.get("redirect")).toBe("/en/admin");
     });
 
     it("redirects /parent/purchases to /login with redirect param", async () => {
@@ -296,8 +359,8 @@ describe("proxy", () => {
       const response = await proxy(createNextRequest("/parent/purchases"));
       expect(response.status).toBe(307);
       const url = getRedirectUrl(response);
-      expect(url.pathname).toBe("/login");
-      expect(url.searchParams.get("redirect")).toBe("/parent/purchases");
+      expect(url.pathname).toBe("/en/login");
+      expect(url.searchParams.get("redirect")).toBe("/en/parent/purchases");
     });
   });
 
@@ -328,21 +391,21 @@ describe("proxy", () => {
       mockUser("customer");
       const response = await proxy(await unlockedCustomerRequest("/admin"));
       expect(response.status).toBe(307);
-      expect(getRedirectUrl(response).pathname).toBe("/parent");
+      expect(getRedirectUrl(response).pathname).toBe("/en/parent");
     });
 
     it("redirects admin from /parent to /admin", async () => {
       mockUser("admin");
       const response = await proxy(createNextRequest("/parent"));
       expect(response.status).toBe(307);
-      expect(getRedirectUrl(response).pathname).toBe("/admin");
+      expect(getRedirectUrl(response).pathname).toBe("/en/admin");
     });
 
     it("redirects gamer from /gedu to /gamer", async () => {
       mockUser("gamer");
       const response = await proxy(createNextRequest("/gedu"));
       expect(response.status).toBe(307);
-      expect(getRedirectUrl(response).pathname).toBe("/gamer");
+      expect(getRedirectUrl(response).pathname).toBe("/en/gamer");
     });
   });
 
@@ -363,7 +426,7 @@ describe("proxy", () => {
         await unlockedCustomerRequest("/preview/products/consumer-club"),
       );
       expect(response.status).toBe(307);
-      expect(getRedirectUrl(response).pathname).toBe("/parent");
+      expect(getRedirectUrl(response).pathname).toBe("/en/parent");
     });
 
     it("redirects unauthenticated from /preview/... to /login", async () => {
@@ -372,7 +435,7 @@ describe("proxy", () => {
         createNextRequest("/preview/products/consumer-club"),
       );
       expect(response.status).toBe(307);
-      expect(getRedirectUrl(response).pathname).toBe("/login");
+      expect(getRedirectUrl(response).pathname).toBe("/en/login");
     });
   });
 
@@ -396,8 +459,8 @@ describe("proxy", () => {
       const response = await proxy(createNextRequest("/settings"));
       expect(response.status).toBe(307);
       const url = getRedirectUrl(response);
-      expect(url.pathname).toBe("/login");
-      expect(url.searchParams.get("redirect")).toBe("/settings");
+      expect(url.pathname).toBe("/en/login");
+      expect(url.searchParams.get("redirect")).toBe("/en/settings");
     });
   });
 
@@ -409,22 +472,22 @@ describe("proxy", () => {
       const response = await proxy(createNextRequest("/parent"));
       expect(response.status).toBe(307);
       const url = getRedirectUrl(response);
-      expect(url.pathname).toBe("/parent/unlock");
-      expect(url.searchParams.get("redirect")).toBe("/parent");
+      expect(url.pathname).toBe("/en/parent/unlock");
+      expect(url.searchParams.get("redirect")).toBe("/en/parent");
     });
 
     it("gates a locked customer even on a PUBLIC route (/shop)", async () => {
       mockUser("customer");
       const response = await proxy(createNextRequest("/shop"));
       expect(response.status).toBe(307);
-      expect(getRedirectUrl(response).pathname).toBe("/parent/unlock");
+      expect(getRedirectUrl(response).pathname).toBe("/en/parent/unlock");
     });
 
     it("gates a locked customer before the wrong-role redirect (/admin → unlock)", async () => {
       mockUser("customer");
       const response = await proxy(createNextRequest("/admin"));
       expect(response.status).toBe(307);
-      expect(getRedirectUrl(response).pathname).toBe("/parent/unlock");
+      expect(getRedirectUrl(response).pathname).toBe("/en/parent/unlock");
     });
 
     it.each([
@@ -459,8 +522,8 @@ describe("proxy", () => {
       );
       expect(response.status).toBe(307);
       const redirect = getRedirectUrl(response);
-      expect(redirect.pathname).toBe("/parent/unlock");
-      expect(redirect.searchParams.get("redirect")).toBe("/parent");
+      expect(redirect.pathname).toBe("/en/parent/unlock");
+      expect(redirect.searchParams.get("redirect")).toBe("/en/parent");
     });
 
     it("treats a cookie bound to a different session as locked (stale after switch/re-login)", async () => {
@@ -470,7 +533,7 @@ describe("proxy", () => {
         createNextRequest("/parent", `${PIN_COOKIE_NAME}=${staleToken}`),
       );
       expect(response.status).toBe(307);
-      expect(getRedirectUrl(response).pathname).toBe("/parent/unlock");
+      expect(getRedirectUrl(response).pathname).toBe("/en/parent/unlock");
     });
 
     it("does not gate non-customer roles (signed-in gamer reaches /shop)", async () => {
@@ -615,7 +678,7 @@ describe("proxy", () => {
 
       const response = await proxy(createNextRequest("/admin"));
       expect(response.status).toBe(307);
-      expect(getRedirectUrl(response).pathname).toBe("/login");
+      expect(getRedirectUrl(response).pathname).toBe("/en/login");
     });
 
     it("passes through auth route when authenticated but profile query fails", async () => {
@@ -652,6 +715,229 @@ describe("proxy", () => {
           expect.objectContaining({ name: "sb-access-token", value: "new-access" }),
           expect.objectContaining({ name: "sb-refresh-token", value: "new-refresh" }),
         ])
+      );
+    });
+  });
+
+  // --- Locale in the URL ----------------------------------------------------
+  //
+  // Every page URL carries its locale, English included. A bare path is never a
+  // page: it is the detector, and it redirects. Two properties are worth
+  // separating, because a bug in either looks like a bug in the other:
+  //
+  // 1. **The normalizer** turns what is in the address bar into the internal
+  //    pathname every gate in the proxy was written against. Unstripped,
+  //    `/fi/admin` sails past the `/admin` role gate; unstripped *and*
+  //    untranslated, `/fr/boutique` never matches the public-route list.
+  // 2. **The ladder** decides which locale a bare path becomes, and it runs
+  //    before every gate — so a bounce is already in the right language.
+
+  describe("the path normalizer", () => {
+    it("strips a locale prefix and untranslates the slug", () => {
+      expect(normalizeExternalPath("/fi/kauppa")).toEqual({
+        locale: "fi",
+        pathname: "/shop",
+        template: "/shop",
+      });
+      expect(normalizeExternalPath("/fr/boutique/abc")).toEqual({
+        locale: "fr",
+        pathname: "/shop/abc",
+        template: "/shop/[id]",
+      });
+    });
+
+    it("keeps a dashboard path recognisable under every prefix", () => {
+      for (const url of ["/en/admin", "/fi/admin", "/tlh/admin"]) {
+        expect(toInternalPathname(url)).toBe("/admin");
+      }
+    });
+
+    it("prefers a static child over the dynamic sibling it shares a shape with", () => {
+      // `/kauppa/vahvistus` and `/kauppa/<product id>` are the same shape; the
+      // App Router's own precedence has to hold here too, or the confirmation
+      // page resolves as a product whose id is the word "vahvistus".
+      expect(toInternalPathname("/fi/kauppa/vahvistus")).toBe(
+        "/shop/confirmation",
+      );
+    });
+
+    it("leaves a path matching no template alone but still unprefixed", () => {
+      expect(normalizeExternalPath("/fi/nothing-here")).toEqual({
+        locale: "fi",
+        pathname: "/nothing-here",
+        template: null,
+      });
+    });
+
+    it("does not mistake a first segment that merely looks like a locale", () => {
+      // Membership in the locale list, never a two-letter shape — which is what
+      // keeps a future `es-mx` a one-line change instead of a regex hunt.
+      expect(normalizeExternalPath("/de/shop").locale).toBeNull();
+      expect(normalizeExternalPath("/xx/shop").locale).toBeNull();
+      // And a route whose own first segment is two letters is not a prefix.
+      expect(normalizeExternalPath("/about")).toEqual({
+        locale: null,
+        pathname: "/about",
+        template: "/about",
+      });
+    });
+
+    it("round-trips an internal path back to the URL a locale serves", () => {
+      expect(localizeInternalPath("/shop/abc", "fi")).toBe("/fi/kauppa/abc");
+      expect(localizeInternalPath("/shop/abc", "en")).toBe("/en/shop/abc");
+      expect(localizeInternalPath("/parent", "sv")).toBe("/sv/parent");
+      // A path behind no template is prefixed anyway, so a Finnish visitor
+      // gets a Finnish 404 rather than an English one.
+      expect(localizeInternalPath("/nothing-here", "fi")).toBe(
+        "/fi/nothing-here",
+      );
+    });
+  });
+
+  describe("the bare-path locale ladder", () => {
+    it("follows the locale cookie", async () => {
+      mockNoUser();
+      const response = await proxy(createBareRequest("/shop", "locale=fi"));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/fi/kauppa");
+    });
+
+    it("falls back to Accept-Language when there is no cookie", async () => {
+      mockNoUser();
+      const response = await proxy(
+        createBareRequest("/shop", undefined, {
+          "accept-language": "sv-SE,sv;q=0.9",
+        }),
+      );
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/sv/butik");
+    });
+
+    it("falls back to English when the browser asks for nothing we ship", async () => {
+      mockNoUser();
+      const response = await proxy(
+        createBareRequest("/shop", undefined, { "accept-language": "de-DE,de" }),
+      );
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/en/shop");
+    });
+
+    it("prefers the cookie over the header", async () => {
+      mockNoUser();
+      const response = await proxy(
+        createBareRequest("/shop", "locale=fr", {
+          "accept-language": "sv-SE,sv;q=0.9",
+        }),
+      );
+      expect(getRedirectUrl(response).pathname).toBe("/fr/boutique");
+    });
+
+    it("preserves the query string", async () => {
+      mockNoUser();
+      const response = await proxy(
+        createBareRequest("/shop?category=camps&topic=minecraft", "locale=fi"),
+      );
+      const url = getRedirectUrl(response);
+      expect(url.pathname).toBe("/fi/kauppa");
+      expect(url.search).toBe("?category=camps&topic=minecraft");
+    });
+
+    it("prefixes a path matching no route at all", async () => {
+      mockNoUser();
+      const response = await proxy(createBareRequest("/nonexistent", "locale=fi"));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/fi/nonexistent");
+    });
+
+    it("leaves /api/* alone", async () => {
+      // An API response has no locale, and a 307'd `fetch` would break every
+      // client-side API call for a non-English user.
+      mockNoUser();
+      const response = await proxy(
+        createBareRequest("/api/some-endpoint", "locale=fi"),
+      );
+      expect(response.status).toBe(200);
+    });
+
+    it("runs before the gates, so a locked parent's bounce is already localized", async () => {
+      mockUser("customer");
+      const first = await proxy(createBareRequest("/parent", "locale=fi"));
+      expect(first.status).toBe(307);
+      expect(getRedirectUrl(first).pathname).toBe("/fi/parent");
+
+      const second = await proxy(createBareRequest("/fi/parent", "locale=fi"));
+      expect(second.status).toBe(307);
+      const unlock = getRedirectUrl(second);
+      expect(unlock.pathname).toBe("/fi/parent/unlock");
+      // The `redirect=` value is the raw external path the reader was on, so
+      // entering the PIN returns them to the Finnish page, not its English twin.
+      expect(unlock.searchParams.get("redirect")).toBe("/fi/parent");
+    });
+  });
+
+  describe("a prefixed visit", () => {
+    it("renders without writing a locale cookie", async () => {
+      // Following a link is reading; touching the picker is choosing. A visit
+      // to somebody else's shared link must not rewrite the reader's stored
+      // preference — which is also why next-intl's own locale cookie is off.
+      mockNoUser();
+      const response = await proxy(createNextRequest("/fr/boutique", "locale=fi"));
+      expect(response.status).toBe(200);
+      const names = response.cookies.getAll().map((cookie) => cookie.name);
+      expect(names).not.toContain("locale");
+      expect(names).not.toContain("NEXT_LOCALE");
+    });
+
+    it("resolves a translated public slug as the public route it is", async () => {
+      mockNoUser();
+      for (const url of ["/fi/kauppa", "/sv/butik", "/fr/ecoles", "/en/shop"]) {
+        const response = await proxy(createNextRequest(url));
+        expect(response.status, url).toBe(200);
+      }
+    });
+
+    it("still role-gates a dashboard under a locale prefix", async () => {
+      mockUser("gamer");
+      const response = await proxy(createNextRequest("/fi/admin"));
+      expect(response.status).toBe(307);
+      // Bounced to their own dashboard, in the locale they were browsing in.
+      expect(getRedirectUrl(response).pathname).toBe("/fi/gamer");
+    });
+
+    it("still requires a session on a prefixed protected route", async () => {
+      mockNoUser();
+      const response = await proxy(createNextRequest("/sv/settings"));
+      expect(response.status).toBe(307);
+      const login = getRedirectUrl(response);
+      expect(login.pathname).toBe("/sv/login");
+      expect(login.searchParams.get("redirect")).toBe("/sv/settings");
+    });
+
+    it("still bounces a signed-in reader off the prefixed home page", async () => {
+      mockUser("gedu");
+      const response = await proxy(createNextRequest("/fi/"));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/fi/gedu");
+    });
+
+    it("still gates /preview/* to admins under a prefix", async () => {
+      mockUser("gedu");
+      const response = await proxy(
+        createNextRequest("/fi/preview/products/consumer-club"),
+      );
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/fi/gedu");
+    });
+
+    it("carries the CSP header onto the rewritten response", async () => {
+      // The nonce the SSR pipeline is about to use is stamped on the request,
+      // and the rewrite next-intl issues has to come back carrying the policy
+      // that names it — otherwise production renders with a nonce the policy
+      // never saw and `strict-dynamic` blocks every script.
+      mockNoUser();
+      const response = await proxy(createNextRequest("/fi/kauppa"));
+      expect(response.headers.get("Content-Security-Policy")).toContain(
+        "script-src",
       );
     });
   });

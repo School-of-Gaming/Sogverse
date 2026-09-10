@@ -12,6 +12,7 @@ import { withBrowseState } from "./browse-state";
 import { ROUTES } from "@/lib/constants";
 import { ProductBrowseCard } from "./product-browse-card";
 import { ProductBrowseFilters } from "./product-browse-filters";
+import type { AppHrefObject } from "@/lib/constants/routes";
 
 /** One headed block of cards. The shop passes one per visible category (Clubs →
  *  Camps → Events, in that fixed order); the municipality page passes a single
@@ -87,7 +88,7 @@ interface ProductBrowseResultsProps {
    *  It supplies the PATH only — the grid's live filter state is appended here,
    *  for both surfaces at once, so neither host can forget it and the two
    *  cannot carry different things. */
-  productHref?: (id: string) => string;
+  productHref?: (id: string) => AppHrefObject;
   /** True on a single-municipality page — drops the redundant municipality name
    *  from online muni cards (see `ProductBrowseCard`). */
   municipalityScoped?: boolean;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import fr from "@/../messages/fr.json";
-import { ROBLOX_TRADEMARK_NOTICE } from "@/app/(public)/roblox/metadata-copy";
+import { ROBLOX_TRADEMARK_NOTICE } from "@/app/[locale]/(public)/roblox/metadata-copy";
 
 /**
  * The programme's Open Graph card is a PNG built by next/og, so its text is

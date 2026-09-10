@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
@@ -61,7 +61,7 @@ import type {
   ProductType,
 } from "@/types";
 import { platformForTopic } from "@/lib/products/topics";
-import { PRODUCT_TYPE_CONFIG } from "../product-type-config";
+import type { AppHref } from "@/lib/constants/routes";
 
 interface AdminGroupDetailsPageProps {
   productType: ProductType;
@@ -115,12 +115,11 @@ export function AdminGroupDetailsPage({
 }: AdminGroupDetailsPageProps) {
   const t = useTranslations("admin.products");
   const s = useTranslations("admin.products.sessions");
-  const config = PRODUCT_TYPE_CONFIG[productType];
-  const backHref = `/admin/${config.routeSlug}/${productId}`;
+  const backHref = ROUTES.admin.product(productType, productId);
   // This page's own route — where leaving a voice room joined from here lands,
   // instead of the body's gedu-workspace default (which the proxy would bounce
   // an admin off, via /gedu, onto /admin and away from this group).
-  const selfHref = `${backHref}/groups/${groupId}`;
+  const selfHref = ROUTES.admin.productGroup(productType, productId, groupId);
 
   const product = useProductAdmin(productId);
   const sessions = useAdminProductSessions(productId);
@@ -200,7 +199,7 @@ function PageFrame({
   backHref,
   children,
 }: {
-  backHref: string;
+  backHref: AppHref;
   children: React.ReactNode;
 }) {
   const c = useTranslations("common");
@@ -298,7 +297,7 @@ function Workspace({
   group: AdminSessionGroup;
   feed: GeduGroupFeed;
   /** This page's own route — handed to the body as the voice rooms' way back. */
-  selfHref: string;
+  selfHref: AppHref;
   /**
    * The admin groups snapshot, and the only source on this page for who teaches
    * each group. `undefined` when that read failed, which renders every group's

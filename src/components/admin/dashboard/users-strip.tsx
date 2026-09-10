@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { BadgeCheck, MailCheck } from "lucide-react";
 import { ROLE_INK, ROUTES } from "@/lib/constants";

@@ -9,6 +9,13 @@ import {
 } from "@/lib/session-occurrence";
 import type { MyAssignedProductSessionRow } from "@/services/assignments";
 import type { ProductType } from "@/types";
+import type {
+  AppHref,
+  AppHrefObject,
+  MaybeInertHref,
+  MaybeInertHrefObject,
+} from "@/lib/constants/routes";
+import { INERT_HREF } from "@/lib/constants/routes";
 
 /**
  * Rolling a gedu's assignments up to **one card per assignment** for the
@@ -112,7 +119,7 @@ export interface GeduAssignmentSummary {
    */
   hasVoiceRoom: boolean;
   /** Where the Join button navigates. `"#"` keeps it inert. */
-  voiceHref: string;
+  voiceHref: MaybeInertHrefObject;
   /**
    * The site an in-person assignment runs at, `null` for a remote one.
    *
@@ -124,7 +131,7 @@ export interface GeduAssignmentSummary {
    */
   siteName: string | null;
   /** Where a click anywhere on the card navigates — the product's feed. */
-  openHref: string;
+  openHref: MaybeInertHref;
   /**
    * How many owed past sessions still need something — the number behind the
    * card's badge, computed server-side by the assignment-summaries RPC and
@@ -146,9 +153,9 @@ export interface RollUpArgs {
   /** Outstanding sessions per product id; missing means none. */
   attentionByProductId?: Readonly<Record<string, number>>;
   /** Where each assignment's card navigates, by product id. */
-  hrefByProductId: Readonly<Record<string, string>>;
+  hrefByProductId: Readonly<Record<string, AppHref>>;
   /** Voice-room href per product id; anything missing collapses to `"#"`. */
-  voiceHrefByProductId?: Readonly<Record<string, string>>;
+  voiceHrefByProductId?: Readonly<Record<string, AppHrefObject>>;
 }
 
 /**
@@ -187,13 +194,13 @@ export function rollUpGeduAssignments({
       // Only meaningful when there is a room; an in-person assignment renders no
       // Join at all, so its href is never read.
       voiceHref: hasVoiceRoom
-        ? (voiceHrefByProductId?.[row.product.id] ?? "#")
-        : "#",
+        ? (voiceHrefByProductId?.[row.product.id] ?? INERT_HREF)
+        : INERT_HREF,
       // Never carried by a remote product, whatever the row says: a product
       // with a voice room has no building, and a card showing both would be
       // claiming the group meets in two places.
       siteName: hasVoiceRoom ? null : row.siteName,
-      openHref: hrefByProductId[row.product.id] ?? "#",
+      openHref: hrefByProductId[row.product.id] ?? INERT_HREF,
       attentionCount: attentionByProductId?.[row.product.id] ?? 0,
     } satisfies GeduAssignmentSummary;
   });

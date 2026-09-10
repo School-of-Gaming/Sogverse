@@ -11,6 +11,8 @@ import type {
   FamilyProductSite,
   FamilySessionEntry,
 } from "./types";
+import type { MaybeInertHrefObject } from "@/lib/constants/routes";
+import { ROUTES } from "@/lib/constants";
 
 /**
  * Fixtures for the family product-page preview scenes — the product shell, the
@@ -95,7 +97,7 @@ export interface FamilyProductPageFixture {
   /** What this participant made in the group. Empty on all but one scenario. */
   creations: readonly FamilyCreation[];
   site: FamilyProductSite | null;
-  voiceHref: string;
+  voiceHref: MaybeInertHrefObject;
   entries: FamilySessionEntry[];
   sourceTimeZone: string;
 }
@@ -965,7 +967,7 @@ export function buildFamilyProductPageFixture(
     groupPublicNote: config.groupPublicNote,
     creations: config.creations ?? [],
     site: config.site,
-    voiceHref: `/voice/group/${GROUP_ID}`,
+    voiceHref: ROUTES.voice.groupSession(GROUP_ID),
     entries,
     sourceTimeZone: TIMEZONE,
   };

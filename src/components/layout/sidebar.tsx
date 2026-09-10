@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link } from "@/i18n/navigation";
+import { usePathname } from "@/i18n/navigation";
 import {
   LayoutDashboard,
   Users,
@@ -22,6 +22,7 @@ import { useAuth } from "@/providers";
 import { ROLE_LABEL_KEYS, ROUTES } from "@/lib/constants";
 import { PRODUCT_TYPE_PRESENTATION } from "@/components/admin/dashboard/product-type-presentation";
 import type { ProductType, UserRole } from "@/types";
+import type { StaticAppHref } from "@/lib/constants/routes";
 
 type SidebarKey =
   | "dashboard" | "users"
@@ -30,7 +31,7 @@ type SidebarKey =
   | "sites";
 
 interface NavItemDef {
-  href: string;
+  href: StaticAppHref;
   labelKey: SidebarKey;
   icon: React.ReactNode;
 }

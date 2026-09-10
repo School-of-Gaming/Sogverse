@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useCheckoutConfirmation } from "@/services/participations";
 import { CONFIRMATION_POLL_TIMEOUT_MS } from "@/lib/constants/participations";
 import { PurchaseConfirmationNotice } from "./purchase-confirmation-view";

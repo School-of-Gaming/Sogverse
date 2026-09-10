@@ -1,4 +1,5 @@
 import type { ProductType, UserRole } from "@/types";
+import type { AppHref } from "@/lib/constants/routes";
 
 /**
  * The presentational shapes the admin dashboard's draft body renders.
@@ -120,7 +121,7 @@ export interface ProductAttention {
   name: string;
   productType: ProductType;
   /** The product's admin page — where every one of these issues is fixed. */
-  href: string;
+  href: AppHref;
   issues: readonly ProductIssue[];
 }
 
@@ -240,7 +241,7 @@ export interface ScheduleChip {
   seatCount: number | null;
   /** Does this product appear in the attention queue above? */
   needsAttention: boolean;
-  href: string;
+  href: AppHref;
 }
 
 /**
@@ -261,7 +262,7 @@ export interface ScheduleWeek {
 export interface ComingUpItem {
   id: string;
   name: string;
-  href: string;
+  href: AppHref;
   activeCount: number;
   seatCount: number | null;
 }

@@ -46,6 +46,7 @@ import type {
   ProductTopic,
   ProductType,
 } from "@/types";
+import type { AppHref } from "@/lib/constants/routes";
 
 /**
  * Everything the groups panel *does*, as callbacks the caller owns.
@@ -114,7 +115,7 @@ interface GroupsPanelViewProps {
    * with no such page to point at, and each column then renders no link — the
    * board keeps working as a board.
    */
-  groupHref?: (groupId: string) => string;
+  groupHref?: (groupId: string) => AppHref;
   actions: GroupsPanelActions;
   /**
    * The shell's own overlays — the participant and gedu pickers.

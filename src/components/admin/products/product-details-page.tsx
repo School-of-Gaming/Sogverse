@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
   AlertTriangle,
@@ -68,6 +68,7 @@ import { GroupsPanel } from "./groups/groups-panel";
 import { ProductStatusChip } from "./product-status-chip";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
+import type { AppHref } from "@/lib/constants/routes";
 
 interface ProductDetailsPageProps {
   productType: ProductType;
@@ -91,9 +92,9 @@ export function ProductDetailsPage({
 
   const { data: product, isLoading } = useProductAdmin(productId);
 
-  const listHref = `/admin/${config.routeSlug}`;
-  const editHref = `/admin/${config.routeSlug}/${productId}/edit`;
-  const cloneHref = `/admin/${config.routeSlug}/new?cloneFrom=${productId}`;
+  const listHref = ROUTES.admin.productList(productType);
+  const editHref = ROUTES.admin.productEdit(productType, productId);
+  const cloneHref = ROUTES.admin.productClone(productType, productId);
 
   if (isLoading) {
     return (
@@ -231,9 +232,9 @@ function HeaderCard({
   isVisible: boolean;
   listedLabel: string;
   unlistedLabel: string;
-  editHref: string;
+  editHref: AppHref;
   editLabel: string;
-  cloneHref: string;
+  cloneHref: AppHref;
   cloneLabel: string;
 }) {
   return (
@@ -758,11 +759,11 @@ function Fact({
  */
 function publicProductPath(product: ProductAdminDetailRow): string | null {
   if (product.product_type !== "municipality_club") {
-    return ROUTES.shopProduct(product.id);
+    return ROUTES.shopProductPath(product.id);
   }
   const municipality = municipalityOf(product.locations);
   if (municipality === null) return null;
-  return ROUTES.schoolMunicipalityProduct(
+  return ROUTES.schoolMunicipalityProductPath(
     municipalitySlug(municipality.name),
     product.id,
   );

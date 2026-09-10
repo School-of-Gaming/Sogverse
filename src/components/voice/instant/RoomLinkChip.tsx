@@ -43,11 +43,11 @@ export function RoomLinkChip({
 
   const host =
     typeof window !== "undefined" ? window.location.host : "sogverse.sog.gg";
-  const displayUrl = `${host}${ROUTES.voice.forCode(code)}`;
+  const displayUrl = `${host}${ROUTES.voice.forCodePath(code)}`;
 
   const handleCopy = () => {
     if (typeof window === "undefined") return;
-    void copy(`${window.location.origin}${ROUTES.voice.forCode(code)}`);
+    void copy(`${window.location.origin}${ROUTES.voice.forCodePath(code)}`);
   };
 
   if (variant === "compact") {

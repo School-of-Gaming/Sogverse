@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { CheckCircle2, Clock, Hourglass, Info, Loader2 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";

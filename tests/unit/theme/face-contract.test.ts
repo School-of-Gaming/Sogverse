@@ -18,6 +18,11 @@ import { describeFaceContract } from "../../helpers/face-contract";
 
 // Anchored on the Vitest project root rather than on `import.meta.url`, which a
 // test runner does not have to expose as a file: URL.
-const APP_LAYOUT = join(process.cwd(), "src", "app", "layout.tsx");
+// The document — and so every font load — belongs to the `[locale]` layout;
+// the layout at the app root is a pass-through that renders no `<html>`.
+const APP_LAYOUT = join(process.cwd(), "src", "app", "[locale]", "layout.tsx");
 
-describeFaceContract(readFileSync(APP_LAYOUT, "utf8"), "src/app/layout.tsx");
+describeFaceContract(
+  readFileSync(APP_LAYOUT, "utf8"),
+  "src/app/[locale]/layout.tsx",
+);

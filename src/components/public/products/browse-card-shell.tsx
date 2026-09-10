@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ import { useRegistrationCta, type RegistrationCta } from "./registration-cta";
 import { SeatAvailabilityBar } from "./seat-availability-bar";
 import { StatusChip } from "./status-chip";
 import type { RegistrationState } from "./derive-registration-state";
+import type { AppHref } from "@/lib/constants/routes";
 
 // ---------- What a browse card *is* ----------
 //
@@ -92,7 +93,7 @@ export interface ProductBrowseCardViewProps {
    * openable state with no href) that would render as inert with the wrong
    * word; required, that combination cannot be expressed.
    */
-  detailHref: string;
+  detailHref: AppHref;
 }
 
 export type SeatBarValue = {
@@ -141,7 +142,7 @@ export interface BrowseCardShell {
   /** Null when the card shows no CTA at all (an ended run). */
   cta: RegistrationCta | null;
   /** Where the card opens, or undefined when it opens nowhere. */
-  openHref: string | undefined;
+  openHref: AppHref | undefined;
   isEnded: boolean;
   /** The `<Card>`'s complete class string, openable feedback included. */
   cardClassName: string;
@@ -166,7 +167,7 @@ export interface BrowseCardShell {
  */
 export function useBrowseCardShell(
   state: RegistrationState,
-  detailHref: string,
+  detailHref: AppHref,
 ): BrowseCardShell {
   const cta = useRegistrationCta(state);
   const isEnded = state.kind === "ended";

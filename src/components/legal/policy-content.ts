@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
+import type { AppHref } from "@/lib/constants/routes";
 
 /**
  * One chunk of a policy's copy, in the order the document reads: a paragraph,
@@ -126,21 +127,19 @@ function fillPolicyValues(text: string): string {
  * stretch of text that links to one of our other legal pages, or one that links
  * off-site to a supervisory authority.
  */
-export interface PolicySegment {
-  /** The words to show. Already the final, translated text. */
-  text: string;
+export type PolicySegment =
+  /** Plain words, no link. */
+  | { text: string; href?: undefined; external?: undefined }
+  /** A link to one of our own pages — a typed route, so it localizes. */
+  | { text: string; href: AppHref; external?: undefined }
   /**
-   * Where to link the text; absent on a plain-text segment. An internal path
-   * unless {@link PolicySegment.external} says otherwise.
+   * A link off-site, to a supervisory authority. `external` is a flag rather
+   * than a sniff of the href: what a link *is* is decided by which allow-list
+   * its tag came from, not by how its URL happens to read — and it is what
+   * separates the two href types above, neither of which the other's renderer
+   * can take.
    */
-  href?: string;
-  /**
-   * Set on a segment whose `href` leaves the site, so the renderer can mark it
-   * as such. A flag rather than a sniff of the href: what a link *is* is decided
-   * by which allow-list its tag came from, not by how its URL happens to read.
-   */
-  external?: true;
-}
+  | { text: string; href: string; external: true };
 
 /**
  * Splits one policy string into {@link PolicySegment}s, turning the tags in

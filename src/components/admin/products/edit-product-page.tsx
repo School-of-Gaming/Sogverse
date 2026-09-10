@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { useProductAdmin } from "@/services/products";
 import { ProductFormEdit } from "./product-form-edit";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
+import { ROUTES } from "@/lib/constants";
 
 interface EditProductPageProps {
   productType: ProductType;
@@ -27,7 +28,7 @@ export function EditProductPage({
 
   const { data: product, isLoading } = useProductAdmin(productId);
 
-  const detailsHref = `/admin/${config.routeSlug}/${productId}`;
+  const detailsHref = ROUTES.admin.product(productType, productId);
 
   // Page chrome (back link + heading) renders immediately. The form area
   // shows a skeleton until the product loads, then swaps in the form.

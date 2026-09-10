@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -332,7 +332,11 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
             <div>
               {t.rich('register.alreadyHaveAccount', {
                 link: (chunks) => (
-                  <Link href={redirect ? `${ROUTES.login}?redirect=${encodeURIComponent(redirect)}` : ROUTES.login} className="text-act hover:underline">
+                  <Link href={
+                      redirect
+                        ? { pathname: ROUTES.login, query: { redirect } }
+                        : ROUTES.login
+                    } className="text-act hover:underline">
                     {chunks}
                   </Link>
                 ),

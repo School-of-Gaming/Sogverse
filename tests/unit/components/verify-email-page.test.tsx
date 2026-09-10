@@ -54,7 +54,7 @@ vi.mock("next-intl/server", () => ({
     }),
 }));
 
-import VerifyEmailPage from "@/app/(auth)/verify-email/page";
+import VerifyEmailPage from "@/app/[locale]/(auth)/verify-email/page";
 
 const CHILD_ADDRESS = "lily@example.test";
 

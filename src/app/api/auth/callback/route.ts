@@ -36,7 +36,7 @@ export async function GET(request: Request) {
           next !== "/"
             ? next
             : role
-              ? ROLE_POST_LOGIN_PATHS[role as keyof typeof ROLE_POST_LOGIN_PATHS]
+              ? ROLE_POST_LOGIN_PATHS[role]
               : ROLE_POST_LOGIN_PATHS.customer;
 
         return NextResponse.redirect(`${origin}${redirectPath}`);

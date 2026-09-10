@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
@@ -59,7 +59,11 @@ export function ProductDetailPage({
   municipalitySlug,
 }: ProductDetailPageProps) {
   const pathname = usePathname();
-  const redirectParam = `?redirect=${encodeURIComponent(pathname)}`;
+  // The **raw external** pathname, embedded in a URL rather than compared
+  // against a route — so it comes from `next/navigation`'s own `usePathname`
+  // (see the import comment) and is carried as the href object's query, which
+  // the wrapped `Link` encodes.
+  const redirectQuery = { redirect: pathname };
   // The viewer's own locale, for the one string on this page built from a
   // database row rather than a message file: the home location's name.
   //
@@ -217,8 +221,8 @@ export function ProductDetailPage({
     if (!user) {
       return {
         kind: "unauthenticated",
-        signInHref: `/login${redirectParam}`,
-        createAccountHref: `/register${redirectParam}`,
+        signInHref: { pathname: ROUTES.login, query: redirectQuery },
+        createAccountHref: { pathname: ROUTES.register, query: redirectQuery },
       };
     }
     // `profile` is re-tested rather than leaning on `isCustomer`: the parent's

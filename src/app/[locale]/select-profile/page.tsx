@@ -86,7 +86,7 @@ export default async function SelectProfilePage() {
       <Header />
       {/* Pull main up under the sticky header so the centering math runs
           against the full viewport, not viewport-minus-header. Same trick
-          the home hero uses (`src/app/(public)/page.tsx`) — visual center
+          the home hero uses (`src/app/[locale]/(public)/page.tsx`) — visual center
           of the body lands at 50vh instead of below the header. Symmetric
           py-12 keeps the centering true; the body content is small enough
           (title + one row of tiles) that it never reaches the header zone. */}

@@ -323,10 +323,18 @@ Translated: the public content routes and their children —
 |---|---|---|---|
 | `/shop`, `/shop/[id]` | `/kauppa` | `/butik` | `/boutique` |
 | `/schools`, `/schools/[slug]` | `/koulut` | `/skolor` | `/ecoles` |
-| `/help` | `/ohjeet` | `/hjalp` | `/aide` |
+| `/help` | *(no such route — see the note below)* | | |
 | `/privacy` | `/tietosuoja` | `/integritet` | `/confidentialite` |
 | `/terms-and-conditions` | `/kayttoehdot` | `/villkor` | `/conditions-generales` |
 | `/anti-bullying-and-discipline` | *(translate)* | *(translate)* | *(translate)* |
+
+**Implementer's note (2026-09-10): the table met the routes as they are.** There is no
+`/help` page in this app — the public FAQ lives on `/about` — so that row has no entry in
+the map. `/about` and `/attributions` are public content routes the table does not list,
+and they were left on their English segments rather than translated on the table's behalf;
+translating them later is one map edit per route. The `anti-bullying-and-discipline` slugs
+were authored during implementation: `/kiusaamisen-vastaisuus-ja-kurinpito`,
+`/mot-mobbning-och-disciplin`, `/lutte-contre-le-harcelement-et-discipline`.
 
 The table's non-English values are the author's best effort — the implementer owns final
 wording under the normal translation rules. `/docs`, `/roblox` (brand/partner surfaces),
@@ -353,6 +361,29 @@ role as the single place hrefs are built, with a concrete dual-form convention:
 - **Hash targets** (`/#yty`-style anchors) don't fit the typed href shape and are handled
   at their call sites, like the preview-scene href helper's template strings.
 
+**Implementer's note (2026-09-10): a route with no params keeps its plain string, and
+that is not a departure.** next-intl types an href as the pathname union *or* an object,
+so a static route's string literal is already a valid typed href — `ROUTES.shop` is both
+the href and the string the proxy matches. Only builders that take params or carry a query
+became objects, which is what the decision above was about. Three consequences worth
+knowing:
+
+- **`AppHref` is exported from the routes module** and derived from `getPathname`'s
+  parameter rather than `Link`'s prop (the two differ: `Link` also accepts a `hash` and a
+  nullable query). `AppHrefObject` and `StaticAppHref` narrow it; every intermediate
+  structure that carries a destination — a dashboard row, a fixture, a card's detail link
+  — holds one of those instead of a `string`.
+- **The inert `#` needed a name and a component.** A Join with no room and a card with no
+  page behind it both rendered `href="#"`, which is not a route and cannot be typed as
+  one. `INERT_HREF` names it, `MaybeInertHref` types a destination that may be it, and
+  `MaybeInertLink` (`src/components/ui/maybe-inert-link.tsx`) renders a plain anchor that
+  cancels its own click for that case and the wrapped `Link` for every other.
+- **Some admin hrefs were built from the product-type config's `routeSlug`** as
+  `` `/admin/${slug}/…` `` template strings, which name no declared route. They are now
+  `ROUTES.admin.productList / productNew / productEdit / productClone / productGroup`,
+  and the `/parent/gamers` *prefix* (an index page that does not exist) became the
+  `ROUTES.customer.gamer(id)` builder.
+
 This is deliberate: the compiler then catches every missed call site in the sweep, and
 adding a locale stays a one-map edit.
 
@@ -374,6 +405,20 @@ adding a locale stays a one-map edit.
    app root to own the fallback document; Next 16 also ships a `global-not-found`
    convention — follow whichever shape the installed next-intl documents for this Next
    version.
+
+   **Implemented (2026-09-10):** `global-not-found` is still behind an experimental flag
+   in the installed Next (16.2), so this took the classic shape — a pass-through
+   `src/app/layout.tsx` returning its children, and `src/app/not-found.tsx` rendering its
+   own `<html>`/`<body>` with no providers and no fonts. **Both OG images stayed where
+   they were**: the root `opengraph-image.tsx` at the app root, because bare
+   `/opengraph-image` is exactly what the proxy's matcher excludes and what today's
+   metadata emits, and the Roblox card with its route group. Step 8 relocates both. The
+   `[locale]` layout validates its segment with `isSupportedLocale` and 404s otherwise,
+   rather than falling back to English — a second, uncanonical URL for the English page is
+   worse than a 404. **The lint rule banning `next/font` outside the root layout was
+   repointed** to the moved file; its `files` pattern is `src/app/*/layout.tsx`, because
+   the brackets in `[locale]` read as a glob character class and escaping them is not
+   honoured there.
 3. **Request config.** `src/i18n/request.ts` derives locale from `requestLocale`
    (validated with `isSupportedLocale`), keeping cookie/header as the fallback for
    contexts with no URL locale.
@@ -393,6 +438,17 @@ adding a locale stays a one-map edit.
    response forwards the mutated request headers is a property of its implementation:
    **verify it first**, and if composition drops the header, hand-roll the rewrite in the
    proxy instead of composing `createMiddleware`.
+
+   **Verified (2026-09-10): composition is safe, so `createMiddleware` is composed.**
+   next-intl 4.9's `next()` builds its rewrite from `new Headers(request.headers)`, so the
+   nonce survives; the proxy copies its refreshed Supabase cookies and re-applies the CSP
+   header onto whatever response comes back. The normalizer lives at
+   `src/lib/navigation/locale-path.ts` (`normalizeExternalPath`, `toInternalPathname`,
+   `localizeInternalPath`, `splitLocalePrefix`), derived from `src/i18n/pathnames.ts`,
+   which is the map both it and the routing config read. **The proxy suite needed one
+   build change**: next-intl's ESM imports `next/server` by bare specifier, which Node's
+   own resolver cannot follow from inside another package, so `vitest.config.mts` inlines
+   `next-intl` in both projects.
 5. **Navigation sweep.** Reshape the `ROUTES` builders to return `{ pathname, params }`
    href objects (see the navigation-typing decision), then swap `next/link` /
    `next/navigation` imports for the wrapped ones across the counted call sites — the
@@ -400,6 +456,15 @@ adding a locale stays a one-map edit.
    `window.location.href` sites and server 303s stay bare deliberately, and the
    pathname-as-URL sites stay on raw `next/navigation` (see the `usePathname`
    constraint).
+
+   **Verified (2026-09-10):** the wrapped `usePathname` does return the internal
+   pathname — it strips the prefix and, with `pathnames` configured, maps the result back
+   to the route template, so `/fi/kauppa/abc` comes back as `/shop/[id]`. The header,
+   sidebar and account menu were swapped to it; the product-detail login redirect and the
+   voice Join's back-link stay on raw `next/navigation` with a comment saying why, and the
+   shop and schools filter hooks were never touched. The voice Join additionally accepts a
+   typed `backHref` and resolves it with `getPathname` at the call site, which is what
+   lets a gedu name the workspace without hand-building a URL.
 6. **LocalePicker + sign-in sync.** Picker: on change, persist (cookie + profile, as
    today), then navigate with the wrapped router —
    `router.replace({ pathname, params, query }, { locale })`, where `pathname` is the
@@ -466,6 +531,19 @@ adding a locale stays a one-map edit.
     green-light a path no user ever hits. The setup mock must also export `useParams`
     (the picker's new replace call reads it). Update any tests asserting unprefixed
     paths.
+
+    **Implemented (2026-09-10):** the drift guard walks under `[locale]` and asserts each
+    page twice — reachable under a real `fi` prefix (Finnish rather than English, because
+    under `en` the internal and external forms coincide and an untranslated bug would
+    pass), and redirecting rather than serving on its bare path. The proxy suite's
+    `createNextRequest` now applies the `/en` prefix itself, with `createBareRequest`
+    beside it for the ladder's own cases — otherwise a hundred existing cases would each
+    have restated the language they are not about. The jsdom setup mocks
+    `@/i18n/navigation` in parallel with `next/navigation`; its `Link` renders a real
+    anchor with the params filled in and no locale prefix, so existing `href` assertions
+    read the route rather than the language. The locale-provider suite lost its
+    cookie-reconcile cases and gained the two the inversion is about: the picker shows the
+    URL's locale over the profile's, and a render writes no cookie and forces no refresh.
 12. **Docs.** Rewrite the locale-resolution section of `src/i18n/CLAUDE.md` (URL first;
     bare-path ladder; picker-only persistence; the pathnames map as part of "adding a
     locale"), note the slug-translation step in the adding-a-locale checklist, and check
