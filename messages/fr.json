@@ -930,6 +930,55 @@
             "description": "Retirer {name} laisserait l’abonnement de la famille facturer une place qui n’existe plus.",
             "nextStep": "La famille ouvre la carte de facturation sur Mon SOG, qui la conduit au portail de facturation sécurisé de Stripe pour résilier. La place se libère dès la fin de l’abonnement."
           }
+        },
+        "switchClub": {
+          "dropZone": "Changer de club",
+          "title": "Changer de club",
+          "description": "Déplacez {name} vers un autre club. Rien ne change pour la famille aujourd’hui : la même carte est débitée à la même date, la prochaine facture régularise le reste du mois, puis la famille paie le prix du nouveau club.",
+          "searchPlaceholder": "Rechercher un club par son nom",
+          "picker": {
+            "empty": "Il n’y a aucun autre club vers lequel basculer. La destination doit être un club facturé chaque mois et qui n’est pas terminé.",
+            "noMatch": "Aucun club ne correspond à cette recherche. Essayez un autre nom.",
+            "alreadyHolds": "A déjà une place"
+          },
+          "facts": {
+            "ageRange": "{ends, select, both {Âges {min}–{max}} from {À partir de {min} ans} other {Jusqu’à {max} ans}}",
+            "ageRangeWithGamer": "{ends, select, both {Âges {min}–{max}} from {À partir de {min} ans} other {Jusqu’à {max} ans}} · {name} a {age} ans",
+            "seats": "{taken} places prises sur {capacity}",
+            "regionLocked": "Familles en {country} uniquement",
+            "notStarted": "Commence le {date}. La famille paie à partir d’aujourd’hui, pas de la date de début.",
+            "notStartedUndated": "Pas encore de date de début. La famille paie à partir d’aujourd’hui.",
+            "subscriptionEnding": "La famille a résilié cet abonnement ; il prend fin le {date}. La différence de prix de ce mois ne sera pas facturée."
+          },
+          "prices": {
+            "current": "Paie actuellement",
+            "target": "Nouveau prix",
+            "proration": "La prochaine facture ajoute ou rembourse la différence pour le reste du mois.",
+            "unavailable": "Aucun prix à afficher",
+            "error": "La vérification du prix n’a pas abouti. Choisissez à nouveau le club pour réessayer."
+          },
+          "back": "Retour",
+          "group": {
+            "label": "Groupe",
+            "unassigned": "Laisser sans groupe",
+            "members": "{count, plural, one {# joueur} other {# joueurs}}"
+          },
+          "refusals": {
+            "latestInvoiceNotPaid": "La dernière facture de la famille n’est pas payée, il n’y a donc pas de temps payé à déplacer. Réglez cela dans Stripe d’abord.",
+            "subscriptionNotSingleItem": "L’abonnement comporte plus d’une ligne, il n’y a donc pas de prix unique à échanger. Réglez cela dans Stripe d’abord.",
+            "noTargetPriceInCurrency": "Ce club n’a pas de prix dans la devise de facturation de l’abonnement. Les clubs sont tarifés en euros, donc un abonnement créé par Stripe dans une autre devise ne peut pas être basculé ici — réglez cela dans Stripe d’abord.",
+            "participationNotActive": "Cette place n’est pas active, il n’y a donc rien à déplacer.",
+            "noLiveSubscription": "Aucun abonnement actif ne se trouve derrière cette place : ce n’est pas le bon outil. Retirez la place et inscrivez le joueur sur l’autre club.",
+            "targetNotPaidSubscriptionClub": "Ce produit n’est pas un club facturé chaque mois, un abonnement ne peut donc pas suivre la place jusque-là.",
+            "sameProduct": "C’est le club où le joueur se trouve déjà.",
+            "alreadyOnTarget": "Ce joueur a déjà une place dans ce club."
+          },
+          "commit": {
+            "stripeUpdated": "L’abonnement est déjà au prix du nouveau club, mais la place n’a pas bougé. Appuyez de nouveau sur Changer de club pour terminer — appuyer une seconde fois ne facture pas la famille deux fois.",
+            "stripeUpdatedStuck": "L’abonnement est déjà au prix du nouveau club alors que la place n’a pas pu être déplacée : la famille est donc facturée pour un club où le joueur n’a aucune place. Réglez cela dans Stripe d’abord.",
+            "failed": "Le changement n’est pas allé jusqu’au bout. Appuyez de nouveau sur Changer de club — un nouvel appui rejoue la même requête, la famille n’est donc jamais facturée deux fois."
+          },
+          "confirm": "Changer de club"
         }
       },
       "seatLimitModes": {

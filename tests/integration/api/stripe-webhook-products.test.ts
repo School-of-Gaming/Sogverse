@@ -174,17 +174,26 @@ function createSubscriptionUpdatedEvent(overrides: {
   subscription?: string;
   cancelAtPeriodEnd?: boolean;
   currentPeriodEnd?: number;
+  /** An update whose payload carries no subscription item at all. */
+  withoutItems?: boolean;
+  /** When Stripe built this payload, in unix seconds. */
+  created?: number;
 }) {
   return {
     id: overrides.id ?? "evt_sub_updated_1",
     type: "customer.subscription.updated",
+    created: overrides.created,
     data: {
       object: {
         id: overrides.subscription ?? SUB_ID,
         status: overrides.status,
         cancel_at_period_end: overrides.cancelAtPeriodEnd ?? false,
         current_period_end: overrides.currentPeriodEnd ?? 1900000000,
-        items: { data: [{ id: "si_1", price: { id: "price_test_1" } }] },
+        items: {
+          data: overrides.withoutItems
+            ? []
+            : [{ id: "si_1", price: { id: "price_test_1" } }],
+        },
       },
     },
   };
@@ -1229,6 +1238,91 @@ describe("POST /api/webhooks/stripe/products", () => {
       expect(inserts.familySubscriptionUpdates[0]).toMatchObject({
         status: "past_due",
       });
+    });
+
+    it("writes the subscription's current item price id", async () => {
+      // The admin club switch moves the Stripe item onto the target club's
+      // price and fires this event; without this write the row would keep
+      // naming the price of the club the family has left. The event payload
+      // carries the items inline, so no extra retrieve is made.
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({ status: "active" }),
+      );
+      const inserts = mockAdmin({ famSubRow: OURS });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.familySubscriptionUpdates[0]).toMatchObject({
+        stripe_price_id: "price_test_1",
+      });
+    });
+
+    it("leaves the price id out of the write when the event is older than the row", async () => {
+      // Stripe delivers and retries out of order, so an event describing the
+      // subscription BEFORE a club switch can arrive after the switch has
+      // already written the target's price. Writing its price would silently
+      // put the row back on the club the family has left.
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({
+          status: "active",
+          created: Math.floor(Date.parse("2026-03-01T09:00:00Z") / 1000),
+        }),
+      );
+      const inserts = mockAdmin({
+        famSubRow: { ...OURS, updated_at: "2026-03-01T10:00:00Z" },
+      });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      // Status and period still travel: those are properties of the
+      // subscription's own lifecycle, and a late arrival there is corrected by
+      // the next event rather than pointing the row at the wrong club.
+      expect(inserts.familySubscriptionUpdates[0]).toMatchObject({
+        status: "active",
+      });
+      expect(inserts.familySubscriptionUpdates[0]).not.toHaveProperty(
+        "stripe_price_id",
+      );
+    });
+
+    it("writes the price id when the event is newer than the row", async () => {
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({
+          status: "active",
+          created: Math.floor(Date.parse("2026-03-01T11:00:00Z") / 1000),
+        }),
+      );
+      const inserts = mockAdmin({
+        famSubRow: { ...OURS, updated_at: "2026-03-01T10:00:00Z" },
+      });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.familySubscriptionUpdates[0]).toMatchObject({
+        stripe_price_id: "price_test_1",
+      });
+    });
+
+    it("leaves the price id out of the write when the payload carries no item", async () => {
+      // An items-less update teaches this handler nothing about the price, and
+      // "nothing" must not be written as null over a good stored id — the rest
+      // of the app reads a null there as a seat that bills for nothing.
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({
+          status: "active",
+          withoutItems: true,
+        }),
+      );
+      const inserts = mockAdmin({ famSubRow: OURS });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.familySubscriptionUpdates[0]).toMatchObject({
+        status: "active",
+      });
+      expect(inserts.familySubscriptionUpdates[0]).not.toHaveProperty(
+        "stripe_price_id",
+      );
     });
 
     it("returns 500 for a status nothing maps to, rather than writing a rejected value", async () => {

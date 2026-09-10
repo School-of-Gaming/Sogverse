@@ -3,14 +3,20 @@ import {
   canCompEnroll,
   chipGameIdentity,
   dragSubjectsFrom,
+  heldProductIds,
   isSubscriptionShaped,
+  isSwitchTarget,
+  orderSwitchTargets,
   readDropData,
   readChipDragData,
   resolveDrop,
   robloxIdsFrom,
   seatOfferAvailability,
   showUnassignedSection,
+  switchTargetFacts,
+  switchTargetSeats,
   type DragSubject,
+  type SwitchTargetSource,
 } from "@/components/admin/products/groups/panel-rules";
 import type { GroupParticipationDetail, ProductGroupsSnapshot } from "@/types";
 
@@ -204,11 +210,13 @@ describe("resolveDrop — demoting onto the waitlist", () => {
 });
 
 describe("resolveDrop — removing a subscribed member", () => {
-  it("refuses removal while a live subscription stands behind the seat", () => {
-    // The same condition `admin_remove_participation` refuses on, fronted so
-    // the admin reads why instead of confirming a removal that is about to
-    // fail. Removal CASCADEs family_subscriptions, so the subscription would
-    // bill on with nothing in the database left to cancel it.
+  it("offers the club switch instead of removing an active subscribed seat", () => {
+    // Removal is refused by `admin_remove_participation` on exactly this
+    // condition — it CASCADEs family_subscriptions, so the subscription would
+    // bill on with nothing in the database left to cancel it. The switch
+    // exists for precisely the same seat, so the zone the admin dropped on
+    // read "Switch club" and the drop resolves to it. Whatever the product's
+    // own shape: the subscription is the participation's fact, not the club's.
     for (const shape of [SUBSCRIPTION_CLUB, ONE_OFF]) {
       expect(
         resolveDrop(
@@ -216,13 +224,15 @@ describe("resolveDrop — removing a subscribed member", () => {
           { ...member, hasLiveSubscription: true },
           shape,
         ),
-      ).toEqual({ kind: "blocked", reason: "removeSubscribed" });
+      ).toEqual({ kind: "switch" });
     }
   });
 
-  it("refuses it from the waitlist too", () => {
+  it("still refuses it from the waitlist, where there is nothing to switch", () => {
     // A waitlisted row can carry a live subscription: the webhook writes one
-    // without the product lock, so a demote can land in that window.
+    // without the product lock, so a demote can land in that window. The
+    // dialog does not serve that edge — there is no active seat to move — so
+    // the refusal and its manual path stay.
     expect(
       resolveDrop(
         toRemoveZone,
@@ -230,6 +240,19 @@ describe("resolveDrop — removing a subscribed member", () => {
         SUBSCRIPTION_CLUB,
       ),
     ).toEqual({ kind: "blocked", reason: "removeSubscribed" });
+  });
+
+  it("removes an active seat with no subscription behind it", () => {
+    // The other half of the split: the switch is keyed to the subscription,
+    // not to the chip being active, so an unsubscribed member on the same
+    // club still stages the ordinary removal confirm.
+    expect(
+      resolveDrop(
+        toRemoveZone,
+        { ...member, hasLiveSubscription: false },
+        SUBSCRIPTION_CLUB,
+      ),
+    ).toEqual({ kind: "remove" });
   });
 
   it("allows removal once the subscription is no longer live", () => {
@@ -371,7 +394,7 @@ describe("dragSubjectsFrom", () => {
         subjects.get("p-subscribed")!,
         SUBSCRIPTION_CLUB,
       ),
-    ).toEqual({ kind: "blocked", reason: "removeSubscribed" });
+    ).toEqual({ kind: "switch" });
   });
 });
 
@@ -665,5 +688,336 @@ describe("seatOfferAvailability", () => {
       kind: "needsOneGroup",
       groupCount: 2,
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The club switch's picker
+// ---------------------------------------------------------------------------
+
+// An ordinary running club with no range, no lock and no cap — the boring
+// target each test below bends one field of.
+const runningClub: SwitchTargetSource = {
+  status: "running",
+  minAge: null,
+  maxAge: null,
+  regionLockCountry: null,
+  startDate: "2026-01-01",
+  seatCount: null,
+};
+
+// Seats counted across both active arms of the snapshot; the waitlist holds
+// nobody's seat and must not count towards the cap.
+function seat(id: string): GroupParticipationDetail {
+  return {
+    id,
+    participant_id: `gamer-of-${id}`,
+    participant_first_name: "Aino",
+    participant_date_of_birth: null,
+    participant_gender: null,
+    participant_minecraft_username: null,
+    participant_minecraft_uuid: null,
+    participant_roblox_username: null,
+    participant_roblox_user_id: null,
+    parent_first_name: null,
+    parent_last_name: null,
+    participant_email: null,
+    status: "active",
+    signed_up_at: "2026-01-01T00:00:00Z",
+    has_live_subscription: false,
+    has_payment_marker: false,
+    group_joined_at: null,
+    note: null,
+    note_updated_by_first_name: null,
+    seat_offer_sent_at: null,
+    seat_offer_expiry_notified_at: null,
+  };
+}
+
+function snapshotOf(
+  grouped: number[],
+  unassigned: number,
+  waitlist = 0,
+): ProductGroupsSnapshot {
+  const seats = (n: number, prefix: string) =>
+    Array.from({ length: n }, (_, i) => seat(`${prefix}-${i}`));
+  return {
+    product_id: "target",
+    groups: grouped.map((count, i) => ({
+      id: `group-${i}`,
+      name: `Group ${i}`,
+      created_at: "2026-01-01T00:00:00Z",
+      gedus: [],
+      participations: seats(count, `g${i}`),
+    })),
+    unassigned: seats(unassigned, "inbox"),
+    waitlist: seats(waitlist, "queue").map((row) => ({
+      ...row,
+      status: "waitlisted" as const,
+    })),
+  };
+}
+
+describe("switchTargetSeats", () => {
+  it("counts both active arms against the cap", () => {
+    expect(switchTargetSeats(snapshotOf([4, 3], 2), 12)).toEqual({
+      taken: 9,
+      capacity: 12,
+    });
+  });
+
+  it("never counts the waitlist", () => {
+    expect(switchTargetSeats(snapshotOf([2], 0, 9), 6)).toEqual({
+      taken: 2,
+      capacity: 6,
+    });
+  });
+
+  it("states the cap with no count while the snapshot is in flight", () => {
+    expect(switchTargetSeats(undefined, 6)).toEqual({
+      taken: null,
+      capacity: 6,
+    });
+  });
+
+  it("says nothing at all about an uncapped club", () => {
+    expect(switchTargetSeats(snapshotOf([50], 50), null)).toBeNull();
+    expect(switchTargetSeats(undefined, null)).toBeNull();
+  });
+});
+
+describe("switchTargetFacts", () => {
+  it("states nothing about a club with no range, no cap, no lock and a start behind it", () => {
+    expect(switchTargetFacts(runningClub, 11, undefined)).toEqual([]);
+  });
+
+  it("states a closed range beside the gamer's age", () => {
+    expect(
+      switchTargetFacts(
+        { ...runningClub, minAge: 8, maxAge: 12 },
+        14,
+        undefined,
+      ),
+    ).toEqual([{ kind: "ageRange", minAge: 8, maxAge: 12, gamerAge: 14 }]);
+  });
+
+  it("states a range open at either end", () => {
+    expect(
+      switchTargetFacts({ ...runningClub, minAge: 8 }, 11, undefined),
+    ).toEqual([{ kind: "ageRange", minAge: 8, maxAge: null, gamerAge: 11 }]);
+    expect(
+      switchTargetFacts({ ...runningClub, maxAge: 12 }, 11, undefined),
+    ).toEqual([{ kind: "ageRange", minAge: null, maxAge: 12, gamerAge: 11 }]);
+  });
+
+  it("carries no age for an adult seat, which has no date of birth", () => {
+    expect(
+      switchTargetFacts(
+        { ...runningClub, minAge: 8, maxAge: 12 },
+        null,
+        undefined,
+      ),
+    ).toEqual([{ kind: "ageRange", minAge: 8, maxAge: 12, gamerAge: null }]);
+  });
+
+  it("states the seats of a capped club, and holds the line before the snapshot lands", () => {
+    expect(
+      switchTargetFacts({ ...runningClub, seatCount: 12 }, 11, snapshotOf([4], 2)),
+    ).toEqual([{ kind: "seats", taken: 6, capacity: 12 }]);
+    expect(
+      switchTargetFacts({ ...runningClub, seatCount: 12 }, 11, undefined),
+    ).toEqual([{ kind: "seats", taken: null, capacity: 12 }]);
+  });
+
+  it("states a region lock whatever country it names", () => {
+    expect(
+      switchTargetFacts(
+        { ...runningClub, regionLockCountry: "FI" },
+        11,
+        undefined,
+      ),
+    ).toEqual([{ kind: "regionLocked", country: "FI" }]);
+  });
+
+  it("states a start only for a club that has not started", () => {
+    expect(
+      switchTargetFacts(
+        { ...runningClub, status: "pending", startDate: "2026-09-01" },
+        11,
+        undefined,
+      ),
+    ).toEqual([{ kind: "notStarted", startDate: "2026-09-01" }]);
+    expect(
+      switchTargetFacts({ ...runningClub, status: "pending", startDate: null }, 11, undefined),
+    ).toEqual([{ kind: "notStarted", startDate: null }]);
+    expect(switchTargetFacts(runningClub, 11, undefined)).toEqual([]);
+  });
+
+  it("carries every fact that applies, in the order they are stated", () => {
+    expect(
+      switchTargetFacts(
+        {
+          status: "pending",
+          minAge: 8,
+          maxAge: 12,
+          regionLockCountry: "SE",
+          startDate: "2026-09-01",
+          seatCount: 6,
+        },
+        14,
+        snapshotOf([2], 1),
+      ).map((fact) => fact.kind),
+    ).toEqual(["ageRange", "seats", "regionLocked", "notStarted"]);
+  });
+});
+
+describe("heldProductIds", () => {
+  const row = (status: string, productId: string) => ({
+    status,
+    product: { id: productId },
+  });
+
+  it("covers exactly the statuses the unique index does", () => {
+    // active | waitlisted | completed is the set the (product, participant)
+    // index enforces, and therefore the set the switch would be refused for.
+    expect([
+      ...heldProductIds([
+        row("active", "club-a"),
+        row("waitlisted", "club-b"),
+        row("completed", "club-c"),
+      ]),
+    ]).toEqual(["club-a", "club-b", "club-c"]);
+  });
+
+  it("ignores every other status", () => {
+    // A cancelled seat or a lapsed queue place leaves the pair free, so the
+    // club stays pressable.
+    expect(
+      heldProductIds([
+        row("cancelled", "club-a"),
+        row("offered", "club-b"),
+      ]).size,
+    ).toBe(0);
+  });
+
+  it("answers an empty set for no rows", () => {
+    expect(heldProductIds([]).size).toBe(0);
+  });
+});
+
+describe("orderSwitchTargets", () => {
+  const source = {
+    id: "source",
+    spoken_language_code: "en",
+    schedule_slots: [{ weekday: 1 }],
+    start_date: "2026-01-01",
+  };
+
+  // Four clubs covering each rung of the order, deliberately listed in the
+  // wrong one.
+  const otherLanguage = {
+    id: "c-other-language",
+    spoken_language_code: "fi",
+    schedule_slots: [{ weekday: 1 }],
+    start_date: "2025-01-01",
+  };
+  const sameLanguageOtherDay = {
+    id: "c-other-day",
+    spoken_language_code: "en",
+    schedule_slots: [{ weekday: 4 }],
+    start_date: "2025-01-01",
+  };
+  const sameLanguageSameDayLate = {
+    id: "c-late",
+    spoken_language_code: "en",
+    schedule_slots: [{ weekday: 1 }, { weekday: 3 }],
+    start_date: "2026-09-01",
+  };
+  const sameLanguageSameDayEarly = {
+    id: "c-early",
+    spoken_language_code: "en",
+    schedule_slots: [{ weekday: 1 }],
+    start_date: "2026-02-01",
+  };
+
+  it("puts likeness first: language, then a shared weekday, then start date", () => {
+    expect(
+      orderSwitchTargets(
+        [
+          otherLanguage,
+          sameLanguageOtherDay,
+          sameLanguageSameDayLate,
+          sameLanguageSameDayEarly,
+        ],
+        source,
+      ).map((row) => row.id),
+    ).toEqual(["c-early", "c-late", "c-other-day", "c-other-language"]);
+  });
+
+  it("sorts an undated club last and breaks the final tie on the id", () => {
+    const undated = { ...sameLanguageSameDayEarly, id: "c-b", start_date: null };
+    const twin = { ...sameLanguageSameDayEarly, id: "c-a" };
+    expect(
+      orderSwitchTargets([undated, twin], source).map((row) => row.id),
+    ).toEqual(["c-a", "c-b"]);
+  });
+
+  it("orders by start date alone when the source club is unknown", () => {
+    expect(
+      orderSwitchTargets(
+        [sameLanguageSameDayLate, otherLanguage],
+        null,
+      ).map((row) => row.id),
+    ).toEqual(["c-other-language", "c-late"]);
+  });
+
+  it("leaves the input array untouched", () => {
+    const input = [sameLanguageSameDayLate, sameLanguageSameDayEarly];
+    orderSwitchTargets(input, source);
+    expect(input.map((row) => row.id)).toEqual(["c-late", "c-early"]);
+  });
+});
+
+describe("isSwitchTarget", () => {
+  const club = {
+    id: "club-b",
+    product_type: "consumer_club",
+    billing_mode: "paid",
+    status: "running",
+  } as const;
+
+  it("admits a paid consumer club that is running or pending", () => {
+    expect(isSwitchTarget(club, "club-a")).toBe(true);
+    expect(isSwitchTarget({ ...club, status: "pending" }, "club-a")).toBe(true);
+  });
+
+  it("refuses the product the seat is already on", () => {
+    expect(isSwitchTarget(club, "club-b")).toBe(false);
+  });
+
+  it("refuses anything that is not subscription-shaped", () => {
+    // A free club creates no subscription for the seat's to move onto, and a
+    // camp or event is paid once rather than monthly.
+    expect(isSwitchTarget({ ...club, billing_mode: "free" }, "club-a")).toBe(
+      false,
+    );
+    expect(
+      isSwitchTarget({ ...club, billing_mode: "external_contract" }, "club-a"),
+    ).toBe(false);
+    expect(isSwitchTarget({ ...club, product_type: "camp" }, "club-a")).toBe(
+      false,
+    );
+    expect(
+      isSwitchTarget({ ...club, product_type: "municipality_club" }, "club-a"),
+    ).toBe(false);
+  });
+
+  it("refuses a finished or cancelled club", () => {
+    expect(isSwitchTarget({ ...club, status: "completed" }, "club-a")).toBe(
+      false,
+    );
+    expect(isSwitchTarget({ ...club, status: "cancelled" }, "club-a")).toBe(
+      false,
+    );
   });
 });

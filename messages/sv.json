@@ -930,6 +930,55 @@
             "description": "Att ta bort {name} skulle lämna familjens prenumeration kvar och fortsätta fakturera för en plats som inte längre finns.",
             "nextStep": "Familjen öppnar faktureringskortet på Min SOG, som tar dem vidare till Stripes säkra faktureringsportal för att säga upp. Platsen frigörs så snart prenumerationen upphör."
           }
+        },
+        "switchClub": {
+          "dropZone": "Byt klubb",
+          "title": "Byt klubb",
+          "description": "Flytta {name} till en annan klubb. Inget ändras för familjen i dag: samma kort dras samma datum, nästa faktura justerar för resten av månaden, och därefter betalar familjen den nya klubbens pris.",
+          "searchPlaceholder": "Sök klubbar på namn",
+          "picker": {
+            "empty": "Det finns ingen annan klubb att byta till. Målet måste vara en klubb som faktureras varje månad och som inte har avslutats.",
+            "noMatch": "Ingen klubb matchar sökningen. Pröva ett annat namn.",
+            "alreadyHolds": "Har redan plats"
+          },
+          "facts": {
+            "ageRange": "{ends, select, both {Åldrar {min}–{max}} from {Från {min} år} other {Upp till {max} år}}",
+            "ageRangeWithGamer": "{ends, select, both {Åldrar {min}–{max}} from {Från {min} år} other {Upp till {max} år}} · {name} är {age}",
+            "seats": "{taken} av {capacity} platser tagna",
+            "regionLocked": "Endast familjer i {country}",
+            "notStarted": "Startar {date}. Familjen betalar från i dag, inte från startdatumet.",
+            "notStartedUndated": "Inget startdatum ännu. Familjen betalar från i dag.",
+            "subscriptionEnding": "Familjen har sagt upp prenumerationen och den slutar {date}. Den här månadens prisskillnad faktureras inte."
+          },
+          "prices": {
+            "current": "Betalar nu",
+            "target": "Nytt pris",
+            "proration": "Nästa faktura lägger till eller återbetalar skillnaden för resten av månaden.",
+            "unavailable": "Inget pris att visa",
+            "error": "Priskontrollen kom inte tillbaka. Välj klubben igen för att försöka på nytt."
+          },
+          "back": "Tillbaka",
+          "group": {
+            "label": "Grupp",
+            "unassigned": "Lämna utan grupp",
+            "members": "{count, plural, one {# spelare} other {# spelare}}"
+          },
+          "refusals": {
+            "latestInvoiceNotPaid": "Familjens senaste faktura är inte betald, så det finns ingen betald tid att flytta. Red ut det i Stripe först.",
+            "subscriptionNotSingleItem": "Prenumerationen har mer än en rad, så det finns inget enskilt pris att byta. Red ut det i Stripe först.",
+            "noTargetPriceInCurrency": "Den här klubben har inget pris i den valuta prenumerationen faktureras i. Klubbar prissätts i euro, så en prenumeration som Stripe skapade i en annan valuta kan inte bytas här — red ut det i Stripe först.",
+            "participationNotActive": "Den här platsen är inte aktiv, så det finns inget att flytta.",
+            "noLiveSubscription": "Ingen aktiv prenumeration står bakom den här platsen, så det här är fel verktyg: ta bort platsen och skriv in spelaren på den andra klubben i stället.",
+            "targetNotPaidSubscriptionClub": "Den produkten är ingen klubb som faktureras varje månad, så en prenumeration kan inte följa med platsen dit.",
+            "sameProduct": "Det är klubben spelaren redan går i.",
+            "alreadyOnTarget": "Spelaren har redan en plats i den klubben."
+          },
+          "commit": {
+            "stripeUpdated": "Prenumerationen ligger redan på den nya klubbens pris, men platsen flyttades inte. Tryck på Byt klubb igen för att slutföra — ett nytt tryck debiterar inte familjen två gånger.",
+            "stripeUpdatedStuck": "Prenumerationen ligger redan på den nya klubbens pris trots att platsen inte kunde flyttas, så familjen faktureras för en klubb där spelaren inte har någon plats. Red ut det i Stripe först.",
+            "failed": "Bytet slutfördes inte. Tryck på Byt klubb igen — ett nytt tryck upprepar samma begäran, så familjen debiteras aldrig två gånger."
+          },
+          "confirm": "Byt klubb"
         }
       },
       "seatLimitModes": {

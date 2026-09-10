@@ -930,6 +930,55 @@
             "description": "Jos {name} poistetaan, perheen tilaus jatkaa laskuttamista paikasta, jota ei enää ole.",
             "nextStep": "Perhe avaa laskutuskortin Oma SOG -sivullaan ja siirtyy sitä kautta Stripen suojattuun laskutusportaaliin perumaan tilauksen. Paikka vapautuu heti, kun tilaus päättyy."
           }
+        },
+        "switchClub": {
+          "dropZone": "Vaihda kerhoa",
+          "title": "Vaihda kerhoa",
+          "description": "{name} siirtyy toiseen kerhoon. Perheelle ei muutu tänään mitään: samalta kortilta veloitetaan samana päivänä, seuraava lasku oikaisee tämän kuukauden loppuosan, ja siitä eteenpäin perhe maksaa uuden kerhon hinnan.",
+          "searchPlaceholder": "Hae kerhoja nimellä",
+          "picker": {
+            "empty": "Muuta kerhoa ei ole tarjolla. Kohteen pitää olla kuukausittain laskutettava kerho, joka ei ole vielä päättynyt.",
+            "noMatch": "Haku ei osu yhteenkään kerhoon. Kokeile toista nimeä.",
+            "alreadyHolds": "On jo paikka"
+          },
+          "facts": {
+            "ageRange": "{ends, select, both {Ikä {min}–{max} vuotta} from {Ikä vähintään {min} vuotta} other {Ikä enintään {max} vuotta}}",
+            "ageRangeWithGamer": "{ends, select, both {Ikä {min}–{max} vuotta} from {Ikä vähintään {min} vuotta} other {Ikä enintään {max} vuotta}} · {name} on {age}-vuotias",
+            "seats": "Paikkoja varattu {taken}/{capacity}",
+            "regionLocked": "Maarajoitus: {country}",
+            "notStarted": "Alkaa {date}. Perhe maksaa tästä päivästä, ei alkamispäivästä.",
+            "notStartedUndated": "Ei alkamispäivää. Perhe maksaa tästä päivästä.",
+            "subscriptionEnding": "Perhe on irtisanonut tilauksen, ja se päättyy {date}. Tämän kuukauden hintaeroa ei laskuteta."
+          },
+          "prices": {
+            "current": "Maksaa nyt",
+            "target": "Uusi hinta",
+            "proration": "Seuraava lasku lisää tai hyvittää erotuksen tämän kuukauden loppuosalta.",
+            "unavailable": "Ei hintaa näytettäväksi",
+            "error": "Hintatietoja ei saatu. Valitse kerho uudelleen ja yritä uudestaan."
+          },
+          "back": "Takaisin",
+          "group": {
+            "label": "Ryhmä",
+            "unassigned": "Jätä ilman ryhmää",
+            "members": "{count, plural, one {# pelaaja} other {# pelaajaa}}"
+          },
+          "refusals": {
+            "latestInvoiceNotPaid": "Perheen viimeisintä laskua ei ole maksettu, joten siirrettävää maksettua aikaa ei ole. Selvitä tämä ensin Stripessä.",
+            "subscriptionNotSingleItem": "Tilauksella on useampi rivi, joten vaihdettavaa yksittäistä hintaa ei ole. Selvitä tämä ensin Stripessä.",
+            "noTargetPriceInCurrency": "Tälle kerholle ei ole hintaa siinä valuutassa, jolla tilausta laskutetaan. Kerhot hinnoitellaan euroina, joten Stripen toisessa valuutassa luomaa tilausta ei voi vaihtaa täällä — selvitä tämä ensin Stripessä.",
+            "participationNotActive": "Tämä paikka ei ole aktiivinen, joten siirrettävää ei ole.",
+            "noLiveSubscription": "Tämän paikan takana ei ole voimassa olevaa tilausta, joten tämä ei ole oikea työkalu: poista paikka ja ilmoita pelaaja toiseen kerhoon.",
+            "targetNotPaidSubscriptionClub": "Kyseinen tuote ei ole kuukausittain laskutettava kerho, joten tilaus ei voi seurata paikkaa sinne.",
+            "sameProduct": "Pelaaja on jo tässä kerhossa.",
+            "alreadyOnTarget": "Pelaajalla on jo paikka kyseisessä kerhossa."
+          },
+          "commit": {
+            "stripeUpdated": "Tilaus on jo uuden kerhon hinnassa, mutta paikka ei siirtynyt. Paina Vaihda kerhoa uudelleen, niin siirto viedään loppuun. Uusi painallus ei veloita perhettä kahteen kertaan.",
+            "stripeUpdatedStuck": "Tilaus on jo uuden kerhon hinnassa, vaikka paikka ei siirtynyt, joten perhettä laskutetaan kerhosta, jossa pelaajalla ei ole paikkaa. Selvitä tämä ensin Stripessä.",
+            "failed": "Vaihto ei mennyt loppuun asti. Paina Vaihda kerhoa uudelleen — uusi painallus toistaa saman pyynnön, joten perhettä ei veloiteta kahteen kertaan."
+          },
+          "confirm": "Vaihda kerhoa"
         }
       },
       "seatLimitModes": {

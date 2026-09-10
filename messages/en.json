@@ -930,6 +930,55 @@
             "description": "Removing {name} would leave the family's subscription billing for a seat that no longer exists.",
             "nextStep": "The family opens the billing card on their My SOG page, which takes them to Stripe's secure billing portal to cancel. Once the subscription ends, the seat is released."
           }
+        },
+        "switchClub": {
+          "dropZone": "Switch club",
+          "title": "Switch club",
+          "description": "Move {name} to another club. Nothing changes for the family today: the same card is charged on the same date, the next invoice corrects for the rest of this month, and from then on they pay the new club's price.",
+          "searchPlaceholder": "Search clubs by name",
+          "picker": {
+            "empty": "There is no other club to switch to. A target has to be a club billed monthly that has not finished.",
+            "noMatch": "No club matches this search. Try another name.",
+            "alreadyHolds": "Already has seat"
+          },
+          "facts": {
+            "ageRange": "{ends, select, both {Ages {min}–{max}} from {Ages {min} and up} other {Ages {max} and under}}",
+            "ageRangeWithGamer": "{ends, select, both {Ages {min}–{max}} from {Ages {min} and up} other {Ages {max} and under}} · {name} is {age}",
+            "seats": "{taken} of {capacity} seats taken",
+            "regionLocked": "Families in {country} only",
+            "notStarted": "Starts {date}. The family pays from today, not from the start date.",
+            "notStartedUndated": "No start date yet. The family pays from today.",
+            "subscriptionEnding": "The family has cancelled this subscription; it ends on {date}. This month's price difference will not be invoiced."
+          },
+          "prices": {
+            "current": "Paying now",
+            "target": "New price",
+            "proration": "The next invoice adds or refunds the difference for the rest of this month.",
+            "unavailable": "No price to show",
+            "error": "The price check did not come back. Pick the club again to retry."
+          },
+          "back": "Back",
+          "group": {
+            "label": "Group",
+            "unassigned": "Leave unassigned",
+            "members": "{count, plural, one {# gamer} other {# gamers}}"
+          },
+          "refusals": {
+            "latestInvoiceNotPaid": "The family's latest invoice is not paid, so there is no paid time to move. Sort this out in Stripe first.",
+            "subscriptionNotSingleItem": "The subscription carries more than one item, so there is no single price to swap. Sort this out in Stripe first.",
+            "noTargetPriceInCurrency": "This club has no price in the currency the subscription bills in. Clubs are priced in euros, so a subscription Stripe created in another currency cannot be switched here — sort this out in Stripe first.",
+            "participationNotActive": "This seat is not active, so there is nothing to move.",
+            "noLiveSubscription": "No live subscription stands behind this seat, so this is not the tool for it: remove the seat and enroll the gamer on the other club instead.",
+            "targetNotPaidSubscriptionClub": "That product is not a club billed monthly, so a subscription cannot follow the seat onto it.",
+            "sameProduct": "That is the club the gamer is already on.",
+            "alreadyOnTarget": "This gamer already holds a place on that club."
+          },
+          "commit": {
+            "stripeUpdated": "The subscription is already on the new club's price, but the seat did not move. Press Switch club again to finish — pressing again does not charge the family twice.",
+            "stripeUpdatedStuck": "The subscription is already on the new club's price even though the seat could not move, so the family is billed for a club the gamer holds no place on. Sort this out in Stripe first.",
+            "failed": "The switch did not complete. Press Switch club again — a repeated press replays the same request, so it never charges the family twice."
+          },
+          "confirm": "Switch club"
         }
       },
       "seatLimitModes": {

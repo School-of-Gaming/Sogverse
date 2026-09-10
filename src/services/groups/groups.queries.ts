@@ -71,8 +71,14 @@ const groupMutationBase = (productId: string) =>
  * exists in an admin's own cache, so a customer-side write (joining a waitlist,
  * enrolling) has nothing to invalidate in the browser it happens in — its effect
  * reaches the dashboard through that page's own next read.
+ *
+ * Exported because one panel action does not live in this file: the club switch
+ * moves a seat between two products, so it invalidates the groups **root**
+ * rather than one product's key — but it is the same admin action against the
+ * same two caches, and a second copy of this pair is how the dashboard starts
+ * getting refreshed by some of the panel's writes and not others.
  */
-function invalidateGroupChange(
+export function invalidateGroupChange(
   queryClient: QueryClient,
   key: QueryKey,
 ): Promise<void> {

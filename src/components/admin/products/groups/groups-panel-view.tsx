@@ -11,7 +11,7 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { Plus, Trash2, UserPlus, Users } from "lucide-react";
+import { ArrowRightLeft, Plus, Trash2, UserPlus, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ import {
   seatOfferAvailability,
   showUnassignedSection,
   type BlockedDropReason,
+  type DragSubject,
 } from "./panel-rules";
 import { UnassignedCard } from "./unassigned-card";
 import { WaitlistCard } from "./waitlist-card";
@@ -79,6 +80,18 @@ export interface GroupsPanelActions {
    * action needs an outcome.
    */
   onSendSeatOffer?: (participationId: string) => Promise<void>;
+  /**
+   * Ask the shell to open its club-switch dialog for this seat. Optional like
+   * the seat offer beside it, and for the same reason: a shell with no dialog
+   * behind it should draw the chips without a control that does nothing.
+   *
+   * There is no control on a chip: the chip is a drag handle, and the switch is
+   * reached by dragging an active, subscribed seat onto the header zone, which
+   * relabels itself for exactly those chips. So this fires from one place, the
+   * drop rule, and the label the admin read and the outcome they got are two
+   * readings of the same subject.
+   */
+  onRequestSwitchClub?: (participationId: string) => void;
 }
 
 interface GroupsPanelViewProps {
@@ -91,6 +104,13 @@ interface GroupsPanelViewProps {
   isLoading: boolean;
   /** Which rows have a write in flight — greys and disables them. */
   pending: GroupPending;
+  /**
+   * The seat whose club switch is committing, or null. It rides beside
+   * `pending` rather than inside it because the write is not one of the panel's
+   * own mutations — the shell's dialog owns it — but the chip has to read as
+   * busy on exactly the same terms while money is moving.
+   */
+  switchingParticipationId?: string | null;
   productType: ProductType;
   /**
    * How the product is paid for. Only ever read together with the type, and
@@ -182,36 +202,92 @@ function DragOverlayContent({
   );
 }
 
-// The enrolment action in the panel header. At rest it's the "Add participant"
-// button; the moment a chip is being dragged it becomes a destructive "Remove"
-// drop zone. The swap is user-initiated (by the drag itself), so it doesn't
-// violate the no-in-place-reflow rule. It lives inside the DndContext and
-// subscribes to dnd state, so only this node re-renders on pointer move — not
-// the whole panel.
-function HeaderParticipantAction({ onAdd }: { onAdd: () => void }) {
+/**
+ * The enrolment action in the panel header. At rest it's the "Add participant"
+ * button; the moment a chip is being dragged it becomes the drop zone that chip
+ * can be dropped on. The swap is user-initiated (by the drag itself), so it
+ * doesn't violate the no-in-place-reflow rule. It lives inside the DndContext
+ * and subscribes to dnd state, so only this node re-renders on pointer move —
+ * not the whole panel.
+ *
+ * **The zone reads the chip it is offered.** One droppable, one payload; what
+ * varies is the label, because remove and switch are the same gesture pointed
+ * at opposite seats — a seat with a live subscription can never be removed and
+ * is exactly the seat the club switch exists for. So the zone says "Switch
+ * club" for an active subscribed chip and "Remove gamer" for every other one,
+ * and `resolveDrop` reaches the same conclusion from the same subject.
+ *
+ * The subjects arrive as a lookup rather than as the map itself, so this node
+ * stays subscribed to dnd state alone — the panel already holds the map, and
+ * handing it over by reference would not change what re-renders here.
+ */
+function HeaderParticipantAction({
+  canAdd,
+  onAdd,
+  subjectFor,
+}: {
+  /**
+   * Whether the at-rest Add button is offered at all: an admin cannot comp a
+   * seat that only a Stripe subscription can create. The **drop zone** is not
+   * gated on it — a paid club's chips are dragged like any other, and the
+   * subscribed ones are precisely the seats the switch serves.
+   */
+  canAdd: boolean;
+  onAdd: () => void;
+  subjectFor: (participationId: string) => DragSubject | undefined;
+}) {
   const t = useTranslations("admin.products.groupsPanel");
   const { active } = useDndContext();
-  const draggingChip = readChipDragData(active?.data.current) !== null;
+  const dragData = readChipDragData(active?.data.current);
 
   const { setNodeRef, isOver } = useDroppable({
     id: "remove-gamer-zone",
     data: { remove: true },
   });
 
-  if (draggingChip) {
+  if (dragData) {
+    const subject = subjectFor(dragData.participationId);
+    const switching =
+      subject !== undefined &&
+      subject.hasLiveSubscription &&
+      !subject.isWaitlisted;
+
     return (
       <div
         ref={setNodeRef}
         className={cn(
-          "flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-sm font-medium text-destructive transition-colors",
+          "flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-sm font-medium transition-colors",
+          switching ? "text-act" : "text-destructive",
           isOver && "bg-lifted",
         )}
       >
-        <Trash2 className="h-4 w-4" />
-        {t("unassigned.removeParticipant")}
+        {switching ? (
+          <ArrowRightLeft className="h-4 w-4" />
+        ) : (
+          <Trash2 className="h-4 w-4" />
+        )}
+        {/* Both labels share one grid cell, so the zone is as wide as the
+            longer of the two in whichever locale is loaded and the header does
+            not move when the label swaps under the pointer mid-drag. The
+            hidden one is `invisible` rather than unmounted — visibility:hidden
+            keeps the box and takes the text out of the accessibility tree. */}
+        <span className="grid">
+          <span
+            className={cn("col-start-1 row-start-1", !switching && "invisible")}
+          >
+            {t("switchClub.dropZone")}
+          </span>
+          <span
+            className={cn("col-start-1 row-start-1", switching && "invisible")}
+          >
+            {t("unassigned.removeParticipant")}
+          </span>
+        </span>
       </div>
     );
   }
+
+  if (!canAdd) return null;
 
   return (
     <Button variant="outline" size="sm" onClick={onAdd}>
@@ -237,6 +313,7 @@ export function GroupsPanelView({
   snapshot,
   isLoading,
   pending,
+  switchingParticipationId,
   productType,
   billingMode,
   topic,
@@ -319,6 +396,14 @@ export function GroupsPanelView({
         // acting. Stash the chip's identity for the dialog copy.
         setRemoving({ id: participationId, name: firstName });
         return;
+      case "switch":
+        // The seat is subscribed, so the zone the admin dropped on read
+        // "Switch club" rather than "Remove gamer". Nothing is written here —
+        // the shell's dialog owns the money — and a shell with no dialog
+        // behind it simply does nothing, the same way its chips would have
+        // carried no control.
+        actions.onRequestSwitchClub?.(participationId);
+        return;
       case "blocked":
         // The money says no. Nothing is written; the dialog explains the manual
         // path and the chip snaps back to where it was.
@@ -387,7 +472,11 @@ export function GroupsPanelView({
   // An in-flight seat offer is deliberately NOT here: it moves nobody, and
   // greying a chip would say the person was going somewhere. The row's own
   // Invite button carries that action's committed state instead.
+  // A committing club switch joins them: the seat is about to leave this
+  // product entirely, and a chip an admin can still drag while its subscription
+  // is being repriced is a second write racing the first.
   const busyChipIds = new Set<string>([...pending.moves, ...pending.removes]);
+  if (switchingParticipationId) busyChipIds.add(switchingParticipationId);
 
   // Whether the inbox card is drawn at all. On a product where every arriving
   // seat is written straight into its only group, an empty inbox is a box
@@ -427,7 +516,7 @@ export function GroupsPanelView({
   return (
     <div className="space-y-3">
       {/* The header is inside the DndContext so the "Add participant" button can
-          swap to a "Remove participant" drop zone mid-drag
+          swap to the remove/switch drop zone mid-drag
           (HeaderParticipantAction). The shell's picker sheets are deliberately
           kept OUTSIDE it — see the `overlays` slot below. */}
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
@@ -464,9 +553,15 @@ export function GroupsPanelView({
                 className="hidden w-80 sm:block"
               />
             )}
-            {canAddGamer && (
-              <HeaderParticipantAction onAdd={actions.onRequestAddParticipant} />
-            )}
+            {/* Always mounted, unlike the Add button it holds at rest: the
+                drop zone is the only way a chip leaves this product, and a
+                paid club — where the Add button is never offered — is exactly
+                where the subscribed seats the switch serves live. */}
+            <HeaderParticipantAction
+              canAdd={canAddGamer}
+              onAdd={actions.onRequestAddParticipant}
+              subjectFor={(participationId) => dragSubjects.get(participationId)}
+            />
             <Button
               variant="outline"
               size="sm"
@@ -515,6 +610,7 @@ export function GroupsPanelView({
                 key={g.id}
                 group={g}
                 pending={pending}
+                busyChipIds={busyChipIds}
                 gamePlatform={gamePlatform}
                 robloxRenders={robloxRenders}
                 voiceAvailable={voiceAvailable}
