@@ -1995,38 +1995,38 @@
       "pegi": "PEGI {age}",
       "topics": {
         "minecraft_java": {
-          "description": "Minecraft är ett kreativt byggspel – tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig, från ett mysigt hus till en hel stad. Det finns inget att vinna eller förlora; det är ett lugnt och öppet utrymme för att skapa och lösa problem. ”Java” är originalversionen för Windows-, Mac- och Linux-datorer, och det är den våra distansklubbar använder eftersom den stöder verktygen våra spelfostrare behöver.",
-          "note": "För våra distansklubbar behöver ditt barn Minecraft på en dator. På Minecrafts egen webbplats säljs det som ”Minecraft: Java & Bedrock Edition for PC” – ett enda engångsköp, inte en prenumeration, och det inkluderar versionen vi använder. Den separata versionen för konsol, telefon och surfplatta fungerar inte för de här klubbarna.",
+          "description": "Minecraft är ett kreativt byggspel. Tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig, från ett mysigt hus till en hel stad. Det finns inget att vinna eller förlora. Det är ett lugnt och öppet utrymme för att skapa och lösa problem. ”Java” är originalversionen för Windows-, Mac- och Linux-datorer. Det är den våra distansklubbar använder, eftersom den stöder verktygen våra spelfostrare behöver.",
+          "note": "För våra distansklubbar behöver ditt barn Minecraft på en dator. På Minecrafts egen webbplats säljs det som ”Minecraft: Java & Bedrock Edition for PC”. Det är ett engångsköp och inte en prenumeration, och det inkluderar versionen vi använder. Den separata versionen för konsol, telefon och surfplatta fungerar inte för de här klubbarna.",
           "linkLabel": "Skaffa Minecraft för PC"
         },
         "minecraft_bedrock": {
-          "description": "Minecraft är ett kreativt byggspel — tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig, från ett mysigt hus till en hel stad. Det finns inget att vinna eller förlora; det är ett lugnt och öppet utrymme för att skapa och lösa problem. ”Bedrock” är versionen som körs på konsoler (Xbox, PlayStation, Switch), telefoner, surfplattor och Windows-datorer.",
-          "note": "Minecraft Bedrock ingår inte i priset. Det är samma spel sålt separat för varje enhet, och ett exemplar köpt till en enhet följer inte med till en annan — det exemplar som räknas är det för enheten ditt barn ska spela på. På en spelkonsol kräver onlinespel dessutom konsolens betalda onlinemedlemskap.",
+          "description": "Minecraft är ett kreativt byggspel. Tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig, från ett mysigt hus till en hel stad. Det finns inget att vinna eller förlora. Det är ett lugnt och öppet utrymme för att skapa och lösa problem. ”Bedrock” är versionen som körs på konsoler (Xbox, PlayStation, Switch), telefoner, surfplattor och Windows-datorer.",
+          "note": "Minecraft Bedrock ingår inte i priset. Det är samma spel sålt separat för varje enhet, och ett exemplar köpt till en enhet följer inte med till en annan. Det exemplar som räknas är det för enheten ditt barn ska spela på. På en spelkonsol kräver onlinespel dessutom konsolens betalda onlinemedlemskap.",
           "linkLabel": "Var du köper det"
         },
         "minecraft_education": {
-          "description": "Minecraft är ett kreativt byggspel — tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig. Minecraft Education är en version gjord för klassrummet: samma trevliga och öppna byggande, plus extra verktyg för den vuxna som leder sessionen, utformad för guidade aktiviteter snarare än för ensamspel.",
-          "note": "Det finns inget att köpa och inget skolkonto att ordna – School of Gaming tillhandahåller de Minecraft Education-konton som deltagarna använder under tillfällena. För distansklubbar är själva spelet en gratis nedladdning från Microsoft Store eller från Minecraft Educations egen webbplats; det fungerar på Windows- och Mac-datorer såväl som på iPad och Chromebook.",
+          "description": "Minecraft är ett kreativt byggspel. Tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig. Minecraft Education är en version gjord för ledda grupper. Byggandet är detsamma, trevligt och öppet, och det finns extra verktyg för den vuxna som leder tillfället.",
+          "note": "Det finns inget att köpa och inget skolkonto att ordna. School of Gaming tillhandahåller de Minecraft Education-konton som deltagarna använder under tillfällena. För distansklubbar är själva spelet en gratis nedladdning från Microsoft Store eller från Minecraft Educations egen webbplats. Det fungerar på Windows- och Mac-datorer såväl som på iPad och Chromebook.",
           "linkLabel": "Om Minecraft Education"
         },
         "fortnite": {
-          "description": "Fortnite är ett färgglatt onlinespel i tecknad stil där spelare bildar lag och tävlar i korta matcher, omgång för omgång. Det är enormt populärt och väldigt socialt, och barn spelar tillsammans med vänner. Stilen är ljus och orealistisk, utan blod eller våld, även om matcherna är tävlingsinriktade och spelas online med andra.",
-          "note": "Fortnite är gratis att ladda ner och spela – du köper inte själva spelet. Att spela kräver ett gratis Epic Games-konto. Vissa valfria extrasaker, som utstyrslar, kostar pengar; Epics föräldrakontroller sitter på kontot i stället för på en enhet och kan begränsa dem.",
+          "description": "Fortnite är ett färgglatt onlinespel i tecknad stil där spelare bildar lag och tävlar i korta matcher, omgång för omgång. Det är enormt populärt och väldigt socialt, och barn spelar det tillsammans med vänner. Stilen är ljus och orealistisk, utan blod eller våldsamma detaljer. Matcherna är tävlingsinriktade och spelas online med andra människor.",
+          "note": "Fortnite är gratis att ladda ner och spela, så det finns inget spel att köpa. Att spela kräver ett gratis Epic Games-konto. Vissa valfria extrasaker kostar pengar, till exempel utstyrslar. Epics föräldrakontroller sitter på kontot i stället för på en enhet, och de kan begränsa sådana köp.",
           "linkLabel": "Skaffa Fortnite"
         },
         "pokemon_go": {
-          "description": "Pokémon GO spelas utomhus, på en telefon. Varelser dyker upp på en karta över den verkliga världen, och barnen går till parker, gator och landmärken för att hitta och samla dem. Det handlar om att samla snarare än att slåss – det roliga är att utforska, fylla sin Pokédex och jämföra fynd med kompisar. Det mesta av spelandet sker till fots, så spelet får barn att röra på sig.",
-          "note": "Pokémon GO är gratis att ladda ner och spela – du köper inte själva spelet. Det kräver en telefon med GPS och mobildata, samt ett gratis konto; för ett barn under 13 år skapas kontot av en förälder och förblir länkat till förälderns. Det finns valfria köp i appen, som föräldrakontroller kan begränsa. Det spelas utomhus på riktiga platser, och det håller skärmen, GPS:en och mobildatan igång hela tiden, så batteriet räcker inte länge.",
+          "description": "Pokémon GO spelas utomhus, på en telefon. Varelser dyker upp på en karta över den verkliga världen, och barnen går till parker, gator och landmärken för att hitta och samla dem. Det handlar om att samla snarare än att slåss. Det roliga är att utforska, fylla sin Pokédex och jämföra fynd med kompisar. Det mesta av spelandet sker till fots, så spelet får barn att röra på sig.",
+          "note": "Pokémon GO är gratis att ladda ner och spela, så det finns inget spel att köpa. Det kräver en telefon med GPS och mobildata, samt ett gratis konto. För ett barn under 13 år skapas kontot av en förälder och förblir länkat till förälderns. Det finns valfria köp i appen, som föräldrakontroller kan begränsa. Det spelas utomhus på riktiga platser. Det håller dessutom skärmen, GPS:en och mobildatan igång hela tiden, så batteriet räcker inte länge.",
           "linkLabel": "Var du laddar ner det"
         },
         "roblox_studio": {
-          "description": "Roblox Studio är det kostnadsfria verktyg som Roblox-spelen själva byggs med. Barn designar världar, bygger med riktiga 3D-verktyg och programmerar med riktig kod, så att deras egna idéer blir upplevelser som andra faktiskt kan spela. I våra klubbar skapar barnen i stället för att spela – det är riktig spelutveckling.",
-          "note": "Roblox Studio är gratis – det finns inget att köpa. Det fungerar bara på Windows-datorer och Mac: inte på iPad eller andra surfplattor, inte på Chromebook, telefon eller spelkonsol. Ett gratis Roblox-konto behövs också, och kontots åldersinställning styr dess chatt- och integritetsskydd. Färdiga skapelser kan publiceras så att andra spelare kan hitta och spela dem.",
+          "description": "Roblox Studio är det kostnadsfria verktyg som Roblox-spelen själva byggs med. Barn designar världar, bygger med riktiga 3D-verktyg och skriver riktig kod. Deras egna idéer blir upplevelser som andra faktiskt kan spela. I våra klubbar skapar barnen i stället för att spela, och det är ett första steg in i riktig spelutveckling.",
+          "note": "Roblox Studio är gratis, så det finns inget att köpa. Det fungerar bara på Windows-datorer och Mac, inte på iPad eller andra surfplattor, inte på Chromebook, telefon eller spelkonsol. Ett gratis Roblox-konto behövs också, och kontots åldersinställning styr dess chatt- och integritetsinställningar. Färdiga skapelser kan publiceras så att andra spelare kan hitta och spela dem.",
           "linkLabel": "Skaffa Roblox Studio"
         },
         "rocket_league": {
-          "description": "Rocket League är fotboll som spelas med raketdrivna bilar. Två lag kör runt på en arena och försöker knuffa in en jättestor boll i motståndarlagets mål, i korta matcher på ungefär fem minuter. Stilen är ljus och tecknad och det finns inget våld – det är en sport, inte ett skjutspel – så det går lätt att följa från sidan även om man aldrig spelat själv. Nästan varje mål bygger på att laget samarbetar, och det är därför spelet passar så bra i en klubb.",
-          "note": "Rocket League är gratis att ladda ner och spela – du köper inte själva spelet. Att spela kräver ett gratis Epic Games-konto. Spelet fungerar på Windows-datorer, PlayStation, Xbox och Nintendo Switch, och spelare på olika enheter kan spela tillsammans, så ditt barns enhet behöver inte vara samma som någon annans. Det finns valfria köp i spelet, som dekorationer till bilarna, som föräldrakontroller kan begränsa.",
+          "description": "Rocket League är fotboll som spelas med raketdrivna bilar. Två lag kör runt på en arena och försöker knuffa in en jättestor boll i motståndarlagets mål, i korta matcher på ungefär fem minuter. Stilen är ljus och tecknad och det finns inget våld. Det är en sport och inte ett skjutspel, så det går lätt att följa från sidan även om man aldrig spelat själv. Nästan varje mål bygger på att laget samarbetar, och det är därför spelet passar så bra i en klubb.",
+          "note": "Rocket League är gratis att ladda ner och spela, så det finns inget spel att köpa. Att spela kräver ett gratis Epic Games-konto. Spelet fungerar på Windows-datorer, PlayStation, Xbox och Nintendo Switch. Spelare på olika enheter kan spela tillsammans, så ditt barns enhet behöver inte vara samma som någon annans. Det finns valfria köp i spelet, som dekorationer till bilarna, som föräldrakontroller kan begränsa.",
           "linkLabel": "Skaffa Rocket League"
         }
       }
@@ -2159,147 +2159,147 @@
     "dialogTitle": "Före första tillfället",
     "triggerLabel": "Gör dig redo",
     "readyLabel": "Jag är redo",
-    "closing": "Det var allt som behöver ordnas i förväg. Vi ses på första tillfället!",
+    "closing": "Om allt fungerar är du redo för tillfället!",
     "topics": {
       "minecraft_java": {
-        "intro": "På de här tillfällena spelas Minecraft på dator, i Java-versionen. Gå igenom stegen nedan före det första, så behöver ingenting ordnas på plats."
+        "intro": "På de här tillfällena spelas Minecraft på dator, i Java-versionen. Varje deltagare behöver ett Microsoft-konto med Minecraft på, och Minecraft Launcher installerad på datorn de ska använda. Gå igenom stegen nedan före det första tillfället."
       },
       "minecraft_education": {
-        "intro": "De här tillfällena använder Minecraft Education, som är gratis. School of Gaming delar ut inloggningarna vid första tillfället, så det finns väldigt lite att göra i förväg."
+        "intro": "De här tillfällena använder Minecraft Education, och det är gratis. School of Gaming delar ut inloggningarna vid första tillfället, så det finns bara ett steg att ta i förväg."
       },
       "minecraft_bedrock": {
-        "intro": "På de här tillfällena spelas Minecraft Bedrock tillsammans online. Så här gör du dig redo inför det första."
+        "intro": "På de här tillfällena spelas Minecraft Bedrock tillsammans online. Varje deltagare behöver ett Microsoft-konto och Minecraft installerat på enheten de ska spela på. Gå igenom stegen nedan före det första tillfället."
       },
       "fortnite": {
-        "intro": "Fortnite är gratis att spela, och tillfällena spelas tillsammans. Så här gör du dig redo inför det första."
+        "intro": "Fortnite är gratis att spela, och på tillfällena spelas det tillsammans. Varje deltagare behöver ett gratis Epic Games-konto och Fortnite installerat på enheten de ska använda. Gå igenom stegen nedan före det första tillfället."
       },
       "rocket_league": {
-        "intro": "Rocket League är gratis att spela, och varje tillfälle spelas tillsammans. Så här gör du dig redo inför det första."
+        "intro": "Rocket League är gratis att spela, och varje tillfälle spelas tillsammans. Varje deltagare behöver ett gratis Epic Games-konto och Rocket League installerat på enheten de ska använda. Gå igenom stegen nedan före det första tillfället."
       },
       "pokemon_go": {
-        "intro": "Pokémon GO spelas utomhus, på en telefon, så det som behöver ordnas i förväg är telefonen och planen."
+        "intro": "Pokémon GO spelas utomhus, på en telefon som någon tar med till tillfället. Gå igenom stegen nedan före det första tillfället."
       },
       "roblox_studio": {
-        "intro": "De här tillfällena byggs i Roblox Studio, Roblox eget gratisprogram för att göra spel. Alla som deltar behöver ett eget Roblox-konto och Studio installerat på datorn de ska använda."
+        "intro": "Tillfället använder Roblox Studio, Roblox gratisprogram för spelutveckling. Varje deltagare behöver ett eget Roblox-konto och Roblox Studio installerat på sin dator. Gå igenom stegen nedan före tillfället."
       }
     },
     "accountsOnlyIntro": {
-      "fortnite": "Till de här tillfällena tar vi med maskinerna, med Fortnite redan installerat – kvar för er är kontot och inställningarna som sitter på det.",
-      "rocket_league": "Till de här tillfällena tar vi med maskinerna, med Rocket League redan installerat. Kontot är den del som måste komma från er.",
-      "roblox_studio": "Till de här tillfällena tar vi med datorerna, med Roblox Studio redan installerat. Kontot kan vi inte ta med – det är alltså den enda saken att ordna i förväg."
+      "fortnite": "Vi tar med maskinerna till tillfället, med Fortnite redan installerat. Varje deltagare behöver ändå ett eget Epic Games-konto, med föräldrakontrollerna inställda på det. Gå igenom stegen nedan före tillfället.",
+      "rocket_league": "Vi tar med maskinerna till tillfället, med Rocket League redan installerat. Varje deltagare behöver ändå ett eget Epic Games-konto. Gå igenom steget nedan före tillfället.",
+      "roblox_studio": "Vi tar med datorerna till tillfället, med Roblox Studio redan installerat. Varje deltagare behöver ändå ett eget Roblox-konto. Gå igenom steget nedan före tillfället."
     },
-    "remoteOnlyIntro": "De här tillfällena hålls online, i ett röstrum. Det finns en sak att ordna före det första.",
+    "remoteOnlyIntro": "Tillfällena hålls online, i ett röstrum. Gå igenom steget nedan före det första tillfället.",
     "steps": {
       "minecraftJavaAccount": {
         "title": "Skaffa ett Microsoft-konto med Minecraft på",
-        "body": "Minecraft loggar in med ett Microsoft-konto. Finns det inget ännu skapar en förälder det och köper sedan ”Minecraft: Java & Bedrock Edition for PC” på det – <b>ett köp, inte en prenumeration</b>, och det täcker Java-versionen som de här tillfällena använder. När du sätter upp det får du välja ett Java-profilnamn: det är användarnamnet vi behöver för att släppa in dig på vår server, så skriv upp det någonstans där du hittar det igen.",
+        "body": "Minecraft loggar in med ett Microsoft-konto. Om deltagaren inte har ett skapar en förälder det och köper ”Minecraft: Java & Bedrock Edition for PC” på det kontot. Det är <b>ett köp, inte en prenumeration</b>, och det täcker Java-versionen som de här tillfällena använder. Under installationen efterfrågas ett Java-profilnamn. Det namnet är användarnamnet vi behöver för att lägga till deltagaren i vår Minecraft-värld, så skriv upp det någonstans där det går att hitta igen.",
         "linkLabel": "Skaffa Minecraft för PC"
       },
       "minecraftJavaInstall": {
         "title": "Installera Minecraft Launcher",
-        "body": "Installera Minecraft Launcher på datorn du ska använda på tillfällena – nedladdningen ligger på samma Minecraft-sida som du köpte från – och logga in med samma Microsoft-konto."
+        "body": "Installera Minecraft Launcher på datorn som används på tillfället. Nedladdningen ligger på samma Minecraft-sida som spelet köptes från. Logga in med samma Microsoft-konto."
       },
       "minecraftJavaLaunch": {
-        "title": "Öppna Minecraft en gång i förväg",
-        "body": "Starta launchern, låt den bli klar med uppdateringarna, öppna spelet fram till huvudmenyn och stäng det igen. Den första uppdateringen kan ta en stund, och att få den undanstökad nu betyder att tillfället inte börjar med en nedladdning."
+        "title": "Öppna Minecraft en gång före det första tillfället",
+        "body": "Starta launchern och låt den bli klar med uppdateringarna. Öppna spelet fram till huvudmenyn och stäng det sedan igen. Den första uppdateringen kan ta en stund, och att göra den nu betyder att tillfället inte börjar med en nedladdning."
       },
       "minecraftEducationInstall": {
         "title": "Installera Minecraft Education",
-        "body": "Minecraft Education är en gratis nedladdning från Microsoft Store eller från Minecraft Educations egen webbplats. Installera det på datorn du ska använda och öppna det en gång för att se att det startar. Det finns inget konto att skapa: School of Gaming tillhandahåller inloggningarna vid första tillfället, så spelet självt är allt du behöver.",
+        "body": "Minecraft Education är en gratis nedladdning från Microsoft Store eller från Minecraft Educations egen webbplats. Installera det på datorn som används på tillfället. Öppna det en gång för att se att det startar. Det finns inget konto att skapa. School of Gaming tillhandahåller inloggningarna vid första tillfället, så deltagaren behöver bara själva spelet.",
         "linkLabel": "Skaffa Minecraft Education"
       },
       "minecraftBedrockAccount": {
-        "title": "Logga in med ett Microsoft-konto",
-        "body": "Minecraft Bedrock spelas online via ett Microsoft-konto, och kontots gamertag är så vi hittar dig och lägger till dig i våra världar. Finns det inget konto ännu skapar en förälder det, med rätt födelsedatum – Microsoft använder det för att avgöra vilka onlinefunktioner som är påslagna. Skriv upp din gamertag; vi kommer att fråga efter den."
+        "title": "Skapa ett Microsoft-konto",
+        "body": "Minecraft Bedrock spelas online via ett Microsoft-konto. Kontots gamertag är så vi hittar deltagaren och lägger till hen i våra världar. Om deltagaren inte har ett konto ännu skapar en förälder det. Ange deltagarens rätta födelsedatum, eftersom Microsoft använder åldersuppgiften för att avgöra vilka onlinefunktioner som är påslagna. Skriv upp gamertaggen. Vi kommer att fråga efter den."
       },
       "minecraftBedrockInstall": {
         "title": "Köp och installera Minecraft på rätt enhet",
-        "body": "Bedrock är samma spel sålt separat för varje enhet, och ett exemplar köpt till en enhet följer inte med till en annan – så <b>köp det på den enhet du faktiskt ska spela på</b>, oavsett om det är en konsol, en telefon, en surfplatta eller en Windows-dator.",
-        "linkLabel": "Välj din enhet"
+        "body": "Bedrock är samma spel sålt separat för varje enhet, och ett exemplar köpt till en enhet fungerar inte på en annan. <b>Köp det på den enhet deltagaren faktiskt ska spela på</b>, oavsett om det är en konsol, en telefon, en surfplatta eller en Windows-dator.",
+        "linkLabel": "Välj enheten"
       },
       "minecraftBedrockOnline": {
         "title": "Kontrollera att onlinespel fungerar",
-        "body": "Öppna Minecraft på den enheten, logga in med Microsoft-kontot och se till att du kommer fram till skärmen för onlinespel. På Xbox, PlayStation och Nintendo Switch kräver spel med andra dessutom konsolens eget betalda onlinemedlemskap."
+        "body": "Öppna Minecraft på den enheten och logga in med Microsoft-kontot. Kontrollera att skärmen för onlinespel öppnas. På Xbox, PlayStation och Nintendo Switch kräver spel med andra dessutom konsolens eget betalda onlinemedlemskap."
       },
       "fortniteAccount": {
         "title": "Skapa ett Epic Games-konto",
-        "body": "Fortnite är gratis att spela och loggar in med ett gratis Epic Games-konto. Finns det inget ännu skapar en förälder det, med rätt födelsedatum – Epic använder det för att avgöra vilka chatt- och sociala funktioner som är tillgängliga. Skriv upp visningsnamnet; det är så vi hittar dig."
+        "body": "Fortnite är gratis att spela och loggar in med ett gratis Epic Games-konto. Om deltagaren inte har ett ännu skapar en förälder det. Ange deltagarens rätta födelsedatum, eftersom Epic använder åldersuppgiften för att avgöra vilka chatt- och sociala funktioner som är tillgängliga. Skriv upp visningsnamnet. Det är så vi hittar deltagaren."
       },
       "fortniteControls": {
         "title": "Ställ in föräldrakontrollerna",
-        "body": "Epics föräldrakontroller sitter på kontot i stället för på en enhet, så de följer med spelaren överallt. En förälder väljer en sexsiffrig PIN-kod och bestämmer vad som är tillåtet – vem som får chatta, och om ett köp kräver PIN-koden. Spelet självt kostar ingenting; det är de valfria extrasakerna det här håller efter."
+        "body": "Epics föräldrakontroller sitter på kontot i stället för på en enhet, så de följer deltagaren till varje enhet. En förälder väljer en sexsiffrig PIN-kod och bestämmer vad som är tillåtet: vem som får chatta, och om ett köp kräver PIN-koden. Spelet självt kostar ingenting. Kontrollerna finns till för de valfria extrasakerna."
       },
       "fortniteInstall": {
         "title": "Installera Fortnite",
-        "body": "Installera Fortnite på enheten du ska använda på tillfällena och logga in med Epic Games-kontot. Öppna det en gång och låt det uppdatera: den första nedladdningen är stor och görs hellre dagen innan än fem minuter innan.",
+        "body": "Installera Fortnite på enheten som används på tillfället och logga in med Epic Games-kontot. Öppna det en gång och låt det uppdatera. Den första nedladdningen är stor, så den görs hellre dagen innan än fem minuter innan.",
         "linkLabel": "Skaffa Fortnite"
       },
       "fortniteCrossplay": {
         "title": "Låt crossplay vara påslaget",
-        "body": "Crossplay är det som gör att alla kan spela tillsammans oavsett enhet. Det är påslaget som standard; om det har stängts av i spelets inställningar, slå på det igen före tillfället."
+        "body": "Crossplay är det som gör att alla kan spela tillsammans oavsett enhet. Det är påslaget som standard. Om det har stängts av i spelets inställningar, slå på det igen före tillfället."
       },
       "rocketLeagueAccount": {
         "title": "Skapa ett Epic Games-konto",
-        "body": "Rocket League är gratis att spela och loggar in med ett gratis Epic Games-konto – samma sorts konto som Fortnite använder, så ett som redan finns fungerar även här. Finns det inget skapar en förälder det, med rätt födelsedatum. Skriv upp visningsnamnet; det är så vi hittar dig."
+        "body": "Rocket League är gratis att spela och loggar in med ett gratis Epic Games-konto, samma sort som Fortnite använder. Om deltagaren redan har ett fungerar det även här. Om det inte finns något ännu skapar en förälder det. Ange deltagarens rätta födelsedatum. Skriv upp visningsnamnet. Det är så vi hittar deltagaren."
       },
       "rocketLeagueInstall": {
         "title": "Installera Rocket League",
-        "body": "Installera Rocket League på enheten du ska använda – det är gratis på Windows-dator, PlayStation, Xbox och Nintendo Switch. Öppna det en gång före tillfället och låt det uppdatera klart.",
+        "body": "Installera Rocket League på enheten som används på tillfället. Det är gratis på Windows-dator, PlayStation, Xbox och Nintendo Switch. Öppna det en gång före tillfället och låt det uppdatera klart.",
         "linkLabel": "Skaffa Rocket League"
       },
       "rocketLeagueCrossplay": {
         "title": "Låt spel mellan plattformar vara påslaget",
-        "body": "Spel mellan plattformar är det som gör att ingens enhet behöver vara samma som någon annans. Det är påslaget som standard; om det har stängts av i inställningarna, slå på det igen så att hela gruppen får plats i samma match."
+        "body": "Spel mellan plattformar betyder att deltagarens enhet inte behöver vara samma som någon annans. Det är påslaget som standard. Om det har stängts av i inställningarna, slå på det igen så att hela gruppen får plats i samma match."
       },
       "pokemonGoInstall": {
         "title": "Installera Pokémon GO på telefonen",
-        "body": "Pokémon GO är gratis, och det installeras på den telefon som tas med till tillfället – från App Store på en iPhone, eller Google Play på en Android-telefon. Det är enbart ett telefonspel: det finns ingen version för dator eller konsol."
+        "body": "Pokémon GO är gratis, och det installeras på den telefon som tas med till tillfället. Hämta det från App Store på en iPhone, eller från Google Play på en Android-telefon. Det är enbart ett telefonspel. Det finns ingen version för dator eller konsol."
       },
       "pokemonGoAccount": {
         "title": "Skapa ett konto",
-        "body": "Att spela kräver ett konto, som spelet erbjuder sig att skapa första gången det öppnas. För ett barn under 13 år sätter en förälder upp det och länkar det till sitt eget, vilket är det som håller inställningarna i en förälders händer. Skriv upp tränarnamnet; det är så vi hittar dig."
+        "body": "Att spela kräver ett konto, och spelet erbjuder sig att skapa ett första gången det öppnas. För en deltagare under 13 år skapar en förälder kontot och länkar det till sitt eget, vilket håller inställningarna i en förälders händer. Skriv upp tränarnamnet. Det är så vi hittar deltagaren."
       },
       "pokemonGoPhone": {
         "title": "Ladda telefonen och kolla inställningarna",
-        "body": "Spelet håller skärmen, GPS:en och mobildatan igång hela tiden det är öppet, och det drar batteri fort. Före tillfället: ladda telefonen, kontrollera att plats och mobildata är påslagna, och ta med en powerbank om det finns en hemma."
+        "body": "Spelet håller skärmen, GPS:en och mobildatan igång hela tiden det är öppet, och batteriet tar snabbt slut. Ladda telefonen före tillfället. Kontrollera att plats och mobildata är påslagna. Ta med en powerbank om det finns en hemma."
       },
       "pokemonGoAgree": {
-        "title": "Kom överens om vart ni går",
-        "body": "Pokémon GO spelas utomhus på riktiga platser, så kom överens i förväg om vilka gator och parker som gäller, om en vuxen följer med och hur ni får tag på varandra under tillfället. Blicken uppåt och koll på trafiken – telefonen kan vänta."
+        "title": "Kom överens om vart deltagaren går",
+        "body": "Pokémon GO spelas utomhus på riktiga platser. Kom överens i förväg om vilka gator och parker som gäller, om en vuxen följer med och hur ni får tag på varandra under tillfället. Påminn deltagaren om att hålla koll på trafiken. Telefonen kan vänta."
       },
       "robloxStudioAccount": {
-        "title": "Se till att det finns ett Roblox-konto",
-        "body": "Alla som deltar behöver ett eget Roblox-konto. Finns det redan ett är det det som ska användas. Finns det inget skapar en förälder det, med rätt födelsedatum – Roblox använder det för att avgöra vilka funktioner och vilket innehåll som är tillgängliga. Se till att du vet användarnamnet, kommer åt lösenordet när det behövs och kan logga in på datorn du ska använda. <b>Behåll lösenordet för er själva</b>: ingen från School of Gaming kommer någonsin att fråga efter det."
+        "title": "Skapa ett Roblox-konto",
+        "body": "Om deltagaren redan har ett eget Roblox-konto behöver inget nytt skapas. Om det inte finns något konto ännu, <b>skapa ett åt deltagaren</b>. Ange deltagarens rätta födelsedatum, eftersom Roblox använder åldersuppgiften för att avgöra vilka funktioner och vilket innehåll som är tillgängliga. Se till att deltagaren kan sitt Roblox-användarnamn, kan sitt lösenord eller kommer åt det vid behov, och kan logga in på sitt konto på datorn som används under tillfället. Skicka inte deltagarens lösenord till din Gedu, vårt ord för en spelfostrare."
       },
       "robloxStudioInstall": {
         "title": "Installera Roblox Studio",
-        "body": "Roblox Studio är Roblox eget program för att göra spel, och det är gratis. Öppna Roblox Creator Hub, logga in med Roblox-kontot och följ instruktionerna där för att ladda ner och installera Studio. När det är klart, öppna Studio och logga in med samma konto. Därefter beter det sig som vilket annat program som helst på datorn.",
-        "linkLabel": "Öppna Roblox Creator Hub"
+        "body": "Under tillfället använder vi Roblox Studio, Roblox gratisprogram för spelutveckling. Gå till Roblox Creator Hub och logga in med deltagarens Roblox-konto. Följ instruktionerna på sidan för att ladda ner och installera Roblox Studio. När installationen är klar, öppna Roblox Studio och logga in med deltagarens Roblox-konto. När det väl är installerat fungerar Roblox Studio som vilket annat program som helst på din dator.",
+        "linkLabel": "Gå till Roblox Creator Hub"
       },
       "robloxStudioTest": {
         "title": "Testa allt före första tillfället",
-        "body": "En snabb genomgång nu sparar de tio första minuterna av tillfället:"
+        "body": "Vi rekommenderar ett snabbt test före tillfället:"
       },
       "remoteSession": {
-        "title": "Gör mikrofonen och kameran redo",
-        "body": "Tillfället hålls i ett röstrum som körs i en webbläsare, på den enhet som passar er bäst: datorn som spelet finns på, eller en telefon eller surfplatta bredvid en konsol. Ett headset eller hörlurar med mikrofon fungerar bäst, så att spelets ljud inte ekar tillbaka till alla andra. Första gången du går med frågar webbläsaren om lov att använda mikrofonen och kameran — ge det. Kameran är frivillig, men att slå på den hjälper din Gedu — spelfostraren som leder tillfället — att se att alla i rummet är den de säger att de är. Leta upp en lugn plats, och gå med några minuter tidigare första gången."
+        "title": "Ställ in mikrofonen och kameran",
+        "body": "Tillfället hålls i ett röstrum som körs i en webbläsare. Deltagaren kan gå med på vilken enhet som helst: datorn som spelet finns på, eller en telefon eller surfplatta bredvid en konsol. Ett headset eller hörlurar med mikrofon fungerar bäst, så att spelets ljud inte ekar tillbaka till alla andra. Första gången deltagaren går med frågar webbläsaren om lov att använda mikrofonen och kameran. Ge det. Kameran är frivillig. Att slå på den hjälper din Gedu, vårt ord för en spelfostrare, att se att alla i rummet är den de säger att de är. Leta upp en lugn plats, och gå med några minuter tidigare första gången."
       }
     },
     "platformNotes": {
       "robloxStudioWindows": {
         "title": "På Windows",
-        "body": "Öppna Start-menyn eller Windows sökfunktion, skriv Roblox Studio och välj det bland resultaten."
+        "body": "Öppna Start-menyn eller Windows sökfunktion och skriv Roblox Studio. Välj sedan Roblox Studio bland sökresultaten."
       },
       "robloxStudioMac": {
         "title": "På Mac",
-        "body": "Öppna Spotlight eller mappen Program och sök efter Roblox Studio."
+        "body": "Öppna Spotlight-sökningen eller mappen Program och sök efter Roblox Studio."
       }
     },
     "checklist": {
       "robloxStudioTestOpen": "Öppna Roblox Studio.",
-      "robloxStudioTestSignIn": "Logga in med Roblox-kontot.",
-      "robloxStudioTestHome": "Kontrollera att Studios startskärm öppnas som den ska.",
-      "robloxStudioTestClose": "Stäng Roblox Studio igen."
+      "robloxStudioTestSignIn": "Logga in med deltagarens Roblox-konto.",
+      "robloxStudioTestHome": "Se till att Roblox Studios startskärm öppnas normalt.",
+      "robloxStudioTestClose": "Stäng Roblox Studio."
     }
   },
   "sidebar": {

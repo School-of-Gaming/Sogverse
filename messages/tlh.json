@@ -2049,7 +2049,7 @@
           "linkLabel": "nuqDaq Suqlu’"
         },
         "minecraft_education": {
-          "description": "Minecraft ’oH chenmoHmeH Quj quv’e’. nagh qo’Daq lengtaH puqpu’, Doch luSuq, qachmey’a’ luchenmoH. Minecraft Education ’oH ghojmoHmeH pa’vaD chenmoHbogh mIllogh: rap chenmoHmeH qo’ Dun, ’ach ghojmoHwI’vaD jan chu’mey, ’ej ghojmoHwI’ Dev, mob Quj net qaSmoHbe’.",
+          "description": "Minecraft ’oH chenmoHmeH Quj quv’e’. nagh qo’Daq lengtaH puqpu’, Doch luSuq, qachmey’a’ luchenmoH. Minecraft Education ’oH Devlu’bogh ghommeyvaD chenmoHbogh mIllogh. rap chenmoHmeH qo’ Dun, ’ej ghomHom Devbogh nuv tInvaD jan chu’mey tu’lu’.",
           "note": "pagh yIje’ ’ej ghojwI’choH pat pong yInIDQo’ – Minecraft Education pongmey nob School of Gaming, ’ej ghomHommeyDaq lulo’ QujwI’pu’. Hop ghojmoHghachmeyvaD, Quj naQ DIl HInobbe’: Microsoft Store pagh Minecraft Education Daq yISuq; Windows De’wI’, Mac, iPad, Chromebook je Qop.",
           "linkLabel": "Minecraft Education De’"
         },
@@ -2203,63 +2203,63 @@
     "dialogTitle": "wa’DIch ghomHom qaSpa’",
     "triggerLabel": "yIghuS",
     "readyLabel": "jIghuSpu’",
-    "closing": "Hoch Qu’ qaSpa’ ta’lu’bogh ta’lu’pu’. wa’DIch ghomHomDaq qaleghqa’!",
+    "closing": "Hoch Qapchugh, ghomHomvaD bIghuHpu’!",
     "topics": {
       "minecraft_java": {
-        "intro": "ghomHomvamDaq De’wI’Daq Minecraft luQuj, Java mIllogh lo’lu’. wa’DIch qaSpa’ bIngDaq mIwmey yIta’ – vaj jajvetlhDaq pagh Qatlh."
+        "intro": "ghomHomvamDaq De’wI’Daq Minecraft luQuj, Java mIllogh lo’lu’. Hoch QujwI’ Minecraft ngaSbogh Microsoft pong poQ, ’ej lo’bogh De’wI’Daq Minecraft Launcher poQ. wa’DIch ghomHom qaSpa’ bIngDaq mIwmey yIta’."
       },
       "minecraft_education": {
-        "intro": "ghomHomvamDaq Minecraft Education lo’lu’, ’ej DIl HInobbe’. wa’DIch ghomHomDaq pongmey nob School of Gaming, vaj qaSpa’ puS Qu’ neH DaghajnIS."
+        "intro": "ghomHomvamDaq Minecraft Education lo’lu’, ’ej DIl HInobbe’. wa’DIch ghomHomDaq pongmey nob School of Gaming, vaj qaSpa’ wa’ Qu’ neH tu’lu’."
       },
       "minecraft_bedrock": {
-        "intro": "ghomHomvamDaq tay’ Minecraft Bedrock luQuj online. wa’DIch qaSpa’ Dochvam yIghuHmoH."
+        "intro": "ghomHomvamDaq tay’ Minecraft Bedrock luQuj online. Hoch QujwI’ Microsoft pong poQ, ’ej Qujbogh janDaq Minecraft poQ. wa’DIch ghomHom qaSpa’ bIngDaq mIwmey yIta’."
       },
       "fortnite": {
-        "intro": "Fortnite DIl HInobbe’, ’ej ghomHomvamDaq tay’ luQuj. wa’DIch qaSpa’ Dochvam yIghuHmoH."
+        "intro": "Fortnite DIl HInobbe’, ’ej ghomHomvamDaq tay’ luQuj. Hoch QujwI’ tlhab Epic Games pong poQ, ’ej lo’bogh janDaq Fortnite poQ. wa’DIch ghomHom qaSpa’ bIngDaq mIwmey yIta’."
       },
       "rocket_league": {
-        "intro": "Rocket League DIl HInobbe’, ’ej Hoch ghomHom tay’ luQuj. wa’DIch qaSpa’ Dochvam yIghuHmoH."
+        "intro": "Rocket League DIl HInobbe’, ’ej Hoch ghomHom tay’ luQuj. Hoch QujwI’ tlhab Epic Games pong poQ, ’ej lo’bogh janDaq Rocket League poQ. wa’DIch ghomHom qaSpa’ bIngDaq mIwmey yIta’."
       },
       "pokemon_go": {
-        "intro": "Hurgh Qujlu’ Pokémon GO, telateghDaq — vaj telategh ’ej nab yIghuHmoH."
+        "intro": "Hurgh Qujlu’ Pokémon GO, telateghDaq – ghomHomvaD qenglu’bogh telategh. wa’DIch ghomHom qaSpa’ bIngDaq mIwmey yIta’."
       },
       "roblox_studio": {
-        "intro": "ghomHomvamDaq Roblox Studio lo’lu’, Roblox Quj chenmoHmeH jan tlhab. Hoch QujwI’ Roblox pong Daj ghaj ’ej De’wI’Daj Studio ngaS."
+        "intro": "ghomHomDaq Roblox Studio lo’lu’, Roblox Quj chenmoHmeH jan tlhab. Hoch QujwI’ Roblox pong Daj poQ, ’ej De’wI’Daj Roblox Studio poQ. ghomHom qaSpa’ bIngDaq mIwmey yIta’."
       }
     },
     "accountsOnlyIntro": {
-      "fortnite": "ghomHomvamvaD janmey wIqem, ’ej Fortnite ngaSpu’ – vaj pong ’ej lojmIt che’meH Dochmey neH Daghaj.",
-      "rocket_league": "ghomHomvamvaD janmey wIqem, ’ej Rocket League ngaSpu’. pong yInob SoH.",
-      "roblox_studio": "ghomHomvamvaD De’wI’mey wIqem, ’ej Roblox Studio ngaSpu’. pong wIqemlaHbe’ – vaj wa’ Qu’ neH Daghaj."
+      "fortnite": "ghomHomvaD janmey wIqem, ’ej Fortnite ngaSpu’. ’ach Hoch QujwI’ Epic Games pong Daj poQ, ’ej pongvetlhDaq lojmIt che’wI’ chenmoHlu’nIS. ghomHom qaSpa’ bIngDaq mIwmey yIta’.",
+      "rocket_league": "ghomHomvaD janmey wIqem, ’ej Rocket League ngaSpu’. ’ach Hoch QujwI’ Epic Games pong Daj poQ. ghomHom qaSpa’ bIngDaq mIw yIta’.",
+      "roblox_studio": "ghomHomvaD De’wI’mey wIqem, ’ej Roblox Studio ngaSpu’. ’ach Hoch QujwI’ Roblox pong Daj poQ. ghomHom qaSpa’ bIngDaq mIw yIta’."
     },
-    "remoteOnlyIntro": "online qaS ghomHomvam, QIchmeH pa’Daq. wa’DIch qaSpa’ wa’ Qu’ neH tu’lu’.",
+    "remoteOnlyIntro": "online qaS ghomHomvam, QIchmeH pa’Daq. wa’DIch ghomHom qaSpa’ bIngDaq mIw yIta’.",
     "steps": {
       "minecraftJavaAccount": {
         "title": "Minecraft ngaSbogh Microsoft pong yISuq",
-        "body": "Microsoft pongDaq ’el Minecraft. pagh tu’lu’chugh, pong chenmoH vav, ’ej pongvetlhDaq ”Minecraft: Java & Bedrock Edition for PC” je’ – <b>wa’logh DIl, tlhachID ghobe’</b> – ’ej ghomHomvam lo’bogh Java mIllogh ngaS. Java pong DawIvnIS: pongvam wIpoQ, server-ma’Daq bI’elmeH, vaj yIqon ’ej DaSammeH Daq yIwIv.",
+        "body": "Microsoft pongDaq ’el Minecraft. pong ghajbe’chugh QujwI’, pong chenmoH vav, ’ej pongvetlhDaq ”Minecraft: Java & Bedrock Edition for PC” je’. <b>wa’logh DIl, tlhachID ghobe’</b>, ’ej ghomHomvam lo’bogh Java mIllogh ngaS. Java pong tlhoblu’. pongvetlh wIpoQ, Minecraft qo’majDaq QujwI’ wIchelmeH. yIqon ’ej DaSamqa’meH Daq yIwIv.",
         "linkLabel": "De’wI’vaD Minecraft yIje’"
       },
       "minecraftJavaInstall": {
         "title": "Minecraft Launcher yIlan",
-        "body": "ghomHommeyvaD Dalo’bogh De’wI’Daq Minecraft Launcher yIlan – Minecraft Daq je’bogh SoH, Daqvetlhvo’ yISuq – ’ej Microsoft pong rap yIlo’ bI’elmeH."
+        "body": "ghomHomvaD lo’lu’bogh De’wI’Daq Minecraft Launcher yIlan. Quj je’lu’bogh Minecraft Daq rapvo’ yISuq. Microsoft pong rap yIlo’ bI’elmeH."
       },
       "minecraftJavaLaunch": {
-        "title": "wa’logh Minecraft yIpoSmoH qaSpa’",
+        "title": "wa’DIch ghomHom qaSpa’ wa’logh Minecraft yIpoSmoH",
         "body": "launcher yIchu’, chu’qa’ghach rInmoHjaj, Quj DevmeH tetlh yISam, ’ej yISoQmoH. tugh qaSbe’ wa’DIch chu’qa’ghach, ’ej DaH DaghurmoHchugh, SuqmeH poH lo’be’ ghomHom."
       },
       "minecraftEducationInstall": {
         "title": "Minecraft Education yIlan",
-        "body": "DIl HInobbe’ Minecraft Education: Microsoft Store pagh Minecraft Education Daq yISuq. Dalo’bogh De’wI’Daq yIlan ’ej wa’logh yIpoSmoH, vaj Qapbej. pong chenmoHnISbe’lu’: wa’DIch ghomHomDaq pongmey nob School of Gaming, vaj Quj neH poQlu’.",
+        "body": "DIl HInobbe’ Minecraft Education: Microsoft Store pagh Minecraft Education Daq yISuq. ghomHomvaD lo’lu’bogh De’wI’Daq yIlan. wa’logh yIpoSmoH ’ej Qapbej net yInuD. pong chenmoHnISbe’lu’. wa’DIch ghomHomDaq pongmey nob School of Gaming, vaj Quj neH poQ QujwI’.",
         "linkLabel": "Minecraft Education yISuq"
       },
       "minecraftBedrockAccount": {
-        "title": "Microsoft pong yIlo’ bI’elmeH",
-        "body": "Microsoft pong lo’taHvIS online Qujlu’ Minecraft Bedrock, ’ej pongvetlh gamertag lo’ma’, DaSammeH ’ej qo’meymajDaq DachelmeH. pong tu’lu’be’chugh, chenmoH vav, ’ej qoS teH lo’ – online Dochmey chu’bogh wIv Microsoft. gamertag yIqon; wIpoQbej."
+        "title": "Microsoft pong yIchenmoH",
+        "body": "Microsoft pong lo’taHvIS online Qujlu’ Minecraft Bedrock. pongvetlh gamertag lo’ma’, QujwI’ DaSammeH ’ej qo’meymajDaq DachelmeH. pong ghajbe’chugh QujwI’, pong chenmoH vav. QujwI’ qoS teH yIghItlh: online Dochmey chu’bogh wIvmeH ben De’ lo’ Microsoft. gamertag yIqon. wIpoQbej."
       },
       "minecraftBedrockInstall": {
         "title": "jan lI’Daq Minecraft yIje’ ’ej yIlan",
-        "body": "rap Quj Bedrock, ’ach jan Hoch je’lu’, ’ej wa’ janvaD je’lu’bogh latlh janDaq jaHbe’ – vaj <b>bIQujbogh janDaq yIje’</b>, qImroQ, telategh, tablet, Windows De’wI’ ghap.",
-        "linkLabel": "janlIj yIwIv"
+        "body": "rap Quj Bedrock, ’ach jan Hoch je’lu’, ’ej wa’ janvaD je’lu’bogh latlh janDaq Qapbe’. <b>QujwI’ Qujbogh janDaq yIje’</b>, qImroQ, telategh, tablet, Windows De’wI’ ghap.",
+        "linkLabel": "jan yIwIv"
       },
       "minecraftBedrockOnline": {
         "title": "online Quj Qap’a’? yInuD",
@@ -2267,11 +2267,11 @@
       },
       "fortniteAccount": {
         "title": "Epic Games pong yIchenmoH",
-        "body": "DIl HInobbe’ Fortnite, ’ej tlhab Epic Games pongDaq ’el. pagh tu’lu’chugh, chenmoH vav, ’ej qoS teH lo’ – ja’chuqmeH ’ej ghomchuqmeH Dochmey chu’bogh wIv Epic. pong ’angbogh yIqon; DaSammeH lo’ma’."
+        "body": "DIl HInobbe’ Fortnite, ’ej tlhab Epic Games pongDaq ’el. pong ghajbe’chugh QujwI’, pong chenmoH vav. QujwI’ qoS teH yIghItlh: ja’chuqmeH ’ej ghomchuqmeH Dochmey chu’bogh wIvmeH ben De’ lo’ Epic. pong ’angbogh yIqon. QujwI’ DaSammeH lo’ma’."
       },
       "fortniteControls": {
         "title": "lojmIt che’wI’ yIchu’",
-        "body": "janDaq ratlhbe’ Epic lojmIt che’wI’, pongDaq ratlh, vaj Hoch DaqDaq QujwI’ tlha’. jav mI’ PIN wIv vav, ’ej chaw’bogh wIv – ’Iv ja’chuqlaH, ’ej PIN poQ’a’ je’ghach. DIl HInobbe’ Quj naQ; wejwI’ Dachmey neH jey."
+        "body": "janDaq ratlhbe’ Epic lojmIt che’wI’, pongDaq ratlh, vaj Hoch janDaq QujwI’ tlha’. jav mI’ PIN wIv vav, ’ej chaw’bogh wIv: ’Iv ja’chuqlaH, ’ej PIN poQ’a’ je’ghach. DIl HInobbe’ Quj naQ. wejwI’ Dachmey neH jeymeH tu’lu’ lojmIt che’wI’."
       },
       "fortniteInstall": {
         "title": "Fortnite yIlan",
@@ -2284,7 +2284,7 @@
       },
       "rocketLeagueAccount": {
         "title": "Epic Games pong yIchenmoH",
-        "body": "DIl HInobbe’ Rocket League, ’ej tlhab Epic Games pongDaq ’el – Fortnite pong rur, vaj pong tu’lu’bogh lI’bej. pagh tu’lu’chugh, chenmoH vav, ’ej qoS teH lo’. pong ’angbogh yIqon; DaSammeH lo’ma’."
+        "body": "DIl HInobbe’ Rocket League, ’ej tlhab Epic Games pongDaq ’el – Fortnite pong rur. pong ghaj QujwI’chugh, lI’bej. pong ghajbe’chugh, pong chenmoH vav. QujwI’ qoS teH yIghItlh. pong ’angbogh yIqon. QujwI’ DaSammeH lo’ma’."
       },
       "rocketLeagueInstall": {
         "title": "Rocket League yIlan",
@@ -2293,7 +2293,7 @@
       },
       "rocketLeagueCrossplay": {
         "title": "jan Hoch-Quj yIchu’taH",
-        "body": "jan Hoch-Quj lo’lu’chugh, janlIj rap jan poQbe’lu’. chu’bej; DuHmeyDaq chu’Ha’lu’pu’chugh, yIchu’qa’, vaj Suv’a’ rapDaq ghom naQ."
+        "body": "jan Hoch-Quj lo’lu’chugh, QujwI’ jan rap jan poQbe’lu’. chu’bej. DuHmeyDaq chu’Ha’lu’pu’chugh, yIchu’qa’, vaj Suv’a’ rapDaq ghom naQ."
       },
       "pokemonGoInstall": {
         "title": "telateghDaq Pokémon GO yIlan",
@@ -2301,38 +2301,38 @@
       },
       "pokemonGoAccount": {
         "title": "pong yIchenmoH",
-        "body": "QujmeH pong poQlu’, ’ej wa’DIch poSlu’DI’, chenmoHmeH nob Quj. wa’maH wej ben puqvaD, chenmoH vav ’ej pongDajDaq rIymoH, vaj vav ghopDaq ratlh DuHmey. QujwI’ pong yIqon; DaSammeH lo’ma’."
+        "body": "QujmeH pong poQlu’, ’ej wa’DIch poSlu’DI’, chenmoHmeH nob Quj. wa’maH wej ben QujwI’vaD, chenmoH vav ’ej pongDajDaq rIymoH, vaj vav ghopDaq ratlh DuHmey. QujwI’ pong yIqon. QujwI’ DaSammeH lo’ma’."
       },
       "pokemonGoPhone": {
         "title": "telategh yIHoSmoH ’ej DuHmey yInuD",
         "body": "poSlu’taHvIS, HoS jan, GPS, De’ je vumtaH Quj, ’ej tugh HoS natlh. ghomHom qaSpa’: telategh yIHoSmoH, Daq-Sam ’ej mobile-data chu’bej net yInuD, ’ej HoS ngaSwI’ tu’lu’chugh juHDaq, yIqem."
       },
       "pokemonGoAgree": {
-        "title": "nuqDaq SujaH? yIqelchuq",
-        "body": "Daq teHDaq, Hurgh Qujlu’ Pokémon GO, vaj qaSpa’ yIqelchuq: nuq He, nuq wIch chaw’lu’, ghaH tlhej’a’ nuv tIn, ’ej ghomHom qaSDI’ chay’ Suja’chuq. yIleghtaH ’ej He yInuD – loStaHlaH telategh."
+        "title": "nuqDaq jaH QujwI’? yIqelchuq",
+        "body": "Daq teHDaq, Hurgh Qujlu’ Pokémon GO. qaSpa’ yIqelchuq: nuq He, nuq wIch chaw’lu’, ghaH tlhej’a’ nuv tIn, ’ej ghomHom qaSDI’ chay’ Suja’chuq. He nuDtaHjaj QujwI’ ’e’ yIqaw. loStaHlaH telategh."
       },
       "robloxStudioAccount": {
-        "title": "Roblox pong tu’lu’’a’? yInuD",
-        "body": "Hoch QujwI’ Roblox pong Daj poQ. tu’lu’chugh, ’oH yIlo’. tu’lu’be’chugh, chenmoH vav, ’ej qoS teH lo’ – Dochmey ’ej Doch ngaSbogh chu’bogh wIv Roblox. pong yISov, poQlu’DI’ pegh mu’ yISuqlaH, ’ej Dalo’bogh De’wI’Daq bI’ellaH net yIchech. <b>pegh mu’ tISo’</b>: not Sutlhbogh School of Gaming nuv poQ."
+        "title": "Roblox pong yIchenmoH",
+        "body": "Roblox pong Daj ghaj QujwI’chugh, chu’ pong chenmoHnISbe’lu’. pong ghajbe’chugh, <b>ghaHvaD wa’ yIchenmoH</b>. QujwI’ qoS teH yIghItlh: Dochmey ’ej Doch ngaSbogh chu’bogh wIvmeH ben De’ lo’ Roblox. Roblox pong Daj Sov QujwI’, pegh mu’ Daj Sov pagh poQlu’DI’ SuqlaH, ’ej ghomHomvaD lo’bogh De’wI’Daq pong Dajdaq ’ellaH net yIchech. Gedu — ghojmoHwI’ pongmaj — QujwI’ pegh mu’ yInobQo’."
       },
       "robloxStudioInstall": {
         "title": "Roblox Studio yIlan",
-        "body": "Roblox Quj chenmoHmeH jan ’oH Roblox Studio’e’, ’ej DIl HInobbe’. Roblox Creator Hub yIpoSmoH, Roblox pongvetlh yIlo’ bI’elmeH, ’ej pa’ chutmey yItlha’, Studio DaSuqmeH ’ej DalanmeH. rInDI’, Studio yIpoSmoH ’ej pong rap yIlo’. vaj De’wI’Daq latlh jan rur.",
-        "linkLabel": "Roblox Creator Hub yIpoSmoH"
+        "body": "ghomHomDaq Roblox Studio wIlo’, Roblox Quj chenmoHmeH jan tlhab. Roblox Creator Hub yIghoS ’ej QujwI’ Roblox pong yIlo’ bI’elmeH. Roblox Studio DaSuqmeH ’ej DalanmeH Daq chutmey yItlha’. rInDI’ langhach, Roblox Studio yIpoSmoH ’ej QujwI’ Roblox pong yIlo’ bI’elmeH. lanlu’pu’DI’, De’wI’lIjDaq latlh jan rur Roblox Studio.",
+        "linkLabel": "Roblox Creator Hub yIghoS"
       },
       "robloxStudioTest": {
         "title": "wa’DIch ghomHom qaSpa’ Hoch yInuD",
-        "body": "DaH nom yInuDchugh, ghomHom wa’DIch wa’maH tup DachIlbe’:"
+        "body": "ghomHom qaSpa’ nom yInuD ’e’ wIchup:"
       },
       "remoteSession": {
         "title": "QIchmeH jan ’ej mIllogh jan yIghuHmoH",
-        "body": "QIchmeH pa’Daq qaS ghomHom, ’ej jIH’a’ lo’bogh De’wI’Daq vumtaH pa’vam: Quj ngaSbogh De’wI’, pagh telategh, pagh nav De’wI’ console retlhDaq. QoghDu’lIj yIlo’ — QIchmeH jan ngaSbogh QoghDu’ QaQqu’, vaj latlhpu’vaD chuSqa’be’ Quj wab. wa’DIch bIjeSDI’, QIchmeH jan ’ej mIllogh jan lo’meH chaw’ tlhob jIH’a’ — yInob. mIllogh jan DapoSmoHnISbe’, ’ach DapoSmoHchugh, Gedu — ghomHom DevwI’, Quj ghojmoHwI’ — legh: pa’Daq ghaHtaHbogh Hoch ghaH ghaH ’e’ ja’bogh nuv’e’. tam Daq yISam, ’ej wa’DIchDaq puS tup nom yIjeS."
+        "body": "QIchmeH pa’Daq qaS ghomHom, ’ej jIH’a’ lo’bogh De’wI’Daq vumtaH pa’vam. Hoch janDaq jeSlaH QujwI’: Quj ngaSbogh De’wI’, pagh telategh, pagh nav De’wI’ console retlhDaq. QIchmeH jan ngaSbogh QoghDu’ QaQqu’, vaj latlhpu’vaD chuSqa’be’ Quj wab. wa’DIch jeSDI’ QujwI’, QIchmeH jan ’ej mIllogh jan lo’meH chaw’ tlhob jIH’a’. yInob. mIllogh jan DapoSmoHnISbe’. DapoSmoHchugh, Gedu — ghojmoHwI’ pongmaj — legh: pa’Daq ghaHtaHbogh Hoch ghaH ghaH ’e’ ja’bogh nuv’e’. tam Daq yISam, ’ej wa’DIchDaq puS tup nom yIjeS."
       }
     },
     "platformNotes": {
       "robloxStudioWindows": {
         "title": "WindowsDaq",
-        "body": "Start tetlh pagh Windows SammeH Daq yIpoSmoH, Roblox Studio yIghItlh, ’ej Sambogh mojaqmeyvo’ yIwIv."
+        "body": "Start tetlh pagh Windows SammeH Daq yIpoSmoH ’ej Roblox Studio yIghItlh. ghIq Sambogh mojaqmeyvo’ Roblox Studio yIwIv."
       },
       "robloxStudioMac": {
         "title": "MacDaq",
@@ -2341,8 +2341,8 @@
     },
     "checklist": {
       "robloxStudioTestOpen": "Roblox Studio yIpoSmoH.",
-      "robloxStudioTestSignIn": "Roblox pong yIlo’ bI’elmeH.",
-      "robloxStudioTestHome": "Studio taghmeH tetlh poSbej net yInuD.",
+      "robloxStudioTestSignIn": "QujwI’ Roblox pong yIlo’ bI’elmeH.",
+      "robloxStudioTestHome": "Roblox Studio taghmeH tetlh poSbej net yInuD.",
       "robloxStudioTestClose": "Roblox Studio yISoQmoH."
     }
   },
