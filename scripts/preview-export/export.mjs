@@ -1,17 +1,19 @@
 /**
  * Export a set of app pages — as the staging admin, in several locales, at both
- * widths — into **one PDF you can drop into a review**.
+ * widths — into **a handful of images you can drop into a Slack thread**.
  *
  * The owner's words for what it is for: *"It works well if I need to see a lot
  * of versions of a page with a given account and it would be too many steps to
  * do it manually. It's not only for checking copy but also a UI layout. UI
  * Previews already does most of this for me. This is mostly adding the
  * convenience so I can export some UI as a single view to share it in a
- * review."*
+ * review."* And for the shape of the output: *"it's more like I want a digitally
+ * rendered static preview of web pages in a single output format that someone
+ * can easily view in Slack."*
  *
  * So the tool is generic and the *list of pages is the input*: a *preset* names
  * the surfaces, and the tool signs in once, walks them, shoots each one, and
- * binds the lot into a contact sheet. `presets/topic-copy.mjs` is the first
+ * composes them into one image per group. `presets/topic-copy.mjs` is the first
  * one; a second review is a second preset, not a second script.
  *
  *   node scripts/preview-export/export.mjs --preset topic-copy
@@ -19,10 +21,10 @@
  *   node scripts/preview-export/export.mjs --pages ./my-pages.mjs --only minecraft_java--about
  *   node scripts/preview-export/export.mjs --selftest       # no app, no login
  *
- * Everything lands in `scripts/output/preview-export/<preset>-<date>/`: the PDF,
- * the contact sheet it was printed from, and every screenshot at full
- * resolution as `<slug>--<locale>--<viewport>.png`, so one picture can be
- * pasted on its own without being cut out of the PDF.
+ * Everything lands in `scripts/output/preview-export/<preset>-<date>/`: the
+ * composites as `<nn>-<group>.jpg`, an `index.html` that scrolls through them,
+ * and every capture at full resolution as `<slug>--<locale>--<viewport>.png`, so
+ * one page can be pasted on its own.
  *
  * ## What a preset looks like
  *
@@ -34,19 +36,16 @@
  *
  *   {
  *     slug,                      // unique; names the PNG
- *     label?, notes?,            // how the sheet titles and annotates it
+ *     label?,                    // how the composite labels this block
  *     route,                     // "/preview/…" or (locale) => "/preview/…";
  *                                //   the /{locale}/ prefix is added for you
  *     capture,                   // "viewport" | "fullPage" | { selector }
  *     waitFor?,                  // a selector to wait for before shooting
- *     text?,                     // (locale) => lines printed as selectable
- *                                //   text under the images
  *   }
  *
- * `text` is the generic form of "print the words as well as the picture": a
- * screenshot cannot be copied out of, and a reviewer fixing a Finnish sentence
- * wants to paste it into Slack. A copy review fills it from the message
- * catalog; a layout review leaves it out.
+ * **A group is one image**, so grouping is how a preset decides what a reader
+ * receives as a unit — and the tool refuses more than ten groups, because ten
+ * files is what one Slack message takes.
  *
  * ## Sign-in, and the one guard
  *
@@ -243,14 +242,6 @@ function planShots(preset) {
       for (const locale of LOCALES) {
         const route =
           typeof entry.route === "function" ? entry.route(locale) : entry.route;
-        // `text` is resolved once per locale rather than per viewport: both
-        // widths render the same words, and the sheet prints them once.
-        let text = [];
-        try {
-          text = entry.text?.(locale) ?? [];
-        } catch (error) {
-          text = [`(this preset's text() threw: ${String(error).slice(0, 120)})`];
-        }
         for (const viewport of VIEWPORTS) {
           shots.push({
             group: group.label,
@@ -261,7 +252,6 @@ function planShots(preset) {
             waitFor: entry.waitFor ?? null,
             locale,
             viewport: viewport.name,
-            text,
             url: `${BASE}/${locale}${route}`,
             file: `${entry.slug}--${locale}--${viewport.name}.png`,
           });
@@ -431,8 +421,18 @@ async function shoot(page, shot) {
       path: dest,
       fullPage: shot.capture === "fullPage",
     });
-    const size = page.viewportSize();
-    return { ...shot, state: "ok", width: size?.width ?? 0 };
+    // Measured off the file rather than off the viewport: a full-page shot is
+    // as tall as the document, which is the number the sheet has to lay out
+    // with, and only the PNG knows it.
+    const meta = await sharp(dest).metadata();
+    const scale =
+      VIEWPORTS.find((v) => v.name === shot.viewport)?.deviceScaleFactor ?? 1;
+    return {
+      ...shot,
+      state: "ok",
+      width: Math.round(meta.width / scale),
+      height: Math.round(meta.height / scale),
+    };
   }
 
   const target = page.locator(shot.capture.selector).first();
@@ -444,64 +444,153 @@ async function shoot(page, shot) {
     // the sheet says so rather than the run stopping.
     return { ...shot, state: "no-card" };
   }
+
+  await hideStickyChrome(target);
   const box = await target.boundingBox();
   await target.screenshot({ path: dest });
-  return { ...shot, state: "ok", width: Math.round(box?.width ?? 0) };
+  await restoreStickyChrome(page);
+
+  return {
+    ...shot,
+    state: "ok",
+    width: Math.round(box?.width ?? 0),
+    height: Math.round(box?.height ?? 0),
+  };
+}
+
+/**
+ * Stop the page's pinned chrome painting over a tall element capture.
+ *
+ * An element taller than the viewport is shot by scrolling and stitching, and
+ * the site header is `position: sticky top-0` — so it stays put while the
+ * card moves under it and lands **in the middle of the picture**, once per
+ * screenful. The first real run put the whole header across the third step of
+ * the Fortnite guide.
+ *
+ * **Which elements those are is computed, not guessed.** A selector list
+ * (`header`, `.sticky`, `[data-sticky]`) is a guess that goes stale the moment
+ * something else is pinned, and there is no stable handle on the header to key
+ * off — `SiteHeaderShell` renders a plain `<header>` with utility classes. So
+ * this asks the browser which elements are actually `sticky` or `fixed` right
+ * now, and hides those. Exact, and it keeps working when a new pinned thing
+ * appears.
+ *
+ * It hides with `visibility` and nothing else. `display: none` or
+ * `position: static` would reflow the document — a sticky element reserves its
+ * slot in flow — and the card would be measured and shot at a different size
+ * than the page really renders it. `visibility: hidden` changes what is
+ * painted and nothing about the layout, which is exactly the difference wanted.
+ *
+ * Ancestors of the target are skipped: hiding one would hide the card itself.
+ */
+const STICKY_MARK = "data-preview-export-hidden";
+
+async function hideStickyChrome(target) {
+  await target.evaluate((el, mark) => {
+    for (const node of el.ownerDocument.querySelectorAll("body *")) {
+      if (node === el || el.contains(node) || node.contains(el)) continue;
+      const position = getComputedStyle(node).position;
+      if (position !== "sticky" && position !== "fixed") continue;
+      node.setAttribute(mark, node.style.visibility);
+      node.style.setProperty("visibility", "hidden", "important");
+    }
+  }, STICKY_MARK);
+}
+
+/**
+ * Put it back. Every shot is preceded by a fresh navigation, which would drop
+ * these changes anyway — but a page that is left as it was found cannot be the
+ * reason a later shot looks wrong, and that is worth four lines.
+ */
+async function restoreStickyChrome(page) {
+  await page.evaluate((mark) => {
+    for (const node of document.querySelectorAll(`[${mark}]`)) {
+      node.style.visibility = node.getAttribute(mark);
+      node.removeAttribute(mark);
+    }
+  }, STICKY_MARK);
 }
 
 // ---------------------------------------------------------------------------
-// The copies of the shots that go *into* the PDF
+// The composites — the thing this tool actually produces
 // ---------------------------------------------------------------------------
 
 /**
- * The PNGs are captured at the sibling tool's scale factors so a single one can
- * be pasted at full quality. That is right for the files on disk and wrong for
- * a PDF carrying a hundred and fifty of them — at that scale the file is far
- * past what anyone wants to hand a chat client. So the sheet gets JPEGs at
- * roughly the width the A4 column can actually show.
+ * One image per group, and that image *is* the deliverable.
  *
- * **The ladder is what keeps the file small, not the first rung.** How big the
- * PDF comes out depends on the preset and how long the pages are that day, so
- * one fixed quality is a guess that goes stale. The run prints, measures, and
- * re-encodes a rung down if it is over budget — at most twice, and only the
- * sheet's copies: the PNGs beside the PDF are never touched.
+ * The owner's words, after a PDF version: *"PDF makes it seem like I want a
+ * series of paper pages. Think of it this way, it's more like I want a digitally
+ * rendered static preview of web pages in a single output format that someone
+ * can easily view in Slack."* So a group is composed into one tall JPEG — for
+ * each of its entries, the four phone captures side by side as full
+ * scroll-height strips (the usual way a mobile layout is showcased on a static
+ * page), the desktop pages beneath them two-up — on the app's own background
+ * colour, so the picture reads as the product rather than as a scan of it.
+ *
+ * **Ten files, each under ten megabytes.** That is not a rule of thumb: the
+ * workspace is on Slack's free plan, which takes ten files per message, so a run
+ * that produces eleven composites is a review that has to be posted twice and
+ * read out of order. It is enforced below rather than advised, because the
+ * moment it is only advice is the moment a preset quietly grows a group.
  */
-const SHEET_ASSETS = "sheet-assets";
-const SHEET_WIDTHS = { desktop: 900, mobile: 360 };
-const PDF_BUDGET_BYTES = 18e6;
-const QUALITY_LADDER = [
-  { scale: 1, quality: 80 },
-  { scale: 0.75, quality: 70 },
-  { scale: 0.55, quality: 60 },
-];
+const MOBILE_DISPLAY_WIDTH = 500;
+const COMPOSITE_PAD = 16;
+const COMPOSITE_GUTTER = 12;
+const PER_ROW = { mobile: 4, desktop: 2 };
+const ENTRY_LABEL_HEIGHT = 40;
+const HEADING_HEIGHT = 64;
+const LABEL_HEIGHT = 26;
 
-async function downscale(shot, base, { scale, quality }) {
-  const dir = path.join(base, SHEET_ASSETS);
-  mkdirSync(dir, { recursive: true });
-  const name = shot.file.replace(/\.png$/, ".jpg");
-  await sharp(path.join(base, shot.file))
-    // JPEG has no alpha; a page screenshot is opaque anyway, and flattening to
-    // white keeps a transparent edge from printing as black.
-    .flatten({ background: "#ffffff" })
-    .resize({
-      width: Math.round(SHEET_WIDTHS[shot.viewport] * scale),
-      withoutEnlargement: true,
-    })
-    .jpeg({ quality, mozjpeg: true })
-    .toFile(path.join(dir, name));
-  return `${SHEET_ASSETS}/${name}`;
-}
+/** Four phones across settles the width; two desktops then fill the same span. */
+const CONTENT_WIDTH =
+  PER_ROW.mobile * MOBILE_DISPLAY_WIDTH +
+  (PER_ROW.mobile - 1) * COMPOSITE_GUTTER;
+const COMPOSITE_WIDTH = CONTENT_WIDTH + 2 * COMPOSITE_PAD;
+const COMPOSITE_WIDTHS = {
+  mobile: MOBILE_DISPLAY_WIDTH,
+  desktop: Math.floor(
+    (CONTENT_WIDTH - (PER_ROW.desktop - 1) * COMPOSITE_GUTTER) / PER_ROW.desktop,
+  ),
+};
 
-async function encodeSheetAssets(shots, rung, base) {
-  for (const shot of shots) {
-    if (shot.state !== "ok") continue;
-    shot.sheetFile = await downscale(shot, base, rung);
+const SLACK_FILES_PER_MESSAGE = 10;
+const MAX_COMPOSITE_BYTES = 10e6;
+/** Tried in order until one lands under the cap; the last is the last chance. */
+const QUALITY_LADDER = [85, 75, 65];
+/** JPEG cannot address a dimension past this, whatever the file size says. */
+const JPEG_MAX_DIMENSION = 65_535;
+
+/**
+ * The app's own colours, read from the UI package's token sheet rather than
+ * copied here — a composite on a white ground looks like a document about the
+ * product, and one on `--color-background` looks like the product. Falls back
+ * to the current values if the sheet ever moves, because a screenshot run is
+ * not a thing that should fail over a colour.
+ */
+function themeColors() {
+  const fallback = {
+    background: "#121212",
+    foreground: "#EDEDED",
+    muted: "#A6A6A6",
+  };
+  try {
+    const css = readFileSync(
+      path.join(REPO_ROOT, "packages", "sog-ui", "src", "tokens", "theme.css"),
+      "utf8",
+    );
+    const read = (name, or) =>
+      new RegExp(`--color-${name}:\\s*(#[0-9a-fA-F]{3,8})`).exec(css)?.[1] ?? or;
+    return {
+      background: read("background", fallback.background),
+      foreground: read("foreground", fallback.foreground),
+      muted: read("muted-foreground", fallback.muted),
+    };
+  } catch {
+    return fallback;
   }
 }
 
-// ---------------------------------------------------------------------------
-// The contact sheet
-// ---------------------------------------------------------------------------
+const COLORS = themeColors();
 
 const esc = (s) =>
   String(s).replace(
@@ -509,141 +598,253 @@ const esc = (s) =>
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
   );
 
-const SHEET_CSS = `
-  @page { size: A4; margin: 14mm 12mm; }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: #fff; color: #111;
-         font: 11px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
-  h1 { font-size: 26px; margin: 0 0 6px; }
-  h2 { font-size: 17px; margin: 0 0 2px; border-bottom: 1px solid #ddd;
-       padding-bottom: 4px; break-after: avoid; }
-  h3 { font-size: 12px; margin: 14px 0 2px; color: #444;
-       text-transform: uppercase; letter-spacing: .06em; break-after: avoid; }
-  .cover { padding: 40mm 0 0; }
-  .cover dl { display: grid; grid-template-columns: 34mm 1fr; gap: 4px 10px;
-              margin: 24px 0 0; }
-  .cover dt { color: #666; }
-  .cover dd { margin: 0; }
-  .group { margin: 0 0 18px; break-before: page; }
-  .notes { color: #777; margin: 0 0 6px; }
-  .block { margin: 0 0 8mm; }
-  .row { display: flex; gap: 6mm; align-items: flex-start; }
-  .cell { min-width: 0; }
-  .cap { color: #666; margin: 0 0 3px; }
-  .text { margin: 3mm 0 0; padding: 2mm 3mm; background: #fafafa;
-          border-left: 2px solid #e0e0e0; font-size: 8.5px; color: #555; }
-  .text p { margin: 0 0 2px; }
-  .text .k { color: #999; font-family: ui-monospace, Consolas, monospace;
-             font-size: 7.5px; margin-right: 6px; }
-  /* True relative scale: each cell's flex-grow is the shot's own CSS width, so
-     a 360-wide mobile capture sits beside a desktop one at the ratio it really
-     has. */
-  img { display: block; width: 100%; max-width: 100%; height: auto;
-        border: 1px solid #e3e3e3; }
-  .note { color: #888; font-style: italic; margin: 0; }
-  .bad { color: #b00; margin: 0; }
-`;
+/**
+ * Lay out one group: where every picture goes, what every label says, and how
+ * tall the result is.
+ *
+ * Pure arithmetic over sizes already known from the PNGs, so the canvas can be
+ * created at its final size before a single pixel is resized — and so a group
+ * that would exceed what a JPEG can address is caught by measuring rather than
+ * after twenty seconds of encoding.
+ */
+/**
+ * Phones first, desktops beneath — whatever order the viewport list happens to
+ * be in. The phone width is where a translated line wraps into three and where
+ * a card runs off the fold, so it is what the reader should meet at the top of
+ * the picture; the desktop view is the check that it also holds up wide.
+ */
+function rowOrder() {
+  const names = VIEWPORTS.map((v) => v.name);
+  const preferred = ["mobile", "desktop"].filter((n) => names.includes(n));
+  return [...preferred, ...names.filter((n) => !preferred.includes(n))];
+}
 
-function cellHtml(shot) {
-  const cap = `${esc(shot.locale)} · ${shot.viewport}${
-    shot.state === "ok" ? ` · ${shot.width}px` : ""
-  }`;
-  if (shot.state === "ok") {
-    return `<div class="cell" style="flex:${shot.width || 1} 1 0">
-      <p class="cap">${cap}</p>
-      <img src="${esc(shot.sheetFile ?? shot.file)}" alt="${esc(cap)}">
-    </div>`;
+function planComposite(shots, title) {
+  const placements = [];
+  const captions = [];
+  let y = COMPOSITE_PAD + HEADING_HEIGHT;
+
+  for (const slug of [...new Set(shots.map((s) => s.slug))]) {
+    const entry = shots.filter((s) => s.slug === slug);
+    captions.push({ text: entry[0].label, top: y + 22, kind: "entry" });
+    y += ENTRY_LABEL_HEIGHT;
+
+    for (const viewport of rowOrder()) {
+      const row = LOCALES.flatMap((locale) =>
+        entry.filter((s) => s.locale === locale && s.viewport === viewport),
+      ).filter((s) => s.state === "ok");
+      if (row.length === 0) continue;
+
+      const width = COMPOSITE_WIDTHS[viewport];
+      for (let i = 0; i < row.length; i += PER_ROW[viewport]) {
+        const chunk = row.slice(i, i + PER_ROW[viewport]);
+        let x = COMPOSITE_PAD;
+        let tallest = 0;
+        for (const shot of chunk) {
+          // Top-aligned, and each strip keeps its own aspect: a page twice as
+          // long as its neighbour should look twice as long.
+          const height = Math.round((shot.height * width) / shot.width);
+          captions.push({
+            text: `${shot.locale} · ${shot.viewport}`,
+            left: x,
+            top: y + 17,
+            kind: "shot",
+          });
+          placements.push({ shot, left: x, top: y + LABEL_HEIGHT, width, height });
+          tallest = Math.max(tallest, height);
+          x += width + COMPOSITE_GUTTER;
+        }
+        y += LABEL_HEIGHT + tallest + COMPOSITE_GUTTER;
+      }
+    }
   }
-  const body =
-    shot.state === "no-card"
-      ? `<p class="note">Nothing rendered here &mdash; this surface draws no such element for this entry.</p>`
-      : `<p class="bad">Failed: ${esc(shot.error ?? "unknown")}</p>`;
-  return `<div class="cell" style="flex:1 1 0"><p class="cap">${cap}</p>${body}</div>`;
+
+  return {
+    title,
+    placements,
+    captions,
+    height: y + COMPOSITE_PAD - COMPOSITE_GUTTER,
+  };
+}
+
+/** The heading and every label, as one SVG laid over the whole canvas. */
+function labelLayer(plan, subtitle) {
+  const text = plan.captions
+    .map(
+      (c) =>
+        `<text x="${c.left ?? COMPOSITE_PAD}" y="${c.top}" class="${
+          c.kind === "entry" ? "e" : "l"
+        }">${esc(c.text)}</text>`,
+    )
+    .join("");
+  return Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${COMPOSITE_WIDTH}" height="${plan.height}">
+      <style>
+        .h { fill: ${COLORS.foreground}; font: 600 32px sans-serif; }
+        .s { fill: ${COLORS.muted}; font: 400 20px sans-serif; }
+        .e { fill: ${COLORS.foreground}; font: 600 22px sans-serif; }
+        .l { fill: ${COLORS.muted}; font: 400 17px sans-serif; }
+      </style>
+      <text x="${COMPOSITE_PAD}" y="${COMPOSITE_PAD + 30}" class="h">${esc(
+        plan.title,
+      )}</text>
+      <text x="${COMPOSITE_PAD}" y="${COMPOSITE_PAD + 56}" class="s">${esc(
+        subtitle,
+      )}</text>
+      ${text}
+    </svg>`,
+  );
 }
 
 /**
- * The preset's own words for this entry and locale, as text a reviewer can
- * select and paste. Visually secondary — small and muted, under the images —
- * because the pictures are what is being judged and this is what gets quoted
- * back. A line may be a bare string or a `{ label, text }` pair; the label
- * prints as a small key beside the sentence.
+ * Encode one planned composite, dropping quality a step at a time until it fits
+ * what Slack will take.
+ *
+ * Failing is the right end of the ladder. A composite over the cap is a file the
+ * workspace refuses, so writing it anyway would hand the owner a folder that
+ * looks complete and cannot be posted — the failure has to happen here, naming
+ * the group, while there is still something to do about it.
  */
-function textHtml(shots) {
-  const lines = shots.find((s) => s.text?.length)?.text;
-  if (!lines?.length) return "";
-  return `<div class="text">${lines
-    .map((line) =>
-      typeof line === "string"
-        ? `<p>${esc(line)}</p>`
-        : `<p><span class="k">${esc(line.label)}</span>${esc(line.text)}</p>`,
-    )
-    .join("")}</div>`;
-}
-
-function entryHtml(shots) {
-  let html = "";
-  for (const locale of LOCALES) {
-    const row = shots.filter((s) => s.locale === locale);
-    if (row.length === 0) continue;
-    html += `<div class="block"><div class="row">${row
-      .map(cellHtml)
-      .join("")}</div>${textHtml(row)}</div>`;
+async function renderComposite(plan, subtitle, dir, file) {
+  if (plan.height > JPEG_MAX_DIMENSION) {
+    fail(
+      `"${plan.title}" composes to ${plan.height}px tall, past what a JPEG can ` +
+        `address (${JPEG_MAX_DIMENSION}px).\n` +
+        `  Split the group in the preset, or run fewer locales.`,
+    );
   }
-  return html;
-}
 
-function buildSheet(shots, meta) {
-  const body = [];
+  const layers = [];
+  for (const p of plan.placements) {
+    layers.push({
+      input: await sharp(path.join(dir, p.shot.file))
+        .resize({ width: p.width })
+        .toBuffer(),
+      left: p.left,
+      top: p.top,
+    });
+  }
+  layers.push({ input: labelLayer(plan, subtitle), left: 0, top: 0 });
 
-  body.push(`<div class="cover">
-    <h1>${esc(meta.title)}</h1>
-    <p>${esc(meta.description ?? "")}</p>
-    <p>The words under each row are printed as selectable text where the preset
-       supplies them &mdash; select and paste one to quote it back.</p>
-    <dl>
-      <dt>Preset</dt><dd>${esc(meta.preset)}</dd>
-      <dt>Date</dt><dd>${esc(meta.date)}</dd>
-      <dt>Base URL</dt><dd>${esc(meta.base)}</dd>
-      <dt>Branch</dt><dd>${esc(meta.branch)} (${esc(meta.sha)})</dd>
-      <dt>Locales</dt><dd>${esc(LOCALES.join(", "))}</dd>
-      <dt>Widths</dt><dd>${esc(
-        VIEWPORTS.map((v) => `${v.name} ${v.width}px`).join(", "),
-      )}</dd>
-      <dt>Screenshots</dt><dd>${esc(String(meta.ok))} captured, ${esc(
-        String(meta.noCard),
-      )} with nothing to shoot, ${esc(String(meta.failed))} failed</dd>
-    </dl>
-  </div>`);
+  const canvas = sharp({
+    create: {
+      width: COMPOSITE_WIDTH,
+      height: plan.height,
+      channels: 3,
+      background: COLORS.background,
+    },
+  }).composite(layers);
 
-  for (const group of [...new Set(shots.map((s) => s.group))]) {
-    const mine = shots.filter((s) => s.group === group);
-    let html = `<section class="group"><h2>${esc(group)}</h2>`;
-    for (const slug of [...new Set(mine.map((s) => s.slug))]) {
-      const entry = mine.filter((s) => s.slug === slug);
-      html += `<h3>${esc(entry[0].label)}</h3>`;
-      if (entry[0].notes) html += `<p class="notes">${esc(entry[0].notes)}</p>`;
-      html += entryHtml(entry);
+  const target = path.join(dir, file);
+  let size = 0;
+  for (const quality of QUALITY_LADDER) {
+    await canvas.clone().jpeg({ quality, mozjpeg: true }).toFile(target);
+    size = statSync(target).size;
+    if (size <= MAX_COMPOSITE_BYTES) {
+      return { file, width: COMPOSITE_WIDTH, height: plan.height, size, quality };
     }
-    body.push(`${html}</section>`);
   }
 
-  return `<!doctype html><html><head><meta charset="utf-8">
-    <title>${esc(meta.title)}</title><style>${SHEET_CSS}</style></head>
-    <body>${body.join("\n")}</body></html>`;
+  fail(
+    `"${plan.title}" is ${(size / 1e6).toFixed(1)} MB even at quality ` +
+      `${QUALITY_LADDER.at(-1)}, past the ${MAX_COMPOSITE_BYTES / 1e6} MB a ` +
+      `Slack upload takes.\n` +
+      `  Split the group in the preset, or run fewer locales.`,
+  );
 }
 
-async function printSheet(browser, html, dir, pdfPath) {
-  const sheetPath = path.join(dir, "contact-sheet.html");
-  writeFileSync(sheetPath, html, "utf8");
-  const page = await browser.newPage();
-  // A file:// navigation, not setContent: the sheet references the images
-  // beside it by relative name, and setContent gives the document an
-  // about:blank base that resolves none of them.
-  await page.goto(pathToFileURL(sheetPath).href, { waitUntil: "load" });
-  await page.evaluate(() => document.fonts.ready).catch(() => {});
-  await page.pdf({ path: pdfPath, format: "A4", printBackground: true });
-  await page.close();
-  return sheetPath;
+/**
+ * A group label as a file name. Accents are folded rather than dropped —
+ * without the decomposition step "Pokémon GO" becomes `pok-mon-go`, which is
+ * the kind of thing nobody notices until it is in a file list in front of the
+ * team.
+ */
+const slugify = (s) =>
+  s
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+/**
+ * Every group, composed, in preset order. Returns what was written.
+ *
+ * **Grouping is the preset's decision, not this function's.** An entry names
+ * the group it belongs to, and one group is one composite — which is how the
+ * topic review ends up as eight files (one per topic, its About views and its
+ * guides stacked inside) rather than nineteen.
+ */
+async function buildComposites(shots, dir) {
+  const groups = [...new Set(shots.map((s) => s.group))];
+  if (groups.length > SLACK_FILES_PER_MESSAGE) {
+    fail(
+      `This preset declares ${groups.length} groups, and a Slack message takes ` +
+        `${SLACK_FILES_PER_MESSAGE} files.\n` +
+        `  Merge groups in the preset so one message carries the whole review.`,
+    );
+  }
+
+  const written = [];
+  for (const [index, group] of groups.entries()) {
+    const mine = shots.filter((s) => s.group === group);
+    const notes = mine.filter((s) => s.state !== "ok");
+    const subtitle =
+      notes.length > 0
+        ? `${LOCALES.join("  ·  ")}    (${notes.length} of ${
+            mine.length
+          } captures had nothing to shoot or failed)`
+        : LOCALES.join("  ·  ");
+    const file = `${String(index + 1).padStart(2, "0")}-${slugify(group)}.jpg`;
+    written.push(
+      await renderComposite(planComposite(mine, group), subtitle, dir, file),
+    );
+  }
+  return written;
+}
+
+/**
+ * A plain scrolling column of every composite, for reading the run back
+ * locally. Deliberately not a design: the composites are the artefact and this
+ * is the window they are looked at through.
+ */
+function writeIndex(dir, composites, meta) {
+  const rows = composites
+    .map(
+      (c) =>
+        `<figure><figcaption>${esc(c.file)} · ${c.width}×${c.height} · ${(
+          c.size / 1e6
+        ).toFixed(1)} MB</figcaption><img src="${esc(c.file)}" alt="${esc(
+          c.file,
+        )}"></figure>`,
+    )
+    .join("\n");
+  const html = `<!doctype html><html><head><meta charset="utf-8">
+    <title>${esc(meta.title)}</title>
+    <style>
+      body { margin: 0; padding: 24px; background: ${COLORS.background};
+             color: ${COLORS.foreground};
+             font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+      h1 { font-size: 20px; margin: 0 0 4px; }
+      p.meta { color: ${COLORS.muted}; margin: 0 0 24px; }
+      figure { margin: 0 0 32px; }
+      figcaption { color: ${COLORS.muted}; font-size: 12px; margin: 0 0 6px; }
+      img { display: block; width: 100%; height: auto; }
+    </style></head>
+    <body>
+      <h1>${esc(meta.title)}</h1>
+      <p class="meta">${esc(meta.date)} · ${esc(meta.base)} · ${esc(
+        meta.branch,
+      )} (${esc(meta.sha)}) · preset ${esc(meta.preset)} · ${esc(
+        LOCALES.join(", "),
+      )} · ${esc(String(meta.ok))} captured, ${esc(
+        String(meta.noCard),
+      )} with nothing to shoot, ${esc(String(meta.failed))} failed</p>
+      ${rows}
+    </body></html>`;
+  const file = path.join(dir, "index.html");
+  writeFileSync(file, html, "utf8");
+  return file;
 }
 
 function gitMeta() {
@@ -668,99 +869,96 @@ function gitMeta() {
 // ---------------------------------------------------------------------------
 
 /**
- * Renders two placeholder pages, runs them through the same downscale, sheet
- * and PDF path a real run uses, and prints where it landed. It needs no
- * credentials and no dev server, which makes it the only way to prove the
- * layout and the print without an admin account — so it stays in the tool
- * rather than being a thing that was run once.
+ * Everything downstream of the browser gate, exercised on placeholder pages.
+ *
+ * It needs no credentials and no dev server, which makes it the only way to
+ * prove the composing, the labels and the size cap without an admin account —
+ * so it stays in the tool rather than being a thing that was run once.
  */
 async function selftest(browser, dir) {
   mkdirSync(dir, { recursive: true });
 
-  const text = [
-    { label: "line", text: "A preset's text() supplies lines like this one." },
-    "A bare string works too, for a preset with nothing to key them by.",
-  ];
-
+  // Full-page captures of a stand-in document, so the composite is built from
+  // the shape of input a real run gives it: a tall strip at the phone width and
+  // a wide one at the desktop width.
   const shots = [];
   for (const viewport of VIEWPORTS) {
-    const file = `selftest--${LOCALES[0]}--${viewport.name}.png`;
-    const page = await browser.newPage({
-      viewport: { width: viewport.width, height: viewport.height },
-      deviceScaleFactor: viewport.deviceScaleFactor,
-      isMobile: viewport.isMobile ?? false,
-      hasTouch: viewport.hasTouch ?? false,
-    });
-    await page.setContent(
-      `<div id="c" style="width:${Math.round(viewport.width * 0.55)}px;
-         padding:24px;border:1px solid #ccc;border-radius:8px;
-         font:14px system-ui;background:#fff">
-         <h2 style="font-size:13px;color:#666;margin:0 0 12px">Placeholder</h2>
-         <p style="margin:0">${viewport.name} · ${viewport.width}px viewport</p>
-       </div>`,
-    );
-    const box = await page.locator("#c").boundingBox();
-    await page.locator("#c").screenshot({ path: path.join(dir, file) });
-    await page.close();
-    const shot = {
-      group: "Self-test",
-      slug: "selftest",
-      label: "Placeholder entry",
-      notes: "Rendered locally; no app and no sign-in were involved.",
-      locale: LOCALES[0],
-      viewport: viewport.name,
-      file,
-      text,
-      state: "ok",
-      width: Math.round(box?.width ?? 1),
-    };
-    shot.sheetFile = await downscale(shot, dir, QUALITY_LADDER[0]);
-    shots.push(shot);
+    for (const locale of LOCALES) {
+      const file = `selftest--${locale}--${viewport.name}.png`;
+      const page = await browser.newPage({
+        viewport: { width: viewport.width, height: viewport.height },
+        deviceScaleFactor: viewport.deviceScaleFactor,
+        isMobile: viewport.isMobile ?? false,
+        hasTouch: viewport.hasTouch ?? false,
+      });
+      await page.setContent(
+        `<body style="margin:0;background:${COLORS.background};
+           color:${COLORS.foreground};font:16px system-ui">
+           <div style="padding:24px">
+             <h1 style="margin:0 0 12px">Placeholder page</h1>
+             <p style="margin:0 0 24px;color:${COLORS.muted}">${locale} · ${
+               viewport.name
+             } · ${viewport.width}px viewport</p>
+             ${Array.from(
+               { length: 10 },
+               (_, i) =>
+                 `<p style="margin:0 0 16px">Paragraph ${
+                   i + 1
+                 }. Enough copy to make the document longer than the viewport,
+                  which is what a capture of a real page looks like.</p>`,
+             ).join("")}
+           </div>
+         </body>`,
+      );
+      await page.screenshot({ path: path.join(dir, file), fullPage: true });
+      const meta = await sharp(path.join(dir, file)).metadata();
+      await page.close();
+      shots.push({
+        group: "Self-test",
+        slug: "selftest--placeholder",
+        label: "Placeholder entry",
+        locale,
+        viewport: viewport.name,
+        file,
+        state: "ok",
+        width: Math.round(meta.width / viewport.deviceScaleFactor),
+        height: Math.round(meta.height / viewport.deviceScaleFactor),
+      });
+    }
   }
-  // One of each non-ok state too, so the sheet's other two branches are drawn.
-  const stub = {
+  // A capture that found nothing, so the subtitle's other branch is drawn too.
+  shots.push({
     group: "Self-test",
-    slug: "selftest-empty",
-    label: "The two states that are not a picture",
+    slug: "selftest--placeholder",
+    label: "Placeholder entry",
     locale: LOCALES[0],
-    text: [],
-  };
-  shots.push(
-    { ...stub, viewport: "desktop", state: "no-card" },
-    {
-      ...stub,
-      viewport: "mobile",
-      state: "failed",
-      error: "a deliberate self-test failure",
-    },
-  );
+    viewport: "desktop",
+    file: "",
+    state: "no-card",
+  });
 
   const { branch, sha } = gitMeta();
-  const pdfPath = path.join(dir, "selftest.pdf");
-  const sheetPath = await printSheet(
-    browser,
-    buildSheet(shots, {
-      title: "Preview export — self-test",
-      description: "The sheet, the downscale and the PDF, over placeholders.",
-      preset: "selftest",
-      date: new Date().toISOString().slice(0, 10),
-      base: "(self-test — no app was loaded)",
-      branch,
-      sha,
-      ok: VIEWPORTS.length,
-      noCard: 1,
-      failed: 1,
-    }),
-    dir,
-    pdfPath,
-  );
+  const composites = await buildComposites(shots, dir);
+  const indexPath = writeIndex(dir, composites, {
+    title: "Preview export — self-test",
+    preset: "selftest",
+    date: new Date().toISOString().slice(0, 10),
+    base: "(self-test — no app was loaded)",
+    branch,
+    sha,
+    ok: shots.filter((s) => s.state === "ok").length,
+    noCard: 1,
+    failed: 0,
+  });
 
-  console.log(
-    `[selftest] ${shots.length} shots, ${text.length} text lines → ${sheetPath}`,
-  );
-  console.log(
-    `[selftest] PDF → ${pdfPath} (${(statSync(pdfPath).size / 1e6).toFixed(2)} MB)`,
-  );
+  for (const c of composites) {
+    console.log(
+      `[selftest] ${c.file}  ${c.width}×${c.height}  q${c.quality}  ${(
+        c.size / 1e6
+      ).toFixed(2)} MB`,
+    );
+  }
+  console.log(`[selftest] index → ${indexPath}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -770,12 +968,24 @@ async function selftest(browser, dir) {
 loadEnvLocal();
 
 const DATE = new Date().toISOString().slice(0, 10);
-const OUT =
-  arg("out") ??
-  path.join(
-    outputDir(import.meta.url, "preview-export"),
-    SELFTEST ? "selftest" : `${PRESET_NAME}-${DATE}`,
-  );
+
+/**
+ * A run never writes into another run's folder. The dated name is the one a
+ * reader wants; a second run on the same day takes `-2`, `-3` and so on rather
+ * than overwriting pictures somebody may already be reviewing.
+ */
+function freshOutputDir() {
+  const root = outputDir(import.meta.url, "preview-export");
+  if (SELFTEST) return path.join(root, "selftest");
+  const base = path.join(root, `${PRESET_NAME}-${DATE}`);
+  if (!existsSync(base)) return base;
+  for (let n = 2; ; n++) {
+    const candidate = `${base}-${n}`;
+    if (!existsSync(candidate)) return candidate;
+  }
+}
+
+const OUT = arg("out") ?? freshOutputDir();
 mkdirSync(OUT, { recursive: true });
 
 if (SELFTEST) {
@@ -821,12 +1031,11 @@ const contextOptions = (viewport, storageState) => ({
  * Prepare a context so what it photographs is the product and nothing else.
  *
  * - **The consent banner.** It is a fixed overlay pinned to the bottom of the
- *   viewport, and at a phone width it covers most of the page — the first real
- *   run of this tool produced a mobile guide whose lower two thirds were the
- *   cookie dialog. Answering it by clicking would be a click per context and a
- *   race against hydration on every one; a stored answer means the banner never
- *   mounts. It stores a *refusal*, which is both the smaller consent to fake
- *   and the one that loads no third-party script into the shot.
+ *   viewport, and at a phone width it covers most of the page. Answering it by
+ *   clicking would be a click per context and a race against hydration on every
+ *   one; a stored answer means the banner never mounts. It stores a *refusal*,
+ *   which is both the smaller consent to fake and the one that loads no
+ *   third-party script into the shot.
  * - **The dev overlay, animations and carets** — the same suppression, and the
  *   same reasons, as `scripts/page-capture/capture.mjs`: the Next badge lands in
  *   the corner of a full-page shot, and anything that moves is a difference
@@ -903,8 +1112,8 @@ for (const shot of planned) {
         (result.state === "ok" ? "" : ` (${result.state})`),
     );
   } catch (error) {
-    // Per shot, so one bad page costs one cell in the sheet rather than the
-    // whole run — the point of the PDF is the pages that did render.
+    // Per shot, so one bad page costs one picture rather than the whole run —
+    // the point of the composites is the pages that did render.
     results.push({
       ...shot,
       state: "failed",
@@ -915,16 +1124,16 @@ for (const shot of planned) {
 }
 
 for (const context of Object.values(contexts)) await context.close();
+await browser.close();
 
 const ok = results.filter((r) => r.state === "ok").length;
 const noCard = results.filter((r) => r.state === "no-card").length;
 const failed = results.filter((r) => r.state === "failed").length;
 
 const { branch, sha } = gitMeta();
-const pdfPath = path.join(OUT, `${PRESET_NAME}-${DATE}.pdf`);
-const meta = {
+const composites = await buildComposites(results, OUT);
+const indexPath = writeIndex(OUT, composites, {
   title: preset.title,
-  description: preset.description,
   preset: PRESET_NAME,
   date: DATE,
   base: BASE,
@@ -933,27 +1142,27 @@ const meta = {
   ok,
   noCard,
   failed,
-};
+});
 
-let sheetPath = "";
-for (const [i, rung] of QUALITY_LADDER.entries()) {
-  await encodeSheetAssets(results, rung, OUT);
-  sheetPath = await printSheet(browser, buildSheet(results, meta), OUT, pdfPath);
-  const size = statSync(pdfPath).size;
-  if (size <= PDF_BUDGET_BYTES || i === QUALITY_LADDER.length - 1) break;
-  console.error(
-    `[preview-export] PDF is ${(size / 1e6).toFixed(1)} MB — re-encoding the ` +
-      `sheet's images smaller and printing again.`,
+console.log(`\n${OUT}`);
+for (const c of composites) {
+  console.log(
+    `  ${c.file.padEnd(34)} ${String(c.width).padStart(5)}×${String(
+      c.height,
+    ).padEnd(6)} q${c.quality}  ${(c.size / 1e6).toFixed(2)} MB`,
   );
 }
-await browser.close();
-
-const megabytes = (statSync(pdfPath).size / 1e6).toFixed(1);
-
-console.log(`\nPDF:   ${pdfPath}`);
-console.log(`Sheet: ${sheetPath}`);
-console.log(`PNGs:  ${OUT}`);
+console.log(`  index.html — the whole run in a scrolling column`);
 console.log(
-  `${ok} captured · ${noCard} with nothing to shoot · ${failed} failed · PDF ${megabytes} MB`,
+  `\n${composites.length} composite${composites.length === 1 ? "" : "s"} · ` +
+    `${(composites.reduce((n, c) => n + c.size, 0) / 1e6).toFixed(1)} MB total · ` +
+    `${ok} captured · ${noCard} with nothing to shoot · ${failed} failed`,
 );
+// Said before the owner opens Slack rather than after the upload is refused.
+if (composites.length > SLACK_FILES_PER_MESSAGE) {
+  console.log(
+    `Slack takes ${SLACK_FILES_PER_MESSAGE} files per message, so this needs ` +
+      `${Math.ceil(composites.length / SLACK_FILES_PER_MESSAGE)} messages.`,
+  );
+}
 process.exit(failed > 0 ? 1 : 0);

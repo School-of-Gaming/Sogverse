@@ -13,19 +13,27 @@
  *   Guide, remote       /{locale}/preview/confirmation/consumer-club?topic=…
  *   Guide, in person    /{locale}/preview/confirmation/camp-open?topic=…
  *
- * The in-person form is the accounts-only one — the steps still the family's to
- * do once School of Gaming has brought the machines and the logins — and only
- * some topics render it at all, so it is an appendix group rather than a third
- * entry under every topic.
+ * **One group per topic, which is one image per topic.** Everything a reviewer
+ * needs about Fortnite is in the Fortnite picture — its About views, its remote
+ * guide, and its in-person guide where it has one — because the reviewer's unit
+ * of attention is a topic, and eight files is a review that posts as a single
+ * Slack message. The in-person form was an appendix of its own for a while, and
+ * that made a reader hold one topic in their head while scrolling past seven
+ * others.
+ *
+ * **Every entry is a full-page shot, not a crop of the card.** The owner's
+ * reason: *"The whole point is that the screenshot is able to take an image of
+ * the content in its context as if it was viewed on an actual desktop or mobile
+ * device."* So each entry photographs the whole page — header, body, the card in
+ * its place, footer — and the card's own locator survives only as the `waitFor`
+ * that proves the page finished rendering it.
  *
  * **The registry is imported from TypeScript, not restated here.**
  * `src/lib/products/topics.ts` has only type-level imports, so Node's own type
  * stripping loads it with no build step and no dependency. Which topics have a
- * card, which have a guide, and which steps survive the in-person filter are
+ * card, which have a guide, and which of them still render one in person are
  * then the app's answers rather than a list here that goes stale.
  */
-import { existsSync, readFileSync } from "node:fs";
-import path from "node:path";
 import {
   PRODUCT_TOPICS,
   PRODUCT_TOPIC_VALUES,
@@ -33,8 +41,6 @@ import {
   topicHasInfoCard,
   topicHasPrep,
 } from "../../../src/lib/products/topics.ts";
-
-const MESSAGES_DIR = path.join(import.meta.dirname, "..", "..", "..", "messages");
 
 /**
  * Any one of the label-only topics stands in for all of them: their guide is
@@ -52,159 +58,64 @@ const TOPICS = (() => {
 })();
 
 // ---------------------------------------------------------------------------
-// Locating the two cards
+// Waiting for the card the page is being shot for
 // ---------------------------------------------------------------------------
 
 /**
- * The nearest enclosing card. `Card` renders a plain div carrying the app's
- * card classes, so the class pair is the handle, and `[1]` on the ancestor axis
- * takes the innermost one.
+ * The shot is the whole page, but the *reason* for the shot is one card on it —
+ * so the run waits for that card before shooting, or a slow render would be
+ * photographed as a page that simply does not have the thing under review.
  *
- * **No test ids were added to the app for this**, because both cards already
- * have an anchor inside them that survives translation:
- *
- * - the About card's heading interpolates the topic's brand label, which the
- *   app never translates ("About Minecraft Java", "Tietoa Minecraft Java"), and
- *   it is the only `h2` on the product page carrying it — the product's own
- *   name is an `h1`;
- * - the guide is the only numbered list on the confirmation page ("what happens
- *   next" beside it is a bulleted `ul`), so no text has to be matched at all.
+ * **Neither handle needed a test id added to the app**, because both survive
+ * translation: the About card's heading interpolates the topic's brand label,
+ * which the app never translates ("About Minecraft Java", "Tietoa Minecraft
+ * Java"), and the guide is the only numbered list on the confirmation page
+ * ("what happens next" beside it is a bulleted `ul`).
  */
-const NEAREST_CARD =
-  'xpath=ancestor::div[contains(@class,"rounded-lg") and contains(@class,"border")][1]';
-
-const aboutCard = (label) =>
-  `h2:has-text(${JSON.stringify(label)}) >> ${NEAREST_CARD}`;
-const prepCard = `ol.list-decimal >> ${NEAREST_CARD}`;
-
-// ---------------------------------------------------------------------------
-// The words, read from the same catalog the cards render from
-// ---------------------------------------------------------------------------
-
-const catalogs = new Map();
-
-function catalog(locale) {
-  if (!catalogs.has(locale)) {
-    const p = path.join(MESSAGES_DIR, `${locale}.json`);
-    catalogs.set(locale, existsSync(p) ? JSON.parse(readFileSync(p, "utf8")) : {});
-  }
-  return catalogs.get(locale);
-}
-
-/**
- * One message, as plain text.
- *
- * A few prep bodies carry `<b>` around the clause that costs a family the
- * session if they skim it. The tags are markup for `t.rich`, not words, so they
- * come off — the reviewer is reading the sentence, and a stray `<b>` in a
- * pasted correction is a second thing to explain.
- *
- * A key the catalog has nothing under yields `null` rather than throwing: a
- * translation in progress is a normal state of this repo, and a half-filled
- * locale should still print the lines it has.
- */
-function message(locale, dottedKey) {
-  let node = catalog(locale);
-  for (const part of dottedKey.split(".")) {
-    if (node === null || typeof node !== "object") return null;
-    node = node[part];
-  }
-  return typeof node === "string" ? node.replace(/<\/?b>/g, "") : null;
-}
-
-/** Collect keys in render order, skipping the ones the catalog has nothing for. */
-function lines(locale, keys) {
-  const out = [];
-  for (const key of keys) {
-    const text = message(locale, key);
-    if (text) out.push({ label: key.split(".").pop(), text });
-  }
-  return out;
-}
-
-const aboutText = (topic) => (locale) =>
-  lines(locale, [
-    `productDetail.topicInfo.topics.${topic}.description`,
-    `productDetail.topicInfo.topics.${topic}.note`,
-    `productDetail.topicInfo.topics.${topic}.linkLabel`,
-  ]);
-
-/** Exactly what `TopicPrepContent` renders for this plan, in its order. */
-const prepText = (topic, isRemote) => (locale) => {
-  const plan = resolveTopicPrep(topic, isRemote);
-  if (plan === null) return [];
-  const keys = [
-    plan.form === "remoteOnly"
-      ? "topicPrep.remoteOnlyIntro"
-      : plan.form === "accountsOnly"
-        ? `topicPrep.accountsOnlyIntro.${plan.topic}`
-        : `topicPrep.topics.${plan.topic}.intro`,
-  ];
-  for (const step of plan.steps) {
-    keys.push(`topicPrep.steps.${step.key}.title`);
-    keys.push(`topicPrep.steps.${step.key}.body`);
-    if (step.url !== undefined) keys.push(`topicPrep.steps.${step.key}.linkLabel`);
-    for (const note of step.platformNotes ?? []) {
-      keys.push(`topicPrep.platformNotes.${note}.title`);
-      keys.push(`topicPrep.platformNotes.${note}.body`);
-    }
-    for (const item of step.checklist ?? []) keys.push(`topicPrep.checklist.${item}`);
-  }
-  keys.push("topicPrep.closing");
-  return lines(locale, keys);
-};
+const aboutHeading = (label) => `h2:has-text(${JSON.stringify(label)})`;
+const prepList = "ol.list-decimal";
 
 // ---------------------------------------------------------------------------
 // The preset
 // ---------------------------------------------------------------------------
 
-const groups = [];
-
-for (const topic of TOPICS) {
+const groups = TOPICS.map((topic) => {
   const label = PRODUCT_TOPICS[topic]?.label ?? topic;
   const entries = [];
 
   if (topicHasInfoCard(topic)) {
     entries.push({
       slug: `${topic}--about`,
-      label: "About card",
-      notes: "Product detail page, remote club fixture.",
+      label: "About card — product page",
       route: `/preview/products/consumer-club?topic=${topic}`,
-      capture: { selector: aboutCard(label) },
-      text: aboutText(topic),
+      capture: "fullPage",
+      waitFor: aboutHeading(label),
     });
   }
 
   entries.push({
     slug: `${topic}--prep`,
-    label: "Before the first session",
-    notes: "Purchase confirmation, remote club — every step applies.",
+    label: "Before the first session — remote club",
     route: `/preview/confirmation/consumer-club?topic=${topic}`,
-    capture: { selector: prepCard },
-    text: prepText(topic, true),
+    capture: "fullPage",
+    waitFor: prepList,
   });
 
-  groups.push({ label, entries });
-}
-
-// The appendix: the topics that still render a guide on an in-person product.
-// Derived rather than listed, because which ones they are is the resolver's
-// answer and moves when a step's scope changes.
-const inPerson = TOPICS.filter((topic) => resolveTopicPrep(topic, false) !== null);
-if (inPerson.length > 0) {
-  groups.push({
-    label: "Appendix — in-person products (accounts only)",
-    entries: inPerson.map((topic) => ({
+  // Only where the topic still has something for the family to do in person.
+  // Asked of the resolver rather than listed, because the answer moves when a
+  // step's scope changes.
+  if (resolveTopicPrep(topic, false) !== null) {
+    entries.push({
       slug: `${topic}--prep-in-person`,
-      label: PRODUCT_TOPICS[topic]?.label ?? topic,
-      notes:
-        "Purchase confirmation, camp fixture — only what is still the family's to do.",
+      label: "Before the first session — in person, accounts only",
       route: `/preview/confirmation/camp-open?topic=${topic}`,
-      capture: { selector: prepCard },
-      text: prepText(topic, false),
-    })),
-  });
-}
+      capture: "fullPage",
+      waitFor: prepList,
+    });
+  }
+
+  return { label, entries };
+});
 
 export default {
   title: "Topic copy review",

@@ -7,9 +7,9 @@
 > view to share it in a review."
 
 Sign in once as the staging admin, walk a list of pages across locales and
-widths, and bind the lot into **one PDF you can paste into a review**. The list
-of pages is the input — a *preset* — so a second review is a second preset, not
-a second script.
+widths, and compose them into **a handful of images you can drop into a Slack
+thread**. The list of pages is the input — a *preset* — so a second review is a
+second preset, not a second script.
 
 ## Running it
 
@@ -17,7 +17,7 @@ a second script.
 node scripts/preview-export/export.mjs --preset topic-copy
 node scripts/preview-export/export.mjs --preset topic-copy --locales en,fi --viewports mobile
 node scripts/preview-export/export.mjs --pages ./my-pages.mjs --only minecraft_java--about
-node scripts/preview-export/export.mjs --selftest   # no app, no login, proves the sheet
+node scripts/preview-export/export.mjs --selftest   # no app, no login
 ```
 
 | Flag | |
@@ -29,12 +29,31 @@ node scripts/preview-export/export.mjs --selftest   # no app, no login, proves t
 | `--locales` | Default `en,fi,sv,fr`. (`tlh` is a test locale.) |
 | `--viewports` | `desktop`, `mobile`, or both (the default). |
 | `--only <slug,…>` | Just these entries. |
-| `--selftest` | Renders placeholders through the sheet and the PDF. |
+| `--selftest` | Composes placeholder pages, so the whole pipeline runs with no app. |
 
-Everything lands in one folder: the PDF, the contact sheet it was printed from,
-and every screenshot at full resolution as `<slug>--<locale>--<viewport>.png`,
-so a single picture can be pasted on its own. The PDF embeds downscaled JPEGs
-and re-encodes smaller if it comes out over budget; the PNGs are never touched.
+Everything lands in one folder — dated, and suffixed `-2`, `-3` if that folder
+already exists, so a rerun never overwrites pictures someone is reviewing:
+
+- `<nn>-<group>.jpg` — **the deliverable.** One per group, in preset order.
+- `index.html` — every composite in a scrolling column, for reading the run back.
+- `<slug>--<locale>--<viewport>.png` — every capture at full resolution, so one
+  page can be pasted on its own.
+
+## What a composite looks like
+
+The group's name at the top, then per entry: a label line, the four phone
+captures side by side as full scroll-height strips, and beneath them the desktop
+pages two across the same span. Ground colour is the app's own
+`--color-background`, read from the UI package's token sheet, so the picture
+reads as the product rather than as a scan of it. Phones come first because the
+phone width is where a translated line wraps into three.
+
+**Ten files, each under 10 MB.** The workspace is on Slack's free plan, which
+takes ten files per message, so a run that produces eleven composites is a review
+that has to be posted twice and read out of order. The tool enforces it: more
+than ten groups is a refusal, and a composite over 10 MB drops through quality
+85 → 75 → 65 before failing by name rather than writing a file Slack rejects.
+That is what makes grouping a preset-level decision — one group is one image.
 
 ## Writing a preset
 
@@ -43,29 +62,31 @@ export default {
   title, description,
   groups: [{ label, entries: [{
     slug,                 // unique; names the PNG
-    label, notes,         // how the sheet titles and annotates it
+    label,                // the block's label inside the composite
     route,                // "/preview/…" or (locale) => "/preview/…"
                           //   the /{locale}/ prefix is added for you
     capture,              // "viewport" | "fullPage" | { selector }
-    waitFor,              // optional selector to wait for
-    text,                 // optional (locale) => lines, printed as
-                          //   selectable text under the images
+    waitFor,              // optional selector to wait for before shooting
   }] }],
 };
 ```
 
-`text` is the generic form of "print the words as well as the picture": a
-screenshot cannot be copied out of, and a reviewer fixing a Finnish sentence
-wants to paste it. `presets/topic-copy.mjs` fills it from the message catalog; a
-layout review leaves it out. A `{ selector }` capture that matches nothing is
-recorded as "nothing rendered here" rather than failing the run — a surface that
-draws no such element is a real answer.
+A `{ selector }` capture that matches nothing is recorded as "nothing rendered
+here" rather than failing the run — a surface that draws no such element is a
+real answer.
 
 ## What it takes out of the picture
 
 A stored consent refusal (so the cookie banner never mounts — at a phone width it
 covers most of the page), the Next dev overlay, animations, transitions and the
 text caret. Everything else in the shot is the product.
+
+A `{ selector }` capture additionally hides whatever is `position: sticky` or
+`fixed` outside the target, computed at shoot time rather than guessed from a
+selector list: an element taller than the viewport is shot by scrolling and
+stitching, and the pinned site header would otherwise be painted across the
+middle of it. `"fullPage"` needs none of that — it renders the document in one
+pass, so the header appears once, where it belongs.
 
 ## Credentials
 
