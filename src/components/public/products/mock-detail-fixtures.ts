@@ -212,7 +212,11 @@ const DEMO_GAMERS_OUT_OF_BAND = [
   },
   {
     id: "9b3e7c25-8d41-4a06-b7f9-1e5a0c6d3842",
-    name: "Sofia",
+    // A long double-barrelled name on purpose, and on the row whose status is
+    // the widest in the widest locale (Finnish "Yli 12-vuotias"): this is the
+    // row that decides whether the name and the reason still share a line at
+    // the 360px floor, and a scene should show the worst case, not the median.
+    name: "Sofia-Aleksandra",
     age: 14,
     ageBlock: { kind: "over", bound: 12 },
   },
