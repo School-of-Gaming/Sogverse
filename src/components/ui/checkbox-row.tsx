@@ -29,9 +29,13 @@ const checkboxRowVariants = cva(
         true: "border-act",
         false: "border-border",
       },
+      // No cursor here in either state: the global stylesheet decides it for
+      // every label holding a checkbox (pointer live, arrow disabled), and its
+      // rule outranks a utility on the element, so one written here would be
+      // dead — and, worse, would read as though it were doing the work.
       disabled: {
-        true: "cursor-not-allowed opacity-60",
-        false: "cursor-pointer",
+        true: "opacity-60",
+        false: "",
       },
     },
     compoundVariants: [

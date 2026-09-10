@@ -77,9 +77,17 @@ input[type="checkbox"] {
   cursor: pointer;
 }
 
+/* And the disabled half: an interactive element that cannot currently be acted
+   on drops back to the arrow. This rule is the one place the disabled cursor is
+   decided, and it has to be, because the pointer rule above outranks any
+   utility class on the element (`label:has(input[type="checkbox"])` is more
+   specific than `.cursor-not-allowed`), so a component cannot opt out on its
+   own — a disabled checkbox row that only set a utility kept the pointer. */
 button:disabled,
 [type="button"]:disabled,
-[role="button"][aria-disabled="true"] {
+[role="button"][aria-disabled="true"],
+input[type="checkbox"]:disabled,
+label:has(input[type="checkbox"]:disabled) {
   cursor: default;
 }
 
