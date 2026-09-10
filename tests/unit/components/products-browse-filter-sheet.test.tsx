@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
 import { ProductBrowseFilterPanel } from "@/components/public/products/product-browse-filter-panel";
@@ -298,6 +305,52 @@ describe("the bar", () => {
       .mockImplementation(() => {});
 
     fireEvent.click(screen.getByRole("button", { name: "Remove Days Monday" }));
+    expect(replaceState).toHaveBeenCalled();
+    replaceState.mockRestore();
+  });
+});
+
+describe("the sheet's header", () => {
+  const clearLabel = messages.productBrowse.filters.clearAll;
+  const closeButton = () =>
+    screen.getByRole("button", { name: messages.common.close });
+
+  it("holds no Clear while nothing is lit", () => {
+    renderPanel();
+    openSheet();
+    // Absent, not merely hidden: the header holds no slot open for it.
+    expect(screen.queryByRole("button", { name: clearLabel })).toBeNull();
+  });
+
+  it("puts Clear beside Close, not on a line under the title", () => {
+    renderPanel("days=0");
+    openSheet();
+
+    const closeGroup = closeButton().parentElement;
+    if (!closeGroup) throw new Error("Close has no group");
+    const headerClear = within(closeGroup).getByRole("button", {
+      name: clearLabel,
+    });
+    // The title is on the same line, not in the group with it.
+    expect(within(closeGroup).queryByRole("heading")).toBeNull();
+    expect(closeGroup.parentElement).toBe(
+      screen.getByRole("heading", { name: messages.productBrowse.filters.title })
+        .parentElement?.parentElement,
+    );
+    // An X in this header means "close the sheet"; Clear does not wear one.
+    expect(headerClear.querySelector("svg")).toBeNull();
+  });
+
+  it("clears the filters when its Clear is tapped", () => {
+    renderPanel("days=0");
+    openSheet();
+    const replaceState = vi
+      .spyOn(window.history, "replaceState")
+      .mockImplementation(() => {});
+
+    const closeGroup = closeButton().parentElement;
+    if (!closeGroup) throw new Error("Close has no group");
+    fireEvent.click(within(closeGroup).getByRole("button", { name: clearLabel }));
     expect(replaceState).toHaveBeenCalled();
     replaceState.mockRestore();
   });

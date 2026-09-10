@@ -10,7 +10,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
 import { useBrowseFilterRows } from "./browse-filter-rows";
 import type { BrowseSurface } from "./browse-surface";
 import { ProductBrowseFilters } from "./product-browse-filters";
@@ -193,28 +192,39 @@ export function ProductBrowseFilterPanel({
       >
         {rowsInSheet && (
           <SheetContent>
-            <SheetHeader onClose={() => setOpen(false)}>
+            {/* One line, and tighter than the header's own spacing, which is
+                sized for the drawer the admin surfaces open beside a table on
+                a monitor. On a phone every line the header spends is a line of
+                chips the reader has to scroll for.
+
+                Clear belongs in here too: the bar that carries it is behind
+                the scrim while the sheet is up, and a reader who has just
+                looked through every row of chips is exactly the reader most
+                likely to want them all off. It sits beside Close rather than
+                under the title, and it is rendered only while there is
+                something to clear rather than held open: it arrives at the end
+                of the line, growing into empty header, so the title and Close
+                keep their places, and Close is the taller of the two, so the
+                header does not grow and the rows under the tapping thumb do
+                not move. It carries no X, unlike the bar's — in this header an
+                X already means "close the sheet", and two of them side by side
+                would leave the reader guessing which one shuts it. */}
+            <SheetHeader
+              className="items-center px-4 py-3"
+              onClose={() => setOpen(false)}
+              actions={
+                showClear && (
+                  <button
+                    type="button"
+                    onClick={clear}
+                    className="inline-flex items-center rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-foreground transition-colors hover:bg-hover"
+                  >
+                    {t("clearAll")}
+                  </button>
+                )
+              }
+            >
               <SheetTitle>{t("title")}</SheetTitle>
-              {/* Clear all belongs in here too: the bar that carries it is
-                  behind the scrim while the sheet is up, and a reader who has
-                  just looked through every row of chips is exactly the reader
-                  most likely to want them all off. It is held open while
-                  hidden, unlike the bar's: it sits above the rows, so its
-                  arriving on the first tapped chip would push every row down
-                  under the thumb that tapped it. */}
-              <button
-                type="button"
-                onClick={clear}
-                aria-hidden={!showClear}
-                tabIndex={showClear ? 0 : -1}
-                className={cn(
-                  "inline-flex w-fit items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs font-medium text-foreground transition-colors hover:bg-hover",
-                  !showClear && "invisible pointer-events-none",
-                )}
-              >
-                <X className="h-3 w-3" aria-hidden />
-                {t("clearAll")}
-              </button>
             </SheetHeader>
             {/* Chips apply as they are tapped — no Apply, no Cancel. Each one
                 rewrites the URL in place and the grid behind the sheet answers

@@ -244,9 +244,22 @@ function SheetContent({
 function SheetHeader({
   className,
   onClose,
+  actions,
   children,
   ...props
-}: React.HTMLAttributes<HTMLDivElement> & { onClose?: () => void }) {
+}: React.HTMLAttributes<HTMLDivElement> & {
+  onClose?: () => void;
+  /**
+   * Controls that act on the sheet as a whole, set at the end of the header
+   * just before Close. They share Close's group, packed to the end, so a
+   * control that appears only once there is something for it to do grows the
+   * group leftward into the header's slack: the title at the start and Close
+   * at the end keep their places, and nothing below the header moves. Handed
+   * in as children instead, a control lands in the title's column — a line of
+   * its own under the title, which costs the sheet's body that much height.
+   */
+  actions?: React.ReactNode;
+}) {
   const c = useTranslations('common');
   return (
     <div
@@ -257,14 +270,19 @@ function SheetHeader({
       {...props}
     >
       <div className="flex flex-col space-y-1.5">{children}</div>
-      {onClose && (
-        <button
-          onClick={onClose}
-          aria-label={c('close')}
-          className="rounded-sm p-1 text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <X className="h-5 w-5" />
-        </button>
+      {(actions || onClose) && (
+        <div className="flex shrink-0 items-center gap-2">
+          {actions}
+          {onClose && (
+            <button
+              onClick={onClose}
+              aria-label={c('close')}
+              className="rounded-sm p-1 text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
