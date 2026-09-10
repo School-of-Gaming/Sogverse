@@ -145,6 +145,35 @@ describe("create_gamer() atomic promotion", () => {
     expect(modes[byEmail.id]).toBe("email");
   });
 
+  it("starts the gamer in the parent's locale", async () => {
+    // The parent sets the account up, so the child's welcome mail and first
+    // sign-in read the way the parent uses the site.
+    const parent = await createParentUser("cg-locale-parent@test.local");
+    const gamer = await createCustomerUser("cg-locale-child@test.local");
+
+    const { error: localeError } = await admin
+      .from("profiles")
+      .update({ locale: "fr" })
+      .eq("id", parent.id);
+    expect(localeError).toBeNull();
+
+    const { error } = await admin.rpc("create_gamer", {
+      p_gamer_id: gamer.id,
+      p_parent_id: parent.id,
+      p_first_name: "Aino",
+      p_last_name: "Parentson",
+      p_date_of_birth: "2015-06-15",
+    });
+    expect(error).toBeNull();
+
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("locale")
+      .eq("id", gamer.id)
+      .single();
+    expect(profile?.locale).toBe("fr");
+  });
+
   it("promotes the profile, swaps extension tables, and links the parent", async () => {
     const parent = await createParentUser("cg-parent@test.local");
     const gamer = await createCustomerUser("cg-child@test.local");

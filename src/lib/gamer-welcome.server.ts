@@ -103,10 +103,11 @@ export async function sendGamerWelcomeEmail(args: {
   const token = await createEmailVerificationToken(gamerId, gamer.email);
   const verificationUrl = `${origin}${ROUTES.verifyEmail}?token=${encodeURIComponent(token)}`;
 
-  // The CHILD's locale, because the child is the reader. It is seeded from the
-  // account's default at creation and is theirs to change afterwards; the
-  // request's own Accept-Language is the fallback, which on a create is the
-  // parent's browser and is the best guess available for a family.
+  // The CHILD's locale, because the child is the reader. Creation copies the
+  // parent's stored locale onto the child, and it is the child's to change
+  // afterwards; the request's own Accept-Language is the fallback for a child
+  // with none stored (a parent who never chose one), which on a create or a
+  // resend is the parent's browser and is the best guess available for a family.
   const locale = isSupportedLocale(gamer.locale)
     ? gamer.locale
     : detectLocaleFromHeader(request.headers.get("Accept-Language"));

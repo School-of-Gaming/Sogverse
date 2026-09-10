@@ -238,6 +238,8 @@ It is a merge, not an overwrite.
 
 `profiles.locale` is a nullable `text` column; null means "auto-detect from browser." It's persisted via a PATCH endpoint using the admin client; existing profiles RLS covers it. Distinct from `profiles.spoken_languages` (see locale-vs-spoken-language above): `locale` controls the app translation and the language of Sogverse communications; `spoken_languages` is the user's preferred club/product languages for gamer↔gedu matching.
 
+**A gamer a parent creates starts with the parent's stored `locale`.** The copy is part of the gamer-creation RPC, in the same transaction that makes the account a gamer, so the child exists in that locale from its first moment — before the welcome mail reads it. Copied once and never synced; the child changes it with the picker like anyone else. A parent's locale is stored when they register, so there is always a value to copy in practice.
+
 ## Known gaps
 
 Client message payload is shipped whole per navigation rather than per-page scoped (could filter namespaces by role/page). Localizing per-page SEO metadata (descriptions, OG text) is tracked in `TODO.md`.
