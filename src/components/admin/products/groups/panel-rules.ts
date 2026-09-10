@@ -1,11 +1,15 @@
 import type { GameAccountExternalId } from "@/components/game-account";
-import { isNoChargeBillingMode } from "@/lib/constants/billing";
+import {
+  isNoChargeBillingMode,
+  isSubscriptionShaped,
+} from "@/lib/constants/billing";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { RobloxRenderMap } from "@/services/roblox";
 import type {
   BillingMode,
   GroupParticipationDetail,
   ProductGroupsSnapshot,
+  ProductStatus,
   ProductType,
 } from "@/types";
 
@@ -88,13 +92,24 @@ export type BlockedDropReason =
   | "unpaidPromote"
   /** Demoting a member whose seat is behind a live Stripe subscription. */
   | "liveSubscription"
-  /** Removing a member whose seat is behind a live Stripe subscription. */
+  /**
+   * Removing a **waitlisted** row whose seat is behind a live Stripe
+   * subscription — a webhook race, and the one subscribed shape the club
+   * switch cannot serve. An active subscribed seat resolves to the switch
+   * instead of to this refusal.
+   */
   | "removeSubscribed";
 
 export type DropOutcome =
   /** Nothing to do: dropped back where it started, or already there. */
   | { kind: "none" }
   | { kind: "remove" }
+  /**
+   * Not a removal at all: the seat the admin dropped is subscribed, and the
+   * zone they dropped it on said "Switch club" rather than "Remove gamer". The
+   * panel opens the switch dialog; nothing is written by the drop itself.
+   */
+  | { kind: "switch" }
   | { kind: "move"; toGroupId: string | null }
   | { kind: "promote"; toGroupId: string | null }
   | { kind: "demote" }
@@ -194,10 +209,23 @@ export function resolveDrop(
       // Removal CASCADEs family_subscriptions, so a live subscription would go
       // on billing a family with nothing left in the database to cancel it —
       // and `admin_remove_participation` refuses exactly this, whatever the
-      // product type. Fronting it here means the admin reads why instead of
-      // confirming a removal that is about to fail.
+      // product type. So a subscribed seat never removes here; what it does
+      // instead splits on where it sits, because the two are exact opposites:
+      // removal is refused precisely when a subscription stands behind the
+      // seat, and the switch exists precisely then.
+      //
+      //  - An **active** subscribed seat is what the club switch was built
+      //    for, and the zone the admin dropped on said so — it reads "Switch
+      //    club" for exactly this chip. The drop opens the dialog; the drop
+      //    itself still writes nothing.
+      //  - A **waitlisted** subscribed row is an edge the dialog does not
+      //    serve (there is no active seat to move), so it keeps the refusal
+      //    and its explanation of the manual path.
       if (subject.hasLiveSubscription) {
-        return { kind: "blocked", reason: "removeSubscribed" };
+        if (subject.isWaitlisted) {
+          return { kind: "blocked", reason: "removeSubscribed" };
+        }
+        return { kind: "switch" };
       }
       // Otherwise legal from anywhere, including the waitlist (it just cancels
       // the queued family). Confirmed in its own dialog.
@@ -227,25 +255,13 @@ export function resolveDrop(
 // ---------------------------------------------------------------------------
 
 /**
- * A product whose active seat cannot exist without a monthly Stripe
- * subscription: a consumer club that charges. Every other shape is either
- * no-charge or paid once, out of band or through Checkout, and an admin action
- * on it leaves no recurring charge unaccounted for.
- *
- * Two panel decisions ask this one question, deliberately the same one
- * `admin_enroll_participant` refuses on:
- *
- *  - whether the add-gamer affordance is offered at all (`canCompEnroll`), and
- *  - whether promoting a never-paid waitlister needs the dialog. A paid camp or
- *    event is *not* subscription-shaped: its payment is a one-off the admin
- *    settles out of band, so the drag is trusted and goes straight through.
+ * Re-exported, not defined here. The predicate moved to
+ * `src/lib/constants/billing.ts` beside `isNoChargeBillingMode` when the admin
+ * club switch (00245) gave it a SQL twin and a second caller outside this panel:
+ * a rule kept in lockstep with the database belongs with the other one, not in a
+ * panel's rule file. Every existing importer keeps reading it from here.
  */
-export function isSubscriptionShaped(
-  productType: ProductType,
-  billingMode: BillingMode,
-): boolean {
-  return productType === "consumer_club" && billingMode === "paid";
-}
+export { isSubscriptionShaped };
 
 /**
  * Whether the panel offers its add-gamer affordance. Mirrors the enrollment
@@ -501,4 +517,229 @@ export function robloxIdsFrom(
   snapshot.waitlist.forEach(add);
 
   return ids;
+}
+
+// ---------------------------------------------------------------------------
+// The club switch's target facts
+// ---------------------------------------------------------------------------
+
+/**
+ * What is worth stating about the club an admin is about to move a subscribed
+ * seat onto. Every one is **information, never a refusal and never a warning**:
+ * admins are trusted, the switch RPC enforces none of them, and an admin
+ * moving a seat has already made the judgment each of these facts would
+ * second-guess. The hard refusals are the money ones, and they come back from
+ * the check route.
+ *
+ * They are stated on the second stage only, about the one club that has been
+ * chosen — the listing above it carries no facts of this kind at all. Drawn
+ * down a list of otherwise-fine clubs they taught an admin to skip the column,
+ * which cost the ones that matter more than it was worth.
+ *
+ * Three of the four are answered by the club catalogue row the picker already
+ * holds — its age range, its region lock and its status. The fourth, the seat
+ * count, needs the target's own groups snapshot, which the second stage reads
+ * anyway to offer the groups.
+ */
+export type SwitchTargetFact =
+  /**
+   * The club's authored range, and the seat holder's age where there is one.
+   * `gamerAge` is null on an adult seat, which carries no date of birth: the
+   * range is stated alone rather than beside a guessed age.
+   */
+  | {
+      kind: "ageRange";
+      minAge: number | null;
+      maxAge: number | null;
+      gamerAge: number | null;
+    }
+  /**
+   * How full the club is, against its own cap. `taken` is null while the
+   * snapshot is still in flight — the line holds its space and says nothing,
+   * because a count invented from a document nobody has read would be a claim
+   * nothing checked.
+   */
+  | { kind: "seats"; taken: number | null; capacity: number }
+  /** The club admits families in one country only. */
+  | { kind: "regionLocked"; country: string }
+  /** The club has not started; a switch onto it bills prorated from today. */
+  | { kind: "notStarted"; startDate: string | null };
+
+/** The target club's own columns, as the admin product list row carries them. */
+export interface SwitchTargetSource {
+  status: ProductStatus;
+  minAge: number | null;
+  maxAge: number | null;
+  regionLockCountry: string | null;
+  startDate: string | null;
+  seatCount: number | null;
+}
+
+/**
+ * Every active seat the target holds — grouped and unassigned alike — against
+ * its own cap, or null where there is no cap or no snapshot yet.
+ *
+ * The waitlist is not counted, because a queued family holds no seat; the
+ * snapshot's two active arms are exactly what a cap is about. An uncapped club
+ * states nothing at all: "12 of ∞" is not a fact anyone needs.
+ */
+export function switchTargetSeats(
+  snapshot: ProductGroupsSnapshot | undefined,
+  seatCount: number | null,
+): { taken: number | null; capacity: number } | null {
+  if (seatCount === null) return null;
+  if (snapshot === undefined) return { taken: null, capacity: seatCount };
+  return {
+    taken:
+      snapshot.groups.reduce((sum, g) => sum + g.participations.length, 0) +
+      snapshot.unassigned.length,
+    capacity: seatCount,
+  };
+}
+
+/**
+ * The facts about one chosen target, in the order they are stated.
+ *
+ * The age range is stated whenever either end is authored — an open-ended range
+ * is honoured on the end it has — and is silent on a club that authored
+ * neither, where there is nothing to say. Everything else is present only when
+ * it is true of this club: an unlocked club states no region, a running one
+ * states no start.
+ */
+export function switchTargetFacts(
+  target: SwitchTargetSource,
+  gamerAge: number | null,
+  snapshot: ProductGroupsSnapshot | undefined,
+): SwitchTargetFact[] {
+  const facts: SwitchTargetFact[] = [];
+
+  if (target.minAge !== null || target.maxAge !== null) {
+    facts.push({
+      kind: "ageRange",
+      minAge: target.minAge,
+      maxAge: target.maxAge,
+      gamerAge,
+    });
+  }
+
+  const seats = switchTargetSeats(snapshot, target.seatCount);
+  if (seats !== null) facts.push({ kind: "seats", ...seats });
+
+  if (target.regionLockCountry !== null) {
+    facts.push({ kind: "regionLocked", country: target.regionLockCountry });
+  }
+  if (target.status === "pending") {
+    facts.push({ kind: "notStarted", startDate: target.startDate });
+  }
+
+  return facts;
+}
+
+/** What the ordering reads off a candidate — and off the club the seat leaves. */
+export interface SwitchTargetOrderRow {
+  id: string;
+  spoken_language_code: string;
+  schedule_slots: readonly { weekday: number }[];
+  start_date: string | null;
+}
+
+/**
+ * The picker's order: the clubs most like the one the family is leaving first.
+ *
+ * A family changing club is usually changing one thing about it, so the two
+ * facts that decide whether a club is a candidate for them at all — the
+ * language it is delivered in, and the day of the week it lands on — sort ahead
+ * of everything else. Same spoken language first; within that, a club running
+ * on a day the source club runs on; then the earliest start date, so what is
+ * about to begin sits above what began long ago. The id breaks the final tie,
+ * so the list is stable across renders rather than left to the sort's own hand.
+ *
+ * `source` is null only if the seat's own club is missing from the catalogue
+ * read; the likeness halves then have nothing to compare against and the order
+ * is the start date alone.
+ */
+export function orderSwitchTargets<T extends SwitchTargetOrderRow>(
+  candidates: readonly T[],
+  source: SwitchTargetOrderRow | null,
+): T[] {
+  const sourceWeekdays = new Set(
+    (source?.schedule_slots ?? []).map((slot) => slot.weekday),
+  );
+  const likeness = (row: T): [number, number] => [
+    source !== null && row.spoken_language_code === source.spoken_language_code
+      ? 0
+      : 1,
+    row.schedule_slots.some((slot) => sourceWeekdays.has(slot.weekday)) ? 0 : 1,
+  ];
+
+  return [...candidates].sort((a, b) => {
+    const [aLanguage, aDay] = likeness(a);
+    const [bLanguage, bDay] = likeness(b);
+    if (aLanguage !== bLanguage) return aLanguage - bLanguage;
+    if (aDay !== bDay) return aDay - bDay;
+    // A club with no start date authored sorts after every dated one: there is
+    // nothing to compare it on, and it is the less finished row of the two.
+    if (a.start_date !== b.start_date) {
+      if (a.start_date === null) return 1;
+      if (b.start_date === null) return -1;
+      return a.start_date < b.start_date ? -1 : 1;
+    }
+    return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+  });
+}
+
+/**
+ * Whether a club is a legal destination for a switch: subscription-shaped (the
+ * predicate whose SQL twin the RPC asks of every target), still `pending` or
+ * `running`, and not the product the seat is already on. Completed and
+ * cancelled clubs are dropped because moving a family onto one is never the
+ * answer to "they changed their mind"; spoken language and region are
+ * deliberately **not** filtered on — the admin knows the family, and the region
+ * lock is a warning above rather than a gate.
+ */
+export function isSwitchTarget(
+  candidate: {
+    id: string;
+    product_type: ProductType;
+    billing_mode: BillingMode;
+    status: ProductStatus;
+  },
+  sourceProductId: string,
+): boolean {
+  if (candidate.id === sourceProductId) return false;
+  if (!isSubscriptionShaped(candidate.product_type, candidate.billing_mode)) {
+    return false;
+  }
+  return candidate.status === "pending" || candidate.status === "running";
+}
+
+/** What the held-place derivation reads off one of the gamer's participations. */
+export interface HeldPlaceRow {
+  status: string;
+  product: { id: string } | null;
+}
+
+/**
+ * The products the gamer already holds a place on, in the sense the unique
+ * index means it: one row per (product, participant) covering `active`,
+ * `waitlisted` and `completed`. Every other status — a row that was cancelled,
+ * a queue place that lapsed — leaves the pair free and is ignored.
+ *
+ * The switch picker draws these clubs disabled, so an admin never reaches the
+ * second stage on a club the move is bound to refuse. The route's refusal stays
+ * the backstop: this is a snapshot, and the index is the truth.
+ */
+export function heldProductIds(rows: readonly HeldPlaceRow[]): Set<string> {
+  const held = new Set<string>();
+  for (const row of rows) {
+    if (row.product === null) continue;
+    if (
+      row.status === "active" ||
+      row.status === "waitlisted" ||
+      row.status === "completed"
+    ) {
+      held.add(row.product.id);
+    }
+  }
+  return held;
 }

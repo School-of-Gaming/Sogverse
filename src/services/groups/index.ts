@@ -5,6 +5,7 @@ export {
 } from "./groups.service";
 export {
   groupsKeys,
+  invalidateGroupChange,
   useProductGroups,
   useMoveParticipation,
   useRenameGroup,

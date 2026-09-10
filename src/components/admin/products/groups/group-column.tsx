@@ -63,6 +63,13 @@ interface GroupColumnProps {
   onDelete: (groupId: string) => void;
   onAddGedu: (groupId: string) => void;
   onRemoveGedu: (groupId: string, geduId: string) => void;
+  /**
+   * Participation ids whose chip is greyed and undraggable — an in-flight move
+   * or removal, or a club switch committing. Handed down rather than derived
+   * from `pending` here, because one of the writes that can busy a chip is not
+   * one of the panel's own mutations and so is not in that registry.
+   */
+  busyChipIds: Set<string>;
 }
 
 export function GroupColumn({
@@ -78,6 +85,7 @@ export function GroupColumn({
   onRename,
   onDelete,
   onAddGedu,
+  busyChipIds,
   onRemoveGedu,
 }: GroupColumnProps) {
   const t = useTranslations("admin.products.groupsPanel");
@@ -335,7 +343,7 @@ export function GroupColumn({
                     parentFirstName={p.parent_first_name}
                     parentLastName={p.parent_last_name}
                     {...chipGameIdentity(p, gamePlatform, robloxRenders)}
-                    isPending={pending.moves.has(p.id) || pending.removes.has(p.id)}
+                    isPending={busyChipIds.has(p.id)}
                   />
                 ))}
               </div>

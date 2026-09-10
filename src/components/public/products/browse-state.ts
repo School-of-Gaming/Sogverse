@@ -11,6 +11,7 @@ import { CATEGORY_PARAM } from "./shop-categories";
 // exactly the kind of drift a shared constant costs nothing to prevent.
 export const TOPIC_PARAM = "topic";
 export const FORMAT_PARAM = "format";
+export const PRICE_PARAM = "price";
 export const LANGUAGE_PARAM = "lang";
 export const AUDIENCE_PARAM = "audience";
 export const TAG_PARAM = "tag";
@@ -45,6 +46,7 @@ const BROWSE_STATE_PARAMS = [
   CATEGORY_PARAM,
   TOPIC_PARAM,
   FORMAT_PARAM,
+  PRICE_PARAM,
   LANGUAGE_PARAM,
   AUDIENCE_PARAM,
   TAG_PARAM,

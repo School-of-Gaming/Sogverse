@@ -139,7 +139,7 @@ node scripts/minecraft-edu-accounts.mjs release --apply  # frees the seats
 node scripts/minecraft-edu-accounts.mjs audit            # confirm capacity
 node scripts/minecraft-edu-accounts.mjs delete  --apply
 node scripts/minecraft-edu-accounts.mjs create  --apply
-node scripts/minecraft-edu-accounts.mjs verify           # emits the CSV
+node scripts/minecraft-edu-accounts.mjs verify           # emits the handout
 ```
 
 **Rule: release licences before deleting, never after.** Releasing is reversible
@@ -148,14 +148,26 @@ and synchronous enough to confirm; deleting is not. Running `release` then
 step, and it means the delete cannot strand the pool half-licensed if seat
 maths were wrong.
 
-**Rule: the plan file and CSV are never committed.** Both carry live passwords;
-both are gitignored. They go to the admin out of band and are regenerated on the
-next reset.
+**Rule: the plan file and the handout are never committed.** Both carry live
+passwords, so both live in the script's gitignored output folder,
+`scripts/output/minecraft-edu-accounts/`, beside any pre-deletion snapshot. They
+go to the admin out of band and are regenerated on the next reset.
 
-The CSV is UTF-8 with BOM, comma-delimited, with blank *Club* and *Student*
-columns for the admin to fill in as accounts are handed out. Import to Google
-Sheets via **File → Import → Upload** rather than opening it from Drive preview,
-so the encoding is applied.
+**Rule: once `verify` produces the handout, the admin uploads it to Google Sheets,
+and that upload is the record.** From then on both local files are scratch: a new
+`plan` overwrites them with no backup step, because the passwords of live accounts
+are already held remotely. The plan file matters only while a batch is unfinished —
+a partial `create` re-runs from it, and `verify` rebuilds the handout from it with
+blank *Club* and *Student* columns, which is why those are filled in on the
+uploaded sheet and never in the local file.
+
+The handout is `minecraft-edu-accounts.xlsx` in that folder: a frozen, filterable header, gedu
+pool logins tinted apart from gamer accounts so one is never handed to a child,
+the licence column coloured by status, and highlighted blank *Club* and
+*Student* columns for the admin to fill in as accounts are handed out. Every
+colour is direct cell formatting, never an Excel table style, because Google
+Sheets keeps the former and drops the latter on import. Import it via
+**File → Import → Upload**.
 
 ## Additive passes
 

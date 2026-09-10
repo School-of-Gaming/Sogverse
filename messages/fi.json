@@ -947,6 +947,55 @@
             "description": "Jos {name} poistetaan, perheen tilaus jatkaa laskuttamista paikasta, jota ei enää ole.",
             "nextStep": "Perhe avaa laskutuskortin Oma SOG -sivullaan ja siirtyy sitä kautta Stripen suojattuun laskutusportaaliin perumaan tilauksen. Paikka vapautuu heti, kun tilaus päättyy."
           }
+        },
+        "switchClub": {
+          "dropZone": "Vaihda kerhoa",
+          "title": "Vaihda kerhoa",
+          "description": "{name} siirtyy toiseen kerhoon. Perheelle ei muutu tänään mitään: samalta kortilta veloitetaan samana päivänä, seuraava lasku oikaisee tämän kuukauden loppuosan, ja siitä eteenpäin perhe maksaa uuden kerhon hinnan.",
+          "searchPlaceholder": "Hae kerhoja nimellä",
+          "picker": {
+            "empty": "Muuta kerhoa ei ole tarjolla. Kohteen pitää olla kuukausittain laskutettava kerho, joka ei ole vielä päättynyt.",
+            "noMatch": "Haku ei osu yhteenkään kerhoon. Kokeile toista nimeä.",
+            "alreadyHolds": "On jo paikka"
+          },
+          "facts": {
+            "ageRange": "{ends, select, both {Ikä {min}–{max} vuotta} from {Ikä vähintään {min} vuotta} other {Ikä enintään {max} vuotta}}",
+            "ageRangeWithGamer": "{ends, select, both {Ikä {min}–{max} vuotta} from {Ikä vähintään {min} vuotta} other {Ikä enintään {max} vuotta}} · {name} on {age}-vuotias",
+            "seats": "Paikkoja varattu {taken}/{capacity}",
+            "regionLocked": "Maarajoitus: {country}",
+            "notStarted": "Alkaa {date}. Perhe maksaa tästä päivästä, ei alkamispäivästä.",
+            "notStartedUndated": "Ei alkamispäivää. Perhe maksaa tästä päivästä.",
+            "subscriptionEnding": "Perhe on irtisanonut tilauksen, ja se päättyy {date}. Tämän kuukauden hintaeroa ei laskuteta."
+          },
+          "prices": {
+            "current": "Maksaa nyt",
+            "target": "Uusi hinta",
+            "proration": "Seuraava lasku lisää tai hyvittää erotuksen tämän kuukauden loppuosalta.",
+            "unavailable": "Ei hintaa näytettäväksi",
+            "error": "Hintatietoja ei saatu. Valitse kerho uudelleen ja yritä uudestaan."
+          },
+          "back": "Takaisin",
+          "group": {
+            "label": "Ryhmä",
+            "unassigned": "Jätä ilman ryhmää",
+            "members": "{count, plural, one {# pelaaja} other {# pelaajaa}}"
+          },
+          "refusals": {
+            "latestInvoiceNotPaid": "Perheen viimeisintä laskua ei ole maksettu, joten siirrettävää maksettua aikaa ei ole. Selvitä tämä ensin Stripessä.",
+            "subscriptionNotSingleItem": "Tilauksella on useampi rivi, joten vaihdettavaa yksittäistä hintaa ei ole. Selvitä tämä ensin Stripessä.",
+            "noTargetPriceInCurrency": "Tälle kerholle ei ole hintaa siinä valuutassa, jolla tilausta laskutetaan. Kerhot hinnoitellaan euroina, joten Stripen toisessa valuutassa luomaa tilausta ei voi vaihtaa täällä — selvitä tämä ensin Stripessä.",
+            "participationNotActive": "Tämä paikka ei ole aktiivinen, joten siirrettävää ei ole.",
+            "noLiveSubscription": "Tämän paikan takana ei ole voimassa olevaa tilausta, joten tämä ei ole oikea työkalu: poista paikka ja ilmoita pelaaja toiseen kerhoon.",
+            "targetNotPaidSubscriptionClub": "Kyseinen tuote ei ole kuukausittain laskutettava kerho, joten tilaus ei voi seurata paikkaa sinne.",
+            "sameProduct": "Pelaaja on jo tässä kerhossa.",
+            "alreadyOnTarget": "Pelaajalla on jo paikka kyseisessä kerhossa."
+          },
+          "commit": {
+            "stripeUpdated": "Tilaus on jo uuden kerhon hinnassa, mutta paikka ei siirtynyt. Paina Vaihda kerhoa uudelleen, niin siirto viedään loppuun. Uusi painallus ei veloita perhettä kahteen kertaan.",
+            "stripeUpdatedStuck": "Tilaus on jo uuden kerhon hinnassa, vaikka paikka ei siirtynyt, joten perhettä laskutetaan kerhosta, jossa pelaajalla ei ole paikkaa. Selvitä tämä ensin Stripessä.",
+            "failed": "Vaihto ei mennyt loppuun asti. Paina Vaihda kerhoa uudelleen — uusi painallus toistaa saman pyynnön, joten perhettä ei veloiteta kahteen kertaan."
+          },
+          "confirm": "Vaihda kerhoa"
         }
       },
       "seatLimitModes": {
@@ -1514,14 +1563,14 @@
       "items": {
         "joiningSession": {
           "question": "Miten pääsen mukaan, kun kertani alkaa?",
-          "answer": "<p>Näin se menee:</p><steps><step>Avaa Oma SOG ja etsi kerhosi.</step><step>Katso kerhon painiketta. Ennen kerran alkua se on lukittuna ja kertoo, minä päivänä ja mihin aikaan se avautuu.</step><step>Viisi minuuttia ennen kerran alkua painikkeen teksti vaihtuu: siinä lukee ”Liity äänihuoneeseen”.</step><step>Napauta sitä. Nyt olet mukana.</step></steps><p>Mitään ei tarvitse asentaa eikä koodia kirjoittaa.</p><p>Jos kerhosi kertoo sen sijaan, että olet mukana ja etsimme sinulle Gedua ja ryhmää, painiketta ei siinä vielä ole. Olet mukana – emme vain ole vielä sijoittaneet sinua ryhmään. Se tapahtuu ennen ensimmäistä kertaasi, ja Gedusi on paikalla, kun se hetki koittaa.</p>"
+          "answer": "<p>Avaa ensin Oma SOG ja etsi kerhosi. Seuraava vaihe riippuu siitä, missä kerhosi kokoontuu.</p><p>Jos kerho kokoontuu verkossa, siinä on painike:</p><steps><step>Ennen kerran alkua painike on lukittuna ja kertoo, minä päivänä ja mihin aikaan se avautuu.</step><step>Viisi minuuttia ennen kerran alkua painikkeen teksti vaihtuu: siinä lukee ”Liity äänihuoneeseen”.</step><step>Napauta sitä. Nyt olet mukana.</step></steps><p>Mitään ei tarvitse asentaa eikä koodia kirjoittaa.</p><p>Jos kerho kokoontuu paikan päällä, painiketta ei ole. Kerhossasi näkyy sen sijaan paikan nimi, ja kerhosi sivulla näkyy myös osoite. Ole paikalla, kun kertasi alkaa.</p><p>Jos kerhosi kertoo sen sijaan, että olet mukana ja etsimme sinulle Gedua ja ryhmää, siinä ei vielä ole painiketta eikä paikkaa. Olet mukana – emme vain ole vielä sijoittaneet sinua ryhmään. Se tapahtuu ennen ensimmäistä kertaasi, ja Gedusi on paikalla, kun se hetki koittaa.</p>"
         },
         "cannotBeHeard": {
-          "question": "Kukaan ei kuule minua – mitä tarkistan?",
+          "question": "Kukaan ei kuule minua äänihuoneessa – mitä tarkistan?",
           "answer": "<p>Tarkista nämä järjestyksessä. Kyse on melkein aina ensimmäisestä.</p><steps><step>Onko mikrofonipainikkeesi punainen? Silloin olet mykistettynä. Napauta sitä, niin mykistys poistuu.</step><step>Näkyykö painikkeessa lukko? Gedusi on lukinnut mikrofonisi hetkeksi. Hän avaa sen kyllä.</step><step>Napauta mikrofonipainikkeen vieressä olevaa pientä nuolta. Se avaa mikrofoniasetukset, joista voit valita oikean mikrofonin listalta.</step><step>Puhu nyt ja etsi listan alta palkkia. Jos palkkia ei näy lainkaan, mikrofonisi on pois päältä eikä vain hiljainen – palaa kohtaan 1. Jos palkki näkyy muttei liiku, mikrofoni on jonkin muun ohjelman käytössä.</step></steps><p>Jos näet punaisen viestin, jonka mukaan emme saa yhteyttä mikrofoniisi, sulje muut sovellukset ja välilehdet, jotka käyttävät sitä, salli mikrofonin käyttö selaimesi asetuksista ja napauta Lataa uudelleen.</p><p>Eikö vieläkään kuulu? Kerro Gedullesi kerran aikana – hän auttaa.</p>"
         },
         "cannotHearOthers": {
-          "question": "En kuule ketään – mitä tarkistan?",
+          "question": "En kuule ketään äänihuoneessa – mitä tarkistan?",
           "answer": "<p>Tarkista nämä järjestyksessä:</p><steps><step>Nosta laitteesi äänenvoimakkuutta ja tarkista, että kuulokkeet ovat kunnolla kiinni.</step><step>Katso alueita. Kuulet vain ne, jotka ovat samalla alueella kuin sinä, joten jos muut ovat jossain muualla, napauta heidän aluettaan ja siirry sinne.</step><step>Jos Gedusi on siirtänyt sinut alueelle tarkoituksella, pysy siellä. Hän tuo sinut takaisin.</step></steps><p>Jos muut ovat samalla alueella, äänet ovat päällä eikä silti kuulu mitään, kerro Gedullesi – sano se ääneen tai kirjoita chattiin, jos huoneessasi on sellainen. Hän näkee, ketkä huoneessa ovat, ja auttaa.</p>"
         },
         "someoneIsMean": {
@@ -1738,11 +1787,11 @@
         },
         "safeguardingConcern": {
           "question": "Minulla herää huoli lapsen turvallisuudesta kesken kerran – mitä teen?",
-          "answer": "<p>Hoida ensin tilanne huoneessa – moderaattorin hallintapainikkeet ovat sinulla: mykistä mikrofoni, lukitse se tai siirrä joku erilliseen tilaan pois ryhmästä. Kirjaa asia sitten samana päivänä, kun se on tuoreena mielessä.</p><p>Jokaisella kerralla on henkilökunnan muistiinpano, joka on merkitty Geduille ja ylläpitäjille eikä näy perheille koskaan; sinne kuuluvat välikohtaus, kiusaaminen tai huoli pelaajasta. Lisäksi ryhmälistalla on pelaajakohtainen muistiinpano, joka seuraa lasta siinä ryhmässä kerrasta toiseen ja on niin ikään vain Gedujen ja ylläpitäjien nähtävissä. Kumpikaan ei näy millekään perheelle.</p><p>Muistiinpano on kirjaus, ei hälytys: se ei herätä ketään, joten kaikki kiireellinen ja kaikki, mikä vaatii jonkun ryhmän ulkopuolelta, menee lisäksi toimistolle osoitteeseen {supportEmail}.</p>"
+          "answer": "<p>Hoida ensin välitön tilanne. Verkkokerralla moderaattorin hallintapainikkeet ovat sinulla äänihuoneessa: mykistä mikrofoni, lukitse se tai siirrä joku erilliseen tilaan pois ryhmästä. Paikan päällä tuotteessa ei ole tähän hallintapainikkeita – hoidat tilanteen itse huoneessa. Kirjaa asia joka tapauksessa samana päivänä, kun se on tuoreena mielessä.</p><p>Jokaisella kerralla on henkilökunnan muistiinpano, joka on merkitty Geduille ja ylläpitäjille eikä näy perheille koskaan; sinne kuuluvat välikohtaus, kiusaaminen tai huoli pelaajasta. Lisäksi ryhmälistalla on pelaajakohtainen muistiinpano, joka seuraa lasta siinä ryhmässä kerrasta toiseen ja on niin ikään vain Gedujen ja ylläpitäjien nähtävissä. Kumpikaan ei näy millekään perheelle.</p><p>Muistiinpano on kirjaus, ei hälytys: se ei herätä ketään, joten kaikki kiireellinen ja kaikki, mikä vaatii jonkun ryhmän ulkopuolelta, menee lisäksi toimistolle osoitteeseen {supportEmail}.</p>"
         },
-        "gamerCannotConnect": {
-          "question": "Pelaaja ei saa yhteyttä ja kerta on jo alkanut – mitä voin tehdä?",
-          "answer": "<p>Kaksi asiaa voit tehdä tuotteen sisällä, ja yhtä et.</p><p>Tarkista ryhmälistaasi vasten, ketkä oikeasti ovat huoneessa – osallistujalista näyttää vain ne, jotka ovat juuri nyt yhteydessä, joten listalta puuttuva nimi on pelaaja, joka ei ole päässyt sisään, eikä mikään merkitse sitä puolestasi; luet sen listasta itse.</p><p>Perheeseen saat yhteyden avaamalla ryhmän listan ryhmätyötilassa: jokaisella rivillä on perheen yhteyssähköposti, jonka kopioit napautuksella, ja listan yläpuolella on painike kaikkien kopioimiseen. Lähetät viestin omasta sähköpostistasi – sovelluksen sisäistä viestiä perheelle ei ole, tekstiviestiä ei ole eikä listalla ole puhelinnumeroa.</p><p>Sitä et voi tehdä, että päästäisit hänet itse sisään: sisäänpääsyn ratkaisee palvelimemme pelaajan omasta pyynnöstä, ja hänellä on oltava voimassa oleva paikka siinä ryhmässä ja kerran aikaikkuna auki. Jos paikka on eikä hän silti pääse sisään, nopein korjaus löytyy yleensä hänen päästään: salli selaimessa mikrofonin käyttö, sulje kaikki muu, mikä käyttää sitä, ja lataa sivu uudelleen. Jos vika on meidän korjattavamme, lähetä viesti toimistolle osoitteeseen {supportEmail}.</p>"
+        "gamerNotArrived": {
+          "question": "Pelaaja ei ole saapunut ja kerta on jo alkanut – mitä voin tehdä?",
+          "answer": "<p>Varmista ensin, kuka puuttuu. Verkossa tarkista ryhmälistaasi vasten, ketkä oikeasti ovat huoneessa – osallistujalista näyttää vain ne, jotka ovat juuri nyt yhteydessä, joten listalta puuttuva nimi on pelaaja, joka ei ole päässyt sisään, eikä mikään merkitse sitä puolestasi; luet sen listasta itse. Paikan päällä ryhmälista kertoo, kenen pitäisi olla paikalla, ja tarkistat tilan sitä vasten samalla tavalla.</p><p>Perheeseen saat yhteyden avaamalla ryhmän listan ryhmätyötilassa: jokaisella rivillä on perheen yhteyssähköposti, jonka kopioit napautuksella, ja listan yläpuolella on painike kaikkien kopioimiseen. Lähetät viestin omasta sähköpostistasi – sovelluksen sisäistä viestiä perheelle ei ole, tekstiviestiä ei ole eikä listalla ole puhelinnumeroa.</p><p>Verkossa et voi päästää pelaajaa itse sisään: sisäänpääsyn ratkaisee palvelimemme pelaajan omasta pyynnöstä, ja hänellä on oltava voimassa oleva paikka siinä ryhmässä ja kerran aikaikkuna auki. Jos paikka on eikä hän silti pääse sisään, nopein korjaus löytyy yleensä hänen päästään: salli selaimessa mikrofonin käyttö, sulje kaikki muu, mikä käyttää sitä, ja lataa sivu uudelleen. Jos vika on meidän korjattavamme, lähetä viesti toimistolle osoitteeseen {supportEmail}.</p>"
         }
       }
     }
@@ -1872,11 +1921,17 @@
       "format": "Muoto",
       "formatOnline": "Verkossa",
       "formatInPerson": "Paikan päällä",
+      "price": "Hinta",
+      "priceFree": "Maksuton",
+      "pricePaid": "Maksullinen",
       "language": "Kieli",
       "age": "Ikä",
       "days": "Päivät",
       "clearAll": "Tyhjennä",
-      "filterBy": "Suodata"
+      "filterBy": "Suodata",
+      "title": "Suodattimet",
+      "activeCount": "{count, plural, one {# suodatin valittuna} other {# suodatinta valittuna}}",
+      "removeFilter": "Poista {label}"
     },
     "card": {
       "ages": "Ikä {min}–{max}",
@@ -2008,12 +2063,7 @@
       "ctaAllSet": "Olet valmis",
       "ctaAgreeConsent": "Anna vaadittu suostumus",
       "ctaWaitlist": "Liity jonotuslistalle",
-      "ctaSignIn": {
-        "consumer_club": "Kirjaudu sisään ilmoittautuaksesi",
-        "municipality_club": "Kirjaudu sisään ilmoittautuaksesi",
-        "camp": "Kirjaudu sisään ilmoittautuaksesi",
-        "event": "Kirjaudu sisään liittyäksesi"
-      },
+      "ctaSignIn": "Kirjaudu sisään",
       "ctaCreateAccount": "Luo tili",
       "gamerAlreadySignedUp": {
         "consumer_club": "Jo ilmoitettu",
@@ -2324,6 +2374,10 @@
     },
     "helpFaq": {
       "items": {
+        "joiningSession": {
+          "question": "Miten pelaajani pääsee mukaan, kun kerta alkaa?",
+          "answer": "<p>Se riippuu siitä, missä kerta pidetään, ja Oma SOG -sivusi kortti kertoo sen: verkossa pidettävän kerran kortissa on painike, ja paikan päällä pidettävän kerran kortissa lukee paikan nimi.</p><p>Verkossa kerta pidetään selaimessa äänihuoneessa, eikä mitään tarvitse asentaa:</p><steps><step>Etsi Oma SOG -sivultasi kortti lapsesi nimen alta. Ennen kerran alkua kortin painike on lukittuna ja kertoo, minä päivänä ja mihin aikaan se avautuu.</step><step>Viisi minuuttia ennen kerran alkua painikkeen teksti vaihtuu: siinä lukee ”Liity äänihuoneeseen”.</step><step>Napauta sitä. Huoneeseen pääsevät vain ryhmään kuuluvat, joten tililtäsi sinua pyydetään ensin vaihtamaan lapsesi profiiliin – samalla sinut kirjataan ulos vanhemman tililtä – ja huone avautuu lapsesi nimissä.</step><step>Salli mikrofonin käyttö, jos selain kysyy sitä.</step></steps><p>Omaan profiiliisi palaamiseen tarvitset jälkeenpäin vanhemman PIN-koodin. Jos lapsesi kirjautuu omalla käyttäjätunnuksellaan tai sähköpostiosoitteellaan, hän voi myös avata oman Oma SOG -sivunsa ja napauttaa samaa painiketta siellä. Huone pysyy auki viisi minuuttia kerran päättymisen jälkeen.</p><p>Paikan päällä pidettävässä kerrassa painiketta ei ole. Kerhon, leirin tai tapahtuman sivulla näkyy paikka osoitteineen sekä perheille tarkoitettu huomautus paikasta, jos sellainen on – tuo siis lapsesi sinne kerran alkuun mennessä.</p><p>Jos kortissa lukee sen sijaan, että etsimme lapsellesi Gedua ja ryhmää, liityttävää ei vielä ole: se tapahtuu ennen ensimmäistä kertaa, ja sen jälkeen kortissa näkyy painike tai paikka.</p>"
+        },
         "parentPin": {
           "question": "Mikä vanhemman PIN on, ja mitä jos unohdan sen?",
           "answer": "<p>Vanhemman PIN on nelinumeroinen koodi, jonka asetat, kun käytät vanhemman tiliäsi ensimmäisen kerran. Se suojaa Sogversen vanhemman puolta kokonaisuutena, ei jokaista yksittäistä toimintoa: avaat lukituksen kerran, ja istunto lukittuu uudelleen heti, kun vaihdat pelaajaprofiiliin tai kirjaudut ulos – niinpä selaimeen tallennettu salasana ei yksin riitä ostamiseen eikä lapsen tilin muuttamiseen. Sama PIN suojaa myös paluun: lapsi, joka tuli Sogverseen vaihtamalla sinun tililtäsi, tarvitsee sen vaihtaakseen sinun profiiliisi tai sisaruksen profiiliin.</p><p>Jos unohdat koodin, napauta PIN-näkymässä ”Unohditko PIN-koodin?”: lähetämme palautuslinkin sähköpostitse tilisi osoitteeseen emmekä minnekään muualle, joten jos lapsi painaa sitä, hän vain lähettää sinulle sähköpostia. Linkki on voimassa 24 tuntia ja toimii kerran.</p><p>Voit myös vaihtaa muistamasi PIN-koodin Asetuksissa.</p>"
@@ -2335,10 +2389,6 @@
         "missedSessions": {
           "question": "Mitä jos jäämme pois yhdeltä kerralta tai liitymme kerhoon kesken kauden?",
           "answer": "<p>Kerho pysyy avoinna uusille pelaajille niin kauan kuin se on käynnissä, joten voit liittyä kesken kauden – kerhon sivu näyttää, minä viikonpäivänä ja mihin aikaan kerho kokoontuu, minkä kauden se kestää ja montako paikkaa on jäljellä. Kun lapsesi on ilmoittautunut, hänen oma kerhosivunsa kertoo seuraavan kerran päivämäärän.</p><p>Leirit ja tapahtumat ovat eri asia: leiri sulkeutuu uusilta ilmoittautumisilta alkamispäivää edeltävänä päivänä, koska ryhmä aloittaa yhdessä, ja tapahtuma sulkeutuu, kun sen kerta on ohi.</p><p>Kerho laskutetaan täytenä kuukautena ilmoittautumispäivästä alkaen, joten kesken kuukauden liittyminen ei pienennä sen kuukauden maksua; jos kerho ei ole vielä alkanut, ilmoittautumispäivänä ei veloiteta mitään ja sivu kertoo ensimmäisen maksun päivämäärän.</p><p>Jos lapsesi jää pois yhdeltä kerralta, mitään ei tarvitse tehdä – se ei vaikuta hänen paikkaansa. Gedu merkitsee läsnäolon jokaiselta kerralta, ja näet merkinnän kerhon sivulla. Väliin jäänyttä kertaa ei korvata eikä hyvitetä; kuntakerhossa toistuvat ilmoittamattomat poissaolot voivat vapauttaa paikan jonotuslistan seuraavalle perheelle, minkä hyväksyt ilmoittautuessasi.</p>"
-        },
-        "sessionTimes": {
-          "question": "Mihin aikaan kerrat pidetään meidän aikavyöhykkeellämme?",
-          "answer": "<p>Teidän omassa ajassanne. Kertojen ajat kirjataan Suomen aikaan ja näytetään sinulle automaattisesti oman laitteesi aikavyöhykkeelle muunnettuina kaikkialla, missä ne esiintyvät – kerhon sivulla, sen kortissa ja Oma SOG -sivullasi.</p><p>Kun aikavyöhykkeesi eroaa kerhon aikavyöhykkeestä, ajan vieressä on lyhyt aikavyöhykemerkintä, jotta muunnos näkyy; kun olet samalla vyöhykkeellä kuin kerho, muunnettavaa ei ole eikä merkintää näy.</p><p>Koska muunnos on aito, kahtena suomalaisena arkipäivänä kokoontuva kerho voi osua sinulle eri viikonpäiville, ja näkemäsi aikataulu on ryhmitelty sinun viikonpäiviesi mukaan, ei meidän. Leirin alkamis- ja päättymispäivät ovat tavallisia kalenteripäiviä, eivätkä ne siirry.</p>"
         }
       }
     }
@@ -3202,8 +3252,9 @@
   },
   "roblox": {
     "hero": {
-      "title": "Rakenna<br></br>Pelaa<br></br><act>Omista</act>",
-      "subtitle": "Ilmainen pelisuunnitteluohjelma nuorille – järjestäjinä Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa.",
+      "title": "Luojien<br></br><act>akatemia</act>",
+      "subtitle": "Rakenna. Pelaa. Omista.",
+      "blurb": "Maksuton nuorille. Julkaise oma Roblox-pelisi.",
       "cta": "Hyppää mukaan!"
     },
     "lockup": {
@@ -3215,7 +3266,7 @@
     "what": {
       "eyebrow": "Mistä on kyse",
       "heading": "Opi rakentamaan Robloxissa.",
-      "paragraph1": "Ohjelma antaa 13–17-vuotiaille Ranskassa mahdollisuuden suunnitella, koodata ja julkaista oma Roblox-pelinsä – ja tärkeimmät ihmiset kannustavat vierellä. Ohjelman toteuttavat Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa, ja se on käytännönläheinen johdatus pelisuunnitteluun, digitaaliseen luovuuteen ja turvalliseen verkkoyhteistyöhön.",
+      "paragraph1": "Luojien akatemia antaa 13–17-vuotiaille Ranskassa mahdollisuuden suunnitella, koodata ja julkaista oma Roblox-pelinsä – ja tärkeimmät ihmiset kannustavat vierellä. Ohjelman toteuttavat Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa, ja se on käytännönläheinen johdatus pelisuunnitteluun, digitaaliseen luovuuteen ja turvalliseen verkkoyhteistyöhön.",
       "paragraph2": "Ohjelma tähtää siihen, että osallistujat julkaisevat oman teoksensa Robloxissa. Aiempaa kokemusta ei tarvita – pelkkä kiinnostus riittää."
     },
     "why": {

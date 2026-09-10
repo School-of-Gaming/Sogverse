@@ -178,6 +178,11 @@ interface ParticipantChipProps extends ContentProps {
   isPending?: boolean;
 }
 
+// The chip carries no controls of its own, deliberately: it is a drag handle end
+// to end, and every action the panel offers a seat — moving it, seating it,
+// removing it, switching its club — is a drop somewhere. A button sitting on a
+// handle competes with the gesture the handle exists for.
+
 export function ParticipantChip({
   participationId,
   participantId,
@@ -206,9 +211,9 @@ export function ParticipantChip({
       {...attributes}
       aria-disabled={isPending || undefined}
       className={cn(
+        "flex items-center gap-2 rounded-lg border border-border px-2.5 py-2 text-xs font-medium transition-colors",
         // `py-2` rather than `py-1.5`: the chip carries a picture now, and the
         // extra 2px a side is what keeps the stack from touching its own border.
-        "flex items-center gap-2 rounded-lg border border-border px-2.5 py-2 text-xs font-medium transition-colors",
         isPending
           ? "cursor-progress border-border bg-lifted text-foreground opacity-50"
           // Shared drag-cursor class (globals.css): grab on hover. The grabbing

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { filterProducts } from "@/components/public/products/filter-products";
 import { PRODUCT_TAG_VALUES } from "@/components/public/products/product-tag";
 import type {
+  BillingMode,
   ProductBrowseRow,
   ProductTag,
   ProductTopic,
@@ -29,10 +30,17 @@ function row(overrides: {
   // Weekdays (0=Mon..6=Sun) the product's schedule touches. Each becomes a
   // schedule_slot; only `weekday` matters for filterProducts().
   weekdays?: number[];
+  // How the product is billed. `paid` by default, which — with no price row
+  // below — is a product whose card can state no amount, so the default row
+  // answers neither price chip.
+  billingMode?: BillingMode;
+  // A price in euro cents, as the one `product_prices` row the browse grid
+  // reads. Undefined leaves the product priceless in that currency.
+  priceCents?: number;
 }): ProductBrowseRow {
   return {
     id: overrides.id,
-    billing_mode: "paid",
+    billing_mode: overrides.billingMode ?? "paid",
     start_date: null,
     end_date: null,
     image_path: null,
@@ -52,7 +60,10 @@ function row(overrides: {
     topic: overrides.topic,
     waitlist_enabled: false,
     product_translations: [],
-    product_prices: [],
+    product_prices:
+      overrides.priceCents === undefined
+        ? []
+        : [{ currency: "eur", price_cents: overrides.priceCents }],
     schedule_slots: (overrides.weekdays ?? []).map((weekday) => ({
       weekday,
       start_time: "16:00:00",
@@ -98,6 +109,7 @@ describe("filterProducts", () => {
       filterProducts(ALL, {
         topics: [],
         format: null,
+        price: null,
         languages: [],
         audiences: [],
         tags: [],
@@ -112,6 +124,7 @@ describe("filterProducts", () => {
       filterProducts(ALL, {
         topics: ["minecraft_java"],
         format: null,
+        price: null,
         languages: [],
         audiences: [],
         tags: [],
@@ -125,6 +138,7 @@ describe("filterProducts", () => {
     const ids = filterProducts(ALL, {
       topics: ["minecraft_java", "fortnite"],
       format: null,
+      price: null,
       languages: [],
       audiences: [],
       tags: [],
@@ -140,6 +154,7 @@ describe("filterProducts", () => {
       filterProducts(ALL, {
         topics: ["fortnite"],
         format: "online",
+        price: null,
         languages: [],
         audiences: [],
         tags: [],
@@ -153,6 +168,7 @@ describe("filterProducts", () => {
     const ids = filterProducts(ALL, {
       topics: [],
       format: "online",
+      price: null,
       languages: [],
       audiences: [],
       tags: [],
@@ -167,6 +183,7 @@ describe("filterProducts", () => {
     const ids = filterProducts(ALL, {
       topics: [],
       format: "in_person",
+      price: null,
       languages: [],
       audiences: [],
       tags: [],
@@ -180,6 +197,7 @@ describe("filterProducts", () => {
     const ids = filterProducts(ALL, {
       topics: ["minecraft_java", "fortnite"],
       format: "online",
+      price: null,
       languages: [],
       audiences: [],
       tags: [],
@@ -194,6 +212,7 @@ describe("filterProducts", () => {
     const ids = filterProducts(ALL, {
       topics: [],
       format: null,
+      price: null,
       languages: ["fi"],
       audiences: [],
       tags: [],
@@ -208,6 +227,7 @@ describe("filterProducts", () => {
     const ids = filterProducts(ALL, {
       topics: [],
       format: null,
+      price: null,
       languages: ["en", "fi"],
       audiences: [],
       tags: [],
@@ -221,6 +241,7 @@ describe("filterProducts", () => {
     const ids = filterProducts(ALL, {
       topics: ["minecraft_java", "fortnite"],
       format: null,
+      price: null,
       languages: ["en"],
       audiences: [],
       tags: [],
@@ -235,6 +256,7 @@ describe("filterProducts", () => {
     const ids = filterProducts(ALL, {
       topics: [],
       format: null,
+      price: null,
       languages: [],
       audiences: [],
       tags: [],
@@ -250,6 +272,7 @@ describe("filterProducts", () => {
     const ids = filterProducts(ALL, {
       topics: [],
       format: null,
+      price: null,
       languages: [],
       audiences: [],
       tags: [],
@@ -273,6 +296,7 @@ describe("filterProducts", () => {
     const base = {
       topics: [] as string[],
       format: null,
+      price: null,
       languages: [] as SpokenLanguageCode[],
       audiences: [],
       tags: [],
@@ -298,6 +322,7 @@ describe("filterProducts", () => {
     const ids = filterProducts(ALL, {
       topics: [],
       format: "online",
+      price: null,
       languages: [],
       audiences: [],
       tags: [],
@@ -314,6 +339,7 @@ describe("filterProducts", () => {
     const ids = filterProducts(ALL, {
       topics: [],
       format: null,
+      price: null,
       languages: [],
       audiences: [],
       tags: [],
@@ -327,6 +353,7 @@ describe("filterProducts", () => {
     const ids = filterProducts(ALL, {
       topics: [],
       format: null,
+      price: null,
       languages: [],
       audiences: [],
       tags: [],
@@ -341,6 +368,7 @@ describe("filterProducts", () => {
     const ids = filterProducts(ALL, {
       topics: [],
       format: null,
+      price: null,
       languages: [],
       audiences: [],
       tags: [],
@@ -354,6 +382,7 @@ describe("filterProducts", () => {
     const ids = filterProducts(ALL, {
       topics: [],
       format: "online",
+      price: null,
       languages: [],
       audiences: [],
       tags: [],
@@ -386,6 +415,7 @@ describe("filterProducts", () => {
       filterProducts(rows, {
         topics: [],
         format: null,
+        price: null,
         languages: [],
         audiences: [],
         tags: [],
@@ -397,6 +427,7 @@ describe("filterProducts", () => {
       filterProducts(rows, {
         topics: [],
         format: null,
+        price: null,
         languages: [],
         audiences: [],
         tags: [],
@@ -408,6 +439,7 @@ describe("filterProducts", () => {
       filterProducts(rows, {
         topics: [],
         format: null,
+        price: null,
         languages: [],
         audiences: [],
         tags: [],
@@ -445,6 +477,7 @@ describe("filterProducts", () => {
     const base = {
       topics: [] as string[],
       format: null,
+      price: null,
       languages: [] as SpokenLanguageCode[],
       tags: [] as ProductTag[],
       age: null,
@@ -519,6 +552,7 @@ describe("filterProducts", () => {
           ...base,
           audiences: ["families"],
           format: "online",
+          price: null,
         }).map((p) => p.id),
       ).toEqual([]);
     });
@@ -575,6 +609,7 @@ describe("filterProducts", () => {
     const base = {
       topics: [] as string[],
       format: null,
+      price: null,
       languages: [] as SpokenLanguageCode[],
       audiences: [],
       age: null,
@@ -641,6 +676,7 @@ describe("filterProducts", () => {
           ...base,
           tags: ["beginner"],
           format: "online",
+          price: null,
         }).map((p) => p.id),
       ).toEqual(["beginner"]);
       expect(
@@ -648,8 +684,120 @@ describe("filterProducts", () => {
           ...base,
           tags: ["advanced"],
           format: "online",
+          price: null,
         }).map((p) => p.id),
       ).toEqual([]);
+    });
+  });
+
+  /**
+   * **The price row answers with the card's own footer, and a product whose
+   * footer states no price answers neither chip.**
+   *
+   * Three shapes state nothing: a club invoiced to a municipality, which shows
+   * how full it is where the others show what they cost; a paid product with
+   * no price in the currency the grid prices in, whose card says exactly that;
+   * and a paid product priced at nothing, which the column permits and which
+   * is a mis-authored product rather than a free one. Each of the three is
+   * reachable only with the row cleared, and the cases below are what stop a
+   * later reading of "free" from quietly sweeping any of them into the Free
+   * chip.
+   */
+  describe("price", () => {
+    const base = {
+      topics: [] as string[],
+      format: null,
+      languages: [] as SpokenLanguageCode[],
+      audiences: [],
+      tags: [],
+      age: null,
+      days: [] as number[],
+    };
+
+    const freeClub = row({
+      id: "free-club",
+      topic: "minecraft_java",
+      billingMode: "free",
+    });
+    const paidClub = row({
+      id: "paid-club",
+      topic: "minecraft_java",
+      billingMode: "paid",
+      priceCents: 2900,
+    });
+    const paidCamp = row({
+      id: "paid-camp",
+      topic: "fortnite",
+      productType: "camp",
+      billingMode: "paid",
+      priceCents: 19900,
+    });
+    const muniClub = row({
+      id: "muni",
+      topic: "minecraft_java",
+      productType: "municipality_club",
+      billingMode: "external_contract",
+    });
+    const unpricedInEuro = row({
+      id: "unpriced",
+      topic: "roblox_studio",
+      billingMode: "paid",
+    });
+    const pricedAtNothing = row({
+      id: "zero",
+      topic: "roblox_studio",
+      billingMode: "paid",
+      priceCents: 0,
+    });
+
+    const rows = [
+      freeClub,
+      paidClub,
+      paidCamp,
+      muniClub,
+      unpricedInEuro,
+      pricedAtNothing,
+    ];
+
+    it("passes everything through when no chip is lit", () => {
+      expect(
+        filterProducts(rows, { ...base, price: null }).map((p) => p.id),
+      ).toEqual(rows.map((p) => p.id));
+    });
+
+    it("matches only the products the billing model calls free", () => {
+      expect(
+        filterProducts(rows, { ...base, price: "free" }).map((p) => p.id),
+      ).toEqual(["free-club"]);
+    });
+
+    it("matches a stated amount, monthly or upfront alike", () => {
+      // A club's subscription and a camp's single payment are two shapes of
+      // one answer: this product costs money.
+      expect(
+        filterProducts(rows, { ...base, price: "paid" }).map((p) => p.id),
+      ).toEqual(["paid-club", "paid-camp"]);
+    });
+
+    it("leaves a product that states no price to neither chip", () => {
+      for (const value of ["free", "paid"] as const) {
+        const ids = filterProducts(rows, { ...base, price: value }).map(
+          (p) => p.id,
+        );
+        expect(ids).not.toContain("muni");
+        expect(ids).not.toContain("unpriced");
+        expect(ids).not.toContain("zero");
+      }
+    });
+
+    it("ANDs with the other rows", () => {
+      expect(
+        filterProducts(rows, {
+          ...base,
+          price: "paid",
+          topics: ["fortnite"],
+        }).map((p) => p.id),
+      ).toEqual(["paid-camp"]);
     });
   });
 });

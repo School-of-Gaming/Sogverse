@@ -1,337 +1,118 @@
 "use client";
 
 import { useId } from "react";
-import { useLocale, useTranslations } from "next-intl";
-import { Sliders, X, Globe, MapPin } from "lucide-react";
-import { LanguageFlag } from "@/components/ui/language-flag";
-import { TOPIC_FILTER_CHIPS } from "@/lib/products/topics";
-import { PRODUCT_AGE_BANDS } from "@/lib/constants/gamer-age";
-import { useTopicLabel } from "@/lib/products/use-topic-label";
-import { SPOKEN_LANGUAGES } from "@/lib/constants/spoken-languages";
-import { useLanguageNames } from "@/hooks/use-language-names";
+import { useTranslations } from "next-intl";
+import { Sliders, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { TagGlyph } from "./product-chips";
-import { PRODUCT_TAG_VALUES, productTagLabelKey } from "./product-tag";
-import { formatWeekday } from "@/lib/products/format-product-schedule";
-import { useBrowseFilters } from "./use-browse-filters";
-import { useShopCategories } from "./use-shop-categories";
+import { useBrowseFilterRows, type BrowseFilterChip } from "./browse-filter-rows";
+import type { BrowseSurface } from "./browse-surface";
+import { useOfferedBrowseFilters } from "./use-browse-filters";
 
-// Weekdays for the "Days" row, in fixed Mon→Sun order (0=Mon..6=Sun, matching
-// `schedule_slots.weekday`). Hardcoded Monday-first: this is a filter, not a
-// calendar, so the locale's first-day-of-week convention doesn't matter here.
-// The per-chip labels are still localised via `formatWeekday`.
-const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
-
-// The filter control — chip rows (type, audience, designed-for, subject,
-// format, language, age, days).
-// Chips are pill-shaped with a clear active state (filled act) so taps
-// register on small phone screens.
+// The filter control — the chip rows the page offers (type, audience,
+// designed-for, subject, format, price, language, age, days, less whatever the
+// page withholds), drawn from the row list in `browse-filter-rows.tsx`. What
+// the rows *are* lives there; this file decides only how they are drawn. Chips
+// are pill-shaped with a clear active state (filled act) so taps register on
+// small phone screens.
 //
-// One component, two shapes, one DOM instance — never a phone copy and a
-// desktop copy:
-//   - Below `lg` it is a strip above the cards. Each row puts its label to the
-//     left of the chips, and most rows scroll horizontally rather than wrapping
-//     so they never push the cards down on overflow. The Subject row is the
-//     exception and wraps at every viewport — that filter matters enough that
-//     every option should be visible without a gesture.
+// One component, two places, mounted in only one of them at a time — never a
+// phone copy and a desktop copy standing side by side:
 //   - From `lg` it is the left rail beside the cards (see
-//     `<ProductBrowseResults>`). Labels move above their chips and every group
-//     wraps: the scroll treatment suppresses its own scrollbar, which is fine
-//     for a thumb and undiscoverable with a mouse, and a rail has the vertical
-//     room to spend.
+//     `<ProductBrowseResults>`).
+//   - Below `lg` it is the body of a bottom sheet, opened from the trigger bar
+//     that stands where the rail cannot (see `<ProductBrowseFilterPanel>`).
+//     Opening the sheet unmounts the rail's instance and mounts a fresh one
+//     inside the sheet, and closing it does the reverse. Nothing is lost in
+//     that swap because the component holds no state of its own; two mounted
+//     at once would be two writers of the same URL params.
+//
+// Both places give a row its own line, so both draw the same shape: the
+// label above its chips, and every chip wrapping onto further lines rather
+// than scrolling out of reach. That used to differ — below `lg` the rows were
+// a strip above the cards with their labels beside them and most of them
+// scrolling sideways — and the strip is what the sheet replaced: a stack of
+// rows standing between a phone reader and the first product card.
 //
 // Type is an inclusive filter, not a choice: selecting nothing shows every
 // category, selecting chips narrows to them, and toggling the last one off
 // returns to everything. Being an ordinary filter, it is reset by "Clear all"
-// like every other row. Format and Age are single-valued — toggling the active
-// chip clears the filter back to "either" / "any age".
+// like every other row. Format, Price and Age are single-valued — toggling the
+// active chip clears the filter back to "either" / "any price" / "any age".
 //
 // No match-count display: the visible card grids already convey that
 // information at a glance, and surfacing a count next to a "Clear"
 // button made the meta row's height jump when the button appeared.
 interface ProductBrowseFiltersProps {
-  /** Lead with the Clubs|Camps|Events Type row — and, by owner decision, with
-   *  the Audience row that shares its guard. The shop shows both; the
-   *  per-municipality page hides them, because there both have one answer
-   *  (everything is that school's own gamers-only club) and a filter with one
-   *  answer controls nothing. The Designed-for row deliberately does NOT share
-   *  this guard — a tag is orthogonal to what makes those two vacuous, and one
-   *  school can offer a beginner club beside a neuroinclusive one. Default
-   *  true. */
-  showTypeFilter?: boolean;
+  /** Which page the rows are for: it decides which rows are drawn and what
+   *  lights Clear. The decision, and the reason for each filter a page
+   *  withholds, live in `browse-surface.ts`. */
+  surface: BrowseSurface;
+  /**
+   * Which of the two places this instance is standing in.
+   *
+   * `card` is the rail: its own bordered box, headed by the "Filter by"
+   * eyebrow and a Clear button, because nothing around it says what the box
+   * is. `sheet` is the same rows with none of that chrome — the sheet's own
+   * header names it and carries the Clear, and a box drawn inside a box is
+   * just a second border.
+   */
+  variant?: "card" | "sheet";
 }
 
 export function ProductBrowseFilters({
-  showTypeFilter = true,
+  surface,
+  variant = "card",
 }: ProductBrowseFiltersProps) {
   const t = useTranslations("productBrowse.filters");
-  // The audience chips share their labels with the card badge and the overview
-  // card's audience row — one vocabulary for the whole concept.
-  const tAudience = useTranslations("productAudience");
-  // Likewise the design tags: the chips wear the same words the cards' own tag
-  // chips do, resolved through the tag module's key map rather than spelled
-  // from the enum value.
-  const tTag = useTranslations("productTag");
-  const locale = useLocale();
-  const topicLabel = useTopicLabel();
-  // The Language row's vocabulary is the `spoken_language` enum — a constant, so
-  // the row is complete in the first frame with nothing to await. It used to be
-  // a query, and the row was rendered only once that query had answered: a
-  // failed prefetch hid it and a later refetch put it back, moving every row
-  // below on data's own schedule.
-  const languageName = useLanguageNames();
-  // Product category (Clubs | Camps | Events) leads the filter card as the
-  // "Type" row. Unlike the other filters it lives in its own URL param
-  // (useShopCategories) and drives which sections render rather than which
-  // cards survive a predicate — but it is still an ordinary filter to the
-  // parent, so Clear below resets it too (the delete rides along inside
-  // `clear`'s single write).
-  const { categories, toggleCategory } = useShopCategories();
-  const {
-    topics: selectedTopics,
-    format: selectedFormat,
-    languages: selectedLanguages,
-    audiences: selectedAudiences,
-    tags: selectedTags,
-    age: selectedAge,
-    days: selectedDays,
-    hasAny,
-    toggleTopics,
-    toggleFormat,
-    toggleLanguage,
-    toggleAudience,
-    toggleTag,
-    setAge,
-    toggleDay,
-    clear,
-  } = useBrowseFilters();
+  const rows = useBrowseFilterRows(surface);
 
-  // The button shows exactly when clearing would change something the user can
-  // see, so it spans both state owners: `hasAny` covers the chip filters, the
-  // categories cover the Type row that `clear` now resets alongside them — but
-  // only where that row is rendered. A surface without the Type row (the
-  // municipality page) still *reads* a stray `?category=` into `categories`,
-  // and a Clear button lit by an invisible param is a control lying.
-  const showClear = hasAny || (showTypeFilter && categories.length > 0);
+  // The button shows exactly when clearing would change something this page
+  // shows, which spans both state owners — the chip filters, and the Type row
+  // `clear` resets alongside them — but only the filters the page offers. A
+  // page still *reads* every param in the URL, so a shop link's `?category=`
+  // edited onto a school page is in the state all the same; a Clear button lit
+  // by a filter with no row on screen is a control lying.
+  const { hasAny: showClear, clear } = useOfferedBrowseFilters(surface);
 
   return (
-    <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <div className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          <Sliders className="h-3.5 w-3.5" aria-hidden />
-          {t("filterBy")}
+    <div
+      className={cn(
+        variant === "card" && "rounded-xl border border-border bg-card p-3 sm:p-4",
+      )}
+    >
+      {variant === "card" && (
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <div className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <Sliders className="h-3.5 w-3.5" aria-hidden />
+            {t("filterBy")}
+          </div>
+          {/* Clear is always rendered so the row's height doesn't shift
+              when a filter becomes active — `invisible` keeps the box,
+              hides the pixels. */}
+          <button
+            type="button"
+            onClick={clear}
+            aria-hidden={!showClear}
+            tabIndex={showClear ? 0 : -1}
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs font-medium text-foreground transition-colors hover:bg-hover hover:text-foreground",
+              !showClear && "invisible pointer-events-none",
+            )}
+          >
+            <X className="h-3 w-3" aria-hidden />
+            {t("clearAll")}
+          </button>
         </div>
-        {/* Clear is always rendered so the row's height doesn't shift
-            when a filter becomes active — `invisible` keeps the box,
-            hides the pixels. */}
-        <button
-          type="button"
-          onClick={clear}
-          aria-hidden={!showClear}
-          tabIndex={showClear ? 0 : -1}
-          className={cn(
-            "inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs font-medium text-foreground transition-colors hover:bg-hover hover:text-foreground",
-            !showClear && "invisible pointer-events-none",
-          )}
-        >
-          <X className="h-3 w-3" aria-hidden />
-          {t("clearAll")}
-        </button>
-      </div>
+      )}
 
-      <div className="space-y-2 lg:space-y-4">
-        {showTypeFilter && (
-          <FilterRow label={t("type")}>
-            <Chip
-              label={t("typeClubs")}
-              active={categories.includes("clubs")}
-              onToggle={() => toggleCategory("clubs")}
-            />
-            <Chip
-              label={t("typeCamps")}
-              active={categories.includes("camps")}
-              onToggle={() => toggleCategory("camps")}
-            />
-            <Chip
-              label={t("typeEvents")}
-              active={categories.includes("events")}
-              onToggle={() => toggleCategory("events")}
-            />
+      <div className="space-y-4">
+        {rows.map((row) => (
+          <FilterRow key={row.id} label={row.label}>
+            {row.chips.map((chip) => (
+              <Chip key={chip.key} chip={chip} />
+            ))}
           </FilterRow>
-        )}
-
-        {/* Audience sits directly under Type because it is the same coarse cut:
-            both answer "which shelf am I looking at" before anything about the
-            product itself — and it shares Type's guard by owner decision: the
-            municipality school pages hide both rows, since every product there
-            is that school's own clubs and a one-answer filter is a control
-            with nothing to control. Two chips, not three: a chip is the badge
-            its cards wear, so each one matches exactly the products bearing
-            that tag, and gamers-only — the assumed default, badged with
-            nothing — is what the row has no chip for. Multi-select with OR
-            semantics like Subject and Language, but lighting both is still
-            narrower than lighting none: it is every badged product, and the
-            unbadged majority answers only to an empty row. The labels are the
-            card's own audience words, reused rather than re-authored so a chip
-            and the card it surfaces say the same thing. The row ships before
-            any for-parents product exists; a chip with an empty result set for
-            a few days is accepted (see the plan). */}
-        {showTypeFilter && (
-          <FilterRow label={t("audience")}>
-            <Chip
-              label={tAudience("parents")}
-              active={selectedAudiences.includes("parents")}
-              onToggle={() => toggleAudience("parents")}
-            />
-            <Chip
-              label={tAudience("families")}
-              active={selectedAudiences.includes("families")}
-              onToggle={() => toggleAudience("families")}
-            />
-          </FilterRow>
-        )}
-
-        {/* "Designed for" follows Audience because it is the other half of the
-            same question — the row above says who may hold a seat, this says
-            who the sessions were built for. Unlike Audience it renders on the
-            municipality pages too (owner decision, 2026-08-12): Type and
-            Audience hide there because everything on a school page is that
-            school's own gamers-only club and both rows would have one answer,
-            but a tag is orthogonal to that structure — one school can offer a
-            beginner club beside a neuroinclusive one, and "which of my
-            school's clubs fits my child" is that page's whole question. On the
-            municipality rail this row therefore leads the card.
-
-            A chip is the chip the card wears, so each matches exactly the
-            products carrying that tag: OR across the lit chips, and untagged
-            products — the ordinary state, wearing nothing — answer only an
-            empty row. Lighting all three is therefore narrower than lighting
-            none, exactly as on the Audience row above.
-
-            The chips carry the glyphs, unlike Audience and like Format: the tag
-            vocabulary is icon-and-word everywhere it is met — on the card, on
-            the detail hero, in the admin picker that set it — so a parent who
-            taps the sprout here recognises the sprout on the cards it leaves
-            standing. The glyph comes from the shared chip module, so a chip
-            cannot pair a tag with the wrong icon.
-
-            The values are enumerated from the tag module's ordered list, so the
-            row and the admin picker offer the same vocabulary in the same order
-            and a tag added by migration appears in both without an edit here. */}
-        <FilterRow label={t("designedFor")}>
-          {PRODUCT_TAG_VALUES.map((tag) => (
-            <Chip
-              key={tag}
-              icon={<TagGlyph tag={tag} className="h-3 w-3" />}
-              label={tTag(productTagLabelKey(tag))}
-              active={selectedTags.includes(tag)}
-              onToggle={() => toggleTag(tag)}
-            />
-          ))}
-        </FilterRow>
-
-        {/* Wraps instead of scrolling: every subject should be visible without
-            a gesture, on any device. */}
-        <FilterRow label={t("subject")} wrap>
-          {TOPIC_FILTER_CHIPS.map((chip) => (
-            <Chip
-              key={chip.key}
-              // A multi-topic group (Minecraft) carries a literal brand label;
-              // a single-topic chip resolves its label from the topic.
-              label={chip.label ?? topicLabel(chip.topics[0])}
-              // `some`, not `every`: a URL carrying a lone edition (an old
-              // shared link, or a hand-edited param) still filters the grid,
-              // and a chip that stays dark while its filter is on is a control
-              // lying about the results. Toggling a partially-selected group
-              // completes it; toggling a full group clears it.
-              active={chip.topics.some((tp) => selectedTopics.includes(tp))}
-              onToggle={() => toggleTopics(chip.topics)}
-            />
-          ))}
-        </FilterRow>
-
-        <FilterRow label={t("format")}>
-          <Chip
-            icon={<Globe className="h-3 w-3" aria-hidden />}
-            label={t("formatOnline")}
-            active={selectedFormat === "online"}
-            onToggle={() => toggleFormat("online")}
-          />
-          <Chip
-            icon={<MapPin className="h-3 w-3" aria-hidden />}
-            label={t("formatInPerson")}
-            active={selectedFormat === "in_person"}
-            onToggle={() => toggleFormat("in_person")}
-          />
-        </FilterRow>
-
-        <FilterRow label={t("language")}>
-          {SPOKEN_LANGUAGES.map((code) => {
-            const name = languageName(code);
-            return (
-              <Chip
-                key={code}
-                icon={<LanguageFlag code={code} showCode={false} title={name} />}
-                label={code.toUpperCase()}
-                active={selectedLanguages.includes(code)}
-                onToggle={() => toggleLanguage(code)}
-              />
-            );
-          })}
-        </FilterRow>
-
-        {/* Age is single-valued — like the Format row, tapping the active chip
-            clears it back to "any age". The chips are the coarse age bands from
-            @/lib/constants/gamer-age (PRODUCT_AGE_BANDS); a band matches any
-            product whose age range overlaps it. */}
-        <FilterRow label={t("age")}>
-          {PRODUCT_AGE_BANDS.map((band) => {
-            const active =
-              selectedAge?.min === band.min && selectedAge.max === band.max;
-            return (
-              <Chip
-                key={`${band.min}-${band.max}`}
-                // Centered tabular digits so the band labels line up evenly.
-                className="justify-center tabular-nums"
-                label={`${band.min}–${band.max}`}
-                active={active}
-                onToggle={() => setAge(active ? null : band)}
-              />
-            );
-          })}
-        </FilterRow>
-
-        {/* Days matches any product whose schedule touches a selected weekday —
-            a club's recurring slot, a camp's day, an event's date all carry
-            one. Chip labels are responsive in both directions: the short
-            weekday on phones, the full name once the strip has the width for
-            it, and the short form again inside the rail, where a Finnish
-            "keskiviikko" would blow the column open. Both come from Intl via
-            `formatWeekday`. */}
-        <FilterRow label={t("days")}>
-          {WEEKDAYS.map((w) => (
-            <Chip
-              key={w}
-              // Fixed, centered width so all seven chips line up like the Age
-              // row. One width per label form: ~3-char short, or the full
-              // weekday name. 5.5rem fits the en/sv full names; the longest fi
-              // name slightly exceeds it and that one chip grows past the floor.
-              className="min-w-[2.75rem] justify-center sm:min-w-[5.5rem] lg:min-w-[2.75rem]"
-              active={selectedDays.includes(w)}
-              onToggle={() => toggleDay(w)}
-              label={
-                <>
-                  <span className="sm:hidden lg:inline">
-                    {formatWeekday(w, locale, "short")}
-                  </span>
-                  <span className="hidden sm:inline lg:hidden">
-                    {formatWeekday(w, locale, "long")}
-                  </span>
-                </>
-              }
-            />
-          ))}
-        </FilterRow>
+        ))}
       </div>
     </div>
   );
@@ -339,82 +120,55 @@ export function ProductBrowseFilters({
 
 function FilterRow({
   label,
-  wrap = false,
   children,
 }: {
   label: string;
-  /** Wrap the chips onto further lines instead of scrolling horizontally,
-   *  below `lg`. The scroll treatment suppresses its own scrollbar, so
-   *  overflowing chips are undiscoverable on a mouse-driven desktop — a
-   *  wrapping row keeps every option visible at the cost of pushing content
-   *  below it down as it grows. With multiple lines the label can't centre
-   *  against the chip area any more; baseline alignment ties it to the first
-   *  line's text instead. Moot from `lg` up, where the rail wraps every row. */
-  wrap?: boolean;
   children: React.ReactNode;
 }) {
   // Grouped for assistive tech: without `role="group"` + `aria-labelledby`,
-  // the six rows read as one undifferentiated run of ~30 toggle buttons — the
-  // visual label ("Type", "Days") never reaches a screen reader.
+  // the rows read as one undifferentiated run of toggle buttons — the visual
+  // label ("Type", "Days") never reaches a screen reader.
   const labelId = useId();
   return (
     <div
       role="group"
       aria-labelledby={labelId}
-      className={cn(
-        // Label beside the chips as a strip, above them in the rail.
-        "flex gap-3 lg:flex-col lg:items-stretch lg:gap-1.5",
-        wrap ? "items-baseline" : "items-center",
-      )}
+      className="flex flex-col items-stretch gap-1.5"
     >
       <span
         id={labelId}
-        className="w-12 shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:w-14 lg:w-auto"
+        className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
       >
         {label}
       </span>
-      <div
-        className={cn(
-          "flex flex-1 gap-1.5 lg:flex-wrap lg:overflow-x-visible lg:pb-0",
-          wrap
-            ? "flex-wrap"
-            : "overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-        )}
-      >
-        {children}
-      </div>
+      {/* Every row wraps, in the rail and in the sheet alike: both have the
+          vertical room to spend, and a chip that has scrolled out of sight is
+          an option the reader never learns exists. */}
+      <div className="flex flex-wrap gap-1.5">{children}</div>
     </div>
   );
 }
 
-function Chip({
-  label,
-  active,
-  onToggle,
-  icon,
-  className,
-}: {
-  label: React.ReactNode;
-  active: boolean;
-  onToggle: () => void;
-  icon?: React.ReactNode;
-  className?: string;
-}) {
+function Chip({ chip }: { chip: BrowseFilterChip }) {
   return (
     <button
       type="button"
-      onClick={onToggle}
-      aria-pressed={active}
+      onClick={chip.toggle}
+      aria-pressed={chip.active}
+      // A chip drawn from a richer label is named by its plain text, which is
+      // written to contain whatever the label shows; one drawn from the text
+      // is already named by it.
+      aria-label={chip.label === undefined ? undefined : chip.text}
       className={cn(
         "inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium transition-all",
-        active
+        chip.active
           ? "bg-act text-act-foreground shadow-sm"
           : "bg-background text-foreground hover:bg-hover",
-        className,
+        chip.className,
       )}
     >
-      {icon}
-      {label}
+      {chip.icon}
+      {chip.label ?? chip.text}
     </button>
   );
 }

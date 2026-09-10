@@ -28,7 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
  * The client hooks still refetch on mount; this prefetch only affects the
  * initial render.
  *
- * The filter strip's Language row is deliberately absent from this: its
+ * The filters' Language row is deliberately absent from this: its
  * vocabulary is the `spoken_language` enum, a compile-time constant since
  * 00199, so the row is complete before any request is made. It used to be a
  * third read here, and is one no longer.

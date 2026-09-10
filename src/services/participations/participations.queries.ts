@@ -278,6 +278,29 @@ export function useParticipationCounts(
 }
 
 /**
+ * Admin-only: every participation the given gamers hold, in every status —
+ * the client-side twin of the read the admin user-detail page makes on the
+ * server. A small, indexed read of a bounded set (one child's seats), so a
+ * caller renders nothing while it is in flight rather than a skeleton.
+ *
+ * `enabled` is how a caller keeps it unfired until it is actually wanted: an
+ * overlay that is mounted from its parent's first render must not read on
+ * behalf of a sheet nobody has opened.
+ */
+export function useParticipationsForGamers(
+  gamerIds: string[],
+  options?: { enabled?: boolean },
+) {
+  const supabase = getClient();
+  const service = new ParticipationsService(supabase);
+  return useQuery({
+    queryKey: participationKeys.forGamers(gamerIds),
+    queryFn: () => service.getParticipationsForGamers(gamerIds),
+    enabled: (options?.enabled ?? true) && gamerIds.length > 0,
+  });
+}
+
+/**
  * Waits for the participation a paid Checkout Session bought to appear. Only
  * the confirmation page's finalizing state mounts this, and only when the row
  * is not there on the server render — the webhook that writes it normally lands

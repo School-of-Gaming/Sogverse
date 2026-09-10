@@ -48,7 +48,21 @@ function categoryOf(productType: string): ShopCategory | undefined {
  * The chip filters genuinely work: they live in the URL and `filterProducts`
  * runs client-side over these rows, so the audience and design-tag rows can be
  * toggled against a grid that actually answers — the one grid carries every tag
- * value, all three audiences, and a handful of products answering neither.
+ * value, all three audiences, and a handful of products answering neither. It
+ * answers the price row too: the catalogue mixes free clubs and events with
+ * paid ones, so both chips leave cards standing.
+ *
+ * It is also where the two shapes of the filter control are seen. Narrow the
+ * window past `lg` and the rail becomes a bar over the cards — the rows move
+ * into a bottom sheet it opens, and the lit chips stay on the bar as a summary
+ * that wraps beneath its button. That is the whole reason this scene is worth opening on a phone
+ * viewport rather than judged from a component demo: what the bar is worth is
+ * how much of the first screen the cards get back.
+ *
+ * The one price shape this grid cannot show is a product that states no price
+ * at all and so answers neither chip — a school's municipality-funded club.
+ * The storefront does not surface those (they are found from `/schools`), and
+ * a scene carrying one would be showing a card the real page cannot produce.
  *
  * Cards open the matching product-detail scene rather than `/shop/<id>`, which
  * no fixture id resolves to. Everything else about a card — its picture, its
@@ -123,6 +137,7 @@ export function ShopBrowseScene() {
 
   return (
     <ProductBrowseBody
+      surface="shop"
       sections={sections}
       counts={counts}
       scopeHasProducts

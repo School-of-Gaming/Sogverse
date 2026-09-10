@@ -34,7 +34,7 @@ function detailQuery(href: AppHrefObject): URLSearchParams {
 describe("carrying browse state through a detail page", () => {
   it("puts a grid's filters back together after the round trip", () => {
     const grid = new URLSearchParams(
-      "category=clubs&topic=minecraft&lang=en&days=1,3",
+      "category=clubs&topic=minecraft&price=free&lang=en&days=1,3",
     );
     const detail = detailQuery(withBrowseState(DETAIL_HREF, grid));
     expect(cameFromBrowse(detail)).toBe(true);
@@ -45,6 +45,7 @@ describe("carrying browse state through a detail page", () => {
       query: {
         category: "clubs",
         topic: "minecraft",
+        price: "free",
         lang: "en",
         days: "1,3",
       },

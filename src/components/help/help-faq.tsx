@@ -45,12 +45,15 @@ import { SUPPORT_EMAIL } from "@/lib/constants";
  * link twice.
  */
 
-/** Parent operating questions — the parent PIN, reports, absences, times. */
+/**
+ * Parent operating questions — joining a session, the parent PIN, reports,
+ * absences.
+ */
 const PARENT_FAQ_KEYS = [
+  "joiningSession",
   "parentPin",
   "sessionReports",
   "missedSessions",
-  "sessionTimes",
 ] as const;
 
 /**
@@ -87,7 +90,7 @@ const GEDU_FAQ_KEYS = [
   "takingAttendance",
   "attendanceAlert",
   "safeguardingConcern",
-  "gamerCannotConnect",
+  "gamerNotArrived",
 ] as const;
 
 export function ParentHelpFaq() {

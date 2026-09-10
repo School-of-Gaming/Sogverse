@@ -26,7 +26,7 @@ describe("FAQ answer blocks render", () => {
     const details = heading.closest("details");
     const ol = details?.querySelector("ol");
     expect(ol, "ordered list present").not.toBeNull();
-    expect(ol?.querySelectorAll("li").length).toBe(4);
+    expect(ol?.querySelectorAll("li").length).toBe(3);
     expect(details?.querySelectorAll("p").length).toBeGreaterThanOrEqual(3);
   });
 

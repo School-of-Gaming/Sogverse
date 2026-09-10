@@ -18,7 +18,7 @@ export function createStripeMock() {
     checkout: { sessions: { create: vi.fn() } },
     prices: { create: vi.fn() },
     products: { search: vi.fn(), create: vi.fn(), update: vi.fn() },
-    subscriptions: { retrieve: vi.fn(), cancel: vi.fn() },
+    subscriptions: { retrieve: vi.fn(), update: vi.fn(), cancel: vi.fn() },
     webhooks: { constructEvent: vi.fn() },
   };
 }

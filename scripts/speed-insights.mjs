@@ -19,11 +19,12 @@
  * Usage:
  *   npm run perf:insights            # last 30 days, desktop + mobile
  *   node scripts/speed-insights.mjs --days 7
- *   node scripts/speed-insights.mjs --dump ./si-raw   # also save raw JSON
+ *   node scripts/speed-insights.mjs --dump   # also save raw JSON to scripts/output/speed-insights/
  */
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
+import { outputDir } from "./lib/output.mjs";
 
 const TEAM_SLUG = "school-of-gaming";
 const PROJECT_ID = "prj_25TSZ5ipsOc5Jx8s3nNMqrnXtVWA";
@@ -93,7 +94,7 @@ function arg(name, fallback) {
 }
 
 const days = Number(arg("days", "30"));
-const dumpDir = arg("dump", null);
+const dumpDir = process.argv.includes("--dump") ? outputDir(import.meta.url) : null;
 const token = getToken();
 
 const to = new Date();
@@ -119,7 +120,6 @@ async function api(path, extra) {
     throw new Error(`${res.status} on ${path}: ${body.slice(0, 200)}`);
   }
   if (dumpDir) {
-    mkdirSync(dumpDir, { recursive: true });
     const name = `si-${path}-${Object.values(extra).join("-")}.json`;
     writeFileSync(join(dumpDir, name), body);
   }

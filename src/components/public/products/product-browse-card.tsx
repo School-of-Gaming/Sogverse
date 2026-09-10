@@ -13,7 +13,7 @@ import type { ParticipationCounts } from "@/services/participations";
 import { deriveRegistrationState } from "./derive-registration-state";
 import { formatProductLocation } from "@/lib/products/format-product-location";
 import { audienceLabelKey } from "@/lib/products/product-audience";
-import { formatProductPrice } from "./format-product-price";
+import { formatProductPrice, statesAPrice } from "./format-product-price";
 import {
   formatProductSchedule,
   scheduleCardLines,
@@ -127,35 +127,32 @@ export function useBrowseCardViewProps(
   // — a number that reads as availability and is at its most misleading on a
   // product that is full. Fullness belongs to the details page.
   //
-  // **The second test is what makes the price line's missing external shape a
-  // compile-time fact rather than a convention.** `chk_products_external_contract_muni`
-  // already guarantees `external_contract` implies `municipality_club`, so it
-  // can never independently decide this branch — but the database's word is not
-  // something the compiler can read, and `formatProductPrice` refuses an
-  // externally-contracted product by its argument type. Testing the column here
-  // is what narrows `billing_mode` for the call below; drop it and the
-  // formatter stops type-checking, which is the point.
-  const footerLeft: BrowseCardFooterLeft =
-    product.product_type === "municipality_club" ||
-    product.billing_mode === "external_contract"
-      ? {
-          kind: "seats",
-          seats: {
-            filled: participationsCount,
-            total: product.seat_count,
-            waitlistEnabled: product.waitlist_enabled,
-          },
-        }
-      : {
-          kind: "price",
-          price: formatProductPrice({
-            prices: product.product_prices,
-            billingMode: product.billing_mode,
-            productType: product.product_type,
-            currency,
-            locale: uiLocale,
-          }),
-        };
+  // **The guard is what makes the price line's missing external shape a
+  // compile-time fact rather than a convention.** It asks the one question two
+  // surfaces need answered the same way — this footer, and the grid's price
+  // filter, which has to know that a product billed off-platform states no
+  // price to filter on — and it answers it as a narrowing, so the formatter
+  // below type-checks only on the branch where a price exists. Drop the guard
+  // and the call stops compiling, which is the point.
+  const footerLeft: BrowseCardFooterLeft = statesAPrice(product)
+    ? {
+        kind: "price",
+        price: formatProductPrice({
+          prices: product.product_prices,
+          billingMode: product.billing_mode,
+          productType: product.product_type,
+          currency,
+          locale: uiLocale,
+        }),
+      }
+    : {
+        kind: "seats",
+        seats: {
+          filled: participationsCount,
+          total: product.seat_count,
+          waitlistEnabled: product.waitlist_enabled,
+        },
+      };
 
   // The badge-or-nothing decision (gamers-only stays unbadged) lives in
   // product-audience.ts with the rest of the audience vocabulary, so this

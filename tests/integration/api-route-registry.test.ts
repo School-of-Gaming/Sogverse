@@ -189,6 +189,7 @@ const TESTS = {
     "tests/integration/api/products-participations-delete.test.ts",
   productsParticipationsTransition:
     "tests/integration/api/products-participations-transition.test.ts",
+  productsParticipationsSwitch: "tests/integration/api/admin-switch-club.test.ts",
   productsUpdate: "tests/integration/api/products-update.test.ts",
   register: "tests/integration/auth/register.test.ts",
   adminUserGameAccount: "tests/integration/api/admin-user-game-account.test.ts",
@@ -278,6 +279,30 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
       },
     },
   },
+
+  // The admin club switch: the seat and its Stripe subscription move together.
+  // Both handlers read on the CALLER's client — every table involved carries an
+  // admin-full-access policy, and admin_move_participation re-checks the role
+  // internally, so a service-role call would have no auth.uid() to read.
+  "src/app/api/admin/products/[id]/participations/[participationId]/switch/route.ts":
+    {
+      adminClient:
+        "the subscription price cache alone, on the commit: getOrCreateSubscriptionPrice writes product_subscription_prices and reconciles the Stripe Product behind it, and takes the service-role client by signature. The check mints nothing and touches it not at all, and the RPC that moves the seat runs on the user client",
+      handlers: {
+        GET: {
+          posture: ADMIN_ONLY,
+          // The check takes its target as a query parameter, not a body: it is
+          // a read the dialog re-runs per picked target.
+          body: { kind: "none" },
+          test: TESTS.productsParticipationsSwitch,
+        },
+        POST: {
+          posture: ADMIN_ONLY,
+          body: { kind: "json", schema: "switchClubCommitBody" },
+          test: TESTS.productsParticipationsSwitch,
+        },
+      },
+    },
 
   // The lazy expiry sweep. There is no cron job behind seat offers: expiry is
   // observed by somebody opening a page that would care, and this is that call.
