@@ -196,5 +196,7 @@ lands is deleted here and its mechanism is described above.
   Profile check, and fixing or replacing the legacy site's link to the dead Oulu Facebook
   page so the profiles it names agree with the `sameAs` here.
 - **Per-route Open Graph images** (deliberately left out of the locale-routing scope).
-- **A per-locale `llms-full.txt`** mirroring About in each language, if the single
-  English file proves too thin for non-English assistants.
+
+A per-locale `llms.txt` was considered and declined (2026-09-10): discovery in another
+language runs through that language's pages and the index they rank in, both of which
+already exist per locale, and models translate the English file fluently.
