@@ -552,6 +552,9 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder files
      * - Next.js metadata file conventions (opengraph-image, sitemap.xml, robots.txt)
+     * - llms.txt — a route handler, not a file convention, but the same shape:
+     *   a bare public URL answered from the deployed catalog and marked
+     *   publicly cacheable, so it is excluded for the reason spelled out below
      * - api/locations/search — see below, this one is load-bearing
      *
      * **Rule: a route whose response is marked publicly cacheable must not pass
@@ -570,6 +573,6 @@ export const config = {
      * made. Excluding the path makes it ours. The route needs nothing from the
      * proxy anyway: it reads no cookies and builds its own anonymous client.
      */
-    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|sitemap\\.xml|robots\\.txt|api/locations/search|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|sitemap\\.xml|robots\\.txt|llms\\.txt|api/locations/search|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

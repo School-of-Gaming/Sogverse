@@ -1,0 +1,123 @@
+import { SUPPORT_EMAIL } from "@/lib/constants";
+import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
+
+/**
+ * The site-wide structured data: who we are, and what this site is.
+ *
+ * Emitted once, from the `[locale]` layout, as a single `@graph` — one script
+ * block holding both nodes rather than two blocks each holding one. A graph is
+ * what lets the `WebSite` name the `Organization` as its publisher by `@id`
+ * instead of restating the company inside it, and it is the shape a consumer
+ * expects when two nodes describe the same site.
+ *
+ * **The facts here are the company's, and they are load-bearing:** the legal
+ * name, the Business ID's VAT form and the country are what let a search engine
+ * or an assistant tie this site to the real Finnish entity behind it rather
+ * than guessing. They are written here rather than translated, because a
+ * company's registered name is not a string that has a French version.
+ *
+ * **No `sameAs`.** That property lists the profiles that corroborate the
+ * identity — the company's own social accounts — and this codebase holds no
+ * social profile URL anywhere. An empty or invented one is worse than its
+ * absence: `sameAs` is only worth anything if every URL in it is really ours.
+ */
+
+/** The registered entity behind the brand. */
+const LEGAL_NAME = "School of Gaming Galactic Oy";
+
+/**
+ * The VAT identifier derived from the Finnish Business ID (3110461-1) — the
+ * same number, in the form the rest of the EU reads. `vatID` takes the
+ * international form; the bare Business ID is what appears in Finnish-facing
+ * legal copy.
+ */
+const VAT_ID = "FI31104611";
+
+/**
+ * The Apple touch icon, at an absolute URL.
+ *
+ * It is the logo rather than `icon.svg` because a consumer of `logo` wants a
+ * raster it can place: Google's own guidance for the property asks for a
+ * `.jpg`/`.png`/`.gif`, and an SVG is routinely skipped. The two files draw the
+ * same mark, so this costs nothing but the format. The OG card is not a
+ * candidate — it is a 1200×630 composition with a tagline and a sentence of
+ * copy drawn into it, which is a share preview, not a logo.
+ */
+const LOGO_PATH = "/apple-icon.png";
+
+export interface SiteJsonLdInput {
+  /** The canonical site origin — `NEXT_PUBLIC_SITE_URL`. */
+  siteUrl: string;
+  /** The site description, already resolved at the request's locale. */
+  description: string;
+}
+
+interface OrganizationNode {
+  "@type": "Organization";
+  "@id": string;
+  name: string;
+  legalName: string;
+  url: string;
+  logo: string;
+  email: string;
+  address: { "@type": "PostalAddress"; addressCountry: string };
+  vatID: string;
+}
+
+interface WebSiteNode {
+  "@type": "WebSite";
+  "@id": string;
+  name: string;
+  url: string;
+  inLanguage: string[];
+  description: string;
+  publisher: { "@id": string };
+}
+
+/**
+ * The `@graph` the layout hands to `<JsonLd>`. Pure, so the whole shape is
+ * assertable without rendering a page — and the graph is typed as the ordered
+ * pair it is rather than an array of "one or the other", so a reader (a test
+ * included) gets at each node's own fields without an assertion.
+ */
+export function siteJsonLd({ siteUrl, description }: SiteJsonLdInput): {
+  "@context": string;
+  "@graph": [OrganizationNode, WebSiteNode];
+} {
+  const organizationId = `${siteUrl}/#organization`;
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": organizationId,
+        // The brand, not the platform: this is the name a stranger meeting us
+        // in a search result or an AI answer has any chance of recognising
+        // (`src/CLAUDE.md` § Brand vs. Platform). `legalName` carries the
+        // registered entity beside it.
+        name: "School of Gaming",
+        legalName: LEGAL_NAME,
+        url: siteUrl,
+        logo: `${siteUrl}${LOGO_PATH}`,
+        email: SUPPORT_EMAIL,
+        address: { "@type": "PostalAddress", addressCountry: "FI" },
+        vatID: VAT_ID,
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${siteUrl}/#website`,
+        name: "School of Gaming",
+        url: siteUrl,
+        // The languages this site is *published* in — which is the indexed set,
+        // not every locale that resolves. Klingon has working URLs and is
+        // excluded from `hreflang` and the sitemap for the reason stated on
+        // `INDEXED_LOCALES`; telling a consumer the site is available in
+        // Klingon would contradict both.
+        inLanguage: [...INDEXED_LOCALES],
+        description,
+        publisher: { "@id": organizationId },
+      },
+    ],
+  };
+}

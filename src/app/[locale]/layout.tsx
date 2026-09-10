@@ -16,6 +16,8 @@ import { BRAND_LOCKUP, toDetectedLocale } from "@/lib/constants";
 import { isSupportedLocale, resolveLocale } from "@/lib/constants/locales";
 import { ogCardImage } from "@/lib/og/card-metadata";
 import { getServerConsent } from "@/lib/consent.server";
+import { JsonLd } from "@/components/seo/json-ld";
+import { siteJsonLd } from "@/lib/seo/organization";
 import {
   AnalyticsScripts,
   ConsentBanner,
@@ -114,7 +116,6 @@ export async function generateMetadata({
     // The longer sentence is the one that tells a stranger what we actually run,
     // which is the job of both a snippet and a link preview, so both get it.
     description,
-    keywords: ["gaming", "education", "learning", "children", "games"],
     // **Klingon is `noindex`, not a robots.txt disallow.** `/tlh/…` is real,
     // crawlable URL-space that is excluded from the sitemap and from every
     // `hreflang` set, which search engines treat as orphaned duplicates — so it
@@ -152,6 +153,15 @@ export default async function LocaleLayout({
   // second, uncanonical URL for the English shop.
   const { locale } = await params;
   if (!isSupportedLocale(locale)) notFound();
+
+  // The two values the site-wide structured data needs. The description is the
+  // same catalog string `generateMetadata` puts in the meta tag, resolved at
+  // this URL's locale, so the machine-readable and the human-readable answers
+  // to "what is this site" cannot disagree.
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL!;
+  const siteDescription = (
+    await getTranslations({ locale, namespace: "metadata" })
+  )("description");
 
   const userWithProfile = await getUserWithProfile();
   const cookieStore = await cookies();
@@ -215,6 +225,13 @@ export default async function LocaleLayout({
       className={`${poppins.variable} ${crimsonPro.variable} ${spaceMono.variable} ${dancingScript.variable}`}
     >
       <body className="antialiased bg-background text-foreground">
+        {/* Who we are and what this site is, as structured data — emitted from
+            the layout because it describes the site rather than any one page,
+            and once per document because a second copy of the same `@id` is a
+            contradiction rather than a reinforcement. The description is the
+            translated one, so each language's pages describe themselves in
+            their own words. `JsonLd` explains why a data block needs no nonce. */}
+        <JsonLd data={siteJsonLd({ siteUrl, description: siteDescription })} />
         <Providers
           initialUser={userWithProfile?.user ?? null}
           initialProfile={userWithProfile?.profile}

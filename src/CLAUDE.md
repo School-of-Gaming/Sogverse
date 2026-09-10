@@ -58,7 +58,7 @@ none of its own are stated in `packages/sog-ui/CLAUDE.md` and held by lint and b
 
 ## Key Conventions
 
-- **Every page lives under `src/app/[locale]/`** — each page URL carries its locale, and a bare path is a detector the proxy redirects (`src/i18n/CLAUDE.md`). Only `api/`, `sitemap.ts`, `robots.ts`, the OG card handlers, `globals.css`, the static icons and a pass-through root layout plus its not-found sit at the app root.
+- **Every page lives under `src/app/[locale]/`** — each page URL carries its locale, and a bare path is a detector the proxy redirects (`src/i18n/CLAUDE.md`). Only `api/`, `sitemap.ts`, `robots.ts`, `llms.txt/`, the OG card handlers, `globals.css`, the static icons and a pass-through root layout plus its not-found sit at the app root.
 - Within `[locale]`, routes are grouped: `(auth)`, `(dashboard)`, `(public)`, `(voice)`, `(preview)`
 - **Name a route through the app's wrapped navigation module (`src/i18n/navigation.ts`), not `next/link` / `next/navigation`** — hrefs are typed against the route map and emitted locale-prefixed. The exception, and the rule for it, is in `src/i18n/CLAUDE.md`: comparing a pathname → wrapped; embedding one in a URL → raw, with a comment.
 - Components are organized by role: `components/[role]/`, shared UI in `components/ui/`
