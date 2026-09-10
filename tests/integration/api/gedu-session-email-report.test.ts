@@ -761,11 +761,22 @@ describe("POST /api/gedu/sessions/email-report", () => {
         expect(mail.htmlContent).toContain(`<img src="${bucketUrl(image.id)}"`);
       }
     }
-    // A box stated before a byte is fetched, from the stored dimensions: a
-    // 16:9 photo is limited by the width budget, a portrait by the height one.
+    // The stored dimensions reach the mail, and they reach it as the two
+    // numbers the layout is built from: the cap a picture may be drawn to
+    // (the height budget spent at that photo's own ratio) and the height of
+    // the well reserved for it before a byte is fetched. The picture itself is
+    // fluid — `width="100%"`, height derived from the ratio — so the shapes are
+    // in those two numbers and nowhere else. The arithmetic behind them is the
+    // unit suite's subject; what is asserted here is that a 16:9 and a portrait
+    // arrive with *different* boxes, which is only true if the row's own width
+    // and height travelled all the way from the read to the markup.
     const family = familyMails()[0].htmlContent;
-    expect(family).toContain(`<img src="${bucketUrl(IMAGES[0].id)}" width="216" height="122"`);
-    expect(family).toContain(`<img src="${bucketUrl(IMAGES[1].id)}" width="101" height="180"`);
+    expect(family).toContain(`<img src="${bucketUrl(IMAGES[0].id)}" width="100%"`);
+    expect(family).toContain("max-width:711px");
+    expect(family).toContain('height="185"');
+    expect(family).toContain(`<img src="${bucketUrl(IMAGES[1].id)}" width="100%"`);
+    expect(family).toContain("max-width:225px");
+    expect(family).toContain('height="400"');
   });
 
   it("sends the report a session has no photos on exactly as it always did", async () => {

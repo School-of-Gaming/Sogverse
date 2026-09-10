@@ -13,9 +13,9 @@ import type { SessionReportPhoto } from "../session-photos";
  * reviewer is here to look at.
  *
  * **Deliberately ordered landscape, portrait, square first**, so the small
- * counts are the interesting ones: three photos show a 16:9 beside a portrait
- * with a square spanning the row underneath, which is the mixed-ratio pairing
- * and the odd-count answer in one render.
+ * counts are the interesting ones: three photos show all three shapes, which
+ * is the whole of what the box arithmetic has to answer for — a 16:9 filling
+ * the column, a portrait held to its 225px cap, and a square at 400.
  *
  * **They are JPEGs because the mail's own photos are.** An SVG would be smaller
  * and easier to author, and no mail client renders one — so demo art in that
@@ -83,8 +83,8 @@ export const SESSION_REPORT_PHOTO_COUNT_LABELS: Record<
   string
 > = {
   "0": "None (a report with no photos)",
-  "1": "One (a 16:9 screenshot, spanning the row)",
-  "2": "Two (a 16:9 beside a portrait)",
-  "3": "Three (mixed ratios, the odd one spanning)",
+  "1": "One (a 16:9 screenshot, filling the column)",
+  "2": "Two (a 16:9 above a portrait)",
+  "3": "Three (all three shapes: 16:9, portrait, square)",
   "5": "Five (the cap, mixed ratios)",
 };

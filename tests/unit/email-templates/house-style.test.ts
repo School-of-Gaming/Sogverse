@@ -350,6 +350,25 @@ function styleAttributes(html: string): { tag: string; style: string }[] {
   }));
 }
 
+/**
+ * Every place a document declares style, inline *and* in the `<style>` block —
+ * each as the run of declarations a background rule has to be checked against.
+ *
+ * The block is in here because a background moved into it. The shell is laid
+ * out for a phone and draws its card from a media query, so the largest fill
+ * any mail depends on is now a declaration in a stylesheet rather than one on a
+ * cell — and a check that only read `style="…"` attributes would have stopped
+ * seeing the very fill it was written for. Rule bodies are matched innermost
+ * first, so a rule nested inside a media query is read as its own block.
+ */
+function declarationRuns(html: string): string[] {
+  const block = /<style>([\s\S]*?)<\/style>/.exec(html)?.[1] ?? "";
+  return [
+    ...styleAttributes(html).map((declared) => declared.style),
+    ...[...block.matchAll(/\{([^{}]*)\}/g)].map((rule) => rule[1]),
+  ];
+}
+
 describe("completeness", () => {
   /**
    * Discovery, so that adding a mail is not also a decision to test it.
@@ -460,11 +479,13 @@ describe("house style, over every mail we can send", () => {
    * flat gradient of it — because a dark theme rewrites `background-color` and
    * leaves gradients alone. There is no exception: the shell used to carry a
    * real two-tone gradient by class and was exempted for it, and the sweep that
-   * removed the gradient removed the exemption with it.
+   * removed the gradient removed the exemption with it. The stylesheet is swept
+   * on the same terms as the markup: the shell's card fill lives in a media
+   * query now, and a fill is a fill wherever it is declared.
    */
   it("declares every background twice", () => {
     for (const [name, html] of allMails()) {
-      for (const { style } of styleAttributes(html)) {
+      for (const style of declarationRuns(html)) {
         const fill = /background-color:\s*(#[0-9a-fA-F]{3,8})/.exec(style);
         if (!fill) continue;
         const hex = fill[1];
