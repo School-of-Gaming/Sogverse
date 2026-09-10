@@ -9,10 +9,20 @@ import { cn } from "@/lib/utils";
 interface SheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /**
+   * Which edge the panel comes in from. `right` is the desk drawer every
+   * staff surface uses — a picker beside the table it is picking for.
+   * `bottom` is the phone shape: the panel meets the thumb that summoned it,
+   * and it is capped short of the top so the page it belongs to stays visible
+   * behind it. A sheet from the bottom on a wide screen would be a drawer
+   * across a monitor, so `bottom` exists for surfaces that only open it on a
+   * narrow viewport.
+   */
+  side?: "right" | "bottom";
   children: React.ReactNode;
 }
 
-function Sheet({ open, onOpenChange, children }: SheetProps) {
+function Sheet({ open, onOpenChange, side = "right", children }: SheetProps) {
   React.useEffect(() => {
     if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -54,8 +64,17 @@ function Sheet({ open, onOpenChange, children }: SheetProps) {
       />
       <div
         className={cn(
-          "fixed inset-y-0 right-0 z-50 w-full max-w-md border-l border-border bg-card shadow-xl transition-transform duration-200 ease-out sm:max-w-lg",
-          open ? "translate-x-0" : "translate-x-full",
+          "fixed z-50 bg-card shadow-xl transition-transform duration-200 ease-out",
+          side === "right" &&
+            "inset-y-0 right-0 w-full max-w-md border-l border-border sm:max-w-lg",
+          side === "right" && (open ? "translate-x-0" : "translate-x-full"),
+          // It is as tall as what it holds. Where that could outgrow the
+          // screen, the body caps itself and scrolls — which is the caller's
+          // call, since only the caller knows how much of the page behind
+          // should stay visible above it.
+          side === "bottom" &&
+            "inset-x-0 bottom-0 rounded-t-xl border-t border-border",
+          side === "bottom" && (open ? "translate-y-0" : "translate-y-full"),
         )}
       >
         {children}

@@ -1904,11 +1904,17 @@
       "format": "Format",
       "formatOnline": "Online",
       "formatInPerson": "På plats",
+      "price": "Pris",
+      "priceFree": "Gratis",
+      "pricePaid": "Avgiftsbelagd",
       "language": "Språk",
       "age": "Ålder",
       "days": "Dagar",
       "clearAll": "Rensa",
-      "filterBy": "Filtrera"
+      "filterBy": "Filtrera",
+      "title": "Filter",
+      "activeCount": "{count, plural, one {# filter aktivt} other {# filter aktiva}}",
+      "removeFilter": "Ta bort {label}"
     },
     "card": {
       "ages": "Ålder {min}–{max}",

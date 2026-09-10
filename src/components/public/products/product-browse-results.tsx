@@ -11,7 +11,7 @@ import { useBrowseFilters } from "./use-browse-filters";
 import { withBrowseState } from "./browse-state";
 import { ROUTES } from "@/lib/constants";
 import { ProductBrowseCard } from "./product-browse-card";
-import { ProductBrowseFilters } from "./product-browse-filters";
+import { ProductBrowseFilterPanel } from "./product-browse-filter-panel";
 
 /** One headed block of cards. The shop passes one per visible category (Clubs →
  *  Camps → Events, in that fixed order); the municipality page passes a single
@@ -34,10 +34,13 @@ export interface ProductBrowseSection {
 // config they pass down. Keeping the chip-filtering + grids here is what stops
 // the two pages from drifting.
 //
-// Layout: one column on phones (filter strip on top, cards below), a rail
-// beside the cards from `lg` up. There is only ever one instance of the filter
-// component — it restyles itself at `lg` instead of a second copy being
-// rendered for the rail.
+// Layout: one column on phones (a one-line filter bar on top, cards below), a
+// rail beside the cards from `lg` up. Below `lg` the chip rows themselves live
+// in a bottom sheet the bar opens, so the cards start near the top of the
+// screen instead of under a strip of nine rows. There is only ever one
+// instance of the filter component — it moves between the rail and the sheet
+// rather than a second copy being rendered for either (see
+// `<ProductBrowseFilterPanel>`).
 //
 // The horizontal width budget lives here rather than in the two hosts, so both
 // browse surfaces are the same shape by construction. Below `lg` this is the
@@ -106,8 +109,17 @@ export function ProductBrowseResults({
   // so it reuses that button's label rather than authoring a second word for
   // the same action.
   const tFilters = useTranslations("productBrowse.filters");
-  const { topics, format, languages, audiences, tags, age, days, clear } =
-    useBrowseFilters();
+  const {
+    topics,
+    format,
+    price,
+    languages,
+    audiences,
+    tags,
+    age,
+    days,
+    clear,
+  } = useBrowseFilters();
   // The raw params, not the parsed filters above: what a card carries is the
   // grid's URL state verbatim, so the listing the back link rebuilds is the one
   // the reader actually left rather than a re-serialization of it.
@@ -139,6 +151,7 @@ export function ProductBrowseResults({
           products: filterProducts(section.products, {
             topics,
             format,
+            price,
             languages,
             audiences,
             tags,
@@ -147,7 +160,7 @@ export function ProductBrowseResults({
           }),
         }))
         .filter((section) => section.products.length > 0),
-    [sections, topics, format, languages, audiences, tags, age, days],
+    [sections, topics, format, price, languages, audiences, tags, age, days],
   );
 
   // "Nothing here yet" vs "no matches" is decided before *all* filtering, Type
@@ -167,7 +180,12 @@ export function ProductBrowseResults({
       className="container mx-auto px-4 lg:grid lg:max-w-none lg:grid-cols-[minmax(16rem,1fr)_minmax(0,64rem)_minmax(0,1fr)] lg:gap-6"
       data-reserve-scroll-gutter
     >
-      {/* Sticks below the site header (--header-height, the same variable the
+      {/* Below `lg` this holds the one-line filter bar; the sticky rail
+          treatment below is what it becomes once there is a gutter to put it
+          in, and every class here that matters carries the `lg:` prefix for
+          that reason.
+
+          Sticks below the site header (--header-height, the same variable the
           header itself is sized from) and scrolls internally once the chip
           groups outgrow the viewport. `self-start` is what lets it stick at
           all — a stretched grid item is already as tall as its row.
@@ -185,7 +203,7 @@ export function ProductBrowseResults({
           nothing: track 1's min is a fixed 16rem, so the rail's own width
           never feeds back into track sizing. */}
       <div className="mb-3 lg:mb-0 lg:sticky lg:top-[calc(var(--header-height)+1.5rem)] lg:max-h-[calc(100vh-var(--header-height)-3rem)] lg:w-full lg:max-w-[20rem] lg:justify-self-end lg:self-start lg:overflow-y-auto">
-        <ProductBrowseFilters showTypeFilter={showTypeFilter} />
+        <ProductBrowseFilterPanel showTypeFilter={showTypeFilter} />
       </div>
 
       {visibleSections.length > 0 ? (

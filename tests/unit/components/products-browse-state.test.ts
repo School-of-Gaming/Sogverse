@@ -15,14 +15,14 @@ import {
 describe("carrying browse state through a detail page", () => {
   it("puts a grid's filters back together after the round trip", () => {
     const grid = new URLSearchParams(
-      "category=clubs&topic=minecraft&lang=en&days=1,3",
+      "category=clubs&topic=minecraft&price=free&lang=en&days=1,3",
     );
     const detail = new URLSearchParams(
       withBrowseState("/shop/abc", grid).split("?")[1],
     );
     expect(cameFromBrowse(detail)).toBe(true);
     expect(listingHrefWithBrowseState("/shop", detail)).toBe(
-      "/shop?category=clubs&topic=minecraft&lang=en&days=1%2C3",
+      "/shop?category=clubs&topic=minecraft&price=free&lang=en&days=1%2C3",
     );
   });
 

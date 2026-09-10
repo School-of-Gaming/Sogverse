@@ -1948,11 +1948,17 @@
       "format": "rurmeH",
       "formatOnline": "QumDaq",
       "formatInPerson": "Daqvam",
+      "price": "DIlmeH",
+      "priceFree": "DIlbe’",
+      "pricePaid": "DIl",
       "language": "Hol",
       "age": "qan",
       "days": "jajmey",
       "clearAll": "yISay’moH",
-      "filterBy": "yIH’lu’"
+      "filterBy": "yIH’lu’",
+      "title": "yIHmey",
+      "activeCount": "{count, plural, one {# yIH vum} other {# yIHmey vum}}",
+      "removeFilter": "{label} yIteq"
     },
     "card": {
       "ages": "ben {min}–{max}",

@@ -1904,11 +1904,17 @@
       "format": "Format",
       "formatOnline": "Online",
       "formatInPerson": "In person",
+      "price": "Price",
+      "priceFree": "Free",
+      "pricePaid": "Paid",
       "language": "Language",
       "age": "Age",
       "days": "Days",
       "clearAll": "Clear",
-      "filterBy": "Filter by"
+      "filterBy": "Filter by",
+      "title": "Filters",
+      "activeCount": "{count, plural, one {# filter active} other {# filters active}}",
+      "removeFilter": "Remove {label}"
     },
     "card": {
       "ages": "Ages {min}–{max}",

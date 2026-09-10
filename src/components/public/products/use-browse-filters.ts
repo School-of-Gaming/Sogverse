@@ -4,7 +4,7 @@ import { useCallback, useMemo } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 import { findAgeBand, type AgeBand } from "@/lib/constants/gamer-age";
-import type { ProductFormat } from "./filter-products";
+import type { ProductFormat, ProductPriceFilter } from "./filter-products";
 import {
   isAudienceFilterValue,
   type AudienceFilterValue,
@@ -24,6 +24,7 @@ import {
   DAYS_PARAM,
   FORMAT_PARAM,
   LANGUAGE_PARAM,
+  PRICE_PARAM,
   TAG_PARAM,
   TOPIC_PARAM,
 } from "./browse-state";
@@ -95,6 +96,14 @@ function parseFormat(raw: string | null): ProductFormat | null {
   return null;
 }
 
+// The price chip, on the format row's terms: one of the two values the row
+// offers, or nothing at all — so a hand-edited `?price=cheap` reads as no
+// selection rather than emptying the grid.
+function parsePrice(raw: string | null): ProductPriceFilter | null {
+  if (raw === "free" || raw === "paid") return raw;
+  return null;
+}
+
 // A selected age band, encoded as "min-max" (e.g. "7-9"). Only a value matching
 // one of the offered bands resolves; anything else reads as "any age" (null) so
 // a hand-edited URL can't surface a band the filter never offered.
@@ -114,8 +123,8 @@ function parseAge(raw: string | null): AgeBand | null {
 // `writeNext`). Other query params (e.g. `?mock=1`) are preserved across
 // writes.
 //
-// Format is single-valued — toggling a chip on with the other one active
-// replaces, not adds. Selecting the active chip clears the filter.
+// Format and price are single-valued — toggling a chip on with the other one
+// active replaces, not adds. Selecting the active chip clears the filter.
 //
 // `clear` is the one place this hook reaches outside its own params: it also
 // drops the shop's `category` param (owned by `useShopCategories`), because
@@ -131,6 +140,10 @@ export function useBrowseFilters() {
   );
   const format = useMemo(
     () => parseFormat(searchParams.get(FORMAT_PARAM)),
+    [searchParams],
+  );
+  const price = useMemo(
+    () => parsePrice(searchParams.get(PRICE_PARAM)),
     [searchParams],
   );
   const languages = useMemo(
@@ -160,6 +173,7 @@ export function useBrowseFilters() {
   const hasAny =
     topics.length > 0 ||
     format !== null ||
+    price !== null ||
     languages.length > 0 ||
     audiences.length > 0 ||
     tags.length > 0 ||
@@ -171,6 +185,7 @@ export function useBrowseFilters() {
       next: {
         topics?: string[];
         format?: ProductFormat | null;
+        price?: ProductPriceFilter | null;
         languages?: SpokenLanguageCode[];
         audiences?: AudienceFilterValue[];
         tags?: ProductTag[];
@@ -189,6 +204,10 @@ export function useBrowseFilters() {
       if (next.format !== undefined) {
         if (next.format === null) params.delete(FORMAT_PARAM);
         else params.set(FORMAT_PARAM, next.format);
+      }
+      if (next.price !== undefined) {
+        if (next.price === null) params.delete(PRICE_PARAM);
+        else params.set(PRICE_PARAM, next.price);
       }
       if (next.languages !== undefined) {
         if (next.languages.length === 0) params.delete(LANGUAGE_PARAM);
@@ -249,6 +268,13 @@ export function useBrowseFilters() {
       writeNext({ format: format === value ? null : value });
     },
     [format, writeNext],
+  );
+
+  const togglePrice = useCallback(
+    (value: ProductPriceFilter) => {
+      writeNext({ price: price === value ? null : value });
+    },
+    [price, writeNext],
   );
 
   // The caller is the chip row, which enumerates the enum, so there is no
@@ -326,6 +352,7 @@ export function useBrowseFilters() {
       {
         topics: [],
         format: null,
+        price: null,
         languages: [],
         audiences: [],
         tags: [],
@@ -339,6 +366,7 @@ export function useBrowseFilters() {
   return {
     topics,
     format,
+    price,
     languages,
     audiences,
     tags,
@@ -347,6 +375,7 @@ export function useBrowseFilters() {
     hasAny,
     toggleTopics,
     toggleFormat,
+    togglePrice,
     toggleLanguage,
     toggleAudience,
     toggleTag,
