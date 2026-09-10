@@ -1920,10 +1920,15 @@ begin
   -- 'customer' so this can't corrupt an already-promoted gamer or an admin/gedu,
   -- and so a double-call fails on the second pass. Keep the synthetic email
   -- handle_new_user() copied from auth.users — gamers are email-first.
+  --
+  -- The child starts in the parent's locale: the parent is the one setting the
+  -- account up, so the welcome mail and the child's first sign-in read the way
+  -- the parent uses the site. Copied once, never synced; the child's to change.
   update public.profiles
   set role = 'gamer',
       first_name = p_first_name,
-      last_name = p_last_name
+      last_name = p_last_name,
+      locale = (select parent.locale from public.profiles parent where parent.id = p_parent_id)
   where id = p_gamer_id
     and role = 'customer';
 
@@ -1971,7 +1976,7 @@ $$;
 -- Name: FUNCTION create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in) IS 'The atomic promote-and-link the gamer-creation route calls once GoTrue has minted the auth user: swaps the trigger-seeded customer profile to a gamer, writes the gamer row with its chosen sign-in mode, links the optional game accounts, and links the parent — in ONE transaction, so a failure anywhere leaves nothing behind for the route to compensate but the auth user itself. service_role only. Refuses with SQLSTATE P0025 and the message PIN_REQUIRED when the named parent holds no PIN: the gate on leaving a gamer session is the parent''s PIN, so a family may not acquire a gamer before it has one, and the route turns that one refusal into a specific ask. `p_sign_in` defaults to `parent`, the switch-only shape every gamer had before the modes existed.';
+COMMENT ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in) IS 'The atomic promote-and-link the gamer-creation route calls once GoTrue has minted the auth user: swaps the trigger-seeded customer profile to a gamer in the parent''s locale, writes the gamer row with its chosen sign-in mode, links the optional game accounts, and links the parent — in ONE transaction, so a failure anywhere leaves nothing behind for the route to compensate but the auth user itself. service_role only. Refuses with SQLSTATE P0025 and the message PIN_REQUIRED when the named parent holds no PIN: the gate on leaving a gamer session is the parent''s PIN, so a family may not acquire a gamer before it has one, and the route turns that one refusal into a specific ask. The locale is copied from the parent once and never synced; the child changes it like anyone else. `p_sign_in` defaults to `parent`, the switch-only shape every gamer had before the modes existed.';
 
 
 --
