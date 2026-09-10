@@ -2040,12 +2040,7 @@
       "ctaAllSet": "Tout est prêt",
       "ctaAgreeConsent": "Donnez le consentement requis",
       "ctaWaitlist": "Rejoindre la liste d’attente",
-      "ctaSignIn": {
-        "consumer_club": "Connectez-vous pour vous inscrire",
-        "municipality_club": "Connectez-vous pour vous inscrire",
-        "camp": "Connectez-vous pour vous inscrire",
-        "event": "Connectez-vous pour participer"
-      },
+      "ctaSignIn": "Se connecter",
       "ctaCreateAccount": "Créer un compte",
       "gamerAlreadySignedUp": {
         "consumer_club": "Déjà inscrit",

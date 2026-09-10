@@ -2040,12 +2040,7 @@
       "ctaAllSet": "You’re all set",
       "ctaAgreeConsent": "Give the required consent",
       "ctaWaitlist": "Join the waitlist",
-      "ctaSignIn": {
-        "consumer_club": "Sign in to register",
-        "municipality_club": "Sign in to register",
-        "camp": "Sign in to register",
-        "event": "Sign in to join"
-      },
+      "ctaSignIn": "Sign in",
       "ctaCreateAccount": "Create account",
       "gamerAlreadySignedUp": {
         "consumer_club": "Already enrolled",

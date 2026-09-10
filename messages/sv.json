@@ -2040,12 +2040,7 @@
       "ctaAllSet": "Du är klar",
       "ctaAgreeConsent": "Ge det obligatoriska samtycket",
       "ctaWaitlist": "Gå med på väntelistan",
-      "ctaSignIn": {
-        "consumer_club": "Logga in för att anmäla",
-        "municipality_club": "Logga in för att anmäla",
-        "camp": "Logga in för att anmäla",
-        "event": "Logga in för att gå med"
-      },
+      "ctaSignIn": "Logga in",
       "ctaCreateAccount": "Skapa konto",
       "gamerAlreadySignedUp": {
         "consumer_club": "Redan anmäld",

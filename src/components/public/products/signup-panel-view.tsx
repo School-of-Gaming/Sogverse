@@ -563,7 +563,6 @@ function FormOrAuth(props: FormOrAuthProps) {
     case "unauthenticated":
       return (
         <UnauthenticatedOverlay
-          productType={props.productType}
           signInHref={props.authState.signInHref}
           createAccountHref={props.authState.createAccountHref}
         />
@@ -606,46 +605,41 @@ function FormOrAuth(props: FormOrAuthProps) {
 }
 
 function UnauthenticatedOverlay({
-  productType,
   signInHref,
   createAccountHref,
 }: {
-  productType: ProductType;
   signInHref: string;
   createAccountHref: string;
 }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
     /* The app-wide button order shape — `src/CLAUDE.md`, "Button Order":
-       DOM [secondary, primary] under `flex-col-reverse`, so signing in reads
-       on top. This pair only ever stacks, so there is no `sm:flex-row` half.
-       The rendered order is what it has always been; only the authoring
-       shape changed, so the whole app states this one way round. */
+       DOM [secondary, primary] under `flex-col-reverse`, so creating an
+       account reads on top. A visitor with no session is far more often new
+       than returning, so the new account is the path the panel steers toward.
+       This pair only ever stacks, so there is no `sm:flex-row` half.
+       Both labels stay short and product-type-agnostic: they must fit one
+       line on a phone in every locale, and the price above already names
+       what is being joined. */
     <div className="flex flex-col-reverse gap-2">
       <Link
-        href={createAccountHref}
+        href={signInHref}
         className={buttonVariants({
           size: "lg",
           variant: "outline",
           className: "w-full text-base",
         })}
       >
-        {t("ctaCreateAccount")}
+        {t("ctaSignIn")}
       </Link>
       <Link
-        href={signInHref}
+        href={createAccountHref}
         className={buttonVariants({
           size: "lg",
           className: "w-full text-base",
         })}
       >
-        {/* Keyed by type like the panel's other action words, so this button can
-            name the action the signed-in CTA will. Only the event mismatch is
-            fixed here — it said "register" where every other word on an event
-            panel says "join". Clubs and camps still pair "Enrol"/"Sign up" with
-            "Sign in to register"; that is left as-is on purpose, as a copy
-            decision to make on its own rather than a mechanical sweep. */}
-        {t(`ctaSignIn.${productType}`)}
+        {t("ctaCreateAccount")}
       </Link>
     </div>
   );

@@ -2040,12 +2040,7 @@
       "ctaAllSet": "Olet valmis",
       "ctaAgreeConsent": "Anna vaadittu suostumus",
       "ctaWaitlist": "Liity jonotuslistalle",
-      "ctaSignIn": {
-        "consumer_club": "Kirjaudu sisään ilmoittautuaksesi",
-        "municipality_club": "Kirjaudu sisään ilmoittautuaksesi",
-        "camp": "Kirjaudu sisään ilmoittautuaksesi",
-        "event": "Kirjaudu sisään liittyäksesi"
-      },
+      "ctaSignIn": "Kirjaudu sisään",
       "ctaCreateAccount": "Luo tili",
       "gamerAlreadySignedUp": {
         "consumer_club": "Jo ilmoitettu",

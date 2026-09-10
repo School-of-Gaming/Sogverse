@@ -2084,12 +2084,7 @@
       "ctaAllSet": "bIghuHrup",
       "ctaAgreeConsent": "poQlu’bogh chaw’ yInob",
       "ctaWaitlist": "tetlh DaqaD",
-      "ctaSignIn": {
-        "consumer_club": "qonmeH yI’el",
-        "municipality_club": "qonmeH yI’el",
-        "camp": "qonmeH yI’el",
-        "event": "muvmeH yI’el"
-      },
+      "ctaSignIn": "yI’el",
       "ctaCreateAccount": "Account chu’ chenmoH",
       "gamerAlreadySignedUp": {
         "consumer_club": "muvpu’",
