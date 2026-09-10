@@ -3,7 +3,11 @@ import { templateRegistry, type TemplateDefinition } from "@/lib/email-templates
 import { BRAND } from "@/lib/constants/colors";
 import { styledName } from "@/lib/email-templates/utils";
 import { bulletList } from "@/lib/email-templates/blocks";
-import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
+import {
+  getEmailTranslator,
+  getTopicPrepTranslator,
+  type EmailTranslator,
+} from "@/lib/email-templates/translator";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import {
   CALENDAR_EXPLORER_BODY,
@@ -21,6 +25,10 @@ import {
  * than about the fixture.
  */
 const PRODUCT_CONFIRMATION_SCHEDULE = {
+  // The topic decides which "Before the first session" guide the mail states,
+  // and one that carries one is the render with more in it — a form nobody has
+  // typed into composes exactly that, since the select's first option leads.
+  topic: "minecraft_java",
   firstChargeDate: "none",
   ageRange: "8-12",
   audience: "gamers",
@@ -299,6 +307,64 @@ describe("templateRegistry render()", () => {
       expect(subject).toBe("You are enrolled in Minecraft 101");
       expect(html).toContain("You’re enrolled in");
       expect(html).not.toContain("is enrolled in");
+    });
+
+    /**
+     * The topic select, end to end: the field the harness grew so the owner can
+     * read the "Before the first session" guide per topic, and the second
+     * translator that the guide's own namespace needs. A render handed only the
+     * mail's translator states no guide, which is what every other template's
+     * render is — so this is the case that would catch the wiring being lost.
+     */
+    describe("the guide the topic select shows", () => {
+      it("states the selected topic's guide when the guide's translator is handed over", async () => {
+        const tPrep = await getTopicPrepTranslator("en");
+        const { html } = templateRegistry.productConfirmation.render(
+          { ...signup, isSelfSeat: false, topic: "roblox_studio", isRemote: "yes" },
+          t,
+          "en",
+          { to: "send" },
+          tPrep,
+        );
+
+        expect(html).toContain("Before the first session");
+        expect(html).toContain("Create a Roblox account");
+      });
+
+      it("states none for a label-only topic on the shared IN-PERSON fixture", async () => {
+        // **In person is half the reason this renders nothing, and the fixture
+        // is where that half comes from**: `PRODUCT_CONFIRMATION_SCHEDULE` sets
+        // `isRemote: "no"`, and a label-only topic brings no steps of its own,
+        // so there is nothing left after the filter. Remotely the same topic
+        // has the shared voice-room step and does render — the case below.
+        const tPrep = await getTopicPrepTranslator("en");
+        const { html } = templateRegistry.productConfirmation.render(
+          { ...signup, isSelfSeat: false, topic: "programming" },
+          t,
+          "en",
+          { to: "send" },
+          tPrep,
+        );
+
+        expect(html).not.toContain("Before the first session");
+      });
+
+      it("states the one-step guide for that same topic on a remote product", async () => {
+        // The room is browser-based and the mic has to work, whatever the
+        // topic — so every remote product carries at least this one step, and
+        // the guide opens on the generic intro rather than a topic's.
+        const tPrep = await getTopicPrepTranslator("en");
+        const { html } = templateRegistry.productConfirmation.render(
+          { ...signup, isSelfSeat: false, topic: "programming", isRemote: "yes" },
+          t,
+          "en",
+          { to: "send" },
+          tPrep,
+        );
+
+        expect(html).toContain("Before the first session");
+        expect(html).toContain("Set up the microphone and camera");
+      });
     });
 
     /**

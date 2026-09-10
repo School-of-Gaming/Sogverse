@@ -7,6 +7,7 @@ process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
 
 import { POST } from "@/app/api/checkout/products/create/route";
 import { NextResponse } from "next/server";
+import type { ProductTopic } from "@/types";
 
 // The route builds every absolute URL it emits — the Stripe redirects, the
 // metadata links a Stripe Workflow drops into Slack, and the confirmation
@@ -137,6 +138,10 @@ type ProductFixture = {
   id: string;
   product_type: "consumer_club" | "municipality_club" | "camp" | "event";
   billing_mode: "paid" | "free" | "external_contract";
+  // The confirmation mail reads this column to decide which "Before the first
+  // session" guide it states: the column is NOT NULL, so a fixture without one
+  // is a row the route can never be handed.
+  topic: ProductTopic;
   seat_count: number | null;
   timezone: string;
   spoken_language_code: string;
@@ -149,6 +154,7 @@ const PAID_CLUB: ProductFixture = {
   id: PRODUCT_ID,
   product_type: "consumer_club",
   billing_mode: "paid",
+  topic: "minecraft_java",
   seat_count: 10,
   timezone: "Europe/Helsinki",
   spoken_language_code: "en",

@@ -82,14 +82,17 @@ describe("waitlist confirmation copy", () => {
   it("shows none of the waitlist copy on an ordinary enrolled signup", () => {
     // The free-club path lands here too — a free enrollment is confirmed on the
     // spot, so it renders the enrolled summary, not the queue one.
-    const { queryByText, getByText } = render(
+    const { queryByText, getByRole } = render(
       <PurchaseConfirmationView
         product={productOfType("consumer_club")}
         participantName="Aino"
         outcome="enrolled"
       />,
     );
-    getByText("heading");
+    // By role rather than by text: with the translations echoing keys, the
+    // page's own `heading` reads the same as the prep guide's `topicPrep`
+    // heading, and only one of the two is this page's title.
+    getByRole("heading", { level: 1, name: "heading" });
     expect(queryByText("waitlist.heading")).toBeNull();
     expect(queryByText("waitlist.next2.consumer_club")).toBeNull();
   });

@@ -172,11 +172,11 @@ describe("the rows across the sheet's open, slide down and close", () => {
   it("ride the panel down, and return to the rail when its slide ends", () => {
     renderPanel();
     openSheet();
-    expect(document.body.style.overflow).toBe("hidden");
+    expect(document.documentElement.style.overflow).toBe("hidden");
 
     closeSheet();
     // Closed, so the page scrolls again at once — but still in the sheet.
-    expect(document.body.style.overflow).toBe("");
+    expect(document.documentElement.style.overflow).toBe("");
     expect(sheetRows()).not.toBeNull();
     expect(railRows()).toBeNull();
 
@@ -231,7 +231,7 @@ describe("the rows across the sheet's open, slide down and close", () => {
     });
     expect(sheetRows()).not.toBeNull();
     expect(railRows()).toBeNull();
-    expect(document.body.style.overflow).toBe("hidden");
+    expect(document.documentElement.style.overflow).toBe("hidden");
     expect(mounted.most).toBe(1);
   });
 
@@ -241,7 +241,7 @@ describe("the rows across the sheet's open, slide down and close", () => {
     openSheet();
 
     fireEvent.keyDown(document, { key: "Escape" });
-    expect(document.body.style.overflow).toBe("");
+    expect(document.documentElement.style.overflow).toBe("");
 
     act(() => {
       vi.advanceTimersByTime(1000);
@@ -265,7 +265,7 @@ describe("the rows across the sheet's open, slide down and close", () => {
         }),
       );
     });
-    expect(document.body.style.overflow).toBe("");
+    expect(document.documentElement.style.overflow).toBe("");
 
     act(() => {
       vi.advanceTimersByTime(1000);

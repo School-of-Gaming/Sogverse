@@ -92,7 +92,12 @@ import {
   GEDU_CONTRACT_CURRENT_VERSION,
 } from "@/components/gedu/contract/documents";
 import { buildGeduContractAcceptance } from "@/components/gedu/contract/mock-contract-fixtures";
-import { useNow, useTimezone } from "@/providers";
+import { useAuth, useNow, useTimezone } from "@/providers";
+import {
+  forgetTopicPrepDismissal,
+  seedTopicPrepDismissals,
+  topicPrepDismissalKey,
+} from "@/components/topic-prep/use-topic-prep-dismissal";
 import { useLocale, useTranslations } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
 import { computeGlowStyle } from "@/lib/voice/glow";
@@ -1441,6 +1446,9 @@ function EnrollmentCardDemo() {
   const now = useNow();
   const locale = resolveLocale(useLocale());
   const timeZone = useTimezone();
+  // The viewer half of every dismissal key — the admin reading this page, since
+  // they are who these cards are being drawn for.
+  const { user } = useAuth();
 
   // Built once from the first tick, for the reason the dashboard scenes hold
   // theirs: re-deriving every slot from a new `now` every thirty seconds would
@@ -1544,7 +1552,49 @@ function EnrollmentCardDemo() {
         startedDaysAgo: 70,
         endsInDays: -35,
       }),
+      // The footer state the "Before the first session" guide adds, and the
+      // only card here that is about it: the same locked club as `locked`
+      // above, on a topic carrying a guide of its own, with the dismissal left
+      // standing. Read the two side by side and the exchange is the whole
+      // design — button for button, in one slot, and the Join comes straight
+      // back once the family says they are ready.
+      prepOffered: build({
+        ...remoteClub,
+        participationId: "demo-enrollment-prep-offered",
+        productName: "Roblox Studio Club",
+        topic: "roblox_studio",
+        slots: [futureSlot(now, 3, "17:00", 90, FIXTURE_TIMEZONE)],
+      }),
     };
+  });
+
+  /**
+   * **What each card below is a demo of, decided rather than inherited.**
+   *
+   * Every remote fixture here has a guide behind it — a topic with steps of its
+   * own, or the shared voice-room step every remote product carries — so left
+   * alone the affordance would take the locked Join's slot on the four cards
+   * whose whole subject is what sits in that slot, and each of them would be a
+   * picture of the wrong thing. The dismissal is keyed by viewer and
+   * participation, so those four are seeded as already answered, and the one
+   * card that *is* about the guide is forgotten in the same breath: an admin
+   * who answered its dialog last week would otherwise have put the demo away
+   * for good.
+   *
+   * Seeded in a `useState` initializer rather than an effect, so it is in place
+   * before these cards take their first snapshot after hydration and the seeded
+   * four never flash "Get ready".
+   */
+  useState(() => {
+    const keyFor = (participationId: string) =>
+      topicPrepDismissalKey(user?.id ?? null, participationId);
+    seedTopicPrepDismissals(
+      [cards.locked, cards.badged, cards.cancelled, cards.cancelledNoDate].map(
+        (card) => keyFor(card.participationId),
+      ),
+    );
+    forgetTopicPrepDismissal(keyFor(cards.prepOffered.participationId));
+    return null;
   });
 
   // A no-op rather than an omitted prop: absent, the leave affordance is not
@@ -1610,9 +1660,19 @@ function EnrollmentCardDemo() {
   ];
 
   // Everything else, one wording each, at a width the card reads at.
-  const customerOnly: typeof compared = [
+  const customerOnly: readonly {
+    label: string;
+    enrollment: (typeof cards)[keyof typeof cards];
+    /** One line, only where the label cannot carry what to look at. */
+    note?: string;
+  }[] = [
     { label: "Live", enrollment: cards.live },
     { label: "Locked", enrollment: cards.locked },
+    {
+      label: "Locked, with the prep guide on offer",
+      enrollment: cards.prepOffered,
+      note: "The locked Join is inert and repeats the schedule row above it, so while there is a guide to read it gives that slot up — button for button, and it takes the slot straight back when the family answers the dialog. Answering here dismisses it in this browser, which is the feature; reloading the page offers this demo again.",
+    },
     { label: "Failing card", enrollment: cards.badged },
     { label: "Cancelled", enrollment: cards.cancelled },
     { label: "Cancelled, window used up", enrollment: cards.cancelledNoDate },
@@ -1674,9 +1734,12 @@ function EnrollmentCardDemo() {
           Every other state, on a parent&rsquo;s card about their child.
         </p>
         <div className="grid items-start gap-x-6 gap-y-8 lg:grid-cols-2">
-          {customerOnly.map(({ label, enrollment }) => (
+          {customerOnly.map(({ label, enrollment, note }) => (
             <div key={enrollment.participationId} className="space-y-3">
               <DemoCaption>{label}</DemoCaption>
+              {note !== undefined && (
+                <p className="text-sm text-muted-foreground">{note}</p>
+              )}
               {cell("customer", enrollment)}
             </div>
           ))}

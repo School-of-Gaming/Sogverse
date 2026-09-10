@@ -51,6 +51,10 @@ const clock = vi.hoisted(() => ({ now: new Date() }));
 vi.mock("@/providers", () => ({
   useNow: () => clock.now,
   useTimezone: () => "Europe/Helsinki",
+  // The family card reads the viewer's id to key the prep guide's dismissal.
+  // Nothing here is about that guide — these cards are waitlisted, which is the
+  // one state that never offers it — but the read happens on every card.
+  useAuth: () => ({ user: { id: "viewer-1", email: null } }),
 }));
 
 // dnd-kit and the chip are the waitlist card's other half and are not what this
@@ -214,6 +218,8 @@ function waitlistedEnrollment(
     participationId: PARTICIPATION_ID,
     productName: "Fortnite Creative Club",
     productType: "consumer_club",
+    topic: "fortnite",
+    isRemote: true,
     nextSessionStart: null,
     nextSessionEnd: null,
     hasVoiceRoom: true,

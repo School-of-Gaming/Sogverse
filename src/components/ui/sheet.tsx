@@ -4,6 +4,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useDocumentScrollLock } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 /**
@@ -104,17 +105,12 @@ function Sheet({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, onOpenChange]);
 
-  // Prevent body scroll while open. Keyed on `open` rather than on being
-  // mounted, so a sheet that stays on the page hands the scroll back the
-  // moment it closes, not when its slide ends.
-  React.useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [open]);
+  // Hold the document's scroll while open, through the dialog module's counted
+  // lock rather than a second one of this component's own — a sheet and a
+  // dialog can be up at once, and only one counter can decide when the page is
+  // handed back. Keyed on `open` rather than on being mounted, so a sheet that
+  // stays on the page releases the moment it closes, not when its slide ends.
+  useDocumentScrollLock(open);
 
   // A transition runs from the style the browser last computed for an element
   // to the one it computes next. A panel that is inserted and opened before

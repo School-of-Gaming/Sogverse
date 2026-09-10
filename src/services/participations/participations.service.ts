@@ -3,6 +3,7 @@ import type {
   Json,
   ParticipationStatus,
   ParticipationSubscriptionState,
+  ProductTopic,
   ProductType,
   ProductTranslation,
   PurchaseShape,
@@ -78,6 +79,12 @@ export interface MyUpcomingSessionRow {
   product: {
     id: string;
     type: ProductType;
+    /**
+     * The product's topic. Carried so a family surface can ask whether the
+     * topic has a "Before the first session" guide to offer — the enrolment
+     * card's prep affordance is the only reader today.
+     */
+    topic: ProductTopic;
     timezone: string;
     /**
      * Inclusive start date in the product's local calendar (YYYY-MM-DD).
@@ -185,6 +192,13 @@ export interface MyWaitlistRow {
   product: {
     /** The type noun the card's eyebrow reads. */
     type: ProductType;
+    /**
+     * The product's topic. A waitlisted card never draws the prep affordance —
+     * there is no seat behind it and nothing to get ready for — but the summary
+     * this row becomes states the product's topic either way, exactly as it
+     * states whether the product has a room.
+     */
+    topic: ProductTopic;
     /** The zone the slot times below are wall-clock times **in**. */
     timezone: string;
     /**
@@ -1002,7 +1016,7 @@ function buildMyUpcomingSessionsQuery(
         participant_id,
         group_id,
         product:products!inner(
-          id, product_type, timezone, start_date, end_date, is_remote,
+          id, product_type, topic, timezone, start_date, end_date, is_remote,
           product_translations(*),
           schedule_slots(weekday, start_time, duration_minutes),
           location:locations(name, name_i18n)
@@ -1055,7 +1069,7 @@ function buildMyWaitlistQuery(
         participant_id,
         seat_offer_sent_at,
         product:products!inner(
-          product_type, timezone, start_date, end_date, is_remote,
+          product_type, topic, timezone, start_date, end_date, is_remote,
           product_translations(*),
           schedule_slots(weekday, start_time, duration_minutes)
         ),
@@ -1089,6 +1103,7 @@ function toMyUpcomingSessionRow(
     product: {
       id: product.id,
       type: product.product_type,
+      topic: product.topic,
       timezone: product.timezone,
       startDate: product.start_date,
       endDate: product.end_date,
@@ -1126,6 +1141,7 @@ function toMyWaitlistRow(
     },
     product: {
       type: product.product_type,
+      topic: product.topic,
       timezone: product.timezone,
       startDate: product.start_date,
       endDate: product.end_date,

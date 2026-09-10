@@ -1162,6 +1162,18 @@ export function buildScenarioFixture(
      * fixture and only the viewer varies.
      */
     auth?: AuthKind;
+    /**
+     * A topic other than the one this scenario's row carries.
+     *
+     * The topic decides two cards a reader has to be able to read for *every*
+     * topic — the product page's "About {label}" card and the confirmation
+     * page's "Before the first session" guide — and the fixtures name one
+     * topic per scenario. Rather than a scenario per topic on both surfaces,
+     * the two scenes take the topic as an axis over the scenarios they already
+     * have, and this is where it lands on the row, so both cards follow one
+     * value exactly as they do in production.
+     */
+    topic?: ProductTopic;
   } = {},
 ): BuildFixtureResult {
   const config: ScenarioConfig = {
@@ -1196,7 +1208,13 @@ export function buildScenarioFixture(
     registrationOpensAt = new Date(STATIC_REF_MS - DAY_MS).toISOString();
   }
 
-  const product = buildBaseProduct(slug, config, registrationOpensAt, state);
+  const product = buildBaseProduct(
+    slug,
+    config,
+    registrationOpensAt,
+    state,
+    overrides.topic,
+  );
   const authState = buildAuthState(config, detailHref, state);
   return { product, state, authState };
 }
@@ -1236,8 +1254,14 @@ export interface ConfirmationFixtureResult {
 // the real detail → CTA → summary flow.
 export function buildConfirmationFixture(
   slug: PreviewScenario,
+  overrides: {
+    /** The topic axis, as `buildScenarioFixture` takes it. */
+    topic?: ProductTopic;
+  } = {},
 ): ConfirmationFixtureResult {
-  const { product, state } = buildScenarioFixture(slug);
+  const { product, state } = buildScenarioFixture(slug, {
+    topic: overrides.topic,
+  });
   const isWaitlist = state.kind === "full_waitlist";
   // A parents-only scenario can only have been bought for the reader, so its
   // summary is the self-worded one — which is the only place that copy is
@@ -1339,6 +1363,7 @@ function buildBaseProduct(
   config: ScenarioConfig,
   registrationOpensAt: string,
   state: RegistrationState,
+  topicOverride: ProductTopic | undefined,
 ): ProductDetailRow {
   const { productType, billingMode } = config;
   const audience = audienceOf(config);
@@ -1433,7 +1458,10 @@ function buildBaseProduct(
     // the value just needs to be valid. Events get Fortnite, the rest
     // Minecraft Java — unless the scenario names one, which is how the
     // info-less (no About card) shape gets a page to be seen on.
+    // The scene's topic axis outranks both, because it is the reviewer asking
+    // for this exact topic on this exact page.
     topic:
+      topicOverride ??
       SCENARIO_TOPIC[slug] ??
       (productType === "event" ? "fortnite" : "minecraft_java"),
     primary_gedu_fee_cents: null,

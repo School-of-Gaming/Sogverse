@@ -2016,38 +2016,38 @@
       "pegi": "PEGI {age}",
       "topics": {
         "minecraft_java": {
-          "description": "Minecraft is a creative building game — think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine, from a cosy house to a whole city. There’s no winning or losing; it’s a calm, open-ended space to create and problem-solve. “Java” is the original version for Windows, Mac and Linux computers — the one our remote clubs use, because it supports the tools our Game Educators rely on.",
-          "note": "For our clubs your child needs Minecraft on a computer. On Minecraft.net it’s sold as “Minecraft: Java & Bedrock Edition for PC” — a single one-time purchase (not a subscription) that includes the version we use. The separate console, phone and tablet version won’t work for these clubs.",
+          "description": "Minecraft is a creative building game. Think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine, from a cosy house to a whole city. There is no winning or losing. It is a calm, open-ended space to create and solve problems. “Java” is the original version for Windows, Mac and Linux computers. It is the one our remote clubs use, because it supports the tools our Game Educators rely on.",
+          "note": "For our remote clubs your child needs Minecraft on a computer. On Minecraft’s own site it is sold as “Minecraft: Java & Bedrock Edition for PC”. That is a single one-time purchase rather than a subscription, and it includes the version we use. The separate console, phone and tablet version does not work for these clubs.",
           "linkLabel": "Get Minecraft for PC"
         },
         "minecraft_bedrock": {
-          "description": "Minecraft is a creative building game — think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine, from a cosy house to a whole city. There’s no winning or losing; it’s a calm, open-ended space to create and problem-solve. “Bedrock” is the version that runs on consoles (Xbox, PlayStation, Switch), phones, tablets and Windows PCs.",
-          "note": "Your child needs Minecraft Bedrock for this club. It isn’t included in the price — buy it from the store that matches the device your child will play on (the same game, sold in a different place on each device). On a games console, playing online may also need that console’s paid online membership.",
+          "description": "Minecraft is a creative building game. Think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine, from a cosy house to a whole city. There is no winning or losing. It is a calm, open-ended space to create and solve problems. “Bedrock” is the version that runs on consoles (Xbox, PlayStation, Switch), phones, tablets and Windows PCs.",
+          "note": "Minecraft Bedrock is not included in the price. It is the same game sold separately for each device, and a copy bought for one device does not carry over to another. The copy that counts is the one for the device your child will play on. On a games console, playing online also needs that console’s paid online membership.",
           "linkLabel": "Where to get it"
         },
         "minecraft_education": {
-          "description": "Minecraft is a creative building game — think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine. Minecraft Education is a version made for the classroom: the same friendly, open-ended building, plus extra tools for the adult leading the session, designed for guided activities rather than solo play.",
-          "note": "There’s nothing to buy and no school account to arrange — School of Gaming provides the Minecraft Education accounts participants use during the club. For our remote clubs, your child also needs to download the game itself, free of charge, from the Microsoft Store or from Minecraft Education’s own site.",
+          "description": "Minecraft is a creative building game. Think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine. Minecraft Education is a version built for guided groups. It is the same friendly, open-ended building, with extra tools for the adult running the session.",
+          "note": "There is nothing to buy and no school account to arrange. School of Gaming provides the Minecraft Education accounts participants use during the sessions. For remote clubs the game itself is a free download from the Microsoft Store or from Minecraft Education’s own site. It runs on Windows and Mac computers as well as iPads and Chromebooks.",
           "linkLabel": "About Minecraft Education"
         },
         "fortnite": {
-          "description": "Fortnite is a colourful, cartoon-style online game where players team up and compete in short, round-based matches. It’s hugely popular and very social — children play together with friends. The look is bright and non-realistic (no blood or gore), though matches are competitive and played online with others.",
-          "note": "Fortnite is free to download and play — you don’t buy the game itself. Your child creates a free Epic Games account to play. Some optional extras (outfits and such) cost money, which you can limit with parental controls.",
+          "description": "Fortnite is a colourful, cartoon-style online game where players team up and compete in short, round-based matches. It is hugely popular and very social, and children play it together with friends. The look is bright and non-realistic, with no blood or gore. Matches are competitive and played online with other people.",
+          "note": "Fortnite is free to download and play, so there is no game to buy. Playing needs a free Epic Games account. Some optional extras cost money, such as outfits. Epic’s parental controls sit on the account rather than on a device, and they can limit those extras.",
           "linkLabel": "Get Fortnite"
         },
         "pokemon_go": {
-          "description": "Pokémon GO is played outdoors, on a phone. Creatures appear on a map of the real world, and children walk to parks, streets and landmarks to find and collect them. It’s about collecting rather than fighting — the appeal is exploring, filling up a Pokédex and comparing finds with friends. Most of the playing happens on foot, so it tends to get children moving.",
-          "note": "Pokémon GO is free to download and play — you don’t buy the game itself. Your child needs a phone or tablet with GPS and a mobile data connection, plus a free account. There are optional in-app purchases, which you can limit with parental controls. Because it’s played outdoors in real places, it’s worth agreeing in advance where your child may go and whether an adult comes along.",
+          "description": "Pokémon GO is played outdoors, on a phone. Creatures appear on a map of the real world, and children walk to parks, streets and landmarks to find and collect them. It is about collecting rather than fighting. The appeal is exploring, filling up a Pokédex and comparing finds with friends. Most of the playing happens on foot, so it tends to get children moving.",
+          "note": "Pokémon GO is free to download and play, so there is no game to buy. It needs a phone with GPS and a mobile data connection, plus a free account. For a child under 13 the account is created by a parent and stays linked to theirs. There are optional in-app purchases, which parental controls can limit. It is played outdoors in real places. It also keeps the screen, GPS and data running the whole time, so a battery does not last long.",
           "linkLabel": "Where to get it"
         },
         "roblox_studio": {
-          "description": "Roblox Studio is the free tool that Roblox games themselves are made with. Children design worlds, build with real 3D tools and script with real code, turning their own ideas into experiences other people can actually play. In our clubs they create rather than play — it’s a first step into real game development.",
-          "note": "Roblox Studio is free — there’s nothing to buy. It runs on Windows PCs and Macs only: not on an iPad or other tablet, not on a Chromebook, phone or games console. A free Roblox account is needed too, and the account’s age setting governs its chat and privacy controls. Finished creations can be published for other players to find and play.",
+          "description": "Roblox Studio is the free tool that Roblox games themselves are made with. Children design worlds, build with real 3D tools and write real code. They turn their own ideas into experiences other people can actually play. In our clubs they create rather than play, which is a first step into real game development.",
+          "note": "Roblox Studio is free, so there is nothing to buy. It runs on Windows PCs and Macs only, not on an iPad or other tablet, not on a Chromebook, phone or games console. A free Roblox account is needed too, and the account’s age setting governs its chat and privacy controls. Finished creations can be published for other players to find and play.",
           "linkLabel": "Get Roblox Studio"
         },
         "rocket_league": {
-          "description": "Rocket League is football played with rocket-powered cars. Two teams drive around an arena and try to push an oversized ball into the other team’s goal, in short matches of about five minutes. The look is bright and cartoonish and there’s no violence — it’s a sport, not a shooter — so it’s easy to follow from the sidelines even if you’ve never played it yourself. Almost every goal comes out of the team working together, which is why it suits club play so well.",
-          "note": "Rocket League is free to download and play — you don’t buy the game itself. Your child needs a free Epic Games account. It runs on Windows PCs, PlayStation, Xbox and Nintendo Switch, and players on different devices can play together, so your child’s device doesn’t have to match anyone else’s. There are optional in-game purchases (decorations for the cars), which you can limit with parental controls.",
+          "description": "Rocket League is football played with rocket-powered cars. Two teams drive around an arena and try to push an oversized ball into the other team’s goal, in short matches of about five minutes. The look is bright and cartoonish and there is no violence. It is a sport, not a shooter, so it is easy to follow from the sidelines even if you have never played it yourself. Almost every goal comes out of the team working together, which is why it suits club play so well.",
+          "note": "Rocket League is free to download and play, so there is no game to buy. Playing needs a free Epic Games account. It runs on Windows PCs, PlayStation, Xbox and Nintendo Switch. Players on different devices can play together, so your child’s device does not have to match anyone else’s. There are optional in-game purchases (decorations for the cars), which parental controls can limit.",
           "linkLabel": "Get Rocket League"
         }
       }
@@ -2173,6 +2173,154 @@
       "title": "We couldn’t find that",
       "description": "It may have been removed or the link is wrong. Browse what’s available below.",
       "cta": "Back to browse"
+    }
+  },
+  "topicPrep": {
+    "heading": "Before the first session",
+    "dialogTitle": "Before the first session",
+    "triggerLabel": "Get ready",
+    "readyLabel": "I’m ready",
+    "closing": "If everything works, you’re ready for the session!",
+    "topics": {
+      "minecraft_java": {
+        "intro": "The sessions play Minecraft on a computer, in the Java version. Each participant needs a Microsoft account with Minecraft on it, and the Minecraft Launcher installed on the computer they will use. Please complete the steps below before the first session."
+      },
+      "minecraft_education": {
+        "intro": "The sessions use Minecraft Education, and it is free. School of Gaming provides the logins at the first session, so there is only one step to complete beforehand."
+      },
+      "minecraft_bedrock": {
+        "intro": "The sessions play Minecraft Bedrock together online. Each participant needs a Microsoft account and Minecraft installed on the device they will play on. Please complete the steps below before the first session."
+      },
+      "fortnite": {
+        "intro": "Fortnite is free to play, and the sessions play it together. Each participant needs a free Epic Games account, and Fortnite installed on the device they will use. Please complete the steps below before the first session."
+      },
+      "rocket_league": {
+        "intro": "Rocket League is free to play, and every session is played together. Each participant needs a free Epic Games account, and Rocket League installed on the device they will use. Please complete the steps below before the first session."
+      },
+      "pokemon_go": {
+        "intro": "Pokémon GO is played outdoors, on a phone that someone carries to the session. Please complete the steps below before the first session."
+      },
+      "roblox_studio": {
+        "intro": "The session uses Roblox Studio, Roblox’s free game development software. Each participant needs their own Roblox account and Roblox Studio installed on their computer. Please complete the steps below before the session."
+      }
+    },
+    "accountsOnlyIntro": {
+      "fortnite": "We bring the machines to the session, with Fortnite already installed. Each participant still needs their own Epic Games account, with the parental controls set on it. Please complete the steps below before the session.",
+      "rocket_league": "We bring the machines to the session, with Rocket League already installed. Each participant still needs their own Epic Games account. Please complete the step below before the session.",
+      "roblox_studio": "We bring the computers to the session, with Roblox Studio already installed. Each participant still needs their own Roblox account. Please complete the step below before the session."
+    },
+    "remoteOnlyIntro": "The sessions happen online, in a voice room. Please complete the step below before the first session.",
+    "steps": {
+      "minecraftJavaAccount": {
+        "title": "Get a Microsoft account with Minecraft on it",
+        "body": "Minecraft logs in with a Microsoft account. If the participant does not have one, a parent creates it and buys “Minecraft: Java & Bedrock Edition for PC” on that account. That is <b>one purchase, not a subscription</b>, and it covers the Java version these sessions use. Setting it up asks for a Java profile name. That name is the username we need in order to add the participant to our Minecraft world, so write it down somewhere it can be found again.",
+        "linkLabel": "Get Minecraft for PC"
+      },
+      "minecraftJavaInstall": {
+        "title": "Install the Minecraft Launcher",
+        "body": "Install the Minecraft Launcher on the computer used for the session. The download is on the same Minecraft page the game was bought from. Log in with the same Microsoft account."
+      },
+      "minecraftJavaLaunch": {
+        "title": "Open Minecraft once before the first session",
+        "body": "Start the launcher and let it finish any updates. Open the game as far as the main menu, then close it again. The first update can take a while, and doing it now means the session does not start with a download."
+      },
+      "minecraftEducationInstall": {
+        "title": "Install Minecraft Education",
+        "body": "Minecraft Education is a free download from the Microsoft Store or from Minecraft Education’s own site. Install it on the computer used for the session. Open it once to check that it starts. There is no account to create. School of Gaming provides the logins at the first session, so the game itself is all the participant needs.",
+        "linkLabel": "Get Minecraft Education"
+      },
+      "minecraftBedrockAccount": {
+        "title": "Create a Microsoft account",
+        "body": "Minecraft Bedrock plays online through a Microsoft account. The gamertag on that account is how we find the participant and add them to our worlds. If the participant does not have an account yet, a parent creates one. Make sure to enter the participant’s correct date of birth, as Microsoft uses age information to determine which online features are switched on. Write the gamertag down. We will ask for it."
+      },
+      "minecraftBedrockInstall": {
+        "title": "Buy and install Minecraft on the right device",
+        "body": "Bedrock is the same game sold separately for each device, and a copy bought for one device does not work on another. <b>Buy it on the device the participant will actually play on</b>, whether that is a console, a phone, a tablet or a Windows PC.",
+        "linkLabel": "Choose the device"
+      },
+      "minecraftBedrockOnline": {
+        "title": "Check that online play works",
+        "body": "Open Minecraft on that device and log in with the Microsoft account. Check that the online play screen opens. On Xbox, PlayStation and Nintendo Switch, playing with other people also needs that console’s own paid online membership."
+      },
+      "fortniteAccount": {
+        "title": "Create an Epic Games account",
+        "body": "Fortnite is free to play and logs in with a free Epic Games account. If the participant does not have one yet, a parent creates it. Make sure to enter the participant’s correct date of birth, as Epic uses age information to determine which chat and social features are available. Write the display name down. That is how we find the participant."
+      },
+      "fortniteControls": {
+        "title": "Set the parental controls",
+        "body": "Epic’s parental controls sit on the account rather than on a device, so they follow the participant to every device. A parent sets a six-digit PIN and chooses what is allowed: who can chat, and whether a purchase needs the PIN. The game itself costs nothing. The controls are there for the optional extras."
+      },
+      "fortniteInstall": {
+        "title": "Install Fortnite",
+        "body": "Install Fortnite on the device used for the session and log in with the Epic Games account. Open it once and let it update. The first download is a large one, so it is better done the day before than five minutes before.",
+        "linkLabel": "Get Fortnite"
+      },
+      "fortniteCrossplay": {
+        "title": "Leave cross-play switched on",
+        "body": "Cross-play is what lets everyone play together whatever device they are on. It is on by default. If it has been switched off in the game’s settings, switch it back on before the session."
+      },
+      "rocketLeagueAccount": {
+        "title": "Create an Epic Games account",
+        "body": "Rocket League is free to play and logs in with a free Epic Games account, the same kind Fortnite uses. If the participant already has one, it works here too. If they don’t have one yet, a parent creates it. Make sure to enter the participant’s correct date of birth. Write the display name down. That is how we find the participant."
+      },
+      "rocketLeagueInstall": {
+        "title": "Install Rocket League",
+        "body": "Install Rocket League on the device used for the session. It is free on Windows PC, PlayStation, Xbox and Nintendo Switch. Open it once before the session and let it finish updating.",
+        "linkLabel": "Get Rocket League"
+      },
+      "rocketLeagueCrossplay": {
+        "title": "Leave cross-platform play switched on",
+        "body": "Cross-platform play means the participant’s device does not have to match anyone else’s. It is on by default. If it has been turned off in the settings, turn it back on so the whole group can be in the same match."
+      },
+      "pokemonGoInstall": {
+        "title": "Install Pokémon GO on the phone",
+        "body": "Pokémon GO is free, and it goes on the phone that will be carried to the session. Get it from the App Store on an iPhone, or from Google Play on an Android phone. It is a phone game only. There is no computer or console version."
+      },
+      "pokemonGoAccount": {
+        "title": "Create an account",
+        "body": "Playing needs an account, and the game offers to create one the first time it opens. For a participant under 13, a parent creates the account and links it to their own, which keeps the settings in a parent’s hands. Write the trainer name down. That is how we find the participant."
+      },
+      "pokemonGoPhone": {
+        "title": "Charge the phone and check its settings",
+        "body": "The game keeps the screen, GPS and mobile data running the whole time it is open, and the battery goes down fast. Charge the phone before the session. Check that location and mobile data are switched on. Bring a power bank if there is one in the house."
+      },
+      "pokemonGoAgree": {
+        "title": "Agree where the participant is going",
+        "body": "Pokémon GO is played outdoors in real places. Agree in advance which streets and parks are in bounds, whether an adult is coming along, and how to get in touch during the session. Remind the participant to keep their eyes on the road. The phone can wait."
+      },
+      "robloxStudioAccount": {
+        "title": "Create a Roblox account",
+        "body": "If the participant already has their own Roblox account, there is no need to create a new one. If they don’t have an account yet, <b>create one for them</b>. Make sure to enter the participant’s correct date of birth, as Roblox uses age information to determine which features and content are available. Make sure the participant knows their Roblox username, knows their password or has access to it when needed, and is able to log in to their account on the computer they will use during the session. Do not send the participant’s password to the Gedu, our word for a Game Educator."
+      },
+      "robloxStudioInstall": {
+        "title": "Install Roblox Studio",
+        "body": "During the session, we will use Roblox Studio, Roblox’s free game development software. Go to the Roblox Creator Hub and log in with the participant’s Roblox account. Follow the instructions on the page to download and install Roblox Studio. Once the installation is complete, open Roblox Studio and log in with the participant’s Roblox account. Once installed, Roblox Studio works like any other application on your computer.",
+        "linkLabel": "Go to the Roblox Creator Hub"
+      },
+      "robloxStudioTest": {
+        "title": "Test everything before the first session",
+        "body": "We recommend doing a quick test before the session:"
+      },
+      "remoteSession": {
+        "title": "Set up the microphone and camera",
+        "body": "The session happens in a voice room that runs in a web browser. The participant can join on any device: the computer the game is on, or a phone or tablet beside a console. A headset or earbuds with a microphone works best, so the game sound does not echo back to everyone else. The first time the participant joins, the browser asks for permission to use the microphone and camera. Allow it. The camera is optional. Turning it on helps the Gedu, our word for a Game Educator, check that everyone in the room is who they say they are. Find a quiet place, and join a few minutes early the first time."
+      }
+    },
+    "platformNotes": {
+      "robloxStudioWindows": {
+        "title": "On Windows",
+        "body": "Open the Start menu or Windows search and type Roblox Studio, then select Roblox Studio from the search results."
+      },
+      "robloxStudioMac": {
+        "title": "On Mac",
+        "body": "Open Spotlight Search or the Applications folder and search for Roblox Studio."
+      }
+    },
+    "checklist": {
+      "robloxStudioTestOpen": "Open Roblox Studio.",
+      "robloxStudioTestSignIn": "Log in with the participant’s Roblox account.",
+      "robloxStudioTestHome": "Make sure the Roblox Studio home screen opens normally.",
+      "robloxStudioTestClose": "Close Roblox Studio."
     }
   },
   "sidebar": {

@@ -2016,38 +2016,38 @@
       "pegi": "PEGI {age}",
       "topics": {
         "minecraft_java": {
-          "description": "Minecraft est un jeu de construction créatif — imaginez des LEGO numériques. Les enfants explorent un monde en blocs, récoltent des matériaux et construisent tout ce qu’ils imaginent, d’une maison douillette à une ville entière. Il n’y a ni victoire ni défaite ; c’est un espace calme et ouvert pour créer et résoudre des problèmes. « Java » est la version d’origine pour les ordinateurs Windows, Mac et Linux — celle qu’utilisent nos clubs à distance, car elle prend en charge les outils dont nos animateurs ont besoin.",
-          "note": "Pour nos clubs, votre enfant a besoin de Minecraft sur un ordinateur. Sur Minecraft.net, il est vendu sous le nom « Minecraft: Java & Bedrock Edition for PC » — un achat unique (et non un abonnement) qui comprend la version que nous utilisons. La version distincte pour consoles, téléphones et tablettes ne fonctionne pas pour ces clubs.",
+          "description": "Minecraft est un jeu de construction créatif. Imaginez des LEGO numériques. Les enfants explorent un monde en blocs, récoltent des matériaux et construisent tout ce qu’ils imaginent, d’une maison douillette à une ville entière. Il n’y a ni victoire ni défaite. C’est un espace calme et ouvert pour créer et résoudre des problèmes. « Java » est la version d’origine pour les ordinateurs Windows, Mac et Linux. C’est celle qu’utilisent nos clubs à distance, car elle prend en charge les outils dont nos animateurs ont besoin.",
+          "note": "Pour nos clubs à distance, votre enfant a besoin de Minecraft sur un ordinateur. Sur le site de Minecraft, il est vendu sous le nom « Minecraft: Java & Bedrock Edition for PC ». C’est un achat unique et non un abonnement, et il comprend la version que nous utilisons. La version distincte pour consoles, téléphones et tablettes ne fonctionne pas pour ces clubs.",
           "linkLabel": "Obtenir Minecraft pour PC"
         },
         "minecraft_bedrock": {
-          "description": "Minecraft est un jeu de construction créatif — imaginez des LEGO numériques. Les enfants explorent un monde en blocs, récoltent des matériaux et construisent tout ce qu’ils imaginent, d’une maison douillette à une ville entière. Il n’y a ni victoire ni défaite ; c’est un espace calme et ouvert pour créer et résoudre des problèmes. « Bedrock » est la version qui fonctionne sur consoles (Xbox, PlayStation, Switch), téléphones, tablettes et PC Windows.",
-          "note": "Votre enfant a besoin de Minecraft Bedrock pour ce club. Ce jeu n’est pas compris dans le prix — achetez-le sur la boutique correspondant à l’appareil sur lequel votre enfant jouera (le même jeu, vendu à un endroit différent selon l’appareil). Sur une console de jeu, jouer en ligne peut aussi nécessiter l’abonnement en ligne payant de cette console.",
+          "description": "Minecraft est un jeu de construction créatif. Imaginez des LEGO numériques. Les enfants explorent un monde en blocs, récoltent des matériaux et construisent tout ce qu’ils imaginent, d’une maison douillette à une ville entière. Il n’y a ni victoire ni défaite. C’est un espace calme et ouvert pour créer et résoudre des problèmes. « Bedrock » est la version qui fonctionne sur consoles (Xbox, PlayStation, Switch), téléphones, tablettes et PC Windows.",
+          "note": "Minecraft Bedrock n’est pas compris dans le prix. C’est le même jeu vendu séparément pour chaque appareil, et un exemplaire acheté pour un appareil ne se reporte pas sur un autre. Celui qui compte est celui de l’appareil sur lequel votre enfant jouera. Sur une console de jeu, jouer en ligne nécessite en plus l’abonnement en ligne payant de cette console.",
           "linkLabel": "Où se le procurer"
         },
         "minecraft_education": {
-          "description": "Minecraft est un jeu de construction créatif — imaginez des LEGO numériques. Les enfants explorent un monde en blocs, récoltent des matériaux et construisent tout ce qu’ils imaginent. Minecraft Education est une version conçue pour la classe : la même construction ouverte et bienveillante, avec des outils supplémentaires pour l’adulte qui anime la session, pensée pour des activités encadrées plutôt que pour le jeu en solo.",
-          "note": "Il n’y a rien à acheter ni de compte scolaire à obtenir — School of Gaming fournit les comptes Minecraft Education que les participants utilisent pendant le club. Pour les clubs à distance, votre enfant doit en plus télécharger le jeu lui-même, gratuitement, depuis le Microsoft Store ou depuis le site de Minecraft Education.",
+          "description": "Minecraft est un jeu de construction créatif. Imaginez des LEGO numériques. Les enfants explorent un monde en blocs, récoltent des matériaux et construisent tout ce qu’ils imaginent. Minecraft Education est une version conçue pour les groupes encadrés. La construction est la même, ouverte et bienveillante, avec des outils supplémentaires pour l’adulte qui anime la séance.",
+          "note": "Il n’y a rien à acheter ni de compte scolaire à obtenir. School of Gaming fournit les comptes Minecraft Education que les participants utilisent pendant les séances. Pour les clubs à distance, le jeu lui-même se télécharge gratuitement depuis le Microsoft Store ou depuis le site de Minecraft Education. Il fonctionne sur les ordinateurs Windows et Mac ainsi que sur iPad et Chromebook.",
           "linkLabel": "À propos de Minecraft Education"
         },
         "fortnite": {
-          "description": "Fortnite est un jeu en ligne coloré, au style cartoon, où les joueurs font équipe et s’affrontent dans des parties courtes. Il est extrêmement populaire et très social — les enfants y jouent ensemble entre amis. L’esthétique est vive et non réaliste (ni sang ni scènes gore), même si les parties sont compétitives et se jouent en ligne avec d’autres.",
-          "note": "Fortnite est gratuit à télécharger et à jouer — vous n’achetez pas le jeu lui-même. Votre enfant crée un compte Epic Games gratuit pour jouer. Certains extras facultatifs (tenues et autres) sont payants, ce que vous pouvez limiter avec le contrôle parental.",
+          "description": "Fortnite est un jeu en ligne coloré, au style cartoon, où les joueurs font équipe et s’affrontent dans des parties courtes. Il est extrêmement populaire et très social, et les enfants y jouent ensemble entre amis. L’esthétique est vive et non réaliste, sans sang ni scènes gore. Les parties sont compétitives et se jouent en ligne avec d’autres personnes.",
+          "note": "Fortnite est gratuit à télécharger et à jouer, il n’y a donc pas de jeu à acheter. Jouer nécessite un compte Epic Games gratuit. Certains extras facultatifs sont payants, comme les tenues. Le contrôle parental d’Epic est attaché au compte plutôt qu’à un appareil, et il permet de limiter ces extras.",
           "linkLabel": "Obtenir Fortnite"
         },
         "pokemon_go": {
-          "description": "Pokémon GO se joue dehors, sur un téléphone. Des créatures apparaissent sur une carte du monde réel, et les enfants marchent jusqu’aux parcs, aux rues et aux monuments pour les trouver et les collectionner. Le jeu repose sur la collection plutôt que sur le combat — l’intérêt est d’explorer, de compléter son Pokédex et de comparer ses trouvailles avec ses amis. L’essentiel du jeu se fait à pied, ce qui fait bouger les enfants.",
-          "note": "Pokémon GO est gratuit à télécharger et à jouer — vous n’achetez pas le jeu lui-même. Votre enfant a besoin d’un téléphone ou d’une tablette avec GPS et connexion mobile, ainsi que d’un compte gratuit. Le jeu propose des achats facultatifs, que vous pouvez limiter avec le contrôle parental. Comme on y joue dehors, dans de vrais lieux, mieux vaut convenir à l’avance des endroits où votre enfant peut aller et de la présence ou non d’un adulte.",
+          "description": "Pokémon GO se joue dehors, sur un téléphone. Des créatures apparaissent sur une carte du monde réel, et les enfants marchent jusqu’aux parcs, aux rues et aux monuments pour les trouver et les collectionner. Le jeu repose sur la collection plutôt que sur le combat. L’intérêt est d’explorer, de compléter son Pokédex et de comparer ses trouvailles avec ses amis. L’essentiel du jeu se fait à pied, ce qui fait bouger les enfants.",
+          "note": "Pokémon GO est gratuit à télécharger et à jouer, il n’y a donc pas de jeu à acheter. Il faut un téléphone avec GPS et connexion mobile, ainsi qu’un compte gratuit. Pour un enfant de moins de 13 ans, le compte est créé par un parent et reste relié au sien. Le jeu propose des achats facultatifs, que le contrôle parental peut limiter. On y joue dehors, dans de vrais lieux. Il garde aussi l’écran, le GPS et les données allumés en permanence, donc la batterie ne tient pas longtemps.",
           "linkLabel": "Où se le procurer"
         },
         "roblox_studio": {
-          "description": "Roblox Studio est l’outil gratuit avec lequel les vrais jeux Roblox sont créés. Dans nos clubs, les enfants construisent leurs propres mondes en 3D et écrivent de vrais programmes pour les faire fonctionner — leurs idées deviennent des jeux auxquels d’autres peuvent vraiment jouer. C’est la première étape pour la création de jeux vidéo.",
-          "note": "Roblox Studio est entièrement gratuit, il n’y a rien à acheter. Il fonctionne uniquement sur PC Windows ou Mac — pas sur iPad, tablette, Chromebook, téléphone ou console. Un compte Roblox gratuit est aussi nécessaire ; les paramètres d’âge du compte permettent de gérer le chat et la confidentialité. Une fois leur jeu terminé, ils pourront le publier pour que d’autres joueurs le découvrent !",
+          "description": "Roblox Studio est l’outil gratuit avec lequel les vrais jeux Roblox sont créés. Les enfants conçoivent des mondes, construisent avec de vrais outils 3D et écrivent du vrai code. Leurs idées deviennent des jeux auxquels d’autres peuvent vraiment jouer. Dans nos clubs, ils créent au lieu de jouer, et c’est le premier pas vers la vraie création de jeux vidéo.",
+          "note": "Roblox Studio est gratuit, il n’y a donc rien à acheter. Il fonctionne uniquement sur PC Windows et Mac, pas sur iPad ni sur une autre tablette, pas sur Chromebook, téléphone ou console de jeu. Un compte Roblox gratuit est également nécessaire, et le réglage d’âge du compte détermine les paramètres de chat et de confidentialité. Les créations terminées peuvent être publiées pour que d’autres joueurs les découvrent et y jouent.",
           "linkLabel": "Obtenir Roblox Studio"
         },
         "rocket_league": {
-          "description": "Rocket League, c’est du football joué avec des voitures propulsées par fusée. Deux équipes s’affrontent dans une arène et poussent un ballon surdimensionné dans le but adverse, en matchs courts d’environ cinq minutes. L’univers est vif et façon dessin animé, sans aucune violence — c’est un sport, pas un jeu de tir — et cela se suit très facilement depuis le bord du terrain, même sans y avoir jamais joué. Presque chaque but naît du jeu d’équipe, ce qui en fait un jeu parfaitement adapté au club.",
-          "note": "Rocket League est gratuit à télécharger et à jouer — vous n’achetez pas le jeu lui-même. Votre enfant a besoin d’un compte Epic Games gratuit. Le jeu fonctionne sur PC Windows, PlayStation, Xbox et Nintendo Switch, et les joueurs sur des appareils différents peuvent jouer ensemble : l’appareil de votre enfant n’a donc pas besoin d’être le même que celui des autres. Des achats facultatifs sont proposés dans le jeu (des décorations pour les voitures), que vous pouvez limiter avec le contrôle parental.",
+          "description": "Rocket League, c’est du football joué avec des voitures propulsées par fusée. Deux équipes s’affrontent dans une arène et poussent un ballon surdimensionné dans le but adverse, en matchs courts d’environ cinq minutes. L’univers est vif et façon dessin animé, sans aucune violence. C’est un sport et non un jeu de tir, et cela se suit très facilement depuis le bord du terrain, même sans y avoir jamais joué. Presque chaque but naît du jeu d’équipe, ce qui en fait un jeu parfaitement adapté au club.",
+          "note": "Rocket League est gratuit à télécharger et à jouer, il n’y a donc pas de jeu à acheter. Jouer nécessite un compte Epic Games gratuit. Le jeu fonctionne sur PC Windows, PlayStation, Xbox et Nintendo Switch. Les joueurs sur des appareils différents peuvent jouer ensemble, donc l’appareil de votre enfant n’a pas besoin d’être le même que celui des autres. Des achats facultatifs sont proposés dans le jeu, comme des décorations pour les voitures, que le contrôle parental peut limiter.",
           "linkLabel": "Obtenir Rocket League"
         }
       }
@@ -2173,6 +2173,154 @@
       "title": "On n’a pas trouvé ça",
       "description": "Elle a peut-être été supprimée ou le lien est erroné. Parcourez l’offre disponible ci-dessous.",
       "cta": "Retour au catalogue"
+    }
+  },
+  "topicPrep": {
+    "heading": "Avant la première séance",
+    "dialogTitle": "Avant la première séance",
+    "triggerLabel": "Se préparer",
+    "readyLabel": "C’est prêt",
+    "closing": "Si tout fonctionne, tout est prêt pour la séance !",
+    "topics": {
+      "minecraft_java": {
+        "intro": "Ces séances se jouent sur Minecraft, sur ordinateur, en version Java. Chaque participant a besoin d’un compte Microsoft sur lequel Minecraft a été acheté, et du Minecraft Launcher installé sur l’ordinateur qu’il utilisera. Merci de suivre les étapes ci-dessous avant la première séance."
+      },
+      "minecraft_education": {
+        "intro": "Ces séances utilisent Minecraft Education, qui est gratuit. School of Gaming distribue les identifiants à la première séance, il n’y a donc qu’une seule étape à effectuer avant."
+      },
+      "minecraft_bedrock": {
+        "intro": "Ces séances se jouent sur Minecraft Bedrock, ensemble en ligne. Chaque participant a besoin d’un compte Microsoft et de Minecraft installé sur l’appareil sur lequel il jouera. Merci de suivre les étapes ci-dessous avant la première séance."
+      },
+      "fortnite": {
+        "intro": "Fortnite est gratuit, et les séances s’y jouent ensemble. Chaque participant a besoin d’un compte Epic Games gratuit et de Fortnite installé sur l’appareil qu’il utilisera. Merci de suivre les étapes ci-dessous avant la première séance."
+      },
+      "rocket_league": {
+        "intro": "Rocket League est gratuit, et chaque séance se joue ensemble. Chaque participant a besoin d’un compte Epic Games gratuit et de Rocket League installé sur l’appareil qu’il utilisera. Merci de suivre les étapes ci-dessous avant la première séance."
+      },
+      "pokemon_go": {
+        "intro": "Pokémon GO se joue dehors, sur un téléphone que quelqu’un apporte à la séance. Merci de suivre les étapes ci-dessous avant la première séance."
+      },
+      "roblox_studio": {
+        "intro": "La séance utilise Roblox Studio, le logiciel de création de jeux gratuit de Roblox. Chaque participant a besoin de son propre compte Roblox et de Roblox Studio installé sur son ordinateur. Merci de suivre les étapes ci-dessous avant la séance."
+      }
+    },
+    "accountsOnlyIntro": {
+      "fortnite": "Nous apportons les machines à la séance, avec Fortnite déjà installé. Chaque participant a tout de même besoin de son propre compte Epic Games, avec le contrôle parental réglé dessus. Merci de suivre les étapes ci-dessous avant la séance.",
+      "rocket_league": "Nous apportons les machines à la séance, avec Rocket League déjà installé. Chaque participant a tout de même besoin de son propre compte Epic Games. Merci de suivre l’étape ci-dessous avant la séance.",
+      "roblox_studio": "Nous apportons les ordinateurs à la séance, avec Roblox Studio déjà installé. Chaque participant a tout de même besoin de son propre compte Roblox. Merci de suivre l’étape ci-dessous avant la séance."
+    },
+    "remoteOnlyIntro": "Les séances se déroulent en ligne, dans un salon vocal. Merci de suivre l’étape ci-dessous avant la première séance.",
+    "steps": {
+      "minecraftJavaAccount": {
+        "title": "Obtenir un compte Microsoft avec Minecraft dessus",
+        "body": "Minecraft se connecte avec un compte Microsoft. Si le participant n’en a pas, un parent le crée et achète « Minecraft: Java & Bedrock Edition for PC » sur ce compte. C’est <b>un achat unique, pas un abonnement</b>, et il couvre la version Java utilisée pendant ces séances. La configuration demande un nom de profil Java. Ce nom est l’identifiant dont nous avons besoin pour ajouter le participant à notre monde Minecraft, alors notez-le quelque part où il sera facile à retrouver.",
+        "linkLabel": "Obtenir Minecraft pour PC"
+      },
+      "minecraftJavaInstall": {
+        "title": "Installer le Minecraft Launcher",
+        "body": "Installez le Minecraft Launcher sur l’ordinateur utilisé pendant la séance. Le téléchargement se trouve sur la même page Minecraft que l’achat. Connectez-vous avec ce même compte Microsoft."
+      },
+      "minecraftJavaLaunch": {
+        "title": "Ouvrir Minecraft une fois avant la première séance",
+        "body": "Lancez le launcher et laissez-le terminer ses mises à jour. Ouvrez le jeu jusqu’au menu principal, puis refermez-le. La première mise à jour peut être longue, et la faire maintenant évite que la séance commence par un téléchargement."
+      },
+      "minecraftEducationInstall": {
+        "title": "Installer Minecraft Education",
+        "body": "Minecraft Education se télécharge gratuitement depuis le Microsoft Store ou depuis le site de Minecraft Education. Installez-le sur l’ordinateur utilisé pendant la séance. Ouvrez-le une fois pour vérifier qu’il démarre. Il n’y a aucun compte à créer. School of Gaming fournit les identifiants à la première séance, le participant n’a donc besoin que du jeu lui-même.",
+        "linkLabel": "Obtenir Minecraft Education"
+      },
+      "minecraftBedrockAccount": {
+        "title": "Créer un compte Microsoft",
+        "body": "Minecraft Bedrock se joue en ligne via un compte Microsoft. C’est le gamertag de ce compte qui nous permet de trouver le participant et de l’ajouter à nos mondes. Si le participant n’a pas encore de compte, un parent le crée. Indiquez la vraie date de naissance du participant, car Microsoft se sert de l’âge pour décider quelles fonctions en ligne sont activées. Notez le gamertag. Nous le demanderons."
+      },
+      "minecraftBedrockInstall": {
+        "title": "Acheter et installer Minecraft sur le bon appareil",
+        "body": "Bedrock est le même jeu vendu séparément pour chaque appareil, et un exemplaire acheté pour un appareil ne fonctionne pas sur un autre. <b>Achetez-le sur l’appareil sur lequel le participant jouera vraiment</b>, que ce soit une console, un téléphone, une tablette ou un PC Windows.",
+        "linkLabel": "Choisir l’appareil"
+      },
+      "minecraftBedrockOnline": {
+        "title": "Vérifier que le jeu en ligne fonctionne",
+        "body": "Ouvrez Minecraft sur cet appareil et connectez-vous avec le compte Microsoft. Vérifiez que l’écran de jeu en ligne s’ouvre. Sur Xbox, PlayStation et Nintendo Switch, jouer avec d’autres nécessite en plus l’abonnement en ligne payant de la console."
+      },
+      "fortniteAccount": {
+        "title": "Créer un compte Epic Games",
+        "body": "Fortnite est gratuit et se connecte avec un compte Epic Games gratuit. Si le participant n’en a pas encore, un parent le crée. Indiquez la vraie date de naissance du participant, car Epic se sert de l’âge pour décider quelles fonctions de discussion et de contacts sont disponibles. Notez le nom affiché. C’est ainsi que nous trouverons le participant."
+      },
+      "fortniteControls": {
+        "title": "Régler le contrôle parental",
+        "body": "Le contrôle parental d’Epic est attaché au compte plutôt qu’à un appareil, il suit donc le participant sur chaque appareil. Un parent choisit un code PIN à six chiffres et décide de ce qui est permis : qui peut discuter, et si un achat exige le code. Le jeu lui-même ne coûte rien. Le contrôle parental est là pour les extras facultatifs."
+      },
+      "fortniteInstall": {
+        "title": "Installer Fortnite",
+        "body": "Installez Fortnite sur l’appareil utilisé pendant la séance et connectez-vous avec le compte Epic Games. Ouvrez-le une fois et laissez-le se mettre à jour. Le premier téléchargement est volumineux, mieux vaut donc le faire la veille que cinq minutes avant.",
+        "linkLabel": "Obtenir Fortnite"
+      },
+      "fortniteCrossplay": {
+        "title": "Laisser le cross-play activé",
+        "body": "Le cross-play est ce qui permet à tout le monde de jouer ensemble, quel que soit l’appareil. Il est activé par défaut. S’il a été désactivé dans les réglages du jeu, réactivez-le avant la séance."
+      },
+      "rocketLeagueAccount": {
+        "title": "Créer un compte Epic Games",
+        "body": "Rocket League est gratuit et se connecte avec un compte Epic Games gratuit, le même type de compte que Fortnite. Si le participant en a déjà un, il convient aussi ici. S’il n’en a pas encore, un parent le crée. Indiquez la vraie date de naissance du participant. Notez le nom affiché. C’est ainsi que nous trouverons le participant."
+      },
+      "rocketLeagueInstall": {
+        "title": "Installer Rocket League",
+        "body": "Installez Rocket League sur l’appareil utilisé pendant la séance. Il est gratuit sur PC Windows, PlayStation, Xbox et Nintendo Switch. Ouvrez-le une fois avant la séance et laissez les mises à jour se terminer.",
+        "linkLabel": "Obtenir Rocket League"
+      },
+      "rocketLeagueCrossplay": {
+        "title": "Laisser le jeu multiplateforme activé",
+        "body": "Le jeu multiplateforme signifie que l’appareil du participant n’a pas besoin de correspondre à celui des autres. Il est activé par défaut. S’il a été désactivé dans les réglages, réactivez-le pour que tout le groupe puisse se retrouver dans le même match."
+      },
+      "pokemonGoInstall": {
+        "title": "Installer Pokémon GO sur le téléphone",
+        "body": "Pokémon GO est gratuit, et il s’installe sur le téléphone qui sera emporté à la séance. Téléchargez-le depuis l’App Store sur un iPhone, ou depuis Google Play sur un téléphone Android. C’est un jeu uniquement pour téléphone. Il n’existe ni version ordinateur ni version console."
+      },
+      "pokemonGoAccount": {
+        "title": "Créer un compte",
+        "body": "Jouer nécessite un compte, que le jeu propose de créer au premier lancement. Pour un participant de moins de 13 ans, c’est un parent qui crée le compte et le relie au sien, ce qui garde les réglages entre les mains d’un parent. Notez le nom de dresseur. C’est ainsi que nous trouverons le participant."
+      },
+      "pokemonGoPhone": {
+        "title": "Charger le téléphone et vérifier ses réglages",
+        "body": "Le jeu garde l’écran, le GPS et les données mobiles allumés tout le temps qu’il est ouvert, et la batterie descend vite. Chargez le téléphone avant la séance. Vérifiez que la localisation et les données mobiles sont activées. Emportez une batterie externe s’il y en a une à la maison."
+      },
+      "pokemonGoAgree": {
+        "title": "Convenir de l’endroit où va le participant",
+        "body": "Pokémon GO se joue dehors, dans de vrais lieux. Convenez à l’avance des rues et des parcs autorisés, de la présence ou non d’un adulte, et de la façon de se joindre pendant la séance. Rappelez au participant de garder les yeux sur la route. Le téléphone peut attendre."
+      },
+      "robloxStudioAccount": {
+        "title": "Créer un compte Roblox",
+        "body": "Si le participant a déjà son propre compte Roblox, il n’y a pas besoin d’en créer un nouveau. S’il n’a pas encore de compte, <b>créez-en un pour lui</b>. Indiquez la vraie date de naissance du participant, car Roblox se sert de l’âge pour décider quelles fonctions et quels contenus sont disponibles. Assurez-vous que le participant connaît son identifiant Roblox, connaît son mot de passe ou peut y accéder au besoin, et sait se connecter à son compte sur l’ordinateur qu’il utilisera pendant la séance. N’envoyez pas le mot de passe du participant au Gedu, notre mot pour un animateur."
+      },
+      "robloxStudioInstall": {
+        "title": "Installer Roblox Studio",
+        "body": "Pendant la séance, nous utiliserons Roblox Studio, le logiciel de création de jeux gratuit de Roblox. Allez sur le Roblox Creator Hub et connectez-vous avec le compte Roblox du participant. Suivez les instructions de la page pour télécharger et installer Roblox Studio. Une fois l’installation terminée, ouvrez Roblox Studio et connectez-vous avec le compte Roblox du participant. Une fois installé, Roblox Studio fonctionne comme n’importe quel autre logiciel de votre ordinateur.",
+        "linkLabel": "Aller sur le Roblox Creator Hub"
+      },
+      "robloxStudioTest": {
+        "title": "Tout tester avant la première séance",
+        "body": "Nous recommandons de faire un test rapide avant la séance :"
+      },
+      "remoteSession": {
+        "title": "Configurer le microphone et la caméra",
+        "body": "La séance se déroule dans un salon vocal qui fonctionne dans un navigateur web. Le participant peut s’y connecter depuis n’importe quel appareil : l’ordinateur où se trouve le jeu, ou un téléphone ou une tablette posés à côté d’une console. Un casque ou des écouteurs avec micro fonctionnent le mieux, pour que le son du jeu ne revienne pas en écho à tout le monde. À la première connexion, le navigateur demande l’autorisation d’utiliser le microphone et la caméra. Acceptez. La caméra est facultative. L’allumer aide le Gedu, notre mot pour un animateur, à vérifier que chaque personne dans le salon est bien celle qu’elle dit être. Trouvez un endroit calme, et connectez-vous quelques minutes en avance la première fois."
+      }
+    },
+    "platformNotes": {
+      "robloxStudioWindows": {
+        "title": "Sous Windows",
+        "body": "Ouvrez le menu Démarrer ou la recherche Windows et tapez Roblox Studio. Sélectionnez ensuite Roblox Studio dans les résultats."
+      },
+      "robloxStudioMac": {
+        "title": "Sur Mac",
+        "body": "Ouvrez la recherche Spotlight ou le dossier Applications et cherchez Roblox Studio."
+      }
+    },
+    "checklist": {
+      "robloxStudioTestOpen": "Ouvrez Roblox Studio.",
+      "robloxStudioTestSignIn": "Connectez-vous avec le compte Roblox du participant.",
+      "robloxStudioTestHome": "Vérifiez que l’écran d’accueil de Roblox Studio s’ouvre normalement.",
+      "robloxStudioTestClose": "Fermez Roblox Studio."
     }
   },
   "sidebar": {

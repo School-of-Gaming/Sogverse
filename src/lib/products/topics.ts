@@ -31,6 +31,69 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 //     to get the software); the parent-facing prose — description, the
 //     needs/costs note, the link/heading label — lives in the
 //     productDetail.topicInfo message namespace, keyed by topic.
+//   - The optional `prep` block is its twin on the other side of the till: it
+//     drives the "Before the first session" guide the confirmation page, the
+//     confirmation mail and the My SOG enrolment cards all render. Its prose
+//     lives in the top-level `topicPrep` namespace — top-level rather than
+//     under a surface's own namespace precisely because three surfaces read it.
+//
+// **About answers "should I buy this"; Prep answers "what do I do now".**
+// That split is the whole reason there are two blocks rather than one longer
+// card, and it decides which sentence goes where:
+//
+//   - **About (`info`)** is read *before* a purchase, on the shop page. What
+//     the thing is, what it costs, what device it needs, what a parent should
+//     know about its content and safety. Requirements are stated as FACTS
+//     ("playing needs a free Epic Games account"), never as instructions.
+//   - **Prep (`prep`)** is read *after* a purchase. The steps that make a
+//     family ready for the first session: create the account, install the
+//     software, test it. It repeats a requirement only as the step that
+//     satisfies it ("Create a free Epic Games account").
+//
+// A how-to sentence in an About note, or a cost/PEGI fact in a prep step, is
+// the drift these definitions exist to catch.
+//
+// Exactly the seven topics that carry `info` carry `prep`, for the same reason:
+// the five label-only topics name subject matter rather than one piece of
+// software, so there is nothing single to install or sign into.
+//
+// **Every step declares a scope, because an in-person product supplies the
+// machines.** At an in-person session School of Gaming provides computers with
+// everything already installed, so a step is the family's to do only where the
+// thing it is about is theirs: `"always"` steps render on every product,
+// `"ownDevice"` steps only on a remote one (`is_remote`).
+//
+// **An account step is scoped by where the login comes from, not by the fact
+// that it is an account.** For the three Minecraft topics the login is ours as
+// well as the machine — at our own venues the gamers play on School of
+// Gaming's Minecraft accounts and may not sign in with their own on our
+// devices, and municipality clubs run on School of Gaming's Minecraft
+// Education accounts — so those account steps are `ownDevice` and all three
+// topics render no guide at all in person. The other four topics keep
+// `always` account steps, because those accounts are the family's own wherever
+// the sessions happen. A topic whose `always` steps come to nothing renders
+// nothing, which is what `resolveTopicPrep` returning null means.
+//
+// **One step belongs to no topic at all.** Getting a microphone and camera
+// ready for the voice room is a fact about a *remote* product — the session
+// happens in a browser room, and in person it does not happen at all — so it is
+// declared once, outside every topic's `steps`, and `resolveTopicPrep` appends
+// it as the last step of every remote guide. Written into the seven blocks it
+// would be seven copies of one paragraph, drifting apart the first time one of
+// them was edited. It is also why the five label-only topics now render a guide
+// on a remote product where they rendered none before: there is exactly one
+// thing to do beforehand, and it is this.
+//
+// **Every message-shaped thing stays out of this registry.** It holds structure
+// and literals (a step's key, its scope, its URL) and the catalog holds the
+// prose, exactly as `info` and `productDetail.topicInfo` already relate. The
+// keys of any list-shaped prose — a step's per-platform notes, its checklist —
+// are declared here as literal arrays so the catalog stays object-shaped and
+// the compiler can check that each key exists. Those keys are **globally
+// unique and the catalog holds them flat**, rather than nested under their
+// topic: a nested shape would make a composed message key the cross product of
+// every topic and every step, most of which do not exist, and the compiler
+// would reject the composition that reads them.
 //
 // Five topics are label-only and render no card at all: creator_studio,
 // game_studio, programming, ai and esports. That is the design, not an omission
@@ -55,6 +118,36 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 // brand/store proper noun (Xbox, App Store, Windows PC) and is NOT translated,
 // same rule as topic labels.
 type GameStore = { name: string; url: string };
+
+/**
+ * Who has to do a step, which decides whether an in-person product renders it.
+ *
+ * - `always` — a step about something the family holds wherever the sessions
+ *   happen: their own account, their own phone. It survives every filter.
+ * - `ownDevice` — a step about something School of Gaming supplies at an
+ *   in-person product, so it is not the family's to do there. An install,
+ *   sign-in or test step against the family's own machine is the usual case;
+ *   so is an account step for a topic whose in-person login is ours too.
+ */
+export type TopicPrepScope = "always" | "ownDevice";
+
+/**
+ * One step of a prep guide, as the registry declares it: a stable key, who has
+ * to do it, and the literals a renderer needs. No prose — every string a reader
+ * sees is resolved from the `topicPrep` catalog by one of these keys.
+ */
+type TopicPrepStepShape = {
+  /** Globally unique across every topic — see the header note. */
+  readonly key: string;
+  readonly scope: TopicPrepScope;
+  /** A literal "get it here" URL. Its label is `steps.<key>.linkLabel`. */
+  readonly url?: string;
+  /** Per-platform "how to find it" notes, by catalog key, in reading order. */
+  readonly platformNotes?: readonly string[];
+  /** A short checklist under the step, by catalog key, in reading order. */
+  readonly checklist?: readonly string[];
+};
+
 export type TopicMeta = {
   /** Brand proper noun — never translated. */
   label: string;
@@ -65,6 +158,25 @@ export type TopicMeta = {
     pegi?: number;
     url?: string;
     stores?: readonly GameStore[];
+  };
+  /** Present ⇒ the topic has a "Before the first session" guide. See the
+   *  header note for the About/Prep split and for what a step's scope means. */
+  prep?: {
+    readonly steps: readonly TopicPrepStepShape[];
+    /**
+     * Declared on a topic that has both scopes: filtered down to its account
+     * steps, its ordinary intro would promise a guide about installing
+     * software that the reader is not being shown. Such a topic carries a
+     * second intro under `topicPrep.accountsOnlyIntro`, and this flag is what
+     * makes the pairing checkable rather than derived from a scope count the
+     * catalog cannot see. A topic with one scope needs no second intro: an
+     * all-`always` topic never filters, and an all-`ownDevice` one renders
+     * nothing in person.
+     *
+     * The *closing* deliberately has no such twin — there is one, shared,
+     * written to be true of either form.
+     */
+    readonly accountsOnlyIntro?: true;
   };
 };
 
@@ -83,12 +195,44 @@ export const PRODUCT_TOPICS = {
       // store links below.
       url: "https://www.minecraft.net/store/minecraft-java-bedrock-edition-pc",
     },
+    prep: {
+      steps: [
+        {
+          // `ownDevice`, because in person the login is ours as well as the
+          // machine: at our own venue's live clubs the gamers play on School
+          // of Gaming's Minecraft accounts and are not allowed to sign in with
+          // their own on our devices, and municipality clubs run on School of
+          // Gaming's Minecraft Education accounts. So an in-person Minecraft
+          // Java product renders no guide at all, exactly as Minecraft
+          // Education already does.
+          key: "minecraftJavaAccount",
+          scope: "ownDevice",
+          url: "https://www.minecraft.net/store/minecraft-java-bedrock-edition-pc",
+        },
+        { key: "minecraftJavaInstall", scope: "ownDevice" },
+        { key: "minecraftJavaLaunch", scope: "ownDevice" },
+      ],
+    },
   },
   minecraft_education: {
     label: "Minecraft Education",
     info: {
       pegi: 7,
       url: "https://education.minecraft.net/",
+    },
+    prep: {
+      // One step, and it is an `ownDevice` one — so an in-person Minecraft
+      // Education product renders no guide at all, which is correct: School of
+      // Gaming supplies the machines AND the logins, so a family has nothing to
+      // do beforehand. A step saying "there is nothing to do" would be worse
+      // than the silence.
+      steps: [
+        {
+          key: "minecraftEducationInstall",
+          scope: "ownDevice",
+          url: "https://education.minecraft.net/",
+        },
+      ],
     },
   },
   minecraft_bedrock: {
@@ -146,12 +290,50 @@ export const PRODUCT_TOPICS = {
         },
       ],
     },
+    prep: {
+      steps: [
+        {
+          // `ownDevice`, for the reason the Java entry states: in person the
+          // Minecraft login is ours too — School of Gaming's own accounts at
+          // our venues, School of Gaming's Minecraft Education accounts in
+          // municipality clubs — so nothing here is the family's to do and an
+          // in-person Bedrock product renders no guide at all.
+          key: "minecraftBedrockAccount",
+          scope: "ownDevice",
+        },
+        {
+          key: "minecraftBedrockInstall",
+          scope: "ownDevice",
+          // The About card's per-device store list is the shop page's answer;
+          // a prep step is one instruction and wants one destination, so it
+          // points at Minecraft's own device picker instead of repeating seven
+          // links a reader has already chosen between.
+          url: "https://www.minecraft.net/get-minecraft",
+        },
+        { key: "minecraftBedrockOnline", scope: "ownDevice" },
+      ],
+    },
   },
   fortnite: {
     label: "Fortnite",
     info: {
       pegi: 12,
       url: "https://www.fortnite.com/",
+    },
+    prep: {
+      accountsOnlyIntro: true,
+      steps: [
+        { key: "fortniteAccount", scope: "always" },
+        // Parental controls are set on the Epic account rather than on a
+        // machine, so they follow the family to an in-person session too.
+        { key: "fortniteControls", scope: "always" },
+        {
+          key: "fortniteInstall",
+          scope: "ownDevice",
+          url: "https://www.fortnite.com/",
+        },
+        { key: "fortniteCrossplay", scope: "ownDevice" },
+      ],
     },
   },
   rocket_league: {
@@ -176,6 +358,18 @@ export const PRODUCT_TOPICS = {
       // variants to get wrong.
       url: "https://www.rocketleague.com/",
     },
+    prep: {
+      accountsOnlyIntro: true,
+      steps: [
+        { key: "rocketLeagueAccount", scope: "always" },
+        {
+          key: "rocketLeagueInstall",
+          scope: "ownDevice",
+          url: "https://www.rocketleague.com/",
+        },
+        { key: "rocketLeagueCrossplay", scope: "ownDevice" },
+      ],
+    },
   },
   pokemon_go: {
     label: "Pokémon GO",
@@ -198,6 +392,22 @@ export const PRODUCT_TOPICS = {
         },
       ],
     },
+    prep: {
+      // Every step is `always`, and no step carries a URL. The phone is the
+      // family's wherever the session happens — School of Gaming supplies
+      // computers, not the child's own phone — so nothing here is ours to
+      // provide and nothing filters out in person. That also makes this the
+      // topic whose accounts-only form never renders, which is why it declares
+      // no second intro. The two app stores are named in the step's own prose
+      // rather than linked, because which of them is right is a fact about the
+      // phone in the reader's hand.
+      steps: [
+        { key: "pokemonGoInstall", scope: "always" },
+        { key: "pokemonGoAccount", scope: "always" },
+        { key: "pokemonGoPhone", scope: "always" },
+        { key: "pokemonGoAgree", scope: "always" },
+      ],
+    },
   },
   // Label-only: competitive play across whichever game the product is actually
   // about, so there is nothing single to rate or link to. See the header note.
@@ -213,6 +423,28 @@ export const PRODUCT_TOPICS = {
       // Studio runs on Windows PCs and Macs only, so a family without a desktop
       // or laptop cannot take part.
       url: "https://create.roblox.com/",
+    },
+    prep: {
+      accountsOnlyIntro: true,
+      steps: [
+        { key: "robloxStudioAccount", scope: "always" },
+        {
+          key: "robloxStudioInstall",
+          scope: "ownDevice",
+          url: "https://create.roblox.com/",
+          platformNotes: ["robloxStudioWindows", "robloxStudioMac"],
+        },
+        {
+          key: "robloxStudioTest",
+          scope: "ownDevice",
+          checklist: [
+            "robloxStudioTestOpen",
+            "robloxStudioTestSignIn",
+            "robloxStudioTestHome",
+            "robloxStudioTestClose",
+          ],
+        },
+      ],
     },
   },
   // Label-only, for the reason in the header note: each names subject matter,
@@ -258,15 +490,210 @@ export type TopicMetaWithInfoCard = TopicMeta & {
 //
 // It is a type predicate rather than a plain boolean because the card needs
 // both halves of the same fact: that a block exists, and that this topic is one
-// of the ones the message catalog has prose for. The lookup inside widens to
-// `TopicMeta` deliberately — the const map's literal member types answer the
-// question per entry, and reading it through the declared shape keeps the
-// runtime check honest instead of something the compiler folds away.
+// of the ones the message catalog has prose for. The lookup inside reads the
+// map through its declared shape rather than through the const map's literal
+// member types, which would answer the question per entry and let the compiler
+// fold the runtime check away.
+//
+// **The predicates below read the map through `TOPIC_META`, and the optional
+// chain that buys is load bearing.** The compiler says every `ProductTopic` has
+// an entry, and the database says the same — but the value arriving here came
+// off a row, and a topic added to the Postgres enum before this map catches up
+// reaches these functions as a key the map has nothing under. Dereferencing
+// that throws from inside a card render, or from inside the confirmation
+// mail's catch-all, whose only handler is a log: the family would silently get
+// no mail at all rather than a mail without a guide. Read through the partial
+// alias the answer degrades to "no card, no guide" instead — the outcome that
+// costs a paragraph rather than a send. Read through `PRODUCT_TOPICS` directly
+// the chain is not merely unnecessary, it is compiled away.
+const TOPIC_META: Partial<Record<ProductTopic, TopicMeta>> = PRODUCT_TOPICS;
+
 export function topicHasInfoCard(
   topic: ProductTopic,
 ): topic is TopicWithInfoCard {
-  const meta: TopicMeta = PRODUCT_TOPICS[topic];
-  return meta.info !== undefined;
+  return TOPIC_META[topic]?.info !== undefined;
+}
+
+// ---------------------------------------------------------------------------
+// Prep: the "Before the first session" guide
+// ---------------------------------------------------------------------------
+
+/**
+ * The one prep step that is not a topic's: getting the microphone and camera
+ * ready for the voice room.
+ *
+ * **Declared here rather than inside seven `steps` arrays** because it is a
+ * fact about a *remote* product and not about any topic — the same paragraph
+ * would otherwise be written seven times and be seven paragraphs to keep in
+ * agreement. `resolveTopicPrep` appends it, last, to every remote guide, and a
+ * label-only topic's remote guide is this step and nothing else.
+ *
+ * Its scope is `ownDevice` for the reason the scope axis exists: the room runs
+ * in a browser on the family's own machine, and at an in-person product there
+ * is no room to join, so the step is never the family's to do there. The
+ * resolver never has to *filter* it — it is only ever added on the remote
+ * branch — but the scope has to be the honest one, because the tests read a
+ * plan's steps back through it.
+ */
+const REMOTE_SESSION_STEP = {
+  key: "remoteSession",
+  scope: "ownDevice",
+} as const satisfies TopicPrepStepShape;
+
+// The topics that carry a prep block, derived from the map the same way
+// `TopicWithInfoCard` is — so adding or removing one `prep` is the whole edit.
+// This is the type the guide's per-topic message keys are resolved against.
+export type TopicWithPrep = {
+  [K in ProductTopic]: (typeof PRODUCT_TOPICS)[K] extends { prep: unknown }
+    ? K
+    : never;
+}[ProductTopic];
+
+// The topics carrying a second, accounts-only intro — the ones that declare
+// `accountsOnlyIntro`. Narrower than `TopicWithPrep` on purpose: only these
+// have a key under `topicPrep.accountsOnlyIntro`, and typing the plan's topic
+// as the wider union would ask the catalog for keys that are deliberately
+// absent.
+export type TopicWithAccountsOnlyIntro = {
+  [K in TopicWithPrep]: (typeof PRODUCT_TOPICS)[K]["prep"] extends {
+    accountsOnlyIntro: true;
+  }
+    ? K
+    : never;
+}[TopicWithPrep];
+
+// One declared step, read back off the const map so its literal key survives.
+// The literals are the point: a composed message key built from a `string`
+// would be `steps.${string}.title`, which is not a member of the catalog's key
+// union and therefore not something the compiler can check. Read through the
+// map, it is a union of exactly the keys that exist.
+export type TopicPrepStep =
+  | (typeof PRODUCT_TOPICS)[TopicWithPrep]["prep"]["steps"][number]
+  | typeof REMOTE_SESSION_STEP;
+
+/** Every step key the catalog must hold prose for. */
+export type TopicPrepStepKey = TopicPrepStep["key"];
+
+/** Every per-platform note key, across every step that declares any. */
+export type TopicPrepPlatformNoteKey = NonNullable<
+  Extract<TopicPrepStep, { platformNotes: unknown }>["platformNotes"]
+>[number];
+
+/** Every checklist-item key, across every step that declares any. */
+export type TopicPrepChecklistKey = NonNullable<
+  Extract<TopicPrepStep, { checklist: unknown }>["checklist"]
+>[number];
+
+/**
+ * What one surface renders: the steps that apply to this product, and which
+ * intro they take.
+ *
+ * The form is a discriminant rather than a boolean because each branch reads a
+ * *different message key*, and the type is what stops a renderer asking the
+ * catalog for one that does not exist. `full` and `accountsOnly` are keyed by
+ * topic and carry the narrowest topic union that has prose; `remoteOnly` is
+ * keyed by nothing, because a guide that is only the shared remote-session step
+ * has no topic-specific sentence to open with and takes the one generic intro.
+ */
+export type TopicPrepPlan =
+  | {
+      form: "full";
+      topic: TopicWithPrep;
+      steps: readonly TopicPrepStep[];
+    }
+  | {
+      form: "accountsOnly";
+      topic: TopicWithAccountsOnlyIntro;
+      steps: readonly TopicPrepStep[];
+    }
+  | {
+      /** A label-only topic on a remote product: the shared step, alone. */
+      form: "remoteOnly";
+      steps: readonly TopicPrepStep[];
+    };
+
+/**
+ * Whether a topic brought a guide of its own — the twin of `topicHasInfoCard`,
+ * and asked for the same reason: a `prep !== undefined` check repeated per
+ * surface would drift.
+ *
+ * It is **not** the render condition on its own any more — a remote product
+ * with no topic steps still renders the shared one — so a surface asks
+ * `resolveTopicPrep`, and this predicate answers only the narrower question of
+ * whether the topic brought steps and prose of its own.
+ *
+ * A type predicate rather than a boolean, so a caller's topic narrows to the
+ * union the catalog actually has prose for. The lookup goes through
+ * `TOPIC_META` exactly as the info predicate's does, and for both of that
+ * alias's reasons: the const map's literal member types would answer the
+ * question at compile time and fold the runtime check away, and a key the map
+ * has no entry for must degrade rather than throw.
+ */
+export function topicHasPrep(topic: ProductTopic): topic is TopicWithPrep {
+  // Through the partial alias, for the reason the info predicate states: an
+  // enum value this map has no entry for degrades to "no guide" rather than
+  // throwing inside a send whose only handler for a throw is a log.
+  return TOPIC_META[topic]?.prep !== undefined;
+}
+
+/** Whether a prep-bearing topic carries the second, accounts-only intro. */
+function topicHasAccountsOnlyIntro(
+  topic: TopicWithPrep,
+): topic is TopicWithAccountsOnlyIntro {
+  return TOPIC_META[topic]?.prep?.accountsOnlyIntro === true;
+}
+
+/**
+ * The whole render decision for one product: which steps apply, which intro
+ * they take, and — as `null` — whether anything applies at all.
+ *
+ * `null` covers both ways a surface ends up with nothing to draw, because a
+ * caller cannot usefully tell them apart: the topic has no guide, or every one
+ * of its steps belongs to something School of Gaming is supplying — a device,
+ * or a login. The three Minecraft topics in person are the second case, and it
+ * is why the answer is a predicate over the *filtered* steps rather than over
+ * `prep` alone.
+ *
+ * **Both ways are now in-person answers.** Every remote product has at least
+ * the shared remote-session step, so `null` on a remote product is unreachable
+ * — which is the whole change a label-only topic sees: it drew no guide, and
+ * now it draws a one-step one.
+ */
+export function resolveTopicPrep(
+  topic: ProductTopic,
+  isRemote: boolean,
+): TopicPrepPlan | null {
+  // A topic with no steps of its own still has the shared one, on a remote
+  // product: the room is browser-based and the mic has to work. In person it
+  // has nothing, which is the answer it has always given.
+  if (!topicHasPrep(topic)) {
+    return isRemote ? { form: "remoteOnly", steps: [REMOTE_SESSION_STEP] } : null;
+  }
+
+  // Read through the const map rather than the declared shape, so the step
+  // keys stay the literals the message catalog is checked against.
+  const declared: readonly TopicPrepStep[] = PRODUCT_TOPICS[topic].prep.steps;
+  const applicable = isRemote
+    ? declared
+    : declared.filter((step) => step.scope === "always");
+
+  if (applicable.length === 0) return null;
+
+  // The shared step goes last, after everything the topic itself asked for: it
+  // is the one thing to do once the game is installed and signed into.
+  const steps = isRemote ? [...applicable, REMOTE_SESSION_STEP] : applicable;
+
+  if (applicable.length === declared.length) {
+    return { form: "full", topic, steps };
+  }
+
+  // Something was filtered out, so the guide is the accounts-only form — which
+  // only a topic declaring the second intro can be in. A topic that filters
+  // without declaring one is a registry mistake, and rendering the full intro
+  // over a shortened guide is the smaller of the two wrongs available here.
+  return topicHasAccountsOnlyIntro(topic)
+    ? { form: "accountsOnly", topic, steps }
+    : { form: "full", topic, steps };
 }
 
 // Which game identity a product's surfaces are about — the first of the

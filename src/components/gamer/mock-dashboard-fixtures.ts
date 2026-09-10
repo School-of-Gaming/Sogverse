@@ -24,7 +24,9 @@ import type { SupportedLocale } from "@/lib/constants/locales";
  * **Two scenarios — populated and empty, the one mutually exclusive split.**
  *
  * `typical` carries everything that can coexist: a club running right now with
- * its Join lit, a second club the gamer is queued for (the waitlist sentence in
+ * its Join lit and the prep guide's quiet link beneath it, a second club whose
+ * room is days away and whose locked Join the guide's button has taken over, a
+ * third club the gamer is queued for (the waitlist sentence in
  * the child's voice, and no link anywhere on the card), an in-person camp naming
  * its site where the Join would be, and a one-afternoon event. The dynamic type
  * nouns' *absence* (a one-noun page renders one heading, not empty sections) is
@@ -82,6 +84,9 @@ export function buildGamerDashboardFixture(
       productName: "Minecraft Explorers Club",
       productType: "consumer_club",
       isRemote: true,
+      // The prep guide beside a lit Join: the room is open and the Join is
+      // untouched, so the guide is the muted link beneath it.
+      topic: "minecraft_java",
       slots: [liveNowSlot(now, 90, FIXTURE_TIMEZONE)],
       startedDaysAgo: 84,
       endsInDays: null,
@@ -110,6 +115,20 @@ export function buildGamerDashboardFixture(
       startedDaysAgo: 1,
       endsInDays: null,
       awaiting: true,
+    },
+    {
+      // The Roblox Studio club, with its room three days out — so the guide
+      // takes the locked Join's slot, which is the placement a child is most
+      // likely to meet: a seat bought for them, a first session still ahead,
+      // and a guide written to read the same to them as to their parent.
+      participationId: "mock-gamer-roblox-studio-club",
+      productName: "Roblox Studio Club",
+      productType: "consumer_club",
+      isRemote: true,
+      topic: "roblox_studio",
+      slots: [futureSlot(now, 3, "15:00", 90, FIXTURE_TIMEZONE)],
+      startedDaysAgo: 28,
+      endsInDays: null,
     },
     {
       participationId: "mock-gamer-roblox-camp",

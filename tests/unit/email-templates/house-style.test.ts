@@ -5,7 +5,12 @@
 // one test.
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { templateRegistry } from "@/lib/email-templates/registry";
-import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
+import {
+  getEmailTranslator,
+  getTopicPrepTranslator,
+  type EmailTranslator,
+  type TopicPrepTranslator,
+} from "@/lib/email-templates/translator";
 import { buildPinResetEmail } from "@/lib/email-templates/pin-reset";
 import {
   calendarInvitationStartDate,
@@ -145,6 +150,12 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     isSelfSeat: false,
     productName: "Minecraft 101",
     productType: "camp",
+    // A topic that carries a guide, so the section's blocks are swept at all.
+    // This fixture is in-person (`isRemote: "no"`, for the site the calendar
+    // states), which shortens the guide to its account steps — the remote form,
+    // with the per-platform notes and the checklist only it renders, is swept
+    // as a variant below.
+    topic: "minecraft_java",
     mode: "upfront",
     priceAmount: "€40.00",
     firstChargeDate: "none",
@@ -220,9 +231,20 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
 };
 
 let t: EmailTranslator;
+/**
+ * The second translator, handed to every registry render below — because a
+ * render composed without it states no "Before the first session" guide, and
+ * the guide is a run of blocks in the signup confirmation that nothing else
+ * here would ever sweep. Same reason the mark's origin is stubbed above: pick
+ * the shape of the mail with more markup in it.
+ */
+let tPrep: TopicPrepTranslator;
 
 beforeAll(async () => {
-  t = await getEmailTranslator("en");
+  [t, tPrep] = await Promise.all([
+    getEmailTranslator("en"),
+    getTopicPrepTranslator("en"),
+  ]);
   // The shell's brand mark is emitted only when an origin can be built for it,
   // and no env is configured for the unit run — locally or in CI. Without this
   // stub every mail swept below renders in its no-origin shape, and the one
@@ -251,7 +273,18 @@ function fromRegistry(
   name = key,
   overrides: Record<string, string | boolean | null> = {},
 ): [string, string][] {
-  return [[name, templateRegistry[key].render({ ...PARAMS[key], ...overrides }, t, "en").html]];
+  return [
+    [
+      name,
+      templateRegistry[key].render(
+        { ...PARAMS[key], ...overrides },
+        t,
+        "en",
+        { to: "send" },
+        tPrep,
+      ).html,
+    ],
+  ];
 }
 
 /**
@@ -286,6 +319,14 @@ const MAILS: Record<string, () => [string, string][]> = {
       gamerCopy: true,
       priceAmount: null,
       dashboardUrl: "https://sogverse.sog.gg/gamer",
+    }),
+    // The guide in its full form, on the one topic whose steps carry
+    // per-platform notes and a checklist — two blocks no other render in this
+    // sweep produces, and both of them `ownDevice`, so only a remote product
+    // reaches them.
+    ...fromRegistry("productConfirmation", "productConfirmation (topic guide, remote)", {
+      topic: "roblox_studio",
+      isRemote: "yes",
     }),
   ],
   // All three mails one send produces: the family's, the child's own copy, and

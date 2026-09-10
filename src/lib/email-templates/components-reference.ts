@@ -7,6 +7,8 @@ import {
   ctaButtonRow,
   inlineLink,
   bulletList,
+  numberedList,
+  inlineBold,
   sectionLabel,
 } from "./blocks";
 import { heading, paragraph, pinnedFill, styledName, styledProductName } from "./utils";
@@ -213,7 +215,13 @@ export function buildComponentsReferenceEmail(locale: string): string {
    * the builder slicing one out of the sentence.
    *
    * `bulletList` takes composed HTML, so anything from a user is escaped before
-   * it goes in.
+   * it goes in. `numberedList` is the same list with the client's own `<ol>`
+   * numbering, for a run whose order is part of what it says; the two are
+   * styled identically, so a mail carrying both spaces them alike.
+   *
+   * `inlineBold` is the emphasis a sentence carries inside itself, and the
+   * shape a message's own `<b>` renders to through `t.markup`. Weight, never
+   * colour — a dark theme rewrites a colour and leaves a weight alone.
    */
   const text = `
     ${section("Text")}
@@ -234,6 +242,16 @@ export function buildComponentsReferenceEmail(locale: string): string {
     ${entry(
       "bulletList",
       bulletList(["One item, already composed and escaped.", "And a second, so it is a list."]),
+    )}
+    ${entry(
+      "numberedList",
+      numberedList(["The first thing to do.", "And then the second."]),
+    )}
+    ${entry(
+      "inlineBold",
+      paragraph(
+        `Buy it on ${inlineBold("the device you will actually play on")} — a copy does not carry over.`,
+      ),
     )}
   `;
 

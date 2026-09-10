@@ -18,10 +18,18 @@ import { fileURLToPath } from "node:url";
 
 const OUTPUT_ROOT = path.join(import.meta.dirname, "..", "output");
 
-/** The calling script's output folder, created if it does not exist yet. */
-export function outputDir(scriptUrl) {
-  const name = path.basename(fileURLToPath(scriptUrl)).replace(/\.[^.]+$/, "");
-  const dir = path.join(OUTPUT_ROOT, name);
+/**
+ * The calling script's output folder, created if it does not exist yet.
+ *
+ * `name` overrides the folder's name, for a tool that is a *directory* of
+ * scripts rather than one file: `scripts/preview-export/export.mjs` wants its
+ * artifacts under `output/preview-export/`, since `output/export/` names the
+ * entry point rather than the tool that wrote them.
+ */
+export function outputDir(scriptUrl, name = null) {
+  const folder =
+    name ?? path.basename(fileURLToPath(scriptUrl)).replace(/\.[^.]+$/, "");
+  const dir = path.join(OUTPUT_ROOT, folder);
   mkdirSync(dir, { recursive: true });
   return dir;
 }

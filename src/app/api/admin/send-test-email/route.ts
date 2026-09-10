@@ -4,7 +4,10 @@ import { defineRoute } from "@/lib/api/define-route";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL, SENDER_NAME } from "@/lib/constants";
 import { templateRegistry } from "@/lib/email-templates/registry";
-import { getEmailTranslator } from "@/lib/email-templates/translator";
+import {
+  getEmailTranslator,
+  getTopicPrepTranslator,
+} from "@/lib/email-templates/translator";
 import { parseEmails } from "@/lib/utils";
 import { resolveLocale } from "@/lib/constants/locales";
 
@@ -76,6 +79,13 @@ export const POST = defineRoute({
 
     const locale = resolveLocale(body.locale);
     const t = await getEmailTranslator(locale);
+    // The second translator, for the one template whose mail carries the
+    // "Before the first session" guide: it lives in the top-level `topicPrep`
+    // namespace, which a translator scoped to `email` cannot reach. Loaded
+    // unconditionally rather than per template — it is one already-imported
+    // catalog read twice, and a per-template branch here would be this route
+    // knowing which mails carry a guide.
+    const tPrep = await getTopicPrepTranslator(locale);
 
     // The context is stated rather than left to the default, because this
     // route is the send: what leaves here is fetched by a recipient's mail
@@ -88,7 +98,7 @@ export const POST = defineRoute({
     // builder wrote for the admin to read.
     let rendered;
     try {
-      rendered = tmpl.render(paramsParsed.data, t, locale, { to: "send" });
+      rendered = tmpl.render(paramsParsed.data, t, locale, { to: "send" }, tPrep);
     } catch (error) {
       return NextResponse.json(
         { error: error instanceof Error ? error.message : String(error) },
