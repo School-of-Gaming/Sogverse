@@ -3234,8 +3234,9 @@
   },
   "roblox": {
     "hero": {
-      "title": "Construisez<br></br>Jouez<br></br><act>Publiez</act>",
-      "subtitle": "Un programme gratuit de création de jeux pour les ados, proposé par Lynx Educate et School of Gaming, en collaboration avec Roblox.",
+      "title": "Académie<br></br><act>des Créateurs</act>",
+      "subtitle": "Construisez. Jouez. Publiez.",
+      "blurb": "Gratuit pour les ados. Publiez votre propre jeu Roblox.",
       "cta": "Lancez-vous !"
     },
     "lockup": {
@@ -3247,7 +3248,7 @@
     "what": {
       "eyebrow": "Le programme",
       "heading": "Apprenez à construire sur Roblox.",
-      "paragraph1": "Ce programme donne aux ados de 13–17 ans en France l’occasion de concevoir, coder et publier leur propre jeu Roblox — avec les personnes qui comptent le plus pour les encourager. Proposé par Lynx Educate et School of Gaming, en collaboration avec Roblox, c’est une introduction pratique à la création de jeux, à la créativité numérique et à la collaboration en ligne en toute sécurité.",
+      "paragraph1": "L’Académie des Créateurs donne aux ados de 13–17 ans en France l’occasion de concevoir, coder et publier leur propre jeu Roblox — avec les personnes qui comptent le plus pour les encourager. Proposé par Lynx Educate et School of Gaming, en collaboration avec Roblox, c’est une introduction pratique à la création de jeux, à la créativité numérique et à la collaboration en ligne en toute sécurité.",
       "paragraph2": "Le programme mène les participants vers la publication de leur propre création originale sur Roblox. Aucune expérience requise — juste de la curiosité."
     },
     "why": {

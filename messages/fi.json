@@ -3234,8 +3234,9 @@
   },
   "roblox": {
     "hero": {
-      "title": "Rakenna<br></br>Pelaa<br></br><act>Omista</act>",
-      "subtitle": "Ilmainen pelisuunnitteluohjelma nuorille – järjestäjinä Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa.",
+      "title": "Luojien<br></br><act>akatemia</act>",
+      "subtitle": "Rakenna. Pelaa. Omista.",
+      "blurb": "Maksuton nuorille. Julkaise oma Roblox-pelisi.",
       "cta": "Hyppää mukaan!"
     },
     "lockup": {
@@ -3247,7 +3248,7 @@
     "what": {
       "eyebrow": "Mistä on kyse",
       "heading": "Opi rakentamaan Robloxissa.",
-      "paragraph1": "Ohjelma antaa 13–17-vuotiaille Ranskassa mahdollisuuden suunnitella, koodata ja julkaista oma Roblox-pelinsä – ja tärkeimmät ihmiset kannustavat vierellä. Ohjelman toteuttavat Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa, ja se on käytännönläheinen johdatus pelisuunnitteluun, digitaaliseen luovuuteen ja turvalliseen verkkoyhteistyöhön.",
+      "paragraph1": "Luojien akatemia antaa 13–17-vuotiaille Ranskassa mahdollisuuden suunnitella, koodata ja julkaista oma Roblox-pelinsä – ja tärkeimmät ihmiset kannustavat vierellä. Ohjelman toteuttavat Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa, ja se on käytännönläheinen johdatus pelisuunnitteluun, digitaaliseen luovuuteen ja turvalliseen verkkoyhteistyöhön.",
       "paragraph2": "Ohjelma tähtää siihen, että osallistujat julkaisevat oman teoksensa Robloxissa. Aiempaa kokemusta ei tarvita – pelkkä kiinnostus riittää."
     },
     "why": {

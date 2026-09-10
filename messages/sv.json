@@ -3234,8 +3234,9 @@
   },
   "roblox": {
     "hero": {
-      "title": "Bygg<br></br>Spela<br></br><act>Äg det</act>",
-      "subtitle": "Ett gratis speldesignprogram för tonåringar — från Lynx Educate och School of Gaming, i samarbete med Roblox.",
+      "title": "Skaparnas<br></br><act>akademi</act>",
+      "subtitle": "Bygg det. Spela det. Äg det.",
+      "blurb": "Gratis för tonåringar. Publicera ditt eget Roblox-spel.",
       "cta": "Häng med!"
     },
     "lockup": {
@@ -3247,7 +3248,7 @@
     "what": {
       "eyebrow": "Vad är det här",
       "heading": "Lär dig bygga i Roblox.",
-      "paragraph1": "Programmet ger 13–17-åringar i Frankrike chansen att designa, koda och publicera sitt eget Roblox-spel — med de viktigaste personerna som hejar på. Det genomförs av Lynx Educate och School of Gaming i samarbete med Roblox, och är en praktisk introduktion till speldesign, digital kreativitet och trygg samverkan online.",
+      "paragraph1": "Skaparnas akademi ger 13–17-åringar i Frankrike chansen att designa, koda och publicera sitt eget Roblox-spel — med de viktigaste personerna som hejar på. Det genomförs av Lynx Educate och School of Gaming i samarbete med Roblox, och är en praktisk introduktion till speldesign, digital kreativitet och trygg samverkan online.",
       "paragraph2": "Programmet siktar mot att deltagarna publicerar sin egen skapelse på Roblox. Ingen erfarenhet krävs — bara nyfikenhet."
     },
     "why": {
