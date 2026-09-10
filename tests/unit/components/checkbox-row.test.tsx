@@ -166,8 +166,14 @@ describe("CheckboxRow", () => {
     );
 
     const box = screen.getByRole("checkbox");
-    const titleLine = box.closest("span")?.parentElement;
-    if (!titleLine) throw new Error("the box rendered outside any line");
+    // The title's line is the row's first child, found from the row rather
+    // than by climbing a fixed number of levels from the input: the box sits
+    // inside its own one-line column, and how deep that nests is the
+    // component's business, not the test's.
+    const titleLine = box.closest("label")?.firstElementChild;
+    if (!(titleLine instanceof HTMLElement) || !titleLine.contains(box)) {
+      throw new Error("the box rendered outside the row's first line");
+    }
     expect(titleLine.textContent).toBe("Photos and videos of your child");
 
     // The title names the box; the sentence and the hint describe it, in that
