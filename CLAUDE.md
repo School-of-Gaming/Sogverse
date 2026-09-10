@@ -90,6 +90,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |
 | Group workspace — shared gedu/admin group page body | `src/components/group-workspace/` |
 | Family product page (a family's club/camp/event page) | `src/components/family/product-page/` |
+| Topic prep — the "Before the first session" guide | `src/components/topic-prep/` |
 | Chat components | `src/components/chat/` |
 | Voice — scheduled group rooms | `src/components/voice/` |
 | Voice — instant rooms | `src/components/voice/instant/` |

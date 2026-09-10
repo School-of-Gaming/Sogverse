@@ -278,6 +278,61 @@ export function bulletList(items: string[]): string {
 }
 
 /**
+ * The same list with numbers instead of bullets, for a run of items whose
+ * *order* is part of what they say — steps to work through, in sequence.
+ *
+ * Styled identically to `bulletList` down to the margins, because the two are
+ * one construct with two markers: a mail carrying both would otherwise space
+ * them differently for no reason a reader could name. The marker itself is the
+ * client's own `<ol>` numbering rather than a number written into each item,
+ * so it stays a list to a screen reader and the numbers cannot fall out of step
+ * with the items after an edit.
+ */
+export function numberedList(items: string[]): string {
+  const rendered = items
+    .map((item) => `<li style="margin:0 0 8px;">${item}</li>`)
+    .join("");
+  return `<ol style="margin:0 0 16px;padding-left:20px;${BODY_TEXT_STYLE}">${rendered}</ol>`;
+}
+
+/**
+ * Bold, inline, in the body's own colour — the emphasis a sentence carries
+ * inside itself.
+ *
+ * Weight rather than colour, for the reason `styledProductName` gives: weight
+ * is the one emphasis every client renders the same way, and a colour is
+ * something a dark theme feels free to rewrite.
+ */
+export function inlineBold(text: string): string {
+  return `<strong style="color:${DARK_THEME.foreground};">${text}</strong>`;
+}
+
+/**
+ * The tag handlers for `t.markup`, so a message can carry its own emphasis.
+ *
+ * A mail's translator is `use-intl`'s plain-string one, so it has no `t.rich`
+ * to build elements with — `t.markup` is the string equivalent, and it takes a
+ * handler per tag the message uses. `<b>` is the only tag a mail's copy may
+ * carry: a message file is where a translator decides *which* words a sentence
+ * leans on, and every other kind of markup in this directory is the builder's
+ * decision rather than the sentence's.
+ *
+ * The app renders the same messages through `t.rich` with a real `<b>`, which
+ * is what lets one string serve a page and a mail.
+ */
+export const MARKUP_TAGS = {
+  b: (chunks: string) => inlineBold(chunks),
+} as const;
+
+/**
+ * The same tags, rendering to nothing — for a plain-text twin, which states the
+ * words and has no way to lean on any of them.
+ */
+export const PLAIN_MARKUP_TAGS = {
+  b: (chunks: string) => chunks,
+} as const;
+
+/**
  * Label–value rows, ruled above and between: the one facts block every mail
  * here states its facts in.
  *

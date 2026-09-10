@@ -6,7 +6,9 @@ import {
   PRODUCT_TOPIC_VALUES,
   TOPIC_FILTER_CHIPS,
   platformForTopic,
+  resolveTopicPrep,
   topicHasInfoCard,
+  topicHasPrep,
   type TopicMeta,
 } from "@/lib/products/topics";
 import { SUPPORTED_GAME_PLATFORMS } from "@/lib/constants/game-platforms";
@@ -210,6 +212,206 @@ describe("product topics", () => {
     });
   });
 
+  // ---------------------------------------------------------------------
+  // Prep: the "Before the first session" guide
+  // ---------------------------------------------------------------------
+  //
+  // Everything here is a link the compiler does not make. The registry's step
+  // keys ARE checked against the catalog's shape where a component composes
+  // them — but only for the topics a component happens to render, and the
+  // catalog gap that actually leaks is the one present in every locale at
+  // once: uniform, so the translation checker says nothing, and visible to a
+  // family as a raw message key on a confirmation page in every language.
+  describe("prep", () => {
+    const prep = messages.topicPrep;
+
+    it("gives prep to exactly the topics that have an About card", () => {
+      // Same seven, and the reason is the same: the five label-only topics
+      // name subject matter rather than one piece of software, so there is
+      // nothing single to install or sign into. Asserting the two sets are
+      // equal is what makes splitting them a deliberate decision later.
+      expect(PRODUCT_TOPIC_VALUES.filter(topicHasPrep).sort()).toEqual(
+        PRODUCT_TOPIC_VALUES.filter(topicHasInfoCard).sort(),
+      );
+      expect(PRODUCT_TOPIC_VALUES.filter((t) => !topicHasPrep(t)).length)
+        .toBeGreaterThan(0);
+    });
+
+    it("gives every step a unique key, a real scope and a real URL", () => {
+      const seen = new Set<string>();
+
+      for (const topic of PRODUCT_TOPIC_VALUES) {
+        const meta: TopicMeta = PRODUCT_TOPICS[topic];
+        if (!meta.prep) continue;
+
+        expect(meta.prep.steps.length).toBeGreaterThan(0);
+
+        for (const step of meta.prep.steps) {
+          // Globally unique, because the catalog holds step prose flat rather
+          // than nested under its topic — the only shape a composed message
+          // key can be checked against. Two topics sharing a key would share
+          // a step's words without either one saying so.
+          expect(seen.has(step.key), `duplicate step key ${step.key}`).toBe(
+            false,
+          );
+          seen.add(step.key);
+
+          expect(["always", "ownDevice"]).toContain(step.scope);
+          if (step.url !== undefined) {
+            expect(step.url.startsWith("https://")).toBe(true);
+          }
+        }
+      }
+    });
+
+    it("gives every prep-bearing topic and every step its English prose", () => {
+      const topics: Record<string, { intro?: string } | undefined> = prep.topics;
+      const steps: Record<
+        string,
+        { title?: string; body?: string; linkLabel?: string } | undefined
+      > = prep.steps;
+      const notes: Record<
+        string,
+        { title?: string; body?: string } | undefined
+      > = prep.platformNotes;
+      const checklist: Record<string, string | undefined> = prep.checklist;
+
+      const nonEmpty = (value: unknown, what: string) => {
+        expect(value, `messages/en.json is missing ${what}`).toBeTypeOf(
+          "string",
+        );
+        expect(
+          typeof value === "string" ? value.trim().length : 0,
+          `messages/en.json has a blank ${what}`,
+        ).toBeGreaterThan(0);
+      };
+
+      for (const topic of PRODUCT_TOPIC_VALUES) {
+        const meta: TopicMeta = PRODUCT_TOPICS[topic];
+        if (!meta.prep) continue;
+
+        nonEmpty(topics[topic]?.intro, `topicPrep.topics.${topic}.intro`);
+
+        for (const step of meta.prep.steps) {
+          nonEmpty(steps[step.key]?.title, `topicPrep.steps.${step.key}.title`);
+          nonEmpty(steps[step.key]?.body, `topicPrep.steps.${step.key}.body`);
+
+          // A step with a URL needs a label for it, and a step without one
+          // must not carry a label nothing renders.
+          if (step.url === undefined) {
+            expect(
+              steps[step.key]?.linkLabel,
+              `topicPrep.steps.${step.key}.linkLabel labels no URL`,
+            ).toBeUndefined();
+          } else {
+            nonEmpty(
+              steps[step.key]?.linkLabel,
+              `topicPrep.steps.${step.key}.linkLabel`,
+            );
+          }
+
+          for (const note of step.platformNotes ?? []) {
+            nonEmpty(notes[note]?.title, `topicPrep.platformNotes.${note}.title`);
+            nonEmpty(notes[note]?.body, `topicPrep.platformNotes.${note}.body`);
+          }
+          for (const item of step.checklist ?? []) {
+            nonEmpty(checklist[item], `topicPrep.checklist.${item}`);
+          }
+        }
+      }
+    });
+
+    it("pairs the accounts-only intro with the topics that actually filter", () => {
+      // The two have to agree in both directions. A topic that loses steps in
+      // person and has no second intro opens a shortened guide by promising
+      // software to install; a topic that declares one and never filters has
+      // paid five locales to translate a paragraph nobody can reach.
+      const filters: string[] = [];
+      const declares: string[] = [];
+
+      for (const topic of PRODUCT_TOPIC_VALUES) {
+        const meta: TopicMeta = PRODUCT_TOPICS[topic];
+        if (!meta.prep) continue;
+
+        const kept = meta.prep.steps.filter((s) => s.scope === "always");
+        // Nothing kept is the third case and needs no intro at all: the guide
+        // does not render in person. Minecraft Education is that case.
+        if (kept.length > 0 && kept.length < meta.prep.steps.length) {
+          filters.push(topic);
+        }
+        if (meta.prep.accountsOnlyIntro === true) declares.push(topic);
+      }
+
+      expect(declares.sort()).toEqual(filters.sort());
+
+      const intros: Record<string, string | undefined> = prep.accountsOnlyIntro;
+      expect(Object.keys(intros).sort()).toEqual([...declares].sort());
+      for (const topic of declares) {
+        expect(intros[topic]?.trim().length ?? 0).toBeGreaterThan(0);
+      }
+    });
+
+    it("drops the ownDevice steps in person and keeps the always ones", () => {
+      // The rule the whole scope axis exists for: at an in-person product
+      // School of Gaming brings the machines, so only the account steps are
+      // the family's to do.
+      for (const topic of PRODUCT_TOPIC_VALUES) {
+        if (!topicHasPrep(topic)) continue;
+
+        const inPerson = resolveTopicPrep(topic, false);
+        if (inPerson === null) continue;
+        expect(
+          inPerson.steps.every((s) => s.scope === "always"),
+          `${topic} renders an ownDevice step at an in-person product`,
+        ).toBe(true);
+
+        const declared: TopicMeta = PRODUCT_TOPICS[topic];
+        const remote = resolveTopicPrep(topic, true);
+        expect(remote).not.toBeNull();
+        expect(remote?.steps.map((s) => s.key)).toEqual(
+          declared.prep?.steps.map((s) => s.key),
+        );
+      }
+    });
+
+    it("renders nothing for a topic with no guide, and none for Minecraft Education in person", () => {
+      expect(resolveTopicPrep("programming", true)).toBeNull();
+      expect(resolveTopicPrep("esports", false)).toBeNull();
+
+      // The case the null answer was written for: we supply the machines AND
+      // the logins, so a family has genuinely nothing to do beforehand and a
+      // guide saying so would be furniture.
+      expect(resolveTopicPrep("minecraft_education", false)).toBeNull();
+      expect(resolveTopicPrep("minecraft_education", true)?.steps).toHaveLength(
+        1,
+      );
+    });
+
+    it("keeps every Pokémon GO step in person", () => {
+      // The phone is the family's wherever the session happens — we supply
+      // computers, not a child's own phone — so nothing here is ours to
+      // provide and nothing filters out. That also makes it the one prep
+      // topic whose accounts-only form never renders.
+      const meta: TopicMeta = PRODUCT_TOPICS.pokemon_go;
+      const declared = meta.prep?.steps;
+      const inPerson = resolveTopicPrep("pokemon_go", false);
+
+      expect(inPerson?.form).toBe("full");
+      expect(inPerson?.steps.map((s) => s.key)).toEqual(
+        declared?.map((s) => s.key),
+      );
+    });
+
+    it("takes the accounts-only intro exactly when steps were dropped", () => {
+      expect(resolveTopicPrep("roblox_studio", true)?.form).toBe("full");
+
+      const inPerson = resolveTopicPrep("roblox_studio", false);
+      expect(inPerson?.form).toBe("accountsOnly");
+      expect(inPerson?.steps.map((s) => s.key)).toEqual([
+        "robloxStudioAccount",
+      ]);
+    });
+  });
   it("covers every topic with exactly one filter chip", () => {
     // MINECRAFT_TOPICS is hand-maintained inside the module and collapses the
     // three editions behind one chip, so this is the one chip assertion that
