@@ -7,11 +7,10 @@ import {
   parseCategories,
 } from "@/components/public/products/shop-categories";
 import {
-  PROGRAMME_LANGUAGE,
+  PROGRAMME_PRICE,
   PROGRAMME_TOPIC,
 } from "@/components/roblox/programme-filters";
 import { isAudienceFilterValue } from "@/lib/products/product-audience";
-import { isSpokenLanguageCode } from "@/lib/constants/spoken-languages";
 import { PRODUCT_TOPIC_VALUES } from "@/lib/products/topics";
 import type { ProductType } from "@/types";
 
@@ -96,28 +95,26 @@ describe("the /roblox programme's shop hrefs", () => {
   // way the shop reads it, so a renamed param, a retired enum value, or a typo'd
   // href fails here instead of silently degrading to an unfiltered shop.
 
-  it("robloxShop filters to the programme's topic and language", () => {
+  it("robloxShop filters to the programme's topic and price, and nothing else", () => {
     const params = new URLSearchParams(queryOf(ROUTES.robloxShop));
     // Topic values are matched as lowercase strings against the product's
     // `topic` enum column (see use-browse-filters/filter-products); membership
     // in the enum's own value list is what "recognised" means.
     expect(params.get("topic")).toBe(PROGRAMME_TOPIC);
     expect(PRODUCT_TOPIC_VALUES).toContain(params.get("topic"));
-    const lang = params.get("lang");
-    expect(lang).toBe(PROGRAMME_LANGUAGE);
-    expect(lang !== null && isSpokenLanguageCode(lang)).toBe(true);
+    expect(params.get("price")).toBe(PROGRAMME_PRICE);
+    // The rail narrows to online on top of this; the CTAs deliberately do not.
+    expect([...params.keys()].sort()).toEqual(["price", "topic"]);
   });
 
-  it("robloxParentSessions filters to French products for parents", () => {
+  it("robloxParentSessions filters to free products for parents, and nothing else", () => {
     const params = new URLSearchParams(queryOf(ROUTES.robloxParentSessions));
-    const lang = params.get("lang");
-    expect(lang).toBe(PROGRAMME_LANGUAGE);
-    expect(lang !== null && isSpokenLanguageCode(lang)).toBe(true);
     const audience = params.get("audience");
     expect(audience !== null && isAudienceFilterValue(audience)).toBe(true);
     expect(audience).toBe("parents");
+    expect(params.get("price")).toBe(PROGRAMME_PRICE);
     // Deliberately not topic-filtered — a parent digital-safety session is not
     // a Roblox Studio product (the route constant's comment owns the why).
-    expect(params.get("topic")).toBeNull();
+    expect([...params.keys()].sort()).toEqual(["audience", "price"]);
   });
 });

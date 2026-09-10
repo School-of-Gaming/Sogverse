@@ -477,32 +477,33 @@ export const ROUTES = {
    */
   roblox: "/roblox",
   /**
-   * The Programme's own slice of the storefront: Roblox Studio products
-   * delivered in French. This is where every "register" / "get started" CTA on
-   * `/roblox` lands — the programme has no storefront of its own, so the shop
-   * filtered down to it *is* its catalogue, and the same URL is shared by the
-   * hero and the closing CTA so both promise the same page.
+   * The Programme's own slice of the storefront: free Roblox Studio products.
+   * This is where every "register" / "get started" CTA on `/roblox` lands —
+   * the programme has no storefront of its own, so the shop filtered down to it
+   * *is* its catalogue, and the same URL is shared by the hero, the closing CTA
+   * and the link under the events rail so all three promise the same page. The
+   * rail itself is narrower (online only; `programme-filters.ts`).
    *
-   * The `topic` and `lang` param names, and their comma-separated list
-   * grammar, are the browse-filter hook's (`use-browse-filters.ts`); the values
-   * are the `product_topic` and `spoken_language` enums' own. Keep the two in
-   * sync — same arrangement as `shopBrowse` and the `category` param above. An
+   * The `topic` and `price` param names, and their grammar, are the
+   * browse-filter hook's (`use-browse-filters.ts`); the values are the
+   * `product_topic` enum's own and the price row's. Keep the two in sync — same
+   * arrangement as `shopBrowse` and the `category` param above. An
    * unrecognised value there reads as no selection rather than an empty grid,
    * so a stale link degrades to a wider shop rather than to nothing.
    */
   robloxShop: {
     pathname: "/shop",
-    query: { topic: "roblox_studio", lang: "fr" },
+    query: { topic: "roblox_studio", price: "free" },
   },
   /**
-   * The parent-facing half of the same slice — French-language products whose
-   * audience is parents rather than their teens, which is what the programme's
+   * The parent-facing half of the same slice — free products whose audience is
+   * parents rather than their teens, which is what the programme's
    * digital-safety sessions for parents are. Deliberately not topic-filtered:
    * a parent session is about online safety, not about Roblox Studio.
    */
   robloxParentSessions: {
     pathname: "/shop",
-    query: { lang: "fr", audience: "parents" },
+    query: { audience: "parents", price: "free" },
   },
   /**
    * The Programme's own privacy policy, supplementing the platform one at

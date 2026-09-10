@@ -83,9 +83,10 @@ export function UpcomingEvents({
       ) : (
         <>
           <EventsRail products={products} counts={counts} />
-          {/* The completist's exit from the rail: the same programme slice in
-              the shop's own vertical layout and filters. Deliberately absent in
-              the empty state above — it would point at an equally empty shop —
+          {/* The completist's exit from the rail: the programme's shop slice in
+              the shop's own vertical layout and filters — wider than the rail,
+              which is online-only, so in-person programme products are reached
+              here. Absent in the empty state above, which has no rail to exit —
               and rendered from the same server data as the rail, so it is in
               the HTML from the first byte and nothing below it ever moves. */}
           <div className="mt-10 text-center">
