@@ -7,14 +7,21 @@ import {
   getTopicPrepTranslator,
   type TopicPrepTranslator,
 } from "@/lib/email-templates/translator";
+import { resolveTopicPrep } from "@/lib/products/topics";
+import type { ProductTopic } from "@/types";
 import messages from "@/../messages/en.json";
 
 // The mail's half of the "Before the first session" guide. What is worth
 // asserting here is the two answers a caller cannot recover for itself: that
-// the section is genuinely *empty* where nothing applies — a mail splices the
-// string in raw, so a section label over a closing line would be furniture
+// there is genuinely *nothing* to state where nothing applies — a mail splices
+// the string in raw, so a section label over a closing line would be furniture
 // announcing that there is nothing to say — and that an in-person render drops
 // exactly the steps School of Gaming is supplying the machines for.
+//
+// Both builders take a plan the caller resolved, which is what keeps the body
+// and its plain-text twin stating one document. So the empty answer is the
+// resolver's `null` rather than an empty string from either builder, and the
+// helpers below make that split the shape of every case.
 
 describe("topic prep email section", () => {
   let t: TopicPrepTranslator;
@@ -23,11 +30,25 @@ describe("topic prep email section", () => {
     t = await getTopicPrepTranslator("en");
   });
 
-  it("renders nothing for a label-only topic in person", () => {
+  /** The plan a caller resolves before composing anything. */
+  function planFor(topic: ProductTopic, isRemote: boolean) {
+    const plan = resolveTopicPrep(topic, isRemote);
+    if (plan === null) {
+      throw new Error(`no guide for ${topic} (isRemote: ${isRemote})`);
+    }
+    return plan;
+  }
+
+  const section = (topic: ProductTopic, isRemote: boolean) =>
+    buildTopicPrepSection(t, planFor(topic, isRemote));
+  const textLines = (topic: ProductTopic, isRemote: boolean) =>
+    topicPrepText(t, planFor(topic, isRemote));
+
+  it("has nothing to compose for a label-only topic in person", () => {
     // It brings no steps of its own, and in person there is no room to get
-    // ready for either — so the mail says nothing rather than saying so.
-    expect(buildTopicPrepSection(t, "programming", false)).toBe("");
-    expect(topicPrepText(t, "programming", false)).toEqual([]);
+    // ready for either — so the mail says nothing rather than saying so, and
+    // it never reaches either builder to find that out.
+    expect(resolveTopicPrep("programming", false)).toBeNull();
   });
 
   it("gives a label-only topic the one-step guide on a remote product", () => {
@@ -35,33 +56,29 @@ describe("topic prep email section", () => {
     // `topics.programming.intro` to reach for, and the plan's third form is
     // what stops the builder asking for one.
     const prep = messages.topicPrep;
-    const html = buildTopicPrepSection(t, "programming", true);
+    const html = section("programming", true);
 
     expect(html).toContain(prep.heading);
     expect(html).toContain(prep.remoteOnlyIntro);
     expect(html).toContain(prep.steps.remoteSession.title);
     expect(html).toContain(prep.closing);
 
-    const lines = topicPrepText(t, "programming", true);
+    const lines = textLines("programming", true);
     expect(lines).toContain(`1. ${prep.steps.remoteSession.title}`);
     // One step and no second: the whole guide is the room.
     expect(lines.some((line) => line.startsWith("2. "))).toBe(false);
   });
 
-  it("renders nothing for Minecraft Education in person", () => {
+  it("has nothing to compose for Minecraft Education in person", () => {
     // Its one step is an install, and in person we supply the machines and the
     // logins alike — so there is genuinely nothing for a family to do, and the
     // mail says nothing rather than saying so.
-    expect(buildTopicPrepSection(t, "minecraft_education", false)).toBe("");
-    expect(topicPrepText(t, "minecraft_education", false)).toEqual([]);
-
-    expect(
-      buildTopicPrepSection(t, "minecraft_education", true),
-    ).not.toBe("");
+    expect(resolveTopicPrep("minecraft_education", false)).toBeNull();
+    expect(section("minecraft_education", true)).not.toBe("");
   });
 
   it("renders the guide as a numbered list under a section label", () => {
-    const html = buildTopicPrepSection(t, "roblox_studio", true);
+    const html = section("roblox_studio", true);
     const prep = messages.topicPrep;
 
     expect(html).toContain(prep.heading);
@@ -82,7 +99,7 @@ describe("topic prep email section", () => {
   });
 
   it("takes the accounts-only intro in person, and drops the install steps", () => {
-    const html = buildTopicPrepSection(t, "roblox_studio", false);
+    const html = section("roblox_studio", false);
     const prep = messages.topicPrep;
 
     expect(html).toContain(prep.accountsOnlyIntro.roblox_studio);
@@ -94,13 +111,28 @@ describe("topic prep email section", () => {
     expect(html).not.toContain(prep.steps.remoteSession.title);
   });
 
+  it("states one document in both forms, from one plan", () => {
+    // The pair is what the single-resolve contract buys: the caller resolves
+    // once and hands the same plan to both, so the HTML body and the twin an
+    // Exchange mailbox reads cannot be filtered differently.
+    const plan = planFor("roblox_studio", false);
+    const html = buildTopicPrepSection(t, plan);
+    const lines = topicPrepText(t, plan).join("\n");
+    const prep = messages.topicPrep;
+
+    expect(html).toContain(prep.steps.robloxStudioAccount.title);
+    expect(lines).toContain(prep.steps.robloxStudioAccount.title);
+    expect(html).not.toContain(prep.steps.robloxStudioInstall.title);
+    expect(lines).not.toContain(prep.steps.robloxStudioInstall.title);
+  });
+
   it("renders a message's own emphasis as weight, and strips it for the text twin", () => {
-    const html = buildTopicPrepSection(t, "roblox_studio", false);
+    const html = section("roblox_studio", false);
     expect(html).toContain("<strong");
     // The tag itself never reaches a reader in either medium.
     expect(html).not.toContain("<b>");
 
-    const lines = topicPrepText(t, "roblox_studio", false).join("\n");
+    const lines = textLines("roblox_studio", false).join("\n");
     expect(lines).not.toContain("<b>");
     expect(lines).not.toContain("<strong");
     expect(lines).toContain("Keep the password to yourselves");
@@ -109,7 +141,7 @@ describe("topic prep email section", () => {
   it("states the same guide in the plain-text twin, numbered by hand", () => {
     // The twin has no list markup to number it, so the builder writes the
     // numbers — the one place they are written rather than the client's.
-    const lines = topicPrepText(t, "roblox_studio", true);
+    const lines = textLines("roblox_studio", true);
     const prep = messages.topicPrep;
 
     expect(lines[0]).toBe(prep.heading);
@@ -127,7 +159,7 @@ describe("topic prep email section", () => {
   it("keeps every Pokémon GO step in person", () => {
     // The phone is the family's wherever the session happens, so nothing
     // filters out and the guide takes its ordinary intro.
-    const html = buildTopicPrepSection(t, "pokemon_go", false);
+    const html = section("pokemon_go", false);
     const prep = messages.topicPrep;
 
     expect(html).toContain(prep.topics.pokemon_go.intro);

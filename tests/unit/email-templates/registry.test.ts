@@ -331,7 +331,12 @@ describe("templateRegistry render()", () => {
         expect(html).toContain("Make sure there is a Roblox account");
       });
 
-      it("states none for a topic that carries no guide", async () => {
+      it("states none for a label-only topic on the shared IN-PERSON fixture", async () => {
+        // **In person is half the reason this renders nothing, and the fixture
+        // is where that half comes from**: `PRODUCT_CONFIRMATION_SCHEDULE` sets
+        // `isRemote: "no"`, and a label-only topic brings no steps of its own,
+        // so there is nothing left after the filter. Remotely the same topic
+        // has the shared voice-room step and does render — the case below.
         const tPrep = await getTopicPrepTranslator("en");
         const { html } = templateRegistry.productConfirmation.render(
           { ...signup, isSelfSeat: false, topic: "programming" },
@@ -342,6 +347,23 @@ describe("templateRegistry render()", () => {
         );
 
         expect(html).not.toContain("Before the first session");
+      });
+
+      it("states the one-step guide for that same topic on a remote product", async () => {
+        // The room is browser-based and the mic has to work, whatever the
+        // topic — so every remote product carries at least this one step, and
+        // the guide opens on the generic intro rather than a topic's.
+        const tPrep = await getTopicPrepTranslator("en");
+        const { html } = templateRegistry.productConfirmation.render(
+          { ...signup, isSelfSeat: false, topic: "programming", isRemote: "yes" },
+          t,
+          "en",
+          { to: "send" },
+          tPrep,
+        );
+
+        expect(html).toContain("Before the first session");
+        expect(html).toContain("Get the mic and camera ready");
       });
     });
 

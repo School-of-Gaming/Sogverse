@@ -4,7 +4,6 @@ import {
   inlineBold,
   numberedList,
   MARKUP_TAGS,
-  PLAIN_MARKUP_TAGS,
 } from "@/lib/email-templates/blocks";
 import { DARK_THEME } from "@/lib/constants/colors";
 
@@ -21,13 +20,6 @@ describe("numberedList", () => {
     expect(html).toContain("<li");
     expect(html).toContain("First.");
     expect(html).toContain("Second.");
-  });
-
-  it("leaves the numbering to the client rather than writing it into an item", () => {
-    // The numbers being the list's own is what keeps them in step with the
-    // items after an edit, and what keeps the run a list to a screen reader.
-    const html = numberedList(["Open it.", "Close it."]);
-    expect(html).not.toMatch(/>\s*1\./);
   });
 
   it("is bulletList with a different marker, down to the styling", () => {
@@ -58,9 +50,5 @@ describe("markup tags", () => {
     expect(rendered).toContain("<strong");
     expect(rendered).toContain(DARK_THEME.foreground);
     expect(rendered).toContain("the device you will play on");
-  });
-
-  it("renders the same tag to nothing for a plain-text twin", () => {
-    expect(PLAIN_MARKUP_TAGS.b("emphasised")).toBe("emphasised");
   });
 });

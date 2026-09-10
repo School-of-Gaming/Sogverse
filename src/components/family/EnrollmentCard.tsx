@@ -21,8 +21,7 @@ import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import { Button } from "@/components/ui/button";
 import { TopicPrepDialog } from "@/components/topic-prep/TopicPrepDialog";
 import { useTopicPrepDismissal } from "@/components/topic-prep/use-topic-prep-dismissal";
-import { resolveTopicPrep } from "@/lib/products/topics";
-import type { ProductTopic } from "@/types";
+import { resolveTopicPrep, type TopicPrepPlan } from "@/lib/products/topics";
 import { useNow, useTimezone } from "@/providers";
 import { cn, formatDate, formatDateOnly, formatTime } from "@/lib/utils";
 import { PaymentProblemBadge } from "@/components/parent/PaymentProblemBadge";
@@ -76,7 +75,9 @@ import {
  *   for a Join to name and no site to name instead) the row is not drawn at
  *   all. The schedule row above it has already said "No schedule set yet", which
  *   is the whole of what that card knows; an empty flex row underneath would add
- *   a band of nothing to say it a second time.
+ *   a band of nothing to say it a second time. The footer is still drawn there
+ *   when the prep guide is on offer, because the guide is something to do rather
+ *   than a second way of saying nothing.
  * - **The Live badge's slot is reserved; nothing else is.** It is the one thing
  *   here that appears on a *clock tick* rather than on something the reader did,
  *   so mounting it as a flex sibling would widen the corner cluster and reflow
@@ -459,8 +460,8 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
    * The dismissal is asked last because it is the only one of the three that
    * cannot be answered on the server — see the hook.
    */
-  const prepApplies =
-    endedOn === null && !waitlisted && resolveTopicPrep(topic, isRemote) !== null;
+  const prepPlan =
+    endedOn === null && !waitlisted ? resolveTopicPrep(topic, isRemote) : null;
   const prepDismissal = useTopicPrepDismissal(participationId);
   /**
    * Whether to draw the affordance *now*. `unresolved` — the server's answer
@@ -468,7 +469,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
    * only ever *arrives* after mount and never has to disappear from under a
    * reader who has already been offered it.
    */
-  const prepOffered = prepApplies && prepDismissal.state === "pending";
+  const prepOffered = prepPlan !== null && prepDismissal.state === "pending";
   /**
    * Whether this card draws a Join at all — the question the prep affordance's
    * placement turns on, and the same three conditions the footer's Join branch
@@ -515,12 +516,22 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
   // offer standing on it is now a second such card: its position line is
   // superseded and its leave link has stood down, so the row would be a band of
   // nothing between the schedule and the block.
+  //
+  // **The prep offer counts as something to say, and it has to.** It is not one
+  // of those five branches — it lives in the footer's second row — so a card
+  // where every sentence branch comes up empty and the guide is on offer would
+  // drop the whole footer and take the affordance down with it. Two real cards
+  // are in exactly that state: an in-person seat whose site has no name yet,
+  // and a remote one with a room but nothing left on its schedule. Both are a
+  // family who has just paid and has a setup to do, which is the one moment
+  // this guide exists for.
   const hasFooter =
     endedOn !== null ||
     showsWaitlistPosition ||
     awaiting ||
     hasJoin ||
-    (running && !hasVoiceRoom && siteName !== null);
+    (running && !hasVoiceRoom && siteName !== null) ||
+    prepUnderSentence;
 
   return (
     // A plain `relative` shell so the corner badge can hang off the card's edge
@@ -688,13 +699,13 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               cards — and where no branch lands at all, the row itself does not
               render.
 
-              **Nothing here is lifted above the card's stretched link except the
-              Join itself.** The lift used to sit on the row, which also lifted
-              the site name, the ended-on date and the waitlist sentence — none
-              of them a control — and turned the bottom strip of most cards into
-              a dead zone. The button is the only thing in the row with a click
-              of its own to receive, so it is the only thing that takes the
-              `z-10`. */}
+              **Every control in here lifts itself, and nothing else does.** The
+              lift used to sit on the row, which also lifted the site name, the
+              ended-on date and the waitlist sentence — none of them a control —
+              and turned the bottom strip of most cards into a dead zone. So the
+              `z-10` goes on each thing with a click of its own to receive: the
+              Join or the prep affordance holding that slot, and the affordance
+              again in the row beneath it. Text takes none of it. */}
           {hasFooter && (
             <div className="flex flex-col items-center gap-2">
               <div className="flex w-full items-center justify-center">
@@ -761,8 +772,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                       // the card and nothing in the column of cards below it.
                       <TopicPrepAffordance
                         variant="button"
-                        topic={topic}
-                        isRemote={isRemote}
+                        plan={prepPlan}
                         onReady={prepDismissal.dismiss}
                       />
                     ) : (
@@ -827,8 +837,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                 <span className="relative z-10">
                   <TopicPrepAffordance
                     variant={prepBesideJoin ? "link" : "button"}
-                    topic={topic}
-                    isRemote={isRemote}
+                    plan={prepPlan}
                     onReady={prepDismissal.dismiss}
                   />
                 </span>
@@ -958,14 +967,13 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
  */
 function TopicPrepAffordance({
   variant,
-  topic,
-  isRemote,
+  plan,
   onReady,
 }: {
   /** `button` where the card has no other action; `link` beside a lit Join. */
   variant: "button" | "link";
-  topic: ProductTopic;
-  isRemote: boolean;
+  /** The guide behind it, resolved once by the card that offers it. */
+  plan: TopicPrepPlan;
   /** Record the dismissal. Fired by the dialog's affirmative and nothing else. */
   onReady: () => void;
 }) {
@@ -991,8 +999,7 @@ function TopicPrepAffordance({
       <TopicPrepDialog
         open={open}
         onOpenChange={setOpen}
-        topic={topic}
-        isRemote={isRemote}
+        plan={plan}
         onReady={onReady}
       />
     </>

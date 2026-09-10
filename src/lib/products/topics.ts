@@ -468,15 +468,28 @@ export type TopicMetaWithInfoCard = TopicMeta & {
 //
 // It is a type predicate rather than a plain boolean because the card needs
 // both halves of the same fact: that a block exists, and that this topic is one
-// of the ones the message catalog has prose for. The lookup inside widens to
-// `TopicMeta` deliberately — the const map's literal member types answer the
-// question per entry, and reading it through the declared shape keeps the
-// runtime check honest instead of something the compiler folds away.
+// of the ones the message catalog has prose for. The lookup inside reads the
+// map through its declared shape rather than through the const map's literal
+// member types, which would answer the question per entry and let the compiler
+// fold the runtime check away.
+//
+// **The predicates below read the map through `TOPIC_META`, and the optional
+// chain that buys is load bearing.** The compiler says every `ProductTopic` has
+// an entry, and the database says the same — but the value arriving here came
+// off a row, and a topic added to the Postgres enum before this map catches up
+// reaches these functions as a key the map has nothing under. Dereferencing
+// that throws from inside a card render, or from inside the confirmation
+// mail's catch-all, whose only handler is a log: the family would silently get
+// no mail at all rather than a mail without a guide. Read through the partial
+// alias the answer degrades to "no card, no guide" instead — the outcome that
+// costs a paragraph rather than a send. Read through `PRODUCT_TOPICS` directly
+// the chain is not merely unnecessary, it is compiled away.
+const TOPIC_META: Partial<Record<ProductTopic, TopicMeta>> = PRODUCT_TOPICS;
+
 export function topicHasInfoCard(
   topic: ProductTopic,
 ): topic is TopicWithInfoCard {
-  const meta: TopicMeta = PRODUCT_TOPICS[topic];
-  return meta.info !== undefined;
+  return TOPIC_META[topic]?.info !== undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -588,22 +601,24 @@ export type TopicPrepPlan =
  * whether the topic brought steps and prose of its own.
  *
  * A type predicate rather than a boolean, so a caller's topic narrows to the
- * union the catalog actually has prose for. The lookup widens to `TopicMeta`
- * deliberately, exactly as the info predicate does: the const map's literal
- * member types would answer the question at compile time and fold the runtime
- * check away.
+ * union the catalog actually has prose for. The lookup goes through
+ * `TOPIC_META` exactly as the info predicate's does, and for both of that
+ * alias's reasons: the const map's literal member types would answer the
+ * question at compile time and fold the runtime check away, and a key the map
+ * has no entry for must degrade rather than throw.
  */
 export function topicHasPrep(topic: ProductTopic): topic is TopicWithPrep {
-  const meta: TopicMeta = PRODUCT_TOPICS[topic];
-  return meta.prep !== undefined;
+  // Through the partial alias, for the reason the info predicate states: an
+  // enum value this map has no entry for degrades to "no guide" rather than
+  // throwing inside a send whose only handler for a throw is a log.
+  return TOPIC_META[topic]?.prep !== undefined;
 }
 
 /** Whether a prep-bearing topic carries the second, accounts-only intro. */
 function topicHasAccountsOnlyIntro(
   topic: TopicWithPrep,
 ): topic is TopicWithAccountsOnlyIntro {
-  const meta: TopicMeta = PRODUCT_TOPICS[topic];
-  return meta.prep?.accountsOnlyIntro === true;
+  return TOPIC_META[topic]?.prep?.accountsOnlyIntro === true;
 }
 
 /**

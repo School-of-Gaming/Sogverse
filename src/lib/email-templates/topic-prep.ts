@@ -8,9 +8,8 @@ import {
   PLAIN_MARKUP_TAGS,
 } from "./blocks";
 import { paragraph } from "./utils";
-import { resolveTopicPrep, type TopicPrepPlan } from "@/lib/products/topics";
+import type { TopicPrepPlan } from "@/lib/products/topics";
 import type { TopicPrepTranslator } from "./translator";
-import type { ProductTopic } from "@/types";
 
 /**
  * The "Before the first session" guide, as a mail section.
@@ -29,12 +28,15 @@ import type { ProductTopic } from "@/types";
  * and a remote one gains the shared step about the voice room's mic and camera
  * (see the registry's header note).
  *
- * **Both halves return empty rather than something short.** They do it for one
- * remaining reason: an in-person product with nothing left after the filter —
- * whether the topic never had steps of its own, or every one of them belongs to
- * a machine we are supplying. There is nothing to tell that family to do, and a
- * section label over a closing line would be a paragraph of furniture saying
- * so. A remote product always has something, because the room always does.
+ * **Both halves take the plan rather than resolving one.** Which steps apply is
+ * `resolveTopicPrep`'s answer, made **once** at the call site and handed to
+ * both — the HTML body and its plain-text twin state the same document, and two
+ * resolves are two chances for them to state different ones. It is also where
+ * the empty answer is handled: a `null` plan is the in-person product with
+ * nothing left after the filter (the topic never had steps of its own, or every
+ * one of them belongs to a machine we are supplying), and the caller composes
+ * no section at all rather than a section label over a closing line. A remote
+ * product always has something, because the room always does.
  *
  * The translator is scoped to `topicPrep` rather than to `email` — see
  * `translator.ts` for why the mail takes a second translator instead of a
@@ -100,19 +102,16 @@ function stepItem(
 }
 
 /**
- * The guide as HTML blocks, or an empty string where nothing applies.
+ * The guide as HTML blocks, from a plan the caller has already resolved.
  *
- * The caller splices the result straight into its own content, so an empty
- * return costs the mail nothing — no wrapper to leave behind, no gap to close.
+ * The caller splices the result straight into its own content. A product with
+ * nothing to say has no plan to hand over, so "nothing applies" is answered
+ * before this function rather than inside it.
  */
 export function buildTopicPrepSection(
   t: TopicPrepTranslator,
-  topic: ProductTopic,
-  isRemote: boolean,
+  plan: TopicPrepPlan,
 ): string {
-  const plan = resolveTopicPrep(topic, isRemote);
-  if (plan === null) return "";
-
   return [
     sectionLabel(t("heading")),
     paragraph(introOf(t, plan)),
@@ -128,16 +127,13 @@ export function buildTopicPrepSection(
  *
  * Lines rather than one string, so the caller splices them into its own text
  * body at the position the HTML section sits at, with the blank lines around it
- * decided there. Empty where nothing applies, exactly as the HTML half is.
+ * decided there. It takes the same plan its HTML twin was handed, which is what
+ * stops the two from stating different documents.
  */
 export function topicPrepText(
   t: TopicPrepTranslator,
-  topic: ProductTopic,
-  isRemote: boolean,
+  plan: TopicPrepPlan,
 ): string[] {
-  const plan = resolveTopicPrep(topic, isRemote);
-  if (plan === null) return [];
-
   const lines: string[] = [t("heading"), "", introOf(t, plan), ""];
 
   plan.steps.forEach((step, index) => {

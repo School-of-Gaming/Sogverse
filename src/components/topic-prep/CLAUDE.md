@@ -106,6 +106,14 @@ the same catalog:
 A fifth surface does not add a third renderer. If one is ever needed, it composes one of
 these two.
 
+**Rule: the resolver runs once per surface, and what travels afterwards is its answer.**
+Every surface has to ask `resolveTopicPrep` before drawing anything — a card around
+nothing is still a card, and an empty dialog is worse — so both renderers take that plan
+rather than a topic to resolve again for themselves. Whoever holds a plan holds a guide,
+which leaves neither renderer with an empty case to have an opinion about, and it is also
+what makes the mail's two forms one document: the HTML body and its plain-text twin are
+composed from the same plan, so they cannot be filtered differently.
+
 ## On an enrolment card the guide is offered once, and then it is gone
 
 The confirmation page and the mail both carry the guide because they *are* the moment
@@ -134,6 +142,33 @@ read and write is wrapped, and anything that throws or is missing means "not dis
 Of the two ways to be wrong, offering a guide twice costs a click and swallowing it costs
 somebody the instructions.
 
+**The dismissal lives in a small module-level store, not in the hook**, and each half of
+it is there for something storage alone cannot do:
+
+- **An in-memory set of dismissed keys, layered over `localStorage`.** A refused write —
+  private mode, blocked site data, a full quota — must still put the affordance away for
+  the reader who has just answered the dialog, or the button lands straight back under
+  their cursor. Reading storage back would say "still pending"; this layer is what makes
+  the answer stick for the visit, while the next visit honestly re-reads.
+- **Its own subscriber list.** The `storage` event fires only in *other* tabs, so the tab
+  that did the dismissing has nothing to hear, and one dashboard can hold several hooks
+  over the same key. The store notifies its own listeners; `useSyncExternalStore`
+  subscribes to those *and* to `storage`, so this tab and the next one both keep up.
+- **Module level rather than per hook.** State inside a hook cannot outlive the hook's own
+  key: a hook whose viewer or participation changed carried the previous card's answer
+  across to the next one. A store keyed by the same string the browser is keyed by cannot.
+
+The hydration design is unchanged and stays: the server snapshot is `null`, and a surface
+draws nothing until the browser has answered.
+
+**A fixture surface seeds the store rather than reaching into storage.** The style guide
+draws several enrollment cards whose subject is what sits in the locked Join's slot, and
+every remote fixture has a guide behind it, so left alone each of those demos would show
+"Get ready" instead of the state it is named for. The page seeds those keys as answered —
+in a render-time initializer, before the cards' first post-hydration read, so nothing
+flashes — and forgets the key of the one demo that *is* about the guide, so an admin who
+answered its dialog once still meets the affordance on their next visit.
+
 ## Where the affordance goes on a card, and what it may displace
 
 The card has one footer, and what the guide does there depends on what else is in it.
@@ -146,10 +181,19 @@ The card has one footer, and what the guide does there depends on what else is i
   delayed, or dressed down by this guide.** A session happening now is the whole reason
   the card exists; the guide steps down into the same subordinate treatment the
   leave-waitlist affordance uses and sits underneath.
-- **Under the footer sentence, on the two cards with no Join at all** — the in-person one
+- **Under the footer sentence, on the cards with no Join at all** — the in-person one
   naming its site, and the seat nobody has been placed in yet. The unplaced card is inert
   *as a link* because there is no page behind it; a dialog is not a page, and the wait for
   a placement is exactly the window this guide is written for.
+- **And on a card whose footer would otherwise not be drawn**, which is the same placement
+  with nothing above it. The footer is populated rather than reserved, so a card where
+  every sentence branch comes up empty — an in-person seat whose location has no name yet,
+  a remote one with a room but nothing on its schedule — normally has no footer at all.
+  The guide is enough to draw one for: those families have just paid and have the whole
+  setup ahead of them, so a card that dropped the row would be withholding the guide from
+  precisely the reader it is written for. **Anything deciding whether that row renders has
+  to count the offer**, and this is the way to get this feature wrong that a card's own
+  rendering will not show you.
 - **Nowhere on a queue place or a finished run.** There is no seat to get ready for in the
   first, and the second's first session is years behind it.
 

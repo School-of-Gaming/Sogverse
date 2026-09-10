@@ -108,6 +108,9 @@ export function PurchaseConfirmationView({
     currencyLabel: CURRENCY_CONFIG[DEFAULT_CURRENCY].label,
   });
   const price = priceText(pricingOption, locale, t);
+  // The "Before the first session" guide, resolved once: the same answer says
+  // whether a card is drawn at all and what goes inside it.
+  const prepPlan = resolveTopicPrep(product.topic, product.is_remote);
 
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
@@ -280,21 +283,17 @@ export function PurchaseConfirmationView({
             seat, so there is no first session to be ready for and a guide
             telling a family to buy the game would be the wrong instruction.
 
-            Asked through the shared predicate, exactly as the product page asks
-            it before drawing the About card's grid wrapper: the content
-            component returns null on its own, but a card around nothing is
-            still a card, and an empty one is a hole in the reading column. Both
-            checks read the one resolver, so they cannot disagree — and it
-            answers both halves at once (the topic has a guide, and at least one
-            of its steps applies to a product of this form). */}
-        {!isWaitlist && resolveTopicPrep(product.topic, product.is_remote) !== null && (
+            Asked through the shared resolver, exactly as the product page asks
+            before drawing the About card's grid wrapper: a card around nothing
+            is still a card, and an empty one is a hole in the reading column.
+            The resolver answers both halves at once — the topic has a guide,
+            and at least one of its steps applies to a product of this form —
+            and its answer is then what the body renders, so the question and
+            the content cannot disagree. */}
+        {!isWaitlist && prepPlan !== null && (
           <Card className="mt-6">
             <CardContent className="p-5 sm:p-6">
-              <TopicPrepContent
-                topic={product.topic}
-                isRemote={product.is_remote}
-                showHeading
-              />
+              <TopicPrepContent plan={prepPlan} showHeading />
             </CardContent>
           </Card>
         )}

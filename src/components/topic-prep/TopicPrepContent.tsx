@@ -2,8 +2,7 @@
 
 import { ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { resolveTopicPrep } from "@/lib/products/topics";
-import type { ProductTopic } from "@/types";
+import type { TopicPrepPlan } from "@/lib/products/topics";
 
 // The "Before the first session" guide, rendered from the topic's prep block
 // and the `topicPrep` catalog. One component, three surfaces — the confirmation
@@ -16,18 +15,23 @@ import type { ProductTopic } from "@/types";
 // its own. A card and a dialog title the same guide differently, so the heading
 // is a prop rather than an assumption, and the surface owns its own container.
 //
-// Whether anything renders at all is `resolveTopicPrep`, which answers both
-// halves of the question — the topic has a guide, and at least one of its steps
-// applies to this product. A remote product renders every step, plus the shared
-// one about the voice room's mic and camera; an in-person one renders only the
-// account steps, because School of Gaming brings the machines. See the
-// registry's header note for that split, and for why a label-only topic's
-// remote guide is that shared step alone.
+// **It takes a resolved plan rather than a topic**, because every surface that
+// renders it has already had to ask `resolveTopicPrep` whether there is a guide
+// at all — a card around nothing is still a card, and a dialog with nothing in
+// it is worse. Resolving again inside would be the same question asked twice
+// per render, and the answer is what decides which message keys are even
+// legal to read. Whoever holds a plan holds a guide; there is no empty case
+// left for this component to have an opinion about.
+//
+// What the resolver decided, for context: a remote product renders every step,
+// plus the shared one about the voice room's mic and camera; an in-person one
+// renders only the account steps, because School of Gaming brings the machines.
+// See the registry's header note for that split, and for why a label-only
+// topic's remote guide is that shared step alone.
 
 export interface TopicPrepContentProps {
-  topic: ProductTopic;
-  /** The product's `is_remote`. Decides which steps apply. */
-  isRemote: boolean;
+  /** What to render — `resolveTopicPrep`'s answer, resolved by the surface. */
+  plan: TopicPrepPlan;
   /**
    * Draws the guide's own heading above the intro. A card wants it; a dialog
    * already says the same words in its title and would say them twice.
@@ -36,14 +40,10 @@ export interface TopicPrepContentProps {
 }
 
 export function TopicPrepContent({
-  topic,
-  isRemote,
+  plan,
   showHeading = false,
 }: TopicPrepContentProps) {
   const t = useTranslations("topicPrep");
-
-  const plan = resolveTopicPrep(topic, isRemote);
-  if (plan === null) return null;
 
   // One branch per form, because each reads a different key and only two of
   // the three have a topic to key by — a label-only topic has no

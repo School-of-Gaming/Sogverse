@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { TopicPrepContent } from "./TopicPrepContent";
-import type { ProductTopic } from "@/types";
+import type { TopicPrepPlan } from "@/lib/products/topics";
 
 /**
  * The "Before the first session" guide as an overlay, with the one button that
@@ -43,9 +43,12 @@ import type { ProductTopic } from "@/types";
 export interface TopicPrepDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  topic: ProductTopic;
-  /** The product's `is_remote` — decides which steps the guide renders. */
-  isRemote: boolean;
+  /**
+   * The guide to show — `resolveTopicPrep`'s answer, resolved by the card. A
+   * card only offers the dialog where there is a guide, so it is holding the
+   * plan already and passes it rather than the question it asked.
+   */
+  plan: TopicPrepPlan;
   /**
    * The family says they are set up. Fires before the dialog closes, and only
    * from the affirmative button.
@@ -56,8 +59,7 @@ export interface TopicPrepDialogProps {
 export function TopicPrepDialog({
   open,
   onOpenChange,
-  topic,
-  isRemote,
+  plan,
   onReady,
 }: TopicPrepDialogProps) {
   const t = useTranslations("topicPrep");
@@ -75,7 +77,7 @@ export function TopicPrepDialog({
         </DialogHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-6">
-          <TopicPrepContent topic={topic} isRemote={isRemote} />
+          <TopicPrepContent plan={plan} />
         </div>
 
         {/* One button, and it is the affirmative — so it is last in the DOM and

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { EnrollmentCard } from "@/components/family/EnrollmentCard";
+import { seedTopicPrepDismissals } from "@/components/topic-prep/use-topic-prep-dismissal";
 import type { FamilyEnrollmentSummary } from "@/components/family/enrollment-rollup";
 import { INERT_HREF } from "@/lib/constants/routes";
 
@@ -128,6 +129,12 @@ beforeEach(() => {
   clock.now = NOW;
   viewer.id = VIEWER_ID;
   window.localStorage.clear();
+  // The dismissal store keeps a tab's own answers in memory over the top of
+  // storage — that layer is what makes a refused write still put the guide
+  // away — so a case that cleared storage alone would inherit the previous
+  // case's click. Seeding an empty set is the store's own way to say "this tab
+  // remembers nothing".
+  seedTopicPrepDismissals([]);
 });
 
 afterEach(() => {
@@ -220,6 +227,34 @@ describe("the prep guide on the cards with no Join", () => {
 
     expect(screen.getByText("familyEnrollment.awaitingGamer")).toBeTruthy();
     expect(screen.getByText(TRIGGER)).toBeTruthy();
+  });
+
+  /**
+   * **The two cards whose footer would otherwise not be drawn at all.**
+   *
+   * The footer is populated rather than reserved: where every sentence branch
+   * comes up empty the row is left out, and the prep affordance lives inside
+   * that row. So a card with nothing to say and a guide to offer has to draw
+   * the footer for the guide alone — otherwise the family who has just paid,
+   * and who has the whole setup ahead of them, is the one family never offered
+   * it.
+   */
+  it("draws the footer for the guide alone on an in-person seat with no site named", () => {
+    // A real row: the seat is in a group, and the location has no name on it
+    // yet. Nothing else in the footer has anything to say.
+    renderCard({ isRemote: false, hasVoiceRoom: false, siteName: null });
+
+    expect(screen.getByText(TRIGGER)).toBeTruthy();
+  });
+
+  it("draws the footer for the guide alone on a remote seat with nothing scheduled", () => {
+    // The product has a room but no slots yet, so there is no session for a
+    // Join to name — and the guide is precisely what this family can be doing
+    // while the schedule is settled.
+    renderCard({ nextSessionStart: null, nextSessionEnd: null });
+
+    expect(screen.getByText(TRIGGER)).toBeTruthy();
+    expect(lockedJoin()).toBeNull();
   });
 });
 

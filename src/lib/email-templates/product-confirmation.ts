@@ -9,6 +9,7 @@ import {
 } from "./utils";
 import { bulletList, ctaButton, factList, sectionLabel } from "./blocks";
 import { buildTopicPrepSection, topicPrepText } from "./topic-prep";
+import { resolveTopicPrep } from "@/lib/products/topics";
 import { textAttachment, type RenderedAttachment } from "./attachments";
 import {
   composeProductConfirmationInvitation,
@@ -357,19 +358,25 @@ export function resolveProductConfirmation(
  * buy the game and install it beside a mail saying they are in a queue is the
  * one thing this mail must not do.
  *
- * Both halves come back empty from the section builder on a topic with no
- * guide, and on an in-person product whose every step belongs to a machine we
- * are supplying — the same answer, and this collapses it to `null` so the body
- * and its twin each have one thing to check.
+ * The resolver answers `null` on a topic with no guide and on an in-person
+ * product whose every step belongs to a machine we are supplying — the same
+ * answer from a mail's point of view, and this passes it straight on as `null`
+ * so the body and its twin each have one thing to check.
  */
 function resolveTopicPrepSection(
   tPrep: TopicPrepTranslator | null,
   options: ProductConfirmationEmailOptions,
 ): ProductConfirmationContent["topicPrep"] {
   if (tPrep === null || options.mode === "waitlist") return null;
-  const html = buildTopicPrepSection(tPrep, options.topic, options.isRemote);
-  if (html === "") return null;
-  return { html, text: topicPrepText(tPrep, options.topic, options.isRemote) };
+  // Resolved **once**, here, and handed to both builders — which is what makes
+  // the docblock above true: one plan cannot shorten the body and leave the
+  // plain-text twin long.
+  const plan = resolveTopicPrep(options.topic, options.isRemote);
+  if (plan === null) return null;
+  return {
+    html: buildTopicPrepSection(tPrep, plan),
+    text: topicPrepText(tPrep, plan),
+  };
 }
 
 /**

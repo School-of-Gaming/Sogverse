@@ -61,6 +61,10 @@ export function TopicPrepScene({
 }) {
   const isRemote = scenario === "remote";
   const topics = PRODUCT_TOPIC_VALUES.filter(topicHasPrep);
+  // Never null on a remote product — every one of them has the shared
+  // voice-room step — but asked rather than asserted, and the card below is
+  // conditional on the answer like every other card on this page.
+  const labelOnlyPlan = resolveTopicPrep(LABEL_ONLY_SAMPLE, true);
 
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
@@ -77,32 +81,37 @@ export function TopicPrepScene({
           </p>
         </div>
 
-        {topics.map((topic) => (
-          <Card key={topic}>
-            <CardContent className="space-y-4 p-5 sm:p-6">
-              <h2 className="text-lg font-semibold">
-                {PRODUCT_TOPICS[topic].label}
-              </h2>
-              {resolveTopicPrep(topic, isRemote) === null ? (
-                <p className="text-sm italic text-muted-foreground">
-                  Nothing renders in this form &mdash; every step belongs to a
-                  machine School of Gaming supplies.
-                </p>
-              ) : (
-                <TopicPrepContent topic={topic} isRemote={isRemote} />
-              )}
-            </CardContent>
-          </Card>
-        ))}
+        {topics.map((topic) => {
+          // The one resolve per card: the same answer decides whether there is
+          // a guide here at all and what the guide is.
+          const plan = resolveTopicPrep(topic, isRemote);
+          return (
+            <Card key={topic}>
+              <CardContent className="space-y-4 p-5 sm:p-6">
+                <h2 className="text-lg font-semibold">
+                  {PRODUCT_TOPICS[topic].label}
+                </h2>
+                {plan === null ? (
+                  <p className="text-sm italic text-muted-foreground">
+                    Nothing renders in this form &mdash; every step belongs to a
+                    machine School of Gaming supplies.
+                  </p>
+                ) : (
+                  <TopicPrepContent plan={plan} />
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
 
         {/* The five label-only topics render one identical guide, so they get
             one card rather than five. Remote only: in person they have nothing
             to say, which is what they had before the shared step existed. */}
-        {isRemote && (
+        {isRemote && labelOnlyPlan !== null && (
           <Card>
             <CardContent className="space-y-4 p-5 sm:p-6">
               <h2 className="text-lg font-semibold">Any other topic</h2>
-              <TopicPrepContent topic={LABEL_ONLY_SAMPLE} isRemote />
+              <TopicPrepContent plan={labelOnlyPlan} />
             </CardContent>
           </Card>
         )}
