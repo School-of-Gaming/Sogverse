@@ -14,10 +14,14 @@ import { SchoolsBrowse } from "@/components/public/schools/schools-browse";
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
   // Owner decision (Aug 2026): search engines and AI crawlers may discover
-  // only the /shop browse surface — the entire /schools tree is noindex. No
-  // `hreflang` alternates either: a page telling crawlers to leave has no
-  // business annotating its language versions, and the site-wide card is
-  // inherited from the layout for the links people share.
+  // only the /shop browse surface — the entire /schools tree is noindex. The
+  // tree is public for convenience, not because the offer is open: these
+  // products are only for families living in the named municipalities, and
+  // strangers on the internet discovering them is the failure the tag
+  // prevents (`docs/architecture/discoverability.md`). No `hreflang`
+  // alternates either: a page telling crawlers to leave has no business
+  // annotating its language versions, and the site-wide card is inherited
+  // from the layout for the links people share.
   return {
     title: t("schools"),
     robots: { index: false, follow: false },

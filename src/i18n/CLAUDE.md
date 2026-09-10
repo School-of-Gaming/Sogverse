@@ -150,6 +150,8 @@ documents can least afford.
 
 **`hreflang` alternates and canonicals are per-page, never layout-level** — a layout has no pathname, so it cannot compute a self-referencing canonical, and one layout-level canonical would cascade onto every page beneath it. Alternates, canonicals and the sitemap all build their URLs from the pathnames map rather than by joining a base to a hand-written slug, so a translated slug and its `hreflang` cannot disagree. `x-default` points at the bare URL, which is what the ladder makes it: a language detector that redirects.
 
+Which pages are promoted to crawlers, which are reachable but not promoted, and which are gated — and why each surface sits where it does — is `docs/architecture/discoverability.md`; this section covers only the locale mechanics beneath that posture.
+
 **Klingon is excluded from `hreflang` and the sitemap, and its pages serve `noindex` instead of a robots disallow.** An easter egg does not belong in search results or in an alternate-language annotation; a disallow would be the wrong tool because a URL that is never fetched never reads the tag and can still be indexed bare. Pages that are `noindex` for their own reasons — product pages, the schools pages, the programme pages, the API docs — emit no alternates at all. The robots disallow covers each gated prefix bare **and** under every locale, Klingon included: a prefixed dashboard URL is as real as a bare one.
 
 **The analytics `route` dimension is supplied by the app, not computed by the framework's wrapper.** It is the internal template with the locale segment dropped, so every language of a page lands on one row while `request_path` keeps the per-language split (`docs/runbooks/vercel-analytics.md`).
