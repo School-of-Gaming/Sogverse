@@ -72,8 +72,15 @@ function Sheet({ open, onOpenChange, side = "right", children }: SheetProps) {
           // screen, the body caps itself and scrolls — which is the caller's
           // call, since only the caller knows how much of the page behind
           // should stay visible above it.
+          //
+          // The bottom padding keeps the panel's last row clear of a phone's
+          // home indicator, and it belongs here because every sheet from the
+          // bottom meets that edge. It resolves to nothing until the page's
+          // viewport opts into drawing under the device's insets
+          // (`viewport-fit=cover`), which this app's does not today; it is
+          // written anyway so that change finds this edge already right.
           side === "bottom" &&
-            "inset-x-0 bottom-0 rounded-t-xl border-t border-border",
+            "inset-x-0 bottom-0 rounded-t-xl border-t border-border pb-[env(safe-area-inset-bottom)]",
           side === "bottom" && (open ? "translate-y-0" : "translate-y-full"),
         )}
       >

@@ -12,9 +12,9 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useBrowseFilterRows } from "./browse-filter-rows";
+import type { BrowseSurface } from "./browse-surface";
 import { ProductBrowseFilters } from "./product-browse-filters";
-import { useBrowseFilters } from "./use-browse-filters";
-import { useShopCategories } from "./use-shop-categories";
+import { useOfferedBrowseFilters } from "./use-browse-filters";
 
 // The filters, in whichever of their two places the viewport calls for.
 //
@@ -22,28 +22,32 @@ import { useShopCategories } from "./use-shop-categories";
 // rail the results grid holds open for them, exactly as they always have.
 //
 // Below `lg` there is no rail to render into, and the rows used to stand as a
-// strip above the cards — nine of them, taking most of a phone's first screen
-// before a single product appeared. So they move into a bottom sheet, and what
-// stands in their place is one line: a button that opens the sheet, and beside
-// it the filters that are currently narrowing the grid, each tappable to drop
-// just that one. The summary is the part that earns the sheet: a strip showed
-// the reader their filters without a tap, and hiding the rows would have taken
-// that away.
+// strip above the cards, taking most of a phone's first screen before a single
+// product appeared. So they move into a bottom sheet, and what stands in their
+// place is one line: a button that opens the sheet, and beside it the filters
+// that are currently narrowing the grid, each tappable to drop just that one.
+// The summary is the part that earns the sheet: the strip showed the reader
+// their filters without a tap, and hiding the rows would have taken that away.
 //
-// **The rows are one element, and it moves.** It renders inline or in the
-// sheet, never both — two mounted copies would be two writers of the same URL
-// params, and the reader would be looking at whichever one happened to be
-// visible. Nothing is lost in the move: the component holds no state of its
-// own, because every filter it draws lives in the URL.
+// **The rows are mounted in one place at a time.** They render inline or in
+// the sheet, never both — two mounted copies would be two writers of the same
+// URL params, and the reader would be looking at whichever one happened to be
+// visible. Opening the sheet unmounts the inline rows and mounts a fresh copy
+// inside it, and closing it does the reverse. Nothing is lost in that swap: the
+// rows hold no state of their own, because every filter they draw lives in the
+// URL.
 export function ProductBrowseFilterPanel({
-  showTypeFilter = true,
+  surface,
 }: {
-  showTypeFilter?: boolean;
+  /** Which page the filters are for — see `browse-surface.ts`. */
+  surface: BrowseSurface;
 }) {
   const t = useTranslations("productBrowse.filters");
-  const rows = useBrowseFilterRows(showTypeFilter);
-  const { hasAny, clear } = useBrowseFilters();
-  const { categories } = useShopCategories();
+  const rows = useBrowseFilterRows(surface);
+  // Clear appears whenever clearing would change something this page applies,
+  // which is exactly when the summary below has a chip in it: both are read
+  // from the page's offer, and every value a param can parse to lights a chip.
+  const { hasAny: showClear, clear } = useOfferedBrowseFilters(surface);
   const [open, setOpen] = useState(false);
 
   // The trigger only exists below `lg`, so the sheet can only ever be opened
@@ -64,20 +68,13 @@ export function ProductBrowseFilterPanel({
   }, [open]);
 
   // Every lit chip, in row order, each carrying the row it belongs to so the
-  // summary can say "Age 7–9" where the chip alone says "7–9". Only chips that
-  // are actually *rendered* are here — the municipality page draws no Type row
-  // — which is what makes the count below span both state owners while still
-  // ignoring a stray hand-edited `?category=` on a page with no Type row to
-  // show for it.
+  // summary can say "Age 7–9" where the chip alone says "7–9". The rows are
+  // only those this page offers, so the count spans both state owners while a
+  // param for a row the page does not draw — a school page's `?audience=` —
+  // lights nothing here, just as it narrows nothing in the grid.
   const lit = rows.flatMap((row) =>
     row.chips.filter((chip) => chip.active).map((chip) => ({ row, chip })),
   );
-
-  // Clear's own condition is the filter card's, unchanged: it appears whenever
-  // clearing would change something, including the rare filter that is live in
-  // the URL with no chip on this surface to show it. That is precisely the case
-  // the summary cannot offer a way out of, so the button is the way out.
-  const showClear = hasAny || (showTypeFilter && categories.length > 0);
 
   return (
     <>
@@ -150,7 +147,7 @@ export function ProductBrowseFilterPanel({
 
       {!open && (
         <div className="hidden lg:block">
-          <ProductBrowseFilters showTypeFilter={showTypeFilter} />
+          <ProductBrowseFilters surface={surface} />
         </div>
       )}
 
@@ -168,8 +165,8 @@ export function ProductBrowseFilterPanel({
               <SheetTitle>{t("title")}</SheetTitle>
               {/* Clear all belongs in here too: the bar that carries it is
                   behind the scrim while the sheet is up, and a reader who has
-                  just looked at nine rows of chips is exactly the reader most
-                  likely to want them all off. */}
+                  just looked through every row of chips is exactly the reader
+                  most likely to want them all off. */}
               <button
                 type="button"
                 onClick={clear}
@@ -188,17 +185,14 @@ export function ProductBrowseFilterPanel({
                 rewrites the URL in place and the grid behind the sheet answers
                 immediately, so a reader can watch a filter take effect through
                 the gap above the panel rather than committing to it blind. */}
-            {/* Nine rows of chips outgrow a phone, so the rows scroll and the
+            {/* The rows of chips outgrow a phone, so the rows scroll and the
                 header stays put. The cap is on the rows rather than on the
                 panel because it is also what leaves part of the grid showing
                 above the sheet, dimmed but moving, so a tapped chip is visibly
                 doing something. The page behind cannot scroll while the sheet
                 is up — the sheet holds the document still. */}
             <SheetBody className="max-h-[65vh]">
-              <ProductBrowseFilters
-                showTypeFilter={showTypeFilter}
-                variant="sheet"
-              />
+              <ProductBrowseFilters surface={surface} variant="sheet" />
             </SheetBody>
           </SheetContent>
         </Sheet>

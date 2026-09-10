@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import type { ParticipationCounts } from "@/services/participations";
 import type { ProductBrowseRow } from "@/types";
 import { filterProducts } from "./filter-products";
-import { useBrowseFilters } from "./use-browse-filters";
+import type { BrowseSurface } from "./browse-surface";
+import { useOfferedBrowseFilters } from "./use-browse-filters";
 import { withBrowseState } from "./browse-state";
 import { ROUTES } from "@/lib/constants";
 import { ProductBrowseCard } from "./product-browse-card";
@@ -27,20 +28,21 @@ export interface ProductBrowseSection {
   products: ProductBrowseRow[];
 }
 
-// The shared body of a browse page: the filter rail/strip, the headed card
-// grids, and the empty states. The shop (a section per visible product
-// category) and the per-municipality page (one municipality's clubs) both
-// render this — they differ only in the sections they hand over and the filter
-// config they pass down. Keeping the chip-filtering + grids here is what stops
-// the two pages from drifting.
+// The shared body of a browse page: the filters (a rail from `lg` up, a bar
+// and a bottom sheet below it), the headed card grids, and the empty states.
+// The shop (a section per visible product category) and the per-municipality
+// page (one municipality's clubs) both render this — they differ only in the
+// sections they hand over and the surface they name, which decides the filters
+// on offer. Keeping the chip-filtering + grids here is what stops the two pages
+// from drifting.
 //
 // Layout: one column on phones (a one-line filter bar on top, cards below), a
 // rail beside the cards from `lg` up. Below `lg` the chip rows themselves live
 // in a bottom sheet the bar opens, so the cards start near the top of the
-// screen instead of under a strip of nine rows. There is only ever one
-// instance of the filter component — it moves between the rail and the sheet
-// rather than a second copy being rendered for either (see
-// `<ProductBrowseFilterPanel>`).
+// screen instead of under the stack of rows that used to stand above them. The
+// filter component is only ever mounted in one of its two places — opening the
+// sheet unmounts the rail's copy and mounts one inside the sheet, rather than a
+// second copy standing in either (see `<ProductBrowseFilterPanel>`).
 //
 // The horizontal width budget lives here rather than in the two hosts, so both
 // browse surfaces are the same shape by construction. Below `lg` this is the
@@ -74,9 +76,11 @@ interface ProductBrowseResultsProps {
    *  per-id map here so both browse hosts hand this component the raw query
    *  result, not a map. */
   counts: ParticipationCounts[];
-  /** Forwarded to `<ProductBrowseFilters>` — see the prop there for why the
-   *  municipality page turns the Type row off. */
-  showTypeFilter?: boolean;
+  /** Which page this is. It decides which filters the page offers — which
+   *  rows are drawn, which params narrow the grid, and what lights Clear —
+   *  and all three read that one decision, in `browse-surface.ts`, where the
+   *  reason for each filter a page withholds is written. */
+  surface: BrowseSurface;
   /** Whether the page's scope holds any products before *any* filtering —
    *  including the Type narrowing the shop applies while building `sections`.
    *  Distinguishes "nothing here yet" from "no matches": without it, selecting
@@ -99,7 +103,7 @@ interface ProductBrowseResultsProps {
 export function ProductBrowseResults({
   sections,
   counts,
-  showTypeFilter,
+  surface,
   scopeHasProducts,
   productHref,
   municipalityScoped,
@@ -109,17 +113,10 @@ export function ProductBrowseResults({
   // so it reuses that button's label rather than authoring a second word for
   // the same action.
   const tFilters = useTranslations("productBrowse.filters");
-  const {
-    topics,
-    format,
-    price,
-    languages,
-    audiences,
-    tags,
-    age,
-    days,
-    clear,
-  } = useBrowseFilters();
+  // The filters as this page offers them, not as the URL spells them: a param
+  // for a row the page does not draw must not empty the grid with nothing on
+  // screen to say why.
+  const { filters, clear } = useOfferedBrowseFilters(surface);
   // The raw params, not the parsed filters above: what a card carries is the
   // grid's URL state verbatim, so the listing the back link rebuilds is the one
   // the reader actually left rather than a re-serialization of it.
@@ -148,19 +145,10 @@ export function ProductBrowseResults({
       sections
         .map((section) => ({
           ...section,
-          products: filterProducts(section.products, {
-            topics,
-            format,
-            price,
-            languages,
-            audiences,
-            tags,
-            age,
-            days,
-          }),
+          products: filterProducts(section.products, filters),
         }))
         .filter((section) => section.products.length > 0),
-    [sections, topics, format, price, languages, audiences, tags, age, days],
+    [sections, filters],
   );
 
   // "Nothing here yet" vs "no matches" is decided before *all* filtering, Type
@@ -203,7 +191,7 @@ export function ProductBrowseResults({
           nothing: track 1's min is a fixed 16rem, so the rail's own width
           never feeds back into track sizing. */}
       <div className="mb-3 lg:mb-0 lg:sticky lg:top-[calc(var(--header-height)+1.5rem)] lg:max-h-[calc(100vh-var(--header-height)-3rem)] lg:w-full lg:max-w-[20rem] lg:justify-self-end lg:self-start lg:overflow-y-auto">
-        <ProductBrowseFilterPanel showTypeFilter={showTypeFilter} />
+        <ProductBrowseFilterPanel surface={surface} />
       </div>
 
       {visibleSections.length > 0 ? (

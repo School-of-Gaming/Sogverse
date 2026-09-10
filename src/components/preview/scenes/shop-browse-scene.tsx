@@ -132,6 +132,7 @@ export function ShopBrowseScene() {
 
   return (
     <ProductBrowseBody
+      surface="shop"
       sections={sections}
       counts={counts}
       scopeHasProducts

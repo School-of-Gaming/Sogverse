@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
-import { useBrowseFilters } from "@/components/public/products/use-browse-filters";
+import {
+  useBrowseFilters,
+  useOfferedBrowseFilters,
+} from "@/components/public/products/use-browse-filters";
 
 /**
  * **The price chip is a URL param, and the URL is the only place it lives.**
@@ -71,14 +74,16 @@ describe("the browse grid's price param", () => {
     expect(result.current.price).toBeNull();
     // And it does not light the Clear button either: a row nobody can see is
     // narrowing nothing.
-    expect(result.current.hasAny).toBe(false);
+    expect(
+      renderHook(() => useOfferedBrowseFilters("shop")).result.current.hasAny,
+    ).toBe(false);
   });
 
-  it("counts as a filter for the Clear button", () => {
+  it("counts as a filter for the shop's Clear button", () => {
     arriveWith("price=paid");
-    expect(renderHook(() => useBrowseFilters()).result.current.hasAny).toBe(
-      true,
-    );
+    expect(
+      renderHook(() => useOfferedBrowseFilters("shop")).result.current.hasAny,
+    ).toBe(true);
   });
 
   it("writes the tapped chip, leaving the rest of the URL alone", () => {

@@ -11,18 +11,24 @@ import { TOPIC_FILTER_CHIPS } from "@/lib/products/topics";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { TagGlyph } from "./product-chips";
 import { PRODUCT_TAG_VALUES, productTagLabelKey } from "./product-tag";
+import {
+  offersFilter,
+  type BrowseFilterKey,
+  type BrowseSurface,
+} from "./browse-surface";
 import { useBrowseFilters } from "./use-browse-filters";
 import { useShopCategories } from "./use-shop-categories";
 
-// What the browse filters *are*, as data: nine rows of chips, each chip
-// knowing its own word, whether it is lit, and how to toggle itself.
+// What the browse filters *are*, as data: rows of chips, each chip knowing its
+// own word, whether it is lit, and how to toggle itself — and only the rows the
+// page offers, so nothing reading the list has to ask that again.
 //
-// It is a module of its own because two surfaces read the same list and must
-// never disagree about it. The filter card renders every row; the trigger bar
+// It is a module of its own because two readers take the same list and must
+// never disagree about it. The filter rows render every row; the trigger bar
 // below `lg` renders only the lit chips, as a summary of what is narrowing the
 // grid. Had the summary enumerated the vocabularies a second time it would
-// have been nine label lookups free to drift from the nine above them — a chip
-// that says one word in the sheet and another in the summary is the same
+// have been a second set of label lookups free to drift from the first — a
+// chip that says one word in the sheet and another in the summary is the same
 // control described twice.
 //
 // Nothing here is presentational beyond a chip's own glyph and the widths a
@@ -32,11 +38,16 @@ import { useShopCategories } from "./use-shop-categories";
 export interface BrowseFilterChip {
   /** Unique within its row. */
   key: string;
-  /** The chip's word as plain text — what assistive tech is given, and what a
-   *  chip with no richer rendering shows. */
+  /** The chip's word as plain text, and what a screen reader is given for it.
+   *  A chip with no `label` shows exactly this. A chip with one shows the
+   *  label and carries this as its accessible name, so it must contain every
+   *  word the label can show — a reader using speech input says what they see,
+   *  and a name that lacks it leaves them nothing to say (WCAG 2.5.3). The
+   *  summary names a chip by it too. */
   text: string;
   /** A richer rendering of the same word, where a row has one: the weekday
-   *  chips change form with the viewport, which no string can express. */
+   *  chips change form with the viewport, which no string can express, and the
+   *  language chips wear a code where a name would not fit. */
   label?: React.ReactNode;
   /** The glyph a chip's own vocabulary carries. Rows whose words stand alone
    *  have none, and inventing one for them is how a glyph stops meaning
@@ -50,7 +61,8 @@ export interface BrowseFilterChip {
 }
 
 export interface BrowseFilterRow {
-  id: string;
+  /** The filter the row draws, named by the state it reads. */
+  id: BrowseFilterKey;
   label: string;
   chips: BrowseFilterChip[];
 }
@@ -62,17 +74,14 @@ export interface BrowseFilterRow {
 const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 
 /**
- * The rows, in the order a reader meets them.
+ * The rows a page offers, in the order a reader meets them.
  *
- * @param showTypeFilter Lead with the Clubs|Camps|Events Type row — and, by
- * owner decision, with the Audience row that shares its guard. The shop shows
- * both; the per-municipality page hides them, because there both have one
- * answer (everything is that school's own gamers-only club) and a filter with
- * one answer controls nothing. The Designed-for row deliberately does NOT
- * share this guard — a tag is orthogonal to what makes those two vacuous, and
- * one school can offer a beginner club beside a neuroinclusive one.
+ * @param surface Which page the rows are for. What each page withholds, and
+ * why, is decided once in `browse-surface.ts` — the same decision the grid's
+ * predicate and the Clear button read — so a row returned here is exactly a
+ * filter the page applies, and a filter the page ignores has no row.
  */
-export function useBrowseFilterRows(showTypeFilter: boolean): BrowseFilterRow[] {
+export function useBrowseFilterRows(surface: BrowseSurface): BrowseFilterRow[] {
   const t = useTranslations("productBrowse.filters");
   // The audience chips share their labels with the card badge and the overview
   // card's audience row — one vocabulary for the whole concept.
@@ -115,80 +124,82 @@ export function useBrowseFilterRows(showTypeFilter: boolean): BrowseFilterRow[] 
     toggleDay,
   } = useBrowseFilters();
 
+  // Every row is built, and the page's offer then decides which of them are
+  // returned. The offer is not decided here because this is only one of its
+  // readers: the grid's predicate and the Clear button have to withhold the
+  // same filters, and a guard written around a row would be a guard only the
+  // rows obeyed.
   const rows: BrowseFilterRow[] = [];
 
-  if (showTypeFilter) {
-    // Type is an inclusive filter, not a choice: selecting nothing shows every
-    // category, selecting chips narrows to them, and toggling the last one off
-    // returns to everything.
-    rows.push({
-      id: "type",
-      label: t("type"),
-      chips: [
-        {
-          key: "clubs",
-          text: t("typeClubs"),
-          active: categories.includes("clubs"),
-          toggle: () => toggleCategory("clubs"),
-        },
-        {
-          key: "camps",
-          text: t("typeCamps"),
-          active: categories.includes("camps"),
-          toggle: () => toggleCategory("camps"),
-        },
-        {
-          key: "events",
-          text: t("typeEvents"),
-          active: categories.includes("events"),
-          toggle: () => toggleCategory("events"),
-        },
-      ],
-    });
+  // Type is an inclusive filter, not a choice: selecting nothing shows every
+  // category, selecting chips narrows to them, and toggling the last one off
+  // returns to everything.
+  rows.push({
+    id: "categories",
+    label: t("type"),
+    chips: [
+      {
+        key: "clubs",
+        text: t("typeClubs"),
+        active: categories.includes("clubs"),
+        toggle: () => toggleCategory("clubs"),
+      },
+      {
+        key: "camps",
+        text: t("typeCamps"),
+        active: categories.includes("camps"),
+        toggle: () => toggleCategory("camps"),
+      },
+      {
+        key: "events",
+        text: t("typeEvents"),
+        active: categories.includes("events"),
+        toggle: () => toggleCategory("events"),
+      },
+    ],
+  });
 
-    // Audience sits directly under Type because it is the same coarse cut:
-    // both answer "which shelf am I looking at" before anything about the
-    // product itself — and it shares Type's guard by owner decision, for the
-    // reason given on `showTypeFilter` above. Two chips, not three: a chip is
-    // the badge its cards wear, so each one matches exactly the products
-    // bearing that tag, and gamers-only — the assumed default, badged with
-    // nothing — is what the row has no chip for. Multi-select with OR
-    // semantics like Subject and Language, but lighting both is still narrower
-    // than lighting none: it is every badged product, and the unbadged
-    // majority answers only to an empty row. The labels are the card's own
-    // audience words, reused rather than re-authored so a chip and the card it
-    // surfaces say the same thing. The row ships before any for-parents
-    // product exists; a chip with an empty result set for a few days is
-    // accepted (see the plan).
-    rows.push({
-      id: "audience",
-      label: t("audience"),
-      chips: [
-        {
-          key: "parents",
-          text: tAudience("parents"),
-          active: selectedAudiences.includes("parents"),
-          toggle: () => toggleAudience("parents"),
-        },
-        {
-          key: "families",
-          text: tAudience("families"),
-          active: selectedAudiences.includes("families"),
-          toggle: () => toggleAudience("families"),
-        },
-      ],
-    });
-  }
+  // Audience sits directly under Type because it is the same coarse cut:
+  // both answer "which shelf am I looking at" before anything about the
+  // product itself — and, by owner decision, the school pages withhold it
+  // along with Type, because there both have one answer. Two chips, not three:
+  // a chip is the badge its cards wear, so each one matches exactly the
+  // products bearing that tag, and gamers-only — the assumed default, badged
+  // with nothing — is what the row has no chip for. Multi-select with OR
+  // semantics like Subject and Language, but lighting both is still narrower
+  // than lighting none: it is every badged product, and the unbadged majority
+  // answers only to an empty row. The labels are the card's own audience
+  // words, reused rather than re-authored so a chip and the card it surfaces
+  // say the same thing. The row ships before any for-parents product exists;
+  // a chip with an empty result set for a few days is accepted (see the plan).
+  rows.push({
+    id: "audiences",
+    label: t("audience"),
+    chips: [
+      {
+        key: "parents",
+        text: tAudience("parents"),
+        active: selectedAudiences.includes("parents"),
+        toggle: () => toggleAudience("parents"),
+      },
+      {
+        key: "families",
+        text: tAudience("families"),
+        active: selectedAudiences.includes("families"),
+        toggle: () => toggleAudience("families"),
+      },
+    ],
+  });
 
   // "Designed for" follows Audience because it is the other half of the same
   // question — the row above says who may hold a seat, this says who the
-  // sessions were built for. Unlike Audience it renders on the municipality
-  // pages too (owner decision, 2026-08-12): Type and Audience hide there
+  // sessions were built for. Unlike Audience the school pages offer it too
+  // (owner decision, 2026-08-12): Type and Audience are withheld there
   // because everything on a school page is that school's own gamers-only club
   // and both rows would have one answer, but a tag is orthogonal to that
   // structure — one school can offer a beginner club beside a neuroinclusive
   // one, and "which of my school's clubs fits my child" is that page's whole
-  // question. On the municipality pages this row therefore leads.
+  // question. On the school pages this row therefore leads.
   //
   // A chip is the chip the card wears, so each matches exactly the products
   // carrying that tag: OR across the lit chips, and untagged products — the
@@ -207,7 +218,7 @@ export function useBrowseFilterRows(showTypeFilter: boolean): BrowseFilterRow[] 
   // and the admin picker offer the same vocabulary in the same order and a tag
   // added by migration appears in both without an edit here.
   rows.push({
-    id: "designedFor",
+    id: "tags",
     label: t("designedFor"),
     chips: PRODUCT_TAG_VALUES.map((tag) => ({
       key: tag,
@@ -219,7 +230,7 @@ export function useBrowseFilterRows(showTypeFilter: boolean): BrowseFilterRow[] 
   });
 
   rows.push({
-    id: "subject",
+    id: "topics",
     label: t("subject"),
     chips: TOPIC_FILTER_CHIPS.map((chip) => ({
       key: chip.key,
@@ -269,7 +280,9 @@ export function useBrowseFilterRows(showTypeFilter: boolean): BrowseFilterRow[] 
   // neither chip and are reachable only with the row cleared — the same shape
   // the Audience and Designed-for rows have, where the unbadged majority
   // belongs to no chip. Calling such a club free would be the worse lie: what
-  // it costs a family is decided by their municipality, not by us.
+  // it costs a family is decided by their municipality, not by us. For the
+  // same reason the school pages withhold this row: every product there is
+  // such a club, so neither chip could ever leave a card standing.
   //
   // No glyph: a currency symbol would be the only one on this surface, and it
   // would have to pick a currency to be, which is a choice the chip is not
@@ -294,17 +307,21 @@ export function useBrowseFilterRows(showTypeFilter: boolean): BrowseFilterRow[] 
   });
 
   rows.push({
-    id: "language",
+    id: "languages",
     label: t("language"),
     chips: SPOKEN_LANGUAGES.map((code) => {
       const name = languageName(code);
+      const shown = code.toUpperCase();
       return {
         key: code,
-        // The name is what assistive tech and the summary announce; the chip
-        // itself wears the code beside its flag, because a row of full
-        // language names does not fit a rail.
-        text: name,
-        label: code.toUpperCase(),
+        // The chip wears the code beside its flag, because a row of full
+        // language names does not fit a rail, and a screen reader and the
+        // summary are given the name. The name alone would not contain the
+        // code the chip shows, so the text is both, code first ("FI Finnish"):
+        // the visible word inside the name is what speech input needs, and
+        // leading with it is the form that rule recommends.
+        text: `${shown} ${name}`,
+        label: shown,
         icon: <LanguageFlag code={code} showCode={false} title={name} />,
         active: selectedLanguages.includes(code),
         toggle: () => toggleLanguage(code),
@@ -339,7 +356,10 @@ export function useBrowseFilterRows(showTypeFilter: boolean): BrowseFilterRow[] 
   // name once there is width for it, and the short form again inside the rail,
   // where a Finnish "keskiviikko" would blow the column open. Both come from
   // Intl via `formatWeekday`, and the full name is what a screen reader is
-  // given either way.
+  // given either way, as the chip's accessible name. That name still contains
+  // the word on screen at every width: in every locale we ship, each short
+  // form is the start of its full name, a French one adding only the full
+  // stop that marks it as an abbreviation.
   rows.push({
     id: "days",
     label: t("days"),
@@ -366,5 +386,5 @@ export function useBrowseFilterRows(showTypeFilter: boolean): BrowseFilterRow[] 
     })),
   });
 
-  return rows;
+  return rows.filter((row) => offersFilter(surface, row.id));
 }

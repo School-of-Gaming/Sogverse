@@ -14,7 +14,15 @@ import {
   isSpokenLanguageCode,
   type SpokenLanguageCode,
 } from "@/lib/constants/spoken-languages";
+import { PRODUCT_TOPIC_VALUES } from "@/lib/products/topics";
 import { CATEGORY_PARAM } from "./shop-categories";
+import { useShopCategories } from "./use-shop-categories";
+import {
+  hasActiveFilters,
+  offeredFilterState,
+  type BrowseFilterState,
+  type BrowseSurface,
+} from "./browse-surface";
 // The param names live in `browse-state.ts` because the detail page's back link
 // reads them back out of a carried URL — see that module for why they stopped
 // being private to this hook.
@@ -49,6 +57,21 @@ function parseDays(raw: string | null): number[] {
     if (Number.isInteger(n) && n >= 0 && n <= 6) seen.add(n);
   }
   return [...seen].sort((a, b) => a - b);
+}
+
+// The subject chips, on the same terms as the tags and languages below: deduped
+// and narrowed to the topic enum, so a hand-edited or stale `?topic=` reads as
+// no selection. Every topic has a chip, so a value this keeps always lights
+// one — which is what stops a topic the row cannot show from emptying the grid
+// and lighting Clear with no chip to say why.
+function parseTopics(raw: string | null): string[] {
+  return [
+    ...new Set(
+      parseList(raw).filter((value) =>
+        PRODUCT_TOPIC_VALUES.some((topic) => topic === value),
+      ),
+    ),
+  ];
 }
 
 // The audience chips, deduped and restricted to the two values the row offers
@@ -135,7 +158,7 @@ export function useBrowseFilters() {
   const searchParams = useSearchParams();
 
   const topics = useMemo(
-    () => parseList(searchParams.get(TOPIC_PARAM)),
+    () => parseTopics(searchParams.get(TOPIC_PARAM)),
     [searchParams],
   );
   const format = useMemo(
@@ -166,19 +189,9 @@ export function useBrowseFilters() {
     () => parseDays(searchParams.get(DAYS_PARAM)),
     [searchParams],
   );
-  // Every filter *in this hook* applies on every browse surface, so one flag
-  // covers all of them. It is not the whole Clear-button condition on its own:
-  // clearing also resets the shop's Type row, so the button's owner ORs the
-  // selected categories in (see `product-browse-filters.tsx`).
-  const hasAny =
-    topics.length > 0 ||
-    format !== null ||
-    price !== null ||
-    languages.length > 0 ||
-    audiences.length > 0 ||
-    tags.length > 0 ||
-    age !== null ||
-    days.length > 0;
+  // No "is anything active" flag here: these are the URL's filters, and not
+  // every surface offers all of them. Whether anything is narrowing a grid is a
+  // question about a surface — see `useOfferedBrowseFilters` below.
 
   const writeNext = useCallback(
     (
@@ -342,11 +355,10 @@ export function useBrowseFilters() {
   // calling into `useShopCategories` because both hooks read a snapshot of
   // `useSearchParams()` — a second, sequential write would rebuild the query
   // string from the pre-clear snapshot and resurrect everything this one just
-  // deleted. One `replaceState`, or nothing. On the municipality page the
-  // delete is a no-op in practice (nothing there writes the param), but a
-  // stray hand-edited `?category=` would still be *read* — which is why the
-  // Clear button's visibility gates the categories term on the Type row being
-  // rendered (see `product-browse-filters.tsx`).
+  // deleted. One `replaceState`, or nothing. It clears every param, offered
+  // on this surface or not: whether the button *shows* is the surface's call
+  // (see `useOfferedBrowseFilters`), but once a reader presses it, a stray
+  // param the page ignores going too is no loss.
   const clear = useCallback(() => {
     writeNext(
       {
@@ -372,7 +384,6 @@ export function useBrowseFilters() {
     tags,
     age,
     days,
-    hasAny,
     toggleTopics,
     toggleFormat,
     togglePrice,
@@ -383,4 +394,36 @@ export function useBrowseFilters() {
     toggleDay,
     clear,
   };
+}
+
+/**
+ * The browse filters as one surface offers them.
+ *
+ * `filters` is what the grid is narrowed by and `hasAny` is whether Clear
+ * shows, and both pass through the surface's offer rather than coming straight
+ * from the URL: a param for a row this surface does not draw is neither applied
+ * nor counted. The lit count and the summary agree with them without a guard
+ * of their own, because both are read off the rows, and the rows are that same
+ * offer drawn.
+ */
+export function useOfferedBrowseFilters(surface: BrowseSurface) {
+  const { topics, format, price, languages, audiences, tags, age, days, clear } =
+    useBrowseFilters();
+  const { categories } = useShopCategories();
+  const filters = useMemo<BrowseFilterState>(
+    () =>
+      offeredFilterState(surface, {
+        categories,
+        topics,
+        format,
+        price,
+        languages,
+        audiences,
+        tags,
+        age,
+        days,
+      }),
+    [surface, categories, topics, format, price, languages, audiences, tags, age, days],
+  );
+  return { filters, hasAny: hasActiveFilters(filters), clear };
 }

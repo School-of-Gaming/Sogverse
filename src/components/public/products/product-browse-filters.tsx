@@ -5,30 +5,33 @@ import { useTranslations } from "next-intl";
 import { Sliders, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrowseFilterRows, type BrowseFilterChip } from "./browse-filter-rows";
-import { useBrowseFilters } from "./use-browse-filters";
-import { useShopCategories } from "./use-shop-categories";
+import type { BrowseSurface } from "./browse-surface";
+import { useOfferedBrowseFilters } from "./use-browse-filters";
 
-// The filter control — the nine chip rows (type, audience, designed-for,
-// subject, format, price, language, age, days), drawn from the row list in
-// `browse-filter-rows.tsx`. What the rows *are* lives there; this file decides
-// only how they are drawn. Chips are pill-shaped with a clear active state
-// (filled act) so taps register on small phone screens.
+// The filter control — the chip rows the page offers (type, audience,
+// designed-for, subject, format, price, language, age, days, less whatever the
+// page withholds), drawn from the row list in `browse-filter-rows.tsx`. What
+// the rows *are* lives there; this file decides only how they are drawn. Chips
+// are pill-shaped with a clear active state (filled act) so taps register on
+// small phone screens.
 //
-// One component, one DOM instance, two places — never a phone copy and a
-// desktop copy:
+// One component, two places, mounted in only one of them at a time — never a
+// phone copy and a desktop copy standing side by side:
 //   - From `lg` it is the left rail beside the cards (see
 //     `<ProductBrowseResults>`).
 //   - Below `lg` it is the body of a bottom sheet, opened from the trigger bar
 //     that stands where the rail cannot (see `<ProductBrowseFilterPanel>`).
-//     The same element moves into the sheet and back out of it; a second
-//     instance would be a second writer of the same URL params.
+//     Opening the sheet unmounts the rail's instance and mounts a fresh one
+//     inside the sheet, and closing it does the reverse. Nothing is lost in
+//     that swap because the component holds no state of its own; two mounted
+//     at once would be two writers of the same URL params.
 //
 // Both places give a row its own line, so both draw the same shape: the
 // label above its chips, and every chip wrapping onto further lines rather
 // than scrolling out of reach. That used to differ — below `lg` the rows were
 // a strip above the cards with their labels beside them and most of them
-// scrolling sideways — and the strip is what the sheet replaced: eight rows
-// standing between a phone reader and the first product card.
+// scrolling sideways — and the strip is what the sheet replaced: a stack of
+// rows standing between a phone reader and the first product card.
 //
 // Type is an inclusive filter, not a choice: selecting nothing shows every
 // category, selecting chips narrows to them, and toggling the last one off
@@ -40,10 +43,10 @@ import { useShopCategories } from "./use-shop-categories";
 // information at a glance, and surfacing a count next to a "Clear"
 // button made the meta row's height jump when the button appeared.
 interface ProductBrowseFiltersProps {
-  /** Lead with the Clubs|Camps|Events Type row — and, by owner decision, with
-   *  the Audience row that shares its guard. See `useBrowseFilterRows`, which
-   *  owns the reasoning along with the rows themselves. Default true. */
-  showTypeFilter?: boolean;
+  /** Which page the rows are for: it decides which rows are drawn and what
+   *  lights Clear. The decision, and the reason for each filter a page
+   *  withholds, live in `browse-surface.ts`. */
+  surface: BrowseSurface;
   /**
    * Which of the two places this instance is standing in.
    *
@@ -57,21 +60,19 @@ interface ProductBrowseFiltersProps {
 }
 
 export function ProductBrowseFilters({
-  showTypeFilter = true,
+  surface,
   variant = "card",
 }: ProductBrowseFiltersProps) {
   const t = useTranslations("productBrowse.filters");
-  const rows = useBrowseFilterRows(showTypeFilter);
-  const { hasAny, clear } = useBrowseFilters();
-  const { categories } = useShopCategories();
+  const rows = useBrowseFilterRows(surface);
 
-  // The button shows exactly when clearing would change something the user can
-  // see, so it spans both state owners: `hasAny` covers the chip filters, the
-  // categories cover the Type row that `clear` now resets alongside them — but
-  // only where that row is rendered. A surface without the Type row (the
-  // municipality page) still *reads* a stray `?category=` into `categories`,
-  // and a Clear button lit by an invisible param is a control lying.
-  const showClear = hasAny || (showTypeFilter && categories.length > 0);
+  // The button shows exactly when clearing would change something this page
+  // shows, which spans both state owners — the chip filters, and the Type row
+  // `clear` resets alongside them — but only the filters the page offers. A
+  // page still *reads* every param in the URL, so a shop link's `?category=`
+  // edited onto a school page is in the state all the same; a Clear button lit
+  // by a filter with no row on screen is a control lying.
+  const { hasAny: showClear, clear } = useOfferedBrowseFilters(surface);
 
   return (
     <div
@@ -125,8 +126,8 @@ function FilterRow({
   children: React.ReactNode;
 }) {
   // Grouped for assistive tech: without `role="group"` + `aria-labelledby`,
-  // the nine rows read as one undifferentiated run of ~35 toggle buttons — the
-  // visual label ("Type", "Days") never reaches a screen reader.
+  // the rows read as one undifferentiated run of toggle buttons — the visual
+  // label ("Type", "Days") never reaches a screen reader.
   const labelId = useId();
   return (
     <div
@@ -154,6 +155,10 @@ function Chip({ chip }: { chip: BrowseFilterChip }) {
       type="button"
       onClick={chip.toggle}
       aria-pressed={chip.active}
+      // A chip drawn from a richer label is named by its plain text, which is
+      // written to contain whatever the label shows; one drawn from the text
+      // is already named by it.
+      aria-label={chip.label === undefined ? undefined : chip.text}
       className={cn(
         "inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium transition-all",
         chip.active
