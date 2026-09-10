@@ -2165,19 +2165,19 @@
         "intro": "Ces séances se jouent sur Minecraft, sur ordinateur, en version Java. Suivez les étapes ci-dessous avant la première et il n’y aura rien à régler le jour même."
       },
       "minecraft_education": {
-        "intro": "Ces séances utilisent Minecraft Education, qui est gratuit. School of Gaming distribue les identifiants à la première séance : il n’y a donc qu’une seule chose à faire avant."
+        "intro": "Ces séances utilisent Minecraft Education, qui est gratuit. School of Gaming distribue les identifiants à la première séance : il n’y a donc presque rien à faire avant."
       },
       "minecraft_bedrock": {
-        "intro": "Ces séances se jouent sur Minecraft Bedrock, ensemble en ligne. Trois choses à régler avant la première."
+        "intro": "Ces séances se jouent sur Minecraft Bedrock, ensemble en ligne. Voici ce qu’il y a à régler avant la première."
       },
       "fortnite": {
         "intro": "Fortnite est gratuit, et les séances s’y jouent ensemble. Voici ce qu’il faut avoir prêt avant la première."
       },
       "rocket_league": {
-        "intro": "Rocket League est gratuit, et chaque séance se joue ensemble. Trois choses à régler avant la première."
+        "intro": "Rocket League est gratuit, et chaque séance se joue ensemble. Voici ce qu’il y a à régler avant la première."
       },
       "pokemon_go": {
-        "intro": "Pokémon GO se joue dehors, sur un téléphone : ce qu’il y a à préparer, c’est donc le téléphone et le parcours. Quatre choses."
+        "intro": "Pokémon GO se joue dehors, sur un téléphone : ce qu’il y a à préparer, c’est donc le téléphone et le parcours."
       },
       "roblox_studio": {
         "intro": "Ces séances se construisent dans Roblox Studio, le logiciel de création de jeux gratuit de Roblox. Chaque participant a besoin de son propre compte Roblox et de Studio installé sur l’ordinateur qu’il utilisera."
@@ -2190,6 +2190,7 @@
       "rocket_league": "Pour ces séances, nous apportons les machines, avec Rocket League déjà installé. Le compte, lui, doit venir de vous.",
       "roblox_studio": "Pour ces séances, nous apportons les ordinateurs, avec Roblox Studio déjà installé. Ce que nous ne pouvons pas apporter, c’est le compte : c’est donc la seule chose à régler à l’avance."
     },
+    "remoteOnlyIntro": "Ces séances se déroulent en ligne, dans un salon vocal. Il y a une seule chose à préparer avant la première.",
     "steps": {
       "minecraftJavaAccount": {
         "title": "Obtenir un compte Microsoft avec Minecraft dessus",
@@ -2280,6 +2281,10 @@
       "robloxStudioTest": {
         "title": "Tout tester avant la première séance",
         "body": "Un essai rapide maintenant fait gagner les dix premières minutes de la séance :"
+      },
+      "remoteSession": {
+        "title": "Préparer le micro et la caméra",
+        "body": "La séance se déroule dans un salon vocal qui fonctionne dans un navigateur web, sur l’appareil qui vous arrange : l’ordinateur où se trouve le jeu, ou un téléphone ou une tablette posés à côté d’une console. Un casque ou des écouteurs avec micro fonctionnent le mieux, pour que le son du jeu ne revienne pas en écho à tout le monde. À la première connexion, le navigateur demande l’autorisation d’utiliser le microphone et la caméra — acceptez. La caméra est facultative, mais l’allumer aide le Gedu — l’animateur ou l’animatrice qui mène la séance — à voir que chaque personne dans le salon est bien celle qu’elle dit être. Trouvez un endroit calme, et connectez-vous quelques minutes en avance la première fois."
       }
     },
     "platformNotes": {

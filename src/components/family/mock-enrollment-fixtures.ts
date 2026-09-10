@@ -56,15 +56,16 @@ export interface EnrollmentFixtureSpec {
   /** Remote products have a voice room and no site; in-person the reverse. */
   isRemote: boolean;
   /**
-   * The product's topic, which decides whether the card has a "Before the first
-   * session" guide to offer and which one.
+   * The product's topic, which decides *which* "Before the first session" guide
+   * the card offers.
    *
-   * **Optional, and it defaults to a topic that carries no guide**, so a
-   * fixture that is not about the prep affordance renders none and reads
-   * exactly as it did before there was one. A fixture that *is* about it names
-   * a topic with a guide — `roblox_studio` is the long one, three steps with
-   * per-platform notes and a checklist, which is the one worth judging a
-   * scrolling dialog against.
+   * **Optional, and it defaults to a label-only topic**, which on an in-person
+   * fixture is still no guide at all. On a *remote* one it is the shortest
+   * guide there is — the one shared step about the voice room's mic and camera
+   * — because every remote product has that step whatever its topic. A fixture
+   * that is about the affordance itself names a topic with a longer one:
+   * `roblox_studio` is the long one, three steps with per-platform notes and a
+   * checklist, which is the one worth judging a scrolling dialog against.
    */
   topic?: ProductTopic;
   slots: FixtureSlot[];
@@ -162,9 +163,11 @@ export function buildEnrollmentFixture(
     participationId: spec.participationId,
     productName: spec.productName,
     productType: spec.productType,
-    // A label-only topic by default: it carries no prep guide, so an untouched
-    // fixture draws no prep affordance and reads exactly as it did before the
-    // affordance existed.
+    // A label-only topic by default: it brings no steps of its own, so an
+    // untouched in-person fixture draws no prep affordance and a remote one
+    // draws the shortest guide in the product. Every fixture carries its own
+    // `participationId`, which is half the dismissal key, so a card dismissed
+    // in a demo takes no other card's guide away with it.
     topic: spec.topic ?? "esports",
     isRemote: spec.isRemote,
     nextSessionStart: next?.start ?? null,

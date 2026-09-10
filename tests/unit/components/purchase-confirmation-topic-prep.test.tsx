@@ -12,7 +12,9 @@ import type { ProductBrowseRow, ProductTopic } from "@/types";
  * catalog's business and is tested there. Three answers have to hold: an
  * enrolled family with a guide gets the card, a waitlisted one never does
  * (there is no seat yet, so there is no first session to be ready for), and a
- * topic with nothing to say leaves no empty card behind.
+ * render with nothing to say leaves no empty card behind — which is now an
+ * in-person answer alone, since every remote product ends its guide on the
+ * shared voice-room step.
  *
  * The translations are stubbed to echo the key, so the assertions are about
  * which keys the page reaches for and not about the wording in `messages/`.
@@ -37,6 +39,8 @@ vi.mock("@/providers", () => ({
 const ACCOUNT_STEP = "steps.minecraftJavaAccount.title";
 const INSTALL_STEP = "steps.minecraftJavaInstall.title";
 const ACCOUNTS_ONLY_INTRO = "accountsOnlyIntro.minecraft_java";
+/** The step every remote guide ends on, whatever its topic. */
+const REMOTE_STEP = "steps.remoteSession.title";
 
 /**
  * One fixture product, re-topiced per case. Taking the row from the shared
@@ -74,12 +78,23 @@ describe("the confirmation page's “Before the first session” card", () => {
     expect(queryByText(ACCOUNT_STEP)).toBeNull();
   });
 
-  it("draws nothing for a topic that carries no guide", () => {
-    const { queryByText } = renderConfirmation("programming");
+  it("draws nothing for a label-only topic on an in-person product", () => {
+    const { queryByText } = renderConfirmation("programming", { isRemote: false });
     expect(queryByText(ACCOUNT_STEP)).toBeNull();
+    expect(queryByText(REMOTE_STEP)).toBeNull();
     // The rest of the page is untouched — this is an absent card, not a
     // broken render.
     expect(queryByText("summaryTitle")).not.toBeNull();
+  });
+
+  it("draws the one-step guide for a label-only topic on a remote product", () => {
+    // The topic brings no steps, but the product does: the room is browser-
+    // based and the mic has to work, so the card is the shared step under the
+    // generic intro rather than a topic's.
+    const { getByText, queryByText } = renderConfirmation("programming");
+    getByText(REMOTE_STEP);
+    getByText("remoteOnlyIntro");
+    expect(queryByText(ACCOUNT_STEP)).toBeNull();
   });
 
   /**

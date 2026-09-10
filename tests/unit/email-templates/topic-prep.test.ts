@@ -23,9 +23,29 @@ describe("topic prep email section", () => {
     t = await getTopicPrepTranslator("en");
   });
 
-  it("renders nothing for a topic with no guide", () => {
-    expect(buildTopicPrepSection(t, "programming", true)).toBe("");
-    expect(topicPrepText(t, "programming", true)).toEqual([]);
+  it("renders nothing for a label-only topic in person", () => {
+    // It brings no steps of its own, and in person there is no room to get
+    // ready for either — so the mail says nothing rather than saying so.
+    expect(buildTopicPrepSection(t, "programming", false)).toBe("");
+    expect(topicPrepText(t, "programming", false)).toEqual([]);
+  });
+
+  it("gives a label-only topic the one-step guide on a remote product", () => {
+    // The generic intro rather than a topic's: there is no
+    // `topics.programming.intro` to reach for, and the plan's third form is
+    // what stops the builder asking for one.
+    const prep = messages.topicPrep;
+    const html = buildTopicPrepSection(t, "programming", true);
+
+    expect(html).toContain(prep.heading);
+    expect(html).toContain(prep.remoteOnlyIntro);
+    expect(html).toContain(prep.steps.remoteSession.title);
+    expect(html).toContain(prep.closing);
+
+    const lines = topicPrepText(t, "programming", true);
+    expect(lines).toContain(`1. ${prep.steps.remoteSession.title}`);
+    // One step and no second: the whole guide is the room.
+    expect(lines.some((line) => line.startsWith("2. "))).toBe(false);
   });
 
   it("renders nothing for Minecraft Education in person", () => {
@@ -56,6 +76,8 @@ describe("topic prep email section", () => {
     // Per-platform notes and the checklist, both declared in the registry.
     expect(html).toContain(prep.platformNotes.robloxStudioWindows.body);
     expect(html).toContain(prep.checklist.robloxStudioTestOpen);
+    // The shared step every remote guide ends on, after the topic's own.
+    expect(html).toContain(prep.steps.remoteSession.title);
     expect(html).toContain(prep.closing);
   });
 
@@ -68,6 +90,8 @@ describe("topic prep email section", () => {
     expect(html).toContain(prep.steps.robloxStudioAccount.title);
     expect(html).not.toContain(prep.steps.robloxStudioInstall.title);
     expect(html).not.toContain("https://create.roblox.com/");
+    // No room to join at an in-person product, so no step about one.
+    expect(html).not.toContain(prep.steps.remoteSession.title);
   });
 
   it("renders a message's own emphasis as weight, and strips it for the text twin", () => {
@@ -95,6 +119,8 @@ describe("topic prep email section", () => {
       `${prep.steps.robloxStudioInstall.linkLabel}: https://create.roblox.com/`,
     );
     expect(lines).toContain(`- ${prep.checklist.robloxStudioTestClose}`);
+    // The shared step is numbered like any other, and it is the last one.
+    expect(lines).toContain(`4. ${prep.steps.remoteSession.title}`);
     expect(lines.at(-1)).toBe(prep.closing);
   });
 

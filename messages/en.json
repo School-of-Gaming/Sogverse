@@ -2165,19 +2165,19 @@
         "intro": "These sessions play Minecraft on a computer, in the Java version. Work through the steps below before the first one and nothing will need sorting out on the day."
       },
       "minecraft_education": {
-        "intro": "These sessions use Minecraft Education, which is free. School of Gaming hands out the logins at the first session, so there is only one thing to do beforehand."
+        "intro": "These sessions use Minecraft Education, which is free. School of Gaming hands out the logins at the first session, so there is very little to do beforehand."
       },
       "minecraft_bedrock": {
-        "intro": "These sessions play Minecraft Bedrock together online. Three things to sort out before the first one."
+        "intro": "These sessions play Minecraft Bedrock together online. Here is what to sort out before the first one."
       },
       "fortnite": {
         "intro": "Fortnite is free to play, and the sessions play it together. Here is what to have ready before the first one."
       },
       "rocket_league": {
-        "intro": "Rocket League is free to play, and every session is played together. Three things to sort out before the first one."
+        "intro": "Rocket League is free to play, and every session is played together. Here is what to sort out before the first one."
       },
       "pokemon_go": {
-        "intro": "Pokémon GO is played outdoors, on a phone, so what needs sorting out beforehand is the phone and the plan. Four things."
+        "intro": "Pokémon GO is played outdoors, on a phone, so what needs sorting out beforehand is the phone and the plan."
       },
       "roblox_studio": {
         "intro": "These sessions are built in Roblox Studio, Roblox’s free game-making software. Everyone taking part needs their own Roblox account and Studio installed on the computer they will use."
@@ -2190,6 +2190,7 @@
       "rocket_league": "We bring the machines to these sessions, with Rocket League already installed. The account is the part that has to come from you.",
       "roblox_studio": "We bring the computers to these sessions, with Roblox Studio already installed. What we cannot bring is the account — so that is the one thing to sort out beforehand."
     },
+    "remoteOnlyIntro": "These sessions happen online, in a voice room. There is one thing to have ready before the first one.",
     "steps": {
       "minecraftJavaAccount": {
         "title": "Get a Microsoft account with Minecraft on it",
@@ -2280,6 +2281,10 @@
       "robloxStudioTest": {
         "title": "Test everything before the first session",
         "body": "A quick run-through now saves the first ten minutes of the session:"
+      },
+      "remoteSession": {
+        "title": "Get the mic and camera ready",
+        "body": "The session happens in a voice room that runs in a web browser, on whichever device suits you: the computer the game is on, or a phone or tablet beside a console. A headset or earbuds with a microphone works best, so the game’s sound doesn’t echo back to everyone else. The first time you join, the browser asks permission to use the microphone and camera; allow it. The camera is optional, but switching it on helps the Gedu — the Game Educator running the session — see that everyone in the room is who they say they are. Find a quiet spot, and join a few minutes early the first time."
       }
     },
     "platformNotes": {

@@ -2165,19 +2165,19 @@
         "intro": "På de här tillfällena spelas Minecraft på dator, i Java-versionen. Gå igenom stegen nedan före det första, så behöver ingenting ordnas på plats."
       },
       "minecraft_education": {
-        "intro": "De här tillfällena använder Minecraft Education, som är gratis. School of Gaming delar ut inloggningarna vid första tillfället, så det finns bara en sak att göra i förväg."
+        "intro": "De här tillfällena använder Minecraft Education, som är gratis. School of Gaming delar ut inloggningarna vid första tillfället, så det finns väldigt lite att göra i förväg."
       },
       "minecraft_bedrock": {
-        "intro": "På de här tillfällena spelas Minecraft Bedrock tillsammans online. Tre saker att ordna före det första."
+        "intro": "På de här tillfällena spelas Minecraft Bedrock tillsammans online. Så här gör du dig redo inför det första."
       },
       "fortnite": {
         "intro": "Fortnite är gratis att spela, och tillfällena spelas tillsammans. Så här gör du dig redo inför det första."
       },
       "rocket_league": {
-        "intro": "Rocket League är gratis att spela, och varje tillfälle spelas tillsammans. Tre saker att ordna före det första."
+        "intro": "Rocket League är gratis att spela, och varje tillfälle spelas tillsammans. Så här gör du dig redo inför det första."
       },
       "pokemon_go": {
-        "intro": "Pokémon GO spelas utomhus, på en telefon, så det som behöver ordnas i förväg är telefonen och planen. Fyra saker."
+        "intro": "Pokémon GO spelas utomhus, på en telefon, så det som behöver ordnas i förväg är telefonen och planen."
       },
       "roblox_studio": {
         "intro": "De här tillfällena byggs i Roblox Studio, Roblox eget gratisprogram för att göra spel. Alla som deltar behöver ett eget Roblox-konto och Studio installerat på datorn de ska använda."
@@ -2190,6 +2190,7 @@
       "rocket_league": "Till de här tillfällena tar vi med maskinerna, med Rocket League redan installerat. Kontot är den del som måste komma från er.",
       "roblox_studio": "Till de här tillfällena tar vi med datorerna, med Roblox Studio redan installerat. Kontot kan vi inte ta med – det är alltså den enda saken att ordna i förväg."
     },
+    "remoteOnlyIntro": "De här tillfällena hålls online, i ett röstrum. Det finns en sak att ordna före det första.",
     "steps": {
       "minecraftJavaAccount": {
         "title": "Skaffa ett Microsoft-konto med Minecraft på",
@@ -2280,6 +2281,10 @@
       "robloxStudioTest": {
         "title": "Testa allt före första tillfället",
         "body": "En snabb genomgång nu sparar de tio första minuterna av tillfället:"
+      },
+      "remoteSession": {
+        "title": "Gör mikrofonen och kameran redo",
+        "body": "Tillfället hålls i ett röstrum som körs i en webbläsare, på den enhet som passar er bäst: datorn som spelet finns på, eller en telefon eller surfplatta bredvid en konsol. Ett headset eller hörlurar med mikrofon fungerar bäst, så att spelets ljud inte ekar tillbaka till alla andra. Första gången du går med frågar webbläsaren om lov att använda mikrofonen och kameran — ge det. Kameran är frivillig, men att slå på den hjälper din Gedu — spelfostraren som leder tillfället — att se att alla i rummet är den de säger att de är. Leta upp en lugn plats, och gå med några minuter tidigare första gången."
       }
     },
     "platformNotes": {

@@ -224,6 +224,8 @@ describe("product topics", () => {
   // family as a raw message key on a confirmation page in every language.
   describe("prep", () => {
     const prep = messages.topicPrep;
+    /** The one step no topic declares — see the registry's header note. */
+    const REMOTE_SESSION_KEY = "remoteSession";
 
     it("gives prep to exactly the topics that have an About card", () => {
       // Same seven, and the reason is the same: the five label-only topics
@@ -256,6 +258,12 @@ describe("product topics", () => {
           );
           seen.add(step.key);
 
+          // The shared step is declared outside the topics, so a topic
+          // claiming its key would silently take its words.
+          expect(step.key, "a topic declares the shared step's key").not.toBe(
+            REMOTE_SESSION_KEY,
+          );
+
           expect(["always", "ownDevice"]).toContain(step.scope);
           if (step.url !== undefined) {
             expect(step.url.startsWith("https://")).toBe(true);
@@ -285,6 +293,18 @@ describe("product topics", () => {
           `messages/en.json has a blank ${what}`,
         ).toBeGreaterThan(0);
       };
+
+      // The shared remote-session step is declared outside every topic, so the
+      // loop below would never reach it — and a missing body there is the gap
+      // that shows up on every remote product at once.
+      nonEmpty(
+        steps[REMOTE_SESSION_KEY]?.title,
+        `topicPrep.steps.${REMOTE_SESSION_KEY}.title`,
+      );
+      nonEmpty(
+        steps[REMOTE_SESSION_KEY]?.body,
+        `topicPrep.steps.${REMOTE_SESSION_KEY}.body`,
+      );
 
       for (const topic of PRODUCT_TOPIC_VALUES) {
         const meta: TopicMeta = PRODUCT_TOPICS[topic];
@@ -364,27 +384,68 @@ describe("product topics", () => {
           inPerson.steps.every((s) => s.scope === "always"),
           `${topic} renders an ownDevice step at an in-person product`,
         ).toBe(true);
+        expect(
+          inPerson.steps.map((s) => s.key),
+          `${topic} carries the remote-session step at an in-person product`,
+        ).not.toContain(REMOTE_SESSION_KEY);
 
         const declared: TopicMeta = PRODUCT_TOPICS[topic];
         const remote = resolveTopicPrep(topic, true);
         expect(remote).not.toBeNull();
-        expect(remote?.steps.map((s) => s.key)).toEqual(
-          declared.prep?.steps.map((s) => s.key),
-        );
+        expect(remote?.steps.map((s) => s.key)).toEqual([
+          ...(declared.prep?.steps.map((s) => s.key) ?? []),
+          REMOTE_SESSION_KEY,
+        ]);
       }
     });
 
-    it("renders nothing for a topic with no guide, and none for Minecraft Education in person", () => {
-      expect(resolveTopicPrep("programming", true)).toBeNull();
+    it("ends every remote guide on the shared voice-room step, and no in-person one", () => {
+      // The step belongs to the product rather than to the topic, so the
+      // assertion is over every topic at once: remote guides all end on it,
+      // in-person guides never mention it, and it is declared once — which is
+      // what the global-uniqueness check above is worth here.
+      for (const topic of PRODUCT_TOPIC_VALUES) {
+        const remote = resolveTopicPrep(topic, true);
+        expect(remote, `${topic} renders no guide on a remote product`).not
+          .toBeNull();
+        expect(remote?.steps.at(-1)?.key, topic).toBe(REMOTE_SESSION_KEY);
+        expect(
+          remote?.steps.filter((s) => s.key === REMOTE_SESSION_KEY),
+          `${topic} appends the shared step more than once`,
+        ).toHaveLength(1);
+      }
+    });
+
+    it("gives a label-only topic a one-step guide remotely and none in person", () => {
+      // The five topics that name subject matter rather than one piece of
+      // software bring no steps of their own. Remotely there is still the room
+      // to get ready for, and it is the whole guide — under the generic intro,
+      // because there is no topic sentence to open with.
+      for (const topic of PRODUCT_TOPIC_VALUES.filter((t) => !topicHasPrep(t))) {
+        expect(resolveTopicPrep(topic, false), topic).toBeNull();
+
+        const remote = resolveTopicPrep(topic, true);
+        expect(remote?.form, topic).toBe("remoteOnly");
+        expect(remote?.steps.map((s) => s.key), topic).toEqual([
+          REMOTE_SESSION_KEY,
+        ]);
+      }
+
+      expect(messages.topicPrep.remoteOnlyIntro.trim().length).toBeGreaterThan(0);
+    });
+
+    it("renders nothing in person for a topic with no guide, and none for Minecraft Education", () => {
+      expect(resolveTopicPrep("programming", false)).toBeNull();
       expect(resolveTopicPrep("esports", false)).toBeNull();
 
       // The case the null answer was written for: we supply the machines AND
       // the logins, so a family has genuinely nothing to do beforehand and a
-      // guide saying so would be furniture.
+      // guide saying so would be furniture. It is now an in-person answer
+      // alone — remotely the room is always there to get ready for.
       expect(resolveTopicPrep("minecraft_education", false)).toBeNull();
-      expect(resolveTopicPrep("minecraft_education", true)?.steps).toHaveLength(
-        1,
-      );
+      expect(
+        resolveTopicPrep("minecraft_education", true)?.steps.map((s) => s.key),
+      ).toEqual(["minecraftEducationInstall", REMOTE_SESSION_KEY]);
     });
 
     it("keeps every Pokémon GO step in person", () => {

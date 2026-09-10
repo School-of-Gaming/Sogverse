@@ -2209,19 +2209,19 @@
         "intro": "ghomHomvamDaq De’wI’Daq Minecraft luQuj, Java mIllogh lo’lu’. wa’DIch qaSpa’ bIngDaq mIwmey yIta’ – vaj jajvetlhDaq pagh Qatlh."
       },
       "minecraft_education": {
-        "intro": "ghomHomvamDaq Minecraft Education lo’lu’, ’ej DIl HInobbe’. wa’DIch ghomHomDaq pongmey nob School of Gaming, vaj wa’ Qu’ neH DaghajnIS."
+        "intro": "ghomHomvamDaq Minecraft Education lo’lu’, ’ej DIl HInobbe’. wa’DIch ghomHomDaq pongmey nob School of Gaming, vaj qaSpa’ puS Qu’ neH DaghajnIS."
       },
       "minecraft_bedrock": {
-        "intro": "ghomHomvamDaq tay’ Minecraft Bedrock luQuj online. wa’DIch qaSpa’ wej Qu’ tu’lu’."
+        "intro": "ghomHomvamDaq tay’ Minecraft Bedrock luQuj online. wa’DIch qaSpa’ Dochvam yIghuHmoH."
       },
       "fortnite": {
         "intro": "Fortnite DIl HInobbe’, ’ej ghomHomvamDaq tay’ luQuj. wa’DIch qaSpa’ Dochvam yIghuHmoH."
       },
       "rocket_league": {
-        "intro": "Rocket League DIl HInobbe’, ’ej Hoch ghomHom tay’ luQuj. wa’DIch qaSpa’ wej Qu’ tu’lu’."
+        "intro": "Rocket League DIl HInobbe’, ’ej Hoch ghomHom tay’ luQuj. wa’DIch qaSpa’ Dochvam yIghuHmoH."
       },
       "pokemon_go": {
-        "intro": "Hurgh Qujlu’ Pokémon GO, telateghDaq – vaj telategh ’ej nab yIghuHmoH. loS Qu’."
+        "intro": "Hurgh Qujlu’ Pokémon GO, telateghDaq — vaj telategh ’ej nab yIghuHmoH."
       },
       "roblox_studio": {
         "intro": "ghomHomvamDaq Roblox Studio lo’lu’, Roblox Quj chenmoHmeH jan tlhab. Hoch QujwI’ Roblox pong Daj ghaj ’ej De’wI’Daj Studio ngaS."
@@ -2234,6 +2234,7 @@
       "rocket_league": "ghomHomvamvaD janmey wIqem, ’ej Rocket League ngaSpu’. pong yInob SoH.",
       "roblox_studio": "ghomHomvamvaD De’wI’mey wIqem, ’ej Roblox Studio ngaSpu’. pong wIqemlaHbe’ – vaj wa’ Qu’ neH Daghaj."
     },
+    "remoteOnlyIntro": "online qaS ghomHomvam, QIchmeH pa’Daq. wa’DIch qaSpa’ wa’ Qu’ neH tu’lu’.",
     "steps": {
       "minecraftJavaAccount": {
         "title": "Minecraft ngaSbogh Microsoft pong yISuq",
@@ -2324,6 +2325,10 @@
       "robloxStudioTest": {
         "title": "wa’DIch ghomHom qaSpa’ Hoch yInuD",
         "body": "DaH nom yInuDchugh, ghomHom wa’DIch wa’maH tup DachIlbe’:"
+      },
+      "remoteSession": {
+        "title": "QIchmeH jan ’ej mIllogh jan yIghuHmoH",
+        "body": "QIchmeH pa’Daq qaS ghomHom, ’ej jIH’a’ lo’bogh De’wI’Daq vumtaH pa’vam: Quj ngaSbogh De’wI’, pagh telategh, pagh nav De’wI’ console retlhDaq. QoghDu’lIj yIlo’ — QIchmeH jan ngaSbogh QoghDu’ QaQqu’, vaj latlhpu’vaD chuSqa’be’ Quj wab. wa’DIch bIjeSDI’, QIchmeH jan ’ej mIllogh jan lo’meH chaw’ tlhob jIH’a’ — yInob. mIllogh jan DapoSmoHnISbe’, ’ach DapoSmoHchugh, Gedu — ghomHom DevwI’, Quj ghojmoHwI’ — legh: pa’Daq ghaHtaHbogh Hoch ghaH ghaH ’e’ ja’bogh nuv’e’. tam Daq yISam, ’ej wa’DIchDaq puS tup nom yIjeS."
       }
     },
     "platformNotes": {

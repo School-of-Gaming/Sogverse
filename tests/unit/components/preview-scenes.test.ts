@@ -1801,4 +1801,20 @@ describe("the topic prep scene", () => {
     );
     expect(emptied).toContain("minecraft_education");
   });
+
+  it("has a label-only guide to add to the remote column, and none in person", () => {
+    // The extra card the scene draws under "Any other topic". It is one card
+    // for five topics because their guides are identical — nothing in the
+    // one-step form is keyed by topic — and it belongs to the remote column
+    // alone, which is what the scene's `isRemote` guard around it says.
+    const labelOnly = PRODUCT_TOPIC_VALUES.filter((t) => !topicHasPrep(t));
+    expect(labelOnly.length).toBeGreaterThan(0);
+
+    for (const topic of labelOnly) {
+      const remote = resolveTopicPrep(topic, true);
+      expect(remote?.form, topic).toBe("remoteOnly");
+      expect(remote?.steps, topic).toHaveLength(1);
+      expect(resolveTopicPrep(topic, false), topic).toBeNull();
+    }
+  });
 });

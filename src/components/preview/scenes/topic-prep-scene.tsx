@@ -1,4 +1,4 @@
-/* eslint-disable i18next/no-literal-string -- every literal in this file is preview scaffolding on an admin-only page: the column's own title, the per-topic heading's fallback line, and the note that a topic renders nothing in this form. The guides themselves are the translated part, and they come from <TopicPrepContent> */
+/* eslint-disable i18next/no-literal-string -- every literal in this file is preview scaffolding on an admin-only page: the column's own title, the per-topic heading's fallback line, the label-only card's heading, and the note that a topic renders nothing in this form. The guides themselves are the translated part, and they come from <TopicPrepContent> */
 import { Card, CardContent } from "@/components/ui/card";
 import { TopicPrepContent } from "@/components/topic-prep/TopicPrepContent";
 import {
@@ -7,6 +7,7 @@ import {
   resolveTopicPrep,
   topicHasPrep,
 } from "@/lib/products/topics";
+import type { ProductTopic } from "@/types";
 
 /**
  * Every topic's "Before the first session" guide, one after another.
@@ -30,7 +31,20 @@ import {
  * nothing says so in a muted line instead of vanishing — Minecraft Education is
  * deliberately empty in person, and a page that simply skipped it would look
  * identical to one where the guide had gone missing.
+ *
+ * The `remote` column carries one card the topic registry cannot name: the
+ * one-step guide every label-only topic gets, which is the shared
+ * remote-session step under the generic intro. It is written once and rendered
+ * on five topics, so it is read once here rather than five times — and it only
+ * exists in this column, which is why `in-person` is unchanged.
  */
+
+/**
+ * Any one of the five label-only topics stands in for all of them: their guide
+ * is the shared step under the generic intro, with nothing keyed by topic in
+ * it, so rendering a second would render the same words again.
+ */
+const LABEL_ONLY_SAMPLE: ProductTopic = "esports";
 
 export const TOPIC_PREP_SCENARIOS = ["remote", "in-person"] as const;
 
@@ -58,7 +72,7 @@ export function TopicPrepScene({
           </h1>
           <p className="text-sm text-muted-foreground">
             {isRemote
-              ? "Every step of every guide: the family is on their own machine, so nothing is filtered away."
+              ? "Every step of every guide, plus the shared voice-room step every remote product ends on."
               : "Only the account steps: School of Gaming brings the machines with the software already on them."}
           </p>
         </div>
@@ -80,6 +94,18 @@ export function TopicPrepScene({
             </CardContent>
           </Card>
         ))}
+
+        {/* The five label-only topics render one identical guide, so they get
+            one card rather than five. Remote only: in person they have nothing
+            to say, which is what they had before the shared step existed. */}
+        {isRemote && (
+          <Card>
+            <CardContent className="space-y-4 p-5 sm:p-6">
+              <h2 className="text-lg font-semibold">Any other topic</h2>
+              <TopicPrepContent topic={LABEL_ONLY_SAMPLE} isRemote />
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

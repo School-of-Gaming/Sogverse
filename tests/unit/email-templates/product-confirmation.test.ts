@@ -815,14 +815,17 @@ describe("the zone the times are given in", () => {
  * is what the *mail* decides about it — that it is stated at all, on which
  * renders, to which readers, and in both of the forms this mail states its
  * content in. The two negatives are the load-bearing half: a waitlist join has
- * no seat and therefore no first session to be ready for, and a topic with no
- * guide has to leave the mail exactly as it was before the guide existed.
+ * no seat and therefore no first session to be ready for, and an in-person
+ * product whose topic brings no steps has to leave the mail exactly as it was
+ * before the guide existed.
  */
 describe("the “Before the first session” guide", () => {
   const HEADING = "Before the first session";
   /** Two of the Java guide's steps: an account step, and an install step. */
   const ACCOUNT_STEP = "Get a Microsoft account with Minecraft on it";
   const INSTALL_STEP = "Install the Minecraft Launcher";
+  /** The step every remote guide ends on, whatever its topic. */
+  const REMOTE_STEP = "Get the mic and camera ready";
 
   it("states the guide on an enrolled signup", () => {
     const html = render();
@@ -855,9 +858,20 @@ describe("the “Before the first session” guide", () => {
     }
   });
 
-  it("states none for a topic that carries no guide", () => {
-    const html = render({ topic: "esports" });
+  it("states none for a label-only topic on an in-person product", () => {
+    // Nothing to install, nothing to sign into, and no voice room either — so
+    // the mail is exactly the mail it was before the guide existed.
+    const html = render({ topic: "esports", isRemote: false });
     expect(html).not.toContain(HEADING);
+    expect(html).not.toContain(ACCOUNT_STEP);
+  });
+
+  it("states the one-step guide for a label-only topic on a remote product", () => {
+    // The room is the thing to get ready for, and it belongs to the product
+    // rather than to the topic.
+    const html = render({ topic: "esports" });
+    expect(html).toContain(HEADING);
+    expect(html).toContain(REMOTE_STEP);
     expect(html).not.toContain(ACCOUNT_STEP);
   });
 
@@ -901,6 +915,7 @@ describe("the “Before the first session” guide", () => {
       expect(body).toContain(HEADING);
       expect(body).toContain(`1. ${ACCOUNT_STEP}`);
       expect(body).toContain(`2. ${INSTALL_STEP}`);
+      expect(body).toContain(`4. ${REMOTE_STEP}`);
       expect(body.indexOf("What happens next")).toBeLessThan(body.indexOf(HEADING));
       expect(body.indexOf(HEADING)).toBeLessThan(body.indexOf(DASHBOARD_URL));
     });
@@ -913,7 +928,8 @@ describe("the “Before the first session” guide", () => {
       const inPerson = text({ isRemote: false });
       expect(inPerson).toContain(ACCOUNT_STEP);
       expect(inPerson).not.toContain(INSTALL_STEP);
-      expect(text({ topic: "esports" })).not.toContain(HEADING);
+      expect(inPerson).not.toContain(REMOTE_STEP);
+      expect(text({ topic: "esports", isRemote: false })).not.toContain(HEADING);
     });
   });
 

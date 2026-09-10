@@ -23,7 +23,8 @@ import { INERT_HREF } from "@/lib/constants/routes";
  *     the in-person one and the unplaced seat, the latter being inert as a link
  *     while still opening a dialog, because a dialog is not a page.
  *  4. **Three cards never offer it**: a queue place (no seat to get ready for),
- *     a finished run, and a topic with no guide.
+ *     a finished run, and an in-person card whose topic brings no steps. The
+ *     third is in-person alone — remotely there is always the voice room.
  *  5. **Only the affirmative dismisses.** Closing the dialog any other way
  *     leaves the affordance exactly where it was, so checking one step does not
  *     silently throw the guide away.
@@ -243,13 +244,23 @@ describe("the cards that never offer it", () => {
     expect(screen.queryByText(TRIGGER)).toBeNull();
   });
 
-  it("says nothing when the topic has no guide", () => {
-    // A label-only topic: it names subject matter rather than one piece of
-    // software, so there is nothing to install or sign into beforehand.
-    renderCard({ topic: "esports" });
+  it("says nothing on an in-person card whose topic brings no steps", () => {
+    // A label-only topic names subject matter rather than one piece of
+    // software, so there is nothing to install or sign into — and in person
+    // there is no voice room to get ready for either.
+    renderCard({ topic: "esports", isRemote: false, hasVoiceRoom: false });
 
     expect(screen.queryByText(TRIGGER)).toBeNull();
-    expect(lockedJoin()).toBeTruthy();
+  });
+
+  it("still offers the guide on a remote card whose topic brings no steps", () => {
+    // The room is the thing to get ready for, and every remote product has
+    // one — so the affordance is drawn on a topic that used to have nothing to
+    // say, and it takes the locked Join's slot like any other guide.
+    renderCard({ topic: "esports" });
+
+    expect(screen.queryByText(TRIGGER)).not.toBeNull();
+    expect(lockedJoin()).toBeNull();
   });
 });
 

@@ -66,6 +66,16 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 // no guide at all in person, which is what `resolveTopicPrep` returning null
 // means.
 //
+// **One step belongs to no topic at all.** Getting a microphone and camera
+// ready for the voice room is a fact about a *remote* product — the session
+// happens in a browser room, and in person it does not happen at all — so it is
+// declared once, outside every topic's `steps`, and `resolveTopicPrep` appends
+// it as the last step of every remote guide. Written into the seven blocks it
+// would be seven copies of one paragraph, drifting apart the first time one of
+// them was edited. It is also why the five label-only topics now render a guide
+// on a remote product where they rendered none before: there is exactly one
+// thing to do beforehand, and it is this.
+//
 // **Every message-shaped thing stays out of this registry.** It holds structure
 // and literals (a step's key, its scope, its URL) and the catalog holds the
 // prose, exactly as `info` and `productDetail.topicInfo` already relate. The
@@ -473,6 +483,28 @@ export function topicHasInfoCard(
 // Prep: the "Before the first session" guide
 // ---------------------------------------------------------------------------
 
+/**
+ * The one prep step that is not a topic's: getting the microphone and camera
+ * ready for the voice room.
+ *
+ * **Declared here rather than inside seven `steps` arrays** because it is a
+ * fact about a *remote* product and not about any topic — the same paragraph
+ * would otherwise be written seven times and be seven paragraphs to keep in
+ * agreement. `resolveTopicPrep` appends it, last, to every remote guide, and a
+ * label-only topic's remote guide is this step and nothing else.
+ *
+ * Its scope is `ownDevice` for the reason the scope axis exists: the room runs
+ * in a browser on the family's own machine, and at an in-person product there
+ * is no room to join, so the step is never the family's to do there. The
+ * resolver never has to *filter* it — it is only ever added on the remote
+ * branch — but the scope has to be the honest one, because the tests read a
+ * plan's steps back through it.
+ */
+const REMOTE_SESSION_STEP = {
+  key: "remoteSession",
+  scope: "ownDevice",
+} as const satisfies TopicPrepStepShape;
+
 // The topics that carry a prep block, derived from the map the same way
 // `TopicWithInfoCard` is — so adding or removing one `prep` is the whole edit.
 // This is the type the guide's per-topic message keys are resolved against.
@@ -501,7 +533,8 @@ export type TopicWithAccountsOnlyIntro = {
 // union and therefore not something the compiler can check. Read through the
 // map, it is a union of exactly the keys that exist.
 export type TopicPrepStep =
-  (typeof PRODUCT_TOPICS)[TopicWithPrep]["prep"]["steps"][number];
+  | (typeof PRODUCT_TOPICS)[TopicWithPrep]["prep"]["steps"][number]
+  | typeof REMOTE_SESSION_STEP;
 
 /** Every step key the catalog must hold prose for. */
 export type TopicPrepStepKey = TopicPrepStep["key"];
@@ -517,12 +550,15 @@ export type TopicPrepChecklistKey = NonNullable<
 >[number];
 
 /**
- * What one surface renders: the steps that survive the product's own filter,
- * and which of the two intros the filtered form takes.
+ * What one surface renders: the steps that apply to this product, and which
+ * intro they take.
  *
- * The form is a discriminant rather than a boolean because the two branches
- * read different message keys, and only the accounts-only branch's topic is
- * narrow enough to have one.
+ * The form is a discriminant rather than a boolean because each branch reads a
+ * *different message key*, and the type is what stops a renderer asking the
+ * catalog for one that does not exist. `full` and `accountsOnly` are keyed by
+ * topic and carry the narrowest topic union that has prose; `remoteOnly` is
+ * keyed by nothing, because a guide that is only the shared remote-session step
+ * has no topic-specific sentence to open with and takes the one generic intro.
  */
 export type TopicPrepPlan =
   | {
@@ -534,13 +570,22 @@ export type TopicPrepPlan =
       form: "accountsOnly";
       topic: TopicWithAccountsOnlyIntro;
       steps: readonly TopicPrepStep[];
+    }
+  | {
+      /** A label-only topic on a remote product: the shared step, alone. */
+      form: "remoteOnly";
+      steps: readonly TopicPrepStep[];
     };
 
 /**
- * The guide's render condition, in one place — the twin of `topicHasInfoCard`,
- * and asked for the same reason: several surfaces decide whether to draw a
- * card, a dialog trigger or a mail section, and a `prep !== undefined` check
- * repeated per surface would drift.
+ * Whether a topic brought a guide of its own — the twin of `topicHasInfoCard`,
+ * and asked for the same reason: a `prep !== undefined` check repeated per
+ * surface would drift.
+ *
+ * It is **not** the render condition on its own any more — a remote product
+ * with no topic steps still renders the shared one — so a surface asks
+ * `resolveTopicPrep`, and this predicate answers only the narrower question of
+ * whether the topic brought steps and prose of its own.
  *
  * A type predicate rather than a boolean, so a caller's topic narrows to the
  * union the catalog actually has prose for. The lookup widens to `TopicMeta`
@@ -570,22 +615,39 @@ function topicHasAccountsOnlyIntro(
  * of its steps belongs to a device School of Gaming is supplying. Minecraft
  * Education in person is the second case, and it is why the answer is a
  * predicate over the *filtered* steps rather than over `prep` alone.
+ *
+ * **Both ways are now in-person answers.** Every remote product has at least
+ * the shared remote-session step, so `null` on a remote product is unreachable
+ * — which is the whole change a label-only topic sees: it drew no guide, and
+ * now it draws a one-step one.
  */
 export function resolveTopicPrep(
   topic: ProductTopic,
   isRemote: boolean,
 ): TopicPrepPlan | null {
-  if (!topicHasPrep(topic)) return null;
+  // A topic with no steps of its own still has the shared one, on a remote
+  // product: the room is browser-based and the mic has to work. In person it
+  // has nothing, which is the answer it has always given.
+  if (!topicHasPrep(topic)) {
+    return isRemote ? { form: "remoteOnly", steps: [REMOTE_SESSION_STEP] } : null;
+  }
 
   // Read through the const map rather than the declared shape, so the step
   // keys stay the literals the message catalog is checked against.
   const declared: readonly TopicPrepStep[] = PRODUCT_TOPICS[topic].prep.steps;
-  const steps = isRemote
+  const applicable = isRemote
     ? declared
     : declared.filter((step) => step.scope === "always");
 
-  if (steps.length === 0) return null;
-  if (steps.length === declared.length) return { form: "full", topic, steps };
+  if (applicable.length === 0) return null;
+
+  // The shared step goes last, after everything the topic itself asked for: it
+  // is the one thing to do once the game is installed and signed into.
+  const steps = isRemote ? [...applicable, REMOTE_SESSION_STEP] : applicable;
+
+  if (applicable.length === declared.length) {
+    return { form: "full", topic, steps };
+  }
 
   // Something was filtered out, so the guide is the accounts-only form — which
   // only a topic declaring the second intro can be in. A topic that filters

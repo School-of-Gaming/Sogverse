@@ -2165,19 +2165,19 @@
         "intro": "Näillä kerroilla pelataan Minecraftia tietokoneella, Java-versiolla. Käy alla olevat vaiheet läpi ennen ensimmäistä kertaa, niin itse päivänä ei tarvitse selvitellä mitään."
       },
       "minecraft_education": {
-        "intro": "Näillä kerroilla käytetään Minecraft Educationia, joka on ilmainen. School of Gaming jakaa tunnukset ensimmäisellä kerralla, joten etukäteen tarvitsee hoitaa vain yksi asia."
+        "intro": "Näillä kerroilla käytetään Minecraft Educationia, joka on ilmainen. School of Gaming jakaa tunnukset ensimmäisellä kerralla, joten etukäteen ei tarvitse hoitaa juuri mitään."
       },
       "minecraft_bedrock": {
-        "intro": "Näillä kerroilla pelataan Minecraft Bedrockia yhdessä verkossa. Ennen ensimmäistä kertaa hoidettavana on kolme asiaa."
+        "intro": "Näillä kerroilla pelataan Minecraft Bedrockia yhdessä verkossa. Näin valmistaudut ensimmäiseen kertaan."
       },
       "fortnite": {
         "intro": "Fortnite on ilmainen, ja sitä pelataan kerroilla yhdessä. Näin valmistaudut ensimmäiseen kertaan."
       },
       "rocket_league": {
-        "intro": "Rocket League on ilmainen, ja jokainen kerta pelataan yhdessä. Ennen ensimmäistä kertaa hoidettavana on kolme asiaa."
+        "intro": "Rocket League on ilmainen, ja jokainen kerta pelataan yhdessä. Näin valmistaudut ensimmäiseen kertaan."
       },
       "pokemon_go": {
-        "intro": "Pokémon GO:ta pelataan ulkona puhelimella, joten etukäteen hoidetaan kuntoon puhelin ja suunnitelma. Neljä asiaa."
+        "intro": "Pokémon GO:ta pelataan ulkona puhelimella, joten etukäteen hoidetaan kuntoon puhelin ja suunnitelma."
       },
       "roblox_studio": {
         "intro": "Nämä kerrat rakennetaan Roblox Studiolla, Robloxin ilmaisella pelinkehitysohjelmalla. Jokainen osallistuja tarvitsee oman Roblox-tilin ja Studion asennettuna siihen tietokoneeseen, jota käyttää."
@@ -2190,6 +2190,7 @@
       "rocket_league": "Näille kerroille tuomme koneet mukanamme, ja Rocket League on niissä valmiina. Tili on se osa, joka tulee teiltä.",
       "roblox_studio": "Näille kerroille tuomme tietokoneet mukanamme, ja Roblox Studio on niissä valmiina. Tiliä emme voi tuoda – se on siis ainoa asia, joka pitää hoitaa etukäteen."
     },
+    "remoteOnlyIntro": "Nämä kerrat pidetään verkossa, äänihuoneessa. Ennen ensimmäistä kertaa on yksi asia hoidettavana.",
     "steps": {
       "minecraftJavaAccount": {
         "title": "Hanki Microsoft-tili, jolla on Minecraft",
@@ -2280,6 +2281,10 @@
       "robloxStudioTest": {
         "title": "Testaa kaikki ennen ensimmäistä kertaa",
         "body": "Nopea läpikäynti nyt säästää kerran ensimmäiset kymmenen minuuttia:"
+      },
+      "remoteSession": {
+        "title": "Laita mikrofoni ja kamera kuntoon",
+        "body": "Kerta pidetään äänihuoneessa, joka toimii verkkoselaimessa sillä laitteella, joka teille parhaiten sopii: sillä tietokoneella, jolla peli on, tai puhelimella tai tabletilla konsolin vieressä. Parhaiten toimivat kuulokkeet tai nappikuulokkeet, joissa on mikrofoni, jotta pelin ääni ei kaiu takaisin muille. Kun liityt ensimmäisen kerran, selain kysyy lupaa käyttää mikrofonia ja kameraa — anna lupa. Kamera on vapaaehtoinen, mutta kun sen laittaa päälle, Gedu — kerran vetävä pelikasvattaja — näkee, että jokainen huoneessa on se, joka sanoo olevansa. Etsi rauhallinen paikka ja liity ensimmäisellä kerralla muutama minuutti etuajassa."
       }
     },
     "platformNotes": {

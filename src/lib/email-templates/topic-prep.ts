@@ -25,22 +25,30 @@ import type { ProductTopic } from "@/types";
  * on the confirmation page, in this mail and on their My SOG enrolment card
  * reads one guide three times rather than three guides. Which steps apply is
  * `resolveTopicPrep`'s answer and not this file's — an in-person product
- * renders only the account steps, because School of Gaming brings the machines
+ * renders only the account steps, because School of Gaming brings the machines,
+ * and a remote one gains the shared step about the voice room's mic and camera
  * (see the registry's header note).
  *
- * **Both halves return empty rather than something short.** A topic with no
- * guide, and an in-person product whose every step belongs to a machine we are
- * supplying, are the same answer from a mail's point of view: there is nothing
- * to tell this family to do, and a section label over a closing line would be a
- * paragraph of furniture saying so.
+ * **Both halves return empty rather than something short.** They do it for one
+ * remaining reason: an in-person product with nothing left after the filter —
+ * whether the topic never had steps of its own, or every one of them belongs to
+ * a machine we are supplying. There is nothing to tell that family to do, and a
+ * section label over a closing line would be a paragraph of furniture saying
+ * so. A remote product always has something, because the room always does.
  *
  * The translator is scoped to `topicPrep` rather than to `email` — see
  * `translator.ts` for why the mail takes a second translator instead of a
  * second copy of the prose.
  */
 
-/** The intro the filtered form takes: the ordinary one, or the accounts-only. */
+/**
+ * The intro this form takes: the topic's own, the accounts-only twin, or — for
+ * a label-only topic whose remote guide is the shared step alone — the one
+ * generic line. Three branches rather than two because only two of the forms
+ * carry a topic the catalog has an intro for.
+ */
 function introOf(t: TopicPrepTranslator, plan: TopicPrepPlan): string {
+  if (plan.form === "remoteOnly") return t("remoteOnlyIntro");
   return plan.form === "accountsOnly"
     ? t(`accountsOnlyIntro.${plan.topic}`)
     : t(`topics.${plan.topic}.intro`);

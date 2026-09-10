@@ -415,14 +415,16 @@ const PRODUCT_AUDIENCE_OPTIONS = [
  * and the guide is what this field exists to look at: Roblox Studio's is the
  * longest of the seven and the one adapted from a real working document, so the
  * form nobody has typed into composes the render with the most to read. The
- * rest follow the catalogue's own order. A topic with no guide is reachable one
- * click away, and it is the mail this template sent before the guide existed.
+ * rest follow the catalogue's own order. A label-only topic is reachable one
+ * click away: it brings no steps of its own, so in person it composes the mail
+ * this template sent before the guide existed, and remotely it composes the
+ * one-step guide every remote product ends on.
  */
 const PRODUCT_TOPIC_OPTIONS = [
   "roblox_studio" as const,
   ...PRODUCT_TOPIC_VALUES.filter((topic) => topic !== "roblox_studio"),
 ].map((value) => ({
-  label: `${PRODUCT_TOPICS[value].label}${topicHasPrep(value) ? "" : " (no guide)"}`,
+  label: `${PRODUCT_TOPICS[value].label}${topicHasPrep(value) ? "" : " (no topic steps)"}`,
   value,
 }));
 

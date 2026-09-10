@@ -18,9 +18,11 @@ import type { ProductTopic } from "@/types";
 //
 // Whether anything renders at all is `resolveTopicPrep`, which answers both
 // halves of the question — the topic has a guide, and at least one of its steps
-// applies to this product. A remote product renders every step; an in-person
-// one renders only the account steps, because School of Gaming brings the
-// machines. See the registry's header note for that split.
+// applies to this product. A remote product renders every step, plus the shared
+// one about the voice room's mic and camera; an in-person one renders only the
+// account steps, because School of Gaming brings the machines. See the
+// registry's header note for that split, and for why a label-only topic's
+// remote guide is that shared step alone.
 
 export interface TopicPrepContentProps {
   topic: ProductTopic;
@@ -43,10 +45,16 @@ export function TopicPrepContent({
   const plan = resolveTopicPrep(topic, isRemote);
   if (plan === null) return null;
 
+  // One branch per form, because each reads a different key and only two of
+  // the three have a topic to key by — a label-only topic has no
+  // `topics.<topic>.intro` to ask for, which is exactly what the plan's
+  // discriminant is protecting.
   const intro =
-    plan.form === "accountsOnly"
-      ? t(`accountsOnlyIntro.${plan.topic}`)
-      : t(`topics.${plan.topic}.intro`);
+    plan.form === "remoteOnly"
+      ? t("remoteOnlyIntro")
+      : plan.form === "accountsOnly"
+        ? t(`accountsOnlyIntro.${plan.topic}`)
+        : t(`topics.${plan.topic}.intro`);
 
   return (
     <div className="space-y-4">

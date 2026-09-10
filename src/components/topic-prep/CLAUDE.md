@@ -1,7 +1,8 @@
 # Topic prep — the "Before the first session" guide
 
 A product's topic can carry a short guide telling a family what to do before the first
-session: create the account, install the software, test it. This directory holds the
+session: create the account, install the software, test it — and, on a remote product,
+get the mic and camera ready for the voice room. This directory holds the
 component that renders its body, the dialog an enrolment card opens it in, and the hook
 that remembers a family has finished with it. The steps themselves are declared in the
 product topic registry under `src/lib/products/`, and every word a reader sees lives in the top-level
@@ -50,18 +51,43 @@ are `always`; install, sign-in and test steps are `ownDevice`. A guide read on a
 family owns has no `ownDevice` steps at all, because the phone is theirs wherever the
 session happens.
 
+## One step belongs to the product, not to the topic
+
+**Rule: getting the mic and camera ready for the voice room is declared once, outside every
+topic, and appended as the last step of every remote guide.** It is a fact about a *remote*
+product — the session happens in a browser room, and in person there is no room to join —
+so writing it into the seven topic blocks would be seven copies of one paragraph, drifting
+apart the first time one of them was edited. Its scope is `ownDevice` for the reason the
+axis exists: the room runs on the family's own machine, and in person it does not run.
+
+**Consequence: a label-only topic now has a guide, on a remote product only.** The five
+topics that name subject matter rather than one piece of software (esports, creator studio,
+game studio, programming, AI) brought no steps and rendered nothing; remotely they now
+render exactly one step, under a generic intro of its own rather than a topic's. That makes
+`null` unreachable on a remote product: every remote guide has at least the room to get
+ready for, and the empty answer is now an in-person answer alone.
+
+**Consequence: an intro may not count the steps.** A guide that opened "Three things to sort
+out" was true of what the topic declared and false the moment a shared step joined it. The
+intros state what the guide is about and leave the numbering to the list.
+
 Two consequences the surfaces have to honour:
 
-- **A topic can filter down to nothing, and then nothing renders** — no heading, no
-  intro, no closing. That is the correct answer for a topic where we supply the machines
-  *and* the logins: there is genuinely nothing to do beforehand, and a guide saying so is
-  furniture. The registry's resolver answers this, and it is the only render condition a
-  surface should ask.
-- **The intro has to be true of the filtered form.** A guide shortened to its account
-  steps cannot open by promising software to install, so a topic with both scopes carries
-  a second, accounts-only intro and the resolver says which one this render takes. The
-  **closing** deliberately has no twin: there is one, shared by every topic and both
-  forms, written so that it is true either way.
+- **An in-person guide can filter down to nothing, and then nothing renders** — no
+  heading, no intro, no closing. That is the correct answer for a topic where we supply the
+  machines *and* the logins: there is genuinely nothing to do beforehand, and a guide
+  saying so is furniture. The registry's resolver answers this, and it is the only render
+  condition a surface should ask — never "does the topic have a block", which is now a
+  narrower question than "is there a guide".
+- **The intro has to be true of the form being rendered, so the plan names which intro to
+  read.** A guide shortened to its account steps cannot open by promising software to
+  install, so a topic with both scopes carries a second, accounts-only intro; a guide that
+  is only the shared remote step has no topic to open about at all, so it takes one generic
+  intro. Those are the plan's three forms — `full`, `accountsOnly`, `remoteOnly` — and the
+  discriminant exists precisely because each reads a different message key and only two of
+  them have a topic narrow enough to key by. The **closing** deliberately has no twin:
+  there is one, shared by every topic and every form, written so that it is true of all of
+  them.
 
 ## Four surfaces, two renderers, one guide
 
