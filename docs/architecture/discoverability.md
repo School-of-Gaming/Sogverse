@@ -20,11 +20,12 @@ key off.
 1. **Promoted.** The marketing pages (home, about, the legal documents, attributions), the
    auth entry points, and the `/shop` browse grid. In the sitemap, self-canonical with the
    full `hreflang` set, a page-specific localized description, structured data, and
-   listed in `llms.txt`.
+   linked from `llms.txt` where a reader would want the link.
 2. **Reachable, not promoted.** Public because a family holding a link must get in, but
-   `noindex, nofollow`, out of the sitemap, no `hreflang`, never linked from `llms.txt` or
-   from any structured-data block. Two surfaces, for two reasons that come up often
-   enough to state plainly:
+   `noindex, nofollow`, out of the sitemap, no `hreflang`, never listed in `llms.txt`, and
+   never the subject or the URL of any structured-data node — the shop's `ItemList` names
+   the shop-visible products and carries no URLs at all. Two surfaces, for two reasons
+   that come up often enough to state plainly:
    - **The entire `/schools` tree.** Those products are **only for families living in the
      named Finnish municipalities**. The pages are public for convenience — a family
      forwards the link, a school newsletter carries it — not because the offer is open.
@@ -65,9 +66,10 @@ Each one exists to make the posture above hold by construction rather than by me
   fetched, so the tag is never read, and the bare URL can still be indexed off an
   external link. Allowing the crawl and serving the tag is what deindexes.
 - **The sitemap** lists the promoted routes, one URL per indexed locale, every entry
-  carrying the whole language set as alternates. It carries **no `lastmod`**: the only
-  value we could emit is "now", every crawl, and search engines discard a modification
-  date they cannot trust.
+  carrying the whole language set as alternates. It carries **no `lastmod`**: the route
+  is prerendered, so the only value available is the deploy time — one date on every
+  URL whether or not that page changed — and search engines discard a modification date
+  they cannot trust.
 - **`robots.txt`** derives the gated-prefix disallow list from the locale list (so a new
   locale cannot leave `/xx/admin` crawlable), and applies one identical rule set to `*`
   and to every named AI agent. Adding an agent is one line in one constant.
@@ -83,7 +85,10 @@ Each one exists to make the posture above hold by construction rather than by me
   data block reads the same source as the visible page** — the same message keys, the
   same prefetched rows — so it can never assert something the page does not show, and
   only shop-visible products can reach the `ItemList` because only those are ever
-  prefetched for the grid.
+  prefetched for the grid. The `ItemList`'s items carry a position and a name and **no
+  URL**: a product detail page is tier 2, so a URL there would point a crawler at pages
+  the tag on them forbids. It is omitted entirely when the grid has nothing to list,
+  rather than emitted empty over a page the client is still filling.
 - **`llms.txt`** is one English file at the site root, generated at request time from the
   English catalog (the site description, the About prose, every FAQ question and answer
   flattened to plain text) so it cannot drift from the site, with absolute links to the

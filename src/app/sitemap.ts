@@ -51,12 +51,15 @@ function urlFor(pathname: StaticAppHref, locale: (typeof INDEXED_LOCALES)[number
 /**
  * No `lastModified` anywhere, deliberately.
  *
- * This function runs per request, so the only value it could put there is
- * "now" — which claims every URL on the site changed on every crawl. A search
- * engine that cannot trust a `lastmod` stops reading it, and one that is
- * always today is the clearest possible signal that it is generated rather
- * than true. We have no per-page modification time to offer (these are code-
- * and catalog-backed pages, not rows with an `updated_at`), and omitting the
+ * The only value this function could put there is the build's own timestamp —
+ * it reads nothing request-scoped and declares no `dynamic`/`revalidate`, so
+ * Next prerenders it and every URL gets the same date. That date says a deploy
+ * happened, not that the page changed: a typo fix on one legal page would
+ * restamp the whole site. A search engine that cannot trust a `lastmod` stops
+ * reading it, and one that moves in lockstep across every URL is the clearest
+ * possible signal that it is generated rather than true. We have no per-page
+ * modification time to offer (these are code- and catalog-backed pages, not
+ * rows with an `updated_at`), and omitting the
  * field is a better answer than a fabricated one: the crawler falls back to
  * its own change detection, which is what it would do with a `lastmod` it
  * distrusted anyway. If a real per-page timestamp ever exists, that is the

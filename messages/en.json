@@ -42,7 +42,6 @@
       "geduDashboard": "My SOG",
       "geduSessionDetails": "Session details",
       "familyProduct": "Sessions and reports",
-      "familyProductDescription": "The schedule for this group and the write-up from every session.",
       "gamerDashboard": "My SOG",
       "voiceSession": "Voice Session",
       "shop": "Shop",
@@ -63,15 +62,15 @@
       "seatOffer": "Seat offer"
     },
     "descriptions": {
-      "signIn": "Sign in to your School of Gaming account to see your gamers' upcoming sessions, manage enrolments and keep your family's details up to date.",
-      "createAccount": "Create your family's School of Gaming account and enrol your child in clubs, camps and events led by professional Game Educators.",
+      "signIn": "Sign in to your School of Gaming account to see your gamers’ upcoming sessions, manage enrolments and keep your family’s details up to date.",
+      "createAccount": "Create your family’s School of Gaming account and enrol your child in clubs, camps and events led by professional Game Educators.",
       "forgotPassword": "Forgotten your password? Give us your email address and we will send you a link to choose a new one for your School of Gaming account.",
       "resetPassword": "Choose a new password for your School of Gaming account from the link we emailed you, then sign in with it straight away.",
       "registerGedu": "Apply to become a Game Educator with School of Gaming and lead clubs, camps and events for children in the games they already play.",
       "about": "Who School of Gaming is, what Yty is, and answers to the questions families ask before they enrol their child.",
-      "shop": "Browse School of Gaming's clubs, camps and events in Minecraft, Roblox, Fortnite and more, and find one that fits your child's week.",
+      "shop": "Browse School of Gaming’s clubs, camps and events in Minecraft, Roblox, Fortnite and more, and find one that fits your child’s week.",
       "resetPin": "Set a new parent PIN for your School of Gaming account from the link we emailed you. The PIN is what keeps the parent-only pages closed to your child.",
-      "privacy": "How School of Gaming collects, uses and stores your family's data: what we hold about a child, who we share it with, and the rights you can exercise.",
+      "privacy": "How School of Gaming collects, uses and stores your family’s data: what we hold about a child, who we share it with, and the rights you can exercise.",
       "terms": "The terms you agree to when you use School of Gaming: how enrolments, payments and cancellations work, and what we and you are each responsible for.",
       "antiBullying": "How School of Gaming prevents bullying in its clubs, camps and events, what happens when it occurs, and the discipline steps a Game Educator follows.",
       "attributions": "The sources and licences behind the data School of Gaming uses: place names, postcodes and player heads, each credited the way its licence requires."

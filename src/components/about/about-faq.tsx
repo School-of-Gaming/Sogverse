@@ -4,6 +4,7 @@ import { FAQ_ANSWER_TAGS } from "@/components/ui/faq-answer";
 import { JsonLd } from "@/components/seo/json-ld";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 import { messageToPlainText } from "@/lib/i18n/plain-text";
+import { rawString } from "@/lib/i18n/raw-messages";
 
 /**
  * The public FAQ's questions, ordered for a parent deciding whether to sign
@@ -85,7 +86,9 @@ export function AboutFaq({ id }: AboutFaqProps) {
   // guard, so the structured data and the rendered list are the same set by
   // construction: a page with no FAQ advertises none. The answers come from
   // `t.raw` rather than from the rendered nodes — `acceptedAnswer.text` wants
-  // the words, and the tag markup is layout.
+  // the words, and the tag markup is layout. `t.raw` is untyped, so the house
+  // validator narrows it and a missing or malformed answer fails loudly here
+  // rather than reaching a crawler as `undefined`.
   const faqPageJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -94,7 +97,7 @@ export function AboutFaq({ id }: AboutFaqProps) {
       name: t(`items.${key}.question`),
       acceptedAnswer: {
         "@type": "Answer",
-        text: messageToPlainText(t.raw(`items.${key}.answer`), {
+        text: messageToPlainText(rawString(t.raw(`items.${key}.answer`)), {
           supportEmail: SUPPORT_EMAIL,
         }),
       },

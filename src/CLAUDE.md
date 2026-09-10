@@ -102,7 +102,7 @@ The canonical sign-out shape is an HTML `<form method="post" action="/api/auth/s
 
 CSP is generated per-request in `src/proxy.ts` with a unique nonce (`crypto.randomUUID()`). In production, `script-src` uses `'nonce-{random}' 'strict-dynamic'` — only scripts tagged by Next.js's SSR pipeline execute. In development, it falls back to `'unsafe-inline' 'unsafe-eval'` for HMR compatibility. Static security headers (X-Frame-Options, HSTS, etc.) remain in `next.config.ts`.
 
-**Rule: Never add inline `<script>` tags directly.** The nonce-based CSP blocks any inline script without the per-request nonce. Use Next.js `<Script>` component or ensure scripts go through the SSR pipeline. If you must add an inline script, read the nonce from the `x-nonce` request header in a server component.
+**Rule: Never add inline `<script>` tags directly.** The nonce-based CSP blocks any inline script without the per-request nonce. Use Next.js `<Script>` component or ensure scripts go through the SSR pipeline. If you must add an inline script, read the nonce from the `x-nonce` request header in a server component. The one exception is the `type="application/ld+json"` block under `src/components/seo/`: it is data the browser never executes, so `script-src` and the nonce do not apply to it — and it must not be given one.
 
 ## Layout & Scrolling
 
@@ -260,7 +260,7 @@ A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoke
 
 Some user-authored fields are stored as **markdown** rather than plain text, because markdown is the one format that renders in-app *and* converts cleanly into the email the same content is later sent as. The rules that govern it:
 
-**Rule: markdown is rendered through the shared `Markdown` component (`src/components/ui/markdown.tsx`), never by converting it to an HTML string.** There is no `dangerouslySetInnerHTML` anywhere in `src/`, and adding one behind a field any user can type into is how a stored-XSS hole ships. The renderer produces React elements, refuses raw HTML in the source, and takes an **allow-list** of elements — anything outside it is unwrapped to its text rather than dropped, so an unsupported construct shows its words instead of silently deleting a paragraph of somebody's writing.
+**Rule: markdown is rendered through the shared `Markdown` component (`src/components/ui/markdown.tsx`), never by converting it to an HTML string.** There is exactly one `dangerouslySetInnerHTML` in `src/` — the JSON-LD data block under `src/components/seo/`, whose content is our own serialized JSON with `<`, `>` and `&` escaped, never reader- or admin-supplied HTML — and adding one behind a field any user can type into is how a stored-XSS hole ships. The renderer produces React elements, refuses raw HTML in the source, and takes an **allow-list** of elements — anything outside it is unwrapped to its text rather than dropped, so an unsupported construct shows its words instead of silently deleting a paragraph of somebody's writing.
 
 **Rule: whether an authored field carries links is a property of the field — of who writes it and who reads it — and never of who is looking.** The two halves of the line:
 

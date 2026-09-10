@@ -22,16 +22,28 @@ import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
  * absence: `sameAs` is only worth anything if every URL in it is really ours.
  */
 
+/**
+ * The company facts, exported because two surfaces state them — this graph and
+ * `/llms.txt` — and a fact typed out twice is a fact that will one day differ.
+ * They are constants rather than message keys because a registered name, a
+ * Business ID and a VAT number have no French version.
+ */
+
 /** The registered entity behind the brand. */
-const LEGAL_NAME = "School of Gaming Galactic Oy";
+export const LEGAL_NAME = "School of Gaming Galactic Oy";
+
+/** The Finnish Business ID, in the form Finnish-facing copy states it. */
+export const BUSINESS_ID = "3110461-1";
 
 /**
- * The VAT identifier derived from the Finnish Business ID (3110461-1) — the
- * same number, in the form the rest of the EU reads. `vatID` takes the
- * international form; the bare Business ID is what appears in Finnish-facing
- * legal copy.
+ * The VAT identifier derived from the Business ID — the same number, in the
+ * form the rest of the EU reads. `vatID` takes the international form; the
+ * bare Business ID is what appears in Finnish-facing legal copy.
  */
-const VAT_ID = "FI31104611";
+export const VAT_ID = "FI31104611";
+
+/** The country the company is registered in, as an ISO 3166-1 alpha-2 code. */
+export const COUNTRY = "FI";
 
 /**
  * The Apple touch icon, at an absolute URL.
@@ -101,7 +113,7 @@ export function siteJsonLd({ siteUrl, description }: SiteJsonLdInput): {
         url: siteUrl,
         logo: `${siteUrl}${LOGO_PATH}`,
         email: SUPPORT_EMAIL,
-        address: { "@type": "PostalAddress", addressCountry: "FI" },
+        address: { "@type": "PostalAddress", addressCountry: COUNTRY },
         vatID: VAT_ID,
       },
       {

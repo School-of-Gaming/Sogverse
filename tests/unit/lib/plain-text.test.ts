@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { messageToPlainText } from "@/lib/i18n/plain-text";
 import { FAQ_ANSWER_TAGS } from "@/components/ui/faq-answer";
-import en from "@/../messages/en.json";
+import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
+import { loadMessages } from "@/i18n/messages";
 
 /**
  * The flattener behind both machine-readable views of an FAQ answer — the
@@ -48,19 +49,25 @@ describe("messageToPlainText", () => {
     expect(messageToPlainText("  <p>One.</p>\n  <p>Two.</p>  ")).toBe("One. Two.");
   });
 
-  it("leaves every real FAQ answer free of markup and placeholders", () => {
+  it("leaves every real FAQ answer free of markup and placeholders, in every locale", async () => {
     // The catalog is the real input, so it is the real test: a tag added to
     // the answer vocabulary, or a new `{value}` a component supplies, shows up
-    // here rather than in a crawler's copy of the page.
-    for (const item of Object.values(en.about.faq.items)) {
-      const text = messageToPlainText(item.answer, { supportEmail: "help@sog.gg" });
+    // here rather than in a crawler's copy of the page. All five locales,
+    // because the `FAQPage` block renders on every language's About page —
+    // only `llms.txt` is English-only.
+    for (const locale of SUPPORTED_LOCALES) {
+      const messages = await loadMessages(locale);
 
-      for (const tag of Object.keys(FAQ_ANSWER_TAGS)) {
-        expect(text).not.toContain(`<${tag}>`);
-        expect(text).not.toContain(`</${tag}>`);
+      for (const item of Object.values(messages.about.faq.items)) {
+        const text = messageToPlainText(item.answer, { supportEmail: "help@sog.gg" });
+
+        for (const tag of Object.keys(FAQ_ANSWER_TAGS)) {
+          expect(text, locale).not.toContain(`<${tag}>`);
+          expect(text, locale).not.toContain(`</${tag}>`);
+        }
+        expect(text, locale).not.toMatch(/\{\w+\}/);
+        expect(text.length, locale).toBeGreaterThan(0);
       }
-      expect(text).not.toMatch(/\{\w+\}/);
-      expect(text.length).toBeGreaterThan(0);
     }
   });
 });

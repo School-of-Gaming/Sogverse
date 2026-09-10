@@ -6,6 +6,7 @@ import { LOCALE_CONFIG } from "@/lib/constants/locales";
 import type { StaticAppHref } from "@/lib/constants/routes";
 import { messageToPlainText } from "@/lib/i18n/plain-text";
 import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
+import { BUSINESS_ID, LEGAL_NAME, VAT_ID } from "@/lib/seo/organization";
 
 /**
  * `/llms.txt` — the site, in plain English, for a language model that has been
@@ -17,12 +18,16 @@ import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
  * get by reading the home page and the About page, minus the navigation, the
  * markup and the five-way locale fan-out.
  *
- * **Every sentence is read out of the `en` catalog rather than written here.**
- * A hand-written summary of the site is a second copy of the site's own copy,
- * and the second copy is the one that goes stale — quietly, because nothing
- * renders it. Reading the catalog means an edit to the home hero or an added
- * FAQ question reaches this file with no further work, and the FAQ order comes
- * from the About page's own key list for the same reason.
+ * **The prose about us is read out of the `en` catalog rather than written
+ * here.** A hand-written summary of the site is a second copy of the site's
+ * own copy, and the second copy is the one that goes stale — quietly, because
+ * nothing renders it. Reading the catalog means an edit to the home hero or an
+ * added FAQ question reaches this file with no further work, and the FAQ order
+ * comes from the About page's own key list for the same reason. What *is*
+ * written here is this file's own scaffolding, which no page renders: the
+ * section headings, the one-line note beside each link, and the company line —
+ * and that line's facts come from the constants the `Organization` graph uses,
+ * so the two cannot disagree.
  *
  * **One file, in English, on purpose.** The convention is a single
  * `/llms.txt` at the site root — there is no locale-negotiated form of it, and
@@ -67,6 +72,11 @@ const LINKED_PAGES: { href: StaticAppHref; label: string; note: string }[] = [
     label: "Create a parent account",
     note: "Where a family starts; children are added from the parent's account.",
   },
+  {
+    href: "/login",
+    label: "Sign in",
+    note: "Where a returning parent picks up — their own account, and each child's.",
+  },
   { href: "/privacy", label: "Privacy policy", note: "What we hold and why." },
   {
     href: "/terms-and-conditions",
@@ -79,6 +89,23 @@ const LINKED_PAGES: { href: StaticAppHref; label: string; note: string }[] = [
     note: "How we handle bullying and toxicity, and what happens when someone crosses the line.",
   },
 ];
+
+/**
+ * A locale's language name, in English.
+ *
+ * `LOCALE_CONFIG.label` is an English *fallback*, not a display string
+ * (`src/i18n/CLAUDE.md`), and the shared language-name hook that normally
+ * resolves one is a React hook with no route handler to run in. This file is
+ * English by design — a single `/llms.txt` at the site root, with no locale to
+ * negotiate — so the English display name is the right one to build here, and
+ * the label is exactly the fallback `Intl` is given for a tag it does not know.
+ */
+function languageName(locale: (typeof INDEXED_LOCALES)[number]): string {
+  return (
+    new Intl.DisplayNames(["en"], { type: "language" }).of(locale) ??
+    LOCALE_CONFIG[locale].label
+  );
+}
 
 /** One `## Heading` followed by its paragraphs, blank-line separated. */
 function section(heading: string, paragraphs: string[]): string {
@@ -127,7 +154,7 @@ function buildLlmsTxt(
     section(about.faq.heading, faq),
     section("Company", [
       "School of Gaming is the brand; Sogverse is the platform families log in to.",
-      "Legal name: School of Gaming Galactic Oy. A Finnish company, Business ID 3110461-1 (VAT FI31104611).",
+      `Legal name: ${LEGAL_NAME}. A Finnish company, Business ID ${BUSINESS_ID} (VAT ${VAT_ID}).`,
       `Contact: ${SUPPORT_EMAIL}`,
     ]),
     section("Pages", [
@@ -139,7 +166,7 @@ function buildLlmsTxt(
       "The same pages, in each language we publish. English is the source.",
       INDEXED_LOCALES.map(
         (locale) =>
-          `- ${LOCALE_CONFIG[locale].label} (${locale}): ${baseUrl}${getPathname({ href: "/", locale })}`,
+          `- ${languageName(locale)} (${locale}): ${baseUrl}${getPathname({ href: "/", locale })}`,
       ).join("\n"),
     ]),
   ].join("\n\n")}\n`;
