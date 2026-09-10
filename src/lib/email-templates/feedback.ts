@@ -3,7 +3,7 @@ import { RADIUS } from "@/lib/constants/radius";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import type { UserRole } from "@/types";
 import { wrapInLayout } from "./layout";
-import { factTable } from "./blocks";
+import { factList } from "./blocks";
 import { defuseAutolinks, escapeHtml, heading, paragraph, pinnedFill } from "./utils";
 import type { EmailTranslator } from "./translator";
 
@@ -111,21 +111,18 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
       </tr>`
     : "";
 
-  // The same box the seat-offer staff mail states its facts in — one helper, so
-  // a correction to how a staff mail reads reaches both. The label column is
-  // narrower than the default because these four labels are single words and
-  // the value column is where the mail is actually read. The table carries its
-  // own 16px of bottom margin, so the cell holding it adds none: the spacing is
-  // unchanged from when this markup was written out by hand here.
-  const facts = factTable(
-    [
-      [t("feedback.from"), escapedName],
-      [t("feedback.role"), escapedRole],
-      [t("feedback.replyToLabel"), escapedEmail],
-      [t("feedback.sent"), escapeHtml(opts.sentAt)],
-    ],
-    { labelWidth: "100px" },
-  );
+  // The one facts block every mail here states its facts in — one helper, so a
+  // correction to how a staff mail reads reaches this mail, the seat-offer
+  // staff mail and the family ones alike. There is no label width to choose any
+  // more: the column is as narrow as its own longest label, which is what these
+  // four single words wanted from the setting that used to be passed. The block
+  // carries its own bottom margin, so the cell holding it adds none.
+  const facts = factList([
+    [t("feedback.from"), escapedName],
+    [t("feedback.role"), escapedRole],
+    [t("feedback.replyToLabel"), escapedEmail],
+    [t("feedback.sent"), escapeHtml(opts.sentAt)],
+  ]);
 
   const content = `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">

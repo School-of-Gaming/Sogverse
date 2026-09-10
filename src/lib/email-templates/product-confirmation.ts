@@ -7,7 +7,7 @@ import {
   styledName,
   styledProductName,
 } from "./utils";
-import { bulletList, ctaButton, factTable, sectionLabel } from "./blocks";
+import { bulletList, ctaButton, factList, sectionLabel } from "./blocks";
 import { textAttachment, type RenderedAttachment } from "./attachments";
 import {
   composeProductConfirmationInvitation,
@@ -31,25 +31,33 @@ import type { ProductType } from "@/types";
  * The mail that follows a signup: **the emailed twin of the purchase
  * confirmation page, plus the calendar invitation the page cannot carry.**
  *
- * Section for section it is that page — the same heading and opening sentence,
- * the same order summary, the same "Good to know" facts, the same "what happens
- * next" bullets — composed in the mail's own idiom of tables and inline CSS.
+ * **What the two surfaces owe each other is their *facts*, not their layout.** A
+ * parent must be able to learn everything about what they have just joined from
+ * either one: what it is, who holds the seat, when and where it runs, who it is
+ * for, what language it is in, what it costs and what happens next. Neither may
+ * state a fact the other lacks. How those facts are *laid out* is each medium's
+ * own business — the page has two cards, a picture and a pair of buttons in a
+ * shop the reader is still standing in; the mail has one list of rows, because
+ * a boxed card spends side padding a phone's column does not have to give.
+ *
+ * Sentences the two share should still read the same, and where a fact has a
+ * composition rule that rule is one function under `src/lib/products/` that
+ * both call. But equality of wording is kept by care rather than by a test:
+ * the parity table that used to hold every shared key pair equal, locale by
+ * locale, was retired as overkill for what it caught.
  *
  * **The foot is where the two deliberately differ, and it is one button here.**
  * The page offers My SOG beside a "keep browsing", because a reader who has
  * just checked out is still standing in the shop and the second button is the
  * way back into it. A reader in their inbox is not standing anywhere, so the
  * mail carries the one action it is asking for — and, being alone, it takes the
- * primary brand fill that a two-button row forbids. That sentence is therefore
- * not shared and not in the parity table.
+ * primary brand fill that a two-button row forbids. Under it the mail says one
+ * more thing the page has no use for: that a reply to it reaches a person,
+ * which is true because this send's Reply-To is the support inbox.
  *
- * A parent who paid on their phone and then
- * opened the mail on a laptop is not told two different stories, and the copy
- * cannot drift: every sentence the two share is held equal, locale by locale, by
- * the parity test in `tests/unit/email-templates/product-confirmation.test.ts`.
  * (The email translator is scoped to the `email` namespace and cannot reach the
- * page's `purchaseConfirmation` keys, so the two sets of strings are real
- * duplicates and the test is what keeps them from becoming two answers.)
+ * page's `purchaseConfirmation` keys, so a sentence both surfaces state is two
+ * strings in the message files. Editing one is editing half of it.)
  *
  * **The three places the mail deliberately differs from the page**, each because
  * the medium differs rather than because the copy drifted:
@@ -114,9 +122,9 @@ export type ProductConfirmationMode = (typeof PRODUCT_CONFIRMATION_MODES)[number
  * card's formatters rather than through a second set of its own.
  *
  * `null` on the whole thing is a send that could not read them (see the
- * waitlist note at the sender), and the card is then simply absent. That is the
- * one shape where the mail is a shorter page rather than the same one, and it
- * is preferred to a card with holes in it.
+ * waitlist note at the sender), and those rows are then simply absent from the
+ * mail's list. That is the one shape where the mail states fewer facts than the
+ * page, and it is preferred to rows with holes in them.
  */
 export interface ProductConfirmationOverviewInput {
   timezone: string;
@@ -446,8 +454,12 @@ export function buildProductConfirmationEmail(
     ? paragraph(t("productConfirmation.gamer.greeting", { participantName: name }))
     : "";
 
-  // The order summary, in the page's order: the type and the product's name,
-  // then who the seat is for, then what it costs.
+  // **One facts list, and it is the whole middle of the mail.** What the page
+  // lays out as two cards — the order summary, then "Good to know" — is one run
+  // of rows here, in the order a parent needs them: what they joined, who it is
+  // for, when and where it happens, and what it costs. Two boxed cards was the
+  // page's arrangement rather than the mail's, and on a phone each one spent
+  // its own border and padding out of a column that had none to give.
   //
   // **No picture, and that is the image rule rather than an omission.** The
   // page paints the product's photograph at a 96×64 crop; a mail cannot,
@@ -459,7 +471,7 @@ export function buildProductConfirmationEmail(
   // would reserve nothing and reflow the mail when it loaded. So the row is the
   // type and the name alone, which leaves no hole — the picture was never
   // carrying a fact the two lines beside it do not.
-  const summaryRows: [string, string][] = [
+  const factRows: [string, string][] = [
     [t(`productConfirmation.typeLabel.${productType}`), product],
     [
       isWaitlist
@@ -467,12 +479,16 @@ export function buildProductConfirmationEmail(
         : t(`productConfirmation.forLabel.${productType}`),
       escapeHtml(participantName),
     ],
+    ...overviewRows(overview),
   ];
   // The child's copy states no price whatever it was handed: what a seat cost
   // is between us and whoever paid for it.
   const price = gamerCopy ? null : plainPriceLine(t, mode, content.options.priceAmount);
   if (price !== null) {
-    summaryRows.push([t("productConfirmation.priceLabel"), escapeHtml(price)]);
+    // Last, because it is the row a reader checks rather than the one they read
+    // the mail for — and because the money is the half of this document a child
+    // never sees, which makes it the cleanest row to be able to drop.
+    factRows.push([t("productConfirmation.priceLabel"), escapeHtml(price)]);
   }
 
   const body = `
@@ -480,8 +496,7 @@ export function buildProductConfirmationEmail(
     ${greeting}
     ${paragraph(subheading)}
     ${sectionLabel(summaryTitle(t, content.options))}
-    ${factTable(summaryRows)}
-    ${overviewSection(t, overview)}
+    ${factList(factRows)}
     ${sectionLabel(t("productConfirmation.nextTitle"))}
     ${bulletList(
       nextItems(t, content.options, {
@@ -499,15 +514,26 @@ export function buildProductConfirmationEmail(
       label: t("productConfirmation.dashboardButton"),
       variant: "primary",
     })}
+    ${
+      // "Just reply to this email" is a true instruction on this mail and not a
+      // figure of speech: every product send carries an explicit Reply-To, and
+      // this one's is the support inbox (the directory's default, and the send
+      // site says so at its call). A mail that invited a reply into the
+      // unattended sending address would be the void this line exists to prove
+      // is not there — so if this send ever takes a Reply-To of its own, this
+      // sentence goes with it.
+      paragraph(t("productConfirmation.closing"))
+    }
   `;
   return wrapInLayout({ title, content: body, locale, t });
 }
 
 /**
- * The order summary's own title.
+ * The label over the facts list — the page's order-summary title, doing the
+ * same job over a longer run of rows.
  *
  * **"Your order" is a buyer's word, and the child's copy has no buyer in it.**
- * That copy states no price and asks for no payment, so the card above it is a
+ * That copy states no price and asks for no payment, so the list under it is a
  * record of a signup rather than of a purchase, and naming it after an order a
  * child did not place is the one line where the parent's mail would show
  * through. The waitlist's own title needs no such variant: waiting for a seat
@@ -523,24 +549,28 @@ function summaryTitle(
     : t("productConfirmation.summaryTitle");
 }
 
-/** The "Good to know" card, or nothing where the send had no facts to state. */
-function overviewSection(
-  t: EmailTranslator,
+/**
+ * The product's own facts as rows of the one list, or none at all where the
+ * send could not read them.
+ *
+ * **They carry no section label of their own.** The page heads them "Good to
+ * know" because they are a second card there, standing apart from the order
+ * summary above; here they are the middle of one list, and a label inside a run
+ * of rows would be announcing a break the layout does not make. A send with no
+ * facts to state simply has a shorter list — which is the same degradation the
+ * card used to make by being absent, with nothing left behind to look empty.
+ */
+function overviewRows(
   overview: ProductConfirmationFact[] | null,
-): string {
-  if (overview === null) return "";
-  return `
-    ${sectionLabel(t("productConfirmation.overview.title"))}
-    ${factTable(
-      overview.map(({ label, lines }): [string, string] => [
-        label,
-        // A site name can be address-shaped, and every mail client linkifies
-        // anything that looks like one — so a value off a row is defused as
-        // well as escaped.
-        lines.map((line) => defuseAutolinks(escapeHtml(line))).join("<br />"),
-      ]),
-    )}
-  `;
+): [string, string][] {
+  if (overview === null) return [];
+  return overview.map(({ label, lines }): [string, string] => [
+    label,
+    // A site name can be address-shaped, and every mail client linkifies
+    // anything that looks like one — so a value off a row is defused as
+    // well as escaped.
+    lines.map((line) => defuseAutolinks(escapeHtml(line))).join("<br />"),
+  ]);
 }
 
 /**
@@ -653,16 +683,17 @@ export function productConfirmationText(
     `${t(`productConfirmation.forLabel.${productType}`)}: ${participantName}`,
   ];
 
-  const price = gamerCopy ? null : plainPriceLine(t, mode, priceAmount);
-  if (price !== null) {
-    lines.push(`${t("productConfirmation.priceLabel")}: ${price}`);
-  }
-
+  // The same one list the HTML states, in the same order and with no heading
+  // over its middle: the product's facts run on from the two rows above them.
   if (overview !== null) {
-    lines.push("", t("productConfirmation.overview.title"));
     for (const { label, lines: values } of overview) {
       lines.push(`${label}: ${values.join(" — ")}`);
     }
+  }
+
+  const price = gamerCopy ? null : plainPriceLine(t, mode, priceAmount);
+  if (price !== null) {
+    lines.push(`${t("productConfirmation.priceLabel")}: ${price}`);
   }
 
   lines.push(
@@ -674,6 +705,8 @@ export function productConfirmationText(
     }).map((item) => `- ${item}`),
     "",
     `${t("productConfirmation.dashboardButton")}: ${dashboardUrl}`,
+    "",
+    t("productConfirmation.closing"),
   );
 
   return lines.join("\n");

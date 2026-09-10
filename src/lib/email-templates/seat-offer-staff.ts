@@ -1,5 +1,5 @@
 import { wrapInLayout } from "./layout";
-import { ctaButton, factTable } from "./blocks";
+import { ctaButton, factList } from "./blocks";
 import { defuseAutolinks, escapeHtml, heading, paragraph } from "./utils";
 import type { EmailTranslator } from "./translator";
 
@@ -88,7 +88,7 @@ export function buildSeatOfferStaffEmail(
   const content = `
     ${heading(title)}
     ${paragraph(t(`seatOfferStaff.${opts.reason}.body`))}
-    ${factTable(rows)}
+    ${factList(rows)}
     ${paragraph(t("seatOfferStaff.nextStep"))}
     ${ctaButton({ href: opts.adminProductUrl, label: t("seatOfferStaff.button") })}
   `;

@@ -422,11 +422,12 @@ describe("templateRegistry render()", () => {
           "en",
         );
 
-        // The whole page, mirrored: the order summary, the four "Good to know"
-        // facts, and the one button — the page's "keep browsing" is a way back
-        // into a shop an inbox reader is not standing in.
+        // Everything the page states, in the mail's own shape: one facts list
+        // carrying the seat and the product's own four facts, and the one
+        // button — the page's "keep browsing" is a way back into a shop an
+        // inbox reader is not standing in.
         expect(html).toContain("Your order");
-        expect(html).toContain("Good to know");
+        expect(html).toContain("Schedule");
         expect(html).toContain("Ages 8–12");
         expect(html).toContain("Finnish");
         expect(html).toContain("Go to My SOG");

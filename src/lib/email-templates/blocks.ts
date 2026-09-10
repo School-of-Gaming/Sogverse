@@ -14,7 +14,7 @@ import { BODY_TEXT_STYLE, pinnedFill } from "./utils";
  * (verification links, My SOG, the shop) and nothing else. A value a user can
  * influence must never reach one of these.
  *
- * The same goes for the composed HTML the layout blocks take — a `factTable`
+ * The same goes for the composed HTML the layout blocks take — a `factList`
  * value, a `bulletList` item, a `calloutPanel` paragraph. They are spliced in
  * as written, so a value off a row is escaped by whoever composed it.
  */
@@ -248,29 +248,34 @@ export function bulletList(items: string[]): string {
   return `<ul style="margin:0 0 16px;padding-left:20px;${BODY_TEXT_STYLE}">${rendered}</ul>`;
 }
 
-interface FactTableOptions {
-  /**
-   * How much room the label column takes. It is a hint rather than a rule —
-   * table layout will widen it for a label that does not fit — so pick the
-   * width the longest label wants and let the values line up against it.
-   */
-  labelWidth?: string;
-}
-
 /**
- * Label–value rows in a bordered, rounded box.
+ * Label–value rows, ruled above and between: the one facts block every mail
+ * here states its facts in.
  *
- * **It is the shape every mail we send to *ourselves* uses**: a handful of
- * facts about one case, stated before the mail asks for the next step, in a box
- * a staff reader can find at a glance without reading a sentence. The feedback
- * mail and both flavours of the seat-offer staff mail are the same table, and
- * they were three hand-rolled copies of it until this helper existed — which is
- * the shape of the worst bug this directory has had. A copy cannot inherit
- * tomorrow's correction; prefer a helper over its output.
+ * **It is the session report's block, promoted — the box it replaced is gone.**
+ * The old shape was a bordered, rounded card of label–value rows, and on a
+ * phone it spent 34px of the content column on each side — a border, a radius
+ * and 16px of cell padding — before a value had any room at all. On the narrow
+ * column the shell gives a phone that is most of a word a line, and what it
+ * bought was an outline around facts no reader was going to mistake for
+ * anything else. Open rules cost nothing, close the list just as clearly, and
+ * hand the whole column back to the values.
  *
- * **The last row carries no rule, and that is the canonical behaviour.** The
- * box's own border already closes the list, so a final `border-bottom` sits a
- * pixel inside it and reads as a rendering fault rather than as a divider.
+ * **Every mail takes it, the ones we send to ourselves included.** Staff read
+ * mail on phones too — that is the owner's ruling and it is the whole of the
+ * reason — and a second arrangement of the same five rows would be a helper
+ * with a knob for each difference, kept alive for two blocks nobody ever wanted
+ * to correct in opposite directions.
+ *
+ * The label column sizes itself: `width:1%` and no wrapping, so it is as narrow
+ * as its own longest label and the values line up whatever the locale calls a
+ * thing. That is also why there is no width option to pass — a caller choosing
+ * one was choosing it for the English labels. Labels are small, muted and
+ * tracked, which is furniture rather than voice; the value carries the line.
+ *
+ * **The last row keeps its rule.** With no box edge to close the list, the
+ * final hairline is what closes it — and where the mail goes on to a report or
+ * a section, it is what separates the two.
  *
  * **Labels and values both go in as HTML and neither is escaped here.** Labels
  * are translated copy; values are whatever the caller composed, which for
@@ -280,24 +285,20 @@ interface FactTableOptions {
  * those treatments, so the rule is the directory's usual one: escape at the
  * value, not at the block.
  */
-export function factTable(
+export function factList(
   rows: ReadonlyArray<readonly [label: string, value: string]>,
-  { labelWidth = "140px" }: FactTableOptions = {},
 ): string {
-  const last = rows.length - 1;
   const rendered = rows
-    .map(([label, value], index) => {
-      const rule =
-        index === last ? "" : `border-bottom:1px solid ${DARK_THEME.border};`;
-      return `
-            <tr>
-              <td style="padding:12px 16px;color:${DARK_THEME.mutedFg};font-size:13px;${rule}width:${labelWidth};">${label}</td>
-              <td style="padding:12px 16px;color:${DARK_THEME.foreground};font-size:14px;${rule}">${value}</td>
-            </tr>`;
-    })
+    .map(
+      ([label, value]) => `
+        <tr>
+          <td style="padding:8px 16px 8px 0;border-bottom:1px solid ${DARK_THEME.border};color:${DARK_THEME.mutedFg};font-size:12px;letter-spacing:0.5px;text-transform:uppercase;white-space:nowrap;width:1%;vertical-align:top;">${label}</td>
+          <td style="padding:8px 0;border-bottom:1px solid ${DARK_THEME.border};color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;">${value}</td>
+        </tr>`,
+    )
     .join("");
   return `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;border:1px solid ${DARK_THEME.border};border-radius:${RADIUS.lg};">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;border-top:1px solid ${DARK_THEME.border};">
       ${rendered}
     </table>`;
 }

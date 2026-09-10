@@ -1324,7 +1324,8 @@
     "price": {
       "subscription": "{amount} / mois",
       "upfront": "{amount} (paiement unique)",
-      "free": "Gratuit"
+      "free": "Gratuit",
+      "external": "Pris en charge par votre commune"
     },
     "nextTitle": "La suite",
     "next": {
@@ -2822,6 +2823,7 @@
         "questions": "Une question ? Écrivez à {supportEmail}."
       },
       "dashboardButton": "Aller à Mon SOG",
+      "closing": "Des questions ? Répondez simplement à cet e-mail.",
       "summaryTitle": "Votre commande",
       "forLabel": {
         "consumer_club": "Inscription",
@@ -2830,7 +2832,6 @@
         "event": "Participation"
       },
       "overview": {
-        "title": "Bon à savoir",
         "schedule": "Planning",
         "where": "Où",
         "format": "Format",

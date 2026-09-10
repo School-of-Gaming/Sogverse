@@ -1324,7 +1324,8 @@
     "price": {
       "subscription": "{amount} / månad",
       "upfront": "{amount} (engångsbetalning)",
-      "free": "Gratis"
+      "free": "Gratis",
+      "external": "Bekostas av din kommun"
     },
     "nextTitle": "Vad händer nu",
     "next": {
@@ -2822,6 +2823,7 @@
         "questions": "Frågor? Skriv till {supportEmail}."
       },
       "dashboardButton": "Gå till Min SOG",
+      "closing": "Frågor? Svara bara på det här mejlet.",
       "summaryTitle": "Din beställning",
       "forLabel": {
         "consumer_club": "Anmäld",
@@ -2830,7 +2832,6 @@
         "event": "Deltar"
       },
       "overview": {
-        "title": "Bra att veta",
         "schedule": "Schema",
         "where": "Plats",
         "format": "Format",
