@@ -187,6 +187,32 @@ const DEMO_GAMERS = [
   { id: "d010872c-7034-401b-9c2d-5dfa675f60d8", name: "Aino", age: 8 },
 ] as const;
 
+// The two siblings the product's own age band refuses, one at each end of it —
+// every product fixture with a gamer audience is 8–12, so a six-year-old and a
+// fourteen-year-old are outside it whichever scenario is being looked at. They
+// ride in the same roster as the three above rather than in a scenario of their
+// own, because the picker's whole point is that a parent compares the rows: a
+// selectable row, an already-enrolled one and both refusals belong in one
+// render, and split across links they would have to be compared from memory.
+//
+// Their `ageBlock` is a literal here, not a computed one. The live page derives
+// it from a stored birth date and today's date; a fixture that recomputed it
+// would be a scene whose picker changes shape on somebody's birthday.
+const DEMO_GAMERS_OUT_OF_BAND = [
+  {
+    id: "c4f1a9e6-2b7d-4e83-95a1-6d0c3f8b2e57",
+    name: "Elias",
+    age: 6,
+    ageBlock: { kind: "under", bound: 8 },
+  },
+  {
+    id: "9b3e7c25-8d41-4a06-b7f9-1e5a0c6d3842",
+    name: "Sofia",
+    age: 14,
+    ageBlock: { kind: "over", bound: 12 },
+  },
+] as const satisfies readonly SignupParticipantChoice[];
+
 // The reader — the parent whose picker this is, and on a for-parents product a
 // selectable row in it. A real UUID for the same reason the children have one:
 // their row carries an identicon, and it is the one face on the panel that is
@@ -1252,6 +1278,11 @@ function buildAuthState(
           { ...DEMO_GAMERS[0] },
           { ...DEMO_GAMERS[1], signupState: childState },
           { ...DEMO_GAMERS[2] },
+          // Last, where the picker's refused rows sit in the live page too: the
+          // adapter builds the roster in the order the account holds it, and
+          // these two are simply the siblings the band excludes.
+          { ...DEMO_GAMERS_OUT_OF_BAND[0] },
+          { ...DEMO_GAMERS_OUT_OF_BAND[1] },
         ]
       : [];
   const selfRow: SignupParticipantChoice[] =
@@ -1269,7 +1300,12 @@ function buildAuthState(
   return {
     kind: "ready",
     participants: [...gamerRows, ...selfRow],
-    gamerCount: hasGamers ? DEMO_GAMERS.length : 0,
+    // Every child on the account, the two the age band refuses included: the
+    // cap is about how many children a parent may hold, not about how many of
+    // them this particular product would take.
+    gamerCount: hasGamers
+      ? DEMO_GAMERS.length + DEMO_GAMERS_OUT_OF_BAND.length
+      : 0,
   };
 }
 

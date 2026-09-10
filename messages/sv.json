@@ -2072,6 +2072,8 @@
         "event": "Redan med"
       },
       "gamerAlreadyWaitlisted": "På väntelistan",
+      "gamerUnderAge": "Under {min} år",
+      "gamerOverAge": "Över {max} år",
       "nonCustomerNote": "Endast föräldrar kan anmäla en spelare här.",
       "nonCustomerNoteParents": "Endast föräldrar kan anmäla sig här.",
       "closedNote": "Den här är inte öppen just nu. Håll utkik efter nästa omgång.",

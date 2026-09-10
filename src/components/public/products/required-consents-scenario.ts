@@ -99,9 +99,10 @@ export const REQUIRED_CONSENTS_SCENARIO: RequiredConsentsScenarioMeta = {
    * memory.
    *
    * The base scenario is signed in with children, so the selected participant
-   * is a child and the photo row is asked. A parent's own seat — the one state
-   * that withholds it — belongs to a for-parents product, which is a different
-   * fixture and not what this scenario is about.
+   * is a child and the photo rows are live. The *disabled* half of the row —
+   * the rows standing but unanswerable because the seat has no gamer behind it
+   * — needs a picker holding both kinds of row, which is a both-audiences
+   * product and its own scenario below.
    */
   gamerPhotoConsentTypes: ["lynx_educate"],
 };
@@ -156,15 +157,49 @@ export const CREATOR_ACADEMY_SCENARIO: RequiredConsentsScenarioMeta = {
 };
 
 /**
- * Both consent scenarios, in the order the UI Previews page lists them.
+ * **The photo ask on a product whose audience admits adults — the one page
+ * where a reader can watch the rows go dead and come back.**
  *
- * A list rather than two exports read one at a time, because the registry and
- * the renderer each walk it: adding a third is then one line here and nothing
- * else, which is the property the region-lock trio next door already has.
+ * The photo rows are drawn wherever a product asks them of a gamer audience,
+ * from the panel's first paint, and only their answerability follows the
+ * selection: a child selected and they are live, the parent's own seat selected
+ * and they are disabled, because a consent about a gamer's image cannot be
+ * given about the adult giving it. Nothing about that is visible in a render —
+ * it is visible in the *transition*, which is why it earns a link rather than a
+ * paragraph: click the reader's own row, watch two boxes go quiet in place with
+ * no row moving, click a child, watch them come back.
+ *
+ * A both-audiences product is the only fixture that can show it. The two
+ * scenarios above are gamers-only, where every selectable row is a child and
+ * the rows are never anything but live; a parents-only product has no gamer
+ * audience at all and so draws no photo rows to begin with.
+ *
+ * It carries no required documents and no marketing ask. Those are what the two
+ * scenarios above are for, and repeating them here would put four bordered
+ * boxes around the two this scenario is actually about.
+ */
+export const PHOTO_ASK_BOTH_AUDIENCES_SCENARIO: RequiredConsentsScenarioMeta = {
+  slug: "photo-ask-both-audiences",
+  /** Link text on the admin UI Previews page. Developer-facing English. */
+  label: "Photo ask — child seat vs. own seat",
+  description: "The rows stand and go disabled; they do not appear and vanish.",
+  baseScenario: "event-both-audiences",
+  documentSlugs: [],
+  marketingConsentTypes: [],
+  gamerPhotoConsentTypes: ["lynx_educate"],
+};
+
+/**
+ * Every consent scenario, in the order the UI Previews page lists them.
+ *
+ * A list rather than exports read one at a time, because the registry and the
+ * renderer each walk it: adding another is then one line here and nothing else,
+ * which is the property the region-lock trio next door already has.
  */
 export const CONSENT_SCENARIOS: readonly RequiredConsentsScenarioMeta[] = [
   REQUIRED_CONSENTS_SCENARIO,
   CREATOR_ACADEMY_SCENARIO,
+  PHOTO_ASK_BOTH_AUDIENCES_SCENARIO,
 ];
 
 /** The consent scenario for a slug, or null when the slug is not one of them. */

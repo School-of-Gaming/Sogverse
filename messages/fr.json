@@ -2072,6 +2072,8 @@
         "event": "Participe déjà"
       },
       "gamerAlreadyWaitlisted": "En liste d’attente",
+      "gamerUnderAge": "Moins de {min} ans",
+      "gamerOverAge": "Plus de {max} ans",
       "nonCustomerNote": "Seuls les parents peuvent inscrire un joueur ici.",
       "nonCustomerNoteParents": "Seuls les parents peuvent s’inscrire ici.",
       "closedNote": "Ce n’est pas ouvert pour le moment. Guettez la prochaine occasion.",

@@ -152,21 +152,24 @@ export interface SignupPanelFields {
    */
   gamerPhotoConsentTypes: readonly GamerPhotoConsentType[];
   /**
-   * Whether those rows are asked at all right now — true only when the selected
-   * participant is a **child**.
+   * Whether those rows can be **answered** right now — true only when the
+   * selected participant is a child.
    *
    * A product whose audience admits adults lets a parent take a seat
    * themselves, and a consent about a gamer's image cannot be given about an
    * adult who is answering for themselves; there is no gamer row to key the
-   * answer to. So the rows are withheld on a self seat, and this is what says
-   * so — computed here rather than in the view, so the boxes on screen and the
-   * answers sent cannot disagree about which participant was being asked
-   * about.
+   * answer to. Nor is there one before anybody is selected. So the rows are
+   * *disabled* in both cases, and this is what says so — computed here rather
+   * than in the view, so the boxes on screen and the answers sent cannot
+   * disagree about which participant was being asked about.
    *
-   * It changes only when the parent picks a different participant, which is a
-   * user action and therefore a reflow the layout rule permits.
+   * It is deliberately not what decides whether the rows are drawn: the view
+   * takes their existence off the product's own asks, so the section is on
+   * screen from first paint and only its answerability follows the selection.
+   * Everything downstream of it here — the answers, and so what is written —
+   * still keys on this, which is what keeps a self seat writing nothing.
    */
-  gamerPhotoConsentsOffered: boolean;
+  gamerPhotoConsentsEnabled: boolean;
   /**
    * Which photo boxes the reader has ticked, for the currently selected child.
    *
@@ -292,11 +295,17 @@ export function useSignupPanelFields(
     );
   }, [pricingOption.kind, startDate, product.timezone, now, locale, viewerTimezone]);
 
-  // Only participants who aren't already on the product are selectable. The
-  // default falls to the first selectable one (skipping anyone already signed
-  // up / waitlisted); a user pick of a now-locked row is ignored. When everyone
-  // is already on, this resolves to null and the CTA stays disabled — the page
-  // still renders, the picker just shows their states.
+  // Only participants the panel would actually accept are selectable — nobody
+  // already on the product, and no child outside its age band. The default
+  // falls to the first of those; a user pick of a now-locked row is ignored.
+  // When every row is refused, this resolves to null and the CTA stays disabled
+  // — the page still renders, the picker just shows each row's reason.
+  //
+  // **The two reasons are one list here on purpose.** The view draws them
+  // differently (an already-enrolled row outranks an age-blocked one in the
+  // label it shows), but selectability is indifferent to which refusal a row
+  // carries, and preselecting a row the button would refuse is the bug either
+  // one would produce.
   //
   // The parent's own row (a for-parents product) is an ordinary member of this
   // list: the adapter puts it in the array and nothing here has to know. On a
@@ -307,7 +316,7 @@ export function useSignupPanelFields(
   >(null);
   const selectable =
     authState.kind === "ready"
-      ? authState.participants.filter((p) => !p.signupState)
+      ? authState.participants.filter((p) => !p.signupState && !p.ageBlock)
       : [];
   const selectedParticipantId: string | null =
     authState.kind === "ready"
@@ -427,17 +436,23 @@ export function useSignupPanelFields(
       ? photoAnswers.values
       : new Map<GamerPhotoConsentType, boolean>();
 
-  // Asked only about a child. A parent taking a seat on a product whose
+  // Answerable only about a child. A parent taking a seat on a product whose
   // audience admits adults is answering for themselves, and there is no gamer
-  // for a photo answer to be keyed to — see the field's own note.
+  // for a photo answer to be keyed to — see the field's own note. The rows are
+  // still on screen in both cases; they are simply disabled.
   const selectedIsSelf =
     authState.kind === "ready" &&
     authState.participants.find((p) => p.id === selectedParticipantId)
       ?.isSelf === true;
-  const gamerPhotoConsentsOffered =
+  const gamerPhotoConsentsEnabled =
     selectedParticipantId !== null && !selectedIsSelf;
 
-  const photoRows = gamerPhotoConsentsOffered
+  // The *answers*, which are a different question from the rows on screen: an
+  // unanswerable box has no answer, so nothing is sent about it and nothing is
+  // written for a seat that has no gamer behind it. This is what keeps the
+  // submitted payload identical to what it was before the rows became
+  // permanent — the disabled section contributes exactly nothing.
+  const photoRows = gamerPhotoConsentsEnabled
     ? describeGamerPhotoConsents(gamerPhotoConsentTypes)
     : [];
   const photoValue = (consentType: GamerPhotoConsentType) =>
@@ -483,7 +498,7 @@ export function useSignupPanelFields(
       }),
     marketingConsentAnswers,
     gamerPhotoConsentTypes,
-    gamerPhotoConsentsOffered,
+    gamerPhotoConsentsEnabled,
     gamerPhotoConsents,
     onGamerPhotoConsentChange: (consentType, granted) =>
       setPhotoAnswers((prev) => {
