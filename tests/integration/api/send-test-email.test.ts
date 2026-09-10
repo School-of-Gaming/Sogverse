@@ -263,6 +263,10 @@ describe("POST /api/admin/send-test-email", () => {
       participantName: "Marja",
       productName: "Parents' Minecraft Evening",
       productType: "consumer_club",
+      // The guide's topic, which the schema requires whole like the rest — a
+      // real one rather than the guideless topic, so a send here composes the
+      // "Before the first session" section too.
+      topic: "minecraft_java",
       mode: "subscription",
       priceAmount: "€40.00",
       firstChargeDate: "none",
