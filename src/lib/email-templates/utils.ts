@@ -63,6 +63,56 @@ export function pinnedFill(color: string): string {
 }
 
 /**
+ * The two fills that have to follow the shell's ground, and the classes that
+ * move them.
+ *
+ * **The shell has two grounds now, and a fill that meant something against one
+ * of them means something else against the other.** The mail is laid out for a
+ * phone, where the content sits straight on the dark ground; above the shell's
+ * breakpoint the same content sits inside the card. Any fill chosen *in
+ * relation to* what is behind it therefore has two correct values, and the
+ * three surfaces that are in that position — a photo's reserved well, the
+ * quoted message in the staff feedback mail, and the outlined button — were all
+ * written when there was only the card to sit on.
+ *
+ * There are exactly two intents, and naming them is what keeps this one
+ * mechanism rather than three ad-hoc rules:
+ *
+ * - **`step`** — a surface that reads as a tone *off* the ground: a well, a
+ *   quoted box. Card on the bare ground, ground inside the card.
+ * - **`match`** — a surface that means to be the same colour as what is behind
+ *   it, and declares that colour only so a client's contrast pass cannot decide
+ *   the region was undesigned. The outlined button is the whole of this case.
+ *   Ground on the bare ground, card inside the card.
+ *
+ * The inline half is the phone's, like every other inline value in this
+ * directory, so a client that drops the stylesheet gets the correct phone
+ * render rather than a fill waiting for a rule. The shell's one media query
+ * builds both selectors from this table, and the call sites take both halves
+ * from `groundFill()` — so a name lives in exactly one place and the rule and
+ * the markup cannot drift apart.
+ */
+export const GROUND_TONES = {
+  step: { className: "ground-step", base: DARK_THEME.card, wide: DARK_THEME.bg },
+  match: { className: "ground-match", base: DARK_THEME.bg, wide: DARK_THEME.card },
+} as const;
+
+export type GroundTone = keyof typeof GROUND_TONES;
+
+/**
+ * The class name and the pinned inline fill for one ground-following surface.
+ *
+ * Both halves come back together because neither is correct alone: the fill
+ * without the class is a phone value frozen into a desktop render, and the
+ * class without the fill is a surface with nothing to paint in a client that
+ * dropped the block.
+ */
+export function groundFill(tone: GroundTone): { className: string; fill: string } {
+  const { className, base } = GROUND_TONES[tone];
+  return { className, fill: pinnedFill(base) };
+}
+
+/**
  * A mail client will manufacture a link we did not write.
  *
  * Every major client linkifies anything *shaped* like an address in running

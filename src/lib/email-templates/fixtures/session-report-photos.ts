@@ -13,9 +13,9 @@ import type { SessionReportPhoto } from "../session-photos";
  * reviewer is here to look at.
  *
  * **Deliberately ordered landscape, portrait, square first**, so the small
- * counts are the interesting ones: three photos show a 16:9 beside a portrait
- * with a square spanning the row underneath, which is the mixed-ratio pairing
- * and the odd-count answer in one render.
+ * counts are the interesting ones: three photos show all three shapes, which
+ * is the whole of what the box arithmetic has to answer for — a 16:9 filling
+ * the column, a portrait held to its 225px cap, and a square at 400.
  *
  * **They are JPEGs because the mail's own photos are.** An SVG would be smaller
  * and easier to author, and no mail client renders one — so demo art in that
@@ -48,11 +48,11 @@ const PHOTO_ART: readonly { path: string; width: number; height: number }[] = [
  * **A preview is the other half, and it is why the distinction exists at all.**
  * The mail drawn in `/admin/testing` is fetched by the browser looking at it, on
  * the machine serving the art, so the loopback origin that is useless in an
- * inbox is the correct one here — and the grid is the thing that page exists to
- * show. Suppressing it there would leave nothing to look at: no pairs, no
- * spanning odd one, no stacking, none of the reserved wells. So the two
- * destinations differ in exactly one way, and it is the way they genuinely
- * differ.
+ * inbox is the correct one here — and the photos are the thing that page exists
+ * to show. Suppressing them there would leave nothing to look at: no shapes, no
+ * caps, none of the reserved wells, and no way to compare the loaded render
+ * against the blocked one the whole design is about. So the two destinations
+ * differ in exactly one way, and it is the way they genuinely differ.
  *
  * **No origin at all is still no photos**, in either destination, and that is an
  * impossibility rather than a judgment: there is no absolute URL to put in a
@@ -83,8 +83,8 @@ export const SESSION_REPORT_PHOTO_COUNT_LABELS: Record<
   string
 > = {
   "0": "None (a report with no photos)",
-  "1": "One (a 16:9 screenshot, spanning the row)",
-  "2": "Two (a 16:9 beside a portrait)",
-  "3": "Three (mixed ratios, the odd one spanning)",
+  "1": "One (a 16:9 screenshot, filling the column)",
+  "2": "Two (a 16:9 above a portrait)",
+  "3": "Three (all three shapes: 16:9, portrait, square)",
   "5": "Five (the cap, mixed ratios)",
 };

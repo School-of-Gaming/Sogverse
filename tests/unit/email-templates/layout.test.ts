@@ -3,6 +3,9 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { wrapInLayout, BRAND_MARK } from "@/lib/email-templates/layout";
+import { GROUND_TONES, pinnedFill } from "@/lib/email-templates/utils";
+import { BRAND, DARK_THEME } from "@/lib/constants/colors";
+import { RADIUS } from "@/lib/constants/radius";
 import { BRAND_LOCKUP, BRAND_LOCKUP_TAIL, SENDER_NAME } from "@/lib/constants";
 import {
   MAIL_FONT_STACK,
@@ -102,6 +105,155 @@ describe("the header's text lockup", () => {
     // Brand first, and it is the brand half that carries the brand colour.
     expect(spans![1]).toBe(SENDER_NAME);
     expect(spans![2]).toBe(BRAND_LOCKUP_TAIL);
+  });
+});
+
+/**
+ * The shell's shape, and which half of it is the base.
+ *
+ * The mail is laid out for a phone and the card is what a wide viewport adds,
+ * rather than the other way round. That direction is the whole reason the shell
+ * is allowed to carry a media query at all: a client that ignores `<style>` —
+ * Outlook on Windows, and the Gmail app signed in to a non-Google account — has
+ * to be left with a correct layout, and a card in the base with a query that
+ * removed it would fail exactly where it matters, on the phone most of these
+ * are read on. So the assertions come in pairs here too: the base has no card,
+ * and the query draws one.
+ */
+describe("the card is the wide viewport's addition, not the phone's loss", () => {
+  /** The contents of the shell's one stylesheet. */
+  function styleBlock(html: string): string {
+    return /<style>([\s\S]*?)<\/style>/.exec(html)![1];
+  }
+
+  /** The one media query in it, with everything inside. It is last in the block. */
+  function wideQuery(html: string): string {
+    const block = styleBlock(html);
+    const at = block.indexOf("@media");
+    expect(at, "the shell carries no media query").toBeGreaterThan(-1);
+    return block.slice(at);
+  }
+
+  /**
+   * The class names, read off the markup rather than typed here, so the test
+   * asserts that the selector and the cell still name the same thing. The panel
+   * cell is recognisable precisely because it carries *no* style attribute —
+   * which is the property under test.
+   */
+  function panelClass(html: string): string {
+    return /<td class="([\w-]+)">\s*<div style="color:/.exec(html)![1];
+  }
+
+  function gutterClass(html: string): string {
+    return /<td class="([\w-]+)" align="center" style="padding:24px 16px;">/.exec(html)![1];
+  }
+
+  it("gives the content cell no fill, no border, no corner and no padding", () => {
+    const html = render();
+    expect(
+      panelClass(html),
+      "the content cell carries an inline style — the phone layout has no card",
+    ).toBeTruthy();
+    // The card colour exists in the document exactly once, inside the query.
+    const body = html.slice(html.indexOf("<body"));
+    expect(body).not.toContain(DARK_THEME.card);
+  });
+
+  /**
+   * 360px is the mobile design floor, and the arithmetic that made this change
+   * worth doing: one 16px gutter a side leaves a 328px content column, where
+   * the 20px gutter plus a 32px card padding used to leave 254px.
+   */
+  it("spends one 16px gutter a side, and nothing else, on a phone", () => {
+    const html = render();
+    expect(gutterClass(html)).toBeTruthy();
+    expect(html).toContain('style="max-width:560px;width:100%;"');
+  });
+
+  it("draws the card back above the breakpoint, from the one media query", () => {
+    const html = render();
+    const query = wideQuery(html);
+
+    // 560px of column plus a 20px gutter a side: the narrowest viewport that
+    // fits the card at its full width.
+    expect(/@media only screen and \(min-width: (\d+)px\)/.exec(query)![1]).toBe("600");
+
+    expect(query).toContain(`.${panelClass(html)}`);
+    expect(query).toContain(`.${gutterClass(html)}`);
+    for (const declaration of [
+      // Pinned like every other background here, and !important on both halves
+      // because the rule is overriding cells that state their own styles.
+      `background-color:${DARK_THEME.card} !important`,
+      `background-image:linear-gradient(${DARK_THEME.card},${DARK_THEME.card}) !important`,
+      `border: 1px solid ${DARK_THEME.border} !important`,
+      `border-radius: ${RADIUS.lg} !important`,
+      "padding: 32px !important",
+      "padding: 40px 20px !important",
+    ]) {
+      expect(query, `the wide layout lost: ${declaration}`).toContain(declaration);
+    }
+  });
+
+  /**
+   * The other thing the ground changing has to move: every fill chosen *in
+   * relation to* what is behind it. There are two intents — a tone off the
+   * ground (a photo's well, the quoted box in the staff feedback mail) and a
+   * fill that means to *be* the ground (the outlined button) — and both come
+   * from one table, so the query cannot restate one and forget the other.
+   *
+   * They are a re-tone rather than a layout the block holds up: each inline
+   * half is correct on the bare ground, which is the only ground a client that
+   * dropped the block will draw.
+   */
+  it("restates both ground-following fills against the card", () => {
+    const query = wideQuery(render());
+
+    for (const tone of Object.values(GROUND_TONES)) {
+      expect(query, `no rule for .${tone.className}`).toContain(`.${tone.className}`);
+      // Pinned in the query exactly as it is inline: a fill is declared twice
+      // wherever it is declared.
+      expect(query).toContain(`background-color:${tone.wide} !important`);
+      expect(query).toContain(
+        `background-image:linear-gradient(${tone.wide},${tone.wide}) !important`,
+      );
+    }
+    // The two are opposites, which is what makes one table rather than two
+    // rules that happen to sit together.
+    expect(GROUND_TONES.step.base).toBe(GROUND_TONES.match.wide);
+    expect(GROUND_TONES.step.wide).toBe(GROUND_TONES.match.base);
+  });
+
+  /**
+   * The rule the shell's stylesheet is exempted under, stated as a test: strip
+   * the block and what is left has to be a correct mail, not a mail waiting for
+   * a stylesheet. Everything the reader needs is inline — the ground, the mark,
+   * the lockup and its brand colour, the world rule, the gutter, the column,
+   * the content and the footer — and nothing that mattered went with the block.
+   */
+  it("is a whole phone layout with the <style> block stripped out", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", PROD_ORIGIN);
+    const stripped = render().replace(/<style>[\s\S]*?<\/style>/, "");
+
+    expect(stripped).not.toContain("@media");
+    // The header, both halves: the mark, and the lockup it never replaces.
+    expect(markTag(stripped)).not.toBeNull();
+    expect(stripped.replace(/<[^>]+>/g, "")).toContain(BRAND_LOCKUP);
+    // The brand colour reaches the lockup inline, so the pin's absence costs
+    // the mail nothing outside Gmail's own renderer.
+    expect(stripped).toContain(`color:${BRAND.act};letter-spacing:0.5px;`);
+    // The ground, on the body and on the outer table — counted by splitting
+    // rather than by a built regex, because the fill's own text is full of
+    // parentheses.
+    expect(stripped.split(pinnedFill(DARK_THEME.bg)).length - 1).toBe(2);
+    // The world rule under the lockup.
+    expect(stripped).toContain(pinnedFill(BRAND.world));
+    // The phone's gutter and the column it holds.
+    expect(stripped).toContain('style="padding:24px 16px;"');
+    expect(stripped).toContain('style="max-width:560px;width:100%;"');
+    // The content, in the body ink, and the footer under it.
+    expect(stripped).toContain("<p>Body</p>");
+    expect(stripped).toContain(`color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;`);
+    expect(stripped).toContain(`color:${DARK_THEME.mutedFg}`);
   });
 });
 

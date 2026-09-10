@@ -1324,7 +1324,8 @@
     "price": {
       "subscription": "{amount} / kk",
       "upfront": "{amount} (kertamaksu)",
-      "free": "Ilmainen"
+      "free": "Ilmainen",
+      "external": "Kunnan kustantama"
     },
     "nextTitle": "Mitä seuraavaksi tapahtuu",
     "next": {
@@ -2130,7 +2131,7 @@
       "subscriptionHint": "Laskutetaan kuukausittain · peru milloin tahansa.",
       "free": "Maksuton",
       "freeHint": "Maksua ei tarvita.",
-      "external": "Kustannettu kunnan toimesta",
+      "external": "Kunnan kustantama",
       "upfrontHint": "Kertamaksu.",
       "notAvailable": "Hinta ei vielä saatavilla valuutassa {currency}.",
       "cadenceMonth": "/ kk",
@@ -2783,7 +2784,7 @@
         "subscription": "{amount} / kk",
         "upfront": "{amount} (kertamaksu)",
         "free": "Ilmainen",
-        "external": "Kustannettu kunnan toimesta"
+        "external": "Kunnan kustantama"
       },
       "nextTitle": "Mitä seuraavaksi tapahtuu",
       "next": {
@@ -2824,6 +2825,7 @@
         "questions": "Kysyttävää? Kirjoita osoitteeseen {supportEmail}."
       },
       "dashboardButton": "Siirry Oma SOG -sivulle",
+      "closing": "Kysyttävää? Vastaa vain tähän viestiin.",
       "summaryTitle": "Tilauksesi",
       "forLabel": {
         "consumer_club": "Ilmoitettu",
@@ -2832,7 +2834,6 @@
         "event": "Liittynyt"
       },
       "overview": {
-        "title": "Hyvä tietää",
         "schedule": "Aikataulu",
         "where": "Missä",
         "format": "Muoto",

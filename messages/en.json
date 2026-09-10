@@ -1324,7 +1324,8 @@
     "price": {
       "subscription": "{amount} / month",
       "upfront": "{amount} (one-time)",
-      "free": "Free"
+      "free": "Free",
+      "external": "Paid for by your municipality"
     },
     "nextTitle": "What happens next",
     "next": {
@@ -3511,6 +3512,7 @@
         "questions": "Questions? Write to {supportEmail}."
       },
       "dashboardButton": "Go to My SOG",
+      "closing": "Questions? Just reply to this email.",
       "summaryTitle": "Your order",
       "forLabel": {
         "consumer_club": "Enrolled",
@@ -3519,7 +3521,6 @@
         "event": "Joined"
       },
       "overview": {
-        "title": "Good to know",
         "schedule": "Schedule",
         "where": "Where",
         "format": "Format",

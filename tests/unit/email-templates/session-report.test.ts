@@ -5,10 +5,12 @@ import {
 } from "@/lib/email-templates/session-report";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import {
-  PHOTO_BOX,
+  PHOTO_MAX_HEIGHT,
+  PHOTO_PHONE_COLUMN,
   sessionPhotoBox,
   type SessionReportPhoto,
 } from "@/lib/email-templates/session-photos";
+import { GROUND_TONES } from "@/lib/email-templates/utils";
 import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 
 let t: EmailTranslator;
@@ -213,8 +215,12 @@ describe("the staff copy's banner", () => {
  * A parent reads this mail with images off — the default in a large share of
  * inboxes — or reads it a month later, after a photo was deleted and its URL
  * started 404ing. Neither is an edge case, so every assertion here is about the
- * mail that arrives with nothing fetched: a box whose size was known before any
- * byte of JPEG, painted, in the right place, whatever shape the picture is.
+ * mail that arrives with nothing fetched: a well whose height was known before
+ * any byte of JPEG, painted, in the right place, whatever shape the picture is.
+ *
+ * The second thing under test is that the arrangement needs no stylesheet. One
+ * photo per row is the layout at every width, so a client that drops the
+ * shell's `<style>` block gets the same grid as one that keeps it.
  */
 describe("the photos under the report", () => {
   const BUCKET = "https://xyz.supabase.co/storage/v1/object/public/session-images";
@@ -232,11 +238,20 @@ describe("the photos under the report", () => {
     return buildSessionReportEmail(t, "en", { ...base, photos, staffCopy });
   }
 
-  /** Every `<img>` in the mail, as its attributes. */
-  function images(html: string): { src: string; width: number; height: number }[] {
-    return [...html.matchAll(/<img src="([^"]*)" width="(\d+)" height="(\d+)"/g)].map(
-      (match) => ({ src: match[1], width: Number(match[2]), height: Number(match[3]) }),
-    );
+  /**
+   * Every `<img>` in the mail, as its src and the width cap on it. A photo is
+   * fluid in every CSS-capable client — the cap lives in `max-width` — so that
+   * is the number this suite reads; the pixel attributes beside it are the
+   * Word engine's copy of the phone box and are asserted separately.
+   */
+  function images(html: string): { src: string; maxWidth: number | null }[] {
+    return [...html.matchAll(/<img src="([^"]*)"[^>]*>/g)].map((match) => ({
+      src: match[1],
+      maxWidth: Number(/max-width:(\d+)px/.exec(match[0])?.[1] ?? Number.NaN),
+    })).map((image) => ({
+      ...image,
+      maxWidth: Number.isFinite(image.maxWidth) ? image.maxWidth : null,
+    }));
   }
 
   /** The photos alone — the shell's brand mark is an image too. */
@@ -269,98 +284,161 @@ describe("the photos under the report", () => {
   });
 
   /**
-   * The whole point of storing the dimensions. Every box is stated on the
-   * `<img>` as attributes *and* in its inline style, and again on the cell
-   * behind it, so a client holds the space open before it has fetched
-   * anything — and holds it open for ever if the object is gone.
+   * The picture takes the column it is given, and stops at the cap its own
+   * ratio buys. A 16:9 is capped above any column this mail has, so it fills
+   * one at every width; a 9:16 stops at 225px and never becomes a tower.
    */
-  it("states every box's size before a byte of JPEG is fetched", () => {
+  it("draws every photo fluid, under a cap derived from its own ratio", () => {
+    const html = withPhotos([PHOTOS.landscape, PHOTOS.portrait, PHOTOS.square]);
+
+    for (const photo of [PHOTOS.landscape, PHOTOS.portrait, PHOTOS.square]) {
+      const box = sessionPhotoBox(photo.width, photo.height);
+      expect(html).toContain(`width:100%;height:auto;max-width:${box.maxWidth}px`);
+      // The wrapping table is capped to the same number and centred, so a
+      // photo narrower than the column is not stretched across it.
+      expect(html).toContain(`margin:0 auto;width:100%;max-width:${box.maxWidth}px;`);
+    }
+
+    const cap = (photo: SessionReportPhoto) =>
+      sessionPhotoBox(photo.width, photo.height).maxWidth;
+    // 16:9 at a 400px cap is 711px — wider than the mail's own 560px column,
+    // which is what "fills the column at any width" means in arithmetic.
+    expect(cap(PHOTOS.landscape)).toBe(711);
+    expect(cap(PHOTOS.portrait)).toBe(225);
+    expect(cap(PHOTOS.square)).toBe(PHOTO_MAX_HEIGHT);
+  });
+
+  /**
+   * Outlook on Windows renders through Word, which reads no `max-width` and
+   * honours `width="100%"` literally — so a fluid picture with no pixel pair
+   * beside it arrives there at the whole column whatever its shape. The pixel
+   * attributes are the phone box, which is exactly the layout the card-less
+   * shell already gives that client, and every CSS-capable client overrides
+   * them with the fluid style asserted above.
+   */
+  it("states the phone box in pixels, for the engine that reads no CSS", () => {
+    const html = withPhotos([PHOTOS.landscape, PHOTOS.portrait, PHOTOS.square]);
+
+    for (const photo of [PHOTOS.landscape, PHOTOS.portrait, PHOTOS.square]) {
+      const box = sessionPhotoBox(photo.width, photo.height);
+      expect(html).toContain(
+        `<img src="${photo.src}" width="${box.phoneWidth}" height="${box.wellHeight}"`,
+      );
+      // The wrapping table carries the same width, because Word sizes the
+      // table from the attribute too.
+      expect(html).toContain(`<table role="presentation" width="${box.phoneWidth}"`);
+      // Never wider than the phone's own content column, whatever the cap is.
+      expect(box.phoneWidth).toBeLessThanOrEqual(PHOTO_PHONE_COLUMN);
+    }
+
+    // A 16:9 fills the phone column; a portrait sits at its cap inside it.
+    expect(sessionPhotoBox(1600, 900).phoneWidth).toBe(PHOTO_PHONE_COLUMN);
+    expect(sessionPhotoBox(900, 1600).phoneWidth).toBe(225);
+    // And a small stored picture is never upscaled into the column.
+    expect(sessionPhotoBox(100, 60).phoneWidth).toBe(100);
+  });
+
+  /**
+   * The whole point of storing the dimensions: the well is a real rectangle
+   * before a byte of JPEG is fetched, stated as an attribute *and* in the
+   * style, so a client honouring either one holds the space.
+   *
+   * The height is the one the photo has at the phone's content column, because
+   * a cell's height is a minimum: on a desktop column a loaded landscape grows
+   * past it, and a blocked one leaves a hole shorter than the picture rather
+   * than taller.
+   */
+  it("reserves a well before a byte of JPEG is fetched", () => {
     const html = withPhotos([PHOTOS.landscape, PHOTOS.portrait]);
 
     for (const photo of [PHOTOS.landscape, PHOTOS.portrait]) {
       const box = sessionPhotoBox(photo.width, photo.height);
-      expect(html).toContain(
-        `<img src="${photo.src}" width="${box.width}" height="${box.height}"`,
-      );
-      expect(html).toContain(`width:${box.width}px;height:${box.height}px`);
-      // The cell behind it: same size, so the well is the picture's own box
-      // rather than the whole half-column.
-      expect(html).toContain(`<td width="${box.width}" height="${box.height}"`);
+      expect(html).toContain(`height="${box.wellHeight}"`);
+      expect(html).toContain(`height:${box.wellHeight}px;font-size:0;line-height:0;`);
     }
+
+    // The arithmetic, spelled out: the phone column is 328px, so a 16:9 is
+    // 185px tall there and a 9:16 hits the cap exactly.
+    expect(sessionPhotoBox(1600, 900).wellHeight).toBe(185);
+    expect(sessionPhotoBox(900, 1600).wellHeight).toBe(PHOTO_MAX_HEIGHT);
+    expect(sessionPhotoBox(1200, 1200).wellHeight).toBe(PHOTO_PHONE_COLUMN);
   });
 
   /**
-   * The requirement in one assertion: a blocked portrait must not reserve the
-   * card's full column. Derived from the height budget, not from the width the
-   * mail happens to have.
+   * The requirement in one assertion: a blocked portrait must not reserve a
+   * screen and a half of nothing. Both numbers stay budgeted whatever shape
+   * the stored pair is, the degenerate ones included.
    */
   it("budgets a portrait's height instead of letting it fill the column", () => {
-    const box = sessionPhotoBox(PHOTOS.portrait.width, PHOTOS.portrait.height);
-
-    expect(box.height).toBe(PHOTO_BOX.maxHeight);
-    expect(box.width).toBeLessThan(PHOTO_BOX.maxWidth / 2);
-    // And no box of any shape escapes either budget.
     for (const [width, height] of [
       [1600, 900],
       [1200, 1200],
       [900, 1600],
-      [4096, 1],
-      [1, 4096],
+      [4000, 3000],
+      [100, 60],
     ]) {
-      const any = sessionPhotoBox(width, height);
-      expect(any.width).toBeLessThanOrEqual(PHOTO_BOX.maxWidth);
-      expect(any.height).toBeLessThanOrEqual(PHOTO_BOX.maxHeight);
-      expect(any.width).toBeGreaterThan(0);
-      expect(any.height).toBeGreaterThan(0);
+      const box = sessionPhotoBox(width, height);
+      expect(box.wellHeight).toBeLessThanOrEqual(PHOTO_MAX_HEIGHT);
+      expect(box.wellHeight).toBeGreaterThan(0);
+      expect(box.maxWidth).toBeGreaterThan(0);
+      // Never upscaled: a stored width is a ceiling of its own.
+      expect(box.maxWidth).toBeLessThanOrEqual(width);
     }
   });
 
-  /** A dimension that cannot make a ratio must not put NaN in an attribute. */
-  it("falls back to a square rather than emitting a NaN box", () => {
+  /**
+   * Two kinds of unusable pair take the same square fallback.
+   *
+   * A dimension that cannot make a ratio must not put NaN in an attribute. And
+   * a pair further from square than the aspect limit is not a photo we can
+   * size: it used to be *clamped* to the limit, which built the box at 4:1
+   * while the picture drew itself at its true ratio — a stored 1×4096 got a 1px
+   * cap and a 4px well holding a 4096px sliver, a hole nothing fills and a
+   * picture nothing contains. The square reserves a sane rectangle instead.
+   */
+  it("falls back to a square rather than sizing a pair it cannot believe", () => {
     for (const [width, height] of [
       [0, 0],
       [-4, 3],
       [Number.NaN, 900],
+      [4096, 1],
+      [1, 4096],
     ]) {
       expect(sessionPhotoBox(width, height)).toEqual({
-        width: PHOTO_BOX.maxHeight,
-        height: PHOTO_BOX.maxHeight,
+        maxWidth: PHOTO_MAX_HEIGHT,
+        phoneWidth: PHOTO_PHONE_COLUMN,
+        wellHeight: PHOTO_PHONE_COLUMN,
       });
     }
+    // The limit itself is inside the believable range, either way up.
+    expect(sessionPhotoBox(4000, 1000).maxWidth).toBe(1600);
+    expect(sessionPhotoBox(1000, 4000).maxWidth).toBe(100);
   });
 
   /**
-   * Two to a row, and an odd one spans rather than sitting beside an empty
-   * half — a hole where a photo was meant to be is the one arrangement that
-   * reads as a fault.
+   * One per row, at every width — no pairs, no spanning tail, and nothing for a
+   * media query to stack. The arrangement is the same table in a client that
+   * reads the shell's stylesheet and in one that drops it, which is the
+   * property the pairs could not have.
    */
-  it("pairs the photos and gives an odd last one the whole row", () => {
-    const odd = withPhotos([PHOTOS.landscape, PHOTOS.portrait, PHOTOS.square]);
+  it("gives every photo a row of its own, with no stylesheet to help", () => {
+    const html = withPhotos([PHOTOS.landscape, PHOTOS.portrait, PHOTOS.square]);
 
-    expect(odd.match(/colspan="2"/g)).toHaveLength(1);
-    // The spanning cell is the last one, and it holds the last photo.
-    expect(odd.lastIndexOf('colspan="2"')).toBeLessThan(odd.indexOf(PHOTOS.square.src));
-    expect(odd.lastIndexOf('colspan="2"')).toBeGreaterThan(odd.indexOf(PHOTOS.portrait.src));
+    expect(html).not.toContain('colspan="2"');
+    expect(html).not.toContain('width="50%"');
+    expect(html).not.toContain("photo-cell");
 
-    const even = withPhotos([PHOTOS.landscape, PHOTOS.portrait]);
-    expect(even).not.toContain('colspan="2"');
-    expect(even.match(/width="50%"/g)).toHaveLength(2);
+    const stripped = html.replace(/<style>[\s\S]*?<\/style>/g, "");
+    for (const photo of [PHOTOS.landscape, PHOTOS.portrait, PHOTOS.square]) {
+      expect(stripped).toContain(photo.src);
+    }
+    expect(photoImages(stripped)).toEqual(photoImages(html));
 
-    // One photo is the same shape as any other odd tail: centred, spanning.
-    expect(withPhotos([PHOTOS.square]).match(/colspan="2"/g)).toHaveLength(1);
-  });
-
-  /**
-   * The stacking rule lives in the shell because a media query cannot be
-   * written inline — but it is only reachable if the cells carry the class it
-   * names, so both halves are asserted from the rendered mail.
-   */
-  it("marks the cells the shell's media query stacks", () => {
-    const html = withPhotos([PHOTOS.landscape, PHOTOS.portrait]);
-
-    expect(html).toMatch(/@media only screen and \(max-width: \d+px\)/);
-    expect(html).toContain(".photo-cell");
-    expect(html.match(/class="photo-cell"/g)).toHaveLength(2);
+    // Rows are separated by padding on the cell rather than by a gutter around
+    // the whole table, so every photo but the last carries one gap.
+    expect(html).toContain('cellspacing="0" style="margin:0 0 24px;"');
+    expect(html.match(/<td align="center" valign="top" style="padding-bottom:8px;">/g)).toHaveLength(2);
+    expect(html.match(/<td align="center" valign="top" style="">/g)).toHaveLength(1);
   });
 
   /**
@@ -371,8 +449,36 @@ describe("the photos under the report", () => {
   it("paints the reserved box as a toned well, declared twice", () => {
     const html = withPhotos([PHOTOS.landscape]);
 
+    // The inline tone is the card's, because the inline layout is the phone's
+    // and there the well sits on the shell's bare ground.
     expect(html).toContain(
-      `background-color:${DARK_THEME.bg};background-image:linear-gradient(${DARK_THEME.bg},${DARK_THEME.bg});border:1px solid ${DARK_THEME.border}`,
+      `background-color:${DARK_THEME.card};background-image:linear-gradient(${DARK_THEME.card},${DARK_THEME.card});border:1px solid ${DARK_THEME.border}`,
+    );
+  });
+
+  /**
+   * A well is a tone one step off the ground it sits on, and the shell has two
+   * grounds: the bare one on a phone, the card above the breakpoint. So the
+   * same cell is card-toned inline and ground-toned inside the shell's own
+   * wide-viewport rule, which reaches it through the shared "step" class — the
+   * same one the staff feedback mail's quoted box takes, so this is one
+   * mechanism rather than a rule the photo module owns.
+   *
+   * It is a re-tone rather than a layout the stylesheet holds up: strip the
+   * block and a card-toned well on the dark ground is exactly right, because
+   * the dark ground is the only one a client that dropped the block will draw.
+   */
+  it("re-tones the well against the card, through a class the shell names", () => {
+    const html = withPhotos([PHOTOS.landscape, PHOTOS.portrait]);
+
+    // Counted by splitting rather than by a built regex: the class name is a
+    // constant, not a pattern.
+    expect(html.split(`class="${GROUND_TONES.step.className}"`).length - 1).toBe(2);
+    const query = html.slice(html.indexOf("@media"), html.indexOf("</style>"));
+    expect(query).toContain(`.${GROUND_TONES.step.className}`);
+    expect(query).toContain(`background-color:${DARK_THEME.bg} !important`);
+    expect(query).toContain(
+      `background-image:linear-gradient(${DARK_THEME.bg},${DARK_THEME.bg}) !important`,
     );
   });
 
@@ -405,7 +511,6 @@ describe("the photos under the report", () => {
     expect(html.match(/<a /g)).toHaveLength(1);
   });
 });
-
 /**
  * The child's own copy: one sentence addressed to the child instead of to the
  * parent about them, and nothing else different. Both halves are pinned —

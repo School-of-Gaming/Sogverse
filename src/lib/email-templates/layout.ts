@@ -6,12 +6,7 @@ import {
   MAIL_WORD_ENGINE_FONT_STACK,
 } from "@/lib/constants/typography";
 import { sendableImageOrigin } from "./render-context";
-import { pinnedFill } from "./utils";
-import {
-  PHOTO_CELL_CLASS,
-  PHOTO_GUTTER,
-  PHOTO_STACK_BREAKPOINT,
-} from "./session-photos";
+import { GROUND_TONES, pinnedFill } from "./utils";
 import type { EmailTranslator } from "./translator";
 
 interface LayoutOptions {
@@ -50,6 +45,77 @@ interface LayoutOptions {
  * force the cell taller.
  */
 const HEADER_RULE_HEIGHT = 6;
+
+/**
+ * The shell's two shapes, and the class names that switch between them.
+ *
+ * **The base layout is the phone, and the card is what a wide viewport adds.**
+ * A parent reads this mail on a phone, and the shell used to spend a 20px
+ * gutter plus a 32px card padding on each side of it — 104px of the 360px
+ * design floor, leaving a 254px content column for a paragraph, a button and a
+ * photograph. So the inline layout carries no card at all: the content sits
+ * directly on the ground behind a single 16px gutter, which is a 328px column
+ * at 360px, and the card is drawn back by the one media query below.
+ *
+ * **Base-is-phone rather than base-is-desktop is the whole reason this is
+ * allowed to be a media query.** The shell's own rule for the one stylesheet a
+ * mail has is that the layout must be correct with the block stripped out —
+ * paid for by correctness without it, not by having been tried elsewhere first.
+ * A client that ignores `<style>` (Outlook on Windows, the Gmail app signed in
+ * to a non-Google account) therefore reads a plain 560px column on the dark
+ * ground: no card, no border, full-width content, every colour and every rule
+ * intact. That is an acceptable mail, which a query-less *desktop* base would
+ * not have been — it would have handed the phone the 254px column this change
+ * exists to delete.
+ *
+ * The breakpoint is arithmetic rather than a round number: the column is 560px
+ * and the wide gutter is 20px a side, so 600px is the narrowest viewport that
+ * fits the card at its full width. Below it, nothing to gain by drawing one.
+ */
+const SHELL_WIDE_BREAKPOINT = 600;
+
+/**
+ * Every class name the shell emits, in one place — the block below and the
+ * markup at the bottom of this file are the only two readers, and a name typed
+ * twice is a selector that can drift away from the cell it was written for.
+ *
+ * The classes the query names that are *not* here are the ground-following
+ * fills, and they follow the same rule from the other end: they belong to the
+ * table in `utils.ts` that the cells take their inline halves from, and are
+ * imported rather than typed.
+ */
+const SHELL_CLASS = {
+  /** The outer cell holding the side gutter: 16px on a phone, 20px wide. */
+  gutter: "shell-gutter",
+  /** The content cell. Bare on a phone; the app's Card on a wide viewport. */
+  panel: "shell-panel",
+  /** The breathing room between the header rule and the content. */
+  rhythm: "shell-rhythm",
+} as const;
+
+/**
+ * A `pinnedFill` for a rule inside the `<style>` block.
+ *
+ * Same two declarations for the same reason — a dark theme rewrites
+ * `background-color` and leaves a gradient alone — with `!important` on both,
+ * because a class rule has to beat the inline styles it is overriding. It is
+ * spelled here rather than taken from `pinnedFill` with a suffix so the
+ * `!important` lands on each declaration rather than on the pair.
+ */
+function pinnedFillRule(color: string): string {
+  return `background-color:${color} !important; background-image:linear-gradient(${color},${color}) !important;`;
+}
+
+/**
+ * The wide-viewport half of every ground-following fill, as rules.
+ *
+ * Built here rather than inline in the shell's own template literal, because a
+ * nested one inside it is a syntax error waiting to be introduced by whoever
+ * next edits the block around it.
+ */
+const groundToneRules = Object.values(GROUND_TONES)
+  .map((tone) => `      .${tone.className} {\n        ${pinnedFillRule(tone.wide)}\n      }`)
+  .join("\n");
 
 /**
  * The brand mark above the lockup — the one image in any mail this codebase
@@ -237,31 +303,54 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
       background-clip: text !important;
       color: transparent !important;
     }
-    /* Session-report photos: two per row on a desktop-width card, one per row
-       on a phone. The cells are a fixed 50/50 split — email clients do not
-       reflow table columns — so stacking them is the one thing that cannot be
-       said inline, and this block is the only stylesheet a mail has. That is
-       why a rule emitted by a single template lives in the shell: it has no
-       other home, not because a per-template technique was promoted here.
+    /* The card, and the one media query a mail carries.
 
-       The breakpoint is arithmetic, not a round number. The card's content
-       column is the viewport less the shell's 20px gutters and the panel's
-       32px padding; two cells and the 8px gutters between and around them
-       split what is left. At the breakpoint below, that leaves each cell
-       exactly the width one photo box is budgeted, so anything narrower has
-       to stack. Where a client strips the block entirely the pairs simply
-       stay pairs, which is why nothing about the mail's correctness rests
-       on it.
+       The layout above this rule is the phone's, and it is the whole layout:
+       a 560px column on the dark ground behind a 16px gutter, with the content
+       sitting straight on that ground. This block is what a viewport wide
+       enough to afford it adds back — the panel's fill, its border, its corner
+       and its 32px padding, plus the wider outer gutter and a little more air
+       under the header.
 
-       The class name, the breakpoint and the gutter all come from the module
-       that emits the cells, so this selector cannot drift away from the
-       markup it was written for. */
-    @media only screen and (max-width: ${PHOTO_STACK_BREAKPOINT}px) {
-      .${PHOTO_CELL_CLASS} {
-        display: block !important;
-        width: 100% !important;
-        padding-bottom: ${PHOTO_GUTTER}px !important;
+       That direction is why a media query is allowed here at all. A rule in
+       this block has to be an improvement on a layout that is already correct
+       without it, because the block is the first thing a client is entitled to
+       drop, and two of the clients our readers actually use do drop it. Strip
+       everything between these braces and the mail is a plain column on the
+       ground: no card, every colour, every rule, every word intact. A card in
+       the base with a query that removed it would have failed that test in the
+       one place it matters, on the phone most of these are read on.
+
+       The fill is declared twice like every other background here, and both
+       declarations carry !important because a class rule is overriding cells
+       that state their own inline styles. */
+    @media only screen and (min-width: ${SHELL_WIDE_BREAKPOINT}px) {
+      .${SHELL_CLASS.gutter} {
+        padding: 40px 20px !important;
       }
+      .${SHELL_CLASS.rhythm} {
+        height: 24px !important;
+        line-height: 24px !important;
+      }
+      .${SHELL_CLASS.panel} {
+        ${pinnedFillRule(DARK_THEME.card)}
+        border: 1px solid ${DARK_THEME.border} !important;
+        border-radius: ${RADIUS.lg} !important;
+        padding: 32px !important;
+      }
+      /* The fills that are chosen in relation to what sits behind them, and
+         this block is where what sits behind them changes: a photo's reserved
+         well and a quoted box are a tone *off* the ground, the outlined button
+         means to *be* the ground. Inline they are the phone's values, against
+         the bare ground; here they are restated against the card.
+
+         Nothing about the layout depends on these rules — the inline values
+         are correct on the only ground a client that drops this block will
+         draw — so they are a re-tone rather than a layout the stylesheet is
+         holding up. Both selectors and both colours come from the one table in
+         utils.ts that the call sites take their inline halves from, so a name
+         lives in one place and the rule cannot drift from the markup. */
+${groundToneRules}
     }
   </style>
   <!-- Desktop Outlook only, and the one thing the inherited stack cannot say to
@@ -282,7 +371,11 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
   <!-- The ground on both body and table: body for clients that respect it, table for Gmail which strips body styles -->
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${pinnedFill(DARK_THEME.bg)}">
     <tr>
-      <td align="center" style="padding:40px 20px;">
+      <!-- The side gutter, and the only one the phone spends. 16px a side
+           leaves a 328px content column at the 360px mobile design floor, which
+           is what the card-less base buys back. The wide viewport's 40px/20px
+           is restored by the media query above, on this cell's class. -->
+      <td class="${SHELL_CLASS.gutter}" align="center" style="padding:24px 16px;">
         <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
           <!-- The brand mark, above the lockup and never instead of it. Its row
                is absent entirely when no origin can be built, so this header
@@ -310,17 +403,28 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
           <tr>
             <td height="${HEADER_RULE_HEIGHT}" style="${pinnedFill(BRAND.world)}height:${HEADER_RULE_HEIGHT}px;line-height:${HEADER_RULE_HEIGHT}px;font-size:0;">&nbsp;</td>
           </tr>
+          <!-- The air between the header and the content. Tighter on a phone
+               than on a desktop, where the media query grows it back: vertical
+               rhythm that reads as generous on a 560px card reads as wasted
+               screen on a 360px one. -->
           <tr>
-            <td style="height:24px;line-height:24px;font-size:0;">&nbsp;</td>
+            <td class="${SHELL_CLASS.rhythm}" style="height:16px;line-height:16px;font-size:0;">&nbsp;</td>
           </tr>
-          <!-- The message panel: the app's Card, rendered in a table cell. It
-               takes the same three tokens the component does — the card fill,
-               the border, and rounded-lg — because a parent meets this surface
-               on the site before they meet it in their inbox. It sat at 12px
-               for a while, which is a step the app uses twice and never on a
-               card; that is what a literal drifting unnoticed looks like. -->
+          <!-- The message panel. On a phone it is not a panel at all: no
+               fill, no border, no corner and no padding, so the content sits
+               straight on the shell's ground and spends none of a 360px
+               viewport on chrome. The media query above gives it the app's Card
+               back — the same three tokens the component takes, the card fill,
+               the border and rounded-lg, plus the 32px padding — the moment
+               there is width to afford them.
+
+               Which way round that is stated is the load-bearing part. The card
+               is the addition, so a client that drops the stylesheet keeps the
+               phone layout rather than losing the phone layout; see
+               SHELL_WIDE_BREAKPOINT for why that is the only shape a media
+               query is allowed to take in this shell. -->
           <tr>
-            <td style="${pinnedFill(DARK_THEME.card)}border:1px solid ${DARK_THEME.border};border-radius:${RADIUS.lg};padding:32px;">
+            <td class="${SHELL_CLASS.panel}">
               <div style="color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;">
                 ${content}
               </div>

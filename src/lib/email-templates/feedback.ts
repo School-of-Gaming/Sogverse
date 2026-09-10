@@ -3,8 +3,20 @@ import { RADIUS } from "@/lib/constants/radius";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import type { UserRole } from "@/types";
 import { wrapInLayout } from "./layout";
-import { factTable } from "./blocks";
-import { defuseAutolinks, escapeHtml, heading, paragraph, pinnedFill } from "./utils";
+import { factList } from "./blocks";
+import { defuseAutolinks, escapeHtml, groundFill, heading, paragraph } from "./utils";
+
+/**
+ * The quoted message's box: a tone off whatever the shell has put it on.
+ *
+ * What it is for is separating the reader's own words from ours, which is a
+ * tonal step and not a colour. It used to name the darker ground, which was
+ * that step while the card was the only thing a mail's content sat on; on the
+ * card-less phone shell that same value is the ground itself and the box would
+ * lose its step entirely. So it takes the shared tone and the shell restates it
+ * against the card, exactly as a photo's well does.
+ */
+const QUOTE_GROUND = groundFill("step");
 import type { EmailTranslator } from "./translator";
 
 export interface FeedbackEmailOptions {
@@ -111,21 +123,18 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
       </tr>`
     : "";
 
-  // The same box the seat-offer staff mail states its facts in — one helper, so
-  // a correction to how a staff mail reads reaches both. The label column is
-  // narrower than the default because these four labels are single words and
-  // the value column is where the mail is actually read. The table carries its
-  // own 16px of bottom margin, so the cell holding it adds none: the spacing is
-  // unchanged from when this markup was written out by hand here.
-  const facts = factTable(
-    [
-      [t("feedback.from"), escapedName],
-      [t("feedback.role"), escapedRole],
-      [t("feedback.replyToLabel"), escapedEmail],
-      [t("feedback.sent"), escapeHtml(opts.sentAt)],
-    ],
-    { labelWidth: "100px" },
-  );
+  // The one facts block every mail here states its facts in — one helper, so a
+  // correction to how a staff mail reads reaches this mail, the seat-offer
+  // staff mail and the family ones alike. There is no label width to choose any
+  // more: the column is as narrow as its own longest label, which is what these
+  // four single words wanted from the setting that used to be passed. The block
+  // carries its own bottom margin, so the cell holding it adds none.
+  const facts = factList([
+    [t("feedback.from"), escapedName],
+    [t("feedback.role"), escapedRole],
+    [t("feedback.replyToLabel"), escapedEmail],
+    [t("feedback.sent"), escapeHtml(opts.sentAt)],
+  ]);
 
   const content = `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
@@ -144,7 +153,7 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
         </td>
       </tr>
       <tr>
-        <td style="padding:16px;${pinnedFill(DARK_THEME.bg)}border:1px solid ${DARK_THEME.border};border-radius:${RADIUS.lg};color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;">
+        <td class="${QUOTE_GROUND.className}" style="padding:16px;${QUOTE_GROUND.fill}border:1px solid ${DARK_THEME.border};border-radius:${RADIUS.lg};color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;">
           ${escapedMessage}
         </td>
       </tr>

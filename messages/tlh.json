@@ -1372,7 +1372,8 @@
     "price": {
       "subscription": "{amount} / jar",
       "upfront": "{amount} (wa’logh DIl)",
-      "free": "wagh Hutlh"
+      "free": "wagh Hutlh",
+      "external": "veng Huch nob"
     },
     "nextTitle": "qaStaHvIS",
     "next": {
@@ -2868,6 +2869,7 @@
         "questions": "yIghel: {supportEmail}."
       },
       "dashboardButton": "My SOG yIghoS",
+      "closing": "yIghel’a’? QInvam yIjang neH.",
       "summaryTitle": "ralHa’ghachlIj",
       "forLabel": {
         "consumer_club": "ghItlhlu’pu’",
@@ -2876,7 +2878,6 @@
         "event": "jeSwI’"
       },
       "overview": {
-        "title": "yISov",
         "schedule": "jaj tetlh",
         "where": "Daq",
         "format": "rurmeH",

@@ -304,11 +304,18 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 }
 
 // The price line for the summary. Subscriptions read "€X / month", one-time
-// camps/events read "€X (one-time)". External (municipality) shows no price
-// line — it never claimed one, and a page that has said nothing about the cost
-// has said nothing wrong; the emailed twin carries a line here only because it
-// had a false one to replace. Unavailable never reaches a paid confirmation at
-// all.
+// camps/events read "€X (one-time)", free reads "Free", and a municipality
+// registration names who bears the cost.
+//
+// **That last one is here because the page may not know less than the mail
+// does.** The two surfaces owe each other their facts, and a parent must be
+// able to learn everything about what they just joined from either one — so a
+// cost the mail states and the page did not was a fact missing from half the
+// pair. Saying nothing was defensible on its own terms and stopped being so the
+// moment the other half spoke. It says who pays and nothing either side of
+// that: what a municipality then asks of a family is not ours to answer, and
+// how we settle up with the municipality is not theirs to read. Unavailable
+// never reaches a paid confirmation at all.
 function priceText(
   option: PricingOption,
   locale: string,
@@ -334,6 +341,7 @@ function priceText(
     case "free":
       return t("price.free");
     case "external":
+      return t("price.external");
     case "unavailable":
       return null;
   }

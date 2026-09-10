@@ -10,8 +10,6 @@ import {
 } from "@/lib/email-templates/product-confirmation";
 import type { ProductConfirmationInvitationInput } from "@/lib/email-templates/product-confirmation-invitation";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
-import { loadMessages } from "@/i18n/messages";
-import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 
 let t: EmailTranslator;
@@ -52,7 +50,7 @@ const SCHEDULE: ProductConfirmationInvitationInput = {
   now: NOW,
 };
 
-/** The same product, as the "Good to know" card reads it. */
+/** The same product, as the page's overview card reads it. */
 const OVERVIEW: ProductConfirmationOverviewInput = {
   timezone: "Europe/Helsinki",
   startDate: "2027-01-04",
@@ -90,6 +88,17 @@ function render(overrides: Partial<ProductConfirmationEmailOptions> = {}): strin
   return buildProductConfirmationEmail(t, "en", resolve(overrides));
 }
 
+/**
+ * The mail's one facts list, cut out of the rendered document: everything
+ * between the label that opens it and the label that opens what happens next.
+ * The shell around it draws borders and corners of its own, so an assertion
+ * about how the *list* is drawn has to be made on the list.
+ */
+function factsList(html: string): string {
+  const upTo = html.slice(0, html.indexOf("What happens next"));
+  return upTo.slice(upTo.lastIndexOf("<table"));
+}
+
 describe("buildProductConfirmationEmail", () => {
   it("names the participant, the product and its type", () => {
     const html = render(base);
@@ -113,6 +122,20 @@ describe("buildProductConfirmationEmail", () => {
     expect(html).toContain(BRAND.act);
     expect(html).not.toContain("Keep browsing");
     expect(html).not.toContain("/shop");
+  });
+
+  /**
+   * The one line the page has no use for. It is an instruction rather than a
+   * pleasantry: this send's Reply-To is the support inbox, so a reply reaches a
+   * person — and it sits under the button, where a reader who is not going to
+   * click one has somewhere else to go.
+   */
+  it("closes by inviting a reply, under the button", () => {
+    const html = render(base);
+    expect(html).toContain("Questions? Just reply to this email.");
+    expect(html.indexOf("Go to My SOG")).toBeLessThan(
+      html.indexOf("Questions? Just reply to this email."),
+    );
   });
 
   it("uses the verb the product type calls for", () => {
@@ -150,20 +173,58 @@ describe("buildProductConfirmationEmail", () => {
   });
 
   /**
-   * The order summary is the page's summary card, minus its picture. The row
-   * that used to carry the photograph carries the type and the name alone —
-   * there are no stored dimensions and no enforced aspect to size a box from,
-   * and the accept list admits three formats Outlook's desktop engine will not
-   * render — so the mail states the two lines that sat beside it and leaves no
-   * hole where a picture would have been.
+   * The mail's one facts list, opened by the page's order-summary title. The
+   * row that used to carry the page's photograph carries the type and the name
+   * alone — there are no stored dimensions and no enforced aspect to size a box
+   * from, and the accept list admits three formats Outlook's desktop engine
+   * will not render — so the mail states the two lines that sat beside it and
+   * leaves no hole where a picture would have been.
    */
-  describe("the order summary", () => {
+  describe("the facts list", () => {
     it("states the type, the name, who the seat is for, and the price", () => {
       const html = render(base);
       expect(html).toContain("Your order");
       expect(html).toContain("Enrolled");
       expect(html).toContain("Aino");
       expect(html).toContain("Price");
+    });
+
+    /**
+     * One list, and the order is the order a parent needs: what they joined,
+     * who holds the seat, when and where it runs, and last what it costs. The
+     * product's facts run on from the two rows above them with no label of
+     * their own — a heading inside a run of rows would announce a break the
+     * layout does not make.
+     */
+    it("runs the product's facts between the seat and the price, in one list", () => {
+      const html = render(base);
+      const order = ["Your order", "Club", "Enrolled", "Schedule", "Language", "Price"];
+      let cursor = -1;
+      for (const fragment of order) {
+        const at = html.indexOf(fragment);
+        expect(at, fragment).toBeGreaterThan(cursor);
+        cursor = at;
+      }
+      // One table between the section label and the next one, not two.
+      const between = html.slice(
+        html.indexOf("Your order"),
+        html.indexOf("What happens next"),
+      );
+      expect(between.match(/<table/g)).toHaveLength(1);
+    });
+
+    /**
+     * No box. The list is ruled — a top rule and a hairline under every row,
+     * the last one included — and nothing draws an edge around it: a card
+     * inside the shell's card spent a border, a radius and 16px a side out of a
+     * column a phone has not got.
+     */
+    it("rules the rows rather than boxing them", () => {
+      const list = factsList(render(base));
+      expect(list).toContain("border-top:1px solid");
+      expect(list).toContain("border-bottom:1px solid");
+      expect(list).not.toContain("border:1px solid");
+      expect(list).not.toContain("border-radius");
     });
 
     it("names the participant even on the parent's own seat", () => {
@@ -187,14 +248,15 @@ describe("buildProductConfirmationEmail", () => {
   });
 
   /**
-   * The page's "Good to know" card, composed by the page's own formatters, in
-   * the page's order and under the page's labels.
+   * The product's own facts, composed by the page's own formatters, under the
+   * page's labels — rows of the one list rather than a card of their own, and
+   * with no heading over them.
    */
-  describe("the Good to know facts", () => {
+  describe("the product's own facts", () => {
     it("states the schedule, where, who it is for, and the language", () => {
       const html = render(base);
 
-      expect(html).toContain("Good to know");
+      expect(html).not.toContain("Good to know");
       expect(html).toContain("Schedule");
       expect(html).toContain("Mon");
       expect(html).toContain("16:00–17:00");
@@ -254,10 +316,16 @@ describe("buildProductConfirmationEmail", () => {
       expect(html).toContain("For families, ages 8–12");
     });
 
-    /** A send that could not read the product's facts states none of them. */
-    it("is absent entirely when the send had no facts", () => {
+    /**
+     * A send that could not read the product's facts states none of them — the
+     * list is simply shorter, with nothing left behind to look empty.
+     */
+    it("leaves a shorter list when the send had no facts", () => {
       const html = render({ overview: null });
-      expect(html).not.toContain("Good to know");
+      expect(html).not.toContain("Schedule");
+      expect(html).not.toContain("Language");
+      expect(html).toContain("Your order");
+      expect(html).toContain("Price");
       expect(html).toContain("What happens next");
     });
   });
@@ -462,9 +530,9 @@ describe("buildProductConfirmationEmail", () => {
       expect(html).toContain("Enrolled");
     });
 
-    it("keeps the Good to know facts, which are nobody's to withhold", () => {
+    it("keeps the product's own facts, which are nobody's to withhold", () => {
       const html = render(child);
-      expect(html).toContain("Good to know");
+      expect(html).toContain("Schedule");
       expect(html).toContain("Ages 8–12");
       expect(html).toContain("Finnish");
     });
@@ -628,13 +696,13 @@ describe("the plain-text twin", () => {
       "Your order",
       "Club: Minecraft 101",
       "Enrolled: Aino",
-      "Price: €40.00 / month",
-      "Good to know",
       "Schedule: ",
       "Language: Finnish",
+      "Price: €40.00 / month",
       "What happens next",
       "- We’ll place Aino in a group",
       DASHBOARD_URL,
+      "Questions? Just reply to this email.",
     ];
     let cursor = -1;
     for (const fragment of order) {
@@ -642,6 +710,9 @@ describe("the plain-text twin", () => {
       expect(at, fragment).toBeGreaterThan(cursor);
       cursor = at;
     }
+    // The facts run on from the rows above them, with no heading of their own,
+    // exactly as they do in the HTML.
+    expect(text).not.toContain("Good to know");
     // The mail's words, not its markup: an entry's notes are read as text.
     expect(text).not.toContain("<");
     expect(text).not.toContain("&#");
@@ -653,140 +724,6 @@ describe("the plain-text twin", () => {
       resolve({ invitation: SCHEDULE, firstChargeDate: "13 Jan 2027" }),
     )!;
     expect(text).toContain("- Nothing was charged today. Your first payment is on 13 Jan 2027.");
-  });
-});
-
-/**
- * **The mail is a second copy of the purchase confirmation page, so every
- * sentence they share has to be one sentence.**
- *
- * They cannot share a message key: the email translator is scoped to the
- * `email` namespace and the page reads `purchaseConfirmation`, `productDetail`
- * and `productAudience`. So the strings are genuine duplicates, and this table
- * is what stops them becoming two answers — an edit to either side fails here
- * rather than in an inbox, in every locale at once.
- *
- * **The placeholder names differ on purpose and are normalised before the
- * comparison.** The page's props are `gamer` and `product`; the mail's params
- * are `participantName` and `productName`, which is the vocabulary the whole
- * email directory uses. Renaming either side to match the other would be a
- * churn across five files to make a test simpler, so the test does the mapping
- * and states it here.
- *
- * A key that is deliberately the mail's alone — the subject lines, the
- * municipality price line the page states nothing for, everything under
- * `invite` — is simply absent from the table.
- */
-describe("copy parity with the confirmation page", () => {
-  const TYPES = ["consumer_club", "municipality_club", "camp", "event"] as const;
-
-  /** `[email key, page key]`, both relative to their own namespace roots. */
-  const PAIRS: [emailKey: string, pageKey: string][] = [
-    ["heading", "purchaseConfirmation.heading"],
-    ...TYPES.map(
-      (tp): [string, string] => [
-        `subheading.${tp}`,
-        `purchaseConfirmation.subheading.${tp}`,
-      ],
-    ),
-    ...TYPES.map(
-      (tp): [string, string] => [
-        `self.subheading.${tp}`,
-        `purchaseConfirmation.self.subheading.${tp}`,
-      ],
-    ),
-    ["waitlist.heading", "purchaseConfirmation.waitlist.heading"],
-    ["waitlist.subheading", "purchaseConfirmation.waitlist.subheading"],
-    ["self.waitlist.subheading", "purchaseConfirmation.self.waitlist.subheading"],
-    ["summaryTitle", "purchaseConfirmation.summaryTitle"],
-    ["waitlist.summaryTitle", "purchaseConfirmation.waitlist.summaryTitle"],
-    ...TYPES.map(
-      (tp): [string, string] => [
-        `forLabel.${tp}`,
-        `purchaseConfirmation.forLabel.${tp}`,
-      ],
-    ),
-    ["waitlist.forLabel", "purchaseConfirmation.waitlist.forLabel"],
-    ["priceLabel", "purchaseConfirmation.priceLabel"],
-    ["price.subscription", "purchaseConfirmation.price.subscription"],
-    ["price.upfront", "purchaseConfirmation.price.upfront"],
-    ["price.free", "purchaseConfirmation.price.free"],
-    ["overview.title", "productDetail.sections.overview"],
-    ["overview.schedule", "productDetail.info.schedule"],
-    ["overview.where", "productDetail.info.where"],
-    ["overview.format", "productDetail.info.format"],
-    ["overview.online", "productDetail.info.online"],
-    ["overview.tbd", "productDetail.info.tbd"],
-    ["overview.ageRange", "productDetail.info.ageRange"],
-    ["overview.audience", "productDetail.info.audience"],
-    ["overview.language", "productDetail.info.language"],
-    ["overview.ages", "productDetail.info.ages"],
-    ["overview.audienceParents", "productAudience.parents"],
-    ["overview.audienceFamilies", "productAudience.families"],
-    ["overview.audienceFamiliesWithAges", "productAudience.familiesWithAges"],
-    ["nextTitle", "purchaseConfirmation.nextTitle"],
-    ["next.placement", "purchaseConfirmation.next.placement"],
-    ["next.placementSelf", "purchaseConfirmation.self.nextPlacement"],
-    ["next.firstCharge", "purchaseConfirmation.next.firstCharge"],
-    ["next.subscription", "purchaseConfirmation.next.subscription"],
-    ["next.upfront", "purchaseConfirmation.next.oneTime"],
-    ["waitlist.next1", "purchaseConfirmation.waitlist.next1"],
-    ...TYPES.map(
-      (tp): [string, string] => [
-        `waitlist.next2.${tp}`,
-        `purchaseConfirmation.waitlist.next2.${tp}`,
-      ],
-    ),
-    ...TYPES.map(
-      (tp): [string, string] => [
-        `self.waitlist.next2.${tp}`,
-        `purchaseConfirmation.self.waitlist.next2.${tp}`,
-      ],
-    ),
-    ["waitlist.next3", "purchaseConfirmation.waitlist.next3"],
-    // No `keepBrowsing` pair: the page's second button is a way back into the
-    // shop a reader is still standing in, and the mail carries one button.
-    ["dashboardButton", "purchaseConfirmation.goToDashboard"],
-    // The order summary's own row label. Both surfaces name the product by its
-    // type before naming it, so the two spellings of "Club"/"Camp" have to
-    // agree as hard as the sentences around them do.
-    ...TYPES.map(
-      (tp): [string, string] => [`typeLabel.${tp}`, `productDetail.typeLabel.${tp}`],
-    ),
-  ];
-
-  /** The page's placeholder names, in the email's spelling. */
-  const PLACEHOLDERS: Record<string, string> = {
-    gamer: "participantName",
-    product: "productName",
-  };
-
-  /** One dotted path through a messages tree, refused unless it lands on copy. */
-  function read(messages: object, dotted: string): string {
-    let node: unknown = messages;
-    for (const key of dotted.split(".")) {
-      if (typeof node !== "object" || node === null) break;
-      node = Object.getOwnPropertyDescriptor(node, key)?.value;
-    }
-    if (typeof node !== "string") throw new Error(`${dotted} is not a string`);
-    return node;
-  }
-
-  function normalise(pageCopy: string): string {
-    return Object.entries(PLACEHOLDERS).reduce(
-      (acc, [from, to]) => acc.split(`{${from}}`).join(`{${to}}`),
-      pageCopy,
-    );
-  }
-
-  it.each(SUPPORTED_LOCALES)("says the same things in %s", async (locale) => {
-    const messages = await loadMessages(locale);
-    for (const [emailKey, pageKey] of PAIRS) {
-      expect(
-        read(messages, `email.productConfirmation.${emailKey}`),
-        `${locale}: ${emailKey}`,
-      ).toBe(normalise(read(messages, pageKey)));
-    }
   });
 });
 
