@@ -824,6 +824,14 @@ describe("the “Before the first session” guide", () => {
   /** Two of the Java guide's steps: an account step, and an install step. */
   const ACCOUNT_STEP = "Get a Microsoft account with Minecraft on it";
   const INSTALL_STEP = "Install the Minecraft Launcher";
+  /**
+   * The Roblox guide's account and install steps. The in-person cases read
+   * this topic rather than Java, because in person the Minecraft login is
+   * ours along with the machine, so Java has nothing to say there at all —
+   * Roblox is the guide that keeps an account step for the family to do.
+   */
+  const ROBLOX_ACCOUNT_STEP = "Create a Roblox account";
+  const ROBLOX_INSTALL_STEP = "Install Roblox Studio";
   /** The step every remote guide ends on, whatever its topic. */
   const REMOTE_STEP = "Set up the microphone and camera";
 
@@ -881,11 +889,15 @@ describe("the “Before the first session” guide", () => {
    * that form, because the ordinary one promises software to install.
    */
   it("states the accounts-only form for an in-person product", () => {
-    const html = render({ isRemote: false });
+    const html = render({ topic: "roblox_studio", isRemote: false });
     expect(html).toContain(HEADING);
-    expect(html).toContain(ACCOUNT_STEP);
-    expect(html).not.toContain(INSTALL_STEP);
+    expect(html).toContain(ROBLOX_ACCOUNT_STEP);
+    expect(html).not.toContain(ROBLOX_INSTALL_STEP);
     expect(html).toContain("We bring the computers to the session");
+  });
+
+  it("states no guide for an in-person Minecraft product, whose login is ours", () => {
+    expect(render({ isRemote: false })).not.toContain(HEADING);
   });
 
   /** Where the section sits: after what happens next, before the button. */
@@ -925,9 +937,9 @@ describe("the “Before the first session” guide", () => {
     });
 
     it("shortens with the HTML rather than separately", () => {
-      const inPerson = text({ isRemote: false });
-      expect(inPerson).toContain(ACCOUNT_STEP);
-      expect(inPerson).not.toContain(INSTALL_STEP);
+      const inPerson = text({ topic: "roblox_studio", isRemote: false });
+      expect(inPerson).toContain(ROBLOX_ACCOUNT_STEP);
+      expect(inPerson).not.toContain(ROBLOX_INSTALL_STEP);
       expect(inPerson).not.toContain(REMOTE_STEP);
       expect(text({ topic: "esports", isRemote: false })).not.toContain(HEADING);
     });
