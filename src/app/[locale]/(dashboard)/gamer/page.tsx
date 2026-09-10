@@ -11,10 +11,7 @@ import {
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
-  return {
-    title: t("gamerDashboard"),
-    description: t("gamerDashboardDescription"),
-  };
+  return { title: t("gamerDashboard") };
 }
 
 /**

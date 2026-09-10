@@ -4,17 +4,17 @@ import { localizedPageMetadata } from "@/lib/metadata/localized-page";
 import { RegisterForm } from "@/components/auth";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("metadata.pages");
+  const t = await getTranslations("metadata");
   const shared = await localizedPageMetadata("/register", await getLocale());
   return {
     ...shared,
-    title: t("createAccount"),
-    description: "Create your School of Gaming parent account",
+    title: t("pages.createAccount"),
+    description: t("descriptions.createAccount"),
     // Spread rather than replaced — see the note on the login page.
     openGraph: {
       ...shared.openGraph,
-      title: "Join School of Gaming",
-      description: "Create your School of Gaming parent account and enrol your child in clubs, camps and events led by professional game educators.",
+      title: t("og.pages.createAccount.title"),
+      description: t("og.pages.createAccount.description"),
     },
   };
 }

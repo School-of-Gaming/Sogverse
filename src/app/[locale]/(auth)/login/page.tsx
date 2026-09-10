@@ -4,19 +4,19 @@ import { localizedPageMetadata } from "@/lib/metadata/localized-page";
 import { LoginForm } from "@/components/auth";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("metadata.pages");
+  const t = await getTranslations("metadata");
   const shared = await localizedPageMetadata("/login", await getLocale());
   return {
     ...shared,
-    title: t("signIn"),
-    description: "Sign in to your School of Gaming account",
+    title: t("pages.signIn"),
+    description: t("descriptions.signIn"),
     // Spread rather than replaced: Next assigns a child's `openGraph` over its
     // parent's wholesale, so a block declared here without the shared one loses
     // the card image and the locale along with it.
     openGraph: {
       ...shared.openGraph,
-      title: "Sign in to School of Gaming",
-      description: "Sign in to your School of Gaming account to manage clubs, gamers, and more.",
+      title: t("og.pages.signIn.title"),
+      description: t("og.pages.signIn.description"),
     },
   };
 }

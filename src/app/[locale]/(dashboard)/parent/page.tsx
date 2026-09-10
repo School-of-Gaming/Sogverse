@@ -15,10 +15,7 @@ import type { BillingAccount } from "@/services/billing";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
-  return {
-    title: t("parentDashboard"),
-    description: t("parentDashboardDescription"),
-  };
+  return { title: t("parentDashboard") };
 }
 
 /**

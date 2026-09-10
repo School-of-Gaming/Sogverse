@@ -5,10 +5,7 @@ import { CreateInstantRoomCard } from "@/components/voice/instant/CreateInstantR
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
-  return {
-    title: t("adminTools"),
-    description: "Minecraft Education password resets and instant voice rooms",
-  };
+  return { title: t("adminTools") };
 }
 
 /**

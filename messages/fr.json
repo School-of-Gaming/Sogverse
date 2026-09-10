@@ -16,6 +16,16 @@
         "headlineTail": "Roblox",
         "subline": "Programme gratuit, animé par de vrais Game Educators",
         "collaboration": "Une collaboration entre"
+      },
+      "pages": {
+        "signIn": {
+          "title": "Connectez-vous à School of Gaming",
+          "description": "Connectez-vous à votre compte School of Gaming pour gérer vos clubs, vos joueurs et bien plus encore."
+        },
+        "createAccount": {
+          "title": "Rejoignez School of Gaming",
+          "description": "Créez votre compte parent School of Gaming et inscrivez votre enfant à des clubs, des stages et des événements encadrés par de vrais animateurs."
+        }
       }
     },
     "pages": {
@@ -29,13 +39,11 @@
       "adminDashboard": "Tableau de bord admin",
       "adminTools": "Outils",
       "parentDashboard": "Mon SOG",
-      "parentDashboardDescription": "Gérez vos joueurs et leurs inscriptions",
       "geduDashboard": "Mon SOG",
       "geduSessionDetails": "Détails de la session",
       "familyProduct": "Séances et comptes rendus",
       "familyProductDescription": "Le calendrier de ce groupe et le compte rendu de chaque séance.",
       "gamerDashboard": "Mon SOG",
-      "gamerDashboardDescription": "Vos clubs, stages et événements dans Sogverse",
       "voiceSession": "Session vocale",
       "shop": "Boutique",
       "schools": "Clubs municipaux",
@@ -53,6 +61,20 @@
       "robloxTerms": "Conditions générales d’utilisation de l’Académie des Créateurs",
       "geduContract": "Contrat Gedu",
       "seatOffer": "Proposition de place"
+    },
+    "descriptions": {
+      "signIn": "Connectez-vous à votre compte School of Gaming pour suivre les séances à venir de vos joueurs, gérer les inscriptions et tenir vos informations à jour.",
+      "createAccount": "Créez le compte School of Gaming de votre famille et inscrivez votre enfant à des clubs, des stages et des événements encadrés par de vrais animateurs.",
+      "forgotPassword": "Mot de passe oublié ? Indiquez votre adresse e-mail et nous vous enverrons un lien pour en choisir un nouveau pour votre compte School of Gaming.",
+      "resetPassword": "Choisissez un nouveau mot de passe pour votre compte School of Gaming à partir du lien reçu par e-mail, puis connectez-vous aussitôt.",
+      "registerGedu": "Rejoignez School of Gaming comme animateur et encadrez des clubs, des stages et des événements pour les enfants, dans les jeux qu’ils pratiquent déjà.",
+      "about": "Qui est School of Gaming, ce qu’est le Yty et les réponses aux questions que les familles se posent avant d’inscrire leur enfant.",
+      "shop": "Parcourez les clubs, les stages et les événements School of Gaming sur Minecraft, Roblox, Fortnite et bien d’autres, et trouvez celui qui convient à votre enfant.",
+      "resetPin": "Choisissez un nouveau code PIN parent à partir du lien reçu par e-mail : ce code garde les pages réservées aux parents fermées à votre enfant.",
+      "privacy": "Comment School of Gaming collecte et conserve les données de votre famille : ce que nous gardons sur un enfant, avec qui nous le partageons et vos droits.",
+      "terms": "Les conditions que vous acceptez en utilisant School of Gaming : inscriptions, paiements, annulations, et ce dont nous et vous êtes responsables.",
+      "antiBullying": "Comment School of Gaming prévient le harcèlement dans ses clubs, ses stages et ses événements, ce qui se passe le cas échéant et comment un animateur intervient.",
+      "attributions": "Les sources et les licences des données utilisées par School of Gaming : noms de lieux, codes postaux et avatars de joueurs, crédités comme l’exige chaque licence."
     }
   },
   "notFound": {

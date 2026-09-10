@@ -16,6 +16,16 @@
         "headlineTail": "i Roblox",
         "subline": "Ett gratis program, lett av riktiga spelfostrare",
         "collaboration": "I samarbete med"
+      },
+      "pages": {
+        "signIn": {
+          "title": "Logga in på School of Gaming",
+          "description": "Logga in på ditt School of Gaming-konto för att hantera klubbar, spelare och mycket mer."
+        },
+        "createAccount": {
+          "title": "Gå med i School of Gaming",
+          "description": "Skapa ett School of Gaming-föräldrakonto och anmäl ditt barn till klubbar, läger och evenemang som leds av professionella spelfostrare."
+        }
       }
     },
     "pages": {
@@ -29,13 +39,11 @@
       "adminDashboard": "Administratörspanel",
       "adminTools": "Verktyg",
       "parentDashboard": "Min SOG",
-      "parentDashboardDescription": "Hantera dina spelare och deras anmälningar",
       "geduDashboard": "Min SOG",
       "geduSessionDetails": "Sessionsdetaljer",
       "familyProduct": "Tillfällen och sammanfattningar",
       "familyProductDescription": "Gruppens schema och sammanfattningen från varje tillfälle.",
       "gamerDashboard": "Min SOG",
-      "gamerDashboardDescription": "Dina klubbar, läger och evenemang i Sogverse",
       "voiceSession": "Röstsession",
       "shop": "Butik",
       "schools": "Kommunklubbar",
@@ -53,6 +61,20 @@
       "robloxTerms": "Användarvillkor för Skaparnas akademi",
       "geduContract": "Gedu-avtal",
       "seatOffer": "Platserbjudande"
+    },
+    "descriptions": {
+      "signIn": "Logga in på ditt School of Gaming-konto för att se dina spelares kommande tillfällen, hantera anmälningar och hålla familjens uppgifter aktuella.",
+      "createAccount": "Skapa ett School of Gaming-konto för din familj och anmäl ditt barn till klubbar, läger och evenemang som leds av professionella spelfostrare.",
+      "forgotPassword": "Glömt lösenordet? Ange din e-postadress så skickar vi en länk där du kan välja ett nytt lösenord för ditt School of Gaming-konto.",
+      "resetPassword": "Välj ett nytt lösenord för ditt School of Gaming-konto via länken vi skickade med e-post, och logga in med det direkt.",
+      "registerGedu": "Sök till spelfostrare hos School of Gaming och led klubbar, läger och evenemang för barn i de spel de redan spelar varje dag.",
+      "about": "Vilka vi på School of Gaming är, vad Yty är och svar på de frågor familjer ställer innan de anmäler sitt barn till en klubb.",
+      "shop": "Bläddra bland School of Gamings klubbar, läger och evenemang i Minecraft, Roblox, Fortnite och mer, och hitta ett som passar ditt barns vecka.",
+      "resetPin": "Välj en ny föräldra-PIN för ditt School of Gaming-konto via länken vi skickade med e-post. PIN-koden håller föräldrasidorna stängda för ditt barn.",
+      "privacy": "Hur School of Gaming samlar in, använder och lagrar din familjs uppgifter: vad vi sparar om ett barn, vem vi delar det med och vilka rättigheter du har.",
+      "terms": "Villkoren du godkänner när du använder School of Gaming: hur anmälningar, betalningar och avbokningar fungerar och vad vi och du ansvarar för.",
+      "antiBullying": "Hur School of Gaming förebygger mobbning i sina klubbar, läger och evenemang, vad som händer när det inträffar och hur en spelfostrare ingriper.",
+      "attributions": "Källorna och licenserna bakom de data School of Gaming använder: ortnamn, postnummer och spelarbilder, var och en krediterad som licensen kräver."
     }
   },
   "notFound": {

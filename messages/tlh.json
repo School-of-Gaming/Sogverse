@@ -16,6 +16,16 @@
         "headlineTail": "Roblox Daq",
         "subline": "Huch Hutlh ghojmoH — Gedu’pu’ Dun DevtaH",
         "collaboration": "boqwI’pu’"
+      },
+      "pages": {
+        "signIn": {
+          "title": "School of Gaming: yI’el",
+          "description": "account-lIj yI’el, ’ej ghom’a’mey, toy’wI’pu’, latlh je yIche’."
+        },
+        "createAccount": {
+          "title": "School of Gaming yIghom!",
+          "description": "qorDu’ account yIchenmoH, ’ej ghom’a’meyDaq, raghmeyDaq, wanI’meyDaq je puqlI’ yIqem."
+        }
       }
     },
     "pages": {
@@ -29,13 +39,11 @@
       "adminDashboard": "Admin QaD",
       "adminTools": "janmey",
       "parentDashboard": "jIH SOG",
-      "parentDashboardDescription": "toy’wI’pu’lIj ghom’a’meychaj je yIche’",
       "geduDashboard": "jIH SOG",
       "geduSessionDetails": "may’ Qatlh",
       "familyProduct": "may’mey qonta’ je",
       "familyProductDescription": "ghom’a’vam poH mIw, may’ Hoch qonta’ je.",
       "gamerDashboard": "jIH SOG",
-      "gamerDashboardDescription": "Sogverse-Daq ghom’a’meylIj, raghmeylIj, Qu’meylIj je",
       "voiceSession": "jatlh poH",
       "shop": "ngevwI’",
       "schools": "veng ghomHommey",
@@ -46,6 +54,16 @@
       "roblox": "chenmoHwI’ DuSaQ",
       "geduContract": "Gedu quv chut",
       "seatOffer": "quS nob"
+    },
+    "descriptions": {
+      "signIn": "School of Gaming account-lIj yI’el. toy’wI’pu’lIj, ghom’a’meychaj, raghmeychaj je Dache’laH.",
+      "createAccount": "qorDu’lIjvaD School of Gaming account yIchenmoH, ’ej ghom’a’meyDaq, raghmeyDaq, wanI’meyDaq je puqlI’ yIqem — Quj ghojmoHwI’pu’ Dun DevtaH.",
+      "forgotPassword": "mu’mey DaSovbe’? QIn Daqlij yIghItlh. tlhegh DaHevbogh yIlo’, ’ej chu’bogh mu’mey yIwIv.",
+      "resetPassword": "School of Gaming account-lIjvaD chu’bogh mu’mey yIwIv. QInDaq tlhegh yIlo’, ’ej DaH yI’el.",
+      "registerGedu": "Quj ghojmoHwI’ — Gedu — yImoj! School of Gaming-vaD ghom’a’mey, raghmey, wanI’mey je yIDev; Qujmey luparHa’bogh puqpu’ yIghojmoH.",
+      "about": "School of Gaming: ’Iv maH, nuq ’oH Yty’e’, ’ej qorDu’pu’ luyu’bogh yu’mey lujangbogh De’.",
+      "shop": "School of Gaming ghom’a’mey, raghmey, wanI’mey je yIlegh: Minecraft, Roblox, Fortnite latlh je. puqlI’vaD lI’bogh wa’ yItu’!",
+      "resetPin": "chu’bogh vav PIN yIwIv — QInDaq tlhegh yIlo’. vav paqmey SoQmoH PIN, ’ej puq luSovbe’."
     }
   },
   "notFound": {

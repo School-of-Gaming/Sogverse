@@ -25,8 +25,8 @@ function flattenKeys(obj, prefix = "") {
  * Keys the Klingon easter-egg catalog deliberately leaves out.
  *
  * The legal surface — the policy and terms namespaces, the attributions credit,
- * those pages' metadata titles, and every link label that names one of the
- * documents — is served in English under `tlh`: binding text and licence
+ * those pages' metadata titles and descriptions, and every link label that
+ * names one of the documents — is served in English under `tlh`: binding text and licence
  * conditions are not a place for an in-character rendering. The keys are
  * *omitted* rather than copied so English stays the single source of truth
  * (a verbatim copy would silently go stale the next time the English is
@@ -63,6 +63,13 @@ const ENGLISH_UNDER_KLINGON = [
   "metadata.pages.robloxPrivacy",
   "metadata.pages.robloxSafeguarding",
   "metadata.pages.robloxTerms",
+  // The same four documents' search-snippet descriptions, mirroring the titles
+  // above. A snippet is how a reader meets a binding document before opening
+  // it, so it is the document describing itself and belongs in the same set.
+  "metadata.descriptions.privacy",
+  "metadata.descriptions.terms",
+  "metadata.descriptions.antiBullying",
+  "metadata.descriptions.attributions",
   // The two consent documents a product can require, named — and the label of
   // the bundle they are published as, which names the same documents as a set.
   // Their *names* only — the sentence a parent ticks, its heading and the CTA

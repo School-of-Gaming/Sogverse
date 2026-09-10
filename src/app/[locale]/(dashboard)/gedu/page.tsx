@@ -25,7 +25,7 @@ import {
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
-  return { title: t("geduDashboard"), description: "Spin up a voice room" };
+  return { title: t("geduDashboard") };
 }
 
 /**

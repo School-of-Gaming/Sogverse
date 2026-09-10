@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import { localizedPageMetadata } from "@/lib/metadata/localized-page";
 import { ForgotPasswordForm } from "@/components/auth";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("metadata.pages");
-  return { title: t("forgotPassword"), description: "Reset your School of Gaming account password" };
+  const t = await getTranslations("metadata");
+  return {
+    ...(await localizedPageMetadata("/forgot-password", await getLocale())),
+    title: t("pages.forgotPassword"),
+    description: t("descriptions.forgotPassword"),
+  };
 }
 
 export default function ForgotPasswordPage() {
