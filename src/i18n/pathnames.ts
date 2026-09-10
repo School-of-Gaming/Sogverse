@@ -98,9 +98,22 @@ export const PATHNAMES = {
     tlh: "/anti-bullying-and-discipline",
   },
 
+  "/about": {
+    en: "/about",
+    fi: "/meista",
+    sv: "/om-oss",
+    fr: "/a-propos",
+    tlh: "/about",
+  },
+  "/attributions": {
+    en: "/attributions",
+    fi: "/lahteet",
+    sv: "/kallor",
+    fr: "/credits",
+    tlh: "/attributions",
+  },
+
   // --- Public, English segments in every locale -----------------------------
-  "/about": "/about",
-  "/attributions": "/attributions",
   "/docs/minecraft-api": "/docs/minecraft-api",
   "/roblox": "/roblox",
   "/roblox/privacy": "/roblox/privacy",

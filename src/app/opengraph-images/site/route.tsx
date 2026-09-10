@@ -1,17 +1,17 @@
-/* eslint-disable i18next/no-literal-string -- OG image is rendered to a PNG by next/og at build time; the text is baked into the image, not a runtime UI string */
 import { ImageResponse } from "next/og";
+import { getTranslations } from "next-intl/server";
 import { DARK_THEME, BRAND } from "@/lib/constants/colors";
-import { BRAND_LOCKUP } from "@/lib/constants";
 import { SogMark } from "@/components/og/marks";
 import { ogFonts, OG_FONT_FAMILY } from "@/components/og/fonts";
-
-export const alt = BRAND_LOCKUP;
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+import {
+  cardLocaleOf,
+  OG_CARD_CACHE_CONTROL,
+  OG_CARD_SIZE,
+} from "@/lib/og/cards";
 
 /**
  * The site-wide social card: the brand mark, the tagline, and one line saying
- * what we actually run.
+ * what we actually run — drawn in the locale the URL asks for.
  *
  * An OG image is the coldest contact surface we have — it is met by someone who
  * has never heard of us, at thumbnail size, beside other people's links — so it
@@ -24,9 +24,18 @@ export const contentType = "image/png";
  * the mark has to survive being shrunk to roughly 500px wide, which is what sets
  * the two type sizes; and the card carries no button, no fake screenshot and no
  * number, because the click has to still be worth having once they arrive.
+ *
+ * **A route handler rather than the `opengraph-image` file convention**, and the
+ * text is read from the catalog rather than baked in: both are consequences of
+ * locale-in-URL routing, and `@/lib/og/cards` holds the reasoning for the shape
+ * and the caching.
  */
-export default async function Image() {
-  const fonts = await ogFonts();
+export async function GET(request: Request) {
+  const locale = cardLocaleOf(request);
+  const [t, fonts] = await Promise.all([
+    getTranslations({ locale, namespace: "metadata.og.site" }),
+    ogFonts(),
+  ]);
 
   return new ImageResponse(
     (
@@ -62,7 +71,9 @@ export default async function Image() {
         {/* The vision statement, drawn the way the styled home hero draws it:
             the canonical capitalization, broken across lines, and no full stop
             — a graphic rather than a sentence. Two lines, not the hero's four,
-            because this one has to stay readable at thumbnail width. */}
+            because this one has to stay readable at thumbnail width. Each
+            locale owns where the break falls, which is why the two halves are
+            two keys rather than one string split here. */}
         <div
           style={{
             display: "flex",
@@ -77,10 +88,10 @@ export default async function Image() {
             color: DARK_THEME.foreground,
           }}
         >
-          <span>Where Screen Time Becomes</span>
+          <span>{t("headline")}</span>
           {/* The payoff half in the mark's own yellow — the only accent below
               the badge, so the eye finishes the line. */}
-          <span style={{ color: BRAND.act }}>Quality Time</span>
+          <span style={{ color: BRAND.act }}>{t("headlineAccent")}</span>
           {/* The page's own hero construct, so a share and the page it lands on
               say one thing. `alignSelf: stretch` rather than a percentage: this
               column is shrink-to-fit around the wider of the two lines, so
@@ -112,10 +123,14 @@ export default async function Image() {
             color: DARK_THEME.mutedFg,
           }}
         >
-          Clubs, camps and events led by professional Game Educators
+          {t("subline")}
         </div>
       </div>
     ),
-    { ...size, fonts }
+    {
+      ...OG_CARD_SIZE,
+      fonts,
+      headers: { "Cache-Control": OG_CARD_CACHE_CONTROL },
+    },
   );
 }

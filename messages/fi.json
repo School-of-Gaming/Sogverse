@@ -1,6 +1,23 @@
 {
   "metadata": {
     "description": "Ruutuajasta laatuaikaa. Kerhoja, leirejä ja tapahtumia Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä, ammattitaitoisten pelikasvattajien johdolla.",
+    "og": {
+      "site": {
+        "alt": "School of Gaming: ruutuajasta laatuaikaa. Kerhoja, leirejä ja tapahtumia ammattitaitoisten pelikasvattajien johdolla.",
+        "headline": "Ruutuajasta",
+        "headlineAccent": "Laatuaikaa",
+        "subline": "Kerhoja, leirejä ja tapahtumia ammattitaitoisten pelikasvattajien johdolla"
+      },
+      "roblox": {
+        "title": "SOG x Lynx – Tee oma pelisi Robloxiin",
+        "description": "Ilmainen ohjelma nuorille, jota vetävät oikeat pelikasvattajat. Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa.",
+        "headline": "Tee",
+        "headlineAccent": "oma pelisi",
+        "headlineTail": "Robloxiin",
+        "subline": "Ilmainen ohjelma, jota vetävät oikeat pelikasvattajat",
+        "collaboration": "Yhteistyössä"
+      }
+    },
     "pages": {
       "signIn": "Kirjaudu sisään",
       "createAccount": "Luo tili",

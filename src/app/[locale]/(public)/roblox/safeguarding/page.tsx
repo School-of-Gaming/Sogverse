@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
+import { robloxCardMetadata } from "../card-metadata";
 import { formatDateOnly } from "@/lib/utils";
 import { rawString } from "@/lib/i18n/raw-messages";
 import { PolicyPage } from "@/components/legal/policy-page";
@@ -9,6 +10,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
   return {
     title: t("robloxSafeguarding"),
+    // The programme card, declared explicitly: this page inherited it from the
+    // file convention next door, and with that gone it would unfurl as the
+    // site-wide card instead. See `../card-metadata`.
+    ...(await robloxCardMetadata()),
     // Same posture as /roblox, whose policy this is: shared by URL rather than
     // published while the Programme copy is still being signed off. The tag is
     // what actually keeps it out of search results; the route is deliberately

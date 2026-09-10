@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import { localizedPageMetadata } from "@/lib/metadata/localized-page";
 import { createClient } from "@/lib/supabase/server";
 import { ProductsService } from "@/services/products";
 import {
@@ -12,7 +13,10 @@ import type { ProductBrowseRow } from "@/types";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
-  return { title: t("shop") };
+  return {
+    ...(await localizedPageMetadata("/shop", await getLocale())),
+    title: t("shop"),
+  };
 }
 
 /**

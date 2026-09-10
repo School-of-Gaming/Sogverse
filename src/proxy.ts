@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database.types";
 
 import { ROUTES } from "@/lib/constants";
+import { LOCALE_COOKIE_NAME } from "@/lib/locale-cookie";
 import {
   DEFAULT_LOCALE,
   isSupportedLocale,
@@ -35,8 +36,6 @@ import { UTM_HEADER, readUtmFromSearchParams, serialiseUtm } from "@/lib/utm";
  * and the `x-next-intl-locale` header the request config reads.
  */
 const intlMiddleware = createIntlMiddleware(routing);
-
-const LOCALE_COOKIE_NAME = "locale";
 
 /**
  * Which locale a **bare** path should be served in: the stored preference

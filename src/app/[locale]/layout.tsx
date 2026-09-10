@@ -13,7 +13,8 @@ import { getUserWithProfile } from "@/lib/supabase/server";
 import { resolveTimezone, TIMEZONE_COOKIE_NAME } from "@/lib/timezone";
 import { UTM_HEADER, parseUtmHeader } from "@/lib/utm";
 import { BRAND_LOCKUP, toDetectedLocale } from "@/lib/constants";
-import { isSupportedLocale } from "@/lib/constants/locales";
+import { isSupportedLocale, resolveLocale } from "@/lib/constants/locales";
+import { ogCardImage } from "@/lib/og/card-metadata";
 import { getServerConsent } from "@/lib/consent.server";
 import {
   AnalyticsScripts,
@@ -77,7 +78,12 @@ const dancingScript = Dancing_Script({
   variable: "--font-dancing-script",
 });
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const locale = resolveLocale((await params).locale);
   const t = await getTranslations("metadata");
   // Both names, brand first — and not a translated string. It was one in every
   // locale file and identical in all five, which is what a mark being copied
@@ -88,6 +94,12 @@ export async function generateMetadata(): Promise<Metadata> {
   // (CLAUDE.md § Brand vs. Platform).
   const title = BRAND_LOCKUP;
   const description = t("description");
+  // The site-wide card, at this URL's locale. It is emitted here rather than by
+  // a file convention: `opengraph-image.tsx` has no locale to render at and
+  // outranks config metadata, so the URL it emits could not be overridden. See
+  // `@/lib/og/cards`. One object for both blocks, because Next replaces a
+  // child's `twitter` wholesale and the two must not drift apart.
+  const card = await ogCardImage("site", locale);
 
   return {
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL!),
@@ -103,16 +115,26 @@ export async function generateMetadata(): Promise<Metadata> {
     // which is the job of both a snippet and a link preview, so both get it.
     description,
     keywords: ["gaming", "education", "learning", "children", "games"],
+    // **Klingon is `noindex`, not a robots.txt disallow.** `/tlh/…` is real,
+    // crawlable URL-space that is excluded from the sitemap and from every
+    // `hreflang` set, which search engines treat as orphaned duplicates — so it
+    // says so itself. Disallow would be the wrong tool for the reason the
+    // Roblox pages already document: a disallowed URL is never fetched, so the
+    // tag is never read, and the URL can still be indexed bare.
+    ...(locale === "tlh" && { robots: { index: false } }),
     openGraph: {
       type: "website",
       siteName: "School of Gaming",
       title,
       description,
+      locale,
+      images: [card],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [card],
     },
   };
 }

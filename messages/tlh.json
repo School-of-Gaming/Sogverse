@@ -1,6 +1,23 @@
 {
   "metadata": {
     "description": "naDev Quj yay’ moj. Minecraft, Roblox, Fortnite latlh je: ghom’a’mey, raghmey, wanI’mey — Gedu’pu’ Dun DevtaH.",
+    "og": {
+      "site": {
+        "alt": "naDev Daq tIv moj Qap tIv. ghom’a’mey, raghmey, wanI’mey — Gedu’pu’ Dun DevtaH.",
+        "headline": "naDev Daq tIv moj",
+        "headlineAccent": "Qap tIv",
+        "subline": "ghom’a’mey, raghmey, wanI’mey — Gedu’pu’ Dun DevtaH"
+      },
+      "roblox": {
+        "title": "SOG x Lynx – yIchenmoH Qujlij Roblox Daq",
+        "description": "loDHompu’ be’Hompu’vaD ghojmoH Huch Hutlh. Lynx Educate, School of Gaming, je Roblox boqwI’pu’.",
+        "headline": "yIchenmoH",
+        "headlineAccent": "Qujlij",
+        "headlineTail": "Roblox Daq",
+        "subline": "Huch Hutlh ghojmoH — Gedu’pu’ Dun DevtaH",
+        "collaboration": "boqwI’pu’"
+      }
+    },
     "pages": {
       "signIn": "yI’el",
       "createAccount": "Account yIchenmoH",

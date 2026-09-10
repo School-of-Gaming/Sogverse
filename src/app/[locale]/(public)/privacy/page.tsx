@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
+import { localizedPageMetadata } from "@/lib/metadata/localized-page";
 import { formatDateOnly } from "@/lib/utils";
 import { rawStringArray } from "@/lib/i18n/raw-messages";
 import { PolicyPage } from "@/components/legal/policy-page";
@@ -7,7 +8,10 @@ import { paragraphsThenBullets } from "@/components/legal/policy-content";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
-  return { title: t("privacy") };
+  return {
+    ...(await localizedPageMetadata("/privacy", await getLocale())),
+    title: t("privacy"),
+  };
 }
 
 // The date the policy *text* last changed — bump it whenever the copy below

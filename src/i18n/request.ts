@@ -6,6 +6,7 @@ import {
   DEFAULT_TIMEZONE,
   type SupportedLocale,
 } from "@/lib/constants/locales";
+import { LOCALE_COOKIE_NAME } from "@/lib/locale-cookie";
 import { loadMessages } from "./messages";
 
 /**
@@ -29,7 +30,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
     locale = urlLocale;
   } else {
     const cookieStore = await cookies();
-    const cookieLocale = cookieStore.get("locale")?.value;
+    const cookieLocale = cookieStore.get(LOCALE_COOKIE_NAME)?.value;
     if (isSupportedLocale(cookieLocale)) {
       locale = cookieLocale;
     } else {

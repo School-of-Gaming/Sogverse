@@ -1,6 +1,7 @@
 import type { Metadata, ResolvingMetadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { DEFAULT_LOCALE } from "@/lib/constants/locales";
+import { getLocale } from "next-intl/server";
+import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { productImageSrc } from "@/lib/images/product-image-url";
 
@@ -45,14 +46,17 @@ export const PRODUCT_ROBOTS_ONLY: Metadata = {
  * selects (prices, slots, locations) exist for the page body and would be a
  * large second fetch for two strings.
  *
- * **The translation is resolved at the default locale, not the viewer's.** The
- * audience for this metadata is a link scraper, which carries no locale cookie
- * and would therefore get the default anyway; resolving deliberately says so
- * rather than leaving it to a coincidence. `resolveTranslation` walks
- * `en` → `en` → first row from there, so a product translated only into some
- * other language still gets a real name instead of falling back to the
+ * **The translation is resolved at the request locale — the URL's.** It used to
+ * resolve at the default locale, and the reason was sound while it held: a link
+ * scraper carries no cookie, so it would have got the default anyway, and
+ * saying so beat leaving it to a coincidence. The URL carries the locale now, so
+ * a `/fi/kauppa/<id>` shared into a Finnish group unfurls with the Finnish name
+ * and short description. `resolveTranslation` walks
+ * locale → `en` → first row from there, so a product without that language
+ * degrades exactly as the page body does rather than falling back to the
  * site-wide card. A product with no translation at all is DB-impossible, but
- * costs nothing to survive here.
+ * costs nothing to survive here. The picture is the product's own and is not
+ * localized; only the text moves.
  *
  * A missing product (a bad id, or one no anonymous reader may see) returns the
  * robots-only metadata unchanged — exactly what these routes served before the
@@ -87,7 +91,7 @@ export async function buildProductMetadata(
 
   const translation = resolveTranslation(
     product?.product_translations,
-    DEFAULT_LOCALE,
+    resolveLocale(await getLocale()),
   );
   if (!product || !translation) return PRODUCT_ROBOTS_ONLY;
 
@@ -117,14 +121,12 @@ export async function buildProductMetadata(
   // they fetch and measure, which is slower and right.
   //
   // **A product with no picture falls back to the parent's resolved images —
-  // the root branded card — and this cannot be done by omission.** Two separate
-  // mechanics in Next's metadata resolution both defeat the obvious spelling:
-  // `mergeMetadata` *assigns* `openGraph` rather than merging it, so declaring
-  // the block at all discards the root's images; and the file-based
-  // `opengraph-image` convention is only merged in when the child's `openGraph`
-  // has no own `images` property — and `{ images: undefined }` has one. So an
-  // imageless product would emit no `og:image` whatsoever, which is strictly
-  // worse than the site-wide card it used to inherit.
+  // the site-wide card the `[locale]` layout emits at this URL's locale — and
+  // this cannot be done by omission.** `mergeMetadata` *assigns* `openGraph`
+  // rather than merging it, so declaring the block at all discards the layout's
+  // images, and `{ images: undefined }` is a declared, empty one. An imageless
+  // product would then emit no `og:image` whatsoever, which is strictly worse
+  // than the card it used to inherit.
   const images = image
     ? [{ url: image, alt: translation.name }]
     : (await parent).openGraph?.images;

@@ -324,15 +324,18 @@ Translated: the public content routes and their children —
 | `/shop`, `/shop/[id]` | `/kauppa` | `/butik` | `/boutique` |
 | `/schools`, `/schools/[slug]` | `/koulut` | `/skolor` | `/ecoles` |
 | `/help` | *(no such route — see the note below)* | | |
+| `/about` | `/meista` | `/om-oss` | `/a-propos` |
+| `/attributions` | `/lahteet` | `/kallor` | `/credits` |
 | `/privacy` | `/tietosuoja` | `/integritet` | `/confidentialite` |
 | `/terms-and-conditions` | `/kayttoehdot` | `/villkor` | `/conditions-generales` |
 | `/anti-bullying-and-discipline` | *(translate)* | *(translate)* | *(translate)* |
 
 **Implementer's note (2026-09-10): the table met the routes as they are.** There is no
 `/help` page in this app — the public FAQ lives on `/about` — so that row has no entry in
-the map. `/about` and `/attributions` are public content routes the table does not list,
-and they were left on their English segments rather than translated on the table's behalf;
-translating them later is one map edit per route. The `anti-bullying-and-discipline` slugs
+the map. **`/about` and `/attributions` were added to the table during Step 8–10** (owner
+decision): the table had simply missed two public content routes, and they are content
+pages exactly like the others, so they carry translated slugs rather than sitting on
+English segments beside `/tietosuoja`. The `anti-bullying-and-discipline` slugs
 were authored during implementation: `/kiusaamisen-vastaisuus-ja-kurinpito`,
 `/mot-mobbning-och-disciplin`, `/lutte-contre-le-harcelement-et-discipline`.
 
@@ -475,11 +478,31 @@ adding a locale stays a one-map edit.
    call site.
    Sign-in: per the mechanism in the decision section — client-side cookie write in the
    login form, server-side in the OAuth callback and switch-account routes.
+   **Implemented (2026-09-10):** the picker builds its destination with `getPathname`
+   (the wrapped router's own internal step, identical output under `always`) and
+   replaces through the raw router, because the wrapped router's typed href has no
+   `hash` field and next-intl drops fragments — the only way to honour "preserve any
+   hash". The href object carries the one described `@ts-expect-error` from next-intl's
+   own locale-switcher recipe (`pathname` is the union of every route and `useParams()`
+   is a loose record; the repo bans assertions). The login form gained no extra fetch:
+   it already selected the profile for the post-login destination, so `locale` joined
+   that select. The provider no longer refreshes the router — the picker's navigation
+   re-renders the server tree. The cookie's name and options live in
+   `src/lib/locale-cookie.ts`, shared by the picker, the auth flows, the proxy and the
+   request config.
 7. **Analytics route.** Swap the analytics mount to the package's React entry point and
    feed it `route` (the internal template via the shared normalizer, locale segment
    dropped) and `path` (the raw pathname), re-emitting a pageview on each navigation
    (see the analytics constraint). Unit-test the route derivation: `/fi/kauppa/abc` →
    `/shop/[id]`, `/en/shop` → `/shop`, `/fi/parent` → `/parent`.
+
+   **Implemented (2026-09-10):** the derivation is `@/lib/analytics/route`, which
+   returns the normalizer's *template* and falls back to the locale-stripped pathname
+   for a path behind no route, so a 404 in four languages is one row rather than four.
+   The mount reads the **raw** `next/navigation` pathname — `path` is it verbatim — and
+   needs no Suspense boundary: only the Next wrapper's `useSearchParams()` param
+   substitution ever wanted one. The React component's own effect re-emits the pageview
+   on every navigation, so nothing here re-implements it.
 8. **OG images.** Both cards become root-level route handlers taking a validated
    `locale` query param (see the OG constraints for why the file convention doesn't
    survive the move), rendering their text and alt from the `metadata` namespace via
@@ -491,6 +514,35 @@ adding a locale stays a one-map edit.
    in place of the French literals. The build-time-baked strings, their lint
    suppressions, the literal-copy module and its drift test go away. The product card
    resolves its translation at the request locale (see the metadata decision).
+
+   **Implemented (2026-09-10).** Five things worth knowing:
+
+   - **The handlers are `/opengraph-images/site` and `/opengraph-images/roblox`**, and
+     **the proxy matcher needed no edit**: its exclusion is a *prefix* (`opengraph-image`
+     with nothing anchoring its end), so the plural directory is already excluded.
+     Sitting one segment away from Next's reserved `opengraph-image` name also means
+     nothing depends on Next tolerating a directory named after one of its own file
+     conventions — the question the plan left open is simply not asked.
+   - **Two font files, not three.** The old module fetched exactly two (the app face at
+     400 and 600); they are vendored to `src/assets/fonts/` with the OFL text beside
+     them, and `next.config.ts` names the directory in `outputFileTracingIncludes`,
+     without which a `process.cwd()` read is invisible to the bundler's tracer and the
+     files are simply not deployed. The licence obliges the text to travel with the
+     files, not a credit on the site, so the `/attributions` page is unchanged.
+   - **The catalogs gained `metadata.og.{site,roblox}`.** The programme headline is
+     three keys — opening, the accent, and the part naming Roblox — because Roblox's
+     guidelines put the accent on what the reader *makes* and never on their name, and
+     one string with a fixed split point could not hold that across four languages.
+   - **The three sub-pages and `/roblox` share `./card-metadata`**, which emits the
+     description and both blocks; a sub-page that declared nothing would now unfurl as
+     the site-wide card, since the file convention that used to reach it is gone.
+   - **The root-level `not-found` no longer carries a card.** It sits outside
+     `[locale]`, and the file convention that used to blanket every page with one is
+     gone; a 404 is not a page anyone shares, so it is left without rather than given a
+     locale it does not have.
+   - **The handlers are outside the route posture registry's surface**, which is
+     globbed as `src/app/api/**/route.ts`. They are covered by
+     `tests/integration/og-cards.test.ts` instead, which renders both cards for real.
 9. **Metadata alternates.** Alternates are **per-page, never layout-level** — a layout
    cannot compute a self-referencing canonical (it has no pathname), and Next's metadata
    merge would cascade one layout-level canonical onto all 63 pages. A shared helper
@@ -509,11 +561,29 @@ adding a locale stays a one-map edit.
    leave — and dynamic detail pages: the product pages (`/shop/[id]` and the municipality
    product route) are noindex by owner decision, and the municipality index page is
    out of scope with the other dynamic params.
+
+   **Implemented (2026-09-10):** the helper is `@/lib/metadata/localized-page`, and it
+   emits the whole `openGraph` block (type, siteName, locale, the card) rather than the
+   images alone — Next *assigns* a child's block over its parent's, so a page emitting
+   only images would drop `og:type` and `og:site_name`. Title and description are
+   deliberately absent from it: Next fills those from the page's own resolved values.
+   `/help` is not in scope because it does not exist; `/about` is. `/schools` turned out
+   to be `noindex` by the same August owner decision that covers product pages, so the
+   noindex exclusion above wins over its place in the list: it emits no alternates and
+   inherits the site-wide card from the layout.
 10. **Sitemap + robots.** Sitemap: keep the current route set (which includes `/login` and
    `/register` — they're indexable), per-locale entries with `alternates.languages`, `tlh`
    excluded, slugs from the pathnames map (never hand-built). Index pages only — no
    DB-backed per-product/per-municipality entries in this scope. Robots: extend the
    disallow list to cover locale-prefixed variants of the gated prefixes.
+
+   **Implemented (2026-09-10):** the sitemap's route set is a table of pathnames keys
+   with their crawl hints, expanded per indexed locale, and every URL comes out of
+   `getPathname` — the locale list is iterated in both files, so a locale added to
+   `SUPPORTED_LOCALES` joins the sitemap and the robots disallow with no edit here.
+   The disallow keeps the bare prefixes beside the prefixed ones: a bare path is a real
+   URL that redirects into its prefixed form, and a crawler should not follow it there
+   either. `tests/unit/lib/sitemap-robots.test.ts` covers both.
 11. **Tests.** The proxy's tests are **integration** tests (per `tests/CLAUDE.md`, where
     the existing proxy suite lives) — cover the normalizer and proxy decisions there: at
     minimum, prefixed dashboard paths still role-gate (`/fi/admin` as a gamer redirects

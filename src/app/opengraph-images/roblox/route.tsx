@@ -1,13 +1,13 @@
-/* eslint-disable i18next/no-literal-string -- OG image is rendered to a PNG by next/og at build time; the text is baked into the image, not a runtime UI string. It is also French for every locale — see `metadata-copy.ts` next door for why the programme's card does not follow the viewer's locale */
 import { ImageResponse } from "next/og";
+import { getTranslations } from "next-intl/server";
 import { DARK_THEME, BRAND } from "@/lib/constants/colors";
 import { LynxEducateMark, RobloxWordmark, SogMark } from "@/components/og/marks";
 import { ogFonts, OG_FONT_FAMILY } from "@/components/og/fonts";
-import { ROBLOX_OG_TITLE, ROBLOX_TRADEMARK_NOTICE } from "./metadata-copy";
-
-export const alt = ROBLOX_OG_TITLE;
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+import {
+  cardLocaleOf,
+  OG_CARD_CACHE_CONTROL,
+  OG_CARD_SIZE,
+} from "@/lib/og/cards";
 
 /**
  * The social card for the Roblox game-design programme.
@@ -15,8 +15,18 @@ export const contentType = "image/png";
  * It is a three-mark card because the programme is a three-way thing, and the
  * two words for those relationships are not interchangeable: School of Gaming
  * *partners with* Lynx Educate and *collaborates with* Roblox, which is why the
- * label above the lockup reads "Une collaboration entre" and nothing on this
- * card says "partenariat". See the partner-brand rules in `src/CLAUDE.md`.
+ * label above the lockup says a collaboration and nothing on this card says
+ * "partnership". See the partner-brand rules in `src/CLAUDE.md`.
+ *
+ * **The card follows the URL's locale now.** It was French for every locale on
+ * purpose — the programme is shared into French channels and the URL could not
+ * carry a locale, so the card was composed for the recipient the link was
+ * expected to reach. Locale-prefixed routing retires that reasoning: `/fr/roblox`
+ * pins French for whoever it is sent to, so the card reads the catalog like
+ * every other surface, with today's French wording as the `fr` values. The
+ * trademark notice is read from the very key the programme's pages render, at
+ * the card's locale — which is what let the pinned French literal and the drift
+ * test that guarded it be deleted outright.
  *
  * Roblox's own constraints shape the bottom half. Their guidelines put a 20px
  * floor under the wordmark, and the floor is about the size it is *seen* at, not
@@ -25,22 +35,24 @@ export const contentType = "image/png";
  * width these cards are usually shown at, and the other two are sized up around
  * it. They also forbid recolouring or restyling the mark — it is their white
  * colourway, unmodified, and the accent in the headline falls on what the reader
- * would make, never on a partner's name. They require clearspace nothing
- * advances into: the gutters either side, and the notice held down at the bottom
- * padding line. They forbid placing it over a busy background, and the card is
- * the flat ground throughout — the two-tone wash that used to open it is gone,
- * and the violet rule it is replaced by sits under the headline, well clear of
- * the lockup. And they
- * require a trademark notice wherever the mark appears — the last line, and it
- * is the same string the programme's pages render, not a retyping of it: it
- * comes from `metadata-copy.ts`, which is pinned to `messages/fr.json` by a
- * unit test.
+ * would make, never on a partner's name, which is what the three-part headline
+ * below is for: each locale places its own accent and keeps the Roblox name
+ * outside it. They require clearspace nothing advances into: the gutters either
+ * side, and the notice held down at the bottom padding line. They forbid placing
+ * it over a busy background, and the card is the flat ground throughout — the
+ * violet rule sits under the headline, well clear of the lockup. And they
+ * require a trademark notice wherever the mark appears — the last line.
  *
  * Meeting all of that is still not permission. Roblox signs off per placement,
  * and this card is a new placement.
  */
-export default async function Image() {
-  const fonts = await ogFonts();
+export async function GET(request: Request) {
+  const locale = cardLocaleOf(request);
+  const [t, tLegal, fonts] = await Promise.all([
+    getTranslations({ locale, namespace: "metadata.og.roblox" }),
+    getTranslations({ locale, namespace: "roblox.legal" }),
+    ogFonts(),
+  ]);
 
   return new ImageResponse(
     (
@@ -85,6 +97,11 @@ export default async function Image() {
               alignItems: "center",
             }}
           >
+            {/* Three keys, not one sentence: the gap draws the word spaces, and
+                the middle one is the accent. A locale writes the opening, the
+                thing the reader makes, and the part that names Roblox, in that
+                order — which is the constraint the guidelines put on where the
+                accent may fall, expressed as the shape of the copy. */}
             <div
               style={{
                 display: "flex",
@@ -96,9 +113,9 @@ export default async function Image() {
                 color: DARK_THEME.foreground,
               }}
             >
-              <span>Crée</span>
-              <span style={{ color: BRAND.act }}>ton propre jeu</span>
-              <span>Roblox</span>
+              <span>{t("headline")}</span>
+              <span style={{ color: BRAND.act }}>{t("headlineAccent")}</span>
+              <span>{t("headlineTail")}</span>
             </div>
             <div
               style={{
@@ -122,7 +139,7 @@ export default async function Image() {
               color: DARK_THEME.mutedFg,
             }}
           >
-            Programme gratuit, animé par de vrais Game Educators
+            {t("subline")}
           </div>
 
           <div
@@ -137,7 +154,7 @@ export default async function Image() {
               color: DARK_THEME.mutedFg,
             }}
           >
-            Une collaboration entre
+            {t("collaboration")}
           </div>
 
           {/* Heights differ per mark on purpose: the aspect ratios span 1.8:1 to
@@ -169,10 +186,14 @@ export default async function Image() {
             color: DARK_THEME.mutedFg,
           }}
         >
-          {ROBLOX_TRADEMARK_NOTICE}
+          {tLegal("roblox")}
         </div>
       </div>
     ),
-    { ...size, fonts }
+    {
+      ...OG_CARD_SIZE,
+      fonts,
+      headers: { "Cache-Control": OG_CARD_CACHE_CONTROL },
+    },
   );
 }

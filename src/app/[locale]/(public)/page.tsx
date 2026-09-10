@@ -1,10 +1,22 @@
+import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from 'next-intl';
+import { getLocale } from "next-intl/server";
+import { localizedPageMetadata } from "@/lib/metadata/localized-page";
 import { ArrowRight, Shield, Users, Sparkles, Gamepad2 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { HomeCtaLink } from "@/components/home/cta-link";
 import { ROUTES } from "@/lib/constants";
+
+/**
+ * The home page states no title or description of its own — it inherits the
+ * root layout's, which are the site's. What it does need is what a layout
+ * cannot emit: its own `hreflang` set and a canonical pointing at itself.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  return localizedPageMetadata("/", await getLocale());
+}
 
 const featureIcons = [Gamepad2, Sparkles, Users, Shield];
 const featureKeys = ["minecraftClubs", "screenTime", "newFriends", "parents"] as const;

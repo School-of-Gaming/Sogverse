@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import { localizedPageMetadata } from "@/lib/metadata/localized-page";
 import { useTranslations } from "next-intl";
 import { AboutFaq } from "@/components/about/about-faq";
 import { AboutSection } from "@/components/about/about-section";
@@ -9,6 +10,7 @@ import { YtySection } from "@/components/about/yty-section";
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
   return {
+    ...(await localizedPageMetadata("/about", await getLocale())),
     title: t("about"),
     // English literal, like every other page description in the app —
     // localising metadata descriptions is tracked as its own piece of work.
