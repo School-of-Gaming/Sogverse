@@ -58,6 +58,7 @@ import { execSync } from "node:child_process";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import ExcelJS from "exceljs";
+import { outputDir } from "./lib/output.mjs";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
 const DOMAIN = "gamer.sog.gg";
@@ -71,7 +72,9 @@ const GAMER_DEPARTMENT = "Gamer";
 const USAGE_LOCATION = "FI";
 /** UPN local part cap — these are typed by 7-to-12-year-olds. */
 const MAX_LOCAL = 18;
-const PLAN_FILE = path.join(process.cwd(), "minecraft-edu-plan.json");
+/** Plan, handout and snapshots all carry live account data; see scripts/CLAUDE.md. */
+const OUTPUT = outputDir(import.meta.url);
+const PLAN_FILE = path.join(OUTPUT, "minecraft-edu-plan.json");
 
 // ---------------------------------------------------------------- word lists
 // Nothing here can read as a tease: no words about looks, body, or being
@@ -299,7 +302,7 @@ const isLicensed = (u) =>
       !(s.disabledPlans ?? []).includes(MINECRAFT_PLAN)
   );
 
-const OUT_FILE = "minecraft-edu-accounts.xlsx";
+const OUT_FILE = path.join(OUTPUT, "minecraft-edu-accounts.xlsx");
 
 const solid = (argb) => ({ type: "pattern", pattern: "solid", fgColor: { argb } });
 
@@ -629,7 +632,10 @@ async function del() {
   console.log(`would delete ${us.length} @${DOMAIN} accounts`);
   if (!APPLY) return console.log(`\n(dry run — pass --apply to write)`);
 
-  const backup = `deleted-accounts-${new Date().toISOString().slice(0, 10)}.json`;
+  const backup = path.join(
+    OUTPUT,
+    `deleted-accounts-${new Date().toISOString().slice(0, 10)}.json`
+  );
   writeFileSync(backup, JSON.stringify(us, null, 1), "utf8");
   console.log(`snapshot -> ${backup}`);
   const res = await pool(us, (u) => graph("DELETE", `/users/${u.id}`));
