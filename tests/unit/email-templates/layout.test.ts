@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { wrapInLayout, BRAND_MARK } from "@/lib/email-templates/layout";
-import { pinnedFill } from "@/lib/email-templates/utils";
+import { GROUND_TONES, pinnedFill } from "@/lib/email-templates/utils";
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
 import { BRAND_LOCKUP, BRAND_LOCKUP_TAIL, SENDER_NAME } from "@/lib/constants";
@@ -192,6 +192,35 @@ describe("the card is the wide viewport's addition, not the phone's loss", () =>
     ]) {
       expect(query, `the wide layout lost: ${declaration}`).toContain(declaration);
     }
+  });
+
+  /**
+   * The other thing the ground changing has to move: every fill chosen *in
+   * relation to* what is behind it. There are two intents — a tone off the
+   * ground (a photo's well, the quoted box in the staff feedback mail) and a
+   * fill that means to *be* the ground (the outlined button) — and both come
+   * from one table, so the query cannot restate one and forget the other.
+   *
+   * They are a re-tone rather than a layout the block holds up: each inline
+   * half is correct on the bare ground, which is the only ground a client that
+   * dropped the block will draw.
+   */
+  it("restates both ground-following fills against the card", () => {
+    const query = wideQuery(render());
+
+    for (const tone of Object.values(GROUND_TONES)) {
+      expect(query, `no rule for .${tone.className}`).toContain(`.${tone.className}`);
+      // Pinned in the query exactly as it is inline: a fill is declared twice
+      // wherever it is declared.
+      expect(query).toContain(`background-color:${tone.wide} !important`);
+      expect(query).toContain(
+        `background-image:linear-gradient(${tone.wide},${tone.wide}) !important`,
+      );
+    }
+    // The two are opposites, which is what makes one table rather than two
+    // rules that happen to sit together.
+    expect(GROUND_TONES.step.base).toBe(GROUND_TONES.match.wide);
+    expect(GROUND_TONES.step.wide).toBe(GROUND_TONES.match.base);
   });
 
   /**

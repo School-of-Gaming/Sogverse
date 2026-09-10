@@ -1,6 +1,6 @@
 import { DARK_THEME } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
-import { escapeHtml, pinnedFill } from "./utils";
+import { escapeHtml, groundFill } from "./utils";
 
 /**
  * The session report's photo grid — the one block in this directory whose
@@ -17,12 +17,11 @@ import { escapeHtml, pinnedFill } from "./utils";
  *
  * **It is still a module of its own rather than part of the template**, because
  * a picture's box is arithmetic with rules of its own and the template composes
- * documents — and because two files have to agree about one thing still. The
- * stacking query's class name, breakpoint and gutter are gone; what replaced
- * them is `PHOTO_WELL_CLASS`, which the shell's existing wide-viewport rule
- * uses to re-tone the well against the card. The name is exported for exactly
- * the reason the old one was: a selector built from the constant cannot drift
- * away from the markup it was written for.
+ * documents. Nothing is exported to the shell any more: the stacking query's
+ * class name, breakpoint and gutter went with the pairs, and the well's own
+ * ground-following tone is one of the two the whole directory shares through
+ * `groundFill()` — so this module names no selector of its own and the shell
+ * imports nothing from it.
  *
  * **Every box is arithmetic from the stored dimensions, under a height budget —
  * never from the column it sits in.** A photo laid out at the card's full width
@@ -73,28 +72,33 @@ export const PHOTO_PHONE_COLUMN = 328;
 const PHOTO_ROW_GAP = 8;
 
 /**
- * The class the shell's wide-viewport rule re-tones the well through. Emitted
- * only from here, and the one thing this module and the shell still share.
+ * The well's tone: a step off whichever ground the shell has put it on.
  *
- * **A well is a tone one step off the ground it sits on, and the shell has two
- * grounds.** On a phone the content sits straight on the dark ground, so the
- * well takes the card's tone and reads as a rectangle. Above the shell's
- * breakpoint the content sits *in* the card, so the same tone would vanish and
- * the well takes the darker ground instead. Both are inside the palette, both
- * are pinned, and the reserved box is a painted rectangle in either — which is
- * what makes this a re-tone rather than a layout the stylesheet is holding up:
- * strip the block and a card-toned well on the dark ground is a correct phone
- * render, which is the only ground a client that drops the block will draw.
+ * On a phone the content sits straight on the dark ground, so the well takes
+ * the card's tone and reads as a rectangle; above the shell's breakpoint the
+ * same well is inside the card and takes the darker ground instead. Both halves
+ * come from the one table the whole directory shares, so the well is toned by
+ * the same mechanism as the staff mail's quoted box and the outlined button
+ * rather than by a rule of its own.
  */
-export const PHOTO_WELL_CLASS = "photo-well";
+const WELL_GROUND = groundFill("step");
 
 /**
- * How far from square a box may get, either way.
+ * How far from square a stored pair may be and still be believed.
  *
  * Real photos never approach it — the client normalizes to a ~2048px longest
  * edge and the shapes in practice run 9:16 to 16:9 — but the table's CHECK
- * permits 4096×1, and a degenerate pair must not emit an absurd width into a
- * mail nobody can correct afterwards. The same limit the app's gallery uses.
+ * permits 4096×1, and a degenerate pair must not emit an absurd box into a mail
+ * nobody can correct afterwards. The same limit the app's gallery uses.
+ *
+ * **It is a believability test, not a clamp, and that is a correction.** The
+ * box used to be built from the ratio *clamped* to this limit, which quietly
+ * produced the worst render available: the box was drawn at 4:1 while the
+ * picture is fluid and draws itself at its true ratio, so a stored 1×4096 got a
+ * 1px cap and a 4px well holding a 4096px-tall sliver — a hole nothing fills
+ * and a picture nothing contains. A pair this far from square is not a photo we
+ * can size; it takes the same square fallback as a pair that cannot make a
+ * ratio at all, which reserves a sane rectangle and lets the picture sit in it.
  */
 const PHOTO_ASPECT_LIMIT = 4;
 
@@ -121,42 +125,48 @@ export interface SessionReportPhoto {
 }
 
 /**
- * The two numbers a photo's markup is built from, from its stored dimensions.
+ * The three numbers a photo's markup is built from, from its stored dimensions.
  *
  * `maxWidth` is how wide the picture may ever be drawn — the height budget
  * spent at this photo's own ratio, and never more than the stored width, since
- * upscaling a small JPEG only makes it soft. `wellHeight` is the height that
- * picture has at the phone's content column, which is what the reserved well
- * states; the constants above say why the well takes the narrow end.
+ * upscaling a small JPEG only makes it soft. `phoneWidth` and `wellHeight` are
+ * the box that same picture has at the phone's content column: the height the
+ * reserved well states, and the pixel pair the markup carries for the one
+ * engine that reads no CSS at all.
  *
- * **Nonsense in, a square out.** A zero, a negative or a non-finite dimension
- * cannot produce a ratio, and a `NaN` reaching a `width` attribute is how a
- * whole table collapses. The route and a CHECK both refuse such a pair, so this
- * branch should be unreachable; it exists because the cost of being wrong about
- * that is a mail that cannot be resent.
+ * **Nonsense in, a square out**, and "nonsense" covers two things. A zero, a
+ * negative or a non-finite dimension cannot produce a ratio, and a `NaN`
+ * reaching a `width` attribute is how a whole table collapses. A pair further
+ * from square than `PHOTO_ASPECT_LIMIT` produces a ratio nothing sensible can
+ * be built from either — see that constant for why it is a believability test
+ * rather than a clamp. The route and a CHECK both refuse the first kind, so
+ * that branch should be unreachable; it exists because the cost of being wrong
+ * about it is a mail that cannot be resent.
  */
 export function sessionPhotoBox(
   width: number,
   height: number,
-): { maxWidth: number; wellHeight: number } {
+): { maxWidth: number; phoneWidth: number; wellHeight: number } {
+  const ratio = width / height;
   const usable =
-    Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0;
-  const ratio = usable
-    ? Math.min(Math.max(width / height, 1 / PHOTO_ASPECT_LIMIT), PHOTO_ASPECT_LIMIT)
-    : 1;
-  const maxWidth = Math.max(
-    1,
-    Math.round(usable ? Math.min(PHOTO_MAX_HEIGHT * ratio, width) : PHOTO_MAX_HEIGHT),
-  );
+    Number.isFinite(ratio) &&
+    width > 0 &&
+    height > 0 &&
+    ratio >= 1 / PHOTO_ASPECT_LIMIT &&
+    ratio <= PHOTO_ASPECT_LIMIT;
+  if (!usable) {
+    return {
+      maxWidth: PHOTO_MAX_HEIGHT,
+      phoneWidth: PHOTO_PHONE_COLUMN,
+      wellHeight: PHOTO_PHONE_COLUMN,
+    };
+  }
+  const maxWidth = Math.max(1, Math.round(Math.min(PHOTO_MAX_HEIGHT * ratio, width)));
+  const phoneWidth = Math.min(PHOTO_PHONE_COLUMN, maxWidth);
   return {
     maxWidth,
-    wellHeight: Math.max(
-      1,
-      Math.min(
-        PHOTO_MAX_HEIGHT,
-        Math.round(Math.min(PHOTO_PHONE_COLUMN, maxWidth) / ratio),
-      ),
-    ),
+    phoneWidth,
+    wellHeight: Math.max(1, Math.min(PHOTO_MAX_HEIGHT, Math.round(phoneWidth / ratio))),
   };
 }
 
@@ -174,17 +184,27 @@ export function sessionPhotoBox(
  * identical corners in a client that rounds them and identical square ones in a
  * client that does not.
  *
- * The inline fill is the **card's** tone, because the phone is what the inline
- * layout is, and there the well sits on the shell's bare ground. A wide
- * viewport puts the same well inside the card, where that tone would disappear,
- * so the shell's own breakpoint rule swaps it for the darker ground through
- * `PHOTO_WELL_CLASS`. One step off whichever ground it is on, either way.
+ * The fill is a step off whichever ground the shell has put the well on — see
+ * `WELL_GROUND` above.
+ *
+ * **The pixel `width` and `height` on the picture are for the one engine that
+ * reads no CSS, and they are the phone's box on purpose.** Outlook on Windows
+ * renders through Word, which honours a `width="100%"` attribute literally and
+ * ignores `max-width` on both the table and the image — so a fluid picture with
+ * no pixel pair beside it arrives there at the full column whatever its shape,
+ * which for a 1080×1920 portrait is a metre of tower and for a 100×60 thumbnail
+ * is an upscale. Stating the phone box as attributes gives that engine exactly
+ * the layout the shell already promises it: no card, one column, the picture at
+ * the size a phone would draw it. Every CSS-capable client overrides both with
+ * the inline `width:100%;height:auto;max-width`, so nothing else sees them.
  *
  * The height is stated as an attribute *and* in the style, because a client
  * honours one or the other and either reserves the same box before anything is
  * fetched. It is a minimum in both, which is what makes one number serve two
  * column widths: a loaded picture on a desktop column is taller than the phone
- * height this well states, and the cell grows to it.
+ * height this well states, and the cell grows to it. It also means the blocked
+ * render's `<img>` box and the well behind it are the same rectangle rather
+ * than two.
  *
  * `alt` is empty on purpose. There is nothing true to write in it: nobody
  * captions these, the file name is a UUID, and a row of "Session photo"
@@ -202,10 +222,10 @@ function photoWell(photo: SessionReportPhoto): string {
   // the one URL here built around a value off a row, and escaping a
   // well-formed one changes nothing.
   const src = escapeHtml(photo.src);
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 auto;width:100%;max-width:${box.maxWidth}px;">
+  return `<table role="presentation" width="${box.phoneWidth}" cellpadding="0" cellspacing="0" style="margin:0 auto;width:100%;max-width:${box.maxWidth}px;">
             <tr>
-              <td class="${PHOTO_WELL_CLASS}" height="${box.wellHeight}" align="center" valign="middle" style="${pinnedFill(DARK_THEME.card)}border:1px solid ${DARK_THEME.border};border-radius:${RADIUS.md};height:${box.wellHeight}px;font-size:0;line-height:0;">
-                <img src="${src}" width="100%" alt="" style="display:block;width:100%;height:auto;max-width:${box.maxWidth}px;border:0;outline:none;text-decoration:none;border-radius:${RADIUS.md};" />
+              <td class="${WELL_GROUND.className}" height="${box.wellHeight}" align="center" valign="middle" style="${WELL_GROUND.fill}border:1px solid ${DARK_THEME.border};border-radius:${RADIUS.md};height:${box.wellHeight}px;font-size:0;line-height:0;">
+                <img src="${src}" width="${box.phoneWidth}" height="${box.wellHeight}" alt="" style="display:block;width:100%;height:auto;max-width:${box.maxWidth}px;border:0;outline:none;text-decoration:none;border-radius:${RADIUS.md};" />
               </td>
             </tr>
           </table>`;

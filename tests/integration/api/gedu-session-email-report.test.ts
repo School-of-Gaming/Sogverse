@@ -771,12 +771,17 @@ describe("POST /api/gedu/sessions/email-report", () => {
     // arrive with *different* boxes, which is only true if the row's own width
     // and height travelled all the way from the read to the markup.
     const family = familyMails()[0].htmlContent;
-    expect(family).toContain(`<img src="${bucketUrl(IMAGES[0].id)}" width="100%"`);
+    // 1600×900: capped at 711px, and the phone box the pixel attributes carry
+    // is the 328px column at 185px tall.
+    expect(family).toContain(
+      `<img src="${bucketUrl(IMAGES[0].id)}" width="328" height="185"`,
+    );
     expect(family).toContain("max-width:711px");
-    expect(family).toContain('height="185"');
-    expect(family).toContain(`<img src="${bucketUrl(IMAGES[1].id)}" width="100%"`);
+    // 900×1600: capped at 225px by the height budget, 400px tall at that width.
+    expect(family).toContain(
+      `<img src="${bucketUrl(IMAGES[1].id)}" width="225" height="400"`,
+    );
     expect(family).toContain("max-width:225px");
-    expect(family).toContain('height="400"');
   });
 
   it("sends the report a session has no photos on exactly as it always did", async () => {

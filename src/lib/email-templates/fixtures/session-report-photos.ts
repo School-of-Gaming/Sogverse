@@ -48,11 +48,11 @@ const PHOTO_ART: readonly { path: string; width: number; height: number }[] = [
  * **A preview is the other half, and it is why the distinction exists at all.**
  * The mail drawn in `/admin/testing` is fetched by the browser looking at it, on
  * the machine serving the art, so the loopback origin that is useless in an
- * inbox is the correct one here — and the grid is the thing that page exists to
- * show. Suppressing it there would leave nothing to look at: no pairs, no
- * spanning odd one, no stacking, none of the reserved wells. So the two
- * destinations differ in exactly one way, and it is the way they genuinely
- * differ.
+ * inbox is the correct one here — and the photos are the thing that page exists
+ * to show. Suppressing them there would leave nothing to look at: no shapes, no
+ * caps, none of the reserved wells, and no way to compare the loaded render
+ * against the blocked one the whole design is about. So the two destinations
+ * differ in exactly one way, and it is the way they genuinely differ.
  *
  * **No origin at all is still no photos**, in either destination, and that is an
  * impossibility rather than a judgment: there is no absolute URL to put in a

@@ -7,10 +7,10 @@ import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/
 import {
   PHOTO_MAX_HEIGHT,
   PHOTO_PHONE_COLUMN,
-  PHOTO_WELL_CLASS,
   sessionPhotoBox,
   type SessionReportPhoto,
 } from "@/lib/email-templates/session-photos";
+import { GROUND_TONES } from "@/lib/email-templates/utils";
 import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 
 let t: EmailTranslator;
@@ -240,8 +240,9 @@ describe("the photos under the report", () => {
 
   /**
    * Every `<img>` in the mail, as its src and the width cap on it. A photo is
-   * fluid now — `width="100%"` on the tag, the arithmetic in `max-width` — so
-   * the cap is the number this suite has to read, not a pixel width attribute.
+   * fluid in every CSS-capable client — the cap lives in `max-width` — so that
+   * is the number this suite reads; the pixel attributes beside it are the
+   * Word engine's copy of the phone box and are asserted separately.
    */
   function images(html: string): { src: string; maxWidth: number | null }[] {
     return [...html.matchAll(/<img src="([^"]*)"[^>]*>/g)].map((match) => ({
@@ -292,7 +293,6 @@ describe("the photos under the report", () => {
 
     for (const photo of [PHOTOS.landscape, PHOTOS.portrait, PHOTOS.square]) {
       const box = sessionPhotoBox(photo.width, photo.height);
-      expect(html).toContain(`<img src="${photo.src}" width="100%"`);
       expect(html).toContain(`width:100%;height:auto;max-width:${box.maxWidth}px`);
       // The wrapping table is capped to the same number and centred, so a
       // photo narrower than the column is not stretched across it.
@@ -306,6 +306,36 @@ describe("the photos under the report", () => {
     expect(cap(PHOTOS.landscape)).toBe(711);
     expect(cap(PHOTOS.portrait)).toBe(225);
     expect(cap(PHOTOS.square)).toBe(PHOTO_MAX_HEIGHT);
+  });
+
+  /**
+   * Outlook on Windows renders through Word, which reads no `max-width` and
+   * honours `width="100%"` literally — so a fluid picture with no pixel pair
+   * beside it arrives there at the whole column whatever its shape. The pixel
+   * attributes are the phone box, which is exactly the layout the card-less
+   * shell already gives that client, and every CSS-capable client overrides
+   * them with the fluid style asserted above.
+   */
+  it("states the phone box in pixels, for the engine that reads no CSS", () => {
+    const html = withPhotos([PHOTOS.landscape, PHOTOS.portrait, PHOTOS.square]);
+
+    for (const photo of [PHOTOS.landscape, PHOTOS.portrait, PHOTOS.square]) {
+      const box = sessionPhotoBox(photo.width, photo.height);
+      expect(html).toContain(
+        `<img src="${photo.src}" width="${box.phoneWidth}" height="${box.wellHeight}"`,
+      );
+      // The wrapping table carries the same width, because Word sizes the
+      // table from the attribute too.
+      expect(html).toContain(`<table role="presentation" width="${box.phoneWidth}"`);
+      // Never wider than the phone's own content column, whatever the cap is.
+      expect(box.phoneWidth).toBeLessThanOrEqual(PHOTO_PHONE_COLUMN);
+    }
+
+    // A 16:9 fills the phone column; a portrait sits at its cap inside it.
+    expect(sessionPhotoBox(1600, 900).phoneWidth).toBe(PHOTO_PHONE_COLUMN);
+    expect(sessionPhotoBox(900, 1600).phoneWidth).toBe(225);
+    // And a small stored picture is never upscaled into the column.
+    expect(sessionPhotoBox(100, 60).phoneWidth).toBe(100);
   });
 
   /**
@@ -344,9 +374,8 @@ describe("the photos under the report", () => {
       [1600, 900],
       [1200, 1200],
       [900, 1600],
-      [4096, 1],
-      [1, 4096],
       [4000, 3000],
+      [100, 60],
     ]) {
       const box = sessionPhotoBox(width, height);
       expect(box.wellHeight).toBeLessThanOrEqual(PHOTO_MAX_HEIGHT);
@@ -357,18 +386,33 @@ describe("the photos under the report", () => {
     }
   });
 
-  /** A dimension that cannot make a ratio must not put NaN in an attribute. */
-  it("falls back to a square rather than emitting a NaN box", () => {
+  /**
+   * Two kinds of unusable pair take the same square fallback.
+   *
+   * A dimension that cannot make a ratio must not put NaN in an attribute. And
+   * a pair further from square than the aspect limit is not a photo we can
+   * size: it used to be *clamped* to the limit, which built the box at 4:1
+   * while the picture drew itself at its true ratio — a stored 1×4096 got a 1px
+   * cap and a 4px well holding a 4096px sliver, a hole nothing fills and a
+   * picture nothing contains. The square reserves a sane rectangle instead.
+   */
+  it("falls back to a square rather than sizing a pair it cannot believe", () => {
     for (const [width, height] of [
       [0, 0],
       [-4, 3],
       [Number.NaN, 900],
+      [4096, 1],
+      [1, 4096],
     ]) {
       expect(sessionPhotoBox(width, height)).toEqual({
         maxWidth: PHOTO_MAX_HEIGHT,
+        phoneWidth: PHOTO_PHONE_COLUMN,
         wellHeight: PHOTO_PHONE_COLUMN,
       });
     }
+    // The limit itself is inside the believable range, either way up.
+    expect(sessionPhotoBox(4000, 1000).maxWidth).toBe(1600);
+    expect(sessionPhotoBox(1000, 4000).maxWidth).toBe(100);
   });
 
   /**
@@ -416,7 +460,9 @@ describe("the photos under the report", () => {
    * A well is a tone one step off the ground it sits on, and the shell has two
    * grounds: the bare one on a phone, the card above the breakpoint. So the
    * same cell is card-toned inline and ground-toned inside the shell's own
-   * wide-viewport rule, which reaches it through the class this module emits.
+   * wide-viewport rule, which reaches it through the shared "step" class — the
+   * same one the staff feedback mail's quoted box takes, so this is one
+   * mechanism rather than a rule the photo module owns.
    *
    * It is a re-tone rather than a layout the stylesheet holds up: strip the
    * block and a card-toned well on the dark ground is exactly right, because
@@ -427,9 +473,9 @@ describe("the photos under the report", () => {
 
     // Counted by splitting rather than by a built regex: the class name is a
     // constant, not a pattern.
-    expect(html.split(`class="${PHOTO_WELL_CLASS}"`).length - 1).toBe(2);
+    expect(html.split(`class="${GROUND_TONES.step.className}"`).length - 1).toBe(2);
     const query = html.slice(html.indexOf("@media"), html.indexOf("</style>"));
-    expect(query).toContain(`.${PHOTO_WELL_CLASS}`);
+    expect(query).toContain(`.${GROUND_TONES.step.className}`);
     expect(query).toContain(`background-color:${DARK_THEME.bg} !important`);
     expect(query).toContain(
       `background-image:linear-gradient(${DARK_THEME.bg},${DARK_THEME.bg}) !important`,

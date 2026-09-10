@@ -1,6 +1,6 @@
 import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
-import { BODY_TEXT_STYLE, pinnedFill } from "./utils";
+import { BODY_TEXT_STYLE, groundFill, pinnedFill } from "./utils";
 
 /**
  * The composed blocks a template reaches for rather than builds. `utils.ts`
@@ -68,10 +68,19 @@ interface RowButtonOptions extends CtaButtonOptions {
 /**
  * The button's look, in one place, so a half-width one is the same button.
  *
- * **Every button declares a background, and the outlined one declares the card
- * colour rather than nothing.** It is the same colour as what sits behind it, so
- * in a client that renders the mail as written the declaration changes nothing
- * — its whole job is to tell Gmail's dark theme that this region was designed.
+ * **Every button declares a background, and the outlined one declares the
+ * ground it is standing on rather than nothing.** In a client that renders the
+ * mail as written the declaration changes nothing — its whole job is to tell
+ * Gmail's dark theme that this region was designed.
+ *
+ * *Which* colour that is depends on where the shell has put the button, which
+ * is why the outlined variant takes the shared "matches the ground" tone rather
+ * than naming a value: on a phone the content sits straight on the dark ground
+ * and the button declares that, and above the shell's breakpoint the same
+ * button is inside the card and declares the card. It used to name the card
+ * unconditionally, under a comment saying that was the colour behind it — true
+ * while the card was the only ground a mail had, and false on a phone from the
+ * moment the shell went card-less.
  * Gmail runs a contrast pass over regions whose background it cannot read off a
  * declaration: it lightens the undeclared region, then, finding light where it
  * has just put light, darkens the text on it. That is how an outlined button
@@ -105,22 +114,33 @@ interface RowButtonOptions extends CtaButtonOptions {
  * orange in the header. For anything lighter, the inline colour is both the
  * simplest answer and the one that survives; adding protection makes it worse.
  */
+/**
+ * The outlined button's fill, which is the ground rather than a colour of its
+ * own — so it comes from the one table in `utils.ts` that every ground-following
+ * surface in this directory takes both of its halves from, and the shell's own
+ * media query restates it against the card.
+ */
+const OUTLINE_GROUND = groundFill("match");
+
 const VARIANTS = {
   primary: {
-    fill: BRAND.act,
+    fill: pinnedFill(BRAND.act),
+    surfaceClass: "",
     label: BRAND.actForeground,
     bordered: false,
     // The only label dark enough for the pin to help rather than hurt.
     labelClass: "cta-on-brand",
   },
   secondary: {
-    fill: BRAND.world,
+    fill: pinnedFill(BRAND.world),
+    surfaceClass: "",
     label: BRAND.worldForeground,
     bordered: false,
     labelClass: "",
   },
   outline: {
-    fill: DARK_THEME.card,
+    fill: OUTLINE_GROUND.fill,
+    surfaceClass: OUTLINE_GROUND.className,
     label: DARK_THEME.foreground,
     bordered: true,
     labelClass: "",
@@ -128,14 +148,15 @@ const VARIANTS = {
 } as const;
 
 function buttonStyles(variant: CtaVariant, width: CtaWidth) {
-  const { fill, label, bordered, labelClass } = VARIANTS[variant];
+  const { fill, surfaceClass, label, bordered, labelClass } = VARIANTS[variant];
   const isHalf = width === "half";
   return {
     surface: [
-      pinnedFill(fill),
+      fill,
       bordered ? `border:1px solid ${DARK_THEME.border};` : "",
       `border-radius:${RADIUS.md};`,
     ].join(""),
+    surfaceClass,
     labelClass,
     label: `display:${isHalf ? "block" : "inline-block"};padding:12px ${isHalf ? "8px" : "32px"};font-size:14px;font-weight:bold;color:${label};text-decoration:none;`,
   };
@@ -146,14 +167,17 @@ function buttonStyles(variant: CtaVariant, width: CtaWidth) {
  * because that is the shape Outlook renders as a button.
  */
 export function ctaButton({ href, label, variant = "primary" }: CtaButtonOptions): string {
-  const { surface, labelClass, label: labelStyle } = buttonStyles(variant, "auto");
+  const { surface, surfaceClass, labelClass, label: labelStyle } = buttonStyles(
+    variant,
+    "auto",
+  );
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px;">
       <tr>
         <td align="center">
           <table role="presentation" cellpadding="0" cellspacing="0">
             <tr>
-              <td align="center" style="${surface}">
+              <td align="center"${surfaceClass ? ` class="${surfaceClass}"` : ""} style="${surface}">
                 <a href="${href}" target="_blank"${labelClass ? ` class="${labelClass}"` : ""} style="${labelStyle}">
                   ${label}
                 </a>
@@ -177,8 +201,10 @@ export function ctaButton({ href, label, variant = "primary" }: CtaButtonOptions
  * Email clients do not reflow table columns and media queries are not dependable
  * across them, so there is no narrow-viewport arrangement to fall back on: these
  * two cells are the layout at every width the shell is read at, and the narrow
- * end is genuinely narrow — a 320px client leaves the card about 216px of
- * content, so each half is around 96px. That is what sets the terms here:
+ * end is genuinely narrow — at 320px, which is below the shell's own design
+ * floor and well below the width at which it draws a card, the content column
+ * is 288px and the 8px gutters leave each half about 132px. That is what sets
+ * the terms here:
  *
  * - The halves use the `half` width, so the label's padding is 8px a side and
  *   the cell drives the width instead of the padding.
@@ -212,8 +238,11 @@ export function ctaButtonRow(left: RowButtonOptions, right: RowButtonOptions): s
  * A shape forbidden in prose and reachable by omission is not forbidden.
  */
 function halfButtonCell({ href, label, variant }: RowButtonOptions): string {
-  const { surface, labelClass, label: labelStyle } = buttonStyles(variant, "half");
-  return `<td width="50%" align="center" valign="middle" style="${surface}">
+  const { surface, surfaceClass, labelClass, label: labelStyle } = buttonStyles(
+    variant,
+    "half",
+  );
+  return `<td width="50%"${surfaceClass ? ` class="${surfaceClass}"` : ""} align="center" valign="middle" style="${surface}">
           <a href="${href}" target="_blank"${labelClass ? ` class="${labelClass}"` : ""} style="${labelStyle}">${label}</a>
         </td>`;
 }

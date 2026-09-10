@@ -150,12 +150,13 @@ export function buildSessionReportEmail(
       }),
     )}
     ${factList([
-      // The shared block escapes nothing, so every row is escaped here — the
-      // directory's usual rule, and the reason this call site reads longer than
-      // the private helper it replaced.
-      [escapeHtml(t("sessionReport.groupLabel")), escapeHtml(groupName)],
-      [escapeHtml(t("sessionReport.dateLabel")), escapeHtml(sessionDate)],
-      [escapeHtml(t("sessionReport.timeLabel")), escapeHtml(sessionTime)],
+      // The shared block escapes nothing, so a value off a row is escaped here
+      // — the directory's usual rule. The labels are not: they are translated
+      // copy, which is composed HTML by the block's convention and is what
+      // every other caller hands it.
+      [t("sessionReport.groupLabel"), escapeHtml(groupName)],
+      [t("sessionReport.dateLabel"), escapeHtml(sessionDate)],
+      [t("sessionReport.timeLabel"), escapeHtml(sessionTime)],
     ])}
     <div style="margin:0 0 24px;">
       ${renderMarkdownForEmail(reportMarkdown)}

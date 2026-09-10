@@ -59,9 +59,12 @@ import type { ProductType } from "@/types";
  * page's `purchaseConfirmation` keys, so a sentence both surfaces state is two
  * strings in the message files. Editing one is editing half of it.)
  *
- * **The three places the mail deliberately differs from the page**, each because
+ * **The four places the mail deliberately differs from the page**, each because
  * the medium differs rather than because the copy drifted:
  *
+ *   - It closes by inviting a reply, which is an affordance rather than a fact:
+ *     a mail can be answered and a page cannot. The line is true because this
+ *     send's Reply-To is the support inbox, so it goes wherever that does.
  *   - It carries an `invite.ics`, and says nothing about it. The page has
  *     nothing to attach; the mail has nothing to announce, because a client
  *     that can act on the file renders the invitation itself and a sentence

@@ -6,8 +6,7 @@ import {
   MAIL_WORD_ENGINE_FONT_STACK,
 } from "@/lib/constants/typography";
 import { sendableImageOrigin } from "./render-context";
-import { pinnedFill } from "./utils";
-import { PHOTO_WELL_CLASS } from "./session-photos";
+import { GROUND_TONES, pinnedFill } from "./utils";
 import type { EmailTranslator } from "./translator";
 
 interface LayoutOptions {
@@ -80,9 +79,10 @@ const SHELL_WIDE_BREAKPOINT = 600;
  * markup at the bottom of this file are the only two readers, and a name typed
  * twice is a selector that can drift away from the cell it was written for.
  *
- * The one class the query names that is *not* here is the photo well's, and it
- * follows the same rule from the other end: it belongs to the module that emits
- * those cells, and is imported rather than typed.
+ * The classes the query names that are *not* here are the ground-following
+ * fills, and they follow the same rule from the other end: they belong to the
+ * table in `utils.ts` that the cells take their inline halves from, and are
+ * imported rather than typed.
  */
 const SHELL_CLASS = {
   /** The outer cell holding the side gutter: 16px on a phone, 20px wide. */
@@ -105,6 +105,17 @@ const SHELL_CLASS = {
 function pinnedFillRule(color: string): string {
   return `background-color:${color} !important; background-image:linear-gradient(${color},${color}) !important;`;
 }
+
+/**
+ * The wide-viewport half of every ground-following fill, as rules.
+ *
+ * Built here rather than inline in the shell's own template literal, because a
+ * nested one inside it is a syntax error waiting to be introduced by whoever
+ * next edits the block around it.
+ */
+const groundToneRules = Object.values(GROUND_TONES)
+  .map((tone) => `      .${tone.className} {\n        ${pinnedFillRule(tone.wide)}\n      }`)
+  .join("\n");
 
 /**
  * The brand mark above the lockup — the one image in any mail this codebase
@@ -327,18 +338,19 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
         border-radius: ${RADIUS.lg} !important;
         padding: 32px !important;
       }
-      /* A session photo's reserved well is a tone one step off the ground it
-         sits on, and this block is where the ground changes. Inline it is the
-         card's tone, because the phone's content sits on the bare ground; the
-         moment the card is drawn the same well is inside it, where that tone
-         would vanish, so it takes the darker ground instead. Nothing about the
-         layout depends on this rule — a card-toned well on the dark ground is
-         the correct phone render, which is the only one a client that drops
-         this block will draw. The class comes from the module that emits the
-         cells, so the selector cannot drift away from the markup. */
-      .${PHOTO_WELL_CLASS} {
-        ${pinnedFillRule(DARK_THEME.bg)}
-      }
+      /* The fills that are chosen in relation to what sits behind them, and
+         this block is where what sits behind them changes: a photo's reserved
+         well and a quoted box are a tone *off* the ground, the outlined button
+         means to *be* the ground. Inline they are the phone's values, against
+         the bare ground; here they are restated against the card.
+
+         Nothing about the layout depends on these rules — the inline values
+         are correct on the only ground a client that drops this block will
+         draw — so they are a re-tone rather than a layout the stylesheet is
+         holding up. Both selectors and both colours come from the one table in
+         utils.ts that the call sites take their inline halves from, so a name
+         lives in one place and the rule cannot drift from the markup. */
+${groundToneRules}
     }
   </style>
   <!-- Desktop Outlook only, and the one thing the inherited stack cannot say to

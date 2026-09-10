@@ -4,7 +4,19 @@ import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import type { UserRole } from "@/types";
 import { wrapInLayout } from "./layout";
 import { factList } from "./blocks";
-import { defuseAutolinks, escapeHtml, heading, paragraph, pinnedFill } from "./utils";
+import { defuseAutolinks, escapeHtml, groundFill, heading, paragraph } from "./utils";
+
+/**
+ * The quoted message's box: a tone off whatever the shell has put it on.
+ *
+ * What it is for is separating the reader's own words from ours, which is a
+ * tonal step and not a colour. It used to name the darker ground, which was
+ * that step while the card was the only thing a mail's content sat on; on the
+ * card-less phone shell that same value is the ground itself and the box would
+ * lose its step entirely. So it takes the shared tone and the shell restates it
+ * against the card, exactly as a photo's well does.
+ */
+const QUOTE_GROUND = groundFill("step");
 import type { EmailTranslator } from "./translator";
 
 export interface FeedbackEmailOptions {
@@ -141,7 +153,7 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
         </td>
       </tr>
       <tr>
-        <td style="padding:16px;${pinnedFill(DARK_THEME.bg)}border:1px solid ${DARK_THEME.border};border-radius:${RADIUS.lg};color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;">
+        <td class="${QUOTE_GROUND.className}" style="padding:16px;${QUOTE_GROUND.fill}border:1px solid ${DARK_THEME.border};border-radius:${RADIUS.lg};color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;">
           ${escapedMessage}
         </td>
       </tr>
