@@ -5,6 +5,7 @@ import {
   buildConfirmationFixture,
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
+import type { ProductTopic } from "@/types";
 
 /**
  * The post-signup summary for a scenario — what a parent sees straight after
@@ -17,8 +18,16 @@ import {
  */
 export function PurchaseConfirmationScene({
   scenario,
+  topic = null,
 }: {
   scenario: PreviewScenario;
+  /**
+   * The `?topic=` axis. The prep card on this page is decided by the product's
+   * topic, and the fixtures name one topic per scenario — so this is how all
+   * seven guides are read in their real placement without a scenario apiece.
+   * `null` leaves the fixture's own topic alone.
+   */
+  topic?: ProductTopic | null;
 }) {
   const {
     product,
@@ -27,7 +36,7 @@ export function PurchaseConfirmationScene({
     outcome,
     waitlistPosition,
     firstChargeAt,
-  } = buildConfirmationFixture(scenario);
+  } = buildConfirmationFixture(scenario, { topic: topic ?? undefined });
   return (
     <PurchaseConfirmationView
       product={product}

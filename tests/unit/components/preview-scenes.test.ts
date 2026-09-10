@@ -4,9 +4,19 @@ import {
   PREVIEW_SCENES,
   PREVIEW_SCENE_LIST,
   findPreviewScene,
+  parsePreviewTopic,
   previewSceneHref,
   sceneHasScenario,
 } from "@/components/preview/scenes";
+import {
+  TOPIC_PREP_SCENARIOS,
+  isTopicPrepScenario,
+} from "@/components/preview/scenes/topic-prep-scene";
+import {
+  PRODUCT_TOPIC_VALUES,
+  resolveTopicPrep,
+  topicHasPrep,
+} from "@/lib/products/topics";
 import {
   GEDU_DASHBOARD_SCENARIOS,
   buildGeduDashboardFixture,
@@ -1672,5 +1682,123 @@ describe("the family club page's billing states", () => {
         (entry) => entry.startsAt.getTime() === lastSessionStart!.getTime(),
       ),
     ).toBe(true);
+  });
+});
+
+/**
+ * The topic axis: a `?topic=` override the two topic-decided surfaces honour,
+ * rather than a scenario per topic on each of them.
+ *
+ * Two things are worth pinning. The parser is one — it decides what a URL may
+ * put on a `product_topic` column shape, and its whole job is that an unknown
+ * value reads as absent rather than as a topic. The other is that the override
+ * reaches the row: both cards the axis exists for (the product page's About
+ * card, the confirmation page's prep guide) read `product.topic`, so a broken
+ * plumbing would show up as the axis silently doing nothing on a page that
+ * still renders fine.
+ */
+describe("the preview topic axis", () => {
+  it("accepts every topic the enum has", () => {
+    for (const topic of PRODUCT_TOPIC_VALUES) {
+      expect(parsePreviewTopic(topic), topic).toBe(topic);
+    }
+  });
+
+  it("reads anything else as absent", () => {
+    // The casing variant and the chip-shaped "minecraft" are the two a person
+    // types by hand; the object keys are what a bare `in`/index check would
+    // have answered yes to.
+    for (const raw of [
+      undefined,
+      "",
+      " minecraft_java",
+      "MINECRAFT_JAVA",
+      "minecraft",
+      "nope",
+      "__proto__",
+      "toString",
+      "constructor",
+      ["minecraft_java"],
+      ["minecraft_java", "fortnite"],
+    ]) {
+      expect(parsePreviewTopic(raw), String(raw)).toBeNull();
+    }
+  });
+
+  it("declares the axis on the two surfaces whose cards a topic decides", () => {
+    // Through the widened list, for the reason its own comment gives: the
+    // registry is `as const`, so a scene that omits the optional flag has no
+    // such property on its literal type to ask about.
+    const axisSurfaces = PREVIEW_SCENE_LIST.filter(
+      (scene) => scene.topicAxis === true,
+    ).map((scene) => scene.surface);
+    expect(axisSurfaces).toContain("products");
+    expect(axisSurfaces).toContain("confirmation");
+    for (const scene of PREVIEW_SCENE_LIST) {
+      if (scene.topicAxis !== true) continue;
+      // The link row points at the scene's first scenario, so a scene carrying
+      // the flag and no scenarios would render a row of links to nowhere.
+      expect(scene.scenarios.length, scene.surface).toBeGreaterThan(0);
+    }
+  });
+
+  it("puts the overridden topic on the row both surfaces read", () => {
+    for (const topic of PRODUCT_TOPIC_VALUES) {
+      expect(
+        buildScenarioFixture("consumer-club", { topic }).product.topic,
+        topic,
+      ).toBe(topic);
+      expect(
+        buildConfirmationFixture("consumer-club", { topic }).product.topic,
+        topic,
+      ).toBe(topic);
+    }
+  });
+
+  it("leaves the scenario's own topic alone with no override", () => {
+    // The per-scenario map still decides when the axis is not in play — the
+    // override is a lens over the fixtures, not a replacement for them.
+    expect(
+      buildScenarioFixture("muni-uncapped", { topic: "fortnite" }).product.topic,
+    ).toBe("fortnite");
+    expect(buildScenarioFixture("muni-uncapped").product.topic).not.toBe(
+      "fortnite",
+    );
+  });
+});
+
+/**
+ * The topic-prep scene is the one scene with no product fixture behind it: it
+ * enumerates the topic registry itself, and its two scenarios are the two forms
+ * a guide filters into rather than two products.
+ */
+describe("the topic prep scene", () => {
+  it("registers exactly the two filtered forms", () => {
+    expect(slugsFor("topic-prep")).toEqual([...TOPIC_PREP_SCENARIOS]);
+    for (const slug of TOPIC_PREP_SCENARIOS) {
+      expect(isTopicPrepScenario(slug)).toBe(true);
+    }
+    expect(isTopicPrepScenario("default")).toBe(false);
+  });
+
+  it("has a guide to show in the remote form for every topic it lists", () => {
+    // The column is built by filtering the topic values on `topicHasPrep`, so
+    // this is the check that the filter leaves a non-empty page — and that the
+    // remote form never reaches the muted "nothing renders" line, which belongs
+    // to the in-person one alone.
+    const listed = PRODUCT_TOPIC_VALUES.filter(topicHasPrep);
+    expect(listed.length).toBeGreaterThan(0);
+    for (const topic of listed) {
+      expect(resolveTopicPrep(topic, true), topic).not.toBeNull();
+    }
+  });
+
+  it("keeps a topic that filters down to nothing in the in-person column", () => {
+    // Minecraft Education is the one, and the scene's muted line is what makes
+    // its emptiness visible instead of it silently dropping out of the page.
+    const emptied = PRODUCT_TOPIC_VALUES.filter(topicHasPrep).filter(
+      (topic) => resolveTopicPrep(topic, false) === null,
+    );
+    expect(emptied).toContain("minecraft_education");
   });
 });

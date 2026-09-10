@@ -5,6 +5,8 @@ import {
 } from "@/components/public/products/mock-detail-fixtures";
 import { REGION_LOCK_SCENARIOS } from "@/components/public/products/region-lock/region-lock-scenarios";
 import { CONSENT_SCENARIOS } from "@/components/public/products/required-consents-scenario";
+import { PRODUCT_TOPIC_VALUES } from "@/lib/products/topics";
+import type { ProductTopic } from "@/types";
 
 /**
  * The **full-page preview scene registry**.
@@ -84,6 +86,48 @@ export interface PreviewSceneMeta {
   chrome: PreviewChromeKind;
   /** Ordered; the first is the sensible default to open. */
   scenarios: readonly PreviewScenarioMeta[];
+  /**
+   * The scene honours `?topic=<product_topic>` as an override of the topic its
+   * fixture carries, and the UI Previews page lists one link per topic beneath
+   * it.
+   *
+   * An **axis**, not a scenario list, and that is the whole reason it is a flag
+   * here rather than twelve more slugs: a topic is not a state the page can
+   * only be in one of — it is a value every existing scenario can be read at.
+   * Two cards are decided by it (the product page's "About {label}" and the
+   * confirmation page's "Before the first session" guide), so the alternative
+   * was a scenario per topic on both surfaces, multiplying two lists that are
+   * already long by twelve. The scenarios stay what they are — the states — and
+   * the topic rides on top of whichever one is open.
+   *
+   * A value outside the enum is **ignored rather than 404'd**: the scenario is
+   * still a real page and the override is a lens over it, so a stale or
+   * hand-typed `?topic=` shows the fixture's own topic instead of taking away a
+   * page that exists. The slug in the path is the thing that must resolve.
+   */
+  topicAxis?: true;
+}
+
+/**
+ * The search param carrying the topic axis, named once so the route that parses
+ * it and the page that builds the links cannot disagree.
+ */
+export const PREVIEW_TOPIC_PARAM = "topic";
+
+/**
+ * The topic a preview URL asks for, or `null` for "whatever the fixture says".
+ *
+ * Takes the raw `searchParams` value — Next hands over `string | string[] |
+ * undefined`, and a repeated param is a caller mistake with no right answer, so
+ * it reads as absent like every other unusable value. Validated against the
+ * enum tuple rather than cast, because the value reaches a `product_topic`
+ * column shape and everything downstream indexes a registry with it.
+ */
+export function parsePreviewTopic(
+  raw: string | string[] | undefined,
+): ProductTopic | null {
+  if (typeof raw !== "string") return null;
+  return PRODUCT_TOPIC_VALUES.find((topic) => topic === raw) ?? null;
 }
 
 /**
@@ -152,6 +196,7 @@ export const PREVIEW_SCENES = [
       ...REGION_LOCK_SCENARIO_META,
       ...CONSENT_SCENARIO_META,
     ],
+    topicAxis: true,
   },
   {
     surface: "confirmation",
@@ -165,6 +210,27 @@ export const PREVIEW_SCENES = [
         slug,
         label: `Paid, no order — ${label}`,
       })),
+    ],
+    topicAxis: true,
+  },
+  {
+    surface: "topic-prep",
+    title: "Topic prep guides",
+    description:
+      "Every \"Before the first session\" guide in one reading column, so the seven of them can be read against each other in a locale rather than one product page at a time.",
+    chrome: "public",
+    scenarios: [
+      {
+        slug: "remote",
+        label: "Remote — the full guides",
+        description: "Every step, which is what a family on their own machine does.",
+      },
+      {
+        slug: "in-person",
+        label: "In person — accounts only",
+        description:
+          "The same guides with the install steps gone, including the one topic that filters down to nothing.",
+      },
     ],
   },
   {

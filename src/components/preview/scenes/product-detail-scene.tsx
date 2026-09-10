@@ -12,7 +12,12 @@ import {
 import { resolveRegionGate } from "@/components/public/products/region-lock/region-gate";
 import type { ProductRegionLock } from "@/components/public/products/region-lock/region-lock-scenarios";
 import type { ConfirmedHomeLocation } from "@/components/public/products/signup-panel-view";
-import type { GamerPhotoConsentType, MarketingConsentType } from "@/types";
+import type {
+  GamerPhotoConsentType,
+  MarketingConsentType,
+  ProductTopic,
+} from "@/types";
+import { PREVIEW_TOPIC_PARAM } from "../scenes";
 import { previewSceneHref } from "../href";
 
 /**
@@ -45,6 +50,7 @@ export function ProductDetailScene({
   marketingConsentTypes,
   gamerPhotoConsentTypes,
   auth,
+  topic = null,
 }: {
   scenario: PreviewScenario;
   /**
@@ -80,6 +86,13 @@ export function ProductDetailScene({
    * because the panel is judged with all three side by side.
    */
   gamerPhotoConsentTypes?: readonly GamerPhotoConsentType[];
+  /**
+   * The `?topic=` axis: the topic this render puts on the fixture's row, in
+   * place of the one the scenario names. The About card is what it is for —
+   * one card per topic, and twelve topics against a scenario list this long is
+   * not a scenario each. `null` leaves the fixture's own topic alone.
+   */
+  topic?: ProductTopic | null;
 }) {
   // A place confirmed in the panel's dialog, held exactly where the live
   // route's data shell holds it — so the pick outranks the scenario's seeded
@@ -92,8 +105,17 @@ export function ProductDetailScene({
     undefined,
   );
 
-  const fixture = buildScenarioFixture(scenario, { auth });
-  const summaryHref = previewSceneHref("confirmation", scenario);
+  const fixture = buildScenarioFixture(scenario, {
+    auth,
+    topic: topic ?? undefined,
+  });
+  // The CTA carries the axis across with it, so walking product → confirmation
+  // stays on the topic being reviewed rather than dropping back to the
+  // fixture's own on the page where the prep guide is.
+  const summaryHref = {
+    ...previewSceneHref("confirmation", scenario),
+    ...(topic === null ? {} : { query: { [PREVIEW_TOPIC_PARAM]: topic } }),
+  };
 
   // The lock rides on the product row, as it does in the database, so nothing
   // downstream is handed a fixture shape the live page would not have.

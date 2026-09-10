@@ -3,7 +3,10 @@ import { buttonVariants } from "@/components/ui/button";
 import { previewScenePath } from "@/components/preview/href";
 import {
   PREVIEW_SCENE_LIST,
+  PREVIEW_TOPIC_PARAM,
+  type PreviewSceneMeta,
 } from "@/components/preview/scenes";
+import { PRODUCT_TOPICS, PRODUCT_TOPIC_VALUES } from "@/lib/products/topics";
 
 /**
  * **UI Previews** — the single home for the full-page preview scenes.
@@ -24,6 +27,45 @@ import {
  * bookkeeping into the message files. Anything a scene itself *renders* is
  * user-facing-shaped and goes through next-intl as usual.
  */
+/**
+ * The topic axis, as a row of links under a scene that declares it.
+ *
+ * A topic is not a scenario — it is a value every scenario of these two scenes
+ * can be read at — so it gets its own row rather than twelve more entries in
+ * the list above it. The links point at the scene's **first** scenario, which
+ * the registry defines as the sensible default to open; from there the axis
+ * survives the reader switching scenario by hand, and the product page's own
+ * CTA carries it across to the confirmation page.
+ */
+function TopicAxisRow({ scene }: { scene: PreviewSceneMeta }) {
+  // Every scene has at least one scenario — the registry test asserts it, and
+  // asserts it again for a scene declaring this flag, since an empty list here
+  // would be a row of links to nowhere.
+  const defaultScenario = scene.scenarios[0];
+
+  return (
+    <div className="space-y-2 border-t border-border pt-3">
+      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        By topic &middot; <code>?{PREVIEW_TOPIC_PARAM}=</code> on{" "}
+        <code>{defaultScenario.slug}</code>
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {PRODUCT_TOPIC_VALUES.map((topic) => (
+          <a
+            key={topic}
+            href={`${previewScenePath(scene.surface, defaultScenario.slug)}?${PREVIEW_TOPIC_PARAM}=${topic}`}
+            target="_blank"
+            rel="noreferrer"
+            className={buttonVariants({ variant: "ghost", size: "sm" })}
+          >
+            {PRODUCT_TOPICS[topic].label}
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminUIPreviewsPage() {
   const sceneCount = PREVIEW_SCENE_LIST.length;
   const scenarioCount = PREVIEW_SCENE_LIST.reduce(
@@ -114,6 +156,7 @@ export default function AdminUIPreviewsPage() {
                 ))}
               </div>
             )}
+            {scene.topicAxis === true && <TopicAxisRow scene={scene} />}
           </section>
         ))}
       </div>
