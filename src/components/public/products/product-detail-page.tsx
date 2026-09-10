@@ -28,6 +28,7 @@ import {
   deriveRegistrationState,
   registrationCtaKind,
 } from "./derive-registration-state";
+import { DETAIL_BAND_CLASS, DETAIL_GRID_CLASS } from "./detail-grid";
 import { ProductDetailPageBody } from "./product-detail-page-body";
 import { audienceAdmitsRole, productAudience } from "@/lib/products/product-audience";
 import { resolveRegionGate, type RegionGate } from "./region-lock/region-gate";
@@ -562,12 +563,12 @@ function describeAgeBlock(
  */
 function DetailLoadingSkeleton() {
   return (
-    // The live body's tracks, verbatim — change them there and change them
-    // here, or the wait stops being a picture of what follows it.
-    <div className="container mx-auto space-y-6 px-4 py-8 sm:py-12 lg:grid lg:max-w-none lg:grid-cols-[minmax(0,1fr)_minmax(0,44rem)_20rem] lg:gap-6 lg:space-y-0 2xl:grid-cols-[minmax(0,1fr)_16rem_minmax(0,44rem)_20rem_minmax(0,1fr)]">
+    // The live body's tracks — the same two strings it draws with, so the wait
+    // cannot stop being a picture of what follows it.
+    <div className={DETAIL_GRID_CLASS}>
       {/* The header band: back link, eyebrow, title, each over its own column,
           mirroring the outer content tracks exactly as the body's band does. */}
-      <div className="lg:col-start-2 lg:col-span-2 lg:row-start-1 lg:grid lg:grid-cols-[minmax(0,44rem)_20rem] lg:gap-6 2xl:col-start-2 2xl:col-span-3 2xl:grid-cols-[16rem_minmax(0,44rem)_20rem]">
+      <div className={DETAIL_BAND_CLASS}>
         <div className="h-4 w-32 animate-pulse rounded bg-lifted lg:hidden" />
         <div className="hidden 2xl:col-start-1 2xl:row-start-1 2xl:flex 2xl:h-9 2xl:items-center 2xl:justify-self-end">
           <div className="h-4 w-32 animate-pulse rounded bg-lifted" />

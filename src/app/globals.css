@@ -41,6 +41,28 @@
      first measurement only ever lowers it. */
   --signup-rail-height: 0px;
 
+  /* The product detail page's three column tracks — the one number each has.
+     They are consumed from the two grid templates in
+     `src/components/public/products/detail-grid.ts` (the page body and its
+     loading skeleton both draw with those), and nowhere else states them: a
+     width restated in a second template is the day the header band and the
+     columns beneath it stop lining up.
+
+     The signup rail is the tightest surface the enrolment panel renders in —
+     a phone at the 360px floor gives the panel's content more room than a
+     desktop rail does — so its width is judged there, in the widest locale:
+     a child's name, an age pill and a status such as "Yli 12-vuotias" on one
+     line of a picker row. 24rem leaves the panel 334px inside its padding,
+     a little more than an iPhone's 316 and well over the 286 a 360px Android
+     gives it. The reading column caps where a 3:2 hero still reads as
+     media-forward and the prose under it keeps a comfortable measure; the
+     facts rail is what the overview card needs and no more. The width budget
+     each of them produces at 1024, 1280, 1536 and 1920 is worked through in
+     the page body, where the grid is placed. */
+  --signup-rail-width: 24rem;
+  --facts-rail-width: 16rem;
+  --reading-column-width: 44rem;
+
   /* Corner radii, as one base step and the four utilities derived from it. */
   --radius: 0.5rem;
   --radius-sm: calc(var(--radius) - 4px);

@@ -345,9 +345,9 @@ export interface SignupPanelViewProps {
 // ---------- Why the panel is flat ----------
 //
 // The panel used to be a card, holding a card, holding a card per participant,
-// and each layer spent padding: in the detail page's 20rem rail that left a row
-// about 195px wide, which is not enough for a name, an age and "Already joined"
-// on one line.
+// and each layer spent padding: in the detail page's rail, then 20rem wide, that
+// left a row about 195px wide, which is not enough for a name, an age and
+// "Already joined" on one line.
 //
 // What has no box is decided by one rule — **a border means you can act on
 // it.** So the picker's outer box is gone (it is a grouping, not a control) and

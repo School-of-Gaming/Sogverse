@@ -69,6 +69,12 @@ const ALLOWED = {
   // ResizeObserver. CSS cannot measure a box, so this is a number JS supplies —
   // the one value here that is not authored at all.
   "--signup-rail-height": "layout: a measured height JS writes",
+  // The product detail page's three column tracks, each stated once and read
+  // by the two grid templates in `detail-grid.ts`. Layout, not colour; they
+  // follow the page's grid into the library if that construct is ever adopted.
+  "--signup-rail-width": "layout: the product page's signup rail track",
+  "--facts-rail-width": "layout: the product page's facts rail track",
+  "--reading-column-width": "layout: the product page's reading column cap",
   // The corner radius as one base step and the four utilities derived from it.
   // A radius arrives in the library with its first cornered component, which is
   // the Button adoption; until then the scale lives here.

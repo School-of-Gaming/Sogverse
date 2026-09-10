@@ -109,7 +109,7 @@ export interface CheckboxRowProps {
    *
    * **`info` is how an optional row says so, and it is the only marker there
    * is.** A chip lived at the end of the first line for a while, carrying the
-   * word "Optional" — and it cost a line of vertical space in a 20rem rail to
+   * word "Optional" — and it cost a line of vertical space in the signup rail to
    * say a word the hint sentence underneath was already saying ("Optional — you
    * can change this anytime in your settings."). So the sentence does the job
    * alone, in the info colour the chip wore. Nothing is repeated, nothing is
@@ -129,8 +129,8 @@ export interface CheckboxRowProps {
   /**
    * The two text scales the app uses: `sm` for a full-width form (the
    * registration card, the admin product form), `xs` for the product panel's
-   * rail, where the row shares a 20rem column with everything else in a signup
-   * form.
+   * rail, where the row shares a narrow column with everything else in a
+   * signup form.
    */
   size?: "sm" | "xs";
   /**

@@ -215,14 +215,14 @@ describe("a bundle of documents", () => {
     // its own one-line column, and how deep that nests is the component's
     // business, not the test's.
     const tickLine = row.firstElementChild;
-    if (!tickLine || !tickLine.contains(box)) {
+    if (!(tickLine instanceof HTMLElement) || !tickLine.contains(box)) {
       throw new Error("the box rendered outside the row's first line");
     }
 
     // The short name shares the tick's line; the sentence — three lines of
     // conditions naming two documents — runs the row's full width beneath it
     // rather than in the box's column, which is what keeps the measure the
-    // same as everything else in a 20rem rail. Asserted as "the sentence and
+    // same as everything else in the signup rail. Asserted as "the sentence and
     // its links are outside the tick's line but inside the row", because that
     // is the structural fact the layout depends on.
     expect(tickLine.textContent).toBe("robloxProgrammeTitle");
