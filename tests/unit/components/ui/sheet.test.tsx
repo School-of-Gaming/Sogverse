@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { hydrateRoot, type Root } from "react-dom/client";
 import { renderToString } from "react-dom/server";
-import { act, cleanup, render, screen } from "@testing-library/react";
-import { Sheet } from "@/components/ui/sheet";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/../messages/en.json";
+import { Sheet, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 /**
  * **A sheet can stand mounted on a page the server renders.**
@@ -17,7 +19,13 @@ import { Sheet } from "@/components/ui/sheet";
  * The other half of standing mounted is knowing when a close has finished,
  * which a caller holding content in the sheet needs so it can let that content
  * go once nobody can see it. That report is for the end of a close, and only a
- * close: a sheet that mounts closed has nothing to finish.
+ * close: a sheet that mounts closed has nothing to finish. And a close is the
+ * panel's own slide ending, which a transition finishing anywhere else in the
+ * panel must not pass for.
+ *
+ * The header is here for its shape as the sheets using it meet it: a title
+ * and Close with nothing else, and, handed actions, those actions set beside
+ * Close rather than under the title.
  */
 
 afterEach(() => {
@@ -114,5 +122,95 @@ describe("the end of a close", () => {
       vi.advanceTimersByTime(1000);
     });
     expect(onExitComplete).toHaveBeenCalledTimes(1);
+  });
+
+  it("is the panel's own slide ending, not a transition inside it or of another property", () => {
+    const onExitComplete = vi.fn();
+    const { rerender } = render(
+      <Sheet open onOpenChange={noop} onExitComplete={onExitComplete}>
+        <p>held</p>
+      </Sheet>,
+    );
+    rerender(
+      <Sheet open={false} onOpenChange={noop} onExitComplete={onExitComplete}>
+        <p>held</p>
+      </Sheet>,
+    );
+    const child = screen.getByText("held");
+    const panel = child.parentElement;
+    if (!panel) throw new Error("the sheet's content has no panel");
+
+    // A child's slide bubbles up to the panel, and is not the panel's.
+    endTransition(child, "translate");
+    // The panel's own transition of some other property is not its slide.
+    endTransition(panel, "opacity");
+    expect(onExitComplete).not.toHaveBeenCalled();
+
+    endTransition(panel, "translate");
+    expect(onExitComplete).toHaveBeenCalledTimes(1);
+  });
+});
+
+/** A transition on `target` finishing, as the browser reports it. */
+function endTransition(target: Element, propertyName: string) {
+  const event = new Event("transitionend", { bubbles: true });
+  Object.defineProperty(event, "propertyName", { value: propertyName });
+  act(() => {
+    target.dispatchEvent(event);
+  });
+}
+
+function WithMessages({ children }: { children: React.ReactNode }) {
+  return (
+    <NextIntlClientProvider
+      locale="en"
+      messages={messages}
+      timeZone="Europe/Helsinki"
+    >
+      {children}
+    </NextIntlClientProvider>
+  );
+}
+
+describe("a sheet's header", () => {
+  const closeName = messages.common.close;
+
+  it("is the title and Close alone when it is handed no actions", () => {
+    render(
+      <SheetHeader onClose={noop}>
+        <SheetTitle>Pick a gedu</SheetTitle>
+      </SheetHeader>,
+      { wrapper: WithMessages },
+    );
+    const buttons = screen.getAllByRole("button");
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0]).toBe(screen.getByRole("button", { name: closeName }));
+    expect(screen.getByRole("heading", { name: "Pick a gedu" })).toBeTruthy();
+  });
+
+  it("sets its actions in Close's group, not in the title's column", () => {
+    render(
+      <SheetHeader
+        onClose={noop}
+        actions={
+          <button type="button" onClick={noop}>
+            Clear
+          </button>
+        }
+      >
+        <SheetTitle>Filters</SheetTitle>
+      </SheetHeader>,
+      { wrapper: WithMessages },
+    );
+    const closeGroup = screen.getByRole("button", { name: closeName })
+      .parentElement;
+    if (!closeGroup) throw new Error("Close has no group");
+    const action = within(closeGroup).getByRole("button", { name: "Clear" });
+
+    const titleColumn = screen.getByRole("heading", { name: "Filters" })
+      .parentElement;
+    if (!titleColumn) throw new Error("the title has no column");
+    expect(titleColumn.contains(action)).toBe(false);
+    expect(within(closeGroup).queryByRole("heading")).toBeNull();
   });
 });

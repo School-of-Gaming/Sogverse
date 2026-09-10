@@ -36,8 +36,10 @@ export interface ProductBrowseSection {
 // on offer. Keeping the chip-filtering + grids here is what stops the two pages
 // from drifting.
 //
-// Layout: one column on phones (a one-line filter bar on top, cards below), a
-// rail beside the cards from `lg` up. Below `lg` the chip rows themselves live
+// Layout: one column on phones (a filter bar on top, cards below), a rail
+// beside the cards from `lg` up. The bar is a Filters button, and beneath it,
+// once anything is lit, the lit filters wrapping to as many lines as they need,
+// so it is as tall as the selection. Below `lg` the chip rows themselves live
 // in a bottom sheet the bar opens, so the cards start near the top of the
 // screen instead of under the stack of rows that used to stand above them. The
 // filter component is only ever mounted in one of its two places — opening the
@@ -168,7 +170,8 @@ export function ProductBrowseResults({
       className="container mx-auto px-4 lg:grid lg:max-w-none lg:grid-cols-[minmax(16rem,1fr)_minmax(0,64rem)_minmax(0,1fr)] lg:gap-6"
       data-reserve-scroll-gutter
     >
-      {/* Below `lg` this holds the one-line filter bar; the sticky rail
+      {/* Below `lg` this holds the filter bar, which grows a wrapping row of
+          lit filters beneath its button; the sticky rail
           treatment below is what it becomes once there is a gutter to put it
           in, and every class here that matters carries the `lg:` prefix for
           that reason.

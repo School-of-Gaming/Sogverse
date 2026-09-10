@@ -137,7 +137,7 @@ export const PREVIEW_SCENES = [
     surface: "shop",
     title: "Shop browse",
     description:
-      "The public storefront grid over fixtures: the filter rail — a bottom sheet behind a one-line bar below `lg` — one headed section per category, and the browse card in every shape it takes. Chips are live and cards open the matching product-detail scene.",
+      "The live storefront body over fixtures with working chips, so both shapes of its filters can be judged as a page at any width.",
     chrome: "public",
     scenarios: [{ slug: "default", label: "Storefront grid" }],
   },

@@ -17,12 +17,16 @@ const SLIDE_MS = 200;
  * How long a close waits for the panel to report the end of its slide before
  * taking it as finished anyway. A tab in the background, or a panel that never
  * moved, sends no `transitionend` at all. The margin past the slide is because
- * the slide starts on the frame after the close rather than on the close
- * itself, so a timer of exactly its length would fire while the last of the
- * panel is still on screen; with the margin, the event wins whenever the
- * browser is going to send one.
+ * the timer and the slide do not start together: the timer starts from an
+ * effect once the close has committed, and the slide on whatever frame the
+ * browser next draws, which a long frame on a slow phone can push well back.
+ * A timer too close to the slide's own length would then call the close
+ * finished while the panel is still visibly on its way down, and a caller
+ * letting go of the panel's content would empty it mid-slide. The margin is
+ * generous because it costs nothing when the event arrives, which ends the
+ * wait early; it only delays the one case where no event is coming.
  */
-const EXIT_FALLBACK_MS = SLIDE_MS + 100;
+const EXIT_FALLBACK_MS = SLIDE_MS + 300;
 
 /**
  * The properties a panel's slide animates. Tailwind's translate utilities set
@@ -55,10 +59,10 @@ interface SheetProps {
    * Which edge the panel comes in from. `right` is the desk drawer every
    * staff surface uses — a picker beside the table it is picking for.
    * `bottom` is the phone shape: the panel meets the thumb that summoned it,
-   * and it is capped short of the top so the page it belongs to stays visible
-   * behind it. A sheet from the bottom on a wide screen would be a drawer
-   * across a monitor, so `bottom` exists for surfaces that only open it on a
-   * narrow viewport.
+   * and it is as tall as what it holds, so a caller whose content can outgrow
+   * the screen caps its body and lets it scroll. A sheet from the bottom on a
+   * wide screen would be a drawer across a monitor, so `bottom` exists for
+   * surfaces that only open it on a narrow viewport.
    */
   side?: "right" | "bottom";
   /**
@@ -137,10 +141,12 @@ function Sheet({
     scrim.style.removeProperty("opacity");
   }, [isClient, open, side]);
 
-  // A close is finished when the panel's own slide ends — not a transition on
-  // something inside it, which bubbles here too, and not the scrim's fade.
-  // Reopening before then tears the wait down, so a stale end never reaches a
-  // sheet that is open again.
+  // A close is finished when the panel's own slide ends. Two other kinds of
+  // end reach the panel's listener and are not that: a transition finishing on
+  // something inside the panel, which bubbles up to it, and a transition of
+  // some other property on the panel itself. The target check turns away the
+  // first and the property check the second. Reopening before then tears the
+  // wait down, so a stale end never reaches a sheet that is open again.
   React.useEffect(() => {
     if (open) {
       hasOpened.current = true;
@@ -254,7 +260,9 @@ function SheetHeader({
    * just before Close. They share Close's group, packed to the end, so a
    * control that appears only once there is something for it to do grows the
    * group leftward into the header's slack: the title at the start and Close
-   * at the end keep their places, and nothing below the header moves. Handed
+   * at the end keep their places. Nothing below the header moves either, so
+   * long as no action is taller than Close, whose height is what sets the
+   * group's; a taller one grows the header by the difference. Handed
    * in as children instead, a control lands in the title's column — a line of
    * its own under the title, which costs the sheet's body that much height.
    */

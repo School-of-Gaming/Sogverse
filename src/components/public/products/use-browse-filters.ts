@@ -139,7 +139,9 @@ function parseAge(raw: string | null): AgeBand | null {
   return findAgeBand(min, max);
 }
 
-// URL-state hook for the topic + tag + format chip filters.
+// URL-state hook for the browse grid's chip filters: each filter's param is
+// read here and written back here, and a filter added to the grid gets its
+// param in this hook alongside the rest.
 //
 // Toggling a chip writes via `window.history.replaceState` — no history
 // entries pushed, no scroll jerk, no RSC navigation (see the note inside

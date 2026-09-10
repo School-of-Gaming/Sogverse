@@ -141,6 +141,15 @@ function endTransition(target: Element, propertyName: string) {
   });
 }
 
+/** The query of the URL last written through the History API. */
+function writtenParams(replaceState: {
+  mock: { calls: readonly (readonly unknown[])[] };
+}): URLSearchParams {
+  const call = replaceState.mock.calls.at(-1);
+  if (!call) throw new Error("nothing was written to the URL");
+  return new URL(String(call[2]), "http://localhost").searchParams;
+}
+
 describe("the rows across the sheet's open, slide down and close", () => {
   it("are in the rail and not the sheet while the sheet is closed", () => {
     renderPanel();
@@ -190,14 +199,17 @@ describe("the rows across the sheet's open, slide down and close", () => {
     openSheet();
     closeSheet();
 
+    // Well past the slide's own length, the rows are still in the sheet: a
+    // slide started late by a long frame may still be on screen, and pulling
+    // the rows out then would empty the panel on its way down.
     act(() => {
-      vi.advanceTimersByTime(100);
+      vi.advanceTimersByTime(400);
     });
     expect(sheetRows()).not.toBeNull();
     expect(railRows()).toBeNull();
 
     act(() => {
-      vi.advanceTimersByTime(1000);
+      vi.advanceTimersByTime(200);
     });
     expect(sheetRows()).toBeNull();
     expect(railRows()).not.toBeNull();
@@ -299,13 +311,18 @@ describe("the bar", () => {
   });
 
   it("drops a filter from the summary when its chip is tapped", () => {
-    renderPanel("days=0");
+    renderPanel("days=0&topic=fortnite&mock=1");
     const replaceState = vi
       .spyOn(window.history, "replaceState")
       .mockImplementation(() => {});
 
     fireEvent.click(screen.getByRole("button", { name: "Remove Days Monday" }));
-    expect(replaceState).toHaveBeenCalled();
+    // Only the tapped filter goes: the other lit one and a param that is no
+    // filter at all are written back untouched.
+    const params = writtenParams(replaceState);
+    expect(params.has("days")).toBe(false);
+    expect(params.get("topic")).toBe("fortnite");
+    expect(params.get("mock")).toBe("1");
     replaceState.mockRestore();
   });
 });
@@ -342,7 +359,7 @@ describe("the sheet's header", () => {
   });
 
   it("clears the filters when its Clear is tapped", () => {
-    renderPanel("days=0");
+    renderPanel("category=clubs&topic=fortnite&days=0&price=paid&mock=1");
     openSheet();
     const replaceState = vi
       .spyOn(window.history, "replaceState")
@@ -351,7 +368,9 @@ describe("the sheet's header", () => {
     const closeGroup = closeButton().parentElement;
     if (!closeGroup) throw new Error("Close has no group");
     fireEvent.click(within(closeGroup).getByRole("button", { name: clearLabel }));
-    expect(replaceState).toHaveBeenCalled();
+    // Every filter goes, Type included, and the one param that is no filter
+    // is all that is written back.
+    expect([...writtenParams(replaceState).entries()]).toEqual([["mock", "1"]]);
     replaceState.mockRestore();
   });
 });

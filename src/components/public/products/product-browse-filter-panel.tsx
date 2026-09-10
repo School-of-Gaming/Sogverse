@@ -103,8 +103,9 @@ export function ProductBrowseFilterPanel({
           That growth moves the grid below, and it is not the shift the layout
           rule forbids: it is the direct result of the reader's own action.
           Filters are lit from the sheet, which covers the page while the bar
-          grows underneath it, and the bar shrinks only when a chip here is
-          tapped to remove the filter it names. */}
+          grows underneath it, and the bar shrinks only when the reader acts on
+          the bar itself: a chip here tapped to remove the filter it names, or
+          Clear tapped to remove them all. */}
       <div className="lg:hidden">
         <div className="flex items-center justify-between gap-2">
           <button
@@ -195,7 +196,9 @@ export function ProductBrowseFilterPanel({
             {/* One line, and tighter than the header's own spacing, which is
                 sized for the drawer the admin surfaces open beside a table on
                 a monitor. On a phone every line the header spends is a line of
-                chips the reader has to scroll for.
+                chips the reader has to scroll for. The rows below take the
+                same side padding as the header, so the title and every row
+                under it start at one left edge.
 
                 Clear belongs in here too: the bar that carries it is behind
                 the scrim while the sheet is up, and a reader who has just
@@ -236,7 +239,7 @@ export function ProductBrowseFilterPanel({
                 above the sheet, dimmed but moving, so a tapped chip is visibly
                 doing something. The page behind cannot scroll while the sheet
                 is up — the sheet holds the document still. */}
-            <SheetBody className="max-h-[65vh]">
+            <SheetBody className="max-h-[65vh] px-4">
               <ProductBrowseFilters surface={surface} variant="sheet" />
             </SheetBody>
           </SheetContent>

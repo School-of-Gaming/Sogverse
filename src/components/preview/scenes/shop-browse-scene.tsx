@@ -51,9 +51,9 @@ function categoryOf(productType: string): ShopCategory | undefined {
  * paid ones, so both chips leave cards standing.
  *
  * It is also where the two shapes of the filter control are seen. Narrow the
- * window past `lg` and the rail becomes a one-line bar over the cards — the
- * rows move into a bottom sheet it opens, and the lit chips stay on the bar as
- * a summary. That is the whole reason this scene is worth opening on a phone
+ * window past `lg` and the rail becomes a bar over the cards — the rows move
+ * into a bottom sheet it opens, and the lit chips stay on the bar as a summary
+ * that wraps beneath its button. That is the whole reason this scene is worth opening on a phone
  * viewport rather than judged from a component demo: what the bar is worth is
  * how much of the first screen the cards get back.
  *
