@@ -126,7 +126,18 @@ function mockAuthenticated(
  * gamers included, because `profiles.email` is a copy and a copy is the wrong
  * thing to open a session against. So this field feeds `getUserById`.
  */
-type TargetProfile = { id: string; role: string; email: string | null } | null;
+type TargetProfile = {
+  id: string;
+  role: string;
+  email: string | null;
+  /**
+   * `profiles.locale`, which the route reads for one purpose: seeding the
+   * `locale` cookie so the switched-in account's own language survives the
+   * full-page navigation that follows. Omitted by every test that is not about
+   * that, where it stands for the nullable column's ordinary null.
+   */
+  locale?: string | null;
+} | null;
 
 /**
  * Configure the admin client to dispatch `from()` calls to per-table mock
@@ -143,11 +154,15 @@ function setupAdminFrom(args: {
   const profileChain = {
     select: vi.fn().mockReturnValue({
       eq: vi.fn().mockReturnValue({
-        // Only the two columns the route selects. Handing it an `email` here
-        // would let a regression that reads the profile copy pass this file.
+        // Only the columns the route selects. Handing it an `email` here would
+        // let a regression that reads the profile copy pass this file.
         maybeSingle: vi.fn().mockResolvedValue(
           target
-            ? mockSupabaseSuccess({ id: target.id, role: target.role })
+            ? mockSupabaseSuccess({
+                id: target.id,
+                role: target.role,
+                locale: target.locale ?? null,
+              })
             : mockSupabaseSuccess(null),
         ),
       }),
@@ -787,6 +802,105 @@ describe("POST /api/auth/switch-account", () => {
   // -------------------------------------------------------------------------
   // Everything that can go wrong after the gate
   // -------------------------------------------------------------------------
+
+  /**
+   * **A switch is a sign-in, so it seeds the `locale` cookie from the account
+   * being entered.** The client follows this response with a full-page
+   * navigation to a bare path, which the proxy resolves by the cookie →
+   * `Accept-Language` → English ladder — so without this a child whose profile
+   * says Finnish would be handed whichever language the parent they came from
+   * had stored.
+   *
+   * It is not a credential and it is not part of establishing the session: it
+   * rides on the profile row the route already read, and it is written after
+   * the family-session marker, never before it.
+   */
+  describe("the locale cookie", () => {
+    // Not `httpOnly`: the picker writes this same cookie from the browser, and
+    // a preference the client cannot read is a preference it cannot keep in
+    // step. Asserted whole for the reason the other two are — every attribute
+    // is a way to end up with two cookies of one name.
+    const LOCALE_COOKIE_OPTIONS = {
+      path: "/",
+      maxAge: 365 * 24 * 60 * 60,
+      sameSite: "lax",
+      secure: COOKIE_SECURE,
+      httpOnly: false,
+    };
+
+    async function parentSwitchesToGamer(locale: string | null) {
+      mockAuthenticated("customer", PARENT_A);
+      setupAdminFrom({
+        target: {
+          id: GAMER_A1,
+          role: "gamer",
+          email: "alphaone@gamer.sogverse.internal",
+          locale,
+        },
+        parentGamerBuilder: linkLookup(true),
+      });
+      mockHappyPathSession(GAMER_A1);
+
+      return POST(createRequest({ userId: GAMER_A1 }));
+    }
+
+    it("carries the target's own locale into the new session", async () => {
+      const response = await parentSwitchesToGamer("fi");
+
+      expect(response.status).toBe(200);
+      expect(mockCookieSet).toHaveBeenCalledWith(
+        "locale",
+        "fi",
+        LOCALE_COOKIE_OPTIONS,
+      );
+    });
+
+    it("writes nothing when the target says auto-detect", async () => {
+      // Null means "follow the browser". Writing anything here would freeze a
+      // guess into a preference nobody expressed — and, worse, hand the child
+      // whatever the previous account had stored.
+      const response = await parentSwitchesToGamer(null);
+
+      expect(response.status).toBe(200);
+      expect(mockCookieSet).not.toHaveBeenCalledWith(
+        "locale",
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
+    it("ignores a stored value we do not ship", async () => {
+      const response = await parentSwitchesToGamer("de");
+
+      expect(response.status).toBe(200);
+      expect(mockCookieSet).not.toHaveBeenCalledWith(
+        "locale",
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
+    it("is not written when the switch is refused", async () => {
+      // A refused caller keeps the session they arrived with, and must keep
+      // their language too: nothing about a target they may not reach is
+      // allowed to reach their browser.
+      mockAuthenticated("customer", PARENT_A);
+      setupAdminFrom({
+        target: {
+          id: GAMER_B1,
+          role: "gamer",
+          email: "betaone@gamer.sogverse.internal",
+          locale: "fi",
+        },
+        parentGamerBuilder: linkLookup(false),
+      });
+
+      const response = await POST(createRequest({ userId: GAMER_B1 }));
+
+      expect(response.status).toBe(403);
+      expect(mockCookieSet).not.toHaveBeenCalled();
+    });
+  });
 
   describe("session mutation failures", () => {
     /**

@@ -1244,7 +1244,7 @@ const NON_ROUTE_ADMIN_CLIENT_SITES: Record<string, string> = {
     "reads an emailed seat offer for its landing page, which authorizes itself — the reader may hold no session or their own child's, and the page renders identically either way. It only reads: accepting is a POST behind a button, so a mail scanner following the link reaches this and stops",
   "src/services/family/family.server.ts":
     "the shared family resolver — a gamer legitimately reads siblings beyond their own view",
-  "src/app/select-profile/page.tsx":
+  "src/app/[locale]/select-profile/page.tsx":
     "the profile chooser prefetch, through the same family resolver as the family-list route",
 };
 

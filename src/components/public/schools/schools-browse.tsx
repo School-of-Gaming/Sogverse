@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { ChevronDown, ChevronRight, Info, MapPin, Search } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";

@@ -4,8 +4,11 @@
 //
 // This file owns the **UI locale** system — which translation of the web app
 // the user sees (English, Finnish, Swedish, French, Klingon, ...). It backs:
-//   - profiles.locale           (DB column)
-//   - the `locale` cookie       (set on every locale change for SSR)
+//   - the `[locale]` URL segment (the authority — a prefixed URL renders in
+//                                 its own locale, whatever is stored)
+//   - profiles.locale            (DB column)
+//   - the `locale` cookie        (the hint the bare-path redirect ladder reads;
+//                                 written by the picker and the sign-in flows)
 //   - the LocalePicker dropdown in the header
 //   - next-intl's getTranslations / useTranslations
 //
@@ -21,8 +24,9 @@
 // src/i18n/CLAUDE.md.
 //
 // Adding a locale is a checklist, not a one-liner: `LOCALE_CONFIG` entry → flag
-// registration → messages loader → `messages/<code>.json` → phone-country
-// decision. The full checklist lives in src/i18n/CLAUDE.md ("Adding a locale").
+// registration → messages loader → `messages/<code>.json` → a slug column in
+// the pathnames map → the indexed-or-not decision → phone-country decision. The
+// full checklist lives in src/i18n/CLAUDE.md ("Adding a locale").
 // The translation-completeness CI script discovers `messages/*.json` on its own
 // and needs no edit.
 
@@ -65,13 +69,18 @@ interface LocaleDefinition {
  * actually need; real locales go before it. A unit test pins
  * `SUPPORTED_LOCALES.at(-1) === "tlh"`.
  *
- * **Codes are bare language subtags** (`fr`, not `fr-FR`). A region-qualified
- * code is added only when we genuinely ship two variants of one language
- * (`fr` *and* `fr-CA`). Doing so touches more than this list: the `locale`
- * column and cookie carry the longer code, `detectLocaleFromHeader` already
- * prefers an exact tag match over a language-subtag one, and any future
- * locale-prefixed routing has to decide how the region appears in URLs. Decide
- * the scheme deliberately — do not add one incidentally.
+ * **Codes are bare language subtags** (`fr`, not `fr-FR`), **and a bare code is
+ * never renamed.** A bare code is the generic variant of its language and
+ * serves every speaker with no closer match; a regional variant is added
+ * *beside* it as lowercase `lang-region` (`/es-mx/` next to `/es/`) — one entry
+ * here, one catalog, one column in every translated entry of the pathnames map,
+ * and the `hreflang` set, the sitemap and the robots disallow all iterate this
+ * list. Nothing is redirected or renamed to make room for a region, so a URL
+ * that worked keeps working. Two things that follow: the `locale` column and
+ * cookie carry the longer code, and **nothing may assume a locale segment is
+ * two letters** — the URL prefix matcher and the path normalizer test
+ * membership in this list, never a shape. `detectLocaleFromHeader` already
+ * prefers an exact tag match over a language-subtag one.
  *
  * A related but smaller open question: the bare `en` tag is also what `Intl`
  * formats with, and bare `en` means US conventions — timezone names render as

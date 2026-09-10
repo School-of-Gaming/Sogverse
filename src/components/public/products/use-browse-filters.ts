@@ -156,6 +156,12 @@ function parseAge(raw: string | null): AgeBand | null {
 // "Clear all" means every filter including Type. See the note on `clear`.
 
 export function useBrowseFilters() {
+  // **Raw `next/navigation`, deliberately.** This pathname is *embedded in a
+  // URL* — `writeNext` hands it to `window.history.replaceState`, so it has to
+  // be the external, locale-prefixed, translated-slug path the reader is
+  // actually on. The wrapped `usePathname` returns the internal form, which
+  // would rewrite `/fi/kauppa` to `/shop` and drop the reader's language on
+  // every chip tap. Comparing → wrapped; embedding → raw (`src/i18n/CLAUDE.md`).
   const pathname = usePathname();
   const searchParams = useSearchParams();
 

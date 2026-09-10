@@ -23,13 +23,13 @@ import { ParticipantPickerSheet } from "../participant-picker-sheet";
 import { GeduPickerSheet } from "../gedu-picker-sheet";
 import { GroupsPanelView, type GroupsPanelActions } from "./groups-panel-view";
 import { SwitchClubSheet } from "./switch-club-sheet";
-import { PRODUCT_TYPE_CONFIG } from "../product-type-config";
 import { robloxIdsFrom } from "./panel-rules";
 import { useRobloxRenders } from "@/services/roblox";
 import { platformForTopic } from "@/lib/products/topics";
 import { computeAge } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import type { BillingMode, ProductTopic, ProductType } from "@/types";
+import { ROUTES } from "@/lib/constants";
 
 interface GroupsPanelProps {
   productId: string;
@@ -166,7 +166,6 @@ export function GroupsPanel({
     };
   }, [snapshot, switchingId, timeZone]);
 
-
   // Anyone already holding a seat blocks a re-add via the picker.
   const enrolledParticipantIds = useMemo(() => {
     const ids = new Set<string>();
@@ -250,7 +249,7 @@ export function GroupsPanel({
       // Built from the type's own route slug, exactly as this page's other
       // admin links are: `/admin/<slug>/<product>/groups/<group>`.
       groupHref={(id) =>
-        `/admin/${PRODUCT_TYPE_CONFIG[productType].routeSlug}/${productId}/groups/${id}`
+        ROUTES.admin.productGroup(productType, productId, id)
       }
       actions={actions}
       overlays={

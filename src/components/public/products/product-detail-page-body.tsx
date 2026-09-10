@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
@@ -596,7 +596,7 @@ export function BackLink({
   const href =
     municipality || cameFromBrowse(searchParams)
       ? listingHrefWithBrowseState(
-          municipality ? base : ROUTES.shop,
+          municipality ? base : { pathname: ROUTES.shop },
           searchParams,
         )
       : base;

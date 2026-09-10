@@ -20,6 +20,8 @@ import {
 } from "@/components/public/products/shop-categories";
 import { useShopCategories } from "@/components/public/products/use-shop-categories";
 import { previewSceneHref } from "../href";
+import type { AppHrefObject } from "@/lib/constants/routes";
+import { ROUTES } from "@/lib/constants";
 
 /**
  * Which category a product type belongs under. Read from `CATEGORY_TYPE`
@@ -101,7 +103,7 @@ export function ShopBrowseScene() {
     }));
     // Fixture ids resolve to no real product, so a card must open its own
     // detail scene rather than `/shop/<id>`.
-    const hrefs = new Map<string, string>(
+    const hrefs = new Map<string, AppHrefObject>(
       products.map(({ entry, product }) => [
         product.id,
         previewSceneHref("products", entry.slug),
@@ -125,8 +127,11 @@ export function ShopBrowseScene() {
     };
   }, [anchorNow, t, visible]);
 
+  // Every fixture id is in the map by construction; the fallback is the shop's
+  // own listing rather than an inert `#`, because a card whose href is not a
+  // route has nowhere for the typed link to go.
   const productHref = useCallback(
-    (id: string) => hrefById.get(id) ?? "#",
+    (id: string) => hrefById.get(id) ?? { pathname: ROUTES.shop },
     [hrefById],
   );
 

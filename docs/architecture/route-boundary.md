@@ -73,6 +73,12 @@ the end of §5 — how bodies are parsed, how errors map, and what is tested.*
 47 `route.ts` files, 50 handlers (three files export two methods). Auth postures found in
 the wild — this taxonomy is exhaustive over today's surface, and §3.1 adopts it:
 
+**The surface is `src/app/api/**`, not every route handler in the app.** The two Open
+Graph card handlers sit at the app root outside it — they are public images reached by a
+crawler, deliberately excluded from the proxy so they stay cacheable, and they have no
+caller to authenticate — so they carry no registry entry and are covered by an
+integration test that renders both cards instead.
+
 | Posture | Handlers | Notes |
 |---|---|---|
 | `role-gated` (`requireRole`) | 32 | Variants that must be captured: `allowUnverified` (6 — the PIN-locked-customer routes), `requireCertifiedGedu` (2), all-four-roles-as-any-authenticated (2) |

@@ -1226,16 +1226,18 @@ export function buildConfirmationFixture(
 // hide that affordance one child early.
 function buildAuthState(
   config: ScenarioConfig,
-  detailHref: string,
+  detailScenePath: string,
   state: RegistrationState,
 ): AuthState {
   const audience = audienceOf(config);
   if (config.auth === "signed-out") {
-    const redirect = `?redirect=${encodeURIComponent(detailHref)}`;
+    // The fixture's own detail scene, carried the way the live page carries
+    // it: as the href object's query rather than a hand-encoded string.
+    const query = { redirect: detailScenePath };
     return {
       kind: "unauthenticated",
-      signInHref: `/login${redirect}`,
-      createAccountHref: `/register${redirect}`,
+      signInHref: { pathname: "/login", query },
+      createAccountHref: { pathname: "/register", query },
     };
   }
 

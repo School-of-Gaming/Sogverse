@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { Globe, MapPin, MapPinCheck, Plus } from "lucide-react";
 import { StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -40,6 +40,7 @@ import {
   SeatAvailabilityBar,
   type SeatAvailabilityBarProps,
 } from "./seat-availability-bar";
+import type { AppHref } from "@/lib/constants/routes";
 
 // Top-level Signup Panel View. Pure presentational: takes resolved
 // state and emits intent callbacks. Renders the right banner + body
@@ -93,7 +94,7 @@ export interface SignupParticipantChoice {
 }
 
 export type AuthState =
-  | { kind: "unauthenticated"; signInHref: string; createAccountHref: string }
+  | { kind: "unauthenticated"; signInHref: AppHref; createAccountHref: AppHref }
   | { kind: "non_customer" }
   | {
       // A signed-in customer. `participants` may be empty — on a product with a
@@ -608,8 +609,8 @@ function UnauthenticatedOverlay({
   signInHref,
   createAccountHref,
 }: {
-  signInHref: string;
-  createAccountHref: string;
+  signInHref: AppHref;
+  createAccountHref: AppHref;
 }) {
   const t = useTranslations("productDetail.signupPanel");
   return (

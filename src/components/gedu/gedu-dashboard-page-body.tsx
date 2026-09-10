@@ -17,7 +17,7 @@ import { UncertifiedToolsNotice } from "./uncertified-notice";
 /**
  * The gedu dashboard's page body — everything below the route's data shell.
  *
- * It lives apart from `app/(dashboard)/gedu/page.tsx` so the page is only a
+ * It lives apart from `app/[locale]/(dashboard)/gedu/page.tsx` so the page is only a
  * data shell (auth, prefetch) and the body is a plain component: that is what
  * lets a full-page preview scene render the dashboard exactly as a gedu meets
  * it, with fixtures in place of the server reads.

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { UserCog, UserPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
@@ -135,7 +135,7 @@ const SELF_SECTION_ID = "self";
 /**
  * The parent dashboard's page body — everything below the route's data shell.
  *
- * It lives apart from `app/(dashboard)/parent/page.tsx` so the page is only a
+ * It lives apart from `app/[locale]/(dashboard)/parent/page.tsx` so the page is only a
  * data shell (auth, prefetch) and the body is a plain component: that is what
  * lets a full-page preview scene render the dashboard exactly as a parent meets
  * it, with fixtures in place of the server reads.
@@ -438,7 +438,7 @@ export function ParentDashboardPageBody({
                         rare. `ml-auto` so a long name wraps against the
                         heading's space, not the link's. */}
                     <Link
-                      href={`${ROUTES.customer.gamers}/${gamer.id}`}
+                      href={ROUTES.customer.gamer(gamer.id)}
                       aria-label={f("manageGamerAria", {
                         name: gamer.firstName,
                       })}

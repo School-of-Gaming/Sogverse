@@ -1,11 +1,82 @@
 import { createServerClient } from "@supabase/ssr";
+import createIntlMiddleware from "next-intl/middleware";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database.types";
 
 import { ROUTES } from "@/lib/constants";
+import { LOCALE_COOKIE_NAME } from "@/lib/locale-cookie";
+import {
+  DEFAULT_LOCALE,
+  isSupportedLocale,
+  matchLocaleFromHeader,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
 import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
+import { routing } from "@/i18n/routing";
+import {
+  canonicalPathForForeignSlug,
+  decodeExternalPathname,
+  localizeInternalPath,
+  normalizeExternalPath,
+} from "@/lib/navigation/locale-path";
 import { PIN_COOKIE_NAME, isPinTokenValid } from "@/lib/pin-session";
 import { UTM_HEADER, readUtmFromSearchParams, serialiseUtm } from "@/lib/utm";
+
+/**
+ * next-intl's rewrite, composed rather than hand-rolled.
+ *
+ * Verified against the installed implementation (4.9.x): its `next()` builds
+ * the rewrite from `new Headers(request.headers)`, so the nonce this proxy
+ * stamps onto the request survives into the SSR pipeline. That is the property
+ * the whole composition rests on — a rewrite that dropped it would render every
+ * production page with a nonce the pipeline never saw, and `strict-dynamic`
+ * would block every script.
+ *
+ * It never sees a bare path: the ladder below has already redirected those, so
+ * next-intl's own redirect-to-prefix cannot fire on a page route. What it is
+ * here for is the external → internal rewrite (`/fi/kauppa/x` → `/fi/shop/x`)
+ * and the `x-next-intl-locale` header the request config reads.
+ */
+const intlMiddleware = createIntlMiddleware(routing);
+
+/**
+ * Which locale a **bare** path should be served in: the stored preference
+ * first, then what the browser asked for, then English. Identical to the ladder
+ * the app has always run — `profiles.locale` participates through the cookie
+ * the picker and the sign-in flows write, which keeps the SSR path DB-free.
+ */
+function localeForBarePath(request: NextRequest): SupportedLocale {
+  const cookieLocale = request.cookies.get(LOCALE_COOKIE_NAME)?.value;
+  if (isSupportedLocale(cookieLocale)) return cookieLocale;
+  return (
+    matchLocaleFromHeader(request.headers.get("accept-language")) ??
+    DEFAULT_LOCALE
+  );
+}
+
+/**
+ * **Not a page route** — outside the intl system entirely, in one predicate
+ * both the bare-path ladder and the rewrite read, because a path the ladder
+ * 307s and the rewrite then cannot serve is a 404 nobody chose.
+ *
+ * `/api/*` is the reason the predicate exists: an API response has no locale,
+ * and a 307'd `fetch` would break every client-side API call for a
+ * non-English user. The other two are files a page happens to request —
+ * Vercel's Analytics and Speed Insights scripts, and the `/.well-known/*`
+ * documents (Apple/Android app association, `security.txt`) whose URLs are
+ * fixed by their own specifications and cannot carry a prefix. The matcher
+ * excludes neither, so without this a Finnish visit would ask for
+ * `/fi/_vercel/insights/script.js` and get a 404 instead of analytics.
+ *
+ * A locked customer's PIN gate reads it too: a script tag is not a surface a
+ * parent can act through, so bouncing it to the unlock page would only break
+ * the page it was requested from.
+ */
+const NON_PAGE_PREFIXES = ["/api/", "/_vercel/", "/.well-known/"];
+
+function isNonPagePath(pathname: string): boolean {
+  return NON_PAGE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
 
 // Paths a LOCKED customer session may still reach (so the parent-PIN gate
 // doesn't trap them). `/api/*` is owned by requireRole(); auth routes are the
@@ -31,7 +102,7 @@ import { UTM_HEADER, readUtmFromSearchParams, serialiseUtm } from "@/lib/utm";
 // then opens the mail an hour later, or on their phone, where the session has
 // re-locked or never existed.
 function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
-  if (pathname.startsWith("/api/") || isAuthRoute) return true;
+  if (isNonPagePath(pathname) || isAuthRoute) return true;
   const exempt = [
     ROUTES.customer.unlock,
     ROUTES.selectProfile,
@@ -199,7 +270,28 @@ export async function proxy(request: NextRequest) {
     request.headers.set(UTM_HEADER, utm);
   }
 
-  const { pathname } = request.nextUrl;
+  // The URL as the visitor typed it: locale-prefixed, with that locale's slug.
+  // Only two things use it — the bare-path ladder below, and the `?redirect=`
+  // values a bounce carries, which must return the reader to the localized page
+  // they were actually on rather than to its English internal twin.
+  const externalPathname = request.nextUrl.pathname;
+
+  // **A pathname this proxy cannot read is refused, not guessed at.** Next
+  // hands the path still percent-encoded and next-intl opens by decoding it,
+  // so every check below runs on the decoded form (the normalizer does it) —
+  // and when the decode is impossible, next-intl forwards to Next.js for a
+  // 400. Mirroring that here keeps the two ends agreeing on the one case where
+  // there is no string to agree on: the alternative is gating a raw path the
+  // rewrite would have read differently.
+  if (decodeExternalPathname(externalPathname) === null) {
+    const malformed = new NextResponse(null, { status: 400 });
+    malformed.headers.set("Content-Security-Policy", cspHeader);
+    return malformed;
+  }
+
+  // Not a page route (`/api/*`, `/_vercel/*`, `/.well-known/*`): no locale
+  // prefix, no rewrite, no ladder — see the predicate.
+  const isNonPage = isNonPagePath(externalPathname);
 
   let supabaseResponse = NextResponse.next({
     request,
@@ -241,21 +333,106 @@ export async function proxy(request: NextRequest) {
   const userId = claimsData?.claims.sub ?? null;
   const sessionId = claimsData?.claims.session_id ?? null;
 
-  // Helper: create a redirect that preserves refreshed auth cookies and CSP
+  // Helper: create a redirect that preserves refreshed auth cookies and CSP.
+  //
+  // **The whole cookie, attributes included.** `set(name, value)` writes a
+  // cookie with none of the ones Supabase chose — no `Max-Age`, no `Secure`,
+  // no `HttpOnly`, no `SameSite`, and above all no `Path`, which then defaults
+  // to the request's own directory. Every page URL carries a locale now, so
+  // that directory is `/fi`, and a refreshed session would be re-issued as a
+  // second, locale-scoped, script-readable cookie shadowing the real one.
   function redirect(url: URL) {
     const redirectResponse = NextResponse.redirect(url);
     supabaseResponse.cookies.getAll().forEach((cookie) => {
-      redirectResponse.cookies.set(cookie.name, cookie.value);
+      redirectResponse.cookies.set(cookie);
     });
     redirectResponse.headers.set("Content-Security-Policy", cspHeader);
     return redirectResponse;
   }
 
-  // Check if route is public. /api/* always passes (handlers own their auth).
+  // Helper: the pass-through response. Every page route goes through
+  // next-intl's rewrite so the `[locale]` tree is what actually renders, and
+  // both things this proxy owns — the refreshed auth cookies and the CSP whose
+  // nonce the SSR pipeline is about to use — are re-applied to whatever
+  // response shape comes back. Cookies are copied whole, for the reason given
+  // on `redirect` above.
+  function proceed() {
+    if (isNonPage) return supabaseResponse;
+    const intlResponse = intlMiddleware(request);
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      intlResponse.cookies.set(cookie);
+    });
+    intlResponse.headers.set("Content-Security-Policy", cspHeader);
+    return intlResponse;
+  }
+
+  // --- The bare-path locale ladder ------------------------------------------
+  //
+  // A bare path is never a page: it is the detector. It runs here — after the
+  // claims/refresh step, so a refreshed cookie is never dropped, and before
+  // every PIN/auth/role gate below, so each of those fires on an
+  // already-localized request and its own bounce is already in the right
+  // language. The extra hop is paid only on bare entry; once inside, wrapped
+  // links emit prefixed hrefs.
+  //
+  // A path matching no route template is prefixed anyway, so a Finnish visitor
+  // gets a Finnish 404 rather than an English one.
+  const {
+    locale: urlLocale,
+    pathname,
+    template,
+  } = normalizeExternalPath(externalPathname);
+  if (!isNonPage && urlLocale === null) {
+    const target = new URL(
+      localizeInternalPath(pathname, localeForBarePath(request)),
+      request.url,
+    );
+    target.search = request.nextUrl.search;
+    return redirect(target);
+  }
+
+  // --- A slug this locale does not serve -------------------------------------
+  //
+  // `/sv/kauppa` is the Finnish slug under the Swedish prefix. It normalizes to
+  // `/kauppa`, which matches no route at all — so without this branch the
+  // request's fate depended on who was asking: an anonymous reader failed the
+  // public-route list and was bounced to login, while a signed-in one reached
+  // the rewrite, where next-intl redirected them to `/sv/butik`. One URL, two
+  // behaviours, and the anonymous half is the one that reads as a broken site.
+  //
+  // So the redirect is issued here instead, ahead of every gate, in the
+  // locale the URL itself named. Only a translated public route can ever be
+  // this shape — dashboards, auth and settings declare one slug for all
+  // locales — so this can never stand in front of a gate.
+  const foreignSlugTarget =
+    template === null ? canonicalPathForForeignSlug(externalPathname) : null;
+  if (foreignSlugTarget !== null) {
+    const target = new URL(foreignSlugTarget, request.url);
+    target.search = request.nextUrl.search;
+    return redirect(target);
+  }
+
+  // Every check below matches the **internal** pathname — locale prefix
+  // stripped, slug untranslated. Unstripped, `/fi/admin` sails past the
+  // `/admin` role gate; untranslated, `/fr/boutique` never matches the
+  // public-route list.
+  const requestLocale = urlLocale ?? DEFAULT_LOCALE;
+
+  // A proxy-issued bounce stays in the locale the request was made in —
+  // otherwise every bounce costs a second hop back through the ladder.
+  function localizedUrl(internalPath: string): URL {
+    return new URL(
+      localizeInternalPath(internalPath, requestLocale),
+      request.url,
+    );
+  }
+
+  // Check if route is public. A non-page path always passes (an API handler
+  // owns its own auth; a `/_vercel/*` or `/.well-known/*` file has none).
   // The /voice/group/[id] branch is excluded so its public-prefix match here
   // can't shadow the authenticated-route handling below.
   const isPublicRoute =
-    pathname.startsWith("/api/") ||
+    isNonPagePath(pathname) ||
     (!pathname.startsWith(AUTH_REQUIRED_VOICE_PREFIX) &&
       PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`)));
 
@@ -298,8 +475,12 @@ export async function proxy(request: NextRequest) {
       // public-route early return. The boundary is the session's state, not the
       // route. API routes are gated separately in requireRole().
       if (userRole === "customer" && !isPinExemptPath(pathname, isAuthRoute)) {
-        const unlockUrl = new URL(ROUTES.customer.unlock, request.url);
-        unlockUrl.searchParams.set("redirect", pathname);
+        const unlockUrl = localizedUrl(ROUTES.customer.unlock);
+        // The **raw external** path — what was in the address bar — so a parent
+        // bounced off `/fi/kauppa` returns to `/fi/kauppa`, not to English
+        // `/shop`. Consumers that match this value against route shapes
+        // normalize it themselves.
+        unlockUrl.searchParams.set("redirect", externalPathname);
         return redirect(unlockUrl);
       }
     }
@@ -307,37 +488,36 @@ export async function proxy(request: NextRequest) {
 
   // Logged-in users on auth routes go to their dashboard.
   if (userId && isAuthRoute && userRole) {
-    const dashboardPath = ROLE_DASHBOARD_PATHS[userRole] || ROUTES.customer.dashboard;
-    return redirect(new URL(dashboardPath, request.url));
+    return redirect(localizedUrl(ROLE_DASHBOARD_PATHS[userRole]));
   }
 
   // Signed-in users visiting the home page get bounced to their dashboard, so
   // the home page isn't a dead-end once you're logged in. Mirrors the SOG-logo
   // behavior, which links to the dashboard for every role.
   if (userId && userRole && pathname === ROUTES.home) {
-    return redirect(new URL(ROLE_DASHBOARD_PATHS[userRole], request.url));
+    return redirect(localizedUrl(ROLE_DASHBOARD_PATHS[userRole]));
   }
 
   // If public route or auth route, allow access
   if (isPublicRoute || isAuthRoute) {
-    return supabaseResponse;
+    return proceed();
   }
 
   // For protected routes, require authentication
   if (!userId) {
-    const loginUrl = new URL(ROUTES.login, request.url);
-    loginUrl.searchParams.set("redirect", pathname);
+    const loginUrl = localizedUrl(ROUTES.login);
+    loginUrl.searchParams.set("redirect", externalPathname);
     return redirect(loginUrl);
   }
 
   // Protected route but the role lookup failed → bounce to login.
   if (!userRole) {
-    return redirect(new URL(ROUTES.login, request.url));
+    return redirect(localizedUrl(ROUTES.login));
   }
 
   // /settings is shared across roles — accessible to any authenticated user.
   if (pathname.startsWith(ROUTES.settings)) {
-    return supabaseResponse;
+    return proceed();
   }
 
   // /preview/* are admin-only mock surfaces indexed on /admin/ui-previews:
@@ -346,7 +526,7 @@ export async function proxy(request: NextRequest) {
   // bounce to their own dashboard; unauthenticated users were already
   // redirected to /login above. The prefix match covers every future scene.
   if (pathname.startsWith("/preview/") && userRole !== "admin") {
-    return redirect(new URL(ROLE_DASHBOARD_PATHS[userRole], request.url));
+    return redirect(localizedUrl(ROLE_DASHBOARD_PATHS[userRole]));
   }
 
   // Check if user has access to the requested route
@@ -354,13 +534,13 @@ export async function proxy(request: NextRequest) {
     if (pathname.startsWith(basePath)) {
       if (role !== userRole) {
         const correctDashboard = ROLE_DASHBOARD_PATHS[userRole];
-        return redirect(new URL(correctDashboard, request.url));
+        return redirect(localizedUrl(correctDashboard));
       }
       break;
     }
   }
 
-  return supabaseResponse;
+  return proceed();
 }
 
 export const config = {

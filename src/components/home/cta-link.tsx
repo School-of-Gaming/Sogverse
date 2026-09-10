@@ -1,10 +1,11 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { ROLE_DASHBOARD_PATHS } from "@/lib/constants";
 import { useAuth } from "@/providers";
+import type { AppHref } from "@/lib/constants/routes";
 
 /**
  * A home-page call to action that points a signed-in reader at their own
@@ -35,7 +36,7 @@ export function HomeCtaLink({
   children,
 }: {
   /** Where a visitor with no account goes — usually the register page. */
-  signedOutHref: string;
+  signedOutHref: AppHref;
   /** What the button says to that visitor. */
   signedOutLabel: string;
   className?: string;

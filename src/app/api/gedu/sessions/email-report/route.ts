@@ -553,8 +553,11 @@ export const POST = defineRoute({
           // they pressed the button on.
           workspacePath:
             profile.role === "admin"
-              ? ROUTES.admin.product(facts.productType, facts.productId)
-              : ROUTES.gedu.assignedProduct(facts.productType, facts.productId),
+              ? ROUTES.admin.productPath(facts.productType, facts.productId)
+              : ROUTES.gedu.assignedProductPath(
+                  facts.productType,
+                  facts.productId,
+                ),
         });
       } catch (error) {
         console.error(
@@ -641,8 +644,8 @@ async function sendFamilyMail(
     // child's own copy, because role routing bounces a child off the other.
     productUrl: `${facts.origin}${
       gamerCopy
-        ? ROUTES.gamer.enrollment(facts.productType, participationId)
-        : ROUTES.customer.enrollment(facts.productType, participationId)
+        ? ROUTES.gamer.enrollmentPath(facts.productType, participationId)
+        : ROUTES.customer.enrollmentPath(facts.productType, participationId)
     }`,
     gamerCopy,
   };

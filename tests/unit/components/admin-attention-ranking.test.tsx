@@ -80,7 +80,7 @@ function product(
     productId,
     name,
     productType: "consumer_club",
-    href: `/admin/consumer-clubs/${productId}`,
+    href: { pathname: "/admin/consumer-clubs/[id]", params: { id: productId } },
     issues,
   };
 }

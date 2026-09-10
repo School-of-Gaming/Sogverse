@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useDroppable } from "@dnd-kit/core";
 import {
   ArrowUpRight,
@@ -29,6 +29,7 @@ import { ParticipantChip } from "./participant-chip";
 import type { RobloxRenderMap } from "@/services/roblox";
 import { chipGameIdentity } from "./panel-rules";
 import { GeduPill } from "./gedu-pill";
+import type { AppHref } from "@/lib/constants/routes";
 
 interface GroupColumnProps {
   group: ProductGroupWithDetails;
@@ -57,7 +58,7 @@ interface GroupColumnProps {
    * caller answers "what is the URL for a group" once, and this component
    * decides when there is a real group to ask about.
    */
-  groupHref?: (groupId: string) => string;
+  groupHref?: (groupId: string) => AppHref;
   onRename: (groupId: string, name: string) => void;
   onDelete: (groupId: string) => void;
   onAddGedu: (groupId: string) => void;

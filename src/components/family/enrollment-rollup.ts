@@ -21,6 +21,12 @@ import type {
 } from "@/services/participations";
 import type { ProductType } from "@/types";
 import type { SessionCancellation } from "@/components/parent/session-card-badge";
+import type {
+  AppHref,
+  MaybeInertHref,
+  MaybeInertHrefObject,
+} from "@/lib/constants/routes";
+import { INERT_HREF } from "@/lib/constants/routes";
 
 /**
  * One **enrollment** — a family's participation in one product — rolled up to
@@ -63,7 +69,7 @@ export interface FamilyEnrollmentSummary {
    */
   hasVoiceRoom: boolean;
   /** Where the Join navigates. `"#"` keeps it inert. */
-  voiceHref: string;
+  voiceHref: MaybeInertHrefObject;
   /**
    * The site an in-person enrollment runs at, `null` for a remote one. The
    * in-person counterpart of the Join button — the same question (where is this
@@ -71,7 +77,7 @@ export interface FamilyEnrollmentSummary {
    */
   siteName: string | null;
   /** Where a click anywhere on the card navigates — the product's own page. */
-  openHref: string;
+  openHref: MaybeInertHref;
   /** The product's last day as a bare `YYYY-MM-DD`, or `null` when open-ended. */
   endDate: string | null;
   /** The zone `endDate` is a date **in** — the product's own. */
@@ -301,7 +307,7 @@ export interface FamilyRollUpArgs {
   openHref?: (enrollment: {
     participationId: string;
     productType: ProductType;
-  }) => string;
+  }) => AppHref;
 }
 
 /**
@@ -623,7 +629,7 @@ function sessionSummary(
     voiceHref:
       hasVoiceRoom && row.groupId !== null
         ? ROUTES.voice.groupSession(row.groupId)
-        : "#",
+        : INERT_HREF,
     // Never carried by a remote product, whatever the row says: a product with
     // a voice room has no building, and a card showing both would be claiming
     // the family meets in two places. The read already gates this, so this is
@@ -636,7 +642,7 @@ function sessionSummary(
     // page, which is the same reason the card drops its chevron and its anchor.
     openHref:
       awaiting || openHref === undefined
-        ? "#"
+        ? INERT_HREF
         : openHref({
             participationId: row.participationId,
             productType: product.type,
@@ -690,9 +696,9 @@ function waitlistSummary(
     nextSessionStart: null,
     nextSessionEnd: null,
     hasVoiceRoom: product.isRemote,
-    voiceHref: "#",
+    voiceHref: INERT_HREF,
     siteName: null,
-    openHref: "#",
+    openHref: INERT_HREF,
     endDate: product.endDate,
     timezone: product.timezone,
     waitlistPosition: row.position,

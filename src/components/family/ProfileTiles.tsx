@@ -1,11 +1,12 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { Loader2, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Identicon } from "@/components/ui/identicon";
 import type { FamilyMember } from "@/services/family";
 import { cn } from "@/lib/utils";
+import type { AppHref } from "@/lib/constants/routes";
 
 export type TileSize = "default" | "sm";
 
@@ -53,7 +54,7 @@ type ProfileTileCommonProps = {
  * onClick variant.
  */
 type ProfileTileLinkProps = ProfileTileCommonProps & {
-  href: string;
+  href: AppHref;
   onClick?: never;
   disabled?: never;
   clickable?: never;

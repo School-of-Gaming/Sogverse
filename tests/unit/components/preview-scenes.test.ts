@@ -59,6 +59,7 @@ import { SHOP_BROWSE_SCENARIOS } from "@/components/public/products/mock-detail-
 import { PRODUCT_TAG_VALUES } from "@/components/public/products/product-tag";
 import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
 import { SEAT_OFFER_WINDOW_MS } from "@/lib/constants/seat-offer";
+import { INERT_HREF } from "@/lib/constants/routes";
 
 /**
  * The preview registry is the only thing standing between a link on the style
@@ -107,9 +108,10 @@ describe("preview scene registry", () => {
   });
 
   it("builds the route the dynamic page serves", () => {
-    expect(previewSceneHref("gedu-product", "camp")).toBe(
-      "/preview/gedu-product/camp",
-    );
+    expect(previewSceneHref("gedu-product", "camp")).toEqual({
+      pathname: "/preview/[surface]/[scenario]",
+      params: { surface: "gedu-product", scenario: "camp" },
+    });
   });
 
   /**
@@ -1412,10 +1414,16 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
    */
   it("points its scene-backed cards at the feed their badge was counted from", () => {
     const hrefs = summaries().map((a) => a.openHref);
-    const linked = hrefs.filter((href) => href !== "#");
+    const linked = hrefs.filter((href) => href !== INERT_HREF);
     expect(linked).toHaveLength(2);
     for (const href of linked) {
-      expect(href).toMatch(/^\/preview\/gedu-product\/(club|camp)$/);
+      expect(href).toEqual({
+        pathname: "/preview/[surface]/[scenario]",
+        params: {
+          surface: "gedu-product",
+          scenario: expect.stringMatching(/^(club|camp)$/),
+        },
+      });
     }
   });
 

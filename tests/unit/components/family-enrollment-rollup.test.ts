@@ -13,6 +13,7 @@ import type {
   MyWaitlistRow,
 } from "@/services/participations";
 import type { ProductTranslation } from "@/types";
+import { INERT_HREF, type AppHref } from "@/lib/constants/routes";
 
 /**
  * The order of a child's cards is the order their week actually runs, and it is
@@ -67,7 +68,7 @@ function enrollment(
     hasVoiceRoom: true,
     voiceHref: "#",
     siteName: null,
-    openHref: "#",
+    openHref: INERT_HREF,
     endDate: fields.endDate ?? null,
     timezone: TZ,
     waitlistPosition: null,
@@ -288,7 +289,7 @@ function mapOne(
   args: {
     sessionRows?: MyUpcomingSessionRow[];
     waitlistRows?: MyWaitlistRow[];
-    openHref?: (e: { participationId: string }) => string;
+    openHref?: (e: { participationId: string }) => AppHref;
   } = {},
 ): FamilyEnrollmentSummary {
   const entries = toFamilyEnrollments({
@@ -311,7 +312,10 @@ describe("toFamilyEnrollments — a seat", () => {
       "2026-02-13T18:30:00.000Z",
     );
     expect(summary.hasVoiceRoom).toBe(true);
-    expect(summary.voiceHref).toContain(GROUP);
+    expect(summary.voiceHref).toEqual({
+      pathname: "/voice/group/[id]",
+      params: { id: GROUP },
+    });
     expect(summary.awaiting).toBe(false);
     expect(summary.waitlistPosition).toBeNull();
   });
@@ -325,13 +329,19 @@ describe("toFamilyEnrollments — a seat", () => {
   // The card opens a page that does not exist yet, so the mapping asks its
   // caller rather than inventing a route — and answers "#" when nobody does.
   it("resolves the open href through the seam, defaulting to inert", () => {
-    expect(mapOne({ sessionRows: [sessionRow()] }).openHref).toBe("#");
+    expect(mapOne({ sessionRows: [sessionRow()] }).openHref).toBe(INERT_HREF);
     expect(
       mapOne({
         sessionRows: [sessionRow()],
-        openHref: (e) => `/parent/clubs/${e.participationId}`,
+        openHref: (e) => ({
+          pathname: "/parent/clubs/[id]",
+          params: { id: e.participationId },
+        }),
       }).openHref,
-    ).toBe("/parent/clubs/participation-1");
+    ).toEqual({
+      pathname: "/parent/clubs/[id]",
+      params: { id: "participation-1" },
+    });
   });
 
   it("names the site on an in-person product and never on a remote one", () => {
@@ -377,14 +387,17 @@ describe("toFamilyEnrollments — an unplaced seat", () => {
     expect(summary.nextSessionStart?.toISOString()).toBe(FIRST_FRIDAY);
     expect(summary.scheduleLines).not.toEqual([]);
     expect(summary.voiceHref).toBe("#");
-    expect(summary.openHref).toBe("#");
+    expect(summary.openHref).toBe(INERT_HREF);
   });
 
   it("keeps the open href inert even when the caller offers one", () => {
     expect(
       mapOne({
         sessionRows: [sessionRow({ groupId: null })],
-        openHref: () => "/parent/clubs/anything",
+        openHref: () => ({
+          pathname: "/parent/clubs/[id]",
+          params: { id: "anything" },
+        }),
       }).openHref,
     ).toBe("#");
   });
@@ -399,7 +412,7 @@ describe("toFamilyEnrollments — a place in line", () => {
     expect(summary.nextSessionStart).toBeNull();
     expect(summary.nextSessionEnd).toBeNull();
     expect(summary.awaiting).toBe(false);
-    expect(summary.openHref).toBe("#");
+    expect(summary.openHref).toBe(INERT_HREF);
     expect(summary.voiceHref).toBe("#");
     expect(summary.paymentProblem).toBe(false);
     expect(summary.cancellation).toBeNull();

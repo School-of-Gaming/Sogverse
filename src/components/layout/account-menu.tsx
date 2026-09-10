@@ -8,8 +8,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link } from "@/i18n/navigation";
+import { usePathname } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { LayoutDashboard, Loader2, LogOut, Settings } from "lucide-react";
 import { StatusLine } from "@/components/ui/alert";
@@ -37,6 +37,7 @@ import {
   SwitchGateDialog,
   type SwitchGateMode,
 } from "@/components/family/SwitchGateDialog";
+import type { StaticAppHref } from "@/lib/constants/routes";
 
 /**
  * The header avatar's dropdown: who else the viewer can be, and the two things
@@ -717,7 +718,7 @@ function MenuLinkRow({
   icon,
   label,
 }: {
-  href: string;
+  href: StaticAppHref;
   active: boolean;
   disabled: boolean;
   onNavigate: () => void;

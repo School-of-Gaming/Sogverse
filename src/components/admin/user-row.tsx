@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import {
   FileWarning,
   MailCheck,
@@ -14,6 +14,7 @@ import { Identicon } from "@/components/ui/identicon";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { gamerUsernameFromEmail, hasRealEmail } from "@/lib/gamer-sign-in";
 import type { GamerSignIn, UserRole } from "@/types";
+import { ROUTES } from "@/lib/constants";
 
 interface UserRowUser {
   id: string;
@@ -43,8 +44,6 @@ export interface GeduStandingWarnings {
 interface UserRowProps {
   user: UserRowUser;
   linkedGamers?: UserRowUser[];
-  /** Base path for user detail links. Defaults to "/admin/users" */
-  basePath?: string;
   /**
    * Whether an admin has certified this educator: `true` shows the mark, `false`
    * withholds it, and `null` means the answer is unknown — the read failed, or
@@ -147,7 +146,6 @@ function identityLine(
 export function UserRow({
   user,
   linkedGamers,
-  basePath = "/admin/users",
   certified,
   standingWarnings,
   gamerSignIns,
@@ -164,7 +162,7 @@ export function UserRow({
   return (
     <div className="rounded-lg border border-border">
       <Link
-        href={`${basePath}/${user.id}`}
+        href={ROUTES.admin.user(user.id)}
         className="group flex items-center justify-between p-4 transition-colors hover:bg-hover hover:text-foreground"
       >
         <div className="flex items-center gap-4">
@@ -234,7 +232,7 @@ export function UserRow({
             return (
             <Link
               key={gamer.id}
-              href={`${basePath}/${gamer.id}`}
+              href={ROUTES.admin.user(gamer.id)}
               className="group flex items-center justify-between py-3 pr-4 pl-14 transition-colors hover:bg-hover hover:text-foreground"
             >
               <div className="flex items-center gap-3">

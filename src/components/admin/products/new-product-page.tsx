@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { cloneFormState } from "./product-build";
 import { ProductFormCreate } from "./product-form-create";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
+import { ROUTES } from "@/lib/constants";
 
 interface NewProductPageProps {
   productType: ProductType;
@@ -40,7 +41,7 @@ export function NewProductPage({
   return (
     <div className="space-y-6">
       <Link
-        href={`/admin/${config.routeSlug}`}
+        href={ROUTES.admin.productList(productType)}
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />

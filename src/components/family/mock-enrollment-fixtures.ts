@@ -12,6 +12,7 @@ import {
 } from "@/lib/session-occurrence";
 import type { ProductType } from "@/types";
 import type { FamilyEnrollmentSummary } from "./enrollment-rollup";
+import { INERT_HREF } from "@/lib/constants/routes";
 
 /**
  * The shared half of the family dashboards' fixtures: turning a short
@@ -155,7 +156,7 @@ export function buildEnrollmentFixture(
     // Left inert on purpose: a preview has no room to join, so the Join button
     // collapses to its inert form while still rendering its real open/locked
     // state.
-    voiceHref: "#",
+    voiceHref: INERT_HREF,
     // Never carried by a remote product, whatever the spec says: a product with
     // a voice room has no building, and a card showing both would be claiming
     // the family meets in two places.
@@ -164,7 +165,7 @@ export function buildEnrollmentFixture(
     // navigate to a page that would go looking for data. Still a real href, so
     // the card is a real link rather than a div pretending to be one — the
     // semantics are what this mock is for.
-    openHref: "#",
+    openHref: INERT_HREF,
     endDate,
     timezone: FIXTURE_TIMEZONE,
     waitlistPosition,

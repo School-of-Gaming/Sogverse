@@ -9,7 +9,6 @@ import {
 } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
-import { ROUTES } from "@/lib/constants";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { AdminGroupDetailsPage } from "@/components/admin/products/group-details/admin-group-details-page";
@@ -549,7 +548,7 @@ describe("admin group details — the page an admin gets is the gedu's page", ()
     // The way through is one navigation, to the page whose scope says so.
     expect(
       panel.getByRole("link", { name: "Edit site" }).getAttribute("href"),
-    ).toBe(ROUTES.admin.site(IDS.location));
+    ).toBe(`/admin/sites/${IDS.location}`);
   });
 });
 

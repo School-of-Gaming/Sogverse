@@ -1,6 +1,23 @@
 {
   "metadata": {
     "description": "Where Screen Time Becomes Quality Time. Clubs, camps and events in Minecraft, Roblox, Fortnite and more, led by professional Game Educators.",
+    "og": {
+      "site": {
+        "alt": "School of Gaming: where screen time becomes quality time. Clubs, camps and events led by professional Game Educators.",
+        "headline": "Where Screen Time Becomes",
+        "headlineAccent": "Quality Time",
+        "subline": "Clubs, camps and events led by professional Game Educators"
+      },
+      "roblox": {
+        "title": "SOG x Lynx – Create your own game on Roblox",
+        "description": "A free programme for teens, run by real Game Educators. By Lynx Educate and School of Gaming, in collaboration with Roblox.",
+        "headline": "Create",
+        "headlineAccent": "your own game",
+        "headlineTail": "on Roblox",
+        "subline": "A free programme, run by real Game Educators",
+        "collaboration": "A collaboration between"
+      }
+    },
     "pages": {
       "signIn": "Sign In",
       "createAccount": "Create Account",

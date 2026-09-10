@@ -191,9 +191,50 @@ or the build fails. Three things about maintaining it:
   to stand off the primitive starts using it, so fixing the code forces the annotation
   to be deleted in the same change instead of rotting into a rubber stamp.
 
+### The proxy suite and the route-group drift guard
+
+The proxy's tests live here (`integration/proxy.test.ts`), and so do the tests for the
+external ⇄ internal path normalizer they depend on — it is the proxy's own security
+plumbing, and splitting the two would put the bypass cases a directory away from the
+decisions they are about.
+
+**Requests are built prefixed by default.** Every page URL carries its locale, so the
+suite's request helper applies a prefix itself and a bare-path helper sits beside it for
+the redirect ladder's own cases — otherwise a hundred existing cases would each restate
+a language they are not about.
+
+The suite also carries the **route-group drift guard**: it walks the `(public)` route
+group on disk and asserts every page it finds passes the proxy unauthenticated, because
+the group means nothing to the proxy's hand-maintained public-route list and the two
+drift silently. Two things it does with the locale segment, both load-bearing:
+
+- **The `[locale]` segment is not walked** — it is the parent the walk starts under, and
+  substituting a sample value there would test a locale that does not exist.
+- **Each page is asserted twice**: reachable under one real, *non-English* prefix with
+  the slug that locale actually serves (the filesystem yields internal segments, and
+  asserting a prefixed-but-untranslated URL would green-light a path no user ever hits —
+  under English the two forms coincide and the bug would pass), and **redirecting rather
+  than serving on its bare path**, which is the ladder's contract.
+
 ## Unit test setup
 
-`tests/setup.ts` (loaded by both projects) globally mocks `next/navigation` and the
-browser Supabase client (`@/lib/supabase/client`), exposing `mockSupabaseClient` for
-assertions. Components and hooks under test get a working router and Supabase client
-without per-test wiring.
+`tests/setup.ts` (loaded by both projects) globally mocks `next/navigation`, the app's
+own wrapped navigation module (`@/i18n/navigation`) and the browser Supabase client
+(`@/lib/supabase/client`), exposing `mockSupabaseClient` for assertions. Components and
+hooks under test get a working router and Supabase client without per-test wiring.
+
+**The wrapped navigation mock is not optional decoration.** Components name routes
+through that module now, and its hooks read a routing context that a rendered component
+has no locale to supply — without the mock every test rendering a link fails. The stub's
+`Link` renders a real anchor with the pathname's dynamic segments filled in from
+`params`, so existing `getByRole("link")` and `href` assertions keep working, and it
+emits **no locale prefix**: a test asserting on a route is asserting about the route, not
+about which language the reader is in. `useParams` is exported for the same reason the
+picker reads it — a locale switch on a dynamic route needs the concrete values.
+
+**Two files deliberately unmock both navigation modules** — the page-metadata helper's
+and the sitemap/robots tests. What they are *about* is the locale-prefixed, translated
+URLs the real path builder produces, which the stub flattens; and `next/navigation` has
+to come with it, because next-intl reads a redirect helper off it while constructing the
+wrapped APIs and the setup's partial mock does not carry one. Unmocking is the right move
+only for a test whose subject is the URL building itself.

@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
 import { RequestPasswordLinkButton } from "@/components/auth/request-password-link-button";
+import { Link } from "@/i18n/navigation";
 
 /**
  * ============================================================================
@@ -33,7 +34,7 @@ function renderButton() {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
       <RequestPasswordLinkButton email={ADDRESS}>
-        <a href="/login">{messages.common.signIn}</a>
+        <Link href="/login">{messages.common.signIn}</Link>
       </RequestPasswordLinkButton>
     </NextIntlClientProvider>,
   );

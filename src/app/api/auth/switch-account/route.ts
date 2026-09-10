@@ -12,6 +12,11 @@ import {
   pinCookieOptions,
   pinTokenFor,
 } from "@/lib/pin-session";
+import { isSupportedLocale } from "@/lib/constants/locales";
+import {
+  LOCALE_COOKIE_NAME,
+  localeCookieOptions,
+} from "@/lib/locale-cookie";
 import {
   switchAccountBody,
   switchAccountResponse,
@@ -103,7 +108,7 @@ export const POST = defineRoute({
 
     const { data: target, error: targetError } = await admin
       .from("profiles")
-      .select("id, role")
+      .select("id, role, locale")
       .eq("id", userId)
       .maybeSingle();
 
@@ -167,7 +172,7 @@ type ServerClient = Awaited<ReturnType<typeof createClient>>;
 // The address is deliberately NOT here: it is asked of GoTrue per switch (see
 // resolveTargetEmail), so carrying the profile copy would only invite a caller
 // to reach for the stale one.
-type TargetProfile = { id: string; role: string | null };
+type TargetProfile = { id: string; role: string | null; locale: string | null };
 
 /** A 403 naming which gate was not satisfied. */
 function gateRefusal(code: SwitchAccountErrorCode, message: string): NextResponse {
@@ -346,6 +351,22 @@ async function switchByOtp(args: {
     // reading it is allowed to fail but not to throw.
     console.error("switch-account: new session carried no session_id");
     cookieStore.delete(FAMILY_SESSION_COOKIE_NAME);
+  }
+
+  // **A switch is a sign-in, so it seeds the locale cookie from the account
+  // being entered — for that account's next cold entry on this device, not for
+  // this hop.** The client follows this response with a full-page navigation to
+  // a URL already carrying the *parent's* reading locale, and a prefixed URL
+  // wins over the cookie by design, so the child lands in the language the
+  // device was being read in. What this write buys is everything after that: a
+  // bare entry later — a bookmark, an emailed link, a fresh tab — resolves
+  // through the cookie → `Accept-Language` → English ladder, and without it a
+  // child whose profile says Finnish would be handed their parent's language,
+  // or English, every time. A null `locale` means "auto-detect from the
+  // browser" and is left unwritten. Placed after the marker mint: nothing above
+  // may be delayed by work that is not part of establishing the session.
+  if (isSupportedLocale(target.locale)) {
+    cookieStore.set(LOCALE_COOKIE_NAME, target.locale, localeCookieOptions());
   }
 
   if (mintUnlockCookie && target.role === "customer" && sessionId) {

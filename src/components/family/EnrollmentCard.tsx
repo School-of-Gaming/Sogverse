@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { MaybeInertLink } from "@/components/ui/maybe-inert-link";
 import {
   CalendarClock,
   CalendarOff,
@@ -773,11 +773,8 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
             unplaced one render no anchor at all — neither has a page behind it
             yet. */}
         {opensAPage && (
-          <Link
+          <MaybeInertLink
             href={openHref}
-            onClick={(e) => {
-              if (openHref === "#") e.preventDefault();
-            }}
             aria-label={productName}
             className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act"
           />

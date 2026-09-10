@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, waitFor } from "@testing-library/react";
+import { act, render } from "@testing-library/react";
 import { LocaleProvider, useLocaleControl } from "@/providers/locale-provider";
 import type { Profile } from "@/types";
 import type {
@@ -19,10 +19,10 @@ vi.mock("@/providers/auth-provider", () => ({
   useAuth: () => mockAuth,
 }));
 
-// LocaleProvider seeds its initial state from useLocale() (the server-
-// resolved locale exposed by NextIntlClientProvider). Tests render the
-// provider in isolation, so stub useLocale to return the default; tests
-// that care about a specific seed value can override mockIntlLocale.value.
+// LocaleProvider reads the locale from useLocale() — next-intl's context,
+// which under URL routing carries the locale the `[locale]` segment named.
+// Tests render the provider in isolation, so stub it; a test that cares which
+// language the reader is on overrides mockIntlLocale.value.
 const mockIntlLocale = vi.hoisted(() => ({ value: "en" }));
 vi.mock("next-intl", () => ({
   useLocale: () => mockIntlLocale.value,
@@ -80,6 +80,8 @@ describe("LocaleProvider", () => {
     mockAuth.user = null;
     mockIntlLocale.value = "en";
     mockRefresh.mockClear();
+    mockRouter.replace.mockClear();
+    mockRouter.push.mockClear();
     mockTrack.mockClear();
   });
 
@@ -104,13 +106,11 @@ describe("LocaleProvider", () => {
     return setLocale;
   }
 
-  it("seeds the locale from the server-resolved useLocale() value", () => {
-    // Regression: on iOS Safari, navigator.language can disagree with the
-    // Accept-Language the browser actually sent (e.g. system Finnish but
-    // navigator.language reports "en-US"). The server resolves correctly
-    // from Accept-Language, so the client must trust useLocale() rather
-    // than re-deriving from navigator. Without this, the page rendered in
-    // Finnish but the LocalePicker showed the EN flag on first paint.
+  it("reports the locale the URL put on screen", () => {
+    // The picker shows what the reader is actually looking at, which under URL
+    // routing is what the `[locale]` segment said — never a re-derivation from
+    // navigator.language (which disagrees with the sent Accept-Language on iOS
+    // Safari) and never the profile.
     mockIntlLocale.value = "fi";
 
     let capturedLocale: string | undefined;
@@ -128,101 +128,48 @@ describe("LocaleProvider", () => {
     expect(capturedLocale).toBe("fi");
   });
 
-  it("syncs the cookie to profile.locale when they disagree on mount", async () => {
-    // Simulates a user signing in on a fresh device. The profile says "fi"
-    // (set previously on another device) but the current browser has an "en"
-    // cookie (from Accept-Language fallback during SSR). On mount, the
-    // provider should reconcile the cookie to match the profile so the next
-    // SSR render loads the right messages bundle.
-    document.cookie = "locale=en;path=/";
+  it("shows the URL's locale even when the profile says another", () => {
+    // The property URL routing exists for: a signed-in reader whose profile
+    // says Finnish opens somebody's shared French link. The page is French, so
+    // the picker says French — the profile does not outrank the address bar.
+    mockIntlLocale.value = "fr";
     mockAuth.profile = createMockProfile({ locale: "fi" });
     mockAuth.user = { id: "user-1" };
 
-    render(
-      <LocaleProvider detectedLocale="en">
-        <div>child</div>
-      </LocaleProvider>,
-    );
-
-    await waitFor(() => {
-      expect(getCookieValue("locale")).toBe("fi");
-    });
-  });
-
-  it("calls router.refresh() after writing the cookie so SSR picks up the new bundle", async () => {
-    // Same scenario as above — the SSR-rendered messages bundle is English
-    // but the profile is Finnish. Writing the cookie alone isn't enough; the
-    // currently-loaded messages bundle won't flip until next-intl re-runs.
-    // The provider must explicitly trigger a re-render.
-    document.cookie = "locale=en;path=/";
-    mockAuth.profile = createMockProfile({ locale: "fi" });
-    mockAuth.user = { id: "user-1" };
+    let capturedLocale: string | undefined;
+    function Capture() {
+      capturedLocale = useLocaleControl().locale;
+      return null;
+    }
 
     render(
       <LocaleProvider detectedLocale="en">
-        <div>child</div>
+        <Capture />
       </LocaleProvider>,
     );
 
-    await waitFor(() => {
-      expect(mockRefresh).toHaveBeenCalled();
-    });
+    expect(capturedLocale).toBe("fr");
   });
 
-  it("is a no-op when cookie and profile already agree", () => {
-    // Steady state: returning user, cookie already matches profile. The
-    // provider must not write the cookie again or trigger a refresh — that
-    // would add a redundant render on every page load.
+  it("writes no cookie and forces no refresh just for being rendered", () => {
+    // **Reading is not choosing.** Visiting a prefixed URL must never persist
+    // that locale, and the reader's stored preference must survive a visit to a
+    // page in another language. The provider used to reconcile the cookie to
+    // `profiles.locale` on mount and refresh after it; both are gone, and this
+    // is what keeps them gone.
     document.cookie = "locale=fi;path=/";
+    mockIntlLocale.value = "fr";
     mockAuth.profile = createMockProfile({ locale: "fi" });
     mockAuth.user = { id: "user-1" };
 
-    // render() is wrapped in act(), so mount effects are flushed before it
-    // returns. No timers needed.
     render(
       <LocaleProvider detectedLocale="en">
         <div>child</div>
       </LocaleProvider>,
     );
 
-    expect(mockRefresh).not.toHaveBeenCalled();
     expect(getCookieValue("locale")).toBe("fi");
-  });
-
-  it("does not roll the cookie back mid-flight when setLocale is in progress", () => {
-    // Regression: when the user picks a new locale in the picker,
-    // setLocale() writes the cookie and calls router.refresh(). The cookie
-    // flips synchronously, but refreshProfile() is async — so for a moment
-    // the cookie says "sv" while profile.locale still says "en". The
-    // reconcile effect must not interpret this as drift and roll the
-    // cookie back to the stale profile value on the next re-render.
-    document.cookie = "locale=en;path=/";
-    mockAuth.profile = createMockProfile({ locale: "en" });
-    mockAuth.user = { id: "user-1" };
-
-    const { rerender } = render(
-      <LocaleProvider detectedLocale="en">
-        <div>child</div>
-      </LocaleProvider>,
-    );
-
-    // Mount reconcile already ran inside render()'s act() — everything
-    // agrees, nothing written.
-    expect(getCookieValue("locale")).toBe("en");
-
-    // Simulate setLocale("sv"): the cookie is written, but profile hasn't
-    // been refreshed yet so profileLocale stays "en". rerender() is wrapped
-    // in act(), so any effect commits before rerender() returns.
-    document.cookie = "locale=sv;path=/";
-
-    rerender(
-      <LocaleProvider detectedLocale="en">
-        <div>child</div>
-      </LocaleProvider>,
-    );
-
-    // The cookie must still be "sv" — not rolled back to "en".
-    expect(getCookieValue("locale")).toBe("sv");
+    expect(mockRefresh).not.toHaveBeenCalled();
   });
 
   it("reports a locale change with what the browser guessed, what was showing, and what was picked", () => {
@@ -255,15 +202,29 @@ describe("LocaleProvider", () => {
 
     expect(mockTrack).not.toHaveBeenCalled();
     expect(getCookieValue("locale")).toBe("en");
-    expect(mockRefresh).toHaveBeenCalled();
   });
 
-  it("reports the profile-derived locale as `from`, not the local state", () => {
-    // A signed-in user whose profile says Swedish is *looking at* Swedish even
-    // though local state was seeded with English (profile outranks state).
-    // Reporting the state here would invent a from === detected row, making a
-    // second, later change look like a first correction of the browser guess.
-    mockAuth.profile = createMockProfile({ locale: "sv" });
+  it("persists without navigating or refreshing — the picker owns the URL", () => {
+    // `setLocale` is persistence and nothing else. The re-issue of the current
+    // route under the new prefix belongs to the picker, which is the only
+    // caller holding the pathname, its params and the query string; a refresh
+    // here would be a second render of the page the reader is leaving.
+    const setLocale = renderWithControl("en");
+
+    act(() => setLocale("sv"));
+
+    expect(getCookieValue("locale")).toBe("sv");
+    expect(mockRefresh).not.toHaveBeenCalled();
+    expect(mockRouter.replace).not.toHaveBeenCalled();
+    expect(mockRouter.push).not.toHaveBeenCalled();
+  });
+
+  it("reports the locale on screen as `from`, not the profile's", () => {
+    // A signed-in reader whose profile says Finnish is *looking at* Swedish,
+    // because that is what the URL said. Reporting the profile here would
+    // describe a correction the reader never made.
+    mockIntlLocale.value = "sv";
+    mockAuth.profile = createMockProfile({ locale: "fi" });
     mockAuth.user = { id: "user-1" };
     // A signed-in setLocale also PATCHes /api/user/locale. jsdom's fetch can't
     // resolve a relative URL, and the provider only console.errors the

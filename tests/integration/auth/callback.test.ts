@@ -6,6 +6,8 @@ import { GET } from "@/app/api/auth/callback/route";
 const mockExchangeCodeForSession = vi.fn();
 const mockGetClaims = vi.fn();
 const mockProfileQuery = vi.fn();
+/** The columns the route asked `profiles` for, as one string. */
+const mockProfileSelect = vi.fn<(columns: string) => void>();
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
@@ -14,11 +16,14 @@ vi.mock("@/lib/supabase/server", () => ({
       getClaims: mockGetClaims,
     },
     from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: mockProfileQuery,
-        })),
-      })),
+      select: vi.fn((columns: string) => {
+        mockProfileSelect(columns);
+        return {
+          eq: vi.fn(() => ({
+            single: mockProfileQuery,
+          })),
+        };
+      }),
     })),
   })),
 }));
@@ -165,6 +170,59 @@ describe("GET /api/auth/callback", () => {
 
     expect(response.status).toBe(307);
     expect(getRedirectUrl(response).pathname).toBe("/some-page");
+  });
+
+  /**
+   * **A completed OAuth sign-in seeds the `locale` cookie from the profile.**
+   * The redirect above goes to a bare path, which the proxy resolves by the
+   * cookie → `Accept-Language` → English ladder — so a Finnish reader signing
+   * in on a fresh device lands on `/fi/parent` only because this response
+   * carried their stored language with it.
+   */
+  describe("the locale cookie", () => {
+    function signedInWithLocale(locale: string | null) {
+      mockExchangeCodeForSession.mockResolvedValue({ error: null });
+      mockGetClaims.mockResolvedValue({
+        data: { claims: { sub: "user-123" } },
+      });
+      mockProfileQuery.mockResolvedValue({
+        data: { role: "customer", locale },
+        error: null,
+      });
+      return GET(createCallbackRequest({ code: "valid-code" }));
+    }
+
+    it("carries the profile's locale on the redirect", async () => {
+      const response = await signedInWithLocale("fi");
+
+      expect(response.headers.get("set-cookie")).toContain("locale=fi");
+    });
+
+    it("writes nothing when the profile says auto-detect", async () => {
+      // Null means "follow the browser", and the ladder's header leg is
+      // exactly that. Writing a guess here would freeze it into a preference
+      // the reader never expressed.
+      const response = await signedInWithLocale(null);
+
+      expect(response.headers.get("set-cookie")).toBeNull();
+    });
+
+    it("ignores a stored value we do not ship", async () => {
+      // The column is plain nullable text, so a value can outlive the locale
+      // it named; writing it would put a segment in the URL that resolves to
+      // no locale at all.
+      const response = await signedInWithLocale("de");
+
+      expect(response.headers.get("set-cookie")).toBeNull();
+    });
+
+    it("reads it on the profile query the route already made", async () => {
+      // No second round trip: `locale` joins the select that resolves the
+      // post-login destination.
+      await signedInWithLocale("fi");
+
+      expect(mockProfileSelect).toHaveBeenCalledWith("role, locale");
+    });
   });
 
   it("redirects to login error when the session has no claims", async () => {

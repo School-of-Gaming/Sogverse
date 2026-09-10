@@ -36,6 +36,13 @@ export default defineConfig({
           // — on a 4-vCPU runner that doubled the summed collect and test
           // time, and on a developer's box it saturates every core.
           pool: "forks",
+          // next-intl ships ESM that imports `next/server` by its bare
+          // specifier. Externalised, Node's own resolver handles that import
+          // and cannot find it (Next exposes it through package exports, which
+          // the raw resolver does not consult from inside another package's
+          // ESM); inlined, Vite resolves it the way it resolves the app's own
+          // imports. The proxy suite is what pulls it in.
+          server: { deps: { inline: ["next-intl"] } },
         },
       },
       {
@@ -57,6 +64,13 @@ export default defineConfig({
           // the mocks that were live when some earlier file first loaded it.
           // Same pool as the dom project, for the reason given there.
           pool: "forks",
+          // next-intl ships ESM that imports `next/server` by its bare
+          // specifier. Externalised, Node's own resolver handles that import
+          // and cannot find it (Next exposes it through package exports, which
+          // the raw resolver does not consult from inside another package's
+          // ESM); inlined, Vite resolves it the way it resolves the app's own
+          // imports. The proxy suite is what pulls it in.
+          server: { deps: { inline: ["next-intl"] } },
         },
       },
     ],

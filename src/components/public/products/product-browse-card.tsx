@@ -25,6 +25,7 @@ import {
 } from "./browse-card-shell";
 import { ProductBrowseCardView } from "./product-browse-card-view";
 import { productTagLabelKey } from "./product-tag";
+import type { AppHref } from "@/lib/constants/routes";
 
 interface ProductBrowseCardProps {
   product: ProductBrowseRow;
@@ -39,7 +40,7 @@ interface ProductBrowseCardProps {
    * per-municipality schools page passes `/schools/<slug>/[id]` so the card,
    * and the detail page it opens, stay in that municipality's URL namespace.
    */
-  detailHref?: string;
+  detailHref?: AppHref;
   /**
    * True when rendered on a single-municipality page, where the municipality is
    * already named in the page header. An online muni club then drops its
@@ -81,7 +82,7 @@ export function ProductBrowseCard({
 export function useBrowseCardViewProps(
   product: ProductBrowseRow,
   counts: ParticipationCounts | null | undefined,
-  detailHref: string | undefined,
+  detailHref: AppHref | undefined,
   municipalityScoped: boolean,
 ): ProductBrowseCardViewProps {
   const t = useTranslations("productBrowse.card");

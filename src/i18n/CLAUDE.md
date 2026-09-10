@@ -6,7 +6,7 @@ This directory holds the next-intl request wiring. The i18n system spans the who
 
 Two different concepts that English would both call "language" — deliberately named differently. Do not conflate them.
 
-- **Locale** (`locale`) — which translation of the web app the user sees. Backed by `profiles.locale`, the `locale` cookie, the LocalePicker, and next-intl's `useLocale()`/`getTranslations()`/`useTranslations()`. Owned by `src/lib/constants/locales.ts` (`SUPPORTED_LOCALES`, `DEFAULT_LOCALE`, `LOCALE_CONFIG`, detection/validation helpers).
+- **Locale** (`locale`) — which translation of the web app the user sees. Decided by the URL's locale segment and exposed through next-intl's `useLocale()`/`getTranslations()`/`useTranslations()`; `profiles.locale`, the `locale` cookie and the LocalePicker are the preference behind it. Owned by `src/lib/constants/locales.ts` (`SUPPORTED_LOCALES`, `DEFAULT_LOCALE`, `LOCALE_CONFIG`, detection/validation helpers).
 - **Spoken language** (`spoken_language`) — the human languages a user speaks / a club is delivered in, used to match gamers to gedus. A Postgres enum, backed by `products.spoken_language_code` and the `profiles.spoken_languages` array, with the ordered value list and the string guard in `src/lib/constants/spoken-languages.ts`. UI lives in the spoken-language checkboxes component under `components/ui/`.
 
 The two are fully independent: a Finnish-speaking parent can have `locale = "fi"` (app in Finnish) and `spoken_languages = ["en"]` (wants their child in English-speaking clubs).
@@ -17,6 +17,9 @@ The two are fully independent: a Finnish-speaking parent can have `locale = "fi"
 
 ## Files in this directory
 
+- `routing.ts` — the routing contract (`defineRouting`): locales derived from `SUPPORTED_LOCALES`, `localePrefix: "always"`, next-intl's own detection, locale cookie and alternate-links header all off, and the pathnames map.
+- `pathnames.ts` — every route in the app keyed by its internal pathname, with the slug each locale serves it under. See "Routes: the pathnames map" below.
+- `navigation.ts` — the locale-aware `Link`, `redirect`, `usePathname`, `useRouter` and `getPathname` (`createNavigation`). Use these, not `next/link` / `next/navigation`, wherever a route is named.
 - `request.ts` — next-intl request config (SSR/RSC). Resolves the per-request locale and loads its messages.
 - `messages.ts` — `Messages` type (derived from `en.json`) and `loadMessages(locale)`, a static import map of `messages/<code>.json`. Static imports so a moved/deleted message file fails the build, not runtime. The `tlh` entry is the one that merges — it is the English-fallback mechanism described under the legal-copy rule below.
 - `types.ts` — module augmentation that registers `Messages` as next-intl's `AppConfig["Messages"]`, giving compile-time key validation and autocomplete in `useTranslations()`/`getTranslations()`.
@@ -115,18 +118,41 @@ documents can least afford.
 - **`vous` to adults, `tu` in child-facing strings.**
 - **Never use the middle dot (`Prêt·e`) to dodge gender agreement — reframe instead.** It is visually awkward on screen and contested in France. Open child-facing prompts with a construction that takes no agreement, and where inserting a name would force a participle to inflect, state the event as a noun phrase (an enrolment is confirmed) rather than agreeing with the person.
 
-## Locale resolution
+## Locale resolution: the URL decides
 
-Priority order:
+**Rule: every page URL carries its locale, and the URL wins over cookie, profile and `Accept-Language` alike.** The prefix is `always`, so `/en/…` is as prefixed as `/fi/…` — one URL shape, no "bare means English" special case in the proxy, the normalizer, the picker or a test — and a link therefore pins a language for whoever receives it, crawler included. That is the whole point: a shared link and the social card scraped from it render the language they were sent in.
 
-1. **User profile** — `profiles.locale` (set via the locale picker).
-2. **Cookie** — the `locale` cookie (set on every locale change; works for logged-out users).
-3. **Accept-Language header** — walks the full ranked list and picks the first supported locale (via `detectLocaleFromHeader`).
-4. **Default** — English.
+**A bare path is never a page — it is the detector.** The proxy answers one with a redirect into a prefixed URL, choosing by the ladder: `locale` cookie → `Accept-Language` (the full ranked list, via `detectLocaleFromHeader`) → English. `profiles.locale` participates through the cookie, so the SSR path stays DB-free, and a path matching no route is prefixed anyway so a Finnish visitor gets a Finnish 404. Two carve-outs: `/api/*` (a response has no locale, and a redirected `fetch` would break every client-side call for a non-English reader) and the OG image handlers, which take their locale as a query parameter and sit outside the proxy's matcher. The ladder runs **first among the routing decisions**, so every later gate — PIN, auth, role — fires on an already-localized request and a bounce lands in the reader's own language. API routes that need a user's preference still read `profiles.locale` and fall back to the header; the URL governs pages, not money flows or mail.
 
-The SSR/RSC path (`request.ts`) checks cookie then header (no DB access there). API routes that need the user's preference check `profiles.locale` then fall back to the header.
+**Rule: persistence is picker-only.** Visiting a prefixed URL writes no cookie — following a link is reading, touching the picker is choosing — which is why next-intl's own locale cookie is off, and why letting a stored preference redirect a prefixed URL is never the answer to a mismatch. The picker writes the cookie (and `profiles.locale` when signed in) and then re-issues the current route under the new prefix with `replace` rather than `push`, carrying params, query and hash: back should return to the previous page, not the previous language. The one exception is the three sign-in flows — password sign-in, the OAuth callback and the account switch — which seed the cookie from the signed-in profile, so a fresh device's post-login bare path lands in the reader's stored language. The cookie's name and attributes come from one module (`src/lib/locale-cookie.ts`) so a server write and a browser write land on one cookie rather than two.
 
-**Rule: Validate any incoming locale value before use.** Use `resolveLocale()`/`isSupportedLocale()` from `src/lib/constants/locales.ts` to narrow `unknown` (profile column, request body) to `SupportedLocale` — never trust a raw string or cast.
+**The client provider reads the locale, it never decides it.** The active locale is next-intl's URL locale; nothing derives it from the profile and nothing reconciles the cookie on render — either would mean a signed-in `fi` reader opening a shared `/fr/…` link sees the wrong language in the picker and has their stored preference silently rewritten by a link they clicked.
+
+**Rule: Validate any incoming locale value before use.** Use `resolveLocale()`/`isSupportedLocale()` from `src/lib/constants/locales.ts` to narrow `unknown` (URL segment, profile column, request body, an OG handler's query param) to `SupportedLocale` — never trust a raw string or cast. The `[locale]` layout 404s on a segment that is not a supported locale rather than falling back to English: a second, uncanonical URL for the English page is worse than a 404.
+
+## Routes: the pathnames map
+
+`pathnames.ts` declares **every route in the app**, keyed by its internal pathname, with the slug each locale serves it under. Two systems read it and neither may be given a second map: the routing config (which rewrites incoming URLs and types every wrapped href against these keys, so a route missing here is a compile error at its call site rather than a silent 404) and the path normalizer.
+
+**Translated slugs are for the public content routes only** — the shop and its children, the schools pages, privacy, terms, the anti-bullying policy, `/about` and `/attributions`. Dashboards, auth, voice, settings, preview, `/roblox` and `/docs` are app or partner surfaces rather than indexable content, so they keep their English segments in every locale and are declared as one plain string. **Klingon reuses the English slugs**: URLs are infrastructure, the easter egg is the content. Slugs are lowercase ASCII kebab with diacritics folded, and every child of a translated parent is translated too — a half-translated URL is a visible seam.
+
+**Rule: name a route through the wrapped navigation module, never `next/link` / `next/navigation` — except where the pathname is being embedded in a URL.** The wrapped `usePathname` returns the *internal* pathname, which is exactly what pathname *comparison* wants (active states, dashboard-prefix detection) and exactly wrong for a value that becomes part of a URL: on a dynamic route it is the template, so a redirect param built from it passes every allowlist and then navigates to a literal bracketed segment, with no compile error anywhere. The split rule: **comparing → wrapped; embedding in a URL → raw, with a comment saying why.** Full-page navigations, server 303s and every server-built absolute link (email, WhatsApp, Discord, Stripe's success URL) stay on bare paths deliberately — they cost one proxy hop and land in the reader's stored locale, which is the designed behaviour for a flow re-entering the app.
+
+**Hrefs are built in the `ROUTES` constants module, in two forms.** The object form (pathname plus its params and query) is canonical and keeps the builder's name, because a typed href for a dynamic route cannot be a built string — which is what makes the compiler surface a missed call site. A route with no params keeps its plain string: that is already a valid typed href *and* the string a route check compares against. Where a genuine string is needed — an absolute URL, a `window.location` assignment, a value matched against a route shape — a `Path`-suffixed sibling provides it. The Stripe success-URL builder is string-only forever: it embeds Stripe's literal checkout-session placeholder, which must never pass through a locale-aware path builder. A destination carried in an intermediate structure (a nav row, a fixture, a card's detail link) holds a typed href, not a string.
+
+**Rule: every security check matches the locale-stripped, untranslated internal path**, through the normalizer in `src/lib/navigation/`. Unstripped, `/fi/admin` sails past the `/admin` role gate; unstripped and untranslated, `/fr/boutique` never matches the public-route list. Redirect params carry the **raw external** path the reader was actually on, so a bounce returns them to the URL they came from; normalization is applied wherever such a value is matched against route shapes — the proxy's own checks, and the post-auth allowlist deciding where a login may land.
+
+## Metadata, cards and crawlers
+
+**Titles and descriptions resolve at the URL's locale.** They come from the `metadata` namespace, so URL routing localizes them with no per-page work, and the shared page-metadata helper emits `og:locale` alongside. The two surfaces that used to resolve at a fixed locale no longer do, and the reason they did is exactly what the URL retired: a scraper carries no cookie, so a card had to be composed for the recipient the link was expected to reach. The programme card follows its URL like any other (today's French wording is simply the `fr` values), and a product card resolves the product's name and short description at the request locale through the translation resolver, degrading the way the page body does when a translation is missing. The picture on a product card is the product's own image and is not localized; only the text moves.
+
+**Both social cards are route handlers taking a validated locale query parameter**, not Next's `opengraph-image` file convention: a file under the locale segment emits a redirecting URL into the meta tag, a file at the app root has no locale to render at, and file-convention metadata outranks config metadata either way, so the emitted URL could not be overridden. Pages emit the card's URL, alt and dimensions from their own `generateMetadata`; the paths, the caching and the reasoning live in `src/lib/og/`.
+
+**`hreflang` alternates and canonicals are per-page, never layout-level** — a layout has no pathname, so it cannot compute a self-referencing canonical, and one layout-level canonical would cascade onto every page beneath it. Alternates, canonicals and the sitemap all build their URLs from the pathnames map rather than by joining a base to a hand-written slug, so a translated slug and its `hreflang` cannot disagree. `x-default` points at the bare URL, which is what the ladder makes it: a language detector that redirects.
+
+**Klingon is excluded from `hreflang` and the sitemap, and its pages serve `noindex` instead of a robots disallow.** An easter egg does not belong in search results or in an alternate-language annotation; a disallow would be the wrong tool because a URL that is never fetched never reads the tag and can still be indexed bare. Pages that are `noindex` for their own reasons — product pages, the schools pages, the programme pages, the API docs — emit no alternates at all. The robots disallow covers each gated prefix bare **and** under every locale, Klingon included: a prefixed dashboard URL is as real as a bare one.
+
+**The analytics `route` dimension is supplied by the app, not computed by the framework's wrapper.** It is the internal template with the locale segment dropped, so every language of a page lands on one row while `request_path` keeps the per-language split (`docs/runbooks/vercel-analytics.md`).
 
 ## Usage patterns
 
@@ -142,7 +168,7 @@ Locale always comes from `useLocale()` (client) or `getLocale()` (server) — ne
 
 ## Namespaces
 
-Translation keys are organized into top-level namespaces in the JSON files. Two namespaces are **server-only** and stripped from the client bundle (in the root `app/layout.tsx`) before reaching `NextIntlClientProvider`:
+Translation keys are organized into top-level namespaces in the JSON files. Two namespaces are **server-only** and stripped from the client bundle (in the `[locale]` layout) before reaching `NextIntlClientProvider`:
 
 - `email` — email templates.
 - `metadata` — page titles via `generateMetadata()`.
@@ -159,7 +185,7 @@ All other namespaces (role/feature pages, public pages, feature components, layo
 
 **Rule: Klingon (`tlh`) is always the last entry.** It's a novelty easter egg and never sits among languages a user might actually need. The picker renders `SUPPORTED_LOCALES` in order, and a unit test pins the last entry.
 
-**Rule: locale codes are bare language subtags** (`fr`, not `fr-FR`). A region-qualified code is only added when we genuinely ship two variants of one language — it changes what the `locale` column and cookie carry and forces a decision about how regions appear in any future locale-prefixed URLs. The header matcher already prefers an exact tag match over a language-subtag one, so no structural prep remains; the decision does. The tripwire comment lives at the `LOCALE_CONFIG` definition.
+**Rule: locale codes are bare language subtags** (`fr`, not `fr-FR`) — **and a bare code is never renamed.** The bare code is the generic variant of its language and serves every speaker with no closer match; a regional variant is added *beside* it, as lowercase `lang-region` (`/es-mx/` next to `/es/`): one entry in the locale list and one catalog, one column in every translated pathnames entry, and the `hreflang` set, sitemap and robots disallow iterate the list. Nothing is ever redirected or renamed to make room for a region, so a URL that worked keeps working — which is what makes adding one a locale addition rather than a migration. **Nothing may assume a locale segment is two letters**: the prefix matcher and the normalizer test membership in the locale list, never a shape. The header matcher already prefers an exact tag match over a language-subtag one. The tripwire comment lives at the locale list in `src/lib/constants/locales.ts`.
 
 **Open, and smaller than a second English: the bare `en` tag also decides how `Intl` formats.** A bare `en` resolves to US conventions, so every date the app renders for English readers leans American — most visibly in timezone names, which come out as "GMT+3" and "GMT+1" where a Helsinki or UK reader expects "EEST" and "BST" (surfaced by the session-report mail, which always names the product's zone; `fi`, `sv` and `fr` are unaffected because their bare tags already resolve to European conventions). The fix that fits is a *formatting* locale per UI locale — a `LOCALE_CONFIG` field handed to `Intl` and next-intl, `en-GB` for `en` — which changes nothing about the `locale` column, the cookie or URLs and so does not trip the rule above. It is still a site-wide decision about every clock face and date the app shows, not something a single surface should decide for itself, which is why it is recorded here rather than patched where it was noticed.
 
@@ -168,13 +194,15 @@ All other namespaces (role/feature pages, public pages, feature components, layo
 1. Add the code to `SUPPORTED_LOCALES` and its entry to `LOCALE_CONFIG` in `src/lib/constants/locales.ts` — label, native label, flag country, Stripe locale (`"auto"` if Stripe doesn't speak it). Place it **before** `tlh` in both.
 2. Register its flag in `src/components/ui/flags.ts` (a named per-country import — never the barrel). `country` is typed against that registry, so an unregistered flag fails the build.
 3. Add its loader to the `messageLoaders` map in `messages.ts`.
-4. Create `messages/<code>.json` by copying `en.json` and translating every value.
-5. **Give it a matching spoken language** — a migration adding the code to the `spoken_language` enum, and its country in the spoken-language → flag map under `components/ui/`. Shipping a UI locale says we serve families who speak that language, so a club has to be offerable in it the same day, and `products.spoken_language_code` can only hold an enum value. **Novelty locales are exempt** (Klingon is an easter egg, not a language a club is delivered in). A unit test asserts this parity — the values reach TypeScript through codegen, so skipping the migration fails the fast suite rather than shipping a dead language option — and the flag map is keyed by the enum, so it fails to compile until it has an entry. This is a parity requirement between the two systems, not a merge: locale and spoken language stay distinct everywhere else, and the requirement runs one way only (a spoken language with no UI locale is perfectly ordinary).
+4. Create `messages/<code>.json` by copying `en.json` and translating every value — including the `metadata` namespace, whose keys are what the page titles, the `hreflang`-annotated descriptions and both social cards render at the new locale.
+5. **Give it a column in the pathnames map** (`pathnames.ts`) — a translated slug for each public content route; entries declared as a plain string serve their English segment in every locale and need no edit. The map is checked against the locale list, so a locale added without one fails the build rather than 404ing the public pages. Slugs are lowercase ASCII kebab with diacritics folded, and a translated parent's children are translated with it. Nothing else in the routing config changes: it derives its locales from `SUPPORTED_LOCALES`.
+6. **Decide whether it is indexed.** A real language joins `hreflang` and the sitemap by being in the locale list, which both iterate; a novelty locale is excluded from both (as Klingon is) and its pages serve `noindex` from the locale layout. The robots disallow iterates the locale list too and needs no edit either way.
+7. **Give it a matching spoken language** — a migration adding the code to the `spoken_language` enum, and its country in the spoken-language → flag map under `components/ui/`. Shipping a UI locale says we serve families who speak that language, so a club has to be offerable in it the same day, and `products.spoken_language_code` can only hold an enum value. **Novelty locales are exempt** (Klingon is an easter egg, not a language a club is delivered in). A unit test asserts this parity — the values reach TypeScript through codegen, so skipping the migration fails the fast suite rather than shipping a dead language option — and the flag map is keyed by the enum, so it fails to compile until it has an entry. This is a parity requirement between the two systems, not a merge: locale and spoken language stay distinct everywhere else, and the requirement runs one way only (a spoken language with no UI locale is perfectly ordinary).
 
    Two things about that migration are easy to get wrong. **Declaration order is what renders**: every picker and the shop's Language filter row read the values in the order the enum declares them — Finland's two national languages first, then the rest — and no call site sorts, so a new language lands last unless the migration says otherwise with `ALTER TYPE … ADD VALUE 'xx' BEFORE '…'` (or `AFTER '…'`). And **a value added by `ALTER TYPE … ADD VALUE` cannot be used in the same transaction that adds it** — `supabase db push` runs each migration file as one transaction, so a migration must not add the value and then write a row carrying it; that write is a second migration.
-6. Decide separately whether the country belongs in `PHONE_COUNTRIES` (`src/lib/constants/phone.ts`). That list is **not** derived from locales and drifts on purpose — US is a phone country with no locale, Klingon a locale with no country.
-7. CI translation validation picks the new file up automatically. No changes needed to `request.ts`, `types.ts`, `next.config.ts`, the check script, or provider code.
-8. Produce the native-speaker review handoff for the new translation — see the
+8. Decide separately whether the country belongs in `PHONE_COUNTRIES` (`src/lib/constants/phone.ts`). That list is **not** derived from locales and drifts on purpose — US is a phone country with no locale, Klingon a locale with no country.
+9. CI translation validation picks the new file up automatically. No changes needed to `request.ts`, `routing.ts`, `types.ts`, `next.config.ts`, the check script, or provider code.
+10. Produce the native-speaker review handoff for the new translation — see the
    "Native-speaker review handoff" section below.
 
 ## Native-speaker review handoff
@@ -232,7 +260,7 @@ It is a merge, not an overwrite.
 
 1. Add the namespace object to **all** locale JSON files.
 2. Use it via `useTranslations("ns")` / `getTranslations("ns")`.
-3. If it's server-only (email, metadata, cron), add it to the strip list in the root `app/layout.tsx` so it stays out of the client bundle.
+3. If it's server-only (email, metadata, cron), add it to the strip list in the `[locale]` layout so it stays out of the client bundle.
 
 ## Database
 
@@ -242,4 +270,4 @@ It is a merge, not an overwrite.
 
 ## Known gaps
 
-Client message payload is shipped whole per navigation rather than per-page scoped (could filter namespaces by role/page). Localizing per-page SEO metadata (descriptions, OG text) is tracked in `TODO.md`.
+Client message payload is shipped whole per navigation rather than per-page scoped (could filter namespaces by role/page).

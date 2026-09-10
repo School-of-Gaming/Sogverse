@@ -193,7 +193,10 @@ describe("the coming-up feed", () => {
             {
               id: "11111111-1111-4111-8111-111111111111",
               name: "Minecraft Mondays",
-              href: "/admin/clubs/11111111-1111-4111-8111-111111111111",
+              href: {
+                pathname: "/admin/consumer-clubs/[id]",
+                params: { id: "11111111-1111-4111-8111-111111111111" },
+              },
               activeCount: 9,
               seatCount: 12,
             },
