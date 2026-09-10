@@ -95,6 +95,15 @@ export function useTopicPrepDismissal(
 
   const markReady = useCallback(() => {
     setSaidReady(true);
+    // **A fixture surface writes a real cookie here, and that is accepted.**
+    // "I'm ready" on a preview scene or a style-guide demo stores an entry
+    // under the admin's own user id keyed by the fixture's stable participation
+    // id, exactly as a family's own answer would be. It is inert: those
+    // surfaces state the answer as a prop and never read the cookie back, so
+    // nothing a demo writes can change what a demo shows, and nothing a family
+    // has stored reaches one. The key is fixed, so pressing it a hundred times
+    // stores one entry, and the cap bounds the cookie whatever gets written.
+    // The whole cost is a few entries of cap headroom on an admin's browser.
     rememberReady(topicPrepReadyKey(user?.id ?? null, participationId));
   }, [user?.id, participationId]);
 

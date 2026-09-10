@@ -997,6 +997,38 @@ describe("toFamilyEnrollments — the prep window on a row", () => {
     );
   });
 
+  /**
+   * **The multi-slot walk, through the real schedule expansion.** A camp
+   * meeting three mornings a week is where the walk's own trimming could hide
+   * the answer: the session in progress at the moment of placement is emitted
+   * too, sorts ahead of everything, and is then filtered out for having started
+   * before the seat was theirs. The cases above all run one slot, so this is
+   * the one that would notice a cap too small to survive that.
+   */
+  it("counts the family's next two sessions across a camp's several days", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({
+          product: { type: "camp" },
+          slots: [
+            { weekday: 0, startTime: "17:00", durationMinutes: 90 },
+            { weekday: 2, startTime: "17:00", durationMinutes: 90 },
+            { weekday: 4, startTime: "17:00", durationMinutes: 90 },
+          ],
+          // Placed half an hour into the Wednesday session: that one is not
+          // theirs — they were not in it — so the window is the Friday and the
+          // Monday after it.
+          signedUpAt: new Date("2026-02-11T17:30:00.000Z"),
+          groupJoinedAt: new Date("2026-02-11T17:30:00.000Z"),
+        }),
+      ],
+    });
+
+    expect(summary.prepWindowEnd?.toISOString()).toBe(
+      "2026-02-16T18:30:00.000Z",
+    );
+  });
+
   it("ends with the run's only remaining session on a one-session product", () => {
     const summary = mapOne({
       sessionRows: [

@@ -278,12 +278,16 @@ export function topicPrepWindowEnd(
  * instead of at now, so the occurrences it yields are the family's first ones
  * rather than the next ones.
  *
- * **The cap is the window plus slack, not the window.** A walk surfaces a
- * session already in progress at its anchor as well as the future ones, and
- * such an occurrence started *before* the moment and is filtered out — so
- * asking for exactly two could hand back two the family never attends. Two
- * spare covers every product that could exist (a slot in progress at the moment
- * of placement, times the two slots that could overlap one).
+ * **The cap is the window plus one per slot, and that bound is provable rather
+ * than generous.** The walk emits, per slot, at most one occurrence that is
+ * already in progress at the anchor plus future ones whose starts are all
+ * strictly after it; it then merges the slots, sorts ascending and keeps the
+ * first `cap`. An in-progress occurrence started *before* the moment, so it is
+ * filtered out here — and since a slot can be in progress at most once at any
+ * one instant, the discarded prefix of that sorted list is at most one per
+ * slot. Asking for `slots.length` more than the window is therefore exactly
+ * what guarantees the second qualifying occurrence survives the trim, on a
+ * product with any number of slots overlapping the moment of placement.
  */
 export function topicPrepWindowEndFromSchedule(args: {
   slots: SlotShape[];
@@ -299,10 +303,59 @@ export function topicPrepWindowEndFromSchedule(args: {
     now: args.startMoment,
     startBoundary: args.startBoundary,
     endBoundary: args.endBoundary,
-    cap: TOPIC_PREP_WINDOW_SESSIONS + 2,
+    cap: TOPIC_PREP_WINDOW_SESSIONS + args.slots.length,
     windowCloseMs: VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000,
   });
   return topicPrepWindowEnd(occurrences, args.startMoment);
+}
+
+/**
+ * One row's prep-window end — the whole derivation, from the row alone.
+ *
+ * **Nothing here reads the clock.** The answer comes from the two stamps on the
+ * row, the product's schedule and its date bounds, all of which are fixed for
+ * as long as the row is; that is what lets the dashboards compute it once per
+ * row instead of once per row per tick, and it is the property to preserve if
+ * this ever grows a branch.
+ *
+ * An unplaced seat gets no end at all: its sessions are not theirs to count
+ * until somebody puts them in a group, and it is the state with the most setup
+ * still ahead of it.
+ */
+export function prepWindowEndForRow(row: MyUpcomingSessionRow): Date | null {
+  if (row.groupId === null) return null;
+  const { product } = row;
+  return topicPrepWindowEndFromSchedule({
+    slots: row.slots,
+    timezone: product.timezone,
+    startMoment: laterStamp(row.signedUpAt, row.groupJoinedAt),
+    startBoundary: startDateToCutoff(product.startDate, product.timezone),
+    endBoundary: endDateToCutoff(product.endDate, product.timezone),
+  });
+}
+
+/**
+ * Every row's prep-window end, keyed by participation — the form the dashboards
+ * hold it in.
+ *
+ * **This exists to keep the walk off the per-tick path.** The roll-up is
+ * re-derived on every beat of the shared 30-second clock, because what is next
+ * and which band a card sorts into both move with the clock; the prep window
+ * does not move at all, and running its occurrence walk twice a minute per
+ * enrollment on the two hottest pages in the app is work with no answer to
+ * show for it. Computed on the rows and handed to the roll-up, it is computed
+ * again only when the rows themselves change.
+ *
+ * A caller that passes nothing still gets the right cards: the roll-up falls
+ * back to deriving each row's window itself, which is what every fixture and
+ * test does.
+ */
+export function prepWindowEndsForRows(
+  sessionRows: readonly MyUpcomingSessionRow[],
+): ReadonlyMap<string, Date | null> {
+  return new Map(
+    sessionRows.map((row) => [row.participationId, prepWindowEndForRow(row)]),
+  );
 }
 
 /**
@@ -434,6 +487,19 @@ export interface FamilyRollUpArgs {
   locale: SupportedLocale;
   /** Viewer's IANA zone — the schedule sentence is stated in it. */
   timeZone: string;
+  /**
+   * Each row's prep-window end, keyed by participation — precomputed, because
+   * it is the one derivation here that does not move with the clock.
+   *
+   * The roll-up runs on every tick of the shared 30-second clock; this answer
+   * depends only on the row, so a caller that holds the rows computes it once
+   * with `prepWindowEndsForRows` and hands it in, keeping an occurrence walk
+   * per enrollment off the dashboards' hottest path. Optional, and a row the
+   * map does not mention is derived here as before — the result is the same
+   * either way, which is what makes the map an optimisation rather than a
+   * second source of truth.
+   */
+  prepWindowEnds?: ReadonlyMap<string, Date | null>;
   /**
    * Where a card's stretched link goes, per enrollment.
    *
@@ -729,7 +795,7 @@ function cancellationFor(
  */
 function sessionSummary(
   row: MyUpcomingSessionRow,
-  { now, locale, timeZone, openHref }: FamilyRollUpArgs,
+  { now, locale, timeZone, openHref, prepWindowEnds }: FamilyRollUpArgs,
 ): FamilyEnrollmentSummary {
   const { product } = row;
   const awaiting = row.groupId === null;
@@ -759,24 +825,22 @@ function sessionSummary(
   const empty = occurrences.length === 0;
   const next = empty ? null : occurrences[0];
 
+  const precomputedPrepWindowEnd = prepWindowEnds?.get(row.participationId);
+
   return {
     // **A second walk, anchored where the family's own run begins**, rather
     // than a slice of the one above: that one starts at `now` and answers what
     // is next, and the prep window is a question about what came *first* for
     // this family, which on a club running since February is months behind it.
     //
-    // An unplaced seat gets no end at all. Its sessions are not theirs to count
-    // until somebody puts them in a group, and it is the state with the most
-    // setup still ahead of it.
-    prepWindowEnd: awaiting
-      ? null
-      : topicPrepWindowEndFromSchedule({
-          slots: row.slots,
-          timezone: product.timezone,
-          startMoment: laterStamp(row.signedUpAt, row.groupJoinedAt),
-          startBoundary: startDateToCutoff(product.startDate, product.timezone),
-          endBoundary: endDateToCutoff(product.endDate, product.timezone),
-        }),
+    // It is also the one field here the clock has nothing to do with, so a
+    // caller re-deriving these cards on every tick supplies it precomputed and
+    // the walk does not run again. `undefined` means the caller offered no
+    // answer for this row — `null` is an answer, and a real one.
+    prepWindowEnd:
+      precomputedPrepWindowEnd !== undefined
+        ? precomputedPrepWindowEnd
+        : prepWindowEndForRow(row),
     participationId: row.participationId,
     productName: resolveTranslation(product.translations, locale)?.name ?? "",
     productType: product.type,

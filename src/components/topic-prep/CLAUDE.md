@@ -167,7 +167,9 @@ second answer of a visit overwrite the first.
 
 **Rule: the cookie is capped, and the oldest answers are what go.** It rides on every
 request to the site, so it is not a store to let grow: past its cap the entries at the
-front are dropped. The newest answer is the one a reader has just given and would notice
+front are dropped. **The cap is measured on the encoded value** — the string the browser
+actually stores and sends, after the separators have been percent-escaped — because a
+limit stated about a form nothing ever holds is not a limit. The newest answer is the one a reader has just given and would notice
 being ignored; an old one dropped costs a click.
 
 **Rule: a browser that refuses cookies is a family who gets offered the guide.** Every
@@ -268,6 +270,17 @@ The dashboards are server-rendered, and **the first client paint is identical to
 server's because both are drawn from the same value** — the cookie, parsed once by the
 route and handed down as a prop. There is no third "not answered yet" state anywhere in
 this feature, and nothing about the affordance arrives, disappears or swaps at hydration.
+
+**The dismissal is not the whole of it: the two frozen placements also read the clock, and
+they agree across the two renders only because the shared render clock is seeded on the
+server and handed to the browser.** Freezing an answer at first render is only worth
+anything if both machines' first render asks the same question, so the provider that
+supplies "now" starts from the instant the request was served and does not advance to the
+browser's own clock until its first tick — which is what makes the window's open-or-closed
+answer identical on both sides. A change to how that clock is seeded — a provider that
+starts at the browser's `new Date()`, or one mounted without the server's instant — puts
+this feature's frozen placements back on the wrong side of hydration for any family whose
+window closes between the two, so it is a change to this feature too.
 
 That is a fix rather than a refinement, and the shape it replaced is worth remembering.
 The answer used to live in `localStorage`, which a server cannot read, so a card had to

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   TOPIC_PREP_COOKIE_MAX_CHARS,
+  decodeTopicPrepCookie,
   parseTopicPrepReadyCookie,
   serialiseTopicPrepReady,
   topicPrepReadyFor,
@@ -28,27 +29,25 @@ const CLUB = "e0b5b0c3-7c8f-4b3e-9a11-5f2c6d7e8a90";
 const CAMP = "2f3a4b5c-6d7e-4f80-9112-334455667788";
 
 describe("the stored value", () => {
-  it("round-trips the keys it was given, in order", () => {
-    const keys = [
-      topicPrepReadyKey(VIEWER, CLUB),
-      topicPrepReadyKey(VIEWER, CAMP),
-    ];
+  /**
+   * The server's path in full: the browser stored a percent-encoded value, Next
+   * hands it back exactly as stored, and the helper decodes it **once** before
+   * the parser — which decodes nothing — reads it. The literal `%` in the key
+   * is what makes the assertion sharp: a second decode would turn `%25` back
+   * into `%` and answer for an enrolment nobody named.
+   */
+  it("decodes the server's raw value exactly once", () => {
+    const key = topicPrepReadyKey(VIEWER, "100%25-club");
+    const stored = encodeURIComponent(serialiseTopicPrepReady([key]));
 
-    expect(parseTopicPrepReadyCookie(serialiseTopicPrepReady(keys))).toEqual(
-      keys,
-    );
+    expect(parseTopicPrepReadyCookie(decodeTopicPrepCookie(stored))).toEqual([
+      key,
+    ]);
   });
 
-  it("survives being URL-encoded on the way out and back", () => {
-    const keys = [topicPrepReadyKey(VIEWER, CLUB)];
-    const encoded = encodeURIComponent(serialiseTopicPrepReady(keys));
-
-    expect(parseTopicPrepReadyCookie(encoded)).toEqual(keys);
-  });
-
-  it("reads nothing out of an absent or empty cookie", () => {
-    expect(parseTopicPrepReadyCookie(undefined)).toEqual([]);
-    expect(parseTopicPrepReadyCookie("")).toEqual([]);
+  it("reads a malformed raw value as an empty cookie", () => {
+    expect(parseTopicPrepReadyCookie(decodeTopicPrepCookie("%"))).toEqual([]);
+    expect(decodeTopicPrepCookie(undefined)).toBeUndefined();
   });
 
   /**
@@ -88,10 +87,31 @@ describe("the cap", () => {
     const value = serialiseTopicPrepReady(keys);
     const kept = parseTopicPrepReadyCookie(value);
 
-    expect(value.length).toBeLessThanOrEqual(TOPIC_PREP_COOKIE_MAX_CHARS);
     expect(kept.length).toBeLessThan(keys.length);
     expect(kept[kept.length - 1]).toBe(keys[keys.length - 1]);
     expect(kept[0]).not.toBe(keys[0]);
+    expect(encodeURIComponent(value).length).toBeLessThanOrEqual(
+      TOPIC_PREP_COOKIE_MAX_CHARS,
+    );
+  });
+
+  /**
+   * The cap has to hold for the string the browser stores, not for the one we
+   * happen to have in hand: the shared cookie writer percent-encodes, and every
+   * `:` and `,` in this value is escaped to three characters on the way out.
+   * Measuring the plain join would ship a value comfortably over the cap.
+   */
+  it("keeps the encoded value inside the cap, not just the plain one", () => {
+    const keys = Array.from({ length: 400 }, (_, index) =>
+      topicPrepReadyKey(VIEWER, `${index}`.padStart(36, "0")),
+    );
+
+    const value = serialiseTopicPrepReady(keys);
+
+    expect(value.length).toBeGreaterThan(0);
+    expect(encodeURIComponent(value).length).toBeLessThanOrEqual(
+      TOPIC_PREP_COOKIE_MAX_CHARS,
+    );
   });
 });
 
