@@ -1,7 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import {
   GamerService,
@@ -28,6 +33,10 @@ export const gamerKeys = {
   // is the same cache entry rather than a second fetch of identical rows.
   signIns: (userIds: readonly string[]) =>
     [...gamerKeys.all, "sign-ins", [...userIds].sort().join(",")] as const,
+  // Same shape as `signIns` above, and sorted for the same reason: the same set
+  // of children asked about in a different order is one cache entry.
+  birthDates: (userIds: readonly string[]) =>
+    [...gamerKeys.all, "birth-dates", [...userIds].sort().join(",")] as const,
 };
 
 // Defaults to enabled so dashboard call sites (which are already gated to
@@ -198,6 +207,75 @@ export function useGamerSignIns(userIds?: readonly string[]) {
   return useMemo(
     () => ({ map, isPending: pending, isError }),
     [map, pending, isError],
+  );
+}
+
+/**
+ * The birth date of each named child, keyed by id, for a surface rendering a
+ * whole roster at once.
+ *
+ * The sign-in hook above in every respect that matters — bounded by the ids the
+ * caller is already holding, a `Map` because every caller looks a child up by
+ * id, memoised so a re-render hands the same identity down, and read under the
+ * caller's own RLS so a parent gets their own children and nobody else's.
+ *
+ * **`isPending` is the load-bearing part here, and it means "has never
+ * resolved" rather than "is not resolved right now".** The enrolment panel
+ * decides from this whether a picker row is selectable at all, so a birth date
+ * landing after first paint would flip a row from enabled to disabled under a
+ * parent who may already have clicked it — a change on data's own schedule,
+ * which the layout rules forbid. The detail page holds its skeleton on this
+ * the same way it holds it on the roster itself.
+ *
+ * **Which is exactly why the key changing must not re-open that wait.** The
+ * cache key is the id list, and the id list grows the moment a parent adds a
+ * child through the enrolment panel's own dialog — so without
+ * `placeholderData` the new key would be pending, the page would return to its
+ * skeleton, and the panel would unmount with every ticked box and the new
+ * child's preselection in it. `keepPreviousData` holds the previous map across
+ * the re-key instead: the child who has just arrived carries no birth date for
+ * one round trip (no age pill, blocked by nothing) and gains one when the read
+ * lands. That late arrival is a change inside the row the parent themselves
+ * just created, by the action they just took, which is what the layout rule
+ * permits — and the alternative is losing their work outright.
+ *
+ * `userIds` is optional for the same reason it is on the sign-in hook: absent
+ * (or empty) is "nothing to ask about yet", which answers with an empty map,
+ * fires no query, and is pending for exactly as long as that takes — nothing.
+ * A caller must read that as *nothing known yet*, never as *no children here*.
+ *
+ * **`failureCount` rather than `isError`**, for the caller that has to decide
+ * whether to keep waiting: `isError` only turns over once the last retry is
+ * spent, so a caller gating a skeleton on it would hold the page through the
+ * whole retry window. The first failed attempt is enough to know this read is
+ * not going to answer in time.
+ */
+export function useGamerBirthDates(userIds?: readonly string[]) {
+  const supabase = getClient();
+  const service = new GamerService(supabase);
+
+  const ids = useMemo(() => userIds ?? [], [userIds]);
+
+  const { data, isPending, isError, failureCount } = useQuery({
+    queryKey: gamerKeys.birthDates(ids),
+    queryFn: () => service.getGamerBirthDates(ids),
+    enabled: ids.length > 0,
+    placeholderData: keepPreviousData,
+  });
+
+  const map = useMemo(
+    () =>
+      new Map((data ?? []).map((row) => [row.user_id, row.date_of_birth])),
+    [data],
+  );
+
+  // A disabled query stays `pending` forever; nothing is in flight, so nothing
+  // is pending.
+  const pending = ids.length > 0 && isPending;
+
+  return useMemo(
+    () => ({ map, isPending: pending, isError, failureCount }),
+    [map, pending, isError, failureCount],
   );
 }
 

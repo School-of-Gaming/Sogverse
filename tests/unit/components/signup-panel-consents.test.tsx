@@ -113,10 +113,10 @@ function panel(
     marketingConsentTypes: [],
     marketingConsents: new Set<MarketingConsentType>(),
     onMarketingConsentChange: () => {},
-    // No optional photo ask either, and offered as false: the block is absent
-    // both when the product asks nothing and when the seat is the parent's own.
+    // No optional photo ask either. It is the empty ask set that withholds the
+    // block — the enabled flag only decides whether the rows can be ticked.
     gamerPhotoConsentTypes: [],
-    gamerPhotoConsentsOffered: false,
+    gamerPhotoConsentsEnabled: false,
     gamerPhotoConsents: new Set<GamerPhotoConsentType>(),
     onGamerPhotoConsentChange: () => {},
     onSubmit: () => {},
@@ -210,13 +210,19 @@ describe("a bundle of documents", () => {
     const row = rows(container)[0];
     const box = row.querySelector<HTMLInputElement>('input[type="checkbox"]');
     if (!box) throw new Error("the bundle row rendered no checkbox");
-    const tickLine = box.closest("span")?.parentElement;
-    if (!tickLine) throw new Error("the box rendered outside any line");
+    // The tick's line is the row's first child, found from the row rather than
+    // by climbing a fixed number of levels from the input: the box sits inside
+    // its own one-line column, and how deep that nests is the component's
+    // business, not the test's.
+    const tickLine = row.firstElementChild;
+    if (!(tickLine instanceof HTMLElement) || !tickLine.contains(box)) {
+      throw new Error("the box rendered outside the row's first line");
+    }
 
     // The short name shares the tick's line; the sentence — three lines of
     // conditions naming two documents — runs the row's full width beneath it
     // rather than in the box's column, which is what keeps the measure the
-    // same as everything else in a 20rem rail. Asserted as "the sentence and
+    // same as everything else in the signup rail. Asserted as "the sentence and
     // its links are outside the tick's line but inside the row", because that
     // is the structural fact the layout depends on.
     expect(tickLine.textContent).toBe("robloxProgrammeTitle");

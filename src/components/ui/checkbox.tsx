@@ -47,7 +47,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
           ref={ref}
           type="checkbox"
           checked={checked}
-          className="peer absolute inset-0 z-10 m-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
+          className="peer absolute inset-0 z-10 m-0 opacity-0"
           {...props}
         />
         <span

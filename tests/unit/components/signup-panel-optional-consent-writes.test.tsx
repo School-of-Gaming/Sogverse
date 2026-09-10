@@ -285,13 +285,19 @@ describe("what submitting sends", () => {
 });
 
 describe("the photo question is about one particular child", () => {
-  it("is not asked at all when the parent takes the seat themselves", () => {
+  it("is not answerable when the parent takes the seat themselves", () => {
     // A consent about a gamer's image cannot be given about the adult giving
     // it, and there is no gamer row for the answer to be keyed to.
     const { container } = render(panel({ authState: AUTH_SELF_SEAT }));
 
-    // Rules and marketing only — the photo row is gone, not merely unticked.
-    expect(boxes(container)).toHaveLength(2);
+    // The row is **on screen and disabled**, not withheld. It used to be
+    // withheld — this assertion read `toHaveLength(2)` — and the question then
+    // appeared out of nowhere the moment a child was picked, between the
+    // conditions the parent had just agreed to and the button they were
+    // reaching for. The product asks it, so it is drawn; what the selection
+    // decides is only whether it can be ticked.
+    expect(boxes(container)).toHaveLength(3);
+    expect(photoBox(container).disabled).toBe(true);
 
     agreeToTheRules(container);
     fireEvent.click(cta(container));

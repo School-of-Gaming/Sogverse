@@ -6,6 +6,7 @@ import { registrationCtaKind } from "@/components/public/products/derive-registr
 import { PreviewSignupPanel } from "@/components/public/products/preview-signup-panel";
 import {
   buildScenarioFixture,
+  type AuthKind,
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
 import { resolveRegionGate } from "@/components/public/products/region-lock/region-gate";
@@ -43,8 +44,15 @@ export function ProductDetailScene({
   requiredConsentSlugs,
   marketingConsentTypes,
   gamerPhotoConsentTypes,
+  auth,
 }: {
   scenario: PreviewScenario;
+  /**
+   * A different viewer from the one the base scenario names — a consent
+   * scenario met by a parent with no children yet, say. The product is the
+   * base's; only who is looking at it changes.
+   */
+  auth?: AuthKind;
   /**
    * The product's lock and the viewer it is read against. The three region-lock
    * scenarios are what it is *for*, but it is not theirs alone: any scenario can
@@ -84,7 +92,7 @@ export function ProductDetailScene({
     undefined,
   );
 
-  const fixture = buildScenarioFixture(scenario);
+  const fixture = buildScenarioFixture(scenario, { auth });
   const summaryHref = previewSceneHref("confirmation", scenario);
 
   // The lock rides on the product row, as it does in the database, so nothing

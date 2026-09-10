@@ -89,8 +89,39 @@ export interface SignupParticipantChoice {
    * labels its state in place instead of offering a second signup.
    */
   signupState?: MyParticipationState | null;
+  /**
+   * When set, this child's age falls outside the product's own band — the row
+   * is shown disabled and labels which side it fell out of, exactly as an
+   * already-enrolled row does.
+   *
+   * **The bound rides on the row rather than on the panel**, which is what
+   * keeps this one optional field the whole of the change: the label names a
+   * number ("Under 8"), and the alternative was threading the product's
+   * `min_age`/`max_age` down through the view, `FormOrAuth` and the form to be
+   * re-derived beside every row anyway. A row that knows why it is blocked can
+   * say so without the panel around it knowing anything.
+   *
+   * **Already-enrolled outranks it** where a row carries both: holding a seat
+   * is the more specific fact about that child on this product, and it is also
+   * the one that answers the parent's actual question.
+   */
+  ageBlock?: SignupAgeBlock | null;
   /** True on the parent's own row. Selects the second-person copy, nothing else. */
   isSelf?: boolean;
+}
+
+/**
+ * Why a row is outside the product's age band, and the bound it fell outside
+ * of. `kind` picks the label, `bound` fills its number.
+ *
+ * The decision itself is made in `src/lib/gamer-age-eligibility.ts` — the panel
+ * renders it and owns nothing of the arithmetic, which is what lets a preview
+ * scene drive both states from fixtures.
+ */
+export interface SignupAgeBlock {
+  kind: "under" | "over";
+  /** The product's `min_age` for `under`, its `max_age` for `over`. */
+  bound: number;
 }
 
 export type AuthState =
@@ -274,17 +305,24 @@ export interface SignupPanelViewProps {
    */
   gamerPhotoConsentTypes: readonly GamerPhotoConsentType[];
   /**
-   * Whether to ask them at all — false when the parent has picked their own
-   * seat on a product whose audience admits adults, because a consent about a
-   * gamer's image cannot be given about the adult giving it.
+   * Whether those rows can be *answered* right now — true only once a child is
+   * selected.
+   *
+   * It is not what decides whether they are drawn. The rows exist wherever the
+   * product asks them of a gamer audience, from the panel's first paint, and
+   * this is the one attribute that changes with the selection: no participant
+   * chosen, or the parent's own seat chosen on a product whose audience admits
+   * adults, and the boxes are disabled — a consent about a gamer's image cannot
+   * be given about the adult giving it, and there is no gamer row for the
+   * answer to be keyed to.
    *
    * Decided by the hook rather than re-derived here, deliberately: the same
-   * answer decides which boxes are drawn and which answers are written at the
-   * click, and two derivations of it could disagree about the participant.
+   * answer decides which boxes can be ticked and which answers are written at
+   * the click, and two derivations of it could disagree about the participant.
    * (The required rows above go the other way for the opposite reason — those
    * gate the button, so the rows on screen must be what the gate counts.)
    */
-  gamerPhotoConsentsOffered: boolean;
+  gamerPhotoConsentsEnabled: boolean;
   /** Which photo boxes are ticked, for the currently selected child. */
   gamerPhotoConsents: ReadonlySet<GamerPhotoConsentType>;
   onGamerPhotoConsentChange: (
@@ -307,9 +345,9 @@ export interface SignupPanelViewProps {
 // ---------- Why the panel is flat ----------
 //
 // The panel used to be a card, holding a card, holding a card per participant,
-// and each layer spent padding: in the detail page's 20rem rail that left a row
-// about 195px wide, which is not enough for a name, an age and "Already joined"
-// on one line.
+// and each layer spent padding: in the detail page's rail, then 20rem wide, that
+// left a row about 195px wide, which is not enough for a name, an age and
+// "Already joined" on one line.
 //
 // What has no box is decided by one rule — **a border means you can act on
 // it.** So the picker's outer box is gone (it is a grouping, not a control) and
@@ -880,6 +918,10 @@ function SignupForm(
   // would create an account that cannot be signed up on this page.
   const canAddGamer =
     props.forGamers && props.gamerCount < MAX_GAMERS_PER_PARENT;
+  // Whether that row is the parent's required next step, which is what decides
+  // its weight — the reasoning is at the row itself, further down.
+  const solidAddGamer =
+    props.gamerCount === 0 && props.selectedParticipantId === null;
   const selectedIsSelf =
     props.participants.find((p) => p.id === props.selectedParticipantId)
       ?.isSelf === true;
@@ -914,12 +956,13 @@ function SignupForm(
   // every step during the pre-open countdown and land on "Ready & waiting",
   // primed to one-tap the instant it opens. Only the final leaf differs by
   // window: the live action label once open (`active`), the holding state until
-  // then. selectedParticipantId is null only when nobody is selectable: there
-  // is still room to add a child (canAddGamer → prompt to add a gamer), every
-  // child is already on the product at the gamer cap, or — on a parents-only
-  // product — the reader already holds the one seat there is. The latter two
-  // both land on ctaAllSet; the picker rows show each person's exact
-  // seat/waitlist status in place.
+  // then. selectedParticipantId is null only when nobody is selectable, which
+  // has four causes: there is still room to add a child (canAddGamer → prompt
+  // to add a gamer), every child is already on the product at the gamer cap,
+  // every child the account has is outside the product's age band, or — on a
+  // parents-only product — the reader already holds the one seat there is. The
+  // last three all land on ctaAllSet; the picker rows show each person's exact
+  // reason — seat, waitlist or bound — in place.
   //
   // The location step is an instruction and nothing more — the button stays
   // disabled and the section above it carries the action, per the grammar note
@@ -975,6 +1018,18 @@ function SignupForm(
               // customer and keyed on the participant column, so a self seat
               // arrives under the parent's own id like any other.
               const alreadyOn = g.signupState ?? null;
+              // The second reason a row can be refused, wearing the identical
+              // treatment: a child outside the product's own age band. It is
+              // *below* the seat in precedence — a child who already holds a
+              // seat is told they hold it, whatever their age says, because
+              // that is the more specific fact and the one the parent is
+              // actually asking about. So this is read only where there is no
+              // seat, and the label below picks in the same order.
+              const ageBlock = alreadyOn === null ? (g.ageBlock ?? null) : null;
+              // One name for "this row is not a target", so the disabled
+              // attribute, the muted fills and the muted name cannot come apart
+              // as the reasons multiply.
+              const refused = alreadyOn !== null || ageBlock !== null;
               const selected = props.selectedParticipantId === g.id;
               return (
                 <button
@@ -982,7 +1037,7 @@ function SignupForm(
                   type="button"
                   role="radio"
                   aria-checked={selected}
-                  disabled={alreadyOn !== null}
+                  disabled={refused}
                   onClick={() => props.onSelectParticipant(g.id)}
                   className={cn(
                     "flex w-full items-center justify-between gap-2 rounded-md border border-border px-2.5 py-2.5 text-sm transition-colors",
@@ -992,7 +1047,7 @@ function SignupForm(
                     // less on its own padding (22px of horizontal cost) and
                     // gives the name/age/status line the room it needs at rail
                     // width.
-                    alreadyOn !== null
+                    refused
                       ? "cursor-not-allowed border-border bg-lifted opacity-60"
                       : selected
                         ? // With no outer box to sit inside, a fill alone
@@ -1013,7 +1068,7 @@ function SignupForm(
                       <span
                         className={cn(
                           "font-medium",
-                          alreadyOn !== null && "text-muted-foreground",
+                          refused && "text-muted-foreground",
                         )}
                       >
                         {g.name}
@@ -1035,11 +1090,21 @@ function SignupForm(
                       )}
                     </span>
                   </span>
+                  {/* The right-hand slot says why a row cannot be acted on, in
+                      the precedence set above: the seat first, the age band
+                      only where there is no seat, and the selected marker only
+                      where the row is a target at all. */}
                   {alreadyOn !== null ? (
                     <span className="shrink-0 text-xs font-semibold text-muted-foreground">
                       {alreadyOn === "active"
                         ? t(`gamerAlreadySignedUp.${props.productType}`)
                         : t("gamerAlreadyWaitlisted")}
+                    </span>
+                  ) : ageBlock !== null ? (
+                    <span className="shrink-0 text-xs font-semibold text-muted-foreground">
+                      {ageBlock.kind === "under"
+                        ? t("gamerUnderAge", { min: ageBlock.bound })
+                        : t("gamerOverAge", { max: ageBlock.bound })}
                     </span>
                   ) : (
                     selected && (
@@ -1059,17 +1124,53 @@ function SignupForm(
               radiogroup must contain only its radios, or assistive tech mis-
               announces the count and arrow-key navigation lands on a non-choice.
               Hidden at the Steven Brown cap, matching every other add-gamer
-              affordance. */}
-          {canAddGamer && (
-            <button
-              type="button"
-              onClick={props.onAddGamer}
-              className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
-            >
-              <Plus className="h-4 w-4" />
-              {tFamily("addGamer")}
-            </button>
-          )}
+              affordance.
+
+              **It has two weights, and which one it wears is decided by whether
+              it is the parent's required next step.** Ordinarily the row is a
+              dashed, muted afterthought, which is right: something above it
+              already holds the answer and this is the way to add another
+              option. It takes the act fill the panel's own CTA wears — the real
+              `Button`, not a hand-rolled imitation of one — in exactly the case
+              where it is the only move on the panel that leads anywhere: an
+              empty roster AND nobody selected, so the CTA underneath is
+              disabled and pointing straight at it ("Add a gamer to continue").
+
+              Both halves of that condition are load-bearing. An empty roster on
+              a both-audiences product is not an empty picker — the reader's own
+              row is there and preselected, the CTA is live, and paying is the
+              next step — so a row keyed on the roster count alone would put a
+              second solid act button on the panel competing with the one that
+              actually completes the form.
+
+              The flip is a user action either way — a child arrives through the
+              dialog this row opens, and neither the roster nor the selection can
+              change any other way while this panel is up — so there is nothing
+              here on data's own schedule for the layout rule to object to. The
+              two weights are different heights (the button's own default, h-10,
+              against the dashed row's padding, which is two pixels taller) and
+              that costs nothing: they never coexist, and the CTA below is taller
+              than either (size="lg", h-11), so neither weight is matching it. */}
+          {canAddGamer &&
+            (solidAddGamer ? (
+              <Button
+                type="button"
+                onClick={props.onAddGamer}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4" />
+                {tFamily("addGamer")}
+              </Button>
+            ) : (
+              <button
+                type="button"
+                onClick={props.onAddGamer}
+                className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+              >
+                <Plus className="h-4 w-4" />
+                {tFamily("addGamer")}
+              </button>
+            ))}
         </div>
       </div>
 
@@ -1111,17 +1212,31 @@ function SignupForm(
           treatment of the box.
 
           Their *existence* comes off the product read, so a product that asks
-          nothing has nothing here from the first paint. The photo block is the
-          one thing on the panel that can appear or vanish afterwards, and only
-          when the parent picks a different participant — a change they made, in
-          the surface they touched, which is exactly the reflow the layout rule
-          permits. */}
+          nothing has nothing here from the first paint — and that now holds for
+          the photo block too. It used to be the one thing on the panel that
+          appeared and vanished under the reader, drawn only once a child was
+          selected: a parent who scrolled the panel, read it end to end and then
+          picked a child got a question they had not seen on the way down,
+          inserted between the conditions they had just agreed to and the button
+          they were reaching for. Nothing about that reflow broke the layout
+          rule — a participant switch is a user action — but arriving by
+          surprise is its own defect, and it is the question the reader is least
+          able to guess at from the rows above it.
+
+          So the rows are on screen from the first paint wherever the product
+          asks them of a gamer audience, and what changes with the selection is
+          only whether they can be *answered*: disabled with no child chosen (and
+          on a self seat, which is a seat no photo answer can be keyed to),
+          enabled the moment a child is. Same rows, same height, one attribute
+          apart — so the section a parent read on the way down is the section
+          they come back to. */}
       <OptionalGamerPhotoSection
         rows={
-          props.gamerPhotoConsentsOffered
+          props.forGamers
             ? describeGamerPhotoConsents(props.gamerPhotoConsentTypes)
             : []
         }
+        disabled={!props.gamerPhotoConsentsEnabled}
         granted={props.gamerPhotoConsents}
         onGrantedChange={props.onGamerPhotoConsentChange}
       />
@@ -1361,15 +1476,26 @@ function RequiredConsentSection({
  * to survive the reading.
  *
  * Renders nothing when there is nothing to ask: a product that attaches no
- * photo consent, or a seat the parent is taking themselves — the caller decides
- * the second, so this component only ever sees rows it should draw.
+ * photo consent, or one with no gamer audience at all — the caller decides
+ * both, so this component only ever sees rows it should draw.
+ *
+ * **Whether the rows can be answered is a separate question from whether they
+ * exist**, and `disabled` is it. The rows stand from the panel's first paint on
+ * any product that asks them, and go live when a child is selected; with nobody
+ * selected, or with the parent's own seat selected on a product whose audience
+ * admits adults, there is no gamer for an answer to be keyed to and the rows
+ * are shown disabled rather than withheld. The copy does not change between the
+ * two states — the question is the same question, and a disabled row that
+ * re-words itself would read as a different one.
  */
 function OptionalGamerPhotoSection({
   rows,
+  disabled,
   granted,
   onGrantedChange,
 }: {
   rows: readonly GamerPhotoConsentAskRow[];
+  disabled: boolean;
   granted: ReadonlySet<GamerPhotoConsentType>;
   onGrantedChange: (consentType: GamerPhotoConsentType, next: boolean) => void;
 }) {
@@ -1381,6 +1507,7 @@ function OptionalGamerPhotoSection({
         <CheckboxRow
           key={type}
           size="xs"
+          disabled={disabled}
           checked={granted.has(type)}
           onCheckedChange={(next) => onGrantedChange(type, next)}
           title={t(`${ask.sentenceKey}Title`)}

@@ -166,6 +166,44 @@ export class GamerService {
   }
 
   /**
+   * The birth date of each named gamer, as `{ user_id, date_of_birth }` rows.
+   *
+   * For a surface that has to know how old several children are at once and
+   * cannot ask per child: the shop's enrolment panel, which prints an age
+   * beside every row in the picker and disables the rows outside the product's
+   * age band. `get_my_gamers` returns `profiles` rows, and a birth date is not
+   * one of them — it lives on `gamer_profiles` — so this is the second read the
+   * panel makes about the roster it is already holding.
+   *
+   * **Keyed, not walked, exactly like the sign-in read above**, and for the
+   * same reasons: the caller is holding the children it is about to paint, one
+   * row per user means a chunk of N ids yields at most N rows, and an id with
+   * no row is simply absent from the map the caller builds.
+   *
+   * A parent's own session is what authorizes this: `authenticated` holds
+   * SELECT on `gamer_profiles` and `parents_read_linked_gamer_profiles` scopes
+   * the rows to their own linked children, so asking about somebody else's
+   * child returns nothing rather than being refused.
+   */
+  async getGamerBirthDates(
+    userIds: readonly string[],
+  ): Promise<Pick<GamerProfile, "user_id" | "date_of_birth">[]> {
+    if (userIds.length === 0) return [];
+
+    const rows: Pick<GamerProfile, "user_id" | "date_of_birth">[] = [];
+    for (const batch of chunkKeys(userIds)) {
+      const { data, error } = await this.supabase
+        .from("gamer_profiles")
+        .select("user_id,date_of_birth")
+        .in("user_id", batch);
+
+      if (error) throw error;
+      rows.push(...data);
+    }
+    return rows;
+  }
+
+  /**
    * Writes a gamer's birth date and gender, returning the stored row.
    *
    * **Through the injected client rather than an API route.** Nothing here

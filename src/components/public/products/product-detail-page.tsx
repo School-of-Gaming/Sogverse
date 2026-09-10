@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -9,11 +9,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { localizedLocationName } from "@/lib/locations/localized-name";
-import { useNow } from "@/providers";
+import { formatInTimeZone } from "date-fns-tz";
+import { useNow, useTimezone } from "@/providers";
+import {
+  ageOnDate,
+  gamerAgeBlock,
+  type GamerAgeBlock,
+} from "@/lib/gamer-age-eligibility";
 import { useAuth } from "@/providers/auth-provider";
 import { useLocationsByIds } from "@/services/locations";
 import { useProductDetail } from "@/services/products";
-import { useMyGamers } from "@/services/gamers";
+import { useGamerBirthDates, useMyGamers } from "@/services/gamers";
 import {
   useParticipationCounts,
   useProductSeatCountsRealtime,
@@ -22,6 +28,7 @@ import {
   deriveRegistrationState,
   registrationCtaKind,
 } from "./derive-registration-state";
+import { DETAIL_BAND_CLASS, DETAIL_GRID_CLASS } from "./detail-grid";
 import { ProductDetailPageBody } from "./product-detail-page-body";
 import { audienceAdmitsRole, productAudience } from "@/lib/products/product-audience";
 import { resolveRegionGate, type RegionGate } from "./region-lock/region-gate";
@@ -29,6 +36,7 @@ import { SignupPanel } from "./signup-panel";
 import type {
   AuthState,
   ConfirmedHomeLocation,
+  SignupAgeBlock,
 } from "./signup-panel-view";
 
 // Route-level adapter: fetches the product, resolves the auth state
@@ -36,6 +44,14 @@ import type {
 // customer / unauthenticated), and forwards everything to the body.
 // The body itself is data-only (no fetching) so the mockup preview
 // route can render it directly with fixture data.
+
+/**
+ * The map a failed birth-date read resolves to: no ages, and so nothing
+ * blocked — the same answer a roster whose children have no stored birth date
+ * gets. Module-level so its identity is stable across renders; a fresh `Map`
+ * each render would be a new one for no reason.
+ */
+const NO_BIRTH_DATES: ReadonlyMap<string, string | null> = new Map();
 
 interface ProductDetailPageProps {
   productId: string;
@@ -84,12 +100,74 @@ export function ProductDetailPage({
   // panel up until the visitor reloaded.
   const now = useNow();
 
+  // The viewer's own zone, and today's calendar date in it. **One string feeds
+  // both halves of the age band** — the pill beside a child's name and the
+  // block that refuses their row — because the two are the same fact stated
+  // twice and a midnight rollover between two readings of the clock would have
+  // them disagree in front of the parent. So the zone is resolved once, the
+  // date is derived once, and both go through the age helper as digits: a bare
+  // calendar date belongs to somebody's zone and a pure helper has no way to
+  // know whose. Never `toISOString().slice(0, 10)` — that is the date in UTC,
+  // which is a day out for half the world at the wrong hour, and here it would
+  // be a day out at exactly the boundary this is about: a child's birthday.
+  // Off the shared server-seeded clock rather than a bare `new Date()`, so the
+  // server render and the first client render cannot disagree about what day
+  // it is.
+  const timeZone = useTimezone();
+  const today = formatInTimeZone(now, timeZone, "yyyy-MM-dd");
+
   const { data: product, isLoading: productLoading, isError } =
     useProductDetail(productId);
 
   const { data: gamers, isLoading: gamersLoading } = useMyGamers({
     enabled: isCustomer,
   });
+
+  // ---------------------------------------------------------------------
+  // How old each child is, for the picker
+  //
+  // `get_my_gamers` returns `profiles` rows and a birth date is not one of
+  // them, so the age the picker prints beside a name — and the age band it
+  // refuses a row on — takes a second keyed read against `gamer_profiles`,
+  // scoped to this parent's own children by RLS.
+  //
+  // **It is asked only where its answer is used**: a product with no gamer
+  // audience has no child rows to describe and no age band to enforce, so it
+  // asks nothing rather than reading a roster it will not paint. That leaves
+  // the ids waiting on the product read, which makes this the one read on the
+  // page that cannot start in parallel with the others — and the wait below is
+  // what pays for that rather than the parent doing so, because the alternative
+  // is a picker that paints a child as selectable and then disables the row
+  // under a cursor already on it.
+  // ---------------------------------------------------------------------
+  const ageBandApplies = isCustomer && product?.for_gamers === true;
+  // Memoised so a re-render hands the hook the same array it had last time —
+  // the ids are what its cache key and its enabled flag are built from.
+  const rosterIds = useMemo(
+    () => (ageBandApplies ? (gamers ?? []).map((g) => g.id) : undefined),
+    [ageBandApplies, gamers],
+  );
+  const {
+    map: birthDatesRead,
+    isPending: birthDatesNeverResolved,
+    failureCount: birthDateFailures,
+  } = useGamerBirthDates(rosterIds);
+
+  // **The fail-open is latched, exactly as the home-location read's is** — see
+  // the block below it, which states the reasoning in full. Same shape, same
+  // reason: sampled per render, a failure that a retry or a focus refetch later
+  // turned into a success would insert age pills beside names already on screen
+  // and flip rows from enabled to disabled under a parent's cursor, which is a
+  // change on data's own schedule. So the first failed attempt is remembered
+  // for the life of the mount and the page settles on "no ages, nothing
+  // blocked" — the same answer a roster with no stored birth dates gets, which
+  // is the honest one when we cannot read them.
+  const [birthDatesEverFailed, setBirthDatesEverFailed] = useState(false);
+  const birthDatesReadFailed = birthDatesEverFailed || birthDateFailures > 0;
+  if (birthDatesReadFailed && !birthDatesEverFailed) {
+    setBirthDatesEverFailed(true);
+  }
+  const birthDates = birthDatesReadFailed ? NO_BIRTH_DATES : birthDatesRead;
 
   const { data: counts, isLoading: countsLoading } = useParticipationCounts(
     product ? [product.id] : [],
@@ -172,7 +250,25 @@ export function ProductDetailPage({
   // Wait on every query the signup panel depends on before painting, so we
   // don't show a child as selectable and then snap them to a disabled
   // "Signed up" row a tick later. countsLoading carries `myGamerStates`
-  // (the per-child already-enrolled signal). For non-customers the
+  // (the per-child already-enrolled signal); the birth dates carry the other
+  // per-child reason a row can be refused, the product's age band, and are
+  // waited on for exactly the same reason — an age landing after paint would
+  // both insert the age pill beside a name already on screen and flip its row
+  // from enabled to disabled.
+  //
+  // **That wait is "until the read has resolved once", not "whenever it is not
+  // resolved".** The birth-date query is keyed on the roster's ids, and the
+  // roster grows while this page is open: a parent adds a child in the panel's
+  // own dialog, the create invalidates the roster key, the ids change, and the
+  // birth-date query re-keys. Were the gate a live "is it pending" this page
+  // would drop back to its skeleton at that moment and unmount the panel —
+  // taking every ticked box with it, and the preselection the dialog had just
+  // handed the new child. The hook keeps the previous map across a re-key
+  // precisely so this never returns to pending, and the flag read here is
+  // first-resolution only. It also fails open on the read's first failed
+  // attempt, on the same terms the location read below does.
+  //
+  // For non-customers the
   // customer-only queries return fast/empty. Gedus assigned to a product reach
   // the gedu session-details page from /gedu/clubs/[id] (or /camps/[id] /
   // /events/[id]) — the marketing route here shows them the public layout with
@@ -202,6 +298,7 @@ export function ProductDetailPage({
     productLoading ||
     authLoading ||
     (isCustomer && gamersLoading) ||
+    (isCustomer && birthDatesNeverResolved && !birthDatesReadFailed) ||
     (isCustomer && countsLoading) ||
     (isCustomer &&
       product?.region_lock_country != null &&
@@ -256,13 +353,33 @@ export function ProductDetailPage({
     // seat is already filed under the reader's own id.
     const audience = productAudience(product);
     const participantStates = myCount?.myGamerStates ?? {};
+    // A child's age and their eligibility come off the same stored birth date,
+    // and both are absent together when the row has none — a gamer profile
+    // with no birth date shows no age pill and is refused by nothing, which is
+    // the honest answer rather than a guess in either direction.
     const gamerRows = audienceAdmitsRole(audience, "gamer")
-      ? (gamers ?? []).map((g) => ({
-          id: g.id,
-          name: g.first_name,
-          age: null,
-          signupState: participantStates[g.id] ?? null,
-        }))
+      ? (gamers ?? []).map((g) => {
+          const dateOfBirth = birthDates.get(g.id) ?? null;
+          return {
+            id: g.id,
+            name: g.first_name,
+            age: dateOfBirth === null ? null : ageOnDate(dateOfBirth, today),
+            ageBlock:
+              dateOfBirth === null
+                ? null
+                : describeAgeBlock(
+                    gamerAgeBlock({
+                      minAge: product.min_age,
+                      maxAge: product.max_age,
+                      dateOfBirth,
+                      today,
+                      startDate: product.start_date,
+                    }),
+                    product,
+                  ),
+            signupState: participantStates[g.id] ?? null,
+          };
+        })
       : [];
     const selfRow = audienceAdmitsRole(audience, "customer")
       ? [
@@ -372,16 +489,53 @@ export function ProductDetailPage({
 }
 
 /**
+ * The eligibility answer, paired with the bound it fell outside of — which is
+ * what the picker row's label needs, and what keeps the panel from having to be
+ * told the product's age band separately.
+ *
+ * A block whose own bound is null cannot happen (the helper only returns a side
+ * it was given a number for) and resolves to no block rather than to an
+ * unlabelable row, so the compiler is satisfied without an assertion.
+ */
+function describeAgeBlock(
+  block: GamerAgeBlock | null,
+  product: { min_age: number | null; max_age: number | null },
+): SignupAgeBlock | null {
+  if (block === "under") {
+    return product.min_age === null
+      ? null
+      : { kind: "under", bound: product.min_age };
+  }
+  if (block === "over") {
+    return product.max_age === null
+      ? null
+      : { kind: "over", bound: product.max_age };
+  }
+  return null;
+}
+
+/**
  * **The wait, drawn as the page that is coming.**
  *
  * Which affordance this is was decided by the gate above, not discovered at
- * runtime: the page holds until *four* queries have answered — the product, the
- * viewer's auth state, and two customer-scoped reads — before it paints, so
+ * runtime: the page holds until *five* queries have answered — the product, the
+ * viewer's auth state, and three customer-scoped reads — before it paints, so
  * this is a perceptibly slow call and gets a structured skeleton immediately,
  * with no delay and no fade. It is not one indexed row, and it is not
- * something React Query can already have.
+ * something React Query can already have. One of the three is deliberately
+ * *behind* the others rather than beside them: the children's birth dates are
+ * keyed on ids that only the roster read can supply, so the wait covers two
+ * hops on a product with a gamer audience and one on any other.
  *
- * A fifth read joins them on a narrow slice of visits: the keyed lookup of the
+ * **Every one of those waits is a first resolution, and none of them can come
+ * back.** This is the whole page, so returning to it is not a loading state but
+ * an unmount: the signup panel goes with it, and with the panel go the boxes a
+ * parent has ticked and the child they had selected. The birth-date read is the
+ * one that could plausibly re-open — its key is the roster's ids, and adding a
+ * child changes them — so it is the one that carries the previous answer across
+ * a re-key rather than returning to pending. Nothing here waits twice.
+ *
+ * A sixth read joins them on a narrow slice of visits: the keyed lookup of the
  * family's home location, waited on only where it can change what the signup
  * panel says — a region-locked product, a signed-in parent, a location stored
  * to resolve, and no pick confirmed in the panel's own dialog yet. It drops out
@@ -409,12 +563,12 @@ export function ProductDetailPage({
  */
 function DetailLoadingSkeleton() {
   return (
-    // The live body's tracks, verbatim — change them there and change them
-    // here, or the wait stops being a picture of what follows it.
-    <div className="container mx-auto space-y-6 px-4 py-8 sm:py-12 lg:grid lg:max-w-none lg:grid-cols-[minmax(0,1fr)_minmax(0,44rem)_20rem] lg:gap-6 lg:space-y-0 2xl:grid-cols-[minmax(0,1fr)_16rem_minmax(0,44rem)_20rem_minmax(0,1fr)]">
+    // The live body's tracks — the same two strings it draws with, so the wait
+    // cannot stop being a picture of what follows it.
+    <div className={DETAIL_GRID_CLASS}>
       {/* The header band: back link, eyebrow, title, each over its own column,
           mirroring the outer content tracks exactly as the body's band does. */}
-      <div className="lg:col-start-2 lg:col-span-2 lg:row-start-1 lg:grid lg:grid-cols-[minmax(0,44rem)_20rem] lg:gap-6 2xl:col-start-2 2xl:col-span-3 2xl:grid-cols-[16rem_minmax(0,44rem)_20rem]">
+      <div className={DETAIL_BAND_CLASS}>
         <div className="h-4 w-32 animate-pulse rounded bg-lifted lg:hidden" />
         <div className="hidden 2xl:col-start-1 2xl:row-start-1 2xl:flex 2xl:h-9 2xl:items-center 2xl:justify-self-end">
           <div className="h-4 w-32 animate-pulse rounded bg-lifted" />

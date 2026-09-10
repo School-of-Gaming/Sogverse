@@ -2072,6 +2072,8 @@
         "event": "Jo liittynyt"
       },
       "gamerAlreadyWaitlisted": "Jonossa",
+      "gamerUnderAge": "Alle {min}-vuotias",
+      "gamerOverAge": "Yli {max}-vuotias",
       "nonCustomerNote": "Vain vanhempi voi ilmoittaa pelaajan tähän.",
       "nonCustomerNoteParents": "Vain vanhempi voi ilmoittautua tähän.",
       "closedNote": "Tämä ei ole juuri nyt avoinna. Pidä silmällä seuraavaa kierrosta.",

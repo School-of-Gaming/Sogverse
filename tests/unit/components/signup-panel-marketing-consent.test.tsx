@@ -108,10 +108,10 @@ function panel(
     marketingConsentTypes: [],
     marketingConsents: new Set<MarketingConsentType>(),
     onMarketingConsentChange: () => {},
-    // No optional photo ask either, and offered as false: the block is absent
-    // both when the product asks nothing and when the seat is the parent's own.
+    // No optional photo ask either. It is the empty ask set that withholds the
+    // block — the enabled flag only decides whether the rows can be ticked.
     gamerPhotoConsentTypes: [],
-    gamerPhotoConsentsOffered: false,
+    gamerPhotoConsentsEnabled: false,
     gamerPhotoConsents: new Set<GamerPhotoConsentType>(),
     onGamerPhotoConsentChange: () => {},
     onSubmit: () => {},

@@ -101,8 +101,13 @@ export type PreviewScenario =
 // Which signed-in shape the panel renders against. `signed-out` → the auth
 // overlay (sign in / create account); `no-gamers` → a `ready` customer whose
 // gamer picker is empty (just the "Add a child" row); `with-gamers` → a `ready`
-// customer with the two demo children.
-type AuthKind = "signed-in-with-gamers" | "signed-in-no-gamers" | "signed-out";
+// customer with the demo children. Exported because a scenario layered on a
+// base fixture (a consent scenario) may need a different viewer from the base
+// without becoming a second, near-identical product in this list.
+export type AuthKind =
+  | "signed-in-with-gamers"
+  | "signed-in-no-gamers"
+  | "signed-out";
 
 /**
  * Who the product is sold to — the fixture's spelling of the two `products`
@@ -186,6 +191,36 @@ const DEMO_GAMERS = [
   { id: "decdae83-3f51-4209-bf1a-254e88f1c32f", name: "Väinö", age: 11 },
   { id: "d010872c-7034-401b-9c2d-5dfa675f60d8", name: "Aino", age: 8 },
 ] as const;
+
+// The two siblings the product's own age band refuses, one at each end of it —
+// every product fixture with a gamer audience is 8–12, so a six-year-old and a
+// fourteen-year-old are outside it whichever scenario is being looked at. They
+// ride in the same roster as the three above rather than in a scenario of their
+// own, because the picker's whole point is that a parent compares the rows: a
+// selectable row, an already-enrolled one and both refusals belong in one
+// render, and split across links they would have to be compared from memory.
+//
+// Their `ageBlock` is a literal here, not a computed one. The live page derives
+// it from a stored birth date and today's date; a fixture that recomputed it
+// would be a scene whose picker changes shape on somebody's birthday.
+const DEMO_GAMERS_OUT_OF_BAND = [
+  {
+    id: "c4f1a9e6-2b7d-4e83-95a1-6d0c3f8b2e57",
+    name: "Elias",
+    age: 6,
+    ageBlock: { kind: "under", bound: 8 },
+  },
+  {
+    id: "9b3e7c25-8d41-4a06-b7f9-1e5a0c6d3842",
+    // A long double-barrelled name on purpose, and on the row whose status is
+    // the widest in the widest locale (Finnish "Yli 12-vuotias"): this is the
+    // row that decides whether the name and the reason still share a line at
+    // the 360px floor, and a scene should show the worst case, not the median.
+    name: "Sofia-Aleksandra",
+    age: 14,
+    ageBlock: { kind: "over", bound: 12 },
+  },
+] as const satisfies readonly SignupParticipantChoice[];
 
 // The reader — the parent whose picker this is, and on a for-parents product a
 // selectable row in it. A real UUID for the same reason the children have one:
@@ -1117,8 +1152,22 @@ interface BuildFixtureResult {
   authState: AuthState;
 }
 
-export function buildScenarioFixture(slug: PreviewScenario): BuildFixtureResult {
-  const config = SCENARIOS[slug];
+export function buildScenarioFixture(
+  slug: PreviewScenario,
+  overrides: {
+    /**
+     * A different viewer from the one the base fixture names. For a scenario
+     * layered on a base — the consent scenarios — whose point is the same
+     * product met by a parent in a different state, so the product stays one
+     * fixture and only the viewer varies.
+     */
+    auth?: AuthKind;
+  } = {},
+): BuildFixtureResult {
+  const config: ScenarioConfig = {
+    ...SCENARIOS[slug],
+    auth: overrides.auth ?? SCENARIOS[slug].auth,
+  };
   const detailHref = `/preview/products/${slug}`;
 
   let state: RegistrationState;
@@ -1252,6 +1301,11 @@ function buildAuthState(
           { ...DEMO_GAMERS[0] },
           { ...DEMO_GAMERS[1], signupState: childState },
           { ...DEMO_GAMERS[2] },
+          // Last, where the picker's refused rows sit in the live page too: the
+          // adapter builds the roster in the order the account holds it, and
+          // these two are simply the siblings the band excludes.
+          { ...DEMO_GAMERS_OUT_OF_BAND[0] },
+          { ...DEMO_GAMERS_OUT_OF_BAND[1] },
         ]
       : [];
   const selfRow: SignupParticipantChoice[] =
@@ -1269,7 +1323,12 @@ function buildAuthState(
   return {
     kind: "ready",
     participants: [...gamerRows, ...selfRow],
-    gamerCount: hasGamers ? DEMO_GAMERS.length : 0,
+    // Every child on the account, the two the age band refuses included: the
+    // cap is about how many children a parent may hold, not about how many of
+    // them this particular product would take.
+    gamerCount: hasGamers
+      ? DEMO_GAMERS.length + DEMO_GAMERS_OUT_OF_BAND.length
+      : 0,
   };
 }
 

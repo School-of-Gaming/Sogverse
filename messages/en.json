@@ -2072,6 +2072,8 @@
         "event": "Already joined"
       },
       "gamerAlreadyWaitlisted": "On waitlist",
+      "gamerUnderAge": "Under {min}",
+      "gamerOverAge": "Over {max}",
       "nonCustomerNote": "Only parents can register a gamer here.",
       "nonCustomerNoteParents": "Only parents can sign up here.",
       "closedNote": "This one’s not open right now. Keep an eye out for the next one.",
