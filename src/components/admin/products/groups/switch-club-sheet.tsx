@@ -680,16 +680,20 @@ function ClubList({
                   {resolveTranslation(row.product_translations, locale)?.name ??
                     ""}
                 </span>
-                {/* The trailing group, right-packed on purpose: the held label
-                    is the one thing here that lands a round trip after the row
-                    does, and it grows this group leftward into the slack the
-                    truncating name leaves rather than moving the status chip
-                    or the row below. */}
-                <span className="flex shrink-0 items-center gap-2">
-                  {isHeld && (
+                {/* One pill in this slot, never two: the held badge REPLACES
+                    the status chip rather than joining it, because where a club
+                    is a dead end for this gamer its lifecycle state is not what
+                    the row is about, and a held row that grew a second pill
+                    would be the one row wider than all the others. The two
+                    wear the same pill geometry — same border, same text size,
+                    same vertical padding — so the swap when the participations
+                    read lands changes the word, not the row's height. */}
+                <span className="shrink-0">
+                  {isHeld ? (
                     <Badge variant="outline">{t("alreadyHolds")}</Badge>
+                  ) : (
+                    <ProductStatusChip status={effectiveStatus(row, now, 0)} />
                   )}
-                  <ProductStatusChip status={effectiveStatus(row, now, 0)} />
                 </span>
               </span>
               <span className="mt-1 block text-xs text-muted-foreground">
