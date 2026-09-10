@@ -139,7 +139,7 @@ node scripts/minecraft-edu-accounts.mjs release --apply  # frees the seats
 node scripts/minecraft-edu-accounts.mjs audit            # confirm capacity
 node scripts/minecraft-edu-accounts.mjs delete  --apply
 node scripts/minecraft-edu-accounts.mjs create  --apply
-node scripts/minecraft-edu-accounts.mjs verify           # emits the CSV
+node scripts/minecraft-edu-accounts.mjs verify           # emits the handout
 ```
 
 **Rule: release licences before deleting, never after.** Releasing is reversible
@@ -148,14 +148,22 @@ and synchronous enough to confirm; deleting is not. Running `release` then
 step, and it means the delete cannot strand the pool half-licensed if seat
 maths were wrong.
 
-**Rule: the plan file and CSV are never committed.** Both carry live passwords;
-both are gitignored. They go to the admin out of band and are regenerated on the
-next reset.
+**Rule: the plan file and the handout are never committed.** Both carry live
+passwords; both are gitignored. They go to the admin out of band and are
+regenerated on the next reset.
 
-The CSV is UTF-8 with BOM, comma-delimited, with blank *Club* and *Student*
-columns for the admin to fill in as accounts are handed out. Import to Google
-Sheets via **File → Import → Upload** rather than opening it from Drive preview,
-so the encoding is applied.
+**Rule: the next `plan` overwrites the plan file and the handout — copy both out
+first.** The plan file is the only machine-readable record of the passwords of
+accounts that are already live, and an additive pass leaves those accounts in
+service.
+
+The handout is `minecraft-edu-accounts.xlsx`: a frozen, filterable header, gedu
+pool logins tinted apart from gamer accounts so one is never handed to a child,
+the licence column coloured by status, and highlighted blank *Club* and
+*Student* columns for the admin to fill in as accounts are handed out. Every
+colour is direct cell formatting, never an Excel table style, because Google
+Sheets keeps the former and drops the latter on import. Import it via
+**File → Import → Upload**.
 
 ## Additive passes
 
