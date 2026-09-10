@@ -58,6 +58,18 @@ default-English crawler/link behaviour hits the majority of the actual audience.
   happens only on bare entry; once inside, wrapped links emit prefixed hrefs.
   `profiles.locale` participates through the cookie — the picker keeps the two in sync —
   and the SSR path stays DB-free.
+
+  **Implemented (2026-09-10): the carve-out is "not a page route", and it is one
+  predicate.** `/api/*` is not the only non-page path the matcher lets through — it
+  excludes neither `/_vercel/*` (the Analytics and Speed Insights scripts a page loads)
+  nor `/.well-known/*` (documents whose URLs are fixed by their own specifications and
+  cannot carry a prefix), so the ladder would have 307'd each of them into a prefixed
+  URL that 404s. All three now go through a single predicate in the proxy, read by the
+  ladder, the rewrite, the public-route check and the parent-PIN gate alike — a path
+  the ladder redirects and the rewrite cannot serve is a 404 nobody chose, so the two
+  must never be given separate lists. The matcher was left alone: an exclusion there
+  would also drop the CSP header these responses carry today, and the predicate is the
+  thing the rewrite has to agree with anyway.
 - **Visiting a prefixed URL does NOT persist that locale.** Only an explicit LocalePicker
   action writes the cookie (+ profile when signed in). Following a link is reading;
   touching the picker is choosing. next-intl's own locale cookie is disabled.
@@ -448,8 +460,42 @@ adding a locale stays a one-map edit.
    header onto whatever response comes back. The normalizer lives at
    `src/lib/navigation/locale-path.ts` (`normalizeExternalPath`, `toInternalPathname`,
    `localizeInternalPath`, `splitLocalePrefix`), derived from `src/i18n/pathnames.ts`,
-   which is the map both it and the routing config read. **The proxy suite needed one
-   build change**: next-intl's ESM imports `next/server` by bare specifier, which Node's
+   which is the map both it and the routing config read.
+
+   **Implemented (2026-09-10): composing next-intl means matching the string it
+   matches.** Next delivers `request.nextUrl.pathname` still percent-encoded and
+   next-intl's middleware opens by decoding and sanitizing it, so a gate run against
+   the raw form and a rewrite run against the decoded one are reasoning about two
+   different URLs — `/fi/%61dmin` matched no role prefix and rewrote into the admin
+   tree. The normalizer therefore reproduces next-intl's opening moves exactly:
+   `decodeURI`, then the backslash/whitespace/duplicate-slash sanitising, and the
+   locale prefix matched case-insensitively because next-intl matches its own with an
+   `i` flag. Two consequences worth stating. **`%2F` stays encoded** — `decodeURI`
+   never touches the reserved set, so an encoded slash is not a separator at either
+   end and `/fi%2Fadmin` is one opaque segment carrying no prefix. And **a pathname
+   that cannot be decoded is refused with a 400** rather than gated in its raw form:
+   that is the outcome next-intl produces (it forwards to Next.js, which answers 400),
+   and mirroring it is the only fail-closed answer when there is no string for the two
+   ends to agree on.
+
+   **Implemented (2026-09-10): a slug the URL's own locale does not serve is
+   canonicalized before the gates.** `/sv/kauppa` normalizes to `/kauppa`, which
+   matches no route, and the outcome used to depend on auth state — anonymous readers
+   failed the public-route list and were bounced to login, signed-in ones reached the
+   rewrite and were redirected to `/sv/butik`. The proxy now issues that redirect
+   itself, ahead of every gate, through the named `canonicalPathForForeignSlug` export
+   so no map walking is duplicated. Only a translated public route can be this shape —
+   dashboards, auth and settings declare one slug for every locale — so the branch can
+   never stand in front of a gate, and a test pins that.
+
+   **Implemented (2026-09-10): refreshed auth cookies are copied whole.** Both the
+   redirect and the rewrite helpers re-apply Supabase's cookies with `set(cookie)`
+   rather than `set(name, value)`. Name-and-value alone drops `Path`, which then
+   defaults to the request's own directory — now `/fi` on every page URL — and drops
+   `HttpOnly` with it, minting a locale-scoped, script-readable shadow of the session
+   cookie.
+
+   **The proxy suite needed one build change**: next-intl's ESM imports `next/server` by bare specifier, which Node's
    own resolver cannot follow from inside another package, so `vitest.config.mts` inlines
    `next-intl` in both projects.
 5. **Navigation sweep.** Reshape the `ROUTES` builders to return `{ pathname, params }`

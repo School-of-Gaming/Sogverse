@@ -4,10 +4,15 @@ import { Compass } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 
-// Site-wide 404, rendered by `notFound()` and by unmatched URLs. It lives at
-// the app root (not inside a route group) so it catches not-found from
-// anywhere, and renders inside RootLayout's providers but outside any group
-// layout — hence its own minimal chrome rather than the public Header/Footer.
+// The **translated** 404: what every in-app `notFound()` renders, and what an
+// unmatched URL under a real locale prefix (`/fi/nothing-here`) falls back to.
+// It sits at the top of the `[locale]` tree rather than inside a route group,
+// so it catches not-found from anywhere in the app, and it renders inside the
+// `[locale]` layout's document and providers but outside any group layout —
+// hence its own minimal chrome rather than the public Header/Footer.
+//
+// Its sibling at `src/app/not-found.tsx` is the other half: the root 404 for a
+// URL that matched no locale segment at all, which never reaches this tree.
 export default async function NotFound() {
   const t = await getTranslations("notFound");
   return (

@@ -222,6 +222,28 @@ describe("LocalePicker navigation", () => {
     );
   });
 
+  it("keeps every value of a repeated query key", () => {
+    // `Object.fromEntries(searchParams.entries())` keeps only the last value of
+    // a repeated key, so a multi-select filter would come back with one option
+    // of it — the reader switches language and half their filter is gone.
+    // next-intl's query serializer takes an array, so the record is built with
+    // `getAll`.
+    mockLocation.search = "topic=minecraft&topic=roblox&category=camps";
+    renderPicker("en");
+    fireEvent.click(toggle());
+
+    fireEvent.click(localeRow("fi"));
+
+    expect(mockGetPathname).toHaveBeenCalledWith({
+      href: {
+        pathname: "/shop/[id]",
+        params: { id: "abc" },
+        query: { topic: ["minecraft", "roblox"], category: "camps" },
+      },
+      locale: "fi",
+    });
+  });
+
   it("replaces rather than pushes, so Back returns to the previous page", () => {
     // A pushed entry would make Back mean "the previous language", and a
     // reader who switched by accident would have to press it twice to leave.

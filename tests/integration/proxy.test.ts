@@ -14,6 +14,7 @@ process.env.PIN_COOKIE_SECRET = "test-pin-cookie-secret";
 import { proxy } from "@/proxy";
 import { PIN_COOKIE_NAME, pinTokenFor } from "@/lib/pin-session";
 import {
+  decodeExternalPathname,
   localizeInternalPath,
   normalizeExternalPath,
   toInternalPathname,
@@ -782,6 +783,30 @@ describe("proxy", () => {
       });
     });
 
+    it("decodes the way next-intl does, so both ends match one string", () => {
+      // Next delivers the pathname still percent-encoded and next-intl opens by
+      // decoding it. Anything matched before that decode is a different URL
+      // from the one that will actually be served.
+      expect(toInternalPathname("/fi/%61dmin")).toBe("/admin");
+      expect(toInternalPathname("/fi/kau%70pa")).toBe("/shop");
+    });
+
+    it("leaves %2F encoded, exactly as decodeURI does", () => {
+      // `decodeURI` does not touch the reserved set, so an encoded slash is not
+      // a separator — at either end. Decoding it here would invent a locale
+      // prefix the rewrite never sees.
+      expect(normalizeExternalPath("/fi%2Fadmin")).toEqual({
+        locale: null,
+        pathname: "/fi%2Fadmin",
+        template: null,
+      });
+    });
+
+    it("answers null for a pathname it cannot decode", () => {
+      expect(decodeExternalPathname("/fi/%E0%A4%A")).toBeNull();
+      expect(decodeExternalPathname("/fi/kauppa")).toBe("/fi/kauppa");
+    });
+
     it("round-trips an internal path back to the URL a locale serves", () => {
       expect(localizeInternalPath("/shop/abc", "fi")).toBe("/fi/kauppa/abc");
       expect(localizeInternalPath("/shop/abc", "en")).toBe("/en/shop/abc");
@@ -941,4 +966,223 @@ describe("proxy", () => {
       );
     });
   });
+  // --- One string, matched by both ends -------------------------------------
+  //
+  // Next hands the proxy a pathname still percent-encoded; next-intl's
+  // middleware opens by decoding and sanitizing it. A gate that matched the raw
+  // form while the rewrite resolved the decoded one is a bypass, not a
+  // mismatch: `/fi/%61dmin` matches no `/admin` prefix, so a signed-in gamer
+  // would fall through to the rewrite and land in the admin tree. Each case
+  // below pins the gate's outcome, because "it did not crash" is exactly what
+  // the bypass looked like.
+
+  describe("encoded and malformed paths", () => {
+    it("gates a percent-encoded dashboard path exactly like the plain one", async () => {
+      mockUser("gamer");
+      const encoded = await proxy(createNextRequest("/fi/%61dmin"));
+      const plain = await proxy(createNextRequest("/fi/admin"));
+      expect(encoded.status).toBe(307);
+      expect(getRedirectUrl(encoded).pathname).toBe("/fi/gamer");
+      expect(getRedirectUrl(encoded).pathname).toBe(
+        getRedirectUrl(plain).pathname,
+      );
+    });
+
+    it("gates a path carrying a character the URL parser deletes", async () => {
+      // `%09` decodes to a TAB, which next-intl strips before matching (the
+      // WHATWG parser would have) — so the rewrite resolves `/fi/admin`, and
+      // anything gating the undecoded string is gating a URL that never runs.
+      mockUser("gamer");
+      const response = await proxy(createNextRequest("/fi/%09admin"));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/fi/gamer");
+    });
+
+    it("does not read %2F as a separator, so /fi%2Fadmin carries no prefix", async () => {
+      // `decodeURI` leaves the reserved set encoded, next-intl included, so
+      // this is one opaque segment rather than a Finnish prefix. It is
+      // therefore a bare path, and the ladder prefixes it — it must not resolve
+      // to the admin route at either end.
+      mockUser("gamer");
+      const response = await proxy(createBareRequest("/fi%2Fadmin"));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/en/fi%2Fadmin");
+    });
+
+    it("strips one locale prefix, not two", async () => {
+      // `/fi/fi/admin` is the Finnish prefix on a path whose own first segment
+      // is `fi`. Stripping twice would hand every gate `/admin`; stripping once
+      // leaves `/fi/admin`, which is a route the app does not have — so the
+      // request is served (and 404s) rather than being mistaken for the
+      // dashboard in either direction.
+      expect(toInternalPathname("/fi/fi/admin")).toBe("/fi/admin");
+      mockUser("gamer");
+      const response = await proxy(createNextRequest("/fi/fi/admin"));
+      expect(response.status).toBe(200);
+    });
+
+    it("gates an upper-case locale prefix, which next-intl matches too", async () => {
+      // next-intl matches its prefixes case-insensitively and canonicalizes
+      // them, so `/FI/admin` is the Finnish `/admin` to the rewrite. Reading it
+      // as a bare path here would gate a URL nobody serves.
+      mockUser("gamer");
+      const response = await proxy(createNextRequest("/FI/admin"));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/fi/gamer");
+    });
+
+    it("does not case-fold the route segment itself", async () => {
+      // The prefix is matched against a list; the slug is matched against the
+      // filesystem, which is case-sensitive at both ends. `/fi/Admin` is a path
+      // the app does not have, and it must not become `/admin` here only to
+      // 404 there.
+      expect(toInternalPathname("/fi/Admin")).toBe("/Admin");
+      mockUser("gamer");
+      const response = await proxy(createNextRequest("/fi/Admin"));
+      expect(response.status).toBe(200);
+    });
+
+    it("gates a trailing slash like the path without one", async () => {
+      mockUser("gamer");
+      const response = await proxy(createNextRequest("/fi/admin/"));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/fi/gamer");
+    });
+
+    it("refuses a pathname it cannot decode instead of guessing at it", async () => {
+      // `decodeURI` throws on a bad escape, and next-intl answers that by
+      // forwarding to Next.js for a 400. There is no string for the two ends to
+      // agree on, so the proxy mirrors the outcome rather than gating a raw
+      // path the rewrite would have read differently.
+      mockUser("gamer");
+      const response = await proxy(createBareRequest("/fi/%E0%A4%A"));
+      expect(response.status).toBe(400);
+    });
+  });
+
+  // --- Refreshed auth cookies keep their attributes -------------------------
+
+  describe("refreshed auth cookies", () => {
+    // What Supabase writes when it refreshes a near-expiry token: a
+    // root-scoped, HttpOnly cookie. Copying it by name and value alone would
+    // re-issue it with no Path — which defaults to the request's own directory,
+    // now `/fi` on every page URL — and no HttpOnly, minting a locale-scoped,
+    // script-readable shadow of the session cookie.
+    const REFRESHED = {
+      name: "sb-access-token",
+      value: "new-access",
+      options: {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax" as const,
+        maxAge: 3600,
+      },
+    };
+
+    function refreshOnClaims() {
+      mockGetClaims.mockImplementation(async () => {
+        capturedCookieHandlers!.setAll([REFRESHED]);
+        return { data: null, error: null };
+      });
+    }
+
+    it("survives the rewrite with its attributes intact", async () => {
+      refreshOnClaims();
+      const response = await proxy(createNextRequest("/fi/kauppa"));
+      expect(response.status).toBe(200);
+      expect(response.cookies.get(REFRESHED.name)).toEqual(
+        expect.objectContaining({
+          value: "new-access",
+          path: "/",
+          httpOnly: true,
+        }),
+      );
+    });
+
+    it("survives the redirect with its attributes intact", async () => {
+      refreshOnClaims();
+      const response = await proxy(createNextRequest("/fi/settings"));
+      expect(response.status).toBe(307);
+      expect(response.cookies.get(REFRESHED.name)).toEqual(
+        expect.objectContaining({
+          value: "new-access",
+          path: "/",
+          httpOnly: true,
+        }),
+      );
+    });
+  });
+
+  // --- Paths that are not pages ---------------------------------------------
+
+  describe("non-page paths", () => {
+    // The ladder fires on anything that is not carved out, and a 307 to
+    // `/en/_vercel/insights/script.js` is a 404 for the analytics script. The
+    // matcher excludes neither prefix, so the carve-out is what does the work,
+    // and it has to be the same one the rewrite reads.
+    it.each([
+      "/_vercel/insights/script.js",
+      "/_vercel/speed-insights/script.js",
+      "/.well-known/security.txt",
+    ])("passes %s through untouched", async (path) => {
+      mockNoUser();
+      const response = await proxy(createBareRequest(path));
+      expect(response.status).toBe(200);
+      expect(response.headers.get("location")).toBeNull();
+    });
+
+    it("does not bounce one to the unlock gate for a locked customer", async () => {
+      // A script tag is not a surface a parent can act through; gating it only
+      // breaks the page it was requested from.
+      mockUser("customer");
+      const response = await proxy(
+        createBareRequest("/_vercel/insights/script.js"),
+      );
+      expect(response.status).toBe(200);
+    });
+  });
+
+  // --- A slug the URL's own locale does not serve ---------------------------
+
+  describe("a foreign locale's slug", () => {
+    // `/sv/kauppa` is the Finnish slug under the Swedish prefix. It normalizes
+    // to `/kauppa`, which matches no route — so before this branch existed the
+    // outcome depended on who was asking: anonymous readers failed the
+    // public-route list and were bounced to login, while signed-in ones reached
+    // the rewrite and were redirected to `/sv/butik`. Both halves are pinned,
+    // because only the pair says "one behaviour".
+    it("redirects an anonymous reader to the slug that locale serves", async () => {
+      mockNoUser();
+      const response = await proxy(createBareRequest("/sv/kauppa"));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/sv/butik");
+    });
+
+    it("redirects a signed-in reader to exactly the same place", async () => {
+      mockUser("gamer");
+      const response = await proxy(createBareRequest("/sv/kauppa"));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/sv/butik");
+    });
+
+    it("preserves the query string", async () => {
+      mockNoUser();
+      const response = await proxy(
+        createBareRequest("/sv/kauppa?category=camps"),
+      );
+      expect(getRedirectUrl(response).search).toBe("?category=camps");
+    });
+
+    it("leaves an untranslated protected route to its own gate", async () => {
+      // The assumption this branch rests on: only a translated public route can
+      // be this shape. Dashboards, auth and settings declare one slug for every
+      // locale, so there is no foreign template to match and nothing can stand
+      // in front of their gates.
+      mockUser("gamer");
+      const response = await proxy(createNextRequest("/sv/admin"));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/sv/gamer");
+    });
+  });
+
 });

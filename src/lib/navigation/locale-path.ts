@@ -18,6 +18,15 @@
  * recognised by membership in the locale list, never by shape, so a future
  * `es-mx` is one entry in that list rather than a regex nobody remembers to
  * widen.
+ *
+ * **One string, matched by both ends.** Next.js hands the proxy a pathname
+ * still percent-encoded, while next-intl's middleware opens by decoding and
+ * sanitizing it — so a check run against the raw form and a rewrite run against
+ * the decoded one are reasoning about two different URLs, and the gap is a
+ * gate bypass (`/fi/%61dmin` matches no `/admin` prefix here and rewrites into
+ * the admin tree there). Everything in this module therefore normalizes
+ * through `decodeExternalPathname`, which reproduces next-intl's own opening
+ * moves exactly.
  */
 
 import {
@@ -26,6 +35,51 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { PATHNAMES, type InternalPathname } from "@/i18n/pathnames";
+
+/**
+ * The pathname as next-intl's middleware will see it, or `null` when it is
+ * malformed.
+ *
+ * Verified against the installed implementation (4.9.x), whose first two
+ * statements this mirrors line for line:
+ *
+ * - **`decodeURI`**, so `/fi/%61dmin` and `/fi/admin` are one string. It leaves
+ *   the reserved set encoded, `%2F` included — so a `%2F` inside a segment is
+ *   *not* a separator, here or there, and `/fi%2Fadmin` is one opaque segment
+ *   that carries no locale prefix at either end.
+ * - **`sanitizePathname`**, which escapes backslashes, drops the three
+ *   whitespace characters the WHATWG URL parser strips (`\t\n\r`), and
+ *   collapses runs of slashes. That last pair is not cosmetic: an encoded TAB
+ *   in `/fi/%09admin` decodes to a character next-intl deletes, so without this
+ *   the rewrite would resolve `/fi/admin` while this module was still matching
+ *   a path with a control character wedged into it.
+ *
+ * `null` is the malformed case — a lone `%` or a bad escape, which `decodeURI`
+ * throws on. next-intl answers it by forwarding to Next.js, which replies 400;
+ * the proxy mirrors that outcome rather than guessing at a path it cannot read.
+ */
+export function decodeExternalPathname(pathname: string): string | null {
+  let decoded: string;
+  try {
+    decoded = decodeURI(pathname);
+  } catch {
+    return null;
+  }
+  return decoded
+    .replace(/\\/g, "%5C")
+    .replace(/[\t\n\r]/g, "")
+    .replace(/\/+/g, "/");
+}
+
+/**
+ * Fail closed: an undecodable pathname is matched in its raw form, which no
+ * template and no locale prefix can match, so it is never treated as public
+ * and never resolves to an internal route. The proxy refuses it outright
+ * before that matters.
+ */
+function readable(pathname: string): string {
+  return decodeExternalPathname(pathname) ?? pathname;
+}
 
 function segmentsOf(pathname: string): string[] {
   return pathname.split("/").filter(Boolean);
@@ -118,13 +172,22 @@ export interface NormalizedPath {
   template: InternalPathname | null;
 }
 
-/** Split a leading locale segment off a pathname. Shape is never consulted. */
+/**
+ * Split a leading locale segment off a pathname. Shape is never consulted.
+ *
+ * **Matched case-insensitively, and answered with the canonical casing** —
+ * next-intl matches its own prefixes with an `i` flag, so `/FI/admin` is the
+ * Finnish prefix to the rewrite whatever this module thinks. Reading it as a
+ * bare path here would leave the proxy gating `/FI/admin` (which matches no
+ * role prefix) while next-intl resolved `/fi/admin`, which is the same
+ * two-strings-one-URL bug the decode above closes.
+ */
 export function splitLocalePrefix(pathname: string): {
   locale: SupportedLocale | null;
   rest: string;
 } {
-  const segments = segmentsOf(pathname);
-  const first = segments[0];
+  const segments = segmentsOf(readable(pathname));
+  const first = segments[0]?.toLowerCase();
   if (isSupportedLocale(first)) {
     return { locale: first, rest: `/${segments.slice(1).join("/")}` };
   }
@@ -157,6 +220,42 @@ export function normalizeExternalPath(pathname: string): NormalizedPath {
   }
 
   return { locale, pathname: rest, template: null };
+}
+
+/**
+ * A URL whose locale does not serve the slug it carries, resolved to the path
+ * that locale *does* serve it under — `/sv/kauppa` → `/sv/butik` — or `null`
+ * when the URL is not that shape.
+ *
+ * next-intl redirects this case itself, but it does so *after* the proxy's
+ * gates have already run against a pathname that matched nothing. That split
+ * the behaviour by auth state: an anonymous reader was bounced to login
+ * (`/kauppa` is not in the public-route list) while a signed-in one sailed
+ * through to the rewrite and got the redirect. Answering it here, before the
+ * gates, makes it one behaviour for everyone.
+ *
+ * **Only a translated public route can be this shape.** Dashboards, auth and
+ * settings are declared as one string for every locale, so their template is
+ * the same in the URL's own locale and there is nothing foreign to match —
+ * which is what keeps this branch from ever standing in front of a gate.
+ */
+export function canonicalPathForForeignSlug(pathname: string): string | null {
+  const own = normalizeExternalPath(pathname);
+  if (own.locale === null || own.template !== null) return null;
+  const { rest } = splitLocalePrefix(pathname);
+
+  for (const internal of INTERNAL_TEMPLATES) {
+    for (const candidate of SUPPORTED_LOCALES) {
+      if (candidate === own.locale) continue;
+      const params = matchTemplate(
+        rest,
+        externalTemplateFor(internal, candidate),
+      );
+      if (!params) continue;
+      return localizeInternalPath(fillTemplate(internal, params), own.locale);
+    }
+  }
+  return null;
 }
 
 /**

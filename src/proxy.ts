@@ -14,6 +14,8 @@ import {
 import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
 import { routing } from "@/i18n/routing";
 import {
+  canonicalPathForForeignSlug,
+  decodeExternalPathname,
   localizeInternalPath,
   normalizeExternalPath,
 } from "@/lib/navigation/locale-path";
@@ -52,6 +54,30 @@ function localeForBarePath(request: NextRequest): SupportedLocale {
   );
 }
 
+/**
+ * **Not a page route** — outside the intl system entirely, in one predicate
+ * both the bare-path ladder and the rewrite read, because a path the ladder
+ * 307s and the rewrite then cannot serve is a 404 nobody chose.
+ *
+ * `/api/*` is the reason the predicate exists: an API response has no locale,
+ * and a 307'd `fetch` would break every client-side API call for a
+ * non-English user. The other two are files a page happens to request —
+ * Vercel's Analytics and Speed Insights scripts, and the `/.well-known/*`
+ * documents (Apple/Android app association, `security.txt`) whose URLs are
+ * fixed by their own specifications and cannot carry a prefix. The matcher
+ * excludes neither, so without this a Finnish visit would ask for
+ * `/fi/_vercel/insights/script.js` and get a 404 instead of analytics.
+ *
+ * A locked customer's PIN gate reads it too: a script tag is not a surface a
+ * parent can act through, so bouncing it to the unlock page would only break
+ * the page it was requested from.
+ */
+const NON_PAGE_PREFIXES = ["/api/", "/_vercel/", "/.well-known/"];
+
+function isNonPagePath(pathname: string): boolean {
+  return NON_PAGE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
 // Paths a LOCKED customer session may still reach (so the parent-PIN gate
 // doesn't trap them). `/api/*` is owned by requireRole(); auth routes are the
 // sign-in/out flow; the rest are the gate itself, the profile chooser (where
@@ -76,7 +102,7 @@ function localeForBarePath(request: NextRequest): SupportedLocale {
 // then opens the mail an hour later, or on their phone, where the session has
 // re-locked or never existed.
 function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
-  if (pathname.startsWith("/api/") || isAuthRoute) return true;
+  if (isNonPagePath(pathname) || isAuthRoute) return true;
   const exempt = [
     ROUTES.customer.unlock,
     ROUTES.selectProfile,
@@ -250,10 +276,22 @@ export async function proxy(request: NextRequest) {
   // they were actually on rather than to its English internal twin.
   const externalPathname = request.nextUrl.pathname;
 
-  // `/api/*` is outside the intl system entirely: an API response has no
-  // locale, and a 307'd `fetch` would break every client-side API call for a
-  // non-English user. API requests flow through this proxy exactly as before.
-  const isApiPath = externalPathname.startsWith("/api/");
+  // **A pathname this proxy cannot read is refused, not guessed at.** Next
+  // hands the path still percent-encoded and next-intl opens by decoding it,
+  // so every check below runs on the decoded form (the normalizer does it) —
+  // and when the decode is impossible, next-intl forwards to Next.js for a
+  // 400. Mirroring that here keeps the two ends agreeing on the one case where
+  // there is no string to agree on: the alternative is gating a raw path the
+  // rewrite would have read differently.
+  if (decodeExternalPathname(externalPathname) === null) {
+    const malformed = new NextResponse(null, { status: 400 });
+    malformed.headers.set("Content-Security-Policy", cspHeader);
+    return malformed;
+  }
+
+  // Not a page route (`/api/*`, `/_vercel/*`, `/.well-known/*`): no locale
+  // prefix, no rewrite, no ladder — see the predicate.
+  const isNonPage = isNonPagePath(externalPathname);
 
   let supabaseResponse = NextResponse.next({
     request,
@@ -295,26 +333,34 @@ export async function proxy(request: NextRequest) {
   const userId = claimsData?.claims.sub ?? null;
   const sessionId = claimsData?.claims.session_id ?? null;
 
-  // Helper: create a redirect that preserves refreshed auth cookies and CSP
+  // Helper: create a redirect that preserves refreshed auth cookies and CSP.
+  //
+  // **The whole cookie, attributes included.** `set(name, value)` writes a
+  // cookie with none of the ones Supabase chose — no `Max-Age`, no `Secure`,
+  // no `HttpOnly`, no `SameSite`, and above all no `Path`, which then defaults
+  // to the request's own directory. Every page URL carries a locale now, so
+  // that directory is `/fi`, and a refreshed session would be re-issued as a
+  // second, locale-scoped, script-readable cookie shadowing the real one.
   function redirect(url: URL) {
     const redirectResponse = NextResponse.redirect(url);
     supabaseResponse.cookies.getAll().forEach((cookie) => {
-      redirectResponse.cookies.set(cookie.name, cookie.value);
+      redirectResponse.cookies.set(cookie);
     });
     redirectResponse.headers.set("Content-Security-Policy", cspHeader);
     return redirectResponse;
   }
 
-  // Helper: the pass-through response. Everything but `/api/*` goes through
+  // Helper: the pass-through response. Every page route goes through
   // next-intl's rewrite so the `[locale]` tree is what actually renders, and
   // both things this proxy owns — the refreshed auth cookies and the CSP whose
   // nonce the SSR pipeline is about to use — are re-applied to whatever
-  // response shape comes back.
+  // response shape comes back. Cookies are copied whole, for the reason given
+  // on `redirect` above.
   function proceed() {
-    if (isApiPath) return supabaseResponse;
+    if (isNonPage) return supabaseResponse;
     const intlResponse = intlMiddleware(request);
     supabaseResponse.cookies.getAll().forEach((cookie) => {
-      intlResponse.cookies.set(cookie.name, cookie.value);
+      intlResponse.cookies.set(cookie);
     });
     intlResponse.headers.set("Content-Security-Policy", cspHeader);
     return intlResponse;
@@ -331,12 +377,37 @@ export async function proxy(request: NextRequest) {
   //
   // A path matching no route template is prefixed anyway, so a Finnish visitor
   // gets a Finnish 404 rather than an English one.
-  const { locale: urlLocale, pathname } = normalizeExternalPath(externalPathname);
-  if (!isApiPath && urlLocale === null) {
+  const {
+    locale: urlLocale,
+    pathname,
+    template,
+  } = normalizeExternalPath(externalPathname);
+  if (!isNonPage && urlLocale === null) {
     const target = new URL(
       localizeInternalPath(pathname, localeForBarePath(request)),
       request.url,
     );
+    target.search = request.nextUrl.search;
+    return redirect(target);
+  }
+
+  // --- A slug this locale does not serve -------------------------------------
+  //
+  // `/sv/kauppa` is the Finnish slug under the Swedish prefix. It normalizes to
+  // `/kauppa`, which matches no route at all — so without this branch the
+  // request's fate depended on who was asking: an anonymous reader failed the
+  // public-route list and was bounced to login, while a signed-in one reached
+  // the rewrite, where next-intl redirected them to `/sv/butik`. One URL, two
+  // behaviours, and the anonymous half is the one that reads as a broken site.
+  //
+  // So the redirect is issued here instead, ahead of every gate, in the
+  // locale the URL itself named. Only a translated public route can ever be
+  // this shape — dashboards, auth and settings declare one slug for all
+  // locales — so this can never stand in front of a gate.
+  const foreignSlugTarget =
+    template === null ? canonicalPathForForeignSlug(externalPathname) : null;
+  if (foreignSlugTarget !== null) {
+    const target = new URL(foreignSlugTarget, request.url);
     target.search = request.nextUrl.search;
     return redirect(target);
   }
@@ -356,11 +427,12 @@ export async function proxy(request: NextRequest) {
     );
   }
 
-  // Check if route is public. /api/* always passes (handlers own their auth).
+  // Check if route is public. A non-page path always passes (an API handler
+  // owns its own auth; a `/_vercel/*` or `/.well-known/*` file has none).
   // The /voice/group/[id] branch is excluded so its public-prefix match here
   // can't shadow the authenticated-route handling below.
   const isPublicRoute =
-    pathname.startsWith("/api/") ||
+    isNonPagePath(pathname) ||
     (!pathname.startsWith(AUTH_REQUIRED_VOICE_PREFIX) &&
       PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`)));
 

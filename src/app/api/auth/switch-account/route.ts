@@ -354,13 +354,17 @@ async function switchByOtp(args: {
   }
 
   // **A switch is a sign-in, so it seeds the locale cookie from the account
-  // being entered.** The client follows this response with a full-page
-  // navigation to a bare path, which the proxy resolves by the cookie →
-  // `Accept-Language` → English ladder — so without this a child whose profile
-  // says Finnish would be handed their parent's language, or English, on the
-  // way in. A null `locale` means "auto-detect from the browser" and is left
-  // unwritten. Placed after the marker mint: nothing above may be delayed by
-  // work that is not part of establishing the session.
+  // being entered — for that account's next cold entry on this device, not for
+  // this hop.** The client follows this response with a full-page navigation to
+  // a URL already carrying the *parent's* reading locale, and a prefixed URL
+  // wins over the cookie by design, so the child lands in the language the
+  // device was being read in. What this write buys is everything after that: a
+  // bare entry later — a bookmark, an emailed link, a fresh tab — resolves
+  // through the cookie → `Accept-Language` → English ladder, and without it a
+  // child whose profile says Finnish would be handed their parent's language,
+  // or English, every time. A null `locale` means "auto-detect from the
+  // browser" and is left unwritten. Placed after the marker mint: nothing above
+  // may be delayed by work that is not part of establishing the session.
   if (isSupportedLocale(target.locale)) {
     cookieStore.set(LOCALE_COOKIE_NAME, target.locale, localeCookieOptions());
   }

@@ -103,7 +103,17 @@ export function LocalePicker({ className }: { className?: string }) {
     setLocale(next);
     setOpen(false);
 
-    const query = Object.fromEntries(searchParams.entries());
+    // **Built with `getAll`, so a repeated key survives as an array.**
+    // `Object.fromEntries(entries())` keeps only the last value of a repeated
+    // key, which silently drops half of a multi-select filter
+    // (`?topic=minecraft&topic=roblox`) on a language switch. next-intl's query
+    // serializer takes an array and re-emits every value.
+    const query = Object.fromEntries(
+      [...new Set(searchParams.keys())].map((key) => {
+        const values = searchParams.getAll(key);
+        return [key, values.length > 1 ? values : values[0]];
+      }),
+    );
     const hash = typeof window === "undefined" ? "" : window.location.hash;
     const target = getPathname({
       // @ts-expect-error -- next-intl's own locale-switcher shape. `pathname`
