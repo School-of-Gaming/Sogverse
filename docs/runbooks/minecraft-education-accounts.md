@@ -153,10 +153,13 @@ passwords, so both live in the script's gitignored output folder,
 `scripts/output/minecraft-edu-accounts/`, beside any pre-deletion snapshot. They
 go to the admin out of band and are regenerated on the next reset.
 
-**Rule: the next `plan` overwrites the plan file and the handout — copy both out
-first.** The plan file is the only machine-readable record of the passwords of
-accounts that are already live, and an additive pass leaves those accounts in
-service.
+**Rule: once `verify` produces the handout, the admin uploads it to Google Sheets,
+and that upload is the record.** From then on both local files are scratch: a new
+`plan` overwrites them with no backup step, because the passwords of live accounts
+are already held remotely. The plan file matters only while a batch is unfinished —
+a partial `create` re-runs from it, and `verify` rebuilds the handout from it with
+blank *Club* and *Student* columns, which is why those are filled in on the
+uploaded sheet and never in the local file.
 
 The handout is `minecraft-edu-accounts.xlsx` in that folder: a frozen, filterable header, gedu
 pool logins tinted apart from gamer accounts so one is never handed to a child,
