@@ -161,8 +161,8 @@ export interface CheckboxRowProps {
  * The app has one checkbox *primitive* and had as many compositions around it
  * as there were surfaces asking a question — a registration form, a signup
  * panel, an admin product form — each hand-assembling the same label, gap, hint
- * indent and `mt-0.5` from memory, and each drifting from the others by a gap
- * unit here and a hover treatment there. This is that composition, once. **New
+ * indent and box alignment from memory, and each drifting from the others by a
+ * gap unit here and a hover treatment there. This is that composition, once. **New
  * consent-shaped surfaces reach for this rather than assembling their own.**
  *
  * **Its scope is a question asked on its own, not a checkbox inside a form.**
@@ -210,9 +210,11 @@ export interface CheckboxRowProps {
  * reader who cannot see the colour: the word travels in the sentence, never in
  * the styling.
  *
- * The box pins to the first line of a wrapping sentence (`mt-0.5`) rather than
- * centring on the whole block, which is what keeps a three-line consent from
- * putting its checkbox halfway down the paragraph.
+ * The box pins to the first line of a wrapping sentence rather than centring
+ * on the whole block, which is what keeps a three-line consent from putting
+ * its checkbox halfway down the paragraph. It does so structurally — a column
+ * one line tall that the box centres in — and never by a margin: an offset is
+ * a number tuned to one text size, and this row has two.
  *
  * **There are two arrangements of the same row, and `title` is what picks
  * between them.** Without one, the sentence sits beside the box and names it.
@@ -256,18 +258,25 @@ const CheckboxRow = React.forwardRef<HTMLInputElement, CheckboxRowProps>(
       (id): id is string => id !== undefined,
     );
 
+    // The box sits inside a column exactly one line of the row's own text tall
+    // (`1lh` resolves against the inherited line-height), centred in it. That
+    // is what pins it to the *first* line of a wrapping sentence and keeps it
+    // level with the title at every size: the column is 16px on an `xs` row
+    // and 20px on an `sm` one without either being named here. A margin would
+    // have been a number tuned to one size and wrong at the other.
     const box = (
-      <Checkbox
-        ref={ref}
-        className="mt-0.5"
-        checked={checked}
-        onChange={(e) => onCheckedChange(e.target.checked)}
-        disabled={disabled}
-        aria-labelledby={labelId}
-        aria-describedby={
-          described.length === 0 ? undefined : described.join(" ")
-        }
-      />
+      <span className="flex h-[1lh] shrink-0 items-center">
+        <Checkbox
+          ref={ref}
+          checked={checked}
+          onChange={(e) => onCheckedChange(e.target.checked)}
+          disabled={disabled}
+          aria-labelledby={labelId}
+          aria-describedby={
+            described.length === 0 ? undefined : described.join(" ")
+          }
+        />
+      </span>
     );
 
     const hintLine = hint !== undefined && (

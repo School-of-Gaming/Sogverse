@@ -210,8 +210,14 @@ describe("a bundle of documents", () => {
     const row = rows(container)[0];
     const box = row.querySelector<HTMLInputElement>('input[type="checkbox"]');
     if (!box) throw new Error("the bundle row rendered no checkbox");
-    const tickLine = box.closest("span")?.parentElement;
-    if (!tickLine) throw new Error("the box rendered outside any line");
+    // The tick's line is the row's first child, found from the row rather than
+    // by climbing a fixed number of levels from the input: the box sits inside
+    // its own one-line column, and how deep that nests is the component's
+    // business, not the test's.
+    const tickLine = row.firstElementChild;
+    if (!tickLine || !tickLine.contains(box)) {
+      throw new Error("the box rendered outside the row's first line");
+    }
 
     // The short name shares the tick's line; the sentence — three lines of
     // conditions naming two documents — runs the row's full width beneath it
