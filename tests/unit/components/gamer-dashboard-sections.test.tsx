@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
+import { NO_TOPIC_PREP_READY } from "@/components/topic-prep/topic-prep-cookie";
 import { GamerDashboardPageBody } from "@/components/gamer/gamer-dashboard-page-body";
 import {
   GAMER_DASHBOARD_FIRST_NAME,
@@ -69,6 +70,7 @@ function dashboardHtml(scenario: "typical" | "empty"): string {
               <GamerDashboardPageBody
                 firstName={GAMER_DASHBOARD_FIRST_NAME}
                 enrollments={enrollments}
+                prepDismissed={NO_TOPIC_PREP_READY}
                 // A node, exactly as the live shell and the preview scene pass
                 // one. What it holds is the form's business, not this page's.
                 helpForm={<div />}

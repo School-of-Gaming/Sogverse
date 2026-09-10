@@ -48,12 +48,20 @@ import { ACTIVITY_HEADING_KEY, activityTypeSections } from "@/lib/activity-type"
 export function GamerDashboardPageBody({
   firstName,
   enrollments,
+  prepDismissed,
   helpForm,
 }: {
   /** The child's own first name, for the greeting. */
   firstName: string;
   /** This gamer's enrollments, already sorted soonest-session-first. */
   enrollments: readonly FamilyEnrollmentSummary[];
+  /**
+   * The enrolments this child has already finished the prep guide for, parsed
+   * from the cookie by whatever rendered the page. Handed straight to the
+   * cards; the body has no opinion about it beyond carrying it, and it is a
+   * required prop so a surface cannot forget to answer the question.
+   */
+  prepDismissed: ReadonlySet<string>;
   /**
    * The ask-for-help-or-send-feedback form, in its child-facing wording. A node
    * so the shell owns the POST behind it and a preview scene can hand over an
@@ -161,6 +169,7 @@ export function GamerDashboardPageBody({
                       <EnrollmentCard
                         key={enrollment.participationId}
                         enrollment={enrollment}
+                        prepDismissed={prepDismissed}
                         audience="gamer"
                       />
                     ))}

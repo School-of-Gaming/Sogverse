@@ -175,6 +175,22 @@ import {
  */
 interface EnrollmentCardCommonProps {
   enrollment: FamilyEnrollmentSummary;
+  /**
+   * The enrolments this viewer has already finished the prep guide for, read
+   * from the cookie by whatever rendered the page.
+   *
+   * **A set handed down rather than a question the card asks**, and that is the
+   * whole of the fix it belongs to: the answer lives in a cookie precisely so
+   * the *server* can read it, and a card that went looking for it itself could
+   * only find it a tick after hydration — which is how the Join button used to
+   * flash in the slot the guide was about to take.
+   *
+   * Required rather than optional: a surface that forgets it would offer every
+   * family a guide they have already finished with, and that failure is
+   * invisible to whoever renders the card. A surface with nothing dismissed
+   * passes `NO_TOPIC_PREP_READY`.
+   */
+  prepDismissed: ReadonlySet<string>;
 }
 
 /**
@@ -337,7 +353,7 @@ const WAITLIST_FOOTER_KEY = {
 } as const;
 
 export function EnrollmentCard(props: EnrollmentCardProps) {
-  const { enrollment } = props;
+  const { enrollment, prepDismissed } = props;
   // Narrowed once, so every adult-only branch below reads as one question ("is
   // there somebody paying behind this card?") rather than repeating the
   // audience check beside each of the props it guards. Both parent arms answer
@@ -364,6 +380,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
     productType,
     topic,
     isRemote,
+    prepWindowEnd,
     nextSessionStart,
     nextSessionEnd,
     hasVoiceRoom,
@@ -457,34 +474,64 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
    * in-person filter, and it answers `null` for a topic where School of Gaming
    * supplies the machines and the logins alike.
    *
-   * The dismissal is asked last because it is the only one of the three that
-   * cannot be answered on the server — see the hook.
+   * The dismissal comes in as a prop, so all three questions are answerable on
+   * the server and this card paints its final footer on the first frame.
    */
   const prepPlan =
     endedOn === null && !waitlisted ? resolveTopicPrep(topic, isRemote) : null;
-  const prepDismissal = useTopicPrepDismissal(participationId);
+  const prepDismissal = useTopicPrepDismissal(
+    participationId,
+    prepDismissed.has(participationId),
+  );
   /**
-   * Whether to draw the affordance *now*. `unresolved` — the server's answer
-   * and the first client paint's — deliberately draws nothing, so the affordance
-   * only ever *arrives* after mount and never has to disappear from under a
-   * reader who has already been offered it.
+   * **Is the offer still this family's to take** — the fourth question, and the
+   * one that keeps a release day quiet.
+   *
+   * The guide is written for a family's first two sessions; past the end of the
+   * second one they have been turning up for as long as anybody could learn
+   * anything from it, and a card asking them to confirm a "Before the first
+   * session" dialog to get its Join button back would be an insult with an
+   * extra click on it. `null` is no end at all — an unplaced seat, a product
+   * with nothing scheduled — and the offer stands until it is answered.
    */
-  const prepOffered = prepPlan !== null && prepDismissal.state === "pending";
+  const prepWindowOpen =
+    prepWindowEnd === null || now.getTime() < prepWindowEnd.getTime();
+  /**
+   * The same answer, **frozen at the card's first render**.
+   *
+   * The live one is safe in the Join's slot: that slot holds a button either
+   * way, so a window closing on the clock's own schedule swaps button for
+   * button and nothing moves. On the two *additive* placements the button would
+   * simply vanish mid-read, shrinking the card and pulling the column up under
+   * whoever was looking at it — a change on data's own schedule, which is
+   * exactly what the layout rule forbids. So those two ask this instead: the
+   * offer they were drawn with is the offer they keep until the page is loaded
+   * again.
+   */
+  const [prepWindowOpenAtFirstPaint] = useState(prepWindowOpen);
+  /** Somewhere to offer, and nobody has finished with it yet. */
+  const prepUnanswered = prepPlan !== null && !prepDismissal.ready;
   /**
    * Whether this card draws a Join at all — the question the prep affordance's
    * placement turns on, and the same three conditions the footer's Join branch
    * has always used, named once so the two cannot drift apart.
    */
   const hasJoin = running && hasVoiceRoom && hasNext;
-  /** The locked Join's slot, taken over while there is a guide to read. */
-  const prepInJoinSlot = prepOffered && hasJoin && !voiceIsOpen;
+  /**
+   * The locked Join's slot, taken over while there is a guide to read — and
+   * given back the moment the window closes, on the live clock, because a
+   * button-for-button swap in one slot moves nothing.
+   */
+  const prepInJoinSlot = prepUnanswered && prepWindowOpen && hasJoin && !voiceIsOpen;
   /** A lit Join keeps its slot; the guide steps down to a quiet link below it. */
-  const prepBesideJoin = prepOffered && hasJoin && voiceIsOpen;
+  const prepBesideJoin =
+    prepUnanswered && prepWindowOpenAtFirstPaint && hasJoin && voiceIsOpen;
   /**
    * No Join to sit in or beside — the in-person card naming its site, and the
    * unplaced seat waiting on a Gedu. The button goes under the sentence.
    */
-  const prepUnderSentence = prepOffered && !hasJoin;
+  const prepUnderSentence =
+    prepUnanswered && prepWindowOpenAtFirstPaint && !hasJoin;
   const leaving = billing?.leavingWaitlist ?? false;
   /** The one interactive element a waitlisted card has, and adults only. */
   const onLeaveWaitlist = waitlisted ? billing?.onLeaveWaitlist : undefined;
@@ -773,7 +820,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                       <TopicPrepAffordance
                         variant="button"
                         plan={prepPlan}
-                        onReady={prepDismissal.dismiss}
+                        onReady={prepDismissal.markReady}
                       />
                     ) : (
                       <JoinVoiceButton
@@ -838,7 +885,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                   <TopicPrepAffordance
                     variant={prepBesideJoin ? "link" : "button"}
                     plan={prepPlan}
-                    onReady={prepDismissal.dismiss}
+                    onReady={prepDismissal.markReady}
                   />
                 </span>
               )}

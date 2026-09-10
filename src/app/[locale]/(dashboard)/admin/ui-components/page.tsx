@@ -7,6 +7,7 @@ import {
   useContext,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -92,12 +93,7 @@ import {
   GEDU_CONTRACT_CURRENT_VERSION,
 } from "@/components/gedu/contract/documents";
 import { buildGeduContractAcceptance } from "@/components/gedu/contract/mock-contract-fixtures";
-import { useAuth, useNow, useTimezone } from "@/providers";
-import {
-  forgetTopicPrepDismissal,
-  seedTopicPrepDismissals,
-  topicPrepDismissalKey,
-} from "@/components/topic-prep/use-topic-prep-dismissal";
+import { useNow, useTimezone } from "@/providers";
 import { useLocale, useTranslations } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
 import { computeGlowStyle } from "@/lib/voice/glow";
@@ -1446,9 +1442,6 @@ function EnrollmentCardDemo() {
   const now = useNow();
   const locale = resolveLocale(useLocale());
   const timeZone = useTimezone();
-  // The viewer half of every dismissal key — the admin reading this page, since
-  // they are who these cards are being drawn for.
-  const { user } = useAuth();
 
   // Built once from the first tick, for the reason the dashboard scenes hold
   // theirs: re-deriving every slot from a new `now` every thirty seconds would
@@ -1572,30 +1565,31 @@ function EnrollmentCardDemo() {
    * **What each card below is a demo of, decided rather than inherited.**
    *
    * Every remote fixture here has a guide behind it — a topic with steps of its
-   * own, or the shared voice-room step every remote product carries — so left
+   * own, or the shared voice-room step every remote product carries — and every
+   * one of them was enrolled just now, so their prep windows are open. Left
    * alone the affordance would take the locked Join's slot on the four cards
    * whose whole subject is what sits in that slot, and each of them would be a
-   * picture of the wrong thing. The dismissal is keyed by viewer and
-   * participation, so those four are seeded as already answered, and the one
-   * card that *is* about the guide is forgotten in the same breath: an admin
-   * who answered its dialog last week would otherwise have put the demo away
-   * for good.
+   * picture of the wrong thing.
    *
-   * Seeded in a `useState` initializer rather than an effect, so it is in place
-   * before these cards take their first snapshot after hydration and the seeded
-   * four never flash "Get ready".
+   * So those four are handed to the cards as **already answered**, and the one
+   * card that *is* about the guide is not. A literal set rather than a seeded
+   * store: the answer is a prop now, read from a cookie by whatever renders the
+   * page, so a fixture surface states it the same way the dashboard does — and
+   * an admin who answered the demo's dialog last week does not arrive to find
+   * the demo gone, because nothing here reads what they wrote.
    */
-  useState(() => {
-    const keyFor = (participationId: string) =>
-      topicPrepDismissalKey(user?.id ?? null, participationId);
-    seedTopicPrepDismissals(
-      [cards.locked, cards.badged, cards.cancelled, cards.cancelledNoDate].map(
-        (card) => keyFor(card.participationId),
+  const prepDismissed: ReadonlySet<string> = useMemo(
+    () =>
+      new Set(
+        [
+          cards.locked,
+          cards.badged,
+          cards.cancelled,
+          cards.cancelledNoDate,
+        ].map((card) => card.participationId),
       ),
-    );
-    forgetTopicPrepDismissal(keyFor(cards.prepOffered.participationId));
-    return null;
-  });
+    [cards],
+  );
 
   // A no-op rather than an omitted prop: absent, the leave affordance is not
   // drawn at all, and the demo's whole job on that card is showing that it is.
@@ -1620,12 +1614,19 @@ function EnrollmentCardDemo() {
     enrollment: (typeof cards)[keyof typeof cards],
   ) => {
     if (audience === "gamer") {
-      return <EnrollmentCard enrollment={enrollment} audience="gamer" />;
+      return (
+        <EnrollmentCard
+          enrollment={enrollment}
+          prepDismissed={prepDismissed}
+          audience="gamer"
+        />
+      );
     }
     if (audience === "self") {
       return (
         <EnrollmentCard
           enrollment={enrollment}
+          prepDismissed={prepDismissed}
           audience="self"
           onOpenPortal={inert}
           onLeaveWaitlist={inert}
@@ -1636,6 +1637,7 @@ function EnrollmentCardDemo() {
     return (
       <EnrollmentCard
         enrollment={enrollment}
+        prepDismissed={prepDismissed}
         audience="customer"
         gamerFirstName="Aino"
         onOpenPortal={inert}

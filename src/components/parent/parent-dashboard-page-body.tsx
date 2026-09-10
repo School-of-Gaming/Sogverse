@@ -198,6 +198,7 @@ const SELF_SECTION_ID = "self";
 export function ParentDashboardPageBody({
   gamers,
   self = null,
+  prepDismissed,
   billingCard,
   helpForm,
   onAddGamer,
@@ -220,6 +221,16 @@ export function ParentDashboardPageBody({
    * as the plain no-parent-seats page it already was.
    */
   self?: ParentDashboardParticipant | null;
+  /**
+   * The enrolments this reader has already finished the prep guide for, parsed
+   * from the cookie by whatever rendered the page — a parent's own answers, and
+   * the ones they gave on their children's cards, since a parent and a child
+   * share a browser and this is the reader's half of that key.
+   *
+   * Handed straight to the cards; the body has no opinion about it beyond
+   * carrying it, and it is required so a surface cannot forget to answer.
+   */
+  prepDismissed: ReadonlySet<string>;
   /** The Stripe portal card. A node, so the shell owns its actions. */
   billingCard: React.ReactNode;
   /**
@@ -461,6 +472,7 @@ export function ParentDashboardPageBody({
                         <EnrollmentCard
                           key={enrollment.participationId}
                           enrollment={enrollment}
+                          prepDismissed={prepDismissed}
                           audience="customer"
                           // Only inside the leave dialog, never on the card
                           // face: the heading two rows up already says whose
@@ -567,6 +579,7 @@ export function ParentDashboardPageBody({
                   <EnrollmentCard
                     key={enrollment.participationId}
                     enrollment={enrollment}
+                    prepDismissed={prepDismissed}
                     audience="self"
                     onOpenPortal={onOpenPortal}
                     // No `onJoinClick`, and the omission is the feature: the

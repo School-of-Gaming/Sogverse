@@ -4,6 +4,7 @@ import {
   rollUpGamerEnrollments,
   sortFamilyEnrollments,
   toFamilyEnrollments,
+  topicPrepWindowEnd,
   type FamilyEnrollmentSummary,
 } from "@/components/family/enrollment-rollup";
 import type { SupportedLocale } from "@/lib/constants/locales";
@@ -67,6 +68,8 @@ function enrollment(
     // card is where they mean anything.
     topic: "minecraft_java",
     isRemote: true,
+    // Not read by the sort either; the window rule has its own describe below.
+    prepWindowEnd: null,
     nextSessionStart: start,
     nextSessionEnd: start === null ? null : new Date(start.getTime() + 5_400_000),
     hasVoiceRoom: true,
@@ -255,6 +258,11 @@ function sessionRow(
       ...(product ?? {}),
     },
     groupId: overrides.groupId === undefined ? GROUP : overrides.groupId,
+    // A seat taken a fortnight ago and placed the same day — the ordinary
+    // shape, and far enough back that the prep window's own cases can move it
+    // without the other cases caring.
+    signedUpAt: new Date("2026-01-28T09:00:00.000Z"),
+    groupJoinedAt: new Date("2026-01-28T09:00:00.000Z"),
     slots: [FRIDAY_SLOT],
     paymentProblem: false,
     subscriptionEndsAt: null,
@@ -855,5 +863,183 @@ describe("rollUpGamerEnrollments — one child's own page", () => {
       "participation-1",
       "waitlist-1",
     ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The prep guide's window
+// ---------------------------------------------------------------------------
+
+/**
+ * **How long a family is offered the "Before the first session" guide.**
+ *
+ * The rule is the family's own first two sessions: from the moment the seat
+ * became theirs to the end of the second session that starts after it. It
+ * exists because the alternative — offering it to everybody — means a family
+ * who has been turning up happily since February is asked to confirm a dialog
+ * about their first session to get their card's button back.
+ *
+ * Two sessions rather than one, because the first session is where a setup
+ * problem is *discovered* rather than where it stops mattering; and sessions
+ * rather than days, because a weekly club and a daily camp are the same amount
+ * of experience at wildly different distances from the purchase.
+ */
+describe("topicPrepWindowEnd", () => {
+  const at = (iso: string, minutes: number) => ({
+    start: new Date(iso),
+    end: new Date(Date.parse(iso) + minutes * 60_000),
+  });
+
+  const MOMENT = new Date("2026-02-01T12:00:00.000Z");
+
+  it("ends with the second session, when there are two or more", () => {
+    const end = topicPrepWindowEnd(
+      [
+        at("2026-02-06T17:00:00.000Z", 90),
+        at("2026-02-13T17:00:00.000Z", 90),
+        at("2026-02-20T17:00:00.000Z", 90),
+      ],
+      MOMENT,
+    );
+
+    expect(end?.toISOString()).toBe("2026-02-13T18:30:00.000Z");
+  });
+
+  it("ends with the only session there is — which is what an event has", () => {
+    const end = topicPrepWindowEnd(
+      [at("2026-02-06T17:00:00.000Z", 240)],
+      MOMENT,
+    );
+
+    expect(end?.toISOString()).toBe("2026-02-06T21:00:00.000Z");
+  });
+
+  /**
+   * No end at all rather than an end in the past. A product with nothing on its
+   * schedule and a seat nobody has placed both land here, and both are a family
+   * with the whole setup ahead of them and no date to measure it against.
+   */
+  it("has no end when nothing is scheduled after the moment", () => {
+    expect(topicPrepWindowEnd([], MOMENT)).toBeNull();
+  });
+
+  /**
+   * A family placed mid-session did not attend that one, so it must not spend
+   * half their window; a family placed fifteen minutes before one gets that
+   * session and the one after it.
+   */
+  it("counts only the sessions that start after the moment", () => {
+    const quarterHourBefore = new Date("2026-02-06T16:45:00.000Z");
+
+    const end = topicPrepWindowEnd(
+      [
+        // In progress when they were placed — theirs to sit in, but not theirs
+        // to learn from, and it does not count.
+        at("2026-02-06T16:00:00.000Z", 90),
+        at("2026-02-06T17:00:00.000Z", 90),
+        at("2026-02-13T17:00:00.000Z", 90),
+      ],
+      quarterHourBefore,
+    );
+
+    expect(end?.toISOString()).toBe("2026-02-13T18:30:00.000Z");
+  });
+});
+
+describe("toFamilyEnrollments — the prep window on a row", () => {
+  /** The default row: a seat taken on 28 January, placed the same day. */
+  it("closes with the second session after the seat was taken", () => {
+    const summary = mapOne({ sessionRows: [sessionRow()] });
+
+    // Fridays: 30 Jan is their first, 6 Feb their second — both behind NOW, so
+    // this card offers nothing, which is what every long-standing seat looks
+    // like the day this ships.
+    expect(summary.prepWindowEnd?.toISOString()).toBe(
+      "2026-02-06T18:30:00.000Z",
+    );
+  });
+
+  /**
+   * **The later of the two stamps, and the reason it is the later one.** A
+   * family promoted off the waitlist joined the queue weeks before the seat was
+   * theirs; counting from the day they queued would hand them a window that
+   * closed before they had anything to prepare for.
+   */
+  it("counts from the placement, not from the day they joined the queue", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({
+          signedUpAt: new Date("2025-11-03T09:00:00.000Z"),
+          groupJoinedAt: new Date("2026-02-13T16:45:00.000Z"),
+        }),
+      ],
+    });
+
+    // Placed a quarter of an hour before the 13 February session: that one is
+    // theirs and so is the following Friday.
+    expect(summary.prepWindowEnd?.toISOString()).toBe(
+      "2026-02-20T18:30:00.000Z",
+    );
+  });
+
+  it("takes the sign-up stamp when it is the later of the two", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({
+          signedUpAt: new Date("2026-02-13T16:45:00.000Z"),
+          groupJoinedAt: new Date("2026-02-01T09:00:00.000Z"),
+        }),
+      ],
+    });
+
+    expect(summary.prepWindowEnd?.toISOString()).toBe(
+      "2026-02-20T18:30:00.000Z",
+    );
+  });
+
+  it("ends with the run's only remaining session on a one-session product", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({
+          signedUpAt: new Date("2026-02-11T09:00:00.000Z"),
+          groupJoinedAt: new Date("2026-02-11T09:00:00.000Z"),
+          product: { endDate: "2026-02-14" },
+        }),
+      ],
+    });
+
+    expect(summary.prepWindowEnd?.toISOString()).toBe(
+      "2026-02-13T18:30:00.000Z",
+    );
+  });
+
+  it("has no end when the schedule projects nothing after the seat was taken", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({
+          signedUpAt: new Date("2026-02-11T09:00:00.000Z"),
+          groupJoinedAt: new Date("2026-02-11T09:00:00.000Z"),
+          product: { endDate: "2026-02-12" },
+        }),
+      ],
+    });
+
+    expect(summary.prepWindowEnd).toBeNull();
+  });
+
+  /** Nobody has been placed, so there are no sessions of theirs to count. */
+  it("has no end on an unplaced seat", () => {
+    const summary = mapOne({
+      sessionRows: [sessionRow({ groupId: null, groupJoinedAt: null })],
+    });
+
+    expect(summary.prepWindowEnd).toBeNull();
+  });
+
+  /** A queue place never offers the guide, so it states no window either. */
+  it("carries no window on a waitlist place", () => {
+    const summary = mapOne({ waitlistRows: [waitlistRow()] });
+
+    expect(summary.prepWindowEnd).toBeNull();
   });
 });

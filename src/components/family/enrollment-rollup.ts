@@ -13,6 +13,7 @@ import {
   endDateToCutoff,
   enumerateRowOccurrences,
   startDateToCutoff,
+  type SlotShape,
 } from "@/lib/session-occurrence";
 import type { FamilyMember } from "@/services/family";
 import type {
@@ -76,6 +77,25 @@ export interface FamilyEnrollmentSummary {
    * card reading one for the other would print the wrong guide.
    */
   isRemote: boolean;
+  /**
+   * The instant this enrollment stops being offered the prep guide, or `null`
+   * for an offer with no end in sight.
+   *
+   * **The guide is for the family's first two sessions and nobody else.** A
+   * family who has been turning up happily for months is set up by definition,
+   * and asking them to confirm a "Before the first session" dialog to get their
+   * card back would be the platform noticing them for the first time on the
+   * day we shipped this. So the offer is bounded by the run's own beginning
+   * *for them*: from the moment the seat became theirs to the end of the second
+   * session that starts after it. See `topicPrepWindowEnd`.
+   *
+   * **The end travels, not an is-it-open boolean**, because the card holds the
+   * live clock and the summary does not: a window closing while a page is open
+   * has to close on the card too. `null` means no end — a seat nobody has been
+   * placed in yet, or a product with nothing on its schedule — and there the
+   * offer stands until the family says they are ready.
+   */
+  prepWindowEnd: Date | null;
   /**
    * Start of the soonest session still worth showing, or `null` when there is
    * none: a waitlisted enrollment with no placement, or a run whose schedule has
@@ -199,6 +219,106 @@ export function enrollmentLiveness(
   now: Date,
 ): RunLiveness {
   return runLiveness(enrollment, now);
+}
+
+/**
+ * How many of the family's *own* sessions the "Before the first session" guide
+ * is offered across.
+ *
+ * Two rather than one, because the first session is where a setup problem is
+ * discovered rather than where it stops mattering: a family who could not get
+ * the account working on Monday is exactly the family who wants the steps again
+ * before Wednesday. Two rather than a fixed number of days, because a club
+ * meeting weekly and a camp meeting every morning are the same two sessions of
+ * experience at wildly different distances from the purchase.
+ */
+export const TOPIC_PREP_WINDOW_SESSIONS = 2;
+
+/**
+ * The instant the prep offer closes, given the occurrences ahead of the moment
+ * the seat became this family's.
+ *
+ * **Only occurrences that *start* after the moment count.** A family placed
+ * mid-session did not attend that one, so it teaches them nothing and must not
+ * spend half their window; a family placed fifteen minutes before a session
+ * gets that session and the one after it.
+ *
+ * Three answers, and the third is the one worth stating outright:
+ *
+ * - two or more ahead → the **end of the second**, which is the ordinary case;
+ * - exactly one ahead → the end of that one, which is what a single-afternoon
+ *   event has and all it could ever have;
+ * - none ahead → **`null`, meaning no end at all.** A seat nobody has been
+ *   placed in yet and a product with nothing on its schedule both land here,
+ *   and both are a family with the whole setup ahead of them and no date to
+ *   measure it against. Closing the offer on them would withhold the guide from
+ *   precisely the reader it is written for.
+ *
+ * Takes the occurrences rather than fetching them, so the same rule serves the
+ * live roll-up and a fixture. They are expected soonest-first, which is what
+ * every walk in this codebase emits.
+ */
+export function topicPrepWindowEnd(
+  occurrences: readonly { start: Date; end: Date }[],
+  startMoment: Date,
+): Date | null {
+  const theirs = occurrences.filter(
+    (occurrence) => occurrence.start.getTime() > startMoment.getTime(),
+  );
+  if (theirs.length === 0) return null;
+  const last = theirs[Math.min(TOPIC_PREP_WINDOW_SESSIONS, theirs.length) - 1];
+  return last.end;
+}
+
+/**
+ * The same answer, from a product's schedule rather than from a list — the form
+ * both the live roll-up and the dashboard fixtures want.
+ *
+ * The walk is the one every other surface runs, anchored at the start moment
+ * instead of at now, so the occurrences it yields are the family's first ones
+ * rather than the next ones.
+ *
+ * **The cap is the window plus slack, not the window.** A walk surfaces a
+ * session already in progress at its anchor as well as the future ones, and
+ * such an occurrence started *before* the moment and is filtered out — so
+ * asking for exactly two could hand back two the family never attends. Two
+ * spare covers every product that could exist (a slot in progress at the moment
+ * of placement, times the two slots that could overlap one).
+ */
+export function topicPrepWindowEndFromSchedule(args: {
+  slots: SlotShape[];
+  timezone: string;
+  /** When the seat became this family's — see `laterStamp`. */
+  startMoment: Date;
+  startBoundary: Date | null;
+  endBoundary: Date | null;
+}): Date | null {
+  const occurrences = enumerateRowOccurrences({
+    slots: args.slots,
+    timezone: args.timezone,
+    now: args.startMoment,
+    startBoundary: args.startBoundary,
+    endBoundary: args.endBoundary,
+    cap: TOPIC_PREP_WINDOW_SESSIONS + 2,
+    windowCloseMs: VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000,
+  });
+  return topicPrepWindowEnd(occurrences, args.startMoment);
+}
+
+/**
+ * When the seat became this family's: **the later of when they signed up and
+ * when they were put in a group.**
+ *
+ * A family promoted off the waitlist joined the queue weeks before the seat was
+ * theirs, and counting from the day they queued would hand them a prep window
+ * that closed before they had anything to prepare for. A family who bought
+ * outright is placed within a day or two, and there the two stamps are near
+ * enough that either would do — so the later one is right in both cases and
+ * needs no branch.
+ */
+export function laterStamp(a: Date, b: Date | null): Date {
+  if (b === null) return a;
+  return b.getTime() > a.getTime() ? b : a;
 }
 
 /**
@@ -640,6 +760,23 @@ function sessionSummary(
   const next = empty ? null : occurrences[0];
 
   return {
+    // **A second walk, anchored where the family's own run begins**, rather
+    // than a slice of the one above: that one starts at `now` and answers what
+    // is next, and the prep window is a question about what came *first* for
+    // this family, which on a club running since February is months behind it.
+    //
+    // An unplaced seat gets no end at all. Its sessions are not theirs to count
+    // until somebody puts them in a group, and it is the state with the most
+    // setup still ahead of it.
+    prepWindowEnd: awaiting
+      ? null
+      : topicPrepWindowEndFromSchedule({
+          slots: row.slots,
+          timezone: product.timezone,
+          startMoment: laterStamp(row.signedUpAt, row.groupJoinedAt),
+          startBoundary: startDateToCutoff(product.startDate, product.timezone),
+          endBoundary: endDateToCutoff(product.endDate, product.timezone),
+        }),
     participationId: row.participationId,
     productName: resolveTranslation(product.translations, locale)?.name ?? "",
     productType: product.type,
@@ -720,6 +857,12 @@ function waitlistSummary(
     productType: product.type,
     topic: product.topic,
     isRemote: product.isRemote,
+    // A queue place never offers the guide — there is no seat to get ready for
+    // — so there is no window to state either. `null` here would mean "no end
+    // in sight", which is the *opposite* of what a waitlist place is, and it is
+    // safe only because the card refuses the offer outright on a waitlisted
+    // enrollment before it ever asks about the window.
+    prepWindowEnd: null,
     nextSessionStart: null,
     nextSessionEnd: null,
     hasVoiceRoom: product.isRemote,
