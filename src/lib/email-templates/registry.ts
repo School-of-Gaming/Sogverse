@@ -82,8 +82,13 @@ import {
 } from "./fixtures/session-report-photos";
 import type { EmailRenderContext } from "./render-context";
 import type { RenderedAttachment } from "./attachments";
-import type { EmailTranslator } from "./translator";
+import type { EmailTranslator, TopicPrepTranslator } from "./translator";
 import { SUPPORTED_TIMEZONES } from "@/lib/calendar-invitations/ics-primitives";
+import {
+  topicHasPrep,
+  PRODUCT_TOPICS,
+  PRODUCT_TOPIC_VALUES,
+} from "@/lib/products/topics";
 import { DEFAULT_PRODUCT_TIMEZONE } from "@/lib/constants/location-hierarchies";
 import { formatDate, formatTimeRange } from "@/lib/utils";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
@@ -172,12 +177,21 @@ export interface TemplateDefinition {
    *
    * `context` says where the render is going, and defaults to the send — the
    * destination that has to be safe when a caller has not thought about it.
+   *
+   * `tPrep` is the **second** translator, scoped to the top-level `topicPrep`
+   * namespace, for the one template whose mail carries a document the app's own
+   * pages render word for word (see `translator.ts` for why that copy has one
+   * home rather than two). It is last and optional because exactly one template
+   * reads it: a render composed without it simply states no guide, which is the
+   * mail every other template sends anyway. Both real call sites — the admin
+   * preview and the test-send route — load it beside the first.
    */
   render: (
     rawParams: unknown,
     t: EmailTranslator,
     locale: string,
     context?: EmailRenderContext,
+    tPrep?: TopicPrepTranslator,
   ) => RenderedTemplate;
   /** Optional: transform UI field values into API params (e.g. a seat select → an `isSelfSeat` boolean). */
   resolveParams?: (params: Record<string, string>) => TemplateParams;
@@ -267,7 +281,20 @@ function defineResolvedTemplate<P extends TemplateParams, R>(entry: {
   label: string;
   fields: TemplateField[];
   schema: z.ZodType<P>;
-  resolve: (params: P, t: EmailTranslator, locale: string, context: EmailRenderContext) => R;
+  /**
+   * The resolution every part of the render reads. `tPrep` is the second
+   * translator described on `TemplateDefinition.render`, normalised to `null`
+   * where the caller gave none — a resolution is the one place a template that
+   * needs it can read it, since what it produces is spliced into the body and
+   * the text twin alike and must be composed exactly once.
+   */
+  resolve: (
+    params: P,
+    t: EmailTranslator,
+    locale: string,
+    context: EmailRenderContext,
+    tPrep: TopicPrepTranslator | null,
+  ) => R;
   build: (resolved: R, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
   subject: (resolved: R, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
   /**
@@ -295,9 +322,9 @@ function defineResolvedTemplate<P extends TemplateParams, R>(entry: {
   return {
     ...rest,
     schema,
-    render: (rawParams, t, locale, context = { to: "send" }) => {
+    render: (rawParams, t, locale, context = { to: "send" }, tPrep) => {
       const params = schema.parse(rawParams);
-      const resolved = resolve(params, t, locale, context);
+      const resolved = resolve(params, t, locale, context, tPrep ?? null);
       const files = attachments?.(resolved, t, locale, context);
       const plain = text?.(resolved, t, locale, context);
       return {
@@ -378,6 +405,26 @@ const PRODUCT_AUDIENCE_OPTIONS = [
   { label: "Parents", value: "parents" },
   { label: "Families (an audience and an age range)", value: "families" },
 ];
+
+/**
+ * The topics a product can carry, under their brand labels — the one field that
+ * decides which "Before the first session" guide the mail states, and whether
+ * it states one at all.
+ *
+ * **Roblox Studio leads because an untouched select posts its first option**,
+ * and the guide is what this field exists to look at: Roblox Studio's is the
+ * longest of the seven and the one adapted from a real working document, so the
+ * form nobody has typed into composes the render with the most to read. The
+ * rest follow the catalogue's own order. A topic with no guide is reachable one
+ * click away, and it is the mail this template sent before the guide existed.
+ */
+const PRODUCT_TOPIC_OPTIONS = [
+  "roblox_studio" as const,
+  ...PRODUCT_TOPIC_VALUES.filter((topic) => topic !== "roblox_studio"),
+].map((value) => ({
+  label: `${PRODUCT_TOPICS[value].label}${topicHasPrep(value) ? "" : " (no guide)"}`,
+  value,
+}));
 
 /** The spoken languages a product can be delivered in, from codegen. */
 const SPOKEN_LANGUAGE_OPTIONS = Constants.public.Enums.spoken_language.map(
@@ -513,6 +560,13 @@ function resolveProductConfirmationOptions(
     gamerCopy: params.gamerCopy,
     productName: params.productName,
     productType: params.productType,
+    // The guide's two inputs. `isRemote` is the same form field the invitation
+    // and the "Where" line read, so one select decides the document a family is
+    // sent and which half of the guide they are shown — a form that could tell
+    // them to install a launcher for a session we bring the machines to would
+    // be a form whose mail contradicts itself.
+    topic: params.topic,
+    isRemote,
     mode: params.mode,
     priceAmount: params.priceAmount,
     // Only a subscription ever states one, and the live send only knows the
@@ -746,6 +800,8 @@ const productConfirmationParamsSchema = z.object({
   isSelfSeat: z.boolean(),
   productName: z.string().min(1),
   productType: z.enum(Constants.public.Enums.product_type),
+  /** Which "Before the first session" guide the mail states, if any. */
+  topic: z.enum(Constants.public.Enums.product_topic),
   mode: z.enum(PRODUCT_CONFIRMATION_MODES),
   priceAmount: z.string().nullable(),
   dashboardUrl: z.string().url(),
@@ -1470,6 +1526,16 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "seat", label: "Whose seat, or whose copy", type: "select", options: PRODUCT_CONFIRMATION_SEAT_OPTIONS },
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
       { key: "productType", label: "Product Type", type: "select", options: PRODUCT_TYPE_OPTIONS },
+      {
+        // The guide's topic. Its other input is the "Runs online" select
+        // further down, which the invitation and the "Where" line already read:
+        // in person we bring the machines, so a guide read there is its
+        // accounts-only form and one topic's is nothing at all.
+        key: "topic",
+        label: "Topic (the “Before the first session” guide)",
+        type: "select",
+        options: PRODUCT_TOPIC_OPTIONS,
+      },
       { key: "mode", label: "Outcome", type: "select", options: PRODUCT_CONFIRMATION_MODE_OPTIONS },
       { key: "priceAmount", label: "Formatted Price", placeholder: "€40.00" },
       {
@@ -1586,8 +1652,16 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     schema: productConfirmationParamsSchema,
     // One resolution per render: the schedule is composed once and the body,
     // the text twin and the attached file all read that one composition.
-    resolve: (p, t, locale) =>
-      resolveProductConfirmation(t, locale, resolveProductConfirmationOptions(p, new Date())),
+    resolve: (p, t, locale, _context, tPrep) =>
+      resolveProductConfirmation(
+        t,
+        // The guide's own translator, or none. A caller that loaded only the
+        // `email` one composes the mail without the guide rather than failing:
+        // it is a section this mail carries, not a section it is made of.
+        tPrep,
+        locale,
+        resolveProductConfirmationOptions(p, new Date()),
+      ),
     build: (content, t, locale) => buildProductConfirmationEmail(t, locale, content),
     // Shared with the live sends rather than restated here — see the function's
     // own note for what the subject has to agree with.

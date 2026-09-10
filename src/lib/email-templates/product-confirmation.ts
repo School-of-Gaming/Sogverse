@@ -8,6 +8,7 @@ import {
   styledProductName,
 } from "./utils";
 import { bulletList, ctaButton, factList, sectionLabel } from "./blocks";
+import { buildTopicPrepSection, topicPrepText } from "./topic-prep";
 import { textAttachment, type RenderedAttachment } from "./attachments";
 import {
   composeProductConfirmationInvitation,
@@ -24,8 +25,8 @@ import {
   productScheduleDisplayLines,
   productWhoItsFor,
 } from "@/lib/products/product-overview-facts";
-import type { EmailTranslator } from "./translator";
-import type { ProductType } from "@/types";
+import type { EmailTranslator, TopicPrepTranslator } from "./translator";
+import type { ProductTopic, ProductType } from "@/types";
 
 /**
  * The mail that follows a signup: **the emailed twin of the purchase
@@ -58,6 +59,14 @@ import type { ProductType } from "@/types";
  * (The email translator is scoped to the `email` namespace and cannot reach the
  * page's `purchaseConfirmation` keys, so a sentence both surfaces state is two
  * strings in the message files. Editing one is editing half of it.)
+ *
+ * **The one thing both surfaces state from the same words is the "Before the
+ * first session" guide**, which is why this builder takes a second translator:
+ * the guide is a document rather than a line, and copying it under `email`
+ * would put the same paragraphs in five catalogs twice with nothing holding
+ * them equal. It renders on the enrolled outcome only — a waitlist join has no
+ * seat and therefore no first session — and on both copies, because the guide
+ * is one text written to read the same to a parent and to a gamer.
  *
  * **The four places the mail deliberately differs from the page**, each because
  * the medium differs rather than because the copy drifted:
@@ -173,6 +182,29 @@ export interface ProductConfirmationEmailOptions {
   isSelfSeat: boolean;
   productName: string;
   productType: ProductType;
+  /**
+   * The product's topic, which is what decides whether this mail carries the
+   * "Before the first session" guide and which guide it carries. Seven topics
+   * have one; the rest state none and the mail is the mail it always was.
+   */
+  topic: ProductTopic;
+  /**
+   * The product's `is_remote`, and the guide's filter: in person we bring the
+   * machines with everything installed, so an in-person product states only the
+   * account steps and a topic whose every step belongs to our machines states
+   * nothing at all.
+   *
+   * **Carried here rather than read out of `overview`, though that bundle holds
+   * the same column.** `overview` is the "Good to know" card's input and is
+   * allowed to be `null` on a send that could not read those facts — a mail
+   * with a shorter list, which is a presentation degradation. Which steps a
+   * family is told to take is not a fact about that card: telling an in-person
+   * family to install software they will never need is a wrong instruction
+   * rather than a missing row, so the filter does not travel inside an optional
+   * bundle. Both come off the one `products.is_remote` at each call site, which
+   * is what keeps them from disagreeing.
+   */
+  isRemote: boolean;
   mode: ProductConfirmationMode;
   /**
    * The price, already formatted in the reader's locale and currency by the
@@ -258,6 +290,17 @@ export interface ProductConfirmationContent {
   invitation: ProductConfirmationInvitation | null;
   /** `null` where the send had no product facts to state. */
   overview: ProductConfirmationFact[] | null;
+  /**
+   * The "Before the first session" guide, rendered **once** into both of the
+   * forms this mail states it in, or `null` where the mail carries none.
+   *
+   * The pair is resolved together for the same reason the calendar object is:
+   * the HTML body and the plain-text twin state the same document, and a guide
+   * composed once per callback could be shortened in one and not in the other
+   * — an in-person family reading "install the launcher" in their calendar
+   * entry's notes and not in the mail above it. One composition cannot do that.
+   */
+  topicPrep: { html: string; text: string[] } | null;
 }
 
 /**
@@ -271,6 +314,16 @@ export interface ProductConfirmationContent {
  */
 export function resolveProductConfirmation(
   t: EmailTranslator,
+  /**
+   * The second translator, scoped to the top-level `topicPrep` namespace —
+   * because the guide is one document shared word for word with pages the app
+   * renders, and `t` here cannot reach outside `email`. See `translator.ts`.
+   *
+   * `null` is a caller that has none to give, and it composes the mail without
+   * the guide. The live sends always hand one over; the admin harness's render
+   * path is where the absence is reachable at all.
+   */
+  tPrep: TopicPrepTranslator | null,
   locale: string,
   options: ProductConfirmationEmailOptions,
 ): ProductConfirmationContent {
@@ -292,7 +345,31 @@ export function resolveProductConfirmation(
       options.overview === null
         ? null
         : resolveOverview(t, locale, options.productType, options.overview),
+    topicPrep: resolveTopicPrepSection(tPrep, options),
   };
+}
+
+/**
+ * The guide's two forms, or nothing.
+ *
+ * **Never on a waitlist join**, whatever the topic says: there is no seat yet,
+ * so there is no first session to be ready for, and a guide telling a family to
+ * buy the game and install it beside a mail saying they are in a queue is the
+ * one thing this mail must not do.
+ *
+ * Both halves come back empty from the section builder on a topic with no
+ * guide, and on an in-person product whose every step belongs to a machine we
+ * are supplying — the same answer, and this collapses it to `null` so the body
+ * and its twin each have one thing to check.
+ */
+function resolveTopicPrepSection(
+  tPrep: TopicPrepTranslator | null,
+  options: ProductConfirmationEmailOptions,
+): ProductConfirmationContent["topicPrep"] {
+  if (tPrep === null || options.mode === "waitlist") return null;
+  const html = buildTopicPrepSection(tPrep, options.topic, options.isRemote);
+  if (html === "") return null;
+  return { html, text: topicPrepText(tPrep, options.topic, options.isRemote) };
 }
 
 /**
@@ -507,6 +584,20 @@ export function buildProductConfirmationEmail(
         firstChargeDate: escapeHtml(content.options.firstChargeDate ?? ""),
       }),
     )}
+    ${
+      // The guide comes after "what happens next" and before the button,
+      // because that list is where the mail says *when* the first session is
+      // and this is what to do before it — the same reason it sits under that
+      // card on the confirmation page. Both readers get it: the steps are one
+      // text written to read the same to a parent and to a gamer, so the
+      // child's copy carries the guide the parent's does.
+      //
+      // Already composed HTML from the section builder, spliced whole: it is
+      // empty on a topic with no guide, on an in-person product with nothing
+      // left to do, and on every waitlist join, and an empty string costs the
+      // mail nothing — no wrapper left behind, no gap to close.
+      content.topicPrep?.html ?? ""
+    }
     ${ctaButton({
       // One button, and it is the page's own primary. The page also offers a
       // "keep browsing" beside it, because a reader still standing in the shop
@@ -706,6 +797,10 @@ export function productConfirmationText(
       participantName,
       firstChargeDate: content.options.firstChargeDate ?? "",
     }).map((item) => `- ${item}`),
+    // The same guide the HTML states, at the same place in the document and
+    // from the same resolution — so the calendar entry's notes cannot hold a
+    // longer or shorter guide than the mail they were filled from.
+    ...(content.topicPrep === null ? [] : ["", ...content.topicPrep.text]),
     "",
     `${t("productConfirmation.dashboardButton")}: ${dashboardUrl}`,
     "",

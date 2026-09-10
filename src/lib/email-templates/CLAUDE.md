@@ -182,6 +182,17 @@ half when you touch either. The parity table that used to hold every shared key 
 in every locale is gone (owner's ruling: overkill for what it caught), and content parity
 is what replaced it.
 
+**The "Before the first session" guide is the one thing the two surfaces state in the same
+words, and it is why this mail takes a second translator.** Everywhere else a shared
+sentence is two strings in the catalog, kept equal by care; a multi-paragraph guide is not,
+so both surfaces read the top-level `topicPrep` namespace and the mail loads a translator
+scoped to it beside its own. It renders on the enrolled outcome only — a waitlist join has
+no seat and so no first session to be ready for — and on the child's copy as well as the
+parent's, because the guide is one text written to read the same to both. The mail places
+it after "what happens next" and before the button, for the reason the page places it after
+that card: the list says when the first session is, and the guide says what to do before
+it. A render handed no second translator states no guide rather than half of one.
+
 **Rule: a fact both surfaces state is formatted by one function, and that function lives
 in `src/lib/products/`.** The schedule lines, the club term range folded in beneath them,
 the "where" line and its Where/Format label, the three-shape "who is this for" answer —

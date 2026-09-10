@@ -6,10 +6,12 @@ import { CheckCircle2, Clock, Hourglass, Info, Loader2 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProductBanner } from "@/components/ui/product-banner";
+import { TopicPrepContent } from "@/components/topic-prep/TopicPrepContent";
 import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { productImageSrc } from "@/lib/images/product-image-url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveTopicPrep } from "@/lib/products/topics";
 import { formatCurrencyFromCents } from "@/lib/utils";
 import { formatFirstChargeDate } from "@/lib/stripe/first-charge-anchor";
 import { useTimezone } from "@/providers";
@@ -268,6 +270,34 @@ export function PurchaseConfirmationView({
             </ul>
           </CardContent>
         </Card>
+
+        {/* The "Before the first session" guide, after "what happens next"
+            because that card says *when* the first session is and this one says
+            what to do before it — the order a parent reads them in, and the
+            same order the mail states them in.
+
+            Enrolled only: a waitlist join is a place in a queue rather than a
+            seat, so there is no first session to be ready for and a guide
+            telling a family to buy the game would be the wrong instruction.
+
+            Asked through the shared predicate, exactly as the product page asks
+            it before drawing the About card's grid wrapper: the content
+            component returns null on its own, but a card around nothing is
+            still a card, and an empty one is a hole in the reading column. Both
+            checks read the one resolver, so they cannot disagree — and it
+            answers both halves at once (the topic has a guide, and at least one
+            of its steps applies to a product of this form). */}
+        {!isWaitlist && resolveTopicPrep(product.topic, product.is_remote) !== null && (
+          <Card className="mt-6">
+            <CardContent className="p-5 sm:p-6">
+              <TopicPrepContent
+                topic={product.topic}
+                isRemote={product.is_remote}
+                showHeading
+              />
+            </CardContent>
+          </Card>
+        )}
 
         {/* The app-wide button order shape — `src/CLAUDE.md`, "Button Order".
             My SOG is the affirmative (last in the DOM, so right in a row and

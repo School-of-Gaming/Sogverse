@@ -16,7 +16,10 @@ import {
   type ProductConfirmationMode,
 } from "@/lib/email-templates/product-confirmation";
 import type { InvitationSlot } from "@/lib/email-templates/product-confirmation-invitation";
-import { getEmailTranslator } from "@/lib/email-templates/translator";
+import {
+  getEmailTranslator,
+  getTopicPrepTranslator,
+} from "@/lib/email-templates/translator";
 import {
   resolveFamilyRecipients,
   type FamilyRecipient,
@@ -192,7 +195,10 @@ async function send({
         // The last five are the "Good to know" facts the mail states because
         // the confirmation page states them — the mail is that page's twin, so
         // its overview card reads the same columns through the same formatters.
-        "product_type, billing_mode, timezone, start_date, end_date, is_remote, min_age, max_age, for_gamers, for_parents, spoken_language_code, product_translations(locale, name, short_description)",
+        // `topic` is the "Before the first session" guide's one input beyond
+        // `is_remote`: which guide the mail carries, if any. It states no row
+        // of its own and is not one of the "Good to know" facts.
+        "product_type, billing_mode, topic, timezone, start_date, end_date, is_remote, min_age, max_age, for_gamers, for_parents, spoken_language_code, product_translations(locale, name, short_description)",
       )
       .eq("id", productId)
       // Embedded resources come back unordered, so a product without a
@@ -342,12 +348,23 @@ async function send({
     // usually does not have yet; see the composer's note on `dashboardUrl`.
     const dashboardUrl = `${origin}${gamerCopy ? ROUTES.gamer.dashboard : ROUTES.customer.dashboard}`;
     const t = await getEmailTranslator(locale);
+    // The guide's own translator, in this reader's locale beside the first one:
+    // it lives in the top-level `topicPrep` namespace, which a translator
+    // scoped to `email` cannot reach. Both read the same catalog, so the two
+    // cannot disagree about the locale.
+    const tPrep = await getTopicPrepTranslator(locale);
 
-    const content = resolveProductConfirmation(t, locale, {
+    const content = resolveProductConfirmation(t, tPrep, locale, {
       participantName,
       isSelfSeat,
       productName,
       productType: product.product_type,
+      // What the "Before the first session" guide is resolved from. Both copies
+      // carry it — one text, written to read the same to a parent and to a
+      // gamer — and a waitlist join carries none, which the resolver decides
+      // from the mode rather than this call site.
+      topic: product.topic,
+      isRemote: product.is_remote,
       mode,
       // The child's copy states no price, so it never reads one.
       priceAmount: gamerCopy

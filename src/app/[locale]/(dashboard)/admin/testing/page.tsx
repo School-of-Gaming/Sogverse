@@ -35,7 +35,10 @@ import {
   type TemplateField,
 } from "@/lib/email-templates/registry";
 import type { RenderedAttachment } from "@/lib/email-templates/attachments";
-import { getEmailTranslator } from "@/lib/email-templates/translator";
+import {
+  getEmailTranslator,
+  getTopicPrepTranslator,
+} from "@/lib/email-templates/translator";
 
 /**
  * The two viewports the preview frame can be given.
@@ -188,13 +191,21 @@ export default function TestingPage() {
 
     void (async () => {
       try {
-        const translate = await getEmailTranslator(locale);
+        // Both translators, from the one locale chunk: the second is scoped to
+        // the top-level `topicPrep` namespace, which the mail's own translator
+        // cannot reach, and is what lets the signup confirmation's "Before the
+        // first session" guide render in the preview as it does in the send.
+        const [translate, translatePrep] = await Promise.all([
+          getEmailTranslator(locale),
+          getTopicPrepTranslator(locale),
+        ]);
         if (previewRun.current !== run) return;
         const rendered = definition.render(
           templateApiParams(definition, params),
           translate,
           locale,
           { to: "preview", origin: window.location.origin },
+          translatePrep,
         );
         setPreview({
           subject: rendered.subject,

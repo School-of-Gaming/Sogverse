@@ -9,13 +9,23 @@ import {
   type ProductConfirmationOverviewInput,
 } from "@/lib/email-templates/product-confirmation";
 import type { ProductConfirmationInvitationInput } from "@/lib/email-templates/product-confirmation-invitation";
-import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
+import {
+  getEmailTranslator,
+  getTopicPrepTranslator,
+  type EmailTranslator,
+  type TopicPrepTranslator,
+} from "@/lib/email-templates/translator";
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 
 let t: EmailTranslator;
+/** The guide's own translator — the second namespace this mail reads. */
+let tPrep: TopicPrepTranslator;
 
 beforeAll(async () => {
-  t = await getEmailTranslator("en");
+  [t, tPrep] = await Promise.all([
+    getEmailTranslator("en"),
+    getTopicPrepTranslator("en"),
+  ]);
 });
 
 const DASHBOARD_URL = "https://sogverse.sog.gg/parent";
@@ -71,6 +81,11 @@ const base: ProductConfirmationEmailOptions = {
   isSelfSeat: false,
   productName: "Minecraft 101",
   productType: "consumer_club",
+  // A topic that carries a guide, on a remote product — the mail a family
+  // actually receives for this fixture, rather than one with the section
+  // silently missing.
+  topic: "minecraft_java",
+  isRemote: true,
   mode: "subscription",
   priceAmount: "€40.00",
   firstChargeDate: null,
@@ -81,7 +96,7 @@ const base: ProductConfirmationEmailOptions = {
 
 /** One render's content, resolved exactly as the registry and the sender do. */
 function resolve(overrides: Partial<ProductConfirmationEmailOptions> = {}) {
-  return resolveProductConfirmation(t, "en", { ...base, ...overrides });
+  return resolveProductConfirmation(t, tPrep, "en", { ...base, ...overrides });
 }
 
 function render(overrides: Partial<ProductConfirmationEmailOptions> = {}): string {
@@ -759,7 +774,10 @@ describe("the zone the times are given in", () => {
     const html = buildProductConfirmationEmail(
       translator,
       locale,
-      resolveProductConfirmation(translator, locale, base),
+      // No guide in this one: the case is about the zone abbrev on the
+      // schedule line, and the four catalogs need not agree on anything else
+      // for it.
+      resolveProductConfirmation(translator, null, locale, base),
     );
 
     expect(html).toContain(`(${abbrev})`);
@@ -787,5 +805,130 @@ describe("the zone the times are given in", () => {
 
     expect(winter).toContain("(GMT+2)");
     expect(summer).toContain("(GMT+3)");
+  });
+});
+
+/**
+ * The "Before the first session" guide, as this mail's section.
+ *
+ * The words themselves belong to the guide's own tests; what is asserted here
+ * is what the *mail* decides about it — that it is stated at all, on which
+ * renders, to which readers, and in both of the forms this mail states its
+ * content in. The two negatives are the load-bearing half: a waitlist join has
+ * no seat and therefore no first session to be ready for, and a topic with no
+ * guide has to leave the mail exactly as it was before the guide existed.
+ */
+describe("the “Before the first session” guide", () => {
+  const HEADING = "Before the first session";
+  /** Two of the Java guide's steps: an account step, and an install step. */
+  const ACCOUNT_STEP = "Get a Microsoft account with Minecraft on it";
+  const INSTALL_STEP = "Install the Minecraft Launcher";
+
+  it("states the guide on an enrolled signup", () => {
+    const html = render();
+    expect(html).toContain(HEADING);
+    expect(html).toContain(ACCOUNT_STEP);
+    expect(html).toContain(INSTALL_STEP);
+    expect(html).toContain("See you at the first session!");
+  });
+
+  /**
+   * One text, written to read the same to a parent and to a teenage gamer — so
+   * the copy that drops the price row and the billing bullets keeps this whole.
+   */
+  it("states the same guide in the child's own copy", () => {
+    const html = render({
+      gamerCopy: true,
+      priceAmount: null,
+      dashboardUrl: "https://sogverse.sog.gg/gamer",
+    });
+    expect(html).toContain(HEADING);
+    expect(html).toContain(ACCOUNT_STEP);
+    expect(html).toContain(INSTALL_STEP);
+  });
+
+  it("states none on a waitlist join, whatever the topic carries", () => {
+    for (const overrides of [{}, { gamerCopy: true }]) {
+      const html = render({ ...overrides, mode: "waitlist", priceAmount: null });
+      expect(html).not.toContain(HEADING);
+      expect(html).not.toContain(ACCOUNT_STEP);
+    }
+  });
+
+  it("states none for a topic that carries no guide", () => {
+    const html = render({ topic: "esports" });
+    expect(html).not.toContain(HEADING);
+    expect(html).not.toContain(ACCOUNT_STEP);
+  });
+
+  /**
+   * In person School of Gaming brings the machines with everything installed,
+   * so the guide shortens to its account steps — under the intro written for
+   * that form, because the ordinary one promises software to install.
+   */
+  it("states the accounts-only form for an in-person product", () => {
+    const html = render({ isRemote: false });
+    expect(html).toContain(HEADING);
+    expect(html).toContain(ACCOUNT_STEP);
+    expect(html).not.toContain(INSTALL_STEP);
+    expect(html).toContain("We bring the computers to these sessions");
+  });
+
+  /** Where the section sits: after what happens next, before the button. */
+  it("places the guide between the next steps and the My SOG button", () => {
+    const html = render();
+    expect(html.indexOf("What happens next")).toBeLessThan(html.indexOf(HEADING));
+    expect(html.indexOf(HEADING)).toBeLessThan(
+      html.indexOf(`href="${DASHBOARD_URL}"`),
+    );
+  });
+
+  /**
+   * The plain-text twin — which on a Microsoft mailbox is the calendar entry's
+   * own notes, so a family reading the session in their calendar weeks later
+   * finds the same guide the mail stated.
+   */
+  describe("the plain-text twin", () => {
+    function text(overrides: Partial<ProductConfirmationEmailOptions> = {}): string {
+      return productConfirmationText(
+        t,
+        resolve({ invitation: SCHEDULE, ...overrides }),
+      )!;
+    }
+
+    it("states the guide, in the mail's own order", () => {
+      const body = text();
+      expect(body).toContain(HEADING);
+      expect(body).toContain(`1. ${ACCOUNT_STEP}`);
+      expect(body).toContain(`2. ${INSTALL_STEP}`);
+      expect(body.indexOf("What happens next")).toBeLessThan(body.indexOf(HEADING));
+      expect(body.indexOf(HEADING)).toBeLessThan(body.indexOf(DASHBOARD_URL));
+    });
+
+    it("states the same guide in the child's own copy", () => {
+      expect(text({ gamerCopy: true, priceAmount: null })).toContain(ACCOUNT_STEP);
+    });
+
+    it("shortens with the HTML rather than separately", () => {
+      const inPerson = text({ isRemote: false });
+      expect(inPerson).toContain(ACCOUNT_STEP);
+      expect(inPerson).not.toContain(INSTALL_STEP);
+      expect(text({ topic: "esports" })).not.toContain(HEADING);
+    });
+  });
+
+  /**
+   * A caller with only the mail's own translator composes the mail without the
+   * guide — the admin harness's path when nothing loaded the second namespace.
+   * It is an absent section, never a half-rendered one.
+   */
+  it("states none when no guide translator was handed over", () => {
+    const html = buildProductConfirmationEmail(
+      t,
+      "en",
+      resolveProductConfirmation(t, null, "en", base),
+    );
+    expect(html).not.toContain(HEADING);
+    expect(html).toContain("Minecraft 101");
   });
 });
