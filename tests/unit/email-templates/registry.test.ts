@@ -328,7 +328,7 @@ describe("templateRegistry render()", () => {
         );
 
         expect(html).toContain("Before the first session");
-        expect(html).toContain("Make sure there is a Roblox account");
+        expect(html).toContain("Create a Roblox account");
       });
 
       it("states none for a label-only topic on the shared IN-PERSON fixture", async () => {
@@ -363,7 +363,7 @@ describe("templateRegistry render()", () => {
         );
 
         expect(html).toContain("Before the first session");
-        expect(html).toContain("Get the mic and camera ready");
+        expect(html).toContain("Set up the microphone and camera");
       });
     });
 

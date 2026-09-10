@@ -825,14 +825,14 @@ describe("the “Before the first session” guide", () => {
   const ACCOUNT_STEP = "Get a Microsoft account with Minecraft on it";
   const INSTALL_STEP = "Install the Minecraft Launcher";
   /** The step every remote guide ends on, whatever its topic. */
-  const REMOTE_STEP = "Get the mic and camera ready";
+  const REMOTE_STEP = "Set up the microphone and camera";
 
   it("states the guide on an enrolled signup", () => {
     const html = render();
     expect(html).toContain(HEADING);
     expect(html).toContain(ACCOUNT_STEP);
     expect(html).toContain(INSTALL_STEP);
-    expect(html).toContain("See you at the first session!");
+    expect(html).toContain("you’re ready for the session!");
   });
 
   /**
@@ -885,7 +885,7 @@ describe("the “Before the first session” guide", () => {
     expect(html).toContain(HEADING);
     expect(html).toContain(ACCOUNT_STEP);
     expect(html).not.toContain(INSTALL_STEP);
-    expect(html).toContain("We bring the computers to these sessions");
+    expect(html).toContain("We bring the computers to the session");
   });
 
   /** Where the section sits: after what happens next, before the button. */

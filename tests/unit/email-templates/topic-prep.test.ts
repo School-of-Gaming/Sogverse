@@ -135,7 +135,7 @@ describe("topic prep email section", () => {
     const lines = textLines("roblox_studio", false).join("\n");
     expect(lines).not.toContain("<b>");
     expect(lines).not.toContain("<strong");
-    expect(lines).toContain("Keep the password to yourselves");
+    expect(lines).toContain("create one for them");
   });
 
   it("states the same guide in the plain-text twin, numbered by hand", () => {
