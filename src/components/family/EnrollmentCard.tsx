@@ -18,6 +18,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
+import { Button } from "@/components/ui/button";
+import { TopicPrepDialog } from "@/components/topic-prep/TopicPrepDialog";
+import { useTopicPrepDismissal } from "@/components/topic-prep/use-topic-prep-dismissal";
+import { resolveTopicPrep } from "@/lib/products/topics";
+import type { ProductTopic } from "@/types";
 import { useNow, useTimezone } from "@/providers";
 import { cn, formatDate, formatDateOnly, formatTime } from "@/lib/utils";
 import { PaymentProblemBadge } from "@/components/parent/PaymentProblemBadge";
@@ -114,9 +119,40 @@ import {
  * stretched anchor, the chevron and the hover lift together: nothing about a
  * card may promise "there is more inside" when there is not. On the cards that
  * do link, an invisible stretched anchor covers the card, the chevron marks
- * that there is more inside, and the Join button — and *only* the Join button —
- * lifts itself above the anchor so it keeps receiving its own clicks. No `<a>`
- * inside `<a>`, so middle-click and prefetch both behave.
+ * that there is more inside, and **every control lifts itself above the
+ * anchor** so it keeps receiving its own clicks — the Join, and the prep
+ * affordance in either of its shapes. Nothing that is merely *text* is lifted:
+ * the site name, the ended-on date and the waitlist sentence stay under the
+ * anchor, because a lifted sentence is a strip of card that swallows clicks and
+ * does nothing. The test is whether the thing has a click of its own to
+ * receive. No `<a>` inside `<a>`, so middle-click and prefetch both behave, and
+ * a dialog one of these controls opens is portalled out of the card entirely,
+ * so nothing inside it can land on the anchor.
+ *
+ * **The prep affordance is offered once and then it is gone.** A topic can
+ * carry a "Before the first session" guide, and a family who has just bought a
+ * seat needs it; a family six weeks into a club has a working setup, and a
+ * card still pointing them at "create the account" is spending its one
+ * affordance slot on something they did in February. So it renders until the
+ * viewer says they are ready and never again — no reopen link, nothing left
+ * behind. Where it sits depends on what else the card has to offer:
+ *
+ * - **In the Join's slot, while the room is closed.** The locked "Opens Thu at
+ *   17:00" button is inert — it states a fact the schedule row above has
+ *   already stated — so until the guide is dismissed, the one button that slot
+ *   can hold is the one with something to do behind it. The locked Join comes
+ *   back the moment the family says they are ready.
+ * - **Beside a lit Join, as a quiet text link.** A room that is open now is the
+ *   whole point of the card and is never gated, delayed or dressed down, so the
+ *   guide steps aside into the same muted link treatment the leave-waitlist
+ *   affordance uses.
+ * - **Under the footer sentence, on the cards with no Join at all** — the
+ *   in-person card naming its site, and the unplaced seat waiting on a Gedu.
+ *   The unplaced card is inert *as a link* because there is no page behind it;
+ *   a dialog is not a page, and the wait for placement is exactly the window
+ *   this guide is written for.
+ * - **Nowhere on a queue place or a finished run.** There is no seat to get
+ *   ready for in the first, and the second is history.
  *
  * **Leaving a waitlist is the queue card's counterpart of the Join.** A quiet
  * muted text link under the footer sentence, parent-only, opening a confirm
@@ -325,6 +361,8 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
     participationId,
     productName,
     productType,
+    topic,
+    isRemote,
     nextSessionStart,
     nextSessionEnd,
     hasVoiceRoom,
@@ -403,6 +441,49 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
   // running enrollment with nothing on its schedule, since a badge that turns
   // on when a session starts needs a session to start.
   const canGoLive = running && hasNext;
+  /**
+   * The "Before the first session" guide, if this card has one to offer.
+   *
+   * Two questions, asked in the order that makes the second cheap. **Does the
+   * enrollment want one at all**: a seat that is theirs (running or waiting on
+   * a placement) on a run that has not finished. A queue place is excluded
+   * because there is nothing to get ready for until a seat exists, and a
+   * finished run because the first session it names is behind them.
+   *
+   * **And does the topic have one for this form of product**, which is
+   * `resolveTopicPrep`'s to answer and nothing else's: it knows both that the
+   * topic carries a guide and that at least one of its steps survives the
+   * in-person filter, and it answers `null` for a topic where School of Gaming
+   * supplies the machines and the logins alike.
+   *
+   * The dismissal is asked last because it is the only one of the three that
+   * cannot be answered on the server — see the hook.
+   */
+  const prepApplies =
+    endedOn === null && !waitlisted && resolveTopicPrep(topic, isRemote) !== null;
+  const prepDismissal = useTopicPrepDismissal(participationId);
+  /**
+   * Whether to draw the affordance *now*. `unresolved` — the server's answer
+   * and the first client paint's — deliberately draws nothing, so the affordance
+   * only ever *arrives* after mount and never has to disappear from under a
+   * reader who has already been offered it.
+   */
+  const prepOffered = prepApplies && prepDismissal.state === "pending";
+  /**
+   * Whether this card draws a Join at all — the question the prep affordance's
+   * placement turns on, and the same three conditions the footer's Join branch
+   * has always used, named once so the two cannot drift apart.
+   */
+  const hasJoin = running && hasVoiceRoom && hasNext;
+  /** The locked Join's slot, taken over while there is a guide to read. */
+  const prepInJoinSlot = prepOffered && hasJoin && !voiceIsOpen;
+  /** A lit Join keeps its slot; the guide steps down to a quiet link below it. */
+  const prepBesideJoin = prepOffered && hasJoin && voiceIsOpen;
+  /**
+   * No Join to sit in or beside — the in-person card naming its site, and the
+   * unplaced seat waiting on a Gedu. The button goes under the sentence.
+   */
+  const prepUnderSentence = prepOffered && !hasJoin;
   const leaving = billing?.leavingWaitlist ?? false;
   /** The one interactive element a waitlisted card has, and adults only. */
   const onLeaveWaitlist = waitlisted ? billing?.onLeaveWaitlist : undefined;
@@ -438,7 +519,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
     endedOn !== null ||
     showsWaitlistPosition ||
     awaiting ||
-    (running && hasVoiceRoom && hasNext) ||
+    hasJoin ||
     (running && !hasVoiceRoom && siteName !== null);
 
   return (
@@ -665,28 +746,49 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                     <span className="min-w-0">{f(AWAITING_KEY[audience])}</span>
                   </span>
                 )}
-                {running && hasVoiceRoom && hasNext && (
-                  // The one thing in the footer that owns its clicks, so the one
-                  // thing lifted above the stretched link covering the card.
+                {hasJoin && (
+                  // A control owns its clicks, so it is lifted above the
+                  // stretched link covering the card — whichever of the two
+                  // controls this slot is holding.
                   <span className="relative z-10">
-                    <JoinVoiceButton
-                      voiceIsOpen={voiceIsOpen}
-                      voiceHref={voiceHref}
-                      // Present only on a *child's* card seen by their parent,
-                      // where joining means switching account first. Passing
-                      // nothing leaves the button the plain link it has always
-                      // been — which is the child's own card, and equally the
-                      // parent's own seat, where the room is already gated on
-                      // the person clicking.
-                      onJoinClick={childSeat?.onJoinClick}
-                      opensDate={formatDate(nextSessionStart, locale, {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                        timeZone,
-                      })}
-                      opensTime={formatTime(nextSessionStart, locale, timeZone)}
-                    />
+                    {prepInJoinSlot ? (
+                      // **Button for button, in one slot.** The locked Join is
+                      // inert and says only what the schedule row above it has
+                      // already said, so while there is a guide to read it
+                      // gives the slot up — and takes it straight back when the
+                      // family says they are ready. Same slot, same size, so
+                      // the swap that follows the storage read moves nothing on
+                      // the card and nothing in the column of cards below it.
+                      <TopicPrepAffordance
+                        variant="button"
+                        topic={topic}
+                        isRemote={isRemote}
+                        onReady={prepDismissal.dismiss}
+                      />
+                    ) : (
+                      <JoinVoiceButton
+                        voiceIsOpen={voiceIsOpen}
+                        voiceHref={voiceHref}
+                        // Present only on a *child's* card seen by their
+                        // parent, where joining means switching account first.
+                        // Passing nothing leaves the button the plain link it
+                        // has always been — which is the child's own card, and
+                        // equally the parent's own seat, where the room is
+                        // already gated on the person clicking.
+                        onJoinClick={childSeat?.onJoinClick}
+                        opensDate={formatDate(nextSessionStart, locale, {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          timeZone,
+                        })}
+                        opensTime={formatTime(
+                          nextSessionStart,
+                          locale,
+                          timeZone,
+                        )}
+                      />
+                    )}
                   </span>
                 )}
                 {running && !hasVoiceRoom && siteName !== null && (
@@ -696,6 +798,41 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                   </span>
                 )}
               </div>
+
+              {/* The prep affordance's other two homes, both of them this
+                  second row — under whatever the row above ended up saying.
+
+                  **Beside a lit Join it is a muted text link**, the same
+                  treatment the leave-waitlist affordance takes and for the same
+                  reason: the card has one loud thing on it and that thing is
+                  the room, which is open now and is never gated or dressed
+                  down by anything this feature does.
+
+                  **On a card with no Join it is the button**, because there is
+                  nothing else on the card to be quieter than: an in-person card
+                  names its building, an unplaced one says a Gedu is being
+                  matched, and neither sentence is something to do.
+
+                  It arrives after mount rather than being reserved, and the
+                  cost is named rather than hidden: the button appears one tick
+                  after hydration and grows the card downward, pushing the cards
+                  below it down the column. The alternative was a button's worth
+                  of hole held open under the footer of every card whose family
+                  has already said they are ready — permanent dead space on the
+                  common card, to save a shift on the first visit of a card that
+                  has not been dismissed yet. It lands at the very end of the
+                  footer, which is where the layout's slack already is, and
+                  nothing above it moves. */}
+              {(prepBesideJoin || prepUnderSentence) && (
+                <span className="relative z-10">
+                  <TopicPrepAffordance
+                    variant={prepBesideJoin ? "link" : "button"}
+                    topic={topic}
+                    isRemote={isRemote}
+                    onReady={prepDismissal.dismiss}
+                  />
+                </span>
+              )}
 
               {/* Under the sentence it acts on, not over the corner. The
                   design this replaced put it in the corner, where the product's
@@ -797,6 +934,68 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
         />
       )}
     </div>
+  );
+}
+
+/**
+ * "Get ready", plus the dialog it opens — the card's half of the prep guide.
+ *
+ * **Two shapes, one act.** The button is what a card offers when it has no
+ * other action on it; the link is what it offers beside a lit Join, in the
+ * muted treatment the leave-waitlist affordance already established for
+ * "something quiet you may do here". Same words, same dialog, same dismissal:
+ * the shape is a statement about what else is on the card, never about what
+ * the affordance does.
+ *
+ * **Only the dialog's own affirmative dismisses.** Escape, the backdrop and a
+ * plain close leave the affordance standing, so a parent who opens the guide
+ * to check one step and closes it again has not accidentally thrown it away.
+ *
+ * Private to the card for the same reason the leave link is: the placement is
+ * defined relative to a footer this card owns, and the two shapes are a
+ * statement about this card's other affordances. The dialog itself is shared,
+ * because a second surface offering the guide is offering the same guide.
+ */
+function TopicPrepAffordance({
+  variant,
+  topic,
+  isRemote,
+  onReady,
+}: {
+  /** `button` where the card has no other action; `link` beside a lit Join. */
+  variant: "button" | "link";
+  topic: ProductTopic;
+  isRemote: boolean;
+  /** Record the dismissal. Fired by the dialog's affirmative and nothing else. */
+  onReady: () => void;
+}) {
+  const t = useTranslations("topicPrep");
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      {variant === "button" ? (
+        <Button size="sm" onClick={() => setOpen(true)}>
+          {t("triggerLabel")}
+        </Button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="rounded text-xs font-medium text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
+        >
+          {t("triggerLabel")}
+        </button>
+      )}
+
+      <TopicPrepDialog
+        open={open}
+        onOpenChange={setOpen}
+        topic={topic}
+        isRemote={isRemote}
+        onReady={onReady}
+      />
+    </>
   );
 }
 

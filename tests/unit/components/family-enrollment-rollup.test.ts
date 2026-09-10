@@ -63,6 +63,10 @@ function enrollment(
     participationId: id,
     productName: fields.productName ?? id,
     productType: "consumer_club",
+    // Neither is read by the sort; both are required of the shape, and the
+    // card is where they mean anything.
+    topic: "minecraft_java",
+    isRemote: true,
     nextSessionStart: start,
     nextSessionEnd: start === null ? null : new Date(start.getTime() + 5_400_000),
     hasVoiceRoom: true,
@@ -241,6 +245,7 @@ function sessionRow(
     product: {
       id: "product-1",
       type: "consumer_club",
+      topic: "minecraft_java",
       timezone: PRODUCT_TZ,
       startDate: null,
       endDate: null,
@@ -268,6 +273,7 @@ function waitlistRow(
     participant: { id: AINO, firstName: "Aino" },
     product: {
       type: "consumer_club",
+      topic: "fortnite",
       timezone: PRODUCT_TZ,
       startDate: null,
       endDate: null,
@@ -342,6 +348,34 @@ describe("toFamilyEnrollments — a seat", () => {
       pathname: "/parent/clubs/[id]",
       params: { id: "participation-1" },
     });
+  });
+
+  /**
+   * The two facts the prep affordance is decided from, carried untouched on
+   * both kinds of row — including the waitlist row, where the card will draw
+   * nothing from them. A queue place still describes a real product, and
+   * inventing a topic or a form for it would be stating something untrue about
+   * the thing the family is queueing for.
+   *
+   * `isRemote` travels beside `hasVoiceRoom` rather than being read off it:
+   * they agree today because a remote product is exactly the one with a room,
+   * and the assertion is what keeps a later divergence from silently printing
+   * the in-person guide on a remote club.
+   */
+  it("carries the topic and the product's form onto both kinds of card", () => {
+    const seat = mapOne({
+      sessionRows: [
+        sessionRow({ product: { topic: "roblox_studio", isRemote: false } }),
+      ],
+    });
+    expect(seat.topic).toBe("roblox_studio");
+    expect(seat.isRemote).toBe(false);
+
+    const queued = mapOne({
+      waitlistRows: [waitlistRow({ product: { topic: "pokemon_go" } })],
+    });
+    expect(queued.topic).toBe("pokemon_go");
+    expect(queued.isRemote).toBe(true);
   });
 
   it("names the site on an in-person product and never on a remote one", () => {

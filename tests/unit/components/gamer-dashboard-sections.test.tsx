@@ -7,7 +7,12 @@ import {
   GAMER_DASHBOARD_FIRST_NAME,
   buildGamerDashboardFixture,
 } from "@/components/gamer/mock-dashboard-fixtures";
-import { NowProvider, TimezoneProvider } from "@/providers";
+import {
+  AuthProvider,
+  NowProvider,
+  QueryProvider,
+  TimezoneProvider,
+} from "@/providers";
 
 /**
  * **The gamer dashboard ends in Help, and the pill never exceeds four chips.**
@@ -26,6 +31,9 @@ import { NowProvider, TimezoneProvider } from "@/providers";
 
 /** The instant the cards' live/locked states are read against. */
 const NOW = new Date("2026-02-11T20:00:00Z");
+
+/** The signed-in child. A real UUID, since a viewer id is one everywhere else. */
+const VIEWER_ID = "3e1b6f6a-9d55-4a2e-b0d1-6c0a0f2f4a7b";
 
 /**
  * How many chips the pill drew.
@@ -51,18 +59,24 @@ function dashboardHtml(scenario: "typical" | "empty"): string {
   return renderToStaticMarkup(
     <NextIntlClientProvider locale="en" messages={messages}>
       {/* The real providers, seeded rather than mocked: a card reads the
-          viewer's zone and a request-stable `now` straight out of them. */}
-      <TimezoneProvider initialTimezone="Europe/Helsinki">
-        <NowProvider initialNow={NOW}>
-          <GamerDashboardPageBody
-            firstName={GAMER_DASHBOARD_FIRST_NAME}
-            enrollments={enrollments}
-            // A node, exactly as the live shell and the preview scene pass one.
-            // What it holds is the form's business, not this page's.
-            helpForm={<div />}
-          />
-        </NowProvider>
-      </TimezoneProvider>
+          viewer's zone, a request-stable `now` and the viewer's own id
+          straight out of them — the last of those keys the prep guide's
+          dismissal, which is per person because a family shares a browser. */}
+      <QueryProvider>
+        <AuthProvider initialUser={{ id: VIEWER_ID, email: undefined }}>
+          <TimezoneProvider initialTimezone="Europe/Helsinki">
+            <NowProvider initialNow={NOW}>
+              <GamerDashboardPageBody
+                firstName={GAMER_DASHBOARD_FIRST_NAME}
+                enrollments={enrollments}
+                // A node, exactly as the live shell and the preview scene pass
+                // one. What it holds is the form's business, not this page's.
+                helpForm={<div />}
+              />
+            </NowProvider>
+          </TimezoneProvider>
+        </AuthProvider>
+      </QueryProvider>
     </NextIntlClientProvider>,
   );
 }

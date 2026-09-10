@@ -10,7 +10,7 @@ import {
   enumerateRowOccurrences,
   startDateToCutoff,
 } from "@/lib/session-occurrence";
-import type { ProductType } from "@/types";
+import type { ProductTopic, ProductType } from "@/types";
 import type { FamilyEnrollmentSummary } from "./enrollment-rollup";
 import { INERT_HREF } from "@/lib/constants/routes";
 
@@ -55,6 +55,18 @@ export interface EnrollmentFixtureSpec {
   productType: ProductType;
   /** Remote products have a voice room and no site; in-person the reverse. */
   isRemote: boolean;
+  /**
+   * The product's topic, which decides whether the card has a "Before the first
+   * session" guide to offer and which one.
+   *
+   * **Optional, and it defaults to a topic that carries no guide**, so a
+   * fixture that is not about the prep affordance renders none and reads
+   * exactly as it did before there was one. A fixture that *is* about it names
+   * a topic with a guide — `roblox_studio` is the long one, three steps with
+   * per-platform notes and a checklist, which is the one worth judging a
+   * scrolling dialog against.
+   */
+  topic?: ProductTopic;
   slots: FixtureSlot[];
   startedDaysAgo: number;
   /**
@@ -150,6 +162,11 @@ export function buildEnrollmentFixture(
     participationId: spec.participationId,
     productName: spec.productName,
     productType: spec.productType,
+    // A label-only topic by default: it carries no prep guide, so an untouched
+    // fixture draws no prep affordance and reads exactly as it did before the
+    // affordance existed.
+    topic: spec.topic ?? "esports",
+    isRemote: spec.isRemote,
     nextSessionStart: next?.start ?? null,
     nextSessionEnd: next?.end ?? null,
     hasVoiceRoom: spec.isRemote,

@@ -19,7 +19,7 @@ import type {
   MyUpcomingSessionRow,
   MyWaitlistRow,
 } from "@/services/participations";
-import type { ProductType } from "@/types";
+import type { ProductTopic, ProductType } from "@/types";
 import type { SessionCancellation } from "@/components/parent/session-card-badge";
 import type {
   AppHref,
@@ -53,6 +53,29 @@ export interface FamilyEnrollmentSummary {
   /** Translated product name — the card's title. */
   productName: string;
   productType: ProductType;
+  /**
+   * The product's topic — what the card asks whether there is a "Before the
+   * first session" guide to offer, and which guide.
+   *
+   * Carried raw rather than pre-resolved into a boolean, because the surface
+   * that draws the affordance is also the surface that opens the guide: a
+   * resolved "has prep" flag would have to be joined back to the topic to
+   * render a single word of it.
+   */
+  topic: ProductTopic;
+  /**
+   * Whether the product runs remotely — the family on their own machines.
+   *
+   * **The same fact `hasVoiceRoom` is derived from, carried separately because
+   * it answers a different question.** `hasVoiceRoom` asks whether there is a
+   * room to join; this asks whose computers the sessions happen on, which is
+   * what decides whether a prep guide includes the install and the test or only
+   * the accounts. They agree today because a remote product is exactly the one
+   * with a room, and the day that stops being true — a remote product with no
+   * room, an in-person one with a room for the family who cannot travel — a
+   * card reading one for the other would print the wrong guide.
+   */
+  isRemote: boolean;
   /**
    * Start of the soonest session still worth showing, or `null` when there is
    * none: a waitlisted enrollment with no placement, or a run whose schedule has
@@ -620,6 +643,8 @@ function sessionSummary(
     participationId: row.participationId,
     productName: resolveTranslation(product.translations, locale)?.name ?? "",
     productType: product.type,
+    topic: product.topic,
+    isRemote: product.isRemote,
     nextSessionStart: next === null ? null : next.start,
     nextSessionEnd: next === null ? null : next.end,
     hasVoiceRoom,
@@ -693,6 +718,8 @@ function waitlistSummary(
     participationId: row.participationId,
     productName: resolveTranslation(product.translations, locale)?.name ?? "",
     productType: product.type,
+    topic: product.topic,
+    isRemote: product.isRemote,
     nextSessionStart: null,
     nextSessionEnd: null,
     hasVoiceRoom: product.isRemote,

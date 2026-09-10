@@ -2159,7 +2159,6 @@
     "dialogTitle": "Before the first session",
     "triggerLabel": "Get ready",
     "readyLabel": "I’m ready",
-    "reopenLabel": "Show the steps again",
     "closing": "That’s everything to sort out beforehand. See you at the first session!",
     "topics": {
       "minecraft_java": {
