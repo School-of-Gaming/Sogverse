@@ -31,17 +31,23 @@ default-English crawler/link behaviour hits the majority of the actual audience.
   `select-profile`, `not-found`, and the root `opengraph-image` (63 pages, 6 layouts at
   time of writing). `api/`, `sitemap.ts`, `robots.ts`, `globals.css` and static icons stay
   at the app root.
-- **`localePrefix: "as-needed"`** — English URLs are the bare URLs, identical to today.
-  Nothing existing breaks: bookmarks, already-sent email links, indexed pages all keep
-  working unchanged. Other locales get a prefix (`/fi/…`, `/sv/…`, `/fr/…`, `/tlh/…`).
+- **`localePrefix: "always"`** — every page URL carries its locale (`/en/…`, `/fi/…`,
+  `/sv/…`, `/fr/…`, `/tlh/…`), English included. A bare path is never a page: it is the
+  detector, and it redirects (see the ladder below). Every URL is one shape, so the
+  proxy, the normalizer, the tests and the picker carry no "bare means English"
+  special case, and `/en/…` is a URL that pins English for any recipient or crawler.
+  Nothing existing breaks: bookmarks, already-sent email links and indexed pages all
+  resolve through the redirect. English pages do move (`/shop` → `/en/shop`) — the
+  cost is one hop on every bare link and a few weeks of search engines re-indexing the
+  English set under its new canonicals, accepted knowingly.
 - **The URL wins, always.** A prefixed request renders in the prefixed locale regardless of
   cookie, profile, or `Accept-Language`. This is the consensus web pattern (Wikipedia, MDN,
   Apple; Google's international-SEO guidance) and the property that makes links shareable
   and crawlable.
 - **Bare paths redirect by today's ladder: `locale` cookie → `Accept-Language` → English**
-  (English meaning: stay on the bare URL). The ladder applies to **every page route,
-  dashboards included** — a Finnish-cookie user hitting bare `/parent` lands on
-  `/fi/parent`; only English URLs are guaranteed byte-identical to today's. **`/api/*` is
+  (English meaning: `/en/…`). The ladder applies to **every page route, dashboards
+  included** — a Finnish-cookie user hitting bare `/parent` lands on `/fi/parent`, an
+  English one on `/en/parent`. **`/api/*` is
   carved out of both the ladder and the intl rewrite entirely** — an API response has no
   locale, and a 307'd `fetch` would break every client-side API call for non-English
   users; API requests flow through the proxy exactly as today. Ordering inside the proxy:
@@ -86,9 +92,29 @@ default-English crawler/link behaviour hits the majority of the actual audience.
 - **Translated slugs are in scope**, for the public content routes only (see the pathnames
   section below). Dashboard, auth, voice, settings and preview segments keep their English
   segments in every locale — they are app surfaces, not indexable content.
-- **The root OG image is localized** — per-locale text pulled from the message catalogs.
-  **No new per-route OG images** in this scope (explicitly deferred; Next.js supports a
-  per-segment `opengraph-image` whenever that's picked up later).
+- **Both existing OG images are localized** — the site-wide card and the Roblox
+  programme's card, each rendering its text and alt from the message catalogs at the
+  URL's locale. **The Roblox card is French for every locale today, on purpose** — the
+  programme is shared into French channels and the URL could not carry a locale, so the
+  card was composed for the recipient the link was expected to reach. That reasoning is
+  exactly what this plan retires: `/fr/roblox` now pins French for whoever it is sent to,
+  so the card follows the URL like every other — English at `/en/roblox`, today's French
+  wording as the `fr` values, translations for the rest. Same for the page's
+  `openGraph`/`twitter` title and description. **No new per-route OG images** in this
+  scope (explicitly deferred; Next.js supports a per-segment `opengraph-image` whenever
+  that's picked up later).
+- **Metadata follows the URL locale, and the two standing exceptions go.** Page titles
+  and the site description already come from the `metadata` namespace, so under URL
+  routing they resolve at the URL's locale with no per-page work; the shared metadata
+  helper additionally emits `og:locale` from it. Two surfaces deliberately resolve at a
+  fixed locale today, and both did so *because* a scraper carries no cookie and the URL
+  said nothing: the Roblox card (above) and the product card, which resolves the
+  product's name and short description at the default locale. The product card now
+  resolves at the request locale through the existing translation resolver — the URL's
+  locale, then English, then the first translation present — so a shared `/fi/kauppa/<id>`
+  unfurls with the Finnish name and description when the product carries a Finnish
+  translation and degrades exactly as the page body does when it doesn't. The picture is
+  the product's own image and is not localized; only the text moves.
 - **`hreflang` alternates and per-locale sitemap entries** for the public pages. **Klingon
   is excluded from both** — it gets working URLs (`/tlh/…`) like any locale, but an easter
   egg does not belong in search results or alternate-language annotations.
@@ -103,9 +129,14 @@ default-English crawler/link behaviour hits the majority of the actual audience.
 
 - **Prefix only the public routes, keep dashboards on cookie resolution.** Two resolution
   systems in one app, a root-layout split, and the picker behaving differently per surface.
-  Rejected: move everything; `as-needed` keeps dashboard URLs unchanged for English anyway.
-- **`localePrefix: "always"` (`/en/shop`).** Breaks every existing URL, email link, and
-  indexed page for a cosmetic gain. Rejected.
+  Rejected: move everything.
+- **`localePrefix: "as-needed"`** (English stays on the bare URLs). Considered first, for
+  leaving every existing English URL byte-identical. Rejected on two counts: it leaves
+  no URL that pins English — a bare URL always runs the language-header ladder, so a
+  Finnish-preferring recipient or crawler can never be handed the English page — and it
+  makes one locale a special case in every place a URL is built, matched or tested. The
+  hop it would have spared English links is a hop the plan already accepts for every
+  other locale, and English is the minority of the audience.
 - **Persisting locale from URL visits** (next-intl's middleware default). One click on a
   shared French link would silently rewrite a user's chosen preference. Rejected —
   persistence is picker-only.
@@ -142,20 +173,31 @@ default-English crawler/link behaviour hits the majority of the actual audience.
   and the locale cookie disabled; implement the bare-path redirect (cookie →
   `Accept-Language` → stay) as a proxy pre-step using the existing helpers in
   `src/lib/constants/locales.ts`. This is what keeps persistence picker-only and the
-  ladder identical to today's. The prefixing direction needs route-template matching, not
+  ladder identical to today's; because the ladder runs first, next-intl's own
+  redirect-to-prefix never fires on a page route. The prefixing direction needs
+  route-template matching, not
   string concatenation — bare `/shop/abc` must become `/fi/kauppa/abc` — so the shared
   helper is bidirectional, derived from the pathnames map, matches segment-wise against
   the declared templates, preserves the query string, and redirects with a 307. A path
   matching no template is prefixed anyway (`/fi/nonexistent`), so a Finnish visitor gets
   a Finnish 404 rather than an English one.
-- **Accepted SEO tension: the Accept-Language leg redirects bare URLs, so under
-  `as-needed` no URL pins English for a non-English-preferring agent** — the header leg
-  of the ladder is precisely the auto-redirection Google's guidance frowns at, and a
-  crawler sending `Accept-Language: fi` cannot fetch the English canonical. Accepted as
-  written: Googlebot overwhelmingly crawls with English or no language preference, the
-  `x-default`/`hreflang` set tells crawlers the structure regardless, and the escape
-  hatch if it ever measurably matters is skipping the header leg for verified crawler
+- **The bare URL is the `x-default` target, and it redirects.** The header leg of the
+  ladder is auto-redirection of the kind Google's guidance frowns at, but only the bare
+  URL does it, every language has its own fetchable canonical, and a redirecting
+  language-detector page is exactly what Google documents `x-default` for. The escape
+  hatch if the header leg ever measurably matters is skipping it for verified crawler
   user-agents — a follow-up, not part of this plan.
+- **Locale codes in URLs are bare language subtags, and a bare code is never renamed.**
+  The constants file and `src/i18n/CLAUDE.md` already rule that codes are bare subtags
+  until two variants of one language actually ship, and leave "how the region appears
+  in URLs" to be decided deliberately; this is that decision. The bare code (`/es/`) is
+  the generic variant of its language and serves every speaker with no closer match; a
+  regional variant is added *beside* it as lowercase `lang-region` (`/es-mx/`) — one
+  entry in the locale list and routing config, one catalog, one column in the slug map,
+  and the `hreflang` set and sitemap iterate the list. Nothing is ever redirected or
+  renamed to make room for a region, so nothing here may assume a locale segment is two
+  letters: the prefix matcher and the normalizer match against the locale list, never a
+  shape. (The header matcher already prefers an exact tag over a language subtag.)
 - **`SUPPORTED_LOCALES` stays the single source of truth** — the routing config derives its
   `locales` from it. The pathnames map is keyed by route (with per-locale values inside
   next-intl's required structure), which is the framework's shape, not a violation of the
@@ -239,6 +281,36 @@ default-English crawler/link behaviour hits the majority of the actual audience.
   files with `generateMetadata`. Note the counts are of *import sites* — the href
   reshaping required by the navigation-typing decision (see the pathnames section) is
   additional to them.
+- **The Roblox card's literal-copy module and its drift test go away with the
+  localization.** The card is a file-convention `opengraph-image` under the programme's
+  directory, so it fails the move for the same reasons the root card does and takes the
+  same shape: a root-level route handler beside the site-wide one, reached by a bare URL,
+  taking a validated `locale` query param (one handler with a `card` param or two
+  handlers — implementer's call). Its title and description move into the `metadata`
+  namespace with today's French strings as the `fr` values; the trademark notice is
+  read from the catalog key the page itself renders, at the card's locale, so the pinned
+  French literal and the unit test that held it equal to the catalog have nothing left
+  to guard and are deleted. The programme's three sub-pages (privacy, safeguarding,
+  terms) inherit the card through the file convention today and declare no `openGraph`
+  of their own — they emit the Roblox card's URL explicitly after the move, or they
+  silently fall back to the site-wide card.
+- **Translated slugs split the analytics `route` dimension unless the app supplies it.**
+  Vercel Web Analytics records two dimensions per pageview: `request_path` (the address
+  bar) and `route`, and the Next wrapper computes `route` in the browser by substituting
+  the values of `useParams()` back out of the browser pathname. It knows the locale value,
+  not the slug translation, so `/fi/kauppa` becomes `/[locale]/kauppa` — one route row per
+  language for every translated page, and "how many people landed on the shop" is a sum
+  across four rows forever (dashboard pages are unaffected: `/fi/parent` collapses to
+  `/[locale]/parent`). Decided: the app supplies the route itself. The analytics mount
+  moves from the framework wrapper to the package's React entry point, which accepts
+  explicit `route` and `path` props (passing `route` disables its auto-tracking, so the
+  component must re-emit a pageview on every navigation — the wrapper's own effect shape).
+  `route` is the **internal** template — the locale-stripped, untranslated pathname the
+  proxy's normalizer already produces, which is pure data importable on the client —
+  with the `[locale]` segment dropped, so every locale of a page lands on one row (`/shop`,
+  `/shop/[id]`) and `route` filters in the analytics runbook keep working unchanged.
+  `path` stays the raw browser pathname, so the per-language split remains readable
+  from `request_path`. Custom events pick up the same `route` automatically.
 - **Email links need no change** (bare links redirect by the recipient's cookie on click).
   Prefixing emailed links with the recipient's `profiles.locale` is a cheap later
   improvement, out of scope here.
@@ -288,7 +360,7 @@ adding a locale stays a one-map edit.
 
 1. **Routing module.** `src/i18n/routing.ts`: `defineRouting()` with `locales` derived
    from `SUPPORTED_LOCALES`, `defaultLocale` from the shared default-locale constant,
-   `localePrefix: "as-needed"`, detection and locale cookie disabled, alternate-links
+   `localePrefix: "always"`, detection and locale cookie disabled, alternate-links
    header disabled (metadata owns `hreflang`), and the pathnames map above.
    `src/i18n/navigation.ts`: `createNavigation(routing)` exporting the wrapped `Link`,
    `redirect`, `usePathname`, `useRouter`, `getPathname`.
@@ -338,14 +410,23 @@ adding a locale stays a one-map edit.
    call site.
    Sign-in: per the mechanism in the decision section — client-side cookie write in the
    login form, server-side in the OAuth callback and switch-account routes.
-7. **OG image.** Becomes a root-level route handler taking a validated `locale` query
-   param (see the OG constraint for why the file convention doesn't survive the move),
-   rendering its text and alt from the `metadata` namespace via `getTranslations` — new
-   keys in all five catalogs (Klingon: have fun). The `[locale]` layout's
-   `generateMetadata` emits `openGraph.images` and the twitter image explicitly with the
-   locale-correct URL and dimensions. The build-time-baked English strings and their lint
-   suppression go away.
-8. **Metadata alternates.** Alternates are **per-page, never layout-level** — a layout
+7. **Analytics route.** Swap the analytics mount to the package's React entry point and
+   feed it `route` (the internal template via the shared normalizer, locale segment
+   dropped) and `path` (the raw pathname), re-emitting a pageview on each navigation
+   (see the analytics constraint). Unit-test the route derivation: `/fi/kauppa/abc` →
+   `/shop/[id]`, `/en/shop` → `/shop`, `/fi/parent` → `/parent`.
+8. **OG images.** Both cards become root-level route handlers taking a validated
+   `locale` query param (see the OG constraints for why the file convention doesn't
+   survive the move), rendering their text and alt from the `metadata` namespace via
+   `getTranslations` — new keys in all five catalogs (Klingon: have fun; the Roblox
+   card's `fr` values are today's strings verbatim). The `[locale]` layout's
+   `generateMetadata` emits the site-wide card's `openGraph.images` and twitter image
+   explicitly with the locale-correct URL and dimensions; the Roblox page and its three
+   sub-pages emit the Roblox card's image the same way, with localized title and description
+   in place of the French literals. The build-time-baked strings, their lint
+   suppressions, the literal-copy module and its drift test go away. The product card
+   resolves its translation at the request locale (see the metadata decision).
+9. **Metadata alternates.** Alternates are **per-page, never layout-level** — a layout
    cannot compute a self-referencing canonical (it has no pathname), and Next's metadata
    merge would cascade one layout-level canonical onto all 63 pages. A shared helper
    builds the `alternates` object (languages via `getPathname` — every locale except
@@ -360,16 +441,15 @@ adding a locale stays a one-map edit.
    replaces the parent's object and loses the layout-emitted image, so the shared helper
    re-emits `openGraph.images` for pages that override `openGraph`. Excluded: noindex
    pages (`/roblox`, the API docs page) — no alternates on a page telling crawlers to
-   leave — and dynamic detail pages (`/shop/[id]`, the municipality pages): the shop
-   detail page is a client component that cannot export `generateMetadata`, and
-   converting it is real work that belongs to the SEO-metadata item in `TODO.md`, not
-   this plan.
-9. **Sitemap + robots.** Sitemap: keep the current route set (which includes `/login` and
+   leave — and dynamic detail pages: the product pages (`/shop/[id]` and the municipality
+   product route) are noindex by owner decision, and the municipality index page is
+   out of scope with the other dynamic params.
+10. **Sitemap + robots.** Sitemap: keep the current route set (which includes `/login` and
    `/register` — they're indexable), per-locale entries with `alternates.languages`, `tlh`
    excluded, slugs from the pathnames map (never hand-built). Index pages only — no
    DB-backed per-product/per-municipality entries in this scope. Robots: extend the
    disallow list to cover locale-prefixed variants of the gated prefixes.
-10. **Tests.** The proxy's tests are **integration** tests (per `tests/CLAUDE.md`, where
+11. **Tests.** The proxy's tests are **integration** tests (per `tests/CLAUDE.md`, where
     the existing proxy suite lives) — cover the normalizer and proxy decisions there: at
     minimum, prefixed dashboard paths still role-gate (`/fi/admin` as a gamer redirects
     out), translated slugs resolve to public routes, bare-path redirect follows cookie →
@@ -378,14 +458,15 @@ adding a locale stays a one-map edit.
     (`@/i18n/navigation`), or every component test that renders a link breaks. The
     integration suite's filesystem drift guard walks the `(public)` directory to assert
     every public page is reachable unauthenticated — re-point it to the moved directory,
-    special-case the `[locale]` segment (assert bare and under one real prefix;
-    substituting a sample value there would test a nonexistent locale), and resolve each
+    special-case the `[locale]` segment (assert under one real prefix, and that the
+    bare path redirects rather than serves; substituting a sample value there would
+    test a nonexistent locale), and resolve each
     walked page through the pathnames map to its **external** per-locale URL — the
     filesystem yields internal segments (`shop`), and asserting `/fi/shop` would
     green-light a path no user ever hits. The setup mock must also export `useParams`
     (the picker's new replace call reads it). Update any tests asserting unprefixed
     paths.
-11. **Docs.** Rewrite the locale-resolution section of `src/i18n/CLAUDE.md` (URL first;
+12. **Docs.** Rewrite the locale-resolution section of `src/i18n/CLAUDE.md` (URL first;
     bare-path ladder; picker-only persistence; the pathnames map as part of "adding a
     locale"), note the slug-translation step in the adding-a-locale checklist, and check
     `src/components/layout/` docs for pathname assumptions. Delete this plan file.
@@ -395,8 +476,8 @@ adding a locale stays a one-map edit.
 - `/fr/boutique` renders French for a visitor with a Finnish cookie and Swedish
   `Accept-Language`, and their cookie is unchanged afterwards.
 - Bare `/shop`: Finnish cookie → redirected to `/fi/kauppa`; no cookie + Swedish
-  `Accept-Language` → `/sv/butik`; neither → stays `/shop` in English. English URLs are
-  byte-identical to today's.
+  `Accept-Language` → `/sv/butik`; neither → `/en/shop`. No bare page URL ever serves a
+  document; `/api/*` and the OG image handlers are untouched by the ladder.
 - The picker on any `/fr/…` page shows FR — including for a signed-in user whose profile
   says FI — and switching to FI lands on the `/fi/…` translated equivalent via
   history-replace and persists cookie + profile.
@@ -405,11 +486,19 @@ adding a locale stays a one-map edit.
 - `/fi/admin` as a non-admin redirects to that role's dashboard; `/fi/parent` as a gamer
   likewise — the role gate holds under every prefix and translated slug.
 - Scraping `/fi/kauppa` (no cookies) yields the Finnish OG image and Finnish metadata;
-  scraping `/shop` yields English.
+  scraping `/en/shop` yields English.
+- Scraping `/en/roblox` yields the English Roblox card, title and description; `/fr/roblox`
+  yields today's French card and copy verbatim; the trademark notice on the card matches
+  the catalog key the page renders, at the card's locale.
+- Scraping `/fi/kauppa/<id>` for a product with a Finnish translation yields the
+  Finnish name and short description on the card; for a product without one, the
+  English translation; the image is the same in both.
 - Public pages emit `hreflang` alternates (en/fi/sv/fr + x-default, no tlh); the sitemap
   lists per-locale URLs with alternates, no tlh; `/tlh/…` pages serve `noindex`;
   `/fi/admin` and friends are covered by the robots disallow list.
 - English pages emit the bare (non-redirecting) OG image URL; a bounced user returns to
   the localized URL they were on (`/fi/kauppa` → unlock → `/fi/kauppa`).
+- A pageview on `/fi/kauppa`, `/sv/butik` and `/en/shop` all report `route` `/shop`;
+  `request_path` still distinguishes them.
 - `npm run lint`, `npm run type-check`, `npm run test` green; translation-completeness CI
   green (new OG/metadata keys in all five catalogs); smoke suite green on the built app.
