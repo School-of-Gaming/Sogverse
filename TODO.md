@@ -412,8 +412,9 @@ tags, which is the whole story.
 ## The mail spends brand colour where SOG-UI says it may not
 
 A 2026-09-11 check of the email components reference against SOG-UI found five
-constructs that the reference presents as correct and the library forbids. Each
-changes how live mail looks, so each is a ruling to make before it is a fix.
+constructs that the reference presents as correct and the library forbids. All but
+the reference's own section titles change how live mail looks, so each is a ruling
+to make before it is a fix.
 
 - [ ] **A person's name is set in amber inside a sentence.** The name helper paints
   act as ink in body copy, in six product mails (the session report's gedu and
@@ -434,17 +435,19 @@ changes how live mail looks, so each is a ruling to make before it is a fix.
   The seat-offer mail fills Accept in violet and puts the amber My SOG button under
   it. SOG-UI: world is never the main call to action, and "a violet button on a page
   with an act one asks the reader to guess"; a parent-tier surface spends a second
-  colour only with an intent stated in the library; and the email doc says nothing
+  colour only "with an intent stated beside the site that spends it" (the header's
+  violet rule is the one such intent a mail states); and the email doc says nothing
   below the header spends a second colour. The email helpers' own rule that "a
   second filled button says the opposite, whichever brand colour fills it" is
-  contradicted by the same mail. Decide between an outlined Accept (and
-  then whether the `secondary` variant has any legal use left in mail) and a
-  declared, justified departure in SOG-UI.
+  contradicted by the same mail. SOG-UI leaves which colours a button may wear to
+  its Button adoption, so the ruling may belong there. Decide between an outlined
+  Accept (and then whether the `secondary` variant has any legal use left in mail)
+  and a stated intent beside the seat offer's row that justifies the violet.
 - [ ] **The info callout's coloured label has no glyph.** SOG-UI: a label set in a
   status hue sits beside a glyph in the same hue, so removing the colour loses
   nothing. The email helper declares the omission locally (a mail has no icon
-  system), but SOG-UI recognises a departure only where the library's own source
-  declares it. Decide between a mail-safe glyph (a hosted PNG, subject to the
+  system), but the app's brand rule recognises a departure only where SOG-UI's own
+  source declares it. Decide between a mail-safe glyph (a hosted PNG, subject to the
   images rules) and moving the declaration into SOG-UI.
 
 ## Safety mechanisms our copy cannot yet claim
