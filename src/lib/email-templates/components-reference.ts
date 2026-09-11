@@ -123,8 +123,10 @@ export function buildComponentsReferenceEmail(locale: string): string {
   /*
    * PALETTE
    *
-   * Eight colours — every value a mail spends — each with a label painted on
-   * top of it.
+   * Eight swatches, each with a label painted on top of it. Every value a mail
+   * spends is here in one of those two forms: most as a swatch, and the
+   * foregrounds a fill carries as the label on that fill — white, world's label,
+   * among them, which a mail spends only as a label and so has no swatch.
    *
    * A fill and its foreground are one decision, never two. The brand colours are
    * mirror images — act is light and reads only under a dark label, world is
@@ -176,23 +178,31 @@ export function buildComponentsReferenceEmail(locale: string): string {
    * it. `outline` is for a destination worth offering that is not what the mail
    * is for.
    *
-   * `secondary` is the brand purple, the world colour. Its one product use is
-   * the seat offer's Accept, the filled half of that mail's row — and purple as
-   * a button fill is the one shape world works in, which was not obvious and
-   * cost a round of guessing to establish.
+   * `secondary` is the brand purple, the world colour. Purple as a button fill
+   * under white is the one shape world clears contrast in, which was not
+   * obvious and cost a round of guessing to establish. Its one product use is
+   * the seat offer's Accept, and whether world may be spent there at all is not
+   * settled: that mail also carries the amber My SOG button, so it holds two
+   * filled buttons — the arrangement the paragraph above rules out — and SOG-UI
+   * forbids violet as a call to action beside an amber one. The open ruling is
+   * recorded in `TODO.md`. The specimen is here because it is live mail, not
+   * because the question is answered.
    *
    * The row is for two alternatives, where stacking them would imply a ranking.
-   * It is shown twice because there are two cases. Two outlined halves are
-   * equal alternatives, two doors into the same place with no ask between them
-   * — the welcome mail's shop-or-My-SOG pair. An outlined half beside a
-   * `secondary` one is a question with an answer the mail is asking for — the
-   * seat offer's Decline and Accept. Position follows the app's button-order
-   * rule in both: the negative in the left cell, the affirmative in the right,
-   * so a reader meets the same pair in the same order in an inbox as in My SOG.
+   * It is shown twice because two mails ship it. Two outlined halves are equal
+   * alternatives, two doors into the same place with no ask between them — the
+   * welcome mail's shop-or-My-SOG pair — so neither half is the negative and
+   * the order between them carries nothing. An outlined half beside a
+   * `secondary` one is the shape the seat-offer mail ships for its Decline and
+   * Accept, and its colour use is the open ruling above rather than a pattern to
+   * copy. Where the halves do answer one question, position follows the app's
+   * button-order rule: the negative in the left cell, the affirmative in the
+   * right, so a reader meets the pair in the same order in an inbox as in My SOG.
    * Its halves are a hardcoded 50/50 at every width, because email clients do
    * not reflow columns, so a long label wraps by design rather than by accident.
    * Its variants exclude `primary` at the type level, so a row with two amber
-   * cells competing for the same click cannot be built.
+   * cells cannot be built; two `secondary` halves still can, and nothing on this
+   * page should be read as licensing them.
    */
   const buttons = `
     ${section("Buttons")}
@@ -380,11 +390,12 @@ export function buildComponentsReferenceEmail(locale: string): string {
    * a 1px border in `STATUS.info` at full value, the app's `rounded-lg` corner,
    * the uppercase label in `STATUS.info` and the paragraphs in ink.
    *
-   * It is for something the reader has to be told about the mail rather than in
-   * it. Two mails use it: the session report's staff copy, opening by saying
-   * that it is a copy and that each family's mail was its own, and the seat
-   * offer, stating the deadline to answer by. A mail with nothing of that kind
-   * to say does not need one.
+   * It is for one of two things, and where it goes follows which. An aside
+   * about the mail itself opens the mail: the session report's staff copy
+   * saying that it is a copy and that each family's mail was its own. The one
+   * fact the reader must not miss, because it stops being true, sits beside what
+   * it bounds: the seat offer's deadline, under the question and above the
+   * answers. A mail with nothing of either kind to say does not need one.
    *
    * The coloured edge and the coloured label are what mark the panel as an
    * aside; a tinted ground would say the same thing a second time. The info

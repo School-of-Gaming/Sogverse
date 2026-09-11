@@ -1496,22 +1496,32 @@ describe("templateRegistry componentsReference", () => {
 
   it("carries the whole palette, each swatch as a real background", () => {
     const { html } = render();
-    // Every value a mail spends. The two inks, the border and the info colour
-    // are never a fill in a product mail, so a flat gradient of any of them can
-    // only be its swatch.
-    for (const hex of [
-      BRAND.act,
-      BRAND.world,
-      DARK_THEME.card,
-      DARK_THEME.bg,
-      DARK_THEME.foreground,
-      DARK_THEME.mutedFg,
-      DARK_THEME.border,
-      STATUS.info,
-    ]) {
-      expect(html).toContain(`background-image:linear-gradient(${hex},${hex})`);
-    }
-    expect(html).toContain("BRAND.world");
+    // Every swatch, read back as one unit: the token name it prints, its fill
+    // (declared twice, like every background), the label colour painted on it
+    // and the hex that label prints. A bare flat gradient is not enough on its
+    // own — the brand fills and both grounds are painted elsewhere in the mail
+    // too (the buttons, the shell), so a check for the gradient alone passes
+    // with their swatches deleted. Only the swatch cell is 150 wide, and the
+    // whole list is compared, so a removed, added or re-paired swatch fails.
+    const swatches = [
+      ...html.matchAll(
+        /<td width="150" style="background-color:([^;]+);background-image:linear-gradient\(\1,\1\);[^"]*?color:([^;]+);[^"]*">\s*([^<]*?)\s*<\/td>\s*<td[^>]*>\s*([^<]*?)\s*<\/td>/g,
+      ),
+    ].map(([, fill, label, printed, token]) => ({ token, fill, label, printed }));
+    expect(swatches).toEqual(
+      (
+        [
+          ["BRAND.act / actForeground", BRAND.act, BRAND.actForeground],
+          ["BRAND.world / worldForeground", BRAND.world, BRAND.worldForeground],
+          ["DARK_THEME.card", DARK_THEME.card, DARK_THEME.foreground],
+          ["DARK_THEME.bg", DARK_THEME.bg, DARK_THEME.foreground],
+          ["DARK_THEME.foreground", DARK_THEME.foreground, DARK_THEME.bg],
+          ["DARK_THEME.mutedFg", DARK_THEME.mutedFg, DARK_THEME.bg],
+          ["DARK_THEME.border", DARK_THEME.border, DARK_THEME.foreground],
+          ["STATUS.info / infoForeground", STATUS.info, STATUS.infoForeground],
+        ] as const
+      ).map(([token, fill, label]) => ({ token, fill, label, printed: fill })),
+    );
   });
 
   /**
