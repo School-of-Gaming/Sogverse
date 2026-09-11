@@ -29,6 +29,15 @@ const { sendTransactionalEmail } = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/brevo", () => ({ sendTransactionalEmail }));
 
+// A static import, deliberately — it used to be an `await import()` inside the
+// test body, which charged the transformation of the sender's whole
+// import graph (every email template, the calendar invitation, the topic
+// guide) to the test's five-second clock instead of to collection. Under
+// CPU contention that alone took longer than the clock, and the test timed
+// out on a machine running lint and type-check beside it. The mock above is
+// hoisted over this import either way, so nothing else changes.
+import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
+
 describe("sendProductConfirmationEmail's product read", () => {
   let fetchMock: FetchMock;
 
@@ -42,9 +51,6 @@ describe("sendProductConfirmationEmail's product read", () => {
     // The sender logs and swallows, so nothing here throws; what is asserted is
     // the request it made on the way.
     const errors = vi.spyOn(console, "error").mockImplementation(() => {});
-    const { sendProductConfirmationEmail } = await import(
-      "@/services/participations/product-confirmation-email.server"
-    );
 
     await sendProductConfirmationEmail({
       client: createFetchStubbedClient(fetchMock),
