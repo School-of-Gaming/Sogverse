@@ -435,7 +435,9 @@ changes how live mail looks, so each is a ruling to make before it is a fix.
   it. SOG-UI: world is never the main call to action, and "a violet button on a page
   with an act one asks the reader to guess"; a parent-tier surface spends a second
   colour only with an intent stated in the library; and the email doc says nothing
-  below the header spends a second colour. Decide between an outlined Accept (and
+  below the header spends a second colour. The email helpers' own rule that "a
+  second filled button says the opposite, whichever brand colour fills it" is
+  contradicted by the same mail. Decide between an outlined Accept (and
   then whether the `secondary` variant has any legal use left in mail) and a
   declared, justified departure in SOG-UI.
 - [ ] **The info callout's coloured label has no glyph.** SOG-UI: a label set in a
