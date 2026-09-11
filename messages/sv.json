@@ -1226,6 +1226,8 @@
       "passwordPlaceholder": "Skapa ett starkt lösenord",
       "confirmPasswordPlaceholder": "Bekräfta ditt lösenord",
       "location": "Plats",
+      "termsLabel": "Jag intygar att jag är förälder eller vårdnadshavare, jag godkänner <terms>användarvillkoren</terms> och har läst <privacy>integritetspolicyn</privacy>.",
+      "termsRequired": "Bekräfta att du är förälder eller vårdnadshavare och godkänner användarvillkoren.",
       "marketingConsentLabel": "School of Gaming får skicka mig nyheter och erbjudanden via e-post.",
       "marketingConsentHint": "Valfritt — du kan ändra detta när som helst i dina inställningar.",
       "creatingAccount": "Skapar konto...",
@@ -4165,7 +4167,9 @@
   "consentDocuments": {
     "names": {
       "robloxProgrammeTerms": "Användarvillkor för Skaparnas akademi",
-      "robloxPrivacyPolicy": "Integritetspolicy för Skaparnas akademi"
+      "robloxPrivacyPolicy": "Integritetspolicy för Skaparnas akademi",
+      "termsAndConditions": "Användarvillkor",
+      "guardianDeclaration": "Intyg från vårdnadshavare"
     },
     "bundles": {
       "robloxProgramme": "Dokument för Skaparnas akademi"

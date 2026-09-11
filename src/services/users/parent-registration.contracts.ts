@@ -131,6 +131,32 @@ export const registerParentBody = z.object({
    * a client that never could.
    */
   marketingConsent: z.boolean().optional(),
+  /**
+   * The required acknowledgement: the registrant is a parent or legal guardian,
+   * and agrees to School of Gaming's Terms and Conditions.
+   *
+   * **Required where `marketingConsent` above is optional, and the two are not
+   * near-misses of each other.** A marketing preference is a preference: an
+   * account must never fail to exist over one, so absence reads as "no" and the
+   * registration proceeds. This one is the agreement the account is opened
+   * *under* — the terms bind only if they were accepted before the contract was
+   * concluded, and the guardian declaration is the reasonable effort GDPR
+   * Article 8 asks of us before an adult starts creating child accounts. An
+   * account created without it is an account we cannot say was created on any
+   * terms at all, so the schema refuses rather than defaulting.
+   *
+   * `z.literal(true)` and not `z.boolean()`: `false` is not a lesser answer to
+   * be recorded, it is the absence of the agreement, and it has to be refused
+   * by the same rule that refuses an omitted field. That also means an older
+   * client that predates the box is refused — deliberately, and the opposite of
+   * the reading `marketingConsent` gives its own silence.
+   */
+  acceptedTerms: z.literal(true, {
+    errorMap: () => ({
+      message:
+        "acceptedTerms must be true: an account is opened under the terms, and the registrant has to confirm they are the parent or legal guardian",
+    }),
+  }),
 });
 
 export type RegisterParentBody = z.infer<typeof registerParentBody>;

@@ -95,6 +95,23 @@ export type ProductRequiredConsent =
 export type ConsentAcceptance =
   Database["public"]["Tables"]["consent_acceptances"]["Row"];
 
+// account_consent_acceptances (00249) — the ACCOUNT-level counterpart of the
+// four aliases above, and the same system rather than a new one: the documents
+// and their versions are the 00210 registry, and a row is the same kind of
+// non-revocable statement about the past. What differs is the subject. A
+// ConsentAcceptance conditions one seat and carries a participant and a
+// product; an AccountConsentAcceptance conditions nothing and belongs to the
+// account — what the holder agreed to when they opened it. Nothing should
+// widen either into the other.
+//
+// Row alias only, for the same reason as the block above: the table carries no
+// write grant for any Data API role. Rows are written by
+// `record_account_consents` from the register route's service-role client, so
+// an Insert type here would name a statement nothing in the app is allowed to
+// make.
+export type AccountConsentAcceptance =
+  Database["public"]["Tables"]["account_consent_acceptances"]["Row"];
+
 // marketing_consents / marketing_consent_events / product_marketing_consents
 // (00220) — the REVOCABLE marketing-consent feature, and deliberately not the
 // same system as the four aliases above. A ConsentAcceptance is a

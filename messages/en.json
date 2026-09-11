@@ -1226,6 +1226,8 @@
       "passwordPlaceholder": "Create a strong password",
       "confirmPasswordPlaceholder": "Confirm your password",
       "location": "Location",
+      "termsLabel": "I confirm that I am a parent or legal guardian, and I agree to the <terms>Terms and Conditions</terms> and have read the <privacy>Privacy Policy</privacy>.",
+      "termsRequired": "Please confirm you are a parent or legal guardian and agree to the terms.",
       "marketingConsentLabel": "School of Gaming may send me news and offers by email.",
       "marketingConsentHint": "Optional — you can change this anytime in your settings.",
       "creatingAccount": "Creating account...",
@@ -4165,7 +4167,9 @@
   "consentDocuments": {
     "names": {
       "robloxProgrammeTerms": "Creator Academy Terms & Conditions",
-      "robloxPrivacyPolicy": "Creator Academy Privacy Policy"
+      "robloxPrivacyPolicy": "Creator Academy Privacy Policy",
+      "termsAndConditions": "Terms and Conditions",
+      "guardianDeclaration": "Parent or guardian declaration"
     },
     "bundles": {
       "robloxProgramme": "Creator Academy documents"

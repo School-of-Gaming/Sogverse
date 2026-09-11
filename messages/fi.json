@@ -1226,6 +1226,8 @@
       "passwordPlaceholder": "Luo vahva salasana",
       "confirmPasswordPlaceholder": "Vahvista salasanasi",
       "location": "Sijainti",
+      "termsLabel": "Vahvistan olevani lapsen vanhempi tai laillinen huoltaja, hyväksyn <terms>käyttöehdot</terms> ja olen lukenut <privacy>tietosuojaselosteen</privacy>.",
+      "termsRequired": "Vahvista, että olet lapsen vanhempi tai laillinen huoltaja ja hyväksyt käyttöehdot.",
       "marketingConsentLabel": "School of Gaming saa lähettää minulle uutisia ja tarjouksia sähköpostitse.",
       "marketingConsentHint": "Vapaaehtoinen — voit muuttaa tätä milloin tahansa asetuksissasi.",
       "creatingAccount": "Luodaan tiliä...",
@@ -4165,7 +4167,9 @@
   "consentDocuments": {
     "names": {
       "robloxProgrammeTerms": "Luojien akatemian käyttöehdot",
-      "robloxPrivacyPolicy": "Luojien akatemian tietosuojaseloste"
+      "robloxPrivacyPolicy": "Luojien akatemian tietosuojaseloste",
+      "termsAndConditions": "Käyttöehdot",
+      "guardianDeclaration": "Huoltajan vahvistus"
     },
     "bundles": {
       "robloxProgramme": "Luojien akatemian asiakirjat"

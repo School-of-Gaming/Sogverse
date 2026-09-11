@@ -30,6 +30,7 @@ const mockCreateUser = vi.fn();
 const mockDeleteUser = vi.fn();
 const mockProfileUpdate = vi.fn();
 const mockConsentRpc = vi.fn();
+const mockAccountConsentRpc = vi.fn();
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
@@ -59,6 +60,12 @@ vi.mock("@/lib/supabase/admin", () => ({
       if (fn === "record_registration_marketing_consent") {
         return mockConsentRpc(args);
       }
+      // The account-level record of what this account was opened under (00249).
+      // Service-role only for the same reason the marketing writer is: it names
+      // its subject in an argument because no session exists yet.
+      if (fn === "record_account_consents") {
+        return mockAccountConsentRpc(args);
+      }
       throw new Error(`Unexpected rpc in admin mock: ${fn}`);
     },
   }),
@@ -72,6 +79,7 @@ vi.mock("@/lib/brevo", () => ({
 
 import { POST } from "@/app/api/auth/register/route";
 import { REGISTER_WEAK_PASSWORD } from "@/services/users/parent-registration.contracts";
+import { REGISTRATION_CONSENT_DOCUMENTS } from "@/lib/constants/consent-documents";
 import { verifyEmailVerificationToken } from "@/lib/email-verification";
 import {
   CONSENT_COOKIE_NAME,
@@ -89,6 +97,10 @@ const validBody = {
   firstName: "Marja",
   lastName: "Virtanen",
   locale: "en",
+  // Required by the contract, so it belongs in the body every other case
+  // starts from: a registration without it is refused before anything is
+  // created, which is what the acknowledgement cases below assert on their own.
+  acceptedTerms: true,
 };
 
 function registerRequest(body: unknown, rawBody?: string): Request {
@@ -144,6 +156,7 @@ describe("POST /api/auth/register", () => {
     });
     mockProfileUpdate.mockResolvedValue({ error: null });
     mockConsentRpc.mockResolvedValue({ error: null });
+    mockAccountConsentRpc.mockResolvedValue({ data: 2, error: null });
     mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-1" });
   });
 
@@ -474,6 +487,97 @@ describe("POST /api/auth/register", () => {
     expect(await response.json()).toEqual({ userId: NEW_USER_ID });
     expect(mockDeleteUser).not.toHaveBeenCalled();
     expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
+    spy.mockRestore();
+  });
+
+  // -- The acknowledgement the account is opened under --
+  //
+  // The terms bind only if they were accepted before the contract was
+  // concluded, and the guardian declaration is the effort Article 8 asks of us
+  // before an adult starts creating child accounts. So unlike the marketing
+  // answer above, this one is a precondition of the account rather than a
+  // preference recorded alongside it — refused at the schema, and then written
+  // against the version of each document that was current.
+
+  it("returns 400 when the acknowledgement is missing", async () => {
+    const { acceptedTerms: _omitted, ...withoutTerms } = validBody;
+    const response = await POST(registerRequest(withoutTerms));
+
+    expect(response.status).toBe(400);
+    // Nothing is created, so there is no account we cannot say was opened on
+    // any terms — which is the whole reason this is a schema refusal and not a
+    // best-effort write after the fact.
+    expect(mockCreateUser).not.toHaveBeenCalled();
+    expect(mockAccountConsentRpc).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when the acknowledgement is explicitly false", async () => {
+    // `false` is not a lesser answer to be recorded. It is the absence of the
+    // agreement, and it is refused by exactly the rule that refuses an omitted
+    // field — the opposite of how the marketing box's silence is read.
+    const response = await POST(
+      registerRequest({ ...validBody, acceptedTerms: false }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockCreateUser).not.toHaveBeenCalled();
+    expect(mockAccountConsentRpc).not.toHaveBeenCalled();
+  });
+
+  it("records both documents through the one account-consent RPC", async () => {
+    const response = await POST(registerRequest(validBody));
+
+    expect(response.status).toBe(200);
+    expect(mockAccountConsentRpc).toHaveBeenCalledTimes(1);
+    // The route names the account and the set, and nothing else: the VERSION of
+    // each document is resolved inside the function, so nothing a caller sends
+    // can claim an acceptance of a text that was never on screen.
+    expect(mockAccountConsentRpc).toHaveBeenCalledWith({
+      p_customer_id: NEW_USER_ID,
+      p_document_slugs: [...REGISTRATION_CONSENT_DOCUMENTS],
+    });
+  });
+
+  // After everything that must succeed, exactly as the marketing write is:
+  // nothing above it may be delayed or broken by a consent write. Pinned here
+  // because the ordering is a decision rather than an accident of where the
+  // code was typed.
+  it("writes the acknowledgement after the welcome mail and after the marketing answer", async () => {
+    await POST(registerRequest(validBody));
+
+    expect(mockAccountConsentRpc.mock.invocationCallOrder[0]).toBeGreaterThan(
+      mockSendTransactionalEmail.mock.invocationCallOrder[0],
+    );
+    expect(mockAccountConsentRpc.mock.invocationCallOrder[0]).toBeGreaterThan(
+      mockConsentRpc.mock.invocationCallOrder[0],
+    );
+  });
+
+  // The account exists and the parent has been mailed; destroying that over a
+  // failed record would cost them more than the missing row costs us. But it is
+  // not the same loss as a missing opt-in, so the id goes in the log line and
+  // the row can be written by hand afterwards.
+  it("still registers when the acknowledgement write is refused, and logs the id", async () => {
+    mockAccountConsentRpc.mockResolvedValue({
+      data: null,
+      error: { code: "42501", message: "permission denied" },
+    });
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const response = await POST(registerRequest(validBody));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ userId: NEW_USER_ID });
+    expect(mockDeleteUser).not.toHaveBeenCalled();
+    expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
+    expect(
+      spy.mock.calls.some((call) =>
+        call.some(
+          (arg) => typeof arg === "string" && arg.includes(NEW_USER_ID),
+        ),
+      ),
+      "the failure was logged without the account id",
+    ).toBe(true);
     spy.mockRestore();
   });
 

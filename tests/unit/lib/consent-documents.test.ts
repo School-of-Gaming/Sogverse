@@ -2,9 +2,11 @@ import { describe, it, expect } from "vitest";
 import {
   CONSENT_DOCUMENTS,
   CONSENT_DOCUMENT_BUNDLES,
+  REGISTRATION_CONSENT_DOCUMENTS,
   completeConsentBundles,
   consentRowSlugs,
   describeRequiredConsents,
+  isAccountConsentSlug,
   isBundledConsentSlug,
 } from "@/lib/constants/consent-documents";
 
@@ -138,5 +140,54 @@ describe("the slugs behind a row", () => {
     expect(consentRowSlugs(rowFor([UNKNOWN], UNKNOWN), [UNKNOWN])).toEqual([
       UNKNOWN,
     ]);
+  });
+});
+
+/**
+ * **What opening an account commits the account holder to** (00249).
+ *
+ * The parent sign-up form asks one question and records two documents against
+ * it. These cases pin the things that make the set safe to hand straight to the
+ * write RPC: every slug in it is a document this deploy can actually name, and
+ * none of them can be offered a second time as a product's enrolment condition.
+ */
+describe("the registration consent set", () => {
+  it("names only documents the registry knows", () => {
+    // The slugs travel from here into `record_account_consents`, which refuses
+    // one with no published version — so a slug this deploy cannot even name is
+    // a registration whose legal record silently fails to be written.
+    expect(REGISTRATION_CONSENT_DOCUMENTS.length).toBeGreaterThan(0);
+    for (const slug of REGISTRATION_CONSENT_DOCUMENTS) {
+      expect(CONSENT_DOCUMENTS[slug]).toBeDefined();
+    }
+  });
+
+  it("is exactly the set of account-level slugs", () => {
+    for (const slug of REGISTRATION_CONSENT_DOCUMENTS) {
+      expect(isAccountConsentSlug(slug)).toBe(true);
+    }
+    // The Roblox pair is per enrolment and must stay attachable to a product.
+    expect(isAccountConsentSlug(TERMS)).toBe(false);
+    expect(isAccountConsentSlug(PRIVACY)).toBe(false);
+    expect(isAccountConsentSlug(UNKNOWN)).toBe(false);
+  });
+
+  it("keeps an account-level document out of every bundle", () => {
+    // A bundle is a *product's* requirement set offered as one row. An
+    // account-level document belongs to no product, so a bundle naming one
+    // would put back in front of a parent a tick that is already on file.
+    for (const slug of REGISTRATION_CONSENT_DOCUMENTS) {
+      expect(isBundledConsentSlug(slug)).toBe(false);
+    }
+  });
+
+  it("gives the guardian declaration a name but no page", () => {
+    // It is a sentence, not a document anyone can go and read, and an anchor
+    // with no destination resolves to the current page — worse than plain text.
+    const meta = CONSENT_DOCUMENTS["guardian-declaration"];
+    expect(meta.href).toBeNull();
+    expect(meta.nameKey).toBe("guardianDeclaration");
+    // The terms, by contrast, are published and the link is the point.
+    expect(CONSENT_DOCUMENTS["terms-and-conditions"].href).not.toBeNull();
   });
 });
