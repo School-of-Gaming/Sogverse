@@ -5,7 +5,7 @@ import {
   SESSION_REPORT_ALREADY_SENT_SQLSTATE,
   SESSION_REPORT_NO_REPORT_SQLSTATE,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
-import { STATUS_TINT } from "@/lib/constants/colors";
+import { STATUS } from "@/lib/constants/colors";
 
 /**
  * POST /api/gedu/sessions/email-report — the fan-out that mails a session
@@ -129,6 +129,8 @@ interface ParticipationFixture {
     email: string;
     role: string;
     locale: string | null;
+    /** One-to-one off `profiles`, so an object or null (an adult has none). */
+    gamer_profiles: { sign_in: string } | null;
   };
 }
 
@@ -153,7 +155,7 @@ interface ParentLinkFixture {
   id: string;
   gamer_id: string;
   created_at: string | null;
-  parent: { email: string; locale: string | null };
+  parent: { first_name: string; email: string; locale: string | null };
 }
 
 /** Two children and an adult on their own seat — the three mailable shapes. */
@@ -167,6 +169,7 @@ const PARTICIPATIONS: ParticipationFixture[] = [
       email: "aino@gamer.sogverse.internal",
       role: "gamer",
       locale: null,
+      gamer_profiles: { sign_in: "parent" },
     },
   },
   {
@@ -178,6 +181,7 @@ const PARTICIPATIONS: ParticipationFixture[] = [
       email: "vaino@gamer.sogverse.internal",
       role: "gamer",
       locale: null,
+      gamer_profiles: { sign_in: "parent" },
     },
   },
   {
@@ -189,16 +193,32 @@ const PARTICIPATIONS: ParticipationFixture[] = [
       email: "sylvie@test.local",
       role: "customer",
       locale: "en",
+      gamer_profiles: null,
     },
   },
 ];
+
+/**
+ * Aino again, holding a mailbox of her own: the real-email sign-in, which is
+ * the whole of what earns a child their own copy. Nothing here says whether
+ * she has verified the address, because the route no longer asks.
+ */
+const EMAIL_CHILD: ParticipationFixture = {
+  ...PARTICIPATIONS[0],
+  participant: {
+    ...PARTICIPATIONS[0].participant,
+    email: "aino@example.test",
+    locale: "en",
+    gamer_profiles: { sign_in: "email" },
+  },
+};
 
 const PARENT_LINKS: ParentLinkFixture[] = [
   {
     id: "a0000000-0000-4000-8000-000000000001",
     gamer_id: PEOPLE.aino,
     created_at: "2026-01-05T09:00:00Z",
-    parent: { email: "aino-parent@test.local", locale: "fi" },
+    parent: { first_name: "Marja", email: "aino-parent@test.local", locale: "fi" },
   },
   // A second link on the same child, created later: the route must pick the
   // earlier one, exactly as the roster RPC's ORDER BY does.
@@ -206,14 +226,14 @@ const PARENT_LINKS: ParentLinkFixture[] = [
     id: "a0000000-0000-4000-8000-000000000002",
     gamer_id: PEOPLE.aino,
     created_at: "2026-03-05T09:00:00Z",
-    parent: { email: "aino-second-parent@test.local", locale: "en" },
+    parent: { first_name: "Pekka", email: "aino-second-parent@test.local", locale: "en" },
   },
   {
     id: "a0000000-0000-4000-8000-000000000003",
     gamer_id: PEOPLE.vaino,
     created_at: "2026-02-05T09:00:00Z",
     // No locale on file, so this mail must come out in the default locale.
-    parent: { email: "vaino-parent@test.local", locale: null },
+    parent: { first_name: "Liisa", email: "vaino-parent@test.local", locale: null },
   },
 ];
 
@@ -741,11 +761,27 @@ describe("POST /api/gedu/sessions/email-report", () => {
         expect(mail.htmlContent).toContain(`<img src="${bucketUrl(image.id)}"`);
       }
     }
-    // A box stated before a byte is fetched, from the stored dimensions: a
-    // 16:9 photo is limited by the width budget, a portrait by the height one.
+    // The stored dimensions reach the mail, and they reach it as the two
+    // numbers the layout is built from: the cap a picture may be drawn to
+    // (the height budget spent at that photo's own ratio) and the height of
+    // the well reserved for it before a byte is fetched. The picture itself is
+    // fluid — `width="100%"`, height derived from the ratio — so the shapes are
+    // in those two numbers and nowhere else. The arithmetic behind them is the
+    // unit suite's subject; what is asserted here is that a 16:9 and a portrait
+    // arrive with *different* boxes, which is only true if the row's own width
+    // and height travelled all the way from the read to the markup.
     const family = familyMails()[0].htmlContent;
-    expect(family).toContain(`<img src="${bucketUrl(IMAGES[0].id)}" width="216" height="122"`);
-    expect(family).toContain(`<img src="${bucketUrl(IMAGES[1].id)}" width="101" height="180"`);
+    // 1600×900: capped at 711px, and the phone box the pixel attributes carry
+    // is the 328px column at 185px tall.
+    expect(family).toContain(
+      `<img src="${bucketUrl(IMAGES[0].id)}" width="328" height="185"`,
+    );
+    expect(family).toContain("max-width:711px");
+    // 900×1600: capped at 225px by the height budget, 400px tall at that width.
+    expect(family).toContain(
+      `<img src="${bucketUrl(IMAGES[1].id)}" width="225" height="400"`,
+    );
+    expect(family).toContain("max-width:225px");
   });
 
   it("sends the report a session has no photos on exactly as it always did", async () => {
@@ -797,6 +833,7 @@ describe("POST /api/gedu/sessions/email-report", () => {
             email: "orvokki@gamer.sogverse.internal",
             role: "gamer",
             locale: null,
+            gamer_profiles: { sign_in: "parent" },
           },
         },
       ],
@@ -844,6 +881,111 @@ describe("POST /api/gedu/sessions/email-report", () => {
     expect(staffCopies()).toHaveLength(1);
   });
 
+  // -- The child's own copy --
+  //
+  // A child who holds a mailbox of their own gets their own copy of the
+  // report, beside the parent's and never instead of it. The gate is the
+  // sign-in mode alone — verification is deliberately not a precondition — so
+  // the cases below are the two modes that have no inbox behind them.
+
+  it("sends an email-mode child their own copy, beside the parent's", async () => {
+    setupAdminClient({
+      participations: [EMAIL_CHILD, PARTICIPATIONS[1], PARTICIPATIONS[2]],
+    });
+
+    const response = await POST(createRequest());
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    // Three seats, four mails: the tally counts seats through the parent's
+    // mail, and the child's copy is not a fourth family.
+    expect(data).toEqual({ sent: 3, failed: 0, skipped: 0 });
+    expect(familyMails()).toHaveLength(4);
+
+    const child = mailTo("aino@example.test");
+    // Their own root — a `/parent` link bounces a signed-in child — and their
+    // own framing sentence; no CC, no BCC, reply to support like the parent's.
+    expect(child.htmlContent).toContain(`${ORIGIN}/gamer/clubs/${SEATS.aino}`);
+    expect(child.htmlContent).not.toContain(`${ORIGIN}/parent/clubs/`);
+    expect(child.htmlContent).toContain("report from your ");
+    expect(child.htmlContent).not.toContain(`color:${STATUS.info}`);
+    expect(child.cc).toBeUndefined();
+    expect(child.bcc).toBeUndefined();
+    expect(child.replyToEmail).toBe("help@sog.gg");
+
+    // The parent's mail is exactly what it was.
+    const parent = mailTo("aino-parent@test.local");
+    expect(parent.htmlContent).toContain(`${ORIGIN}/parent/clubs/${SEATS.aino}`);
+    expect(parent.htmlContent).not.toContain("report from your ");
+  });
+
+  it("writes the child's copy in the child's locale, not the parent's", async () => {
+    setupAdminClient({ participations: [EMAIL_CHILD] });
+
+    await POST(createRequest());
+
+    // The parent reads Finnish; the child has English on file.
+    expect(mailTo("aino-parent@test.local").subject).toContain("Raportti kerrasta");
+    expect(mailTo("aino@example.test").subject).toContain("Session report");
+    expect(mailTo("aino@example.test").subject).toContain("Minecraft Club");
+  });
+
+  it.each([
+    [
+      "switch-only sign-in",
+      { email: "aino@gamer.sogverse.internal", gamer_profiles: { sign_in: "parent" } },
+    ],
+    [
+      "username sign-in",
+      { email: "aino@gamer.sogverse.internal", gamer_profiles: { sign_in: "username" } },
+    ],
+  ])("mails the parent alone for a child with a %s", async (_label, participant) => {
+    setupAdminClient({
+      participations: [
+        { ...EMAIL_CHILD, participant: { ...EMAIL_CHILD.participant, ...participant } },
+      ],
+    });
+
+    const response = await POST(createRequest());
+    const data = await response.json();
+
+    expect(data).toEqual({ sent: 1, failed: 0, skipped: 0 });
+    expect(familyMails().map((mail) => mail.toEmail)).toEqual(["aino-parent@test.local"]);
+    expect(
+      sentMails().some((sent) => String(sent.toEmail).includes("sogverse.internal")),
+    ).toBe(false);
+  });
+
+  it("writes to nobody for a child with no parent — never to a child alone", async () => {
+    setupAdminClient({ participations: [EMAIL_CHILD], parentLinks: [] });
+
+    const response = await POST(createRequest());
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data).toEqual({ sent: 0, failed: 0, skipped: 1 });
+    expect(familyMails()).toHaveLength(0);
+  });
+
+  it("neither counts nor retries over a child's copy that throws", async () => {
+    setupAdminClient({ participations: [EMAIL_CHILD] });
+    mockSendTransactionalEmail.mockImplementation((options: SentMail) =>
+      options.toEmail === "aino@example.test"
+        ? Promise.reject(new Error("mailbox full"))
+        : Promise.resolve({ messageId: "msg-1" }),
+    );
+
+    const response = await POST(createRequest());
+    const data = await response.json();
+
+    // The parent's mail is the outcome and it went; the copy's failure is
+    // logged and changes nothing — not the tally, not the claim.
+    expect(response.status).toBe(200);
+    expect(data).toEqual({ sent: 1, failed: 0, skipped: 0 });
+    expect(release.patch).toBeNull();
+    expect(staffCopies()).toHaveLength(1);
+  });
+
   // -- The staff copy --
 
   it("sends exactly one staff copy, to the gedu with every admin in CC", async () => {
@@ -885,19 +1027,17 @@ describe("POST /api/gedu/sessions/email-report", () => {
     // The load-bearing check is the banner's own markup, not its words: these
     // mails are rendered in each reader's locale, so an English string proves
     // nothing about the Finnish parent's mail — it would be absent from that one
-    // whether the banner rendered or not. The callout's info border is the
-    // banner's alone in this template and is the same bytes in every locale: the
-    // shell's card and the fact table's rules are the other 1px borders in a
-    // session report and both are `DARK_THEME.border`. (Its twice-declared fill
-    // would do as well, but the colour is the discriminating half either way.)
-    expect(copy.htmlContent).toContain(`border:1px solid ${STATUS_TINT.infoBorder}`);
+    // whether the banner rendered or not. The callout's label is the only text
+    // in this template set in the info colour, and it is the same bytes in every
+    // locale, so that colour is what tells a staff copy from a family one.
+    expect(copy.htmlContent).toContain(`color:${STATUS.info}`);
     // The English copy's words still earn their place — this sender reads in
     // `en`, and the marker cannot tell a banner from an empty one.
     expect(copy.htmlContent).toContain("Gedu and Admin copy");
     expect(copy.htmlContent).toContain("Every family received their own separate email");
 
     for (const mail of familyMails()) {
-      expect(mail.htmlContent).not.toContain(`border:1px solid ${STATUS_TINT.infoBorder}`);
+      expect(mail.htmlContent).not.toContain(`color:${STATUS.info}`);
     }
   });
 

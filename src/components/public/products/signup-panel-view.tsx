@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { Globe, MapPin, MapPinCheck, Plus } from "lucide-react";
+import { StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckboxRow } from "@/components/ui/checkbox-row";
@@ -20,7 +21,15 @@ import {
   describeMarketingConsents,
   type MarketingConsentAskRow,
 } from "@/lib/constants/marketing-consents";
-import type { MarketingConsentType, ProductType } from "@/types";
+import {
+  describeGamerPhotoConsents,
+  type GamerPhotoConsentAskRow,
+} from "@/lib/constants/gamer-photo-consents";
+import type {
+  GamerPhotoConsentType,
+  MarketingConsentType,
+  ProductType,
+} from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import { CountdownClock, useCountdownDone } from "./countdown-clock";
 import type { RegistrationState } from "./derive-registration-state";
@@ -31,6 +40,7 @@ import {
   SeatAvailabilityBar,
   type SeatAvailabilityBarProps,
 } from "./seat-availability-bar";
+import type { AppHref } from "@/lib/constants/routes";
 
 // Top-level Signup Panel View. Pure presentational: takes resolved
 // state and emits intent callbacks. Renders the right banner + body
@@ -79,12 +89,43 @@ export interface SignupParticipantChoice {
    * labels its state in place instead of offering a second signup.
    */
   signupState?: MyParticipationState | null;
+  /**
+   * When set, this child's age falls outside the product's own band — the row
+   * is shown disabled and labels which side it fell out of, exactly as an
+   * already-enrolled row does.
+   *
+   * **The bound rides on the row rather than on the panel**, which is what
+   * keeps this one optional field the whole of the change: the label names a
+   * number ("Under 8"), and the alternative was threading the product's
+   * `min_age`/`max_age` down through the view, `FormOrAuth` and the form to be
+   * re-derived beside every row anyway. A row that knows why it is blocked can
+   * say so without the panel around it knowing anything.
+   *
+   * **Already-enrolled outranks it** where a row carries both: holding a seat
+   * is the more specific fact about that child on this product, and it is also
+   * the one that answers the parent's actual question.
+   */
+  ageBlock?: SignupAgeBlock | null;
   /** True on the parent's own row. Selects the second-person copy, nothing else. */
   isSelf?: boolean;
 }
 
+/**
+ * Why a row is outside the product's age band, and the bound it fell outside
+ * of. `kind` picks the label, `bound` fills its number.
+ *
+ * The decision itself is made in `src/lib/gamer-age-eligibility.ts` — the panel
+ * renders it and owns nothing of the arithmetic, which is what lets a preview
+ * scene drive both states from fixtures.
+ */
+export interface SignupAgeBlock {
+  kind: "under" | "over";
+  /** The product's `min_age` for `under`, its `max_age` for `over`. */
+  bound: number;
+}
+
 export type AuthState =
-  | { kind: "unauthenticated"; signInHref: string; createAccountHref: string }
+  | { kind: "unauthenticated"; signInHref: AppHref; createAccountHref: AppHref }
   | { kind: "non_customer" }
   | {
       // A signed-in customer. `participants` may be empty — on a product with a
@@ -240,17 +281,52 @@ export interface SignupPanelViewProps {
    */
   marketingConsentTypes: readonly MarketingConsentType[];
   /**
-   * Which of those the reader has ticked, seeded from their account's own
-   * stored answer and overlaid with anything they change here.
+   * Which of those the reader has ticked here — never a seed, and never a value
+   * that arrives after first paint.
    *
-   * The one thing on the panel whose value may legitimately change after first
-   * paint on data's own schedule — the account read lands a round trip late —
-   * and it is allowed to because only the *tick* moves. The box, its sentence
-   * and its hint are all on screen from the first frame, so nothing shifts.
+   * The panel used to seed these from the parent's account, which made this the
+   * one value on screen allowed to change on data's own schedule. It does not
+   * any more: every optional box on this panel starts unticked on every
+   * enrolment, so the only thing that ever moves a tick is a click.
    */
   marketingConsents: ReadonlySet<MarketingConsentType>;
   onMarketingConsentChange: (
     consentType: MarketingConsentType,
+    granted: boolean,
+  ) => void;
+  /**
+   * **The product's optional photo asks**, as stored — whether photos and
+   * videos of the child taking this seat may be taken and used. Empty on nearly
+   * every product, and the block ceases to exist when it is.
+   *
+   * Rides in on the product read like the two sets above, and like the
+   * marketing asks it NEVER gates the CTA: declining is a complete answer and
+   * the seat is unaffected.
+   */
+  gamerPhotoConsentTypes: readonly GamerPhotoConsentType[];
+  /**
+   * Whether those rows can be *answered* right now — true only once a child is
+   * selected.
+   *
+   * It is not what decides whether they are drawn. The rows exist wherever the
+   * product asks them of a gamer audience, from the panel's first paint, and
+   * this is the one attribute that changes with the selection: no participant
+   * chosen, or the parent's own seat chosen on a product whose audience admits
+   * adults, and the boxes are disabled — a consent about a gamer's image cannot
+   * be given about the adult giving it, and there is no gamer row for the
+   * answer to be keyed to.
+   *
+   * Decided by the hook rather than re-derived here, deliberately: the same
+   * answer decides which boxes can be ticked and which answers are written at
+   * the click, and two derivations of it could disagree about the participant.
+   * (The required rows above go the other way for the opposite reason — those
+   * gate the button, so the rows on screen must be what the gate counts.)
+   */
+  gamerPhotoConsentsEnabled: boolean;
+  /** Which photo boxes are ticked, for the currently selected child. */
+  gamerPhotoConsents: ReadonlySet<GamerPhotoConsentType>;
+  onGamerPhotoConsentChange: (
+    consentType: GamerPhotoConsentType,
     granted: boolean,
   ) => void;
   onSubmit: () => void;
@@ -269,9 +345,9 @@ export interface SignupPanelViewProps {
 // ---------- Why the panel is flat ----------
 //
 // The panel used to be a card, holding a card, holding a card per participant,
-// and each layer spent padding: in the detail page's 20rem rail that left a row
-// about 195px wide, which is not enough for a name, an age and "Already joined"
-// on one line.
+// and each layer spent padding: in the detail page's rail, then 20rem wide, that
+// left a row about 195px wide, which is not enough for a name, an age and
+// "Already joined" on one line.
 //
 // What has no box is decided by one rule — **a border means you can act on
 // it.** So the picker's outer box is gone (it is a grouping, not a control) and
@@ -323,7 +399,7 @@ function PanelShell({
   const t = useTranslations("productDetail.signupPanel");
   return (
     <Card className="overflow-hidden">
-      <div className="bg-muted px-5 py-2.5 text-center text-sm font-semibold text-muted-foreground">
+      <div className="bg-lifted px-5 py-2.5 text-center text-sm font-semibold text-muted-foreground">
         {t(`noun.${productType}`)}
       </div>
       <CardContent className="space-y-5 p-5 sm:p-6">{children}</CardContent>
@@ -503,13 +579,14 @@ interface FormOrAuthProps extends SignupPanelViewProps {
 // to agree to becomes another row in this section, above the rules row; it does
 // not become a section of its own.
 //
-// **One consent row carries a marker, and it is the one that does NOT gate the
-// button.** The optional marketing row below the section is the same bordered
-// control as the gates above it — the border draws the click target, not the
-// stakes — so its info-toned hint sentence, which opens with the word
-// "Optional", is what a reader (and, through `aria-describedby`, a screen
-// reader) tells them apart by. Every gate is unmarked, because a gate is the
-// ordinary thing to find here.
+// **The consent rows that carry a marker are the ones that do NOT gate the
+// button.** The optional rows below the section — a photo permission for the
+// selected child, a partner's mailing list — are the same bordered control as
+// the gates above them (the border draws the click target, not the stakes), so
+// each one's info-toned hint sentence, which opens with the word "Optional", is
+// what a reader (and, through `aria-describedby`, a screen reader) tells them
+// apart by. Every gate is unmarked, because a gate is the ordinary thing to
+// find here.
 //
 // **Actions live in the sections, never in the CTA.** A section that needs
 // something offers its own affordance: the dashed add-a-gamer row inside the
@@ -525,7 +602,6 @@ function FormOrAuth(props: FormOrAuthProps) {
     case "unauthenticated":
       return (
         <UnauthenticatedOverlay
-          productType={props.productType}
           signInHref={props.authState.signInHref}
           createAccountHref={props.authState.createAccountHref}
         />
@@ -568,46 +644,41 @@ function FormOrAuth(props: FormOrAuthProps) {
 }
 
 function UnauthenticatedOverlay({
-  productType,
   signInHref,
   createAccountHref,
 }: {
-  productType: ProductType;
-  signInHref: string;
-  createAccountHref: string;
+  signInHref: AppHref;
+  createAccountHref: AppHref;
 }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    /* The app-wide button order shape — root `CLAUDE.md`, "Button Order":
-       DOM [secondary, primary] under `flex-col-reverse`, so signing in reads
-       on top. This pair only ever stacks, so there is no `sm:flex-row` half.
-       The rendered order is what it has always been; only the authoring
-       shape changed, so the whole app states this one way round. */
+    /* The app-wide button order shape — `src/CLAUDE.md`, "Button Order":
+       DOM [secondary, primary] under `flex-col-reverse`, so creating an
+       account reads on top. A visitor with no session is far more often new
+       than returning, so the new account is the path the panel steers toward.
+       This pair only ever stacks, so there is no `sm:flex-row` half.
+       Both labels stay short and product-type-agnostic: they must fit one
+       line on a phone in every locale, and the price above already names
+       what is being joined. */
     <div className="flex flex-col-reverse gap-2">
       <Link
-        href={createAccountHref}
+        href={signInHref}
         className={buttonVariants({
           size: "lg",
           variant: "outline",
           className: "w-full text-base",
         })}
       >
-        {t("ctaCreateAccount")}
+        {t("ctaSignIn")}
       </Link>
       <Link
-        href={signInHref}
+        href={createAccountHref}
         className={buttonVariants({
           size: "lg",
           className: "w-full text-base",
         })}
       >
-        {/* Keyed by type like the panel's other action words, so this button can
-            name the action the signed-in CTA will. Only the event mismatch is
-            fixed here — it said "register" where every other word on an event
-            panel says "join". Clubs and camps still pair "Enrol"/"Sign up" with
-            "Sign in to register"; that is left as-is on purpose, as a copy
-            decision to make on its own rather than a mechanical sweep. */}
-        {t(`ctaSignIn.${productType}`)}
+        {t("ctaCreateAccount")}
       </Link>
     </div>
   );
@@ -620,7 +691,7 @@ function UnauthenticatedOverlay({
 function NonCustomerOverlay({ forGamers }: { forGamers: boolean }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <p className="rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+    <p className="rounded-md border border-border bg-lifted p-3 text-xs text-muted-foreground">
       {forGamers ? t("nonCustomerNote") : t("nonCustomerNoteParents")}
     </p>
   );
@@ -640,7 +711,7 @@ function NonCustomerOverlay({ forGamers }: { forGamers: boolean }) {
  * **Info, not warning and not error.** Nothing has gone wrong and nothing is
  * their fault: the product is sold somewhere else, which is a fact about the
  * product. So the tint is the `info` semantic pair, never `destructive` or
- * `warning` (which would tell them to fix something) and never `primary`
+ * `warning` (which would tell them to fix something) and never `act`
  * (which is the panel's *act on this* colour, and there is nothing to act on).
  * The `Globe` anchors it — the same subject the sections' `MapPin` /
  * `MapPinCheck` mark, one scale up because this block is the panel's entire
@@ -679,7 +750,7 @@ function WrongCountryOverlay({
 }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <div className="flex items-start gap-3 rounded-md border border-info/30 bg-info/10 p-4">
+    <div className="flex items-start gap-3 rounded-md border border-border p-4">
       <Globe className="mt-0.5 h-5 w-5 shrink-0 text-info" />
       <p className="text-sm text-foreground">
         {t.rich("regionLock.wrongCountry", {
@@ -708,13 +779,14 @@ function WrongCountryOverlay({
  * than in the CTA.
  *
  * **It speaks in the refusal's hue at the quiet volume, because it is about
- * the same thing.** The `info` border says "this product is a bit different
+ * the same thing.** The `info` pin says "this product is a bit different
  * and wants your attention" without ever saying anything is wrong — which is
  * exactly the question being asked — while the default background keeps a
- * section inside a working form from shouting over the form itself. The
- * border is the whole change: the heading, the note and the button sit where
- * they always sat, in the order they always sat in, so the section still
- * reads as one step of the form rather than as an interruption of it.
+ * section inside a working form from shouting over the form itself. The edge
+ * is the neutral border every block on this panel wears and the glyph carries
+ * the hue: the heading, the note and the button sit where they always sat, in
+ * the order they always sat in, so the section still reads as one step of the
+ * form rather than as an interruption of it.
  *
  * **The block's `MapPin` anchors the section, and the button's does not.** The
  * heading carries an `info`-coloured pin, the way the refusal's `Globe` and the
@@ -729,7 +801,7 @@ function WrongCountryOverlay({
 function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <div className="rounded-md border border-info/40 p-4">
+    <div className="rounded-md border border-border p-4">
       <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
         <MapPin className="h-4 w-4 shrink-0 text-info" />
         {t("regionLock.heading")}
@@ -741,7 +813,7 @@ function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void })
       <button
         type="button"
         onClick={onSetLocation}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-input px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-foreground"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
       >
         <MapPin className="h-4 w-4" />
         {t("regionLock.setLocation")}
@@ -781,9 +853,9 @@ function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void })
  * **It carries the region-lock family's `info` surface, which is the one place
  * this panel's "a border means you can act on it" rule is deliberately spent.**
  * What is bought with it is not inactionability — the ask section wears the
- * same border and holds a button — but *subject*: the info hue says "the region
- * lock is speaking", and it says that about all three surfaces regardless of
- * whether there is anything to do on them. Controls keep announcing themselves
+ * same border and holds a button — but *subject*: the info-coloured pin says
+ * "the region lock is speaking", and it says that about all three surfaces
+ * regardless of whether there is anything to do on them. Controls keep announcing themselves
  * the way they do everywhere else on the panel, from inside the block: the ask
  * section's affordance is a bordered, full-width button that looks exactly like
  * the picker's add-a-gamer row, and its absence here is what tells a reader this
@@ -806,7 +878,7 @@ function RegionEligibleSection({
 }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <div className="rounded-md border border-info/40 p-4">
+    <div className="rounded-md border border-border p-4">
       <p className="flex items-start gap-2 text-sm text-foreground">
         <MapPinCheck className="mt-0.5 h-4 w-4 shrink-0 text-info" />
         <span>
@@ -846,6 +918,10 @@ function SignupForm(
   // would create an account that cannot be signed up on this page.
   const canAddGamer =
     props.forGamers && props.gamerCount < MAX_GAMERS_PER_PARENT;
+  // Whether that row is the parent's required next step, which is what decides
+  // its weight — the reasoning is at the row itself, further down.
+  const solidAddGamer =
+    props.gamerCount === 0 && props.selectedParticipantId === null;
   const selectedIsSelf =
     props.participants.find((p) => p.id === props.selectedParticipantId)
       ?.isSelf === true;
@@ -880,12 +956,13 @@ function SignupForm(
   // every step during the pre-open countdown and land on "Ready & waiting",
   // primed to one-tap the instant it opens. Only the final leaf differs by
   // window: the live action label once open (`active`), the holding state until
-  // then. selectedParticipantId is null only when nobody is selectable: there
-  // is still room to add a child (canAddGamer → prompt to add a gamer), every
-  // child is already on the product at the gamer cap, or — on a parents-only
-  // product — the reader already holds the one seat there is. The latter two
-  // both land on ctaAllSet; the picker rows show each person's exact
-  // seat/waitlist status in place.
+  // then. selectedParticipantId is null only when nobody is selectable, which
+  // has four causes: there is still room to add a child (canAddGamer → prompt
+  // to add a gamer), every child is already on the product at the gamer cap,
+  // every child the account has is outside the product's age band, or — on a
+  // parents-only product — the reader already holds the one seat there is. The
+  // last three all land on ctaAllSet; the picker rows show each person's exact
+  // reason — seat, waitlist or bound — in place.
   //
   // The location step is an instruction and nothing more — the button stays
   // disabled and the section above it carries the action, per the grammar note
@@ -941,6 +1018,18 @@ function SignupForm(
               // customer and keyed on the participant column, so a self seat
               // arrives under the parent's own id like any other.
               const alreadyOn = g.signupState ?? null;
+              // The second reason a row can be refused, wearing the identical
+              // treatment: a child outside the product's own age band. It is
+              // *below* the seat in precedence — a child who already holds a
+              // seat is told they hold it, whatever their age says, because
+              // that is the more specific fact and the one the parent is
+              // actually asking about. So this is read only where there is no
+              // seat, and the label below picks in the same order.
+              const ageBlock = alreadyOn === null ? (g.ageBlock ?? null) : null;
+              // One name for "this row is not a target", so the disabled
+              // attribute, the muted fills and the muted name cannot come apart
+              // as the reasons multiply.
+              const refused = alreadyOn !== null || ageBlock !== null;
               const selected = props.selectedParticipantId === g.id;
               return (
                 <button
@@ -948,26 +1037,27 @@ function SignupForm(
                   type="button"
                   role="radio"
                   aria-checked={selected}
-                  disabled={alreadyOn !== null}
+                  disabled={refused}
                   onClick={() => props.onSelectParticipant(g.id)}
                   className={cn(
-                    "flex w-full items-center justify-between gap-2 rounded-md border px-2.5 py-2.5 text-sm transition-colors",
+                    "flex w-full items-center justify-between gap-2 rounded-md border border-border px-2.5 py-2.5 text-sm transition-colors",
                     // The border and the fills stay: this row is the one thing
                     // in the picker you can act on, and the border is what says
                     // so. With no box around the group the row spends a little
                     // less on its own padding (22px of horizontal cost) and
                     // gives the name/age/status line the room it needs at rail
                     // width.
-                    alreadyOn !== null
-                      ? "cursor-not-allowed border-input bg-muted/40 opacity-60"
+                    refused
+                      ? "cursor-not-allowed border-border bg-lifted opacity-60"
                       : selected
-                        ? // With no outer box to sit inside, a 1px primary
-                          // border against a 1px input border is a thin
-                          // distinction. An inset ring doubles the line without
-                          // changing the box, so selecting a row cannot nudge
-                          // its own text by a pixel.
-                          "border-primary bg-primary/10 ring-1 ring-inset ring-primary/50"
-                        : "border-input hover:bg-accent hover:text-accent-foreground",
+                        ? // With no outer box to sit inside, a fill alone
+                          // would be a thin distinction — and act is a figure
+                          // on the dark ground rather than a wash over it. An
+                          // inset ring at full value doubles the row's own line
+                          // without changing the box, so selecting a row cannot
+                          // nudge its own text by a pixel.
+                          "ring-1 ring-inset ring-act"
+                        : "hover:bg-hover hover:text-foreground",
                   )}
                 >
                   <span className="flex min-w-0 items-center gap-2.5">
@@ -978,7 +1068,7 @@ function SignupForm(
                       <span
                         className={cn(
                           "font-medium",
-                          alreadyOn !== null && "text-muted-foreground",
+                          refused && "text-muted-foreground",
                         )}
                       >
                         {g.name}
@@ -1000,15 +1090,25 @@ function SignupForm(
                       )}
                     </span>
                   </span>
+                  {/* The right-hand slot says why a row cannot be acted on, in
+                      the precedence set above: the seat first, the age band
+                      only where there is no seat, and the selected marker only
+                      where the row is a target at all. */}
                   {alreadyOn !== null ? (
                     <span className="shrink-0 text-xs font-semibold text-muted-foreground">
                       {alreadyOn === "active"
                         ? t(`gamerAlreadySignedUp.${props.productType}`)
                         : t("gamerAlreadyWaitlisted")}
                     </span>
+                  ) : ageBlock !== null ? (
+                    <span className="shrink-0 text-xs font-semibold text-muted-foreground">
+                      {ageBlock.kind === "under"
+                        ? t("gamerUnderAge", { min: ageBlock.bound })
+                        : t("gamerOverAge", { max: ageBlock.bound })}
+                    </span>
                   ) : (
                     selected && (
-                      <span className="shrink-0 text-xs font-semibold text-primary">
+                      <span className="shrink-0 text-xs font-semibold text-act">
                         {t("selected")}
                       </span>
                     )
@@ -1024,17 +1124,53 @@ function SignupForm(
               radiogroup must contain only its radios, or assistive tech mis-
               announces the count and arrow-key navigation lands on a non-choice.
               Hidden at the Steven Brown cap, matching every other add-gamer
-              affordance. */}
-          {canAddGamer && (
-            <button
-              type="button"
-              onClick={props.onAddGamer}
-              className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-input px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-foreground"
-            >
-              <Plus className="h-4 w-4" />
-              {tFamily("addGamer")}
-            </button>
-          )}
+              affordance.
+
+              **It has two weights, and which one it wears is decided by whether
+              it is the parent's required next step.** Ordinarily the row is a
+              dashed, muted afterthought, which is right: something above it
+              already holds the answer and this is the way to add another
+              option. It takes the act fill the panel's own CTA wears — the real
+              `Button`, not a hand-rolled imitation of one — in exactly the case
+              where it is the only move on the panel that leads anywhere: an
+              empty roster AND nobody selected, so the CTA underneath is
+              disabled and pointing straight at it ("Add a gamer to continue").
+
+              Both halves of that condition are load-bearing. An empty roster on
+              a both-audiences product is not an empty picker — the reader's own
+              row is there and preselected, the CTA is live, and paying is the
+              next step — so a row keyed on the roster count alone would put a
+              second solid act button on the panel competing with the one that
+              actually completes the form.
+
+              The flip is a user action either way — a child arrives through the
+              dialog this row opens, and neither the roster nor the selection can
+              change any other way while this panel is up — so there is nothing
+              here on data's own schedule for the layout rule to object to. The
+              two weights are different heights (the button's own default, h-10,
+              against the dashed row's padding, which is two pixels taller) and
+              that costs nothing: they never coexist, and the CTA below is taller
+              than either (size="lg", h-11), so neither weight is matching it. */}
+          {canAddGamer &&
+            (solidAddGamer ? (
+              <Button
+                type="button"
+                onClick={props.onAddGamer}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4" />
+                {tFamily("addGamer")}
+              </Button>
+            ) : (
+              <button
+                type="button"
+                onClick={props.onAddGamer}
+                className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+              >
+                <Plus className="h-4 w-4" />
+                {tFamily("addGamer")}
+              </button>
+            ))}
         </div>
       </div>
 
@@ -1067,13 +1203,44 @@ function SignupForm(
         onRulesAgreedChange={props.onAgreedChange}
       />
 
-      {/* Below the conditions and above the button: the last thing on the panel
-          before the CTA, and deliberately NOT a row inside the section above.
-          See the component's own note — the section above is one act the button
-          names, and this question does not gate it. What tells the two apart is
-          its own info-toned hint sentence, not the treatment of the box. Its
-          existence comes off the product read, so it is here or absent from the
-          first paint; only its tick arrives late. */}
+      {/* Below the conditions and above the button: the optional questions, in
+          the order the product asks them — the child's photo permission, then
+          the partner's mailing list — and deliberately NOT rows inside the
+          section above. See the sections' own notes: the section above is one
+          act the button names, and neither of these gates it. What tells them
+          apart from a gate is each one's info-toned hint sentence, not the
+          treatment of the box.
+
+          Their *existence* comes off the product read, so a product that asks
+          nothing has nothing here from the first paint — and that now holds for
+          the photo block too. It used to be the one thing on the panel that
+          appeared and vanished under the reader, drawn only once a child was
+          selected: a parent who scrolled the panel, read it end to end and then
+          picked a child got a question they had not seen on the way down,
+          inserted between the conditions they had just agreed to and the button
+          they were reaching for. Nothing about that reflow broke the layout
+          rule — a participant switch is a user action — but arriving by
+          surprise is its own defect, and it is the question the reader is least
+          able to guess at from the rows above it.
+
+          So the rows are on screen from the first paint wherever the product
+          asks them of a gamer audience, and what changes with the selection is
+          only whether they can be *answered*: disabled with no child chosen (and
+          on a self seat, which is a seat no photo answer can be keyed to),
+          enabled the moment a child is. Same rows, same height, one attribute
+          apart — so the section a parent read on the way down is the section
+          they come back to. */}
+      <OptionalGamerPhotoSection
+        rows={
+          props.forGamers
+            ? describeGamerPhotoConsents(props.gamerPhotoConsentTypes)
+            : []
+        }
+        disabled={!props.gamerPhotoConsentsEnabled}
+        granted={props.gamerPhotoConsents}
+        onGrantedChange={props.onGamerPhotoConsentChange}
+      />
+
       <OptionalMarketingSection
         rows={describeMarketingConsents(props.marketingConsentTypes)}
         granted={props.marketingConsents}
@@ -1091,9 +1258,9 @@ function SignupForm(
       </Button>
 
       {props.submitError && (
-        <p className="text-xs text-destructive" role="alert">
+        <StatusLine status="destructive" size="xs" role="alert">
           {props.submitError}
-        </p>
+        </StatusLine>
       )}
     </div>
   );
@@ -1112,19 +1279,28 @@ function SignupForm(
  *
  * **The heading says "Consent" and not "Required consent", because the rows
  * below it are no longer the only consent rows on the panel.** The optional
- * marketing row sits just outside this section wearing the same border, so a
- * heading claiming "required" would be the only thing separating them and it
- * would sit above one of the two rather than on either. The distinction lives on
- * the rows instead — and on exactly one of them: the optional row carries the
- * word, every gate carries nothing.
+ * rows sit just outside this section wearing the same border, so a heading
+ * claiming "required" would be the only thing separating them and it would sit
+ * above some of them rather than on any. The distinction lives on the rows
+ * instead — and on exactly the optional ones: they carry the word, every gate
+ * carries nothing.
  *
- * **The rules row carries no heading of its own.** It used to be its own titled
- * section, and beside a second titled section of identically-shaped boxes that
- * title stopped meaning anything: two headings, two boxes, one act. What the
- * heading was doing — giving the CTA's prompt a visible referent — is now done
- * by the section's own, so the row is left to be a sentence and a checkbox. Like
- * every gate here it carries no marker: it sits in the same stack, under the
- * same heading, at the same spacing, and it gates the CTA exactly as they do.
+ * **Every agreement row leads with a title, the rules row included.** A title is
+ * the handle a parent scanning the section reads before deciding whether to
+ * read three lines of conditions, and a row without one in a column of rows
+ * with one does not read as simpler — it reads as the odd row out, which is the
+ * one thing this section must never make a gate look like. So the rules row
+ * takes the same composition as a bundle's: the name on the tick's own line,
+ * the sentence full width beneath it.
+ *
+ * The rules used to be their own *titled section*, and that heading went
+ * because beside a second titled section of identically-shaped boxes it had
+ * stopped meaning anything: two headings, two boxes, one act. Its words come
+ * back here as a row title rather than as a heading — one line naming what the
+ * box is about, inside the box, rather than a second section division above it.
+ * Like every gate here the row still carries no *marker*: it sits in the same
+ * stack, under the same heading, at the same spacing, and it gates the CTA
+ * exactly as the rest do.
  *
  * **And its sentence names its own document, exactly as a bundle's does.** The
  * rules row is a consent to our Anti-Bullying and Discipline policy, so the
@@ -1247,19 +1423,13 @@ function RequiredConsentSection({
             key={row.key}
             agreed={agreements.has(row.key)}
             onAgreedChange={(next) => onAgreementChange(row.key, next)}
-            sentence={
-              <>
-                {/* The raw slug at the head of the sentence rather than in a
-                    slot of its own: it is part of what this row is asking, and
-                    a row that names a document has to name it where the reader
-                    is already looking. Never an anchor with nowhere to go — an
-                    empty href resolves to the page the reader is already on. */}
-                <span className="mb-2 block font-medium text-foreground">
-                  {row.slug}
-                </span>
-                {t("consents.agree")}
-              </>
-            }
+            // The raw slug as the row's title, which is the same position a
+            // bundle's name takes — a drift row is a document this deploy
+            // cannot name, and the one thing it can still say is which
+            // document. Never an anchor with nowhere to go: an empty href
+            // resolves to the page the reader is already on.
+            title={row.slug}
+            sentence={t("consents.agree")}
           />
         ),
       )}
@@ -1269,8 +1439,93 @@ function RequiredConsentSection({
       <ConsentRow
         agreed={rulesAgreed}
         onAgreedChange={onRulesAgreedChange}
+        // One title across all five variants. The municipality ones add a
+        // clause about a seat lost to unexcused absence, which is a rule of the
+        // club exactly as the conduct policy is — so the handle is the same
+        // handle, and a title that varied by product type would invite a reader
+        // to look for a difference the row does not have.
+        title={tRules("title")}
         sentence={ruleText}
       />
+    </div>
+  );
+}
+
+/**
+ * **May we photograph this child?** — the product's optional photo ask, above
+ * the marketing ask and below everything that gates the button.
+ *
+ * The marketing section's twin in every respect a reader can see: the same
+ * bordered `CheckboxRow` at the same size, the same info-toned hint under the
+ * sentence opening with the word "Optional", the same new-tab link inside the
+ * sentence, and the same complete indifference to the CTA. A parent must not be
+ * able to tell a question they may decline from another question they may
+ * decline, and these two are the same kind of thing.
+ *
+ * What it does not share is who the answer is about. A marketing answer is one
+ * standing state on the answering adult's account; this one is about a
+ * particular child's image, is stored against that child, and is asked again on
+ * every enrolment. Two consequences the reader meets: the sentence is written
+ * about "my child" rather than about the reader, and the hint points at the
+ * child's page in My SOG rather than at the reader's own settings.
+ *
+ * The link goes to the policy that explains what a tick permits — not to the
+ * partner's own site, which is what the marketing sentence links and for a
+ * different question ("who am I handing my address to"). New tab, because the
+ * panel behind it is holding a chosen child and a half-answered form that has
+ * to survive the reading.
+ *
+ * Renders nothing when there is nothing to ask: a product that attaches no
+ * photo consent, or one with no gamer audience at all — the caller decides
+ * both, so this component only ever sees rows it should draw.
+ *
+ * **Whether the rows can be answered is a separate question from whether they
+ * exist**, and `disabled` is it. The rows stand from the panel's first paint on
+ * any product that asks them, and go live when a child is selected; with nobody
+ * selected, or with the parent's own seat selected on a product whose audience
+ * admits adults, there is no gamer for an answer to be keyed to and the rows
+ * are shown disabled rather than withheld. The copy does not change between the
+ * two states — the question is the same question, and a disabled row that
+ * re-words itself would read as a different one.
+ */
+function OptionalGamerPhotoSection({
+  rows,
+  disabled,
+  granted,
+  onGrantedChange,
+}: {
+  rows: readonly GamerPhotoConsentAskRow[];
+  disabled: boolean;
+  granted: ReadonlySet<GamerPhotoConsentType>;
+  onGrantedChange: (consentType: GamerPhotoConsentType, next: boolean) => void;
+}) {
+  const t = useTranslations("productDetail.signupPanel.consents.gamerPhoto");
+  if (rows.length === 0) return null;
+  return (
+    <div className="space-y-2">
+      {rows.map(({ type, ask }) => (
+        <CheckboxRow
+          key={type}
+          size="xs"
+          disabled={disabled}
+          checked={granted.has(type)}
+          onCheckedChange={(next) => onGrantedChange(type, next)}
+          title={t(`${ask.sentenceKey}Title`)}
+          label={
+            <span className="text-muted-foreground">
+              {t.rich(ask.sentenceKey, {
+                privacy: (chunks) => (
+                  <ConsentSentenceLink href={ask.href}>
+                    {chunks}
+                  </ConsentSentenceLink>
+                ),
+              })}
+            </span>
+          }
+          hint={t("hint")}
+          hintTone="info"
+        />
+      ))}
     </div>
   );
 }
@@ -1342,6 +1597,7 @@ function OptionalMarketingSection({
           size="xs"
           checked={granted.has(type)}
           onCheckedChange={(next) => onGrantedChange(type, next)}
+          title={t(`${ask.sentenceKey}Title`)}
           label={
             <span className="text-muted-foreground">
               {t.rich(ask.sentenceKey, {
@@ -1401,6 +1657,12 @@ function BundleConsentRow({
     <ConsentRow
       agreed={agreed}
       onAgreedChange={onAgreedChange}
+      // What the bundle IS, on the tick's own line, with the sentence that
+      // consents to it beneath. The documents' own names stay inside the
+      // sentence, where they are links; the title is the handle a parent
+      // scanning the section reads before deciding to read three lines of
+      // conditions.
+      title={t(`${bundle.sentenceKey}Title`)}
       sentence={t.rich(bundle.sentenceKey, tags)}
     />
   );
@@ -1427,7 +1689,7 @@ function ConsentSentenceLink({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="font-medium text-primary underline-offset-2 hover:underline"
+      className="font-medium text-act underline-offset-2 hover:underline"
     >
       {children}
     </a>
@@ -1459,10 +1721,21 @@ function ConsentSentenceLink({
 function ConsentRow({
   agreed,
   onAgreedChange,
+  title,
   sentence,
 }: {
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
+  /**
+   * The short name of the thing being agreed to. Required, because a titled row
+   * beside an untitled one reads as a difference between the two gates rather
+   * than as a shorter sentence — and the type is the only thing that can stop a
+   * later row from being added without one. `CheckboxRow` still supports the
+   * untitled arrangement; what is settled here is that this section never mixes
+   * the two. Every caller has a name to give: a bundle its own, the rules row
+   * its own, a drift row the raw slug it cannot name any better.
+   */
+  title: React.ReactNode;
   sentence: React.ReactNode;
 }) {
   return (
@@ -1470,6 +1743,7 @@ function ConsentRow({
       size="xs"
       checked={agreed}
       onCheckedChange={onAgreedChange}
+      title={title}
       label={<span className="text-muted-foreground">{sentence}</span>}
     />
   );

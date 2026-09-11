@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
-import { Info } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { CheckboxRow } from "@/components/ui/checkbox-row";
@@ -19,7 +18,7 @@ import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, SUPPORT_EMAIL } from "@/lib
 import { REGISTER_WEAK_PASSWORD } from "@/services/users/parent-registration.contracts";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
-import { useAuth, useReferralCode } from "@/providers";
+import { useAuth, useUtm } from "@/providers";
 
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -82,9 +81,10 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
   const locale = useLocale();
   const { redirect, status, navigateAfterAuth } = useAuthRedirect(redirectParam);
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
-  // Where this visit came from, if a marketing link carried `?ref=`. Held in
-  // memory by the root provider since the landing page; never on this device.
-  const referralCode = useReferralCode();
+  // Where this visit came from, if a marketing link carried UTM params. Held in
+  // memory by the root provider since the landing page, so it survives browsing
+  // the whole site as client-side navigation.
+  const utm = useUtm();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -132,14 +132,18 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
           // stored preference yet — it is created by this very request — so the
           // locale the form is being read in is the best answer anyone has.
           locale,
-          // Marketing provenance, written by the handle_new_user trigger to
-          // profiles.referral_code and never updatable afterwards. It travels
-          // in the body (and from there into signup metadata) rather than as a
-          // later profile write, because a client write would need
-          // GRANT UPDATE(referral_code) TO authenticated, handing every user the
-          // permanent ability to rewrite their own attribution; the grant is the
-          // thing we are refusing, and the trigger is what lets us.
-          referralCode: referralCode ?? undefined,
+          // Marketing provenance, written by the handle_new_user trigger to the
+          // three profiles.utm_* columns and never updatable afterwards. It
+          // travels in the body (and from there into signup metadata) rather
+          // than as a later profile write, because a client write would need
+          // GRANT UPDATE on those columns TO authenticated, handing every user
+          // the permanent ability to rewrite their own attribution; the grant is
+          // the thing we are refusing, and the trigger is what lets us.
+          utm: {
+            source: utm.source ?? undefined,
+            medium: utm.medium ?? undefined,
+            campaign: utm.campaign ?? undefined,
+          },
           // Always an explicit boolean, never omitted. The schema takes it as
           // optional so an older client that predates the box can still
           // register — but a form that *shows* the question has an answer
@@ -209,18 +213,19 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <Alert variant="info">
-            <Info className="h-4 w-4 shrink-0" />
             <div>
-              <AlertTitle>{t('register.parentAccountAlertTitle')}</AlertTitle>
+              <AlertTitle sentence>
+                {t('register.parentAccountAlertTitle')}
+              </AlertTitle>
               <AlertDescription>
                 {t('register.parentAccountAlertDescription')}
               </AlertDescription>
             </div>
           </Alert>
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
           <Field label={t('register.parentFirstName')} htmlFor="firstName">
             <Input
@@ -327,7 +332,11 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
             <div>
               {t.rich('register.alreadyHaveAccount', {
                 link: (chunks) => (
-                  <Link href={redirect ? `${ROUTES.login}?redirect=${encodeURIComponent(redirect)}` : ROUTES.login} className="text-primary hover:underline">
+                  <Link href={
+                      redirect
+                        ? { pathname: ROUTES.login, query: { redirect } }
+                        : ROUTES.login
+                    } className="text-act hover:underline">
                     {chunks}
                   </Link>
                 ),
@@ -337,7 +346,7 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
               {t.rich('needHelp', {
                 email: SUPPORT_EMAIL,
                 link: (chunks) => (
-                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary hover:underline">
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-act hover:underline">
                     {chunks}
                   </a>
                 ),

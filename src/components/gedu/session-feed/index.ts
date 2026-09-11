@@ -20,6 +20,8 @@ export { CollapsibleRegion } from "./CollapsibleRegion";
 export { FamilyNoteBlock } from "./FamilyNoteBlock";
 export { SessionFeed } from "./SessionFeed";
 export { SessionFeedAlertBadge } from "./SessionFeedAlertBadge";
+export { SessionPhotoConsentList } from "./SessionPhotoConsentList";
+export type { SessionPhotoConsentState } from "./SessionPhotoConsentList";
 export { SessionPhotoStrip } from "./SessionPhotoStrip";
 export { StaffNoteBlock } from "./StaffNoteBlock";
 export { sessionPhotoErrorCode } from "./photo-failure";
@@ -47,10 +49,12 @@ export {
   entryNeedsAttention,
   entryOwesCreations,
   isEditableEntry,
+  isExpectedOnEntry,
   isLiveEntry,
   isPlannableEntry,
   planDraftFromEditorState,
   planEditorStateFromEntry,
+  resolveInGroupSince,
   rosterScopedMarks,
 } from "./entry-state";
 export type {

@@ -2,7 +2,10 @@ import { z } from "zod";
 import { Constants } from "@/types";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
-import { isSeededCountry } from "@/lib/constants/location-hierarchies";
+import {
+  isProductTimezone,
+  isSupportedCountry,
+} from "@/lib/constants/location-hierarchies";
 
 /**
  * Contracts for the admin product create/update routes.
@@ -83,16 +86,16 @@ const productDataBase = z.object({
   // pointing at a country whose municipalities were never seeded is one no
   // family's stored location could satisfy — an unpassable gate that looks from
   // the admin form exactly like a working one. The database deliberately holds
-  // only the shape invariant: which countries are seeded changes as rows land,
-  // so an enum or FK there would need a migration per country and would turn an
-  // already-stored lock into a violation the day one is un-seeded.
+  // only the shape invariant: which countries we operate in changes as rows
+  // land, so an enum or FK there would need a migration per country and would
+  // turn an already-stored lock into a violation the day one is dropped.
   //
   // `refine` rather than `z.enum` because `CountryConfig.code` is typed
   // `string`, so a tuple built from it narrows to nothing a literal union could
   // be made of — the enum would buy an error message and no type at all.
   region_lock_country: z
     .string()
-    .refine(isSeededCountry, {
+    .refine(isSupportedCountry, {
       message: "Not a country products can be locked to",
     })
     .nullable(),
@@ -135,14 +138,28 @@ const productDataBase = z.object({
   signup_threshold: z.number().nullable(),
   start_date: z.string().nullable(),
   end_date: z.string().nullable(),
-  timezone: z.string(),
+  // The IANA zone the product's wall clocks are authored in — its schedule
+  // slots and its registration drop.
+  //
+  // Constrained to the zones the seeded countries actually declare, the same
+  // way `region_lock_country` is constrained to the seeded countries, and for
+  // the same reason: this is the boundary that can see the location config,
+  // while the database holds only the shape invariant. A zone we do not operate
+  // in is not a value an admin can mean — the form cannot offer it, so a
+  // request carrying one did not come from the form.
+  //
+  // `refine` rather than `z.enum` for the same reason the lock uses one: the
+  // zones are `string`s derived from the country config, so a tuple built from
+  // them narrows to nothing a literal union could be made of.
+  timezone: z.string().refine(isProductTimezone, {
+    message: "Not a timezone products can be scheduled in",
+  }),
   seat_count: z.number().nullable(),
   waitlist_enabled: z.boolean(),
   registration_opens_at: z.string(),
   is_visible: z.boolean(),
   schedule_slots: z.array(scheduleSlotInput),
   prices: z.array(priceInput),
-  holiday_calendar_ids: z.array(z.string()),
   // The consent documents a parent must agree to before enrolling — slugs from
   // `consent_documents`, empty for almost every product.
   //
@@ -178,6 +195,16 @@ const productDataBase = z.object({
   // wire is not the place to re-litigate the second.
   marketing_consent_types: z.array(
     z.enum(Constants.public.Enums.marketing_consent_type),
+  ),
+  // The photo consents the signup panel ASKS about — never requires. The
+  // marketing field's twin one line up, with the subject changed from a
+  // parent's mailbox to a child's image, and every reason above holds
+  // unchanged: required and never optional, because the writer behind it
+  // replaces the whole ask set on every call; a plain array, because the empty
+  // one already says "asks nothing"; and narrowed here rather than at a foreign
+  // key, because the values are a Postgres ENUM that codegen hands us.
+  gamer_photo_consent_types: z.array(
+    z.enum(Constants.public.Enums.gamer_photo_consent_type),
   ),
   // Per-session operating fees, a single EUR amount in integer cents. State is
   // derived from the value (the form enforces it): null = unknown/none,

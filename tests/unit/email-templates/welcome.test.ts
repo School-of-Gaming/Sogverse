@@ -131,7 +131,7 @@ describe("buildWelcomeParentEmail", () => {
     expect(html).toContain('class="cta-on-brand"');
     expect(html).toContain("u + .body .cta-on-brand");
     expect(html).toContain(
-      `background-color:${BRAND.primary};background-image:linear-gradient(${BRAND.primary},${BRAND.primary})`,
+      `background-color:${BRAND.act};background-image:linear-gradient(${BRAND.act},${BRAND.act})`,
     );
   });
 
@@ -147,9 +147,12 @@ describe("buildWelcomeParentEmail", () => {
     );
     expect(outlined).toHaveLength(2);
     for (const style of outlined) {
-      expect(style).toContain(`background-color:${DARK_THEME.card}`);
+      // The inline half is the phone's: an outlined button declares the ground
+      // it is standing on, and on the card-less phone shell that is the dark
+      // ground. The shell's wide-viewport rule restates it as the card.
+      expect(style).toContain(`background-color:${DARK_THEME.bg}`);
       expect(style).toContain(
-        `background-image:linear-gradient(${DARK_THEME.card},${DARK_THEME.card})`,
+        `background-image:linear-gradient(${DARK_THEME.bg},${DARK_THEME.bg})`,
       );
     }
   });

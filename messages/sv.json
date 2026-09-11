@@ -1,6 +1,33 @@
 {
   "metadata": {
     "description": "Där skärmtid blir kvalitetstid. Klubbar, läger och evenemang i Minecraft, Roblox, Fortnite och mer, ledda av professionella spelfostrare.",
+    "og": {
+      "site": {
+        "alt": "School of Gaming: där skärmtid blir kvalitetstid. Klubbar, läger och evenemang med professionella spelfostrare.",
+        "headline": "Där skärmtid blir",
+        "headlineAccent": "kvalitetstid",
+        "subline": "Klubbar, läger och evenemang med professionella spelfostrare"
+      },
+      "roblox": {
+        "title": "SOG x Lynx – Skapa ditt eget spel i Roblox",
+        "description": "Ett gratis program för unga, lett av riktiga spelfostrare. Av Lynx Educate och School of Gaming, i samarbete med Roblox.",
+        "headline": "Skapa",
+        "headlineAccent": "ditt eget spel",
+        "headlineTail": "i Roblox",
+        "subline": "Ett gratis program, lett av riktiga spelfostrare",
+        "collaboration": "I samarbete med"
+      },
+      "pages": {
+        "signIn": {
+          "title": "Logga in på School of Gaming",
+          "description": "Logga in på ditt School of Gaming-konto för att hantera klubbar, spelare och mycket mer."
+        },
+        "createAccount": {
+          "title": "Gå med i School of Gaming",
+          "description": "Skapa ett School of Gaming-föräldrakonto och anmäl ditt barn till klubbar, läger och evenemang som leds av professionella spelfostrare."
+        }
+      }
+    },
     "pages": {
       "signIn": "Logga in",
       "createAccount": "Skapa konto",
@@ -12,13 +39,10 @@
       "adminDashboard": "Administratörspanel",
       "adminTools": "Verktyg",
       "parentDashboard": "Min SOG",
-      "parentDashboardDescription": "Hantera dina spelare och deras anmälningar",
       "geduDashboard": "Min SOG",
       "geduSessionDetails": "Sessionsdetaljer",
       "familyProduct": "Tillfällen och sammanfattningar",
-      "familyProductDescription": "Gruppens schema och sammanfattningen från varje tillfälle.",
       "gamerDashboard": "Min SOG",
-      "gamerDashboardDescription": "Dina klubbar, läger och evenemang i Sogverse",
       "voiceSession": "Röstsession",
       "shop": "Butik",
       "schools": "Kommunklubbar",
@@ -30,12 +54,26 @@
       "terms": "Användarvillkor",
       "antiBullying": "Mot mobbning och disciplin",
       "attributions": "Källor och licenser",
-      "roblox": "Roblox-speldesignprogram",
-      "robloxPrivacy": "Integritetspolicy för Roblox-programmet",
-      "robloxSafeguarding": "Barnskyddspolicy för Roblox-programmet",
-      "robloxTerms": "Användarvillkor för Roblox-programmet",
+      "roblox": "Skaparnas akademi",
+      "robloxPrivacy": "Integritetspolicy för Skaparnas akademi",
+      "robloxSafeguarding": "Barnskyddspolicy för Skaparnas akademi",
+      "robloxTerms": "Användarvillkor för Skaparnas akademi",
       "geduContract": "Gedu-avtal",
       "seatOffer": "Platserbjudande"
+    },
+    "descriptions": {
+      "signIn": "Logga in på ditt School of Gaming-konto för att se dina spelares kommande tillfällen, hantera anmälningar och hålla familjens uppgifter aktuella.",
+      "createAccount": "Skapa ett School of Gaming-konto för din familj och anmäl ditt barn till klubbar, läger och evenemang som leds av professionella spelfostrare.",
+      "forgotPassword": "Glömt lösenordet? Ange din e-postadress så skickar vi en länk där du kan välja ett nytt lösenord för ditt School of Gaming-konto.",
+      "resetPassword": "Välj ett nytt lösenord för ditt School of Gaming-konto via länken vi skickade med e-post, och logga in med det direkt.",
+      "registerGedu": "Bli spelfostrare hos School of Gaming och led klubbar, läger och evenemang för barn i de spel de redan spelar varje dag.",
+      "about": "Vilka vi på School of Gaming är, vad Yty är och svar på de frågor familjer ställer innan de anmäler sitt barn till en klubb.",
+      "shop": "Bläddra bland School of Gamings klubbar, läger och evenemang i Minecraft, Roblox, Fortnite och mer, och hitta ett som passar ditt barns vecka.",
+      "resetPin": "Välj en ny föräldra-PIN för ditt School of Gaming-konto via länken vi skickade med e-post. PIN-koden håller föräldrasidorna stängda för ditt barn.",
+      "privacy": "Hur School of Gaming samlar in, använder och lagrar din familjs uppgifter: vad vi sparar om ett barn, vem vi delar det med och vilka rättigheter du har.",
+      "terms": "Villkoren du godkänner när du använder School of Gaming: hur anmälningar, betalningar och avbokningar fungerar och vad vi och du ansvarar för.",
+      "antiBullying": "Hur School of Gaming förebygger mobbning i sina klubbar, läger och evenemang, vad som händer när det inträffar och hur en spelfostrare ingriper.",
+      "attributions": "Källorna och licenserna bakom de data School of Gaming använder: ortnamn, postnummer och spelarbilder, var och en krediterad som licensen kräver."
     }
   },
   "notFound": {
@@ -101,13 +139,28 @@
     "roleParent": "Förälder",
     "roleGamer": "Spelare",
     "roleGedu": "Gedu",
-    "gedus": "Geduer"
+    "gedus": "Geduer",
+    "next": "Nästa",
+    "week": "v. {week}",
+    "weekRange": "v. {from}–{to}",
+    "weekRangeAcrossYears": "v. {from}/{fromYear} – v. {to}/{toYear}",
+    "weekCount": "{count, plural, one {# vecka} other {# veckor}}",
+    "weekColumn": "v."
+  },
+  "datePicker": {
+    "openCalendar": "Öppna kalendern",
+    "previousMonth": "Föregående månad",
+    "nextMonth": "Nästa månad",
+    "weekNumber": "Veckonummer",
+    "goToWeek": "Gå till vecka",
+    "selectWeek": "Välj vecka {week}",
+    "today": "I dag"
   },
   "about": {
     "pageTitle": "Om oss",
     "sectionNav": "På den här sidan",
     "hero": {
-      "title": "Om <primary>School of Gaming</primary>",
+      "title": "Om School of Gaming",
       "subtitle": "Där skärmtid blir kvalitetstid. Vi sammanför barn, professionella spelfostrare och spelen som barnen redan älskar — Minecraft, Roblox, Fortnite och fler — och skapar lekfulla lärandeupplevelser där de får nya vänner, utvecklar riktiga färdigheter och har roligt."
     },
     "quote": {
@@ -130,7 +183,7 @@
       },
       "keepChildrenSafe": {
         "title": "Håll barn trygga online",
-        "description": "Sogverse-plattformen har ingen funktion för privata meddelanden: samtalen sker i gemensamma grupprum, och meddelanden under ett röstsamtal går ut till hela rummet och sparas aldrig. Varje spelarkonto är kopplat till ett föräldrakonto, och barnet loggar in via det i stället för att ha ett eget lösenord. Nolltolerans mot mobbning och toxicitet."
+        "description": "Sogverse-plattformen har ingen funktion för privata meddelanden: samtalen sker i gemensamma grupprum, och meddelanden under ett röstsamtal går ut till hela rummet och sparas aldrig. Varje spelarkonto skapas av en förälder och är kopplat till förälderns konto, och föräldern väljer hur barnet loggar in — enbart via föräldrakontot, eller med ett användarnamn eller en verifierad e-postadress och ett eget lösenord. Nolltolerans mot mobbning och toxicitet."
       },
       "familyInTheLoop": {
         "title": "Familjen är delaktig",
@@ -170,7 +223,7 @@
         },
         "howToStart": {
           "question": "Hur kommer jag igång?",
-          "answer": "<p>Skapa ett föräldrakonto, lägg till ditt barn som spelare från Min SOG, och bläddra sedan i butiken och anmäl hen — anmälningspanelen frågar vem platsen är till för, och uppmanar dig att lägga till en spelare om du inte har gjort det än.</p><p>När du har anmält placerar vi ditt barn i en grupp med en Gedu före hens första tillfälle, och klubben dyker sedan upp på Min SOG för er båda.</p><p>Hen går med i tillfällena via ditt konto — du växlar till hens profil — så hen behöver aldrig ett eget lösenord.</p>"
+          "answer": "<p>Skapa ett föräldrakonto, lägg till ditt barn som spelare från Min SOG, och bläddra sedan i butiken och anmäl hen — anmälningspanelen frågar vem platsen är till för, och uppmanar dig att lägga till en spelare om du inte har gjort det än.</p><p>När du har anmält placerar vi ditt barn i en grupp med en Gedu före hens första tillfälle, och klubben dyker sedan upp på Min SOG för er båda.</p><p>Hen går med i tillfällena via ditt konto — du växlar till hens profil — om du inte väljer att ge hen en egen inloggning från Min SOG.</p>"
         },
         "isItASchool": {
           "question": "Är det här skola?",
@@ -210,11 +263,11 @@
         },
         "gamerAccounts": {
           "question": "Hur loggar mitt barn in, och vad är föräldra-PIN-koden?",
-          "answer": "<p>Ditt barn har ingen egen inloggning. Ett spelarkonto bär en intern Sogverse-adress i stället för ditt barns riktiga e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn kommer in i Sogverse genom att växla till sin profil från din — det finns inget lösenord för hen att tappa bort eller dela.</p><p>För att komma in på föräldrasidan krävs en fyrsiffrig PIN-kod som bara du känner till, så ett lösenord sparat i webbläsaren räcker inte för att köpa något eller ändra ett barns konto, och sessionen låses igen i samma stund som du växlar till ett barns profil eller loggar ut.</p><p>Om du glömmer PIN-koden mejlar vi en återställningslänk till adressen på ditt konto och ingen annanstans — ett barn som trycker på ”Glömt din PIN?” skickar helt enkelt ett mejl till dig.</p>"
+          "answer": "<p>Du väljer hur ditt barn loggar in, för varje barn, från Min SOG. Som standard har ett spelarkonto ingen egen inloggning: det bär en intern Sogverse-adress i stället för en riktig e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn kommer in i Sogverse genom att växla till sin profil från din. Om du hellre vill kan du ge barnet ett användarnamn och ett lösenord, eller en egen e-postadress — som barnet verifierar innan det väljer ett lösenord via det vanliga återställningsflödet.</p><p>Vad du än väljer öppnar ett barns inloggning bara barnets eget konto: ett barn som loggade in med sitt eget användarnamn eller sin egen e-postadress kan inte alls växla till ditt eller ett syskons konto — barnet loggar ut och loggar in igen, som dig med ditt lösenord eller som ett syskon som har en egen inloggning; ett syskon som loggar in via ditt konto nås i stället från ditt konto — och ett barn som kom in genom att växla från ditt konto behöver din föräldra-PIN för att växla någon annanstans.</p><p>För att komma in på föräldrasidan krävs en fyrsiffrig PIN-kod som bara du känner till, så ett lösenord sparat i webbläsaren räcker inte för att köpa något eller ändra ett barns konto, och sessionen låses igen i samma stund som du växlar till ett barns profil eller loggar ut.</p><p>Om du glömmer PIN-koden mejlar vi en återställningslänk till adressen på ditt konto och ingen annanstans — ett barn som trycker på ”Glömt din PIN?” skickar helt enkelt ett mejl till dig.</p>"
         },
         "childData": {
           "question": "Vad sparar ni om mitt barn?",
-          "answer": "<p>Om ditt barn:</p><list><item>Förnamnet, födelsemånaden och födelseåret — vi frågar inte efter dagen — och valfritt kön.</item><item>Ert efternamn, eftersom ditt barn är en del av din familj. Det visas för ingen utanför er familj: en Gedus deltagarlista och röstrummet visar ditt barns förnamn, hens ålder och eventuellt användarnamn i spel som du lagt till.</item><item>En intern Sogverse-adress på kontot i stället för en riktig e-postadress.</item><item>Valfritt hens användarnamn i de spel som hens klubbar använder — i dag Minecraft och Roblox — och det id spelet ger hen, så att vi känner igen hen under ett tillfälle. Bilden på spelfiguren hämtas från spelets egna servrar, så användarnamnet når Minecraft eller Roblox varje gång en deltagarlista ritas upp.</item><item>En profilbild som inte är ett foto: utan ett kopplat spelkonto är bilden bredvid namnet ett mönster som genereras ur konto-id:t.</item></list><p>Vid sidan av det sparar vi det som krävs för att driva en klubb: vilka klubbar, läger och evenemang hen är anmäld till, hens närvaro, de rapporter och korta personalanteckningar som hens Geduer skriver, chatten från hens tillfällen och eventuella bilder som lagts upp i den, det hen gör som en Gedu länkar till gruppen, de samtycken som noterats för hens plats, och de foton en Gedu bifogar en rapport. Även en Gedus moderering noteras — flyttas ett barn till ett eget utrymme eller tystas i chatten lämnar det ett spår. Rapportens foton är av tillfället och inte av ett enskilt barn — varje familj i gruppen ser dem på gruppens sida och får dem med rapporten per mejl.</p><p>Vill du se, rätta eller radera något vi har om ditt barn, mejla {supportEmail}. Vi sparar dina uppgifter så länge du har ett konto och raderar eller anonymiserar dem om du avslutar det, utom där lagen kräver att vi behåller vissa uppgifter längre, som den finländska bokföringslagen gör för betalningsuppgifter.</p>"
+          "answer": "<p>Om ditt barn:</p><list><item>Förnamnet, födelsemånaden och födelseåret — vi frågar inte efter dagen — och valfritt kön.</item><item>Ert efternamn, eftersom ditt barn är en del av din familj. Det visas för ingen utanför er familj: en Gedus deltagarlista och röstrummet visar ditt barns förnamn, hens ålder och eventuellt användarnamn i spel som du lagt till.</item><item>En intern Sogverse-adress på kontot i stället för en riktig e-postadress — om du inte har valt att ge barnet en egen inloggning med en egen adress, då sparar vi den adressen. Hur du än väljer visas ingen e-postadress till ditt barn på en Gedus deltagarlista eller i röstrummet.</item><item>Valfritt hens användarnamn i de spel som hens klubbar använder — i dag Minecraft och Roblox — och det id spelet ger hen, så att vi känner igen hen under ett tillfälle. Bilden på spelfiguren hämtas från spelets egna servrar, så användarnamnet når Minecraft eller Roblox varje gång en deltagarlista ritas upp.</item><item>En profilbild som inte är ett foto: utan ett kopplat spelkonto är bilden bredvid namnet ett mönster som genereras ur konto-id:t.</item></list><p>Vid sidan av det sparar vi det som krävs för att driva en klubb: vilka klubbar, läger och evenemang hen är anmäld till, hens närvaro, de rapporter och korta personalanteckningar som hens Geduer skriver, chatten från hens tillfällen och eventuella bilder som lagts upp i den, det hen gör som en Gedu länkar till gruppen, de samtycken som noterats för hens plats, och de foton en Gedu bifogar en rapport. Även en Gedus moderering noteras — flyttas ett barn till ett eget utrymme eller tystas i chatten lämnar det ett spår. Rapportens foton är av tillfället och inte av ett enskilt barn — varje familj i gruppen ser dem på gruppens sida och får dem med rapporten per mejl.</p><p>Vill du se, rätta eller radera något vi har om ditt barn, mejla {supportEmail}. Vi sparar dina uppgifter så länge du har ett konto och raderar eller anonymiserar dem om du avslutar det, utom där lagen kräver att vi behåller vissa uppgifter längre, som den finländska bokföringslagen gör för betalningsuppgifter.</p>"
         },
         "becomeGedu": {
           "question": "Hur blir jag spelfostrare?",
@@ -249,6 +302,7 @@
         "issues": {
           "unassignedGamers": "{count, plural, one {# oplacerad spelare} other {# oplacerade spelare}}",
           "groupWithoutGedu": "Gruppen {group} har ingen Gedu",
+          "emptyGroupWithoutGedu": "Den tomma gruppen {group} har ingen Gedu",
           "waitlistOpenSeats": "{waiting} i kö · {open, plural, one {# plats} other {# platser}} lediga",
           "missingGeduFee": "Gedu-arvode saknas",
           "missingMunicipalityFee": "Kommunavgift saknas",
@@ -274,7 +328,6 @@
         "sessionCount": "{count, plural, one {# tillfälle} other {# tillfällen}}",
         "timesIn": "tider i {zone}",
         "nothingOn": "Inget inplanerat",
-        "paused": "Pausade den här veckan:",
         "needsAttention": "Behöver åtgärd – den här produkten finns i kön högst upp på sidan",
         "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
       },
@@ -415,9 +468,10 @@
           "materialUrl": "Lektionsmaterial",
           "startDate": "Startdatum",
           "endDate": "Slutdatum",
+          "firstSession": "Första tillfället",
+          "lastSession": "Sista tillfället",
           "signupThreshold": "Anmälningströskel",
           "termDates": "Period",
-          "holidayCalendars": "Lovkalendrar",
           "billingMode": "Fakturering",
           "seats": "Platser",
           "waitlist": "Väntelista",
@@ -425,12 +479,15 @@
           "primaryGeduFee": "Huvud-Gedu-arvode / tillfälle",
           "assistantGeduFee": "Assisterande Gedu-arvode / tillfälle",
           "municipalityFee": "Kommunavgift / tillfälle",
+          "timezone": "Tidszon",
           "registrationOpensAt": "Anmälan öppnar",
           "tag": "Utformad för",
           "regionLock": "Landsbegränsning",
           "requiredConsents": "Obligatoriska samtycken",
           "requiresGamerCreations": "Spelarnas skapelser",
-          "visibility": "Synlighet"
+          "visibility": "Synlighet",
+          "gamerPhotoConsents": "Fotofrågor",
+          "marketingConsents": "Marknadsföringsfrågor"
         },
         "copyLink": "Kopiera den publika länken",
         "copied": "Kopierad"
@@ -475,7 +532,7 @@
         "registration": "Registreringstid",
         "registrationDescription": "Välj när föräldrar kan börja anmäla sig.",
         "consents": "Samtycken",
-        "consentsDescription": "Vad en förälder godkänner, och vad hen tillfrågas om, på vägen genom anmälan. Obligatoriska dokument måste godkännas innan en plats kan tas, medan marknadsföringsfrågor kan avböjas.",
+        "consentsDescription": "Vad en förälder godkänner, och vad hen tillfrågas om, på vägen genom anmälan. Obligatoriska dokument måste godkännas innan en plats kan tas; både fotofrågan och marknadsföringsfrågan kan avböjas.",
         "visibility": "Listning",
         "visibilityDescription": "Avgör var produkten visas, inte vem som får köpa den. Anmälningar öppnas och stängs av anmälningsdatumet, platsgränsen och produktens status — aldrig av den här inställningen."
       },
@@ -507,8 +564,7 @@
         "dayAndTime": "Dag & tid",
         "daysAndTimes": "Dagar & tider",
         "time": "Tid",
-        "holidayCalendars": "Lovkalendrar",
-        "holidayNoUpcoming": "Inga kommande datum — denna kalender behöver datum innan den är användbar.",
+        "timezone": "Tidszon",
         "pricing": "Pris",
         "free": "Gratis",
         "paid": "Betalt",
@@ -608,10 +664,16 @@
         "version": "Version {version}",
         "noVersion": "Ingen publicerad version",
         "none": "Inga",
+        "gamerPhoto": {
+          "lynxEducate": {
+            "label": "Foton och videor (Lynx Educate)",
+            "description": "Att kryssa i detta lägger till en valfri fråga vid anmälan till den här produkten: föräldrar tillfrågas om foton och videor på deras barn får tas och användas av School of Gaming, Lynx Educate och Roblox. En förälder kan tacka nej, och platsen påverkas inte. Frågan ställs per barn och ställs på nytt vid varje anmälan."
+          }
+        },
         "marketing": {
           "lynxEducate": {
             "label": "Lynx Educate",
-            "description": "Att kryssa i detta lägger till en valfri fråga vid anmälan till den här produkten: föräldrar tillfrågas om de vill dela sina kontaktuppgifter med Lynx Educate. En förälder kan tacka nej, och platsen påverkas inte."
+            "description": "Att kryssa i detta lägger till en valfri fråga vid anmälan till den här produkten: föräldrar tillfrågas om de vill dela sin e-postadress med Lynx Educate. En förälder kan tacka nej, och platsen påverkas inte."
           }
         }
       },
@@ -634,8 +696,9 @@
         "eventSingleDay": "Evenemang äger rum ett enda datum.",
         "thresholdOnly": "Inget fast startdatum än. Föräldrar ser en räknare ”X av Y behövs” medan den fylls. Du trycker Starta när du har tillräckligt med anmälningar och väljer första tillfällets datum då.",
         "thresholdWithDate": "Om färre än så här många föräldrar anmäler sig till startdatumet behöver du ställa in den och återbetala från produktsidan.",
-        "timezoneFixedHelsinki": "Tider är i tidszonen Europe/Helsinki. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
-        "holidayHint": "Inget tillfälle körs på något datum från de valda kalendrarna. Redigera en kalender en gång och alla produkter som använder den uppdateras automatiskt.",
+        "timezoneEntry": "Tiderna för tillfällena nedan anges i den här tidszonen. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
+        "timezoneChangeMoves": "Tiderna för tillfällena nedan anges i den här tidszonen. Byter du zon flyttas varje kommande tillfälle till samma klockslag i den nya zonen, medan tillfällen som redan har en rapport eller närvaro registrerad behåller de tider de hölls på.",
+        "timezoneIs": "Tider är i {timezone}. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
         "billingHint": "Gratisprodukter får som standard en platsgräns, betalda börjar utan gräns.",
         "freeDetail": "Ingen avgift. Alla kan delta med ett klick.",
         "paidDetailMonthly": "Debiteras varje månad som en prenumeration.",
@@ -647,8 +710,9 @@
         "seatHintNoWaitlist": "När fullt nekas nya anmälningar.",
         "visibleHint": "Utan bocken visas produkten inte på någon publik sida, men den som har direktlänken kan ändå öppna den och köpa en plats. Det är just det som gör den lämplig för oannonserade produkter, inbjudningar och kampanjer. Det är inget sätt att stoppa anmälningar, och det påverkar aldrig föräldrar och gamers som redan deltar.",
         "seatLimitHint": "Begränsa antalet deltagare eller kör utan gräns.",
-        "holidayComingSoon": "Lovkalendrar kommer snart. Tills vidare körs varje schemalagt tillfälle.",
-        "startDateBillingAnchor": "Datumet då klubben börjar, och då familjerna debiteras första gången. Att ändra det i efterhand flyttar inte första betalningen för dem som redan har anmält sig — rätta de prenumerationerna i Stripe."
+        "startDateBillingAnchor": "Datumet då klubben börjar, och då familjerna debiteras första gången. Att ändra det i efterhand flyttar inte första betalningen för dem som redan har anmält sig — rätta de prenumerationerna i Stripe.",
+        "startNotSessionDay": "Inget tillfälle infaller detta datum. Första tillfället är {date}.",
+        "endNotSessionDay": "Inget tillfälle infaller detta datum. Sista tillfället är {date}."
       },
       "errors": {
         "translationRequired": "Minst ett språk med namn och beskrivning krävs",
@@ -781,7 +845,7 @@
         "searchGedu": "Sök Geduer…",
         "searchMunicipality": "Sök kommuner…",
         "noResults": "Inga träffar.",
-        "search": "Sök produkter på namn",
+        "search": "Sök",
         "searchPlaceholder": "Sök på namn…",
         "showing": "Visar {count} av {total}",
         "clear": "Rensa",
@@ -904,6 +968,55 @@
             "description": "Att ta bort {name} skulle lämna familjens prenumeration kvar och fortsätta fakturera för en plats som inte längre finns.",
             "nextStep": "Familjen öppnar faktureringskortet på Min SOG, som tar dem vidare till Stripes säkra faktureringsportal för att säga upp. Platsen frigörs så snart prenumerationen upphör."
           }
+        },
+        "switchClub": {
+          "dropZone": "Byt klubb",
+          "title": "Byt klubb",
+          "description": "Flytta {name} till en annan klubb. Inget ändras för familjen i dag: samma kort dras samma datum, nästa faktura justerar för resten av månaden, och därefter betalar familjen den nya klubbens pris.",
+          "searchPlaceholder": "Sök klubbar på namn",
+          "picker": {
+            "empty": "Det finns ingen annan klubb att byta till. Målet måste vara en klubb som faktureras varje månad och som inte har avslutats.",
+            "noMatch": "Ingen klubb matchar sökningen. Pröva ett annat namn.",
+            "alreadyHolds": "Har redan plats"
+          },
+          "facts": {
+            "ageRange": "{ends, select, both {Åldrar {min}–{max}} from {Från {min} år} other {Upp till {max} år}}",
+            "ageRangeWithGamer": "{ends, select, both {Åldrar {min}–{max}} from {Från {min} år} other {Upp till {max} år}} · {name} är {age}",
+            "seats": "{taken} av {capacity} platser tagna",
+            "regionLocked": "Endast familjer i {country}",
+            "notStarted": "Startar {date}. Familjen betalar från i dag, inte från startdatumet.",
+            "notStartedUndated": "Inget startdatum ännu. Familjen betalar från i dag.",
+            "subscriptionEnding": "Familjen har sagt upp prenumerationen och den slutar {date}. Den här månadens prisskillnad faktureras inte."
+          },
+          "prices": {
+            "current": "Betalar nu",
+            "target": "Nytt pris",
+            "proration": "Nästa faktura lägger till eller återbetalar skillnaden för resten av månaden.",
+            "unavailable": "Inget pris att visa",
+            "error": "Priskontrollen kom inte tillbaka. Välj klubben igen för att försöka på nytt."
+          },
+          "back": "Tillbaka",
+          "group": {
+            "label": "Grupp",
+            "unassigned": "Lämna utan grupp",
+            "members": "{count, plural, one {# spelare} other {# spelare}}"
+          },
+          "refusals": {
+            "latestInvoiceNotPaid": "Familjens senaste faktura är inte betald, så det finns ingen betald tid att flytta. Red ut det i Stripe först.",
+            "subscriptionNotSingleItem": "Prenumerationen har mer än en rad, så det finns inget enskilt pris att byta. Red ut det i Stripe först.",
+            "noTargetPriceInCurrency": "Den här klubben har inget pris i den valuta prenumerationen faktureras i. Klubbar prissätts i euro, så en prenumeration som Stripe skapade i en annan valuta kan inte bytas här — red ut det i Stripe först.",
+            "participationNotActive": "Den här platsen är inte aktiv, så det finns inget att flytta.",
+            "noLiveSubscription": "Ingen aktiv prenumeration står bakom den här platsen, så det här är fel verktyg: ta bort platsen och skriv in spelaren på den andra klubben i stället.",
+            "targetNotPaidSubscriptionClub": "Den produkten är ingen klubb som faktureras varje månad, så en prenumeration kan inte följa med platsen dit.",
+            "sameProduct": "Det är klubben spelaren redan går i.",
+            "alreadyOnTarget": "Spelaren har redan en plats i den klubben."
+          },
+          "commit": {
+            "stripeUpdated": "Prenumerationen ligger redan på den nya klubbens pris, men platsen flyttades inte. Tryck på Byt klubb igen för att slutföra — ett nytt tryck debiterar inte familjen två gånger.",
+            "stripeUpdatedStuck": "Prenumerationen ligger redan på den nya klubbens pris trots att platsen inte kunde flyttas, så familjen faktureras för en klubb där spelaren inte har någon plats. Red ut det i Stripe först.",
+            "failed": "Bytet slutfördes inte. Tryck på Byt klubb igen — ett nytt tryck upprepar samma begäran, så familjen debiteras aldrig två gånger."
+          },
+          "confirm": "Byt klubb"
         }
       },
       "seatLimitModes": {
@@ -943,7 +1056,6 @@
       "userNotFound": "Användaren hittades inte.",
       "joined": "Gick med",
       "unknown": "Okänd",
-      "referralCode": "Hänvisningskod",
       "linkedGamers": "Kopplade spelare",
       "linkedParents": "Kopplade föräldrar",
       "unnamedGamer": "Namnlös spelare",
@@ -974,9 +1086,25 @@
         "description": "Ange eller korrigera kontots spelanvändarnamn. Sparandet kontrollerar namnet hos plattformen."
       },
       "marketing": {
-        "title": "Marknadsföringsinställningar",
+        "title": "Marknadsföring",
+        "attribution": "Ursprung",
+        "utm": {
+          "source": "Källa",
+          "medium": "Medium",
+          "campaign": "Kampanj"
+        },
+        "preferences": "Inställningar",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
+        "granted": "Godkänt",
+        "notGranted": "Inte godkänt",
+        "since": "sedan {date}"
+      },
+      "photoConsent": {
+        "title": "Fotosamtycke",
+        "labels": {
+          "lynx_educate": "Lynx Educate"
+        },
         "granted": "Godkänt",
         "notGranted": "Inte godkänt",
         "since": "sedan {date}"
@@ -1000,7 +1128,8 @@
         "uncertifyAction": "Ta bort certifiering",
         "saving": "Sparar…",
         "error": "Det gick inte att uppdatera certifieringen. Försök igen."
-      }
+      },
+      "usernameLabel": "Användarnamn"
     },
     "locations": {
       "editName": "Redigera {name}",
@@ -1036,36 +1165,24 @@
       "description": "Interna verktyg för testning och utveckling",
       "emailTool": "Verktyg för e-posttestning",
       "emailToolDescription": "Skicka testmeddelanden via Brevo (SMTP) för att verifiera leverans och mallar.",
-      "provider": "Leverantör",
-      "brevo": "Brevo (SMTP)",
-      "klaviyoComingSoon": "Klaviyo (kommer snart)",
-      "content": "Innehåll",
       "template": "Mall",
       "language": "Språk",
-      "custom": "Anpassad",
       "toEmail": "Mottagare",
       "toEmailPlaceholder": "mottagare@example.com",
       "templateParameters": "Mallparametrar",
-      "fromEmail": "Avsändarens e-post",
-      "fromName": "Avsändarens namn",
       "subject": "Ämne",
-      "subjectPlaceholder": "Ämne för testmeddelande",
-      "body": "Brödtext",
-      "bodyPlaceholder": "Skriv e-postinnehåll (HTML stöds)",
-      "replyTo": "Svara till (valfritt)",
-      "replyToPlaceholder": "svar@example.com",
       "sendTestEmail": "Skicka testmeddelande",
       "emailSentSuccess": "E-post skickat! Meddelande-ID: {messageId}",
       "failedToSendRequest": "Kunde inte skicka förfrågan",
       "preview": "Förhandsgranskning",
-      "previewDescription": "Så här återges meddelandet. Det ritas upp här i din webbläsare och skickas inte, och bilderna laddas från den här servern – därför visar en förhandsgranskning även de foton som ett utskick från en utvecklingsmaskin utelämnar.",
-      "refreshPreview": "Uppdatera förhandsgranskningen",
       "previewError": "Kunde inte rendera mallen: {message}",
       "previewWidth": {
         "label": "Förhandsgranskningens bredd",
         "desktop": "Dator",
         "mobile": "Mobil"
-      }
+      },
+      "attachment": "Bilaga: {name}",
+      "sentAttachment": "Det som skickades: {name}"
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -1084,15 +1201,16 @@
       "welcomeTitle": "Välkommen till School of Gaming",
       "noAccountSignUp": "Har du inget konto? <link>Registrera dig</link>",
       "signingIn": "Loggar in...",
-      "emailPlaceholder": "du@example.com",
       "passwordPlaceholder": "Ange ditt lösenord",
       "errors": {
-        "identifierRequired": "Ange din e-postadress.",
+        "identifierRequired": "Ange din e-postadress eller ditt användarnamn.",
         "passwordTooShort": "Lösenordet måste vara minst {count} tecken långt.",
-        "invalidCredentials": "E-postadressen eller lösenordet du angav är felaktigt.",
+        "invalidCredentials": "E-postadressen, användarnamnet eller lösenordet du angav är felaktigt.",
         "emailNotConfirmed": "Bekräfta din e-postadress innan du loggar in.",
         "tooManyAttempts": "För många inloggningsförsök. Vänta en stund och försök igen."
-      }
+      },
+      "identifierLabel": "E-postadress eller användarnamn",
+      "identifierPlaceholder": "du@example.com eller ett användarnamn"
     },
     "needHelp": "Behöver du hjälp? Kontakta <link>{email}</link>",
     "register": {
@@ -1227,7 +1345,8 @@
     "price": {
       "subscription": "{amount} / månad",
       "upfront": "{amount} (engångsbetalning)",
-      "free": "Gratis"
+      "free": "Gratis",
+      "external": "Bekostas av din kommun"
     },
     "nextTitle": "Vad händer nu",
     "next": {
@@ -1373,6 +1492,16 @@
       "title": "Byt till {name}s profil för att lägga till en gamer?",
       "oneWayWarning": "Du loggas ut från ditt gamer-konto."
     },
+    "switchGate": {
+      "pinTitle": "Be en förälder att ange sin PIN-kod",
+      "pinDescription": "En förälders PIN-kod behövs för att byta till {name}.",
+      "pinNotSetTitle": "Ingen föräldra-PIN ännu",
+      "pinNotSetDescription": "En förälder måste först skapa en PIN-kod från sin Min SOG. Sedan kan du byta konto.",
+      "signOutTitle": "Logga ut först",
+      "signOutOwnSession": "{name} är inloggad med sin egen inloggning, så det här kontot kan inte byta till ett annat. Så förblir allas konton privata.",
+      "signOutHow": "Logga ut och logga sedan in som {name}.",
+      "signOutHowViaParent": "Logga ut, logga sedan in med din förälders inloggning och växla till {name} därifrån."
+    },
     "addGamerForm": {
       "title": "Lägg till en gamer",
       "firstNameLabel": "Förnamn",
@@ -1444,7 +1573,8 @@
     "privacy": "Integritetspolicy",
     "terms": "Användarvillkor",
     "antiBullying": "Mot mobbning",
-    "attributions": "Källor och licenser"
+    "attributions": "Källor och licenser",
+    "privacyChoices": "Integritetsval"
   },
   "gamer": {
     "welcomeNamed": "Välkommen, {name}!",
@@ -1455,14 +1585,14 @@
       "items": {
         "joiningSession": {
           "question": "Hur går jag med i mitt tillfälle när det börjar?",
-          "answer": "<p>Så här går det till:</p><steps><step>Öppna Min SOG och leta upp din klubb.</step><step>Titta på knappen på den. Fram till strax före ditt tillfälle är den låst, och den talar om vilken dag och vilken tid den öppnar.</step><step>Fem minuter innan ditt tillfälle börjar ändras knappen till ”Gå med i röstrum”.</step><step>Tryck på den. Nu är du inne.</step></steps><p>Det finns ingenting att installera och ingen kod att skriva.</p><p>Om din klubb i stället säger att du är anmäld och att vi letar upp en Gedu och en grupp åt dig, finns det ingen knapp på den än. Du är med — vi har bara inte satt dig i en grupp. Det sker före ditt första tillfälle, och din Gedu är där när det gör det.</p>"
+          "answer": "<p>Öppna först Min SOG och leta upp din klubb. Vad som händer sedan beror på var din klubb träffas.</p><p>Om den träffas online finns det en knapp på den:</p><steps><step>Fram till strax före ditt tillfälle är knappen låst, och den talar om vilken dag och vilken tid den öppnar.</step><step>Fem minuter innan ditt tillfälle börjar ändras knappen till ”Gå med i röstrum”.</step><step>Tryck på den. Nu är du inne.</step></steps><p>Det finns ingenting att installera och ingen kod att skriva.</p><p>Om den träffas på plats finns det ingen knapp. Din klubb visar i stället namnet på platsen, och din klubbs sida visar adressen också. Var där när ditt tillfälle börjar.</p><p>Om din klubb i stället säger att du är anmäld och att vi letar upp en Gedu och en grupp åt dig, finns det ingen knapp eller plats på den än. Du är med — vi har bara inte satt dig i en grupp. Det sker före ditt första tillfälle, och din Gedu är där när det gör det.</p>"
         },
         "cannotBeHeard": {
-          "question": "Ingen hör mig — vad kollar jag?",
+          "question": "Ingen hör mig i röstrummet — vad kollar jag?",
           "answer": "<p>Kolla det här i tur och ordning. Det är nästan alltid det första.</p><steps><step>Är din mikrofonknapp röd? Då är du avstängd. Tryck på den för att slå på mikrofonen.</step><step>Visar knappen ett hänglås? Din Gedu har låst din mikrofon en stund. Hen låser upp den.</step><step>Tryck på den lilla pilen bredvid mikrofonknappen. Den öppnar dina mikrofoninställningar, där du kan välja rätt mikrofon i listan.</step><step>Prata nu och leta efter stapeln under listan. Syns ingen stapel alls är din mikrofon avstängd snarare än tyst — gå tillbaka till steg 1. Finns stapeln men rör sig aldrig har något annat på din enhet tagit mikrofonen.</step></steps><p>Ser du ett rött meddelande om att vi inte når din mikrofon: stäng andra appar och flikar som använder den, tillåt mikrofonen i webbläsarens inställningar och tryck på Ladda om.</p><p>Hörs du fortfarande inte? Säg det till din Gedu under tillfället — hen kan hjälpa till.</p>"
         },
         "cannotHearOthers": {
-          "question": "Jag hör ingen — vad kollar jag?",
+          "question": "Jag hör ingen i röstrummet — vad kollar jag?",
           "answer": "<p>Kolla det här i tur och ordning:</p><steps><step>Höj volymen på din enhet och kolla att hörlurarna sitter i ordentligt.</step><step>Titta på zonerna. Du hör bara dem som är i samma zon som du, så om alla andra är någon annanstans trycker du på deras zon för att flytta dit.</step><step>Har din Gedu flyttat dig till en zon med flit, stanna där. Hen hämtar tillbaka dig.</step></steps><p>Är de andra i din zon, volymen uppe och det ändå är tyst — säg det till din Gedu, högt eller i chatten om ditt rum har en. Hen ser vilka som är i rummet och kan hjälpa till.</p>"
         },
         "someoneIsMean": {
@@ -1531,6 +1661,7 @@
       "staffNotePlaceholder": "Allt en annan Gedu bör veta – och allt du behöver få nedskrivet privat: en incident, mobbning eller oro för en spelare.",
       "attendanceLegend": "Närvaro",
       "attendanceRevertHint": "Välj samma svar igen för att ta bort en markering. Du kan spara en del av listan och fortsätta senare.",
+      "attendanceNobodyExpected": "Ingen på listan hade gått med i gruppen när det här tillfället hölls, så det finns ingen närvaro att markera.",
       "reportTitle": "Rapport om tillfället – syns för föräldrar och spelare",
       "reportFormattingHint": "Skriv aldrig privat eller känslig information om en spelare här. Rubriker, fetstil och listor gör det lätt att överblicka.",
       "reportPlaceholder": "Börja med en Titel och ge sedan hela bilden: tillfällets tema, gruppens arbete, hur det går samt höjdpunkterna och stunder värda att minnas.",
@@ -1551,6 +1682,10 @@
       "photosEmpty": "Lägg till en bild för det här tillfället.",
       "photosDropHint": "Du kan också släppa bilder här.",
       "addPhoto": "Lägg till bild",
+      "photoConsentTitle": "Fototillstånd",
+      "photoConsentNote": "Fråga varje gamer innan du tar bilden, även när föräldern har gett sitt samtycke. En gamer vars förälder inte har gett sitt samtycke får inte vara med på bilden.",
+      "photoConsentAllowed": "Tillåtet",
+      "photoConsentNotAllowed": "Inte tillåtet",
       "removePhoto": "Ta bort bild {index}",
       "photosTrimmed": "En rapport rymmer högst {cap} bilder, så {count, plural, one {bara den första lades till} other {bara de # första lades till}}.",
       "photoErrorDecodeFailed": "Filen gick inte att öppna. Om den kommer från en iPhone, spara den som JPEG och försök igen.",
@@ -1674,11 +1809,11 @@
         },
         "safeguardingConcern": {
           "question": "Jag har en oro för ett barns trygghet mitt i ett tillfälle — vad gör jag?",
-          "answer": "<p>Ta hand om den akuta situationen i rummet först — du har moderatorkontrollerna: tysta en mikrofon, lås den, eller flytta någon till ett eget utrymme bort från gruppen. Skriv sedan ner det samma dag, medan det är färskt.</p><p>Varje tillfälle har en personalanteckning, märkt för Geduer och administratörer, som familjer aldrig ser; det är där en incident, mobbning eller en oro för en spelare hör hemma. Det finns också en anteckning per spelare på gruppens deltagarlista, som följer med det barnet i den gruppen, tillfälle för tillfälle, och som likaså bara Geduer och administratörer ser. Ingen av dem är synlig för någon familj.</p><p>En anteckning är en notering, inte ett larm: ingen blir uppringd av den, så allt som är brådskande, eller allt som behöver någon utanför gruppen, går även till kontoret på {supportEmail}.</p>"
+          "answer": "<p>Ta hand om den akuta situationen först. Vid ett tillfälle online har du moderatorkontrollerna i röstrummet: tysta en mikrofon, lås den, eller flytta någon till ett eget utrymme bort från gruppen. På plats har produkten inga kontroller för det här — där hanterar du det själv i rummet. Skriv i båda fallen ner det samma dag, medan det är färskt.</p><p>Varje tillfälle har en personalanteckning, märkt för Geduer och administratörer, som familjer aldrig ser; det är där en incident, mobbning eller en oro för en spelare hör hemma. Det finns också en anteckning per spelare på gruppens deltagarlista, som följer med det barnet i den gruppen, tillfälle för tillfälle, och som likaså bara Geduer och administratörer ser. Ingen av dem är synlig för någon familj.</p><p>En anteckning är en notering, inte ett larm: ingen blir uppringd av den, så allt som är brådskande, eller allt som behöver någon utanför gruppen, går även till kontoret på {supportEmail}.</p>"
         },
-        "gamerCannotConnect": {
-          "question": "En spelare kan inte ansluta och tillfället har börjat — vad kan jag göra?",
-          "answer": "<p>Två saker kan du göra inne i produkten, och en kan du inte.</p><p>Stäm av vilka som faktiskt är i rummet mot din deltagarlista — deltagarlistan i samtalet visar bara de som är anslutna just nu, så ett namn som saknas där är en spelare som inte har tagit sig in, och ingenting markerar det åt dig; du läser av det ur listan.</p><p>För att nå familjen, öppna gruppens deltagarlista i gruppytan: varje rad har familjens kontaktmejl, som du kopierar med en tryckning, och ovanför listan finns en kontroll för att kopiera alla. Du skickar från din egen mejl — det finns inget meddelande till en familj inne i appen, inget sms och inget telefonnummer på listan.</p><p>Det du inte kan göra är att släppa in hen själv: tillträdet avgörs av vår server på spelarens egen begäran, och hen behöver en aktiv plats i den gruppen med tillfällets tidsfönster öppet. Om hen har en plats och ändå inte kommer in sitter den snabbaste lösningen oftast hos hen — tillåt mikrofonen i webbläsaren, stäng det som annars använder den, ladda om. Är det något vi behöver åtgärda, mejla kontoret på {supportEmail}.</p>"
+        "gamerNotArrived": {
+          "question": "En spelare har inte kommit och tillfället har börjat — vad kan jag göra?",
+          "answer": "<p>Se först till att du vet vem som saknas. Online stämmer du av vilka som faktiskt är i rummet mot din deltagarlista — deltagarlistan i samtalet visar bara de som är anslutna just nu, så ett namn som saknas där är en spelare som inte har tagit sig in, och ingenting markerar det åt dig; du läser av det ur listan. På plats är gruppens deltagarlista de som ska vara där, och du stämmer av rummet mot den på samma sätt.</p><p>För att nå familjen, öppna gruppens deltagarlista i gruppytan: varje rad har familjens kontaktmejl, som du kopierar med en tryckning, och ovanför listan finns en kontroll för att kopiera alla. Du skickar från din egen mejl — det finns inget meddelande till en familj inne i appen, inget sms och inget telefonnummer på listan.</p><p>Online kan du inte släppa in en spelare själv: tillträdet avgörs av vår server på spelarens egen begäran, och hen behöver en aktiv plats i den gruppen med tillfällets tidsfönster öppet. Om hen har en plats och ändå inte kommer in sitter den snabbaste lösningen oftast hos hen — tillåt mikrofonen i webbläsaren, stäng det som annars använder den, ladda om. Är det något vi behöver åtgärda, mejla kontoret på {supportEmail}.</p>"
         }
       }
     }
@@ -1764,7 +1899,7 @@
   },
   "schools": {
     "hero": {
-      "title": "Spelklubbar i <primary>din kommun</primary>",
+      "title": "Spelklubbar i din kommun",
       "subtitle": "School of Gaming ordnar klubbar tillsammans med finländska kommuner. Hitta din kommun och utforska utbudet.",
       "howItWorks": "Beroende på kommun träffas klubben antingen online hemifrån eller på plats i ditt barns skola. En professionell spelfostrare finns alltid med och leder verksamheten."
     },
@@ -1808,11 +1943,17 @@
       "format": "Format",
       "formatOnline": "Online",
       "formatInPerson": "På plats",
+      "price": "Pris",
+      "priceFree": "Gratis",
+      "pricePaid": "Avgiftsbelagd",
       "language": "Språk",
       "age": "Ålder",
       "days": "Dagar",
       "clearAll": "Rensa",
-      "filterBy": "Filtrera"
+      "filterBy": "Filtrera",
+      "title": "Filter",
+      "activeCount": "{count, plural, one {# filter aktivt} other {# filter aktiva}}",
+      "removeFilter": "Ta bort {label}"
     },
     "card": {
       "ages": "Ålder {min}–{max}",
@@ -1875,38 +2016,38 @@
       "pegi": "PEGI {age}",
       "topics": {
         "minecraft_java": {
-          "description": "Minecraft är ett kreativt byggspel – tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig, från ett mysigt hus till en hel stad. Det finns inget att vinna eller förlora; det är ett lugnt och öppet utrymme för att skapa och lösa problem. ”Java” är originalversionen för Windows-, Mac- och Linux-datorer, och det är den våra distansklubbar använder eftersom den stöder verktygen våra spelfostrare behöver.",
-          "note": "För våra klubbar behöver ditt barn Minecraft på en dator. På Minecraft.net säljs det som ”Minecraft: Java & Bedrock Edition for PC” – ett enda engångsköp (inte en prenumeration) som inkluderar versionen vi använder. Den separata versionen för konsol, telefon och surfplatta fungerar inte för de här klubbarna.",
+          "description": "Minecraft är ett kreativt byggspel. Tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig, från ett mysigt hus till en hel stad. Det finns inget att vinna eller förlora. Det är ett lugnt och öppet utrymme för att skapa och lösa problem. ”Java” är originalversionen för Windows-, Mac- och Linux-datorer. Det är den våra distansklubbar använder, eftersom den stöder verktygen våra spelfostrare behöver.",
+          "note": "För våra distansklubbar behöver ditt barn Minecraft på en dator. På Minecrafts egen webbplats säljs det som ”Minecraft: Java & Bedrock Edition for PC”. Det är ett engångsköp och inte en prenumeration, och det inkluderar versionen vi använder. Den separata versionen för konsol, telefon och surfplatta fungerar inte för de här klubbarna.",
           "linkLabel": "Skaffa Minecraft för PC"
         },
         "minecraft_bedrock": {
-          "description": "Minecraft är ett kreativt byggspel — tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig, från ett mysigt hus till en hel stad. Det finns inget att vinna eller förlora; det är ett lugnt och öppet utrymme för att skapa och lösa problem. ”Bedrock” är versionen som körs på konsoler (Xbox, PlayStation, Switch), telefoner, surfplattor och Windows-datorer.",
-          "note": "Ditt barn behöver Minecraft Bedrock för den här klubben. Den ingår inte i priset — köp den från butiken som matchar enheten ditt barn ska spela på (samma spel, men säljs på olika ställen för olika enheter). På en spelkonsol kan onlinespel dessutom kräva konsolens betalda onlinemedlemskap.",
+          "description": "Minecraft är ett kreativt byggspel. Tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig, från ett mysigt hus till en hel stad. Det finns inget att vinna eller förlora. Det är ett lugnt och öppet utrymme för att skapa och lösa problem. ”Bedrock” är versionen som körs på konsoler (Xbox, PlayStation, Switch), telefoner, surfplattor och Windows-datorer.",
+          "note": "Minecraft Bedrock ingår inte i priset. Det är samma spel sålt separat för varje enhet, och ett exemplar köpt till en enhet följer inte med till en annan. Det exemplar som räknas är det för enheten ditt barn ska spela på. På en spelkonsol kräver onlinespel dessutom konsolens betalda onlinemedlemskap.",
           "linkLabel": "Var du köper det"
         },
         "minecraft_education": {
-          "description": "Minecraft är ett kreativt byggspel — tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig. Minecraft Education är en version gjord för klassrummet: samma trevliga och öppna byggande, plus extra verktyg för den vuxna som leder sessionen, utformad för guidade aktiviteter snarare än för ensamspel.",
-          "note": "Det finns inget att köpa och inget skolkonto att ordna – School of Gaming tillhandahåller de Minecraft Education-konton som deltagarna använder under klubben. För distansklubbar behöver ditt barn dessutom ladda ner själva spelet, gratis, från Microsoft Store eller från Minecraft Educations egen webbplats.",
+          "description": "Minecraft är ett kreativt byggspel. Tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig. Minecraft Education är en version gjord för ledda grupper. Byggandet är detsamma, trevligt och öppet, och det finns extra verktyg för den vuxna som leder tillfället.",
+          "note": "Det finns inget att köpa och inget skolkonto att ordna. School of Gaming tillhandahåller de Minecraft Education-konton som deltagarna använder under tillfällena. För distansklubbar är själva spelet en gratis nedladdning från Microsoft Store eller från Minecraft Educations egen webbplats. Det fungerar på Windows- och Mac-datorer såväl som på iPad och Chromebook.",
           "linkLabel": "Om Minecraft Education"
         },
         "fortnite": {
-          "description": "Fortnite är ett färgglatt onlinespel i tecknad stil där spelare bildar lag och tävlar i korta matcher, omgång för omgång. Det är enormt populärt och väldigt socialt, och barn spelar tillsammans med vänner. Stilen är ljus och orealistisk, utan blod eller våld, även om matcherna är tävlingsinriktade och spelas online med andra.",
-          "note": "Fortnite är gratis att ladda ner och spela – du köper inte själva spelet. Ditt barn skapar ett gratis Epic Games-konto för att spela. Vissa valfria extrasaker, som utstyrslar, kostar pengar, och du kan begränsa dem med föräldrakontroller.",
+          "description": "Fortnite är ett färgglatt onlinespel i tecknad stil där spelare bildar lag och tävlar i korta matcher, omgång för omgång. Det är enormt populärt och väldigt socialt, och barn spelar det tillsammans med vänner. Stilen är ljus och orealistisk, utan blod eller våldsamma detaljer. Matcherna är tävlingsinriktade och spelas online med andra människor.",
+          "note": "Fortnite är gratis att ladda ner och spela, så det finns inget spel att köpa. Att spela kräver ett gratis Epic Games-konto. Vissa valfria extrasaker kostar pengar, till exempel utstyrslar. Epics föräldrakontroller sitter på kontot i stället för på en enhet, och de kan begränsa sådana köp.",
           "linkLabel": "Skaffa Fortnite"
         },
         "pokemon_go": {
-          "description": "Pokémon GO spelas utomhus, på en telefon. Varelser dyker upp på en karta över den verkliga världen, och barnen går till parker, gator och landmärken för att hitta och samla dem. Det handlar om att samla snarare än att slåss – det roliga är att utforska, fylla sin Pokédex och jämföra fynd med kompisar. Det mesta av spelandet sker till fots, så spelet får barn att röra på sig.",
-          "note": "Pokémon GO är gratis att ladda ner och spela – du köper inte själva spelet. Ditt barn behöver en telefon eller surfplatta med GPS och mobildata, samt ett gratis konto. Det finns valfria köp i appen, som du kan begränsa med föräldrakontroller. Eftersom spelet spelas utomhus på riktiga platser är det bra att i förväg komma överens om var barnet får röra sig och om en vuxen följer med.",
+          "description": "Pokémon GO spelas utomhus, på en telefon. Varelser dyker upp på en karta över den verkliga världen, och barnen går till parker, gator och landmärken för att hitta och samla dem. Det handlar om att samla snarare än att slåss. Det roliga är att utforska, fylla sin Pokédex och jämföra fynd med kompisar. Det mesta av spelandet sker till fots, så spelet får barn att röra på sig.",
+          "note": "Pokémon GO är gratis att ladda ner och spela, så det finns inget spel att köpa. Det kräver en telefon med GPS och mobildata, samt ett gratis konto. För ett barn under 13 år skapas kontot av en förälder och förblir länkat till förälderns. Det finns valfria köp i appen, som föräldrakontroller kan begränsa. Det spelas utomhus på riktiga platser. Det håller dessutom skärmen, GPS:en och mobildatan igång hela tiden, så batteriet räcker inte länge.",
           "linkLabel": "Var du laddar ner det"
         },
         "roblox_studio": {
-          "description": "Roblox Studio är det kostnadsfria verktyg som Roblox-spelen själva byggs med. Barn designar världar, bygger med riktiga 3D-verktyg och programmerar med riktig kod, så att deras egna idéer blir upplevelser som andra faktiskt kan spela. I våra klubbar skapar barnen i stället för att spela – det är riktig spelutveckling.",
-          "note": "Roblox Studio är gratis – det finns inget att köpa. Det fungerar bara på Windows-datorer och Mac: inte på iPad eller andra surfplattor, inte på Chromebook, telefon eller spelkonsol. Ett gratis Roblox-konto behövs också, och kontots åldersinställning styr dess chatt- och integritetsskydd. Färdiga skapelser kan publiceras så att andra spelare kan hitta och spela dem.",
+          "description": "Roblox Studio är det kostnadsfria verktyg som Roblox-spelen själva byggs med. Barn designar världar, bygger med riktiga 3D-verktyg och skriver riktig kod. Deras egna idéer blir upplevelser som andra faktiskt kan spela. I våra klubbar skapar barnen i stället för att spela, och det är ett första steg in i riktig spelutveckling.",
+          "note": "Roblox Studio är gratis, så det finns inget att köpa. Det fungerar bara på Windows-datorer och Mac, inte på iPad eller andra surfplattor, inte på Chromebook, telefon eller spelkonsol. Ett gratis Roblox-konto behövs också, och kontots åldersinställning styr dess chatt- och integritetsinställningar. Färdiga skapelser kan publiceras så att andra spelare kan hitta och spela dem.",
           "linkLabel": "Skaffa Roblox Studio"
         },
         "rocket_league": {
-          "description": "Rocket League är fotboll som spelas med raketdrivna bilar. Två lag kör runt på en arena och försöker knuffa in en jättestor boll i motståndarlagets mål, i korta matcher på ungefär fem minuter. Stilen är ljus och tecknad och det finns inget våld – det är en sport, inte ett skjutspel – så det går lätt att följa från sidan även om man aldrig spelat själv. Nästan varje mål bygger på att laget samarbetar, och det är därför spelet passar så bra i en klubb.",
-          "note": "Rocket League är gratis att ladda ner och spela – du köper inte själva spelet. Ditt barn behöver ett gratis Epic Games-konto. Spelet fungerar på Windows-datorer, PlayStation, Xbox och Nintendo Switch, och spelare på olika enheter kan spela tillsammans, så ditt barns enhet behöver inte vara samma som någon annans. Det finns valfria köp i spelet, som dekorationer till bilarna, och du kan begränsa dem med föräldrakontroller.",
+          "description": "Rocket League är fotboll som spelas med raketdrivna bilar. Två lag kör runt på en arena och försöker knuffa in en jättestor boll i motståndarlagets mål, i korta matcher på ungefär fem minuter. Stilen är ljus och tecknad och det finns inget våld. Det är en sport och inte ett skjutspel, så det går lätt att följa från sidan även om man aldrig spelat själv. Nästan varje mål bygger på att laget samarbetar, och det är därför spelet passar så bra i en klubb.",
+          "note": "Rocket League är gratis att ladda ner och spela, så det finns inget spel att köpa. Att spela kräver ett gratis Epic Games-konto. Spelet fungerar på Windows-datorer, PlayStation, Xbox och Nintendo Switch. Spelare på olika enheter kan spela tillsammans, så ditt barns enhet behöver inte vara samma som någon annans. Det finns valfria köp i spelet, som dekorationer till bilarna, som föräldrakontroller kan begränsa.",
           "linkLabel": "Skaffa Rocket League"
         }
       }
@@ -1921,18 +2062,6 @@
       "language": "Språk",
       "online": "Online",
       "tbd": "Bekräftas senare"
-    },
-    "calendar": {
-      "weekdayMon": "Mån",
-      "weekdayTue": "Tis",
-      "weekdayWed": "Ons",
-      "weekdayThu": "Tor",
-      "weekdayFri": "Fre",
-      "weekdaySat": "Lör",
-      "weekdaySun": "Sön",
-      "legendSession": "Pass",
-      "legendSkipped": "Inställt",
-      "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
       "verb": {
@@ -1956,12 +2085,7 @@
       "ctaAllSet": "Du är klar",
       "ctaAgreeConsent": "Ge det obligatoriska samtycket",
       "ctaWaitlist": "Gå med på väntelistan",
-      "ctaSignIn": {
-        "consumer_club": "Logga in för att anmäla",
-        "municipality_club": "Logga in för att anmäla",
-        "camp": "Logga in för att anmäla",
-        "event": "Logga in för att gå med"
-      },
+      "ctaSignIn": "Logga in",
       "ctaCreateAccount": "Skapa konto",
       "gamerAlreadySignedUp": {
         "consumer_club": "Redan anmäld",
@@ -1970,10 +2094,13 @@
         "event": "Redan med"
       },
       "gamerAlreadyWaitlisted": "På väntelistan",
+      "gamerUnderAge": "Under {min} år",
+      "gamerOverAge": "Över {max} år",
       "nonCustomerNote": "Endast föräldrar kan anmäla en spelare här.",
       "nonCustomerNoteParents": "Endast föräldrar kan anmäla sig här.",
       "closedNote": "Den här är inte öppen just nu. Håll utkik efter nästa omgång.",
       "rules": {
+        "title": "Våra regler",
         "consumer_club": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, vilket beskrivs närmare i <policy>policyn mot mobbning och disciplin</policy>.",
         "municipality_club": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, vilket beskrivs närmare i <policy>policyn mot mobbning och disciplin</policy>, samt att upprepad oanmäld frånvaro kan göra att mitt barns plats erbjuds nästa familj på väntelistan.",
         "municipality_club_self": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, vilket beskrivs närmare i <policy>policyn mot mobbning och disciplin</policy>, samt att upprepad oanmäld frånvaro kan göra att min plats erbjuds nästa familj på väntelistan.",
@@ -1984,10 +2111,17 @@
         "heading": "Samtycke",
         "agree": "Jag har läst och godkänner dessa dokument.",
         "bundles": {
-          "robloxProgramme": "Jag har läst och godkänner Roblox-programmets <terms>användarvillkor</terms> och <privacy>integritetspolicy</privacy>."
+          "robloxProgramme": "Jag har läst och godkänner Skaparnas akademis <terms>användarvillkor</terms> och <privacy>integritetspolicy</privacy>.",
+          "robloxProgrammeTitle": "Skaparnas akademis användarvillkor och integritetspolicy"
+        },
+        "gamerPhoto": {
+          "lynxEducate": "Foton och videor på mitt barn får tas med i sessionsrapporter, delas med Lynx Educate och Roblox för effektrapportering och användas på School of Gamings, Lynx Educates och Roblox webbplatser och sociala medier. Detaljerna finns i <privacy>Skaparnas akademis integritetspolicy</privacy>.",
+          "lynxEducateTitle": "Foton och videor på ditt barn",
+          "hint": "Valfritt — du kan ändra detta när som helst på ditt barns sida i My SOG."
         },
         "marketing": {
-          "lynxEducate": "Dela mina kontaktuppgifter med vår betrodda partner <link>Lynx Educate</link> så att de kan skicka mig nyheter och erbjudanden.",
+          "lynxEducate": "Dela min e-postadress med <link>Lynx Educate</link> så att de kan skicka mig nyheter om kommande evenemang och resurser om spelande. Jag kan avsluta prenumerationen när som helst.",
+          "lynxEducateTitle": "Nyheter från Lynx Educate",
           "hint": "Valfritt — du kan ändra detta när som helst i dina inställningar."
         }
       },
@@ -2041,6 +2175,154 @@
       "cta": "Tillbaka till bläddring"
     }
   },
+  "topicPrep": {
+    "heading": "Före första tillfället",
+    "dialogTitle": "Före första tillfället",
+    "triggerLabel": "Gör dig redo",
+    "readyLabel": "Jag är redo",
+    "closing": "Om allt fungerar är du redo för tillfället!",
+    "topics": {
+      "minecraft_java": {
+        "intro": "På de här tillfällena spelas Minecraft på dator, i Java-versionen. Varje deltagare behöver ett Microsoft-konto med Minecraft på, och Minecraft Launcher installerad på datorn de ska använda. Gå igenom stegen nedan före det första tillfället."
+      },
+      "minecraft_education": {
+        "intro": "De här tillfällena använder Minecraft Education, och det är gratis. School of Gaming delar ut inloggningarna vid första tillfället, så det finns bara ett steg att ta i förväg."
+      },
+      "minecraft_bedrock": {
+        "intro": "På de här tillfällena spelas Minecraft Bedrock tillsammans online. Varje deltagare behöver ett Microsoft-konto och Minecraft installerat på enheten de ska spela på. Gå igenom stegen nedan före det första tillfället."
+      },
+      "fortnite": {
+        "intro": "Fortnite är gratis att spela, och på tillfällena spelas det tillsammans. Varje deltagare behöver ett gratis Epic Games-konto och Fortnite installerat på enheten de ska använda. Gå igenom stegen nedan före det första tillfället."
+      },
+      "rocket_league": {
+        "intro": "Rocket League är gratis att spela, och varje tillfälle spelas tillsammans. Varje deltagare behöver ett gratis Epic Games-konto och Rocket League installerat på enheten de ska använda. Gå igenom stegen nedan före det första tillfället."
+      },
+      "pokemon_go": {
+        "intro": "Pokémon GO spelas utomhus, på en telefon som någon tar med till tillfället. Gå igenom stegen nedan före det första tillfället."
+      },
+      "roblox_studio": {
+        "intro": "Tillfället använder Roblox Studio, Roblox gratisprogram för spelutveckling. Varje deltagare behöver ett eget Roblox-konto och Roblox Studio installerat på sin dator. Gå igenom stegen nedan före tillfället."
+      }
+    },
+    "accountsOnlyIntro": {
+      "fortnite": "Vi tar med maskinerna till tillfället, med Fortnite redan installerat. Varje deltagare behöver ändå ett eget Epic Games-konto, med föräldrakontrollerna inställda på det. Gå igenom stegen nedan före tillfället.",
+      "rocket_league": "Vi tar med maskinerna till tillfället, med Rocket League redan installerat. Varje deltagare behöver ändå ett eget Epic Games-konto. Gå igenom steget nedan före tillfället.",
+      "roblox_studio": "Vi tar med datorerna till tillfället, med Roblox Studio redan installerat. Varje deltagare behöver ändå ett eget Roblox-konto. Gå igenom steget nedan före tillfället."
+    },
+    "remoteOnlyIntro": "Tillfällena hålls online, i ett röstrum. Gå igenom steget nedan före det första tillfället.",
+    "steps": {
+      "minecraftJavaAccount": {
+        "title": "Skaffa ett Microsoft-konto med Minecraft på",
+        "body": "Minecraft loggar in med ett Microsoft-konto. Om deltagaren inte har ett skapar en förälder det och köper ”Minecraft: Java & Bedrock Edition for PC” på det kontot. Det är <b>ett köp, inte en prenumeration</b>, och det täcker Java-versionen som de här tillfällena använder. Under installationen efterfrågas ett Java-profilnamn. Det namnet är användarnamnet vi behöver för att lägga till deltagaren i vår Minecraft-värld, så skriv upp det någonstans där det går att hitta igen.",
+        "linkLabel": "Skaffa Minecraft för PC"
+      },
+      "minecraftJavaInstall": {
+        "title": "Installera Minecraft Launcher",
+        "body": "Installera Minecraft Launcher på datorn som används på tillfället. Nedladdningen ligger på samma Minecraft-sida som spelet köptes från. Logga in med samma Microsoft-konto."
+      },
+      "minecraftJavaLaunch": {
+        "title": "Öppna Minecraft en gång före det första tillfället",
+        "body": "Starta launchern och låt den bli klar med uppdateringarna. Öppna spelet fram till huvudmenyn och stäng det sedan igen. Den första uppdateringen kan ta en stund, och att göra den nu betyder att tillfället inte börjar med en nedladdning."
+      },
+      "minecraftEducationInstall": {
+        "title": "Installera Minecraft Education",
+        "body": "Minecraft Education är en gratis nedladdning från Microsoft Store eller från Minecraft Educations egen webbplats. Installera det på datorn som används på tillfället. Öppna det en gång för att se att det startar. Det finns inget konto att skapa. School of Gaming tillhandahåller inloggningarna vid första tillfället, så deltagaren behöver bara själva spelet.",
+        "linkLabel": "Skaffa Minecraft Education"
+      },
+      "minecraftBedrockAccount": {
+        "title": "Skapa ett Microsoft-konto",
+        "body": "Minecraft Bedrock spelas online via ett Microsoft-konto. Kontots gamertag är så vi hittar deltagaren och lägger till hen i våra världar. Om deltagaren inte har ett konto ännu skapar en förälder det. Ange deltagarens rätta födelsedatum, eftersom Microsoft använder åldersuppgiften för att avgöra vilka onlinefunktioner som är påslagna. Skriv upp gamertaggen. Vi kommer att fråga efter den."
+      },
+      "minecraftBedrockInstall": {
+        "title": "Köp och installera Minecraft på rätt enhet",
+        "body": "Bedrock är samma spel sålt separat för varje enhet, och ett exemplar köpt till en enhet fungerar inte på en annan. <b>Köp det på den enhet deltagaren faktiskt ska spela på</b>, oavsett om det är en konsol, en telefon, en surfplatta eller en Windows-dator.",
+        "linkLabel": "Välj enheten"
+      },
+      "minecraftBedrockOnline": {
+        "title": "Kontrollera att onlinespel fungerar",
+        "body": "Öppna Minecraft på den enheten och logga in med Microsoft-kontot. Kontrollera att skärmen för onlinespel öppnas. På Xbox, PlayStation och Nintendo Switch kräver spel med andra dessutom konsolens eget betalda onlinemedlemskap."
+      },
+      "fortniteAccount": {
+        "title": "Skapa ett Epic Games-konto",
+        "body": "Fortnite är gratis att spela och loggar in med ett gratis Epic Games-konto. Om deltagaren inte har ett ännu skapar en förälder det. Ange deltagarens rätta födelsedatum, eftersom Epic använder åldersuppgiften för att avgöra vilka chatt- och sociala funktioner som är tillgängliga. Skriv upp visningsnamnet. Det är så vi hittar deltagaren."
+      },
+      "fortniteControls": {
+        "title": "Ställ in föräldrakontrollerna",
+        "body": "Epics föräldrakontroller sitter på kontot i stället för på en enhet, så de följer deltagaren till varje enhet. En förälder väljer en sexsiffrig PIN-kod och bestämmer vad som är tillåtet: vem som får chatta, och om ett köp kräver PIN-koden. Spelet självt kostar ingenting. Kontrollerna finns till för de valfria extrasakerna."
+      },
+      "fortniteInstall": {
+        "title": "Installera Fortnite",
+        "body": "Installera Fortnite på enheten som används på tillfället och logga in med Epic Games-kontot. Öppna det en gång och låt det uppdatera. Den första nedladdningen är stor, så den görs hellre dagen innan än fem minuter innan.",
+        "linkLabel": "Skaffa Fortnite"
+      },
+      "fortniteCrossplay": {
+        "title": "Låt crossplay vara påslaget",
+        "body": "Crossplay är det som gör att alla kan spela tillsammans oavsett enhet. Det är påslaget som standard. Om det har stängts av i spelets inställningar, slå på det igen före tillfället."
+      },
+      "rocketLeagueAccount": {
+        "title": "Skapa ett Epic Games-konto",
+        "body": "Rocket League är gratis att spela och loggar in med ett gratis Epic Games-konto, samma sort som Fortnite använder. Om deltagaren redan har ett fungerar det även här. Om det inte finns något ännu skapar en förälder det. Ange deltagarens rätta födelsedatum. Skriv upp visningsnamnet. Det är så vi hittar deltagaren."
+      },
+      "rocketLeagueInstall": {
+        "title": "Installera Rocket League",
+        "body": "Installera Rocket League på enheten som används på tillfället. Det är gratis på Windows-dator, PlayStation, Xbox och Nintendo Switch. Öppna det en gång före tillfället och låt det uppdatera klart.",
+        "linkLabel": "Skaffa Rocket League"
+      },
+      "rocketLeagueCrossplay": {
+        "title": "Låt spel mellan plattformar vara påslaget",
+        "body": "Spel mellan plattformar betyder att deltagarens enhet inte behöver vara samma som någon annans. Det är påslaget som standard. Om det har stängts av i inställningarna, slå på det igen så att hela gruppen får plats i samma match."
+      },
+      "pokemonGoInstall": {
+        "title": "Installera Pokémon GO på telefonen",
+        "body": "Pokémon GO är gratis, och det installeras på den telefon som tas med till tillfället. Hämta det från App Store på en iPhone, eller från Google Play på en Android-telefon. Det är enbart ett telefonspel. Det finns ingen version för dator eller konsol."
+      },
+      "pokemonGoAccount": {
+        "title": "Skapa ett konto",
+        "body": "Att spela kräver ett konto, och spelet erbjuder sig att skapa ett första gången det öppnas. För en deltagare under 13 år skapar en förälder kontot och länkar det till sitt eget, vilket håller inställningarna i en förälders händer. Skriv upp tränarnamnet. Det är så vi hittar deltagaren."
+      },
+      "pokemonGoPhone": {
+        "title": "Ladda telefonen och kolla inställningarna",
+        "body": "Spelet håller skärmen, GPS:en och mobildatan igång hela tiden det är öppet, och batteriet tar snabbt slut. Ladda telefonen före tillfället. Kontrollera att plats och mobildata är påslagna. Ta med en powerbank om det finns en hemma."
+      },
+      "pokemonGoAgree": {
+        "title": "Kom överens om vart deltagaren går",
+        "body": "Pokémon GO spelas utomhus på riktiga platser. Kom överens i förväg om vilka gator och parker som gäller, om en vuxen följer med och hur ni får tag på varandra under tillfället. Påminn deltagaren om att hålla koll på trafiken. Telefonen kan vänta."
+      },
+      "robloxStudioAccount": {
+        "title": "Skapa ett Roblox-konto",
+        "body": "Om deltagaren redan har ett eget Roblox-konto behöver inget nytt skapas. Om det inte finns något konto ännu, <b>skapa ett åt deltagaren</b>. Ange deltagarens rätta födelsedatum, eftersom Roblox använder åldersuppgiften för att avgöra vilka funktioner och vilket innehåll som är tillgängliga. Se till att deltagaren kan sitt Roblox-användarnamn, kan sitt lösenord eller kommer åt det vid behov, och kan logga in på sitt konto på datorn som används under tillfället. Skicka inte deltagarens lösenord till din Gedu, vårt ord för en spelfostrare."
+      },
+      "robloxStudioInstall": {
+        "title": "Installera Roblox Studio",
+        "body": "Under tillfället använder vi Roblox Studio, Roblox gratisprogram för spelutveckling. Gå till Roblox Creator Hub och logga in med deltagarens Roblox-konto. Följ instruktionerna på sidan för att ladda ner och installera Roblox Studio. När installationen är klar, öppna Roblox Studio och logga in med deltagarens Roblox-konto. När det väl är installerat fungerar Roblox Studio som vilket annat program som helst på din dator.",
+        "linkLabel": "Gå till Roblox Creator Hub"
+      },
+      "robloxStudioTest": {
+        "title": "Testa allt före första tillfället",
+        "body": "Vi rekommenderar ett snabbt test före tillfället:"
+      },
+      "remoteSession": {
+        "title": "Ställ in mikrofonen och kameran",
+        "body": "Tillfället hålls i ett röstrum som körs i en webbläsare. Deltagaren kan gå med på vilken enhet som helst: datorn som spelet finns på, eller en telefon eller surfplatta bredvid en konsol. Ett headset eller hörlurar med mikrofon fungerar bäst, så att spelets ljud inte ekar tillbaka till alla andra. Första gången deltagaren går med frågar webbläsaren om lov att använda mikrofonen och kameran. Ge det. Kameran är frivillig. Att slå på den hjälper din Gedu, vårt ord för en spelfostrare, att se att alla i rummet är den de säger att de är. Leta upp en lugn plats, och gå med några minuter tidigare första gången."
+      }
+    },
+    "platformNotes": {
+      "robloxStudioWindows": {
+        "title": "På Windows",
+        "body": "Öppna Start-menyn eller Windows sökfunktion och skriv Roblox Studio. Välj sedan Roblox Studio bland sökresultaten."
+      },
+      "robloxStudioMac": {
+        "title": "På Mac",
+        "body": "Öppna Spotlight-sökningen eller mappen Program och sök efter Roblox Studio."
+      }
+    },
+    "checklist": {
+      "robloxStudioTestOpen": "Öppna Roblox Studio.",
+      "robloxStudioTestSignIn": "Logga in med deltagarens Roblox-konto.",
+      "robloxStudioTestHome": "Se till att Roblox Studios startskärm öppnas normalt.",
+      "robloxStudioTestClose": "Stäng Roblox Studio."
+    }
+  },
   "sidebar": {
     "dashboard": "Instrumentpanel",
     "users": "Användare",
@@ -2060,7 +2342,7 @@
   },
   "home": {
     "hero": {
-      "title": "Där<br></br><primary>skärmtid</primary><br></br>blir<br></br><secondary>kvalitetstid</secondary>",
+      "title": "Där<br></br>skärmtid<br></br>blir<br></br><act>kvalitetstid</act>",
       "subtitle": "Våra skickligt utformade klubbar främjar hälsosamt spelande som hobby — i Minecraft, Roblox, Fortnite och mer. Professionella spelfostrare gör varje session till en lekfull lärandeupplevelse där barn får nya vänner, utvecklar sina unika talanger och har roligt med det de älskar.",
       "aboutCta": "Läs mer om oss"
     },
@@ -2192,6 +2474,18 @@
       }
     },
     "gamerDetail": {
+      "photoConsent": {
+        "title": "Foton och videor",
+        "description": "Gäller klubbar, läger och evenemang som drivs i partnerskap med Lynx Educate, i samarbete med Roblox.",
+        "sentence": {
+          "lynxEducate": "Foton och videor där {name} syns får användas i rapporter från tillfällena, delas med Lynx Educate och Roblox för effektrapportering och användas på School of Gamings, Lynx Educates och Roblox webbplatser och sociala medier. Detaljerna finns i <privacy>Skaparnas akademis integritetspolicy</privacy>."
+        },
+        "sentenceTitle": {
+          "lynxEducate": "Foton och videor där {name} syns"
+        },
+        "hint": "Vi frågar det här igen varje gång {name} anmäls till något av dem; ditt senaste svar är det som gäller.",
+        "saveFailed": "Svaret sparades inte. Kontrollera anslutningen och försök igen."
+      },
       "backToMySog": "Tillbaka till Min SOG",
       "title": "Spelarinställningar",
       "subtitle": "Hantera inställningar för {name}",
@@ -2215,6 +2509,35 @@
       "roblox": {
         "title": "Roblox-konto",
         "description": "Koppla ett Roblox-användarnamn för funktioner i spelet."
+      },
+      "signIn": {
+        "title": "Inloggning",
+        "current": {
+          "parent": "{name} loggar in via ditt konto.",
+          "username": "{name} loggar in med användarnamn och lösenord.",
+          "email": "{name} loggar in med sin egen e-postadress."
+        },
+        "currentUsername": "{name} loggar in med användarnamnet {username}.",
+        "saved": "Inloggningen är uppdaterad.",
+        "saveFailed": "Det gick inte att spara ändringen. Försök igen.",
+        "newPasswordTitle": "Ange ett nytt lösenord",
+        "newPasswordDescription": "Välj ett nytt lösenord och läs upp det för {name}. Det ersätter det gamla direkt.",
+        "newPasswordSubmit": "Spara lösenordet",
+        "newPasswordSaved": "Nytt lösenord sparat.",
+        "verified": "Adressen är verifierad.",
+        "notVerified": "{name} har inte öppnat verifieringslänken än.",
+        "resend": "Skicka verifieringsmejlet igen",
+        "resendSent": "Skickat. Be {name} titta i sin inkorg.",
+        "resendRateLimited": "Det är många mejl till en och samma gamer. Försök igen om en stund.",
+        "resendFailed": "Det gick inte att skicka mejlet. Försök igen.",
+        "change": {
+          "username": {
+            "title": "Byt användarnamn",
+            "description": "Välj ett nytt användarnamn åt {name}. Lösenordet är detsamma, och det gamla användarnamnet slutar fungera direkt.",
+            "submit": "Spara användarnamnet",
+            "saved": "Användarnamnet är uppdaterat. Läs upp det nya för din gamer."
+          }
+        }
       }
     },
     "switchToGamer": {
@@ -2223,9 +2546,13 @@
     },
     "helpFaq": {
       "items": {
+        "joiningSession": {
+          "question": "Hur går min spelare med i ett tillfälle när det börjar?",
+          "answer": "<p>Det beror på var tillfället hålls, och kortet på ditt Min SOG visar vilket: ett tillfälle som hålls online har en knapp på kortet, och ett som hålls på plats visar namnet på platsen.</p><p>Online är tillfället ett röstrum i webbläsaren, och det finns ingenting att installera:</p><steps><step>Leta upp kortet under ditt barns namn på ditt Min SOG. Fram till strax före tillfället är knappen på det låst, och den talar om vilken dag och vilken tid den öppnar.</step><step>Fem minuter innan tillfället börjar ändras knappen till ”Gå med i röstrum”.</step><step>Tryck på den. Rummet släpper bara in dem som hör till gruppen, så från ditt konto ombeds du först att byta till ditt barns profil — då loggas du ut från ditt föräldrakonto — och sedan öppnas rummet som ditt barn.</step><step>Tillåt mikrofonen om webbläsaren frågar.</step></steps><p>För att komma tillbaka till din egen profil efteråt behövs din föräldra-PIN. Om ditt barn loggar in med ett eget användarnamn eller en egen e-postadress kan hen i stället öppna sitt eget Min SOG och trycka på samma knapp där. Rummet står öppet till fem minuter efter att tillfället har slutat.</p><p>På plats finns ingen knapp. Sidan för klubben, lägret eller evenemanget visar platsen där det hålls, med adress, och en anteckning om platsen för familjer när det finns en — så ta med ditt barn dit till starttiden.</p><p>Om kortet i stället säger att vi letar upp en Gedu och en grupp åt ditt barn finns det ingenting att gå med i än: det sker före första tillfället, och därefter visar kortet knappen eller platsen.</p>"
+        },
         "parentPin": {
           "question": "Vad är föräldra-PIN-koden, och vad gör jag om jag glömmer den?",
-          "answer": "<p>Din föräldra-PIN är en fyrsiffrig kod som du väljer första gången du använder ditt föräldrakonto. Den skyddar hela föräldrasidan av Sogverse snarare än varje enskild åtgärd: du låser upp en gång, och sessionen låses igen i samma stund som du växlar till en spelarprofil eller loggar ut — så ett lösenord sparat i webbläsaren räcker inte i sig för att köpa något eller ändra ett barns konto.</p><p>Om du glömmer den, tryck på ”Glömt din PIN?” på PIN-skärmen: vi mejlar en återställningslänk till adressen på ditt konto och ingen annanstans, så ett barn som trycker på den skickar helt enkelt ett mejl till dig. Länken gäller i 24 timmar och fungerar en gång.</p><p>Du kan också byta en PIN du fortfarande minns under Inställningar.</p>"
+          "answer": "<p>Din föräldra-PIN är en fyrsiffrig kod som du väljer första gången du använder ditt föräldrakonto. Den skyddar hela föräldrasidan av Sogverse snarare än varje enskild åtgärd: du låser upp en gång, och sessionen låses igen i samma stund som du växlar till en spelarprofil eller loggar ut — så ett lösenord sparat i webbläsaren räcker inte i sig för att köpa något eller ändra ett barns konto. Samma PIN skyddar vägen tillbaka: ett barn som kom in i Sogverse genom att växla från ditt konto behöver den för att växla till din profil eller ett syskons.</p><p>Om du glömmer den, tryck på ”Glömt din PIN?” på PIN-skärmen: vi mejlar en återställningslänk till adressen på ditt konto och ingen annanstans, så ett barn som trycker på den skickar helt enkelt ett mejl till dig. Länken gäller i 24 timmar och fungerar en gång.</p><p>Du kan också byta en PIN du fortfarande minns under Inställningar.</p>"
         },
         "sessionReports": {
           "question": "Får jag veta hur tillfällena gick?",
@@ -2234,10 +2561,6 @@
         "missedSessions": {
           "question": "Vad händer om vi missar ett tillfälle, eller går med i en klubb mitt i?",
           "answer": "<p>En klubb står öppen för nya spelare medan den pågår, så du kan gå med mitt i en termin — klubbsidan visar vilken dag och vilken tid den träffas varje vecka, vilken termin den löper över och hur många platser som är kvar. När ditt barn är anmält talar hens egen klubbsida om datumet för nästa tillfälle.</p><p>Läger och evenemang är annorlunda: ett läger stänger för nya anmälningar dagen innan det börjar, eftersom gruppen startar tillsammans, och ett evenemang stänger när dess tillfälle är över.</p><p>En klubb faktureras som en hel månad från den dag du anmäler dig, så att gå med mitt i månaden minskar inte den månadens betalning; om en klubb ännu inte har startat dras ingenting den dag du anmäler dig, och sidan talar om datumet för din första betalning.</p><p>Om ditt barn missar ett enstaka tillfälle finns det ingenting att göra — platsen påverkas inte. Hens Gedu markerar närvaro för varje tillfälle och du ser markeringen på klubbsidan. Ett missat tillfälle tas inte igen och återbetalas inte; i en kommunklubb kan upprepad oanmäld frånvaro öppna platsen för nästa familj i kön, vilket du godkänner när du anmäler dig.</p>"
-        },
-        "sessionTimes": {
-          "question": "Vilken tid hålls tillfällena i vår tidszon?",
-          "answer": "<p>I er egen. Tiderna för tillfällena skrivs in i finländsk tid och visas för dig omräknade till din egen enhets tidszon automatiskt, överallt där de förekommer — på en klubbs sida, på dess kort och på ditt Min SOG.</p><p>När din tidszon skiljer sig från klubbens står en kort tidszonsmarkering bredvid tiden så att omräkningen syns; när du är i samma zon som klubben finns ingenting att räkna om och ingen markering.</p><p>Eftersom omräkningen är verklig kan en klubb som går två finländska vardagar hamna på andra veckodagar hos dig, och schemat du ser är grupperat efter dina veckodagar, inte våra. Ett lägers start- och slutdatum är vanliga kalenderdatum och flyttar sig inte.</p>"
         }
       }
     }
@@ -2273,7 +2596,14 @@
     "marketing": {
       "title": "Marknadsföringsinställningar",
       "schoolOfGaming": "School of Gaming får skicka mig nyheter och erbjudanden via e-post.",
-      "lynxEducate": "Dela mina kontaktuppgifter med vår betrodda partner <link>Lynx Educate</link> så att de kan skicka mig nyheter och erbjudanden."
+      "lynxEducate": "Dela min e-postadress med <link>Lynx Educate</link> så att de kan skicka mig nyheter om kommande evenemang och resurser om spelande. Jag kan avsluta prenumerationen när som helst."
+    },
+    "usernameLabel": "Användarnamn",
+    "gamerPasswordFromParent": "Din förälder kan ange ett nytt lösenord åt dig från sin Min SOG.",
+    "photoConsent": {
+      "title": "Foton och videor",
+      "granted": "Din förälder har sagt att foton och videor på dig får användas i rapporter från tillfällena och av School of Gaming, Lynx Educate och Roblox. En Gedu frågar dig ändå innan de tar ett foto på dig.",
+      "notGranted": "Din förälder har sagt att foton och videor på dig inte får användas, så en Gedu håller dig utanför tillfällenas foton. Bara din förälder kan ändra det här."
     }
   },
   "tools": {
@@ -2312,7 +2642,12 @@
     "goToDashboard": "Gå till Min SOG",
     "invalidTitle": "Den här länken fungerar inte längre",
     "invalidDescription": "En verifieringslänk slutar fungera så snart kontots e-postadress ändras. Öppna dina inställningar och skicka en ny till dig själv.",
-    "goToSettings": "Gå till inställningar"
+    "goToSettings": "Gå till inställningar",
+    "gamerVerifiedTitle": "Din e-postadress är bekräftad",
+    "gamerChoosePasswordDescription": "Nu väljer du ditt lösenord – vi mejlar dig en länk.",
+    "gamerSendPasswordLink": "Skicka mig en lösenordslänk",
+    "gamerPasswordLinkSent": "Skickat. Titta i din e-post.",
+    "gamerPasswordLinkFailed": "Det gick inte. Försök igen."
   },
   "voice": {
     "participants": "Deltagare",
@@ -2374,6 +2709,7 @@
       "no-device": "Ingen mikrofon eller kamera hittades. Anslut en och ladda om sidan.",
       "in-use": "Din mikrofon eller kamera används av en annan app eller flik. Stäng den och ladda om sidan.",
       "insecure": "Kamera och mikrofon kräver en säker (https) anslutning.",
+      "interrupted": "Din mikrofon har slutat skicka ljud. Kontrollera att den är ansluten och inte avstängd på din enhet, och välj den sedan igen i listan eller ladda om sidan.",
       "unknown": "Vi kunde inte komma åt din mikrofon eller kamera. Ladda om sidan och försök igen.",
       "reload": "Ladda om"
     },
@@ -2418,24 +2754,6 @@
       "pizza": "Pizza",
       "ice-cream": "Glass",
       "coffee": "Kaffe"
-    },
-    "zoneColor": {
-      "red": "Röd",
-      "orange": "Orange",
-      "amber": "Bärnsten",
-      "yellow": "Gul",
-      "lime": "Lime",
-      "green": "Grön",
-      "emerald": "Smaragd",
-      "teal": "Turkos",
-      "cyan": "Cyan",
-      "sky": "Himmelsblå",
-      "blue": "Blå",
-      "indigo": "Indigo",
-      "violet": "Violett",
-      "purple": "Lila",
-      "fuchsia": "Fuchsia",
-      "pink": "Rosa"
     },
     "instant": {
       "joinFailed": "Kunde inte gå med i rummet. Försök igen.",
@@ -2493,7 +2811,7 @@
   },
   "yty": {
     "hero": {
-      "title": "Vad är <primary>Yty</primary>?",
+      "title": "Vad är Yty?",
       "subtitle": "Yty är kraften som håller Sogverse i balans. Genom att göra bra saker — lära sig nya färdigheter, skaffa vänner, uppföra sig väl och delta i gemenskapen — tjänar spelare Yty åt sig själva och åt alla."
     },
     "overview": {
@@ -2563,7 +2881,8 @@
       "replyToLabel": "Svarsadress",
       "sent": "Skickat",
       "message": "Meddelande",
-      "gamerNote": "Det här meddelandet kommer från ett spelarkonto. Svar går till deras förälder ({parentEmail})."
+      "gamerNoteNoMailbox": "Skickat från ett spelarkonto ({firstName}) som inte har någon egen e-postadress.",
+      "gamerNoteOwnMailbox": "Skickat från ett spelarkonto ({firstName}) — hen läser också sin egen e-post, {gamerEmail}."
     },
     "welcomeParent": {
       "subject": "Välkommen till School of Gaming",
@@ -2614,7 +2933,13 @@
           "event": "Du har gått med i {productName}."
         },
         "waitlist": {
-          "subheading": "Du står på väntelistan för {productName}. Vi hör av oss så snart en plats blir ledig."
+          "subheading": "Du står på väntelistan för {productName}. Vi hör av oss så snart en plats blir ledig.",
+          "next2": {
+            "consumer_club": "Du behåller din plats i kön under hela terminen.",
+            "municipality_club": "Du behåller din plats i kön under hela terminen.",
+            "camp": "Du behåller din plats i kön under hela lägret.",
+            "event": "Du behåller din plats i kön fram till evenemanget."
+          }
         }
       },
       "typeLabel": {
@@ -2636,7 +2961,7 @@
         "placementSelf": "Vi placerar dig i en grupp med en Gedu. Tillfällena visas sedan under Min SOG.",
         "subscription": "Du faktureras varje månad. Du kan hantera eller avsluta när som helst från Min SOG.",
         "upfront": "Detta var en engångsbetalning – det finns inget mer att betala.",
-        "free": "Det finns inget att betala för den här."
+        "firstCharge": "Inget debiterades i dag. Din första betalning sker den {date}."
       },
       "waitlist": {
         "subject": "{participantName} står på väntelistan för {productName}",
@@ -2644,9 +2969,53 @@
         "heading": "Du står på väntelistan",
         "subheading": "{participantName} står på väntelistan för {productName}. Vi hör av oss så snart en plats blir ledig.",
         "next1": "Vi mejlar så snart en plats blir ledig.",
-        "next2": "Du kan följa din plats i kön när som helst i Min SOG."
+        "summaryTitle": "Din väntelisteplats",
+        "forLabel": "På väntelista",
+        "next2": {
+          "consumer_club": "{participantName} behåller sin plats i kön under hela terminen.",
+          "municipality_club": "{participantName} behåller sin plats i kön under hela terminen.",
+          "camp": "{participantName} behåller sin plats i kön under hela lägret.",
+          "event": "{participantName} behåller sin plats i kön fram till evenemanget."
+        },
+        "next3": "Du kan följa din plats i kön när som helst i Min SOG."
       },
-      "dashboardButton": "Gå till Min SOG"
+      "gamer": {
+        "greeting": "Hej {participantName}!",
+        "summaryTitle": "Din anmälan"
+      },
+      "invite": {
+        "summary": "{productName} – {participantName}",
+        "locationOnline": "Online – Min SOG",
+        "locationInPerson": "{site}, {address}",
+        "whereOnline": "Tillfällena hålls online i Min SOG, och röstrummet öppnar {minutes} minuter innan varje tillfälle börjar.",
+        "whereInPerson": "Tillfällena hålls på {site}.",
+        "whereAddress": "Adress: {address}",
+        "link": "Allt om den här anmälan finns i Min SOG: {url}",
+        "questions": "Frågor? Skriv till {supportEmail}."
+      },
+      "dashboardButton": "Gå till Min SOG",
+      "closing": "Frågor? Svara bara på det här mejlet.",
+      "summaryTitle": "Din beställning",
+      "forLabel": {
+        "consumer_club": "Anmäld",
+        "municipality_club": "Registrerad",
+        "camp": "Anmäld",
+        "event": "Deltar"
+      },
+      "overview": {
+        "schedule": "Schema",
+        "where": "Plats",
+        "format": "Format",
+        "online": "Online",
+        "tbd": "Bekräftas senare",
+        "ageRange": "Åldersintervall",
+        "audience": "Målgrupp",
+        "language": "Språk",
+        "ages": "Ålder {min}–{max}",
+        "audienceParents": "För föräldrar",
+        "audienceFamilies": "För familjer",
+        "audienceFamiliesWithAges": "För familjer, ålder {min}–{max}"
+      }
     },
     "verifyEmail": {
       "subject": "Bekräfta din e-postadress",
@@ -2655,10 +3024,18 @@
       "button": "Bekräfta din e-postadress",
       "ignore": "Om du inte bad om det här kan du bortse från mejlet. Ingenting ändras."
     },
+    "gamerWelcome": {
+      "subject": "Ditt School of Gaming-konto är klart",
+      "heading": "Ditt konto är klart",
+      "body": "Hej {gamerName}, din förälder har skapat ett School of Gaming-konto åt dig. För att logga in behöver du ett lösenord – tryck först på knappen för att bekräfta att det här är din e-postadress, sedan får du välja ett.",
+      "button": "Det här är min e-postadress",
+      "ignore": "Om du inte väntade dig det här mejlet kan du bortse från det. Ingenting händer."
+    },
     "sessionReport": {
       "subject": "Rapport från passet – {productName}, {sessionDate}",
       "title": "Rapport från passet",
       "intro": "Hej! Här är {geduName}s rapport från {gamerName}s pass i {productName}.",
+      "gamerIntro": "Hej {gamerName}! Här är {geduName}s rapport från ditt pass i {productName}.",
       "groupLabel": "Grupp",
       "dateLabel": "Datum",
       "timeLabel": "Tid",
@@ -2685,6 +3062,12 @@
       "self": {
         "subject": "En plats har blivit ledig – {productName}",
         "opening": "Vi lovade att höra av oss så snart en plats blev ledig. Nu har det hänt: du kan vara med – {productName}."
+      },
+      "gamer": {
+        "subject": "En plats har blivit ledig för dig – {productName}",
+        "opening": "Hej {gamerName}, en plats har blivit ledig för dig i {productName}. Goda nyheter!",
+        "parentDecides": "Din förälder har fått ett mejl med frågan om platsen ska tas, och kan svara fram till {deadline}. När svaret kommer ser du det i Min SOG.",
+        "dashboardButton": "Öppna Min SOG"
       }
     },
     "seatOfferStaff": {
@@ -2710,7 +3093,7 @@
   },
   "legal": {
     "draftNotice": "Utkast – innehållet på den här sidan håller fortfarande på att färdigställas och har ännu inte godkänts. Detaljer kan ändras.",
-    "pendingSection": "Det här avsnittet håller fortfarande på att skrivas och läggs till innan Programmet startar."
+    "opensInNewTab": "(öppnas i en ny flik)"
   },
   "privacy": {
     "title": "Integritetspolicy",
@@ -2718,7 +3101,7 @@
     "intro": {
       "heading": "Kort sammanfattning",
       "paragraphs": [
-        "School of Gaming finns till för att ge barn en trygg och rolig plats att lära sig genom spel. Den här sidan listar det viktigaste vi lagrar om ditt barn, och varför – på ett tydligt språk utan juridisk jargong, så att du själv kan kontrollera det. Ett spelarkonto har en intern Sogverse-adress i stället för en riktig e-postadress, och det finns bara inuti ditt eget konto.",
+        "School of Gaming finns till för att ge barn en trygg och rolig plats att lära sig genom spel. Den här sidan listar det viktigaste vi lagrar om ditt barn, och varför – på ett tydligt språk utan juridisk jargong, så att du själv kan kontrollera det. Ett spelarkonto finns bara inuti ditt eget konto, och det har en intern Sogverse-adress i stället för en riktig e-postadress om du inte väljer att ge ditt barn en egen.",
         "Kort sagt: vi samlar bara in det vi behöver för att driva våra klubbar, läger och evenemang. Vi säljer aldrig dina eller ditt barns uppgifter. Endast en förälder kan skapa ett konto åt ett barn, och vi gör aldrig reklam riktad till barn. Du kan när som helst be oss visa, rätta eller radera dina uppgifter genom att mejla {supportEmail}."
       ]
     },
@@ -2745,11 +3128,11 @@
           "Dina språk- och valutainställningar – så att webbplatsen visas som du förväntar dig.",
           "Ditt lösenord, som vi endast lagrar i krypterad (hashad) form – vi kan aldrig se det.",
           "Betaluppgifter hanteras direkt i Stripe. Vi ser eller lagrar aldrig hela ditt kortnummer.",
-          "Om ditt barn: förnamn, födelsemånad och födelseår (vi frågar inte efter det exakta datumet – bara det vi verkligen behöver) och eventuellt kön – så att vi kan placera barnet i rätt grupp och tilltala det rätt. Vi lagrar också ditt efternamn på barnets konto, eftersom barnet hör till ditt konto. Geduer och andra spelare ser det aldrig. Själva kontot har en intern Sogverse-adress i stället för en riktig e-postadress.",
+          "Om ditt barn: förnamn, födelsemånad och födelseår (vi frågar inte efter det exakta datumet – bara det vi verkligen behöver) och eventuellt kön – så att vi kan placera barnet i rätt grupp och tilltala det rätt. Vi lagrar också ditt efternamn på barnets konto, eftersom barnet hör till ditt konto. Geduer och andra spelare ser det aldrig. Själva kontot har en intern Sogverse-adress i stället för en riktig e-postadress, om du inte väljer att ge barnet en inloggning med en egen e-postadress; då sparar vi den adressen och skickar barnet en egen kopia av de mejl vi skickar dig om barnets klubbar, läger och evenemang.",
           "Eventuellt barnets användarnamn i de spel som barnets klubbar använder – i dag Minecraft och Roblox – och det konto-id som spelet ger barnet, så att vi känner igen barnet i spelet och så att barnet kan ansluta till vår Minecraft-server under träffarna.",
           "Våra spelfostrares anteckningar från träffarna – närvaro, träffrapporter och korta noteringar som hjälper oss att stötta ditt barn i gruppen.",
-          "Allmän, anonym information om hur webbplatsen används (se \"Cookies och analys\" nedan).",
-          "En kort kod som visar vilken skola, klubb eller samarbetspartner som delade länken du kom hit via – så att vi vet vilken information som faktiskt når familjer, och kan berätta för våra partner om deras länk fungerade."
+          "Allmän, anonym information om hur webbplatsen används (se \"Cookies, analys och annonsering\" nedan).",
+          "Kampanjkoden – källa, medium och kampanj – som fanns i länken ditt besök kom från. Vi sparar den en gång, när kontot skapas, så att vi och våra partner vet vilken information som faktiskt når familjer."
         ]
       },
       "childrensPrivacy": {
@@ -2757,7 +3140,7 @@
         "paragraphs": [
           "De flesta som använder Sogverse är barn, så deras trygghet och integritet är vår högsta prioritet.",
           "Ett barn kan aldrig skapa ett eget konto. Endast en förälder eller vårdnadshavare skapar barnets konto, väljer vad som delas och ger tillstånd å barnets vägnar. Så uppfyller vi våra skyldigheter enligt dataskyddslagstiftningen när det gäller barn.",
-          "Vad vi lagrar om ett barn står ovan under \"Vilka uppgifter vi samlar in\", och vi samlar inte in något om ett barn utöver det vi behöver för att driva våra klubbar, läger och evenemang. Vi visar aldrig reklam för barn och vi säljer eller delar aldrig deras uppgifter för marknadsföring. Träffarna leds av våra utbildade spelfostrare (vi kallar dem Geduer).",
+          "Vad vi lagrar om ett barn står ovan under \"Vilka uppgifter vi samlar in\", och vi samlar inte in något om ett barn utöver det vi behöver för att driva våra klubbar, läger och evenemang. Vi visar aldrig reklam för barn och vi säljer eller delar aldrig deras uppgifter för marknadsföring. När ditt barn är inloggat som spelare skickas ingenting om barnets surfande till en annonsplattform, även om marknadsföring är påslagen på enheten. Träffarna leds av våra utbildade spelfostrare (vi kallar dem Geduer).",
           "Om du när som helst vill se, ändra eller radera ditt barns uppgifter är det bara att mejla {supportEmail}, så ordnar vi det."
         ]
       },
@@ -2785,7 +3168,8 @@
           "Eftersom en förälder har gett tillstånd å barnets vägnar (samtycke).",
           "För att uppfylla våra lagstadgade skyldigheter, till exempel att spara bokföringsuppgifter för betalningar.",
           "För vårt berättigade intresse av att hålla webbplatsen säker och välfungerande – alltid avvägt mot din integritet.",
-          "För vårt berättigade intresse av att veta vilka av våra insatser som når familjer – alltid avvägt mot din integritet, och du kan när som helst be oss sluta."
+          "För vårt berättigade intresse av att veta vilka av våra insatser som når familjer – alltid avvägt mot din integritet, och du kan när som helst be oss sluta.",
+          "Ditt samtycke, för cookies för analys och marknadsföring – som du kan återkalla när som helst via Integritetsval längst ner på varje sida."
         ]
       },
       "providers": {
@@ -2798,18 +3182,24 @@
           "Stripe – hanterar betalningar. Dina kortuppgifter går direkt till Stripe, och vi ser dem aldrig.",
           "Brevo – skickar våra e-postmeddelanden, till exempel kvitton och påminnelser.",
           "Daily.co – möjliggör de direktsända röst- och videoträffarna.",
-          "Vercel – är värd för webbplatsen och tillhandahåller anonym, cookiefri användningsstatistik.",
+          "Vercel – är värd för webbplatsen och tillhandahåller anonym användningsstatistik.",
           "Meta (WhatsApp) – för att skicka vissa meddelanden och påminnelser till familjer som hellre använder WhatsApp.",
           "Roblox – tar emot ditt barns Roblox-konto-id, så att vi kan bekräfta kontot och visa barnets avatarbild.",
-          "Mojang (Microsoft) – tar emot ditt barns Minecraft-användarnamn, så att vi kan bekräfta kontot."
+          "Mojang (Microsoft) – tar emot ditt barns Minecraft-användarnamn, så att vi kan bekräfta kontot.",
+          "Meta (annonser på Facebook och Instagram) – får via Meta-pixeln veta att du besökt oss och om du skapade ett konto, så att vi kan visa våra annonser där. Bara om du tillåter cookies för marknadsföring.",
+          "TikTok – får via TikTok-pixeln veta att du besökt oss och om du skapade ett konto, så att vi kan visa våra annonser på TikTok. Bara om du tillåter cookies för marknadsföring."
         ]
       },
       "cookies": {
-        "heading": "Cookies och analys",
+        "heading": "Cookies, analys och annonsering",
         "paragraphs": [
-          "Vi använder inga reklam- eller spårningscookies, och vi följer dig inte runt på internet.",
-          "Vi använder ett fåtal nödvändiga cookies för att hålla dig säkert inloggad – webbplatsen fungerar inte utan dem, så de kräver inte ditt samtycke.",
-          "För att förstå sådant som hur många som besöker oss och om de använder telefon eller dator använder vi Vercels analys. Den är integritetsvänlig: inga cookies och ingen personlig identifiering."
+          "Några cookies är helt enkelt hur webbplatsen fungerar: de håller dig inloggad, kommer ihåg att du angett din föräldra-PIN, sparar ditt språk och din tidszon och lagrar det cookieval du gör. De kräver inte ditt samtycke – utan dem finns det ingen webbplats att samtycka till.",
+          "Allt annat väntar på dig. Första gången du besöker oss frågar vi, och inget utöver de nödvändiga cookiesarna startar förrän du svarar. Du kan ändra dig när som helst via Integritetsval längst ner på varje sida: att stänga av något gäller direkt, och ändrar inte det vi redan gjort medan det var på.",
+          "Det finns två saker att säga ja eller nej till:"
+        ],
+        "bullets": [
+          "Analys – Vercels, och bara om du väljer den. Den räknar besök, mäter hur snabbt sidorna laddas och tar emot några anonyma händelser om hur webbplatsen används: hur någon tar sig till sin My SOG och när språket byts. Den kan inte se vem du är, och vi lämnar den aldrig till annonsörer.",
+          "Marknadsföring – Meta-pixeln och TikTok-pixeln, och bara om du väljer dem. De får veta att du besökt School of Gaming och om du skapade ett konto, så att Meta och TikTok kan visa dig våra annonser hos sig. Ingen av pixlarna laddas medan ditt barn är inloggat som spelare. Om du säger ja till marknadsföring och sedan skapar ett konto sätter vi en enda kortlivad egen cookie – fem minuter, inget namn, ingen adress, bara ordet \"registration\" – vars enda uppgift är att berätta för pixlarna på nästa sida att ett konto skapades. Att stänga av marknadsföring raderar de cookies pixlarna lämnat i din webbläsare, men vi kan inte radera det Meta och TikTok redan har – det kan du be dem om i dina egna inställningar där, där Meta kallar det \"aktivitet utanför Metas teknik\"."
         ]
       },
       "voice": {
@@ -2859,7 +3249,7 @@
         "heading": "Kontakt och din rätt att klaga",
         "paragraphs": [
           "Om du vill använda någon av rättigheterna ovan eller har en fråga om din integritet eller ditt barns uppgifter är det bara att mejla {supportEmail}. Det är kostnadsfritt, vi svarar alltid, och e-post är det bästa sättet att nå oss.",
-          "Om du är missnöjd med hur vi har hanterat dina uppgifter har du rätt att lämna in ett klagomål till dataombudsmannens byrå i Finland (tietosuoja.fi)."
+          "Om du är missnöjd med hur vi har hanterat dina uppgifter har du rätt att lämna in ett klagomål till dataombudsmannens byrå i Finland (<linkTietosuoja>tietosuoja.fi</linkTietosuoja>)."
         ]
       }
     }
@@ -2941,7 +3331,7 @@
       "privacy": {
         "heading": "Din familjs integritet",
         "paragraphs": [
-          "Vi hanterar din familjs uppgifter i enlighet med finländsk och europeisk dataskyddslagstiftning, och vi lagrar så lite som möjligt om ditt barn: ett spelarkonto skapas av dig, har en intern Sogverse-adress i stället för barnets egen e-postadress, och används aldrig för att rikta reklam till barnet. Vår <linkPrivacy>integritetspolicy</linkPrivacy> förklarar exakt vad vi samlar in och varför."
+          "Vi hanterar din familjs uppgifter i enlighet med finländsk och europeisk dataskyddslagstiftning, och vi lagrar så lite som möjligt om ditt barn: ett spelarkonto skapas av dig, har en intern Sogverse-adress i stället för barnets egen e-postadress om du inte väljer att ge barnet en, och används aldrig för att rikta reklam till barnet. Vår <linkPrivacy>integritetspolicy</linkPrivacy> förklarar exakt vad vi samlar in och varför."
         ]
       },
       "changes": {
@@ -3034,8 +3424,9 @@
   },
   "roblox": {
     "hero": {
-      "title": "Bygg<br></br><primary>Spela</primary><br></br><secondary>Äg det</secondary>",
-      "subtitle": "Ett gratis Roblox-speldesignprogram för tonåringar — från Lynx Educate och School of Gaming, i samarbete med Roblox.",
+      "title": "Skaparnas<br></br><act>akademi</act>",
+      "subtitle": "Bygg det. Spela det. Äg det.",
+      "blurb": "Gratis för tonåringar. Publicera ditt eget Roblox-spel.",
       "cta": "Häng med!"
     },
     "lockup": {
@@ -3047,8 +3438,8 @@
     "what": {
       "eyebrow": "Vad är det här",
       "heading": "Lär dig bygga i Roblox.",
-      "paragraph1": "Programmet ger 13–17-åringar i Frankrike chansen att designa, koda och publicera sitt eget Roblox-spel — med de viktigaste personerna som hejar på. Det genomförs av Lynx Educate och School of Gaming i samarbete med Roblox, och är en praktisk introduktion till speldesign, digital kreativitet och trygg samverkan online.",
-      "paragraph2": "När programmet är slut har deltagarna publicerat sin egen skapelse på Roblox. Ingen erfarenhet krävs — bara nyfikenhet."
+      "paragraph1": "Skaparnas akademi ger 13–17-åringar i Frankrike chansen att designa, koda och publicera sitt eget Roblox-spel — med de viktigaste personerna som hejar på. Det genomförs av Lynx Educate och School of Gaming i samarbete med Roblox, och är en praktisk introduktion till speldesign, digital kreativitet och trygg samverkan online.",
+      "paragraph2": "Programmet siktar mot att deltagarna publicerar sin egen skapelse på Roblox. Ingen erfarenhet krävs — bara nyfikenhet."
     },
     "why": {
       "eyebrow": "Varför vara med",
@@ -3105,7 +3496,7 @@
       "empty": "De första evenemangen planeras just nu. Titta in snart och se vad som är på gång.",
       "previous": "Föregående evenemang",
       "next": "Nästa evenemang",
-      "browseShop": "Se alla evenemang i butiken"
+      "browseShop": "Utforska butiken"
     },
     "parents": {
       "eyebrow": "För föräldrar",
@@ -3152,7 +3543,7 @@
         },
         "media": {
           "question": "Kommer mitt barn att fotograferas eller filmas?",
-          "answer": "<p>Träffarna kan fotograferas för interna anteckningar. Om materialet används externt i marknadsföring är helt ditt val vid anmälan, och du kan ändra det när som helst.</p>"
+          "answer": "<p>Träffarna kan fotograferas. Ditt barn syns på ett foto bara om du kryssar i det frivilliga mediavalet när du anmäler barnet, och du kan ändra svaret när som helst på barnets sida i My SOG.</p>"
         },
         "facilitators": {
           "question": "Vem håller i träffarna, och hur kontrolleras de?",
@@ -3170,21 +3561,22 @@
       "button": "Kom igång"
     },
     "legal": {
-      "roblox": "© 2024 Roblox Corporation. Ordmärket Roblox, Roblox-logotypen och Roblox Tilt är bland Roblox Corporations registrerade och oregistrerade varumärken i USA och andra länder. Används med tillstånd.",
+      "roblox": "Ordmärket Roblox, Roblox-logotypen och Roblox Tilt är bland Roblox Corporations registrerade och oregistrerade varumärken i USA och andra länder. Används med tillstånd.",
       "lynx": "Lynx Educate och Lynx Educate-logotypen är varumärken som tillhör Lynx Educate. Används med tillstånd.",
-      "privacy": "Integritetspolicy för Roblox-programmet",
-      "safeguarding": "Barnskyddspolicy för Roblox-programmet",
-      "terms": "Användarvillkor för Roblox-programmet"
+      "documents": "Dokument för Skaparnas akademi",
+      "privacy": "Integritetspolicy",
+      "safeguarding": "Barnskyddspolicy",
+      "terms": "Användarvillkor"
     }
   },
   "robloxPrivacy": {
-    "title": "Integritetspolicy för Roblox-programmet",
+    "title": "Integritetspolicy för Skaparnas akademi",
     "subtitle": "För familjer som anmäler sig till Programmet för ungas digitala kreativitet i Frankrike, som drivs av Lynx Educate och School of Gaming och sponsras av Roblox.",
     "lastUpdated": "Senast uppdaterad: {date}",
     "intro": {
       "heading": "Kort sammanfattning – för föräldrar och unga",
       "blocks": [
-        "Programmet riktar sig till unga i Frankrike i åldern 8–17 år. Anmälan måste göras av en förälder eller vårdnadshavare.",
+        "Programmet riktar sig till unga i Frankrike i åldern 13–17 år. Anmälan måste göras av en förälder eller vårdnadshavare.",
         "Vi samlar bara in det vi behöver för att anmäla ditt barn, genomföra Programmet på ett tryggt sätt och förstå om det fungerar. Det omfattar förälderns kontaktuppgifter, begränsade uppgifter om barnet, barnets Roblox-användarnamn eller Roblox-ID samt uppgifter om närvaro, slutförande och publicering av spel.",
         "School of Gaming använder uppgifterna för att driva anmälnings- och lärplattformen. Lynx Educate behandlar Programmets uppgifter i den utsträckning som behövs för att sköta genomförandet. Organisationerna har olika ansvar beroende på aktiviteten och på ändamålet med behandlingen av personuppgifterna.",
         [
@@ -3195,10 +3587,9 @@
         "Följande val är frivilliga och påverkar inte ditt barns plats:",
         [
           "E-post till föräldern från Lynx Educate om kommande Roblox-evenemang och resurser om spel.",
-          "Foto eller film för intern rapportering om Programmet till Roblox.",
-          "Offentlig användning av foton eller filmmaterial av Lynx Educate, School of Gaming och Roblox."
+          "Foton och filmer på barnet, i träffrapporter, i effektrapportering till Lynx Educate och Roblox och i offentlig användning av Lynx Educate, School of Gaming och Roblox."
         ],
-        "Vanliga träffar online spelas inte in. Inget barn fotograferas eller filmas om det nödvändiga tillståndet saknas eller om barnet inte vill vara med.",
+        "Träffar online spelas inte in. Inget barn fotograferas eller filmas om det nödvändiga tillståndet saknas eller om barnet inte vill vara med.",
         "Lynx Educate och School of Gaming säljer inte anmälningsuppgifter från Programmet och använder dem inte för reklam riktad till barn.",
         "Du och ditt barn kan begära att få se, rätta eller radera uppgifter, återkalla ett frivilligt samtycke eller invända mot viss användning genom att kontakta support@lynxeducate.com eller {supportEmail}."
       ]
@@ -3207,11 +3598,11 @@
       "applies": {
         "heading": "Vem policyn gäller",
         "blocks": [
-          "Den här policyn gäller föräldrar, vårdnadshavare och unga som anmäler sig till Roblox program för ungas digitala kreativitet i Frankrike (Programmet).",
-          "Programmet riktar sig till unga i åldern 8–17 år. En förälder eller vårdnadshavare måste göra anmälan och bekräfta att hen har rätt att anmäla barnet.",
+          "Den här policyn gäller föräldrar, vårdnadshavare och unga som anmäler sig till Skaparnas akademi, programmet för ungas digitala kreativitet i Frankrike (Programmet).",
+          "Programmet riktar sig till unga i åldern 13–17 år. En förälder eller vårdnadshavare måste göra anmälan och bekräfta att hen har rätt att anmäla barnet.",
           "Policyn omfattar anmälan till Programmet, administration, lärandeträffar, evenemang, support, barns trygghet och utvärdering av effekt. Den kompletterar School of Gamings <linkPrivacy>allmänna integritetspolicy</linkPrivacy>. Om de två policyerna står i konflikt med varandra när det gäller Programmet gäller den här programspecifika policyn.",
           "Barnets egen användning av ett Roblox-konto, Roblox Studio eller någon annan Roblox-tjänst omfattas av Roblox egen integritetspolicy och egna villkor.",
-          "<linkRobloxTerms>Programmets villkor</linkRobloxTerms> fastställer åldersspannet 8–17 år, att anmälan görs av föräldern och den datadelning som är specifik för Programmet."
+          "<linkRobloxTerms>Programmets villkor</linkRobloxTerms> fastställer åldersspannet 13–17 år, att anmälan görs av föräldern och den datadelning som är specifik för Programmet."
         ]
       },
       "responsible": {
@@ -3359,7 +3750,7 @@
       "useMedia": {
         "heading": "Frivilligt foto och film",
         "blocks": [
-          "Foto, film och offentlig kommunikation bygger på separata, frivilliga tillstånd. Att tacka nej till något av mediavalen påverkar varken anmälan eller deltagandet.",
+          "Foto, film och offentlig kommunikation bygger på ett enda frivilligt tillstånd, som ges för varje barn. Att tacka nej påverkar varken anmälan eller deltagandet.",
           "Samtycke är inte den rättsliga grunden för de centrala aktiviteterna kring anmälan, genomförande eller barns trygghet som beskrivs ovan."
         ]
       },
@@ -3396,41 +3787,34 @@
       "media": {
         "heading": "Foto, film och offentlig användning",
         "blocks": [
-          "Vanliga träffar online spelas inte in. Om foto eller film planeras vid en viss träff eller ett visst evenemang får familjerna veta det i förväg.",
-          "Det finns två separata frivilliga val."
+          "Träffar online spelas inte in. Om foto eller film planeras vid en viss träff eller ett visst evenemang får familjerna veta det i förväg.",
+          "Det finns ett enda frivilligt mediaval per barn. Det görs när barnet anmäls till en aktivitet i Skaparnas akademi och kan ändras när som helst på barnets sida i My SOG."
         ]
       },
-      "mediaSponsor": {
-        "heading": "Intern rapportering till sponsorn",
+      "mediaChoice": {
+        "heading": "Vad mediavalet omfattar",
         "blocks": [
-          "Det första mediavalet tillåter att barnet fotograferas eller filmas för intern rapportering om Programmet till Roblox i egenskap av sponsor. Det kan handla om interna effektrapporter, lägesuppdateringar eller presentationer för sponsorn.",
-          "Tillståndet ger inte rätt att publicera materialet på webbplatser, i sociala medier eller i pressen."
-        ]
-      },
-      "mediaPublic": {
-        "heading": "Offentlig kommunikation om effekt",
-        "blocks": [
-          "Det andra mediavalet tillåter Lynx Educate, School of Gaming och Roblox att använda foton eller filmmaterial offentligt för att visa Programmets effekt, bland annat på:",
+          "En enda frivillig ruta omfattar all användning av ett barns foton och filmmaterial. När rutan är ikryssad får foton och filmer på barnet:",
           [
-            "Deras webbplatser.",
-            "Deras kanaler i sociala medier.",
-            "Press- och PR-material.",
-            "Kommunikation om Programmet och dess effekt."
+            "Tas med i träffrapporter, som varje familj i barnets grupp ser på gruppens sida och får per e-post.",
+            "Delas med Lynx Educate och Roblox för effektrapportering, bland annat i interna effektrapporter, lägesuppdateringar och presentationer för sponsorn.",
+            "Användas offentligt av Lynx Educate, School of Gaming och Roblox på deras webbplatser och kanaler i sociala medier."
           ],
-          "Offentligt innehåll kan vara tillgängligt i hela världen och kan kopieras eller delas vidare av andra användare utan att organisationerna kan styra det."
+          "Offentligt innehåll kan vara tillgängligt i hela världen och kan kopieras eller delas vidare av andra användare utan att organisationerna kan styra det.",
+          "Är rutan inte ikryssad hålls barnet utanför träffarnas foton och identifierbart material. Ingenting som identifierar barnet tas med i en träffrapport, delas med Lynx Educate eller Roblox eller används offentligt. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
         ]
       },
       "mediaChildAgrees": {
         "heading": "Barnet måste också vara med på det",
         "blocks": [
           "Föräldern bör prata med barnet om mediavalet innan det görs. Vi förklarar också fotograferingen eller filmningen för barnet på ett sätt som passar barnets ålder.",
-          "Vi fotograferar eller filmar aldrig medvetet ett barn som säger nej, även om en förälder tidigare kryssat i en mediaruta. Personalen vidtar rimliga praktiska åtgärder för att barn utan tillstånd inte ska synas identifierbart i materialet."
+          "En spelfostrare frågar barnet innan ett foto tas, även när föräldern kryssat i rutan, och vi fotograferar eller filmar aldrig medvetet ett barn som säger nej. Ett barn vars förälder inte kryssat i rutan hålls utanför träffarnas foton och identifierbart material. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
         ]
       },
       "mediaCaseStudies": {
         "heading": "Fallbeskrivningar, namn och innehåll som deltagarna skapat",
         "blocks": [
-          "De två mediarutorna vid anmälan omfattar bara foton och filmmaterial.",
+          "Mediarutan omfattar bara foton och filmmaterial.",
           "Ett separat skriftligt medgivande inhämtas innan följande används:",
           [
             "Ett barns fullständiga namn.",
@@ -3446,7 +3830,7 @@
       "mediaChanging": {
         "heading": "Ändra ett mediaval",
         "blocks": [
-          "En förälder eller ett barn kan återkalla ett mediatillstånd genom att kontakta oss eller använda inställningen i Sogverse.",
+          "En förälder kan ändra mediavalet när som helst på barnets sida i My SOG, eller genom att kontakta oss. Ett barn kan också be oss återkalla tillståndet.",
           "Efter återkallelsen slutar vi använda materialet på nya sätt och tar bort det från kanaler vi själva styr över, när det rimligen går. En återkallelse kan inte göra tidigare laglig användning olaglig, ta tillbaka tryckt material som redan spridits eller garantera att kopior som tredje part redan delat raderas."
         ]
       },
@@ -3460,7 +3844,7 @@
             "Endast anmälda deltagare och kontrollerade spelfostrare får delta.",
             "Kommunikationen sker i grupp och under uppsikt.",
             "Det finns inga privata direktmeddelanden mellan barn.",
-            "Vanliga träffar spelas inte in.",
+            "Träffar spelas inte in.",
             "Lynx Educate och School of Gaming använder inte anmälningsuppgifter från Programmet för beteendebaserad reklam riktad till barn."
           ],
           "Oro som rör barns trygghet hanteras enligt den gemensamma <linkRobloxSafeguarding>barnskyddspolicyn</linkRobloxSafeguarding>. School of Gaming hanterar vardagliga ärenden i första hand och för allvarliga ärenden vidare till Lynx Educate. Räddningstjänsten kontaktas först om ett barn kan vara i omedelbar fara.",
@@ -3532,7 +3916,7 @@
           "Barn får kontakta oss direkt om sina egna uppgifter. Föräldrar och vårdnadshavare kan också göra en begäran för ett barn, med hänsyn till barnets egna rättigheter, ålder och mognad.",
           "Det förekommer inget helt automatiserat beslutsfattande som får rättsliga följder eller på liknande sätt i betydande grad påverkar deltagarna.",
           "Skicka din begäran till support@lynxeducate.com eller {supportEmail}. Organisationerna samordnar svaret och skickar vidare de frågor som rör Roblox till Roblox när det behövs.",
-          "Familjer har också rätt att lämna in klagomål till den franska dataskyddsmyndigheten Commission nationale de l’informatique et des libertés – CNIL."
+          "Familjer har också rätt att lämna in klagomål till den franska dataskyddsmyndigheten Commission nationale de l’informatique et des libertés – <linkCnil>CNIL</linkCnil>."
         ]
       },
       "security": {
@@ -3575,10 +3959,9 @@
     }
   },
   "robloxSafeguarding": {
-    "title": "Barnskyddspolicy för Roblox-programmet",
-    "subtitle": "Det här dokumentet kompletterar School of Gamings <linkDiscipline>policy mot mobbning</linkDiscipline>, som fortsatt gäller för vardagligt beteende under träffarna. Här beskrivs Lynx Educates och School of Gamings bredare ansvar för barns trygghet i Programmet, även vid fysiska evenemang.",
+    "title": "Barnskyddspolicy för Skaparnas akademi",
+    "subtitle": "Det här dokumentet kompletterar School of Gamings <linkDiscipline>policy mot mobbning</linkDiscipline>, som fortsatt gäller för vardagligt beteende under träffarna. Här beskrivs Lynx Educates och School of Gamings bredare ansvar för barns trygghet i Programmet.",
     "lastUpdated": "Senast granskad: {date}",
-    "pendingContact": "En kontaktadress hos School of Gaming för trygghetsfrågor håller på att bekräftas och läggs till här.",
     "intro": {
       "heading": "Vårt åtagande",
       "blocks": [
@@ -3593,9 +3976,16 @@
         ]
       },
       "vetting": {
-        "heading": "Innan någon arbetar med barn",
+        "heading": "Innan en spelfostrare arbetar med barn",
         "blocks": [
-          "Alla spelfostrare (Geduer) måste genomgå School of Gamings egen kontroll- och utbildningsprocess innan de arbetar med barn i Sogverse. Detta omfattar:"
+          "Alla spelfostrare (Geduer) måste genomgå School of Gamings egen kontroll- och utbildningsprocess innan de arbetar med barn i Sogverse. Detta omfattar:",
+          [
+            "Att vara över 18 år. Varje spelfostrare är vuxen.",
+            "En bakgrundskontroll. Varje Gedu visar oss ett utdrag ur belastningsregistret av det slag som utfärdas för den som arbetar med barn, innan hen tilldelas någon grupp – så att vi vet vem som tillbringar tid med ditt barn. Vi kontrollerar utdraget själva, och vi får inte behålla någon kopia, så det gör vi inte.",
+            "School of Gamings grundkurs för spelfostrare, som varje Gedu måste slutföra med godkänt resultat.",
+            "Vår handbok för spelfostrare, som beskriver hur vi förväntar oss att en Gedu uppträder och gör stämningen i gruppen till hens ansvar.",
+            "Ett undertecknat avtal med School of Gaming, som gås igenom tillsammans med någon ur vår personal innan det skrivs under. Det beskriver det skriftliga förfarande vi följer – som börjar med en varning och ett samtal – om en Gedu inte lever upp till förväntningarna."
+          ]
         ]
       },
       "online": {
@@ -3611,7 +4001,9 @@
       },
       "inPerson": {
         "heading": "Under fysiska evenemang",
-        "blocks": []
+        "blocks": [
+          "Våra spelfostrare håller i träffen, men de är inte arrangörer av evenemanget. Lynx Educate ansvarar för att de lokaler organisationen samarbetar med är lämpliga för träffen och uppfyller Programmets krav på barns trygghet. De närmare arrangemangen kan variera från lokal till lokal."
+        ]
       },
       "behaviour": {
         "heading": "Beteende och disciplin",
@@ -3628,13 +4020,13 @@
       "concern": {
         "heading": "Om du är orolig",
         "blocks": [
-          "Om du eller ditt barn har en oro som rör barns trygghet, kontakta support@lynxeducate.com."
+          "Om du eller ditt barn har en oro som rör barns trygghet, kontakta School of Gaming på {supportEmail} eller Lynx Educate på support@lynxeducate.com."
         ]
       },
       "data": {
         "heading": "Uppgifter och foton",
         "blocks": [
-          "All fotografering, filmning och användning av ett barns bild styrs av de samtyckesval som beskrivs i <linkRobloxPrivacy>Integritetspolicyn för Roblox-programmet</linkRobloxPrivacy> – aldrig förutsatta, alltid frivilliga, alltid möjliga att ändra."
+          "Ett barn syns identifierbart på ett foto endast när barnets förälder kryssat i det frivilliga mediasamtycket för barnet vid anmälan. Föräldern kan ändra svaret när som helst på barnets sida i My SOG, och en spelfostrare frågar barnet innan ett foto tas, även när föräldern har samtyckt. <linkRobloxPrivacy>Integritetspolicyn för Skaparnas akademi</linkRobloxPrivacy> beskriver vad samtycket omfattar. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
         ]
       },
       "review": {
@@ -3646,14 +4038,13 @@
     }
   },
   "robloxTerms": {
-    "title": "Användarvillkor för Roblox-programmet",
-    "subtitle": "Gäller familjer som anmäler sig till programmet Lynx Educate × School of Gaming × Roblox i Frankrike.",
+    "title": "Användarvillkor för Skaparnas akademi",
+    "subtitle": "Gäller familjer som anmäler sig till Skaparnas akademi i Frankrike – Lynx Educate × School of Gaming, i samarbete med Roblox.",
     "lastUpdated": "Uppdaterad: {date}",
-    "pendingContact": "En kontaktadress hos School of Gaming håller på att bekräftas och läggs till här.",
     "intro": {
       "heading": "Kort sammanfattning",
       "blocks": [
-        "Här förklarar vi vad du anmäler ditt barn till när ni registrerar er för Roblox-programmet. Det är ett gemensamt program mellan Lynx Educate och School of Gaming, sponsrat av Roblox. Om något är oklart, mejla support@lynxeducate.com."
+        "Här förklarar vi vad du anmäler ditt barn till när ni registrerar er för Skaparnas akademi. Det är ett gemensamt program mellan Lynx Educate och School of Gaming, sponsrat av Roblox. Om något är oklart, mejla support@lynxeducate.com."
       ]
     },
     "sections": {
@@ -3670,7 +4061,7 @@
       "eligibility": {
         "heading": "Vem kan delta",
         "blocks": [
-          "Programmet riktar sig till unga i Frankrike i åldern 8–17 år, anmälda av en förälder eller vårdnadshavare. En förälder eller vårdnadshavare måste göra anmälan och lämna samtycke för barnets räkning."
+          "Programmet riktar sig till unga i Frankrike i åldern 13–17 år, anmälda av en förälder eller vårdnadshavare. En förälder eller vårdnadshavare måste göra anmälan och lämna samtycke för barnets räkning."
         ]
       },
       "whatsInvolved": {
@@ -3688,26 +4079,26 @@
       "safety": {
         "heading": "Trygghet och tillsyn",
         "blocks": [
-          "Varje träff leds av en utbildad spelfostrare. Vår hållning till beteende och barns trygghet framgår av vår gemensamma <linkRobloxSafeguarding>barnskyddspolicy</linkRobloxSafeguarding>, som finns tillgänglig på begäran."
+          "Varje träff leds av en utbildad spelfostrare. Vår hållning till beteende och barns trygghet framgår av vår gemensamma <linkRobloxSafeguarding>barnskyddspolicy</linkRobloxSafeguarding>."
         ]
       },
       "information": {
         "heading": "Dina uppgifter",
         "blocks": [
-          "Hur vi använder dina och ditt barns uppgifter förklaras i vår <linkRobloxPrivacy>Integritetspolicy för Roblox-programmet</linkRobloxPrivacy>. Genom att anmäla dig bekräftar du att du har läst och förstått den.",
-          "När du anmäler dig till ett Roblox-program delas även uppgifterna som är kopplade till ditt School of Gaming-konto (inklusive dina kontaktuppgifter och ditt barns kontouppgifter) med Lynx Educate för att genomföra programmet och med Roblox för forskning om programmets effekter."
+          "Hur vi använder dina och ditt barns uppgifter förklaras i vår <linkRobloxPrivacy>Integritetspolicy för Skaparnas akademi</linkRobloxPrivacy>. Genom att anmäla dig bekräftar du att du har läst och förstått den.",
+          "När du anmäler dig till Skaparnas akademi delas även uppgifterna som är kopplade till ditt School of Gaming-konto (inklusive dina kontaktuppgifter och ditt barns kontouppgifter) med Lynx Educate för att genomföra programmet och med Roblox för forskning om programmets effekter."
         ]
       },
       "media": {
         "heading": "Foto, video och marknadsföring",
         "blocks": [
-          "Om ditt barn fotograferas eller filmas, och om materialet används i marknadsföring, beror helt på de val du gör vid anmälan. Valen är frivilliga och du kan ändra dig när som helst i inställningarna för din Sogverse-profil."
+          "Om ditt barn syns på foton eller film är ett enda frivilligt val, som du gör när du anmäler barnet till en aktivitet i Skaparnas akademi. Du kan ändra det när som helst på barnets sida i My SOG. Ett barn utan det tillståndet hålls utanför träffarnas foton och identifierbart material. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
         ]
       },
       "concern": {
         "heading": "Om du är orolig",
         "blocks": [
-          "Om du är orolig för ditt barns upplevelse i Programmet, kontakta support@lynxeducate.com – vi ser till att ärendet når rätt personer."
+          "Om du är orolig för ditt barns upplevelse i Programmet, kontakta School of Gaming på {supportEmail} eller Lynx Educate på support@lynxeducate.com – vi ser till att ärendet når rätt personer."
         ]
       },
       "changes": {
@@ -3728,8 +4119,7 @@
       "geonames": "Listan över länder, regioner och orter som du väljer från när du berättar var din familj bor — samma lista som vi använder för att hitta klubbar nära dig. Vår version bygger på GeoNames men är ingen kopia: vi utelämnar platser där vi inte är verksamma, grupperar en del annorlunda och byter namn på andra till den form som används lokalt.",
       "laPoste": "De franska postnumren i samma lista, så att en familj i Frankrike kan skriva in sitt postnummer i stället för att leta upp sin kommun.",
       "mcHeads": "Ritar den Minecraft-figur som visas bredvid ett länkat Minecraft-konto. De begär ingenting i gengäld, så det här är ett tack snarare än ett krav."
-    },
-    "opensInNewTab": "(öppnas i en ny flik)"
+    }
   },
   "seatOffer": {
     "offer": {
@@ -3774,11 +4164,11 @@
   },
   "consentDocuments": {
     "names": {
-      "robloxProgrammeTerms": "Användarvillkor för Roblox-programmet",
-      "robloxPrivacyPolicy": "Integritetspolicy för Roblox-programmet"
+      "robloxProgrammeTerms": "Användarvillkor för Skaparnas akademi",
+      "robloxPrivacyPolicy": "Integritetspolicy för Skaparnas akademi"
     },
     "bundles": {
-      "robloxProgramme": "Dokument för Roblox-programmet"
+      "robloxProgramme": "Dokument för Skaparnas akademi"
     }
   },
   "chat": {
@@ -3863,5 +4253,38 @@
       "next": "Nästa bild",
       "close": "Stäng"
     }
+  },
+  "gamerSignIn": {
+    "question": "Hur ska {name} logga in?",
+    "option": {
+      "parent": "Via förälderns konto",
+      "username": "Via ett barnkonto med användarnamn",
+      "email": "Via ett barnkonto med barnets e-postadress"
+    },
+    "optionHint": {
+      "parent": "Föräldern loggar in på enheten och lämnar över den till barnet. Barnet har inget eget användarnamn och inget eget lösenord.",
+      "username": "Föräldern skapar användarnamnet och lösenordet åt barnet.",
+      "email": "Föräldern skapar kontot; barnet bekräftar sin e-postadress och skapar ett eget lösenord."
+    },
+    "parentModeNote": "Inget att fylla i – {name} loggar in när du växlar till dem från ditt eget konto.",
+    "usernameLabel": "Användarnamn",
+    "usernamePlaceholder": "saga2015",
+    "usernameHint": "Endast bokstäver och siffror, 3 till 20 tecken.",
+    "usernameRequired": "Välj ett användarnamn.",
+    "usernameInvalid": "Använd 3 till 20 bokstäver eller siffror, utan mellanslag.",
+    "usernameTaken": "Användarnamnet är upptaget. Prova ett annat.",
+    "passwordHint": "Minst {count} tecken. Läs upp det för din gamer – du kan ändra det här senare.",
+    "passwordTooShort": "Lösenordet måste vara minst {count} tecken.",
+    "emailPlaceholder": "saga@example.com",
+    "emailRequired": "Ange en e-postadress.",
+    "emailInvalid": "Det ser inte ut som en e-postadress.",
+    "emailTaken": "Den e-postadressen har redan ett konto."
+  },
+  "consent": {
+    "heading": "Dina integritetsval",
+    "body": "Nödvändiga cookies får webbplatsen att fungera. Analys räknar besök och laddningstider. Den kan inte se vem du är, och annonsörer får den aldrig. Vi annonserar på andra plattformar. Marknadsföring berättar för dem att du varit här, och om du skapade ett konto, så att de kan visa dig våra annonser där. Marknadsföring är aldrig igång medan en spelare är inloggad. Du kan ändra ditt svar när som helst längst ner på sidan, och detaljerna finns i vår <link>integritetspolicy</link>.",
+    "rejectAll": "Neka alla",
+    "analyticsOnly": "Endast analys",
+    "analyticsAndMarketing": "Marknadsföring och analys"
   }
 }

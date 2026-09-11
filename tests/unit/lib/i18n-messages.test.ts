@@ -7,7 +7,8 @@ import tlh from "@/../messages/tlh.json";
 /**
  * Klingon is the one catalog with holes in it. The legal surface — the policy
  * and terms namespaces, the attributions credit, those pages' metadata titles
- * and every label that names one of the documents — is left out so it resolves
+ * and search-snippet descriptions, and every label that names one of the
+ * documents — is left out so it resolves
  * to English: binding text and licence conditions are not a place for an
  * in-character rendering, and omitting the keys is what keeps English their
  * single source of truth rather than something a future edit has to remember to
@@ -32,6 +33,16 @@ describe("loadMessages", () => {
     expect(messages.legal).toEqual(en.legal);
   });
 
+  it("fills the cookie banner, buttons included", async () => {
+    const messages = await loadMessages("tlh");
+
+    // Not a page *about* a policy — the instrument that records one. The
+    // buttons are why it is the whole namespace: a refusal has to be as legible
+    // as an acceptance, which a refusal written in character is not.
+    expect(messages.consent).toEqual(en.consent);
+    expect(messages.consent.rejectAll).toBe(en.consent.rejectAll);
+  });
+
   it("fills the labels that name one of those documents too", async () => {
     const messages = await loadMessages("tlh");
 
@@ -45,6 +56,19 @@ describe("loadMessages", () => {
     expect(messages.metadata.pages.antiBullying).toBe(en.metadata.pages.antiBullying);
     expect(messages.metadata.pages.robloxSafeguarding).toBe(
       en.metadata.pages.robloxSafeguarding,
+    );
+
+    // And the snippet each of those pages is met by in a search result — the
+    // document describing itself, so it belongs to the document.
+    expect(messages.metadata.descriptions.privacy).toBe(
+      en.metadata.descriptions.privacy,
+    );
+    expect(messages.metadata.descriptions.terms).toBe(en.metadata.descriptions.terms);
+    expect(messages.metadata.descriptions.antiBullying).toBe(
+      en.metadata.descriptions.antiBullying,
+    );
+    expect(messages.metadata.descriptions.attributions).toBe(
+      en.metadata.descriptions.attributions,
     );
 
     expect(messages.roblox.legal.privacy).toBe(en.roblox.legal.privacy);
@@ -63,6 +87,7 @@ describe("loadMessages", () => {
     expect(messages.footer.copyright).not.toBe(en.footer.copyright);
     expect(messages.roblox.legal.roblox).toBe(tlh.roblox.legal.roblox);
     expect(messages.metadata.pages.about).toBe(tlh.metadata.pages.about);
+    expect(messages.metadata.descriptions.about).toBe(tlh.metadata.descriptions.about);
     expect(messages.header.nav).toEqual(tlh.header.nav);
     // The consent *sentence* is ordinary product copy, unlike the document
     // names and the bundle label it points at.
@@ -84,5 +109,14 @@ describe("loadMessages", () => {
     expect(Object.keys(en.about)).not.toContain("easterEgg");
     expect(en.footer.copyright).not.toBe(tlh.footer.copyright);
     expect(Object.keys(tlh)).not.toContain("privacy");
+    // Absence is the assertion that matters: a namespace merely *equal* to
+    // English is one nothing keeps in step the next time English is edited.
+    expect(Object.keys(tlh)).not.toContain("consent");
+    // Same for the legal snippets, one level down: `tlh` carries the marketing
+    // and auth descriptions and is silent on the four documents’.
+    expect(Object.keys(tlh.metadata.descriptions)).not.toContain("privacy");
+    expect(Object.keys(tlh.metadata.descriptions)).not.toContain("terms");
+    expect(Object.keys(tlh.metadata.descriptions)).not.toContain("antiBullying");
+    expect(Object.keys(tlh.metadata.descriptions)).not.toContain("attributions");
   });
 });

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useLocale } from "next-intl";
 import type {
+  GamerPhotoConsentType,
   MarketingConsentType,
   ProductBrowseRow,
   ProductType,
@@ -18,6 +19,7 @@ import {
   describeRequiredConsents,
 } from "@/lib/constants/consent-documents";
 import { describeMarketingConsents } from "@/lib/constants/marketing-consents";
+import { describeGamerPhotoConsents } from "@/lib/constants/gamer-photo-consents";
 import {
   firstChargeAnchor,
   formatFirstChargeDate,
@@ -99,16 +101,20 @@ export interface SignupPanelFields {
    */
   marketingConsentTypes: readonly MarketingConsentType[];
   /**
-   * Which of those the reader currently has ticked: their account's stored
-   * answer, overlaid with anything they have changed in this panel.
+   * Which of those the reader currently has ticked in THIS panel — nothing
+   * else, and never a seed.
    *
-   * **Seeded, and the deliberate inverse of `consentAgreements` above.** A
-   * required consent is a per-enrolment event, so a pre-ticked box would be the
-   * platform asserting an agreement on the family's behalf. A marketing consent
-   * is a single account-level state with a present tense — the panel is showing
-   * a parent what we currently believe about their mailbox, and showing them
-   * `false` when the answer on file is `true` would be showing them something
-   * untrue and inviting them to "fix" it into a withdrawal.
+   * **Unticked at mount on every enrolment, exactly like `consentAgreements`
+   * above.** The panel used to seed these from the account, on the reasoning
+   * that a marketing consent is a single present-tense state and showing
+   * `false` to a parent who is opted in invites them to "fix" it into a
+   * withdrawal. That reasoning lost to a simpler one: a box we ticked on a
+   * parent's behalf is the platform answering a question that was asked of
+   * them. Every optional box on this panel now starts empty, a parent decides
+   * afresh each time, and an untouched box is recorded as the "no" it looks
+   * like — the owner's call, and it is the same rule for both kinds of
+   * optional ask so a reader never has to know which sort of box they are
+   * looking at.
    */
   marketingConsents: ReadonlySet<MarketingConsentType>;
   onMarketingConsentChange: (
@@ -116,19 +122,76 @@ export interface SignupPanelFields {
     granted: boolean,
   ) => void;
   /**
-   * What submitting would change about the account, and nothing else — one
-   * entry per asked consent whose box now differs from what was seeded.
+   * **What the parent said about every marketing box this panel asked — one
+   * entry per row on screen, whatever its value.**
    *
-   * Empty is the overwhelmingly common case (a parent who did not touch the
-   * box), and empty means no call at all: the RPC is idempotent, but an event
-   * log that recorded non-changes is exactly what its own migration refused to
-   * build, so the client should not make it work to reject them either.
+   * Answers, not changes. There is nothing left to diff against now that
+   * nothing is seeded, and "send only what moved" would silently drop the
+   * commonest answer there is: a box left alone, which is a "no" the parent
+   * looked at. The writer is idempotent and appends no event for a no-op, so
+   * re-stating an answer that has not moved costs a round trip and nothing
+   * else.
+   *
+   * Only over the rows actually on screen. A stored type this deploy cannot
+   * name is not rendered, so nobody answered it and nothing is sent about it.
    *
    * Derived every render rather than computed at click time, so an adapter's
    * handler reads whatever was true in the frame the parent clicked in.
    */
-  marketingConsentChanges: readonly {
+  marketingConsentAnswers: readonly {
     consentType: MarketingConsentType;
+    granted: boolean;
+  }[];
+  /**
+   * **The product's optional photo asks**, as stored — whether photos and
+   * videos of the selected child may be taken and used. Empty on almost every
+   * product, and the block ceases to exist when it is.
+   *
+   * Rides in from the product read like the two ask sets above, so the block's
+   * existence is settled before the panel paints.
+   */
+  gamerPhotoConsentTypes: readonly GamerPhotoConsentType[];
+  /**
+   * Whether those rows can be **answered** right now — true only when the
+   * selected participant is a child.
+   *
+   * A product whose audience admits adults lets a parent take a seat
+   * themselves, and a consent about a gamer's image cannot be given about an
+   * adult who is answering for themselves; there is no gamer row to key the
+   * answer to. Nor is there one before anybody is selected. So the rows are
+   * *disabled* in both cases, and this is what says so — computed here rather
+   * than in the view, so the boxes on screen and the answers sent cannot
+   * disagree about which participant was being asked about.
+   *
+   * It is deliberately not what decides whether the rows are drawn: the view
+   * takes their existence off the product's own asks, so the section is on
+   * screen from first paint and only its answerability follows the selection.
+   * Everything downstream of it here — the answers, and so what is written —
+   * still keys on this, which is what keeps a self seat writing nothing.
+   */
+  gamerPhotoConsentsEnabled: boolean;
+  /**
+   * Which photo boxes the reader has ticked, for the currently selected child.
+   *
+   * **Reset to empty whenever the selected participant changes**, because the
+   * tick is about one specific child: carrying it across a switch would record
+   * a permission for a sibling nobody gave it for. That is the one thing this
+   * differs from the marketing boxes in, and it follows from the answer being
+   * keyed per gamer rather than per account.
+   */
+  gamerPhotoConsents: ReadonlySet<GamerPhotoConsentType>;
+  onGamerPhotoConsentChange: (
+    consentType: GamerPhotoConsentType,
+    granted: boolean,
+  ) => void;
+  /**
+   * What the parent said about every photo box this panel asked, on the same
+   * terms as the marketing answers above: one entry per row on screen, whatever
+   * its value, and empty when the rows were not asked at all (a self seat, or a
+   * product that asks nothing).
+   */
+  gamerPhotoConsentAnswers: readonly {
+    consentType: GamerPhotoConsentType;
     granted: boolean;
   }[];
   currency: SupportedCurrency;
@@ -170,41 +233,11 @@ export function useSignupPanelFields(
    */
   marketingConsentTypes: readonly MarketingConsentType[],
   /**
-   * What the reader's account currently says about those consents — the set of
-   * types they have granted — or `undefined` while that read has not answered.
-   *
-   * **An argument rather than a query made in here**, unlike everything else
-   * this hook derives. Two reasons, and either alone would settle it: the
-   * preview twin has no session to read one for and must not fire the call, and
-   * the read is only correct for a signed-in customer — an admin calling it
-   * gets every parent's rows, because their own SELECT policy is what widens
-   * it. So the adapter that knows who is looking owns the read, and this owns
-   * what the panel does with the answer.
-   *
-   * `undefined` is not the same as an empty set: nothing is known yet. It reads
-   * as "not granted" for rendering, because a box has to be drawn either way
-   * and unticked is the safe direction — the box, its sentence and its hint are
-   * all on screen from the first frame, so only the tick can change when the
-   * answer lands, and nothing moves.
-   *
-   * **What that costs, stated plainly rather than argued away.** An edit
-   * outranks a late seed, and an edit is recorded by the box having been
-   * *touched*, not by its value differing from anything. So a parent who is
-   * already opted in, and who ticks and unticks this box before their account's
-   * answer arrives, submits an unticked box that counts as an edit — and the
-   * enrolment records a withdrawal of a consent they never meant to withdraw.
-   *
-   * This is the accepted behaviour, and the rule it follows is the one worth
-   * keeping: **what the box shows at submit is what is recorded.** The
-   * alternative — treating a touched box that happens to match the eventual seed
-   * as no answer at all — would mean the panel silently discarding an unticked
-   * box a parent was looking at when they pressed the button, which is the worse
-   * failure of the two and the harder one to explain. A consent is account-level
-   * and revocable from settings that evening, so the cost of the case above is a
-   * mailing list the parent can switch back on; the cost of the alternative is a
-   * control that does not do what it says while you watch it.
+   * The photo consents this product asks about, off the same product read and
+   * beside the product for the same reason the two sets above are: a shop card
+   * never names what signing up would ask.
    */
-  seededMarketingConsents: ReadonlySet<MarketingConsentType> | undefined,
+  gamerPhotoConsentTypes: readonly GamerPhotoConsentType[],
 ): SignupPanelFields {
   // Platform is EUR-only; Stripe Adaptive Pricing handles the customer's local
   // currency at checkout. See src/lib/constants/currency.ts.
@@ -262,11 +295,17 @@ export function useSignupPanelFields(
     );
   }, [pricingOption.kind, startDate, product.timezone, now, locale, viewerTimezone]);
 
-  // Only participants who aren't already on the product are selectable. The
-  // default falls to the first selectable one (skipping anyone already signed
-  // up / waitlisted); a user pick of a now-locked row is ignored. When everyone
-  // is already on, this resolves to null and the CTA stays disabled — the page
-  // still renders, the picker just shows their states.
+  // Only participants the panel would actually accept are selectable — nobody
+  // already on the product, and no child outside its age band. The default
+  // falls to the first of those; a user pick of a now-locked row is ignored.
+  // When every row is refused, this resolves to null and the CTA stays disabled
+  // — the page still renders, the picker just shows each row's reason.
+  //
+  // **The two reasons are one list here on purpose.** The view draws them
+  // differently (an already-enrolled row outranks an age-blocked one in the
+  // label it shows), but selectability is indifferent to which refusal a row
+  // carries, and preselecting a row the button would refuse is the bug either
+  // one would produce.
   //
   // The parent's own row (a for-parents product) is an ordinary member of this
   // list: the adapter puts it in the array and nothing here has to know. On a
@@ -277,7 +316,7 @@ export function useSignupPanelFields(
   >(null);
   const selectable =
     authState.kind === "ready"
-      ? authState.participants.filter((p) => !p.signupState)
+      ? authState.participants.filter((p) => !p.signupState && !p.ageBlock)
       : [];
   const selectedParticipantId: string | null =
     authState.kind === "ready"
@@ -329,48 +368,103 @@ export function useSignupPanelFields(
   );
 
   // ---------------------------------------------------------------------
-  // The optional marketing asks
+  // The optional asks — marketing, and photos of a child
   //
-  // **Seeded from the account, and an edit outranks a seed that lands after
-  // it.** The saved-value-plus-edit-wrapper shape the settings page uses on its
-  // home-location field, for the same reason: the seed arrives a round trip
-  // after the panel paints, and a parent who ticked the box in that gap must
-  // not watch their tick undone by an answer they were not waiting for.
+  // **Every optional box starts unticked on every enrolment, and every box that
+  // was asked is answered on submit.** One rule for both kinds, and it replaced
+  // two different ones: the marketing boxes used to be seeded from the parent's
+  // account and to send only what had moved.
   //
-  // A Map rather than a Set of edited types, because `false` is a real edit —
-  // it is a *withdrawal*, the whole point of a revocable consent — and a bare
-  // set could not tell it from "not touched".
+  // Why the seeding went. A seeded box is the platform pre-answering a question
+  // it is putting to a parent, and the failure it produces is the one that
+  // cannot be undone by explaining it: a parent glances at a ticked box, takes
+  // it for something they did, and never learns that we decided for them. The
+  // owner's call is that re-asking a question is cheaper than that, on every
+  // enrolment, for every optional box on this panel. It also removes the read
+  // the panel used to make, and with it the whole edit-outranks-a-late-seed
+  // apparatus that existed only because that read landed after first paint.
   //
-  // Nothing here is keyed to the enrolment: the required ticks above are
-  // stamped with the slugs they covered and dropped when the set moves, and
-  // that machinery is deliberately absent here. A marketing answer is about the
-  // reader's mailbox rather than about this seat, so a product changing what it
-  // asks has nothing to say about an answer they have already given.
+  // Why every asked box is now sent rather than only the moved ones. With
+  // nothing seeded there is nothing to diff against, and the commonest answer
+  // on the panel is a box left alone — which under the old rule sent nothing
+  // and now sends the "no" it looks like. Both writers are idempotent and
+  // append no event for a no-op, so re-stating an unchanged answer costs a
+  // round trip and changes no record.
+  //
+  // A Map rather than a Set of ticked types in both cases, so the shape of the
+  // state says what it holds: an explicit answer per box, `false` included.
   // ---------------------------------------------------------------------
   const [marketingEdits, setMarketingEdits] = useState<
     ReadonlyMap<MarketingConsentType, boolean>
   >(() => new Map<MarketingConsentType, boolean>());
 
   const marketingRows = describeMarketingConsents(marketingConsentTypes);
-  const seededValue = (consentType: MarketingConsentType) =>
-    seededMarketingConsents?.has(consentType) ?? false;
-  const marketingValue = (consentType: MarketingConsentType) => {
-    const edit = marketingEdits.get(consentType);
-    return edit === undefined ? seededValue(consentType) : edit;
-  };
+  const marketingValue = (consentType: MarketingConsentType) =>
+    marketingEdits.get(consentType) ?? false;
 
   const marketingConsents = new Set(
     marketingRows.map((row) => row.type).filter(marketingValue),
   );
   // Only over the rows actually on screen. A stored type this deploy cannot
-  // name is not rendered, so it has no box for the reader to have moved and
-  // nothing to send about it.
-  const marketingConsentChanges = marketingRows
-    .filter((row) => marketingValue(row.type) !== seededValue(row.type))
-    .map((row) => ({
-      consentType: row.type,
-      granted: marketingValue(row.type),
-    }));
+  // name is not rendered, so nobody answered it and nothing is sent about it.
+  const marketingConsentAnswers = marketingRows.map((row) => ({
+    consentType: row.type,
+    granted: marketingValue(row.type),
+  }));
+
+  // The photo asks, which differ from the marketing asks in exactly one way:
+  // **the answer belongs to a particular child**, so it does not survive the
+  // parent selecting a different one.
+  //
+  // The reset is done by comparing during render rather than by clearing from
+  // an effect — the same trick the consent stamps above use, and for the same
+  // reason: an effect would leave one frame in which a tick made for Aino is on
+  // screen beside Ville's name, and that frame is the one a fast click lands
+  // in. Holding the participant the ticks were made for, and reading the map as
+  // empty the moment it disagrees with the selection, keeps every frame
+  // consistent.
+  const [photoAnswers, setPhotoAnswers] = useState<{
+    participantId: string | null;
+    values: ReadonlyMap<GamerPhotoConsentType, boolean>;
+  }>(() => ({
+    participantId: null,
+    values: new Map<GamerPhotoConsentType, boolean>(),
+  }));
+
+  const photoEdits =
+    photoAnswers.participantId === selectedParticipantId
+      ? photoAnswers.values
+      : new Map<GamerPhotoConsentType, boolean>();
+
+  // Answerable only about a child. A parent taking a seat on a product whose
+  // audience admits adults is answering for themselves, and there is no gamer
+  // for a photo answer to be keyed to — see the field's own note. The rows are
+  // still on screen in both cases; they are simply disabled.
+  const selectedIsSelf =
+    authState.kind === "ready" &&
+    authState.participants.find((p) => p.id === selectedParticipantId)
+      ?.isSelf === true;
+  const gamerPhotoConsentsEnabled =
+    selectedParticipantId !== null && !selectedIsSelf;
+
+  // The *answers*, which are a different question from the rows on screen: an
+  // unanswerable box has no answer, so nothing is sent about it and nothing is
+  // written for a seat that has no gamer behind it. This is what keeps the
+  // submitted payload identical to what it was before the rows became
+  // permanent — the disabled section contributes exactly nothing.
+  const photoRows = gamerPhotoConsentsEnabled
+    ? describeGamerPhotoConsents(gamerPhotoConsentTypes)
+    : [];
+  const photoValue = (consentType: GamerPhotoConsentType) =>
+    photoEdits.get(consentType) ?? false;
+
+  const gamerPhotoConsents = new Set(
+    photoRows.map((row) => row.type).filter(photoValue),
+  );
+  const gamerPhotoConsentAnswers = photoRows.map((row) => ({
+    consentType: row.type,
+    granted: photoValue(row.type),
+  }));
 
   return {
     productType: product.product_type,
@@ -398,13 +492,28 @@ export function useSignupPanelFields(
     onMarketingConsentChange: (consentType, granted) =>
       setMarketingEdits((prev) => {
         const next = new Map(prev);
-        // Recorded either way — an untick is an answer, not the absence of one,
-        // and deleting the entry would hand the box back to a seed that says
-        // the opposite.
+        // Recorded either way — an untick is an answer, not the absence of one.
         next.set(consentType, granted);
         return next;
       }),
-    marketingConsentChanges,
+    marketingConsentAnswers,
+    gamerPhotoConsentTypes,
+    gamerPhotoConsentsEnabled,
+    gamerPhotoConsents,
+    onGamerPhotoConsentChange: (consentType, granted) =>
+      setPhotoAnswers((prev) => {
+        // Stamped with the participant it was answered about, and built on the
+        // previous map only when that participant has not changed — so a tick
+        // made before a switch cannot survive into the answer given after it.
+        const base =
+          prev.participantId === selectedParticipantId
+            ? prev.values
+            : new Map<GamerPhotoConsentType, boolean>();
+        const values = new Map(base);
+        values.set(consentType, granted);
+        return { participantId: selectedParticipantId, values };
+      }),
+    gamerPhotoConsentAnswers,
     currency,
     locale,
   };

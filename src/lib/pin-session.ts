@@ -1,4 +1,8 @@
-// Parent-PIN "unlock" token.
+// The two signed marker cookies that say what a session IS, plus the PIN-reset
+// token. All three are HMACs under PIN_COOKIE_SECRET; the payload prefixes keep
+// them apart (see the inventory in src/lib/email-verification.ts).
+//
+// PARENT-PIN "UNLOCK" TOKEN
 //
 // A customer session is "locked" until the parent enters their PIN once. When
 // they do, src/app/api/auth/pin/* sets an HttpOnly cookie holding this token;
@@ -97,6 +101,85 @@ export function pinCookieOptions() {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax" as const,
     path: "/",
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Family-session marker
+// ---------------------------------------------------------------------------
+//
+// The cookie that says "this session was handed over from another family
+// member's" — which is what the switch gate charges a parent's PIN for rather
+// than the target account's password (src/lib/session-provenance.ts).
+//
+// WHY A MINTED MARKER RATHER THAN A CLAIM WE CAN READ. The obvious source is
+// the JWT's `amr`: a switch-created session records `otp` and a typed sign-in
+// records `password`, so "no password method" looks like it means "switched
+// in". It does not. A password-RECOVERY session records `otp` too, so a child
+// who opens their own reset link and abandons the form would hold a session
+// classified as switched-in — a PIN-only path to the parent's account, opened
+// by a link the child can request for themselves. Nothing in the token
+// separates the two. This cookie can, because only the switch route's OTP path
+// mints it: the marker is not evidence about the session, it is the switch
+// route's own signature on a session it created.
+//
+// It is bound to `(userId, session_id)` exactly as the unlock token is, so it
+// is inert for every other session and for every other account — a marker left
+// behind by an earlier session cannot mark the one that replaced it.
+//
+// UNLIKE THE UNLOCK COOKIE, THIS ONE HAS A LONG `maxAge`. The unlock cookie is
+// a session cookie because dropping it on a browser quit re-locks the parent,
+// which is free security. Here the incentive runs the other way: a dropped
+// marker re-classifies a switched-in child as self-authenticated, and the next
+// switch out asks for a password the family may not have — so a browser
+// restart at home would become a dead end. A year is longer than any auth
+// session survives, so the session_id binding is what actually expires it.
+
+export const FAMILY_SESSION_COOKIE_NAME = "sog_family_session";
+
+/** HMAC-SHA256(secret, `family-session:${userId}:${sessionId}`) as hex. */
+export async function mintFamilySessionToken(
+  userId: string,
+  sessionId: string,
+): Promise<string> {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(getSecret()),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    encoder.encode(`family-session:${userId}:${sessionId}`),
+  );
+  return toHex(signature);
+}
+
+/** True when the cookie value is the valid family marker for this user+session. */
+export async function isFamilySessionTokenValid(
+  cookieValue: string | undefined | null,
+  userId: string,
+  sessionId: string,
+): Promise<boolean> {
+  if (!cookieValue) return false;
+  const expected = await mintFamilySessionToken(userId, sessionId);
+  return constantTimeEqual(cookieValue, expected);
+}
+
+/**
+ * Cookie attributes for the family marker. Same shape as the unlock cookie's
+ * except for the expiry — see the section header for why this one persists.
+ */
+export function familySessionCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge: 365 * 24 * 60 * 60,
   };
 }
 

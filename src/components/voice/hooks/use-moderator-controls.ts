@@ -80,8 +80,23 @@ export function useModeratorControls({
       case "moderatorMute": {
         const sender = Object.values(co.participants()).find((p) => p.session_id === fromId);
         if (!sender?.owner) break;
-        // UI feedback only — track change happens via updateParticipant,
-        // which triggers Daily's participant-updated event
+
+        // The target acts on its own owner-verified message: it stops its own
+        // track *and* writes its own intent, so the two agree by construction
+        // rather than by reading one back from the other (see the voice
+        // CLAUDE.md rule). The moderator's SFU `updateParticipant` still lands
+        // as well, and the two are idempotent together — both say "off".
+        // Exactly the shape moderatorLock uses below.
+        const localSid = co.participants().local.session_id;
+        if (msg.targetSessionId === localSid) {
+          if (msg.track === "audio") {
+            co.setLocalAudio(false);
+            setMicOn(false);
+          } else {
+            co.setLocalVideo(false);
+            setCameraOn(false);
+          }
+        }
         break;
       }
       case "moderatorLock": {

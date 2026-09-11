@@ -8,7 +8,13 @@ import { detectLocaleFromHeader } from "@/lib/constants/locales";
 import { buildWelcomeParentEmail } from "@/lib/email-templates/welcome";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { createEmailVerificationToken } from "@/lib/email-verification";
-import { sanitiseReferralCode } from "@/lib/referral";
+import { buildUtmMetadata } from "@/lib/utm";
+import {
+  CONVERSION_COOKIE_MAX_AGE_SECONDS,
+  CONVERSION_COOKIE_NAME,
+  parseConsentCookieHeader,
+  REGISTRATION_CONVERSION,
+} from "@/lib/consent";
 import { getOrigin } from "@/lib/url";
 import {
   REGISTER_WEAK_PASSWORD,
@@ -67,20 +73,21 @@ export const POST = defineRoute({
       lastName,
       homeLocationId,
       locale: requestedLocale,
-      referralCode,
+      utm,
       marketingConsent,
     } = body;
 
-    // The schema takes this as a plain string and leaves the format rule here,
+    // The schema takes these as plain strings and leaves the format rule here,
     // deliberately — see the contract. A malformed value degrades to null and
-    // the account is created without a code.
-    const sanitisedReferralCode = sanitiseReferralCode(referralCode);
+    // the account is created without that field; the three are independent, so
+    // a junk `utm_source` does not cost a well-formed `utm_campaign`.
+    const utmMetadata = buildUtmMetadata(utm);
 
     const admin = createAdminClient();
 
     // The metadata shape is exactly what the browser `signUp()` sent before, and
     // it has to stay that way: `handle_new_user` reads `first_name`,
-    // `last_name` and `referral_code` out of it to build the profile row.
+    // `last_name` and the three `utm_*` keys out of it to build the profile row.
     // `display_name` is not read by the trigger — it is the label the Supabase
     // Auth dashboard shows for the user — and `role` is not read either, since
     // the trigger hardcodes `customer`. Both are kept because the dashboard and
@@ -101,12 +108,10 @@ export const POST = defineRoute({
           last_name: lastName,
           display_name: composedDisplayName,
           role: "customer",
-          // Omitted entirely when absent, so the column simply stays null. The
-          // trigger re-sanitises whatever arrives, so a junk value costs this
-          // registration nothing.
-          ...(sanitisedReferralCode !== null
-            ? { referral_code: sanitisedReferralCode }
-            : {}),
+          // Each field omitted entirely when absent, so its column simply stays
+          // null. The trigger re-sanitises whatever arrives, so a junk value
+          // costs this registration nothing.
+          ...utmMetadata,
         },
       });
 
@@ -281,7 +286,37 @@ export const POST = defineRoute({
       console.error("[auth/register] marketing consent write failed", error);
     }
 
-    return { userId };
+    const response = NextResponse.json({ userId });
+
+    // The registration conversion, handed to the browser as a one-shot marker
+    // the marketing pixels read on the next page and then delete.
+    //
+    // **Set only when this request already carried marketing consent.** The
+    // conversion is reported by Meta's and TikTok's scripts, so writing the
+    // marker for someone who refused would either do nothing (no script to read
+    // it) or, the day the gating slipped, report a conversion nobody agreed to.
+    // Deciding it here — from the cookie the request actually carried, on the
+    // server, before anything is written — is what makes that impossible rather
+    // than merely unlikely.
+    //
+    // Not `httpOnly`: the whole point is that a page script reads it. That is
+    // also why it carries nothing worth stealing — one fixed word, no id, no
+    // address — and why it expires in five minutes.
+    if (parseConsentCookieHeader(request.headers.get("cookie"))?.marketing) {
+      response.cookies.set({
+        name: CONVERSION_COOKIE_NAME,
+        value: REGISTRATION_CONVERSION,
+        maxAge: CONVERSION_COOKIE_MAX_AGE_SECONDS,
+        path: "/",
+        sameSite: "lax",
+        httpOnly: false,
+        // From the origin we already trust rather than the raw Host header, so
+        // a spoofed `Host: localhost:3000` cannot talk us out of the flag.
+        secure: getOrigin(request).startsWith("https:"),
+      });
+    }
+
+    return response;
   },
 });
 

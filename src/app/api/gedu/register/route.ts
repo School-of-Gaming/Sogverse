@@ -6,7 +6,7 @@ import { lookupRobloxProfile } from "@/lib/roblox";
 import { toE164Digits } from "@/lib/utils";
 import { detectLocaleFromHeader, resolveLocale } from "@/lib/constants/locales";
 import { registerGeduBody } from "@/services/gedu/gedu-registration.contracts";
-import { sanitiseReferralCode } from "@/lib/referral";
+import { buildUtmMetadata } from "@/lib/utm";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
@@ -45,17 +45,17 @@ export const POST = defineRoute({
       locationIds,
       minecraftUsername,
       robloxUsername,
-      referralCode,
+      utm,
     } = body;
 
     const locale = resolveLocale(requestedLocale);
 
-    // The body schema takes this as a plain string and leaves the format rule to
-    // here, deliberately: the educator never typed the `?ref=` value and cannot
-    // see it, so a malformed one must not become a 400 that blocks their
+    // The body schema takes these as plain strings and leaves the format rule to
+    // here, deliberately: the educator never typed the UTM values and cannot see
+    // them, so a malformed one must not become a 400 that blocks their
     // registration. A bad value degrades to null and the account is created
-    // without a code — the same outcome as arriving with no link at all.
-    const sanitisedReferralCode = sanitiseReferralCode(referralCode);
+    // without that field — the same outcome as arriving with no link at all.
+    const utmMetadata = buildUtmMetadata(utm);
 
     // Phone → digits to match the profiles.phone CHECK (^\d{7,15}$). Empty or
     // absent stays "" and the RPC NULLIFs it.
@@ -116,14 +116,13 @@ export const POST = defineRoute({
           first_name: firstName,
           last_name: lastName,
           display_name: composedDisplayName,
-          // Same metadata key the parent path uses, reaching the same trigger,
-          // which writes profiles.referral_code and re-sanitises on the way in.
-          // Omitted when absent so the column simply stays null. The promotion
-          // RPC below names a targeted column list that does not mention it, so
-          // the trigger-written value survives.
-          ...(sanitisedReferralCode !== null
-            ? { referral_code: sanitisedReferralCode }
-            : {}),
+          // The same three metadata keys the parent path uses, reaching the same
+          // trigger, which writes profiles.utm_source / utm_medium /
+          // utm_campaign and re-sanitises on the way in. Each is omitted when
+          // absent so its column simply stays null. The promotion RPC below
+          // names a targeted column list that mentions none of them, so the
+          // trigger-written values survive.
+          ...utmMetadata,
         },
       });
 

@@ -1,65 +1,181 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { buildProductConfirmationEmail } from "@/lib/email-templates/product-confirmation";
-import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
+import {
+  buildProductConfirmationEmail,
+  productConfirmationAttachments,
+  productConfirmationSubject,
+  productConfirmationText,
+  resolveProductConfirmation,
+  type ProductConfirmationEmailOptions,
+  type ProductConfirmationOverviewInput,
+} from "@/lib/email-templates/product-confirmation";
+import type { ProductConfirmationInvitationInput } from "@/lib/email-templates/product-confirmation-invitation";
+import {
+  getEmailTranslator,
+  getTopicPrepTranslator,
+  type EmailTranslator,
+  type TopicPrepTranslator,
+} from "@/lib/email-templates/translator";
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 
 let t: EmailTranslator;
+/** The guide's own translator — the second namespace this mail reads. */
+let tPrep: TopicPrepTranslator;
 
 beforeAll(async () => {
-  t = await getEmailTranslator("en");
+  [t, tPrep] = await Promise.all([
+    getEmailTranslator("en"),
+    getTopicPrepTranslator("en"),
+  ]);
 });
 
 const DASHBOARD_URL = "https://sogverse.sog.gg/parent";
+const PARTICIPATION_ID = "3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15";
 
-const base = {
+/** Monday 4 January 2027, 10:00 in Helsinki. */
+const NOW = new Date("2027-01-04T08:00:00Z");
+
+/**
+ * A schedule that composes a real invitation, for the cases that are about the
+ * invitation. Everything else runs with `invitation: null`, which is the mail a
+ * waitlist join gets and the mail a product with no schedule gets.
+ */
+const SCHEDULE: ProductConfirmationInvitationInput = {
+  participationId: PARTICIPATION_ID,
   participantName: "Aino",
   isSelfSeat: false,
   productName: "Minecraft 101",
   productType: "consumer_club",
+  shortDescription: null,
+  timezone: "Europe/Helsinki",
+  startDate: "2027-01-04",
+  endDate: null,
+  slots: [{ weekday: 0, startTime: "16:00", durationMinutes: 60 }],
+  isRemote: true,
+  siteName: null,
+  siteAddress: null,
+  siteNote: null,
+  attendeeName: "Marja Virtanen",
+  attendeeEmail: "marja@example.com",
+  dashboardUrl: DASHBOARD_URL,
+  now: NOW,
+};
+
+/** The same product, as the page's overview card reads it. */
+const OVERVIEW: ProductConfirmationOverviewInput = {
+  timezone: "Europe/Helsinki",
+  startDate: "2027-01-04",
+  endDate: "2027-05-31",
+  slots: [{ weekday: 0, start_time: "16:00", duration_minutes: 60 }],
+  isRemote: true,
+  location: null,
+  minAge: 8,
+  maxAge: 12,
+  forGamers: true,
+  forParents: false,
+  spokenLanguageCode: "fi",
+  now: NOW,
+};
+
+const base: ProductConfirmationEmailOptions = {
+  participantName: "Aino",
+  isSelfSeat: false,
+  productName: "Minecraft 101",
+  productType: "consumer_club",
+  // A topic that carries a guide, on a remote product — the mail a family
+  // actually receives for this fixture, rather than one with the section
+  // silently missing.
+  topic: "minecraft_java",
+  isRemote: true,
   mode: "subscription",
   priceAmount: "€40.00",
+  firstChargeDate: null,
   dashboardUrl: DASHBOARD_URL,
-} as const;
+  overview: OVERVIEW,
+  invitation: null,
+};
+
+/** One render's content, resolved exactly as the registry and the sender do. */
+function resolve(overrides: Partial<ProductConfirmationEmailOptions> = {}) {
+  return resolveProductConfirmation(t, tPrep, "en", { ...base, ...overrides });
+}
+
+function render(overrides: Partial<ProductConfirmationEmailOptions> = {}): string {
+  return buildProductConfirmationEmail(t, "en", resolve(overrides));
+}
+
+/**
+ * The mail's one facts list, cut out of the rendered document: everything
+ * between the label that opens it and the label that opens what happens next.
+ * The shell around it draws borders and corners of its own, so an assertion
+ * about how the *list* is drawn has to be made on the list.
+ */
+function factsList(html: string): string {
+  const upTo = html.slice(0, html.indexOf("What happens next"));
+  return upTo.slice(upTo.lastIndexOf("<table"));
+}
 
 describe("buildProductConfirmationEmail", () => {
   it("names the participant, the product and its type", () => {
-    const html = buildProductConfirmationEmail(t, "en", base);
+    const html = render(base);
     expect(html).toContain("Aino");
     expect(html).toContain("Minecraft 101");
     expect(html).toContain("Club");
     expect(html).toContain("<!DOCTYPE html>");
   });
 
-  it("links My SOG", () => {
-    const html = buildProductConfirmationEmail(t, "en", base);
+  /**
+   * One button, and it is the page's own primary. The page also offers a "keep
+   * browsing" beside it, because a reader who has just checked out is still
+   * standing in the shop; a reader in their inbox is not, so the mail carries
+   * only the action it is asking for — and, being alone, takes the primary
+   * brand fill a two-button row forbids.
+   */
+  it("offers one way onward, filled in the brand primary", () => {
+    const html = render(base);
     expect(html).toContain(`href="${DASHBOARD_URL}"`);
     expect(html).toContain("Go to My SOG");
+    expect(html).toContain(BRAND.act);
+    expect(html).not.toContain("Keep browsing");
+    expect(html).not.toContain("/shop");
+  });
+
+  /**
+   * The one line the page has no use for. It is an instruction rather than a
+   * pleasantry: this send's Reply-To is the support inbox, so a reply reaches a
+   * person — and it sits under the button, where a reader who is not going to
+   * click one has somewhere else to go.
+   */
+  it("closes by inviting a reply, under the button", () => {
+    const html = render(base);
+    expect(html).toContain("Questions? Just reply to this email.");
+    expect(html.indexOf("Go to My SOG")).toBeLessThan(
+      html.indexOf("Questions? Just reply to this email."),
+    );
   });
 
   it("uses the verb the product type calls for", () => {
-    const club = buildProductConfirmationEmail(t, "en", base);
-    const event = buildProductConfirmationEmail(t, "en", { ...base, productType: "event" });
+    const club = render(base);
+    const event = render({ ...base, productType: "event" });
     expect(club).toContain("is enrolled in");
     expect(event).toContain("is joining");
     expect(event).toContain("Event");
   });
 
   /**
-   * The product name is emphasised by weight, not by the brand secondary it used
-   * to carry: Gmail's dark-theme rewriting left that purple unreadable against
+   * The product name is emphasised by weight, not by the brand's world colour it
+   * used to carry: Gmail's dark-theme rewriting left that purple unreadable against
    * the card, and weight is the emphasis every client renders the same way.
-   * Brand color survives only where the layout defends it — the header and the
-   * button fills — so a colored product name reaching the body is a regression.
+   * The brand purple is still in the mail — it fills the My SOG button — so the
+   * assertion is on the name's own markup rather than on the colour's absence.
    */
   it("emphasises the product name by weight, in the body's own color", () => {
-    const html = buildProductConfirmationEmail(t, "en", base);
+    const html = render(base);
     expect(html).toContain(`<strong style="color:${DARK_THEME.foreground};">Minecraft 101</strong>`);
-    expect(html).not.toContain(BRAND.secondary);
-    expect(html).not.toContain("brand-secondary");
+    expect(html).not.toContain("brand-world");
   });
 
   it("escapes HTML in every value it is handed", () => {
-    const html = buildProductConfirmationEmail(t, "en", {
+    const html = render({
       ...base,
       participantName: "<script>xss</script>",
       productName: "<b>Club</b>",
@@ -72,31 +188,195 @@ describe("buildProductConfirmationEmail", () => {
   });
 
   /**
+   * The mail's one facts list, opened by the page's order-summary title. The
+   * row that used to carry the page's photograph carries the type and the name
+   * alone — there are no stored dimensions and no enforced aspect to size a box
+   * from, and the accept list admits three formats Outlook's desktop engine
+   * will not render — so the mail states the two lines that sat beside it and
+   * leaves no hole where a picture would have been.
+   */
+  describe("the facts list", () => {
+    it("states the type, the name, who the seat is for, and the price", () => {
+      const html = render(base);
+      expect(html).toContain("Your order");
+      expect(html).toContain("Enrolled");
+      expect(html).toContain("Aino");
+      expect(html).toContain("Price");
+    });
+
+    /**
+     * One list, and the order is the order a parent needs: what they joined,
+     * who holds the seat, when and where it runs, and last what it costs. The
+     * product's facts run on from the two rows above them with no label of
+     * their own — a heading inside a run of rows would announce a break the
+     * layout does not make.
+     */
+    it("runs the product's facts between the seat and the price, in one list", () => {
+      const html = render(base);
+      const order = ["Your order", "Club", "Enrolled", "Schedule", "Language", "Price"];
+      let cursor = -1;
+      for (const fragment of order) {
+        const at = html.indexOf(fragment);
+        expect(at, fragment).toBeGreaterThan(cursor);
+        cursor = at;
+      }
+      // One table between the section label and the next one, not two.
+      const between = html.slice(
+        html.indexOf("Your order"),
+        html.indexOf("What happens next"),
+      );
+      expect(between.match(/<table/g)).toHaveLength(1);
+    });
+
+    /**
+     * No box. The list is ruled — a top rule and a hairline under every row,
+     * the last one included — and nothing draws an edge around it: a card
+     * inside the shell's card spent a border, a radius and 16px a side out of a
+     * column a phone has not got.
+     */
+    it("rules the rows rather than boxing them", () => {
+      const list = factsList(render(base));
+      expect(list).toContain("border-top:1px solid");
+      expect(list).toContain("border-bottom:1px solid");
+      expect(list).not.toContain("border:1px solid");
+      expect(list).not.toContain("border-radius");
+    });
+
+    it("names the participant even on the parent's own seat", () => {
+      const html = render({ participantName: "Marja", isSelfSeat: true });
+      // The sentences move to the second person; the summary row does not — a
+      // reader's own first name beside "Enrolled" is what they recognise.
+      expect(html).toContain("You’re enrolled in");
+      expect(html).toContain("Marja");
+    });
+
+    it("carries no product picture", () => {
+      expect(render(base)).not.toContain("product-images");
+    });
+
+    it("takes the waitlist's own title and label", () => {
+      const html = render({ mode: "waitlist", priceAmount: null });
+      expect(html).toContain("Your waitlist spot");
+      expect(html).toContain("Waitlisted");
+      expect(html).not.toContain("Your order");
+    });
+  });
+
+  /**
+   * The product's own facts, composed by the page's own formatters, under the
+   * page's labels — rows of the one list rather than a card of their own, and
+   * with no heading over them.
+   */
+  describe("the product's own facts", () => {
+    it("states the schedule, where, who it is for, and the language", () => {
+      const html = render(base);
+
+      expect(html).not.toContain("Good to know");
+      expect(html).toContain("Schedule");
+      expect(html).toContain("Mon");
+      expect(html).toContain("16:00–17:00");
+      // A club's term range is folded in as an extra schedule line, exactly as
+      // the page folds it — the weekly line never says when the term runs.
+      expect(html).toContain("May 31, 2027");
+      expect(html).toContain("Format");
+      expect(html).toContain("Online");
+      expect(html).toContain("Age range");
+      expect(html).toContain("Ages 8–12");
+      expect(html).toContain("Language");
+      expect(html).toContain("Finnish");
+    });
+
+    /**
+     * The mail renders in the *product's* zone, because there is no viewer zone
+     * to render in — parents store none. So the reader cannot infer which zone
+     * the times are in, and the abbrev that names it is always appended. The
+     * page appends the same abbrev through the same formatter, but only when
+     * the viewer's zone differs from the product's; one option, one line.
+     */
+    it("appends the product zone's abbrev to the time-bearing line", () => {
+      expect(render(base)).toContain("16:00–17:00 (GMT+2)");
+    });
+
+    it("appends no abbrev where the schedule states no time", () => {
+      const html = render({
+        overview: { ...OVERVIEW, slots: [], startDate: null, endDate: null },
+      });
+      expect(html).not.toContain("(GMT+");
+    });
+
+    it("names a site and its parent under Where", () => {
+      const html = render({
+        overview: {
+          ...OVERVIEW,
+          isRemote: false,
+          location: { kind: "site", site: "Kallion kirjasto", parent: "Helsinki" },
+        },
+      });
+      expect(html).toContain("Where");
+      expect(html).toContain("Kallion kirjasto, Helsinki");
+      expect(html).not.toContain("Format");
+    });
+
+    it("leads with the audience word where the product is sold to parents", () => {
+      const html = render({
+        overview: { ...OVERVIEW, forGamers: false, forParents: true, minAge: null, maxAge: null },
+      });
+      expect(html).toContain("Audience");
+      expect(html).toContain("For parents");
+      expect(html).not.toContain("Age range");
+    });
+
+    it("composes the family audience and its ages as one sentence", () => {
+      const html = render({ overview: { ...OVERVIEW, forParents: true } });
+      expect(html).toContain("For families, ages 8–12");
+    });
+
+    /**
+     * A send that could not read the product's facts states none of them — the
+     * list is simply shorter, with nothing left behind to look empty.
+     */
+    it("leaves a shorter list when the send had no facts", () => {
+      const html = render({ overview: null });
+      expect(html).not.toContain("Schedule");
+      expect(html).not.toContain("Language");
+      expect(html).toContain("Your order");
+      expect(html).toContain("Price");
+      expect(html).toContain("What happens next");
+    });
+  });
+
+  /**
    * The five modes are the whole shape of this mail: four price shapes and one
    * outcome with no price at all. Each case asserts what its own variant says
-   * *and* what it must not — a waitlist mail that still carries a monthly price
+   * *and* what it must not — a waitlist mail that still carried a monthly price
    * would render perfectly and tell a parent they are being billed for a seat
    * they do not have.
    */
   describe("modes", () => {
     it("states a monthly price on a subscription", () => {
-      const html = buildProductConfirmationEmail(t, "en", base);
+      const html = render(base);
       expect(html).toContain("€40.00 / month");
       expect(html).toContain("billed every month");
       expect(html).not.toContain("one-time");
     });
 
     it("states a one-time price on an upfront purchase", () => {
-      const html = buildProductConfirmationEmail(t, "en", { ...base, mode: "upfront" });
+      const html = render({ mode: "upfront" });
       expect(html).toContain("€40.00 (one-time)");
       expect(html).toContain("nothing more to pay");
       expect(html).not.toContain("billed every month");
     });
 
-    it("says free rather than showing a blank price", () => {
-      const html = buildProductConfirmationEmail(t, "en", { ...base, mode: "free", priceAmount: null });
-      expect(html).toContain("Price: Free");
-      expect(html).toContain("nothing to pay");
+    /**
+     * A free signup says "Free" on the price row and adds no bullet, which is
+     * exactly the page's shape — the row has already said what there is to say,
+     * and a second sentence about a cost of nothing is a sentence about
+     * nothing.
+     */
+    it("says free rather than showing a blank price, and adds no bullet", () => {
+      const html = render({ mode: "free", priceAmount: null });
+      expect(html).toContain("Free");
+      expect(html).not.toContain("nothing to pay for this one");
     });
 
     /**
@@ -105,86 +385,578 @@ describe("buildProductConfirmationEmail", () => {
      * fee of their own, and the family has already been told so by their
      * council. The mail says who bears the cost on the price line and adds
      * nothing to the "what happens next" list, so the negative assertions are
-     * the load-bearing half of this case — including the absent bullet, which
-     * is the only place a second, wordier version of the same claim could
-     * creep back in.
+     * the load-bearing half of this case.
      */
     it("says who bears the cost of a municipality registration, never 'Free'", () => {
-      const html = buildProductConfirmationEmail(t, "en", { ...base, mode: "external", priceAmount: null });
-      expect(html).toContain("Price: Paid for by your municipality");
-      expect(html).not.toContain("Price: Free");
-      expect(html).not.toContain("nothing to pay for this one");
-      // Placement only — no cost bullet of any wording.
+      const html = render({ mode: "external", priceAmount: null });
+      expect(html).toContain("Paid for by your municipality");
+      expect(html).not.toContain("Free");
       expect(html).not.toContain("invoice");
       expect(html).toContain("in a group with a Gedu");
     });
 
-    it("prints no price line at all on a waitlist join", () => {
-      const html = buildProductConfirmationEmail(t, "en", { ...base, mode: "waitlist", priceAmount: null });
+    it("prints no price row at all on a waitlist join", () => {
+      const html = render({ mode: "waitlist", priceAmount: null });
       expect(html).toContain("on the waitlist");
-      expect(html).not.toContain("Price");
+      expect(html).not.toContain("€40.00");
       expect(html).not.toContain("billed every month");
     });
 
     /** No frozen queue number — it goes stale and the reader can't tell. */
     it("points at My SOG for the live waitlist position instead of stating one", () => {
-      const html = buildProductConfirmationEmail(t, "en", { ...base, mode: "waitlist", priceAmount: null });
-      expect(html).toContain("where you stand in My SOG");
+      const html = render({ mode: "waitlist", priceAmount: null });
+      expect(html).toContain("keep track of your waitlist spot");
       expect(html).not.toContain("position");
     });
 
+    /** The page's three waitlist bullets, the middle one keyed by type. */
+    it("keeps a waitlisted place in the words the type calls for", () => {
+      const club = render({ mode: "waitlist", priceAmount: null });
+      // The name arrives styled, so the assertion is on the sentence around it.
+      expect(club).toContain("Aino</span> keeps their place in line for the whole term.");
+      expect(
+        render({ mode: "waitlist", priceAmount: null, productType: "camp" }),
+      ).toContain("keeps their place in line for the camp.");
+    });
+
     /**
-     * A paid mode with no amount in hand: the price line disappears rather than
+     * A paid mode with no amount in hand: the price row disappears rather than
      * rendering an empty one, because a blank beside a product name reads as
      * "free".
      */
-    it("omits the price line when a paid mode has no amount", () => {
-      const html = buildProductConfirmationEmail(t, "en", { ...base, priceAmount: null });
-      expect(html).not.toContain("Price:");
+    it("omits the price row when a paid mode has no amount", () => {
+      const html = render({ priceAmount: null });
+      expect(html).not.toContain("€");
       expect(html).toContain("billed every month");
     });
   });
 
   /**
+   * A club bought before it starts completes Checkout at €0, and the parent is
+   * owed the real date in the same breath — the page states it and so does the
+   * mail, from the same rule, above the general billing line.
+   */
+  describe("the deferred first charge", () => {
+    it("states the date it was given, before the billing line", () => {
+      const html = render({ firstChargeDate: "13 Jan 2027" });
+      expect(html).toContain("Nothing was charged today.");
+      expect(html).toContain("13 Jan 2027");
+      expect(html.indexOf("13 Jan 2027")).toBeLessThan(
+        html.indexOf("billed every month"),
+      );
+    });
+
+    it("says nothing where none was given", () => {
+      expect(render(base)).not.toContain("Nothing was charged today.");
+    });
+
+    /** Only a subscription defers a charge; nothing else may state one. */
+    it("says nothing on a one-time purchase, whatever it was handed", () => {
+      const html = render({ mode: "upfront", firstChargeDate: "13 Jan 2027" });
+      expect(html).not.toContain("Nothing was charged today.");
+    });
+  });
+
+  /**
    * The self seat: the recipient and the participant are one person, so the
-   * copy moves to the second person by
-   * swapping whole keys — reading your own name back at you in the third person
-   * is the shape of a mail sent about somebody else.
+   * copy moves to the second person by swapping whole keys — reading your own
+   * name back at you in the third person is the shape of a mail sent about
+   * somebody else.
    */
   describe("the parent's own seat", () => {
     it("swaps the whole sentence rather than naming the reader", () => {
-      const html = buildProductConfirmationEmail(t, "en", {
-        ...base,
-        participantName: "Marja",
-        isSelfSeat: true,
-      });
+      const html = render({ participantName: "Marja", isSelfSeat: true });
       expect(html).toContain("You’re enrolled in");
       expect(html).not.toContain("is enrolled in");
-      // The self variant names nobody: the reader *is* the participant, so the
-      // name appearing anywhere means a third-person sentence survived.
-      expect(html).not.toContain("Marja");
     });
 
     it("moves the placement line into the second person too", () => {
-      const html = buildProductConfirmationEmail(t, "en", {
-        ...base,
-        participantName: "Marja",
-        isSelfSeat: true,
-      });
+      const html = render({ participantName: "Marja", isSelfSeat: true });
       expect(html).toContain("We’ll place you in a group");
-      expect(html).not.toContain("Marja");
+      expect(html).not.toContain("We’ll place Marja");
     });
 
     it("takes the second person on the waitlist as well", () => {
-      const html = buildProductConfirmationEmail(t, "en", {
-        ...base,
+      const html = render({
         participantName: "Marja",
         isSelfSeat: true,
         mode: "waitlist",
         priceAmount: null,
       });
       expect(html).toContain("You’re on the waitlist for");
-      expect(html).not.toContain("Marja");
+      expect(html).toContain("You keep your place in line for the whole term.");
     });
+  });
+
+  /**
+   * The child's own copy: the reader is the participant, so it takes the self
+   * seat's second person — and it drops everything only a parent can act on.
+   * The negative assertions are the load-bearing half: a child told they will
+   * be billed monthly has been sent their parent's mail under another name.
+   */
+  describe("the child's own copy", () => {
+    const GAMER_DASHBOARD_URL = "https://sogverse.sog.gg/gamer";
+    /** What the sender hands the child's render: their root, and no price. */
+    const child: Partial<ProductConfirmationEmailOptions> = {
+      gamerCopy: true,
+      priceAmount: null,
+      dashboardUrl: GAMER_DASHBOARD_URL,
+    };
+
+    it("greets the child by name and speaks in the second person", () => {
+      const html = render(child);
+      expect(html).toContain("Aino");
+      expect(html).toContain("Hi ");
+      expect(html).toContain("You’re enrolled in");
+      expect(html).not.toContain("is enrolled in");
+      expect(html).toContain("We’ll place you in a group");
+    });
+
+    it("states no price and no billing line on any mode", () => {
+      for (const mode of ["subscription", "upfront", "free", "external"] as const) {
+        const html = render({ ...child, mode });
+        expect(html).not.toContain("Price");
+        expect(html).not.toContain("billed every month");
+        expect(html).not.toContain("nothing more to pay");
+        expect(html).not.toContain("Nothing was charged today");
+      }
+    });
+
+    it("ignores a price and a first-charge date it is handed", () => {
+      const html = render({
+        ...child,
+        priceAmount: "€40.00",
+        firstChargeDate: "13 Jan 2027",
+      });
+      expect(html).not.toContain("€40.00");
+      expect(html).not.toContain("13 Jan 2027");
+    });
+
+    /**
+     * The card records a signup rather than a purchase, because there is no
+     * purchase in this copy — no price row, and nothing the reader paid.
+     */
+    it("titles the summary after the signup rather than after an order", () => {
+      const html = render(child);
+      expect(html).toContain("Your signup");
+      expect(html).not.toContain("Your order");
+      // Still the same card otherwise: who the seat is for, under the page's
+      // own label.
+      expect(html).toContain("Enrolled");
+    });
+
+    it("keeps the product's own facts, which are nobody's to withhold", () => {
+      const html = render(child);
+      expect(html).toContain("Schedule");
+      expect(html).toContain("Ages 8–12");
+      expect(html).toContain("Finnish");
+    });
+
+    it("links the child's own My SOG root", () => {
+      const html = render(child);
+      expect(html).toContain(`href="${GAMER_DASHBOARD_URL}"`);
+      expect(html).not.toContain("/parent");
+    });
+
+    it("takes the second person on the waitlist and keeps the live-position pointer", () => {
+      const html = render({ ...child, mode: "waitlist" });
+      expect(html).toContain("You’re on the waitlist for");
+      expect(html).toContain("You keep your place in line for the whole term.");
+      expect(html).not.toContain("is on the waitlist for");
+    });
+
+    it("subjects the copy in the second person, whatever the seat flag says", () => {
+      expect(productConfirmationSubject(t, resolve(child))).toBe(
+        "You are enrolled in Minecraft 101",
+      );
+      expect(
+        productConfirmationSubject(t, resolve({ ...child, mode: "waitlist" })),
+      ).toBe("You are on the waitlist for Minecraft 101");
+    });
+
+    /**
+     * **The calendar file is in both copies, and it is one calendar object.** A
+     * child with a mailbox has a calendar, and the sessions in it are theirs;
+     * the identifier is the seat's, so the two documents are one event seen by
+     * two people rather than two events nobody can reconcile. What differs is
+     * the attendee, because a client offers the RSVP only to the mailbox it
+     * matches.
+     */
+    describe("its calendar invitation", () => {
+      const CHILD_SCHEDULE: ProductConfirmationInvitationInput = {
+        ...SCHEDULE,
+        attendeeName: "Aino Virtanen",
+        attendeeEmail: "aino@example.test",
+      };
+
+      it("carries the same invite.ics under the same identifier as the parent's", () => {
+        const [parent] = productConfirmationAttachments(resolve({ invitation: SCHEDULE }));
+        const [mine] = productConfirmationAttachments(
+          resolve({ ...child, invitation: CHILD_SCHEDULE }),
+        );
+
+        expect(mine.name).toBe("invite.ics");
+        expect(parent.name).toBe("invite.ics");
+        expect(mine.text).toContain(`UID:${PARTICIPATION_ID}@sogverse`);
+        expect(parent.text).toContain(`UID:${PARTICIPATION_ID}@sogverse`);
+      });
+
+      it("names the child as the attendee, and only the child", () => {
+        const [mine] = productConfirmationAttachments(
+          resolve({ ...child, invitation: CHILD_SCHEDULE }),
+        );
+
+        expect(mine.text).toContain("aino@example.test");
+        expect(mine.text).toContain("Aino Virtanen");
+        expect(mine.text).not.toContain("marja@example.com");
+      });
+
+      /**
+       * The same rule the mail's sentences follow: name the participant only
+       * when the reader is not the participant. In the child's own calendar
+       * that is their own name, which is the shape of an entry about somebody
+       * else.
+       */
+      it("titles the entry by the product alone", () => {
+        const [mine] = productConfirmationAttachments(
+          resolve({ ...child, invitation: CHILD_SCHEDULE }),
+        );
+        const [parent] = productConfirmationAttachments(resolve({ invitation: SCHEDULE }));
+
+        expect(mine.text).toContain("SUMMARY:Minecraft 101\r\n");
+        expect(parent.text).toContain("SUMMARY:Minecraft 101 – Aino");
+      });
+
+      it("states the text twin the entry's notes are filled from", () => {
+        const text = productConfirmationText(
+          t,
+          resolve({ ...child, invitation: CHILD_SCHEDULE }),
+        )!;
+
+        expect(text).toContain("Hi Aino!");
+        expect(text).toContain("You’re enrolled in Minecraft 101.");
+        expect(text).toContain("Your signup");
+        expect(text).toContain(GAMER_DASHBOARD_URL);
+        expect(text).not.toContain("Price");
+        expect(text).not.toContain("billed every month");
+      });
+    });
+  });
+});
+
+/**
+ * The two artifacts a signup mail can carry — the file and its plain-text twin
+ * — and the one thing that decides both: whether a calendar object could be
+ * composed at all.
+ *
+ * **The mail says nothing about the file, deliberately.** A client that can act
+ * on an `invite.ics` shows the invitation itself, with its own buttons, and a
+ * sentence announcing it underneath is the mail narrating its own attachment
+ * list. So the pins here are on the artifacts, not on any copy.
+ */
+describe("the calendar invitation", () => {
+  it("announces the attachment nowhere in the body", () => {
+    const html = render({ invitation: SCHEDULE });
+
+    expect(html).not.toContain("calendar invitation");
+    expect(html).not.toContain("invite.ics");
+  });
+
+  /**
+   * A waitlist join is a place in a queue rather than a seat, so it composes no
+   * entry however complete the product's schedule is — the resolver refuses it
+   * before the composer is asked.
+   */
+  it("composes nothing for a waitlist join, schedule or no schedule", () => {
+    const content = resolve({
+      mode: "waitlist",
+      priceAmount: null,
+      invitation: SCHEDULE,
+    });
+
+    expect(content.invitation).toBeNull();
+    expect(productConfirmationAttachments(content)).toEqual([]);
+    expect(productConfirmationText(t, content)).toBeUndefined();
+  });
+
+  it("attaches the document as invite.ics, carrying the seat's own identifier", () => {
+    const [attachment] = productConfirmationAttachments(resolve({ invitation: SCHEDULE }));
+
+    expect(attachment.name).toBe("invite.ics");
+    expect(attachment.text).toContain(`UID:${PARTICIPATION_ID}@sogverse`);
+    expect(attachment.text).toContain("BEGIN:VCALENDAR");
+    // What is sent is the base64; the decoded copy exists for the preview.
+    expect(atob(attachment.contentBase64)).toContain("BEGIN:VCALENDAR");
+  });
+});
+
+/**
+ * The text body is not a courtesy fallback — on a Microsoft mailbox it is where
+ * the calendar entry's own notes come from — so it exists exactly when a
+ * calendar part travels with the mail, and it states the mail's own words in
+ * the mail's own order.
+ */
+describe("the plain-text twin", () => {
+  it("is stated only when the mail carries the calendar part", () => {
+    expect(productConfirmationText(t, resolve())).toBeUndefined();
+    expect(productConfirmationText(t, resolve({ invitation: SCHEDULE }))).toBeDefined();
+  });
+
+  it("walks the same sections in the same order, as plain lines", () => {
+    const text = productConfirmationText(t, resolve({ invitation: SCHEDULE }))!;
+
+    const order = [
+      "You’re all set!",
+      "Aino is enrolled in Minecraft 101.",
+      "Your order",
+      "Club: Minecraft 101",
+      "Enrolled: Aino",
+      "Schedule: ",
+      "Language: Finnish",
+      "Price: €40.00 / month",
+      "What happens next",
+      "- We’ll place Aino in a group",
+      DASHBOARD_URL,
+      "Questions? Just reply to this email.",
+    ];
+    let cursor = -1;
+    for (const fragment of order) {
+      const at = text.indexOf(fragment);
+      expect(at, fragment).toBeGreaterThan(cursor);
+      cursor = at;
+    }
+    // The facts run on from the rows above them, with no heading of their own,
+    // exactly as they do in the HTML.
+    expect(text).not.toContain("Good to know");
+    // The mail's words, not its markup: an entry's notes are read as text.
+    expect(text).not.toContain("<");
+    expect(text).not.toContain("&#");
+  });
+
+  it("carries the deferred first-charge date unescaped", () => {
+    const text = productConfirmationText(
+      t,
+      resolve({ invitation: SCHEDULE, firstChargeDate: "13 Jan 2027" }),
+    )!;
+    expect(text).toContain("- Nothing was charged today. Your first payment is on 13 Jan 2027.");
+  });
+});
+
+/**
+ * The zone the mail's times are in, named the way every other mail already
+ * names one: the short `Intl` abbrev, appended to the line that carries the
+ * clock face.
+ *
+ * **It is the product's zone, not the viewer's**, and that is the whole reason
+ * the abbrev is unconditional here. A page renders in the viewer's own zone and
+ * decorates the line only when that differs from the product's; a mail has no
+ * viewer zone to render in, so the times are in a zone the reader has no way to
+ * infer and the abbrev is the whole statement.
+ *
+ * The values are **measured, not guessed** — CLDR gives different abbrevs for
+ * one zone in different languages, and the point of the pin is that the abbrev
+ * is locale-formatted rather than a string we wrote. `tlh` is skipped for the
+ * reason its clock face is: `Intl` has no data for it, so it resolves to the
+ * runtime default locale and nothing about its output is stable across
+ * machines.
+ */
+describe("the zone the times are given in", () => {
+  /** Europe/Helsinki in January (EET, UTC+2), as each locale's `Intl` sets it. */
+  const ABBREV = [
+    ["en", "GMT+2"],
+    ["fi", "UTC+2"],
+    ["sv", "EET"],
+    ["fr", "UTC+2"],
+  ] as const;
+
+  it.each(ABBREV)("appends %s's own abbrev for the product zone", async (locale, abbrev) => {
+    const translator = await getEmailTranslator(locale);
+    const html = buildProductConfirmationEmail(
+      translator,
+      locale,
+      // No guide in this one: the case is about the zone abbrev on the
+      // schedule line, and the four catalogs need not agree on anything else
+      // for it.
+      resolveProductConfirmation(translator, null, locale, base),
+    );
+
+    expect(html).toContain(`(${abbrev})`);
+    // The raw IANA identifier is the fallback `viewerTzAbbrev` returns when
+    // `Intl` throws; seeing it here would mean no abbrev was resolved at all.
+    expect(html).not.toContain("Europe/Helsinki");
+  });
+
+  /**
+   * The abbrev is read off the run's own first occurrence, so a summer term
+   * says EEST where a winter one says EET. That is correct rather than a
+   * seasonal-name bug: unlike a long name spanning a whole run, this decorates
+   * one line of times that were themselves rendered at that instant.
+   */
+  it("reads the abbrev at the occurrence the times are rendered for", () => {
+    const winter = render({ overview: { ...OVERVIEW, startDate: "2027-01-04" } });
+    const summer = render({
+      overview: {
+        ...OVERVIEW,
+        startDate: "2027-07-05",
+        endDate: "2027-08-31",
+        now: new Date("2027-06-01T08:00:00Z"),
+      },
+    });
+
+    expect(winter).toContain("(GMT+2)");
+    expect(summer).toContain("(GMT+3)");
+  });
+});
+
+/**
+ * The "Before the first session" guide, as this mail's section.
+ *
+ * The words themselves belong to the guide's own tests; what is asserted here
+ * is what the *mail* decides about it — that it is stated at all, on which
+ * renders, to which readers, and in both of the forms this mail states its
+ * content in. The two negatives are the load-bearing half: a waitlist join has
+ * no seat and therefore no first session to be ready for, and an in-person
+ * product whose topic brings no steps has to leave the mail exactly as it was
+ * before the guide existed.
+ */
+describe("the “Before the first session” guide", () => {
+  const HEADING = "Before the first session";
+  /** Two of the Java guide's steps: an account step, and an install step. */
+  const ACCOUNT_STEP = "Get a Microsoft account with Minecraft on it";
+  const INSTALL_STEP = "Install the Minecraft Launcher";
+  /**
+   * The Roblox guide's account and install steps. The in-person cases read
+   * this topic rather than Java, because in person the Minecraft login is
+   * ours along with the machine, so Java has nothing to say there at all —
+   * Roblox is the guide that keeps an account step for the family to do.
+   */
+  const ROBLOX_ACCOUNT_STEP = "Create a Roblox account";
+  const ROBLOX_INSTALL_STEP = "Install Roblox Studio";
+  /** The step every remote guide ends on, whatever its topic. */
+  const REMOTE_STEP = "Set up the microphone and camera";
+
+  it("states the guide on an enrolled signup", () => {
+    const html = render();
+    expect(html).toContain(HEADING);
+    expect(html).toContain(ACCOUNT_STEP);
+    expect(html).toContain(INSTALL_STEP);
+    expect(html).toContain("you’re ready for the session!");
+  });
+
+  /**
+   * One text, written to read the same to a parent and to a teenage gamer — so
+   * the copy that drops the price row and the billing bullets keeps this whole.
+   */
+  it("states the same guide in the child's own copy", () => {
+    const html = render({
+      gamerCopy: true,
+      priceAmount: null,
+      dashboardUrl: "https://sogverse.sog.gg/gamer",
+    });
+    expect(html).toContain(HEADING);
+    expect(html).toContain(ACCOUNT_STEP);
+    expect(html).toContain(INSTALL_STEP);
+  });
+
+  it("states none on a waitlist join, whatever the topic carries", () => {
+    for (const overrides of [{}, { gamerCopy: true }]) {
+      const html = render({ ...overrides, mode: "waitlist", priceAmount: null });
+      expect(html).not.toContain(HEADING);
+      expect(html).not.toContain(ACCOUNT_STEP);
+    }
+  });
+
+  it("states none for a label-only topic on an in-person product", () => {
+    // Nothing to install, nothing to sign into, and no voice room either — so
+    // the mail is exactly the mail it was before the guide existed.
+    const html = render({ topic: "esports", isRemote: false });
+    expect(html).not.toContain(HEADING);
+    expect(html).not.toContain(ACCOUNT_STEP);
+  });
+
+  it("states the one-step guide for a label-only topic on a remote product", () => {
+    // The room is the thing to get ready for, and it belongs to the product
+    // rather than to the topic.
+    const html = render({ topic: "esports" });
+    expect(html).toContain(HEADING);
+    expect(html).toContain(REMOTE_STEP);
+    expect(html).not.toContain(ACCOUNT_STEP);
+  });
+
+  /**
+   * In person School of Gaming brings the machines with everything installed,
+   * so the guide shortens to its account steps — under the intro written for
+   * that form, because the ordinary one promises software to install.
+   */
+  it("states the accounts-only form for an in-person product", () => {
+    const html = render({ topic: "roblox_studio", isRemote: false });
+    expect(html).toContain(HEADING);
+    expect(html).toContain(ROBLOX_ACCOUNT_STEP);
+    expect(html).not.toContain(ROBLOX_INSTALL_STEP);
+    expect(html).toContain("We bring the computers to the session");
+  });
+
+  it("states no guide for an in-person Minecraft product, whose login is ours", () => {
+    expect(render({ isRemote: false })).not.toContain(HEADING);
+  });
+
+  /** Where the section sits: after what happens next, before the button. */
+  it("places the guide between the next steps and the My SOG button", () => {
+    const html = render();
+    expect(html.indexOf("What happens next")).toBeLessThan(html.indexOf(HEADING));
+    expect(html.indexOf(HEADING)).toBeLessThan(
+      html.indexOf(`href="${DASHBOARD_URL}"`),
+    );
+  });
+
+  /**
+   * The plain-text twin — which on a Microsoft mailbox is the calendar entry's
+   * own notes, so a family reading the session in their calendar weeks later
+   * finds the same guide the mail stated.
+   */
+  describe("the plain-text twin", () => {
+    function text(overrides: Partial<ProductConfirmationEmailOptions> = {}): string {
+      return productConfirmationText(
+        t,
+        resolve({ invitation: SCHEDULE, ...overrides }),
+      )!;
+    }
+
+    it("states the guide, in the mail's own order", () => {
+      const body = text();
+      expect(body).toContain(HEADING);
+      expect(body).toContain(`1. ${ACCOUNT_STEP}`);
+      expect(body).toContain(`2. ${INSTALL_STEP}`);
+      expect(body).toContain(`4. ${REMOTE_STEP}`);
+      expect(body.indexOf("What happens next")).toBeLessThan(body.indexOf(HEADING));
+      expect(body.indexOf(HEADING)).toBeLessThan(body.indexOf(DASHBOARD_URL));
+    });
+
+    it("states the same guide in the child's own copy", () => {
+      expect(text({ gamerCopy: true, priceAmount: null })).toContain(ACCOUNT_STEP);
+    });
+
+    it("shortens with the HTML rather than separately", () => {
+      const inPerson = text({ topic: "roblox_studio", isRemote: false });
+      expect(inPerson).toContain(ROBLOX_ACCOUNT_STEP);
+      expect(inPerson).not.toContain(ROBLOX_INSTALL_STEP);
+      expect(inPerson).not.toContain(REMOTE_STEP);
+      expect(text({ topic: "esports", isRemote: false })).not.toContain(HEADING);
+    });
+  });
+
+  /**
+   * A caller with only the mail's own translator composes the mail without the
+   * guide — the admin harness's path when nothing loaded the second namespace.
+   * It is an absent section, never a half-rendered one.
+   */
+  it("states none when no guide translator was handed over", () => {
+    const html = buildProductConfirmationEmail(
+      t,
+      "en",
+      resolveProductConfirmation(t, null, "en", base),
+    );
+    expect(html).not.toContain(HEADING);
+    expect(html).toContain("Minecraft 101");
   });
 });

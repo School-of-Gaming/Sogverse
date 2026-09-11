@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe/client";
+import { currentPeriodEndOf } from "@/lib/stripe/subscription-period";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { confirmPaidParticipationRpcResult } from "@/services/participations/participations.contracts";
 import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
@@ -260,6 +261,14 @@ async function handleCheckoutCompleted(
   // gamer×club), so there's nothing to find-or-merge — just insert, keyed to the
   // participation. Idempotent on replay via the UNIQUE participation_id /
   // stripe_subscription_id (insert and swallow 23505).
+  // The confirmation mail's "your first payment is on …" line, and this handler
+  // is the only send site that gets it for free: the subscription is retrieved
+  // just below to write the row, so the period end is already in hand. It is a
+  // *deferred* first charge only where nothing moved today — a club bought
+  // before it starts completes Checkout at €0 — and only while the instant is
+  // still ahead of us; those two tests are the same pair the confirmation page
+  // makes against the ledger, asked here of the values that produced it.
+  let firstChargeAt: string | null = null;
   if (isSubscription && typeof session.subscription === "string") {
     const subId = session.subscription;
     const sub = await stripe.subscriptions.retrieve(subId, {
@@ -286,6 +295,14 @@ async function handleCheckoutCompleted(
     });
     if (subErr && subErr.code !== "23505") {
       throw subErr;
+    }
+
+    if (
+      (session.amount_total ?? 0) === 0 &&
+      periodEnd !== null &&
+      periodEnd * 1000 > Date.now()
+    ) {
+      firstChargeAt = new Date(periodEnd * 1000).toISOString();
     }
   }
 
@@ -339,6 +356,7 @@ async function handleCheckoutCompleted(
       customerId,
       participantId,
       productId,
+      participationId: confirmJson.participation_id,
       // The price shape, from the shape that was bought: a club is a monthly
       // subscription, a camp or event is paid once.
       mode: isSubscription ? "subscription" : "upfront",
@@ -346,6 +364,8 @@ async function handleCheckoutCompleted(
       // was built. Anything outside the supported set cannot be formatted, and
       // the mail then states no price rather than a wrong one.
       currency: isSupportedCurrency(currency) ? currency : undefined,
+      // Null on everything but a club bought before it starts — see above.
+      firstChargeAt,
     });
   }
 }
@@ -453,16 +473,42 @@ async function handleSubscriptionUpdated(
   // the account; "do we have a row for this stripe_subscription_id" is the gate.
   const { data: ours } = await admin
     .from("family_subscriptions")
-    .select("id")
+    .select("id, updated_at")
     .eq("stripe_subscription_id", sub.id)
     .maybeSingle();
   if (!ours) return;
 
   const periodEnd = currentPeriodEndOf(sub);
+  const priceId = sub.items.data[0]?.price.id;
+  // Stripe delivers and retries out of order, so an event describing the
+  // subscription BEFORE the club switch can arrive after the switch has already
+  // written the target's price. Writing its price id then would silently
+  // downgrade the row back to the club the family has left — the one field on
+  // this row that names a product, and the one a stale payload can get wrong in
+  // a way nothing else notices.
+  //
+  // `event.created` is the instant Stripe built the payload; `updated_at` is
+  // the instant we last wrote the row. Older payload, no price write. Status and
+  // period are unaffected: those are properties of the subscription's own
+  // lifecycle rather than of which club it bills for, and a late arrival there
+  // is corrected by the next event.
+  const eventIsStale = event.created * 1000 < Date.parse(ours.updated_at);
   const { error } = await admin
     .from("family_subscriptions")
     .update({
       status: statusForSubscriptionUpdate(sub),
+      // The subscription's current item price, exactly as the checkout-completed
+      // handler records it at creation. The admin club switch changes this price
+      // and fires this event, so without it the row would keep naming the club
+      // the family has left. The event payload carries the items inline, so this
+      // costs no extra retrieve. Last writer wins between this and the RPC that
+      // moves the seat, and both write the same id.
+      //
+      // The key is OMITTED when the payload carries no item, rather than written
+      // as null: an items-less update is this handler learning nothing about the
+      // price, and "I learned nothing" must not overwrite a good stored id with
+      // a null the rest of the app reads as "this seat bills for nothing".
+      ...(priceId && !eventIsStale ? { stripe_price_id: priceId } : {}),
       current_period_end:
         periodEnd !== null
           ? new Date(periodEnd * 1000).toISOString()
@@ -622,23 +668,6 @@ function statusForNewSubscription(
     { subscription: sub.id, stripeStatus: sub.status, eventId },
   );
   return "incomplete";
-}
-
-// Stripe API: `current_period_end` lives on the subscription in older API
-// versions and on the subscription items in newer ones. Read whichever side
-// has it. Cast through `unknown` because the active SDK type elides one form.
-function currentPeriodEndOf(sub: Stripe.Subscription): number | null {
-  const item = sub.items.data[0] as
-    | (Stripe.SubscriptionItem & { current_period_end?: number })
-    | undefined;
-  if (item && typeof item.current_period_end === "number") {
-    return item.current_period_end;
-  }
-  const subAny = sub as Stripe.Subscription & { current_period_end?: number };
-  if (typeof subAny.current_period_end === "number") {
-    return subAny.current_period_end;
-  }
-  return null;
 }
 
 async function handleSubscriptionDeleted(

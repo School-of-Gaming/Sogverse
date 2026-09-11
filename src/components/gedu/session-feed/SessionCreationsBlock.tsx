@@ -3,7 +3,8 @@
 import { AlertTriangle, Check, Eye, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import type { SessionFeedGamer } from "./types";
+import { isExpectedOnEntry } from "./entry-state";
+import type { SessionFeedEntry, SessionFeedGamer } from "./types";
 
 /**
  * What the run's **final session** still owes in creations, itemized per member,
@@ -11,7 +12,7 @@ import type { SessionFeedGamer } from "./types";
  *
  * **It exists because a session cannot flag work a gedu has no way to provide
  * from where they were flagged** *(owner)*. The final card of a flagged run goes
- * amber for a fourth reason nobody could see on it: a gedu opened the editor,
+ * warning-toned for a fourth reason nobody could see on it: a gedu opened the editor,
  * found the register full and the report written, and had nothing to fix. The
  * itemization was on the roster the whole time — a tone on a button in the rail
  * — which is the right place for *who*, and no place at all for a gedu working
@@ -36,24 +37,44 @@ import type { SessionFeedGamer } from "./types";
  * last session, here is what it will want. Once the session has ended and the
  * condition is unmet it takes the warning tone, which is exactly when the card's
  * own needs-attention line fires — the two are read off one derivation, so a
- * warning-toned block always sits under an amber header. Not the converse: a
- * header goes amber for any of four unmet conditions, so a card owing nothing
- * but its report is amber over a perfectly calm block. What the neutral half
+ * warning-toned block always sits under a warning-toned header. Not the
+ * converse: a header takes the tone for any of four unmet conditions, so a card
+ * owing nothing but its report is warning-toned over a perfectly calm block. What the neutral half
  * buys is the whole of the owner's complaint: the work is discoverable while
  * there is still time to do it, rather than only after the run is over.
  *
- * **An empty roster renders nothing at all**, which is the same exemption the
- * completeness derivation makes: there is nobody to owe, so there is nothing to
- * say and no space to hold for it.
+ * **Every member is the members this session EXPECTED**, on the same test the
+ * register beside it uses — a member placed into the group after the final
+ * session ended is on neither list. The owner's principle is that a gedu owes a
+ * creation for every gamer who was in the group at the time of the last
+ * session, which is the register's question asked about a different obligation,
+ * so it gets the register's answer. Without it this block would be the one part
+ * of the card contradicting the rest: the same name absent from the register
+ * directly above and itemized as owing directly below it, on one session.
+ *
+ * **An empty expected set renders nothing at all**, which is the same exemption
+ * the completeness derivation makes: there is nobody to owe, so there is
+ * nothing to say and no space to hold for it. That now covers a second case —
+ * a group formed entirely after its final session ran — and it should, for the
+ * same reason.
  */
 export function SessionCreationsBlock({
+  entry,
   roster,
   withCreations,
   owed,
   disabled = false,
   onOpenMember,
 }: {
-  /** The group's current roster — the tally runs over it, never over the map. */
+  /**
+   * The session this block belongs to — the run's final one, read only for its
+   * end instant, which is what decides who it expected.
+   */
+  entry: Pick<SessionFeedEntry, "endsAt">;
+  /**
+   * The group's current roster — the tally runs over the members of it this
+   * session expected, never over the creations map.
+   */
   roster: readonly SessionFeedGamer[];
   /** Who already has at least one creation in this group. */
   withCreations: ReadonlySet<string>;
@@ -78,16 +99,19 @@ export function SessionCreationsBlock({
 }) {
   const t = useTranslations("gedu.sessionFeed");
 
-  if (roster.length === 0) return null;
+  // The members this final session expected — see the note above. Everything
+  // below counts and lists over this, never over the whole roster.
+  const expected = roster.filter((gamer) => isExpectedOnEntry(entry, gamer));
 
-  const added = roster.filter((gamer) => withCreations.has(gamer.id)).length;
+  if (expected.length === 0) return null;
+
+  const added = expected.filter((gamer) => withCreations.has(gamer.id)).length;
 
   return (
     <div
-      className={cn(
-        "space-y-2 rounded-md border p-2.5",
-        owed ? "border-warning/40 bg-warning/5" : "border-border bg-muted/20",
-      )}
+      // One ground either way: what an owed block changes is its mark and its
+      // title, never the panel behind them.
+      className="space-y-2 rounded-md border border-border bg-lifted p-2.5"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         {/* The eye is the dialog's own mark for the family-visible half, so the
@@ -117,14 +141,14 @@ export function SessionCreationsBlock({
             owed ? "text-warning" : "text-muted-foreground",
           )}
         >
-          {t("creationsAddedCount", { added, total: roster.length })}
+          {t("creationsAddedCount", { added, total: expected.length })}
         </span>
       </div>
 
       <p className="text-xs text-muted-foreground">{t("creationsHint")}</p>
 
       <ul className="flex flex-wrap gap-1.5">
-        {roster.map((gamer) => {
+        {expected.map((gamer) => {
           const has = withCreations.has(gamer.id);
           return (
             <li key={gamer.id}>
@@ -138,14 +162,14 @@ export function SessionCreationsBlock({
                     : t("creationsMemberMissing", { name: gamer.firstName })
                 }
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                  "inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   "disabled:cursor-not-allowed disabled:opacity-50",
                   has
-                    ? "border-transparent bg-muted/40 text-muted-foreground hover:text-foreground"
+                    ? "bg-lifted text-muted-foreground hover:text-foreground"
                     : owed
-                      ? "border-warning bg-warning/15 font-semibold text-warning"
-                      : "border-border text-foreground hover:bg-muted",
+                      ? "font-semibold text-warning"
+                      : "text-foreground hover:bg-hover",
                 )}
               >
                 {has ? (

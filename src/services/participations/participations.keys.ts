@@ -31,4 +31,10 @@ export const participationKeys = {
     ] as const,
   byCheckoutSession: (checkoutSessionId: string) =>
     [...participationKeys.all, "checkout-session", checkoutSessionId] as const,
+  forGamers: (gamerIds: string[]) =>
+    [
+      ...participationKeys.all,
+      "for-gamers",
+      { gamerIds: [...gamerIds].sort() },
+    ] as const,
 };

@@ -73,6 +73,12 @@ the end of §5 — how bodies are parsed, how errors map, and what is tested.*
 47 `route.ts` files, 50 handlers (three files export two methods). Auth postures found in
 the wild — this taxonomy is exhaustive over today's surface, and §3.1 adopts it:
 
+**The surface is `src/app/api/**`, not every route handler in the app.** The two Open
+Graph card handlers sit at the app root outside it — they are public images reached by a
+crawler, deliberately excluded from the proxy so they stay cacheable, and they have no
+caller to authenticate — so they carry no registry entry and are covered by an
+integration test that renders both cards instead.
+
 | Posture | Handlers | Notes |
 |---|---|---|
 | `role-gated` (`requireRole`) | 32 | Variants that must be captured: `allowUnverified` (6 — the PIN-locked-customer routes), `requireCertifiedGedu` (2), all-four-roles-as-any-authenticated (2) |
@@ -152,7 +158,11 @@ its classification:
   verifier), `api-key`. Every non-`role-gated` entry carries a mandatory `reason`
   string — the carve-out-with-reason shape the proxy test already uses.
 - **Body discipline** — `json` (names its schema), `multipart`, `raw` (webhook text
-  verification), `none`.
+  verification), `none`. `raw` covers a second, smaller case: a plain HTML form post
+  (urlencoded) that reads at most one named field — the sign-out route's `next` — where
+  there is no JSON to parse and nothing a schema would add; like a webhook's, that entry
+  carries a written reason, so both uses of the one label are documented rather than the
+  second looking like an unschema'd body.
 - **Test** — the integration test file that exercises the route. The spine verifies it
   exists on disk and imports the route. An entry may carry `test: null` only during
   Phase 1 (seeding reality); Phase 2 ends with none left.

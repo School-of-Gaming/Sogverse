@@ -6,7 +6,10 @@ import {
   type SignupPanelViewProps,
   type SignupParticipantChoice,
 } from "@/components/public/products/signup-panel-view";
-import type { MarketingConsentType } from "@/types";
+import type {
+  GamerPhotoConsentType,
+  MarketingConsentType,
+} from "@/types";
 
 /**
  * **What the region lock does to the signup panel.**
@@ -92,6 +95,12 @@ function panel(
     marketingConsentTypes: [],
     marketingConsents: new Set<MarketingConsentType>(),
     onMarketingConsentChange: () => {},
+    // No optional photo ask either. It is the empty ask set that withholds the
+    // block — the enabled flag only decides whether the rows can be ticked.
+    gamerPhotoConsentTypes: [],
+    gamerPhotoConsentsEnabled: false,
+    gamerPhotoConsents: new Set<GamerPhotoConsentType>(),
+    onGamerPhotoConsentChange: () => {},
     onSubmit: () => {},
     onJoinWaitlist: () => {},
     currency: "eur",
@@ -118,16 +127,23 @@ const setLocationButton = (c: HTMLElement) =>
   );
 
 /**
- * The tinted blocks the region-lock surfaces render inside.
+ * The blocks the region-lock surfaces render inside.
  *
- * Matched on the class attribute by substring rather than as a CSS class,
- * because a Tailwind opacity modifier carries a `/` that a class selector would
- * have to escape — and the escaping, not the assertion, is what would break
- * first.
+ * These used to be found by their `border-info/*` edge. The border sweep left
+ * every block in the app on the one neutral border, so the family is found the
+ * way a reader now finds it: the block's own geometry (`rounded-md`, `border`,
+ * `p-4`) plus the info-coloured glyph anchoring it. A wrapper around one of
+ * these carries the anchor too — see `anchorGlyphs` — which is what the
+ * geometry filter is for.
  */
-const infoBlocks = (c: HTMLElement) => [
-  ...c.querySelectorAll<HTMLElement>('[class*="border-info/"]'),
-];
+const infoBlocks = (c: HTMLElement) =>
+  [...c.querySelectorAll<HTMLElement>("div")].filter((el) => {
+    const tokens = new Set((el.getAttribute("class") ?? "").split(/\s+/));
+    return (
+      ["rounded-md", "border", "p-4"].every((token) => tokens.has(token)) &&
+      anchorGlyphs(el).length === 1
+    );
+  });
 
 /**
  * The info-coloured lucide glyph *anchoring* `block` — the family's shared voice.
@@ -155,8 +171,8 @@ const anchorGlyphs = (block: HTMLElement) => {
 /**
  * Every class token on `el` and on everything inside it, as a set.
  *
- * Tokens rather than a substring search of the markup: `text-primary` is a
- * prefix of `text-primary-foreground`, so `innerHTML.not.toContain` reported a
+ * Tokens rather than a substring search of the markup: `text-act` is a
+ * prefix of `text-act-foreground`, so `innerHTML.not.toContain` reported a
  * violation for a class that is not the one being forbidden — and it could not
  * see the block's own classes at all.
  */
@@ -213,16 +229,17 @@ describe("wrong country", () => {
   it("states it as information, with the country weighted", () => {
     // The treatment is the point of this state, not decoration: a parent who
     // came to buy meets an inert panel, so the one thing left on it has to
-    // read as an answer rather than as a page that failed to load. Info tint
-    // (nothing is wrong and nothing is theirs to fix), and the country — the
-    // single fact they are scanning for — goes through a weighted wrapper.
+    // read as an answer rather than as a page that failed to load. The info
+    // glyph says it (nothing is wrong and nothing is theirs to fix) on the
+    // neutral edge every panel wears, and the country — the single fact they
+    // are scanning for — goes through a weighted wrapper.
     //
     // The panel's own type header is weighted too, so the assertion is which
     // weighted element the country landed in rather than that one exists.
     const { container } = render(
       <SignupPanelView {...panel({ regionGate: wrongCountry })} />,
     );
-    expect(container.innerHTML).toContain("bg-info/10");
+    expect(container.innerHTML).not.toContain("bg-info");
     const weighted = [...container.querySelectorAll(".font-semibold")].filter(
       (el) => el.textContent.includes("Finland"),
     );
@@ -412,20 +429,20 @@ describe("eligible", () => {
  * moments — this product is a bit different, it wants your attention, nothing
  * is wrong. A parent who meets two of them in one visit (asked for a location,
  * then told it fits) should recognise the second as the same voice as the
- * first, so all three wear the `info` surface, its hairline border and an
- * `info`-coloured glyph anchoring the block. The eligible line in particular
- * used to carry the panel's *action* colour, which said "you can act on this"
- * about the one state that offers nothing to act on.
+ * first, so all three wear the same bordered block and an `info`-coloured
+ * glyph anchoring it. The eligible line in particular used to carry the panel's
+ * *action* colour, which said "you can act on this" about the one state that
+ * offers nothing to act on.
  *
  * The hue marks the *subject*, not inactionability — the question's block holds
- * a button and wears the same border — so what is pinned per surface is that
- * the anchor sits in anchor position, and that the action colour appears
- * nowhere in the block. A control inside one keeps announcing itself the way
+ * a button and wears the same edge — so what is pinned per surface is that the
+ * anchor sits in anchor position, and that the action colour appears nowhere in
+ * the block. A control inside one keeps announcing itself the way
  * every other control on the panel does, from its own affordance.
  *
  * Asserted on the semantic tokens rather than on any literal colour: the point
  * is that the three agree, and that they agree on `info` rather than on
- * `primary`, `warning` or `destructive`.
+ * `act`, `warning` or `destructive`.
  */
 describe("the info family", () => {
   const surfaces = [
@@ -436,10 +453,6 @@ describe("the info family", () => {
         onSetLocation: () => {},
       },
       says: "regionLock.wrongCountry",
-      // The loud tier: the refusal replaces the form and is the one thing on
-      // the panel, so it carries the full tinted surface.
-      border: "border-info/30",
-      tinted: true,
     },
     {
       name: "the question",
@@ -448,22 +461,15 @@ describe("the info family", () => {
         onSetLocation: () => {},
       },
       says: "regionLock.note",
-      // The quiet tier: a section inside a working form carries the family's
-      // hue on its border alone (the EnrollmentCard "awaiting" opacity), so
-      // the form stays the loudest thing on its own panel.
-      border: "border-info/40",
-      tinted: false,
     },
     {
       name: "the confirmation",
       regionGate: eligible,
       says: "regionLock.eligible",
-      border: "border-info/40",
-      tinted: false,
     },
   ];
 
-  for (const { name, regionGate, says, border, tinted } of surfaces) {
+  for (const { name, regionGate, says } of surfaces) {
     it(`marks ${name} as information, anchored by an info-coloured glyph`, () => {
       const { container } = render(
         <SignupPanelView {...panel({ regionGate })} />,
@@ -475,18 +481,18 @@ describe("the info family", () => {
       expect(blocks).toHaveLength(1);
       const block = blocks[0];
       expect(block.textContent).toContain(says);
-      expect(block.className).toContain(border);
-      // Volume follows stakes: only the refusal fills its surface.
-      expect(block.className.includes("bg-info/")).toBe(tinted);
+      // No status colour is ever a ground: every one of these blocks carries
+      // the hue on its glyph and sits on the ground it is already on.
+      expect(block.className).not.toContain("bg-info");
       // One anchor, and in anchor position — see `anchorGlyphs`.
       expect(anchorGlyphs(block)).toHaveLength(1);
       // Never the action colour, never an alarm colour: nothing here has gone
       // wrong, and the hue marks the subject rather than a control. Asserted as
-      // exact class tokens, so a `text-primary-foreground` on a control inside
+      // exact class tokens, so a `text-act-foreground` on a control inside
       // the block is not mistaken for the action colour on the block.
       const tokens = classTokens(block);
       for (const forbidden of [
-        "text-primary",
+        "text-act",
         "text-destructive",
         "text-warning",
       ]) {
@@ -506,12 +512,9 @@ describe("the info family", () => {
     // One family, one geometry, one hue — the tiers differ only in volume,
     // which the per-surface cases above pin.
     for (const tokens of shared) {
-      for (const token of ["rounded-md", "border", "p-4"]) {
+      for (const token of ["rounded-md", "border", "border-border", "p-4"]) {
         expect(tokens).toContain(token);
       }
-      expect(
-        [...tokens].some((t) => t.startsWith("border-info/")),
-      ).toBe(true);
     }
   });
 

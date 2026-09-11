@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { AlertTriangle, PauseCircle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { cn, formatDateOnly } from "@/lib/utils";
 import type { ScheduleChip, ScheduleWeek } from "./admin-dashboard-data";
-import { addCalendarDays, formatDayMonth } from "./calendar";
+import { addCalendarDays, formatDayMonth } from "@/lib/calendar-date";
 import { PRODUCT_TYPE_PRESENTATION } from "./product-type-presentation";
 
 /** The seven rows, Monday first — the order, not the names. */
@@ -62,65 +62,52 @@ export function WeekRows({
   });
 
   return (
-    <div className="space-y-3">
-      <ul className="space-y-1.5">
-        {rows.map((row) => (
-          <li
-            key={row.date}
-            className={cn(
-              "flex flex-col gap-2 rounded-lg border p-2 sm:flex-row sm:gap-3",
-              row.isToday
-                ? "border-primary/60 bg-primary/5"
-                : "border-border bg-card",
-            )}
-          >
-            <div className="flex shrink-0 items-baseline gap-2 px-1 sm:w-24 sm:flex-col sm:items-start sm:gap-0">
-              <span
-                className={cn(
-                  "text-sm font-semibold",
-                  row.isToday ? "text-primary" : "text-foreground",
-                )}
-              >
-                {row.label}
-              </span>
-              <span className="text-xs tabular-nums text-muted-foreground">
-                {formatDayMonth(row.date, locale)}
-              </span>
-            </div>
+    <ul className="space-y-1.5">
+      {rows.map((row) => (
+        <li
+          key={row.date}
+          className={cn(
+            // Today is marked by a 2px act edge down its leading side, and the
+            // edge is drawn on every row from the start — in `border` where the
+            // day is not today — so the mark costs no layout when the week
+            // rolls over under a reader.
+            "flex flex-col gap-2 rounded-lg border border-l-2 border-border bg-card p-2 sm:flex-row sm:gap-3",
+            row.isToday && "border-l-act",
+          )}
+        >
+          <div className="flex shrink-0 items-baseline gap-2 px-1 sm:w-24 sm:flex-col sm:items-start sm:gap-0">
+            <span
+              className={cn(
+                "text-sm font-semibold",
+                row.isToday ? "text-act" : "text-foreground",
+              )}
+            >
+              {row.label}
+            </span>
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {formatDayMonth(row.date, locale)}
+            </span>
+          </div>
 
-            {row.chips.length === 0 ? (
-              // No placeholder and no reserved height: an empty Sunday is a fact
-              // about the week, and a ghost chip there would read as something
-              // that failed to load.
-              <p className="px-1 text-xs text-muted-foreground">
-                {t("nothingOn")}
-              </p>
-            ) : (
-              <ul className="flex min-w-0 flex-1 flex-wrap gap-1.5">
-                {row.chips.map((chip) => (
-                  <li key={chip.id}>
-                    <SessionChip chip={chip} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        ))}
-      </ul>
-
-      {week.onBreak.length > 0 && (
-        // Kept under the whole week rather than pinned to a row: a paused club
-        // is absent from every row it would have appeared in, so attaching the
-        // line to one of them would say it once and imply it about the others.
-        <p className="flex items-start gap-2 text-xs text-muted-foreground">
-          <PauseCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-          <span>
-            <span className="font-medium">{t("paused")}</span>{" "}
-            {week.onBreak.join(", ")}
-          </span>
-        </p>
-      )}
-    </div>
+          {row.chips.length === 0 ? (
+            // No placeholder and no reserved height: an empty Sunday is a fact
+            // about the week, and a ghost chip there would read as something
+            // that failed to load.
+            <p className="px-1 text-xs text-muted-foreground">
+              {t("nothingOn")}
+            </p>
+          ) : (
+            <ul className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+              {row.chips.map((chip) => (
+                <li key={chip.id}>
+                  <SessionChip chip={chip} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -165,7 +152,7 @@ function SessionChip({ chip }: { chip: ScheduleChip }) {
     <Link
       href={chip.href}
       title={title}
-      className="flex items-center gap-1.5 rounded border border-border py-1 pl-1.5 pr-2 text-xs leading-tight transition-colors hover:border-foreground/30 hover:bg-accent"
+      className="flex items-center gap-1.5 rounded border border-border py-1 pl-1.5 pr-2 text-xs leading-tight transition-colors hover:bg-hover"
     >
       <Icon
         className={cn("h-3.5 w-3.5 shrink-0", presentation.text)}
@@ -183,7 +170,7 @@ function SessionChip({ chip }: { chip: ScheduleChip }) {
 /**
  * "This one is in the queue at the top of the page."
  *
- * It was a bare amber dot, which needed a key entry to mean anything — and a
+ * It was a bare act dot, which needed a key entry to mean anything — and a
  * mark that cannot be read without a key is a mark that is not read. The
  * replacement borrows the grammar the family surfaces already use to tell a
  * parent something is wrong with an enrollment (`PaymentProblemBadge`): a

@@ -54,12 +54,10 @@ describe("formLocksFor", () => {
 
   describe("the When-section locks", () => {
     it("stays on for every type", () => {
-      // No product lifts these today; the When section resolves them through
-      // this function anyway so there is only ever one decision-maker.
+      // No product lifts this today; the When section resolves it through this
+      // function anyway so there is only ever one decision-maker.
       for (const config of EVERY_CONFIG) {
-        const locks = formLocksFor(config);
-        expect(locks.startMode).toBe(true);
-        expect(locks.holidayCalendars).toBe(true);
+        expect(formLocksFor(config).startMode).toBe(true);
       }
     });
 

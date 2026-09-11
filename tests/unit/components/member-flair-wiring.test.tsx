@@ -27,6 +27,14 @@ import {
   postgrestJson,
 } from "../../mocks/postgrest-fetch";
 
+// The rich-text note fields are opaque here: nothing below opens one, types
+// into one, or asserts on the markdown one produces (the "Private note" a test
+// does type into is the flair dialog's plain textarea). Stubbing the editor keeps
+// ProseMirror and its markdown parser out of this file's module graph.
+vi.mock("@/components/ui/rich-text-editor", () =>
+  import("../../mocks/rich-text-editor"),
+);
+
 /**
  * ============================================================================
  * The per-member overlay reaches the roster, and the two writes leave it.
@@ -141,6 +149,16 @@ vi.mock("@/services/gedu-sessions", async (importOriginal) => ({
   useDeleteSessionImage: noopMutation,
   useSetGroupNotes: noopMutation,
   useSetSiteNotes: noopMutation,
+}));
+
+// The photo-consent pair, stubbed at the two reads and left with the real
+// resolver: this page asks a product what it wants asked and the roster what
+// their parents answered, and an ordinary product asks nothing — which is the
+// shape every fixture here has.
+vi.mock("@/services/gamer-photo-consents", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/gamer-photo-consents")>()),
+  useProductGamerPhotoConsentTypes: () => ({ data: [] }),
+  useGamerPhotoConsentsForGamers: () => ({ data: [] }),
 }));
 
 vi.mock("@/services/minecraft", () => ({

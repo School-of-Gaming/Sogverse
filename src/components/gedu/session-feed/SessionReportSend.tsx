@@ -2,6 +2,7 @@
 
 import { CheckCircle2, Loader2, Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { SessionReportSendResult } from "./send-report";
 
@@ -131,19 +132,24 @@ export function SessionReportSend({
         </Button>
 
         {result !== null && result.failed > 0 && (
-          <span className="text-xs text-warning">
+          <StatusLine status="warning" size="xs" muted>
             {t("reportSendPartial", {
               sent: result.sent,
               failed: result.failed,
             })}
-          </span>
+          </StatusLine>
         )}
       </div>
 
       {error !== null && (
-        <p role="alert" className="text-center text-xs text-destructive">
+        <StatusLine
+          status="destructive"
+          size="xs"
+          role="alert"
+          className="justify-center text-center"
+        >
           {error}
-        </p>
+        </StatusLine>
       )}
     </div>
   );

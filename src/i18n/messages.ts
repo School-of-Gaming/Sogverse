@@ -9,9 +9,10 @@ export type Messages = typeof en;
  * to the English text at runtime.
  *
  * `tlh` omits the legal surface — the policy and terms namespaces, the
- * attributions credit, those pages' metadata titles, and every label that names
- * one of the documents. Binding text and licence conditions are not a place for
- * an in-character rendering, and *omitting* the keys rather than copying the
+ * attributions credit, those pages' metadata titles and descriptions, every
+ * label that names one of the documents, and the cookie banner. Binding text and licence conditions
+ * are not a place for an in-character rendering, and neither is the question
+ * whose answer we store as a consent; *omitting* the keys rather than copying the
  * English in verbatim is what keeps English their single source of truth: a
  * copy has to be re-mirrored by hand every time the English is edited, and
  * nothing would fail if it were not.
@@ -21,7 +22,9 @@ export type Messages = typeof en;
  * *new* hole in silence; this returns `Messages` under the compiler's eye, so a
  * namespace that starts omitting a key without a matching line here fails the
  * build and names itself. Three subtrees have holes today — everything else
- * `tlh` carries whole, and the outer spread takes it as-is.
+ * `tlh` carries whole, and the outer spread takes it as-is. `metadata` has two
+ * of them, one level apart: the legal pages' titles and their search-snippet
+ * descriptions, so both child objects are spread as well as the parent.
  *
  * next-intl 4.x ships no merge helper of its own; its docs point at a general
  * deep-merge package, which is the shape this replaces.
@@ -35,6 +38,10 @@ function withEnglishFallback(english: Messages, klingon: typeof tlh): Messages {
       ...english.metadata,
       ...klingon.metadata,
       pages: { ...english.metadata.pages, ...klingon.metadata.pages },
+      descriptions: {
+        ...english.metadata.descriptions,
+        ...klingon.metadata.descriptions,
+      },
     },
     roblox: {
       ...english.roblox,

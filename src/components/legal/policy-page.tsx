@@ -1,5 +1,6 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { TriangleAlert } from "lucide-react";
+import { OutboundLink } from "@/components/ui/outbound-link";
 import { policyTextSegments, type PolicyBlock } from "./policy-content";
 
 interface PolicySubsection {
@@ -12,14 +13,6 @@ interface PolicySection {
   blocks: PolicyBlock[];
   /** Second-level headings under this section, in render order. */
   subsections?: PolicySubsection[];
-  /**
-   * Set where the source document has a gap we refuse to invent copy for — a
-   * list that was never written, a section that does not exist yet, a contact
-   * address nobody has decided on. Rendered after the section's own copy as a
-   * visible marker, so a reader can tell "not written yet" apart from "not
-   * applicable" instead of meeting a silently short section.
-   */
-  pending?: string;
 }
 
 interface PolicyPageProps {
@@ -34,6 +27,14 @@ interface PolicyPageProps {
   /** Fully-formed "Last updated: …" line (already localized by the caller). */
   lastUpdated: string;
   /**
+   * Localized "(opens in a new tab)", read out beside any outbound link the copy
+   * carries. **Required, not optional**: whether a given document names a
+   * regulator today is a property of the copy and can change in a translation
+   * nobody reviewing English would open, so a page that supplies no label could
+   * otherwise ship an unannounced outbound link the day a tag is added.
+   */
+  newTabLabel: string;
+  /**
    * Set while the document is a draft: renders a prominent banner above the
    * summary box saying so. Omitted once the copy is signed off — a page with
    * no banner is a page whose text is final.
@@ -46,39 +47,60 @@ interface PolicyPageProps {
 }
 
 /**
- * One line of policy copy, with any cross-reference to another of our legal
- * pages rendered as a real link. The copy arrives tagged from the message file
- * and is split by `policyTextSegments`, which owns the allow-list and the
- * hrefs; all this decides is what a link looks like in body prose.
+ * One line of policy copy, with any cross-reference rendered as a real link.
+ * The copy arrives tagged from the message file and is split by
+ * `policyTextSegments`, which owns the allow-lists and the hrefs; all this
+ * decides is what a link looks like in body prose.
+ *
+ * A segment the splitter marked outbound goes through the shared `OutboundLink`,
+ * the same component `/attributions` renders its credits with — so the two
+ * readings are identical by construction rather than by a comment asking for it.
+ * `PolicyPage` requires the label that component demands, so an outbound link
+ * cannot ship unannounced.
  */
-function PolicyText({ text }: { text: string }) {
+function PolicyText({
+  text,
+  newTabLabel,
+}: {
+  text: string;
+  newTabLabel: string;
+}) {
   return (
     <>
-      {policyTextSegments(text).map((segment, i) =>
-        segment.href === undefined ? (
-          segment.text
+      {policyTextSegments(text).map((segment, i) => {
+        if (segment.href === undefined) return segment.text;
+        return segment.external ? (
+          <OutboundLink key={i} href={segment.href} label={newTabLabel}>
+            {segment.text}
+          </OutboundLink>
         ) : (
           <Link
             key={i}
             href={segment.href}
-            className="rounded-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="rounded-sm font-medium text-act underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
           >
             {segment.text}
           </Link>
-        ),
-      )}
+        );
+      })}
     </>
   );
 }
 
 /** Renders a run of policy copy — paragraphs and bulleted lists, in order. */
-function PolicyBlocks({ blocks }: { blocks: PolicyBlock[] }) {
+function PolicyBlocks({
+  blocks,
+  newTabLabel,
+}: {
+  blocks: PolicyBlock[];
+  newTabLabel: string;
+}) {
   return (
     <>
       {blocks.map((block, i) =>
         "paragraph" in block ? (
           <p key={i} className="text-muted-foreground">
-            <PolicyText text={block.paragraph} />
+            <PolicyText text={block.paragraph} newTabLabel={newTabLabel} />
           </p>
         ) : (
           <ul
@@ -87,30 +109,13 @@ function PolicyBlocks({ blocks }: { blocks: PolicyBlock[] }) {
           >
             {block.bullets.map((bullet, bi) => (
               <li key={bi}>
-                <PolicyText text={bullet} />
+                <PolicyText text={bullet} newTabLabel={newTabLabel} />
               </li>
             ))}
           </ul>
         ),
       )}
     </>
-  );
-}
-
-/**
- * Marks a heading whose copy the source document has not supplied yet. Quieter
- * than the page-level draft banner and louder than body text: the reader is
- * meant to notice the hole rather than read past it.
- */
-function PendingNotice({ notice }: { notice: string }) {
-  return (
-    <div className="flex items-start gap-2.5 rounded-md border border-dashed border-warning/60 bg-warning/5 px-4 py-3">
-      <TriangleAlert
-        className="mt-0.5 h-4 w-4 shrink-0 text-warning"
-        aria-hidden="true"
-      />
-      <p className="text-sm italic text-muted-foreground">{notice}</p>
-    </div>
   );
 }
 
@@ -124,15 +129,17 @@ function PendingNotice({ notice }: { notice: string }) {
  * renders its own copy and then any second-level subsections beneath it.
  *
  * Every string of body copy (subtitle, paragraphs, bullets) may name one of our
- * other legal pages through a cross-reference tag, which becomes a link here;
- * see `policy-content.ts` for the allow-list. Headings, the "last updated" line
- * and the draft/pending notices are structural rather than authored prose, so
+ * other legal pages, or one of the supervisory authorities a reader has the
+ * right to complain to, through a cross-reference tag that becomes a link here;
+ * see `policy-content.ts` for the two allow-lists. Headings, the "last updated" line
+ * and the draft notice are structural rather than authored prose, so
  * they render as plain text.
  */
 export function PolicyPage({
   title,
   subtitle,
   lastUpdated,
+  newTabLabel,
   draftNotice,
   intro,
   sections,
@@ -143,7 +150,7 @@ export function PolicyPage({
         <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
         {subtitle && (
           <p className="text-muted-foreground">
-            <PolicyText text={subtitle} />
+            <PolicyText text={subtitle} newTabLabel={newTabLabel} />
           </p>
         )}
         <p className="text-sm text-muted-foreground">{lastUpdated}</p>
@@ -154,7 +161,7 @@ export function PolicyPage({
       {draftNotice && (
         <div
           role="note"
-          className="mt-8 flex items-start gap-4 rounded-lg border-2 border-warning bg-warning/10 p-5 sm:p-6"
+          className="mt-8 flex items-start gap-4 rounded-lg border-2 border-warning p-5 sm:p-6"
         >
           <TriangleAlert
             className="mt-0.5 h-7 w-7 shrink-0 text-warning"
@@ -170,21 +177,23 @@ export function PolicyPage({
           parent to actually read. */}
       <div className="mt-8 space-y-3 rounded-lg border border-border bg-card p-6">
         <h2 className="text-lg font-semibold">{intro.heading}</h2>
-        <PolicyBlocks blocks={intro.blocks} />
+        <PolicyBlocks blocks={intro.blocks} newTabLabel={newTabLabel} />
       </div>
 
       <div className="mt-10 space-y-10">
         {sections.map((section, si) => (
           <section key={si} className="space-y-3">
             <h2 className="text-2xl font-bold">{section.heading}</h2>
-            <PolicyBlocks blocks={section.blocks} />
+            <PolicyBlocks blocks={section.blocks} newTabLabel={newTabLabel} />
             {section.subsections?.map((subsection, sub) => (
               <div key={sub} className="space-y-3 pt-3">
                 <h3 className="text-xl font-semibold">{subsection.heading}</h3>
-                <PolicyBlocks blocks={subsection.blocks} />
+                <PolicyBlocks
+                  blocks={subsection.blocks}
+                  newTabLabel={newTabLabel}
+                />
               </div>
             ))}
-            {section.pending && <PendingNotice notice={section.pending} />}
           </section>
         ))}
       </div>

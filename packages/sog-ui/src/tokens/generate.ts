@@ -17,7 +17,17 @@
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { BRAND, NEUTRALS, YTY_FAMILIES, type NeutralId } from "./brand.ts";
+import {
+  BRAND,
+  NEUTRALS,
+  STATUS_IDS,
+  STATUS_INK,
+  YTY_FAMILIES,
+  statusHex,
+  type NeutralId,
+} from "./brand.ts";
+import { PICKS } from "./picks.ts";
+import { GLASS, HOVER, SCRIM } from "./surfaces.ts";
 import { FACES, TYPE_SCALE } from "./typography.ts";
 
 /** CSS pixels → rem at the 16px root, with no trailing zeros. */
@@ -34,11 +44,18 @@ function kebab(name: string): string {
 /**
  * The surfaces that ship a `-foreground` companion token.
  *
- * Not every surface, and the difference is naming rather than use: the page
- * ground is filled every bit as much as the card, but the token its text reads
- * from already ships under its own name (`--color-foreground`), so a companion
- * would be a second name for a declaration that is already there. The card is
- * the ground with no such name of its own.
+ * One of the three, and what decides it is whether a consumer writes text on
+ * that ground through a `-foreground` class today. One does: a card hands a
+ * component its ground and its ink as a pair, and `text-card-foreground` is
+ * spelled. Nothing writes `text-background-foreground` or
+ * `text-lifted-foreground` — text on the page and on the lifted grey is
+ * `text-foreground`, which the stylesheet already carries — so a companion
+ * there would be a token with no call site, which is the one thing the
+ * foundations rule says a token may not be.
+ *
+ * `--color-muted-foreground` is emitted from the neutrals like any other token
+ * and is **not** a companion of anything: it is the quiet ink, it reads on all
+ * three grounds, and no surface names it as its `on`.
  */
 const SURFACES_WITH_FOREGROUND = ["card"] as const satisfies readonly NeutralId[];
 
@@ -74,10 +91,125 @@ function brandLines(): string[] {
 }
 
 function ytyLines(): string[] {
-  return Object.entries(YTY_FAMILIES).flatMap(([id, family]) => [
-    declaration(`--color-yty-${id}-strong`, family.strong),
-    declaration(`--color-yty-${id}-soft`, family.soft),
+  return Object.entries(YTY_FAMILIES).map(([id, family]) =>
+    declaration(`--color-yty-${id}`, family.hex),
+  );
+}
+
+/**
+ * The four statuses, each with the ink its fill carries.
+ *
+ * `statusHex` is what makes success and info *equal* Glow and Wit rather than
+ * agree with them: the two rows resolve through the family entry, so a retuned
+ * family moves its status in the same regeneration and no literal is left behind
+ * to drift. The `-foreground` companions are all one value, which is why they
+ * are generated from `STATUS_INK` rather than authored per status — a consumer
+ * writing `text-destructive-foreground` is naming the decision the measurement
+ * made, not a grey it picked.
+ */
+function statusLines(): string[] {
+  return STATUS_IDS.flatMap((id) => [
+    declaration(`--color-${id}`, statusHex(id)),
+    declaration(`--color-${id}-foreground`, STATUS_INK),
   ]);
+}
+
+function pickLines(): string[] {
+  return PICKS.map((pick) => declaration(`--color-pick-${pick.id}`, pick.hex));
+}
+
+/** `0.7` → `70%`, with no trailing zeros. The form a `color-mix` percentage takes. */
+function percent(fraction: number): string {
+  return `${Number((fraction * 100).toFixed(5))}%`;
+}
+
+/**
+ * The scrim, as one colour token that carries its own alpha.
+ *
+ * The alpha belongs to the value, not to the call site: `bg-scrim` is the
+ * whole construct, and a site able to write `bg-scrim/40` would be picking a
+ * strength again, which is the drift a single scrim exists to end.
+ *
+ * Written as a `color-mix` with `transparent` — the form Tailwind's own `/n`
+ * modifier compiles to — so the authored hex and the authored fraction reach
+ * the stylesheet verbatim and nothing is converted on the way. Mixing with
+ * `transparent` is done on premultiplied alpha, so the transparent half
+ * contributes no colour and the result is exactly the hex at that alpha.
+ */
+function scrimLines(): string[] {
+  return [
+    declaration(
+      "--color-scrim",
+      `color-mix(in oklab, ${SCRIM.hex} ${percent(SCRIM.alpha)}, transparent)`,
+    ),
+  ];
+}
+
+/**
+ * The hover layer, emitted in the **image** namespace rather than the colour
+ * one — which is the whole of what makes it a layer.
+ *
+ * A colour token compiles `bg-hover` to a `background-color`, and a
+ * `background-color` **replaces** whatever ground the element already had: an
+ * outline button with `bg-card` went see-through under the pointer, because the
+ * card fill was overwritten by an 8% ink, and the six glass controls over media
+ * had the same fault. A `background-image` composites over the
+ * `background-color` instead of standing in for it, which is what a layer means
+ * — so the layer is emitted as a flat two-stop gradient of the mix, in Tailwind
+ * 4's `--background-image-*` namespace, and `hover:bg-hover` paints the ink on
+ * top of a card, a page, a lifted panel, a glass panel or nothing at all.
+ *
+ * It stays a theme variable, so `hover:bg-hover` and `group-hover:bg-hover` are
+ * still ordinary Tailwind utilities taking every variant the framework offers.
+ * And because it is no longer in the colour namespace, `text-hover`,
+ * `border-hover` and `ring-hover` cannot be written at all — which is right:
+ * there is no such thing as hover-coloured type.
+ *
+ * The ink is spelled through the neutrals rather than written as a `var()`, so
+ * the value reaching the stylesheet is a hex at an alpha — the same shape the
+ * scrim takes, and a shape a `color-mix` can composite without a second
+ * indirection.
+ */
+function hoverLines(): string[] {
+  const mix = `color-mix(in oklab, ${NEUTRALS[HOVER.ink].hex} ${percent(HOVER.alpha)}, transparent)`;
+  return [
+    declaration("--background-image-hover", `linear-gradient(${mix}, ${mix})`),
+  ];
+}
+
+/**
+ * The glass, as a Tailwind utility rather than a token.
+ *
+ * It is three declarations and a fallback, not a colour, so there is no token
+ * shape that can hold it: emitted as `@utility` it is a real utility, scanned
+ * like any other, able to take variants, and it lands in the utilities layer
+ * where a consumer's own utilities can sit beside it. A plain `.glass` rule
+ * would be unlayered and would beat every utility on the same element.
+ *
+ * The `color-mix(… , transparent)` form is what Tailwind's own `/n` modifier
+ * compiles to and the form that survives Lightning CSS; a hand-written slash
+ * alpha inside a `var()` fill is dropped by the optimiser and leaves the panel
+ * with no background at all.
+ */
+function glassUtility(): string {
+  const ground = `var(--color-${kebab(GLASS.ground)})`;
+  const blur = `blur(${GLASS.blurPx}px)`;
+  const fill = (opacity: number) =>
+    `color-mix(in oklab, ${ground} ${percent(opacity)}, transparent)`;
+  return [
+    "/* Glass — the page's own ground, thinned and blurred, for a surface that",
+    "   carries its own contents over whatever moves beneath it. The stronger",
+    "   fill is the base: where the browser cannot blur, opacity is the only",
+    "   thing left holding those contents legible, so it goes up. */",
+    "@utility glass {",
+    `  background-color: ${fill(GLASS.fallbackOpacity)};`,
+    `  -webkit-backdrop-filter: ${blur};`,
+    `  backdrop-filter: ${blur};`,
+    `  @supports ((backdrop-filter: ${blur}) or (-webkit-backdrop-filter: ${blur})) {`,
+    `    background-color: ${fill(GLASS.opacity)};`,
+    "  }",
+    "}",
+  ].join("\n");
 }
 
 function faceLines(): string[] {
@@ -129,13 +261,33 @@ export function renderTheme(): string {
     ),
     "",
     section(
-      "The signature pair. A fill and its foreground are one decision — amber is light and takes only a dark label, violet is dark and takes only a light one.",
+      "The signature pair. A fill and its foreground are one decision — act is light and takes only a dark label, world is dark and takes only a light one.",
       brandLines(),
     ),
     "",
     section(
-      "The four Yty-Element families. Strong fills, borders, rings and glows; soft carries text and glyphs. That split is a contrast result — see src/tokens/contrast.ts.",
+      "The four Yty-Element families, one colour each. The same value fills, edges, rings, marks, inks a label and draws a glyph — see src/tokens/brand.ts for why a family has one colour and not a pair.",
       ytyLines(),
+    ),
+    "",
+    section(
+      "The four statuses, each with the ink its fill carries. Success is Glow and info is Wit, resolved through the family rather than copied from it: a status is a fact, and a fact takes a family.",
+      statusLines(),
+    ),
+    "",
+    section(
+      "The sixteen picks — the colours a person chooses for their own thing. Numbered because a pick means nothing but whose it is; the number is a stable id, never a position.",
+      pickLines(),
+    ),
+    "",
+    section(
+      "The scrim — the one colour in the theme that carries its own alpha. It dims what is behind it and nothing sits inside it; black, because a tint that adds a hue is a tint that recolours a photograph. See src/tokens/surfaces.ts.",
+      scrimLines(),
+    ),
+    "",
+    section(
+      "The hover layer — the theme's ink at 8%, laid over whatever ground an element already sits on, so a row on the page, on a card and on a lifted panel each lift one visible step from where they are. An image and not a colour, because a layer is drawn over a ground rather than in place of it: a background-color would discard the fill an element already had. A state, never a surface: nothing is authored on it. See src/tokens/surfaces.ts.",
+      hoverLines(),
     ),
     "",
     section(
@@ -160,7 +312,7 @@ export function renderTheme(): string {
     "}",
   ].join("\n");
 
-  return `${header}\n\n${theme}\n\n${root}\n`;
+  return `${header}\n\n${theme}\n\n${glassUtility()}\n\n${root}\n`;
 }
 
 function main(): void {

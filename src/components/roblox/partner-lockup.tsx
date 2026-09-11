@@ -7,7 +7,7 @@ import sogLogo from "@/assets/brand/sog-logo-full.svg";
 /**
  * The three-way lockup: School of Gaming, Lynx Educate — who we partner
  * with — and Roblox, who we collaborate with. The two words are not
- * interchangeable; see the partner-brand rules in the root CLAUDE.md.
+ * interchangeable; see the partner-brand rules in `src/CLAUDE.md`.
  *
  * Sits directly on the page background with no card behind it. Each mark is in
  * its dark-surface colourway — Roblox's own white wordmark, our own yellow mark

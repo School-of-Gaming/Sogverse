@@ -27,7 +27,66 @@ vi.mock("next/navigation", () => ({
   }),
   usePathname: () => "/",
   useSearchParams: () => new URLSearchParams(),
+  useParams: () => ({}),
+  notFound: vi.fn(),
+  redirect: vi.fn(),
 }));
+
+// The same mock for the app's own navigation module, which is what components
+// import now that hrefs are locale-aware. Without it every test rendering a
+// link would drag in next-intl's routing context and fail on the missing
+// locale — the wrapped hooks read one, where `next/navigation`'s do not.
+//
+// `Link` renders a real anchor so the existing `getByRole("link")` queries and
+// `toHaveAttribute("href")` assertions keep working: an href object is resolved
+// the way the router resolves it, by filling the pathname's dynamic segments
+// from `params` and appending `query`. The locale prefix is deliberately
+// absent — a test asserting on `/shop/abc` is asserting about the route, not
+// about which language the reader is in.
+vi.mock("@/i18n/navigation", async () => {
+  const { createElement } = await import("react");
+
+  type Href =
+    | string
+    | {
+        pathname: string;
+        params?: Record<string, string | number>;
+        query?: Record<string, string | number | boolean>;
+      };
+
+  function resolve(href: Href): string {
+    if (typeof href === "string") return href;
+    let pathname = href.pathname;
+    for (const [key, value] of Object.entries(href.params ?? {})) {
+      pathname = pathname.replace(`[${key}]`, String(value));
+    }
+    const query = Object.entries(href.query ?? {});
+    if (query.length === 0) return pathname;
+    const search = new URLSearchParams(
+      query.map(([key, value]) => [key, String(value)]),
+    );
+    return `${pathname}?${search.toString()}`;
+  }
+
+  return {
+    Link: ({ href, ...props }: { href: Href } & Record<string, unknown>) =>
+      // Props first, `href` last: React emits attributes in key order, and
+      // the real `Link` puts `class` before `href` — a test asserting on
+      // rendered HTML should not have to know which mock produced it.
+      createElement("a", { ...props, href: resolve(href) }),
+    usePathname: () => "/",
+    useRouter: () => ({
+      push: vi.fn(),
+      replace: vi.fn(),
+      refresh: vi.fn(),
+      back: vi.fn(),
+      forward: vi.fn(),
+      prefetch: vi.fn(),
+    }),
+    redirect: vi.fn(),
+    getPathname: ({ href }: { href: Href }) => resolve(href),
+  };
+});
 
 // Mock Supabase client
 vi.mock("@/lib/supabase/client", () => ({

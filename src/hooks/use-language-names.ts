@@ -3,6 +3,10 @@
 import { useMemo } from "react";
 import { useLocale } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
+import {
+  languageDisplayName,
+  languageDisplayNames,
+} from "@/lib/i18n/language-name";
 
 /**
  * Resolve a language code to its name in the **viewer's UI locale** —
@@ -14,46 +18,36 @@ import { resolveLocale } from "@/lib/constants/locales";
  * hand-maintained map silently falls back to English for anything new.
  *
  * The optional `fallback` is returned when Intl cannot help, and it exists for
- * the **locale** side alone: `tlh` is not a language Intl has a name for, so
- * the locale surfaces pass `LOCALE_CONFIG.label` and get "Klingon" rather than
- * a raw tag. Every spoken-language code is named in every locale we ship, so
- * those callers pass no fallback at all. (For a viewer whose locale Intl has no
- * data for — Klingon again — `DisplayNames` resolves against its own
- * default-locale data, so tlh viewers read English language names; the easter
- * egg does not get its own.)
+ * the **locale** side alone: the locale surfaces pass `LOCALE_CONFIG.label` so
+ * `tlh` reads "Klingon" rather than a raw tag. Every spoken-language code is
+ * named in every locale we ship, so those callers pass no fallback at all. (For
+ * a viewer whose locale Intl has no data for — Klingon again — `DisplayNames`
+ * resolves against its own default-locale data, so tlh viewers read English
+ * language names; the easter egg does not get its own.)
+ *
+ * **Klingon is never asked of Intl at all.** Whether CLDR has a name for it
+ * depends on the ICU build: the Node this renders on names it in French,
+ * Finnish and Swedish ("klingon", "klingonska"), and the browser hydrating that
+ * markup does not and falls back to English "Klingon" — a hydration mismatch
+ * on every locale picker for any viewer whose browser and our server disagree,
+ * and one that flips as either side updates its ICU. So the answer for `tlh`
+ * is the caller's fallback, deterministically, on both sides. That also
+ * matches the house rule for the easter egg: "Klingon" is a mark, like
+ * "Sogverse", and is not translated.
  */
 export function useLanguageNames(): (code: string, fallback?: string) => string {
   const uiLocale = resolveLocale(useLocale());
 
-  const displayNames = useMemo(() => {
-    try {
-      // fallback: "none" is load-bearing: the default ("code") makes `.of()`
-      // return the code itself for any well-formed tag Intl has no data for,
-      // so the `?? fallback` chain below would never fire and an unknown tag
-      // would render raw instead of its configured English name.
-      // "en" second: for a locale Intl has no data for (Klingon), a bare
-      // [uiLocale] falls back to the RUNTIME default locale — different on the
-      // server and each visitor's machine, i.e. a hydration mismatch. The
-      // explicit fallback makes the answer deterministic English everywhere.
-      return new Intl.DisplayNames([uiLocale, "en"], {
-        type: "language",
-        fallback: "none",
-      });
-    } catch {
-      return null;
-    }
-  }, [uiLocale]);
+  // The instance and the lookup both live in `@/lib/i18n/language-name`, with
+  // the reasoning above spelled out beside them — the signup confirmation email
+  // names a product's spoken language the same way and cannot call a hook, so
+  // the rule has one home and this is its React wrapper. All the hook adds is
+  // memoisation of the instance across renders.
+  const displayNames = useMemo(() => languageDisplayNames(uiLocale), [uiLocale]);
 
   return useMemo(
-    () => (code: string, fallback?: string) => {
-      try {
-        return displayNames?.of(code) ?? fallback ?? code;
-      } catch {
-        // RangeError on a structurally invalid tag — the fallback is exactly
-        // for a code Intl refuses.
-        return fallback ?? code;
-      }
-    },
+    () => (code: string, fallback?: string) =>
+      languageDisplayName(displayNames, code, fallback),
     [displayNames],
   );
 }

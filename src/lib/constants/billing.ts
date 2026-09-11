@@ -28,7 +28,7 @@
 // widen one and you must widen the other in the same change, or the admin panel
 // and the database start disagreeing about where a seat lands.
 
-import type { BillingMode } from "@/types";
+import type { BillingMode, ProductType } from "@/types";
 
 /**
  * The billing modes under which nobody pays us for a seat: `free`, and
@@ -55,4 +55,43 @@ export const NO_CHARGE_BILLING_MODES = [
  */
 export function isNoChargeBillingMode(mode: BillingMode): boolean {
   return NO_CHARGE_BILLING_MODES.some((noCharge) => noCharge === mode);
+}
+
+// =============================================================================
+// The subscription-shaped product
+// =============================================================================
+//
+// The other question a billing mode is asked, and the one the mode cannot
+// answer alone: it takes the product TYPE too, which is why it lives beside the
+// predicate above rather than inside it.
+//
+// Lockstep: the same predicate exists in Postgres as
+// `public.is_subscription_shaped(public.product_type, public.billing_mode)`,
+// introduced in migration 00245 and asked by the admin club-switch RPC of every
+// switch target. The two are one rule in two languages — widen one and you must
+// widen the other in the same change, or the admin panel and the database start
+// disagreeing about which products can be switched between.
+
+/**
+ * A product whose active seat cannot exist without a monthly Stripe
+ * subscription: a consumer club that charges. Every other shape is either
+ * no-charge or paid once, out of band or through Checkout, and an admin action
+ * on it leaves no recurring charge unaccounted for.
+ *
+ * Three decisions ask this one question, deliberately the same one
+ * `admin_enroll_participant` refuses on:
+ *
+ *  - whether the groups panel's add-gamer affordance is offered at all
+ *    (`canCompEnroll`),
+ *  - whether promoting a never-paid waitlister needs the dialog. A paid camp or
+ *    event is *not* subscription-shaped: its payment is a one-off the admin
+ *    settles out of band, so the drag is trusted and goes straight through.
+ *  - whether a club is a legal target for an admin club switch, which is the
+ *    refusal the SQL twin raises.
+ */
+export function isSubscriptionShaped(
+  productType: ProductType,
+  billingMode: BillingMode,
+): boolean {
+  return productType === "consumer_club" && billingMode === "paid";
 }

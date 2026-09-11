@@ -48,12 +48,20 @@ import { ACTIVITY_HEADING_KEY, activityTypeSections } from "@/lib/activity-type"
 export function GamerDashboardPageBody({
   firstName,
   enrollments,
+  prepDismissed,
   helpForm,
 }: {
   /** The child's own first name, for the greeting. */
   firstName: string;
   /** This gamer's enrollments, already sorted soonest-session-first. */
   enrollments: readonly FamilyEnrollmentSummary[];
+  /**
+   * The enrolments this child has already finished the prep guide for, parsed
+   * from the cookie by whatever rendered the page. Handed straight to the
+   * cards; the body has no opinion about it beyond carrying it, and it is a
+   * required prop so a surface cannot forget to answer the question.
+   */
+  prepDismissed: ReadonlySet<string>;
   /**
    * The ask-for-help-or-send-feedback form, in its child-facing wording. A node
    * so the shell owns the POST behind it and a preview scene can hand over an
@@ -101,13 +109,13 @@ export function GamerDashboardPageBody({
             would be the first thing a child met on their own home page. The pill
             still sticks the moment it reaches the top of the viewport. */}
         <div className="text-center">
-          {/* Two-size pattern matching the public Home heading:
-              font-display (Press Start 2P) is monospaced ~1em-wide, so a
-              long Finnish word like "Tervetuloa," overflows mobile at
-              text-3xl. break-words is a safety net for longer translations —
-              and now for the name too, which is the longest thing that can
-              land in this line and the one part of it no translator controls. */}
-          <h2 className="font-display text-xl font-bold text-primary break-words md:text-3xl">
+          {/* Two-size pattern matching the public Home heading: a long Finnish
+              word like "Tervetuloa," overflows mobile at text-3xl, so the
+              greeting steps down on a narrow viewport. break-words is a safety
+              net for longer translations — and for the name, which is the
+              longest thing that can land in this line and the one part of it no
+              translator controls. */}
+          <h2 className="text-xl font-bold text-act break-words md:text-3xl">
             {t("welcomeNamed", { name: firstName })}
           </h2>
           <p className="text-muted-foreground">{t("subtitle")}</p>
@@ -161,6 +169,7 @@ export function GamerDashboardPageBody({
                       <EnrollmentCard
                         key={enrollment.participationId}
                         enrollment={enrollment}
+                        prepDismissed={prepDismissed}
                         audience="gamer"
                       />
                     ))}

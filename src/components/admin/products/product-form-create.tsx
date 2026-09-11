@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -11,6 +11,7 @@ import { initialState, type FormState } from "./product-form-state";
 import { ProductFormShell } from "./product-form";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
+import { ROUTES } from "@/lib/constants";
 
 interface ProductFormCreateProps {
   productType: ProductType;
@@ -44,8 +45,9 @@ export function ProductFormCreate({
       productType={productType}
       initialFormState={initialFormState ?? initialState(config, uiLocale)}
       initialImage={initialImage}
+      isEdit={false}
       submitLabel={t("actions.createLabel", { label: label.toLowerCase() })}
-      onCancel={() => router.push(`/admin/${config.routeSlug}`)}
+      onCancel={() => router.push(ROUTES.admin.productList(productType))}
       onSubmit={async (state) => {
         const input = buildCreateInput(state, productType, config);
         const { product_id, warning } = await createProduct.mutateAsync(input);
@@ -57,10 +59,10 @@ export function ProductFormCreate({
           return {
             message: warning,
             onContinue: () =>
-              router.push(`/admin/${config.routeSlug}/${product_id}/edit`),
+              router.push(ROUTES.admin.productEdit(productType, product_id)),
           };
         }
-        router.push(`/admin/${config.routeSlug}`);
+        router.push(ROUTES.admin.productList(productType));
       }}
     />
   );

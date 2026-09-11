@@ -14,35 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      calendar_holidays: {
-        Row: {
-          calendar_id: string
-          date: string
-          id: string
-          reason: string | null
-        }
-        Insert: {
-          calendar_id: string
-          date: string
-          id?: string
-          reason?: string | null
-        }
-        Update: {
-          calendar_id?: string
-          date?: string
-          id?: string
-          reason?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "calendar_holidays_calendar_id_fkey"
-            columns: ["calendar_id"]
-            isOneToOne: false
-            referencedRelation: "holiday_calendars"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       chat_channel_locks: {
         Row: {
           channel_id: string
@@ -669,20 +640,104 @@ export type Database = {
           },
         ]
       }
+      gamer_photo_consent_events: {
+        Row: {
+          answered_by: string | null
+          consent_type: Database["public"]["Enums"]["gamer_photo_consent_type"]
+          created_at: string
+          gamer_id: string
+          granted: boolean
+          id: string
+          source: string
+        }
+        Insert: {
+          answered_by?: string | null
+          consent_type: Database["public"]["Enums"]["gamer_photo_consent_type"]
+          created_at?: string
+          gamer_id: string
+          granted: boolean
+          id?: string
+          source: string
+        }
+        Update: {
+          answered_by?: string | null
+          consent_type?: Database["public"]["Enums"]["gamer_photo_consent_type"]
+          created_at?: string
+          gamer_id?: string
+          granted?: boolean
+          id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gamer_photo_consent_events_answered_by_fkey"
+            columns: ["answered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gamer_photo_consent_events_answered_by_fkey"
+            columns: ["answered_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gamer_photo_consent_events_gamer_id_fkey"
+            columns: ["gamer_id"]
+            isOneToOne: false
+            referencedRelation: "gamer_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      gamer_photo_consents: {
+        Row: {
+          consent_type: Database["public"]["Enums"]["gamer_photo_consent_type"]
+          gamer_id: string
+          granted: boolean
+          updated_at: string
+        }
+        Insert: {
+          consent_type: Database["public"]["Enums"]["gamer_photo_consent_type"]
+          gamer_id: string
+          granted: boolean
+          updated_at?: string
+        }
+        Update: {
+          consent_type?: Database["public"]["Enums"]["gamer_photo_consent_type"]
+          gamer_id?: string
+          granted?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gamer_photo_consents_gamer_id_fkey"
+            columns: ["gamer_id"]
+            isOneToOne: false
+            referencedRelation: "gamer_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       gamer_profiles: {
         Row: {
           date_of_birth: string
           gender: Database["public"]["Enums"]["gender_type"] | null
+          sign_in: Database["public"]["Enums"]["gamer_sign_in"]
           user_id: string
         }
         Insert: {
           date_of_birth: string
           gender?: Database["public"]["Enums"]["gender_type"] | null
+          sign_in?: Database["public"]["Enums"]["gamer_sign_in"]
           user_id: string
         }
         Update: {
           date_of_birth?: string
           gender?: Database["public"]["Enums"]["gender_type"] | null
+          sign_in?: Database["public"]["Enums"]["gamer_sign_in"]
           user_id?: string
         }
         Relationships: [
@@ -1062,30 +1117,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      holiday_calendars: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-          timezone: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-          timezone: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-          timezone?: string
-          updated_at?: string
-        }
-        Relationships: []
       }
       locations: {
         Row: {
@@ -1481,6 +1512,29 @@ export type Database = {
           },
         ]
       }
+      product_gamer_photo_consents: {
+        Row: {
+          consent_type: Database["public"]["Enums"]["gamer_photo_consent_type"]
+          product_id: string
+        }
+        Insert: {
+          consent_type: Database["public"]["Enums"]["gamer_photo_consent_type"]
+          product_id: string
+        }
+        Update: {
+          consent_type?: Database["public"]["Enums"]["gamer_photo_consent_type"]
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_gamer_photo_consents_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_groups: {
         Row: {
           created_at: string
@@ -1512,39 +1566,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "product_groups_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      product_holiday_calendars: {
-        Row: {
-          calendar_id: string
-          created_at: string
-          product_id: string
-        }
-        Insert: {
-          calendar_id: string
-          created_at?: string
-          product_id: string
-        }
-        Update: {
-          calendar_id?: string
-          created_at?: string
-          product_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "product_holiday_calendars_calendar_id_fkey"
-            columns: ["calendar_id"]
-            isOneToOne: false
-            referencedRelation: "holiday_calendars"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "product_holiday_calendars_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
@@ -1932,10 +1953,12 @@ export type Database = {
           last_name: string
           locale: string | null
           phone: string | null
-          referral_code: string | null
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
         }
         Insert: {
           created_at?: string
@@ -1948,10 +1971,12 @@ export type Database = {
           last_name?: string
           locale?: string | null
           phone?: string | null
-          referral_code?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           spoken_languages?: Database["public"]["Enums"]["spoken_language"][]
           updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Update: {
           created_at?: string
@@ -1964,10 +1989,12 @@ export type Database = {
           last_name?: string
           locale?: string | null
           phone?: string | null
-          referral_code?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           spoken_languages?: Database["public"]["Enums"]["spoken_language"][]
           updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Relationships: [
           {
@@ -2420,13 +2447,15 @@ export type Database = {
           last_name: string | null
           locale: string | null
           phone: string | null
-          referral_code: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           search_blob: string | null
           spoken_languages:
             | Database["public"]["Enums"]["spoken_language"][]
             | null
           updated_at: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
         }
         Relationships: [
           {
@@ -2520,9 +2549,27 @@ export type Database = {
         Args: { p_participant_id: string; p_product_id: string }
         Returns: Json
       }
+      admin_move_participation: {
+        Args: {
+          p_expected_source_product_id: string
+          p_expected_stripe_price_id: string
+          p_group_id?: string
+          p_participation_id: string
+          p_stripe_price_id: string
+          p_target_product_id: string
+        }
+        Returns: Json
+      }
       admin_remove_participation: {
         Args: { p_participation_id: string; p_product_id: string }
         Returns: Json
+      }
+      admin_set_product_gamer_photo_consents: {
+        Args: {
+          p_consent_types: Database["public"]["Enums"]["gamer_photo_consent_type"][]
+          p_product_id: string
+        }
+        Returns: undefined
       }
       admin_set_product_marketing_consents: {
         Args: {
@@ -2600,6 +2647,7 @@ export type Database = {
           p_parent_id: string
           p_roblox_user_id?: number
           p_roblox_username?: string
+          p_sign_in?: Database["public"]["Enums"]["gamer_sign_in"]
         }
         Returns: undefined
       }
@@ -2621,7 +2669,6 @@ export type Database = {
           p_end_date?: string
           p_for_gamers: boolean
           p_for_parents: boolean
-          p_holiday_calendar_ids?: string[]
           p_is_remote: boolean
           p_is_visible?: boolean
           p_location_id?: string
@@ -2691,6 +2738,7 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: string
       }
+      gedu_teaches_gamer: { Args: { p_gamer_id: string }; Returns: boolean }
       gedu_teaches_group: { Args: { p_group_id: string }; Returns: boolean }
       gedu_teaches_group_product: {
         Args: { p_group_id: string }
@@ -2748,10 +2796,12 @@ export type Database = {
           last_name: string
           locale: string | null
           phone: string | null
-          referral_code: string | null
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
         }[]
         SetofOptions: {
           from: "*"
@@ -2777,10 +2827,12 @@ export type Database = {
           last_name: string
           locale: string | null
           phone: string | null
-          referral_code: string | null
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
         }[]
         SetofOptions: {
           from: "*"
@@ -2844,6 +2896,13 @@ export type Database = {
         Returns: boolean
       }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
+      is_subscription_shaped: {
+        Args: {
+          p_mode: Database["public"]["Enums"]["billing_mode"]
+          p_type: Database["public"]["Enums"]["product_type"]
+        }
+        Returns: boolean
+      }
       is_voice_group_member: { Args: { p_group_id: string }; Returns: boolean }
       is_voice_group_moderator: {
         Args: { p_group_id: string }
@@ -2884,10 +2943,6 @@ export type Database = {
         Returns: string
       }
       pin_is_set: { Args: never; Returns: boolean }
-      product_has_session: {
-        Args: { p_product_id: string; p_session_date: string }
-        Returns: boolean
-      }
       promote_from_waitlist: {
         Args: { p_group_id?: string; p_participation_id: string }
         Returns: Json
@@ -2934,6 +2989,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: undefined
+      }
+      request_gamer_verification_email: {
+        Args: { p_gamer_id: string }
+        Returns: boolean
       }
       request_my_verification_email: { Args: never; Returns: boolean }
       respond_seat_offer: {
@@ -2989,6 +3048,15 @@ export type Database = {
       set_gamer_group_note: {
         Args: { p_group_id: string; p_note: string; p_participant_id: string }
         Returns: Json
+      }
+      set_gamer_photo_consent: {
+        Args: {
+          p_consent_type: Database["public"]["Enums"]["gamer_photo_consent_type"]
+          p_gamer_id: string
+          p_granted: boolean
+          p_source: string
+        }
+        Returns: undefined
       }
       set_gedu_certified: {
         Args: { p_certified: boolean; p_gedu_id: string }
@@ -3068,7 +3136,6 @@ export type Database = {
           p_end_date?: string
           p_for_gamers: boolean
           p_for_parents: boolean
-          p_holiday_calendar_ids?: string[]
           p_id: string
           p_is_remote: boolean
           p_is_visible?: boolean
@@ -3097,6 +3164,10 @@ export type Database = {
         Returns: string
       }
       verify_my_pin: { Args: { p_pin: string }; Returns: boolean }
+      verify_pin_for_any: {
+        Args: { p_pin: string; p_user_ids: string[] }
+        Returns: string
+      }
     }
     Enums: {
       billing_mode: "paid" | "free" | "external_contract"
@@ -3107,6 +3178,8 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "expired"
+      gamer_photo_consent_type: "lynx_educate"
+      gamer_sign_in: "parent" | "username" | "email"
       gender_type: "boy" | "girl" | "non_binary"
       location_type: "country" | "region" | "municipality" | "district" | "site"
       marketing_consent_type: "school_of_gaming" | "lynx_educate"
@@ -3149,12 +3222,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3178,11 +3251,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3203,11 +3276,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3228,11 +3301,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3245,11 +3318,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3270,6 +3343,8 @@ export const Constants = {
         "cancelled",
         "expired",
       ],
+      gamer_photo_consent_type: ["lynx_educate"],
+      gamer_sign_in: ["parent", "username", "email"],
       gender_type: ["boy", "girl", "non_binary"],
       location_type: ["country", "region", "municipality", "district", "site"],
       marketing_consent_type: ["school_of_gaming", "lynx_educate"],

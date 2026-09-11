@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
@@ -20,7 +20,8 @@ import type { ProductDetailRow } from "@/services/products";
 import type { ProductType } from "@/types";
 import { LongDescription } from "./long-description";
 import { cameFromBrowse, listingHrefWithBrowseState } from "./browse-state";
-import { audienceLabelKey } from "./product-audience";
+import { DETAIL_BAND_CLASS, DETAIL_GRID_CLASS } from "./detail-grid";
+import { audienceLabelKey } from "@/lib/products/product-audience";
 import { ProductMediaChips } from "./product-chips";
 import { ProductOverviewCard } from "./product-overview-card";
 import { productTagLabelKey } from "./product-tag";
@@ -104,12 +105,9 @@ function usePublishedHeight(
 export interface ProductDetailPageBodyProps {
   /**
    * The detail row, not the browse row: this page renders the authored long
-   * description, which the browse listing deliberately does not fetch. Holidays
-   * stay optional — a caller that has no calendar to draw simply omits them.
+   * description, which the browse listing deliberately does not fetch.
    */
-  product: Omit<ProductDetailRow, "holidays"> & {
-    holidays?: { date: string; reason: string }[];
-  };
+  product: ProductDetailRow;
   /** The signup panel, injected so the body stays panel-agnostic. Prod passes
    *  the live `SignupPanel`; the preview passes a navigating one. Every state
    *  it can render, it renders here. */
@@ -260,24 +258,32 @@ export function ProductDetailPageBody({
     // overview card, topic card, signup panel. `space-y-6` spaces the four
     // blocks and is cancelled from `lg` up, where the grid's own gap takes over.
     //
+    // The three widths — signup rail 24rem (384px), facts rail 16rem (256px),
+    // reading column capped at 44rem (704px) — are declared once, beside
+    // `--header-height` in `globals.css`, and the templates that consume them
+    // live in `detail-grid.ts`; the arithmetic below is what those numbers
+    // produce, with the container's 16px side padding and the 24px gap, and
+    // without a scrollbar (a classic Windows one takes ~17px off every gutter
+    // figure).
+    //
     // **From `lg`**, three tracks — left gutter, reading column, signup rail —
     // with the container's cap dropped (`max-w-none`) so the rails can live in
     // the viewport's margins instead of eating the reading measure. The reading
-    // column caps at 44rem (~704px): wide enough for a 3:2 hero that reads as
-    // media-forward, narrow enough that the prose under it stays a comfortable
-    // measure. Measured: at 1024 the gutter is gone and the column has shrunk to
-    // ~624px; at 1280 the column is at its 704px cap, 96px left of centre, with
-    // the rail flush right; from ~1424 both gutters equalise and the column sits
-    // within half a gap of dead centre.
+    // column's cap is wide enough for a 3:2 hero that reads as media-forward,
+    // narrow enough that the prose under it stays a comfortable measure. At
+    // 1024 the gutter is gone and the column has shrunk to 584px; at 1280 the
+    // column is at its 704px cap, 136px left of centre, with the rail flush
+    // right; the column then drifts toward dead centre as the gutter grows and
+    // is within 10px of it just under 1536, where the grid changes.
     //
     // **From `2xl`** (1536px — the point at which a 1080p screen has ~570px of
-    // dead left gutter) the overview card moves out of the reading flow into a
-    // 16rem facts rail on the left, and the grid becomes
+    // dead left gutter) the overview card moves out of the reading flow into
+    // the facts rail on the left, and the grid becomes
     // gutter | facts | reading | signup | gutter. Both gutters are `1fr`, so the
-    // reading column sits a constant 32px left of centre — exactly half the
-    // 64px by which the signup rail out-widths the facts rail — at 1536, at
-    // 1920 and at everything between: at 1536 the gutters are 64px each, at 1920
-    // 256px each, and the reading column holds its 704px cap throughout.
+    // reading column sits a constant 64px left of centre — exactly half the
+    // 128px by which the signup rail out-widths the facts rail — at 1536, at
+    // 1920 and at everything between: at 1536 the gutters are 32px each, at 1920
+    // 224px each, and the reading column holds its 704px cap throughout.
     //
     // Placement is explicit because auto-placement cannot express this. Every
     // row is named, and the counts are worth reading before moving anything:
@@ -299,7 +305,7 @@ export function ProductDetailPageBody({
     // are implicit: with no `grid-template-rows`, line `-1` is line 1 and the
     // span silently collapses to nothing. **A fourth block in the reading column
     // means bumping both counts and adding a row above.**
-    <div className="container mx-auto space-y-6 px-4 py-8 sm:py-12 lg:grid lg:max-w-none lg:grid-cols-[minmax(0,1fr)_minmax(0,44rem)_20rem] lg:gap-6 lg:space-y-0 2xl:grid-cols-[minmax(0,1fr)_16rem_minmax(0,44rem)_20rem_minmax(0,1fr)]">
+    <div className={DETAIL_GRID_CLASS}>
       {/* The header band: row 1, spanning the CONTENT tracks only — from the
           facts rail's left edge to the signup rail's right edge, the same
           container that holds the two panels. Never the gutter tracks: a band
@@ -313,8 +319,10 @@ export function ProductDetailPageBody({
           over the signup panel. The band is an inner grid whose template and
           gap MIRROR the outer content tracks exactly — the band item spans
           those same tracks, so equal templates distribute equal widths and the
-          cells align with the columns beneath without subgrid. Change the
-          outer tracks and these must change with them.
+          cells align with the columns beneath without subgrid. Both templates
+          live in `detail-grid.ts`, side by side, and the widths inside them
+          are the three variables declared in `globals.css` — so the outer
+          tracks and these cannot be changed apart.
 
           At `lg` the facts column does not exist yet (the card is still in the
           reading flow), so the back link keeps the inline spot left of the
@@ -329,7 +337,7 @@ export function ProductDetailPageBody({
           Below `lg` it is not a band at all, just the top of the single stack
           in the order it has always been: back link, eyebrow, title — which is
           the DOM order; desktop placement is explicit per cell. */}
-      <div className="lg:col-start-2 lg:col-span-2 lg:row-start-1 lg:grid lg:grid-cols-[minmax(0,44rem)_20rem] lg:gap-6 2xl:col-start-2 2xl:col-span-3 2xl:grid-cols-[16rem_minmax(0,44rem)_20rem]">
+      <div className={DETAIL_BAND_CLASS}>
         {/* Mobile copy: its own line at the top of the stack, as always. */}
         <div className="lg:hidden">
           <BackLink
@@ -352,7 +360,7 @@ export function ProductDetailPageBody({
             {/* Unconditional, because every topic resolves to a label. The
                 middot separator is a CSS pseudo-element rather than a text
                 node, so it stays out of the message files. */}
-            <span className="normal-case text-primary before:mx-1.5 before:text-muted-foreground/50 before:content-['·']">
+            <span className="normal-case text-act before:mx-1.5 before:text-muted-foreground before:content-['·']">
               {topicLabel}
             </span>
           </span>
@@ -380,7 +388,7 @@ export function ProductDetailPageBody({
             design. `relative` is what the chips position against. A product with
             no picture gets the wordmark banner at the same ratio — and wears the
             chips on it, exactly as an un-imaged card does. */}
-        <div className="relative overflow-hidden rounded-lg border">
+        <div className="relative overflow-hidden rounded-lg border border-border">
           {/* Eager: the hero is the page's picture and reliably above the
               fold — the one banner that must not wait for a scroll. */}
           {/* The reading column's width: capped at 44rem from `lg`, and below
@@ -599,7 +607,7 @@ export function BackLink({
   const href =
     municipality || cameFromBrowse(searchParams)
       ? listingHrefWithBrowseState(
-          municipality ? base : ROUTES.shop,
+          municipality ? base : { pathname: ROUTES.shop },
           searchParams,
         )
       : base;

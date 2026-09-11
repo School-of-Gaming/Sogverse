@@ -338,7 +338,7 @@ export function GameUsernameEditableRow({
             })}
             className="h-8 min-w-0 flex-1 px-2 py-0 text-xs"
           />
-          {/* Cancel then Save — the app-wide button order (root `CLAUDE.md`,
+          {/* Cancel then Save — the app-wide button order (`src/CLAUDE.md`,
               "Button Order") puts the affirmative last, so it reads rightmost.
               This row never stacks, so it needs no `flex-col-reverse`. */}
           <Button
@@ -399,7 +399,7 @@ export function GameUsernameEditableRow({
               ? t("edit", { platform: descriptor.name })
               : t("editFor", { platform: descriptor.name, name: personName })
           }
-          className="shrink-0 rounded-sm p-0.5 text-muted-foreground opacity-50 transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover/game:opacity-100"
+          className="shrink-0 rounded-sm p-0.5 text-muted-foreground opacity-50 transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act group-hover/game:opacity-100"
         >
           {/* Always the pencil: the row's status square already owns the loading
               affordance, and a second spinner beside it says the same thing

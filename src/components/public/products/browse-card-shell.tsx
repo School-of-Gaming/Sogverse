@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ import { useRegistrationCta, type RegistrationCta } from "./registration-cta";
 import { SeatAvailabilityBar } from "./seat-availability-bar";
 import { StatusChip } from "./status-chip";
 import type { RegistrationState } from "./derive-registration-state";
+import type { AppHref } from "@/lib/constants/routes";
 
 // ---------- What a browse card *is* ----------
 //
@@ -92,7 +93,7 @@ export interface ProductBrowseCardViewProps {
    * openable state with no href) that would render as inert with the wrong
    * word; required, that combination cannot be expressed.
    */
-  detailHref: string;
+  detailHref: AppHref;
 }
 
 export type SeatBarValue = {
@@ -141,7 +142,7 @@ export interface BrowseCardShell {
   /** Null when the card shows no CTA at all (an ended run). */
   cta: RegistrationCta | null;
   /** Where the card opens, or undefined when it opens nowhere. */
-  openHref: string | undefined;
+  openHref: AppHref | undefined;
   isEnded: boolean;
   /** The `<Card>`'s complete class string, openable feedback included. */
   cardClassName: string;
@@ -166,7 +167,7 @@ export interface BrowseCardShell {
  */
 export function useBrowseCardShell(
   state: RegistrationState,
-  detailHref: string,
+  detailHref: AppHref,
 ): BrowseCardShell {
   const cta = useRegistrationCta(state);
   const isEnded = state.kind === "ended";
@@ -179,17 +180,14 @@ export function useBrowseCardShell(
     cardClassName: cn(
       // `group` is what the chevron's nudge reads; `relative` is what the
       // stretched link is positioned against.
-      "group relative flex h-full flex-col overflow-hidden transition-[border-color,box-shadow]",
+      "group relative flex h-full flex-col overflow-hidden transition-[box-shadow]",
       isEnded && "opacity-70 grayscale-[40%]",
       openHref && [
         "cursor-pointer",
-        "hover:border-primary/40 hover:shadow-lg",
+        "hover:shadow-lg",
         // `focus-within` so keyboard focus on the stretched link lights the
-        // whole card, not just the invisible anchor. `active` is the touch
-        // half of the same signal: a phone has no hover, so without it a tap
-        // gets no acknowledgement until the next page paints.
-        "focus-within:border-primary/40 focus-within:shadow-lg",
-        "active:border-primary/40",
+        // whole card, not just the invisible anchor.
+        "focus-within:shadow-lg",
       ],
     ),
   };
@@ -214,7 +212,7 @@ export function BrowseCardFooter({
   const { cta, openHref, isEnded } = shell;
 
   return (
-    <div className="mt-auto border-t pt-3">
+    <div className="mt-auto border-t border-border pt-3">
       {isEnded ? (
         <p className="text-xs italic text-muted-foreground">{t("endedNote")}</p>
       ) : (
@@ -260,9 +258,9 @@ export function BrowseCardFooter({
               lone child at the start. */}
           {cta &&
             (openHref ? (
-              <span className="ml-auto inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap text-sm font-medium text-primary">
+              <span className="ml-auto inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap text-sm font-medium text-act">
                 {cta.labelText}
-                <NavChevron size="sm" className="text-primary" />
+                <NavChevron size="sm" className="text-act" />
               </span>
             ) : (
               /* A dead end states a fact rather than offering an action, so
@@ -315,7 +313,7 @@ export function StretchedCardLink({
     <Link
       href={openHref}
       aria-label={t("cardLink", { action: cta.labelText, name })}
-      className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act"
     />
   );
 }

@@ -3,6 +3,12 @@
 import { useState } from "react";
 import { ROUTES } from "@/lib/constants";
 import { resolveInternalPath } from "@/lib/navigation/internal-path";
+import { toInternalPathname } from "@/lib/navigation/locale-path";
+
+// `resolveInternalPath` hands back a path with its query and hash still on it,
+// and only the pathname is a route. Any absolute base works to split them; the
+// value has already been proved same-origin by the time it gets here.
+const SENTINEL = "https://internal.invalid";
 
 // Allowlisted prefixes for post-auth redirects. Anything else is dropped
 // and the user lands on the fallback (their dashboard). Public product detail
@@ -35,7 +41,17 @@ const SAFE_REDIRECT_PREFIXES: readonly string[] = [
 export function resolveSafeRedirect(redirect: string | null): string | null {
   const path = resolveInternalPath(redirect, "");
   if (!path) return null;
-  return SAFE_REDIRECT_PREFIXES.some((p) => path.startsWith(p)) ? path : null;
+  // **Matched on the internal pathname, navigated to raw.** The value arrives
+  // as the external URL the reader was actually on (`/fi/kauppa/<id>`), which
+  // no bare `/shop/` prefix would ever match — so the allowlist would silently
+  // drop it and strand a buyer on their dashboard. The normalizer strips the
+  // locale prefix and untranslates the slug for the *check*; what is returned
+  // is the original path, so the reader returns to the page they left, in the
+  // language they were reading it in.
+  const internal = toInternalPathname(new URL(path, SENTINEL).pathname);
+  return SAFE_REDIRECT_PREFIXES.some((p) => internal.startsWith(p))
+    ? path
+    : null;
 }
 
 /**

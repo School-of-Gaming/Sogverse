@@ -34,6 +34,12 @@ interface CallEndedScreenProps {
  * the copy or palette changes later. A small copyright line sits below
  * the tagline as a footer; this is the only voice screen that carries
  * one.
+ *
+ * The tagline's one act phrase is the hero headline's own treatment
+ * (`brand.ts`, beside the label rule), and the world rule that completes it
+ * on a hero is deliberately not drawn here: this is a card on a dead-end
+ * screen, not a public page's hero, and a display rule inside it would be the
+ * hero's mark spent where no hero is.
  */
 export function CallEndedScreen({ reason, code, copyright }: CallEndedScreenProps) {
   const t = useTranslations(`voice.instant.${reason}`);
@@ -50,14 +56,11 @@ export function CallEndedScreen({ reason, code, copyright }: CallEndedScreenProp
               <RoomLinkChip code={code} />
             </div>
           )}
-          <h2 className="pt-6 font-display text-2xl font-bold leading-tight tracking-tight md:text-3xl">
+          <h2 className="pt-6 text-2xl font-bold leading-tight tracking-tight md:text-3xl">
             {tHome.rich("title", {
               br: () => <br />,
-              primary: (chunks) => (
-                <span className="text-primary">{chunks}</span>
-              ),
-              secondary: (chunks) => (
-                <span className="text-secondary">{chunks}</span>
+              act: (chunks) => (
+                <span className="text-act">{chunks}</span>
               ),
             })}
           </h2>

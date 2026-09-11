@@ -74,7 +74,7 @@ export function GameAvatarBox({
   return (
     <div
       className={cn(
-        "shrink-0 overflow-hidden rounded-sm bg-muted",
+        "shrink-0 overflow-hidden rounded-sm bg-lifted",
         gameFigureHeight(figure),
         model.widthClass,
       )}
@@ -258,7 +258,7 @@ export function GameUsernameRow({
           empty square is dead space and goes.
 
           `unverified` deliberately draws nothing here. It takes the house
-          treatment for a saved-but-unconfirmed game account — amber, with the
+          treatment for a saved-but-unconfirmed game account — the warning tone, with the
           tick simply absent rather than a glyph of its own. The missing tick
           beside a name that carries one elsewhere is the signal; a second glyph
           would read as its own kind of failure. */}

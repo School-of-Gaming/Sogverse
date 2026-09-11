@@ -174,17 +174,26 @@ function createSubscriptionUpdatedEvent(overrides: {
   subscription?: string;
   cancelAtPeriodEnd?: boolean;
   currentPeriodEnd?: number;
+  /** An update whose payload carries no subscription item at all. */
+  withoutItems?: boolean;
+  /** When Stripe built this payload, in unix seconds. */
+  created?: number;
 }) {
   return {
     id: overrides.id ?? "evt_sub_updated_1",
     type: "customer.subscription.updated",
+    created: overrides.created,
     data: {
       object: {
         id: overrides.subscription ?? SUB_ID,
         status: overrides.status,
         cancel_at_period_end: overrides.cancelAtPeriodEnd ?? false,
         current_period_end: overrides.currentPeriodEnd ?? 1900000000,
-        items: { data: [{ id: "si_1", price: { id: "price_test_1" } }] },
+        items: {
+          data: overrides.withoutItems
+            ? []
+            : [{ id: "si_1", price: { id: "price_test_1" } }],
+        },
       },
     },
   };
@@ -306,13 +315,36 @@ function mockAdmin(opts: AdminMockOptions = {}) {
                 Promise.resolve({
                   data: {
                     product_type: "consumer_club",
+                    billing_mode: "paid",
+                    topic: "minecraft_java",
+                    timezone: "Europe/Helsinki",
+                    start_date: null,
+                    end_date: null,
+                    is_remote: true,
+                    // The "Good to know" facts the mail mirrors from the
+                    // confirmation page.
+                    min_age: 8,
+                    max_age: 12,
+                    for_gamers: true,
+                    for_parents: false,
+                    spoken_language_code: "en",
                     product_translations: [
-                      { locale: "en", name: "Test Club" },
+                      { locale: "en", name: "Test Club", short_description: "" },
                     ],
                   },
                   error: null,
                 }),
             }),
+            // The confirmation mail's second read: the schedule and the site
+            // its calendar invitation would be composed from. No slots here on
+            // purpose — what this file covers about that mail is which webhook
+            // outcome sends it and to whom, and a fixture schedule would put a
+            // calendar document nobody asserts on into every render.
+            single: () =>
+              Promise.resolve({
+                data: { schedule_slots: [], locations: null },
+                error: null,
+              }),
           }),
         }),
       };
@@ -1208,6 +1240,91 @@ describe("POST /api/webhooks/stripe/products", () => {
       });
     });
 
+    it("writes the subscription's current item price id", async () => {
+      // The admin club switch moves the Stripe item onto the target club's
+      // price and fires this event; without this write the row would keep
+      // naming the price of the club the family has left. The event payload
+      // carries the items inline, so no extra retrieve is made.
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({ status: "active" }),
+      );
+      const inserts = mockAdmin({ famSubRow: OURS });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.familySubscriptionUpdates[0]).toMatchObject({
+        stripe_price_id: "price_test_1",
+      });
+    });
+
+    it("leaves the price id out of the write when the event is older than the row", async () => {
+      // Stripe delivers and retries out of order, so an event describing the
+      // subscription BEFORE a club switch can arrive after the switch has
+      // already written the target's price. Writing its price would silently
+      // put the row back on the club the family has left.
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({
+          status: "active",
+          created: Math.floor(Date.parse("2026-03-01T09:00:00Z") / 1000),
+        }),
+      );
+      const inserts = mockAdmin({
+        famSubRow: { ...OURS, updated_at: "2026-03-01T10:00:00Z" },
+      });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      // Status and period still travel: those are properties of the
+      // subscription's own lifecycle, and a late arrival there is corrected by
+      // the next event rather than pointing the row at the wrong club.
+      expect(inserts.familySubscriptionUpdates[0]).toMatchObject({
+        status: "active",
+      });
+      expect(inserts.familySubscriptionUpdates[0]).not.toHaveProperty(
+        "stripe_price_id",
+      );
+    });
+
+    it("writes the price id when the event is newer than the row", async () => {
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({
+          status: "active",
+          created: Math.floor(Date.parse("2026-03-01T11:00:00Z") / 1000),
+        }),
+      );
+      const inserts = mockAdmin({
+        famSubRow: { ...OURS, updated_at: "2026-03-01T10:00:00Z" },
+      });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.familySubscriptionUpdates[0]).toMatchObject({
+        stripe_price_id: "price_test_1",
+      });
+    });
+
+    it("leaves the price id out of the write when the payload carries no item", async () => {
+      // An items-less update teaches this handler nothing about the price, and
+      // "nothing" must not be written as null over a good stored id — the rest
+      // of the app reads a null there as a seat that bills for nothing.
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({
+          status: "active",
+          withoutItems: true,
+        }),
+      );
+      const inserts = mockAdmin({ famSubRow: OURS });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.familySubscriptionUpdates[0]).toMatchObject({
+        status: "active",
+      });
+      expect(inserts.familySubscriptionUpdates[0]).not.toHaveProperty(
+        "stripe_price_id",
+      );
+    });
+
     it("returns 500 for a status nothing maps to, rather than writing a rejected value", async () => {
       // A status Stripe adds that this route has never heard of. A 500 is the
       // right answer: Stripe retries it and it shows up in the logs, where the
@@ -1420,7 +1537,10 @@ describe("POST /api/webhooks/stripe/products", () => {
       await POST(createWebhookRequest());
 
       const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
-      expect(htmlContent).toContain("Price: €40.00 (one-time)");
+      // The summary's price row — a label cell and a value cell, as the page's
+      // own summary states it.
+      expect(htmlContent).toContain(">Price</td>");
+      expect(htmlContent).toContain("€40.00 (one-time)");
       expect(htmlContent).not.toContain("/ month");
     });
 
@@ -1450,6 +1570,36 @@ describe("POST /api/webhooks/stripe/products", () => {
       const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
       expect(htmlContent).toContain("/ month");
       expect(htmlContent).toContain("40.00");
+      // The same session is the deferred shape — €0 today, a period end still
+      // ahead — so the mail owes the parent the real date, from the value this
+      // handler already holds rather than from a second Stripe read.
+      expect(htmlContent).toContain("Nothing was charged today.");
+    });
+
+    /**
+     * The other half of that rule: money moved today, so nothing was deferred
+     * and the mail must not promise a future first payment.
+     */
+    it("states no first-charge date when the club was billed at checkout", async () => {
+      mockConstructEvent.mockReturnValue(
+        createCompletedEvent({
+          purchaseShape: "subscription_monthly",
+          subscription: SUB_ID,
+        }),
+      );
+      mockAdmin({ productPrice: { price_cents: 4000 } });
+      confirmFresh();
+      mockSubscriptionsRetrieve.mockResolvedValue({
+        id: SUB_ID,
+        status: "active",
+        cancel_at_period_end: false,
+        items: { data: [{ id: "si_1", price: { id: "price_1" }, current_period_end: 1900000000 }] },
+      });
+
+      await POST(createWebhookRequest());
+
+      const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
+      expect(htmlContent).not.toContain("Nothing was charged today.");
     });
 
     it("states no price when the product is not sold in the session's currency", async () => {
@@ -1462,7 +1612,7 @@ describe("POST /api/webhooks/stripe/products", () => {
       // A blank figure beside a product name reads as "free", so the whole
       // price line is omitted rather than left empty — and the mail still goes.
       const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
-      expect(htmlContent).not.toContain("Price:");
+      expect(htmlContent).not.toContain(">Price</td>");
       expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
     });
 

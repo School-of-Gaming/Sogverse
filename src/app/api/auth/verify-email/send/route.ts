@@ -11,6 +11,7 @@ import {
   isSupportedLocale,
 } from "@/lib/constants/locales";
 import { getOrigin } from "@/lib/url";
+import { hasRealEmail } from "@/lib/gamer-sign-in";
 
 /**
  * POST /api/auth/verify-email/send
@@ -20,10 +21,20 @@ import { getOrigin } from "@/lib/url";
  * is most of what makes it safe to expose — the worst a caller can do with it is
  * send themselves mail.
  *
- * **Gamers are excluded from the role list.** A gamer's address is the synthetic
- * `<token>@gamer.sogverse.internal` one the account was created with; nobody
- * reads that inbox, so a send would be a message into a void and a "verified"
- * stamp on it would mean nothing.
+ * **Who may call it is a question about the ADDRESS, not the role.** Every
+ * adult holds a real mailbox; a gamer holds one only in sign-in mode `email`.
+ * The other two modes put a synthetic `@gamer.sogverse.internal` handle on the
+ * account that nobody reads, so a send there would be a message into a void and
+ * a "verified" stamp on it would mean nothing. So the gate lets every role
+ * through and the handler refuses on `hasRealEmail`, which is the same question
+ * the role list used to approximate — and approximated wrongly the moment a
+ * child could hold an address of their own.
+ *
+ * A child in `email` mode reaching this route is the rarer path: the parent's
+ * resend button (`/api/gamers/[id]/verification/send`) is the usual one,
+ * because a child who has not verified yet cannot sign in to press this one.
+ * It is here for the child who verified, set a password, and later changed
+ * something — the same self-service every other role has.
  *
  * **An already-verified caller is re-sent the link rather than refused.** The
  * settings button that calls this is only offered while the address is
@@ -44,9 +55,26 @@ import { getOrigin } from "@/lib/url";
  */
 export const POST = defineRoute({
   posture: "role-gated",
-  roles: ["customer", "gedu", "admin"],
+  roles: ["customer", "gamer", "gedu", "admin"],
 
   handler: async ({ request, supabase, profile }) => {
+    // The real gate. A gamer's entitlement depends on their sign-in mode, which
+    // lives one table over, so it is read here rather than guessed from the role.
+    if (profile.role === "gamer") {
+      const { data: gamerProfile, error: modeError } = await supabase
+        .from("gamer_profiles")
+        .select("sign_in")
+        .eq("user_id", profile.id)
+        .maybeSingle();
+      if (modeError) throw modeError;
+      if (!hasRealEmail({ role: profile.role, sign_in: gamerProfile?.sign_in })) {
+        return NextResponse.json(
+          { error: "This account has no email address to verify." },
+          { status: 403 },
+        );
+      }
+    }
+
     // No address on file → nothing to verify and nowhere to send. Answering
     // success keeps the client's one path; there is no state to report. Ahead of
     // the rate-limit check on purpose: no mail leaves, so nothing should be

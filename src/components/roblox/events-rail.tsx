@@ -160,11 +160,10 @@ interface EventsRailProps {
  *    the scroll-padding above. Adding a tab stop would only insert an unnamed
  *    focusable region ahead of the cards. This is a scrolling list, not an ARIA
  *    carousel: no `aria-roledescription`, no live region, nothing to announce.
- *  - **No edge fade.** The one on the session calendar works because it fades
- *    into a card of known colour; here it would sit over cards whose whole
- *    hover feedback is a brightened border and a shadow, dimming exactly the
- *    thing the reader is reaching for. The peek and the arrows already say
- *    "more".
+ *  - **No edge fade.** An edge fade works where it fades into a card of known
+ *    colour; here it would sit over cards whose whole hover feedback is a
+ *    brightened border and a shadow, dimming exactly the thing the reader is
+ *    reaching for. The peek and the arrows already say "more".
  */
 export function EventsRail({ products, counts }: EventsRailProps) {
   const t = useTranslations("roblox.events");

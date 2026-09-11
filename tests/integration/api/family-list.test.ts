@@ -29,17 +29,21 @@ const CUSTOMER_ID = "11111111-1111-1111-1111-111111111111";
 const GAMER_ID = "22222222-2222-2222-2222-222222222222";
 
 const FAMILY = [
-  { id: CUSTOMER_ID, role: "customer", first_name: "Pat" },
-  { id: GAMER_ID, role: "gamer", first_name: "Robin" },
+  { id: CUSTOMER_ID, role: "customer", first_name: "Pat", sign_in: null },
+  { id: GAMER_ID, role: "gamer", first_name: "Robin", sign_in: "username" },
 ];
 
 function listRequest(): Request {
   return new Request("http://localhost:3000/api/family/list");
 }
 
-function mockAuthenticatedAs(role: "customer" | "gamer", id: string) {
+function mockAuthenticatedAs(
+  role: "customer" | "gamer",
+  id: string,
+  provenance: "own" | "family" = "own",
+) {
   mockRequireRole.mockResolvedValue({
-    user: { id },
+    user: { id, session: { id: "session-1", provenance } },
     profile: { id, role },
   });
 }
@@ -104,7 +108,35 @@ describe("GET /api/family/list", () => {
     const response = await GET(listRequest());
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ family: FAMILY });
+    expect(await response.json()).toEqual({
+      family: FAMILY,
+      session_provenance: "own",
+    });
+  });
+
+  it("names the provenance of the caller own session, off the verified JWT", async () => {
+    // The switcher reads this to decide what leaving THIS session will cost: a
+    // parent PIN from a switched-in session, the target password from one the
+    // child signed into. It comes off the gate claims, never the request.
+    mockAuthenticatedAs("gamer", GAMER_ID, "family");
+
+    const response = await GET(listRequest());
+
+    expect((await response.json()).session_provenance).toBe("family");
+  });
+
+  it("carries each gamer sign-in mode, and null for a customer", async () => {
+    // Reachability is what the switcher needs it for: a sibling in `parent`
+    // mode holds no password, so from an own session that tile can never be
+    // clicked through.
+    mockAuthenticatedAs("customer", CUSTOMER_ID);
+
+    const { family } = await (await GET(listRequest())).json();
+
+    expect(family).toEqual([
+      expect.objectContaining({ role: "customer", sign_in: null }),
+      expect.objectContaining({ role: "gamer", sign_in: "username" }),
+    ]);
   });
 
   it("resolves against the session's identity, never a request parameter", async () => {

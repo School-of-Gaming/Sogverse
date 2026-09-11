@@ -1,6 +1,33 @@
 {
   "metadata": {
     "description": "naDev Quj yay’ moj. Minecraft, Roblox, Fortnite latlh je: ghom’a’mey, raghmey, wanI’mey — Gedu’pu’ Dun DevtaH.",
+    "og": {
+      "site": {
+        "alt": "naDev Daq tIv moj Qap tIv. ghom’a’mey, raghmey, wanI’mey — Gedu’pu’ Dun DevtaH.",
+        "headline": "naDev Daq tIv moj",
+        "headlineAccent": "Qap tIv",
+        "subline": "ghom’a’mey, raghmey, wanI’mey — Gedu’pu’ Dun DevtaH"
+      },
+      "roblox": {
+        "title": "SOG x Lynx – yIchenmoH Qujlij Roblox Daq",
+        "description": "loDHompu’ be’Hompu’vaD ghojmoH Huch Hutlh. Lynx Educate, School of Gaming, je Roblox boqwI’pu’.",
+        "headline": "yIchenmoH",
+        "headlineAccent": "Qujlij",
+        "headlineTail": "Roblox Daq",
+        "subline": "Huch Hutlh ghojmoH — Gedu’pu’ Dun DevtaH",
+        "collaboration": "boqwI’pu’"
+      },
+      "pages": {
+        "signIn": {
+          "title": "School of Gaming: yI’el",
+          "description": "account-lIj yI’el, ’ej ghom’a’mey, toy’wI’pu’, latlh je yIche’."
+        },
+        "createAccount": {
+          "title": "School of Gaming yIghom!",
+          "description": "qorDu’ account yIchenmoH, ’ej ghom’a’meyDaq, raghmeyDaq, wanI’meyDaq je puqlI’ yIqem."
+        }
+      }
+    },
     "pages": {
       "signIn": "yI’el",
       "createAccount": "Account yIchenmoH",
@@ -12,13 +39,10 @@
       "adminDashboard": "Admin QaD",
       "adminTools": "janmey",
       "parentDashboard": "jIH SOG",
-      "parentDashboardDescription": "toy’wI’pu’lIj ghom’a’meychaj je yIche’",
       "geduDashboard": "jIH SOG",
       "geduSessionDetails": "may’ Qatlh",
       "familyProduct": "may’mey qonta’ je",
-      "familyProductDescription": "ghom’a’vam poH mIw, may’ Hoch qonta’ je.",
       "gamerDashboard": "jIH SOG",
-      "gamerDashboardDescription": "Sogverse-Daq ghom’a’meylIj, raghmeylIj, Qu’meylIj je",
       "voiceSession": "jatlh poH",
       "shop": "ngevwI’",
       "schools": "veng ghomHommey",
@@ -26,9 +50,19 @@
       "resetPin": "PIN yIchu’qa’",
       "verifyEmail": "QIn Daq yIngu’",
       "changePin": "PIN yIchoH",
-      "roblox": "Roblox qetlh chenmoHmeH ghojmoH",
+      "roblox": "chenmoHwI’ DuSaQ",
       "geduContract": "Gedu quv chut",
       "seatOffer": "quS nob"
+    },
+    "descriptions": {
+      "signIn": "School of Gaming account-lIj yI’el. toy’wI’pu’lIj, ghom’a’meychaj, raghmeychaj je Dache’laH.",
+      "createAccount": "qorDu’lIjvaD School of Gaming account yIchenmoH, ’ej ghom’a’meyDaq, raghmeyDaq, wanI’meyDaq je puqlI’ yIqem — Quj ghojmoHwI’pu’ Dun DevtaH.",
+      "forgotPassword": "mu’mey DaSovbe’? QIn Daqlij yIghItlh. tlhegh DaHevbogh yIlo’, ’ej chu’bogh mu’mey yIwIv.",
+      "resetPassword": "School of Gaming account-lIjvaD chu’bogh mu’mey yIwIv. QInDaq tlhegh yIlo’, ’ej DaH yI’el.",
+      "registerGedu": "Quj ghojmoHwI’ — Gedu — yImoj! School of Gaming-vaD ghom’a’mey, raghmey, wanI’mey je yIDev; Qujmey luparHa’bogh puqpu’ yIghojmoH.",
+      "about": "School of Gaming: ’Iv maH, nuq ’oH Yty’e’, ’ej qorDu’pu’ luyu’bogh yu’mey lujangbogh De’.",
+      "shop": "School of Gaming ghom’a’mey, raghmey, wanI’mey je yIlegh: Minecraft, Roblox, Fortnite latlh je. puqlI’vaD lI’bogh wa’ yItu’!",
+      "resetPin": "chu’bogh vav PIN yIwIv — QInDaq tlhegh yIlo’. vav paqmey SoQmoH PIN, ’ej puq luSovbe’."
     }
   },
   "notFound": {
@@ -94,13 +128,28 @@
     "roleParent": "vav/SoS",
     "roleGamer": "toy’wI’",
     "roleGedu": "Gedu",
-    "gedus": "Gedupu’"
+    "gedus": "Gedupu’",
+    "next": "veb",
+    "week": "Hogh {week}",
+    "weekRange": "Hogh {from}–{to}",
+    "weekRangeAcrossYears": "Hogh {from}/{fromYear} – Hogh {to}/{toYear}",
+    "weekCount": "{count} Hogh",
+    "weekColumn": "Hogh"
+  },
+  "datePicker": {
+    "openCalendar": "jajmey nav yIpoSmoH",
+    "previousMonth": "jar wa'Hu'",
+    "nextMonth": "jar veb",
+    "weekNumber": "Hogh mI'",
+    "goToWeek": "Hogh yIghoS",
+    "selectWeek": "Hogh {week} yIwIv",
+    "today": "DaHjaj"
   },
   "about": {
     "pageTitle": "maH tIqel",
     "sectionNav": "ghItlhvam DevwI’",
     "hero": {
-      "title": "<primary>noH Quj yejHaD</primary> tIqel",
+      "title": "noH Quj yejHaD tIqel",
       "subtitle": "naDev Quj yay’ moj. puqpu’, Gedu’pu’ Dun, je Qujmey puqpu’ muSHa’bogh — Minecraft, Roblox, Fortnite latlh je — DIboqmoH. jup chu’ luSuq, laHmey teH luchenmoH, ’ej lutIvqu’."
     },
     "quote": {
@@ -123,7 +172,7 @@
       },
       "keepChildrenSafe": {
         "title": "moQ DIvI’ Daq puqpu’ yISuq",
-        "description": "Sogverse pat: pegh QInmey ngeHmeH mIw tu’lu’be’. ghom DaqmeyDaq jatlh toy’wI’pu’, ’ej ja’chuqtaHvIS Hoch pa’ QInmey lulegh ’ej polbe’lu’. Hoch toy’wI’ account vav account tlhej boqlu’, ’ej vav accountDaq ’el puq — pegh mu’mey Daj Hutlh. qIp ’ej tlhejHa’: not wIchaw’."
+        "description": "Sogverse pat: pegh QInmey ngeHmeH mIw tu’lu’be’. ghom DaqmeyDaq jatlh toy’wI’pu’, ’ej ja’chuqtaHvIS Hoch pa’ QInmey lulegh ’ej polbe’lu’. Hoch toy’wI’ account chenmoH vav, ’ej vav account tlhej boqlu’; chay’ ’el puq ’e’ wIv vav — vav account neH, pagh pong pegh mu’ je, pagh jabbI’ID Daq ’ol pegh mu’ je. qIp ’ej tlhejHa’: not wIchaw’."
       },
       "familyInTheLoop": {
         "title": "qorDu’ Qu’ SoH",
@@ -218,7 +267,7 @@
         },
         "howToStart": {
           "question": "chay’ jIQaplaH?",
-          "answer": "<p>vav account yIchenmoH. jIH SOGvo’ toy’wI’ puqlI’ yIchel. ngevwI’ yInuD ’ej yIchel! chelmeH nagh beQ tlhob: ’Iv pa’? ’ej toy’wI’ Daghajbe’taHchugh, DachelmeH ra’.</p><p>bIchelpu’DI’, may’ wa’DIchDaj taghpa’ Gedu ghajbogh ghomDaq puqlI’ wIlan, ’ej cha’maj jIH SOGDaq ghom’a’ nargh.</p><p>accountlIjvo’ may’mey muv puqlI’ — profileDaj DawIv — vaj mu’ pegh Daj poQbe’ not.</p>"
+          "answer": "<p>vav account yIchenmoH. jIH SOGvo’ toy’wI’ puqlI’ yIchel. ngevwI’ yInuD ’ej yIchel! chelmeH nagh beQ tlhob: ’Iv pa’? ’ej toy’wI’ Daghajbe’taHchugh, DachelmeH ra’.</p><p>bIchelpu’DI’, may’ wa’DIchDaj taghpa’ Gedu ghajbogh ghomDaq puqlI’ wIlan, ’ej cha’maj jIH SOGDaq ghom’a’ nargh.</p><p>accountlIjvo’ may’mey muv puqlI’ — profileDaj DawIv — jIH SOGDaq ’elmeH ngoq Daj DanobtaHbe’chugh.</p>"
         },
         "isItASchool": {
           "question": "ghojmoHmeH yejHaD ’oH’a’?",
@@ -258,11 +307,11 @@
         },
         "gamerAccounts": {
           "question": "chay’ ’el puqwI’, ’ej nuq ’oH vav PIN’e’?",
-          "answer": "<p>’elmeH ngoq Daj ghajbe’ puqlI’. toy’wI’ account ghaj Sogverse qoD Daq — puqlI’ jabbI’ID Daq teH ghajbe’. vav accountlIj tlhej boqlu’, ’ej accountlIjvo’ profileDaj DawIvDI’, Sogverse ’el puqlI’ — vaj mu’ pegh chIllaHbogh qoj HIjlaHbogh ghajbe’.</p><p>vav Daq ’elmeH loS mI’ PIN poQlu’, ’ej SoH neH Sov: vaj Hal qawwI’Daq polta’bogh mu’ pegh: je’meH qoj puq account choHmeH lI’be’. puq profile DawIvDI’ qoj bImejDI’, SIbI’ jonqa’lu’.</p><p>PIN DalIjchugh, accountlIj jabbI’ID DaqDaq neH chu’moHmeH He wIngeH — latlh DaqDaq pagh. vaj ”PIN DalIj’a’?” qIptaHvIS puq, jabbI’ID neH DangeHmoH.</p>"
+          "answer": "<p>chay’ ’el puqlI’ ’e’ DawIv, Hoch puqvaD, jIH SOGDaq. motlh ’elmeH ngoq Daj ghajbe’ toy’wI’ account: Sogverse qoD Daq ghaj — jabbI’ID Daq teH ghajbe’ — vav accountlIj tlhej boqlu’, ’ej accountlIjvo’ profileDaj DawIvDI’, Sogverse ’el puqlI’. DaneHchugh, pong pegh mu’ je DanoblaH, pagh jabbI’ID DaqDaj — ’olDI’ puq, pegh mu’ wIv.</p><p>DawIvbogh Hoch: puq ’elmeH ngoq accountDaj neH poSmoH — ponglIj mu’lIj joq lo’taHbogh puq: accountlIj qoj loDnI’ be’nI’ account ’ol laHbe’ pagh. mej ’ej ’elqa’: SoH ghaH ’ej pegh mu’lIj lo’, pagh loDnI’ be’nI’ je ghaj pong pegh mu’ je. ’ach accountlIjvo’ ’elbogh loDnI’ be’nI’: accountlIjvo’ neH yISuch. ’ej accountlIjvo’ ’elpu’bogh puq: latlh DaqDaq wIvmeH vav PINlIj poQ.</p><p>vav Daq ’elmeH loS mI’ PIN poQlu’, ’ej SoH neH Sov: vaj Hal qawwI’Daq polta’bogh mu’ pegh: je’meH qoj puq account choHmeH lI’be’. puq profile DawIvDI’ qoj bImejDI’, SIbI’ jonqa’lu’.</p><p>PIN DalIjchugh, accountlIj jabbI’ID DaqDaq neH chu’moHmeH He wIngeH — latlh DaqDaq pagh. vaj ”PIN DalIj’a’?” qIptaHvIS puq, jabbI’ID neH DangeHmoH.</p>"
         },
         "childData": {
           "question": "nuq De’ puqwI’vo’ bopol?",
-          "answer": "<p>puqlI’ De’:</p><list><item>pong wa’DIch, boghtaHvIS maS DIS je — jaj wItlhobbe’ — ’ej DaneHchugh loD be’ ghap.</item><item>qorDu’lI’ pong Qav, qorDu’lI’ ’ay’ ghaHmo’ puqlI’. qorDu’lI’ HurDaq cha’lu’be’ pagh: Gedu tetlhDaq ghogh pa’Daq je puqlI’ pong wa’DIch, DISDaj, ’ej Dachelpu’bogh Quj pong cha’lu’.</item><item>accountDaj Sogverse qoD Daq — jabbI’ID Daq teH ghajbe’.</item><item>DaneHchugh, ghom’a’Daj Qujmey pongDaj ’ej Quj nobbogh mI’, may’Daq wIngu’meH. Quj nuvDaj mIllogh: Quj SeHlawmeyvo’ Sublu’, vaj tetlh cha’DI’ vay’, Minecraft Roblox ghap SIch pong.</item><item>pongDaj retlhDaq mIllogh: mIllogh teH ’oHbe’. Quj account rarlu’be’chugh, account mI’vo’ chenbogh Segh ’oH.</item></list><p>latlh: ghom’a’ vumlaHmeH poQbogh De’ wIpol — muvpu’bogh ghom’a’mey, raghmey, wanI’mey; pawwI’ ngu’ghachmey; Gedupu’Daj qonbogh may’ De’mey ngajbogh qonta’mey je; may’meyDaq QInmey ’ej pa’Daq lanlu’bogh mIlloghmey; chenmoHta’meyDaj Gedu rarbogh ghomDaq; pa’Daj qonlu’bogh chaw’ghachmey; ’ej may’ De’Daq Gedu chelbogh mIlloghmey. Gedu SeHghach je qonlu’ — Daq mobDaq puq vIHlu’chugh, QInmeyDaq SovmoHlu’chugh je, qonta’ lan. may’ De’ mIlloghmey may’ luDel, wa’ puq luDelbe’ — ghom qorDu’ Hoch luleghlaH ghom HalDaq, ’ej may’ De’ tlhej jabbI’ID luHev.</p><p>puqlI’ De’ DaleghmeH, DaghItlhqa’meH, qoj DaQaw’meH: {supportEmail} Daq yIngeH. account DaghajtaHvIS De’lIj wIpol; account DaSoQmoHchugh, wIQaw’ qoj pong wIteq — ’ach chut poQchugh, poH nI’ De’ puS wIpol, Suomngan Huch chut poQmo’ Huch qonta’vaD.</p>"
+          "answer": "<p>puqlI’ De’:</p><list><item>pong wa’DIch, boghtaHvIS maS DIS je — jaj wItlhobbe’ — ’ej DaneHchugh loD be’ ghap.</item><item>qorDu’lI’ pong Qav, qorDu’lI’ ’ay’ ghaHmo’ puqlI’. qorDu’lI’ HurDaq cha’lu’be’ pagh: Gedu tetlhDaq ghogh pa’Daq je puqlI’ pong wa’DIch, DISDaj, ’ej Dachelpu’bogh Quj pong cha’lu’.</item><item>accountDaj Sogverse qoD Daq — jabbI’ID Daq teH ghajbe’, DaqDaj DanobtaHbe’chugh; Danobpu’chugh, Daqvetlh wIpol. DawIvbogh Hoch: Gedu tetlhDaq ghogh pa’Daq je puqlI’ jabbI’ID Daq cha’lu’be’ not.</item><item>DaneHchugh, ghom’a’Daj Qujmey pongDaj ’ej Quj nobbogh mI’, may’Daq wIngu’meH. Quj nuvDaj mIllogh: Quj SeHlawmeyvo’ Sublu’, vaj tetlh cha’DI’ vay’, Minecraft Roblox ghap SIch pong.</item><item>pongDaj retlhDaq mIllogh: mIllogh teH ’oHbe’. Quj account rarlu’be’chugh, account mI’vo’ chenbogh Segh ’oH.</item></list><p>latlh: ghom’a’ vumlaHmeH poQbogh De’ wIpol — muvpu’bogh ghom’a’mey, raghmey, wanI’mey; pawwI’ ngu’ghachmey; Gedupu’Daj qonbogh may’ De’mey ngajbogh qonta’mey je; may’meyDaq QInmey ’ej pa’Daq lanlu’bogh mIlloghmey; chenmoHta’meyDaj Gedu rarbogh ghomDaq; pa’Daj qonlu’bogh chaw’ghachmey; ’ej may’ De’Daq Gedu chelbogh mIlloghmey. Gedu SeHghach je qonlu’ — Daq mobDaq puq vIHlu’chugh, QInmeyDaq SovmoHlu’chugh je, qonta’ lan. may’ De’ mIlloghmey may’ luDel, wa’ puq luDelbe’ — ghom qorDu’ Hoch luleghlaH ghom HalDaq, ’ej may’ De’ tlhej jabbI’ID luHev.</p><p>puqlI’ De’ DaleghmeH, DaghItlhqa’meH, qoj DaQaw’meH: {supportEmail} Daq yIngeH. account DaghajtaHvIS De’lIj wIpol; account DaSoQmoHchugh, wIQaw’ qoj pong wIteq — ’ach chut poQchugh, poH nI’ De’ puS wIpol, Suomngan Huch chut poQmo’ Huch qonta’vaD.</p>"
         },
         "becomeGedu": {
           "question": "chay’ Gedu vImoj?",
@@ -297,6 +346,7 @@
         "issues": {
           "unassignedGamers": "{count, plural, one {# toy’wI’ ghomHa’} other {# toy’wI’pu’ ghomHa’}}",
           "groupWithoutGedu": "ghom {group} Gedu ghajbe’",
+          "emptyGroupWithoutGedu": "ghom chIm {group} Gedu ghajbe’",
           "waitlistOpenSeats": "{waiting} loStaH · {open, plural, one {# quS} other {# quSmey}} poSmoH",
           "missingGeduFee": "Gedu Huch Hutlh",
           "missingMunicipalityFee": "veng Huch Hutlh",
@@ -322,7 +372,6 @@
         "sessionCount": "{count, plural, one {# poH} other {# poHmey}}",
         "timesIn": "poHmey: {zone}",
         "nothingOn": "pagh",
-        "paused": "Hoghvam leSlI’:",
         "needsAttention": "poQ Qu’ – De’vam tu’lu’ ’etlhDaq QaDDaq",
         "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
       },
@@ -463,9 +512,10 @@
           "materialUrl": "ghojmoHmeH De’",
           "startDate": "tagh jaj",
           "endDate": "rIn jaj",
+          "firstSession": "wa'DIch ghom",
+          "lastSession": "Qav ghom",
           "signupThreshold": "ghIH yum",
           "termDates": "poH",
-          "holidayCalendars": "leSpoH naQ",
           "billingMode": "Huch yIv",
           "seats": "quS",
           "waitlist": "loS DIS",
@@ -473,12 +523,15 @@
           "primaryGeduFee": "Gedu wa’DIch Huch / qaStaHvIS",
           "assistantGeduFee": "Gedu boQwI’ Huch / qaStaHvIS",
           "municipalityFee": "veng Huch / qaStaHvIS",
+          "timezone": "poH Sep",
           "registrationOpensAt": "ghIH poSchoH",
           "tag": "’Iv chenmoHlu’pu’",
           "regionLock": "Sep ngaQmoH",
           "requiredConsents": "poQlu’bogh chaw’mey",
           "requiresGamerCreations": "toy’wI’ chenmoHtaHbogh Doch",
-          "visibility": "leghlu"
+          "visibility": "leghlu",
+          "gamerPhotoConsents": "mIllogh tlhobmey",
+          "marketingConsents": "QIn tlhobmey"
         },
         "copyLink": "Hoch He yIghItlhqa'",
         "copied": "ghItlhqa'lu'ta'"
@@ -523,7 +576,7 @@
         "registration": "ghItlh poH",
         "registrationDescription": "ghItlh tagh poH yIwIv.",
         "consents": "chaw’mey",
-        "consentsDescription": "nuq lajnIS vav, nuq tlhoblu’ je. poQlu’bogh ghItlhmey lulajnIS. ra’be’lu’bogh tlhobmey lujangbe’laH ’ej quS chIlbe’.",
+        "consentsDescription": "nuq lajnIS vav, nuq tlhoblu’ je. poQlu’bogh ghItlhmey lulajnIS. mIllogh tlhob QIn tlhob je lujangbe’laH ’ej quS chIlbe’.",
         "visibility": "tetlh",
         "visibilityDescription": "Doch DaQIjbogh Daq wIv, ’ach ’Iv je’laH ’e’ wIvbe’. ghItlh poH, pa’ mI’, Doch Dotlh je — bIH neH poSmoH ’ej SoQmoH."
       },
@@ -555,8 +608,7 @@
         "dayAndTime": "jaj & poH",
         "daysAndTimes": "jajmey & poHmey",
         "time": "poH",
-        "holidayCalendars": "jajmey Do’",
-        "holidayNoUpcoming": "jaj pagh — jaj poQ.",
+        "timezone": "poH Sep",
         "pricing": "Huch",
         "free": "Huch pagh",
         "paid": "Huch",
@@ -656,10 +708,16 @@
         "version": "’ay’ {version}",
         "noVersion": "pagh ’ay’ ngeHlu’pu’",
         "none": "pagh",
+        "gamerPhoto": {
+          "lynxEducate": {
+            "label": "mIllogh HaSta je (Lynx Educate)",
+            "description": "DawIvchugh, ghItlhDaq ra’be’lu’bogh tlhob chel: puqDaj mIllogh HaSta je tlhoblu’ ’ej School of Gaming, Lynx Educate, Roblox je lulo’laH ’e’ tlhoblu’ vavpu’. jangbe’laH vav, ’ej quSDaj chIlbe’. puq Hoch tlhoblu’, ’ej ghIH Hoch tlhobqa’lu’."
+          }
+        },
         "marketing": {
           "lynxEducate": {
             "label": "Lynx Educate",
-            "description": "DawIvchugh, ghItlhDaq ra’be’lu’bogh tlhob chel: boqwI’maj Lynx Educate-vaD De’chaj lunob ’e’ luchaw’ ’e’ tlhoblu’ vavpu’. jangbe’laH vav, ’ej quSDaj chIlbe’."
+            "description": "DawIvchugh, ghItlhDaq ra’be’lu’bogh tlhob chel: Lynx Educate-vaD De’wI’ HeywI’ lunob ’e’ luchaw’ ’e’ tlhoblu’ vavpu’. jangbe’laH vav, ’ej quSDaj chIlbe’."
           }
         }
       },
@@ -682,8 +740,9 @@
         "eventSingleDay": "Qu’mey wa’ jaj qaS.",
         "thresholdOnly": "jaj tagh DaH pagh. vavmey ”X / Y poQ” laSvargh lulegh teb. ghItlh law’ tIghaj ’ej tagh yIqotlh, jaj tagh yIngu’ qIb.",
         "thresholdWithDate": "jaj taghDaq ghItlh law’ pumchugh, De’ Daq tlhotlh ’ej Huch chegh.",
-        "timezoneFixedHelsinki": "poHmey Europe/Helsinki Daq. vavmey Daq poHchaj choHlu’.",
-        "holidayHint": "jajmey Do’ qaStaHvIS pagh qaS. wa’ jajmey Do’ DachoHchugh, Hoch ghor De’.",
+        "timezoneEntry": "poH Sepvamdaq ghItlhlu’ bIng poHmey. vavpu’ Daq poHchaj choHlu’.",
+        "timezoneChangeMoves": "poH Sepvamdaq ghItlhlu’ bIng poHmey. poH Sep DachoHchugh, vIH Hoch qep pIq: poH rap, Sep chu’. ’ach qepmey ghItlhlu’pu’bogh — ja’chuq ghojwI’pu’ ghap — poHchaj tIQ luSaH: not choHlu’ qun.",
+        "timezoneIs": "poHmey {timezone} Daq. vavpu’ Daq poHchaj choHlu’.",
         "billingHint": "Huch Hutlhbogh Dochmey: pa’ mI’ Sub ghaj. Huch ghajbogh Dochmey: Sub Hutlh.",
         "freeDetail": "Huch pagh. Hoch wa’ chu’wI’ lo’.",
         "paidDetailMonthly": "jar Hoch Huch nob. not mev.",
@@ -695,8 +754,9 @@
         "seatHintNoWaitlist": "tebDI’, ghItlh chu’mey lajQo’lu’.",
         "visibleHint": "yIchu’Ha’chugh, pagh tetlhDaq Doch tu’lu’ — ’ach He nIH ghajbogh nuv Doch legh ’ej pa’ je’laH. vaj ’angbe’lu’bogh Doch, ri’bogh Doch, ghap tlhIngan may’ Doch DaSuqmeH QaQ. ghItlh chu’ DamevmeH mIw ghaHbe’, ’ej ghoStaHbogh vavpu’ QujwI’pu’ je luQaHbe’.",
         "seatLimitHint": "pa’ mI’ yIgheS pagh Sub Hutlh yIqaw.",
-        "holidayComingSoon": "jaj Do’ De’wI’ tugh chol. DaH Hoch ghum qaS.",
-        "startDateBillingAnchor": "tagh ghom jaj ’ej DIl qorDu’ jaj. jaj Da’choHchugh, DIlpu’bogh qorDu’vaD pagh choH — Stripe Daq yIchoH!"
+        "startDateBillingAnchor": "tagh ghom jaj ’ej DIl qorDu’ jaj. jaj Da’choHchugh, DIlpu’bogh qorDu’vaD pagh choH — Stripe Daq yIchoH!",
+        "startNotSessionDay": "jajvam ghomlaHbe'. wa'DIch ghom 'oH {date}'e'.",
+        "endNotSessionDay": "jajvam ghomlaHbe'. Qav ghom 'oH {date}'e'."
       },
       "errors": {
         "translationRequired": "wa’ Hol pong QIn je poQ",
@@ -829,7 +889,7 @@
         "searchGedu": "Gedu yISam…",
         "searchMunicipality": "veng yISam…",
         "noResults": "pagh SammoHlu’.",
-        "search": "pong lo'taHvIS ngoQ nej",
+        "search": "nej",
         "searchPlaceholder": "pong nej…",
         "showing": "cha’lu’ {count}/{total}",
         "clear": "yIteq",
@@ -952,6 +1012,55 @@
             "description": "{name} Dateqchugh, ngab pa’ ’ach taHtaH Huch nge’ghach: pa’ Hutlhbogh qorDu’vo’ Huch nge’taH. quvHa’ghach ’oH!",
             "nextStep": "jIH SOG yaHDaj Huch ngoptlhIn poSmoH qorDu’; vaj Hubbogh Stripe Huch pa’Daq nge’ghach chIl. chIlDI’, tlhab pa’."
           }
+        },
+        "switchClub": {
+          "dropZone": "ghom’a’ yIchIj",
+          "title": "ghom’a’ yIchIj",
+          "description": "latlh ghom’a’Daq {name} vIH. DaHjaj qorDu’vaD pagh choH: rap nav, rap jaj je; jarvam chuq chIm ghItlh veb; ghIq ghom’a’ chu’ Huch DIl qorDu’.",
+          "searchPlaceholder": "pongDaq ghom’a’ yISam",
+          "picker": {
+            "empty": "latlh ghom’a’ tu’lu’be’. jarmey Huch poQnIS ghom’a’, ’ej rInbe’nIS.",
+            "noMatch": "ghom’a’ tu’lu’be’ QulmeHvam. latlh pong yInID.",
+            "alreadyHolds": "quS ghaj"
+          },
+          "facts": {
+            "ageRange": "{ends, select, both {DIS {min}–{max}} from {DIS {min} pagh nIvbogh} other {DIS {max} pagh puSbogh}}",
+            "ageRangeWithGamer": "{ends, select, both {DIS {min}–{max}} from {DIS {min} pagh nIvbogh} other {DIS {max} pagh puSbogh}} · DIS {age} ghaj {name}",
+            "seats": "{taken}/{capacity} quS ngaSlu’",
+            "regionLocked": "{country} qorDu’pu’ neH",
+            "notStarted": "{date} tagh. DaHjaj DIlchoH qorDu’, taghbogh jaj DIlchoHbe’.",
+            "notStartedUndated": "tagh jaj tu’lu’be’. DaHjaj DIlchoH qorDu’.",
+            "subscriptionEnding": "Huch nge’ghach chIl qorDu’; {date} van rIn. jarvam Huch pIm nge’lu’be’."
+          },
+          "prices": {
+            "current": "DaH DIl",
+            "target": "Huch chu’",
+            "proration": "jarvam chuq pIm chel pagh nobHa’ ghItlh veb.",
+            "unavailable": "Huch cha’lu’be’",
+            "error": "cheghbe’ Huch chov. ghom’a’ yIwIvqa’."
+          },
+          "back": "yIchegh",
+          "group": {
+            "label": "ghom",
+            "unassigned": "ghom yIwIvQo’",
+            "members": "{count, plural, one {# SuvwI’} other {# SuvwI’pu’}}"
+          },
+          "refusals": {
+            "latestInvoiceNotPaid": "DIlbe’lu’ qorDu’ ghItlh Qav, vaj poH DIlta’ tu’lu’be’. StripeDaq nom yIQIj.",
+            "subscriptionNotSingleItem": "wa’ Doch law’ ghaj Huch nge’ghach, vaj wa’ Huch chIjmeH tu’lu’be’. StripeDaq nom yIQIj.",
+            "noTargetPriceInCurrency": "Huch nge’ghach Huch Segh ghajbe’ ghom’a’vam. euro neH lo’ ghom’a’pu’, vaj latlh Huch SeghDaq chenbogh Huch nge’ghach chIjlaHbe’lu’ naDev — StripeDaq nom yIQIj.",
+            "participationNotActive": "vumbe’ pa’vam, vaj vIHmeH pagh tu’lu’.",
+            "noLiveSubscription": "pa’vam DungDaq taHbogh Huch nge’ghach tu’lu’be’, vaj jan lughbe’ ’oH: pa’ yIteq, ’ej latlh ghom’a’Daq SuvwI’ yIngu’.",
+            "targetNotPaidSubscriptionClub": "jarmey Huch poQbogh ghom’a’ ’oHbe’ ngoptlhInvam’e’, vaj pa’ tlha’laHbe’ Huch nge’ghach.",
+            "sameProduct": "ghom’a’vamDaq ghaHtaH SuvwI’’e’.",
+            "alreadyOnTarget": "ghom’a’vamDaq pa’ ghaj SuvwI’."
+          },
+          "commit": {
+            "stripeUpdated": "ghom’a’ chu’ HuchDaq ’oHtaH Huch nge’ghach’e’, ’ach vIHbe’ pa’. rInmeH ghom’a’ yIchIj yI’uy’qa’ — cha’logh qorDu’ nge’lu’be’.",
+            "stripeUpdatedStuck": "ghom’a’ chu’ HuchDaq ’oHtaH Huch nge’ghach’e’, ’ach vIHlaHbe’ pa’: ghom’a’Daq pa’ ghajbe’bogh SuvwI’vaD DIl qorDu’. StripeDaq nom yIQIj.",
+            "failed": "rInbe’ chIjghach. ghom’a’ yIchIj yI’uy’qa’ — rap tlhobHa’ghach, vaj not cha’logh DIl qorDu’."
+          },
+          "confirm": "ghom’a’ yIchIj"
         }
       },
       "seatLimitModes": {
@@ -991,7 +1100,6 @@
       "userNotFound": "lo’wI’ tu’be’lu’.",
       "joined": "muv",
       "unknown": "Sovbe’lu’",
-      "referralCode": "ghum ngoq",
       "linkedGamers": "toy’wI’pu’ jonlu’",
       "linkedParents": "vav/SoSmey jonlu’",
       "unnamedGamer": "pong Hutlh toy’wI’",
@@ -1022,9 +1130,25 @@
         "description": "QujwI’ pong yIchoH ghap yIcher. bIpolDI’ pong chel Qu’qoq."
       },
       "marketing": {
-        "title": "QIn chaw’mey",
+        "title": "ghum",
+        "attribution": "He",
+        "utm": {
+          "source": "mung",
+          "medium": "Duj",
+          "campaign": "veS"
+        },
+        "preferences": "chaw’mey",
         "schoolOfGaming": "noH Quj yejHaD",
         "lynxEducate": "Lynx Educate",
+        "granted": "chaw’lu’",
+        "notGranted": "chaw’be’lu’",
+        "since": "{date}vo’"
+      },
+      "photoConsent": {
+        "title": "mIlogh chaw’",
+        "labels": {
+          "lynx_educate": "Lynx Educate"
+        },
         "granted": "chaw’lu’",
         "notGranted": "chaw’be’lu’",
         "since": "{date}vo’"
@@ -1048,7 +1172,8 @@
         "uncertifyAction": "patlh yIteq",
         "saving": "vISaH...",
         "error": "patlh choHlu’be’pu’. yInID."
-      }
+      },
+      "usernameLabel": "pong"
     },
     "locations": {
       "editName": "{name} yIchoH",
@@ -1084,36 +1209,24 @@
       "description": "SuvwI’ Qu’mey nI’moH je ghojmoH",
       "emailTool": "QIn Qu’ nI’moH",
       "emailToolDescription": "Brevo (SMTP) QInmey ngeH — ’eb je De’mey bIH Suq.",
-      "provider": "ngeHwI’",
-      "brevo": "Brevo (SMTP)",
-      "klaviyoComingSoon": "Klaviyo (pIq ghoS)",
-      "content": "Qatlh",
       "template": "De’ tIng",
       "language": "Hol",
-      "custom": "nI’moH",
       "toEmail": "QIn naDev",
       "toEmailPlaceholder": "recipient@example.com",
       "templateParameters": "De’ tIng ngoQmey",
-      "fromEmail": "QIn vo’",
-      "fromName": "pong",
       "subject": "ngoQ",
-      "subjectPlaceholder": "Qu’ nI’moH QIn ngoQ",
-      "body": "Qatlh",
-      "bodyPlaceholder": "QIn Qatlh yIchel (HTML chergh)",
-      "replyTo": "jang-naDev (nIvbe’)",
-      "replyToPlaceholder": "reply@example.com",
       "sendTestEmail": "Qu’ nI’moH QIn yIngeH",
       "emailSentSuccess": "QIn ngeHlu’! De’ ID: {messageId}",
       "failedToSendRequest": "tlhob ngeH Dabe’lu’",
       "preview": "QIn bejwI’",
-      "previewDescription": "ngeHbe’lu’ — naDev neH QIn Dalegh. De’wI’vamvo’ mIlloghmey Suqlu’, vaj Hoch mIlloghmey Dalegh; ’ach ngeHlu’chugh, mIlloghmeyvam Hutlh QIn.",
-      "refreshPreview": "QIn yIchu’qa’",
       "previewError": "De’ tIng chenmoHlaHbe’lu’: {message}",
       "previewWidth": {
         "label": "QIn leghmeH Daq",
         "desktop": "De’wI’ tIn",
         "mobile": "De’wI’ mach"
-      }
+      },
+      "attachment": "chelta’ghach: {name}",
+      "sentAttachment": "ngeHta’: {name}"
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -1132,15 +1245,16 @@
       "welcomeTitle": "noH Quj yejHaD bIghoS, SuvwI’!",
       "noAccountSignUp": "account DaHutlh’a’? <link>DachenmoH</link>",
       "signingIn": "bI’el...",
-      "emailPlaceholder": "SoH@example.com",
       "passwordPlaceholder": "mu’mey yIchel",
       "errors": {
-        "identifierRequired": "QIn-HutlIj yIchel, SuvwI’!",
+        "identifierRequired": "QIn Daq pagh ponglIj yIchel, SuvwI’!",
         "passwordTooShort": "{count} mu’mey law’ law’ Hutlhbe’ mu’mey’lIj.",
-        "invalidCredentials": "QIn-Hut pagh mu’mey lughbe’. tugh!",
+        "invalidCredentials": "QIn Daq, pong pagh mu’mey lughbe’. tugh!",
         "emailNotConfirmed": "QIn-HutlIj yIngu’ ’el qaSpa’.",
         "tooManyAttempts": "law’ ’el wIv DataH! loSpa’ tugh ghIq yInID."
-      }
+      },
+      "identifierLabel": "QIn Daq pagh pong",
+      "identifierPlaceholder": "SoH@example.com pagh pong"
     },
     "needHelp": "QaH DaSov’a’? <link>{email}</link> yIngeH",
     "register": {
@@ -1275,7 +1389,8 @@
     "price": {
       "subscription": "{amount} / jar",
       "upfront": "{amount} (wa’logh DIl)",
-      "free": "wagh Hutlh"
+      "free": "wagh Hutlh",
+      "external": "veng Huch nob"
     },
     "nextTitle": "qaStaHvIS",
     "next": {
@@ -1421,6 +1536,16 @@
       "title": "QujwI’ chelmeH {name} pong yIchoH’a’?",
       "oneWayWarning": "QujwI’ account lup mejlu’."
     },
+    "switchGate": {
+      "pinTitle": "PIN ghItlhmeH vav yItlhob",
+      "pinDescription": "{name} DaSuchmeH vav PIN poQlu’.",
+      "pinNotSetTitle": "vav PIN tu’be’lu’",
+      "pinNotSetDescription": "My SOG DajDaq PIN cher vav wa’DIch. ghIq account DachoHlaH.",
+      "signOutTitle": "yImej wa’DIch",
+      "signOutOwnSession": "pongDaj lo’ta’ {name}. vaj latlh accountDaq choHlaHbe’ accountvam. Hoch account So’lu’.",
+      "signOutHow": "yImej, ghIq {name} yImoj.",
+      "signOutHowViaParent": "yImej. vavlI’ pong yIlo’, ghIq pa’vo’ {name} yIchoH."
+    },
     "addGamerForm": {
       "title": "QujwI’ chu’ chel",
       "firstNameLabel": "wa’DIch pong",
@@ -1488,7 +1613,8 @@
     "copyright": "© {year} noH Quj yejHaD. Hoch batlh.",
     "contact": {
       "email": "QIn: {email}"
-    }
+    },
+    "privacyChoices": "pegh wIvmey"
   },
   "gamer": {
     "welcomeNamed": "nuqneH, {name}!",
@@ -1499,14 +1625,14 @@
       "items": {
         "joiningSession": {
           "question": "may’wIj taghDI’, chay’ vImuv?",
-          "answer": "<p>naDev Hoch mIw:</p><steps><step>jIH SOG yIpoSmoH ’ej ghom’a’lIj yISam.</step><step>’etlh yIlegh. may’lIj SumtaHvIS jonta’ ’oH, ’ej jaj poH je ja’.</step><step>may’lIj taghpa’ vagh tup, choH ’etlh: ”ghogh pa’Daq yIghoS” moj.</step><step>yIqIp. bI’elpu’!</step></steps><p>chenmoHnISlu’bogh pagh, ghItlhnISlu’bogh ngoq pagh.</p><p>’ach bIchelpu’ ’e’ ja’chugh ghom’a’lIj, ’ej Gedu ghom je DISamlI’ ’e’ ja’chugh: ’etlh tu’lu’be’ DaH. bIchelpu’bej — ’ach ghomDaq wIlanbe’taH. may’ wa’DIchlIj taghpa’ qaS, ’ej pa’ ghaHtaH GedulIj’e’. yISuvqang!</p>"
+          "answer": "<p>wa’DIch jIH SOG yIpoSmoH ’ej ghom’a’lIj yISam. nuqDaq ghom ghom’a’lIj? ghIq qaSbogh wanI’ wIv.</p><p>ghogh pa’Daq ghomchugh, ’etlh tu’lu’:</p><steps><step>may’lIj SumtaHvIS jonta’ ’etlh, ’ej jaj poH je ja’.</step><step>may’lIj taghpa’ vagh tup, choH ’etlh: ”ghogh pa’Daq yIghoS” moj.</step><step>yIqIp. bI’elpu’!</step></steps><p>chenmoHnISlu’bogh pagh, ghItlhnISlu’bogh ngoq pagh.</p><p>Daq’e’ ghomchugh, ’etlh tu’lu’be’. Daq pong cha’ ghom’a’lIj, ’ej Daq ngoq cha’ ghom’a’lIj Hal je. may’lIj taghDI’, pa’ yIghoS!</p><p>’ach bIchelpu’ ’e’ ja’chugh ghom’a’lIj, ’ej Gedu ghom je DISamlI’ ’e’ ja’chugh: ’etlh Daq ghap tu’lu’be’ DaH. bIchelpu’bej — ’ach ghomDaq wIlanbe’taH. may’ wa’DIchlIj taghpa’ qaS, ’ej pa’ ghaHtaH GedulIj’e’. yISuvqang!</p>"
         },
         "cannotBeHeard": {
-          "question": "jIHvaD Qoy pagh — nuq vInuD?",
+          "question": "ghogh pa’Daq jIHvaD Qoy pagh — nuq vInuD?",
           "answer": "<p>Dochmey yInuD, mIw yIpab. motlh wa’DIch ’oH qay’bogh Doch’e’.</p><steps><step>Doq’a’ wab jan ’etlhlIj? bIjatlhHa’moHlu’pu’. yIqIp, ’ej bIjatlhlaHqa’.</step><step>’etlhDaq ngaQwI’ Dalegh’a’? ram GedulIj jonpu’ wab janlIj. poSmoHqa’ ghaH.</step><step>wab jan ’etlh retlhDaq naQjej mach yIqIp. wab jan SeHlaw poSmoH, ’ej tetlhvo’ wab jan lugh DawIvlaH.</step><step>DaH yIjatlh, ’ej tetlh bIngDaq nagh beQ yISam. nagh beQ tu’lu’be’chugh, chu’Ha’lu’ wab janlIj — tammoHlu’be’; wa’DIch mIwDaq yIcheghqa’. tu’lu’chugh nagh beQ ’ach vIHbe’chugh, latlh Doch ghaj wab janlIj.</step></steps><p>wab janlIj wISIchlaHbe’ ’e’ ja’bogh Doq QIn Dalegh’a’? lo’bogh latlh ngoqmey nav beQmey je yISoQmoH, HallIj SeHlawDaq wab jan yIchaw’, ’ej ”yItchu’qa’” yIqIp.</p><p>DaH je Qoy pagh’a’? may’Daq GedulIj yIja’ — QaH ghaH.</p>"
         },
         "cannotHearOthers": {
-          "question": "pagh vIQoy — nuq vInuD?",
+          "question": "ghogh pa’Daq pagh vIQoy — nuq vInuD?",
           "answer": "<p>Dochmey yInuD, mIw yIpab:</p><steps><step>janlIj wab yInIt, ’ej teSDeq yInuD: DIlyIqDaq bIH’a’?</step><step>Daqmey yIlegh. DaqlIjDaq tu’lu’bogh nuvpu’ neH Daqoy. latlh DaqDaq tu’lu’chugh Hoch, Daqchaj yIqIp ’ej pa’ yIghoS.</step><step>lI’mo’ DaqDaq Dulanpu’ GedulIj’e’chugh, pa’ yIratlh. qangeHqa’.</step></steps><p>DaqlIjDaq tu’lu’chugh latlh, ’ej wab nItpu’, ’ach tamtaHchugh Hoch: GedulIj yIja’ — yIjach, pagh pa’lIjDaq QInmey tu’lu’chugh, pa’ yIghItlh. pa’Daq tu’lu’bogh nuvpu’ legh ghaH, ’ej QaH.</p>"
         },
         "someoneIsMean": {
@@ -1575,6 +1701,7 @@
       "staffNotePlaceholder": "latlh Gedu Sovnis Hoch — ’ej pegh qonnIS Hoch: wanI’ qab, joy’taHghach, QujwI’ Daqelbogh je.",
       "attendanceLegend": "pawwI’pu’",
       "attendanceRevertHint": "wIv rap DawIvqa’chugh, vaj ngu’ Danatlh. tetlh ’ay’ DapollaH ’ej tugh Darinmoh.",
+      "attendanceNobodyExpected": "may’vam qaStaHvIS ghom’a’vamDaq luHevlu’pu’be’. vaj pawwI’pu’ ngu’nISlu’be’.",
       "reportTitle": "may’ De’ — vavpu’ SoSpu’ toy’wI’pu’ je lulaD",
       "reportFormattingHint": "not QujwI’ pegh Daghitlh — Hoch lulaD. permey, ngutlh tIn, tetlhmey je tIlo’ — vaj sampu’.",
       "reportPlaceholder": "per’a’ yIghItlh. ghIq Hoch yIja’: may’ qech, ghom vum, qaStaHvIS nuq qaS, Dun poHmey, qawlu’bogh wanI’mey je.",
@@ -1595,6 +1722,10 @@
       "photosEmpty": "may’vamvaD mIllogh yIchel.",
       "photosDropHint": "naDev je mIlloghmey yIwoD.",
       "addPhoto": "mIllogh yIchel",
+      "photoConsentTitle": "mIllogh chaw’",
+      "photoConsentNote": "QujwI’ DamIlloghpa’, ghaH yItlhob — vav chaw’ta’chugh je. vav chaw’be’chugh, mIlloghDaq QujwI’ tu’lu’ net tuHmoH: mIlloghvo’ yIteq.",
+      "photoConsentAllowed": "chaw’lu’",
+      "photoConsentNotAllowed": "chaw’lu’be’",
       "removePhoto": "mIllogh {index} yIteq",
       "photosTrimmed": "{cap} mIlloghmey neH ngaSlaH De’ — vaj {count, plural, one {wa’ neH chellu’ta’} other {# neH chellu’ta’}}.",
       "photoErrorDecodeFailed": "De’vam poSmoHlu’laHbe’. iPhone Do’Ha’! JPEG yIchenmoH ’ej yIboq.",
@@ -1718,11 +1849,11 @@
         },
         "safeguardingConcern": {
           "question": "may’ botDaq puq Hung vIbuS — vaj nuq vIta’?",
-          "answer": "<p>wa’DIch pa’Daq wanI’ yISeH — SeHwI’ janmey Daghaj: wab jan yISovmoH, yIjon, qoj ghomvo’ pa’ pImDaq vay’ yIvIH. ghIq jaj rap qonta’ yIchenmoH, tu’taHvIS.</p><p>may’ Hoch ghaj Qu’nganpu’ qonta’ — Gedupu’ che’wI’pu’ je vaD ’oH, ’ej leghbe’ qorDu’pu’ not; naDev qonlu’ wanI’ qab, qIp tlhejHa’ ghap, toy’wI’vaD buSbogh De’ je. ghom tetlhDaq toy’wI’ Hoch ghaj qonta’ mob je: ghomvetlhDaq puqvetlh tlhejtaH, may’ Hoch, ’ej Gedupu’ che’wI’pu’ je neH legh. cha’ qonta’: qorDu’ leghbe’ pagh.</p><p>qonta’ ’oH ghItlh’e’, ghuHmoHwI’ ’oHbe’: pagh vemmoH. vaj nom poQbogh Hoch, ’ej ghom retlh nuv poQbogh Hoch: {supportEmail} Daq je yIngeH.</p>"
+          "answer": "<p>wa’DIch wanI’ yISeH. ghogh pa’Daq may’ qaSchugh, SeHwI’ janmey Daghaj: wab jan yISovmoH, yIjon, qoj ghomvo’ pa’ pImDaq vay’ yIvIH. Daq’e’ qaSchugh, SeHwI’ janmey nob pat pagh — pa’Daq SoH yISeH! ghIq jaj rap qonta’ yIchenmoH, tu’taHvIS.</p><p>may’ Hoch ghaj Qu’nganpu’ qonta’ — Gedupu’ che’wI’pu’ je vaD ’oH, ’ej leghbe’ qorDu’pu’ not; naDev qonlu’ wanI’ qab, qIp tlhejHa’ ghap, toy’wI’vaD buSbogh De’ je. ghom tetlhDaq toy’wI’ Hoch ghaj qonta’ mob je: ghomvetlhDaq puqvetlh tlhejtaH, may’ Hoch, ’ej Gedupu’ che’wI’pu’ je neH legh. cha’ qonta’: qorDu’ leghbe’ pagh.</p><p>qonta’ ’oH ghItlh’e’, ghuHmoHwI’ ’oHbe’: pagh vemmoH. vaj nom poQbogh Hoch, ’ej ghom retlh nuv poQbogh Hoch: {supportEmail} Daq je yIngeH.</p>"
         },
-        "gamerCannotConnect": {
-          "question": "’ellaHbe’ toy’wI’, ’ej taghpu’ may’ — nuq vIta’laH?",
-          "answer": "<p>cha’ Doch DalaH pat qoDDaq, ’ej wa’ Doch DalaHbe’.</p><p>wa’DIch: tetlhlIj tlhej pa’Daq tu’lu’bogh nuvpu’ yInuD — DaH rarbogh nuvpu’ neH cha’ muvwI’pu’ tetlh, vaj tetlhvo’ Hutlhbogh pong: ’elpu’be’bogh toy’wI’ ’oH. pagh ngu’moH SoHvaD — SoH yIlaD!</p><p>qorDu’ DaSIchmeH: ghom Daq ghom tetlh yIpoSmoH: tetlh patlh Hoch ghaj qorDu’ jabbI’ID Daq, ’ej wa’ qIp neH velqa’; ’ej tetlh Dungdaq Hoch velqa’meH SeHwI’ tu’lu’. jabbI’ID DaqlIjvo’ yIngeH — pat qoDDaq qorDu’vaD QIn tu’lu’be’, ghItlh QIn ngaj tu’lu’be’, ’ej tetlhDaq jabbI’ID jan mI’ tu’lu’be’.</p><p>DalaHbe’bogh: ghaH Dachaw’laHbe’ SoH. toy’wI’ tlhob mojaq ’el wIv may’wI’maj; ’ej ghomvetlhDaq pa’ yIntaH poQ ghaH, may’ poH poStaHvIS. pa’ ghajtaHchugh ’ach ’ellaHbe’taHchugh: motlh nom tI’lu’ ghaH Daq — Hal qawwI’Daq wab jan yIchaw’, lo’bogh latlh yISoQmoH, ’ej yItchu’qa’. maH wItI’nISbogh vay’ ’oHchugh: {supportEmail} Daq yIngeH.</p>"
+        "gamerNotArrived": {
+          "question": "toy’wI’ pawbe’, ’ej taghpu’ may’ — nuq vIta’laH?",
+          "answer": "<p>wa’DIch: Hutlhbogh ’Iv yISov. ghogh pa’Daq: tetlhlIj tlhej pa’Daq tu’lu’bogh nuvpu’ yInuD — DaH rarbogh nuvpu’ neH cha’ muvwI’pu’ tetlh, vaj tetlhvo’ Hutlhbogh pong: ’elpu’be’bogh toy’wI’ ’oH. pagh ngu’moH SoHvaD — SoH yIlaD! Daq’e’: pa’Daq ghaHnISbogh nuvpu’ ja’ ghom tetlh; pa’ yInuD, tetlh yIlo’.</p><p>qorDu’ DaSIchmeH: ghom Daq ghom tetlh yIpoSmoH: tetlh patlh Hoch ghaj qorDu’ jabbI’ID Daq, ’ej wa’ qIp neH velqa’; ’ej tetlh Dungdaq Hoch velqa’meH SeHwI’ tu’lu’. jabbI’ID DaqlIjvo’ yIngeH — pat qoDDaq qorDu’vaD QIn tu’lu’be’, ghItlh QIn ngaj tu’lu’be’, ’ej tetlhDaq jabbI’ID jan mI’ tu’lu’be’.</p><p>ghogh pa’Daq DalaHbe’bogh: ghaH Dachaw’laHbe’ SoH. toy’wI’ tlhob mojaq ’el wIv may’wI’maj; ’ej ghomvetlhDaq pa’ yIntaH poQ ghaH, may’ poH poStaHvIS. pa’ ghajtaHchugh ’ach ’ellaHbe’taHchugh: motlh nom tI’lu’ ghaH Daq — Hal qawwI’Daq wab jan yIchaw’, lo’bogh latlh yISoQmoH, ’ej yItchu’qa’. maH wItI’nISbogh vay’ ’oHchugh: {supportEmail} Daq yIngeH.</p>"
         }
       }
     }
@@ -1808,7 +1939,7 @@
   },
   "schools": {
     "hero": {
-      "title": "<primary>venglIjDaq</primary> Qup ghomHommey",
+      "title": "venglIjDaq Qup ghomHommey",
       "subtitle": "Suomngan vengmey tlhej ghomHommey chenmoH School of Gaming. venglIj yISam ’ej nuq tu’lu’ yIlegh.",
       "howItWorks": "venglIj ghaj, juHvo’ rurmey ghap puqlIj DuSaQDaq ghomHom. vummeH lughoSmoH Qup pIn’a’ reH tu’lu’."
     },
@@ -1852,11 +1983,17 @@
       "format": "rurmeH",
       "formatOnline": "QumDaq",
       "formatInPerson": "Daqvam",
+      "price": "DIlmeH",
+      "priceFree": "DIlbe’",
+      "pricePaid": "DIl",
       "language": "Hol",
       "age": "qan",
       "days": "jajmey",
       "clearAll": "yISay’moH",
-      "filterBy": "yIH’lu’"
+      "filterBy": "yIH’lu’",
+      "title": "yIHmey",
+      "activeCount": "{count, plural, one {# yIH vum} other {# yIHmey vum}}",
+      "removeFilter": "{label} yIteq"
     },
     "card": {
       "ages": "ben {min}–{max}",
@@ -1920,27 +2057,27 @@
       "topics": {
         "minecraft_java": {
           "description": "Minecraft ’oH chenmoHmeH Quj quv’e’. nagh qo’Daq lengtaH puqpu’, Doch luSuq, qachmey’a’ luchenmoH – juHHom, veng, qo’ naQ ghap. Suvbe’lu’, QaplaHbe’lu’; jot ’ej tlhab Daq ’oH, vaj nuD ’ej Qatlh Sov luSamlaH. ”Java” ’oH mung Quj’e’, De’wI’mey Windows, Mac, Linux je lo’meH; ghojmoHwI’pu’maj lulo’.",
-          "note": "ghojmoHghachmaj luSuvmeH, De’wI’Daq Minecraft poQ puqlI’. Minecraft.net-Daq ”Minecraft: Java & Bedrock Edition for PC” ponglu’ – wa’ wa’logh DIl (tlhachID ghobe’), mIllogh lo’bogh ngaSbogh. console, telategh, tablet je mIllogh pIm lI’be’.",
+          "note": "Hop ghojmoHghachmaj luSuvmeH, De’wI’Daq Minecraft poQ puqlI’. Minecraft Daq ”Minecraft: Java & Bedrock Edition for PC” ponglu’ – wa’logh DIl, tlhachID ghobe’, ’ej mIllogh lo’bogh ngaS. console, telategh, tablet je mIllogh pIm lI’be’.",
           "linkLabel": "De’wI’vaD Minecraft yIje’"
         },
         "minecraft_bedrock": {
           "description": "Minecraft ’oH chenmoHmeH Quj quv’e’. nagh qo’Daq lengtaH puqpu’, Doch luSuq, qachmey’a’ luchenmoH – juHHom, veng, qo’ naQ ghap. Suvbe’lu’, QaplaHbe’lu’; jot ’ej tlhab Daq ’oH. ”Bedrock” ’oH mIllogh qImroQ (Xbox, PlayStation, Switch), telategh, tablet, Windows De’wI’ je lo’bogh.",
-          "note": "Qujvam’e’ luSuvmeH, Minecraft Bedrock poQ puqlI’. ngeHbe’lu’ – janlIj Quj jan rurbogh malja’Daq yIje’ (rap Quj, ’ach jan pImmo’ Daq pIm). qImroQDaq, online Suvmey luSuvmeH, qImroQ Huch-membership poQlaH.",
+          "note": "Huch ngaSbe’ Minecraft Bedrock. rap Quj, ’ach jan Hoch je’lu’, ’ej wa’ janvaD je’lu’bogh latlh janDaq jaHbe’ – lI’bogh je’lu’bogh, jan Quj puqlI’. qImroQDaq, online Suvmey luSuvmeH, qImroQ Huch-membership je poQlu’.",
           "linkLabel": "nuqDaq Suqlu’"
         },
         "minecraft_education": {
-          "description": "Minecraft ’oH chenmoHmeH Quj quv’e’. nagh qo’Daq lengtaH puqpu’, Doch luSuq, qachmey’a’ luchenmoH. Minecraft Education ’oH ghojmoHmeH pa’vaD chenmoHbogh mIllogh: rap chenmoHmeH qo’ Dun, ’ach ghojmoHwI’vaD jan chu’mey, ’ej ghojmoHwI’ Dev, mob Quj net qaSmoHbe’.",
-          "note": "pagh yIje’ ’ej ghojwI’choH pat pong yInIDQo’ – Minecraft Education pongmey nob School of Gaming, ’ej ghomHomDaq lulo’ QujwI’pu’. ’ach Hop ghomHommeyDaq, Quj naQ je lIng puqlI’: DIl HInobbe’, Microsoft Store pagh Minecraft Education Daq yISuq.",
+          "description": "Minecraft ’oH chenmoHmeH Quj quv’e’. nagh qo’Daq lengtaH puqpu’, Doch luSuq, qachmey’a’ luchenmoH. Minecraft Education ’oH Devlu’bogh ghommeyvaD chenmoHbogh mIllogh. rap chenmoHmeH qo’ Dun, ’ej ghomHom Devbogh nuv tInvaD jan chu’mey tu’lu’.",
+          "note": "pagh yIje’ ’ej ghojwI’choH pat pong yInIDQo’ – Minecraft Education pongmey nob School of Gaming, ’ej ghomHommeyDaq lulo’ QujwI’pu’. Hop ghojmoHghachmeyvaD, Quj naQ DIl HInobbe’: Microsoft Store pagh Minecraft Education Daq yISuq; Windows De’wI’, Mac, iPad, Chromebook je Qop.",
           "linkLabel": "Minecraft Education De’"
         },
         "fortnite": {
           "description": "Fortnite ’oH ’IH, na’rural online Quj’e’, ghochDaq ghom chenmoH ’ej tlhup ngajbogh ghochmeyDaq Suvchuq. tlhIng’a’ Suy’, tlhIngan jaj rur – juppu’ tlhej puqpu’. wovbogh ’ej teHbe’bogh ’IH (’Iw ghobe’, SuvwI’Hey ghobe’), ’ach qugh Suvmey, latlhpu’ tlhej online.",
-          "note": "Fortnite yISuqmeH DIl HInobbe’ – Quj naQ yIje’be’. Epic Games-Daq HInob tlhab chenmoH puqlI’. wejwI’ DachmeH (Sut latlh je) Huch poQlu’, ’ach SoH yI’el lojmIt.",
+          "note": "Fortnite yISuqmeH DIl HInobbe’ – Quj naQ yIje’be’. tlhab Epic Games pong poQ QujmeH. wejwI’ DachmeH (Sut latlh je) Huch poQlu’; Epic lojmIt che’wI’ pongDaq ratlh, janDaq ratlhbe’, ’ej lujey.",
           "linkLabel": "Fortnite yISuq"
         },
         "pokemon_go": {
           "description": "Pokémon GO QujmeH juHlIj yImej – Hurgh yIghoS! qo’ teH chartDaq Ha’DIbaHmey chenlu’, ’ej Sammeh yIt puqpu’: wIchmey, Hemey, Daq Dunmey je. Suvbe’lu’ – qemlu’ neH. Pokédex yIteb ’ej juppu’ tlhej SammeH yIqel. Qujchugh puq, yItnIS – vaj vIHmoH Quj.",
-          "note": "Pokémon GO yISuqmeH DIl HInobbe’ – Quj naQ yIje’be’. GPS ghajbogh jabbI’ID jan mobile-data je poQlu’, ’ej tlhab De’wI’ pong chenmoH. wejwI’ DachmeH Huch poQlu’, ’ach SoH yI’el lojmIt. Hurgh Qujlu’, Daq teHDaq – vaj yIqel: nuqDaq jaHlaH puqlI’, ’ej ghaH tlhej’a’ nuv tIn?",
+          "note": "Pokémon GO yISuqmeH DIl HInobbe’ – Quj naQ yIje’be’. GPS mobile-data je ghajbogh telategh poQlu’, ’ej tlhab pong; wa’maH wej ben puqvaD pong chenmoH vav, ’ej vav pongDaq rIn. wejwI’ DachmeH Huch poQlu’, ’ej lojmIt che’wI’ lujey. Hurgh Qujlu’, Daq teHDaq, ’ej HoS jan, GPS, De’ je vumtaH – vaj tugh HoS natlh.",
           "linkLabel": "nuqDaq Suqlu’"
         },
         "roblox_studio": {
@@ -1950,7 +2087,7 @@
         },
         "rocket_league": {
           "description": "Rocket League ’oH Ho’DoS’e’ – qul’a’ ghajbogh Dujmey lo’lu’, ’ej moQ tIn luqIp. cha’ ghom: jagh lojmItDaq moQ ghoSmoHmeH lulo’. vagh tup neH Suvmey; ngaj ’ej pay’. wov ’ej na’rural mIllogh, ’Iw tu’lu’be’, nuH tu’lu’be’ – Ho’DoS ’oH, Suv-Quj ghobe’. Qujbe’bogh vav je: nuq qaS, tugh yaj. ghom wa’chuqchugh neH Qapla’ chav – vaj ghomHommeymajvaD QaQqu’.",
-          "note": "Rocket League yISuqmeH DIl HInobbe’ – Quj naQ yIje’be’. tlhab Epic Games pong chenmoH puqlI’. Windows De’wI’, PlayStation, Xbox, Nintendo Switch je Daq Qop, ’ej jan pIm lo’bogh QujwI’pu’ tay’ Quj – vaj janlIj rap jan poQbe’lu’. Quj qoDDaq wejwI’ DachmeH Huch poQlu’ (Duj ’IHmoHmeH Dochmey), ’ach SoH yI’el lojmIt.",
+          "note": "Rocket League yISuqmeH DIl HInobbe’ – Quj naQ yIje’be’. tlhab Epic Games pong poQ QujmeH. Windows De’wI’, PlayStation, Xbox, Nintendo Switch je Daq Qop, ’ej jan pIm lo’bogh QujwI’pu’ tay’ Quj – vaj janlIj rap jan poQbe’lu’. Quj qoDDaq wejwI’ DachmeH Huch poQlu’ (Duj ’IHmoHmeH Dochmey), ’ej lojmIt che’wI’ lujey.",
           "linkLabel": "Rocket League yISuq"
         }
       }
@@ -1965,18 +2102,6 @@
       "language": "Hol",
       "online": "QumDaq",
       "tbd": "Sov pagh"
-    },
-    "calendar": {
-      "weekdayMon": "wa’",
-      "weekdayTue": "cha’",
-      "weekdayWed": "wej",
-      "weekdayThu": "loS",
-      "weekdayFri": "vagh",
-      "weekdaySat": "jav",
-      "weekdaySun": "Soch",
-      "legendSession": "qaStaHvIS",
-      "legendSkipped": "qIl",
-      "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
       "verb": {
@@ -2000,12 +2125,7 @@
       "ctaAllSet": "bIghuHrup",
       "ctaAgreeConsent": "poQlu’bogh chaw’ yInob",
       "ctaWaitlist": "tetlh DaqaD",
-      "ctaSignIn": {
-        "consumer_club": "qonmeH yI’el",
-        "municipality_club": "qonmeH yI’el",
-        "camp": "qonmeH yI’el",
-        "event": "muvmeH yI’el"
-      },
+      "ctaSignIn": "yI’el",
       "ctaCreateAccount": "Account chu’ chenmoH",
       "gamerAlreadySignedUp": {
         "consumer_club": "muvpu’",
@@ -2014,10 +2134,13 @@
         "event": "muvpu’"
       },
       "gamerAlreadyWaitlisted": "tetlhDaq",
+      "gamerUnderAge": "{min} bIng",
+      "gamerOverAge": "{max} Dung",
       "nonCustomerNote": "vavmey neH puq qonlaH naDev.",
       "nonCustomerNoteParents": "vavmey neH jeSlaH naDev.",
       "closedNote": "DaH poSbe’. latlh boqDI’ yI’aHta’.",
       "rules": {
+        "title": "chutmeymaj",
         "consumer_club": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
         "municipality_club": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, ’ej qaSpa’ choHmeH puqwI’ DaH lop laH latlh qorDu’ tetlh teb ’oHbogh, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
         "municipality_club_self": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, ’ej qaSpa’ choHmeH quSwI’ DaH lop laH latlh qorDu’ tetlh teb ’oHbogh, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
@@ -2028,10 +2151,17 @@
         "heading": "chaw’",
         "agree": "ghItlhmeyvam vIlaDpu’ ’ej vIlaj.",
         "bundles": {
-          "robloxProgramme": "<terms>Roblox Programme Terms & Conditions</terms>, <privacy>Roblox Programme Privacy Policy</privacy> je vIlaDpu’ ’ej vIlaj."
+          "robloxProgramme": "<terms>Creator Academy Terms & Conditions</terms>, <privacy>Creator Academy Privacy Policy</privacy> je vIlaDpu’ ’ej vIlaj.",
+          "robloxProgrammeTitle": "Creator Academy ghItlhmey"
+        },
+        "gamerPhoto": {
+          "lynxEducate": "puqwI’ mIllogh HaSta je lo’lu’: qaStaHvIS ja’chuqmeH nab, Lynx Educate Roblox je lughojmoH, ’ej School of Gaming, Lynx Educate, Roblox je De’wI’ HeDaq nItebHa’ cha’lu’. <privacy>Creator Academy Privacy Policy</privacy> DaH yIlaD.",
+          "lynxEducateTitle": "puqlI’ mIloghmey HaSta je",
+          "hint": "ra’be’lu’ — My SOG-Daq puqlI’ HevDaq reH DachoHlaH."
         },
         "marketing": {
-          "lynxEducate": "boqwI’maj <link>Lynx Educate</link> vISovmoH ’e’ vIchaw’ — vaj QIn mungeHlaH.",
+          "lynxEducate": "<link>Lynx Educate</link>-vaD De’wI’ HeywI’ vInob ’e’ vIchaw’ — vaj wanI’ chu’ QIn Qujmey De’ je mungeHlaH. reH vImev’laH.",
+          "lynxEducateTitle": "Lynx Educate QInmey",
           "hint": "ra’be’lu’ — ngoQmeylIjDaq reH DachoHlaH."
         }
       },
@@ -2085,6 +2215,154 @@
       "cta": "leng yIchegh"
     }
   },
+  "topicPrep": {
+    "heading": "wa’DIch ghomHom qaSpa’",
+    "dialogTitle": "wa’DIch ghomHom qaSpa’",
+    "triggerLabel": "yIghuS",
+    "readyLabel": "jIghuSpu’",
+    "closing": "Hoch Qapchugh, ghomHomvaD bIghuHpu’!",
+    "topics": {
+      "minecraft_java": {
+        "intro": "ghomHomvamDaq De’wI’Daq Minecraft luQuj, Java mIllogh lo’lu’. Hoch QujwI’ Minecraft ngaSbogh Microsoft pong poQ, ’ej lo’bogh De’wI’Daq Minecraft Launcher poQ. wa’DIch ghomHom qaSpa’ bIngDaq mIwmey yIta’."
+      },
+      "minecraft_education": {
+        "intro": "ghomHomvamDaq Minecraft Education lo’lu’, ’ej DIl HInobbe’. wa’DIch ghomHomDaq pongmey nob School of Gaming, vaj qaSpa’ wa’ Qu’ neH tu’lu’."
+      },
+      "minecraft_bedrock": {
+        "intro": "ghomHomvamDaq tay’ Minecraft Bedrock luQuj online. Hoch QujwI’ Microsoft pong poQ, ’ej Qujbogh janDaq Minecraft poQ. wa’DIch ghomHom qaSpa’ bIngDaq mIwmey yIta’."
+      },
+      "fortnite": {
+        "intro": "Fortnite DIl HInobbe’, ’ej ghomHomvamDaq tay’ luQuj. Hoch QujwI’ tlhab Epic Games pong poQ, ’ej lo’bogh janDaq Fortnite poQ. wa’DIch ghomHom qaSpa’ bIngDaq mIwmey yIta’."
+      },
+      "rocket_league": {
+        "intro": "Rocket League DIl HInobbe’, ’ej Hoch ghomHom tay’ luQuj. Hoch QujwI’ tlhab Epic Games pong poQ, ’ej lo’bogh janDaq Rocket League poQ. wa’DIch ghomHom qaSpa’ bIngDaq mIwmey yIta’."
+      },
+      "pokemon_go": {
+        "intro": "Hurgh Qujlu’ Pokémon GO, telateghDaq – ghomHomvaD qenglu’bogh telategh. wa’DIch ghomHom qaSpa’ bIngDaq mIwmey yIta’."
+      },
+      "roblox_studio": {
+        "intro": "ghomHomDaq Roblox Studio lo’lu’, Roblox Quj chenmoHmeH jan tlhab. Hoch QujwI’ Roblox pong Daj poQ, ’ej De’wI’Daj Roblox Studio poQ. ghomHom qaSpa’ bIngDaq mIwmey yIta’."
+      }
+    },
+    "accountsOnlyIntro": {
+      "fortnite": "ghomHomvaD janmey wIqem, ’ej Fortnite ngaSpu’. ’ach Hoch QujwI’ Epic Games pong Daj poQ, ’ej pongvetlhDaq lojmIt che’wI’ chenmoHlu’nIS. ghomHom qaSpa’ bIngDaq mIwmey yIta’.",
+      "rocket_league": "ghomHomvaD janmey wIqem, ’ej Rocket League ngaSpu’. ’ach Hoch QujwI’ Epic Games pong Daj poQ. ghomHom qaSpa’ bIngDaq mIw yIta’.",
+      "roblox_studio": "ghomHomvaD De’wI’mey wIqem, ’ej Roblox Studio ngaSpu’. ’ach Hoch QujwI’ Roblox pong Daj poQ. ghomHom qaSpa’ bIngDaq mIw yIta’."
+    },
+    "remoteOnlyIntro": "online qaS ghomHomvam, QIchmeH pa’Daq. wa’DIch ghomHom qaSpa’ bIngDaq mIw yIta’.",
+    "steps": {
+      "minecraftJavaAccount": {
+        "title": "Minecraft ngaSbogh Microsoft pong yISuq",
+        "body": "Microsoft pongDaq ’el Minecraft. pong ghajbe’chugh QujwI’, pong chenmoH vav, ’ej pongvetlhDaq ”Minecraft: Java & Bedrock Edition for PC” je’. <b>wa’logh DIl, tlhachID ghobe’</b>, ’ej ghomHomvam lo’bogh Java mIllogh ngaS. Java pong tlhoblu’. pongvetlh wIpoQ, Minecraft qo’majDaq QujwI’ wIchelmeH. yIqon ’ej DaSamqa’meH Daq yIwIv.",
+        "linkLabel": "De’wI’vaD Minecraft yIje’"
+      },
+      "minecraftJavaInstall": {
+        "title": "Minecraft Launcher yIlan",
+        "body": "ghomHomvaD lo’lu’bogh De’wI’Daq Minecraft Launcher yIlan. Quj je’lu’bogh Minecraft Daq rapvo’ yISuq. Microsoft pong rap yIlo’ bI’elmeH."
+      },
+      "minecraftJavaLaunch": {
+        "title": "wa’DIch ghomHom qaSpa’ wa’logh Minecraft yIpoSmoH",
+        "body": "launcher yIchu’, chu’qa’ghach rInmoHjaj, Quj DevmeH tetlh yISam, ’ej yISoQmoH. tugh qaSbe’ wa’DIch chu’qa’ghach, ’ej DaH DaghurmoHchugh, SuqmeH poH lo’be’ ghomHom."
+      },
+      "minecraftEducationInstall": {
+        "title": "Minecraft Education yIlan",
+        "body": "DIl HInobbe’ Minecraft Education: Microsoft Store pagh Minecraft Education Daq yISuq. ghomHomvaD lo’lu’bogh De’wI’Daq yIlan. wa’logh yIpoSmoH ’ej Qapbej net yInuD. pong chenmoHnISbe’lu’. wa’DIch ghomHomDaq pongmey nob School of Gaming, vaj Quj neH poQ QujwI’.",
+        "linkLabel": "Minecraft Education yISuq"
+      },
+      "minecraftBedrockAccount": {
+        "title": "Microsoft pong yIchenmoH",
+        "body": "Microsoft pong lo’taHvIS online Qujlu’ Minecraft Bedrock. pongvetlh gamertag lo’ma’, QujwI’ DaSammeH ’ej qo’meymajDaq DachelmeH. pong ghajbe’chugh QujwI’, pong chenmoH vav. QujwI’ qoS teH yIghItlh: online Dochmey chu’bogh wIvmeH ben De’ lo’ Microsoft. gamertag yIqon. wIpoQbej."
+      },
+      "minecraftBedrockInstall": {
+        "title": "jan lI’Daq Minecraft yIje’ ’ej yIlan",
+        "body": "rap Quj Bedrock, ’ach jan Hoch je’lu’, ’ej wa’ janvaD je’lu’bogh latlh janDaq Qapbe’. <b>QujwI’ Qujbogh janDaq yIje’</b>, qImroQ, telategh, tablet, Windows De’wI’ ghap.",
+        "linkLabel": "jan yIwIv"
+      },
+      "minecraftBedrockOnline": {
+        "title": "online Quj Qap’a’? yInuD",
+        "body": "janvetlhDaq Minecraft yIpoSmoH, Microsoft pong yIlo’ bI’elmeH, ’ej online Quj tetlh yISam. Xbox, PlayStation, Nintendo Switch je Daq, latlhpu’ tlhej SuvmeH, qImroQ Huch-membership je poQlu’."
+      },
+      "fortniteAccount": {
+        "title": "Epic Games pong yIchenmoH",
+        "body": "DIl HInobbe’ Fortnite, ’ej tlhab Epic Games pongDaq ’el. pong ghajbe’chugh QujwI’, pong chenmoH vav. QujwI’ qoS teH yIghItlh: ja’chuqmeH ’ej ghomchuqmeH Dochmey chu’bogh wIvmeH ben De’ lo’ Epic. pong ’angbogh yIqon. QujwI’ DaSammeH lo’ma’."
+      },
+      "fortniteControls": {
+        "title": "lojmIt che’wI’ yIchu’",
+        "body": "janDaq ratlhbe’ Epic lojmIt che’wI’, pongDaq ratlh, vaj Hoch janDaq QujwI’ tlha’. jav mI’ PIN wIv vav, ’ej chaw’bogh wIv: ’Iv ja’chuqlaH, ’ej PIN poQ’a’ je’ghach. DIl HInobbe’ Quj naQ. wejwI’ Dachmey neH jeymeH tu’lu’ lojmIt che’wI’."
+      },
+      "fortniteInstall": {
+        "title": "Fortnite yIlan",
+        "body": "ghomHommeyvaD Dalo’bogh janDaq Fortnite yIlan, ’ej Epic Games pongvetlh yIlo’ bI’elmeH. wa’logh yIpoSmoH ’ej chu’qa’jaj: tIn wa’DIch Suqghach, vaj wa’DIch ghomHom jaj qaSpa’ yIta’, vagh tup neH qaSpa’ ghobe’.",
+        "linkLabel": "Fortnite yISuq"
+      },
+      "fortniteCrossplay": {
+        "title": "jan-Hey-Quj yIchu’taH",
+        "body": "jan pIm lo’taHvIS Hoch tay’ QujchoH: jan-Hey-Quj ’oH meq’e’. chu’bej; Quj DuHmeyDaq chu’Ha’lu’pu’chugh, ghomHom qaSpa’ yIchu’qa’."
+      },
+      "rocketLeagueAccount": {
+        "title": "Epic Games pong yIchenmoH",
+        "body": "DIl HInobbe’ Rocket League, ’ej tlhab Epic Games pongDaq ’el – Fortnite pong rur. pong ghaj QujwI’chugh, lI’bej. pong ghajbe’chugh, pong chenmoH vav. QujwI’ qoS teH yIghItlh. pong ’angbogh yIqon. QujwI’ DaSammeH lo’ma’."
+      },
+      "rocketLeagueInstall": {
+        "title": "Rocket League yIlan",
+        "body": "Dalo’bogh janDaq Rocket League yIlan – Windows De’wI’, PlayStation, Xbox, Nintendo Switch je Daq DIl HInobbe’. ghomHom qaSpa’ wa’logh yIpoSmoH ’ej chu’qa’ghach rInmoHjaj.",
+        "linkLabel": "Rocket League yISuq"
+      },
+      "rocketLeagueCrossplay": {
+        "title": "jan Hoch-Quj yIchu’taH",
+        "body": "jan Hoch-Quj lo’lu’chugh, QujwI’ jan rap jan poQbe’lu’. chu’bej. DuHmeyDaq chu’Ha’lu’pu’chugh, yIchu’qa’, vaj Suv’a’ rapDaq ghom naQ."
+      },
+      "pokemonGoInstall": {
+        "title": "telateghDaq Pokémon GO yIlan",
+        "body": "DIl HInobbe’ Pokémon GO, ’ej ghomHomvaD qengbogh telateghDaq lanlu’ – iPhoneDaq App Store, Android telateghDaq Google Play. telategh Quj neH ’oH: De’wI’ qImroQ ghap mIllogh tu’lu’be’."
+      },
+      "pokemonGoAccount": {
+        "title": "pong yIchenmoH",
+        "body": "QujmeH pong poQlu’, ’ej wa’DIch poSlu’DI’, chenmoHmeH nob Quj. wa’maH wej ben QujwI’vaD, chenmoH vav ’ej pongDajDaq rIymoH, vaj vav ghopDaq ratlh DuHmey. QujwI’ pong yIqon. QujwI’ DaSammeH lo’ma’."
+      },
+      "pokemonGoPhone": {
+        "title": "telategh yIHoSmoH ’ej DuHmey yInuD",
+        "body": "poSlu’taHvIS, HoS jan, GPS, De’ je vumtaH Quj, ’ej tugh HoS natlh. ghomHom qaSpa’: telategh yIHoSmoH, Daq-Sam ’ej mobile-data chu’bej net yInuD, ’ej HoS ngaSwI’ tu’lu’chugh juHDaq, yIqem."
+      },
+      "pokemonGoAgree": {
+        "title": "nuqDaq jaH QujwI’? yIqelchuq",
+        "body": "Daq teHDaq, Hurgh Qujlu’ Pokémon GO. qaSpa’ yIqelchuq: nuq He, nuq wIch chaw’lu’, ghaH tlhej’a’ nuv tIn, ’ej ghomHom qaSDI’ chay’ Suja’chuq. He nuDtaHjaj QujwI’ ’e’ yIqaw. loStaHlaH telategh."
+      },
+      "robloxStudioAccount": {
+        "title": "Roblox pong yIchenmoH",
+        "body": "Roblox pong Daj ghaj QujwI’chugh, chu’ pong chenmoHnISbe’lu’. pong ghajbe’chugh, <b>ghaHvaD wa’ yIchenmoH</b>. QujwI’ qoS teH yIghItlh: Dochmey ’ej Doch ngaSbogh chu’bogh wIvmeH ben De’ lo’ Roblox. Roblox pong Daj Sov QujwI’, pegh mu’ Daj Sov pagh poQlu’DI’ SuqlaH, ’ej ghomHomvaD lo’bogh De’wI’Daq pong Dajdaq ’ellaH net yIchech. Gedu — ghojmoHwI’ pongmaj — QujwI’ pegh mu’ yInobQo’."
+      },
+      "robloxStudioInstall": {
+        "title": "Roblox Studio yIlan",
+        "body": "ghomHomDaq Roblox Studio wIlo’, Roblox Quj chenmoHmeH jan tlhab. Roblox Creator Hub yIghoS ’ej QujwI’ Roblox pong yIlo’ bI’elmeH. Roblox Studio DaSuqmeH ’ej DalanmeH Daq chutmey yItlha’. rInDI’ langhach, Roblox Studio yIpoSmoH ’ej QujwI’ Roblox pong yIlo’ bI’elmeH. lanlu’pu’DI’, De’wI’lIjDaq latlh jan rur Roblox Studio.",
+        "linkLabel": "Roblox Creator Hub yIghoS"
+      },
+      "robloxStudioTest": {
+        "title": "wa’DIch ghomHom qaSpa’ Hoch yInuD",
+        "body": "ghomHom qaSpa’ nom yInuD ’e’ wIchup:"
+      },
+      "remoteSession": {
+        "title": "QIchmeH jan ’ej mIllogh jan yIghuHmoH",
+        "body": "QIchmeH pa’Daq qaS ghomHom, ’ej jIH’a’ lo’bogh De’wI’Daq vumtaH pa’vam. Hoch janDaq jeSlaH QujwI’: Quj ngaSbogh De’wI’, pagh telategh, pagh nav De’wI’ console retlhDaq. QIchmeH jan ngaSbogh QoghDu’ QaQqu’, vaj latlhpu’vaD chuSqa’be’ Quj wab. wa’DIch jeSDI’ QujwI’, QIchmeH jan ’ej mIllogh jan lo’meH chaw’ tlhob jIH’a’. yInob. mIllogh jan DapoSmoHnISbe’. DapoSmoHchugh, Gedu — ghojmoHwI’ pongmaj — legh: pa’Daq ghaHtaHbogh Hoch ghaH ghaH ’e’ ja’bogh nuv’e’. tam Daq yISam, ’ej wa’DIchDaq puS tup nom yIjeS."
+      }
+    },
+    "platformNotes": {
+      "robloxStudioWindows": {
+        "title": "WindowsDaq",
+        "body": "Start tetlh pagh Windows SammeH Daq yIpoSmoH ’ej Roblox Studio yIghItlh. ghIq Sambogh mojaqmeyvo’ Roblox Studio yIwIv."
+      },
+      "robloxStudioMac": {
+        "title": "MacDaq",
+        "body": "Spotlight pagh Applications ngaSwI’ yIpoSmoH ’ej Roblox Studio yISam."
+      }
+    },
+    "checklist": {
+      "robloxStudioTestOpen": "Roblox Studio yIpoSmoH.",
+      "robloxStudioTestSignIn": "QujwI’ Roblox pong yIlo’ bI’elmeH.",
+      "robloxStudioTestHome": "Roblox Studio taghmeH tetlh poSbej net yInuD.",
+      "robloxStudioTestClose": "Roblox Studio yISoQmoH."
+    }
+  },
   "sidebar": {
     "dashboard": "QaD",
     "users": "lo’wI’pu’",
@@ -2104,7 +2382,7 @@
   },
   "home": {
     "hero": {
-      "title": "naDev<br></br><primary>Daq tIv</primary><br></br>moj<br></br><secondary>Qap tIv</secondary>",
+      "title": "naDev<br></br>Daq tIv<br></br>moj<br></br><act>Qap tIv</act>",
       "subtitle": "po’taHvIS chenmoHlu’ ghom’a’meymaj: Quj QaQ Hob chenmoH — Minecraft, Roblox, Fortnite latlh je. Gedu’pu’ Dun Hoch qep ghojmoHmeH tIv chenmoH — jup chu’ luSuq puqpu’, laHmeychaj mojaq luchenmoH, ’ej muSHa’bogh lutIv.",
       "aboutCta": "maH yIqel"
     },
@@ -2236,6 +2514,18 @@
       }
     },
     "gamerDetail": {
+      "photoConsent": {
+        "title": "mIloghmey HaSta je",
+        "description": "Lynx Educate Roblox je tIq boq: ghommey, raQmey, wanI’mey je.",
+        "sentence": {
+          "lynxEducate": "{name} mIloghmey HaSta je lo’lu’laH: poH ja’ghItlhmeyDaq, Lynx Educate Roblox je De’meyDaq, School of Gaming Lynx Educate Roblox je De’wI’ yotlhmeyDaq ghantoHmeyDaq je. <privacy>Creator Academy Privacy Policy</privacy> DaH yIlaD."
+        },
+        "sentenceTitle": {
+          "lynxEducate": "{name} mIloghmey HaSta je"
+        },
+        "hint": "Hoch muvmoHmeH poH {name} wIghelqa’. Qav jangbogh mu’, ghaH potlh.",
+        "saveFailed": "jang polbe’lu’. QummeH He yInuD ’ej yInIDqa’."
+      },
       "backToMySog": "jIH SOGDaq yIchegh",
       "title": "toy’wI’ ngoQmey",
       "subtitle": "{name}vaH ngoQmey tI’ang",
@@ -2259,6 +2549,35 @@
       "roblox": {
         "title": "Roblox account",
         "description": "Roblox lo’wI’ pong jonmoH — toy’a’ Qu’meyvaH."
+      },
+      "signIn": {
+        "title": "’el mIw",
+        "current": {
+          "parent": "accountlIj Dung ’el {name}.",
+          "username": "pong mu’mey je lo’ ’ej ’el {name}.",
+          "email": "QIn Daq Daj lo’ ’ej ’el {name}."
+        },
+        "currentUsername": "{username} pong lo’ ’ej ’el {name}.",
+        "saved": "choHlu’ta’ ’el mIw.",
+        "saveFailed": "choHlu’be’ta’. yInIDqa’!",
+        "newPasswordTitle": "mu’mey chu’ yIwIv",
+        "newPasswordDescription": "mu’mey chu’ yIwIv ’ej {name}vaD yIjatlh. SIbI’ lonlu’ mu’mey ngo’.",
+        "newPasswordSubmit": "mu’mey yIchoH",
+        "newPasswordSaved": "chenta’ mu’mey chu’.",
+        "verified": "ngu’lu’pu’ Daqvam.",
+        "notVerified": "ngu’meH lInk poSmoHpu’be’ {name}.",
+        "resend": "ngu’meH QIn yIngeHqa’",
+        "resendSent": "ngeHta’. QIn buq nuD ’e’ {name} yItlhob.",
+        "resendRateLimited": "wa’ QujwI’vaD QIn law’ qar’a’! tugh yInIDqa’.",
+        "resendFailed": "ngeHlu’be’ta’ QIn. yInIDqa’!",
+        "change": {
+          "username": {
+            "title": "pong yIchoH",
+            "description": "{name}vaD pong chu’ yIwIv. rInbe’ mu’mey, ’ach SIbI’ Qapbe’choH pong ngo’.",
+            "submit": "pong yIpol",
+            "saved": "choHlu’ta’ pong. QujwI’lIjvaD chu’ yIjatlh."
+          }
+        }
       }
     },
     "switchToGamer": {
@@ -2267,9 +2586,13 @@
     },
     "helpFaq": {
       "items": {
+        "joiningSession": {
+          "question": "may’ taghDI’, chay’ muv toy’wI’wI’?",
+          "answer": "<p>nuqDaq qaS may’? jIH SOGlIjDaq nagh beQ ja’: ’etlh ghajchugh, ghogh pa’Daq qaS; Daq pong ghajchugh, Daqvetlh qaS.</p><p>ghogh pa’Daq: Hal qawwI’Daq qaS, ’ej chenmoHnISlu’bogh pagh:</p><steps><step>jIH SOGlIjDaq puqlI’ pong bIngDaq nagh beQ yISam. may’ SumtaHvIS jonta’ ’etlh, ’ej jaj poH je ja’.</step><step>may’ taghpa’ vagh tup, choH ’etlh: ”ghogh pa’Daq yIghoS” moj.</step><step>yIqIp. ghom ghotpu’ neH chaw’ pa’, vaj wa’DIch puqlI’ profile DawIvnIS — vav/SoS accountlIjvo’ bImej — ’ej puqlI’ pongDaq poS pa’.</step><step>wab jan tlhobchugh Hal qawwI’, yIchaw’.</step></steps><p>profilelIj DacheghmeH, vav PIN DapoQ. mob pong ngoq qoj jabbI’ID ghajchugh puqlI’, jIH SOGDaj poSmoHlaH ’ej ’etlh rap qIplaH. may’ rInpu’DI’ vagh tup poStaH pa’.</p><p>Daq’e’ qaSchugh, ’etlh tu’lu’be’. ghom’a’, ragh, wanI’ HalDaq Daq pong Daq ngoq je cha’lu’, ’ej qorDu’vaD Daq De’ tu’lu’chugh, ’oH je cha’lu’ — vaj may’ taghDI’, puqlI’ tlhej Daqvetlh yIghoS!</p><p>Gedu ghom je DISamlI’ ’e’ ja’chugh nagh beQ, muvnISlu’bogh pagh DaH: may’ wa’DIch qaSpa’ qaS, ’ej ghIq ’etlh qoj Daq cha’ nagh beQ.</p>"
+        },
         "parentPin": {
           "question": "nuq ’oH vav PIN’e’, ’ej vIlIjchugh?",
-          "answer": "<p>vav accountlIj DaDIchDaq Dalo’DI’ DawIvbogh loS mI’ ngoq ’oH vav PIN’e’. Qu’ Hoch jonbe’ — Sogverse vav Daq naQ jon: wa’logh yIpoSmoH, ’ej toy’wI’ profile DawIvDI’ qoj bImejDI’, SIbI’ jonqa’lu’ — vaj Hal qawwI’Daq polta’bogh mu’ pegh mob: je’meH qoj puq account choHmeH lI’be’.</p><p>DalIjchugh, PIN jIHDaq ”PIN DalIj’a’?” yIqIp: accountlIj jabbI’ID DaqDaq neH chu’moHmeH He wIngeH — latlh DaqDaq pagh. vaj qIptaHvIS puq, jabbI’ID neH DangeHmoH. cha’maH loS rep yIntaH He, ’ej wa’logh neH Qap.</p><p>PIN DaqawtaHchugh, ngoQmeyDaq DachoHlaH je.</p>"
+          "answer": "<p>vav accountlIj DaDIchDaq Dalo’DI’ DawIvbogh loS mI’ ngoq ’oH vav PIN’e’. Qu’ Hoch jonbe’ — Sogverse vav Daq naQ jon: wa’logh yIpoSmoH, ’ej toy’wI’ profile DawIvDI’ qoj bImejDI’, SIbI’ jonqa’lu’ — vaj Hal qawwI’Daq polta’bogh mu’ pegh mob: je’meH qoj puq account choHmeH lI’be’. He chegh je jon PIN’vam: accountlIjvo’ Sogverse ’elpu’bogh puq: profilelIj qoj loDnI’ be’nI’ profile wIvmeH PIN poQ.</p><p>DalIjchugh, PIN jIHDaq ”PIN DalIj’a’?” yIqIp: accountlIj jabbI’ID DaqDaq neH chu’moHmeH He wIngeH — latlh DaqDaq pagh. vaj qIptaHvIS puq, jabbI’ID neH DangeHmoH. cha’maH loS rep yIntaH He, ’ej wa’logh neH Qap.</p><p>PIN DaqawtaHchugh, ngoQmeyDaq DachoHlaH je.</p>"
         },
         "sessionReports": {
           "question": "may’mey chay’ qaSpu’ vISov’a’?",
@@ -2278,10 +2601,6 @@
         "missedSessions": {
           "question": "may’ wIchIlchugh, qoj botDaq ghom’a’ wImuvchugh?",
           "answer": "<p>qaStaHvIS ghom’a’, toy’wI’pu’ chu’vaD poStaH: vaj botDaq bImuvlaH — ghom’a’ HalDaq legh: Hogh Hoch nuq jaj nuq rep je ghomlu’, nuq poH qaStaH, ’ej ratlhbogh pa’mey mI’. puqlI’ chelpu’DI’, ghom’a’ Hal mob: may’ veb jaj ja’.</p><p>pIm raghmey wanI’mey je: taghpa’ jaj wa’, chelwI’pu’ chu’vaD SoQmoH ragh, ghom rap taghmo’; ’ej may’Daj rInDI’ SoQmoH wanI’.</p><p>bIchelbogh jajvo’ jar naQ nge’lu’ ghom’a’: vaj jar botDaq bImuvchugh, jarvetlh Huch machbe’. ghom’a’ taghpa’ bIchelchugh, jajvetlh pagh nge’lu’, ’ej Huch wa’DIch jaj ja’ Hal.</p><p>wa’ may’ chIlchugh puqlI’, pagh yIta’ — pa’Daj Qaw’be’. may’ Hoch pawwI’pu’ ngu’ Gedu, ’ej ghom’a’ HalDaq ngu’ghach Dalegh. chIlta’bogh may’ nobqa’lu’be’, tamlu’be’ je; ghomHom vengDaq, ja’be’taHvIS pIj ghoSbe’chugh puq, loSwI’pu’ tetlhDaq qorDu’ vebvaD pa’ poSlaH — bIchelDI’ Dalajta’.</p>"
-        },
-        "sessionTimes": {
-          "question": "maj poH SepDaq ghorgh qaS may’mey?",
-          "answer": "<p>SepraJ poHDaq! Suomngan poHDaq may’mey poH qonlu’, ’ej janlIj Sep poHDaq mughlu’taHvIS SoHvaD cha’lu’ — Daq Hoch: ghom’a’ HalDaq, nagh beQDaq, jIH SOGlIjDaq je.</p><p>ghom’a’ Sep rurbe’chugh SeplIj, poH retlhDaq Sep per ngaj tu’lu’, vaj mughghach Dalegh; ghom’a’ Sep rurchugh SeplIj, mughnISlu’be’ ’ej per tu’lu’be’.</p><p>teH mughghach ’oHmo’, cha’ Suomngan jajmeyDaq qaSbogh ghom’a’: SoHvaD jajmey pIm ghoSlaH; ’ej DaleghtaHbogh poH tetlh: jajmeylIj lo’, jajmeymaj lo’be’. ragh taghghach rInghach jaj je: HovpoH jajmey mob bIH, ’ej vIHbe’.</p>"
         }
       }
     }
@@ -2317,7 +2636,14 @@
     "marketing": {
       "title": "QIn chaw’mey",
       "schoolOfGaming": "noH Quj yejHaD QIn HevmeH vIchaw’.",
-      "lynxEducate": "boqwI’maj <link>Lynx Educate</link> vISovmoH ’e’ vIchaw’ — vaj QIn mungeHlaH."
+      "lynxEducate": "<link>Lynx Educate</link>-vaD De’wI’ HeywI’ vInob ’e’ vIchaw’ — vaj wanI’ chu’ QIn Qujmey De’ je mungeHlaH. reH vImev’laH."
+    },
+    "usernameLabel": "pong",
+    "gamerPasswordFromParent": "My SOGDaj lo’ ’ej mu’mey chu’ DulanlaH SoSlI’ vav joq.",
+    "photoConsent": {
+      "title": "mIloghmey HaSta je",
+      "granted": "chaw’ SoSlI’ vavlI’ joq: poH ja’ghItlhmeyDaq mIloghlIj HaSta je lo’lu’laH, ’ej School of Gaming, Lynx Educate, Roblox je lo’laH. ’ach mIloghlIj tlhapmeH, SoH Dughel Gedu.",
+      "notGranted": "chaw’be’ SoSlI’ vavlI’ joq. vaj poH mIloghmeyvo’ DuchoprupmoH Gedu. SoSlI’ vavlI’ joq neH choHlaH."
     }
   },
   "tools": {
@@ -2356,7 +2682,12 @@
     "goToDashboard": "My SOG yIghoS",
     "invalidTitle": "Qapbe’ lInkvam",
     "invalidDescription": "choHlu’DI’ QIn Daq, Qapbe’choH ngu’meH lInk. DuHmeylIj yIpoSmoH ’ej lInk chu’ yIngeH.",
-    "goToSettings": "DuHmey yIghoS"
+    "goToSettings": "DuHmey yIghoS",
+    "gamerVerifiedTitle": "ngu’lu’pu’ QIn DaqlIj",
+    "gamerChoosePasswordDescription": "DaH mu’meylIj yIwIv – lInk wIngeHbej.",
+    "gamerSendPasswordLink": "mu’mey lInk HIngeH",
+    "gamerPasswordLinkSent": "ngeHta’. QIn yInuD.",
+    "gamerPasswordLinkFailed": "Qapbe’. yInIDqa’!"
   },
   "voice": {
     "participants": "toy’wI’pu’",
@@ -2418,6 +2749,7 @@
       "no-device": "jatlhwI’ mIlQeD je tu’lu’be’. wa’ yISamchoH, vaj yItchu’qa’.",
       "in-use": "latlh ngoqvaD jatlhwI’ mIlQeD je lo’lu’. yISoQmoH, vaj yItchu’qa’.",
       "insecure": "Hung He (https) poQ mIlQeD jatlhwI’ je.",
+      "interrupted": "jatlhwI’lij wab ngeHbe’taH. yIrarlu’’a’, tamlu’’a’ yIlegh; vaj tetlhDaq yIwIvqa’ pagh yItchu’qa’.",
       "unknown": "jatlhwI’ mIlQeD je wISuqlaHbe’. yItchu’qa’, yInIDqa’.",
       "reload": "yItchu’qa’"
     },
@@ -2462,24 +2794,6 @@
       "pizza": "pIza’",
       "ice-cream": "bIQ’a’ nay’",
       "coffee": "qa’vIn"
-    },
-    "zoneColor": {
-      "red": "Doq",
-      "orange": "qIm",
-      "amber": "SuD Doq",
-      "yellow": "SuD wov",
-      "lime": "SuD’a’",
-      "green": "SuD",
-      "emerald": "SuDqu’",
-      "teal": "SuD chal",
-      "cyan": "Sayan",
-      "sky": "chal",
-      "blue": "SuD qIj",
-      "indigo": "indigo",
-      "violet": "morgh",
-      "purple": "morghqu’",
-      "fuchsia": "pIQqu’",
-      "pink": "pIQ"
     },
     "instant": {
       "joinFailed": "Daq muv Dabe’lu’. yItoH’egh!",
@@ -2537,7 +2851,7 @@
   },
   "yty": {
     "hero": {
-      "title": "<primary>Yty</primary> nuq?",
+      "title": "Yty nuq?",
       "subtitle": "Yty ’oH HoS’e’ Sogverse rojmoHbogh. QaQ Qu’mey lutaHvIS — laHmey chu’ lughoj, juppu’ luSuq, batlh luDa, ’ej ghomDaq lumuv — Yty luSuq toy’wI’pu’, chaHvaD HochvaD je."
     },
     "overview": {
@@ -2607,7 +2921,8 @@
       "replyToLabel": "jangmeH QIn",
       "sent": "ngeHlu’",
       "message": "QIn",
-      "gamerNote": "QIn’vam toy’wI’ account vo’. jangmey vav/SoS naDev ({parentEmail}) ghoS."
+      "gamerNoteNoMailbox": "toy’wI’ account vo’ QInvam ({firstName}) — jabbI’ID Daq ghajbe’.",
+      "gamerNoteOwnMailbox": "toy’wI’ account vo’ QInvam ({firstName}) — jabbI’ID DaqDaj je laD: {gamerEmail}."
     },
     "welcomeParent": {
       "subject": "School of Gamingvo’ nuqneH!",
@@ -2639,9 +2954,9 @@
       },
       "heading": "Qapla’! Doch Dalajpu’!",
       "subheading": {
-        "consumer_club": "{productName} ghom’a’Daq ghItlhlu’pu’ {participantName}.",
-        "municipality_club": "{productName} veng ghom’a’Daq ghItlhlu’pu’ {participantName}.",
-        "camp": "{productName} raghDaq ghItlhlu’pu’ {participantName}.",
+        "consumer_club": "{productName} QujmeH ghItlhlu’pu’ {participantName}.",
+        "municipality_club": "{productName} QujmeH ghItlhlu’pu’ {participantName}.",
+        "camp": "{productName} QujmeH ghItlhlu’pu’ {participantName}.",
         "event": "{productName}Daq jeSpu’ {participantName}."
       },
       "self": {
@@ -2652,13 +2967,19 @@
           "event": "{productName}Daq bIjeSpu’"
         },
         "subheading": {
-          "consumer_club": "{productName} ghom’a’Daq ghItlhlu’pu’ SoH.",
-          "municipality_club": "{productName} veng ghom’a’Daq ghItlhlu’pu’ SoH.",
-          "camp": "{productName} raghDaq ghItlhlu’pu’ SoH.",
+          "consumer_club": "{productName} QujmeH ghItlhlu’pu’ SoH.",
+          "municipality_club": "{productName} QujmeH ghItlhlu’pu’ SoH.",
+          "camp": "{productName} QujmeH ghItlhlu’pu’ SoH.",
           "event": "{productName}Daq bIjeSpu’."
         },
         "waitlist": {
-          "subheading": "bIloS tetlhDaq: {productName}. quS poSDI’, SoH wIja’."
+          "subheading": "bIloS tetlhDaq: {productName}. quS poSDI’, SoH wIja’.",
+          "next2": {
+            "consumer_club": "DIS naQ tetlhDaq Daq DaqaD.",
+            "municipality_club": "DIS naQ tetlhDaq Daq DaqaD.",
+            "camp": "ragh naQ tetlhDaq Daq DaqaD.",
+            "event": "wanI’ tetlhDaq Daq DaqaD."
+          }
         }
       },
       "typeLabel": {
@@ -2680,7 +3001,7 @@
         "placementSelf": "Gedu tlhej ghomDaq qalanpu’. My SOG-Daq Qu’mey Dalegh.",
         "subscription": "Hoch jar DaDIlnIS. My SOG-Daq Dajondaq ghap Damevmeh laH.",
         "upfront": "wa’logh neH DIl — latlh DIl Hutlh.",
-        "free": "pagh DaDIlnIS."
+        "firstCharge": "DaHjaj pagh DIllu’. wa’DIch DIlmeH jajlIj: {date}."
       },
       "waitlist": {
         "subject": "{participantName} loS tetlhDaq: {productName}",
@@ -2688,9 +3009,53 @@
         "heading": "loS tetlhDaq SoH",
         "subheading": "{participantName} loS tetlhDaq: {productName}. quS poSDI’, SoH wIja’.",
         "next1": "quS poSDI’, QInHom wIngeH.",
-        "next2": "reH My SOG-Daq loS DaqlIj DaleghlaH."
+        "summaryTitle": "loS DaqlIj",
+        "forLabel": "loStaH",
+        "next2": {
+          "consumer_club": "DIS naQ tetlhDaq {participantName} Daq qaD.",
+          "municipality_club": "DIS naQ tetlhDaq {participantName} Daq qaD.",
+          "camp": "ragh naQ tetlhDaq {participantName} Daq qaD.",
+          "event": "wanI’ tetlhDaq {participantName} Daq qaD."
+        },
+        "next3": "reH My SOG-Daq loS DaqlIj DaleghlaH."
       },
-      "dashboardButton": "My SOG yIghoS"
+      "gamer": {
+        "greeting": "nuqneH {participantName}!",
+        "summaryTitle": "ghItlhlIj"
+      },
+      "invite": {
+        "summary": "{productName} – {participantName}",
+        "locationOnline": "De’wI’Daq – My SOG",
+        "locationInPerson": "{site}, {address}",
+        "whereOnline": "De’wI’Daq ghom, My SOG-Daq. ghom pagh {minutes} tup pa’ poSlu’ ghogh pa’.",
+        "whereInPerson": "{site}Daq ghom.",
+        "whereAddress": "Daq: {address}",
+        "link": "My SOG-Daq Hoch De’: {url}",
+        "questions": "yIghel: {supportEmail}."
+      },
+      "dashboardButton": "My SOG yIghoS",
+      "closing": "yIghel’a’? QInvam yIjang neH.",
+      "summaryTitle": "ralHa’ghachlIj",
+      "forLabel": {
+        "consumer_club": "ghItlhlu’pu’",
+        "municipality_club": "ghItlhlu’pu’",
+        "camp": "ghItlhlu’pu’",
+        "event": "jeSwI’"
+      },
+      "overview": {
+        "schedule": "jaj tetlh",
+        "where": "Daq",
+        "format": "rurmeH",
+        "online": "QumDaq",
+        "tbd": "Sov pagh",
+        "ageRange": "qan SaH",
+        "audience": "ghotpu’",
+        "language": "Hol",
+        "ages": "qan {min}–{max}",
+        "audienceParents": "vavpu’vaD",
+        "audienceFamilies": "qorDu’pu’vaD",
+        "audienceFamiliesWithAges": "qorDu’pu’vaD, qan {min}–{max}"
+      }
     },
     "verifyEmail": {
       "subject": "QIn DaqlIj yIchel",
@@ -2699,10 +3064,18 @@
       "button": "QIn DaqlIj yIchel",
       "ignore": "Datlhobbe’chugh, QIn yIleghQo’. pagh choHlu’."
     },
+    "gamerWelcome": {
+      "subject": "School of Gaming patlhlIj DaSuqpu’",
+      "heading": "patlhlIj DaSuqpu’",
+      "body": "nuqneH {gamerName}! School of Gaming patlhlIj chenmoHpu’ vavlI’. bI’elmeH mu’ pegh DaHutlh — QIn Daqvam Daghaj ’e’ toblu’meH bIngDaq leQ yIqIp, ghIq mu’ pegh DawIvlaH.",
+      "button": "QIn Daqwij ’oH",
+      "ignore": "QInvam DapIHbe’chugh, yIleghQo’. pagh qaS."
+    },
     "sessionReport": {
       "subject": "poH ja’ghItlh – {productName}, {sessionDate}",
       "title": "poH ja’ghItlh",
       "intro": "nuqneH! {productName} poH {gamerName} ghompu’. {geduName} ja’ghItlh ghItlhpu’.",
+      "gamerIntro": "nuqneH {gamerName}! {productName} poHlIj ghompu’. {geduName} ja’ghItlh ghItlhpu’ — SoHvaD.",
       "groupLabel": "ghom",
       "dateLabel": "jaj",
       "timeLabel": "poH",
@@ -2729,6 +3102,12 @@
       "self": {
         "subject": "quS poSchoHpu’ – {productName}",
         "opening": "quS poSDI’ SoH wIja’ ’e’ wIper. DaH poSchoHpu’: maHvaD bIghoSlaH – {productName}."
+      },
+      "gamer": {
+        "subject": "SoHvaD quS poSchoHpu’ – {productName}",
+        "opening": "nuqneH {gamerName}! SoHvaD quS poSchoHpu’ – {productName}. QaQ De’vam!",
+        "parentDecides": "HIja’ pagh ghobe’ jang ’e’ luQoy vavlI’, ’ej {deadline} jangnIS. jangDI’, My SOG-Daq Dalegh.",
+        "dashboardButton": "My SOG yIpoSmoH"
       }
     },
     "seatOfferStaff": {
@@ -2754,8 +3133,9 @@
   },
   "roblox": {
     "hero": {
-      "title": "yIchen<br></br><primary>yItIv</primary><br></br><secondary>yIghaj</secondary>",
-      "subtitle": "Roblox qetlh chenmoHmeH ghojmoH — Huch Hutlh! loDHompu’ be’Hompu’vaD. Lynx Educate, School of Gaming, je Roblox boqwI’pu’.",
+      "title": "chenmoHwI’<br></br><act>DuSaQ</act>",
+      "subtitle": "yIchen. yItIv. yIghaj.",
+      "blurb": "Huch Hutlh! loDHompu’ be’Hompu’vaD. Robloxdaq qetlhlIj yIqIn.",
       "cta": "may’Daq yIghoS!"
     },
     "lockup": {
@@ -2767,8 +3147,8 @@
     "what": {
       "eyebrow": "nuq ’oH",
       "heading": "Robloxdaq chenmoH yIghoj.",
-      "paragraph1": "France Sepdaq 13–17 ben loDHompu’ be’Hompu’ je qetlhmey luchenmoH, chuvmey lulughmoH, ’ej Robloxdaq luqIn. LughojmoH Lynx Educate je School of Gaming; Roblox luboq. qetlh chenmoHghach, De’ laHmey, je jIrDaq QaQ boqghach ghojmoH.",
-      "paragraph2": "ghojmoH van, Hoch jeSwI’ Robloxdaq qetlhDaj chu’ qInpu’. laH tIn Hutlh — neH tu’lI’ neH."
+      "paragraph1": "chenmoHwI’ DuSaQ. France Sepdaq 13–17 ben loDHompu’ be’Hompu’ je qetlhmey luchenmoH, chuvmey lulughmoH, ’ej Robloxdaq luqIn. LughojmoH Lynx Educate je School of Gaming; Roblox luboq. qetlh chenmoHghach, De’ laHmey, je jIrDaq QaQ boqghach ghojmoH.",
+      "paragraph2": "Robloxdaq qetlhDaj chu’ qIn ’e’ ghoS ghojmoHghach. laH tIn Hutlh — neH tu’lI’ neH."
     },
     "why": {
       "eyebrow": "qatlh yIjeS",
@@ -2825,7 +3205,7 @@
       "empty": "jajmey wa’DIch DaH wIqech. tugh yIleghqa’, ’ej nuq ghoS yISov.",
       "previous": "jajmey ret yIcha’",
       "next": "jajmey veb yIcha’",
-      "browseShop": "ngevwI’Daq Hoch jajmey tIlegh"
+      "browseShop": "ngevwI’ yIlegh"
     },
     "parents": {
       "eyebrow": "vavpu’ SoSpu’vaD",
@@ -2872,7 +3252,7 @@
         },
         "media": {
           "question": "puqwI’ mIllogh chenmoHlu’’a’?",
-          "answer": "<p>poHmeyDaq mIlloghmey chenmoHlu’laH — maHvaD neH. Hurghaj ngoqvaD mIlloghmey lo’lu’chugh, SoH DawIv qInmeH poHDaq, ’ej reH DachoHlaH.</p>"
+          "answer": "<p>poHmeyDaq mIlloghmey chenmoHlu’laH. ’ach mIlloghDaq puqlI’ tu’lu’ SoH wIv DawIvchugh neH — puqlI’ DalanDI’ wIv DawIv. reH wIv DachoHlaH: My SOG, puqlI’ HaHDaq. wIv DawIvbe’chugh, mIlloghmeyvo’ puqlI’ jotlhlu’.</p>"
         },
         "facilitators": {
           "question": "’Iv poHmey Sep, ’ej chay’ nuDlu’?",
@@ -2890,8 +3270,9 @@
       "button": "yIchu’"
     },
     "legal": {
-      "roblox": "© 2024 Roblox Corporation. Roblox per, Roblox Degh, je Roblox Tilt Roblox Corporation ngoq’a’mey — Amerika Sepmey je latlh Sepmey. chaw’ lo’lu’.",
-      "lynx": "Lynx Educate je Lynx Educate Degh Lynx Educate ngoq’a’mey. chaw’ lo’lu’."
+      "roblox": "Roblox per, Roblox Degh, je Roblox Tilt Roblox Corporation ngoq’a’mey — Amerika Sepmey je latlh Sepmey. chaw’ lo’lu’.",
+      "lynx": "Lynx Educate je Lynx Educate Degh Lynx Educate ngoq’a’mey. chaw’ lo’lu’.",
+      "documents": "chenmoHwI’ DuSaQ ghItlhmey"
     }
   },
   "seatOffer": {
@@ -3017,5 +3398,31 @@
       "next": "mIllogh veb yIlegh",
       "close": "yISoQmoH"
     }
+  },
+  "gamerSignIn": {
+    "question": "chay’ ’el {name}?",
+    "option": {
+      "parent": "vav account Dung",
+      "username": "puq account: pong lo’",
+      "email": "puq account: puq QIn Daq lo’"
+    },
+    "optionHint": {
+      "parent": "janDaq ’el vav, ’ej puqvaD jan nob. pong ghajbe’ puq, pegh mu’ ghajbe’ je.",
+      "username": "puqvaD pong pegh mu’ je cher vav.",
+      "email": "account chenmoH vav. QIn DaqDaj ngu’ puq, ’ej pegh mu’Daj chenmoH."
+    },
+    "parentModeNote": "pagh yIghItlh. accountlIjvo’ bIchoHDI’ ’el {name}.",
+    "usernameLabel": "pong",
+    "usernamePlaceholder": "mara2015",
+    "usernameHint": "ghItlh mI’ je neH, wej – cha’maH Hap.",
+    "usernameRequired": "pong yIwIv!",
+    "usernameInvalid": "wej – cha’maH ghItlh mI’ joq yIlo’. pe’vIl yIlo’Qo’.",
+    "usernameTaken": "pongvam lo’lu’. latlh yInuD!",
+    "passwordHint": "{count} Hap law’ law’. QujwI’lIjvaD yIjatlh – naDev DachoHlaH.",
+    "passwordTooShort": "{count} Hap law’ law’ poQ mu’mey.",
+    "emailPlaceholder": "mara@example.com",
+    "emailRequired": "QIn Daq yIchel!",
+    "emailInvalid": "QIn Daq rurbe’ vam.",
+    "emailTaken": "account ghaj QIn Daqvam."
   }
 }

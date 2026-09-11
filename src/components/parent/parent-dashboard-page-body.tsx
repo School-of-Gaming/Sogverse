@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { UserCog, UserPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
@@ -135,7 +135,7 @@ const SELF_SECTION_ID = "self";
 /**
  * The parent dashboard's page body — everything below the route's data shell.
  *
- * It lives apart from `app/(dashboard)/parent/page.tsx` so the page is only a
+ * It lives apart from `app/[locale]/(dashboard)/parent/page.tsx` so the page is only a
  * data shell (auth, prefetch) and the body is a plain component: that is what
  * lets a full-page preview scene render the dashboard exactly as a parent meets
  * it, with fixtures in place of the server reads.
@@ -198,6 +198,7 @@ const SELF_SECTION_ID = "self";
 export function ParentDashboardPageBody({
   gamers,
   self = null,
+  prepDismissed,
   billingCard,
   helpForm,
   onAddGamer,
@@ -220,6 +221,16 @@ export function ParentDashboardPageBody({
    * as the plain no-parent-seats page it already was.
    */
   self?: ParentDashboardParticipant | null;
+  /**
+   * The enrolments this reader has already finished the prep guide for, parsed
+   * from the cookie by whatever rendered the page — a parent's own answers, and
+   * the ones they gave on their children's cards, since a parent and a child
+   * share a browser and this is the reader's half of that key.
+   *
+   * Handed straight to the cards; the body has no opinion about it beyond
+   * carrying it, and it is required so a surface cannot forget to answer.
+   */
+  prepDismissed: ReadonlySet<string>;
   /** The Stripe portal card. A node, so the shell owns its actions. */
   billingCard: React.ReactNode;
   /**
@@ -438,7 +449,7 @@ export function ParentDashboardPageBody({
                         rare. `ml-auto` so a long name wraps against the
                         heading's space, not the link's. */}
                     <Link
-                      href={`${ROUTES.customer.gamers}/${gamer.id}`}
+                      href={ROUTES.customer.gamer(gamer.id)}
                       aria-label={f("manageGamerAria", {
                         name: gamer.firstName,
                       })}
@@ -461,6 +472,7 @@ export function ParentDashboardPageBody({
                         <EnrollmentCard
                           key={enrollment.participationId}
                           enrollment={enrollment}
+                          prepDismissed={prepDismissed}
                           audience="customer"
                           // Only inside the leave dialog, never on the card
                           // face: the heading two rows up already says whose
@@ -520,7 +532,7 @@ export function ParentDashboardPageBody({
                 <button
                   type="button"
                   onClick={onAddGamer}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-muted-foreground/40 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
                 >
                   <UserPlus className="h-4 w-4" aria-hidden />
                   {f("addGamer")}
@@ -567,6 +579,7 @@ export function ParentDashboardPageBody({
                   <EnrollmentCard
                     key={enrollment.participationId}
                     enrollment={enrollment}
+                    prepDismissed={prepDismissed}
                     audience="self"
                     onOpenPortal={onOpenPortal}
                     // No `onJoinClick`, and the omission is the feature: the

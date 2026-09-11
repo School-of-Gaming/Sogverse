@@ -6,12 +6,18 @@ import { registrationCtaKind } from "@/components/public/products/derive-registr
 import { PreviewSignupPanel } from "@/components/public/products/preview-signup-panel";
 import {
   buildScenarioFixture,
+  type AuthKind,
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
 import { resolveRegionGate } from "@/components/public/products/region-lock/region-gate";
-import type { RegionLockScenarioMeta } from "@/components/public/products/region-lock/region-lock-scenarios";
+import type { ProductRegionLock } from "@/components/public/products/region-lock/region-lock-scenarios";
 import type { ConfirmedHomeLocation } from "@/components/public/products/signup-panel-view";
-import type { MarketingConsentType } from "@/types";
+import type {
+  GamerPhotoConsentType,
+  MarketingConsentType,
+  ProductTopic,
+} from "@/types";
+import { PREVIEW_TOPIC_PARAM } from "../scenes";
 import { previewSceneHref } from "../href";
 
 /**
@@ -42,9 +48,24 @@ export function ProductDetailScene({
   regionLock,
   requiredConsentSlugs,
   marketingConsentTypes,
+  gamerPhotoConsentTypes,
+  auth,
+  topic = null,
 }: {
   scenario: PreviewScenario;
-  regionLock?: RegionLockScenarioMeta;
+  /**
+   * A different viewer from the one the base scenario names — a consent
+   * scenario met by a parent with no children yet, say. The product is the
+   * base's; only who is looking at it changes.
+   */
+  auth?: AuthKind;
+  /**
+   * The product's lock and the viewer it is read against. The three region-lock
+   * scenarios are what it is *for*, but it is not theirs alone: any scenario can
+   * be about something else and still be locked — the Creator Academy consent
+   * scenario is — so this takes the lock's own shape rather than a scenario's.
+   */
+  regionLock?: ProductRegionLock;
   /**
    * The enrolment conditions this scenario's product requires. Absent on every
    * ordinary scenario, which is what the live page looks like for nearly every
@@ -58,6 +79,20 @@ export function ProductDetailScene({
    * because a panel is judged with its conditions and its asks side by side.
    */
   marketingConsentTypes?: readonly MarketingConsentType[];
+  /**
+   * The optional photo permission the same scenario asks for, standing in for
+   * the `product_gamer_photo_consents` embed — the third of the three things a
+   * signup panel puts in front of a parent, and set by the same scenario
+   * because the panel is judged with all three side by side.
+   */
+  gamerPhotoConsentTypes?: readonly GamerPhotoConsentType[];
+  /**
+   * The `?topic=` axis: the topic this render puts on the fixture's row, in
+   * place of the one the scenario names. The About card is what it is for —
+   * one card per topic, and twelve topics against a scenario list this long is
+   * not a scenario each. `null` leaves the fixture's own topic alone.
+   */
+  topic?: ProductTopic | null;
 }) {
   // A place confirmed in the panel's dialog, held exactly where the live
   // route's data shell holds it — so the pick outranks the scenario's seeded
@@ -70,8 +105,17 @@ export function ProductDetailScene({
     undefined,
   );
 
-  const fixture = buildScenarioFixture(scenario);
-  const summaryHref = previewSceneHref("confirmation", scenario);
+  const fixture = buildScenarioFixture(scenario, {
+    auth,
+    topic: topic ?? undefined,
+  });
+  // The CTA carries the axis across with it, so walking product → confirmation
+  // stays on the topic being reviewed rather than dropping back to the
+  // fixture's own on the page where the prep guide is.
+  const summaryHref = {
+    ...previewSceneHref("confirmation", scenario),
+    ...(topic === null ? {} : { query: { [PREVIEW_TOPIC_PARAM]: topic } }),
+  };
 
   // The lock rides on the product row, as it does in the database, so nothing
   // downstream is handed a fixture shape the live page would not have.
@@ -87,6 +131,7 @@ export function ProductDetailScene({
           product={product}
           requiredConsentSlugs={requiredConsentSlugs}
           marketingConsentTypes={marketingConsentTypes}
+          gamerPhotoConsentTypes={gamerPhotoConsentTypes}
           state={fixture.state}
           authState={fixture.authState}
           summaryHref={summaryHref}

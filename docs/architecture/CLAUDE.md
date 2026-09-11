@@ -2,7 +2,7 @@
 
 Living docs for what is too cross-cutting for any one colocated `CLAUDE.md`: multi-system
 architecture (products, db-authorization, route-boundary) and repo-wide running topics
-(performance, security).
+(performance, security, discoverability).
 
 - **Definitive and current.** Each doc describes the system as it exists and is updated
   in the same change that shifts the architecture. A doc that has drifted is a bug.

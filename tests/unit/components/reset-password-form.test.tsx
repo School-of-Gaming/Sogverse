@@ -75,8 +75,43 @@ describe("mapping the update failure to copy", () => {
     expect(screen.queryByText(COPY.samePassword)).toBeNull();
   });
 
+  /**
+   * **The recovery session does not survive its own success.**
+   *
+   * The password on this account has just been changed by whoever was working
+   * through its inbox, and a live session opened by a link should not outlive
+   * the page that moved the credential — on a machine we know nothing about,
+   * that session is the one thing the password change did not close. Ending it
+   * costs the user a sign-in they were being sent to do anyway.
+   *
+   * Not a provenance guard: a recovery session carries no marker from the
+   * switch route, so it is already an `own` session and pays the target's
+   * password to switch (`src/lib/session-provenance.ts`).
+   */
+  it("signs the recovery session out before pointing at the login page", async () => {
+    mockSupabaseClient.auth.updateUser.mockResolvedValue({ error: null });
+    mockSupabaseClient.auth.signOut.mockResolvedValue({ error: null });
+    renderForm();
+
+    await submitPassword("a-long-enough-password");
+
+    expect(mockSupabaseClient.auth.signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves the session alone when the update itself failed", async () => {
+    mockSupabaseClient.auth.updateUser.mockResolvedValue({
+      error: { code: "same_password", message: "New password should be different" },
+    });
+    renderForm();
+
+    await submitPassword("a-long-enough-password");
+
+    expect(mockSupabaseClient.auth.signOut).not.toHaveBeenCalled();
+  });
+
   it("swaps to the success card when the update goes through", async () => {
     mockSupabaseClient.auth.updateUser.mockResolvedValue({ error: null });
+    mockSupabaseClient.auth.signOut.mockResolvedValue({ error: null });
     renderForm();
 
     await submitPassword("hunter2hunter2");

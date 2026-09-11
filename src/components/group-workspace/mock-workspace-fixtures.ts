@@ -5,6 +5,7 @@ import {
   SESSION_FEED_EDITORS,
   SESSION_FEED_GAMER_IDS,
   SESSION_FEED_PHOTO_ART,
+  SESSION_FEED_PHOTO_CONSENTS,
   SESSION_FEED_ROSTER,
   SESSION_FEED_TIMEZONE,
   buildSessionFeedFixture,
@@ -18,6 +19,7 @@ import { sessionEntryId } from "@/lib/session-occurrence";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type {
   GamerCreation,
+  GamerPhotoConsent,
   GeduAssignedProduct,
   GeduAssignedProductGroup,
   GeduAssignedProductRosterEntry,
@@ -174,6 +176,17 @@ export interface GroupWorkspaceFixture {
    * all, which is what most real groups look like.
    */
   memberFlair: MemberFlairFixture;
+  /**
+   * What this group's parents have answered about photographs of their
+   * children, as stored rows — or `null` on a scenario whose product does not
+   * ask the photo consent, which is every one but the Roblox Programme's.
+   *
+   * **Rows rather than the resolved map**, so the scene runs the same
+   * resolution the two live shells run: absence is what makes a child "not
+   * allowed", and a fixture that resolved the answer itself would be asserting
+   * that rule instead of exercising it.
+   */
+  photoConsentRows: readonly GamerPhotoConsent[] | null;
 }
 
 /** Gedu ids. Real UUIDs because each one renders as an identicon chip. */
@@ -249,6 +262,19 @@ interface ScenarioConfig {
    * has rows lit by one — because the flag adds the obligation, not the data.
    */
   requiresGamerCreations: boolean;
+  /**
+   * Whether this product asks the per-gamer photo consent — the Lynx Educate
+   * one, which the Roblox Programme's products carry and nothing else does.
+   *
+   * **Exactly one scenario sets it, and it is the Roblox one**, because that is
+   * the product shape the consent belongs to: a page whose topic is Roblox
+   * Studio is the page a gedu photographing children is actually looking at.
+   * Every other scenario leaves it false, which is what keeps the "nothing on
+   * any other product" half of the rule visible rather than merely asserted —
+   * four pages where the session editor's photo block is what it always was,
+   * beside one where it carries the roster's permissions.
+   */
+  asksGamerPhotoConsent: boolean;
   /**
    * Remote products have a voice room; in-person ones have a building. The two
    * are exclusive, and the flag drives both — an in-person page renders **no
@@ -610,7 +636,7 @@ const YEARLONG_STAFF_NOTES: readonly string[] = [
  *   one whose roster was started and abandoned (the partial save).
  * - *Needs attention, report missing* — weeks marked off to the last child and
  *   never written up. These used to be the silent middle of a three-rung ladder;
- *   they are amber now, because the report is what a family opens the page for
+ *   they are warning-toned now, because the report is what a family opens the page for
  *   and a week without one is a week they were told nothing about.
  * - *Needs attention, never sent* — three weeks marked off and written up whose
  *   reports have not been emailed to the families. They are the only cards here
@@ -625,11 +651,11 @@ const YEARLONG_STAFF_NOTES: readonly string[] = [
  *   check and a sent line under each report.
  *
  * Plus a pre-epoch tail: one session somebody went back and wrote up (an
- * ordinary past entry that never turns amber, and the only place on this page
+ * ordinary past entry that never takes the warning tone, and the only place on this page
  * the neutral marker still appears) and two nobody ever touched (quiet
- * placeholder lines that still open the record editor). There are no holiday
- * skips: a session that did not run has no entry kind, because declaring one off
- * is part of the cancellation flows nobody has designed.
+ * placeholder lines that still open the record editor). A session that did not
+ * run has no entry kind at all, because declaring one off is part of the
+ * cancellation flows nobody has designed.
  */
 function yearlongSpecs(): readonly EntrySpec[] {
   const OWED_AT = new Set([2, 12]);
@@ -1068,7 +1094,7 @@ function owedMemberFlair(now: Date): MemberFlairFixture {
  *
  * Written this way so the final card's needs-attention line has exactly one
  * cause. Every entry here is marked off, written up and emailed — the three
- * ordinary obligations, all discharged — so the amber on the newest card can
+ * ordinary obligations, all discharged — so the warning on the newest card can
  * only be the fourth condition, and a reviewer is not left guessing which of
  * four things it is complaining about. The four cards beneath it carry green
  * checks for the same reason: the contrast is the point.
@@ -1144,6 +1170,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     startedDaysAgo: 55 * 7,
     endsInDays: null,
     requiresGamerCreations: false,
+    asksGamerPhotoConsent: false,
     isRemote: true,
     // Remote: no building, so no site-notes panel on the page.
     site: null,
@@ -1257,6 +1284,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     // owed and four weeks to go. `owed` below is the same block after the run
     // has ended, and the two are the whole of what the block can look like.
     requiresGamerCreations: true,
+    asksGamerPhotoConsent: false,
     isRemote: false,
     // The site pair is deliberately half-written: the family note is there and
     // the staff note is not, so the partial-fill ghost is reviewable on a real
@@ -1313,6 +1341,16 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
    * and that is a property of previews rather than of Roblox: a scene must not
    * reach a third-party host on load, so no render is resolved. On the live page
    * a verified row's picture arrives from the roster's one batched by-id call.
+   *
+   * **It is also the one product here that asks the photo consent**, and that
+   * costs no scenario of its own: the consent belongs to the Roblox Programme
+   * delivered with Lynx Educate, so a Roblox-topic page is where it genuinely
+   * sits, and it coexists with everything else this page shows. Open any
+   * session's editor and the photo block carries the verbal-ask note over the
+   * roster's permissions — four allowed, two refused, and three (Linnéa, Emil,
+   * and Marja the adult) with no answer on file, which read exactly as the
+   * refusals do. The other four scenarios are the control: their photo block is
+   * untouched.
    */
   roblox: {
     productName: "Roblox Studio Thursday",
@@ -1326,6 +1364,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     startedDaysAgo: 4 * 7,
     endsInDays: null,
     requiresGamerCreations: false,
+    asksGamerPhotoConsent: true,
     isRemote: true,
     site: null,
     materialUrl: "https://drive.sog.gg/roblox-studio-thursday/lesson-plans",
@@ -1376,6 +1415,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     startedDaysAgo: 4 * 7,
     endsInDays: null,
     requiresGamerCreations: false,
+    asksGamerPhotoConsent: false,
     isRemote: true,
     site: null,
     materialUrl: null,
@@ -1415,13 +1455,13 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
    * block it exists for.
    *
    * **Everything the signal does is on this one page.** The newest card carries
-   * the amber needs-attention line, its marker on the timeline takes the warning
+   * the warning-toned needs-attention line, its marker on the timeline takes the warning
    * tone, the card itself names the two members it is waiting on, and those two
    * carry the warning tone on their roster buttons — every one of which opens
    * the same dialog every other row's button opens, because there is one
    * authoring surface and each signal is a route to it rather than a second way
-   * in. The four cards below the last one are green, so the amber has something
-   * to be amber against.
+   * in. The four cards below the last one are green, so the warning has
+   * something to stand against.
    *
    * It is deliberately thin on everything else — a five-week run, one peer
    * group, no site, no backlog of any other kind — for the same reason the two
@@ -1457,6 +1497,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     // or the final-session derivation lands on a different day, or on none.
     endsInDays: "last-session",
     requiresGamerCreations: true,
+    asksGamerPhotoConsent: false,
     isRemote: true,
     site: null,
     materialUrl: "https://drive.sog.gg/roblox-programme/autumn",
@@ -1597,7 +1638,7 @@ export function buildGroupWorkspaceFixture(
         is_remote: config.isRemote,
         // Flagged on two scenarios, one per tone of the session card's
         // creations block: the camp, whose run is still going, states the
-        // obligation quietly; `owed`, whose run has ended, states it in amber.
+        // obligation quietly; `owed`, whose run has ended, states it in the warning tone.
         // Creations themselves are on show without the flag — the club's rail
         // has rows lit by one — because what the flag adds is the obligation,
         // not the data.
@@ -1622,6 +1663,9 @@ export function buildGroupWorkspaceFixture(
     site: config.site,
     materialUrl: config.materialUrl,
     memberFlair: config.memberFlair(now),
+    photoConsentRows: config.asksGamerPhotoConsent
+      ? SESSION_FEED_PHOTO_CONSENTS
+      : null,
   };
 }
 

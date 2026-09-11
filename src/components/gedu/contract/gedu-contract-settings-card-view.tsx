@@ -1,7 +1,12 @@
 "use client";
 
-import Link from "next/link";
-import { BadgeCheck, FileSignature, ScrollText } from "lucide-react";
+import { Link } from "@/i18n/navigation";
+import {
+  BadgeCheck,
+  FileSignature,
+  FileWarning,
+  ScrollText,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -60,7 +65,10 @@ export function GeduContractSettingsCardView({
         <div className="space-y-3">
           {acceptance === null ? (
             <>
-              <p className="font-medium text-warning">{t("notAcceptedTitle")}</p>
+              <p className="flex items-center gap-2 font-medium text-warning">
+                <FileWarning className="h-5 w-5 shrink-0" aria-hidden />
+                {t("notAcceptedTitle")}
+              </p>
               <p className="text-sm text-muted-foreground">
                 {t("notAcceptedBody")}
               </p>

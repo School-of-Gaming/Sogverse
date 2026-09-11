@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { ArrowUpRight, MapPin, Share2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Field } from "@/components/ui/field";
@@ -10,6 +10,7 @@ import {
   TwoAudienceNotesPanel,
   type TwoAudienceNotesDraft,
 } from "./TwoAudienceNotesPanel";
+import type { AppHref } from "@/lib/constants/routes";
 
 /** The two standing notes a site carries, independent of any product. */
 export type SiteNotesDraft = TwoAudienceNotesDraft;
@@ -82,7 +83,7 @@ interface SitePanelProps {
    * show a site they do not own (the product form's site field, the group page)
    * pass it; the site page itself does not, because it is already there.
    */
-  editHref?: string;
+  editHref?: AppHref;
 }
 
 /**

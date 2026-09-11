@@ -38,8 +38,6 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
 const PRODUCT = "00000000-0000-0000-0000-0000000005a4";
 const GROUP = "00000000-0000-0000-0000-0000000005a5";
 const ZONE = "00000000-0000-0000-0000-0000000005a6";
-const CALENDAR = "00000000-0000-0000-0000-0000000005a7";
-const HOLIDAY = "00000000-0000-0000-0000-0000000005a8";
 const SLOT = "00000000-0000-0000-0000-0000000005a9";
 // Outside the 5a4–5a9 block because it was full when the catalogue arrived;
 // registered in product-helpers.ts alongside it.
@@ -89,12 +87,14 @@ interface IdorCase {
 }
 
 /**
- * `authenticated` holds column-level UPDATE on `profiles` rather than a
- * table-level grant, so it is invisible to `_list_table_grants` and has to be
- * named here explicitly. The column-grant audit (spine check 4) pins which
- * columns those are; this pins that they are still only the caller's own.
+ * `authenticated` holds column-level UPDATE on these rather than a table-level
+ * grant, so they are invisible to `_list_table_grants` and have to be named here
+ * explicitly. The column-grant audit (spine check 4) pins which columns those
+ * are; this pins that they are still only the caller's own. `gamer_profiles`
+ * joined `profiles` here in 00235, when its table-wide UPDATE was traded for
+ * two column grants so the new `sign_in` column would sit outside them.
  */
-const COLUMN_GRANT_ONLY_TABLES = ["profiles"];
+const COLUMN_GRANT_ONLY_TABLES = ["profiles", "gamer_profiles"];
 
 const CASES: Record<string, IdorCase> = {
   products: {
@@ -272,96 +272,6 @@ const CASES: Record<string, IdorCase> = {
           .delete()
           .eq("product_id", PRODUCT)
           .eq("locale", "en")
-          .select("product_id")
-      ),
-  },
-
-  holiday_calendars: {
-    attacker: "customer2",
-    why: "publicly readable, admin-writable — the classic read/write mismatch",
-    probe: async (admin) =>
-      (
-        await admin
-          .from("holiday_calendars")
-          .select("*")
-          .eq("id", CALENDAR)
-          .maybeSingle()
-      ).data,
-    update: async (client) =>
-      outcomeOf(
-        await client
-          .from("holiday_calendars")
-          .update({ name: "Defaced" })
-          .eq("id", CALENDAR)
-          .select("id")
-      ),
-    remove: async (client) =>
-      outcomeOf(
-        await client
-          .from("holiday_calendars")
-          .delete()
-          .eq("id", CALENDAR)
-          .select("id")
-      ),
-  },
-
-  calendar_holidays: {
-    attacker: "customer2",
-    why: "deleting a holiday silently reinstates a cancelled session",
-    probe: async (admin) =>
-      (
-        await admin
-          .from("calendar_holidays")
-          .select("*")
-          .eq("id", HOLIDAY)
-          .maybeSingle()
-      ).data,
-    update: async (client) =>
-      outcomeOf(
-        await client
-          .from("calendar_holidays")
-          .update({ reason: "Defaced" })
-          .eq("id", HOLIDAY)
-          .select("id")
-      ),
-    remove: async (client) =>
-      outcomeOf(
-        await client
-          .from("calendar_holidays")
-          .delete()
-          .eq("id", HOLIDAY)
-          .select("id")
-      ),
-  },
-
-  product_holiday_calendars: {
-    attacker: "customer2",
-    why: "unlinking a calendar from someone else's product",
-    probe: async (admin) =>
-      (
-        await admin
-          .from("product_holiday_calendars")
-          .select("*")
-          .eq("product_id", PRODUCT)
-          .eq("calendar_id", CALENDAR)
-          .maybeSingle()
-      ).data,
-    update: async (client) =>
-      outcomeOf(
-        await client
-          .from("product_holiday_calendars")
-          .update({ created_at: new Date(0).toISOString() })
-          .eq("product_id", PRODUCT)
-          .eq("calendar_id", CALENDAR)
-          .select("product_id")
-      ),
-    remove: async (client) =>
-      outcomeOf(
-        await client
-          .from("product_holiday_calendars")
-          .delete()
-          .eq("product_id", PRODUCT)
-          .eq("calendar_id", CALENDAR)
           .select("product_id")
       ),
   },
@@ -668,7 +578,6 @@ describe("write-path IDOR (§3.4 check 3)", () => {
     }
 
     await deleteTestProducts(admin, [PRODUCT]);
-    await admin.from("holiday_calendars").delete().eq("id", CALENDAR);
     await admin.from("whatsapp_contacts").delete().eq("phone", WHATSAPP_PHONE);
     await admin.from("product_images").delete().eq("id", IMAGE);
 
@@ -711,16 +620,6 @@ describe("write-path IDOR (§3.4 check 3)", () => {
       short_description: "Seeded by write-idor.test.ts",
     });
 
-    await admin
-      .from("holiday_calendars")
-      .insert({ id: CALENDAR, name: "IDOR calendar", timezone: "UTC" });
-    await admin
-      .from("calendar_holidays")
-      .insert({ id: HOLIDAY, calendar_id: CALENDAR, date: "2099-01-01" });
-    await admin
-      .from("product_holiday_calendars")
-      .insert({ product_id: PRODUCT, calendar_id: CALENDAR });
-
     await admin.from("site_details").upsert({
       location_id: TEST_IDS.LOCATION_SITE,
       address: "Seeded by write-idor.test.ts",
@@ -748,7 +647,7 @@ describe("write-path IDOR (§3.4 check 3)", () => {
       group_id: GROUP,
       name: "Private",
       icon: "ghost",
-      color: "indigo",
+      color: "12",
       is_locked: true,
       created_by: TEST_IDS.ADMIN,
     });
@@ -790,7 +689,6 @@ describe("write-path IDOR (§3.4 check 3)", () => {
 
   afterAll(async () => {
     await deleteTestProducts(admin, [PRODUCT]);
-    await admin.from("holiday_calendars").delete().eq("id", CALENDAR);
     await admin.from("whatsapp_contacts").delete().eq("phone", WHATSAPP_PHONE);
     await admin.from("product_images").delete().eq("id", IMAGE);
     await admin

@@ -14,7 +14,9 @@ export function createMockProfile(overrides: Partial<Profile> = {}): Profile {
     phone: null,
     spoken_languages: [],
     home_location_id: null,
-    referral_code: null,
+    utm_source: null,
+    utm_medium: null,
+    utm_campaign: null,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
     ...overrides,
@@ -37,7 +39,9 @@ export function createMockGamerProfile(
     phone: null,
     spoken_languages: [],
     home_location_id: null,
-    referral_code: null,
+    utm_source: null,
+    utm_medium: null,
+    utm_campaign: null,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
     ...overrides,
@@ -62,6 +66,9 @@ export function createMockGamerExtProfile(
     user_id: "test-gamer-id",
     date_of_birth: "2015-01-01",
     gender: "boy",
+    // The default a gamer is created with: switch-only from the parent, no
+    // credential of their own.
+    sign_in: "parent",
     ...overrides,
   };
 }

@@ -7,13 +7,22 @@ import {
   parseCategories,
 } from "@/components/public/products/shop-categories";
 import {
-  PROGRAMME_LANGUAGE,
+  PROGRAMME_PRICE,
   PROGRAMME_TOPIC,
 } from "@/components/roblox/programme-filters";
-import { isAudienceFilterValue } from "@/components/public/products/product-audience";
-import { isSpokenLanguageCode } from "@/lib/constants/spoken-languages";
+import { isAudienceFilterValue } from "@/lib/products/product-audience";
 import { PRODUCT_TOPIC_VALUES } from "@/lib/products/topics";
 import type { ProductType } from "@/types";
+
+/**
+ * The query a browse href carries. The builders return typed href objects now,
+ * so these assertions read the query field rather than re-parsing a URL — the
+ * wrapped `Link` is what serialises it, and asserting on a string here would be
+ * testing a serialiser this module does not own.
+ */
+function queryOf(href: { query?: Record<string, string> }): Record<string, string> {
+  return href.query ?? {};
+}
 
 describe("ROUTES.admin.product", () => {
   // Each v2 product type has its own admin detail surface — unlike the gedu
@@ -27,12 +36,12 @@ describe("ROUTES.admin.product", () => {
   ];
 
   it.each(cases)("maps %s to its admin detail route", (type, expected) => {
-    expect(ROUTES.admin.product(type, "p1")).toBe(expected);
+    expect(ROUTES.admin.productPath(type, "p1")).toBe(expected);
   });
 
   it("never targets the dead v1 /admin/products/[id] surface", () => {
     for (const [type] of cases) {
-      expect(ROUTES.admin.product(type, "p1")).not.toMatch(
+      expect(ROUTES.admin.productPath(type, "p1")).not.toMatch(
         /^\/admin\/products\//,
       );
     }
@@ -47,9 +56,10 @@ describe("ROUTES.shopBrowse", () => {
   it.each(SHOP_CATEGORIES)(
     "sends the %s category's product type back to that category",
     (category) => {
-      expect(ROUTES.shopBrowse(CATEGORY_TYPE[category])).toBe(
-        `/shop?category=${category}`,
-      );
+      expect(ROUTES.shopBrowse(CATEGORY_TYPE[category])).toEqual({
+        pathname: "/shop",
+        query: { [CATEGORY_PARAM]: category },
+      });
     },
   );
 
@@ -59,10 +69,9 @@ describe("ROUTES.shopBrowse", () => {
       // The back link names one category; the shop's Type filter is a
       // multi-select, so it has to read that single value as a selection of
       // one — not as a stale format it ignores.
-      const emitted = new URL(
-        ROUTES.shopBrowse(CATEGORY_TYPE[category]),
-        "https://example.test",
-      ).searchParams.get(CATEGORY_PARAM);
+      const emitted =
+        queryOf(ROUTES.shopBrowse(CATEGORY_TYPE[category]))[CATEGORY_PARAM] ??
+        null;
       expect(emitted).not.toBeNull();
       expect(parseCategories(emitted)).toEqual([category]);
     },
@@ -73,7 +82,9 @@ describe("ROUTES.shopBrowse", () => {
     // and a muni club opened from there overrides this back link entirely. The
     // derived cases above can't cover this: there is no category to derive it
     // from, which is exactly the point.
-    expect(ROUTES.shopBrowse("municipality_club")).toBe("/shop");
+    expect(ROUTES.shopBrowse("municipality_club")).toEqual({
+      pathname: "/shop",
+    });
   });
 });
 
@@ -84,30 +95,26 @@ describe("the /roblox programme's shop hrefs", () => {
   // way the shop reads it, so a renamed param, a retired enum value, or a typo'd
   // href fails here instead of silently degrading to an unfiltered shop.
 
-  it("robloxShop filters to the programme's topic and language", () => {
-    const params = new URL(ROUTES.robloxShop, "https://example.test")
-      .searchParams;
+  it("robloxShop filters to the programme's topic and price, and nothing else", () => {
+    const params = new URLSearchParams(queryOf(ROUTES.robloxShop));
     // Topic values are matched as lowercase strings against the product's
     // `topic` enum column (see use-browse-filters/filter-products); membership
     // in the enum's own value list is what "recognised" means.
     expect(params.get("topic")).toBe(PROGRAMME_TOPIC);
     expect(PRODUCT_TOPIC_VALUES).toContain(params.get("topic"));
-    const lang = params.get("lang");
-    expect(lang).toBe(PROGRAMME_LANGUAGE);
-    expect(lang !== null && isSpokenLanguageCode(lang)).toBe(true);
+    expect(params.get("price")).toBe(PROGRAMME_PRICE);
+    // The rail narrows to online on top of this; the CTAs deliberately do not.
+    expect([...params.keys()].sort()).toEqual(["price", "topic"]);
   });
 
-  it("robloxParentSessions filters to French products for parents", () => {
-    const params = new URL(ROUTES.robloxParentSessions, "https://example.test")
-      .searchParams;
-    const lang = params.get("lang");
-    expect(lang).toBe(PROGRAMME_LANGUAGE);
-    expect(lang !== null && isSpokenLanguageCode(lang)).toBe(true);
+  it("robloxParentSessions filters to free products for parents, and nothing else", () => {
+    const params = new URLSearchParams(queryOf(ROUTES.robloxParentSessions));
     const audience = params.get("audience");
     expect(audience !== null && isAudienceFilterValue(audience)).toBe(true);
     expect(audience).toBe("parents");
+    expect(params.get("price")).toBe(PROGRAMME_PRICE);
     // Deliberately not topic-filtered — a parent digital-safety session is not
     // a Roblox Studio product (the route constant's comment owns the why).
-    expect(params.get("topic")).toBeNull();
+    expect([...params.keys()].sort()).toEqual(["audience", "price"]);
   });
 });

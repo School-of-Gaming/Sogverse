@@ -1,9 +1,3 @@
-// @vitest-environment node
-//
-// Node environment because this exercises a route handler and nothing else —
-// no DOM, and Request/Response are the undici natives the runtime actually
-// hands the route.
-
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
 import { POST } from "@/app/api/admin/products/create/route";
@@ -120,9 +114,9 @@ const validBody = {
   is_visible: true,
   schedule_slots: [{ weekday: 1, start_time: "16:00", duration_minutes: 90 }],
   prices: [],
-  holiday_calendar_ids: [],
   required_consent_slugs: [],
   marketing_consent_types: [],
+  gamer_photo_consent_types: [],
   primary_gedu_fee_cents: null,
   assistant_gedu_fee_cents: null,
   municipality_fee_cents: null,
@@ -427,6 +421,54 @@ describe("POST /api/admin/products/create", () => {
     });
   });
 
+  it("writes the photo asks in a third call, after the marketing ones", async () => {
+    // The marketing set's twin, and a call of its own for the same structural
+    // reason: it is keyed on the product id `create_product` produces. Two
+    // separate writers rather than one, because the two answers are stored
+    // against different subjects — an account's mailbox and a child's image.
+    mockAuthenticatedAdmin();
+    await POST(
+      createRequest({
+        data: { ...validBody, gamer_photo_consent_types: ["lynx_educate"] },
+      }),
+    );
+
+    expect(mockUserRpc.mock.calls[0][0]).toBe("create_product");
+    expect(mockUserRpc.mock.calls[2]).toEqual([
+      "admin_set_product_gamer_photo_consents",
+      { p_product_id: "new-prod-id", p_consent_types: ["lynx_educate"] },
+    ]);
+  });
+
+  it("sends the photo asks as an array, always", async () => {
+    mockAuthenticatedAdmin();
+    await POST(createRequest({ data: validBody }));
+
+    expect(mockUserRpc.mock.calls[2][1]).toEqual({
+      p_product_id: "new-prod-id",
+      p_consent_types: [],
+    });
+  });
+
+  it("returns 400 when the photo field is missing", async () => {
+    mockAuthenticatedAdmin();
+    const { gamer_photo_consent_types: _photo, ...noPhoto } = validBody;
+    const response = await POST(createRequest({ data: noPhoto }));
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for a photo consent type outside the enum", async () => {
+    mockAuthenticatedAdmin();
+    const response = await POST(
+      createRequest({
+        data: { ...validBody, gamer_photo_consent_types: ["nonsense"] },
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
   it("returns 400 when the marketing field is missing", async () => {
     mockAuthenticatedAdmin();
     const { marketing_consent_types: _types, ...noTypes } = validBody;
@@ -465,6 +507,10 @@ describe("POST /api/admin/products/create", () => {
     expect(json.product_id).toBe("new-prod-id");
     expect(json.warning).toMatch(/marketing consents were not applied/);
     expect(json.warning).toMatch(/edit page/);
+    // Every post-RPC write fails in this mock, and each one contributes its own
+    // sentence: they are independent, so a product whose marketing asks and
+    // whose photo asks both failed to land says so twice.
+    expect(json.warning).toMatch(/photo consents were not applied/);
   });
 
   it("returns 400 when the region lock field is missing", async () => {
@@ -478,14 +524,42 @@ describe("POST /api/admin/products/create", () => {
   });
 
   it("returns 400 for a country the lock cannot point at", async () => {
-    // The contract narrows to the SEEDED countries, not to the column CHECK's
-    // alpha-2 shape. "ES" is a real, well-formed code and a declared entry in
-    // SUPPORTED_COUNTRIES — it is simply not seeded, so a lock on it could
-    // never match any family's stored location. Refusing here is the only place
-    // that distinction is enforced.
+    // The contract narrows to the countries we operate in, not to the column
+    // CHECK's alpha-2 shape. "ES" is a real, well-formed code and not one of
+    // them, so a lock on it could never match any family's stored location.
+    // Refusing here is the only place that distinction is enforced.
     mockAuthenticatedAdmin();
     const response = await POST(
       createRequest({ data: { ...validBody, region_lock_country: "ES" } }),
+    );
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  it("accepts a timezone the platform operates in", async () => {
+    // The zone stopped being a constant when the admin form gained a picker, so
+    // the boundary has to carry a value other than the Helsinki default all the
+    // way to the RPC. Paris is a seeded country's zone.
+    mockAuthenticatedAdmin();
+    await POST(
+      createRequest({ data: { ...validBody, timezone: "Europe/Paris" } }),
+    );
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "create_product",
+      expect.objectContaining({ p_timezone: "Europe/Paris" }),
+    );
+  });
+
+  it("returns 400 for a timezone no product can be scheduled in", async () => {
+    // The same narrowing the region lock gets, one field over: the contract is
+    // constrained to the zones the SEEDED countries declare, not to whatever
+    // `Intl` will accept. "Europe/Berlin" is a real IANA zone in a country we do
+    // not operate in — the form cannot offer it, so a request carrying it did
+    // not come from the form. The column holds no such constraint, because
+    // which countries are seeded changes as rows land.
+    mockAuthenticatedAdmin();
+    const response = await POST(
+      createRequest({ data: { ...validBody, timezone: "Europe/Berlin" } }),
     );
     expect(response.status).toBe(400);
     expect(mockUserRpc).not.toHaveBeenCalled();

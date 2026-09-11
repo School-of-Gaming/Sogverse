@@ -6,7 +6,7 @@
  * These accounts are generated in bulk, used for a term, then wiped and
  * regenerated. This script is the whole lifecycle: audit what exists, plan a
  * new pool of names, release the licences, delete, create, verify, and emit the
- * CSV the admin hands to gedus.
+ * xlsx handout the admin gives to gedus.
  *
  * See `docs/runbooks/minecraft-education-accounts.md` for the runbook and for the
  * platform constraints the design works around — they are not obvious, and
@@ -57,6 +57,8 @@
 import { execSync } from "node:child_process";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import path from "node:path";
+import ExcelJS from "exceljs";
+import { outputDir } from "./lib/output.mjs";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
 const DOMAIN = "gamer.sog.gg";
@@ -70,7 +72,9 @@ const GAMER_DEPARTMENT = "Gamer";
 const USAGE_LOCATION = "FI";
 /** UPN local part cap — these are typed by 7-to-12-year-olds. */
 const MAX_LOCAL = 18;
-const PLAN_FILE = path.join(process.cwd(), "minecraft-edu-plan.json");
+/** Plan, handout and snapshots all carry live account data; see scripts/CLAUDE.md. */
+const OUTPUT = outputDir(import.meta.url);
+const PLAN_FILE = path.join(OUTPUT, "minecraft-edu-plan.json");
 
 // ---------------------------------------------------------------- word lists
 // Nothing here can read as a tease: no words about looks, body, or being
@@ -298,32 +302,56 @@ const isLicensed = (u) =>
       !(s.disabledPlans ?? []).includes(MINECRAFT_PLAN)
   );
 
-function writeCsv(file, rows) {
-  const head = [
-    "Tyyppi / Type",
-    "Kayttajatunnus / Username", "Salasana / Password", "Nimi pelissa / Name in game",
-    "Kieli / Language", "Merkitys / Meaning (EN)", "Lisenssi / Licence",
-    "Kerho / Club", "Kerholainen / Student",
+const OUT_FILE = path.join(OUTPUT, "minecraft-edu-accounts.xlsx");
+
+const solid = (argb) => ({ type: "pattern", pattern: "solid", fgColor: { argb } });
+
+/**
+ * The handout the admin gives to gedus. Every colour here is direct cell
+ * formatting, never an Excel table style: the file is imported into Google
+ * Sheets, which keeps cell formatting and drops table styles.
+ */
+async function writeXlsx(file, rows) {
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet("Accounts", { views: [{ state: "frozen", ySplit: 1 }] });
+  ws.columns = [
+    { header: "Tyyppi / Type", width: 12 },
+    { header: "Kayttajatunnus / Username", width: 32 },
+    // Text, so no spreadsheet ever reinterprets a password.
+    { header: "Salasana / Password", width: 20, style: { numFmt: "@" } },
+    { header: "Nimi pelissa / Name in game", width: 26 },
+    { header: "Kieli / Language", width: 16 },
+    { header: "Merkitys / Meaning (EN)", width: 24 },
+    { header: "Lisenssi / Licence", width: 26 },
+    { header: "Kerho / Club", width: 24 },
+    { header: "Kerholainen / Student", width: 28 },
   ];
-  const esc = (v) =>
-    /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
-  const lines = [head.map(esc).join(",")];
+  const header = ws.getRow(1);
+  header.font = { bold: true, color: { argb: "FFFFFFFF" } };
+  header.fill = solid("FF1F4E78");
+  header.height = 20;
+  header.alignment = { vertical: "middle" };
+
   for (const r of rows) {
     const gedu = r.kind === "gedu";
-    lines.push(
-      [
-        gedu ? "Gedu" : "Gamer",
-        r.upn, r.password, r.ingame,
-        // A gedu pool login has no language: its name is a number, not a word.
-        gedu ? "" : r.lang === "fi" ? "suomi" : "English",
-        r.meaning ?? "",
-        r.licensed === false ? "PUUTTUU / MISSING" : "OK - Minecraft Education",
-        "", "",
-      ].map(esc).join(",")
-    );
+    const row = ws.addRow([
+      gedu ? "Gedu" : "Gamer",
+      r.upn, r.password, r.ingame,
+      // A gedu pool login has no language: its name is a number, not a word.
+      gedu ? "" : r.lang === "fi" ? "suomi" : "English",
+      r.meaning ?? "",
+      r.licensed === false ? "PUUTTUU / MISSING" : "OK - Minecraft Education",
+      "", "",
+    ]);
+    // The two pools are tinted apart, so a gedu login is never handed to a child.
+    for (let c = 1; c <= 6; c++) row.getCell(c).fill = solid(gedu ? "FFDDEBF7" : "FFFFFFFF");
+    row.getCell(7).fill = solid(r.licensed === false ? "FFF8CBAD" : "FFE2EFDA");
+    // The columns the admin fills in as accounts are handed out.
+    row.getCell(8).fill = solid("FFFFF2CC");
+    row.getCell(9).fill = solid("FFFFF2CC");
   }
-  // BOM so Excel renders the umlauts; Google Sheets ignores it.
-  writeFileSync(file, "\uFEFF" + lines.join("\r\n") + "\r\n", "utf8");
+  ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: ws.columnCount } };
+  await wb.xlsx.writeFile(file);
 }
 
 
@@ -482,8 +510,8 @@ async function planAdd() {
   }
 
   writeFileSync(PLAN_FILE, JSON.stringify(rows, null, 1), "utf8");
-  const csv = arg("csv", "minecraft-edu-accounts.csv");
-  writeCsv(csv, rows);
+  const out = arg("out", OUT_FILE);
+  await writeXlsx(out, rows);
 
   const nGedu = rows.length - picked.length;
   const s = await seats();
@@ -493,7 +521,7 @@ async function planAdd() {
   console.log(`  distinct nouns drawn      : ${nounUse.size}/${EN_NOUN.length}`);
   console.log(`  max uses of any one word  : ${maxUse}`);
   console.log(`  plan -> ${PLAN_FILE}`);
-  console.log(`  csv  -> ${csv}`);
+  console.log(`  xlsx -> ${out}`);
   console.log(
     `\nA3 student seats: ${s.used}/${s.total} used, ${s.free} free; this plan needs ${rows.length}`
   );
@@ -510,7 +538,7 @@ async function planAdd() {
   console.log(`\nNothing was written to Azure. Next: create --apply`);
 }
 
-function plan() {
+async function plan() {
   if (has("add")) return planAdd();
   const nFi = Number(arg("fi", "500"));
   const nEn = Number(arg("en", "100"));
@@ -545,11 +573,11 @@ function plan() {
   }
 
   writeFileSync(PLAN_FILE, JSON.stringify(rows, null, 1), "utf8");
-  const csv = arg("csv", "minecraft-edu-accounts.csv");
-  writeCsv(csv, rows);
+  const out = arg("out", OUT_FILE);
+  await writeXlsx(out, rows);
   console.log(`planned ${rows.length} accounts (${nFi} fi + ${nEn} en)`);
   console.log(`  plan -> ${PLAN_FILE}`);
-  console.log(`  csv  -> ${csv}`);
+  console.log(`  xlsx -> ${out}`);
   console.log(`\nsamples:`);
   for (const r of rows.slice(0, 8)) {
     console.log(
@@ -604,7 +632,10 @@ async function del() {
   console.log(`would delete ${us.length} @${DOMAIN} accounts`);
   if (!APPLY) return console.log(`\n(dry run — pass --apply to write)`);
 
-  const backup = `deleted-accounts-${new Date().toISOString().slice(0, 10)}.json`;
+  const backup = path.join(
+    OUTPUT,
+    `deleted-accounts-${new Date().toISOString().slice(0, 10)}.json`
+  );
   writeFileSync(backup, JSON.stringify(us, null, 1), "utf8");
   console.log(`snapshot -> ${backup}`);
   const res = await pool(us, (u) => graph("DELETE", `/users/${u.id}`));
@@ -747,10 +778,10 @@ async function verify() {
   const s = await seats();
   console.log(`\nA3 student seats: ${s.used}/${s.total} used, ${s.free} free`);
   if (rows.length) {
-    const csv = arg("csv", "minecraft-edu-accounts.csv");
-    writeCsv(csv, rows);
+    const out = arg("out", OUT_FILE);
+    await writeXlsx(out, rows);
     writeFileSync(PLAN_FILE, JSON.stringify(rows, null, 1), "utf8");
-    console.log(`csv -> ${csv}`);
+    console.log(`xlsx -> ${out}`);
   }
 }
 

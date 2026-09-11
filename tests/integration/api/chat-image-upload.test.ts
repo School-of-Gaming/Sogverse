@@ -55,6 +55,14 @@ const mockGetClaims = vi.fn();
 const mockRpc = vi.fn();
 /** The policy-scoped channel read the route puts in front of the re-encode. */
 const mockChannelRead = vi.fn();
+// `defineRoute` classifies the session it hands the handler, and that answer is
+// the switch route's marker cookie rather than anything in the token — so a
+// route on the any-authenticated posture reads the cookie jar even where
+// nothing here is about cookies. Empty: none of these callers is switched in.
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(async () => ({ get: () => undefined })),
+}));
+
 vi.mock("@/lib/supabase/server", () => ({
   createClient: () =>
     Promise.resolve({

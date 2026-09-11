@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, type ReactNode } from "react";
-import { AlertTriangle, CheckCircle2, Pencil } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Pencil, Radio } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -118,6 +118,12 @@ interface SessionFeedItemProps {
    */
   photoEditing: SessionPhotoEditing;
   /**
+   * Who on the roster may be photographed, or `null` on a product that does not
+   * ask the question. Handed straight to the photo block on whichever editor
+   * this card opens; the card itself has no other use for it.
+   */
+  photoConsents: ReadonlyMap<string, boolean> | null;
+  /**
    * What this session owes in creations, or `null` — which is every entry but
    * one, on every product but a flagged one.
    *
@@ -180,7 +186,7 @@ interface SessionFeedItemProps {
  * either half — a register that is not finished, a report that was never written
  * — is an alert icon and label on an otherwise ordinary card. It used to wear a
  * tinted background too, which made the feed's most common transient state look
- * like a failure and painted half the page amber for a gedu catching up after
+ * like a failure and painted half the page in the warning tone for a gedu catching up after
  * half term. Both halves present is the one state that earns a mark of its own,
  * a green check, because it is what the gedu is aiming at and nothing else on the
  * card can tell them they have arrived. Everything else is silent: a future
@@ -227,9 +233,9 @@ interface SessionFeedItemProps {
  * "future session", and all of them are the same blue —
  * the boundary between what has happened and what has not is the one thing a
  * reader must never have to work out from a date. The tone is info rather than
- * the primary brand one because the two signals in this feed sit inches apart
- * ("this is coming up" and "this owes you work") and primary is close enough to
- * the warning amber that a column of cards read as one wash of attention. Info
+ * the brand's act because the two signals in this feed sit inches apart
+ * ("this is coming up" and "this owes you work") and act is close enough to
+ * the warning tone that a column of cards read as one wash of attention. Info
  * separates on hue, so the two are told apart from across the room.
  *
  * **Which editor opens follows whether the session has STARTED, not which side
@@ -266,6 +272,7 @@ export function SessionFeedItem({
   sendError,
   onSendReport,
   photoEditing,
+  photoConsents,
   creations,
   registerEditButton,
   onToggleEdit,
@@ -319,6 +326,12 @@ export function SessionFeedItem({
       // Greyed with everything else while the card commits: what is staged here
       // is part of what this Save is carrying.
       disabled={committing}
+      // The roster travels with the answers rather than beside them: the block
+      // draws one row per roster member and marks it from the map, so the two
+      // are one datum and a card could not render either half alone.
+      consent={
+        photoConsents === null ? null : { roster, allowed: photoConsents }
+      }
       {...photoEditing}
     />
   );
@@ -338,6 +351,10 @@ export function SessionFeedItem({
   const creationsBlock = (inEditor: boolean) =>
     creations === null ? null : (
       <SessionCreationsBlock
+        // The entry is what tells the block who this session expected — the
+        // same scoping the register above it applies, so one card cannot omit a
+        // member from its register and bill them for a creation on it.
+        entry={entry}
         roster={roster}
         withCreations={creations.withCreations}
         owed={creations.owed}
@@ -350,6 +367,7 @@ export function SessionFeedItem({
     <CollapsibleRegion open={editing} instant id={editorId}>
       <SessionRecordEditor
         open={editing}
+        entry={entry}
         roster={roster}
         initialState={editorStateFromEntry(entry, roster)}
         committing={committing}
@@ -367,7 +385,7 @@ export function SessionFeedItem({
   // because nothing about the epoch says this session cannot be written up.
   if (entry.kind === "no_record") {
     return (
-      <div className="rounded-md border border-dashed border-border/60 px-3 py-2 text-xs text-muted-foreground">
+      <div className="rounded-md border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <SessionDateLine labels={labels} muted />
           <div className="flex items-center gap-2">
@@ -455,7 +473,6 @@ export function SessionFeedItem({
         // and the chip's size does not change. The ~11px it leaves clears a
         // thumbnail's bottom border exactly as it clears the staff-note box's.
         signedBy !== null && "pb-8 sm:pb-8",
-        entry.kind === "future" && prominent && "border-info/50",
       )}
     >
       <div className="flex items-start justify-between gap-3">
@@ -463,19 +480,16 @@ export function SessionFeedItem({
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           {entry.kind === "future" && (
             // The live tag is the same shared `sessionBadge` copy the family
-            // feed reads, in a filled tone rather than an outline one: a
-            // session happening right now is the one thing on this feed worth
-            // finding from across the room. "Next session" on a club that is
-            // running would be technically true and read as a mistake.
+            // feed reads, marked by a broadcast dot rather than by a ground
+            // behind the word: a session happening right now is the one thing
+            // on this feed worth finding from across the room. "Next session"
+            // on a club that is running would be technically true and read as
+            // a mistake.
             <Badge
               variant="outline"
-              className={cn(
-                "text-[10px] uppercase tracking-wide",
-                live
-                  ? "border-info bg-info/10 text-info"
-                  : "border-info/50 text-info",
-              )}
+              className="gap-1 text-[10px] uppercase tracking-wide text-info"
             >
+              {live && <Radio className="h-3 w-3" aria-hidden />}
               {live ? b("live") : prominent ? b("nextSession") : b("upcoming")}
             </Badge>
           )}
@@ -657,7 +671,11 @@ function SessionEntryBody({
       return (
         <div className="space-y-3 pb-1 pt-3">
           {showAttendance && (
-            <AttendanceSummary roster={roster} attendance={marks} />
+            <AttendanceSummary
+              entry={entry}
+              roster={roster}
+              attendance={marks}
+            />
           )}
           {creationsBlock}
           <WrittenFields entry={entry} clampReport={clampReport} />
@@ -685,7 +703,11 @@ function SessionEntryBody({
       // region clips its own overflow.
       return (
         <div className="space-y-3 pb-1 pt-3">
-          <AttendanceSummary roster={roster} attendance={entry.attendance} />
+          <AttendanceSummary
+            entry={entry}
+            roster={roster}
+            attendance={entry.attendance}
+          />
           {creationsBlock}
           <WrittenFields
             entry={entry}

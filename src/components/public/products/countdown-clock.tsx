@@ -79,7 +79,7 @@ export function CountdownClock({
 
 function Cell({ value, label }: { value: number | undefined; label: string }) {
   return (
-    <div className="rounded-md border border-border bg-muted/30 py-2">
+    <div className="rounded-md border border-border bg-lifted py-2">
       <p className="text-xl font-bold tabular-nums sm:text-2xl">
         {value === undefined ? "--" : pad2(value)}
       </p>

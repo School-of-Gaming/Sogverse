@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { isSupportedCurrency } from "@/lib/constants";
 import {
@@ -38,6 +39,14 @@ interface ProductFormShellProps {
    *  picture, and on the empty create form. Derived data, so it is a prop
    *  rather than form state — see `ImagePicker`. */
   initialImage?: ProductImageSelection | null;
+  /**
+   * Whether this shell is editing a product that already exists.
+   *
+   * The wrappers know which they are and nothing else in the shell does, so it
+   * is stated rather than inferred. One field reads it today — the timezone
+   * hint, whose warning is about re-timing sessions that are already stored.
+   */
+  isEdit: boolean;
   /** Submit-button label, e.g. "Create club" or "Save changes". */
   submitLabel: string;
   /** Called when the admin clicks Cancel. Wrapper navigates from here. */
@@ -84,6 +93,7 @@ export function ProductFormShell({
   productType,
   initialFormState,
   initialImage = null,
+  isEdit,
   submitLabel,
   onCancel,
   onSubmit,
@@ -196,7 +206,12 @@ export function ProductFormShell({
       />
       <AudienceSection state={state} setState={setState} config={config} />
       <WhereSection state={state} setState={setState} config={config} />
-      <WhenSection state={state} setState={setState} config={config} />
+      <WhenSection
+        state={state}
+        setState={setState}
+        config={config}
+        isEdit={isEdit}
+      />
       <BillingSection state={state} setState={setState} config={config} />
       <FeesSection state={state} setState={setState} config={config} />
       <RegistrationSection state={state} setState={setState} config={config} />
@@ -212,30 +227,29 @@ export function ProductFormShell({
       <VisibilitySection state={state} setState={setState} />
 
       {error && (
-        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-          {error}
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
       {warning && (
-        <div className="rounded-md bg-warning/10 p-3 text-sm text-warning">
-          <p className="flex items-start gap-2">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-            <span>{warning.message}</span>
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="mt-3"
-            onClick={warning.onContinue}
-          >
-            {c("continue")}
-          </Button>
-        </div>
+        <Alert variant="warning">
+          <div>
+            <AlertDescription>{warning.message}</AlertDescription>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={warning.onContinue}
+            >
+              {c("continue")}
+            </Button>
+          </div>
+        </Alert>
       )}
 
-      <div className="flex items-center justify-between gap-4 border-t pt-6">
+      <div className="flex items-center justify-between gap-4 border-t border-border pt-6">
         <Button type="button" variant="ghost" onClick={onCancel}>
           {c("cancel")}
         </Button>

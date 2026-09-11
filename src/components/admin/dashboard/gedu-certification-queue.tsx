@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import {
   BadgeCheck,
@@ -10,6 +10,7 @@ import {
   FileWarning,
   Scale,
 } from "lucide-react";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { CertifyWithWarningsDialog } from "@/components/admin/certify-with-warnings-dialog";
 import { PersonChip } from "@/components/ui/person-chip";
@@ -259,9 +260,9 @@ function GeduRow({
           nothing here to move, and the row it appears in is one the admin just
           acted on. */}
       {failed && (
-        <p className="order-last w-full text-xs text-destructive">
+        <StatusLine status="destructive" size="xs" className="order-last w-full">
           {t("failed")}
-        </p>
+        </StatusLine>
       )}
       <Button
         type="button"

@@ -69,28 +69,30 @@ export function PricingPanelView({
 function MoneyBackGuarantee() {
   const t = useTranslations("productDetail.pricing.guarantee");
   return (
-    <div className="flex gap-2.5 border-t border-border pt-3">
-      <ShieldCheck
-        className="mt-0.5 h-4 w-4 shrink-0 text-success"
-        aria-hidden="true"
-      />
-      <div className="space-y-1">
-        <p className="text-sm font-semibold">{t("title")}</p>
-        <p className="text-xs text-muted-foreground">{t("body")}</p>
-        <p className="text-xs text-muted-foreground">
-          {t.rich("contact", {
-            email: SUPPORT_EMAIL,
-            link: (chunks) => (
-              <a
-                href={`mailto:${SUPPORT_EMAIL}`}
-                className="text-primary hover:underline"
-              >
-                {chunks}
-              </a>
-            ),
-          })}
-        </p>
-      </div>
+    <div className="space-y-1 border-t border-border pt-3">
+      {/* The mark sits on the title's own line rather than in a gutter beside
+          the whole block: the two paragraphs under it are sentences a parent
+          reads, and a column indented under a 16px glyph gives them a narrower
+          measure than everything else on the panel for no reason the reader can
+          see. */}
+      <p className="flex items-center gap-2 text-sm font-semibold">
+        <ShieldCheck className="h-4 w-4 shrink-0 text-success" aria-hidden="true" />
+        {t("title")}
+      </p>
+      <p className="text-xs text-muted-foreground">{t("body")}</p>
+      <p className="text-xs text-muted-foreground">
+        {t.rich("contact", {
+          email: SUPPORT_EMAIL,
+          link: (chunks) => (
+            <a
+              href={`mailto:${SUPPORT_EMAIL}`}
+              className="text-act hover:underline"
+            >
+              {chunks}
+            </a>
+          ),
+        })}
+      </p>
     </div>
   );
 }
@@ -126,7 +128,7 @@ function OptionRow({
               mistake. Rendered from data present on first paint, so it never
               arrives late and pushes the CTA down. */}
           {firstChargeDate !== null && (
-            <p className="mt-1.5 text-xs font-medium text-primary">
+            <p className="mt-1.5 text-xs font-medium text-act">
               {t("firstChargeOn", { date: firstChargeDate })}
             </p>
           )}

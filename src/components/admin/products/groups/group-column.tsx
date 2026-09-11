@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useDroppable } from "@dnd-kit/core";
 import {
   ArrowUpRight,
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +29,7 @@ import { ParticipantChip } from "./participant-chip";
 import type { RobloxRenderMap } from "@/services/roblox";
 import { chipGameIdentity } from "./panel-rules";
 import { GeduPill } from "./gedu-pill";
+import type { AppHref } from "@/lib/constants/routes";
 
 interface GroupColumnProps {
   group: ProductGroupWithDetails;
@@ -56,11 +58,18 @@ interface GroupColumnProps {
    * caller answers "what is the URL for a group" once, and this component
    * decides when there is a real group to ask about.
    */
-  groupHref?: (groupId: string) => string;
+  groupHref?: (groupId: string) => AppHref;
   onRename: (groupId: string, name: string) => void;
   onDelete: (groupId: string) => void;
   onAddGedu: (groupId: string) => void;
   onRemoveGedu: (groupId: string, geduId: string) => void;
+  /**
+   * Participation ids whose chip is greyed and undraggable — an in-flight move
+   * or removal, or a club switch committing. Handed down rather than derived
+   * from `pending` here, because one of the writes that can busy a chip is not
+   * one of the panel's own mutations and so is not in that registry.
+   */
+  busyChipIds: Set<string>;
 }
 
 export function GroupColumn({
@@ -76,6 +85,7 @@ export function GroupColumn({
   onRename,
   onDelete,
   onAddGedu,
+  busyChipIds,
   onRemoveGedu,
 }: GroupColumnProps) {
   const t = useTranslations("admin.products.groupsPanel");
@@ -130,7 +140,7 @@ export function GroupColumn({
           "transition-colors",
           isDeleting && "opacity-40",
           isSaving && !isDeleting && "opacity-60",
-          isOver && !busy && "border-primary bg-primary/5",
+          isOver && !busy && "ring-2 ring-act",
         )}
       >
         <CardHeader className="space-y-3 pb-3">
@@ -158,10 +168,10 @@ export function GroupColumn({
                       placeholder={t("group.namePlaceholder")}
                       aria-invalid={!draft.trim() || undefined}
                     />
-                    {/* Cancel then Save — the app-wide button order (root
-                        `CLAUDE.md`, "Button Order") puts the affirmative last,
-                        so it reads rightmost. This row never stacks, so it
-                        needs no `flex-col-reverse`. */}
+                    {/* Cancel then Save — the app-wide button order
+                        (`src/CLAUDE.md`, "Button Order") puts the affirmative
+                        last, so it reads rightmost. This row never stacks, so
+                        it needs no `flex-col-reverse`. */}
                     <Button
                       type="button"
                       variant="ghost"
@@ -185,9 +195,9 @@ export function GroupColumn({
                     </Button>
                   </div>
                   {!draft.trim() && (
-                    <p className="text-xs text-destructive">
+                    <StatusLine status="destructive" size="xs">
                       {t("group.nameRequired")}
-                    </p>
+                    </StatusLine>
                   )}
                 </div>
               ) : (
@@ -333,7 +343,7 @@ export function GroupColumn({
                     parentFirstName={p.parent_first_name}
                     parentLastName={p.parent_last_name}
                     {...chipGameIdentity(p, gamePlatform, robloxRenders)}
-                    isPending={pending.moves.has(p.id) || pending.removes.has(p.id)}
+                    isPending={busyChipIds.has(p.id)}
                   />
                 ))}
               </div>

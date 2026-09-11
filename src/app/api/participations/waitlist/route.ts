@@ -109,6 +109,7 @@ export const POST = defineRoute({
           customerId: profile.id,
           participantId: body.participantId,
           productId: body.productId,
+          participationId: parsed.data.participation_id,
           mode: "waitlist",
         }),
       );

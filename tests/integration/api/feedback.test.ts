@@ -15,8 +15,8 @@ vi.mock("@/lib/brevo", () => ({
 }));
 
 // The feedback WRITE now runs on the user-bound client (`submit_my_feedback`);
-// the admin client survives only for the notification fan-out, which reads every
-// admin's email and a gamer's parent's — neither in the submitter's RLS view.
+// the admin client survives only to resolve a gamer's reply-to (their parent's
+// address), which is not in the submitter's RLS view.
 const mockFrom = vi.fn();
 const mockRpc = vi.fn();
 const mockAdminClient = { from: mockFrom };
@@ -55,27 +55,39 @@ function mockAuthenticatedAs(role: string, overrides?: Record<string, unknown>) 
   });
 }
 
-/** Sets up the admin client mock chain for the standard happy path. */
+/**
+ * The standard happy path for a non-gamer submitter: the RPC accepts, and the
+ * admin client is never reached — the mail's recipient is the fixed support
+ * inbox, and only a gamer's parent lookup touches the service-role client.
+ */
 function setupHappyPath(accepted = true) {
   mockRpc.mockResolvedValue({ data: accepted, error: null });
+  mockFrom.mockImplementation(() => {
+    throw new Error("the admin client must not be used for a non-gamer submission");
+  });
+}
+
+/**
+ * The gamer case's reads: the parent link, the parent's address, and the
+ * gamer's own sign-in mode. The mode defaults to switch-only, which is what
+ * every gamer is created with and what keeps the child's handle out of the
+ * mail.
+ */
+function setupGamerParentLookup(
+  parentEmail: string,
+  gamerProfile: { sign_in: string } | null = { sign_in: "parent" },
+) {
+  mockRpc.mockResolvedValue({ data: true, error: null });
   mockFrom.mockImplementation((table: string) => {
-    if (table === "profiles") {
+    if (table === "gamer_profiles") {
       return {
         select: () => ({
-          eq: () => Promise.resolve({
-            data: [{ email: "admin1@test.local" }, { email: "admin2@test.local" }],
-            error: null,
+          eq: () => ({
+            maybeSingle: () => Promise.resolve({ data: gamerProfile, error: null }),
           }),
         }),
       };
     }
-    return {};
-  });
-}
-
-function setupGamerParentLookup(parentEmail: string) {
-  mockRpc.mockResolvedValue({ data: true, error: null });
-  mockFrom.mockImplementation((table: string) => {
     if (table === "parent_gamer") {
       return {
         select: () => ({
@@ -91,24 +103,15 @@ function setupGamerParentLookup(parentEmail: string) {
       };
     }
     if (table === "profiles") {
+      // Parent profile lookup (id = parent-123)
       return {
         select: () => ({
-          eq: (_col: string, val: string) => {
-            // Admin emails query (role = admin)
-            if (val === "admin") {
-              return Promise.resolve({
-                data: [{ email: "admin1@test.local" }],
-                error: null,
-              });
-            }
-            // Parent profile lookup (id = parent-123)
-            return {
-              single: () => Promise.resolve({
-                data: { email: parentEmail },
-                error: null,
-              }),
-            };
-          },
+          eq: () => ({
+            single: () => Promise.resolve({
+              data: { email: parentEmail },
+              error: null,
+            }),
+          }),
         }),
       };
     }
@@ -182,7 +185,7 @@ describe("POST /api/feedback", () => {
     expect(response.status).toBe(429);
     expect(data.error).toContain("Too many");
 
-    // The whole point of the rate limit is the admin inbox, not the status
+    // The whole point of the rate limit is the support inbox, not the status
     // code: the RPC's per-hour cap is the only throttle on feedback mail, since
     // a caller can reach the RPC through PostgREST without this route at all.
     // Sending the mail before the accepted check — or ignoring it — would keep
@@ -203,7 +206,7 @@ describe("POST /api/feedback", () => {
     expect(data.success).toBe(true);
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        toEmail: ["admin1@test.local", "admin2@test.local"],
+        toEmail: "help@sog.gg",
         replyToEmail: "customer@test.local",
         subject: expect.stringContaining("Test customer"),
       })
@@ -237,6 +240,85 @@ describe("POST /api/feedback", () => {
         replyToEmail: "parent@test.local",
       })
     );
+  });
+
+  // -- A gamer's own mailbox --
+  //
+  // Reply-To is one address and stays the parent's; a gamer who holds a real
+  // address of their own is named in the staff note instead, so the admin can
+  // include both. The gate is the sign-in mode alone, so the negative cases are
+  // the two modes with no inbox behind them — and there the note says so rather
+  // than printing a handle nobody reads.
+
+  it("names a gamer's own address in the note and keeps the parent as reply-to", async () => {
+    mockAuthenticatedAs("gamer", {
+      email: "aino@example.test",
+      first_name: "Aino",
+    });
+    setupGamerParentLookup("parent@test.local", { sign_in: "email" });
+
+    await POST(createRequest(validBody));
+
+    const sent = mockSendTransactionalEmail.mock.calls[0][0];
+    expect(sent.replyToEmail).toBe("parent@test.local");
+    expect(sent.htmlContent).toContain("they also read their own email");
+    // Defused, so a client cannot linkify it: the address is present but never
+    // as one unbroken token.
+    expect(sent.htmlContent).toContain("aino@example");
+    expect(sent.htmlContent).not.toContain('href="mailto:');
+  });
+
+  /**
+   * The Reply-to row and the Reply-To header are one address, resolved once.
+   * The row that named the submitter while the header went to their parent is
+   * the exact lie the shared resolver exists to make unrepresentable, so the
+   * assertion is that the printed address IS the header's — on a gamer, where
+   * the two are different people.
+   */
+  it("prints the parent's address in the reply-to row, and never the child's handle", async () => {
+    mockAuthenticatedAs("gamer", {
+      email: "aino@gamer.sogverse.internal",
+      first_name: "Aino",
+    });
+    setupGamerParentLookup("parent@test.local", { sign_in: "parent" });
+
+    await POST(createRequest(validBody));
+
+    const sent = mockSendTransactionalEmail.mock.calls[0][0];
+    expect(sent.replyToEmail).toBe("parent@test.local");
+    expect(sent.htmlContent).toContain("parent@test");
+    expect(sent.htmlContent).not.toContain("sogverse.internal");
+  });
+
+  it("never names a switch-only sign-in's handle", async () => {
+    mockAuthenticatedAs("gamer", {
+      email: "aino@gamer.sogverse.internal",
+      first_name: "Aino",
+    });
+    setupGamerParentLookup("parent@test.local", { sign_in: "parent" });
+
+    await POST(createRequest(validBody));
+
+    const sent = mockSendTransactionalEmail.mock.calls[0][0];
+    expect(sent.replyToEmail).toBe("parent@test.local");
+    expect(sent.htmlContent).not.toContain("sogverse.internal");
+    expect(sent.htmlContent).toContain("has no email of its own");
+    expect(sent.htmlContent).not.toContain("they also read their own email");
+  });
+
+  it("never names a username sign-in's handle", async () => {
+    mockAuthenticatedAs("gamer", {
+      email: "aino@gamer.sogverse.internal",
+      first_name: "Aino",
+    });
+    setupGamerParentLookup("parent@test.local", { sign_in: "username" });
+
+    await POST(createRequest(validBody));
+
+    const sent = mockSendTransactionalEmail.mock.calls[0][0];
+    expect(sent.htmlContent).not.toContain("sogverse.internal");
+    expect(sent.htmlContent).toContain("has no email of its own");
+    expect(sent.htmlContent).not.toContain("they also read their own email");
   });
 
   it("should HTML-escape message content", async () => {

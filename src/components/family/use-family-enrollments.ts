@@ -15,6 +15,7 @@ import {
 } from "@/services/participations";
 import type { ProductType } from "@/types";
 import {
+  prepWindowEndsForRows,
   rollUpFamilyEnrollments,
   rollUpGamerEnrollments,
   type FamilyDashboardEnrollments,
@@ -126,17 +127,21 @@ export function useFamilyEnrollments(
   const { data: family } = useFamily(
     options.initialFamily === null
       ? undefined
-      : { initialData: options.initialFamily },
+      : // No provenance: the parent dashboard's viewer is a customer, whose
+        // switches are never gated, so there is nothing here to decide.
+        { initialData: { family: options.initialFamily } },
   );
   const now = useNow();
   const locale = resolveLocale(useLocale());
   const timeZone = useTimezone();
+  const prepWindowEnds = usePrepWindowEnds(sessionRows);
 
   return useMemo(
     () =>
       rollUpFamilyEnrollments({
         sessionRows,
         waitlistRows,
+        prepWindowEnds,
         // `useFamily` types its data as optional because most of its callers
         // mount without a prefetch. This one normally has one — so `undefined`
         // here means the prefetch failed and the refetch has not landed yet,
@@ -147,8 +152,25 @@ export function useFamilyEnrollments(
         timeZone,
         openHref: parentOpenHref,
       }),
-    [sessionRows, waitlistRows, family, now, locale, timeZone],
+    [sessionRows, waitlistRows, family, now, locale, timeZone, prepWindowEnds],
   );
+}
+
+/**
+ * Each row's prep-window end, recomputed only when the rows change.
+ *
+ * **The one derivation on this page that the clock has nothing to say about.**
+ * A prep window runs from the moment the seat became the family's to the end of
+ * their second session, and both ends are fixed by the row: the same rows give
+ * the same answer at 14:00 and at 14:00:30. Left inside the tick-keyed memo it
+ * would run a full occurrence walk per enrollment twice a minute on the two
+ * busiest pages in the app, for a value that cannot have changed. Keyed on the
+ * rows alone, it runs when a refetch actually brings something new.
+ */
+function usePrepWindowEnds(
+  sessionRows: readonly MyUpcomingSessionRow[],
+): ReadonlyMap<string, Date | null> {
+  return useMemo(() => prepWindowEndsForRows(sessionRows), [sessionRows]);
 }
 
 /**
@@ -175,18 +197,20 @@ export function useGamerEnrollments(
   const locale = resolveLocale(useLocale());
   const timeZone = useTimezone();
   const { gamerId } = options;
+  const prepWindowEnds = usePrepWindowEnds(sessionRows);
 
   return useMemo(
     () =>
       rollUpGamerEnrollments({
         sessionRows,
         waitlistRows,
+        prepWindowEnds,
         gamerId,
         now,
         locale,
         timeZone,
         openHref: gamerOpenHref,
       }),
-    [sessionRows, waitlistRows, gamerId, now, locale, timeZone],
+    [sessionRows, waitlistRows, gamerId, now, locale, timeZone, prepWindowEnds],
   );
 }

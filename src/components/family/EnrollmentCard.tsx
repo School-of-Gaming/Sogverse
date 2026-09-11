@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { MaybeInertLink } from "@/components/ui/maybe-inert-link";
 import {
-  AlertTriangle,
   CalendarClock,
   CalendarOff,
   ChevronRight,
@@ -14,10 +13,15 @@ import {
   UserRoundSearch,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
+import { Button } from "@/components/ui/button";
+import { TopicPrepDialog } from "@/components/topic-prep/TopicPrepDialog";
+import { useTopicPrepDismissal } from "@/components/topic-prep/use-topic-prep-dismissal";
+import { resolveTopicPrep, type TopicPrepPlan } from "@/lib/products/topics";
 import { useNow, useTimezone } from "@/providers";
 import { cn, formatDate, formatDateOnly, formatTime } from "@/lib/utils";
 import { PaymentProblemBadge } from "@/components/parent/PaymentProblemBadge";
@@ -71,7 +75,9 @@ import {
  *   for a Join to name and no site to name instead) the row is not drawn at
  *   all. The schedule row above it has already said "No schedule set yet", which
  *   is the whole of what that card knows; an empty flex row underneath would add
- *   a band of nothing to say it a second time.
+ *   a band of nothing to say it a second time. The footer is still drawn there
+ *   when the prep guide is on offer, because the guide is something to do rather
+ *   than a second way of saying nothing.
  * - **The Live badge's slot is reserved; nothing else is.** It is the one thing
  *   here that appears on a *clock tick* rather than on something the reader did,
  *   so mounting it as a flex sibling would widen the corner cluster and reflow
@@ -114,9 +120,40 @@ import {
  * stretched anchor, the chevron and the hover lift together: nothing about a
  * card may promise "there is more inside" when there is not. On the cards that
  * do link, an invisible stretched anchor covers the card, the chevron marks
- * that there is more inside, and the Join button — and *only* the Join button —
- * lifts itself above the anchor so it keeps receiving its own clicks. No `<a>`
- * inside `<a>`, so middle-click and prefetch both behave.
+ * that there is more inside, and **every control lifts itself above the
+ * anchor** so it keeps receiving its own clicks — the Join, and the prep
+ * affordance in either of its shapes. Nothing that is merely *text* is lifted:
+ * the site name, the ended-on date and the waitlist sentence stay under the
+ * anchor, because a lifted sentence is a strip of card that swallows clicks and
+ * does nothing. The test is whether the thing has a click of its own to
+ * receive. No `<a>` inside `<a>`, so middle-click and prefetch both behave, and
+ * a dialog one of these controls opens is portalled out of the card entirely,
+ * so nothing inside it can land on the anchor.
+ *
+ * **The prep affordance is offered once and then it is gone.** A topic can
+ * carry a "Before the first session" guide, and a family who has just bought a
+ * seat needs it; a family six weeks into a club has a working setup, and a
+ * card still pointing them at "create the account" is spending its one
+ * affordance slot on something they did in February. So it renders until the
+ * viewer says they are ready and never again — no reopen link, nothing left
+ * behind. Where it sits depends on what else the card has to offer:
+ *
+ * - **In the Join's slot, while the room is closed.** The locked "Opens Thu at
+ *   17:00" button is inert — it states a fact the schedule row above has
+ *   already stated — so until the guide is dismissed, the one button that slot
+ *   can hold is the one with something to do behind it. The locked Join comes
+ *   back the moment the family says they are ready.
+ * - **Beside a lit Join, as a quiet text link.** A room that is open now is the
+ *   whole point of the card and is never gated, delayed or dressed down, so the
+ *   guide steps aside into the same muted link treatment the leave-waitlist
+ *   affordance uses.
+ * - **Under the footer sentence, on the cards with no Join at all** — the
+ *   in-person card naming its site, and the unplaced seat waiting on a Gedu.
+ *   The unplaced card is inert *as a link* because there is no page behind it;
+ *   a dialog is not a page, and the wait for placement is exactly the window
+ *   this guide is written for.
+ * - **Nowhere on a queue place or a finished run.** There is no seat to get
+ *   ready for in the first, and the second is history.
  *
  * **Leaving a waitlist is the queue card's counterpart of the Join.** A quiet
  * muted text link under the footer sentence, parent-only, opening a confirm
@@ -138,6 +175,22 @@ import {
  */
 interface EnrollmentCardCommonProps {
   enrollment: FamilyEnrollmentSummary;
+  /**
+   * The enrolments this viewer has already finished the prep guide for, read
+   * from the cookie by whatever rendered the page.
+   *
+   * **A set handed down rather than a question the card asks**, and that is the
+   * whole of the fix it belongs to: the answer lives in a cookie precisely so
+   * the *server* can read it, and a card that went looking for it itself could
+   * only find it a tick after hydration — which is how the Join button used to
+   * flash in the slot the guide was about to take.
+   *
+   * Required rather than optional: a surface that forgets it would offer every
+   * family a guide they have already finished with, and that failure is
+   * invisible to whoever renders the card. A surface with nothing dismissed
+   * passes `NO_TOPIC_PREP_READY`.
+   */
+  prepDismissed: ReadonlySet<string>;
 }
 
 /**
@@ -300,7 +353,7 @@ const WAITLIST_FOOTER_KEY = {
 } as const;
 
 export function EnrollmentCard(props: EnrollmentCardProps) {
-  const { enrollment } = props;
+  const { enrollment, prepDismissed } = props;
   // Narrowed once, so every adult-only branch below reads as one question ("is
   // there somebody paying behind this card?") rather than repeating the
   // audience check beside each of the props it guards. Both parent arms answer
@@ -325,6 +378,9 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
     participationId,
     productName,
     productType,
+    topic,
+    isRemote,
+    prepWindowEnd,
     nextSessionStart,
     nextSessionEnd,
     hasVoiceRoom,
@@ -403,6 +459,79 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
   // running enrollment with nothing on its schedule, since a badge that turns
   // on when a session starts needs a session to start.
   const canGoLive = running && hasNext;
+  /**
+   * The "Before the first session" guide, if this card has one to offer.
+   *
+   * Two questions, asked in the order that makes the second cheap. **Does the
+   * enrollment want one at all**: a seat that is theirs (running or waiting on
+   * a placement) on a run that has not finished. A queue place is excluded
+   * because there is nothing to get ready for until a seat exists, and a
+   * finished run because the first session it names is behind them.
+   *
+   * **And does the topic have one for this form of product**, which is
+   * `resolveTopicPrep`'s to answer and nothing else's: it knows both that the
+   * topic carries a guide and that at least one of its steps survives the
+   * in-person filter, and it answers `null` for a topic where School of Gaming
+   * supplies the machines and the logins alike.
+   *
+   * The dismissal comes in as a prop, so all three questions are answerable on
+   * the server and this card paints its final footer on the first frame.
+   */
+  const prepPlan =
+    endedOn === null && !waitlisted ? resolveTopicPrep(topic, isRemote) : null;
+  const prepDismissal = useTopicPrepDismissal(
+    participationId,
+    prepDismissed.has(participationId),
+  );
+  /**
+   * **Is the offer still this family's to take** — the fourth question, and the
+   * one that keeps a release day quiet.
+   *
+   * The guide is written for a family's first two sessions; past the end of the
+   * second one they have been turning up for as long as anybody could learn
+   * anything from it, and a card asking them to confirm a "Before the first
+   * session" dialog to get its Join button back would be an insult with an
+   * extra click on it. `null` is no end at all — an unplaced seat, a product
+   * with nothing scheduled — and the offer stands until it is answered.
+   */
+  const prepWindowOpen =
+    prepWindowEnd === null || now.getTime() < prepWindowEnd.getTime();
+  /**
+   * The same answer, **frozen at the card's first render**.
+   *
+   * The live one is safe in the Join's slot: that slot holds a button either
+   * way, so a window closing on the clock's own schedule swaps button for
+   * button and nothing moves. On the two *additive* placements the button would
+   * simply vanish mid-read, shrinking the card and pulling the column up under
+   * whoever was looking at it — a change on data's own schedule, which is
+   * exactly what the layout rule forbids. So those two ask this instead: the
+   * offer they were drawn with is the offer they keep until the page is loaded
+   * again.
+   */
+  const [prepWindowOpenAtFirstPaint] = useState(prepWindowOpen);
+  /** Somewhere to offer, and nobody has finished with it yet. */
+  const prepUnanswered = prepPlan !== null && !prepDismissal.ready;
+  /**
+   * Whether this card draws a Join at all — the question the prep affordance's
+   * placement turns on, and the same three conditions the footer's Join branch
+   * has always used, named once so the two cannot drift apart.
+   */
+  const hasJoin = running && hasVoiceRoom && hasNext;
+  /**
+   * The locked Join's slot, taken over while there is a guide to read — and
+   * given back the moment the window closes, on the live clock, because a
+   * button-for-button swap in one slot moves nothing.
+   */
+  const prepInJoinSlot = prepUnanswered && prepWindowOpen && hasJoin && !voiceIsOpen;
+  /** A lit Join keeps its slot; the guide steps down to a quiet link below it. */
+  const prepBesideJoin =
+    prepUnanswered && prepWindowOpenAtFirstPaint && hasJoin && voiceIsOpen;
+  /**
+   * No Join to sit in or beside — the in-person card naming its site, and the
+   * unplaced seat waiting on a Gedu. The button goes under the sentence.
+   */
+  const prepUnderSentence =
+    prepUnanswered && prepWindowOpenAtFirstPaint && !hasJoin;
   const leaving = billing?.leavingWaitlist ?? false;
   /** The one interactive element a waitlisted card has, and adults only. */
   const onLeaveWaitlist = waitlisted ? billing?.onLeaveWaitlist : undefined;
@@ -434,12 +563,22 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
   // offer standing on it is now a second such card: its position line is
   // superseded and its leave link has stood down, so the row would be a band of
   // nothing between the schedule and the block.
+  //
+  // **The prep offer counts as something to say, and it has to.** It is not one
+  // of those five branches — it lives in the footer's second row — so a card
+  // where every sentence branch comes up empty and the guide is on offer would
+  // drop the whole footer and take the affordance down with it. Two real cards
+  // are in exactly that state: an in-person seat whose site has no name yet,
+  // and a remote one with a room but nothing left on its schedule. Both are a
+  // family who has just paid and has a setup to do, which is the one moment
+  // this guide exists for.
   const hasFooter =
     endedOn !== null ||
     showsWaitlistPosition ||
     awaiting ||
-    (running && hasVoiceRoom && hasNext) ||
-    (running && !hasVoiceRoom && siteName !== null);
+    hasJoin ||
+    (running && !hasVoiceRoom && siteName !== null) ||
+    prepUnderSentence;
 
   return (
     // A plain `relative` shell so the corner badge can hang off the card's edge
@@ -448,19 +587,20 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
       <Card
         aria-busy={leaving}
         className={cn(
-          "group relative overflow-hidden transition-[border-color,box-shadow,opacity]",
-          opensAPage &&
-            "hover:border-primary/40 hover:shadow-lg focus-within:border-primary/40 focus-within:shadow-lg",
-          live &&
-            "border-primary/40 bg-gradient-to-r from-primary/5 to-transparent",
-          // The awaiting tone: the same lit-card treatment in `info` rather than
-          // `primary`, because this *is* a card with something happening on it
-          // — a purchase has landed and placement is under way — and it must
-          // read as that rather than as a fault or as a waitlist place. Blue is
+          // A card is lit from its leading edge: a 2px rule at full value, on
+          // the plain card ground. The rule is drawn in the neutral edge on
+          // every card from the start, so a card that lights up changes colour
+          // and nothing beside it moves.
+          "group relative overflow-hidden border-l-2 transition-[box-shadow,opacity,border-color]",
+          opensAPage && "hover:shadow-lg focus-within:shadow-lg",
+          live && "border-l-act",
+          // The awaiting tone: the same lit edge in `info` rather than `act`,
+          // because this *is* a card with something happening on it — a
+          // purchase has landed and placement is under way — and it must read
+          // as that rather than as a fault or as a waitlist place. Blue is
           // already this product's colour for "we are telling you something",
-          // and the two gradients are mutually exclusive by `running`.
-          awaiting &&
-            "border-info/40 bg-gradient-to-r from-info/5 to-transparent",
+          // and the two rules are mutually exclusive by `running`.
+          awaiting && "border-l-info",
           // Dimmed in place while the leave is in flight, so the card that is
           // about to disappear says so without moving. Matches the treatment
           // the badge-era waitlist card used, for continuity.
@@ -470,12 +610,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
         <CardContent className="flex flex-col gap-4 p-5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 space-y-1">
-              <p
-                className={cn(
-                  "text-xs font-medium uppercase tracking-wider text-muted-foreground",
-                  endedOn !== null && "text-muted-foreground/70",
-                )}
-              >
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 {p(productType)}
               </p>
               {/* The identity keeps its weight and loses its tone on a finished
@@ -503,7 +638,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                 <Badge
                   variant="outline"
                   className={cn(
-                    "gap-1 border-success/50 bg-success/10 px-2 py-0 text-[10px] uppercase tracking-wide text-success",
+                    "gap-1 px-2 py-0 text-[10px] uppercase tracking-wide text-success",
                     !live && "invisible",
                   )}
                 >
@@ -528,12 +663,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               Thu 12 Feb at 17:00", and once it starts the corner badge says so.
               The row is always here, and holds the "nothing scheduled yet" line
               for a product still being put together. */}
-          <div
-            className={cn(
-              "flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground",
-              endedOn !== null && "text-muted-foreground/70",
-            )}
-          >
+          <div className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
             <CalendarClock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
             <span className="min-w-0">
               {scheduleLines.length > 0 ? (
@@ -616,13 +746,13 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               cards — and where no branch lands at all, the row itself does not
               render.
 
-              **Nothing here is lifted above the card's stretched link except the
-              Join itself.** The lift used to sit on the row, which also lifted
-              the site name, the ended-on date and the waitlist sentence — none
-              of them a control — and turned the bottom strip of most cards into
-              a dead zone. The button is the only thing in the row with a click
-              of its own to receive, so it is the only thing that takes the
-              `z-10`. */}
+              **Every control in here lifts itself, and nothing else does.** The
+              lift used to sit on the row, which also lifted the site name, the
+              ended-on date and the waitlist sentence — none of them a control —
+              and turned the bottom strip of most cards into a dead zone. So the
+              `z-10` goes on each thing with a click of its own to receive: the
+              Join or the prep affordance holding that slot, and the affordance
+              again in the row beneath it. Text takes none of it. */}
           {hasFooter && (
             <div className="flex flex-col items-center gap-2">
               <div className="flex w-full items-center justify-center">
@@ -674,28 +804,48 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                     <span className="min-w-0">{f(AWAITING_KEY[audience])}</span>
                   </span>
                 )}
-                {running && hasVoiceRoom && hasNext && (
-                  // The one thing in the footer that owns its clicks, so the one
-                  // thing lifted above the stretched link covering the card.
+                {hasJoin && (
+                  // A control owns its clicks, so it is lifted above the
+                  // stretched link covering the card — whichever of the two
+                  // controls this slot is holding.
                   <span className="relative z-10">
-                    <JoinVoiceButton
-                      voiceIsOpen={voiceIsOpen}
-                      voiceHref={voiceHref}
-                      // Present only on a *child's* card seen by their parent,
-                      // where joining means switching account first. Passing
-                      // nothing leaves the button the plain link it has always
-                      // been — which is the child's own card, and equally the
-                      // parent's own seat, where the room is already gated on
-                      // the person clicking.
-                      onJoinClick={childSeat?.onJoinClick}
-                      opensDate={formatDate(nextSessionStart, locale, {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                        timeZone,
-                      })}
-                      opensTime={formatTime(nextSessionStart, locale, timeZone)}
-                    />
+                    {prepInJoinSlot ? (
+                      // **Button for button, in one slot.** The locked Join is
+                      // inert and says only what the schedule row above it has
+                      // already said, so while there is a guide to read it
+                      // gives the slot up — and takes it straight back when the
+                      // family says they are ready. Same slot, same size, so
+                      // the swap that follows the storage read moves nothing on
+                      // the card and nothing in the column of cards below it.
+                      <TopicPrepAffordance
+                        variant="button"
+                        plan={prepPlan}
+                        onReady={prepDismissal.markReady}
+                      />
+                    ) : (
+                      <JoinVoiceButton
+                        voiceIsOpen={voiceIsOpen}
+                        voiceHref={voiceHref}
+                        // Present only on a *child's* card seen by their
+                        // parent, where joining means switching account first.
+                        // Passing nothing leaves the button the plain link it
+                        // has always been — which is the child's own card, and
+                        // equally the parent's own seat, where the room is
+                        // already gated on the person clicking.
+                        onJoinClick={childSeat?.onJoinClick}
+                        opensDate={formatDate(nextSessionStart, locale, {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          timeZone,
+                        })}
+                        opensTime={formatTime(
+                          nextSessionStart,
+                          locale,
+                          timeZone,
+                        )}
+                      />
+                    )}
                   </span>
                 )}
                 {running && !hasVoiceRoom && siteName !== null && (
@@ -705,6 +855,40 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                   </span>
                 )}
               </div>
+
+              {/* The prep affordance's other two homes, both of them this
+                  second row — under whatever the row above ended up saying.
+
+                  **Beside a lit Join it is a muted text link**, the same
+                  treatment the leave-waitlist affordance takes and for the same
+                  reason: the card has one loud thing on it and that thing is
+                  the room, which is open now and is never gated or dressed
+                  down by anything this feature does.
+
+                  **On a card with no Join it is the button**, because there is
+                  nothing else on the card to be quieter than: an in-person card
+                  names its building, an unplaced one says a Gedu is being
+                  matched, and neither sentence is something to do.
+
+                  It arrives after mount rather than being reserved, and the
+                  cost is named rather than hidden: the button appears one tick
+                  after hydration and grows the card downward, pushing the cards
+                  below it down the column. The alternative was a button's worth
+                  of hole held open under the footer of every card whose family
+                  has already said they are ready — permanent dead space on the
+                  common card, to save a shift on the first visit of a card that
+                  has not been dismissed yet. It lands at the very end of the
+                  footer, which is where the layout's slack already is, and
+                  nothing above it moves. */}
+              {(prepBesideJoin || prepUnderSentence) && (
+                <span className="relative z-10">
+                  <TopicPrepAffordance
+                    variant={prepBesideJoin ? "link" : "button"}
+                    plan={prepPlan}
+                    onReady={prepDismissal.markReady}
+                  />
+                </span>
+              )}
 
               {/* Under the sentence it acts on, not over the corner. The
                   design this replaced put it in the corner, where the product's
@@ -782,13 +966,10 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
             unplaced one render no anchor at all — neither has a page behind it
             yet. */}
         {opensAPage && (
-          <Link
+          <MaybeInertLink
             href={openHref}
-            onClick={(e) => {
-              if (openHref === "#") e.preventDefault();
-            }}
             aria-label={productName}
-            className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+            className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act"
           />
         )}
       </Card>
@@ -809,6 +990,66 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
         />
       )}
     </div>
+  );
+}
+
+/**
+ * "Get ready", plus the dialog it opens — the card's half of the prep guide.
+ *
+ * **Two shapes, one act.** The button is what a card offers when it has no
+ * other action on it; the link is what it offers beside a lit Join, in the
+ * muted treatment the leave-waitlist affordance already established for
+ * "something quiet you may do here". Same words, same dialog, same dismissal:
+ * the shape is a statement about what else is on the card, never about what
+ * the affordance does.
+ *
+ * **Only the dialog's own affirmative dismisses.** Escape, the backdrop and a
+ * plain close leave the affordance standing, so a parent who opens the guide
+ * to check one step and closes it again has not accidentally thrown it away.
+ *
+ * Private to the card for the same reason the leave link is: the placement is
+ * defined relative to a footer this card owns, and the two shapes are a
+ * statement about this card's other affordances. The dialog itself is shared,
+ * because a second surface offering the guide is offering the same guide.
+ */
+function TopicPrepAffordance({
+  variant,
+  plan,
+  onReady,
+}: {
+  /** `button` where the card has no other action; `link` beside a lit Join. */
+  variant: "button" | "link";
+  /** The guide behind it, resolved once by the card that offers it. */
+  plan: TopicPrepPlan;
+  /** Record the dismissal. Fired by the dialog's affirmative and nothing else. */
+  onReady: () => void;
+}) {
+  const t = useTranslations("topicPrep");
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      {variant === "button" ? (
+        <Button size="sm" onClick={() => setOpen(true)}>
+          {t("triggerLabel")}
+        </Button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="rounded text-xs font-medium text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
+        >
+          {t("triggerLabel")}
+        </button>
+      )}
+
+      <TopicPrepDialog
+        open={open}
+        onOpenChange={setOpen}
+        plan={plan}
+        onReady={onReady}
+      />
+    </>
   );
 }
 
@@ -857,7 +1098,7 @@ function LeaveWaitlistLink({
         type="button"
         onClick={() => setOpen(true)}
         disabled={leaving}
-        className="rounded text-xs font-medium text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:hover:text-muted-foreground"
+        className="rounded text-xs font-medium text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act disabled:cursor-default disabled:hover:text-muted-foreground"
       >
         {t("trigger")}
       </button>
@@ -877,10 +1118,9 @@ function LeaveWaitlistLink({
         confirmLabel={t("confirmCta")}
         onConfirm={onConfirm}
       >
-        <div className="flex items-start gap-2 rounded-md border border-destructive bg-destructive/10 px-3 py-2.5 text-sm font-semibold text-destructive">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-          <span>{t("backOfLineWarning")}</span>
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{t("backOfLineWarning")}</AlertDescription>
+        </Alert>
       </ConfirmDialog>
     </>
   );

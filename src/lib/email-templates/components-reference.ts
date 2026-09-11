@@ -7,6 +7,8 @@ import {
   ctaButtonRow,
   inlineLink,
   bulletList,
+  numberedList,
+  inlineBold,
   sectionLabel,
 } from "./blocks";
 import { heading, paragraph, pinnedFill, styledName, styledProductName } from "./utils";
@@ -71,7 +73,7 @@ function section(title: string): string {
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:8px 0 20px;">
       <tr>
-        <td style="border-top:1px solid ${DARK_THEME.border};padding-top:16px;color:${BRAND.primary};font-size:15px;font-weight:bold;">
+        <td style="border-top:1px solid ${DARK_THEME.border};padding-top:16px;color:${BRAND.act};font-size:15px;font-weight:bold;">
           ${title}
         </td>
       </tr>
@@ -114,11 +116,11 @@ export function buildComponentsReferenceEmail(locale: string): string {
    * Five colours, and the foreground each carries painted on top of it.
    *
    * A fill and its foreground are one decision, never two. The brand colours are
-   * mirror images — the primary is light and reads only under a dark label, the
-   * secondary is dark and reads only under white — so a button that swaps its
+   * mirror images — act is light and reads only under a dark label, world is
+   * dark and reads only under white — so a button that swaps its
    * fill and keeps its label has not been recoloured, it has been broken. That
    * is the most tempting wrong edit in this directory and the reason `BRAND`
-   * carries `primaryForeground` and `secondaryForeground` rather than leaving a
+   * carries `actForeground` and `worldForeground` rather than leaving a
    * caller to pick.
    *
    * Not shown, deliberately: brand colour as body text. There is no correct
@@ -136,8 +138,8 @@ export function buildComponentsReferenceEmail(locale: string): string {
    */
   const palette = `
     ${section("Palette")}
-    ${swatch("BRAND.primary / primaryForeground", BRAND.primary, BRAND.primaryForeground)}
-    ${swatch("BRAND.secondary / secondaryForeground", BRAND.secondary, BRAND.secondaryForeground)}
+    ${swatch("BRAND.act / actForeground", BRAND.act, BRAND.actForeground)}
+    ${swatch("BRAND.world / worldForeground", BRAND.world, BRAND.worldForeground)}
     ${swatch("DARK_THEME.card", DARK_THEME.card, DARK_THEME.foreground)}
     ${swatch("DARK_THEME.bg", DARK_THEME.bg, DARK_THEME.foreground)}
     ${swatch("DARK_THEME.mutedFg", DARK_THEME.mutedFg, DARK_THEME.bg)}
@@ -153,9 +155,9 @@ export function buildComponentsReferenceEmail(locale: string): string {
    * it. `outline` is for a destination worth offering that is not what the mail
    * is for.
    *
-   * `secondary` is the brand purple. No product mail uses it yet — it is here
-   * because the vocabulary should be complete and because purple as a button
-   * fill is the one shape the secondary colour works in, which was not obvious
+   * `secondary` is the brand purple, the world colour. No product mail uses it
+   * yet — it is here because the vocabulary should be complete and because
+   * purple as a button fill is the one shape world works in, which was not obvious
    * and cost a round of guessing to establish.
    *
    * The row is for two alternatives — two doors into the same place, where
@@ -213,7 +215,13 @@ export function buildComponentsReferenceEmail(locale: string): string {
    * the builder slicing one out of the sentence.
    *
    * `bulletList` takes composed HTML, so anything from a user is escaped before
-   * it goes in.
+   * it goes in. `numberedList` is the same list with the client's own `<ol>`
+   * numbering, for a run whose order is part of what it says; the two are
+   * styled identically, so a mail carrying both spaces them alike.
+   *
+   * `inlineBold` is the emphasis a sentence carries inside itself, and the
+   * shape a message's own `<b>` renders to through `t.markup`. Weight, never
+   * colour — a dark theme rewrites a colour and leaves a weight alone.
    */
   const text = `
     ${section("Text")}
@@ -234,6 +242,16 @@ export function buildComponentsReferenceEmail(locale: string): string {
     ${entry(
       "bulletList",
       bulletList(["One item, already composed and escaped.", "And a second, so it is a list."]),
+    )}
+    ${entry(
+      "numberedList",
+      numberedList(["The first thing to do.", "And then the second."]),
+    )}
+    ${entry(
+      "inlineBold",
+      paragraph(
+        `Buy it on ${inlineBold("the device you will actually play on")} — a copy does not carry over.`,
+      ),
     )}
   `;
 

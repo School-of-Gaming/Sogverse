@@ -1,15 +1,82 @@
 import { createServerClient } from "@supabase/ssr";
+import createIntlMiddleware from "next-intl/middleware";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database.types";
 
 import { ROUTES } from "@/lib/constants";
-import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
-import { PIN_COOKIE_NAME, isPinTokenValid } from "@/lib/pin-session";
+import { LOCALE_COOKIE_NAME } from "@/lib/locale-cookie";
 import {
-  REFERRAL_CODE_HEADER,
-  REFERRAL_QUERY_PARAM,
-  sanitiseReferralCode,
-} from "@/lib/referral";
+  DEFAULT_LOCALE,
+  isSupportedLocale,
+  matchLocaleFromHeader,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
+import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
+import { routing } from "@/i18n/routing";
+import {
+  canonicalPathForForeignSlug,
+  decodeExternalPathname,
+  localizeInternalPath,
+  normalizeExternalPath,
+} from "@/lib/navigation/locale-path";
+import { PIN_COOKIE_NAME, isPinTokenValid } from "@/lib/pin-session";
+import { UTM_HEADER, readUtmFromSearchParams, serialiseUtm } from "@/lib/utm";
+
+/**
+ * next-intl's rewrite, composed rather than hand-rolled.
+ *
+ * Verified against the installed implementation (4.9.x): its `next()` builds
+ * the rewrite from `new Headers(request.headers)`, so the nonce this proxy
+ * stamps onto the request survives into the SSR pipeline. That is the property
+ * the whole composition rests on — a rewrite that dropped it would render every
+ * production page with a nonce the pipeline never saw, and `strict-dynamic`
+ * would block every script.
+ *
+ * It never sees a bare path: the ladder below has already redirected those, so
+ * next-intl's own redirect-to-prefix cannot fire on a page route. What it is
+ * here for is the external → internal rewrite (`/fi/kauppa/x` → `/fi/shop/x`)
+ * and the `x-next-intl-locale` header the request config reads.
+ */
+const intlMiddleware = createIntlMiddleware(routing);
+
+/**
+ * Which locale a **bare** path should be served in: the stored preference
+ * first, then what the browser asked for, then English. Identical to the ladder
+ * the app has always run — `profiles.locale` participates through the cookie
+ * the picker and the sign-in flows write, which keeps the SSR path DB-free.
+ */
+function localeForBarePath(request: NextRequest): SupportedLocale {
+  const cookieLocale = request.cookies.get(LOCALE_COOKIE_NAME)?.value;
+  if (isSupportedLocale(cookieLocale)) return cookieLocale;
+  return (
+    matchLocaleFromHeader(request.headers.get("accept-language")) ??
+    DEFAULT_LOCALE
+  );
+}
+
+/**
+ * **Not a page route** — outside the intl system entirely, in one predicate
+ * both the bare-path ladder and the rewrite read, because a path the ladder
+ * 307s and the rewrite then cannot serve is a 404 nobody chose.
+ *
+ * `/api/*` is the reason the predicate exists: an API response has no locale,
+ * and a 307'd `fetch` would break every client-side API call for a
+ * non-English user. The other two are files a page happens to request —
+ * Vercel's Analytics and Speed Insights scripts, and the `/.well-known/*`
+ * documents (Apple/Android app association, `security.txt`) whose URLs are
+ * fixed by their own specifications and cannot carry a prefix. The matcher
+ * excludes neither, so without this a Finnish visit would ask for
+ * `/fi/_vercel/insights/script.js` and get a 404 instead of analytics.
+ *
+ * A locked customer's PIN gate reads it too: a script tag is not a surface a
+ * parent can act through, so bouncing it to the unlock page would only break
+ * the page it was requested from.
+ */
+const NON_PAGE_PREFIXES = ["/api/", "/_vercel/", "/.well-known/"];
+
+function isNonPagePath(pathname: string): boolean {
+  return NON_PAGE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
 
 // Paths a LOCKED customer session may still reach (so the parent-PIN gate
 // doesn't trap them). `/api/*` is owned by requireRole(); auth routes are the
@@ -35,7 +102,7 @@ import {
 // then opens the mail an hour later, or on their phone, where the session has
 // re-locked or never existed.
 function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
-  if (pathname.startsWith("/api/") || isAuthRoute) return true;
+  if (isNonPagePath(pathname) || isAuthRoute) return true;
   const exempt = [
     ROUTES.customer.unlock,
     ROUTES.selectProfile,
@@ -123,19 +190,35 @@ function buildCspHeader(nonce: string): string {
 
   return [
     "default-src 'self'",
+    // Production needs no vendor host here: the pixels' inline snippets carry
+    // the nonce, and `strict-dynamic` lets a script that ran with the nonce
+    // insert the libraries it needs. Development has neither, so the two pixel
+    // hosts have to be named — connect.facebook.net serves fbevents.js and
+    // analytics.tiktok.com serves the TikTok events library, both inserted by
+    // the snippets in `MarketingPixels`.
     isProd
       ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
-      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co",
+      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co https://connect.facebook.net https://analytics.tiktok.com",
     "style-src 'self' 'unsafe-inline'",
     // mc-heads.net renders the Minecraft skin body, which the shared game-account
     // row derives straight from a username — so it loads anywhere an identity is
     // shown (settings, rosters, the admin panel, the voice room).
     // tr.rbxcdn.com serves the Roblox avatar bust render — the thumbnails API hands back that one
     // host for every completed render, so it is named rather than wildcarded across *.rbxcdn.com.
-    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net https://tr.rbxcdn.com`,
+    // www.facebook.com and analytics.tiktok.com are the two pixels' own
+    // transports: fbevents.js reports by requesting /tr/ as an image, and
+    // TikTok's events.js falls back to an image beacon where fetch is
+    // unavailable or blocked. `strict-dynamic` does not reach img-src, so both
+    // are needed in production too — removing either silently stops a pixel in
+    // the one environment where it matters.
+    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net https://tr.rbxcdn.com https://www.facebook.com https://analytics.tiktok.com`,
     "font-src 'self'",
-    // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io",
+    // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting.
+    // www.facebook.com and analytics.tiktok.com are where the two pixels in
+    // `MarketingPixels` send events once their libraries have loaded — the
+    // fetch/beacon path beside the image one above. Also not covered by
+    // `strict-dynamic`, so both branches need them.
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io https://www.facebook.com https://analytics.tiktok.com",
     "frame-src 'self' https://*.daily.co https://*.stripe.com",
     // blob: workers used by Daily.co for WebRTC media processing
     "worker-src 'self' blob:",
@@ -153,35 +236,62 @@ export async function proxy(request: NextRequest) {
   request.headers.set("x-nonce", nonce);
   request.headers.set("Content-Security-Policy", cspHeader);
 
-  // Referral attribution: `?ref=<code>` on the landing URL, sanitised here and
-  // handed to the root layout, which seeds it into a client context provider so
-  // it survives the whole visit as client-side navigation. See src/lib/referral.ts
-  // for the constraints this feature is built to — the value never reaches the
-  // user's device, at any point.
+  // UTM attribution: `utm_source` / `utm_medium` / `utm_campaign` on the landing
+  // URL, sanitised here and handed to the root layout, which seeds them into a
+  // client context provider so they survive the whole visit as client-side
+  // navigation. See src/lib/utm.ts for the constraints this feature is built to
+  // — including why reading the query string here is itself the moment ePrivacy
+  // engages, whatever we do with the value afterwards.
   //
   // **Delete unconditionally, then set conditionally.** A browser can send its
-  // own `x-referral-code:` header, and an incoming request header reaches the
-  // layout untouched on any request the proxy does not overwrite it on — so a
-  // bare conditional `set` would leave a forgeable path. The harm is small
-  // (anyone can type `?ref=` themselves, and the profile-creation trigger
-  // re-sanitises regardless), but this is the difference between "the value
-  // always came through our own sanitiser" being true and merely being intended.
+  // own `x-utm:` header, and an incoming request header reaches the layout
+  // untouched on any request the proxy does not overwrite it on — so a bare
+  // conditional `set` would leave a forgeable path. The harm is small (anyone
+  // can type `?utm_campaign=` themselves, and the layout and the
+  // profile-creation trigger both re-sanitise regardless), but this is the
+  // difference between "the value always came through our own sanitiser" being
+  // true and merely being intended.
+  //
+  // **A value over the byte budget is dropped, not truncated**, and the budget
+  // lives in the module with the rest of the rules — `serialiseUtm` answers
+  // null past `UTM_HEADER_MAX_LENGTH`, so it arrives here as the same "nothing
+  // to send" the no-attribution case produces and needs no branch of its own.
+  // The point of enforcing it at all is that a header a stranger controls
+  // through the query string must not be able to push a request past a hop's
+  // own per-header ceiling: that turns into a 502 nobody chose, where dropping
+  // the attribution costs one visit's marketing data.
   //
   // This runs above every branch and early return, like the two sets above, so
-  // no path bypasses it. `.getAll()` rather than `.get()`: a repeated
-  // `?ref=a&ref=b` is not a code and must resolve to absent, and `.get()` would
-  // silently hand back the first value. (A `typeof x === "string"` check — the
-  // idiom the register *page* uses on its `searchParams` — is dead code here:
-  // `URLSearchParams.get()` can never return an array.)
-  request.headers.delete(REFERRAL_CODE_HEADER);
-  const referralValues = request.nextUrl.searchParams.getAll(REFERRAL_QUERY_PARAM);
-  const referralCode =
-    referralValues.length === 1 ? sanitiseReferralCode(referralValues[0]) : null;
-  if (referralCode !== null) {
-    request.headers.set(REFERRAL_CODE_HEADER, referralCode);
+  // no path bypasses it. The repeated-param rule and the sanitiser both live in
+  // the module, so this file holds no copy of either.
+  request.headers.delete(UTM_HEADER);
+  const utm = serialiseUtm(readUtmFromSearchParams(request.nextUrl.searchParams));
+  if (utm !== null) {
+    request.headers.set(UTM_HEADER, utm);
   }
 
-  const { pathname } = request.nextUrl;
+  // The URL as the visitor typed it: locale-prefixed, with that locale's slug.
+  // Only two things use it — the bare-path ladder below, and the `?redirect=`
+  // values a bounce carries, which must return the reader to the localized page
+  // they were actually on rather than to its English internal twin.
+  const externalPathname = request.nextUrl.pathname;
+
+  // **A pathname this proxy cannot read is refused, not guessed at.** Next
+  // hands the path still percent-encoded and next-intl opens by decoding it,
+  // so every check below runs on the decoded form (the normalizer does it) —
+  // and when the decode is impossible, next-intl forwards to Next.js for a
+  // 400. Mirroring that here keeps the two ends agreeing on the one case where
+  // there is no string to agree on: the alternative is gating a raw path the
+  // rewrite would have read differently.
+  if (decodeExternalPathname(externalPathname) === null) {
+    const malformed = new NextResponse(null, { status: 400 });
+    malformed.headers.set("Content-Security-Policy", cspHeader);
+    return malformed;
+  }
+
+  // Not a page route (`/api/*`, `/_vercel/*`, `/.well-known/*`): no locale
+  // prefix, no rewrite, no ladder — see the predicate.
+  const isNonPage = isNonPagePath(externalPathname);
 
   let supabaseResponse = NextResponse.next({
     request,
@@ -223,21 +333,106 @@ export async function proxy(request: NextRequest) {
   const userId = claimsData?.claims.sub ?? null;
   const sessionId = claimsData?.claims.session_id ?? null;
 
-  // Helper: create a redirect that preserves refreshed auth cookies and CSP
+  // Helper: create a redirect that preserves refreshed auth cookies and CSP.
+  //
+  // **The whole cookie, attributes included.** `set(name, value)` writes a
+  // cookie with none of the ones Supabase chose — no `Max-Age`, no `Secure`,
+  // no `HttpOnly`, no `SameSite`, and above all no `Path`, which then defaults
+  // to the request's own directory. Every page URL carries a locale now, so
+  // that directory is `/fi`, and a refreshed session would be re-issued as a
+  // second, locale-scoped, script-readable cookie shadowing the real one.
   function redirect(url: URL) {
     const redirectResponse = NextResponse.redirect(url);
     supabaseResponse.cookies.getAll().forEach((cookie) => {
-      redirectResponse.cookies.set(cookie.name, cookie.value);
+      redirectResponse.cookies.set(cookie);
     });
     redirectResponse.headers.set("Content-Security-Policy", cspHeader);
     return redirectResponse;
   }
 
-  // Check if route is public. /api/* always passes (handlers own their auth).
+  // Helper: the pass-through response. Every page route goes through
+  // next-intl's rewrite so the `[locale]` tree is what actually renders, and
+  // both things this proxy owns — the refreshed auth cookies and the CSP whose
+  // nonce the SSR pipeline is about to use — are re-applied to whatever
+  // response shape comes back. Cookies are copied whole, for the reason given
+  // on `redirect` above.
+  function proceed() {
+    if (isNonPage) return supabaseResponse;
+    const intlResponse = intlMiddleware(request);
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      intlResponse.cookies.set(cookie);
+    });
+    intlResponse.headers.set("Content-Security-Policy", cspHeader);
+    return intlResponse;
+  }
+
+  // --- The bare-path locale ladder ------------------------------------------
+  //
+  // A bare path is never a page: it is the detector. It runs here — after the
+  // claims/refresh step, so a refreshed cookie is never dropped, and before
+  // every PIN/auth/role gate below, so each of those fires on an
+  // already-localized request and its own bounce is already in the right
+  // language. The extra hop is paid only on bare entry; once inside, wrapped
+  // links emit prefixed hrefs.
+  //
+  // A path matching no route template is prefixed anyway, so a Finnish visitor
+  // gets a Finnish 404 rather than an English one.
+  const {
+    locale: urlLocale,
+    pathname,
+    template,
+  } = normalizeExternalPath(externalPathname);
+  if (!isNonPage && urlLocale === null) {
+    const target = new URL(
+      localizeInternalPath(pathname, localeForBarePath(request)),
+      request.url,
+    );
+    target.search = request.nextUrl.search;
+    return redirect(target);
+  }
+
+  // --- A slug this locale does not serve -------------------------------------
+  //
+  // `/sv/kauppa` is the Finnish slug under the Swedish prefix. It normalizes to
+  // `/kauppa`, which matches no route at all — so without this branch the
+  // request's fate depended on who was asking: an anonymous reader failed the
+  // public-route list and was bounced to login, while a signed-in one reached
+  // the rewrite, where next-intl redirected them to `/sv/butik`. One URL, two
+  // behaviours, and the anonymous half is the one that reads as a broken site.
+  //
+  // So the redirect is issued here instead, ahead of every gate, in the
+  // locale the URL itself named. Only a translated public route can ever be
+  // this shape — dashboards, auth and settings declare one slug for all
+  // locales — so this can never stand in front of a gate.
+  const foreignSlugTarget =
+    template === null ? canonicalPathForForeignSlug(externalPathname) : null;
+  if (foreignSlugTarget !== null) {
+    const target = new URL(foreignSlugTarget, request.url);
+    target.search = request.nextUrl.search;
+    return redirect(target);
+  }
+
+  // Every check below matches the **internal** pathname — locale prefix
+  // stripped, slug untranslated. Unstripped, `/fi/admin` sails past the
+  // `/admin` role gate; untranslated, `/fr/boutique` never matches the
+  // public-route list.
+  const requestLocale = urlLocale ?? DEFAULT_LOCALE;
+
+  // A proxy-issued bounce stays in the locale the request was made in —
+  // otherwise every bounce costs a second hop back through the ladder.
+  function localizedUrl(internalPath: string): URL {
+    return new URL(
+      localizeInternalPath(internalPath, requestLocale),
+      request.url,
+    );
+  }
+
+  // Check if route is public. A non-page path always passes (an API handler
+  // owns its own auth; a `/_vercel/*` or `/.well-known/*` file has none).
   // The /voice/group/[id] branch is excluded so its public-prefix match here
   // can't shadow the authenticated-route handling below.
   const isPublicRoute =
-    pathname.startsWith("/api/") ||
+    isNonPagePath(pathname) ||
     (!pathname.startsWith(AUTH_REQUIRED_VOICE_PREFIX) &&
       PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`)));
 
@@ -280,8 +475,12 @@ export async function proxy(request: NextRequest) {
       // public-route early return. The boundary is the session's state, not the
       // route. API routes are gated separately in requireRole().
       if (userRole === "customer" && !isPinExemptPath(pathname, isAuthRoute)) {
-        const unlockUrl = new URL(ROUTES.customer.unlock, request.url);
-        unlockUrl.searchParams.set("redirect", pathname);
+        const unlockUrl = localizedUrl(ROUTES.customer.unlock);
+        // The **raw external** path — what was in the address bar — so a parent
+        // bounced off `/fi/kauppa` returns to `/fi/kauppa`, not to English
+        // `/shop`. Consumers that match this value against route shapes
+        // normalize it themselves.
+        unlockUrl.searchParams.set("redirect", externalPathname);
         return redirect(unlockUrl);
       }
     }
@@ -289,37 +488,36 @@ export async function proxy(request: NextRequest) {
 
   // Logged-in users on auth routes go to their dashboard.
   if (userId && isAuthRoute && userRole) {
-    const dashboardPath = ROLE_DASHBOARD_PATHS[userRole] || ROUTES.customer.dashboard;
-    return redirect(new URL(dashboardPath, request.url));
+    return redirect(localizedUrl(ROLE_DASHBOARD_PATHS[userRole]));
   }
 
   // Signed-in users visiting the home page get bounced to their dashboard, so
   // the home page isn't a dead-end once you're logged in. Mirrors the SOG-logo
   // behavior, which links to the dashboard for every role.
   if (userId && userRole && pathname === ROUTES.home) {
-    return redirect(new URL(ROLE_DASHBOARD_PATHS[userRole], request.url));
+    return redirect(localizedUrl(ROLE_DASHBOARD_PATHS[userRole]));
   }
 
   // If public route or auth route, allow access
   if (isPublicRoute || isAuthRoute) {
-    return supabaseResponse;
+    return proceed();
   }
 
   // For protected routes, require authentication
   if (!userId) {
-    const loginUrl = new URL(ROUTES.login, request.url);
-    loginUrl.searchParams.set("redirect", pathname);
+    const loginUrl = localizedUrl(ROUTES.login);
+    loginUrl.searchParams.set("redirect", externalPathname);
     return redirect(loginUrl);
   }
 
   // Protected route but the role lookup failed → bounce to login.
   if (!userRole) {
-    return redirect(new URL(ROUTES.login, request.url));
+    return redirect(localizedUrl(ROUTES.login));
   }
 
   // /settings is shared across roles — accessible to any authenticated user.
   if (pathname.startsWith(ROUTES.settings)) {
-    return supabaseResponse;
+    return proceed();
   }
 
   // /preview/* are admin-only mock surfaces indexed on /admin/ui-previews:
@@ -328,7 +526,7 @@ export async function proxy(request: NextRequest) {
   // bounce to their own dashboard; unauthenticated users were already
   // redirected to /login above. The prefix match covers every future scene.
   if (pathname.startsWith("/preview/") && userRole !== "admin") {
-    return redirect(new URL(ROLE_DASHBOARD_PATHS[userRole], request.url));
+    return redirect(localizedUrl(ROLE_DASHBOARD_PATHS[userRole]));
   }
 
   // Check if user has access to the requested route
@@ -336,13 +534,13 @@ export async function proxy(request: NextRequest) {
     if (pathname.startsWith(basePath)) {
       if (role !== userRole) {
         const correctDashboard = ROLE_DASHBOARD_PATHS[userRole];
-        return redirect(new URL(correctDashboard, request.url));
+        return redirect(localizedUrl(correctDashboard));
       }
       break;
     }
   }
 
-  return supabaseResponse;
+  return proceed();
 }
 
 export const config = {
@@ -354,6 +552,9 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder files
      * - Next.js metadata file conventions (opengraph-image, sitemap.xml, robots.txt)
+     * - llms.txt — a route handler, not a file convention, but the same shape:
+     *   a bare public URL answered from the deployed catalog and marked
+     *   publicly cacheable, so it is excluded for the reason spelled out below
      * - api/locations/search — see below, this one is load-bearing
      *
      * **Rule: a route whose response is marked publicly cacheable must not pass
@@ -372,6 +573,6 @@ export const config = {
      * made. Excluding the path makes it ours. The route needs nothing from the
      * proxy anyway: it reads no cookies and builds its own anonymous client.
      */
-    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|sitemap\\.xml|robots\\.txt|api/locations/search|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|sitemap\\.xml|robots\\.txt|llms\\.txt|api/locations/search|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

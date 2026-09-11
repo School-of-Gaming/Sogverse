@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import {
   buildSeatOfferEmail,
+  buildSeatOfferGamerEmail,
+  seatOfferGamerSubject,
   seatOfferSubject,
 } from "@/lib/email-templates/seat-offer";
 import {
@@ -126,6 +128,72 @@ describe("buildSeatOfferEmail", () => {
     expect(seatOfferSubject(t, { ...offer, isSelfSeat: true })).toBe(
       "A seat has opened in Minecraft 101",
     );
+  });
+});
+
+const GAMER_DASHBOARD_URL = "https://sogverse.sog.gg/gamer";
+
+const gamerCopy = {
+  gamerName: "Aino",
+  productName: "Minecraft 101",
+  deadline: DEADLINE,
+  dashboardUrl: GAMER_DASHBOARD_URL,
+};
+
+/**
+ * The child's copy of the offer. What it must say is small; what it must not
+ * carry is the whole point — the token is the parent's, and this mail has no
+ * parameter that could hold it, so the assertions here are mostly negative.
+ */
+describe("buildSeatOfferGamerEmail", () => {
+  it("names the child and the product, states the deadline, and says the parent answers", () => {
+    const html = buildSeatOfferGamerEmail(t, "en", gamerCopy);
+    expect(html).toContain("Aino");
+    expect(html).toContain("Minecraft 101");
+    expect(html).toContain(DEADLINE);
+    expect(html).toContain("Your parent has an email");
+    expect(html).toContain("<!DOCTYPE html>");
+  });
+
+  /**
+   * The deadline is a fact the parent's mail carries too, and both must state
+   * it the same way: absolutely, never as a countdown. The child's copy states
+   * it in a sentence rather than a panel of its own — one less box in a mail
+   * whose whole job is three short lines — which is exactly why this assertion
+   * has to hold on the rendered text rather than on where it sits.
+   */
+  it("states the deadline absolutely and never as a window", () => {
+    const html = buildSeatOfferGamerEmail(t, "en", gamerCopy);
+    expect(html).toContain(DEADLINE);
+    expect(html).not.toMatch(/\b5 days\b/);
+    expect(html).not.toMatch(/\bfive days\b/i);
+  });
+
+  it("carries no answer buttons and no token — its one link is My SOG at the child's root", () => {
+    const html = buildSeatOfferGamerEmail(t, "en", gamerCopy);
+    const hrefs = [...html.matchAll(/<a href="([^"]*)"/g)].map((match) => match[1]);
+    expect(hrefs).toEqual([GAMER_DASHBOARD_URL]);
+    expect(html).not.toContain("token=");
+    expect(html).not.toContain("/seat-offer");
+    expect(html).not.toContain("Accept the seat");
+    expect(html).not.toContain("No, thank you");
+    expect(html).not.toContain('width="50%"');
+  });
+
+  it("subjects the mail to the reader, so it names the product and not the child", () => {
+    expect(seatOfferGamerSubject(t, gamerCopy)).toBe(
+      "A seat has opened for you in Minecraft 101",
+    );
+    expect(seatOfferGamerSubject(t, gamerCopy)).not.toContain("Aino");
+  });
+
+  it("escapes HTML in the child's name", () => {
+    const html = buildSeatOfferGamerEmail(t, "en", {
+      ...gamerCopy,
+      gamerName: "<script>xss</script>",
+    });
+    expect(html).not.toContain("<script>xss</script>");
+    expect(html).toContain("&lt;script&gt;xss&lt;/script&gt;");
   });
 });
 

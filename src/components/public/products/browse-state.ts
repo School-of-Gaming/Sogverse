@@ -1,3 +1,4 @@
+import type { AppHrefObject } from "@/lib/constants/routes";
 import { CATEGORY_PARAM } from "./shop-categories";
 
 // The browse surfaces' URL vocabulary, and the one place it is spelled.
@@ -10,6 +11,7 @@ import { CATEGORY_PARAM } from "./shop-categories";
 // exactly the kind of drift a shared constant costs nothing to prevent.
 export const TOPIC_PARAM = "topic";
 export const FORMAT_PARAM = "format";
+export const PRICE_PARAM = "price";
 export const LANGUAGE_PARAM = "lang";
 export const AUDIENCE_PARAM = "audience";
 export const TAG_PARAM = "tag";
@@ -44,6 +46,7 @@ const BROWSE_STATE_PARAMS = [
   CATEGORY_PARAM,
   TOPIC_PARAM,
   FORMAT_PARAM,
+  PRICE_PARAM,
   LANGUAGE_PARAM,
   AUDIENCE_PARAM,
   TAG_PARAM,
@@ -61,13 +64,15 @@ const BROWSE_STATE_PARAMS = [
  * not recognise, so validating here would be a second, driftable copy of rules
  * that are enforced where they matter.
  */
-export function browseStateQuery(source: URLSearchParams): string {
-  const params = new URLSearchParams();
+export function browseStateQuery(
+  source: URLSearchParams,
+): Record<string, string> {
+  const query: Record<string, string> = {};
   for (const name of BROWSE_STATE_PARAMS) {
     const value = source.get(name);
-    if (value) params.set(name, value);
+    if (value) query[name] = value;
   }
-  return params.toString();
+  return query;
 }
 
 /**
@@ -76,11 +81,19 @@ export function browseStateQuery(source: URLSearchParams): string {
  *
  * The marker goes on whether or not any filter did — an unfiltered grid is
  * still a grid that was navigated from.
+ *
+ * Both halves are href *objects* rather than built strings: the wrapped `Link`
+ * localizes the pathname and serializes the query itself, so a filter value
+ * arrives encoded once and the slug arrives translated.
  */
-export function withBrowseState(href: string, source: URLSearchParams): string {
-  const params = new URLSearchParams(browseStateQuery(source));
-  params.set(FROM_PARAM, FROM_BROWSE);
-  return `${href}?${params.toString()}`;
+export function withBrowseState(
+  href: AppHrefObject,
+  source: URLSearchParams,
+): AppHrefObject {
+  return {
+    ...href,
+    query: { ...browseStateQuery(source), [FROM_PARAM]: FROM_BROWSE },
+  };
 }
 
 /**
@@ -93,11 +106,10 @@ export function withBrowseState(href: string, source: URLSearchParams): string {
  * them.
  */
 export function listingHrefWithBrowseState(
-  base: string,
+  base: AppHrefObject,
   source: URLSearchParams,
-): string {
-  const qs = browseStateQuery(source);
-  return qs ? `${base}?${qs}` : base;
+): AppHrefObject {
+  return { ...base, query: browseStateQuery(source) };
 }
 
 /** Whether this page was opened from a browse grid — see `FROM_PARAM`. */

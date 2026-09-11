@@ -62,17 +62,20 @@ describe("Access Control", () => {
     // The second direction matters because a dropped GRANT leaves the RLS
     // policy intact but silently breaks every authenticated write against
     // the table — exactly how products/games writes regressed in the past.
-    // profiles is intentionally NOT in this allowlist: it uses column-level
-    // UPDATE grants on the safe self-editable fields rather than table-level
-    // UPDATE. Column privileges live in information_schema
-    // .column_privileges — out of scope for _list_table_grants, and covered by
-    // the column-grant audit in authorization-spine.test.ts.
+    // profiles and gamer_profiles are intentionally NOT in this allowlist: both
+    // use column-level UPDATE grants on the safe self-editable fields rather
+    // than table-level UPDATE. gamer_profiles moved off its table-wide grant in
+    // 00235, when it gained `sign_in` — a column that decides whether a child
+    // can sign in without their parent, and so may not be reachable by the same
+    // grant that lets them correct their own date of birth. Column privileges
+    // live in information_schema.column_privileges — out of scope for
+    // _list_table_grants, and covered by the column-grant audit in
+    // authorization-spine.test.ts.
     //
     // Every table listed here also needs a write-IDOR case in
     // write-idor.test.ts; that file fails if one is missing.
     const WRITE_GRANT_ALLOWLIST = new Map<string, Set<string>>([
       ["parent_gamer", new Set(["DELETE"])],
-      ["gamer_profiles", new Set(["UPDATE"])],
       ["whatsapp_contacts", new Set(["INSERT", "UPDATE"])],
       // INSERT only: the outbound-send route inserts and never updates, and the
       // dead UPDATE grant (no policy behind it) was revoked in 00123. Delivery
@@ -117,9 +120,6 @@ describe("Access Control", () => {
       ["product_images", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["schedule_slots", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["product_prices", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["holiday_calendars", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["calendar_holidays", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["product_holiday_calendars", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["site_details", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["site_staff_details", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["product_translations", new Set(["INSERT", "UPDATE", "DELETE"])],
@@ -170,7 +170,7 @@ describe("Access Control", () => {
 
   it("anon has no write grants on any table", async () => {
     // anon's only legitimate table access is SELECT through the public
-    // catalog policies (products, locations, holiday calendars, languages).
+    // catalog policies (products, locations, languages).
     // Write grants for anon are never acceptable: RLS default-deny is the
     // only thing between a standing grant and an unauthenticated write path,
     // and a single future policy written without a TO clause (which defaults

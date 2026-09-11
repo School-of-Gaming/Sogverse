@@ -19,6 +19,7 @@
 
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocationsByIds } from "@/services/locations";
@@ -133,8 +134,19 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
         {/* One reserved line for the failure message, so surfacing it cannot
             move the save button out from under the pointer. */}
         <div className="flex items-start justify-between gap-3">
-          <p className="min-h-[20px] flex-1 text-sm text-destructive" role="alert">
-            {saveError}
+          <p
+            className="flex min-h-[20px] flex-1 items-start gap-1.5 text-sm text-foreground"
+            role="alert"
+          >
+            {saveError !== null && (
+              <>
+                <AlertCircle
+                  className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
+                  aria-hidden
+                />
+                <span>{saveError}</span>
+              </>
+            )}
           </p>
           <Button
             type="button"

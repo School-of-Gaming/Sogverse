@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -343,7 +343,7 @@ function ConnectedProductRow({ product }: { product: SiteProductRow }) {
   return (
     <Link
       href={ROUTES.admin.product(product.product_type, product.id)}
-      className="group flex items-center justify-between gap-2 rounded-lg border p-3 transition-colors hover:bg-accent hover:text-accent-foreground"
+      className="group flex items-center justify-between gap-2 rounded-lg border border-border p-3 transition-colors hover:bg-hover hover:text-foreground"
     >
       <div className="min-w-0">
         <p className="truncate text-sm font-medium">{name}</p>

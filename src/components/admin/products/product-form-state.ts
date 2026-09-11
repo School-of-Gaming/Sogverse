@@ -1,7 +1,11 @@
-import { type SupportedCurrency } from "@/lib/constants";
+import {
+  DEFAULT_PRODUCT_TIMEZONE,
+  type SupportedCurrency,
+} from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { ProductTag, ProductTopic, SpokenLanguageCode } from "@/types";
 import type { AttachableMarketingConsentType } from "@/lib/constants/marketing-consents";
+import type { AttachableGamerPhotoConsentType } from "@/lib/constants/gamer-photo-consents";
 import { effectiveBillingMode } from "./product-type-config";
 import type {
   PaidMode,
@@ -80,8 +84,6 @@ export const MINUTE_OPTIONS = Array.from(
   { length: 60 / MINUTE_STEP },
   (_, i) => String(i * MINUTE_STEP).padStart(2, "0"),
 );
-
-export const FIXED_TIMEZONE = "Europe/Helsinki";
 
 export type RegistrationOpensMode =
   (typeof REGISTRATION_OPENS_MODE_VALUES)[number];
@@ -169,6 +171,21 @@ export interface FormState {
   locationId: string | null;
 
   // When
+  //
+  // The IANA zone every wall clock on this form is entered in — the schedule
+  // slots and the scheduled registration drop alike. It is a real field rather
+  // than a constant because a product's sessions happen where the product does,
+  // and the platform now runs in four countries; it stays editable on the edit
+  // form because the schedule is stored as wall clock, so changing it re-resolves
+  // every session the schedule still projects to that same clock face in the new
+  // zone, which is exactly the correction an admin who picked the wrong zone
+  // needs. What it does not move is a session already recorded: a session row is
+  // written lazily, only once a report, a note or an attendance mark needs
+  // somewhere to live, and it snapshots its start and end at that moment and
+  // never re-derives them. So history keeps the times it was held at while the
+  // rest of the term follows the new zone — which is what the edit form's hint
+  // tells the admin, and why that hint is not simply "every session moves".
+  timezone: string;
   startMode: StartMode;
   startDate: string;
   // Whether a consumer club has a fixed end date. `false` ⇒ ongoing (end_date
@@ -178,7 +195,6 @@ export interface FormState {
   hasEndDate: boolean;
   endDate: string;
   scheduleSlots: ScheduleSlotDraft[];
-  holidayCalendarIds: Set<string>;
   signupThreshold: string;
 
   // Capacity & billing
@@ -201,9 +217,10 @@ export interface FormState {
   municipalityFee: FeeDraft<MunicipalityFeeStatus>;
 
   // Registration timing — `immediately` accepts signups as soon as the
-  // product is published; `scheduled` opens at the picked Helsinki-local
-  // date+time. The date/hour/minute fields are kept around even when mode
-  // is `immediately` so toggling back doesn't lose what was typed.
+  // product is published; `scheduled` opens at the picked date+time, read as a
+  // wall clock in the product's own `timezone` above. The date/hour/minute
+  // fields are kept around even when mode is `immediately` so toggling back
+  // doesn't lose what was typed.
   registrationOpensMode: RegistrationOpensMode;
   registrationOpensDate: string;
   registrationOpensHour: string;
@@ -212,9 +229,9 @@ export interface FormState {
   // Required consents
   //
   // The consent documents a parent must agree to before enrolling, as the slugs
-  // of `consent_documents` rows. A Set for the same reason `holidayCalendarIds`
-  // is one: the control is a list of independent checkboxes and the payload
-  // builder flattens it with `Array.from`.
+  // of `consent_documents` rows. A Set because the control is a list of
+  // independent checkboxes and the payload builder flattens it with
+  // `Array.from`.
   //
   // Offered on every product type, deliberately: the mechanism is generic — a
   // product requires whichever published documents it requires — and a per-type
@@ -235,6 +252,22 @@ export interface FormState {
   // enum: `school_of_gaming` is asked at registration and belongs to no
   // product, so a state that could hold it would be a state no screen can show.
   marketingConsentTypes: Set<AttachableMarketingConsentType>;
+
+  // Optional gamer photo asks
+  //
+  // The photo consents this product's signup panel ASKS a parent about, as
+  // `gamer_photo_consent_type` values. The marketing set's twin in every
+  // structural respect — a Set, never a gate on the seat, replaced wholesale on
+  // every save — and its twin in the one that matters least and reads most:
+  // what it is about. A marketing answer is about the answering adult's
+  // mailbox; this one is about a *child's image*, so the stored answer is keyed
+  // per gamer rather than per account, and the panel only asks it when the seat
+  // being taken is a child's.
+  //
+  // Narrowed to the attachable types for the same reason the marketing set is,
+  // even though today's enum has nothing else in it: what a product may store
+  // is a database question and what a form may offer is a product decision.
+  gamerPhotoConsentTypes: Set<AttachableGamerPhotoConsentType>;
 
   // Does every member of this product owe a creation — a link to the thing
   // they made — by the time it ends? An admin decision, never derived from
@@ -303,6 +336,9 @@ export function initialState(
     spokenLanguageCode: "",
     isRemote: true,
     locationId: null,
+    // Finland unless the admin says otherwise — most of what we run is Finnish,
+    // and every product that predates the picker carries this zone.
+    timezone: DEFAULT_PRODUCT_TIMEZONE,
     startMode: config.allowedStartModes[0],
     // Blank on every type, consumer clubs included: a club may now start on a
     // future date (billing defers to it), so there is no safe date to pin and
@@ -311,7 +347,6 @@ export function initialState(
     hasEndDate: false,
     endDate: "",
     scheduleSlots: defaultSlots(config),
-    holidayCalendarIds: new Set(),
     signupThreshold: "",
     paidMode: initialPaidMode,
     prices: {
@@ -340,6 +375,10 @@ export function initialState(
     // Nothing asked until somebody says otherwise. A default ask would put a
     // partner's marketing question in front of families nobody decided to ask.
     marketingConsentTypes: new Set(),
+    // Nothing asked until somebody says otherwise, for the same reason: a
+    // default ask would put a question about photographing a child in front of
+    // families nobody decided to ask.
+    gamerPhotoConsentTypes: new Set(),
     // Nothing owed until somebody says otherwise. The obligation comes from a
     // sponsor's contract, so it is stated per product rather than defaulted —
     // and false being the resting state is what makes flagging the opt-in.

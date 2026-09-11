@@ -11,6 +11,13 @@ import type {
   SessionFeedGamer,
 } from "@/components/gedu/session-feed/types";
 
+// The note fields are opaque here: nothing below opens one, types into one,
+// or asserts on the markdown one produces. Stubbing the editor keeps
+// ProseMirror and its markdown parser out of this file's module graph.
+vi.mock("@/components/ui/rich-text-editor", () =>
+  import("../../mocks/rich-text-editor"),
+);
+
 /**
  * ============================================================================
  * The feed reads ONE clock, and it is the caller's — not the ticking provider.
@@ -44,10 +51,17 @@ import type {
  */
 
 /** Real generated UUIDs: ids reaching an identicon must never be readable stubs. */
+/**
+ * When these seats entered the group — long before any fixture session, so
+ * every one of them is expected on every register here. The tests in this
+ * file are about other things; a late joiner would only add noise to them.
+ */
+const FOUNDED = new Date("2020-01-01T00:00:00.000Z");
+
 const GAMERS: readonly SessionFeedGamer[] = [
-  { id: "26586f95-d91e-4cf3-ae9d-edf3e51d9e64", firstName: "Aino" },
-  { id: "c6f10c3a-972d-41bc-9413-c7f674afea3d", firstName: "Elias" },
-  { id: "cec00f11-094d-4b75-a5a4-828ca620d7cd", firstName: "Venla" },
+  { id: "26586f95-d91e-4cf3-ae9d-edf3e51d9e64", firstName: "Aino", inGroupSince: FOUNDED },
+  { id: "c6f10c3a-972d-41bc-9413-c7f674afea3d", firstName: "Elias", inGroupSince: FOUNDED },
+  { id: "cec00f11-094d-4b75-a5a4-828ca620d7cd", firstName: "Venla", inGroupSince: FOUNDED },
 ];
 
 /** A camp day running 08:00–23:00 Helsinki on Monday 16 March 2026. */

@@ -32,11 +32,11 @@ with its demo at `packages/sog-ui/demo` run through Next's directory argument on
 3001, deployed later to Vercel as its own project with the package directory as its root.
 
 **Inputs are not truth.** Two sources are consulted while deciding, and neither is carried
-into the code. The School of Gaming Brand Voice & Identity Guidebook (v2.0, kept outside
-the repo at `~/work/SoG_Brand_Voice_Guidebook_v2_0.md`) holds the brand's stated opinions;
-the reference branch (`feat/brand-palette-design-pass`, tag `ref/brand-palette-design-pass`)
-holds tokens, a button recipe, two styling tests, a colour grammar and the litigation
-history of the rulings behind them. A value enters the library because the owner decides
+into the code. The School of Gaming Brand Voice & Identity Guidebook (v2.0, kept beside
+this file as an excerpt in `guidebook/` until the library covers it) holds the brand's
+stated opinions; the reference branch (`feat/brand-palette-design-pass`, tag
+`ref/brand-palette-design-pass`) holds tokens, a button recipe, two styling tests, a colour
+grammar and the litigation history of the rulings behind them. A value enters the library because the owner decides
 it here, in the demo, and it enters with no source label, no provenance field and no
 provisional status. The library is the truth from the moment a value is in it; the inputs
 are where to look when deciding, and the origins record is where the history stays.
@@ -75,11 +75,11 @@ as the token source.
    `Intl` formatters with the first component that shows a date, time or amount. None of
    them is defined ahead of that, and the foundations floor of the demo shows only what
    exists.
-3. **The UI rules move in.** The root `CLAUDE.md`'s UI sections (layout and scrolling,
+3. **The UI rules move in.** `src/CLAUDE.md`'s UI sections (layout and scrolling,
    loading and disabled state, button order, styling, the UI reference and preview-scene
-   rules) relocate into the package's `CLAUDE.md` as each mechanism lands; the root keeps
-   one pointer. Where a rule was a pattern each screen repeated (committing, layout shift),
-   the library ships the state system instead of the pattern.
+   rules) relocate into the package's `CLAUDE.md` as each mechanism lands; the app file
+   keeps one pointer. Where a rule was a pattern each screen repeated (committing, layout
+   shift), the library ships the state system instead of the pattern.
 4. **Primitives.** The 24 that lift, with strings turned into props; then the missing
    middle: heading, page header, empty state, skeleton, inline error, chip, status chip,
    accent tile, selection edge, select, table, search input, person row. No `className`
@@ -95,9 +95,9 @@ as the token source.
    preview scenes retire as each page body thins to composition only. Steps 4 to 7
    interleave: a component is built, shown, adopted and locked before the next begins.
 8. **Lockdown.** The seam lint: Sogverse's source contains no utility class; it composes
-   and never paints. The root `CLAUDE.md` carries no UI rule of its own.
-9. **Completion.** The reference branch and its tag are deleted, this file is deleted, the
-   deviations entries the library resolved are removed.
+   and never paints. `src/CLAUDE.md` carries no UI rule of its own.
+9. **Completion.** The reference branch and its tag are deleted, the Guidebook
+   folder and this file are deleted, the deviations entries the library resolved are removed.
 
 ## Acceptance criteria
 
@@ -112,7 +112,7 @@ as the token source.
 
 ## Owner decisions open
 
-- Amber on hover: the Guidebook darkens it about 10%; the reference branch shaded no fill
+- Act on hover: the Guidebook darkens it about 10%; the reference branch shaded no fill
   on hover and used a ring. Decided when the first button lands, not before.
 - Two measurements from the inputs to weigh when their components arrive, not before: a
   destructive red whose white label measured 3.76:1 against the 4.5:1 body floor, and a
@@ -122,4 +122,3 @@ as the token source.
 
 - Visual regression against the demo, if the page-capture tool ever grows a fixture-only
   mode. Ruled out for now: the tool is for human review, not testing.
-- Crimson Pro's first placement, when an editorial surface exists.

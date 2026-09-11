@@ -37,6 +37,18 @@ vi.mock("@/lib/brevo", () => ({
     mockSendTransactionalEmail(...args),
 }));
 
+/**
+ * The signup confirmation, mocked at its own boundary rather than at Brevo's —
+ * the same reason the emailed respond route's test does it: the sender reads a
+ * product row of its own and composes a calendar document from it, and what
+ * this file is about is which outcome sends it.
+ */
+const mockSendProductConfirmationEmail = vi.fn();
+vi.mock("@/services/participations/product-confirmation-email.server", () => ({
+  sendProductConfirmationEmail: (...args: unknown[]) =>
+    mockSendProductConfirmationEmail(...args),
+}));
+
 const deferred: unknown[] = [];
 vi.mock("next/server", async (importOriginal) => {
   const actual = await importOriginal<typeof import("next/server")>();
@@ -259,14 +271,28 @@ describe("POST /api/participations/seat-offer", () => {
     });
   });
 
-  it("answers `accepted` and mails nobody", async () => {
+  /**
+   * The same seat and the same mail whichever door a family came through: a yes
+   * from the card in My SOG earns the signup confirmation exactly as a yes from
+   * the emailed link does, and staff hear nothing because the offer did what it
+   * was for.
+   */
+  it("answers `accepted`, confirms the seat to the family, and tells staff nothing", async () => {
     mockAuthenticatedCustomer();
 
     const response = await POST(request(accept));
 
     expect(await response.json()).toEqual({ outcome: "accepted" });
-    expect(deferred).toHaveLength(0);
     await settleDeferred();
+
+    expect(mockSendProductConfirmationEmail).toHaveBeenCalledTimes(1);
+    expect(mockSendProductConfirmationEmail.mock.calls[0][0]).toMatchObject({
+      customerId: CUSTOMER_ID,
+      participantId: GAMER_ID,
+      productId: PRODUCT_ID,
+      participationId: PARTICIPATION_ID,
+      mode: "honoured-offer",
+    });
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 
@@ -298,6 +324,9 @@ describe("POST /api/participations/seat-offer", () => {
       "ada@sog.gg",
       "bo@sog.gg",
     ]);
+    // No seat, so no signup confirmation — the mail follows the seat rather
+    // than the answer.
+    expect(mockSendProductConfirmationEmail).not.toHaveBeenCalled();
   });
 
   /**
@@ -366,6 +395,8 @@ describe("POST /api/participations/seat-offer", () => {
       "claim_expired_seat_offer_notifications",
       { p_participation_id: PARTICIPATION_ID },
     );
+    // No seat was granted, so there is nothing to confirm.
+    expect(mockSendProductConfirmationEmail).not.toHaveBeenCalled();
   });
 
   it("answers `declined` even when the staff mail throws", async () => {

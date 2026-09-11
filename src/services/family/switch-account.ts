@@ -12,6 +12,14 @@ function dashboardFor(role: FamilyMember["role"]): string {
   return role === "customer" ? ROUTES.customer.dashboard : ROUTES.gamer.dashboard;
 }
 
+/** What one commit may carry beyond the target. */
+export interface CommitAccountSwitchOptions {
+  /** A linked parent's PIN. Required when leaving a switched-in gamer session. */
+  pin?: string;
+  /** Where to land instead of the target's dashboard. */
+  redirectUrl?: string;
+}
+
 /**
  * The commit step of an account switch: POST the switch, then leave the page.
  *
@@ -30,17 +38,27 @@ function dashboardFor(role: FamilyMember["role"]): string {
  * set on success — the returned promise resolves into a document that is
  * already unloading.
  *
- * SEAM: a follow-up piece gates a switch *initiated from a gamer session*
- * behind a parent-PIN dialog. That dialog will wrap exactly this function —
- * take the PIN, then commit the target it was handed — which is why every
- * gamer-initiated call site routes through here rather than POSTing for
- * itself. Keep it free of anything belonging to a particular caller's click.
+ * **The credential is the caller's to collect, not this function's to prompt
+ * for.** Leaving a gamer session costs a linked parent's PIN when the session
+ * was handed over by a switch, and cannot be done at all from a session the
+ * child opened themselves — that one is refused `SIGN_OUT_REQUIRED`, and the way
+ * to the other account is the login page. Which of the two applies is a fact
+ * about the caller's session (see `session-provenance.ts`) that the switcher
+ * knows before the click, so a gate dialog collects the PIN and hands it here.
+ * A commit sent without it comes back as a `SwitchAccountError` naming what was
+ * missing, which is what lets a surface open its dialog on the refusal rather
+ * than pre-empting it.
+ *
+ * Failure is thrown, always as a `SwitchAccountError` carrying the route's code
+ * where there is one; nothing is caught here, for the same reason no state is
+ * held here.
  */
 export async function commitAccountSwitch(
   target: FamilyMember,
-  redirectUrl?: string,
+  options: CommitAccountSwitchOptions = {},
 ): Promise<void> {
-  await new FamilyService().switchAccount(target.id);
+  const { redirectUrl, ...credentials } = options;
+  await new FamilyService().switchAccount(target.id, credentials);
   // Full-page navigation so the new session cookies hydrate the root layout —
   // the browser Supabase client is seeded from cookies at construction time,
   // so only a document reload rebuilds it.

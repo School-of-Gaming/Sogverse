@@ -74,7 +74,12 @@ export const scheduleSlotSummary = z.object({
 export const geduFeedRosterEntry = z.object({
   participant_id: z.string(),
   first_name: z.string(),
-  /** When they joined the group — the feed uses it for nothing else. */
+  /**
+   * When the seat was taken on the **product** — not when it entered this
+   * group, which is `group_joined_at` below. The feed renders neither; the
+   * distinction matters because it is the bound the historical `group_joined_at`
+   * rows were backfilled from.
+   */
   signed_up_at: z.string(),
   /**
    * The child-shaped facts, null together on an adult seat: an adult has no
@@ -120,8 +125,15 @@ export const geduFeedRosterEntry = z.object({
    * has a fresh second and an unchanged first. It travels unconditionally
    * because a timestamp is a *fact* while the clubs-only newcomer rule is a
    * *presentation* rule the client applies through `showsNewcomerBadge` — so
-   * null here means the seat predates the column (there was deliberately no
-   * backfill), never "not a club".
+   * null here never means "not a club".
+   *
+   * That distinction is also what the **session register** now measures itself
+   * against: a member is expected on a session only if this stamp is at or
+   * before the session's end instant. Which is why the rows that predated the
+   * column no longer carry null — they were backfilled from their own
+   * `signed_up_at`, a provable lower bound on the true join, by the migration
+   * that introduced the rule. Null here now means only what the column comment
+   * says it means: a seat holding no group at all, which no roster contains.
    *
    * `note` is the (group, member) staff note, null when no row exists — the
    * absence of a row is what "no note" means everywhere.
@@ -302,14 +314,22 @@ export type GeduFeedSite = z.infer<typeof geduFeedSite>;
 /**
  * One dashboard card's worth of assignment facts.
  *
- * `attention_count` is computed server-side against the same holiday-blind
- * weekday expansion the client uses, floored at `max(product start, epoch)`, and
- * counts a finished session until **all four** parts are in: every current
- * roster member marked, a non-empty report written, that report emailed to the
- * families, and — on the run's FINAL session of a product with
- * `requires_gamer_creations` set — every current roster member holding at least
- * one creation. The dashboard deliberately never fetches a feed to derive it —
- * a page of cards would otherwise be a page of history downloads.
+ * `attention_count` is computed server-side against the same weekday
+ * expansion the client uses, floored at `max(product start, epoch)`, and
+ * counts a finished session until **all four** parts are in: every roster
+ * member the session EXPECTED marked, a non-empty report written, that report
+ * emailed to the families, and — on the run's FINAL session of a product with
+ * `requires_gamer_creations` set — every roster member THAT session expected
+ * holding at least one creation. The dashboard deliberately never fetches a
+ * feed to derive it — a page of cards would otherwise be a page of history
+ * downloads.
+ *
+ * "Expected" is one rule applied to both per-member parts: a member is expected
+ * on a session only if their group-join stamp is at or before that session's
+ * end instant. Growing a group therefore reopens neither the register of a
+ * session that finished before the newcomer arrived nor the creations owed for
+ * it. The report and the mail are unscoped — a session owes those whoever was
+ * in the room.
  *
  * The fourth part fires on exactly one occurrence per run, and an open-ended
  * product (no `end_date`) has no final session, so it may be flagged and never

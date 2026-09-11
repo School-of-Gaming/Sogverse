@@ -19,7 +19,8 @@ import {
   REGION_LOCK_BASE_SCENARIO,
   findRegionLockScenario,
 } from "@/components/public/products/region-lock/region-lock-scenarios";
-import { REQUIRED_CONSENTS_SCENARIO } from "@/components/public/products/required-consents-scenario";
+import { findConsentScenario } from "@/components/public/products/required-consents-scenario";
+import type { ProductTopic } from "@/types";
 import type { PreviewSurface } from "./scenes";
 import { AdminDashboardScene } from "./scenes/admin-dashboard-scene";
 import { ChatScene } from "./scenes/chat-scene";
@@ -32,6 +33,10 @@ import { GeduProductPageScene } from "./scenes/gedu-product-page-scene";
 import { ProductDetailScene } from "./scenes/product-detail-scene";
 import { PurchaseConfirmationScene } from "./scenes/purchase-confirmation-scene";
 import { SeatOfferScene } from "./scenes/seat-offer-scene";
+import {
+  TopicPrepScene,
+  isTopicPrepScenario,
+} from "./scenes/topic-prep-scene";
 import { ShopBrowseScene } from "./scenes/shop-browse-scene";
 import { VoiceRoomScene } from "./scenes/voice-room-scene";
 
@@ -48,9 +53,23 @@ import { VoiceRoomScene } from "./scenes/voice-room-scene";
  * means the registry and the fixtures have drifted — a 404 is the honest
  * answer, not a half-rendered page.
  */
+/**
+ * What a scene needs from the URL beyond its slug.
+ *
+ * One field so far, and it is deliberately handed to *every* renderer rather
+ * than to the two that read it: the alternative is a per-surface options type,
+ * which is a second registry keyed by surface to keep in step with this one. A
+ * renderer that has nothing to do with the topic axis simply declares one
+ * parameter and never sees it.
+ */
+export interface PreviewSceneOptions {
+  /** The `?topic=` override, already validated against the enum, or `null`. */
+  topic: ProductTopic | null;
+}
+
 const SCENE_RENDERERS: Record<
   PreviewSurface,
-  (scenario: string) => React.ReactNode
+  (scenario: string, options: PreviewSceneOptions) => React.ReactNode
 > = {
   shop: (scenario) => {
     // Checked and not handed on: there is one storefront grid, so the scene
@@ -60,7 +79,7 @@ const SCENE_RENDERERS: Record<
     if (!isShopBrowseScenario(scenario)) notFound();
     return <ShopBrowseScene />;
   },
-  products: (scenario) => {
+  products: (scenario, { topic }) => {
     // The region-lock scenarios are this page under a lock, so they go through
     // the same scene — they share the surface but not its fixtures, rendering
     // one club fixture with the gate as the only thing that varies.
@@ -70,35 +89,44 @@ const SCENE_RENDERERS: Record<
         <ProductDetailScene
           scenario={REGION_LOCK_BASE_SCENARIO}
           regionLock={regionLock}
+          topic={topic}
         />
       );
     }
     // Same page again, on a product that asks a parent for something extra —
-    // conditions it must agree to, and a partner's mailing list it may decline.
-    // Like the region-lock trio it shares the surface but not the fixtures: one
-    // club fixture, with the two ask sets as the only things that vary.
-    if (scenario === REQUIRED_CONSENTS_SCENARIO.slug) {
+    // conditions it must agree to, a photo permission for their child and a
+    // partner's mailing list, both of which it may decline. Like the region-lock
+    // trio it shares the surface but not the fixtures: one club fixture, with
+    // the three ask sets as the only things that vary.
+    // One of them carries a lock as well, because the product the photo consent
+    // actually ships on is region-locked and free — so the lock rides on the
+    // scenario rather than making it a region scenario, which would be a claim
+    // about what the page is for.
+    const consents = findConsentScenario(scenario);
+    if (consents) {
       return (
         <ProductDetailScene
-          scenario={REQUIRED_CONSENTS_SCENARIO.baseScenario}
-          requiredConsentSlugs={REQUIRED_CONSENTS_SCENARIO.documentSlugs}
-          marketingConsentTypes={
-            REQUIRED_CONSENTS_SCENARIO.marketingConsentTypes
-          }
+          scenario={consents.baseScenario}
+          auth={consents.auth}
+          regionLock={consents.regionLock}
+          requiredConsentSlugs={consents.documentSlugs}
+          marketingConsentTypes={consents.marketingConsentTypes}
+          gamerPhotoConsentTypes={consents.gamerPhotoConsentTypes}
+          topic={topic}
         />
       );
     }
     if (!isPreviewScenario(scenario)) notFound();
-    return <ProductDetailScene scenario={scenario} />;
+    return <ProductDetailScene scenario={scenario} topic={topic} />;
   },
-  confirmation: (scenario) => {
+  confirmation: (scenario, { topic }) => {
     // The paid no-order states need no fixture — the notice component takes
     // only which state it is — so they mount directly rather than through the
     // fixture-building scene.
     const notice = findConfirmationNotice(scenario);
     if (notice) return <PurchaseConfirmationNotice kind={notice.kind} />;
     if (!isPreviewScenario(scenario)) notFound();
-    return <PurchaseConfirmationScene scenario={scenario} />;
+    return <PurchaseConfirmationScene scenario={scenario} topic={topic} />;
   },
   "parent-dashboard": (scenario) => {
     if (!isParentDashboardScenario(scenario)) notFound();
@@ -152,11 +180,19 @@ const SCENE_RENDERERS: Record<
     if (!isAdminDashboardScenario(scenario)) notFound();
     return <AdminDashboardScene scenario={scenario} />;
   },
+  // The one scene with no product behind it: it enumerates the topic registry
+  // itself, so its scenarios are the two forms a guide filters into rather than
+  // fixtures of anything.
+  "topic-prep": (scenario) => {
+    if (!isTopicPrepScenario(scenario)) notFound();
+    return <TopicPrepScene scenario={scenario} />;
+  },
 };
 
 export function renderPreviewScene(
   surface: PreviewSurface,
   scenario: string,
+  options: PreviewSceneOptions = { topic: null },
 ): React.ReactNode {
-  return SCENE_RENDERERS[surface](scenario);
+  return SCENE_RENDERERS[surface](scenario, options);
 }

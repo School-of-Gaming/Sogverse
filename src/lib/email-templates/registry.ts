@@ -1,20 +1,74 @@
 import { z } from "zod";
-import { buildFeedbackEmail } from "./feedback";
+import { buildFeedbackEmail, feedbackReplyToAddress } from "./feedback";
 import { buildPasswordResetEmail } from "./password-reset";
 import { buildWelcomeParentEmail, buildWelcomeGeduEmail } from "./welcome";
 import {
   buildProductConfirmationEmail,
+  productConfirmationAttachments,
   productConfirmationSubject,
+  productConfirmationText,
+  resolveProductConfirmation,
   PRODUCT_CONFIRMATION_MODES,
+  type ProductConfirmationEmailOptions,
 } from "./product-confirmation";
+import type { InvitationSlot } from "./product-confirmation-invitation";
+import { formatProductLocation } from "@/lib/products/format-product-location";
+import {
+  fail,
+  isNoneToken,
+  listEntries,
+  noneOrAgeRange,
+  noneOrDate,
+  noneOrText,
+  optionalDate,
+  requireEmail,
+  requireTime,
+  requireWeekday,
+  requireWholeNumber,
+  FORM_NONE_TOKEN,
+  FORM_YES_NO,
+} from "./form-fields";
 import { buildVerifyEmailEmail } from "./verify-email";
-import { buildSeatOfferEmail, seatOfferSubject } from "./seat-offer";
+import { buildGamerWelcomeEmail } from "./gamer-welcome";
+import {
+  buildSeatOfferEmail,
+  buildSeatOfferGamerEmail,
+  seatOfferGamerSubject,
+  seatOfferSubject,
+} from "./seat-offer";
 import {
   buildSeatOfferStaffEmail,
   seatOfferStaffSubject,
   SEAT_OFFER_STAFF_REASONS,
 } from "./seat-offer-staff";
 import { buildComponentsReferenceEmail } from "./components-reference";
+import {
+  buildCalendarInvitationEmail,
+  calendarExplorerAlarmOffsets,
+  calendarInvitationAttachment,
+  calendarInvitationSubject,
+  calendarInvitationText,
+  resolveCalendarInvitation,
+  CALENDAR_EXPLORER_ALARM_ACTIONS,
+  CALENDAR_EXPLORER_ALARM_ANCHORS,
+  CALENDAR_EXPLORER_ALARM_OFFSETS,
+  CALENDAR_EXPLORER_BODY,
+  CALENDAR_EXPLORER_METHODS,
+  CALENDAR_EXPLORER_PARTSTATS,
+  CALENDAR_EXPLORER_RECURRENCES,
+  CALENDAR_EXPLORER_ROLES,
+  CALENDAR_EXPLORER_SHOW_AS,
+  CALENDAR_EXPLORER_STATUSES,
+  CALENDAR_EXPLORER_TIMEZONES,
+  CALENDAR_EXPLORER_TIME_FORMS,
+  CALENDAR_EXPLORER_TITLE,
+  CALENDAR_EXPLORER_WEEKDAY_PRESETS,
+  CALENDAR_EXPLORER_YES_NO,
+  calendarInvitationStartDate,
+  calendarInvitationUntilDate,
+  type CalendarExplorerAlarmOffset,
+  type CalendarExplorerWeekdayPreset,
+} from "./calendar-invitation";
 import {
   buildSessionReportEmail,
   sessionReportSubject,
@@ -27,10 +81,18 @@ import {
   sessionReportPhotoFixtures,
 } from "./fixtures/session-report-photos";
 import type { EmailRenderContext } from "./render-context";
-import type { EmailTranslator } from "./translator";
+import type { RenderedAttachment } from "./attachments";
+import type { EmailTranslator, TopicPrepTranslator } from "./translator";
+import { SUPPORTED_TIMEZONES } from "@/lib/calendar-invitations/ics-primitives";
+import {
+  topicHasPrep,
+  PRODUCT_TOPICS,
+  PRODUCT_TOPIC_VALUES,
+} from "@/lib/products/topics";
+import { DEFAULT_PRODUCT_TIMEZONE } from "@/lib/constants/location-hierarchies";
 import { formatDate, formatTimeRange } from "@/lib/utils";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import { Constants } from "@/types";
 
 // --- Field types for the testing UI ---
@@ -82,8 +144,24 @@ type TemplateParams = Record<string, string | boolean | null>;
 export interface RenderedTemplate {
   subject: string;
   html: string;
+  /**
+   * The same mail as plain text, for the templates that state one.
+   *
+   * Optional because most mails have nothing to gain from it, and required in
+   * practice for one: a mail carrying a calendar part is read by Exchange as
+   * the source of the calendar entry's *notes*, and with no text part it
+   * flattens the HTML into them. See this directory's `CLAUDE.md`.
+   */
+  text?: string;
   /** Reply-To this template's real sending route would set. */
   replyTo: string;
+  /**
+   * Files that travel with the mail. Absent for the templates that carry none,
+   * which is all of them but one — an attachment changes how a client reads a
+   * mail, so it is a property a template opts into rather than a slot every
+   * render has to fill with an empty array.
+   */
+  attachments?: RenderedAttachment[];
 }
 
 export interface TemplateDefinition {
@@ -99,12 +177,21 @@ export interface TemplateDefinition {
    *
    * `context` says where the render is going, and defaults to the send — the
    * destination that has to be safe when a caller has not thought about it.
+   *
+   * `tPrep` is the **second** translator, scoped to the top-level `topicPrep`
+   * namespace, for the one template whose mail carries a document the app's own
+   * pages render word for word (see `translator.ts` for why that copy has one
+   * home rather than two). It is last and optional because exactly one template
+   * reads it: a render composed without it simply states no guide, which is the
+   * mail every other template sends anyway. Both real call sites — the admin
+   * preview and the test-send route — load it beside the first.
    */
   render: (
     rawParams: unknown,
     t: EmailTranslator,
     locale: string,
     context?: EmailRenderContext,
+    tPrep?: TopicPrepTranslator,
   ) => RenderedTemplate;
   /** Optional: transform UI field values into API params (e.g. a seat select → an `isSelfSeat` boolean). */
   resolveParams?: (params: Record<string, string>) => TemplateParams;
@@ -144,18 +231,108 @@ function defineTemplate<P extends TemplateParams>(entry: {
    * send reproduce the live behaviour instead of a plausible-looking stand-in.
    */
   replyTo?: (params: P) => string;
+  /**
+   * Files this mail carries, for the rare template whose content is not only
+   * the body. Declared beside `build` rather than returned from it because the
+   * two are different artifacts with different rules — the body is HTML a
+   * client renders, an attachment is bytes a client *acts on* — and because a
+   * builder that returned a pair would make every template that carries nothing
+   * say so.
+   */
+  attachments?: (
+    params: P,
+    t: EmailTranslator,
+    locale: string,
+    context: EmailRenderContext,
+  ) => RenderedAttachment[];
+  /**
+   * The plain-text body, for a template that states one. See
+   * `RenderedTemplate` for why one template must.
+   */
+  text?: (
+    params: P,
+    t: EmailTranslator,
+    locale: string,
+    context: EmailRenderContext,
+  ) => string | undefined;
   resolveParams?: TemplateDefinition["resolveParams"];
 }): TemplateDefinition {
-  const { schema, build, subject, replyTo, ...rest } = entry;
+  // The validated params are the resolution: a template with nothing to derive
+  // hands its own params to every part of the render.
+  return defineResolvedTemplate({ ...entry, resolve: (params: P) => params });
+}
+
+/**
+ * A template whose parts are built from something *derived* from the params,
+ * resolved exactly once per render.
+ *
+ * **The once is the whole reason this exists.** With four callbacks each doing
+ * their own derivation, a derivation that is not a pure function of the params
+ * — one that mints an identifier, say — produces a different answer in each of
+ * them, and the mail states one value while the file it carries states another.
+ * Nothing about that is visible from any one callback, which is what made it
+ * ship: each was correct on its own.
+ *
+ * Every template that has nothing to derive goes through the identity
+ * resolution above rather than through a second code path, so there is one
+ * render assembly and not two to keep in step.
+ */
+function defineResolvedTemplate<P extends TemplateParams, R>(entry: {
+  label: string;
+  fields: TemplateField[];
+  schema: z.ZodType<P>;
+  /**
+   * The resolution every part of the render reads. `tPrep` is the second
+   * translator described on `TemplateDefinition.render`, normalised to `null`
+   * where the caller gave none — a resolution is the one place a template that
+   * needs it can read it, since what it produces is spliced into the body and
+   * the text twin alike and must be composed exactly once.
+   */
+  resolve: (
+    params: P,
+    t: EmailTranslator,
+    locale: string,
+    context: EmailRenderContext,
+    tPrep: TopicPrepTranslator | null,
+  ) => R;
+  build: (resolved: R, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
+  subject: (resolved: R, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
+  /**
+   * `undefined` is a real answer, not an omission: a template can owe a text
+   * body only on the renders that carry a calendar part, and the signup
+   * confirmation is exactly that — it attaches one when the product has a
+   * schedule and sends the plain HTML mail when it does not.
+   */
+  text?: (
+    resolved: R,
+    t: EmailTranslator,
+    locale: string,
+    context: EmailRenderContext,
+  ) => string | undefined;
+  attachments?: (
+    resolved: R,
+    t: EmailTranslator,
+    locale: string,
+    context: EmailRenderContext,
+  ) => RenderedAttachment[];
+  replyTo?: (params: P) => string;
+  resolveParams?: TemplateDefinition["resolveParams"];
+}): TemplateDefinition {
+  const { schema, resolve, build, subject, text, replyTo, attachments, ...rest } = entry;
   return {
     ...rest,
     schema,
-    render: (rawParams, t, locale, context = { to: "send" }) => {
+    render: (rawParams, t, locale, context = { to: "send" }, tPrep) => {
       const params = schema.parse(rawParams);
+      const resolved = resolve(params, t, locale, context, tPrep ?? null);
+      const files = attachments?.(resolved, t, locale, context);
+      const plain = text?.(resolved, t, locale, context);
       return {
-        subject: subject(params, t, locale, context),
-        html: build(params, t, locale, context),
+        subject: subject(resolved, t, locale, context),
+        html: build(resolved, t, locale, context),
+        ...(plain !== undefined && { text: plain }),
         replyTo: replyTo?.(params) ?? SUPPORT_EMAIL,
+        ...(files?.length && { attachments: files }),
       };
     },
   };
@@ -176,6 +353,17 @@ const SEAT_OPTIONS = [
 ];
 
 /**
+ * The signup mail has a third reader the seat offer's form does not: the
+ * child's own copy, sent beside the parent's when the child holds a mailbox of
+ * their own. Second person like the self seat, minus everything only a parent
+ * can act on — so it is a select option here and a flag on the builder.
+ */
+const PRODUCT_CONFIRMATION_SEAT_OPTIONS = [
+  ...SEAT_OPTIONS,
+  { label: "The child's own copy (second person, no billing)", value: "gamer" },
+];
+
+/**
  * Both derived from their source tuples rather than hand-listed, so a new
  * product type from codegen — or a new confirmation mode — shows up in the
  * testing form without anyone remembering to add it. The labels are the raw
@@ -193,20 +381,264 @@ const PRODUCT_CONFIRMATION_MODE_OPTIONS = PRODUCT_CONFIRMATION_MODES.map((value)
 }));
 
 /**
+ * The zones a calendar document can be written in, default first.
+ *
+ * The product zones plus UTC, which is the calendar builder's own list — so a
+ * test send cannot ask for a zone the document would carry an unexplained note
+ * about. `DEFAULT_PRODUCT_TIMEZONE` leads because an untouched select posts its
+ * first option and that is the zone the great majority of products carry.
+ */
+const INVITATION_TIMEZONE_OPTIONS = [
+  DEFAULT_PRODUCT_TIMEZONE,
+  ...SUPPORTED_TIMEZONES.filter((zone) => zone !== DEFAULT_PRODUCT_TIMEZONE),
+].map((value) => ({ label: value, value }));
+
+/**
+ * Who the product is sold to, as the one word the overview card renders rather
+ * than as the two booleans behind it — a form offering both flags separately
+ * offers the neither-flag row the schema's CHECK refuses. Gamers-only leads
+ * because it is the audience every product had before audiences existed, and
+ * because it is the shape whose cell states an age range.
+ */
+const PRODUCT_AUDIENCE_OPTIONS = [
+  { label: "Gamers (an age range)", value: "gamers" },
+  { label: "Parents", value: "parents" },
+  { label: "Families (an audience and an age range)", value: "families" },
+];
+
+/**
+ * The topics a product can carry, under their brand labels — the one field that
+ * decides which "Before the first session" guide the mail states, and whether
+ * it states one at all.
+ *
+ * **Roblox Studio leads because an untouched select posts its first option**,
+ * and the guide is what this field exists to look at: Roblox Studio's is the
+ * longest of the seven and the one adapted from a real working document, so the
+ * form nobody has typed into composes the render with the most to read. The
+ * rest follow the catalogue's own order. A label-only topic is reachable one
+ * click away: it brings no steps of its own, so in person it composes the mail
+ * this template sent before the guide existed, and remotely it composes the
+ * one-step guide every remote product ends on.
+ */
+const PRODUCT_TOPIC_OPTIONS = [
+  "roblox_studio" as const,
+  ...PRODUCT_TOPIC_VALUES.filter((topic) => topic !== "roblox_studio"),
+].map((value) => ({
+  label: `${PRODUCT_TOPICS[value].label}${topicHasPrep(value) ? "" : " (no topic steps)"}`,
+  value,
+}));
+
+/** The spoken languages a product can be delivered in, from codegen. */
+const SPOKEN_LANGUAGE_OPTIONS = Constants.public.Enums.spoken_language.map(
+  (value) => ({ label: value, value }),
+);
+
+/**
  * The product-confirmation form's two derived values. The seat select becomes
  * the boolean the builder takes, defaulting to the child case — which is what an
  * unfilled field in the testing UI means, and what every seat was before
  * for-parents products existed. The price is cleared on the modes that state no
  * amount, so a test render of a free signup, a municipality registration or a
  * waitlist join carries no price at all, which is what the live mail carries.
+ *
+ * Everything the *invitation* needs stays a string here and is parsed by the
+ * template's own resolver below: this function runs in the browser with no
+ * translator and no clock, and a blank date means something the form cannot
+ * decide on its own.
  */
-function resolveProductConfirmation(params: Record<string, string>): TemplateParams {
+function resolveProductConfirmationParams(params: Record<string, string>): TemplateParams {
   const { seat, priceAmount, ...rest } = params;
-  const statesPrice = rest.mode === "subscription" || rest.mode === "upfront";
+  const gamerCopy = seat === "gamer";
+  // The child's copy states no price whatever the mode, exactly as the live
+  // send never reads one for it.
+  const statesPrice =
+    !gamerCopy && (rest.mode === "subscription" || rest.mode === "upfront");
   return {
     ...rest,
     isSelfSeat: seat === "self",
+    gamerCopy,
     priceAmount: statesPrice ? priceAmount : null,
+  };
+}
+
+/**
+ * Which sign-in the gamer holds. The mail only cares whether there is an inbox
+ * behind it — the note names the address in the one mode that has one — so the
+ * two modes that share an answer share an option, and the form's default is the
+ * one nearly every gamer is on.
+ */
+const FEEDBACK_GAMER_MAILBOX_OPTIONS = [
+  { label: "No email of their own (parent or username sign-in)", value: "none" },
+  { label: "Their own email (the email sign-in)", value: "own" },
+];
+
+/**
+ * The help-and-feedback form's two gamer-only fields. The parent's address is
+ * where a reply to a child's message goes, so an untouched text input posting
+ * its placeholder means "none" has to be typed as an empty field, which becomes
+ * null here; the sign-in select becomes the boolean the builder takes.
+ */
+function resolveFeedback(params: Record<string, string>): TemplateParams {
+  const { parentEmail, gamerMailbox, ...rest } = params;
+  return {
+    ...rest,
+    parentEmail: parentEmail.trim() || null,
+    gamerOwnMailbox: gamerMailbox === "own",
+  };
+}
+
+/**
+ * One typed schedule entry: `mon 16:00 60` — a weekday, a start time, and how
+ * many minutes the session runs, several of them separated by commas.
+ *
+ * The same shape the explorer's override lines take, for the same reason: the
+ * testing form's fields are single values, and a schedule is a list. **A
+ * product with no slots is a real state** — it is the one that sends the plain
+ * mail with no invitation at all — and it is stated with the `none` token
+ * rather than by clearing the field, because this is a text input and an
+ * untouched one posts its placeholder. That is deliberate: the untouched form
+ * composes an ordinary invitation, which is the document worth looking at, and
+ * the empty state stays one word away.
+ */
+function parseInvitationSlots(value: string): InvitationSlot[] {
+  if (isNoneToken(value)) return [];
+  return listEntries(value).map((line) => {
+    const parts = line.split(/\s+/);
+    if (parts.length !== 3) {
+      fail("Schedule", "a weekday, a start time and a duration in minutes", line);
+    }
+    const [weekday, startTime, duration] = parts;
+    return {
+      weekday: requireWeekday(weekday, "Schedule"),
+      startTime: requireTime(startTime, "Schedule"),
+      durationMinutes: requireWholeNumber(duration, "Schedule duration", 1),
+    };
+  });
+}
+
+/**
+ * The form's strings as the options the mail is built from, resolved once.
+ *
+ * `now` is the resolver's own — the live sends read the clock at the moment
+ * they compose, and so does a test send, because which occurrence a `DTSTART`
+ * lands on is a fact about when the mail was written. The composer itself never
+ * reads a clock; this is the one place the value enters.
+ */
+function resolveProductConfirmationOptions(
+  params: ProductConfirmationParams,
+  now: Date,
+): ProductConfirmationEmailOptions {
+  const startDate = optionalDate(params.startDate, "Start date");
+  const endDate = noneOrDate(params.endDate, "End date");
+  const slots = parseInvitationSlots(params.slots);
+  const isRemote = params.isRemote === "yes";
+  const siteName = params.siteName.trim() || null;
+  // The location as the page's own rule resolves it — the mail states "Where"
+  // in exactly the words the confirmation page does, so the shape it renders is
+  // that rule's output rather than a second reading of the same fields. The
+  // form has no parent-location field, so a test send shows a bare site.
+  const location = formatProductLocation(
+    {
+      is_remote: isRemote,
+      product_type: params.productType,
+      // `parent: null` is a real answer here, not a forgotten join: the form
+      // has one site field and no municipality field, so a test send shows a
+      // bare site by construction.
+      locations: siteName ? { name: siteName, name_i18n: null, parent: null } : null,
+    },
+    // The locale is inert: `name_i18n` is `null` on everything this form can
+    // build, so `localizedLocationName` falls through to the typed `name`
+    // whatever locale it is handed. A translated site name cannot reach here.
+    "en",
+  );
+  const ages = noneOrAgeRange(params.ageRange, "Age range");
+
+  return {
+    participantName: params.participantName,
+    isSelfSeat: params.isSelfSeat,
+    // The third reader the seat select offers. It is a flag on the builder
+    // rather than a template of its own, and it reaches the invitation too —
+    // the child's entry names them as its attendee.
+    gamerCopy: params.gamerCopy,
+    productName: params.productName,
+    productType: params.productType,
+    // The guide's two inputs. `isRemote` is the same form field the invitation
+    // and the "Where" line read, so one select decides the document a family is
+    // sent and which half of the guide they are shown — a form that could tell
+    // them to install a launcher for a session we bring the machines to would
+    // be a form whose mail contradicts itself.
+    topic: params.topic,
+    isRemote,
+    mode: params.mode,
+    priceAmount: params.priceAmount,
+    // Only a subscription ever states one, and the live send only knows the
+    // date on a club bought before it starts — so the token is what reaches
+    // the mail that states no billing line.
+    firstChargeDate: noneOrText(params.firstChargeDate),
+    dashboardUrl: params.dashboardUrl,
+    overview: {
+      timezone: params.timezone,
+      startDate,
+      endDate,
+      // The same schedule the invitation is composed from, in the column
+      // spelling the page's formatter reads. One list, two consumers: a form
+      // that could feed the words and the file different times would be a form
+      // whose mail and attachment disagree.
+      slots: slots.map((slot) => ({
+        weekday: slot.weekday,
+        start_time: slot.startTime,
+        duration_minutes: slot.durationMinutes,
+      })),
+      isRemote,
+      location,
+      minAge: ages?.min ?? null,
+      maxAge: ages?.max ?? null,
+      forGamers: params.audience !== "parents",
+      forParents: params.audience !== "gamers",
+      spokenLanguageCode: params.spokenLanguageCode,
+      now,
+    },
+    invitation: {
+      // Minted when the form names none, exactly as the explorer mints a UID:
+      // the identifier is a function of the seat, and a test send has no seat.
+      participationId:
+        params.participationId.trim() === ""
+          ? crypto.randomUUID()
+          : params.participationId.trim(),
+      participantName: params.participantName,
+      isSelfSeat: params.isSelfSeat,
+      gamerCopy: params.gamerCopy,
+      productName: params.productName,
+      productType: params.productType,
+      // The column is NOT NULL, but the product writers coalesce a missing
+      // description to an empty string, so a product with nothing to say here
+      // is an ordinary stored state — and the composer skips the paragraph for
+      // it. The token is what lets a test send reach that state, since an empty
+      // text input posts its placeholder.
+      shortDescription: noneOrText(params.shortDescription),
+      timezone: params.timezone,
+      startDate,
+      // Three more of the token fields, alongside the description above and the
+      // schedule below. Every one of them is a text input, so the absence is a
+      // typed word rather than a cleared box — see `FORM_NONE_TOKEN` for why an
+      // empty one cannot carry it.
+      endDate,
+      slots,
+      isRemote,
+      siteName,
+      siteAddress: noneOrText(params.siteAddress),
+      siteNote: noneOrText(params.siteNote),
+      attendeeName: params.attendeeName,
+      // Named for the *label* the admin is looking at, not for the property it
+      // becomes: the testing page shows a thrown message verbatim, and a
+      // refusal naming a field no form control carries sends them hunting.
+      attendeeEmail: requireEmail(params.attendeeEmail, "Attendee email"),
+      // The same link the mail's own button carries: the entry points a parent
+      // at My SOG, which resolves for every seat, rather than at a seat page
+      // that needs a group the seat may not have yet.
+      dashboardUrl: params.dashboardUrl,
+      now,
+    },
   };
 }
 
@@ -231,9 +663,14 @@ const SESSION_REPORT_SAMPLE_OPTIONS = SESSION_REPORT_SAMPLES.map((sample) => ({
   value: sample.id,
 }));
 
-/** Zones to format the mail in; the first is what the live send uses (the product's). */
+/**
+ * Zones to format the mail in. A live send uses the product's own zone, which
+ * an admin now picks per product — so the first entry is labelled as the
+ * default that zone starts at rather than as "the product's zone", which was
+ * true only while every product was pinned to Helsinki.
+ */
 const VIEWER_TIMEZONE_OPTIONS = [
-  { label: "Europe/Helsinki (the product's zone)", value: "Europe/Helsinki" },
+  { label: "Europe/Helsinki (the default product zone)", value: "Europe/Helsinki" },
   { label: "Europe/Stockholm", value: "Europe/Stockholm" },
   { label: "Europe/London", value: "Europe/London" },
   { label: "Europe/Paris", value: "Europe/Paris" },
@@ -241,24 +678,26 @@ const VIEWER_TIMEZONE_OPTIONS = [
 ];
 
 /**
- * Which of the two mails one send produces. The live route sends both — a
- * family's, and one copy to the sender with the admins in CC — and they differ
- * in three places, none of which is visible unless the testing UI can ask for
- * the other mail: the copy opens with the staff banner, it carries the GROUP's
+ * Which of the mails one send produces. The live route sends a family's mail,
+ * a copy to the child themselves when the child holds a mailbox of their own, and one copy to the sender with the admins in CC — and they
+ * differ in places none of which is visible unless the testing UI can ask for
+ * the other mail: the staff copy opens with the banner and carries the GROUP's
  * name where a family's mail carries the child's (so the intro reads as a
- * record of what the group was sent), and its button points at the sender's own
- * workspace rather than at a family's enrollment page.
+ * record of what the group was sent), the child's copy addresses its framing
+ * sentence to the child, and each button points at its reader's own surface —
+ * the family page, the child's page under `/gamer`, or the sender's workspace.
  *
- * The first two follow this select. The third stays the tester's to type: the
- * `productUrl` field is a family-page link, and a workspace URL cannot be
- * derived here — the live route picks between the gedu workspace and the admin
- * product page from the sender's role, which this form has no notion of. Change
- * it by hand when the link is what you are checking.
+ * The copy and the name follow this select. The link stays the tester's to
+ * type: the `productUrl` field is a family-page link, and neither the `/gamer`
+ * twin nor a workspace URL can be derived here — the live route picks the root
+ * from the recipient and the workspace from the sender's role, which this form
+ * has no notion of. Change it by hand when the link is what you are checking.
  */
-const SESSION_REPORT_COPIES = ["family", "staff"] as const;
+const SESSION_REPORT_COPIES = ["family", "gamer", "staff"] as const;
 
 const SESSION_REPORT_COPY_LABELS: Record<(typeof SESSION_REPORT_COPIES)[number], string> = {
   family: "The family mail (what a parent receives)",
+  gamer: "The child's own copy (a gamer in email mode)",
   staff: "The Gedu and Admin copy (sender, admins in CC)",
 };
 
@@ -303,6 +742,7 @@ function resolveSessionReport(
     // is a record of what the group was mailed, not one child's report.
     gamerName: staffCopy ? rest.groupName : rest.gamerName,
     staffCopy,
+    gamerCopy: copy === "gamer",
     sessionDate: formatDate(sample.startsAt, locale, {
       timeZone: viewerTimezone,
       dateStyle: "full",
@@ -319,11 +759,19 @@ const passwordResetParamsSchema = z.object({
   resetLink: z.string().url(),
 });
 
+/**
+ * The parent's address is nullable rather than optional for the same reason the
+ * session report's `copy` is required: an optional key's `undefined` does not
+ * fit the registry's param bag. It and the mailbox flag only mean anything on a
+ * gamer's message — the builder ignores both for every other role.
+ */
 const feedbackParamsSchema = z.object({
   userName: z.string().min(1),
   userRole: z.enum(Constants.public.Enums.user_role),
   userEmail: z.string().email(),
   message: z.string().min(1),
+  parentEmail: z.string().email().nullable(),
+  gamerOwnMailbox: z.boolean(),
 });
 
 const welcomeParentParamsSchema = z.object({
@@ -354,13 +802,56 @@ const productConfirmationParamsSchema = z.object({
   isSelfSeat: z.boolean(),
   productName: z.string().min(1),
   productType: z.enum(Constants.public.Enums.product_type),
+  /** Which "Before the first session" guide the mail states, if any. */
+  topic: z.enum(Constants.public.Enums.product_topic),
   mode: z.enum(PRODUCT_CONFIRMATION_MODES),
   priceAmount: z.string().nullable(),
   dashboardUrl: z.string().url(),
+  gamerCopy: z.boolean(),
+
+  // --- The "Good to know" facts the mail states, exactly as the page does. ---
+  //
+  // The schedule, the zone, the dates and the site are shared with the calendar
+  // block below rather than doubled: one form field feeds both, so a test send
+  // cannot make the words and the file disagree. These four are the facts the
+  // calendar has no use for.
+  firstChargeDate: z.string(),
+  ageRange: z.string(),
+  audience: z.enum(["gamers", "parents", "families"]),
+  spokenLanguageCode: z.enum(Constants.public.Enums.spoken_language),
+
+  // --- What the calendar invitation is composed from. ---
+  //
+  // Bare strings, like the explorer's, and parsed by the template's own
+  // resolver rather than here: that is where a blank means "omit" and where a
+  // malformed date earns a sentence naming the field. Duplicating the shapes as
+  // regexes would give one mistake two different messages depending on which
+  // layer caught it first.
+  participationId: z.string(),
+  attendeeName: z.string().min(1),
+  attendeeEmail: z.string(),
+  shortDescription: z.string(),
+  timezone: z.string().refine((zone) => SUPPORTED_TIMEZONES.includes(zone), {
+    message: "no VTIMEZONE is written for this zone",
+  }),
+  startDate: z.string(),
+  endDate: z.string(),
+  slots: z.string(),
+  isRemote: z.enum(FORM_YES_NO),
+  siteName: z.string(),
+  siteAddress: z.string(),
+  siteNote: z.string(),
 });
+
+type ProductConfirmationParams = z.infer<typeof productConfirmationParamsSchema>;
 
 const verifyEmailParamsSchema = z.object({
   firstName: z.string().min(1),
+  verificationUrl: z.string().url(),
+});
+
+const gamerWelcomeParamsSchema = z.object({
+  gamerFirstName: z.string().min(1),
   verificationUrl: z.string().url(),
 });
 
@@ -378,6 +869,18 @@ const seatOfferParamsSchema = z.object({
   deadline: z.string().min(1),
   acceptUrl: z.string().url(),
   declineUrl: z.string().url(),
+  dashboardUrl: z.string().url(),
+});
+
+/**
+ * The child's copy of a seat offer. No accept or decline URL, and no field
+ * that could carry one: the token is the parent's, and this schema is the
+ * mechanical half of the rule that it never reaches the child's mail.
+ */
+const seatOfferGamerParamsSchema = z.object({
+  gamerName: z.string().min(1),
+  productName: z.string().min(1),
+  deadline: z.string().min(1),
   dashboardUrl: z.string().url(),
 });
 
@@ -399,10 +902,14 @@ function resolveSeatOffer(params: Record<string, string>): TemplateParams {
   return { ...rest, isSelfSeat: seat === "self" };
 }
 
-/** An untouched text field posts its placeholder, so "none" has to be typed. */
+/**
+ * An untouched text field posts its placeholder, so the no-schedule variant is
+ * reached by typing the token — the same rule the confirmation's fields follow;
+ * see `FORM_NONE_TOKEN`.
+ */
 function resolveSeatOfferStaff(params: Record<string, string>): TemplateParams {
   const { productSchedule, ...rest } = params;
-  return { ...rest, productSchedule: productSchedule.trim() || null };
+  return { ...rest, productSchedule: noneOrText(productSchedule) };
 }
 
 const SEAT_OFFER_STAFF_REASON_LABELS: Record<
@@ -449,6 +956,429 @@ const sessionReportParamsSchema = z.object({
 
 type SessionReportParams = z.infer<typeof sessionReportParamsSchema>;
 
+// --- Calendar invite explorer: options, placeholders and schema ---
+
+/**
+ * A select whose values are already the tokens the document writes.
+ *
+ * `ROLE` and `PARTSTAT` are read straight off the calendar file, so the raw
+ * value is the clearest possible label: the person picking one is about to go
+ * looking for that exact string in the document beneath the form.
+ */
+function literalOptions(values: readonly string[]): { label: string; value: string }[] {
+  return values.map((value) => ({ label: value, value }));
+}
+
+/**
+ * A yes/no select with `first` as its default, because an untouched select
+ * posts its first option — so the order *is* the default, and these four fields
+ * do not all default the same way.
+ */
+function yesNoOptions(
+  first: (typeof CALENDAR_EXPLORER_YES_NO)[number],
+): { label: string; value: string }[] {
+  const rest = CALENDAR_EXPLORER_YES_NO.filter((value) => value !== first);
+  return [first, ...rest].map((value) => ({
+    label: value === "yes" ? "Yes" : "No",
+    value,
+  }));
+}
+
+const CALENDAR_EXPLORER_METHOD_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_METHODS)[number],
+  string
+> = {
+  request: "REQUEST — asks the reader to answer",
+  publish: "PUBLISH — states the entry, asks nothing",
+  cancel: "CANCEL — withdraws the entry",
+};
+
+const CALENDAR_EXPLORER_STATUS_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_STATUSES)[number],
+  string
+> = {
+  confirmed: "CONFIRMED",
+  tentative: "TENTATIVE",
+  cancelled: "CANCELLED",
+};
+
+const CALENDAR_EXPLORER_TIME_FORM_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_TIME_FORMS)[number],
+  string
+> = {
+  tzid: "Wall clock under a TZID — promises a clock face",
+  utc: "Absolute instant (…Z) — promises a moment",
+};
+
+const CALENDAR_EXPLORER_RECURRENCE_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_RECURRENCES)[number],
+  string
+> = {
+  none: "None — a single occurrence",
+  weekly: "Weekly rule (RRULE)",
+};
+
+const CALENDAR_EXPLORER_WEEKDAY_LABELS: Record<CalendarExplorerWeekdayPreset, string> = {
+  mon: "MO",
+  tue: "TU",
+  wed: "WE",
+  thu: "TH",
+  fri: "FR",
+  sat: "SA",
+  sun: "SU",
+  "mon-wed-fri": "MO,WE,FR",
+  "tue-thu": "TU,TH",
+  "mon-fri": "MO,TU,WE,TH,FR",
+  "sat-sun": "SA,SU",
+  "every-day": "Every day",
+};
+
+const CALENDAR_EXPLORER_ALARM_OFFSET_LABELS: Record<CalendarExplorerAlarmOffset, string> = {
+  none: "No alarm",
+  "0": "On the trigger point (0 minutes)",
+  "5": "5 minutes before",
+  "15": "15 minutes before",
+  "30": "30 minutes before",
+  "60": "60 minutes before (an hour)",
+  "120": "120 minutes before (two hours)",
+  "1440": "1440 minutes before (a day)",
+  "2880": "2880 minutes before (two days)",
+};
+
+const CALENDAR_EXPLORER_ALARM_ACTION_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_ALARM_ACTIONS)[number],
+  string
+> = {
+  display: "DISPLAY",
+  email: "EMAIL — carries a SUMMARY and an ATTENDEE",
+  audio: "AUDIO",
+};
+
+const CALENDAR_EXPLORER_ALARM_ANCHOR_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_ALARM_ANCHORS)[number],
+  string
+> = {
+  start: "Before the start",
+  end: "Before the end (RELATED=END)",
+};
+
+const CALENDAR_EXPLORER_SHOW_AS_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_SHOW_AS)[number],
+  string
+> = {
+  free: "TRANSPARENT — does not block the reader's time",
+  busy: "OPAQUE — blocks it",
+};
+
+/**
+ * One alarm's three selects, built the same way for all three alarms.
+ *
+ * The alarms are the one place the three clients are *known* to disagree and
+ * are kept anyway — Apple keeps what the organiser sent, Google replaces it
+ * with the reader's own defaults, Exchange keeps the first and drops the rest —
+ * because watching that happen is the point rather than a disqualification.
+ */
+function alarmFields(
+  index: 1 | 2 | 3,
+  defaultOffset: CalendarExplorerAlarmOffset,
+): TemplateField[] {
+  return [
+    {
+      key: `alert${index}Offset`,
+      label: `Alerts – Alarm ${index} offset`,
+      type: "select",
+      options: calendarExplorerAlarmOffsets(defaultOffset).map((value) => ({
+        label: CALENDAR_EXPLORER_ALARM_OFFSET_LABELS[value],
+        value,
+      })),
+    },
+    {
+      key: `alert${index}Action`,
+      label: `Alerts – Alarm ${index} ACTION`,
+      type: "select",
+      options: CALENDAR_EXPLORER_ALARM_ACTIONS.map((value) => ({
+        label: CALENDAR_EXPLORER_ALARM_ACTION_LABELS[value],
+        value,
+      })),
+    },
+    {
+      key: `alert${index}RelativeTo`,
+      label: `Alerts – Alarm ${index} TRIGGER relative to`,
+      type: "select",
+      options: CALENDAR_EXPLORER_ALARM_ANCHORS.map((value) => ({
+        label: CALENDAR_EXPLORER_ALARM_ANCHOR_LABELS[value],
+        value,
+      })),
+    },
+  ];
+}
+
+/**
+ * The explorer's form, grouped by what part of the document a field lands in.
+ *
+ * The page renders fields in the order this array gives them and has no notion
+ * of a group, so the group is carried in the label's own prefix — which is
+ * enough, because the fields of one group are adjacent and a reader scanning a
+ * column of labels is looking for the prefix rather than for a heading.
+ *
+ * **A text field with no placeholder is a field whose default is "omit".** An
+ * untouched text input posts its placeholder, so a blank placeholder is the
+ * only way a text field can default to absent — and the label says what it
+ * would write if it were filled in.
+ *
+ * **Every field is a property all three target clients honour.** Google
+ * Calendar, Apple Calendar and Outlook are the whole audience, and a knob one
+ * of them drops teaches nothing but its own absence — so this list is shorter
+ * than the format is, on purpose.
+ */
+const CALENDAR_EXPLORER_FIELDS: TemplateField[] = [
+  { key: "subject", label: "Mail – Subject", placeholder: CALENDAR_EXPLORER_TITLE },
+  {
+    key: "body",
+    label: "Mail – Body (empty sends the neutral default)",
+    type: "textarea",
+    placeholder: CALENDAR_EXPLORER_BODY,
+  },
+
+  {
+    key: "uid",
+    label: "Identity – UID (empty mints one per render; type one back for an update)",
+    placeholder: "",
+  },
+  { key: "sequence", label: "Identity – SEQUENCE", placeholder: "0" },
+  {
+    key: "method",
+    label: "Identity – METHOD",
+    type: "select",
+    options: CALENDAR_EXPLORER_METHODS.map((value) => ({
+      label: CALENDAR_EXPLORER_METHOD_LABELS[value],
+      value,
+    })),
+  },
+  {
+    key: "status",
+    label: "Identity – STATUS",
+    type: "select",
+    options: CALENDAR_EXPLORER_STATUSES.map((value) => ({
+      label: CALENDAR_EXPLORER_STATUS_LABELS[value],
+      value,
+    })),
+  },
+
+  {
+    key: "timezone",
+    label: "Time – TZID (each of these ships its own VTIMEZONE; UTC ships none)",
+    type: "select",
+    options: literalOptions(CALENDAR_EXPLORER_TIMEZONES),
+  },
+  {
+    key: "startDate",
+    label: "Time – DTSTART date",
+    // A getter, so the date is read when the field is read rather than when
+    // this module loads: the same registry is imported by the admin page and by
+    // the send route, and a value frozen at load would differ between the
+    // server's render and the browser's hydration of it.
+    get placeholder() {
+      return calendarInvitationStartDate();
+    },
+  },
+  { key: "startTime", label: "Time – DTSTART time", placeholder: "16:00" },
+  { key: "durationMinutes", label: "Time – DURATION (minutes)", placeholder: "120" },
+  {
+    key: "timeForm",
+    label: "Time – How the times are written",
+    type: "select",
+    options: CALENDAR_EXPLORER_TIME_FORMS.map((value) => ({
+      label: CALENDAR_EXPLORER_TIME_FORM_LABELS[value],
+      value,
+    })),
+  },
+  {
+    key: "allDay",
+    label: "Time – All day (DATE-valued DTSTART and DTEND, no zone at all)",
+    type: "select",
+    options: yesNoOptions("no"),
+  },
+
+  {
+    key: "recurrence",
+    label: "Recurrence – Shape",
+    type: "select",
+    options: CALENDAR_EXPLORER_RECURRENCES.map((value) => ({
+      label: CALENDAR_EXPLORER_RECURRENCE_LABELS[value],
+      value,
+    })),
+  },
+  {
+    key: "weekdays",
+    label: "Recurrence – BYDAY",
+    type: "select",
+    options: CALENDAR_EXPLORER_WEEKDAY_PRESETS.map((value) => ({
+      label: CALENDAR_EXPLORER_WEEKDAY_LABELS[value],
+      value,
+    })),
+  },
+  { key: "until", label: "Recurrence – UNTIL date (empty for none)", placeholder: "" },
+  {
+    key: "count",
+    // RFC 5545 forbids stating both, so one has to win, and it is this one: a
+    // reader who typed a number of occurrences meant that number.
+    label: "Recurrence – COUNT (empty for none; wins over UNTIL when both are set)",
+    placeholder: "",
+  },
+  { key: "interval", label: "Recurrence – INTERVAL (weeks)", placeholder: "1" },
+  {
+    key: "excludedDates",
+    label: "Recurrence – EXDATE, one YYYY-MM-DD per line (written at the start time)",
+    type: "textarea",
+    // Read-time, for the reason the start date's own getter states.
+    get placeholder() {
+      return calendarInvitationUntilDate();
+    },
+  },
+  {
+    key: "overrides",
+    // The mechanism a mixed-time product needs and the one a single moved
+    // session needs are the same: an occurrence that happens at another clock
+    // face becomes its own VEVENT under the same UID, naming the occurrence it
+    // replaces. A rule states one clock face, so a club that meets Monday at
+    // 16:00 and Wednesday at 14:00 cannot be stated without this.
+    label:
+      "Recurrence – Overrides, one YYYY-MM-DD HH:MM [minutes] per line (the weekly rule only)",
+    type: "textarea",
+    // Read-time, for the reason the start date's own getter states.
+    get placeholder() {
+      return `${calendarInvitationUntilDate()} 14:00 90`;
+    },
+  },
+
+  { key: "organizerName", label: "People – ORGANIZER name", placeholder: SENDER_NAME },
+  { key: "organizerEmail", label: "People – ORGANIZER email", placeholder: SENDER_EMAIL },
+  { key: "attendeeName", label: "People – ATTENDEE name", placeholder: "Attendee" },
+  {
+    key: "attendeeEmail",
+    // A client decides whether to show the RSVP by matching the attendee
+    // against the mailbox it is reading, so a send whose attendee is somebody
+    // else renders as somebody else's invitation.
+    label: "People – ATTENDEE email (use the address you send to)",
+    placeholder: "attendee@example.com",
+  },
+  { key: "rsvp", label: "People – RSVP", type: "select", options: yesNoOptions("yes") },
+  {
+    key: "attendeeRole",
+    label: "People – ROLE",
+    type: "select",
+    options: literalOptions(CALENDAR_EXPLORER_ROLES),
+  },
+  {
+    key: "partstat",
+    label: "People – PARTSTAT",
+    type: "select",
+    options: literalOptions(CALENDAR_EXPLORER_PARTSTATS),
+  },
+  {
+    key: "includeAttendee",
+    label: "People – Write an ATTENDEE at all (a PUBLISH normally does not)",
+    type: "select",
+    options: yesNoOptions("yes"),
+  },
+
+  { key: "summary", label: "Content – SUMMARY", placeholder: CALENDAR_EXPLORER_TITLE },
+  {
+    key: "description",
+    label: "Content – DESCRIPTION (empty omits it)",
+    type: "textarea",
+    placeholder: "A baseline invitation. Change one field, send it again, and compare.",
+  },
+  { key: "location", label: "Content – LOCATION (empty omits it)", placeholder: "Helsinki, Finland" },
+  { key: "url", label: "Content – URL (empty omits it)", placeholder: "" },
+
+  // Three alarms, because the order they are written in is a real property: an
+  // Exchange mailbox keeps exactly one per item and keeps the first.
+  ...alarmFields(1, "15"),
+  ...alarmFields(2, "1440"),
+  ...alarmFields(3, "none"),
+
+  {
+    key: "showAs",
+    label: "Behaviour – TRANSP",
+    type: "select",
+    options: CALENDAR_EXPLORER_SHOW_AS.map((value) => ({
+      label: CALENDAR_EXPLORER_SHOW_AS_LABELS[value],
+      value,
+    })),
+  },
+];
+
+/**
+ * The wire shape, and only the wire shape.
+ *
+ * Every free-form field is a bare string here and is parsed by the template's
+ * own resolver, which is where a blank means "omit" and where a malformed date
+ * earns a sentence naming the field. Duplicating the shapes as regexes would
+ * give the same mistake two different error messages depending on which layer
+ * caught it first.
+ */
+const calendarInvitationParamsSchema = z.object({
+  subject: z.string().min(1),
+  body: z.string(),
+
+  uid: z.string(),
+  sequence: z.string(),
+  method: z.enum(CALENDAR_EXPLORER_METHODS),
+  status: z.enum(CALENDAR_EXPLORER_STATUSES),
+
+  timezone: z
+    .string()
+    .refine((zone) => CALENDAR_EXPLORER_TIMEZONES.includes(zone), {
+      message: "no VTIMEZONE is written for this zone",
+    }),
+  startDate: z.string(),
+  startTime: z.string(),
+  durationMinutes: z.string(),
+  timeForm: z.enum(CALENDAR_EXPLORER_TIME_FORMS),
+  allDay: z.enum(CALENDAR_EXPLORER_YES_NO),
+
+  recurrence: z.enum(CALENDAR_EXPLORER_RECURRENCES),
+  weekdays: z.enum(CALENDAR_EXPLORER_WEEKDAY_PRESETS),
+  until: z.string(),
+  count: z.string(),
+  interval: z.string(),
+  excludedDates: z.string(),
+  overrides: z.string(),
+
+  organizerName: z.string().min(1),
+  organizerEmail: z.string(),
+  attendeeName: z.string().min(1),
+  attendeeEmail: z.string(),
+  rsvp: z.enum(CALENDAR_EXPLORER_YES_NO),
+  attendeeRole: z.enum(CALENDAR_EXPLORER_ROLES),
+  partstat: z.enum(CALENDAR_EXPLORER_PARTSTATS),
+  includeAttendee: z.enum(CALENDAR_EXPLORER_YES_NO),
+
+  // Whitespace is refused as well as emptiness, because the two arrive at the
+  // same place: `SUMMARY` is the only line a client has to name the entry by,
+  // and a value of three spaces writes one every calendar shows as untitled.
+  summary: z.string().refine((value) => value.trim() !== "", {
+    message: "a SUMMARY of nothing but whitespace writes an entry no client can name",
+  }),
+  description: z.string(),
+  location: z.string(),
+  url: z.string(),
+
+  alert1Offset: z.enum(CALENDAR_EXPLORER_ALARM_OFFSETS),
+  alert1Action: z.enum(CALENDAR_EXPLORER_ALARM_ACTIONS),
+  alert1RelativeTo: z.enum(CALENDAR_EXPLORER_ALARM_ANCHORS),
+  alert2Offset: z.enum(CALENDAR_EXPLORER_ALARM_OFFSETS),
+  alert2Action: z.enum(CALENDAR_EXPLORER_ALARM_ACTIONS),
+  alert2RelativeTo: z.enum(CALENDAR_EXPLORER_ALARM_ANCHORS),
+  alert3Offset: z.enum(CALENDAR_EXPLORER_ALARM_OFFSETS),
+  alert3Action: z.enum(CALENDAR_EXPLORER_ALARM_ACTIONS),
+  alert3RelativeTo: z.enum(CALENDAR_EXPLORER_ALARM_ANCHORS),
+
+  showAs: z.enum(CALENDAR_EXPLORER_SHOW_AS),
+});
+
 // --- Single source of truth for all email templates ---
 
 export const templateRegistry: Record<string, TemplateDefinition> = {
@@ -458,11 +1388,17 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
    * what it is for: whoever opens this page to test a template should meet the
    * house style before they meet their own mail.
    *
-   * It takes no params and ignores the locale for its own copy (see the builder
-   * for why it is the one untranslated one). A registry entry rather than a
-   * page because it has to be *sent* to be worth anything — a reference for
-   * email that can only be viewed in a browser is describing a rendering nobody
-   * receives.
+   * **The one entry that takes no params at all**: a specimen sheet has nothing
+   * to be told, so the form under it is empty and the fixture that renders it
+   * is `{}`. Its copy is literal English rather than translated, which is the
+   * call `fixtures/` makes too — developer-facing instrumentation whose strings
+   * are component names and hex values (see the builder). The calendar explorer
+   * is untranslated for the opposite reason: it has no copy of its own to
+   * translate, because both of its strings are typed into the form.
+   *
+   * A registry entry rather than a page because it has to be *sent* to be worth
+   * anything — a reference for email that can only be viewed in a browser is
+   * describing a rendering nobody receives.
    */
   componentsReference: defineTemplate({
     label: "Email components (reference)",
@@ -498,22 +1434,45 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
           { label: "Admin", value: "admin" },
         ],
       },
-      { key: "userEmail", label: "User Email", placeholder: "marja@example.com" },
+      // The sender's OWN address, not necessarily where a reply goes: for a
+      // gamer that is the parent's, and the mail resolves which is which.
+      { key: "userEmail", label: "Sender's own email", placeholder: "marja@example.com" },
       // An untouched text input posts its placeholder, so this is what a test
       // send actually carries — a help request rather than a compliment, since
       // that is the half of the form the mail's copy was rewritten for.
       { key: "message", label: "Message", placeholder: "How do I move my child to a different club?" },
+      // The gamer case's two fields. The address posts its placeholder
+      // untouched, so clear it to render the mail as it goes for every other
+      // role; the select's first option is the default and means "no inbox".
+      { key: "parentEmail", label: "Parent email (gamer only, empty for none)", placeholder: "marja@example.com" },
+      {
+        key: "gamerMailbox",
+        label: "Gamer's sign-in (gamer only)",
+        type: "select",
+        options: FEEDBACK_GAMER_MAILBOX_OPTIONS,
+      },
     ],
     schema: feedbackParamsSchema,
     build: (p, t, locale) => buildFeedbackEmail(t, locale, {
-      ...p,
+      userName: p.userName,
+      userRole: p.userRole,
+      userEmail: p.userEmail,
+      message: p.message,
       sentAt: new Date().toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" }),
+      isGamer: p.userRole === "gamer",
+      parentEmail: p.parentEmail ?? undefined,
+      gamerOwnMailbox: p.gamerOwnMailbox,
     }),
     subject: (p, t) => t("feedback.subject", { displayName: p.userName, role: t(ROLE_LABEL_KEYS[p.userRole]) }),
-    // The live route resolves the reply-to first and passes it in as
-    // `userEmail` (a gamer's resolves to their linked parent's), so this param
-    // already *is* the address the real mail replies to.
-    replyTo: (p) => p.userEmail,
+    resolveParams: resolveFeedback,
+    // The same resolver the mail's own "Reply to" row reads, so a test send
+    // replies exactly where the live one does — a gamer's to their linked
+    // parent, everyone else's to themselves.
+    replyTo: (p) => feedbackReplyToAddress({
+      isGamer: p.userRole === "gamer",
+      parentEmail: p.parentEmail ?? undefined,
+      userEmail: p.userEmail,
+    }),
   }),
   welcomeParent: defineTemplate({
     label: "Welcome (Parent)",
@@ -540,23 +1499,180 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     build: (p, t, locale) => buildWelcomeGeduEmail(t, locale, p),
     subject: (_p, t) => t("welcomeGedu.subject"),
   }),
-  productConfirmation: defineTemplate({
+  /**
+   * The signup mail — and the second template in this registry that carries a
+   * file.
+   *
+   * **Its fields are two forms in one, and the split is worth reading.** The
+   * first seven describe the *signup*: who took a seat, on what, and what it
+   * cost. The rest describe the *product's schedule*, because that is what the
+   * attached `invite.ics` is composed from — a live send reads every one of
+   * them off the product row, and here they are typed so the document can be
+   * previewed and sent without a product existing.
+   *
+   * **The untouched form composes an ordinary invitation**, and that is the
+   * point of it: every calendar field is a text input, an untouched text input
+   * posts its placeholder, so a form nobody has typed into sends the mail with
+   * a schedule, a site, a note and a description in it — the render with the
+   * most to look at. The mail this template sent *before* the invitation
+   * existed — no session-times section, no attachment, no text body — is one
+   * word away: type `none` into the schedule field. Five fields take that
+   * token — the schedule, the end date, the site address, the site note and
+   * the short description — because a cleared text input posts its placeholder
+   * and so can never mean "none"; see `FORM_NONE_TOKEN`.
+   */
+  productConfirmation: defineResolvedTemplate({
     label: "Product Confirmation",
     fields: [
       { key: "participantName", label: "Participant Name", placeholder: "Aino" },
-      { key: "seat", label: "Whose seat", type: "select", options: SEAT_OPTIONS },
+      { key: "seat", label: "Whose seat, or whose copy", type: "select", options: PRODUCT_CONFIRMATION_SEAT_OPTIONS },
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
       { key: "productType", label: "Product Type", type: "select", options: PRODUCT_TYPE_OPTIONS },
+      {
+        // The guide's topic. Its other input is the "Runs online" select
+        // further down, which the invitation and the "Where" line already read:
+        // in person we bring the machines, so a guide read there is its
+        // accounts-only form and one topic's is nothing at all.
+        key: "topic",
+        label: "Topic (the “Before the first session” guide)",
+        type: "select",
+        options: PRODUCT_TOPIC_OPTIONS,
+      },
       { key: "mode", label: "Outcome", type: "select", options: PRODUCT_CONFIRMATION_MODE_OPTIONS },
       { key: "priceAmount", label: "Formatted Price", placeholder: "€40.00" },
+      {
+        key: "firstChargeDate",
+        label: `Formatted first-charge date (\`${FORM_NONE_TOKEN}\` for a signup billed at checkout)`,
+        // What the live send composes for `en` through the shared first-charge
+        // rule: a club bought before it starts renders that bare start date.
+        placeholder: "13 Jan 2027",
+      },
       { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/parent" },
+
+      {
+        key: "ageRange",
+        label: `Good to know – Age range, \`8-12\` (\`${FORM_NONE_TOKEN}\` for a product with none)`,
+        placeholder: "8-12",
+      },
+      {
+        key: "audience",
+        label: "Good to know – Who the product is for",
+        type: "select",
+        options: PRODUCT_AUDIENCE_OPTIONS,
+      },
+      {
+        key: "spokenLanguageCode",
+        label: "Good to know – Spoken language",
+        type: "select",
+        options: SPOKEN_LANGUAGE_OPTIONS,
+      },
+
+      {
+        key: "slots",
+        label: `Invite – Schedule, comma-separated \`mon 16:00 60\` entries (\`${FORM_NONE_TOKEN}\` sends the mail with no invitation)`,
+        placeholder: "mon 16:00 60, wed 16:00 60",
+      },
+      {
+        key: "timezone",
+        label: "Invite – The product's own timezone",
+        type: "select",
+        options: INVITATION_TIMEZONE_OPTIONS,
+      },
+      {
+        key: "startDate",
+        label: "Invite – Product start date",
+        // A getter, so the suggestion is read when the field is read rather
+        // than when this module loads: the registry is imported by the admin
+        // page and by the send route, and a value frozen at load would differ
+        // between the server's render and the browser's hydration of it. A
+        // start date in the past would also compose an invitation with nothing
+        // ahead of it, which is not the document worth looking at.
+        get placeholder() {
+          return calendarInvitationStartDate();
+        },
+      },
+      {
+        key: "endDate",
+        label: `Invite – Product end date (\`${FORM_NONE_TOKEN}\` for an open-ended club)`,
+        get placeholder() {
+          return calendarInvitationUntilDate();
+        },
+      },
+      {
+        key: "isRemote",
+        label: "Invite – Runs online",
+        type: "select",
+        // "No" first, so the untouched form composes the in-person document —
+        // the one with a site, an address and a note in it, which is the case
+        // with more to look at.
+        options: yesNoOptions("no"),
+      },
+      { key: "siteName", label: "Invite – Site name", placeholder: "Kallion kirjasto" },
+      {
+        key: "siteAddress",
+        label: `Invite – Site address (\`${FORM_NONE_TOKEN}\` for none)`,
+        placeholder: "Viides linja 11, 00530 Helsinki",
+      },
+      {
+        // A text input rather than a textarea for the same reason "no" leads
+        // the online select above: the untouched form composes the site with a
+        // note in it, which is the case with more to look at.
+        key: "siteNote",
+        label: `Invite – Public site note (\`${FORM_NONE_TOKEN}\` for none)`,
+        placeholder: "The door on the north side. Ring the bell marked School of Gaming.",
+      },
+      {
+        key: "shortDescription",
+        label: `Invite – The product's short description (\`${FORM_NONE_TOKEN}\` for a product left without one)`,
+        placeholder: "Build, explore and survive together in a private world.",
+      },
+      {
+        key: "participationId",
+        label: "Invite – Participation id (empty mints one per render)",
+        placeholder: "",
+      },
+      {
+        // The labels say *the reader*, not *the parent*, and they explain
+        // themselves: a client offers the RSVP only when the attendee matches
+        // the mailbox it is reading, so a document is composed per recipient and
+        // names whoever received it. The parent's copy names the parent; the
+        // child's copy — the third seat option above — names the child. Sending
+        // the child's copy with the parent's address in these fields renders a
+        // document the child could not answer, which is the mistake the label
+        // is here to prevent.
+        key: "attendeeName",
+        label:
+          "Invite – Attendee name (this copy's own reader: a client shows RSVP only when the attendee matches the mailbox reading it)",
+        placeholder: "Marja Virtanen",
+      },
+      {
+        key: "attendeeEmail",
+        label: "Invite – Attendee email (this copy's own reader; use the address you send to)",
+        placeholder: "marja@example.com",
+      },
     ],
     schema: productConfirmationParamsSchema,
-    build: (p, t, locale) => buildProductConfirmationEmail(t, locale, p),
+    // One resolution per render: the schedule is composed once and the body,
+    // the text twin and the attached file all read that one composition.
+    resolve: (p, t, locale, _context, tPrep) =>
+      resolveProductConfirmation(
+        t,
+        // The guide's own translator, or none. A caller that loaded only the
+        // `email` one composes the mail without the guide rather than failing:
+        // it is a section this mail carries, not a section it is made of.
+        tPrep,
+        locale,
+        resolveProductConfirmationOptions(p, new Date()),
+      ),
+    build: (content, t, locale) => buildProductConfirmationEmail(t, locale, content),
     // Shared with the live sends rather than restated here — see the function's
     // own note for what the subject has to agree with.
-    subject: (p, t) => productConfirmationSubject(t, p),
-    resolveParams: resolveProductConfirmation,
+    subject: (content, t) => productConfirmationSubject(t, content),
+    // Stated only on the renders that carry a calendar part, which is where
+    // Exchange reads the entry's notes from.
+    text: (content, t) => productConfirmationText(t, content),
+    attachments: (content) => productConfirmationAttachments(content),
+    resolveParams: resolveProductConfirmationParams,
   }),
   verifyEmail: defineTemplate({
     label: "Verify Email",
@@ -614,7 +1730,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
       {
         key: "productSchedule",
-        label: "Schedule line (empty for none)",
+        label: `Schedule line (\`${FORM_NONE_TOKEN}\` for none)`,
         placeholder: "Tue 16:00, Thu 16:00 (Europe/Helsinki)",
       },
       {
@@ -669,5 +1785,75 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       buildSessionReportEmail(t, locale, resolveSessionReport(p, locale, context)),
     subject: (p, t, locale, context) =>
       sessionReportSubject(t, resolveSessionReport(p, locale, context)),
+  }),
+  gamerWelcome: defineTemplate({
+    label: "Welcome (Gamer)",
+    fields: [
+      { key: "gamerFirstName", label: "Gamer First Name", placeholder: "Aino" },
+      {
+        key: "verificationUrl",
+        label: "Verification URL",
+        placeholder: "https://sogverse.sog.gg/verify-email?token=abc123",
+      },
+    ],
+    schema: gamerWelcomeParamsSchema,
+    build: (p, t, locale) => buildGamerWelcomeEmail(t, locale, p),
+    subject: (_p, t) => t("gamerWelcome.subject"),
+  }),
+  /**
+   * The child's copy of a seat offer — its own entry rather than a select on
+   * the parent's, because it takes a different, smaller param set: no accept
+   * or decline URL exists for it to carry, which is the point of the variant.
+   */
+  seatOfferGamer: defineTemplate({
+    label: "Seat Offer (Gamer's own copy)",
+    fields: [
+      { key: "gamerName", label: "Gamer Name", placeholder: "Aino" },
+      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
+      {
+        key: "deadline",
+        label: "Deadline (formatted)",
+        // The same string the parent's mail states — one deadline, two readers.
+        placeholder: "Monday, August 31 at 14:20 GMT+3",
+      },
+      { key: "dashboardUrl", label: "My SOG URL (gamer root)", placeholder: "https://sogverse.sog.gg/gamer" },
+    ],
+    schema: seatOfferGamerParamsSchema,
+    build: (p, t, locale) => buildSeatOfferGamerEmail(t, locale, p),
+    subject: (p, t) => seatOfferGamerSubject(t, p),
+  }),
+  /**
+   * The one template that carries a file, and the reason the registry can carry
+   * one at all.
+   *
+   * **It explores the format rather than stating a product.** What is being
+   * tried is not our wording but what a calendar client *does* with an
+   * `invite.ics` — which properties it renders, which it drops, which it
+   * rewrites — so every property all three clients honour is a field, with
+   * defaults that compose an unremarkable baseline invitation. The form is
+   * therefore shorter than the format is: the RFC 7986 additions and the rest
+   * of what was tried are gone on purpose, because a knob one client drops
+   * teaches nothing but its own absence. The way to use it is one send at a
+   * time: send the baseline, change one field, send it again, and compare what
+   * each client made of the two.
+   *
+   * A thread is two or three sends: leave the identifier alone for the first,
+   * then type it back in with a higher revision number for the update and the
+   * cancellation.
+   */
+  calendarInvitation: defineResolvedTemplate({
+    label: "Calendar invite explorer",
+    fields: CALENDAR_EXPLORER_FIELDS,
+    schema: calendarInvitationParamsSchema,
+    // One resolution per render, threaded through every part: the identifier is
+    // minted here, and the file and the copy the admin reads back after a send
+    // both state the same one.
+    resolve: (p) => resolveCalendarInvitation(p),
+    build: (content, t, locale) => buildCalendarInvitationEmail(t, locale, content),
+    subject: (content) => calendarInvitationSubject(content),
+    // The one template that states a text body, because a mail carrying a
+    // calendar part is where Exchange reads the entry's notes from.
+    text: (content) => calendarInvitationText(content),
+    attachments: (content) => [calendarInvitationAttachment(content)],
   }),
 };

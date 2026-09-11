@@ -4,7 +4,6 @@ import {
   type ProductWhereSource,
 } from "@/components/admin/products/product-where-line";
 import {
-  filterProductsBySearch,
   matchesProductSearch,
   normalizeProductSearch,
 } from "@/components/admin/products/product-name-search";
@@ -150,20 +149,17 @@ describe("product name search", () => {
     expect(rows.every((row) => matchesProductSearch(row, ""))).toBe(true);
   });
 
-  it("leaves the list untouched, and in order, for a blank query", () => {
-    expect(filterProductsBySearch(rows, "  ")).toEqual(rows);
-  });
-
-  it("keeps the original order of the rows that match", () => {
-    expect(filterProductsBySearch(rows, "C").map((row) => row.id)).toEqual([
-      "a",
-      "b",
-    ]);
+  it("matches nothing typed as a blank query", () => {
+    const needle = normalizeProductSearch("  ");
+    expect(rows.filter((row) => matchesProductSearch(row, needle))).toEqual(
+      rows,
+    );
   });
 
   it("drops a product with no translated name at all", () => {
-    expect(filterProductsBySearch(rows, "club").map((row) => row.id)).toEqual([
-      "a",
-    ]);
+    const needle = normalizeProductSearch("club");
+    expect(
+      rows.filter((row) => matchesProductSearch(row, needle)).map((r) => r.id),
+    ).toEqual(["a"]);
   });
 });

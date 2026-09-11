@@ -176,18 +176,9 @@ export function formatDateRange(
 }
 
 
-export function generateGamerEmail(username: string): string {
-  return `${username.toLowerCase()}@gamer.sogverse.internal`;
-}
-
-export function extractUsernameFromGamerEmail(email: string): string | null {
-  const match = email.match(/^(.+)@gamer\.sogverse\.internal$/);
-  return match ? match[1] : null;
-}
-
-export function isGamerEmail(email: string): boolean {
-  return email.endsWith("@gamer.sogverse.internal");
-}
+// The gamer synthetic-address helpers used to live here. They are now in
+// src/lib/gamer-sign-in.ts, beside the sign-in modes that decide what an
+// address on a child's account actually is.
 
 /** Strip the leading '+' from an E.164 phone number for DB storage, or return null if empty. */
 export function toE164Digits(phone: string): string | null {

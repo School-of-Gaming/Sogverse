@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
  * where a default chip pushes the row into wrapping.
  */
 const personChipVariants = cva(
-  "inline-flex items-center rounded-full border border-border bg-muted",
+  "inline-flex items-center rounded-full border border-border bg-lifted",
   {
     variants: {
       size: {

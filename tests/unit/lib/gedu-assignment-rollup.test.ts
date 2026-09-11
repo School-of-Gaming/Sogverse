@@ -7,6 +7,7 @@ import {
 // two are exercised together here — the derivations' own boundaries are pinned
 // beside them, in the shared module's test.
 import { runEndedOn, runLiveness } from "@/lib/product-run";
+import { INERT_HREF } from "@/lib/constants/routes";
 
 /**
  * The roll-up is what replaced the dashboard's per-occurrence enumeration, so
@@ -68,7 +69,13 @@ function rollUp(
     now,
     locale: "en",
     hrefByProductId: Object.fromEntries(
-      rows.map((r) => [r.product.id, `/preview/gedu-product/${r.product.id}`]),
+      rows.map((r) => [
+        r.product.id,
+        {
+          pathname: "/preview/[surface]/[scenario]",
+          params: { surface: "gedu-product", scenario: r.product.id },
+        },
+      ]),
     ),
     ...extra,
   });
@@ -313,29 +320,46 @@ describe("rollUpGeduAssignments", () => {
     const summaries = rollUp(
       [row({ id: "p1", name: "Remote Club", isRemote: true })],
       now,
-      { voiceHrefByProductId: { p1: "/voice/group/p1-group" } },
+      {
+        voiceHrefByProductId: {
+          p1: { pathname: "/voice/group/[id]", params: { id: "p1-group" } },
+        },
+      },
     );
     expect(summaries[0].hasVoiceRoom).toBe(true);
-    expect(summaries[0].voiceHref).toBe("/voice/group/p1-group");
+    expect(summaries[0].voiceHref).toEqual({
+      pathname: "/voice/group/[id]",
+      params: { id: "p1-group" },
+    });
   });
 
   it("gives an in-person product an inert Join href", () => {
     const summaries = rollUp(
       [row({ id: "onsite", name: "Onsite Club", isRemote: false })],
       now,
-      { voiceHrefByProductId: { onsite: "/voice/group/onsite-group" } },
+      {
+        voiceHrefByProductId: {
+          onsite: {
+            pathname: "/voice/group/[id]",
+            params: { id: "onsite-group" },
+          },
+        },
+      },
     );
-    expect(summaries[0].voiceHref).toBe("#");
+    expect(summaries[0].voiceHref).toBe(INERT_HREF);
   });
 
   it("falls back to an inert Join href when the caller supplies none", () => {
     const summaries = rollUp([row({ id: "p1", name: "A" })], now);
-    expect(summaries[0].voiceHref).toBe("#");
+    expect(summaries[0].voiceHref).toBe(INERT_HREF);
   });
 
   it("uses the caller's per-product open href", () => {
     const summaries = rollUp([row({ id: "p1", name: "A" })], now);
-    expect(summaries[0].openHref).toBe("/preview/gedu-product/p1");
+    expect(summaries[0].openHref).toEqual({
+      pathname: "/preview/[surface]/[scenario]",
+      params: { surface: "gedu-product", scenario: "p1" },
+    });
   });
 
   /**

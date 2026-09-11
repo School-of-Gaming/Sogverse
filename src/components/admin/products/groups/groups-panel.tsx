@@ -18,15 +18,18 @@ import {
   useSendSeatOffer,
 } from "@/services/groups";
 import { useSeatOfferSweepOnMount } from "@/services/participations";
-import type { ProductAudience } from "@/components/public/products/product-audience";
+import type { ProductAudience } from "@/lib/products/product-audience";
 import { ParticipantPickerSheet } from "../participant-picker-sheet";
 import { GeduPickerSheet } from "../gedu-picker-sheet";
 import { GroupsPanelView, type GroupsPanelActions } from "./groups-panel-view";
-import { PRODUCT_TYPE_CONFIG } from "../product-type-config";
+import { SwitchClubSheet } from "./switch-club-sheet";
 import { robloxIdsFrom } from "./panel-rules";
 import { useRobloxRenders } from "@/services/roblox";
 import { platformForTopic } from "@/lib/products/topics";
+import { computeAge } from "@/lib/utils";
+import { useTimezone } from "@/providers";
 import type { BillingMode, ProductTopic, ProductType } from "@/types";
+import { ROUTES } from "@/lib/constants";
 
 interface GroupsPanelProps {
   productId: string;
@@ -97,6 +100,7 @@ export function GroupsPanel({
   opensTime,
 }: GroupsPanelProps) {
   const t = useTranslations("admin.products.groupsPanel");
+  const timeZone = useTimezone();
   const { data: snapshot, isLoading } = useProductGroups(productId);
   const pending = useGroupPending(productId);
 
@@ -121,6 +125,46 @@ export function GroupsPanel({
 
   const [pickerForGroupId, setPickerForGroupId] = useState<string | null>(null);
   const [participantPickerOpen, setParticipantPickerOpen] = useState(false);
+  // The seat whose club switch is open, and — separately — whether that switch
+  // is currently moving money. The sheet reports the second back rather than
+  // the panel inferring it: React Query's pending flag clears before the sheet
+  // closes, and a chip that un-greys a frame early is one an admin can start
+  // dragging mid-switch.
+  //
+  // The seat and the open flag are two pieces of state rather than one nullable
+  // id, because the sheet is always mounted and closes by animating out: the
+  // seat it was about has to stay readable for as long as the exit runs, so
+  // closing clears the flag and leaves the id where it is.
+  const [switchingId, setSwitchingId] = useState<string | null>(null);
+  const [switchOpen, setSwitchOpen] = useState(false);
+  const [switchCommitting, setSwitchCommitting] = useState(false);
+
+  // The seat the switch sheet is about, read off the same snapshot that drew
+  // its chip — so the sheet's age line and the chip are one fact. It outlives
+  // the close on purpose (see above), which is what keeps the gamer's name in
+  // the description from blanking mid-animation. Only active seats are
+  // searched: a waitlisted row never carries a subscription and never offers
+  // the control.
+  const switching = useMemo(() => {
+    if (!snapshot || switchingId === null) return null;
+    const active = [
+      ...snapshot.groups.flatMap((g) => g.participations),
+      ...snapshot.unassigned,
+    ];
+    const row = active.find((p) => p.id === switchingId);
+    if (!row) return null;
+    return {
+      id: row.id,
+      participantId: row.participant_id,
+      name: row.participant_first_name,
+      // Null on an adult seat, which carries no date of birth — the sheet then
+      // states the club's age range alone rather than beside a guessed age.
+      age:
+        row.participant_date_of_birth === null
+          ? null
+          : computeAge(row.participant_date_of_birth, timeZone),
+    };
+  }, [snapshot, switchingId, timeZone]);
 
   // Anyone already holding a seat blocks a re-add via the picker.
   const enrolledParticipantIds = useMemo(() => {
@@ -176,6 +220,10 @@ export function GroupsPanel({
     // looking exactly as it did and the admin has to be able to press again.
     onSendSeatOffer: (participationId) =>
       sendSeatOffer.mutateAsync({ participationId }),
+    onRequestSwitchClub: (participationId) => {
+      setSwitchingId(participationId);
+      setSwitchOpen(true);
+    },
   };
 
   const groupBeingStaffed = snapshot?.groups.find(
@@ -187,6 +235,7 @@ export function GroupsPanel({
       snapshot={snapshot}
       isLoading={isLoading}
       pending={pending}
+      switchingParticipationId={switchCommitting ? switchingId : null}
       productType={productType}
       billingMode={billingMode}
       topic={topic}
@@ -200,7 +249,7 @@ export function GroupsPanel({
       // Built from the type's own route slug, exactly as this page's other
       // admin links are: `/admin/<slug>/<product>/groups/<group>`.
       groupHref={(id) =>
-        `/admin/${PRODUCT_TYPE_CONFIG[productType].routeSlug}/${productId}/groups/${id}`
+        ROUTES.admin.productGroup(productType, productId, id)
       }
       actions={actions}
       overlays={
@@ -235,6 +284,29 @@ export function GroupsPanel({
               });
               setPickerForGroupId(null);
             }}
+          />
+
+          {/* The club switch. An overlay like the two pickers above it, and
+              here for the same reason: it reads reference data of its own
+              (every consumer club on the platform) and talks to Stripe, neither
+              of which the presentational panel knows anything about. Mounted
+              from the start and driven by `open`, exactly as they are — a sheet
+              mounted already open plays no enter animation and, unmounted on
+              close, no exit one either. */}
+          <SwitchClubSheet
+            open={switchOpen}
+            onOpenChange={(next) => {
+              if (!next) {
+                setSwitchOpen(false);
+                setSwitchCommitting(false);
+              }
+            }}
+            productId={productId}
+            participationId={switching?.id ?? ""}
+            participantId={switching?.participantId ?? ""}
+            gamerName={switching?.name ?? ""}
+            gamerAge={switching?.age ?? null}
+            onCommittingChange={setSwitchCommitting}
           />
         </>
       }

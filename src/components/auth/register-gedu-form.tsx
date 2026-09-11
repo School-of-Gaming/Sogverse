@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
-import { Info } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +22,7 @@ import { isValidPhoneNumber } from "react-phone-number-input";
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, SUPPORT_EMAIL } from "@/lib/constants";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
-import { useAuth, useReferralCode } from "@/providers";
+import { useAuth, useUtm } from "@/providers";
 import { readErrorMessage } from "@/lib/api/json-response";
 import type { SpokenLanguageCode } from "@/types";
 
@@ -54,7 +53,7 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
   // Educator capture is not for the Roblox programme — it is for knowing where
   // educators come from when SOG runs a recruitment campaign.
-  const referralCode = useReferralCode();
+  const utm = useUtm();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -123,11 +122,14 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
           locationIds,
           minecraftUsername: minecraftUsername ?? undefined,
           robloxUsername: robloxUsername ?? undefined,
-          // The route cannot read `x-referral-code` off its own request: the
-          // proxy derives that header from the query string of the request it is
-          // handling, and this POST carries no `?ref=`. So it travels in the
-          // body.
-          referralCode: referralCode ?? undefined,
+          // The route cannot read `x-utm` off its own request: the proxy derives
+          // that header from the query string of the request it is handling, and
+          // this POST carries no UTM params. So they travel in the body.
+          utm: {
+            source: utm.source ?? undefined,
+            medium: utm.medium ?? undefined,
+            campaign: utm.campaign ?? undefined,
+          },
         }),
       });
 
@@ -169,21 +171,24 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
         {/* The brand slogan for the people this page is addressed to, placed
             once and only here — lower and smaller than the title it sits
             under, which is the sanctioned shape for a slogan on a page. */}
-        <p className="text-center text-sm font-medium text-primary">
+        <p className="text-center text-sm font-medium text-act">
           {t("registerGedu.slogan")}
         </p>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <Alert variant="info">
-            <Info className="h-4 w-4 shrink-0" />
             <div>
-              <AlertTitle>{t("registerGedu.certificationAlertTitle")}</AlertTitle>
+              <AlertTitle sentence>
+                {t("registerGedu.certificationAlertTitle")}
+              </AlertTitle>
               <AlertDescription>{t("registerGedu.certificationAlertDescription")}</AlertDescription>
             </div>
           </Alert>
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={c("firstName")} htmlFor="firstName">
@@ -324,7 +329,7 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
             <div>
               {t.rich("registerGedu.alreadyHaveAccount", {
                 link: (chunks) => (
-                  <Link href={ROUTES.login} className="text-primary hover:underline">
+                  <Link href={ROUTES.login} className="text-act hover:underline">
                     {chunks}
                   </Link>
                 ),
@@ -334,7 +339,7 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
               {t.rich("needHelp", {
                 email: SUPPORT_EMAIL,
                 link: (chunks) => (
-                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary hover:underline">
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-act hover:underline">
                     {chunks}
                   </a>
                 ),

@@ -14,6 +14,9 @@ vi.mock("@/lib/auth", () => ({
 const mockAdminFrom = vi.fn();
 const mockAdminAuthAdmin = {
   updateUserById: vi.fn(),
+  // The identity re-read after an address move: `auth.identities.email` is a
+  // generated column, and the update's own payload reports it stale.
+  getUserById: vi.fn(),
 };
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
@@ -28,6 +31,11 @@ vi.mock("@/lib/supabase/admin", () => ({
 const mockLookupMinecraftUser = vi.fn();
 vi.mock("@/lib/mojang", () => ({
   lookupMinecraftUser: (...args: unknown[]) => mockLookupMinecraftUser(...args),
+}));
+
+const mockSendGamerWelcomeEmail = vi.fn();
+vi.mock("@/lib/gamer-welcome.server", () => ({
+  sendGamerWelcomeEmail: (...args: unknown[]) => mockSendGamerWelcomeEmail(...args),
 }));
 
 const mockLookupRobloxProfile = vi.fn();
@@ -57,6 +65,10 @@ function mockForbiddenRole() {
 }
 
 const mockSupabaseFrom = vi.fn();
+// The per-child verification-mail allowance, spent on the caller's own client:
+// the mode change into `email` sends the same mail the resend button does, so it
+// pays the same six-an-hour.
+const mockSupabaseRpc = vi.fn();
 
 // Real gamer ids are auth-user uuids, and the route validates the path
 // segment as one — so the fixtures are uuids too.
@@ -68,6 +80,7 @@ function mockAuthenticated(userId = "customer-123") {
     profile: { role: "customer" },
     supabase: {
       from: (...args: unknown[]) => mockSupabaseFrom(...args),
+      rpc: (...args: unknown[]) => mockSupabaseRpc(...args),
     },
   });
 }
@@ -99,6 +112,34 @@ function mockParentGamerLookup(found: boolean) {
   const eqParentMock = vi.fn().mockReturnValue({ eq: eqGamerMock });
   const selectMock = vi.fn().mockReturnValue({ eq: eqParentMock });
   mockSupabaseFrom.mockReturnValue({ select: selectMock });
+}
+
+/**
+ * The child's current sign-in mode, as the credential logic reads it, plus the
+ * update chain that writes a new one. `username` by default, because that is the
+ * mode a password may be set in and most of this file's credential cases are
+ * about passwords.
+ */
+let currentSignIn: "parent" | "username" | "email" = "username";
+const mockSignInUpdate = vi.fn();
+
+function gamerProfileTable() {
+  return {
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        single: vi
+          .fn()
+          .mockResolvedValue({ data: { sign_in: currentSignIn }, error: null }),
+        maybeSingle: vi
+          .fn()
+          .mockResolvedValue({ data: { sign_in: currentSignIn }, error: null }),
+      }),
+    }),
+    update: (...args: unknown[]) => {
+      mockSignInUpdate(...args);
+      return { eq: vi.fn().mockResolvedValue({ data: null, error: null }) };
+    },
+  };
 }
 
 /** Mock the admin profiles lookup for role verification */
@@ -157,7 +198,10 @@ function mockAdminSuccess(
   const fetch = mockProfileFetch(updatedProfile);
 
   let callCount = 0;
-  mockAdminFrom.mockImplementation(() => {
+  mockAdminFrom.mockImplementation((table: string) => {
+    // The sign-in mode lives on its own table and is read (and written)
+    // outside the `profiles` sequence the counts below describe.
+    if (table === "gamer_profiles") return gamerProfileTable();
     callCount++;
     if (callCount === 1) return roleCheck;
     if (callCount === 2) return update;
@@ -175,6 +219,21 @@ function mockAdminSuccess(
 describe("PATCH /api/gamers/[id]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    currentSignIn = "username";
+    // The allowance is there unless a test spends it.
+    mockSupabaseRpc.mockResolvedValue({ data: true, error: null });
+    // The identity re-read echoes whatever address the auth write carried, which
+    // is the honest default: a test that wants the trap asserts a stale one.
+    mockAdminAuthAdmin.getUserById.mockImplementation(() => {
+      const call = mockAdminAuthAdmin.updateUserById.mock.calls.find(
+        ([, payload]) => "email" in payload,
+      );
+      const email = call ? call[1].email : "moved@example.com";
+      return Promise.resolve({
+        data: { user: { identities: [{ identity_data: { email } }] } },
+        error: null,
+      });
+    });
   });
 
   // -- Auth & authorization --
@@ -221,15 +280,18 @@ describe("PATCH /api/gamers/[id]", () => {
     expect(data.error).toContain("between 2 and 32 characters");
   });
 
-  it("should return 400 when password is too short", async () => {
+  it("holds a child's password to the same bar as their parent's", async () => {
+    // The account policy is one rule, shared with parent registration: a child's
+    // credential guards the same kind of account, so a weaker bar here would be
+    // a decision nobody made. It used to be six characters here and eight there.
     mockAuthenticated();
 
-    const [req, ctx] = createRequest(GAMER_ID, { password: "12345" });
+    const [req, ctx] = createRequest(GAMER_ID, { password: "1234567" });
     const response = await PATCH(req, ctx);
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toContain("at least 6 characters");
+    expect(data.error).toContain("at least 8 characters");
   });
 
   // -- IDOR / parent-child verification --
@@ -298,7 +360,10 @@ describe("PATCH /api/gamers/[id]", () => {
     });
 
     let callCount = 0;
-    mockAdminFrom.mockImplementation(() => {
+    mockAdminFrom.mockImplementation((table: string) => {
+      // The sign-in mode lives on its own table and is read (and written)
+      // outside the `profiles` sequence the counts below describe.
+      if (table === "gamer_profiles") return gamerProfileTable();
       callCount++;
       if (callCount === 1) return roleCheck;
       return fetch;
@@ -309,7 +374,7 @@ describe("PATCH /api/gamers/[id]", () => {
       error: null,
     });
 
-    const [req, ctx] = createRequest(GAMER_ID, { password: "newpass123" });
+    const [req, ctx] = createRequest(GAMER_ID, { password: "newpassword123" });
     const response = await PATCH(req, ctx);
     const data = await response.json();
 
@@ -317,7 +382,7 @@ describe("PATCH /api/gamers/[id]", () => {
     expect(data.gamer.id).toBe(GAMER_ID);
     expect(mockAdminAuthAdmin.updateUserById).toHaveBeenCalledWith(
       GAMER_ID,
-      { password: "newpass123" },
+      { password: "newpassword123" },
     );
   });
 
@@ -332,7 +397,7 @@ describe("PATCH /api/gamers/[id]", () => {
 
     const [req, ctx] = createRequest(GAMER_ID, {
       firstName: "New Name",
-      password: "newpass123",
+      password: "newpassword123",
     });
     const response = await PATCH(req, ctx);
     const data = await response.json();
@@ -365,7 +430,10 @@ describe("PATCH /api/gamers/[id]", () => {
     });
 
     let callCount = 0;
-    mockAdminFrom.mockImplementation(() => {
+    mockAdminFrom.mockImplementation((table: string) => {
+      // The sign-in mode lives on its own table and is read (and written)
+      // outside the `profiles` sequence the counts below describe.
+      if (table === "gamer_profiles") return gamerProfileTable();
       callCount++;
       if (callCount === 1) return roleCheck;
       if (callCount === 2) return mcUpsert;
@@ -404,7 +472,10 @@ describe("PATCH /api/gamers/[id]", () => {
     });
 
     let callCount = 0;
-    mockAdminFrom.mockImplementation(() => {
+    mockAdminFrom.mockImplementation((table: string) => {
+      // The sign-in mode lives on its own table and is read (and written)
+      // outside the `profiles` sequence the counts below describe.
+      if (table === "gamer_profiles") return gamerProfileTable();
       callCount++;
       if (callCount === 1) return roleCheck;
       if (callCount === 2) return mcUpsert;
@@ -444,7 +515,10 @@ describe("PATCH /api/gamers/[id]", () => {
     });
 
     let callCount = 0;
-    mockAdminFrom.mockImplementation(() => {
+    mockAdminFrom.mockImplementation((table: string) => {
+      // The sign-in mode lives on its own table and is read (and written)
+      // outside the `profiles` sequence the counts below describe.
+      if (table === "gamer_profiles") return gamerProfileTable();
       callCount++;
       if (callCount === 1) return roleCheck;
       if (callCount === 2) return mcUpsert;
@@ -504,7 +578,10 @@ describe("PATCH /api/gamers/[id]", () => {
     });
 
     let callCount = 0;
-    mockAdminFrom.mockImplementation(() => {
+    mockAdminFrom.mockImplementation((table: string) => {
+      // The sign-in mode lives on its own table and is read (and written)
+      // outside the `profiles` sequence the counts below describe.
+      if (table === "gamer_profiles") return gamerProfileTable();
       callCount++;
       if (callCount === 1) return roleCheck;
       if (callCount === 2) return robloxUpsert;
@@ -546,7 +623,10 @@ describe("PATCH /api/gamers/[id]", () => {
     });
 
     let callCount = 0;
-    mockAdminFrom.mockImplementation(() => {
+    mockAdminFrom.mockImplementation((table: string) => {
+      // The sign-in mode lives on its own table and is read (and written)
+      // outside the `profiles` sequence the counts below describe.
+      if (table === "gamer_profiles") return gamerProfileTable();
       callCount++;
       if (callCount === 1) return roleCheck;
       if (callCount === 2) return robloxUpsert;
@@ -584,7 +664,10 @@ describe("PATCH /api/gamers/[id]", () => {
     });
 
     let callCount = 0;
-    mockAdminFrom.mockImplementation(() => {
+    mockAdminFrom.mockImplementation((table: string) => {
+      // The sign-in mode lives on its own table and is read (and written)
+      // outside the `profiles` sequence the counts below describe.
+      if (table === "gamer_profiles") return gamerProfileTable();
       callCount++;
       if (callCount === 1) return roleCheck;
       if (callCount === 2) return robloxUpsert;
@@ -637,7 +720,10 @@ describe("PATCH /api/gamers/[id]", () => {
         });
 
         let callCount = 0;
-        mockAdminFrom.mockImplementation(() => {
+        mockAdminFrom.mockImplementation((table: string) => {
+          // The sign-in mode lives on its own table and is read (and written)
+          // outside the `profiles` sequence the counts below describe.
+          if (table === "gamer_profiles") return gamerProfileTable();
           callCount++;
           if (callCount === 1) return roleCheck;
           if (callCount === 2) return accountUpsert;
@@ -694,7 +780,10 @@ describe("PATCH /api/gamers/[id]", () => {
     });
 
     let callCount = 0;
-    mockAdminFrom.mockImplementation(() => {
+    mockAdminFrom.mockImplementation((table: string) => {
+      // The sign-in mode lives on its own table and is read (and written)
+      // outside the `profiles` sequence the counts below describe.
+      if (table === "gamer_profiles") return gamerProfileTable();
       callCount++;
       if (callCount === 1) return roleCheck;
       if (callCount === 2) return robloxUpsert;
@@ -727,5 +816,546 @@ describe("PATCH /api/gamers/[id]", () => {
 
     expect(response.status).toBe(400);
     expect(mockLookupRobloxProfile).not.toHaveBeenCalled();
+  });
+
+  // -- Sign-in mode transitions --
+  //
+  // The account's *address* is what a sign-in mode is, so each destination
+  // rewrites `auth.users`, `profiles.email` and `gamer_profiles.sign_in`
+  // together. What differs is what goes in them — and, on two of the three, what
+  // happens to the password. Every case below asserts the trio.
+
+  describe("sign-in mode transitions", () => {
+    /**
+     * Admin dispatch for a credential change: the role check, then the
+     * `profiles.email` write, then the final fetch — with `gamer_profiles`
+     * answered out of band by the shared table mock.
+     */
+    function mockCredentialChange() {
+      const roleCheck = mockTargetProfile("gamer");
+      const emailUpdate = {
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      };
+      const finalFetch = mockProfileFetch({
+        id: GAMER_ID,
+        first_name: "Aino",
+        role: "gamer",
+      });
+
+      let profilesCall = 0;
+      mockAdminFrom.mockImplementation((table: string) => {
+        if (table === "gamer_profiles") return gamerProfileTable();
+        profilesCall++;
+        if (profilesCall === 1) return roleCheck;
+        // Whether the address moved decides how many `profiles` calls follow, so
+        // the rest of them answer both shapes rather than being counted.
+        return { ...emailUpdate, ...finalFetch };
+      });
+
+      mockAdminAuthAdmin.updateUserById.mockResolvedValue({
+        data: { user: {} },
+        error: null,
+      });
+      return { emailUpdate };
+    }
+
+    /** The one argument bag the route handed GoTrue. */
+    function authWrite(): Record<string, unknown> {
+      const call = mockAdminAuthAdmin.updateUserById.mock.calls.find(
+        ([, payload]) => "email" in payload || "password" in payload,
+      );
+      expect(call, "no credential write reached GoTrue").toBeDefined();
+      return call![1];
+    }
+
+    beforeEach(() => {
+      mockAuthenticated("customer-123");
+      mockParentGamerLookup(true);
+      mockSendGamerWelcomeEmail.mockResolvedValue(undefined);
+    });
+
+    it("→ parent: a fresh synthetic handle, and the password scrambled away", async () => {
+      currentSignIn = "username";
+      const { emailUpdate } = mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, { signIn: "parent" });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(200);
+      const written = authWrite();
+      // A random handle rather than the one they had: the old address was a
+      // username the family chose, and it should not stay attached to an account
+      // that is no longer reachable through it.
+      expect(written.email).toMatch(/@gamer\.sogverse\.internal$/);
+      // GoTrue cannot unset a password, so it is overwritten with a value nobody
+      // holds. That is what "switch-only" means here.
+      expect(typeof written.password).toBe("string");
+      expect(String(written.password).length).toBeGreaterThan(32);
+      expect(emailUpdate.update).toHaveBeenCalledWith({ email: written.email });
+      expect(mockSignInUpdate).toHaveBeenCalledWith({ sign_in: "parent" });
+      expect(mockSendGamerWelcomeEmail).not.toHaveBeenCalled();
+    });
+
+    it("→ username: the address becomes the handle, and the password is set", async () => {
+      currentSignIn = "parent";
+      mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "username",
+        username: "Aino",
+        password: "a good password",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(200);
+      // Normalised on the way in, so one username is one address.
+      expect(authWrite()).toEqual({
+        email: "aino@gamer.sogverse.internal",
+        email_confirm: true,
+        password: "a good password",
+      });
+      expect(mockSignInUpdate).toHaveBeenCalledWith({ sign_in: "username" });
+    });
+
+    it("→ username: refuses without a password, because entering the mode needs one", async () => {
+      currentSignIn = "parent";
+      mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "username",
+        username: "aino",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(400);
+      expect(mockAdminAuthAdmin.updateUserById).not.toHaveBeenCalled();
+    });
+
+    it("→ username: refuses without a username", async () => {
+      currentSignIn = "parent";
+      mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "username",
+        password: "a good password",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(400);
+      expect(mockAdminAuthAdmin.updateUserById).not.toHaveBeenCalled();
+    });
+
+    it("within username mode: a password alone is a parent resetting a forgotten one", async () => {
+      currentSignIn = "username";
+      mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, { password: "a new password" });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(200);
+      // No address moved, so no identity re-read and no profiles write.
+      expect(authWrite()).toEqual({ password: "a new password" });
+      expect(mockAdminAuthAdmin.getUserById).not.toHaveBeenCalled();
+      expect(mockSignInUpdate).not.toHaveBeenCalled();
+    });
+
+    it("within username mode: a new username moves the address", async () => {
+      currentSignIn = "username";
+      mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, { username: "aino2" });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(200);
+      expect(authWrite()).toEqual({
+        email: "aino2@gamer.sogverse.internal",
+        email_confirm: true,
+      });
+      // The mode did not change, so nothing was written to it.
+      expect(mockSignInUpdate).not.toHaveBeenCalled();
+    });
+
+    it("→ email: the real address, the password scrambled, and the mail sent", async () => {
+      currentSignIn = "username";
+      const { emailUpdate } = mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "email",
+        email: "aino@example.com",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(200);
+      const written = authWrite();
+      expect(written.email).toBe("aino@example.com");
+      // The password set against the OLD address must not survive the move.
+      expect(typeof written.password).toBe("string");
+      expect(emailUpdate.update).toHaveBeenCalledWith({ email: "aino@example.com" });
+      expect(mockSignInUpdate).toHaveBeenCalledWith({ sign_in: "email" });
+      expect(mockSendGamerWelcomeEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ gamerId: GAMER_ID }),
+      );
+    });
+
+    it("→ email: normalises the address before it becomes the account", async () => {
+      // GoTrue lowercases on the way in, so a parent typing capitals must
+      // produce the row GoTrue will actually hold. The verification token is
+      // signed over the stored address, so a second spelling would mint a link
+      // that could never verify.
+      currentSignIn = "username";
+      const { emailUpdate } = mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "email",
+        email: "  Aino@Example.COM ",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(200);
+      expect(authWrite().email).toBe("aino@example.com");
+      expect(emailUpdate.update).toHaveBeenCalledWith({ email: "aino@example.com" });
+    });
+
+    it("→ email: refuses an address in our own synthetic domain", async () => {
+      // The domain is ours and no family types it. Landing there would promise a
+      // mailbox nobody can read, or claim a username-mode handle that belongs to
+      // another child — and the schema refuses before anything is written.
+      currentSignIn = "username";
+      mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "email",
+        email: "AINO@gamer.sogverse.internal",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(400);
+      expect(mockAdminAuthAdmin.updateUserById).not.toHaveBeenCalled();
+    });
+
+    it("→ email: refuses without an address", async () => {
+      currentSignIn = "parent";
+      mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, { signIn: "email" });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(400);
+      expect(mockAdminAuthAdmin.updateUserById).not.toHaveBeenCalled();
+    });
+
+    it("within email mode: an address change is refused, not written", async () => {
+      // Changing an account's email address is not something the platform
+      // supports for any role (owner ruling), and the route is where that is
+      // enforced: it is the only layer that can tell a child *entering* the mode
+      // from one already in it. The card offers no field for this, so a body
+      // shaped like this is a caller working around the product decision.
+      currentSignIn = "email";
+      mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, { email: "new@example.com" });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(400);
+      expect(mockAdminAuthAdmin.updateUserById).not.toHaveBeenCalled();
+      expect(mockSignInUpdate).not.toHaveBeenCalled();
+      expect(mockSendGamerWelcomeEmail).not.toHaveBeenCalled();
+    });
+
+    it("within email mode: a restated signIn does not make it a transition", async () => {
+      // `signIn: "email"` on an account that is already there changes nothing,
+      // so the address beside it is still an address change and is refused the
+      // same way. The rule keys on whether the mode moves, not on the key.
+      currentSignIn = "email";
+      mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "email",
+        email: "new@example.com",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(400);
+      expect(mockAdminAuthAdmin.updateUserById).not.toHaveBeenCalled();
+    });
+
+    it("→ email: a failed mail does not fail the mode change", async () => {
+      currentSignIn = "username";
+      mockCredentialChange();
+      mockSendGamerWelcomeEmail.mockRejectedValue(new Error("brevo is down"));
+      const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "email",
+        email: "aino@example.com",
+      });
+      const response = await PATCH(req, ctx);
+
+      // The mode change is committed by the time the send runs, so a Brevo
+      // outage must not unwind it — the parent can send the link again.
+      expect(response.status).toBe(200);
+      spy.mockRestore();
+    });
+
+    it("refuses a password on a gamer who is not, and is not becoming, username-mode", async () => {
+      currentSignIn = "email";
+      mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, { password: "a good password" });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(400);
+      expect(mockAdminAuthAdmin.updateUserById).not.toHaveBeenCalled();
+    });
+
+    it("answers 409 USERNAME_TAKEN when the handle is already an address", async () => {
+      currentSignIn = "parent";
+      mockCredentialChange();
+      mockAdminAuthAdmin.updateUserById.mockResolvedValue({
+        data: null,
+        error: { code: "email_exists", message: "email already registered" },
+      });
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "username",
+        username: "taken",
+        password: "a good password",
+      });
+      const response = await PATCH(req, ctx);
+      const data = await response.json();
+
+      expect(response.status).toBe(409);
+      // In username mode the address IS the username, so naming the email field
+      // would point at a form field this parent does not have.
+      expect(data.code).toBe("USERNAME_TAKEN");
+    });
+
+    it("answers 409 EMAIL_TAKEN when the address already has an account", async () => {
+      currentSignIn = "parent";
+      mockCredentialChange();
+      mockAdminAuthAdmin.updateUserById.mockResolvedValue({
+        data: null,
+        error: { code: "email_exists", message: "email already registered" },
+      });
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "email",
+        email: "taken@example.com",
+      });
+      const response = await PATCH(req, ctx);
+      const data = await response.json();
+
+      expect(response.status).toBe(409);
+      expect(data.code).toBe("EMAIL_TAKEN");
+    });
+
+    it("withdraws the credential when the sign-in mode cannot be recorded", async () => {
+      // The invariant: a credential that opens a gamer account exists only where
+      // `gamer_profiles.sign_in` says one does. The mode is written last —
+      // it is the record of the auth writes rather than a part of them — so its
+      // failure is the one that leaves a working username and password the
+      // platform believes does not exist. That is exactly what the switch gate
+      // is built to rule out: the child could sign in on any machine, and the
+      // platform would classify that session by a mode that is a lie.
+      currentSignIn = "parent";
+      mockCredentialChange();
+      const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+      // Everything succeeds except the mode write, which is the last of the
+      // three and the only one under test here.
+      const profiles = {
+        ...mockTargetProfile("gamer"),
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      };
+      mockAdminFrom.mockImplementation((table: string) => {
+        if (table !== "gamer_profiles") return profiles;
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi
+                .fn()
+                .mockResolvedValue({ data: { sign_in: "parent" }, error: null }),
+            }),
+          }),
+          update: (...args: unknown[]) => {
+            mockSignInUpdate(...args);
+            return {
+              eq: vi
+                .fn()
+                .mockResolvedValue({ data: null, error: { message: "row locked" } }),
+            };
+          },
+        };
+      });
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "username",
+        username: "aino",
+        password: "a good password",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(500);
+
+      // Two auth writes: the credential, then the compensation that takes it
+      // away again. The second carries a password nobody holds and no address —
+      // the address is deliberately left where it landed, because moving it back
+      // is another write that can fail the same way.
+      const writes = mockAdminAuthAdmin.updateUserById.mock.calls.map(([, p]) => p);
+      expect(writes).toHaveLength(2);
+      expect(writes[0]).toMatchObject({ password: "a good password" });
+      expect(Object.keys(writes[1])).toEqual(["password"]);
+      expect(writes[1].password).not.toBe("a good password");
+      expect(String(writes[1].password)).toHaveLength(64);
+
+      spy.mockRestore();
+    });
+
+    it("refuses a username the resolved mode has no use for", async () => {
+      // A `username` against a child who signs in through their parent names a
+      // field that mode does not have. It used to be dropped and answered 200,
+      // which tells the parent their edit landed.
+      currentSignIn = "parent";
+      mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, { username: "aino" });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(400);
+      expect(mockAdminAuthAdmin.updateUserById).not.toHaveBeenCalled();
+      expect(mockSignInUpdate).not.toHaveBeenCalled();
+    });
+
+    it("refuses an email the resolved mode has no use for", async () => {
+      // The mirror case: an address against a username-mode child, with no
+      // `signIn` key to make it a transition. The schema cannot catch it — it
+      // cannot see the mode — so the route does.
+      currentSignIn = "username";
+      mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, { email: "aino@example.com" });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(400);
+      expect(mockAdminAuthAdmin.updateUserById).not.toHaveBeenCalled();
+      expect(mockSignInUpdate).not.toHaveBeenCalled();
+    });
+
+    it("→ email: spends the child's verification-mail allowance", async () => {
+      currentSignIn = "username";
+      mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "email",
+        email: "aino@example.com",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(200);
+      // Keyed on the CHILD and charged on the caller's own client, exactly as
+      // the resend button charges it: flipping a child into the mode is the
+      // same mail by another route, and must not be the uncounted way to it.
+      expect(mockSupabaseRpc).toHaveBeenCalledWith(
+        "request_gamer_verification_email",
+        { p_gamer_id: GAMER_ID },
+      );
+      expect(mockSendGamerWelcomeEmail).toHaveBeenCalled();
+    });
+
+    it("→ email: a spent allowance still changes the mode, and sends nothing", async () => {
+      // The refusal costs the mail and nothing else. The mode change has
+      // committed by the time the send runs and it is what the parent asked
+      // for, so the answer is a success — and the parent can resend from the
+      // child's card once the hour has turned.
+      currentSignIn = "username";
+      mockCredentialChange();
+      mockSupabaseRpc.mockResolvedValue({ data: false, error: null });
+      const spy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "email",
+        email: "aino@example.com",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(200);
+      expect(mockSignInUpdate).toHaveBeenCalledWith({ sign_in: "email" });
+      expect(mockSendGamerWelcomeEmail).not.toHaveBeenCalled();
+      expect(spy).toHaveBeenCalled();
+      spy.mockRestore();
+    });
+
+    it("withdraws the credential when profiles.email fails after the auth write", async () => {
+      // The compensated window is everything after GoTrue accepts, not the mode
+      // write alone: by this point the child answers to a username and password
+      // the parent just chose, while our own tables still describe the child
+      // they used to be. The same unrecorded credential, one write earlier.
+      currentSignIn = "parent";
+      mockCredentialChange();
+      const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+      const roleCheck = mockTargetProfile("gamer");
+      let profilesCall = 0;
+      mockAdminFrom.mockImplementation((table: string) => {
+        if (table === "gamer_profiles") return gamerProfileTable();
+        profilesCall++;
+        if (profilesCall === 1) return roleCheck;
+        return {
+          update: vi.fn().mockReturnValue({
+            eq: vi
+              .fn()
+              .mockResolvedValue({ data: null, error: { message: "conflict" } }),
+          }),
+        };
+      });
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "username",
+        username: "aino",
+        password: "a good password",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(500);
+      // The mode was never recorded, so the credential must not survive: two
+      // auth writes, the second a password nobody holds and no address.
+      expect(mockSignInUpdate).not.toHaveBeenCalled();
+      const writes = mockAdminAuthAdmin.updateUserById.mock.calls.map(([, p]) => p);
+      expect(writes).toHaveLength(2);
+      expect(writes[0]).toMatchObject({ password: "a good password" });
+      expect(Object.keys(writes[1])).toEqual(["password"]);
+      expect(writes[1].password).not.toBe("a good password");
+      expect(String(writes[1].password)).toHaveLength(64);
+      spy.mockRestore();
+    });
+
+    it("fails loudly when auth.users moved and auth.identities did not", async () => {
+      // The trap the hand operation checks for: sign-in would keep answering to
+      // the OLD address while everything looks like it worked. Caught before
+      // `profiles` is touched, so the two halves cannot silently disagree.
+      currentSignIn = "parent";
+      const { emailUpdate } = mockCredentialChange();
+      mockAdminAuthAdmin.getUserById.mockResolvedValue({
+        data: {
+          user: { identities: [{ identity_data: { email: "stale@example.com" } }] },
+        },
+        error: null,
+      });
+      const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "email",
+        email: "aino@example.com",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(500);
+      expect(emailUpdate.update).not.toHaveBeenCalled();
+      spy.mockRestore();
+    });
   });
 });

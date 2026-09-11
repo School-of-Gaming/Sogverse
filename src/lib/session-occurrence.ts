@@ -81,7 +81,7 @@ export interface SlotShape {
  *   maximum over the window the maximum over the run, at a bounded cost.
  * - **Pure calendar arithmetic, UTC-pinned.** Both bounds are bare dates with no
  *   time of day, so there is no zone to convert through and no DST to step over;
- *   the walk is `Date.UTC` day arithmetic, exactly as the root `CLAUDE.md` asks
+ *   the walk is `Date.UTC` day arithmetic, exactly as `src/CLAUDE.md` asks
  *   of a zoneless date. The weekday convention is the app's own — 0 is Monday —
  *   which is what `EXTRACT(ISODOW …) - 1` produces on the SQL side.
  */
@@ -371,12 +371,6 @@ export function enumerateRowOccurrences(args: {
  * reason to exist once it was over. A session feed is the opposite question —
  * it is a history, read newest-first — so it needs the same slots walked the
  * other way, and it needs the walk to be as DST-safe as the forward one.
- *
- * **Holiday-blind, deliberately.** It expands weekday slots and nothing else,
- * matching the live dashboards' expansion rather than the calendar component's
- * holiday-aware one. A feed that hid a listed holiday while the write path
- * still accepted a record for it (or vice versa) would produce sessions a gedu
- * can neither see nor clear.
  *
  * The walk is bounded twice over — by `floor` and by `maxOccurrences` — because
  * a schedule with no start date would otherwise be an unbounded loop, and an

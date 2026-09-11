@@ -5,7 +5,7 @@ import {
   YTY_PRESENTATIONS,
   zoneIconFor,
   zoneColorFor,
-  type ZoneColorClasses,
+  type ZoneRenderClasses,
 } from "@/lib/constants/voice-zones";
 
 /**
@@ -27,12 +27,12 @@ export interface VoiceZoneView {
   name: string;
   nameIsKey: boolean;
   icon: LucideIcon;
-  color: ZoneColorClasses;
+  color: ZoneRenderClasses;
   isLocked: boolean;
 }
 
 function virtualView(
-  v: { id: string; nameKey: string; icon: LucideIcon; color: ZoneColorClasses },
+  v: { id: string; nameKey: string; icon: LucideIcon; color: ZoneRenderClasses },
   kind: "lobby" | "yty",
 ): VoiceZoneView {
   return {

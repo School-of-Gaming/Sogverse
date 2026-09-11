@@ -272,6 +272,7 @@ export const POST = defineRoute({
           customerId: user.id,
           participantId,
           productId,
+          participationId: rpcJson.participation_id,
           mode: rpcJson.kind === "external_active" ? "external" : "free",
         }),
       );
@@ -316,7 +317,7 @@ export const POST = defineRoute({
       const successUrl = `${origin}${ROUTES.shopPaidConfirmation("{CHECKOUT_SESSION_ID}")}`;
       // Cancel bounces straight back to the product page so the parent can
       // retry. Nothing to undo — no row was written.
-      const cancelUrl = `${origin}${ROUTES.shopProduct(productId)}`;
+      const cancelUrl = `${origin}${ROUTES.shopProductPath(productId)}`;
 
       // The three links the Slack notification offers its reader: the product's
       // admin page, the paying customer's admin page, and the public shop page.
@@ -342,15 +343,15 @@ export const POST = defineRoute({
       // read within minutes of the purchase and never revisited, but the next
       // person moving an admin route should meet that deliberately here rather
       // than discover it from a dead link.
-      const adminProductUrl = `${origin}${ROUTES.admin.product(product.product_type, productId)}`;
-      const adminUserUrl = `${origin}${ROUTES.admin.user(user.id)}`;
+      const adminProductUrl = `${origin}${ROUTES.admin.productPath(product.product_type, productId)}`;
+      const adminUserUrl = `${origin}${ROUTES.admin.userPath(user.id)}`;
       // Textually identical to `cancelUrl` above, and deliberately duplicated
       // rather than shared. `cancelUrl` is where an abandoned checkout bounces
       // the parent back to; this is where a Slack reader goes to see what was
       // bought. Two independent reasons that happen to name the same page today,
       // so folding them into one variable would silently drag one along the next
       // time the other has to move.
-      const shopProductUrl = `${origin}${ROUTES.shopProduct(productId)}`;
+      const shopProductUrl = `${origin}${ROUTES.shopProductPath(productId)}`;
 
       // The metadata IS the link between this session and the participation the
       // webhook will create. Nothing else carries it, so every field here is

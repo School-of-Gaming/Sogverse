@@ -10,14 +10,32 @@ the demo's code as the reference for how the library is meant to be used.
 package alone, and Sogverse takes it whole.** Anything that would need a Sogverse edit to
 follow a brand change is in the wrong place.
 
+**The School of Gaming Brand Voice & Identity Guidebook is this library's input, and this
+is the only `CLAUDE.md` that names it.** It lives as an excerpt in `docs/guidebook/`, one
+file per topic behind that folder's own index, for as long as it is needed. For anything
+the library does not yet cover, the Guidebook is the source of truth, consulted while
+deciding (what else is consulted beside it is in `docs/rollout.md`). For anything the
+library covers, the library is the truth from the moment the value is in it, and the
+Guidebook is not cited beside it. **The change that covers a piece of the Guidebook
+deletes that piece from the excerpt in the same change**, whole paragraphs at a time.
+Covered means the library holds it in its own form — a token, a generated value, a
+component, a test, a lint rule — and so produces it correctly every time; the form is
+rarely the Guidebook's words, and a claim merely restated as prose is not covered. The
+excerpt then only ever holds what is not yet covered, and its size is the measure of what
+remains. When the last paragraph goes, the library has forgotten the
+Guidebook exists: it is the authority, references no external document, and Sogverse
+never needs one.
+
 ## Ownership
 
-**SOG-UI owns every UI opinion, and the two `CLAUDE.md` files never disagree.** The root
-file governs the monorepo: lint, type-check, commits, branching, testing, the database, the
-services. This file governs the UI. Sogverse follows the library one construct at a time,
-as each is adopted (`docs/adoption.md`); for a construct not yet adopted, the root file's
+**SOG-UI owns every UI opinion, and the three `CLAUDE.md` files never disagree.** The root
+file governs the monorepo: lint, type-check, commits, branching, testing, the database. The
+app file (`src/CLAUDE.md`) governs Sogverse the web app: its roles, services, auth and
+copy. This file governs the UI. Sogverse follows the library one construct at a time,
+as each is adopted (`docs/adoption.md`); for a construct not yet adopted, the app file's
 existing rule for it still governs Sogverse's code, and the adoption that retires the
-construct deletes that rule. A rule about the UI is never added to the root file.
+construct deletes that rule. A rule about the UI is never added to the root file or the
+app file.
 
 **If something has a state, SOG-UI owns the system that handles it.** A button's committing
 state across a redirect, a loading affordance, an element that must not move under a
@@ -64,25 +82,136 @@ as hex; every other form of it (an HSL triple, a composited tint for email, a co
 ratio) is computed by a function, never typed by hand, so a value converted twice is the
 same value. No new colour arrives by conversion or by eye.
 
-**A brand colour exists only at its authored values**, a family's strong or soft variant
-or a token's own full value, never at an alpha step. A ground that needs to lift goes to a
-neutral; the brand arrives at full value on an edge, ink or fill. The exemptions are
-chip-scale icon-accent tiles and artwork carrying its own palette, and the list is closed.
+**A brand colour exists only at its authored values**, a family's single hex or a token's
+own full value, never at an alpha step. A ground that needs to lift goes to a neutral; the
+brand arrives at full value on an edge, ink, mark or fill. The one exemption is artwork
+carrying its own palette. **A glyph tile is the lifted neutral with an edge in its glyph's
+hue.** It used to be a square of the hue at a tenth behind a glyph already inked in it,
+which was the same colour stated twice — once at its authored value and once at a duller
+one — and the tint went; what replaced it was nothing at all, and a bare grey square is
+too little to say which hue a tile belongs to when the glyph inside it is sixteen pixels
+across. The edge is the answer the ban already allows: it draws the hue at full value,
+around a ground that stays neutral, so the colour reaches the reader twice and is diluted
+neither time. A tile whose glyph is the quiet ink has no hue to draw and keeps the plain
+lifted fill.
+
+**The ban is on the brand. A neutral may carry an alpha where the alpha does a job a solid
+cannot: a layer over a ground it does not know.** The greys are not the brand speaking —
+they are the ground, the ink and the edge, and a grey at a fraction of itself
+misrepresents nothing — so what governs them is whether the transparency is doing work.
+Three constructs are, they are the library's, and they are the whole list: **the scrim**
+over media, **the glass** over whatever scrolls beneath it, and **the hover layer** over
+whatever surface an element sits on. Each carries its own alpha, so no call site picks a
+strength, and a consumer spends `bg-scrim`, `glass` or `bg-hover` rather than composing
+one. A grey at alpha used as an **ink** is not on that list and never joins it: nothing
+moves beneath a word, so the alpha buys nothing a solid could not, and what it produces is
+a duller grey the theme already names. There are two inks, and the quiet one is one of
+them.
+
+**The lifted grey is a surface, and hover is a layer.** They answer different questions
+and neither substitutes for the other: `lifted` is the authored ground a static thing
+takes when it is set back from its neighbours, and `hover` is the ink at a low alpha laid
+over whatever ground an element is already on — laid, and so drawn as a background *image*
+rather than a background colour, because a colour would stand in for the ground instead of
+sitting on it and an outline button would go see-through under the pointer. So a panel may be lifted and the rows on it
+still show hover — the layer lifts a row on the page, on a card and on a lifted panel by
+the same visible step, because it never had to name the ground beneath it. A grey written
+as a hover is the defect this pair exists to prevent: it draws a state on one surface and
+nothing at all on the one above. **Nothing in Sogverse writes a grey as a hover**, and
+lint holds it. The demo's Ground-and-ink floor is the reference, where the three surfaces
+are nested and each carries a live hoverable row.
+
+**A nested list sits on its parent's ground, marked by an indent and a divider, never by a
+lift.** The lifted grey is for small objects — a glyph tile, a key cap, a skeleton bar, an
+input's well, a mono value — and never for a region of rows a reader moves through. Two
+things go wrong when a run of rows is lifted off the rows above it. The children read as a
+different kind of thing from their parent, which they are not; and the hover layer, which
+lifts every ground by the same visible step, then lands on two grounds at once, so one
+list answers the pointer in two colours and a reader is taught that the difference means
+something. What actually says *these belong to that* is the indent, and it is the only
+signal a nested list needs, with the divider saying where the parent's own row ends. **A
+page section band is the same rule at the scale of a page**: an alternating band is a
+region a reader moves through, so it takes the card ground, and the lifted grey — the
+lightest ground the theme ships, authored for objects a few pixels across — is far too
+bright spread across a viewport. Cards inside such a band are told apart by their own
+edge, which is what a card's border has always been for.
+
+**Colour is a figure where it names something and a fill where it is pressed.** An edge,
+an ink, a mark, a chip's word beside its glyph: each of those is colour naming a thing —
+a state, a kind, a role — and none of them is pressed. A fill is what a hand presses, and
+the ink on it is the label of an action. **A native control's accent is act**: a browser
+paints its own radio dot and checkbox tick from one property, which makes them the one
+fill the library does not draw itself, and act is the value they take — a chosen option is
+a thing the reader did, and only ever one control in a group is wearing it. A filled label is not a fault and does not read
+as one; the chip does the same job and reads better, so a label wears the chip and the
+fill stays the control's, which is what keeps a fill meaning *press*. Which colours a
+**button** may wear is decided by the Button adoption, not here. **World is the measured
+exception on the figure half**: `world` reads 2.71 as an ink on a card and 2.91 on the
+page — under the glyph floor, let alone the body one — so it cannot be an ink on either
+ground, which is why the role and status tables name families and statuses and never
+world as a figure. World lives as an edge, a rule, a fill, or the logo — the logo
+named rather than "a mark", because a logotype is the one graphic the non-text floor
+exempts and a glyph is not. Nothing drawn to be read is drawn in world: no icon, no
+tick, no arrow, no word. **A status panel is that division drawn whole: no ground, a
+coloured edge, the glyph and a label in the hue, and the body in ink** — the edge
+carries the attention the tint used to, and it costs nothing, because the panel was
+already being drawn by a neutral one. **A boxed status is that panel and carries its
+edge; a status stated inline — under a field, along a row — is a line and has no box at
+all.** There is no third shape between the two, and the third shape is what keeps
+getting built: a box drawn by hand with a neutral edge and a coloured glyph inside it is
+the panel with its one mark of attention taken back off. **A public page's
+hero headline is the one declared departure from the division** — a display treatment,
+one phrase in `act` and the `world` rule beneath it — declared beside the label rule in
+`brand.ts`, which is also where it says a section heading is not a hero.
+
+**Colour is spent to a budget, and the budget is set by who the page is for.** **A
+surface where a parent is being asked to trust us or to pay**, the parent's dashboard,
+the mail, billing, safety and safeguarding copy, a partner page, spends act as its one
+accent on neutral grounds, with ink for text and grey for support. Calm surfaces carry
+credibility. A second colour arrives there only with an intent stated beside the site
+that spends it. **A surface telling the story to a mixed audience**, the home page,
+About, Roblox, the social cards, spends act plus one other colour, two accents at most,
+and is colourful by putting two saturated colours on a calm ground rather than many
+colours on one page. **A gamer surface**, the child's dashboard, the community, anything
+inside the world, may spend the palette; that is where the loudness belongs. No page
+spends all six, and act plus one is the default wherever no decision has been made. And
+world is never the colour of quiet: it does not carry safety, safeguarding or
+trust-building copy on a parent surface, where the reader is being asked to trust us with
+a child and the page should sound settled rather than energetic.
+
+No lint holds this one. What a page spends is a property of the whole rendered page, and
+no class string can be asked how many colours its neighbours used; the place a check
+becomes possible is the template adoption, where a page is composed from templates and
+the set of colours it spends is knowable from what it composes. Until then it is judged in
+the demo's template floor, on the page, like every other composition question.
 
 **There is one theme and it is dark.** No light fallback, no switcher, no `dark:` variant.
 Every text-on-ground pairing the library ships is proven in the contrast tests, and a
 consumer trusts the library to have done that arithmetic: a colour the library offers for
 text on a ground is safe there, and a pairing the library does not offer is not available.
+The dark theme is one deliberate reading of a palette whose rules are written light-first:
+every inversion that reading makes, and every departure from the brand's colour rules, is
+declared and justified in the colour source's doc comments, or it does not exist.
 
 **Faces.** The library owns the faces School of Gaming uses, and the list is exhaustive and
-defined by grammar: Poppins is the app face, body and every heading; Space Mono is the world
-voice, spent only where the platform names one of its own places; Crimson Pro is the
+defined by grammar: Poppins is the app face, body and every heading; Space Mono is the one monospace on the
+site and the machine face and nothing else, for a room code, a password, an id, a log, an
+inline code span or a placeholder no customer should see, never a voice, a heading or a
+name; Crimson Pro is the
 editorial voice, for quotes and pull-quotes and never for UI or body copy; Dancing Script
-is for a signature line and nothing else. The consumer loads the font files and exposes
+is for a signature line and nothing else. **Mail is set in the reader's own system sans**,
+a face the library declares and mail alone may spend — never a screen face — and **no
+webfont is ever loaded in a mail**, because the clients most readers use load none and a
+face that reaches a minority makes the mail two designs. The consumer loads the font files and exposes
 each face as a CSS variable on `<html>`, never on `<body>`, because the theme emits at
 `:root` and a variable one element lower is invisible there while the page still looks
 styled. The library owns the semantic names and the scale. The demo's layout is the
-reference implementation of that contract.
+reference implementation of that contract. **A consumer loads exactly the faces named
+here and no other, defines no face of its own, and spells no family**: it sets a face by
+its utility, and a renderer with no stylesheet — a mail, a social card, a canvas — takes
+the name from the library rather than typing one. Lint holds the spellings, one per way
+a face can be written, and the contract tests hold the list in both directions, so a
+fifth family cannot be loaded and a face of the consumer's own cannot be declared.
 
 **The mark.** The logo, its variants, the monogram, their clearspace, minimum size and
 placement rules, and the combined lockup `School of Gaming – Sogverse` with its spaced en
@@ -155,8 +284,10 @@ string means rung 3 or 4 was needed and the ladder was skipped.
 
 ## The demo
 
-`demo/` is a Next app, run on its own dev server on port 3001 and deployed as its own
-Vercel project with this package as its root directory. **It is seen, not read.** A human
+`demo/` is a Next app, run on its own dev server on port 3001. It is not deployed
+anywhere: it is opened on localhost, and giving it a home of its own on the web is a later
+step, taken when there is a reason to look at it from somewhere other than the machine
+that is building it. **It is seen, not read.** A human
 opens it to check that things look right and that interaction behaves; an agent reads the
 code to understand why. So the page shows a thing and its name and nothing else: no prose,
 no rationale, no numbers, no pass marks. Everything worth knowing about a value or a

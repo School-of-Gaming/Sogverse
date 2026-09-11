@@ -35,6 +35,14 @@ const mockGetClaims = vi.fn();
 const mockDownload = vi.fn();
 /** The bucket name the route asked for, captured per call. */
 const mockStorageFrom = vi.fn();
+// `defineRoute` classifies the session it hands the handler, and that answer is
+// the switch route's marker cookie rather than anything in the token — so a
+// route on the any-authenticated posture reads the cookie jar even where
+// nothing here is about cookies. Empty: none of these callers is switched in.
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(async () => ({ get: () => undefined })),
+}));
+
 vi.mock("@/lib/supabase/server", () => ({
   createClient: () =>
     Promise.resolve({

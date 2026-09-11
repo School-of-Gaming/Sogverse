@@ -25,6 +25,7 @@ import {
 } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown as MarkdownExtension } from "tiptap-markdown";
+import { StatusLine } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 
 /**
@@ -343,7 +344,7 @@ export function RichTextEditor({
   return (
     <div
       className={cn(
-        "rounded-md border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background",
+        "rounded-md border border-border bg-background focus-within:ring-2 focus-within:ring-act focus-within:ring-offset-2 focus-within:ring-offset-background",
         disabled && "cursor-not-allowed opacity-50",
         className,
       )}
@@ -356,7 +357,7 @@ export function RichTextEditor({
           roughly 305px, and it only ever appears on the marketing variant,
           which lives on a full-width admin form. **A ninth button is a decision
           about the narrow case, not a paste job.** */}
-      <div className="flex h-10 flex-nowrap items-center gap-0.5 border-b border-input px-1">
+      <div className="flex h-10 flex-nowrap items-center gap-0.5 border-b border-border px-1">
         {toolGroups.map((group, index) => (
           <div key={group[0].key} className="flex items-center gap-0.5">
             {index > 0 && (
@@ -382,7 +383,7 @@ export function RichTextEditor({
           somebody was typing a URL would be a disaster with a keyboard
           shortcut. */}
       {linkDraft !== null && (
-        <div className="border-b border-input px-1 py-1">
+        <div className="border-b border-border px-1 py-1">
           <div className="flex items-center gap-1">
             <input
               // The row is not a form, so this buys a URL keyboard on a phone
@@ -407,11 +408,11 @@ export function RichTextEditor({
               aria-label={t("linkUrl")}
               aria-invalid={linkRejected || undefined}
               aria-describedby={linkRejected ? linkErrorId : undefined}
-              className="h-8 min-w-0 flex-1 rounded-sm bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-8 min-w-0 flex-1 rounded-sm bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
             />
             {/* Cancel, Remove link, Apply — the three-or-more spine from the
-                root `CLAUDE.md` "Button Order" rule: negative first,
-                affirmative last, the other action between. */}
+                `src/CLAUDE.md` "Button Order" rule: negative first, affirmative
+                last, the other action between. */}
             <IconButton label={t("linkCancel")} icon={X} onClick={closeLinkRow} />
             <IconButton
               label={t("linkRemove")}
@@ -430,13 +431,15 @@ export function RichTextEditor({
               line held open under every address they type would be a hole
               waiting for a failure that mostly never comes. */}
           {linkRejected && (
-            <p
+            <StatusLine
               id={linkErrorId}
               role="alert"
-              className="px-2 pb-0.5 pt-1 text-xs text-destructive"
+              status="destructive"
+              size="xs"
+              className="px-2 pb-0.5 pt-1"
             >
               {t("linkInvalid")}
-            </p>
+            </StatusLine>
           )}
         </div>
       )}
@@ -557,7 +560,7 @@ const MARKETING_PROSE = cn(
   "[&_h1]:mt-5 [&_h1]:text-lg [&_h1]:font-semibold [&_h1]:leading-snug",
   "[&_h2]:mt-5 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:leading-snug",
   "[&_h3]:mt-5 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:leading-snug",
-  "[&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4",
+  "[&_a]:font-medium [&_a]:text-act [&_a]:underline [&_a]:underline-offset-4",
 );
 
 /**
@@ -696,10 +699,10 @@ function IconButton({
       aria-pressed={active}
       title={label}
       className={cn(
-        "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act disabled:pointer-events-none disabled:opacity-50",
         active === true
-          ? "bg-accent text-accent-foreground"
-          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+          ? "bg-lifted text-foreground"
+          : "text-muted-foreground hover:bg-hover hover:text-foreground",
       )}
     >
       <Icon className="h-4 w-4" />

@@ -4,8 +4,15 @@ import type { ProductBrowseRow } from "@/types";
 import {
   matchesAudienceFilter,
   type AudienceFilterValue,
-} from "./product-audience";
+} from "@/lib/products/product-audience";
 import type { ProductTag } from "./product-tag";
+import { resolveProductPrice, statesAPrice } from "./format-product-price";
+import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
+
+// The currency every browse card prices in, and so the one the price chips
+// answer for. Read from the same constant the card reads, so a shop that one
+// day prices per viewer changes in one place rather than two.
+const BROWSE_CURRENCY = DEFAULT_CURRENCY;
 
 // Topic + format + language filters as the parent navigates the catalog.
 //
@@ -16,6 +23,13 @@ import type { ProductTag } from "./product-tag";
 // - `format`: "online" / "in_person" / null. Maps directly to
 //   `products.is_remote`. Null means "no preference" and skips the
 //   filter. Single-valued — a product is one or the other, never both.
+// - `price`: "free" / "paid" / null. Single-valued like format, and read off
+//   the very line the card prints in its footer rather than from pricing rules
+//   restated here: "free" is the line that says Free, "paid" is a line that
+//   states an amount above nothing. A product billed off-platform prints no
+//   price line at all — its card shows how full it is instead — so it answers
+//   neither chip and is reachable only with the row cleared. Null skips the
+//   filter.
 // - `languages`: list of `spoken_language` enum values. Single-valued on a
 //   product (`spoken_language_code`, the same enum) — a product passes when its
 //   language is in the selected set. OR semantics across the set.
@@ -58,10 +72,41 @@ import type { ProductTag } from "./product-tag";
 // enum, so the comparison is between two members of one literal union.
 
 export type ProductFormat = "online" | "in_person";
+export type ProductPriceFilter = "free" | "paid";
+
+/**
+ * Whether a product answers the Free or the Paid chip — or neither.
+ *
+ * Everything about pricing comes from the card's own price resolution, so a
+ * chip cannot come to a different conclusion than the footer the reader is
+ * looking at. Two shapes answer neither chip and are reachable only with the
+ * row cleared: a product billed off-platform, which states no price anywhere,
+ * and a paid product with no row in the currency the grid prices in, whose
+ * card says as much.
+ *
+ * A stated amount of nothing is the third: it is a paid product an admin
+ * priced at zero, which the schema permits and which the card prints as a
+ * zero. "Paid" means a price above nothing, so such a product answers neither
+ * chip — it is a mis-authored product rather than a shape the shop offers, and
+ * the free chip belongs to the products the billing model itself calls free.
+ */
+function priceKindOf(p: ProductBrowseRow): ProductPriceFilter | null {
+  if (!statesAPrice(p)) return null;
+  const resolved = resolveProductPrice({
+    prices: p.product_prices,
+    billingMode: p.billing_mode,
+    productType: p.product_type,
+    currency: BROWSE_CURRENCY,
+  });
+  if (resolved.kind === "free") return "free";
+  if (resolved.kind === "unavailable") return null;
+  return resolved.priceCents > 0 ? "paid" : null;
+}
 
 export interface BrowseFilters {
   topics: string[];
   format: ProductFormat | null;
+  price: ProductPriceFilter | null;
   languages: SpokenLanguageCode[];
   audiences: AudienceFilterValue[];
   tags: ProductTag[];
@@ -72,6 +117,7 @@ export interface BrowseFilters {
 export const EMPTY_FILTERS: BrowseFilters = {
   topics: [],
   format: null,
+  price: null,
   languages: [],
   audiences: [],
   tags: [],
@@ -91,6 +137,9 @@ export function filterProducts(
       const isOnline = p.is_remote;
       if (filters.format === "online" && !isOnline) return false;
       if (filters.format === "in_person" && isOnline) return false;
+    }
+    if (filters.price !== null) {
+      if (priceKindOf(p) !== filters.price) return false;
     }
     if (filters.languages.length > 0) {
       if (!filters.languages.includes(p.spoken_language_code)) return false;

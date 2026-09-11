@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { cva } from "class-variance-authority";
+import { Info } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
@@ -19,20 +20,30 @@ const checkboxRowVariants = cva(
         sm: "text-sm",
         xs: "text-xs",
       },
+      // A ticked row is marked by its own edge going act, not by a wash
+      // behind it: on the dark ground act is a figure, and the edge is free
+      // here because the row is bordered already. The border *colour* lives in
+      // this variant rather than in the base string, so the two values can
+      // never both be emitted and resolve by stylesheet order.
       checked: {
-        true: "border-primary bg-primary/5",
-        false: "border-input",
+        true: "border-act",
+        false: "border-border",
       },
+      // No cursor here in either state: the global stylesheet decides it for
+      // every label holding a checkbox (pointer live, arrow disabled), and its
+      // rule outranks a utility on the element, so one written here would be
+      // dead — and, worse, would read as though it were doing the work.
       disabled: {
-        true: "cursor-not-allowed opacity-60",
-        false: "cursor-pointer",
+        true: "opacity-60",
+        false: "",
       },
     },
     compoundVariants: [
       // The hover fill is the border's promise being kept — it lights the same
-      // area the click will act on. A ticked row already carries its own fill
-      // and a disabled one is not a target, so neither takes it.
-      { checked: false, disabled: false, class: "hover:bg-accent/50" },
+      // area the click will act on. A disabled row is not a target, so it does
+      // not take it. A ticked row does now: it was excluded while it carried a
+      // wash of its own, and the wash is gone.
+      { disabled: false, class: "hover:bg-hover" },
     ],
     defaultVariants: { size: "sm", checked: false, disabled: false },
   },
@@ -45,9 +56,10 @@ export interface CheckboxRowProps {
   /**
    * The sentence beside the box — a node rather than a string, because these
    * sentences carry their own links inline (`t.rich(...)` output naming a
-   * partner, a policy, a document) and because a row whose label is a bold
-   * title over a couple of detail lines is the same composition with a richer
-   * node in this slot, not a second component.
+   * partner, a policy, a document).
+   *
+   * With a `title`, this drops to a full-width line beneath the tick's line and
+   * becomes the row's description rather than its name — see `title`.
    *
    * A click landing on a link inside it reads instead of ticking, which is the
    * DOM's own doing: a `<label>`'s activation behaviour is skipped when the
@@ -55,6 +67,35 @@ export interface CheckboxRowProps {
    * so there is nothing for an anchor to stop propagating away from.
    */
   label: React.ReactNode;
+  /**
+   * A short name for what is being asked, on the tick's own line, with `label`
+   * dropping to a full-width line beneath it.
+   *
+   * **The composition, not a second component.** A consent sentence is three
+   * lines of conditions naming two documents; a reader scanning a column of
+   * them needs to know what each box is *about* before deciding whether to read
+   * it, and a run of rows that are each a paragraph gives them nothing to scan.
+   * The title is that handle. Absent, the row is the plain sentence-beside-box
+   * shape and nothing changes.
+   *
+   * **The sentence is full width and is NOT indented under the box**, which is
+   * the whole reason this is a layout change rather than a bold `<span>` at the
+   * head of `label`. A column indented under a 16px glyph runs a narrower
+   * measure than everything else on the surface for no reason a reader can see
+   * — the panel's money-back guarantee block settled this — and at 360px in the
+   * widest locale those 28 lost pixels are a wrapped word per line.
+   *
+   * The whole block stays one click target: it is all inside the `<label>`, so
+   * the title, the sentence and the hint each toggle the box, and a link inside
+   * the sentence still reads instead of ticking.
+   *
+   * Accessibility follows the shape rather than the markup: the **title** names
+   * the box and the sentence joins the hint as its description, so a screen
+   * reader announces "Photos and videos of your child, checkbox" and then reads
+   * the conditions, instead of opening with three lines of conditions the
+   * listener cannot skip.
+   */
+  title?: React.ReactNode;
   /**
    * A sub-line under the sentence — what the tick means, or where the answer can
    * be changed later. It sits in the sentence's own column, so it aligns with
@@ -68,7 +109,7 @@ export interface CheckboxRowProps {
    *
    * **`info` is how an optional row says so, and it is the only marker there
    * is.** A chip lived at the end of the first line for a while, carrying the
-   * word "Optional" — and it cost a line of vertical space in a 20rem rail to
+   * word "Optional" — and it cost a line of vertical space in the signup rail to
    * say a word the hint sentence underneath was already saying ("Optional — you
    * can change this anytime in your settings."). So the sentence does the job
    * alone, in the info colour the chip wore. Nothing is repeated, nothing is
@@ -88,8 +129,8 @@ export interface CheckboxRowProps {
   /**
    * The two text scales the app uses: `sm` for a full-width form (the
    * registration card, the admin product form), `xs` for the product panel's
-   * rail, where the row shares a 20rem column with everything else in a signup
-   * form.
+   * rail, where the row shares a narrow column with everything else in a
+   * signup form.
    */
   size?: "sm" | "xs";
   /**
@@ -120,8 +161,8 @@ export interface CheckboxRowProps {
  * The app has one checkbox *primitive* and had as many compositions around it
  * as there were surfaces asking a question — a registration form, a signup
  * panel, an admin product form — each hand-assembling the same label, gap, hint
- * indent and `mt-0.5` from memory, and each drifting from the others by a gap
- * unit here and a hover treatment there. This is that composition, once. **New
+ * indent and box alignment from memory, and each drifting from the others by a
+ * gap unit here and a hover treatment there. This is that composition, once. **New
  * consent-shaped surfaces reach for this rather than assembling their own.**
  *
  * **Its scope is a question asked on its own, not a checkbox inside a form.**
@@ -160,17 +201,27 @@ export interface CheckboxRowProps {
  * repeating a word the hint underneath already said. See `hintTone`.
  *
  * The input's accessible name comes from `aria-labelledby` pointing at the
- * sentence rather than from the label's text content, because the content also
- * holds the hint and whatever `trailing` carries — without it, a screen reader
+ * sentence, or at the title where there is one, rather than from the label's
+ * text content, because the content also holds the hint and whatever
+ * `trailing` carries — without it, a screen reader
  * would read the hint twice, once as part of the name and again as the
  * description. The hint is then handed back deliberately through
  * `aria-describedby`, which is what keeps the optional marker legible to a
  * reader who cannot see the colour: the word travels in the sentence, never in
  * the styling.
  *
- * The box pins to the first line of a wrapping sentence (`mt-0.5`) rather than
- * centring on the whole block, which is what keeps a three-line consent from
- * putting its checkbox halfway down the paragraph.
+ * The box pins to the first line of a wrapping sentence rather than centring
+ * on the whole block, which is what keeps a three-line consent from putting
+ * its checkbox halfway down the paragraph. It does so structurally — a column
+ * one line tall that the box centres in — and never by a margin: an offset is
+ * a number tuned to one text size, and this row has two.
+ *
+ * **There are two arrangements of the same row, and `title` is what picks
+ * between them.** Without one, the sentence sits beside the box and names it.
+ * With one, the box and the title share the first line and the sentence runs
+ * the row's full width beneath — the shape a column of multi-line consents
+ * needs to be scannable, and the one place the sentence must *not* stay in the
+ * box's column. See `title` for why it is not indented.
  */
 const CheckboxRow = React.forwardRef<HTMLInputElement, CheckboxRowProps>(
   (
@@ -179,6 +230,7 @@ const CheckboxRow = React.forwardRef<HTMLInputElement, CheckboxRowProps>(
       onCheckedChange,
       disabled = false,
       label,
+      title,
       hint,
       hintTone = "muted",
       size = "sm",
@@ -192,10 +244,97 @@ const CheckboxRow = React.forwardRef<HTMLInputElement, CheckboxRowProps>(
     // renders two of them, and `aria-describedby` would point at whichever one
     // the DOM happened to hold.
     const generated = React.useId();
+    // Whatever *names* the box: the title where there is one, the sentence
+    // otherwise. One id either way, so the two arrangements cannot disagree
+    // about which node the accessible name comes from.
     const labelId = `${generated}-label`;
+    // The sentence's own id, and it exists only in the titled arrangement —
+    // untitled, the sentence IS the name and must not also be the description.
+    const sentenceId = title === undefined ? undefined : `${generated}-sentence`;
     // Undefined when there is no hint — an empty `aria-describedby` is a
     // dangling reference, not an absent one.
     const hintId = hint === undefined ? undefined : `${generated}-hint`;
+    const described = [sentenceId, hintId].filter(
+      (id): id is string => id !== undefined,
+    );
+
+    // The box sits inside a column exactly one line of the row's own text tall
+    // (`1lh` resolves against the inherited line-height), centred in it. That
+    // is what pins it to the *first* line of a wrapping sentence and keeps it
+    // level with the title at every size: the column is 16px on an `xs` row
+    // and 20px on an `sm` one without either being named here. A margin would
+    // have been a number tuned to one size and wrong at the other.
+    const box = (
+      <span className="flex h-[1lh] shrink-0 items-center">
+        <Checkbox
+          ref={ref}
+          checked={checked}
+          onChange={(e) => onCheckedChange(e.target.checked)}
+          disabled={disabled}
+          aria-labelledby={labelId}
+          aria-describedby={
+            described.length === 0 ? undefined : described.join(" ")
+          }
+        />
+      </span>
+    );
+
+    const hintLine = hint !== undefined && (
+      <span
+        id={hintId}
+        className={cn(
+          // Quiet info: a mark, no fill and no border. The row is already
+          // bordered, so a second edge here would read as a box inside a
+          // box rather than as a note — and the hint itself is something
+          // the reader reads through, so it stays ink and the glyph
+          // beside it is what carries the tone.
+          "mt-1 block text-xs text-muted-foreground",
+          hintTone === "info" && "flex items-start gap-1.5",
+        )}
+      >
+        {hintTone === "info" && (
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-info" aria-hidden />
+        )}
+        {hint}
+      </span>
+    );
+
+    // The titled arrangement: the tick and the title share one line, and the
+    // sentence runs the row's whole width beneath it. `flex-col` turns the
+    // container's own gap into vertical rhythm, so it drops to one step and
+    // `items-stretch` gives the sentence the full measure it exists to have.
+    if (title !== undefined) {
+      return (
+        <label
+          className={cn(
+            checkboxRowVariants({ size, checked, disabled }),
+            "flex-col items-stretch gap-1",
+            className,
+          )}
+        >
+          <span className="flex items-start gap-3">
+            {box}
+            <span
+              id={labelId}
+              className="min-w-0 flex-1 font-semibold text-foreground"
+            >
+              {title}
+            </span>
+            {/* Still right-packed and still last, for the reason `trailing`
+                gives: the slack lives at the end of this line, so a status
+                arriving after first paint grows into it instead of moving the
+                title. */}
+            {trailing !== undefined && (
+              <span className="ml-3 shrink-0">{trailing}</span>
+            )}
+          </span>
+          <span id={sentenceId} className="block">
+            {label}
+          </span>
+          {hintLine}
+        </label>
+      );
+    }
 
     return (
       <label
@@ -204,37 +343,15 @@ const CheckboxRow = React.forwardRef<HTMLInputElement, CheckboxRowProps>(
           className,
         )}
       >
-        <Checkbox
-          ref={ref}
-          className="mt-0.5"
-          checked={checked}
-          onChange={(e) => onCheckedChange(e.target.checked)}
-          disabled={disabled}
-          aria-labelledby={labelId}
-          aria-describedby={hintId}
-        />
-        {/* `min-w-0` so a long word or a truncating title inside the label can
-            actually shrink; `flex-1` so the slack the trailing slot grows into
-            lives here, at the end of the row, rather than between the box and
-            the sentence. */}
+        {box}
+        {/* `min-w-0` so a long word inside the label can actually shrink;
+            `flex-1` so the slack the trailing slot grows into lives here, at
+            the end of the row, rather than between the box and the sentence. */}
         <span className="min-w-0 flex-1">
           <span id={labelId} className="block">
             {label}
           </span>
-          {hint !== undefined && (
-            <span
-              id={hintId}
-              className={cn(
-                "mt-1 block text-xs",
-                // Quiet info: coloured text, no fill and no border. The row is
-                // already bordered, so a second edge here would read as a box
-                // inside a box rather than as a note.
-                hintTone === "info" ? "text-info" : "text-muted-foreground",
-              )}
-            >
-              {hint}
-            </span>
-          )}
+          {hintLine}
         </span>
         {trailing !== undefined && (
           <span className="ml-3 shrink-0 self-start">{trailing}</span>

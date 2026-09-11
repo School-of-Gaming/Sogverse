@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { CircleCheck } from "lucide-react";
+import { AlertTriangle, CircleCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ProductAttention } from "./admin-dashboard-data";
 import { PixelSprite, TROPHY_CUP } from "./pixel-art";
@@ -45,7 +45,8 @@ export function NeedsAttentionPanel({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-xl">{t("title")}</CardTitle>
-        <span className="rounded-full bg-warning/15 px-3 py-1 text-sm font-semibold text-warning">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-sm font-semibold text-warning">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
           {products.length}
         </span>
       </CardHeader>
@@ -104,19 +105,14 @@ function AllClearPanel() {
           wordmark and wraps within itself rather than pushing the card sideways.
           `justify-end` keeps it packed right wherever it lands. */}
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-x-6 gap-y-3 space-y-0">
-        {/* The wordmark is the card's heading, in the pixel face the cup beside
-            it is drawn in, and every class here is cancelling something
-            `CardTitle` assumes about a normal title. `leading-relaxed` because
-            Press Start 2P sets roughly one em per glyph and wants none of the
-            tight leading; `tracking-normal` because the base class ships
-            `tracking-tight`, which tailwind-merge has no reason to drop, and
-            negative letter-spacing smudges pixel glyphs into their neighbours;
-            `text-sm` because at the title's own size the longest locale would
-            set this wider than a phone. The one diacritic any locale puts in
-            this face is Swedish's ä (U+00E4), which is inside the `latin`
-            subset the font is loaded with, so it renders in the pixel face
-            rather than falling back mid-word. */}
-        <CardTitle className="font-display text-sm leading-relaxed tracking-normal text-primary sm:text-base">
+        {/* The all-clear line is the card's heading, in the app face like every
+            other panel title on this page; the pixel cup beside it is artwork
+            and carries the reward on its own. `text-sm` because at the title's
+            own size the longest locale would set this wider than a phone, and
+            `leading-relaxed`/`tracking-normal` because the heading sits on one
+            row beside the sprite and the base class's tight leading and
+            `tracking-tight` are drawn for a title stacked over body copy. */}
+        <CardTitle className="text-sm leading-relaxed tracking-normal text-act sm:text-base">
           {t("allClearTitle")}
         </CardTitle>
         <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2">

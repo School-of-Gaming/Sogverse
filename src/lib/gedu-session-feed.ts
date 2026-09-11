@@ -23,8 +23,8 @@ import type { GeduFeedSession } from "@/services/gedu-sessions/gedu-sessions.con
  * into the feed the workspace renders.
  *
  * **The RPC returns data; this module does the calendar math.** Nothing on the
- * server expands a schedule — that would be the third holiday-blind expansion in
- * the codebase and the second language it is written in. What comes back is the
+ * server expands a schedule — that would be the third schedule expansion in the
+ * codebase and the second language it is written in. What comes back is the
  * schedule parameters, the rows, and the roster; the walk forward, the walk
  * backward, the merge of rows over projections and the derivation of what kind
  * of entry each date is all happen here, once, in front of one clock.
@@ -221,7 +221,7 @@ export function buildGeduSessionFeed(
  * still fully editable, because a gedu is allowed to write up any session back
  * to the product's start. The moment anything *is* recorded on it, it becomes an
  * ordinary past entry that simply never owes anything (`owed: false`), so the
- * amber warning can never apply to it while the green check still can.
+ * warning can never apply to it while the green check still can.
  *
  * A running session can never reach that branch whatever its date: it is
  * `future` now, and the epoch test sits below the end-based split.

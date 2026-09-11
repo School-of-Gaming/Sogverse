@@ -5,7 +5,10 @@ import {
   type AuthState,
   type SignupPanelViewProps,
 } from "@/components/public/products/signup-panel-view";
-import type { MarketingConsentType } from "@/types";
+import type {
+  GamerPhotoConsentType,
+  MarketingConsentType,
+} from "@/types";
 import type { RegistrationState } from "@/components/public/products/derive-registration-state";
 
 /**
@@ -87,6 +90,13 @@ function panel(state: RegistrationState): SignupPanelViewProps {
     marketingConsentTypes: [],
     marketingConsents: new Set<MarketingConsentType>(),
     onMarketingConsentChange: () => {},
+    // No optional photo ask by default, which is what withholds the block —
+    // the *enabled* flag no longer does, and the case at the foot of this file
+    // is about exactly that.
+    gamerPhotoConsentTypes: [],
+    gamerPhotoConsentsEnabled: false,
+    gamerPhotoConsents: new Set<GamerPhotoConsentType>(),
+    onGamerPhotoConsentChange: () => {},
     onSubmit: () => {},
     onJoinWaitlist: () => {},
     currency: "eur",
@@ -224,5 +234,102 @@ describe("the pre-open → open swap is invisible", () => {
     );
     expect(clock(container)).toBeNull();
     expect(seatBar(container)).not.toBeNull();
+  });
+});
+
+/**
+ * **The photo ask does not arrive with the selection.**
+ *
+ * It used to: the rows were drawn only once a child was picked, so a parent who
+ * had read the whole panel on the way down met a question they had not seen,
+ * inserted between the conditions they had just agreed to and the button they
+ * were reaching for. A participant switch is a user action, so nothing there
+ * broke the layout rule outright — but a question arriving by surprise, in the
+ * one section a reader is least able to anticipate from what is above it, is
+ * its own defect.
+ *
+ * So the rows are drawn from the panel's first paint on any product that asks
+ * them of a gamer audience, and only their `disabled` state follows the
+ * selection. These assertions are about DOM node *identity* for the same reason
+ * the swap cases above are: a node that is the same object either side of the
+ * change was reconciled in place and cannot have moved.
+ */
+describe("the photo ask stands before anybody is selected", () => {
+  /** Every checkbox on the panel, in the order it is met down the page. */
+  const boxes = (c: HTMLElement) => [
+    ...c.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'),
+  ];
+  /** Rules first, then the photo ask — see the section order in the view. */
+  const photoBox = (c: HTMLElement) => boxes(c)[1];
+
+  /** The panel above, plus the one photo ask this product makes. */
+  const asking = (
+    selectedParticipantId: string | null,
+  ): SignupPanelViewProps => ({
+    ...panel({ kind: "open", ...CAPPED }),
+    selectedParticipantId,
+    gamerPhotoConsentTypes: ["lynx_educate"],
+    gamerPhotoConsentsEnabled: selectedParticipantId !== null,
+  });
+
+  it("draws the row disabled with nobody selected and enables it in place", () => {
+    const { container, rerender } = render(
+      <SignupPanelView {...asking(null)} />,
+    );
+
+    // Present before the parent has picked anyone, and not a target yet.
+    expect(boxes(container)).toHaveLength(2);
+    const before = photoBox(container);
+    expect(before.disabled).toBe(true);
+    // The row the box sits in, so the assertion covers the whole thing a
+    // reader can see rather than the input alone.
+    const rowBefore = before.closest("label");
+    expect(rowBefore).not.toBeNull();
+
+    rerender(<SignupPanelView {...asking(GAMER_ID)} />);
+
+    // The same input and the same row, one attribute apart: nothing was
+    // inserted, nothing was replaced, so nothing below it moved.
+    expect(boxes(container)).toHaveLength(2);
+    expect(photoBox(container)).toBe(before);
+    expect(photoBox(container).closest("label")).toBe(rowBefore);
+    expect(photoBox(container).disabled).toBe(false);
+  });
+
+  it("keeps the CTA the same node across that change", () => {
+    // The button is what the reader is reaching for when they pick a child,
+    // and it sits directly under the section that used to grow.
+    const { container, rerender } = render(
+      <SignupPanelView {...asking(null)} />,
+    );
+    const ctaBefore = cta(container);
+    rerender(<SignupPanelView {...asking(GAMER_ID)} />);
+    expect(cta(container)).toBe(ctaBefore);
+  });
+
+  it("draws nothing at all on a product that asks no photo consent", () => {
+    // The block's existence still comes off the product read, which is what
+    // keeps it absent from first paint on the overwhelming majority of them.
+    const { container } = render(
+      <SignupPanelView {...panel({ kind: "open", ...CAPPED })} />,
+    );
+    expect(boxes(container)).toHaveLength(1);
+  });
+
+  it("draws nothing on a product with no gamer audience", () => {
+    // A parents-only product asks nobody about a child's image, whatever it
+    // has stored: there is no gamer audience for the question to be about.
+    const { container } = render(
+      <SignupPanelView
+        {...asking(null)}
+        forGamers={false}
+        authState={{
+          kind: "ready",
+          participants: [{ id: GAMER_ID, name: "Marja", age: null, isSelf: true }],
+          gamerCount: 0,
+        }}
+      />,
+    );
+    expect(boxes(container)).toHaveLength(1);
   });
 });

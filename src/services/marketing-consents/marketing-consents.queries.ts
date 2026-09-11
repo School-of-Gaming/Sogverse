@@ -31,11 +31,14 @@ export const marketingConsentKeys = {
  * a consumer renders nothing while it flies inside a container that already has
  * its final size rather than a skeleton or a spinner. What a consumer *must*
  * do is treat `undefined` as "not answered yet" and never let an unresolved
- * read decide a write: a control rendered *from* server state (the settings
- * toggle) has to stay disabled until it lands, or it would send the opposite of
- * what is on file, while a control that merely *seeds* from it (the signup
- * panel's optional box) may render immediately and let a reader's own edit
- * outrank a late answer.
+ * read decide a write: a control rendered *from* server state has to stay
+ * disabled until it lands, or it would send the opposite of what is on file.
+ *
+ * **The settings toggle is now the only such control**, and this read has only
+ * that one caller. The signup panel used to seed its optional box from here and
+ * does not any more: every optional box on that panel starts unticked on every
+ * enrolment, so a parent decides afresh each time rather than being shown an
+ * answer we ticked for them.
  *
  * **`enabled` is not a convenience.** The query is only meaningful for a
  * signed-in customer: `anon` holds no grant on the table at all, and an ADMIN's

@@ -13,7 +13,7 @@ import { mockSupabaseClient } from "../../setup";
  *    back only on the outcomes where the parent has to try again;
  *  - success is a FULL-PAGE navigation, because the browser Supabase client
  *    seeds its session from cookies at construction and only a document unload
- *    rebuilds it (root CLAUDE.md, auth state);
+ *    rebuilds it (`src/CLAUDE.md`, auth state);
  *  - a registration that fails leaves the form usable and says why.
  *
  * What is new:
@@ -47,7 +47,7 @@ vi.mock("@/providers", () => ({
     freezeUntilNavigation: mockFreezeUntilNavigation,
     unfreezeAuthState: mockUnfreezeAuthState,
   }),
-  useReferralCode: () => "paris-nord",
+  useUtm: () => ({ source: "Lynx", medium: null, campaign: "lynx-summer-a" }),
 }));
 
 // The navigation itself is the hook's job and jsdom cannot perform it; what
@@ -143,7 +143,7 @@ describe("RegisterForm", () => {
     expect(mockSupabaseClient.auth.signUp).not.toHaveBeenCalled();
   });
 
-  it("sends the names, the UI locale and the referral code it was given", async () => {
+  it("sends the names, the UI locale and the utm values it was given", async () => {
     const form = renderForm();
 
     await form.submit();
@@ -156,7 +156,9 @@ describe("RegisterForm", () => {
       // request — so the locale the form is being read in is the best answer
       // anyone has for the welcome mail.
       locale: "fi",
-      referralCode: "paris-nord",
+      // Every field is sent, present or not: an absent one goes as `undefined`,
+      // which JSON.stringify drops, so the body carries only what survived.
+      utm: { source: "Lynx", campaign: "lynx-summer-a" },
     });
   });
 

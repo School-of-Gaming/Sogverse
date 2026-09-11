@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button";
 import type { ParticipationCounts } from "@/services/participations";
 import type { ProductBrowseRow } from "@/types";
 import { filterProducts } from "./filter-products";
-import { useBrowseFilters } from "./use-browse-filters";
+import type { BrowseSurface } from "./browse-surface";
+import { useOfferedBrowseFilters } from "./use-browse-filters";
 import { withBrowseState } from "./browse-state";
 import { ROUTES } from "@/lib/constants";
 import { ProductBrowseCard } from "./product-browse-card";
-import { ProductBrowseFilters } from "./product-browse-filters";
+import { ProductBrowseFilterPanel } from "./product-browse-filter-panel";
+import type { AppHrefObject } from "@/lib/constants/routes";
 
 /** One headed block of cards. The shop passes one per visible category (Clubs →
  *  Camps → Events, in that fixed order); the municipality page passes a single
@@ -27,17 +29,23 @@ export interface ProductBrowseSection {
   products: ProductBrowseRow[];
 }
 
-// The shared body of a browse page: the filter rail/strip, the headed card
-// grids, and the empty states. The shop (a section per visible product
-// category) and the per-municipality page (one municipality's clubs) both
-// render this — they differ only in the sections they hand over and the filter
-// config they pass down. Keeping the chip-filtering + grids here is what stops
-// the two pages from drifting.
+// The shared body of a browse page: the filters (a rail from `lg` up, a bar
+// and a bottom sheet below it), the headed card grids, and the empty states.
+// The shop (a section per visible product category) and the per-municipality
+// page (one municipality's clubs) both render this — they differ only in the
+// sections they hand over and the surface they name, which decides the filters
+// on offer. Keeping the chip-filtering + grids here is what stops the two pages
+// from drifting.
 //
-// Layout: one column on phones (filter strip on top, cards below), a rail
-// beside the cards from `lg` up. There is only ever one instance of the filter
-// component — it restyles itself at `lg` instead of a second copy being
-// rendered for the rail.
+// Layout: one column on phones (a filter bar on top, cards below), a rail
+// beside the cards from `lg` up. The bar is a Filters button, and beneath it,
+// once anything is lit, the lit filters wrapping to as many lines as they need,
+// so it is as tall as the selection. Below `lg` the chip rows themselves live
+// in a bottom sheet the bar opens, so the cards start near the top of the
+// screen instead of under the stack of rows that used to stand above them. The
+// filter component is only ever mounted in one of its two places — opening the
+// sheet unmounts the rail's copy and mounts one inside the sheet, rather than a
+// second copy standing in either (see `<ProductBrowseFilterPanel>`).
 //
 // The horizontal width budget lives here rather than in the two hosts, so both
 // browse surfaces are the same shape by construction. Below `lg` this is the
@@ -71,9 +79,11 @@ interface ProductBrowseResultsProps {
    *  per-id map here so both browse hosts hand this component the raw query
    *  result, not a map. */
   counts: ParticipationCounts[];
-  /** Forwarded to `<ProductBrowseFilters>` — see the prop there for why the
-   *  municipality page turns the Type row off. */
-  showTypeFilter?: boolean;
+  /** Which page this is. It decides which filters the page offers — which
+   *  rows are drawn, which params narrow the grid, and what lights Clear —
+   *  and all three read that one decision, in `browse-surface.ts`, where the
+   *  reason for each filter a page withholds is written. */
+  surface: BrowseSurface;
   /** Whether the page's scope holds any products before *any* filtering —
    *  including the Type narrowing the shop applies while building `sections`.
    *  Distinguishes "nothing here yet" from "no matches": without it, selecting
@@ -87,7 +97,7 @@ interface ProductBrowseResultsProps {
    *  It supplies the PATH only — the grid's live filter state is appended here,
    *  for both surfaces at once, so neither host can forget it and the two
    *  cannot carry different things. */
-  productHref?: (id: string) => string;
+  productHref?: (id: string) => AppHrefObject;
   /** True on a single-municipality page — drops the redundant municipality name
    *  from online muni cards (see `ProductBrowseCard`). */
   municipalityScoped?: boolean;
@@ -96,7 +106,7 @@ interface ProductBrowseResultsProps {
 export function ProductBrowseResults({
   sections,
   counts,
-  showTypeFilter,
+  surface,
   scopeHasProducts,
   productHref,
   municipalityScoped,
@@ -106,8 +116,10 @@ export function ProductBrowseResults({
   // so it reuses that button's label rather than authoring a second word for
   // the same action.
   const tFilters = useTranslations("productBrowse.filters");
-  const { topics, format, languages, audiences, tags, age, days, clear } =
-    useBrowseFilters();
+  // The filters as this page offers them, not as the URL spells them: a param
+  // for a row the page does not draw must not empty the grid with nothing on
+  // screen to say why.
+  const { filters, clear } = useOfferedBrowseFilters(surface);
   // The raw params, not the parsed filters above: what a card carries is the
   // grid's URL state verbatim, so the listing the back link rebuilds is the one
   // the reader actually left rather than a re-serialization of it.
@@ -136,18 +148,10 @@ export function ProductBrowseResults({
       sections
         .map((section) => ({
           ...section,
-          products: filterProducts(section.products, {
-            topics,
-            format,
-            languages,
-            audiences,
-            tags,
-            age,
-            days,
-          }),
+          products: filterProducts(section.products, filters),
         }))
         .filter((section) => section.products.length > 0),
-    [sections, topics, format, languages, audiences, tags, age, days],
+    [sections, filters],
   );
 
   // "Nothing here yet" vs "no matches" is decided before *all* filtering, Type
@@ -167,7 +171,13 @@ export function ProductBrowseResults({
       className="container mx-auto px-4 lg:grid lg:max-w-none lg:grid-cols-[minmax(16rem,1fr)_minmax(0,64rem)_minmax(0,1fr)] lg:gap-6"
       data-reserve-scroll-gutter
     >
-      {/* Sticks below the site header (--header-height, the same variable the
+      {/* Below `lg` this holds the filter bar, which grows a wrapping row of
+          lit filters beneath its button; the sticky rail
+          treatment below is what it becomes once there is a gutter to put it
+          in, and every class here that matters carries the `lg:` prefix for
+          that reason.
+
+          Sticks below the site header (--header-height, the same variable the
           header itself is sized from) and scrolls internally once the chip
           groups outgrow the viewport. `self-start` is what lets it stick at
           all — a stretched grid item is already as tall as its row.
@@ -185,7 +195,7 @@ export function ProductBrowseResults({
           nothing: track 1's min is a fixed 16rem, so the rail's own width
           never feeds back into track sizing. */}
       <div className="mb-3 lg:mb-0 lg:sticky lg:top-[calc(var(--header-height)+1.5rem)] lg:max-h-[calc(100vh-var(--header-height)-3rem)] lg:w-full lg:max-w-[20rem] lg:justify-self-end lg:self-start lg:overflow-y-auto">
-        <ProductBrowseFilters showTypeFilter={showTypeFilter} />
+        <ProductBrowseFilterPanel surface={surface} />
       </div>
 
       {visibleSections.length > 0 ? (

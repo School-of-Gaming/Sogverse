@@ -64,7 +64,7 @@ function FeeRow<S extends FeeStatus>({
             const status = findOption(statuses, e.target.value);
             if (status) onChange({ ...draft, status });
           }}
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
         >
           {statuses.map((s) => (
             <option key={s} value={s}>

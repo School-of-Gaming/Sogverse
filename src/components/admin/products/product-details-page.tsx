@@ -1,10 +1,13 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
+  AlertTriangle,
   ArrowLeft,
   Calendar,
+  CalendarCheck,
+  Camera,
   Check,
   Clock,
   Coins,
@@ -13,6 +16,7 @@ import {
   Globe2,
   Landmark,
   Link2,
+  Mail,
   MapPin,
   Pencil,
   Shapes,
@@ -30,18 +34,25 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { municipalityOf } from "@/lib/locations/embedded-chain";
 import { municipalitySlug } from "@/lib/locations/municipality-slug";
-import { cn, formatCurrencyFromCents, formatDate } from "@/lib/utils";
+import { cn, formatCurrencyFromCents, formatDate, formatDateOnly } from "@/lib/utils";
+import { firstSessionDate, lastSessionDate } from "@/lib/session-dates";
+import { formatTimezoneOptionLabel } from "@/lib/timezone";
 import { ProductBanner } from "@/components/ui/product-banner";
 import { productImageSrc } from "@/lib/images/product-image-url";
-import { productAudience } from "@/components/public/products/product-audience";
+import { productAudience } from "@/lib/products/product-audience";
 import { ProductOverviewCard } from "@/components/public/products/product-overview-card";
-import { formatClubTermDates } from "@/components/public/products/format-product-term-dates";
+import {
+  formatAdminTermWeeks,
+  formatClubTermDates,
+} from "@/lib/products/format-product-term-dates";
 import { productTagLabelKey } from "@/components/public/products/product-tag";
 import { countryDisplayName } from "@/components/public/products/region-lock/region-gate";
 import {
   consentDocumentMeta,
   describeRequiredConsents,
 } from "@/lib/constants/consent-documents";
+import { describeMarketingConsents } from "@/lib/constants/marketing-consents";
+import { describeGamerPhotoConsents } from "@/lib/constants/gamer-photo-consents";
 import {
   useProductAdmin,
   type ProductAdminDetailRow,
@@ -57,6 +68,7 @@ import { GroupsPanel } from "./groups/groups-panel";
 import { ProductStatusChip } from "./product-status-chip";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
+import type { AppHref } from "@/lib/constants/routes";
 
 interface ProductDetailsPageProps {
   productType: ProductType;
@@ -80,9 +92,9 @@ export function ProductDetailsPage({
 
   const { data: product, isLoading } = useProductAdmin(productId);
 
-  const listHref = `/admin/${config.routeSlug}`;
-  const editHref = `/admin/${config.routeSlug}/${productId}/edit`;
-  const cloneHref = `/admin/${config.routeSlug}/new?cloneFrom=${productId}`;
+  const listHref = ROUTES.admin.productList(productType);
+  const editHref = ROUTES.admin.productEdit(productType, productId);
+  const cloneHref = ROUTES.admin.productClone(productType, productId);
 
   if (isLoading) {
     return (
@@ -94,8 +106,8 @@ export function ProductDetailsPage({
           <ArrowLeft className="h-4 w-4" />
           {t("newPage.back", { plural })}
         </Link>
-        <div className="h-40 animate-pulse rounded-lg border border-input bg-muted" />
-        <div className="h-24 animate-pulse rounded-lg border border-input bg-muted" />
+        <div className="h-40 animate-pulse rounded-lg border border-border bg-lifted" />
+        <div className="h-24 animate-pulse rounded-lg border border-border bg-lifted" />
       </div>
     );
   }
@@ -220,9 +232,9 @@ function HeaderCard({
   isVisible: boolean;
   listedLabel: string;
   unlistedLabel: string;
-  editHref: string;
+  editHref: AppHref;
   editLabel: string;
-  cloneHref: string;
+  cloneHref: AppHref;
   cloneLabel: string;
 }) {
   return (
@@ -252,7 +264,7 @@ function HeaderCard({
           )}
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <ProductStatusChip status={statusKey} />
-            <Badge variant={isVisible ? "default" : "secondary"}>
+            <Badge variant="outline">
               {isVisible ? listedLabel : unlistedLabel}
             </Badge>
           </div>
@@ -281,6 +293,21 @@ function HeaderCard({
 // dates, capacity/waitlist, registration window, billing + prices and topic.
 // One scan answers "is this product set up the way I expect?".
 // ──────────────────────────────────────────────────────────────────────
+
+/**
+ * `Wednesday, August 19, 2026` in en; `keskiviikko 19. elokuuta 2026` in fi —
+ * the weekday spelled out in full and the rest left to `Intl`, because the
+ * whole point of the first/last session facts is *which day of the week* a
+ * family turns up, and an abbreviation is the one part of the answer a reader
+ * has to decode. UTC-pinned like every bare calendar date on this page.
+ */
+const SESSION_DATE_FORMAT: Intl.DateTimeFormatOptions = {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+};
+
 function OperationalFacts({
   product,
   topicName,
@@ -323,7 +350,13 @@ function OperationalFacts({
   // checkboxes with, so the admin reading this row and the parent ticking the
   // box are looking at one name for one document.
   const tConsent = useTranslations("consentDocuments.names");
+  // The admin-facing names of the two optional asks — the same labels the form's
+  // rows carry, so the details page and the edit form call one thing one thing.
+  const tAsks = useTranslations("admin.products.consents");
   const tConsentBundle = useTranslations("consentDocuments.bundles");
+  // The clock the zone label's offset is read at — request-stable, so the
+  // server and the first client render agree across a DST transition.
+  const now = useNow();
 
   // Render a per-session fee from its stored cents. The state is derived from
   // the value: null = "not set" (the `nullStatus` label — "unknown" draws the
@@ -335,10 +368,13 @@ function OperationalFacts({
         <span
           className={
             nullStatus === "unknown"
-              ? "text-destructive"
+              ? "inline-flex items-center gap-1 text-destructive"
               : "text-muted-foreground"
           }
         >
+          {nullStatus === "unknown" && (
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          )}
           {t(`fees.status.${nullStatus}`)}
         </span>
       );
@@ -355,6 +391,44 @@ function OperationalFacts({
   // `formatClubTermDates`). Camps/events fold their dates into the schedule
   // card instead, so the helper returns null for them.
   const termDates = formatClubTermDates(product, uiLocale);
+
+  // `wk 34–50 · 17 weeks`, appended to the term range above — see
+  // `formatAdminTermWeeks` for why it is not part of the range itself.
+  const termWeeks =
+    termDates === null ? null : formatAdminTermWeeks(product, c);
+
+  /**
+   * The first and last days a family actually turns up.
+   *
+   * `start_date`/`end_date` and the weekly pattern are stored independently, so
+   * an admin could save a Monday start for a Wednesday club and every surface
+   * reading the column told families it "starts Monday" when the first session
+   * was two days later. These two facts are the audit: the derived dates are
+   * readable on the details page, so checking what a family is told costs a
+   * glance rather than opening the edit form (a write surface) to infer it.
+   *
+   * Events are excluded because their single date *is* the session — snapping
+   * it to a weekday pattern would restate the term dates fact one row down.
+   */
+  const sessionWeekdays = product.schedule_slots.map((slot) => slot.weekday);
+  const showSessionDates =
+    product.product_type !== "event" && sessionWeekdays.length > 0;
+  const firstSession =
+    showSessionDates && product.start_date
+      ? formatDateOnly(
+          firstSessionDate(product.start_date, sessionWeekdays),
+          uiLocale,
+          SESSION_DATE_FORMAT,
+        )
+      : null;
+  const lastSession =
+    showSessionDates && product.end_date
+      ? formatDateOnly(
+          lastSessionDate(product.end_date, sessionWeekdays),
+          uiLocale,
+          SESSION_DATE_FORMAT,
+        )
+      : null;
 
   // Where a family meets this product. `null` only for a municipality club with
   // no location at all — there is no school page to point at, and a `/shop`
@@ -404,12 +478,45 @@ function OperationalFacts({
         {termDates && (
           <Fact icon={Calendar} label={t("detailsPage.fields.termDates")}>
             {termDates}
+            {termWeeks && (
+              <span className="tabular-nums text-muted-foreground">
+                {` · ${termWeeks}`}
+              </span>
+            )}
+          </Fact>
+        )}
+
+        {/* Directly after the term range: the same span, read as the days a
+            family is actually expected. */}
+        {firstSession && (
+          <Fact
+            icon={CalendarCheck}
+            label={t("detailsPage.fields.firstSession")}
+          >
+            {firstSession}
+          </Fact>
+        )}
+
+        {lastSession && (
+          <Fact
+            icon={CalendarCheck}
+            label={t("detailsPage.fields.lastSession")}
+          >
+            {lastSession}
           </Fact>
         )}
 
         <Fact icon={Clock} label={t("detailsPage.fields.seats")}>
           {seatsLine}
           {waitlistSuffix}
+        </Fact>
+
+        {/* The zone the schedule is authored in — the stored property, as
+            distinct from the viewer-converted times the overview card shows.
+            Same label the edit form's dropdown uses, so the two cannot
+            disagree about what a zone is called. */}
+        <Fact icon={Globe2} label={t("detailsPage.fields.timezone")}>
+          {formatTimezoneOptionLabel(product.timezone, now)}
         </Fact>
 
         <Fact icon={Globe2} label={t("detailsPage.fields.registrationOpensAt")}>
@@ -521,6 +628,54 @@ function OperationalFacts({
           )}
         </Fact>
 
+        {/* The two optional asks, in the order the signup panel asks them and
+            directly under the conditions they sit beside on that panel.
+
+            **Always rendered, both of them, and that is the rule rather than a
+            preference**: an admin must be able to read every stored property of
+            a product off this page, because the edit form is a write surface
+            and opening it to answer "is this asked?" costs a form that can be
+            accidentally submitted. "None" is the ordinary answer on nearly every
+            product, and it is a different answer from a row that is not here.
+
+            A stored type this deploy cannot name is dropped rather than shown
+            raw — the opposite of what the required run above does with an
+            unknown slug, and the same asymmetry the family-facing describe
+            helpers make. A required document that vanished from the app is a
+            legal condition nobody can see; an ask that vanished simply goes
+            unasked, and a bare enum value would say less than the count does. */}
+        <Fact icon={Camera} label={t("detailsPage.fields.gamerPhotoConsents")}>
+          {product.product_gamer_photo_consents.length === 0 ? (
+            <span className="text-muted-foreground">{t("consents.none")}</span>
+          ) : (
+            <ul>
+              {describeGamerPhotoConsents(
+                product.product_gamer_photo_consents.map((c) => c.consent_type),
+              ).map((row) => (
+                <li key={row.type}>
+                  {tAsks(`gamerPhoto.${row.ask.sentenceKey}.label`)}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Fact>
+
+        <Fact icon={Mail} label={t("detailsPage.fields.marketingConsents")}>
+          {product.product_marketing_consents.length === 0 ? (
+            <span className="text-muted-foreground">{t("consents.none")}</span>
+          ) : (
+            <ul>
+              {describeMarketingConsents(
+                product.product_marketing_consents.map((c) => c.consent_type),
+              ).map((row) => (
+                <li key={row.type}>
+                  {tAsks(`marketing.${row.ask.sentenceKey}.label`)}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Fact>
+
         {/* Staff-only, and it lives on its own embedded row for exactly that
             reason — `products` is anon-readable by column selection, so the
             lesson link cannot be a column on it. */}
@@ -530,7 +685,7 @@ function OperationalFacts({
               href={product.product_staff_details.material_url}
               target="_blank"
               rel="noreferrer"
-              className="break-all text-primary underline-offset-2 hover:underline"
+              className="break-all text-act underline-offset-2 hover:underline"
             >
               {product.product_staff_details.material_url}
             </a>
@@ -604,11 +759,11 @@ function Fact({
  */
 function publicProductPath(product: ProductAdminDetailRow): string | null {
   if (product.product_type !== "municipality_club") {
-    return ROUTES.shopProduct(product.id);
+    return ROUTES.shopProductPath(product.id);
   }
   const municipality = municipalityOf(product.locations);
   if (municipality === null) return null;
-  return ROUTES.schoolMunicipalityProduct(
+  return ROUTES.schoolMunicipalityProductPath(
     municipalitySlug(municipality.name),
     product.id,
   );
@@ -642,7 +797,7 @@ function PublicProductLink({ path }: { path: string }) {
         href={url}
         target="_blank"
         rel="noreferrer"
-        className="min-w-0 break-all text-primary underline-offset-2 hover:underline"
+        className="min-w-0 break-all text-act underline-offset-2 hover:underline"
       >
         {url}
       </a>

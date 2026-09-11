@@ -9,7 +9,6 @@ import {
 } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
-import { ROUTES } from "@/lib/constants";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { AdminGroupDetailsPage } from "@/components/admin/products/group-details/admin-group-details-page";
@@ -17,6 +16,13 @@ import type { AdminProductSessions } from "@/services/admin-sessions";
 import type { GeduGroupFeed } from "@/services/gedu-sessions";
 import type { ProductAdminDetailRow } from "@/services/products";
 import type { ProductGroupsSnapshot, ProductType } from "@/types";
+
+// The note fields are opaque here: nothing below opens one, types into one,
+// or asserts on the markdown one produces. Stubbing the editor keeps
+// ProseMirror and its markdown parser out of this file's module graph.
+vi.mock("@/components/ui/rich-text-editor", () =>
+  import("../../mocks/rich-text-editor"),
+);
 
 /**
  * ============================================================================
@@ -125,6 +131,16 @@ vi.mock("@/services/gedu-sessions", async (importOriginal) => ({
   useGeduGroupFeed: () => ({ data: reads.feed, isPending: false }),
 }));
 
+// The photo-consent pair, stubbed at the two reads and left with the real
+// resolver: this page asks a product what it wants asked and the roster what
+// their parents answered, and an ordinary product asks nothing — which is the
+// shape every fixture here has.
+vi.mock("@/services/gamer-photo-consents", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/gamer-photo-consents")>()),
+  useProductGamerPhotoConsentTypes: () => ({ data: [] }),
+  useGamerPhotoConsentsForGamers: () => ({ data: [] }),
+}));
+
 vi.mock("@/services/groups", () => ({
   useProductGroups: () => ({ data: reads.snapshot, isPending: false }),
 }));
@@ -216,9 +232,9 @@ function productRow(productType: ProductType): ProductAdminDetailRow {
     product_prices: [{ currency: "eur", price_cents: 3000 }],
     schedule_slots: [],
     locations: null,
-    product_holiday_calendars: [],
     product_required_consents: [],
     product_marketing_consents: [],
+    product_gamer_photo_consents: [],
   };
 }
 
@@ -532,7 +548,7 @@ describe("admin group details — the page an admin gets is the gedu's page", ()
     // The way through is one navigation, to the page whose scope says so.
     expect(
       panel.getByRole("link", { name: "Edit site" }).getAttribute("href"),
-    ).toBe(ROUTES.admin.site(IDS.location));
+    ).toBe(`/admin/sites/${IDS.location}`);
   });
 });
 

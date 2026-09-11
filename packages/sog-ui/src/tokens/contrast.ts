@@ -20,7 +20,17 @@
  * is ever typed by hand.
  */
 
-import { BRAND, NEUTRALS, YTY_FAMILIES, type Hex, type YtyFamilyId } from "./brand";
+import {
+  BRAND,
+  NEUTRALS,
+  STATUS,
+  STATUS_IDS,
+  STATUS_INK,
+  YTY_FAMILIES,
+  statusHex,
+  type Hex,
+  type YtyFamilyId,
+} from "./brand";
 
 export type Rgb = readonly [number, number, number];
 
@@ -61,7 +71,7 @@ export type Threshold = (typeof THRESHOLDS)[keyof typeof THRESHOLDS];
 
 /** One end of a pairing: the semantic token, so two tokens sharing a hex stay distinguishable. */
 export type PairingSide = {
-  /** The theme token without its `--color-` prefix, e.g. `yty-wit-soft`. */
+  /** The theme token without its `--color-` prefix, e.g. `yty-wit` or `warning`. */
   readonly token: string;
   readonly hex: Hex;
 };
@@ -77,16 +87,24 @@ export type Pairing = {
   readonly why: string;
 };
 
-/** The two grounds a page is built from. The card is the lighter one, so it binds. */
-const GROUNDS = [
+/**
+ * Every ground the library fills — the complete set a text token can land on.
+ *
+ * `lifted` is the lightest of the three, so it binds: a foreground that clears
+ * its threshold there clears it on the card and on the page. Measuring all
+ * three rather than only the binding one is what makes that claim checkable
+ * instead of remembered.
+ */
+export const GROUNDS = [
   { token: "background", hex: NEUTRALS.background.hex, label: "the page" },
   { token: "card", hex: NEUTRALS.card.hex, label: "a card" },
+  { token: "lifted", hex: NEUTRALS.lifted.hex, label: "a lifted block" },
 ] as const;
 
 const INK: PairingSide = { token: "background", hex: NEUTRALS.background.hex };
 const WHITE: PairingSide = {
-  token: "secondary-foreground",
-  hex: BRAND.secondary.foreground,
+  token: "world-foreground",
+  hex: BRAND.world.foreground,
 };
 
 const YTY_IDS = [
@@ -97,10 +115,10 @@ const YTY_IDS = [
 ] as const satisfies readonly YtyFamilyId[];
 
 /**
- * The app's own text tokens, on both grounds a page is built from.
+ * The app's own text tokens, on every ground the library fills.
  *
  * Body size, so the body floor: these are the pairings a whole paragraph is set
- * in, and secondary text on the lighter ground is where the set comes closest
+ * in, and secondary text on the lightest ground is where the set comes closest
  * to that floor.
  */
 const appTextOnGrounds: Pairing[] = (
@@ -122,72 +140,126 @@ const appTextOnGrounds: Pairing[] = (
   })),
 );
 
-/** The two signature colours, each under the ink it carries. */
+/**
+ * The two signature colours, each under the ink it carries.
+ *
+ * **There is no `world`-as-ink row, and that is a measurement rather than an
+ * omission.** World reads 2.71 against a card and 2.91 against the page —
+ * under the glyph floor, let alone the body one — so there is no ground this
+ * theme fills that it could be set as type on. It reaches a reader as an edge,
+ * a rule, a mark or a fill, which is why the role and status tables name
+ * families and statuses and never world as a figure.
+ */
 const brandPairings: Pairing[] = [
   {
-    id: "ink-on-primary",
+    id: "ink-on-act",
     foreground: INK,
-    background: { token: "primary", hex: BRAND.primary.hex },
+    background: { token: "act", hex: BRAND.act.hex },
     threshold: THRESHOLDS.bodyText,
-    why: "Dark ink on the amber fill — the primary call to action. Its label is body size, so it takes the body floor.",
+    why: "Dark ink on the act fill — the main call to action. Its label is body size, so it takes the body floor.",
   },
   {
-    id: "white-on-secondary",
+    id: "white-on-world",
     foreground: WHITE,
-    background: { token: "secondary", hex: BRAND.secondary.hex },
+    background: { token: "world", hex: BRAND.world.hex },
     threshold: THRESHOLDS.bodyText,
-    why: "White on the violet fill, a body-size label. Violet is a dark colour, so only a light label reads on it — the exact mirror of amber, which takes only a dark one.",
+    why: "White on the world fill, a body-size label. World is a dark colour, so only a light label reads on it — the exact mirror of act, which takes only a dark one.",
   },
 ];
 
 /**
- * Every Yty family's **soft** variant as text, on both grounds. Soft is what
- * carries text and glyphs in this palette; strong is for fills and edges.
+ * Act as a **figure** — a display phrase, an eyebrow, a label — on every ground.
+ *
+ * Act is the half of the signature pair that can be set as type, and these rows
+ * are what makes that half checkable rather than assumed. Without them a retune
+ * of the brand's loudest colour would pass the ledger untouched while act is
+ * spent as a figure on a hundred surfaces and drawn across a hero in display
+ * size.
+ *
+ * The body floor, not the large-text one: the hero phrase is the loudest use but
+ * not the binding one — a topic eyebrow and an inline label are body size or
+ * smaller, and a colour proven at the harder floor is proven at the easier one.
  */
-const softAsText: Pairing[] = YTY_IDS.flatMap((id) =>
+const actAsInk: Pairing[] = GROUNDS.map((ground) => ({
+  id: `act-on-${ground.token}`,
+  foreground: { token: "act", hex: BRAND.act.hex },
+  background: { token: ground.token, hex: ground.hex },
+  threshold: THRESHOLDS.bodyText,
+  why: `Act as a figure on ${ground.label} — a hero's display phrase, a topic eyebrow, a word naming the thing to do. Type at body size, so the body floor.`,
+}));
+
+/**
+ * Every Yty family as **ink** — a label or a glyph — on every ground.
+ *
+ * Body size, so the body floor. A label is the only place a family colour is
+ * ever set as type, and a glyph beside it clears the same bar with room to
+ * spare, so one measurement covers both roles a family plays on a neutral
+ * ground.
+ */
+const familyAsInk: Pairing[] = YTY_IDS.flatMap((id) =>
   GROUNDS.map((ground) => ({
-    id: `yty-${id}-soft-on-${ground.token}`,
-    foreground: { token: `yty-${id}-soft`, hex: YTY_FAMILIES[id].soft },
+    id: `yty-${id}-on-${ground.token}`,
+    foreground: { token: `yty-${id}`, hex: YTY_FAMILIES[id].hex },
     background: { token: ground.token, hex: ground.hex },
     threshold: THRESHOLDS.bodyText,
-    why: `${YTY_FAMILIES[id].name}'s soft variant set as body text on ${ground.label}, so it takes the body floor.`,
+    why: `${YTY_FAMILIES[id].name} as a label on ${ground.label}, at body size and so at the body floor. Its glyph clears the same pairing by a wider margin.`,
   })),
 );
 
 /**
- * The fills a family-coloured button draws, each under dark ink.
+ * Every Yty family as a **fill**, under the dark ink it carries.
  *
- * Three families fill **strong**; wit fills **soft**, because wit-strong misses
- * the body floor a button label sits under. That substitution is the one
- * asymmetry in the recipe, and it is a measurement rather than a preference.
+ * One entry per family, because a family is one colour: the same hex that inks a
+ * label fills the chip the label sits in, and this is the other half of that
+ * value's proof. No family fill takes a white label — none of the four clears
+ * the body floor against white — which is what removes white from the palette's
+ * fills altogether.
  */
-const FILL_RECIPE = [
-  { family: "valor", variant: "strong" },
-  { family: "harmony", variant: "strong" },
-  { family: "glow", variant: "strong" },
-  { family: "wit", variant: "soft" },
-] as const satisfies readonly {
-  family: YtyFamilyId;
-  variant: "strong" | "soft";
-}[];
-
-const fillUnderInk: Pairing[] = FILL_RECIPE.map(({ family, variant }) => ({
-  id: `ink-on-yty-${family}-${variant}`,
+const familyUnderInk: Pairing[] = YTY_IDS.map((id) => ({
+  id: `ink-on-yty-${id}`,
   foreground: INK,
-  background: {
-    token: `yty-${family}-${variant}`,
-    hex: YTY_FAMILIES[family][variant],
-  },
+  background: { token: `yty-${id}`, hex: YTY_FAMILIES[id].hex },
   threshold: THRESHOLDS.bodyText,
-  why: `Dark ink on a ${YTY_FAMILIES[family].name} fill — a family-coloured button's label, at body size and so at the body floor.`,
+  why: `Dark ink on a ${YTY_FAMILIES[id].name} fill — a family-coloured chip or button label, at body size and so at the body floor.`,
+}));
+
+/**
+ * Every status as **ink** on every ground, and as a **fill** under its own ink.
+ *
+ * Two of the four resolve to a family's hex and are therefore measured twice —
+ * once as `yty-glow`, once as `success`. That is deliberate rather than
+ * redundant: the ledger is keyed on the **token** a consumer writes, so a
+ * pairing the library offers under a name is proven under that name. If success
+ * ever stopped pointing at Glow, its rows would go on being measured without
+ * anybody having to remember to add them.
+ */
+const statusAsInk: Pairing[] = STATUS_IDS.flatMap((id) =>
+  GROUNDS.map((ground) => ({
+    id: `${id}-on-${ground.token}`,
+    foreground: { token: id, hex: statusHex(id) },
+    background: { token: ground.token, hex: ground.hex },
+    threshold: THRESHOLDS.bodyText,
+    why: `${STATUS[id].name} as the label of a state on ${ground.label}, at body size and so at the body floor. Its glyph clears the same pairing by a wider margin.`,
+  })),
+);
+
+const statusUnderInk: Pairing[] = STATUS_IDS.map((id) => ({
+  id: `ink-on-${id}`,
+  foreground: { token: `${id}-foreground`, hex: STATUS_INK },
+  background: { token: id, hex: statusHex(id) },
+  threshold: THRESHOLDS.bodyText,
+  why: `A ${STATUS[id].name} label on a ${STATUS[id].name} fill — a badge, at body size and so at the body floor. Every status fill carries this one ink; none of the four clears the floor under white.`,
 }));
 
 /** Every foreground/ground pair the library ships, each with the threshold it is held to. */
 export const PAIRINGS: readonly Pairing[] = [
   ...appTextOnGrounds,
   ...brandPairings,
-  ...softAsText,
-  ...fillUnderInk,
+  ...actAsInk,
+  ...familyAsInk,
+  ...familyUnderInk,
+  ...statusAsInk,
+  ...statusUnderInk,
 ];
 
 /** The measured ratio for a pairing. Computed on every call — never stored, never rounded into the data. */

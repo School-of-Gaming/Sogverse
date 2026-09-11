@@ -129,7 +129,7 @@ export function ProductBrowseCardView({
               entirely when there is no topic and no flag to hang it on. */}
           <div className="flex items-center gap-2">
             {topicLabel !== null && (
-              <p className="text-xs font-medium uppercase tracking-wide text-primary">
+              <p className="text-xs font-medium uppercase tracking-wide text-act">
                 {topicLabel}
               </p>
             )}

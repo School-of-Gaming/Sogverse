@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
 import {
@@ -12,6 +12,7 @@ import { buildUpdateInput, existingFormState } from "./product-build";
 import { ProductFormShell } from "./product-form";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
+import { ROUTES } from "@/lib/constants";
 
 interface ProductFormEditProps {
   productType: ProductType;
@@ -35,7 +36,7 @@ export function ProductFormEdit({
     [product, config, uiLocale],
   );
 
-  const detailsHref = `/admin/${config.routeSlug}/${product.id}`;
+  const detailsHref = ROUTES.admin.product(product.product_type, product.id);
 
   return (
     <ProductFormShell
@@ -45,6 +46,7 @@ export function ProductFormEdit({
       // the form is seeded from — so the image card paints its picture and its
       // label on the first frame, with no extra request.
       initialImage={product.product_images}
+      isEdit
       submitLabel={c("saveChanges")}
       onCancel={() => router.push(detailsHref)}
       onSubmit={async (state) => {

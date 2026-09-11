@@ -5,6 +5,85 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
 /**
+ * **A modal locks the document, the lock is counted, and the gutter it frees is
+ * paid back.** The document is this app's single scroll container
+ * (`src/components/layout/CLAUDE.md`), so `overflow: hidden` on the root element
+ * is the whole lock — there is no inner pane to stop as well. Every modal in the
+ * app takes it through the same counter, so a second dialog opened over the
+ * first changes nothing and closing that second one does not hand the page back
+ * to a reader still standing in front of the first; only the last release
+ * restores the exact inline values that were there before the first acquire
+ * (not empty strings, in case something else had set them). Hiding the overflow
+ * takes the scrollbar away and gives its width back to the content, which would
+ * shift the whole page sideways under the dialog, so the width the root actually
+ * reclaims is **measured** across the lock and added back as `padding-right`.
+ * Measured rather than assumed because a page that opted into
+ * `scrollbar-gutter: stable` reclaims nothing — the gutter stays reserved — and
+ * padding it anyway would produce the very shift this is here to prevent.
+ *
+ * **No `touchmove` guard, deliberately.** The trick that needs one is the older
+ * `document.body` lock, which iOS Safari lets a touch drag through; hiding the
+ * overflow on the *root* element stops the document's own scroller there too. A
+ * blanket `touchmove` preventer is also not free — it would have to exempt every
+ * scrollable region inside a modal (a sheet's body scrolls by design), and an
+ * exemption list is exactly the kind of thing that silently stops matching the
+ * markup. If a device is ever found scrolling behind a modal, this is the
+ * paragraph to come back to, with that device named.
+ */
+const scrollLock: {
+  count: number;
+  previous: { overflow: string; paddingRight: string } | null;
+} = { count: 0, previous: null };
+
+function acquireScrollLock() {
+  scrollLock.count += 1;
+  if (scrollLock.count > 1) return;
+  const root = document.documentElement;
+  scrollLock.previous = {
+    overflow: root.style.overflow,
+    paddingRight: root.style.paddingRight,
+  };
+  const paddingBefore = parseFloat(getComputedStyle(root).paddingRight) || 0;
+  const widthBefore = root.clientWidth;
+  root.style.overflow = "hidden";
+  // Read after the write: the difference is exactly what the vanished scrollbar
+  // handed to the content, which is 0 on an overlay-scrollbar OS and on a page
+  // holding a stable gutter open.
+  const reclaimed = root.clientWidth - widthBefore;
+  if (reclaimed > 0) {
+    root.style.paddingRight = `${paddingBefore + reclaimed}px`;
+  }
+}
+
+function releaseScrollLock() {
+  scrollLock.count -= 1;
+  if (scrollLock.count > 0) return;
+  scrollLock.count = 0;
+  const root = document.documentElement;
+  const previous = scrollLock.previous;
+  if (previous === null) return;
+  scrollLock.previous = null;
+  root.style.overflow = previous.overflow;
+  root.style.paddingRight = previous.paddingRight;
+}
+
+/**
+ * Holds the document's scroll for as long as `locked` is true.
+ *
+ * Exported so the other modal primitive in the kit — `Sheet`, which is a portal
+ * of its own rather than a dialog — takes the same counted lock instead of a
+ * second copy of it. Two independent locks would each restore on their own
+ * schedule, and a sheet closing over an open dialog would hand the page back.
+ */
+function useDocumentScrollLock(locked: boolean) {
+  React.useEffect(() => {
+    if (!locked) return;
+    acquireScrollLock();
+    return releaseScrollLock;
+  }, [locked]);
+}
+
+/**
  * How much of the viewport a dialog is allowed to take.
  *
  * `default` is the width every dialog in the app had before there was a
@@ -111,6 +190,7 @@ function topmostDialog(): DialogStackEntry | null {
 
 function Dialog({ open, onOpenChange, size = "default", children }: DialogProps) {
   const depth = React.useContext(DialogDepthContext);
+  useDocumentScrollLock(open);
   // The register entry has to outlive a re-render with a new `onOpenChange`
   // identity — re-registering would move this dialog to the end of the array
   // and change who wins a tie, for no reason the reader could see. So the
@@ -182,7 +262,7 @@ function Dialog({ open, onOpenChange, size = "default", children }: DialogProps)
           onSubmit={(event) => event.stopPropagation()}
         >
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 bg-scrim"
             onClick={() => onOpenChange(false)}
           />
           <div className={cn("relative z-50 w-full", DIALOG_SIZE_CLASS[size])}>
@@ -257,7 +337,7 @@ function DialogFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      // The app-wide button order rule (root `CLAUDE.md`, "Button Order"):
+      // The app-wide button order rule (`src/CLAUDE.md`, "Button Order"):
       // affirmative on the right in a row, on top in a stack. Footers are
       // authored DOM-order [negative, …, affirmative], and this one class list
       // places them both ways — `sm:flex-row sm:justify-end` reads left→right
@@ -273,4 +353,12 @@ function DialogFooter({
   );
 }
 
-export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter };
+export {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  useDocumentScrollLock,
+};

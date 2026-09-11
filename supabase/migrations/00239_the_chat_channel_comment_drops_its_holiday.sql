@@ -1,0 +1,27 @@
+-- The chat channel comment drops its holiday.
+--
+-- 00237 removed the holiday calendar from the schema and rewrote the three
+-- function comments that explained themselves by contrast with it — the two
+-- session-schedule helpers and the product read predicate. It missed a fourth:
+-- ensure_chat_channel describes its window search as "holiday-blind to match
+-- the voice path", a phrase that now points at nothing and would send a reader
+-- looking for the feature it names.
+--
+-- WHY THIS IS ITS OWN MIGRATION RATHER THAN AN EDIT TO 00237
+--
+-- 00237 has already been applied to staging, and a pushed migration is never
+-- edited: the edit would not re-run there, so staging would go on carrying the
+-- old comment while the file claimed otherwise, and every environment applied
+-- later would carry the new one. The correction ships forward, like any other.
+--
+-- WHAT CHANGES
+--
+-- Only the phrase. The comment is restated verbatim with "holiday-blind to
+-- match the voice path" removed from the list of properties the PL/pgSQL port
+-- shares with the voice token route, and the list's comma dropped so the
+-- remaining pair reads as a pair. Nothing about the function itself moves.
+--
+-- This is the last one: no other function comment in the schema mentions
+-- holidays.
+
+COMMENT ON FUNCTION public.ensure_chat_channel(p_group_id uuid) IS 'The current session window''s chat channel for a group, materialized if it does not exist yet. Guarded on is_voice_group_member, so exactly the people who may join the room may open its chat. Both window instants are derived HERE, from the product''s schedule, and are never accepted from the caller: they feed the family read bound, so a client-supplied value would let a member mint an arbitrary read window over the group''s history. The window search is this function''s own PL/pgSQL port of the voice token route''s TypeScript search — join margins as SQL literals and DST-safe by stepping CALENDAR dates in the product''s zone and probing the adjacent days, never by 24-hour arithmetic. Deliberately never calls ensure_group_session and never touches group_sessions: that function is unguarded behind staff-only callers, and a participant reaching it would manufacture phantom session rows in the staff feeds. Raises P0002 when no window is open, which the container renders as its one quiet "chat unavailable" line.';

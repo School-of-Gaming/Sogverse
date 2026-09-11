@@ -3,11 +3,22 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const mockRequireRole = vi.fn();
+// `defineRoute`'s own session read classifies the caller's session the same way
+// the role gate does, so both live behind this mock. The classification itself
+// is not this file's subject — it has its own tests — and the constant answer
+// keeps a posture test from turning into a cookie test.
 vi.mock("@/lib/auth", () => ({
   requireRole: (...args: unknown[]) => mockRequireRole(...args),
+  readSessionProvenance: async () => "own",
 }));
 
 const mockGetClaims = vi.fn();
+// The session read asks the cookie jar for the switch route's marker, which
+// needs a store to ask. Empty: none of these callers is switched in.
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(async () => ({ get: () => undefined })),
+}));
+
 vi.mock("@/lib/supabase/server", () => ({
   createClient: () => Promise.resolve({ auth: { getClaims: mockGetClaims } }),
 }));

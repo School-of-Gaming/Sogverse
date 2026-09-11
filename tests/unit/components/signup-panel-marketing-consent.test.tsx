@@ -7,7 +7,10 @@ import {
   type SignupParticipantChoice,
 } from "@/components/public/products/signup-panel-view";
 import { LYNX_EDUCATE_URL } from "@/lib/constants/marketing-consents";
-import type { MarketingConsentType } from "@/types";
+import type {
+  GamerPhotoConsentType,
+  MarketingConsentType,
+} from "@/types";
 
 /**
  * **The panel's optional marketing ask.**
@@ -105,6 +108,12 @@ function panel(
     marketingConsentTypes: [],
     marketingConsents: new Set<MarketingConsentType>(),
     onMarketingConsentChange: () => {},
+    // No optional photo ask either. It is the empty ask set that withholds the
+    // block — the enabled flag only decides whether the rows can be ticked.
+    gamerPhotoConsentTypes: [],
+    gamerPhotoConsentsEnabled: false,
+    gamerPhotoConsents: new Set<GamerPhotoConsentType>(),
+    onGamerPhotoConsentChange: () => {},
     onSubmit: () => {},
     onJoinWaitlist: () => {},
     currency: "eur",

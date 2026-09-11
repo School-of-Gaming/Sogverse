@@ -18,7 +18,7 @@ import {
   compareComingUpCohorts,
   relativeWait,
 } from "./build-admin-dashboard-data";
-import { addCalendarDays, mondayOf, monthsAfter, weekdayOf } from "./calendar";
+import { addCalendarDays, mondayOf, monthsAfter, weekdayOf } from "@/lib/calendar-date";
 
 /**
  * Fixtures for the admin dashboard preview scene: a plausible autumn term for a
@@ -34,10 +34,10 @@ import { addCalendarDays, mondayOf, monthsAfter, weekdayOf } from "./calendar";
  *
  * **The schedule and the coming-up feed are resolved here, not in the body.** A
  * week's chips are the occurrences that actually fall in it — a term that has
- * not started, one that has ended and a club paused for syysloma all contribute
- * nothing — and the feed's cohorts are already grouped by date and type. That is
- * the same split the live page will want: the aggregation is a query's job, and
- * swapping this module for one is the whole of promotion.
+ * not started and one that has ended contribute nothing — and the feed's
+ * cohorts are already grouped by date and type. That is the same split the live
+ * page will want: the aggregation is a query's job, and swapping this module
+ * for one is the whole of promotion.
  */
 
 /**
@@ -73,9 +73,9 @@ export function isAdminDashboardScenario(
  * landing on whatever weekday it falls on for them. Here the two zones are the
  * same by construction, so the conversion is the identity and a 17:00 Helsinki
  * slot sits at 17:00 on its own weekday. The scene is pinned that way on purpose
- * — the cases it exists to show are a holiday week and a term boundary, and
- * running it through a reader's own zone would make those land on a different
- * day depending on who opened it.
+ * — the case it exists to show is a term boundary, and running it through a
+ * reader's own zone would make it land on a different day depending on who
+ * opened it.
  */
 export const ADMIN_DASHBOARD_TIMEZONE = "Europe/Helsinki";
 
@@ -84,11 +84,11 @@ export const ADMIN_DASHBOARD_TIMEZONE = "Europe/Helsinki";
  *
  * A *fixed* instant rather than the real clock, unlike the dashboards' scenes
  * next door, and the reason is that this page is a calendar. Week navigation
- * steps through a fixed range, one week is deliberately a holiday break, and the
- * coming-up feed is built to show a term boundary landing on one date; all of
- * that is arithmetic against a known Monday, and re-deriving it from a live clock
- * would make the scene show a different set of cases every day and none of them
- * the ones the design was drawn for. The cost is honest and known: this date will
+ * steps through a fixed range and the coming-up feed is built to show a term
+ * boundary landing on one date; all of that is arithmetic against a known
+ * Monday, and re-deriving it from a live clock would make the scene show a
+ * different set of cases every day and none of them the ones the design was
+ * drawn for. The cost is honest and known: this date will
  * one day be in the past, at which point the fixture is showing a historical term
  * rather than rotting silently.
  */
@@ -154,15 +154,6 @@ interface ProductSpec {
     startTime: string;
     durationMinutes: number;
   }[];
-  /**
-   * Mondays this product does not run, as bare calendar dates.
-   *
-   * Modelled because a resolved week has to be able to say "absent on purpose".
-   * A school club is closed for syysloma, and a week where four of them vanish
-   * with no explanation is indistinguishable from a week where four of them were
-   * deleted.
-   */
-  breakWeeks: readonly string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -257,9 +248,6 @@ const MUNICIPALITY_TERM_END = "2026-11-27";
 const MUNICIPALITY_WAVE_TWO_START = "2026-09-07";
 /** The first index of that second wave. */
 const MUNICIPALITY_WAVE_TWO_FROM = 15;
-/** Syysloma — the week the school clubs are closed. */
-const AUTUMN_BREAK_WEEK = "2026-10-12";
-
 /** Consumer clubs that have not opened yet, and when they do. */
 const PENDING_CONSUMER: Readonly<Partial<Record<number, string>>> = {
   5: "2026-09-07",
@@ -305,7 +293,6 @@ function consumerClubs(): ProductSpec[] {
         seatCount,
       ),
       slots,
-      breakWeeks: [],
     };
   });
 }
@@ -333,10 +320,6 @@ function municipalityClubs(): ProductSpec[] {
         index % 3 === 0
           ? [slot(primary, index), slot(secondWeekday(primary), index + 2)]
           : [slot(primary, index)],
-      // Four of them carry the holiday break, which is enough to prove the
-      // resolved week drops them and enough for the break line under it to stay
-      // one readable sentence.
-      breakWeeks: index < 4 ? [AUTUMN_BREAK_WEEK] : [],
     };
   });
 }
@@ -450,7 +433,6 @@ function camps(): ProductSpec[] {
       startTime: "10:00",
       durationMinutes: 180,
     })),
-    breakWeeks: [],
   }));
 }
 
@@ -528,7 +510,6 @@ function events(): ProductSpec[] {
         durationMinutes: spec.durationMinutes,
       },
     ],
-    breakWeeks: [],
   }));
 }
 
@@ -548,7 +529,6 @@ function quietCatalogue(): ProductSpec[] {
         { weekday: 1, startTime: "17:00", durationMinutes: 90 },
         { weekday: 3, startTime: "17:00", durationMinutes: 90 },
       ],
-      breakWeeks: [],
     },
     {
       id: "consumer-club-2",
@@ -560,7 +540,6 @@ function quietCatalogue(): ProductSpec[] {
       seatCount: 16,
       activeCount: 11,
       slots: [{ weekday: 2, startTime: "16:30", durationMinutes: 90 }],
-      breakWeeks: [],
     },
     {
       id: "municipality-club-1",
@@ -572,7 +551,6 @@ function quietCatalogue(): ProductSpec[] {
       seatCount: 10,
       activeCount: 10,
       slots: [{ weekday: 0, startTime: "15:00", durationMinutes: 60 }],
-      breakWeeks: [AUTUMN_BREAK_WEEK],
     },
     {
       id: "municipality-club-2",
@@ -584,7 +562,6 @@ function quietCatalogue(): ProductSpec[] {
       seatCount: 12,
       activeCount: 8,
       slots: [{ weekday: 4, startTime: "15:30", durationMinutes: 60 }],
-      breakWeeks: [AUTUMN_BREAK_WEEK],
     },
     {
       id: "camp-1",
@@ -600,7 +577,6 @@ function quietCatalogue(): ProductSpec[] {
         startTime: "10:00",
         durationMinutes: 180,
       })),
-      breakWeeks: [],
     },
     {
       id: "event-1",
@@ -618,7 +594,6 @@ function quietCatalogue(): ProductSpec[] {
           durationMinutes: 240,
         },
       ],
-      breakWeeks: [],
     },
   ];
 }
@@ -632,10 +607,18 @@ function quietCatalogue(): ProductSpec[] {
  *
  * Authored as `(product, issue facts)` pairs so the queue reads the way an admin
  * thinks — *this product, these problems* — rather than as ten category lists a
- * reader has to reassemble a product from. Twenty-one products across five kinds
- * of problem, deliberately uneven: three carry a stack of three, most carry one,
- * and two carry two group lines each, because a card whose only shape is "one
- * line" says nothing about how a card with several reads.
+ * reader has to reassemble a product from. Twenty-two products across all six
+ * kinds of problem, deliberately uneven: three carry a stack of three, most
+ * carry one, and two carry two group lines each, because a card whose only shape
+ * is "one line" says nothing about how a card with several reads.
+ *
+ * **The two unstaffed-group kinds appear together on one card and apart on
+ * another**, because that pair is the hardest thing on this panel to get right:
+ * they say almost the same sentence and are ranked and tinted differently, so
+ * the only way to tell whether the difference reads is to see them adjacent. The
+ * card carrying an empty group alone is the other half of that — the same line
+ * with no warning line above it to lend it weight, sitting at the top of the
+ * muted band that the fee-only cards fill out below it.
  *
  * **The facts are structural here for the same reason they are on the wire.** A
  * fixture holding pre-worded English would render the preview scene through a
@@ -697,8 +680,14 @@ const PRODUCT_ISSUE_SPECS: readonly {
     ],
   },
   {
+    // The pair on one card: one unstaffed group somebody is in, one nobody is.
+    // Almost the same sentence twice, ranked apart and tinted apart — which is
+    // only checkable with the two of them adjacent.
     productId: "municipality-club-5",
-    issues: [{ kind: "group-without-gedu", values: { group: "Kerho 1" } }],
+    issues: [
+      { kind: "group-without-gedu", values: { group: "Kerho 1" } },
+      { kind: "empty-group-without-gedu", values: { group: "Kerho 2" } },
+    ],
   },
   {
     productId: "camp-5",
@@ -716,6 +705,16 @@ const PRODUCT_ISSUE_SPECS: readonly {
     // singular form somewhere in the scene.
     productId: "municipality-club-4",
     issues: [{ kind: "waitlist-open-seats", values: { waiting: 4, open: 1, offers: 0 } }],
+  },
+  {
+    // The empty group standing alone: a club that has not started yet, whose
+    // whole problem is one group with nobody teaching it and nobody in it. The
+    // fee-only cards below are all-muted too and rank below this one, so what
+    // this card is here for is the top of the muted band with nothing above it —
+    // the shape that made this kind worth adding, because before it existed this
+    // product was absent from the queue altogether.
+    productId: "municipality-club-17",
+    issues: [{ kind: "empty-group-without-gedu", values: { group: "Ryhmä" } }],
   },
   {
     productId: "consumer-club-6",
@@ -906,7 +905,6 @@ function resolveWeeks(
   for (let offset = 0; offset <= WEEKS_BEFORE + WEEKS_AFTER; offset += 1) {
     const weekStart = addCalendarDays(firstMonday, 7 * offset);
     const chips: ScheduleChip[] = [];
-    const onBreak: string[] = [];
 
     for (const spec of specs) {
       // A cancelled or completed product is history: it has no occurrences to
@@ -917,11 +915,6 @@ function resolveWeeks(
         withinRun(spec, addCalendarDays(weekStart, entry.weekday)),
       );
       if (!runsThisWeek) continue;
-
-      if (spec.breakWeeks.includes(weekStart)) {
-        onBreak.push(spec.name);
-        continue;
-      }
 
       for (const entry of spec.slots) {
         const date = addCalendarDays(weekStart, entry.weekday);
@@ -942,7 +935,7 @@ function resolveWeeks(
       }
     }
 
-    weeks.push({ weekStart, chips, onBreak });
+    weeks.push({ weekStart, chips });
   }
 
   return { weeks, currentWeekIndex: WEEKS_BEFORE };

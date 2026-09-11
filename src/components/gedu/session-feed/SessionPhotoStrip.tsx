@@ -4,6 +4,7 @@ import { useId, useRef, useState } from "react";
 import Image from "next/image";
 import { ImagePlus, Images, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   sessionThumbnailWidth,
@@ -20,6 +21,10 @@ import {
 } from "@/services/gedu-sessions";
 import { cn } from "@/lib/utils";
 import { sessionPhotoErrorCode } from "./photo-failure";
+import {
+  SessionPhotoConsentList,
+  type SessionPhotoConsentState,
+} from "./SessionPhotoConsentList";
 import {
   keptPhotos,
   stagedPhotoCount,
@@ -84,6 +89,18 @@ interface SessionPhotoStripProps extends SessionPhotoEditing {
    * card, because a photo is now part of what that Save is carrying.
    */
   disabled: boolean;
+  /**
+   * Who on this roster may be photographed, or `null` on a product that does
+   * not ask the question — which is every product but the one delivered with
+   * Lynx Educate, and where this block is byte-for-byte what it was before the
+   * consent existed.
+   *
+   * It is handed down from the page rather than read here, like every other
+   * datum on this feed: the page asks for the product's ask set and the
+   * roster's answers in the same render as the roster itself, so the block's
+   * presence is settled long before an editor opens.
+   */
+  consent: SessionPhotoConsentState | null;
 }
 
 /**
@@ -153,6 +170,7 @@ export function SessionPhotoStrip({
   staged,
   landed,
   disabled,
+  consent,
   error,
   onStageAdd,
   onUnstageAdd,
@@ -300,11 +318,11 @@ export function SessionPhotoStrip({
         handleDrop(Array.from(event.dataTransfer.files));
       }}
       className={cn(
-        "rounded-md bg-muted/40 p-3 transition-colors sm:p-3.5",
-        // Tinted and ringed rather than resized: the answer to "will this land
+        "rounded-md bg-lifted p-3 transition-colors sm:p-3.5",
+        // Ringed rather than resized: the answer to "will this land
         // here" has to be visible without the block growing under a pointer
         // that is mid-gesture.
-        dragging && "bg-primary/10 ring-2 ring-primary",
+        dragging && "ring-2 ring-act",
         // Greyed with the rest of the editor while the card commits, because
         // what is on this strip is part of what that Save is carrying.
         disabled && "opacity-60",
@@ -317,6 +335,18 @@ export function SessionPhotoStrip({
         <Images className="h-3 w-3" aria-hidden />
         {t("photosTitle")}
       </p>
+
+      {/* Above the thumbnails and the drop area, because it is the thing to
+          read *before* a photo is taken or picked, not a footnote under the row
+          of the ones already attached. It is absent entirely on a product that
+          asks no photo consent. */}
+      {consent !== null && (
+        <SessionPhotoConsentList
+          roster={consent.roster}
+          allowed={consent.allowed}
+          className="mt-2"
+        />
+      )}
 
       {/* `items-end` so the Add button sits on the thumbnails' baseline
           whatever their heights round to, and the run reads as one row.
@@ -430,9 +460,14 @@ export function SessionPhotoStrip({
         </p>
       )}
       {error !== null && (
-        <p role="alert" className="mt-2 text-xs text-destructive">
+        <StatusLine
+          status="destructive"
+          size="xs"
+          role="alert"
+          className="mt-2"
+        >
           {t(PHOTO_ERROR_KEY[error])}
-        </p>
+        </StatusLine>
       )}
     </section>
   );
@@ -481,7 +516,7 @@ function StripThumbnail({
   // the rounding costs — and a clamped extreme ratio — into a letterbox rather
   // than a crop.
   const imageClass =
-    "h-20 w-auto max-w-full rounded-md border border-border bg-muted object-contain sm:h-24";
+    "h-20 w-auto max-w-full rounded-md border border-border bg-lifted object-contain sm:h-24";
 
   return (
     <li className="relative max-w-full shrink-0">
@@ -509,7 +544,7 @@ function StripThumbnail({
         aria-label={label}
         disabled={disabled}
         onClick={onRemove}
-        className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background/90 text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+        className="glass absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act disabled:pointer-events-none disabled:opacity-50"
       >
         <X className="h-3.5 w-3.5" aria-hidden />
       </button>

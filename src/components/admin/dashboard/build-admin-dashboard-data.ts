@@ -30,7 +30,7 @@ import {
   mondayOf,
   monthsAfter,
   weekdayOf,
-} from "./calendar";
+} from "@/lib/calendar-date";
 import { PRODUCT_TYPE_ORDER } from "./product-type-presentation";
 
 /**
@@ -78,10 +78,9 @@ export interface BuildAdminDashboardDataArgs {
  * **viewer's** and then shrinks by a day at each end, because the two anchors
  * straddle a midnight for part of every day — see `windowWeekStarts`.
  *
- * The page must not offer a week the data cannot fill: the holiday dates are
- * bounded to this same window, so a week beyond it would render a break as a
- * session. Week navigation therefore stops at the last week lying **wholly**
- * inside it rather than at an arbitrary count of steps.
+ * The page must not offer a week the data cannot fill, so week navigation stops
+ * at the last week lying **wholly** inside the window rather than at an
+ * arbitrary count of steps.
  */
 const WINDOW_DAYS_BEFORE = 30;
 const WINDOW_MONTHS_AFTER = 4;
@@ -191,7 +190,7 @@ function orderUsers(
 /**
  * One product's card: its name, and every one of its problems as a fact.
  *
- * The wire carries facts (`unassigned_count`, a list of group names, a
+ * The wire carries facts (`unassigned_count`, two lists of group names, a
  * waitlist pair, two booleans) and this keeps them facts: a `kind` naming the
  * message and the numbers or names that message interpolates. **Nothing here is
  * worded**, because this module is pure — no locale hook, no `t()` — and a count
@@ -231,6 +230,18 @@ function toProductAttention(
       id: `${product.id}-waitlist-open-seats`,
       kind: "waitlist-open-seats",
       values: { waiting, open, offers },
+    });
+  }
+
+  // Its own loop over its own wire array, not a second pass over the one
+  // above: the two are disjoint sets from the RPC, and reading them separately
+  // is what keeps "who is in the group" a question the query answered rather
+  // than one this module re-derives.
+  for (const group of product.empty_groups_without_gedu) {
+    issues.push({
+      id: `${product.id}-empty-group-without-gedu-${group.id}`,
+      kind: "empty-group-without-gedu",
+      values: { group: group.name },
     });
   }
 
@@ -388,11 +399,6 @@ interface ResolveWeeksArgs {
  * The whole range is resolved up front rather than a week at a time, because
  * stepping weeks is local state over data the page already holds — a step that
  * had to resolve anything would be a round trip charged for a click.
- *
- * **A product is "on break" in a week only when every session it had there fell
- * on a holiday.** A club that loses one of its two Wednesdays to a public
- * holiday still met that week, and a break line claiming otherwise would say
- * something false about a week the reader can see the other chip in.
  */
 function resolveWeeks({
   products,
@@ -406,16 +412,10 @@ function resolveWeeks({
   const inWindow = new Set(weekStarts);
 
   const chipsByWeek = new Map<string, ScheduleChip[]>();
-  /** weekStart → productId → how many of its sessions there, and how many fell on a holiday. */
-  const breakTally = new Map<
-    string,
-    Map<string, { name: string; sessions: number; holidays: number }>
-  >();
 
   for (const product of products) {
     const name = productName(product.translations, locale);
     const href = ROUTES.admin.product(product.product_type, product.id);
-    const holidays = new Set(product.holidays);
 
     for (const occurrence of productOccurrences(product, now)) {
       const { date, time } = viewerPlacement(
@@ -428,22 +428,6 @@ function resolveWeeks({
       // The viewer's week can reach a day either side of the source window; a
       // week the data does not wholly cover is not offered at all.
       if (!inWindow.has(weekStart)) continue;
-
-      let tally = breakTally.get(weekStart);
-      if (tally === undefined) {
-        tally = new Map();
-        breakTally.set(weekStart, tally);
-      }
-      const entry = tally.get(product.id) ?? {
-        name,
-        sessions: 0,
-        holidays: 0,
-      };
-      entry.sessions += 1;
-      if (holidays.has(occurrence.date)) entry.holidays += 1;
-      tally.set(product.id, entry);
-
-      if (holidays.has(occurrence.date)) continue;
 
       const chips = chipsByWeek.get(weekStart) ?? [];
       chips.push({
@@ -463,22 +447,10 @@ function resolveWeeks({
     }
   }
 
-  const weeks = weekStarts.map((weekStart): ScheduleWeek => {
-    const tally = breakTally.get(weekStart);
-    const onBreak =
-      tally === undefined
-        ? []
-        : [...tally.values()]
-            .filter((entry) => entry.sessions === entry.holidays)
-            .map((entry) => entry.name)
-            .sort((a, b) => a.localeCompare(b));
-
-    return {
-      weekStart,
-      chips: chipsByWeek.get(weekStart) ?? [],
-      onBreak,
-    };
-  });
+  const weeks = weekStarts.map((weekStart): ScheduleWeek => ({
+    weekStart,
+    chips: chipsByWeek.get(weekStart) ?? [],
+  }));
 
   const currentWeekIndex = Math.max(weekStarts.indexOf(mondayOf(today)), 0);
 
@@ -497,16 +469,15 @@ function resolveWeeks({
  *
  * **The day at each end is the price of two calendars.** This window is measured
  * from the *viewer's* today, while every product's own occurrence window is
- * measured from today in the *product's* zone — the RPC bounds its holidays that
- * way, and the walk above mirrors it. The two agree for most of the day and
- * disagree across whichever midnight comes first: an LA admin reading a Helsinki
- * club is a calendar date behind it for seven hours out of every twenty-four.
- * On those hours a boundary week can be offered whose first or last day lies
- * outside the product's window, so its sessions are simply missing — the exact
- * half-covered week the whole-weeks bound exists to refuse. Shrinking by one day
- * at each end covers the largest gap the two calendars can open (a day) and
- * costs at most one week of navigation at each extreme, which is a range nobody
- * is reading anyway.
+ * measured from today in the *product's* zone, which the walk above mirrors.
+ * The two agree for most of the day and disagree across whichever midnight
+ * comes first: an LA admin reading a Helsinki club is a calendar date behind it
+ * for seven hours out of every twenty-four. On those hours a boundary week can
+ * be offered whose first or last day lies outside the product's window, so its
+ * sessions are simply missing — the exact half-covered week the whole-weeks
+ * bound exists to refuse. Shrinking by one day at each end covers the largest
+ * gap the two calendars can open (a day) and costs at most one week of
+ * navigation at each extreme, which is a range nobody is reading anyway.
  *
  * **The day comes off `today`, not off the far edge**, and the two are not the
  * same date. Adding four months clamps to the end of the target month, so a
@@ -552,13 +523,12 @@ interface Occurrence {
 }
 
 /**
- * Every date a product's slots fall on inside its own window, holidays included.
+ * Every date a product's slots fall on inside its own window.
  *
- * The walk is in the product's zone because that is the zone its term dates,
- * its slot weekdays and its holidays are all authored in — a term that ends on
- * the 13th ends on the 13th there, whoever is reading. Conversion happens one
- * step later, per occurrence, once there is a concrete date to hang a clock
- * face on.
+ * The walk is in the product's zone because that is the zone its term dates and
+ * its slot weekdays are authored in — a term that ends on the 13th ends on the
+ * 13th there, whoever is reading. Conversion happens one step later, per
+ * occurrence, once there is a concrete date to hang a clock face on.
  */
 function* productOccurrences(
   product: AdminDashboardScheduleProduct,

@@ -13,8 +13,8 @@ import type {
 /**
  * The snapshot → page mapping, which is where every calendar decision on the
  * admin dashboard is actually made: which weeks can be stepped through, which
- * occurrences survive a holiday, which weekday a session lands on for the person
- * reading it, and what collapses into one line of the coming-up feed.
+ * weekday a session lands on for the person reading it, and what collapses into
+ * one line of the coming-up feed.
  *
  * The clock is pinned to a known Monday so a week's arithmetic has a fixed
  * answer, and the zones are chosen for what they disagree about: Helsinki and
@@ -45,7 +45,6 @@ function scheduleProduct(
     schedule_slots: [
       { weekday: 0, start_time: "17:00", duration_minutes: 90 },
     ],
-    holidays: [],
     ...overrides,
   };
 }
@@ -58,6 +57,7 @@ function attentionProduct(
     translations: [{ locale: "en", name: `Product ${overrides.id}` }],
     unassigned_count: 0,
     groups_without_gedu: [],
+    empty_groups_without_gedu: [],
     waitlist: null,
     missing_gedu_fee: false,
     missing_municipality_fee: false,
@@ -124,8 +124,7 @@ describe("the week window", () => {
 
   it("offers only weeks lying wholly inside the snapshot's own window", () => {
     // The RPC sends [today - 30 days, today + 4 months), less a day at each end
-    // (see the straddle case below); the holidays it sends are bounded the same
-    // way, so a half-covered week would render a break as a session.
+    // (see the straddle case below), so a half-covered week is never offered.
     expect(data.weeks[0].weekStart).toBe("2026-07-20");
     expect(data.weeks[data.weeks.length - 1].weekStart).toBe("2026-12-07");
   });
@@ -245,50 +244,6 @@ describe("resolving a week's sessions", () => {
     );
 
     expect(data.weeks.every((entry) => entry.chips.length === 0)).toBe(true);
-  });
-
-  it("drops a session that falls on a holiday and says the product is paused", () => {
-    const data = build(
-      snapshot({
-        schedule_products: [
-          scheduleProduct({
-            id: "kerho",
-            translations: [{ locale: "en", name: "Pelikerho Leppävaara" }],
-            holidays: ["2026-10-12"],
-          }),
-        ],
-      }),
-    );
-
-    const holidayWeek = week(data, "2026-10-12");
-    expect(holidayWeek.chips).toHaveLength(0);
-    expect(holidayWeek.onBreak).toEqual(["Pelikerho Leppävaara"]);
-
-    const ordinaryWeek = week(data, "2026-10-05");
-    expect(ordinaryWeek.chips).toHaveLength(1);
-    expect(ordinaryWeek.onBreak).toEqual([]);
-  });
-
-  it("does not call a product paused when only one of its two sessions is a holiday", () => {
-    const data = build(
-      snapshot({
-        schedule_products: [
-          scheduleProduct({
-            id: "kerho",
-            schedule_slots: [
-              { weekday: 0, start_time: "17:00", duration_minutes: 90 },
-              { weekday: 2, start_time: "17:00", duration_minutes: 90 },
-            ],
-            holidays: ["2026-10-12"],
-          }),
-        ],
-      }),
-    );
-
-    const holidayWeek = week(data, "2026-10-12");
-    // Monday is gone, Wednesday still ran — so the club met that week.
-    expect(holidayWeek.chips).toMatchObject([{ weekday: 2 }]);
-    expect(holidayWeek.onBreak).toEqual([]);
   });
 
   it("marks a chip when its product is in the attention queue, and only then", () => {
@@ -546,6 +501,7 @@ describe("the attention queue", () => {
               { id: "g1", name: "Tiistai A" },
               { id: "g2", name: "Tiistai B" },
             ],
+            empty_groups_without_gedu: [{ id: "g3", name: "Tiistai C" }],
             waitlist: { waitlist_count: 3, open_seats: 1, live_offer_count: 0 },
             missing_gedu_fee: true,
           }),
@@ -556,7 +512,7 @@ describe("the attention queue", () => {
     expect(data.products[0]).toMatchObject({
       productId: "club",
       name: "Minecraft-klubi Espoo",
-      href: "/admin/consumer-clubs/club",
+      href: { pathname: "/admin/consumer-clubs/[id]", params: { id: "club" } },
     });
     // Nothing is worded here: the mapping is pure, so an issue leaves as the
     // message key its `kind` names plus the values that key interpolates. The
@@ -568,12 +524,49 @@ describe("the attention queue", () => {
       { kind: "group-without-gedu", values: { group: "Tiistai A" } },
       { kind: "group-without-gedu", values: { group: "Tiistai B" } },
       { kind: "waitlist-open-seats", values: { waiting: 3, open: 1, offers: 0 } },
+      // Below the waitlist line and above the fee: an empty unstaffed group is
+      // a loose end rather than a child nobody is looking after, and this is
+      // where the queue says so.
+      { kind: "empty-group-without-gedu", values: { group: "Tiistai C" } },
       { kind: "missing-gedu-fee" },
     ]);
-    // Two group lines on one card need two keys.
-    expect(new Set(data.products[0].issues.map((issue) => issue.id)).size).toBe(
-      5,
+    // The ids are asserted whole rather than counted, because a count only
+    // proves they differ — it does not pin *how*. Each is product, kind and,
+    // where a kind can repeat on one card, the group it is about; that last
+    // part is what keeps three group lines from sharing a React key, and the
+    // kind infix is what keeps a populated and an empty group line legible as
+    // two different lines wherever an id is read back.
+    expect(data.products[0].issues.map((issue) => issue.id)).toEqual([
+      "club-unassigned-gamers",
+      "club-group-without-gedu-g1",
+      "club-group-without-gedu-g2",
+      "club-waitlist-open-seats",
+      "club-empty-group-without-gedu-g3",
+      "club-missing-gedu-fee",
+    ]);
+  });
+
+  it("keeps an empty unstaffed group out of the populated group's line", () => {
+    // The two arrays are disjoint on the wire, and the mapping reads each one
+    // exactly once. A pass that folded them together would produce the right
+    // number of lines with the wrong ranks and the wrong tint — the one failure
+    // mode a count of issues would not catch.
+    const data = build(
+      snapshot({
+        attention_products: [
+          attentionProduct({
+            id: "club",
+            empty_groups_without_gedu: [{ id: "g1", name: "Ryhmä" }],
+          }),
+        ],
+      }),
     );
+
+    expect(
+      data.products[0].issues.map(({ id: _id, ...issue }) => issue),
+    ).toEqual([
+      { kind: "empty-group-without-gedu", values: { group: "Ryhmä" } },
+    ]);
   });
 
   it("carries the live seat-offer count into the waitlist fact", () => {

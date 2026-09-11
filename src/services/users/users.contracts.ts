@@ -34,7 +34,9 @@ export const searchedProfile = z.object({
   phone: z.string().nullable(),
   currency: z.string().nullable(),
   home_location_id: z.string().nullable(),
-  referral_code: z.string().nullable(),
+  utm_source: z.string().nullable(),
+  utm_medium: z.string().nullable(),
+  utm_campaign: z.string().nullable(),
   locale: z.string().nullable(),
   spoken_languages: z.array(z.enum(Constants.public.Enums.spoken_language)),
   created_at: z.string(),
@@ -60,7 +62,7 @@ export const searchedProfile = z.object({
  * are exactly the schema's keys.
  */
 export const SEARCHED_PROFILE_COLUMNS =
-  "id,email,email_verified_at,first_name,last_name,role,phone,currency,home_location_id,referral_code,locale,spoken_languages,created_at,updated_at" as const;
+  "id,email,email_verified_at,first_name,last_name,role,phone,currency,home_location_id,utm_source,utm_medium,utm_campaign,locale,spoken_languages,created_at,updated_at" as const;
 
 /**
  * Wire shapes for the admin's edit of somebody else's game identity

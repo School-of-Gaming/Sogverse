@@ -21,7 +21,8 @@ import { TEST_CREDENTIALS } from "./constants";
  *   2. Behavioural role × RPC matrix — every role-gated RPC refuses every role
  *      it does not name, called with all-NULL arguments.
  *   4. Column-grant audit — no UPDATE privilege reaches a privilege-bearing
- *      column, and the column-level write surface is confined to `profiles`.
+ *      column, and the column-level write surface is confined to the tables
+ *      declared here, each pinned to its exact set of updatable columns.
  *   5. Completeness — every exposed function is in exactly one of the two
  *      classifications, and every self-scoping entry names a real scope test.
  *      Views are held to the same requirement: a view has no body to guard, so
@@ -88,6 +89,15 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // product-existence check with `no_data_found`, which is an error but not the
   // forbidden one.
   admin_set_product_marketing_consents: { permittedRoles: ["admin"] },
+  // The single writer of product_gamer_photo_consents (00244) — the exact twin
+  // of the RPC above, one consent system over, and its own RPC for the same
+  // reason: the admin product form reaches it as the admin's own session role
+  // and an inline INSERT would need a table write grant the migration
+  // deliberately never issues. The positive half of the matrix IS assertable
+  // with no fixture: an admin passes the guard and is then refused by the
+  // product-existence check with `no_data_found`, which is an error but not the
+  // forbidden one.
+  admin_set_product_gamer_photo_consents: { permittedRoles: ["admin"] },
   get_product_groups_with_details: { permittedRoles: ["admin"] },
   // The admin product page's whole session record (00200). Its second question
   // is "does this product exist", which a NULL id answers with P0002 rather
@@ -111,6 +121,11 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // "no such product" / "no such participation" — an error, but not 42501.
   admin_enroll_participant: { permittedRoles: ["admin"] },
   admin_remove_participation: { permittedRoles: ["admin"] },
+  // The database half of the admin club switch (00245). Past the admin guard,
+  // an all-NULL call hits "no such participation" — an error, but not 42501 —
+  // so the positive half of the matrix is assertable here with no fixture,
+  // exactly as it is for the two RPCs above.
+  admin_move_participation: { permittedRoles: ["admin"] },
 
   // --- customer-gated ------------------------------------------------------
   // Phase 3's grant-plus-guard conversion. Past the role guard, a customer
@@ -138,6 +153,21 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // passes the guard and is then refused by the NULL consent type with
   // check_violation, which is not the forbidden error.
   set_marketing_consent: { permittedRoles: ["customer"] },
+  // The one writer of a gamer photo consent (00244). Role-gated for the same
+  // reason its marketing twin above is — its first statement IS a guard
+  // primitive, which is what check 1 reads — but the role gate carries MORE
+  // weight here, not less, because this function does name its subject in an
+  // argument: a parent has several children, so the child cannot come from
+  // auth.uid(). The role half keeps out the gamer (a child may never grant
+  // permission to photograph themselves), the gedu, and the admin; the target
+  // half — a parent_gamer link from auth.uid() to the named child — is enforced
+  // in the body and pinned by gamer-photo-consents.test.ts, which is where the
+  // cross-family IDOR cases live.
+  //
+  // The positive half of the matrix IS assertable with no fixture: a customer
+  // passes the guard and is then refused by the NULL-argument check with
+  // check_violation, which is not the forbidden error.
+  set_gamer_photo_consent: { permittedRoles: ["customer"] },
 
   // --- gedu-gated ----------------------------------------------------------
   get_my_assigned_products: { permittedRoles: ["gedu"] },
@@ -444,6 +474,10 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/exposed-function-scope.test.ts",
     why: "boolean about the caller's own moderator standing in a voice group",
   },
+  gedu_teaches_gamer: {
+    scopeTest: "tests/db/gamer-photo-consents.test.ts",
+    why: "boolean about the CALLER — is this gamer on a roster I can open — and the predicate behind the gedu read policy on gamer_photo_consents (00244). Exposed only because an RLS policy evaluates its USING clause as the querying role, so a policy cannot call a private helper. Deliberately composed from the roster's own two halves (gedu_teaches_group, plus the active-participation filter get_gedu_group_feed applies) rather than computed afresh, so the set of children a gedu may see a photo answer for cannot drift away from the set already on their rosters. Total: an unknown gamer id is false, never NULL, so a USING clause is never handed a three-valued answer",
+  },
 
   // --- chat (00228 / 00229 / 00233) ----------------------------------------
   //
@@ -528,6 +562,10 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   request_my_verification_email: {
     scopeTest: "tests/db/verification-email-rate-limit.test.ts",
     why: "the rate-limit gate on the verification-email send, and the same shape as submit_my_feedback one table over: it takes no argument at all, so the row it writes and the rows it counts are alike keyed to auth.uid() and a caller can neither spend nor clear anyone else's hourly allowance. No role gate by design — every role with a real inbox may ask for the mail, and the route is what excludes gamers, because the reason to exclude them is that nobody reads their synthetic address rather than anything about authority",
+  },
+  request_gamer_verification_email: {
+    scopeTest: "tests/db/verification-email-rate-limit.test.ts",
+    why: "the same rate-limit gate one subject over: a PARENT asks for the verification mail on behalf of a named child, because a child in sign-in mode `email` cannot sign in until that address is verified and so cannot ask for themselves. It takes an argument that names a user, which is exactly why it is not the argument-free shape of its sibling — and what makes it self-scoping rather than role-gated is that the guard is is_parent_of, keyed to auth.uid(). No role primitive could stand in for that: the question is a RELATIONSHIP, and every customer is equally entitled to ask about their own children and equally refused about anyone else's, so a role annotation would say nothing. Another family's child and an id that does not exist are refused identically, so neither answer is an oracle. The rate-limit state is keyed on the GAMER rather than on the caller, which the scope test pins from both sides: a parent of two spends one child's allowance without touching the sibling's, and the prune reaches only the subject's own expired rows",
   },
   get_waitlist_position: {
     scopeTest: "tests/db/waitlist-admin.test.ts",
@@ -687,25 +725,41 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
   ["product_seat_counts", "waitlist_count"],
   // The parent PIN hash.
   ["customer_profiles", "pin_hash"],
+  // How a child reaches their own account (00235). Writable, a gamer could hand
+  // themselves a login — `username` or `email` mode is a credential the switch
+  // gate no longer stands in front of — and their parent could do it from the
+  // browser without the PIN check the routes make. Written only by the API
+  // routes on the service-role client.
+  ["gamer_profiles", "sign_in"],
 ];
 
 /**
- * The only table whose UPDATE surface is column-scoped rather than table-wide.
- * Pinned exactly: these are the safe profile fields a user may edit — identity
- * and presentation, nothing that decides what they may do. `locale` joined them
- * in Phase 3 when the locale route stopped writing through the service-role
+ * The tables whose UPDATE surface is column-scoped rather than table-wide, and
+ * exactly which columns each exposes.
+ *
+ * `profiles` is pinned to the safe profile fields a user may edit — identity and
+ * presentation, nothing that decides what they may do. `locale` joined them in
+ * Phase 3 when the locale route stopped writing through the service-role
  * client; `home_location_id` in 00137, and it stays on the safe side of that
  * line — it is a reference to public, anon-readable seeded geography, it gates
  * nothing, and its FK is the only thing constraining what it may hold.
+ *
+ * `gamer_profiles` joined in 00235 and for the reason column scoping exists: the
+ * table gained `sign_in`, which decides whether a child can sign in without
+ * their parent at all. The self-update policy is unchanged; what changed is what
+ * it can be used on. The two columns left are the child's own facts.
  */
-const PROFILES_UPDATABLE_COLUMNS = [
-  "first_name",
-  "last_name",
-  "phone",
-  "spoken_languages",
-  "locale",
-  "home_location_id",
-];
+const COLUMN_SCOPED_UPDATE_TABLES: Record<string, readonly string[]> = {
+  profiles: [
+    "first_name",
+    "last_name",
+    "phone",
+    "spoken_languages",
+    "locale",
+    "home_location_id",
+  ],
+  gamer_profiles: ["date_of_birth", "gender"],
+};
 
 // ---------------------------------------------------------------------------
 // Catalog plumbing
@@ -982,11 +1036,13 @@ describe("authorization spine (§3.4)", () => {
       }
     });
 
-    it("column-level UPDATE outside a table-level grant is confined to profiles", async () => {
+    it("column-level UPDATE outside a table-level grant is confined to the declared tables", async () => {
       // information_schema.column_privileges is the union of table-level and
       // column-level ACLs, so subtracting the tables that hold a table-wide
       // UPDATE grant (already pinned by access-control.test.ts) leaves exactly
-      // the column-scoped ones. `profiles` is the only intended member.
+      // the column-scoped ones — which must be the set declared above and
+      // nothing else, because an undeclared one is a table whose privilege
+      // columns nobody enumerated.
       const { data, error } = await admin.rpc("_list_table_grants", {
         p_grantee: "authenticated",
       });
@@ -1008,19 +1064,24 @@ describe("authorization spine (§3.4)", () => {
         ),
       ].sort();
 
-      expect(columnScoped).toEqual(["profiles"]);
+      expect(columnScoped).toEqual(
+        Object.keys(COLUMN_SCOPED_UPDATE_TABLES).sort()
+      );
     });
 
-    it("profiles exposes exactly the safe columns for UPDATE", async () => {
-      const updatable = (await columnGrants("authenticated"))
-        .filter(
-          (row) => row.table_name === "profiles" && row.privilege_type === "UPDATE"
-        )
-        .map((row) => row.column_name)
-        .sort();
+    it.each(Object.entries(COLUMN_SCOPED_UPDATE_TABLES))(
+      "%s exposes exactly the safe columns for UPDATE",
+      async (table, columns) => {
+        const updatable = (await columnGrants("authenticated"))
+          .filter(
+            (row) => row.table_name === table && row.privilege_type === "UPDATE"
+          )
+          .map((row) => row.column_name)
+          .sort();
 
-      expect(updatable).toEqual([...PROFILES_UPDATABLE_COLUMNS].sort());
-    });
+        expect(updatable).toEqual([...columns].sort());
+      }
+    );
 
     it("anon holds no column-level write privilege anywhere", async () => {
       // The table-level sibling of this assertion lives in access-control.test

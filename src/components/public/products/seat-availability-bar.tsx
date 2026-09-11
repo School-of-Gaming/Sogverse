@@ -83,7 +83,7 @@ export function SeatAvailabilityBar({
       </div>
 
       <div
-        className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+        className="h-1.5 w-full overflow-hidden rounded-full bg-lifted"
         role="progressbar"
         aria-label={remainingLabel}
         aria-valuenow={left}

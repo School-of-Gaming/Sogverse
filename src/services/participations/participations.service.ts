@@ -3,6 +3,7 @@ import type {
   Json,
   ParticipationStatus,
   ParticipationSubscriptionState,
+  ProductTopic,
   ProductType,
   ProductTranslation,
   PurchaseShape,
@@ -78,6 +79,12 @@ export interface MyUpcomingSessionRow {
   product: {
     id: string;
     type: ProductType;
+    /**
+     * The product's topic. Carried so a family surface can ask whether the
+     * topic has a "Before the first session" guide to offer — the enrolment
+     * card's prep affordance is the only reader today.
+     */
+    topic: ProductTopic;
     timezone: string;
     /**
      * Inclusive start date in the product's local calendar (YYYY-MM-DD).
@@ -126,6 +133,25 @@ export interface MyUpcomingSessionRow {
    * inert exactly like an in-person product.
    */
   groupId: string | null;
+  /**
+   * When this seat was taken on the product — the row's own creation stamp.
+   *
+   * Read for one thing: the family dashboards bound the "Before the first
+   * session" guide to this family's first sessions, and that needs to know when
+   * the run began *for them* rather than when the product's did. A club has run
+   * since February; a family who joined it last week has their first session
+   * ahead of them.
+   */
+  signedUpAt: Date;
+  /**
+   * When this seat entered its group, `null` while nobody has placed it.
+   *
+   * The other half of the same question, and the half that matters to a family
+   * promoted off the waitlist: they signed up weeks before the seat was theirs,
+   * so the prep window counts from the placement rather than from the day they
+   * joined the queue.
+   */
+  groupJoinedAt: Date | null;
   slots: Array<{
     weekday: number;
     startTime: string;
@@ -185,6 +211,13 @@ export interface MyWaitlistRow {
   product: {
     /** The type noun the card's eyebrow reads. */
     type: ProductType;
+    /**
+     * The product's topic. A waitlisted card never draws the prep affordance —
+     * there is no seat behind it and nothing to get ready for — but the summary
+     * this row becomes states the product's topic either way, exactly as it
+     * states whether the product has a room.
+     */
+    topic: ProductTopic;
     /** The zone the slot times below are wall-clock times **in**. */
     timezone: string;
     /**
@@ -1001,8 +1034,10 @@ function buildMyUpcomingSessionsQuery(
         id,
         participant_id,
         group_id,
+        signed_up_at,
+        group_joined_at,
         product:products!inner(
-          id, product_type, timezone, start_date, end_date, is_remote,
+          id, product_type, topic, timezone, start_date, end_date, is_remote,
           product_translations(*),
           schedule_slots(weekday, start_time, duration_minutes),
           location:locations(name, name_i18n)
@@ -1055,7 +1090,7 @@ function buildMyWaitlistQuery(
         participant_id,
         seat_offer_sent_at,
         product:products!inner(
-          product_type, timezone, start_date, end_date, is_remote,
+          product_type, topic, timezone, start_date, end_date, is_remote,
           product_translations(*),
           schedule_slots(weekday, start_time, duration_minutes)
         ),
@@ -1089,6 +1124,7 @@ function toMyUpcomingSessionRow(
     product: {
       id: product.id,
       type: product.product_type,
+      topic: product.topic,
       timezone: product.timezone,
       startDate: product.start_date,
       endDate: product.end_date,
@@ -1100,6 +1136,11 @@ function toMyUpcomingSessionRow(
       translations: product.product_translations,
     },
     groupId: row.group_id,
+    // Parsed here rather than carried as text, so every consumer works in
+    // instants and none of them re-parses the same string per render tick.
+    signedUpAt: new Date(row.signed_up_at),
+    groupJoinedAt:
+      row.group_joined_at === null ? null : new Date(row.group_joined_at),
     slots: product.schedule_slots.map((s) => ({
       weekday: s.weekday,
       startTime: s.start_time,
@@ -1126,6 +1167,7 @@ function toMyWaitlistRow(
     },
     product: {
       type: product.product_type,
+      topic: product.topic,
       timezone: product.timezone,
       startDate: product.start_date,
       endDate: product.end_date,

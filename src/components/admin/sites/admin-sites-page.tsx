@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link } from "@/i18n/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { Plus, Search } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -205,12 +205,12 @@ export function AdminSitesPage() {
                    */
                   <tr
                     key={row.id}
-                    className="group relative border-b border-border transition-colors last:border-b-0 hover:bg-accent focus-within:bg-accent"
+                    className="group relative border-b border-border transition-colors last:border-b-0 hover:bg-hover focus-within:bg-lifted"
                   >
                     <td className="px-3 py-2">
                       <Link
                         href={ROUTES.admin.site(row.id)}
-                        className="rounded font-medium after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="rounded font-medium after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
                       >
                         {localizedLocationName(row, locale)}
                       </Link>

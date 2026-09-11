@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import {
   FileWarning,
   MailCheck,
@@ -12,7 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
-import type { UserRole } from "@/types";
+import { gamerUsernameFromEmail, hasRealEmail } from "@/lib/gamer-sign-in";
+import type { GamerSignIn, UserRole } from "@/types";
+import { ROUTES } from "@/lib/constants";
 
 interface UserRowUser {
   id: string;
@@ -42,8 +44,6 @@ export interface GeduStandingWarnings {
 interface UserRowProps {
   user: UserRowUser;
   linkedGamers?: UserRowUser[];
-  /** Base path for user detail links. Defaults to "/admin/users" */
-  basePath?: string;
   /**
    * Whether an admin has certified this educator: `true` shows the mark, `false`
    * withholds it, and `null` means the answer is unknown — the read failed, or
@@ -63,6 +63,36 @@ interface UserRowProps {
    * silence.
    */
   standingWarnings?: GeduStandingWarnings | null;
+  /**
+   * Every gamer's sign-in mode, keyed by user id — for this row's own user and
+   * for each nested child alike, which is why it is a lookup rather than a value
+   * on `UserRowUser`.
+   *
+   * A missing entry is silence, not `parent`: an unanswered read prints no
+   * identity line rather than asserting a child has no credential. The page
+   * holds its skeleton until this has landed, so in practice the only missing
+   * entries are the accounts that genuinely have no `gamer_profiles` row.
+   */
+  gamerSignIns?: ReadonlyMap<string, GamerSignIn>;
+}
+
+/**
+ * What to print under a person's name: an address, a username, or nothing.
+ *
+ * One function for the two places a person appears in this component — the row
+ * itself and the nested children under a parent — so a child cannot be described
+ * one way in the list and another way two lines further down.
+ */
+function identityLine(
+  user: UserRowUser,
+  signIn: GamerSignIn | undefined,
+): { kind: "email" | "username"; value: string } | null {
+  if (hasRealEmail({ role: user.role, sign_in: signIn ?? null })) {
+    return user.email ? { kind: "email", value: user.email } : null;
+  }
+  if (signIn !== "username") return null;
+  const username = gamerUsernameFromEmail(user.email);
+  return username ? { kind: "username", value: username } : null;
 }
 
 /**
@@ -97,10 +127,16 @@ interface UserRowProps {
  * caller that rendered each as it landed would let the second one push the
  * first across the row.
  *
- * A gamer gets none of them. Their address is the synthetic
- * `@gamer.sogverse.internal` one their account was created with, so there is no
- * inbox to confirm it from and a check would be asserting something nobody did;
- * the other three are questions only an educator's row raises.
+ * A gamer gets the email check only when their address is a real mailbox — that
+ * is, in sign-in mode `email`. Every other child holds a synthetic
+ * `@gamer.sogverse.internal` handle, so there is no inbox to confirm it from and
+ * a check would be asserting something nobody did. The other three marks are
+ * questions only an educator's row raises.
+ *
+ * **The line under a name follows the same fact.** A child with a mailbox shows
+ * it; a child in `username` mode shows the username their parent chose, labelled
+ * as one so it is not read as a truncated address; a switch-only child shows
+ * nothing, because their handle is a string nobody has ever seen.
  *
  * **Every mark is printed only on a definite answer.** A mark is a claim
  * somebody made, so the absence of an answer has to read as silence rather than
@@ -110,21 +146,24 @@ interface UserRowProps {
 export function UserRow({
   user,
   linkedGamers,
-  basePath = "/admin/users",
   certified,
   standingWarnings,
+  gamerSignIns,
 }: UserRowProps) {
   const t = useTranslations('admin.users');
   const c = useTranslations('common');
   const contract = useTranslations('admin.geduContract');
   const check = useTranslations('admin.geduCriminalRecordCheck');
-  const emailVerified = user.role !== "gamer" && user.email_verified_at !== null;
+  const identity = identityLine(user, gamerSignIns?.get(user.id));
+  const emailVerified =
+    hasRealEmail({ role: user.role, sign_in: gamerSignIns?.get(user.id) ?? null }) &&
+    user.email_verified_at !== null;
   const warnings = user.role === "gedu" ? standingWarnings ?? null : null;
   return (
-    <div className="rounded-lg border">
+    <div className="rounded-lg border border-border">
       <Link
-        href={`${basePath}/${user.id}`}
-        className="group flex items-center justify-between p-4 transition-colors hover:bg-accent hover:text-accent-foreground"
+        href={ROUTES.admin.user(user.id)}
+        className="group flex items-center justify-between p-4 transition-colors hover:bg-hover hover:text-foreground"
       >
         <div className="flex items-center gap-4">
           <Avatar>
@@ -136,9 +175,7 @@ export function UserRow({
                 ? [user.first_name, user.last_name].filter(Boolean).join(" ")
                 : user.first_name) || t('unnamedUser')}
             </p>
-            {user.role !== "gamer" && user.email && (
-              <p className="text-sm text-muted-foreground">{user.email}</p>
-            )}
+            {identity && <IdentityLine identity={identity} />}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -170,7 +207,7 @@ export function UserRow({
               label={t('emailVerified')}
             />
           )}
-          <Badge className={ROLE_BADGE_STYLES[user.role]}>
+          <Badge variant="outline" className={ROLE_BADGE_STYLES[user.role]}>
             {c(ROLE_LABEL_KEYS[user.role])}
           </Badge>
           <NavChevron />
@@ -178,38 +215,77 @@ export function UserRow({
       </Link>
 
       {user.role === "customer" && (!linkedGamers || linkedGamers.length === 0) && (
-        <div className="border-t bg-muted/30 py-3 pl-14 pr-4">
+        <div className="border-t border-border py-3 pl-14 pr-4">
           <p className="text-sm text-muted-foreground">{t('noConnectedGamers')}</p>
         </div>
       )}
 
+      {/* The children sit on the parent's own ground, marked by the indent and
+          the divider and never by a lift: a lifted run of rows reads as a
+          different kind of thing from the row above it, and the hover layer
+          would then land on two grounds at once, so one list would answer the
+          pointer in two colours. */}
       {linkedGamers && linkedGamers.length > 0 && (
-        <div className="border-t bg-muted/30">
-          {linkedGamers.map((gamer) => (
+        <div className="border-t border-border">
+          {linkedGamers.map((gamer) => {
+            const gamerIdentity = identityLine(gamer, gamerSignIns?.get(gamer.id));
+            return (
             <Link
               key={gamer.id}
-              href={`${basePath}/${gamer.id}`}
-              className="group flex items-center justify-between py-3 pr-4 pl-14 transition-colors hover:bg-accent hover:text-accent-foreground"
+              href={ROUTES.admin.user(gamer.id)}
+              className="group flex items-center justify-between py-3 pr-4 pl-14 transition-colors hover:bg-hover hover:text-foreground"
             >
               <div className="flex items-center gap-3">
                 <Avatar className="h-7 w-7">
                   <Identicon id={gamer.id} size={28} />
                 </Avatar>
-                <p className="text-sm font-medium">
-                  {gamer.first_name || t('unnamedGamer')}
-                </p>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">
+                    {gamer.first_name || t('unnamedGamer')}
+                  </p>
+                  {gamerIdentity && <IdentityLine identity={gamerIdentity} />}
+                </div>
               </div>
               <div className="flex items-center gap-2">
-                <Badge className={`${ROLE_BADGE_STYLES.gamer} text-[10px] px-2 py-0`}>
+                <Badge variant="outline" className={`${ROLE_BADGE_STYLES.gamer} text-[10px] px-2 py-0`}>
                   {c("roleGamer")}
                 </Badge>
                 <NavChevron size="sm" />
               </div>
             </Link>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * The line under a name: an address as itself, a username with a word saying so.
+ *
+ * The label is what stops `lily2015` reading as a mangled email in a column
+ * where every other line is one. It is small and muted furniture rather than
+ * prose — a marker an admin scans past, not a sentence — which is why it takes
+ * the caps treatment the app file permits for exactly that (`src/CLAUDE.md`,
+ * "Styling": eyebrows, pills and field labels may be capped; headings may not).
+ */
+function IdentityLine({
+  identity,
+}: {
+  identity: { kind: "email" | "username"; value: string };
+}) {
+  const t = useTranslations("admin.users");
+  if (identity.kind === "email") {
+    return <p className="text-sm text-muted-foreground">{identity.value}</p>;
+  }
+  return (
+    <p className="flex items-baseline gap-1.5 text-sm text-muted-foreground">
+      <span className="text-[10px] uppercase tracking-wide">
+        {t("usernameLabel")}
+      </span>
+      <span className="truncate">{identity.value}</span>
+    </p>
   );
 }
 

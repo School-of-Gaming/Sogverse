@@ -11,13 +11,13 @@ import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import type { ProductBrowseRow } from "@/types";
 import type { ParticipationCounts } from "@/services/participations";
 import { deriveRegistrationState } from "./derive-registration-state";
-import { formatProductLocation } from "./format-product-location";
-import { audienceLabelKey } from "./product-audience";
-import { formatProductPrice } from "./format-product-price";
+import { formatProductLocation } from "@/lib/products/format-product-location";
+import { audienceLabelKey } from "@/lib/products/product-audience";
+import { formatProductPrice, statesAPrice } from "./format-product-price";
 import {
   formatProductSchedule,
   scheduleCardLines,
-} from "./format-product-schedule";
+} from "@/lib/products/format-product-schedule";
 import {
   type BrowseCardFooterLeft,
   type LocationLine,
@@ -25,6 +25,7 @@ import {
 } from "./browse-card-shell";
 import { ProductBrowseCardView } from "./product-browse-card-view";
 import { productTagLabelKey } from "./product-tag";
+import type { AppHref } from "@/lib/constants/routes";
 
 interface ProductBrowseCardProps {
   product: ProductBrowseRow;
@@ -39,7 +40,7 @@ interface ProductBrowseCardProps {
    * per-municipality schools page passes `/schools/<slug>/[id]` so the card,
    * and the detail page it opens, stay in that municipality's URL namespace.
    */
-  detailHref?: string;
+  detailHref?: AppHref;
   /**
    * True when rendered on a single-municipality page, where the municipality is
    * already named in the page header. An online muni club then drops its
@@ -81,7 +82,7 @@ export function ProductBrowseCard({
 export function useBrowseCardViewProps(
   product: ProductBrowseRow,
   counts: ParticipationCounts | null | undefined,
-  detailHref: string | undefined,
+  detailHref: AppHref | undefined,
   municipalityScoped: boolean,
 ): ProductBrowseCardViewProps {
   const t = useTranslations("productBrowse.card");
@@ -126,35 +127,32 @@ export function useBrowseCardViewProps(
   // — a number that reads as availability and is at its most misleading on a
   // product that is full. Fullness belongs to the details page.
   //
-  // **The second test is what makes the price line's missing external shape a
-  // compile-time fact rather than a convention.** `chk_products_external_contract_muni`
-  // already guarantees `external_contract` implies `municipality_club`, so it
-  // can never independently decide this branch — but the database's word is not
-  // something the compiler can read, and `formatProductPrice` refuses an
-  // externally-contracted product by its argument type. Testing the column here
-  // is what narrows `billing_mode` for the call below; drop it and the
-  // formatter stops type-checking, which is the point.
-  const footerLeft: BrowseCardFooterLeft =
-    product.product_type === "municipality_club" ||
-    product.billing_mode === "external_contract"
-      ? {
-          kind: "seats",
-          seats: {
-            filled: participationsCount,
-            total: product.seat_count,
-            waitlistEnabled: product.waitlist_enabled,
-          },
-        }
-      : {
-          kind: "price",
-          price: formatProductPrice({
-            prices: product.product_prices,
-            billingMode: product.billing_mode,
-            productType: product.product_type,
-            currency,
-            locale: uiLocale,
-          }),
-        };
+  // **The guard is what makes the price line's missing external shape a
+  // compile-time fact rather than a convention.** It asks the one question two
+  // surfaces need answered the same way — this footer, and the grid's price
+  // filter, which has to know that a product billed off-platform states no
+  // price to filter on — and it answers it as a narrowing, so the formatter
+  // below type-checks only on the branch where a price exists. Drop the guard
+  // and the call stops compiling, which is the point.
+  const footerLeft: BrowseCardFooterLeft = statesAPrice(product)
+    ? {
+        kind: "price",
+        price: formatProductPrice({
+          prices: product.product_prices,
+          billingMode: product.billing_mode,
+          productType: product.product_type,
+          currency,
+          locale: uiLocale,
+        }),
+      }
+    : {
+        kind: "seats",
+        seats: {
+          filled: participationsCount,
+          total: product.seat_count,
+          waitlistEnabled: product.waitlist_enabled,
+        },
+      };
 
   // The badge-or-nothing decision (gamers-only stays unbadged) lives in
   // product-audience.ts with the rest of the audience vocabulary, so this

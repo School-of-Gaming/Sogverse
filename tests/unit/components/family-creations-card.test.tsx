@@ -385,7 +385,10 @@ function renderPage(
             groupPublicNote={null}
             creations={creations}
             site={null}
-            voiceHref="/voice/group/builders-a"
+            voiceHref={{
+              pathname: "/voice/group/[id]",
+              params: { id: "builders-a" },
+            }}
             entries={[]}
             sourceTimeZone="Europe/Helsinki"
           />

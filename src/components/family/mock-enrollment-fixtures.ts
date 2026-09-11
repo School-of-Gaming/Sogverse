@@ -2,7 +2,7 @@ import { calendarDate, type FixtureSlot } from "@/components/preview/fixture-clo
 import {
   formatProductSchedule,
   scheduleCardLines,
-} from "@/components/public/products/format-product-schedule";
+} from "@/lib/products/format-product-schedule";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import {
@@ -10,8 +10,12 @@ import {
   enumerateRowOccurrences,
   startDateToCutoff,
 } from "@/lib/session-occurrence";
-import type { ProductType } from "@/types";
-import type { FamilyEnrollmentSummary } from "./enrollment-rollup";
+import type { ProductTopic, ProductType } from "@/types";
+import {
+  topicPrepWindowEndFromSchedule,
+  type FamilyEnrollmentSummary,
+} from "./enrollment-rollup";
+import { INERT_HREF } from "@/lib/constants/routes";
 
 /**
  * The shared half of the family dashboards' fixtures: turning a short
@@ -54,8 +58,37 @@ export interface EnrollmentFixtureSpec {
   productType: ProductType;
   /** Remote products have a voice room and no site; in-person the reverse. */
   isRemote: boolean;
+  /**
+   * The product's topic, which decides *which* "Before the first session" guide
+   * the card offers.
+   *
+   * **Optional, and it defaults to a label-only topic**, which on an in-person
+   * fixture is still no guide at all. On a *remote* one it is the shortest
+   * guide there is — the one shared step about the voice room's mic and camera
+   * — because every remote product has that step whatever its topic. A fixture
+   * that is about the affordance itself names a topic with a longer one:
+   * `roblox_studio` is the long one, three steps with per-platform notes and a
+   * checklist, which is the one worth judging a scrolling dialog against.
+   */
+  topic?: ProductTopic;
   slots: FixtureSlot[];
   startedDaysAgo: number;
+  /**
+   * Days ago the seat became this family's — the moment the prep window is
+   * measured from, and therefore the difference between a card that offers the
+   * guide and one that does not.
+   *
+   * **Defaults to `0`, the family who has just enrolled**, because that is the
+   * reader every prep placement is drawn for and a fixture is worth nothing if
+   * it shows the card in a state nobody is looking at. A fixture that wants the
+   * *closed* window — the family who has been turning up for weeks, whom this
+   * feature must leave alone — says so with a value far enough back that two of
+   * the product's sessions have run since.
+   *
+   * Ignored on an unplaced seat, which has no sessions of its own yet and so
+   * carries no window end at all.
+   */
+  enrolledDaysAgo?: number;
   /**
    * Days after `now` the run ends, or `null` for an open-ended club. Negative
    * puts the last day in the past, which is what makes a card a finished one.
@@ -149,13 +182,37 @@ export function buildEnrollmentFixture(
     participationId: spec.participationId,
     productName: spec.productName,
     productType: spec.productType,
+    // Derived rather than authored, exactly as the next session is: the window
+    // runs to the end of the second session that starts after the family
+    // enrolled, so a fixture states *when they enrolled* and the same rule the
+    // live roll-up runs decides whether the card still offers anything. An
+    // unplaced seat has no sessions of its own yet, and its offer has no end.
+    prepWindowEnd:
+      spec.awaiting === true
+        ? null
+        : topicPrepWindowEndFromSchedule({
+            slots: spec.slots,
+            timezone: FIXTURE_TIMEZONE,
+            startMoment: new Date(
+              now.getTime() - (spec.enrolledDaysAgo ?? 0) * 86_400_000,
+            ),
+            startBoundary: startDateToCutoff(startDate, FIXTURE_TIMEZONE),
+            endBoundary: endDateToCutoff(endDate, FIXTURE_TIMEZONE),
+          }),
+    // A label-only topic by default: it brings no steps of its own, so an
+    // untouched in-person fixture draws no prep affordance and a remote one
+    // draws the shortest guide in the product. Every fixture carries its own
+    // `participationId`, which is half the dismissal key, so a card dismissed
+    // in a demo takes no other card's guide away with it.
+    topic: spec.topic ?? "esports",
+    isRemote: spec.isRemote,
     nextSessionStart: next?.start ?? null,
     nextSessionEnd: next?.end ?? null,
     hasVoiceRoom: spec.isRemote,
     // Left inert on purpose: a preview has no room to join, so the Join button
     // collapses to its inert form while still rendering its real open/locked
     // state.
-    voiceHref: "#",
+    voiceHref: INERT_HREF,
     // Never carried by a remote product, whatever the spec says: a product with
     // a voice room has no building, and a card showing both would be claiming
     // the family meets in two places.
@@ -164,7 +221,7 @@ export function buildEnrollmentFixture(
     // navigate to a page that would go looking for data. Still a real href, so
     // the card is a real link rather than a div pretending to be one — the
     // semantics are what this mock is for.
-    openHref: "#",
+    openHref: INERT_HREF,
     endDate,
     timezone: FIXTURE_TIMEZONE,
     waitlistPosition,

@@ -28,7 +28,24 @@ export type ProductPriceLine =
   | { kind: "upfront"; total: string }
   | { kind: "unavailable"; currency: string };
 
-export interface FormatPriceArgs {
+/**
+ * The pricing decision, before anything is worded.
+ *
+ * Same four cases as the line above, carrying the raw amount where there is
+ * one instead of a formatted string. It exists because two readers want two
+ * different halves of this: the card wants the words, and the browse grid's
+ * price filter wants only what kind of price a product has and whether it is
+ * more than nothing. Splitting the decision from the wording is what lets the
+ * filter answer without a locale, a currency formatter, or a second copy of
+ * the rules — and what keeps the two answers from ever disagreeing, since the
+ * formatter is built on this rather than beside it.
+ */
+export type ResolvedProductPrice =
+  | { kind: "free" }
+  | { kind: "unavailable" }
+  | { kind: "subscription" | "upfront"; priceCents: number };
+
+export interface ResolvePriceArgs {
   /** An amount and the currency it is in — the two columns this reads. Asking
    *  for the whole `product_prices` row would make every caller's read carry
    *  timestamps and a foreign key nothing here looks at. */
@@ -41,34 +58,82 @@ export interface FormatPriceArgs {
   billingMode: Exclude<BillingMode, "external_contract">;
   productType: ProductType;
   currency: SupportedCurrency;
+}
+
+export interface FormatPriceArgs extends ResolvePriceArgs {
   locale: string;
 }
 
-export function formatProductPrice({
+/**
+ * Whether this product's card states a price at all.
+ *
+ * The narrowing every price reader has to do first, in one place rather than
+ * repeated at each call site. It reads as a type guard because the answer is
+ * exactly what makes the formatter's argument type satisfiable: a product this
+ * returns true for has a billing mode that names a price, and one it returns
+ * false for is billed off-platform and shows how full it is instead. A caller
+ * that skips it does not compile, which is the point.
+ */
+export function statesAPrice<
+  T extends { product_type: ProductType; billing_mode: BillingMode },
+>(
+  product: T,
+): product is T & { billing_mode: Exclude<BillingMode, "external_contract"> } {
+  return (
+    product.product_type !== "municipality_club" &&
+    product.billing_mode !== "external_contract"
+  );
+}
+
+export function resolveProductPrice({
   prices,
   billingMode,
   productType,
   currency,
-  locale,
-}: FormatPriceArgs): ProductPriceLine {
+}: ResolvePriceArgs): ResolvedProductPrice {
   if (billingMode === "free") return { kind: "free" };
 
   const row = prices.find((p) => p.currency === currency);
-  if (!row) {
-    return { kind: "unavailable", currency: CURRENCY_CONFIG[currency].label };
-  }
+  if (!row) return { kind: "unavailable" };
 
-  if (productType === "consumer_club") {
-    // Consumer clubs bill as a flat monthly subscription.
-    return {
-      kind: "subscription",
-      perMonth: formatCurrencyFromCents(row.price_cents, currency, locale),
-    };
-  }
-
-  // paid camp / paid event upfront — the single product price.
+  // Consumer clubs bill as a flat monthly subscription; a paid camp or event
+  // is the single product price, paid upfront.
   return {
-    kind: "upfront",
-    total: formatCurrencyFromCents(row.price_cents, currency, locale),
+    kind: productType === "consumer_club" ? "subscription" : "upfront",
+    priceCents: row.price_cents,
   };
+}
+
+export function formatProductPrice({
+  locale,
+  ...args
+}: FormatPriceArgs): ProductPriceLine {
+  const resolved = resolveProductPrice(args);
+  switch (resolved.kind) {
+    case "free":
+      return { kind: "free" };
+    case "unavailable":
+      return {
+        kind: "unavailable",
+        currency: CURRENCY_CONFIG[args.currency].label,
+      };
+    case "subscription":
+      return {
+        kind: "subscription",
+        perMonth: formatCurrencyFromCents(
+          resolved.priceCents,
+          args.currency,
+          locale,
+        ),
+      };
+    case "upfront":
+      return {
+        kind: "upfront",
+        total: formatCurrencyFromCents(
+          resolved.priceCents,
+          args.currency,
+          locale,
+        ),
+      };
+  }
 }

@@ -1,9 +1,10 @@
 /**
  * The brand's type, defined once.
  *
- * The faces, the working scale, and the type rules that are values rather than
- * prose. `theme.css` is generated from here and from `brand.ts` together, so a
- * step's size, weight and line height move in one place.
+ * The faces, the mail face, the working scale, and the type rules that are
+ * values rather than prose. `theme.css` is generated from here and from
+ * `brand.ts` together, so a step's size, weight and line height move in one
+ * place.
  *
  * **The package owns the names; the consumer supplies the files.** Nothing here
  * loads a font. A consumer loads each face through `next/font` and exposes it as
@@ -16,6 +17,10 @@
  * face that is not here is not available to the UI, whether or not it exists in
  * the brand's art. The logo's lettering, campaign display faces and anything
  * retired are drawn, not typed, and the UI never recreates them.
+ *
+ * **`MAIL_FACE` sits beside that list and is not part of it.** It is the one
+ * face the library declares without loading, for the one surface that cannot
+ * load anything, and no token is generated for it.
  *
  * ## The type rules that are opinions
  *
@@ -65,6 +70,17 @@ export type Face = {
   readonly weights: readonly number[];
   /** Subsets the consumer requests. `latin-ext` is not optional: the product ships Finnish, Swedish and French. */
   readonly subsets: readonly string[];
+  /**
+   * Styles the consumer loads, one file per style per weight.
+   *
+   * A style not listed is not loaded, and a page that asks for it gets the
+   * browser's synthesis rather than a drawn face: on a serif that is a skew of
+   * the upright glyphs, where a true italic is a different alphabet with its
+   * own strokes, terminals and narrower fit. So a style is listed when a
+   * placement needs it, and not for completeness — every extra style is
+   * another file every visitor to that surface downloads.
+   */
+  readonly styles: readonly ("normal" | "italic")[];
 };
 
 export const FACES = {
@@ -87,39 +103,72 @@ export const FACES = {
     fallback: "system-ui, sans-serif",
     weights: [400, 500, 600, 700],
     subsets: ["latin", "latin-ext"],
+    styles: ["normal"],
   },
   /**
    * The editorial voice: a humanist serif for editorial headlines, pull quotes
    * and long-form pieces written in a person's voice.
    *
    * A seasoning, not a staple. Never set UI or a long passage of body text in
-   * it on screen. The theme carries the name and waits for a placement.
+   * it on screen. Its placement is a pull quote in a named person's voice,
+   * which is two of those four at once.
+   *
+   * **It carries its italic**, alone among the faces. A pull quote in someone
+   * else's voice is the one editorial flourish the type rules above reserve
+   * italics for — not emphasis inside running copy — and a serif set in a
+   * synthesised slant is visibly wrong in a way the sans is not, because a
+   * true italic is a different alphabet rather than a tilt of the upright one.
+   * Decided against: the serif upright, with the slant dropped, which would
+   * have cost nothing in the contract and let the change of voice do the work
+   * on its own. The quotation is in a person's voice, and the italic is how
+   * that voice is drawn.
+   *
+   * One weight, because nothing is defined before it is needed: the single
+   * placement sets no weight of its own, so a bold cut would be two more files
+   * every visitor to that page downloads for a cut nothing draws.
    */
   serif: {
     name: "Crimson Pro",
     token: "--font-serif",
     variable: "--font-crimson-pro",
     fallback: "Georgia, serif",
-    weights: [400, 600],
+    weights: [400],
     subsets: ["latin", "latin-ext"],
+    styles: ["normal", "italic"],
   },
   /**
-   * The world voice: the typewriter-monospace face of Sogverse itself, spent
-   * where the platform names one of its own places — in-world UI, quest and
-   * story artwork, campaign posters.
+   * The machine face, and nothing else. Text a machine wrote or a person has to
+   * reproduce exactly is set in it — a room code, a password, an id, a log, an
+   * inline code span, a placeholder no customer should see — so that machine
+   * text is told apart from words at a glance. It is never a voice, never a
+   * heading and never a name.
    *
-   * Read narrowly, and kept out of plain copy addressed to a parent, where the
-   * app face carries trust better. Deliberately not called `--font-mono`, which
-   * owns Tailwind's own utility and is spent on machine text — a room code, an
-   * id, an inline code span — that must not silently become branded.
+   * **Decided against: the world voice** — the monospace spent where the
+   * platform names one of its own places, on the child's own surfaces, in a
+   * voice room. It was put to its strongest cases and not taken, because the app
+   * face carries every word a person reads, and a second face for the same words
+   * asks a reader to learn a distinction the product does not need.
+   *
+   * It was two tokens — a branded mono beside Tailwind's own, left at the UA
+   * stack so machine text could not silently become branded. That was a
+   * distinction every call site had to get right, and the failure was silent: a
+   * room code in one token and a room code in the other look different on the
+   * same screen and nothing catches it. One token, one answer, and no call site
+   * left with a choice to get wrong.
+   *
+   * The property that had to be judged before it could carry machine text: this
+   * face's zero carries no slash and no dot, so it was read against `O` at the
+   * sizes codes are set — a dictated room code, a copied id, a generated
+   * password — and found clear.
    */
-  brandMono: {
+  mono: {
     name: "Space Mono",
-    token: "--font-brand-mono",
+    token: "--font-mono",
     variable: "--font-space-mono",
     fallback: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
     weights: [400, 700],
     subsets: ["latin", "latin-ext"],
+    styles: ["normal"],
   },
   /**
    * Handwriting, for a signature and nothing else — a name typed into a signing
@@ -134,10 +183,105 @@ export const FACES = {
     fallback: "cursive",
     weights: [600],
     subsets: ["latin", "latin-ext"],
+    styles: ["normal"],
   },
 } as const satisfies Record<string, Face>;
 
 export type FaceId = keyof typeof FACES;
+
+// -------------------------------------------------------------- the mail face
+
+/**
+ * The face mail is set in.
+ *
+ * Not a `Face`, and the difference is the whole of it: a `Face` is a family the
+ * consumer loads, named by a token that points at a variable. This has no file,
+ * no token and no variable, because a mail client loads nothing and reads no
+ * CSS variable. The stack *is* the face — the reader's own device answers it —
+ * so there is nothing here for the theme generator to emit.
+ */
+export type MailFace = {
+  /** What it is. It has no family name of its own, because it is not one family. */
+  readonly name: string;
+  /** The `font-family` string, written to survive an inline `style="…"` attribute. */
+  readonly stack: string;
+  /**
+   * The same face for the one engine that cannot read a stack.
+   *
+   * Outlook on Windows renders through Word, which does not walk a
+   * `font-family` list: it takes the first family and, where that family is not
+   * installed, falls to Times New Roman rather than to the next entry. So a
+   * stack whose first names exist only on Apple platforms turns every mail
+   * serif on the desktop client least able to recover from it. Every entry here
+   * resolves on Windows, and the mail declares it to that engine alone — every
+   * other client reads `stack` and walks the list as intended.
+   *
+   * It is the same face by another route, not a second design: what a Windows
+   * reader gets from either string is the system sans they already read.
+   */
+  readonly wordEngineStack: string;
+  /** The weights mail may ask for. Both are drawn by every face in the stack. */
+  readonly weights: readonly number[];
+};
+
+/**
+ * The mail face: the reader's own system sans, with no webfont in front of it.
+ *
+ * **Exclusive to mail, and never a screen face.** On a screen the brand has a
+ * face and the consumer loads it; a page reaching for this one is asking for
+ * the app face and spelling it wrong. Mail is the only surface that spends it,
+ * and the only surface that may.
+ *
+ * **No webfont sits in front of it, and that is a decision rather than a
+ * limitation.** The clients that carry most readers — Gmail, Outlook, Yahoo —
+ * load no web font at all, so a family declared ahead of the stack would reach
+ * a minority and the mail would be two designs rather than one; the brand's own
+ * sans is also markedly wider than anything it could fall back to, so line
+ * breaks and button widths would differ from client to client, which is exactly
+ * where a mail layout comes apart. A webfont in a mail is also a request to a
+ * third party, or to our own domain, on every open — an open-tracking beacon,
+ * in a product whose parent-facing copy is about trust. And Outlook on Windows
+ * answers a missing declared web font with Times New Roman rather than with the
+ * next family in the stack, so declaring one costs a serif mail on the desktop
+ * client least able to recover from it.
+ *
+ * **What the stack resolves to is a face, not a fallback**: San Francisco on
+ * iPhone and Mac, Segoe UI in Outlook and on Windows, Roboto on Android,
+ * Helvetica or Arial where nothing else exists. Each is a humanist sans, warm
+ * and legible at the sizes a mail is read at, so the mail reads as native to
+ * the client it arrived in rather than as a page whose face failed to load. The
+ * library's rule for every face is that the fallback is the UA's own and never
+ * a second webfont; mail is the surface where that fallback is the whole face.
+ *
+ * **Two stacks, one face, because one client reads no stack.** Every mail
+ * client but one walks the list until a family resolves; Outlook on Windows
+ * renders through Word, which takes the first family and answers a family it
+ * cannot resolve with Times New Roman rather than with the next entry. The
+ * primary stack opens with the Apple names, which resolve nowhere on Windows,
+ * so that engine gets `wordEngineStack` — every entry of it installed on
+ * Windows — and the mail declares it to that engine alone. The ruling is
+ * untouched by the split: both stacks are the reader's own system sans, and
+ * neither loads anything.
+ *
+ * **Decided against.** The brand sans first with this stack behind it: the
+ * archetypal family phone in our markets is Android, where every stack ends at
+ * Roboto anyway, so a preference honoured by the desktop minority buys one
+ * design for them and a second for everybody else. A single named web-safe face
+ * (Verdana, Trebuchet) fails on the same ground — it is a desktop face with the
+ * same Android ending underneath it, so it is not "one face everywhere" either,
+ * and it trades a face every reader already reads comfortably for one picked
+ * from a list written for a different decade.
+ *
+ * Two weights and no more, because every face the stack can land on draws
+ * exactly these two.
+ */
+export const MAIL_FACE = {
+  name: "The reader's own sans",
+  stack:
+    "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+  wordEngineStack: "'Segoe UI', Arial, sans-serif",
+  weights: [400, 700],
+} as const satisfies MailFace;
 
 // ------------------------------------------------------------- the scale
 

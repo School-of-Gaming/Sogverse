@@ -22,6 +22,13 @@ import type { GamerCreation } from "@/services/member-flair/member-flair.contrac
 // Enums
 export type UserRole = Database["public"]["Enums"]["user_role"];
 export type GenderType = Database["public"]["Enums"]["gender_type"];
+/**
+ * How a child reaches their own account, chosen by their parent: `parent` is
+ * switch-only (a synthetic address, no password), `username` is a handle plus a
+ * password behind a `<username>@gamer.sogverse.internal` auth email, and `email`
+ * is the child's real mailbox with a password they set after verifying it.
+ */
+export type GamerSignIn = Database["public"]["Enums"]["gamer_sign_in"];
 export type LocationType = Database["public"]["Enums"]["location_type"];
 
 /**
@@ -110,6 +117,29 @@ export type MarketingConsentEvent =
   Database["public"]["Tables"]["marketing_consent_events"]["Row"];
 export type ProductMarketingConsent =
   Database["public"]["Tables"]["product_marketing_consents"]["Row"];
+
+// gamer_photo_consents / gamer_photo_consent_events /
+// product_gamer_photo_consents (00244) — the twin of the three aliases above
+// with the SUBJECT changed from an adult's mailbox to a child's image. A
+// MarketingConsent is held by the adult it is about; a GamerPhotoConsent is
+// held on the GAMER and answered by their parent, which is why the state row
+// is keyed on the child and the event row additionally carries `answered_by`.
+// The two systems must not be widened into each other any more than either may
+// be folded into the enrolment-condition types further up.
+//
+// Row aliases only, on the same reasoning as both blocks above: none of these
+// three tables carries a write grant for any Data API role. A parent's answer
+// is written by `set_gamer_photo_consent` and a product's ask set by
+// `admin_set_product_gamer_photo_consents`, so an Insert type here would name
+// a statement nothing in the app is allowed to make.
+export type GamerPhotoConsentType =
+  Database["public"]["Enums"]["gamer_photo_consent_type"];
+export type GamerPhotoConsent =
+  Database["public"]["Tables"]["gamer_photo_consents"]["Row"];
+export type GamerPhotoConsentEvent =
+  Database["public"]["Tables"]["gamer_photo_consent_events"]["Row"];
+export type ProductGamerPhotoConsent =
+  Database["public"]["Tables"]["product_gamer_photo_consents"]["Row"];
 
 // minecraft_accounts
 export type MinecraftAccount = Database["public"]["Tables"]["minecraft_accounts"]["Row"];
@@ -256,14 +286,6 @@ export type ProductPriceUpdate = Database["public"]["Tables"]["product_prices"][
 export type ProductImage = Database["public"]["Tables"]["product_images"]["Row"];
 export type ProductImageInsert = Database["public"]["Tables"]["product_images"]["Insert"];
 export type ProductImageUpdate = Database["public"]["Tables"]["product_images"]["Update"];
-
-// holiday_calendars + calendar_holidays + product_holiday_calendars
-export type HolidayCalendar = Database["public"]["Tables"]["holiday_calendars"]["Row"];
-export type HolidayCalendarInsert = Database["public"]["Tables"]["holiday_calendars"]["Insert"];
-export type CalendarHoliday = Database["public"]["Tables"]["calendar_holidays"]["Row"];
-export type CalendarHolidayInsert = Database["public"]["Tables"]["calendar_holidays"]["Insert"];
-export type ProductHolidayCalendar = Database["public"]["Tables"]["product_holiday_calendars"]["Row"];
-export type ProductHolidayCalendarInsert = Database["public"]["Tables"]["product_holiday_calendars"]["Insert"];
 
 // site_details (member-visible) + site_staff_details (admin + Gedu only)
 export type SiteDetails = Database["public"]["Tables"]["site_details"]["Row"];
@@ -769,6 +791,18 @@ export interface CreateGamerInput {
   gender?: "boy" | "girl" | "non_binary" | null;
   minecraftUsername?: string;
   robloxUsername?: string;
+  /**
+   * How this child will reach their own account. Optional, and absent means
+   * `parent` — the switch-only shape every gamer had before the modes existed,
+   * which is also what the route defaults to.
+   */
+  signIn?: GamerSignIn;
+  /** Required by `username` mode, forbidden by the other two. */
+  username?: string;
+  /** Required by `email` mode, forbidden by the other two. */
+  email?: string;
+  /** Required by `username` mode, forbidden by the other two. */
+  password?: string;
 }
 
 export interface LoginCredentials {

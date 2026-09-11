@@ -1,15 +1,17 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { CheckCircle2, Clock, Hourglass, Info, Loader2 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProductBanner } from "@/components/ui/product-banner";
+import { TopicPrepContent } from "@/components/topic-prep/TopicPrepContent";
 import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { productImageSrc } from "@/lib/images/product-image-url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveTopicPrep } from "@/lib/products/topics";
 import { formatCurrencyFromCents } from "@/lib/utils";
 import { formatFirstChargeDate } from "@/lib/stripe/first-charge-anchor";
 import { useTimezone } from "@/providers";
@@ -106,16 +108,19 @@ export function PurchaseConfirmationView({
     currencyLabel: CURRENCY_CONFIG[DEFAULT_CURRENCY].label,
   });
   const price = priceText(pricingOption, locale, t);
+  // The "Before the first session" guide, resolved once: the same answer says
+  // whether a card is drawn at all and what goes inside it.
+  const prepPlan = resolveTopicPrep(product.topic, product.is_remote);
 
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
       <div className="mx-auto max-w-2xl">
         <div className="flex flex-col items-center text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-act bg-lifted">
             {isWaitlist ? (
-              <Hourglass className="h-7 w-7 text-primary" />
+              <Hourglass className="h-7 w-7 text-act" />
             ) : (
-              <CheckCircle2 className="h-8 w-8 text-primary" />
+              <CheckCircle2 className="h-8 w-8 text-act" />
             )}
           </div>
           <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
@@ -269,7 +274,31 @@ export function PurchaseConfirmationView({
           </CardContent>
         </Card>
 
-        {/* The app-wide button order shape — root `CLAUDE.md`, "Button Order".
+        {/* The "Before the first session" guide, after "what happens next"
+            because that card says *when* the first session is and this one says
+            what to do before it — the order a parent reads them in, and the
+            same order the mail states them in.
+
+            Enrolled only: a waitlist join is a place in a queue rather than a
+            seat, so there is no first session to be ready for and a guide
+            telling a family to buy the game would be the wrong instruction.
+
+            Asked through the shared resolver, exactly as the product page asks
+            before drawing the About card's grid wrapper: a card around nothing
+            is still a card, and an empty one is a hole in the reading column.
+            The resolver answers both halves at once — the topic has a guide,
+            and at least one of its steps applies to a product of this form —
+            and its answer is then what the body renders, so the question and
+            the content cannot disagree. */}
+        {!isWaitlist && prepPlan !== null && (
+          <Card className="mt-6">
+            <CardContent className="p-5 sm:p-6">
+              <TopicPrepContent plan={prepPlan} showHeading />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* The app-wide button order shape — `src/CLAUDE.md`, "Button Order".
             My SOG is the affirmative (last in the DOM, so right in a row and
             top in a stack); Keep browsing is the negative, on the left. */}
         <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-center">
@@ -304,11 +333,18 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 }
 
 // The price line for the summary. Subscriptions read "€X / month", one-time
-// camps/events read "€X (one-time)". External (municipality) shows no price
-// line — it never claimed one, and a page that has said nothing about the cost
-// has said nothing wrong; the emailed twin carries a line here only because it
-// had a false one to replace. Unavailable never reaches a paid confirmation at
-// all.
+// camps/events read "€X (one-time)", free reads "Free", and a municipality
+// registration names who bears the cost.
+//
+// **That last one is here because the page may not know less than the mail
+// does.** The two surfaces owe each other their facts, and a parent must be
+// able to learn everything about what they just joined from either one — so a
+// cost the mail states and the page did not was a fact missing from half the
+// pair. Saying nothing was defensible on its own terms and stopped being so the
+// moment the other half spoke. It says who pays and nothing either side of
+// that: what a municipality then asks of a family is not ours to answer, and
+// how we settle up with the municipality is not theirs to read. Unavailable
+// never reaches a paid confirmation at all.
 function priceText(
   option: PricingOption,
   locale: string,
@@ -334,6 +370,7 @@ function priceText(
     case "free":
       return t("price.free");
     case "external":
+      return t("price.external");
     case "unavailable":
       return null;
   }
@@ -407,13 +444,13 @@ export function PurchaseConfirmationNotice({
     <div className="container mx-auto px-4 py-8 sm:py-12">
       <div className="mx-auto max-w-2xl">
         <div className="flex flex-col items-center text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-act bg-lifted">
             {isFinalizing ? (
-              <Loader2 className="h-7 w-7 animate-spin text-primary" />
+              <Loader2 className="h-7 w-7 animate-spin text-act" />
             ) : kind === "timedOut" ? (
-              <Clock className="h-7 w-7 text-primary" />
+              <Clock className="h-7 w-7 text-act" />
             ) : (
-              <Info className="h-7 w-7 text-primary" />
+              <Info className="h-7 w-7 text-act" />
             )}
           </div>
           <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
@@ -427,10 +464,10 @@ export function PurchaseConfirmationNotice({
             {/* Ghosts shaped like the summary card that replaces them. */}
             <Card className="mt-8">
               <CardContent className="space-y-3 p-5 sm:p-6">
-                <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-                <div className="h-16 animate-pulse rounded-lg bg-muted" />
-                <div className="h-4 animate-pulse rounded bg-muted" />
-                <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+                <div className="h-4 w-32 animate-pulse rounded bg-lifted" />
+                <div className="h-16 animate-pulse rounded-lg bg-lifted" />
+                <div className="h-4 animate-pulse rounded bg-lifted" />
+                <div className="h-4 w-2/3 animate-pulse rounded bg-lifted" />
               </CardContent>
             </Card>
             <p className="mt-6 text-center text-sm text-muted-foreground">
@@ -448,7 +485,7 @@ export function PurchaseConfirmationNotice({
                     link: (chunks) => (
                       <a
                         href={`mailto:${SUPPORT_EMAIL}`}
-                        className="text-primary hover:underline"
+                        className="text-act hover:underline"
                       >
                         {chunks}
                       </a>

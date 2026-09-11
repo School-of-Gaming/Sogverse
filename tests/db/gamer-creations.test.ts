@@ -95,7 +95,41 @@ function dayOffset(offset: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+const TODAY = dayOffset(0);
 const YESTERDAY = dayOffset(-1);
+
+/**
+ * The instant the run's final session ended: yesterday's 23:00 UTC slot plus its
+ * hour, which is today's midnight.
+ *
+ * Written out rather than derived, because it is the value the join-date
+ * predicate compares against and the whole point of the pair of assertions at
+ * the foot of this file is to sit either side of it deliberately.
+ */
+const FINAL_SESSION_ENDS_AT = `${TODAY}T00:00:00.000Z`;
+
+/**
+ * When GROUP_OWED's seat entered the group — the product's own start date, a
+ * month before the run ended.
+ *
+ * **A fixture written before the rule existed does not get to be the rule's
+ * counter-example.** `group_joined_at` is stamped `now()` by 00203's trigger, so
+ * an unadorned insert puts every seat in the group TODAY — strictly after the
+ * final occurrence ended at midnight — and since 00243 a seat that joined after
+ * a session ended is not expected on it. The creations condition would then
+ * find nobody to ask, and the block below would assert zero for a reason that
+ * has nothing to do with what it is testing.
+ *
+ * Backdating is the fix, and it belongs here rather than in the SQL: a member
+ * who was in the group for the whole run is what the fixture always meant, and
+ * the predicate refusing to bill somebody who was not is the branch working.
+ * The table comment's standing "do not set group_joined_at by hand" is aimed at
+ * application code — the column has one writer in production, and 00243's own
+ * backfill is the other statement that legitimately names it. An UPDATE that
+ * does not name `group_id` never fires the stamping trigger, so this write
+ * stands.
+ */
+const JOINED_AT_BACKDATE = `${dayOffset(-30)}T00:00:00.000Z`;
 
 const ROBLOX_GAME = {
   title: "Skyward Bazaar",
@@ -227,6 +261,18 @@ describe("gamer creations", () => {
         status: "active",
       },
     ]);
+
+    // Backdate every seat's join stamp to the products' start date. See
+    // JOINED_AT_BACKDATE: left at the trigger's `now()`, each of these seats
+    // joins its group today, which since 00243 makes it unexpected on every
+    // session that has already finished — and the creations block at the foot
+    // of this file is entirely about sessions that have already finished.
+    // Doing it for all of them, rather than only the seat that needs it, keeps
+    // "when did this fixture's people join" one answer instead of two.
+    await admin
+      .from("participations")
+      .update({ group_joined_at: JOINED_AT_BACKDATE })
+      .in("product_id", ALL_PRODUCTS);
 
     const { data: seat } = await admin
       .from("participations")
@@ -692,6 +738,11 @@ describe("gamer creations", () => {
       // Marked, written up and mailed — under the three original conditions this
       // session is finished. It is not, because the product requires a creation
       // from every member and this member has none.
+      //
+      // The member is only asked for one because their seat is backdated into
+      // the run (JOINED_AT_BACKDATE). That is a property of the fixture rather
+      // than of this assertion, and the two tests at the foot of this block are
+      // where the join date itself is the subject.
       expect(await owedCount()).toBe(1);
     });
 
@@ -711,6 +762,12 @@ describe("gamer creations", () => {
       // wrong reason. GROUP_A's members have creations and GROUP_OFF's do not,
       // but neither product is flagged and neither has ended — so nothing there
       // is ever owed a creation.
+      //
+      // Which means the zero below has to be the FLAG's doing and nothing
+      // else's. It nearly stopped being: with the seat left on the trigger's
+      // `now()` stamp this returned zero because the member had not joined in
+      // time to be asked, flag or no flag. The fixture's backdate is what keeps
+      // this control a control.
       await admin
         .from("products")
         .update({ requires_gamer_creations: false })
@@ -733,6 +790,11 @@ describe("gamer creations", () => {
       // Documented behaviour rather than an error: "the final session" is the
       // last occurrence on or before end_date, so a product with no end_date has
       // none and can be flagged forever without owing anything.
+      //
+      // A control on the same terms as the one above, and vulnerable in the
+      // same way: this zero has to come from there being no final session, not
+      // from the member having joined too late to be asked about one. The
+      // fixture's backdate is what rules the second reading out.
       await admin
         .from("gamer_group_creations")
         .delete()
@@ -748,6 +810,72 @@ describe("gamer creations", () => {
         .from("products")
         .update({ end_date: YESTERDAY })
         .eq("id", PRODUCT_OWED);
+    });
+
+    /**
+     * Who the final session was FOR — the join-date scoping 00243 added to this
+     * condition, asserted from both sides.
+     *
+     * Until these two existed the predicate had no semantic coverage at all:
+     * the migration's end-state block greps its own source for the column name,
+     * which a `>=` typo or a comparison against the wrong instant would sail
+     * straight through. The direction that would regress silently is the second
+     * one — a member placed into the group after the run finished being billed
+     * for a creation on a session they were never on, and reopening a run that
+     * was square — so it is asserted against the exact boundary rather than
+     * against a comfortable margin.
+     *
+     * These run last and leave the stamp where they found it, so nothing above
+     * has to know they happened. No creations exist by this point: the two
+     * control tests above each delete them, so the base state here is "one
+     * member, no creations", which is the state that owes exactly one.
+     */
+    describe("the join-date scoping", () => {
+      /** Move GROUP_OWED's only seat, without naming group_id and re-stamping it. */
+      async function setJoinedAt(value: string): Promise<void> {
+        const { error } = await admin
+          .from("participations")
+          .update({ group_joined_at: value })
+          .eq("group_id", GROUP_OWED)
+          .eq("participant_id", TEST_IDS.GAMER);
+        expect(error).toBeNull();
+      }
+
+      afterAll(async () => {
+        await setJoinedAt(JOINED_AT_BACKDATE);
+      });
+
+      it("owes a creation from a member who joined before the final session ended", async () => {
+        // Mid-run, and again half an hour into the final session itself: both
+        // are "in the group at the time of the last session", which is the
+        // owner's principle in the words it was given in.
+        await setJoinedAt(`${dayOffset(-15)}T09:00:00.000Z`);
+        expect(await owedCount()).toBe(1);
+
+        await setJoinedAt(`${YESTERDAY}T23:30:00.000Z`);
+        expect(await owedCount()).toBe(1);
+      });
+
+      it("owes nothing from a member who joined after the final session ended", async () => {
+        // The boundary is INCLUSIVE and it is drawn at the end instant, both
+        // deliberately and both matched by the TypeScript twin: somebody
+        // stamped at the very moment the session ended is still expected on it.
+        await setJoinedAt(FINAL_SESSION_ENDS_AT);
+        expect(await owedCount()).toBe(1);
+
+        // One millisecond past it, and the run is square. This is the whole of
+        // what 00243 changed here — before it, this same seat was billed for a
+        // creation on a session it postdates, on a card that does not even draw
+        // it a register row.
+        await setJoinedAt(`${TODAY}T00:00:00.001Z`);
+        expect(await owedCount()).toBe(0);
+
+        // And a stamp well clear of the boundary rather than a millisecond
+        // past it: the same answer, so the zero above is the predicate and not
+        // a rounding artefact somewhere in the comparison.
+        await setJoinedAt(`${TODAY}T12:00:00.000Z`);
+        expect(await owedCount()).toBe(0);
+      });
     });
   });
 });

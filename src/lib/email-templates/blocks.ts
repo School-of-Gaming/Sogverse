@@ -1,6 +1,6 @@
-import { BRAND, DARK_THEME, STATUS_TINT } from "@/lib/constants/colors";
+import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
-import { BODY_TEXT_STYLE, pinnedFill } from "./utils";
+import { BODY_TEXT_STYLE, groundFill, pinnedFill } from "./utils";
 
 /**
  * The composed blocks a template reaches for rather than builds. `utils.ts`
@@ -14,7 +14,7 @@ import { BODY_TEXT_STYLE, pinnedFill } from "./utils";
  * (verification links, My SOG, the shop) and nothing else. A value a user can
  * influence must never reach one of these.
  *
- * The same goes for the composed HTML the layout blocks take — a `factTable`
+ * The same goes for the composed HTML the layout blocks take — a `factList`
  * value, a `bulletList` item, a `calloutPanel` paragraph. They are spliced in
  * as written, so a value off a row is escaped by whoever composed it.
  */
@@ -22,9 +22,9 @@ import { BODY_TEXT_STYLE, pinnedFill } from "./utils";
 /**
  * The same three names the app's `Button` uses, meaning the same three things,
  * because a mail is the app's style in an inbox and a shared vocabulary is half
- * of that. `secondary` is the brand purple — it used to name the outlined
- * button here, which left the app's secondary colour with no way to be spelled
- * and made "secondary" mean two different things in two places.
+ * of that. `secondary` is the brand purple, the world colour — it used to name
+ * the outlined button here, which left the world colour with no way to be
+ * spelled and made "secondary" mean two different things in two places.
  */
 type CtaVariant = "primary" | "secondary" | "outline";
 
@@ -68,10 +68,19 @@ interface RowButtonOptions extends CtaButtonOptions {
 /**
  * The button's look, in one place, so a half-width one is the same button.
  *
- * **Every button declares a background, and the outlined one declares the card
- * colour rather than nothing.** It is the same colour as what sits behind it, so
- * in a client that renders the mail as written the declaration changes nothing
- * — its whole job is to tell Gmail's dark theme that this region was designed.
+ * **Every button declares a background, and the outlined one declares the
+ * ground it is standing on rather than nothing.** In a client that renders the
+ * mail as written the declaration changes nothing — its whole job is to tell
+ * Gmail's dark theme that this region was designed.
+ *
+ * *Which* colour that is depends on where the shell has put the button, which
+ * is why the outlined variant takes the shared "matches the ground" tone rather
+ * than naming a value: on a phone the content sits straight on the dark ground
+ * and the button declares that, and above the shell's breakpoint the same
+ * button is inside the card and declares the card. It used to name the card
+ * unconditionally, under a comment saying that was the colour behind it — true
+ * while the card was the only ground a mail had, and false on a phone from the
+ * moment the shell went card-less.
  * Gmail runs a contrast pass over regions whose background it cannot read off a
  * declaration: it lightens the undeclared region, then, finding light where it
  * has just put light, darkens the text on it. That is how an outlined button
@@ -105,22 +114,33 @@ interface RowButtonOptions extends CtaButtonOptions {
  * orange in the header. For anything lighter, the inline colour is both the
  * simplest answer and the one that survives; adding protection makes it worse.
  */
+/**
+ * The outlined button's fill, which is the ground rather than a colour of its
+ * own — so it comes from the one table in `utils.ts` that every ground-following
+ * surface in this directory takes both of its halves from, and the shell's own
+ * media query restates it against the card.
+ */
+const OUTLINE_GROUND = groundFill("match");
+
 const VARIANTS = {
   primary: {
-    fill: BRAND.primary,
-    label: BRAND.primaryForeground,
+    fill: pinnedFill(BRAND.act),
+    surfaceClass: "",
+    label: BRAND.actForeground,
     bordered: false,
     // The only label dark enough for the pin to help rather than hurt.
     labelClass: "cta-on-brand",
   },
   secondary: {
-    fill: BRAND.secondary,
-    label: BRAND.secondaryForeground,
+    fill: pinnedFill(BRAND.world),
+    surfaceClass: "",
+    label: BRAND.worldForeground,
     bordered: false,
     labelClass: "",
   },
   outline: {
-    fill: DARK_THEME.card,
+    fill: OUTLINE_GROUND.fill,
+    surfaceClass: OUTLINE_GROUND.className,
     label: DARK_THEME.foreground,
     bordered: true,
     labelClass: "",
@@ -128,14 +148,15 @@ const VARIANTS = {
 } as const;
 
 function buttonStyles(variant: CtaVariant, width: CtaWidth) {
-  const { fill, label, bordered, labelClass } = VARIANTS[variant];
+  const { fill, surfaceClass, label, bordered, labelClass } = VARIANTS[variant];
   const isHalf = width === "half";
   return {
     surface: [
-      pinnedFill(fill),
+      fill,
       bordered ? `border:1px solid ${DARK_THEME.border};` : "",
       `border-radius:${RADIUS.md};`,
     ].join(""),
+    surfaceClass,
     labelClass,
     label: `display:${isHalf ? "block" : "inline-block"};padding:12px ${isHalf ? "8px" : "32px"};font-size:14px;font-weight:bold;color:${label};text-decoration:none;`,
   };
@@ -146,14 +167,17 @@ function buttonStyles(variant: CtaVariant, width: CtaWidth) {
  * because that is the shape Outlook renders as a button.
  */
 export function ctaButton({ href, label, variant = "primary" }: CtaButtonOptions): string {
-  const { surface, labelClass, label: labelStyle } = buttonStyles(variant, "auto");
+  const { surface, surfaceClass, labelClass, label: labelStyle } = buttonStyles(
+    variant,
+    "auto",
+  );
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px;">
       <tr>
         <td align="center">
           <table role="presentation" cellpadding="0" cellspacing="0">
             <tr>
-              <td align="center" style="${surface}">
+              <td align="center"${surfaceClass ? ` class="${surfaceClass}"` : ""} style="${surface}">
                 <a href="${href}" target="_blank"${labelClass ? ` class="${labelClass}"` : ""} style="${labelStyle}">
                   ${label}
                 </a>
@@ -177,8 +201,10 @@ export function ctaButton({ href, label, variant = "primary" }: CtaButtonOptions
  * Email clients do not reflow table columns and media queries are not dependable
  * across them, so there is no narrow-viewport arrangement to fall back on: these
  * two cells are the layout at every width the shell is read at, and the narrow
- * end is genuinely narrow — a 320px client leaves the card about 216px of
- * content, so each half is around 96px. That is what sets the terms here:
+ * end is genuinely narrow — at 320px, which is below the shell's own design
+ * floor and well below the width at which it draws a card, the content column
+ * is 288px and the 8px gutters leave each half about 132px. That is what sets
+ * the terms here:
  *
  * - The halves use the `half` width, so the label's padding is 8px a side and
  *   the cell drives the width instead of the padding.
@@ -212,8 +238,11 @@ export function ctaButtonRow(left: RowButtonOptions, right: RowButtonOptions): s
  * A shape forbidden in prose and reachable by omission is not forbidden.
  */
 function halfButtonCell({ href, label, variant }: RowButtonOptions): string {
-  const { surface, labelClass, label: labelStyle } = buttonStyles(variant, "half");
-  return `<td width="50%" align="center" valign="middle" style="${surface}">
+  const { surface, surfaceClass, labelClass, label: labelStyle } = buttonStyles(
+    variant,
+    "half",
+  );
+  return `<td width="50%"${surfaceClass ? ` class="${surfaceClass}"` : ""} align="center" valign="middle" style="${surface}">
           <a href="${href}" target="_blank"${labelClass ? ` class="${labelClass}"` : ""} style="${labelStyle}">${label}</a>
         </td>`;
 }
@@ -237,7 +266,7 @@ export function inlineLink(href: string, label: string): string {
   // wrong here. The underline is the affordance that says "link", so it
   // outranks matching the name's orange exactly; that mismatch is real, and it
   // is the cheaper of the two faults until a screenshot settles a fix for it.
-  return `<a href="${href}" target="_blank" style="color:${BRAND.primary};text-decoration:underline;">${label}</a>`;
+  return `<a href="${href}" target="_blank" style="color:${BRAND.act};text-decoration:underline;">${label}</a>`;
 }
 
 /** A bulleted list of already-composed (and already-escaped) HTML snippets. */
@@ -248,29 +277,89 @@ export function bulletList(items: string[]): string {
   return `<ul style="margin:0 0 16px;padding-left:20px;${BODY_TEXT_STYLE}">${rendered}</ul>`;
 }
 
-interface FactTableOptions {
-  /**
-   * How much room the label column takes. It is a hint rather than a rule —
-   * table layout will widen it for a label that does not fit — so pick the
-   * width the longest label wants and let the values line up against it.
-   */
-  labelWidth?: string;
+/**
+ * The same list with numbers instead of bullets, for a run of items whose
+ * *order* is part of what they say — steps to work through, in sequence.
+ *
+ * Styled identically to `bulletList` down to the margins, because the two are
+ * one construct with two markers: a mail carrying both would otherwise space
+ * them differently for no reason a reader could name. The marker itself is the
+ * client's own `<ol>` numbering rather than a number written into each item,
+ * so it stays a list to a screen reader and the numbers cannot fall out of step
+ * with the items after an edit.
+ */
+export function numberedList(items: string[]): string {
+  const rendered = items
+    .map((item) => `<li style="margin:0 0 8px;">${item}</li>`)
+    .join("");
+  return `<ol style="margin:0 0 16px;padding-left:20px;${BODY_TEXT_STYLE}">${rendered}</ol>`;
 }
 
 /**
- * Label–value rows in a bordered, rounded box.
+ * Bold, inline, in the body's own colour — the emphasis a sentence carries
+ * inside itself.
  *
- * **It is the shape every mail we send to *ourselves* uses**: a handful of
- * facts about one case, stated before the mail asks for the next step, in a box
- * a staff reader can find at a glance without reading a sentence. The feedback
- * mail and both flavours of the seat-offer staff mail are the same table, and
- * they were three hand-rolled copies of it until this helper existed — which is
- * the shape of the worst bug this directory has had. A copy cannot inherit
- * tomorrow's correction; prefer a helper over its output.
+ * Weight rather than colour, for the reason `styledProductName` gives: weight
+ * is the one emphasis every client renders the same way, and a colour is
+ * something a dark theme feels free to rewrite.
+ */
+export function inlineBold(text: string): string {
+  return `<strong style="color:${DARK_THEME.foreground};">${text}</strong>`;
+}
+
+/**
+ * The tag handlers for `t.markup`, so a message can carry its own emphasis.
  *
- * **The last row carries no rule, and that is the canonical behaviour.** The
- * box's own border already closes the list, so a final `border-bottom` sits a
- * pixel inside it and reads as a rendering fault rather than as a divider.
+ * A mail's translator is `use-intl`'s plain-string one, so it has no `t.rich`
+ * to build elements with — `t.markup` is the string equivalent, and it takes a
+ * handler per tag the message uses. `<b>` is the only tag a mail's copy may
+ * carry: a message file is where a translator decides *which* words a sentence
+ * leans on, and every other kind of markup in this directory is the builder's
+ * decision rather than the sentence's.
+ *
+ * The app renders the same messages through `t.rich` with a real `<b>`, which
+ * is what lets one string serve a page and a mail.
+ */
+export const MARKUP_TAGS = {
+  b: (chunks: string) => inlineBold(chunks),
+} as const;
+
+/**
+ * The same tags, rendering to nothing — for a plain-text twin, which states the
+ * words and has no way to lean on any of them.
+ */
+export const PLAIN_MARKUP_TAGS = {
+  b: (chunks: string) => chunks,
+} as const;
+
+/**
+ * Label–value rows, ruled above and between: the one facts block every mail
+ * here states its facts in.
+ *
+ * **It is the session report's block, promoted — the box it replaced is gone.**
+ * The old shape was a bordered, rounded card of label–value rows, and on a
+ * phone it spent 34px of the content column on each side — a border, a radius
+ * and 16px of cell padding — before a value had any room at all. On the narrow
+ * column the shell gives a phone that is most of a word a line, and what it
+ * bought was an outline around facts no reader was going to mistake for
+ * anything else. Open rules cost nothing, close the list just as clearly, and
+ * hand the whole column back to the values.
+ *
+ * **Every mail takes it, the ones we send to ourselves included.** Staff read
+ * mail on phones too — that is the owner's ruling and it is the whole of the
+ * reason — and a second arrangement of the same five rows would be a helper
+ * with a knob for each difference, kept alive for two blocks nobody ever wanted
+ * to correct in opposite directions.
+ *
+ * The label column sizes itself: `width:1%` and no wrapping, so it is as narrow
+ * as its own longest label and the values line up whatever the locale calls a
+ * thing. That is also why there is no width option to pass — a caller choosing
+ * one was choosing it for the English labels. Labels are small, muted and
+ * tracked, which is furniture rather than voice; the value carries the line.
+ *
+ * **The last row keeps its rule.** With no box edge to close the list, the
+ * final hairline is what closes it — and where the mail goes on to a report or
+ * a section, it is what separates the two.
  *
  * **Labels and values both go in as HTML and neither is escaped here.** Labels
  * are translated copy; values are whatever the caller composed, which for
@@ -280,24 +369,20 @@ interface FactTableOptions {
  * those treatments, so the rule is the directory's usual one: escape at the
  * value, not at the block.
  */
-export function factTable(
+export function factList(
   rows: ReadonlyArray<readonly [label: string, value: string]>,
-  { labelWidth = "140px" }: FactTableOptions = {},
 ): string {
-  const last = rows.length - 1;
   const rendered = rows
-    .map(([label, value], index) => {
-      const rule =
-        index === last ? "" : `border-bottom:1px solid ${DARK_THEME.border};`;
-      return `
-            <tr>
-              <td style="padding:12px 16px;color:${DARK_THEME.mutedFg};font-size:13px;${rule}width:${labelWidth};">${label}</td>
-              <td style="padding:12px 16px;color:${DARK_THEME.foreground};font-size:14px;${rule}">${value}</td>
-            </tr>`;
-    })
+    .map(
+      ([label, value]) => `
+        <tr>
+          <td style="padding:8px 16px 8px 0;border-bottom:1px solid ${DARK_THEME.border};color:${DARK_THEME.mutedFg};font-size:12px;letter-spacing:0.5px;text-transform:uppercase;white-space:nowrap;width:1%;vertical-align:top;">${label}</td>
+          <td style="padding:8px 0;border-bottom:1px solid ${DARK_THEME.border};color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;">${value}</td>
+        </tr>`,
+    )
     .join("");
   return `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;border:1px solid ${DARK_THEME.border};border-radius:${RADIUS.lg};">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;border-top:1px solid ${DARK_THEME.border};">
       ${rendered}
     </table>`;
 }
@@ -321,27 +406,32 @@ interface CalloutPanelOptions {
  *
  * **It is the app's `Alert`, in its `info` variant, in an inbox.** A mail
  * inherits rather than being styled, so the shape comes from the component the
- * app already uses for exactly this: `rounded-lg`, a full 1px border in the info
- * colour at half alpha, a wash of the same colour at a tenth. Email cannot rely
- * on alpha, so both arrive here as flat values composited over the message panel
- * (`STATUS_TINT`, in `colors.ts`, with the derivation beside them). The earlier
- * version of this panel was a 3px brand-orange rule down one edge, which is a
- * treatment that exists nowhere in the app and read as a warning besides — the
- * brand primary is the colour that means *ours*, not *careful*.
+ * app already uses for exactly this: `rounded-lg`, a neutral 1px border, the
+ * ground it is already on, the label in the status colour and the sentences in
+ * ink. No status colour is tinted anywhere — info is Wit's blue, and a brand
+ * colour exists at the value it is authored at or not at all — so the wash and
+ * its half-alpha edge are both gone, and with them the composited pair they
+ * needed. The version before that was a 3px brand-orange rule down one edge,
+ * which is a treatment that exists nowhere in the app and read as a warning
+ * besides — the act is the colour that means *ours*, not *careful*.
  *
- * **The border is what draws the panel, and it is allowed to be quiet.** At
- * 2.18:1 against the card it would not carry a control boundary on its own, and
- * it is not asked to: everything the panel means is in its label and its
- * sentences. The wash is a tint rather than a divider — 1.12:1 on the card —
- * and that is the app's own balance for this component, not a concession made
- * for mail.
+ * **The border carries the status, at full value.** The app's alerts do the
+ * same thing and for the same reason: with no tinted ground left, an edge in
+ * the status hue is what brings the eye to a panel whose whole job is to be
+ * noticed, and an edge is one of the roles a brand colour may take. It stays a
+ * 1px solid line on the cell — the most robust border email has, and the one
+ * construct Outlook's Word engine and Gmail's Android renderer both draw
+ * without argument — so what changed is one colour and nothing about the
+ * markup.
  *
- * **The text on it is the body's colour, and that is a contrast fact.** The
- * app's `Alert` colours its title with the accent, and the mail cannot: the info
- * blue on this wash is 4.46:1, just under AA, and a label this size gets no
- * large-text exemption. So the label and the paragraphs are `foreground`
- * (13.24:1) — checked before fidelity, as this directory's rule says, and pinned
- * in `palette-contrast.test.ts` both ways round.
+ * **The label takes the colour and the sentences stay ink.** That is the app's
+ * rule for this construct — coloured ink only on a label, never on something a
+ * reader reads through — and here it is also a contrast fact: on the message
+ * panel the info blue measures 7.53:1 as text, well clear of the body floor,
+ * where on the wash it used to sit at 4.46:1 and could not be spent at all. The
+ * app puts a glyph beside that label; a mail has no icon system to draw one
+ * with, so the label carries the tone alone. Both pairings are pinned in
+ * `palette-contrast.test.ts`.
  *
  * The paragraphs carry equal weight rather than the second being muted: in a
  * callout the later sentence is usually the one that answers the actual worry,
@@ -358,8 +448,8 @@ export function calloutPanel({ label, paragraphs }: CalloutPanelOptions): string
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
       <tr>
-        <td style="${pinnedFill(STATUS_TINT.infoSurface)}border:1px solid ${STATUS_TINT.infoBorder};border-radius:${RADIUS.lg};padding:16px;">
-          <p style="margin:0 0 8px;color:${DARK_THEME.foreground};font-size:12px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">${label}</p>
+        <td style="border:1px solid ${STATUS.info};border-radius:${RADIUS.lg};padding:16px;">
+          <p style="margin:0 0 8px;color:${STATUS.info};font-size:12px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">${label}</p>
           ${body}
         </td>
       </tr>

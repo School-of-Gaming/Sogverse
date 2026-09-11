@@ -11,32 +11,10 @@ import { adminSessionKeys } from "@/services/admin-sessions";
 // service class, and this file only needs the cache key factory.
 import { siteKeys } from "@/services/sites/sites.queries";
 import { updateSiteNotesResponse } from "./reference-data.contracts";
-import type { CalendarHoliday, HolidayCalendar } from "@/types";
-
-export type HolidayCalendarWithDates = HolidayCalendar & {
-  calendar_holidays: Pick<CalendarHoliday, "date" | "reason">[];
-};
 
 export const referenceKeys = {
-  holidayCalendars: ["products", "holiday-calendars"] as const,
   consentDocuments: ["products", "consent-documents"] as const,
 };
-
-export function useHolidayCalendars() {
-  const supabase = getClient();
-
-  return useQuery<HolidayCalendarWithDates[]>({
-    queryKey: referenceKeys.holidayCalendars,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("holiday_calendars")
-        .select("*, calendar_holidays(date, reason)")
-        .order("name");
-      if (error) throw error;
-      return data as HolidayCalendarWithDates[];
-    },
-  });
-}
 
 /**
  * One consent document the platform has published, with the version that is
@@ -57,10 +35,10 @@ export interface ConsentDocumentOption {
 /**
  * Every consent document a product can be made to require.
  *
- * A direct read through the caller's own client, like the holiday calendars
- * above: the table is a list of published document slugs with no personal data
- * in it, readable by `anon` and `authenticated` alike under migration 00210, so
- * a route would add nothing but a hop.
+ * A direct read through the caller's own client: the table is a list of
+ * published document slugs with no personal data in it, readable by `anon` and
+ * `authenticated` alike under migration 00210, so a route would add nothing but
+ * a hop.
  *
  * The "current version" is resolved here rather than in SQL because PostgREST
  * has no greatest-n-per-group: the versions ride in on the embed and the

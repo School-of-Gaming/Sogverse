@@ -5,9 +5,18 @@
 // one test.
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { templateRegistry } from "@/lib/email-templates/registry";
-import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
+import {
+  getEmailTranslator,
+  getTopicPrepTranslator,
+  type EmailTranslator,
+  type TopicPrepTranslator,
+} from "@/lib/email-templates/translator";
 import { buildPinResetEmail } from "@/lib/email-templates/pin-reset";
-import { BRAND, DARK_THEME, GRADIENT, STATUS, STATUS_TINT } from "@/lib/constants/colors";
+import {
+  calendarInvitationStartDate,
+  calendarInvitationUntilDate,
+} from "@/lib/email-templates/calendar-invitation";
+import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
 
 /**
@@ -36,9 +45,7 @@ const PALETTE = new Set(
   [
     ...Object.values(BRAND),
     ...Object.values(DARK_THEME),
-    ...Object.values(GRADIENT),
     ...Object.values(STATUS),
-    ...Object.values(STATUS_TINT),
   ].map((hex) => hex.toLowerCase()),
 );
 
@@ -51,9 +58,62 @@ const RADII = new Set(Object.values(RADIUS));
  * so the result is unreadable rather than merely off-brand.
  */
 const LEGAL_ON_FILL: Record<string, string> = {
-  [BRAND.primary.toLowerCase()]: BRAND.primaryForeground.toLowerCase(),
-  [BRAND.secondary.toLowerCase()]: BRAND.secondaryForeground.toLowerCase(),
+  [BRAND.act.toLowerCase()]: BRAND.actForeground.toLowerCase(),
+  [BRAND.world.toLowerCase()]: BRAND.worldForeground.toLowerCase(),
 };
+
+/**
+ * The calendar explorer's baseline params — every field at the value its
+ * untouched form control posts.
+ *
+ * It is the whole form because the schema requires every key, and it is the
+ * *baseline* because this file only cares about the mail around the document:
+ * a subject, a body and the house shell. Which properties the calendar itself
+ * writes is the builder suite's subject, next door.
+ */
+const CALENDAR_INVITATION_FIXTURE = {
+  subject: "Calendar invite explorer",
+  body: "",
+  uid: "",
+  sequence: "0",
+  method: "request",
+  status: "confirmed",
+  timezone: "Europe/Helsinki",
+  startDate: calendarInvitationStartDate(),
+  startTime: "16:00",
+  durationMinutes: "120",
+  timeForm: "tzid",
+  allDay: "no",
+  recurrence: "none",
+  weekdays: "mon",
+  until: "",
+  count: "",
+  interval: "1",
+  excludedDates: "",
+  overrides: "",
+  organizerName: "School of Gaming",
+  organizerEmail: "sogverse@sog.gg",
+  attendeeName: "Attendee",
+  attendeeEmail: "attendee@example.com",
+  rsvp: "yes",
+  attendeeRole: "REQ-PARTICIPANT",
+  partstat: "NEEDS-ACTION",
+  includeAttendee: "yes",
+  summary: "Calendar invite explorer",
+  description: "",
+  location: "Helsinki, Finland",
+  url: "",
+  alert1Offset: "15",
+  alert1Action: "display",
+  alert1RelativeTo: "start",
+  alert2Offset: "1440",
+  alert2Action: "display",
+  alert2RelativeTo: "start",
+  alert3Offset: "none",
+  alert3Action: "display",
+  alert3RelativeTo: "start",
+  showAs: "free",
+} satisfies Record<string, string | boolean | null>;
 
 /** Fixture params for the registry-backed renders. */
 const PARAMS: Record<string, Record<string, string | boolean | null>> = {
@@ -64,6 +124,8 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     userRole: "customer",
     userEmail: "marja@example.com",
     message: "Great product!",
+    parentEmail: null,
+    gamerOwnMailbox: false,
   },
   welcomeParent: {
     firstName: "Marja",
@@ -78,17 +140,49 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     dashboardUrl: "https://sogverse.sog.gg/gedu",
     settingsUrl: "https://sogverse.sog.gg/settings",
   },
+  // A schedule, deliberately: the session-times section and the sentence about
+  // the attached calendar are markup no other render in this sweep reaches, and
+  // a fixture with no slots would leave them unchecked. The dates are read at
+  // fixture time for the same reason the form's placeholders are — an
+  // invitation whose run has finished composes nothing at all.
   productConfirmation: {
     participantName: "Aino",
     isSelfSeat: false,
     productName: "Minecraft 101",
     productType: "camp",
+    // A topic that carries a guide, so the section's blocks are swept at all.
+    // This fixture is in-person (`isRemote: "no"`, for the site the calendar
+    // states), which shortens the guide to its account steps — the remote form,
+    // with the per-platform notes and the checklist only it renders, is swept
+    // as a variant below.
+    topic: "minecraft_java",
     mode: "upfront",
     priceAmount: "€40.00",
+    firstChargeDate: "none",
     dashboardUrl: "https://sogverse.sog.gg/parent",
+    gamerCopy: false,
+    ageRange: "8-12",
+    audience: "gamers",
+    spokenLanguageCode: "fi",
+    participationId: "3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+    attendeeName: "Marja Virtanen",
+    attendeeEmail: "marja@example.com",
+    shortDescription: "Build, explore and survive together.",
+    timezone: "Europe/Helsinki",
+    startDate: calendarInvitationStartDate(),
+    endDate: calendarInvitationUntilDate(),
+    slots: "mon 16:00 60\nwed 16:00 60",
+    isRemote: "no",
+    siteName: "Kallion kirjasto",
+    siteAddress: "Viides linja 11, 00530 Helsinki",
+    siteNote: "The door on the north side. Ring the bell.",
   },
   verifyEmail: {
     firstName: "Marja",
+    verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
+  },
+  gamerWelcome: {
+    gamerFirstName: "Aino",
     verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
   },
   seatOffer: {
@@ -99,6 +193,12 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     acceptUrl: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=accept",
     declineUrl: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=decline",
     dashboardUrl: "https://sogverse.sog.gg/parent",
+  },
+  seatOfferGamer: {
+    gamerName: "Aino",
+    productName: "Minecraft 101",
+    deadline: "Sunday, 31 August at 14:20 GMT+3",
+    dashboardUrl: "https://sogverse.sog.gg/gamer",
   },
   seatOfferStaff: {
     reason: "declined",
@@ -127,12 +227,24 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     reportMarkdown: "",
     productUrl: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
   },
+  calendarInvitation: CALENDAR_INVITATION_FIXTURE,
 };
 
 let t: EmailTranslator;
+/**
+ * The second translator, handed to every registry render below — because a
+ * render composed without it states no "Before the first session" guide, and
+ * the guide is a run of blocks in the signup confirmation that nothing else
+ * here would ever sweep. Same reason the mark's origin is stubbed above: pick
+ * the shape of the mail with more markup in it.
+ */
+let tPrep: TopicPrepTranslator;
 
 beforeAll(async () => {
-  t = await getEmailTranslator("en");
+  [t, tPrep] = await Promise.all([
+    getEmailTranslator("en"),
+    getTopicPrepTranslator("en"),
+  ]);
   // The shell's brand mark is emitted only when an origin can be built for it,
   // and no env is configured for the unit run — locally or in CI. Without this
   // stub every mail swept below renders in its no-origin shape, and the one
@@ -161,7 +273,18 @@ function fromRegistry(
   name = key,
   overrides: Record<string, string | boolean | null> = {},
 ): [string, string][] {
-  return [[name, templateRegistry[key].render({ ...PARAMS[key], ...overrides }, t, "en").html]];
+  return [
+    [
+      name,
+      templateRegistry[key].render(
+        { ...PARAMS[key], ...overrides },
+        t,
+        "en",
+        { to: "send" },
+        tPrep,
+      ).html,
+    ],
+  ];
 }
 
 /**
@@ -177,21 +300,56 @@ function fromRegistry(
 const MAILS: Record<string, () => [string, string][]> = {
   "components-reference": () => fromRegistry("componentsReference"),
   "password-reset": () => fromRegistry("passwordReset"),
-  feedback: () => fromRegistry("feedback"),
-  "product-confirmation": () => fromRegistry("productConfirmation"),
-  // Both mails one send produces: the family's, and the copy to staff, which
-  // carries a banner of its own and so has markup no other render reaches.
+  // The plain mail, and the gamer case with the note that names a child's own
+  // address — a row of markup no other render reaches.
+  feedback: () => [
+    ...fromRegistry("feedback"),
+    ...fromRegistry("feedback", "feedback (gamer, own mailbox)", {
+      userRole: "gamer",
+      userEmail: "aino@example.com",
+      parentEmail: "marja@example.com",
+      gamerOwnMailbox: true,
+    }),
+  ],
+  // The parent's mail and the child's own copy, which greets the reader and
+  // drops the price line — a different document, swept on its own.
+  "product-confirmation": () => [
+    ...fromRegistry("productConfirmation"),
+    ...fromRegistry("productConfirmation", "productConfirmation (child's copy)", {
+      gamerCopy: true,
+      priceAmount: null,
+      dashboardUrl: "https://sogverse.sog.gg/gamer",
+    }),
+    // The guide in its full form, on the one topic whose steps carry
+    // per-platform notes and a checklist — two blocks no other render in this
+    // sweep produces, and both of them `ownDevice`, so only a remote product
+    // reaches them.
+    ...fromRegistry("productConfirmation", "productConfirmation (topic guide, remote)", {
+      topic: "roblox_studio",
+      isRemote: "yes",
+    }),
+  ],
+  // All three mails one send produces: the family's, the child's own copy, and
+  // the copy to staff, which carries a banner of its own and so has markup no
+  // other render reaches.
   "session-report": () => [
     ...fromRegistry("sessionReport"),
+    ...fromRegistry("sessionReport", "sessionReport (child's copy)", {
+      copy: "gamer",
+      productUrl: "https://sogverse.sog.gg/gamer/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+    }),
     ...fromRegistry("sessionReport", "sessionReport (staff copy)", { copy: "staff" }),
   ],
-  // Both voices of the parent mail. Every sentence moves between the second and
-  // the third person on `isSelfSeat`, and the two are swept for the same reason
-  // the staff mail's two flavours are: a variant nothing renders is a variant
-  // nothing can vouch for.
+  // Both voices of the parent mail, and the child's own copy from the same
+  // module. Every sentence moves between the second and the third person on
+  // `isSelfSeat`, and the child's copy is a second builder with no answer
+  // buttons at all; all three are swept for the same reason the staff mail's
+  // two flavours are: a variant nothing renders is a variant nothing can vouch
+  // for.
   "seat-offer": () => [
     ...fromRegistry("seatOffer"),
     ...fromRegistry("seatOffer", "seatOffer (own seat)", { isSelfSeat: true }),
+    ...fromRegistry("seatOfferGamer"),
   ],
   // Both flavours of the staff mail: they differ only in two sentences, but a
   // variant nothing renders is a variant nothing can vouch for.
@@ -202,6 +360,13 @@ const MAILS: Record<string, () => [string, string][]> = {
     }),
   ],
   "verify-email": () => fromRegistry("verifyEmail"),
+  "gamer-welcome": () => fromRegistry("gamerWelcome"),
+  // One render, unlike the other multi-message templates: every message this
+  // template can send is the same mail — the typed subject and the typed body
+  // in the shell — and everything that moves between a request, a publish and
+  // a cancellation moves inside the attached document, which carries no markup
+  // for this file to sweep.
+  "calendar-invitation": () => fromRegistry("calendarInvitation"),
   welcome: () => [...fromRegistry("welcomeParent"), ...fromRegistry("welcomeGedu")],
 
   // Not registered, deliberately: a test send from the admin UI would mint a
@@ -219,12 +384,30 @@ function allMails(): [string, string][] {
 }
 
 /** Every `style="…"` value in a document, with the whole opening tag it sits on. */
-function styleAttributes(html: string): { tag: string; openingTag: string; style: string }[] {
+function styleAttributes(html: string): { tag: string; style: string }[] {
   return [...html.matchAll(/<(\w+)\b[^>]*?\sstyle="([^"]*)"[^>]*>/g)].map((m) => ({
     tag: m[1],
-    openingTag: m[0],
     style: m[2],
   }));
+}
+
+/**
+ * Every place a document declares style, inline *and* in the `<style>` block —
+ * each as the run of declarations a background rule has to be checked against.
+ *
+ * The block is in here because a background moved into it. The shell is laid
+ * out for a phone and draws its card from a media query, so the largest fill
+ * any mail depends on is now a declaration in a stylesheet rather than one on a
+ * cell — and a check that only read `style="…"` attributes would have stopped
+ * seeing the very fill it was written for. Rule bodies are matched innermost
+ * first, so a rule nested inside a media query is read as its own block.
+ */
+function declarationRuns(html: string): string[] {
+  const block = /<style>([\s\S]*?)<\/style>/.exec(html)?.[1] ?? "";
+  return [
+    ...styleAttributes(html).map((declared) => declared.style),
+    ...[...block.matchAll(/\{([^{}]*)\}/g)].map((rule) => rule[1]),
+  ];
 }
 
 describe("completeness", () => {
@@ -280,7 +463,7 @@ describe("house style, over every mail we can send", () => {
         const isButton = /^display:(inline-)?block;padding:12px (8|32)px;font-size:14px;font-weight:bold;color:#[0-9a-fA-F]{6};text-decoration:none;$/.test(
           style,
         );
-        const isInlineLink = style === `color:${BRAND.primary};text-decoration:underline;`;
+        const isInlineLink = style === `color:${BRAND.act};text-decoration:underline;`;
         expect(
           isButton || isInlineLink,
           `${name}: hand-rolled anchor — use ctaButton/ctaButtonRow/inlineLink.\n  ${style}`,
@@ -335,20 +518,17 @@ describe("house style, over every mail we can send", () => {
   /**
    * Any background a mail depends on is declared twice — as a colour and as a
    * flat gradient of it — because a dark theme rewrites `background-color` and
-   * leaves gradients alone. The exception is the hero, whose gradient is a real
-   * one applied by class.
+   * leaves gradients alone. There is no exception: the shell used to carry a
+   * real two-tone gradient by class and was exempted for it, and the sweep that
+   * removed the gradient removed the exemption with it. The stylesheet is swept
+   * on the same terms as the markup: the shell's card fill lives in a media
+   * query now, and a fill is a fill wherever it is declared.
    */
   it("declares every background twice", () => {
     for (const [name, html] of allMails()) {
-      // The hero's gradient is applied by class, deliberately: Gmail rewrites an
-      // inline linear-gradient() into url(linear-gradient(...)) and breaks it,
-      // so those elements carry their background-image in the style block.
-      // Keyed on the element's own opening tag, not its tag *name* — the hero
-      // class sits on a <table>, and exempting by name handed every future table
-      // the same pass.
-      for (const { openingTag, style } of styleAttributes(html)) {
+      for (const style of declarationRuns(html)) {
         const fill = /background-color:\s*(#[0-9a-fA-F]{3,8})/.exec(style);
-        if (!fill || openingTag.includes("hero-gradient")) continue;
+        if (!fill) continue;
         const hex = fill[1];
         expect(
           style.includes(`background-image:linear-gradient(${hex},${hex})`),
@@ -417,12 +597,12 @@ describe("house style, over every mail we can send", () => {
 describe("every pinned colour has been verified, not reasoned about", () => {
   /** Pinned colours seen to survive, and where that was seen. */
   const VERIFIED_PINS: Record<string, { hex: string; evidence: string }> = {
-    "brand-primary": {
-      hex: BRAND.primary,
+    "brand-act": {
+      hex: BRAND.act,
       evidence: "Gmail Android, dark system theme, 2026-08-22 — components reference, header lockup and V7.",
     },
     "cta-on-brand": {
-      hex: BRAND.primaryForeground,
+      hex: BRAND.actForeground,
       evidence: "Gmail Android, dark system theme, 2026-08-22 — C1. Fixed a real white/black flip.",
     },
   };

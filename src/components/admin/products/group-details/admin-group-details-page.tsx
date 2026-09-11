@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,7 +15,10 @@ import { createGameUsernameSave } from "@/components/group-workspace/game-userna
 import type { GroupNotesDraft } from "@/components/group-workspace/GroupNotesPanel";
 import { createSessionEntrySaves } from "@/components/group-workspace/session-entry-saves";
 import type { SiteNotesDraft } from "@/components/group-workspace/SitePanel";
-import type { SessionFeedGamer } from "@/components/gedu/session-feed";
+import {
+  resolveInGroupSince,
+  type SessionFeedGamer,
+} from "@/components/gedu/session-feed";
 import { showsNewcomerBadge } from "@/components/member-flair";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
 import { ROUTES } from "@/lib/constants";
@@ -32,6 +35,11 @@ import {
   type AdminProductSessions,
   type AdminSessionGroup,
 } from "@/services/admin-sessions";
+import {
+  resolveGamerPhotoConsents,
+  useGamerPhotoConsentsForGamers,
+  useProductGamerPhotoConsentTypes,
+} from "@/services/gamer-photo-consents";
 import { useGeduGroupFeed, type GeduGroupFeed } from "@/services/gedu-sessions";
 import { useProductGroups } from "@/services/groups";
 import {
@@ -53,7 +61,7 @@ import type {
   ProductType,
 } from "@/types";
 import { platformForTopic } from "@/lib/products/topics";
-import { PRODUCT_TYPE_CONFIG } from "../product-type-config";
+import type { AppHref } from "@/lib/constants/routes";
 
 interface AdminGroupDetailsPageProps {
   productType: ProductType;
@@ -107,12 +115,11 @@ export function AdminGroupDetailsPage({
 }: AdminGroupDetailsPageProps) {
   const t = useTranslations("admin.products");
   const s = useTranslations("admin.products.sessions");
-  const config = PRODUCT_TYPE_CONFIG[productType];
-  const backHref = `/admin/${config.routeSlug}/${productId}`;
+  const backHref = ROUTES.admin.product(productType, productId);
   // This page's own route — where leaving a voice room joined from here lands,
   // instead of the body's gedu-workspace default (which the proxy would bounce
   // an admin off, via /gedu, onto /admin and away from this group).
-  const selfHref = `${backHref}/groups/${groupId}`;
+  const selfHref = ROUTES.admin.productGroup(productType, productId, groupId);
 
   const product = useProductAdmin(productId);
   const sessions = useAdminProductSessions(productId);
@@ -192,7 +199,7 @@ function PageFrame({
   backHref,
   children,
 }: {
-  backHref: string;
+  backHref: AppHref;
   children: React.ReactNode;
 }) {
   const c = useTranslations("common");
@@ -241,25 +248,25 @@ function GroupDetailsSkeleton() {
 
       <div aria-hidden>
         <header className="space-y-2 border-b border-border pb-5">
-          <div className="h-3 w-16 animate-pulse rounded bg-muted" />
-          <div className="h-8 w-72 max-w-full animate-pulse rounded-md bg-muted" />
-          <div className="h-4 w-48 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-16 animate-pulse rounded bg-lifted" />
+          <div className="h-8 w-72 max-w-full animate-pulse rounded-md bg-lifted" />
+          <div className="h-4 w-48 animate-pulse rounded bg-lifted" />
         </header>
 
-        <div className="mt-6 h-32 animate-pulse rounded-lg border border-input bg-muted" />
+        <div className="mt-6 h-32 animate-pulse rounded-lg border border-border bg-lifted" />
 
         <div className="mt-6 grid items-start gap-6 lg:grid-cols-3 lg:gap-8">
           <div className="min-w-0 space-y-3 lg:col-span-2">
             {[0, 1, 2, 3].map((row) => (
               <div
                 key={row}
-                className="h-24 animate-pulse rounded-lg border border-input bg-muted"
+                className="h-24 animate-pulse rounded-lg border border-border bg-lifted"
               />
             ))}
           </div>
           <aside className="min-w-0 space-y-4">
-            <div className="h-64 animate-pulse rounded-lg border border-input bg-muted" />
-            <div className="h-32 animate-pulse rounded-lg border border-input bg-muted" />
+            <div className="h-64 animate-pulse rounded-lg border border-border bg-lifted" />
+            <div className="h-32 animate-pulse rounded-lg border border-border bg-lifted" />
           </aside>
         </div>
       </div>
@@ -290,7 +297,7 @@ function Workspace({
   group: AdminSessionGroup;
   feed: GeduGroupFeed;
   /** This page's own route — handed to the body as the voice rooms' way back. */
-  selfHref: string;
+  selfHref: AppHref;
   /**
    * The admin groups snapshot, and the only source on this page for who teaches
    * each group. `undefined` when that read failed, which renders every group's
@@ -397,16 +404,47 @@ function Workspace({
     [groupId, sessions.product, group.sessions, now],
   );
 
-  // The attendance checklist takes id + first name and nothing else; everything
-  // else about a seat stays on this side of the map, the contact address most
-  // deliberately of all.
+  // The attendance checklist takes id + first name and the instant from which
+  // the seat counts as being in this group — the last of the three because a
+  // register has to know which sessions it is for. The family contact data
+  // stays on this side of the map, most deliberately of all.
   const feedRoster = useMemo<SessionFeedGamer[]>(
     () =>
       feed.roster.map((member) => ({
         id: member.participant_id,
         firstName: member.first_name,
+        // Through the shared resolver, on every surface that builds this
+        // roster, so no surface can decide who a register is for differently
+        // from the others.
+        inGroupSince: resolveInGroupSince(member.group_joined_at),
       })),
     [feed.roster],
+  );
+
+  /**
+   * Who on this roster may be photographed, or `null` on a product that asks no
+   * photo consent — read here exactly as the gedu shell reads it, because an
+   * admin's claim on this page is that they see what the gedu sees. The two
+   * shells differ in where their documents come from and in nothing else, so a
+   * different answer to this question on one of them would be the drift the
+   * shared body exists to prevent.
+   */
+  const { data: askedPhotoConsents } = useProductGamerPhotoConsentTypes(
+    sessions.product.id,
+  );
+  const rosterIds = useMemo(
+    () => feedRoster.map((member) => member.id),
+    [feedRoster],
+  );
+  const { data: photoConsentRows } = useGamerPhotoConsentsForGamers(rosterIds, {
+    enabled: (askedPhotoConsents?.length ?? 0) > 0,
+  });
+  const photoConsents = useMemo(
+    () =>
+      askedPhotoConsents && askedPhotoConsents.length > 0
+        ? resolveGamerPhotoConsents(photoConsentRows ?? [], askedPhotoConsents)
+        : null,
+    [askedPhotoConsents, photoConsentRows],
   );
 
   /**
@@ -621,6 +659,10 @@ function Workspace({
       // card under somebody typing into it.
       feedNow={now}
       feedRoster={feedRoster}
+      // The same answer the gedu shell hands the same body: `null` on a product
+      // that asks no photo consent, and the roster's permissions on one that
+      // does.
+      photoConsents={photoConsents}
       sourceTimeZone={sessions.product.timezone}
       materialUrl={feed.product.material_url}
       groupPublicNote={group.public_note}

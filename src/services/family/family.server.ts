@@ -1,23 +1,72 @@
 import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
-import type { AppSupabaseClient } from "@/types";
-import type { FamilyMember } from "./family.service";
+import type { AppSupabaseClient, GamerSignIn } from "@/types";
+import type { FamilyMember } from "./family.contracts";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
 type ProfileRow = { id: string; role: string | null; first_name: string | null };
 
+/** A family member before their sign-in mode has been resolved. */
+type NamedMember = Omit<FamilyMember, "sign_in">;
+
 /**
- * Narrow raw `profiles` rows to `FamilyMember`s. The selector and My Gamers
- * grid only render customers and gamers that have a name — admins/gedus and
- * name-less rows are dropped.
+ * Narrow raw `profiles` rows to switchable family members. The selector and My
+ * Gamers grid only render customers and gamers that have a name — admins/gedus
+ * and name-less rows are dropped.
+ *
+ * The sign-in mode lives on `gamer_profiles` rather than here, so it is
+ * attached separately; a customer's is `null`, because a customer has no such
+ * thing.
  */
-function toFamilyMembers(rows: ProfileRow[]): FamilyMember[] {
+function toNamedMembers(rows: ProfileRow[]): NamedMember[] {
   return rows.filter(
-    (p): p is FamilyMember =>
+    (p): p is NamedMember =>
       (p.role === "customer" || p.role === "gamer") && typeof p.first_name === "string",
   );
+}
+
+/**
+ * Stamp each member with their sign-in mode.
+ *
+ * A gamer with no `gamer_profiles` row cannot exist — the creation RPC writes it
+ * in the same transaction as the promotion — but a missing one degrades to
+ * `parent`, the switch-only mode, rather than to a mode that would advertise a
+ * credential the account does not hold.
+ */
+function stampSignIn(
+  members: NamedMember[],
+  modes: Map<string, GamerSignIn>,
+): FamilyMember[] {
+  return members.map((member) => ({
+    ...member,
+    sign_in: member.role === "gamer" ? (modes.get(member.id) ?? "parent") : null,
+  }));
+}
+
+/**
+ * Read the sign-in modes for a set of gamers in one keyed lookup. Bounded by
+ * construction: one row per id, and the ids are the family unit the caller has
+ * already resolved.
+ */
+async function fetchSignInModes(
+  admin: AdminClient,
+  gamerIds: string[],
+): Promise<Map<string, GamerSignIn>> {
+  const modes = new Map<string, GamerSignIn>();
+  if (gamerIds.length === 0) return modes;
+
+  const { data, error } = await admin
+    .from("gamer_profiles")
+    .select("user_id, sign_in")
+    .in("user_id", gamerIds);
+  if (error) {
+    console.error("resolveFamilyWithAdmin: sign-in lookup failed", error);
+    return modes;
+  }
+  for (const row of data) modes.set(row.user_id, row.sign_in);
+  return modes;
 }
 
 async function fetchParentIds(admin: AdminClient, gamerId: string): Promise<string[]> {
@@ -42,7 +91,12 @@ async function fetchProfiles(admin: AdminClient, ids: string[]): Promise<FamilyM
     console.error("resolveFamilyWithAdmin: profile lookup failed", error);
     return [];
   }
-  return toFamilyMembers(data);
+  const members = toNamedMembers(data);
+  const modes = await fetchSignInModes(
+    admin,
+    members.filter((m) => m.role === "gamer").map((m) => m.id),
+  );
+  return stampSignIn(members, modes);
 }
 
 /**
@@ -108,10 +162,21 @@ export async function resolveFamilyWithAdmin(
 export async function resolveCustomerFamilyViaRls(
   supabase: AppSupabaseClient,
 ): Promise<FamilyMember[]> {
-  const { data, error } = await supabase.from("profiles").select("id, role, first_name");
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, role, first_name, gamer_profiles(sign_in)");
   if (error) {
     console.error("resolveCustomerFamilyViaRls: profile lookup failed", error);
     return [];
   }
-  return toFamilyMembers(data);
+
+  // The sign-in mode rides along as an embed on the one query the customer's own
+  // policies already allow — `gamer_profiles` carries a parents-read policy over
+  // the same link — so this needs neither a second round trip nor the admin
+  // client, which is the whole point of this resolver existing beside the other.
+  const modes = new Map<string, GamerSignIn>();
+  for (const row of data) {
+    if (row.gamer_profiles) modes.set(row.id, row.gamer_profiles.sign_in);
+  }
+  return stampSignIn(toNamedMembers(data), modes);
 }

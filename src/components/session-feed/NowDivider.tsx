@@ -68,7 +68,7 @@ export function NowDivider({
           than the month ticks, so the rail says where the boundary is too. */}
       <span
         aria-hidden
-        className="absolute -left-6 top-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-info/70"
+        className="absolute -left-6 top-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-info"
       />
 
       <button
@@ -76,7 +76,7 @@ export function NowDivider({
         onClick={onToggle}
         aria-expanded={open}
         aria-controls={controls}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-info/40 bg-info/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-info transition-colors hover:bg-info/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-semibold uppercase tracking-wider text-info transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <ChevronUp
           aria-hidden
@@ -89,8 +89,10 @@ export function NowDivider({
       </button>
 
       {/* The rule runs out to the edge from the label, so the boundary reads
-          across the whole column without a box being drawn anywhere. */}
-      <span aria-hidden className="h-0.5 flex-1 rounded-full bg-info/40" />
+          across the whole column without a box being drawn anywhere. Two
+          pixels of the hue at full value: the boundary is a line, which is
+          where a colour belongs, and a weakened one is a different colour. */}
+      <span aria-hidden className="h-0.5 flex-1 rounded-full bg-info" />
     </div>
   );
 }

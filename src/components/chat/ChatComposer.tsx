@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ImagePlus, Lock, Send, X } from "lucide-react";
+import { StatusLine } from "@/components/ui/alert";
 import { useTranslations } from "next-intl";
 import {
   MAX_CHAT_MESSAGE_LENGTH,
@@ -271,7 +272,7 @@ export function ChatComposer({
     return (
       <div
         className={cn(
-          "flex items-start gap-2 rounded-md border border-border bg-muted/60 px-3 py-2 text-sm text-muted-foreground",
+          "flex items-start gap-2 rounded-md border border-border bg-lifted px-3 py-2 text-sm text-muted-foreground",
           className,
         )}
       >
@@ -288,7 +289,7 @@ export function ChatComposer({
         // box rather than sitting inside it, so the composer's own height
         // never depends on whether somebody is halfway through a name.
         "relative rounded-md border border-border bg-background transition-colors",
-        dragging && "border-primary bg-primary/5",
+        dragging && "ring-2 ring-act",
         className,
       )}
       onDragEnter={() => {
@@ -322,7 +323,7 @@ export function ChatComposer({
                 height={CHAT_IMAGE_THUMB_HEIGHT}
                 unoptimized
                 style={{ height: CHAT_IMAGE_THUMB_HEIGHT }}
-                className="w-auto rounded border border-border bg-muted object-contain"
+                className="w-auto rounded border border-border bg-lifted object-contain"
               />
               <button
                 type="button"
@@ -334,7 +335,7 @@ export function ChatComposer({
                   );
                   setRefused(0);
                 }}
-                className="absolute right-1 top-1 rounded-full bg-background/85 p-0.5 text-foreground shadow-sm transition-colors hover:bg-background"
+                className="glass absolute right-1 top-1 rounded-full p-0.5 text-foreground shadow-sm transition-colors hover:bg-hover"
               >
                 <X className="h-3.5 w-3.5" aria-hidden />
               </button>
@@ -356,7 +357,7 @@ export function ChatComposer({
       {suggestions.length > 0 && (
         <ul
           aria-label={t("mentionList")}
-          className="absolute inset-x-0 bottom-full z-20 mb-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover shadow-lg"
+          className="absolute inset-x-0 bottom-full z-20 mb-1 max-h-48 overflow-y-auto rounded-md border border-border bg-card shadow-lg"
         >
           {suggestions.map((account, index) => (
             <li key={account.id}>
@@ -371,8 +372,8 @@ export function ChatComposer({
                 className={cn(
                   "flex w-full items-center px-2 py-1.5 text-left text-sm transition-colors",
                   index === activeIndex
-                    ? "bg-accent text-accent-foreground"
-                    : "hover:bg-accent",
+                    ? "bg-lifted text-foreground"
+                    : "hover:bg-hover",
                 )}
               >
                 {account.name}
@@ -494,9 +495,9 @@ export function ChatComposer({
       </form>
 
       {refused > 0 && (
-        <p className="px-2 pb-2 text-xs text-destructive">
+        <StatusLine status="destructive" size="xs" className="px-2 pb-2">
           {t("imagesRefused", { count: MAX_STAGED_CHAT_IMAGES })}
-        </p>
+        </StatusLine>
       )}
     </div>
   );

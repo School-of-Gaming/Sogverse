@@ -1,18 +1,24 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AudioLines, Lock } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { getPathname } from "@/i18n/navigation";
 import { buttonVariants } from "@/components/ui/button";
+import { MaybeInertLink } from "@/components/ui/maybe-inert-link";
 import { resolveInternalPath } from "@/lib/navigation/internal-path";
 import { cn } from "@/lib/utils";
+import {
+  INERT_HREF,
+  type AppHref,
+  type MaybeInertHrefObject,
+} from "@/lib/constants/routes";
 
 interface JoinVoiceButtonProps {
   /** Whether the voice window is currently open for this product. */
   voiceIsOpen: boolean;
   /** Where the open button navigates. `"#"` keeps the button inert (in-person products). */
-  voiceHref: string;
+  voiceHref: MaybeInertHrefObject;
   /** Pre-formatted "next open" date label, e.g. "Wed, May 28". */
   opensDate: string;
   /** Pre-formatted "next open" time label, e.g. "14:55". */
@@ -36,7 +42,7 @@ interface JoinVoiceButtonProps {
    * happened to click from. Gedu call sites therefore name the workspace
    * explicitly, and every other role keeps the pathname default untouched.
    */
-  backHref?: string;
+  backHref?: AppHref;
   /** Button size variant — defaults to `sm` to match the dashboard card. */
   size?: "sm" | "default";
 }
@@ -82,7 +88,13 @@ export function JoinVoiceButton({
   size = "sm",
 }: JoinVoiceButtonProps) {
   const t = useTranslations("voiceButton");
+  // **Raw `next/navigation`, deliberately.** This pathname is *embedded in a
+  // URL* (`?back=`), not compared against a route, and the wrapped
+  // `usePathname` returns the internal template — so on a dynamic route it
+  // would put a literal `/parent/clubs/[id]` in the query, which passes every
+  // allowlist and then navigates to it verbatim.
   const pathname = usePathname();
+  const locale = useLocale();
 
   if (voiceIsOpen) {
     if (onJoinClick) {
@@ -99,22 +111,26 @@ export function JoinVoiceButton({
     }
     // An empty fallback is the "nothing safe to say" answer: the query is then
     // omitted and the voice route falls back to the viewer's own dashboard.
-    const back = resolveInternalPath(backHref ?? pathname, "");
+    // An override is a typed href, so it becomes a concrete external path
+    // here — that is what a `?back=` value has to be, and it is what makes the
+    // override usable at all without hand-building one.
+    const backCandidate =
+      backHref === undefined
+        ? pathname
+        : getPathname({ href: backHref, locale });
+    const back = resolveInternalPath(backCandidate, "");
     const hrefWithBack =
-      voiceHref === "#" || back === ""
+      voiceHref === INERT_HREF || back === ""
         ? voiceHref
-        : `${voiceHref}?back=${encodeURIComponent(back)}`;
+        : { ...voiceHref, query: { back } };
     return (
-      <Link
+      <MaybeInertLink
         href={hrefWithBack}
-        onClick={(e) => {
-          if (voiceHref === "#") e.preventDefault();
-        }}
         className={cn(buttonVariants({ size }), "gap-1.5")}
       >
         <AudioLines className="h-4 w-4" />
         {t("joinVoice")}
-      </Link>
+      </MaybeInertLink>
     );
   }
 

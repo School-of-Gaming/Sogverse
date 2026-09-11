@@ -1,9 +1,12 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Input } from "@/components/ui/input";
+import { formatInTimeZone } from "date-fns-tz";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Field } from "@/components/ui/field";
+import { formatTimezoneOptionLabel } from "@/lib/timezone";
 import { cn } from "@/lib/utils";
+import { useNow } from "@/providers";
 import { FormSection, InfoCallout } from "../form-primitives";
 import { formLocksFor } from "../form-locks";
 import {
@@ -26,11 +29,16 @@ export function RegistrationSection({
   config,
 }: RegistrationSectionProps) {
   const t = useTranslations("admin.products");
+  const now = useNow();
 
   // Pre-prod UI lock (see form-locks.ts): registration always opens immediately
   // and the chooser is pinned to "Right away" — except on municipality clubs,
   // where the scheduled ticket drop is signed off and the chooser is editable.
   const lockTiming = formLocksFor(config).registrationTiming;
+
+  // Today in the product's own zone — the drop is scheduled against the
+  // product's calendar, not the reader's.
+  const today = formatInTimeZone(now, state.timezone, "yyyy-MM-dd");
 
   return (
     <FormSection
@@ -43,17 +51,9 @@ export function RegistrationSection({
             <label
               key={option}
               className={cn(
-                "flex items-start gap-3 rounded-md border p-3 text-sm transition-colors",
-                state.registrationOpensMode === option
-                  ? "border-primary bg-primary/5"
-                  : "border-input",
-                lockTiming
-                  ? "cursor-not-allowed opacity-60"
-                  : cn(
-                      "cursor-pointer",
-                      state.registrationOpensMode !== option &&
-                        "hover:border-foreground/30"
-                    )
+                "flex items-start gap-3 rounded-md border border-border p-3 text-sm transition-colors",
+                state.registrationOpensMode === option && "border-act",
+                lockTiming ? "cursor-not-allowed opacity-60" : "cursor-pointer"
               )}
             >
               <input
@@ -64,7 +64,7 @@ export function RegistrationSection({
                 onChange={() =>
                   setState({ ...state, registrationOpensMode: option })
                 }
-                className="mt-1 h-4 w-4"
+                className="mt-1 h-4 w-4 accent-act"
               />
               <div className="min-w-0 flex-1">
                 <div className="font-medium">
@@ -83,16 +83,18 @@ export function RegistrationSection({
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label={t("labels.date")} htmlFor="p-opens-date">
-              <Input
+              {/* The ticket drop is a moment rather than a term: it has no
+                  other end to band against, and no schedule to snap a week
+                  pick to — an empty `weekdays` makes a week click mean its
+                  Monday, which is what "registration opens in week 34" says. */}
+              <DatePicker
                 id="p-opens-date"
-                type="date"
                 value={state.registrationOpensDate}
-                onChange={(e) =>
-                  setState({
-                    ...state,
-                    registrationOpensDate: e.target.value,
-                  })
+                onChange={(registrationOpensDate) =>
+                  setState({ ...state, registrationOpensDate })
                 }
+                today={today}
+                weekPick={{ edge: "start", weekdays: [] }}
                 required
               />
             </Field>
@@ -107,7 +109,7 @@ export function RegistrationSection({
                       registrationOpensHour: e.target.value,
                     })
                   }
-                  className="flex h-10 flex-1 rounded-md border border-input bg-background px-2 text-sm"
+                  className="flex h-10 flex-1 rounded-md border border-border bg-background px-2 text-sm"
                 >
                   {HOUR_OPTIONS.map((h) => (
                     <option key={h} value={h}>
@@ -125,7 +127,7 @@ export function RegistrationSection({
                       registrationOpensMinute: e.target.value,
                     })
                   }
-                  className="flex h-10 flex-1 rounded-md border border-input bg-background px-2 text-sm"
+                  className="flex h-10 flex-1 rounded-md border border-border bg-background px-2 text-sm"
                 >
                   {MINUTE_OPTIONS.map((m) => (
                     <option key={m} value={m}>
@@ -136,7 +138,14 @@ export function RegistrationSection({
               </div>
             </Field>
           </div>
-          <InfoCallout text={t("hints.timezoneFixedHelsinki")} />
+          {/* The zone is picked in the When section; this only reports it, and
+              reports it through the same formatter, so the two sections cannot
+              describe one field two ways. */}
+          <InfoCallout
+            text={t("hints.timezoneIs", {
+              timezone: formatTimezoneOptionLabel(state.timezone, now),
+            })}
+          />
         </>
       )}
     </FormSection>

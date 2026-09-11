@@ -3,7 +3,7 @@ import {
   formatProductSchedule,
   formatWeekday,
   scheduleCardLines,
-} from "@/components/public/products/format-product-schedule";
+} from "@/lib/products/format-product-schedule";
 import type { ProductBrowseRow } from "@/types";
 
 // Test fixtures only need the columns the formatter reads. Cast the rest

@@ -19,7 +19,11 @@ import {
   ATTACHABLE_MARKETING_CONSENT_TYPES,
   isAttachableMarketingConsent,
 } from "@/lib/constants/marketing-consents";
-import { isSeededCountry } from "@/lib/constants/location-hierarchies";
+import {
+  ATTACHABLE_GAMER_PHOTO_CONSENT_TYPES,
+  isAttachableGamerPhotoConsent,
+} from "@/lib/constants/gamer-photo-consents";
+import { isSupportedCountry } from "@/lib/constants/location-hierarchies";
 import {
   isSupportedLocale,
   SUPPORTED_LOCALES,
@@ -36,7 +40,6 @@ import type { ProductType } from "@/types";
 import { formLocksFor } from "./form-locks";
 import {
   effectivePricingShape,
-  FIXED_TIMEZONE,
   locationPickerMode,
   offersUncapped,
   startModeUsesDate,
@@ -353,12 +356,14 @@ function feeDraftToCents(
 
 /**
  * "Right away" (mode=immediately) resolves to *now*, "Specific time" to the
- * picked Helsinki-local moment. Always returns a real ISO string — every
- * product type has a single ticket-drop concept (`registration_opens_at`
- * is NOT NULL in the schema). `fromZonedTime` interprets the local string
- * as Helsinki time regardless of the admin's browser timezone, so a Tokyo
- * admin and a Helsinki admin produce the same UTC for the same picker
- * input.
+ * picked moment in the product's own zone. Always returns a real ISO string —
+ * every product type has a single ticket-drop concept
+ * (`registration_opens_at` is NOT NULL in the schema). `fromZonedTime`
+ * interprets the local string in `state.timezone` regardless of the admin's
+ * browser timezone, so a Tokyo admin and a Helsinki admin filling the same
+ * picker for the same product produce the same UTC — and an admin who switches
+ * the zone dropdown moves the drop to that clock face in the new zone, which is
+ * the same re-resolution the schedule slots get.
  */
 function resolveRegistrationOpensAt(state: FormState): string {
   if (
@@ -367,7 +372,7 @@ function resolveRegistrationOpensAt(state: FormState): string {
   ) {
     return fromZonedTime(
       `${state.registrationOpensDate}T${state.registrationOpensHour}:${state.registrationOpensMinute}:00`,
-      FIXED_TIMEZONE,
+      state.timezone,
     ).toISOString();
   }
   return new Date().toISOString();
@@ -555,7 +560,7 @@ function buildSharedFields(
             ? state.endDate || null
             : null
           : state.endDate || null,
-    timezone: FIXED_TIMEZONE,
+    timezone: state.timezone,
     seat_count: seat,
     waitlist_enabled: waitlist,
     registration_opens_at: resolveRegistrationOpensAt(state),
@@ -585,7 +590,6 @@ function buildSharedFields(
           };
         })
       : [],
-    holiday_calendar_ids: Array.from(state.holidayCalendarIds),
     // The enrolment conditions, on every save including the empty array that
     // means "requires nothing" — the RPC replaces the whole set on every call,
     // so an omitted answer would drop a product's conditions rather than
@@ -610,6 +614,12 @@ function buildSharedFields(
     // beside another.
     marketing_consent_types: ATTACHABLE_MARKETING_CONSENT_TYPES.filter((type) =>
       state.marketingConsentTypes.has(type),
+    ),
+    // The optional photo asks, on the same terms as the marketing asks above
+    // and for the same reasons: on every save including the empty array, and in
+    // registry order rather than the Set's insertion order.
+    gamer_photo_consent_types: ATTACHABLE_GAMER_PHOTO_CONSENT_TYPES.filter(
+      (type) => state.gamerPhotoConsentTypes.has(type),
     ),
     primary_gedu_fee_cents: feeDraftToCents(
       state.primaryGeduFee.status,
@@ -734,8 +744,10 @@ function inferStartMode(
  *
  * Decisions baked in:
  *   - `registrationOpensMode` is derived: in the future ⇒ scheduled (with
- *     the date/hour/minute fields populated from the timestamp in
- *     Helsinki TZ). In the past ⇒ "immediately" (the form will re-resolve
+ *     the date/hour/minute fields populated from the timestamp read in the
+ *     row's OWN stored zone, which is also what seeds `timezone` — the form
+ *     shows the wall clock the product was authored at, in the zone it was
+ *     authored in). In the past ⇒ "immediately" (the form will re-resolve
  *     to a fresh now() at submit; harmless because the timestamp is
  *     already in the past). A type whose chooser is locked always derives
  *     "immediately" regardless of the stored value — see the comment at the
@@ -814,14 +826,19 @@ export function existingFormState(
   const isFuture =
     opensAt.getTime() > Date.now() && !formLocksFor(config).registrationTiming;
   const mode: RegistrationOpensMode = isFuture ? "scheduled" : "immediately";
+  // Read back in the row's OWN stored zone, not a constant and not the admin's
+  // browser: the form shows the wall clock the product was authored at, and the
+  // dropdown below shows which zone that clock is in. Reading it in some other
+  // zone would show an admin a time nobody ever typed, and saving would then
+  // write that misread clock back as if they had meant it.
   const opensDate = isFuture
-    ? formatInTimeZone(opensAt, FIXED_TIMEZONE, "yyyy-MM-dd")
+    ? formatInTimeZone(opensAt, product.timezone, "yyyy-MM-dd")
     : "";
   const opensHour = isFuture
-    ? formatInTimeZone(opensAt, FIXED_TIMEZONE, "HH")
+    ? formatInTimeZone(opensAt, product.timezone, "HH")
     : "10";
   const opensMinute = isFuture
-    ? formatInTimeZone(opensAt, FIXED_TIMEZONE, "mm")
+    ? formatInTimeZone(opensAt, product.timezone, "mm")
     : "00";
 
   const paidMode: PaidMode = product.billing_mode === "free" ? "free" : "paid";
@@ -849,16 +866,17 @@ export function existingFormState(
     tag: product.tag,
     // Nearly straight through — the column is already `string | null` and the
     // picker's "not region locked" option *is* null. The one filter is a stored
-    // code the picker cannot offer (a country un-seeded since the lock was set,
-    // or one written before this field existed): it loads as *unlocked* rather
-    // than as a value with no matching option, because a select whose value
-    // matches nothing shows the admin the first option while state holds
-    // something else, and the write contract — which only admits seeded
-    // countries — would then refuse every save of the product with an error
-    // about a field they were never shown. Loading it as null is the same
-    // heal-on-write shape the uncapped-muni and locked-registration cases use:
+    // code the picker cannot offer (a country dropped from the supported list
+    // since the lock was set, or one written before this field existed): it
+    // loads as *unlocked* rather than as a value with no matching option,
+    // because a select whose value matches nothing shows the admin the first
+    // option while state holds something else, and the write contract — which
+    // only admits countries we operate in — would then refuse every save of
+    // the product with an error about a field they were never shown. Loading
+    // it as null is the same heal-on-write shape the uncapped-muni and
+    // locked-registration cases use:
     // the next save of anything at all normalises the row, visibly.
-    regionLockCountry: isSeededCountry(product.region_lock_country)
+    regionLockCountry: isSupportedCountry(product.region_lock_country)
       ? product.region_lock_country
       : null,
     // Straight through: a NOT NULL boolean column and a boolean field, with no
@@ -867,6 +885,15 @@ export function existingFormState(
     spokenLanguageCode: product.spoken_language_code,
     isRemote: product.is_remote,
     locationId: product.location_id,
+    // Straight through, deliberately unfiltered — the opposite treatment to the
+    // region lock above, for the opposite reason. A lock the picker cannot offer
+    // is a gate nobody can pass, so loading it as "unlocked" loses nothing; a
+    // zone the picker cannot offer is the only interpretation the row's schedule
+    // has, and swapping it for the default would silently re-time every session
+    // on the next save of anything at all. The picker closes the usual gap by
+    // offering the stored zone as an extra option, so what the admin sees always
+    // matches what state holds.
+    timezone: product.timezone,
     startMode: inferStartMode(product, config),
     startDate: product.start_date ?? "",
     hasEndDate: product.end_date != null,
@@ -876,11 +903,8 @@ export function existingFormState(
       start_time: s.start_time,
       duration_minutes: s.duration_minutes,
     })),
-    holidayCalendarIds: new Set(
-      product.product_holiday_calendars.map((h) => h.calendar_id),
-    ),
     // Straight through from the join table. A stored slug this deploy cannot
-    // name is deliberately NOT filtered out the way an un-seeded region lock is
+    // name is deliberately NOT filtered out the way an unsupported region lock is
     // — the checkbox renders the raw slug and stays ticked, so a save made for
     // some other reason cannot silently drop a legal condition the product
     // really carries. The write contract admits any string for exactly this
@@ -899,6 +923,15 @@ export function existingFormState(
       product.product_marketing_consents
         .map((c) => c.consent_type)
         .filter((type) => isAttachableMarketingConsent(type)),
+    ),
+    // Its twin's twin: straight through from its own join table, dropping a
+    // stored type this deploy cannot offer for exactly the reason above — a
+    // photo ask carries no legal condition to protect, and keeping one the form
+    // cannot show would leave a checkbox state nobody can see or clear.
+    gamerPhotoConsentTypes: new Set(
+      product.product_gamer_photo_consents
+        .map((c) => c.consent_type)
+        .filter((type) => isAttachableGamerPhotoConsent(type)),
     ),
     signupThreshold:
       product.signup_threshold != null ? String(product.signup_threshold) : "",

@@ -4,6 +4,7 @@ import {
   rollUpGamerEnrollments,
   sortFamilyEnrollments,
   toFamilyEnrollments,
+  topicPrepWindowEnd,
   type FamilyEnrollmentSummary,
 } from "@/components/family/enrollment-rollup";
 import type { SupportedLocale } from "@/lib/constants/locales";
@@ -13,6 +14,7 @@ import type {
   MyWaitlistRow,
 } from "@/services/participations";
 import type { ProductTranslation } from "@/types";
+import { INERT_HREF, type AppHref } from "@/lib/constants/routes";
 
 /**
  * The order of a child's cards is the order their week actually runs, and it is
@@ -62,12 +64,18 @@ function enrollment(
     participationId: id,
     productName: fields.productName ?? id,
     productType: "consumer_club",
+    // Neither is read by the sort; both are required of the shape, and the
+    // card is where they mean anything.
+    topic: "minecraft_java",
+    isRemote: true,
+    // Not read by the sort either; the window rule has its own describe below.
+    prepWindowEnd: null,
     nextSessionStart: start,
     nextSessionEnd: start === null ? null : new Date(start.getTime() + 5_400_000),
     hasVoiceRoom: true,
     voiceHref: "#",
     siteName: null,
-    openHref: "#",
+    openHref: INERT_HREF,
     endDate: fields.endDate ?? null,
     timezone: TZ,
     waitlistPosition: null,
@@ -240,6 +248,7 @@ function sessionRow(
     product: {
       id: "product-1",
       type: "consumer_club",
+      topic: "minecraft_java",
       timezone: PRODUCT_TZ,
       startDate: null,
       endDate: null,
@@ -249,6 +258,11 @@ function sessionRow(
       ...(product ?? {}),
     },
     groupId: overrides.groupId === undefined ? GROUP : overrides.groupId,
+    // A seat taken a fortnight ago and placed the same day — the ordinary
+    // shape, and far enough back that the prep window's own cases can move it
+    // without the other cases caring.
+    signedUpAt: new Date("2026-01-28T09:00:00.000Z"),
+    groupJoinedAt: new Date("2026-01-28T09:00:00.000Z"),
     slots: [FRIDAY_SLOT],
     paymentProblem: false,
     subscriptionEndsAt: null,
@@ -267,6 +281,7 @@ function waitlistRow(
     participant: { id: AINO, firstName: "Aino" },
     product: {
       type: "consumer_club",
+      topic: "fortnite",
       timezone: PRODUCT_TZ,
       startDate: null,
       endDate: null,
@@ -288,7 +303,7 @@ function mapOne(
   args: {
     sessionRows?: MyUpcomingSessionRow[];
     waitlistRows?: MyWaitlistRow[];
-    openHref?: (e: { participationId: string }) => string;
+    openHref?: (e: { participationId: string }) => AppHref;
   } = {},
 ): FamilyEnrollmentSummary {
   const entries = toFamilyEnrollments({
@@ -311,7 +326,10 @@ describe("toFamilyEnrollments — a seat", () => {
       "2026-02-13T18:30:00.000Z",
     );
     expect(summary.hasVoiceRoom).toBe(true);
-    expect(summary.voiceHref).toContain(GROUP);
+    expect(summary.voiceHref).toEqual({
+      pathname: "/voice/group/[id]",
+      params: { id: GROUP },
+    });
     expect(summary.awaiting).toBe(false);
     expect(summary.waitlistPosition).toBeNull();
   });
@@ -325,13 +343,47 @@ describe("toFamilyEnrollments — a seat", () => {
   // The card opens a page that does not exist yet, so the mapping asks its
   // caller rather than inventing a route — and answers "#" when nobody does.
   it("resolves the open href through the seam, defaulting to inert", () => {
-    expect(mapOne({ sessionRows: [sessionRow()] }).openHref).toBe("#");
+    expect(mapOne({ sessionRows: [sessionRow()] }).openHref).toBe(INERT_HREF);
     expect(
       mapOne({
         sessionRows: [sessionRow()],
-        openHref: (e) => `/parent/clubs/${e.participationId}`,
+        openHref: (e) => ({
+          pathname: "/parent/clubs/[id]",
+          params: { id: e.participationId },
+        }),
       }).openHref,
-    ).toBe("/parent/clubs/participation-1");
+    ).toEqual({
+      pathname: "/parent/clubs/[id]",
+      params: { id: "participation-1" },
+    });
+  });
+
+  /**
+   * The two facts the prep affordance is decided from, carried untouched on
+   * both kinds of row — including the waitlist row, where the card will draw
+   * nothing from them. A queue place still describes a real product, and
+   * inventing a topic or a form for it would be stating something untrue about
+   * the thing the family is queueing for.
+   *
+   * `isRemote` travels beside `hasVoiceRoom` rather than being read off it:
+   * they agree today because a remote product is exactly the one with a room,
+   * and the assertion is what keeps a later divergence from silently printing
+   * the in-person guide on a remote club.
+   */
+  it("carries the topic and the product's form onto both kinds of card", () => {
+    const seat = mapOne({
+      sessionRows: [
+        sessionRow({ product: { topic: "roblox_studio", isRemote: false } }),
+      ],
+    });
+    expect(seat.topic).toBe("roblox_studio");
+    expect(seat.isRemote).toBe(false);
+
+    const queued = mapOne({
+      waitlistRows: [waitlistRow({ product: { topic: "pokemon_go" } })],
+    });
+    expect(queued.topic).toBe("pokemon_go");
+    expect(queued.isRemote).toBe(true);
   });
 
   it("names the site on an in-person product and never on a remote one", () => {
@@ -377,14 +429,17 @@ describe("toFamilyEnrollments — an unplaced seat", () => {
     expect(summary.nextSessionStart?.toISOString()).toBe(FIRST_FRIDAY);
     expect(summary.scheduleLines).not.toEqual([]);
     expect(summary.voiceHref).toBe("#");
-    expect(summary.openHref).toBe("#");
+    expect(summary.openHref).toBe(INERT_HREF);
   });
 
   it("keeps the open href inert even when the caller offers one", () => {
     expect(
       mapOne({
         sessionRows: [sessionRow({ groupId: null })],
-        openHref: () => "/parent/clubs/anything",
+        openHref: () => ({
+          pathname: "/parent/clubs/[id]",
+          params: { id: "anything" },
+        }),
       }).openHref,
     ).toBe("#");
   });
@@ -399,7 +454,7 @@ describe("toFamilyEnrollments — a place in line", () => {
     expect(summary.nextSessionStart).toBeNull();
     expect(summary.nextSessionEnd).toBeNull();
     expect(summary.awaiting).toBe(false);
-    expect(summary.openHref).toBe("#");
+    expect(summary.openHref).toBe(INERT_HREF);
     expect(summary.voiceHref).toBe("#");
     expect(summary.paymentProblem).toBe(false);
     expect(summary.cancellation).toBeNull();
@@ -808,5 +863,215 @@ describe("rollUpGamerEnrollments — one child's own page", () => {
       "participation-1",
       "waitlist-1",
     ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The prep guide's window
+// ---------------------------------------------------------------------------
+
+/**
+ * **How long a family is offered the "Before the first session" guide.**
+ *
+ * The rule is the family's own first two sessions: from the moment the seat
+ * became theirs to the end of the second session that starts after it. It
+ * exists because the alternative — offering it to everybody — means a family
+ * who has been turning up happily since February is asked to confirm a dialog
+ * about their first session to get their card's button back.
+ *
+ * Two sessions rather than one, because the first session is where a setup
+ * problem is *discovered* rather than where it stops mattering; and sessions
+ * rather than days, because a weekly club and a daily camp are the same amount
+ * of experience at wildly different distances from the purchase.
+ */
+describe("topicPrepWindowEnd", () => {
+  const at = (iso: string, minutes: number) => ({
+    start: new Date(iso),
+    end: new Date(Date.parse(iso) + minutes * 60_000),
+  });
+
+  const MOMENT = new Date("2026-02-01T12:00:00.000Z");
+
+  it("ends with the second session, when there are two or more", () => {
+    const end = topicPrepWindowEnd(
+      [
+        at("2026-02-06T17:00:00.000Z", 90),
+        at("2026-02-13T17:00:00.000Z", 90),
+        at("2026-02-20T17:00:00.000Z", 90),
+      ],
+      MOMENT,
+    );
+
+    expect(end?.toISOString()).toBe("2026-02-13T18:30:00.000Z");
+  });
+
+  it("ends with the only session there is — which is what an event has", () => {
+    const end = topicPrepWindowEnd(
+      [at("2026-02-06T17:00:00.000Z", 240)],
+      MOMENT,
+    );
+
+    expect(end?.toISOString()).toBe("2026-02-06T21:00:00.000Z");
+  });
+
+  /**
+   * No end at all rather than an end in the past. A product with nothing on its
+   * schedule and a seat nobody has placed both land here, and both are a family
+   * with the whole setup ahead of them and no date to measure it against.
+   */
+  it("has no end when nothing is scheduled after the moment", () => {
+    expect(topicPrepWindowEnd([], MOMENT)).toBeNull();
+  });
+
+  /**
+   * A family placed mid-session did not attend that one, so it must not spend
+   * half their window; a family placed fifteen minutes before one gets that
+   * session and the one after it.
+   */
+  it("counts only the sessions that start after the moment", () => {
+    const quarterHourBefore = new Date("2026-02-06T16:45:00.000Z");
+
+    const end = topicPrepWindowEnd(
+      [
+        // In progress when they were placed — theirs to sit in, but not theirs
+        // to learn from, and it does not count.
+        at("2026-02-06T16:00:00.000Z", 90),
+        at("2026-02-06T17:00:00.000Z", 90),
+        at("2026-02-13T17:00:00.000Z", 90),
+      ],
+      quarterHourBefore,
+    );
+
+    expect(end?.toISOString()).toBe("2026-02-13T18:30:00.000Z");
+  });
+});
+
+describe("toFamilyEnrollments — the prep window on a row", () => {
+  /** The default row: a seat taken on 28 January, placed the same day. */
+  it("closes with the second session after the seat was taken", () => {
+    const summary = mapOne({ sessionRows: [sessionRow()] });
+
+    // Fridays: 30 Jan is their first, 6 Feb their second — both behind NOW, so
+    // this card offers nothing, which is what every long-standing seat looks
+    // like the day this ships.
+    expect(summary.prepWindowEnd?.toISOString()).toBe(
+      "2026-02-06T18:30:00.000Z",
+    );
+  });
+
+  /**
+   * **The later of the two stamps, and the reason it is the later one.** A
+   * family promoted off the waitlist joined the queue weeks before the seat was
+   * theirs; counting from the day they queued would hand them a window that
+   * closed before they had anything to prepare for.
+   */
+  it("counts from the placement, not from the day they joined the queue", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({
+          signedUpAt: new Date("2025-11-03T09:00:00.000Z"),
+          groupJoinedAt: new Date("2026-02-13T16:45:00.000Z"),
+        }),
+      ],
+    });
+
+    // Placed a quarter of an hour before the 13 February session: that one is
+    // theirs and so is the following Friday.
+    expect(summary.prepWindowEnd?.toISOString()).toBe(
+      "2026-02-20T18:30:00.000Z",
+    );
+  });
+
+  it("takes the sign-up stamp when it is the later of the two", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({
+          signedUpAt: new Date("2026-02-13T16:45:00.000Z"),
+          groupJoinedAt: new Date("2026-02-01T09:00:00.000Z"),
+        }),
+      ],
+    });
+
+    expect(summary.prepWindowEnd?.toISOString()).toBe(
+      "2026-02-20T18:30:00.000Z",
+    );
+  });
+
+  /**
+   * **The multi-slot walk, through the real schedule expansion.** A camp
+   * meeting three mornings a week is where the walk's own trimming could hide
+   * the answer: the session in progress at the moment of placement is emitted
+   * too, sorts ahead of everything, and is then filtered out for having started
+   * before the seat was theirs. The cases above all run one slot, so this is
+   * the one that would notice a cap too small to survive that.
+   */
+  it("counts the family's next two sessions across a camp's several days", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({
+          product: { type: "camp" },
+          slots: [
+            { weekday: 0, startTime: "17:00", durationMinutes: 90 },
+            { weekday: 2, startTime: "17:00", durationMinutes: 90 },
+            { weekday: 4, startTime: "17:00", durationMinutes: 90 },
+          ],
+          // Placed half an hour into the Wednesday session: that one is not
+          // theirs — they were not in it — so the window is the Friday and the
+          // Monday after it.
+          signedUpAt: new Date("2026-02-11T17:30:00.000Z"),
+          groupJoinedAt: new Date("2026-02-11T17:30:00.000Z"),
+        }),
+      ],
+    });
+
+    expect(summary.prepWindowEnd?.toISOString()).toBe(
+      "2026-02-16T18:30:00.000Z",
+    );
+  });
+
+  it("ends with the run's only remaining session on a one-session product", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({
+          signedUpAt: new Date("2026-02-11T09:00:00.000Z"),
+          groupJoinedAt: new Date("2026-02-11T09:00:00.000Z"),
+          product: { endDate: "2026-02-14" },
+        }),
+      ],
+    });
+
+    expect(summary.prepWindowEnd?.toISOString()).toBe(
+      "2026-02-13T18:30:00.000Z",
+    );
+  });
+
+  it("has no end when the schedule projects nothing after the seat was taken", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({
+          signedUpAt: new Date("2026-02-11T09:00:00.000Z"),
+          groupJoinedAt: new Date("2026-02-11T09:00:00.000Z"),
+          product: { endDate: "2026-02-12" },
+        }),
+      ],
+    });
+
+    expect(summary.prepWindowEnd).toBeNull();
+  });
+
+  /** Nobody has been placed, so there are no sessions of theirs to count. */
+  it("has no end on an unplaced seat", () => {
+    const summary = mapOne({
+      sessionRows: [sessionRow({ groupId: null, groupJoinedAt: null })],
+    });
+
+    expect(summary.prepWindowEnd).toBeNull();
+  });
+
+  /** A queue place never offers the guide, so it states no window either. */
+  it("carries no window on a waitlist place", () => {
+    const summary = mapOne({ waitlistRows: [waitlistRow()] });
+
+    expect(summary.prepWindowEnd).toBeNull();
   });
 });

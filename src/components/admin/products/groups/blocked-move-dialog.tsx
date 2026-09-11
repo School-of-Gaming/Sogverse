@@ -1,7 +1,7 @@
 "use client";
 
-import { AlertTriangle } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -60,15 +60,11 @@ export function BlockedMoveDialog({
             {t(`${copy}.description`, { name: gamerName })}
           </DialogDescription>
         </DialogHeader>
-        {/* The way forward, not a second warning — so the callout is toned
-            warning but the sentence stays in body colour and is readable. */}
-        <div className="mt-4 flex items-start gap-2 rounded-md border border-warning/50 bg-warning/10 px-3 py-2.5 text-sm text-foreground">
-          <AlertTriangle
-            className="mt-0.5 h-4 w-4 shrink-0 text-warning"
-            aria-hidden
-          />
-          <span>{t(`${copy}.nextStep`)}</span>
-        </div>
+        {/* The way forward, not a second warning — so the alert's edge and its
+            glyph carry the warning tone and the sentence is read through. */}
+        <Alert variant="warning" className="mt-4">
+          <AlertDescription>{t(`${copy}.nextStep`)}</AlertDescription>
+        </Alert>
         <DialogFooter>
           <Button onClick={onClose}>{t("acknowledge")}</Button>
         </DialogFooter>

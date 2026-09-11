@@ -16,9 +16,11 @@ export type ParticipantSessionRow = GeduAssignedProductRosterEntry;
  *
  * The RPC emits exactly one of the two contact fields per row and never both:
  * `parent_email` for a child (their linked parent) and `participant_email` for
- * an adult (their own address). A child's *own* profile email is the synthetic
- * `@gamer.sogverse.internal` handle and is deliberately not emitted at all, so
- * there is no shape in which this returns a non-mailbox.
+ * an adult (their own address). A child's *own* profile email is withheld by
+ * policy whatever it is — a platform-internal handle under the switch-only
+ * and username sign-ins, a real address under the email one — because a
+ * gedu's contact for a child is always the parent, so there is no shape in
+ * which this returns a child's address or a non-mailbox.
  *
  * It lives here rather than inside the row component because the bulk
  * copy-all affordance above the list has to make the identical choice, and two

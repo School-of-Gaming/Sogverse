@@ -9,7 +9,7 @@ type RpcArgs = Database["public"]["Functions"]["update_product"]["Args"];
 function friendlyRpcError(err: { code?: string; message: string }): string {
   switch (err.code) {
     case "23503": // foreign_key_violation
-      return "Something you selected (location or holiday calendar) is no longer available. Please refresh the page and try again.";
+      return "Something you selected (the location) is no longer available. Please refresh the page and try again.";
     case "23505": // unique_violation
       return "A product with these details already exists. Please change something and try again.";
     default:
@@ -39,6 +39,15 @@ function imageLinkWarning(err: { code?: string; message: string }): string {
  */
 function marketingConsentsWarning(err: { message: string }): string {
   return `Product saved but its marketing consents were not applied: ${err.message}. Retry from the edit page.`;
+}
+
+/**
+ * And the same for the product's gamer photo ask set — the third write keyed on
+ * the product rather than being a column on it, with its own warning so an
+ * admin retrying knows which of the two ask sets did not land.
+ */
+function gamerPhotoConsentsWarning(err: { message: string }): string {
+  return `Product saved but its photo consents were not applied: ${err.message}. Retry from the edit page.`;
 }
 
 /**
@@ -113,12 +122,11 @@ export const POST = defineRoute({
       p_seat_count: body.seat_count ?? undefined,
       p_schedule_slots: body.schedule_slots,
       p_prices: body.prices,
-      p_holiday_calendar_ids: body.holiday_calendar_ids,
-      // Wipe-and-replace, like the calendars above: the RPC hands this straight
-      // to the requirement set's single writer, so an empty array clears the
-      // conditions and a populated one replaces them. Never `?? undefined` — an
-      // omission here would be indistinguishable from "requires nothing", and
-      // the contract demands the field precisely so it cannot be one.
+      // Wipe-and-replace: the RPC hands this straight to the requirement set's
+      // single writer, so an empty array clears the conditions and a populated
+      // one replaces them. Never `?? undefined` — an omission here would be
+      // indistinguishable from "requires nothing", and the contract demands the
+      // field precisely so it cannot be one.
       p_required_consent_slugs: body.required_consent_slugs,
       // null (unknown/none) maps to undefined so the RPC's DEFAULT NULL clears
       // the column; 0 (volunteer) survives `??` since it's not nullish.
@@ -159,6 +167,21 @@ export const POST = defineRoute({
 
     if (marketingError) {
       warnings.push(marketingConsentsWarning(marketingError));
+    }
+
+    // Wipe-and-replace again, for the other ask set: the array goes through
+    // unconditionally, so an empty one clears the photo asks and a populated
+    // one replaces them. Never `?? undefined`, for the reason above.
+    const { error: photoError } = await supabase.rpc(
+      "admin_set_product_gamer_photo_consents",
+      {
+        p_product_id: productId,
+        p_consent_types: body.gamer_photo_consent_types,
+      },
+    );
+
+    if (photoError) {
+      warnings.push(gamerPhotoConsentsWarning(photoError));
     }
 
     // The picture, in one statement, after the RPC — the same image-last shape

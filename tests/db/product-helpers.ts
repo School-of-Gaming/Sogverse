@@ -17,8 +17,8 @@ import { TEST_IDS } from "./constants";
  * suffix is the last byte of the UUID (`...0000000005XX`):
  *   5a1–5a3, 5aa   exposed-function-scope.test.ts (5a3 is its product_groups
  *                  id; 5aa is its unlisted-but-published product)
- *   5a4–5a9        write-idor.test.ts (5a4 is the product; 5a5–5a9 are the
- *                  group / zone / calendar / holiday / slot fixtures it seeds)
+ *   5a4–5a9        write-idor.test.ts (5a4 is the product; 5a5, 5a6 and 5a9
+ *                  are the group / zone / slot fixtures it seeds)
  *   5b1–5b5        participations-race.test.ts (5b2 is its soft-cap product)
  *   5b6–5b7        participations-rls.test.ts
  *   5b8–5b9        participations-external.test.ts
@@ -49,10 +49,12 @@ import { TEST_IDS } from "./constants";
  *                  groups 60a-60b)
  *   610-616        product-audience.test.ts (three products 610-612, one group
  *                  613, and 614-616 for the roster-shape fixtures)
- *   620-628        admin-dashboard.test.ts (six products — 620, 621, 623, 624,
- *                  625, 628 — plus two groups 622/627 and a holiday calendar
- *                  626; one product per dashboard issue so a fixture built for
- *                  one cannot accidentally raise another)
+ *   620-629        admin-dashboard.test.ts (seven products — 620, 621, 623, 624,
+ *                  625, 626, 628 — plus three groups 622/627/629; one product
+ *                  per dashboard issue so a fixture built for one cannot
+ *                  accidentally raise another, and three groups because the two
+ *                  unstaffed-group arrays need a group with members, a group
+ *                  with none, and a group with an educator to be told apart)
  *   630-636        product-images-trigger.test.ts (three products 630-632, and
  *                  633-636 for the product_images entries it links them to —
  *                  a different table, but kept in the one registry so nobody
@@ -131,6 +133,31 @@ import { TEST_IDS } from "./constants";
  *                  kept apart because its cases satisfy the other three
  *                  conditions and would otherwise move the counts every other
  *                  block asserts on)
+ *   6c0-6c3, 6cf   gamer-photo-consents.test.ts (6c0 PUBLISHED and 6c1
+ *                  CANCELLED are the readability pair, for the reason the
+ *                  690/691 pair above has one: `can_read_product` is what
+ *                  separates them and a single product cannot hold both
+ *                  answers. 6c2 is a third product with its group 6c3, kept
+ *                  apart from both because it is the only one with a gedu
+ *                  assignment and a roster on it — the fixture the whole staff
+ *                  read arm is asserted against, and one whose membership
+ *                  changes inside a case. 6cf is that file's must-NOT-exist
+ *                  product id, backing the case that the ask-set writer refuses
+ *                  an unknown product even on a call that clears; declared here
+ *                  for the same reason 6ee and 6ff are)
+ *   6d0-6d4, 6df   admin-move-participation.test.ts (two PAID consumer clubs
+ *                  6d0 and 6d1 — the switch needs a source and a target, and
+ *                  the pair is also what the opposite-directions deadlock case
+ *                  moves between — plus a FREE club 6d2, the no-charge target
+ *                  the RPC refuses. Three products because no single one can be
+ *                  both ends of a move and the refused shape at once. 6d3 and
+ *                  6d4 are one product_groups row on each paid club: the
+ *                  admin's placement on the target and its opposite on the
+ *                  source, which is what makes "a group of the target" a
+ *                  provable condition rather than "a group that exists". 6df is
+ *                  a group id that must NEVER exist, backing the case that an
+ *                  unknown group is refused exactly as a foreign one is —
+ *                  declared here for the same reason 6ee and 6ff are)
  *   6ee            marketing-consents.test.ts's must-NOT-exist product id,
  *                  backing the case that the ask-set writer refuses an unknown
  *                  product even on a call that clears. Declared here for the
@@ -167,6 +194,10 @@ import { TEST_IDS } from "./constants";
  *                  two is always on summer time — and a fixed-offset zone in
  *                  which it is just after local midnight, which is what
  *                  exercises the SQL window search's adjacent-day probe)
+ *   7f5-7f6       gamer-sign-in.test.ts (one club 7f5 with one group 7f6 — the
+ *                  smallest document that can carry a roster, which is all the
+ *                  boundary half needs: a gedu-readable feed that would show a
+ *                  child's address if any RPC ever emitted one)
  *   637           write-idor.test.ts's product_images entry. It sits outside
  *                  that file's 5a4-5a9 block because the block was full when
  *                  the catalogue arrived; the file is named twice here rather

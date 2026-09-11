@@ -1,15 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
+import { identifierToLoginEmail } from "@/lib/gamer-sign-in";
 import { ROLE_POST_LOGIN_PATHS, ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
+import { isSupportedLocale } from "@/lib/constants/locales";
+import { setCookie } from "@/lib/cookies";
+import { LOCALE_COOKIE_NAME } from "@/lib/locale-cookie";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth } from "@/providers";
 
@@ -21,13 +26,25 @@ export function LoginForm({ redirect: redirectParam }: { redirect: string | null
   const { redirect, status, navigateAfterAuth } = useAuthRedirect(redirectParam);
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
 
-  const [email, setEmail] = useState("");
+  // One field for two kinds of value. An adult types an address; a child in
+  // username mode types the name their parent chose for them, which
+  // `identifierToLoginEmail` turns into the synthetic address their account
+  // actually holds. Both end up as an email + password sign-in, which is why
+  // this is one field rather than a mode switch the person has to find.
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const supabase = getClient();
 
+  /**
+   * **One sentence covers every way the pair can be wrong**, and that is not a
+   * shortcut: a username nobody holds, an address nobody holds, and the right
+   * identifier with the wrong password all come back as `invalid_credentials`,
+   * and telling them apart on screen would be an oracle for whether a given
+   * username or address has an account here.
+   */
   const translateSignInError = (code: string | undefined): string => {
     switch (code) {
       case "invalid_credentials":
@@ -45,8 +62,8 @@ export function LoginForm({ redirect: redirectParam }: { redirect: string | null
     e.preventDefault();
     setError(null);
 
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
+    const trimmedIdentifier = identifier.trim();
+    if (!trimmedIdentifier) {
       setError(t("login.errors.identifierRequired"));
       return;
     }
@@ -66,8 +83,13 @@ export function LoginForm({ redirect: redirectParam }: { redirect: string | null
       // (page is still showing signed-out chrome) and a full reload resets it.
       freezeUntilNavigation();
 
+      // The one place the two kinds of identifier become one. A value with an
+      // `@` is passed through as the address it is; anything else is a username
+      // and is resolved to the synthetic address that account holds. Getting
+      // this backwards — guessing username first — would rewrite a short real
+      // address into a handle and tell its owner their password was wrong.
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: trimmedEmail,
+        email: identifierToLoginEmail(trimmedIdentifier),
         password,
       });
 
@@ -81,9 +103,27 @@ export function LoginForm({ redirect: redirectParam }: { redirect: string | null
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role, locale")
         .eq("id", data.user.id)
         .single();
+
+      // **Sign-in seeds the locale cookie — the one exception to "persistence
+      // is picker-only".** The navigation below goes to a *bare* dashboard
+      // path, and a bare path is resolved by the cookie → `Accept-Language` →
+      // English ladder; without this, a `fi` reader signing in on a fresh
+      // device would land on `/en/parent` despite their stored preference.
+      //
+      // It rides on the profile read that was already happening, and it is
+      // awaited before navigating for the same reason: the document is about
+      // to unload, and a fire-and-forget write would race it and be lost.
+      //
+      // A null `locale` means "auto-detect from the browser", so it is skipped
+      // rather than written — the ladder's header leg is exactly what that
+      // reader asked for. The cookie is a preference, not a credential, which
+      // is what makes a client-side write fine here.
+      if (isSupportedLocale(profile?.locale)) {
+        setCookie(LOCALE_COOKIE_NAME, profile.locale);
+      }
 
       // Customer (parent) lands on /select-profile so they can pick which
       // family member is entering Sogverse; everyone else goes to their
@@ -111,20 +151,29 @@ export function LoginForm({ redirect: redirectParam }: { redirect: string | null
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
-          <Field label={c('email')} htmlFor="email">
+          {/* `type="text"`, not `type="email"`: the browser's own validation
+              would refuse a username outright, before the form ever ran. The
+              soft-keyboard hint stays `email`, because an address is what the
+              overwhelming majority of the people who reach this field are about
+              to type, and `inputMode` only chooses a keyboard layout — it
+              refuses nothing. */}
+          <Field label={t('login.identifierLabel')} htmlFor="identifier">
             <Input
-              id="email"
-              type="email"
-              placeholder={t('login.emailPlaceholder')}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="identifier"
+              type="text"
+              inputMode="email"
+              placeholder={t('login.identifierPlaceholder')}
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               disabled={isLoading}
               required
-              autoComplete="email"
+              autoCapitalize="none"
+              spellCheck={false}
+              autoComplete="username"
             />
           </Field>
           <Field
@@ -133,7 +182,7 @@ export function LoginForm({ redirect: redirectParam }: { redirect: string | null
             labelAction={
               <Link
                 href={ROUTES.forgotPassword}
-                className="text-sm text-primary hover:underline"
+                className="text-sm text-act hover:underline"
               >
                 {c('forgotPassword')}
               </Link>
@@ -159,8 +208,12 @@ export function LoginForm({ redirect: redirectParam }: { redirect: string | null
               {t.rich('login.noAccountSignUp', {
                 link: (chunks) => (
                   <Link
-                    href={redirect ? `${ROUTES.register}?redirect=${encodeURIComponent(redirect)}` : ROUTES.register}
-                    className="text-primary hover:underline"
+                    href={
+                      redirect
+                        ? { pathname: ROUTES.register, query: { redirect } }
+                        : ROUTES.register
+                    }
+                    className="text-act hover:underline"
                   >
                     {chunks}
                   </Link>
@@ -171,7 +224,7 @@ export function LoginForm({ redirect: redirectParam }: { redirect: string | null
               {t.rich('needHelp', {
                 email: SUPPORT_EMAIL,
                 link: (chunks) => (
-                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary hover:underline">
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-act hover:underline">
                     {chunks}
                   </a>
                 ),

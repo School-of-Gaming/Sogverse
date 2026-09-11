@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import type { MarketingConsentType, ProductBrowseRow } from "@/types";
+import { useRouter } from "@/i18n/navigation";
+import type {
+  GamerPhotoConsentType,
+  MarketingConsentType,
+  ProductBrowseRow,
+} from "@/types";
 import { AddGamerDialog } from "@/components/family";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { ROUTES } from "@/lib/constants";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { useAuth } from "@/providers/auth-provider";
-import {
-  useMyMarketingConsents,
-  useSetMarketingConsent,
-} from "@/services/marketing-consents";
+import { useSetMarketingConsent } from "@/services/marketing-consents";
+import { useSetGamerPhotoConsent } from "@/services/gamer-photo-consents";
 import {
   useCreateParticipation,
   useJoinWaitlist,
@@ -64,6 +66,11 @@ interface SignupPanelProps {
    * for the same reason the slugs are, and off the same detail-query embed.
    */
   marketingConsentTypes: readonly MarketingConsentType[];
+  /**
+   * The photo consents this product's panel asks about — beside `product` for
+   * the same reason again, and off the same detail-query embed.
+   */
+  gamerPhotoConsentTypes: readonly GamerPhotoConsentType[];
   state: RegistrationState;
   authState: AuthState;
   /**
@@ -114,6 +121,7 @@ export function SignupPanel({
   product,
   requiredConsentSlugs,
   marketingConsentTypes,
+  gamerPhotoConsentTypes,
   state,
   authState,
   regionGate,
@@ -123,40 +131,22 @@ export function SignupPanel({
   const router = useRouter();
   const { user, refreshProfile } = useAuth();
 
-  /**
-   * What this parent's account already says about the consents this product
-   * asks about — the seed for the optional boxes.
-   *
-   * **Switched off unless there is a question to seed and somebody to seed it
-   * for.** The read is only correct for a signed-in customer, and on the
-   * overwhelming majority of products there is no box for it to fill, so a
-   * product asking nothing makes no call at all. It is a primary-key-prefixed
-   * read of at most two rows on the products that do ask — near-instant, so the
-   * panel renders the box immediately rather than waiting or drawing a
-   * skeleton, and the tick arrives a frame or two later without moving
-   * anything.
-   */
-  const { data: myMarketingConsents } = useMyMarketingConsents({
-    enabled: authState.kind === "ready" && marketingConsentTypes.length > 0,
-  });
-  const seededMarketingConsents =
-    myMarketingConsents === undefined
-      ? undefined
-      : new Set(
-          myMarketingConsents
-            .filter((row) => row.granted)
-            .map((row) => row.consent_type),
-        );
-
   // Pricing / gamer selection / agreed / locale+currency — the view props
   // shared verbatim with the preview panel. This panel only adds the live
   // mutation actions on top, so the demo can't drift from the real UI.
+  //
+  // **Nothing is read here to fill the optional boxes in, and there used to
+  // be.** This panel made a keyed read of the parent's stored marketing answers
+  // and seeded the boxes from it. Every optional box now starts unticked on
+  // every enrolment (see the hook), so there is nothing for a read to seed —
+  // which also means the panel makes one fewer call, and the preview twin and
+  // the live panel now build their fields from identical arguments.
   const fields = useSignupPanelFields(
     product,
     authState,
     requiredConsentSlugs,
     marketingConsentTypes,
-    seededMarketingConsents,
+    gamerPhotoConsentTypes,
   );
 
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -167,6 +157,7 @@ export function SignupPanel({
   const waitlistMutation = useJoinWaitlist();
   const updateProfile = useUpdateProfile();
   const setMarketingConsent = useSetMarketingConsent();
+  const setGamerPhotoConsent = useSetGamerPhotoConsent();
 
   // Per CLAUDE.md "Loading & Disabled State": flip true synchronously *before*
   // the mutation so there's no render where the button is enabled between
@@ -205,8 +196,8 @@ export function SignupPanel({
     fields.consentsAgreed ? [...fields.requiredConsentSlugs] : [];
 
   /**
-   * **The optional marketing answers, sent alongside the enrolment — one place,
-   * both doors.**
+   * **The optional answers, sent alongside the enrolment — one place, both
+   * doors, both kinds of ask.**
    *
    * Called from the submit handler and the waitlist handler, because the parent
    * answered one panel and it would be indefensible for which button they
@@ -216,30 +207,54 @@ export function SignupPanel({
    * Nothing about this is allowed to block, delay or fail the enrolment: it is
    * not awaited, its outcome never touches `committing` or `submitError`, and a
    * rejection is logged and dropped. A parent who came to buy a seat must not
-   * be told their purchase failed because a mailing-list preference did — and
-   * the answer is not lost either way, since the same question is waiting on
-   * their settings page.
+   * be told their purchase failed because a mailing-list preference or a photo
+   * permission did — and neither answer is lost for good, since both questions
+   * are waiting where the parent can answer them again (their settings, and the
+   * child's page under My SOG).
    *
-   * **Nothing is sent when nothing changed**, which is the ordinary case: the
-   * hook hands over only the boxes that now differ from what the account says.
-   * The RPC is idempotent and would swallow a no-op, but its event log records
-   * *changes*, and asking it to reject page-loads is the client making work out
-   * of a question it already knows the answer to.
+   * **Every box that was asked is answered, including the ones nobody
+   * touched.** Nothing is seeded any more, so an untouched box is a "no" the
+   * parent looked at rather than the absence of an answer, and sending only
+   * what moved would drop the commonest answer on the panel. Both writers are
+   * idempotent and append no event for a no-op, so re-stating an unchanged
+   * answer costs a round trip and changes no record.
+   *
+   * The photo answers come with the participant they were given about, and the
+   * hook hands over none at all when the seat being taken is the parent's own —
+   * a consent about a gamer's image has no gamer to key to there.
    *
    * It runs at the click rather than on the enrolment's success, so an
    * enrolment that then fails still records what the parent said. That is the
-   * right way round: the answer is about their mailbox, not about the seat, and
-   * a withdrawal in particular must not be conditional on a purchase going
-   * through.
+   * right way round: the answers are about a mailbox and a child's image, not
+   * about the seat, and a "no" in particular must not be conditional on a
+   * purchase going through.
    */
-  const recordMarketingAnswers = () => {
-    for (const change of fields.marketingConsentChanges) {
+  const recordConsentAnswers = () => {
+    for (const answer of fields.marketingConsentAnswers) {
       setMarketingConsent.mutate(
-        { ...change, source: "enrolment" },
+        { ...answer, source: "enrolment" },
         {
           onError: (error) => {
             console.error(
               "[signup-panel] marketing consent write failed",
+              error,
+            );
+          },
+        },
+      );
+    }
+    const gamerId = fields.selectedParticipantId;
+    // Structurally unreachable with an empty answer list — the hook withholds
+    // the rows unless a participant is selected — and cheap insurance against
+    // ever writing a photo answer with nobody to attach it to.
+    if (gamerId === null) return;
+    for (const answer of fields.gamerPhotoConsentAnswers) {
+      setGamerPhotoConsent.mutate(
+        { ...answer, gamerId, source: "enrolment" },
+        {
+          onError: (error) => {
+            console.error(
+              "[signup-panel] gamer photo consent write failed",
               error,
             );
           },
@@ -252,7 +267,7 @@ export function SignupPanel({
     if (!fields.selectedParticipantId || !purchaseShape) return;
     setSubmitError(null);
     setCommitting(true);
-    recordMarketingAnswers();
+    recordConsentAnswers();
     const input: CreateParticipationInput = {
       productId: product.id,
       // The parent's own id when they picked their own row. The route pins
@@ -303,7 +318,7 @@ export function SignupPanel({
     if (!fields.selectedParticipantId) return;
     setSubmitError(null);
     setCommitting(true);
-    recordMarketingAnswers();
+    recordConsentAnswers();
     waitlistMutation.mutate(
       {
         productId: product.id,

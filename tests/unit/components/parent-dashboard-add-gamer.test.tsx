@@ -2,10 +2,16 @@ import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
+import { NO_TOPIC_PREP_READY } from "@/components/topic-prep/topic-prep-cookie";
 import { ParentDashboardPageBody } from "@/components/parent/parent-dashboard-page-body";
 import { buildParentDashboardFixture } from "@/components/parent/mock-dashboard-fixtures";
 import { MAX_GAMERS_PER_PARENT } from "@/lib/constants";
-import { NowProvider, TimezoneProvider } from "@/providers";
+import {
+  AuthProvider,
+  NowProvider,
+  QueryProvider,
+  TimezoneProvider,
+} from "@/providers";
 import type { ParentDashboardParticipant } from "@/components/parent/parent-dashboard-page-body";
 
 /**
@@ -28,6 +34,9 @@ import type { ParentDashboardParticipant } from "@/components/parent/parent-dash
 /** The instant the cards' live/locked states are read against. */
 const NOW = new Date("2026-02-11T20:00:00Z");
 
+/** The signed-in parent. A real UUID, since a viewer id is one everywhere else. */
+const VIEWER_ID = "c6d9a0f2-7a4b-4f1e-8f0c-1b2d3e4f5a6b";
+
 /** The tile's label, read from the catalogue so a copy change can't hide a
  *  regression behind a passing test. */
 const ADD_GAMER = messages.family.addGamer;
@@ -35,16 +44,24 @@ const ADD_GAMER = messages.family.addGamer;
 function dashboardHtml(gamers: readonly ParentDashboardParticipant[]): string {
   return renderToStaticMarkup(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <TimezoneProvider initialTimezone="Europe/Helsinki">
-        <NowProvider initialNow={NOW}>
-          <ParentDashboardPageBody
-            gamers={gamers}
-            billingCard={<div />}
-            helpForm={<div />}
-            onAddGamer={() => {}}
-          />
-        </NowProvider>
-      </TimezoneProvider>
+      {/* Auth alongside the zone and the clock: an enrollment card keys the
+          prep guide's dismissal by the viewer's own id, because a parent and a
+          child routinely share one browser. */}
+      <QueryProvider>
+        <AuthProvider initialUser={{ id: VIEWER_ID, email: undefined }}>
+          <TimezoneProvider initialTimezone="Europe/Helsinki">
+            <NowProvider initialNow={NOW}>
+              <ParentDashboardPageBody
+                gamers={gamers}
+                prepDismissed={NO_TOPIC_PREP_READY}
+                billingCard={<div />}
+                helpForm={<div />}
+                onAddGamer={() => {}}
+              />
+            </NowProvider>
+          </TimezoneProvider>
+        </AuthProvider>
+      </QueryProvider>
     </NextIntlClientProvider>,
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useNow, useTimezone } from "@/providers";
 import {
@@ -19,16 +19,17 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { formatDate, formatDateOnly, formatDateRange } from "@/lib/utils";
 import { effectiveStatus, pendingHintKey } from "@/lib/products/effective-status";
+import { formatProductWeeks } from "@/lib/products/format-product-term-dates";
 import { ProductStatusChip } from "./product-status-chip";
 import {
   formatProductSchedule,
   joinScheduleGroups,
   type ProductScheduleSummary,
-} from "@/components/public/products/format-product-schedule";
-import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
+} from "@/lib/products/format-product-schedule";
 import { productWhereLine } from "./product-where-line";
 import type { ProductWithDetails } from "@/services/products";
 import type { ProductType } from "@/types";
+import { ROUTES } from "@/lib/constants";
 
 // `pendingHintKey` lives in effective-status.ts (UI-free decision tree). This
 // thin wrapper formats the values for display: dates go through the user's
@@ -94,8 +95,8 @@ interface ProductRowsProps {
 // Shared by the plain list (camps/events) and the filtered club list, so the
 // row layout lives in one place.
 export function ProductRows({ products, productType }: ProductRowsProps) {
-  const config = PRODUCT_TYPE_CONFIG[productType];
   const t = useTranslations("admin.products");
+  const c = useTranslations("common");
   const uiLocale = resolveLocale(useLocale());
   const timeZone = useTimezone();
   // One `now` for the whole render so every row derives status from the same
@@ -137,17 +138,29 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
         // the viewer's zone (may differ from the stored start_date). Every
         // other dated value here — a camp's date range, a club term date, a
         // no-time event — is a zoneless calendar date that stays UTC-pinned.
-        const dateChip =
-          schedule.kind === "single" && schedule.time
-            ? schedule.date
-            : p.start_date
-              ? formatDateRange(p.start_date, p.end_date, uiLocale)
-              : null;
+        const timeBearingEvent =
+          schedule.kind === "single" && schedule.time !== null;
+        const dateChip = timeBearingEvent
+          ? schedule.date
+          : p.start_date
+            ? formatDateRange(p.start_date, p.end_date, uiLocale)
+            : null;
+        // The ISO week(s) a term or camp runs across, appended to the date
+        // chip because Finnish admins plan in week numbers — "kerho alkaa
+        // viikolla 34" — and matching a list row against a plan otherwise
+        // means counting weeks off a calendar. Only on the calendar-date
+        // branch: the time-bearing event above renders an instant in the
+        // viewer's zone, and an ISO week belongs to a bare date, so numbering
+        // that one would assert a week the stored date may not be in.
+        const weekChip =
+          !timeBearingEvent && p.start_date
+            ? formatProductWeeks(p.start_date, p.end_date, c)
+            : null;
         return (
           <Link
             key={p.id}
-            href={`/admin/${config.routeSlug}/${p.id}`}
-            className="group flex items-center justify-between gap-4 rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            href={ROUTES.admin.product(p.product_type, p.id)}
+            className="group flex items-center justify-between gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
           >
             <div className="flex min-w-0 flex-1 items-center gap-4">
               {/* The project ratio at row-thumb size (owner rule — one aspect
@@ -172,7 +185,7 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
                   </span>
                   <ProductStatusChip status={status} />
                   {!p.is_visible && (
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                    <span className="rounded-full bg-lifted px-2 py-0.5 text-xs text-muted-foreground">
                       {t("list.unlisted")}
                     </span>
                   )}
@@ -196,6 +209,16 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
                     <span className="inline-flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       {dateChip}
+                      {/* Appended at the end of the chip's own run, so nothing
+                          already painted moves — and inside the same chip
+                          rather than beside it, because a week number is a
+                          reading of the date it follows, not a fact of its
+                          own. */}
+                      {weekChip && (
+                        <span className="tabular-nums text-muted-foreground">
+                          {` · ${weekChip}`}
+                        </span>
+                      )}
                     </span>
                   )}
                   {scheduleLine && (
@@ -217,7 +240,7 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
                     </span>
                   )}
                   {hint && (
-                    <span className="inline-flex items-center gap-1 text-primary">
+                    <span className="inline-flex items-center gap-1 text-act">
                       <Hourglass className="h-3 w-3" />
                       {hint}
                     </span>

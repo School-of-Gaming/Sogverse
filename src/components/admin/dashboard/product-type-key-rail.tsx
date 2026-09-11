@@ -33,7 +33,7 @@ import {
  *
  * **Type is the only thing here, and that is the target rather than an
  * omission.** The attention marker had an entry until it stopped needing one:
- * it was a bare amber dot, and a dot has no meaning a key can be avoided for.
+ * it was a bare act dot, and a dot has no meaning a key can be avoided for.
  * It is now the alert triangle the family surfaces already use to say something
  * is wrong, which reads on sight and carries its own words in a tooltip. Every
  * other mark on the page is a glyph beside its own label. A key that has to
@@ -69,8 +69,8 @@ export function ProductTypeKeyRail() {
                     and imply they were two facts. */}
                 <span
                   className={cn(
-                    "grid h-7 w-7 shrink-0 place-items-center rounded-md",
-                    presentation.tint,
+                    "grid h-7 w-7 shrink-0 place-items-center rounded-md border bg-lifted",
+                    presentation.border,
                   )}
                 >
                   <Icon

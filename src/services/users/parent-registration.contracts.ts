@@ -1,6 +1,33 @@
 import { z } from "zod";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
+import { GAMER_EMAIL_DOMAIN } from "@/lib/gamer-sign-in";
+
+/**
+ * Marketing provenance as it travels in a registration body: the three UTM
+ * fields this visit arrived with, each present or absent.
+ *
+ * **Plain optional strings on purpose — no format rule here.** This is a
+ * deliberate exception to the usual "the body schema is the validation"
+ * discipline, and it exists because of who supplies the values: not the person
+ * filling in the form, who never typed them and cannot see them, but whoever
+ * authored the link they clicked. A format rule on the schema would turn a
+ * malformed marketing param into a 400 that blocks a legitimate registration.
+ * Each route runs the values through the shared sanitiser instead, where a bad
+ * one becomes NULL and the registration succeeds.
+ *
+ * **Defined once and imported by the educator schema too**, rather than written
+ * out in both places. Both registration routes hand these to the same signup
+ * trigger under the same three metadata keys, so a second copy is a shape that
+ * can drift while both ends still type-check.
+ */
+export const registrationUtmBody = z.object({
+  source: z.string().optional(),
+  medium: z.string().optional(),
+  campaign: z.string().optional(),
+});
+
+export type RegistrationUtmBody = z.infer<typeof registrationUtmBody>;
 
 /**
  * Request body for public parent self-registration (`POST /api/auth/register`).
@@ -18,9 +45,54 @@ import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
  * makes them measure the name rather than the whitespace around it (`" A"` is
  * not a two-character first name).
  */
+/**
+ * The password policy for an account on this platform, stated once.
+ *
+ * Exported because a gamer in `username` mode holds a password the parent
+ * chooses, and it is the same kind of credential guarding the same kind of
+ * account — a child's password being held to a weaker bar than their parent's
+ * would be a decision nobody made. GoTrue's own policy still stands behind it
+ * (the provider refuses a breached or too-short password whatever we accept),
+ * so this is the bar the form can state before the round trip, not the whole
+ * of it.
+ */
+export const accountPasswordValue = z
+  .string()
+  .min(8, "Password must be at least 8 characters");
+
+/**
+ * A real mailbox somebody typed to open or name an account, stated once.
+ *
+ * **Normalised before it is judged.** The address becomes the account's login
+ * and the thing a verification token is signed over, and GoTrue lowercases on
+ * the way in — so `"Aino@Example.COM "` must produce the row GoTrue will
+ * actually hold, not a second spelling of it that every later comparison then
+ * has to fold for itself.
+ *
+ * **And it refuses our own synthetic domain outright.** `@gamer.sogverse.internal`
+ * is the namespace a gamer's other two sign-in modes live in: a random handle
+ * for a switch-only child, and a username-derived one where GoTrue's uniqueness
+ * on the address IS the uniqueness of the username. An address landing there
+ * would put a mailbox nobody can read where a real one is promised — and on a
+ * PUBLIC registration it is worse than that: a stranger could open an account on
+ * `aino@gamer.sogverse.internal` and hold the handle a family will later pick
+ * for their child, because that one namespace is exactly what makes usernames
+ * unique. The domain is ours and nobody outside this codebase types it, so
+ * every schema taking an address a person supplied refuses it here rather than
+ * each deciding for itself.
+ */
+export const realEmailValue = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .pipe(z.string().email())
+  .refine((value) => !value.endsWith(GAMER_EMAIL_DOMAIN), {
+    message: `${GAMER_EMAIL_DOMAIN} is our own internal domain — use a real email address`,
+  });
+
 export const registerParentBody = z.object({
-  email: z.string().email(),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  email: realEmailValue,
+  password: accountPasswordValue,
   firstName: z.string().trim().min(DISPLAY_NAME_MIN).max(DISPLAY_NAME_MAX),
   lastName: z.string().trim().min(DISPLAY_NAME_MIN).max(DISPLAY_NAME_MAX),
   /**
@@ -37,15 +109,12 @@ export const registerParentBody = z.object({
    */
   locale: z.enum(SUPPORTED_LOCALES).optional(),
   /**
-   * Marketing provenance: the `?ref=` code this visit arrived with, if any.
+   * Marketing provenance: the UTM values this visit arrived with, if any.
    *
-   * A plain optional string, for exactly the reason the gedu schema's is — the
-   * parent never typed it and cannot see it, so a format rule here would turn
-   * whoever authored the marketing link into someone who can block a
-   * registration. The handler runs it through the shared sanitiser, where a bad
-   * value becomes NULL and the signup succeeds.
+   * See `registrationUtmBody` — the same shape the educator registration takes,
+   * and the reason it is defined once.
    */
-  referralCode: z.string().optional(),
+  utm: registrationUtmBody.optional(),
   /**
    * Whether the parent ticked the optional School of Gaming marketing box.
    *

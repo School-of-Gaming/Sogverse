@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import {
   FaqAccordion,
@@ -50,7 +50,7 @@ const FAQ_ITEM_KEYS = [
 
 /** Inline link styling shared by the three links the answers can carry. */
 const ANSWER_LINK_CLASS =
-  "text-primary underline underline-offset-4 hover:no-underline";
+  "text-act underline underline-offset-4 hover:no-underline";
 
 /**
  * The Programme's FAQ: the signed-off Lynx Educate copy, translated in every
@@ -112,7 +112,7 @@ export function ProgrammeFaq() {
         {/* The locations answer's closing aside, subordinate in the signed-off
             copy and rendered as one. */}
         {key === "where" && (
-          <p className="text-sm italic text-muted-foreground/80">
+          <p className="text-sm italic text-muted-foreground">
             {t("items.where.answer2")}
           </p>
         )}
@@ -121,7 +121,7 @@ export function ProgrammeFaq() {
   }));
 
   return (
-    <section className="bg-muted/30 py-16 sm:py-24">
+    <section className="bg-card py-16 sm:py-24">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-3xl">
           <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">

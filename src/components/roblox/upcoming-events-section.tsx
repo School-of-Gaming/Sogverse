@@ -7,7 +7,7 @@ import {
 } from "@/services/participations";
 import { ProductsService } from "@/services/products";
 import type { ProductBrowseRow } from "@/types";
-import { PROGRAMME_PRODUCT_FILTERS } from "./programme-filters";
+import { PROGRAMME_RAIL_FILTERS } from "./programme-filters";
 import { UpcomingEventsBrowse } from "./upcoming-events-browse";
 
 /**
@@ -43,7 +43,7 @@ async function getInitialProgrammeData(): Promise<{
     const counts = await new ParticipationsService(
       supabase,
     ).getParticipationCounts(
-      filterProducts(products, PROGRAMME_PRODUCT_FILTERS).map((p) => p.id),
+      filterProducts(products, PROGRAMME_RAIL_FILTERS).map((p) => p.id),
     );
     return { products, counts };
   } catch {

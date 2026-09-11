@@ -1,9 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { User, Lock, LogOut, MailCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
+import {
+  Alert,
+  AlertDescription,
+  StatusLine,
+} from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
@@ -23,6 +28,7 @@ import {
   MarketingPreferencesFields,
   MARKETING_CONSENT_ORDER,
 } from "@/components/settings/marketing-preferences-fields";
+import { GamerPhotoConsentNotice } from "@/components/settings/gamer-photo-consent-notice";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
 import { useAuth } from "@/providers";
@@ -36,8 +42,10 @@ import {
   useMyMarketingConsents,
   useSetMarketingConsent,
 } from "@/services/marketing-consents";
+import { hasRealEmail, gamerUsernameFromEmail } from "@/lib/gamer-sign-in";
 import {
   isGamerProfile,
+  type GamerSignIn,
   type MarketingConsent,
   type MarketingConsentType,
   type ProfileUpdate,
@@ -54,6 +62,13 @@ import {
 const NO_MARKETING_CONSENTS: readonly MarketingConsent[] = [];
 
 /**
+ * The read-only username row's id. A named constant rather than a literal in
+ * the markup because the literal-string lint reads JSX attributes and cannot
+ * tell a DOM id apart from copy.
+ */
+const GAMER_USERNAME_FIELD_ID = "settings-gamer-username";
+
+/**
  * A keyed location read, as the picker's own value shape. The two are already
  * the same information — a row plus its ancestors, nearest first — so this only
  * renames the row half; there is nothing to look up and nothing to reconcile.
@@ -65,7 +80,29 @@ function toLocationPick(row: LocationWithChain | undefined): LocationPick | null
 
 export function SettingsSectionContent({
   geduContractSeed,
+  gamerSignIn,
+  photoConsentGranted = false,
 }: {
+  /**
+   * Whether this child's parent has said photos and videos of them may be used,
+   * read by the route before the page rendered.
+   *
+   * **Defaults to `false`, and for a non-gamer that default is never read** —
+   * the card it feeds is rendered only for a gamer. For a gamer it is the
+   * feature's own default rather than a placeholder: an unanswered question and
+   * a stored "no" mean the same thing here, which is that the child stays out of
+   * the photographs.
+   */
+  photoConsentGranted?: boolean;
+  /**
+   * How this gamer signs in, read by the route before the page rendered.
+   *
+   * **Absent means "not a gamer"**, the same way `geduContractSeed`'s absence
+   * means "not a gedu": every other role holds a real mailbox by construction,
+   * so there is nothing to resolve for them. Passed down rather than fetched
+   * here because three of this card's rows key on it — see the route.
+   */
+  gamerSignIn?: GamerSignIn;
   /**
    * A gedu's contract acceptances as the route read them, with the moment it
    * read them. Threaded straight through to the card's data shell, which seeds
@@ -88,6 +125,20 @@ export function SettingsSectionContent({
   const isGedu = profile?.role === "gedu";
   const isGamer = isGamerProfile(profile);
   const isParent = profile?.role === "customer";
+  // **The question is whether this account's address reaches a person, not
+  // whether its holder is a child.** Every adult holds a mailbox; a gamer holds
+  // one only in `email` mode. The three rows below that used to test the role
+  // test this instead, because the role was only ever standing in for it — and
+  // it stopped being a safe stand-in the day a child could be given a real
+  // address of their own.
+  const hasMailbox = hasRealEmail({
+    role: profile?.role ?? null,
+    sign_in: gamerSignIn ?? null,
+  });
+  // A username-mode child's username lives in the local part of their synthetic
+  // address and nowhere else, so it is read back out rather than looked up.
+  const gamerUsername =
+    gamerSignIn === "username" ? gamerUsernameFromEmail(profile?.email) : null;
   const { data: mcAccount } = useMyMinecraftAccount();
   const updateMyMc = useUpdateMyMinecraft();
   const { data: robloxAccount } = useMyRobloxAccount();
@@ -108,10 +159,15 @@ export function SettingsSectionContent({
   //
   // The profile is seeded server-side in the root layout, so the verified /
   // unverified line is decided before the first paint and never arrives late —
-  // nothing under it moves once the page is up. Gamers have no line at all:
-  // their address is the synthetic `@gamer.sogverse.internal` one their account
-  // was created with, which is why the whole Email field is already
-  // non-gamer-only.
+  // nothing under it moves once the page is up. The gamer's sign-in mode is
+  // seeded by the route for the same reason.
+  //
+  // Most gamers still have no line, because most gamers hold a synthetic
+  // `@gamer.sogverse.internal` address that reaches no inbox and a "verified"
+  // stamp on one would mean nothing. A gamer in `email` mode is the exception
+  // and gets the whole field: a real mailbox, a real verification state, and the
+  // button to re-send — the same three things every adult has, because it is the
+  // same question about the same kind of address.
   // ---------------------------------------------------------------------
   const isEmailVerified = profile?.email_verified_at !== null && profile?.email_verified_at !== undefined;
   const sendVerification = useSendVerificationEmail();
@@ -157,13 +213,14 @@ export function SettingsSectionContent({
   // with the single-use token the mail carries, so walking someone there
   // without one is a dead end (that was the bug this replaced).
   //
-  // Gamers get no button at all. They sign in by account-switch from their
-  // parent, where the server mints the credential; they never type a password,
-  // their `@gamer.sogverse.internal` address is synthetic and reaches no
-  // inbox, so the mail could not arrive — and a child holding a password of
-  // their own would be a way into the account that does not pass through the
-  // parent. That is why this is gated on `isGamer` rather than on whether a
-  // deliverable address happens to exist.
+  // **The gate is a deliverable address, which is exactly what it looks like.**
+  // A reset mail sent to a synthetic `@gamer.sogverse.internal` handle arrives
+  // nowhere, so the button would be a click that does nothing — and the send
+  // helper refuses such an address anyway. That covers a switch-only child (no
+  // password to reset; the parent's switch mints the session) and a
+  // username-mode one (a password their parent set and their parent resets, from
+  // the child's card in My SOG). A child in `email` mode holds a mailbox and a
+  // password of their own, so they get the button on the same terms as an adult.
   // ---------------------------------------------------------------------
   // Local and set synchronously before the request, for the same reason
   // `sendingVerification` above is. Every outcome clears it: the user stays on
@@ -446,7 +503,11 @@ export function SettingsSectionContent({
               <p className="font-medium">
                 {[profile?.first_name, !isGamer && profile?.last_name].filter(Boolean).join(" ")}
               </p>
-              {!isGamer && (
+              {/* Same question as the Email field below, so the same test: a
+                  synthetic handle is not an address anyone would recognise as
+                  theirs, and printing one under someone's name would be
+                  showing them an implementation detail. */}
+              {hasMailbox && (
                 <p className="text-sm text-muted-foreground">
                   {profile?.email}
                 </p>
@@ -458,15 +519,15 @@ export function SettingsSectionContent({
           </div>
 
           {successMessage && (
-            <div className="rounded-md bg-success/10 p-3 text-sm text-success">
-              {successMessage}
-            </div>
+            <Alert variant="success">
+              <AlertDescription>{successMessage}</AlertDescription>
+            </Alert>
           )}
 
           {errorMessage && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {errorMessage}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
           )}
 
           <Field label={c('firstName')} htmlFor="firstName">
@@ -541,16 +602,48 @@ export function SettingsSectionContent({
             </Field>
           )}
 
-          {!isGamer && (
+          {/* A username-mode child's own name for themselves, read-only: they
+              type it to sign in, so they have to be able to look it up, and
+              nobody but their parent may change it. The sentence under it says
+              where a new password comes from — the one thing a child locked out
+              of this account needs to know, and a mechanism rather than a
+              reassurance. */}
+          {/* `readOnly`, not `disabled`, and a label that names the input: the
+              username is the one value a child comes here to look up, and a
+              disabled input is skipped by the keyboard entirely — so it could
+              be neither tabbed to nor selected to copy, and the label above it
+              named nothing. */}
+          {gamerUsername && (
+            <Field
+              label={t('usernameLabel')}
+              htmlFor={GAMER_USERNAME_FIELD_ID}
+              hint={t('gamerPasswordFromParent')}
+            >
+              {({ hintId }) => (
+                <Input
+                  id={GAMER_USERNAME_FIELD_ID}
+                  value={gamerUsername}
+                  readOnly
+                  className="bg-lifted"
+                  aria-describedby={hintId}
+                />
+              )}
+            </Field>
+          )}
+
+          {hasMailbox && (
             <Field label={c('email')}>
               <Input
                 value={profile?.email || ""}
                 disabled
-                className="bg-muted"
+                className="bg-lifted"
               />
               {isEmailVerified ? (
-                <p className="flex items-center gap-1.5 text-sm text-success">
-                  <MailCheck className="h-4 w-4 shrink-0" aria-hidden />
+                <p className="flex items-center gap-1.5 text-sm text-foreground">
+                  <MailCheck
+                    className="h-4 w-4 shrink-0 text-success"
+                    aria-hidden
+                  />
                   {t('emailVerified')}
                 </p>
               ) : (
@@ -571,22 +664,22 @@ export function SettingsSectionContent({
                     </Button>
                   </div>
                   {verificationOutcome === "sent" && (
-                    <p className="text-sm text-success">
+                    <StatusLine status="success">
                       {t('verificationEmailSent')}
-                    </p>
+                    </StatusLine>
                   )}
                   {/* Warning rather than destructive: nothing broke, and the
                       wait is short — but no mail went out, so it cannot read as
                       success either. */}
                   {verificationOutcome === "rate_limited" && (
-                    <p className="text-sm text-warning">
+                    <StatusLine status="warning">
                       {t('verificationEmailRateLimited')}
-                    </p>
+                    </StatusLine>
                   )}
                   {verificationOutcome === "failed" && (
-                    <p className="text-sm text-destructive">
+                    <StatusLine status="destructive">
                       {t('verificationEmailFailed')}
-                    </p>
+                    </StatusLine>
                   )}
                 </div>
               )}
@@ -645,6 +738,12 @@ export function SettingsSectionContent({
         </>
       )}
 
+      {/* After the game identities and before security: what a child is called
+          in a game, then what may be done with a picture of them, then the way
+          out. Read-only — only their parent can answer it, from the child's page
+          under the parent's My SOG. */}
+      {isGamer && <GamerPhotoConsentNotice granted={photoConsentGranted} />}
+
       {/* The seed's presence is the role test: the route reads these rows only
           for a gedu, so a viewer who is not one has nothing to hand down and no
           card to render. */}
@@ -667,8 +766,9 @@ export function SettingsSectionContent({
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-3">
-            {/* See the password-reset block above for why gamers have none. */}
-            {profile && !isGamer && (
+            {/* See the password-reset block above for why an account with no
+                deliverable address has none. */}
+            {profile && hasMailbox && (
               <Button
                 variant="outline"
                 onClick={() => handleSendPasswordReset(profile.email)}
@@ -693,14 +793,14 @@ export function SettingsSectionContent({
             </form>
           </div>
           {passwordResetOutcome === "sent" && (
-            <p className="text-sm text-success">
+            <StatusLine status="success">
               {t('resetPasswordEmailSent', { email: profile?.email ?? "" })}
-            </p>
+            </StatusLine>
           )}
           {passwordResetOutcome === "failed" && (
-            <p className="text-sm text-destructive">
+            <StatusLine status="destructive">
               {t('resetPasswordEmailFailed')}
-            </p>
+            </StatusLine>
           )}
         </CardContent>
       </Card>

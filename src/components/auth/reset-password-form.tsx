@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES } from "@/lib/constants";
@@ -139,6 +140,31 @@ export function ResetPasswordForm() {
       return;
     }
 
+    // **Sign the recovery session out before pointing at the login page.**
+    //
+    // Reaching this line means an account's password was just changed by
+    // whoever was working through that account's inbox, and a live session on
+    // it should not outlive the page that changed it. The password is the thing
+    // that says who the account holder is; the session sitting in this browser
+    // was opened by a link, and there is no reason for it to stay open on a
+    // machine we know nothing about once the credential has moved. Ending it
+    // costs the user one sign-in they were being sent to do anyway.
+    //
+    // It is *not* what keeps the switch gate honest — a recovery session
+    // carries no marker from the switch route, so it is an `own` session and
+    // cannot switch at all, like any other (`src/lib/session-provenance.ts`).
+    // This sign-out predates that model; it stays because the reason above
+    // stands on its own.
+    try {
+      await supabase.auth.signOut();
+    } catch (signOutError) {
+      // The password has already moved; the session is the lesser half, and a
+      // throw here would strand the form with `committing` still set and no way
+      // forward. So the failure is logged and the success card shown — the user
+      // is being sent to sign in again either way.
+      console.error("[reset-password] sign-out after the update failed:", signOutError);
+    }
+
     // Success swaps to the success card (unmounts the form); leave `committing`
     // set so the button never re-enables on the way out.
     setSuccess(true);
@@ -185,7 +211,7 @@ export function ResetPasswordForm() {
           </Button>
           <Link
             href="/login"
-            className="flex items-center justify-center text-sm text-muted-foreground hover:text-primary"
+            className="flex items-center justify-center text-sm text-muted-foreground hover:text-act"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             {c('backToLogin')}
@@ -214,9 +240,9 @@ export function ResetPasswordForm() {
             className="sr-only"
           />
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
           <Field
             label={c('newPassword')}
@@ -251,7 +277,7 @@ export function ResetPasswordForm() {
           </Button>
           <Link
             href="/login"
-            className="flex items-center justify-center text-sm text-muted-foreground hover:text-primary"
+            className="flex items-center justify-center text-sm text-muted-foreground hover:text-act"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             {c('backToLogin')}

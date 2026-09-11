@@ -54,6 +54,14 @@ const nextConfig: NextConfig = {
   // import it — the only places in the app that do — so its ~20 MB lands on
   // those functions and nowhere else.
   serverExternalPackages: ["sharp"],
+  // The Open Graph cards read two vendored font files off disk at request time
+  // (`src/components/og/fonts.ts`). A `process.cwd()` read is invisible to the
+  // bundler's tracer, so the files have to be named here or they are simply not
+  // deployed beside the handlers — and a card with no fonts is a card satori
+  // draws in nothing.
+  outputFileTracingIncludes: {
+    "/opengraph-images/**": ["./src/assets/fonts/*.ttf"],
+  },
   images: {
     remotePatterns: [
       bucketPattern("product-images"),

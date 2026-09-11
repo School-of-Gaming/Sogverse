@@ -19,18 +19,48 @@ import type { AttendanceMark, SessionPhoto } from "@/components/session-feed";
 
 /**
  * One person on the group's roster, as the workspace's session surfaces need
- * them: an id and a first name, which is exactly enough to take a register.
+ * them: an id, a first name, and the instant from which they count as being in
+ * this group.
  *
- * The narrowness is the decision. The rail row beside this list knows a great
- * deal more about each seat — whether it is an adult holding their own place or
- * a child with a linked parent, and who there is to write to — and none of it
- * belongs on a session card. A roster of parents' mailboxes in particular is
- * not something an attendance checklist needs to be carrying, and who the send
- * reaches is settled server-side by the route that mails them.
+ * The narrowness is still the decision, and the third field does not weaken it.
+ * What stays on the far side of this map is **family contact data** — a roster
+ * of parents' mailboxes is not something an attendance checklist needs to be
+ * carrying, and who the send reaches is settled server-side by the route that
+ * mails them. What crosses is what taking a register needs, and taking a
+ * register needs to know who the register is *for*: a child placed into the
+ * group in week six was never expected on week two, and a sheet that cannot
+ * tell the difference asks the gedu to answer for an afternoon that child had
+ * no part in.
+ *
+ * The rail row beside this list still knows a great deal more about each seat —
+ * whether it is an adult holding their own place or a child with a linked
+ * parent — and none of that belongs on a session card.
  */
 export interface SessionFeedGamer {
   id: string;
   firstName: string;
+  /**
+   * The instant from which this member counts as being in this group — the
+   * floor the register's expectations are measured from.
+   *
+   * It is `participations.group_joined_at` (00203) and nothing else. Every seat
+   * that holds a group carries one: the trigger stamps every write path, and
+   * the seats placed before the column existed were backfilled from their own
+   * product signup in the migration that introduced this rule — a *data* fix,
+   * argued on its own merits there, rather than a fallback smuggled into every
+   * reader.
+   *
+   * Non-nullable on purpose, which is what keeps that guarantee from
+   * propagating a `Date | null` through every derivation downstream. The
+   * nullability dies once, at the map site that builds this roster, and it dies
+   * in the **safe direction**: a stamp that is somehow absent resolves to an
+   * instant before every session, so the member is expected everywhere. That is
+   * exactly today's behaviour and it is the harmless error — expecting somebody
+   * on a session they were not on costs a mark nobody needed, while exempting
+   * somebody who really was there is a false "complete" on a register that was
+   * never taken.
+   */
+  inGroupSince: Date;
 }
 
 interface SessionFeedEntryBase {
@@ -210,9 +240,9 @@ export interface PastSessionFeedEntry extends SessionFeedEntryBase {
    * out. The dashboard's SQL count draws the same end line, so the badge and the
    * card can never disagree about which sessions are outstanding.
    *
-   * It gates the amber warning and nothing else. Neither an old session nor a
+   * It gates the warning and nothing else. Neither an old session nor a
    * live one loses its editor — both are fully recordable, which is what makes
-   * roll call during the club work; what they may never do is turn amber for
+   * roll call during the club work; what they may never do is turn warning for
    * work nobody is owed yet. The green check still applies to both: finish the
    * sheet, write the report, and it is earned.
    */

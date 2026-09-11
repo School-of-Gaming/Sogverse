@@ -5,6 +5,7 @@ import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FamilyProfileSelector } from "@/components/family";
 import type { FamilyMember } from "@/services/family";
+import type { SessionProvenance } from "@/lib/session-provenance";
 
 /**
  * Body of the family profile selector page. The page-level layout owns the
@@ -21,9 +22,16 @@ import type { FamilyMember } from "@/services/family";
 export function SelectProfileView({
   selfDashboardPath,
   initialFamily,
+  initialSessionProvenance,
 }: {
   selfDashboardPath: string;
   initialFamily?: FamilyMember[];
+  /**
+   * Seeded because this page serves gamers, whose switches are gated: without
+   * it the tiles paint out of service and enable themselves once the client
+   * refetch lands.
+   */
+  initialSessionProvenance?: SessionProvenance;
 }) {
   const t = useTranslations("selectProfile");
   const c = useTranslations("common");
@@ -36,6 +44,7 @@ export function SelectProfileView({
       <FamilyProfileSelector
         autoOpenAddGamerFromUrl
         initialFamily={initialFamily}
+        initialSessionProvenance={initialSessionProvenance}
         onSelfClick={() => {
           // Full-page navigation so the proxy/root layout re-run and the
           // dashboard hydrates against fresh session cookies. Deliberately

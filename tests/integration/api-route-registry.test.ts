@@ -162,6 +162,8 @@ const TESTS = {
   forgotPassword: "tests/integration/auth/forgot-password.test.ts",
   gamersCreate: "tests/integration/api/gamers-create.test.ts",
   gamersUpdate: "tests/integration/api/gamers-update.test.ts",
+  gamersVerificationSend:
+    "tests/integration/api/gamers-verification-send.test.ts",
   geduGamerMinecraft: "tests/integration/api/gedu-gamer-minecraft.test.ts",
   geduGamerRoblox: "tests/integration/api/gedu-gamer-roblox.test.ts",
   geduRegister: "tests/integration/api/gedu-register.test.ts",
@@ -187,6 +189,7 @@ const TESTS = {
     "tests/integration/api/products-participations-delete.test.ts",
   productsParticipationsTransition:
     "tests/integration/api/products-participations-transition.test.ts",
+  productsParticipationsSwitch: "tests/integration/api/admin-switch-club.test.ts",
   productsUpdate: "tests/integration/api/products-update.test.ts",
   register: "tests/integration/auth/register.test.ts",
   adminUserGameAccount: "tests/integration/api/admin-user-game-account.test.ts",
@@ -276,6 +279,30 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
       },
     },
   },
+
+  // The admin club switch: the seat and its Stripe subscription move together.
+  // Both handlers read on the CALLER's client — every table involved carries an
+  // admin-full-access policy, and admin_move_participation re-checks the role
+  // internally, so a service-role call would have no auth.uid() to read.
+  "src/app/api/admin/products/[id]/participations/[participationId]/switch/route.ts":
+    {
+      adminClient:
+        "the subscription price cache alone, on the commit: getOrCreateSubscriptionPrice writes product_subscription_prices and reconciles the Stripe Product behind it, and takes the service-role client by signature. The check mints nothing and touches it not at all, and the RPC that moves the seat runs on the user client",
+      handlers: {
+        GET: {
+          posture: ADMIN_ONLY,
+          // The check takes its target as a query parameter, not a body: it is
+          // a read the dialog re-runs per picked target.
+          body: { kind: "none" },
+          test: TESTS.productsParticipationsSwitch,
+        },
+        POST: {
+          posture: ADMIN_ONLY,
+          body: { kind: "json", schema: "switchClubCommitBody" },
+          test: TESTS.productsParticipationsSwitch,
+        },
+      },
+    },
 
   // The lazy expiry sweep. There is no cron job behind seat offers: expiry is
   // observed by somebody opening a page that would care, and this is that call.
@@ -430,7 +457,6 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   },
 
   "src/app/api/auth/forgot-password/route.ts": {
-    adminClient: "Auth Admin API (recovery link generation)",
     handlers: {
       POST: {
         posture: {
@@ -543,11 +569,13 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
       POST: {
         posture: {
           kind: "role-gated",
-          // Every role with a real inbox. `gamer` is excluded deliberately: a
-          // gamer's address is the synthetic `@gamer.sogverse.internal` one the
-          // account was created with, so there is nobody to write to and
-          // nothing a stamp on it would mean.
-          roles: ["customer", "gedu", "admin"],
+          // Every role, because the real question is about the ADDRESS rather
+          // than the role and the handler is where it can be asked: a gamer
+          // holds a real inbox only in sign-in mode `email`, which lives one
+          // table over. The other two modes carry a synthetic
+          // `@gamer.sogverse.internal` handle with nobody to write to and
+          // nothing a stamp on it would mean, and the handler answers those 403.
+          roles: ["customer", "gamer", "gedu", "admin"],
         },
         body: { kind: "none" },
         test: TESTS.verifyEmailSend,
@@ -563,7 +591,11 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           reason:
             "clearing a session must work even when the session is already unusable, so requiring a valid one would strand exactly the callers who need it. POST-only is the CSRF control: a cross-origin top-level POST carries no SameSite=Lax cookie, so a hostile page cannot force a sign-out. Answers a 303 the browser follows as a full-page GET",
         },
-        body: { kind: "none" },
+        body: {
+          kind: "raw",
+          reason:
+            "an HTML form post carrying at most one urlencoded field, `next`, the internal path to land on; it is resolved through resolveInternalPath() with '/' as the fallback, and there is nothing else to validate, so no schema",
+        },
         test: TESTS.signout,
       },
     },
@@ -578,7 +610,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           roles: ["customer", "gamer"],
           allowUnverified: true,
         },
-        body: { kind: "json", schema: "inline: switchAccountBody" },
+        body: { kind: "json", schema: "switchAccountBody" },
         test: TESTS.switchAccount,
       },
     },
@@ -685,7 +717,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/feedback/route.ts": {
     adminClient:
-      "the submission write runs on the user client; the admin client survives only for the notification fan-out (every admin's address, a gamer's parent's) which is not in the submitter's view and must not be returnable",
+      "the submission write runs on the user client; the admin client survives only to resolve a gamer's reply-to (their parent's address), which is not in the submitter's view and must not be returnable",
     handlers: {
       POST: {
         // Every role, which is the shared gate's way of spelling "any
@@ -724,6 +756,18 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: { kind: "role-gated", roles: ["customer"] },
         body: { kind: "json", schema: "createGamerBody" },
         test: TESTS.gamersCreate,
+      },
+    },
+  },
+
+  "src/app/api/gamers/[id]/verification/send/route.ts": {
+    adminClient:
+      "reads the child's sign-in mode, and the shared sender reads the child's own address — none of which the parent's own client is granted, while the two things that decide entitlement (the parent_gamer link and the rate-limit RPC's is_parent_of guard) both run on the caller's client",
+    handlers: {
+      POST: {
+        posture: { kind: "role-gated", roles: ["customer"] },
+        body: { kind: "none" },
+        test: TESTS.gamersVerificationSend,
       },
     },
   },
@@ -1190,13 +1234,17 @@ const NON_ROUTE_ADMIN_CLIENT_SITES: Record<string, string> = {
   "src/lib/supabase/admin.ts": "the client factory itself",
   "src/lib/pin-session-server.ts":
     "resolves a PIN-reset token to a user id with no session in hand; shared by the reset page and the reset route",
+  "src/lib/password-reset.server.ts":
+    "mints the recovery link and mails it, for a caller who by definition cannot sign in — and for the verify page, acting on a token it just validated rather than on a session. The route that used to hold this import now delegates to it",
+  "src/lib/gamer-welcome.server.ts":
+    "reads a CHILD's stored address and locale to mail them the link that verifies it; the child holds no session yet (that is what the mail is for) and the parent's own client is not granted that row's address",
   "src/lib/email-verification.server.ts":
     "redeems an emailed verification token, which authorizes itself — the reader may hold no session or somebody else's, and `email_verified_at` has no write grant outside the service role",
   "src/lib/seat-offer.server.ts":
     "reads an emailed seat offer for its landing page, which authorizes itself — the reader may hold no session or their own child's, and the page renders identically either way. It only reads: accepting is a POST behind a button, so a mail scanner following the link reaches this and stops",
   "src/services/family/family.server.ts":
     "the shared family resolver — a gamer legitimately reads siblings beyond their own view",
-  "src/app/select-profile/page.tsx":
+  "src/app/[locale]/select-profile/page.tsx":
     "the profile chooser prefetch, through the same family resolver as the family-list route",
 };
 

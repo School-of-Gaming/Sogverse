@@ -75,8 +75,8 @@ exists.
 assignment codes; batch creation for a whole period; a per-lesson status workflow; and
 substitution tracking when another educator covers.
 
-**Sogverse has:** Sessions projected from a group's recurring schedule slots and holiday
-calendars, materialised lazily as `group_sessions` when a gedu first writes to one.
+**Sogverse has:** Sessions projected from a group's recurring schedule slots,
+materialised lazily as `group_sessions` when a gedu first writes to one.
 Batch creation is replaced by design — the projection *is* the semester. Per-session
 staff writes (report, photos, attendance) exist.
 
@@ -260,7 +260,7 @@ used for dropdowns and classifications across the app.
 `spoken_language`, `user_role` and others) with labels in `messages/`, plus TS const
 tuples for locales. `docs/investigations/enum-candidates.md` records the bar a value must
 clear to be an enum and the disqualifier: anything that is genuinely data with admin CRUD
-is a table instead — `locations`, `product_images`, `holiday_calendars`, `postal_codes`.
+is a table instead — `locations`, `product_images`, `postal_codes`.
 
 **Still open:** Only the question of whether any enum will ever need runtime editing. No
 current need; treat this item as closed unless one appears.
@@ -395,10 +395,11 @@ RPC when an admin opens a surface that cares, and verification requests self-pru
 their own RPC. Subscription cancellation is delegated to Stripe (`cancel_at_period_end`
 via the webhook, self-served through the Customer Portal).
 
-**Still open:** Any feature that genuinely needs a timer — session reminders
-(`docs/investigations/session-reminders-and-calendar-feed.md`) and chat retention
-(`TODO.md`) both name the constraint. The first such feature has to bring the runbook and
-alerting `pg_cron` would need.
+**Still open:** Any feature that genuinely needs a timer — chat retention (`TODO.md`)
+names the constraint. Session reminders no longer do: the direction is a calendar
+invitation carried by the confirmation mail, whose reminders the parent's own calendar
+fires, explored in `src/lib/calendar-invitations/`. The first feature that does need a
+timer has to bring the runbook and alerting `pg_cron` would need.
 
 **Priority:** `Medium`
 **Complexity:** `Medium` — Decided per feature; no general job system is wanted.
@@ -437,8 +438,6 @@ expandable club details.
 concrete week by weekday with a product-type filter only and no unscheduled bucket. The
 club list pages (`/admin/consumer-clubs`, `/admin/municipality-clubs`) have a flat list
 with day, educator, spoken language / municipality filters and a debounced text search.
-A standalone session calendar component exists with zero production consumers, which
-`TODO.md` already flags as rewire-or-delete.
 
 **Still missing:** Weekday grouping and multi-dimensional filtering on the same surface,
 status and attendance-type axes (absent from the wire contract, not just the UI), and an

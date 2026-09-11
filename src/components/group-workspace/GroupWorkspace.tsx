@@ -11,6 +11,7 @@ import { GamerFlairDialog } from "@/components/member-flair";
 import {
   SessionFeed,
   entryOwesCreations,
+  isExpectedOnEntry,
   type CreationsObligation,
   type SessionEntryDraft,
   type SessionFeedEntry,
@@ -45,6 +46,7 @@ import { ParticipantRosterRow } from "./ParticipantRosterRow";
 import { rosterContactEmail } from "./types";
 import { GroupNotesPanel, type GroupNotesDraft } from "./GroupNotesPanel";
 import { SitePanel, type SiteNotesDraft } from "./SitePanel";
+import type { AppHref } from "@/lib/constants/routes";
 
 /**
  * One group of one product, as the people running it work it: the group's
@@ -230,6 +232,25 @@ interface GroupWorkspaceProps {
   feedNow: Date;
   /** Attendance roster for the feed — same children as the group roster. */
   feedRoster: readonly SessionFeedGamer[];
+  /**
+   * Who on the roster may be photographed, keyed by roster id — or `null` on a
+   * product that does not ask the photo consent, where every session editor's
+   * photo block is exactly what it was before the consent existed.
+   *
+   * **Required rather than defaulted, unlike the other caller-derived props on
+   * this body**, and for a reason none of them has: the safe-looking default is
+   * the one that hides a safeguard. A new shell that forgot this prop would
+   * silently render a photo block with no permissions on it, on the one product
+   * where a gedu is photographing actual children — so the compiler asks, and
+   * a shell whose product asks nothing answers `null` in so many words.
+   *
+   * **A missing id in the map is a refusal, never a pending answer.** The shell
+   * resolves the stored rows into it and leaves out anybody with nothing on
+   * file, which is what lets the map be handed down the moment the roster is
+   * known: the answers land at the end of rows that already exist, and nothing
+   * on screen moves when they do.
+   */
+  photoConsents: ReadonlyMap<string, boolean> | null;
   /** Zone the schedule was authored in; the feed renders in the viewer's. */
   sourceTimeZone: string;
   /**
@@ -278,7 +299,7 @@ interface GroupWorkspaceProps {
    * Like the back link and the voice rooms' way back, it is a statement about
    * who brought you here — the one kind of thing a shared body cannot know.
    */
-  siteEditHref?: string;
+  siteEditHref?: AppHref;
   editingEntryId: string | null;
   onEditEntry: (entryId: string | null) => void;
   /**
@@ -383,7 +404,7 @@ interface GroupWorkspaceProps {
    * be bounced through /gedu to /admin instead of back to the group they were
    * looking at. Same ownership rule as {@link backLink}.
    */
-  workspaceHref?: string;
+  workspaceHref?: AppHref;
   /**
    * What the rail's first card is called. Omitted, it is the gedu's "My Group",
    * which is the possessive that makes the pair with "Other groups" read as one
@@ -402,6 +423,7 @@ export function GroupWorkspace({
   entries,
   feedNow,
   feedRoster,
+  photoConsents,
   sourceTimeZone,
   materialUrl,
   groupPublicNote,
@@ -551,6 +573,38 @@ export function GroupWorkspace({
     entryOwesCreations(finalEntry, feedRoster, creationsObligation);
 
   /**
+   * The session-level obligation itemized onto the rail's rows: who wears the
+   * per-member creations marker.
+   *
+   * Derived here rather than row by row inside the card, because the itemization
+   * has to be measured over the same list the obligation itself is — the
+   * members the FINAL session expected, on the shared expectation test. A member
+   * placed into the group after that session ended owes nothing, so a marker on
+   * their row would be the rail asserting a debt the card beside it has already
+   * said does not exist, on a session that does not even draw them.
+   *
+   * An empty set is every case where nothing is owed at all, which is what lets
+   * the row read one membership test rather than three conditions.
+   */
+  const membersOwingCreation = useMemo<ReadonlySet<string>>(() => {
+    // No `finalEntry === undefined` arm: `creationsOwedNow` already tested it,
+    // and the compiler carries that narrowing through the alias — restating it
+    // is a condition the types say can never fire.
+    if (!creationsOwedNow || creationsObligation === null) {
+      return new Set<string>();
+    }
+    return new Set(
+      feedRoster
+        .filter(
+          (gamer) =>
+            isExpectedOnEntry(finalEntry, gamer) &&
+            !creationsObligation.withCreations.has(gamer.id),
+        )
+        .map((gamer) => gamer.id),
+    );
+  }, [creationsOwedNow, creationsObligation, finalEntry, feedRoster]);
+
+  /**
    * Where leaving a voice room lands — this workspace, always.
    *
    * Named rather than left to the Join button's "wherever you clicked from"
@@ -600,7 +654,7 @@ export function GroupWorkspace({
               {/* Punctuation between two translated strings, so it is a
                   pseudo-element rather than a text node — it does not belong in
                   the message files. */}
-              <span className="inline-flex items-center gap-1 before:mr-1 before:text-muted-foreground/50 before:content-['·']">
+              <span className="inline-flex items-center gap-1 before:mr-1 before:content-['·']">
                 <Users className="h-4 w-4" aria-hidden />
                 {t("participantCount", {
                   count: assignedGroup.participant_count,
@@ -646,8 +700,7 @@ export function GroupWorkspace({
               gameStatuses={gameStatuses}
               robloxAvatarUrls={robloxAvatarUrls}
               memberFlair={memberFlair}
-              creationsOwedNow={creationsOwedNow}
-              creationsObligation={creationsObligation}
+              membersOwingCreation={membersOwingCreation}
               onOpenFlair={setOpenFor}
             />
           )}
@@ -724,6 +777,7 @@ export function GroupWorkspace({
               onSendReport={onSendReport}
               onAddPhoto={onAddPhoto}
               onRemovePhoto={onRemovePhoto}
+              photoConsents={photoConsents}
             />
           ) : (
             <Card>
@@ -876,7 +930,7 @@ function OtherGroupsRailCard({
   opensDate: string;
   opensTime: string;
   /** Where leaving a peer's room lands — this workspace, not theirs. */
-  backHref: string;
+  backHref: AppHref;
 }) {
   const t = useTranslations("gedu.sessionDetails");
   const g = useTranslations("common");
@@ -890,7 +944,7 @@ function OtherGroupsRailCard({
           {peerGroups.map((group) => (
             <li
               key={group.id}
-              className="space-y-1.5 rounded-md border border-border bg-muted/30 p-2.5"
+              className="space-y-1.5 rounded-md border border-border bg-lifted p-2.5"
             >
               <div className="flex items-baseline justify-between gap-2">
                 <p className="min-w-0 flex-1 truncate text-sm font-medium leading-tight">
@@ -1017,8 +1071,7 @@ function GroupRailCard({
   gameStatuses,
   robloxAvatarUrls,
   memberFlair,
-  creationsOwedNow,
-  creationsObligation,
+  membersOwingCreation,
   onOpenFlair,
 }: {
   group: GeduAssignedProductGroup;
@@ -1029,7 +1082,7 @@ function GroupRailCard({
   opensDate: string;
   opensTime: string;
   /** Where leaving this group's room lands — back on this workspace. */
-  backHref: string;
+  backHref: AppHref;
   /** The product's game identity, or `null` for a topic that has none. */
   platform: GamePlatform | null;
   onSaveGameUsername: (
@@ -1046,13 +1099,14 @@ function GroupRailCard({
    */
   memberFlair: RosterMemberFlair;
   /**
-   * Whether this group's final session is currently owed creations — the gate
-   * on the per-row marker. False on every unflagged product, on an open-ended
-   * one, and on a flagged run whose last session has not finished yet.
+   * Who wears the per-row creations marker — already gated on the final
+   * session being owed at all, and already scoped to the members that session
+   * expected, so a row asks one membership question and cannot re-derive either
+   * half differently. Empty on every unflagged product, on an open-ended one,
+   * on a flagged run whose last session has not finished yet, and on one that
+   * is square.
    */
-  creationsOwedNow: boolean;
-  /** Who already has a creation, so a row can ask whether *it* is one of them. */
-  creationsObligation: CreationsObligation | null;
+  membersOwingCreation: ReadonlySet<string>;
   /**
    * Open one member's per-gamer dialog. The dialog itself belongs to the page,
    * not to this card: the final session's creations block opens the same one,
@@ -1130,14 +1184,12 @@ function GroupRailCard({
                   (memberFlair.creations[member.participant_id]?.length ?? 0) > 0
                 }
                 // The itemization of the session-level obligation: while the
-                // final session is owed creations, every member who has none
-                // wears the marker, and it routes to the same dialog every
-                // other row's button does.
-                owesCreation={
-                  creationsOwedNow &&
-                  creationsObligation !== null &&
-                  !creationsObligation.withCreations.has(member.participant_id)
-                }
+                // final session is owed creations, every member that session
+                // EXPECTED who has none wears the marker, and it routes to the
+                // same dialog every other row's button does. The set is built
+                // once by the page above — see its note for why the expectation
+                // test belongs in the derivation rather than here.
+                owesCreation={membersOwingCreation.has(member.participant_id)}
                 // Handed to every row, not only the ones already written
                 // about: an empty note is what the add flow opens, most of the
                 // roster is that case, and a marker that appeared only on rows

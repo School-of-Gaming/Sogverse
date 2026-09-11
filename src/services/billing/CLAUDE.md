@@ -68,7 +68,7 @@ covers, under a short line explaining the split.
 **Rule: The account list is resolved server-side in the dashboard's Server
 Component, not fetched from the client.** The count decides how many buttons
 render; resolving it after paint would turn one rendered button into three under
-the parent's cursor. See the root `CLAUDE.md` layout rule.
+the parent's cursor. See the `src/CLAUDE.md` layout rule.
 
 ## Do not rebuild these
 

@@ -27,6 +27,20 @@ know. Note what none of them is — a *capability*. The body renders the same fi
 the same ones writable on both shells; where the shells differ is only in where they can
 send you.
 
+**The photo-consent answers are a shell read, and the body takes them whole.** On a
+product that asks whether photographs of a child may be taken and used, the session
+editors' photo block lists the roster's permissions and the note telling a gedu to ask
+each gamer in person as well; on every other product nothing about that block changes.
+Both facts — whether this product asks at all, and what each roster member's parent
+answered — are read by the shell alongside its other reads and handed in as one prop, for
+the reason every other datum here is: two shells reading it two ways is exactly the drift
+a shared body prevents, and a page that asks the database about children's photo
+permissions on a product that never asked the question is a read nobody wanted made. The
+prop is **required rather than defaulted**, unlike the other caller-derived props here:
+the innocent-looking default is the one that hides a safeguard, so a shell says `null` in
+so many words. What each answer *means* — and why a missing one is a refusal — belongs to
+the feed and is written down there.
+
 **Rule: nothing in here is named for a role.** The directory is the shared half, so a
 `Gedu*` or `Admin*` name in it is a claim the code does not make. Role-specific shells
 keep their role names and stay in their own trees. What does *not* move is domain

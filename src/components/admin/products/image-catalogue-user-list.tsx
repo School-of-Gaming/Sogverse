@@ -1,11 +1,12 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Circle, CircleDot } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ProductImageUser } from "@/services/product-images";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
+import { ROUTES } from "@/lib/constants";
 
 /**
  * **Which products a catalogue entry reaches**, in the one shape both places
@@ -47,8 +48,8 @@ export function ProductImageUserList({
         return (
           <li key={product.id}>
             <Link
-              href={`/admin/${config.routeSlug}/${product.id}`}
-              className="flex items-center justify-between gap-3 px-3 py-2 text-sm hover:bg-accent"
+              href={ROUTES.admin.product(product.product_type, product.id)}
+              className="flex items-center justify-between gap-3 px-3 py-2 text-sm hover:bg-hover"
             >
               <span className="min-w-0">
                 <span className="block truncate font-medium">

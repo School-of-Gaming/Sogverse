@@ -1,6 +1,33 @@
 {
   "metadata": {
     "description": "Where Screen Time Becomes Quality Time. Clubs, camps and events in Minecraft, Roblox, Fortnite and more, led by professional Game Educators.",
+    "og": {
+      "site": {
+        "alt": "School of Gaming: where screen time becomes quality time. Clubs, camps and events led by professional Game Educators.",
+        "headline": "Where Screen Time Becomes",
+        "headlineAccent": "Quality Time",
+        "subline": "Clubs, camps and events led by professional Game Educators"
+      },
+      "roblox": {
+        "title": "SOG x Lynx – Create your own game on Roblox",
+        "description": "A free programme for teens, run by real Game Educators. By Lynx Educate and School of Gaming, in collaboration with Roblox.",
+        "headline": "Create",
+        "headlineAccent": "your own game",
+        "headlineTail": "on Roblox",
+        "subline": "A free programme, run by real Game Educators",
+        "collaboration": "A collaboration between"
+      },
+      "pages": {
+        "signIn": {
+          "title": "Sign in to School of Gaming",
+          "description": "Sign in to your School of Gaming account to manage clubs, gamers, and more."
+        },
+        "createAccount": {
+          "title": "Join School of Gaming",
+          "description": "Create your School of Gaming parent account and enrol your child in clubs, camps and events led by professional Game Educators."
+        }
+      }
+    },
     "pages": {
       "signIn": "Sign In",
       "createAccount": "Create Account",
@@ -12,13 +39,10 @@
       "adminDashboard": "Admin Dashboard",
       "adminTools": "Tools",
       "parentDashboard": "My SOG",
-      "parentDashboardDescription": "Manage your gamers and enrollments",
       "geduDashboard": "My SOG",
       "geduSessionDetails": "Session details",
       "familyProduct": "Sessions and reports",
-      "familyProductDescription": "The schedule for this group and the write-up from every session.",
       "gamerDashboard": "My SOG",
-      "gamerDashboardDescription": "Your clubs, camps and events in Sogverse",
       "voiceSession": "Voice Session",
       "shop": "Shop",
       "schools": "Municipality Clubs",
@@ -30,12 +54,26 @@
       "terms": "Terms and Conditions",
       "antiBullying": "Anti-Bullying and Discipline",
       "attributions": "Attributions",
-      "roblox": "Roblox Game Design Programme",
-      "robloxPrivacy": "Roblox Programme Privacy Policy",
-      "robloxSafeguarding": "Roblox Programme Child Safeguarding Policy",
-      "robloxTerms": "Roblox Programme Terms & Conditions",
+      "roblox": "Creator Academy",
+      "robloxPrivacy": "Creator Academy Privacy Policy",
+      "robloxSafeguarding": "Creator Academy Child Safeguarding Policy",
+      "robloxTerms": "Creator Academy Terms & Conditions",
       "geduContract": "Gedu contract",
       "seatOffer": "Seat offer"
+    },
+    "descriptions": {
+      "signIn": "Sign in to your School of Gaming account to see your gamers’ upcoming sessions, manage enrolments and keep your family’s details up to date.",
+      "createAccount": "Create your family’s School of Gaming account and enrol your child in clubs, camps and events led by professional Game Educators.",
+      "forgotPassword": "Forgotten your password? Give us your email address and we will send you a link to choose a new one for your School of Gaming account.",
+      "resetPassword": "Choose a new password for your School of Gaming account from the link we emailed you, then sign in with it straight away.",
+      "registerGedu": "Apply to become a Game Educator with School of Gaming and lead clubs, camps and events for children in the games they already play.",
+      "about": "Who School of Gaming is, what Yty is, and answers to the questions families ask before they enrol their child.",
+      "shop": "Browse School of Gaming’s clubs, camps and events in Minecraft, Roblox, Fortnite and more, and find one that fits your child’s week.",
+      "resetPin": "Set a new parent PIN for your School of Gaming account from the link we emailed you. The PIN is what keeps the parent-only pages closed to your child.",
+      "privacy": "How School of Gaming collects, uses and stores your family’s data: what we hold about a child, who we share it with, and the rights you can exercise.",
+      "terms": "The terms you agree to when you use School of Gaming: how enrolments, payments and cancellations work, and what we and you are each responsible for.",
+      "antiBullying": "How School of Gaming prevents bullying in its clubs, camps and events, what happens when it occurs, and the discipline steps a Game Educator follows.",
+      "attributions": "The sources and licences behind the data School of Gaming uses: place names, postcodes and player heads, each credited the way its licence requires."
     }
   },
   "notFound": {
@@ -101,13 +139,28 @@
     "roleParent": "Parent",
     "roleGamer": "Gamer",
     "roleGedu": "Gedu",
-    "gedus": "Gedus"
+    "gedus": "Gedus",
+    "next": "Next",
+    "week": "wk {week}",
+    "weekRange": "wk {from}–{to}",
+    "weekRangeAcrossYears": "wk {from}/{fromYear} – wk {to}/{toYear}",
+    "weekCount": "{count, plural, one {# week} other {# weeks}}",
+    "weekColumn": "wk"
+  },
+  "datePicker": {
+    "openCalendar": "Open calendar",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "weekNumber": "Week number",
+    "goToWeek": "Go to week",
+    "selectWeek": "Select week {week}",
+    "today": "Today"
   },
   "about": {
     "pageTitle": "About us",
     "sectionNav": "On this page",
     "hero": {
-      "title": "About <primary>School of Gaming</primary>",
+      "title": "About School of Gaming",
       "subtitle": "Where Screen Time Becomes Quality Time. We bring together children, professional Game Educators, and the games children already love — Minecraft, Roblox, Fortnite and more — creating playful learning experiences where they make new friends, develop real skills, and have fun."
     },
     "quote": {
@@ -130,7 +183,7 @@
       },
       "keepChildrenSafe": {
         "title": "Keep children safe online",
-        "description": "The Sogverse platform has no direct-message feature: conversation happens in shared group spaces, and chat during a call goes to the whole room and is never stored. Every gamer account is linked to a parent account, and a child signs in through it rather than holding a password of their own. Zero tolerance for bullying and toxicity."
+        "description": "The Sogverse platform has no direct-message feature: conversation happens in shared group spaces, and chat during a call goes to the whole room and is never stored. Every gamer account is created by a parent and linked to their account, and the parent chooses how the child signs in — through the parent account alone, or with a username or a verified email address and a password of their own. Zero tolerance for bullying and toxicity."
       },
       "familyInTheLoop": {
         "title": "Family in the loop",
@@ -206,15 +259,15 @@
         },
         "gamerAccounts": {
           "question": "How does my child sign in, and what is the parent PIN?",
-          "answer": "<p>Your child has no login of their own. A gamer account carries an internal Sogverse address rather than your child’s real email address, it is linked to your parent account, and your child enters Sogverse by switching to their profile from yours — there is no password for them to lose or share.</p><p>Getting into the parent side takes a four-digit PIN that only you know, so a password saved in the browser is not enough to buy anything or change a child’s account, and the session locks again the moment you switch to a child’s profile or sign out.</p><p>If you forget the PIN, we email a reset link to the address on your account and nowhere else — a child pressing “Forgot your PIN?” simply sends you an email.</p>"
+          "answer": "<p>You choose how your child signs in, for each child, from My SOG. By default a gamer account has no login of its own: it carries an internal Sogverse address rather than a real email address, it is linked to your parent account, and your child enters Sogverse by switching to their profile from yours. If you prefer, you can give them a username and a password, or their own email address — which they verify before setting a password through the normal reset flow.</p><p>Whichever you choose, a child’s sign-in opens only their own account: a child who signed in with their own username or email cannot switch to your account or a sibling’s at all — they sign out and sign in again, as you with your password, or as a sibling who has a login of their own; a sibling who signs in through your account is reached from your account instead — and a child who got in by switching from your account needs your parent PIN to switch anywhere else.</p><p>Getting into the parent side takes a four-digit PIN that only you know, so a password saved in the browser is not enough to buy anything or change a child’s account, and the session locks again the moment you switch to a child’s profile or sign out.</p><p>If you forget the PIN, we email a reset link to the address on your account and nowhere else — a child pressing “Forgot your PIN?” simply sends you an email.</p>"
         },
         "childData": {
           "question": "What do you store about my child?",
-          "answer": "<p>About your child:</p><list><item>Their first name, their birth month and year — we do not ask for the day — and optionally their gender.</item><item>Your family surname, because your child is part of your family. It is shown to nobody outside your family: a Gedu’s roster and the voice room show your child’s first name, their age, and any game username you have added.</item><item>An internal Sogverse address on their account, rather than a real email address.</item><item>Optionally, their username in the games their clubs use — today Minecraft and Roblox — and the id that game gives them, so we can recognise them in a session. Their in-game character picture is loaded from that game’s own servers, so the username reaches Minecraft or Roblox whenever a roster is drawn.</item><item>A profile picture that is not a photo: with no game account linked, the image beside their name is a pattern generated from their account id.</item></list><p>Alongside that we keep what running a club requires: which clubs, camps and events they are signed up for, their attendance, the session reports and short staff notes their Gedus write, the chat from their sessions and any picture posted into it, anything they make that a Gedu links to their group, the consents recorded against their place, and the photos a Gedu attaches to a report. A Gedu’s moderation is on record too — a child moved into a private space, or muted in the chat, leaves a record of it. Those report photos are of the session rather than of one child — every family in that group sees them on the group’s page and receives them with the report by email.</p><p>To see, correct or delete anything we hold about your child, email {supportEmail}. We keep your information for as long as you have an account and delete or anonymise it if you close one, except where the law requires us to keep certain records longer, as Finnish accounting law does for payment records.</p>"
+          "answer": "<p>About your child:</p><list><item>Their first name, their birth month and year — we do not ask for the day — and optionally their gender.</item><item>Your family surname, because your child is part of your family. It is shown to nobody outside your family: a Gedu’s roster and the voice room show your child’s first name, their age, and any game username you have added.</item><item>An internal Sogverse address on their account, rather than a real email address — unless you chose to give your child a sign-in of their own with their own address, in which case we hold that address. Either way, no email address of your child’s is shown on a Gedu’s roster or in the voice room.</item><item>Optionally, their username in the games their clubs use — today Minecraft and Roblox — and the id that game gives them, so we can recognise them in a session. Their in-game character picture is loaded from that game’s own servers, so the username reaches Minecraft or Roblox whenever a roster is drawn.</item><item>A profile picture that is not a photo: with no game account linked, the image beside their name is a pattern generated from their account id.</item></list><p>Alongside that we keep what running a club requires: which clubs, camps and events they are signed up for, their attendance, the session reports and short staff notes their Gedus write, the chat from their sessions and any picture posted into it, anything they make that a Gedu links to their group, the consents recorded against their place, and the photos a Gedu attaches to a report. A Gedu’s moderation is on record too — a child moved into a private space, or muted in the chat, leaves a record of it. Those report photos are of the session rather than of one child — every family in that group sees them on the group’s page and receives them with the report by email.</p><p>To see, correct or delete anything we hold about your child, email {supportEmail}. We keep your information for as long as you have an account and delete or anonymise it if you close one, except where the law requires us to keep certain records longer, as Finnish accounting law does for payment records.</p>"
         },
         "howToStart": {
           "question": "How do I get started?",
-          "answer": "<p>Create a parent account, add your child as a gamer from My SOG, then browse the shop and enrol them — the signup panel asks who the seat is for, and prompts you to add a gamer if you have not yet.</p><p>Once you have signed up we place your child in a group with a Gedu before their first session, and the club then appears on My SOG for both of you.</p><p>They join sessions through your account — you switch to their profile — so they never need a password of their own.</p>"
+          "answer": "<p>Create a parent account, add your child as a gamer from My SOG, then browse the shop and enrol them — the signup panel asks who the seat is for, and prompts you to add a gamer if you have not yet.</p><p>Once you have signed up we place your child in a group with a Gedu before their first session, and the club then appears on My SOG for both of you.</p><p>They join sessions through your account — you switch to their profile — unless you choose to give them a sign-in of their own from My SOG.</p>"
         },
         "becomeGedu": {
           "question": "How do I become a Game Educator?",
@@ -249,6 +302,7 @@
         "issues": {
           "unassignedGamers": "{count, plural, one {# unassigned gamer} other {# unassigned gamers}}",
           "groupWithoutGedu": "Group {group} has no Gedu",
+          "emptyGroupWithoutGedu": "Empty group {group} has no Gedu",
           "waitlistOpenSeats": "{waiting} waitlisted · {open, plural, one {# seat} other {# seats}} open",
           "missingGeduFee": "Gedu fee not set",
           "missingMunicipalityFee": "Municipality fee not set",
@@ -274,7 +328,6 @@
         "sessionCount": "{count, plural, one {# session} other {# sessions}}",
         "timesIn": "times in {zone}",
         "nothingOn": "Nothing on",
-        "paused": "Paused this week:",
         "needsAttention": "Needs attention — this product is in the queue at the top of the page",
         "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
       },
@@ -415,9 +468,10 @@
           "materialUrl": "Lesson material",
           "startDate": "Start date",
           "endDate": "End date",
+          "firstSession": "First session",
+          "lastSession": "Last session",
           "signupThreshold": "Signup threshold",
           "termDates": "Term dates",
-          "holidayCalendars": "Holiday calendars",
           "billingMode": "Billing",
           "seats": "Seats",
           "waitlist": "Waitlist",
@@ -425,12 +479,15 @@
           "primaryGeduFee": "Primary Gedu fee / session",
           "assistantGeduFee": "Assistant Gedu fee / session",
           "municipalityFee": "Municipality fee / session",
+          "timezone": "Timezone",
           "registrationOpensAt": "Registration opens",
           "tag": "Designed for",
           "regionLock": "Region lock",
           "requiredConsents": "Required consents",
           "requiresGamerCreations": "Gamer creations",
-          "visibility": "Visibility"
+          "visibility": "Visibility",
+          "gamerPhotoConsents": "Photo asks",
+          "marketingConsents": "Marketing asks"
         },
         "copyLink": "Copy public link",
         "copied": "Copied"
@@ -475,7 +532,7 @@
         "registration": "Registration timing",
         "registrationDescription": "Pick when parents can start signing up.",
         "consents": "Consents",
-        "consentsDescription": "What a parent agrees to, and what they are asked, on the way through signup. Required documents must be accepted before a seat can be taken; marketing questions may be declined.",
+        "consentsDescription": "What a parent agrees to, and what they are asked, on the way through signup. Required documents must be accepted before a seat can be taken; the photo question and the marketing question may both be declined.",
         "visibility": "Listing",
         "visibilityDescription": "Decides where this product is advertised, not who may buy it. Sign-ups are opened and closed by the registration date, the seat limit and the product's status — never by this setting."
       },
@@ -507,8 +564,7 @@
         "dayAndTime": "Day & time",
         "daysAndTimes": "Days & times",
         "time": "Time",
-        "holidayCalendars": "Holiday calendars",
-        "holidayNoUpcoming": "No upcoming dates — this calendar needs dates before it’s useful.",
+        "timezone": "Timezone",
         "pricing": "Price",
         "free": "Free",
         "paid": "Paid",
@@ -608,10 +664,16 @@
         "version": "Version {version}",
         "noVersion": "No published version",
         "none": "None",
+        "gamerPhoto": {
+          "lynxEducate": {
+            "label": "Photos and videos (Lynx Educate)",
+            "description": "Ticking this adds an optional question to this product’s signup: parents are asked whether photos and videos of their child may be taken and used by School of Gaming, Lynx Educate and Roblox. They may decline, and the seat is unaffected. Asked per child, and re-asked on every enrolment."
+          }
+        },
         "marketing": {
           "lynxEducate": {
             "label": "Lynx Educate",
-            "description": "Ticking this adds an optional question to this product’s signup: parents are asked whether to share their contact details with Lynx Educate. They may decline, and the seat is unaffected."
+            "description": "Ticking this adds an optional question to this product’s signup: parents are asked whether to share their email address with Lynx Educate. They may decline, and the seat is unaffected."
           }
         }
       },
@@ -634,8 +696,9 @@
         "eventSingleDay": "Events happen on a single date.",
         "thresholdOnly": "No fixed start date yet. Parents see a “X of Y needed” counter while it fills up. You press Start once you have enough sign-ups and pick the first session date then.",
         "thresholdWithDate": "If fewer than this many parents sign up by the start date, you’ll need to cancel and refund from the product’s page.",
-        "timezoneFixedHelsinki": "Times are in Europe/Helsinki. Parents see them converted to their local timezone automatically.",
-        "holidayHint": "No session will run on any date from the selected calendars. Edit a calendar once and every product using it updates automatically.",
+        "timezoneEntry": "Session times below are entered in this timezone. Parents see them converted to their own automatically.",
+        "timezoneChangeMoves": "Session times below are entered in this timezone. Changing it moves every upcoming session to the same clock time in the new zone, while sessions that already have a report or attendance recorded keep the times they were held at.",
+        "timezoneIs": "Times are in {timezone}. Parents see them converted to their local timezone automatically.",
         "billingHint": "Free products default to a seat limit; paid ones start unlimited.",
         "freeDetail": "No charge. Anyone can join with one click.",
         "paidDetailMonthly": "Charged monthly as a subscription.",
@@ -647,8 +710,9 @@
         "seatHintNoWaitlist": "When full, new signups are refused.",
         "visibleHint": "Unchecked, the product appears on no public page — but anyone with the direct link can still open it and buy a place. That is what makes it right for unannounced, invite-only or campaign products. It is not a way to stop sign-ups, and it never affects parents and gamers already taking part.",
         "seatLimitHint": "Cap the number of participants, or run with no limit.",
-        "holidayComingSoon": "Holiday calendars are coming soon. For now, every scheduled session runs.",
-        "startDateBillingAnchor": "The date the club starts, and the date families are first charged. Changing it later does not move the first charge for anyone who has already signed up — correct those subscriptions in Stripe."
+        "startDateBillingAnchor": "The date the club starts, and the date families are first charged. Changing it later does not move the first charge for anyone who has already signed up — correct those subscriptions in Stripe.",
+        "startNotSessionDay": "No session falls on this date. The first session is {date}.",
+        "endNotSessionDay": "No session falls on this date. The last session is {date}."
       },
       "errors": {
         "translationRequired": "At least one language with name and description is required",
@@ -781,7 +845,7 @@
         "searchGedu": "Search Gedus…",
         "searchMunicipality": "Search municipalities…",
         "noResults": "No matches.",
-        "search": "Search products by name",
+        "search": "Search",
         "searchPlaceholder": "Search by name…",
         "showing": "Showing {count} of {total}",
         "clear": "Clear",
@@ -904,6 +968,55 @@
             "description": "Removing {name} would leave the family's subscription billing for a seat that no longer exists.",
             "nextStep": "The family opens the billing card on their My SOG page, which takes them to Stripe's secure billing portal to cancel. Once the subscription ends, the seat is released."
           }
+        },
+        "switchClub": {
+          "dropZone": "Switch club",
+          "title": "Switch club",
+          "description": "Move {name} to another club. Nothing changes for the family today: the same card is charged on the same date, the next invoice corrects for the rest of this month, and from then on they pay the new club's price.",
+          "searchPlaceholder": "Search clubs by name",
+          "picker": {
+            "empty": "There is no other club to switch to. A target has to be a club billed monthly that has not finished.",
+            "noMatch": "No club matches this search. Try another name.",
+            "alreadyHolds": "Already has seat"
+          },
+          "facts": {
+            "ageRange": "{ends, select, both {Ages {min}–{max}} from {Ages {min} and up} other {Ages {max} and under}}",
+            "ageRangeWithGamer": "{ends, select, both {Ages {min}–{max}} from {Ages {min} and up} other {Ages {max} and under}} · {name} is {age}",
+            "seats": "{taken} of {capacity} seats taken",
+            "regionLocked": "Families in {country} only",
+            "notStarted": "Starts {date}. The family pays from today, not from the start date.",
+            "notStartedUndated": "No start date yet. The family pays from today.",
+            "subscriptionEnding": "The family has cancelled this subscription; it ends on {date}. This month's price difference will not be invoiced."
+          },
+          "prices": {
+            "current": "Paying now",
+            "target": "New price",
+            "proration": "The next invoice adds or refunds the difference for the rest of this month.",
+            "unavailable": "No price to show",
+            "error": "The price check did not come back. Pick the club again to retry."
+          },
+          "back": "Back",
+          "group": {
+            "label": "Group",
+            "unassigned": "Leave unassigned",
+            "members": "{count, plural, one {# gamer} other {# gamers}}"
+          },
+          "refusals": {
+            "latestInvoiceNotPaid": "The family's latest invoice is not paid, so there is no paid time to move. Sort this out in Stripe first.",
+            "subscriptionNotSingleItem": "The subscription carries more than one item, so there is no single price to swap. Sort this out in Stripe first.",
+            "noTargetPriceInCurrency": "This club has no price in the currency the subscription bills in. Clubs are priced in euros, so a subscription Stripe created in another currency cannot be switched here — sort this out in Stripe first.",
+            "participationNotActive": "This seat is not active, so there is nothing to move.",
+            "noLiveSubscription": "No live subscription stands behind this seat, so this is not the tool for it: remove the seat and enroll the gamer on the other club instead.",
+            "targetNotPaidSubscriptionClub": "That product is not a club billed monthly, so a subscription cannot follow the seat onto it.",
+            "sameProduct": "That is the club the gamer is already on.",
+            "alreadyOnTarget": "This gamer already holds a place on that club."
+          },
+          "commit": {
+            "stripeUpdated": "The subscription is already on the new club's price, but the seat did not move. Press Switch club again to finish — pressing again does not charge the family twice.",
+            "stripeUpdatedStuck": "The subscription is already on the new club's price even though the seat could not move, so the family is billed for a club the gamer holds no place on. Sort this out in Stripe first.",
+            "failed": "The switch did not complete. Press Switch club again — a repeated press replays the same request, so it never charges the family twice."
+          },
+          "confirm": "Switch club"
         }
       },
       "seatLimitModes": {
@@ -943,7 +1056,6 @@
       "userNotFound": "User not found.",
       "joined": "Joined",
       "unknown": "Unknown",
-      "referralCode": "Referral code",
       "linkedGamers": "Linked Gamers",
       "linkedParents": "Linked Parents",
       "unnamedGamer": "Unnamed Gamer",
@@ -974,9 +1086,25 @@
         "description": "Set or correct this account's game usernames. Saving checks the name with the platform."
       },
       "marketing": {
-        "title": "Marketing preferences",
+        "title": "Marketing",
+        "attribution": "Attribution",
+        "utm": {
+          "source": "Source",
+          "medium": "Medium",
+          "campaign": "Campaign"
+        },
+        "preferences": "Preferences",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
+        "granted": "Granted",
+        "notGranted": "Not granted",
+        "since": "since {date}"
+      },
+      "photoConsent": {
+        "title": "Photo consent",
+        "labels": {
+          "lynx_educate": "Lynx Educate"
+        },
         "granted": "Granted",
         "notGranted": "Not granted",
         "since": "since {date}"
@@ -1000,7 +1128,8 @@
         "uncertifyAction": "Remove certification",
         "saving": "Saving…",
         "error": "Couldn’t update certification. Please try again."
-      }
+      },
+      "usernameLabel": "Username"
     },
     "locations": {
       "editName": "Edit {name}",
@@ -1036,36 +1165,24 @@
       "description": "Internal tools for testing and development",
       "emailTool": "Email Testing Tool",
       "emailToolDescription": "Send test emails via Brevo (SMTP) to verify delivery and templates.",
-      "provider": "Provider",
-      "brevo": "Brevo (SMTP)",
-      "klaviyoComingSoon": "Klaviyo (coming soon)",
-      "content": "Content",
       "template": "Template",
       "language": "Language",
-      "custom": "Custom",
       "toEmail": "To Email",
       "toEmailPlaceholder": "recipient@example.com",
       "templateParameters": "Template Parameters",
-      "fromEmail": "From Email",
-      "fromName": "From Name",
       "subject": "Subject",
-      "subjectPlaceholder": "Test email subject",
-      "body": "Body",
-      "bodyPlaceholder": "Enter email body (HTML supported)",
-      "replyTo": "Reply-To (optional)",
-      "replyToPlaceholder": "reply@example.com",
       "sendTestEmail": "Send Test Email",
       "emailSentSuccess": "Email sent! Message ID: {messageId}",
       "failedToSendRequest": "Failed to send request",
       "preview": "Preview",
-      "previewDescription": "How the mail renders. It is drawn here in your browser and not sent, and its images load from this server — so a preview shows the photos a send from a dev machine leaves out.",
-      "refreshPreview": "Refresh preview",
       "previewError": "Could not render this template: {message}",
       "previewWidth": {
         "label": "Preview width",
         "desktop": "Desktop",
         "mobile": "Mobile"
-      }
+      },
+      "attachment": "Attachment: {name}",
+      "sentAttachment": "What was sent: {name}"
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -1084,15 +1201,16 @@
       "welcomeTitle": "Welcome to School of Gaming",
       "noAccountSignUp": "Don’t have an account? <link>Sign up</link>",
       "signingIn": "Signing in...",
-      "emailPlaceholder": "you@example.com",
       "passwordPlaceholder": "Enter your password",
       "errors": {
-        "identifierRequired": "Please enter your email.",
+        "identifierRequired": "Please enter your email or username.",
         "passwordTooShort": "Password must be at least {count} characters.",
-        "invalidCredentials": "The email or password you entered is incorrect.",
+        "invalidCredentials": "The email, username or password you entered is incorrect.",
         "emailNotConfirmed": "Please confirm your email address before signing in.",
         "tooManyAttempts": "Too many sign-in attempts. Please wait a moment and try again."
-      }
+      },
+      "identifierLabel": "Email or username",
+      "identifierPlaceholder": "you@example.com or a username"
     },
     "needHelp": "Need help? Contact <link>{email}</link>",
     "register": {
@@ -1227,7 +1345,8 @@
     "price": {
       "subscription": "{amount} / month",
       "upfront": "{amount} (one-time)",
-      "free": "Free"
+      "free": "Free",
+      "external": "Paid for by your municipality"
     },
     "nextTitle": "What happens next",
     "next": {
@@ -1373,6 +1492,16 @@
       "title": "Switch to {name}’s profile to add a gamer?",
       "oneWayWarning": "You’ll be signed out of your gamer account."
     },
+    "switchGate": {
+      "pinTitle": "Ask a parent to enter their PIN",
+      "pinDescription": "A parent’s PIN is needed to switch to {name}.",
+      "pinNotSetTitle": "No parent PIN yet",
+      "pinNotSetDescription": "A parent needs to set a PIN from their own My SOG first. Then you can switch accounts.",
+      "signOutTitle": "Sign out first",
+      "signOutOwnSession": "{name} is signed in with their own login, so this account can’t switch to another one. That keeps everyone’s account private.",
+      "signOutHow": "Sign out, then sign in as {name}.",
+      "signOutHowViaParent": "Sign out, then sign in as your parent and switch to {name} from there."
+    },
     "addGamerForm": {
       "title": "Add a gamer",
       "firstNameLabel": "First name",
@@ -1444,7 +1573,8 @@
     "privacy": "Privacy Policy",
     "terms": "Terms & Conditions",
     "antiBullying": "Anti-Bullying",
-    "attributions": "Attributions"
+    "attributions": "Attributions",
+    "privacyChoices": "Privacy choices"
   },
   "gamer": {
     "welcomeNamed": "Welcome, {name}!",
@@ -1455,14 +1585,14 @@
       "items": {
         "joiningSession": {
           "question": "How do I join my session when it starts?",
-          "answer": "<p>Here is the whole thing:</p><steps><step>Open My SOG and find your club.</step><step>Look at the button on it. Until your session is close it stays locked, and it tells you the day and time it opens.</step><step>Five minutes before your session starts, that button changes to “Join voice room”.</step><step>Tap it. You are in.</step></steps><p>There is nothing to install and no code to type.</p><p>If your club says instead that you are signed up and we are matching you with a Gedu and a group, there is no button on it yet. You are in — we just have not put you in a group. That happens before your first session, and your Gedu will be there when it does.</p>"
+          "answer": "<p>First, open My SOG and find your club. What happens next depends on where your club meets.</p><p>If it meets online, there is a button on it:</p><steps><step>Until your session is close, the button stays locked, and it tells you the day and time it opens.</step><step>Five minutes before your session starts, that button changes to “Join voice room”.</step><step>Tap it. You are in.</step></steps><p>There is nothing to install and no code to type.</p><p>If it meets in person, there is no button. Your club shows the name of the place instead, and your club’s page shows its address too. Be there when your session starts.</p><p>If your club says instead that you are signed up and we are matching you with a Gedu and a group, there is no button or place on it yet. You are in — we just have not put you in a group. That happens before your first session, and your Gedu will be there when it does.</p>"
         },
         "cannotBeHeard": {
-          "question": "Nobody can hear me — what do I check?",
+          "question": "Nobody can hear me in the voice room — what do I check?",
           "answer": "<p>Check these in order. It is almost always the first one.</p><steps><step>Is your microphone button red? That means you are muted. Tap it to unmute.</step><step>Does the button show a padlock? Your Gedu has locked your microphone for a moment. They will unlock it.</step><step>Tap the small arrow next to the microphone button. It opens your microphone settings, where you can pick the right microphone from the list.</step><step>Now talk, and look for the bar under the list. If there is no bar at all, your microphone is off rather than quiet — go back to step 1. If the bar is there but never moves, something else on your device has your microphone.</step></steps><p>If you see a red message saying we cannot reach your microphone, close any other app or tab that is using it, allow microphone access in your browser’s settings, and tap Reload.</p><p>Still nobody? Tell your Gedu in the session — they can help.</p>"
         },
         "cannotHearOthers": {
-          "question": "I cannot hear anyone — what do I check?",
+          "question": "I cannot hear anyone in the voice room — what do I check?",
           "answer": "<p>Check these in order:</p><steps><step>Turn your device’s volume up, and check your headphones are plugged in properly.</step><step>Look at the zones. You only hear the people in the same zone as you, so if everyone else is somewhere else, tap the zone they are in to move in with them.</step><step>If your Gedu moved you into a zone on purpose, stay there. They will bring you back.</step></steps><p>If the others are in your zone, your volume is up and it is still silent, tell your Gedu — say it out loud, or write it in the chat if your room has one. They can see who is in the room and help.</p>"
         },
         "someoneIsMean": {
@@ -1531,6 +1661,7 @@
       "staffNotePlaceholder": "Anything another Gedu should know — and anything you need on record privately: an incident, bullying, a worry about a gamer.",
       "attendanceLegend": "Attendance",
       "attendanceRevertHint": "Choose the same answer again to clear a mark. You can save part of a roster and finish later.",
+      "attendanceNobodyExpected": "Nobody on the roster had joined this group when this session ran, so there is no register to take.",
       "reportTitle": "Session report — visible to parents and gamers",
       "reportFormattingHint": "Never include private or sensitive information about a gamer. Headings, bold and lists keep it easy to skim.",
       "reportPlaceholder": "Start with a Title, then the full picture — the session’s topic, the group’s work, how it goes, and the highlights and moments worth remembering.",
@@ -1551,6 +1682,10 @@
       "photosEmpty": "Add a photo to this session.",
       "photosDropHint": "You can also drop photos here.",
       "addPhoto": "Add photo",
+      "photoConsentTitle": "Photo permission",
+      "photoConsentNote": "Ask each gamer before taking their photo, even when their parent has consented. A gamer whose parent has not consented must not be in the photo.",
+      "photoConsentAllowed": "Allowed",
+      "photoConsentNotAllowed": "Not allowed",
       "removePhoto": "Remove photo {index}",
       "photosTrimmed": "A report holds up to {cap} photos, so {count, plural, one {only the first one was} other {only the first # were}} added.",
       "photoErrorDecodeFailed": "That file couldn’t be opened. If it came from an iPhone, save it as a JPEG and try again.",
@@ -1674,11 +1809,11 @@
         },
         "safeguardingConcern": {
           "question": "I have a safeguarding concern mid-session — what do I do?",
-          "answer": "<p>Deal with the immediate situation in the room first — you hold the moderator controls: mute a microphone, lock it, or move someone into a private space away from the group. Then put it on record the same day, while it is fresh.</p><p>Every session has a staff note, marked for Gedus and admins, that families never see; it is where an incident, bullying or a worry about a gamer belongs. There is also a per-gamer note on the group roster that stays with that child in that group, session to session, and is likewise Gedu- and admin-only. Neither is visible to any family.</p><p>A note is a record, not an alert: nobody is paged by it, so anything urgent, or anything that needs someone beyond the group, goes to the office at {supportEmail} as well.</p>"
+          "answer": "<p>Deal with the immediate situation first. In an online session you hold the moderator controls in the voice room: mute a microphone, lock it, or move someone into a private space away from the group. In person the product has no controls for this — you handle it in the room yourself. Either way, put it on record the same day, while it is fresh.</p><p>Every session has a staff note, marked for Gedus and admins, that families never see; it is where an incident, bullying or a worry about a gamer belongs. There is also a per-gamer note on the group roster that stays with that child in that group, session to session, and is likewise Gedu- and admin-only. Neither is visible to any family.</p><p>A note is a record, not an alert: nobody is paged by it, so anything urgent, or anything that needs someone beyond the group, goes to the office at {supportEmail} as well.</p>"
         },
-        "gamerCannotConnect": {
-          "question": "A gamer cannot connect and the session has started — what can I do?",
-          "answer": "<p>Two things you can do inside the product, and one you cannot.</p><p>Check who is actually in the room against your roster — the participant list only shows people who are connected right now, so a name missing from it is a gamer who has not made it in, and nothing marks that for you; you read it off the list.</p><p>To reach the family, open the group’s roster in the group workspace: each row carries the family’s contact email, which you copy with a tap, and there is a copy-all control above the list. You send from your own mail — there is no in-app message to a family, no text message, and no phone number on the roster.</p><p>What you cannot do is admit them yourself: entry is decided by our server on the gamer’s own request, and they need an active place in that group with the session window open. If they hold a place and still cannot get in, the fastest fix is usually on their side — allow the browser microphone access, close whatever else is using it, reload. If it is something we need to fix, mail the office at {supportEmail}.</p>"
+        "gamerNotArrived": {
+          "question": "A gamer has not arrived and the session has started — what can I do?",
+          "answer": "<p>First, be sure who is missing. Online, check who is actually in the room against your roster — the participant list only shows people who are connected right now, so a name missing from it is a gamer who has not made it in, and nothing marks that for you; you read it off the list. In person, the group’s roster is who should be there, and you check the room against it the same way.</p><p>To reach the family, open the group’s roster in the group workspace: each row carries the family’s contact email, which you copy with a tap, and there is a copy-all control above the list. You send from your own mail — there is no in-app message to a family, no text message, and no phone number on the roster.</p><p>Online, what you cannot do is admit a gamer yourself: entry is decided by our server on the gamer’s own request, and they need an active place in that group with the session window open. If they hold a place and still cannot get in, the fastest fix is usually on their side — allow the browser microphone access, close whatever else is using it, reload. If it is something we need to fix, mail the office at {supportEmail}.</p>"
         }
       }
     }
@@ -1764,7 +1899,7 @@
   },
   "schools": {
     "hero": {
-      "title": "Game clubs in <primary>your municipality</primary>",
+      "title": "Game clubs in your municipality",
       "subtitle": "School of Gaming runs clubs together with Finnish municipalities. Find your municipality and explore what’s on offer.",
       "howItWorks": "Depending on the municipality, the club meets either online from home or in person at your child’s school. A professional Game Educator is always there to guide the activity."
     },
@@ -1808,11 +1943,17 @@
       "format": "Format",
       "formatOnline": "Online",
       "formatInPerson": "In person",
+      "price": "Price",
+      "priceFree": "Free",
+      "pricePaid": "Paid",
       "language": "Language",
       "age": "Age",
       "days": "Days",
       "clearAll": "Clear",
-      "filterBy": "Filter by"
+      "filterBy": "Filter by",
+      "title": "Filters",
+      "activeCount": "{count, plural, one {# filter active} other {# filters active}}",
+      "removeFilter": "Remove {label}"
     },
     "card": {
       "ages": "Ages {min}–{max}",
@@ -1875,38 +2016,38 @@
       "pegi": "PEGI {age}",
       "topics": {
         "minecraft_java": {
-          "description": "Minecraft is a creative building game — think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine, from a cosy house to a whole city. There’s no winning or losing; it’s a calm, open-ended space to create and problem-solve. “Java” is the original version for Windows, Mac and Linux computers — the one our remote clubs use, because it supports the tools our Game Educators rely on.",
-          "note": "For our clubs your child needs Minecraft on a computer. On Minecraft.net it’s sold as “Minecraft: Java & Bedrock Edition for PC” — a single one-time purchase (not a subscription) that includes the version we use. The separate console, phone and tablet version won’t work for these clubs.",
+          "description": "Minecraft is a creative building game. Think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine, from a cosy house to a whole city. There is no winning or losing. It is a calm, open-ended space to create and solve problems. “Java” is the original version for Windows, Mac and Linux computers. It is the one our remote clubs use, because it supports the tools our Game Educators rely on.",
+          "note": "For our remote clubs your child needs Minecraft on a computer. On Minecraft’s own site it is sold as “Minecraft: Java & Bedrock Edition for PC”. That is a single one-time purchase rather than a subscription, and it includes the version we use. The separate console, phone and tablet version does not work for these clubs.",
           "linkLabel": "Get Minecraft for PC"
         },
         "minecraft_bedrock": {
-          "description": "Minecraft is a creative building game — think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine, from a cosy house to a whole city. There’s no winning or losing; it’s a calm, open-ended space to create and problem-solve. “Bedrock” is the version that runs on consoles (Xbox, PlayStation, Switch), phones, tablets and Windows PCs.",
-          "note": "Your child needs Minecraft Bedrock for this club. It isn’t included in the price — buy it from the store that matches the device your child will play on (the same game, sold in a different place on each device). On a games console, playing online may also need that console’s paid online membership.",
+          "description": "Minecraft is a creative building game. Think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine, from a cosy house to a whole city. There is no winning or losing. It is a calm, open-ended space to create and solve problems. “Bedrock” is the version that runs on consoles (Xbox, PlayStation, Switch), phones, tablets and Windows PCs.",
+          "note": "Minecraft Bedrock is not included in the price. It is the same game sold separately for each device, and a copy bought for one device does not carry over to another. The copy that counts is the one for the device your child will play on. On a games console, playing online also needs that console’s paid online membership.",
           "linkLabel": "Where to get it"
         },
         "minecraft_education": {
-          "description": "Minecraft is a creative building game — think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine. Minecraft Education is a version made for the classroom: the same friendly, open-ended building, plus extra tools for the adult leading the session, designed for guided activities rather than solo play.",
-          "note": "There’s nothing to buy and no school account to arrange — School of Gaming provides the Minecraft Education accounts participants use during the club. For our remote clubs, your child also needs to download the game itself, free of charge, from the Microsoft Store or from Minecraft Education’s own site.",
+          "description": "Minecraft is a creative building game. Think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine. Minecraft Education is a version built for guided groups. It is the same friendly, open-ended building, with extra tools for the adult running the session.",
+          "note": "There is nothing to buy and no school account to arrange. School of Gaming provides the Minecraft Education accounts participants use during the sessions. For remote clubs the game itself is a free download from the Microsoft Store or from Minecraft Education’s own site. It runs on Windows and Mac computers as well as iPads and Chromebooks.",
           "linkLabel": "About Minecraft Education"
         },
         "fortnite": {
-          "description": "Fortnite is a colourful, cartoon-style online game where players team up and compete in short, round-based matches. It’s hugely popular and very social — children play together with friends. The look is bright and non-realistic (no blood or gore), though matches are competitive and played online with others.",
-          "note": "Fortnite is free to download and play — you don’t buy the game itself. Your child creates a free Epic Games account to play. Some optional extras (outfits and such) cost money, which you can limit with parental controls.",
+          "description": "Fortnite is a colourful, cartoon-style online game where players team up and compete in short, round-based matches. It is hugely popular and very social, and children play it together with friends. The look is bright and non-realistic, with no blood or gore. Matches are competitive and played online with other people.",
+          "note": "Fortnite is free to download and play, so there is no game to buy. Playing needs a free Epic Games account. Some optional extras cost money, such as outfits. Epic’s parental controls sit on the account rather than on a device, and they can limit those extras.",
           "linkLabel": "Get Fortnite"
         },
         "pokemon_go": {
-          "description": "Pokémon GO is played outdoors, on a phone. Creatures appear on a map of the real world, and children walk to parks, streets and landmarks to find and collect them. It’s about collecting rather than fighting — the appeal is exploring, filling up a Pokédex and comparing finds with friends. Most of the playing happens on foot, so it tends to get children moving.",
-          "note": "Pokémon GO is free to download and play — you don’t buy the game itself. Your child needs a phone or tablet with GPS and a mobile data connection, plus a free account. There are optional in-app purchases, which you can limit with parental controls. Because it’s played outdoors in real places, it’s worth agreeing in advance where your child may go and whether an adult comes along.",
+          "description": "Pokémon GO is played outdoors, on a phone. Creatures appear on a map of the real world, and children walk to parks, streets and landmarks to find and collect them. It is about collecting rather than fighting. The appeal is exploring, filling up a Pokédex and comparing finds with friends. Most of the playing happens on foot, so it tends to get children moving.",
+          "note": "Pokémon GO is free to download and play, so there is no game to buy. It needs a phone with GPS and a mobile data connection, plus a free account. For a child under 13 the account is created by a parent and stays linked to theirs. There are optional in-app purchases, which parental controls can limit. It is played outdoors in real places. It also keeps the screen, GPS and data running the whole time, so a battery does not last long.",
           "linkLabel": "Where to get it"
         },
         "roblox_studio": {
-          "description": "Roblox Studio is the free tool that Roblox games themselves are made with. Children design worlds, build with real 3D tools and script with real code, turning their own ideas into experiences other people can actually play. In our clubs they create rather than play — it’s a first step into real game development.",
-          "note": "Roblox Studio is free — there’s nothing to buy. It runs on Windows PCs and Macs only: not on an iPad or other tablet, not on a Chromebook, phone or games console. A free Roblox account is needed too, and the account’s age setting governs its chat and privacy controls. Finished creations can be published for other players to find and play.",
+          "description": "Roblox Studio is the free tool that Roblox games themselves are made with. Children design worlds, build with real 3D tools and write real code. They turn their own ideas into experiences other people can actually play. In our clubs they create rather than play, which is a first step into real game development.",
+          "note": "Roblox Studio is free, so there is nothing to buy. It runs on Windows PCs and Macs only, not on an iPad or other tablet, not on a Chromebook, phone or games console. A free Roblox account is needed too, and the account’s age setting governs its chat and privacy controls. Finished creations can be published for other players to find and play.",
           "linkLabel": "Get Roblox Studio"
         },
         "rocket_league": {
-          "description": "Rocket League is football played with rocket-powered cars. Two teams drive around an arena and try to push an oversized ball into the other team’s goal, in short matches of about five minutes. The look is bright and cartoonish and there’s no violence — it’s a sport, not a shooter — so it’s easy to follow from the sidelines even if you’ve never played it yourself. Almost every goal comes out of the team working together, which is why it suits club play so well.",
-          "note": "Rocket League is free to download and play — you don’t buy the game itself. Your child needs a free Epic Games account. It runs on Windows PCs, PlayStation, Xbox and Nintendo Switch, and players on different devices can play together, so your child’s device doesn’t have to match anyone else’s. There are optional in-game purchases (decorations for the cars), which you can limit with parental controls.",
+          "description": "Rocket League is football played with rocket-powered cars. Two teams drive around an arena and try to push an oversized ball into the other team’s goal, in short matches of about five minutes. The look is bright and cartoonish and there is no violence. It is a sport, not a shooter, so it is easy to follow from the sidelines even if you have never played it yourself. Almost every goal comes out of the team working together, which is why it suits club play so well.",
+          "note": "Rocket League is free to download and play, so there is no game to buy. Playing needs a free Epic Games account. It runs on Windows PCs, PlayStation, Xbox and Nintendo Switch. Players on different devices can play together, so your child’s device does not have to match anyone else’s. There are optional in-game purchases (decorations for the cars), which parental controls can limit.",
           "linkLabel": "Get Rocket League"
         }
       }
@@ -1921,18 +2062,6 @@
       "language": "Language",
       "online": "Online",
       "tbd": "To be confirmed"
-    },
-    "calendar": {
-      "weekdayMon": "Mon",
-      "weekdayTue": "Tue",
-      "weekdayWed": "Wed",
-      "weekdayThu": "Thu",
-      "weekdayFri": "Fri",
-      "weekdaySat": "Sat",
-      "weekdaySun": "Sun",
-      "legendSession": "Session",
-      "legendSkipped": "Skipped",
-      "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
       "verb": {
@@ -1956,12 +2085,7 @@
       "ctaAllSet": "You’re all set",
       "ctaAgreeConsent": "Give the required consent",
       "ctaWaitlist": "Join the waitlist",
-      "ctaSignIn": {
-        "consumer_club": "Sign in to register",
-        "municipality_club": "Sign in to register",
-        "camp": "Sign in to register",
-        "event": "Sign in to join"
-      },
+      "ctaSignIn": "Sign in",
       "ctaCreateAccount": "Create account",
       "gamerAlreadySignedUp": {
         "consumer_club": "Already enrolled",
@@ -1970,10 +2094,13 @@
         "event": "Already joined"
       },
       "gamerAlreadyWaitlisted": "On waitlist",
+      "gamerUnderAge": "Under {min}",
+      "gamerOverAge": "Over {max}",
       "nonCustomerNote": "Only parents can register a gamer here.",
       "nonCustomerNoteParents": "Only parents can sign up here.",
       "closedNote": "This one’s not open right now. Keep an eye out for the next one.",
       "rules": {
+        "title": "Our rules",
         "consumer_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, as set out in the <policy>Anti-Bullying and Discipline policy</policy>.",
         "municipality_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, as set out in the <policy>Anti-Bullying and Discipline policy</policy>, and that repeated unexcused absences may open my child’s seat for the next family on the waitlist.",
         "municipality_club_self": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, as set out in the <policy>Anti-Bullying and Discipline policy</policy>, and that repeated unexcused absences may open my seat for the next family on the waitlist.",
@@ -1984,10 +2111,17 @@
         "heading": "Consent",
         "agree": "I have read and agree to these documents.",
         "bundles": {
-          "robloxProgramme": "I have read and agree to the Roblox Programme <terms>Terms & Conditions</terms> and <privacy>Privacy Policy</privacy>."
+          "robloxProgramme": "I have read and agree to the Creator Academy <terms>Terms & Conditions</terms> and <privacy>Privacy Policy</privacy>.",
+          "robloxProgrammeTitle": "Creator Academy terms and privacy policy"
+        },
+        "gamerPhoto": {
+          "lynxEducate": "Photos and videos of my child may be included in session reports, shared with Lynx Educate and Roblox for impact reporting, and used on School of Gaming’s, Lynx Educate’s and Roblox’s websites and social media. Details are in the <privacy>Creator Academy Privacy Policy</privacy>.",
+          "lynxEducateTitle": "Photos and videos of your child",
+          "hint": "Optional — you can change this anytime on your child’s page in My SOG."
         },
         "marketing": {
-          "lynxEducate": "Share my contact details with our trusted partner <link>Lynx Educate</link> so they can send me news and offers.",
+          "lynxEducate": "Share my email address with <link>Lynx Educate</link> so they can send me news about future events and gaming resources. I can unsubscribe at any time.",
+          "lynxEducateTitle": "News from Lynx Educate",
           "hint": "Optional — you can change this anytime in your settings."
         }
       },
@@ -2041,6 +2175,154 @@
       "cta": "Back to browse"
     }
   },
+  "topicPrep": {
+    "heading": "Before the first session",
+    "dialogTitle": "Before the first session",
+    "triggerLabel": "Get ready",
+    "readyLabel": "I’m ready",
+    "closing": "If everything works, you’re ready for the session!",
+    "topics": {
+      "minecraft_java": {
+        "intro": "The sessions play Minecraft on a computer, in the Java version. Each participant needs a Microsoft account with Minecraft on it, and the Minecraft Launcher installed on the computer they will use. Please complete the steps below before the first session."
+      },
+      "minecraft_education": {
+        "intro": "The sessions use Minecraft Education, and it is free. School of Gaming provides the logins at the first session, so there is only one step to complete beforehand."
+      },
+      "minecraft_bedrock": {
+        "intro": "The sessions play Minecraft Bedrock together online. Each participant needs a Microsoft account and Minecraft installed on the device they will play on. Please complete the steps below before the first session."
+      },
+      "fortnite": {
+        "intro": "Fortnite is free to play, and the sessions play it together. Each participant needs a free Epic Games account, and Fortnite installed on the device they will use. Please complete the steps below before the first session."
+      },
+      "rocket_league": {
+        "intro": "Rocket League is free to play, and every session is played together. Each participant needs a free Epic Games account, and Rocket League installed on the device they will use. Please complete the steps below before the first session."
+      },
+      "pokemon_go": {
+        "intro": "Pokémon GO is played outdoors, on a phone that someone carries to the session. Please complete the steps below before the first session."
+      },
+      "roblox_studio": {
+        "intro": "The session uses Roblox Studio, Roblox’s free game development software. Each participant needs their own Roblox account and Roblox Studio installed on their computer. Please complete the steps below before the session."
+      }
+    },
+    "accountsOnlyIntro": {
+      "fortnite": "We bring the machines to the session, with Fortnite already installed. Each participant still needs their own Epic Games account, with the parental controls set on it. Please complete the steps below before the session.",
+      "rocket_league": "We bring the machines to the session, with Rocket League already installed. Each participant still needs their own Epic Games account. Please complete the step below before the session.",
+      "roblox_studio": "We bring the computers to the session, with Roblox Studio already installed. Each participant still needs their own Roblox account. Please complete the step below before the session."
+    },
+    "remoteOnlyIntro": "The sessions happen online, in a voice room. Please complete the step below before the first session.",
+    "steps": {
+      "minecraftJavaAccount": {
+        "title": "Get a Microsoft account with Minecraft on it",
+        "body": "Minecraft logs in with a Microsoft account. If the participant does not have one, a parent creates it and buys “Minecraft: Java & Bedrock Edition for PC” on that account. That is <b>one purchase, not a subscription</b>, and it covers the Java version these sessions use. Setting it up asks for a Java profile name. That name is the username we need in order to add the participant to our Minecraft world, so write it down somewhere it can be found again.",
+        "linkLabel": "Get Minecraft for PC"
+      },
+      "minecraftJavaInstall": {
+        "title": "Install the Minecraft Launcher",
+        "body": "Install the Minecraft Launcher on the computer used for the session. The download is on the same Minecraft page the game was bought from. Log in with the same Microsoft account."
+      },
+      "minecraftJavaLaunch": {
+        "title": "Open Minecraft once before the first session",
+        "body": "Start the launcher and let it finish any updates. Open the game as far as the main menu, then close it again. The first update can take a while, and doing it now means the session does not start with a download."
+      },
+      "minecraftEducationInstall": {
+        "title": "Install Minecraft Education",
+        "body": "Minecraft Education is a free download from the Microsoft Store or from Minecraft Education’s own site. Install it on the computer used for the session. Open it once to check that it starts. There is no account to create. School of Gaming provides the logins at the first session, so the game itself is all the participant needs.",
+        "linkLabel": "Get Minecraft Education"
+      },
+      "minecraftBedrockAccount": {
+        "title": "Create a Microsoft account",
+        "body": "Minecraft Bedrock plays online through a Microsoft account. The gamertag on that account is how we find the participant and add them to our worlds. If the participant does not have an account yet, a parent creates one. Make sure to enter the participant’s correct date of birth, as Microsoft uses age information to determine which online features are switched on. Write the gamertag down. We will ask for it."
+      },
+      "minecraftBedrockInstall": {
+        "title": "Buy and install Minecraft on the right device",
+        "body": "Bedrock is the same game sold separately for each device, and a copy bought for one device does not work on another. <b>Buy it on the device the participant will actually play on</b>, whether that is a console, a phone, a tablet or a Windows PC.",
+        "linkLabel": "Choose the device"
+      },
+      "minecraftBedrockOnline": {
+        "title": "Check that online play works",
+        "body": "Open Minecraft on that device and log in with the Microsoft account. Check that the online play screen opens. On Xbox, PlayStation and Nintendo Switch, playing with other people also needs that console’s own paid online membership."
+      },
+      "fortniteAccount": {
+        "title": "Create an Epic Games account",
+        "body": "Fortnite is free to play and logs in with a free Epic Games account. If the participant does not have one yet, a parent creates it. Make sure to enter the participant’s correct date of birth, as Epic uses age information to determine which chat and social features are available. Write the display name down. That is how we find the participant."
+      },
+      "fortniteControls": {
+        "title": "Set the parental controls",
+        "body": "Epic’s parental controls sit on the account rather than on a device, so they follow the participant to every device. A parent sets a six-digit PIN and chooses what is allowed: who can chat, and whether a purchase needs the PIN. The game itself costs nothing. The controls are there for the optional extras."
+      },
+      "fortniteInstall": {
+        "title": "Install Fortnite",
+        "body": "Install Fortnite on the device used for the session and log in with the Epic Games account. Open it once and let it update. The first download is a large one, so it is better done the day before than five minutes before.",
+        "linkLabel": "Get Fortnite"
+      },
+      "fortniteCrossplay": {
+        "title": "Leave cross-play switched on",
+        "body": "Cross-play is what lets everyone play together whatever device they are on. It is on by default. If it has been switched off in the game’s settings, switch it back on before the session."
+      },
+      "rocketLeagueAccount": {
+        "title": "Create an Epic Games account",
+        "body": "Rocket League is free to play and logs in with a free Epic Games account, the same kind Fortnite uses. If the participant already has one, it works here too. If they don’t have one yet, a parent creates it. Make sure to enter the participant’s correct date of birth. Write the display name down. That is how we find the participant."
+      },
+      "rocketLeagueInstall": {
+        "title": "Install Rocket League",
+        "body": "Install Rocket League on the device used for the session. It is free on Windows PC, PlayStation, Xbox and Nintendo Switch. Open it once before the session and let it finish updating.",
+        "linkLabel": "Get Rocket League"
+      },
+      "rocketLeagueCrossplay": {
+        "title": "Leave cross-platform play switched on",
+        "body": "Cross-platform play means the participant’s device does not have to match anyone else’s. It is on by default. If it has been turned off in the settings, turn it back on so the whole group can be in the same match."
+      },
+      "pokemonGoInstall": {
+        "title": "Install Pokémon GO on the phone",
+        "body": "Pokémon GO is free, and it goes on the phone that will be carried to the session. Get it from the App Store on an iPhone, or from Google Play on an Android phone. It is a phone game only. There is no computer or console version."
+      },
+      "pokemonGoAccount": {
+        "title": "Create an account",
+        "body": "Playing needs an account, and the game offers to create one the first time it opens. For a participant under 13, a parent creates the account and links it to their own, which keeps the settings in a parent’s hands. Write the trainer name down. That is how we find the participant."
+      },
+      "pokemonGoPhone": {
+        "title": "Charge the phone and check its settings",
+        "body": "The game keeps the screen, GPS and mobile data running the whole time it is open, and the battery goes down fast. Charge the phone before the session. Check that location and mobile data are switched on. Bring a power bank if there is one in the house."
+      },
+      "pokemonGoAgree": {
+        "title": "Agree where the participant is going",
+        "body": "Pokémon GO is played outdoors in real places. Agree in advance which streets and parks are in bounds, whether an adult is coming along, and how to get in touch during the session. Remind the participant to keep their eyes on the road. The phone can wait."
+      },
+      "robloxStudioAccount": {
+        "title": "Create a Roblox account",
+        "body": "If the participant already has their own Roblox account, there is no need to create a new one. If they don’t have an account yet, <b>create one for them</b>. Make sure to enter the participant’s correct date of birth, as Roblox uses age information to determine which features and content are available. Make sure the participant knows their Roblox username, knows their password or has access to it when needed, and is able to log in to their account on the computer they will use during the session. Do not send the participant’s password to the Gedu, our word for a Game Educator."
+      },
+      "robloxStudioInstall": {
+        "title": "Install Roblox Studio",
+        "body": "During the session, we will use Roblox Studio, Roblox’s free game development software. Go to the Roblox Creator Hub and log in with the participant’s Roblox account. Follow the instructions on the page to download and install Roblox Studio. Once the installation is complete, open Roblox Studio and log in with the participant’s Roblox account. Once installed, Roblox Studio works like any other application on your computer.",
+        "linkLabel": "Go to the Roblox Creator Hub"
+      },
+      "robloxStudioTest": {
+        "title": "Test everything before the first session",
+        "body": "We recommend doing a quick test before the session:"
+      },
+      "remoteSession": {
+        "title": "Set up the microphone and camera",
+        "body": "The session happens in a voice room that runs in a web browser. The participant can join on any device: the computer the game is on, or a phone or tablet beside a console. A headset or earbuds with a microphone works best, so the game sound does not echo back to everyone else. The first time the participant joins, the browser asks for permission to use the microphone and camera. Allow it. The camera is optional. Turning it on helps the Gedu, our word for a Game Educator, check that everyone in the room is who they say they are. Find a quiet place, and join a few minutes early the first time."
+      }
+    },
+    "platformNotes": {
+      "robloxStudioWindows": {
+        "title": "On Windows",
+        "body": "Open the Start menu or Windows search and type Roblox Studio, then select Roblox Studio from the search results."
+      },
+      "robloxStudioMac": {
+        "title": "On Mac",
+        "body": "Open Spotlight Search or the Applications folder and search for Roblox Studio."
+      }
+    },
+    "checklist": {
+      "robloxStudioTestOpen": "Open Roblox Studio.",
+      "robloxStudioTestSignIn": "Log in with the participant’s Roblox account.",
+      "robloxStudioTestHome": "Make sure the Roblox Studio home screen opens normally.",
+      "robloxStudioTestClose": "Close Roblox Studio."
+    }
+  },
   "sidebar": {
     "dashboard": "Dashboard",
     "users": "Users",
@@ -2060,7 +2342,7 @@
   },
   "home": {
     "hero": {
-      "title": "Where<br></br><primary>Screen Time</primary><br></br>Becomes<br></br><secondary>Quality Time</secondary>",
+      "title": "Where<br></br>Screen Time<br></br>Becomes<br></br><act>Quality Time</act>",
       "subtitle": "Our skilfully designed clubs promote healthy gaming as a hobby, in Minecraft, Roblox, Fortnite and more. Professional Game Educators make every session a playful learning experience where children make new friends, develop their unique talents, and have fun doing what they love.",
       "aboutCta": "Learn more about us"
     },
@@ -2108,8 +2390,9 @@
   },
   "roblox": {
     "hero": {
-      "title": "Build It<br></br><primary>Play It</primary><br></br><secondary>Own It</secondary>",
-      "subtitle": "A free Roblox game design programme for teens — brought to you by Lynx Educate and School of Gaming, in collaboration with Roblox.",
+      "title": "Creator<br></br><act>Academy</act>",
+      "subtitle": "Build it. Play it. Own it.",
+      "blurb": "Free for teens. Publish your own Roblox game.",
       "cta": "Jump in!"
     },
     "lockup": {
@@ -2121,8 +2404,8 @@
     "what": {
       "eyebrow": "What is this",
       "heading": "Learn to build on Roblox.",
-      "paragraph1": "This programme gives 13–17 year-olds in France the chance to design, code, and publish their own Roblox game — with the people who matter most cheering them on. Delivered by Lynx Educate and School of Gaming, in collaboration with Roblox, it is a hands-on introduction to game design, digital creativity, and safe online collaboration.",
-      "paragraph2": "By the end of the programme, participants will have published their own original creation on Roblox. No experience necessary — just curiosity."
+      "paragraph1": "Creator Academy gives 13–17 year-olds in France the chance to design, code, and publish their own Roblox game — with the people who matter most cheering them on. Delivered by Lynx Educate and School of Gaming, in collaboration with Roblox, it is a hands-on introduction to game design, digital creativity, and safe online collaboration.",
+      "paragraph2": "The programme builds towards publishing their own original creation on Roblox. No experience necessary — just curiosity."
     },
     "why": {
       "eyebrow": "Why join",
@@ -2179,7 +2462,7 @@
       "empty": "The first events are being scheduled now. Check back shortly to see what is coming up.",
       "previous": "Previous events",
       "next": "Next events",
-      "browseShop": "Browse all events in the shop"
+      "browseShop": "Browse the shop"
     },
     "parents": {
       "eyebrow": "For parents",
@@ -2226,7 +2509,7 @@
         },
         "media": {
           "question": "Will my child be photographed or filmed?",
-          "answer": "<p>Sessions may be photographed for internal records. Whether footage is used externally in marketing is entirely your choice at registration, and you can change it anytime.</p>"
+          "answer": "<p>Sessions may be photographed. Your child appears in a photograph only if you tick the optional media choice when you enrol them, and you can change that answer at any time on your child’s page in My SOG.</p>"
         },
         "facilitators": {
           "question": "Who runs the sessions, and how are they vetted?",
@@ -2244,21 +2527,22 @@
       "button": "Get started"
     },
     "legal": {
-      "roblox": "© 2024 Roblox Corporation. The Roblox word mark, Roblox Logo and Roblox Tilt are among the registered and unregistered trademarks of Roblox Corporation in the U.S. and other countries. Used with permission.",
+      "roblox": "The Roblox word mark, Roblox Logo and Roblox Tilt are among the registered and unregistered trademarks of Roblox Corporation in the U.S. and other countries. Used with permission.",
       "lynx": "Lynx Educate and the Lynx Educate logo are trademarks of Lynx Educate. Used with permission.",
-      "privacy": "Roblox Programme Privacy Policy",
-      "safeguarding": "Roblox Programme Child Safeguarding Policy",
-      "terms": "Roblox Programme Terms & Conditions"
+      "documents": "Creator Academy documents",
+      "privacy": "Privacy Policy",
+      "safeguarding": "Child Safeguarding Policy",
+      "terms": "Terms & Conditions"
     }
   },
   "robloxPrivacy": {
-    "title": "Roblox Programme Privacy Policy",
+    "title": "Creator Academy Privacy Policy",
     "subtitle": "For families registering for the youth digital creativity Programme in France delivered by Lynx Educate and School of Gaming and sponsored by Roblox.",
     "lastUpdated": "Last updated: {date}",
     "intro": {
       "heading": "The short version — for parents and young people",
       "blocks": [
-        "The Programme is for young people in France aged 8–17. A parent or legal guardian must complete registration.",
+        "The Programme is for young people in France aged 13–17. A parent or legal guardian must complete registration.",
         "We collect only what we need to register your child, deliver the Programme safely and understand whether it is working. This includes the parent’s contact details, limited information about the child, the child’s Roblox username or User ID, and information about attendance, completion and game publication.",
         "School of Gaming uses information to operate the registration and learning platform. Lynx Educate processes Programme information as needed to manage delivery. Each organisation has different responsibilities depending on the activity and the purpose for which personal information is used.",
         [
@@ -2269,10 +2553,9 @@
         "The following choices are optional and will not affect your child’s place:",
         [
           "Emails to the parent from Lynx Educate about future Roblox events and gaming resources.",
-          "Photography or filming for private Programme reporting to Roblox.",
-          "Public use of photographs or footage by Lynx Educate, School of Gaming and Roblox."
+          "Photographs and video of the child, used in session reports, in impact reporting to Lynx Educate and Roblox, and publicly by Lynx Educate, School of Gaming and Roblox."
         ],
-        "Routine online sessions are not recorded. A child will not be photographed or filmed where the required permission has not been given or where the child does not want to take part.",
+        "Online sessions are not recorded. A child will not be photographed or filmed where the required permission has not been given or where the child does not want to take part.",
         "Lynx Educate and School of Gaming do not sell Programme registration information or use it to advertise to children.",
         "You and your child may ask to see, correct or delete information, withdraw an optional consent, or object to certain uses by contacting support@lynxeducate.com or {supportEmail}."
       ]
@@ -2281,11 +2564,11 @@
       "applies": {
         "heading": "Who this policy applies to",
         "blocks": [
-          "This policy applies to parents, legal guardians and young people registering for the Roblox youth digital creativity Programme in France (The Programme).",
-          "The Programme is for young people aged 8–17. A parent or legal guardian must complete registration and confirm that they have authority to register the child.",
+          "This policy applies to parents, legal guardians and young people registering for the Creator Academy, the youth digital creativity programme in France (The Programme).",
+          "The Programme is for young people aged 13–17. A parent or legal guardian must complete registration and confirm that they have authority to register the child.",
           "The policy covers Programme registration, administration, learning sessions, events, support, safeguarding and impact evaluation. It supplements School of Gaming’s <linkPrivacy>general Privacy Policy</linkPrivacy>. Where the two policies conflict in relation to this Programme, this Programme-specific policy applies.",
           "The child’s separate use of a Roblox account, Roblox Studio or another Roblox service is governed by Roblox’s own privacy policy and terms.",
-          "The <linkRobloxTerms>Programme Terms</linkRobloxTerms> establish the 8–17 age range, parent-led registration and Programme-specific data sharing."
+          "The <linkRobloxTerms>Programme Terms</linkRobloxTerms> establish the 13–17 age range, parent-led registration and Programme-specific data sharing."
         ]
       },
       "responsible": {
@@ -2433,7 +2716,7 @@
       "useMedia": {
         "heading": "Optional photography and filming",
         "blocks": [
-          "Photography, filming and public communications are based on separate, optional permissions. Declining either media option will not affect registration or participation.",
+          "Photography, filming and public communications are based on one optional permission, given for each child. Declining it will not affect registration or participation.",
           "Consent is not the legal basis for the core registration, delivery or safeguarding activities described above."
         ]
       },
@@ -2470,41 +2753,34 @@
       "media": {
         "heading": "Photography, filming and public use",
         "blocks": [
-          "Routine online sessions are not recorded. Where photography or filming is planned for a selected session or event, families will be told in advance.",
-          "There are two separate optional choices."
+          "Online sessions are not recorded. Where photography or filming is planned for a selected session or event, families will be told in advance.",
+          "There is one optional media choice per child. It is made when the child is enrolled in a Creator Academy activity, and it can be changed at any time on the child’s page in My SOG."
         ]
       },
-      "mediaSponsor": {
-        "heading": "Private sponsor reporting",
+      "mediaChoice": {
+        "heading": "What the media choice covers",
         "blocks": [
-          "The first media choice permits the child to be photographed or filmed for private Programme reporting to Roblox as Programme sponsor. This may include internal impact reports, delivery updates or sponsor presentations.",
-          "This permission does not permit publication on websites, social media or in the press."
-        ]
-      },
-      "mediaPublic": {
-        "heading": "Public impact communications",
-        "blocks": [
-          "The second media choice permits Lynx Educate, School of Gaming and Roblox to use photographs or footage publicly to show the impact of the Programme, including on:",
+          "One optional checkbox covers every use of a child’s photograph or footage. Where it is ticked, photographs and video of the child may be:",
           [
-            "Their websites.",
-            "Their social-media channels.",
-            "Press and public-relations materials.",
-            "Programme and impact communications."
+            "Included in session reports, which every family in the child’s group sees on the group’s page and receives by email.",
+            "Shared with Lynx Educate and Roblox for impact reporting, including internal impact reports, delivery updates and sponsor presentations.",
+            "Used publicly by Lynx Educate, School of Gaming and Roblox on their websites and social-media channels."
           ],
-          "Public content may be accessible worldwide and may be copied or shared by other users beyond the organisations’ control."
+          "Public content may be accessible worldwide and may be copied or shared by other users beyond the organisations’ control.",
+          "Where the box is not ticked, the child is kept out of session photographs and identifiable footage. Nothing identifying them is placed in a session report, shared with Lynx Educate or Roblox, or used publicly. Wide shots of an event or workshop may be taken from a distance, where no child is identifiable."
         ]
       },
       "mediaChildAgrees": {
         "heading": "The child must also agree",
         "blocks": [
           "The parent should discuss the media choice with the child before selecting it. We will also explain the photography or filming to the child in an age-appropriate way.",
-          "We will not deliberately photograph or film a child who objects, even where a parent previously selected a media checkbox. Staff will use reasonable practical measures to keep children without permission out of identifiable footage."
+          "A Game Educator asks the child before taking a photograph, even where the parent has ticked the box, and will not deliberately photograph or film a child who objects. A child whose parent has not ticked the box is kept out of session photographs and identifiable footage. Wide shots of an event or workshop may be taken from a distance, where no child is identifiable."
         ]
       },
       "mediaCaseStudies": {
         "heading": "Case studies, names and participant-created content",
         "blocks": [
-          "The two registration media boxes cover photographs and footage only.",
+          "The media checkbox covers photographs and footage only.",
           "A separate written release will be obtained before using:",
           [
             "A child’s full name.",
@@ -2520,7 +2796,7 @@
       "mediaChanging": {
         "heading": "Changing a media choice",
         "blocks": [
-          "A parent or child may withdraw a media permission by contacting us or using the available Sogverse setting.",
+          "A parent can change the media choice at any time on their child’s page in My SOG, or by contacting us. A child may also ask us to withdraw it.",
           "After withdrawal, we will stop new uses and remove material from channels we control where reasonably possible. Withdrawal cannot make earlier lawful use unlawful, undo printed materials already distributed, or guarantee deletion of copies already shared by third parties."
         ]
       },
@@ -2534,7 +2810,7 @@
             "Only registered participants and vetted Game Educators may join.",
             "Communication is group-based and supervised.",
             "There is no private direct messaging between children.",
-            "Routine sessions are not recorded.",
+            "Sessions are not recorded.",
             "Lynx Educate and School of Gaming do not use Programme registration data for behavioural advertising to children."
           ],
           "Safeguarding concerns are handled under the joint <linkRobloxSafeguarding>Child Safeguarding Policy</linkRobloxSafeguarding>. School of Gaming handles day-to-day concerns in the first instance and escalates serious matters to Lynx Educate. Emergency services are contacted first where a child may be in immediate danger.",
@@ -2606,7 +2882,7 @@
           "Children may contact us directly about their own information. Parents or legal guardians may also make a request for a child, subject to the child’s own rights, age and maturity.",
           "There is no solely automated decision-making that produces legal or similarly significant effects on participants.",
           "Send requests to support@lynxeducate.com or {supportEmail}. The organisations will coordinate the response and route Roblox-related requests to Roblox where necessary.",
-          "Families also have the right to complain to the Commission nationale de l’informatique et des libertés — CNIL."
+          "Families also have the right to complain to the Commission nationale de l’informatique et des libertés — <linkCnil>CNIL</linkCnil>."
         ]
       },
       "security": {
@@ -2649,10 +2925,9 @@
     }
   },
   "robloxSafeguarding": {
-    "title": "Roblox Programme Child Safeguarding Policy",
-    "subtitle": "This sits alongside School of Gaming’s <linkDiscipline>Anti-Bullying policy</linkDiscipline>, which continues to apply to day-to-day behaviour in sessions. This document covers Lynx Educate and School of Gaming’s broader safeguarding responsibilities for the Programme, including in-person events.",
+    "title": "Creator Academy Child Safeguarding Policy",
+    "subtitle": "This sits alongside School of Gaming’s <linkDiscipline>Anti-Bullying policy</linkDiscipline>, which continues to apply to day-to-day behaviour in sessions. This document covers Lynx Educate and School of Gaming’s broader safeguarding responsibilities for the Programme.",
     "lastUpdated": "Last reviewed: {date}",
-    "pendingContact": "A School of Gaming contact address for safeguarding concerns is still being confirmed and will be added here.",
     "intro": {
       "heading": "Our commitment",
       "blocks": [
@@ -2667,9 +2942,16 @@
         ]
       },
       "vetting": {
-        "heading": "Before someone works with children",
+        "heading": "Before a Game Educator works with children",
         "blocks": [
-          "All Game Educators (Gedus) are required to complete School of Gaming’s own vetting and training process before working with children on Sogverse. This includes:"
+          "All Game Educators (Gedus) are required to complete School of Gaming’s own vetting and training process before working with children on Sogverse. This includes:",
+          [
+            "Being over 18. Every Game Educator is an adult.",
+            "A background check. Every Gedu shows us a criminal record extract of the kind issued for people who work with children, before they’re assigned to any group — so we know who is spending time with your child. We check it ourselves, and we’re not allowed to keep a copy, so we don’t.",
+            "School of Gaming’s Basic Course for game educators, which every Gedu has to complete successfully.",
+            "Our Game Educator handbook, which sets out how we expect a Gedu to behave and makes the atmosphere of the group their responsibility.",
+            "A signed agreement with School of Gaming, talked through with a member of our staff before it’s signed. It sets out the written procedure we follow — starting with a warning and a conversation — if a Gedu doesn’t meet those expectations."
+          ]
         ]
       },
       "online": {
@@ -2685,7 +2967,9 @@
       },
       "inPerson": {
         "heading": "During in-person events",
-        "blocks": []
+        "blocks": [
+          "Our Game Educators run the session; they are not the organisers of the event. Lynx Educate is responsible for making sure the venues it works with are suitable for the session and meet the Programme’s safeguarding requirements. The specific arrangements may vary by venue."
+        ]
       },
       "behaviour": {
         "heading": "Behaviour and discipline",
@@ -2702,13 +2986,13 @@
       "concern": {
         "heading": "If you have a concern",
         "blocks": [
-          "If you or your child have a safeguarding concern, please contact support@lynxeducate.com."
+          "If you or your child have a safeguarding concern, please contact School of Gaming at {supportEmail} or Lynx Educate at support@lynxeducate.com."
         ]
       },
       "data": {
         "heading": "Data and photos",
         "blocks": [
-          "Any photography, filming, or use of a child’s image is governed by the consent choices set out in the <linkRobloxPrivacy>Roblox Programme Privacy Policy</linkRobloxPrivacy> — never assumed, always optional, always changeable."
+          "A child appears identifiably in a photograph only where their parent has ticked the optional media consent for that child when enrolling them. The parent can change that answer at any time on the child’s page in My SOG, and a Game Educator asks the child before taking a photograph even where the parent has consented. The <linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy> sets out what the consent covers. Wide shots of an event or workshop may be taken from a distance, where no child is identifiable."
         ]
       },
       "review": {
@@ -2720,14 +3004,13 @@
     }
   },
   "robloxTerms": {
-    "title": "Roblox Programme Terms & Conditions",
-    "subtitle": "Applies to families registering for the Lynx Educate × School of Gaming × Roblox programme in France.",
+    "title": "Creator Academy Terms & Conditions",
+    "subtitle": "Applies to families registering for the Creator Academy in France — Lynx Educate × School of Gaming, in collaboration with Roblox.",
     "lastUpdated": "Updated: {date}",
-    "pendingContact": "A School of Gaming contact address is still being confirmed and will be added here.",
     "intro": {
       "heading": "The short version",
       "blocks": [
-        "This explains what you’re signing your child up for when you register for the Roblox Programme. It’s a joint programme between Lynx Educate and School of Gaming, sponsored by Roblox. If anything’s unclear, email support@lynxeducate.com."
+        "This explains what you’re signing your child up for when you register for the Creator Academy. It’s a joint programme between Lynx Educate and School of Gaming, sponsored by Roblox. If anything’s unclear, email support@lynxeducate.com."
       ]
     },
     "sections": {
@@ -2744,7 +3027,7 @@
       "eligibility": {
         "heading": "Who can take part",
         "blocks": [
-          "The Programme is for young people in France, aged 8–17, registered by a parent or legal guardian. A parent or guardian must complete registration and consent on the child’s behalf."
+          "The Programme is for young people in France, aged 13–17, registered by a parent or legal guardian. A parent or guardian must complete registration and consent on the child’s behalf."
         ]
       },
       "whatsInvolved": {
@@ -2762,26 +3045,26 @@
       "safety": {
         "heading": "Safety and supervision",
         "blocks": [
-          "Every session is supervised by a trained Game Educator. Our approach to behaviour and safeguarding is set out in our joint <linkRobloxSafeguarding>Child Safeguarding Policy</linkRobloxSafeguarding>, available upon request."
+          "Every session is supervised by a trained Game Educator. Our approach to behaviour and safeguarding is set out in our joint <linkRobloxSafeguarding>Child Safeguarding Policy</linkRobloxSafeguarding>."
         ]
       },
       "information": {
         "heading": "Your information",
         "blocks": [
-          "How we use your and your child’s information is explained in our <linkRobloxPrivacy>Roblox Programme Privacy Policy</linkRobloxPrivacy>. By registering, you confirm you’ve read and understood it.",
-          "When enrolling in a Roblox programme, the information associated with your School of Gaming account (including your contact details and your child’s account information) will also be shared with Lynx Educate for the purposes of delivering the programme and with Roblox for the purposes of programme impact research."
+          "How we use your and your child’s information is explained in our <linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy>. By registering, you confirm you’ve read and understood it.",
+          "When enrolling in the Creator Academy, the information associated with your School of Gaming account (including your contact details and your child’s account information) will also be shared with Lynx Educate for the purposes of delivering the programme and with Roblox for the purposes of programme impact research."
         ]
       },
       "media": {
         "heading": "Photos, video, and marketing",
         "blocks": [
-          "Whether your child is photographed or filmed, and whether that’s used for marketing, depends entirely on the choices you make at registration. These are optional and you can change your mind at any time in your Sogverse profile settings."
+          "Whether your child appears in photographs or video is a single optional choice, made when you enrol them in a Creator Academy activity. You can change it at any time on your child’s page in My SOG. A child without that permission is kept out of session photographs and identifiable footage. Wide shots of an event or workshop may be taken from a distance, where no child is identifiable."
         ]
       },
       "concern": {
         "heading": "If you have a concern",
         "blocks": [
-          "If you’re concerned about your child’s experience in the Programme, contact support@lynxeducate.com — we’ll make sure it reaches the right people."
+          "If you’re concerned about your child’s experience in the Programme, contact School of Gaming at {supportEmail} or Lynx Educate at support@lynxeducate.com — we’ll make sure it reaches the right people."
         ]
       },
       "changes": {
@@ -2878,6 +3161,18 @@
       }
     },
     "gamerDetail": {
+      "photoConsent": {
+        "title": "Photos and videos",
+        "description": "For clubs, camps and events run in partnership with Lynx Educate, in collaboration with Roblox.",
+        "sentence": {
+          "lynxEducate": "Photos and videos of {name} may be included in session reports, shared with Lynx Educate and Roblox for impact reporting, and used on School of Gaming’s, Lynx Educate’s and Roblox’s websites and social media. Details are in the <privacy>Creator Academy Privacy Policy</privacy>."
+        },
+        "sentenceTitle": {
+          "lynxEducate": "Photos and videos of {name}"
+        },
+        "hint": "You are asked this again every time you enrol {name} in one of these; your latest answer is what counts.",
+        "saveFailed": "That answer was not saved. Check your connection and try again."
+      },
       "backToMySog": "Back to My SOG",
       "title": "Gamer settings",
       "subtitle": "Manage settings for {name}",
@@ -2901,6 +3196,35 @@
       "roblox": {
         "title": "Roblox account",
         "description": "Link a Roblox username for in-game features."
+      },
+      "signIn": {
+        "title": "Sign-in",
+        "current": {
+          "parent": "{name} signs in through your account.",
+          "username": "{name} signs in with a username and password.",
+          "email": "{name} signs in with their own email address."
+        },
+        "currentUsername": "{name} signs in with the username {username}.",
+        "saved": "Sign-in updated.",
+        "saveFailed": "Couldn’t save this change. Please try again.",
+        "newPasswordTitle": "Set a new password",
+        "newPasswordDescription": "Choose a new password and read it out to {name}. It replaces the old one straight away.",
+        "newPasswordSubmit": "Set password",
+        "newPasswordSaved": "New password set.",
+        "verified": "This address has been verified.",
+        "notVerified": "{name} has not opened the verification link yet.",
+        "resend": "Resend the verification email",
+        "resendSent": "Sent. Ask {name} to check their inbox.",
+        "resendRateLimited": "That is a lot of emails for one gamer. Please try again in a while.",
+        "resendFailed": "We couldn’t send the email. Please try again.",
+        "change": {
+          "username": {
+            "title": "Change the username",
+            "description": "Pick a new username for {name}. Their password stays the same, and the old username stops working straight away.",
+            "submit": "Save the username",
+            "saved": "Username updated. Read the new one out to your gamer."
+          }
+        }
       }
     },
     "switchToGamer": {
@@ -2909,9 +3233,13 @@
     },
     "helpFaq": {
       "items": {
+        "joiningSession": {
+          "question": "How does my gamer join a session when it starts?",
+          "answer": "<p>That depends on where it meets, and the card on your My SOG shows which: a session that meets online has a button on it, and one that meets in person names the place.</p><p>Online, the session is a voice room in the browser, with nothing to install:</p><steps><step>On your My SOG, find the card under your child’s name. Until the session is close, its button is locked and tells you the day and time it opens.</step><step>Five minutes before the session starts, the button changes to “Join voice room”.</step><step>Tap it. The room lets in only the people in the group, so from your account you are asked to switch to your child’s profile first — that signs you out of your parent account — and the room then opens as your child.</step><step>Allow microphone access if the browser asks for it.</step></steps><p>Getting back to your own profile afterwards takes your parent PIN. If your child signs in with a username or email of their own, they can open their own My SOG instead and tap the same button there. The room stays open until five minutes after the session ends.</p><p>In person, there is no button. The page for that club, camp or event shows the place it meets at, with the address, and a note about the place for families when there is one — so bring your child there for the start time.</p><p>If the card says instead that we are matching your child with a Gedu and a group, there is nothing to join yet: that happens before the first session, and the card shows the button or the place once it has.</p>"
+        },
         "parentPin": {
           "question": "What is the parent PIN, and what if I forget it?",
-          "answer": "<p>Your parent PIN is a four-digit code you set the first time you use your parent account. It gates the parent side of Sogverse rather than each separate action: you unlock once, and the session locks again the moment you switch to a gamer profile or sign out — so a password saved in the browser is not enough on its own to buy anything or change a child’s account.</p><p>If you forget it, tap “Forgot your PIN?” on the PIN screen: we email a reset link to the address on your account and nowhere else, so a child pressing it simply sends you an email. The link lasts 24 hours and works once.</p><p>You can also change a PIN you still know from Settings.</p>"
+          "answer": "<p>Your parent PIN is a four-digit code you set the first time you use your parent account. It gates the parent side of Sogverse rather than each separate action: you unlock once, and the session locks again the moment you switch to a gamer profile or sign out — so a password saved in the browser is not enough on its own to buy anything or change a child’s account. The same PIN gates the way back: a child who entered Sogverse by switching from your account needs it to switch to your profile or to a sibling’s.</p><p>If you forget it, tap “Forgot your PIN?” on the PIN screen: we email a reset link to the address on your account and nowhere else, so a child pressing it simply sends you an email. The link lasts 24 hours and works once.</p><p>You can also change a PIN you still know from Settings.</p>"
         },
         "sessionReports": {
           "question": "Will I hear how sessions went?",
@@ -2920,10 +3248,6 @@
         "missedSessions": {
           "question": "What if we miss a session, or join a club partway through?",
           "answer": "<p>A club stays open for new gamers while it is running, so you can join partway through a term — the club page shows which day and time it meets each week, the term it runs over, and how many seats are left; once your child is enrolled, their own club page names the date of the next session.</p><p>Camps and events are different: a camp closes to new sign-ups the day before it starts, because the group starts together, and an event closes once its session has ended.</p><p>A club is billed as a full month from the day you sign up, so joining mid-month does not reduce that month’s payment; if a club has not started yet, nothing is charged on the day you sign up and the page tells you the date of your first payment.</p><p>If your child misses a single session there is nothing to do — their place is not affected. Their Gedu marks attendance for each session and you will see that mark on the club page. A session missed is not made up or refunded; on a municipality club, repeated unexcused absences may open the place for the next family on the waiting list, which you agree to when you register.</p>"
-        },
-        "sessionTimes": {
-          "question": "What time do sessions happen in our timezone?",
-          "answer": "<p>In yours. Session times are authored in Finnish time and shown to you converted to your own device’s timezone automatically, everywhere they appear — on a club’s page, on its card, and on your My SOG.</p><p>When your timezone differs from the club’s, the time carries a short timezone marker beside it so the conversion is visible; when you are in the same zone as the club, there is nothing to convert and no marker.</p><p>Because the conversion is real, a club running on two Finnish weekdays can land on different weekdays for you, and the schedule you see is grouped by your weekdays, not ours. A camp’s start and end dates are plain calendar dates and do not shift.</p>"
         }
       }
     }
@@ -2959,7 +3283,14 @@
     "marketing": {
       "title": "Marketing preferences",
       "schoolOfGaming": "School of Gaming may send me news and offers by email.",
-      "lynxEducate": "Share my contact details with our trusted partner <link>Lynx Educate</link> so they can send me news and offers."
+      "lynxEducate": "Share my email address with <link>Lynx Educate</link> so they can send me news about future events and gaming resources. I can unsubscribe at any time."
+    },
+    "usernameLabel": "Username",
+    "gamerPasswordFromParent": "Your parent can set a new password for you from their My SOG.",
+    "photoConsent": {
+      "title": "Photos and videos",
+      "granted": "Your parent has said photos and videos of you may be included in session reports and used by School of Gaming, Lynx Educate and Roblox. A Gedu will still ask you before taking your photo.",
+      "notGranted": "Your parent has said photos and videos of you are not to be used, so a Gedu will keep you out of session photos. Only your parent can change this."
     }
   },
   "tools": {
@@ -2998,7 +3329,12 @@
     "goToDashboard": "Go to My SOG",
     "invalidTitle": "This link no longer works",
     "invalidDescription": "A verification link stops working once the email address on the account changes. Open your settings and send yourself a fresh one.",
-    "goToSettings": "Go to settings"
+    "goToSettings": "Go to settings",
+    "gamerVerifiedTitle": "Your email is confirmed",
+    "gamerChoosePasswordDescription": "Next, choose your password — we will email you a link.",
+    "gamerSendPasswordLink": "Send me a password link",
+    "gamerPasswordLinkSent": "Sent. Have a look in your email.",
+    "gamerPasswordLinkFailed": "That did not work. Try again."
   },
   "voice": {
     "participants": "Participants",
@@ -3060,6 +3396,7 @@
       "no-device": "No microphone or camera was found. Connect one, then reload.",
       "in-use": "Your microphone or camera is being used by another app or browser tab. Close it, then reload.",
       "insecure": "Camera and microphone need a secure (https) connection.",
+      "interrupted": "Your microphone has stopped sending sound. Check that it’s connected and not muted on your device, then pick it again in the list or reload.",
       "unknown": "We couldn’t access your microphone or camera. Reload and try again.",
       "reload": "Reload"
     },
@@ -3104,24 +3441,6 @@
       "pizza": "Pizza",
       "ice-cream": "Ice cream",
       "coffee": "Coffee"
-    },
-    "zoneColor": {
-      "red": "Red",
-      "orange": "Orange",
-      "amber": "Amber",
-      "yellow": "Yellow",
-      "lime": "Lime",
-      "green": "Green",
-      "emerald": "Emerald",
-      "teal": "Teal",
-      "cyan": "Cyan",
-      "sky": "Sky",
-      "blue": "Blue",
-      "indigo": "Indigo",
-      "violet": "Violet",
-      "purple": "Purple",
-      "fuchsia": "Fuchsia",
-      "pink": "Pink"
     },
     "instant": {
       "joinFailed": "Couldn’t join the room. Please try again.",
@@ -3179,7 +3498,7 @@
   },
   "yty": {
     "hero": {
-      "title": "What is <primary>Yty</primary>?",
+      "title": "What is Yty?",
       "subtitle": "Yty is the force that keeps Sogverse in balance. By doing good things — learning new skills, making friends, behaving well, and taking part in the community — gamers earn Yty for themselves and for everyone."
     },
     "overview": {
@@ -3249,7 +3568,8 @@
       "replyToLabel": "Reply to",
       "sent": "Sent",
       "message": "Message",
-      "gamerNote": "This message is from a gamer account. Replies go to their parent ({parentEmail})."
+      "gamerNoteNoMailbox": "Sent from {firstName}’s gamer account, which has no email of its own.",
+      "gamerNoteOwnMailbox": "Sent from {firstName}’s gamer account — they also read their own email, {gamerEmail}."
     },
     "welcomeParent": {
       "subject": "Welcome to School of Gaming",
@@ -3300,7 +3620,13 @@
           "event": "You’re joining {productName}."
         },
         "waitlist": {
-          "subheading": "You’re on the waitlist for {productName}. We’ll let you know if a seat opens."
+          "subheading": "You’re on the waitlist for {productName}. We’ll let you know if a seat opens.",
+          "next2": {
+            "consumer_club": "You keep your place in line for the whole term.",
+            "municipality_club": "You keep your place in line for the whole term.",
+            "camp": "You keep your place in line for the camp.",
+            "event": "You keep your place in line for the event."
+          }
         }
       },
       "typeLabel": {
@@ -3318,11 +3644,11 @@
       },
       "nextTitle": "What happens next",
       "next": {
-        "placement": "We’ll place {participantName} in a group with a Gedu. The sessions will then appear in My SOG.",
-        "placementSelf": "We’ll place you in a group with a Gedu. The sessions will then appear in My SOG.",
+        "placement": "We’ll place {participantName} in a group with a Gedu. The sessions will then appear under My SOG.",
+        "placementSelf": "We’ll place you in a group with a Gedu. The sessions will then appear under My SOG.",
         "subscription": "You’ll be billed every month. You can manage or cancel anytime from My SOG.",
         "upfront": "This was a one-time payment — there’s nothing more to pay.",
-        "free": "There’s nothing to pay for this one."
+        "firstCharge": "Nothing was charged today. Your first payment is on {date}."
       },
       "waitlist": {
         "subject": "{participantName} is on the waitlist for {productName}",
@@ -3330,9 +3656,53 @@
         "heading": "You’re on the waitlist",
         "subheading": "{participantName} is on the waitlist for {productName}. We’ll let you know if a seat opens.",
         "next1": "We’ll email you the moment a seat opens.",
-        "next2": "You can see where you stand in My SOG at any time."
+        "summaryTitle": "Your waitlist spot",
+        "forLabel": "Waitlisted",
+        "next2": {
+          "consumer_club": "{participantName} keeps their place in line for the whole term.",
+          "municipality_club": "{participantName} keeps their place in line for the whole term.",
+          "camp": "{participantName} keeps their place in line for the camp.",
+          "event": "{participantName} keeps their place in line for the event."
+        },
+        "next3": "You can keep track of your waitlist spot anytime in My SOG."
       },
-      "dashboardButton": "Go to My SOG"
+      "gamer": {
+        "greeting": "Hi {participantName}!",
+        "summaryTitle": "Your signup"
+      },
+      "invite": {
+        "summary": "{productName} – {participantName}",
+        "locationOnline": "Online – My SOG",
+        "locationInPerson": "{site}, {address}",
+        "whereOnline": "Sessions run online in My SOG, and the voice room opens {minutes} minutes before each session starts.",
+        "whereInPerson": "Sessions run at {site}.",
+        "whereAddress": "Address: {address}",
+        "link": "Everything about this signup is in My SOG: {url}",
+        "questions": "Questions? Write to {supportEmail}."
+      },
+      "dashboardButton": "Go to My SOG",
+      "closing": "Questions? Just reply to this email.",
+      "summaryTitle": "Your order",
+      "forLabel": {
+        "consumer_club": "Enrolled",
+        "municipality_club": "Registered",
+        "camp": "Signed up",
+        "event": "Joined"
+      },
+      "overview": {
+        "schedule": "Schedule",
+        "where": "Where",
+        "format": "Format",
+        "online": "Online",
+        "tbd": "To be confirmed",
+        "ageRange": "Age range",
+        "audience": "Audience",
+        "language": "Language",
+        "ages": "Ages {min}–{max}",
+        "audienceParents": "For parents",
+        "audienceFamilies": "For families",
+        "audienceFamiliesWithAges": "For families, ages {min}–{max}"
+      }
     },
     "verifyEmail": {
       "subject": "Verify your email address",
@@ -3341,10 +3711,18 @@
       "button": "Verify your email address",
       "ignore": "If you didn’t ask for this, you can safely ignore this email. Nothing will change."
     },
+    "gamerWelcome": {
+      "subject": "Your School of Gaming account is ready",
+      "heading": "Your account is ready",
+      "body": "Hi {gamerName}, your parent set up a School of Gaming account for you. To sign in you need a password — first, tap the button to confirm this is your email, then you can choose one.",
+      "button": "This is my email",
+      "ignore": "If you were not expecting this email, you can ignore it. Nothing will happen."
+    },
     "sessionReport": {
       "subject": "Session report – {productName}, {sessionDate}",
       "title": "Session report",
       "intro": "Hi! Here’s {geduName}’s report from {gamerName}’s {productName} session.",
+      "gamerIntro": "Hi {gamerName}! Here’s {geduName}’s report from your {productName} session.",
       "groupLabel": "Group",
       "dateLabel": "Date",
       "timeLabel": "Time",
@@ -3371,6 +3749,12 @@
       "self": {
         "subject": "A seat has opened in {productName}",
         "opening": "We promised to write the moment a seat opened. It has: you can join us — {productName}."
+      },
+      "gamer": {
+        "subject": "A seat has opened for you in {productName}",
+        "opening": "Hi {gamerName}, a seat has opened up for you in {productName}. That is good news.",
+        "parentDecides": "Your parent has an email asking them to say yes or no, and they have until {deadline}. Once they answer, you will see it in My SOG.",
+        "dashboardButton": "Open My SOG"
       }
     },
     "seatOfferStaff": {
@@ -3396,7 +3780,7 @@
   },
   "legal": {
     "draftNotice": "Draft — this page’s content is still being finalised and has not yet been approved. Details may change.",
-    "pendingSection": "This section is still being written and will be added before the Programme launches."
+    "opensInNewTab": "(opens in a new tab)"
   },
   "privacy": {
     "title": "Privacy Policy",
@@ -3404,7 +3788,7 @@
     "intro": {
       "heading": "The short version",
       "paragraphs": [
-        "School of Gaming exists to give children a safe, fun place to learn through gaming. This page lists the main things we hold about your child, and why — in plain language instead of legal jargon, so you can check it for yourself. A gamer account carries an internal Sogverse address rather than a real email, and it exists only inside your own account.",
+        "School of Gaming exists to give children a safe, fun place to learn through gaming. This page lists the main things we hold about your child, and why — in plain language instead of legal jargon, so you can check it for yourself. A gamer account exists only inside your own account, and it carries an internal Sogverse address rather than a real email unless you choose to give your child their own.",
         "In short: we only collect what we need to run our clubs, camps, and events. We never sell your information or your child’s. Only a parent can create a child’s account, and we never advertise to children. You can ask us to show, correct, or delete your information at any time by emailing {supportEmail}."
       ]
     },
@@ -3431,11 +3815,11 @@
           "Your language and currency preferences — so the site shows up the way you expect.",
           "Your password, which we store only in a scrambled (hashed) form — we can never see it.",
           "Payment details are handled directly in Stripe. We never see or store your full card number.",
-          "About your child: their first name, their birth month and year (we don’t ask for the full date — only what we actually need), and optionally their gender — so we can place them in the right group and address them properly. We store your family surname on their account too, because your child is part of your account; Gedus and other gamers never see it. Their account itself uses an internal Sogverse address rather than a real email.",
+          "About your child: their first name, their birth month and year (we don’t ask for the full date — only what we actually need), and optionally their gender — so we can place them in the right group and address them properly. We store your family surname on their account too, because your child is part of your account; Gedus and other gamers never see it. Their account itself uses an internal Sogverse address rather than a real email, unless you choose to give them a sign-in with their own email address; we then hold that address and send them their own copy of the emails we send you about their clubs, camps and events.",
           "Optionally, your child’s username in the games their clubs use — today that’s Minecraft and Roblox — and the account id that game gives them, so we can recognise them in the game and so they can connect to our Minecraft server during sessions.",
           "Session records our Game Educators write — attendance, session reports, and short notes that help us support your child in the group.",
-          "Basic, anonymous information about how the site is used (see \"Cookies and analytics\" below).",
-          "If you came to us through a link shared by a school, club or partner organisation, a short code telling us which one — so we know which outreach actually reaches families, and can tell our partners whether theirs worked."
+          "Basic, anonymous information about how the site is used (see \"Cookies, analytics and advertising\" below).",
+          "The campaign tag — source, medium and campaign — carried by the link your visit came from. We store it once, when the account is created, so that we and our partners know which outreach actually reaches families."
         ]
       },
       "childrensPrivacy": {
@@ -3443,7 +3827,7 @@
         "paragraphs": [
           "Most of the people using Sogverse are children, so their safety and privacy is our highest priority.",
           "A child can never create their own account. Only a parent or guardian sets up a child’s account, chooses what to share, and gives permission on their behalf. That’s how we meet our responsibilities under data-protection law when it comes to children.",
-          "What we hold about a child is set out above under \"The information we collect\", and we don’t collect anything about a child beyond what we need to run our clubs, camps, and events. We never show children advertising, and we never sell or share their data for marketing. Live sessions are run by our trained Game Educators (we call them Gedus).",
+          "What we hold about a child is set out above under \"The information we collect\", and we don’t collect anything about a child beyond what we need to run our clubs, camps, and events. We never show children advertising, and we never sell or share their data for marketing. When your child is signed in as a gamer, nothing about their browsing is sent to an advertising platform, even if marketing is switched on for the device. Live sessions are run by our trained Game Educators (we call them Gedus).",
           "If you ever want to see, change, or delete your child’s information, just email {supportEmail} and we’ll take care of it."
         ]
       },
@@ -3471,7 +3855,8 @@
           "Because a parent has given permission on their child’s behalf (consent).",
           "To meet our legal duties, such as keeping accounting records for payments.",
           "For our legitimate interest in keeping the site secure and working well — always balanced against your privacy.",
-          "For our legitimate interest in understanding which of our outreach efforts reach families — always balanced against your privacy, and you can ask us to stop at any time."
+          "For our legitimate interest in understanding which of our outreach efforts reach families — always balanced against your privacy, and you can ask us to stop at any time.",
+          "Your consent, for the analytics and marketing cookies — which you can withdraw at any time from Privacy choices at the bottom of every page."
         ]
       },
       "providers": {
@@ -3484,18 +3869,24 @@
           "Stripe — processes payments. Your card details go straight to Stripe; we never see them.",
           "Brevo — sends our emails, such as receipts and reminders.",
           "Daily.co — powers the live voice and video sessions.",
-          "Vercel — hosts the website and provides anonymous, cookie-free usage statistics.",
+          "Vercel — hosts the website and provides anonymous usage statistics.",
           "Meta (WhatsApp) — used to send some messages and reminders to families who prefer WhatsApp.",
           "Roblox — receives your child’s Roblox account id, so we can confirm the account and show their avatar picture.",
-          "Mojang (Microsoft) — receives your child’s Minecraft username, so we can confirm the account."
+          "Mojang (Microsoft) — receives your child’s Minecraft username, so we can confirm the account.",
+          "Meta (Facebook and Instagram ads) — learns, through the Meta Pixel, that you visited and whether you created an account, so we can show our ads there. Only if you allow marketing cookies.",
+          "TikTok — learns, through the TikTok Pixel, that you visited and whether you created an account, so we can show our ads on TikTok. Only if you allow marketing cookies."
         ]
       },
       "cookies": {
-        "heading": "Cookies and analytics",
+        "heading": "Cookies, analytics and advertising",
         "paragraphs": [
-          "We don’t use advertising or tracking cookies, and we don’t follow you around the internet.",
-          "We use a small number of necessary cookies to keep you securely logged in — the site can’t work without these, so they don’t need your consent.",
-          "To understand things like how many people visit and whether they’re using a phone or a computer, we use Vercel’s analytics. It’s privacy-friendly: no cookies, and it doesn’t identify you personally."
+          "A few cookies are simply how the site works: they keep you signed in, remember that you entered your parent PIN, hold your language and timezone, and store the cookie choice you make. These don’t need your consent — without them there is no site to consent to.",
+          "Everything else waits for you. The first time you visit we ask, and nothing beyond those necessary cookies runs until you answer. You can change your mind whenever you like from Privacy choices at the bottom of every page: switching something off takes effect straight away, and it doesn’t change anything we already did while it was on.",
+          "There are two things to say yes or no to:"
+        ],
+        "bullets": [
+          "Analytics — Vercel’s, and only if you choose it. It counts visits, measures how quickly pages load, and receives a few anonymous events about how the site is used: how someone reached their My SOG, when someone changes the language. It can’t see who you are, and we never hand it to advertisers.",
+          "Marketing — the Meta Pixel and the TikTok Pixel, and only if you choose them. They learn that you visited School of Gaming and whether you created an account, so Meta and TikTok can show you our ads on their own platforms. Neither pixel loads while your child is signed in as a gamer. If you say yes to marketing and then create an account, we set one short-lived cookie of our own — five minutes, no name, no address, nothing but the word \"registration\" — whose only job is to tell the pixels on the next page that an account was created. Switching marketing off deletes the cookies the pixels left in your browser, but we can’t delete what Meta and TikTok already hold — you can ask them to, in your own settings there, where Meta calls it \"activity off Meta technologies\"."
         ]
       },
       "voice": {
@@ -3545,7 +3936,7 @@
         "heading": "Getting in touch and your right to complain",
         "paragraphs": [
           "To use any of the rights above, or if you have a question about your privacy or your child’s information, just email {supportEmail}. There’s no charge, we’ll always reply, and email is the best way to reach us.",
-          "If you’re ever unhappy with how we’ve handled your information, you have the right to complain to the Finnish Data Protection Ombudsman (Tietosuojavaltuutetun toimisto) at tietosuoja.fi."
+          "If you’re ever unhappy with how we’ve handled your information, you have the right to complain to the Finnish Data Protection Ombudsman (Tietosuojavaltuutetun toimisto) at <linkTietosuoja>tietosuoja.fi</linkTietosuoja>."
         ]
       }
     }
@@ -3627,7 +4018,7 @@
       "privacy": {
         "heading": "Your family’s privacy",
         "paragraphs": [
-          "We handle your family’s information in line with Finnish and EU data-protection law, and we hold as little of your child’s as we can: a gamer account is created by you, carries an internal Sogverse address rather than your child’s own email, and is never used to advertise to them. Our <linkPrivacy>Privacy Policy</linkPrivacy> explains exactly what we collect and why."
+          "We handle your family’s information in line with Finnish and EU data-protection law, and we hold as little of your child’s as we can: a gamer account is created by you, carries an internal Sogverse address rather than your child’s own email unless you choose to give them one, and is never used to advertise to them. Our <linkPrivacy>Privacy Policy</linkPrivacy> explains exactly what we collect and why."
         ]
       },
       "changes": {
@@ -3728,8 +4119,7 @@
       "geonames": "The list of countries, regions and towns you pick from when you tell us where your family lives — the same list we use to find clubs near you. Ours is based on GeoNames rather than being a copy of it: we leave out places we do not serve, group some of them differently, and rename others to the form people use locally.",
       "laPoste": "The French postal codes in that same list, so a family in France can type their code instead of hunting for their commune.",
       "mcHeads": "Draws the Minecraft character shown beside a linked Minecraft account. They ask for nothing in return, so this credit is a thank-you rather than a requirement."
-    },
-    "opensInNewTab": "(opens in a new tab)"
+    }
   },
   "seatOffer": {
     "offer": {
@@ -3774,11 +4164,11 @@
   },
   "consentDocuments": {
     "names": {
-      "robloxProgrammeTerms": "Roblox Programme Terms & Conditions",
-      "robloxPrivacyPolicy": "Roblox Programme Privacy Policy"
+      "robloxProgrammeTerms": "Creator Academy Terms & Conditions",
+      "robloxPrivacyPolicy": "Creator Academy Privacy Policy"
     },
     "bundles": {
-      "robloxProgramme": "Roblox Programme documents"
+      "robloxProgramme": "Creator Academy documents"
     }
   },
   "chat": {
@@ -3863,5 +4253,38 @@
       "next": "Next image",
       "close": "Close"
     }
+  },
+  "gamerSignIn": {
+    "question": "How will {name} sign in?",
+    "option": {
+      "parent": "Through the parent account",
+      "username": "Through a child account with a username",
+      "email": "Through a child account with the child’s email address"
+    },
+    "optionHint": {
+      "parent": "The parent signs in on the device and hands it to the child. The child has no username or password of their own.",
+      "username": "The parent sets up the username and password for the child.",
+      "email": "The parent creates the account; the child confirms their email address and creates their own password."
+    },
+    "parentModeNote": "Nothing to fill in — {name} will sign in when you switch to them from your own account.",
+    "usernameLabel": "Username",
+    "usernamePlaceholder": "lily2015",
+    "usernameHint": "Letters and numbers only, 3 to 20 characters.",
+    "usernameRequired": "Choose a username.",
+    "usernameInvalid": "Use 3 to 20 letters or numbers, with no spaces.",
+    "usernameTaken": "That username is taken. Try another one.",
+    "passwordHint": "At least {count} characters. Read it out to your gamer — you can change it here later.",
+    "passwordTooShort": "The password needs at least {count} characters.",
+    "emailPlaceholder": "lily@example.com",
+    "emailRequired": "Enter an email address.",
+    "emailInvalid": "That does not look like an email address.",
+    "emailTaken": "That email address already has an account."
+  },
+  "consent": {
+    "heading": "Your privacy choices",
+    "body": "Necessary cookies keep the site working. Analytics counts visits and page load times. It cannot tell who you are, and advertisers never see it. We advertise on other platforms. Marketing tells them you visited, and whether you created an account, so they can show you our ads there. Marketing never runs while a gamer is signed in. You can change your answer any time from the footer, and the details are in our <link>privacy policy</link>.",
+    "rejectAll": "Reject all",
+    "analyticsOnly": "Analytics only",
+    "analyticsAndMarketing": "Marketing and analytics"
   }
 }

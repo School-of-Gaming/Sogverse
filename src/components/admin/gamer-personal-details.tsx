@@ -4,6 +4,7 @@ import { useMemo, useRef, useState, type RefObject } from "react";
 import { formatInTimeZone } from "date-fns-tz";
 import { Loader2, Pencil } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -115,7 +116,7 @@ export function GamerPersonalDetails({
           type="button"
           onClick={() => setEditing(true)}
           aria-label={t("edit")}
-          className="shrink-0 rounded-sm p-0.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="shrink-0 rounded-sm p-0.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
         >
           <Pencil className="h-3.5 w-3.5" aria-hidden />
         </button>
@@ -338,12 +339,9 @@ function GamerPersonalDetailsForm({
               push the very selects the admin just used. It only ever appears
               after they pressed Save and it did not take. */}
           {failed && (
-            <div
-              role="alert"
-              className="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
-            >
-              {t("saveError")}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{t("saveError")}</AlertDescription>
+            </Alert>
           )}
         </div>
 
@@ -372,4 +370,4 @@ function GamerPersonalDetailsForm({
  * border so a row of them reads as one set of controls.
  */
 const SELECT_CLASS =
-  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+  "flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";

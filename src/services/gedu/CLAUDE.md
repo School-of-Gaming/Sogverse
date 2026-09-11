@@ -49,7 +49,7 @@ Public, unauthenticated `/register-gedu` page → `POST /api/gedu/register`:
 
 Then the **client** signs in with the password and does a full-page nav to `/gedu`
 (`admin.createUser` doesn't sign the browser in; full-page nav is required after any auth
-change — see root CLAUDE.md).
+change — see `src/CLAUDE.md`).
 
 **Rule: `register_gedu` is `service_role` only.** It grants the gedu role, so it must
 never be reachable by `authenticated`/`anon`. The API route (admin client) is the only

@@ -26,8 +26,9 @@
  * See `docs/architecture/performance.md` § F7 for the measured capacity this is watched
  * against.
  *
- * The log lands in `scripts/output/` (gitignored), named for the opening rather
- * than for the run, so restarting mid-event appends to the same file.
+ * The log lands in `scripts/output/watch-registration/` (gitignored), named for
+ * the opening rather than for the run, so restarting mid-event appends to the
+ * same file.
  *
  * ## Reading it
  *
@@ -58,6 +59,7 @@
 
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { outputDir } from "./lib/output.mjs";
 
 /** Load .env.local without clobbering the shell — the shell always wins. */
 function loadEnvLocal() {
@@ -93,8 +95,10 @@ if (!OPENS_AT) {
 
 // Named for the opening it records, not for the moment the process started, so
 // two runs across one event append to one file and separate openings never mix.
-// `scripts/output/` is gitignored — see the comment on that entry.
-const LOG_FILE = argOf("log", `scripts/output/registration-watch-${OPENS_AT.slice(0, 10)}.jsonl`);
+// The script's output folder is gitignored — see scripts/CLAUDE.md.
+const LOG_FILE =
+  argOf("log") ??
+  path.join(outputDir(import.meta.url), `registration-watch-${OPENS_AT.slice(0, 10)}.jsonl`);
 
 const REF = STAGING ? process.env.SUPABASE_PROJECT_REF : process.env.SUPABASE_PROD_PROJECT_REF;
 const SERVICE_KEY = STAGING

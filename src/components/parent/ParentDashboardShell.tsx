@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { getPathname } from "@/i18n/navigation";
+import { INERT_HREF } from "@/lib/constants/routes";
 import { AddGamerDialog } from "@/components/family/AddGamerDialog";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
 import { useFamilyEnrollments } from "@/components/family/use-family-enrollments";
@@ -47,6 +49,7 @@ export function ParentDashboardShell({
   initialSessionRows,
   initialWaitlistRows,
   initialFamily,
+  prepDismissed,
   billingCard,
 }: {
   /*
@@ -59,10 +62,23 @@ export function ParentDashboardShell({
   initialSessionRows: MyUpcomingSessionRow[] | null;
   initialWaitlistRows: MyWaitlistRow[] | null;
   initialFamily: FamilyMember[] | null;
+  /**
+   * The enrolments this parent has already finished the prep guide for, parsed
+   * from the cookie by the server component above.
+   *
+   * **Not a query and not a hook**, which is the point of it arriving this way:
+   * it is read where the page is rendered, so the server's HTML already carries
+   * the right footer on every card and nothing swaps a tick after hydration.
+   * A dismissal made on this page updates the card through its own local state;
+   * this value is a seed, and a stale one is only ever stale in the direction
+   * of a card the reader has already put away themselves.
+   */
+  prepDismissed: ReadonlySet<string>;
   /** The Stripe portal card, rendered by the server component above. */
   billingCard: React.ReactNode;
 }) {
   const t = useTranslations("parent");
+  const locale = useLocale();
   const { gamers, self } = useFamilyEnrollments({
     initialSessionRows,
     initialWaitlistRows,
@@ -135,12 +151,14 @@ export function ParentDashboardShell({
     // renders no live Join in either case, so this is a guard against the
     // dialog ever opening with nowhere to land rather than a path a parent
     // can take.
-    if (enrollment.voiceHref === "#") return;
+    if (enrollment.voiceHref === INERT_HREF) return;
     setSwitchTarget({
       gamerId: gamer.id,
       gamerFirstName: gamer.firstName,
       productName: enrollment.productName,
-      redirectUrl: enrollment.voiceHref,
+      // A concrete URL: the switch ends in a full-page navigation, so the
+      // typed href is resolved here, in the locale the parent is reading.
+      redirectUrl: getPathname({ href: enrollment.voiceHref, locale }),
     });
   }
 
@@ -200,6 +218,7 @@ export function ParentDashboardShell({
         // section of their own only once they hold a seat themselves, which
         // only a for-parents product can give them.
         self={self}
+        prepDismissed={prepDismissed}
         billingCard={billingCard}
         // The live form, wired to the real POST. Constructed here rather than
         // passed down from the server component above: it needs no server data

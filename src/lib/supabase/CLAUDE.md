@@ -3,7 +3,7 @@
 This directory holds the Supabase client factories — browser (singleton), server
 component, and the privileged service-role one — plus the shared paging primitive every
 list read that can outgrow a single response goes through. The factories are described in
-the root `CLAUDE.md`; the rest of this file is about the paging rules, which are
+`src/CLAUDE.md`; the rest of this file is about the paging rules, which are
 normative for every service in the codebase and not only the ones that happen to page
 today.
 

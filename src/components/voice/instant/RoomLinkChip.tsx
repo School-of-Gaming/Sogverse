@@ -43,11 +43,11 @@ export function RoomLinkChip({
 
   const host =
     typeof window !== "undefined" ? window.location.host : "sogverse.sog.gg";
-  const displayUrl = `${host}${ROUTES.voice.forCode(code)}`;
+  const displayUrl = `${host}${ROUTES.voice.forCodePath(code)}`;
 
   const handleCopy = () => {
     if (typeof window === "undefined") return;
-    void copy(`${window.location.origin}${ROUTES.voice.forCode(code)}`);
+    void copy(`${window.location.origin}${ROUTES.voice.forCodePath(code)}`);
   };
 
   if (variant === "compact") {
@@ -56,8 +56,8 @@ export function RoomLinkChip({
         type="button"
         onClick={handleCopy}
         className={cn(
-          "flex shrink-0 items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          copied && "border-success text-success",
+          "flex shrink-0 items-center gap-2 rounded-md border border-border bg-lifted px-3 py-1.5 text-sm transition-colors hover:border-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
+          copied && "text-success",
         )}
         // The aria-label carries the code because a screen reader gets the
         // label INSTEAD of the button's visible content — without it, this
@@ -72,7 +72,7 @@ export function RoomLinkChip({
         <span className="font-medium text-muted-foreground">
           {t("roomCode")}
         </span>
-        <span className="font-mono font-semibold tracking-wider">{code}</span>
+        <span className="font-mono font-bold tracking-wider">{code}</span>
         {copied ? (
           <Check className="h-3.5 w-3.5" aria-hidden />
         ) : (
@@ -88,8 +88,8 @@ export function RoomLinkChip({
         type="button"
         onClick={handleCopy}
         className={cn(
-          "group flex w-full max-w-md items-center justify-center gap-3 rounded-lg border border-border bg-muted/40 px-5 py-4 text-base font-mono font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          copied && "border-success text-success",
+          "group flex w-full max-w-md items-center justify-center gap-3 rounded-lg border border-border bg-lifted px-5 py-4 text-base font-mono transition-colors hover:border-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
+          copied && "text-success",
         )}
         aria-label={copied ? t("copied") : displayUrl}
       >

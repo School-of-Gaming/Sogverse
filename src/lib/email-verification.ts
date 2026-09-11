@@ -39,13 +39,22 @@
 // separation comes from the payload prefix (`email-verify:` vs `pin-reset:`),
 // which is what stops a token minted by one flow from ever validating in the
 // other; sharing an HMAC key across prefixed payloads is exactly the case
-// prefixing exists for. One payload under this key carries NO prefix — the PIN
-// unlock cookie signs `${userId}:${sessionId}` bare — and it still cannot
-// collide: its verifier derives both components from the caller's own JWT
-// rather than the token, and a UUID can never begin with a prefix string. The
-// fourth payload class is the seat offer (`seat-offer:`, in
-// `seat-offer-token.ts`), which followed this rule. Any FIFTH must carry its
-// own prefix too; do not add another bare one.
+// prefixing exists for. The inventory of payload classes under this key, which
+// a new one joins by adding its own prefix here:
+//
+//   1. `pin-reset:`      — the PIN reset link (`pin-session.ts`).
+//   2. `email-verify:`   — this module.
+//   3. `seat-offer:`     — the seat offer link (`seat-offer-token.ts`).
+//   4. `family-session:` — the switch route's marker on a session it created
+//                          (`pin-session.ts`).
+//   5. (no prefix)       — the PIN unlock cookie, which signs
+//                          `${userId}:${sessionId}` bare.
+//
+// The bare one is the exception and stays the only one: it cannot collide with
+// a prefixed payload because its verifier derives both components from the
+// caller's own JWT rather than from the token, and a UUID can never begin with
+// a prefix string. Any NEW payload class must carry its own prefix; do not add
+// another bare one.
 //
 // The changed-address reset watches `profiles.email` (a DB trigger), which is
 // the only email this app ever changes. An auth-side change that bypassed

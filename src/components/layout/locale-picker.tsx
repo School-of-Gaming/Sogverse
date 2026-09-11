@@ -11,14 +11,21 @@
  */
 
 import { useState, useRef } from "react";
+import {
+  useParams,
+  useSearchParams,
+  useRouter as useRawRouter,
+} from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { usePathname, getPathname } from "@/i18n/navigation";
 import { FLAGS } from "@/components/ui/flags";
 import { useClickOutside } from "@/hooks/use-click-outside";
 import { useLocaleControl } from "@/providers";
 import {
   SUPPORTED_LOCALES,
   LOCALE_CONFIG,
+  type SupportedLocale,
 } from "@/lib/constants/locales";
 import { trackLocalePickerOpen } from "@/lib/analytics";
 import { cn, isKeyOf } from "@/lib/utils";
@@ -64,8 +71,63 @@ export function LocalePicker({ className }: { className?: string }) {
   const c = useTranslations('common');
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  // The **wrapped** pathname: the internal route template, its locale prefix
+  // stripped and its slug untranslated, so `/fi/kauppa/abc` arrives here as
+  // `/shop/[id]`. The concrete values come from `useParams()` — handing
+  // next-intl the template alone would put a literal `[id]` in the address bar.
+  const pathname = usePathname();
+  const params = useParams();
+  const searchParams = useSearchParams();
+  // The raw router, because this call site *embeds a pathname in a URL*: the
+  // destination is built by `getPathname` and then has to carry the fragment,
+  // and no typed href has a `hash` field to carry one in.
+  const router = useRawRouter();
 
   useClickOutside(ref, () => setOpen(false));
+
+  /**
+   * Persist the choice, then re-issue this very page under the new prefix.
+   *
+   * **`replace`, not `push`** — Back should return the reader to the previous
+   * *page*, not to the previous language.
+   *
+   * The query string rides along: dropping it would strand a switch on
+   * `/shop?category=camps` or on a `?session_id=…` confirmation page. The
+   * fragment is appended by hand for the reason given at the router above.
+   *
+   * Persistence flows one way only, and only from here: the cookie and the
+   * profile are written because someone *chose* a language. Visiting a
+   * prefixed URL is reading, and writes nothing.
+   */
+  function chooseLocale(next: SupportedLocale) {
+    setLocale(next);
+    setOpen(false);
+
+    // **Built with `getAll`, so a repeated key survives as an array.**
+    // `Object.fromEntries(entries())` keeps only the last value of a repeated
+    // key, which silently drops half of a multi-select filter
+    // (`?topic=minecraft&topic=roblox`) on a language switch. next-intl's query
+    // serializer takes an array and re-emits every value.
+    const query = Object.fromEntries(
+      [...new Set(searchParams.keys())].map((key) => {
+        const values = searchParams.getAll(key);
+        return [key, values.length > 1 ? values : values[0]];
+      }),
+    );
+    const hash = typeof window === "undefined" ? "" : window.location.hash;
+    const target = getPathname({
+      // @ts-expect-error -- next-intl's own locale-switcher shape. `pathname`
+      // is the union of every declared route while `params` is the loose
+      // record `useParams()` returns, so the compiler cannot pair one route's
+      // params against all of them; at runtime the two came out of the same
+      // URL and always agree. A cast is not the alternative — this repo bans
+      // type assertions outright.
+      href: { pathname, params, query },
+      locale: next,
+    });
+
+    router.replace(`${target}${hash}`);
+  }
 
   const config = LOCALE_CONFIG[locale];
 
@@ -86,7 +148,7 @@ export function LocalePicker({ className }: { className?: string }) {
           }
           setOpen(!open);
         }}
-        className="flex items-center gap-1 rounded-md border border-border bg-muted/50 px-2 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+        className="flex items-center gap-1 rounded-md border border-border bg-lifted px-2 py-1 text-sm font-medium transition-colors hover:border-foreground hover:text-foreground"
         aria-label={c('selectLanguage')}
       >
         <span className="h-4 w-6 [&>svg]:h-full">
@@ -103,12 +165,11 @@ export function LocalePicker({ className }: { className?: string }) {
               <button
                 key={opt}
                 onClick={() => {
-                  setLocale(opt);
-                  setOpen(false);
+                  chooseLocale(opt);
                 }}
                 className={cn(
-                  "flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground",
-                  opt === locale && "font-semibold text-primary",
+                  "flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-hover hover:text-foreground",
+                  opt === locale && "font-semibold text-act",
                 )}
               >
                 <span className="h-4 w-6 [&>svg]:h-full">
