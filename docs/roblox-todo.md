@@ -27,7 +27,7 @@ since some may have been answered inside the review itself.
 - The media consent structure. Lynx prefers one combined box "if it's compliant (the lawyer
   will tell us)" — so the direction is chosen and the answer is not. **Kyle decided on
   2026-09-07 to build the one box anyway** and record the unanswered question; see the
-  open item under *Features the policies promise*.
+  open item under *Open decisions*.
 
 ---
 
@@ -123,27 +123,6 @@ item and keep going until nothing is left that we can move on our own.
    reviewed as a piece, by people looking at it together — applying a resolution early
    spends that and cannot be given back.
 
-## Features the policies promise that the app does not have
-
-- [ ] **The mandatory "I am the parent/legal guardian" checkbox.** The rest of Lynx's
-      proposed registration set (2026-08-12) landed on `feat/gamer-photo-consent`: the
-      required Terms & Privacy bundle, the optional Lynx email box and one optional
-      media box are all asked when a parent enrols a participant in a product that
-      attaches them — per gamer for the photo box, editable afterwards on the gamer's
-      page under the parent's My SOG, visible read-only to the gamer and to admins, with
-      a roster list on the Gedu session editor. The guardian checkbox is the one item of
-      that set with no surface, and it is a platform-wide question rather than a
-      programme one (every parent account already asserts the relationship implicitly by
-      creating the gamer).
-
-- [ ] **Facilitator↔parent messaging without exposing parent contact details.** The
-      programme documents once claimed a facilitator could reach a parent without seeing
-      their contact details; the claim was removed because no such feature exists. If we
-      ever want the claim back in the policies, the feature has to exist first.
-- [ ] **Roblox impact-research data export.** The DPA-limited dataset (Roblox username,
-      Roblox User ID, programme-account email, activity attended) has to actually reach
-      Roblox somehow. No process or tooling exists for producing that export.
-
 ## Attribution, cookie consent, and the Lynx data export
 
 **Opened 2026-08-26.** Research is complete and written up below.
@@ -194,8 +173,7 @@ for *why*, not for what is true now.
   and the third was the deleted plan.
 
 Not resolved, and unchanged: the third-party sharing of children's personal data in
-Lynx's schema — see "The half that is bigger than the banner" — and the privacy policy's
-answer to the cookie question.
+Lynx's schema — see "The half that is bigger than the banner".
 
 ### What triggered it
 
@@ -445,18 +423,6 @@ lawyer is not reviewing sections that are about to be restructured.
       photo a Gedu appears in, on Lynx Educate's or Roblox's website. Neither privacy
       policy mentions Gedu images in either direction. If the answer is that it does not,
       the fix is a clause in the Gedu contract, not a line in the parent-facing policies.
-- [ ] **Free products, the FREE price, and the waitlist.** Kyle's flag, 2026-08-30.
-      Looked into on 2026-09-07, and the machinery is not the gap. The admin product
-      form shows the waitlist tick for any capped product of any type, and switching a
-      product to free turns the cap on and defaults the waitlist to on — so a free,
-      capacity-capped programme event can offer a waitlist today, and its details page
-      shows the waitlist CTA once it fills. What the browse card shows is a deliberate
-      choice rather than a FREE-specific one: the seat bar is confined to municipality
-      clubs, and every other card says nothing about capacity, so a full product with a
-      waitlist looks open until it is opened (the card shell's own comment accepts this).
-      What is left is Kyle's decision: whether programme events — free, capped, and
-      exactly the kind of product that fills — should carry the seat bar or a waitlist
-      marker on the card after all.
 - [ ] **Draft banners come off** each page as its copy is confirmed final (the banner is
       the "copy pending / in draft" warning added while content is incomplete). Not an
       escalation of its own — it resolves as a consequence of the signoff above, and the
