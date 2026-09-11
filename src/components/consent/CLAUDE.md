@@ -56,8 +56,10 @@ So a report waits for the script to load, then re-reads the address bar: the tab
 be on the page that authorised the report, and the query string must carry only campaign
 keys, the platforms' click ids and the shop's own filter state. The second check is what
 keeps `/login?redirect=/parent/gamers/<id>` — the proxy's bounce for a signed-out parent —
-from ever being reported, even though the login page itself is a marketing page. A visitor
-who moved on gets no report for either page; a query with anything else in it gets none.
+from ever being reported, even though the login page itself is a marketing page — and the
+same check runs before the library is loaded at all, so such a page never has Meta's code
+in it. A visitor who moved on gets no report for either page; a query with anything else
+in it gets none.
 
 ## What Meta is told
 

@@ -181,9 +181,22 @@ describe("reportMetaPageView", () => {
 
   // The proxy's bounce for a signed-out parent: the pathname is a marketing
   // page, the query names a child.
-  it("reports nothing when the query carries anything but campaign keys", async () => {
+  it("loads nothing, let alone reports, when the query carries anything but campaign keys", async () => {
     tabIsOn("/login?redirect=/en/parent/gamers/abc-123");
+
+    await reportMetaPageView(PIXEL_ID, "/login");
+
+    // Not even the library: a page we will not report from is a page Meta's
+    // code has no business running on.
+    expect(insertedScripts()).toHaveLength(0);
+    expect(window.fbq).toBeUndefined();
+  });
+
+  // The query turning private between the request and the library's arrival —
+  // the tab was bounced while the download was in flight.
+  it("reports nothing when the query turned private meanwhile", async () => {
     const report = reportMetaPageView(PIXEL_ID, "/login");
+    tabIsOn("/login?redirect=/en/parent/gamers/abc-123");
 
     libraryArrives();
     await report;

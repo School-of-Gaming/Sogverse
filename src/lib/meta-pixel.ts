@@ -171,6 +171,11 @@ export async function reportMetaPageView(
   pixelId: string,
   pathname: string,
 ): Promise<void> {
+  // Checked before loading as well as before sending: a page whose query may
+  // not travel gets no library at all, not merely no report. The proxy's
+  // bounce to the login page is the case — a marketing page by pathname,
+  // carrying a private path in its query.
+  if (!isReportableQuery(window.location.search)) return;
   const ready = await loadMetaPixel(pixelId);
   if (!ready) return;
   // Both sides resolved through the URL parser, so a slug with a non-ASCII
