@@ -243,11 +243,12 @@ export const POST = defineRoute({
     // that this provenance can only be claimed from here, with the service-role
     // client, on the account this request has just created (see 00220's header).
     //
-    // LAST, deliberately. It is the least important thing this route does and
-    // the only one with no user-visible consequence if it fails, so it goes
-    // after the mail — nothing above it can be delayed or broken by a consent
-    // write, and the parent's account, their profile extras and their welcome
-    // link are all already settled by the time it runs.
+    // AFTER THE MAIL, deliberately, as the first of the two consent writes that
+    // end this handler. Neither has a user-visible consequence if it fails, so
+    // both go after everything that does — nothing above them can be delayed
+    // or broken by a consent write, and the parent's account, their profile
+    // extras and their welcome link are all already settled by the time they
+    // run.
     //
     // WRITTEN EVEN WHEN THEY DECLINED. An absent row means "never asked", a
     // `granted = false` row means "asked and said no", and this form asked — so

@@ -362,10 +362,16 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
             onCheckedChange={setAcceptedTerms}
             disabled={isLoading}
             label={t.rich('register.termsLabel', {
+              // A new tab for both, as the signup panel opens its consent
+              // documents: the parent is mid-way through a form, and the
+              // document is the thing they have to read *before* submitting
+              // it. In this tab, the way back would be an empty form.
               terms: (chunks) => (
                 <Link
                   href={ROUTES.termsAndConditions}
                   prefetch={false}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-act hover:underline"
                 >
                   {chunks}
@@ -375,6 +381,8 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
                 <Link
                   href={ROUTES.privacy}
                   prefetch={false}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-act hover:underline"
                 >
                   {chunks}

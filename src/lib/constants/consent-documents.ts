@@ -285,9 +285,11 @@ export type RequiredConsentDisplayRow =
  * **A `document` row has no sentence and no link, so it is a fallback and not a
  * shape to design toward.** A bundle is what carries an authored sentence and
  * the links inside it; a document standing outside every bundle can only be
- * offered as its raw slug beside the generic sentence. Today that means exactly
- * the drift case — a slug the database knows and this deploy does not — because
- * every document `CONSENT_DOCUMENTS` names belongs to a bundle. A new document
+ * offered as its raw slug beside the generic sentence. Today that means the
+ * drift case — a slug the database knows and this deploy does not — because
+ * every document a product can *require* belongs to a bundle; the two
+ * account-level documents stand outside every bundle by design, and never
+ * reach this function because a product cannot require them. A new document
  * that a parent should be able to *read* before ticking wants a bundle of its
  * own with a sentence to match, not a loose entry.
  */
