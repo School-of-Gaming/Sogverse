@@ -25,7 +25,9 @@ import { mockSupabaseClient } from "../../setup";
  *    act on, and it too gets its own translated message — the generic one tells
  *    them to go and sign in, which is wrong when no account exists;
  *  - the optional marketing box, which starts unticked and whose answer travels
- *    in the same body as an explicit boolean either way.
+ *    in the same body as an explicit boolean either way;
+ *  - the required acknowledgement above it — parent or legal guardian, and the
+ *    terms — which is the only control on this form that can refuse a submit.
  *
  * The translations are stubbed to echo the key, so the assertions are about
  * which key the form reaches for, not about wording in `messages/`.
@@ -72,7 +74,14 @@ import { ROUTES } from "@/lib/constants";
 
 const mockFetch = vi.fn();
 
-function renderForm() {
+/**
+ * A rendered form with every required field already answered — the text fields
+ * and, by default, the required acknowledgement, which is as much a required
+ * answer as the email is. A case that is *about* the unticked state opts out
+ * with `{ acceptTerms: false }` rather than every other case restating a tick
+ * it is not about.
+ */
+function renderForm({ acceptTerms = true }: { acceptTerms?: boolean } = {}) {
   const view = render(<RegisterForm redirect={null} />);
 
   function fill(id: string, value: string) {
@@ -90,20 +99,30 @@ function renderForm() {
   const form = view.container.querySelector("form");
   if (!form) throw new Error("no form");
 
-  // The one checkbox on the form: the marketing opt-in. It is rendered by the
-  // shared `CheckboxRow`, which generates its own ids, so it is found by role
-  // rather than by a literal id the form no longer chooses.
-  function marketingBox() {
-    const input = view.container.querySelector<HTMLInputElement>(
+  // Two checkboxes, both rendered by the shared `CheckboxRow`, which generates
+  // its own ids — so they are found by position rather than by a literal id the
+  // form no longer chooses. **The order is the assertion**: the required
+  // acknowledgement is first because it sits directly above the optional
+  // marketing row, and a change that swapped them would put the box that gates
+  // the form below the one that does not.
+  function boxes() {
+    const found = view.container.querySelectorAll<HTMLInputElement>(
       'input[type="checkbox"]',
     );
-    if (!input) throw new Error("no marketing consent checkbox");
-    return input;
+    if (found.length !== 2) {
+      throw new Error(`expected 2 checkboxes, found ${found.length}`);
+    }
+    return found;
   }
+  const termsBox = () => boxes()[0];
+  const marketingBox = () => boxes()[1];
+
+  if (acceptTerms) fireEvent.click(termsBox());
 
   return {
     ...view,
     fill,
+    termsBox,
     marketingBox,
     // Async, because the handler awaits the route and then the sign-in: the
     // state updates that follow both land after the event has been dispatched.
@@ -168,6 +187,54 @@ describe("RegisterForm", () => {
     await form.submit();
 
     expect(postedBody()).not.toHaveProperty("homeLocationId");
+  });
+
+  // -- The required acknowledgement --
+  //
+  // One box, two obligations: the registrant says they are the parent or legal
+  // guardian, and agrees to the terms the account is opened under. It is the
+  // only thing on this form that refuses a submit outright, which is why the
+  // cases below pin the refusal as hard as the success.
+
+  it("starts with the acknowledgement unticked", () => {
+    const form = renderForm({ acceptTerms: false });
+
+    // A declaration we ticked for them is a declaration nobody made.
+    expect(form.termsBox().checked).toBe(false);
+  });
+
+  it("refuses locally, and posts nothing, when the acknowledgement is missing", async () => {
+    const form = renderForm({ acceptTerms: false });
+
+    await form.submit();
+
+    // Nothing reached the route, so no account exists that we cannot say was
+    // opened on any terms.
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockSupabaseClient.auth.signInWithPassword).not.toHaveBeenCalled();
+    // `CheckboxRow` takes no `required`, so the refusal is the form's own — the
+    // same mechanism, and the same translated Alert, the password-mismatch case
+    // below uses.
+    expect(form.container.textContent).toContain("register.termsRequired");
+    expect(form.button().disabled).toBe(false);
+  });
+
+  it("sends the acknowledgement when the box is ticked", async () => {
+    const form = renderForm();
+
+    await form.submit();
+
+    // Always the literal `true`: the submit returns before the fetch unless the
+    // box is ticked, and the route's schema takes nothing else.
+    expect(postedBody().acceptedTerms).toBe(true);
+  });
+
+  it("leaves the acknowledgement disabled through the navigation", async () => {
+    const form = renderForm();
+
+    await form.submit();
+
+    expect(form.termsBox().disabled).toBe(true);
   });
 
   // -- The optional marketing box --

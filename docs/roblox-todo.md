@@ -156,8 +156,12 @@ for *why*, not for what is true now.
 - **Web Analytics Plus is not bought.** Lynx's ask is the per-account value, which lives
   in our own database; Plus only adds landing-page UTM reporting, which is useful for
   non-ad links and for nothing Lynx asked for.
-- **Meta and TikTok pixels ship, behind marketing consent**, using School of Gaming's own
-  pixel IDs.
+- **The Meta pixel ships, behind marketing consent**, using School of Gaming's own pixel
+  ID — on the marketing pages only, with the signup conversions reported from our own
+  servers through Meta's Conversions API. **TikTok was dropped on 2026-09-10** (snippet,
+  env var, CSP hosts and cookie names all removed) until the team wants it: its id was
+  never issued, so it had never fired anywhere, and a second unproven pixel doubled the
+  surface the privacy copy had to describe.
 - **The partner prefix convention survives the rename** as a `utm_campaign` naming
   convention: a campaign issued to or for a partner is prefixed with the partner's slug
   and a hyphen (`lynx-summer-a`, `rblx-launch`). It cannot be retrofitted, because the

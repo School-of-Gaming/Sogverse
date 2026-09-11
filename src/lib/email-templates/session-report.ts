@@ -179,8 +179,8 @@ export function buildSessionReportEmail(
  * an explanation arriving after the alarm.
  *
  * **It is `calloutPanel`, not markup of its own** — the app's `Alert` in its
- * `info` variant, reaching an inbox: a washed info surface inside a full info
- * border, with an uppercase label and the body's own text colour. Everything
+ * `info` variant, reaching an inbox: no fill, a full info border, an uppercase
+ * label in the info colour and paragraphs in the body's own ink. Everything
  * about how it looks lives in the helper, so the one thing this file decides is
  * which three strings go in it. It was a brand-orange rule down one edge for a
  * while, which is a treatment the app has nowhere and which read as a warning —

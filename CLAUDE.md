@@ -75,6 +75,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 |---|---|
 | Sogverse the web app — cross-cutting app rules | `src/` |
 | Layout & scrolling | `src/components/layout/` |
+| Cookie consent and the Meta Pixel | `src/components/consent/` |
 | Game accounts (Minecraft, Roblox) | `src/components/game-account/` |
 | Partner brand assets (Roblox, Lynx marks) | `src/assets/partners/` |
 | Billing portal | `src/services/billing/` |

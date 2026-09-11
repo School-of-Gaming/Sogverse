@@ -40,9 +40,9 @@ interface ConsentBannerViewProps {
  * we would like pressed.
  *
  * **The body names no advertising platform, and that is a decision, not an
- * omission.** Meta and TikTok are identified in the privacy policy, which is
- * where recipients belong and which carries the last-updated date that makes a
- * change to the list visible. Adding a platform is therefore a policy edit plus
+ * omission.** The advertising platform is identified in the privacy policy,
+ * which is where recipients belong and which carries the last-updated date
+ * that makes a change to the list visible. Adding a platform is therefore a policy edit plus
  * a `CONSENT_VERSION` bump — a new recipient is a new consent, and an answer
  * given to the old question is not an answer to the new one.
  *

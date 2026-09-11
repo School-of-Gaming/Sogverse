@@ -78,6 +78,7 @@ let reload: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   clearCookies();
+  window.localStorage.clear();
   reload = vi.fn();
   Object.defineProperty(window, "location", {
     configurable: true,
@@ -132,15 +133,16 @@ describe("ConsentBanner", () => {
     expect(sentence.endsWith(`${label}.`)).toBe(true);
   });
 
-  // Naming Meta and TikTok here would make the strip a list of recipients that
-  // nothing dates or versions. The policy names them; adding one is a policy
-  // edit plus a CONSENT_VERSION bump.
+  // Naming the platform here would make the strip a list of recipients that
+  // nothing dates or versions. The policy names it; adding one is a policy edit
+  // plus a CONSENT_VERSION bump.
   it("names no advertising platform", () => {
     render(<Harness initial={null} />);
 
     const text = strip().textContent;
     expect(text).not.toContain("Meta");
-    expect(text).not.toContain("TikTok");
+    expect(text).not.toContain("Facebook");
+    expect(text).not.toContain("Instagram");
   });
 
   it("stores the chosen purposes and closes, without reloading", () => {
@@ -181,13 +183,17 @@ describe("ConsentBanner", () => {
     expect(reload).not.toHaveBeenCalled();
   });
 
-  it("withdrawing a granted purpose clears the pixel cookies and reloads", () => {
+  it("withdrawing a granted purpose clears what the pixel left and reloads", () => {
     document.cookie = "_fbp=fb.1.abc;path=/";
-    document.cookie = "_ttp=tt.1.abc;path=/";
-    // The one that is easy to forget: TikTok's library reads this flag to
-    // decide whether it may write `_ttp` at all, so leaving it behind re-arms
-    // the withdrawal on the next visit.
-    document.cookie = "_tt_enable_cookie=1;path=/";
+    document.cookie = "_fbc=fb.1.abc.IwAR;path=/";
+    document.cookie = "_fbleid=lead-1;path=/";
+    // The half that is easy to forget, because it is not a cookie: clearing
+    // `_fbp` while the library's own local-storage entries survive leaves the
+    // device re-identifiable the moment the pixel is allowed to run again.
+    window.localStorage.setItem("multiFbc", "[]");
+    window.localStorage.setItem("fbevents^$last_event^$123", "1757500000000");
+    window.localStorage.setItem("pixel_mutex:123", "held");
+    window.localStorage.setItem("sog-theme", "dark");
 
     render(<Harness initial={GRANTED_BOTH} />);
     fireEvent.click(screen.getByRole("button", { name: "reopen" }));
@@ -201,8 +207,14 @@ describe("ConsentBanner", () => {
       marketing: false,
     });
     expect(document.cookie).not.toContain("_fbp");
-    expect(document.cookie).not.toContain("_ttp");
-    expect(document.cookie).not.toContain("_tt_enable_cookie");
+    expect(document.cookie).not.toContain("_fbc");
+    expect(document.cookie).not.toContain("_fbleid");
+    expect(window.localStorage.getItem("multiFbc")).toBeNull();
+    expect(window.localStorage.getItem("fbevents^$last_event^$123")).toBeNull();
+    expect(window.localStorage.getItem("pixel_mutex:123")).toBeNull();
+    // Ours is left alone: a withdrawal clears the advertiser's state, not the
+    // reader's own preferences.
+    expect(window.localStorage.getItem("sog-theme")).toBe("dark");
     expect(reload).toHaveBeenCalledTimes(1);
   });
 

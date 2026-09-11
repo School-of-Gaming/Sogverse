@@ -7,7 +7,7 @@ test.describe("Security Headers", () => {
 
     expect(headers["x-frame-options"]).toBe("SAMEORIGIN");
     expect(headers["x-content-type-options"]).toBe("nosniff");
-    expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+    expect(headers["referrer-policy"]).toBe("strict-origin");
     expect(headers["x-xss-protection"]).toBe("1; mode=block");
     expect(headers["strict-transport-security"]).toBe(
       "max-age=31536000; includeSubDomains"
@@ -24,14 +24,14 @@ test.describe("Security Headers", () => {
     expect(csp).toContain("frame-ancestors 'self'");
   });
 
-  // The two directives `strict-dynamic` does not reach. In production the
-  // pixels' scripts are admitted by the nonce, so nothing in `script-src` names
-  // a vendor — which makes it easy to read the policy as "the pixels need no
-  // hosts at all" and tidy these away. They are where the pixels actually send:
-  // fbevents.js reports by requesting facebook.com/tr/ as an image and by
-  // fetch, and TikTok's library posts to analytics.tiktok.com. Removing either
-  // stops marketing measurement silently, and only in production.
-  test("names the marketing pixels' own hosts in img-src and connect-src", async ({
+  // The two directives `strict-dynamic` does not reach. In production the Meta
+  // Pixel's script is admitted by `strict-dynamic` itself — the app's own bundle
+  // inserts it — so nothing in `script-src` names a vendor, which makes it easy
+  // to read the policy as "the pixel needs no hosts at all" and tidy these away.
+  // They are where the pixel actually sends: fbevents.js reports by requesting
+  // facebook.com/tr/ as an image and by fetch. Removing either stops marketing
+  // measurement silently, and only in production.
+  test("names the Meta Pixel's own host in img-src and connect-src", async ({
     request,
   }) => {
     const response = await request.get("/");
@@ -41,9 +41,7 @@ test.describe("Security Headers", () => {
     const connectSrc = /(?:^|; )connect-src ([^;]*)/.exec(csp)?.[1] ?? "";
 
     expect(imgSrc).toContain("https://www.facebook.com");
-    expect(imgSrc).toContain("https://analytics.tiktok.com");
     expect(connectSrc).toContain("https://www.facebook.com");
-    expect(connectSrc).toContain("https://analytics.tiktok.com");
   });
 
   test("each request should receive a unique CSP nonce", async ({ request }) => {

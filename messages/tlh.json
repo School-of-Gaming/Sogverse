@@ -1270,6 +1270,8 @@
       "passwordPlaceholder": "HoS mu’mey yIchenmoH",
       "confirmPasswordPlaceholder": "mu’mey yIchel",
       "location": "Daq",
+      "termsLabel": "puq vav ghap puq SoS jIH ’e’ vIper; <terms>Terms and Conditions</terms> vIlaj ’ej <privacy>Privacy Policy</privacy> vIlaDta’.",
+      "termsRequired": "puq vav ghap puq SoS SoH ’e’ yIper ’ej chutmey yIlaj!",
       "marketingConsentLabel": "noH Quj yejHaD QIn HevmeH vIchaw’.",
       "marketingConsentHint": "ra’be’lu’ — ngoQmeylIjDaq reH DachoHlaH.",
       "creatingAccount": "account vIchenmoH...",

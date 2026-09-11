@@ -1646,11 +1646,15 @@ function BundleConsentRow({
   const tags: Record<string, (chunks: React.ReactNode) => React.ReactNode> = {};
   for (const [tag, slug] of Object.entries(bundle.sentenceTags)) {
     const meta = consentDocumentMeta(slug);
+    // A document with no page is named exactly as an unmapped slug is: in
+    // plain, emphasised text. The alternative is an anchor with nowhere to go,
+    // which resolves to the current page and is worse than no link at all.
+    const href = meta?.href ?? null;
     tags[tag] = (chunks) =>
-      meta === null ? (
+      href === null ? (
         <span className="font-medium text-foreground">{chunks}</span>
       ) : (
-        <ConsentSentenceLink href={meta.href}>{chunks}</ConsentSentenceLink>
+        <ConsentSentenceLink href={href}>{chunks}</ConsentSentenceLink>
       );
   }
   return (

@@ -91,6 +91,11 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [homeLocation, setHomeLocation] = useState<LocationPick | null>(null);
+  // The required acknowledgement: parent or legal guardian, and agreement to
+  // the terms. Unticked by default for the same reason the optional box below
+  // is — a pre-ticked box is not an agreement — and here the stakes are higher:
+  // a declaration we ticked for them is a declaration nobody made.
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   // Unticked by default, and it stays that way unless the parent ticks it: an
   // opt-in that arrives pre-ticked is not an opt-in.
   const [marketingConsent, setMarketingConsent] = useState(false);
@@ -102,6 +107,19 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // Refused here rather than by the browser, and the reason is the shape of
+    // the rest of the form: `CheckboxRow` takes no `required`, and the one
+    // other rule this form enforces before posting — the two passwords having
+    // to agree — is likewise a local refusal with a sentence in the parent's
+    // own language. A native validity bubble beside a translated Alert would be
+    // two idioms for one job. Before `setIsLoading`, so a refused submit leaves
+    // the form exactly as usable as it was.
+    if (!acceptedTerms) {
+      setError(t('register.termsRequired'));
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -150,6 +168,10 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
           // either way, and "unticked" is a decision the parent made rather
           // than a field they were never asked about.
           marketingConsent,
+          // The required acknowledgement. Always `true` when it is sent at
+          // all: the submit above returns before this line unless the box is
+          // ticked, and the route's schema takes nothing else.
+          acceptedTerms: true,
         }),
       });
 
@@ -203,7 +225,12 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
   };
 
   return (
-    <Card className="w-full max-w-md">
+    // The same width as the educator registration card next door, and the pair
+    // rows below are that card's too. One registration form, two audiences: a
+    // parent arriving from a shop link and an educator arriving from a
+    // recruitment one meet the same page at the same measure, which is what
+    // stops the narrower of the two reading as an older screen.
+    <Card className="w-full max-w-2xl">
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl text-center">{t('register.title')}</CardTitle>
         <CardDescription className="text-center">
@@ -227,32 +254,39 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          <Field label={t('register.parentFirstName')} htmlFor="firstName">
-            <Input
-              id="firstName"
-              type="text"
-              placeholder={t('register.firstNamePlaceholder')}
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              disabled={isLoading}
-              required
-              maxLength={DISPLAY_NAME_MAX}
-              autoComplete="given-name"
-            />
-          </Field>
-          <Field label={t('register.parentLastName')} htmlFor="lastName">
-            <Input
-              id="lastName"
-              type="text"
-              placeholder={t('register.lastNamePlaceholder')}
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              disabled={isLoading}
-              required
-              maxLength={DISPLAY_NAME_MAX}
-              autoComplete="family-name"
-            />
-          </Field>
+          {/* The two halves of one name, side by side from `sm` and stacked
+              below it — the educator form's arrangement, for the same reason it
+              has it: a first and last name are one answer split in two, and a
+              wide card that runs them down the middle wastes the width the card
+              was widened for. */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label={t('register.parentFirstName')} htmlFor="firstName">
+              <Input
+                id="firstName"
+                type="text"
+                placeholder={t('register.firstNamePlaceholder')}
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                disabled={isLoading}
+                required
+                maxLength={DISPLAY_NAME_MAX}
+                autoComplete="given-name"
+              />
+            </Field>
+            <Field label={t('register.parentLastName')} htmlFor="lastName">
+              <Input
+                id="lastName"
+                type="text"
+                placeholder={t('register.lastNamePlaceholder')}
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                disabled={isLoading}
+                required
+                maxLength={DISPLAY_NAME_MAX}
+                autoComplete="family-name"
+              />
+            </Field>
+          </div>
           <Field label={c('email')} htmlFor="email">
             <Input
               id="email"
@@ -265,32 +299,37 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
               autoComplete="username"
             />
           </Field>
-          <Field
-            label={c('password')}
-            htmlFor="password"
-            hint={c('passwordMinLength', { count: 8 })}
-          >
-            <PasswordInput
-              id="password"
-              placeholder={t('register.passwordPlaceholder')}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
-              required
-              autoComplete="new-password"
-            />
-          </Field>
-          <Field label={c('confirmPassword')} htmlFor="confirmPassword">
-            <PasswordInput
-              id="confirmPassword"
-              placeholder={t('register.confirmPasswordPlaceholder')}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={isLoading}
-              required
-              autoComplete="new-password"
-            />
-          </Field>
+          {/* The password and its confirmation, paired at the same breakpoint
+              as the names above and for the same reason: one answer, typed
+              twice. */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label={c('password')}
+              htmlFor="password"
+              hint={c('passwordMinLength', { count: 8 })}
+            >
+              <PasswordInput
+                id="password"
+                placeholder={t('register.passwordPlaceholder')}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+                required
+                autoComplete="new-password"
+              />
+            </Field>
+            <Field label={c('confirmPassword')} htmlFor="confirmPassword">
+              <PasswordInput
+                id="confirmPassword"
+                placeholder={t('register.confirmPasswordPlaceholder')}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={isLoading}
+                required
+                autoComplete="new-password"
+              />
+            </Field>
+          </div>
           <Field
             label={t('register.location')}
             htmlFor="homeLocation"
@@ -303,14 +342,55 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
               disabled={isLoading}
             />
           </Field>
-          {/* Deliberately not a `Field`: that primitive puts a label above its
-              control, and a checkbox is named by the sentence beside it — a
-              label above one would be a second name for the same thing. The
-              shared row is the composition instead: the sentence is the label,
-              the hint sits under it in the same column, and `aria-describedby`
-              is wired for us.
+          {/* Both boxes are deliberately not `Field`s: that primitive puts a
+              label above its control, and a checkbox is named by the sentence
+              beside it — a label above one would be a second name for the same
+              thing. The shared row is the composition instead: the sentence is
+              the label, any hint sits under it in the same column, and
+              `aria-describedby` is wired for us.
 
-              The hint is info-toned, exactly as the signup panel's marketing
+              The required acknowledgement sits directly above the optional box,
+              so the two read as one pair and the one that gates the form is met
+              first. It carries NO hint: per the `CheckboxRow` doc the absence
+              of the optional marker IS the "required", and the row below is the
+              exception that says so in words. The two documents are named
+              inside the sentence and each name is its own link, which is what a
+              parent has to be able to reach before agreeing; a click landing on
+              a link reads instead of ticking, which the DOM gives for free. */}
+          <CheckboxRow
+            checked={acceptedTerms}
+            onCheckedChange={setAcceptedTerms}
+            disabled={isLoading}
+            label={t.rich('register.termsLabel', {
+              // A new tab for both, as the signup panel opens its consent
+              // documents: the parent is mid-way through a form, and the
+              // document is the thing they have to read *before* submitting
+              // it. In this tab, the way back would be an empty form.
+              terms: (chunks) => (
+                <Link
+                  href={ROUTES.termsAndConditions}
+                  prefetch={false}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-act hover:underline"
+                >
+                  {chunks}
+                </Link>
+              ),
+              privacy: (chunks) => (
+                <Link
+                  href={ROUTES.privacy}
+                  prefetch={false}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-act hover:underline"
+                >
+                  {chunks}
+                </Link>
+              ),
+            })}
+          />
+          {/* The hint is info-toned, exactly as the signup panel's marketing
               row is — it is the same sentence, opening on the same word, doing
               the same job of saying this one may be skipped. Leaving one of the
               two muted and the other coloured would be drift a reader could

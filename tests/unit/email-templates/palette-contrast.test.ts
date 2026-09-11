@@ -38,8 +38,7 @@ const AA_BODY = 4.5;
  * Every foreground/background pair a mail is permitted to produce.
  *
  * The list is the point: a pair that is not here is a pair no template may
- * emit, and adding one means measuring it. `large` marks the pairs only ever
- * used at 18px bold or above, where AA's threshold is lower.
+ * emit, and adding one means measuring it.
  */
 const PAIRS: { name: string; fg: string; bg: string }[] = [
   { name: "body text on the message panel", fg: DARK_THEME.foreground, bg: DARK_THEME.card },
@@ -53,9 +52,17 @@ const PAIRS: { name: string; fg: string; bg: string }[] = [
   // used as emphasis at body size — it clears AA_BODY anyway, comfortably.
   { name: "brand orange on the ground", fg: BRAND.act, bg: DARK_THEME.bg },
   // The callout panel, which is now the app's Alert exactly: its uppercase
-  // label in the status colour and its paragraphs in ink, both on the message
-  // panel the panel sits on rather than on a wash of their own.
+  // label in the status colour and its paragraphs in ink, on whichever ground
+  // the shell has put it on rather than on a wash of their own — the bare
+  // ground on a phone, the message panel above the breakpoint.
   { name: "callout label on the message panel", fg: STATUS.info, bg: DARK_THEME.card },
+  { name: "callout label on the ground", fg: STATUS.info, bg: DARK_THEME.bg },
+  // The components reference's palette swatches. Contrast is symmetric, so a
+  // swatch whose label is a row above turned over — the ground on ink, the
+  // ground on quiet ink — is already measured by that row. These two are not:
+  // no product mail paints either, and the reference does.
+  { name: "info fill's own foreground (reference swatch)", fg: STATUS.infoForeground, bg: STATUS.info },
+  { name: "ink on the border grey (reference swatch)", fg: DARK_THEME.foreground, bg: DARK_THEME.border },
 ];
 
 describe("every colour pair a mail may emit is legible", () => {

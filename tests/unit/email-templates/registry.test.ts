@@ -1,8 +1,12 @@
 import { describe, it, expect, beforeAll, vi } from "vitest";
 import { templateRegistry, type TemplateDefinition } from "@/lib/email-templates/registry";
-import { BRAND } from "@/lib/constants/colors";
+import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 import { styledName } from "@/lib/email-templates/utils";
-import { bulletList } from "@/lib/email-templates/blocks";
+import { bulletList, ctaButtonRow, factList } from "@/lib/email-templates/blocks";
+import {
+  EMAIL_MARKDOWN_ELEMENTS,
+  renderMarkdownForEmail,
+} from "@/lib/email-templates/markdown";
 import {
   getEmailTranslator,
   getTopicPrepTranslator,
@@ -1471,16 +1475,53 @@ describe("templateRegistry componentsReference", () => {
     expect(html).toContain(`background-color:${BRAND.world};background-image:linear-gradient(${BRAND.world},${BRAND.world})`);
     expect(html).toContain(`color:${BRAND.actForeground}`);
     expect(html).toContain(`color:${BRAND.worldForeground}`);
-    // The two-up row is the helper's, not a hand-built pair of cells.
-    expect([...html.matchAll(/width="50%"/g)]).toHaveLength(2);
+    // Both two-up rows — the equal pair and the one with a filled half — are the
+    // helper's own cells, not hand-built pairs.
+    expect([...html.matchAll(/width="50%"/g)]).toHaveLength(4);
+    expect(html).toContain(
+      ctaButtonRow(
+        {
+          href: "https://sogverse.sog.gg/seat-offer?answer=decline",
+          label: "No, thank you",
+          variant: "outline",
+        },
+        {
+          href: "https://sogverse.sog.gg/seat-offer?answer=accept",
+          label: "Accept the seat",
+          variant: "secondary",
+        },
+      ),
+    );
   });
 
   it("carries the whole palette, each swatch as a real background", () => {
     const { html } = render();
-    for (const hex of [BRAND.act, BRAND.world]) {
-      expect(html).toContain(`background-image:linear-gradient(${hex},${hex})`);
-    }
-    expect(html).toContain("BRAND.world");
+    // Every swatch, read back as one unit: the token name it prints, its fill
+    // (declared twice, like every background), the label colour painted on it
+    // and the hex that label prints. A bare flat gradient is not enough on its
+    // own — the brand fills and both grounds are painted elsewhere in the mail
+    // too (the buttons, the shell), so a check for the gradient alone passes
+    // with their swatches deleted. Only the swatch cell is 150 wide, and the
+    // whole list is compared, so a removed, added or re-paired swatch fails.
+    const swatches = [
+      ...html.matchAll(
+        /<td width="150" style="background-color:([^;]+);background-image:linear-gradient\(\1,\1\);[^"]*?color:([^;]+);[^"]*">\s*([^<]*?)\s*<\/td>\s*<td[^>]*>\s*([^<]*?)\s*<\/td>/g,
+      ),
+    ].map(([, fill, label, printed, token]) => ({ token, fill, label, printed }));
+    expect(swatches).toEqual(
+      (
+        [
+          ["BRAND.act / actForeground", BRAND.act, BRAND.actForeground],
+          ["BRAND.world / worldForeground", BRAND.world, BRAND.worldForeground],
+          ["DARK_THEME.card", DARK_THEME.card, DARK_THEME.foreground],
+          ["DARK_THEME.bg", DARK_THEME.bg, DARK_THEME.foreground],
+          ["DARK_THEME.foreground", DARK_THEME.foreground, DARK_THEME.bg],
+          ["DARK_THEME.mutedFg", DARK_THEME.mutedFg, DARK_THEME.bg],
+          ["DARK_THEME.border", DARK_THEME.border, DARK_THEME.foreground],
+          ["STATUS.info / infoForeground", STATUS.info, STATUS.infoForeground],
+        ] as const
+      ).map(([token, fill, label]) => ({ token, fill, label, printed: fill })),
+    );
   });
 
   /**
@@ -1531,5 +1572,46 @@ describe("templateRegistry componentsReference", () => {
         "And a second, so it is a list.",
       ]),
     );
+  });
+
+  it("shows the facts block and rendered markdown as the helpers emit them", () => {
+    const { html } = render();
+    expect(html).toContain(
+      factList([
+        ["Club", "Minecraft 101"],
+        ["Gamer", "Aino"],
+        ["When", "Mondays 16:00–17:00"],
+        ["Where", "Kallion kirjasto, Viides linja 11"],
+        ["Price", "€40.00 per month"],
+      ]),
+    );
+    // The renderer's whole output rather than a tag census: `p`, `h2`, `strong`
+    // and the lists are emitted elsewhere on the page too, so a check that only
+    // looked for the tags would pass with the specimen gone.
+    const rendered = renderMarkdownForEmail(
+      [
+        "# Today's session",
+        "",
+        "We finished the **castle walls** and made a start on the *moat*.  ",
+        "Everyone got their build saved before the end.",
+        "",
+        "## What we built",
+        "",
+        "- A gatehouse with a working drawbridge",
+        "- Torches along the north wall",
+        "",
+        "### Next time",
+        "",
+        "1. Fill the moat",
+        "2. Test the drawbridge with redstone",
+      ].join("\n"),
+    );
+    expect(html).toContain(rendered);
+    // And the specimen exercises the whole subset, so no construct's look can
+    // change without the page showing it.
+    const emitted = new Set([...rendered.matchAll(/<([a-z][a-z0-9]*)[\s>/]/g)].map((m) => m[1]));
+    for (const tag of EMAIL_MARKDOWN_ELEMENTS) {
+      expect(emitted, `the markdown specimen emits no <${tag}>`).toContain(tag);
+    }
   });
 });

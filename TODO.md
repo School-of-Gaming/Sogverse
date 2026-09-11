@@ -409,6 +409,47 @@ shell sets `color-scheme` and `supported-color-schemes`, which is exactly the
 mechanism Apple Mail honours to skip its own adjustment. Gmail ignores those
 tags, which is the whole story.
 
+## The mail spends brand colour where SOG-UI says it may not
+
+A 2026-09-11 check of the email components reference against SOG-UI found five
+constructs that the reference presents as correct and the library forbids. All but
+the reference's own section titles change how live mail looks, so each is a ruling
+to make before it is a fix.
+
+- [ ] **A person's name is set in amber inside a sentence.** The name helper paints
+  act as ink in body copy, in six product mails (the session report's gedu and
+  group names are the visible case). SOG-UI: act is "never body copy or a small
+  link — it is a fill and a mark", and anything a reader reads through is ink.
+  The email doc also says there is no specimen of brand-coloured body text, while
+  the reference shows one. Likely answer: bold ink, the shape the product name
+  already takes.
+- [ ] **The inline link is amber.** Same rule, and SOG-UI names links among the
+  things that stay ink. Likely answer: ink with its underline as the affordance —
+  which also retires the recorded mismatch between the link's unpinned amber and
+  the name's pinned one.
+- [ ] **The reference's own section titles are amber.** A heading in a brand colour
+  is the defect SOG-UI's hero-headline departure is drawn narrowly enough to catch,
+  and the reference is the page that shows only what is correct. Likely answer:
+  ink.
+- [ ] **The world (violet) button is spent below the header, beside an amber one.**
+  The seat-offer mail fills Accept in violet and puts the amber My SOG button under
+  it. SOG-UI: world is never the main call to action, and "a violet button on a page
+  with an act one asks the reader to guess"; a parent-tier surface spends a second
+  colour only "with an intent stated beside the site that spends it" (the header's
+  violet rule is the one such intent a mail states); and the email doc says nothing
+  below the header spends a second colour. The email helpers' own rule that "a
+  second filled button says the opposite, whichever brand colour fills it" is
+  contradicted by the same mail. SOG-UI leaves which colours a button may wear to
+  its Button adoption, so the ruling may belong there. Decide between an outlined
+  Accept (and then whether the `secondary` variant has any legal use left in mail)
+  and a stated intent beside the seat offer's row that justifies the violet.
+- [ ] **The info callout's coloured label has no glyph.** SOG-UI: a label set in a
+  status hue sits beside a glyph in the same hue, so removing the colour loses
+  nothing. The email helper declares the omission locally (a mail has no icon
+  system), but the app's brand rule recognises a departure only where SOG-UI's own
+  source declares it. Decide between a mail-safe glyph (a hosted PNG, subject to the
+  images rules) and moving the declaration into SOG-UI.
+
 ## Safety mechanisms our copy cannot yet claim
 
 Safety copy states checkable mechanisms, never intentions, and only mechanisms verified true (`src/CLAUDE.md`) — so a safeguard we want but do not have is a feature, never a sentence. These two came out of the 2026-08 brand audit as exactly that shape: the copy reaches for them, and they are not true enough to write down yet. (A third — holding only a display name and an age bracket about a child — is now a roadmap feature rather than a backlog item; see **Safety** in `ROADMAP.md`.)
@@ -424,9 +465,10 @@ Safety copy states checkable mechanisms, never intentions, and only mechanisms v
 
 - [ ] **Physical deletion of chat data — pick the retention number and its mechanism, with real data.** Voice-room chat v1 keeps every message row and image byte indefinitely: capacity never forces deletion at plausible scale, keeping the record is what makes chat staff-reviewable after an incident, and the family-facing behaviour ("history is gone after the session") is already delivered by the read rule's time bound regardless. What remains is the privacy decision — stored children's data is safer deleted, so choose a number (days/weeks/term) once real send-rate data exists, then build the mechanism. The constraint that shapes any mechanism: **no event fires at the moment a session ends** (sessions end by clock; the app runs no scheduled jobs), so the candidates are a reap on a convenient later event (the voice-join reap idiom), `pg_cron` (installed, zero jobs, would need a runbook + alerting), or the Daily `meeting.ended` webhook — which is HMAC-signed and real but delivery-unreliable by design (its default mode stops **all** webhooks after three failed deliveries until manually reactivated), so it can only ever be a latency improvement over a reap, never the correctness mechanism. Deleting `storage.objects` rows in SQL orphans the files — image deletion goes through the Storage API.
 
-## Verify the Meta and TikTok pixels end to end
+## Verify the Meta pixel end to end
 
-- [ ] **The pixels have never fired anywhere — the mechanism is built and gated but unobserved.** `NEXT_PUBLIC_META_PIXEL_ID` is set in no environment (the production value is School of Gaming's own pixel, held by the owner; TikTok's id is pending from Lynx), so every check so far has proven the *off* state: no script in the HTML, nothing on Reject all, nothing for a signed-in gamer. What remains is the *on* state under the production build. **The cheap way is a branch-scoped preview variable**: `vercel env add NEXT_PUBLIC_META_PIXEL_ID preview <branch>` (see `docs/runbooks/vercel-env-vars.md`), redeploy, accept marketing on the strip, and watch Meta Events Manager's **Test Events** tab for the PageView from that browser and the CompleteRegistration after a signup on the tagged link — then remove the branch-scoped variable. Three things to confirm while looking: the nonced inline snippets run under `'strict-dynamic'` (a CSP report or a silent pixel means they did not); `fbq('set','autoConfig',false,…)` holds, i.e. Events Manager shows no advanced-matching parameters on the events; and a withdrawal from the footer clears `_fbp`/`_fbc` (and `_ttp`/`_tt_enable_cookie` once TikTok is set) and reloads with nothing mounted. Blocked on 2026-09-03 only by the owner not having Meta access at the time; the same check on production after go-live is the fallback.
+- [ ] **Nothing has ever fired anywhere — the mechanism is built and gated but unobserved.** `NEXT_PUBLIC_META_PIXEL_ID` is set in no environment (the production value is School of Gaming's own pixel, held by the owner), so every check so far has proven the *off* state: no script in the HTML, nothing on Reject all, nothing for a signed-in gamer, no server sends. **Part 1, the preview rehearsal.** Add all three variables branch-scoped — `NEXT_PUBLIC_META_PIXEL_ID`, `META_CONVERSIONS_API_ACCESS_TOKEN` and `META_CONVERSIONS_API_TEST_EVENT_CODE` (the code comes from Events Manager's **Test Events** tab) — with `vercel env add <name> preview <branch>` (see `docs/runbooks/vercel-env-vars.md`), redeploy, accept marketing on the strip, then watch the Test Events tab: a browser **PageView** on each marketing page (home, about, Roblox, shop, a product, register, login) and on **no** other page; a server **Lead** after creating an account; server **CompleteRegistration** with `outcome` `enrolled` and `waitlisted`, and **InitiateCheckout** with `sent_to_checkout`, for the three signup outcomes; and **nothing at all** for a municipality club. In the network tab at the same time: no request to Meta on a private or token page, none after client-navigating into My SOG, every request's page and referrer a marketing-page path or our bare origin, `_fbp`/`_fbc` written on a landing with `?fbclid=` and carried on the server events, and a withdrawal from the footer clearing them and reloading with no pixel. Remove the three branch-scoped variables afterwards.
+- [ ] **Part 2, production after go-live.** Only the pixel id and the access token are set in production: **`META_CONVERSIONS_API_TEST_EVENT_CODE` must never be**, because an event carrying a test code is shown in the Test Events tab and counted for no ad — a production value would silently turn every conversion into a test event. Browser PageViews can still be watched live by opening the production site from that tab's **Test browser events** field, which tags that one browser; server events carry no test code, so they appear only in the pixel's Overview / event list, minutes to an hour later. What to confirm: after a real visit that accepts marketing, PageView appears with marketing-page URLs and nothing else; after a real account creation, one server Lead; after real signups, CompleteRegistration `enrolled`/`waitlisted` and InitiateCheckout `sent_to_checkout` with `outcome` visible under the event's parameters, and none for a municipality club; each server event shows `fbp` (and `fbc` when the visit came from an ad click) in its matched parameters, with Event Match Quality not "Poor"; **Diagnostics** shows no warning about the pixel or the Conversions API; Events Manager's Automatic advanced matching / automatic events settings have no effect even if switched on in the dashboard (no advanced-matching parameters on any event), because `autoConfig` is off in the page; and a footer withdrawal clears `_fbp`/`_fbc` and reloads with no request to Meta on any page. The owner holds the pixel and Business Manager access, so this needs one person in Events Manager while another performs the actions — or the same person with two browsers.
 
 ## Automatic group placement excludes paid products for a reason that does not hold
 

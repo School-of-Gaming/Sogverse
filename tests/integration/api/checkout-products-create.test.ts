@@ -31,6 +31,17 @@ vi.mock("@/lib/brevo", () => ({
     mockSendTransactionalEmail(...args),
 }));
 
+// --- The signup conversions ---
+//
+// Mocked at their own module boundary: whether a report is actually sent is
+// decided inside the reporter, from the request's consent cookie, and that is
+// its own suite's subject. What belongs here is which outcome reports what, and
+// which outcomes report nothing at all.
+const mockReportMetaConversion = vi.fn();
+vi.mock("@/lib/meta-conversions.server", () => ({
+  reportMetaConversion: (...args: unknown[]) => mockReportMetaConversion(...args),
+}));
+
 // --- The post-response hook ---
 //
 // The seat is committed before the mail is attempted, so the send is handed to
@@ -190,6 +201,15 @@ const MUNI_CLUB: ProductFixture = {
   ...PAID_CLUB,
   product_type: "municipality_club",
   billing_mode: "external_contract",
+};
+
+// A municipality club billed free rather than by contract. It exists for one
+// assertion: the conversion refusal is keyed on the product, so a municipality
+// product that happens to take the free door still reports nothing.
+const FREE_MUNI_CLUB: ProductFixture = {
+  ...PAID_CLUB,
+  product_type: "municipality_club",
+  billing_mode: "free",
 };
 
 // A consumer club that costs nothing. Billing is a per-product choice on every
@@ -1418,6 +1438,158 @@ describe("POST /api/checkout/products/create", () => {
 
   // ── Defensive: unexpected RPC return shapes ───────────────────────
 
+  // ── The signup conversions ────────────────────────────────────────
+  //
+  // Meta optimises a campaign on the event NAME, so the split between these two
+  // is the money decision in this area: a parent handed to Stripe has not paid,
+  // and reporting that as an enrolment would train the campaign on abandoned
+  // checkouts. The seat itself is reported from the webhook the day we report a
+  // purchase at all.
+
+  describe("the signup conversions", () => {
+    function freeSignup() {
+      return createRequest({
+        productId: PRODUCT_ID,
+        participantId: GAMER_ID,
+        purchaseShape: "free",
+        currency: "eur",
+      });
+    }
+
+    function paidSignupReachesStripe() {
+      mockGetOrCreateSubscriptionPrice.mockResolvedValue({
+        product_id: PRODUCT_ID,
+        currency: "eur",
+        stripe_price_id: STRIPE_PRICE_ID,
+        unit_amount_cents: 5000,
+      });
+      mockStripeSessionCreate.mockResolvedValue({
+        url: "https://checkout.stripe.com/c/test_sub",
+      });
+    }
+
+    it("reports an enrolment when a free signup takes the seat", async () => {
+      mockAuthenticatedCustomer();
+      mockAdmin({ product: FREE_EVENT });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "free_active", participation_id: PARTICIPATION_ID },
+        error: null,
+      });
+
+      const res = await POST(freeSignup());
+
+      expect(res.status).toBe(200);
+      await settleDeferred();
+      expect(mockReportMetaConversion).toHaveBeenCalledTimes(1);
+      const [request, conversion] = mockReportMetaConversion.mock.calls[0];
+      expect(request).toBeInstanceOf(Request);
+      // The product's own public page, stated rather than taken from this
+      // route's URL — which is an API path nobody browses.
+      expect(conversion).toEqual({
+        event: "enrolment",
+        outcome: "enrolled",
+        sourcePath: `/shop/${PRODUCT_ID}`,
+      });
+    });
+
+    it("reports a started checkout, not an enrolment, on the paid path", async () => {
+      mockAuthenticatedCustomer();
+      mockAdmin({ product: PAID_CLUB });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "validated" },
+        error: null,
+      });
+      paidSignupReachesStripe();
+
+      const res = await POST(createRequest(VALID_BODY));
+
+      expect(res.status).toBe(200);
+      await settleDeferred();
+      expect(mockReportMetaConversion).toHaveBeenCalledTimes(1);
+      expect(mockReportMetaConversion.mock.calls[0][1]).toEqual({
+        event: "enrolment",
+        outcome: "sent_to_checkout",
+        sourcePath: `/shop/${PRODUCT_ID}`,
+      });
+    });
+
+    it("reports nothing for a municipality registration", async () => {
+      mockAuthenticatedCustomer();
+      mockAdmin({ product: MUNI_CLUB });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "external_active", participation_id: PARTICIPATION_ID },
+        error: null,
+      });
+
+      const res = await POST(
+        createRequest({
+          productId: PRODUCT_ID,
+          participantId: GAMER_ID,
+          purchaseShape: "external",
+          currency: "eur",
+        }),
+      );
+
+      expect(res.status).toBe(200);
+      await settleDeferred();
+      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+    });
+
+    // Refused by the product row rather than by which door it came through:
+    // a municipality club billed free activates on the free path, and still
+    // reports nothing.
+    it("reports nothing for a municipality club billed free", async () => {
+      mockAuthenticatedCustomer();
+      mockAdmin({ product: FREE_MUNI_CLUB });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "free_active", participation_id: PARTICIPATION_ID },
+        error: null,
+      });
+
+      const res = await POST(freeSignup());
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ status: "free_confirmed" });
+      await settleDeferred();
+      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+    });
+
+    it("reports nothing when the seat was already gone", async () => {
+      mockAuthenticatedCustomer();
+      mockAdmin({ product: FREE_EVENT });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "full" },
+        error: null,
+      });
+
+      const res = await POST(freeSignup());
+
+      expect(await res.json()).toEqual({ status: "full" });
+      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+    });
+
+    it("reports nothing when Stripe never returned a checkout URL", async () => {
+      mockAuthenticatedCustomer();
+      mockAdmin({ product: PAID_CLUB });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "validated" },
+        error: null,
+      });
+      mockGetOrCreateSubscriptionPrice.mockResolvedValue({
+        product_id: PRODUCT_ID,
+        currency: "eur",
+        stripe_price_id: STRIPE_PRICE_ID,
+        unit_amount_cents: 5000,
+      });
+      mockStripeSessionCreate.mockResolvedValue({ url: null });
+
+      const res = await POST(createRequest(VALID_BODY));
+
+      expect(res.status).toBe(502);
+      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+    });
+  });
+
   it("returns 500 when RPC returns free_active without a participation_id", async () => {
     mockAuthenticatedCustomer();
     mockAdmin({ product: FREE_EVENT });
@@ -1839,8 +2011,9 @@ describe("POST /api/checkout/products/create", () => {
       const res = await POST(freeSignupRequest());
 
       expect(res.status).toBe(200);
-      // Handed to the post-response hook, not awaited inside the answer.
-      expect(deferred).toHaveLength(1);
+      // Both handed to the post-response hook, not awaited inside the answer:
+      // the mail, and the enrolment conversion beside it.
+      expect(deferred).toHaveLength(2);
       await settleDeferred();
       expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
       const sent = mockSendTransactionalEmail.mock.calls[0][0];
@@ -2056,7 +2229,10 @@ describe("POST /api/checkout/products/create", () => {
       const res = await POST(createRequest(VALID_BODY));
 
       expect(res.status).toBe(200);
-      expect(deferred).toHaveLength(0);
+      // One deferred item, and it is the checkout conversion rather than a
+      // mail: the seat does not exist yet, so there is nothing to confirm.
+      expect(deferred).toHaveLength(1);
+      await settleDeferred();
       expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
     });
 

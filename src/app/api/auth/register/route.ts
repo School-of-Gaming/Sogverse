@@ -1,20 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { defineRoute } from "@/lib/api/define-route";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
+import { REGISTRATION_CONSENT_DOCUMENTS } from "@/lib/constants/consent-documents";
 import { detectLocaleFromHeader } from "@/lib/constants/locales";
 import { buildWelcomeParentEmail } from "@/lib/email-templates/welcome";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { createEmailVerificationToken } from "@/lib/email-verification";
 import { buildUtmMetadata } from "@/lib/utm";
-import {
-  CONVERSION_COOKIE_MAX_AGE_SECONDS,
-  CONVERSION_COOKIE_NAME,
-  parseConsentCookieHeader,
-  REGISTRATION_CONVERSION,
-} from "@/lib/consent";
+import { reportMetaConversion } from "@/lib/meta-conversions.server";
 import { getOrigin } from "@/lib/url";
 import {
   REGISTER_WEAK_PASSWORD,
@@ -242,11 +238,12 @@ export const POST = defineRoute({
     // that this provenance can only be claimed from here, with the service-role
     // client, on the account this request has just created (see 00220's header).
     //
-    // LAST, deliberately. It is the least important thing this route does and
-    // the only one with no user-visible consequence if it fails, so it goes
-    // after the mail — nothing above it can be delayed or broken by a consent
-    // write, and the parent's account, their profile extras and their welcome
-    // link are all already settled by the time it runs.
+    // AFTER THE MAIL, deliberately, as the first of the two consent writes that
+    // end this handler. Neither has a user-visible consequence if it fails, so
+    // both go after everything that does — nothing above them can be delayed
+    // or broken by a consent write, and the parent's account, their profile
+    // extras and their welcome link are all already settled by the time they
+    // run.
     //
     // WRITTEN EVEN WHEN THEY DECLINED. An absent row means "never asked", a
     // `granted = false` row means "asked and said no", and this form asked — so
@@ -286,35 +283,60 @@ export const POST = defineRoute({
       console.error("[auth/register] marketing consent write failed", error);
     }
 
+    // What the account was opened under: the Terms and Conditions and the
+    // guardian declaration, each recorded against the version that is current
+    // right now (00249). The contract already refused the request unless the
+    // box was ticked, so reaching this line means the agreement happened; this
+    // write is what makes it provable, and which TEXT it was given for.
+    //
+    // Beside the marketing write and after everything that must succeed, on the
+    // same reasoning: nothing above it may be delayed or broken by a consent
+    // write. It is NOT fatal for the same reason either — the account exists,
+    // the parent has been mailed, and destroying a working account here would
+    // cost them more than the missing row costs us.
+    //
+    // But it is not the same *kind* of loss, which is why the failure is logged
+    // at error level with the id rather than shrugged off: a lost marketing
+    // opt-in under-markets, while a lost record here is the legal value of the
+    // tick going missing on an account that really did tick it. The id is in
+    // the line so the row can be written by hand afterwards.
+    try {
+      const { error: termsError } = await admin.rpc("record_account_consents", {
+        p_customer_id: userId,
+        p_document_slugs: [...REGISTRATION_CONSENT_DOCUMENTS],
+      });
+      if (termsError) throw termsError;
+    } catch (error) {
+      console.error(
+        `[auth/register] account consent write failed for ${userId}`,
+        error,
+      );
+    }
+
     const response = NextResponse.json({ userId });
 
-    // The registration conversion, handed to the browser as a one-shot marker
-    // the marketing pixels read on the next page and then delete.
+    // The account-creation conversion, reported from here to Meta rather than
+    // by a script on the next page the browser loads. This handler is the only
+    // place that knows an account was created, exactly once — the marker cookie
+    // this replaced had to survive a redirect and a page load, and was lost or
+    // double-counted whenever it did not.
     //
-    // **Set only when this request already carried marketing consent.** The
-    // conversion is reported by Meta's and TikTok's scripts, so writing the
-    // marker for someone who refused would either do nothing (no script to read
-    // it) or, the day the gating slipped, report a conversion nobody agreed to.
-    // Deciding it here — from the cookie the request actually carried, on the
-    // server, before anything is written — is what makes that impossible rather
-    // than merely unlikely.
+    // AFTER the response, so a Meta round trip cannot delay or fail a
+    // registration that has already succeeded. The helper decides for itself
+    // whether to send anything: it refuses unless this request's own consent
+    // cookie says marketing is allowed, so an un-consented registration reports
+    // nothing. The source path is the page the parent was on, stated rather than
+    // derived from this route's own URL.
     //
-    // Not `httpOnly`: the whole point is that a page script reads it. That is
-    // also why it carries nothing worth stealing — one fixed word, no id, no
-    // address — and why it expires in five minutes.
-    if (parseConsentCookieHeader(request.headers.get("cookie"))?.marketing) {
-      response.cookies.set({
-        name: CONVERSION_COOKIE_NAME,
-        value: REGISTRATION_CONVERSION,
-        maxAge: CONVERSION_COOKIE_MAX_AGE_SECONDS,
-        path: "/",
-        sameSite: "lax",
-        httpOnly: false,
-        // From the origin we already trust rather than the raw Host header, so
-        // a spoofed `Host: localhost:3000` cannot talk us out of the flag.
-        secure: getOrigin(request).startsWith("https:"),
-      });
-    }
+    // No role check, and none is possible to need: the account this just created
+    // is an ordinary customer, and a gamer cannot reach a registration form at
+    // all.
+    after(
+      reportMetaConversion(request, {
+        event: "account_created",
+        sourcePath: ROUTES.register,
+      }),
+    );
 
     return response;
   },

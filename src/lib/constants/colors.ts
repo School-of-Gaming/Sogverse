@@ -84,8 +84,8 @@ export const STATUS = {
 // The mail's note panel used to carry a composited pair here — the info colour
 // at a tenth for its wash and at a half for its edge, flattened against the
 // message panel because a mail client cannot be relied on for alpha. No status
-// colour is tinted anywhere now: the panel wears the neutral border every other
-// panel wears and sits on the ground it is already on, so both values have no
+// colour is tinted anywhere now: the panel's border is `STATUS.info` at full
+// value and it sits on the ground it is already on, so both values have no
 // consumer and are gone.
 
 // A footer grey of #555555 used to live here. It mirrored no token in

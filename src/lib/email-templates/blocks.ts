@@ -6,8 +6,8 @@ import { BODY_TEXT_STYLE, groundFill, pinnedFill } from "./utils";
  * The composed blocks a template reaches for rather than builds. `utils.ts`
  * holds the pieces every template uses (escaping, a paragraph, a styled name);
  * these are the larger shapes: the buttons and links a mail that sends the
- * reader somewhere needs, and the callout panel a mail that has something to say
- * about *itself* opens with.
+ * reader somewhere needs, and the callout panel a mail sets an aside in — a word
+ * about the mail *itself*, or the one fact in it the reader must not miss.
  *
  * **Every `href` here is embedded unescaped, by design** — the same exception
  * the password-reset builder documents. Callers pass app-generated URLs
@@ -35,7 +35,7 @@ interface CtaButtonOptions {
   label: string;
   /**
    * `primary` fills the brand orange, `secondary` the brand purple, `outline`
-   * is the card colour behind a border. However many buttons a mail carries,
+   * is whatever ground it stands on, behind a border. However many buttons a mail carries,
    * exactly one of them is the action it is actually asking for — a second
    * filled button says the opposite, whichever brand colour fills it.
    */
@@ -59,11 +59,46 @@ interface CtaButtonOptions {
  */
 type CtaWidth = "auto" | "half";
 
-/** A row half: never `primary`, so a row cannot hold two filled brand buttons. */
+/**
+ * A row half: never `primary`, so a row cannot hold two amber (act) cells. That
+ * is all the type forbids — two `secondary` halves still compile.
+ */
 interface RowButtonOptions extends CtaButtonOptions {
   variant: Exclude<CtaVariant, "primary">;
 }
 
+/**
+ * The outlined button's fill, which is the ground rather than a colour of its
+ * own — so it comes from the one table in `utils.ts` that every ground-following
+ * surface in this directory takes both of its halves from, and the shell's own
+ * media query restates it against the card.
+ */
+const OUTLINE_GROUND = groundFill("match");
+
+const VARIANTS = {
+  primary: {
+    fill: pinnedFill(BRAND.act),
+    surfaceClass: "",
+    label: BRAND.actForeground,
+    bordered: false,
+    // The only label dark enough for the pin to help rather than hurt.
+    labelClass: "cta-on-brand",
+  },
+  secondary: {
+    fill: pinnedFill(BRAND.world),
+    surfaceClass: "",
+    label: BRAND.worldForeground,
+    bordered: false,
+    labelClass: "",
+  },
+  outline: {
+    fill: OUTLINE_GROUND.fill,
+    surfaceClass: OUTLINE_GROUND.className,
+    label: DARK_THEME.foreground,
+    bordered: true,
+    labelClass: "",
+  },
+} as const;
 
 /**
  * The button's look, in one place, so a half-width one is the same button.
@@ -114,39 +149,6 @@ interface RowButtonOptions extends CtaButtonOptions {
  * orange in the header. For anything lighter, the inline colour is both the
  * simplest answer and the one that survives; adding protection makes it worse.
  */
-/**
- * The outlined button's fill, which is the ground rather than a colour of its
- * own — so it comes from the one table in `utils.ts` that every ground-following
- * surface in this directory takes both of its halves from, and the shell's own
- * media query restates it against the card.
- */
-const OUTLINE_GROUND = groundFill("match");
-
-const VARIANTS = {
-  primary: {
-    fill: pinnedFill(BRAND.act),
-    surfaceClass: "",
-    label: BRAND.actForeground,
-    bordered: false,
-    // The only label dark enough for the pin to help rather than hurt.
-    labelClass: "cta-on-brand",
-  },
-  secondary: {
-    fill: pinnedFill(BRAND.world),
-    surfaceClass: "",
-    label: BRAND.worldForeground,
-    bordered: false,
-    labelClass: "",
-  },
-  outline: {
-    fill: OUTLINE_GROUND.fill,
-    surfaceClass: OUTLINE_GROUND.className,
-    label: DARK_THEME.foreground,
-    bordered: true,
-    labelClass: "",
-  },
-} as const;
-
 function buttonStyles(variant: CtaVariant, width: CtaWidth) {
   const { fill, surfaceClass, label, bordered, labelClass } = VARIANTS[variant];
   const isHalf = width === "half";
@@ -228,14 +230,14 @@ export function ctaButtonRow(left: RowButtonOptions, right: RowButtonOptions): s
     </table>`;
 }
 
-/** One half of a `ctaButtonRow`: the row's own cell, painted as the button. */
 /**
- * One half of a `ctaButtonRow`.
+ * One half of a `ctaButtonRow`: the row's own cell, painted as the button.
  *
  * The variant is narrowed rather than defaulted: a row is for two alternatives,
- * so two filled brand buttons is the one arrangement it must not be able to
- * make, and it used to be the arrangement you got by leaving the argument out.
- * A shape forbidden in prose and reachable by omission is not forbidden.
+ * so two amber `primary` cells is the arrangement it must not be able to make,
+ * and it used to be the arrangement you got by leaving the argument out. A shape
+ * forbidden in prose and reachable by omission is not forbidden. The narrowing
+ * reaches that one shape only — two `secondary` halves still compile.
  */
 function halfButtonCell({ href, label, variant }: RowButtonOptions): string {
   const { surface, surfaceClass, labelClass, label: labelStyle } = buttonStyles(
@@ -400,13 +402,17 @@ interface CalloutPanelOptions {
 }
 
 /**
- * A panel above the mail's own opening, for something the reader has to be told
- * about the mail rather than in it — today, the session report's staff copy
- * saying that it *is* a copy and that each family's mail was its own.
+ * A panel set apart from the mail's own prose, for one of two things. An aside
+ * about the mail itself, which goes at the top because it changes how everything
+ * under it is read — today, the session report's staff copy saying that it *is*
+ * a copy and that each family's mail was its own. Or the one fact in a mail the
+ * reader must not miss because it stops being true, which goes beside whatever
+ * it bounds — today, the seat offer's deadline to answer by, under the question
+ * and above the answers.
  *
  * **It is the app's `Alert`, in its `info` variant, in an inbox.** A mail
  * inherits rather than being styled, so the shape comes from the component the
- * app already uses for exactly this: `rounded-lg`, a neutral 1px border, the
+ * app already uses for exactly this: `rounded-lg`, a 1px border, the
  * ground it is already on, the label in the status colour and the sentences in
  * ink. No status colour is tinted anywhere — info is Wit's blue, and a brand
  * colour exists at the value it is authored at or not at all — so the wash and
@@ -430,8 +436,12 @@ interface CalloutPanelOptions {
  * panel the info blue measures 7.53:1 as text, well clear of the body floor,
  * where on the wash it used to sit at 4.46:1 and could not be spent at all. The
  * app puts a glyph beside that label; a mail has no icon system to draw one
- * with, so the label carries the tone alone. Both pairings are pinned in
- * `palette-contrast.test.ts`.
+ * with, so the label carries the tone alone. `palette-contrast.test.ts` pins
+ * the label on both grounds the shell can put the panel on — the message panel
+ * and the bare ground a phone shows — and the paragraphs' ink through its
+ * ordinary body-text rows. It also measures the info fill under its own
+ * foreground, but that pair is the components reference's swatch: this panel
+ * has no fill for it to describe.
  *
  * The paragraphs carry equal weight rather than the second being muted: in a
  * callout the later sentence is usually the one that answers the actual worry,

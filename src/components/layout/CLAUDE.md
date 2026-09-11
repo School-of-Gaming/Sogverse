@@ -36,7 +36,7 @@ The consent banner is rendered from the **locale layout** (`src/app/[locale]/lay
 
 It is deliberately **non-modal** — no backdrop, no focus trap, no scroll lock — and a `region` with an accessible name, so a reader can go on reading the page and answer whenever they like. Whether it shows is decided **on the server**, from the `sog_consent` cookie parsed in that layout and seeded into the provider, so the first client render agrees with the SSR HTML and nothing appears or disappears at hydration. Its `z-50` matches the dialog portals', and the strip wins nothing by that: it is rendered as a sibling of `children` rather than portaled, so it is always earlier in the body than a runtime portal and an open dialog paints above it.
 
-**It asks on every surface, the gamer one included.** The pixels refuse a signed-in gamer by role, wherever they are, so a child's browsing never reaches an ad platform whatever was answered on the device; a gate on the question itself would withhold no script, and was removed as complexity without coverage.
+**It asks on every surface, the gamer one included.** The pixel refuses a signed-in gamer by role, wherever they are, so a child's browsing never reaches an ad platform whatever was answered on the device; a gate on the question itself would withhold no script, and was removed as complexity without coverage.
 
 ## The account menu
 
