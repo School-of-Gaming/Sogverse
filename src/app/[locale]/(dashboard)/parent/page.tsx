@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { ManageBillingCard } from "@/components/billing";
 import { ParentDashboardShell } from "@/components/parent/ParentDashboardShell";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserWithProfile } from "@/lib/supabase/server";
+import { getServerTopicPrepReady } from "@/components/topic-prep/topic-prep-cookie.server";
 import {
   ParticipationsService,
   type MyUpcomingSessionRow,
@@ -136,22 +137,38 @@ export default async function CustomerDashboardPage() {
   // way, so running the cheaper three alongside the sessions read costs ~no
   // extra wall-clock and is what lets every section paint populated at once.
   const [
+    viewer,
     initialSessionRows,
     initialWaitlistRows,
     initialFamily,
     billingAccounts,
   ] = await Promise.all([
+    // Request-cached, and the dashboard layout has already called it, so this
+    // shares that render's row rather than firing a second query. It is here
+    // for one value: the reader's id, which is the viewer half of every prep
+    // dismissal key. A parent and a child share a browser, so the answer has to
+    // be filtered to whoever is actually signed in.
+    getUserWithProfile(),
     getInitialSessionRows(),
     getInitialWaitlistRows(),
     getInitialFamily(),
     getInitialBillingAccounts(),
   ]);
 
+  // Read here rather than in the client shell, and that is the whole point of
+  // it being a cookie: the server knows which guides this family has finished
+  // with before it draws a single card, so the footer it renders is the final
+  // one. Read from `localStorage` it could only have been known a tick after
+  // hydration, which is how the Join button used to flash in the slot the
+  // "Get ready" button was about to take.
+  const prepDismissed = await getServerTopicPrepReady(viewer?.user.id ?? null);
+
   return (
     <ParentDashboardShell
       initialSessionRows={initialSessionRows}
       initialWaitlistRows={initialWaitlistRows}
       initialFamily={initialFamily}
+      prepDismissed={prepDismissed}
       // Handed over finished rather than as data: billing is one self-contained
       // section with its own backend actions, and nothing about the shape of the
       // page depends on what is inside it.

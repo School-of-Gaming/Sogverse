@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { EnrollmentCard } from "@/components/family/EnrollmentCard";
-import { seedTopicPrepDismissals } from "@/components/topic-prep/use-topic-prep-dismissal";
+import {
+  NO_TOPIC_PREP_READY,
+  TOPIC_PREP_COOKIE_NAME,
+  topicPrepReadyFor,
+} from "@/components/topic-prep/topic-prep-cookie";
 import type { FamilyEnrollmentSummary } from "@/components/family/enrollment-rollup";
 import { INERT_HREF } from "@/lib/constants/routes";
 
@@ -11,13 +15,13 @@ import { INERT_HREF } from "@/lib/constants/routes";
  * Everything about *what the guide says* is settled elsewhere — the registry's
  * resolver decides whether a topic has one and which steps survive the
  * in-person filter, and its own tests pin that. What only a rendered card can
- * answer is where the affordance goes, what it displaces, and what puts it away
- * for good:
+ * answer is where the affordance goes, what it displaces, what puts it away for
+ * good, and when it stops being offered at all:
  *
  *  1. **It takes the locked Join's slot and gives it straight back.** The
  *     locked button is inert and restates the schedule row above it; the guide
- *     has something to do behind it. Button for button, so the swap that
- *     follows the storage read moves nothing.
+ *     has something to do behind it. Button for button, so the swap moves
+ *     nothing.
  *  2. **A lit Join is never touched.** The room being open is the whole point of
  *     the card, so the guide steps down to a quiet link beside it.
  *  3. **The cards with no Join take the button under their footer sentence** —
@@ -26,12 +30,14 @@ import { INERT_HREF } from "@/lib/constants/routes";
  *  4. **Three cards never offer it**: a queue place (no seat to get ready for),
  *     a finished run, and an in-person card whose topic brings no steps. The
  *     third is in-person alone — remotely there is always the voice room.
- *  5. **Only the affirmative dismisses.** Closing the dialog any other way
- *     leaves the affordance exactly where it was, so checking one step does not
- *     silently throw the guide away.
- *  6. **Storage is never trusted.** A browser that refuses it is a family who
- *     gets offered the guide, which is the failure that costs a click rather
- *     than the one that costs the setup instructions.
+ *  5. **Only the affirmative dismisses**, and the answer arrives on the *first*
+ *     render as a prop, because it is read from a cookie by whatever rendered
+ *     the page. There is no third "not known yet" state and nothing swaps after
+ *     hydration.
+ *  6. **The offer is bounded by the family's first two sessions.** Past the end
+ *     of the second one the card offers nothing, answered or not — which is
+ *     what keeps a family who has been turning up since February from being
+ *     asked to confirm a dialog about their first session.
  */
 
 // Keys echo, so an assertion names the copy the card reached for rather than
@@ -58,9 +64,8 @@ vi.mock("@/providers", () => ({
 
 const NOW = new Date("2026-02-11T12:00:00.000Z");
 const PARTICIPATION_ID = "e0b5b0c3-7c8f-4b3e-9a11-5f2c6d7e8a90";
-/** Whoever is looking. Restored per case, since one case swaps it mid-test. */
+/** Whoever is looking. The viewer half of every key written to the cookie. */
 const VIEWER_ID = "9c1f0f2e-3a4b-4c5d-8e9f-0a1b2c3d4e5f";
-const OTHER_VIEWER_ID = "1d2e3f4a-5b6c-4d7e-8f90-a1b2c3d4e5f6";
 
 const TRIGGER = "topicPrep.triggerLabel";
 const READY = "topicPrep.readyLabel";
@@ -71,10 +76,13 @@ function lockedJoin(): HTMLElement | null {
   return screen.queryByText(/^voiceButton\.locked\(/);
 }
 
+/** Ten minutes out — long enough to read, short enough for a case to outlive. */
+const WINDOW_ENDS_SOON = new Date(NOW.getTime() + 600_000);
+
 /**
  * One enrollment, in whichever state a case needs. Defaults to the card the
- * affordance was designed for: a remote club with a guide behind its topic and
- * its room three days out.
+ * affordance was designed for: a remote club with a guide behind its topic, its
+ * room three days out, and a prep window still open.
  */
 function enrollment(
   overrides: Partial<FamilyEnrollmentSummary> = {},
@@ -85,6 +93,7 @@ function enrollment(
     productType: "consumer_club",
     topic: "roblox_studio",
     isRemote: true,
+    prepWindowEnd: new Date(NOW.getTime() + 10 * 86_400_000),
     nextSessionStart: new Date(NOW.getTime() + 3 * 86_400_000),
     nextSessionEnd: new Date(NOW.getTime() + 3 * 86_400_000 + 5_400_000),
     hasVoiceRoom: true,
@@ -103,9 +112,16 @@ function enrollment(
   };
 }
 
-function renderCard(overrides: Partial<FamilyEnrollmentSummary> = {}) {
+function renderCard(
+  overrides: Partial<FamilyEnrollmentSummary> = {},
+  prepDismissed: ReadonlySet<string> = NO_TOPIC_PREP_READY,
+) {
   return render(
-    <EnrollmentCard enrollment={enrollment(overrides)} audience="gamer" />,
+    <EnrollmentCard
+      enrollment={enrollment(overrides)}
+      prepDismissed={prepDismissed}
+      audience="gamer"
+    />,
   );
 }
 
@@ -125,16 +141,19 @@ function sayReady(): void {
   });
 }
 
+/** What the browser has been told to remember, decoded. */
+function storedCookie(): string {
+  const match = document.cookie.match(
+    // eslint-disable-next-line security/detect-non-literal-regexp -- the name is a hardcoded constant
+    new RegExp(`(?:^|; )${TOPIC_PREP_COOKIE_NAME}=([^;]*)`),
+  );
+  return match ? decodeURIComponent(match[1]) : "";
+}
+
 beforeEach(() => {
   clock.now = NOW;
   viewer.id = VIEWER_ID;
-  window.localStorage.clear();
-  // The dismissal store keeps a tab's own answers in memory over the top of
-  // storage — that layer is what makes a refused write still put the guide
-  // away — so a case that cleared storage alone would inherit the previous
-  // case's click. Seeding an empty set is the store's own way to say "this tab
-  // remembers nothing".
-  seedTopicPrepDismissals([]);
+  document.cookie = `${TOPIC_PREP_COOKIE_NAME}=;max-age=0;path=/`;
 });
 
 afterEach(() => {
@@ -157,35 +176,46 @@ describe("the prep guide in the Join's slot", () => {
     expect(lockedJoin()).toBeTruthy();
   });
 
-  it("stays away on a later visit, for this viewer and this enrollment", () => {
-    renderCard();
-    sayReady();
-    cleanup();
+  /**
+   * **The whole point of the cookie**: the answer is known before a single
+   * pixel is drawn, so the card that has been finished with paints its locked
+   * Join on the first render and never shows "Get ready" at all. Under the
+   * `localStorage` design this card drew the affordance first and corrected
+   * itself a tick after hydration, which is the flash this replaces.
+   */
+  it("draws the locked Join from the first render when the prop says ready", () => {
+    renderCard({}, new Set([PARTICIPATION_ID]));
 
-    renderCard();
     expect(screen.queryByText(TRIGGER)).toBeNull();
     expect(lockedJoin()).toBeTruthy();
   });
 
   /**
    * A parent and a child share one computer far more often than they share a
-   * dashboard, so a parent finishing with the guide must not take it away from
-   * the child who has not read it — and one child's club must not answer for
-   * their sibling's.
+   * dashboard, so what is written down has to say *who* answered — a parent
+   * finishing with the guide must not take it away from the child who has not
+   * read it, and one child's club must not answer for their sibling's.
    */
-  it("is keyed by the viewer and the enrollment, not by the browser", () => {
+  it("writes the viewer and the enrollment, not a bare flag", () => {
+    renderCard();
+    sayReady();
+
+    expect(storedCookie()).toBe(`${VIEWER_ID}:${PARTICIPATION_ID}`);
+  });
+
+  /** A second card's answer joins the first rather than replacing it. */
+  it("merges a second answer into what is already stored", () => {
+    const other = "2f3a4b5c-6d7e-4f80-9112-334455667788";
     renderCard();
     sayReady();
     cleanup();
 
-    viewer.id = OTHER_VIEWER_ID;
-    renderCard();
-    expect(screen.getByText(TRIGGER)).toBeTruthy();
-    cleanup();
+    renderCard({ participationId: other });
+    sayReady();
 
-    viewer.id = VIEWER_ID;
-    renderCard({ participationId: "2f3a4b5c-6d7e-4f80-9112-334455667788" });
-    expect(screen.getByText(TRIGGER)).toBeTruthy();
+    expect(storedCookie()).toBe(
+      `${VIEWER_ID}:${PARTICIPATION_ID},${VIEWER_ID}:${other}`,
+    );
   });
 });
 
@@ -220,10 +250,11 @@ describe("the prep guide on the cards with no Join", () => {
    * The unplaced seat draws no link and no chevron because there is no page
    * behind it — and it still offers the guide, because a dialog is not a page
    * and the wait for a placement is precisely the window the guide is written
-   * for.
+   * for. It also carries no window *end*: nobody has put them in a group, so
+   * there are no sessions of theirs to count.
    */
   it("sits under the awaiting sentence of an unplaced seat", () => {
-    renderCard({ awaiting: true });
+    renderCard({ awaiting: true, prepWindowEnd: null });
 
     expect(screen.getByText("familyEnrollment.awaitingGamer")).toBeTruthy();
     expect(screen.getByText(TRIGGER)).toBeTruthy();
@@ -250,8 +281,13 @@ describe("the prep guide on the cards with no Join", () => {
   it("draws the footer for the guide alone on a remote seat with nothing scheduled", () => {
     // The product has a room but no slots yet, so there is no session for a
     // Join to name — and the guide is precisely what this family can be doing
-    // while the schedule is settled.
-    renderCard({ nextSessionStart: null, nextSessionEnd: null });
+    // while the schedule is settled. With nothing scheduled there is nothing
+    // to bound the offer with either.
+    renderCard({
+      nextSessionStart: null,
+      nextSessionEnd: null,
+      prepWindowEnd: null,
+    });
 
     expect(screen.getByText(TRIGGER)).toBeTruthy();
     expect(lockedJoin()).toBeNull();
@@ -264,6 +300,7 @@ describe("the cards that never offer it", () => {
       waitlistPosition: 3,
       nextSessionStart: null,
       nextSessionEnd: null,
+      prepWindowEnd: null,
     });
 
     expect(screen.queryByText(TRIGGER)).toBeNull();
@@ -299,6 +336,102 @@ describe("the cards that never offer it", () => {
   });
 });
 
+/**
+ * **The rollout's whole quietness lives here.** A family who has been coming
+ * for months has a working setup, and the guide asking them to confirm a
+ * "Before the first session" dialog to get their card back would be the
+ * platform noticing them for the first time on the day we shipped this.
+ */
+describe("the window the offer lives in", () => {
+  it("offers nothing once the window has closed, answered or not", () => {
+    renderCard({ prepWindowEnd: new Date(NOW.getTime() - 60_000) });
+
+    expect(screen.queryByText(TRIGGER)).toBeNull();
+    // And the slot goes back to what it always held.
+    expect(lockedJoin()).toBeTruthy();
+  });
+
+  it("hands the Join's slot back the moment the window closes", () => {
+    // Button for button in one slot, so following the live clock here costs
+    // nothing: nothing on the card moves when the swap happens.
+    const { rerender } = renderCard({ prepWindowEnd: WINDOW_ENDS_SOON });
+    expect(screen.getByText(TRIGGER)).toBeTruthy();
+
+    clock.now = new Date(WINDOW_ENDS_SOON.getTime() + 1_000);
+    rerender(
+      <EnrollmentCard
+        enrollment={enrollment({ prepWindowEnd: WINDOW_ENDS_SOON })}
+        prepDismissed={NO_TOPIC_PREP_READY}
+        audience="gamer"
+      />,
+    );
+
+    expect(screen.queryByText(TRIGGER)).toBeNull();
+    expect(lockedJoin()).toBeTruthy();
+  });
+
+  /**
+   * **A move between groups reopens the window, and must never re-ask a seat
+   * that has already answered.**
+   *
+   * The start moment is the later of the two stamps, so a child moved to
+   * another group is re-stamped and their window opens again from the new
+   * placement — which is what a family who really is starting over with a new
+   * gedu, a new room and a new day wants. What must not come back with it is
+   * the guide on a seat that was finished with, and nothing about this card
+   * has to be careful for that to hold: the answer is written down against the
+   * **participation**, and a group move leaves the participation exactly where
+   * it was. So the reopened window finds the seat already answered and offers
+   * nothing, in the Join's slot and under the footer sentence alike.
+   */
+  it("never re-asks a seat that has answered, even when a group move reopens the window", () => {
+    renderCard({ prepWindowEnd: WINDOW_ENDS_SOON });
+    sayReady();
+    // The reader's own answer, as the browser now holds it — which is exactly
+    // what a page render parses back out of the cookie.
+    const dismissed = topicPrepReadyFor(storedCookie(), VIEWER_ID);
+    expect([...dismissed]).toEqual([PARTICIPATION_ID]);
+    cleanup();
+
+    // A fresh placement: the same seat, re-stamped, with a window running well
+    // past the old one.
+    const reopened = new Date(NOW.getTime() + 30 * 86_400_000);
+
+    renderCard({ prepWindowEnd: reopened }, dismissed);
+    expect(screen.queryByText(TRIGGER)).toBeNull();
+    expect(lockedJoin()).toBeTruthy();
+    cleanup();
+
+    // And the same answer on the placement that has no Join to give back.
+    renderCard({ awaiting: true, prepWindowEnd: reopened }, dismissed);
+    expect(screen.getByText("familyEnrollment.awaitingGamer")).toBeTruthy();
+    expect(screen.queryByText(TRIGGER)).toBeNull();
+  });
+
+  /**
+   * The additive placements do **not** follow the clock, and that is the layout
+   * rule rather than an oversight: there is no button underneath to take the
+   * space back, so a button vanishing on time's own schedule would shrink the
+   * card and pull the column up under whoever was reading it.
+   */
+  it("leaves the button under the awaiting sentence alone when the window closes mid-read", () => {
+    const spec = { awaiting: true, prepWindowEnd: WINDOW_ENDS_SOON };
+    const { rerender } = renderCard(spec);
+    expect(screen.getByText(TRIGGER)).toBeTruthy();
+
+    clock.now = new Date(WINDOW_ENDS_SOON.getTime() + 1_000);
+    rerender(
+      <EnrollmentCard
+        enrollment={enrollment(spec)}
+        prepDismissed={NO_TOPIC_PREP_READY}
+        audience="gamer"
+      />,
+    );
+
+    expect(screen.getByText(TRIGGER)).toBeTruthy();
+  });
+});
+
 describe("what does and does not count as finishing with the guide", () => {
   it("keeps the affordance when the dialog is closed without answering", () => {
     renderCard();
@@ -316,31 +449,39 @@ describe("what does and does not count as finishing with the guide", () => {
     // offered it again.
     expect(screen.queryByText(DIALOG_TITLE)).toBeNull();
     expect(screen.getByText(TRIGGER)).toBeTruthy();
-    expect(window.localStorage.length).toBe(0);
+    expect(storedCookie()).toBe("");
   });
 });
 
-describe("a browser that refuses storage", () => {
-  it("treats a throwing read as not dismissed", () => {
-    vi.stubGlobal("localStorage", {
-      getItem: () => {
+describe("a browser that refuses cookies", () => {
+  it("still puts the affordance away for the reader who just answered", () => {
+    const real = Object.getOwnPropertyDescriptor(
+      Document.prototype,
+      "cookie",
+    );
+    Object.defineProperty(document, "cookie", {
+      configurable: true,
+      get() {
         throw new Error("site data blocked");
       },
-      setItem: () => {
+      set() {
         throw new Error("site data blocked");
       },
-      removeItem: () => {},
-      clear: () => {},
-      key: () => null,
-      length: 0,
     });
 
-    renderCard();
-    expect(screen.getByText(TRIGGER)).toBeTruthy();
+    try {
+      renderCard();
+      expect(screen.getByText(TRIGGER)).toBeTruthy();
 
-    // And the throwing *write* is swallowed too: the reader answered, so the
-    // affordance goes away for this render whatever the browser will store.
-    sayReady();
-    expect(screen.queryByText(TRIGGER)).toBeNull();
+      // The throwing write is swallowed: the reader answered, so the affordance
+      // goes away for this visit whatever the browser will store. Offering the
+      // guide again next time costs a click; leaving the button under their
+      // cursor after they answered costs their trust in the button.
+      sayReady();
+      expect(screen.queryByText(TRIGGER)).toBeNull();
+    } finally {
+      Reflect.deleteProperty(document, "cookie");
+      if (real) Object.defineProperty(Document.prototype, "cookie", real);
+    }
   });
 });

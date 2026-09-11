@@ -11,7 +11,10 @@ import {
   startDateToCutoff,
 } from "@/lib/session-occurrence";
 import type { ProductTopic, ProductType } from "@/types";
-import type { FamilyEnrollmentSummary } from "./enrollment-rollup";
+import {
+  topicPrepWindowEndFromSchedule,
+  type FamilyEnrollmentSummary,
+} from "./enrollment-rollup";
 import { INERT_HREF } from "@/lib/constants/routes";
 
 /**
@@ -70,6 +73,22 @@ export interface EnrollmentFixtureSpec {
   topic?: ProductTopic;
   slots: FixtureSlot[];
   startedDaysAgo: number;
+  /**
+   * Days ago the seat became this family's — the moment the prep window is
+   * measured from, and therefore the difference between a card that offers the
+   * guide and one that does not.
+   *
+   * **Defaults to `0`, the family who has just enrolled**, because that is the
+   * reader every prep placement is drawn for and a fixture is worth nothing if
+   * it shows the card in a state nobody is looking at. A fixture that wants the
+   * *closed* window — the family who has been turning up for weeks, whom this
+   * feature must leave alone — says so with a value far enough back that two of
+   * the product's sessions have run since.
+   *
+   * Ignored on an unplaced seat, which has no sessions of its own yet and so
+   * carries no window end at all.
+   */
+  enrolledDaysAgo?: number;
   /**
    * Days after `now` the run ends, or `null` for an open-ended club. Negative
    * puts the last day in the past, which is what makes a card a finished one.
@@ -163,6 +182,23 @@ export function buildEnrollmentFixture(
     participationId: spec.participationId,
     productName: spec.productName,
     productType: spec.productType,
+    // Derived rather than authored, exactly as the next session is: the window
+    // runs to the end of the second session that starts after the family
+    // enrolled, so a fixture states *when they enrolled* and the same rule the
+    // live roll-up runs decides whether the card still offers anything. An
+    // unplaced seat has no sessions of its own yet, and its offer has no end.
+    prepWindowEnd:
+      spec.awaiting === true
+        ? null
+        : topicPrepWindowEndFromSchedule({
+            slots: spec.slots,
+            timezone: FIXTURE_TIMEZONE,
+            startMoment: new Date(
+              now.getTime() - (spec.enrolledDaysAgo ?? 0) * 86_400_000,
+            ),
+            startBoundary: startDateToCutoff(startDate, FIXTURE_TIMEZONE),
+            endBoundary: endDateToCutoff(endDate, FIXTURE_TIMEZONE),
+          }),
     // A label-only topic by default: it brings no steps of its own, so an
     // untouched in-person fixture draws no prep affordance and a remote one
     // draws the shortest guide in the product. Every fixture carries its own

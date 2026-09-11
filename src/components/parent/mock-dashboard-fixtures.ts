@@ -299,9 +299,18 @@ export function buildParentDashboardFixture(
               productName: "Rocket League Club",
               productType: "municipality_club",
               isRemote: true,
+              // **The card that offers nothing, and the reason the offer has a
+              // window at all.** The topic carries a guide and the Join is
+              // locked, so on the old rule this card would be asking a family
+              // nine weeks into a club to confirm a "Before the first session"
+              // dialog to get its button back. Enrolled when the club started,
+              // so their first two sessions are long behind them and the offer
+              // has closed — which is what every long-standing family's card
+              // looks like, and the state the rollout has to be quiet on.
               topic: "rocket_league",
               slots: [futureSlot(now, 2, "16:30", 60, FIXTURE_TIMEZONE)],
               startedDaysAgo: 63,
+              enrolledDaysAgo: 63,
               endsInDays: null,
               cancelledAccessInDays: 18,
             },

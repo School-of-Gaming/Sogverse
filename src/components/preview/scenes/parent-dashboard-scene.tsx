@@ -12,6 +12,7 @@ import {
   type ParentDashboardScenario,
 } from "@/components/parent/mock-dashboard-fixtures";
 import { InertHelpFeedbackCard } from "@/components/preview/inert-help-feedback-card";
+import { NO_TOPIC_PREP_READY } from "@/components/topic-prep/topic-prep-cookie";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useNow, useTimezone } from "@/providers";
 
@@ -55,6 +56,12 @@ export function ParentDashboardScene({
     <ParentDashboardPageBody
       gamers={fixture.gamers}
       self={fixture.self}
+      // Nothing dismissed: a scene is where the prep placements are judged, and
+      // the answer is a prop now rather than something a browser store could
+      // leak into the page. Which cards actually offer the guide is decided by
+      // the fixtures' own enrolment dates, through the same window rule the
+      // live roll-up runs.
+      prepDismissed={NO_TOPIC_PREP_READY}
       billingCard={<FixtureBillingCard accounts={fixture.accounts} />}
       helpForm={<InertHelpFeedbackCard audience="adult" />}
       onAddGamer={noop}

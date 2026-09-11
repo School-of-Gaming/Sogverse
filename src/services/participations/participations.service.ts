@@ -133,6 +133,25 @@ export interface MyUpcomingSessionRow {
    * inert exactly like an in-person product.
    */
   groupId: string | null;
+  /**
+   * When this seat was taken on the product — the row's own creation stamp.
+   *
+   * Read for one thing: the family dashboards bound the "Before the first
+   * session" guide to this family's first sessions, and that needs to know when
+   * the run began *for them* rather than when the product's did. A club has run
+   * since February; a family who joined it last week has their first session
+   * ahead of them.
+   */
+  signedUpAt: Date;
+  /**
+   * When this seat entered its group, `null` while nobody has placed it.
+   *
+   * The other half of the same question, and the half that matters to a family
+   * promoted off the waitlist: they signed up weeks before the seat was theirs,
+   * so the prep window counts from the placement rather than from the day they
+   * joined the queue.
+   */
+  groupJoinedAt: Date | null;
   slots: Array<{
     weekday: number;
     startTime: string;
@@ -1015,6 +1034,8 @@ function buildMyUpcomingSessionsQuery(
         id,
         participant_id,
         group_id,
+        signed_up_at,
+        group_joined_at,
         product:products!inner(
           id, product_type, topic, timezone, start_date, end_date, is_remote,
           product_translations(*),
@@ -1115,6 +1136,11 @@ function toMyUpcomingSessionRow(
       translations: product.product_translations,
     },
     groupId: row.group_id,
+    // Parsed here rather than carried as text, so every consumer works in
+    // instants and none of them re-parses the same string per render tick.
+    signedUpAt: new Date(row.signed_up_at),
+    groupJoinedAt:
+      row.group_joined_at === null ? null : new Date(row.group_joined_at),
     slots: product.schedule_slots.map((s) => ({
       weekday: s.weekday,
       startTime: s.start_time,

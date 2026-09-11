@@ -84,11 +84,18 @@ export function buildGamerDashboardFixture(
       productName: "Minecraft Explorers Club",
       productType: "consumer_club",
       isRemote: true,
-      // The prep guide beside a lit Join: the room is open and the Join is
-      // untouched, so the guide is the muted link beneath it.
+      // **The card that offers nothing, and the state most cards on a real
+      // dashboard are in.** The topic carries a guide, but this gamer has been
+      // turning up to this club since it started twelve weeks ago: their first
+      // two sessions are far behind them, the prep window closed with the
+      // second one, and the card is simply a card with a lit Join on it. It is
+      // here so the page can be judged with an ordinary long-standing club on
+      // it — the alternative, every card offering a guide, is a picture of a
+      // family who bought five things this morning.
       topic: "minecraft_java",
       slots: [liveNowSlot(now, 90, FIXTURE_TIMEZONE)],
       startedDaysAgo: 84,
+      enrolledDaysAgo: 84,
       endsInDays: null,
     },
     {
@@ -135,6 +142,12 @@ export function buildGamerDashboardFixture(
       productName: "Roblox Builders Camp",
       productType: "camp",
       isRemote: false,
+      // The in-person placement, on a seat taken this week: the guide filters
+      // down to its account steps (School of Gaming brings the machines) and
+      // its button sits under the site line, where a Join never was. Read
+      // against the Minecraft club above it, the pair is the whole window rule
+      // — a new seat is offered the guide, a long-standing one is not.
+      topic: "roblox_studio",
       slots: [0, 1, 2, 3, 4].map((weekday) => ({
         weekday,
         startTime: "10:00",

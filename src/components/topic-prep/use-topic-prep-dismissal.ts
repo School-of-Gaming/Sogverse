@@ -1,10 +1,19 @@
 "use client";
 
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useState } from "react";
+import { getCookie, setCookie } from "@/lib/cookies";
 import { useAuth } from "@/providers";
+import {
+  TOPIC_PREP_COOKIE_MAX_AGE_SECONDS,
+  TOPIC_PREP_COOKIE_NAME,
+  parseTopicPrepReadyCookie,
+  serialiseTopicPrepReady,
+  topicPrepReadyKey,
+} from "./topic-prep-cookie";
 
 /**
- * Whether this viewer has finished with this enrollment's prep guide.
+ * Whether this viewer has finished with this enrolment's prep guide, and the
+ * one act that says so.
  *
  * **The guide is offered once and then it is gone.** A family six weeks into a
  * club has a working setup, and a card still pointing them at "create the
@@ -13,208 +22,90 @@ import { useAuth } from "@/providers";
  * reader's side: there is no reopen link, and nothing brings the affordance
  * back.
  *
- * **It is remembered in `localStorage` rather than on the profile**, and that is
- * a deliberate ceiling on what this feature costs: no column, no migration, no
- * route, no write path from a child's session. What is paid for it is that the
- * dismissal is per browser — the same parent on a second device is offered the
- * guide again, which is the failure mode a family barely notices and never has
- * to act on.
+ * **The answer arrives as a prop, not from this hook.** It is parsed out of the
+ * cookie on the server, where the page is rendered, and handed down to the card
+ * — so the server's HTML and the first client render agree about every footer
+ * and nothing swaps after hydration. What the hook adds is the other half of
+ * the round trip: the write, plus the local state that makes the card change
+ * under the reader's own click without waiting for a navigation.
  *
- * **The key carries the viewer *and* the participation**, because a parent and
- * a gamer routinely share one computer and one browser profile: a parent
- * clicking "I'm ready" on the family PC must not take the guide away from the
- * child who has not read it yet. And per participation rather than per product,
- * because a second child joining the same club is a second family setup — a
- * second account, on a second machine.
- *
- * **One key per enrollment, not one blob for all of them.** Two tabs dismissing
- * two cards would have to read-modify-write the same blob, and the second write
- * would silently drop the first. Independent keys cannot race.
+ * It is a cookie rather than a profile column for the same reason it was once
+ * `localStorage`: no migration, no route, no write path from a child's session,
+ * and the whole feature stays a rendering decision. What that costs is that a
+ * second device is offered the guide again, which is a click.
  */
-
-/**
- * What this viewer's browser has told us, and what a surface may draw from it.
- *
- * `unresolved` is the state the **server** is in, and the first client paint
- * with it: a server has no `localStorage` to read, so a surface must render
- * something that is right for both answers until the browser has spoken. Once
- * an effect has run the answer is `pending` (offer the guide) or `dismissed`
- * (never mention it again).
- */
-export type TopicPrepDismissalState = "unresolved" | "pending" | "dismissed";
-
 export interface TopicPrepDismissal {
-  state: TopicPrepDismissalState;
+  /** True once this viewer has said they are ready — stored, or just said. */
+  ready: boolean;
   /**
-   * Record the dismissal and never offer this guide to this viewer again.
-   * Called only by the affirmative button inside the dialog — closing the
-   * dialog any other way leaves the affordance where it was.
+   * Record it and never offer this guide to this viewer again. Called only by
+   * the affirmative button inside the dialog — closing the dialog any other way
+   * leaves the affordance exactly where it was.
    */
-  dismiss: () => void;
+  markReady: () => void;
 }
 
-/** Namespaced so the key says what it is when somebody opens dev tools. */
-const STORAGE_PREFIX = "sog:topic-prep-dismissed";
-
 /**
- * The viewer half of the key when nobody is signed in — a preview scene with no
- * fixture user, and nothing else, since every surface that draws an enrollment
- * card is behind a role gate. Stable rather than random, so a preview's own
- * dismissal survives a reload and the affordance can be judged in both states.
- */
-const ANONYMOUS_VIEWER = "anonymous";
-
-/**
- * The key one viewer's dismissal of one enrollment is stored under.
+ * Append one key to the stored value, merging with whatever is there now.
  *
- * Exported because a fixture surface seeds keys it has no hook to ask for them
- * — see `seedTopicPrepDismissals` — and because a key spelled twice is a key
- * that can be spelled differently twice.
+ * **Read-modify-write against `document.cookie` on every call, deliberately.**
+ * A dashboard draws many cards over one cookie, and a value captured at render
+ * time would let the second answer of a visit overwrite the first. Reading at
+ * write time makes two dismissals a second apart independent.
+ *
+ * Wrapped, and a throw means nothing was stored: a browser can refuse cookies
+ * outright, and the honest fallback is the state that shows the guide again
+ * next time. The reader's own click has already put the affordance away for
+ * this visit through the local state below, so nothing lands back under their
+ * cursor.
  */
-export function topicPrepDismissalKey(
-  viewerId: string | null,
-  participationId: string,
-): string {
-  return `${STORAGE_PREFIX}:${viewerId ?? ANONYMOUS_VIEWER}:${participationId}`;
-}
-
-/**
- * **Every read and write is wrapped, and a throw means "not dismissed".** A
- * browser can refuse storage outright (Safari's private mode has thrown on
- * write, an embedded webview can have site data blocked, a quota can be full),
- * and the honest fallback is the state that shows the guide: offering a family
- * a guide they have already read costs one click, and swallowing it costs them
- * the setup instructions.
- */
-function readStored(key: string): boolean {
+function rememberReady(key: string): void {
   try {
-    return window.localStorage.getItem(key) !== null;
+    const keys = parseTopicPrepReadyCookie(
+      getCookie(TOPIC_PREP_COOKIE_NAME),
+    );
+    if (keys.includes(key)) return;
+    setCookie(
+      TOPIC_PREP_COOKIE_NAME,
+      serialiseTopicPrepReady([...keys, key]),
+      { maxAge: TOPIC_PREP_COOKIE_MAX_AGE_SECONDS },
+    );
   } catch {
-    return false;
-  }
-}
-
-function writeStored(key: string): void {
-  try {
-    window.localStorage.setItem(key, "1");
-  } catch {
-    // Nothing to do and nothing to say: the tab's own memory below has already
-    // recorded it, so the affordance goes away for this visit. The family meets
-    // it again next time, which is the same outcome a cleared browser gives.
+    // Nothing to do and nothing to say — see above.
   }
 }
 
 /**
- * **The keys this tab knows are dismissed, layered over `localStorage`.**
- *
- * It exists for two things storage alone cannot do. First, a refused write —
- * private mode, blocked site data, a full quota — must still put the affordance
- * away for the reader who just answered the dialog, or the button lands back
- * under their cursor. Second, `storage` events fire only in *other* tabs, so
- * the tab that dismissed has nothing to hear; this set's own listeners are what
- * tell every hook instance on the page, which matters because a parent's
- * dashboard can show the same guide under two cards' worth of state at once.
- *
- * A module-level store rather than per-hook state, which is the other half of
- * why: state held inside one hook could not outlive its own key, so a hook
- * whose viewer or participation changed carried the previous card's answer over
- * to the next one.
+ * @param participationId the enrolment this card is about
+ * @param readyFromCookie the server's parse of the cookie, already scoped to
+ *   this viewer: `true` when this enrolment is in it
  */
-const dismissedHere = new Set<string>();
-const listeners = new Set<() => void>();
-
-function notify(): void {
-  for (const listener of listeners) listener();
-}
-
-function isDismissed(key: string): boolean {
-  return dismissedHere.has(key) || readStored(key);
-}
-
-/**
- * **The store is `localStorage` plus this tab's own memory, so the hook reads
- * it the way React reads any external store**, rather than seeding state and
- * syncing it in an effect. The server snapshot is `null` — the honest answer
- * for a machine with no browser storage — so the server's HTML and the first
- * client paint agree by construction, and React re-reads for real immediately
- * after hydrating.
- *
- * Both sources are subscribed to: the store's own listeners for this tab (a
- * dismissal here, or a fixture seeding one), and `storage` for the others, so a
- * second tab showing the same card stops offering the guide the moment this one
- * finishes with it.
- */
-function subscribe(onStoreChange: () => void): () => void {
-  listeners.add(onStoreChange);
-  window.addEventListener("storage", onStoreChange);
-  return () => {
-    listeners.delete(onStoreChange);
-    window.removeEventListener("storage", onStoreChange);
-  };
-}
-
-/**
- * Mark these keys dismissed for this tab, without writing anything down.
- *
- * For fixture surfaces: the style guide draws several enrollment cards whose
- * point is a state other than "there is a guide to read", and an undismissed
- * guide would take the locked Join's slot on every one of them and show a demo
- * of the wrong thing. Seeding replaces the whole set, so a fixture states what
- * this tab remembers rather than adding to whatever a previous one left.
- *
- * Memory only, so a demo never touches a real family's storage — and a no-op on
- * the server, because a module-level set on a server is shared by every request
- * that touches it.
- */
-export function seedTopicPrepDismissals(keys: readonly string[]): void {
-  if (typeof window === "undefined") return;
-  dismissedHere.clear();
-  for (const key of keys) dismissedHere.add(key);
-  notify();
-}
-
-/**
- * Forget one key outright — this tab's memory *and* what the browser wrote.
- *
- * The other half of a fixture surface's needs: a demo whose whole subject is
- * the affordance has to draw it on every visit, and an admin who answered its
- * dialog once would otherwise have dismissed that demo for good.
- */
-export function forgetTopicPrepDismissal(key: string): void {
-  if (typeof window === "undefined") return;
-  dismissedHere.delete(key);
-  try {
-    window.localStorage.removeItem(key);
-  } catch {
-    // Same wrapping as every other access, and the same fallback: a browser
-    // that will not let us remove it is a browser we cannot have written to.
-  }
-  notify();
-}
-
 export function useTopicPrepDismissal(
   participationId: string,
+  readyFromCookie: boolean,
 ): TopicPrepDismissal {
   const { user } = useAuth();
-  const key = topicPrepDismissalKey(user?.id ?? null, participationId);
+  // Answered *here*, this visit. Kept separate from the seeded value rather
+  // than initialising state from it, so a refetch that re-renders the card with
+  // a fresh seed cannot un-answer a dialog the reader has just answered — and
+  // so the two facts stay legible: what the browser remembers, and what just
+  // happened. Every list keys its cards by participation id, so this state
+  // cannot outlive the enrolment it belongs to.
+  const [saidReady, setSaidReady] = useState(false);
 
-  const stored = useSyncExternalStore(
-    subscribe,
-    useCallback(() => isDismissed(key), [key]),
-    // No storage on the server, and no pretending otherwise: `null` is the
-    // third state, and it is what stops the first paint from claiming an
-    // answer the machine that drew it could not have had.
-    () => null,
-  );
+  const markReady = useCallback(() => {
+    setSaidReady(true);
+    // **A fixture surface writes a real cookie here, and that is accepted.**
+    // "I'm ready" on a preview scene or a style-guide demo stores an entry
+    // under the admin's own user id keyed by the fixture's stable participation
+    // id, exactly as a family's own answer would be. It is inert: those
+    // surfaces state the answer as a prop and never read the cookie back, so
+    // nothing a demo writes can change what a demo shows, and nothing a family
+    // has stored reaches one. The key is fixed, so pressing it a hundred times
+    // stores one entry, and the cap bounds the cookie whatever gets written.
+    // The whole cost is a few entries of cap headroom on an admin's browser.
+    rememberReady(topicPrepReadyKey(user?.id ?? null, participationId));
+  }, [user?.id, participationId]);
 
-  const state: TopicPrepDismissalState =
-    stored === null ? "unresolved" : stored ? "dismissed" : "pending";
-
-  const dismiss = useCallback(() => {
-    dismissedHere.add(key);
-    writeStored(key);
-    notify();
-  }, [key]);
-
-  return { state, dismiss };
+  return { ready: readyFromCookie || saidReady, markReady };
 }

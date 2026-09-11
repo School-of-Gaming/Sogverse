@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import { WaitlistCard } from "@/components/admin/products/groups/waitlist-card";
 import { EnrollmentCard } from "@/components/family/EnrollmentCard";
+import { NO_TOPIC_PREP_READY } from "@/components/topic-prep/topic-prep-cookie";
 import type { FamilyEnrollmentSummary } from "@/components/family/enrollment-rollup";
 import { SEAT_OFFER_WINDOW_MS } from "@/lib/constants/seat-offer";
 import type { ProductGroupsSnapshot } from "@/types";
@@ -220,6 +221,9 @@ function waitlistedEnrollment(
     productType: "consumer_club",
     topic: "fortnite",
     isRemote: true,
+    // A queue place carries no prep window: it never offers the guide, so
+    // there is nothing to bound. See the roll-up.
+    prepWindowEnd: null,
     nextSessionStart: null,
     nextSessionEnd: null,
     hasVoiceRoom: true,
@@ -246,6 +250,7 @@ function renderFamilyCard(
   return render(
     <EnrollmentCard
       enrollment={waitlistedEnrollment(seatOfferSentAt)}
+      prepDismissed={NO_TOPIC_PREP_READY}
       audience="customer"
       gamerFirstName="Aino"
       onLeaveWaitlist={() => {}}
@@ -313,6 +318,7 @@ describe("EnrollmentCard — the family's seat offer", () => {
     rerender(
       <EnrollmentCard
         enrollment={waitlistedEnrollment(OFFERED_ALMOST_OUT)}
+        prepDismissed={NO_TOPIC_PREP_READY}
         audience="customer"
         gamerFirstName="Aino"
         onLeaveWaitlist={() => {}}
@@ -352,6 +358,7 @@ describe("EnrollmentCard — the family's seat offer", () => {
     rerender(
       <EnrollmentCard
         enrollment={waitlistedEnrollment(OFFERED_ALMOST_OUT)}
+        prepDismissed={NO_TOPIC_PREP_READY}
         audience="customer"
         gamerFirstName="Aino"
         onLeaveWaitlist={() => {}}
@@ -472,6 +479,7 @@ describe("EnrollmentCard — the family's seat offer", () => {
     render(
       <EnrollmentCard
         enrollment={waitlistedEnrollment(OFFERED_TWO_DAYS_AGO)}
+        prepDismissed={NO_TOPIC_PREP_READY}
         audience="gamer"
       />,
     );

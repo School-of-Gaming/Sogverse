@@ -29,6 +29,7 @@ export function GamerDashboardShell({
   firstName,
   initialSessionRows,
   initialWaitlistRows,
+  prepDismissed,
 }: {
   /** The signed-in gamer, whose rows these are and whose cards these become. */
   gamerId: string;
@@ -41,6 +42,12 @@ export function GamerDashboardShell({
    */
   initialSessionRows: MyUpcomingSessionRow[] | null;
   initialWaitlistRows: MyWaitlistRow[] | null;
+  /**
+   * The enrolments this child has already finished the prep guide for, parsed
+   * from the cookie by the server component above. Read where the page is
+   * rendered so the first paint is final -- see the parent shell's own note.
+   */
+  prepDismissed: ReadonlySet<string>;
 }) {
   const enrollments = useGamerEnrollments({
     gamerId,
@@ -52,6 +59,7 @@ export function GamerDashboardShell({
     <GamerDashboardPageBody
       firstName={firstName}
       enrollments={enrollments}
+      prepDismissed={prepDismissed}
       // The child-facing wording, and the only variant the form has: a reply to
       // a gamer resolves to their linked parent's mailbox, which the copy says.
       helpForm={<HelpFeedbackCard audience="gamer" />}

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
+import { NO_TOPIC_PREP_READY } from "@/components/topic-prep/topic-prep-cookie";
 import { ParentDashboardPageBody } from "@/components/parent/parent-dashboard-page-body";
 import { buildParentDashboardFixture } from "@/components/parent/mock-dashboard-fixtures";
 import { MAX_GAMERS_PER_PARENT } from "@/lib/constants";
@@ -52,6 +53,7 @@ function dashboardHtml(gamers: readonly ParentDashboardParticipant[]): string {
             <NowProvider initialNow={NOW}>
               <ParentDashboardPageBody
                 gamers={gamers}
+                prepDismissed={NO_TOPIC_PREP_READY}
                 billingCard={<div />}
                 helpForm={<div />}
                 onAddGamer={() => {}}

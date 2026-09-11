@@ -9,6 +9,7 @@ import {
   type GamerDashboardScenario,
 } from "@/components/gamer/mock-dashboard-fixtures";
 import { InertHelpFeedbackCard } from "@/components/preview/inert-help-feedback-card";
+import { NO_TOPIC_PREP_READY } from "@/components/topic-prep/topic-prep-cookie";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useNow, useTimezone } from "@/providers";
 
@@ -39,6 +40,12 @@ export function GamerDashboardScene({
     <GamerDashboardPageBody
       firstName={GAMER_DASHBOARD_FIRST_NAME}
       enrollments={enrollments}
+      // Nothing dismissed: a scene is where the prep placements are judged, and
+      // the answer is a prop now rather than something a browser store could
+      // leak into the page. Which cards actually offer the guide is decided by
+      // the fixtures' own enrolment dates, through the same window rule the
+      // live roll-up runs.
+      prepDismissed={NO_TOPIC_PREP_READY}
       helpForm={<InertHelpFeedbackCard audience="gamer" />}
     />
   );

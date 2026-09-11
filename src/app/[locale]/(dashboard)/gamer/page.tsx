@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { GamerDashboardShell } from "@/components/gamer/GamerDashboardShell";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
+import { getServerTopicPrepReady } from "@/components/topic-prep/topic-prep-cookie.server";
 import {
   ParticipationsService,
   type MyUpcomingSessionRow,
@@ -86,6 +87,12 @@ export default async function GamerDashboardPage() {
     redirect("/login");
   }
 
+  // The cookie the browser wrote, read where the page is rendered, so every
+  // card paints its final footer on the first frame. Keyed by this child rather
+  // than by the browser: a parent and a child share one, and a parent finishing
+  // with a guide must not take it away from the child who has not read it.
+  const prepDismissed = await getServerTopicPrepReady(viewer.user.id);
+
   const t = await getTranslations("gamer");
 
   return (
@@ -97,6 +104,7 @@ export default async function GamerDashboardPage() {
       firstName={viewer.profile?.first_name ?? t("fallbackName")}
       initialSessionRows={initialSessionRows}
       initialWaitlistRows={initialWaitlistRows}
+      prepDismissed={prepDismissed}
     />
   );
 }

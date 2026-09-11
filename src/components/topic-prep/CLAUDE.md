@@ -3,8 +3,9 @@
 A product's topic can carry a short guide telling a family what to do before the first
 session: create the account, install the software, test it — and, on a remote product,
 get the mic and camera ready for the voice room. This directory holds the
-component that renders its body, the dialog an enrolment card opens it in, and the hook
-that remembers a family has finished with it. The steps themselves are declared in the
+component that renders its body, the dialog an enrolment card opens it in, and the cookie
+that remembers a family has finished with it — its format, the server-side read, and the
+hook that writes it. The steps themselves are declared in the
 product topic registry under `src/lib/products/`, and every word a reader sees lives in the top-level
 `topicPrep` message namespace.
 
@@ -138,46 +139,105 @@ only thing that counts as saying so: closing the overlay by any other means leav
 affordance exactly where it was, because opening a guide to check one step is reading it,
 not finishing with it.
 
-**Rule: the dismissal is remembered in the browser, keyed by the viewer *and* the
+**Rule: the dismissal is remembered in a cookie, keyed by the viewer *and* the
 enrolment.** It is deliberately not a profile column: no migration, no route, no write
-path from a child's session, and the whole feature stays a rendering decision. What that
-costs is that a second device is offered the guide again, which is a click. What the key
-buys is the case a family actually hits — a parent and a child sharing one computer, where
-a parent finishing with the guide must not take it away from the child who has not read
-it — and, per enrolment, a second child in the same club being a second setup on a second
-machine.
+path from a child's session, and the whole feature stays a rendering decision. A cookie
+rather than browser storage for one reason, and it is the reason the whole design turns
+on: **a cookie is the only store the machine drawing the page can read.** The dashboards
+are server-rendered, so an answer the server cannot see is an answer that can only be
+applied a tick after hydration — which means every card first paints the state the family
+has already finished with, and then corrects itself under them.
 
-**Rule: a browser that refuses storage is a family who gets offered the guide.** Every
-read and write is wrapped, and anything that throws or is missing means "not dismissed".
-Of the two ways to be wrong, offering a guide twice costs a click and swallowing it costs
-somebody the instructions.
+What the key buys is the case a family actually hits — a parent and a child sharing one
+computer, where a parent finishing with the guide must not take it away from the child
+who has not read it — and, per enrolment, a second child in the same club being a second
+setup on a second machine. What it costs is that a second device is offered the guide
+again, which is a click.
 
-**The dismissal lives in a small module-level store, not in the hook**, and each half of
-it is there for something storage alone cannot do:
+**Rule: the value is read on the server and written by the browser, and neither end owns
+the format.** The parse, the serialise and the key's spelling live in one isomorphic
+module that both ends import; the server helper beside it is a thin wrapper over the
+request's cookie jar. A dashboard route resolves the reader's id, filters the cookie down
+to that person, and hands its page body a plain set of participation ids — so what
+travels through the page is already about the reader, and a card asking whether *this*
+enrolment is finished with cannot accidentally answer for the other person sharing the
+browser. The write is a read-modify-write against the live cookie on every answer,
+because one dashboard draws many cards and a value captured at render time would let the
+second answer of a visit overwrite the first.
 
-- **An in-memory set of dismissed keys, layered over `localStorage`.** A refused write —
-  private mode, blocked site data, a full quota — must still put the affordance away for
-  the reader who has just answered the dialog, or the button lands straight back under
-  their cursor. Reading storage back would say "still pending"; this layer is what makes
-  the answer stick for the visit, while the next visit honestly re-reads.
-- **Its own subscriber list.** The `storage` event fires only in *other* tabs, so the tab
-  that did the dismissing has nothing to hear, and one dashboard can hold several hooks
-  over the same key. The store notifies its own listeners; `useSyncExternalStore`
-  subscribes to those *and* to `storage`, so this tab and the next one both keep up.
-- **Module level rather than per hook.** State inside a hook cannot outlive the hook's own
-  key: a hook whose viewer or participation changed carried the previous card's answer
-  across to the next one. A store keyed by the same string the browser is keyed by cannot.
+**Rule: the cookie is capped, and the oldest answers are what go.** It rides on every
+request to the site, so it is not a store to let grow: past its cap the entries at the
+front are dropped. **The cap is measured on the encoded value** — the string the browser
+actually stores and sends, after the separators have been percent-escaped — because a
+limit stated about a form nothing ever holds is not a limit. The newest answer is the one a reader has just given and would notice
+being ignored; an old one dropped costs a click.
 
-The hydration design is unchanged and stays: the server snapshot is `null`, and a surface
-draws nothing until the browser has answered.
+**Rule: a browser that refuses cookies is a family who gets offered the guide.** Every
+read and write is wrapped, and anything that throws, is missing or cannot be parsed means
+"not dismissed". Of the two ways to be wrong, offering a guide twice costs a click and
+swallowing it costs somebody the instructions. The reader who has just answered the
+dialog still sees the affordance go away, because the card holds their answer in local
+state for the visit — a refused write must never leave the button under the cursor of
+somebody who has just pressed it.
 
-**A fixture surface seeds the store rather than reaching into storage.** The style guide
-draws several enrollment cards whose subject is what sits in the locked Join's slot, and
+**A fixture surface states the answer rather than seeding a store.** The style guide
+draws several enrolment cards whose subject is what sits in the locked Join's slot, and
 every remote fixture has a guide behind it, so left alone each of those demos would show
-"Get ready" instead of the state it is named for. The page seeds those keys as answered —
-in a render-time initializer, before the cards' first post-hydration read, so nothing
-flashes — and forgets the key of the one demo that *is* about the guide, so an admin who
-answered its dialog once still meets the affordance on their next visit.
+"Get ready" instead of the state it is named for. Because the answer is a prop, the page
+simply hands those cards a literal set and hands the one demo that *is* about the guide
+an empty one — and nothing a demo does touches, or is touched by, what a real family's
+browser has stored.
+
+## The offer is bounded by the family's first two sessions
+
+**Rule: the guide is offered from the moment the seat became this family's until the end
+of the second session that starts after it, and after that the card offers nothing —
+answered or not.** The dismissal alone was never enough. A family six weeks into a club
+has a working setup, and a rule that only stops offering once they *confirm* a dialog
+about their first session means the platform introduces itself to every long-standing
+family by asking them to do exactly that, on the day the feature ships. The window is
+what makes a release quiet: for everyone whose second session is behind them, nothing
+changes at all.
+
+**Two sessions, not one**, because the first session is where a setup problem is
+*discovered* rather than where it stops mattering: a family who could not get the account
+working on Monday is precisely the family who wants the steps again before Wednesday.
+**Sessions, not days**, because a weekly club and a daily camp are the same amount of
+experience at wildly different distances from the purchase.
+
+**Rule: the moment the seat became theirs is the later of when they signed up and when
+they were placed in a group.** A family promoted off a waitlist joined the queue weeks
+before the seat was theirs, and counting from the day they queued would hand them a
+window that closed before they had anything to prepare for. A family who bought outright
+is placed within a day or two, where the two stamps are near enough that either would do
+— so the later one is right in both cases and needs no branch.
+
+**A move between groups re-stamps the placement and so reopens the window, and it never
+re-asks a family who has already answered.** Reopening is the right half: a child moved to
+another group meets a new gedu, a new room and often a new day, which is a beginning worth
+offering the steps for again. The other half costs nothing to hold, because the dismissal
+is written against the **seat, not the group** — a move leaves the participation exactly
+where it was, so the reopened window finds the answer already there and the card offers
+nothing.
+
+**Only occurrences that *start* after that moment count.** A family placed mid-session
+did not attend that one, so it teaches them nothing and must not spend half their window.
+A family placed a quarter of an hour before one gets that session and the one after it.
+
+**No occurrences means no end at all, and that is the deliberate answer rather than a
+degenerate one.** A seat nobody has been placed in yet, and a product with nothing on its
+schedule, are both a family with the whole setup ahead of them and no date to measure it
+against; closing the offer on them would withhold the guide from precisely the reader it
+is written for. A single-occurrence product — an event — ends with that one occurrence.
+
+**Rule: the summary carries the window's *end*, not a verdict, and the card decides
+against the live clock — except on the two additive placements.** In the locked Join's
+slot the swap is button for button in one slot, so a window closing while a page is open
+may close on the card too and nothing moves. On the placements that *add* a button — the
+quiet link beside a lit Join, and the button under a footer sentence — there is nothing
+underneath to take the space back, so a button vanishing on time's own schedule would
+shrink the card and pull the column up under whoever was reading it. Those two freeze the
+answer at the card's first render and keep it until the page is loaded again.
 
 ## Where the affordance goes on a card, and what it may displace
 
@@ -212,23 +272,38 @@ and the dialog it opens is portalled out of the card entirely.** The card is one
 anchor; anything with a click of its own has to sit above it, and anything that is merely
 text must not, or the card grows a strip that swallows clicks and does nothing.
 
-## A dismissal a server cannot know, and a first paint that must not move
+## A first paint that is final
 
-The dashboards are server-rendered and the browser holds the answer, so **the first client
-paint has to be identical to the server's**. The storage is read the way React reads any
-external store, with a server snapshot that says "no answer" — which is the truth about a
-machine with no browser storage — so the two paints agree by construction rather than by
-care. That leaves the affordance *arriving* just after hydration rather than disappearing
-just after it, and the two placements pay for that differently.
+The dashboards are server-rendered, and **the first client paint is identical to the
+server's because both are drawn from the same value** — the cookie, parsed once by the
+route and handed down as a prop. There is no third "not answered yet" state anywhere in
+this feature, and nothing about the affordance arrives, disappears or swaps at hydration.
 
-In the Join's slot it costs nothing: the slot holds a button either way, so the swap is
-button for button and no pixel moves. On the two additive placements the button appears
-one tick after hydration and grows the card downward, pushing the cards below it down the
-column. That is accepted rather than reserved, and the reasoning is worth keeping: a
-button's worth of held-open space would sit under the footer of every card whose family
-has already said they are ready — permanently, on the common card — to save one shift on
-the first visit of a card that has not been dismissed. The button lands at the very end
-of the footer, which is where the layout's slack already is, so nothing above it moves.
+**The dismissal is not the whole of it: the two frozen placements also read the clock, and
+they agree across the two renders only because the shared render clock is seeded on the
+server and handed to the browser.** Freezing an answer at first render is only worth
+anything if both machines' first render asks the same question, so the provider that
+supplies "now" starts from the instant the request was served and does not advance to the
+browser's own clock until its first tick — which is what makes the window's open-or-closed
+answer identical on both sides. A change to how that clock is seeded — a provider that
+starts at the browser's `new Date()`, or one mounted without the server's instant — puts
+this feature's frozen placements back on the wrong side of hydration for any family whose
+window closes between the two, so it is a change to this feature too.
+
+That is a fix rather than a refinement, and the shape it replaced is worth remembering.
+The answer used to live in `localStorage`, which a server cannot read, so a card had to
+render its *undismissed* state first and correct itself once the browser had spoken. In
+the locked Join's slot that cost a visible flash of the Join button in the frame before
+"Get ready" took the slot — the button a family was reaching for, appearing and vanishing
+under them. On the two additive placements it cost a shift: the button arrived a tick
+after hydration and grew the card downward, pushing every card below it down the column.
+Neither is a cost this design pays any more, and no future arrangement that reintroduces
+a post-hydration read is an acceptable trade for it.
+
+What the card still holds for itself is one thing: the reader's own answer, this visit.
+A dismissal changes the card the instant the dialog's affirmative is pressed, without
+waiting for a navigation and whatever the browser does or does not store — a change the
+reader asked for, which is the one kind the layout rule permits freely.
 
 ## Where the pieces live
 
