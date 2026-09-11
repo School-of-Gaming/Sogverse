@@ -6188,6 +6188,104 @@ COMMENT ON FUNCTION public.promote_from_waitlist(p_participation_id uuid, p_grou
 
 
 --
+-- Name: record_account_consents(uuid, text[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.record_account_consents(p_customer_id uuid, p_document_slugs text[]) RETURNS integer
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_missing  text[];
+  v_inserted integer;
+BEGIN
+  IF p_customer_id IS NULL
+     OR p_document_slugs IS NULL
+     OR array_length(p_document_slugs, 1) IS NULL
+  THEN
+    RAISE EXCEPTION
+      'an account consent needs a customer and at least one document'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- A NULL element is refused rather than skipped. `= ANY` and `unnest` both
+  -- treat one as an unknown that quietly contributes nothing, so skipping it
+  -- would record fewer documents than the caller asked for and say nothing
+  -- about it — on a legal record, the wrong direction to fail in.
+  IF array_position(p_document_slugs, NULL) IS NOT NULL THEN
+    RAISE EXCEPTION
+      'an account consent cannot name a NULL document'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+      FROM public.profiles p
+     WHERE p.id = p_customer_id
+       AND p.role = 'customer'
+  ) THEN
+    RAISE EXCEPTION
+      'an account consent belongs to a customer profile (% is not one)',
+      p_customer_id
+      USING ERRCODE = 'raise_exception';
+  END IF;
+
+  -- Every named slug must have a published version, and the refusal names the
+  -- ones that do not. Left to the NOT NULL on document_version this would abort
+  -- with a constraint message naming no slug; a data error only a migration can
+  -- create deserves a sentence saying which document is missing its text.
+  v_missing := ARRAY(
+    SELECT s
+      FROM unnest(p_document_slugs) AS s
+     WHERE NOT EXISTS (
+       SELECT 1
+         FROM public.consent_document_versions cdv
+        WHERE cdv.document_slug = s
+     )
+  );
+
+  IF array_length(v_missing, 1) > 0 THEN
+    RAISE EXCEPTION
+      'no published version exists for %',
+      array_to_string(v_missing, ', ')
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- ON CONFLICT DO NOTHING, and the primary key is what gives it meaning: a
+  -- retried registration request re-records the same (account, slug, version)
+  -- and writes nothing, while a parent who later accepts a NEW revision gets a
+  -- second row rather than an overwrite. DISTINCT so a caller sending the same
+  -- slug twice cannot make one statement fail the other in the same statement.
+  WITH written AS (
+    INSERT INTO public.account_consent_acceptances (
+      customer_id, document_slug, document_version
+    )
+    SELECT p_customer_id,
+           s,
+           (SELECT cdv.version
+              FROM public.consent_document_versions cdv
+             WHERE cdv.document_slug = s
+             ORDER BY cdv.created_at DESC, cdv.version DESC
+             LIMIT 1)
+      FROM (SELECT DISTINCT unnest(p_document_slugs) AS s) AS slugs
+    ON CONFLICT (customer_id, document_slug, document_version) DO NOTHING
+    RETURNING 1
+  )
+  SELECT count(*) INTO v_inserted FROM written;
+
+  RETURN v_inserted;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION record_account_consents(p_customer_id uuid, p_document_slugs text[]); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.record_account_consents(p_customer_id uuid, p_document_slugs text[]) IS 'Record that an account holder accepted the named consent documents, each at that document''s CURRENT version — the only writer of account_consent_acceptances. Called by the parent register route after the account exists, with the fixed set the sign-up form asks about. The version is resolved here and never supplied by a caller: greatest created_at for the slug, version DESC to break a tie, the same derivation record_required_consents uses. Refuses a NULL or empty array, a NULL element, a slug with no published version, and a profile that is not a `customer` — the invariant assert_role gives a self-service writer, read off the named profile because no session exists at registration. The customer IS a parameter because of that missing session, which is exactly why the only EXECUTE grant is to service_role: a parameter naming the subject can be aimed at somebody, so nothing a browser can reach may call it. Idempotent on (account, slug, version), so a retried registration writes nothing twice while a later revision of a document is a fresh row rather than an overwrite. Returns the number of rows written.';
+
+
+--
 -- Name: record_attendance(uuid, date, uuid, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -9038,6 +9136,53 @@ COMMENT ON FUNCTION public.verify_pin_for_any(p_user_ids uuid[], p_pin text) IS 
 
 
 --
+-- Name: account_consent_acceptances; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.account_consent_acceptances (
+    customer_id uuid NOT NULL,
+    document_slug text NOT NULL,
+    document_version text NOT NULL,
+    accepted_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE account_consent_acceptances; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.account_consent_acceptances IS 'One row per (account, document VERSION) the account holder has accepted — the ACCOUNT-level counterpart of consent_acceptances, which is per enrolment and whose participant_id and product_id are both NOT NULL because a row there conditions one seat. A row here conditions no seat: it is what the person agreed to when they opened the account. Written at registration and NEVER REVOKED — a row is a statement that an agreement happened at an instant, and a statement about the past cannot be un-made, so there is no revoked_at column and there must never be one (the revocable marketing and photo consents are 00220 and 00244 and are a separate system). The versions live in the 00210 registry: consent_documents holds the identity, consent_document_versions one row per published revision, and the composite foreign key below is what stops a row naming a text nobody published. A LATER version is a fresh row rather than an edit, because accepting a revision is a new agreement and the old one still happened. INSERT-ONLY and insert-only from ONE place: no Data API role holds a write grant, and record_account_consents — service_role only — is the sole writer.';
+
+
+--
+-- Name: COLUMN account_consent_acceptances.customer_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.account_consent_acceptances.customer_id IS 'The adult who agreed, and the account the agreement belongs to. Always a profile whose role is `customer`: the writer refuses anything else, which is the invariant assert_role gives a self-service writer, read off the named profile because no session exists at registration.';
+
+
+--
+-- Name: COLUMN account_consent_acceptances.document_slug; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.account_consent_acceptances.document_slug IS 'Which document, never which revision of it — the stable identity in consent_documents.slug. Part of the primary key, so accepting two documents is two rows.';
+
+
+--
+-- Name: COLUMN account_consent_acceptances.document_version; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.account_consent_acceptances.document_version IS 'The version that was CURRENT for this slug at the moment of acceptance, resolved server-side and never supplied by a caller. Part of the primary key, which is what makes a replay of the same acceptance idempotent and a later revision a new row rather than an overwrite.';
+
+
+--
+-- Name: COLUMN account_consent_acceptances.accepted_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.account_consent_acceptances.accepted_at IS 'When the agreement was recorded, stamped by the server. A client never supplies it — a timestamp the agreeing party chooses proves nothing about when they agreed.';
+
+
+--
 -- Name: chat_channel_locks; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -10707,6 +10852,14 @@ CREATE TABLE public.whatsapp_messages (
 
 
 --
+-- Name: account_consent_acceptances account_consent_acceptances_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account_consent_acceptances
+    ADD CONSTRAINT account_consent_acceptances_pkey PRIMARY KEY (customer_id, document_slug, document_version);
+
+
+--
 -- Name: chat_channel_locks chat_channel_locks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -11898,6 +12051,22 @@ CREATE TRIGGER voice_zones_updated_at BEFORE UPDATE ON public.voice_zones FOR EA
 
 
 --
+-- Name: account_consent_acceptances account_consent_acceptances_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account_consent_acceptances
+    ADD CONSTRAINT account_consent_acceptances_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: account_consent_acceptances account_consent_acceptances_document_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account_consent_acceptances
+    ADD CONSTRAINT account_consent_acceptances_document_fkey FOREIGN KEY (document_slug, document_version) REFERENCES public.consent_document_versions(document_slug, version);
+
+
+--
 -- Name: chat_channel_locks chat_channel_locks_channel_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -12645,6 +12814,12 @@ CREATE POLICY "Admins can update whatsapp_contacts" ON public.whatsapp_contacts 
 
 
 --
+-- Name: account_consent_acceptances; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.account_consent_acceptances ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: customer_profiles admin_full_access_customer_profiles; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -12812,6 +12987,13 @@ CREATE POLICY admin_manage_gedu_locations ON public.gedu_locations TO authentica
 --
 
 CREATE POLICY admin_manage_locations ON public.locations TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
+
+
+--
+-- Name: account_consent_acceptances admins_read_account_consent_acceptances; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY admins_read_account_consent_acceptances ON public.account_consent_acceptances FOR SELECT TO authenticated USING (( SELECT public.is_admin() AS is_admin));
 
 
 --
@@ -12986,6 +13168,13 @@ CREATE POLICY customers_read_assignments_via_gamers ON public.gedu_group_assignm
 --
 
 CREATE POLICY customers_read_groups_via_gamers ON public.product_groups FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'customer'::public.user_role) AND ( SELECT public.has_active_participation_in_group(product_groups.id) AS has_active_participation_in_group)));
+
+
+--
+-- Name: account_consent_acceptances customers_read_own_account_consent_acceptances; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY customers_read_own_account_consent_acceptances ON public.account_consent_acceptances FOR SELECT TO authenticated USING ((customer_id = ( SELECT auth.uid() AS uid)));
 
 
 --
@@ -14414,6 +14603,14 @@ GRANT ALL ON FUNCTION public.promote_from_waitlist(p_participation_id uuid, p_gr
 
 
 --
+-- Name: FUNCTION record_account_consents(p_customer_id uuid, p_document_slugs text[]); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.record_account_consents(p_customer_id uuid, p_document_slugs text[]) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.record_account_consents(p_customer_id uuid, p_document_slugs text[]) TO service_role;
+
+
+--
 -- Name: FUNCTION record_attendance(p_group_id uuid, p_session_date date, p_participant_id uuid, p_status text); Type: ACL; Schema: public; Owner: -
 --
 
@@ -14797,6 +14994,14 @@ GRANT ALL ON FUNCTION public.verify_my_pin(p_pin text) TO service_role;
 
 REVOKE ALL ON FUNCTION public.verify_pin_for_any(p_user_ids uuid[], p_pin text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.verify_pin_for_any(p_user_ids uuid[], p_pin text) TO service_role;
+
+
+--
+-- Name: TABLE account_consent_acceptances; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.account_consent_acceptances TO authenticated;
+GRANT ALL ON TABLE public.account_consent_acceptances TO service_role;
 
 
 --
