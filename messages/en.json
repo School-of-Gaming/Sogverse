@@ -3875,8 +3875,7 @@
           "Meta (WhatsApp) — used to send some messages and reminders to families who prefer WhatsApp.",
           "Roblox — receives your child’s Roblox account id, so we can confirm the account and show their avatar picture.",
           "Mojang (Microsoft) — receives your child’s Minecraft username, so we can confirm the account.",
-          "Meta (Facebook and Instagram ads) — learns, through the Meta Pixel, that you visited and whether you created an account, so we can show our ads there. Only if you allow marketing cookies.",
-          "TikTok — learns, through the TikTok Pixel, that you visited and whether you created an account, so we can show our ads on TikTok. Only if you allow marketing cookies."
+          "Meta (Facebook and Instagram) — through the Meta Pixel in your browser and reports from our servers, sees how you use our site, so we can show you our ads there and measure how they perform. Only if you allow marketing cookies."
         ]
       },
       "cookies": {
@@ -3888,7 +3887,7 @@
         ],
         "bullets": [
           "Analytics — Vercel’s, and only if you choose it. It counts visits, measures how quickly pages load, and receives a few anonymous events about how the site is used: how someone reached their My SOG, when someone changes the language. It can’t see who you are, and we never hand it to advertisers.",
-          "Marketing — the Meta Pixel and the TikTok Pixel, and only if you choose them. They learn that you visited School of Gaming and whether you created an account, so Meta and TikTok can show you our ads on their own platforms. Neither pixel loads while your child is signed in as a gamer. If you say yes to marketing and then create an account, we set one short-lived cookie of our own — five minutes, no name, no address, nothing but the word \"registration\" — whose only job is to tell the pixels on the next page that an account was created. Switching marketing off deletes the cookies the pixels left in your browser, but we can’t delete what Meta and TikTok already hold — you can ask them to, in your own settings there, where Meta calls it \"activity off Meta technologies\"."
+          "Marketing — advertising cookies, only if you choose them. They let the advertising platforms listed above see how you use our site, so they can show you our ads and we can tell which ads work. They never run while a gamer is signed in. Switching marketing off deletes these cookies from your browser, but not what the platforms already hold — you can ask them to delete it in your settings with them."
         ]
       },
       "voice": {
@@ -4286,7 +4285,7 @@
   },
   "consent": {
     "heading": "Your privacy choices",
-    "body": "Necessary cookies keep the site working. Analytics counts visits and page load times. It cannot tell who you are, and advertisers never see it. We advertise on other platforms. Marketing tells them you visited, and whether you created an account, so they can show you our ads there. Marketing never runs while a gamer is signed in. You can change your answer any time from the footer, and the details are in our <link>privacy policy</link>.",
+    "body": "Necessary cookies keep the site working. Analytics counts visits and how fast pages load, without knowing who you are. Marketing lets the advertising platforms we work with see how you use our site, so they can show you our ads and we can tell which ones work. Marketing never runs while a gamer is signed in. You can change your answer any time from the footer. Details are in our <link>privacy policy</link>.",
     "rejectAll": "Reject all",
     "analyticsOnly": "Analytics only",
     "analyticsAndMarketing": "Marketing and analytics"

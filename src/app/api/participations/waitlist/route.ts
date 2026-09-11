@@ -10,6 +10,10 @@ import {
 } from "@/services/participations/participations.contracts";
 import { consentRefusalError } from "@/services/participations/consent-refusal";
 import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
+import { isAdvertisedProduct } from "@/lib/marketing-events";
+import { reportMetaConversion } from "@/lib/meta-conversions.server";
+import { ROUTES } from "@/lib/constants/routes";
+import type { AppSupabaseClient } from "@/types";
 
 /**
  * POST /api/participations/waitlist
@@ -113,6 +117,14 @@ export const POST = defineRoute({
           mode: "waitlist",
         }),
       );
+
+      // The same place in line, reported to Meta as a conversion — a queue place
+      // is a family committing to a product, which is what the enrolment event
+      // names. Behind the same two gates the mail is: a row this call actually
+      // wrote, and (inside the helper) a request that carried marketing consent.
+      // No role check is needed on this side, because the route is customer-only
+      // and a gamer cannot reach it.
+      after(reportWaitlistConversion(request, supabase, body.productId));
     }
 
     return {
@@ -122,6 +134,42 @@ export const POST = defineRoute({
     };
   },
 });
+
+/**
+ * Report a waitlist join, if the product is one we advertise.
+ *
+ * The product's two advertising columns are read here rather than in the
+ * handler, because nothing in the answer depends on them: this runs after the
+ * response has gone out, on the caller's own client — a parent may read any
+ * product they can browse, so the read needs no privilege the join did not
+ * already have. **Decided by the product, never by the URL it was reached
+ * from.** A read that fails, or a product that has vanished, reports nothing.
+ */
+async function reportWaitlistConversion(
+  request: Request,
+  client: AppSupabaseClient,
+  productId: string,
+): Promise<void> {
+  try {
+    const { data: product } = await client
+      .from("products")
+      .select("product_type, billing_mode")
+      .eq("id", productId)
+      .maybeSingle();
+    if (!product || !isAdvertisedProduct(product)) return;
+
+    await reportMetaConversion(request, {
+      event: "enrolment",
+      outcome: "waitlisted",
+      sourcePath: ROUTES.shopProductPath(productId),
+    });
+  } catch (error) {
+    console.error(
+      "[participations/waitlist] could not report the conversion",
+      error,
+    );
+  }
+}
 
 /**
  * DELETE /api/participations/waitlist

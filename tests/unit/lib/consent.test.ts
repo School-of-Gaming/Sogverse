@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   CONSENT_COOKIE_NAME,
   CONSENT_VERSION,
+  clearPixelStorage,
   consentForChoice,
+  cookieValueFromHeader,
   isWithdrawal,
   parseConsentCookie,
   parseConsentCookieHeader,
@@ -144,5 +146,116 @@ describe("isWithdrawal", () => {
 
   it("is false when nothing changes", () => {
     expect(isWithdrawal(state(true, true), state(true, true))).toBe(false);
+  });
+});
+
+/**
+ * The generic half of the cookie reader, used by the consent parse above and by
+ * the server-side conversion report, which has to find Meta's own two cookies in
+ * the same header.
+ *
+ * The case a `header.includes(name)` gets wrong is the one worth a test: a
+ * cookie whose name merely ends with the one being looked for. Everything else
+ * is "find it, or say you did not".
+ */
+describe("cookieValueFromHeader", () => {
+  const header = "locale=fi; _fbp=fb.1.123.456; not__fbc=decoy; _fbc=fb.1.789";
+
+  it("finds a cookie past its neighbours", () => {
+    expect(cookieValueFromHeader(header, "_fbp")).toBe("fb.1.123.456");
+    expect(cookieValueFromHeader(header, "_fbc")).toBe("fb.1.789");
+  });
+
+  it("is not fooled by a name that merely ends with the one asked for", () => {
+    expect(cookieValueFromHeader("not__fbc=decoy", "_fbc")).toBeUndefined();
+  });
+
+  it.each([
+    ["no header", null],
+    ["a header without it", "locale=fi"],
+    ["a pair with no equals sign at all", "locale"],
+  ])("answers undefined for %s", (_label, raw) => {
+    expect(cookieValueFromHeader(raw, "_fbp")).toBeUndefined();
+  });
+
+  // Undecoded, deliberately: the caller knows what it is holding. The consent
+  // parse decodes; a pixel cookie is passed on exactly as the browser sent it.
+  it("returns the raw value, untouched", () => {
+    expect(cookieValueFromHeader("sog_x=%7B%22v%22%3A1%7D", "sog_x")).toBe(
+      "%7B%22v%22%3A1%7D",
+    );
+  });
+});
+
+/**
+ * Withdrawal has to clear what the pixel left in local storage as well as its
+ * cookies, and that half is the one that is easy to forget: it is not a cookie,
+ * so clearing the cookies alone leaves the device re-identifiable the moment the
+ * pixel is allowed to run again. The keys are matched by prefix because the
+ * library appends a pixel id and a purpose to each one.
+ */
+describe("clearPixelStorage", () => {
+  function fakeStorage(entries: Record<string, string>): Storage {
+    const map = new Map(Object.entries(entries));
+    return {
+      get length() {
+        return map.size;
+      },
+      key: (index: number) => Array.from(map.keys())[index] ?? null,
+      getItem: (key: string) => map.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        map.set(key, value);
+      },
+      removeItem: (key: string) => {
+        map.delete(key);
+      },
+      clear: () => {
+        map.clear();
+      },
+    };
+  }
+
+  function keysOf(storage: Storage): string[] {
+    return Array.from({ length: storage.length }, (_, index) =>
+      storage.key(index),
+    ).filter((key): key is string => key !== null);
+  }
+
+  it("removes what the library wrote and nothing else", () => {
+    const storage = fakeStorage({
+      multiFbc: "[]",
+      "fbevents^$last_event^$1234567890": "1757500000000",
+      "pixel_mutex:1234567890": "held",
+      "sog-theme": "dark",
+      fbp: "not-ours-either",
+    });
+
+    clearPixelStorage(storage);
+
+    expect(keysOf(storage)).toEqual(["sog-theme", "fbp"]);
+  });
+
+  // The bug a remove-while-walking implementation has: deleting a key shifts
+  // every later one down an index, so the next match is stepped over. Three
+  // adjacent matches is the shape that catches it.
+  it("removes every match, not every other one", () => {
+    const storage = fakeStorage({
+      "fbevents^$a": "1",
+      "fbevents^$b": "2",
+      "fbevents^$c": "3",
+      keep: "yes",
+    });
+
+    clearPixelStorage(storage);
+
+    expect(keysOf(storage)).toEqual(["keep"]);
+  });
+
+  it("does nothing to a storage the pixel never touched", () => {
+    const storage = fakeStorage({ "sog-theme": "dark" });
+
+    clearPixelStorage(storage);
+
+    expect(keysOf(storage)).toEqual(["sog-theme"]);
   });
 });

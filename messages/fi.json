@@ -3188,8 +3188,7 @@
           "Meta (WhatsApp) – joidenkin viestien ja muistutusten lähettämiseen perheille, jotka käyttävät mieluummin WhatsAppia.",
           "Roblox – vastaanottaa lapsesi Roblox-tilitunnisteen, jotta voimme varmistaa tilin ja näyttää hänen hahmokuvansa.",
           "Mojang (Microsoft) – vastaanottaa lapsesi Minecraft-käyttäjätunnuksen, jotta voimme varmistaa tilin.",
-          "Meta (Facebook- ja Instagram-mainokset) – saa Meta-pikselin kautta tiedon käynnistäsi ja siitä, loitko tilin, jotta voimme näyttää mainoksiamme siellä. Vain jos sallit markkinointievästeet.",
-          "TikTok – saa TikTok-pikselin kautta tiedon käynnistäsi ja siitä, loitko tilin, jotta voimme näyttää mainoksiamme TikTokissa. Vain jos sallit markkinointievästeet."
+          "Meta (Facebook ja Instagram) – näkee selaimesi Meta-pikselin ja palvelimiltamme tulevien raporttien kautta, miten käytät sivustoamme, jotta voimme näyttää sinulle mainoksiamme siellä ja mitata, miten ne toimivat. Vain jos sallit markkinointievästeet."
         ]
       },
       "cookies": {
@@ -3201,7 +3200,7 @@
         ],
         "bullets": [
           "Analytiikka – Vercelin analytiikka, ja vain jos valitset sen. Se laskee käynnit, mittaa sivujen latausnopeuden ja vastaanottaa muutamia nimettömiä tapahtumia siitä, miten sivustoa käytetään: miten oma My SOG avataan ja milloin kieltä vaihdetaan. Se ei näe, kuka olet, emmekä anna sitä koskaan mainostajille.",
-          "Markkinointi – Meta-pikseli ja TikTok-pikseli, ja vain jos valitset ne. Ne saavat tietää, että kävit School of Gamingin sivustolla ja loitko tilin, jotta Meta ja TikTok voivat näyttää sinulle mainoksiamme omissa palveluissaan. Kumpikaan pikseli ei lataudu, kun lapsesi on kirjautuneena pelaajana. Jos hyväksyt markkinoinnin ja luot sen jälkeen tilin, asetamme yhden lyhytikäisen oman evästeen – viisi minuuttia, ei nimeä, ei osoitetta, vain sana \"registration\" – jonka ainoa tehtävä on kertoa seuraavan sivun pikseleille, että tili luotiin. Markkinoinnin poistaminen käytöstä poistaa pikselien selaimeesi jättämät evästeet, mutta emme voi poistaa sitä, mitä Metalla ja TikTokilla jo on – sen voit pyytää poistettavaksi omista asetuksistasi niissä, joissa Meta kutsuu sitä nimellä \"Meta-teknologioiden ulkopuolinen toiminta\"."
+          "Markkinointi – mainosevästeet, vain jos valitset ne. Niiden avulla yllä luetellut mainosalustat näkevät, miten käytät sivustoamme, jotta ne voivat näyttää sinulle mainoksiamme ja me näemme, mitkä mainokset toimivat. Ne eivät ole koskaan käytössä, kun pelaaja on kirjautuneena. Markkinoinnin poistaminen käytöstä poistaa nämä evästeet selaimestasi, mutta ei sitä, mitä alustoilla jo on – voit pyytää niitä poistamaan sen omista asetuksistasi niissä."
         ]
       },
       "voice": {
@@ -4286,7 +4285,7 @@
   },
   "consent": {
     "heading": "Yksityisyysvalintasi",
-    "body": "Välttämättömät evästeet pitävät sivuston toiminnassa. Analytiikka laskee käynnit ja sivujen latausajat. Se ei näe, kuka olet, eivätkä mainostajat saa sitä koskaan. Mainostamme muilla alustoilla. Markkinointi kertoo niille käynnistäsi ja siitä, loitko tilin, jotta ne voivat näyttää sinulle mainoksiamme. Markkinointi ei ole koskaan päällä, kun pelaaja on kirjautuneena. Voit vaihtaa vastaustasi milloin tahansa sivun alalaidasta, ja tarkemmat tiedot ovat <link>tietosuojaselosteessamme</link>.",
+    "body": "Välttämättömät evästeet pitävät sivuston toiminnassa. Analytiikka laskee käynnit ja mittaa sivujen latausnopeuden tietämättä, kuka olet. Markkinointi antaa mainosalustoille, joiden kanssa teemme yhteistyötä, nähdä, miten käytät sivustoamme, jotta ne voivat näyttää sinulle mainoksiamme ja me näemme, mitkä niistä toimivat. Markkinointi ei ole koskaan päällä, kun pelaaja on kirjautuneena. Voit vaihtaa vastaustasi milloin tahansa sivun alalaidasta. Tarkemmat tiedot ovat <link>tietosuojaselosteessamme</link>.",
     "rejectAll": "Hylkää kaikki",
     "analyticsOnly": "Vain analytiikka",
     "analyticsAndMarketing": "Markkinointi ja analytiikka"

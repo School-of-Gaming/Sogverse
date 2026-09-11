@@ -21,7 +21,7 @@ import { siteJsonLd } from "@/lib/seo/organization";
 import {
   AnalyticsScripts,
   ConsentBanner,
-  MarketingPixels,
+  MetaPixel,
 } from "@/components/consent";
 import "../globals.css";
 
@@ -199,13 +199,6 @@ export default async function LocaleLayout({
   // client render carry the same set of optional scripts — a client-only read
   // would mount (or unmount) a third-party script at hydration.
   const initialConsent = await getServerConsent();
-  // The proxy's per-request CSP nonce. Production `script-src` is
-  // `'nonce-…' 'strict-dynamic'`, so this is what lets the pixels' inline
-  // snippets run at all; every other script on the page is nonced by Next's
-  // own SSR pipeline, which reads the same header. Empty string on the
-  // impossible path where the header is missing: that yields an un-nonced
-  // script the policy blocks, which is the safe direction to fail in.
-  const nonce = requestHeaders.get("x-nonce") ?? "";
   // Strip server-only namespaces (email, metadata) from the client bundle.
   // Server components access full messages via getTranslations() directly.
   const { email: _email, metadata: _metadata, ...clientMessages } =
@@ -267,7 +260,7 @@ export default async function LocaleLayout({
               nothing already painted moves when it appears or goes. */}
           <ConsentBanner />
           <AnalyticsScripts />
-          <MarketingPixels nonce={nonce} />
+          <MetaPixel />
         </Providers>
       </body>
     </html>
