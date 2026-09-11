@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { defineRoute } from "@/lib/api/define-route";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/brevo";
@@ -10,12 +10,7 @@ import { buildWelcomeParentEmail } from "@/lib/email-templates/welcome";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { createEmailVerificationToken } from "@/lib/email-verification";
 import { buildUtmMetadata } from "@/lib/utm";
-import {
-  CONVERSION_COOKIE_MAX_AGE_SECONDS,
-  CONVERSION_COOKIE_NAME,
-  parseConsentCookieHeader,
-  REGISTRATION_CONVERSION,
-} from "@/lib/consent";
+import { reportMetaConversion } from "@/lib/meta-conversions.server";
 import { getOrigin } from "@/lib/url";
 import {
   REGISTER_WEAK_PASSWORD,
@@ -320,33 +315,28 @@ export const POST = defineRoute({
 
     const response = NextResponse.json({ userId });
 
-    // The registration conversion, handed to the browser as a one-shot marker
-    // the marketing pixels read on the next page and then delete.
+    // The account-creation conversion, reported from here to Meta rather than
+    // by a script on the next page the browser loads. This handler is the only
+    // place that knows an account was created, exactly once — the marker cookie
+    // this replaced had to survive a redirect and a page load, and was lost or
+    // double-counted whenever it did not.
     //
-    // **Set only when this request already carried marketing consent.** The
-    // conversion is reported by Meta's and TikTok's scripts, so writing the
-    // marker for someone who refused would either do nothing (no script to read
-    // it) or, the day the gating slipped, report a conversion nobody agreed to.
-    // Deciding it here — from the cookie the request actually carried, on the
-    // server, before anything is written — is what makes that impossible rather
-    // than merely unlikely.
+    // AFTER the response, so a Meta round trip cannot delay or fail a
+    // registration that has already succeeded. The helper decides for itself
+    // whether to send anything: it refuses unless this request's own consent
+    // cookie says marketing is allowed, so an un-consented registration reports
+    // nothing. The source path is the page the parent was on, stated rather than
+    // derived from this route's own URL.
     //
-    // Not `httpOnly`: the whole point is that a page script reads it. That is
-    // also why it carries nothing worth stealing — one fixed word, no id, no
-    // address — and why it expires in five minutes.
-    if (parseConsentCookieHeader(request.headers.get("cookie"))?.marketing) {
-      response.cookies.set({
-        name: CONVERSION_COOKIE_NAME,
-        value: REGISTRATION_CONVERSION,
-        maxAge: CONVERSION_COOKIE_MAX_AGE_SECONDS,
-        path: "/",
-        sameSite: "lax",
-        httpOnly: false,
-        // From the origin we already trust rather than the raw Host header, so
-        // a spoofed `Host: localhost:3000` cannot talk us out of the flag.
-        secure: getOrigin(request).startsWith("https:"),
-      });
-    }
+    // No role check, and none is possible to need: the account this just created
+    // is an ordinary customer, and a gamer cannot reach a registration form at
+    // all.
+    after(
+      reportMetaConversion(request, {
+        event: "account_created",
+        sourcePath: ROUTES.register,
+      }),
+    );
 
     return response;
   },

@@ -100,7 +100,7 @@ The canonical sign-out shape is an HTML `<form method="post" action="/api/auth/s
 
 ## Content Security Policy (CSP)
 
-CSP is generated per-request in `src/proxy.ts` with a unique nonce (`crypto.randomUUID()`). In production, `script-src` uses `'nonce-{random}' 'strict-dynamic'` — only scripts tagged by Next.js's SSR pipeline execute. In development, it falls back to `'unsafe-inline' 'unsafe-eval'` for HMR compatibility. Static security headers (X-Frame-Options, HSTS, etc.) remain in `next.config.ts`.
+CSP is generated per-request in `src/proxy.ts` with a unique nonce (`crypto.randomUUID()`). In production, `script-src` uses `'nonce-{random}' 'strict-dynamic'` — only scripts tagged by Next.js's SSR pipeline execute, plus any script element that already-trusted app code creates itself (`'strict-dynamic'` passes trust to a non-parser-inserted script), which is why the Meta Pixel's library loads with no vendor host named in the production policy. In development, it falls back to `'unsafe-inline' 'unsafe-eval'` for HMR compatibility. Static security headers (X-Frame-Options, HSTS, etc.) remain in `next.config.ts`.
 
 **Rule: Never add inline `<script>` tags directly.** The nonce-based CSP blocks any inline script without the per-request nonce. Use Next.js `<Script>` component or ensure scripts go through the SSR pipeline. If you must add an inline script, read the nonce from the `x-nonce` request header in a server component. The one exception is the `type="application/ld+json"` block under `src/components/seo/`: it is data the browser never executes, so `script-src` and the nonce do not apply to it — and it must not be given one.
 

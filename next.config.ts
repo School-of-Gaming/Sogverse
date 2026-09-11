@@ -114,9 +114,19 @@ const nextConfig: NextConfig = {
         headers: [
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "X-Content-Type-Options", value: "nosniff" },
+          // **`strict-origin`, not `strict-origin-when-cross-origin`.** The
+          // difference is what a SAME-ORIGIN navigation hands the next document,
+          // and several of our URLs are secrets: a password-reset link, a PIN
+          // reset, an email verification, a seat offer. Under the default, a
+          // parent following `?token_hash=…` and then landing on the login page
+          // gives that page a `document.referrer` carrying the token — and the
+          // Meta Pixel reports the referrer with every event. `strict-origin`
+          // sends the bare origin everywhere, so a token cannot travel in a
+          // referrer at all. Nothing in the app reads the Referer header, so
+          // there is nothing on our side to lose by it.
           {
             key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin",
+            value: "strict-origin",
           },
           { key: "X-XSS-Protection", value: "1; mode=block" },
           {

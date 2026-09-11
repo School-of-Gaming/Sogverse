@@ -20,6 +20,14 @@ vi.mock("@/lib/brevo", () => ({
     mockSendTransactionalEmail(...args),
 }));
 
+// A place in a queue is a family committing to a product, so it is reported as
+// an enrolment. Mocked at its own module boundary: whether anything is actually
+// sent is decided inside the reporter, from the request's consent cookie.
+const mockReportMetaConversion = vi.fn();
+vi.mock("@/lib/meta-conversions.server", () => ({
+  reportMetaConversion: (...args: unknown[]) => mockReportMetaConversion(...args),
+}));
+
 // The spot is committed before the mail is even attempted, so the send is
 // handed to the platform's post-response hook rather than awaited inside the
 // answer — the parent's click never waits on Brevo. Capture the deferred work
@@ -140,8 +148,17 @@ function mockReadsForConfirmationEmail(
   {
     participantFirstName = "Aino",
     gamer = {},
+    advertisingColumns = {
+      product_type: "consumer_club",
+      billing_mode: "paid",
+    },
   }: {
     participantFirstName?: string;
+    /**
+     * What the conversion's own read finds. The default is an ordinary
+     * advertised club; a municipality one is the case that must report nothing.
+     */
+    advertisingColumns?: { product_type: string; billing_mode: string } | null;
     /**
      * Overrides on the child's profile row. The default is the switch-only
      * sign-in every gamer is created with — no address of their own, so the
@@ -183,6 +200,12 @@ function mockReadsForConfirmationEmail(
                 data: { schedule_slots: [], locations: null },
                 error: null,
               }),
+            // The conversion's own read, after the response: the two columns
+            // that decide whether this is a product we advertise at all. A
+            // separate terminator from the two above, so a route reading the
+            // wrong shape fails here rather than silently getting a schedule.
+            maybeSingle: () =>
+              Promise.resolve({ data: advertisingColumns, error: null }),
           }),
         }),
       };
@@ -620,8 +643,9 @@ describe("POST /api/participations/waitlist", () => {
     );
 
     expect(res.status).toBe(200);
-    // Handed to the post-response hook, not awaited inside the answer.
-    expect(deferred).toHaveLength(1);
+    // Both handed to the post-response hook, not awaited inside the answer:
+    // the mail, and the enrolment conversion beside it.
+    expect(deferred).toHaveLength(2);
     await settleDeferred();
     expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
     const sent = mockSendTransactionalEmail.mock.calls[0][0];
@@ -821,6 +845,90 @@ describe("POST /api/participations/waitlist", () => {
     // than rejecting — which is what makes it safe to hand to `after()` at all.
     await expect(settleDeferred()).resolves.toBeUndefined();
     spy.mockRestore();
+  });
+  // ── The waitlist conversion ───────────────────────────────────────
+  //
+  // Behind the same two gates the mail is — a row this call actually wrote, and
+  // a request that carried marketing consent — plus one of its own: the product
+  // has to be one we advertise, decided by the product row rather than by the
+  // URL the parent arrived from.
+
+  describe("the waitlist conversion", () => {
+    it("reports the place in line as a waitlisted enrolment", async () => {
+      mockAuthenticatedCustomer();
+      joinsWaitlist();
+
+      const res = await POST(
+        createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
+      );
+
+      expect(res.status).toBe(200);
+      await settleDeferred();
+      expect(mockReportMetaConversion).toHaveBeenCalledTimes(1);
+      const [request, conversion] = mockReportMetaConversion.mock.calls[0];
+      expect(request).toBeInstanceOf(Request);
+      expect(conversion).toEqual({
+        event: "enrolment",
+        outcome: "waitlisted",
+        sourcePath: `/shop/${PRODUCT_ID}`,
+      });
+    });
+
+    it("reports nothing for a municipality club", async () => {
+      mockAuthenticatedCustomer();
+      joinsWaitlist();
+      mockReadsForConfirmationEmail({
+        advertisingColumns: {
+          product_type: "municipality_club",
+          billing_mode: "external_contract",
+        },
+      });
+
+      const res = await POST(
+        createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
+      );
+
+      expect(res.status).toBe(200);
+      await settleDeferred();
+      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+    });
+
+    // A product that vanished between the join and the read, or a read the
+    // caller's own policies refused: nothing to report, and nothing to throw.
+    it("reports nothing when the product cannot be read", async () => {
+      mockAuthenticatedCustomer();
+      joinsWaitlist();
+      mockReadsForConfirmationEmail({ advertisingColumns: null });
+
+      const res = await POST(
+        createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
+      );
+
+      expect(res.status).toBe(200);
+      await settleDeferred();
+      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+    });
+
+    it("reports nothing on a replay of a join that already happened", async () => {
+      mockAuthenticatedCustomer();
+      mockRpc.mockResolvedValue({
+        data: {
+          participation_id: PARTICIPATION_ID,
+          waitlist_position: 3,
+          status: "waitlisted",
+          idempotent: true,
+        },
+        error: null,
+      });
+
+      const res = await POST(
+        createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
+      );
+
+      expect(res.status).toBe(200);
+      expect(deferred).toHaveLength(0);
+      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+    });
   });
 });
 

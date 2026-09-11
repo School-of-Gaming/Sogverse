@@ -17,11 +17,11 @@ import { deleteCookie, setCookie } from "@/lib/cookies";
  * `domain=.sog.gg` write, so a jar-based assertion would prove nothing about
  * the write we actually care about.
  *
- * The case that matters is the delete walk. Meta's `_fbp` / `_fbc` and TikTok's
- * `_ttp` are set on the **registrable domain**, while our pages are served from
- * a subdomain — so an expiry at the document's own host matches none of them,
- * and a withdrawal that looks like it worked leaves every pixel cookie in
- * place. This pins that the walk goes all the way up.
+ * The case that matters is the delete walk. Meta's `_fbp` and `_fbc` are set on
+ * the **registrable domain**, while our pages are served from a subdomain — so
+ * an expiry at the document's own host matches neither, and a withdrawal that
+ * looks like it worked leaves every pixel cookie in place. This pins that the
+ * walk goes all the way up.
  */
 
 /** Every string written to `document.cookie` since the last reset. */
@@ -101,7 +101,7 @@ describe("deleteCookie", () => {
     expect(writes).toHaveLength(3);
     expect(writes[0]).not.toContain("domain=");
     expect(writes[1]).toContain("domain=.app.sog.gg");
-    // The one that actually clears Meta's cookie: both pixels set theirs on the
+    // The one that actually clears Meta's cookie: the pixel sets it on the
     // registrable domain, not on the subdomain our pages are served from.
     expect(writes[2]).toContain("domain=.sog.gg");
     for (const write of writes) {
@@ -114,7 +114,7 @@ describe("deleteCookie", () => {
   it("stops at two labels rather than reaching a bare TLD", () => {
     stubHostname("a.b.c.example.com");
 
-    deleteCookie("_ttp");
+    deleteCookie("_fbc");
 
     const domains = writes.slice(1);
     expect(domains).toHaveLength(4);
@@ -125,7 +125,7 @@ describe("deleteCookie", () => {
   it("writes only the domainless expiry on a single-label host", () => {
     stubHostname("localhost");
 
-    deleteCookie("_ttp");
+    deleteCookie("_fbc");
 
     expect(writes).toHaveLength(1);
     expect(writes[0]).not.toContain("domain=");

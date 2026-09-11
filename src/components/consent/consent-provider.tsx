@@ -12,6 +12,7 @@ import { deleteCookie, setCookie } from "@/lib/cookies";
 import {
   CONSENT_COOKIE_NAME,
   CONSENT_MAX_AGE_SECONDS,
+  clearPixelStorage,
   consentForChoice,
   isWithdrawal,
   PIXEL_COOKIE_NAMES,
@@ -73,11 +74,22 @@ export function ConsentProvider({ initial, children }: ConsentProviderProps) {
       // enough to stop one, because the script has already installed its own
       // listeners, timers and globals on this document and will go on using
       // them. The only thing that reliably unloads it is a new document — so a
-      // purpose that was granted and is now refused takes the pixels' own
-      // cookies with it and reloads. Granting a purpose needs none of that:
+      // purpose that was granted and is now refused takes the pixel's own
+      // cookies and stored state with it and reloads. Granting a purpose needs
+      // none of that:
       // the gated components mount and the scripts arrive.
       if (isWithdrawal(consent, next)) {
         for (const name of PIXEL_COOKIE_NAMES) deleteCookie(name);
+        // The other half of what the pixel left behind. Best-effort, and both
+        // steps can fail: reading `window.localStorage` throws outright where
+        // site data is blocked, which is a browser that has nothing of Meta's to
+        // clear anyway. Nothing about the withdrawal depends on it — the cookie
+        // above is the answer, and the reload below is what stops the script.
+        try {
+          clearPixelStorage(window.localStorage);
+        } catch (error) {
+          console.error("[consent] could not clear the pixel's storage", error);
+        }
         // Deliberately no `setConsent`/`setIsOpen` before this: the document is
         // on its way out, and the banner's own committing flag is what keeps
         // its buttons disabled until it goes. A state update here would repaint

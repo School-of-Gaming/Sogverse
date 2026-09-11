@@ -6,10 +6,11 @@
  * register API route has to read a decision without mounting anything.
  *
  * **Two purposes, three answers.** `analytics` covers Vercel Web Analytics and
- * Speed Insights; `marketing` covers the Meta and TikTok pixels. Marketing
- * without analytics is deliberately not offered — it would be a fourth button
- * answering a question nobody asks, and the two ad pixels already report a
- * superset of what the analytics pair does.
+ * Speed Insights; `marketing` covers the Meta Pixel in the browser and the
+ * conversions our servers report to Meta. Marketing without analytics is
+ * deliberately not offered — it would be a fourth button answering a question
+ * nobody asks, and the advertising side already reports a superset of what the
+ * analytics pair does.
  */
 
 /** The cookie that remembers the answer. Named like `sog_pin_verified`. */
@@ -42,44 +43,56 @@ export const CONSENT_VERSION = 1;
 export const CONSENT_MAX_AGE_SECONDS = 180 * 24 * 60 * 60;
 
 /**
- * A short-lived marker cookie saying "the thing that just happened was a
- * registration", read once by the marketing pixels and then deleted.
+ * The cookies Meta's pixel sets, cleared when a granted purpose is taken away
+ * again. Not ours, which is exactly why they are named here: a script that has
+ * already run keeps whatever it wrote until something removes it.
  *
- * It exists because the conversion happens on the server (the register route)
- * and has to be reported by a script in the browser, on whatever page the
- * browser lands on next. The route sets it only when the request's consent
- * cookie already says marketing is allowed, so an un-consented registration
- * leaves no marker at all rather than one nothing is allowed to read.
+ * `_fbp` is the browser identifier the library mints for this device, `_fbc`
+ * records the ad click that brought the visitor here, and `_fbleid` is the
+ * lead-event id it writes after reporting one. All three are also what a
+ * server-side report reads back off a later request, so leaving one behind is
+ * how a withdrawal keeps identifying the same browser to Meta from our own side.
  */
-export const CONVERSION_COOKIE_NAME = "sog_conversion";
-
-/** The one value `sog_conversion` can carry today. */
-export const REGISTRATION_CONVERSION = "registration";
+export const PIXEL_COOKIE_NAMES = ["_fbp", "_fbc", "_fbleid"] as const;
 
 /**
- * Five minutes. Long enough to survive the redirect out of registration and
- * the page load that follows it, short enough that a marker nobody read cannot
- * attach itself to some unrelated visit tomorrow.
+ * What Meta's library keeps in `localStorage`, removed on withdrawal beside the
+ * cookies above.
+ *
+ * Easy to miss, and the reason it matters is that it is *not* a cookie: clearing
+ * `_fbp` while `multiFbc` still holds the click ids, and the library's own
+ * `fbevents^$…` and `pixel_mutex:…` entries still hold its state, leaves the
+ * device re-identifiable the moment the pixel is allowed to run again. The
+ * prefixes are matched rather than listed because the library appends a pixel id
+ * and a purpose to each key.
  */
-export const CONVERSION_COOKIE_MAX_AGE_SECONDS = 300;
+const PIXEL_STORAGE_KEYS = ["multiFbc"] as const;
+const PIXEL_STORAGE_PREFIXES = ["fbevents^$", "pixel_mutex:"] as const;
 
 /**
- * The cookies Meta's and TikTok's pixels set, cleared when a granted purpose is
- * taken away again. Not ours, which is exactly why they are named here: a
- * script that has already run keeps whatever it wrote until something removes
- * it.
+ * Remove everything Meta's library has stored in the given `Storage`.
  *
- * `_fbp` and `_fbc` are Meta's browser and click identifiers; `_ttp` is
- * TikTok's, and `_tt_enable_cookie` is the flag its library reads to decide
- * whether it may write `_ttp` at all — leaving that one behind is how a
- * withdrawal quietly re-arms itself on the next visit.
+ * Takes the storage rather than reaching for `window`, which keeps it testable
+ * and keeps this module isomorphic. The caller owns the failure: reading
+ * `window.localStorage` throws outright where site data is blocked, so the one
+ * call site wraps both the access and this call.
  */
-export const PIXEL_COOKIE_NAMES = [
-  "_fbp",
-  "_fbc",
-  "_ttp",
-  "_tt_enable_cookie",
-] as const;
+export function clearPixelStorage(storage: Storage): void {
+  const doomed: string[] = [];
+  for (let index = 0; index < storage.length; index++) {
+    const key = storage.key(index);
+    if (key === null) continue;
+    if (
+      (PIXEL_STORAGE_KEYS as readonly string[]).includes(key) ||
+      PIXEL_STORAGE_PREFIXES.some((prefix) => key.startsWith(prefix))
+    ) {
+      doomed.push(key);
+    }
+  }
+  // Collected first, removed after: removing while walking the index shifts
+  // every key after it down one and skips the next match.
+  for (const key of doomed) storage.removeItem(key);
+}
 
 /** The three buttons, in the order the banner offers them. */
 export type ConsentChoice =
@@ -91,7 +104,7 @@ export type ConsentChoice =
 export interface ConsentState {
   /** Vercel Web Analytics and Speed Insights. */
   analytics: boolean;
-  /** The Meta and TikTok pixels. */
+  /** The Meta Pixel, and the conversions our servers report to Meta. */
   marketing: boolean;
   /** When the answer was given, ISO-8601. Stored so a refusal can age out. */
   decidedAt: string;
@@ -217,22 +230,38 @@ export function parseConsentCookie(
 }
 
 /**
- * The stored answer, read out of a raw `Cookie` request header.
+ * One cookie's raw value, found in a raw `Cookie` request header.
  *
  * For a route handler that receives a plain `Request` rather than a
  * `NextRequest` — the shape `defineRoute` hands its handlers — and so has no
- * parsed cookie jar of its own. Everything about *interpreting* the value stays
- * in `parseConsentCookie`; this only finds it.
+ * parsed cookie jar of its own. It matches on the whole name rather than by
+ * substring, which is the case a `header.includes(name)` gets wrong: a cookie
+ * whose name merely ends with the one being looked for.
+ *
+ * The value comes back exactly as it was sent, undecoded — a caller that knows
+ * what it is holding decides that. `undefined` for a header without it.
+ */
+export function cookieValueFromHeader(
+  header: string | null,
+  name: string,
+): string | undefined {
+  if (!header) return undefined;
+  for (const pair of header.split(";")) {
+    const separator = pair.indexOf("=");
+    if (separator === -1) continue;
+    if (pair.slice(0, separator).trim() !== name) continue;
+    return pair.slice(separator + 1).trim();
+  }
+  return undefined;
+}
+
+/**
+ * The stored answer, read out of a raw `Cookie` request header. Everything about
+ * *interpreting* the value stays in `parseConsentCookie`; the helper above only
+ * finds it.
  */
 export function parseConsentCookieHeader(
   header: string | null,
 ): ConsentState | null {
-  if (!header) return null;
-  for (const pair of header.split(";")) {
-    const separator = pair.indexOf("=");
-    if (separator === -1) continue;
-    if (pair.slice(0, separator).trim() !== CONSENT_COOKIE_NAME) continue;
-    return parseConsentCookie(pair.slice(separator + 1).trim());
-  }
-  return null;
+  return parseConsentCookie(cookieValueFromHeader(header, CONSENT_COOKIE_NAME));
 }

@@ -3,7 +3,7 @@
  *
  * `ConsentProvider` holds the answer (seeded on the server by
  * `getServerConsent()` from `@/lib/consent.server`); `ConsentBanner` asks;
- * `AnalyticsScripts` and `MarketingPixels` are the two things the answer
+ * `AnalyticsScripts` and `MetaPixel` are the two things the answer
  * switches on; `PrivacyChoicesLink` is the way back to the question.
  */
 export { AnalyticsScripts } from "./analytics-scripts";
@@ -18,4 +18,4 @@ export {
   useConsentOptional,
 } from "./consent-provider";
 export { PrivacyChoicesLink } from "./privacy-choices-link";
-export { MarketingPixels } from "./marketing-pixels";
+export { MetaPixel } from "./meta-pixel";

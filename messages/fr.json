@@ -3188,8 +3188,7 @@
           "Meta (WhatsApp) — utilisé pour envoyer certains messages et rappels aux familles qui préfèrent WhatsApp.",
           "Roblox — reçoit l’identifiant de compte Roblox de votre enfant, pour que nous puissions vérifier le compte et afficher son avatar.",
           "Mojang (Microsoft) — reçoit le nom d’utilisateur Minecraft de votre enfant, pour que nous puissions vérifier le compte.",
-          "Meta (publicités Facebook et Instagram) — apprend, via le pixel Meta, que vous avez visité le site et si vous y avez créé un compte, pour que nous puissions y diffuser nos publicités. Uniquement si vous autorisez les cookies marketing.",
-          "TikTok — apprend, via le pixel TikTok, que vous avez visité le site et si vous y avez créé un compte, pour que nous puissions diffuser nos publicités sur TikTok. Uniquement si vous autorisez les cookies marketing."
+          "Meta (Facebook et Instagram) — voit, via le pixel Meta dans votre navigateur et les rapports envoyés par nos serveurs, comment vous utilisez notre site, pour que nous puissions vous y montrer nos publicités et mesurer leurs performances. Uniquement si vous autorisez les cookies marketing."
         ]
       },
       "cookies": {
@@ -3201,7 +3200,7 @@
         ],
         "bullets": [
           "Les statistiques — celles de Vercel, et seulement si vous les acceptez. Elles comptent les visites, mesurent la vitesse d’affichage des pages et reçoivent quelques événements anonymes sur l’usage du site : comment on accède à son My SOG, quand la langue est changée. Elles ne peuvent pas savoir qui vous êtes, et nous ne les transmettons jamais à des annonceurs.",
-          "Le marketing — le pixel Meta et le pixel TikTok, et seulement si vous les acceptez. Ils apprennent que vous avez visité School of Gaming et si vous y avez créé un compte, afin que Meta et TikTok puissent vous montrer nos publicités chez eux. Aucun des deux pixels ne se charge pendant que votre enfant est connecté en tant que joueur. Si vous acceptez le marketing puis créez un compte, nous déposons un seul cookie éphémère qui nous appartient — cinq minutes, aucun nom, aucune adresse, rien que le mot « registration » — dont l’unique rôle est d’indiquer aux pixels de la page suivante qu’un compte a été créé. Désactiver le marketing supprime les cookies que les pixels ont laissés dans votre navigateur, mais nous ne pouvons pas supprimer ce que Meta et TikTok détiennent déjà — vous pouvez le leur demander depuis vos propres paramètres chez eux, où Meta appelle cela « activité en dehors des technologies Meta »."
+          "Le marketing — des cookies publicitaires, et seulement si vous les acceptez. Ils permettent aux plateformes publicitaires citées plus haut — aujourd’hui Meta — de voir comment vous utilisez notre site, afin qu’elles puissent vous montrer nos publicités et que nous sachions lesquelles fonctionnent. Ils ne sont jamais actifs pendant qu’un joueur est connecté. Désactiver le marketing supprime ces cookies de votre navigateur, mais pas ce que les plateformes détiennent déjà — vous pouvez leur demander de le supprimer dans vos paramètres chez elles."
         ]
       },
       "voice": {
@@ -4286,7 +4285,7 @@
   },
   "consent": {
     "heading": "Vos choix de confidentialité",
-    "body": "Les cookies nécessaires font fonctionner le site. Les statistiques comptent les visites et le temps de chargement des pages. Elles ne peuvent pas savoir qui vous êtes, et les annonceurs ne les reçoivent jamais. Nous diffusons des publicités sur d’autres plateformes. Le marketing leur indique votre visite et si vous avez créé un compte, afin qu’elles puissent vous y montrer nos publicités. Le marketing n’est jamais actif pendant qu’un joueur est connecté. Vous pouvez changer votre réponse à tout moment en bas de page, et le détail se trouve dans notre <link>politique de confidentialité</link>.",
+    "body": "Les cookies nécessaires font fonctionner le site. Les statistiques comptent les visites et mesurent la vitesse de chargement des pages, sans savoir qui vous êtes. Le marketing permet aux plateformes publicitaires avec lesquelles nous travaillons de voir comment vous utilisez notre site, afin qu’elles puissent vous montrer nos publicités et que nous sachions lesquelles fonctionnent. Le marketing n’est jamais actif pendant qu’un joueur est connecté. Vous pouvez changer votre réponse à tout moment en bas de page. Le détail se trouve dans notre <link>politique de confidentialité</link>.",
     "rejectAll": "Tout refuser",
     "analyticsOnly": "Statistiques uniquement",
     "analyticsAndMarketing": "Marketing et statistiques"
