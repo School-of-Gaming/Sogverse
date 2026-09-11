@@ -212,6 +212,14 @@ window that closed before they had anything to prepare for. A family who bought 
 is placed within a day or two, where the two stamps are near enough that either would do
 — so the later one is right in both cases and needs no branch.
 
+**A move between groups re-stamps the placement and so reopens the window, and it never
+re-asks a family who has already answered.** Reopening is the right half: a child moved to
+another group meets a new gedu, a new room and often a new day, which is a beginning worth
+offering the steps for again. The other half costs nothing to hold, because the dismissal
+is written against the **seat, not the group** — a move leaves the participation exactly
+where it was, so the reopened window finds the answer already there and the card offers
+nothing.
+
 **Only occurrences that *start* after that moment count.** A family placed mid-session
 did not attend that one, so it teaches them nothing and must not spend half their window.
 A family placed a quarter of an hour before one gets that session and the one after it.

@@ -4,6 +4,7 @@ import { EnrollmentCard } from "@/components/family/EnrollmentCard";
 import {
   NO_TOPIC_PREP_READY,
   TOPIC_PREP_COOKIE_NAME,
+  topicPrepReadyFor,
 } from "@/components/topic-prep/topic-prep-cookie";
 import type { FamilyEnrollmentSummary } from "@/components/family/enrollment-rollup";
 import { INERT_HREF } from "@/lib/constants/routes";
@@ -367,6 +368,44 @@ describe("the window the offer lives in", () => {
 
     expect(screen.queryByText(TRIGGER)).toBeNull();
     expect(lockedJoin()).toBeTruthy();
+  });
+
+  /**
+   * **A move between groups reopens the window, and must never re-ask a seat
+   * that has already answered.**
+   *
+   * The start moment is the later of the two stamps, so a child moved to
+   * another group is re-stamped and their window opens again from the new
+   * placement — which is what a family who really is starting over with a new
+   * gedu, a new room and a new day wants. What must not come back with it is
+   * the guide on a seat that was finished with, and nothing about this card
+   * has to be careful for that to hold: the answer is written down against the
+   * **participation**, and a group move leaves the participation exactly where
+   * it was. So the reopened window finds the seat already answered and offers
+   * nothing, in the Join's slot and under the footer sentence alike.
+   */
+  it("never re-asks a seat that has answered, even when a group move reopens the window", () => {
+    renderCard({ prepWindowEnd: WINDOW_ENDS_SOON });
+    sayReady();
+    // The reader's own answer, as the browser now holds it — which is exactly
+    // what a page render parses back out of the cookie.
+    const dismissed = topicPrepReadyFor(storedCookie(), VIEWER_ID);
+    expect([...dismissed]).toEqual([PARTICIPATION_ID]);
+    cleanup();
+
+    // A fresh placement: the same seat, re-stamped, with a window running well
+    // past the old one.
+    const reopened = new Date(NOW.getTime() + 30 * 86_400_000);
+
+    renderCard({ prepWindowEnd: reopened }, dismissed);
+    expect(screen.queryByText(TRIGGER)).toBeNull();
+    expect(lockedJoin()).toBeTruthy();
+    cleanup();
+
+    // And the same answer on the placement that has no Join to give back.
+    renderCard({ awaiting: true, prepWindowEnd: reopened }, dismissed);
+    expect(screen.getByText("familyEnrollment.awaitingGamer")).toBeTruthy();
+    expect(screen.queryByText(TRIGGER)).toBeNull();
   });
 
   /**
