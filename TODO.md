@@ -409,6 +409,47 @@ shell sets `color-scheme` and `supported-color-schemes`, which is exactly the
 mechanism Apple Mail honours to skip its own adjustment. Gmail ignores those
 tags, which is the whole story.
 
+## The mail spends brand colour where SOG-UI says it may not
+
+A 2026-09-11 check of the email components reference against SOG-UI found five
+constructs that the reference presents as correct and the library forbids. All but
+the reference's own section titles change how live mail looks, so each is a ruling
+to make before it is a fix.
+
+- [ ] **A person's name is set in amber inside a sentence.** The name helper paints
+  act as ink in body copy, in six product mails (the session report's gedu and
+  group names are the visible case). SOG-UI: act is "never body copy or a small
+  link — it is a fill and a mark", and anything a reader reads through is ink.
+  The email doc also says there is no specimen of brand-coloured body text, while
+  the reference shows one. Likely answer: bold ink, the shape the product name
+  already takes.
+- [ ] **The inline link is amber.** Same rule, and SOG-UI names links among the
+  things that stay ink. Likely answer: ink with its underline as the affordance —
+  which also retires the recorded mismatch between the link's unpinned amber and
+  the name's pinned one.
+- [ ] **The reference's own section titles are amber.** A heading in a brand colour
+  is the defect SOG-UI's hero-headline departure is drawn narrowly enough to catch,
+  and the reference is the page that shows only what is correct. Likely answer:
+  ink.
+- [ ] **The world (violet) button is spent below the header, beside an amber one.**
+  The seat-offer mail fills Accept in violet and puts the amber My SOG button under
+  it. SOG-UI: world is never the main call to action, and "a violet button on a page
+  with an act one asks the reader to guess"; a parent-tier surface spends a second
+  colour only "with an intent stated beside the site that spends it" (the header's
+  violet rule is the one such intent a mail states); and the email doc says nothing
+  below the header spends a second colour. The email helpers' own rule that "a
+  second filled button says the opposite, whichever brand colour fills it" is
+  contradicted by the same mail. SOG-UI leaves which colours a button may wear to
+  its Button adoption, so the ruling may belong there. Decide between an outlined
+  Accept (and then whether the `secondary` variant has any legal use left in mail)
+  and a stated intent beside the seat offer's row that justifies the violet.
+- [ ] **The info callout's coloured label has no glyph.** SOG-UI: a label set in a
+  status hue sits beside a glyph in the same hue, so removing the colour loses
+  nothing. The email helper declares the omission locally (a mail has no icon
+  system), but the app's brand rule recognises a departure only where SOG-UI's own
+  source declares it. Decide between a mail-safe glyph (a hosted PNG, subject to the
+  images rules) and moving the declaration into SOG-UI.
+
 ## Safety mechanisms our copy cannot yet claim
 
 Safety copy states checkable mechanisms, never intentions, and only mechanisms verified true (`src/CLAUDE.md`) — so a safeguard we want but do not have is a feature, never a sentence. These two came out of the 2026-08 brand audit as exactly that shape: the copy reaches for them, and they are not true enough to write down yet. (A third — holding only a display name and an age bracket about a child — is now a roadmap feature rather than a backlog item; see **Safety** in `ROADMAP.md`.)

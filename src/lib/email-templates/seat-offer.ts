@@ -34,8 +34,8 @@ export interface SeatOfferEmailOptions {
  *
  * **Two buttons, one ask, and the affirmative one is on the right.**
  * `ctaButtonRow` puts Accept and Decline side by side because they are
- * alternatives rather than a first and second choice, and its type forbids two
- * filled brand buttons for exactly that reason — so Accept takes the emphasized
+ * alternatives rather than a first and second choice, and its type forbids an
+ * amber `primary` half for exactly that reason — so Accept takes the emphasized
  * variant the row allows and Decline is outlined. Their *order* is the app's own
  * convention, written down on `DialogFooter`: the negative answer is authored
  * first and the affirmative last, so Decline is the left cell and Accept the

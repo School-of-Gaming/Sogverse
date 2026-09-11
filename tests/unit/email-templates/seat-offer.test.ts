@@ -60,7 +60,8 @@ describe("buildSeatOfferEmail", () => {
 
   /**
    * Two buttons, one ask, in the app's own footer order. `ctaButtonRow` forbids
-   * two filled brand buttons, so the emphasis lands on exactly one of them —
+   * an amber `primary` half, and the mail fills only one of the two, so the
+   * emphasis lands on exactly one of them —
    * Accept, because the mail wants an answer either way but is asking them to
    * come. **The order is the other half and it is the half that regresses
    * silently**: DOM order runs negative-then-affirmative, so Decline is the
