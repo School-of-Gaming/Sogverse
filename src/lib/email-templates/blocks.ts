@@ -35,7 +35,7 @@ interface CtaButtonOptions {
   label: string;
   /**
    * `primary` fills the brand orange, `secondary` the brand purple, `outline`
-   * is the card colour behind a border. However many buttons a mail carries,
+   * is whatever ground it stands on, behind a border. However many buttons a mail carries,
    * exactly one of them is the action it is actually asking for — a second
    * filled button says the opposite, whichever brand colour fills it.
    */
@@ -64,6 +64,38 @@ interface RowButtonOptions extends CtaButtonOptions {
   variant: Exclude<CtaVariant, "primary">;
 }
 
+/**
+ * The outlined button's fill, which is the ground rather than a colour of its
+ * own — so it comes from the one table in `utils.ts` that every ground-following
+ * surface in this directory takes both of its halves from, and the shell's own
+ * media query restates it against the card.
+ */
+const OUTLINE_GROUND = groundFill("match");
+
+const VARIANTS = {
+  primary: {
+    fill: pinnedFill(BRAND.act),
+    surfaceClass: "",
+    label: BRAND.actForeground,
+    bordered: false,
+    // The only label dark enough for the pin to help rather than hurt.
+    labelClass: "cta-on-brand",
+  },
+  secondary: {
+    fill: pinnedFill(BRAND.world),
+    surfaceClass: "",
+    label: BRAND.worldForeground,
+    bordered: false,
+    labelClass: "",
+  },
+  outline: {
+    fill: OUTLINE_GROUND.fill,
+    surfaceClass: OUTLINE_GROUND.className,
+    label: DARK_THEME.foreground,
+    bordered: true,
+    labelClass: "",
+  },
+} as const;
 
 /**
  * The button's look, in one place, so a half-width one is the same button.
@@ -114,39 +146,6 @@ interface RowButtonOptions extends CtaButtonOptions {
  * orange in the header. For anything lighter, the inline colour is both the
  * simplest answer and the one that survives; adding protection makes it worse.
  */
-/**
- * The outlined button's fill, which is the ground rather than a colour of its
- * own — so it comes from the one table in `utils.ts` that every ground-following
- * surface in this directory takes both of its halves from, and the shell's own
- * media query restates it against the card.
- */
-const OUTLINE_GROUND = groundFill("match");
-
-const VARIANTS = {
-  primary: {
-    fill: pinnedFill(BRAND.act),
-    surfaceClass: "",
-    label: BRAND.actForeground,
-    bordered: false,
-    // The only label dark enough for the pin to help rather than hurt.
-    labelClass: "cta-on-brand",
-  },
-  secondary: {
-    fill: pinnedFill(BRAND.world),
-    surfaceClass: "",
-    label: BRAND.worldForeground,
-    bordered: false,
-    labelClass: "",
-  },
-  outline: {
-    fill: OUTLINE_GROUND.fill,
-    surfaceClass: OUTLINE_GROUND.className,
-    label: DARK_THEME.foreground,
-    bordered: true,
-    labelClass: "",
-  },
-} as const;
-
 function buttonStyles(variant: CtaVariant, width: CtaWidth) {
   const { fill, surfaceClass, label, bordered, labelClass } = VARIANTS[variant];
   const isHalf = width === "half";
@@ -228,9 +227,8 @@ export function ctaButtonRow(left: RowButtonOptions, right: RowButtonOptions): s
     </table>`;
 }
 
-/** One half of a `ctaButtonRow`: the row's own cell, painted as the button. */
 /**
- * One half of a `ctaButtonRow`.
+ * One half of a `ctaButtonRow`: the row's own cell, painted as the button.
  *
  * The variant is narrowed rather than defaulted: a row is for two alternatives,
  * so two filled brand buttons is the one arrangement it must not be able to
@@ -402,11 +400,12 @@ interface CalloutPanelOptions {
 /**
  * A panel above the mail's own opening, for something the reader has to be told
  * about the mail rather than in it — today, the session report's staff copy
- * saying that it *is* a copy and that each family's mail was its own.
+ * saying that it *is* a copy and that each family's mail was its own, and the
+ * seat offer stating the deadline to answer by.
  *
  * **It is the app's `Alert`, in its `info` variant, in an inbox.** A mail
  * inherits rather than being styled, so the shape comes from the component the
- * app already uses for exactly this: `rounded-lg`, a neutral 1px border, the
+ * app already uses for exactly this: `rounded-lg`, a 1px border, the
  * ground it is already on, the label in the status colour and the sentences in
  * ink. No status colour is tinted anywhere — info is Wit's blue, and a brand
  * colour exists at the value it is authored at or not at all — so the wash and

@@ -1,16 +1,18 @@
-import { BRAND, DARK_THEME } from "@/lib/constants/colors";
+import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
 import { wrapInLayout } from "./layout";
 import {
   calloutPanel,
   ctaButton,
   ctaButtonRow,
+  factList,
   inlineLink,
   bulletList,
   numberedList,
   inlineBold,
   sectionLabel,
 } from "./blocks";
+import { renderMarkdownForEmail } from "./markdown";
 import { heading, paragraph, pinnedFill, styledName, styledProductName } from "./utils";
 
 /**
@@ -30,12 +32,15 @@ import { heading, paragraph, pinnedFill, styledName, styledProductName } from ".
  * or on the card beside it?* A swatch and its token name go on the wall. A
  * sentence explaining that the two brand colours are mirror images goes here.
  *
- * **Everything shown is a live call to a real helper.** Every button comes from
- * `blocks.ts`, every text style from `utils.ts`, every colour from the constants
- * that mirror `globals.css`, inside the shell every mail uses. That is the
- * property that makes the page worth trusting — a guide that hand-rolls its
- * specimens is a picture of what the components used to do, and it goes stale
- * without anyone noticing. `house-style.test.ts` asserts it rather than hoping.
+ * **Everything shown is a live call to a real helper.** Every button and block
+ * comes from `blocks.ts`, every text style from `utils.ts` or `blocks.ts`, the
+ * rendered markdown from `markdown.ts`, and every colour from
+ * `@/lib/constants/colors`, which derives each value from `@sog/ui` — all inside
+ * the shell every mail uses. That is the property that makes the page worth
+ * trusting — a guide that hand-rolls its specimens is a picture of what the
+ * components used to do, and it goes stale without anyone noticing. The house
+ * style sweep and the reference's own registry tests assert it rather than
+ * hoping.
  *
  * **It shows only what is correct.** No gallery of broken examples: a reference
  * that displays a wrong thing teaches the wrong thing to whoever skims it, and
@@ -49,7 +54,8 @@ import { heading, paragraph, pinnedFill, styledName, styledProductName } from ".
  *
  * **Its copy is literal English and is not translated**, the same call
  * `fixtures/` makes: developer-facing instrumentation that only renders inside
- * `/admin/testing`, whose strings are component names and hex values.
+ * `/admin/testing`, whose strings are component names, hex values and sample
+ * copy invented to fill a specimen.
  */
 
 /**
@@ -83,10 +89,14 @@ function section(title: string): string {
 /**
  * A palette row: the colour as a filled block, its token name, its hex.
  *
- * The swatch is a filled cell rather than a dot or a border because the thing
- * worth checking is how a client treats a *background* of that colour, which is
- * the form these colours actually take in a mail. Each is painted through
- * `pinnedFill` for the same reason every other background is.
+ * The swatch is a filled cell rather than a dot or a border because a block is
+ * the one shape big enough to judge a colour at. For the brand fills and the
+ * grounds it is also the form they take in a mail, so how a client treats a
+ * *background* of that colour is exactly the thing worth checking. The inks,
+ * the edge and the status colour are never fills in a mail — each appears in
+ * the form a mail actually spends it in the specimens further down — and are
+ * blocked in here only so the palette can be read in one place. Each is painted
+ * through `pinnedFill` for the same reason every other background is.
  *
  * The label sits on the colour, so the pairing is visible rather than asserted:
  * a foreground that does not read on its own fill is the one palette fault you
@@ -113,7 +123,8 @@ export function buildComponentsReferenceEmail(locale: string): string {
   /*
    * PALETTE
    *
-   * Five colours, and the foreground each carries painted on top of it.
+   * Eight colours — every value a mail spends — each with a label painted on
+   * top of it.
    *
    * A fill and its foreground are one decision, never two. The brand colours are
    * mirror images — act is light and reads only under a dark label, world is
@@ -121,20 +132,27 @@ export function buildComponentsReferenceEmail(locale: string): string {
    * fill and keeps its label has not been recoloured, it has been broken. That
    * is the most tempting wrong edit in this directory and the reason `BRAND`
    * carries `actForeground` and `worldForeground` rather than leaving a
-   * caller to pick.
+   * caller to pick. `STATUS` does the same for info: its fill carries
+   * `infoForeground`, which is ink, because every status fill is light enough
+   * to take a dark label and none is dark enough to take white.
+   *
+   * Where a colour has no foreground of its own the label is the other half of
+   * a text pairing the palette already makes, turned over: the ground on the
+   * two inks, since contrast is symmetric and the ink-on-ground row measures
+   * both directions. The border grey is the one value nothing is ever set on —
+   * it is an edge and never a ground — so its swatch borrows the ink every
+   * neutral ground carries. That label and the info fill's own are painted by
+   * this page alone, and `palette-contrast.test.ts` measures both.
    *
    * Not shown, deliberately: brand colour as body text. There is no correct
    * version of it to display. Purple on the panel is 2.7:1 — unreadable however
    * faithfully a client renders it — and brand colour inside a sentence is a
    * rule this directory settled against. Emphasis in a mail is weight.
    *
-   * Also not shown as a swatch: the info colour. It is mirrored now, because a
-   * mail needed it — but a swatch paints the token's name *on* the fill, and
-   * white on this blue is under AA. There is no legible label to put on it, so
-   * showing it that way would be showing a pairing no mail may emit. It appears
-   * below in the only shape it takes: the callout's border and wash. The other
-   * status colours (destructive/success/warning) are still unmirrored; mirror
-   * one when a mail needs it, and measure it then.
+   * The info swatch is the value; the shape a mail spends it in is the callout
+   * further down, as a border and a label on no fill at all. The other status
+   * colours (destructive/success/warning) are still unmirrored; mirror one when
+   * a mail needs it, and measure it then.
    */
   const palette = `
     ${section("Palette")}
@@ -142,7 +160,10 @@ export function buildComponentsReferenceEmail(locale: string): string {
     ${swatch("BRAND.world / worldForeground", BRAND.world, BRAND.worldForeground)}
     ${swatch("DARK_THEME.card", DARK_THEME.card, DARK_THEME.foreground)}
     ${swatch("DARK_THEME.bg", DARK_THEME.bg, DARK_THEME.foreground)}
+    ${swatch("DARK_THEME.foreground", DARK_THEME.foreground, DARK_THEME.bg)}
     ${swatch("DARK_THEME.mutedFg", DARK_THEME.mutedFg, DARK_THEME.bg)}
+    ${swatch("DARK_THEME.border", DARK_THEME.border, DARK_THEME.foreground)}
+    ${swatch("STATUS.info / infoForeground", STATUS.info, STATUS.infoForeground)}
   `;
 
   /*
@@ -155,16 +176,23 @@ export function buildComponentsReferenceEmail(locale: string): string {
    * it. `outline` is for a destination worth offering that is not what the mail
    * is for.
    *
-   * `secondary` is the brand purple, the world colour. No product mail uses it
-   * yet — it is here because the vocabulary should be complete and because
-   * purple as a button fill is the one shape world works in, which was not obvious
-   * and cost a round of guessing to establish.
+   * `secondary` is the brand purple, the world colour. Its one product use is
+   * the seat offer's Accept, the filled half of that mail's row — and purple as
+   * a button fill is the one shape world works in, which was not obvious and
+   * cost a round of guessing to establish.
    *
-   * The row is for two alternatives — two doors into the same place, where
-   * stacking them would imply a ranking. Its halves are a hardcoded 50/50 at
-   * every width, because email clients do not reflow columns, so a long label
-   * wraps by design rather than by accident. Its variants exclude `primary` at
-   * the type level, so the forbidden two-filled-buttons row cannot be built.
+   * The row is for two alternatives, where stacking them would imply a ranking.
+   * It is shown twice because there are two cases. Two outlined halves are
+   * equal alternatives, two doors into the same place with no ask between them
+   * — the welcome mail's shop-or-My-SOG pair. An outlined half beside a
+   * `secondary` one is a question with an answer the mail is asking for — the
+   * seat offer's Decline and Accept. Position follows the app's button-order
+   * rule in both: the negative in the left cell, the affirmative in the right,
+   * so a reader meets the same pair in the same order in an inbox as in My SOG.
+   * Its halves are a hardcoded 50/50 at every width, because email clients do
+   * not reflow columns, so a long label wraps by design rather than by accident.
+   * Its variants exclude `primary` at the type level, so a row with two amber
+   * cells competing for the same click cannot be built.
    */
   const buttons = `
     ${section("Buttons")}
@@ -189,10 +217,25 @@ export function buildComponentsReferenceEmail(locale: string): string {
       }),
     )}
     ${entry(
-      "ctaButtonRow",
+      "ctaButtonRow — outline + outline",
       ctaButtonRow(
         { href: "https://sogverse.sog.gg/shop", label: "Browse the shop", variant: "outline" },
         { href: "https://sogverse.sog.gg/parent", label: "Go to My SOG", variant: "outline" },
+      ),
+    )}
+    ${entry(
+      "ctaButtonRow — outline + secondary",
+      ctaButtonRow(
+        {
+          href: "https://sogverse.sog.gg/seat-offer?answer=decline",
+          label: "No, thank you",
+          variant: "outline",
+        },
+        {
+          href: "https://sogverse.sog.gg/seat-offer?answer=accept",
+          label: "Accept the seat",
+          variant: "secondary",
+        },
       ),
     )}
   `;
@@ -256,31 +299,109 @@ export function buildComponentsReferenceEmail(locale: string): string {
   `;
 
   /*
+   * FACTS
+   *
+   * `factList` is the one label–value block every mail states its facts in: who
+   * holds the seat, when and where it runs, what it costs. Reach for it whenever
+   * a mail has more than a couple of facts a reader will scan for rather than
+   * read through — a sentence carrying four of them is a sentence nobody finds
+   * the date in. Every mail takes the same block, staff mail included; there is
+   * no variant and no label-width option, because the label column sizes itself
+   * to whatever the locale calls a thing.
+   *
+   * Its own section rather than a line under Text, because it is not a text
+   * style: it is a ruled table, it carries a 24px bottom margin where the text
+   * blocks carry 16px, and a reader skimming for "how do I state a date and a
+   * price" should find it by name rather than between the lists.
+   *
+   * Labels and values go in as composed HTML and neither is escaped by the
+   * block, so a value off a row is escaped by the caller — and an address is
+   * defused as well. The literals below need neither.
+   */
+  const facts = `
+    ${section("Facts")}
+    ${entry(
+      "factList",
+      factList([
+        ["Club", "Minecraft 101"],
+        ["Gamer", "Aino"],
+        ["When", "Mondays 16:00–17:00"],
+        ["Where", "Kallion kirjasto, Viides linja 11"],
+        ["Price", "€40.00 per month"],
+      ]),
+    )}
+  `;
+
+  /*
+   * MARKDOWN
+   *
+   * `renderMarkdownForEmail` is how stored, user-authored markdown — a gedu's
+   * session report — reaches a mail. A template never styles that text itself:
+   * the renderer emits exactly the app's feed subset (paragraphs, three heading
+   * levels, bold, italic, lists, line breaks) with the margins decided inline,
+   * escapes every character, unwraps a link to its label and defuses anything
+   * a client would linkify. Reach for it only for a field the app also renders
+   * as markdown; copy a builder writes is composed from the helpers above.
+   *
+   * It is a string walker rather than a React render, which is what makes it
+   * safe to call here: this module sits behind the registry, which a client page
+   * imports. The specimen exercises every construct the subset has, so a change
+   * to how any of them looks shows up on this page.
+   */
+  const markdown = `
+    ${section("Markdown")}
+    ${entry(
+      "renderMarkdownForEmail",
+      renderMarkdownForEmail(
+        [
+          "# Today's session",
+          "",
+          "We finished the **castle walls** and made a start on the *moat*.  ",
+          "Everyone got their build saved before the end.",
+          "",
+          "## What we built",
+          "",
+          "- A gatehouse with a working drawbridge",
+          "- Torches along the north wall",
+          "",
+          "### Next time",
+          "",
+          "1. Fill the moat",
+          "2. Test the drawbridge with redstone",
+        ].join("\n"),
+      ),
+    )}
+  `;
+
+  /*
    * CALLOUT
    *
-   * The app's `Alert` in its `info` variant, reaching an inbox: a wash of the
-   * info colour inside a full border of it, both flattened out of alpha and
-   * composited over the message panel, with the app's `rounded-lg` corner.
+   * The app's `Alert` in its `info` variant, reaching an inbox: no fill at all,
+   * a 1px border in `STATUS.info` at full value, the app's `rounded-lg` corner,
+   * the uppercase label in `STATUS.info` and the paragraphs in ink.
    *
-   * It is for something about the mail rather than in it — the one that exists
-   * is the session report's staff copy, opening by saying that it is a copy and
-   * that each family's mail was its own. A mail that has nothing to say about
-   * itself does not need one.
+   * It is for something the reader has to be told about the mail rather than in
+   * it. Two mails use it: the session report's staff copy, opening by saying
+   * that it is a copy and that each family's mail was its own, and the seat
+   * offer, stating the deadline to answer by. A mail with nothing of that kind
+   * to say does not need one.
    *
-   * Its text is the body's colour rather than the accent, which is the app's one
-   * deviation and a measured one: the info blue on this wash is just under AA at
-   * a label's size, and no fidelity work rescues a colour that fails contrast.
-   * The border is quiet by design — everything the panel means is in its words.
+   * The coloured edge and the coloured label are what mark the panel as an
+   * aside; a tinted ground would say the same thing a second time. The info
+   * blue clears the body floor as a label on the grounds a mail has, and
+   * `palette-contrast.test.ts` holds that. The paragraphs are equal-weight ink
+   * rather than muted, because the later sentence is usually the one answering
+   * the reader's actual worry.
    */
   const callout = `
     ${section("Callout")}
     ${entry(
       "calloutPanel",
       calloutPanel({
-        label: "Attention",
+        label: "A note about this mail",
         paragraphs: [
-          "A callout, for what the reader has to be told before the mail itself.",
-          "And a second, so the rhythm of a pair is the shape you are looking at.",
+          "This is a copy of the report, sent to the staff on the group.",
+          "Each family received their own mail, addressed to them alone.",
         ],
       }),
     )}
@@ -288,7 +409,7 @@ export function buildComponentsReferenceEmail(locale: string): string {
 
   return wrapInLayout({
     title: "Email components",
-    content: `${heading("Email components")}${palette}${buttons}${text}${callout}`,
+    content: `${heading("Email components")}${palette}${buttons}${text}${facts}${markdown}${callout}`,
     locale,
   });
 }

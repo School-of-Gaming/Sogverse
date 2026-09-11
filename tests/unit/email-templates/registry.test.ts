@@ -1,8 +1,12 @@
 import { describe, it, expect, beforeAll, vi } from "vitest";
 import { templateRegistry, type TemplateDefinition } from "@/lib/email-templates/registry";
-import { BRAND } from "@/lib/constants/colors";
+import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 import { styledName } from "@/lib/email-templates/utils";
-import { bulletList } from "@/lib/email-templates/blocks";
+import { bulletList, ctaButtonRow, factList } from "@/lib/email-templates/blocks";
+import {
+  EMAIL_MARKDOWN_ELEMENTS,
+  renderMarkdownForEmail,
+} from "@/lib/email-templates/markdown";
 import {
   getEmailTranslator,
   getTopicPrepTranslator,
@@ -1471,13 +1475,40 @@ describe("templateRegistry componentsReference", () => {
     expect(html).toContain(`background-color:${BRAND.world};background-image:linear-gradient(${BRAND.world},${BRAND.world})`);
     expect(html).toContain(`color:${BRAND.actForeground}`);
     expect(html).toContain(`color:${BRAND.worldForeground}`);
-    // The two-up row is the helper's, not a hand-built pair of cells.
-    expect([...html.matchAll(/width="50%"/g)]).toHaveLength(2);
+    // Both two-up rows — the equal pair and the one with a filled half — are the
+    // helper's own cells, not hand-built pairs.
+    expect([...html.matchAll(/width="50%"/g)]).toHaveLength(4);
+    expect(html).toContain(
+      ctaButtonRow(
+        {
+          href: "https://sogverse.sog.gg/seat-offer?answer=decline",
+          label: "No, thank you",
+          variant: "outline",
+        },
+        {
+          href: "https://sogverse.sog.gg/seat-offer?answer=accept",
+          label: "Accept the seat",
+          variant: "secondary",
+        },
+      ),
+    );
   });
 
   it("carries the whole palette, each swatch as a real background", () => {
     const { html } = render();
-    for (const hex of [BRAND.act, BRAND.world]) {
+    // Every value a mail spends. The two inks, the border and the info colour
+    // are never a fill in a product mail, so a flat gradient of any of them can
+    // only be its swatch.
+    for (const hex of [
+      BRAND.act,
+      BRAND.world,
+      DARK_THEME.card,
+      DARK_THEME.bg,
+      DARK_THEME.foreground,
+      DARK_THEME.mutedFg,
+      DARK_THEME.border,
+      STATUS.info,
+    ]) {
       expect(html).toContain(`background-image:linear-gradient(${hex},${hex})`);
     }
     expect(html).toContain("BRAND.world");
@@ -1531,5 +1562,46 @@ describe("templateRegistry componentsReference", () => {
         "And a second, so it is a list.",
       ]),
     );
+  });
+
+  it("shows the facts block and rendered markdown as the helpers emit them", () => {
+    const { html } = render();
+    expect(html).toContain(
+      factList([
+        ["Club", "Minecraft 101"],
+        ["Gamer", "Aino"],
+        ["When", "Mondays 16:00–17:00"],
+        ["Where", "Kallion kirjasto, Viides linja 11"],
+        ["Price", "€40.00 per month"],
+      ]),
+    );
+    // The renderer's whole output rather than a tag census: `p`, `h2`, `strong`
+    // and the lists are emitted elsewhere on the page too, so a check that only
+    // looked for the tags would pass with the specimen gone.
+    const rendered = renderMarkdownForEmail(
+      [
+        "# Today's session",
+        "",
+        "We finished the **castle walls** and made a start on the *moat*.  ",
+        "Everyone got their build saved before the end.",
+        "",
+        "## What we built",
+        "",
+        "- A gatehouse with a working drawbridge",
+        "- Torches along the north wall",
+        "",
+        "### Next time",
+        "",
+        "1. Fill the moat",
+        "2. Test the drawbridge with redstone",
+      ].join("\n"),
+    );
+    expect(html).toContain(rendered);
+    // And the specimen exercises the whole subset, so no construct's look can
+    // change without the page showing it.
+    const emitted = new Set([...rendered.matchAll(/<([a-z][a-z0-9]*)[\s>/]/g)].map((m) => m[1]));
+    for (const tag of EMAIL_MARKDOWN_ELEMENTS) {
+      expect(emitted, `the markdown specimen emits no <${tag}>`).toContain(tag);
+    }
   });
 });
