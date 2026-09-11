@@ -23,6 +23,18 @@
  */
 
 import type { InternalPathname } from "@/i18n/pathnames";
+import {
+  AGE_PARAM,
+  AUDIENCE_PARAM,
+  DAYS_PARAM,
+  FORMAT_PARAM,
+  FROM_PARAM,
+  LANGUAGE_PARAM,
+  PRICE_PARAM,
+  TAG_PARAM,
+  TOPIC_PARAM,
+} from "@/components/public/products/browse-state";
+import { CATEGORY_PARAM } from "@/components/public/products/shop-categories";
 
 export const MARKETING_PAGES = [
   "/",
@@ -44,4 +56,45 @@ export function isMarketingPage(
 ): boolean {
   if (template === null) return false;
   return (MARKETING_PAGES as readonly string[]).includes(template);
+}
+
+/**
+ * The query keys a marketing page may carry and still be reported.
+ *
+ * The allowlist above is matched against the pathname, but Meta's library
+ * reports the whole URL, query string included — and the proxy puts a private
+ * path into the query of two marketing pages: a signed-out parent reaching a
+ * child's page is bounced to `/login?redirect=/parent/gamers/<id>`. So a page
+ * view is reported only when every key in the query is one of these: the
+ * campaign parameters an ad link carries, the click ids the platforms append,
+ * and the shop's own filter state, which names topics, formats and prices and
+ * nobody. Anything else — `redirect` above all — refuses the report, which
+ * costs a measurement rather than a secret.
+ */
+const REPORTABLE_QUERY_KEYS: ReadonlySet<string> = new Set([
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_term",
+  "utm_content",
+  "fbclid",
+  "gclid",
+  CATEGORY_PARAM,
+  TOPIC_PARAM,
+  FORMAT_PARAM,
+  PRICE_PARAM,
+  LANGUAGE_PARAM,
+  AUDIENCE_PARAM,
+  TAG_PARAM,
+  AGE_PARAM,
+  DAYS_PARAM,
+  FROM_PARAM,
+]);
+
+/** Whether a page's query string (`location.search`) may travel to Meta. */
+export function isReportableQuery(search: string): boolean {
+  for (const key of new URLSearchParams(search).keys()) {
+    if (!REPORTABLE_QUERY_KEYS.has(key)) return false;
+  }
+  return true;
 }

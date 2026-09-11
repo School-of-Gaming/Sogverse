@@ -2,8 +2,8 @@
  * The Meta Pixel, loaded from app code rather than from an inline snippet.
  *
  * Client-safe and React-free: one function that installs Meta's library and one
- * that reports an event through it, so the component above it is only the gates
- * and the effect.
+ * that reports a page view through it, so the component above it is only the
+ * gates and the effect.
  *
  * **Why not the official inline snippet.** Meta's base code is a `<script>` in
  * the document that loads the library and reports a PageView the moment it
@@ -16,11 +16,19 @@
  * script element created by already-trusted app code is trusted, so the
  * insertion below needs nothing named in `script-src`.
  *
- * The queueing stub is still Meta's own, byte for byte in behaviour: an `fbq()`
- * call made before the library has finished downloading is pushed onto
- * `fbq.queue` and replayed by the library on arrival. That is what lets a
- * caller load and report in the same tick.
+ * **Why a report waits for the library rather than using Meta's queue.** The
+ * stub queues any call made before the library arrives, and the library replays
+ * the queue on arrival — against the URL the tab shows *then*, not the one it
+ * showed when the call was made. A visitor can client-navigate from a shop page
+ * into a child's page inside the few hundred milliseconds the download takes,
+ * and a queued PageView would then carry the child's URL. So nothing is ever
+ * queued here: a report waits for the script's `load`, re-checks that the tab
+ * is still on the page that authorised it, and only then calls the library,
+ * which reads the URL synchronously.
  */
+
+import { isReportableQuery } from "@/lib/marketing-pages";
+import { PIXEL_EVENTS } from "@/lib/marketing-events";
 
 const FBEVENTS_SRC = "https://connect.facebook.net/en_US/fbevents.js";
 
@@ -64,11 +72,15 @@ declare global {
   }
 }
 
+/**
+ * Whether the library has arrived, for the document this module was loaded
+ * into. `null` until the first load is asked for; a stub left over from an
+ * earlier document (tests reset the global) starts the load over.
+ */
+let libraryLoaded: Promise<boolean> | null = null;
+
 /** Meta's queueing stub, exactly as its base code builds it. */
 function installStub(): Fbq {
-  const existing = window.fbq;
-  if (existing) return existing;
-
   // A function with fields on it, built by assignment rather than by asserting
   // a bare function into the richer type: every field the library reads back is
   // then something the compiler has actually seen set.
@@ -102,23 +114,30 @@ function installStub(): Fbq {
 }
 
 /**
- * Install Meta's library and initialise the pixel. Idempotent: a second call is
- * a no-op, so a caller may load on every page it is allowed to report from
- * without tracking whether it has loaded already.
+ * Install Meta's library and initialise the pixel. Idempotent: a second call
+ * returns the first call's promise, so a caller may load on every page it is
+ * allowed to report from without tracking whether it has loaded already.
+ * Resolves `true` once the library has run, `false` if the browser refused or
+ * failed to fetch it (an ad blocker, most often) — in which case there is
+ * nothing to report through and never will be in this document.
  *
  * **No `PageView` here.** Loading and reporting are separate on purpose —
  * Meta's snippet fuses them, which is how a page that merely *loads* the pixel
  * ends up reported. The caller reports, once it knows what page it is on.
  */
-export function loadMetaPixel(pixelId: string): void {
-  if (typeof window === "undefined") return;
-  if (window.fbq) return;
+export function loadMetaPixel(pixelId: string): Promise<boolean> {
+  if (typeof window === "undefined") return Promise.resolve(false);
+  if (window.fbq && libraryLoaded) return libraryLoaded;
 
   const fbq = installStub();
 
   const script = document.createElement("script");
   script.async = true;
   script.src = FBEVENTS_SRC;
+  libraryLoaded = new Promise<boolean>((resolve) => {
+    script.addEventListener("load", () => resolve(true));
+    script.addEventListener("error", () => resolve(false));
+  });
   document.head.appendChild(script);
 
   fbq.disablePushState = true;
@@ -133,14 +152,32 @@ export function loadMetaPixel(pixelId: string): void {
   // must not be able to make that sentence false.
   fbq("set", "autoConfig", false, pixelId);
   fbq("init", pixelId);
+
+  return libraryLoaded;
 }
 
 /**
- * Report one event, if the pixel is loaded. A call before the library has
- * arrived is queued by the stub; a call with no pixel at all is a no-op, so no
- * call site needs its own gate.
+ * Report a page view of `pathname`, the page the caller has already checked
+ * against the marketing-page allowlist.
+ *
+ * The report goes out only once the library has arrived, and only if the tab
+ * is still on that pathname with a query string that may travel — re-read from
+ * the address bar at that moment, because that is the URL the library attaches.
+ * A visitor who moved on in the meantime gets no report for the page they
+ * left, and none for the page they reached: the caller reports that one, or
+ * refuses it, on its own terms.
  */
-export function trackMetaEvent(eventName: string): void {
-  if (typeof window === "undefined") return;
-  window.fbq?.("track", eventName);
+export async function reportMetaPageView(
+  pixelId: string,
+  pathname: string,
+): Promise<void> {
+  const ready = await loadMetaPixel(pixelId);
+  if (!ready) return;
+  // Both sides resolved through the URL parser, so a slug with a non-ASCII
+  // character compares the same whether the router hands it over encoded or
+  // not.
+  const authorised = new URL(pathname, window.location.origin).pathname;
+  if (window.location.pathname !== authorised) return;
+  if (!isReportableQuery(window.location.search)) return;
+  window.fbq?.("track", PIXEL_EVENTS.pageView);
 }

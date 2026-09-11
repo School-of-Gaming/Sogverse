@@ -9,8 +9,8 @@ import { useEffect, useRef, useSyncExternalStore } from "react";
 // (`/fi/kauppa/abc`) and answers with the template.
 import { usePathname } from "next/navigation";
 import { isMarketingPage } from "@/lib/marketing-pages";
-import { isValidPixelId, PIXEL_EVENTS } from "@/lib/marketing-events";
-import { loadMetaPixel, trackMetaEvent } from "@/lib/meta-pixel";
+import { isValidPixelId } from "@/lib/marketing-events";
+import { reportMetaPageView } from "@/lib/meta-pixel";
 import { normalizeExternalPath } from "@/lib/navigation/locale-path";
 import { useAuth } from "@/providers/auth-provider";
 import { useConsent } from "./consent-provider";
@@ -34,15 +34,19 @@ function useIsClient(): boolean {
 /**
  * The Meta Pixel: the one script on the site that exists to serve somebody
  * other than the visitor, and therefore the one with the most gates in front of
- * it. All five must hold, and all five are decided in the browser:
+ * it. All six must hold, and all six are decided in the browser:
  *
  *   1. the visitor has said yes to marketing;
  *   2. this is a client render, not the server one or the hydration one;
  *   3. the visitor is not — and cannot be — a signed-in gamer;
  *   4. the advertiser id is configured, and is an id rather than a placeholder;
- *   5. the page is on the marketing-page allowlist (`@/lib/marketing-pages`).
+ *   5. the page is on the marketing-page allowlist (`@/lib/marketing-pages`);
+ *   6. at the moment of reporting, the tab is still on that page and its query
+ *      string carries only campaign and shop-filter keys — never the
+ *      `redirect` the proxy adds when it bounces a signed-out parent from a
+ *      child's page to the login page.
  *
- * **The fifth gate is the one that makes the other four sufficient.** Meta's
+ * **The fifth and sixth gates are what make the other four sufficient.** Meta's
  * library sends the page URL and the document's referrer with every event, and
  * several of our URLs are secrets: a password-reset link, a PIN reset, an email
  * verification, a seat offer, and the pages that name a child by id. Mounting
@@ -99,8 +103,11 @@ export function MetaPixel() {
     const { template } = normalizeExternalPath(pathname);
     if (!isMarketingPage(template)) return;
 
-    loadMetaPixel(pixelId);
-    trackMetaEvent(PIXEL_EVENTS.pageView);
+    // Loads the library on first need, then reports — but only once the
+    // library has arrived and only if the tab is still on this page with a
+    // query that may travel (the loader re-reads the address bar at that
+    // moment). Fire and forget: it cannot throw, and nothing here waits on it.
+    void reportMetaPageView(pixelId, pathname);
   }, [allowed, pathname, pixelId]);
 
   return null;

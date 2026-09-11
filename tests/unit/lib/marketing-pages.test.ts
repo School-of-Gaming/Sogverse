@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { PATHNAMES } from "@/i18n/pathnames";
-import { isMarketingPage, MARKETING_PAGES } from "@/lib/marketing-pages";
+import {
+  isMarketingPage,
+  isReportableQuery,
+  MARKETING_PAGES,
+} from "@/lib/marketing-pages";
 
 /**
  * ============================================================================
@@ -51,5 +55,40 @@ describe("the marketing-page allowlist", () => {
   // path normalizer answers with for it.
   it("refuses a path that matched no route", () => {
     expect(isMarketingPage(null)).toBe(false);
+  });
+});
+
+describe("the reportable-query allowlist", () => {
+  // The pathname is on the allowlist; the query is what the library also
+  // reports, and the proxy puts a private path into it on two marketing pages.
+  it("admits an empty query and the keys an ad link carries", () => {
+    expect(isReportableQuery("")).toBe(true);
+    expect(isReportableQuery("?")).toBe(true);
+    expect(
+      isReportableQuery(
+        "?utm_source=lynx&utm_medium=email&utm_campaign=lynx-summer-a&fbclid=IwAR0abc",
+      ),
+    ).toBe(true);
+  });
+
+  it("admits the shop's own filter state", () => {
+    expect(isReportableQuery("?category=club&topic=minecraft&age=10")).toBe(
+      true,
+    );
+  });
+
+  it("refuses the proxy's redirect back to a private page", () => {
+    expect(isReportableQuery("?redirect=/en/parent/gamers/abc-123")).toBe(
+      false,
+    );
+    // One bad key among good ones is still a refusal.
+    expect(
+      isReportableQuery("?utm_source=lynx&redirect=/en/parent/gamers/abc-123"),
+    ).toBe(false);
+  });
+
+  it("refuses any key it has not heard of", () => {
+    expect(isReportableQuery("?token=abc")).toBe(false);
+    expect(isReportableQuery("?email=parent%40example.com")).toBe(false);
   });
 });

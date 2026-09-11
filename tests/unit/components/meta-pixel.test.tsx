@@ -40,11 +40,14 @@ vi.mock("@/providers/auth-provider", () => ({
   useAuth: () => mockAuth,
 }));
 
-const mockLoad = vi.hoisted(() => vi.fn());
-const mockTrack = vi.hoisted(() => vi.fn());
+// The one call the component makes: "report a page view of this pathname".
+// The loader's own suite covers what happens after — waiting for the library,
+// re-reading the address bar — so here the call itself is the whole assertion.
+const mockReport = vi.hoisted(() =>
+  vi.fn((..._args: unknown[]) => Promise.resolve()),
+);
 vi.mock("@/lib/meta-pixel", () => ({
-  loadMetaPixel: (...args: unknown[]) => mockLoad(...args),
-  trackMetaEvent: (...args: unknown[]) => mockTrack(...args),
+  reportMetaPageView: (...args: unknown[]) => mockReport(...args),
 }));
 
 const GRANTED_BOTH: ConsentState = {
@@ -97,8 +100,8 @@ describe("MetaPixel — what stops it", () => {
   ])("loads nothing on %s", (_label, consent) => {
     renderPixel(consent);
 
-    expect(mockLoad).not.toHaveBeenCalled();
-    expect(mockTrack).not.toHaveBeenCalled();
+    expect(mockReport).not.toHaveBeenCalled();
+    expect(mockReport).not.toHaveBeenCalled();
   });
 
   it("loads nothing for a signed-in gamer", () => {
@@ -107,7 +110,7 @@ describe("MetaPixel — what stops it", () => {
 
     renderPixel();
 
-    expect(mockLoad).not.toHaveBeenCalled();
+    expect(mockReport).not.toHaveBeenCalled();
   });
 
   // The doubt resolved in the safe direction: somebody is signed in and we
@@ -118,7 +121,7 @@ describe("MetaPixel — what stops it", () => {
 
     renderPixel();
 
-    expect(mockLoad).not.toHaveBeenCalled();
+    expect(mockReport).not.toHaveBeenCalled();
   });
 
   it("loads nothing while the session is still loading", () => {
@@ -126,7 +129,7 @@ describe("MetaPixel — what stops it", () => {
 
     renderPixel();
 
-    expect(mockLoad).not.toHaveBeenCalled();
+    expect(mockReport).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -139,8 +142,8 @@ describe("MetaPixel — what stops it", () => {
 
     renderPixel();
 
-    expect(mockLoad).not.toHaveBeenCalled();
-    expect(mockTrack).not.toHaveBeenCalled();
+    expect(mockReport).not.toHaveBeenCalled();
+    expect(mockReport).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -151,7 +154,7 @@ describe("MetaPixel — what stops it", () => {
 
     renderPixel();
 
-    expect(mockLoad).not.toHaveBeenCalled();
+    expect(mockReport).not.toHaveBeenCalled();
   });
 });
 
@@ -161,10 +164,8 @@ describe("MetaPixel — what it reports", () => {
 
     renderPixel();
 
-    expect(mockLoad).toHaveBeenCalledTimes(1);
-    expect(mockLoad).toHaveBeenCalledWith(PIXEL_ID);
-    expect(mockTrack).toHaveBeenCalledTimes(1);
-    expect(mockTrack).toHaveBeenCalledWith("PageView");
+    expect(mockReport).toHaveBeenCalledTimes(1);
+    expect(mockReport).toHaveBeenCalledWith(PIXEL_ID, "/shop");
   });
 
   // The visitor's own URL, in their own language, with a real product id in it
@@ -174,7 +175,7 @@ describe("MetaPixel — what it reports", () => {
 
     renderPixel();
 
-    expect(mockTrack).toHaveBeenCalledTimes(1);
+    expect(mockReport).toHaveBeenCalledTimes(1);
   });
 
   it("reports nothing more when the component merely re-renders", () => {
@@ -183,7 +184,7 @@ describe("MetaPixel — what it reports", () => {
 
     navigate(rerender, "/shop");
 
-    expect(mockTrack).toHaveBeenCalledTimes(1);
+    expect(mockReport).toHaveBeenCalledTimes(1);
   });
 
   it("sends nothing when the visitor navigates into a private page", () => {
@@ -192,8 +193,7 @@ describe("MetaPixel — what it reports", () => {
 
     navigate(rerender, "/parent/gamers/abc");
 
-    expect(mockTrack).toHaveBeenCalledTimes(1);
-    expect(mockLoad).toHaveBeenCalledTimes(1);
+    expect(mockReport).toHaveBeenCalledTimes(1);
   });
 
   // Coming back is a second view of the page, and the one case a naive
@@ -205,13 +205,9 @@ describe("MetaPixel — what it reports", () => {
     navigate(rerender, "/parent/gamers/abc");
     navigate(rerender, "/shop");
 
-    expect(mockTrack).toHaveBeenCalledTimes(2);
-    // The component asks to load on every page it reports from, and does not
-    // track whether it has loaded already — the loader's own guard makes the
-    // second ask a no-op, which is its suite's subject rather than this one's.
-    // What matters here is that nothing was asked for on the private page in
-    // between.
-    expect(mockLoad).toHaveBeenCalledTimes(2);
+    expect(mockReport).toHaveBeenCalledTimes(2);
+    // And nothing was asked for on the private page in between.
+    expect(mockReport).not.toHaveBeenCalledWith(PIXEL_ID, "/parent/gamers/abc");
   });
 
   it("reports each marketing page a visitor walks through", () => {
@@ -221,6 +217,6 @@ describe("MetaPixel — what it reports", () => {
     navigate(rerender, "/shop");
     navigate(rerender, "/shop/abc-123");
 
-    expect(mockTrack).toHaveBeenCalledTimes(3);
+    expect(mockReport).toHaveBeenCalledTimes(3);
   });
 });

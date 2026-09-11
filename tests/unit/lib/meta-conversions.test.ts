@@ -188,7 +188,10 @@ describe("reportMetaConversion — the request", () => {
       "https://test.sogverse.local/register",
     );
     expect(typeof event.event_id).toBe("string");
-    expect(typeof event.event_time).toBe("number");
+    // Seconds, not milliseconds: Meta rejects a timestamp more than seven days
+    // out, and a millisecond value is fifty years out.
+    expect(event.event_time).toBeLessThanOrEqual(Math.floor(Date.now() / 1000));
+    expect(event.event_time).toBeGreaterThan(Math.floor(Date.now() / 1000) - 60);
     // An account creation carries no outcome — it is not an enrolment.
     expect(event).not.toHaveProperty("custom_data");
 

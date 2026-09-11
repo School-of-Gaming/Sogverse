@@ -5,7 +5,7 @@ answer switches on. The strip's own layout rules live in `src/components/layout/
 written here is the pixel: where it may run, what leaves the browser, what leaves our
 servers, and how a withdrawal takes effect.
 
-## Three gates in front of the pixel, and a fourth that is the page
+## Four gates in front of the pixel, and two more that are the page
 
 The pixel loads only when all of these hold, and every one of them is decided in the
 browser:
@@ -37,7 +37,7 @@ missing from it simply gets no pixel, which costs a measurement, where a page wr
 it costs a secret. That asymmetry is why there is no completeness test demanding every
 route be classified: such a test only adds a place for a new page to be waved through.
 
-Three knobs hold that promise, and all three are load-bearing:
+Four knobs hold that promise, and all four are load-bearing:
 
 - **The allowlist** decides where a page view may be reported from at all.
 - **Meta's automatic page view on client navigation is turned off** in the loader, so the
@@ -46,13 +46,18 @@ Three knobs hold that promise, and all three are load-bearing:
 - **`Referrer-Policy: strict-origin`** site-wide (set in `next.config.ts`), so a
   same-origin navigation — from a reset link to the login page, say — cannot hand the next
   document a referrer carrying the token.
+- **A report is sent only once the library has loaded, and only if the address bar still
+  shows an allowed page with an allowed query** — the paragraph below.
 
-**One accepted residual.** A call queued before Meta's library has finished downloading is
-stamped by the library with whatever URL the tab shows by the time it runs. Reaching it
-takes a signed-in parent navigating two pages deep inside that window, which is a
-marketing page's page view arriving with a later URL — no token, because a token page is
-not navigated to from a marketing page in the same document. Accepted knowingly rather
-than unnoticed.
+**Nothing is ever queued for the library to replay.** Meta's stub queues a call made before
+the library has downloaded and replays it on arrival against the URL the tab shows *then* —
+and a parent can client-navigate from a shop page into a child's page inside that window.
+So a report waits for the script to load, then re-reads the address bar: the tab must still
+be on the page that authorised the report, and the query string must carry only campaign
+keys, the platforms' click ids and the shop's own filter state. The second check is what
+keeps `/login?redirect=/parent/gamers/<id>` — the proxy's bounce for a signed-out parent —
+from ever being reported, even though the login page itself is a marketing page. A visitor
+who moved on gets no report for either page; a query with anything else in it gets none.
 
 ## What Meta is told
 
