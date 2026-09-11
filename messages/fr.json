@@ -1226,6 +1226,8 @@
       "passwordPlaceholder": "Créez un mot de passe solide",
       "confirmPasswordPlaceholder": "Confirmez votre mot de passe",
       "location": "Localisation",
+      "termsLabel": "Je certifie être le parent ou le représentant légal de l’enfant, j’accepte les <terms>conditions générales</terms> et j’ai lu la <privacy>politique de confidentialité</privacy>.",
+      "termsRequired": "Veuillez confirmer que vous êtes le parent ou le représentant légal et que vous acceptez les conditions générales.",
       "marketingConsentLabel": "School of Gaming peut m’envoyer des actualités et des offres par e-mail.",
       "marketingConsentHint": "Facultatif — vous pouvez modifier ce choix à tout moment dans vos paramètres.",
       "creatingAccount": "Création du compte...",
@@ -4165,7 +4167,9 @@
   "consentDocuments": {
     "names": {
       "robloxProgrammeTerms": "Conditions générales d’utilisation de l’Académie des Créateurs",
-      "robloxPrivacyPolicy": "Politique de confidentialité de l’Académie des Créateurs"
+      "robloxPrivacyPolicy": "Politique de confidentialité de l’Académie des Créateurs",
+      "termsAndConditions": "Conditions générales",
+      "guardianDeclaration": "Déclaration du parent ou du représentant légal"
     },
     "bundles": {
       "robloxProgramme": "Documents de l’Académie des Créateurs"

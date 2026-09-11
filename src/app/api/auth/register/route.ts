@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
+import { REGISTRATION_CONSENT_DOCUMENTS } from "@/lib/constants/consent-documents";
 import { detectLocaleFromHeader } from "@/lib/constants/locales";
 import { buildWelcomeParentEmail } from "@/lib/email-templates/welcome";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
@@ -284,6 +285,36 @@ export const POST = defineRoute({
       if (consentError) throw consentError;
     } catch (error) {
       console.error("[auth/register] marketing consent write failed", error);
+    }
+
+    // What the account was opened under: the Terms and Conditions and the
+    // guardian declaration, each recorded against the version that is current
+    // right now (00249). The contract already refused the request unless the
+    // box was ticked, so reaching this line means the agreement happened; this
+    // write is what makes it provable, and which TEXT it was given for.
+    //
+    // Beside the marketing write and after everything that must succeed, on the
+    // same reasoning: nothing above it may be delayed or broken by a consent
+    // write. It is NOT fatal for the same reason either — the account exists,
+    // the parent has been mailed, and destroying a working account here would
+    // cost them more than the missing row costs us.
+    //
+    // But it is not the same *kind* of loss, which is why the failure is logged
+    // at error level with the id rather than shrugged off: a lost marketing
+    // opt-in under-markets, while a lost record here is the legal value of the
+    // tick going missing on an account that really did tick it. The id is in
+    // the line so the row can be written by hand afterwards.
+    try {
+      const { error: termsError } = await admin.rpc("record_account_consents", {
+        p_customer_id: userId,
+        p_document_slugs: [...REGISTRATION_CONSENT_DOCUMENTS],
+      });
+      if (termsError) throw termsError;
+    } catch (error) {
+      console.error(
+        `[auth/register] account consent write failed for ${userId}`,
+        error,
+      );
     }
 
     const response = NextResponse.json({ userId });

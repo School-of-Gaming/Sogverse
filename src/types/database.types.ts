@@ -14,6 +14,49 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_consent_acceptances: {
+        Row: {
+          accepted_at: string
+          customer_id: string
+          document_slug: string
+          document_version: string
+        }
+        Insert: {
+          accepted_at?: string
+          customer_id: string
+          document_slug: string
+          document_version: string
+        }
+        Update: {
+          accepted_at?: string
+          customer_id?: string
+          document_slug?: string
+          document_version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_consent_acceptances_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_consent_acceptances_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_consent_acceptances_document_fkey"
+            columns: ["document_slug", "document_version"]
+            isOneToOne: false
+            referencedRelation: "consent_document_versions"
+            referencedColumns: ["document_slug", "version"]
+          },
+        ]
+      }
       chat_channel_locks: {
         Row: {
           channel_id: string
@@ -2946,6 +2989,10 @@ export type Database = {
       promote_from_waitlist: {
         Args: { p_group_id?: string; p_participation_id: string }
         Returns: Json
+      }
+      record_account_consents: {
+        Args: { p_customer_id: string; p_document_slugs: string[] }
+        Returns: number
       }
       record_attendance: {
         Args: {

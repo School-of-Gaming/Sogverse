@@ -9,6 +9,12 @@ import { ROUTES } from "./routes";
  * this map owns the two things the database has no business knowing: where the
  * document is published on our own site, and which message key names it.
  *
+ * **Two of the slugs here are not product requirements at all**, and they are
+ * in the map for the same reason everything else is: they are rows in
+ * `consent_documents`, so anything reading that table meets them. See
+ * `REGISTRATION_CONSENT_DOCUMENTS` below for what they are and
+ * `isAccountConsentSlug` for the one place the difference is acted on.
+ *
  * **Rows arrive by migration and this map ships in the same deploy**, so a slug
  * the database knows about and this map does not is a defect in the change that
  * added it, never a runtime condition to design around. What the two readers do
@@ -34,15 +40,26 @@ export interface ConsentDocumentMeta {
    * Where the document is published. Opened in a NEW TAB from the signup
    * panel — deliberately, so the parent's half-filled enrolment panel survives
    * the reading.
+   *
+   * **`null` for a document that has no page**, which is an honest state and
+   * not a gap to fill. The guardian declaration is a *sentence* a parent ticks,
+   * versioned so we can say which wording they were shown; there is nowhere to
+   * send someone to read it, and pointing it at a page it does not live on
+   * would be a link that lies. A renderer that turns a name into a link has to
+   * handle the null the same way it handles an unmapped slug: the name, plain.
    */
-  href: string;
+  href: string | null;
   /**
    * Key under the `consentDocuments.names` message namespace. Not the slug
    * itself: a hyphenated slug is a fine JSON key but a poor translator key, and
    * keeping the two apart means a slug can be renamed by migration without
    * touching five locale files.
    */
-  nameKey: "robloxProgrammeTerms" | "robloxPrivacyPolicy";
+  nameKey:
+    | "robloxProgrammeTerms"
+    | "robloxPrivacyPolicy"
+    | "termsAndConditions"
+    | "guardianDeclaration";
 }
 
 /**
@@ -58,7 +75,59 @@ export const CONSENT_DOCUMENTS: Readonly<Record<string, ConsentDocumentMeta>> = 
     href: ROUTES.robloxPrivacy,
     nameKey: "robloxPrivacyPolicy",
   },
+  "terms-and-conditions": {
+    href: ROUTES.termsAndConditions,
+    nameKey: "termsAndConditions",
+  },
+  "guardian-declaration": {
+    href: null,
+    nameKey: "guardianDeclaration",
+  },
 };
+
+/**
+ * **What opening an account commits the account holder to** (migration 00249).
+ *
+ * One checkbox on the parent sign-up form carries both: the person declares
+ * they are a parent or legal guardian, and they agree to School of Gaming's
+ * Terms and Conditions. The register route records each as its own row against
+ * the version that was current — one tick, two documents, because a later
+ * question about a specific text has to be answerable about that text alone.
+ *
+ * **Defined here rather than in the route** so the form's sentence, the wire
+ * call and the tests all read the same list. It is the whole set: a document a
+ * parent should have to accept at registration joins this array and gets its
+ * migration, and nothing else has to change.
+ */
+export const REGISTRATION_CONSENT_DOCUMENTS = [
+  "terms-and-conditions",
+  "guardian-declaration",
+] as const;
+
+/** Every slug an account holder accepts once, for the account rather than a seat. */
+const ACCOUNT_CONSENT_SLUGS: ReadonlySet<string> = new Set(
+  REGISTRATION_CONSENT_DOCUMENTS,
+);
+
+/**
+ * True when this slug is accepted at the ACCOUNT level rather than per
+ * enrolment.
+ *
+ * The admin product form uses it to decide which documents may be attached to a
+ * product: one of these is already accepted by every account holder, once, at
+ * the moment they registered, so offering it as an enrolment condition would
+ * ask a second time for an agreement that is already on file — and record the
+ * answer in a different table, keyed to a seat it does not condition.
+ *
+ * It is a *filter on what may be attached*, not a filter on what may be named.
+ * The documents stay in `CONSENT_DOCUMENTS` precisely so every surface that
+ * meets one — an admin page reading the whole registry, a stored requirement
+ * set written before this rule existed — can still call it by its name instead
+ * of showing a raw slug.
+ */
+export function isAccountConsentSlug(slug: string): boolean {
+  return ACCOUNT_CONSENT_SLUGS.has(slug);
+}
 
 /**
  * The metadata for a slug, or `null` when this deploy has never heard of it.
