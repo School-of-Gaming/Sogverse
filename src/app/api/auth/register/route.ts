@@ -9,7 +9,8 @@ import { detectLocaleFromHeader } from "@/lib/constants/locales";
 import { buildWelcomeParentEmail } from "@/lib/email-templates/welcome";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { createEmailVerificationToken } from "@/lib/email-verification";
-import { buildUtmMetadata } from "@/lib/utm";
+import { utmMetadataForConsent } from "@/lib/utm";
+import { parseConsentCookieHeader } from "@/lib/consent";
 import { reportMetaConversion } from "@/lib/meta-conversions.server";
 import { getOrigin } from "@/lib/url";
 import {
@@ -77,7 +78,21 @@ export const POST = defineRoute({
     // deliberately — see the contract. A malformed value degrades to null and
     // the account is created without that field; the three are independent, so
     // a junk `utm_source` does not cost a well-formed `utm_campaign`.
-    const utmMetadata = buildUtmMetadata(utm);
+    //
+    // GATED ON MARKETING CONSENT, DECIDED HERE. Counsel reads the UTM
+    // parameters on a landing link as tracking, under the marketing purpose, so
+    // the three `profiles.utm_*` columns are written only for a visitor whose
+    // stored answer granted it — anything else (no cookie, a refusal,
+    // analytics-only) drops all three keys and the columns stay NULL. The
+    // answer is read off THIS request's own `Cookie` header, the same way the
+    // Conversions API reporter below decides whether to send: a
+    // `marketingConsent` field in the body is the checkbox for our mailing
+    // list, a different question with a different answer, and either way a
+    // client can send whatever it likes. `src/lib/utm.ts` has the ruling.
+    const utmMetadata = utmMetadataForConsent(
+      parseConsentCookieHeader(request.headers.get("cookie")),
+      utm,
+    );
 
     const admin = createAdminClient();
 

@@ -2,10 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription, StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import {
@@ -24,7 +26,7 @@ import {
 import { usePinStatus, pinKeys } from "@/services/pin";
 import { PinUnlockFlow } from "@/components/pin";
 import { useRequiredAuth } from "@/providers/auth-provider";
-import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { ApiError } from "@/lib/api/api-error";
 import { normalizeGamerUsername } from "@/lib/gamer-sign-in";
 import { cn } from "@/lib/utils";
@@ -47,13 +49,21 @@ type Gender = "boy" | "girl" | "non_binary";
 /**
  * Which page of the form is showing.
  *
- * Two pages, the same two for every parent: who the child is, then how they
- * sign in. The sign-in question used to ride along at the bottom of page one
- * and open a third page for the two modes that need a credential; it is a page
- * of its own now, so the footer's affirmative is always Next on page one and
- * always the create on page two — nothing about it is decided by a radio.
+ * Three pages, the same three for every parent: who the child is, then how they
+ * sign in, then the optional game handles. The sign-in question used to ride
+ * along at the bottom of page one and open a third page for the two modes that
+ * need a credential; it is a page of its own now, so the footer's affirmative is
+ * Next, then Next, then the create — nothing about it is decided by a radio.
+ *
+ * The game handles moved onto a page of their own when page one gained the
+ * guardian declaration. Page one is where the child is named, and the
+ * declaration is a sentence about a named child, so that is the only page it can
+ * sit on — and page one could not carry a required box AND two optional rows
+ * inside the dialog's height cap at 360px. The two rows are what gave way: both
+ * are optional, a child who has neither is the ordinary case, and last is where
+ * they already sat.
  */
-type FormStep = "details" | "signIn";
+type FormStep = "details" | "signIn" | "accounts";
 
 /**
  * How the card can be seeded, which is the style guide's seam and nothing else.
@@ -61,10 +71,13 @@ type FormStep = "details" | "signIn";
  * A union rather than three optional fields, because page two names the child:
  * production can only reach it through page one's validation, which guarantees
  * a first name, and this makes the same guarantee for a card that opens there.
+ * Page three sits after page two and inherits the same guarantee, which is why
+ * it asks for a name too even though nothing painted on it says one.
  */
 type InitialState =
   | { step?: "details"; firstName?: string; signIn?: GamerSignIn }
-  | { step: "signIn"; firstName: string; signIn?: GamerSignIn };
+  | { step: "signIn"; firstName: string; signIn?: GamerSignIn }
+  | { step: "accounts"; firstName: string; signIn?: GamerSignIn };
 
 /**
  * The stem every field id on this card is built from — both pages of it, and the
@@ -89,11 +102,12 @@ interface AddGamerDialogProps {
 /**
  * Reusable dialog for creating a gamer linked to the current parent.
  *
- * The form asks for a first name, a birth month and year, an optional gender
- * and each platform's optional game handle on page one, then how the child will
- * sign in on page two. The default answer to the last one is the switch-only
- * account every gamer used to get, so a parent who wants exactly what this
- * dialog always produced reads page two and presses the button.
+ * The form asks for a first name, a birth month and year, an optional gender and
+ * the parent's guardian declaration on page one, then how the child will sign in
+ * on page two, then each platform's optional game handle on page three. The
+ * default answer to the sign-in question is the switch-only account every gamer
+ * used to get, so a parent who wants exactly what this dialog always produced
+ * reads page two and presses Next.
  *
  * Designed for reuse: family selector wires it now; product / club / camp /
  * event detail pages should pass `open` / `onOpenChange` to drop it in when a
@@ -287,6 +301,11 @@ export function AddGamerFormCard({
   // — and neither is ever sent as an empty string.
   const [minecraftUsername, setMinecraftUsername] = useState<string | null>(null);
   const [robloxUsername, setRobloxUsername] = useState<string | null>(null);
+  // The parent's declaration about THIS child. Unticked to begin with for the
+  // reason every consent box is: a box we ticked for them is a declaration
+  // nobody made. It gates page one's Next rather than being checked on a press,
+  // so the parent never submits a form the answer was going to refuse.
+  const [guardianAttested, setGuardianAttested] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Per CLAUDE.md "Loading & Disabled State": a local flag set BEFORE
   // mutate runs, only cleared on outcomes that need the user to retry.
@@ -303,6 +322,39 @@ export function AddGamerFormCard({
   const trimmedName = firstName.trim();
 
   /**
+   * The card's title, which is the page's own question.
+   *
+   * Page two's title IS the question the radios answer, so it is also what
+   * labels them: the `id` below is what the radio group points its
+   * `aria-labelledby` at, and it is built off `idPrefix` for the same reason
+   * every other id on this card is — the style guide paints five of these at
+   * once, and five `add-gamer-title` nodes would leave four radio groups
+   * labelled by a heading belonging to another card.
+   */
+  const titleId = `${idPrefix}-title`;
+
+  /**
+   * Page two's rule, as a gate on its Next rather than a refusal after it.
+   *
+   * Only *presence* is judged here — a username and a password, or an address —
+   * because those are the answers the page is visibly asking for and a parent
+   * can see for themselves whether they have given them. Whether what they
+   * typed is long enough or shaped like an address is a different kind of
+   * question: the parent has answered, and the answer is wrong in a way only a
+   * sentence can explain. So the format checks stay on submit, where
+   * `credentialProblem` can say which field is wrong and why, and a disabled
+   * button never stands in for an explanation nobody can read.
+   *
+   * `parent` asks for nothing, so there is nothing to be missing.
+   */
+  const signInIncomplete =
+    signIn === "username"
+      ? username.trim() === "" || password.trim() === ""
+      : signIn === "email"
+        ? email.trim() === ""
+        : false;
+
+  /**
    * Page one's rules. Unchanged from when they were the whole form, and they
    * run before the step to page two, so a parent never answers a question about
    * a child the first page was going to refuse anyway.
@@ -316,6 +368,14 @@ export function AddGamerFormCard({
   }
 
   async function create() {
+    // The declaration is the reason this call is allowed to be made, so it is
+    // checked here and not only where the button is drawn. Page one's Next is
+    // disabled until the box is ticked, which is what a parent meets; this is
+    // what makes the state load-bearing rather than decorative, so no path that
+    // reaches `create()` — a seam that opens the card on a later page, a future
+    // caller — can send an attestation nobody made.
+    if (!guardianAttested) return;
+
     setError(null);
     setCommitting(true);
 
@@ -339,6 +399,11 @@ export function AddGamerFormCard({
         username: signIn === "username" ? normalizeGamerUsername(username) : undefined,
         password: signIn === "username" ? password : undefined,
         email: signIn === "email" ? email.trim() : undefined,
+        // Narrowed to the literal the input type demands. `create()` returns
+        // early unless the box is ticked, so by here the value is true as a
+        // fact about the parent's answer rather than as a constant — and the
+        // route's schema refuses anything else regardless.
+        guardianAttested: true,
       });
       onCreated?.(result.gamerId);
       onOpenChange(false);
@@ -346,17 +411,22 @@ export function AddGamerFormCard({
     } catch (caught) {
       setCommitting(false);
       // Two refusals a parent can actually fix, and both are about a value they
-      // typed on this page: the address is spoken for, or the username is. They
-      // land on the field rather than in the banner, because "try again" over a
-      // form the parent cannot see the fault in is the unhelpful version of the
-      // same message.
+      // typed on the sign-in page: the address is spoken for, or the username
+      // is. They land on the field rather than in the banner, because "try
+      // again" over a form the parent cannot see the fault in is the unhelpful
+      // version of the same message — which is why each of these also walks the
+      // form back to the page the field is on. The create is pressed a page
+      // later now, and a message pointing at an input that is not on screen
+      // would be exactly the banner it exists to avoid being.
       const code = caught instanceof ApiError ? caught.code : undefined;
       if (code === GAMER_USERNAME_TAKEN) {
         setCredentialProblem({ field: "username", key: "usernameTaken" });
+        setStep("signIn");
         return;
       }
       if (code === GAMER_EMAIL_TAKEN) {
         setCredentialProblem({ field: "email", key: "emailTaken" });
+        setStep("signIn");
         return;
       }
       // The route's own `message` is raw English (for logs); never show it. No
@@ -382,16 +452,66 @@ export function AddGamerFormCard({
       return;
     }
 
-    const problem = findGamerCredentialProblem({ signIn, username, password, email });
-    setCredentialProblem(problem);
-    if (problem) return;
+    if (step === "signIn") {
+      const problem = findGamerCredentialProblem({ signIn, username, password, email });
+      setCredentialProblem(problem);
+      if (problem) return;
+      setStep("accounts");
+      return;
+    }
 
+    // Page three has nothing left to refuse: both game rows are optional and
+    // commit themselves, and the box that gated page one's Next was ticked two
+    // pages ago.
     await create();
   }
 
   // Matches the styling used by other selects in the codebase
   // (see admin/location-form-dialog.tsx). Aligned with Input's height/border
   // so the form reads as a single coherent column.
+  /**
+   * The two game identities, which are the whole of page three.
+   *
+   * Held as a node rather than written inline because they are rendered from
+   * exactly one place and read better named: the page they are on carries
+   * nothing else at all, so a `step === "accounts"` arm holding a hundred lines
+   * of markup would bury the fact that the page IS these two rows.
+   *
+   * **Closed, not `autoEdit`.** A register page opens its row because typing a
+   * name is the only thing there is to do there; here the pencil is the
+   * invitation, and two open text inputs on a page whose whole message is "these
+   * are optional" would read as two more things being asked. A closed row costs
+   * exactly the same height — both modes declare the game-account height at the
+   * same node — so this is a reading decision, not a fitting one.
+   *
+   * Full width rather than paired, because the editor has to hold a 60px figure,
+   * an input and two buttons; half a dialog leaves the input too narrow to read
+   * a 20-character handle back in.
+   */
+  const gameRows = (
+    <>
+      <Field label={g("label", { platform: GAME_PLATFORMS.minecraft.name })} optional>
+        <GameUsernameEditableRow
+          platform="minecraft"
+          username={minecraftUsername}
+          onCommit={({ username: committed }) => setMinecraftUsername(committed)}
+        />
+      </Field>
+
+      <Field label={g("label", { platform: GAME_PLATFORMS.roblox.name })} optional>
+        <GameUsernameEditableRow
+          platform="roblox"
+          username={robloxUsername}
+          // Nothing to draw and nothing to go and find: a Roblox render is not
+          // addressable by username, so the row shows its silhouette until a
+          // commit resolves one.
+          avatarUrl={null}
+          onCommit={({ username: committed }) => setRobloxUsername(committed)}
+        />
+      </Field>
+    </>
+  );
+
   const selectClassName =
     "flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
@@ -399,19 +519,39 @@ export function AddGamerFormCard({
     <DialogContent
       className={cn("max-h-[90vh] overflow-y-auto sm:max-w-lg", className)}
     >
-      <DialogHeader>
-        <DialogTitle>{t("title")}</DialogTitle>
+      {/* One title per page, each of them that page's own question: who this
+          child is, then how they will sign in, then the game handles. The
+          sign-in page used to repeat its question as a label over the radios
+          while the title said "Add a gamer" a line above it — two headings for
+          one page, and the lower of them the only one saying anything. */}
+      {/* Left-aligned at every width, not the primitive's centred-on-phone
+          default: on page two the title IS the radiogroup's label, and a
+          centred two-line question above left-aligned radios reads as a page
+          title rather than as the thing labelling them. */}
+      <DialogHeader className="text-left">
+        {/* `leading-snug` over the primitive's `leading-none`: a one-word title
+            never wraps, and a question naming a child does — at 360px its
+            wrapped lines collide on the tighter leading. */}
+        <DialogTitle id={titleId} className="leading-snug">
+          {step === "signIn"
+            ? s("question", { name: trimmedName })
+            : step === "accounts"
+              ? t("accountsTitle", { name: trimmedName })
+              : t("title")}
+        </DialogTitle>
       </DialogHeader>
 
       <form onSubmit={handleSubmit}>
-        {/* **The two pages swap; nothing crosses between them.** The title
-            above and the footer below are the only things that survive the
-            swap, and the title does not move — the footer does, because the two
-            pages are not the same height. That is a panel replaced by a
-            different panel on the parent's own click (`src/CLAUDE.md`,
-            "Layout & Scrolling"): nothing a reader was pointing at is still on
-            screen somewhere else, so there is nothing to hold still, and
-            reserving page one's height behind page two would leave a hole
+        {/* **The three pages swap; nothing crosses between them.** The title
+            above and the footer below are the only nodes that survive a swap,
+            and neither survives it unchanged: the title says something else,
+            because it is the page's own question, and the footer moves, because
+            no two of the pages are the same height. Both are the parent's own
+            click swapping one panel for another (`src/CLAUDE.md`, "Layout &
+            Scrolling") — a change they asked for and are braced for, not one on
+            data's schedule — so the title rewriting itself in place is the same
+            permitted move as the page beneath it being replaced, and reserving
+            the tallest page's height behind the others would leave a hole
             rather than prevent a shift. Inside page two the answer is the
             opposite one, for the opposite reason — see the box below the
             radios. */}
@@ -422,22 +562,25 @@ export function AddGamerFormCard({
             </Alert>
           )}
 
-          {step === "signIn" ? (
+          {step === "accounts" ? (
+            gameRows
+          ) : step === "signIn" ? (
             <>
-              {/* The question names the child rather than "your gamer": page
-                  one has already refused an empty first name, so by the time
-                  this renders there is always a name to use. */}
-              <Field label={s("question", { name: trimmedName })}>
-                {({ labelId }) => (
-                  <GamerSignInRadios
-                    value={signIn}
-                    onChange={setSignIn}
-                    disabled={committing}
-                    labelId={labelId}
-                    name={`${idPrefix}-sign-in`}
-                  />
-                )}
-              </Field>
+              {/* **No label over the radios: the title is the label.** The
+                  question is asked once, by the heading, and the group points
+                  its `aria-labelledby` straight at it — so a screen reader
+                  entering the group still hears the question, and the page
+                  spends one line on it rather than two. The question names the
+                  child rather than "your gamer": page one has already refused
+                  an empty first name, so by the time this renders there is
+                  always a name to use. */}
+              <GamerSignInRadios
+                value={signIn}
+                onChange={setSignIn}
+                disabled={committing}
+                labelId={titleId}
+                name={`${idPrefix}-sign-in`}
+              />
 
               {/* **One height for all three answers, declared here.** Clicking
                   a radio swaps what is in this box while the radios above it
@@ -550,7 +693,7 @@ export function AddGamerFormCard({
             </div>
 
             {/* Three across at every width, not stacked below `sm`. The stack
-                cost 96px of a dialog that now also has to fit two game rows on a
+                cost 96px of a dialog that has to fit a required consent row on a
                 phone — the single biggest lever available, and this is what it is
                 spent on.
 
@@ -581,66 +724,95 @@ export function AddGamerFormCard({
               </div>
             </Field>
 
-            {/* The two game identities, last because they are the two a parent is
-                most likely to skip — and because a child who has neither yet is
-                the ordinary case.
+            {/* **The guardian declaration**, last on the page and with no
+                divider and no label above it: it is the final row of the same
+                basic information the parent is already giving, and a rule would
+                announce a second section that does not exist.
 
-                **Closed, not `autoEdit`.** A register page opens its row because
-                typing a name is the only thing there is to do there; here the row
-                sits among four fields the parent must fill in, and two more open
-                text inputs would read as two more things being asked of them. A
-                closed row costs exactly the same height — both modes declare the
-                game-account height at the same node — so this is a reading
-                decision, not a fitting one, and the pencil is the invitation.
+                One sentence and nothing else. No restating of the fields just
+                filled in, because a list of what we store is a list that drifts
+                the moment a column is added, and the Privacy Policy is where
+                that list is kept current.
 
-                Full width rather than paired, because the editor has to hold a
-                60px figure, an input and two buttons; half a dialog leaves the
-                input too narrow to read a 20-character handle back in. */}
-            <Field label={g("label", { platform: GAME_PLATFORMS.minecraft.name })} optional>
-              <GameUsernameEditableRow
-                platform="minecraft"
-                username={minecraftUsername}
-                onCommit={({ username }) => setMinecraftUsername(username)}
-              />
-            </Field>
+                It names the child, so it has to read as English before there is
+                a name to use — the box renders while the first-name input is
+                still empty. "This gamer" rather than a possessive dodge, because
+                the row is pointing at the child described directly above it, and
+                the word swaps to the real name on the first keystroke.
 
-            <Field label={g("label", { platform: GAME_PLATFORMS.roblox.name })} optional>
-              <GameUsernameEditableRow
-                platform="roblox"
-                username={robloxUsername}
-                // Nothing to draw and nothing to go and find: a Roblox render is
-                // not addressable by username, so the row shows its silhouette
-                // until a commit resolves one.
-                avatarUrl={null}
-                onCommit={({ username }) => setRobloxUsername(username)}
-              />
-            </Field>
+                No hint: per the `CheckboxRow` doc the absence of the optional
+                marker IS the "required". The policy opens in a NEW TAB, as the
+                register form's does — the parent is mid-way through a form, and
+                in this tab the way back would be an empty one. A click landing
+                on the link reads instead of ticking, which the DOM gives for
+                free. */}
+            <CheckboxRow
+              checked={guardianAttested}
+              onCheckedChange={setGuardianAttested}
+              label={t.rich(
+                trimmedName === ""
+                  ? "guardianAttestationUnnamed"
+                  : "guardianAttestation",
+                {
+                  name: trimmedName,
+                  privacy: (chunks) => (
+                    <Link
+                      href={ROUTES.privacy}
+                      prefetch={false}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-act hover:underline"
+                    >
+                      {chunks}
+                    </Link>
+                  ),
+                },
+              )}
+            />
 
             </>
           )}
         </div>
 
-        {/* Two fixed labels, one per page, decided by the page alone: page one
-            always advances and page two always creates, so the affirmative says
-            what pressing it will do without any radio having to change it. */}
+        {/* Two fixed labels over three pages, each decided by the page alone:
+            the first two always advance and the last always creates, so the
+            affirmative says what pressing it will do without any radio having to
+            change it. Each of the first two pages additionally gates its own
+            Next on what it asks for — page one on the declaration, page two on
+            the credential its mode needs — and in both cases the button goes
+            from disabled to enabled under the parent's own typing or tick while
+            the label never changes, so nothing in the footer resizes. */}
         <DialogFooter className="gap-2">
           <Button
             type="button"
             variant="outline"
-            onClick={() =>
-              step === "signIn" ? setStep("details") : onOpenChange(false)
-            }
+            onClick={() => {
+              if (step === "accounts") {
+                setStep("signIn");
+              } else if (step === "signIn") {
+                setStep("details");
+              } else {
+                onOpenChange(false);
+              }
+            }}
             disabled={committing}
           >
-            {step === "signIn" ? c("back") : c("cancel")}
+            {step === "details" ? c("cancel") : c("back")}
           </Button>
-          <Button type="submit" disabled={committing}>
+          <Button
+            type="submit"
+            disabled={
+              committing ||
+              (step === "details" && !guardianAttested) ||
+              (step === "signIn" && signInIncomplete)
+            }
+          >
             {committing && <Loader2 className="animate-spin" />}
             {committing
               ? t("submitting")
-              : step === "details"
-                ? c("next")
-                : t("submit")}
+              : step === "accounts"
+                ? t("submit")
+                : c("next")}
           </Button>
         </DialogFooter>
       </form>

@@ -1,7 +1,11 @@
+import { Fragment } from "react";
 import { Link } from "@/i18n/navigation";
-import { TriangleAlert } from "lucide-react";
 import { OutboundLink } from "@/components/ui/outbound-link";
-import { policyTextSegments, type PolicyBlock } from "./policy-content";
+import {
+  policyTextSegments,
+  type PolicyBlock,
+  type PolicySegment,
+} from "./policy-content";
 
 interface PolicySubsection {
   heading: string;
@@ -34,12 +38,6 @@ interface PolicyPageProps {
    * otherwise ship an unannounced outbound link the day a tag is added.
    */
   newTabLabel: string;
-  /**
-   * Set while the document is a draft: renders a prominent banner above the
-   * summary box saying so. Omitted once the copy is signed off — a page with
-   * no banner is a page whose text is final.
-   */
-  draftNotice?: string;
   /** Plain-language summary box shown up top. */
   intro: { heading: string; blocks: PolicyBlock[] };
   /** Body sections, in render order. */
@@ -57,6 +55,26 @@ interface PolicyPageProps {
  * readings are identical by construction rather than by a comment asking for it.
  * `PolicyPage` requires the label that component demands, so an outbound link
  * cannot ship unannounced.
+ *
+ * Emphasis is orthogonal to all of that: a segment the document bolds is wrapped
+ * in a real `<strong>`, around the link if there is one, so a bolded document
+ * name reads as one emphasised link rather than two adjacent runs. Body copy is
+ * `text-muted-foreground` at the default weight, so `font-semibold` is what
+ * reads as bold against it — the same weight the page's own subheadings take. The
+ * weight has to be pushed onto any anchor inside the run as well, because a link
+ * carries its own `font-medium` and that wins over an inherited weight: without
+ * it a bold phrase ending in a linked acronym renders 600 up to the link and 500
+ * on the link itself, and a bold run that is *entirely* a link never looks bold
+ * at all. One arbitrary variant on the `<strong>` covers both, so the link's own
+ * class list stays the one thing that decides what a link looks like.
+ *
+ * Neighbouring emphasised segments are gathered into **one** element before
+ * rendering. The splitter has to hand emphasis back per segment, because a bold
+ * run may contain a link and each side of it has its own destination; emitting
+ * one `<strong>` per segment would turn the one bold phrase the document
+ * actually carries — a regulator's name ending in a linked acronym — into two
+ * adjacent ones, which reads the same today and would grow a seam the moment
+ * emphasis gains anything but a weight.
  */
 function PolicyText({
   text,
@@ -65,24 +83,42 @@ function PolicyText({
   text: string;
   newTabLabel: string;
 }) {
+  const runs: { strong: boolean; segments: PolicySegment[] }[] = [];
+  for (const segment of policyTextSegments(text)) {
+    const strong = segment.strong === true;
+    const open = runs.at(-1);
+    if (open?.strong === strong) open.segments.push(segment);
+    else runs.push({ strong, segments: [segment] });
+  }
+
+  const piece = (segment: PolicySegment, key: number) =>
+    segment.href === undefined ? (
+      <Fragment key={key}>{segment.text}</Fragment>
+    ) : segment.external ? (
+      <OutboundLink key={key} href={segment.href} label={newTabLabel}>
+        {segment.text}
+      </OutboundLink>
+    ) : (
+      <Link
+        key={key}
+        href={segment.href}
+        className="rounded-sm font-medium text-act underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
+      >
+        {segment.text}
+      </Link>
+    );
+
   return (
     <>
-      {policyTextSegments(text).map((segment, i) => {
-        if (segment.href === undefined) return segment.text;
-        return segment.external ? (
-          <OutboundLink key={i} href={segment.href} label={newTabLabel}>
-            {segment.text}
-          </OutboundLink>
+      {runs.map((run, i) =>
+        run.strong ? (
+          <strong key={i} className="font-semibold [&_a]:font-semibold">
+            {run.segments.map(piece)}
+          </strong>
         ) : (
-          <Link
-            key={i}
-            href={segment.href}
-            className="rounded-sm font-medium text-act underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
-          >
-            {segment.text}
-          </Link>
-        );
-      })}
+          <Fragment key={i}>{run.segments.map(piece)}</Fragment>
+        ),
+      )}
     </>
   );
 }
@@ -131,16 +167,16 @@ function PolicyBlocks({
  * Every string of body copy (subtitle, paragraphs, bullets) may name one of our
  * other legal pages, or one of the supervisory authorities a reader has the
  * right to complain to, through a cross-reference tag that becomes a link here;
- * see `policy-content.ts` for the two allow-lists. Headings, the "last updated" line
- * and the draft notice are structural rather than authored prose, so
- * they render as plain text.
+ * see `policy-content.ts` for the two allow-lists. It may also carry the
+ * emphasis its source document emphasises, through the one markup tag beside
+ * them. Headings and the "last updated" line are structural rather than authored
+ * prose, so they render as plain text.
  */
 export function PolicyPage({
   title,
   subtitle,
   lastUpdated,
   newTabLabel,
-  draftNotice,
   intro,
   sections,
 }: PolicyPageProps) {
@@ -155,23 +191,6 @@ export function PolicyPage({
         )}
         <p className="text-sm text-muted-foreground">{lastUpdated}</p>
       </div>
-
-      {/* Above the summary box, not below it: a reader who takes only the
-          short version still has to pass the "this is not final" warning. */}
-      {draftNotice && (
-        <div
-          role="note"
-          className="mt-8 flex items-start gap-4 rounded-lg border-2 border-warning p-5 sm:p-6"
-        >
-          <TriangleAlert
-            className="mt-0.5 h-7 w-7 shrink-0 text-warning"
-            aria-hidden="true"
-          />
-          <p className="text-base font-bold leading-relaxed sm:text-lg">
-            {draftNotice}
-          </p>
-        </div>
-      )}
 
       {/* Plain-language summary up top — the one part we most want a hurried
           parent to actually read. */}

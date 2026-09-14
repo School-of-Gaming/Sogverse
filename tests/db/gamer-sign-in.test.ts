@@ -134,6 +134,7 @@ describe("gamer sign-in mode", () => {
     const { error: createError } = await admin.rpc("create_gamer", {
       p_gamer_id: childId,
       p_parent_id: parentId,
+      p_guardian_attested: true,
       p_first_name: "Boundary",
       p_last_name: "Parentson",
       p_date_of_birth: "2015-06-15",

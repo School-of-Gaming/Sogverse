@@ -508,8 +508,12 @@ export const ROUTES = {
   /**
    * The Programme's own privacy policy, supplementing the platform one at
    * `/privacy`. Shares `/roblox`'s unpublished posture exactly — noindex, no
-   * sitemap entry, no nav link, reachable only from `/roblox` itself — and
-   * flips to published in the same change that publishes `/roblox`.
+   * sitemap entry, no nav link — and flips to published in the same change that
+   * publishes `/roblox`. It is reached from `/roblox` itself and from the
+   * general privacy policy's section on the Creator Academy, which links it for
+   * everything that section does not itself state; being linked from a
+   * published page changes nothing about the noindex posture, which is the
+   * page's own and not a consequence of who points at it.
    */
   robloxPrivacy: "/roblox/privacy",
   /**

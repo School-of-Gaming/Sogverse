@@ -557,6 +557,59 @@ export type Database = {
           },
         ]
       }
+      gamer_consent_acceptances: {
+        Row: {
+          accepted_at: string
+          accepted_by: string
+          document_slug: string
+          document_version: string
+          gamer_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          accepted_by: string
+          document_slug: string
+          document_version: string
+          gamer_id: string
+        }
+        Update: {
+          accepted_at?: string
+          accepted_by?: string
+          document_slug?: string
+          document_version?: string
+          gamer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gamer_consent_acceptances_accepted_by_fkey"
+            columns: ["accepted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gamer_consent_acceptances_accepted_by_fkey"
+            columns: ["accepted_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gamer_consent_acceptances_document_fkey"
+            columns: ["document_slug", "document_version"]
+            isOneToOne: false
+            referencedRelation: "consent_document_versions"
+            referencedColumns: ["document_slug", "version"]
+          },
+          {
+            foreignKeyName: "gamer_consent_acceptances_gamer_id_fkey"
+            columns: ["gamer_id"]
+            isOneToOne: false
+            referencedRelation: "gamer_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       gamer_group_creations: {
         Row: {
           created_at: string
@@ -2684,6 +2737,7 @@ export type Database = {
           p_first_name: string
           p_gamer_id: string
           p_gender?: Database["public"]["Enums"]["gender_type"]
+          p_guardian_attested?: boolean
           p_last_name: string
           p_minecraft_username?: string
           p_minecraft_uuid?: string
