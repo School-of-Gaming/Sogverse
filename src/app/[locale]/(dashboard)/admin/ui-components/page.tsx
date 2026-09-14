@@ -3162,11 +3162,12 @@ export default function AdminUIComponentsPage() {
         <p className="text-sm text-muted-foreground -mt-2">
           Lynx&rsquo;s lawyer wants a parent creating a child account to be shown
           the Privacy Policy again and to attest they are that child&rsquo;s
-          parent or legal guardian. Four ways to ask, all on page two of the real
-          card, directly above the button that creates the child &mdash; because
-          the attestation belongs with the act it attests, not with page
-          one&rsquo;s Continue. The submit is inert; every box refuses the submit
-          from the card&rsquo;s own error banner. Judge them at 360px too.
+          parent or legal guardian. V1&ndash;V4 ask on page two of the real card,
+          directly above the button that creates the child; V5 gives the ask a
+          third and final page of its own, and page two&rsquo;s affirmative reads
+          Continue. The submit is inert; every box refuses the submit from the
+          card&rsquo;s own error banner. Judge them at 360px too &mdash; the
+          height of page two is what V5 exists to answer.
         </p>
         <GuardianAttestationDemo />
       </Section>
@@ -4373,16 +4374,31 @@ function AddGamerDialogDemo() {
  */
 function GuardianAttestationDemo() {
   const dismiss = () => {};
+  // V5 first, because it is the one that answers the objection to the other
+  // four; its card opens on the review step it exists to show, which is the
+  // only one of the five whose interesting page is not page two.
   const variants = [
-    { variant: "v1", caption: "V1 — one required box" },
-    { variant: "v2", caption: "V2 — data sentence, then the box" },
-    { variant: "v3", caption: "V3 — no box, the button declares" },
-    { variant: "v4", caption: "V4 — the box plus our rules" },
+    {
+      variant: "v5",
+      caption: "V5 — review step, one box, third and final page",
+      initial: {
+        firstName: "Aino",
+        signIn: "parent",
+        step: "review",
+        month: "3",
+        year: "2013",
+        minecraftUsername: "AinoBuilds",
+      },
+    },
+    { variant: "v1", caption: "V1 — one required box", initial: undefined },
+    { variant: "v2", caption: "V2 — data sentence, then the box", initial: undefined },
+    { variant: "v3", caption: "V3 — no box, the button declares", initial: undefined },
+    { variant: "v4", caption: "V4 — the box plus our rules", initial: undefined },
   ] as const;
 
   return (
-    <div className="grid items-start gap-6 sm:grid-cols-2 2xl:grid-cols-4">
-      {variants.map(({ variant, caption }) => (
+    <div className="grid items-start gap-6 sm:grid-cols-2 xl:grid-cols-3">
+      {variants.map(({ variant, caption, initial }) => (
         <div key={variant} className="space-y-2">
           <DemoCaption>{caption}</DemoCaption>
           <AddGamerFormCard
@@ -4390,7 +4406,9 @@ function GuardianAttestationDemo() {
             onCreate={inertCreateGamer}
             className="max-h-none"
             idPrefix={`add-gamer-attestation-${variant}`}
-            initial={{ firstName: "Aino", signIn: "parent", step: "signIn" }}
+            initial={
+              initial ?? { firstName: "Aino", signIn: "parent", step: "signIn" }
+            }
             demoVariant={variant}
           />
         </div>
