@@ -2809,6 +2809,26 @@
         "ready": "Votre salle est prête",
         "join": "Rejoindre"
       }
+    },
+    "feedback": {
+      "heading": "Comment ça s’est passé ?",
+      "items": {
+        "learned": "J’ai appris quelque chose de nouveau.",
+        "fun": "J’ai passé un bon moment.",
+        "geduKnowledgeable": "Mon Gedu s’y connaissait et m’a apporté son aide.",
+        "geduKind": "Mon Gedu a fait preuve de sympathie et de gentillesse.",
+        "groupListens": "Mon groupe m’écoute et me comprend."
+      },
+      "scale": {
+        "no": "Non",
+        "notReally": "Pas vraiment",
+        "aBit": "Un peu",
+        "yes": "Oui",
+        "definitely": "Tout à fait"
+      },
+      "notePrompt": "Tu veux nous dire autre chose sur la séance d’aujourd’hui ?",
+      "audience": "Ton Gedu et l’équipe de School of Gaming liront ton retour. Merci !",
+      "done": "Terminé"
     }
   },
   "voiceButton": {

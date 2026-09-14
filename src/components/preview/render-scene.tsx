@@ -37,6 +37,8 @@ import {
   TopicPrepScene,
   isTopicPrepScenario,
 } from "./scenes/topic-prep-scene";
+import { SessionFeedbackScene } from "./scenes/session-feedback-scene";
+import { isSessionFeedbackScenario } from "./scenes/session-feedback-scenarios";
 import { ShopBrowseScene } from "./scenes/shop-browse-scene";
 import { VoiceRoomScene } from "./scenes/voice-room-scene";
 
@@ -159,6 +161,13 @@ const SCENE_RENDERERS: Record<
   "voice-room": (scenario) => {
     if (!isVoiceRoomScenario(scenario)) notFound();
     return <VoiceRoomScene scenario={scenario} />;
+  },
+  // Two scenarios, because the two live paths differ by the line above the
+  // heading: the room closing at the window's end says so, and the reader who
+  // pressed Leave is told nothing they do not already know.
+  "voice-feedback": (scenario) => {
+    if (!isSessionFeedbackScenario(scenario)) notFound();
+    return <SessionFeedbackScene scenario={scenario} />;
   },
   // Two surfaces, one body and one set of fixtures. The audience is the whole
   // difference between them, which is exactly what the pair of scenes is for:

@@ -2849,6 +2849,26 @@
         "ready": "DaqlIj pIm",
         "join": "yImuv"
       }
+    },
+    "feedback": {
+      "heading": "chay’ Qapla’?",
+      "items": {
+        "learned": "De’ chu’ vIghojpu’.",
+        "fun": "jItIvqu’.",
+        "geduKnowledgeable": "po’ Gedu’wI’ ’ej muQaHpu’.",
+        "geduKind": "muparHa’ Gedu’wI’ ’ej jIQuch.",
+        "groupListens": "muQoy ghomwIj ’ej muyaj."
+      },
+      "scale": {
+        "no": "ghobe’",
+        "notReally": "ghobe’law’",
+        "aBit": "loQ",
+        "yes": "HISlaH",
+        "definitely": "HISlaHbej"
+      },
+      "notePrompt": "DaHjaj poHvaD latlh vay’ choja’laH’a’?",
+      "audience": "QInlIj laD Gedu’lI’ School of Gaming ghom je. qatlho’!",
+      "done": "rIn"
     }
   },
   "voiceButton": {

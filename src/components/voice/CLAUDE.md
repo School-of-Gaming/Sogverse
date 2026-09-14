@@ -158,6 +158,134 @@ Persisted messages, images, reactions, replies, mentions and moderation, in thei
 
 **Rule: the voice room *context* stays chat-free — the room may thread chat-owned props to named slots, and that is the whole of the seam.** The provider carries no chat hook and no chat fields, so the style-guide mock has nothing chat-shaped to fake and a room can be rendered with no chat at all. That separation is what lets one component tree serve a fixture scene and a live room with no branch inside it — put chat state in the provider and both ends lose it at once. Two named slots carry chat across it in the other direction, and both are optional with absence as the resting state: the `chat` slot the panel is drawn into, and the participant rail's per-person chat controls. An instant room passes neither, and the room it gets is a room with no chat in it. The line is between *state a room reads* and *props a caller hands it*: the first is forbidden, the second is how a slot works.
 
+## Session feedback (gamer only)
+
+A gamer leaving an online session is asked how it went: five statements, each answered on
+its own five-segment charge bar, an optional note and a Done. It replaces the last frame of
+leaving — the Leave button's navigation, and the card the room shows when the window closes
+and everyone is ejected — and only for that one audience.
+Every other role leaves exactly as it did before, and the error path is untouched.
+
+**Rule: saving is a no-op, deliberately, until there is an instrument to save into.** The
+screen collects answers in local state and Done does what leaving already did — navigate
+to where the reader came from. There is no route, no service and no table behind it: it
+exists so the product team can rule on the question set in context before any of that is
+built, and a prototype that quietly persisted children's answers would be the worse of the
+two mistakes. The page that mounts the screen is the one place the save will be written,
+and it says so beside the handler.
+
+**Rule: the screen is presentational and takes its statements as data.** It is handed the
+statements and reports one result through one callback, so it cannot know whether anything
+is saved and does not change when something is. The statements themselves are a typed
+constant in one place — a stable identifier per statement, never the English sentence,
+because the copy is rewritten freely and a stored answer has to survive that. Each
+identifier also carries the Yty-Element it will report into, and **that mapping is never
+surfaced to the gamer**: no element mark, name or colour appears on this screen, because a
+child told which bucket a statement feeds learns to answer the bucket.
+
+**Rule: scrolling is the design, and the screen is one column read from the top down.** The
+question is longer than a phone viewport and squeezing it to fit was tried and rejected: a
+child answering five statements is served by copy at the app's body size, targets big
+enough to hit with a thumb, labels at a readable size and the app's ordinary section gap
+between statements — none of which survives a layout budgeted to a viewport. So the column
+ends in Done, at the end, scrolled to like anything else; nothing is pinned over the page,
+because the dashboard layout scrolls the document itself.
+
+**Rule: the answer control is a five-segment bar that charges, and the level's word is
+shown once.** Tapping a segment fills it and every segment below it, and tapping a lower
+one drains back to it. Five words spread across a phone's width read as a list to pick from
+and repeat themselves five times down the page; one wide bar reads as a level being set,
+which is what the question actually asks for, and a gamer surface is where the palette may
+be spent. So the words leave the segments and the chosen level's own word is stated once,
+on the line below the bar — **under the segment that was tapped**, in the bar's own five
+columns, so the caption points at the choice rather than floating in the middle of a
+control it no longer describes. It is pulled in at the two ends (left under the first
+segment, right under the fifth) so a word longer than a fifth of the bar grows inward and
+never leaves the bar's outer edges; under the middle three it is centred on its segment and
+overflows into the empty columns beside it rather than wrapping or truncating.
+**The line that holds it is always reserved**, because
+an answer that grew a line would push the next statement down the page under the thumb that
+just tapped. It is a polite live region, so setting a level — and clearing one — is
+announced to a reader who cannot see the fill.
+
+**Rule: the bar shows its direction before a tap, and shows it twice.** An unanswered row
+of five identical blocks says nothing about which end is "more", and a child asked to set a
+level has to know that before they can set one. So the blocks **rise** from left to right,
+bottom-aligned like a signal meter, and while the statement is unanswered the reserved line
+under them carries the **first level's word at the left and the fifth's at the right** in
+muted type. Twice, because the two say it to different readers: the shape to a child who
+never reads the line, the words to one who does not read the shape. **Those words are a
+prompt, not a caption** — they stand only until a level is chosen, then give the line over
+to the single chosen word under its own segment, and come back when the bar is emptied. The
+line's five columns are unchanged either way and everything on it sits on one row, so only
+the contents are swapped and the height
+never moves. The end words are `aria-hidden` — assistive tech already hears all five as the
+radios' own names, and the scale said a second time there is furniture read aloud. **The rise is the drawing only: the
+tap target stays 44px on every segment**, with the block bottom-aligned inside a full-height
+label, because a first option with half the target of the last one biases the answers it
+collects.
+Underneath it is still a radio group with one name per statement and every level named to
+assistive tech, so the bar is five options rather than a picture of a value — and the fill
+is derived from the row's value, not from which radio is checked, because every segment
+below the chosen one fills too.
+
+**Corollary: a second tap on the level the fill already ends on empties the bar.** Skipping
+a statement has to stay reachable *after* a first tap — a child who taps by accident, or
+decides they would rather not answer, otherwise has no way back, and the screen would have
+turned an optional question into a compulsory one the moment it was touched. The tap that
+empties is the one the control itself is worst at reporting: a radio that is already
+checked fires no change event, so the clear is read from the click and the set from the
+change, and the word line goes back to empty with the bar. **From the keyboard the same tap
+is Space on the level already chosen** — activating the checked radio clears it, exactly as
+a second tap does — and that is deliberate: it is the keyboard route to a skip, and without
+it a reader who cannot point at the bar could answer a statement but never un-answer it.
+
+**The screen resets the page when it mounts**: it scrolls the document to the top instantly
+and moves focus to its own heading. It replaces a room that may have been scrolled a long
+way down and leaves focus on `<body>` otherwise, so the next Tab would restart at the top of
+the document and nothing would be announced. The reset lives in the screen rather than in
+the page that mounts it, so the preview scene arrives the same way the live one does. It is
+not a scroll *between* statements — that was built and rejected (see the rule below).
+
+**Rule: choosing an answer changes that bar and nothing else — the page does not move.**
+Scrolling the reader to the next statement on an answer was built and rejected: a child
+has to be able to see the level they just set, and a screen that travels on the tap takes
+the answer out from under them before they can check it. The column is scrolled by the
+reader, at their own pace, like any other page.
+
+**Rule: it is not carded on a phone, and is a narrow centred card above the small
+breakpoint.** Width is the scarce resource at the design floor — a card's padding and
+border come out of the bar, which is the one thing on the screen that cannot give — so
+below that breakpoint the column sits directly on the page inside the dashboard layout's
+own gutter and adds no horizontal padding of its own. Above it, width stops being scarce
+and stretching the column across a desktop is the opposite defect, so the card returns
+capped at the width the app gives a single-question page. The note field stands open at the
+foot of the column, where the last statement's scroll lands.
+
+**Rule: a statement stacks on a phone and is a row from `md` up, because the two widths run
+out of different things.** On a phone width is the scarce resource, so the bar takes the
+whole of it and the sentence sits above — that is the layout above, unchanged. On a desktop
+width is plentiful and *height* is what runs out: the same narrow column stacked five times
+is a tall thin ribbon down the middle of a wide screen, and the reader scrolls for want of a
+layout rather than for want of room. So from `md` the card widens and each statement becomes
+one row — the sentence taking the slack on the left, the bar with its reserved word line at
+a fixed width on the right, the sentence centred on the *segment row* rather than on the
+whole right-hand block, which is what stops it sitting visibly high of the thing it labels.
+Halving each statement's height is what puts all five, the note and Done inside one desktop
+viewport. The statement stays **one DOM block** at every width, with the row built as a grid
+inside it, so the radiogroup's labelling never reaches across a layout — and the word line
+is reserved in both, so setting or clearing a level still shifts nothing either way.
+
+**Every statement is optional and an unanswered one is a skip**, which is why there is no
+Skip button, no per-row skip control, and no state in which Done is refused — and why a
+second tap has to be able to put a statement back into that state. Done carries
+the committing flag the app-wide rule describes: set before the navigation, never cleared,
+because the document is leaving.
+
+The screen is judged in the preview scene rather than the style guide: what is open about
+it is how the column reads at the page's own width, chrome and scrolling, which a component
+card lifted out of the page cannot show.
+
 ## Daily token `user_name` encoding
 
 `user_name` is a pipe-delimited `userId|role|displayName`, with three further slots — `|gamePlatform|gameUsername|gameExternalId` — where the room carries a game identity. Build and parse only through `src/lib/voice/user-name.ts`.

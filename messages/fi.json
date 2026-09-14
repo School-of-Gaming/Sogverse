@@ -2809,6 +2809,26 @@
         "ready": "Huoneesi on valmis",
         "join": "Liity"
       }
+    },
+    "feedback": {
+      "heading": "Miten meni?",
+      "items": {
+        "learned": "Opin jotain uutta.",
+        "fun": "Minulla oli kiva.",
+        "geduKnowledgeable": "Geduni osasi asiansa ja auttoi minua.",
+        "geduKind": "Geduni oli ystävällinen ja mukava.",
+        "groupListens": "Ryhmäni kuuntelee ja ymmärtää minua."
+      },
+      "scale": {
+        "no": "Ei",
+        "notReally": "Vähän",
+        "aBit": "Jonkin verran",
+        "yes": "Kyllä",
+        "definitely": "Ehdottomasti"
+      },
+      "notePrompt": "Haluatko kertoa vielä jotain tämän päivän kerrasta?",
+      "audience": "Gedusi ja School of Gamingin tiimi lukevat palautteesi. Kiitos!",
+      "done": "Valmis"
     }
   },
   "voiceButton": {

@@ -2,15 +2,21 @@
 
 **Status: investigation, not committed.** Researched 7 September 2026; a second pass on
 8 September 2026 measured what prod actually does, which turned *placement* into a real
-question the first pass had assumed away. Nothing is built — there is no session-feedback
-table, route, or UI; the only feedback in the product is the free-text help card and its
-rate-limited submit path. The claims about our own code were checked against the repo on
-those dates. **The traffic and database figures below cover 30- and 90-day windows ending
+question the first pass had assumed away. Nothing here is built — no session-feedback table
+or route exists, and the only other feedback in the product is the free-text help card and
+its rate-limited submit path; the one built piece, the online gamer screen, has left this
+file (see the dated line below). The claims about our own code were checked against the
+repo on those dates. **The traffic and database figures below cover 30- and 90-day windows ending
 8 September 2026 — the very start of the autumn term.** The two windows return almost the
 same counts, so there is nearly no history behind them: re-pull after a full term rather
 than trusting them. The claims about **email client capability** are external, age faster,
 and are flagged where they need re-verifying before anyone builds on them. If this is
 committed to, it becomes a `docs/plans/` plan and this file is deleted.
+
+**14 September 2026: the online gamer leg is decided and built as a UI prototype, and its
+wiring is planned in `../plans/session-feedback-gamer-wiring.md` — that leg's question set,
+answer control, placement and storage live there, not here.** The in-person half of the
+gamer leg, the parent leg and the Gedu leg are still open questions and stay in this file.
 
 **The question:** if we ask for feedback at the end of a session, what should we ask each
 of the three audiences, what should we deliberately not ask, and in what format should
@@ -131,85 +137,7 @@ household's.
 
 ---
 
-## Gamers (7–17)
-
-### Ask — four items, every session, never changed
-
-1. I had fun today.
-2. My Gedu listened to me today.
-3. Someone in my group was friendly to me today.
-4. I want to come back next week.
-
-Optional fifth, rotating with whichever Yty-Element the session leaned on: *I felt okay
-being myself today* (Harmony), *I helped someone today* (Glow), *the group used one of my
-ideas today* (Valor), *I tried something today I had not tried before* (Wit).
-
-### Why these
-
-- **They cover what only a child can answer.** Safety mechanisms, value for money and
-  scheduling are parent questions; session quality is a Gedu question. Fun, being heard,
-  being treated well and wanting to return are the four things nobody else can report.
-- **#3 asks about observable behaviour, not an internal state.** "I felt included" asks a
-  young child to name a feeling; "someone was friendly to me" asks them to recall an
-  event. The second is answerable across the whole 7–17 band, which is what keeps one
-  instrument usable for every gamer.
-- **#2 is the most coachable item in the set.** It is about one adult's behaviour in one
-  session, so a low week is a conversation with evidence rather than a verdict on a person.
-- **#4 is the best churn predictor available from a child** — an intention, not a
-  satisfaction rating. It needs a per-product-type variant, because camps and events have
-  no next week, and the final session of a club term does not either.
-
-### Do not ask
-
-- **"I felt safe today."** A five-point safety score is a bad safeguarding instrument in
-  both directions: a child in trouble does not tick 2, and a high average manufactures
-  false comfort. Keep the friendliness item and **route a low or falling score to a human**
-  rather than into an average. This is the same standard `src/CLAUDE.md` sets for
-  safety copy — a mechanism, not a reassurance.
-- **Reverse-worded items** ("I was bored today") mixed among positives. With children they
-  cost more in measurement noise than they buy in acquiescence control.
-- **Rating the Gedu out of ten.** Asking a child to grade an adult they will see next week
-  returns nines and tens.
-- **Double-barrelled items** ("fun and educational"), and abstractions ("did the session
-  meet your expectations").
-- **Platform or tech satisfaction.** That is a Gedu question, and partly a telemetry
-  question.
-
-### Format
-
-- **Five points, fully labelled in words**, never bare numbers: *No · Not really · A bit ·
-  Yes · Yes, a lot*. Children anchor on labels, not on a numeric range.
-- **One scale for every age.** The youngest will skew high; that is acceptable because
-  **the level is nearly meaningless and the within-child change over weeks is the signal.**
-  A single scale keeps that change comparable, which a per-age-band scale would destroy.
-- **A skip is recorded as a skip, never as a middle value.** Rising non-response is the
-  earliest warning that the instrument has gone stale.
-- **Four taps, one screen, under fifteen seconds, no required fields.** Past that, gamers
-  straight-line and the data is worse than none.
-- **The moment is leaving the voice room — not inside it**, where a Gedu is on a shared
-  screen and the group is still present. The first pass said "on their own dashboard
-  afterwards"; the dashboards argue against that. Both family dashboards are dense pages
-  whose cards have an explicit three-part grammar and a corner badge reserved for *this
-  needs attention*, and a survey fits none of those slots. **Leaving the room is already a
-  full-page navigation to a validated internal path** — the voice session components take a
-  back target, default it to the role dashboard, and resolve it through
-  `resolveInternalPath()` — so a question can be interposed on that hand-off and then
-  forward to the destination the child was going to anyway. That costs no dashboard real
-  estate, inherits the redirect rule rather than restating it, and puts the question at the
-  moment of maximum recall. The same hand-off carries Gedus, so it must be role-aware.
-- **It only reaches online sessions**, which is the smaller half — see the in-person
-  section below.
-- Note that a gamer signing in through the parent's session may be answering with a parent
-  beside them, which degrades items 2 and 3. Under the switch-only shape prod is currently
-  in, that is not an edge case but the only way in.
-- **Cadence:** every club session; once per camp *day*, not per activity block; once per
-  event.
-- **Yty-Points for completing, never varying with the answers.** Rewarding the act is
-  fine; rewarding an answer buys fives.
-- **Labels are icons plus translated words** — the no-emoji rule for `messages/` applies, so
-  faces are `lucide-react` icons or nothing. Avoid idiom in the item text: five locales.
-
-### The in-person half, which has no moment at all
+## Gamers (7–17): the in-person half
 
 The larger half of gamer-sessions happens in a room, and three blockers stack there. None
 of them is a UI problem:
@@ -217,17 +145,16 @@ of them is a UI problem:
 1. **No signed-in device.** Prod is switch-only; see the constraint above.
 2. **No moment.** The child walks out of a hall. There is no navigation, no hand-off, no
    page to interpose anything on.
-3. **The room is the place this document already refuses to collect in.** A code on the
-   projector answered by nine children with the Gedu present is exactly the shape the
-   gamer format section rules out — so an in-person instrument would be worse data even
-   once built.
+3. **The room is the wrong place to collect in.** A code on the projector answered by nine
+   children with the Gedu present is a group answering under the eye of the adult it is
+   partly about — so an in-person instrument would be worse data even once built.
 
 **Which suggests not asking.** Attendance is already recorded per child per session, it
 covers every in-person session, it needs no login, no new UI and no new consent
-conversation, and the figures above show it genuinely varies. This document calls *I want
-to come back next week* the best churn predictor obtainable from a child; where the
-question cannot be put, the behaviour it predicts can be observed instead, and observed
-behaviour is the better measurement of the two.
+conversation, and the figures above show it genuinely varies. What the online instrument
+gets from a child is, at best, their intention to come back; where the question cannot be
+put, the behaviour that intention predicts can be observed instead, and observed behaviour
+is the better measurement of the two.
 
 What it cannot do is say **why** — it will not separate boredom from a cold from a house
 move. That is what the Gedu leg covers for those same sessions, and it is the argument for
@@ -279,8 +206,8 @@ after this session.**
 6. The reports tell me what I want to know.
 7. This is worth what we pay for it. — termly only, timed before the renewal decision.
 
-**#5 is a safety item asked of a parent, which the gamer set deliberately refuses.** The
-asymmetry is the point: a child ticking four on "I felt safe" is not a safeguarding
+**#5 is a safety item asked of a parent, which is not a question to put to a child on a
+scale.** The asymmetry is the point: a child ticking four on "I felt safe" is not a safeguarding
 instrument, but a parent's confidence in an institution is precisely the number that moves
 before a family leaves.
 
@@ -331,7 +258,7 @@ write, if it is cheap and they believe it is read.
 2. Every gamer in the group took part today.
 3. I had what I needed to run this session.
 
-**#2 is the counterpart to the gamer's friendliness item** and exists for the discrepancy:
+**#2 exists for the discrepancy** it can produce with what the children in the group say:
 a group where the Gedu says everyone took part and a child says nobody was friendly is
 visible through no other instrument we have.
 
@@ -357,7 +284,7 @@ is confidence, time-cost and avoidance, and those are exactly Likert-shaped:
    a tool whose success is invisibility.
 6. **There was something I wanted to do today that the platform would not let me.**
 
-**#6 is reverse-worded on purpose**, which the gamer set forbids. With adults it is safe,
+**#6 is reverse-worded on purpose**, which is noisy with children and safe with adults,
 and here it is the highest-value item in the survey: a high score is a feature request with
 a session attached. It carries the conditional text box above all others.
 
@@ -510,13 +437,15 @@ ordering matters less than it looked, and coverage is the open problem instead.
   build of the three, and the only leg that reaches in-person sessions.
 - **Parents — a tokenised link in the report mail.** Our own PIN gate rules out the in-app
   alternative more decisively than any mail-client argument does. Ceiling: 78% of sessions.
-- **Gamers — the voice-room leave, for online sessions only.** Roughly 42% of
-  gamer-sessions, and the honest answer for the rest is probably not to ask at all.
+- **Gamers, online — decided and planned**, at roughly 42% of gamer-sessions; the design
+  and its wiring live in `../plans/session-feedback-gamer-wiring.md`.
+- **Gamers, in person — still open**, and the honest answer for that half may be not to
+  ask at all.
 
-**Nothing here is decided, and the one that is not settled is the gamer leg.** The other
-two have obvious homes; the in-person half of the gamer population has no moment, no
-signed-in device, and a room this document already refuses to collect in. Whether the
-attendance derivation is an acceptable substitute for a question is the open call.
+**The open call in this file is the in-person half of the gamer population.** The parent
+and Gedu legs have obvious homes but are not committed to; the in-person half has no
+moment, no signed-in device, and only a room to collect in. Whether the attendance
+derivation is an acceptable substitute for a question is the call still to make.
 
 **What would still be true whatever is decided:** the storage rule at the top, and the fact
 that partial coverage is the design rather than a defect to be engineered away later — a
@@ -530,13 +459,10 @@ measures nothing.
 - **If AMP for Email turns out to be alive and supported by Brevo**, the parent flow could
   collect the full periodic set in the inbox — but only alongside the link-based fallback,
   which is the objection above and does not go away.
-- **If response rates on the gamer set fall below roughly half**, the instrument is being
-  ignored rather than answered, and the fix is fewer items or a different moment, not more
-  reminders.
 - **If the gamer sign-in modes reach prod**, the in-person half stops being structurally
   unreachable and every gamer answer stops being potentially the household's rather than
-  the child's. That is the single change that most alters the gamer leg, and it is already
-  written — it just has not been released.
+  the child's. That is the single change that most alters the open half of the gamer leg,
+  and it is already written — it just has not been released.
 - **If the report mail's button gains a marker**, the unanswerable question of whether
   parents click through from the mail becomes answerable in a week, and the parent leg
   stops being designed against a guess.
