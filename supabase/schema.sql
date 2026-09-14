@@ -1894,13 +1894,15 @@ $$;
 
 
 --
--- Name: create_gamer(uuid, uuid, text, text, date, public.gender_type, text, text, text, bigint, public.gamer_sign_in); Type: FUNCTION; Schema: public; Owner: -
+-- Name: create_gamer(uuid, uuid, text, text, date, public.gender_type, text, text, text, bigint, public.gamer_sign_in, boolean); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type DEFAULT NULL::public.gender_type, p_minecraft_username text DEFAULT NULL::text, p_minecraft_uuid text DEFAULT NULL::text, p_roblox_username text DEFAULT NULL::text, p_roblox_user_id bigint DEFAULT NULL::bigint, p_sign_in public.gamer_sign_in DEFAULT 'parent'::public.gamer_sign_in) RETURNS void
+CREATE FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type DEFAULT NULL::public.gender_type, p_minecraft_username text DEFAULT NULL::text, p_minecraft_uuid text DEFAULT NULL::text, p_roblox_username text DEFAULT NULL::text, p_roblox_user_id bigint DEFAULT NULL::bigint, p_sign_in public.gamer_sign_in DEFAULT 'parent'::public.gamer_sign_in, p_guardian_attested boolean DEFAULT false) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
+declare
+  v_declaration_version text;
 begin
   -- The PIN invariant, first and before anything is written: a gamer must never
   -- exist in a family that has no parent PIN, because the gate on leaving a
@@ -1914,6 +1916,18 @@ begin
        and pin_hash is not null
   ) then
     raise exception 'PIN_REQUIRED' using errcode = 'P0025';
+  end if;
+
+  -- The declaration, refused before anything is written and refused on NULL as
+  -- well as on false: a three-valued answer to "are you this child's parent or
+  -- guardian" is not an answer. There is no route by which a parent reaches
+  -- this with the box unticked — the form disables the button and the body
+  -- schema refuses anything but true — so this is the database's own guarantee
+  -- rather than the user-facing check, and a plain raise is the right shape:
+  -- nothing the parent can act on reaches them through it.
+  if p_guardian_attested is not true then
+    raise exception
+      'a gamer may only be created with the guardian declaration attested';
   end if;
 
   -- Promote the trigger-seeded customer profile to a gamer. Gate on role =
@@ -1946,6 +1960,29 @@ begin
   insert into public.gamer_profiles (user_id, date_of_birth, gender, sign_in)
   values (p_gamer_id, p_date_of_birth, p_gender, p_sign_in);
 
+  -- The declaration, against the wording that is current right now. It has to
+  -- follow the gamer_profiles insert above, because that is what the row's
+  -- foreign key points at. A slug with no published version is a broken deploy
+  -- rather than a runtime condition, and it is named rather than left to the
+  -- NOT NULL to abort with a message mentioning no document.
+  select cdv.version
+    into v_declaration_version
+    from public.consent_document_versions cdv
+   where cdv.document_slug = 'guardian-declaration'
+   order by cdv.created_at desc, cdv.version desc
+   limit 1;
+
+  if v_declaration_version is null then
+    raise exception 'no published version exists for guardian-declaration';
+  end if;
+
+  insert into public.gamer_consent_acceptances (
+    gamer_id, document_slug, document_version, accepted_by
+  )
+  values (
+    p_gamer_id, 'guardian-declaration', v_declaration_version, p_parent_id
+  );
+
   -- Optional Minecraft link. Nothing here can reject a username: the account may
   -- be shared with another Sogverse user, and an unresolvable one simply lands
   -- with a null uuid. The insert is inside this transaction so a failure from any
@@ -1973,10 +2010,10 @@ $$;
 
 
 --
--- Name: FUNCTION create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in, p_guardian_attested boolean); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in) IS 'The atomic promote-and-link the gamer-creation route calls once GoTrue has minted the auth user: swaps the trigger-seeded customer profile to a gamer in the parent''s locale, writes the gamer row with its chosen sign-in mode, links the optional game accounts, and links the parent — in ONE transaction, so a failure anywhere leaves nothing behind for the route to compensate but the auth user itself. service_role only. Refuses with SQLSTATE P0025 and the message PIN_REQUIRED when the named parent holds no PIN: the gate on leaving a gamer session is the parent''s PIN, so a family may not acquire a gamer before it has one, and the route turns that one refusal into a specific ask. The locale is copied from the parent once and never synced; the child changes it like anyone else. `p_sign_in` defaults to `parent`, the switch-only shape every gamer had before the modes existed.';
+COMMENT ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in, p_guardian_attested boolean) IS 'The atomic promote-and-link the gamer-creation route calls once GoTrue has minted the auth user: swaps the trigger-seeded customer profile to a gamer in the parent''s locale, writes the gamer row with its chosen sign-in mode, records the parent''s guardian declaration about THIS child, links the optional game accounts, and links the parent — in ONE transaction, so a failure anywhere leaves nothing behind for the route to compensate but the auth user itself. service_role only. Refuses with SQLSTATE P0025 and the message PIN_REQUIRED when the named parent holds no PIN: the gate on leaving a gamer session is the parent''s PIN, so a family may not acquire a gamer before it has one, and the route turns that one refusal into a specific ask. Refuses with a plain raise when p_guardian_attested is not true — false and NULL alike, because a three-valued answer to "are you this child''s parent or guardian" is not an answer — and the declaration is written against the CURRENT version of the guardian-declaration document, resolved here and never supplied by a caller. The locale is copied from the parent once and never synced; the child changes it like anyone else. `p_sign_in` defaults to `parent`, the switch-only shape every gamer had before the modes existed; `p_guardian_attested` defaults to false so an untaught caller is refused rather than admitted.';
 
 
 --
@@ -9495,6 +9532,61 @@ CREATE TABLE public.feedback_submissions (
 
 
 --
+-- Name: gamer_consent_acceptances; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.gamer_consent_acceptances (
+    gamer_id uuid NOT NULL,
+    document_slug text NOT NULL,
+    document_version text NOT NULL,
+    accepted_at timestamp with time zone DEFAULT now() NOT NULL,
+    accepted_by uuid NOT NULL
+);
+
+
+--
+-- Name: TABLE gamer_consent_acceptances; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.gamer_consent_acceptances IS 'One row per (gamer, document VERSION) an adult has accepted ABOUT THAT CHILD — the third subject in the 00210 consent system, beside consent_acceptances (per enrolment) and account_consent_acceptances (per account). What it exists for is the guardian declaration: the statement that this specific child is the adult''s own or that the adult is their legal guardian, made at the moment the child''s account is created and recorded against the wording that was on screen. An account-level declaration could not answer that, because an account that adds a second child later never said anything about the second one. NEVER REVOKED — a row is a statement that something was declared at an instant, and a statement about the past cannot be un-made, so there is no revoked_at column and there must never be one (the revocable photo consents are 00244 and are a separate system). INSERT-ONLY BY INTENT, and written from one place: neither `authenticated` nor `anon` holds any write grant, so no browser session can write a row by any path — they hold SELECT, gated by the two policies to a linked parent and to admins. `service_role` holds the usual full set, as it does on every table here, and create_gamer — service_role only — is the sole intended writer, which is what makes the declaration and the child arrive in one transaction or not at all.';
+
+
+--
+-- Name: COLUMN gamer_consent_acceptances.gamer_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gamer_consent_acceptances.gamer_id IS 'The child the declaration is ABOUT, keyed to gamer_profiles rather than to profiles so the foreign key itself says the subject is a gamer. ON DELETE CASCADE: a declaration of guardianship over somebody who no longer has an account governs nothing.';
+
+
+--
+-- Name: COLUMN gamer_consent_acceptances.document_slug; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gamer_consent_acceptances.document_slug IS 'Which document, never which revision of it — the stable identity in consent_documents.slug. A column rather than a hardcoded assumption that every row is the guardian declaration: a second thing an adult may one day have to state about one child is a new slug here, not a new table.';
+
+
+--
+-- Name: COLUMN gamer_consent_acceptances.document_version; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gamer_consent_acceptances.document_version IS 'The version that was CURRENT for this slug at the moment of the declaration, resolved server-side and never supplied by a caller. Part of the primary key, so a later revision is a fresh row rather than an overwrite.';
+
+
+--
+-- Name: COLUMN gamer_consent_acceptances.accepted_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gamer_consent_acceptances.accepted_at IS 'When the declaration was recorded, stamped by the server. A client never supplies it — a timestamp the declaring party chooses proves nothing about when they declared.';
+
+
+--
+-- Name: COLUMN gamer_consent_acceptances.accepted_by; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gamer_consent_acceptances.accepted_by IS 'The adult who made the statement — the parent creating the child, taken from create_gamer''s parent argument and never from anything a browser sent. A different question from gamer_id, which names who the statement is about, and the reason the pair is worth storing: a child linked to two adults carries the declaration of the one who actually made it. No cascade on the FK, matching consent_acceptances.accepted_by: the profile that made a legal record is part of it, so it cannot be hard-deleted while the record stands.';
+
+
+--
 -- Name: gamer_group_creations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -10964,6 +11056,14 @@ ALTER TABLE ONLY public.feedback_submissions
 
 
 --
+-- Name: gamer_consent_acceptances gamer_consent_acceptances_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gamer_consent_acceptances
+    ADD CONSTRAINT gamer_consent_acceptances_pkey PRIMARY KEY (gamer_id, document_slug, document_version);
+
+
+--
 -- Name: gamer_group_creations gamer_group_creations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -12235,6 +12335,30 @@ ALTER TABLE ONLY public.feedback_submissions
 
 
 --
+-- Name: gamer_consent_acceptances gamer_consent_acceptances_accepted_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gamer_consent_acceptances
+    ADD CONSTRAINT gamer_consent_acceptances_accepted_by_fkey FOREIGN KEY (accepted_by) REFERENCES public.profiles(id);
+
+
+--
+-- Name: gamer_consent_acceptances gamer_consent_acceptances_document_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gamer_consent_acceptances
+    ADD CONSTRAINT gamer_consent_acceptances_document_fkey FOREIGN KEY (document_slug, document_version) REFERENCES public.consent_document_versions(document_slug, version);
+
+
+--
+-- Name: gamer_consent_acceptances gamer_consent_acceptances_gamer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gamer_consent_acceptances
+    ADD CONSTRAINT gamer_consent_acceptances_gamer_id_fkey FOREIGN KEY (gamer_id) REFERENCES public.gamer_profiles(user_id) ON DELETE CASCADE;
+
+
+--
 -- Name: gamer_group_creations gamer_group_creations_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -13004,6 +13128,13 @@ CREATE POLICY admins_read_consent_acceptances ON public.consent_acceptances FOR 
 
 
 --
+-- Name: gamer_consent_acceptances admins_read_gamer_consent_acceptances; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY admins_read_gamer_consent_acceptances ON public.gamer_consent_acceptances FOR SELECT TO authenticated USING (( SELECT public.is_admin() AS is_admin));
+
+
+--
 -- Name: gamer_photo_consent_events admins_read_gamer_photo_consent_events; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -13225,6 +13356,12 @@ ALTER TABLE public.family_subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.feedback_submissions ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: gamer_consent_acceptances; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.gamer_consent_acceptances ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: gamer_group_creations; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -13425,6 +13562,13 @@ ALTER TABLE public.minecraft_accounts ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.parent_gamer ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: gamer_consent_acceptances parents_read_gamer_consent_acceptances; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY parents_read_gamer_consent_acceptances ON public.gamer_consent_acceptances FOR SELECT TO authenticated USING (public.is_parent_of(gamer_id));
+
 
 --
 -- Name: gamer_photo_consents parents_read_gamer_photo_consents; Type: POLICY; Schema: public; Owner: -
@@ -14075,11 +14219,11 @@ GRANT ALL ON FUNCTION public.count_active_seats(p_product_id uuid) TO service_ro
 
 
 --
--- Name: FUNCTION create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in, p_guardian_attested boolean); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in) TO service_role;
+REVOKE ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in, p_guardian_attested boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in, p_guardian_attested boolean) TO service_role;
 
 
 --
@@ -15079,6 +15223,14 @@ GRANT SELECT ON TABLE public.family_subscriptions TO authenticated;
 GRANT SELECT ON TABLE public.feedback_submissions TO anon;
 GRANT ALL ON TABLE public.feedback_submissions TO service_role;
 GRANT SELECT ON TABLE public.feedback_submissions TO authenticated;
+
+
+--
+-- Name: TABLE gamer_consent_acceptances; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.gamer_consent_acceptances TO authenticated;
+GRANT ALL ON TABLE public.gamer_consent_acceptances TO service_role;
 
 
 --
