@@ -3827,14 +3827,14 @@
       "technical": {
         "heading": "Technical information",
         "paragraphs": [
-          "Running a website means some technical information passes through the companies that host and secure it for us. None of it is something we ask you for, and we don’t keep a copy of it in our own database — it exists in our providers’ systems for as long as they need it to keep the site working and safe, and we don’t extend that. Here is what it is and where it goes:"
+          "Running a website means some technical information passes through the companies that host and secure it for us. None of it is something we ask you for, and we don’t keep a copy of it in any table of ours — it exists in our providers’ systems for as long as they need it to keep the site working and safe, and we don’t extend that. Here is what it is and where it goes:"
         ],
         "bullets": [
-          "Sign-in records — when you sign in, Supabase, which runs our accounts, keeps a record of the session: when it started, the browser it came from and its internet address. That is what lets us keep you signed in and end a session that shouldn’t be there. The record is deleted with the session, and everything goes when the account does.",
-          "Requests and errors — every page you open is a request to Vercel, which hosts the site. Like any host, Vercel logs it: the page, the time, your browser type and its internet address, and any error it caused. We use those logs to keep the site running and to find faults. Vercel also counts requests to each part of the site on its own servers — totals, not people — and that count runs without any cookie or consent. It is separate from the analytics you can switch on or off below, which is the only thing that follows a visit through the site.",
+          "Sign-in records — when you sign in, Supabase, which runs our accounts, keeps a record of the session: when it started, the browser and device it came from and its internet address. That is what lets us keep you signed in and end a session that shouldn’t be there. The record is deleted when the session ends, and everything goes when the account does.",
+          "Requests and errors — every page you open is a request to Vercel, which hosts the site. Like any host, Vercel logs it: the page, the time, your browser and device type and its internet address, and any error it caused. We use those logs to keep the site running and to find faults. Vercel also counts requests to each part of the site on its own servers — totals, not people — and that count runs without any cookie or consent. It is separate from the analytics you can switch on or off below.",
           "Cookies and analytics — a few necessary cookies, and analytics and marketing only if you choose them. All of it is set out in \"Cookies, analytics and advertising\" below.",
           "Live sessions — during a voice session your child’s device connects to Daily.co directly, so Daily sees its internet address and connection details for the length of the call. See \"Voice and video sessions\" below.",
-          "We don’t run an error-tracking or logging service of our own, we never store your internet address or browser details in our own database, and none of this is used to build a profile of you or your child."
+          "What we don’t do — we don’t run an error-tracking or logging service of our own, we never store your internet address or browser details in any table of ours, and none of this is used to build a profile of you or your child."
         ]
       },
       "childrensPrivacy": {
@@ -3842,7 +3842,7 @@
         "paragraphs": [
           "Most of the people using Sogverse are children, so their safety and privacy is our highest priority.",
           "A child can never create their own account. Only a parent or guardian sets up a child’s account, chooses what to share, and gives permission on their behalf. That’s how we meet our responsibilities under data-protection law when it comes to children.",
-          "What we hold about a child is set out above under \"The information we collect\", and we don’t collect anything about a child beyond what we need to run our clubs, camps, and events. We never show children advertising, and we never sell or share their data for marketing. When your child is signed in as a gamer, nothing about their browsing is sent to an advertising platform, even if marketing is switched on for the device. Live sessions are run by our trained Game Educators (we call them Gedus).",
+          "What we hold about a child is set out above under \"The information we collect\" and \"Technical information\", and we don’t collect anything about a child beyond what we need to run our clubs, camps, and events. We never show children advertising, and we never sell or share their data for marketing. When your child is signed in as a gamer, nothing about their browsing is sent to an advertising platform, even if marketing is switched on for the device. Live sessions are run by our trained Game Educators (we call them Gedus).",
           "If you ever want to see, change, or delete your child’s information, just email {supportEmail} and we’ll take care of it."
         ]
       },
@@ -3886,9 +3886,9 @@
           "Daily.co — powers the live voice and video sessions; your child’s device connects to it directly during a session.",
           "Vercel — hosts the website, so every request passes through it (see \"Technical information\"), and provides anonymous usage statistics if you allow analytics.",
           "Meta (WhatsApp) — used to send some messages and reminders to families who prefer WhatsApp.",
-          "Roblox — receives your child’s Roblox account id, so we can confirm the account and show their avatar picture.",
+          "Roblox — receives your child’s Roblox account id, so we can confirm the account, and your browser fetches their avatar picture from Roblox directly.",
           "Mojang (Microsoft) — receives your child’s Minecraft username, so we can confirm the account.",
-          "mc-heads.net — draws the picture of your child’s Minecraft character from their Minecraft username, which is public in the game.",
+          "mc-heads.net — your browser fetches the picture of your child’s Minecraft character from it directly, using their Minecraft username, which is public in the game. It is a free public service rather than a contractor of ours, and it sees only that request.",
           "Meta (Facebook and Instagram) — through the Meta Pixel in your browser and reports from our servers, sees how you use our site, so we can show you our ads there and measure how they perform. Only if you allow marketing cookies."
         ]
       },
@@ -3896,7 +3896,7 @@
         "heading": "Cookies, analytics and advertising",
         "paragraphs": [
           "A few cookies are simply how the site works: they keep you signed in and remember when you’ve switched between the accounts in your family, remember that you entered your parent PIN, hold your language and timezone, store the cookie choice you make, and remember that you’ve closed the guide we show before a first session. These don’t need your consent — without them there is no site to consent to.",
-          "Everything else waits for you. The first time you visit we ask, and nothing beyond those necessary cookies runs until you answer. You can change your mind whenever you like from Privacy choices at the bottom of every page: switching something off takes effect straight away, and it doesn’t change anything we already did while it was on.",
+          "Everything else waits for you. The first time you visit we ask, and nothing beyond those necessary cookies runs in your browser until you answer. You can change your mind whenever you like from Privacy choices at the bottom of every page: switching something off takes effect straight away, and it doesn’t change anything we already did while it was on.",
           "There are two things to say yes or no to:"
         ],
         "bullets": [
@@ -3908,7 +3908,7 @@
         "heading": "Voice and video sessions",
         "paragraphs": [
           "Live clubs, camps, and events take place over voice and video, powered by Daily.co. Sessions are run live by our trained Game Educators, and we use it only to deliver the session your child signed up for.",
-          "Your child’s device connects to Daily.co directly for the call, so Daily sees its internet address and connection details for as long as the session lasts, and Daily’s own software reports faults it meets in the browser back to Daily. To put your child in the right room we give Daily their first name and, where they have added one, their game username and the id that game gives them, so the Gedu and the other gamers in the room can see who is speaking. Sessions are not recorded."
+          "Your child’s device connects to Daily.co directly for the call, so Daily sees its internet address and connection details for as long as the session lasts, and Daily’s own software reports faults it meets in the browser back to Daily. To put your child in the right room we give Daily their first name and, where they have added one, their game username and the id that game gives them, so the Gedu and the other gamers in the room can see who is speaking. The audio and video are not recorded."
         ]
       },
       "retention": {

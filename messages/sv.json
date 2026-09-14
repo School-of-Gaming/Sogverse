@@ -3139,14 +3139,14 @@
       "technical": {
         "heading": "Teknisk information",
         "paragraphs": [
-          "Att driva en webbplats innebär att en del teknisk information passerar genom de företag som är värdar för den och håller den säker åt oss. Inget av det är något vi ber dig om, och vi sparar ingen kopia av det i vår egen databas – det finns i våra leverantörers system så länge de behöver det för att hålla webbplatsen igång och säker, och vi förlänger inte det. Här är vad det är och vart det tar vägen:"
+          "Att driva en webbplats innebär att en del teknisk information passerar genom de företag som är värdar för den och håller den säker åt oss. Inget av det är något vi ber dig om, och vi sparar ingen kopia av det i någon tabell hos oss – det finns i våra leverantörers system så länge de behöver det för att hålla webbplatsen igång och säker, och vi förlänger inte det. Här är vad det är och vart det tar vägen:"
         ],
         "bullets": [
-          "Inloggningsuppgifter – när du loggar in sparar Supabase, som driver våra konton, en notering om sessionen: när den startade, vilken webbläsare den kom från och dess internetadress. Det är det som låter oss hålla dig inloggad och avsluta en session som inte borde finnas. Noteringen raderas tillsammans med sessionen, och allt försvinner när kontot gör det.",
-          "Förfrågningar och fel – varje sida du öppnar är en förfrågan till Vercel, som är värd för webbplatsen. Som alla webbvärdar loggar Vercel den: sidan, tidpunkten, din webbläsartyp och dess internetadress, och eventuella fel som uppstod. Vi använder de loggarna för att hålla webbplatsen igång och för att hitta fel. Vercel räknar också förfrågningar till varje del av webbplatsen på sina egna servrar – summor, inte personer – och den räkningen sker utan någon cookie och utan samtycke. Den är skild från den analys du kan slå på eller av nedan, som är det enda som följer ett besök genom webbplatsen.",
+          "Noteringar om inloggningar – när du loggar in sparar Supabase, som driver våra konton, en notering om sessionen: när den startade, vilken webbläsare och enhet den kom från och dess internetadress. Det är det som låter oss hålla dig inloggad och avsluta en session som inte borde finnas. Noteringen raderas när sessionen avslutas, och allt försvinner när kontot gör det.",
+          "Förfrågningar och fel – varje sida du öppnar är en förfrågan till Vercel, som är värd för webbplatsen. Som alla webbvärdar loggar Vercel den: sidan, tidpunkten, din webbläsar- och enhetstyp och dess internetadress, och eventuella fel som uppstod. Vi använder de loggarna för att hålla webbplatsen igång och för att hitta fel. Vercel räknar också förfrågningar till varje del av webbplatsen på sina egna servrar – summor, inte personer – och den räkningen sker utan någon cookie och utan samtycke. Den är skild från den analys du kan slå på eller av nedan.",
           "Cookies och analys – några nödvändiga cookies, och analys och marknadsföring bara om du väljer dem. Allt det beskrivs under \"Cookies, analys och annonsering\" nedan.",
           "Direktsända träffar – under en rösträff ansluter ditt barns enhet direkt till Daily.co, så Daily ser enhetens internetadress och anslutningsuppgifter så länge samtalet pågår. Se \"Röst- och videoträffar\" nedan.",
-          "Vi driver ingen egen tjänst för felspårning eller loggning, vi lagrar aldrig din internetadress eller dina webbläsaruppgifter i vår egen databas, och inget av det här används för att bygga en profil av dig eller ditt barn."
+          "Vad vi inte gör – vi driver ingen egen tjänst för felspårning eller loggning, vi lagrar aldrig din internetadress eller dina webbläsaruppgifter i någon tabell hos oss, och inget av det här används för att bygga en profil av dig eller ditt barn."
         ]
       },
       "childrensPrivacy": {
@@ -3154,7 +3154,7 @@
         "paragraphs": [
           "De flesta som använder Sogverse är barn, så deras trygghet och integritet är vår högsta prioritet.",
           "Ett barn kan aldrig skapa ett eget konto. Endast en förälder eller vårdnadshavare skapar barnets konto, väljer vad som delas och ger tillstånd å barnets vägnar. Så uppfyller vi våra skyldigheter enligt dataskyddslagstiftningen när det gäller barn.",
-          "Vad vi lagrar om ett barn står ovan under \"Vilka uppgifter vi samlar in\", och vi samlar inte in något om ett barn utöver det vi behöver för att driva våra klubbar, läger och evenemang. Vi visar aldrig reklam för barn och vi säljer eller delar aldrig deras uppgifter för marknadsföring. När ditt barn är inloggat som spelare skickas ingenting om barnets surfande till en annonsplattform, även om marknadsföring är påslagen på enheten. Träffarna leds av våra utbildade spelfostrare (vi kallar dem Geduer).",
+          "Vad vi lagrar om ett barn står ovan under \"Vilka uppgifter vi samlar in\" och \"Teknisk information\", och vi samlar inte in något om ett barn utöver det vi behöver för att driva våra klubbar, läger och evenemang. Vi visar aldrig reklam för barn och vi säljer eller delar aldrig deras uppgifter för marknadsföring. När ditt barn är inloggat som spelare skickas ingenting om barnets surfande till en annonsplattform, även om marknadsföring är påslagen på enheten. Träffarna leds av våra utbildade spelfostrare (vi kallar dem Geduer).",
           "Om du när som helst vill se, ändra eller radera ditt barns uppgifter är det bara att mejla {supportEmail}, så ordnar vi det."
         ]
       },
@@ -3198,9 +3198,9 @@
           "Daily.co – möjliggör de direktsända röst- och videoträffarna; ditt barns enhet ansluter direkt till tjänsten under en träff.",
           "Vercel – är värd för webbplatsen, så varje förfrågan passerar genom Vercel (se \"Teknisk information\"), och tillhandahåller anonym användningsstatistik om du tillåter analys.",
           "Meta (WhatsApp) – för att skicka vissa meddelanden och påminnelser till familjer som hellre använder WhatsApp.",
-          "Roblox – tar emot ditt barns Roblox-konto-id, så att vi kan bekräfta kontot och visa barnets avatarbild.",
+          "Roblox – tar emot ditt barns Roblox-konto-id, så att vi kan bekräfta kontot, och din webbläsare hämtar barnets avatarbild direkt från Roblox.",
           "Mojang (Microsoft) – tar emot ditt barns Minecraft-användarnamn, så att vi kan bekräfta kontot.",
-          "mc-heads.net – ritar bilden av ditt barns Minecraft-figur utifrån barnets Minecraft-användarnamn, som är offentligt i spelet.",
+          "mc-heads.net – din webbläsare hämtar bilden av ditt barns Minecraft-figur direkt därifrån, utifrån barnets Minecraft-användarnamn, som är offentligt i spelet. Det är en gratis offentlig tjänst och inte en underleverantör till oss, och den ser bara den förfrågan.",
           "Meta (Facebook och Instagram) – ser via Meta-pixeln i din webbläsare och rapporter från våra servrar hur du använder vår webbplats, så att vi kan visa dig våra annonser där och mäta hur de presterar. Bara om du tillåter cookies för marknadsföring."
         ]
       },
@@ -3208,7 +3208,7 @@
         "heading": "Cookies, analys och annonsering",
         "paragraphs": [
           "Några cookies är helt enkelt hur webbplatsen fungerar: de håller dig inloggad och kommer ihåg när du har bytt mellan kontona i din familj, kommer ihåg att du angett din föräldra-PIN, sparar ditt språk och din tidszon, lagrar det cookieval du gör och kommer ihåg att du har stängt guiden som vi visar inför en första träff. De kräver inte ditt samtycke – utan dem finns det ingen webbplats att samtycka till.",
-          "Allt annat väntar på dig. Första gången du besöker oss frågar vi, och inget utöver de nödvändiga cookiesarna startar förrän du svarar. Du kan ändra dig när som helst via Integritetsval längst ner på varje sida: att stänga av något gäller direkt, och ändrar inte det vi redan gjort medan det var på.",
+          "Allt annat väntar på dig. Första gången du besöker oss frågar vi, och inget utöver de nödvändiga cookiesarna startar i din webbläsare förrän du svarar. Du kan ändra dig när som helst via Integritetsval längst ner på varje sida: att stänga av något gäller direkt, och ändrar inte det vi redan gjort medan det var på.",
           "Det finns två saker att säga ja eller nej till:"
         ],
         "bullets": [
@@ -3220,7 +3220,7 @@
         "heading": "Röst- och videoträffar",
         "paragraphs": [
           "Direktsända klubbar, läger och evenemang hålls via röst och video med hjälp av Daily.co. Träffarna leds live av våra utbildade spelfostrare, och vi använder tjänsten endast för att genomföra den träff som ditt barn anmält sig till.",
-          "Ditt barns enhet ansluter direkt till Daily.co för samtalet, så Daily ser enhetens internetadress och anslutningsuppgifter så länge träffen pågår, och Dailys egen programvara rapporterar fel som den möter i webbläsaren tillbaka till Daily. För att placera ditt barn i rätt rum ger vi Daily barnets förnamn och, om barnet har lagt till ett sådant, barnets spelanvändarnamn och det id som spelet ger barnet, så att spelfostraren och de andra spelarna i rummet ser vem som talar. Träffarna spelas inte in."
+          "Ditt barns enhet ansluter direkt till Daily.co för samtalet, så Daily ser enhetens internetadress och anslutningsuppgifter så länge träffen pågår, och Dailys egen programvara rapporterar fel som den möter i webbläsaren tillbaka till Daily. För att placera ditt barn i rätt rum ger vi Daily barnets förnamn och, om barnet har lagt till ett sådant, barnets spelanvändarnamn och det id som spelet ger barnet, så att spelfostraren och de andra spelarna i rummet ser vem som talar. Ljudet och videon spelas inte in."
         ]
       },
       "retention": {
