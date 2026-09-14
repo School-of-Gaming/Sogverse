@@ -3,16 +3,30 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
 import { SessionFeedbackScreen } from "@/components/voice/feedback/SessionFeedbackScreen";
+import type { SessionFeedbackInitialState } from "@/components/voice/feedback/SessionFeedbackScreen";
 import {
+  SESSION_FEEDBACK_NOTE_MAX_LENGTH,
   SESSION_FEEDBACK_RATING_KEYS,
   type SessionFeedbackResult,
 } from "@/components/voice/feedback/session-feedback-items";
 
 /**
- * The screen collects answers and reports them once, and that is the whole of
- * its contract — no save, no route, no store. What is worth pinning is what a
- * child's session would otherwise lose silently:
+ * The screen opens on a state it is handed, collects answers and reports them
+ * once, and that is the whole of its contract — no save, no route, no store.
+ * What is worth pinning is what a child's session would otherwise lose
+ * silently:
  *
+ * - **It opens charged to whatever it was handed**, and reports that back
+ *   merged with whatever the reader then did to it — including a seeded answer
+ *   taken back off the record by a second tap, which is the one path where a
+ *   stored value has to *stop* being reported.
+ * - **The initial state is read once.** A later one is a read landing behind
+ *   the reader, so a rerender with a different one must change nothing —
+ *   asserted through a rerender rather than a fresh mount, because a fresh
+ *   mount cannot tell "read once" from "read every render".
+ * - **The status line is there only when the caller hands one over**, above the
+ *   button it is about, because a reader at the foot of the column cannot read
+ *   a line at the top of it.
  * - **A tap charges the bar to that level**, filling every segment below it; a
  *   lower tap drains back to it, and a second tap on the level the fill already
  *   ends on empties the bar — the only route back to unanswered, and the one a
@@ -68,19 +82,41 @@ function renderScreen(
   overrides: {
     onDone?: (result: SessionFeedbackResult<AskedKey>) => void;
     committing?: boolean;
+    initial?: SessionFeedbackInitialState<AskedKey>;
+    status?: string;
   } = {},
 ) {
   const onDone = overrides.onDone ?? vi.fn();
-  render(
+  // `rerender` is handed back so the seed-once test can hand the *same* mounted
+  // screen a different `initial`, which is the only way to tell a value read
+  // once from a value read on every render.
+  const { rerender } = render(
     <NextIntlClientProvider locale="en" messages={messages}>
       <SessionFeedbackScreen
         items={ITEMS}
         onDone={onDone}
         committing={overrides.committing ?? false}
+        initial={overrides.initial}
+        status={overrides.status}
       />
     </NextIntlClientProvider>,
   );
-  return { onDone };
+  return {
+    onDone,
+    reseed: (initial: SessionFeedbackInitialState<AskedKey>) => {
+      rerender(
+        <NextIntlClientProvider locale="en" messages={messages}>
+          <SessionFeedbackScreen
+            items={ITEMS}
+            onDone={onDone}
+            committing={overrides.committing ?? false}
+            initial={initial}
+            status={overrides.status}
+          />
+        </NextIntlClientProvider>,
+      );
+    },
+  };
 }
 
 /**
@@ -357,9 +393,108 @@ describe("the session feedback screen", () => {
     // turn every rewrite of it into a failing test about something else.
     const field = screen.getByRole("textbox");
     expect(field.hasAttribute("disabled")).toBe(false);
+    // And capped where the row is capped, so the field stops a reader rather
+    // than letting them write a tail that is trimmed off on the way to storage.
+    expect(field.getAttribute("maxlength")).toBe(
+      String(SESSION_FEEDBACK_NOTE_MAX_LENGTH),
+    );
 
     fireEvent.change(field, { target: { value: "hi" } });
     expect(screen.getByDisplayValue("hi")).toBe(field);
+  });
+
+  it("opens charged to the answers and note it was handed", () => {
+    renderScreen({
+      initial: { answers: { fun: 5, learned: 2 }, note: "we built a castle" },
+    });
+
+    expect(level(barFor("I had fun."), "Definitely").checked).toBe(true);
+    expect(wordLine("I had fun.").textContent).toBe("Definitely");
+    // Seeded and unanswered statements sit side by side, so a form opened on a
+    // partial answer still says which way its untouched bars run.
+    expect(endWords("I had fun.")).toEqual([]);
+    expect(endWords("My Gedu was friendly and kind.")).toEqual([
+      "No",
+      "Definitely",
+    ]);
+    expect(screen.getByDisplayValue("we built a castle")).toBe(
+      screen.getByRole("textbox"),
+    );
+  });
+
+  it("reports what it opened with, merged with what the reader then did", () => {
+    const { onDone, results } = captureDone();
+    renderScreen({
+      onDone,
+      initial: { answers: { fun: 5, learned: 2 }, note: "we built a castle" },
+    });
+
+    // The three things a second visit can do to a seeded answer: leave it,
+    // change it, and take it back off the record entirely.
+    fireEvent.click(segment(barFor("I learned something new."), "Yes"));
+    fireEvent.click(segment(barFor("My Gedu was friendly and kind."), "A bit"));
+    fireEvent.click(segment(barFor("I had fun."), "Definitely"));
+
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "and a moat" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+
+    expect(results[0]).toStrictEqual({
+      answers: { ...NO_ANSWERS, learned: 4, geduKind: 3 },
+      note: "and a moat",
+    });
+  });
+
+  it("does not re-seed when the initial state changes after it has mounted", () => {
+    const { onDone, results } = captureDone();
+    const { reseed } = renderScreen({
+      onDone,
+      initial: { answers: { fun: 5 }, note: "we built a castle" },
+    });
+
+    fireEvent.click(segment(barFor("I learned something new."), "No"));
+
+    // A read resolving behind the reader. Whatever it brings is older than the
+    // taps already made, so it must not reach the form.
+    reseed({ answers: { fun: 1, groupListens: 1 }, note: "something else" });
+
+    expect(level(barFor("I had fun."), "Definitely").checked).toBe(true);
+    expect(
+      level(barFor("My group listens to and understands me."), "No").checked,
+    ).toBe(false);
+    expect(screen.getByDisplayValue("we built a castle")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    expect(results[0]).toStrictEqual({
+      answers: { ...NO_ANSWERS, fun: 5, learned: 1 },
+      note: "we built a castle",
+    });
+  });
+
+  it("draws the caller's status line, above the button it is about", () => {
+    // Already-translated copy, exactly like `lead`: the screen renders the
+    // sentence it is handed, so a literal here is what a caller passes.
+    renderScreen({ status: "These answers didn’t save. Try again." });
+
+    const line = screen.getByText("These answers didn’t save. Try again.");
+    const done = screen.getByRole("button", { name: "Done" });
+    expect(
+      line.compareDocumentPosition(done) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeGreaterThan(0);
+  });
+
+  it("draws nothing where the status line would go when there is none", () => {
+    renderScreen();
+
+    // Absence is the resting state: a form nobody has failed to save must look
+    // exactly as it did before the prop existed, with no slot held open.
+    expect(
+      screen.queryByText("These answers didn’t save. Try again."),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Done" }).hasAttribute("disabled"),
+    ).toBe(false);
   });
 
   it("holds Done disabled while the caller is acting on it", () => {

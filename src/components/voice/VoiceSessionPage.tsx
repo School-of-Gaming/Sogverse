@@ -19,7 +19,13 @@ import {
   useSetGamerGroupCreations,
   useSetGamerGroupNote,
 } from "@/services/member-flair";
+import {
+  isEmptySessionFeedback,
+  useOwnSessionFeedback,
+  useSaveSessionFeedback,
+} from "@/services/session-feedback";
 import { useVoiceToken } from "@/services/voice";
+import type { SessionFeedbackResult } from "@/components/voice/feedback/session-feedback-items";
 import type { GamerCreation } from "@/types";
 
 interface VoiceSessionPageProps {
@@ -72,6 +78,20 @@ function VoiceSessionInner({
    * the button back.
    */
   const [finishing, setFinishing] = useState(false);
+  /**
+   * Whether the last Done failed to save, which is the only thing the screen is
+   * told about the write.
+   */
+  const [saveFailed, setSaveFailed] = useState(false);
+  /**
+   * The instant this session's window opened, as the token response gave it.
+   *
+   * It is the third column of the feedback row's key and the same value the
+   * room stamps occupancy with, so the page holds it rather than consuming it
+   * where the token resolves. Null until the token does, which is also what
+   * holds the prefill read.
+   */
+  const [sessionOpensAt, setSessionOpensAt] = useState<string | null>(null);
   const feedbackItems = useSessionFeedbackItems();
 
   /**
@@ -114,13 +134,34 @@ function VoiceSessionInner({
 
     getToken
       .mutateAsync(groupId)
-      .then(({ token, roomUrl, sessionOpensAt }) => join(roomUrl, token, { sessionOpensAt }))
+      .then(({ token, roomUrl, sessionOpensAt: opensAt }) => {
+        setSessionOpensAt(opensAt);
+        return join(roomUrl, token, { sessionOpensAt: opensAt });
+      })
       .then(() => setWasJoined(true))
       .catch((err) => {
         setError(err instanceof Error ? err.message : t('failedToJoinRoom'));
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only run once on mount
   }, []);
+
+  /**
+   * What this viewer already answered in this window, read as they join and
+   * held until they leave.
+   *
+   * **Read here rather than at the moment of leaving**, because both paths to
+   * the question are abrupt: a Leave whose disconnect has already happened, and
+   * a room closing under everyone, which fires on any post-join drop — a failed
+   * network among them — and must not wait on a fresh read right then. It asks
+   * only for a viewer the page asks, and only once the window instant the row
+   * is keyed by is in hand.
+   *
+   * A row that never existed and a read that failed are both survivable here:
+   * the form opens empty either way. The two are told apart exactly once, in
+   * the write-or-skip rule below.
+   */
+  const prefill = useOwnSessionFeedback(groupId, sessionOpensAt, askForFeedback);
+  const { mutate: saveSessionFeedback } = useSaveSessionFeedback();
 
   /**
    * The staff-supplied overlay for this room, and the two writes behind it.
@@ -198,18 +239,70 @@ function VoiceSessionInner({
   }, [leave, backHref, askForFeedback]);
 
   /**
-   * Done, from either path the question is asked on.
+   * Done, from either path the question is asked on: the answers are written to
+   * this viewer's own row for this group and window, and then the navigation
+   * leaving already performed happens.
    *
-   * **This is the seam where the save goes.** Today the answers are collected
-   * and dropped: the screen is a prototype for the product team to rule on, and
-   * nothing behind it exists yet — no route, no service, no table. When the
-   * instrument lands it is written here, and the screen does not change, because
-   * the screen has never known whether anything is saved.
+   * **The write-or-skip rule is one condition.** The write is skipped when the
+   * form is empty *and* nothing was loaded into it — a first-time Done with
+   * nothing on screen, which saves nothing because the response rate's
+   * denominator is the sessions themselves. Something answered, or a row
+   * loaded and now cleared, writes. A read that failed counts as nothing
+   * loaded: the child saw an empty form, so an empty Done has nothing of
+   * theirs to replace, and the row they never saw is left as it was.
+   *
+   * **The screen's `onDone` is synchronous and this owns the promise.** The
+   * committing flag is set before the call and left set on the success path,
+   * where the document unloads; a refusal clears it, keeps the screen mounted
+   * with what the reader typed still in it, and says so above a Done that
+   * retries this same write.
    */
-  const handleFeedbackDone = useCallback(() => {
-    setFinishing(true);
-    window.location.href = backHref;
-  }, [backHref]);
+  const handleFeedbackDone = useCallback(
+    (result: SessionFeedbackResult) => {
+      setFinishing(true);
+      setSaveFailed(false);
+
+      const nothingToKeep = isEmptySessionFeedback(result) && !prefill.data;
+      // The screen cannot mount before the token resolved — the join it waits
+      // on is what sets this — so the null branch is the compiler's, not a
+      // state a reader can reach. With no key there is no row to write.
+      if (nothingToKeep || sessionOpensAt === null) {
+        window.location.href = backHref;
+        return;
+      }
+
+      saveSessionFeedback(
+        {
+          groupId,
+          sessionOpensAt,
+          result,
+          // Which way out this is: the Leave button, or the room closing under
+          // everyone. Only knowable here, and no later reader could recover it.
+          exitReason: leftForFeedback ? "left" : "ended",
+        },
+        {
+          onSuccess: () => {
+            window.location.href = backHref;
+          },
+          onError: () => {
+            setFinishing(false);
+            setSaveFailed(true);
+          },
+        },
+      );
+    },
+    [
+      backHref,
+      groupId,
+      leftForFeedback,
+      prefill.data,
+      // The mutate function, not the mutation object: the object is a fresh
+      // identity on every render, so depending on it would rebuild this
+      // callback continuously. `mutate` is stable for the hook's lifetime.
+      saveSessionFeedback,
+      sessionOpensAt,
+    ],
+  );
 
   if (error) {
     return (
@@ -253,6 +346,11 @@ function VoiceSessionInner({
         committing={finishing}
         onDone={handleFeedbackDone}
         lead={leftForFeedback ? undefined : t('sessionEnded')}
+        // What this viewer already answered in this window, if anything. Absent
+        // covers all three of no row, a read still in flight and a read that
+        // failed — an empty form, which is the resting state.
+        initial={prefill.data ?? undefined}
+        status={saveFailed ? t('feedback.saveFailed') : undefined}
       />
     );
   }

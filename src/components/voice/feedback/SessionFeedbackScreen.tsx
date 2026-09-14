@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import {
+  SESSION_FEEDBACK_NOTE_MAX_LENGTH,
   SESSION_FEEDBACK_RATINGS,
   SESSION_FEEDBACK_RATING_KEYS,
   type SessionFeedbackItemKey,
@@ -30,18 +32,44 @@ export interface SessionFeedbackItem<
   label: string;
 }
 
+/**
+ * The answers and the note the form opens with.
+ *
+ * Only the statements carrying an answer are present — the same shape an answer
+ * is stored in, so a caller that has read one back hands it over as it stands
+ * rather than re-expanding it into a key per statement.
+ */
+export interface SessionFeedbackInitialState<
+  K extends SessionFeedbackItemKey = SessionFeedbackItemKey,
+> {
+  answers: Partial<Record<K, SessionFeedbackRating>>;
+  note: string;
+}
+
 export interface SessionFeedbackScreenProps<
   K extends SessionFeedbackItemKey = SessionFeedbackItemKey,
 > {
   /** The statements, in the order they are asked. */
   items: readonly SessionFeedbackItem<K>[];
   /**
+   * What the form starts out holding — absent for an empty one, which is the
+   * resting state.
+   *
+   * **Read once, as the screen mounts.** A value arriving or changing after
+   * that is ignored, because by then whatever the reader has already tapped is
+   * the newer answer and re-seeding would take it back off them. The screen
+   * knows no more about where this came from than about where the result goes:
+   * a stored row and a fixture are the same argument here.
+   */
+  initial?: SessionFeedbackInitialState<K>;
+  /**
    * What the reader answered, handed over when they press Done.
    *
-   * **The screen does not know whether anything is saved.** It collects, it
-   * reports once, and what the caller does with the result — store it, ignore
-   * it, navigate — is the caller's business, which is what lets the same screen
-   * render in a preview scene with nothing behind it.
+   * **The screen does not know whether anything is stored — at either end.** It
+   * is handed an initial state, it collects, it reports once, and where that
+   * state came from and what the caller does with the result — store it, ignore
+   * it, navigate — are both the caller's business, which is what lets the same
+   * screen render in a preview scene with nothing behind it.
    */
   onDone: (result: SessionFeedbackResult<K>) => void;
   /**
@@ -58,6 +86,17 @@ export interface SessionFeedbackScreenProps<
    * reader left it.
    */
   lead?: string;
+  /**
+   * A line above Done, in the caller's own already-translated words — the one
+   * place the screen says something went wrong with the press the reader just
+   * made.
+   *
+   * The caller owns the sentence exactly as it owns `lead`'s, because only the
+   * caller knows what it was doing; the screen renders whatever it is handed,
+   * and nothing at all when it is handed nothing, so the column is unchanged
+   * for a reader who never meets the case.
+   */
+  status?: string;
 }
 
 /**
@@ -208,22 +247,36 @@ const WORD_CELL = {
  * no reason. Halving each statement's height is what puts all five, the note
  * and Done inside one viewport. Nothing changes below `md`.
  *
- * Purely presentational: the statements arrive as data, the answers leave
- * through one callback, and nothing here reaches a service, a route or a store.
+ * Purely presentational: the statements and whatever the form opens with arrive
+ * as data, the answers leave through one callback, anything to say about how
+ * that went comes back as a line the caller wrote, and nothing here reaches a
+ * service, a route or a store.
  * Every item is optional and an unanswered one is a skip, which is why there is
  * no Skip button and why Done is never disabled for want of an answer.
  */
 export function SessionFeedbackScreen<
   K extends SessionFeedbackItemKey = SessionFeedbackItemKey,
->({ items, onDone, committing, lead }: SessionFeedbackScreenProps<K>) {
+>({
+  items,
+  onDone,
+  committing,
+  lead,
+  initial,
+  status,
+}: SessionFeedbackScreenProps<K>) {
   const t = useTranslations("voice.feedback");
   const groupId = useId();
   const noteFieldId = `${groupId}-note`;
 
+  // Seeded lazily, which is the whole of how `initial` is "read once": the
+  // initialiser runs on the first render and never again, so a prop that
+  // changes later — a read landing behind the reader — cannot overwrite the
+  // taps they have already made. Copied rather than held, so the screen's own
+  // state is never the caller's object.
   const [answers, setAnswers] = useState<
     Partial<Record<K, SessionFeedbackRating>>
-  >({});
-  const [note, setNote] = useState("");
+  >(() => ({ ...initial?.answers }));
+  const [note, setNote] = useState(() => initial?.note ?? "");
 
   /**
    * The heading, which is where focus goes when the screen arrives.
@@ -472,6 +525,10 @@ export function SessionFeedbackScreen<
         <Textarea
           id={noteFieldId}
           rows={3}
+          // The cap the schema owns, made visible at the field: a reader stops
+          // where the row stops instead of typing past it and having the tail
+          // of their note quietly trimmed away on the way to storage.
+          maxLength={SESSION_FEEDBACK_NOTE_MAX_LENGTH}
           value={note}
           disabled={committing}
           placeholder={t("notePrompt")}
@@ -480,6 +537,15 @@ export function SessionFeedbackScreen<
       </div>
 
       <p className="text-sm text-muted-foreground">{t("audience")}</p>
+
+      {/* Directly above Done, beside the button whose press it is about: a
+          reader who has answered their way down the column is at the foot of
+          it, and a line announced at the top would be off screen at the moment
+          they decide whether to press again. It appears only when the caller
+          hands one over, so nothing is held open for it. */}
+      {status !== undefined && (
+        <StatusLine status="destructive">{status}</StatusLine>
+      )}
 
       {/* Done ends the column, where a reader who has answered their way down
           the page arrives at it. It is not pinned to the viewport: the

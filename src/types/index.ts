@@ -732,6 +732,17 @@ export const WHATSAPP_DIRECTION = {
 } as const;
 export type WhatsAppDirection = (typeof WHATSAPP_DIRECTION)[keyof typeof WHATSAPP_DIRECTION];
 
+// session_feedback (00254) — the row a gamer writes on the way out of an online
+// session: the answers to the leave screen's statements and the note, keyed by
+// (group, participant, session window). Named "SessionFeedbackRow" rather than
+// "SessionFeedback" so it cannot be confused with the screen's own
+// `SessionFeedback*` types under `src/components/voice/feedback/`, which
+// describe what the screen collects, not what the table holds. `answers` comes
+// back as untyped Json; the feature's contracts file narrows it on read.
+export type SessionFeedbackRow = Database["public"]["Tables"]["session_feedback"]["Row"];
+export type SessionFeedbackRowInsert =
+  Database["public"]["Tables"]["session_feedback"]["Insert"];
+
 // get_my_assigned_products RPC — the generator marks every column of an RPC
 // RETURNS TABLE row as non-nullable from the column type alone, missing
 // products columns that are actually nullable (start_date, end_date). It also

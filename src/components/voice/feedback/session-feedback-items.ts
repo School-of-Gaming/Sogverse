@@ -112,3 +112,24 @@ export interface SessionFeedbackResult<
   /** Empty when the reader never opened the field, or opened it and wrote nothing. */
   note: string;
 }
+
+/**
+ * The most answers one stored result may carry.
+ *
+ * **The database's check constraint owns this cap; the number here only mirrors
+ * it**, so a writer cannot measure it differently and walk into a refusal it
+ * could have avoided. It sits far above the five statements asked today on
+ * purpose: the stored keys are deliberately unconstrained so a statement can be
+ * added or removed without a migration, and this is the bound on that freedom
+ * rather than a count of the catalogue.
+ */
+export const SESSION_FEEDBACK_MAX_ANSWERS = 32;
+
+/**
+ * The longest note that may be stored, in characters.
+ *
+ * The same mirror of the same constraint: the cap is enforced by the schema, and
+ * a writer trims to it rather than handing over a note the row would refuse — a
+ * child's words arriving shortened beats a Done that cannot succeed.
+ */
+export const SESSION_FEEDBACK_NOTE_MAX_LENGTH = 2000;

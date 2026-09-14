@@ -129,6 +129,14 @@ describe("Access Control", () => {
       // UPDATE grant. RLS authorizes both actor and target.
       ["voice_zones", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["voice_private_zone_occupants", new Set(["INSERT", "DELETE"])],
+      // Session feedback (00254). The child writes their own row — an upsert on
+      // (group, participant, session window) — straight from the browser, so
+      // there is no function and no route to hold the grant instead. INSERT and
+      // UPDATE and nothing else: an emptied form is an update with an empty
+      // object, never a delete, so no row is ever removed except by CASCADE.
+      // RLS authorizes both halves — the caller is the participant named on the
+      // row AND holds an active participation in the group.
+      ["session_feedback", new Set(["INSERT", "UPDATE"])],
     ]);
 
     const { data, error } = await admin.rpc("_list_table_grants", {

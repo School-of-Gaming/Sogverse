@@ -2857,6 +2857,7 @@
       },
       "notePrompt": "Tu veux nous dire autre chose sur la séance d’aujourd’hui ?",
       "audience": "Ton Gedu et l’équipe de School of Gaming liront ton retour. Merci !",
+      "saveFailed": "Tes réponses n’ont pas été enregistrées. Appuie sur Terminé pour réessayer.",
       "done": "Terminé"
     }
   },
@@ -3186,6 +3187,7 @@
           "Facultativement, le nom d’utilisateur de votre enfant dans les jeux utilisés par ses clubs — aujourd’hui Minecraft et Roblox — ainsi que l’identifiant de compte que le jeu lui attribue, pour que nous puissions le reconnaître dans le jeu et pour qu’il puisse se connecter à notre serveur Minecraft pendant les sessions.",
           "Ce que nos animateurs notent au fil des sessions — présences, comptes rendus de session et courtes notes qui nous aident à accompagner votre enfant dans le groupe.",
           "Les messages que votre enfant envoie dans le chat d’une session — pour que l’animateur et le groupe puissent les lire pendant la session, et pour que nous puissions examiner une inquiétude par la suite. Un message que votre enfant supprime est masqué pour le groupe, mais conservé jusqu’à la fermeture du compte.",
+          "Les retours que votre enfant nous donne sur ses sessions — les évaluations et l’éventuel message qu’il choisit de nous laisser lorsque nous lui demandons comment une session s’est passée — afin que nous puissions voir comment se déroulent nos sessions et les améliorer.",
           "Les informations techniques nécessaires au fonctionnement de tout site web — sessions de connexion, journaux de requêtes et, uniquement si vous le choisissez, statistiques d’utilisation anonymes. Voir « Informations techniques » et « Cookies, statistiques et publicité » ci-dessous.",
           "L’étiquette de campagne — source, support et campagne — portée par le lien à l’origine de votre visite. Nous l’enregistrons une fois, à la création du compte, et uniquement si vous avez autorisé les cookies marketing, pour savoir, avec nos partenaires, quelles actions touchent réellement les familles. Refuser le marketing par la suite ne supprime pas une étiquette déjà enregistrée."
         ]
