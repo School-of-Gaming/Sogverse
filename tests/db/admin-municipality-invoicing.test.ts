@@ -3,7 +3,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import {
+  createScheduleSlot,
+  createTestProduct,
+  deleteTestProducts,
+} from "./product-helpers";
 import {
   municipalityInvoicingSnapshot,
   type MunicipalityInvoicingSnapshot,
@@ -20,9 +24,17 @@ import {
  *   - the month argument has to be a month, and a mid-month date is refused
  *   - a club with a stored session row inside the month is in the document,
  *     with that row, whatever else is true of it
+ *   - a club that recorded NOTHING but was running across the month is in it
+ *     too, with an empty session array — that is the second half of the
+ *     candidate union, and it is the club the CFO most needs to see
  *   - the municipality is resolved by walking UP from the club's own location:
  *     the fixture club sits in a *site*, and the answer has to be the
  *     municipality that site hangs off
+ *   - the walk is ancestor-or-**self**: an online club pointing straight at a
+ *     municipality reports that municipality as both its location and its
+ *     invoicing target
+ *   - a schedule slot's `start_time` arrives as a bare `HH:MM` wall clock, which
+ *     is what the client contract parses and what the projection reads
  *   - a club whose sessions and term both fall outside the month is absent
  *
  * **Every assertion is scoped to this file's own fixtures.** CI carries the
@@ -35,7 +47,8 @@ import {
  * every fact this file asserts is about which side of a month boundary a date
  * falls on, and a window that moves while the suite runs cannot state that.
  *
- * Product UUIDs 7fa-7fc (see the allocation registry in product-helpers.ts).
+ * Product UUIDs 7f7, 7f8 and 7fa-7fd (see the allocation registry in
+ * product-helpers.ts).
  */
 
 /** The month under test. March 2026 — fixed, so nothing here moves with time. */
@@ -59,8 +72,32 @@ const GROUP_IN_MONTH = "00000000-0000-0000-0000-0000000007fb";
  */
 const P_OUT_OF_MONTH = "00000000-0000-0000-0000-0000000007fc";
 const GROUP_OUT_OF_MONTH = "00000000-0000-0000-0000-0000000007fd";
+/**
+ * The club that was running right across the month and recorded nothing at all:
+ * no group, no session row, no schedule slot.
+ *
+ * It pins the *second* half of the candidate union — status running with a term
+ * overlapping the month — which nothing else in this file reaches, because every
+ * other club here is carried in by a stored row. It is also the club this page
+ * exists for: one that was supposed to run and wrote nothing up is the thing a
+ * CFO has to see before invoicing, and dropping it would be invisible.
+ */
+const P_NO_SESSIONS = "00000000-0000-0000-0000-0000000007f7";
+/**
+ * The online club whose own location IS a municipality, which is why the walk is
+ * ancestor-or-*self*: there is nothing above it to climb to, and a walk that
+ * insisted on a parent would invoice nobody for it.
+ */
+const P_AT_MUNICIPALITY = "00000000-0000-0000-0000-0000000007f8";
 
-const ALL_PRODUCTS = [P_IN_MONTH, P_OUT_OF_MONTH];
+const ALL_PRODUCTS = [
+  P_IN_MONTH,
+  P_OUT_OF_MONTH,
+  P_NO_SESSIONS,
+  P_AT_MUNICIPALITY,
+];
+/** The clubs that meet in the seeded school, one level under the municipality. */
+const IN_PERSON_PRODUCTS = [P_IN_MONTH, P_OUT_OF_MONTH, P_NO_SESSIONS];
 
 /** A session row's two timestamps, which the table requires and this file does not assert on. */
 function sessionWindow(date: string) {
@@ -95,30 +132,44 @@ describe("get_admin_municipality_invoicing", () => {
 
     // --- products -----------------------------------------------------------
     //
-    // Both are created online against the municipality (the only location an
-    // online municipality club may carry) and then moved in person into the
-    // site, because an in-person product's location must be a site. That second
-    // step is what this file is about: the club's own location is the school,
-    // and the municipality has to be found above it.
+    // All four are created online against the municipality — the only location
+    // an online municipality club may carry — and three of them are then moved
+    // in person into the site, because an in-person product's location must be a
+    // site. That second step is most of what this file is about: those clubs' own
+    // location is the school, and the municipality has to be found above it. The
+    // fourth stays online where it was created, on the municipality itself.
     for (const id of ALL_PRODUCTS) {
+      const outside = id === P_OUT_OF_MONTH;
       await createTestProduct(admin, {
         id,
         productType: "municipality_club",
         billingMode: "external_contract",
         status: "running",
         locationId: TEST_IDS.LOCATION_MUNICIPALITY,
-        startDate: id === P_IN_MONTH ? "2026-01-12" : "2026-06-01",
-        endDate: id === P_IN_MONTH ? "2026-05-29" : "2026-07-31",
+        startDate: outside ? "2026-06-01" : "2026-01-12",
+        endDate: outside ? "2026-07-31" : "2026-05-29",
         seatCount: null,
         waitlistEnabled: false,
       });
     }
 
+    // Every club but the online one moves into the school. The online one keeps
+    // the location it was created with — the municipality itself — which is the
+    // only location an online municipality club may carry, and is the fixture
+    // behind the ancestor-or-self case.
     const inPerson = await admin
       .from("products")
       .update({ is_remote: false, location_id: TEST_IDS.LOCATION_SITE })
-      .in("id", ALL_PRODUCTS);
+      .in("id", IN_PERSON_PRODUCTS);
     expect(inPerson.error).toBeNull();
+
+    // One slot on the club that recorded a session, so the document carries a
+    // non-empty schedule somewhere. The zero-session club keeps none, which is
+    // what makes the empty-array case below a real empty case.
+    await createScheduleSlot(admin, P_IN_MONTH, {
+      weekday: 2,
+      startTime: "16:00",
+    });
 
     const fee = await admin
       .from("products")
@@ -225,14 +276,46 @@ describe("get_admin_municipality_invoicing", () => {
     expect(club?.municipality?.id).toBe(TEST_IDS.LOCATION_MUNICIPALITY);
   });
 
+  it("carries a club that recorded nothing but was running all month", () => {
+    // The second half of the candidate union, and the only fixture here that
+    // reaches it: no group, no row, nothing but a status and a term. A read that
+    // kept only the clubs with stored rows would hide exactly the club a CFO has
+    // to look at before invoicing, and the omission would look like a quiet month.
+    const club = invoiced(P_NO_SESSIONS);
+    expect(club).toBeDefined();
+    expect(club?.sessions).toEqual([]);
+    expect(club?.municipality?.id).toBe(TEST_IDS.LOCATION_MUNICIPALITY);
+  });
+
+  it("reports a club sitting on the municipality itself as its own answer", () => {
+    // Ancestor-or-*self*. An online club points at the municipality directly, so
+    // the location and the invoicing target are one row; a walk that climbed
+    // before it looked would run off the top of the tree and find nothing.
+    const club = invoiced(P_AT_MUNICIPALITY);
+    expect(club?.location?.id).toBe(TEST_IDS.LOCATION_MUNICIPALITY);
+    expect(club?.location?.type).toBe("municipality");
+    expect(club?.municipality?.id).toBe(club?.location?.id);
+  });
+
+  it("ships a schedule slot's start time as a bare HH:MM wall clock", () => {
+    // `schedule_slots.start_time` is a `time`, which Postgres would render as
+    // `16:00:00`. The client parses `HH:MM` and shows it as a clock face, so the
+    // trailing seconds are the RPC's job to drop and this is where that is held.
+    expect(invoiced(P_IN_MONTH)?.schedule_slots).toEqual([
+      { weekday: 2, start_time: "16:00", duration_minutes: 60 },
+    ]);
+  });
+
   it("omits a club whose sessions and term both fall outside the month", () => {
     expect(invoiced(P_OUT_OF_MONTH)).toBeUndefined();
   });
 
   it("ships every array, never a null", () => {
-    const club = invoiced(P_IN_MONTH);
-    // No schedule slots were seeded, so this is the empty case — the one where
-    // a `jsonb_agg` over nothing would have produced null and broken the parse.
+    const club = invoiced(P_NO_SESSIONS);
+    // This club has no slots and no rows, so both arrays are the empty case —
+    // the one where a `jsonb_agg` over nothing would have produced null and
+    // broken the parse.
     expect(club?.schedule_slots).toEqual([]);
+    expect(club?.sessions).toEqual([]);
   });
 });

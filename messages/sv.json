@@ -374,7 +374,7 @@
       "nextMonth": "Nästa månad",
       "emptyMonth": "Ingen kommunklubb har något registrerat eller inplanerat den här månaden.",
       "noMunicipality": "Ingen kommun",
-      "excludedClubs": "{count, plural, one {Utan # klubb som saknar avgift} other {Utan # klubbar som saknar avgift}}",
+      "excludedClubs": "{count, plural, one {Exklusive # klubb utan avgift} other {Exklusive # klubbar utan avgift}}",
       "feeNotSet": "Avgift saknas",
       "clubTotal": "{count, plural, one {# tillfälle} other {# tillfällen}} × {fee} = {total}",
       "notRecorded": "Inte registrerat",

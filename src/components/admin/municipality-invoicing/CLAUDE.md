@@ -24,9 +24,8 @@ not a property of the data, and doing it in the query would have thrown away whi
 met.
 
 **A schedule is a claim, not a session.** The club's weekly slots are projected across the
-month, clipped to its own term (both ends inclusive; no end date means the projection runs
-to the end of the month). A projected date with no stored row is shown, never counted, and
-its treatment splits on whether it has passed:
+month, clipped to its own term, both ends inclusive. A projected date with no stored row is
+shown, never counted, and its treatment splits on whether it has passed:
 
 - **Before today — unrecorded.** Worth nothing, shown at zero in a warning tone, because a
   club that was supposed to meet and recorded nothing is the one thing on this page worth
@@ -44,6 +43,16 @@ counts; a date carrying both is one line, and that line is recorded. This is the
 every session feed in the app follows, and it has to stay the same rule: two surfaces
 disagreeing about whether a day happened is worse than either answer.
 
+**But a date after the club's local today never bills, whatever is stored on it.** Nothing
+in the database stops an educator writing a note against a session that has not happened
+yet, and such a row would otherwise invoice a municipality for a session still ahead of it.
+A stored row dated later than today is therefore **upcoming** — the same line a projection
+with no row gets — and is outside the count. A row dated *today* counts: the comparison is
+between two of the club's own local dates, and an educator writing up the afternoon's
+session is recording one that ran. This is the one place the invoice is deliberately
+smaller than the stored evidence would make it, and the direction is the point — a total
+that is short is a question somebody asks, and a total that is long is one nobody does.
+
 **Projection is only offered for a club that is running or completed, and only where it has
 a start date.** A club that has not started, or that was cancelled, did not run the
 sessions its weekly schedule describes, and a club with no first day has no date to start
@@ -60,6 +69,14 @@ nothing in a month it was never running in.
 the page is read.** Nothing is snapshotted and nothing is versioned: an invoice is
 recomputed from today's facts every time it is opened, and correcting a wrong fee corrects
 every month that has not been sent yet.
+
+**The schedule and the term are read the same way, and the consequence is worth stating.**
+Editing a club's weekly slots or moving its start or end date changes, retroactively, which
+dates a past month projects — so a month looked at last week can show a different set of
+unrecorded lines today. What it cannot change is a **total**: a total is stored rows times
+the current fee, and a schedule edit touches neither. So the drift is confined to the
+flags — which is the half of the page that exists to be investigated rather than invoiced —
+and a club that has just had its schedule corrected is expected to look different here.
 
 **An unset fee is never worth zero.** A club whose fee has never been filled in shows a
 translated "fee not set" label in warning tone in place of both its per-session fee and its
@@ -88,6 +105,23 @@ server's month and the finance officer's month are different answers.
 Every session line carries its date **and its ISO week number**, using the same week label
 the rest of the platform uses. Finnish admins plan and talk about clubs in week numbers, so
 a week number is how the line is found rather than a decoration on it.
+
+## The one departure from the viewer's timezone
+
+The app's rule is that anything with a time of day renders in the **viewer's** zone. The
+club's "where and when" summary on this page renders in the **club's own** zone instead,
+deliberately.
+
+Every date on this page is a club-local calendar date — the session rows, the projected
+dates, the club's own today — because that is what a session record is keyed to. A schedule
+summary converted into the reader's zone can name a weekday those dates never fall on: a
+line reading Tuesday sitting above a column of Mondays, for a reader one zone west of
+Helsinki. A clock face the reader has to adjust by an hour is a smaller error than a page
+that contradicts itself, and municipality clubs are Finnish by definition, so for the
+finance officer actually reading this the two zones are the same one.
+
+The departure is confined to that one summary line. Nothing else on the page carries a time
+of day at all.
 
 ## Grouping and order
 

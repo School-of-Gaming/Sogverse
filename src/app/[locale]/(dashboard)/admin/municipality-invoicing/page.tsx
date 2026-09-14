@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   MunicipalityInvoicingService,
   municipalityInvoicingKeys,
+  municipalityInvoicingSnapshot,
   type MunicipalityInvoicingSnapshot,
 } from "@/services/municipality-invoicing";
 
@@ -27,8 +28,16 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 const INVOICING_TIME_ZONE = "Europe/Helsinki";
 
-/** `?month=YYYY-MM`, and nothing else. */
-const MONTH_PARAM = /^\d{4}-(0[1-9]|1[0-2])$/;
+/**
+ * `?month=YYYY-MM`, and nothing else — with the year inside this century.
+ *
+ * The year bound is not tidiness. `0007-03` and `9999-12` are both spelled
+ * correctly, so a regex on the *shape* alone hands them to Postgres, which
+ * happily answers a month nobody has ever invoiced and never will. A value that
+ * cannot be a month anybody means is the same kind of wrong as a malformed one,
+ * and takes the same answer: the default month.
+ */
+const MONTH_PARAM = /^20\d{2}-(0[1-9]|1[0-2])$/;
 
 /**
  * Which month the page is showing: the one the URL names, or the previous one.
@@ -38,10 +47,10 @@ const MONTH_PARAM = /^\d{4}-(0[1-9]|1[0-2])$/;
  * so the month the CFO wants on opening the page is the one that just ended,
  * and the stepper is right there for the two other months they might want.
  *
- * A malformed or absent parameter falls to that default rather than refusing.
- * There is nothing dangerous in the value — it selects a read that is already
- * admin-gated — and a 404 for a mistyped URL would cost the reader the page
- * they can plainly see the rest of.
+ * A malformed, absent or absurd parameter falls to that default rather than
+ * refusing. There is nothing dangerous in the value — it selects a read that is
+ * already admin-gated — and a 404 for a mistyped URL would cost the reader the
+ * page they can plainly see the rest of.
  */
 function resolveMonthStart(raw: string | string[] | undefined): string {
   const value = Array.isArray(raw) ? raw[0] : raw;
@@ -49,6 +58,39 @@ function resolveMonthStart(raw: string | string[] | undefined): string {
 
   const today = formatInTimeZone(new Date(), INVOICING_TIME_ZONE, "yyyy-MM-dd");
   return monthsAfter(`${today.slice(0, 7)}-01`, -1);
+}
+
+/**
+ * TEMP (preview only): removed before merge
+ *
+ * A month read off disk instead of out of Postgres, so the page can be looked at
+ * against a saved document without a database behind it. It answers `null`
+ * wherever it does not apply — in a production build, and with the variable
+ * unset — which is every deployment, so the route below behaves exactly as it
+ * did. A month with no file on disk is the ordinary empty month: the preview
+ * exists to see the page, and refusing to draw it because one month was never
+ * captured would be the preview failing at its only job.
+ *
+ * The document is parsed through the same contract the RPC's answer is, because
+ * a fixture that does not satisfy the contract would prove the page works on
+ * data it will never be given.
+ */
+async function previewDocument(
+  monthStart: string,
+): Promise<MunicipalityInvoicingSnapshot | null> {
+  if (process.env.NODE_ENV === "production") return null;
+  const directory = process.env.MUNICIPALITY_INVOICING_DOCUMENTS_DIR;
+  if (directory === undefined || directory === "") return null;
+
+  const { readFile } = await import("node:fs/promises");
+  const { join } = await import("node:path");
+  let raw: string;
+  try {
+    raw = await readFile(join(directory, `${monthStart.slice(0, 7)}.json`), "utf8");
+  } catch {
+    return { month_start: monthStart, clubs: [] };
+  }
+  return municipalityInvoicingSnapshot.parse(JSON.parse(raw));
 }
 
 /** The read, or the reason it did not happen. Never both, never neither. */
@@ -73,6 +115,10 @@ type SnapshotResult =
  * sentence an admin can act on.
  */
 async function loadMonth(monthStart: string): Promise<SnapshotResult> {
+  // TEMP (preview only): removed before merge
+  const preview = await previewDocument(monthStart);
+  if (preview !== null) return { ok: true, snapshot: preview };
+
   // Outside the `try` on purpose. Building the server client reads cookies, and
   // in the App Router a dynamic-render signal travels as a thrown control-flow
   // object — caught here it would be reported to the admin as a failed read and

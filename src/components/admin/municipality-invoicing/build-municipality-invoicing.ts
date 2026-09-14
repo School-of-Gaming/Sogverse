@@ -8,6 +8,7 @@ import {
   joinScheduleGroups,
 } from "@/lib/products/format-product-schedule";
 import { productLocalDate } from "@/lib/session-occurrence";
+import { sumCents } from "@/lib/utils";
 import type {
   MunicipalityInvoicingClub,
   MunicipalityInvoicingSnapshot,
@@ -47,6 +48,14 @@ import type {
  * date the schedule does not project still counts, which is the same rule every
  * session feed in this app follows.
  *
+ * **A date after the club's own today never bills, whatever is stored on it.**
+ * Nothing stops a gedu writing a note against a session that has not happened
+ * yet, and that row would otherwise invoice a municipality for a session still
+ * ahead of it. Such a date is `upcoming` — the same line a projection with no row
+ * gets — and it is outside the count. A row dated *today* bills: the date is the
+ * club's own local day, and an educator writing a session up in the afternoon is
+ * recording one that ran.
+ *
  * **Projection is only offered for a club whose status is `running` or
  * `completed`,** and only where it has a term to clip against. A club that has
  * not started, or was cancelled, or carries no start date, contributes its
@@ -65,11 +74,15 @@ import type {
 
 /** What one session line on the invoice is. */
 export type InvoiceSessionKind =
-  /** A stored row exists. This is what bills. */
+  /** A stored row exists on a date that has arrived. This is what bills. */
   | "recorded"
   /** The schedule projected it, no row exists, and the date has passed. */
   | "unrecorded"
-  /** The schedule projects it and the date has not arrived yet. */
+  /**
+   * The date has not arrived yet — whether the schedule merely projects it or a
+   * stored row already sits on it. A row written ahead of its own session is
+   * something the database permits and the invoice must not bill.
+   */
   | "upcoming";
 
 export interface InvoiceSession {
@@ -83,13 +96,13 @@ export interface InvoiceSession {
 export interface InvoiceClub {
   id: string;
   name: string;
-  /** The school hall it meets in, or null where the club has no location row. */
+  /** The school hall it meets in. Null is type-driven only — see `buildClub`. */
   locationName: string | null;
   /** One line of weekdays and clock faces, or null where it has no slots. */
   scheduleSummary: string | null;
   /** The club's current per-session fee in cents, or null where it is unset. */
   feeCents: number | null;
-  /** Distinct dates with a stored row — the number that bills. */
+  /** Distinct dates with a stored row that has arrived — what bills. */
   recordedCount: number;
   /** `recordedCount × feeCents`, or null where the fee is unset. */
   totalCents: number | null;
@@ -127,34 +140,6 @@ export interface BuildMunicipalityInvoicingArgs {
    * nameless one would have to be special-cased in two places instead of none.
    */
   noMunicipalityLabel: string;
-}
-
-// ---------------------------------------------------------------------------
-// Cents
-// ---------------------------------------------------------------------------
-
-/**
- * Add a run of integer cents, refusing to hand back a number that has stopped
- * being one.
- *
- * Every value here is money, and money in this app is an integer number of
- * cents precisely so that no total is ever the sum of two roundings. The guard
- * is what makes that a fact rather than an intention: a fee that arrived as a
- * fraction, a count multiplied past `Number.MAX_SAFE_INTEGER`, or anything else
- * that would make the arithmetic silently approximate stops the page instead of
- * printing a plausible wrong number onto an invoice.
- */
-export function sumCents(values: Iterable<number>): number {
-  let total = 0;
-  for (const value of values) {
-    total += value;
-    if (!Number.isSafeInteger(total)) {
-      throw new Error(
-        `sumCents: running total is not a safe integer (${total})`,
-      );
-    }
-  }
-  return total;
 }
 
 // ---------------------------------------------------------------------------
@@ -251,9 +236,21 @@ function buildClub(
   // two hours before midnight there, every night of the year.
   const today = productLocalDate(now, club.timezone);
 
+  // A stored row is evidence only for a day that has happened. The table takes
+  // whatever date an educator types, so a note saved against next week's session
+  // would otherwise be invoiced a week early — and an invoice that is too big is
+  // the one error on this page nobody downstream can catch.
+  const billableDates = new Set(
+    [...recordedDates].filter((date) => date <= today),
+  );
+
   const lines: InvoiceSession[] = [];
   for (const date of recordedDates) {
-    lines.push({ date, isoWeek: isoWeekOf(date).week, kind: "recorded" });
+    lines.push({
+      date,
+      isoWeek: isoWeekOf(date).week,
+      kind: billableDates.has(date) ? "recorded" : "upcoming",
+    });
   }
   for (const date of projectedDates(club, monthStart, monthEnd)) {
     if (recordedDates.has(date)) continue;
@@ -266,7 +263,7 @@ function buildClub(
   lines.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 
   const feeCents = club.municipality_fee_cents;
-  const recordedCount = recordedDates.size;
+  const recordedCount = billableDates.size;
 
   return {
     id: club.id,
@@ -305,6 +302,10 @@ function projectedDates(
   monthEnd: string,
 ): string[] {
   if (club.status !== "running" && club.status !== "completed") return [];
+  // Type-driven, not reachable: a municipality club always carries both ends of
+  // its term and a location by CHECK constraint, so these nulls exist only in
+  // the generated types. Handled rather than asserted, because a page that
+  // throws is a worse answer than one that projects nothing.
   if (club.start_date === null) return [];
 
   const from = club.start_date > monthStart ? club.start_date : monthStart;

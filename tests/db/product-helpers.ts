@@ -194,13 +194,16 @@ import { TEST_IDS } from "./constants";
  *                  two is always on summer time — and a fixed-offset zone in
  *                  which it is just after local midnight, which is what
  *                  exercises the SQL window search's adjacent-day probe)
- *   7fa-7fd       admin-municipality-invoicing.test.ts (two municipality
- *                  clubs with a group each: 7fa/7fb recorded a session inside
- *                  the month under test, 7fc/7fd sit wholly outside it in both
- *                  their term and their one session row. Two products because
- *                  "absent from the month" has to be a fact about the month
- *                  rather than about the fixture being empty, and no single
- *                  product can be both inside and outside one)
+ *   7f7, 7f8, 7fa-7fd
+ *                  admin-municipality-invoicing.test.ts (four municipality
+ *                  clubs, two of them with a group: 7fa/7fb recorded a session
+ *                  inside the month under test, 7fc/7fd sit wholly outside it in
+ *                  both their term and their one session row, 7f7 was running
+ *                  right across the month and recorded nothing at all, and 7f8
+ *                  is the online club whose own location is the municipality.
+ *                  One product per fact, because no single product can be both
+ *                  inside and outside a month, both silent and recorded, or both
+ *                  under a municipality and in one)
  *   7f5-7f6       gamer-sign-in.test.ts (one club 7f5 with one group 7f6 — the
  *                  smallest document that can carry a roster, which is all the
  *                  boundary half needs: a gedu-readable feed that would show a

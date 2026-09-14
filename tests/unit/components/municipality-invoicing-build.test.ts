@@ -1,8 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  buildMunicipalityInvoicing,
-  sumCents,
-} from "@/components/admin/municipality-invoicing/build-municipality-invoicing";
+import { buildMunicipalityInvoicing } from "@/components/admin/municipality-invoicing/build-municipality-invoicing";
 import type {
   MunicipalityInvoicingClub,
   MunicipalityInvoicingSnapshot,
@@ -164,6 +161,43 @@ describe("buildMunicipalityInvoicing", () => {
       expect(built.totalCents).toBe(0);
     });
 
+    it("refuses to bill a stored row dated after the club's today", () => {
+      // The database lets a gedu write a note against a session that has not
+      // happened yet. Such a row is evidence of nothing, so the 23rd reads as
+      // upcoming exactly like the projection it sits on, and only the 9th bills.
+      const built = onlyClub([
+        club({
+          id: "a",
+          sessions: [
+            { group_id: "g1", session_date: "2026-09-09" },
+            { group_id: "g1", session_date: "2026-09-23" },
+          ],
+        }),
+      ]);
+
+      expect(built.sessions.find((s) => s.date === "2026-09-23")?.kind).toBe(
+        "upcoming",
+      );
+      expect(built.recordedCount).toBe(1);
+      expect(built.totalCents).toBe(8_750);
+    });
+
+    it("bills a stored row dated today", () => {
+      // Today is not "after today". An educator writing up the afternoon's
+      // session is recording one that ran, and it is on this month's invoice.
+      const built = onlyClub([
+        club({
+          id: "a",
+          sessions: [{ group_id: "g1", session_date: "2026-09-16" }],
+        }),
+      ]);
+
+      expect(built.sessions.find((s) => s.date === "2026-09-16")?.kind).toBe(
+        "recorded",
+      );
+      expect(built.recordedCount).toBe(1);
+    });
+
     it("reads today in the club's zone, not in UTC", () => {
       // 22:30 UTC on Tuesday the 15th is already 01:30 on Wednesday the 16th in
       // Helsinki. The club's Wednesday session is therefore TODAY — not late —
@@ -203,14 +237,6 @@ describe("buildMunicipalityInvoicing", () => {
         "2026-09-09",
         "2026-09-16",
       ]);
-    });
-
-    it("projects the whole month for an open-ended club", () => {
-      const built = onlyClub([club({ id: "a", end_date: null })]);
-
-      expect(built.sessions).toHaveLength(5);
-      expect(built.sessions[0].date).toBe("2026-09-02");
-      expect(built.sessions[4].date).toBe("2026-09-30");
     });
 
     it("projects nothing for a club with no start date", () => {
@@ -407,15 +433,19 @@ describe("buildMunicipalityInvoicing", () => {
       // number of cents, so there is no rounding for two of them to disagree
       // about — 4 × 87.5 in euros would have been fine here and is not the
       // point; the point is that nothing ever divides before it sums.
+      //
+      // All four dates are on or before the club's today, because a row dated
+      // ahead of its own session does not bill and would make this a case about
+      // that rule instead of about the arithmetic.
       const view = build([
         club({
           id: "a",
           municipality_fee_cents: 8_750,
           sessions: [
             { group_id: "g1", session_date: "2026-09-02" },
+            { group_id: "g1", session_date: "2026-09-04" },
             { group_id: "g1", session_date: "2026-09-09" },
             { group_id: "g1", session_date: "2026-09-16" },
-            { group_id: "g1", session_date: "2026-09-23" },
           ],
         }),
       ]);
@@ -442,21 +472,6 @@ describe("buildMunicipalityInvoicing", () => {
       ]);
 
       expect(view.municipalities[0].totalCents).toBe(8_750 + 6_666);
-    });
-
-    it("adds an ordinary run of cents", () => {
-      expect(sumCents([1, 2, 3])).toBe(6);
-      expect(sumCents([])).toBe(0);
-    });
-
-    it("throws rather than hand back a total that is not an integer", () => {
-      expect(() => sumCents([1.5, 1])).toThrow(/safe integer/);
-    });
-
-    it("throws rather than hand back a total past the safe range", () => {
-      expect(() =>
-        sumCents([Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER]),
-      ).toThrow(/safe integer/);
     });
   });
 });
