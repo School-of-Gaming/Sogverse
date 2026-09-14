@@ -75,6 +75,12 @@ interface DemoInitialFields {
   minecraftUsername?: string;
   /** DEMO — stripped after the ruling. */
   robloxUsername?: string;
+  /**
+   * DEMO — stripped after the ruling. V5's box, pre-ticked, so the style guide
+   * can stand the gated button and the enabled one side by side. Nothing but
+   * the style guide ever passes it.
+   */
+  guardianAttested?: boolean;
 }
 
 /**
@@ -167,9 +173,19 @@ const DEMO_RULES_REQUIRED =
   "Please confirm you have read the Anti-Bullying and Discipline policy.";
 /** DEMO — stripped after the ruling. V5's affirmative on its last page. */
 const demoAddNamed = (name: string) => `Add ${name}`;
-/** DEMO — stripped after the ruling */
-const demoGuardianRequiredNamed = (name: string) =>
-  `Please confirm you are ${name}'s parent or legal guardian.`;
+/**
+ * DEMO — stripped after the ruling. The group label under V5's third-page
+ * divider, marking where the optional game rows stop and the one required box
+ * begins.
+ */
+const demoBeforeYouAdd = (name: string) => `Before you add ${name}`;
+/**
+ * DEMO — stripped after the ruling. V5's affirmative while the box is unticked:
+ * the button is disabled and says what would un-disable it, the same move the
+ * enrolment panel's CTA makes.
+ */
+const demoConfirmParentToContinue = (name: string) =>
+  `Confirm you're ${name}'s parent to continue`;
 
 /**
  * DEMO — stripped after the ruling.
@@ -292,6 +308,13 @@ function DemoGuardianAttestation({
  * parent just filled in, because a list of what we store is a list that drifts
  * the moment a column is added, and the Privacy Policy is where that list is
  * kept current.
+ *
+ * **It brings its own break with it.** The two rows above are optional and the
+ * box is not, and stacked at the page's own spacing they read as a third row of
+ * the same kind. A rule plus a short label — the app's ordinary section break
+ * (`border-t border-border` + padding, as the gamer sign-in card and the
+ * pricing panel draw theirs) — says where the optional part stops, and the
+ * label names what the box is for rather than repeating its sentence.
  */
 function DemoAccountsAttestation({
   name,
@@ -305,22 +328,30 @@ function DemoAccountsAttestation({
   onGuardianAttestedChange: (next: boolean) => void;
 }) {
   return (
-    /* No hint — per the `CheckboxRow` doc the absence of the optional
-       marker *is* the "required". */
-    <CheckboxRow
-      checked={guardianAttested}
-      onCheckedChange={onGuardianAttestedChange}
-      disabled={disabled}
-      label={
-        <>
-          {demoGuardianWithPolicy(name)}
-          <DemoPolicyLink href={ROUTES.privacy}>
-            {DEMO_PRIVACY_POLICY_NAME}
-          </DemoPolicyLink>
-          {DEMO_SENTENCE_END}
-        </>
-      }
-    />
+    <div className="space-y-3 border-t border-border pt-4">
+      {/* The same weight and size a `Field` gives its label, muted, because it
+          labels a group rather than titling a section — sentence case per the
+          styling rule, and no tracking to go with it. */}
+      <p className="text-sm font-medium leading-none text-muted-foreground">
+        {demoBeforeYouAdd(name)}
+      </p>
+      {/* No hint — per the `CheckboxRow` doc the absence of the optional
+          marker *is* the "required". */}
+      <CheckboxRow
+        checked={guardianAttested}
+        onCheckedChange={onGuardianAttestedChange}
+        disabled={disabled}
+        label={
+          <>
+            {demoGuardianWithPolicy(name)}
+            <DemoPolicyLink href={ROUTES.privacy}>
+              {DEMO_PRIVACY_POLICY_NAME}
+            </DemoPolicyLink>
+            {DEMO_SENTENCE_END}
+          </>
+        }
+      />
+    </div>
   );
 }
 
@@ -550,9 +581,12 @@ export function AddGamerFormCard({
   // mutate runs, only cleared on outcomes that need the user to retry.
   // On success we close the dialog so the unmount handles cleanup.
   const [committing, setCommitting] = useState(false);
-  // DEMO — stripped after the ruling. Unticked always: a box we ticked is a
-  // declaration nobody made.
-  const [guardianAttested, setGuardianAttested] = useState(false);
+  // DEMO — stripped after the ruling. Unticked wherever a parent will meet it:
+  // a box we ticked is a declaration nobody made. The `initial?.` half is the
+  // style guide's alone, so a card can be photographed in the ticked state.
+  const [guardianAttested, setGuardianAttested] = useState(
+    initial?.guardianAttested ?? false,
+  );
   // DEMO — stripped after the ruling.
   const [rulesAccepted, setRulesAccepted] = useState(false);
 
@@ -645,13 +679,11 @@ export function AddGamerFormCard({
       return;
     }
 
-    // DEMO — stripped after the ruling. V5's third page: the two game rows are
-    // optional and commit themselves, so the box is the only thing to refuse.
+    // DEMO — stripped after the ruling. V5's third page has nothing left to
+    // refuse: the two game rows are optional and commit themselves, and the box
+    // gates the button rather than being checked after a press, so reaching
+    // here at all means the parent has already ticked it.
     if (step === "accounts") {
-      if (!guardianAttested) {
-        setError(demoGuardianRequiredNamed(trimmedName));
-        return;
-      }
       await create();
       return;
     }
@@ -962,7 +994,9 @@ export function AddGamerFormCard({
 
         {/* Two fixed labels, one per page, decided by the page alone: page one
             always advances and page two always creates, so the affirmative says
-            what pressing it will do without any radio having to change it. */}
+            what pressing it will do without any radio having to change it.
+            (DEMO — stripped after the ruling: V5's third page is the one
+            exception, where the label is decided by the box below it.) */}
         <DialogFooter className="gap-2">
           <Button
             type="button"
@@ -983,21 +1017,33 @@ export function AddGamerFormCard({
           >
             {step === "details" ? c("cancel") : c("back")}
           </Button>
-          <Button type="submit" disabled={committing}>
+          <Button
+            type="submit"
+            // DEMO — stripped after the ruling: the `"accounts"` arm, and the
+            // width with it. The box gates the button the way the enrolment
+            // panel's rules row gates its CTA, and the button names what is
+            // missing while it does — so the label changes length under the
+            // parent's own tick. Full width is what keeps that swap from
+            // resizing the button and dragging Back along with it: in the
+            // stacked footer the children already stretch, and `sm:flex-1`
+            // makes the row behave the same way.
+            className={step === "accounts" ? "w-full sm:flex-1" : undefined}
+            disabled={committing || (step === "accounts" && !guardianAttested)}
+          >
             {committing && <Loader2 className="animate-spin" />}
             {committing
               ? t("submitting")
               : step === "details"
-                ? // DEMO — stripped after the ruling: the `"v5"` arm. Two of
-                  // V5's three pages only move the parent along, so both say
-                  // so, and only its last one creates.
-                  demoVariant === "v5"
-                  ? c("continue")
-                  : c("next")
+                ? c("next")
                 : step === "accounts"
-                  ? demoAddNamed(trimmedName)
+                  ? // DEMO — stripped after the ruling. Only V5's last page
+                    // creates; its first two just move the parent along and
+                    // both say Next, exactly as page one always has.
+                    guardianAttested
+                    ? demoAddNamed(trimmedName)
+                    : demoConfirmParentToContinue(trimmedName)
                   : demoVariant === "v5"
-                    ? c("continue")
+                    ? c("next")
                     : // DEMO — stripped after the ruling. V3 has no box: the
                       // button itself carries the declaration.
                       demoVariant === "v3"
