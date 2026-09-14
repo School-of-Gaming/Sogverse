@@ -2845,6 +2845,28 @@
         "ready": "DaqlIj pIm",
         "join": "yImuv"
       }
+    },
+    "feedback": {
+      "heading": "DaHjaj chay’ Qapla’?",
+      "items": {
+        "fun": "jItIvqu’.",
+        "learned": "De’ chu’ vIghojpu’.",
+        "gedu": "po’ Gedu’wI’ ’ej muQaH.",
+        "help": "ghomwIjDaq QaH vItlhoblaH ’ej jInebbe’.",
+        "proud": "vIta’pu’bogh vIHem.",
+        "belonging": "ghomwIjDaq jIDoy’be’; pa’ jIyIn.",
+        "listened": "muQoybej ghomwIj ’ej muyaj."
+      },
+      "scale": {
+        "no": "ghobe’",
+        "notReally": "ghobe’law’",
+        "aBit": "loQ",
+        "yes": "HISlaH",
+        "definitely": "HISlaHbej"
+      },
+      "notePrompt": "DaHjaj poHvaD latlh vay’ choja’laH’a’?",
+      "audience": "ghomlI’ qab leghlaH Gedu’lI’. DawIvbogh legh School of Gaming ghom neH.",
+      "done": "rIn"
     }
   },
   "voiceButton": {

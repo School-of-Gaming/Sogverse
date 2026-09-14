@@ -11,6 +11,8 @@ import { VoiceRoom } from "@/components/voice/VoiceRoom";
 import { GroupSessionChat } from "@/components/voice/GroupSessionChat";
 import type { ParticipantChatControls } from "@/components/voice/ParticipantRow";
 import { VoiceMemberFlairProvider } from "@/components/voice/VoiceMemberFlairProvider";
+import { SessionFeedbackScreen } from "@/components/voice/feedback/SessionFeedbackScreen";
+import { useSessionFeedbackItems } from "@/components/voice/feedback/use-session-feedback-items";
 import { deriveVoiceMemberFlair } from "@/components/voice/derive-voice-member-flair";
 import {
   useGroupStaffOverlay,
@@ -24,9 +26,21 @@ interface VoiceSessionPageProps {
   /** A `product_groups.id` — the token endpoint derives the Daily room name from the group + current session window. */
   groupId: string;
   backHref: string;
+  /**
+   * Whether this viewer is asked how the session went on the way out.
+   *
+   * Gamers are, and nobody else is. It arrives as a prop because the route has
+   * already resolved the viewer's role server-side, and a second, client-side
+   * answer to the same question is a second thing that can be wrong.
+   */
+  askForFeedback: boolean;
 }
 
-function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
+function VoiceSessionInner({
+  groupId,
+  backHref,
+  askForFeedback,
+}: VoiceSessionPageProps) {
   const t = useTranslations('voice');
   const c = useTranslations('common');
   const { joined, joining, join, leave, isModerator } = useVoiceRoom();
@@ -44,6 +58,21 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
   // connecting spinner with no way out.
   const [wasJoined, setWasJoined] = useState(false);
   const hasAttemptedJoin = useRef(false);
+  /**
+   * Whether the reader has already left the call and is now being asked how it
+   * went. Only ever set for a viewer the page asks — for everyone else leaving
+   * is still one step, and the flag never turns true.
+   */
+  const [leftForFeedback, setLeftForFeedback] = useState(false);
+  /**
+   * Done has been pressed and the navigation it starts is under way.
+   *
+   * Set synchronously before the assignment to `window.location` and never
+   * cleared: the document is on its way out, so there is no outcome that wants
+   * the button back.
+   */
+  const [finishing, setFinishing] = useState(false);
+  const feedbackItems = useSessionFeedbackItems();
 
   /**
    * The chat lock offered against each person in the room, published by the
@@ -156,8 +185,31 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
   const handleLeave = useCallback(async () => {
     setLeaving(true);
     await leave();
+    // A viewer we ask is held here rather than sent away: the disconnect has
+    // already happened, so the question sits between the call and the
+    // destination instead of delaying either. Everyone else leaves exactly as
+    // they did before.
+    if (askForFeedback) {
+      setLeaving(false);
+      setLeftForFeedback(true);
+      return;
+    }
     window.location.href = backHref;
-  }, [leave, backHref]);
+  }, [leave, backHref, askForFeedback]);
+
+  /**
+   * Done, from either path the question is asked on.
+   *
+   * **This is the seam where the save goes.** Today the answers are collected
+   * and dropped: the screen is a prototype for the product team to rule on, and
+   * nothing behind it exists yet — no route, no service, no table. When the
+   * instrument lands it is written here, and the screen does not change, because
+   * the screen has never known whether anything is saved.
+   */
+  const handleFeedbackDone = useCallback(() => {
+    setFinishing(true);
+    window.location.href = backHref;
+  }, [backHref]);
 
   if (error) {
     return (
@@ -187,6 +239,21 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
           <p className="text-sm text-muted-foreground">{t('disconnecting')}</p>
         </CardContent>
       </Card>
+    );
+  }
+
+  // The question, on both paths that reach it: the reader pressed Leave and the
+  // disconnect resolved, or the room closed under everyone at the window's end.
+  // One screen either way — the only difference is that the second one says so
+  // above the heading, because nothing else on the page would.
+  if (askForFeedback && (leftForFeedback || (wasJoined && !joined))) {
+    return (
+      <SessionFeedbackScreen
+        items={feedbackItems}
+        committing={finishing}
+        onDone={handleFeedbackDone}
+        lead={leftForFeedback ? undefined : t('sessionEnded')}
+      />
     );
   }
 

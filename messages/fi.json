@@ -2805,6 +2805,28 @@
         "ready": "Huoneesi on valmis",
         "join": "Liity"
       }
+    },
+    "feedback": {
+      "heading": "Miten tänään meni?",
+      "items": {
+        "fun": "Minulla oli hauskaa.",
+        "learned": "Opin jotain uutta.",
+        "gedu": "Geduni osaa asiansa ja auttaa minua.",
+        "help": "Uskallan pyytää apua ryhmässäni.",
+        "proud": "Olen ylpeä siitä, mitä tein.",
+        "belonging": "Tunsin kuuluvani ryhmääni.",
+        "listened": "Ryhmäni kuuntelee ja ymmärtää minua."
+      },
+      "scale": {
+        "no": "Ei",
+        "notReally": "Ei oikein",
+        "aBit": "Vähän",
+        "yes": "Kyllä",
+        "definitely": "Ehdottomasti"
+      },
+      "notePrompt": "Haluatko kertoa vielä jotain tämän päivän kerrasta?",
+      "audience": "Gedusi näkee, miltä ryhmästä tuntui. Vain School of Gamingin tiimi näkee, mitä valitsit.",
+      "done": "Valmis"
     }
   },
   "voiceButton": {

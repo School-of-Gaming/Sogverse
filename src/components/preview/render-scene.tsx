@@ -37,6 +37,10 @@ import {
   TopicPrepScene,
   isTopicPrepScenario,
 } from "./scenes/topic-prep-scene";
+import {
+  SessionFeedbackScene,
+  isSessionFeedbackScenario,
+} from "./scenes/session-feedback-scene";
 import { ShopBrowseScene } from "./scenes/shop-browse-scene";
 import { VoiceRoomScene } from "./scenes/voice-room-scene";
 
@@ -159,6 +163,14 @@ const SCENE_RENDERERS: Record<
   "voice-room": (scenario) => {
     if (!isVoiceRoomScenario(scenario)) notFound();
     return <VoiceRoomScene scenario={scenario} />;
+  },
+  // Checked and not handed on: the leave path and the session-ended path render
+  // the same screen, so there is one scenario and the scene body branches on
+  // nothing. The check still belongs here, so a slug the registry does not
+  // declare 404s rather than rendering the screen under a made-up name.
+  "voice-feedback": (scenario) => {
+    if (!isSessionFeedbackScenario(scenario)) notFound();
+    return <SessionFeedbackScene />;
   },
   // Two surfaces, one body and one set of fixtures. The audience is the whole
   // difference between them, which is exactly what the pair of scenes is for:

@@ -2805,6 +2805,28 @@
         "ready": "Votre salle est prête",
         "join": "Rejoindre"
       }
+    },
+    "feedback": {
+      "heading": "Comment s’est passée ta journée ?",
+      "items": {
+        "fun": "J’ai passé un bon moment.",
+        "learned": "J’ai appris quelque chose de nouveau.",
+        "gedu": "Mon Gedu s’y connaît et m’aide.",
+        "help": "Je me sens à l’aise pour demander de l’aide dans mon groupe.",
+        "proud": "Je ressens de la fierté pour ce que j’ai fait.",
+        "belonging": "J’ai senti que j’avais ma place dans mon groupe.",
+        "listened": "Mon groupe m’écoute vraiment et me comprend."
+      },
+      "scale": {
+        "no": "Non",
+        "notReally": "Pas vraiment",
+        "aBit": "Un peu",
+        "yes": "Oui",
+        "definitely": "Tout à fait"
+      },
+      "notePrompt": "Tu veux nous dire autre chose sur la séance d’aujourd’hui ?",
+      "audience": "Ton Gedu voit comment le groupe s’est senti. Seule l’équipe de School of Gaming voit ce que tu as choisi.",
+      "done": "Terminé"
     }
   },
   "voiceButton": {

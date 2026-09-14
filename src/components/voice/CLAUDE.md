@@ -158,6 +158,46 @@ Persisted messages, images, reactions, replies, mentions and moderation, in thei
 
 **Rule: the voice room *context* stays chat-free — the room may thread chat-owned props to named slots, and that is the whole of the seam.** The provider carries no chat hook and no chat fields, so the style-guide mock has nothing chat-shaped to fake and a room can be rendered with no chat at all. That separation is what lets one component tree serve a fixture scene and a live room with no branch inside it — put chat state in the provider and both ends lose it at once. Two named slots carry chat across it in the other direction, and both are optional with absence as the resting state: the `chat` slot the panel is drawn into, and the participant rail's per-person chat controls. An instant room passes neither, and the room it gets is a room with no chat in it. The line is between *state a room reads* and *props a caller hands it*: the first is forbidden, the second is how a slot works.
 
+## Session feedback (gamer only)
+
+A gamer leaving an online session is asked how it went: seven statements, each answered on
+the same five-point row of words, an optional note collapsed to one line, and a Done. It
+replaces the last frame of leaving — the Leave button's navigation, and the card the room
+shows when the window closes and everyone is ejected — and only for that one audience.
+Every other role leaves exactly as it did before, and the error path is untouched.
+
+**Rule: saving is a no-op, deliberately, until there is an instrument to save into.** The
+screen collects answers in local state and Done does what leaving already did — navigate
+to where the reader came from. There is no route, no service and no table behind it: it
+exists so the product team can rule on the question set in context before any of that is
+built, and a prototype that quietly persisted children's answers would be the worse of the
+two mistakes. The page that mounts the screen is the one place the save will be written,
+and it says so beside the handler.
+
+**Rule: the screen is presentational and takes its statements as data.** It is handed the
+statements and reports one result through one callback, so it cannot know whether anything
+is saved and does not change when something is. The statements themselves are a typed
+constant in one place — a stable identifier per statement, never the English sentence,
+because the copy is rewritten freely and a stored answer has to survive that. Each
+identifier also carries the Yty-Element it will report into, and **that mapping is never
+surfaced to the gamer**: no element mark, name or colour appears on this screen, because a
+child told which bucket a statement feeds learns to answer the bucket.
+
+**Rule: the whole question fits one phone viewport without scrolling, and that budget is
+what decides the layout.** A child who has to scroll to find out how much is left stops
+answering halfway, so the rows are compact — a statement on one line, its answer row
+directly beneath, tight gaps — and the note stays one tappable line until it is asked for.
+Anything added here spends from that budget and does the arithmetic rather than eyeballing
+it. Below the design floor, scrolling is the accepted degradation.
+
+**Every statement is optional and an unanswered one is a skip**, which is why there is no
+Skip button, no per-row skip control, and no state in which Done is refused. Done carries
+the committing flag the app-wide rule describes: set before the navigation, never cleared,
+because the document is leaving.
+
+The screen is judged in the preview scene rather than the style guide: the only open
+question about it is whether it fits the page it appears on.
+
 ## Daily token `user_name` encoding
 
 `user_name` is a pipe-delimited `userId|role|displayName`, with three further slots — `|gamePlatform|gameUsername|gameExternalId` — where the room carries a game identity. Build and parse only through `src/lib/voice/user-name.ts`.

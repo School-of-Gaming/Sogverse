@@ -391,6 +391,14 @@ export const PREVIEW_SCENES = [
     ],
   },
   {
+    surface: "voice-feedback",
+    title: "Session feedback — gamer",
+    description:
+      "The seven statements a gamer is asked on the way out of an online session, in the dashboard chrome — where whether the whole question fits one phone viewport can actually be judged.",
+    chrome: "dashboard",
+    scenarios: [{ slug: "default", label: "Leaving a session" }],
+  },
+  {
     surface: "chat",
     title: "Chat",
     description:

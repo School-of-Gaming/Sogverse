@@ -2805,6 +2805,28 @@
         "ready": "Ditt rum är redo",
         "join": "Gå med"
       }
+    },
+    "feedback": {
+      "heading": "Hur var det i dag?",
+      "items": {
+        "fun": "Jag hade roligt.",
+        "learned": "Jag lärde mig något nytt.",
+        "gedu": "Min Gedu kan sin sak och hjälper mig.",
+        "help": "Jag vågar be om hjälp i min grupp.",
+        "proud": "Jag är stolt över det jag gjorde.",
+        "belonging": "Jag kände att jag hörde hemma i min grupp.",
+        "listened": "Min grupp lyssnar verkligen och förstår mig."
+      },
+      "scale": {
+        "no": "Nej",
+        "notReally": "Inte riktigt",
+        "aBit": "Lite",
+        "yes": "Ja",
+        "definitely": "Absolut"
+      },
+      "notePrompt": "Vill du berätta något mer om dagens session?",
+      "audience": "Din Gedu ser hur gruppen kände sig. Bara teamet på School of Gaming ser vad du valde.",
+      "done": "Klart"
     }
   },
   "voiceButton": {
