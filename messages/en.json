@@ -37,6 +37,7 @@
       "about": "About Us",
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Admin Dashboard",
+      "adminMunicipalityInvoicing": "Municipality Invoicing",
       "adminTools": "Tools",
       "parentDashboard": "My SOG",
       "geduDashboard": "My SOG",
@@ -365,6 +366,21 @@
         "label": "Product type key",
         "heading": "Product types"
       }
+    },
+    "municipalityInvoicing": {
+      "title": "Municipality invoicing",
+      "description": "One month of municipality clubs: what each one ran, and what the municipality owes for it.",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "emptyMonth": "No municipality club has anything recorded or scheduled in this month.",
+      "noMunicipality": "No municipality",
+      "excludedClubs": "{count, plural, one {Excludes # club with no fee set} other {Excludes # clubs with no fee set}}",
+      "feeNotSet": "Fee not set",
+      "clubTotal": "{count, plural, one {# session} other {# sessions}} × {fee} = {total}",
+      "notRecorded": "Not recorded",
+      "upcoming": "Upcoming",
+      "loadError": "Could not load the invoicing month. Refresh to try again.",
+      "loadErrorWithReason": "Could not load the invoicing month — {reason}. Refresh to try again."
     },
     "geduContract": {
       "heading": "Gedu contract",
@@ -2330,6 +2346,7 @@
     "users": "Users",
     "consumerClubs": "Consumer Clubs",
     "municipalityClubs": "Municipality Clubs",
+    "municipalityInvoicing": "Municipality Invoicing",
     "camps": "Camps",
     "events": "Events",
     "sites": "Sites",

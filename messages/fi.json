@@ -37,6 +37,7 @@
       "about": "Tietoa meistä",
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Ylläpidon hallintapaneeli",
+      "adminMunicipalityInvoicing": "Kuntalaskutus",
       "adminTools": "Työkalut",
       "parentDashboard": "Oma SOG",
       "geduDashboard": "Oma SOG",
@@ -365,6 +366,21 @@
         "label": "Tuotetyyppien selite",
         "heading": "Tuotetyypit"
       }
+    },
+    "municipalityInvoicing": {
+      "title": "Kuntalaskutus",
+      "description": "Kuukausi kuntakerhoja: montako kertaa kukin kokoontui ja mitä kunta maksaa siitä.",
+      "previousMonth": "Edellinen kuukausi",
+      "nextMonth": "Seuraava kuukausi",
+      "emptyMonth": "Yhdelläkään kuntakerholla ei ole tälle kuukaudelle kirjattuja tai aikataulutettuja kertoja.",
+      "noMunicipality": "Ei kuntaa",
+      "excludedClubs": "{count, plural, one {Summasta puuttuu # kerho, jolta puuttuu maksu} other {Summasta puuttuu # kerhoa, joilta puuttuu maksu}}",
+      "feeNotSet": "Maksua ei ole asetettu",
+      "clubTotal": "{count, plural, one {# kerta} other {# kertaa}} × {fee} = {total}",
+      "notRecorded": "Ei kirjattu",
+      "upcoming": "Tulossa",
+      "loadError": "Laskutuskuukauden lataus epäonnistui. Päivitä sivu ja yritä uudelleen.",
+      "loadErrorWithReason": "Laskutuskuukauden lataus epäonnistui – {reason}. Päivitä sivu ja yritä uudelleen."
     },
     "geduContract": {
       "heading": "Gedu-sopimus",
@@ -2330,6 +2346,7 @@
     "users": "Käyttäjät",
     "consumerClubs": "Kuluttajakerhot",
     "municipalityClubs": "Kuntakerhot",
+    "municipalityInvoicing": "Kuntalaskutus",
     "camps": "Leirit",
     "events": "Tapahtumat",
     "sites": "Toimipisteet",

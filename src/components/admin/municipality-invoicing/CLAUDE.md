@@ -1,0 +1,113 @@
+# Municipality invoicing
+
+The admin-only page a finance officer opens once a month to raise the invoices School of
+Gaming sends Finnish municipalities for the clubs it runs there. One month, one
+municipality at a time, every club beneath it, every session behind every club's number.
+It is read-only end to end: it writes nothing, snapshots nothing and exports nothing.
+
+The page is one pure build over one document. The route fetches the month before the
+first paint, the builder turns it into the invoice, and the components render it — so
+everything below is a rule about the *arithmetic*, and the arithmetic lives in one
+function that has no clock, no query and no translator of its own.
+
+## What the invoice counts
+
+**A session ran iff a stored session row exists** for one of the club's groups on a date
+inside the month. Session records are materialized lazily — one is written the moment an
+educator records a report, a note or an attendance mark, and not before — so the row is
+the evidence that somebody was there, and it is the only evidence that bills.
+
+**Counting is per club, per calendar date.** A club may run several groups, and two
+groups meeting on the same date are one session of that club. The rows arrive raw, one
+per group and date, and the collapse happens in the builder: it is a rule of the invoice,
+not a property of the data, and doing it in the query would have thrown away which groups
+met.
+
+**A schedule is a claim, not a session.** The club's weekly slots are projected across the
+month, clipped to its own term (both ends inclusive; no end date means the projection runs
+to the end of the month). A projected date with no stored row is shown, never counted, and
+its treatment splits on whether it has passed:
+
+- **Before today — unrecorded.** Worth nothing, shown at zero in a warning tone, because a
+  club that was supposed to meet and recorded nothing is the one thing on this page worth
+  investigating.
+- **Today or later — upcoming.** Shown muted with no amount at all. It has not happened;
+  printing zero against it would send somebody looking for a session nobody has missed.
+
+"Today" is **the club's own local today**, resolved in the club's timezone, because every
+date on either side of that comparison is one of the club's own local dates. A UTC "today"
+is off by one for several hours of every day, and the error always lands on the newest
+session — the one most likely to be looked at.
+
+**Records beat projections.** A stored row on a date the schedule does not project still
+counts; a date carrying both is one line, and that line is recorded. This is the same rule
+every session feed in the app follows, and it has to stay the same rule: two surfaces
+disagreeing about whether a day happened is worse than either answer.
+
+**Projection is only offered for a club that is running or completed, and only where it has
+a start date.** A club that has not started, or that was cancelled, did not run the
+sessions its weekly schedule describes, and a club with no first day has no date to start
+walking from — guessing one would invent work. Any such club can still appear on the
+invoice, on the strength of its stored rows alone.
+
+**A club is on the invoice iff it has at least one line of any kind in the month**, and a
+municipality is on it iff at least one of its clubs is. An empty club row would say it did
+nothing in a month it was never running in.
+
+## The fee, and the money
+
+**The fee is always the product's current per-session municipality fee, read at the moment
+the page is read.** Nothing is snapshotted and nothing is versioned: an invoice is
+recomputed from today's facts every time it is opened, and correcting a wrong fee corrects
+every month that has not been sent yet.
+
+**An unset fee is never worth zero.** A club whose fee has never been filled in shows a
+translated "fee not set" label in warning tone in place of both its per-session fee and its
+total, links its name to its own admin page so the gap can be closed, and is **left out of
+its municipality's total** — with a line under that total saying how many clubs were left
+out. A total that is quietly short is the one failure this page cannot afford.
+
+**Money is an integer number of cents from end to end.** The count is multiplied by the fee
+in cents, cents are summed, and the division into euros happens exactly once, at render,
+through the shared currency formatter. Nothing divides before it sums. Every total passes
+through a guarded addition that throws rather than return a value that has stopped being a
+safe integer, so an invoice can fail loudly but cannot print a plausible wrong number.
+
+## The month, and how it is named
+
+The month is a calendar month, selected by a `month=YYYY-MM` search parameter, and it lives
+in the URL rather than in component state — a month of invoicing is something a finance
+officer links to or comes back to tomorrow, and it is also what lets the server fetch the
+right month before the page is written.
+
+**A missing or malformed parameter falls back to the previous calendar month in Helsinki.**
+Previous, because an invoice is raised for a month that has finished. Helsinki, because
+municipality clubs are Finnish by definition, and on the first and last day of a month the
+server's month and the finance officer's month are different answers.
+
+Every session line carries its date **and its ISO week number**, using the same week label
+the rest of the platform uses. Finnish admins plan and talk about clubs in week numbers, so
+a week number is how the line is found rather than a decoration on it.
+
+## Grouping and order
+
+Month → municipality → club → session. Municipalities sort by the name **the reader sees**,
+which is not always the stored one: the localized name is what the sort key has to be, or a
+Swedish reader is handed a list that is not in alphabetical order for them. Clubs sort the
+same way within a municipality, and sessions run ascending by date.
+
+A club whose location chain reaches no municipality at all goes into a single **trailing**
+bucket under a translated "no municipality" label, in warning tone. It trails whatever it
+is called: it is a list of things to fix rather than a municipality to invoice, and sorting
+it in by name would bury it in the middle.
+
+## Which municipality a club belongs to
+
+The nearest ancestor-or-self of type `municipality` above the club's own location. A club
+meeting in a school points at the school, whose parent is the municipality; an online club
+points at the municipality directly, which is why the walk is ancestor-or-*self*.
+
+**The walk passes through retired locations and never filters them.** A school that closed
+last term still sat in its municipality while it was running the sessions being invoiced,
+and dropping a retired row from the chain would move every club that met there into the
+no-municipality bucket — silently, and only for the months where it matters most.

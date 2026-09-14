@@ -37,6 +37,7 @@
       "about": "maH tIqel",
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Admin QaD",
+      "adminMunicipalityInvoicing": "veng DIlmeH ghItlh",
       "adminTools": "janmey",
       "parentDashboard": "jIH SOG",
       "geduDashboard": "jIH SOG",
@@ -409,6 +410,21 @@
         "label": "De’ Segh ngoq",
         "heading": "De’ Seghmey"
       }
+    },
+    "municipalityInvoicing": {
+      "title": "veng DIlmeH ghItlh",
+      "description": "wa’ jar ghomHom veng: nuq qaSpu’, ’ej nuq DIlnIS veng.",
+      "previousMonth": "jar wa’Dich",
+      "nextMonth": "jar veb",
+      "emptyMonth": "jarvam qaSpu’bogh ghomHom veng tu’lu’be’.",
+      "noMunicipality": "veng tu’lu’be’",
+      "excludedClubs": "{count, plural, one {mI’vamDaq # ghomHom tu’lu’be’ — DIl SaHbe’} other {mI’vamDaq # ghomHom tu’lu’be’ — DIl SaHbe’}}",
+      "feeNotSet": "DIl wIvlu’pu’be’",
+      "clubTotal": "{count, plural, one {# qaSpu’} other {# qaSpu’}} × {fee} = {total}",
+      "notRecorded": "qonlu’pu’be’",
+      "upcoming": "qaSbe’lI’",
+      "loadError": "DIl jar laDlaHbe’. yIchu’qa’ ’ej yInID.",
+      "loadErrorWithReason": "DIl jar laDlaHbe’ – {reason}. yIchu’qa’ ’ej yInID."
     },
     "geduContract": {
       "heading": "Gedu quv chut",
@@ -2370,6 +2386,7 @@
     "users": "lo’wI’pu’",
     "consumerClubs": "ghomHom tlhIngan",
     "municipalityClubs": "ghomHom veng",
+    "municipalityInvoicing": "veng DIlmeH ghItlh",
     "camps": "pa’ Qugh",
     "events": "Qu’mey",
     "sites": "Daqmey",
