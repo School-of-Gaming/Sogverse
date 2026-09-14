@@ -6,7 +6,7 @@ import {
   CONSENT_DOCUMENTS,
   CONSENT_DOCUMENT_BUNDLES,
   consentDocumentMeta,
-  isAccountConsentSlug,
+  isNonProductConsentSlug,
   isBundledConsentSlug,
 } from "@/lib/constants/consent-documents";
 import {
@@ -132,14 +132,15 @@ export function ConsentsSection({
   // added outside a bundle must get a row without anyone remembering to add
   // one.
   //
-  // An ACCOUNT-level document is excluded for a different reason than a bundled
-  // one, which is why it is a second predicate rather than a widened first. A
-  // bundled slug is offered, just through its bundle; an account-level one
-  // (00249) is not offered at all, because every account holder accepted it
-  // once at registration and asking again per product would record a second
-  // answer against a seat the agreement does not condition.
+  // A document accepted outside an enrolment is excluded for a different reason
+  // than a bundled one, which is why it is a second predicate rather than a
+  // widened first. A bundled slug is offered, just through its bundle; one
+  // accepted once for the account (00249) or once for a child (00250) is not
+  // offered at all, because it is already on file and asking again per product
+  // would record a second answer against a seat the agreement does not
+  // condition.
   const looseSlugs = Object.keys(CONSENT_DOCUMENTS).filter(
-    (slug) => !isBundledConsentSlug(slug) && !isAccountConsentSlug(slug),
+    (slug) => !isBundledConsentSlug(slug) && !isNonProductConsentSlug(slug),
   );
 
   // Slugs the database knows and this deploy does not.

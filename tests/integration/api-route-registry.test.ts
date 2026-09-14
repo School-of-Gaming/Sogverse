@@ -478,7 +478,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/auth/register/route.ts": {
     adminClient:
-      "Auth Admin API (self-registration creates the auth user before any session exists), plus the optional home-location write onto the profile that same request creates, plus the registration marketing-consent write — record_registration_marketing_consent (00221) is granted to service_role alone, because it takes the customer as a parameter (no session exists yet) and hardcodes the 'registration' source that set_marketing_consent refuses, so that provenance can only be claimed from here, plus the account-consent write — record_account_consents (00249) is granted to service_role alone for the same reason, and records what the account was opened under (the terms and the guardian declaration) against the version of each that was current",
+      "Auth Admin API (self-registration creates the auth user before any session exists), plus the optional home-location write onto the profile that same request creates, plus the registration marketing-consent write — record_registration_marketing_consent (00221) is granted to service_role alone, because it takes the customer as a parameter (no session exists yet) and hardcodes the 'registration' source that set_marketing_consent refuses, so that provenance can only be claimed from here, plus the account-consent write — record_account_consents (00249) is granted to service_role alone for the same reason, and records what the account was opened under (the terms; the guardian declaration moved to create_gamer in 00250, where it is a statement about one named child) against the version that was current",
     handlers: {
       POST: {
         posture: {
@@ -750,7 +750,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/gamers/create/route.ts": {
     adminClient:
-      "Auth Admin API (user creation, with delete-on-failure compensation)",
+      "Auth Admin API (user creation, with delete-on-failure compensation), plus the promote-and-link RPC — create_gamer (00250) is granted to service_role alone because it takes both the gamer and the parent as parameters (the child has no session and the parent's own client cannot promote a profile), and it is what records the parent's guardian declaration about this child in the same transaction",
     handlers: {
       POST: {
         posture: { kind: "role-gated", roles: ["customer"] },

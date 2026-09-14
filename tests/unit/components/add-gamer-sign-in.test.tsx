@@ -9,17 +9,21 @@ import { GAMER_EMAIL_DOMAIN } from "@/lib/gamer-sign-in";
 import type { CreateGamerInput } from "@/types";
 
 /**
- * **The add-gamer form is two pages for every parent, and the second one is the
- * sign-in question.**
+ * **The add-gamer form is three pages for every parent: who the child is, how
+ * they sign in, then the optional game handles.**
  *
- * Four things are pinned here. That the flow is fixed — page one always
- * advances, page two always creates, and no radio changes either — which is the
- * whole of what replaced a footer that used to re-decide itself as a mode was
- * picked. That page two holds one box whose declared height does not move as the
- * radio does, because the footer sits directly under it and a parent's thumb is
- * on the radio they just pressed. That each mode sends exactly its own fields.
- * And that the two refusals only the server can make land on the field the
- * parent can fix rather than in the generic banner.
+ * Five things are pinned here. That the flow is fixed — the first two pages
+ * always advance, the last always creates, and no radio changes any of it —
+ * which is the whole of what replaced a footer that used to re-decide itself as
+ * a mode was picked. That page one's guardian declaration gates its own Next, so
+ * a child cannot be created without it and the parent meets that gate before
+ * answering anything else. That page two holds one box whose declared height
+ * does not move as the radio does, because the footer sits directly under it and
+ * a parent's thumb is on the radio they just pressed. That each mode sends
+ * exactly its own fields. And that the two refusals only the server can make
+ * land on the field the parent can fix — which now means walking the form back
+ * to the page that field is on, since the create is pressed a page later than
+ * the typing.
  *
  * The real catalogue rather than echoed keys, because the footer's label is the
  * assertion in half these cases and "which key" would not distinguish Next from
@@ -27,7 +31,7 @@ import type { CreateGamerInput } from "@/types";
  */
 
 // The game rows do real platform lookups on commit and contribute nothing to
-// any question here; the dialog renders two of them.
+// any question here; page three is the two of them and nothing else.
 vi.mock("@/components/game-account", () => ({
   GAME_PLATFORMS: {
     minecraft: { name: "Minecraft" },
@@ -71,13 +75,39 @@ function renderCard() {
     fill(id: string, value: string) {
       fireEvent.change(field(id), { target: { value } });
     },
-    /** Fill page one's three required answers. */
+    /**
+     * The one checkbox page one carries: the parent's declaration about this
+     * child. Found by type rather than by its sentence, because the sentence is
+     * what other cases assert on and a helper matching it would make those cases
+     * pass by construction.
+     */
+    declaration() {
+      const box = view.container.querySelector<HTMLInputElement>(
+        'input[type="checkbox"]',
+      );
+      if (!box) throw new Error("no declaration checkbox");
+      return box;
+    },
+    /** Page one's three typed answers, without the declaration. */
+    fillAnswers() {
+      fireEvent.change(field("add-gamer-first-name"), {
+        target: { value: "Lily" },
+      });
+      fireEvent.change(field("add-gamer-month"), { target: { value: "3" } });
+      fireEvent.change(field("add-gamer-year"), { target: { value: "2015" } });
+    },
+    /** Everything page one requires, declaration included. */
     fillDetails() {
       fireEvent.change(field("add-gamer-first-name"), {
         target: { value: "Lily" },
       });
       fireEvent.change(field("add-gamer-month"), { target: { value: "3" } });
       fireEvent.change(field("add-gamer-year"), { target: { value: "2015" } });
+      const box = view.container.querySelector<HTMLInputElement>(
+        'input[type="checkbox"]',
+      );
+      if (!box) throw new Error("no declaration checkbox");
+      fireEvent.click(box);
     },
     radio(mode: string) {
       const input = view.container.querySelector<HTMLInputElement>(
@@ -127,6 +157,10 @@ function renderCard() {
     async goToSignIn() {
       await submit();
     },
+    /** Page two → page three, likewise. */
+    async goToAccounts() {
+      await submit();
+    },
   };
 }
 
@@ -135,7 +169,7 @@ beforeEach(() => {
   onCreate.mockResolvedValue({ gamerId: "1a8e1e2a-32f6-4c6f-9a6a-9d0f2a1b7c44" });
 });
 
-describe("the flow is the same two pages for everyone", () => {
+describe("the flow is the same three pages for everyone", () => {
   it("opens on page one, whose affirmative is always a Next", () => {
     const view = renderCard();
 
@@ -145,10 +179,16 @@ describe("the flow is the same two pages for everyone", () => {
     expect(
       view.container.querySelector('input[name="add-gamer-sign-in"]'),
     ).toBeNull();
+    // The game handles are page three's, for the same reason.
+    expect(view.queryAllByTestId("game-row")).toHaveLength(0);
   });
 
   it("refuses page one's own rules rather than advancing", async () => {
     const view = renderCard();
+    // Ticked, so the only thing standing between this press and page two is the
+    // empty name — a press blocked by the disabled button would prove nothing
+    // about the validation being asserted here.
+    fireEvent.click(view.declaration());
     await view.goToSignIn();
 
     // No name, so the parent never reaches a page asking how a child the first
@@ -174,12 +214,13 @@ describe("the flow is the same two pages for everyone", () => {
         messages.gamerSignIn.question.replace("{name}", "Lily"),
       ),
     ).toBeTruthy();
-    expect(view.affirmative().textContent).toContain(ADD_GAMER);
+    // Page two advances too — only page three creates.
+    expect(view.affirmative().textContent).toContain(NEXT);
     expect(view.negative(BACK)).toBeTruthy();
     expect(onCreate).not.toHaveBeenCalled();
   });
 
-  it("creates a switch-only child from page two with no credential fields", async () => {
+  it("creates a switch-only child from page three with no credential fields", async () => {
     const view = renderCard();
     view.fillDetails();
     await view.goToSignIn();
@@ -192,6 +233,13 @@ describe("the flow is the same two pages for everyone", () => {
     expect(view.container.querySelector("#add-gamer-username")).toBeNull();
     expect(view.container.querySelector("#add-gamer-email")).toBeNull();
 
+    await view.goToAccounts();
+
+    // Page three: the two optional game rows, the create, and nothing else.
+    expect(view.queryAllByTestId("game-row")).toHaveLength(2);
+    expect(view.affirmative().textContent).toContain(ADD_GAMER);
+    expect(onCreate).not.toHaveBeenCalled();
+
     await view.submit();
 
     expect(onCreate).toHaveBeenCalledTimes(1);
@@ -201,7 +249,28 @@ describe("the flow is the same two pages for everyone", () => {
       username: undefined,
       email: undefined,
       password: undefined,
+      // The declaration the parent made on page one, carried to the mutation
+      // rather than re-derived anywhere between.
+      guardianAttested: true,
     });
+  });
+
+  it("walks back a page at a time, keeping what was typed on each", async () => {
+    const view = renderCard();
+    view.fillDetails();
+    await view.goToSignIn();
+    view.chooseMode("username");
+    view.fill("add-gamer-username", "lily2015");
+    view.fill("add-gamer-password", "a-long-enough-password");
+    await view.goToAccounts();
+
+    await act(async () => {
+      view.negative(BACK).click();
+    });
+
+    expect(view.field("add-gamer-username").value).toBe("lily2015");
+    expect(view.affirmative().textContent).toContain(NEXT);
+    expect(onCreate).not.toHaveBeenCalled();
   });
 
   it("goes back to page one with what was typed there still in place", async () => {
@@ -216,8 +285,64 @@ describe("the flow is the same two pages for everyone", () => {
     expect(view.field("add-gamer-first-name").value).toBe("Lily");
     expect(view.field("add-gamer-month").value).toBe("3");
     expect(view.field("add-gamer-year").value).toBe("2015");
+    // The declaration is one of those answers: a parent who steps back should
+    // not find themselves asked to say it again.
+    expect(view.declaration().checked).toBe(true);
     expect(view.affirmative().textContent).toContain(NEXT);
+    expect(view.affirmative().disabled).toBe(false);
     expect(onCreate).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * **The guardian declaration**, which is page one's last row and the gate on its
+ * Next.
+ *
+ * It gates the button rather than being checked on a press, so the parent never
+ * submits a form the answer was going to refuse — and the label does not change
+ * as they tick it, so nothing in the footer resizes under the thumb that just
+ * pressed the box.
+ */
+describe("page one's guardian declaration", () => {
+  it("is unticked to begin with and disables Next until it is not", () => {
+    const view = renderCard();
+
+    expect(view.declaration().checked).toBe(false);
+    expect(view.affirmative().disabled).toBe(true);
+
+    fireEvent.click(view.declaration());
+
+    expect(view.affirmative().disabled).toBe(false);
+    // Same label either side of the tick: the gate is the disabled state alone.
+    expect(view.affirmative().textContent).toContain(NEXT);
+  });
+
+  it("names the child once there is a name, and reads as English before that", () => {
+    const view = renderCard();
+
+    // Asserted on the rendered text rather than through `getByText`, because the
+    // sentence is deliberately broken across elements: the policy's name inside
+    // it is its own link.
+    expect(view.container.textContent).toContain(
+      "This gamer is my child, or I am their legal guardian.",
+    );
+
+    view.fillAnswers();
+
+    expect(view.container.textContent).toContain(
+      "Lily is my child, or I am their legal guardian.",
+    );
+  });
+
+  it("offers the Privacy Policy as a link that opens in a new tab", () => {
+    const view = renderCard();
+
+    const link = view.container.querySelector<HTMLAnchorElement>(
+      "label a[target='_blank']",
+    );
+    expect(link).toBeTruthy();
+    expect(link?.textContent).toBe("Privacy Policy");
+    expect(link?.rel).toContain("noopener");
   });
 });
 
@@ -286,6 +411,7 @@ describe("what page two sends", () => {
 
     view.fill("add-gamer-username", "Lily2015");
     view.fill("add-gamer-password", "a-long-enough-password");
+    await view.goToAccounts();
     await view.submit();
 
     expect(onCreate.mock.calls[0][0]).toMatchObject({
@@ -303,6 +429,7 @@ describe("what page two sends", () => {
     view.chooseMode("email");
 
     view.fill("add-gamer-email", " lily@example.test ");
+    await view.goToAccounts();
     await view.submit();
 
     expect(onCreate.mock.calls[0][0]).toMatchObject({
@@ -358,8 +485,12 @@ describe("the two refusals only the server can make", () => {
     view.chooseMode("username");
     view.fill("add-gamer-username", "lily2015");
     view.fill("add-gamer-password", "a-long-enough-password");
+    await view.goToAccounts();
     await view.submit();
 
+    // The create is pressed on page three; the refusal walks the form back to
+    // page two, where the field it is about lives.
+    expect(view.field("add-gamer-username")).toBeTruthy();
     expect(screen.getByText(messages.gamerSignIn.usernameTaken)).toBeTruthy();
     // Not the banner: a parent who can see which field is wrong can fix it.
     expect(
@@ -377,8 +508,10 @@ describe("the two refusals only the server can make", () => {
     await view.goToSignIn();
     view.chooseMode("email");
     view.fill("add-gamer-email", "lily@example.test");
+    await view.goToAccounts();
     await view.submit();
 
+    expect(view.field("add-gamer-email")).toBeTruthy();
     expect(screen.getByText(messages.gamerSignIn.emailTaken)).toBeTruthy();
     expect(
       screen.queryByText(messages.family.addGamerForm.genericError),
@@ -393,6 +526,7 @@ describe("the two refusals only the server can make", () => {
     await view.goToSignIn();
     view.chooseMode("email");
     view.fill("add-gamer-email", "lily@example.test");
+    await view.goToAccounts();
     await view.submit();
 
     expect(

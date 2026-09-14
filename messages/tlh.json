@@ -1270,8 +1270,8 @@
       "passwordPlaceholder": "HoS mu’mey yIchenmoH",
       "confirmPasswordPlaceholder": "mu’mey yIchel",
       "location": "Daq",
-      "termsLabel": "puq vav ghap puq SoS jIH ’e’ vIper; <terms>Terms and Conditions</terms> vIlaj ’ej <privacy>Privacy Policy</privacy> vIlaDta’.",
-      "termsRequired": "puq vav ghap puq SoS SoH ’e’ yIper ’ej chutmey yIlaj!",
+      "termsLabel": "<terms>Terms and Conditions</terms> vIlaj ’ej <privacy>Privacy Policy</privacy> vIlaDta’.",
+      "termsRequired": "chutmey yIlaj ’ej <privacy>Privacy Policy</privacy> DalaDta’ ’e’ yIper!",
       "marketingConsentLabel": "noH Quj yejHaD QIn HevmeH vIchaw’.",
       "marketingConsentHint": "ra’be’lu’ — ngoQmeylIjDaq reH DachoHlaH.",
       "creatingAccount": "account vIchenmoH...",
@@ -1566,7 +1566,9 @@
       "firstNameTooLong": "wa’DIch pong tIn law’ cha’maH cha’ Hap law’.",
       "birthMonthRequired": "qoSlIj jar yIwIv!",
       "birthYearRequired": "qoSlIj DIS yIwIv!",
-      "genericError": "QujwI’ chelta’be’. yInIDqa’!"
+      "genericError": "QujwI’ chelta’be’. yInIDqa’!",
+      "guardianAttestation": "puqwI’ ghaH {name}’e’ ghap ghaHvaD jIQorghqu’. <privacy>Privacy Policy</privacy> vIlaDta’.",
+      "guardianAttestationUnnamed": "puqwI’ ghaH QujwI’vam’e’ ghap ghaHvaD jIQorghqu’. <privacy>Privacy Policy</privacy> vIlaDta’."
     }
   },
   "familyEnrollment": {

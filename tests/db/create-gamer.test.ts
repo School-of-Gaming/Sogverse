@@ -6,9 +6,15 @@ import { createAdminTestClient } from "./helpers";
 /**
  * Tests for the create_gamer() RPC (migration 00113) — the atomic
  * promote + link that the gamer-creation route calls after creating the auth
- * user. Three properties matter: it refuses a family that has no parent PIN, it
- * does the full promotion correctly, and it does it as ONE transaction, so a
- * mid-flight failure leaves nothing behind.
+ * user. Four properties matter: it refuses a family that has no parent PIN, it
+ * refuses a creation the parent has not attached their guardian declaration to,
+ * it does the full promotion correctly, and it does all of it as ONE
+ * transaction, so a mid-flight failure leaves nothing behind.
+ *
+ * Every call in this file therefore carries `p_guardian_attested: true` (00250),
+ * including the PIN refusal — which is the point there: the PIN guard is what
+ * must answer, and a call that was also missing the declaration would not prove
+ * which of the two refused it.
  *
  * Every parent in this file is created WITH a PIN (00235), because a parent
  * without one can no longer acquire a gamer at all — the gate on leaving a
@@ -27,6 +33,13 @@ describe("create_gamer() atomic promotion", () => {
 
   afterEach(async () => {
     for (const userId of createdUserIds.reverse()) {
+      // The acceptance cascades from gamer_profiles, but `accepted_by` names the
+      // parent and deliberately does NOT cascade — a profile that made a legal
+      // record cannot be hard-deleted while the record stands. Clearing both
+      // ends explicitly keeps teardown independent of the order ids were pushed
+      // in, which is otherwise a trap the next case to be added would fall into.
+      await admin.from("gamer_consent_acceptances").delete().eq("gamer_id", userId);
+      await admin.from("gamer_consent_acceptances").delete().eq("accepted_by", userId);
       await admin.from("parent_gamer").delete().eq("gamer_id", userId);
       await admin.from("parent_gamer").delete().eq("parent_id", userId);
       await admin.from("minecraft_accounts").delete().eq("user_id", userId);
@@ -82,6 +95,7 @@ describe("create_gamer() atomic promotion", () => {
     const { error } = await admin.rpc("create_gamer", {
       p_gamer_id: gamer.id,
       p_parent_id: parent.id,
+      p_guardian_attested: true,
       p_first_name: "Unmade",
       p_last_name: "Parentson",
       p_date_of_birth: "2015-06-15",
@@ -107,6 +121,99 @@ describe("create_gamer() atomic promotion", () => {
     expect(link).toBeNull();
   });
 
+  it.each<[string, boolean | undefined]>([
+    ["omitted", undefined],
+    ["false", false],
+  ])(
+    "refuses a creation whose guardian declaration is %s, writing nothing",
+    async (_label, attested) => {
+      // The declaration is what makes the child's account lawful to create at
+      // all, so its absence is refused before anything is written. Omitted
+      // exercises the parameter's own default, which is the fail-closed one: a
+      // caller that has not been taught about the declaration is refused rather
+      // than admitted. The guard is written `is not true` rather than `= false`,
+      // so a NULL is refused by the same branch — it is not a case here because
+      // the generated Args type has no NULL for a defaulted parameter, and
+      // asserting one past the compiler would be testing a call no caller can
+      // make.
+      const parent = await createParentUser(
+        `cg-att-parent-${String(attested)}@test.local`,
+      );
+      const gamer = await createCustomerUser(
+        `cg-att-child-${String(attested)}@test.local`,
+      );
+
+      const { error } = await admin.rpc("create_gamer", {
+        p_gamer_id: gamer.id,
+        p_parent_id: parent.id,
+        p_first_name: "Undeclared",
+        p_last_name: "Parentson",
+        p_date_of_birth: "2015-06-15",
+        ...(attested === undefined ? {} : { p_guardian_attested: attested }),
+      });
+
+      expect(error).not.toBeNull();
+      expect(error?.message).toContain("guardian declaration");
+
+      // The refusal is before the promotion, so the candidate is still a
+      // customer with its trigger-seeded extension row and no link.
+      const { data: profile } = await admin
+        .from("profiles")
+        .select("role")
+        .eq("id", gamer.id)
+        .single();
+      expect(profile?.role).toBe("customer");
+
+      const { data: link } = await admin
+        .from("parent_gamer")
+        .select("gamer_id")
+        .eq("gamer_id", gamer.id)
+        .maybeSingle();
+      expect(link).toBeNull();
+    },
+  );
+
+  it("records the declaration against the document's current version", async () => {
+    // One row per child, stamped with the version that is current at the moment
+    // of creation and with the adult who made the statement. The version is
+    // resolved inside the function — greatest created_at, version DESC to break
+    // a tie — so this asserts against the same derivation rather than against a
+    // literal that would have to be edited every time the wording changes.
+    const parent = await createParentUser("cg-decl-parent@test.local");
+    const gamer = await createCustomerUser("cg-decl-child@test.local");
+
+    const { error } = await admin.rpc("create_gamer", {
+      p_gamer_id: gamer.id,
+      p_parent_id: parent.id,
+      p_guardian_attested: true,
+      p_first_name: "Declared",
+      p_last_name: "Parentson",
+      p_date_of_birth: "2015-06-15",
+    });
+    expect(error).toBeNull();
+
+    const { data: current } = await admin
+      .from("consent_document_versions")
+      .select("version")
+      .eq("document_slug", "guardian-declaration")
+      .order("created_at", { ascending: false })
+      .order("version", { ascending: false })
+      .limit(1)
+      .single();
+
+    const { data: rows } = await admin
+      .from("gamer_consent_acceptances")
+      .select("document_slug, document_version, accepted_by")
+      .eq("gamer_id", gamer.id);
+
+    expect(rows).toHaveLength(1);
+    expect(rows?.[0]).toMatchObject({
+      document_slug: "guardian-declaration",
+      document_version: current?.version,
+      accepted_by: parent.id,
+    });
+  });
+
   it("stores the sign-in mode, defaulting to switch-only", async () => {
     const parent = await createParentUser("cg-mode-parent@test.local");
     const byDefault = await createCustomerUser("cg-mode-default@test.local");
@@ -117,6 +224,7 @@ describe("create_gamer() atomic promotion", () => {
     const { error: defaultError } = await admin.rpc("create_gamer", {
       p_gamer_id: byDefault.id,
       p_parent_id: parent.id,
+      p_guardian_attested: true,
       p_first_name: "Switched",
       p_last_name: "Parentson",
       p_date_of_birth: "2015-06-15",
@@ -126,6 +234,7 @@ describe("create_gamer() atomic promotion", () => {
     const { error: emailError } = await admin.rpc("create_gamer", {
       p_gamer_id: byEmail.id,
       p_parent_id: parent.id,
+      p_guardian_attested: true,
       p_first_name: "Mailed",
       p_last_name: "Parentson",
       p_date_of_birth: "2015-06-15",
@@ -160,6 +269,7 @@ describe("create_gamer() atomic promotion", () => {
     const { error } = await admin.rpc("create_gamer", {
       p_gamer_id: gamer.id,
       p_parent_id: parent.id,
+      p_guardian_attested: true,
       p_first_name: "Aino",
       p_last_name: "Parentson",
       p_date_of_birth: "2015-06-15",
@@ -181,6 +291,7 @@ describe("create_gamer() atomic promotion", () => {
     const { error } = await admin.rpc("create_gamer", {
       p_gamer_id: gamer.id,
       p_parent_id: parent.id,
+      p_guardian_attested: true,
       p_first_name: "Lily",
       p_last_name: "Parentson",
       p_date_of_birth: "2015-06-15",
@@ -229,6 +340,7 @@ describe("create_gamer() atomic promotion", () => {
     const { error } = await admin.rpc("create_gamer", {
       p_gamer_id: gamer.id,
       p_parent_id: parent.id,
+      p_guardian_attested: true,
       p_first_name: "Max",
       p_last_name: "Parentson",
       p_date_of_birth: "2014-01-20",
@@ -259,6 +371,7 @@ describe("create_gamer() atomic promotion", () => {
       const { error } = await admin.rpc("create_gamer", {
         p_gamer_id: gamer.id,
         p_parent_id: parent.id,
+        p_guardian_attested: true,
         p_first_name: name,
         p_last_name: "Parentson",
         p_date_of_birth: "2014-01-20",
@@ -287,6 +400,7 @@ describe("create_gamer() atomic promotion", () => {
     const { error } = await admin.rpc("create_gamer", {
       p_gamer_id: gamer.id,
       p_parent_id: parent.id,
+      p_guardian_attested: true,
       p_first_name: "Max",
       p_last_name: "Parentson",
       p_date_of_birth: "2014-01-20",
@@ -317,6 +431,7 @@ describe("create_gamer() atomic promotion", () => {
     const { error: bothError } = await admin.rpc("create_gamer", {
       p_gamer_id: both.id,
       p_parent_id: parent.id,
+      p_guardian_attested: true,
       p_first_name: "Both",
       p_last_name: "Parentson",
       p_date_of_birth: "2014-01-20",
@@ -330,6 +445,7 @@ describe("create_gamer() atomic promotion", () => {
     const { error: neitherError } = await admin.rpc("create_gamer", {
       p_gamer_id: neither.id,
       p_parent_id: parent.id,
+      p_guardian_attested: true,
       p_first_name: "Neither",
       p_last_name: "Parentson",
       p_date_of_birth: "2014-01-20",
@@ -378,6 +494,7 @@ describe("create_gamer() atomic promotion", () => {
       const { error } = await admin.rpc("create_gamer", {
         p_gamer_id: gamer.id,
         p_parent_id: parent.id,
+        p_guardian_attested: true,
         p_first_name: name,
         p_last_name: "Parentson",
         p_date_of_birth: "2014-01-20",
@@ -414,6 +531,7 @@ describe("create_gamer() atomic promotion", () => {
     const { error } = await admin.rpc("create_gamer", {
       p_gamer_id: gamer.id,
       p_parent_id: impostor.id,
+      p_guardian_attested: true,
       p_first_name: "Doomed",
       p_last_name: "Parentson",
       p_date_of_birth: "2016-03-03",
@@ -481,6 +599,7 @@ describe("create_gamer() atomic promotion", () => {
     const { error: firstError } = await admin.rpc("create_gamer", {
       p_gamer_id: gamer.id,
       p_parent_id: parent.id,
+      p_guardian_attested: true,
       p_first_name: "Once",
       p_last_name: "Parentson",
       p_date_of_birth: "2015-09-09",
@@ -493,6 +612,7 @@ describe("create_gamer() atomic promotion", () => {
     const { error: secondError } = await admin.rpc("create_gamer", {
       p_gamer_id: gamer.id,
       p_parent_id: parent.id,
+      p_guardian_attested: true,
       p_first_name: "Twice",
       p_last_name: "Parentson",
       p_date_of_birth: "2015-09-09",

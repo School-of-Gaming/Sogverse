@@ -112,6 +112,20 @@ export type ConsentAcceptance =
 export type AccountConsentAcceptance =
   Database["public"]["Tables"]["account_consent_acceptances"]["Row"];
 
+// gamer_consent_acceptances (00250) — the third subject in the same system,
+// and the one the guardian declaration belongs to: what an adult stated about
+// ONE CHILD at the moment that child's account was created. It is neither of
+// the two above. A ConsentAcceptance conditions a seat; an
+// AccountConsentAcceptance belongs to the account; this one is about a person
+// who is not the person who made it, which is why it carries both ids.
+//
+// Row alias only, for the same reason: the table carries no write grant for any
+// Data API role. Rows are written by `create_gamer`, in the same transaction as
+// the gamer, so an Insert type here would name a statement nothing in the app
+// is allowed to make on its own.
+export type GamerConsentAcceptance =
+  Database["public"]["Tables"]["gamer_consent_acceptances"]["Row"];
+
 // marketing_consents / marketing_consent_events / product_marketing_consents
 // (00220) — the REVOCABLE marketing-consent feature, and deliberately not the
 // same system as the four aliases above. A ConsentAcceptance is a
@@ -820,6 +834,16 @@ export interface CreateGamerInput {
   email?: string;
   /** Required by `username` mode, forbidden by the other two. */
   password?: string;
+  /**
+   * The parent's declaration that this child is theirs, or that they are the
+   * child's legal guardian, made against the wording the form showed them.
+   *
+   * Typed `true` rather than `boolean` on purpose: there is no such thing as
+   * creating a gamer without it, so a call site holding a false has a bug the
+   * compiler can see rather than a 400 it discovers at runtime. The route's
+   * schema and `create_gamer` both refuse anything else regardless.
+   */
+  guardianAttested: true;
 }
 
 export interface LoginCredentials {

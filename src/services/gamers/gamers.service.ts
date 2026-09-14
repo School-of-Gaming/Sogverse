@@ -256,6 +256,10 @@ export class GamerService {
         username: input.username,
         email: input.email,
         password: input.password,
+        // The parent's declaration about this child. Carried like every other
+        // field rather than hardcoded here, so the one place it can be true is
+        // the box the parent actually ticked.
+        guardianAttested: input.guardianAttested,
       }),
     });
 

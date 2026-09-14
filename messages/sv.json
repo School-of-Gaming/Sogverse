@@ -1226,8 +1226,8 @@
       "passwordPlaceholder": "Skapa ett starkt lösenord",
       "confirmPasswordPlaceholder": "Bekräfta ditt lösenord",
       "location": "Plats",
-      "termsLabel": "Jag intygar att jag är förälder eller vårdnadshavare, jag godkänner <terms>användarvillkoren</terms> och har läst <privacy>integritetspolicyn</privacy>.",
-      "termsRequired": "Bekräfta att du är förälder eller vårdnadshavare och godkänner användarvillkoren.",
+      "termsLabel": "Jag godkänner <terms>användarvillkoren</terms> och har läst <privacy>integritetspolicyn</privacy>.",
+      "termsRequired": "Godkänn användarvillkoren och bekräfta att du har läst integritetspolicyn.",
       "marketingConsentLabel": "School of Gaming får skicka mig nyheter och erbjudanden via e-post.",
       "marketingConsentHint": "Valfritt — du kan ändra detta när som helst i dina inställningar.",
       "creatingAccount": "Skapar konto...",
@@ -1522,7 +1522,9 @@
       "firstNameTooLong": "Förnamnet får vara högst 32 tecken.",
       "birthMonthRequired": "Välj en födelsemånad.",
       "birthYearRequired": "Välj ett födelseår.",
-      "genericError": "Det gick inte att lägga till gamern. Försök igen."
+      "genericError": "Det gick inte att lägga till gamern. Försök igen.",
+      "guardianAttestation": "{name} är mitt barn, eller så är jag barnets vårdnadshavare. Jag har läst <privacy>integritetspolicyn</privacy>.",
+      "guardianAttestationUnnamed": "Den här gamern är mitt barn, eller så är jag barnets vårdnadshavare. Jag har läst <privacy>integritetspolicyn</privacy>."
     }
   },
   "familyEnrollment": {

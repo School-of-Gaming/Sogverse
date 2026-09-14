@@ -11,9 +11,11 @@ import { ROUTES } from "./routes";
  *
  * **Two of the slugs here are not product requirements at all**, and they are
  * in the map for the same reason everything else is: they are rows in
- * `consent_documents`, so anything reading that table meets them. See
- * `REGISTRATION_CONSENT_DOCUMENTS` below for what they are and
- * `isAccountConsentSlug` for the one place the difference is acted on.
+ * `consent_documents`, so anything reading that table meets them. They are
+ * asked at two different moments and recorded against two different subjects —
+ * `REGISTRATION_CONSENT_DOCUMENTS` (the account) and
+ * `GAMER_CONSENT_DOCUMENTS` (one child) below say which is which — and
+ * `isNonProductConsentSlug` is the one place the difference is acted on.
  *
  * **Rows arrive by migration and this map ships in the same deploy**, so a slug
  * the database knows about and this map does not is a defect in the change that
@@ -86,37 +88,65 @@ export const CONSENT_DOCUMENTS: Readonly<Record<string, ConsentDocumentMeta>> = 
 };
 
 /**
- * **What opening an account commits the account holder to** (migration 00249).
+ * **What opening an account commits the account holder to** (migrations 00249,
+ * 00250).
  *
- * One checkbox on the parent sign-up form carries both: the person declares
- * they are a parent or legal guardian, and they agree to School of Gaming's
- * Terms and Conditions. The register route records each as its own row against
- * the version that was current — one tick, two documents, because a later
- * question about a specific text has to be answerable about that text alone.
+ * One checkbox on the parent sign-up form, and it is about the terms alone: the
+ * person agrees to School of Gaming's Terms and Conditions, having been given
+ * the Privacy Policy to read. The register route records it against the version
+ * that was current, so a later question about a specific text is answerable
+ * about that text alone.
+ *
+ * **The guardian declaration used to be in this array and is deliberately not
+ * any more** (00250). Ticked at registration it said "this account holder is a
+ * parent or guardian of somebody", which is not what has to be shown: consent
+ * on behalf of a child must come from the holder of parental responsibility FOR
+ * THAT CHILD, and an account that adds a second child a year later never said
+ * anything about the second one. It is now asked where the child is named — the
+ * add-gamer form — and recorded per gamer, inside the same transaction that
+ * creates the gamer. See `GAMER_CONSENT_DOCUMENTS`.
  *
  * **Defined here rather than in the route** so the form's sentence, the wire
  * call and the tests all read the same list. It is the whole set: a document a
  * parent should have to accept at registration joins this array and gets its
  * migration, and nothing else has to change.
  */
-export const REGISTRATION_CONSENT_DOCUMENTS = [
-  "terms-and-conditions",
-  "guardian-declaration",
-] as const;
-
-/** Every slug an account holder accepts once, for the account rather than a seat. */
-const ACCOUNT_CONSENT_SLUGS: ReadonlySet<string> = new Set(
-  REGISTRATION_CONSENT_DOCUMENTS,
-);
+export const REGISTRATION_CONSENT_DOCUMENTS = ["terms-and-conditions"] as const;
 
 /**
- * True when this slug is accepted at the ACCOUNT level rather than per
- * enrolment.
+ * **What adding a child commits the adult to, about that child** (00250).
+ *
+ * One document today, and the surface is the add-gamer form's single required
+ * box: the adult states that this child is theirs or that they are the child's
+ * legal guardian, having read the Privacy Policy. Unlike the registration set,
+ * **the app does not send these slugs anywhere** — the row is written by
+ * `create_gamer` itself, against the current version, in the transaction that
+ * creates the child, so that a gamer without a declaration is a state the
+ * database cannot be left in. What the form sends is one boolean.
+ *
+ * The array exists anyway, because the difference this file is asked about is
+ * "may an admin attach this to a product" — and the answer for a per-gamer
+ * declaration is the same no as for an account-level one.
+ */
+export const GAMER_CONSENT_DOCUMENTS = ["guardian-declaration"] as const;
+
+/**
+ * Every slug that is accepted somewhere other than at an enrolment — once for
+ * the account, or once for a child.
+ */
+const NON_PRODUCT_CONSENT_SLUGS: ReadonlySet<string> = new Set([
+  ...REGISTRATION_CONSENT_DOCUMENTS,
+  ...GAMER_CONSENT_DOCUMENTS,
+]);
+
+/**
+ * True when this slug is accepted at the ACCOUNT or the GAMER level rather than
+ * per enrolment.
  *
  * The admin product form uses it to decide which documents may be attached to a
- * product: one of these is already accepted by every account holder, once, at
- * the moment they registered, so offering it as an enrolment condition would
- * ask a second time for an agreement that is already on file — and record the
+ * product: one of these is already accepted — once, when the account was opened
+ * or when the child was added — so offering it as an enrolment condition would
+ * ask a second time for an agreement that is already on file, and record the
  * answer in a different table, keyed to a seat it does not condition.
  *
  * It is a *filter on what may be attached*, not a filter on what may be named.
@@ -125,8 +155,8 @@ const ACCOUNT_CONSENT_SLUGS: ReadonlySet<string> = new Set(
  * set written before this rule existed — can still call it by its name instead
  * of showing a raw slug.
  */
-export function isAccountConsentSlug(slug: string): boolean {
-  return ACCOUNT_CONSENT_SLUGS.has(slug);
+export function isNonProductConsentSlug(slug: string): boolean {
+  return NON_PRODUCT_CONSENT_SLUGS.has(slug);
 }
 
 /**
@@ -288,8 +318,9 @@ export type RequiredConsentDisplayRow =
  * offered as its raw slug beside the generic sentence. Today that means the
  * drift case — a slug the database knows and this deploy does not — because
  * every document a product can *require* belongs to a bundle; the two
- * account-level documents stand outside every bundle by design, and never
- * reach this function because a product cannot require them. A new document
+ * documents accepted outside an enrolment — one for the account, one for a
+ * child — stand outside every bundle by design, and never reach this function
+ * because a product cannot require them. A new document
  * that a parent should be able to *read* before ticking wants a bundle of its
  * own with a sentence to match, not a loose entry.
  */

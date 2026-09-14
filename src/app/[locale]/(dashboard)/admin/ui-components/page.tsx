@@ -4287,14 +4287,19 @@ function inertCreateGamer(): Promise<{ gamerId: string }> {
 }
 
 /**
- * Both pages side by side, with page two drawn once per answer.
+ * All three pages side by side, with page two drawn once per answer.
  *
- * The form is two pages for every parent, and the questions about them are
- * comparative: does page two look like it belongs to page one, and do the three
- * answers sit in a box that does not resize as the radio moves between them.
- * States reached by driving one card through the flow would have to be compared
- * from memory, so all four are rendered at once and each is seeded straight into
- * its page through the card's `initial` prop.
+ * The form is three pages for every parent, and the questions about them are
+ * comparative: do the pages look like they belong to one another, does the
+ * declaration read as the last row of page one rather than as a section of its
+ * own, and do the three sign-in answers sit in a box that does not resize as the
+ * radio moves between them. States reached by driving one card through the flow
+ * would have to be compared from memory, so all five are rendered at once and
+ * each is seeded straight into its page through the card's `initial` prop.
+ *
+ * Page one is drawn with its box unticked, which is also the state that disables
+ * its Next — the gate is the thing worth seeing, and a ticked box is one click
+ * away in the demo itself.
  *
  * **No `Dialog` around them.** A dialog is a portal, so four of them would stack
  * in `document.body` on top of one another rather than sitting in a row — and
@@ -4338,6 +4343,13 @@ function AddGamerDialogDemo() {
         className="max-h-none"
         idPrefix="add-gamer-demo-email"
         initial={{ firstName: "Lily", signIn: "email", step: "signIn" }}
+      />
+      <AddGamerFormCard
+        onOpenChange={dismiss}
+        onCreate={inertCreateGamer}
+        className="max-h-none"
+        idPrefix="add-gamer-demo-accounts"
+        initial={{ firstName: "Lily", signIn: "parent", step: "accounts" }}
       />
     </div>
   );

@@ -69,6 +69,7 @@ export const POST = defineRoute({
       username,
       email,
       password,
+      guardianAttested,
     } = body;
 
     const dobDate = new Date(dateOfBirth + "T00:00:00");
@@ -235,6 +236,12 @@ export const POST = defineRoute({
         p_roblox_username: resolvedRoblox?.username ?? undefined,
         p_roblox_user_id: resolvedRoblox?.userId ?? undefined,
         p_sign_in: signIn,
+        // The parent's declaration about THIS child, recorded by the RPC in the
+        // same transaction as the child. The body schema has already refused
+        // anything but `true`, so this is the value that arrived rather than a
+        // constant — the route asserts nothing the boundary has not checked, and
+        // the RPC refuses a false or NULL on its own account anyway.
+        p_guardian_attested: guardianAttested,
       });
 
       if (rpcError) {
