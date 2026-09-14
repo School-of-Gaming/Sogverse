@@ -3132,6 +3132,7 @@
           "Au sujet de votre enfant : son prénom, son mois et son année de naissance (nous ne demandons pas la date complète — seulement ce dont nous avons réellement besoin) et, facultativement, son genre — afin de le placer dans le bon groupe et de nous adresser à lui correctement. Nous enregistrons aussi votre nom de famille sur son compte, parce que votre enfant fait partie de votre compte ; les Gedus et les autres joueurs ne le voient jamais. Le compte lui-même porte une adresse interne Sogverse plutôt qu’un véritable e-mail, sauf si vous choisissez de lui donner une connexion avec sa propre adresse e-mail ; nous conservons alors cette adresse et lui envoyons sa propre copie des e-mails que nous vous adressons au sujet de ses clubs, stages et événements.",
           "Facultativement, le nom d’utilisateur de votre enfant dans les jeux utilisés par ses clubs — aujourd’hui Minecraft et Roblox — ainsi que l’identifiant de compte que le jeu lui attribue, pour que nous puissions le reconnaître dans le jeu et pour qu’il puisse se connecter à notre serveur Minecraft pendant les sessions.",
           "Ce que nos animateurs notent au fil des sessions — présences, comptes rendus de session et courtes notes qui nous aident à accompagner votre enfant dans le groupe.",
+          "Les messages que votre enfant envoie dans le chat d’une session — pour que l’animateur et le groupe puissent les lire pendant la session, et pour que nous puissions examiner une inquiétude par la suite. Un message que votre enfant supprime est masqué pour le groupe, mais conservé jusqu’à la fermeture du compte.",
           "Les informations techniques nécessaires au fonctionnement de tout site web — sessions de connexion, journaux de requêtes et, uniquement si vous le choisissez, statistiques d’utilisation anonymes. Voir « Informations techniques » et « Cookies, statistiques et publicité » ci-dessous.",
           "L’étiquette de campagne — source, support et campagne — portée par le lien à l’origine de votre visite. Nous l’enregistrons une fois, à la création du compte, et uniquement si vous avez autorisé les cookies marketing, pour savoir, avec nos partenaires, quelles actions touchent réellement les familles. Refuser le marketing par la suite ne supprime pas une étiquette déjà enregistrée."
         ]
@@ -3823,7 +3824,8 @@
         "heading": "Photographies, tournages et usage public",
         "blocks": [
           "Les sessions en ligne ordinaires ne sont pas enregistrées. Des vues d’ensemble d’un événement ou d’un atelier peuvent être prises à distance, lorsqu’aucun enfant n’est identifiable.",
-          "Lorsqu’une prise de vue ou un tournage permettant d’identifier les personnes est prévu pour une session ou un événement donné, les familles en sont informées à l’avance."
+          "Lorsqu’une prise de vue ou un tournage permettant d’identifier les personnes est prévu pour une session ou un événement donné, les familles en sont informées à l’avance.",
+          "Lorsque l’autorisation média a été donnée, une photographie prise pendant une session peut figurer dans le compte rendu de session, que toutes les familles du groupe de l’enfant peuvent consulter."
         ]
       },
       "mediaPublic": {

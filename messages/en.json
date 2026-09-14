@@ -2757,7 +2757,8 @@
         "heading": "Photography, filming and public use",
         "blocks": [
           "Routine online sessions are not recorded. Wide shots of an event or workshop may be taken from a distance, where no child is identifiable.",
-          "Where identifiable photography or filming is planned for a selected session or event, families will be told in advance."
+          "Where identifiable photography or filming is planned for a selected session or event, families will be told in advance.",
+          "Where the media permission has been given, a photograph taken during a session may be included in the session report, which every family in the child’s group can see."
         ]
       },
       "mediaPublic": {
@@ -3818,6 +3819,7 @@
           "About your child: their first name, their birth month and year (we don’t ask for the full date — only what we actually need), and optionally their gender — so we can place them in the right group and address them properly. We store your family surname on their account too, because your child is part of your account; Gedus and other gamers never see it. Their account itself uses an internal Sogverse address rather than a real email, unless you choose to give them a sign-in with their own email address; we then hold that address and send them their own copy of the emails we send you about their clubs, camps and events.",
           "Optionally, your child’s username in the games their clubs use — today that’s Minecraft and Roblox — and the account id that game gives them, so we can recognise them in the game and so they can connect to our Minecraft server during sessions.",
           "Session records our Game Educators write — attendance, session reports, and short notes that help us support your child in the group.",
+          "Messages your child sends in a session’s chat — so the Gedu and the group can read them during the session, and so we can look into a concern afterwards. A message your child removes is hidden from the group but kept until the account is closed.",
           "The technical information any website needs to run — sign-in sessions, request logs and, only if you choose it, anonymous usage statistics. See \"Technical information\" and \"Cookies, analytics and advertising\" below.",
           "The campaign tag — source, medium and campaign — carried by the link your visit came from. We store it once, when the account is created, and only if you’ve allowed marketing cookies, so that we and our partners know which outreach actually reaches families. Saying no to marketing later doesn’t remove a tag that was already stored."
         ]

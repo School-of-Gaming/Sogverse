@@ -3132,6 +3132,7 @@
           "Lapsestasi: etunimen, syntymäkuukauden ja -vuoden (emme kysy tarkkaa päivämäärää – vain sen, mitä todella tarvitsemme) ja halutessasi sukupuolen – jotta voimme sijoittaa hänet oikeaan ryhmään ja puhutella häntä oikein. Tallennamme lapsen tilille myös perheesi sukunimen, koska lapsi kuuluu tiliisi. Gedut ja muut pelaajat eivät näe sitä koskaan. Tilillä itsellään on Sogversen sisäinen osoite oikean sähköpostiosoitteen sijaan, ellet anna lapselle kirjautumista hänen omalla sähköpostiosoitteellaan; silloin säilytämme sen osoitteen ja lähetämme hänelle oman kopion viesteistä, jotka lähetämme sinulle hänen kerhoistaan, leireistään ja tapahtumistaan.",
           "Halutessasi lapsesi käyttäjätunnuksen niissä peleissä, joita hänen kerhonsa käyttävät – tällä hetkellä Minecraftissa ja Robloxissa – sekä tilitunnisteen, jonka peli hänelle antaa, jotta tunnistamme hänet pelissä ja jotta hän voi liittyä Minecraft-palvelimellemme tapaamisten aikana.",
           "Pelikasvattajiemme kirjoittamat merkinnät tapaamisista – läsnäolot, tapaamisraportit ja lyhyet muistiinpanot, jotka auttavat meitä tukemaan lastasi ryhmässä.",
+          "Viestit, joita lapsesi lähettää tapaamisen chatissa – jotta pelikasvattaja ja muu ryhmä voivat lukea ne tapaamisen aikana ja jotta voimme selvittää mahdollisen huolen jälkikäteen. Lapsesi poistama viesti piilotetaan ryhmältä, mutta se säilytetään tilin sulkemiseen asti.",
           "Tekniset tiedot, joita mikä tahansa verkkosivusto tarvitsee toimiakseen – kirjautumisistunnot, pyyntölokit ja, vain jos valitset sen, nimettömät käyttötilastot. Katso kohdat \"Tekniset tiedot\" ja \"Evästeet, analytiikka ja mainonta\" jäljempänä.",
           "Kampanjatunnisteen – lähteen, välineen ja kampanjan – jonka käyntisi aloittanut linkki kantoi mukanaan. Tallennamme sen kerran, tilin luonnin yhteydessä ja vain jos olet sallinut markkinointievästeet, jotta me ja kumppanimme tiedämme, mikä viestintä tavoittaa perheitä. Markkinoinnista kieltäytyminen myöhemmin ei poista jo tallennettua tunnistetta."
         ]
@@ -3823,7 +3824,8 @@
         "heading": "Valokuvaaminen, videokuvaaminen ja julkinen käyttö",
         "blocks": [
           "Tavanomaisia verkkotapaamisia ei tallenneta. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun yksikään lapsi ei ole tunnistettavissa.",
-          "Jos johonkin tapaamiseen tai tapahtumaan on suunniteltu tunnistettavaa valokuvausta tai videokuvausta, perheille kerrotaan siitä etukäteen."
+          "Jos johonkin tapaamiseen tai tapahtumaan on suunniteltu tunnistettavaa valokuvausta tai videokuvausta, perheille kerrotaan siitä etukäteen.",
+          "Kun medialupa on annettu, tapaamisen aikana otettu valokuva voidaan liittää tapaamisraporttiin, jonka kaikki lapsen ryhmän perheet näkevät."
         ]
       },
       "mediaPublic": {
