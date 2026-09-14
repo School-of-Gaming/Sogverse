@@ -243,13 +243,13 @@ function VoiceSessionInner({
    * this viewer's own row for this group and window, and then the navigation
    * leaving already performed happens.
    *
-   * **The write-or-skip rule is one condition.** The write is skipped only when
-   * the form is empty *and* the prefill read succeeded with no row — a
-   * first-time Done with nothing on screen, which saves nothing because the
-   * response rate's denominator is the sessions themselves. In every other
-   * state — something answered, a row already loaded, a read that failed or
-   * never ran — it writes, because an unknown prefill state must not leave a
-   * stale row standing behind a child who cleared it.
+   * **The write-or-skip rule is one condition.** The write is skipped when the
+   * form is empty *and* nothing was loaded into it — a first-time Done with
+   * nothing on screen, which saves nothing because the response rate's
+   * denominator is the sessions themselves. Something answered, or a row
+   * loaded and now cleared, writes. A read that failed counts as nothing
+   * loaded: the child saw an empty form, so an empty Done has nothing of
+   * theirs to replace, and the row they never saw is left as it was.
    *
    * **The screen's `onDone` is synchronous and this owns the promise.** The
    * committing flag is set before the call and left set on the success path,
@@ -262,10 +262,7 @@ function VoiceSessionInner({
       setFinishing(true);
       setSaveFailed(false);
 
-      const nothingToKeep =
-        isEmptySessionFeedback(result) &&
-        prefill.isSuccess &&
-        prefill.data === null;
+      const nothingToKeep = isEmptySessionFeedback(result) && !prefill.data;
       // The screen cannot mount before the token resolved — the join it waits
       // on is what sets this — so the null branch is the compiler's, not a
       // state a reader can reach. With no key there is no row to write.
@@ -299,7 +296,6 @@ function VoiceSessionInner({
       groupId,
       leftForFeedback,
       prefill.data,
-      prefill.isSuccess,
       // The mutate function, not the mutation object: the object is a fresh
       // identity on every render, so depending on it would rebuild this
       // callback continuously. `mutate` is stable for the hook's lifetime.

@@ -190,12 +190,14 @@ once on join and the screen is mounted from what is already in hand. A missing r
 failed read are the same empty form; the two are told apart in exactly one place, the
 write rule below.
 
-**Rule: Done writes, except when there is nothing and never was.** The write is skipped
-only when the form is empty *and* the prefill read succeeded with no row — a first-time
-Done with nothing answered, which saves nothing because the response rate's denominator is
-the sessions themselves. In every other state, including a read that failed or never ran,
-it writes: an unknown prefill must not leave a stale row standing behind a child who
-cleared their answers. **The last Done wins** — a child who drops out, rejoins and leaves
+**Rule: Done writes, except when the form is empty and nothing was loaded into it.** A
+first-time Done with nothing answered saves nothing, because the response rate's
+denominator is the sessions themselves. Something answered writes, and so does an empty
+form over a row that was loaded, because a child who cleared their answers must not be
+left with the old ones standing. A read that failed loaded nothing, so an empty Done
+after it also skips: the child cleared nothing they saw, and the row they never saw is
+left as it was. It is one condition on purpose — a rule that also tracked whether the
+row arrived before or after the screen mounted was judged not worth its code. **The last Done wins** — a child who drops out, rejoins and leaves
 again updates the row they already have, and an emptied form is an ordinary update with an
 empty object and an empty note, never a delete. The row also records which of the two ways
 out it came from, because that is only knowable at write time.

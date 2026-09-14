@@ -166,7 +166,6 @@ vi.mock("@/services/session-feedback", async () => {
       if (enabled && sessionOpensAt !== null) feedback.reads.push(sessionOpensAt);
       return {
         data: feedback.readSucceeded ? feedback.row : undefined,
-        isSuccess: feedback.readSucceeded,
       };
     },
     useSaveSessionFeedback: () => ({
@@ -322,11 +321,11 @@ describe("who the voice session page asks for feedback", () => {
  *     lets leaving cost no round trip, and a viewer the page does not ask must
  *     not be reading a child's row at all. It cannot go out before the token
  *     resolves either: the instant is the row's third key.
- *  2. **Write-or-skip is one condition.** A first-time Done with an empty form
- *     saves nothing, because the response rate counts sessions rather than
- *     rows — but an empty form over a row that exists, or over a read that
- *     never answered, writes, or a child who cleared their answers would be
- *     left with the old ones standing.
+ *  2. **Write-or-skip is one condition.** An empty form with nothing loaded
+ *     into it saves nothing, because the response rate counts sessions rather
+ *     than rows — but an empty form over a row that was loaded writes, or a
+ *     child who cleared their answers would be left with the old ones
+ *     standing. A read that never answered loaded nothing, so it skips too.
  *  3. **The exit reason is only knowable here**, and no later reader could
  *     reconstruct which of the two ways out a row came from.
  *  4. **A failed save keeps the child on the form, with a working Done.** The
@@ -449,25 +448,17 @@ describe("what the voice session page does with a gamer's answers", () => {
     expect(window.location.href).toBe(BACK);
   });
 
-  it("writes an empty form when the read never answered", async () => {
-    // An unknown prefill state must not leave a stale row behind a child who
-    // cleared it, so the write goes ahead on nothing at all.
+  it("writes nothing when an empty form meets a read that never answered", async () => {
+    // Nothing was loaded, so the child saw an empty form and cleared nothing:
+    // an empty Done has nothing of theirs to replace, and whatever row the
+    // failed read would have shown is left as it was.
     feedback.readSucceeded = false;
     renderPage(true);
     await leaveAndWait();
     pressDone();
 
-    expect(feedback.saves).toHaveLength(1);
-    expect(feedback.saves[0].result).toStrictEqual({
-      answers: {
-        learned: undefined,
-        fun: undefined,
-        geduKnowledgeable: undefined,
-        geduKind: undefined,
-        groupListens: undefined,
-      },
-      note: "",
-    });
+    expect(feedback.saves).toEqual([]);
+    expect(window.location.href).toBe(BACK);
   });
 
   it("writes what a child answered, keyed to the group and the window", async () => {
