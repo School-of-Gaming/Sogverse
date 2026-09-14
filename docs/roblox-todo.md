@@ -13,8 +13,9 @@ launches; that flip is unchanged by the copy being final.
 **Where the site departs from the returned text.** Kyle's ruling on applying it: the
 legal wording is Lynx's and is not his to fix, the code's behaviour is. So the only
 departures are mechanics — link tags on our own documents, the support address rendered
-through the placeholder (`help@sog.gg`; the returned text says `hello@sog.gg`), and three
-sentences that described how Sogverse works and were wrong: a media choice is changed on
+through the placeholder (`help@sog.gg`; the returned text says `hello@sog.gg`), and two
+corrections, in four sentences, where the text described how Sogverse works and was
+wrong: a media choice is changed on
 the child's page in My SOG, not in "Sogverse profile settings" (terms, and the privacy
 policy's *Changing a media choice*); and a child takes part under their first name, not a
 "display name" (the privacy policy's *About the child* and *Children's privacy and
@@ -373,6 +374,6 @@ time is rationed, spend it here rather than on the banner.**
 
 ## Resolved — ready to apply
 
-Decided, with the exact change written out but not yet applied; entries land together in
-one pass, and each is deleted once its change is in.
+Decided, with the exact change written out but not yet applied; an entry lands when Kyle
+names it, and is deleted once its change is in.
 
