@@ -183,20 +183,32 @@ identifier also carries the Yty-Element it will report into, and **that mapping 
 surfaced to the gamer**: no element mark, name or colour appears on this screen, because a
 child told which bucket a statement feeds learns to answer the bucket.
 
-**Rule: the whole question fits one phone viewport without scrolling, and that budget is
-what decides the layout.** A child who has to scroll to find out how much is left stops
-answering halfway, so the rows are compact — a statement on one line, its answer row
-directly beneath, tight gaps — and the note stays one tappable line until it is asked for.
-Anything added here spends from that budget and does the arithmetic rather than eyeballing
-it. Below the design floor, scrolling is the accepted degradation.
+**Rule: scrolling is the design, and the screen is one column read from the top down.** The
+question is longer than a phone viewport and squeezing it to fit was tried and rejected: a
+child answering seven statements is served by copy at the app's body size, answer cells big
+enough to hit with a thumb, labels at a readable size and the app's ordinary section gap
+between statements — none of which survives a layout budgeted to a viewport. So the column
+ends in Done, at the end, scrolled to like anything else; nothing is pinned over the page,
+because the dashboard layout scrolls the document itself.
+
+**Rule: it is not carded on a phone, and is a narrow centred card above the small
+breakpoint.** Width is the scarce resource at the design floor — a card's padding and
+border come out of the five answer cells, which are the one thing on the screen that cannot
+give — so below that breakpoint the column sits directly on the page inside the dashboard
+layout's own gutter and adds no horizontal padding of its own. Above it, width stops being
+scarce and stretching five cells across a desktop is the opposite defect, so the card
+returns capped at the width the app gives a single-question page. The note stays one
+tappable line until it is asked for, which is about not reading as an eighth question
+rather than about saving space.
 
 **Every statement is optional and an unanswered one is a skip**, which is why there is no
 Skip button, no per-row skip control, and no state in which Done is refused. Done carries
 the committing flag the app-wide rule describes: set before the navigation, never cleared,
 because the document is leaving.
 
-The screen is judged in the preview scene rather than the style guide: the only open
-question about it is whether it fits the page it appears on.
+The screen is judged in the preview scene rather than the style guide: what is open about
+it is how the column reads at the page's own width, chrome and scrolling, which a component
+card lifted out of the page cannot show.
 
 ## Daily token `user_name` encoding
 

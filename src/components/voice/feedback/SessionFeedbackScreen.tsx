@@ -4,7 +4,6 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import {
   SESSION_FEEDBACK_RATINGS,
@@ -83,14 +82,21 @@ export interface SessionFeedbackScreenProps<
  * its neighbour.
  */
 const ANSWER_CELL =
-  "flex min-h-9 w-full min-w-0 items-center justify-center hyphens-auto break-words rounded-md border border-border px-0.5 text-center text-[11px] font-medium leading-tight text-muted-foreground transition-colors peer-hover:bg-hover peer-hover:text-foreground peer-checked:border-act peer-checked:text-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-act peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background peer-disabled:opacity-50";
+  "flex min-h-11 w-full min-w-0 items-center justify-center hyphens-auto break-words rounded-md border border-border px-0.5 py-1.5 text-center text-xs sm:px-1 font-medium leading-tight text-muted-foreground transition-colors peer-hover:bg-hover peer-hover:text-foreground peer-checked:border-act peer-checked:text-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-act peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background peer-disabled:opacity-50";
 
 /**
  * **The screen a gamer meets when they leave an online session.**
  *
- * Seven statements on one five-point row, an optional note and a Done, sized so
- * the whole question fits a phone without scrolling — a child scrolling to find
- * out how much is left is a child who stops answering halfway.
+ * Seven statements on one five-point row, an optional note and a Done, read as
+ * one column from the top down. It is longer than a phone viewport and that is
+ * the design: a child answering seven questions is better served by text they
+ * can read and targets they can hit than by a screen squeezed until it fits.
+ *
+ * On a phone the column is not carded — width is the scarce resource there, and
+ * a card would spend some of it on padding and a border the five answer cells
+ * need more than the page needs the frame. From `sm` up the same column takes
+ * the card, capped to the narrow centred width a focused single-question page
+ * uses, so the cells never stretch across a desktop.
  *
  * Purely presentational: the statements arrive as data, the answers leave
  * through one callback, and nothing here reaches a service, a route or a store.
@@ -127,104 +133,124 @@ export function SessionFeedbackScreen<
   }, [answers, items, note, onDone]);
 
   return (
-    <Card>
-      <CardContent className="space-y-2 p-3 sm:p-5">
+    // No card below `sm`: the page's own gutter is the only margin, so all five
+    // cells share the full content width. From `sm` the card appears and the
+    // column is capped at the width the app gives a single-question page — the
+    // auth cards' `max-w-md` — so a wide screen centres the same column instead
+    // of stretching it.
+    <div className="mx-auto w-full max-w-md space-y-6 sm:rounded-lg sm:border sm:border-border sm:bg-card sm:p-6 sm:shadow-sm">
+      <div className="space-y-1">
         {lead !== undefined && (
-          <p className="text-xs text-muted-foreground">{lead}</p>
+          <p className="text-sm text-muted-foreground">{lead}</p>
         )}
-        <h1 className="text-lg font-semibold">{t("heading")}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {t("heading")}
+        </h1>
+      </div>
 
-        <div className="space-y-1.5">
-          {items.map((item) => {
-            const labelId = `${groupId}-${item.key}`;
-            return (
-              <div key={item.key}>
-                <p id={labelId} className="text-sm leading-snug">
-                  {item.label}
-                </p>
-                <div
-                  role="radiogroup"
-                  aria-labelledby={labelId}
-                  className="mt-0.5 grid grid-cols-5 gap-1"
-                >
-                  {SESSION_FEEDBACK_RATINGS.map((rating) => (
-                    <label key={rating} className="flex min-w-0 cursor-pointer">
-                      {/* One `name` per statement: the arrows walk this row and
-                          Tab leaves it for the next one. It carries the
-                          instance id too, because two screens on one document
-                          sharing a name would deselect each other. */}
-                      <input
-                        type="radio"
-                        name={`${groupId}-${item.key}`}
-                        value={rating}
-                        className="peer sr-only"
-                        checked={answers[item.key] === rating}
-                        disabled={committing}
-                        onChange={() =>
-                          setAnswers((current) => ({
-                            ...current,
-                            [item.key]: rating,
-                          }))
-                        }
-                      />
-                      <span className={ANSWER_CELL}>
-                        {t(`scale.${SESSION_FEEDBACK_RATING_KEYS[rating]}`)}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+      {/* The rhythm between statements is the app's section gap, not a squeeze:
+          each statement and its row read as one block with clear air around it,
+          which is what lets a reader answer a row without checking which
+          sentence it belongs to. */}
+      <div className="space-y-6">
+        {items.map((item) => {
+          const labelId = `${groupId}-${item.key}`;
+          return (
+            <div key={item.key}>
+              <p id={labelId} className="text-base leading-snug">
+                {item.label}
+              </p>
+              <div
+                role="radiogroup"
+                aria-labelledby={labelId}
+                className="mt-2 grid grid-cols-5 gap-1.5 sm:gap-2"
+              >
+                {SESSION_FEEDBACK_RATINGS.map((rating) => (
+                  <label key={rating} className="flex min-w-0 cursor-pointer">
+                    {/* One `name` per statement: the arrows walk this row and
+                        Tab leaves it for the next one. It carries the
+                        instance id too, because two screens on one document
+                        sharing a name would deselect each other. */}
+                    <input
+                      type="radio"
+                      name={`${groupId}-${item.key}`}
+                      value={rating}
+                      className="peer sr-only"
+                      checked={answers[item.key] === rating}
+                      disabled={committing}
+                      onChange={() =>
+                        setAnswers((current) => ({
+                          ...current,
+                          [item.key]: rating,
+                        }))
+                      }
+                    />
+                    <span className={ANSWER_CELL}>
+                      {t(`scale.${SESSION_FEEDBACK_RATING_KEYS[rating]}`)}
+                    </span>
+                  </label>
+                ))}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
+      </div>
 
-        {/* Collapsed to one line until it is asked for: a textarea standing open
-            under seven questions reads as an eighth question, and most readers
-            have nothing to add. Expanding is the reader's own action, so the
-            growth below them is theirs to expect. */}
-        {noteOpen ? (
-          <div>
-            <label htmlFor={noteFieldId} className="sr-only">
-              {t("notePrompt")}
-            </label>
-            <Textarea
-              id={noteFieldId}
-              ref={noteRef}
-              rows={3}
-              value={note}
-              disabled={committing}
-              placeholder={t("notePrompt")}
-              onChange={(event) => setNote(event.target.value)}
-            />
-          </div>
-        ) : (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="w-full justify-start text-sm font-normal text-muted-foreground"
-            disabled={committing}
-            onClick={() => setNoteOpen(true)}
-          >
+      {/* Collapsed to one line until it is asked for: a textarea standing open
+          under seven questions reads as an eighth question, and most readers
+          have nothing to add. Expanding is the reader's own action, so the
+          growth below them is theirs to expect. */}
+      {noteOpen ? (
+        <div>
+          <label htmlFor={noteFieldId} className="sr-only">
             {t("notePrompt")}
-          </Button>
-        )}
-
-        <p className="text-xs text-muted-foreground">{t("audience")}</p>
-
+          </label>
+          <Textarea
+            id={noteFieldId}
+            ref={noteRef}
+            rows={3}
+            value={note}
+            disabled={committing}
+            placeholder={t("notePrompt")}
+            onChange={(event) => setNote(event.target.value)}
+          />
+        </div>
+      ) : (
         <Button
           type="button"
-          className="w-full"
+          variant="outline"
+          size="lg"
+          // The prompt is a sentence, so the line wraps and the button grows to
+          // hold it: a button's default single line would push its own words
+          // past the page at the design floor, which is a horizontal scroll on
+          // the whole document rather than a clipped label.
+          className="h-auto min-h-11 w-full justify-start whitespace-normal px-4 py-2 text-left font-normal text-muted-foreground"
           disabled={committing}
-          onClick={handleDone}
+          onClick={() => setNoteOpen(true)}
         >
-          {/* The Done a child pressed has to look pressed for the whole of the
-              navigation it starts, which is the app's committing rule: the flag
-              is never cleared, so the spinner rides out the unload. */}
-          {committing && <Loader2 className="animate-spin" />}
-          {t("done")}
+          {t("notePrompt")}
         </Button>
-      </CardContent>
-    </Card>
+      )}
+
+      <p className="text-sm text-muted-foreground">{t("audience")}</p>
+
+      {/* Done ends the column, where a reader who has answered their way down
+          the page arrives at it. It is not pinned to the viewport: the
+          dashboard layout scrolls the document itself and holds nothing over
+          it but the header. */}
+      <Button
+        type="button"
+        size="lg"
+        className="w-full"
+        disabled={committing}
+        onClick={handleDone}
+      >
+        {/* The Done a child pressed has to look pressed for the whole of the
+            navigation it starts, which is the app's committing rule: the flag
+            is never cleared, so the spinner rides out the unload. */}
+        {committing && <Loader2 className="animate-spin" />}
+        {t("done")}
+      </Button>
+    </div>
   );
 }

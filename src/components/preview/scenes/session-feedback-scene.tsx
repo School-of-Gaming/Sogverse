@@ -10,15 +10,16 @@ import type { SessionFeedbackSceneScenario } from "./session-feedback-scenarios"
  * The screen a gamer meets on the way out of an online session, in the chrome
  * they meet it in.
  *
- * It is here rather than on the style guide because the only open question
- * about it is whether it fits: seven statements, a five-point row each, a note
- * and a Done have to sit inside one phone viewport under the app's own header,
- * and a card lifted out of the page cannot answer that.
+ * It is here rather than on the style guide because the open question about it
+ * is how it reads as a page: the column is longer than a phone viewport and is
+ * meant to be, so what has to be judged is the width the page gives it, the
+ * rhythm of scrolling seven statements under the app's own header, and how the
+ * uncarded phone layout sits against the carded one above `sm` — none of which
+ * a card lifted out of the page can answer.
  *
  * Two scenarios, because the two live paths do not render the same screen: the
  * room closing at the window's end announces that above the heading and the
- * Leave path says nothing, so the ended one is a line taller and is the one the
- * budget is judged against. Done is inert and holds its committed state, which
+ * Leave path says nothing. Done is inert and holds its committed state, which
  * is what the live paths show for the moment before the document unloads.
  */
 export function SessionFeedbackScene({
