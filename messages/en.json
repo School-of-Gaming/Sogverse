@@ -3496,13 +3496,11 @@
     "feedback": {
       "heading": "How did it go?",
       "items": {
-        "fun": "I had fun.",
         "learned": "I learned something new.",
-        "gedu": "My Gedu is knowledgeable and helpful.",
-        "help": "I feel comfortable asking for help in my group.",
-        "proud": "I’m proud of what I did.",
-        "belonging": "I felt like I belonged in my group.",
-        "listened": "My group really listens and understands me."
+        "fun": "I had fun.",
+        "geduKnowledgeable": "My Gedu was knowledgeable and helpful.",
+        "geduKind": "My Gedu was friendly and kind.",
+        "groupListens": "My group listens to and understands me."
       },
       "scale": {
         "no": "No",

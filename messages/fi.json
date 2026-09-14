@@ -2809,20 +2809,18 @@
     "feedback": {
       "heading": "Miten meni?",
       "items": {
-        "fun": "Minulla oli hauskaa.",
         "learned": "Opin jotain uutta.",
-        "gedu": "Geduni osaa asiansa ja auttaa minua.",
-        "help": "Uskallan pyytää apua ryhmässäni.",
-        "proud": "Olen ylpeä siitä, mitä tein.",
-        "belonging": "Tunsin kuuluvani ryhmääni.",
-        "listened": "Ryhmäni kuuntelee ja ymmärtää minua."
+        "fun": "Minulla oli kiva.",
+        "geduKnowledgeable": "Geduni osasi asiansa ja auttoi minua.",
+        "geduKind": "Geduni oli ystävällinen ja mukava.",
+        "groupListens": "Ryhmäni kuuntelee ja ymmärtää minua."
       },
       "scale": {
         "no": "Ei",
-        "notReally": "Ei oikein",
-        "aBit": "Vähän",
+        "notReally": "Vähän",
+        "aBit": "Jonkin verran",
         "yes": "Kyllä",
-        "definitely": "Totta kai"
+        "definitely": "Ehdottomasti"
       },
       "notePrompt": "Haluatko kertoa vielä jotain tämän päivän kerrasta?",
       "audience": "Gedusi ja School of Gamingin tiimi lukevat palautteesi. Kiitos!",

@@ -139,9 +139,9 @@ const WORD_CELL = {
 /**
  * **The screen a gamer meets when they leave an online session.**
  *
- * Seven statements, each answered on a charge bar, a note and a Done, read as
+ * Five statements, each answered on a charge bar, a note and a Done, read as
  * one column from the top down. It is longer than a phone viewport and that is
- * the design: a child answering seven questions is better served by text they
+ * the design: a child answering five questions is better served by text they
  * can read and targets they can hit than by a screen squeezed until it fits.
  *
  * **The answer control is a five-segment bar that charges.** Tapping a segment
@@ -203,9 +203,9 @@ const WORD_CELL = {
  * the segment row rather than on the whole right-hand block. The two layouts
  * answer two different scarcities. On a phone width is the scarce thing, so the
  * bar takes the whole of it and the sentence goes above; on a desktop width is
- * plentiful and *height* is what runs out, and the narrow column stacked seven
+ * plentiful and *height* is what runs out, and the narrow column stacked five
  * times was a tall thin ribbon of unused screen that a reader had to scroll for
- * no reason. Halving each statement's height is what puts all seven, the note
+ * no reason. Halving each statement's height is what puts all five, the note
  * and Done inside one viewport. Nothing changes below `md`.
  *
  * Purely presentational: the statements arrive as data, the answers leave
@@ -276,7 +276,7 @@ export function SessionFeedbackScreen<
     // spans the full content width. From `sm` the card appears, capped at the
     // width the app gives a single-question page. From `md` the card widens to
     // `max-w-3xl` and the statements become rows — see the layout note in the
-    // component doc: the narrow column stacked seven times is the right answer
+    // component doc: the narrow column stacked five times is the right answer
     // on a phone and a cramped one on a desktop.
     <div className="mx-auto w-full max-w-md space-y-6 sm:rounded-lg sm:border sm:border-border sm:bg-card sm:p-6 sm:shadow-sm md:max-w-3xl md:space-y-4 md:p-8">
       {/* Centred, at the size and alignment the app's other single-question
@@ -303,7 +303,7 @@ export function SessionFeedbackScreen<
           each statement and its bar read as one block with clear air around it,
           which is what lets a reader answer a bar without checking which
           sentence it belongs to. From `md` a statement is a row rather than a
-          stack, so it is half as tall and the gap closes with it — seven rows,
+          stack, so it is half as tall and the gap closes with it — five rows,
           the note and Done then land inside one desktop viewport. */}
       <div className="space-y-6 md:space-y-2">
         {items.map((item) => {

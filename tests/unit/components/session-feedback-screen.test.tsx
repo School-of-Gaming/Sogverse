@@ -32,7 +32,7 @@ import {
  *   asserted through the readout's `data-column`, which is the one part of that
  *   placement a test without layout can see.
  * - **Every statement is optional**, so Done with nothing chosen has to be a
- *   real answer (seven skips) rather than a blocked button or a dropped result.
+ *   real answer (five skips) rather than a blocked button or a dropped result.
  * - **Every statement is *reported***, answered or not — asserted on the
  *   captured argument with `toStrictEqual`, because `toHaveBeenCalledWith`
  *   counts a key holding `undefined` as absent and would pass an empty result.
@@ -41,9 +41,21 @@ import {
  */
 
 const ITEMS = [
-  { key: "fun", label: "I had fun." },
   { key: "learned", label: "I learned something new." },
+  { key: "fun", label: "I had fun." },
+  { key: "geduKnowledgeable", label: "My Gedu was knowledgeable and helpful." },
+  { key: "geduKind", label: "My Gedu was friendly and kind." },
+  { key: "groupListens", label: "My group listens to and understands me." },
 ] as const;
+
+/** Every statement unanswered — the shape a screen nobody touched reports. */
+const NO_ANSWERS = {
+  learned: undefined,
+  fun: undefined,
+  geduKnowledgeable: undefined,
+  geduKind: undefined,
+  groupListens: undefined,
+} as const;
 
 type AskedKey = (typeof ITEMS)[number]["key"];
 
@@ -244,10 +256,7 @@ describe("the session feedback screen", () => {
     fireEvent.click(segment(bar, "Yes"));
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
 
-    expect(results[0]).toStrictEqual({
-      answers: { fun: undefined, learned: undefined },
-      note: "",
-    });
+    expect(results[0]).toStrictEqual({ answers: NO_ANSWERS, note: "" });
   });
 
   it("reserves the word line before anything is chosen", () => {
@@ -315,10 +324,7 @@ describe("the session feedback screen", () => {
     expect(results).toHaveLength(1);
     // `toStrictEqual` is the point of the test: a result that dropped the
     // statements entirely would satisfy an argument matcher.
-    expect(results[0]).toStrictEqual({
-      answers: { fun: undefined, learned: undefined },
-      note: "",
-    });
+    expect(results[0]).toStrictEqual({ answers: NO_ANSWERS, note: "" });
     expect(Object.keys(results[0].answers)).toEqual(
       ITEMS.map((item) => item.key),
     );
@@ -338,7 +344,7 @@ describe("the session feedback screen", () => {
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
 
     expect(results[0]).toStrictEqual({
-      answers: { fun: 5, learned: 1 },
+      answers: { ...NO_ANSWERS, fun: 5, learned: 1 },
       note: "we built a castle",
     });
   });

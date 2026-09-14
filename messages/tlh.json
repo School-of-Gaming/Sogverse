@@ -2849,13 +2849,11 @@
     "feedback": {
       "heading": "chay’ Qapla’?",
       "items": {
-        "fun": "jItIvqu’.",
         "learned": "De’ chu’ vIghojpu’.",
-        "gedu": "po’ Gedu’wI’ ’ej muQaH.",
-        "help": "ghomwIjDaq QaH vItlhoblaH ’ej jInebbe’.",
-        "proud": "vIta’pu’bogh vIHem.",
-        "belonging": "ghomwIjDaq jIDoy’be’; pa’ jIyIn.",
-        "listened": "muQoybej ghomwIj ’ej muyaj."
+        "fun": "jItIvqu’.",
+        "geduKnowledgeable": "po’ Gedu’wI’ ’ej muQaHpu’.",
+        "geduKind": "muparHa’ Gedu’wI’ ’ej jIQuch.",
+        "groupListens": "muQoy ghomwIj ’ej muyaj."
       },
       "scale": {
         "no": "ghobe’",

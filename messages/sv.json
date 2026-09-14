@@ -2809,13 +2809,11 @@
     "feedback": {
       "heading": "Hur gick det?",
       "items": {
-        "fun": "Jag hade roligt.",
         "learned": "Jag lärde mig något nytt.",
-        "gedu": "Min Gedu kan sin sak och hjälper mig.",
-        "help": "Jag vågar be om hjälp i min grupp.",
-        "proud": "Jag är stolt över det jag gjorde.",
-        "belonging": "Jag kände att jag hörde hemma i min grupp.",
-        "listened": "Min grupp lyssnar verkligen och förstår mig."
+        "fun": "Jag hade roligt.",
+        "geduKnowledgeable": "Min Gedu kunde sin sak och hjälpte mig.",
+        "geduKind": "Min Gedu var trevlig och snäll.",
+        "groupListens": "Min grupp lyssnar på mig och förstår mig."
       },
       "scale": {
         "no": "Nej",

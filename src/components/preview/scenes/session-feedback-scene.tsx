@@ -13,7 +13,7 @@ import type { SessionFeedbackSceneScenario } from "./session-feedback-scenarios"
  * It is here rather than on the style guide because the open question about it
  * is how it reads as a page: the column is longer than a phone viewport and is
  * meant to be, so what has to be judged is the width the page gives it, the
- * rhythm of scrolling seven statements under the app's own header, and how the
+ * rhythm of scrolling five statements under the app's own header, and how the
  * uncarded phone layout sits against the carded one above `sm` — none of which
  * a card lifted out of the page can answer.
  *

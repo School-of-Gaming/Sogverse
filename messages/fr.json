@@ -2809,13 +2809,11 @@
     "feedback": {
       "heading": "Comment ça s’est passé ?",
       "items": {
-        "fun": "J’ai passé un bon moment.",
         "learned": "J’ai appris quelque chose de nouveau.",
-        "gedu": "Mon Gedu s’y connaît et m’aide.",
-        "help": "Je me sens à l’aise pour demander de l’aide dans mon groupe.",
-        "proud": "Je ressens de la fierté pour ce que j’ai fait.",
-        "belonging": "J’ai senti que j’avais ma place dans mon groupe.",
-        "listened": "Mon groupe m’écoute vraiment et me comprend."
+        "fun": "J’ai passé un bon moment.",
+        "geduKnowledgeable": "Mon Gedu s’y connaissait et m’a apporté son aide.",
+        "geduKind": "Mon Gedu a fait preuve de sympathie et de gentillesse.",
+        "groupListens": "Mon groupe m’écoute et me comprend."
       },
       "scale": {
         "no": "Non",

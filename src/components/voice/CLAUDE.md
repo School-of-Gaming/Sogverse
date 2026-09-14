@@ -160,7 +160,7 @@ Persisted messages, images, reactions, replies, mentions and moderation, in thei
 
 ## Session feedback (gamer only)
 
-A gamer leaving an online session is asked how it went: seven statements, each answered on
+A gamer leaving an online session is asked how it went: five statements, each answered on
 its own five-segment charge bar, an optional note and a Done. It replaces the last frame of
 leaving — the Leave button's navigation, and the card the room shows when the window closes
 and everyone is ejected — and only for that one audience.
@@ -185,7 +185,7 @@ child told which bucket a statement feeds learns to answer the bucket.
 
 **Rule: scrolling is the design, and the screen is one column read from the top down.** The
 question is longer than a phone viewport and squeezing it to fit was tried and rejected: a
-child answering seven statements is served by copy at the app's body size, targets big
+child answering five statements is served by copy at the app's body size, targets big
 enough to hit with a thumb, labels at a readable size and the app's ordinary section gap
 between statements — none of which survives a layout budgeted to a viewport. So the column
 ends in Done, at the end, scrolled to like anything else; nothing is pinned over the page,
@@ -194,7 +194,7 @@ because the dashboard layout scrolls the document itself.
 **Rule: the answer control is a five-segment bar that charges, and the level's word is
 shown once.** Tapping a segment fills it and every segment below it, and tapping a lower
 one drains back to it. Five words spread across a phone's width read as a list to pick from
-and repeat themselves seven times down the page; one wide bar reads as a level being set,
+and repeat themselves five times down the page; one wide bar reads as a level being set,
 which is what the question actually asks for, and a gamer surface is where the palette may
 be spent. So the words leave the segments and the chosen level's own word is stated once,
 on the line below the bar — **under the segment that was tapped**, in the bar's own five
@@ -265,13 +265,13 @@ foot of the column, where the last statement's scroll lands.
 **Rule: a statement stacks on a phone and is a row from `md` up, because the two widths run
 out of different things.** On a phone width is the scarce resource, so the bar takes the
 whole of it and the sentence sits above — that is the layout above, unchanged. On a desktop
-width is plentiful and *height* is what runs out: the same narrow column stacked seven times
+width is plentiful and *height* is what runs out: the same narrow column stacked five times
 is a tall thin ribbon down the middle of a wide screen, and the reader scrolls for want of a
 layout rather than for want of room. So from `md` the card widens and each statement becomes
 one row — the sentence taking the slack on the left, the bar with its reserved word line at
 a fixed width on the right, the sentence centred on the *segment row* rather than on the
 whole right-hand block, which is what stops it sitting visibly high of the thing it labels.
-Halving each statement's height is what puts all seven, the note and Done inside one desktop
+Halving each statement's height is what puts all five, the note and Done inside one desktop
 viewport. The statement stays **one DOM block** at every width, with the row built as a grid
 inside it, so the radiogroup's labelling never reaches across a layout — and the word line
 is reserved in both, so setting or clearing a level still shifts nothing either way.

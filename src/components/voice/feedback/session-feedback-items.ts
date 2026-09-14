@@ -25,6 +25,22 @@ export const SESSION_FEEDBACK_RATING_KEYS = {
   5: "definitely",
 } as const satisfies Record<SessionFeedbackRating, string>;
 
+/**
+ * The themes the owner reports on, as the words they used for them.
+ *
+ * A tuple rather than a bare union so the set is enumerable at runtime if the
+ * eventual instrument wants to group by it, and so a typo in a statement's
+ * theme is a compile error rather than a new theme nobody asked for.
+ */
+export const SESSION_FEEDBACK_THEMES = [
+  "Learning",
+  "Fun",
+  "Gedu quality",
+  "Belonging",
+] as const;
+
+export type SessionFeedbackTheme = (typeof SESSION_FEEDBACK_THEMES)[number];
+
 export interface SessionFeedbackItemDefinition {
   /**
    * The stable identifier the answer is stored under, and the message key the
@@ -43,10 +59,20 @@ export interface SessionFeedbackItemDefinition {
    * the bucket instead.
    */
   element: YtyElementId;
+  /**
+   * The owner's own word for what this statement is asking about, kept beside
+   * the element so the reporting intent survives a rewrite of the sentence.
+   *
+   * It is not the element and does not map onto it one-to-one — two statements
+   * about the Gedu both report into `glow` while being one theme between them —
+   * and it is **internal, exactly as the element is**: nothing on the screen
+   * groups, labels or orders the statements by it.
+   */
+  theme: SessionFeedbackTheme;
 }
 
 /**
- * The seven statements a gamer is asked after an online session, in the order
+ * The five statements a gamer is asked after an online session, in the order
  * they are asked.
  *
  * One place, because three things have to agree about them — the screen, the
@@ -55,13 +81,11 @@ export interface SessionFeedbackItemDefinition {
  * different questionnaire.
  */
 export const SESSION_FEEDBACK_ITEMS = [
-  { key: "fun", element: "harmony" },
-  { key: "learned", element: "wit" },
-  { key: "gedu", element: "valor" },
-  { key: "help", element: "glow" },
-  { key: "proud", element: "harmony" },
-  { key: "belonging", element: "glow" },
-  { key: "listened", element: "glow" },
+  { key: "learned", element: "wit", theme: "Learning" },
+  { key: "fun", element: "harmony", theme: "Fun" },
+  { key: "geduKnowledgeable", element: "glow", theme: "Gedu quality" },
+  { key: "geduKind", element: "glow", theme: "Gedu quality" },
+  { key: "groupListens", element: "glow", theme: "Belonging" },
 ] as const satisfies readonly SessionFeedbackItemDefinition[];
 
 export type SessionFeedbackItemKey =
