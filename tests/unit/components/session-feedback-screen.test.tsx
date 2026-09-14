@@ -5,6 +5,7 @@ import messages from "@/../messages/en.json";
 import { SessionFeedbackScreen } from "@/components/voice/feedback/SessionFeedbackScreen";
 import type { SessionFeedbackInitialState } from "@/components/voice/feedback/SessionFeedbackScreen";
 import {
+  SESSION_FEEDBACK_NOTE_MAX_LENGTH,
   SESSION_FEEDBACK_RATING_KEYS,
   type SessionFeedbackResult,
 } from "@/components/voice/feedback/session-feedback-items";
@@ -392,6 +393,11 @@ describe("the session feedback screen", () => {
     // turn every rewrite of it into a failing test about something else.
     const field = screen.getByRole("textbox");
     expect(field.hasAttribute("disabled")).toBe(false);
+    // And capped where the row is capped, so the field stops a reader rather
+    // than letting them write a tail that is trimmed off on the way to storage.
+    expect(field.getAttribute("maxlength")).toBe(
+      String(SESSION_FEEDBACK_NOTE_MAX_LENGTH),
+    );
 
     fireEvent.change(field, { target: { value: "hi" } });
     expect(screen.getByDisplayValue("hi")).toBe(field);

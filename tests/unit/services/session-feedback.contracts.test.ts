@@ -7,7 +7,9 @@ import {
   storedSessionFeedbackAnswers,
 } from "@/services/session-feedback/session-feedback.contracts";
 import {
+  SESSION_FEEDBACK_MAX_ANSWERS,
   SESSION_FEEDBACK_NOTE_MAX_LENGTH,
+  type SessionFeedbackRating,
   type SessionFeedbackResult,
 } from "@/components/voice/feedback/session-feedback-items";
 
@@ -106,10 +108,48 @@ describe("writing a result into the column", () => {
     expect(answersForStorage(result({}).answers)).toEqual({});
   });
 
+  it("stores at most the cap's worth of answers, however many it is given", () => {
+    // The catalogue asks five, but the stored keys are deliberately
+    // unconstrained, so the only thing between a caller and a refused write is
+    // this cap — and it is the same number the check constraint owns.
+    const extra: Record<string, SessionFeedbackRating> = {};
+    for (let i = 0; i < 35; i += 1) extra[`extra_${i}`] = 3;
+
+    const stored = answersForStorage(
+      Object.assign(
+        result({
+          learned: 3,
+          fun: 3,
+          geduKnowledgeable: 3,
+          geduKind: 3,
+          groupListens: 3,
+        }).answers,
+        extra,
+      ),
+    );
+    expect(Object.keys(stored)).toHaveLength(SESSION_FEEDBACK_MAX_ANSWERS);
+  });
+
   it("trims a note to the cap the constraint owns, and nothing else", () => {
     const long = "a".repeat(SESSION_FEEDBACK_NOTE_MAX_LENGTH + 50);
     expect(noteForStorage(long)).toHaveLength(SESSION_FEEDBACK_NOTE_MAX_LENGTH);
     expect(noteForStorage("  it was great\n")).toBe("  it was great\n");
+  });
+
+  it("trims by characters, never through the middle of an emoji", () => {
+    // The cap is `char_length`, which counts characters; a JavaScript string is
+    // indexed in UTF-16 units. A note whose last character straddles the cap
+    // would be cut in half by an index-based slice, and the lone surrogate that
+    // came out is a string the column refuses — turning the failure this trim
+    // exists to prevent into one that no retry of the same write can clear.
+    const note = "a".repeat(SESSION_FEEDBACK_NOTE_MAX_LENGTH - 1) + "🎮🎮";
+    const stored = noteForStorage(note);
+
+    // The whole emoji survives or it is dropped whole; half of one is not a
+    // possible answer. An index-based slice would have ended in a lone
+    // surrogate here, one UTF-16 unit longer and unstorable.
+    expect(stored).toBe("a".repeat(SESSION_FEEDBACK_NOTE_MAX_LENGTH - 1) + "🎮");
+    expect(Array.from(stored)).toHaveLength(SESSION_FEEDBACK_NOTE_MAX_LENGTH);
   });
 });
 

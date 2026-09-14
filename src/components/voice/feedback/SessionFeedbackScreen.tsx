@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import {
+  SESSION_FEEDBACK_NOTE_MAX_LENGTH,
   SESSION_FEEDBACK_RATINGS,
   SESSION_FEEDBACK_RATING_KEYS,
   type SessionFeedbackItemKey,
@@ -524,6 +525,10 @@ export function SessionFeedbackScreen<
         <Textarea
           id={noteFieldId}
           rows={3}
+          // The cap the schema owns, made visible at the field: a reader stops
+          // where the row stops instead of typing past it and having the tail
+          // of their note quietly trimmed away on the way to storage.
+          maxLength={SESSION_FEEDBACK_NOTE_MAX_LENGTH}
           value={note}
           disabled={committing}
           placeholder={t("notePrompt")}

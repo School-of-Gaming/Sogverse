@@ -6,7 +6,8 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
 
 /**
- * `session_feedback` (00254) — the row a child writes on the way out of an
+ * `session_feedback` (00254, its answers shape tightened by 00255) — the row a
+ * child writes on the way out of an
  * online session, and the scope test the write-IDOR loop deliberately does not
  * cover.
  *
@@ -20,12 +21,21 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  *     each half failing on its own, so neither can be carrying the other.
  *   - A member reads their own row and nobody else's, proven with two children
  *     seated in the SAME group each holding a row.
- *   - The shape checks: `{}` is legal, a level of 9 is not, a note over 2000
- *     characters is not, and an exit reason outside the two words is not.
+ *   - The UPDATE policy's WITH CHECK, which is what stops an existing row being
+ *     re-keyed on the way through. A `WITH CHECK` refusal is an ERROR, unlike a
+ *     `USING` miss, which is a success over zero rows — so those cases assert on
+ *     the error AND on the row still reading back unchanged.
+ *   - The shape checks: `{}` is legal, a level of 9 is not, a value that merely
+ *     CONTAINS a level or holds none — an array, an object, a null — is not, a
+ *     note over 2000 characters is not, and an exit reason outside the two
+ *     words is not.
  *   - The upsert on the natural key updates rather than duplicating, which is
  *     what "the last Done wins" rests on.
  *
- * Fixtures are built inline: seed.sql has no groups and no seats.
+ * Fixtures — groups, seats and the rows the read and update cases act on — are
+ * built in `beforeAll` as admin: seed.sql has no groups and no seats, and a case
+ * that depended on a row a previous `it` happened to write would pass or fail on
+ * the order the file happened to run in. Every case below stands alone.
  *
  *   PRODUCT_X / GROUP_X — GAMER and GAMER_2 both hold an active seat.
  *   PRODUCT_Y / GROUP_Y — nobody does. It is the control that makes every
@@ -48,6 +58,39 @@ const WINDOW_OWN = "2026-06-16T10:00:00+00:00";
 const WINDOW_SIBLING = "2026-06-16T11:00:00+00:00";
 const WINDOW_UPSERT = "2026-06-16T12:00:00+00:00";
 const WINDOW_SHAPE = "2026-06-16T13:00:00+00:00";
+const WINDOW_WRITE = "2026-06-16T14:00:00+00:00";
+const WINDOW_REKEY = "2026-06-16T15:00:00+00:00";
+
+/** The rows `beforeAll` lays down, so the cases that read or update one do not
+ * have to have written it. WINDOW_OWN and WINDOW_SIBLING are the pair the read
+ * scoping is proven on; WINDOW_REKEY is the row the re-keying attempts aim at.
+ * WINDOW_WRITE and WINDOW_UPSERT are left empty for the cases that write them. */
+const SEEDED_ROWS = [
+  {
+    group_id: GROUP_X,
+    participant_id: TEST_IDS.GAMER,
+    session_opens_at: WINDOW_OWN,
+    answers: { learned: 5, fun: 4 },
+    note: "It was good",
+    exit_reason: "left",
+  },
+  {
+    group_id: GROUP_X,
+    participant_id: TEST_IDS.GAMER_2,
+    session_opens_at: WINDOW_SIBLING,
+    answers: { learned: 3 },
+    note: "",
+    exit_reason: null,
+  },
+  {
+    group_id: GROUP_X,
+    participant_id: TEST_IDS.GAMER,
+    session_opens_at: WINDOW_REKEY,
+    answers: { learned: 2 },
+    note: "mine",
+    exit_reason: "left",
+  },
+];
 
 describe("session_feedback RLS + shape constraints", () => {
   let admin: SupabaseClient<Database>;
@@ -108,6 +151,14 @@ describe("session_feedback RLS + shape constraints", () => {
     if (seats.error) {
       throw new Error(`seed participations failed: ${seats.error.message}`);
     }
+
+    // The rows the read and update cases act on, written as admin so that no
+    // case is a precondition for another. The policies are proven by the cases
+    // that write through them, not by the fixture.
+    const rows = await admin.from("session_feedback").insert(SEEDED_ROWS);
+    if (rows.error) {
+      throw new Error(`seed session_feedback failed: ${rows.error.message}`);
+    }
   });
 
   afterAll(async () => {
@@ -123,15 +174,18 @@ describe("session_feedback RLS + shape constraints", () => {
   });
 
   // -------------------------------------------------------------------------
-  // The happy path, and the read scoping on top of it.
+  // The happy path, and the read scoping beside it.
   // -------------------------------------------------------------------------
 
   describe("a seated child's own row", () => {
+    // The write nothing else depends on: it takes a window of its own, so the
+    // read cases below are proven against the seeded rows rather than against
+    // whatever this one happened to leave behind.
     it("writes and reads back their own answers", async () => {
       const { error } = await gamerAuth.from("session_feedback").insert({
         group_id: GROUP_X,
         participant_id: TEST_IDS.GAMER,
-        session_opens_at: WINDOW_OWN,
+        session_opens_at: WINDOW_WRITE,
         answers: { learned: 5, fun: 4 },
         note: "It was good",
         exit_reason: "left",
@@ -143,7 +197,7 @@ describe("session_feedback RLS + shape constraints", () => {
         .select("answers, note, exit_reason")
         .eq("group_id", GROUP_X)
         .eq("participant_id", TEST_IDS.GAMER)
-        .eq("session_opens_at", WINDOW_OWN)
+        .eq("session_opens_at", WINDOW_WRITE)
         .maybeSingle();
       expect(data?.answers).toEqual({ learned: 5, fun: 4 });
       expect(data?.note).toBe("It was good");
@@ -151,15 +205,8 @@ describe("session_feedback RLS + shape constraints", () => {
     });
 
     it("reads only their own row, not their group-mate's", async () => {
-      const sibling = await gamer2Auth.from("session_feedback").insert({
-        group_id: GROUP_X,
-        participant_id: TEST_IDS.GAMER_2,
-        session_opens_at: WINDOW_SIBLING,
-        answers: { learned: 3 },
-      });
-      expect(sibling.error).toBeNull();
-
-      // Both rows exist, so a policy that leaked would have something to leak.
+      // Both rows are seeded, so a policy that leaked would have something to
+      // leak, and neither of them is another case's leftovers.
       const seen = await admin
         .from("session_feedback")
         .select("participant_id")
@@ -276,6 +323,70 @@ describe("session_feedback RLS + shape constraints", () => {
   });
 
   // -------------------------------------------------------------------------
+  // The UPDATE policy's WITH CHECK: what a row is allowed to BECOME.
+  //
+  // `USING` and `WITH CHECK` fail differently and the difference is the point.
+  // A `USING` miss is an ordinary success over zero rows — the statement simply
+  // never sees the row. A `WITH CHECK` violation is an ERROR ("new row violates
+  // row-level security policy"), because the row was visible, was updated, and
+  // the result was refused. Both cases below start from a row this child owns
+  // and may see, so `USING` passes and `WITH CHECK` is the only thing standing;
+  // asserting merely that no rows came back would pass even if the policy had
+  // no `WITH CHECK` at all.
+  // -------------------------------------------------------------------------
+
+  describe("the UPDATE policy authorises what the row becomes", () => {
+    async function rekeyRowAsAdmin(): Promise<{
+      participant_id: string;
+      group_id: string;
+      note: string;
+    } | null> {
+      const { data } = await admin
+        .from("session_feedback")
+        .select("participant_id, group_id, note")
+        .eq("group_id", GROUP_X)
+        .eq("participant_id", TEST_IDS.GAMER)
+        .eq("session_opens_at", WINDOW_REKEY)
+        .maybeSingle();
+      return data;
+    }
+
+    it("refuses re-keying their own row to their group-mate", async () => {
+      const { error } = await gamerAuth
+        .from("session_feedback")
+        .update({ participant_id: TEST_IDS.GAMER_2, note: "handed over" })
+        .eq("group_id", GROUP_X)
+        .eq("participant_id", TEST_IDS.GAMER)
+        .eq("session_opens_at", WINDOW_REKEY);
+      expect(error).not.toBeNull();
+
+      // And the row is still theirs, unedited — the refusal is not a silent
+      // partial write.
+      expect(await rekeyRowAsAdmin()).toEqual({
+        participant_id: TEST_IDS.GAMER,
+        group_id: GROUP_X,
+        note: "mine",
+      });
+    });
+
+    it("refuses moving their own row to a group they hold no seat in", async () => {
+      const { error } = await gamerAuth
+        .from("session_feedback")
+        .update({ group_id: GROUP_Y, note: "moved" })
+        .eq("group_id", GROUP_X)
+        .eq("participant_id", TEST_IDS.GAMER)
+        .eq("session_opens_at", WINDOW_REKEY);
+      expect(error).not.toBeNull();
+
+      expect(await rekeyRowAsAdmin()).toEqual({
+        participant_id: TEST_IDS.GAMER,
+        group_id: GROUP_X,
+        note: "mine",
+      });
+    });
+  });
+
+  // -------------------------------------------------------------------------
   // The shape constraints. Keys are unconstrained on purpose; values are not.
   // -------------------------------------------------------------------------
 
@@ -329,6 +440,33 @@ describe("session_feedback RLS + shape constraints", () => {
 
     it("refuses a level that is not a number at all", async () => {
       const { error } = await insertShape({ answers: { learned: "5" } });
+      expect(error).not.toBeNull();
+    });
+
+    // What lax mode let through, and what 00255's strict jsonpath refuses: a
+    // member has to BE a level, not merely contain one or be empty of them.
+    it("refuses a level wrapped in an array", async () => {
+      const { error } = await insertShape({ answers: { learned: [3] } });
+      expect(error).not.toBeNull();
+    });
+
+    it("refuses an empty array where a level should be", async () => {
+      const { error } = await insertShape({ answers: { learned: [] } });
+      expect(error).not.toBeNull();
+    });
+
+    it("refuses an object where a level should be", async () => {
+      const { error } = await insertShape({ answers: { learned: { a: 1 } } });
+      expect(error).not.toBeNull();
+    });
+
+    it("refuses a null where a level should be", async () => {
+      const { error } = await insertShape({ answers: { learned: null } });
+      expect(error).not.toBeNull();
+    });
+
+    it("refuses a boolean where a level should be", async () => {
+      const { error } = await insertShape({ answers: { learned: true } });
       expect(error).not.toBeNull();
     });
 

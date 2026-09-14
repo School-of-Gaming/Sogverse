@@ -146,6 +146,24 @@ function VoiceSessionInner({
   }, []);
 
   /**
+   * What this viewer already answered in this window, read as they join and
+   * held until they leave.
+   *
+   * **Read here rather than at the moment of leaving**, because both paths to
+   * the question are abrupt: a Leave whose disconnect has already happened, and
+   * a room closing under everyone, which fires on any post-join drop — a failed
+   * network among them — and must not wait on a fresh read right then. It asks
+   * only for a viewer the page asks, and only once the window instant the row
+   * is keyed by is in hand.
+   *
+   * A row that never existed and a read that failed are both survivable here:
+   * the form opens empty either way. The two are told apart exactly once, in
+   * the write-or-skip rule below.
+   */
+  const prefill = useOwnSessionFeedback(groupId, sessionOpensAt, askForFeedback);
+  const { mutate: saveSessionFeedback } = useSaveSessionFeedback();
+
+  /**
    * The staff-supplied overlay for this room, and the two writes behind it.
    *
    * **This page is the seam.** Every component inside the room is a pure
@@ -172,24 +190,6 @@ function VoiceSessionInner({
    * badge is last on the identity line, the note button is the left edge of the
    * right-packed trailing group), which is why nothing waits for it.
    */
-  /**
-   * What this viewer already answered in this window, read as they join and
-   * held until they leave.
-   *
-   * **Read here rather than at the moment of leaving**, because both paths to
-   * the question are abrupt: a Leave whose disconnect has already happened, and
-   * a room closing under everyone, which fires on any post-join drop — a failed
-   * network among them — and must not wait on a fresh read right then. It asks
-   * only for a viewer the page asks, and only once the window instant the row
-   * is keyed by is in hand.
-   *
-   * A row that never existed and a read that failed are both survivable here:
-   * the form opens empty either way. The two are told apart exactly once, in
-   * the write-or-skip rule below.
-   */
-  const prefill = useOwnSessionFeedback(groupId, sessionOpensAt, askForFeedback);
-  const saveFeedback = useSaveSessionFeedback();
-
   const { data: overlay } = useGroupStaffOverlay(groupId, isModerator);
   const setGamerNote = useSetGamerGroupNote(groupId);
   const setGamerCreations = useSetGamerGroupCreations(groupId);
@@ -274,7 +274,7 @@ function VoiceSessionInner({
         return;
       }
 
-      saveFeedback.mutate(
+      saveSessionFeedback(
         {
           groupId,
           sessionOpensAt,
@@ -300,7 +300,10 @@ function VoiceSessionInner({
       leftForFeedback,
       prefill.data,
       prefill.isSuccess,
-      saveFeedback,
+      // The mutate function, not the mutation object: the object is a fresh
+      // identity on every render, so depending on it would rebuild this
+      // callback continuously. `mutate` is stable for the hook's lifetime.
+      saveSessionFeedback,
       sessionOpensAt,
     ],
   );

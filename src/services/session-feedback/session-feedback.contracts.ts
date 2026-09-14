@@ -110,9 +110,17 @@ export function answersForStorage(
  * The child's own words are not otherwise touched: leading spaces, line breaks
  * and all are theirs, and a writer that tidied them would be editing what
  * somebody wrote.
+ *
+ * **Trimmed by code points, because the cap is counted in characters.** A
+ * JavaScript string is indexed in UTF-16 units, so cutting at the cap can land
+ * between the halves of a surrogate pair — an emoji, which is exactly what a
+ * child fills a long note with — and produce a lone surrogate the column
+ * refuses outright. A trim that hands over an unstorable string turns the
+ * failure it exists to prevent into one no retry of the same write can ever
+ * clear.
  */
 export function noteForStorage(note: string): string {
-  return note.slice(0, SESSION_FEEDBACK_NOTE_MAX_LENGTH);
+  return Array.from(note).slice(0, SESSION_FEEDBACK_NOTE_MAX_LENGTH).join("");
 }
 
 /**

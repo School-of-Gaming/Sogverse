@@ -177,6 +177,11 @@ value can only mis-key the forger's own row, while chat's bounds what a family m
 The questions stay out of the schema — the stored object is item key to level, with the
 shape checked and the keys deliberately unconstrained — so adding or removing a statement
 is an edit to the catalogue in this directory plus its message strings, with no migration.
+**The two caps on that row — at most thirty-two answers, and a note of at most two thousand
+characters — are owned by the schema's own constraints and only mirrored as constants beside
+the catalogue**, so the field a child types into, the writer that trims what they typed and
+the row that stores it all measure the same limit the same way, and no client can walk into
+a refusal it could have avoided.
 
 **Rule: the prefill is read when the reader joins, never when they leave.** Both ways to
 the question are abrupt — a Leave whose disconnect has already happened, and the ended
