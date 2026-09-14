@@ -30,15 +30,3 @@ export function SessionFeedbackScene() {
     />
   );
 }
-
-/** The scene's one scenario, narrowed where the renderer resolves a slug. */
-export const SESSION_FEEDBACK_SCENARIOS = ["default"] as const;
-
-export type SessionFeedbackSceneScenario =
-  (typeof SESSION_FEEDBACK_SCENARIOS)[number];
-
-export function isSessionFeedbackScenario(
-  value: string,
-): value is SessionFeedbackSceneScenario {
-  return SESSION_FEEDBACK_SCENARIOS.some((scenario) => scenario === value);
-}

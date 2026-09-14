@@ -37,10 +37,8 @@ import {
   TopicPrepScene,
   isTopicPrepScenario,
 } from "./scenes/topic-prep-scene";
-import {
-  SessionFeedbackScene,
-  isSessionFeedbackScenario,
-} from "./scenes/session-feedback-scene";
+import { SessionFeedbackScene } from "./scenes/session-feedback-scene";
+import { isSessionFeedbackScenario } from "./scenes/session-feedback-scenarios";
 import { ShopBrowseScene } from "./scenes/shop-browse-scene";
 import { VoiceRoomScene } from "./scenes/voice-room-scene";
 
