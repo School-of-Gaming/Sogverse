@@ -3571,34 +3571,35 @@
   },
   "robloxPrivacy": {
     "title": "Luojien akatemian tietosuojaseloste",
-    "subtitle": "Perheille, jotka ilmoittautuvat Ranskassa järjestettävään nuorten digitaalisen luovuuden Ohjelmaan, jonka toteuttavat Lynx Educate ja School of Gaming ja jota Roblox tukee.",
+    "subtitle": "Perheille, jotka ilmoittautuvat Ranskan digitaalisen koulutuksen Ohjelmaan, jonka toteuttavat Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa.",
     "lastUpdated": "Päivitetty viimeksi: {date}",
     "intro": {
       "heading": "Lyhyesti – vanhemmille ja nuorille",
       "blocks": [
-        "Ohjelma on tarkoitettu 13–17-vuotiaille nuorille Ranskassa. Ilmoittautumisen tekee vanhempi tai muu huoltaja.",
+        "Luojien akatemian Ohjelma on tarkoitettu 13–17-vuotiaille nuorille Ranskassa. Ilmoittautumisen tekee vanhempi tai muu huoltaja.",
         "Keräämme vain ne tiedot, joita tarvitsemme lapsen ilmoittamiseen, Ohjelman turvalliseen toteuttamiseen ja sen arviointiin, toimiiko Ohjelma. Näihin kuuluvat vanhemman yhteystiedot, rajattu määrä lasta koskevia tietoja, lapsen Roblox-käyttäjätunnus tai Roblox-käyttäjätunniste sekä tiedot osallistumisesta, suorittamisesta ja pelien julkaisemisesta.",
         "School of Gaming käyttää tietoja ilmoittautumis- ja oppimisalustan ylläpitämiseen. Lynx Educate käsittelee Ohjelman tietoja siinä laajuudessa kuin toteutuksen hallinnointi edellyttää. Kullakin organisaatiolla on erilainen vastuu sen mukaan, mistä toiminnasta on kyse ja mihin tarkoitukseen henkilötietoja käytetään.",
         [
+          "Lynx Educate on rekisterinpitäjä Ohjelman toteuttamisen ja vapaaehtoisen sähköpostiviestinnän osalta.",
           "School of Gaming on rekisterinpitäjä Sogversen toiminnan osalta ja niiden henkilötietojen osalta, joita se käsittelee omia alustapalvelujaan varten.",
-          "Robloxin lukuun tehtävässä rajatussa vaikuttavuustutkimuksessa Roblox on rekisterinpitäjä, Lynx Educate toimii Robloxin henkilötietojen käsittelijänä ja School of Gaming Lynx Educaten hyväksymänä alikäsittelijänä.",
-          "Kun Lynx Educate käsittelee henkilötietoja omiin, itsenäisesti määrittelemiinsä tarkoituksiin, kuten vapaaehtoisiin Lynxin sähköposteihin, Lynx Educate on tämän käsittelyn rekisterinpitäjä."
+          "Robloxin lukuun tehtävässä rajatussa vaikuttavuustutkimuksessa Roblox on rekisterinpitäjä, Lynx Educate toimii Robloxin henkilötietojen käsittelijänä ja School of Gaming Lynx Educaten hyväksymänä alikäsittelijänä."
         ],
         "Seuraavat valinnat ovat vapaaehtoisia, eivätkä ne vaikuta lapsesi paikkaan:",
         [
           "Lynx Educaten vanhemmalle lähettämät sähköpostit tulevista Roblox-tapahtumista ja pelaamiseen liittyvistä aineistoista.",
-          "Lapsesta otetut valokuvat ja videot tapaamisraporteissa, Lynx Educatelle ja Robloxille tehtävässä vaikuttavuusraportoinnissa sekä Lynx Educaten, School of Gamingin ja Robloxin julkisessa käytössä."
+          "Valokuvaaminen tai videokuvaaminen Robloxille tehtävää ei-julkista Ohjelman raportointia varten.",
+          "Lynx Educaten, School of Gamingin ja Robloxin harjoittama valokuvien tai videomateriaalin julkinen käyttö."
         ],
-        "Verkkotapaamisia ei tallenneta. Lasta ei valokuvata eikä videokuvata, jos tarvittavaa lupaa ei ole annettu tai jos lapsi ei halua osallistua.",
+        "Tavanomaisia verkkotapaamisia ei tallenneta. Lasta ei valokuvata eikä videokuvata, jos tarvittavaa lupaa ei ole annettu tai jos lapsi ei halua osallistua.",
         "Lynx Educate ja School of Gaming eivät myy Ohjelman ilmoittautumistietoja eivätkä käytä niitä lapsille suunnattuun mainontaan.",
-        "Sinä ja lapsesi voitte pyytää saada nähdä, korjata tai poistaa tietoja, peruuttaa vapaaehtoisen suostumuksen tai vastustaa tiettyä käyttöä ottamalla yhteyttä osoitteeseen support@lynxeducate.com tai {supportEmail}."
+        "Sinä ja lapsesi voitte pyytää saada nähdä, korjata tai poistaa tietoja, peruuttaa vapaaehtoisen suostumuksen tai vastustaa tiettyä käyttöä ottamalla yhteyttä osoitteeseen admin@lynxeducate.com tai {supportEmail}."
       ]
     },
     "sections": {
       "applies": {
         "heading": "Keitä tämä seloste koskee",
         "blocks": [
-          "Tämä seloste koskee vanhempia, huoltajia ja nuoria, jotka ilmoittautuvat Luojien akatemiaan, Ranskassa järjestettävään nuorten digitaalisen luovuuden Ohjelmaan (Ohjelma).",
+          "Tämä seloste koskee vanhempia, huoltajia ja nuoria, jotka ilmoittautuvat Ranskassa järjestettävään digitaalisen koulutuksen ohjelmaan, jonka toteuttavat Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa (Ohjelma).",
           "Ohjelma on tarkoitettu 13–17-vuotiaille nuorille. Vanhemman tai huoltajan on tehtävä ilmoittautuminen ja vahvistettava, että hänellä on oikeus ilmoittaa lapsi mukaan.",
           "Seloste kattaa Ohjelmaan ilmoittautumisen, hallinnoinnin, oppimistapaamiset, tapahtumat, tuen, lasten turvallisuuden ja vaikuttavuuden arvioinnin. Se täydentää School of Gamingin <linkPrivacy>yleistä tietosuojaselostetta</linkPrivacy>. Jos selosteet ovat tämän Ohjelman osalta ristiriidassa, sovelletaan tätä Ohjelmaa koskevaa selostetta.",
           "Lapsen omaan Roblox-tilin, Roblox Studion tai muun Roblox-palvelun käyttöön sovelletaan Robloxin omaa tietosuojaselostetta ja käyttöehtoja.",
@@ -3616,13 +3617,13 @@
           "Lynx Educate SAS",
           "185 rue Ordener",
           "75018 Pariisi, Ranska",
-          "Sähköposti: support@lynxeducate.com"
+          "Sähköposti: admin@lynxeducate.com"
         ]
       },
       "responsibleSog": {
         "heading": "School of Gaming Galactic Oy",
         "blocks": [
-          "School of Gaming ylläpitää Sogversea, hallinnoi ilmoittautumis- ja oppimisympäristöä, tuottaa tapaamisten sisällöt ja pelikasvattajat, ohjaa oppimistapaamiset ja huolehtii lasten turvallisuuden valvonnasta.",
+          "School of Gaming ylläpitää Sogversea, hallinnoi ilmoittautumis- ja oppimisympäristöä, tuottaa opetussuunnitelman ja ohjaajat, ohjaa oppimistapaamiset ja huolehtii lasten turvallisuuden valvonnasta.",
           "School of Gaming Galactic Oy",
           "Y-tunnus: 3110461-1",
           "Isokatu 56",
@@ -3671,13 +3672,12 @@
             "Lapsen etunimi ja sen rinnalla vanhemman tililtä tallennettu perheen sukunimi. Pelikasvattajat ja muut osallistujat eivät koskaan näe sukunimeä – lapsi osallistuu etunimellään.",
             "Ikä, ikäryhmä tai syntymäkuukausi ja -vuosi täydellisen syntymäajan sijaan.",
             "Roblox-käyttäjätunnus ja Roblox-käyttäjätunniste.",
-            "Kerho, leiri, tapahtuma tai ryhmä, johon lapsi osallistuu.",
+            "Kurssi, kerho, leiri, tapahtuma tai ryhmä, johon lapsi osallistuu.",
             "Läsnäolo, osallistuminen, oppimisen eteneminen ja suorittaminen.",
             "Tieto siitä, julkaiseeko lapsi ensimmäisen Roblox-pelinsä, -kokemuksensa tai -digitaalisen esineensä.",
             "Julkaistun kokemuksen nimi tai linkki, kun se on tarpeen Ohjelman tuloksen todentamiseksi.",
             "Oppijan palaute ja vapaaehtoiset kyselyvastaukset.",
             "Rajatut moderointia, käyttäytymistä tai turvallisuutta koskevat tiedot, kun ne ovat tarpeen osallistujien turvallisuuden vuoksi.",
-            "Saavutettavuutta, ruokavaliota tai terveyttä koskevat tiedot, jotka on annettu tiettyä tapahtumaa varten, vain silloin kun se on välttämätöntä.",
             "Valokuvat, videomateriaali, äänitteet ja niihin liittyvä aineisto, kun asiaa koskeva vapaaehtoinen lupa on annettu."
           ],
           "Emme kysy lapsen Roblox-salasanaa. Lapsen ei tarvitse antaa erillistä sähköpostiosoitetta Sogversea varten, kun tiliä hallinnoidaan vanhemman tai huoltajan kautta."
@@ -3702,7 +3702,7 @@
         "blocks": []
       },
       "useDeliver": {
-        "heading": "Ilmoittautumiseen ja Ohjelman toteuttamiseen",
+        "heading": "Ilmoittautumiseen ja Ohjelman toteuttamiseen (Lynx Educate)",
         "blocks": [
           "Käytämme tili-, ikä-, ilmoittautumis- ja yhteystietoja seuraaviin tarkoituksiin:",
           [
@@ -3717,7 +3717,7 @@
         ]
       },
       "useSafety": {
-        "heading": "Lasten ja palvelun turvallisuuden varmistamiseen",
+        "heading": "Lasten ja palvelun turvallisuuden varmistamiseen (Lynx Educate)",
         "blocks": [
           "Käytämme rajattuja tili-, tapaamis-, moderointi- ja tapahtumatietoja seuraaviin tarkoituksiin:",
           [
@@ -3726,13 +3726,13 @@
             "Valitusten ja turvallisuushuolien selvittäminen.",
             "Yhteydenpito vanhempaan tai huoltajaan.",
             "Yhteydenotto hätäpalveluihin tai toimivaltaisiin viranomaisiin, kun se on tarpeen.",
-            "Osallistujien, pelikasvattajien ja muiden ihmisten oikeuksien, turvallisuuden ja hyvinvoinnin suojaaminen."
+            "Osallistujien, ohjaajien ja muiden ihmisten oikeuksien, turvallisuuden ja hyvinvoinnin suojaaminen."
           ],
           "Perusteena on oikeutettu etumme turvallisen Ohjelman ylläpitämisessä, sovellettavat lakisääteiset velvoitteet ja hätätilanteessa jonkun elintärkeiden etujen suojaaminen."
         ]
       },
       "useEvaluate": {
-        "heading": "Ohjelman arviointiin",
+        "heading": "Ohjelman arviointiin (Lynx Educate)",
         "blocks": [
           "Käytämme osallistumista, suorittamista, julkaisutuloksia, vanhempien osallistumista ja kyselyvastauksia koskevia tietoja arvioidaksemme, saavuttaako Ohjelma tavoitteensa, sekä Ohjelman raporttien laatimiseen.",
           "Raporteissa käytetään mahdollisuuksien mukaan koostettuja tai anonymisoituja tietoja, joista yksittäistä lasta ei voi tunnistaa.",
@@ -3740,17 +3740,17 @@
         ]
       },
       "useEmail": {
-        "heading": "Vapaaehtoinen sähköpostiviestintä",
+        "heading": "Vapaaehtoinen sähköpostiviestintä (Lynx Educate)",
         "blocks": [
           "Lynx Educate käyttää vanhemman sähköpostiosoitetta tulevia Roblox-tapahtumia ja pelaamiseen liittyviä aineistoja koskevaan viestintään vain silloin, kun vanhempi rastittaa vapaaehtoisen sähköpostivalinnan.",
           "Käyttö perustuu vanhemman suostumukseen. Se ei ole edellytys osallistumiselle, ja sen voi lopettaa jokaisessa viestissä olevasta peruutuslinkistä tai ottamalla yhteyttä Lynx Educateen.",
-          "School of Gaming ja Roblox eivät saa vanhemman sähköpostiosoitetta tämän valinnan perusteella omaa markkinointiaan varten."
+          "Roblox ei saa vanhemman sähköpostiosoitetta tämän valinnan perusteella omaa markkinointiaan varten."
         ]
       },
       "useMedia": {
-        "heading": "Vapaaehtoinen valokuvaaminen ja videokuvaaminen",
+        "heading": "Vapaaehtoinen valokuvaaminen ja videokuvaaminen (Lynx Educate)",
         "blocks": [
-          "Valokuvaaminen, videokuvaaminen ja julkinen viestintä perustuvat yhteen vapaaehtoiseen lupaan, joka annetaan lapsikohtaisesti. Luvan epääminen ei vaikuta ilmoittautumiseen eikä osallistumiseen.",
+          "Valokuvaaminen, videokuvaaminen ja julkinen viestintä perustuvat erillisiin vapaaehtoisiin lupiin. Kummastakaan mediavalinnasta kieltäytyminen ei vaikuta ilmoittautumiseen eikä osallistumiseen.",
           "Suostumus ei ole oikeusperuste edellä kuvatulle ilmoittautumiselle, Ohjelman toteuttamiselle tai lasten turvallisuuden varmistamiselle."
         ]
       },
@@ -3759,10 +3759,12 @@
         "blocks": [
           "Ohjelman voimassa olevan tietojenkäsittelyliitteen mukaan Robloxille sisäistä vaikuttavuustutkimusta varten mahdollisesti luovutettavat tunnistetiedot rajoittuvat seuraaviin:",
           [
-            "Roblox-käyttäjätunnus.",
-            "Roblox-käyttäjätunniste.",
-            "Ohjelman tiliin liitetty sähköpostiosoite, joka voi olla vanhemman tai huoltajan osoite.",
-            "Ohjelman palvelu tai toiminta, johon on osallistuttu."
+            "Roblox-käyttäjätunnus",
+            "Roblox-käyttäjätunniste",
+            "Sijainti (kaupunki ja maa)",
+            "Lapsen ikä",
+            "Ohjelman palvelu tai toiminta, johon on osallistuttu",
+            "Lapsen julkaiseman pelin URL-osoite"
           ],
           "Roblox käyttää tätä tietojoukkoa sisäiseen tutkimukseen Ohjelman hyödyistä ja vaikuttavuudesta. Sitä ei luovuteta Ohjelman kautta mainontaan eikä suoramarkkinointiin.",
           "Roblox voi lisäksi saada koostettua raportointia osallistumisesta, suorittamisesta, julkaisemisesta ja tyytyväisyydestä. Tästä raportoinnista ei voi tunnistaa yksittäisiä perheitä.",
@@ -3787,34 +3789,33 @@
       "media": {
         "heading": "Valokuvaaminen, videokuvaaminen ja julkinen käyttö",
         "blocks": [
-          "Verkkotapaamisia ei tallenneta. Jos johonkin tapaamiseen tai tapahtumaan on suunniteltu valokuvausta tai videokuvausta, perheille kerrotaan siitä etukäteen.",
-          "Mediavalintoja on yksi, ja se tehdään lapsikohtaisesti. Valinta tehdään, kun lapsi ilmoitetaan Luojien akatemian toimintaan, ja sen voi muuttaa milloin tahansa lapsen sivulla My SOG -näkymässä."
+          "Tavanomaisia verkkotapaamisia ei tallenneta. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun yksikään lapsi ei ole tunnistettavissa.",
+          "Jos johonkin tapaamiseen tai tapahtumaan on suunniteltu tunnistettavaa valokuvausta tai videokuvausta, perheille kerrotaan siitä etukäteen."
         ]
       },
       "mediaPublic": {
-        "heading": "Mitä mediavalinta kattaa",
+        "heading": "Julkinen vaikuttavuusviestintä",
         "blocks": [
-          "Yksi vapaaehtoinen valintaruutu kattaa kaiken lapsen valokuvien ja videomateriaalin käytön. Kun ruutu on rastitettu, lapsesta otettuja valokuvia ja videoita voidaan:",
+          "Tämä valinta antaa Lynx Educatelle, School of Gamingille ja Robloxille luvan käyttää valokuvia tai videomateriaalia julkisesti Ohjelman vaikuttavuuden esittelemiseen, muun muassa seuraavissa yhteyksissä:",
           [
-            "Liittää tapaamisraportteihin, jotka jokainen ryhmän perhe näkee ryhmän sivulla ja saa sähköpostitse.",
-            "Jakaa Lynx Educatelle ja Robloxille vaikuttavuusraportointia varten, mukaan lukien sisäiset vaikuttavuusraportit, toteutuskatsaukset ja tukijalle pidettävät esitykset.",
-            "Käyttää julkisesti Lynx Educaten, School of Gamingin ja Robloxin verkkosivuilla ja sosiaalisen median kanavissa."
+            "Niiden verkkosivuilla.",
+            "Niiden sosiaalisen median kanavissa.",
+            "Lehdistö- ja viestintäaineistoissa.",
+            "Ohjelmaa ja sen vaikuttavuutta koskevassa viestinnässä."
           ],
-          "Julkinen sisältö voi olla saatavilla maailmanlaajuisesti, ja muut käyttäjät voivat kopioida tai jakaa sitä ilman, että organisaatiot voivat vaikuttaa siihen.",
-          "Jos ruutua ei ole rastitettu, lapsi jätetään pois tapaamisten valokuvista ja tunnistettavasta materiaalista. Mitään hänet tunnistettavaksi tekevää ei liitetä tapaamisraporttiin, jaeta Lynx Educatelle tai Robloxille eikä käytetä julkisesti. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun yksikään lapsi ei ole tunnistettavissa."
+          "Julkinen sisältö voi olla saatavilla maailmanlaajuisesti, ja muut käyttäjät voivat kopioida tai jakaa sitä ilman, että organisaatiot voivat vaikuttaa siihen. Roblox, Lynx Educate ja School of Gaming ovat tällaisten tietojen osalta erillisiä ja itsenäisiä rekisterinpitäjiä."
         ]
       },
       "mediaChildAgrees": {
         "heading": "Myös lapsen on suostuttava",
         "blocks": [
           "Vanhemman on hyvä keskustella mediavalinnasta lapsen kanssa ennen sen tekemistä. Selitämme valokuvaamisen tai videokuvaamisen myös lapselle hänen ikätasolleen sopivalla tavalla.",
-          "Pelikasvattaja kysyy lapselta ennen valokuvan ottamista, vaikka vanhempi olisi rastittanut ruudun, eikä lasta valokuvata tai videokuvata tarkoituksellisesti, jos hän vastustaa sitä. Lapsi, jonka vanhempi ei ole rastittanut ruutua, jätetään pois tapaamisten valokuvista ja tunnistettavasta materiaalista. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun yksikään lapsi ei ole tunnistettavissa."
+          "Emme valokuvaa emmekä videokuvaa tarkoituksellisesti lasta, joka vastustaa sitä, vaikka vanhempi olisi aiemmin rastittanut mediavalinnan. Henkilöstö toteuttaa kohtuulliset käytännön toimet, joilla lapset, joilla ei ole lupaa, jätetään pois tunnistettavasta materiaalista."
         ]
       },
       "mediaCaseStudies": {
         "heading": "Tapausesittelyt, nimet ja osallistujien luoma sisältö",
         "blocks": [
-          "Mediavalinnan valintaruutu koskee vain valokuvia ja videomateriaalia.",
           "Erillinen kirjallinen lupa pyydetään ennen kuin käytetään seuraavia:",
           [
             "Lapsen koko nimi.",
@@ -3830,7 +3831,7 @@
       "mediaChanging": {
         "heading": "Mediavalinnan muuttaminen",
         "blocks": [
-          "Vanhempi voi muuttaa mediavalintaa milloin tahansa lapsen sivulla My SOG -näkymässä tai ottamalla meihin yhteyttä. Myös lapsi voi pyytää meitä peruuttamaan luvan.",
+          "Vanhempi tai lapsi voi peruuttaa medialuvan ottamalla yhteyttä osoitteeseen {supportEmail}, tai vanhempi voi muuttaa sitä milloin tahansa lapsen sivulla My SOG -näkymässä.",
           "Peruuttamisen jälkeen lopetamme uuden käytön ja poistamme aineiston hallinnassamme olevista kanavista, jos se on kohtuudella mahdollista. Peruuttaminen ei voi tehdä aiemmasta lainmukaisesta käytöstä lainvastaista, perua jo jaettuja painotuotteita eikä taata sitä, että kolmansien osapuolten jo jakamat kopiot poistetaan."
         ]
       },
@@ -3841,10 +3842,10 @@
           [
             "Jokaisen lapsen profiili on liitetty vanhemman tai huoltajan tiliin.",
             "Lapset osallistuvat pelkällä etunimellään – eivät koskaan yhteystiedoillaan.",
-            "Mukaan pääsevät vain ilmoittautuneet osallistujat ja taustatarkistetut pelikasvattajat.",
+            "Mukaan pääsevät vain ilmoittautuneet osallistujat ja taustatarkistetut ohjaajat.",
             "Viestintä tapahtuu ryhmässä ja valvotusti.",
             "Lasten välillä ei ole yksityisiä suoraviestejä.",
-            "Tapaamisia ei tallenneta.",
+            "Tavanomaisia tapaamisia ei tallenneta.",
             "Lynx Educate ja School of Gaming eivät käytä Ohjelman ilmoittautumistietoja lapsille suunnattuun käyttäytymiseen perustuvaan mainontaan."
           ],
           "Turvallisuushuolet käsitellään yhteisen <linkRobloxSafeguarding>lasten turvallisuuden toimintaohjeen</linkRobloxSafeguarding> mukaisesti. School of Gaming hoitaa arjen tilanteet ensisijaisesti ja siirtää vakavat asiat Lynx Educaten käsiteltäviksi. Jos lapsi voi olla välittömässä vaarassa, hätäpalveluihin otetaan yhteyttä ensin.",
@@ -3915,7 +3916,7 @@
           "Suostumuksen peruuttaminen ei vaikuta ennen peruutusta tapahtuneen käsittelyn lainmukaisuuteen.",
           "Lapset voivat ottaa meihin yhteyttä suoraan omia tietojaan koskevissa asioissa. Myös vanhempi tai huoltaja voi tehdä pyynnön lapsen puolesta ottaen huomioon lapsen omat oikeudet, iän ja kehitystason.",
           "Osallistujiin ei kohdisteta pelkästään automaattiseen käsittelyyn perustuvaa päätöksentekoa, jolla on oikeusvaikutuksia tai vastaavalla tavalla merkittäviä vaikutuksia.",
-          "Lähetä pyynnöt osoitteeseen support@lynxeducate.com tai {supportEmail}. Organisaatiot sovittavat vastauksensa yhteen ja välittävät Robloxia koskevat pyynnöt Robloxille tarvittaessa.",
+          "Lähetä pyynnöt osoitteeseen admin@lynxeducate.com tai {supportEmail}. Organisaatiot sovittavat vastauksensa yhteen ja välittävät Robloxia koskevat pyynnöt Robloxille tarvittaessa.",
           "Perheillä on myös oikeus tehdä valitus Ranskan tietosuojaviranomaiselle, joka on Commission nationale de l’informatique et des libertés – <linkCnil>CNIL</linkCnil>."
         ]
       },
@@ -3949,7 +3950,7 @@
           "Lynx Educate SAS",
           "185 rue Ordener",
           "75018 Pariisi, Ranska",
-          "support@lynxeducate.com",
+          "admin@lynxeducate.com",
           "School of Gaming Galactic Oy",
           "Isokatu 56",
           "90100 Oulu, Suomi",
@@ -4039,12 +4040,12 @@
   },
   "robloxTerms": {
     "title": "Luojien akatemian käyttöehdot",
-    "subtitle": "Koskee perheitä, jotka ilmoittautuvat Luojien akatemiaan Ranskassa – Lynx Educate × School of Gaming, yhteistyössä Robloxin kanssa.",
+    "subtitle": "Perheille, jotka ilmoittautuvat Ranskan digitaalisen koulutuksen Ohjelmaan, jonka toteuttavat Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa.",
     "lastUpdated": "Päivitetty: {date}",
     "intro": {
       "heading": "Lyhyesti",
       "blocks": [
-        "Tässä kerrotaan, mihin ilmoitat lapsesi, kun ilmoittaudut Luojien akatemiaan. Kyseessä on Lynx Educaten ja School of Gamingin yhteinen ohjelma, jota Roblox tukee. Jos jokin jää epäselväksi, lähetä sähköpostia osoitteeseen support@lynxeducate.com."
+        "Tässä kerrotaan, mihin ilmoitat lapsesi, kun ilmoittaudut Luojien akatemian Ohjelmaan. Kyseessä on Lynx Educaten ja School of Gamingin yhdessä toteuttama ohjelma, joka tehdään yhteistyössä Robloxin kanssa. Jos jokin jää epäselväksi, lähetä sähköpostia osoitteeseen admin@lynxeducate.com"
       ]
     },
     "sections": {
@@ -4079,26 +4080,26 @@
       "safety": {
         "heading": "Turvallisuus ja valvonta",
         "blocks": [
-          "Jokaista tapaamista valvoo koulutettu pelikasvattaja. Käyttäytymistä ja lasten turvallisuutta koskeva toimintatapamme on kuvattu yhteisessä <linkRobloxSafeguarding>lasten turvallisuuden toimintaohjeessamme</linkRobloxSafeguarding>."
+          "Jokaista tapaamista valvoo koulutettu ohjaaja. Käyttäytymistä ja lasten turvallisuutta koskeva toimintatapamme on kuvattu yhteisessä <linkRobloxSafeguarding>lasten turvallisuuden toimintaohjeessamme</linkRobloxSafeguarding>, joka on saatavilla pyynnöstä."
         ]
       },
       "information": {
         "heading": "Sinun tietosi",
         "blocks": [
           "<linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy> kerrotaan, miten käytämme sinun ja lapsesi tietoja. Ilmoittautumalla vahvistat lukeneesi ja ymmärtäneesi sen.",
-          "Kun ilmoittaudut Luojien akatemiaan, School of Gaming -tiliisi liittyvät tiedot (mukaan lukien yhteystietosi ja lapsesi tilitiedot) jaetaan myös Lynx Educatelle ohjelman toteuttamista varten ja Robloxille ohjelman vaikuttavuustutkimusta varten."
+          "Kun ilmoittaudut Roblox-ohjelmaan, School of Gaming -tiliisi liittyvät tiedot (mukaan lukien yhteystietosi ja lapsesi tilitiedot) jaetaan myös Lynx Educatelle ohjelman toteuttamista varten ja Robloxille ohjelman vaikuttavuustutkimusta varten. Lisätietoja on <linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy>."
         ]
       },
       "media": {
         "heading": "Valokuvat, video ja markkinointi",
         "blocks": [
-          "Se, näkyykö lapsesi valokuvissa tai videoissa, on yksi vapaaehtoinen valinta, joka tehdään ilmoittaessasi hänet Luojien akatemian toimintaan. Voit muuttaa sitä milloin tahansa lapsesi sivulla My SOG -näkymässä. Lapsi, jolla ei ole tätä lupaa, jätetään pois tapaamisten valokuvista ja tunnistettavasta materiaalista. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun yksikään lapsi ei ole tunnistettavissa."
+          "Se, valokuvataanko tai videokuvataanko lastasi ja käytetäänkö kuvia markkinointiin, riippuu kokonaan niistä valinnoista, jotka teet ilmoittautumisen yhteydessä. Valinnat ovat vapaaehtoisia, ja voit muuttaa mieltäsi milloin tahansa lapsesi sivulla My SOG -näkymässä."
         ]
       },
       "concern": {
         "heading": "Jos sinulla on huoli",
         "blocks": [
-          "Jos olet huolissasi lapsesi kokemuksesta Ohjelmassa, ota yhteyttä School of Gamingiin osoitteeseen {supportEmail} tai Lynx Educateen osoitteeseen support@lynxeducate.com – huolehdimme siitä, että viesti tavoittaa oikeat ihmiset."
+          "Jos olet huolissasi lapsesi kokemuksesta Ohjelmassa, ota yhteyttä joko osoitteeseen admin@lynxeducate.com tai {supportEmail} – huolehdimme siitä, että viesti tavoittaa oikeat ihmiset."
         ]
       },
       "changes": {

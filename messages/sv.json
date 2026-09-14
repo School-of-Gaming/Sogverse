@@ -3571,34 +3571,35 @@
   },
   "robloxPrivacy": {
     "title": "Integritetspolicy för Skaparnas akademi",
-    "subtitle": "För familjer som anmäler sig till Programmet för ungas digitala kreativitet i Frankrike, som drivs av Lynx Educate och School of Gaming och sponsras av Roblox.",
+    "subtitle": "För familjer som anmäler sig till Programmet för digital utbildning i Frankrike, som drivs av Lynx Educate och School of Gaming i samarbete med Roblox.",
     "lastUpdated": "Senast uppdaterad: {date}",
     "intro": {
       "heading": "Kort sammanfattning – för föräldrar och unga",
       "blocks": [
-        "Programmet riktar sig till unga i Frankrike i åldern 13–17 år. Anmälan måste göras av en förälder eller vårdnadshavare.",
+        "Programmet Skaparnas akademi riktar sig till unga i Frankrike i åldern 13–17 år. Anmälan måste göras av en förälder eller vårdnadshavare.",
         "Vi samlar bara in det vi behöver för att anmäla ditt barn, genomföra Programmet på ett tryggt sätt och förstå om det fungerar. Det omfattar förälderns kontaktuppgifter, begränsade uppgifter om barnet, barnets Roblox-användarnamn eller Roblox-ID samt uppgifter om närvaro, slutförande och publicering av spel.",
         "School of Gaming använder uppgifterna för att driva anmälnings- och lärplattformen. Lynx Educate behandlar Programmets uppgifter i den utsträckning som behövs för att sköta genomförandet. Organisationerna har olika ansvar beroende på aktiviteten och på ändamålet med behandlingen av personuppgifterna.",
         [
+          "Lynx Educate är personuppgiftsansvarig för genomförandet av Programmet och för den frivilliga e-postkommunikationen.",
           "School of Gaming är personuppgiftsansvarig för driften av Sogverse och för de personuppgifter som behandlas inom företagets egna plattformstjänster.",
-          "För den begränsade effektforskning som utförs på uppdrag av Roblox är Roblox personuppgiftsansvarig, Lynx Educate är personuppgiftsbiträde åt Roblox och School of Gaming är godkänt underbiträde åt Lynx Educate.",
-          "När Lynx Educate behandlar personuppgifter för egna, självständigt bestämda ändamål – till exempel frivilliga e-postutskick från Lynx – är Lynx Educate personuppgiftsansvarig för den behandlingen."
+          "För den begränsade effektforskning som utförs på uppdrag av Roblox är Roblox personuppgiftsansvarig, Lynx Educate är personuppgiftsbiträde åt Roblox och School of Gaming är godkänt underbiträde åt Lynx Educate."
         ],
         "Följande val är frivilliga och påverkar inte ditt barns plats:",
         [
           "E-post till föräldern från Lynx Educate om kommande Roblox-evenemang och resurser om spel.",
-          "Foton och filmer på barnet, i träffrapporter, i effektrapportering till Lynx Educate och Roblox och i offentlig användning av Lynx Educate, School of Gaming och Roblox."
+          "Foto eller film för icke-offentlig rapportering om Programmet till Roblox.",
+          "Offentlig användning av foton eller filmmaterial av Lynx Educate, School of Gaming och Roblox."
         ],
-        "Träffar online spelas inte in. Inget barn fotograferas eller filmas om det nödvändiga tillståndet saknas eller om barnet inte vill vara med.",
+        "Ordinarie träffar online spelas inte in. Inget barn fotograferas eller filmas om det nödvändiga tillståndet saknas eller om barnet inte vill vara med.",
         "Lynx Educate och School of Gaming säljer inte anmälningsuppgifter från Programmet och använder dem inte för reklam riktad till barn.",
-        "Du och ditt barn kan begära att få se, rätta eller radera uppgifter, återkalla ett frivilligt samtycke eller invända mot viss användning genom att kontakta support@lynxeducate.com eller {supportEmail}."
+        "Du och ditt barn kan begära att få se, rätta eller radera uppgifter, återkalla ett frivilligt samtycke eller invända mot viss användning genom att kontakta admin@lynxeducate.com eller {supportEmail}."
       ]
     },
     "sections": {
       "applies": {
         "heading": "Vem policyn gäller",
         "blocks": [
-          "Den här policyn gäller föräldrar, vårdnadshavare och unga som anmäler sig till Skaparnas akademi, programmet för ungas digitala kreativitet i Frankrike (Programmet).",
+          "Den här policyn gäller föräldrar, vårdnadshavare och unga som anmäler sig till det program för digital utbildning i Frankrike som drivs av Lynx Educate och School of Gaming i samarbete med Roblox (Programmet).",
           "Programmet riktar sig till unga i åldern 13–17 år. En förälder eller vårdnadshavare måste göra anmälan och bekräfta att hen har rätt att anmäla barnet.",
           "Policyn omfattar anmälan till Programmet, administration, lärandeträffar, evenemang, support, barns trygghet och utvärdering av effekt. Den kompletterar School of Gamings <linkPrivacy>allmänna integritetspolicy</linkPrivacy>. Om de två policyerna står i konflikt med varandra när det gäller Programmet gäller den här programspecifika policyn.",
           "Barnets egen användning av ett Roblox-konto, Roblox Studio eller någon annan Roblox-tjänst omfattas av Roblox egen integritetspolicy och egna villkor.",
@@ -3616,13 +3617,13 @@
           "Lynx Educate SAS",
           "185 rue Ordener",
           "75018 Paris, Frankrike",
-          "E-post: support@lynxeducate.com"
+          "E-post: admin@lynxeducate.com"
         ]
       },
       "responsibleSog": {
         "heading": "School of Gaming Galactic Oy",
         "blocks": [
-          "School of Gaming driver Sogverse, sköter anmälnings- och lärmiljön, tillhandahåller innehållet och spelfostrarna, håller i lärandeträffarna och ansvarar för tillsynen av barns trygghet.",
+          "School of Gaming driver Sogverse, sköter anmälnings- och lärmiljön, tillhandahåller kursplanen och ledarna, håller i lärandeträffarna och ansvarar för tillsynen av barns trygghet.",
           "School of Gaming Galactic Oy",
           "FO-nummer: 3110461-1",
           "Isokatu 56",
@@ -3671,13 +3672,12 @@
             "Barnets förnamn, med familjens efternamn från förälderns konto lagrat bredvid. Spelfostrare och andra deltagare ser aldrig efternamnet – barnet deltar under sitt förnamn.",
             "Ålder, åldersgrupp eller födelsemånad och födelseår i stället för fullständigt födelsedatum.",
             "Roblox-användarnamn och Roblox-ID.",
-            "Klubben, lägret, evenemanget eller gruppen som barnet deltar i.",
+            "Kursen, klubben, lägret, evenemanget eller gruppen som barnet deltar i.",
             "Närvaro, deltagande, lärandeframsteg och slutförande.",
             "Om barnet publicerar sitt första Roblox-spel, sin första upplevelse eller sitt första digitala föremål.",
             "Namnet på eller länken till en publicerad upplevelse, när det behövs för att bekräfta resultatet i Programmet.",
             "Deltagarens återkoppling och frivilliga enkätsvar.",
             "Begränsade uppgifter om moderering, beteende eller trygghet när de behövs för att hålla deltagarna trygga.",
-            "Uppgifter om tillgänglighet, kost eller hälsa som lämnas inför ett visst evenemang, men bara när det är nödvändigt.",
             "Foton, filmmaterial, ljud eller liknande material när det aktuella frivilliga tillståndet har getts."
           ],
           "Vi frågar aldrig efter barnets Roblox-lösenord. Barnet behöver ingen egen e-postadress för Sogverse när kontot sköts via föräldern eller vårdnadshavaren."
@@ -3702,7 +3702,7 @@
         "blocks": []
       },
       "useDeliver": {
-        "heading": "För att anmäla deltagare och genomföra Programmet",
+        "heading": "För att anmäla deltagare och genomföra Programmet (av Lynx Educate)",
         "blocks": [
           "Vi använder konto-, ålders-, anmälnings- och kontaktuppgifter för att:",
           [
@@ -3717,7 +3717,7 @@
         ]
       },
       "useSafety": {
-        "heading": "För att hålla barnen och tjänsten trygga",
+        "heading": "För att hålla barnen och tjänsten trygga (av Lynx Educate)",
         "blocks": [
           "Vi använder begränsade konto-, sessions-, modererings- och incidentuppgifter för att:",
           [
@@ -3726,13 +3726,13 @@
             "Utreda klagomål och oro som rör barns trygghet.",
             "Kommunicera med en förälder eller vårdnadshavare.",
             "Kontakta räddningstjänst eller behöriga myndigheter när det behövs.",
-            "Skydda deltagarnas, spelfostrarnas och andra personers rättigheter, säkerhet och välbefinnande."
+            "Skydda deltagarnas, ledarnas och andra personers rättigheter, säkerhet och välbefinnande."
           ],
           "Vi stöder oss på våra berättigade intressen av att driva ett tryggt Program, på tillämpliga rättsliga skyldigheter och, i en nödsituation, på skyddet av någons grundläggande intressen."
         ]
       },
       "useEvaluate": {
-        "heading": "För att utvärdera Programmet",
+        "heading": "För att utvärdera Programmet (av Lynx Educate)",
         "blocks": [
           "Vi använder uppgifter om närvaro, slutförande, publicering, föräldrars deltagande och enkätsvar för att förstå om Programmet når sina mål och för att ta fram rapporter om Programmet.",
           "När det är möjligt bygger rapporterna på aggregerade eller anonymiserade uppgifter som inte identifierar något enskilt barn.",
@@ -3740,17 +3740,17 @@
         ]
       },
       "useEmail": {
-        "heading": "Frivillig e-postkommunikation",
+        "heading": "Frivillig e-postkommunikation (av Lynx Educate)",
         "blocks": [
           "Lynx Educate använder förälderns e-postadress för att skicka information om kommande Roblox-evenemang och resurser om spel enbart när föräldern kryssar i den frivilliga e-postrutan.",
           "Den här användningen grundar sig på förälderns samtycke. Den krävs inte för att delta och kan när som helst avslutas via avregistreringslänken i varje utskick eller genom att kontakta Lynx Educate.",
-          "School of Gaming och Roblox får inte förälderns e-postadress via den här rutan för egen marknadsföring."
+          "Roblox får inte förälderns e-postadress via den här rutan för egen marknadsföring."
         ]
       },
       "useMedia": {
-        "heading": "Frivilligt foto och film",
+        "heading": "Frivilligt foto och film (av Lynx Educate)",
         "blocks": [
-          "Foto, film och offentlig kommunikation bygger på ett enda frivilligt tillstånd, som ges för varje barn. Att tacka nej påverkar varken anmälan eller deltagandet.",
+          "Foto, film och offentlig kommunikation bygger på separata, frivilliga tillstånd. Att tacka nej till något av mediavalen påverkar varken anmälan eller deltagandet.",
           "Samtycke är inte den rättsliga grunden för de centrala aktiviteterna kring anmälan, genomförande eller barns trygghet som beskrivs ovan."
         ]
       },
@@ -3759,10 +3759,12 @@
         "blocks": [
           "Enligt Programmets nuvarande personuppgiftsbiträdesavtal är de identifierbara uppgifter som får lämnas till Roblox för intern effektforskning begränsade till:",
           [
-            "Roblox-användarnamn.",
-            "Roblox-ID.",
-            "E-postadressen som är kopplad till kontot i Programmet, vilket kan vara förälderns eller vårdnadshavarens adress.",
-            "Den specifika tjänst eller aktivitet i Programmet som barnet deltagit i."
+            "Roblox-användarnamn",
+            "Roblox-ID",
+            "Plats (stad och land)",
+            "Barnets ålder",
+            "Den specifika tjänst eller aktivitet i Programmet som barnet deltagit i",
+            "URL till barnets publicerade spel"
           ],
           "Roblox använder datamängden för intern forskning om Programmets nytta och effekt. Den lämnas inte via Programmet för reklam eller direktmarknadsföring.",
           "Roblox kan också få aggregerad rapportering om närvaro, slutförande, publicering och nöjdhet som inte identifierar enskilda familjer.",
@@ -3787,34 +3789,33 @@
       "media": {
         "heading": "Foto, film och offentlig användning",
         "blocks": [
-          "Träffar online spelas inte in. Om foto eller film planeras vid en viss träff eller ett visst evenemang får familjerna veta det i förväg.",
-          "Det finns ett enda frivilligt mediaval per barn. Det görs när barnet anmäls till en aktivitet i Skaparnas akademi och kan ändras när som helst på barnets sida i My SOG."
+          "Ordinarie träffar online spelas inte in. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera.",
+          "Om identifierbar fotografering eller filmning planeras vid en viss träff eller ett visst evenemang får familjerna veta det i förväg."
         ]
       },
       "mediaPublic": {
-        "heading": "Vad mediavalet omfattar",
+        "heading": "Offentlig kommunikation om Programmets effekt",
         "blocks": [
-          "En enda frivillig ruta omfattar all användning av ett barns foton och filmmaterial. När rutan är ikryssad får foton och filmer på barnet:",
+          "Det här valet ger Lynx Educate, School of Gaming och Roblox rätt att använda foton eller filmmaterial offentligt för att visa Programmets effekt, bland annat:",
           [
-            "Tas med i träffrapporter, som varje familj i barnets grupp ser på gruppens sida och får per e-post.",
-            "Delas med Lynx Educate och Roblox för effektrapportering, bland annat i interna effektrapporter, lägesuppdateringar och presentationer för sponsorn.",
-            "Användas offentligt av Lynx Educate, School of Gaming och Roblox på deras webbplatser och kanaler i sociala medier."
+            "På deras webbplatser.",
+            "I deras kanaler i sociala medier.",
+            "I press- och PR-material.",
+            "I kommunikation om Programmet och dess effekt."
           ],
-          "Offentligt innehåll kan vara tillgängligt i hela världen och kan kopieras eller delas vidare av andra användare utan att organisationerna kan styra det.",
-          "Är rutan inte ikryssad hålls barnet utanför träffarnas foton och identifierbart material. Ingenting som identifierar barnet tas med i en träffrapport, delas med Lynx Educate eller Roblox eller används offentligt. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
+          "Offentligt innehåll kan vara tillgängligt i hela världen och kan kopieras eller delas vidare av andra användare utan att organisationerna kan styra det. Roblox, Lynx Educate och School of Gaming är separata och självständiga personuppgiftsansvariga för sådana uppgifter."
         ]
       },
       "mediaChildAgrees": {
         "heading": "Barnet måste också vara med på det",
         "blocks": [
           "Föräldern bör prata med barnet om mediavalet innan det görs. Vi förklarar också fotograferingen eller filmningen för barnet på ett sätt som passar barnets ålder.",
-          "En spelfostrare frågar barnet innan ett foto tas, även när föräldern kryssat i rutan, och vi fotograferar eller filmar aldrig medvetet ett barn som säger nej. Ett barn vars förälder inte kryssat i rutan hålls utanför träffarnas foton och identifierbart material. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
+          "Vi fotograferar eller filmar aldrig medvetet ett barn som säger nej, även om en förälder tidigare har kryssat i en mediaruta. Personalen vidtar rimliga praktiska åtgärder för att hålla barn utan tillstånd utanför identifierbart material."
         ]
       },
       "mediaCaseStudies": {
         "heading": "Fallbeskrivningar, namn och innehåll som deltagarna skapat",
         "blocks": [
-          "Mediarutan omfattar bara foton och filmmaterial.",
           "Ett separat skriftligt medgivande inhämtas innan följande används:",
           [
             "Ett barns fullständiga namn.",
@@ -3830,7 +3831,7 @@
       "mediaChanging": {
         "heading": "Ändra ett mediaval",
         "blocks": [
-          "En förälder kan ändra mediavalet när som helst på barnets sida i My SOG, eller genom att kontakta oss. Ett barn kan också be oss återkalla tillståndet.",
+          "En förälder eller ett barn kan återkalla ett mediatillstånd genom att kontakta {supportEmail}, eller så kan föräldern ändra det när som helst på barnets sida i My SOG.",
           "Efter återkallelsen slutar vi använda materialet på nya sätt och tar bort det från kanaler vi själva styr över, när det rimligen går. En återkallelse kan inte göra tidigare laglig användning olaglig, ta tillbaka tryckt material som redan spridits eller garantera att kopior som tredje part redan delat raderas."
         ]
       },
@@ -3841,10 +3842,10 @@
           [
             "Varje barns profil är kopplad till ett konto för en förälder eller vårdnadshavare.",
             "Barnen deltar bara under sitt förnamn – aldrig med sina kontaktuppgifter.",
-            "Endast anmälda deltagare och kontrollerade spelfostrare får delta.",
+            "Endast anmälda deltagare och kontrollerade ledare får delta.",
             "Kommunikationen sker i grupp och under uppsikt.",
             "Det finns inga privata direktmeddelanden mellan barn.",
-            "Träffar spelas inte in.",
+            "Ordinarie träffar spelas inte in.",
             "Lynx Educate och School of Gaming använder inte anmälningsuppgifter från Programmet för beteendebaserad reklam riktad till barn."
           ],
           "Oro som rör barns trygghet hanteras enligt den gemensamma <linkRobloxSafeguarding>barnskyddspolicyn</linkRobloxSafeguarding>. School of Gaming hanterar vardagliga ärenden i första hand och för allvarliga ärenden vidare till Lynx Educate. Räddningstjänsten kontaktas först om ett barn kan vara i omedelbar fara.",
@@ -3915,7 +3916,7 @@
           "Att återkalla ett samtycke påverkar inte den behandling som var laglig innan återkallelsen.",
           "Barn får kontakta oss direkt om sina egna uppgifter. Föräldrar och vårdnadshavare kan också göra en begäran för ett barn, med hänsyn till barnets egna rättigheter, ålder och mognad.",
           "Det förekommer inget helt automatiserat beslutsfattande som får rättsliga följder eller på liknande sätt i betydande grad påverkar deltagarna.",
-          "Skicka din begäran till support@lynxeducate.com eller {supportEmail}. Organisationerna samordnar svaret och skickar vidare de frågor som rör Roblox till Roblox när det behövs.",
+          "Skicka din begäran till admin@lynxeducate.com eller {supportEmail}. Organisationerna samordnar svaret och skickar vidare de frågor som rör Roblox till Roblox när det behövs.",
           "Familjer har också rätt att lämna in klagomål till den franska dataskyddsmyndigheten Commission nationale de l’informatique et des libertés – <linkCnil>CNIL</linkCnil>."
         ]
       },
@@ -3949,7 +3950,7 @@
           "Lynx Educate SAS",
           "185 rue Ordener",
           "75018 Paris, Frankrike",
-          "support@lynxeducate.com",
+          "admin@lynxeducate.com",
           "School of Gaming Galactic Oy",
           "Isokatu 56",
           "90100 Uleåborg, Finland",
@@ -4039,12 +4040,12 @@
   },
   "robloxTerms": {
     "title": "Användarvillkor för Skaparnas akademi",
-    "subtitle": "Gäller familjer som anmäler sig till Skaparnas akademi i Frankrike – Lynx Educate × School of Gaming, i samarbete med Roblox.",
+    "subtitle": "För familjer som anmäler sig till Programmet för digital utbildning i Frankrike, som drivs av Lynx Educate och School of Gaming i samarbete med Roblox.",
     "lastUpdated": "Uppdaterad: {date}",
     "intro": {
       "heading": "Kort sammanfattning",
       "blocks": [
-        "Här förklarar vi vad du anmäler ditt barn till när ni registrerar er för Skaparnas akademi. Det är ett gemensamt program mellan Lynx Educate och School of Gaming, sponsrat av Roblox. Om något är oklart, mejla support@lynxeducate.com."
+        "Här förklarar vi vad du anmäler ditt barn till när ni registrerar er för programmet Skaparnas akademi. Det är ett gemensamt program som drivs av Lynx Educate och School of Gaming i samarbete med Roblox. Om något är oklart, mejla admin@lynxeducate.com"
       ]
     },
     "sections": {
@@ -4079,26 +4080,26 @@
       "safety": {
         "heading": "Trygghet och tillsyn",
         "blocks": [
-          "Varje träff leds av en utbildad spelfostrare. Vår hållning till beteende och barns trygghet framgår av vår gemensamma <linkRobloxSafeguarding>barnskyddspolicy</linkRobloxSafeguarding>."
+          "Varje träff leds av en utbildad ledare. Vår hållning till beteende och barns trygghet framgår av vår gemensamma <linkRobloxSafeguarding>barnskyddspolicy</linkRobloxSafeguarding>, som finns tillgänglig på begäran."
         ]
       },
       "information": {
         "heading": "Dina uppgifter",
         "blocks": [
           "Hur vi använder dina och ditt barns uppgifter förklaras i vår <linkRobloxPrivacy>Integritetspolicy för Skaparnas akademi</linkRobloxPrivacy>. Genom att anmäla dig bekräftar du att du har läst och förstått den.",
-          "När du anmäler dig till Skaparnas akademi delas även uppgifterna som är kopplade till ditt School of Gaming-konto (inklusive dina kontaktuppgifter och ditt barns kontouppgifter) med Lynx Educate för att genomföra programmet och med Roblox för forskning om programmets effekter."
+          "När du anmäler dig till ett Roblox-program delas även uppgifterna som är kopplade till ditt School of Gaming-konto (inklusive dina kontaktuppgifter och ditt barns kontouppgifter) med Lynx Educate för att genomföra programmet och med Roblox för forskning om programmets effekter. Läs mer i <linkRobloxPrivacy>Integritetspolicyn för Skaparnas akademi</linkRobloxPrivacy>."
         ]
       },
       "media": {
         "heading": "Foto, video och marknadsföring",
         "blocks": [
-          "Om ditt barn syns på foton eller film är ett enda frivilligt val, som du gör när du anmäler barnet till en aktivitet i Skaparnas akademi. Du kan ändra det när som helst på barnets sida i My SOG. Ett barn utan det tillståndet hålls utanför träffarnas foton och identifierbart material. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
+          "Om ditt barn fotograferas eller filmas, och om materialet används i marknadsföring, avgörs helt av de val du gör vid anmälan. Valen är frivilliga och du kan ändra dig när som helst på barnets sida i My SOG."
         ]
       },
       "concern": {
         "heading": "Om du är orolig",
         "blocks": [
-          "Om du är orolig för ditt barns upplevelse i Programmet, kontakta School of Gaming på {supportEmail} eller Lynx Educate på support@lynxeducate.com – vi ser till att ärendet når rätt personer."
+          "Om du är orolig för ditt barns upplevelse i Programmet, kontakta antingen admin@lynxeducate.com eller {supportEmail} – vi ser till att ärendet når rätt personer."
         ]
       },
       "changes": {
