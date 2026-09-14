@@ -2184,6 +2184,7 @@
     "heading": "Before the first session",
     "dialogTitle": "Before the first session",
     "triggerLabel": "Get ready",
+    "notYetLabel": "Not yet",
     "readyLabel": "I’m ready",
     "closing": "If everything works, you’re ready for the session!",
     "topics": {

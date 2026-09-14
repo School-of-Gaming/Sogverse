@@ -2184,6 +2184,7 @@
     "heading": "Avant la première séance",
     "dialogTitle": "Avant la première séance",
     "triggerLabel": "Se préparer",
+    "notYetLabel": "Pas encore",
     "readyLabel": "C’est prêt",
     "closing": "Si tout fonctionne, tout est prêt pour la séance !",
     "topics": {
