@@ -3156,6 +3156,21 @@ export default function AdminUIComponentsPage() {
         <GameAccountDemo />
       </Section>
 
+      {/* DEMO — stripped after the ruling. Throwaway: four shapes of one ask,
+          side by side, so the choice is made by looking rather than reading. */}
+      <Section title="Add gamer — guardian attestation (DEMO)">
+        <p className="text-sm text-muted-foreground -mt-2">
+          Lynx&rsquo;s lawyer wants a parent creating a child account to be shown
+          the Privacy Policy again and to attest they are that child&rsquo;s
+          parent or legal guardian. Four ways to ask, all on page two of the real
+          card, directly above the button that creates the child &mdash; because
+          the attestation belongs with the act it attests, not with page
+          one&rsquo;s Continue. The submit is inert; every box refuses the submit
+          from the card&rsquo;s own error banner. Judge them at 360px too.
+        </p>
+        <GuardianAttestationDemo />
+      </Section>
+
       <Section title="Minecraft Education password reset">
         {/* One card, rendered unchanged on the gedu dashboard's Tools section
             and on /admin/tools. Every row shape is on it because they only
@@ -4339,6 +4354,47 @@ function AddGamerDialogDemo() {
         idPrefix="add-gamer-demo-email"
         initial={{ firstName: "Lily", signIn: "email", step: "signIn" }}
       />
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  DEMO — stripped after the ruling                                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * DEMO — stripped after the ruling.
+ *
+ * Four shapes of the guardian attestation Lynx's lawyer is asking for, on the
+ * one page it can live on: page two of the add-gamer form, directly above the
+ * button that creates the child. Seeded through the card's `initial` seam with
+ * a name and the switch-only answer already picked, so the four differ by the
+ * block above the footer and by nothing else.
+ */
+function GuardianAttestationDemo() {
+  const dismiss = () => {};
+  const variants = [
+    { variant: "v1", caption: "V1 — one required box" },
+    { variant: "v2", caption: "V2 — data sentence, then the box" },
+    { variant: "v3", caption: "V3 — no box, the button declares" },
+    { variant: "v4", caption: "V4 — the box plus our rules" },
+  ] as const;
+
+  return (
+    <div className="grid items-start gap-6 sm:grid-cols-2 2xl:grid-cols-4">
+      {variants.map(({ variant, caption }) => (
+        <div key={variant} className="space-y-2">
+          <DemoCaption>{caption}</DemoCaption>
+          <AddGamerFormCard
+            onOpenChange={dismiss}
+            onCreate={inertCreateGamer}
+            className="max-h-none"
+            idPrefix={`add-gamer-attestation-${variant}`}
+            initial={{ firstName: "Aino", signIn: "parent", step: "signIn" }}
+            demoVariant={variant}
+          />
+        </div>
+      ))}
     </div>
   );
 }

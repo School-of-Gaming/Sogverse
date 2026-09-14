@@ -16,6 +16,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { GAME_PLATFORMS, GameUsernameEditableRow } from "@/components/game-account";
+// DEMO — stripped after the ruling
+import { CheckboxRow } from "@/components/ui/checkbox-row";
+// DEMO — stripped after the ruling
+import { Link } from "@/i18n/navigation";
 import {
   GAMER_EMAIL_TAKEN,
   GAMER_USERNAME_TAKEN,
@@ -24,7 +28,8 @@ import {
 import { usePinStatus, pinKeys } from "@/services/pin";
 import { PinUnlockFlow } from "@/components/pin";
 import { useRequiredAuth } from "@/providers/auth-provider";
-import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+// `ROUTES` is the DEMO import here — stripped after the ruling.
+import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
 import { ApiError } from "@/lib/api/api-error";
 import { normalizeGamerUsername } from "@/lib/gamer-sign-in";
 import { cn } from "@/lib/utils";
@@ -79,6 +84,169 @@ type InitialState =
  * browser-level fight over which of them may hold a selection.
  */
 const CREDENTIAL_FIELD_ID_PREFIX = "add-gamer";
+
+/* ------------------------------------------------------------------ */
+/*  DEMO — stripped after the ruling                                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * DEMO — stripped after the ruling.
+ *
+ * Lynx's lawyer wants a parent creating a gamer to be shown the Privacy Policy
+ * again and to attest they are that child's parent or legal guardian. Four
+ * shapes of the same ask, rendered side by side in the style guide so the owner
+ * can pick one. Nothing here ships: a card with no `demoVariant` is the
+ * production card, unchanged.
+ */
+type GuardianAttestationVariant = "v1" | "v2" | "v3" | "v4";
+
+/**
+ * DEMO — stripped after the ruling.
+ *
+ * Every demo sentence is held here rather than written into the markup, because
+ * `i18next/no-literal-string` reads JSX text and cannot tell throwaway English
+ * from copy that ships. Rendering `{IDENTIFIER}` satisfies it without a
+ * suppression comment.
+ */
+const DEMO_PRIVACY_POLICY_NAME = "Privacy Policy";
+/** DEMO — stripped after the ruling */
+const DEMO_ANTI_BULLYING_NAME = "Anti-Bullying and Discipline policy";
+/** DEMO — stripped after the ruling */
+const DEMO_SENTENCE_END = ".";
+/** DEMO — stripped after the ruling */
+const demoGuardianWithPolicy = (name: string) =>
+  `${name} is my child, or I am their legal guardian. I have read the `;
+/** DEMO — stripped after the ruling */
+const demoGuardianPlain = (name: string) =>
+  `${name} is my child, or I am their legal guardian.`;
+/** DEMO — stripped after the ruling */
+const demoDataSentence = (name: string) =>
+  `We store ${name}'s first name, birth month and year, and any game usernames, so a Gedu knows who is in the room. Full details are in the `;
+/** DEMO — stripped after the ruling */
+const DEMO_RULES_SENTENCE =
+  "I understand School of Gaming has zero tolerance for bullying and toxic behaviour, as set out in the ";
+/** DEMO — stripped after the ruling */
+const demoSubmitAsGuardian = (name: string) =>
+  `Add ${name} — I am their parent or guardian`;
+/** DEMO — stripped after the ruling */
+const DEMO_ATTESTATION_REQUIRED =
+  "Please confirm you are this child's parent or legal guardian.";
+/** DEMO — stripped after the ruling */
+const DEMO_RULES_REQUIRED =
+  "Please confirm you have read the Anti-Bullying and Discipline policy.";
+
+/**
+ * DEMO — stripped after the ruling.
+ *
+ * A policy name inside a demo sentence, opened in a new tab exactly as the
+ * register form opens its two: the parent is mid-form, and in this tab the way
+ * back would be an emptied card.
+ */
+function DemoPolicyLink({
+  href,
+  children,
+}: {
+  href: React.ComponentProps<typeof Link>["href"];
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      prefetch={false}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-act hover:underline"
+    >
+      {children}
+    </Link>
+  );
+}
+
+/**
+ * DEMO — stripped after the ruling.
+ *
+ * The block that sits directly above the footer on page two, because the
+ * attestation accompanies the act it attests: the button that creates the
+ * gamer, not page one's Continue.
+ *
+ * No hint on any row — per the `CheckboxRow` doc the absence of the optional
+ * marker *is* the "required".
+ */
+function DemoGuardianAttestation({
+  variant,
+  name,
+  disabled,
+  guardianAttested,
+  onGuardianAttestedChange,
+  rulesAccepted,
+  onRulesAcceptedChange,
+}: {
+  variant: GuardianAttestationVariant;
+  name: string;
+  disabled: boolean;
+  guardianAttested: boolean;
+  onGuardianAttestedChange: (next: boolean) => void;
+  rulesAccepted: boolean;
+  onRulesAcceptedChange: (next: boolean) => void;
+}) {
+  const dataSentence = (
+    <p className="text-sm text-muted-foreground">
+      {demoDataSentence(name)}
+      <DemoPolicyLink href={ROUTES.privacy}>
+        {DEMO_PRIVACY_POLICY_NAME}
+      </DemoPolicyLink>
+      {DEMO_SENTENCE_END}
+    </p>
+  );
+
+  // V3 makes the button the act, so there is no box at all — only the sentence
+  // that tells the parent what is stored and where to read the rest.
+  if (variant === "v3") return <div className="pb-4">{dataSentence}</div>;
+
+  const guardianRow = (
+    <CheckboxRow
+      checked={guardianAttested}
+      onCheckedChange={onGuardianAttestedChange}
+      disabled={disabled}
+      label={
+        variant === "v2" ? (
+          demoGuardianPlain(name)
+        ) : (
+          <>
+            {demoGuardianWithPolicy(name)}
+            <DemoPolicyLink href={ROUTES.privacy}>
+              {DEMO_PRIVACY_POLICY_NAME}
+            </DemoPolicyLink>
+            {DEMO_SENTENCE_END}
+          </>
+        )
+      }
+    />
+  );
+
+  return (
+    <div className="space-y-3 pb-4">
+      {variant === "v2" && dataSentence}
+      {guardianRow}
+      {variant === "v4" && (
+        <CheckboxRow
+          checked={rulesAccepted}
+          onCheckedChange={onRulesAcceptedChange}
+          disabled={disabled}
+          label={
+            <>
+              {DEMO_RULES_SENTENCE}
+              <DemoPolicyLink href={ROUTES.antiBullying}>
+                {DEMO_ANTI_BULLYING_NAME}
+              </DemoPolicyLink>
+              {DEMO_SENTENCE_END}
+            </>
+          }
+        />
+      )}
+    </div>
+  );
+}
 
 interface AddGamerDialogProps {
   open: boolean;
@@ -243,6 +411,7 @@ export function AddGamerFormCard({
   className,
   initial,
   idPrefix = CREDENTIAL_FIELD_ID_PREFIX,
+  demoVariant,
 }: {
   onCreate: (input: CreateGamerInput) => Promise<{ gamerId: string }>;
   onOpenChange: (open: boolean) => void;
@@ -257,6 +426,12 @@ export function AddGamerFormCard({
    * exactly one of them.
    */
   idPrefix?: string;
+  /**
+   * DEMO — stripped after the ruling. Which shape of the guardian attestation
+   * page two carries. Absent — which is every production call site — and the
+   * card is byte-for-byte the card it has always been.
+   */
+  demoVariant?: GuardianAttestationVariant;
 }) {
   const t = useTranslations("family.addGamerForm");
   const s = useTranslations("gamerSignIn");
@@ -292,6 +467,11 @@ export function AddGamerFormCard({
   // mutate runs, only cleared on outcomes that need the user to retry.
   // On success we close the dialog so the unmount handles cleanup.
   const [committing, setCommitting] = useState(false);
+  // DEMO — stripped after the ruling. Unticked always: a box we ticked is a
+  // declaration nobody made.
+  const [guardianAttested, setGuardianAttested] = useState(false);
+  // DEMO — stripped after the ruling.
+  const [rulesAccepted, setRulesAccepted] = useState(false);
 
   const years = useMemo(() => gamerBirthYearOptions(), []);
 
@@ -385,6 +565,21 @@ export function AddGamerFormCard({
     const problem = findGamerCredentialProblem({ signIn, username, password, email });
     setCredentialProblem(problem);
     if (problem) return;
+
+    // DEMO — stripped after the ruling. A local refusal with the dialog's own
+    // inline error, exactly as the register form refuses an unticked terms box:
+    // `CheckboxRow` takes no `required`, and a native validity bubble beside a
+    // translated Alert would be two idioms for one job.
+    if (demoVariant !== undefined && demoVariant !== "v3") {
+      if (!guardianAttested) {
+        setError(DEMO_ATTESTATION_REQUIRED);
+        return;
+      }
+      if (demoVariant === "v4" && !rulesAccepted) {
+        setError(DEMO_RULES_REQUIRED);
+        return;
+      }
+    }
 
     await create();
   }
@@ -620,6 +815,20 @@ export function AddGamerFormCard({
           )}
         </div>
 
+        {/* DEMO — stripped after the ruling. Directly above the footer on page
+            two, because the attestation accompanies the act it attests. */}
+        {demoVariant !== undefined && step === "signIn" && (
+          <DemoGuardianAttestation
+            variant={demoVariant}
+            name={trimmedName}
+            disabled={committing}
+            guardianAttested={guardianAttested}
+            onGuardianAttestedChange={setGuardianAttested}
+            rulesAccepted={rulesAccepted}
+            onRulesAcceptedChange={setRulesAccepted}
+          />
+        )}
+
         {/* Two fixed labels, one per page, decided by the page alone: page one
             always advances and page two always creates, so the affirmative says
             what pressing it will do without any radio having to change it. */}
@@ -640,7 +849,11 @@ export function AddGamerFormCard({
               ? t("submitting")
               : step === "details"
                 ? c("next")
-                : t("submit")}
+                : // DEMO — stripped after the ruling. V3 has no box: the button
+                  // itself carries the declaration.
+                  demoVariant === "v3"
+                  ? demoSubmitAsGuardian(trimmedName)
+                  : t("submit")}
           </Button>
         </DialogFooter>
       </form>

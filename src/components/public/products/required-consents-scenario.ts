@@ -1,5 +1,7 @@
 import type { GamerPhotoConsentType, MarketingConsentType } from "@/types";
 import type { AuthKind, PreviewScenario } from "./mock-detail-fixtures";
+// DEMO — stripped after the ruling.
+import type { DemoRulesTreatment } from "./signup-panel-view";
 import {
   REGION_LOCK_COUNTRY,
   REGION_LOCK_HOME,
@@ -59,6 +61,12 @@ interface RequiredConsentsScenarioMeta {
    * which is the unlocked page every other product scenario shows.
    */
   regionLock?: ProductRegionLock;
+  /**
+   * DEMO — stripped after the ruling. What this scenario does with the panel's
+   * own rules row, for the guardian-attestation comparison. Absent on every
+   * real scenario.
+   */
+  demoRules?: DemoRulesTreatment;
 }
 
 export const REQUIRED_CONSENTS_SCENARIO: RequiredConsentsScenarioMeta = {
@@ -222,6 +230,48 @@ export const PHOTO_ASK_BOTH_AUDIENCES_SCENARIO: RequiredConsentsScenarioMeta = {
 };
 
 /**
+ * DEMO — stripped after the ruling.
+ *
+ * The consent-asks scenario with our rules row taken out, and nothing else
+ * changed: same base club, same Roblox bundle, same two optional asks. It
+ * differs from the scenario it mirrors by exactly one row, which is the point —
+ * the question being asked is what the panel loses when the conduct promise
+ * moves to a per-child attestation on the add-gamer form, and a scenario that
+ * also changed the product would answer a different question.
+ */
+export const DEMO_RULES_REMOVED_SCENARIO: RequiredConsentsScenarioMeta = {
+  slug: "demo-rules-removed",
+  /** Link text on the admin UI Previews page. Developer-facing English. */
+  label: "DEMO — panel with no rules row",
+  description: "The consent asks with our rules row moved to the add-gamer form.",
+  baseScenario: "consumer-club",
+  documentSlugs: ["roblox-programme-terms", "roblox-privacy-policy"],
+  marketingConsentTypes: ["lynx_educate"],
+  gamerPhotoConsentTypes: ["lynx_educate"],
+  demoRules: "hidden",
+};
+
+/**
+ * DEMO — stripped after the ruling.
+ *
+ * A municipality club, which is the one product type whose rules say something
+ * a per-child attestation cannot: a seat lost to repeated unexcused absence.
+ * So this is the residue — the row kept, carrying that clause alone — and the
+ * thing to judge is whether one clause still earns a bordered box of its own.
+ */
+export const DEMO_ABSENCE_ONLY_SCENARIO: RequiredConsentsScenarioMeta = {
+  slug: "demo-absence-only",
+  /** Link text on the admin UI Previews page. Developer-facing English. */
+  label: "DEMO — municipality, absence clause alone",
+  description: "The one rule a per-child attestation cannot carry.",
+  baseScenario: "muni-filling",
+  documentSlugs: [],
+  marketingConsentTypes: [],
+  gamerPhotoConsentTypes: [],
+  demoRules: "absence-only",
+};
+
+/**
  * Every consent scenario, in the order the UI Previews page lists them.
  *
  * A list rather than exports read one at a time, because the registry and the
@@ -233,6 +283,9 @@ export const CONSENT_SCENARIOS: readonly RequiredConsentsScenarioMeta[] = [
   CREATOR_ACADEMY_SCENARIO,
   CREATOR_ACADEMY_NO_GAMERS_SCENARIO,
   PHOTO_ASK_BOTH_AUDIENCES_SCENARIO,
+  // DEMO — stripped after the ruling.
+  DEMO_RULES_REMOVED_SCENARIO,
+  DEMO_ABSENCE_ONLY_SCENARIO,
 ];
 
 /** The consent scenario for a slug, or null when the slug is not one of them. */
