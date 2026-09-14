@@ -26,7 +26,7 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState<UserRole | null>(null);
   const { data: allUsers, isLoading: isLoadingAll } = useUsers();
   const { data: searchResults, isLoading: isSearching } = useSearchUsers(searchQuery);
-  const { data: parentGamerLinks } = useParentGamerLinks();
+  const { data: parentGamerLinks, isLoading: isLoadingLinks } = useParentGamerLinks();
   const certification = useGeduCertificationMap();
   const acceptances = useGeduContractAcceptanceMap();
 
@@ -78,7 +78,12 @@ export default function AdminUsersPage() {
 
   const isSearchActive = searchQuery.length >= 2;
   const baseUsers = isSearchActive ? searchResults?.results : allUsers;
-  const isLoading = isSearchActive ? isSearching : isLoadingAll;
+  // The links read is part of the gate too: the children nest *under* their
+  // parent's row, so a parent painted before its links arrive would grow a
+  // block beneath itself on data's own schedule and push every row below it
+  // (CLAUDE.md layout rule). The read is small and lands well before the
+  // profile walk in practice, so waiting on it costs nothing.
+  const isLoading = (isSearchActive ? isSearching : isLoadingAll) || isLoadingLinks;
 
   // Search is capped server-side, so a full page of hits and a complete answer
   // look identical without this. Rendered *below* whichever branch is showing:
