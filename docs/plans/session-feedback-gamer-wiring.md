@@ -19,92 +19,129 @@ has left it and lives here.
 
 Small and steady. Production runs about 60 online sessions a month with roughly 430
 present gamer-seats per quarter, so the table grows by a few hundred rows a month. One
-write per child per session, one read per child per screen. Nothing here is hot.
+write per child per session, one read per child per join. Nothing here is hot.
 
 ## The decision
 
-**One row per child, per group, per session window, written by one self-scoping RPC, read
-back by the child through RLS for prefill. The questions live in code, never in the
-schema.**
+**One row per child, per group, per session window, written and read by the child through
+RLS — no function, no route. The questions live in code, never in the schema.**
 
 ### Storage
 
-A table, `session_feedback`, with:
+A table, `session_feedback` — distinct from the existing `feedback_submissions`, which is
+the help card's free-text box; the table comment says so, since the two names will sit
+side by side forever. Columns:
 
 - `group_id` → `product_groups`, `participant_id` → `profiles` (the gamer), and
   `session_opens_at timestamptz` — the instant the session window opened, which is the same
   triple in-call chat is keyed by and the same value the voice token response already hands
   the client. This is the join key the investigation requires: a session's readings from
   every audience must be joinable, and this row never depends on a session row existing.
-- `answers jsonb` — an object of item key → level 1–5, only the answered items. Item keys
-  are the catalogue's stable identifiers (`learned`, `fun`, …) as text. **No Postgres enum,
-  no check constraint listing the keys**: adding or removing a question is an edit to the
-  typed catalogue in `src/components/voice/feedback/` plus message strings, with no
-  migration. The RPC validates shape only — an object, each key a short identifier, each
-  value an integer 1–5, a bounded number of entries — and a later reader ignores keys the
-  catalogue no longer holds.
-- `note text` — the free-text note, empty string when none, bounded in length.
-- `exit text` — `left` (the Leave button) or `ended` (Daily closed the room), so a rating
-  given after an abnormal end can later be read differently from one given after the
-  session finished. The page already knows which path it is on.
-- `created_at`, `updated_at`; unique on `(group_id, participant_id, session_opens_at)`.
+  **The instant is client-asserted, and the column comment says so.** Chat's column of the
+  same name is server-derived because it bounds what a family may read; this one bounds
+  nothing, and a forged value can only mis-key the forger's own row. Two columns with one
+  name and opposite trust must be told apart at the column, not from memory.
+- `answers jsonb NOT NULL DEFAULT '{}'` — an object of item key → level, only the answered
+  items; `{}` is a legal stored value. Item keys are the catalogue's stable identifiers
+  (`learned`, `fun`, …) as text. **No Postgres enum, no check constraint listing the
+  keys**: adding or removing a question is an edit to the typed catalogue in
+  `src/components/voice/feedback/` plus message strings, with no migration. A check
+  constraint bounds the shape: a JSON object, at most 32 entries, every value an integer
+  from 1 to 5. Keys are unconstrained; a later reader ignores keys the catalogue no
+  longer holds.
+- `note text NOT NULL DEFAULT ''` — the free-text note, checked to at most 2000
+  characters. The same two numbers (32, 2000) live as constants beside the catalogue so
+  the client does not re-measure them differently; the constraint owns the cap, as the
+  chat body's does.
+- `exit_reason text` — `left` (the Leave button) or `ended` (Daily closed the room),
+  constrained to those two values. Kept because it is only knowable at write time; the page
+  already knows which path it is on, and a later reader could not reconstruct it.
+- `created_at`, `updated_at` with the repo's usual before-update trigger; unique on
+  `(group_id, participant_id, session_opens_at)`, which is also the only index: the child's
+  prefill read and the upsert both go through it.
 - Both foreign keys cascade on delete, so a family closing its account takes its child's
   feedback with it, which is what the privacy page promises about retention.
-- RLS enabled. `authenticated` may SELECT only rows where `participant_id = auth.uid()`.
-  No INSERT, UPDATE or DELETE grant to `authenticated` at all: writes go through the RPC,
-  so the table never needs a write-IDOR case and the row cannot be written except by the
-  function that checks membership and the window. Grants are explicit per role; nothing to
-  `anon`.
+- RLS enabled, with policies that authorise both the actor and the target:
+  `participant_id = auth.uid()` **and** the caller holds an **active participation** in
+  `group_id` — the seat check the voice token route makes, not the broader voice-room
+  membership predicate, which would let an admin or a Gedu write a row for themselves.
+  SELECT, INSERT and UPDATE for `authenticated` under that predicate, the UPDATE policy
+  carrying it in both `USING` and `WITH CHECK` so a row cannot be re-keyed to another
+  group or child; no DELETE. Grants are explicit per role — the three privileges to
+  `authenticated`, `ALL` to `service_role` as the chat tables grant it, for the readers
+  that come later — and nothing to `anon`. The write grant puts the table in the DB
+  suite's write-IDOR cases, which is the standard posture for a table a user writes to.
 
 ### The write
 
-One RPC, `save_session_feedback(p_group_id, p_session_opens_at, p_answers, p_note, p_exit)`,
-`SECURITY DEFINER`, granted to `authenticated` only, `REVOKE … FROM PUBLIC`, classified in
-the DB test suite's authorization spine as **self-scoping**: every write is keyed to
-`auth.uid()`, and its scope test proves a second gamer cannot write, overwrite or delete
-the first gamer's row. The body, in order:
+On Done, the client upserts its row on the unique key through the browser Supabase client,
+as in-call chat writes do: answers, note, exit reason, and `session_opens_at` from the
+token response the room already holds. **The last Done wins.** A child who drops out,
+rejoins and leaves again answers once more with their earlier answers already in place,
+and whatever they press Done on is the record — including an emptied one, which is an
+update with an empty object and an empty note, never a delete.
 
-1. The caller holds an active participation in `p_group_id`. Otherwise raise.
-2. `p_session_opens_at` is the open instant of a real window of that group's product
-   schedule, and that window opened within the last day. The session-window derivation
-   already exists server-side for the group session tables; reuse it rather than writing a
-   second one. Otherwise raise. This is what stops a gamer stamping feedback onto a session
-   that never happened.
-3. `p_answers` passes the shape validation above and `p_note` the length bound.
-4. **Nothing answered and an empty note means no feedback.** If the object is empty and
-   the note blank, delete the caller's row for that key if one exists and return. A child
-   who clears every bar and presses Done has withdrawn their feedback, not submitted an
-   empty one. The response rate's denominator is the sessions themselves, not a shown-count,
-   so no row is written merely because the screen appeared.
-5. Otherwise upsert: insert, or update `answers`, `note`, `exit`, `updated_at` on the
-   unique key. **The last Done wins.** A child who drops out, rejoins and leaves again
-   answers once more with their earlier answers already in place, and whatever they press
-   Done on is the record.
+**Nothing on screen and nothing loaded means no write.** A first-time Done with every bar
+empty and no note navigates without touching the database. The response rate's denominator
+is the sessions themselves, so no row exists merely because the screen appeared. The rule
+is one client-side condition: skip the write only when the form is empty **and** the
+prefill read succeeded with no row; in every other state — something on screen, a row
+loaded, the read failed or never ran — write. An unknown prefill state must not leave a
+stale row in place behind a child who cleared it.
 
-The client calls the RPC directly through the browser Supabase client, as in-call chat
-writes do. There is no API route, so nothing joins the route posture registry.
+There is no API route, so nothing joins the route posture registry.
 
 ### The read, for prefill
 
-When a gamer is about to see the screen, the page reads their own row for
-`(group, sessionOpensAt)` through RLS — a single indexed row by primary key shape, the
-loading rule's near-instant category — and mounts the screen with those answers and note
-as its initial state. The read happens before the screen renders: on the Leave path it
-runs alongside the room disconnect that already shows a spinner, and on the ended path it
-runs when the ended state fires and the screen appears when it resolves. The screen itself
-gains an `initial` prop and nothing else; a missing row is an empty form exactly as today.
+When a gamer joins the room, the page reads their own row for `(group, sessionOpensAt)`
+through RLS — one row by its unique key, the loading rule's near-instant category — and
+keeps it in the page's React Query cache under the feature's own key family. The query is
+enabled only for a viewer the page asks (`askForFeedback`) and only once the window
+instant is in state. A missing row reads as `null`; a read error is treated as no row, so
+a failed read never keeps a child from the screen. Both exit paths then mount the screen
+with those answers and note as its initial state, with no round trip at the moment of
+leaving; the ended path in particular fires on any post-join disconnect, often a failed
+network, and must not wait on a fresh read right then. The screen gains one optional
+`initial` prop — the answered keys and the note, as stored — read once as seed state; a
+read that resolves after the screen mounted does not re-seed it, because whatever the
+child has already tapped wins. A missing row is an empty form exactly as today.
+
+The `answers` column comes back as untyped JSON. It is parsed through a zod schema in the
+feature's contracts file, per the `src/CLAUDE.md` rule for JSON-shaped reads, and that
+parse is where keys the catalogue no longer holds are dropped and values narrowed to the
+level type. No invalidation is needed after the save: the success path unloads the document.
 
 ### The page
 
-`Done` calls the RPC with the answers, the note, the exit reason and the `sessionOpensAt`
-the room already holds, then performs the same full-page navigation it performs today.
-The committing flag is set before the call and never cleared on the success path, per the
-app-wide loading rule; on a failed write it is cleared, the screen stays, a status line
-says the answers were not saved, and Done is enabled again for a retry. A child is never
-navigated away from a form that did not save, and never trapped on one that did.
+`Done` writes as above, then performs the same full-page navigation it performs today.
+The page holds the window instant from the token response in state (today it is consumed
+inline where the token resolves). The screen's `onDone` stays synchronous and
+fire-and-forget; the page owns the promise. One committing flag: set before the call and
+never cleared on the success path, per the app-wide loading rule, and it is what stops a
+second Done while the first write is in flight; on a failed write it is cleared, the
+screen stays, a status line says the answers were not saved, and Done is enabled again
+for a plain retry of the same write. The screen renders that line from an optional status
+prop above Done, using the app's status line component, with the copy in all five
+locales. A child is never navigated away from a form that did not save, and never trapped
+on one that did. The screen cannot mount without the instant: a failed token fetch renders
+the error card and never asks.
 
 ## Rejected alternatives
 
+- **A self-scoping RPC that validates the session window server-side.** The first draft
+  wrote one, and the design challenge took it apart. The only server-side window
+  derivation is keyed by date, returns one slot per weekday and reads the current
+  schedule, so it would refuse legitimate feedback on a product with two slots on one day
+  and after any schedule edit, and it does not include the join margin the open instant
+  carries. Chat validates its window because a family read bound depends on it; a
+  feedback row's key bounds nothing, so the check would have guarded against a gamer
+  mis-keying their own row at the cost of a function, a spine entry, a validator in
+  PL/pgSQL and a third copy of the schedule arithmetic. A guard, if ever wanted, derives
+  from the group alone with a closed-recently tolerance and drops the parameter; it never
+  validates a caller-supplied instant.
+- **Deleting the row when Done arrives empty.** Considered as "withdrawal"; rejected by the
+  owner as an edge case not worth a destructive path. An emptied form over an existing row
+  is an ordinary update.
 - **A row per answer (child, session, item key, level) instead of one row with a JSON
   object.** Same flexibility, five times the rows and an upsert that is really a
   delete-and-insert of a set. The object is the natural unit here because the screen
@@ -113,74 +150,82 @@ navigated away from a form that did not save, and never trapped on one that did.
 - **A column per question.** Every added or removed question becomes a migration and a
   type regeneration, which is exactly the friction the owner ruled out.
 - **A Postgres enum or check constraint enumerating the item keys.** Same objection. The
-  shape check in the RPC is the loud failure at the boundary; a key the catalogue does not
-  know is harmless to store and ignored on read.
+  shape checks are the loud failure at the boundary; a key the catalogue does not know is
+  harmless to store and ignored on read.
 - **An API route that validates the keys against the code catalogue before writing.** It
   buys a guarantee nobody needs — a tampering gamer can at most store a nonsense key
-  against their own name — at the cost of a route, its posture entry and a second layer
-  over the RPC. Chat writes through RLS from the browser for the same reason.
-- **Direct table writes under RLS instead of an RPC.** The window check ("this session
-  really opened, recently") cannot be expressed as a row policy without a second copy of
-  the schedule derivation; the RPC holds it once. A write grant on the table would also
-  pull it into the write-IDOR suite for no gain.
+  against their own name — at the cost of a route, its posture entry and a second layer.
 - **Writing a row when the screen is shown, for a response-rate denominator.** The owner
   ruled that Done with nothing answered saves nothing and that sessions are the
-  denominator. Attendance is already recorded per child per session, so the denominator
-  exists without a write.
+  denominator. Attendance is already recorded per child per session.
 - **Recording that a session's feedback was read, or notifying anyone.** No reader exists
   yet, and nothing proactive was wanted. Both are follow-ups.
 
 ## Steps
 
-1. **Migration.** The table, its constraints, indexes (the unique key; `participant_id`),
-   RLS with the SELECT-own policy, explicit grants (`SELECT` to `authenticated`, table
-   access to `service_role` for the readers that come later), the RPC with its guard,
-   window check, shape validation, delete-on-empty and upsert, `REVOKE … FROM PUBLIC`,
-   `GRANT EXECUTE … TO authenticated`. Model the boilerplate on the highest-numbered
-   migrations and verify the version number against remote history at push time
-   (`supabase/CLAUDE.md`).
-2. **Push and regenerate types**, then add the table's row alias to `src/types/index.ts`.
-3. **Service.** A service module beside the voice services with two functions — save (the
-   RPC call) and read-own (the RLS select) — and the React Query hooks the page uses,
-   following the service layer pattern in `src/CLAUDE.md`. The screen's result type is
-   already the RPC's argument shape.
-4. **Page wiring.** In the voice session page: read the existing row before the screen
-   renders on both paths; pass it as the screen's initial state; on Done, save with the
-   exit reason and navigate on success, or stay with a status line and a re-enabled Done on
-   failure. Remove the no-op comment that marks the seam.
-5. **Screen.** Accept `initial` answers and note; everything else unchanged.
-6. **Tests.** DB (CI only): the spine entry naming the scope test; the scope test itself
-   (own row written and read; another gamer's write refused; a non-member refused; a
-   `sessionOpensAt` matching no window refused; empty submission deletes; second submission
-   overwrites); the access-control sweep passes with the new table. Unit: the screen
-   renders its initial state; the page passes the read result through, calls save with the
-   right exit reason on each path, navigates on success and stays on failure.
-7. **Docs.** Update the session feedback section of `src/components/voice/CLAUDE.md`: the
-   save is real, where it goes, the prefill, the empty-means-withdrawn rule, and the
-   last-Done-wins rule. Then delete this plan.
+1. **Migration.** The table, its check constraints, the unique key, the `updated_at`
+   trigger, RLS with the actor-and-seat policies for SELECT, INSERT and UPDATE, explicit
+   grants per role, and the two column comments (the table's purpose against
+   `feedback_submissions`; `session_opens_at` as client-asserted). Model the boilerplate
+   on the highest-numbered migrations and verify the version number against remote history
+   at push time (`supabase/CLAUDE.md`). No function is created.
+2. **Push and regenerate types**, then add the table's row alias to `src/types/index.ts`
+   (name it so it cannot be confused with the screen's own `SessionFeedback*` types).
+3. **Service.** A new feature directory under `src/services/` for session feedback, with
+   its service (read-own by the unique key, `maybeSingle`; save as an upsert on it, taking
+   the screen's result type and stripping unanswered keys), its contracts file with the
+   zod schema for the read, its query keys, and the React Query hooks the page uses,
+   following the service layer pattern in `src/CLAUDE.md`.
+4. **Page wiring.** Hold the window instant in page state; issue the read once the token
+   resolves, gated as above; pass the result as the screen's initial state on both paths;
+   on Done, apply the write-or-skip rule, save with the exit reason, navigate on success,
+   or stay with the status line and a re-enabled Done on failure. Replace the doc block on
+   the Done handler that describes the seam with a description of the save.
+5. **Screen.** Accept `initial` and the optional status prop; everything else unchanged.
+6. **Tests.** DB (CI only): the access-control sweep passes with the new table; a second
+   gamer joins the write-IDOR attacker list and the UPDATE case proves their statement
+   affects nothing; the feature's own scope test covers what that file's header keeps out
+   of the IDOR loop — a second gamer's insert refused, a non-member's insert refused, a
+   member reading only their own row, `{}` accepted, a value of 9 refused. Fixtures are
+   built through the existing product helpers; `seed.sql` has no groups or seats. Unit:
+   the screen renders its initial state and its status line; the page test keeps mocking
+   the service modules as it does today (no query provider), and asserts the read is
+   issued only for an asked viewer with the instant in state, the result passes through,
+   the write-or-skip rule, the right exit reason on each path, navigation on success and
+   staying on failure.
+7. **Docs.** In the session feedback section of `src/components/voice/CLAUDE.md`, delete
+   the rule that saving is a no-op and write what is now true: where the row goes, the
+   prefill on join, write-or-skip, last Done wins; reword the presentational rule so it
+   says the screen is handed an initial state and reports one result, and still does not
+   know whether either is stored. Nothing changes in the root docs index. Then delete this
+   plan.
 
 ## Acceptance criteria
 
 - A gamer who answers and presses Done has one row for that group and window; leaving
   again in the same window shows those answers prefilled, and a second Done replaces them.
-- Done with every bar empty and no note writes nothing, and removes a row if one existed.
-- A gamer cannot write or read another gamer's row; a non-member cannot write to a group;
-  a made-up `sessionOpensAt` is refused. All proven in the DB suite.
+- A first-time Done with every bar empty and no note writes nothing.
+- A gamer cannot write or read another gamer's row, and a non-member cannot write to a
+  group. Proven in the DB suite.
 - The exit reason distinguishes Leave from the room closing.
 - A failed save leaves the child on the screen with a message and a working Done.
 - Adding or removing a statement in the catalogue needs no migration and no type
   regeneration.
 - Gedus, admins and parents leave a room exactly as before; the error path is untouched.
-- Lint, type-check, unit tests and CI's DB tests pass; `check-translations` passes if any
-  string was added.
+- Lint, type-check, unit tests and CI's DB tests pass; `check-translations` passes for the
+  status-line copy.
 
 ## Constraints discovered while deciding
 
 - The session row is lazily materialised, so feedback must not be the first writer to
   want one; keying by `(group, participant, session_opens_at)` avoids it entirely, and it
   is how chat already solved the same problem.
+- The window instant is derived from the schedule at token mint, so a re-mint in the same
+  window yields the same value. A schedule edit during a live session could yield a
+  different instant on rejoin and so a second row for one session; chat accepts the same
+  edge and so does this.
 - The ended path fires on any post-join disconnect, not only the window closing, so
-  `exit = ended` includes network drops. Recording the reason is what lets a reader
+  `exit_reason = ended` includes network drops. Recording the reason is what lets a reader
   separate them later; deciding how to read them is not this plan's job.
 - Under the current switch-only sign-in, a gamer's answer may have been given with a
   parent beside them. Nothing here changes that; the sign-in mode in force is not stored,
@@ -195,14 +240,14 @@ navigated away from a form that did not save, and never trapped on one that did.
   on record is one bullet under "The information we collect" naming session feedback (a
   few ratings and an optional short note, read by the child's Gedu and the School of Gaming
   team), because the page promises to list what is held about a child and this is a new
-  category the child provides. Not a gate for building; the owner decides whether it ships
-  before or after the feature.
+  category the child provides. Not a gate: build without touching it and flag it again at
+  completion.
 
 ## Follow-ups (cut from this plan; proposed to the owner when the plan is deleted)
 
 - Reading views: the Gedu's group workspace showing each child's answers and note for a
   session; an admin view per group session; per-theme trends over a term with the session
-  items and the standing items shown as two groups.
+  items and the standing items shown as two groups. A per-child index arrives with them.
 - Anything proactive: a Slack post when a note arrives, a visible marker on a low answer
   to either Gedu item.
 - A visible label above the note field, since the question currently lives only in the
