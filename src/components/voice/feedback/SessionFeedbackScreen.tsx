@@ -112,6 +112,31 @@ const SEGMENT_HEIGHTS = {
 } as const satisfies Record<SessionFeedbackRating, string>;
 
 /**
+ * Where a level's word is placed on the line below the bar, and how it is
+ * aligned there.
+ *
+ * The line is the bar's own five columns, so the word can sit **under the
+ * segment that was tapped** — a caption that points at the choice rather than a
+ * value floating in the middle of a control it no longer describes. The column
+ * is the level's own; the alignment is what keeps the word inside the bar: the
+ * ends pull in (left at the first, right at the fifth) so a long word grows
+ * inward, and the middle three centre under their own segment.
+ *
+ * A word is routinely wider than a fifth of the bar, and that is allowed —
+ * `min-w-max` sizes it to its own content and lets it overflow into the empty
+ * columns beside it rather than wrapping or truncating. At the ends that
+ * inward growth is the whole reason the word never crosses the bar's outer
+ * edges.
+ */
+const WORD_CELL = {
+  1: "col-start-1 justify-self-start text-left",
+  2: "col-start-2 justify-self-center text-center",
+  3: "col-start-3 justify-self-center text-center",
+  4: "col-start-4 justify-self-center text-center",
+  5: "col-start-5 justify-self-end text-right",
+} as const satisfies Record<SessionFeedbackRating, string>;
+
+/**
  * **The screen a gamer meets when they leave an online session.**
  *
  * Seven statements, each answered on a charge bar, a note and a Done, read as
@@ -121,8 +146,8 @@ const SEGMENT_HEIGHTS = {
  *
  * **The answer control is a five-segment bar that charges.** Tapping a segment
  * fills it and everything below it, tapping a lower one drains back to it, and
- * the level's word is shown once, centred on the line below the bar rather than
- * five times under the segments — five words competing for a phone's width read
+ * the level's word is shown once, on the line below the bar rather than five
+ * times under the segments — five words competing for a phone's width read
  * as a list to choose from, and this is one value to set. **Tapping the
  * segment the fill already ends on empties the bar**, which is the only way back
  * to unanswered and has to exist: every statement is a skip until it is touched,
@@ -140,10 +165,19 @@ const SEGMENT_HEIGHTS = {
  * the left and the fifth's at the right in muted type. A reader who does not
  * read the shape reads the words, and the other way round. Those two are a
  * **prompt, not a caption**: they are there for the moment before an answer and
- * they go the instant one is given, leaving the chosen word alone in the middle
- * of the same line — and clearing the bar brings the question's prompts back
- * with the question. The row's three columns never change, only what is in
- * them, so the swap costs no height and moves nothing. The end words are
+ * they go the instant one is given, leaving the chosen word alone on the same
+ * line — and clearing the bar brings the question's prompts back with the
+ * question.
+ *
+ * **The chosen word sits under the segment that was tapped.** The line is the
+ * bar's own five columns, so the caption points at the choice instead of
+ * floating in the middle of a control it no longer describes, and the word is
+ * pulled in at the two ends — left in the first column, right in the fifth — so
+ * a word longer than a fifth of the bar grows inward and never leaves the bar's
+ * outer edges. A middle word is centred under its segment and simply overflows
+ * into the empty columns beside it; nothing wraps and nothing is truncated. All
+ * of it is one row, so the swap costs no height and moves nothing. The end words
+ * are
  * `aria-hidden`: assistive tech already hears all five as the radios' own names,
  * and repeating the ends there would be furniture read aloud.
  *
@@ -363,35 +397,38 @@ export function SessionFeedbackScreen<
                     </label>
                   ))}
                 </div>
-                {/* Three parts on one row, in three equal columns so the middle
-                  one is centred under the middle of the bar however long the
-                  words at the ends are.
+                {/* The line below the bar, in the bar's own five columns —
+                  same widths, same gap — so anything on it lines up with a
+                  segment above it.
 
-                  The ends name what the two ends of the bar mean, and they are
-                  **prompt, not caption**: they stand while the statement is
-                  unanswered, which is the only moment a reader needs telling
-                  which way the bar runs, and they go once a level is chosen so
-                  the answer is the one word under the bar. Clearing the bar
-                  brings them back with the question. They are `aria-hidden`
+                  While the statement is unanswered the ends name what the two
+                  ends of the bar mean, and they are **prompt, not caption**:
+                  they stand for the one moment a reader needs telling which way
+                  the bar runs, and they go once a level is chosen. Clearing the
+                  bar brings them back with the question. They are `aria-hidden`
                   because every one of the five words is already a radio's own
                   name, and a reader hearing the scale twice would be hearing
                   furniture.
 
-                  The three columns stay in place whichever is showing — the
-                  words are swapped, never the cells — so the middle stays
-                  centred under the middle of the bar and the row's height
-                  never depends on what is in it. That is what makes this the
-                  line that was always reserved: the answer arrives, the
-                  prompts leave, and nothing below moves either way.
+                  The chosen word takes the column of the segment that was
+                  tapped, so the caption points at the choice. It may be wider
+                  than its column and overflows into the empty ones beside it
+                  rather than wrapping or truncating — pulled in at the ends, so
+                  a long word never leaves the bar. Every cell is pinned to row
+                  one, so the word and the prompts share the one line and the
+                  line's height never depends on what is in it: the answer
+                  arrives, the prompts leave, and nothing below moves either
+                  way.
 
-                  `role="status"` is the middle's identity, an advisory readout
-                  of one value, and `aria-live` states the politeness that role
-                  implies rather than leaving it inferred, so setting a level
-                  and clearing one are both announced. */}
-                <div className="mt-1.5 grid min-h-4 grid-cols-3 items-baseline text-xs font-medium leading-4">
+                  `role="status"` is the word's identity, an advisory readout of
+                  one value, and `aria-live` states the politeness that role
+                  implies rather than leaving it inferred, so setting a level and
+                  clearing one are both announced. It changes column with the
+                  level and stays the same live region throughout. */}
+                <div className="mt-1.5 grid min-h-4 grid-cols-5 items-baseline gap-1 overflow-visible text-xs font-medium leading-4">
                   <span
                     aria-hidden
-                    className="whitespace-nowrap text-left text-muted-foreground"
+                    className="col-start-1 row-start-1 min-w-max justify-self-start whitespace-nowrap text-left text-muted-foreground"
                   >
                     {level === undefined &&
                       t(`scale.${SESSION_FEEDBACK_RATING_KEYS[1]}`)}
@@ -399,14 +436,21 @@ export function SessionFeedbackScreen<
                   <p
                     role="status"
                     aria-live="polite"
-                    className="text-center text-foreground"
+                    data-column={level}
+                    className={cn(
+                      "row-start-1 min-w-max whitespace-nowrap text-foreground",
+                      // An unanswered line has no chosen segment to sit under,
+                      // and the element is empty then — the middle column is
+                      // where it waits, not a claim about a level.
+                      WORD_CELL[level ?? 3],
+                    )}
                   >
                     {level !== undefined &&
                       t(`scale.${SESSION_FEEDBACK_RATING_KEYS[level]}`)}
                   </p>
                   <span
                     aria-hidden
-                    className="whitespace-nowrap text-right text-muted-foreground"
+                    className="col-start-5 row-start-1 min-w-max justify-self-end whitespace-nowrap text-right text-muted-foreground"
                   >
                     {level === undefined &&
                       t(`scale.${SESSION_FEEDBACK_RATING_KEYS[5]}`)}

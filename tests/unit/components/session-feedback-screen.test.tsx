@@ -26,6 +26,11 @@ import {
  * - **The level's word is shown once**, on a line that exists before anything is
  *   chosen and empties with the bar: reserving it is what keeps an answer — or
  *   an un-answer — from moving the page under the next question.
+ * - **The word sits under the segment that was tapped** — the line is the bar's
+ *   own five columns, and the column the word lands in is what makes the caption
+ *   point at the choice rather than at the middle of the control. The column is
+ *   asserted through the readout's `data-column`, which is the one part of that
+ *   placement a test without layout can see.
  * - **Every statement is optional**, so Done with nothing chosen has to be a
  *   real answer (seven skips) rather than a blocked button or a dropped result.
  * - **Every statement is *reported***, answered or not — asserted on the
@@ -169,6 +174,34 @@ describe("the session feedback screen", () => {
     for (const word of WORDS) {
       expect(within(bar).getByText(word)).toBeDefined();
     }
+  });
+
+  it("puts the chosen word in the column of the segment that was tapped", () => {
+    renderScreen();
+    const bar = barFor("I had fun.");
+
+    // Every level, because the placement is per-column and the two ends are the
+    // ones that carry the alignment keeping a long word inside the bar.
+    WORDS.forEach((word, index) => {
+      fireEvent.click(segment(bar, word));
+      expect(wordLine("I had fun.").getAttribute("data-column")).toBe(
+        String(index + 1),
+      );
+    });
+  });
+
+  it("claims no column while the statement is unanswered", () => {
+    renderScreen();
+    const bar = barFor("I had fun.");
+
+    // An empty line is under no segment, and a column attribute on it would be
+    // a claim about a level nobody has chosen.
+    expect(wordLine("I had fun.").hasAttribute("data-column")).toBe(false);
+
+    fireEvent.click(segment(bar, "A bit"));
+    fireEvent.click(segment(bar, "A bit"));
+
+    expect(wordLine("I had fun.").hasAttribute("data-column")).toBe(false);
   });
 
   it("moves focus to the heading when it arrives", () => {

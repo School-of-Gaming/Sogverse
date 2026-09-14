@@ -197,7 +197,13 @@ one drains back to it. Five words spread across a phone's width read as a list t
 and repeat themselves seven times down the page; one wide bar reads as a level being set,
 which is what the question actually asks for, and a gamer surface is where the palette may
 be spent. So the words leave the segments and the chosen level's own word is stated once,
-centred on the line below the bar. **The line that holds it is always reserved**, because
+on the line below the bar — **under the segment that was tapped**, in the bar's own five
+columns, so the caption points at the choice rather than floating in the middle of a
+control it no longer describes. It is pulled in at the two ends (left under the first
+segment, right under the fifth) so a word longer than a fifth of the bar grows inward and
+never leaves the bar's outer edges; under the middle three it is centred on its segment and
+overflows into the empty columns beside it rather than wrapping or truncating.
+**The line that holds it is always reserved**, because
 an answer that grew a line would push the next statement down the page under the thumb that
 just tapped. It is a polite live region, so setting a level — and clearing one — is
 announced to a reader who cannot see the fill.
@@ -210,8 +216,9 @@ under them carries the **first level's word at the left and the fifth's at the r
 muted type. Twice, because the two say it to different readers: the shape to a child who
 never reads the line, the words to one who does not read the shape. **Those words are a
 prompt, not a caption** — they stand only until a level is chosen, then give the line over
-to the single chosen word centred in it, and come back when the bar is emptied. The line's
-three columns are unchanged either way, so only their contents are swapped and the height
+to the single chosen word under its own segment, and come back when the bar is emptied. The
+line's five columns are unchanged either way and everything on it sits on one row, so only
+the contents are swapped and the height
 never moves. The end words are `aria-hidden` — assistive tech already hears all five as the
 radios' own names, and the scale said a second time there is furniture read aloud. **The rise is the drawing only: the
 tap target stays 44px on every segment**, with the block bottom-aligned inside a full-height
