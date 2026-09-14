@@ -128,10 +128,3 @@ which here means success.
 The same procedure removes an account made by mistake (a would-be gedu who signed up as a
 parent), which frees the address to sign up again. That is housekeeping, not an erasure
 request.
-
-## Last executed
-
-Prod, 2026-09-14: a parent account created by mistake the same day, no gamers; no
-payments, subscriptions, Stripe customer or storage objects. The single delete removed
-the auth user; the re-scan returned zero hits. The old platform was not relevant to a
-same-day account.
