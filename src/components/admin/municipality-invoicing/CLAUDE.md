@@ -220,6 +220,37 @@ bucket under a translated "no municipality" label, in warning tone. It trails wh
 is called: it is a list of things to fix rather than a municipality to invoice, and sorting
 it in by name would bury it in the middle.
 
+## How the page is looked at: the preview scene, not the database
+
+**This page is reviewed from fixtures, in the UI Previews scene, and not by pointing it
+at production data.** It is the densest surface in the app and most of what there is to
+judge about it is a state — a missed session, a fee nobody set, a club with no
+municipality, a term ending mid-month. Live data shows whichever of those the month
+happens to contain, changes between two readings, and cannot be screenshotted twice; a
+month of invented clubs in the shape of production shows all of them at once and shows
+the same ones tomorrow.
+
+The scene renders **this shell**, not a copy of it, over a fixture that satisfies the
+wire contract — so every figure on it is produced by the same pure build the live
+document goes through, and a scene that looked right could not be a page that is wrong.
+Two things make that possible, and both are deliberately visible in the code:
+
+- **The shell takes an optional clock.** Every state here is a claim about where a date
+  sits relative to today, so a fixture month is pinned to a fixed instant inside itself.
+  The live page passes nothing and reads the ticking clock exactly as before; the tick is
+  precisely what a pinned month cannot have, which is why this is a prop rather than a
+  provider the scene could wrap.
+- **The scene owns a query client that never refetches.** The shell's read is seeded —
+  hydrated server-side on the live route, handed in as the seed in the scene — and the
+  default one-minute staleness would otherwise let a window focus fire the real
+  admin-gated read behind the preview and replace the fixtures with production's own
+  month.
+
+The month stepper and the club names stay real links out to the live admin pages, which
+is the honest behaviour for a control whose whole purpose is to leave the row. The empty
+month is therefore a **scenario** rather than a step: it is the one state the working
+month cannot show alongside itself.
+
 ## Which municipality a club belongs to
 
 The nearest ancestor-or-self of type `municipality` above the club's own location. A club

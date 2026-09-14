@@ -484,6 +484,27 @@ export const PREVIEW_SCENES = [
       },
     ],
   },
+  {
+    surface: "municipality-invoicing",
+    title: "Municipality invoicing",
+    description:
+      "The CFO's monthly ledger over a fixture document, pinned to Thursday 21 May 2026: twelve municipalities, thirty-two clubs and every state a line on this page can be in. Expanding a municipality, opening a club's dated sessions and the expand-all control all work; the month stepper and the club names are real links out to the live admin pages.",
+    chrome: "admin",
+    scenarios: [
+      {
+        slug: "working-month",
+        label: "A month of invoicing",
+        description:
+          "Every state that can share one render — recorded, missed and upcoming dates, a club with no fee, one with no municipality, one with no schedule.",
+      },
+      {
+        slug: "empty-month",
+        label: "A month with nothing in it",
+        description:
+          "July, when no club runs: the one state the working month cannot show alongside itself.",
+      },
+    ],
+  },
 ] as const satisfies readonly PreviewSceneMeta[];
 
 export type PreviewScene = (typeof PREVIEW_SCENES)[number];

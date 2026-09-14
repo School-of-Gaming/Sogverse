@@ -9,7 +9,6 @@ import { createClient } from "@/lib/supabase/server";
 import {
   MunicipalityInvoicingService,
   municipalityInvoicingKeys,
-  municipalityInvoicingSnapshot,
   type MunicipalityInvoicingSnapshot,
 } from "@/services/municipality-invoicing";
 
@@ -60,39 +59,6 @@ function resolveMonthStart(raw: string | string[] | undefined): string {
   return monthsAfter(`${today.slice(0, 7)}-01`, -1);
 }
 
-/**
- * TEMP (preview only): removed before merge
- *
- * A month read off disk instead of out of Postgres, so the page can be looked at
- * against a saved document without a database behind it. It answers `null`
- * wherever it does not apply — in a production build, and with the variable
- * unset — which is every deployment, so the route below behaves exactly as it
- * did. A month with no file on disk is the ordinary empty month: the preview
- * exists to see the page, and refusing to draw it because one month was never
- * captured would be the preview failing at its only job.
- *
- * The document is parsed through the same contract the RPC's answer is, because
- * a fixture that does not satisfy the contract would prove the page works on
- * data it will never be given.
- */
-async function previewDocument(
-  monthStart: string,
-): Promise<MunicipalityInvoicingSnapshot | null> {
-  if (process.env.NODE_ENV === "production") return null;
-  const directory = process.env.MUNICIPALITY_INVOICING_DOCUMENTS_DIR;
-  if (directory === undefined || directory === "") return null;
-
-  const { readFile } = await import("node:fs/promises");
-  const { join } = await import("node:path");
-  let raw: string;
-  try {
-    raw = await readFile(join(directory, `${monthStart.slice(0, 7)}.json`), "utf8");
-  } catch {
-    return { month_start: monthStart, clubs: [] };
-  }
-  return municipalityInvoicingSnapshot.parse(JSON.parse(raw));
-}
-
 /** The read, or the reason it did not happen. Never both, never neither. */
 type SnapshotResult =
   | { ok: true; snapshot: MunicipalityInvoicingSnapshot }
@@ -115,10 +81,6 @@ type SnapshotResult =
  * sentence an admin can act on.
  */
 async function loadMonth(monthStart: string): Promise<SnapshotResult> {
-  // TEMP (preview only): removed before merge
-  const preview = await previewDocument(monthStart);
-  if (preview !== null) return { ok: true, snapshot: preview };
-
   // Outside the `try` on purpose. Building the server client reads cookies, and
   // in the App Router a dynamic-render signal travels as a thrown control-flow
   // object — caught here it would be reported to the admin as a failed read and

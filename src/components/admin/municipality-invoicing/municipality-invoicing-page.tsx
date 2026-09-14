@@ -64,14 +64,28 @@ import {
 export function MunicipalityInvoicingPage({
   monthStart,
   initialSnapshot,
+  now: pinnedNow,
 }: {
   /** The month on screen, as its first day (`YYYY-MM-01`). */
   monthStart: string;
   initialSnapshot: MunicipalityInvoicingSnapshot;
+  /**
+   * A clock to read the month against, instead of the live one.
+   *
+   * Only the preview scene passes it, and it is a prop rather than a provider
+   * the scene could wrap because the provider's whole job is to *tick*: a
+   * fixture month pinned to one instant and a clock that moves to the real one
+   * thirty seconds later would reclassify every line on the page — today's
+   * recorded session and next week's upcoming ones both — while somebody was
+   * looking at it. Absent, which is every deployment, the page reads the live
+   * clock exactly as it did.
+   */
+  now?: Date;
 }) {
   const t = useTranslations("admin.municipalityInvoicing");
   const locale = resolveLocale(useLocale());
-  const now = useNow();
+  const liveNow = useNow();
+  const now = pinnedNow ?? liveNow;
   const { data: snapshot } = useMunicipalityInvoicingMonth(
     monthStart,
     initialSnapshot,
