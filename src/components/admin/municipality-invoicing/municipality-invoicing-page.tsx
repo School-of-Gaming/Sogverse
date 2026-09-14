@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { monthsAfter } from "@/lib/calendar-date";
@@ -52,6 +52,14 @@ import {
  * links somebody else to "Espoo expanded", and persisting it would mean the
  * page opened differently for the same month depending on what was done to it
  * last time.
+ *
+ * **The whole month is one ledger, so it is one card.** A month runs to a
+ * hundred clubs; every municipality in a card of its own spent a border, a gap
+ * and two lots of padding per municipality on saying something the reader
+ * already knew from the name, and pushed the figures at the bottom of the page
+ * off the screen. One card, hairline-divided, is also what makes the money axis
+ * exact rather than approximate: the month total, every municipality total and
+ * every club total end on one right padding, because there is one right padding.
  */
 export function MunicipalityInvoicingPage({
   monthStart,
@@ -91,13 +99,17 @@ export function MunicipalityInvoicingPage({
     invoice.municipalities.every((one) => openKeys.has(sectionKey(one)));
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-3 pb-12">
+      {/* The page's own title, at the smallest size that still reads as the
+          page's title. This is a working surface rather than a page somebody
+          arrives at, and a display heading over a dense ledger spends a tenth of
+          the first screen naming what the sidebar already named. */}
       <div>
-        <h1 className="text-3xl font-bold">{t("title")}</h1>
-        <p className="text-muted-foreground">{t("description")}</p>
+        <h1 className="text-xl font-semibold">{t("title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("description")}</p>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <MonthStepper monthStart={invoice.monthStart} locale={locale} />
         {/* One control rather than two: the pair is a single state with two
             ends, and a reader who can see that everything is open does not also
@@ -122,9 +134,9 @@ export function MunicipalityInvoicingPage({
       {invoice.municipalities.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("emptyMonth")}</p>
       ) : (
-        <>
-          <MonthSummary invoice={invoice} locale={locale} />
-          <div className="space-y-4">
+        <Card className="overflow-hidden">
+          <MonthSummaryRow invoice={invoice} locale={locale} />
+          <div className="divide-y divide-border border-t border-border">
             {invoice.municipalities.map((municipality) => (
               <MunicipalitySection
                 key={sectionKey(municipality)}
@@ -142,7 +154,7 @@ export function MunicipalityInvoicingPage({
               />
             ))}
           </div>
-        </>
+        </Card>
       )}
     </div>
   );
@@ -160,20 +172,24 @@ function sectionKey(municipality: InvoiceMunicipality): string {
   return municipality.id ?? "none";
 }
 
+/** The one horizontal inset every row on the ledger shares. */
+const ROW_INSET = "px-3";
+
 /**
- * The whole month in one line: what it comes to, and what it is made of.
+ * The whole month on one line: what it is made of on the left, what it comes to
+ * on the right.
  *
- * It leads the page because it is the figure the invoice run is *for* — a CFO
- * opening this page wants to know what the month is worth before wanting to
- * know which municipality owes which part of it — and because every section
- * below it now opens closed, so without it the page's first screen would carry
- * no number at all.
+ * It leads the ledger because it is the figure the invoice run is *for*, and it
+ * is the ledger's own first row rather than a card above it for the reason every
+ * other line on this page is where it is: the total has to end on the same right
+ * padding as the twenty totals underneath it, and a separate card's padding is a
+ * different padding.
  *
- * The total sits on the same right edge as every municipality total under it,
- * which is the whole reason it is a `Card` like they are rather than a band of
- * its own: the column of figures runs from here to the bottom of the page.
+ * The exclusion warning sits with the counts on the left rather than under the
+ * figure, so the figure keeps the line to itself and the row stays one line
+ * high.
  */
-function MonthSummary({
+function MonthSummaryRow({
   invoice,
   locale,
 }: {
@@ -183,30 +199,38 @@ function MonthSummary({
   const t = useTranslations("admin.municipalityInvoicing");
 
   return (
-    <Card>
-      <CardHeader className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-        <div>
-          <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            {t("monthTotal")}
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            <CountLine
-              parts={[
-                t("municipalityCount", { count: invoice.municipalityCount }),
-                t("clubCount", { count: invoice.clubCount }),
-                t("recordedSessions", { count: invoice.recordedCount }),
-              ]}
-            />
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-2xl font-semibold tabular-nums">
-            {formatCurrencyFromCents(invoice.totalCents, "eur", locale)}
-          </p>
-          {invoice.clubsWithoutFee > 0 && <ExcludedClubs count={invoice.clubsWithoutFee} />}
-        </div>
-      </CardHeader>
-    </Card>
+    <div
+      className={cn(
+        "flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2",
+        ROW_INSET,
+      )}
+    >
+      <p className="text-xs text-muted-foreground">
+        <CountLine
+          parts={[
+            t("municipalityCount", { count: invoice.municipalityCount }),
+            t("clubCount", { count: invoice.clubCount }),
+            t("recordedSessions", { count: invoice.recordedCount }),
+          ]}
+        />
+        {invoice.clubsWithoutFee > 0 && (
+          <>
+            {SCHEDULE_PART_SEPARATOR}
+            <ExcludedClubs count={invoice.clubsWithoutFee} />
+          </>
+        )}
+      </p>
+      <p className="ml-auto flex items-baseline gap-2">
+        {/* Furniture: the one caption on the ledger, because a figure at the end
+            of a line of counts would otherwise be a number with no noun. */}
+        <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+          {t("monthTotal")}
+        </span>
+        <span className="text-base font-semibold tabular-nums">
+          {formatCurrencyFromCents(invoice.totalCents, "eur", locale)}
+        </span>
+      </p>
+    </div>
   );
 }
 
@@ -222,15 +246,32 @@ function CountLine({ parts }: { parts: readonly string[] }) {
   return <>{parts.join(SCHEDULE_PART_SEPARATOR)}</>;
 }
 
-/** The one line that says a total is short, wherever a total is printed. */
+/**
+ * The one phrase that says a total is short, wherever a total is printed.
+ *
+ * An inline span rather than a line of its own: it travels along the same muted
+ * count line the reader is already scanning, which is what keeps a municipality
+ * that excludes a club exactly as tall as one that does not.
+ */
 function ExcludedClubs({ count }: { count: number }) {
   const t = useTranslations("admin.municipalityInvoicing");
 
   return (
-    <p className="flex items-center justify-end gap-1.5 text-xs font-medium text-warning">
-      <TriangleAlert className="h-3.5 w-3.5 shrink-0" aria-hidden />
+    <span className="font-medium text-warning">
       {t("excludedClubs", { count })}
-    </p>
+    </span>
+  );
+}
+
+/** A fee, or a total, that cannot be stated because nobody has set the fee. */
+function FeeNotSet() {
+  const t = useTranslations("admin.municipalityInvoicing");
+
+  return (
+    <span className="inline-flex items-center gap-1 whitespace-nowrap text-xs font-medium text-warning">
+      <TriangleAlert className="h-3 w-3 shrink-0" aria-hidden />
+      {t("feeNotSet")}
+    </span>
   );
 }
 
@@ -292,7 +333,7 @@ function MonthLink({
         query: { month },
       }}
       aria-label={label}
-      className="rounded-md border border-border p-1.5 text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+      className="rounded-md border border-border p-1 text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
     >
       {children}
     </Link>
@@ -300,24 +341,20 @@ function MonthLink({
 }
 
 /**
- * One municipality's invoice: a summary row that is always there, and the
- * clubs behind it when the reader asks for them.
+ * One municipality: a one-line summary that is always there, and the clubs
+ * behind it when the reader asks for them.
  *
- * **Closed is the default, and the summary row is the page.** A month can carry
+ * **Closed is the default, and the summary line is the page.** A month can carry
  * a hundred clubs across twenty municipalities, and a page that opens with all
- * of them expanded is one where the figure being invoiced — the municipality
- * total — can only be found by scrolling past the working that produced it. So
- * the row states the whole answer (who, how many clubs, how many sessions, what
- * it comes to) and opening it is how the reader asks *why*.
+ * of them expanded is one where the figure being invoiced can only be found by
+ * scrolling past the working that produced it. So the line states the whole
+ * answer — who, how many clubs, how many sessions ran, what it comes to, and
+ * whether a club had to be left out — and opening it is how the reader asks
+ * *why*.
  *
- * The row itself is identical open and closed, which is what keeps the layout
- * rule satisfied: expanding adds the clubs underneath and moves nothing the
- * reader was already looking at, and it is their own click that did it.
- *
- * Where a club had to be left out of the total, the reason is stated directly
- * under the total rather than only on the club — a total that is quietly short
- * is the one failure mode this page cannot afford, and under a *closed* section
- * it would otherwise be invisible.
+ * The line is identical open and closed, which is what keeps the layout rule
+ * satisfied: expanding adds the clubs underneath and moves nothing the reader
+ * was already looking at, and it is their own click that did it.
  */
 function MunicipalitySection({
   municipality,
@@ -334,186 +371,276 @@ function MunicipalitySection({
   const regionId = useId();
 
   return (
-    <Card>
-      {/* The header is the control, so the padding lives on the button and not
-          on the header around it: a hit area that stops short of the card's own
-          edge is a row that ignores half the clicks aimed at it. */}
-      <CardHeader className="p-0">
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={isOpen}
-          aria-controls={regionId}
+    <section>
+      {/* The whole line is the control, so the inset lives on the button rather
+          than on a wrapper around it: a hit area that stops short of the row's
+          own edge is a row that ignores half the clicks aimed at it. */}
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        aria-controls={regionId}
+        className={cn(
+          "flex w-full items-baseline gap-2 py-1.5 text-left transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act",
+          ROW_INSET,
+        )}
+      >
+        <ChevronDown
+          aria-hidden
           className={cn(
-            "flex w-full items-start gap-3 rounded-t-lg p-6 text-left transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act",
-            // Closed, the control *is* the card and rounds with it; open, its
-            // bottom edge is a join with the clubs below and must be square, or
-            // the hover fill cuts a curve out of the middle of the card.
-            !isOpen && "rounded-b-lg",
+            "h-4 w-4 shrink-0 self-center text-muted-foreground transition-transform duration-200",
+            isOpen && "rotate-180",
+          )}
+        />
+        <span
+          className={cn(
+            "shrink-0 text-sm font-semibold",
+            municipality.id === null && "text-warning",
           )}
         >
-          <ChevronDown
-            aria-hidden
-            className={cn(
-              "mt-1 h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200",
-              isOpen && "rotate-180",
-            )}
+          {municipality.name}
+        </span>
+        <span className="min-w-0 truncate text-xs text-muted-foreground">
+          <CountLine
+            parts={[
+              t("clubCount", { count: municipality.clubs.length }),
+              t("recordedSessions", { count: municipality.recordedCount }),
+            ]}
           />
-          <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
-            <div className="min-w-0">
-              <h2
-                className={cn(
-                  "text-xl font-semibold",
-                  municipality.id === null && "text-warning",
-                )}
-              >
-                {municipality.name}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                <CountLine
-                  parts={[
-                    t("clubCount", { count: municipality.clubs.length }),
-                    t("recordedSessions", { count: municipality.recordedCount }),
-                  ]}
-                />
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-xl font-semibold tabular-nums">
-                {formatCurrencyFromCents(municipality.totalCents, "eur", locale)}
-              </p>
-              {municipality.clubsWithoutFee > 0 && (
-                <ExcludedClubs count={municipality.clubsWithoutFee} />
-              )}
-            </div>
-          </div>
-        </button>
-      </CardHeader>
-      {/* The clubs are divided rows on the card's own ground rather than boxes
-          inside it, and that is what puts every number on one axis: a box would
-          inset its contents by its own border and padding, so a club's total
-          would stop short of the municipality total above it by exactly that
-          much. Divided, all four — session amount, club line, municipality
-          total and the month total above them all — end at the card's right
-          padding. */}
-      {isOpen && (
-        <CardContent id={regionId} className="divide-y divide-border">
-          {municipality.clubs.map((club) => (
-            <ClubBlock key={club.id} club={club} locale={locale} />
-          ))}
-        </CardContent>
-      )}
-    </Card>
-  );
-}
-
-/**
- * One club: what it is, what it ran, and every session behind the number.
- *
- * The club name links to its admin page, which is the whole repair path for the
- * one thing this page can find wrong — a fee nobody has filled in — so the link
- * is there whether or not the fee is missing rather than appearing only when
- * something is broken.
- *
- * The link is a real link inside a section whose header is a button, which is
- * why the header's hit area stops at the header: a control nested inside
- * another control is the one arrangement that makes a click ambiguous.
- */
-function ClubBlock({ club, locale }: { club: InvoiceClub; locale: string }) {
-  const t = useTranslations("admin.municipalityInvoicing");
-  // Where it meets and when, on one line. Assembled here rather than in the
-  // JSX because the only literal in it is the separator the schedule formatter
-  // already owns; every word in it comes from the data or from `Intl`.
-  const whereAndWhen = [club.locationName, club.scheduleSummary]
-    .filter((part): part is string => part !== null)
-    .join(SCHEDULE_PART_SEPARATOR);
-
-  return (
-    <div className="py-4 first:pt-0 last:pb-0">
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
-        <div className="min-w-0">
-          <Link
-            href={ROUTES.admin.product("municipality_club", club.id)}
-            className="font-medium hover:underline"
-          >
-            {club.name}
-          </Link>
-          {/* Only where there is something to say. A club with neither a
-              location nor a slot would otherwise get an empty line holding open
-              a gap under its name for copy that is never coming. */}
-          {whereAndWhen !== "" && (
-            <p className="text-xs text-muted-foreground">{whereAndWhen}</p>
+          {municipality.clubsWithoutFee > 0 && (
+            <>
+              {SCHEDULE_PART_SEPARATOR}
+              <ExcludedClubs count={municipality.clubsWithoutFee} />
+            </>
           )}
+        </span>
+        <span className="ml-auto shrink-0 text-sm font-semibold tabular-nums">
+          {formatCurrencyFromCents(municipality.totalCents, "eur", locale)}
+        </span>
+      </button>
+      {isOpen && (
+        <div id={regionId} className={cn("overflow-x-auto pb-1", ROW_INSET)}>
+          <ClubTable municipality={municipality} locale={locale} />
         </div>
-        {/* The two nulls travel together — the total is null exactly when the
-            fee is — and both are named here so nothing has to stand in for a
-            missing number with a zero the reader would believe. */}
-        {club.feeCents === null || club.totalCents === null ? (
-          <p className="flex items-center justify-end gap-1.5 text-right text-sm font-medium text-warning">
-            <TriangleAlert className="h-4 w-4 shrink-0" aria-hidden />
-            {t("feeNotSet")}
-          </p>
-        ) : (
-          <p className="text-right text-sm tabular-nums">
-            {t("clubTotal", {
-              count: club.recordedCount,
-              fee: formatCurrencyFromCents(club.feeCents, "eur", locale),
-              total: formatCurrencyFromCents(club.totalCents, "eur", locale),
-            })}
-          </p>
-        )}
-      </div>
-
-      <SessionTable club={club} locale={locale} />
-    </div>
+      )}
+    </section>
   );
 }
 
 /**
- * The club's month as a real table: when, which week, what happened, what it is
- * worth.
+ * A municipality's clubs as one table: product, schedule, fee, sessions, total.
  *
- * It is a `<table>` and not a grid of `<li>`s because it *is* a table — four
- * facts about each of a run of dates, read down the columns as often as across
- * the rows — and a screen reader announcing "column: amount" is a fact the
- * previous three-column grid could only imply. `table-fixed` with percentage
- * widths is what makes the columns agree between one club and the next: an auto
- * layout measures each club's own content, so a page of clubs would have a page
- * of different money axes.
+ * **One table per municipality, not one per club, and `table-fixed`.** The
+ * columns are what makes a page of a hundred clubs readable — a fee is read
+ * against the fee above it and a total against the total above it — and an auto
+ * layout measures each table's own content, so a table per club would be a page
+ * of clubs each with its own money axis. Fixed proportional widths give the
+ * whole municipality one set of columns, and the last of them ends on the row
+ * inset every other figure on the page ends on.
  *
- * **The widths spread the three text columns across the card rather than
- * packing them against the left edge.** At a desk — which is where an admin
- * surface is designed to be read — a row of four short values bunched into the
- * first third of a 1900px card leaves two thirds of every club empty and the
- * money a long way from the words explaining it.
- *
- * The amount column is right-aligned, `tabular-nums`, and ends at the card's own
- * right padding, which is the axis every other figure on the page shares.
+ * **It scrolls sideways rather than stacking.** This is an admin surface read at
+ * a desk; below the width the columns need, a phone gets the table it would get
+ * on a laptop and drags it, which is a better answer for a ledger than five
+ * stacked labelled values per club. The scroll is this element's, so the page
+ * body's own width is untouched.
  */
-function SessionTable({ club, locale }: { club: InvoiceClub; locale: string }) {
+function ClubTable({
+  municipality,
+  locale,
+}: {
+  municipality: InvoiceMunicipality;
+  locale: string;
+}) {
   const t = useTranslations("admin.municipalityInvoicing");
 
   return (
-    <table className="mt-3 w-full table-fixed text-sm">
+    <table className="w-full min-w-[52rem] table-fixed text-sm">
       <thead>
         {/* Furniture, not voice: a column header is a marker a reader scans for
             structure, which is the one place the house style keeps its caps. */}
-        <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
-          <th scope="col" className="w-[32%] pb-1 text-left font-medium">
-            {t("columnDate")}
+        <tr className="text-[11px] uppercase tracking-wide text-muted-foreground">
+          {/* The disclosure column. It has no name because the control in it is
+              named per club, by the club it belongs to. */}
+          <th scope="col" className="w-7" />
+          <th scope="col" className="py-1 pr-2 text-left font-medium">
+            {t("columnClub")}
           </th>
-          <th scope="col" className="w-[14%] pb-1 text-left font-medium">
-            {t("columnWeek")}
+          <th scope="col" className="w-[22%] py-1 pr-2 text-left font-medium">
+            {t("columnSchedule")}
           </th>
-          <th scope="col" className="w-[28%] pb-1 text-left font-medium">
-            {t("columnStatus")}
+          <th scope="col" className="w-[14%] py-1 pr-2 text-right font-medium">
+            {t("columnFee")}
           </th>
-          <th scope="col" className="w-[26%] pb-1 text-right font-medium">
-            {t("columnAmount")}
+          <th scope="col" className="w-[14%] py-1 pr-2 text-right font-medium">
+            {t("columnSessions")}
+          </th>
+          <th scope="col" className="w-[16%] py-1 text-right font-medium">
+            {t("columnTotal")}
           </th>
         </tr>
       </thead>
+      <tbody className="divide-y divide-border border-t border-border">
+        {municipality.clubs.map((club) => (
+          <ClubRows key={club.id} club={club} locale={locale} />
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+/**
+ * One club's line, and the dates behind its number when the reader opens it.
+ *
+ * Five facts on one line, in the order the arithmetic runs: what it is, when it
+ * meets, what a session of it costs, how many ran, and what that comes to. The
+ * total is the product of the two columns to its left, so a reader can check the
+ * multiplication without leaving the row — which is the whole reason the fee is
+ * on the line at all rather than only in the detail.
+ *
+ * **A club with sessions it should have run and did not says so on its own
+ * line.** The count cell carries the missed count beside the recorded one, in
+ * warning tone, so a month's problems are visible without opening anything —
+ * which matters precisely because every club here is closed by default. Dates
+ * still ahead of the club get no mention: nothing is wrong with a session that
+ * has not happened yet, and a note about one would be indistinguishable at a
+ * glance from a note about one that was missed.
+ *
+ * The club name links to its admin page, which is the whole repair path for the
+ * one thing this page can find wrong — a fee nobody has filled in — so the link
+ * is there whether or not the fee is missing. It sits *beside* the disclosure
+ * control rather than inside it, because a control nested inside another control
+ * is the one arrangement that makes a click ambiguous.
+ */
+function ClubRows({ club, locale }: { club: InvoiceClub; locale: string }) {
+  const t = useTranslations("admin.municipalityInvoicing");
+  const [isOpen, setIsOpen] = useState(false);
+  const detailId = useId();
+
+  return (
+    <>
+      <tr className="align-baseline">
+        <td className="py-1">
+          <button
+            type="button"
+            onClick={() => setIsOpen((open) => !open)}
+            aria-expanded={isOpen}
+            aria-controls={detailId}
+            aria-label={t("sessionsFor", { club: club.name })}
+            className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
+          >
+            <ChevronDown
+              aria-hidden
+              className={cn(
+                "h-3.5 w-3.5 transition-transform duration-200",
+                isOpen && "rotate-180",
+              )}
+            />
+          </button>
+        </td>
+        <td className="py-1 pr-2">
+          {/* Truncated with the whole name on hover: a product name runs long
+              and a column that grows to fit the longest one takes the width the
+              figures need. */}
+          <Link
+            href={ROUTES.admin.product("municipality_club", club.id)}
+            title={club.name}
+            className="block truncate font-medium hover:underline"
+          >
+            {club.name}
+          </Link>
+        </td>
+        <td
+          className="truncate py-1 pr-2 text-xs text-muted-foreground"
+          title={club.scheduleSummary ?? undefined}
+        >
+          {club.scheduleSummary}
+        </td>
+        <td className="py-1 pr-2 text-right tabular-nums">
+          {club.feeCents === null ? (
+            <FeeNotSet />
+          ) : (
+            formatCurrencyFromCents(club.feeCents, "eur", locale)
+          )}
+        </td>
+        <td className="py-1 pr-2 text-right tabular-nums">
+          {club.recordedCount}
+          {club.unrecordedCount > 0 && (
+            <span className="whitespace-nowrap text-xs font-medium text-warning">
+              {SCHEDULE_PART_SEPARATOR}
+              {t("unrecordedSessions", { count: club.unrecordedCount })}
+            </span>
+          )}
+        </td>
+        {/* The money axis. The last column's right edge is the row inset, which
+            is the same edge the municipality total and the month total end on. */}
+        <td className="py-1 text-right tabular-nums">
+          {club.totalCents === null ? (
+            <FeeNotSet />
+          ) : (
+            formatCurrencyFromCents(club.totalCents, "eur", locale)
+          )}
+        </td>
+      </tr>
+      {isOpen && (
+        <tr id={detailId}>
+          {/* The detail is indented under the club's own name, on the same
+              ground: an indent and the divider above it are what say *these
+              belong to that*, and lifting a run of rows off the rows around
+              them would make the club's dates read as a different kind of thing
+              from the club. */}
+          <td />
+          <td colSpan={5} className="pb-2">
+            <ClubSessionDetail club={club} locale={locale} />
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+/**
+ * Every date behind one club's number: when it was, which week that is, what
+ * happened, and what it is worth.
+ *
+ * It is a nested `table-fixed` whose last column is right-aligned, so its
+ * amounts land on the same axis as the club total above them without having to
+ * agree with the outer table's column widths — only with its right edge.
+ *
+ * It carries no header row of its own. The outer table already named its columns
+ * once for the whole municipality, and a second header row per opened club would
+ * spend a line on labelling four values a reader can tell apart by their shape:
+ * a date, a week number, a word, and a sum of money.
+ */
+function ClubSessionDetail({
+  club,
+  locale,
+}: {
+  club: InvoiceClub;
+  locale: string;
+}) {
+  return (
+    <table className="w-full table-fixed text-xs">
+      {/* The widths live in a `colgroup` rather than on the first row's cells,
+          because the first row is not always a session: a club that meets
+          somewhere states where above its dates, spanning the lot, and a fixed
+          layout reading its widths off a spanning row would have none to read. */}
+      <colgroup>
+        <col className="w-[32%]" />
+        <col className="w-[14%]" />
+        <col className="w-[30%]" />
+        <col className="w-[24%]" />
+      </colgroup>
       <tbody>
+        {/* Where it meets, stated once above its dates rather than in the club's
+            own line, where the name and four figures already have the width
+            spoken for. */}
+        {club.locationName !== null && (
+          <tr>
+            <td colSpan={4} className="pb-0.5 text-muted-foreground">
+              {club.locationName}
+            </td>
+          </tr>
+        )}
         {club.sessions.map((session) => (
           <SessionRow
             key={session.date}
@@ -538,12 +665,6 @@ function SessionTable({ club, locale }: { club: InvoiceClub; locale: string }) {
  * a free session. An upcoming one carries no amount at all: it has not
  * happened, and printing €0 against a date in the future would invite somebody
  * to go looking for a session nobody has missed.
- *
- * **The weekday is the one thing that goes under `sm`.** A finance officer
- * reading a column of dates reads the weekday to check it against the club's
- * schedule line above, which is worth a word at a desk and is the first word
- * worth losing on a phone — where the status column, which is the difference
- * between a session that happened and one that did not, is not.
  */
 function SessionRow({
   session,
@@ -565,11 +686,9 @@ function SessionRow({
         session.kind === "unrecorded" && "text-warning",
       )}
     >
-      <td className="py-1">
+      <td className="py-0.5 pr-2">
         <span className="flex items-baseline gap-1.5">
-          <span className="hidden sm:inline">
-            {formatDateOnly(session.date, locale, { weekday: "short" })}
-          </span>
+          <span>{formatDateOnly(session.date, locale, { weekday: "short" })}</span>
           <span className="tabular-nums">
             {formatDateOnly(session.date, locale, {
               day: "numeric",
@@ -579,34 +698,27 @@ function SessionRow({
           </span>
         </span>
       </td>
-      <td className="py-1 text-xs tabular-nums text-muted-foreground">
+      <td className="py-0.5 pr-2 tabular-nums">
         {c("week", { week: session.isoWeek })}
       </td>
-      <td className="py-1 text-xs">
-        <span className="flex items-center gap-1.5">
+      <td className="py-0.5 pr-2">
+        <span className="flex items-center gap-1">
           {session.kind === "unrecorded" && (
-            <TriangleAlert className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <TriangleAlert className="h-3 w-3 shrink-0" aria-hidden />
           )}
           {session.kind === "recorded" && t("recorded")}
           {session.kind === "unrecorded" && t("notRecorded")}
           {session.kind === "upcoming" && t("upcoming")}
         </span>
       </td>
-      {/* The money column. Whatever it holds ends on the column's right edge —
-          the axis every figure on this page shares — and an amount that has a
-          word beside it flows leftward into the column's slack rather than
-          pushing the figure off that axis. */}
-      <td className="py-1 text-right tabular-nums">
+      {/* The money column, ending on the same axis as the club's own total. An
+          amount with a word beside it flows leftward into the column's slack
+          rather than pushing the figure off that axis. */}
+      <td className="py-0.5 text-right tabular-nums">
         <span className="flex items-baseline justify-end gap-1.5">
           {session.kind === "recorded" &&
             (feeCents === null ? (
-              <>
-                <TriangleAlert
-                  className="h-3.5 w-3.5 shrink-0 self-center text-warning"
-                  aria-hidden
-                />
-                <span className="text-xs text-warning">{t("feeNotSet")}</span>
-              </>
+              <FeeNotSet />
             ) : (
               formatCurrencyFromCents(feeCents, "eur", locale)
             ))}

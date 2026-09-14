@@ -216,6 +216,99 @@ describe("buildMunicipalityInvoicing", () => {
     });
   });
 
+  describe("the sessions a club was supposed to run and did not", () => {
+    // The count the club's own line carries, so a month's problems are visible
+    // without opening a single club. It is on the view model rather than
+    // filtered out of the session lines by the component, because it is a
+    // definition of "missed" and there has to be exactly one of those.
+    it("counts every passed projected date with no stored row", () => {
+      // Wednesdays: 2, 9, 16, 23, 30; today is the 16th. Nothing is recorded, so
+      // the 2nd and the 9th were missed and the rest are merely still ahead.
+      const built = onlyClub([club({ id: "a" })]);
+
+      expect(built.unrecordedCount).toBe(2);
+      expect(built.recordedCount).toBe(0);
+    });
+
+    it("stops counting a date once a row exists on it", () => {
+      const built = onlyClub([
+        club({
+          id: "a",
+          sessions: [{ group_id: "g1", session_date: "2026-09-09" }],
+        }),
+      ]);
+
+      expect(built.unrecordedCount).toBe(1);
+      expect(built.recordedCount).toBe(1);
+    });
+
+    it("counts none where every passed date was recorded", () => {
+      const built = onlyClub([
+        club({
+          id: "a",
+          sessions: [
+            { group_id: "g1", session_date: "2026-09-02" },
+            { group_id: "g1", session_date: "2026-09-09" },
+          ],
+        }),
+      ]);
+
+      expect(built.unrecordedCount).toBe(0);
+    });
+
+    it("never counts a date still ahead of the club", () => {
+      // A club whose term starts after today has projected dates and not one of
+      // them is a problem: nothing is wrong with a session nobody has missed.
+      const built = onlyClub([club({ id: "a", start_date: "2026-09-20" })]);
+
+      expect(built.sessions.every((s) => s.kind === "upcoming")).toBe(true);
+      expect(built.unrecordedCount).toBe(0);
+    });
+
+    it("counts none for a club with nothing to project", () => {
+      // No weekly slots is no claim, so there is nothing it failed to meet — the
+      // page must not report a club with an empty schedule as a club in trouble.
+      const built = onlyClub([
+        club({
+          id: "a",
+          schedule_slots: [],
+          sessions: [{ group_id: "g1", session_date: "2026-09-09" }],
+        }),
+      ]);
+
+      expect(built.unrecordedCount).toBe(0);
+    });
+
+    it("counts a missed date on a club with no fee, which is two problems", () => {
+      // The two warnings are independent: a club can be missing its fee and
+      // missing its sessions, and the count is not silenced by the null total.
+      const built = onlyClub([
+        club({ id: "a", municipality_fee_cents: null }),
+      ]);
+
+      expect(built.totalCents).toBeNull();
+      expect(built.unrecordedCount).toBe(2);
+    });
+
+    it("is counted per club, not shared across a municipality", () => {
+      const view = build([
+        club({ id: "a", product_translations: [{ locale: "en", name: "A" }] }),
+        club({
+          id: "b",
+          product_translations: [{ locale: "en", name: "B" }],
+          sessions: [
+            { group_id: "g1", session_date: "2026-09-02" },
+            { group_id: "g1", session_date: "2026-09-09" },
+          ],
+        }),
+      ]);
+
+      expect(
+        view.municipalities[0].clubs.map((one) => one.unrecordedCount),
+      ).toEqual([2, 0]);
+    });
+  });
+
   describe("the term clips the projection", () => {
     it("starts projecting at the club's start date", () => {
       const built = onlyClub([club({ id: "a", start_date: "2026-09-10" })]);

@@ -104,6 +104,17 @@ export interface InvoiceClub {
   feeCents: number | null;
   /** Distinct dates with a stored row that has arrived — what bills. */
   recordedCount: number;
+  /**
+   * Dates the schedule projected, that have passed, and that carry no stored
+   * row — the one thing on this page worth investigating, counted here so the
+   * club's own line can say so without being opened.
+   *
+   * It is on the view model rather than derived in the component for the same
+   * reason every other count is: a number the CFO acts on belongs to the one
+   * function that is tested, and a component filtering the session lines itself
+   * would be a second definition of "missed" nothing holds to the first.
+   */
+  unrecordedCount: number;
   /** `recordedCount × feeCents`, or null where the fee is unset. */
   totalCents: number | null;
   sessions: readonly InvoiceSession[];
@@ -318,6 +329,7 @@ function buildClub(
     scheduleSummary: scheduleSummary(club, locale, now),
     feeCents,
     recordedCount,
+    unrecordedCount: lines.filter((line) => line.kind === "unrecorded").length,
     // One multiplication in cents, through the same guard every sum goes
     // through, and no division anywhere: the euros appear once, at render.
     totalCents: feeCents === null ? null : sumCents([feeCents * recordedCount]),

@@ -57,9 +57,9 @@ that is short is a question somebody asks, and a total that is long is one nobod
 line at all.** It is a shape production has and staging did not — a club whose schedule was
 never filled in, or emptied after the term began — and it reaches the invoice on the
 strength of its stored rows alone. Nothing about it is exceptional: it has no projected
-dates, so it carries no unrecorded lines, and the "where and when" line under its name
-omits the half it cannot state rather than printing an empty one. What it must never do is
-fail: one such club would otherwise take the whole month's invoice down with it, so the
+dates, so it carries no unrecorded lines and nothing to report as missed, and its schedule
+column is simply empty rather than printing a weekly cadence it does not have. What it must
+never do is fail: one such club would otherwise take the whole month's invoice down with it, so the
 build is required to survive every document the wire contract accepts.
 
 **Projection is only offered for a club that is running or completed, and only where it has
@@ -90,8 +90,9 @@ and a club that has just had its schedule corrected is expected to look differen
 **An unset fee is never worth zero.** A club whose fee has never been filled in shows a
 translated "fee not set" label in warning tone in place of both its per-session fee and its
 total, links its name to its own admin page so the gap can be closed, and is **left out of
-its municipality's total** — with a line under that total saying how many clubs were left
-out. A total that is quietly short is the one failure this page cannot afford.
+its municipality's total** — which says beside its own counts how many clubs were left out,
+in warning tone. A total that is quietly short is the one failure this page cannot afford,
+and a section that opens closed is exactly where a short total would otherwise hide.
 
 **Money is an integer number of cents from end to end.** The count is multiplied by the fee
 in cents, cents are summed, and the division into euros happens exactly once, at render,
@@ -102,34 +103,77 @@ safe integer, so an invoice can fail loudly but cannot print a plausible wrong n
 **The month has a total of its own, and it is computed where every other total is.** It is
 the sum of the municipality totals — not a second pass over the clubs — so the figure at the
 top of the page cannot disagree with the figures it stands over, and a club with no fee is
-outside it exactly as it is outside its own municipality's, with the same line saying how
+outside it exactly as it is outside its own municipality's, with the same warning saying how
 many were left out. It lives in the pure build beside the counts it is printed with (how
 many municipalities, how many clubs, how many sessions ran), because a figure the finance
 officer reads first has no business being the one figure nothing tests.
 
 ## How the month is read
 
-**A municipality is a section, and a section opens closed.** A month carries a hundred
-clubs across twenty municipalities, and every one of them expanded means the number being
-invoiced can only be found by scrolling past the working that produced it. So the section's
-summary row states the whole answer — who, how many clubs, how many sessions ran, what it
-comes to, and the exclusion warning where one applies — and opening it is how the reader
-asks *why*. The row is identical open and closed, so expanding adds the clubs underneath and
-moves nothing that was already on screen. An expand-all control sits beside the month
-stepper; which sections are open is where the reader is in the page rather than what the
-page is about, so it is local state, in neither the URL nor storage.
+**This is a ledger, and it is read the way a ledger is read: down the columns.** A month
+runs to a hundred clubs across twenty municipalities, and the reader is a finance officer
+checking figures against each other rather than somebody being introduced to a page. So
+every decision here spends vertical space as if it were expensive: small body type, smaller
+secondary type, one line per thing, hairline rules instead of gaps, and no ornament that
+repeats what the line beside it already says. Every figure is set in tabular figures, so a
+column of money is a column of digits that line up.
 
-**A club's sessions are a table, and every amount on the page ends on one right edge.** Four
-columns — the date with its weekday, the ISO week, what happened in a word, and what it is
-worth — at fixed proportional widths, so one club's columns land where the next club's do
-and a figure can be read against the figure above it. The widths spread the three text
-columns across the card rather than packing them against the left: this is an admin surface,
-read at a desk, and a row of four short values bunched into the first third of the card
-leaves the money a long way from the words explaining it. The amount column is right-aligned
-and ends at the card's own right padding, which is the axis the club line, the municipality
-total and the month total all share. The weekday is the one thing that goes at phone width —
-the status column, which is the difference between a session that happened and one that did
-not, stays.
+**The whole month is one panel, divided.** Not a panel per municipality: a border, a gap and
+two lots of padding per municipality bought nothing the municipality's own name was not
+already saying, and cost the reader the bottom half of the month. One panel is also what
+makes the money axis exact rather than approximate — the month's total, every municipality's
+total and every club's total end on one right inset, because there is one right inset.
+
+**The month states itself on the panel's first line**: how many municipalities, how many
+clubs and how many sessions ran on the left, the month's total on the right, and the
+exclusion warning where one applies travelling along the left-hand line with the counts
+rather than under the figure, so the line stays one line.
+
+**A municipality is one line, and it opens closed.** Chevron, name, then how many clubs and
+how many sessions ran, with its total on the money axis and the exclusion warning beside the
+counts. The line states the whole answer and opening it is how the reader asks *why*; it is
+identical open and closed, so expanding adds the clubs underneath and moves nothing that was
+already on screen. An expand-all control sits beside the month stepper; which sections are
+open is where the reader is in the page rather than what the page is about, so it is local
+state, in neither the URL nor storage.
+
+**A club is one line of five columns, and the columns are one table for the whole
+municipality.** In the order the arithmetic runs: what the club is, when it meets, what one
+session of it costs, how many ran, and what that comes to. The last two columns multiply into
+the third, so the reader can check the multiplication without leaving the row — which is the
+whole reason the fee is on the line rather than only in the detail. The table is
+fixed-layout, one per municipality, so every club's columns land where the club above them
+did; a table per club would measure its own contents and give the page as many money axes as
+it has clubs. A small tracked uppercase header names the columns once per municipality —
+furniture, which is where the house style keeps its caps. The club's name is truncated to the
+column and carries the whole name for a pointer, and links to its own admin page, which is
+the repair path for the one thing this page can find wrong.
+
+**A club that missed sessions says so on its own line.** The count column carries the missed
+count beside the recorded one, in warning tone — so the problems in a month are visible with
+every club still closed, which is what makes closing them by default affordable. Dates still
+ahead of the club are never mentioned there: nothing is wrong with a session nobody has
+missed, and a note about one would be indistinguishable at a glance from a note about one
+that was.
+
+**The dates behind a club's number are a second disclosure, under its own line.** A compact
+table of the club's month — the date with its weekday, the ISO week, what happened in a word,
+and what it is worth — indented under the club's name and sitting on the same ground as the
+line above it, because an indent and the rule above are what say *these belong to that*, and
+lifting a run of rows off its neighbours would make a club's own dates read as a different
+kind of thing from the club. It carries no column header of its own: the municipality's
+header named those columns once already, and four values a reader tells apart by shape — a
+date, a week number, a word and a sum of money — do not need naming twice. Its amount column
+is right-aligned and ends on the same right inset, which is how it joins the money axis
+without having to agree with the outer table's column widths. Where the club meets is stated
+here, once, above its dates, rather than on a line whose width is already spoken for by a
+name and four figures.
+
+**Below the width the columns need, the table scrolls sideways rather than stacking.** This is
+an admin surface read at a desk, and five labelled values stacked per club is a worse answer
+for a ledger than the same table dragged a little. The scroll belongs to the table's own
+wrapper, so the page body's width — and the document's single scroll container — are
+untouched.
 
 ## The month, and how it is named
 
@@ -150,7 +194,7 @@ a week number is how the line is found rather than a decoration on it.
 ## The one departure from the viewer's timezone
 
 The app's rule is that anything with a time of day renders in the **viewer's** zone. The
-club's "where and when" summary on this page renders in the **club's own** zone instead,
+club's schedule summary on this page renders in the **club's own** zone instead,
 deliberately.
 
 Every date on this page is a club-local calendar date — the session rows, the projected
@@ -161,8 +205,8 @@ Helsinki. A clock face the reader has to adjust by an hour is a smaller error th
 that contradicts itself, and municipality clubs are Finnish by definition, so for the
 finance officer actually reading this the two zones are the same one.
 
-The departure is confined to that one summary line. Nothing else on the page carries a time
-of day at all.
+The departure is confined to that one column. Nothing else on the page carries a time of day
+at all.
 
 ## Grouping and order
 
