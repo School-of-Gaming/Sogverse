@@ -168,6 +168,18 @@ function renderCard() {
       return match;
     },
     submit,
+    /**
+     * Presses the footer's affirmative, which is what a parent does. Unlike a
+     * submit dispatched at the form, it goes through the button's own disabled
+     * state — so a page that wrongly gates its Next stalls the flow here rather
+     * than advancing past a button no parent could have pressed.
+     */
+    press: () =>
+      act(async () => {
+        fireEvent.click(
+          view.container.querySelector<HTMLButtonElement>('button[type="submit"]')!,
+        );
+      }),
     /** Page one → page two, which is the only way production reaches it. */
     async goToSignIn() {
       await submit();
@@ -262,6 +274,33 @@ describe("the flow is the same three pages for everyone", () => {
       password: undefined,
       // The declaration the parent made on page one, carried to the mutation
       // rather than re-derived anywhere between.
+      guardianAttested: true,
+    });
+  });
+
+  // The same three pages, walked the way a parent walks them: every advance is
+  // a press of the footer's own button, so each page's gate has to actually
+  // release for the flow to reach the next one.
+  it("goes all the way through on presses of the footer's own button", async () => {
+    const view = renderCard();
+    view.fillDetails();
+    await view.press();
+
+    expect(view.radio("parent").checked).toBe(true);
+    view.chooseMode("username");
+    view.fill("add-gamer-username", "Lily2015");
+    view.fill("add-gamer-password", "a-long-enough-password");
+    await view.press();
+
+    expect(view.queryAllByTestId("game-row")).toHaveLength(2);
+    expect(view.affirmative().textContent).toContain(ADD_GAMER);
+    await view.press();
+
+    expect(onCreate).toHaveBeenCalledTimes(1);
+    expect(onCreate.mock.calls[0][0]).toMatchObject({
+      firstName: "Lily",
+      signIn: "username",
+      username: "lily2015",
       guardianAttested: true,
     });
   });
@@ -547,6 +586,44 @@ describe("page two's Next waits for the mode's own fields", () => {
 
     view.fill("add-gamer-email", "  ");
     expect(view.affirmative().disabled).toBe(true);
+  });
+
+  // Whitespace is not a username any more than it is a password or an address;
+  // the same trim decides all three.
+  it("does not count a whitespace-only username as an answer", async () => {
+    const view = renderCard();
+    view.fillDetails();
+    await view.goToSignIn();
+    view.chooseMode("username");
+
+    view.fill("add-gamer-username", "lily2015");
+    view.fill("add-gamer-password", "a-long-enough-password");
+    expect(view.affirmative().disabled).toBe(false);
+
+    view.fill("add-gamer-username", "   ");
+    expect(view.affirmative().disabled).toBe(true);
+  });
+
+  // The gate belongs to the mode that is selected, not to whatever was typed
+  // under a mode the parent left: the switch-only answer asks for nothing, so
+  // coming back to it releases the button while the abandoned fields sit there
+  // still empty.
+  it("releases the gate on the way back to the answer that asks for nothing", async () => {
+    const view = renderCard();
+    view.fillDetails();
+    await view.goToSignIn();
+
+    view.chooseMode("username");
+    expect(view.affirmative().disabled).toBe(true);
+
+    view.chooseMode("parent");
+    expect(view.affirmative().disabled).toBe(false);
+
+    view.chooseMode("email");
+    expect(view.affirmative().disabled).toBe(true);
+
+    view.chooseMode("parent");
+    expect(view.affirmative().disabled).toBe(false);
   });
 
   // The gate is about presence and the refusals are about format, so a value

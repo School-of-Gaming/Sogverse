@@ -524,8 +524,15 @@ export function AddGamerFormCard({
           sign-in page used to repeat its question as a label over the radios
           while the title said "Add a gamer" a line above it — two headings for
           one page, and the lower of them the only one saying anything. */}
-      <DialogHeader>
-        <DialogTitle id={titleId}>
+      {/* Left-aligned at every width, not the primitive's centred-on-phone
+          default: on page two the title IS the radiogroup's label, and a
+          centred two-line question above left-aligned radios reads as a page
+          title rather than as the thing labelling them. */}
+      <DialogHeader className="text-left">
+        {/* `leading-snug` over the primitive's `leading-none`: a one-word title
+            never wraps, and a question naming a child does — at 360px its
+            wrapped lines collide on the tighter leading. */}
+        <DialogTitle id={titleId} className="leading-snug">
           {step === "signIn"
             ? s("question", { name: trimmedName })
             : step === "accounts"
