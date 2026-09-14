@@ -15,8 +15,6 @@ import {
   SignupPanelView,
   type AuthState,
   type ConfirmedHomeLocation,
-  // DEMO — stripped after the ruling.
-  type DemoRulesTreatment,
 } from "./signup-panel-view";
 import { useSignupPanelFields } from "./use-signup-panel-fields";
 import type { RegistrationState } from "./derive-registration-state";
@@ -66,11 +64,6 @@ interface PreviewSignupPanelProps {
    * stays exactly as it was.
    */
   gamerPhotoConsentTypes?: readonly GamerPhotoConsentType[];
-  /**
-   * DEMO — stripped after the ruling. What this scenario does with our rules
-   * row. Absent on every ordinary scenario.
-   */
-  demoRules?: DemoRulesTreatment;
   state: RegistrationState;
   authState: AuthState;
   /** Where the CTA lands — the matching `/preview/confirmation/<scenario>`. */
@@ -103,7 +96,6 @@ export function PreviewSignupPanel({
   requiredConsentSlugs = NO_CONSENTS,
   marketingConsentTypes = NO_MARKETING_CONSENTS,
   gamerPhotoConsentTypes = NO_GAMER_PHOTO_CONSENTS,
-  demoRules,
   state,
   authState,
   summaryHref,
@@ -169,8 +161,6 @@ export function PreviewSignupPanel({
             onSetLocation: () => setLocationDialogOpen(true),
           }
         }
-        // DEMO — stripped after the ruling.
-        demoRules={demoRules}
         onAddGamer={() => {}}
         onSubmit={goToSummary}
         onJoinWaitlist={goToSummary}

@@ -112,8 +112,6 @@ const SCENE_RENDERERS: Record<
           requiredConsentSlugs={consents.documentSlugs}
           marketingConsentTypes={consents.marketingConsentTypes}
           gamerPhotoConsentTypes={consents.gamerPhotoConsentTypes}
-          // DEMO — stripped after the ruling.
-          demoRules={consents.demoRules}
           topic={topic}
         />
       );

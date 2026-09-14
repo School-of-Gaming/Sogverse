@@ -16,10 +16,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { GAME_PLATFORMS, GameUsernameEditableRow } from "@/components/game-account";
-// DEMO — stripped after the ruling
-import { CheckboxRow } from "@/components/ui/checkbox-row";
-// DEMO — stripped after the ruling
-import { Link } from "@/i18n/navigation";
 import {
   GAMER_EMAIL_TAKEN,
   GAMER_USERNAME_TAKEN,
@@ -28,8 +24,7 @@ import {
 import { usePinStatus, pinKeys } from "@/services/pin";
 import { PinUnlockFlow } from "@/components/pin";
 import { useRequiredAuth } from "@/providers/auth-provider";
-// `ROUTES` is the DEMO import here — stripped after the ruling.
-import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
+import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { ApiError } from "@/lib/api/api-error";
 import { normalizeGamerUsername } from "@/lib/gamer-sign-in";
 import { cn } from "@/lib/utils";
@@ -58,31 +53,7 @@ type Gender = "boy" | "girl" | "non_binary";
  * of its own now, so the footer's affirmative is always Next on page one and
  * always the create on page two — nothing about it is decided by a radio.
  */
-type FormStep = "details" | "signIn" | "accounts";
-
-/**
- * DEMO — stripped after the ruling. A card the style guide opens part-way
- * through V5 has never had the earlier pages filled in, so the style guide
- * hands the values over instead — the game handles above all, because the
- * whole point of the third page is how its two rows read filled and empty side
- * by side.
- */
-interface DemoInitialFields {
-  /** DEMO — the birth month as the select's own value, "1"–"12". */
-  month?: string;
-  /** DEMO — the birth year as the select's own value. */
-  year?: string;
-  /** DEMO — stripped after the ruling. */
-  minecraftUsername?: string;
-  /** DEMO — stripped after the ruling. */
-  robloxUsername?: string;
-  /**
-   * DEMO — stripped after the ruling. V5's box, pre-ticked, so the style guide
-   * can stand page one's disabled Next and its enabled one side by side.
-   * Nothing but the style guide ever passes it.
-   */
-  guardianAttested?: boolean;
-}
+type FormStep = "details" | "signIn";
 
 /**
  * How the card can be seeded, which is the style guide's seam and nothing else.
@@ -90,17 +61,10 @@ interface DemoInitialFields {
  * A union rather than three optional fields, because page two names the child:
  * production can only reach it through page one's validation, which guarantees
  * a first name, and this makes the same guarantee for a card that opens there.
- *
- * `"accounts"` is DEMO — stripped after the ruling — and takes the same
- * guarantee because it sits after page two, which named the child.
  */
 type InitialState =
-  | ({ step?: "details"; firstName?: string; signIn?: GamerSignIn } & DemoInitialFields)
-  | ({
-      step: "signIn" | "accounts";
-      firstName: string;
-      signIn?: GamerSignIn;
-    } & DemoInitialFields);
+  | { step?: "details"; firstName?: string; signIn?: GamerSignIn }
+  | { step: "signIn"; firstName: string; signIn?: GamerSignIn };
 
 /**
  * The stem every field id on this card is built from — both pages of it, and the
@@ -115,230 +79,6 @@ type InitialState =
  * browser-level fight over which of them may hold a selection.
  */
 const CREDENTIAL_FIELD_ID_PREFIX = "add-gamer";
-
-/* ------------------------------------------------------------------ */
-/*  DEMO — stripped after the ruling                                   */
-/* ------------------------------------------------------------------ */
-
-/**
- * DEMO — stripped after the ruling.
- *
- * Lynx's lawyer wants a parent creating a gamer to be shown the Privacy Policy
- * again and to attest they are that child's parent or legal guardian. Four
- * shapes of the same ask, rendered side by side in the style guide so the owner
- * can pick one. Nothing here ships: a card with no `demoVariant` is the
- * production card, unchanged.
- *
- * V1–V4 all put the ask on the sign-in page, which is already at the height the
- * dialog can hold at 360px. **V5 is the answer to that**: it moves the two game
- * rows off page one onto a third and final page of their own, and puts the box
- * on page one instead, as the last row of the basic information the parent is
- * already giving. Page one trades two rows for one box, page three is the two
- * optional rows alone, and nothing anywhere is a summary of what the parent
- * just typed. Every page's affirmative says what it has always said: Next,
- * Next, then the production Add gamer.
- */
-type GuardianAttestationVariant = "v1" | "v2" | "v3" | "v4" | "v5";
-
-/**
- * DEMO — stripped after the ruling.
- *
- * Every demo sentence is held here rather than written into the markup, because
- * `i18next/no-literal-string` reads JSX text and cannot tell throwaway English
- * from copy that ships. Rendering `{IDENTIFIER}` satisfies it without a
- * suppression comment.
- */
-const DEMO_PRIVACY_POLICY_NAME = "Privacy Policy";
-/** DEMO — stripped after the ruling */
-const DEMO_ANTI_BULLYING_NAME = "Anti-Bullying and Discipline policy";
-/** DEMO — stripped after the ruling */
-const DEMO_SENTENCE_END = ".";
-/** DEMO — stripped after the ruling */
-const demoGuardianWithPolicy = (name: string) =>
-  `${name} is my child, or I am their legal guardian. I have read the `;
-/** DEMO — stripped after the ruling */
-const demoGuardianPlain = (name: string) =>
-  `${name} is my child, or I am their legal guardian.`;
-/** DEMO — stripped after the ruling */
-const demoDataSentence = (name: string) =>
-  `We store ${name}'s first name, birth month and year, and any game usernames, so a Gedu knows who is in the room. Full details are in the `;
-/** DEMO — stripped after the ruling */
-const DEMO_RULES_SENTENCE =
-  "I understand School of Gaming has zero tolerance for bullying and toxic behaviour, as set out in the ";
-/** DEMO — stripped after the ruling */
-const demoSubmitAsGuardian = (name: string) =>
-  `Add ${name} — I am their parent or guardian`;
-/** DEMO — stripped after the ruling */
-const DEMO_ATTESTATION_REQUIRED =
-  "Please confirm you are this child's parent or legal guardian.";
-/** DEMO — stripped after the ruling */
-const DEMO_RULES_REQUIRED =
-  "Please confirm you have read the Anti-Bullying and Discipline policy.";
-/**
- * DEMO — stripped after the ruling. What V5's box calls the child before page
- * one has been given a name: the box is the last row of the first page, so it
- * renders while the first-name input is still empty, and the sentence has to
- * read as English at that moment too. "This gamer" rather than a possessive
- * dodge, because the row is pointing at the child being described directly
- * above it, and the word swaps to the real name on the first keystroke.
- */
-const DEMO_UNNAMED_GAMER = "This gamer";
-
-/**
- * DEMO — stripped after the ruling.
- *
- * A policy name inside a demo sentence, opened in a new tab exactly as the
- * register form opens its two: the parent is mid-form, and in this tab the way
- * back would be an emptied card.
- */
-function DemoPolicyLink({
-  href,
-  children,
-}: {
-  href: React.ComponentProps<typeof Link>["href"];
-  children: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      prefetch={false}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-act hover:underline"
-    >
-      {children}
-    </Link>
-  );
-}
-
-/**
- * DEMO — stripped after the ruling.
- *
- * The block that sits directly above the footer on page two, because the
- * attestation accompanies the act it attests: the button that creates the
- * gamer, not page one's Continue.
- *
- * No hint on any row — per the `CheckboxRow` doc the absence of the optional
- * marker *is* the "required".
- */
-function DemoGuardianAttestation({
-  variant,
-  name,
-  disabled,
-  guardianAttested,
-  onGuardianAttestedChange,
-  rulesAccepted,
-  onRulesAcceptedChange,
-}: {
-  variant: GuardianAttestationVariant;
-  name: string;
-  disabled: boolean;
-  guardianAttested: boolean;
-  onGuardianAttestedChange: (next: boolean) => void;
-  rulesAccepted: boolean;
-  onRulesAcceptedChange: (next: boolean) => void;
-}) {
-  const dataSentence = (
-    <p className="text-sm text-muted-foreground">
-      {demoDataSentence(name)}
-      <DemoPolicyLink href={ROUTES.privacy}>
-        {DEMO_PRIVACY_POLICY_NAME}
-      </DemoPolicyLink>
-      {DEMO_SENTENCE_END}
-    </p>
-  );
-
-  // V3 makes the button the act, so there is no box at all — only the sentence
-  // that tells the parent what is stored and where to read the rest.
-  if (variant === "v3") return <div className="pb-4">{dataSentence}</div>;
-
-  const guardianRow = (
-    <CheckboxRow
-      checked={guardianAttested}
-      onCheckedChange={onGuardianAttestedChange}
-      disabled={disabled}
-      label={
-        variant === "v2" ? (
-          demoGuardianPlain(name)
-        ) : (
-          <>
-            {demoGuardianWithPolicy(name)}
-            <DemoPolicyLink href={ROUTES.privacy}>
-              {DEMO_PRIVACY_POLICY_NAME}
-            </DemoPolicyLink>
-            {DEMO_SENTENCE_END}
-          </>
-        )
-      }
-    />
-  );
-
-  return (
-    <div className="space-y-3 pb-4">
-      {variant === "v2" && dataSentence}
-      {guardianRow}
-      {variant === "v4" && (
-        <CheckboxRow
-          checked={rulesAccepted}
-          onCheckedChange={onRulesAcceptedChange}
-          disabled={disabled}
-          label={
-            <>
-              {DEMO_RULES_SENTENCE}
-              <DemoPolicyLink href={ROUTES.antiBullying}>
-                {DEMO_ANTI_BULLYING_NAME}
-              </DemoPolicyLink>
-              {DEMO_SENTENCE_END}
-            </>
-          }
-        />
-      )}
-    </div>
-  );
-}
-
-/**
- * DEMO — stripped after the ruling.
- *
- * V5's box, and the last row of page one — under the gender buttons, with no
- * divider and no group label above it, because it is part of the same basic-
- * information section and a rule would announce a second section that does not
- * exist. One sentence and nothing else: no restating of the fields the parent
- * just filled in, because a list of what we store is a list that drifts the
- * moment a column is added, and the Privacy Policy is where that list is kept
- * current.
- *
- * No hint — per the `CheckboxRow` doc the absence of the optional marker *is*
- * the "required".
- */
-function DemoGuardianBox({
-  name,
-  disabled,
-  guardianAttested,
-  onGuardianAttestedChange,
-}: {
-  name: string;
-  disabled: boolean;
-  guardianAttested: boolean;
-  onGuardianAttestedChange: (next: boolean) => void;
-}) {
-  return (
-    <CheckboxRow
-      checked={guardianAttested}
-      onCheckedChange={onGuardianAttestedChange}
-      disabled={disabled}
-      label={
-        <>
-          {demoGuardianWithPolicy(name === "" ? DEMO_UNNAMED_GAMER : name)}
-          <DemoPolicyLink href={ROUTES.privacy}>
-            {DEMO_PRIVACY_POLICY_NAME}
-          </DemoPolicyLink>
-          {DEMO_SENTENCE_END}
-        </>
-      }
-    />
-  );
-}
 
 interface AddGamerDialogProps {
   open: boolean;
@@ -503,7 +243,6 @@ export function AddGamerFormCard({
   className,
   initial,
   idPrefix = CREDENTIAL_FIELD_ID_PREFIX,
-  demoVariant,
 }: {
   onCreate: (input: CreateGamerInput) => Promise<{ gamerId: string }>;
   onOpenChange: (open: boolean) => void;
@@ -518,12 +257,6 @@ export function AddGamerFormCard({
    * exactly one of them.
    */
   idPrefix?: string;
-  /**
-   * DEMO — stripped after the ruling. Which shape of the guardian attestation
-   * page two carries. Absent — which is every production call site — and the
-   * card is byte-for-byte the card it has always been.
-   */
-  demoVariant?: GuardianAttestationVariant;
 }) {
   const t = useTranslations("family.addGamerForm");
   const s = useTranslations("gamerSignIn");
@@ -532,10 +265,8 @@ export function AddGamerFormCard({
   const locale = useLocale();
 
   const [firstName, setFirstName] = useState(initial?.firstName ?? "");
-  // The `initial?.` halves are DEMO — stripped after the ruling. Production
-  // passes no `initial`, so both start empty exactly as they always have.
-  const [month, setMonth] = useState<string>(initial?.month ?? "");
-  const [year, setYear] = useState<string>(initial?.year ?? "");
+  const [month, setMonth] = useState<string>("");
+  const [year, setYear] = useState<string>("");
   const [gender, setGender] = useState<Gender | null>(null);
   // How the child will reach their own account, and which of the form's two
   // pages is showing. `parent` is the answer a parent keeps by reading page two
@@ -554,26 +285,13 @@ export function AddGamerFormCard({
   // Both game handles are optional and independent. Held as `string | null`
   // because that is what a commit reports — `null` is "cleared", not "untouched"
   // — and neither is ever sent as an empty string.
-  // The `initial?.` halves are DEMO — stripped after the ruling.
-  const [minecraftUsername, setMinecraftUsername] = useState<string | null>(
-    initial?.minecraftUsername ?? null,
-  );
-  const [robloxUsername, setRobloxUsername] = useState<string | null>(
-    initial?.robloxUsername ?? null,
-  );
+  const [minecraftUsername, setMinecraftUsername] = useState<string | null>(null);
+  const [robloxUsername, setRobloxUsername] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Per CLAUDE.md "Loading & Disabled State": a local flag set BEFORE
   // mutate runs, only cleared on outcomes that need the user to retry.
   // On success we close the dialog so the unmount handles cleanup.
   const [committing, setCommitting] = useState(false);
-  // DEMO — stripped after the ruling. Unticked wherever a parent will meet it:
-  // a box we ticked is a declaration nobody made. The `initial?.` half is the
-  // style guide's alone, so a card can be photographed in the ticked state.
-  const [guardianAttested, setGuardianAttested] = useState(
-    initial?.guardianAttested ?? false,
-  );
-  // DEMO — stripped after the ruling.
-  const [rulesAccepted, setRulesAccepted] = useState(false);
 
   const years = useMemo(() => gamerBirthYearOptions(), []);
 
@@ -664,40 +382,9 @@ export function AddGamerFormCard({
       return;
     }
 
-    // DEMO — stripped after the ruling. V5's third page has nothing left to
-    // refuse: both game rows are optional and commit themselves, and the box
-    // that gates page one's Next was ticked two pages ago.
-    if (step === "accounts") {
-      await create();
-      return;
-    }
-
     const problem = findGamerCredentialProblem({ signIn, username, password, email });
     setCredentialProblem(problem);
     if (problem) return;
-
-    // DEMO — stripped after the ruling. V5 does not create from here: the
-    // sign-in page's affirmative says Continue and opens the game-accounts page.
-    if (demoVariant === "v5") {
-      setError(null);
-      setStep("accounts");
-      return;
-    }
-
-    // DEMO — stripped after the ruling. A local refusal with the dialog's own
-    // inline error, exactly as the register form refuses an unticked terms box:
-    // `CheckboxRow` takes no `required`, and a native validity bubble beside a
-    // translated Alert would be two idioms for one job.
-    if (demoVariant !== undefined && demoVariant !== "v3") {
-      if (!guardianAttested) {
-        setError(DEMO_ATTESTATION_REQUIRED);
-        return;
-      }
-      if (demoVariant === "v4" && !rulesAccepted) {
-        setError(DEMO_RULES_REQUIRED);
-        return;
-      }
-    }
 
     await create();
   }
@@ -705,49 +392,6 @@ export function AddGamerFormCard({
   // Matches the styling used by other selects in the codebase
   // (see admin/location-form-dialog.tsx). Aligned with Input's height/border
   // so the form reads as a single coherent column.
-  /* The two game identities, last on page one because they are the two a parent
-     is most likely to skip — and because a child who has neither yet is the
-     ordinary case.
-
-     **Closed, not `autoEdit`.** A register page opens its row because typing a
-     name is the only thing there is to do there; here the row sits among four
-     fields the parent must fill in, and two more open text inputs would read as
-     two more things being asked of them. A closed row costs exactly the same
-     height — both modes declare the game-account height at the same node — so
-     this is a reading decision, not a fitting one, and the pencil is the
-     invitation.
-
-     Full width rather than paired, because the editor has to hold a 60px
-     figure, an input and two buttons; half a dialog leaves the input too narrow
-     to read a 20-character handle back in.
-
-     A node rather than markup in place, because V5 renders the same two rows on
-     a page of their own instead — same components, same state, same closed-row
-     behaviour, decided by where it is rendered rather than by a second copy. */
-  const gameRows = (
-    <>
-      <Field label={g("label", { platform: GAME_PLATFORMS.minecraft.name })} optional>
-        <GameUsernameEditableRow
-          platform="minecraft"
-          username={minecraftUsername}
-          onCommit={({ username }) => setMinecraftUsername(username)}
-        />
-      </Field>
-
-      <Field label={g("label", { platform: GAME_PLATFORMS.roblox.name })} optional>
-        <GameUsernameEditableRow
-          platform="roblox"
-          username={robloxUsername}
-          // Nothing to draw and nothing to go and find: a Roblox render is not
-          // addressable by username, so the row shows its silhouette until a
-          // commit resolves one.
-          avatarUrl={null}
-          onCommit={({ username }) => setRobloxUsername(username)}
-        />
-      </Field>
-    </>
-  );
-
   const selectClassName =
     "flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
@@ -778,14 +422,7 @@ export function AddGamerFormCard({
             </Alert>
           )}
 
-          {/* DEMO — stripped after the ruling. V5's third page, which no
-              production step reaches: `step` is only ever `"accounts"` under
-              `demoVariant === "v5"`. The two rows page one no longer carries,
-              both optional, rendered exactly as page one renders them in
-              production — no box, no break, no label. */}
-          {step === "accounts" ? (
-            gameRows
-          ) : step === "signIn" ? (
+          {step === "signIn" ? (
             <>
               {/* The question names the child rather than "your gamer": page
                   one has already refused an empty first name, so by the time
@@ -944,94 +581,66 @@ export function AddGamerFormCard({
               </div>
             </Field>
 
-            {/* DEMO — stripped after the ruling: the condition, not the rows.
-                V5 is the variant that moves them to a page of their own, so
-                page one asks for the child and nothing else. Every other
-                caller, production included, renders them here as always. */}
-            {demoVariant === "v5" ? (
-              <DemoGuardianBox
-                name={trimmedName}
-                disabled={committing}
-                guardianAttested={guardianAttested}
-                onGuardianAttestedChange={setGuardianAttested}
+            {/* The two game identities, last because they are the two a parent is
+                most likely to skip — and because a child who has neither yet is
+                the ordinary case.
+
+                **Closed, not `autoEdit`.** A register page opens its row because
+                typing a name is the only thing there is to do there; here the row
+                sits among four fields the parent must fill in, and two more open
+                text inputs would read as two more things being asked of them. A
+                closed row costs exactly the same height — both modes declare the
+                game-account height at the same node — so this is a reading
+                decision, not a fitting one, and the pencil is the invitation.
+
+                Full width rather than paired, because the editor has to hold a
+                60px figure, an input and two buttons; half a dialog leaves the
+                input too narrow to read a 20-character handle back in. */}
+            <Field label={g("label", { platform: GAME_PLATFORMS.minecraft.name })} optional>
+              <GameUsernameEditableRow
+                platform="minecraft"
+                username={minecraftUsername}
+                onCommit={({ username }) => setMinecraftUsername(username)}
               />
-            ) : (
-              gameRows
-            )}
+            </Field>
+
+            <Field label={g("label", { platform: GAME_PLATFORMS.roblox.name })} optional>
+              <GameUsernameEditableRow
+                platform="roblox"
+                username={robloxUsername}
+                // Nothing to draw and nothing to go and find: a Roblox render is
+                // not addressable by username, so the row shows its silhouette
+                // until a commit resolves one.
+                avatarUrl={null}
+                onCommit={({ username }) => setRobloxUsername(username)}
+              />
+            </Field>
 
             </>
           )}
         </div>
 
-        {/* DEMO — stripped after the ruling. Directly above the footer on page
-            two, because the attestation accompanies the act it attests. */}
-        {demoVariant !== undefined && demoVariant !== "v5" && step === "signIn" && (
-          <DemoGuardianAttestation
-            variant={demoVariant}
-            name={trimmedName}
-            disabled={committing}
-            guardianAttested={guardianAttested}
-            onGuardianAttestedChange={setGuardianAttested}
-            rulesAccepted={rulesAccepted}
-            onRulesAcceptedChange={setRulesAccepted}
-          />
-        )}
-
         {/* Two fixed labels, one per page, decided by the page alone: page one
             always advances and page two always creates, so the affirmative says
-            what pressing it will do without any radio having to change it.
-            (DEMO — stripped after the ruling: V5 keeps the same two labels on
-            three pages — Next, Next, then the create — and gates page one's
-            Next on its box rather than renaming anything.) */}
+            what pressing it will do without any radio having to change it. */}
         <DialogFooter className="gap-2">
           <Button
             type="button"
             variant="outline"
-            onClick={() => {
-              // DEMO — stripped after the ruling: the `"accounts"` arm. Each
-              // page goes back to the one before it, and page one closes the
-              // dialog.
-              if (step === "accounts") {
-                setStep("signIn");
-              } else if (step === "signIn") {
-                setStep("details");
-              } else {
-                onOpenChange(false);
-              }
-            }}
+            onClick={() =>
+              step === "signIn" ? setStep("details") : onOpenChange(false)
+            }
             disabled={committing}
           >
-            {step === "details" ? c("cancel") : c("back")}
+            {step === "signIn" ? c("back") : c("cancel")}
           </Button>
-          <Button
-            type="submit"
-            // DEMO — stripped after the ruling: the second disjunct. V5's box
-            // gates page one's Next the way the enrolment panel's rules row
-            // gates its CTA — the button goes from disabled to enabled under
-            // the parent's own tick and its label never changes, so nothing in
-            // the footer resizes.
-            disabled={
-              committing ||
-              (demoVariant === "v5" && step === "details" && !guardianAttested)
-            }
-          >
+          <Button type="submit" disabled={committing}>
             {committing && <Loader2 className="animate-spin" />}
             {committing
               ? t("submitting")
               : step === "details"
                 ? c("next")
-                : // DEMO — stripped after the ruling. V5's third page is the
-                  // one that creates, and it says exactly what production's
-                  // final page says; its first two pages both say Next.
-                  step === "accounts"
-                  ? t("submit")
-                  : demoVariant === "v5"
-                    ? c("next")
-                    : // DEMO — stripped after the ruling. V3 has no box: the
-                      // button itself carries the declaration.
-                      demoVariant === "v3"
-                      ? demoSubmitAsGuardian(trimmedName)
-                      : t("submit")}
+                : t("submit")}
           </Button>
         </DialogFooter>
       </form>

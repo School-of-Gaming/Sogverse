@@ -69,23 +69,6 @@ import type { AppHref } from "@/lib/constants/routes";
 // survive the flip and the sign-up really is one tap.
 
 /**
- * DEMO — stripped after the ruling.
- *
- * If a per-child guardian attestation on the add-gamer form carries the conduct
- * promise, what is left of the panel's rules row? Two answers worth seeing on a
- * real page: nothing at all, or just the municipality absence clause — the only
- * sentence in the five rule variants that a per-child box does not cover.
- */
-export type DemoRulesTreatment = "hidden" | "absence-only";
-
-/**
- * DEMO — stripped after the ruling. The municipality clause on its own, in
- * literal English: the message files are not touched by a throwaway demo.
- */
-const DEMO_ABSENCE_ONLY_RULE =
-  "I understand that repeated unexcused absences may open my child's seat for the next family on the waitlist.";
-
-/**
  * One selectable row in the picker: a child, or — on a product sold to parents
  * — the reader themselves.
  *
@@ -263,14 +246,6 @@ export interface SignupPanelViewProps {
   onAddGamer: () => void;
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
-  /**
-   * DEMO — stripped after the ruling. What becomes of our rules row once a
-   * per-child attestation carries the conduct promise: `"hidden"` drops it
-   * entirely, `"absence-only"` keeps only the municipality clause that no
-   * per-child box covers. Absent on every production render, and the panel is
-   * then exactly the panel it has always been.
-   */
-  demoRules?: DemoRulesTreatment;
   /**
    * **The product's enrolment conditions**: the published documents a parent
    * must agree to before a seat can be taken, as slugs. Empty on nearly every
@@ -965,14 +940,9 @@ function SignupForm(
   const consentsSatisfied = consentRows.every((row) =>
     props.consentAgreements.has(row.key),
   );
-  // DEMO — stripped after the ruling. A demo that removes the rules row has to
-  // remove its gate with it, or the CTA stays disabled naming a row that is not
-  // on screen; the absence-only demo is ticked like any other row.
-  const rulesGateMet =
-    props.demoRules === "hidden" ? true : props.agreed;
   const formReady =
     props.selectedParticipantId !== null &&
-    rulesGateMet &&
+    props.agreed &&
     consentsSatisfied &&
     !needsLocation;
   const clickable = formReady && props.active && !props.submitting;
@@ -1011,7 +981,7 @@ function SignupForm(
           // the rules" would be pointing at a row the reader cannot tell from
           // the one above it. The section is what they act on, so the section
           // is what the button names.
-          !consentsSatisfied || !rulesGateMet
+          !consentsSatisfied || !props.agreed
           ? t("ctaAgreeConsent")
           : props.active
             ? props.ctaLabelActive
@@ -1231,8 +1201,6 @@ function SignupForm(
         onAgreementChange={props.onConsentAgreementChange}
         rulesAgreed={props.agreed}
         onRulesAgreedChange={props.onAgreedChange}
-        // DEMO — stripped after the ruling.
-        demoRules={props.demoRules}
       />
 
       {/* Below the conditions and above the button: the optional questions, in
@@ -1392,7 +1360,6 @@ function RequiredConsentSection({
   onAgreementChange,
   rulesAgreed,
   onRulesAgreedChange,
-  demoRules,
 }: {
   productType: ProductType;
   /**
@@ -1414,8 +1381,6 @@ function RequiredConsentSection({
   onAgreementChange: (rowKey: string, agreed: boolean) => void;
   rulesAgreed: boolean;
   onRulesAgreedChange: (next: boolean) => void;
-  /** DEMO — stripped after the ruling. */
-  demoRules?: DemoRulesTreatment;
 }) {
   const t = useTranslations("productDetail.signupPanel");
   const tRules = useTranslations("productDetail.signupPanel.rules");
@@ -1470,12 +1435,7 @@ function RequiredConsentSection({
       )}
       {/* Ours, and always last: whatever else a product attaches to a seat, the
           final thing a parent agrees to before the button is the one thing
-          School of Gaming asks of them.
-
-          DEMO — stripped after the ruling: `hidden` drops the row, and
-          `absence-only` keeps the row with the one clause a per-child
-          attestation would not already have covered. */}
-      {demoRules === "hidden" ? null : (
+          School of Gaming asks of them. */}
       <ConsentRow
         agreed={rulesAgreed}
         onAgreedChange={onRulesAgreedChange}
@@ -1485,10 +1445,8 @@ function RequiredConsentSection({
         // handle, and a title that varied by product type would invite a reader
         // to look for a difference the row does not have.
         title={tRules("title")}
-        // DEMO — stripped after the ruling.
-        sentence={demoRules === "absence-only" ? DEMO_ABSENCE_ONLY_RULE : ruleText}
+        sentence={ruleText}
       />
-      )}
     </div>
   );
 }

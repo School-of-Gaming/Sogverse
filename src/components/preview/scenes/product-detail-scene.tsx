@@ -4,8 +4,6 @@ import { useState } from "react";
 import { ProductDetailPageBody } from "@/components/public/products/product-detail-page-body";
 import { registrationCtaKind } from "@/components/public/products/derive-registration-state";
 import { PreviewSignupPanel } from "@/components/public/products/preview-signup-panel";
-// DEMO — stripped after the ruling.
-import type { DemoRulesTreatment } from "@/components/public/products/signup-panel-view";
 import {
   buildScenarioFixture,
   type AuthKind,
@@ -51,7 +49,6 @@ export function ProductDetailScene({
   requiredConsentSlugs,
   marketingConsentTypes,
   gamerPhotoConsentTypes,
-  demoRules,
   auth,
   topic = null,
 }: {
@@ -89,11 +86,6 @@ export function ProductDetailScene({
    * because the panel is judged with all three side by side.
    */
   gamerPhotoConsentTypes?: readonly GamerPhotoConsentType[];
-  /**
-   * DEMO — stripped after the ruling. What this scenario does with the panel's
-   * rules row, for the throwaway guardian-attestation comparison.
-   */
-  demoRules?: DemoRulesTreatment;
   /**
    * The `?topic=` axis: the topic this render puts on the fixture's row, in
    * place of the one the scenario names. The About card is what it is for —
@@ -140,8 +132,6 @@ export function ProductDetailScene({
           requiredConsentSlugs={requiredConsentSlugs}
           marketingConsentTypes={marketingConsentTypes}
           gamerPhotoConsentTypes={gamerPhotoConsentTypes}
-          // DEMO — stripped after the ruling.
-          demoRules={demoRules}
           state={fixture.state}
           authState={fixture.authState}
           summaryHref={summaryHref}
