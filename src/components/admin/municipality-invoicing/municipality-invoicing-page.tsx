@@ -1,9 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
+import { useId, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ChevronLeft, ChevronRight, TriangleAlert } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  TriangleAlert,
+} from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -18,6 +24,7 @@ import {
   type InvoiceClub,
   type InvoiceMunicipality,
   type InvoiceSession,
+  type MunicipalityInvoicingView,
 } from "./build-municipality-invoicing";
 
 /**
@@ -28,17 +35,23 @@ import {
  * current fees and the sessions that were actually recorded, and nothing here
  * writes, snapshots or exports anything.
  *
- * The shell owns three things and nothing else: the month the URL names, the
- * clock, and the reader's locale. Everything else — which clubs are in the
- * month, which dates they ran, what the totals are — is one pure build over the
- * document the route already fetched, which is why there is no loading state
- * anywhere below this line.
+ * The shell owns four things and nothing else: the month the URL names, the
+ * clock, the reader's locale, and which sections are open. Everything else —
+ * which clubs are in the month, which dates they ran, what the totals are — is
+ * one pure build over the document the route already fetched, which is why
+ * there is no loading state anywhere below this line.
  *
  * **The month lives in the URL, not in state.** A month of invoicing is
  * something a CFO sends to somebody or comes back to tomorrow, and a stepper
  * held in component state gives them no way to do either. It also means the
  * server can fetch the right month before the first paint, which is what makes
  * the page arrive finished rather than arriving and then filling in.
+ *
+ * **Which sections are open is the opposite kind of state and stays local.** It
+ * is where a reader is in the page rather than what the page is about: nobody
+ * links somebody else to "Espoo expanded", and persisting it would mean the
+ * page opened differently for the same month depending on what was done to it
+ * last time.
  */
 export function MunicipalityInvoicingPage({
   monthStart,
@@ -67,6 +80,16 @@ export function MunicipalityInvoicingPage({
     [snapshot, locale, now, t],
   );
 
+  // Collapsed is the default, so the set holds what is *open* — an empty set is
+  // the opening state and needs no list of every municipality to express it.
+  const [openKeys, setOpenKeys] = useState<ReadonlySet<string>>(
+    () => new Set<string>(),
+  );
+
+  const allOpen =
+    invoice.municipalities.length > 0 &&
+    invoice.municipalities.every((one) => openKeys.has(sectionKey(one)));
+
   return (
     <div className="space-y-6 pb-12">
       <div>
@@ -74,22 +97,140 @@ export function MunicipalityInvoicingPage({
         <p className="text-muted-foreground">{t("description")}</p>
       </div>
 
-      <MonthStepper monthStart={invoice.monthStart} locale={locale} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <MonthStepper monthStart={invoice.monthStart} locale={locale} />
+        {/* One control rather than two: the pair is a single state with two
+            ends, and a reader who can see that everything is open does not also
+            need an "expand all" sitting next to it doing nothing. */}
+        {invoice.municipalities.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              setOpenKeys(
+                allOpen
+                  ? new Set<string>()
+                  : new Set(invoice.municipalities.map(sectionKey)),
+              )
+            }
+          >
+            {allOpen ? t("collapseAll") : t("expandAll")}
+          </Button>
+        )}
+      </div>
 
       {invoice.municipalities.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("emptyMonth")}</p>
       ) : (
-        <div className="space-y-6">
-          {invoice.municipalities.map((municipality) => (
-            <MunicipalityCard
-              key={municipality.id ?? "none"}
-              municipality={municipality}
-              locale={locale}
-            />
-          ))}
-        </div>
+        <>
+          <MonthSummary invoice={invoice} locale={locale} />
+          <div className="space-y-4">
+            {invoice.municipalities.map((municipality) => (
+              <MunicipalitySection
+                key={sectionKey(municipality)}
+                municipality={municipality}
+                locale={locale}
+                isOpen={openKeys.has(sectionKey(municipality))}
+                onToggle={() =>
+                  setOpenKeys((keys) => {
+                    const next = new Set(keys);
+                    const key = sectionKey(municipality);
+                    if (!next.delete(key)) next.add(key);
+                    return next;
+                  })
+                }
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
+  );
+}
+
+/**
+ * A municipality's identity as a section: its own id, or the one name the
+ * trailing no-municipality bucket can be told apart by.
+ *
+ * A function rather than an inline `?? "none"` at four call sites, because the
+ * open-set's keys and the React keys have to be the same string or a section
+ * opens one card and marks another.
+ */
+function sectionKey(municipality: InvoiceMunicipality): string {
+  return municipality.id ?? "none";
+}
+
+/**
+ * The whole month in one line: what it comes to, and what it is made of.
+ *
+ * It leads the page because it is the figure the invoice run is *for* — a CFO
+ * opening this page wants to know what the month is worth before wanting to
+ * know which municipality owes which part of it — and because every section
+ * below it now opens closed, so without it the page's first screen would carry
+ * no number at all.
+ *
+ * The total sits on the same right edge as every municipality total under it,
+ * which is the whole reason it is a `Card` like they are rather than a band of
+ * its own: the column of figures runs from here to the bottom of the page.
+ */
+function MonthSummary({
+  invoice,
+  locale,
+}: {
+  invoice: MunicipalityInvoicingView;
+  locale: string;
+}) {
+  const t = useTranslations("admin.municipalityInvoicing");
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+        <div>
+          <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+            {t("monthTotal")}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            <CountLine
+              parts={[
+                t("municipalityCount", { count: invoice.municipalityCount }),
+                t("clubCount", { count: invoice.clubCount }),
+                t("recordedSessions", { count: invoice.recordedCount }),
+              ]}
+            />
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-2xl font-semibold tabular-nums">
+            {formatCurrencyFromCents(invoice.totalCents, "eur", locale)}
+          </p>
+          {invoice.clubsWithoutFee > 0 && <ExcludedClubs count={invoice.clubsWithoutFee} />}
+        </div>
+      </CardHeader>
+    </Card>
+  );
+}
+
+/**
+ * Facts about a total, strung along one line.
+ *
+ * The separator is punctuation rather than copy — it is the same middle dot the
+ * schedule formatter already joins a line's parts with — so it is written here
+ * and not in five message files, where it would be five chances to type a
+ * hyphen instead.
+ */
+function CountLine({ parts }: { parts: readonly string[] }) {
+  return <>{parts.join(SCHEDULE_PART_SEPARATOR)}</>;
+}
+
+/** The one line that says a total is short, wherever a total is printed. */
+function ExcludedClubs({ count }: { count: number }) {
+  const t = useTranslations("admin.municipalityInvoicing");
+
+  return (
+    <p className="flex items-center justify-end gap-1.5 text-xs font-medium text-warning">
+      <TriangleAlert className="h-3.5 w-3.5 shrink-0" aria-hidden />
+      {t("excludedClubs", { count })}
+    </p>
   );
 }
 
@@ -159,56 +300,109 @@ function MonthLink({
 }
 
 /**
- * One municipality's invoice: the total in the header, the clubs beneath it.
+ * One municipality's invoice: a summary row that is always there, and the
+ * clubs behind it when the reader asks for them.
  *
- * The total leads because it is the number being invoiced and everything under
- * it is the working. Where a club had to be left out of it, the reason is
- * stated directly under the total rather than only on the club — a total that
- * is quietly short is the one failure mode this page cannot afford.
+ * **Closed is the default, and the summary row is the page.** A month can carry
+ * a hundred clubs across twenty municipalities, and a page that opens with all
+ * of them expanded is one where the figure being invoiced — the municipality
+ * total — can only be found by scrolling past the working that produced it. So
+ * the row states the whole answer (who, how many clubs, how many sessions, what
+ * it comes to) and opening it is how the reader asks *why*.
+ *
+ * The row itself is identical open and closed, which is what keeps the layout
+ * rule satisfied: expanding adds the clubs underneath and moves nothing the
+ * reader was already looking at, and it is their own click that did it.
+ *
+ * Where a club had to be left out of the total, the reason is stated directly
+ * under the total rather than only on the club — a total that is quietly short
+ * is the one failure mode this page cannot afford, and under a *closed* section
+ * it would otherwise be invisible.
  */
-function MunicipalityCard({
+function MunicipalitySection({
   municipality,
   locale,
+  isOpen,
+  onToggle,
 }: {
   municipality: InvoiceMunicipality;
   locale: string;
+  isOpen: boolean;
+  onToggle: () => void;
 }) {
   const t = useTranslations("admin.municipalityInvoicing");
+  const regionId = useId();
 
   return (
     <Card>
-      <CardHeader className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-        <h2
+      {/* The header is the control, so the padding lives on the button and not
+          on the header around it: a hit area that stops short of the card's own
+          edge is a row that ignores half the clicks aimed at it. */}
+      <CardHeader className="p-0">
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={isOpen}
+          aria-controls={regionId}
           className={cn(
-            "text-xl font-semibold",
-            municipality.id === null && "text-warning",
+            "flex w-full items-start gap-3 rounded-t-lg p-6 text-left transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act",
+            // Closed, the control *is* the card and rounds with it; open, its
+            // bottom edge is a join with the clubs below and must be square, or
+            // the hover fill cuts a curve out of the middle of the card.
+            !isOpen && "rounded-b-lg",
           )}
         >
-          {municipality.name}
-        </h2>
-        <div className="text-right">
-          <p className="text-xl font-semibold tabular-nums">
-            {formatCurrencyFromCents(municipality.totalCents, "eur", locale)}
-          </p>
-          {municipality.clubsWithoutFee > 0 && (
-            <p className="flex items-center justify-end gap-1.5 text-xs font-medium text-warning">
-              <TriangleAlert className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              {t("excludedClubs", { count: municipality.clubsWithoutFee })}
-            </p>
-          )}
-        </div>
+          <ChevronDown
+            aria-hidden
+            className={cn(
+              "mt-1 h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200",
+              isOpen && "rotate-180",
+            )}
+          />
+          <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
+            <div className="min-w-0">
+              <h2
+                className={cn(
+                  "text-xl font-semibold",
+                  municipality.id === null && "text-warning",
+                )}
+              >
+                {municipality.name}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                <CountLine
+                  parts={[
+                    t("clubCount", { count: municipality.clubs.length }),
+                    t("recordedSessions", { count: municipality.recordedCount }),
+                  ]}
+                />
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-xl font-semibold tabular-nums">
+                {formatCurrencyFromCents(municipality.totalCents, "eur", locale)}
+              </p>
+              {municipality.clubsWithoutFee > 0 && (
+                <ExcludedClubs count={municipality.clubsWithoutFee} />
+              )}
+            </div>
+          </div>
+        </button>
       </CardHeader>
       {/* The clubs are divided rows on the card's own ground rather than boxes
           inside it, and that is what puts every number on one axis: a box would
           inset its contents by its own border and padding, so a club's total
           would stop short of the municipality total above it by exactly that
-          much. Divided, all three — session amount, club line, municipality
-          total — end at the card's right padding. */}
-      <CardContent className="divide-y divide-border">
-        {municipality.clubs.map((club) => (
-          <ClubBlock key={club.id} club={club} locale={locale} />
-        ))}
-      </CardContent>
+          much. Divided, all four — session amount, club line, municipality
+          total and the month total above them all — end at the card's right
+          padding. */}
+      {isOpen && (
+        <CardContent id={regionId} className="divide-y divide-border">
+          {municipality.clubs.map((club) => (
+            <ClubBlock key={club.id} club={club} locale={locale} />
+          ))}
+        </CardContent>
+      )}
     </Card>
   );
 }
@@ -220,6 +414,10 @@ function MunicipalityCard({
  * one thing this page can find wrong — a fee nobody has filled in — so the link
  * is there whether or not the fee is missing rather than appearing only when
  * something is broken.
+ *
+ * The link is a real link inside a section whose header is a button, which is
+ * why the header's hit area stops at the header: a control nested inside
+ * another control is the one arrangement that makes a click ambiguous.
  */
 function ClubBlock({ club, locale }: { club: InvoiceClub; locale: string }) {
   const t = useTranslations("admin.municipalityInvoicing");
@@ -266,7 +464,56 @@ function ClubBlock({ club, locale }: { club: InvoiceClub; locale: string }) {
         )}
       </div>
 
-      <ul className="mt-3 space-y-1">
+      <SessionTable club={club} locale={locale} />
+    </div>
+  );
+}
+
+/**
+ * The club's month as a real table: when, which week, what happened, what it is
+ * worth.
+ *
+ * It is a `<table>` and not a grid of `<li>`s because it *is* a table — four
+ * facts about each of a run of dates, read down the columns as often as across
+ * the rows — and a screen reader announcing "column: amount" is a fact the
+ * previous three-column grid could only imply. `table-fixed` with percentage
+ * widths is what makes the columns agree between one club and the next: an auto
+ * layout measures each club's own content, so a page of clubs would have a page
+ * of different money axes.
+ *
+ * **The widths spread the three text columns across the card rather than
+ * packing them against the left edge.** At a desk — which is where an admin
+ * surface is designed to be read — a row of four short values bunched into the
+ * first third of a 1900px card leaves two thirds of every club empty and the
+ * money a long way from the words explaining it.
+ *
+ * The amount column is right-aligned, `tabular-nums`, and ends at the card's own
+ * right padding, which is the axis every other figure on the page shares.
+ */
+function SessionTable({ club, locale }: { club: InvoiceClub; locale: string }) {
+  const t = useTranslations("admin.municipalityInvoicing");
+
+  return (
+    <table className="mt-3 w-full table-fixed text-sm">
+      <thead>
+        {/* Furniture, not voice: a column header is a marker a reader scans for
+            structure, which is the one place the house style keeps its caps. */}
+        <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
+          <th scope="col" className="w-[32%] pb-1 text-left font-medium">
+            {t("columnDate")}
+          </th>
+          <th scope="col" className="w-[14%] pb-1 text-left font-medium">
+            {t("columnWeek")}
+          </th>
+          <th scope="col" className="w-[28%] pb-1 text-left font-medium">
+            {t("columnStatus")}
+          </th>
+          <th scope="col" className="w-[26%] pb-1 text-right font-medium">
+            {t("columnAmount")}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
         {club.sessions.map((session) => (
           <SessionRow
             key={session.date}
@@ -275,42 +522,28 @@ function ClubBlock({ club, locale }: { club: InvoiceClub; locale: string }) {
             locale={locale}
           />
         ))}
-      </ul>
-    </div>
+      </tbody>
+    </table>
   );
 }
 
 /**
- * The page's one money axis, as a grid: the date, the ISO week, and the amount.
- *
- * It is a constant rather than a class string inside the row because the axis is
- * the whole point — a second row spelling its own widths is how a column of
- * figures stops being a column — and because the two fixed widths are the only
- * numbers on this page that have to agree with each other. They are sized for
- * the widest thing each column holds: a full numeric date, and `vk 38`.
- */
-const MONEY_GRID =
-  "grid grid-cols-[5.5rem_3.25rem_1fr] gap-x-2 sm:grid-cols-[8rem_5rem_1fr] sm:gap-x-3";
-
-/**
- * One dated line: when it was, which week that is, and what it is worth.
+ * One dated line: when it was, which week that is, what happened, and what it is
+ * worth.
  *
  * The three kinds read differently on purpose. A recorded session carries the
- * fee and nothing else — it is the ordinary case and should be quiet. An
- * unrecorded one carries a zero *and* says why, because a zero with no
- * explanation beside it is indistinguishable from a free session. An upcoming
- * one carries no amount at all: it has not happened, and printing €0 against a
- * date in the future would invite somebody to go looking for a session nobody
- * has missed.
+ * fee and nothing else in the way of explanation — it is the ordinary case and
+ * should be quiet. An unrecorded one is drawn in warning tone and says so in
+ * words, because a zero with no explanation beside it is indistinguishable from
+ * a free session. An upcoming one carries no amount at all: it has not
+ * happened, and printing €0 against a date in the future would invite somebody
+ * to go looking for a session nobody has missed.
  *
- * The row is three grid columns — date, week, money — at every width, the first
- * two at fixed widths so the money column starts at the same place on every row
- * of every club, and the money itself right-aligned inside it. A number is read
- * by comparing it with the numbers above and below it, and a column of amounts
- * that each begin where the words before them happened to end cannot be read
- * that way at all. The two fixed columns narrow on a phone rather than stacking:
- * three short columns still fit 360px, and stacking would put each amount on its
- * own line, which is the one arrangement that destroys the axis entirely.
+ * **The weekday is the one thing that goes under `sm`.** A finance officer
+ * reading a column of dates reads the weekday to check it against the club's
+ * schedule line above, which is worth a word at a desk and is the first word
+ * worth losing on a phone — where the status column, which is the difference
+ * between a session that happened and one that did not, is not.
  */
 function SessionRow({
   session,
@@ -323,58 +556,64 @@ function SessionRow({
 }) {
   const t = useTranslations("admin.municipalityInvoicing");
   const c = useTranslations("common");
-  const muted = session.kind === "upcoming";
 
   return (
-    <li
+    <tr
       className={cn(
-        MONEY_GRID,
-        "items-baseline text-sm",
-        muted && "text-muted-foreground",
+        "align-baseline",
+        session.kind === "upcoming" && "text-muted-foreground",
         session.kind === "unrecorded" && "text-warning",
       )}
     >
-      <span className="tabular-nums">
-        {formatDateOnly(session.date, locale, {
-          day: "numeric",
-          month: "numeric",
-          year: "numeric",
-        })}
-      </span>
-      <span className="text-xs tabular-nums text-muted-foreground">
+      <td className="py-1">
+        <span className="flex items-baseline gap-1.5">
+          <span className="hidden sm:inline">
+            {formatDateOnly(session.date, locale, { weekday: "short" })}
+          </span>
+          <span className="tabular-nums">
+            {formatDateOnly(session.date, locale, {
+              day: "numeric",
+              month: "numeric",
+              year: "numeric",
+            })}
+          </span>
+        </span>
+      </td>
+      <td className="py-1 text-xs tabular-nums text-muted-foreground">
         {c("week", { week: session.isoWeek })}
-      </span>
-      {/* The money column. Whatever it holds ends on the column's right edge:
-          the amount is its last child, and the words explaining an amount flow
-          leftward into the column's slack instead of pushing the figure off the
-          axis every other row on the page shares. */}
-      <span className="flex items-baseline justify-end gap-1.5 text-right tabular-nums">
-        {session.kind === "recorded" &&
-          (feeCents === null ? (
-            <>
-              <TriangleAlert
-                className="h-3.5 w-3.5 shrink-0 self-center text-warning"
-                aria-hidden
-              />
-              <span className="text-warning">{t("feeNotSet")}</span>
-            </>
-          ) : (
-            formatCurrencyFromCents(feeCents, "eur", locale)
-          ))}
-        {session.kind === "unrecorded" && (
-          <>
-            <TriangleAlert
-              className="h-3.5 w-3.5 shrink-0 self-center"
-              aria-hidden
-            />
-            <span className="text-xs">{t("notRecorded")}</span>
-            {formatCurrencyFromCents(0, "eur", locale)}
-          </>
-        )}
-        {session.kind === "upcoming" && (
-          <span className="text-xs">{t("upcoming")}</span>
-        )}
-      </span>
-    </li>
+      </td>
+      <td className="py-1 text-xs">
+        <span className="flex items-center gap-1.5">
+          {session.kind === "unrecorded" && (
+            <TriangleAlert className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          )}
+          {session.kind === "recorded" && t("recorded")}
+          {session.kind === "unrecorded" && t("notRecorded")}
+          {session.kind === "upcoming" && t("upcoming")}
+        </span>
+      </td>
+      {/* The money column. Whatever it holds ends on the column's right edge —
+          the axis every figure on this page shares — and an amount that has a
+          word beside it flows leftward into the column's slack rather than
+          pushing the figure off that axis. */}
+      <td className="py-1 text-right tabular-nums">
+        <span className="flex items-baseline justify-end gap-1.5">
+          {session.kind === "recorded" &&
+            (feeCents === null ? (
+              <>
+                <TriangleAlert
+                  className="h-3.5 w-3.5 shrink-0 self-center text-warning"
+                  aria-hidden
+                />
+                <span className="text-xs text-warning">{t("feeNotSet")}</span>
+              </>
+            ) : (
+              formatCurrencyFromCents(feeCents, "eur", locale)
+            ))}
+          {session.kind === "unrecorded" &&
+            formatCurrencyFromCents(0, "eur", locale)}
+        </span>
+      </td>
+    </tr>
   );
 }

@@ -474,4 +474,169 @@ describe("buildMunicipalityInvoicing", () => {
       expect(view.municipalities[0].totalCents).toBe(8_750 + 6_666);
     });
   });
+
+  describe("a club with no weekly slots", () => {
+    // Staging had no such club and production does: a municipality club whose
+    // schedule was never filled in, or was emptied after the term started. It
+    // is on the invoice on the strength of its stored rows alone, and the one
+    // thing the page must not do is fall over on it — a single club with no
+    // slots would otherwise take the whole month's invoice down with it.
+    const slotless = () =>
+      club({
+        id: "a",
+        schedule_slots: [],
+        sessions: [
+          { group_id: "g1", session_date: "2026-09-02" },
+          { group_id: "g1", session_date: "2026-09-09" },
+        ],
+      });
+
+    it("builds without throwing, and bills its stored rows", () => {
+      const built = onlyClub([slotless()]);
+
+      expect(built.recordedCount).toBe(2);
+      expect(built.totalCents).toBe(2 * 8_750);
+      expect(built.sessions.map((s) => s.date)).toEqual([
+        "2026-09-02",
+        "2026-09-09",
+      ]);
+    });
+
+    it("has no schedule summary rather than an empty one", () => {
+      // The summary line is omitted entirely — not printed blank, and not
+      // printed as a weekday list with nothing in it. The component hangs the
+      // club's "where and when" line on this being null.
+      expect(onlyClub([slotless()]).scheduleSummary).toBeNull();
+    });
+
+    it("projects nothing, so it contributes no unrecorded lines", () => {
+      const built = onlyClub([slotless()]);
+
+      expect(built.sessions.every((s) => s.kind === "recorded")).toBe(true);
+    });
+
+    it("is left off the invoice when it has no rows either", () => {
+      // Nothing stored and nothing to project is a club that did nothing in a
+      // month it may not even have been running in. An empty row would say
+      // otherwise.
+      const view = build([club({ id: "a", schedule_slots: [], sessions: [] })]);
+
+      expect(view.municipalities).toHaveLength(0);
+      expect(view.totalCents).toBe(0);
+    });
+  });
+
+  describe("the month's own total", () => {
+    it("sums every municipality, and counts what it is made of", () => {
+      const view = build([
+        club({
+          id: "a",
+          municipality: MUNICIPALITY_A,
+          municipality_fee_cents: 8_750,
+          sessions: [{ group_id: "g1", session_date: "2026-09-02" }],
+        }),
+        club({
+          id: "b",
+          municipality: MUNICIPALITY_A,
+          municipality_fee_cents: 3_333,
+          sessions: [
+            { group_id: "g2", session_date: "2026-09-02" },
+            { group_id: "g2", session_date: "2026-09-09" },
+          ],
+        }),
+        club({
+          id: "c",
+          municipality: MUNICIPALITY_B,
+          municipality_fee_cents: 5_000,
+          sessions: [{ group_id: "g3", session_date: "2026-09-16" }],
+        }),
+      ]);
+
+      expect(view.totalCents).toBe(8_750 + 6_666 + 5_000);
+      expect(view.municipalityCount).toBe(2);
+      expect(view.clubCount).toBe(3);
+      expect(view.recordedCount).toBe(4);
+      expect(view.clubsWithoutFee).toBe(0);
+    });
+
+    it("agrees with the municipality totals it stands over", () => {
+      const view = build([
+        club({
+          id: "a",
+          municipality: MUNICIPALITY_A,
+          sessions: [{ group_id: "g1", session_date: "2026-09-02" }],
+        }),
+        club({
+          id: "b",
+          municipality: MUNICIPALITY_B,
+          sessions: [{ group_id: "g2", session_date: "2026-09-09" }],
+        }),
+      ]);
+
+      expect(view.totalCents).toBe(
+        view.municipalities.reduce((sum, one) => sum + one.totalCents, 0),
+      );
+    });
+
+    it("leaves every club with no fee out of the total and says how many", () => {
+      // Across two municipalities, so the month's count is not just one
+      // municipality's count read twice.
+      const view = build([
+        club({
+          id: "a",
+          municipality: MUNICIPALITY_A,
+          municipality_fee_cents: null,
+          sessions: [{ group_id: "g1", session_date: "2026-09-02" }],
+        }),
+        club({
+          id: "b",
+          municipality: MUNICIPALITY_B,
+          municipality_fee_cents: null,
+          sessions: [{ group_id: "g2", session_date: "2026-09-02" }],
+        }),
+        club({
+          id: "c",
+          municipality: MUNICIPALITY_B,
+          municipality_fee_cents: 5_000,
+          sessions: [{ group_id: "g3", session_date: "2026-09-09" }],
+        }),
+      ]);
+
+      expect(view.totalCents).toBe(5_000);
+      expect(view.clubsWithoutFee).toBe(2);
+      // The recorded count is not the billed count: a session that ran with no
+      // fee set still ran, and hiding it would hide the thing to fix.
+      expect(view.recordedCount).toBe(3);
+    });
+
+    it("counts a municipality's recorded sessions across its clubs", () => {
+      const view = build([
+        club({
+          id: "a",
+          municipality: MUNICIPALITY_A,
+          sessions: [
+            { group_id: "g1", session_date: "2026-09-02" },
+            { group_id: "g1", session_date: "2026-09-09" },
+          ],
+        }),
+        club({
+          id: "b",
+          municipality: MUNICIPALITY_A,
+          sessions: [{ group_id: "g2", session_date: "2026-09-09" }],
+        }),
+      ]);
+
+      expect(view.municipalities[0].recordedCount).toBe(3);
+    });
+
+    it("is zero for a month with nothing in it", () => {
+      const view = build([]);
+
+      expect(view.totalCents).toBe(0);
+      expect(view.municipalityCount).toBe(0);
+      expect(view.clubCount).toBe(0);
+      expect(view.recordedCount).toBe(0);
+      expect(view.clubsWithoutFee).toBe(0);
+    });
+  });
 });

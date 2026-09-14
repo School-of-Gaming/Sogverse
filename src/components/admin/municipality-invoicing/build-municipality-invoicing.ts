@@ -117,6 +117,8 @@ export interface InvoiceMunicipality {
   totalCents: number;
   /** How many of this municipality's clubs were left out of that total. */
   clubsWithoutFee: number;
+  /** Sessions that ran across this municipality's clubs — what bills. */
+  recordedCount: number;
   clubs: readonly InvoiceClub[];
 }
 
@@ -124,6 +126,25 @@ export interface MunicipalityInvoicingView {
   /** The first day of the month, `YYYY-MM-01`. */
   monthStart: string;
   municipalities: readonly InvoiceMunicipality[];
+  /**
+   * The whole month: every municipality's total, summed in cents through the
+   * same guard every other sum on this page goes through.
+   *
+   * It is here rather than in the component because it is the same arithmetic
+   * as every other total — count times fee, summed, divided once at render —
+   * and a figure the CFO reads first has no business being the one figure
+   * nothing tests. A club with no fee is outside it, exactly as it is outside
+   * its own municipality's, and `clubsWithoutFee` is how the page says so.
+   */
+  totalCents: number;
+  /** How many clubs in the month were left out of `totalCents`. */
+  clubsWithoutFee: number;
+  /** How many municipalities are on the invoice, the trailing bucket included. */
+  municipalityCount: number;
+  /** How many clubs are on the invoice, across every municipality. */
+  clubCount: number;
+  /** How many sessions ran across the whole month — what `totalCents` bills. */
+  recordedCount: number;
 }
 
 export interface BuildMunicipalityInvoicingArgs {
@@ -190,12 +211,11 @@ export function buildMunicipalityInvoicing({
   const unnamed = [...buckets.values()].filter((bucket) => bucket.id === null);
   named.sort((a, b) => a.name.localeCompare(b.name, locale));
 
-  return {
-    monthStart,
-    // The no-municipality bucket trails every real one whatever it is called.
-    // It is a list of things to fix rather than a municipality to invoice, and
-    // sorting it in by name would hide it somewhere in the middle.
-    municipalities: [...named, ...unnamed].map((bucket) => {
+  // The no-municipality bucket trails every real one whatever it is called. It
+  // is a list of things to fix rather than a municipality to invoice, and
+  // sorting it in by name would hide it somewhere in the middle.
+  const municipalities: InvoiceMunicipality[] = [...named, ...unnamed].map(
+    (bucket) => {
       const clubs = [...bucket.clubs].sort((a, b) =>
         a.name.localeCompare(b.name, locale),
       );
@@ -208,9 +228,32 @@ export function buildMunicipalityInvoicing({
           ),
         ),
         clubsWithoutFee: clubs.filter((club) => club.feeCents === null).length,
+        recordedCount: clubs.reduce(
+          (count, club) => count + club.recordedCount,
+          0,
+        ),
         clubs,
       };
-    }),
+    },
+  );
+
+  return {
+    monthStart,
+    municipalities,
+    // The month is summed from the municipality totals rather than from the
+    // clubs again: one arithmetic, stated once, so the figure at the top of the
+    // page cannot disagree with the figures it is standing over.
+    totalCents: sumCents(municipalities.map((one) => one.totalCents)),
+    clubsWithoutFee: municipalities.reduce(
+      (count, one) => count + one.clubsWithoutFee,
+      0,
+    ),
+    municipalityCount: municipalities.length,
+    clubCount: municipalities.reduce((count, one) => count + one.clubs.length, 0),
+    recordedCount: municipalities.reduce(
+      (count, one) => count + one.recordedCount,
+      0,
+    ),
   };
 }
 

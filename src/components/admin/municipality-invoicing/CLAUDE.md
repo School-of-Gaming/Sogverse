@@ -53,6 +53,15 @@ session is recording one that ran. This is the one place the invoice is delibera
 smaller than the stored evidence would make it, and the direction is the point — a total
 that is short is a question somebody asks, and a total that is long is one nobody does.
 
+**A club with no weekly slots has no claim to project, and renders without a schedule
+line at all.** It is a shape production has and staging did not — a club whose schedule was
+never filled in, or emptied after the term began — and it reaches the invoice on the
+strength of its stored rows alone. Nothing about it is exceptional: it has no projected
+dates, so it carries no unrecorded lines, and the "where and when" line under its name
+omits the half it cannot state rather than printing an empty one. What it must never do is
+fail: one such club would otherwise take the whole month's invoice down with it, so the
+build is required to survive every document the wire contract accepts.
+
 **Projection is only offered for a club that is running or completed, and only where it has
 a start date.** A club that has not started, or that was cancelled, did not run the
 sessions its weekly schedule describes, and a club with no first day has no date to start
@@ -89,6 +98,38 @@ in cents, cents are summed, and the division into euros happens exactly once, at
 through the shared currency formatter. Nothing divides before it sums. Every total passes
 through a guarded addition that throws rather than return a value that has stopped being a
 safe integer, so an invoice can fail loudly but cannot print a plausible wrong number.
+
+**The month has a total of its own, and it is computed where every other total is.** It is
+the sum of the municipality totals — not a second pass over the clubs — so the figure at the
+top of the page cannot disagree with the figures it stands over, and a club with no fee is
+outside it exactly as it is outside its own municipality's, with the same line saying how
+many were left out. It lives in the pure build beside the counts it is printed with (how
+many municipalities, how many clubs, how many sessions ran), because a figure the finance
+officer reads first has no business being the one figure nothing tests.
+
+## How the month is read
+
+**A municipality is a section, and a section opens closed.** A month carries a hundred
+clubs across twenty municipalities, and every one of them expanded means the number being
+invoiced can only be found by scrolling past the working that produced it. So the section's
+summary row states the whole answer — who, how many clubs, how many sessions ran, what it
+comes to, and the exclusion warning where one applies — and opening it is how the reader
+asks *why*. The row is identical open and closed, so expanding adds the clubs underneath and
+moves nothing that was already on screen. An expand-all control sits beside the month
+stepper; which sections are open is where the reader is in the page rather than what the
+page is about, so it is local state, in neither the URL nor storage.
+
+**A club's sessions are a table, and every amount on the page ends on one right edge.** Four
+columns — the date with its weekday, the ISO week, what happened in a word, and what it is
+worth — at fixed proportional widths, so one club's columns land where the next club's do
+and a figure can be read against the figure above it. The widths spread the three text
+columns across the card rather than packing them against the left: this is an admin surface,
+read at a desk, and a row of four short values bunched into the first third of the card
+leaves the money a long way from the words explaining it. The amount column is right-aligned
+and ends at the card's own right padding, which is the axis the club line, the municipality
+total and the month total all share. The weekday is the one thing that goes at phone width —
+the status column, which is the difference between a session that happened and one that did
+not, stays.
 
 ## The month, and how it is named
 
