@@ -142,10 +142,10 @@ not finishing with it.
 **Rule: the dialog carries a visible "not yet" control beside the affirmative, and pressing
 it is the same act as closing the overlay — nothing is remembered and the card keeps its
 offer.** It exists because the affirmative standing alone was pressed as the way out, by
-families who had not done the steps: a lone button in a footer reads as a door, and every
-honest exit — Escape, the backdrop, a back gesture — was a thing no thumb could find on a
-phone. Drawing the negative as a lesser button of its own is what lets a family leave
-without claiming a setup they have not finished.
+families who had not done the steps: a lone button in a footer reads as a door, and the
+honest exits — Escape, the backdrop — are not controls a thumb can find on a phone.
+Drawing the negative as a lesser button of its own is what lets a family leave without
+claiming a setup they have not finished.
 
 **Rule: the dismissal is remembered in a cookie, keyed by the viewer *and* the
 enrolment.** It is deliberately not a profile column: no migration, no route, no write

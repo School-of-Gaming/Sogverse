@@ -65,7 +65,7 @@ describe("TopicPrepDialog", () => {
     const { onReady, onOpenChange } = renderDialog();
 
     act(() => {
-      screen.getByText(NOT_YET).click();
+      screen.getByRole("button", { name: NOT_YET }).click();
     });
 
     expect(onReady).not.toHaveBeenCalled();
@@ -76,7 +76,7 @@ describe("TopicPrepDialog", () => {
     const { onReady, onOpenChange } = renderDialog();
 
     act(() => {
-      screen.getByText(READY).click();
+      screen.getByRole("button", { name: READY }).click();
     });
 
     expect(onReady).toHaveBeenCalledTimes(1);
@@ -86,8 +86,8 @@ describe("TopicPrepDialog", () => {
   it("puts the negative first in the DOM and the affirmative last", () => {
     renderDialog();
 
-    const order = screen.getByText(NOT_YET).compareDocumentPosition(
-      screen.getByText(READY),
+    const order = screen.getByRole("button", { name: NOT_YET }).compareDocumentPosition(
+      screen.getByRole("button", { name: READY }),
     );
 
     expect(order & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
