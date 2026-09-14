@@ -1,15 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { cva } from "class-variance-authority";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import {
   SESSION_FEEDBACK_RATINGS,
   SESSION_FEEDBACK_RATING_KEYS,
+  type SessionFeedbackItemKey,
   type SessionFeedbackRating,
   type SessionFeedbackResult,
 } from "./session-feedback-items";
@@ -20,16 +20,21 @@ import {
  * The key is the stable identifier the answer is reported under and the label is
  * the sentence a gamer reads — two fields rather than one, because the copy is
  * rewritten freely and an answer keyed to a sentence would not survive the first
- * rewrite.
+ * rewrite. The key is the catalogue's own type, so a caller cannot ask — or
+ * report — a statement the catalogue does not know.
  */
-export interface SessionFeedbackItem {
-  key: string;
+export interface SessionFeedbackItem<
+  K extends SessionFeedbackItemKey = SessionFeedbackItemKey,
+> {
+  key: K;
   label: string;
 }
 
-export interface SessionFeedbackScreenProps {
+export interface SessionFeedbackScreenProps<
+  K extends SessionFeedbackItemKey = SessionFeedbackItemKey,
+> {
   /** The statements, in the order they are asked. */
-  items: readonly SessionFeedbackItem[];
+  items: readonly SessionFeedbackItem<K>[];
   /**
    * What the reader answered, handed over when they press Done.
    *
@@ -38,7 +43,7 @@ export interface SessionFeedbackScreenProps {
    * it, navigate — is the caller's business, which is what lets the same screen
    * render in a preview scene with nothing behind it.
    */
-  onDone: (result: SessionFeedbackResult) => void;
+  onDone: (result: SessionFeedbackResult<K>) => void;
   /**
    * Whether the caller is acting on a Done that has already been pressed.
    *
@@ -56,27 +61,29 @@ export interface SessionFeedbackScreenProps {
 }
 
 /**
- * One point on the answer row.
+ * One point on the answer row: the cell drawn by the sibling of a hidden native
+ * radio.
  *
- * A chosen point is marked by its own edge, which is the selected state the rest
- * of the app already uses for a bordered target; no fill, no colour of its own,
- * and no element hue — this screen says nothing about which Yty-Element a
- * statement belongs to. The border colour lives in the variant rather than in
- * the base string so the two values can never both be emitted and resolve by
- * stylesheet order.
+ * The radio is real, and that is the whole reason the markup is shaped this way:
+ * a row is then one tab stop whose arrow keys walk the five words, instead of
+ * five tab stops a child has to press Tab through thirty-five times. It is the
+ * construct the app's other radio groups already use, with the control hidden
+ * rather than drawn because the cell itself is the target here.
+ *
+ * A chosen point is marked by its own edge — the selected state the rest of the
+ * app uses for a bordered target — and the mark is the `peer-checked:` answer to
+ * the input's own state rather than a class picked in JavaScript, so there is
+ * one source of which word is chosen. No fill, no colour of its own, and no
+ * element hue: this screen says nothing about which Yty-Element a statement
+ * belongs to.
+ *
+ * `min-w-0` plus wrapping is what makes the cell safe in every locale. Five
+ * cells share a phone's width, so a word that will not fit on one line takes a
+ * second, and a word with nowhere to break is broken rather than painted across
+ * its neighbour.
  */
-const answerVariants = cva(
-  "flex min-h-9 items-center justify-center rounded-md border px-1 text-center text-[11px] font-medium leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
-  {
-    variants: {
-      selected: {
-        true: "border-act text-foreground",
-        false: "border-border text-muted-foreground hover:bg-hover hover:text-foreground",
-      },
-    },
-    defaultVariants: { selected: false },
-  },
-);
+const ANSWER_CELL =
+  "flex min-h-9 w-full min-w-0 items-center justify-center hyphens-auto break-words rounded-md border border-border px-0.5 text-center text-[11px] font-medium leading-tight text-muted-foreground transition-colors peer-hover:bg-hover peer-hover:text-foreground peer-checked:border-act peer-checked:text-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-act peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background peer-disabled:opacity-50";
 
 /**
  * **The screen a gamer meets when they leave an online session.**
@@ -90,18 +97,15 @@ const answerVariants = cva(
  * Every item is optional and an unanswered one is a skip, which is why there is
  * no Skip button and why Done is never disabled for want of an answer.
  */
-export function SessionFeedbackScreen({
-  items,
-  onDone,
-  committing,
-  lead,
-}: SessionFeedbackScreenProps) {
+export function SessionFeedbackScreen<
+  K extends SessionFeedbackItemKey = SessionFeedbackItemKey,
+>({ items, onDone, committing, lead }: SessionFeedbackScreenProps<K>) {
   const t = useTranslations("voice.feedback");
   const groupId = useId();
   const noteFieldId = `${groupId}-note`;
 
   const [answers, setAnswers] = useState<
-    Record<string, SessionFeedbackRating | undefined>
+    Partial<Record<K, SessionFeedbackRating>>
   >({});
   const [noteOpen, setNoteOpen] = useState(false);
   const [note, setNote] = useState("");
@@ -124,13 +128,13 @@ export function SessionFeedbackScreen({
 
   return (
     <Card>
-      <CardContent className="space-y-3 p-4 sm:p-5">
+      <CardContent className="space-y-2 p-3 sm:p-5">
         {lead !== undefined && (
           <p className="text-xs text-muted-foreground">{lead}</p>
         )}
         <h1 className="text-lg font-semibold">{t("heading")}</h1>
 
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {items.map((item) => {
             const labelId = `${groupId}-${item.key}`;
             return (
@@ -141,29 +145,33 @@ export function SessionFeedbackScreen({
                 <div
                   role="radiogroup"
                   aria-labelledby={labelId}
-                  className="mt-1 grid grid-cols-5 gap-1"
+                  className="mt-0.5 grid grid-cols-5 gap-1"
                 >
-                  {SESSION_FEEDBACK_RATINGS.map((rating) => {
-                    const selected = answers[item.key] === rating;
-                    return (
-                      <button
-                        key={rating}
-                        type="button"
-                        role="radio"
-                        aria-checked={selected}
+                  {SESSION_FEEDBACK_RATINGS.map((rating) => (
+                    <label key={rating} className="flex min-w-0 cursor-pointer">
+                      {/* One `name` per statement: the arrows walk this row and
+                          Tab leaves it for the next one. It carries the
+                          instance id too, because two screens on one document
+                          sharing a name would deselect each other. */}
+                      <input
+                        type="radio"
+                        name={`${groupId}-${item.key}`}
+                        value={rating}
+                        className="peer sr-only"
+                        checked={answers[item.key] === rating}
                         disabled={committing}
-                        onClick={() =>
+                        onChange={() =>
                           setAnswers((current) => ({
                             ...current,
                             [item.key]: rating,
                           }))
                         }
-                        className={answerVariants({ selected })}
-                      >
+                      />
+                      <span className={ANSWER_CELL}>
                         {t(`scale.${SESSION_FEEDBACK_RATING_KEYS[rating]}`)}
-                      </button>
-                    );
-                  })}
+                      </span>
+                    </label>
+                  ))}
                 </div>
               </div>
             );
@@ -190,22 +198,30 @@ export function SessionFeedbackScreen({
             />
           </div>
         ) : (
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
+            className="w-full justify-start text-sm font-normal text-muted-foreground"
             disabled={committing}
             onClick={() => setNoteOpen(true)}
-            className={cn(
-              "flex min-h-9 w-full items-center rounded-md border border-border px-3 text-left text-sm text-muted-foreground transition-colors",
-              "hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
-            )}
           >
             {t("notePrompt")}
-          </button>
+          </Button>
         )}
 
         <p className="text-xs text-muted-foreground">{t("audience")}</p>
 
-        <Button type="button" className="w-full" disabled={committing} onClick={handleDone}>
+        <Button
+          type="button"
+          className="w-full"
+          disabled={committing}
+          onClick={handleDone}
+        >
+          {/* The Done a child pressed has to look pressed for the whole of the
+              navigation it starts, which is the app's committing rule: the flag
+              is never cleared, so the spinner rides out the unload. */}
+          {committing && <Loader2 className="animate-spin" />}
           {t("done")}
         </Button>
       </CardContent>

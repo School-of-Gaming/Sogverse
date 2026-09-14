@@ -66,14 +66,24 @@ export const SESSION_FEEDBACK_ITEMS = [
 export type SessionFeedbackItemKey =
   (typeof SESSION_FEEDBACK_ITEMS)[number]["key"];
 
-/** What the screen collects: one answer per statement, plus the note. */
-export interface SessionFeedbackResult {
+/**
+ * What the screen collects: one answer per statement, plus the note.
+ *
+ * Keyed on the catalogue's own identifiers rather than on `string`, so a result
+ * cannot carry a statement nothing in the catalogue asks. The parameter is what
+ * lets a caller asking a subset — a test, a scene exercising two rows — be typed
+ * to exactly the subset it asked, while the live caller's `K` is the whole
+ * catalogue.
+ */
+export interface SessionFeedbackResult<
+  K extends SessionFeedbackItemKey = SessionFeedbackItemKey,
+> {
   /**
-   * Every statement is present; a statement nobody answered carries
+   * Every statement asked is present; a statement nobody answered carries
    * `undefined`, because an unanswered item is a skip rather than a missing
    * field.
    */
-  answers: Record<string, SessionFeedbackRating | undefined>;
+  answers: Record<K, SessionFeedbackRating | undefined>;
   /** Empty when the reader never opened the field, or opened it and wrote nothing. */
   note: string;
 }

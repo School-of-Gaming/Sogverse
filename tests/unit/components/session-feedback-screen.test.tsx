@@ -12,6 +12,9 @@ import type { SessionFeedbackResult } from "@/components/voice/feedback/session-
  *
  * - **Every statement is optional**, so Done with nothing chosen has to be a
  *   real answer (seven skips) rather than a blocked button or a dropped result.
+ * - **Every statement is *reported***, answered or not — asserted on the
+ *   captured argument with `toStrictEqual`, because `toHaveBeenCalledWith`
+ *   counts a key holding `undefined` as absent and would pass an empty result.
  * - **Re-choosing replaces**, because a child who taps the wrong word has no
  *   other way back — there is no clear control and never will be.
  * - **The note is collapsed until asked for**, which is the whole reason the
@@ -25,9 +28,11 @@ const ITEMS = [
   { key: "learned", label: "I learned something new." },
 ] as const;
 
+type AskedKey = (typeof ITEMS)[number]["key"];
+
 function renderScreen(
   overrides: {
-    onDone?: (result: SessionFeedbackResult) => void;
+    onDone?: (result: SessionFeedbackResult<AskedKey>) => void;
     committing?: boolean;
   } = {},
 ) {
@@ -44,6 +49,19 @@ function renderScreen(
   return { onDone };
 }
 
+/**
+ * The last result a press of Done reported, captured rather than matched: the
+ * assertions below have to see a key that is present and `undefined`, which is
+ * exactly what an argument matcher cannot tell from a key that is missing.
+ */
+function captureDone() {
+  const results: SessionFeedbackResult<AskedKey>[] = [];
+  const onDone = (result: SessionFeedbackResult<AskedKey>) => {
+    results.push(result);
+  };
+  return { onDone, results };
+}
+
 /** The five words of one statement's row, resolved through its own group. */
 function rowFor(label: string): HTMLElement {
   const group = screen
@@ -55,48 +73,65 @@ function rowFor(label: string): HTMLElement {
   return group;
 }
 
+/** One word's radio inside a row, as the element that carries `checked`. */
+function word(row: HTMLElement, name: string): HTMLInputElement {
+  const radio = within(row).getByRole("radio", { name });
+  if (!(radio instanceof HTMLInputElement)) {
+    throw new Error(`"${name}" is not a native radio`);
+  }
+  return radio;
+}
+
 describe("the session feedback screen", () => {
   it("marks the word a reader picks, and moves the mark when they pick another", () => {
     renderScreen();
     const row = rowFor("I had fun.");
 
-    fireEvent.click(within(row).getByRole("radio", { name: "A bit" }));
-    expect(
-      within(row).getByRole("radio", { name: "A bit" }).getAttribute("aria-checked"),
-    ).toBe("true");
+    fireEvent.click(word(row, "A bit"));
+    expect(word(row, "A bit").checked).toBe(true);
 
-    fireEvent.click(within(row).getByRole("radio", { name: "Definitely" }));
-    expect(
-      within(row).getByRole("radio", { name: "Definitely" }).getAttribute("aria-checked"),
-    ).toBe("true");
-    expect(
-      within(row).getByRole("radio", { name: "A bit" }).getAttribute("aria-checked"),
-    ).toBe("false");
+    fireEvent.click(word(row, "Definitely"));
+    expect(word(row, "Definitely").checked).toBe(true);
+    expect(word(row, "A bit").checked).toBe(false);
+  });
+
+  it("gives each statement its own radio group, so the arrows stay inside one row", () => {
+    renderScreen();
+
+    const names = new Set(
+      screen
+        .getAllByRole("radio")
+        .map((radio) => radio.getAttribute("name") ?? ""),
+    );
+
+    expect(names.size).toBe(ITEMS.length);
+    expect(screen.getAllByRole("radio")).toHaveLength(ITEMS.length * 5);
   });
 
   it("reports every statement as unanswered when Done is pressed with nothing picked", () => {
-    const onDone = vi.fn();
+    const { onDone, results } = captureDone();
     renderScreen({ onDone });
 
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
 
-    expect(onDone).toHaveBeenCalledTimes(1);
-    expect(onDone).toHaveBeenCalledWith({
+    expect(results).toHaveLength(1);
+    // `toStrictEqual` is the point of the test: a result that dropped the
+    // statements entirely would satisfy an argument matcher.
+    expect(results[0]).toStrictEqual({
       answers: { fun: undefined, learned: undefined },
       note: "",
     });
+    expect(Object.keys(results[0].answers)).toEqual(
+      ITEMS.map((item) => item.key),
+    );
   });
 
   it("reports the values picked and the note typed", () => {
-    const onDone = vi.fn();
+    const { onDone, results } = captureDone();
     renderScreen({ onDone });
 
-    fireEvent.click(
-      within(rowFor("I had fun.")).getByRole("radio", { name: "Definitely" }),
-    );
-    fireEvent.click(
-      within(rowFor("I learned something new.")).getByRole("radio", { name: "No" }),
-    );
+    fireEvent.click(word(rowFor("I had fun."), "Definitely"));
+    fireEvent.click(word(rowFor("I learned something new."), "No"));
 
     fireEvent.click(
       screen.getByRole("button", {
@@ -109,7 +144,7 @@ describe("the session feedback screen", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
 
-    expect(onDone).toHaveBeenCalledWith({
+    expect(results[0]).toStrictEqual({
       answers: { fun: 5, learned: 1 },
       note: "we built a castle",
     });
@@ -135,5 +170,8 @@ describe("the session feedback screen", () => {
     expect(
       screen.getByRole("button", { name: "Done" }).hasAttribute("disabled"),
     ).toBe(true);
+    for (const radio of screen.getAllByRole("radio")) {
+      expect(radio.hasAttribute("disabled")).toBe(true);
+    }
   });
 });

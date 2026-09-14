@@ -162,13 +162,12 @@ const SCENE_RENDERERS: Record<
     if (!isVoiceRoomScenario(scenario)) notFound();
     return <VoiceRoomScene scenario={scenario} />;
   },
-  // Checked and not handed on: the leave path and the session-ended path render
-  // the same screen, so there is one scenario and the scene body branches on
-  // nothing. The check still belongs here, so a slug the registry does not
-  // declare 404s rather than rendering the screen under a made-up name.
+  // Two scenarios, because the two live paths differ by the line above the
+  // heading: the room closing at the window's end says so, and the reader who
+  // pressed Leave is told nothing they do not already know.
   "voice-feedback": (scenario) => {
     if (!isSessionFeedbackScenario(scenario)) notFound();
-    return <SessionFeedbackScene />;
+    return <SessionFeedbackScene scenario={scenario} />;
   },
   // Two surfaces, one body and one set of fixtures. The audience is the whole
   // difference between them, which is exactly what the pair of scenes is for:

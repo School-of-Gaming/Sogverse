@@ -396,7 +396,15 @@ export const PREVIEW_SCENES = [
     description:
       "The seven statements a gamer is asked on the way out of an online session, in the dashboard chrome — where whether the whole question fits one phone viewport can actually be judged.",
     chrome: "dashboard",
-    scenarios: [{ slug: "default", label: "Leaving a session" }],
+    scenarios: [
+      { slug: "default", label: "Leaving a session" },
+      {
+        slug: "session-ended",
+        label: "The session ended under them",
+        description:
+          "The same screen a line taller: the window closed, so the page says so above the heading.",
+      },
+    ],
   },
   {
     surface: "chat",

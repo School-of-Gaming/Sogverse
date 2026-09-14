@@ -3,7 +3,7 @@
  * directive: the renderer narrows a URL slug on the server, and a guard
  * exported from the client scene file cannot be called there.
  */
-export const SESSION_FEEDBACK_SCENARIOS = ["default"] as const;
+export const SESSION_FEEDBACK_SCENARIOS = ["default", "session-ended"] as const;
 
 export type SessionFeedbackSceneScenario =
   (typeof SESSION_FEEDBACK_SCENARIOS)[number];
