@@ -3181,7 +3181,7 @@ export default function AdminUIComponentsPage() {
         {/* One card, rendered unchanged in the parent, gamer and gedu Help
             sections. Every state is here because the three preview scenes can
             only ever show the idle one — a scene must never gain a live submit
-            that emails every admin. */}
+            that emails the support inbox. */}
         <p className="text-sm text-muted-foreground -mt-2">
           The first card of each pair is live &mdash; type into it &mdash;
           because the textarea, the two counters and the

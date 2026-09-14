@@ -293,27 +293,6 @@ async function readContext(
   };
 }
 
-/**
- * Who the staff mail goes to: every admin account, resolved at send time.
- *
- * **The same shape the feedback notification uses, and for the same reason.** A
- * hardcoded inbox is a list that drifts the moment somebody joins or leaves, and
- * it makes the mail's audience a constant rather than a fact about the platform;
- * reading `role = 'admin'` means an admin who exists is an admin who is told.
- * It needs the privileged client — a role column is not in anybody else's view —
- * which every caller here already holds for the RPC behind it.
- */
-async function readAdminRecipients(
-  client: AppSupabaseClient,
-): Promise<string[]> {
-  const { data, error } = await client
-    .from("profiles")
-    .select("email")
-    .eq("role", "admin");
-  if (error) throw error;
-  return data.flatMap((row) => (row.email ? [row.email] : []));
-}
-
 async function sendOffer({
   client,
   request,
@@ -467,22 +446,11 @@ async function sendStaff({
   reason,
   sentAt,
 }: SeatOfferStaffEmailInput): Promise<void> {
-  const [{ product, customer, participant }, adminEmails] = await Promise.all([
-    readContext(client, { customerId, participantId, productId }),
-    readAdminRecipients(client),
-  ]);
-
-  // Nobody to tell. Not an error to answer a family with — the seat is already
-  // free either way — but it is a platform with no admin account, which is
-  // worth a line in the log rather than a silent no-op.
-  if (adminEmails.length === 0) {
-    console.error("[seat-offer staff email] no admin recipients — skipping the send", {
-      productId,
-      participantId,
-      reason,
-    });
-    return;
-  }
+  const { product, customer, participant } = await readContext(client, {
+    customerId,
+    participantId,
+    productId,
+  });
 
   // Staff mail is written in the default locale, like every mail we send to
   // ourselves: the recipient is the support inbox, and a mail that changed
@@ -531,25 +499,21 @@ async function sendStaff({
   await sendTransactionalEmail({
     fromEmail: SENDER_EMAIL,
     fromName: SENDER_NAME,
-    // Every admin account, resolved above — the owner's decision for this flow,
-    // and the same recipient list the feedback notification uses. The thing this
-    // mail asks for is done in the admin UI by whoever gets to it first, so it
-    // goes to the people who can do it rather than to an inbox they would have
-    // to be watching.
-    toEmail: adminEmails,
+    // The shared support inbox, exactly where the help & feedback mail goes:
+    // whoever is on the inbox invites the next family, and a recipient list
+    // assembled from the profiles table changes whenever staff do.
+    toEmail: SUPPORT_EMAIL,
     subject: seatOfferStaffSubject(t, params),
     htmlContent: buildSeatOfferStaffEmail(t, locale, params),
     // The email CLAUDE.md draws two kinds — a product mail TO a person (reply to
     // support) and a mail we send to OURSELVES about a person (reply to that
-    // person). This is the second kind by its facts and the FIRST kind by what a
-    // reply would be for, and the second reading is the one that wins: nothing
-    // here is waiting on an answer from the family. The offer is over, and the
-    // next step is inviting somebody else. So Reply-To is the support inbox,
-    // where staff conversation already lives; a reply-to aimed at the family
-    // would point the one obvious control on the mail at the person this mail is
-    // not about, and on a decline their row is already deleted. Their address is
-    // still in the fact table, defused, for the rare case where writing to them
-    // is genuinely the right move.
+    // person). This is the second kind by its facts, but nothing here is waiting
+    // on an answer from the family: the offer is over, and the next step is
+    // inviting somebody else. So Reply-To stays the support inbox, where staff
+    // conversation already lives, rather than pointing the one obvious control
+    // on the mail at a family whose row, on a decline, is already deleted. Their
+    // address is still in the fact table, defused, for the rare case where
+    // writing to them is genuinely the right move.
     replyToEmail: SUPPORT_EMAIL,
   });
 }
