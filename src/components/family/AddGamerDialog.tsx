@@ -61,10 +61,11 @@ type Gender = "boy" | "girl" | "non_binary";
 type FormStep = "details" | "signIn" | "accounts";
 
 /**
- * DEMO — stripped after the ruling. The fields a card seeded straight onto
- * V5's third page has never had a page one to fill in, so the style guide
- * hands them over instead — the game handles above all, because the whole
- * point of that page is how its two rows read filled and empty side by side.
+ * DEMO — stripped after the ruling. A card the style guide opens part-way
+ * through V5 has never had the earlier pages filled in, so the style guide
+ * hands the values over instead — the game handles above all, because the
+ * whole point of the third page is how its two rows read filled and empty side
+ * by side.
  */
 interface DemoInitialFields {
   /** DEMO — the birth month as the select's own value, "1"–"12". */
@@ -77,8 +78,8 @@ interface DemoInitialFields {
   robloxUsername?: string;
   /**
    * DEMO — stripped after the ruling. V5's box, pre-ticked, so the style guide
-   * can stand the gated button and the enabled one side by side. Nothing but
-   * the style guide ever passes it.
+   * can stand page one's disabled Next and its enabled one side by side.
+   * Nothing but the style guide ever passes it.
    */
   guardianAttested?: boolean;
 }
@@ -91,7 +92,7 @@ interface DemoInitialFields {
  * a first name, and this makes the same guarantee for a card that opens there.
  *
  * `"accounts"` is DEMO — stripped after the ruling — and takes the same
- * guarantee for the same reason: its box names the child.
+ * guarantee because it sits after page two, which named the child.
  */
 type InitialState =
   | ({ step?: "details"; firstName?: string; signIn?: GamerSignIn } & DemoInitialFields)
@@ -130,10 +131,12 @@ const CREDENTIAL_FIELD_ID_PREFIX = "add-gamer";
  *
  * V1–V4 all put the ask on the sign-in page, which is already at the height the
  * dialog can hold at 360px. **V5 is the answer to that**: it moves the two game
- * rows off page one onto a third and final page of their own, reached by the
- * sign-in page's affirmative saying Continue, and puts the one box under them.
- * Page one loses two rows, page three is the two rows plus a box, and nothing
- * anywhere is a summary of what the parent just typed.
+ * rows off page one onto a third and final page of their own, and puts the box
+ * on page one instead, as the last row of the basic information the parent is
+ * already giving. Page one trades two rows for one box, page three is the two
+ * optional rows alone, and nothing anywhere is a summary of what the parent
+ * just typed. Every page's affirmative says what it has always said: Next,
+ * Next, then the production Add gamer.
  */
 type GuardianAttestationVariant = "v1" | "v2" | "v3" | "v4" | "v5";
 
@@ -171,21 +174,15 @@ const DEMO_ATTESTATION_REQUIRED =
 /** DEMO — stripped after the ruling */
 const DEMO_RULES_REQUIRED =
   "Please confirm you have read the Anti-Bullying and Discipline policy.";
-/** DEMO — stripped after the ruling. V5's affirmative on its last page. */
-const demoAddNamed = (name: string) => `Add ${name}`;
 /**
- * DEMO — stripped after the ruling. The group label under V5's third-page
- * divider, marking where the optional game rows stop and the one required box
- * begins.
+ * DEMO — stripped after the ruling. What V5's box calls the child before page
+ * one has been given a name: the box is the last row of the first page, so it
+ * renders while the first-name input is still empty, and the sentence has to
+ * read as English at that moment too. "This gamer" rather than a possessive
+ * dodge, because the row is pointing at the child being described directly
+ * above it, and the word swaps to the real name on the first keystroke.
  */
-const demoBeforeYouAdd = (name: string) => `Before you add ${name}`;
-/**
- * DEMO — stripped after the ruling. V5's affirmative while the box is unticked:
- * the button is disabled and says what would un-disable it, the same move the
- * enrolment panel's CTA makes.
- */
-const demoConfirmParentToContinue = (name: string) =>
-  `Confirm you're ${name}'s parent to continue`;
+const DEMO_UNNAMED_GAMER = "This gamer";
 
 /**
  * DEMO — stripped after the ruling.
@@ -303,20 +300,18 @@ function DemoGuardianAttestation({
 /**
  * DEMO — stripped after the ruling.
  *
- * The box that closes V5's third and final page, under the two game rows that
- * page carries. One sentence and nothing else: no restating of the fields the
- * parent just filled in, because a list of what we store is a list that drifts
- * the moment a column is added, and the Privacy Policy is where that list is
- * kept current.
+ * V5's box, and the last row of page one — under the gender buttons, with no
+ * divider and no group label above it, because it is part of the same basic-
+ * information section and a rule would announce a second section that does not
+ * exist. One sentence and nothing else: no restating of the fields the parent
+ * just filled in, because a list of what we store is a list that drifts the
+ * moment a column is added, and the Privacy Policy is where that list is kept
+ * current.
  *
- * **It brings its own break with it.** The two rows above are optional and the
- * box is not, and stacked at the page's own spacing they read as a third row of
- * the same kind. A rule plus a short label — the app's ordinary section break
- * (`border-t border-border` + padding, as the gamer sign-in card and the
- * pricing panel draw theirs) — says where the optional part stops, and the
- * label names what the box is for rather than repeating its sentence.
+ * No hint — per the `CheckboxRow` doc the absence of the optional marker *is*
+ * the "required".
  */
-function DemoAccountsAttestation({
+function DemoGuardianBox({
   name,
   disabled,
   guardianAttested,
@@ -328,30 +323,20 @@ function DemoAccountsAttestation({
   onGuardianAttestedChange: (next: boolean) => void;
 }) {
   return (
-    <div className="space-y-3 border-t border-border pt-4">
-      {/* The same weight and size a `Field` gives its label, muted, because it
-          labels a group rather than titling a section — sentence case per the
-          styling rule, and no tracking to go with it. */}
-      <p className="text-sm font-medium leading-none text-muted-foreground">
-        {demoBeforeYouAdd(name)}
-      </p>
-      {/* No hint — per the `CheckboxRow` doc the absence of the optional
-          marker *is* the "required". */}
-      <CheckboxRow
-        checked={guardianAttested}
-        onCheckedChange={onGuardianAttestedChange}
-        disabled={disabled}
-        label={
-          <>
-            {demoGuardianWithPolicy(name)}
-            <DemoPolicyLink href={ROUTES.privacy}>
-              {DEMO_PRIVACY_POLICY_NAME}
-            </DemoPolicyLink>
-            {DEMO_SENTENCE_END}
-          </>
-        }
-      />
-    </div>
+    <CheckboxRow
+      checked={guardianAttested}
+      onCheckedChange={onGuardianAttestedChange}
+      disabled={disabled}
+      label={
+        <>
+          {demoGuardianWithPolicy(name === "" ? DEMO_UNNAMED_GAMER : name)}
+          <DemoPolicyLink href={ROUTES.privacy}>
+            {DEMO_PRIVACY_POLICY_NAME}
+          </DemoPolicyLink>
+          {DEMO_SENTENCE_END}
+        </>
+      }
+    />
   );
 }
 
@@ -680,9 +665,8 @@ export function AddGamerFormCard({
     }
 
     // DEMO — stripped after the ruling. V5's third page has nothing left to
-    // refuse: the two game rows are optional and commit themselves, and the box
-    // gates the button rather than being checked after a press, so reaching
-    // here at all means the parent has already ticked it.
+    // refuse: both game rows are optional and commit themselves, and the box
+    // that gates page one's Next was ticked two pages ago.
     if (step === "accounts") {
       await create();
       return;
@@ -797,18 +781,10 @@ export function AddGamerFormCard({
           {/* DEMO — stripped after the ruling. V5's third page, which no
               production step reaches: `step` is only ever `"accounts"` under
               `demoVariant === "v5"`. The two rows page one no longer carries,
-              then the one box — in that order, because the box attests to the
-              child rather than to the handles above it and so reads last. */}
+              both optional, rendered exactly as page one renders them in
+              production — no box, no break, no label. */}
           {step === "accounts" ? (
-            <>
-              {gameRows}
-              <DemoAccountsAttestation
-                name={trimmedName}
-                disabled={committing}
-                guardianAttested={guardianAttested}
-                onGuardianAttestedChange={setGuardianAttested}
-              />
-            </>
+            gameRows
           ) : step === "signIn" ? (
             <>
               {/* The question names the child rather than "your gamer": page
@@ -972,7 +948,16 @@ export function AddGamerFormCard({
                 V5 is the variant that moves them to a page of their own, so
                 page one asks for the child and nothing else. Every other
                 caller, production included, renders them here as always. */}
-            {demoVariant !== "v5" && gameRows}
+            {demoVariant === "v5" ? (
+              <DemoGuardianBox
+                name={trimmedName}
+                disabled={committing}
+                guardianAttested={guardianAttested}
+                onGuardianAttestedChange={setGuardianAttested}
+              />
+            ) : (
+              gameRows
+            )}
 
             </>
           )}
@@ -995,8 +980,9 @@ export function AddGamerFormCard({
         {/* Two fixed labels, one per page, decided by the page alone: page one
             always advances and page two always creates, so the affirmative says
             what pressing it will do without any radio having to change it.
-            (DEMO — stripped after the ruling: V5's third page is the one
-            exception, where the label is decided by the box below it.) */}
+            (DEMO — stripped after the ruling: V5 keeps the same two labels on
+            three pages — Next, Next, then the create — and gates page one's
+            Next on its box rather than renaming anything.) */}
         <DialogFooter className="gap-2">
           <Button
             type="button"
@@ -1019,29 +1005,26 @@ export function AddGamerFormCard({
           </Button>
           <Button
             type="submit"
-            // DEMO — stripped after the ruling: the `"accounts"` arm, and the
-            // width with it. The box gates the button the way the enrolment
-            // panel's rules row gates its CTA, and the button names what is
-            // missing while it does — so the label changes length under the
-            // parent's own tick. Full width is what keeps that swap from
-            // resizing the button and dragging Back along with it: in the
-            // stacked footer the children already stretch, and `sm:flex-1`
-            // makes the row behave the same way.
-            className={step === "accounts" ? "w-full sm:flex-1" : undefined}
-            disabled={committing || (step === "accounts" && !guardianAttested)}
+            // DEMO — stripped after the ruling: the second disjunct. V5's box
+            // gates page one's Next the way the enrolment panel's rules row
+            // gates its CTA — the button goes from disabled to enabled under
+            // the parent's own tick and its label never changes, so nothing in
+            // the footer resizes.
+            disabled={
+              committing ||
+              (demoVariant === "v5" && step === "details" && !guardianAttested)
+            }
           >
             {committing && <Loader2 className="animate-spin" />}
             {committing
               ? t("submitting")
               : step === "details"
                 ? c("next")
-                : step === "accounts"
-                  ? // DEMO — stripped after the ruling. Only V5's last page
-                    // creates; its first two just move the parent along and
-                    // both say Next, exactly as page one always has.
-                    guardianAttested
-                    ? demoAddNamed(trimmedName)
-                    : demoConfirmParentToContinue(trimmedName)
+                : // DEMO — stripped after the ruling. V5's third page is the
+                  // one that creates, and it says exactly what production's
+                  // final page says; its first two pages both say Next.
+                  step === "accounts"
+                  ? t("submit")
                   : demoVariant === "v5"
                     ? c("next")
                     : // DEMO — stripped after the ruling. V3 has no box: the

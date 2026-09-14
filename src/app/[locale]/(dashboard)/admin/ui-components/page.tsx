@@ -3163,14 +3163,14 @@ export default function AdminUIComponentsPage() {
           Lynx&rsquo;s lawyer wants a parent creating a child account to be shown
           the Privacy Policy again and to attest they are that child&rsquo;s
           parent or legal guardian. V1&ndash;V4 ask on page two of the real card,
-          directly above the button that creates the child; V5 moves the two
-          game-account rows off page one onto a third and final page and puts
-          the box under them, behind a break of its own, so pages one and two
-          both read Next and page three is what creates the child. The submit is
-          inert. V1&ndash;V4 refuse an unticked box from the card&rsquo;s own
-          error banner; V5 does not have to, because its button is disabled
-          until the box is ticked and says so while it waits. Judge them at
-          360px too &mdash; the height of page two is what V5 exists to answer.
+          directly above the button that creates the child; V5 asks on page one
+          instead, as the last row under the gender buttons, and moves the two
+          optional game-account rows off to a third and final page of their own.
+          Page one&rsquo;s Next is simply disabled until the box is ticked
+          &mdash; no label anywhere changes &mdash; while V1&ndash;V4 refuse an
+          unticked box from the card&rsquo;s own error banner. The submit is
+          inert. Judge them at 360px too &mdash; the height of page two is what
+          V5 exists to answer.
         </p>
         <GuardianAttestationDemo />
       </Section>
@@ -4369,32 +4369,52 @@ function AddGamerDialogDemo() {
 /**
  * DEMO — stripped after the ruling.
  *
- * Four shapes of the guardian attestation Lynx's lawyer is asking for, on the
- * one page it can live on: page two of the add-gamer form, directly above the
- * button that creates the child. Seeded through the card's `initial` seam with
- * a name and the switch-only answer already picked, so the four differ by the
- * block above the footer and by nothing else.
+ * Five shapes of the guardian attestation Lynx's lawyer is asking for. V1–V4
+ * put it on page two of the add-gamer form, directly above the button that
+ * creates the child; V5 puts it on page one and rearranges the pages around it.
+ * Seeded through the card's `initial` seam with a name, a birthday and the
+ * switch-only answer already picked, so each card opens on the page being
+ * judged with everything before it already answered.
  */
 function GuardianAttestationDemo() {
   const dismiss = () => {};
   // V5 first, and three times, because it is the one that answers the objection
-  // to the other four and it is the only one that changes two pages: the card
-  // opens on each of them in turn, so both changes are looked at rather than
-  // one of them being taken on trust, and its third page appears twice because
-  // the tick swaps the button's label as well as its disabled state. V1–V4 each
-  // change page two alone.
+  // to the other four and it is the only one that changes two pages: page one
+  // appears twice, unticked and ticked, because the disabled Next and the
+  // enabled one are the pair being judged and a reader comparing them from
+  // memory is the round-trip a demo exists to remove; page three appears once,
+  // because there is nothing on it that has two states. V1–V4 each change page
+  // two alone.
   const variants = [
     {
       id: "v5-details",
       variant: "v5",
-      caption: "V5 — step one without the game rows",
-      initial: { firstName: "Aino", signIn: "parent", step: "details" },
+      caption: "V5 — step one, box unticked (Next disabled)",
+      initial: {
+        firstName: "Aino",
+        signIn: "parent",
+        step: "details",
+        month: "3",
+        year: "2013",
+      },
+    },
+    {
+      id: "v5-details-ticked",
+      variant: "v5",
+      caption: "V5 — step one, box ticked",
+      initial: {
+        firstName: "Aino",
+        signIn: "parent",
+        step: "details",
+        month: "3",
+        year: "2013",
+        guardianAttested: true,
+      },
     },
     {
       id: "v5-accounts",
       variant: "v5",
-      caption:
-        "V5 — step three: game accounts, a break, then the required box (button gated)",
+      caption: "V5 — step three: game accounts, all optional",
       initial: {
         firstName: "Aino",
         signIn: "parent",
@@ -4404,24 +4424,6 @@ function GuardianAttestationDemo() {
         // One row filled and one empty, which is the ordinary case and the
         // only arrangement that shows both of the row's states at once.
         minecraftUsername: "AinoBuilds",
-      },
-    },
-    {
-      // The same page one tick later. Two cards rather than a note under one,
-      // because the gated label and the enabled one are the pair being judged
-      // and a reader comparing them from memory is the round-trip a demo
-      // exists to remove.
-      id: "v5-accounts-ticked",
-      variant: "v5",
-      caption: "V5 — step three, box ticked",
-      initial: {
-        firstName: "Aino",
-        signIn: "parent",
-        step: "accounts",
-        month: "3",
-        year: "2013",
-        minecraftUsername: "AinoBuilds",
-        guardianAttested: true,
       },
     },
     {
