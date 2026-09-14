@@ -344,6 +344,34 @@ describe("page one's guardian declaration", () => {
     expect(link?.textContent).toBe("Privacy Policy");
     expect(link?.rel).toContain("noopener");
   });
+
+  // The gate a parent meets is page one's disabled Next, and that is what the
+  // cases above pin. This one pins the thing underneath it: the create itself
+  // refuses without the declaration, so the attestation the request carries is
+  // an answer somebody gave rather than a constant the payload spells. Driven
+  // through the `initial` seam, which is the one way to stand on page three
+  // without passing the button — exactly the shape a future caller or a demo
+  // could take by accident.
+  it("does not create when page three is reached with the box unticked", async () => {
+    const view = render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <AddGamerFormCard
+          onOpenChange={vi.fn()}
+          onCreate={onCreate}
+          initial={{ step: "accounts", firstName: "Lily" }}
+        />
+      </NextIntlClientProvider>,
+    );
+
+    const form = view.container.querySelector("form");
+    if (!form) throw new Error("no form");
+
+    await act(async () => {
+      fireEvent.submit(form);
+    });
+
+    expect(onCreate).not.toHaveBeenCalled();
+  });
 });
 
 describe("the box under the radios", () => {

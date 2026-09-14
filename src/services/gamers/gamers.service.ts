@@ -256,9 +256,10 @@ export class GamerService {
         username: input.username,
         email: input.email,
         password: input.password,
-        // The parent's declaration about this child. Carried like every other
-        // field rather than hardcoded here, so the one place it can be true is
-        // the box the parent actually ticked.
+        // The parent's declaration about this child. Carried through like every
+        // other field rather than hardcoded here, so the service never asserts
+        // on the parent's behalf: the value has to arrive from a caller, and the
+        // form that makes this call refuses to submit until the box is ticked.
         guardianAttested: input.guardianAttested,
       }),
     });

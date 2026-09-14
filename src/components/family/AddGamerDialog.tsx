@@ -335,6 +335,14 @@ export function AddGamerFormCard({
   }
 
   async function create() {
+    // The declaration is the reason this call is allowed to be made, so it is
+    // checked here and not only where the button is drawn. Page one's Next is
+    // disabled until the box is ticked, which is what a parent meets; this is
+    // what makes the state load-bearing rather than decorative, so no path that
+    // reaches `create()` — a seam that opens the card on a later page, a future
+    // caller — can send an attestation nobody made.
+    if (!guardianAttested) return;
+
     setError(null);
     setCommitting(true);
 
@@ -358,10 +366,10 @@ export function AddGamerFormCard({
         username: signIn === "username" ? normalizeGamerUsername(username) : undefined,
         password: signIn === "username" ? password : undefined,
         email: signIn === "email" ? email.trim() : undefined,
-        // Narrowed to the literal the input type demands. Page one's Next is
-        // disabled until the box is ticked and page three is two pages past it,
-        // so reaching here with anything else is unreachable rather than
-        // unhandled — and the route's schema refuses it regardless.
+        // Narrowed to the literal the input type demands. `create()` returns
+        // early unless the box is ticked, so by here the value is true as a
+        // fact about the parent's answer rather than as a constant — and the
+        // route's schema refuses anything else regardless.
         guardianAttested: true,
       });
       onCreated?.(result.gamerId);
@@ -686,7 +694,6 @@ export function AddGamerFormCard({
             <CheckboxRow
               checked={guardianAttested}
               onCheckedChange={setGuardianAttested}
-              disabled={committing}
               label={t.rich(
                 trimmedName === ""
                   ? "guardianAttestationUnnamed"

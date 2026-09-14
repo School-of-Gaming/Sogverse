@@ -4301,22 +4301,28 @@ function inertCreateGamer(): Promise<{ gamerId: string }> {
  * its Next — the gate is the thing worth seeing, and a ticked box is one click
  * away in the demo itself.
  *
- * **No `Dialog` around them.** A dialog is a portal, so four of them would stack
- * in `document.body` on top of one another rather than sitting in a row — and
- * `DialogContent` needs no portal to render, which is the whole reason the card
- * is separable from it. The height cap goes with the dialog: `90vh` is about a
- * viewport, and these are four columns on a page.
+ * **No `Dialog` around them.** A dialog is a portal, so all five of them would
+ * stack in `document.body` on top of one another rather than sitting in a row —
+ * and `DialogContent` needs no portal to render, which is the whole reason the
+ * card is separable from it. The height cap goes with the dialog: `90vh` is
+ * about a viewport, and these are columns on a page.
  *
- * **Each card gets its own `idPrefix`.** Four cards on one page is the case the
+ * **Each card gets its own `idPrefix`.** Five cards on one page is the case the
  * seam exists for: without it every label would point at the first card's input,
- * and all four radio groups would share a `name`, so the browser would treat the
- * twelve radios as one group and let a click in one card clear another's answer.
+ * and the radio groups would all share a `name`, so the browser would treat the
+ * nine radios the three sign-in cards paint as one group and let a click in one
+ * card clear another's answer.
+ *
+ * **The grid is two then three across, so the fifth card sits in a row rather
+ * than trailing one.** Five does not divide into four columns, and a lone card
+ * on a second row reads as a card that did not fit rather than as the last page
+ * of the flow.
  */
 function AddGamerDialogDemo() {
   const dismiss = () => {};
 
   return (
-    <div className="grid items-start gap-4 lg:grid-cols-2 2xl:grid-cols-4">
+    <div className="grid items-start gap-4 lg:grid-cols-2 2xl:grid-cols-3">
       <AddGamerFormCard
         onOpenChange={dismiss}
         onCreate={inertCreateGamer}

@@ -1271,7 +1271,7 @@
       "confirmPasswordPlaceholder": "mu’mey yIchel",
       "location": "Daq",
       "termsLabel": "<terms>Terms and Conditions</terms> vIlaj ’ej <privacy>Privacy Policy</privacy> vIlaDta’.",
-      "termsRequired": "chutmey yIlaj ’ej <privacy>Privacy Policy</privacy> DalaDta’ ’e’ yIper!",
+      "termsRequired": "chutmey yIlaj ’ej Privacy Policy DalaDta’ ’e’ yIper!",
       "marketingConsentLabel": "noH Quj yejHaD QIn HevmeH vIchaw’.",
       "marketingConsentHint": "ra’be’lu’ — ngoQmeylIjDaq reH DachoHlaH.",
       "creatingAccount": "account vIchenmoH...",
