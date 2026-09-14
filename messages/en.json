@@ -2544,7 +2544,7 @@
     "intro": {
       "heading": "The short version — for parents and young people",
       "blocks": [
-        "The Creator Academy Programme is for young people in France aged 13–17. A parent or legal guardian must complete registration.",
+        "The Creator Academy Programme is for young people in France aged <strong>13–17</strong>. A parent or legal guardian must complete registration.",
         "We collect only what we need to register your child, deliver the Programme safely and understand whether it is working. This includes the parent’s contact details, limited information about the child, the child’s Roblox username or User ID, and information about attendance, completion and game publication.",
         "School of Gaming uses information to operate the registration and learning platform. Lynx Educate processes Programme information as needed to manage delivery. Each organisation has different responsibilities depending on the activity and the purpose for which personal information is used.",
         [
@@ -2552,7 +2552,7 @@
           "School of Gaming is the data controller for the operation of Sogverse and the personal information it processes for its own platform services.",
           "For the limited Programme impact research carried out on behalf of Roblox, Roblox is the data controller, Lynx Educate acts as Roblox’s data processor, and School of Gaming acts as Lynx Educate’s approved sub-processor."
         ],
-        "The following choices are optional and will not affect your child’s place:",
+        "The following choices are <strong>optional</strong> and will not affect your child’s place:",
         [
           "Emails to the parent from Lynx Educate about future Roblox events and gaming resources.",
           "Photography or filming for private Programme reporting to Roblox.",
@@ -2560,7 +2560,7 @@
         ],
         "Routine online sessions are not recorded. A child will not be photographed or filmed where the required permission has not been given or where the child does not want to take part.",
         "Lynx Educate and School of Gaming do not sell Programme registration information or use it to advertise to children.",
-        "You and your child may ask to see, correct or delete information, withdraw an optional consent, or object to certain uses by contacting admin@lynxeducate.com or {supportEmail}."
+        "You and your child may ask to see, correct or delete information, withdraw an optional consent, or object to certain uses by contacting <strong>admin@lynxeducate.com</strong> or <strong>{supportEmail}</strong>."
       ]
     },
     "sections": {
@@ -2568,7 +2568,7 @@
         "heading": "Who this policy applies to",
         "blocks": [
           "This policy applies to parents, legal guardians and young people registering for the digital education programme in France delivered by Lynx Educate and School of Gaming in collaboration with Roblox (The Programme).",
-          "The Programme is for young people aged 13–17. A parent or legal guardian must complete registration and confirm that they have authority to register the child.",
+          "The Programme is for young people aged <strong>13–17</strong>. A parent or legal guardian must complete registration and confirm that they have authority to register the child.",
           "The policy covers Programme registration, administration, learning sessions, events, support, safeguarding and impact evaluation. It supplements School of Gaming’s <linkPrivacy>general Privacy Policy</linkPrivacy>. Where the two policies conflict in relation to this Programme, this Programme-specific policy applies.",
           "The child’s separate use of a Roblox account, Roblox Studio or another Roblox service is governed by Roblox’s own privacy policy and terms.",
           "The <linkRobloxTerms>Programme Terms</linkRobloxTerms> establish the 13–17 age range, parent-led registration and Programme-specific data sharing."
@@ -2582,21 +2582,21 @@
         "heading": "Lynx Educate SAS",
         "blocks": [
           "Lynx Educate manages learner recruitment, Programme administration, operational delivery, participant communications and reporting.",
-          "Lynx Educate SAS",
+          "<strong>Lynx Educate SAS</strong>",
           "185 rue Ordener",
           "75018 Paris, France",
-          "Email: admin@lynxeducate.com"
+          "Email: <strong>admin@lynxeducate.com</strong>"
         ]
       },
       "responsibleSog": {
         "heading": "School of Gaming Galactic Oy",
         "blocks": [
           "School of Gaming operates Sogverse, manages the registration and learning environment, provides the curriculum and facilitators, delivers learning sessions and ensures safeguarding oversight.",
-          "School of Gaming Galactic Oy",
+          "<strong>School of Gaming Galactic Oy</strong>",
           "Business ID: 3110461-1",
           "Isokatu 56",
           "90100 Oulu, Finland",
-          "Email: {supportEmail}"
+          "Email: <strong>{supportEmail}</strong>"
         ]
       },
       "responsibleRoblox": {
@@ -2834,11 +2834,11 @@
           ],
           "School of Gaming’s principal technical providers currently include:",
           [
-            "Supabase, for account and Programme information.",
-            "Brevo, for operational emails and reminders.",
-            "Daily.co, for live voice and video functionality.",
-            "Vercel, for website hosting and privacy-friendly analytics.",
-            "Meta/WhatsApp, only where a family chooses WhatsApp communications."
+            "<strong>Supabase</strong>, for account and Programme information.",
+            "<strong>Brevo</strong>, for operational emails and reminders.",
+            "<strong>Daily.co</strong>, for live voice and video functionality.",
+            "<strong>Vercel</strong>, for website hosting and privacy-friendly analytics.",
+            "<strong>Meta/WhatsApp</strong>, only where a family chooses WhatsApp communications."
           ],
           "These providers may process information only to perform their contracted services and must protect it appropriately."
         ]
@@ -2857,13 +2857,13 @@
         "blocks": [
           "We do not keep every type of information for the same period.",
           [
-            "Sogverse account information: kept while the family account is active and then deleted or anonymised, except where a limited record must lawfully be retained.",
-            "Programme administration and participation information: kept until Programme delivery, final reporting and reasonable follow-up are complete, then deleted or anonymised.",
-            "Roblox research dataset: returned or securely deleted when the relevant processing services end, unless applicable law requires limited retention.",
-            "Marketing information: kept until the parent unsubscribes.",
-            "Media and media permissions: kept for the permitted reporting or publication purpose and reviewed periodically.",
-            "Safeguarding, incident and legal records: may be kept longer where necessary to protect a child, investigate a concern, comply with law, or establish or defend legal claims.",
-            "Security records: kept only for the period reasonably needed to protect and investigate the service."
+            "<strong>Sogverse account information:</strong> kept while the family account is active and then deleted or anonymised, except where a limited record must lawfully be retained.",
+            "<strong>Programme administration and participation information:</strong> kept until Programme delivery, final reporting and reasonable follow-up are complete, then deleted or anonymised.",
+            "<strong>Roblox research dataset:</strong> returned or securely deleted when the relevant processing services end, unless applicable law requires limited retention.",
+            "<strong>Marketing information:</strong> kept until the parent unsubscribes.",
+            "<strong>Media and media permissions:</strong> kept for the permitted reporting or publication purpose and reviewed periodically.",
+            "<strong>Safeguarding, incident and legal records:</strong> may be kept longer where necessary to protect a child, investigate a concern, comply with law, or establish or defend legal claims.",
+            "<strong>Security records:</strong> kept only for the period reasonably needed to protect and investigate the service."
           ],
           "Closing a Sogverse account does not automatically close a separate Roblox account or remove an experience published on Roblox."
         ]
@@ -2884,8 +2884,8 @@
           "Withdrawing consent does not affect processing that was lawful before withdrawal.",
           "Children may contact us directly about their own information. Parents or legal guardians may also make a request for a child, subject to the child’s own rights, age and maturity.",
           "There is no solely automated decision-making that produces legal or similarly significant effects on participants.",
-          "Send requests to admin@lynxeducate.com or {supportEmail}. The organisations will coordinate the response and route Roblox-related requests to Roblox where necessary.",
-          "Families also have the right to complain to the Commission nationale de l’informatique et des libertés — <linkCnil>CNIL</linkCnil>."
+          "Send requests to <strong>admin@lynxeducate.com</strong> or <strong>{supportEmail}</strong>. The organisations will coordinate the response and route Roblox-related requests to Roblox where necessary.",
+          "Families also have the right to complain to the <strong>Commission nationale de l’informatique et des libertés — <linkCnil>CNIL</linkCnil></strong>."
         ]
       },
       "security": {
@@ -2915,14 +2915,14 @@
       "contact": {
         "heading": "Contact",
         "blocks": [
-          "Lynx Educate SAS",
+          "<strong>Lynx Educate SAS</strong>",
           "185 rue Ordener",
           "75018 Paris, France",
-          "admin@lynxeducate.com",
-          "School of Gaming Galactic Oy",
+          "<strong>admin@lynxeducate.com</strong>",
+          "<strong>School of Gaming Galactic Oy</strong>",
           "Isokatu 56",
           "90100 Oulu, Finland",
-          "{supportEmail}"
+          "<strong>{supportEmail}</strong>"
         ]
       }
     }
@@ -3013,7 +3013,7 @@
     "intro": {
       "heading": "The short version",
       "blocks": [
-        "This explains what you’re signing your child up for when you register for the Creator Academy Programme. It’s a joint programme delivered by Lynx Educate and School of Gaming, in collaboration with Roblox. If anything’s unclear, email admin@lynxeducate.com"
+        "This explains what you’re signing your child up for when you register for the Creator Academy Programme. It’s a joint programme delivered by Lynx Educate and School of Gaming, in collaboration with Roblox. If anything’s unclear, email <strong>admin@lynxeducate.com</strong>."
       ]
     },
     "sections": {
@@ -3021,8 +3021,8 @@
         "heading": "Who’s involved",
         "blocks": [
           [
-            "Lynx Educate SAS and School of Gaming Galactic Oy (“SOG”) design and deliver this Programme together — in this document, “we”/“us” means both of us jointly, unless we say otherwise.",
-            "Roblox Corporation (“Roblox”) sponsors the Programme and provides the platform your child will build on. Roblox is not a party to these Terms."
+            "<strong>Lynx Educate SAS</strong> and <strong>School of Gaming Galactic Oy (“SOG”)</strong> design and deliver this Programme together — in this document, “we”/“us” means both of us jointly, unless we say otherwise.",
+            "<strong>Roblox Corporation</strong> (“Roblox”) sponsors the Programme and provides the platform your child will build on. Roblox is not a party to these Terms."
           ],
           "Registration and sessions happen on School of Gaming’s platform (“Sogverse”). By registering, you’re agreeing to these Programme-specific terms, which apply alongside (and take precedence over, where they conflict with) <linkTerms>School of Gaming</linkTerms> and Lynx’s standard Terms and Conditions."
         ]
@@ -3048,14 +3048,14 @@
       "safety": {
         "heading": "Safety and supervision",
         "blocks": [
-          "Every session is supervised by a trained facilitator. Our approach to behaviour and safeguarding is set out in our joint <linkRobloxSafeguarding>Child Safeguarding Policy</linkRobloxSafeguarding>, available upon request."
+          "Every session is supervised by a trained facilitator. Our approach to behaviour and safeguarding is set out in our joint <strong><linkRobloxSafeguarding>Child Safeguarding Policy</linkRobloxSafeguarding></strong>, available upon request."
         ]
       },
       "information": {
         "heading": "Your information",
         "blocks": [
-          "How we use your and your child’s information is explained in our <linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy>. By registering, you confirm you’ve read and understood it.",
-          "When enrolling in a Roblox programme, the information associated with your School of Gaming account (including your contact details and your child’s account information) will also be shared with Lynx Educate for the purposes of delivering the programme and with Roblox for the purposes of programme impact research. See the <linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy> for more information."
+          "How we use your and your child’s information is explained in our <strong><linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy></strong>. By registering, you confirm you’ve read and understood it.",
+          "When enrolling in a Roblox programme, the information associated with your School of Gaming account (including your contact details and your child’s account information) will also be shared with Lynx Educate for the purposes of delivering the programme and with Roblox for the purposes of programme impact research. See the <strong><linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy></strong> for more information."
         ]
       },
       "media": {

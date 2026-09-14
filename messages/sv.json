@@ -3576,7 +3576,7 @@
     "intro": {
       "heading": "Kort sammanfattning – för föräldrar och unga",
       "blocks": [
-        "Programmet Skaparnas akademi riktar sig till unga i Frankrike i åldern 13–17 år. Anmälan måste göras av en förälder eller vårdnadshavare.",
+        "Programmet Skaparnas akademi riktar sig till unga i Frankrike i åldern <strong>13–17</strong> år. Anmälan måste göras av en förälder eller vårdnadshavare.",
         "Vi samlar bara in det vi behöver för att anmäla ditt barn, genomföra Programmet på ett tryggt sätt och förstå om det fungerar. Det omfattar förälderns kontaktuppgifter, begränsade uppgifter om barnet, barnets Roblox-användarnamn eller Roblox-ID samt uppgifter om närvaro, slutförande och publicering av spel.",
         "School of Gaming använder uppgifterna för att driva anmälnings- och lärplattformen. Lynx Educate behandlar Programmets uppgifter i den utsträckning som behövs för att sköta genomförandet. Organisationerna har olika ansvar beroende på aktiviteten och på ändamålet med behandlingen av personuppgifterna.",
         [
@@ -3584,7 +3584,7 @@
           "School of Gaming är personuppgiftsansvarig för driften av Sogverse och för de personuppgifter som behandlas inom företagets egna plattformstjänster.",
           "För den begränsade effektforskning som utförs på uppdrag av Roblox är Roblox personuppgiftsansvarig, Lynx Educate är personuppgiftsbiträde åt Roblox och School of Gaming är godkänt underbiträde åt Lynx Educate."
         ],
-        "Följande val är frivilliga och påverkar inte ditt barns plats:",
+        "Följande val är <strong>frivilliga</strong> och påverkar inte ditt barns plats:",
         [
           "E-post till föräldern från Lynx Educate om kommande Roblox-evenemang och resurser om spel.",
           "Foto eller film för icke-offentlig rapportering om Programmet till Roblox.",
@@ -3592,7 +3592,7 @@
         ],
         "Ordinarie träffar online spelas inte in. Inget barn fotograferas eller filmas om det nödvändiga tillståndet saknas eller om barnet inte vill vara med.",
         "Lynx Educate och School of Gaming säljer inte anmälningsuppgifter från Programmet och använder dem inte för reklam riktad till barn.",
-        "Du och ditt barn kan begära att få se, rätta eller radera uppgifter, återkalla ett frivilligt samtycke eller invända mot viss användning genom att kontakta admin@lynxeducate.com eller {supportEmail}."
+        "Du och ditt barn kan begära att få se, rätta eller radera uppgifter, återkalla ett frivilligt samtycke eller invända mot viss användning genom att kontakta <strong>admin@lynxeducate.com</strong> eller <strong>{supportEmail}</strong>."
       ]
     },
     "sections": {
@@ -3600,7 +3600,7 @@
         "heading": "Vem policyn gäller",
         "blocks": [
           "Den här policyn gäller föräldrar, vårdnadshavare och unga som anmäler sig till det program för digital utbildning i Frankrike som drivs av Lynx Educate och School of Gaming i samarbete med Roblox (Programmet).",
-          "Programmet riktar sig till unga i åldern 13–17 år. En förälder eller vårdnadshavare måste göra anmälan och bekräfta att hen har rätt att anmäla barnet.",
+          "Programmet riktar sig till unga i åldern <strong>13–17</strong> år. En förälder eller vårdnadshavare måste göra anmälan och bekräfta att hen har rätt att anmäla barnet.",
           "Policyn omfattar anmälan till Programmet, administration, lärandeträffar, evenemang, support, barns trygghet och utvärdering av effekt. Den kompletterar School of Gamings <linkPrivacy>allmänna integritetspolicy</linkPrivacy>. Om de två policyerna står i konflikt med varandra när det gäller Programmet gäller den här programspecifika policyn.",
           "Barnets egen användning av ett Roblox-konto, Roblox Studio eller någon annan Roblox-tjänst omfattas av Roblox egen integritetspolicy och egna villkor.",
           "<linkRobloxTerms>Programmets villkor</linkRobloxTerms> fastställer åldersspannet 13–17 år, att anmälan görs av föräldern och den datadelning som är specifik för Programmet."
@@ -3614,21 +3614,21 @@
         "heading": "Lynx Educate SAS",
         "blocks": [
           "Lynx Educate sköter rekrytering av deltagare, administration av Programmet, det praktiska genomförandet, deltagarkommunikation och rapportering.",
-          "Lynx Educate SAS",
+          "<strong>Lynx Educate SAS</strong>",
           "185 rue Ordener",
           "75018 Paris, Frankrike",
-          "E-post: admin@lynxeducate.com"
+          "E-post: <strong>admin@lynxeducate.com</strong>"
         ]
       },
       "responsibleSog": {
         "heading": "School of Gaming Galactic Oy",
         "blocks": [
           "School of Gaming driver Sogverse, sköter anmälnings- och lärmiljön, tillhandahåller kursplanen och ledarna, håller i lärandeträffarna och ansvarar för tillsynen av barns trygghet.",
-          "School of Gaming Galactic Oy",
+          "<strong>School of Gaming Galactic Oy</strong>",
           "FO-nummer: 3110461-1",
           "Isokatu 56",
           "90100 Uleåborg, Finland",
-          "E-post: {supportEmail}"
+          "E-post: <strong>{supportEmail}</strong>"
         ]
       },
       "responsibleRoblox": {
@@ -3866,11 +3866,11 @@
           ],
           "School of Gamings viktigaste tekniska leverantörer är för närvarande:",
           [
-            "Supabase, för konto- och programuppgifter.",
-            "Brevo, för e-post om driften och påminnelser.",
-            "Daily.co, för ljud och video i realtid.",
-            "Vercel, för webbhotell och integritetsvänlig statistik.",
-            "Meta/WhatsApp, endast när en familj väljer kommunikation via WhatsApp."
+            "<strong>Supabase</strong>, för konto- och programuppgifter.",
+            "<strong>Brevo</strong>, för e-post om driften och påminnelser.",
+            "<strong>Daily.co</strong>, för ljud och video i realtid.",
+            "<strong>Vercel</strong>, för webbhotell och integritetsvänlig statistik.",
+            "<strong>Meta/WhatsApp</strong>, endast när en familj väljer kommunikation via WhatsApp."
           ],
           "Leverantörerna får bara behandla uppgifterna för att utföra de tjänster som avtalats och måste skydda dem på lämpligt sätt."
         ]
@@ -3889,13 +3889,13 @@
         "blocks": [
           "Vi sparar inte alla typer av uppgifter lika länge.",
           [
-            "Uppgifter om Sogverse-kontot: sparas så länge familjens konto är aktivt och raderas eller anonymiseras sedan, utom när en begränsad uppgift måste sparas enligt lag.",
-            "Uppgifter om administration och deltagande i Programmet: sparas tills genomförandet, slutrapporteringen och rimlig uppföljning är klara, och raderas eller anonymiseras därefter.",
-            "Roblox forskningsdata: återlämnas eller raderas säkert när de aktuella behandlingstjänsterna upphör, om inte tillämplig lag kräver begränsad lagring.",
-            "Marknadsföringsuppgifter: sparas tills föräldern avregistrerar sig.",
-            "Material och mediatillstånd: sparas för det tillåtna rapporterings- eller publiceringsändamålet och ses över regelbundet.",
-            "Uppgifter om trygghet, incidenter och rättsliga ärenden: kan sparas längre när det behövs för att skydda ett barn, utreda en oro, följa lag eller fastställa, göra gällande eller försvara rättsliga anspråk.",
-            "Säkerhetsloggar: sparas bara så länge som rimligen behövs för att skydda och utreda tjänsten."
+            "<strong>Uppgifter om Sogverse-kontot:</strong> sparas så länge familjens konto är aktivt och raderas eller anonymiseras sedan, utom när en begränsad uppgift måste sparas enligt lag.",
+            "<strong>Uppgifter om administration och deltagande i Programmet:</strong> sparas tills genomförandet, slutrapporteringen och rimlig uppföljning är klara, och raderas eller anonymiseras därefter.",
+            "<strong>Roblox forskningsdata:</strong> återlämnas eller raderas säkert när de aktuella behandlingstjänsterna upphör, om inte tillämplig lag kräver begränsad lagring.",
+            "<strong>Marknadsföringsuppgifter:</strong> sparas tills föräldern avregistrerar sig.",
+            "<strong>Material och mediatillstånd:</strong> sparas för det tillåtna rapporterings- eller publiceringsändamålet och ses över regelbundet.",
+            "<strong>Uppgifter om trygghet, incidenter och rättsliga ärenden:</strong> kan sparas längre när det behövs för att skydda ett barn, utreda en oro, följa lag eller fastställa, göra gällande eller försvara rättsliga anspråk.",
+            "<strong>Säkerhetsloggar:</strong> sparas bara så länge som rimligen behövs för att skydda och utreda tjänsten."
           ],
           "Att stänga ett Sogverse-konto stänger inte automatiskt ett separat Roblox-konto och tar inte bort en upplevelse som publicerats på Roblox."
         ]
@@ -3916,8 +3916,8 @@
           "Att återkalla ett samtycke påverkar inte den behandling som var laglig innan återkallelsen.",
           "Barn får kontakta oss direkt om sina egna uppgifter. Föräldrar och vårdnadshavare kan också göra en begäran för ett barn, med hänsyn till barnets egna rättigheter, ålder och mognad.",
           "Det förekommer inget helt automatiserat beslutsfattande som får rättsliga följder eller på liknande sätt i betydande grad påverkar deltagarna.",
-          "Skicka din begäran till admin@lynxeducate.com eller {supportEmail}. Organisationerna samordnar svaret och skickar vidare de frågor som rör Roblox till Roblox när det behövs.",
-          "Familjer har också rätt att lämna in klagomål till den franska dataskyddsmyndigheten Commission nationale de l’informatique et des libertés – <linkCnil>CNIL</linkCnil>."
+          "Skicka din begäran till <strong>admin@lynxeducate.com</strong> eller <strong>{supportEmail}</strong>. Organisationerna samordnar svaret och skickar vidare de frågor som rör Roblox till Roblox när det behövs.",
+          "Familjer har också rätt att lämna in klagomål till den franska dataskyddsmyndigheten <strong>Commission nationale de l’informatique et des libertés – <linkCnil>CNIL</linkCnil></strong>."
         ]
       },
       "security": {
@@ -3947,14 +3947,14 @@
       "contact": {
         "heading": "Kontakt",
         "blocks": [
-          "Lynx Educate SAS",
+          "<strong>Lynx Educate SAS</strong>",
           "185 rue Ordener",
           "75018 Paris, Frankrike",
-          "admin@lynxeducate.com",
-          "School of Gaming Galactic Oy",
+          "<strong>admin@lynxeducate.com</strong>",
+          "<strong>School of Gaming Galactic Oy</strong>",
           "Isokatu 56",
           "90100 Uleåborg, Finland",
-          "{supportEmail}"
+          "<strong>{supportEmail}</strong>"
         ]
       }
     }
@@ -4045,7 +4045,7 @@
     "intro": {
       "heading": "Kort sammanfattning",
       "blocks": [
-        "Här förklarar vi vad du anmäler ditt barn till när ni registrerar er för programmet Skaparnas akademi. Det är ett gemensamt program som drivs av Lynx Educate och School of Gaming i samarbete med Roblox. Om något är oklart, mejla admin@lynxeducate.com"
+        "Här förklarar vi vad du anmäler ditt barn till när ni registrerar er för programmet Skaparnas akademi. Det är ett gemensamt program som drivs av Lynx Educate och School of Gaming i samarbete med Roblox. Om något är oklart, mejla <strong>admin@lynxeducate.com</strong>."
       ]
     },
     "sections": {
@@ -4053,8 +4053,8 @@
         "heading": "Vilka som är med",
         "blocks": [
           [
-            "Lynx Educate SAS och School of Gaming Galactic Oy (”SOG”) utformar och genomför Programmet tillsammans – i det här dokumentet betyder ”vi” båda parterna gemensamt, om vi inte säger något annat.",
-            "Roblox Corporation (”Roblox”) sponsrar Programmet och tillhandahåller plattformen som ditt barn bygger på. Roblox är inte part i dessa villkor."
+            "<strong>Lynx Educate SAS</strong> och <strong>School of Gaming Galactic Oy (”SOG”)</strong> utformar och genomför Programmet tillsammans – i det här dokumentet betyder ”vi” båda parterna gemensamt, om vi inte säger något annat.",
+            "<strong>Roblox Corporation</strong> (”Roblox”) sponsrar Programmet och tillhandahåller plattformen som ditt barn bygger på. Roblox är inte part i dessa villkor."
           ],
           "Anmälan och träffar sker på School of Gamings plattform (”Sogverse”). Genom att anmäla dig godkänner du dessa programspecifika villkor, som gäller vid sidan av <linkTerms>School of Gamings</linkTerms> och Lynx ordinarie användarvillkor och som har företräde om villkoren skulle stå i strid med varandra."
         ]
@@ -4080,14 +4080,14 @@
       "safety": {
         "heading": "Trygghet och tillsyn",
         "blocks": [
-          "Varje träff leds av en utbildad ledare. Vår hållning till beteende och barns trygghet framgår av vår gemensamma <linkRobloxSafeguarding>barnskyddspolicy</linkRobloxSafeguarding>, som finns tillgänglig på begäran."
+          "Varje träff leds av en utbildad ledare. Vår hållning till beteende och barns trygghet framgår av vår gemensamma <strong><linkRobloxSafeguarding>barnskyddspolicy</linkRobloxSafeguarding></strong>, som finns tillgänglig på begäran."
         ]
       },
       "information": {
         "heading": "Dina uppgifter",
         "blocks": [
-          "Hur vi använder dina och ditt barns uppgifter förklaras i vår <linkRobloxPrivacy>Integritetspolicy för Skaparnas akademi</linkRobloxPrivacy>. Genom att anmäla dig bekräftar du att du har läst och förstått den.",
-          "När du anmäler dig till ett Roblox-program delas även uppgifterna som är kopplade till ditt School of Gaming-konto (inklusive dina kontaktuppgifter och ditt barns kontouppgifter) med Lynx Educate för att genomföra programmet och med Roblox för forskning om programmets effekter. Läs mer i <linkRobloxPrivacy>Integritetspolicyn för Skaparnas akademi</linkRobloxPrivacy>."
+          "Hur vi använder dina och ditt barns uppgifter förklaras i vår <strong><linkRobloxPrivacy>Integritetspolicy för Skaparnas akademi</linkRobloxPrivacy></strong>. Genom att anmäla dig bekräftar du att du har läst och förstått den.",
+          "När du anmäler dig till ett Roblox-program delas även uppgifterna som är kopplade till ditt School of Gaming-konto (inklusive dina kontaktuppgifter och ditt barns kontouppgifter) med Lynx Educate för att genomföra programmet och med Roblox för forskning om programmets effekter. Läs mer i <strong><linkRobloxPrivacy>Integritetspolicyn för Skaparnas akademi</linkRobloxPrivacy></strong>."
         ]
       },
       "media": {

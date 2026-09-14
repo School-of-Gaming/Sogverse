@@ -63,10 +63,20 @@ const EXTERNAL_TAG_HREFS = {
   linkCnil: "https://www.cnil.fr",
 } as const;
 
+/**
+ * The one tag that is markup rather than a destination: the emphasis a source
+ * document carries in its own body text. It is in the census below like any
+ * other tag — which is what gives it the same cross-locale parity the links get,
+ * so a translation that drops a bold run fails here rather than quietly
+ * un-emphasising a clause the lawyer emphasised.
+ */
+const EMPHASIS_TAG = "strong";
+
 /** Both allow-lists together — every tag any legal string may carry. */
 const ALL_TAGS = [
   ...Object.keys(TAG_ROUTES),
   ...Object.keys(EXTERNAL_TAG_HREFS),
+  EMPHASIS_TAG,
 ];
 
 /** The six documents: the namespace each one's copy lives in, and its own tag. */
@@ -217,6 +227,37 @@ describe("policy cross-reference tags", () => {
     }
   });
 
+  it("marks an emphasised run without pointing it anywhere", () => {
+    expect(
+      policyTextSegments(`The choices are <${EMPHASIS_TAG}>optional</${EMPHASIS_TAG}>.`),
+    ).toEqual([
+      { text: "The choices are " },
+      { text: "optional", strong: true },
+      { text: "." },
+    ]);
+  });
+
+  it("carries emphasis and a cross-reference on one run when the copy nests them", () => {
+    expect(
+      policyTextSegments(
+        `Set out in our <${EMPHASIS_TAG}><linkRobloxSafeguarding>Child Safeguarding Policy</linkRobloxSafeguarding></${EMPHASIS_TAG}>, on request.`,
+      ),
+    ).toEqual([
+      { text: "Set out in our " },
+      {
+        text: "Child Safeguarding Policy",
+        href: ROUTES.robloxSafeguarding,
+        strong: true,
+      },
+      { text: ", on request." },
+    ]);
+  });
+
+  it("leaves an unclosed emphasis tag as the literal text it already is", () => {
+    const broken = `An unclosed <${EMPHASIS_TAG}>bold run and the rest of the sentence.`;
+    expect(policyTextSegments(broken)).toEqual([{ text: broken }]);
+  });
+
   it("never loses or reorders a word, whatever the tags do", () => {
     for (const source of [
       "",
@@ -224,6 +265,8 @@ describe("policy cross-reference tags", () => {
       "<linkPrivacy>Privacy Policy</linkPrivacy>",
       "Two: <linkTerms>Terms</linkTerms> and <linkDiscipline>Discipline</linkDiscipline>.",
       "An <unknownTag>unwrapped</unknownTag> run beside a <linkPrivacy>real</linkPrivacy> one.",
+      `Write to <${EMPHASIS_TAG}>someone</${EMPHASIS_TAG}> about it.`,
+      `A bold <${EMPHASIS_TAG}><linkTerms>document name</linkTerms></${EMPHASIS_TAG}> mid-sentence.`,
     ]) {
       expect(rendered(source)).toBe(source.replace(/<\/?[A-Za-z][A-Za-z0-9]*>/g, ""));
     }
@@ -433,7 +476,11 @@ describe("the rendered page", () => {
           },
           {
             paragraph:
-              "You may complain to the <linkCnil>CNIL</linkCnil> at any time.",
+              "You may complain to the <strong>the regulator — <linkCnil>CNIL</linkCnil></strong> at any time.",
+          },
+          {
+            paragraph:
+              "Write to <strong>someone@example.com</strong>, or read the <strong><linkPrivacy>Privacy Policy</linkPrivacy></strong>.",
           },
         ],
       }}
@@ -485,6 +532,33 @@ describe("the rendered page", () => {
     const anchor = openingTagFor(ROUTES.robloxPrivacy);
     expect(anchor).not.toContain("target=");
     expect(anchor).not.toContain("rel=");
+  });
+
+  it("renders the document's own emphasis as a real <strong>", () => {
+    expect(html).toContain(
+      '<strong class="font-semibold">someone@example.com</strong>',
+    );
+  });
+
+  it("puts the emphasis around a bolded cross-reference, not beside it", () => {
+    expect(html).toContain(
+      `<strong class="font-semibold"><a class="rounded-sm font-medium text-act underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act" href="${ROUTES.privacy}">Privacy Policy</a></strong>`,
+    );
+  });
+
+  /**
+   * The one bold phrase the copy carries is one element, however many
+   * destinations it spans — the shape the documents actually use, where a
+   * regulator's bolded name ends in a linked acronym.
+   */
+  it("emits one <strong> around a bold run that contains a link", () => {
+    const at = html.indexOf("the regulator");
+    const opened = html.lastIndexOf('<strong class="font-semibold">', at);
+    const closed = html.indexOf("</strong>", at);
+    expect(html.slice(opened, closed + "</strong>".length)).toContain(
+      `href="${EXTERNAL_TAG_HREFS.linkCnil}"`,
+    );
+    expect(html.slice(at, closed)).not.toContain("<strong");
   });
 
   it("ships no tag markup to the reader", () => {
