@@ -1,33 +1,26 @@
 # ROBLOX-TODO
 
-## PAUSED — 2026-08-12
+## Status — resumed 2026-09-14
 
-**This effort is on hold until a lawyer has reviewed the programme copy in full.** Kyle's
-call. Nothing here is being worked until the reviewed copy comes back and has been
-compared against the platform. The one exception so far: on 2026-09-07 and 2026-09-08
-Kyle had every entry then under *Resolved — ready to apply* applied, since each was
-already decided and the surface is still unpublished; a new resolved entry waits as
-before.
+The pause that began on 2026-08-12 ended when Lynx's lawyer returned the **Creator Academy
+Terms & Conditions** and **Creator Academy Privacy Policy** as approved and final, and
+confirmed the **Child Safeguarding Policy** final as it already stood. The returned text
+is on the site word for word, the draft banners are off all three pages, and the two
+returned documents carry the lawyer's date (2026-09-09). The surface itself is still
+unpublished — noindex, absent from the sitemap, no nav links — until the programme
+launches; that flip is unchanged by the copy being final.
 
-*Why pausing is safe:* the whole programme surface is unpublished — noindex, absent from
-the sitemap, no nav links — so none of the copy discussed below is reaching a family. That
-is what makes it reasonable to leave known-inaccurate wording sitting in the catalog rather
-than racing to fix it. **If any part of `/roblox` is published before this resumes, that
-reasoning is void** and the findings listed below have to be dealt with first.
-
-**On resume, do this before touching anything else.** Diff the returned copy against
-`messages/`. The resolved entries were written against today's strings, and a legal rewrite
-can move a key, merge a section, or delete the very sentence an entry edits. **The
-decisions survive; the strings and keys may not** — re-derive each entry's mechanical steps
-against the new text rather than applying them blind. Then re-read the escalations below,
-since some may have been answered inside the review itself.
-
-**Outstanding with Lynx when the pause began:**
-
-- The media consent structure. Lynx prefers one combined box "if it's compliant (the lawyer
-  will tell us)" — so the direction is chosen and the answer is not. **Kyle decided on
-  2026-09-07 to build the one box anyway** and record the unanswered question; see the
-  open item under *Open decisions*.
+**Where the site departs from the returned text.** Kyle's ruling on applying it: the
+legal wording is Lynx's and is not his to fix, the code's behaviour is. So the only
+departures are mechanics — link tags on our own documents, the support address rendered
+through the placeholder (`help@sog.gg`; the returned text says `hello@sog.gg`), and three
+sentences that described how Sogverse works and were wrong: a media choice is changed on
+the child's page in My SOG, not in "Sogverse profile settings" (terms, and the privacy
+policy's *Changing a media choice*); and a child takes part under their first name, not a
+"display name" (the privacy policy's *About the child* and *Children's privacy and
+safety*). Everything else — "facilitator", "curriculum", "course", the "(by Lynx
+Educate)" heading suffixes, the short version's two media bullets — is verbatim, house
+style notwithstanding. A future edit to these namespaces is held to the same line.
 
 ---
 
@@ -60,13 +53,12 @@ written down, but nothing has been applied to the codebase yet; it moves to
 
 **The objective is an empty open list.** Every item terminates in a decision — Kyle's,
 his team's, or Lynx's — and the work is to drive all of them there, not to pick off the
-tractable ones. Nothing is applied along the way (the one exception is recorded in the
-pause banner at the top). Once no open or escalated items are
-left **and Kyle gives the go-ahead**, the whole of *Resolved — ready to apply* lands in
-**one pass**, translated and reviewed together rather than dribbling in item by item.
-Each resolved entry therefore has to be self-contained enough for a fresh session to
-apply it with no prior context: the final English copy, the message keys, and the
-mechanical steps.
+tractable ones. The single landing pass that the pause was protecting happened on
+2026-09-14, when the lawyer's copy went in; since then a resolved entry lands **when Kyle
+says so**, one at a time or in a batch as he prefers, translated and reviewed with
+whatever lands beside it. Each resolved entry still has to be self-contained enough for a
+fresh session to apply it with no prior context: the final English copy, the message
+keys, and the mechanical steps.
 
 The programme surface (`/roblox` and its child pages) is unpublished — noindex, absent
 from the sitemap, no nav links — until copy is signed off by SOG and Roblox. The flip to
@@ -118,10 +110,9 @@ item and keep going until nothing is left that we can move on our own.
    that is cheap, mechanical, or changes no wording at all is still written down and
    still waits. "It only adds a tag", "it needs no translation" and "this item isn't
    really copy" are not exemptions; they are the shapes the temptation actually takes.
-7. **Nothing lands until the list is empty and Kyle says go.** That is the one hard rule
-   here. The value of the single pass is that the whole document gets translated and
-   reviewed as a piece, by people looking at it together — applying a resolution early
-   spends that and cannot be given back.
+7. **Nothing lands until Kyle says go.** That is the one hard rule here. A resolved
+   entry waits in *Resolved — ready to apply* until he names it; it is never applied on
+   the strength of being decided.
 
 ## Attribution, cookie consent, and the Lynx data export
 
@@ -345,79 +336,31 @@ basis, Lynx named in the privacy policy, and a data-sharing agreement — flagge
 2026-08-13 as the item "most likely to be missed", and still not started. **If counsel's
 time is rationed, spend it here rather than on the banner.**
 
-## Tone — where the programme documents don't sound like Sogverse
-
-The house standard (set by the existing `/privacy` and `/terms-and-conditions` copy):
-plain language a parent can read in full without feeling overwhelmed; warm second
-person ("you", "your child"); jargon translated inline the moment it appears ("in legal
-terms, we're the 'data controller'"); every collected item explained with a "— so we
-can…" reason. Under the rule at the top the programme documents are Lynx's to word, so
-none of the items below is a rewrite we make ourselves: each is an observation to hand
-Lynx, with the house policy as the example, for them to take or leave.
-
-**Blocked 2026-08-12 by Kyle: none of this starts until a lawyer has reviewed the copy as
-a whole.** Two reasons it has to be that order. A tone pass on text a lawyer may rewrite
-is work done twice; and tone edits to legal prose move meaning whether or not they intend
-to, so the version a lawyer signs off should be the version families read. **This review
-has not been requested yet** — it needs arranging, and it is nobody's job until someone
-takes it. Best sequenced after the media-consent structure settles with Lynx, so the
-lawyer is not reviewing sections that are about to be restructured.
-
-- [ ] **Programme Privacy Policy — the "short version" fails its own audience.** It is
-      titled "for parents and young people" yet leads with the controller/processor/
-      sub-processor triangle ("Roblox is the data controller, Lynx Educate acts as
-      Roblox's data processor, and School of Gaming acts as Lynx Educate's approved
-      sub-processor") — undefined jargon in the one section meant to be readable by
-      everyone. The policy itself notes French law "requires information addressed to a
-      child to be clear and easily understandable"; the short version as written doesn't
-      meet the standard it quotes. The responsibilities split can move to the "Who is
-      responsible" body section and be glossed the way the house policy glosses
-      "data controller".
-- [ ] **Programme Privacy Policy — untranslated jargon throughout.** "Legitimate
-      interests" (used five times, never explained), "vital interests", "adequacy
-      decision", "Standard Contractual Clauses", "Data Processing Addendum",
-      "pseudonymisation", "suppression record", "solely automated decision-making that
-      produces legal or similarly significant effects". The house policy shows the fix
-      for each: keep the legally required concept, add the plain-words gloss (e.g. its
-      "usually the European Commission's Standard Contractual Clauses" sits inside a
-      sentence a parent can follow).
-- [ ] **Programme Privacy Policy — bullets state *what* without *why*.** House-style
-      collection bullets pair each item with its reason ("your child's Minecraft
-      username — so they can connect to our Minecraft server"). The programme policy's
-      lists ("Roblox username and Roblox User ID.") drop the reassurance that does the
-      most to keep a parent unoverwhelmed.
-- [ ] **Programme Privacy Policy — institutional passive voice in places.** E.g. "Where
-      information is transferred outside the EEA, the responsible organisation uses an
-      approved transfer mechanism" vs the house "When your information is sent to them,
-      we make sure it's protected". Same content, different temperature.
-- [ ] **Length.** The programme privacy policy is roughly three times the house policy.
-      Some of that is genuinely required (three organisations, media consents, research
-      transfer), but sections like retention and security could compress toward the
-      house policy's register without losing legal content.
-- [ ] **Terms & Conditions and Safeguarding Policy are broadly on-tone** — friendly,
-      short, second person. One small spot: "apply alongside (and take precedence over,
-      where they conflict with)" could be said plainly ("if the two ever disagree, these
-      programme terms win").
-
 ## Open decisions
 
-- [ ] **Lynx's lawyer has not confirmed that one combined media box is compliant.**
-      Lynx preferred one box "if it's compliant (the lawyer will tell us)". On
-      2026-09-07 the owner decided to build the one box without waiting, on the
-      reasoning that public use is the larger of the two scopes — a parent who agrees to
-      their child appearing on Roblox's and Lynx Educate's public channels is agreeing to
-      more than private sponsor reporting, so a single tick covering both grants nothing
-      the wider half did not already grant. The policy sections were merged to match on
-      `feat/gamer-photo-consent`: `robloxPrivacy.sections.mediaSponsor` and `.mediaPublic`
-      are gone, replaced by a single `.mediaChoice`, and every string that counted two
-      boxes was rewritten in all three translated locales that carry the legal
-      pages (`tlh` omits them and falls back to English).
+- [ ] **The returned Privacy Policy counts the media choices both ways, and the app
+      offers one.** Lynx preferred one box "if it's compliant (the lawyer will tell us)",
+      and on 2026-09-07 the owner built the one box without waiting, on the reasoning
+      that public use is the larger of the two scopes, so a single tick covering both
+      grants nothing the wider half did not already grant. The lawyer's final text did
+      not settle it: the short version lists two optional media choices (private
+      reporting to Roblox; public use) and the body says "declining either media
+      option", yet the body has only one choice section, *Public impact communications*.
+      The policy also never mentions session reports, which the enrolment checkbox names
+      as a use of the photo. Kyle's ruling on 2026-09-14: not his call, the wording is
+      Lynx's; the app stays at one box and the text stays verbatim until Lynx answers.
 
-      **If the lawyer wants two boxes**, the change is bounded and known: the
+      **Escalated 2026-09-14** — Claude drafted the question for the Lynx × SOG Slack
+      channel (one choice or two; whether the policy should name session reports; the
+      contact addresses; the two mechanism corrections), for Kyle to post. Waiting on
+      Lynx.
+
+      **If the answer is two boxes**, the change is bounded and known: the
       `gamer_photo_consent_type` enum gains a second value beside `lynx_educate`, the
-      product attaches both, the enrolment panel asks two rows, and `.mediaChoice` splits
-      back into a sponsor-reporting section and a public-use one — the pre-merge wording
-      for both is in the `messages/*.json` history at the commit before this branch.
+      product attaches both, the enrolment panel asks two rows, and the policy's
+      `.mediaPublic` section gains a sponsor-reporting sibling in Lynx's wording. **If
+      the answer is one box**, the short version's two bullets and the "either" sentence
+      are Lynx's to reword, and the app changes nothing.
 - [ ] **Whether a Gedu's own likeness in a session photo is covered when Lynx or Roblox
       use it.** Raised 2026-09-07 alongside the box question so it rides to the lawyer at
       no extra cost. Gedus working these products expect to appear in photos — it is
@@ -427,10 +370,6 @@ lawyer is not reviewing sections that are about to be restructured.
       photo a Gedu appears in, on Lynx Educate's or Roblox's website. Neither privacy
       policy mentions Gedu images in either direction. If the answer is that it does not,
       the fix is a clause in the Gedu contract, not a line in the parent-facing policies.
-- [ ] **Draft banners come off** each page as its copy is confirmed final (the banner is
-      the "copy pending / in draft" warning added while content is incomplete). Not an
-      escalation of its own — it resolves as a consequence of the signoff above, and the
-      banner removal belongs in the one pass with everything else.
 
 ## Resolved — ready to apply
 

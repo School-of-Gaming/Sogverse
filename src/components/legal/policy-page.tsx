@@ -1,5 +1,4 @@
 import { Link } from "@/i18n/navigation";
-import { TriangleAlert } from "lucide-react";
 import { OutboundLink } from "@/components/ui/outbound-link";
 import { policyTextSegments, type PolicyBlock } from "./policy-content";
 
@@ -34,12 +33,6 @@ interface PolicyPageProps {
    * otherwise ship an unannounced outbound link the day a tag is added.
    */
   newTabLabel: string;
-  /**
-   * Set while the document is a draft: renders a prominent banner above the
-   * summary box saying so. Omitted once the copy is signed off — a page with
-   * no banner is a page whose text is final.
-   */
-  draftNotice?: string;
   /** Plain-language summary box shown up top. */
   intro: { heading: string; blocks: PolicyBlock[] };
   /** Body sections, in render order. */
@@ -131,16 +124,14 @@ function PolicyBlocks({
  * Every string of body copy (subtitle, paragraphs, bullets) may name one of our
  * other legal pages, or one of the supervisory authorities a reader has the
  * right to complain to, through a cross-reference tag that becomes a link here;
- * see `policy-content.ts` for the two allow-lists. Headings, the "last updated" line
- * and the draft notice are structural rather than authored prose, so
- * they render as plain text.
+ * see `policy-content.ts` for the two allow-lists. Headings and the "last updated"
+ * line are structural rather than authored prose, so they render as plain text.
  */
 export function PolicyPage({
   title,
   subtitle,
   lastUpdated,
   newTabLabel,
-  draftNotice,
   intro,
   sections,
 }: PolicyPageProps) {
@@ -155,23 +146,6 @@ export function PolicyPage({
         )}
         <p className="text-sm text-muted-foreground">{lastUpdated}</p>
       </div>
-
-      {/* Above the summary box, not below it: a reader who takes only the
-          short version still has to pass the "this is not final" warning. */}
-      {draftNotice && (
-        <div
-          role="note"
-          className="mt-8 flex items-start gap-4 rounded-lg border-2 border-warning p-5 sm:p-6"
-        >
-          <TriangleAlert
-            className="mt-0.5 h-7 w-7 shrink-0 text-warning"
-            aria-hidden="true"
-          />
-          <p className="text-base font-bold leading-relaxed sm:text-lg">
-            {draftNotice}
-          </p>
-        </div>
-      )}
 
       {/* Plain-language summary up top — the one part we most want a hurried
           parent to actually read. */}

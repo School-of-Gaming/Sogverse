@@ -3094,7 +3094,6 @@
     }
   },
   "legal": {
-    "draftNotice": "Utkast – innehållet på den här sidan håller fortfarande på att färdigställas och har ännu inte godkänts. Detaljer kan ändras.",
     "opensInNewTab": "(öppnas i en ny flik)"
   },
   "privacy": {
@@ -3792,7 +3791,7 @@
           "Det finns ett enda frivilligt mediaval per barn. Det görs när barnet anmäls till en aktivitet i Skaparnas akademi och kan ändras när som helst på barnets sida i My SOG."
         ]
       },
-      "mediaChoice": {
+      "mediaPublic": {
         "heading": "Vad mediavalet omfattar",
         "blocks": [
           "En enda frivillig ruta omfattar all användning av ett barns foton och filmmaterial. När rutan är ikryssad får foton och filmer på barnet:",

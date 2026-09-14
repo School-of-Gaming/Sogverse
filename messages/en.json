@@ -2539,34 +2539,35 @@
   },
   "robloxPrivacy": {
     "title": "Creator Academy Privacy Policy",
-    "subtitle": "For families registering for the youth digital creativity Programme in France delivered by Lynx Educate and School of Gaming and sponsored by Roblox.",
+    "subtitle": "For families registering for the France Digital Education Programme delivered by Lynx Educate and School of Gaming, in collaboration with Roblox.",
     "lastUpdated": "Last updated: {date}",
     "intro": {
       "heading": "The short version — for parents and young people",
       "blocks": [
-        "The Programme is for young people in France aged 13–17. A parent or legal guardian must complete registration.",
+        "The Creator Academy Programme is for young people in France aged 13–17. A parent or legal guardian must complete registration.",
         "We collect only what we need to register your child, deliver the Programme safely and understand whether it is working. This includes the parent’s contact details, limited information about the child, the child’s Roblox username or User ID, and information about attendance, completion and game publication.",
         "School of Gaming uses information to operate the registration and learning platform. Lynx Educate processes Programme information as needed to manage delivery. Each organisation has different responsibilities depending on the activity and the purpose for which personal information is used.",
         [
+          "Lynx Educate is the data controller for the delivery of Programme and optional email communications.",
           "School of Gaming is the data controller for the operation of Sogverse and the personal information it processes for its own platform services.",
-          "For the limited Programme impact research carried out on behalf of Roblox, Roblox is the data controller, Lynx Educate acts as Roblox’s data processor, and School of Gaming acts as Lynx Educate’s approved sub-processor.",
-          "Where Lynx Educate processes personal information for its own independently determined purposes (such as optional Lynx email communications), Lynx Educate acts as the data controller for that processing."
+          "For the limited Programme impact research carried out on behalf of Roblox, Roblox is the data controller, Lynx Educate acts as Roblox’s data processor, and School of Gaming acts as Lynx Educate’s approved sub-processor."
         ],
         "The following choices are optional and will not affect your child’s place:",
         [
           "Emails to the parent from Lynx Educate about future Roblox events and gaming resources.",
-          "Photographs and video of the child, used in session reports, in impact reporting to Lynx Educate and Roblox, and publicly by Lynx Educate, School of Gaming and Roblox."
+          "Photography or filming for private Programme reporting to Roblox.",
+          "Public use of photographs or footage by Lynx Educate, School of Gaming and Roblox."
         ],
-        "Online sessions are not recorded. A child will not be photographed or filmed where the required permission has not been given or where the child does not want to take part.",
+        "Routine online sessions are not recorded. A child will not be photographed or filmed where the required permission has not been given or where the child does not want to take part.",
         "Lynx Educate and School of Gaming do not sell Programme registration information or use it to advertise to children.",
-        "You and your child may ask to see, correct or delete information, withdraw an optional consent, or object to certain uses by contacting support@lynxeducate.com or {supportEmail}."
+        "You and your child may ask to see, correct or delete information, withdraw an optional consent, or object to certain uses by contacting admin@lynxeducate.com or {supportEmail}."
       ]
     },
     "sections": {
       "applies": {
         "heading": "Who this policy applies to",
         "blocks": [
-          "This policy applies to parents, legal guardians and young people registering for the Creator Academy, the youth digital creativity programme in France (The Programme).",
+          "This policy applies to parents, legal guardians and young people registering for the digital education programme in France delivered by Lynx Educate and School of Gaming in collaboration with Roblox (The Programme).",
           "The Programme is for young people aged 13–17. A parent or legal guardian must complete registration and confirm that they have authority to register the child.",
           "The policy covers Programme registration, administration, learning sessions, events, support, safeguarding and impact evaluation. It supplements School of Gaming’s <linkPrivacy>general Privacy Policy</linkPrivacy>. Where the two policies conflict in relation to this Programme, this Programme-specific policy applies.",
           "The child’s separate use of a Roblox account, Roblox Studio or another Roblox service is governed by Roblox’s own privacy policy and terms.",
@@ -2584,13 +2585,13 @@
           "Lynx Educate SAS",
           "185 rue Ordener",
           "75018 Paris, France",
-          "Email: support@lynxeducate.com"
+          "Email: admin@lynxeducate.com"
         ]
       },
       "responsibleSog": {
         "heading": "School of Gaming Galactic Oy",
         "blocks": [
-          "School of Gaming operates Sogverse, manages the registration and learning environment, provides the session content and Game Educators, delivers learning sessions and ensures safeguarding oversight.",
+          "School of Gaming operates Sogverse, manages the registration and learning environment, provides the curriculum and facilitators, delivers learning sessions and ensures safeguarding oversight.",
           "School of Gaming Galactic Oy",
           "Business ID: 3110461-1",
           "Isokatu 56",
@@ -2639,13 +2640,12 @@
             "The child’s first name, stored alongside the family surname from the parent’s account. Game Educators and other participants never see the surname — the child takes part under their first name.",
             "Age, age bracket, or birth month and year rather than a full date of birth.",
             "Roblox username and Roblox User ID.",
-            "The club, camp, event or group attended.",
+            "The course, club, camp, event or group attended.",
             "Attendance, participation, learning progress and completion.",
             "Whether the child publishes their first Roblox game, experience or digital item.",
             "The name or link of a published experience where required to verify the Programme outcome.",
             "Learner feedback and optional survey responses.",
             "Limited moderation, behavioural or safeguarding information where needed to keep participants safe.",
-            "Accessibility, dietary or health information provided for a particular event, but only where necessary.",
             "Photographs, footage, audio or related media where the relevant optional permission has been given."
           ],
           "We do not ask for the child’s Roblox password. The child does not need to provide a separate email address for Sogverse where the account is managed through the parent or guardian."
@@ -2670,7 +2670,7 @@
         "blocks": []
       },
       "useDeliver": {
-        "heading": "To register and deliver the Programme",
+        "heading": "To register and deliver the Programme (by Lynx Educate)",
         "blocks": [
           "We use account, age, enrolment and contact information to:",
           [
@@ -2685,7 +2685,7 @@
         ]
       },
       "useSafety": {
-        "heading": "To keep children and the service safe",
+        "heading": "To keep children and the service safe (by Lynx Educate)",
         "blocks": [
           "We use limited account, session, moderation and incident information to:",
           [
@@ -2694,13 +2694,13 @@
             "Investigate complaints and safeguarding concerns.",
             "Communicate with a parent or guardian.",
             "Contact emergency services or competent authorities where necessary.",
-            "Protect the rights, safety and welfare of participants, Game Educators and other people."
+            "Protect the rights, safety and welfare of participants, facilitators and other people."
           ],
           "We rely on our legitimate interests in operating a safe Programme, applicable legal obligations and, in an emergency, the protection of someone’s vital interests."
         ]
       },
       "useEvaluate": {
-        "heading": "To evaluate the Programme",
+        "heading": "To evaluate the Programme (by Lynx Educate)",
         "blocks": [
           "We use attendance, completion, publication outcomes, parent participation and survey information to understand whether the Programme is achieving its objectives and to prepare Programme reports.",
           "Where possible, reports use aggregated or anonymised information that does not identify an individual child.",
@@ -2708,17 +2708,17 @@
         ]
       },
       "useEmail": {
-        "heading": "Optional email communications",
+        "heading": "Optional email communications (by Lynx Educate)",
         "blocks": [
           "Lynx Educate uses the parent’s email address to send information about future Roblox events and gaming resources only where the parent selects the optional email checkbox.",
           "This use is based on the parent’s consent. It is not required for participation and can be stopped through the unsubscribe link in any email or by contacting Lynx Educate.",
-          "School of Gaming and Roblox do not receive the parent’s email under this checkbox for their own marketing."
+          "Roblox does not receive the parent’s email under this checkbox for its own marketing."
         ]
       },
       "useMedia": {
-        "heading": "Optional photography and filming",
+        "heading": "Optional photography and filming (by Lynx Educate)",
         "blocks": [
-          "Photography, filming and public communications are based on one optional permission, given for each child. Declining it will not affect registration or participation.",
+          "Photography, filming and public communications are based on separate, optional permissions. Declining either media option will not affect registration or participation.",
           "Consent is not the legal basis for the core registration, delivery or safeguarding activities described above."
         ]
       },
@@ -2727,10 +2727,12 @@
         "blocks": [
           "Under the Programme’s current Data Processing Addendum, the identifiable information that may be provided to Roblox for internal impact research is limited to:",
           [
-            "Roblox username.",
-            "Roblox User ID.",
-            "The email address associated with the Programme account, which may be the parent or guardian’s email.",
-            "The particular Programme service or activity attended."
+            "Roblox username",
+            "Roblox User ID",
+            "Location (city & country)",
+            "Child’s age",
+            "The particular Programme service or activity attended",
+            "Child’s published game URL"
           ],
           "Roblox uses this dataset for internal research into the benefits and impact of the Programme. It is not supplied through the Programme for advertising or direct marketing.",
           "Roblox may also receive aggregated attendance, completion, publication and satisfaction reporting that does not identify individual families.",
@@ -2755,34 +2757,33 @@
       "media": {
         "heading": "Photography, filming and public use",
         "blocks": [
-          "Online sessions are not recorded. Where photography or filming is planned for a selected session or event, families will be told in advance.",
-          "There is one optional media choice per child. It is made when the child is enrolled in a Creator Academy activity, and it can be changed at any time on the child’s page in My SOG."
+          "Routine online sessions are not recorded. Wide shots of an event or workshop may be taken from a distance, where no child is identifiable.",
+          "Where identifiable photography or filming is planned for a selected session or event, families will be told in advance."
         ]
       },
-      "mediaChoice": {
-        "heading": "What the media choice covers",
+      "mediaPublic": {
+        "heading": "Public impact communications",
         "blocks": [
-          "One optional checkbox covers every use of a child’s photograph or footage. Where it is ticked, photographs and video of the child may be:",
+          "This choice permits Lynx Educate, School of Gaming and Roblox to use photographs or footage publicly to show the impact of the Programme, including on:",
           [
-            "Included in session reports, which every family in the child’s group sees on the group’s page and receives by email.",
-            "Shared with Lynx Educate and Roblox for impact reporting, including internal impact reports, delivery updates and sponsor presentations.",
-            "Used publicly by Lynx Educate, School of Gaming and Roblox on their websites and social-media channels."
+            "Their websites.",
+            "Their social-media channels.",
+            "Press and public-relations materials.",
+            "Programme and impact communications."
           ],
-          "Public content may be accessible worldwide and may be copied or shared by other users beyond the organisations’ control.",
-          "Where the box is not ticked, the child is kept out of session photographs and identifiable footage. Nothing identifying them is placed in a session report, shared with Lynx Educate or Roblox, or used publicly. Wide shots of an event or workshop may be taken from a distance, where no child is identifiable."
+          "Public content may be accessible worldwide and may be copied or shared by other users beyond the organisations’ control. Roblox, Lynx Educate and School of Gaming are separate and independent data controllers for such data."
         ]
       },
       "mediaChildAgrees": {
         "heading": "The child must also agree",
         "blocks": [
           "The parent should discuss the media choice with the child before selecting it. We will also explain the photography or filming to the child in an age-appropriate way.",
-          "A Game Educator asks the child before taking a photograph, even where the parent has ticked the box, and will not deliberately photograph or film a child who objects. A child whose parent has not ticked the box is kept out of session photographs and identifiable footage. Wide shots of an event or workshop may be taken from a distance, where no child is identifiable."
+          "We will not deliberately photograph or film a child who objects, even where a parent previously selected a media checkbox. Staff will use reasonable practical measures to keep children without permission out of identifiable footage."
         ]
       },
       "mediaCaseStudies": {
         "heading": "Case studies, names and participant-created content",
         "blocks": [
-          "The media checkbox covers photographs and footage only.",
           "A separate written release will be obtained before using:",
           [
             "A child’s full name.",
@@ -2798,7 +2799,7 @@
       "mediaChanging": {
         "heading": "Changing a media choice",
         "blocks": [
-          "A parent can change the media choice at any time on their child’s page in My SOG, or by contacting us. A child may also ask us to withdraw it.",
+          "A parent or child may withdraw a media permission by contacting {supportEmail}, or a parent can change it at any time on their child’s page in My SOG.",
           "After withdrawal, we will stop new uses and remove material from channels we control where reasonably possible. Withdrawal cannot make earlier lawful use unlawful, undo printed materials already distributed, or guarantee deletion of copies already shared by third parties."
         ]
       },
@@ -2809,10 +2810,10 @@
           [
             "Every child’s profile is linked to a parent or guardian account.",
             "Children take part under their first name only — never their contact details.",
-            "Only registered participants and vetted Game Educators may join.",
+            "Only registered participants and vetted facilitators may join.",
             "Communication is group-based and supervised.",
             "There is no private direct messaging between children.",
-            "Sessions are not recorded.",
+            "Routine sessions are not recorded.",
             "Lynx Educate and School of Gaming do not use Programme registration data for behavioural advertising to children."
           ],
           "Safeguarding concerns are handled under the joint <linkRobloxSafeguarding>Child Safeguarding Policy</linkRobloxSafeguarding>. School of Gaming handles day-to-day concerns in the first instance and escalates serious matters to Lynx Educate. Emergency services are contacted first where a child may be in immediate danger.",
@@ -2883,7 +2884,7 @@
           "Withdrawing consent does not affect processing that was lawful before withdrawal.",
           "Children may contact us directly about their own information. Parents or legal guardians may also make a request for a child, subject to the child’s own rights, age and maturity.",
           "There is no solely automated decision-making that produces legal or similarly significant effects on participants.",
-          "Send requests to support@lynxeducate.com or {supportEmail}. The organisations will coordinate the response and route Roblox-related requests to Roblox where necessary.",
+          "Send requests to admin@lynxeducate.com or {supportEmail}. The organisations will coordinate the response and route Roblox-related requests to Roblox where necessary.",
           "Families also have the right to complain to the Commission nationale de l’informatique et des libertés — <linkCnil>CNIL</linkCnil>."
         ]
       },
@@ -2917,7 +2918,7 @@
           "Lynx Educate SAS",
           "185 rue Ordener",
           "75018 Paris, France",
-          "support@lynxeducate.com",
+          "admin@lynxeducate.com",
           "School of Gaming Galactic Oy",
           "Isokatu 56",
           "90100 Oulu, Finland",
@@ -3007,12 +3008,12 @@
   },
   "robloxTerms": {
     "title": "Creator Academy Terms & Conditions",
-    "subtitle": "Applies to families registering for the Creator Academy in France — Lynx Educate × School of Gaming, in collaboration with Roblox.",
+    "subtitle": "For families registering for the France Digital Education Programme delivered by Lynx Educate and School of Gaming, in collaboration with Roblox.",
     "lastUpdated": "Updated: {date}",
     "intro": {
       "heading": "The short version",
       "blocks": [
-        "This explains what you’re signing your child up for when you register for the Creator Academy. It’s a joint programme between Lynx Educate and School of Gaming, sponsored by Roblox. If anything’s unclear, email support@lynxeducate.com."
+        "This explains what you’re signing your child up for when you register for the Creator Academy Programme. It’s a joint programme delivered by Lynx Educate and School of Gaming, in collaboration with Roblox. If anything’s unclear, email admin@lynxeducate.com"
       ]
     },
     "sections": {
@@ -3047,26 +3048,26 @@
       "safety": {
         "heading": "Safety and supervision",
         "blocks": [
-          "Every session is supervised by a trained Game Educator. Our approach to behaviour and safeguarding is set out in our joint <linkRobloxSafeguarding>Child Safeguarding Policy</linkRobloxSafeguarding>."
+          "Every session is supervised by a trained facilitator. Our approach to behaviour and safeguarding is set out in our joint <linkRobloxSafeguarding>Child Safeguarding Policy</linkRobloxSafeguarding>, available upon request."
         ]
       },
       "information": {
         "heading": "Your information",
         "blocks": [
           "How we use your and your child’s information is explained in our <linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy>. By registering, you confirm you’ve read and understood it.",
-          "When enrolling in the Creator Academy, the information associated with your School of Gaming account (including your contact details and your child’s account information) will also be shared with Lynx Educate for the purposes of delivering the programme and with Roblox for the purposes of programme impact research."
+          "When enrolling in a Roblox programme, the information associated with your School of Gaming account (including your contact details and your child’s account information) will also be shared with Lynx Educate for the purposes of delivering the programme and with Roblox for the purposes of programme impact research. See the <linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy> for more information."
         ]
       },
       "media": {
         "heading": "Photos, video, and marketing",
         "blocks": [
-          "Whether your child appears in photographs or video is a single optional choice, made when you enrol them in a Creator Academy activity. You can change it at any time on your child’s page in My SOG. A child without that permission is kept out of session photographs and identifiable footage. Wide shots of an event or workshop may be taken from a distance, where no child is identifiable."
+          "Whether your child is photographed or filmed, and whether that’s used for marketing, depends entirely on the choices you make at registration. These are optional and you can change your mind at any time on your child’s page in My SOG."
         ]
       },
       "concern": {
         "heading": "If you have a concern",
         "blocks": [
-          "If you’re concerned about your child’s experience in the Programme, contact School of Gaming at {supportEmail} or Lynx Educate at support@lynxeducate.com — we’ll make sure it reaches the right people."
+          "If you’re concerned about your child’s experience in the Programme, contact either admin@lynxeducate.com or {supportEmail} — we’ll make sure it reaches the right people."
         ]
       },
       "changes": {
@@ -3781,7 +3782,6 @@
     }
   },
   "legal": {
-    "draftNotice": "Draft — this page’s content is still being finalised and has not yet been approved. Details may change.",
     "opensInNewTab": "(opens in a new tab)"
   },
   "privacy": {

@@ -3094,7 +3094,6 @@
     }
   },
   "legal": {
-    "draftNotice": "Brouillon — le contenu de cette page est en cours de finalisation et n’a pas encore été approuvé. Les détails peuvent changer.",
     "opensInNewTab": "(s’ouvre dans un nouvel onglet)"
   },
   "privacy": {
@@ -3792,7 +3791,7 @@
           "Il existe un seul choix média facultatif par enfant. Il est fait au moment de l’inscription de l’enfant à une activité de l’Académie des Créateurs et peut être modifié à tout moment sur la page de l’enfant dans My SOG."
         ]
       },
-      "mediaChoice": {
+      "mediaPublic": {
         "heading": "Ce que couvre le choix média",
         "blocks": [
           "Une seule case facultative couvre tous les usages des photographies et des séquences vidéo d’un enfant. Lorsqu’elle est cochée, les photographies et les vidéos de l’enfant peuvent être :",

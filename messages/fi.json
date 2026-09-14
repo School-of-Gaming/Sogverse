@@ -3094,7 +3094,6 @@
     }
   },
   "legal": {
-    "draftNotice": "Luonnos – tämän sivun sisältöä viimeistellään edelleen, eikä sitä ole vielä hyväksytty. Yksityiskohdat voivat muuttua.",
     "opensInNewTab": "(avautuu uuteen välilehteen)"
   },
   "privacy": {
@@ -3792,7 +3791,7 @@
           "Mediavalintoja on yksi, ja se tehdään lapsikohtaisesti. Valinta tehdään, kun lapsi ilmoitetaan Luojien akatemian toimintaan, ja sen voi muuttaa milloin tahansa lapsen sivulla My SOG -näkymässä."
         ]
       },
-      "mediaChoice": {
+      "mediaPublic": {
         "heading": "Mitä mediavalinta kattaa",
         "blocks": [
           "Yksi vapaaehtoinen valintaruutu kattaa kaiken lapsen valokuvien ja videomateriaalin käytön. Kun ruutu on rastitettu, lapsesta otettuja valokuvia ja videoita voidaan:",

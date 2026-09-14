@@ -14,8 +14,8 @@ export async function generateMetadata(): Promise<Metadata> {
     // file convention next door, and with that gone it would unfurl as the
     // site-wide card instead. See `../card-metadata`.
     ...(await robloxCardMetadata()),
-    // Same posture as /roblox, whose terms these are: shared by URL rather than
-    // published while the Programme copy is still being signed off. The tag is
+    // Same posture as /roblox, whose terms these are: the copy is signed off, but
+    // the surface stays unpublished until the Programme launches. The tag is
     // what actually keeps it out of search results; the route is deliberately
     // absent from sitemap.ts and linked only from /roblox itself.
     //
@@ -31,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
 // messages/*.json) is edited. A date-only value, rendered through the
 // locale-aware, UTC-pinned `formatDateOnly` helper rather than hardcoded per
 // language (a plain calendar date carries no zone).
-const LAST_UPDATED = "2026-09-08";
+const LAST_UPDATED = "2026-09-09";
 
 // Section order is owned here, not in the message files, so the same structure
 // renders for every locale. Each key maps to a flat
@@ -65,7 +65,6 @@ export default async function RobloxTermsPage() {
         date: formatDateOnly(LAST_UPDATED, locale, { dateStyle: "long" }),
       })}
       newTabLabel={tLegal("opensInNewTab")}
-      draftNotice={tLegal("draftNotice")}
       intro={{
         heading: t("intro.heading"),
         blocks: rawPolicyBlocks(t.raw("intro.blocks")),
