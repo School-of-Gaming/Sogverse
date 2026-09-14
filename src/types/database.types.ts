@@ -2236,6 +2236,61 @@ export type Database = {
           },
         ]
       }
+      session_feedback: {
+        Row: {
+          answers: Json
+          created_at: string
+          exit_reason: string | null
+          group_id: string
+          note: string
+          participant_id: string
+          session_opens_at: string
+          updated_at: string
+        }
+        Insert: {
+          answers?: Json
+          created_at?: string
+          exit_reason?: string | null
+          group_id: string
+          note?: string
+          participant_id: string
+          session_opens_at: string
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          exit_reason?: string | null
+          group_id?: string
+          note?: string
+          participant_id?: string
+          session_opens_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_feedback_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_feedback_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_feedback_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_details: {
         Row: {
           address: string | null
@@ -2842,6 +2897,10 @@ export type Database = {
         Returns: boolean
       }
       get_admin_dashboard: { Args: never; Returns: Json }
+      get_admin_municipality_invoicing: {
+        Args: { p_month_start: string }
+        Returns: Json
+      }
       get_admin_product_sessions: {
         Args: { p_product_id: string }
         Returns: Json
