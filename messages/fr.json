@@ -1506,6 +1506,7 @@
     },
     "addGamerForm": {
       "title": "Ajouter un joueur",
+      "accountsTitle": "Comptes de jeu de {name}",
       "firstNameLabel": "Prénom",
       "firstNamePlaceholder": "ex. Lily",
       "birthMonthLabel": "Mois de naissance",

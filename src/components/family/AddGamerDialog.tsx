@@ -322,6 +322,39 @@ export function AddGamerFormCard({
   const trimmedName = firstName.trim();
 
   /**
+   * The card's title, which is the page's own question.
+   *
+   * Page two's title IS the question the radios answer, so it is also what
+   * labels them: the `id` below is what the radio group points its
+   * `aria-labelledby` at, and it is built off `idPrefix` for the same reason
+   * every other id on this card is — the style guide paints five of these at
+   * once, and five `add-gamer-title` nodes would leave four radio groups
+   * labelled by a heading belonging to another card.
+   */
+  const titleId = `${idPrefix}-title`;
+
+  /**
+   * Page two's rule, as a gate on its Next rather than a refusal after it.
+   *
+   * Only *presence* is judged here — a username and a password, or an address —
+   * because those are the answers the page is visibly asking for and a parent
+   * can see for themselves whether they have given them. Whether what they
+   * typed is long enough or shaped like an address is a different kind of
+   * question: the parent has answered, and the answer is wrong in a way only a
+   * sentence can explain. So the format checks stay on submit, where
+   * `credentialProblem` can say which field is wrong and why, and a disabled
+   * button never stands in for an explanation nobody can read.
+   *
+   * `parent` asks for nothing, so there is nothing to be missing.
+   */
+  const signInIncomplete =
+    signIn === "username"
+      ? username.trim() === "" || password.trim() === ""
+      : signIn === "email"
+        ? email.trim() === ""
+        : false;
+
+  /**
    * Page one's rules. Unchanged from when they were the whole form, and they
    * run before the step to page two, so a parent never answers a question about
    * a child the first page was going to refuse anyway.
@@ -486,21 +519,35 @@ export function AddGamerFormCard({
     <DialogContent
       className={cn("max-h-[90vh] overflow-y-auto sm:max-w-lg", className)}
     >
+      {/* One title per page, each of them that page's own question: who this
+          child is, then how they will sign in, then the game handles. The
+          sign-in page used to repeat its question as a label over the radios
+          while the title said "Add a gamer" a line above it — two headings for
+          one page, and the lower of them the only one saying anything. */}
       <DialogHeader>
-        <DialogTitle>{t("title")}</DialogTitle>
+        <DialogTitle id={titleId}>
+          {step === "signIn"
+            ? s("question", { name: trimmedName })
+            : step === "accounts"
+              ? t("accountsTitle", { name: trimmedName })
+              : t("title")}
+        </DialogTitle>
       </DialogHeader>
 
       <form onSubmit={handleSubmit}>
         {/* **The three pages swap; nothing crosses between them.** The title
-            above and the footer below are the only things that survive a swap,
-            and the title does not move — the footer does, because no two of the
-            pages are the same height. That is a panel replaced by a different
-            panel on the parent's own click (`src/CLAUDE.md`, "Layout &
-            Scrolling"): nothing a reader was pointing at is still on screen
-            somewhere else, so there is nothing to hold still, and reserving the
-            tallest page's height behind the others would leave a hole rather
-            than prevent a shift. Inside page two the answer is the opposite
-            one, for the opposite reason — see the box below the radios. */}
+            above and the footer below are the only nodes that survive a swap,
+            and neither survives it unchanged: the title says something else,
+            because it is the page's own question, and the footer moves, because
+            no two of the pages are the same height. Both are the parent's own
+            click swapping one panel for another (`src/CLAUDE.md`, "Layout &
+            Scrolling") — a change they asked for and are braced for, not one on
+            data's schedule — so the title rewriting itself in place is the same
+            permitted move as the page beneath it being replaced, and reserving
+            the tallest page's height behind the others would leave a hole
+            rather than prevent a shift. Inside page two the answer is the
+            opposite one, for the opposite reason — see the box below the
+            radios. */}
         <div className="space-y-4 py-4">
           {error && (
             <Alert variant="destructive">
@@ -512,20 +559,21 @@ export function AddGamerFormCard({
             gameRows
           ) : step === "signIn" ? (
             <>
-              {/* The question names the child rather than "your gamer": page
-                  one has already refused an empty first name, so by the time
-                  this renders there is always a name to use. */}
-              <Field label={s("question", { name: trimmedName })}>
-                {({ labelId }) => (
-                  <GamerSignInRadios
-                    value={signIn}
-                    onChange={setSignIn}
-                    disabled={committing}
-                    labelId={labelId}
-                    name={`${idPrefix}-sign-in`}
-                  />
-                )}
-              </Field>
+              {/* **No label over the radios: the title is the label.** The
+                  question is asked once, by the heading, and the group points
+                  its `aria-labelledby` straight at it — so a screen reader
+                  entering the group still hears the question, and the page
+                  spends one line on it rather than two. The question names the
+                  child rather than "your gamer": page one has already refused
+                  an empty first name, so by the time this renders there is
+                  always a name to use. */}
+              <GamerSignInRadios
+                value={signIn}
+                onChange={setSignIn}
+                disabled={committing}
+                labelId={titleId}
+                name={`${idPrefix}-sign-in`}
+              />
 
               {/* **One height for all three answers, declared here.** Clicking
                   a radio swaps what is in this box while the radios above it
@@ -722,9 +770,11 @@ export function AddGamerFormCard({
         {/* Two fixed labels over three pages, each decided by the page alone:
             the first two always advance and the last always creates, so the
             affirmative says what pressing it will do without any radio having to
-            change it. Page one's Next is additionally gated on the declaration
-            — the box goes from disabled to enabled under the parent's own tick
-            and the label never changes, so nothing in the footer resizes. */}
+            change it. Each of the first two pages additionally gates its own
+            Next on what it asks for — page one on the declaration, page two on
+            the credential its mode needs — and in both cases the button goes
+            from disabled to enabled under the parent's own typing or tick while
+            the label never changes, so nothing in the footer resizes. */}
         <DialogFooter className="gap-2">
           <Button
             type="button"
@@ -744,7 +794,11 @@ export function AddGamerFormCard({
           </Button>
           <Button
             type="submit"
-            disabled={committing || (step === "details" && !guardianAttested)}
+            disabled={
+              committing ||
+              (step === "details" && !guardianAttested) ||
+              (step === "signIn" && signInIncomplete)
+            }
           >
             {committing && <Loader2 className="animate-spin" />}
             {committing

@@ -12,7 +12,12 @@ import type { CreateGamerInput } from "@/types";
  * **The add-gamer form is three pages for every parent: who the child is, how
  * they sign in, then the optional game handles.**
  *
- * Five things are pinned here. That the flow is fixed — the first two pages
+ * Seven things are pinned here. That each page's title is that page's own
+ * question — which on page two means the title is also what labels the radio
+ * group, there being no label over it any more. That page two's Next waits for
+ * the fields its mode asks for, while a filled-in answer that is merely wrong
+ * still reaches the press and gets the sentence explaining it. That the flow is
+ * fixed — the first two pages
  * always advance, the last always creates, and no radio changes any of it —
  * which is the whole of what replaced a footer that used to re-decide itself as
  * a mode was picked. That page one's guardian declaration gates its own Next, so
@@ -43,6 +48,7 @@ vi.mock("@/components/game-account", () => ({
 const ADD_GAMER = messages.family.addGamerForm.submit;
 const NEXT = messages.common.next;
 const BACK = messages.common.back;
+const QUESTION = messages.gamerSignIn.question.replace("{name}", "Lily");
 
 const onCreate = vi.fn<(input: CreateGamerInput) => Promise<{ gamerId: string }>>();
 
@@ -141,6 +147,15 @@ function renderCard() {
     affirmative: () =>
       view.container.querySelector<HTMLButtonElement>('button[type="submit"]')!,
     /**
+     * The card's one heading, which is the page's own question. Found as the
+     * heading rather than by its words, so a case can assert what it says.
+     */
+    title() {
+      const heading = view.container.querySelector<HTMLElement>("h2");
+      if (!heading) throw new Error("no title");
+      return heading;
+    },
+    /**
      * The footer's left-hand button. Found by its label rather than by
      * `button[type="button"]`, because the password field's own show/hide toggle
      * is one of those too and comes first in the DOM.
@@ -209,11 +224,7 @@ describe("the flow is the same three pages for everyone", () => {
     expect(view.radio("parent").checked).toBe(true);
     expect(view.radio("username").checked).toBe(false);
     expect(view.radio("email").checked).toBe(false);
-    expect(
-      screen.getByText(
-        messages.gamerSignIn.question.replace("{name}", "Lily"),
-      ),
-    ).toBeTruthy();
+    expect(view.title().textContent).toBe(QUESTION);
     // Page two advances too — only page three creates.
     expect(view.affirmative().textContent).toContain(NEXT);
     expect(view.negative(BACK)).toBeTruthy();
@@ -291,6 +302,57 @@ describe("the flow is the same three pages for everyone", () => {
     expect(view.affirmative().textContent).toContain(NEXT);
     expect(view.affirmative().disabled).toBe(false);
     expect(onCreate).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * **One title per page, and it is that page's own question.**
+ *
+ * The sign-in page used to carry the question twice — "Add a gamer" as the
+ * title, and the question itself as a label over the radios a line below it —
+ * and the fix is not to delete a line of copy but to move the question up into
+ * the heading. So the assertions are a pair: the title says it, and the radio
+ * group is labelled BY the title rather than by a label that no longer exists.
+ */
+describe("the title is the page's own question", () => {
+  it("names the card on page one", () => {
+    const view = renderCard();
+
+    expect(view.title().textContent).toBe(messages.family.addGamerForm.title);
+  });
+
+  it("asks the sign-in question on page two, with no second copy of it", async () => {
+    const view = renderCard();
+    view.fillDetails();
+    await view.goToSignIn();
+
+    expect(view.title().textContent).toBe(QUESTION);
+    // Once on the page, not twice: the label over the radios is gone, so the
+    // question is asked by exactly one node — the heading asserted above.
+    const asked = screen.getAllByText(QUESTION);
+    expect(asked).toHaveLength(1);
+    expect(asked[0]).toBe(view.title());
+  });
+
+  it("labels the radio group by the title", async () => {
+    const view = renderCard();
+    view.fillDetails();
+    await view.goToSignIn();
+
+    const group = screen.getByRole("radiogroup", { name: QUESTION });
+    expect(group.getAttribute("aria-labelledby")).toBe(view.title().id);
+    expect(view.title().id).not.toBe("");
+  });
+
+  it("names the child's game accounts on page three", async () => {
+    const view = renderCard();
+    view.fillDetails();
+    await view.goToSignIn();
+    await view.goToAccounts();
+
+    expect(view.title().textContent).toBe(
+      messages.family.addGamerForm.accountsTitle.replace("{name}", "Lily"),
+    );
   });
 });
 
@@ -427,6 +489,103 @@ describe("the box under the radios", () => {
 
     expect(view.field("add-gamer-password").getAttribute("type")).toBe("text");
     expect(view.container.querySelector("#add-gamer-confirm-password")).toBeNull();
+  });
+});
+
+/**
+ * **Page two's Next is gated on the fields its mode asks for**, and on nothing
+ * else.
+ *
+ * The split is what these cases pin: an *empty* field is a question the parent
+ * has not answered yet, so the button waits for them rather than refusing them;
+ * a *filled* field that is wrong is an answer, and an answer gets a sentence
+ * saying what is wrong with it, on the parent's own press. A gate that also
+ * judged the format would leave a parent holding a password the button silently
+ * disliked with nothing on screen saying so.
+ */
+describe("page two's Next waits for the mode's own fields", () => {
+  it("is enabled straight away for the switch-only answer, which asks for nothing", async () => {
+    const view = renderCard();
+    view.fillDetails();
+    await view.goToSignIn();
+
+    expect(view.radio("parent").checked).toBe(true);
+    expect(view.affirmative().disabled).toBe(false);
+  });
+
+  it("waits for both the username and the password", async () => {
+    const view = renderCard();
+    view.fillDetails();
+    await view.goToSignIn();
+    view.chooseMode("username");
+
+    expect(view.affirmative().disabled).toBe(true);
+
+    view.fill("add-gamer-username", "lily2015");
+    expect(view.affirmative().disabled).toBe(true);
+
+    view.fill("add-gamer-password", "a-long-enough-password");
+    expect(view.affirmative().disabled).toBe(false);
+
+    // Blanks are not answers, whitespace included.
+    view.fill("add-gamer-password", "   ");
+    expect(view.affirmative().disabled).toBe(true);
+    // Same label throughout: the gate is the disabled state alone.
+    expect(view.affirmative().textContent).toContain(NEXT);
+  });
+
+  it("waits for the address", async () => {
+    const view = renderCard();
+    view.fillDetails();
+    await view.goToSignIn();
+    view.chooseMode("email");
+
+    expect(view.affirmative().disabled).toBe(true);
+
+    view.fill("add-gamer-email", "lily@example.test");
+    expect(view.affirmative().disabled).toBe(false);
+
+    view.fill("add-gamer-email", "  ");
+    expect(view.affirmative().disabled).toBe(true);
+  });
+
+  // The gate is about presence and the refusals are about format, so a value
+  // that is there but wrong reaches the press and gets the sentence.
+  it("lets a badly-shaped answer through to the refusal that explains it", async () => {
+    const view = renderCard();
+    view.fillDetails();
+    await view.goToSignIn();
+    view.chooseMode("email");
+
+    view.fill("add-gamer-email", "not-an-address");
+    expect(view.affirmative().disabled).toBe(false);
+
+    await view.submit();
+
+    expect(screen.getByText(messages.gamerSignIn.emailInvalid)).toBeTruthy();
+    // Still on page two, with the address the parent typed to correct.
+    expect(view.field("add-gamer-email").value).toBe("not-an-address");
+    expect(onCreate).not.toHaveBeenCalled();
+  });
+
+  it("lets a too-short password through to the refusal that explains it", async () => {
+    const view = renderCard();
+    view.fillDetails();
+    await view.goToSignIn();
+    view.chooseMode("username");
+
+    view.fill("add-gamer-username", "lily2015");
+    view.fill("add-gamer-password", "short");
+    expect(view.affirmative().disabled).toBe(false);
+
+    await view.submit();
+
+    expect(
+      screen.getByText(
+        messages.gamerSignIn.passwordTooShort.replace("{count}", "8"),
+      ),
+    ).toBeTruthy();
+    expect(onCreate).not.toHaveBeenCalled();
   });
 });
 

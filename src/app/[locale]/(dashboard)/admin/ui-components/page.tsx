@@ -4299,7 +4299,14 @@ function inertCreateGamer(): Promise<{ gamerId: string }> {
  *
  * Page one is drawn with its box unticked, which is also the state that disables
  * its Next — the gate is the thing worth seeing, and a ticked box is one click
- * away in the demo itself.
+ * away in the demo itself. The two credential cards are drawn with their fields
+ * empty, which is the same shape one page later: page two's Next is disabled
+ * until the mode's fields are filled.
+ *
+ * **Each card carries its own page's title**, so the row reads as five headings
+ * rather than five copies of "Add a gamer" — and the three sign-in cards show
+ * the question the radios under them answer, which is the label they are
+ * pointed at.
  *
  * **No `Dialog` around them.** A dialog is a portal, so all five of them would
  * stack in `document.body` on top of one another rather than sitting in a row —
