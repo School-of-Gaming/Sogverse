@@ -2828,6 +2828,7 @@
       },
       "notePrompt": "Tu veux nous dire autre chose sur la séance d’aujourd’hui ?",
       "audience": "Ton Gedu et l’équipe de School of Gaming liront ton retour. Merci !",
+      "saveFailed": "Tes réponses n’ont pas été enregistrées. Appuie sur Terminé pour réessayer.",
       "done": "Terminé"
     }
   },

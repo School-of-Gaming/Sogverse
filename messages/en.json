@@ -3515,6 +3515,7 @@
       },
       "notePrompt": "Anything else you want to tell us about today’s session?",
       "audience": "Your Gedu and the School of Gaming team will read your feedback. Thank you!",
+      "saveFailed": "Your answers were not saved. Press Done to try again.",
       "done": "Done"
     }
   },

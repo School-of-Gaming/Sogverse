@@ -166,17 +166,46 @@ leaving — the Leave button's navigation, and the card the room shows when the 
 and everyone is ejected — and only for that one audience.
 Every other role leaves exactly as it did before, and the error path is untouched.
 
-**Rule: saving is a no-op, deliberately, until there is an instrument to save into.** The
-screen collects answers in local state and Done does what leaving already did — navigate
-to where the reader came from. There is no route, no service and no table behind it: it
-exists so the product team can rule on the question set in context before any of that is
-built, and a prototype that quietly persisted children's answers would be the worse of the
-two mistakes. The page that mounts the screen is the one place the save will be written,
-and it says so beside the handler.
+**Rule: the answers are one row per child, per group, per session window, written and read
+by the child themselves through RLS — no route, no function, and no session row.** The key
+is the group plus the child plus the instant the window opened, which is the same triple
+in-call chat keys a channel by and the same value the voice token response already hands
+every joiner, so a later reader can line a session's readings up against chat and
+attendance without either of them depending on a session row existing. **The instant is
+client-asserted here and server-derived for chat**: this one bounds nothing, so a forged
+value can only mis-key the forger's own row, while chat's bounds what a family may read.
+The questions stay out of the schema — the stored object is item key to level, with the
+shape checked and the keys deliberately unconstrained — so adding or removing a statement
+is an edit to the catalogue in this directory plus its message strings, with no migration.
+
+**Rule: the prefill is read when the reader joins, never when they leave.** Both ways to
+the question are abrupt — a Leave whose disconnect has already happened, and the ended
+path, which fires on any post-join drop including a failed network — so the row is read
+once on join and the screen is mounted from what is already in hand. A missing row and a
+failed read are the same empty form; the two are told apart in exactly one place, the
+write rule below.
+
+**Rule: Done writes, except when there is nothing and never was.** The write is skipped
+only when the form is empty *and* the prefill read succeeded with no row — a first-time
+Done with nothing answered, which saves nothing because the response rate's denominator is
+the sessions themselves. In every other state, including a read that failed or never ran,
+it writes: an unknown prefill must not leave a stale row standing behind a child who
+cleared their answers. **The last Done wins** — a child who drops out, rejoins and leaves
+again updates the row they already have, and an emptied form is an ordinary update with an
+empty object and an empty note, never a delete. The row also records which of the two ways
+out it came from, because that is only knowable at write time.
+
+**Rule: the page owns the promise, and a refused save keeps the child where they are.**
+The screen's Done reports and returns; the page sets the committing flag before the call
+and leaves it set on the success path, where the document unloads. A refusal clears it,
+keeps the screen mounted with what the reader typed still in it, and hands the screen a
+status line saying the answers were not saved — the same Done then retries the same write.
+A child is never navigated away from a form that did not save.
 
 **Rule: the screen is presentational and takes its statements as data.** It is handed the
-statements and reports one result through one callback, so it cannot know whether anything
-is saved and does not change when something is. The statements themselves are a typed
+statements and an initial state, and reports one result through one callback — so it knows
+at neither end whether anything is stored, and does not change when the answer to that
+changes. The statements themselves are a typed
 constant in one place — a stable identifier per statement, never the English sentence,
 because the copy is rewritten freely and a stored answer has to survive that. Each
 identifier also carries the Yty-Element it will report into, and **that mapping is never
@@ -346,7 +375,7 @@ The corollary for anything added next: put it where the run ends, or resolve it 
 
 - `VoiceRoomProvider` — context orchestrator; takes `groupId: string | null` (null = instant room → custom/private features disabled). Composes the hooks, derives `participantsByZone` (bucketing private-zone occupants by their authoritative occupancy row, self by synchronous membership zone), owns the unified `moveParticipantToZone` (moveUser + occupancy write/clear) and the one-shot confinement seed, and routes Daily app-messages in `handleAppMessage`. Exports `VoiceRoomContext` for the style-guide mock.
 - `hooks/` — `use-audio-pipeline` (playback + analyser; mutes cross-zone via `element.muted`), `use-zone-membership` (userData self-move + mod `moveUser`; sole writer of `localZoneIdRef`), `use-zone-data` (DB custom zones + occupancy + realtime), `use-receive-permissions` (owner-side live `canReceive` projection over raw occupancy), `use-mic-devices`, `use-screen-share`, `use-moderator-controls`, `use-speaking-glow`, `use-local-stream-glow`, `use-wake-lock`. `hooks/types.ts` — shared types incl. the `VoiceRoomContextValue` contract.
-- Outside this dir: `src/services/voice/` (token service + `VoiceZonesService` + React Query hook), `src/app/api/voice/token/route.ts`, `src/lib/daily.ts` (Daily REST + room-name helpers + token `canReceive`/`user_id`), `src/lib/voice/receive-permissions.ts` (the pure `canReceive` projection, shared by the route + the hook), `src/lib/session-schedule.ts` + `src/lib/voice-window.ts`, `src/lib/voice/{user-name,audio-routing,zone-composition,glow,locked-session}.ts`, `src/lib/constants/{voice,voice-zones}.ts`.
+- Outside this dir: `src/services/session-feedback/` (the child's own feedback row: the read that prefills the screen, the upsert behind Done, and the parse that narrows a stored answers object to the catalogue), `src/services/voice/` (token service + `VoiceZonesService` + React Query hook), `src/app/api/voice/token/route.ts`, `src/lib/daily.ts` (Daily REST + room-name helpers + token `canReceive`/`user_id`), `src/lib/voice/receive-permissions.ts` (the pure `canReceive` projection, shared by the route + the hook), `src/lib/session-schedule.ts` + `src/lib/voice-window.ts`, `src/lib/voice/{user-name,audio-routing,zone-composition,glow,locked-session}.ts`, `src/lib/constants/{voice,voice-zones}.ts`.
 
 ## Env
 

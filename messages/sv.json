@@ -2828,6 +2828,7 @@
       },
       "notePrompt": "Vill du berätta något mer om dagens session?",
       "audience": "Din Gedu och teamet på School of Gaming läser din feedback. Tack!",
+      "saveFailed": "Dina svar sparades inte. Tryck på Klart för att försöka igen.",
       "done": "Klart"
     }
   },

@@ -2828,6 +2828,7 @@
       },
       "notePrompt": "Haluatko kertoa vielä jotain tämän päivän kerrasta?",
       "audience": "Gedusi ja School of Gamingin tiimi lukevat palautteesi. Kiitos!",
+      "saveFailed": "Vastauksiasi ei tallennettu. Paina Valmis ja yritä uudelleen.",
       "done": "Valmis"
     }
   },
