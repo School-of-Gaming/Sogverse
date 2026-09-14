@@ -66,7 +66,7 @@ export interface HelpFeedbackCardViewProps {
  * It owns no fetch, no mutation and no router: the caller hands it the whole
  * state and takes the submit. That is what lets a preview scene render the real
  * form with the submit inert — a scene must never gain a live submit that
- * emails every admin — and it is why the three dashboards are looking at one
+ * emails the support inbox — and it is why the three dashboards are looking at one
  * component rather than at three copies of one.
  *
  * The result appears **below the submit button** once a submit has answered, and
