@@ -108,3 +108,24 @@ describe("UserRow certification mark", () => {
     expect(html).not.toContain(VERIFIED_LABEL);
   });
 });
+
+/**
+ * **The line under a name is the person's address, and a gamer has none worth
+ * printing.** A child's stored address is either a synthetic handle nobody has
+ * ever seen or a mailbox that belongs to that child's own account, so the list
+ * prints a name and the detail page is where credentials are read.
+ */
+describe("the line under a name on an admin row", () => {
+  it("prints an adult's address", () => {
+    expect(rowHtml({})).toContain("sam@example.com");
+  });
+
+  it("prints no address for a gamer", () => {
+    const gamer: RowUser = {
+      ...GEDU,
+      role: "gamer",
+      email: "abc123@gamer.sogverse.internal",
+    };
+    expect(rowHtml({ user: gamer })).not.toContain("gamer.sogverse.internal");
+  });
+});
