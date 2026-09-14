@@ -622,17 +622,28 @@ function ClubRows({ club, locale }: { club: InvoiceClub; locale: string }) {
             />
           </button>
         </td>
-        <td className="py-2 pr-2">
-          {/* Truncated with the whole name on hover: a product name runs long
-              and a column that grows to fit the longest one takes the width the
-              figures need. The click is stopped here and nowhere else — this is
-              the one target on the row that is not the disclosure, and it keeps
-              its own underline so it still reads as the way out of the row. */}
+        {/* Truncated with the whole name on hover: a product name runs long and a
+            column that grows to fit the longest one takes the width the figures
+            need.
+            **The truncation is the cell's and the anchor stays inline**, which is
+            what makes the anchor's box end where its text ends. Given `block` or
+            `w-full` it filled the cell, so the whole width of the Club column
+            navigated away — including the empty space after a short name, which is
+            the part of a row a reader is most likely to click when they meant to
+            open it. An inline anchor is exactly its own words: the rest of the cell
+            falls through to the row's handler, and the cell clips a long name to
+            the column as the schedule cell beside it does. Inline also keeps the
+            name on the row's shared baseline, which an `inline-block` with
+            `overflow: hidden` would not — such a box takes its bottom edge as its
+            baseline and would sit the name off the axis of the figures beside it.
+            The click is stopped here and nowhere else, and the underline on hover
+            marks exactly the text that leaves the row. */}
+        <td className="truncate py-2 pr-2">
           <Link
             href={ROUTES.admin.product("municipality_club", club.id)}
             title={club.name}
             onClick={(event) => event.stopPropagation()}
-            className="block truncate font-medium hover:underline"
+            className="font-medium hover:underline"
           >
             {club.name}
           </Link>
@@ -700,17 +711,18 @@ function ClubRows({ club, locale }: { club: InvoiceClub; locale: string }) {
  * amounts land on the same axis as the club total above them without having to
  * agree with the outer table's column widths — only with its right edge.
  *
- * **Three columns, not four: the date and its week number are one cell.** They
- * are one fact — *when* — and a fixed layout that gave each its own column set
- * them at opposite ends of half the table's width, where the week read as a
- * figure belonging to something else. Joined by the same middle dot the rest of
- * the page joins parts of a line with, they are read together and the status
- * column takes the width that is left.
+ * **Two columns: a sentence on the left, the money on the right.** The date, its
+ * week number and what happened are one fact — *what became of this day* — and a
+ * fixed layout that gave each a column of its own set them at intervals across
+ * the table, where the week read as a figure belonging to something else and the
+ * status word floated in the middle of the row attached to nothing. Joined by the
+ * same middle dot the rest of the page joins parts of a line with, they read as
+ * one phrase, and the only column left is the one that has to hold an axis.
  *
  * It carries no header row of its own. The outer table already named its columns
  * once for the whole municipality, and a second header row per opened club would
- * spend a line on labelling three values a reader can tell apart by their shape:
- * a dated week, a word, and a sum of money.
+ * spend a line on labelling two values a reader can tell apart by their shape: a
+ * dated week with a word after it, and a sum of money.
  */
 function ClubSessionDetail({
   club,
@@ -726,8 +738,7 @@ function ClubSessionDetail({
           somewhere states where above its dates, spanning the lot, and a fixed
           layout reading its widths off a spanning row would have none to read. */}
       <colgroup>
-        <col className="w-[40%]" />
-        <col className="w-[36%]" />
+        <col className="w-[76%]" />
         <col className="w-[24%]" />
       </colgroup>
       <tbody>
@@ -736,7 +747,7 @@ function ClubSessionDetail({
             spoken for. */}
         {club.locationName !== null && (
           <tr>
-            <td colSpan={3} className="pb-1 text-muted-foreground">
+            <td colSpan={2} className="pb-1 text-muted-foreground">
               {club.locationName}
             </td>
           </tr>
@@ -755,8 +766,8 @@ function ClubSessionDetail({
 }
 
 /**
- * One dated line: when it was — the date and its ISO week, read as one thing —
- * what happened, and what it is worth.
+ * One dated line: when it was and what became of it, read as one phrase, and
+ * what it is worth.
  *
  * The three kinds read differently on purpose. A recorded session carries the
  * fee and nothing else in the way of explanation — it is the ordinary case and
@@ -765,6 +776,10 @@ function ClubSessionDetail({
  * a free session. An upcoming one carries no amount at all: it has not
  * happened, and printing €0 against a date in the future would invite somebody
  * to go looking for a session nobody has missed.
+ *
+ * The tone is the whole row's rather than the status word's, which is what keeps
+ * the phrase one phrase: a warning-toned word after a plain date would read as
+ * two facts about two different things, and the thing being flagged is the day.
  */
 function SessionRow({
   session,
@@ -786,12 +801,13 @@ function SessionRow({
         session.kind === "unrecorded" && "text-warning",
       )}
     >
-      {/* The week rides with the date rather than in a column of its own: a
-          Finnish admin finds a session by its week, and a week number sitting a
-          third of the table away from the day it belongs to is a figure the
-          reader has to pair up by eye. It keeps the row's own tone — muting it
-          inside a warning row would say the week was the ordinary part of a line
-          that is not. */}
+      {/* Day, week and outcome as one run of words. The week rides with the date
+          because a Finnish admin finds a session by its week, and the status word
+          rides with both because it is what became of that day — parked in a
+          column of its own it sat in the middle of the row belonging to nothing
+          either side of it. Everything here takes the row's own tone; muting the
+          week or plainly toning the word inside a warning row would split one
+          phrase into facts about different things. */}
       <td className="py-1 pr-2">
         <span className="flex flex-wrap items-baseline gap-x-1.5">
           <span>{formatDateOnly(session.date, locale, { weekday: "short" })}</span>
@@ -806,16 +822,15 @@ function SessionRow({
             {SCHEDULE_PART_SEPARATOR}
             {c("week", { week: session.isoWeek })}
           </span>
-        </span>
-      </td>
-      <td className="py-1 pr-2">
-        <span className="flex items-center gap-1">
-          {session.kind === "unrecorded" && (
-            <TriangleAlert className="h-3 w-3 shrink-0" aria-hidden />
-          )}
-          {session.kind === "recorded" && t("recorded")}
-          {session.kind === "unrecorded" && t("notRecorded")}
-          {session.kind === "upcoming" && t("upcoming")}
+          <span className="inline-flex items-center gap-1">
+            {SCHEDULE_PART_SEPARATOR}
+            {session.kind === "unrecorded" && (
+              <TriangleAlert className="h-3 w-3 shrink-0" aria-hidden />
+            )}
+            {session.kind === "recorded" && t("recorded")}
+            {session.kind === "unrecorded" && t("notRecorded")}
+            {session.kind === "upcoming" && t("upcoming")}
+          </span>
         </span>
       </td>
       {/* The money column, ending on the same axis as the club's own total. An

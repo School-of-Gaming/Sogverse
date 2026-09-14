@@ -152,7 +152,11 @@ did; a table per club would measure its own contents and give the page as many m
 it has clubs. A small tracked uppercase header names the columns once per municipality —
 furniture, which is where the house style keeps its caps. The club's name is truncated to the
 column and carries the whole name for a pointer, and links to its own admin page, which is
-the repair path for the one thing this page can find wrong.
+the repair path for the one thing this page can find wrong. **The link is the name's own
+words and nothing more** — the cell does the truncating and the anchor stays inline, so it is
+exactly as wide as the text that underlines on hover; a block anchor filling the cell made
+the whole Club column navigate away, including the empty space after a short name, which is
+the part of a row a reader is most likely to click when they meant to open it.
 
 **The whole row opens the dates, and the club's name is the only thing on it that does
 not.** A row this dense is read by pointing at it, and a reader aiming at a chevron to find
@@ -178,16 +182,21 @@ missed, and a note about one would be indistinguishable at a glance from a note 
 that was.
 
 **The dates behind a club's number are a second disclosure, under its own line.** A compact
-table of the club's month — the date with its weekday *and its ISO week, in one cell*, what
-happened in a word, and what it is worth — indented under the club's name and sitting on the same ground as the
+table of the club's month, two columns wide: the day, its ISO week and what became of it as
+one run of words on the left, and what it is worth on the right — indented under the club's
+name and sitting on the same ground as the
 line above it, because an indent and the rule above are what say *these belong to that*, and
 lifting a run of rows off its neighbours would make a club's own dates read as a different
-kind of thing from the club. The week rides with the date rather than
-taking a column: they are one fact — *when* — and a fixed layout that gave each its own
-column set them at opposite ends of half the table, where the week read as a figure
-belonging to something else. It carries no column header of its own: the municipality's
-header named those columns once already, and three values a reader tells apart by shape — a
-dated week, a word and a sum of money — do not need naming twice. Its amount column
+kind of thing from the club. The week and the status word ride with the date rather than
+taking columns of their own: day, week and outcome are one fact — *what became of this day* —
+and a fixed layout that gave each a column set them at intervals across the table, where the
+week read as a figure belonging to something else and the status word sat in the middle of
+the row attached to nothing either side of it. The tone belongs to the whole line rather than
+to the word, which is what keeps the phrase one phrase: a warning-toned word after a plain
+date would read as two facts about two different things, and the thing being flagged is the
+day. It carries no column header of its own: the municipality's header named those columns
+once already, and two values a reader tells apart by shape — a dated week with a word after
+it, and a sum of money — do not need naming twice. Its amount column
 is right-aligned and ends on the same right inset, which is how it joins the money axis
 without having to agree with the outer table's column widths. Where the club meets is stated
 here, once, above its dates, rather than on a line whose width is already spoken for by a
