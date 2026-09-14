@@ -72,6 +72,23 @@ const EXTERNAL_TAG_HREFS = {
  */
 const EMPHASIS_TAG = "strong";
 
+/**
+ * The classes the renderer puts on an emphasised run. Named once because three
+ * assertions below pin the rendered markup, and a weight change that forgot one
+ * of them would be a half-updated test rather than a failing one. The descendant
+ * half is load-bearing: a link carries its own `font-medium`, which beats an
+ * inherited weight, so the emphasis has to reach the anchor explicitly.
+ */
+const STRONG_CLASS = "font-semibold [&_a]:font-semibold";
+
+/**
+ * The same classes as they reach the reader: the arbitrary variant's `&` is an
+ * HTML entity delimiter, so React escapes it in the serialized attribute. The
+ * assertions below are about the markup a browser receives, so they compare
+ * against this form rather than the authored one.
+ */
+const STRONG_CLASS_HTML = STRONG_CLASS.replaceAll("&", "&amp;");
+
 /** Both allow-lists together — every tag any legal string may carry. */
 const ALL_TAGS = [
   ...Object.keys(TAG_ROUTES),
@@ -253,9 +270,69 @@ describe("policy cross-reference tags", () => {
     ]);
   });
 
+  /**
+   * **Emphasis is the outer layer, by design, and a link may never wrap it.**
+   * The splitter peels `<strong>` off first and hands each piece to the link
+   * splitter, whose own pattern refuses a `<` inside a label — which is what
+   * keeps malformed markup from swallowing half a sentence. The cost of that
+   * ordering is this shape: a link tag opening *before* an emphasis tag is cut
+   * in two by the emphasis pass, so neither half is ever a complete link pair
+   * and the reader meets a literal `<linkTerms>` in a binding document.
+   *
+   * No catalog string does this today, and the census below
+   * ("never opens a link tag before an emphasis tag") is what keeps it that way
+   * — the tag-parity test cannot, because it sorts tag names and so reads both
+   * nestings as identical. This case is here so the behaviour the census
+   * forbids is written down rather than inferred.
+   */
+  it("cuts a link that wraps emphasis in two, leaking its tag as literal text", () => {
+    expect(
+      policyTextSegments(
+        `<linkTerms>a <${EMPHASIS_TAG}>b</${EMPHASIS_TAG}> c</linkTerms>`,
+      ),
+    ).toEqual([
+      { text: "<linkTerms>a " },
+      { text: "b", strong: true },
+      { text: " c</linkTerms>" },
+    ]);
+  });
+
   it("leaves an unclosed emphasis tag as the literal text it already is", () => {
     const broken = `An unclosed <${EMPHASIS_TAG}>bold run and the rest of the sentence.`;
     expect(policyTextSegments(broken)).toEqual([{ text: broken }]);
+  });
+
+  /**
+   * The two ways a catalog can nest emphasis wrongly, pinned as the accepted
+   * behaviour they are rather than as behaviour anyone designed. The emphasis
+   * pattern is non-greedy, so in both cases the first opener pairs with the
+   * first closer and whatever is left over survives as the literal text it
+   * already is — the same "show the writer's sentence intact" reading the
+   * unknown-tag and unclosed-tag cases above take. Neither shape is nice, and
+   * neither loses a word, which is the property that actually matters in a
+   * binding document.
+   */
+  const strippedOfTags = (value: string) =>
+    value.replace(/<\/?[A-Za-z][A-Za-z0-9]*>/g, "");
+
+  it("pins nested emphasis: the first closer ends the bold run (accepted behaviour)", () => {
+    const nested = `<${EMPHASIS_TAG}>a <${EMPHASIS_TAG}>b</${EMPHASIS_TAG}> c</${EMPHASIS_TAG}>`;
+    expect(policyTextSegments(nested)).toEqual([
+      { text: `a <${EMPHASIS_TAG}>b`, strong: true },
+      { text: ` c</${EMPHASIS_TAG}>` },
+    ]);
+    // Never lose a word: the same prose, tag markup aside, comes back out.
+    expect(strippedOfTags(rendered(nested))).toBe(strippedOfTags(nested));
+  });
+
+  it("pins a stray opener before a well-formed pair: it swallows to the first closer (accepted behaviour)", () => {
+    const stray = `unclosed <${EMPHASIS_TAG}>a and <${EMPHASIS_TAG}>b</${EMPHASIS_TAG}> tail`;
+    expect(policyTextSegments(stray)).toEqual([
+      { text: "unclosed " },
+      { text: `a and <${EMPHASIS_TAG}>b`, strong: true },
+      { text: " tail" },
+    ]);
+    expect(strippedOfTags(rendered(stray))).toBe(strippedOfTags(stray));
   });
 
   it("never loses or reorders a word, whatever the tags do", () => {
@@ -355,6 +432,33 @@ describe("every catalog's legal namespaces", () => {
           expect(value, `${locale}: ${name}.${path} links to its own page`).not.toContain(
             `<${ownTag}>`,
           );
+        }
+      }
+    }
+  });
+
+  /**
+   * **Emphasis is the outer layer; a link tag never opens before one.** The
+   * splitter peels `<strong>` off first and hands each piece to the link
+   * splitter, so `<linkTerms>a <strong>b</strong> c</linkTerms>` is cut in two
+   * before either link half is seen and the reader meets a literal
+   * `<linkTerms>` in a document a family may be held to. That is pinned as
+   * behaviour beside the splitter's other cases; this is the census that keeps
+   * the catalogs on the right side of it.
+   *
+   * It has to be its own assertion because the parity test above cannot see it:
+   * `tagsIn` sorts the tag names, so the safe nesting and the broken one carry
+   * the same census and compare equal. No catalog string does this today —
+   * which is exactly when a mechanism is cheap to install.
+   */
+  it("never opens a link tag before an emphasis tag", () => {
+    for (const [locale, catalog] of Object.entries(CATALOGS)) {
+      for (const { name } of LEGAL_DOCUMENTS) {
+        for (const [path, value] of flatStrings(catalog[name])) {
+          expect(
+            value,
+            `${locale}: ${name}.${path} wraps emphasis in a link — nest it the other way round`,
+          ).not.toMatch(new RegExp(`<link[A-Za-z]*>[^<]*<${EMPHASIS_TAG}>`));
         }
       }
     }
@@ -536,14 +640,28 @@ describe("the rendered page", () => {
 
   it("renders the document's own emphasis as a real <strong>", () => {
     expect(html).toContain(
-      '<strong class="font-semibold">someone@example.com</strong>',
+      `<strong class="${STRONG_CLASS_HTML}">someone@example.com</strong>`,
     );
   });
 
   it("puts the emphasis around a bolded cross-reference, not beside it", () => {
     expect(html).toContain(
-      `<strong class="font-semibold"><a class="rounded-sm font-medium text-act underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act" href="${ROUTES.privacy}">Privacy Policy</a></strong>`,
+      `<strong class="${STRONG_CLASS_HTML}"><a class="rounded-sm font-medium text-act underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act" href="${ROUTES.privacy}">Privacy Policy</a></strong>`,
     );
+  });
+
+  /**
+   * A link sets its own `font-medium`, which beats an inherited weight — so
+   * without the descendant rule a bold run reads 600 up to the link and 500 on
+   * the link, and a run that is entirely a link never looks bold at all. The
+   * assertion is on the `<strong>`'s own class rather than on a rendered weight,
+   * because static markup is all a reader of this page ever gets.
+   */
+  it("carries the bold weight onto an anchor inside the emphasis", () => {
+    expect(STRONG_CLASS).toContain("[&_a]:font-semibold");
+    const at = html.indexOf(`href="${ROUTES.privacy}"`);
+    const opened = html.lastIndexOf("<strong ", at);
+    expect(html.slice(opened, at)).toContain("[&amp;_a]:font-semibold");
   });
 
   /**
@@ -553,7 +671,7 @@ describe("the rendered page", () => {
    */
   it("emits one <strong> around a bold run that contains a link", () => {
     const at = html.indexOf("the regulator");
-    const opened = html.lastIndexOf('<strong class="font-semibold">', at);
+    const opened = html.lastIndexOf(`<strong class="${STRONG_CLASS_HTML}">`, at);
     const closed = html.indexOf("</strong>", at);
     expect(html.slice(opened, closed + "</strong>".length)).toContain(
       `href="${EXTERNAL_TAG_HREFS.linkCnil}"`,
@@ -563,6 +681,7 @@ describe("the rendered page", () => {
 
   it("ships no tag markup to the reader", () => {
     expect(html).not.toContain("&lt;link");
+    expect(html).not.toContain("&lt;strong");
     expect(html).not.toContain("<linkDiscipline>");
   });
 });

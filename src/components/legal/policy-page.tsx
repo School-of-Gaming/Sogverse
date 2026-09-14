@@ -60,7 +60,13 @@ interface PolicyPageProps {
  * in a real `<strong>`, around the link if there is one, so a bolded document
  * name reads as one emphasised link rather than two adjacent runs. Body copy is
  * `text-muted-foreground` at the default weight, so `font-semibold` is what
- * reads as bold against it — the same weight the page's own subheadings take.
+ * reads as bold against it — the same weight the page's own subheadings take. The
+ * weight has to be pushed onto any anchor inside the run as well, because a link
+ * carries its own `font-medium` and that wins over an inherited weight: without
+ * it a bold phrase ending in a linked acronym renders 600 up to the link and 500
+ * on the link itself, and a bold run that is *entirely* a link never looks bold
+ * at all. One arbitrary variant on the `<strong>` covers both, so the link's own
+ * class list stays the one thing that decides what a link looks like.
  *
  * Neighbouring emphasised segments are gathered into **one** element before
  * rendering. The splitter has to hand emphasis back per segment, because a bold
@@ -106,7 +112,7 @@ function PolicyText({
     <>
       {runs.map((run, i) =>
         run.strong ? (
-          <strong key={i} className="font-semibold">
+          <strong key={i} className="font-semibold [&_a]:font-semibold">
             {run.segments.map(piece)}
           </strong>
         ) : (
