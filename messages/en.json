@@ -3494,7 +3494,7 @@
       }
     },
     "feedback": {
-      "heading": "How was today?",
+      "heading": "How did it go?",
       "items": {
         "fun": "I had fun.",
         "learned": "I learned something new.",
@@ -3512,7 +3512,7 @@
         "definitely": "Definitely"
       },
       "notePrompt": "Anything else you want to tell us about today’s session?",
-      "audience": "Your Gedu sees how the group felt. Only the School of Gaming team sees what you picked.",
+      "audience": "Your Gedu and the School of Gaming team will read your feedback. Thank you!",
       "done": "Done"
     }
   },

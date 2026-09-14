@@ -2807,7 +2807,7 @@
       }
     },
     "feedback": {
-      "heading": "Miten tänään meni?",
+      "heading": "Miten meni?",
       "items": {
         "fun": "Minulla oli hauskaa.",
         "learned": "Opin jotain uutta.",
@@ -2825,7 +2825,7 @@
         "definitely": "Totta kai"
       },
       "notePrompt": "Haluatko kertoa vielä jotain tämän päivän kerrasta?",
-      "audience": "Gedusi näkee, miltä ryhmästä tuntui. Vain School of Gamingin tiimi näkee, mitä valitsit.",
+      "audience": "Gedusi ja School of Gamingin tiimi lukevat palautteesi. Kiitos!",
       "done": "Valmis"
     }
   },

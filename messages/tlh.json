@@ -2847,7 +2847,7 @@
       }
     },
     "feedback": {
-      "heading": "DaHjaj chay’ Qapla’?",
+      "heading": "chay’ Qapla’?",
       "items": {
         "fun": "jItIvqu’.",
         "learned": "De’ chu’ vIghojpu’.",
@@ -2865,7 +2865,7 @@
         "definitely": "HISlaHbej"
       },
       "notePrompt": "DaHjaj poHvaD latlh vay’ choja’laH’a’?",
-      "audience": "ghomlI’ qab leghlaH Gedu’lI’. DawIvbogh legh School of Gaming ghom neH.",
+      "audience": "QInlIj laD Gedu’lI’ School of Gaming ghom je. qatlho’!",
       "done": "rIn"
     }
   },

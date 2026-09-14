@@ -2807,7 +2807,7 @@
       }
     },
     "feedback": {
-      "heading": "Comment s’est passée ta journée ?",
+      "heading": "Comment ça s’est passé ?",
       "items": {
         "fun": "J’ai passé un bon moment.",
         "learned": "J’ai appris quelque chose de nouveau.",
@@ -2825,7 +2825,7 @@
         "definitely": "Tout à fait"
       },
       "notePrompt": "Tu veux nous dire autre chose sur la séance d’aujourd’hui ?",
-      "audience": "Ton Gedu voit comment le groupe s’est senti. Seule l’équipe de School of Gaming voit ce que tu as choisi.",
+      "audience": "Ton Gedu et l’équipe de School of Gaming liront ton retour. Merci !",
       "done": "Terminé"
     }
   },

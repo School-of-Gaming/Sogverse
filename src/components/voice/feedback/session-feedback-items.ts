@@ -1,20 +1,21 @@
 import type { YtyElementId } from "@/lib/constants/yty";
 
 /**
- * The five-point answer row, in the order it is drawn.
+ * The five levels of the answer bar, in the order they charge.
  *
  * The numbers are the stored shape and the words are what a gamer reads: a bare
  * number on a tap target asks a child to decode a scale before answering, so the
- * row never draws one. The tuple is the single source of both the order and the
- * values, so a row cannot be re-ordered without re-ordering the values with it.
+ * bar never draws one. The tuple is the single source of both the order and the
+ * values, so the levels cannot be re-ordered without re-ordering the values with
+ * them.
  */
 export const SESSION_FEEDBACK_RATINGS = [1, 2, 3, 4, 5] as const;
 
 export type SessionFeedbackRating = (typeof SESSION_FEEDBACK_RATINGS)[number];
 
 /**
- * The message key each point on the row takes its word from, indexed by the
- * value it stands for.
+ * The message key each level takes its word from, indexed by the value it stands
+ * for. One level's word is shown at a time — the one the bar is charged to.
  */
 export const SESSION_FEEDBACK_RATING_KEYS = {
   1: "no",

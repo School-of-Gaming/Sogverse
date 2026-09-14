@@ -3,22 +3,30 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
 import { SessionFeedbackScreen } from "@/components/voice/feedback/SessionFeedbackScreen";
-import type { SessionFeedbackResult } from "@/components/voice/feedback/session-feedback-items";
+import {
+  SESSION_FEEDBACK_RATING_KEYS,
+  type SessionFeedbackResult,
+} from "@/components/voice/feedback/session-feedback-items";
 
 /**
  * The screen collects answers and reports them once, and that is the whole of
  * its contract — no save, no route, no store. What is worth pinning is what a
  * child's session would otherwise lose silently:
  *
+ * - **A tap charges the bar to that level**, filling every segment below it; a
+ *   lower tap drains back to it, and a second tap on the level the fill already
+ *   ends on empties the bar — the only route back to unanswered, and the one a
+ *   child who tapped by accident needs. That second tap is the fragile one: an
+ *   already-checked radio fires no change event, so a screen reading only
+ *   `onChange` would swallow it silently.
+ * - **The level's word is shown once**, on a line that exists before anything is
+ *   chosen and empties with the bar: reserving it is what keeps an answer — or
+ *   an un-answer — from moving the page under the next question.
  * - **Every statement is optional**, so Done with nothing chosen has to be a
  *   real answer (seven skips) rather than a blocked button or a dropped result.
  * - **Every statement is *reported***, answered or not — asserted on the
  *   captured argument with `toStrictEqual`, because `toHaveBeenCalledWith`
  *   counts a key holding `undefined` as absent and would pass an empty result.
- * - **Re-choosing replaces**, because a child who taps the wrong word has no
- *   other way back — there is no clear control and never will be.
- * - **The note is collapsed until asked for**, which is the whole reason the
- *   question fits a phone; a textarea standing open is the regression.
  * - **Done stays down once pressed**, because the caller's next act is a
  *   full-page navigation and a button that re-enables in that gap fires twice.
  */
@@ -29,6 +37,11 @@ const ITEMS = [
 ] as const;
 
 type AskedKey = (typeof ITEMS)[number]["key"];
+
+/** The five level words, as a reader meets them, in the order they charge. */
+const WORDS = Object.values(SESSION_FEEDBACK_RATING_KEYS).map(
+  (key) => messages.voice.feedback.scale[key],
+);
 
 function renderScreen(
   overrides: {
@@ -62,40 +75,98 @@ function captureDone() {
   return { onDone, results };
 }
 
-/** The five words of one statement's row, resolved through its own group. */
-function rowFor(label: string): HTMLElement {
+/** One statement's charge bar, resolved through the sentence above it. */
+function barFor(label: string): HTMLElement {
   const group = screen
     .getAllByRole("radiogroup")
     .find((candidate) => candidate.getAttribute("aria-labelledby") !== null &&
       document.getElementById(candidate.getAttribute("aria-labelledby")!)
         ?.textContent === label);
-  if (group === undefined) throw new Error(`no answer row for "${label}"`);
+  if (group === undefined) throw new Error(`no charge bar for "${label}"`);
   return group;
 }
 
-/** One word's radio inside a row, as the element that carries `checked`. */
-function word(row: HTMLElement, name: string): HTMLInputElement {
-  const radio = within(row).getByRole("radio", { name });
+/** One level's radio inside a bar, as the element that carries `checked`. */
+function level(bar: HTMLElement, name: string): HTMLInputElement {
+  const radio = within(bar).getByRole("radio", { name });
   if (!(radio instanceof HTMLInputElement)) {
     throw new Error(`"${name}" is not a native radio`);
   }
   return radio;
 }
 
+/** The line under a bar that holds the chosen level's word. */
+function wordLine(label: string): HTMLElement {
+  const line = barFor(label).nextElementSibling;
+  if (!(line instanceof HTMLElement)) {
+    throw new Error(`no word line under "${label}"`);
+  }
+  return line;
+}
+
 describe("the session feedback screen", () => {
-  it("marks the word a reader picks, and moves the mark when they pick another", () => {
+  it("charges the bar to the level tapped and shows that level's word once", () => {
     renderScreen();
-    const row = rowFor("I had fun.");
+    const bar = barFor("I had fun.");
 
-    fireEvent.click(word(row, "A bit"));
-    expect(word(row, "A bit").checked).toBe(true);
+    fireEvent.click(level(bar, "Yes"));
 
-    fireEvent.click(word(row, "Definitely"));
-    expect(word(row, "Definitely").checked).toBe(true);
-    expect(word(row, "A bit").checked).toBe(false);
+    expect(level(bar, "Yes").checked).toBe(true);
+    expect(wordLine("I had fun.").textContent).toBe("Yes");
+    // Once, not five times: the words left the bar when it became a meter, so
+    // every drawn segment is a block with nothing written on it.
+    const segments = bar.querySelectorAll('[aria-hidden="true"]');
+    expect(segments).toHaveLength(5);
+    for (const segment of segments) expect(segment.textContent).toBe("");
   });
 
-  it("gives each statement its own radio group, so the arrows stay inside one row", () => {
+  it("drains back when a lower segment is tapped", () => {
+    renderScreen();
+    const bar = barFor("I had fun.");
+
+    fireEvent.click(level(bar, "Yes"));
+    fireEvent.click(level(bar, "Not really"));
+
+    expect(level(bar, "Not really").checked).toBe(true);
+    expect(level(bar, "Yes").checked).toBe(false);
+    expect(wordLine("I had fun.").textContent).toBe("Not really");
+  });
+
+  it("empties the bar when the level it is charged to is tapped again", () => {
+    renderScreen();
+    const bar = barFor("I had fun.");
+
+    fireEvent.click(level(bar, "Yes"));
+    fireEvent.click(level(bar, "Yes"));
+
+    for (const word of WORDS) expect(level(bar, word).checked).toBe(false);
+    expect(wordLine("I had fun.").textContent).toBe("");
+  });
+
+  it("reports a statement emptied by a second tap as a skip", () => {
+    const { onDone, results } = captureDone();
+    renderScreen({ onDone });
+    const bar = barFor("I had fun.");
+
+    fireEvent.click(level(bar, "Yes"));
+    fireEvent.click(level(bar, "Yes"));
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+
+    expect(results[0]).toStrictEqual({
+      answers: { fun: undefined, learned: undefined },
+      note: "",
+    });
+  });
+
+  it("reserves the word line before anything is chosen", () => {
+    renderScreen();
+
+    for (const item of ITEMS) {
+      expect(wordLine(item.label).textContent).toBe("");
+    }
+  });
+
+  it("gives each statement its own radio group, so the arrows stay inside one bar", () => {
     renderScreen();
 
     const names = new Set(
@@ -130,14 +201,9 @@ describe("the session feedback screen", () => {
     const { onDone, results } = captureDone();
     renderScreen({ onDone });
 
-    fireEvent.click(word(rowFor("I had fun."), "Definitely"));
-    fireEvent.click(word(rowFor("I learned something new."), "No"));
+    fireEvent.click(level(barFor("I had fun."), "Definitely"));
+    fireEvent.click(level(barFor("I learned something new."), "No"));
 
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Anything else you want to tell us about today’s session?",
-      }),
-    );
     fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "we built a castle" },
     });
@@ -150,18 +216,16 @@ describe("the session feedback screen", () => {
     });
   });
 
-  it("keeps the note field collapsed until the line is tapped", () => {
+  it("offers the note field open and writable from the first paint", () => {
     renderScreen();
 
-    expect(screen.queryByRole("textbox")).toBeNull();
-
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Anything else you want to tell us about today’s session?",
-      }),
+    const field = screen.getByRole("textbox");
+    expect(field.getAttribute("placeholder")).toBe(
+      "Anything else you want to tell us about today’s session?",
     );
 
-    expect(screen.getByRole("textbox")).not.toBeNull();
+    fireEvent.change(field, { target: { value: "hi" } });
+    expect(screen.getByDisplayValue("hi")).toBe(field);
   });
 
   it("holds Done disabled while the caller is acting on it", () => {

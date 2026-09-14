@@ -2807,7 +2807,7 @@
       }
     },
     "feedback": {
-      "heading": "Hur var det i dag?",
+      "heading": "Hur gick det?",
       "items": {
         "fun": "Jag hade roligt.",
         "learned": "Jag lärde mig något nytt.",
@@ -2825,7 +2825,7 @@
         "definitely": "Absolut"
       },
       "notePrompt": "Vill du berätta något mer om dagens session?",
-      "audience": "Din Gedu ser hur gruppen kände sig. Bara teamet på School of Gaming ser vad du valde.",
+      "audience": "Din Gedu och teamet på School of Gaming läser din feedback. Tack!",
       "done": "Klart"
     }
   },

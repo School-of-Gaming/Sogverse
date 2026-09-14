@@ -161,9 +161,9 @@ Persisted messages, images, reactions, replies, mentions and moderation, in thei
 ## Session feedback (gamer only)
 
 A gamer leaving an online session is asked how it went: seven statements, each answered on
-the same five-point row of words, an optional note collapsed to one line, and a Done. It
-replaces the last frame of leaving — the Leave button's navigation, and the card the room
-shows when the window closes and everyone is ejected — and only for that one audience.
+its own five-segment charge bar, an optional note and a Done. It replaces the last frame of
+leaving — the Leave button's navigation, and the card the room shows when the window closes
+and everyone is ejected — and only for that one audience.
 Every other role leaves exactly as it did before, and the error path is untouched.
 
 **Rule: saving is a no-op, deliberately, until there is an instrument to save into.** The
@@ -185,24 +185,51 @@ child told which bucket a statement feeds learns to answer the bucket.
 
 **Rule: scrolling is the design, and the screen is one column read from the top down.** The
 question is longer than a phone viewport and squeezing it to fit was tried and rejected: a
-child answering seven statements is served by copy at the app's body size, answer cells big
+child answering seven statements is served by copy at the app's body size, targets big
 enough to hit with a thumb, labels at a readable size and the app's ordinary section gap
 between statements — none of which survives a layout budgeted to a viewport. So the column
 ends in Done, at the end, scrolled to like anything else; nothing is pinned over the page,
 because the dashboard layout scrolls the document itself.
 
+**Rule: the answer control is a five-segment bar that charges, and the level's word is
+shown once.** Tapping a segment fills it and every segment below it, and tapping a lower
+one drains back to it. Five words spread across a phone's width read as a list to pick from
+and repeat themselves seven times down the page; one wide bar reads as a level being set,
+which is what the question actually asks for, and a gamer surface is where the palette may
+be spent. So the words leave the segments and the chosen level's own word is stated once
+beside the bar. **The line that holds it is always reserved**, because an answer that grew
+a line would push the next statement down the page under the thumb that just tapped.
+Underneath it is still a radio group with one name per statement and every level named to
+assistive tech, so the bar is five options rather than a picture of a value — and the fill
+is derived from the row's value, not from which radio is checked, because every segment
+below the chosen one fills too.
+
+**Corollary: a second tap on the level the fill already ends on empties the bar.** Skipping
+a statement has to stay reachable *after* a first tap — a child who taps by accident, or
+decides they would rather not answer, otherwise has no way back, and the screen would have
+turned an optional question into a compulsory one the moment it was touched. The tap that
+empties is the one the control itself is worst at reporting: a radio that is already
+checked fires no change event, so the clear is read from the click and the set from the
+change, and the word line goes back to empty with the bar.
+
+**Rule: choosing an answer changes that bar and nothing else — the page does not move.**
+Scrolling the reader to the next statement on an answer was built and rejected: a child
+has to be able to see the level they just set, and a screen that travels on the tap takes
+the answer out from under them before they can check it. The column is scrolled by the
+reader, at their own pace, like any other page.
+
 **Rule: it is not carded on a phone, and is a narrow centred card above the small
 breakpoint.** Width is the scarce resource at the design floor — a card's padding and
-border come out of the five answer cells, which are the one thing on the screen that cannot
-give — so below that breakpoint the column sits directly on the page inside the dashboard
-layout's own gutter and adds no horizontal padding of its own. Above it, width stops being
-scarce and stretching five cells across a desktop is the opposite defect, so the card
-returns capped at the width the app gives a single-question page. The note stays one
-tappable line until it is asked for, which is about not reading as an eighth question
-rather than about saving space.
+border come out of the bar, which is the one thing on the screen that cannot give — so
+below that breakpoint the column sits directly on the page inside the dashboard layout's
+own gutter and adds no horizontal padding of its own. Above it, width stops being scarce
+and stretching the column across a desktop is the opposite defect, so the card returns
+capped at the width the app gives a single-question page. The note field stands open at the
+foot of the column, where the last statement's scroll lands.
 
 **Every statement is optional and an unanswered one is a skip**, which is why there is no
-Skip button, no per-row skip control, and no state in which Done is refused. Done carries
+Skip button, no per-row skip control, and no state in which Done is refused — and why a
+second tap has to be able to put a statement back into that state. Done carries
 the committing flag the app-wide rule describes: set before the navigation, never cleared,
 because the document is leaving.
 
