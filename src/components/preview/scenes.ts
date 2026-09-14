@@ -402,7 +402,7 @@ export const PREVIEW_SCENES = [
         slug: "session-ended",
         label: "The session ended under them",
         description:
-          "The window closed under the reader, so the page says so above the heading.",
+          "A second scenario because the lead line cannot coexist with its absence in one render.",
       },
     ],
   },

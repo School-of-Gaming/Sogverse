@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
@@ -19,6 +19,10 @@ import {
  *   child who tapped by accident needs. That second tap is the fragile one: an
  *   already-checked radio fires no change event, so a screen reading only
  *   `onChange` would swallow it silently.
+ * - **Every tap here lands on the visible segment**, never on the sr-only radio
+ *   inside it. The click/change split only works because a click on the label is
+ *   forwarded to the control it labels, and firing straight at the input would
+ *   skip exactly the half of the path a reader actually uses.
  * - **The level's word is shown once**, on a line that exists before anything is
  *   chosen and empties with the bar: reserving it is what keeps an answer — or
  *   an un-answer — from moving the page under the next question.
@@ -75,15 +79,16 @@ function captureDone() {
   return { onDone, results };
 }
 
+/** One statement — its sentence, its bar and its word line — as one block. */
+function blockFor(label: string): HTMLElement {
+  const block = screen.getByText(label).closest("div");
+  if (block === null) throw new Error(`no statement block for "${label}"`);
+  return block;
+}
+
 /** One statement's charge bar, resolved through the sentence above it. */
 function barFor(label: string): HTMLElement {
-  const group = screen
-    .getAllByRole("radiogroup")
-    .find((candidate) => candidate.getAttribute("aria-labelledby") !== null &&
-      document.getElementById(candidate.getAttribute("aria-labelledby")!)
-        ?.textContent === label);
-  if (group === undefined) throw new Error(`no charge bar for "${label}"`);
-  return group;
+  return within(blockFor(label)).getByRole("radiogroup");
 }
 
 /** One level's radio inside a bar, as the element that carries `checked`. */
@@ -95,37 +100,91 @@ function level(bar: HTMLElement, name: string): HTMLInputElement {
   return radio;
 }
 
-/** The line under a bar that holds the chosen level's word. */
+/**
+ * The visible segment a reader taps — the `<label>` the radio sits inside, not
+ * the sr-only radio itself.
+ *
+ * Every tap below goes through here on purpose. The split that makes the bar
+ * work — the clear read from the click, the set read from the change — only
+ * holds because a click on a label is forwarded to the control it labels, and
+ * firing straight at the hidden input skips the forwarding: the test would pass
+ * even if the visible half of the bar were wired to nothing.
+ */
+function segment(bar: HTMLElement, name: string): HTMLLabelElement {
+  const label = level(bar, name).closest("label");
+  if (label === null) throw new Error(`"${name}" has no visible segment`);
+  return label;
+}
+
+/**
+ * The line under a bar that holds the chosen level's word — found by what it is
+ * (the statement's one status readout, which is how the level is announced)
+ * rather than by where it happens to sit in the markup.
+ */
 function wordLine(label: string): HTMLElement {
-  const line = barFor(label).nextElementSibling;
-  if (!(line instanceof HTMLElement)) {
-    throw new Error(`no word line under "${label}"`);
-  }
-  return line;
+  return within(blockFor(label)).getByRole("status");
+}
+
+/**
+ * The words naming the two ends of the scale, in the order they are drawn.
+ *
+ * Found as the level words that appear in the statement's block *outside* the
+ * bar and outside the answer readout — which is what an end label is. Doing it
+ * that way rather than by walking the markup keeps the test indifferent to how
+ * the row below the bar is built, and still fails if an end label goes missing,
+ * doubles up, or quietly becomes the answer line.
+ */
+function endWords(label: string): string[] {
+  const block = blockFor(label);
+  const bar = barFor(label);
+  const answer = wordLine(label);
+  return WORDS.filter((word) =>
+    within(block)
+      .queryAllByText(word)
+      .some((node) => !bar.contains(node) && node !== answer),
+  );
 }
 
 describe("the session feedback screen", () => {
+  // The screen scrolls the document to the top as it arrives, because it
+  // replaces a room the reader may have scrolled a long way down. jsdom has no
+  // layout to scroll and reports its own `scrollTo` unimplemented, so it is
+  // stubbed here rather than branched around in the component.
+  beforeAll(() => {
+    vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+  });
+
   it("charges the bar to the level tapped and shows that level's word once", () => {
     renderScreen();
     const bar = barFor("I had fun.");
 
-    fireEvent.click(level(bar, "Yes"));
+    fireEvent.click(segment(bar, "Yes"));
 
     expect(level(bar, "Yes").checked).toBe(true);
     expect(wordLine("I had fun.").textContent).toBe("Yes");
-    // Once, not five times: the words left the bar when it became a meter, so
-    // every drawn segment is a block with nothing written on it.
-    const segments = bar.querySelectorAll('[aria-hidden="true"]');
-    expect(segments).toHaveLength(5);
-    for (const segment of segments) expect(segment.textContent).toBe("");
+    // Once, not five times: the words left the segments when the bar became a
+    // meter, so inside the bar each word survives exactly once — as a radio's
+    // accessible name. A word drawn on a segment as well would make the lookup
+    // ambiguous and this would throw.
+    for (const word of WORDS) {
+      expect(within(bar).getByText(word)).toBeDefined();
+    }
+  });
+
+  it("moves focus to the heading when it arrives", () => {
+    renderScreen();
+
+    expect(document.activeElement).toBe(
+      screen.getByRole("heading", { level: 1 }),
+    );
   });
 
   it("drains back when a lower segment is tapped", () => {
     renderScreen();
     const bar = barFor("I had fun.");
 
-    fireEvent.click(level(bar, "Yes"));
-    fireEvent.click(level(bar, "Not really"));
+    fireEvent.click(segment(bar, "Yes"));
+    fireEvent.click(segment(bar, "Not really"));
 
     expect(level(bar, "Not really").checked).toBe(true);
     expect(level(bar, "Yes").checked).toBe(false);
@@ -136,8 +195,8 @@ describe("the session feedback screen", () => {
     renderScreen();
     const bar = barFor("I had fun.");
 
-    fireEvent.click(level(bar, "Yes"));
-    fireEvent.click(level(bar, "Yes"));
+    fireEvent.click(segment(bar, "Yes"));
+    fireEvent.click(segment(bar, "Yes"));
 
     for (const word of WORDS) expect(level(bar, word).checked).toBe(false);
     expect(wordLine("I had fun.").textContent).toBe("");
@@ -148,8 +207,8 @@ describe("the session feedback screen", () => {
     renderScreen({ onDone });
     const bar = barFor("I had fun.");
 
-    fireEvent.click(level(bar, "Yes"));
-    fireEvent.click(level(bar, "Yes"));
+    fireEvent.click(segment(bar, "Yes"));
+    fireEvent.click(segment(bar, "Yes"));
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
 
     expect(results[0]).toStrictEqual({
@@ -164,6 +223,41 @@ describe("the session feedback screen", () => {
     for (const item of ITEMS) {
       expect(wordLine(item.label).textContent).toBe("");
     }
+  });
+
+  it("names both ends of the scale before anything is tapped", () => {
+    renderScreen();
+
+    // The direction has to be readable from an untouched bar: the rising
+    // blocks say it in shape and these two words say it in language.
+    for (const item of ITEMS) {
+      expect(endWords(item.label)).toEqual(["No", "Definitely"]);
+    }
+  });
+
+  it("trades the end words for the answer, and takes them back when it is cleared", () => {
+    renderScreen();
+    const bar = barFor("I had fun.");
+
+    // The end words are a prompt, not a caption: they are there for the moment
+    // before an answer and gone once there is one.
+    fireEvent.click(segment(bar, "A bit"));
+    expect(wordLine("I had fun.").textContent).toBe("A bit");
+    expect(endWords("I had fun.")).toEqual([]);
+
+    // ...and the question coming back brings its prompt back with it.
+    fireEvent.click(segment(bar, "A bit"));
+    expect(wordLine("I had fun.").textContent).toBe("");
+    expect(endWords("I had fun.")).toEqual(["No", "Definitely"]);
+  });
+
+  it("leaves every other statement's end words alone when one is answered", () => {
+    renderScreen();
+
+    fireEvent.click(segment(barFor("I had fun."), "Yes"));
+
+    expect(endWords("I had fun.")).toEqual([]);
+    expect(endWords("I learned something new.")).toEqual(["No", "Definitely"]);
   });
 
   it("gives each statement its own radio group, so the arrows stay inside one bar", () => {
@@ -201,8 +295,8 @@ describe("the session feedback screen", () => {
     const { onDone, results } = captureDone();
     renderScreen({ onDone });
 
-    fireEvent.click(level(barFor("I had fun."), "Definitely"));
-    fireEvent.click(level(barFor("I learned something new."), "No"));
+    fireEvent.click(segment(barFor("I had fun."), "Definitely"));
+    fireEvent.click(segment(barFor("I learned something new."), "No"));
 
     fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "we built a castle" },
@@ -219,10 +313,11 @@ describe("the session feedback screen", () => {
   it("offers the note field open and writable from the first paint", () => {
     renderScreen();
 
+    // Present, enabled and writable — the three things that make it *open*.
+    // What it says while empty is copy, and pinning that sentence here would
+    // turn every rewrite of it into a failing test about something else.
     const field = screen.getByRole("textbox");
-    expect(field.getAttribute("placeholder")).toBe(
-      "Anything else you want to tell us about today’s session?",
-    );
+    expect(field.hasAttribute("disabled")).toBe(false);
 
     fireEvent.change(field, { target: { value: "hi" } });
     expect(screen.getByDisplayValue("hi")).toBe(field);

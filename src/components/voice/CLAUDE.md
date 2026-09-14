@@ -196,9 +196,27 @@ shown once.** Tapping a segment fills it and every segment below it, and tapping
 one drains back to it. Five words spread across a phone's width read as a list to pick from
 and repeat themselves seven times down the page; one wide bar reads as a level being set,
 which is what the question actually asks for, and a gamer surface is where the palette may
-be spent. So the words leave the segments and the chosen level's own word is stated once
-beside the bar. **The line that holds it is always reserved**, because an answer that grew
-a line would push the next statement down the page under the thumb that just tapped.
+be spent. So the words leave the segments and the chosen level's own word is stated once,
+centred on the line below the bar. **The line that holds it is always reserved**, because
+an answer that grew a line would push the next statement down the page under the thumb that
+just tapped. It is a polite live region, so setting a level — and clearing one — is
+announced to a reader who cannot see the fill.
+
+**Rule: the bar shows its direction before a tap, and shows it twice.** An unanswered row
+of five identical blocks says nothing about which end is "more", and a child asked to set a
+level has to know that before they can set one. So the blocks **rise** from left to right,
+bottom-aligned like a signal meter, and while the statement is unanswered the reserved line
+under them carries the **first level's word at the left and the fifth's at the right** in
+muted type. Twice, because the two say it to different readers: the shape to a child who
+never reads the line, the words to one who does not read the shape. **Those words are a
+prompt, not a caption** — they stand only until a level is chosen, then give the line over
+to the single chosen word centred in it, and come back when the bar is emptied. The line's
+three columns are unchanged either way, so only their contents are swapped and the height
+never moves. The end words are `aria-hidden` — assistive tech already hears all five as the
+radios' own names, and the scale said a second time there is furniture read aloud. **The rise is the drawing only: the
+tap target stays 44px on every segment**, with the block bottom-aligned inside a full-height
+label, because a first option with half the target of the last one biases the answers it
+collects.
 Underneath it is still a radio group with one name per statement and every level named to
 assistive tech, so the bar is five options rather than a picture of a value — and the fill
 is derived from the row's value, not from which radio is checked, because every segment
@@ -210,7 +228,17 @@ decides they would rather not answer, otherwise has no way back, and the screen 
 turned an optional question into a compulsory one the moment it was touched. The tap that
 empties is the one the control itself is worst at reporting: a radio that is already
 checked fires no change event, so the clear is read from the click and the set from the
-change, and the word line goes back to empty with the bar.
+change, and the word line goes back to empty with the bar. **From the keyboard the same tap
+is Space on the level already chosen** — activating the checked radio clears it, exactly as
+a second tap does — and that is deliberate: it is the keyboard route to a skip, and without
+it a reader who cannot point at the bar could answer a statement but never un-answer it.
+
+**The screen resets the page when it mounts**: it scrolls the document to the top instantly
+and moves focus to its own heading. It replaces a room that may have been scrolled a long
+way down and leaves focus on `<body>` otherwise, so the next Tab would restart at the top of
+the document and nothing would be announced. The reset lives in the screen rather than in
+the page that mounts it, so the preview scene arrives the same way the live one does. It is
+not a scroll *between* statements — that was built and rejected (see the rule below).
 
 **Rule: choosing an answer changes that bar and nothing else — the page does not move.**
 Scrolling the reader to the next statement on an answer was built and rejected: a child
@@ -226,6 +254,20 @@ own gutter and adds no horizontal padding of its own. Above it, width stops bein
 and stretching the column across a desktop is the opposite defect, so the card returns
 capped at the width the app gives a single-question page. The note field stands open at the
 foot of the column, where the last statement's scroll lands.
+
+**Rule: a statement stacks on a phone and is a row from `md` up, because the two widths run
+out of different things.** On a phone width is the scarce resource, so the bar takes the
+whole of it and the sentence sits above — that is the layout above, unchanged. On a desktop
+width is plentiful and *height* is what runs out: the same narrow column stacked seven times
+is a tall thin ribbon down the middle of a wide screen, and the reader scrolls for want of a
+layout rather than for want of room. So from `md` the card widens and each statement becomes
+one row — the sentence taking the slack on the left, the bar with its reserved word line at
+a fixed width on the right, the sentence centred on the *segment row* rather than on the
+whole right-hand block, which is what stops it sitting visibly high of the thing it labels.
+Halving each statement's height is what puts all seven, the note and Done inside one desktop
+viewport. The statement stays **one DOM block** at every width, with the row built as a grid
+inside it, so the radiogroup's labelling never reaches across a layout — and the word line
+is reserved in both, so setting or clearing a level still shifts nothing either way.
 
 **Every statement is optional and an unanswered one is a skip**, which is why there is no
 Skip button, no per-row skip control, and no state in which Done is refused — and why a
