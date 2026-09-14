@@ -4,13 +4,14 @@ import {
   UTM_HEADER,
   UTM_HEADER_MAX_LENGTH,
   UTM_QUERY_PARAMS,
-  buildUtmMetadata,
   hasUtmAttribution,
   parseUtmHeader,
   readUtmFromSearchParams,
   sanitiseUtmValue,
   serialiseUtm,
+  utmMetadataForConsent,
 } from "@/lib/utm";
+import type { ConsentState } from "@/lib/consent";
 
 /**
  * The shared UTM sanitiser. Three callers depend on it agreeing with the
@@ -247,24 +248,76 @@ describe("the x-utm header round trip", () => {
   });
 });
 
-describe("buildUtmMetadata", () => {
+/**
+ * The consent gate on the write. Counsel reads a landing link's UTM parameters
+ * as tracking under the MARKETING purpose, so the three `profiles.utm_*`
+ * columns are filled only for a visitor whose stored answer granted it. This is
+ * the only exported way to build the signup metadata, which is what stops a
+ * registration route from persisting an attribution without first saying what
+ * the visitor consented to.
+ */
+describe("utmMetadataForConsent", () => {
+  /** A stored answer, exactly as the cookie parser hands one back. */
+  const answer = (analytics: boolean, marketing: boolean): ConsentState => ({
+    analytics,
+    marketing,
+    decidedAt: "2026-09-14T10:15:00.000Z",
+  });
+  const GRANTED = answer(true, true);
+  const utm = { source: "Lynx", medium: "email", campaign: "lynx-summer-a" };
+
+  it("carries all three fields when marketing consent was granted", () => {
+    expect(utmMetadataForConsent(GRANTED, utm)).toEqual({
+      utm_source: "Lynx",
+      utm_medium: "email",
+      utm_campaign: "lynx-summer-a",
+    });
+  });
+
+  it("carries nothing when the visitor never answered the banner", () => {
+    // `null` is every unusable answer collapsed into one — no cookie, a cookie
+    // from a superseded version of the question, junk. An unanswered banner is
+    // not consent, so it is refused exactly like a refusal.
+    expect(utmMetadataForConsent(null, utm)).toEqual({});
+  });
+
+  it("carries nothing when the visitor rejected everything", () => {
+    expect(
+      utmMetadataForConsent(answer(false, false), utm),
+    ).toEqual({});
+  });
+
+  it("carries nothing on analytics-only, which is the case the ruling turns on", () => {
+    // Lynx's lawyer put this under marketing rather than analytics, so a
+    // visitor who agreed to measurement and refused advertising produces no
+    // tag. Reading the parameters still happened — that is the proxy's
+    // business, and it is what the banner governs; the write is the part
+    // consent decides.
+    expect(
+      utmMetadataForConsent(answer(true, false), utm),
+    ).toEqual({});
+  });
+
   it("omits a field entirely rather than sending null", () => {
     // The column simply stays NULL, and the metadata a future reader inspects
     // says only what was actually true.
-    expect(buildUtmMetadata({ campaign: "lynx-summer-a" })).toEqual({
-      utm_campaign: "lynx-summer-a",
-    });
+    expect(
+      utmMetadataForConsent(GRANTED, { campaign: "lynx-summer-a" }),
+    ).toEqual({ utm_campaign: "lynx-summer-a" });
   });
 
   it("drops a field the sanitiser refuses and keeps the rest", () => {
-    expect(buildUtmMetadata({ source: "=SUM(A1)", campaign: "lynx-summer-a" })).toEqual({
-      utm_campaign: "lynx-summer-a",
-    });
+    expect(
+      utmMetadataForConsent(GRANTED, {
+        source: "=SUM(A1)",
+        campaign: "lynx-summer-a",
+      }),
+    ).toEqual({ utm_campaign: "lynx-summer-a" });
   });
 
   it("is empty when the body carried no utm object at all", () => {
-    expect(buildUtmMetadata(undefined)).toEqual({});
-    expect(buildUtmMetadata({})).toEqual({});
+    expect(utmMetadataForConsent(GRANTED, undefined)).toEqual({});
+    expect(utmMetadataForConsent(GRANTED, {})).toEqual({});
   });
 });
 
@@ -280,10 +333,17 @@ describe("utm names", () => {
       campaign: "utm_campaign",
     });
     expect(UTM_HEADER).toBe("x-utm");
-    expect(Object.keys(buildUtmMetadata({ source: "a", medium: "b", campaign: "c" }))).toEqual([
-      "utm_source",
-      "utm_medium",
-      "utm_campaign",
-    ]);
+    expect(
+      Object.keys(
+        utmMetadataForConsent(
+          {
+            analytics: true,
+            marketing: true,
+            decidedAt: "2026-09-14T10:15:00.000Z",
+          },
+          { source: "a", medium: "b", campaign: "c" },
+        ),
+      ),
+    ).toEqual(["utm_source", "utm_medium", "utm_campaign"]);
   });
 });

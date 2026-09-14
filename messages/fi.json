@@ -3133,7 +3133,7 @@
           "Halutessasi lapsesi käyttäjätunnuksen niissä peleissä, joita hänen kerhonsa käyttävät – tällä hetkellä Minecraftissa ja Robloxissa – sekä tilitunnisteen, jonka peli hänelle antaa, jotta tunnistamme hänet pelissä ja jotta hän voi liittyä Minecraft-palvelimellemme tapaamisten aikana.",
           "Pelikasvattajiemme kirjoittamat merkinnät tapaamisista – läsnäolot, tapaamisraportit ja lyhyet muistiinpanot, jotka auttavat meitä tukemaan lastasi ryhmässä.",
           "Tekniset tiedot, joita mikä tahansa verkkosivusto tarvitsee toimiakseen – kirjautumisistunnot, pyyntölokit ja, vain jos valitset sen, nimettömät käyttötilastot. Katso kohdat \"Tekniset tiedot\" ja \"Evästeet, analytiikka ja mainonta\" jäljempänä.",
-          "Kampanjatunnisteen – lähteen, välineen ja kampanjan – jonka käyntisi aloittanut linkki kantoi mukanaan. Tallennamme sen kerran, tilin luonnin yhteydessä, jotta me ja kumppanimme tiedämme, mikä viestintä tavoittaa perheitä."
+          "Kampanjatunnisteen – lähteen, välineen ja kampanjan – jonka käyntisi aloittanut linkki kantoi mukanaan. Tallennamme sen kerran, tilin luonnin yhteydessä ja vain jos olet sallinut markkinointievästeet, jotta me ja kumppanimme tiedämme, mikä viestintä tavoittaa perheitä. Markkinoinnista kieltäytyminen myöhemmin ei poista jo tallennettua tunnistetta."
         ]
       },
       "technical": {
@@ -3182,8 +3182,7 @@
           "Koska vanhempi on antanut luvan lapsensa puolesta (suostumus).",
           "Täyttääksemme lakisääteiset velvollisuutemme, kuten maksujen kirjanpitotietojen säilyttämisen.",
           "Oikeutetun etumme perusteella, kun pidämme sivuston turvallisena ja toimivana – aina yksityisyytesi kanssa tasapainotettuna.",
-          "Oikeutetun etumme perusteella, kun selvitämme, mikä viestintämme tavoittaa perheitä – aina yksityisyytesi kanssa tasapainotettuna, ja voit milloin tahansa pyytää meitä lopettamaan.",
-          "Suostumuksesi analytiikka- ja markkinointievästeisiin – voit peruuttaa sen milloin tahansa jokaisen sivun alalaidan Yksityisyysvalinnat-linkistä."
+          "Suostumuksesi analytiikka- ja markkinointievästeisiin sekä kampanjatunnisteeseen – voit peruuttaa sen milloin tahansa jokaisen sivun alalaidan Yksityisyysvalinnat-linkistä."
         ]
       },
       "providers": {
@@ -3204,6 +3203,26 @@
           "Meta (Facebook ja Instagram) – näkee selaimesi Meta-pikselin ja palvelimiltamme tulevien raporttien kautta, miten käytät sivustoamme, jotta voimme näyttää sinulle mainoksiamme siellä ja mitata, miten ne toimivat. Vain jos sallit markkinointievästeet."
         ]
       },
+      "partners": {
+        "heading": "Ohjelmat, joita pyöritämme kumppanin kanssa",
+        "blocks": [
+          "Jos ilmoitat lapsesi Luojien akatemiaan – ohjelmaan, jota pyöritämme Lynx Educaten kanssa yhteistyössä Robloxin kanssa – jaamme ohjelman tarvitsemat tiedot Lynx Educaten kanssa, joka toteuttaa sen kanssamme, ja rajatun joukon Robloxille sen ohjelmaa koskevaa tutkimusta varten. Lynx Educate saa:",
+          [
+            "Tilisi kampanjatunnisteen – lähteen, välineen ja kampanjan – jotta he näkevät, mikä viestintä toi perheesi ohjelmaan.",
+            "Etunimesi, sukunimesi ja sähköpostiosoitteesi – jotta he saavat sinuun yhteyden ohjelmaan liittyen.",
+            "Kunnan ja maan, jotka annoit perheesi kotipaikaksi, jos annoit sellaisen.",
+            "Lapsesi etunimen.",
+            "Lapsesi syntymäkuukauden ja -vuoden – päivää emme säilytä koskaan.",
+            "Lapsesi Roblox-käyttäjätunnuksen ja tilitunnisteen, jonka Roblox sille antaa.",
+            "Sen, mitkä ehdot ja selosteet hyväksyit ilmoittautuessasi, sekä vastauksesi markkinointia ja valokuvaamista koskeviin kysymyksiin.",
+            "Itse ilmoittautumisen – kerhon, leirin tai tapahtuman, lapsesi ryhmän ja sen, milloin hän ilmoittautui.",
+            "Sen, merkittiinkö lapsesi kussakin tapaamisessa paikalle vai poissa olevaksi.",
+            "Lapsesi Robloxissa julkaiseman työn nimen ja linkin sellaisena kuin pelikasvattaja sen kirjaa.",
+            "Tapaamisraporttiin liitetyt valokuvat – vain jos olet sallinut valokuvaamisen."
+          ],
+          "Lynx käyttää tietoja ohjelman pyörittämiseen ilmoittautumisen yhteydessä hyväksymiesi ohjelman ehtojen ja oman oikeutetun etunsa perusteella, joka on ohjelman turvallinen toteuttaminen – lukuun ottamatta kampanjatunnistetta, joka jaetaan vain jos olet sallinut markkinointievästeet, ja valokuvia, jotka jaetaan vain jos olet rastittanut ruudun. Se, mitä Roblox saa, ja kaikki muu ohjelmasta on <linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy>."
+        ]
+      },
       "cookies": {
         "heading": "Evästeet, analytiikka ja mainonta",
         "paragraphs": [
@@ -3213,7 +3232,7 @@
         ],
         "bullets": [
           "Analytiikka – Vercelin analytiikka, ja vain jos valitset sen. Se laskee käynnit, mittaa sivujen latausnopeuden ja vastaanottaa muutamia nimettömiä tapahtumia siitä, miten sivustoa käytetään: miten oma My SOG avataan ja milloin kieltä vaihdetaan. Se ei näe, kuka olet, emmekä anna sitä koskaan mainostajille.",
-          "Markkinointi – mainosevästeet, vain jos valitset ne. Niiden avulla yllä mainitut mainosalustat – tällä hetkellä Meta – näkevät, miten käytät sivustoamme, jotta ne voivat näyttää sinulle mainoksiamme ja me näemme, mitkä mainokset toimivat. Ne eivät ole koskaan käytössä, kun pelaaja on kirjautuneena. Markkinoinnin poistaminen käytöstä poistaa nämä evästeet ja sen pienen tietomäärän, jota Metan skripti säilyttää selaimessasi niiden rinnalla, mutta ei sitä, mitä alustoilla jo on – voit pyytää niitä poistamaan sen omista asetuksistasi niissä."
+          "Markkinointi – mainosevästeet, vain jos valitset ne. Niiden avulla yllä mainitut mainosalustat – tällä hetkellä Meta – näkevät, miten käytät sivustoamme, jotta ne voivat näyttää sinulle mainoksiamme ja me näemme, mitkä mainokset toimivat. Jos luot tilin käynnin aikana, myös sen linkin kampanjatunniste, jonka kautta saavuit, tallennetaan tilille. Ne eivät ole koskaan käytössä, kun pelaaja on kirjautuneena. Markkinoinnin poistaminen käytöstä poistaa nämä evästeet ja sen pienen tietomäärän, jota Metan skripti säilyttää selaimessasi niiden rinnalla, mutta ei sitä, mitä alustoilla jo on – voit pyytää niitä poistamaan sen omista asetuksistasi niissä."
         ]
       },
       "voice": {
@@ -3602,12 +3621,11 @@
         "Seuraavat valinnat ovat <strong>vapaaehtoisia</strong>, eivätkä ne vaikuta lapsesi paikkaan:",
         [
           "Lynx Educaten vanhemmalle lähettämät sähköpostit tulevista Roblox-tapahtumista ja pelaamiseen liittyvistä aineistoista.",
-          "Valokuvaaminen tai videokuvaaminen Robloxille tehtävää ei-julkista Ohjelman raportointia varten.",
-          "Lynx Educaten, School of Gamingin ja Robloxin harjoittama valokuvien tai videomateriaalin julkinen käyttö."
+          "Lapsesta otetut valokuvat ja videot, joita käytetään tapaamisraporteissa – ne näkyvät kaikille lapsen ryhmän perheille – sekä Lynx Educatelle ja Robloxille tehtävässä vaikuttavuusraportoinnissa ja joita Lynx Educate, School of Gaming ja Roblox käyttävät julkisesti."
         ],
         "Tavanomaisia verkkotapaamisia ei tallenneta. Lasta ei valokuvata eikä videokuvata, jos tarvittavaa lupaa ei ole annettu tai jos lapsi ei halua osallistua.",
         "Lynx Educate ja School of Gaming eivät myy Ohjelman ilmoittautumistietoja eivätkä käytä niitä lapsille suunnattuun mainontaan.",
-        "Sinä ja lapsesi voitte pyytää saada nähdä, korjata tai poistaa tietoja, peruuttaa vapaaehtoisen suostumuksen tai vastustaa tiettyä käyttöä ottamalla yhteyttä osoitteeseen <strong>admin@lynxeducate.com</strong> tai <strong>{supportEmail}</strong>."
+        "Sinä ja lapsesi voitte pyytää saada nähdä, korjata tai poistaa tietoja, peruuttaa vapaaehtoisen suostumuksen tai vastustaa tiettyä käyttöä ottamalla yhteyttä osoitteeseen <strong>support@lynxeducate.com</strong> tai <strong>{supportEmail}</strong>."
       ]
     },
     "sections": {
@@ -3632,7 +3650,7 @@
           "<strong>Lynx Educate SAS</strong>",
           "185 rue Ordener",
           "75018 Pariisi, Ranska",
-          "Sähköposti: <strong>admin@lynxeducate.com</strong>"
+          "Sähköposti: <strong>support@lynxeducate.com</strong>"
         ]
       },
       "responsibleSog": {
@@ -3684,7 +3702,7 @@
         "blocks": [
           "Toiminnasta riippuen voimme kerätä seuraavat tiedot:",
           [
-            "Lapsen etunimi ja sen rinnalla vanhemman tililtä tallennettu perheen sukunimi. Pelikasvattajat ja muut osallistujat eivät koskaan näe sukunimeä – lapsi osallistuu etunimellään.",
+            "Etunimi.",
             "Ikä, ikäryhmä tai syntymäkuukausi ja -vuosi täydellisen syntymäajan sijaan.",
             "Roblox-käyttäjätunnus ja Roblox-käyttäjätunniste.",
             "Kurssi, kerho, leiri, tapahtuma tai ryhmä, johon lapsi osallistuu.",
@@ -3765,7 +3783,7 @@
       "useMedia": {
         "heading": "Vapaaehtoinen valokuvaaminen ja videokuvaaminen (Lynx Educate)",
         "blocks": [
-          "Valokuvaaminen, videokuvaaminen ja julkinen viestintä perustuvat erillisiin vapaaehtoisiin lupiin. Kummastakaan mediavalinnasta kieltäytyminen ei vaikuta ilmoittautumiseen eikä osallistumiseen.",
+          "Valokuvaaminen, videokuvaaminen ja julkinen viestintä perustuvat erillisiin vapaaehtoisiin lupiin. Näistä luvista kieltäytyminen ei vaikuta ilmoittautumiseen eikä osallistumiseen.",
           "Suostumus ei ole oikeusperuste edellä kuvatulle ilmoittautumiselle, Ohjelman toteuttamiselle tai lasten turvallisuuden varmistamiselle."
         ]
       },
@@ -3856,7 +3874,6 @@
           "Ohjelma toteutetaan yksityisessä ja moderoidussa oppimisympäristössä.",
           [
             "Jokaisen lapsen profiili on liitetty vanhemman tai huoltajan tiliin.",
-            "Lapset osallistuvat pelkällä etunimellään – eivät koskaan yhteystiedoillaan.",
             "Mukaan pääsevät vain ilmoittautuneet osallistujat ja taustatarkistetut ohjaajat.",
             "Viestintä tapahtuu ryhmässä ja valvotusti.",
             "Lasten välillä ei ole yksityisiä suoraviestejä.",
@@ -3931,7 +3948,7 @@
           "Suostumuksen peruuttaminen ei vaikuta ennen peruutusta tapahtuneen käsittelyn lainmukaisuuteen.",
           "Lapset voivat ottaa meihin yhteyttä suoraan omia tietojaan koskevissa asioissa. Myös vanhempi tai huoltaja voi tehdä pyynnön lapsen puolesta ottaen huomioon lapsen omat oikeudet, iän ja kehitystason.",
           "Osallistujiin ei kohdisteta pelkästään automaattiseen käsittelyyn perustuvaa päätöksentekoa, jolla on oikeusvaikutuksia tai vastaavalla tavalla merkittäviä vaikutuksia.",
-          "Lähetä pyynnöt osoitteeseen <strong>admin@lynxeducate.com</strong> tai <strong>{supportEmail}</strong>. Organisaatiot sovittavat vastauksensa yhteen ja välittävät Robloxia koskevat pyynnöt Robloxille tarvittaessa.",
+          "Lähetä pyynnöt osoitteeseen <strong>support@lynxeducate.com</strong> tai <strong>{supportEmail}</strong>. Organisaatiot sovittavat vastauksensa yhteen ja välittävät Robloxia koskevat pyynnöt Robloxille tarvittaessa.",
           "Perheillä on myös oikeus tehdä valitus Ranskan tietosuojaviranomaiselle, joka on <strong>Commission nationale de l’informatique et des libertés – <linkCnil>CNIL</linkCnil></strong>."
         ]
       },
@@ -3965,7 +3982,7 @@
           "<strong>Lynx Educate SAS</strong>",
           "185 rue Ordener",
           "75018 Pariisi, Ranska",
-          "<strong>admin@lynxeducate.com</strong>",
+          "<strong>support@lynxeducate.com</strong>",
           "<strong>School of Gaming Galactic Oy</strong>",
           "Isokatu 56",
           "90100 Oulu, Suomi",
@@ -4060,7 +4077,7 @@
     "intro": {
       "heading": "Lyhyesti",
       "blocks": [
-        "Tässä kerrotaan, mihin ilmoitat lapsesi, kun ilmoittaudut Luojien akatemian Ohjelmaan. Kyseessä on Lynx Educaten ja School of Gamingin yhdessä toteuttama ohjelma, joka tehdään yhteistyössä Robloxin kanssa. Jos jokin jää epäselväksi, lähetä sähköpostia osoitteeseen <strong>admin@lynxeducate.com</strong>."
+        "Tässä kerrotaan, mihin ilmoitat lapsesi, kun ilmoittaudut Luojien akatemian Ohjelmaan. Kyseessä on Lynx Educaten ja School of Gamingin yhdessä toteuttama ohjelma, joka tehdään yhteistyössä Robloxin kanssa. Jos jokin jää epäselväksi, lähetä sähköpostia osoitteeseen <strong>support@lynxeducate.com</strong>."
       ]
     },
     "sections": {
@@ -4114,7 +4131,7 @@
       "concern": {
         "heading": "Jos sinulla on huoli",
         "blocks": [
-          "Jos olet huolissasi lapsesi kokemuksesta Ohjelmassa, ota yhteyttä joko osoitteeseen admin@lynxeducate.com tai {supportEmail} – huolehdimme siitä, että viesti tavoittaa oikeat ihmiset."
+          "Jos olet huolissasi lapsesi kokemuksesta Ohjelmassa, ota yhteyttä joko osoitteeseen support@lynxeducate.com tai {supportEmail} – huolehdimme siitä, että viesti tavoittaa oikeat ihmiset."
         ]
       },
       "changes": {

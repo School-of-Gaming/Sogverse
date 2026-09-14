@@ -41,8 +41,10 @@ key off.
      thing worth a search result. The Open Graph card is still the product's own: the
      scrapers behind a WhatsApp or Slack unfurl ignore robots directives, and the card is
      what a shared link shows.
-   - Also here: the unpublished Roblox programme pages (`docs/roblox-todo.md`), the
-     Minecraft API docs, the preview scenes, and every Klingon URL.
+   - Also here: the unpublished Roblox programme pages (the flip to published is
+     nav, sitemap and noindex together — see the note on the route in
+     `src/lib/constants/routes.ts`), the Minecraft API docs, the preview scenes, and
+     every Klingon URL.
 3. **Gated.** The role dashboards, settings and voice. Behind a login, disallowed in
    `robots.txt` for tidiness (the control is the proxy and RLS), and they carry no
    description of their own — the root's translated one is inherited and no crawler

@@ -3133,7 +3133,7 @@
           "Eventuellt barnets användarnamn i de spel som barnets klubbar använder – i dag Minecraft och Roblox – och det konto-id som spelet ger barnet, så att vi känner igen barnet i spelet och så att barnet kan ansluta till vår Minecraft-server under träffarna.",
           "Våra spelfostrares anteckningar från träffarna – närvaro, träffrapporter och korta noteringar som hjälper oss att stötta ditt barn i gruppen.",
           "Den tekniska information som varje webbplats behöver för att fungera – inloggningssessioner, förfrågningsloggar och, bara om du väljer det, anonym användningsstatistik. Se \"Teknisk information\" och \"Cookies, analys och annonsering\" nedan.",
-          "Kampanjkoden – källa, medium och kampanj – som fanns i länken ditt besök kom från. Vi sparar den en gång, när kontot skapas, så att vi och våra partner vet vilken information som faktiskt når familjer."
+          "Kampanjkoden – källa, medium och kampanj – som fanns i länken ditt besök kom från. Vi sparar den en gång, när kontot skapas, och bara om du har tillåtit cookies för marknadsföring, så att vi och våra partner vet vilken information som faktiskt når familjer. Att senare tacka nej till marknadsföring tar inte bort en kod som redan har sparats."
         ]
       },
       "technical": {
@@ -3182,8 +3182,7 @@
           "Eftersom en förälder har gett tillstånd å barnets vägnar (samtycke).",
           "För att uppfylla våra lagstadgade skyldigheter, till exempel att spara bokföringsuppgifter för betalningar.",
           "För vårt berättigade intresse av att hålla webbplatsen säker och välfungerande – alltid avvägt mot din integritet.",
-          "För vårt berättigade intresse av att veta vilka av våra insatser som når familjer – alltid avvägt mot din integritet, och du kan när som helst be oss sluta.",
-          "Ditt samtycke, för cookies för analys och marknadsföring – som du kan återkalla när som helst via Integritetsval längst ner på varje sida."
+          "Ditt samtycke, för cookies för analys och marknadsföring och för kampanjkoden – som du kan återkalla när som helst via Integritetsval längst ner på varje sida."
         ]
       },
       "providers": {
@@ -3204,6 +3203,26 @@
           "Meta (Facebook och Instagram) – ser via Meta-pixeln i din webbläsare och rapporter från våra servrar hur du använder vår webbplats, så att vi kan visa dig våra annonser där och mäta hur de presterar. Bara om du tillåter cookies för marknadsföring."
         ]
       },
+      "partners": {
+        "heading": "Program vi driver tillsammans med en partner",
+        "blocks": [
+          "Om du anmäler ditt barn till Skaparnas akademi, programmet vi driver tillsammans med Lynx Educate i samarbete med Roblox, delar vi det som programmet behöver med Lynx Educate, som genomför det tillsammans med oss, och en begränsad mängd med Roblox för deras forskning om programmet. Lynx Educate får:",
+          [
+            "Kampanjkoden på ditt konto – källa, medium och kampanj – så att de ser vilken information som förde din familj till programmet.",
+            "Ditt förnamn, ditt efternamn och din e-postadress – så att de kan nå dig om programmet.",
+            "Kommunen och landet du angav som din familjs hemort, om du angav någon.",
+            "Ditt barns förnamn.",
+            "Ditt barns födelsemånad och födelseår – vi sparar aldrig dagen.",
+            "Ditt barns Roblox-användarnamn och det konto-id som Roblox ger det.",
+            "Vilka villkor och policyer du godkände när du anmälde dig, och dina svar på frågorna om marknadsföring och foto.",
+            "Själva anmälan – klubben, lägret eller evenemanget, gruppen ditt barn är i och när ni anmälde er.",
+            "Om ditt barn antecknades som närvarande eller frånvarande vid varje träff.",
+            "Titeln på och länken till det ditt barn publicerar på Roblox, så som en spelfostrare antecknar det.",
+            "Foton som bifogats en träffrapport – bara där du har tillåtit foto."
+          ],
+          "Lynx använder uppgifterna för att driva programmet, med stöd av programmets villkor som du godkänner när du anmäler dig och av deras berättigade intresse av att driva det tryggt – utom kampanjkoden, som delas bara om du har tillåtit cookies för marknadsföring, och foton, som delas bara där du har kryssat i rutan. Vad Roblox får, och allt annat om programmet, står i <linkRobloxPrivacy>Integritetspolicyn för Skaparnas akademi</linkRobloxPrivacy>."
+        ]
+      },
       "cookies": {
         "heading": "Cookies, analys och annonsering",
         "paragraphs": [
@@ -3213,7 +3232,7 @@
         ],
         "bullets": [
           "Analys – Vercels, och bara om du väljer den. Den räknar besök, mäter hur snabbt sidorna laddas och tar emot några anonyma händelser om hur webbplatsen används: hur någon tar sig till sin My SOG och när språket byts. Den kan inte se vem du är, och vi lämnar den aldrig till annonsörer.",
-          "Marknadsföring – annonscookies, och bara om du väljer dem. De låter annonsplattformarna som nämns ovan – i dag Meta – se hur du använder vår webbplats, så att de kan visa dig våra annonser och vi kan se vilka annonser som fungerar. De är aldrig igång medan en spelare är inloggad. Att stänga av marknadsföring raderar dessa cookies, och den lilla mängd data som Metas skript sparar i din webbläsare vid sidan av dem, men inte det plattformarna redan har – du kan be dem radera det i dina inställningar hos dem."
+          "Marknadsföring – annonscookies, och bara om du väljer dem. De låter annonsplattformarna som nämns ovan – i dag Meta – se hur du använder vår webbplats, så att de kan visa dig våra annonser och vi kan se vilka annonser som fungerar. Om du skapar ett konto under ett besök sparas även kampanjkoden från länken du kom från på kontot. De är aldrig igång medan en spelare är inloggad. Att stänga av marknadsföring raderar dessa cookies, och den lilla mängd data som Metas skript sparar i din webbläsare vid sidan av dem, men inte det plattformarna redan har – du kan be dem radera det i dina inställningar hos dem."
         ]
       },
       "voice": {
@@ -3602,12 +3621,11 @@
         "Följande val är <strong>frivilliga</strong> och påverkar inte ditt barns plats:",
         [
           "E-post till föräldern från Lynx Educate om kommande Roblox-evenemang och resurser om spel.",
-          "Foto eller film för icke-offentlig rapportering om Programmet till Roblox.",
-          "Offentlig användning av foton eller filmmaterial av Lynx Educate, School of Gaming och Roblox."
+          "Foton och filmmaterial på barnet, som används i träffrapporter som är synliga för alla familjer i barnets grupp, i effektrapportering till Lynx Educate och Roblox och offentligt av Lynx Educate, School of Gaming och Roblox."
         ],
         "Ordinarie träffar online spelas inte in. Inget barn fotograferas eller filmas om det nödvändiga tillståndet saknas eller om barnet inte vill vara med.",
         "Lynx Educate och School of Gaming säljer inte anmälningsuppgifter från Programmet och använder dem inte för reklam riktad till barn.",
-        "Du och ditt barn kan begära att få se, rätta eller radera uppgifter, återkalla ett frivilligt samtycke eller invända mot viss användning genom att kontakta <strong>admin@lynxeducate.com</strong> eller <strong>{supportEmail}</strong>."
+        "Du och ditt barn kan begära att få se, rätta eller radera uppgifter, återkalla ett frivilligt samtycke eller invända mot viss användning genom att kontakta <strong>support@lynxeducate.com</strong> eller <strong>{supportEmail}</strong>."
       ]
     },
     "sections": {
@@ -3632,7 +3650,7 @@
           "<strong>Lynx Educate SAS</strong>",
           "185 rue Ordener",
           "75018 Paris, Frankrike",
-          "E-post: <strong>admin@lynxeducate.com</strong>"
+          "E-post: <strong>support@lynxeducate.com</strong>"
         ]
       },
       "responsibleSog": {
@@ -3684,7 +3702,7 @@
         "blocks": [
           "Beroende på aktivitet kan vi samla in:",
           [
-            "Barnets förnamn, med familjens efternamn från förälderns konto lagrat bredvid. Spelfostrare och andra deltagare ser aldrig efternamnet – barnet deltar under sitt förnamn.",
+            "Förnamn.",
             "Ålder, åldersgrupp eller födelsemånad och födelseår i stället för fullständigt födelsedatum.",
             "Roblox-användarnamn och Roblox-ID.",
             "Kursen, klubben, lägret, evenemanget eller gruppen som barnet deltar i.",
@@ -3765,7 +3783,7 @@
       "useMedia": {
         "heading": "Frivilligt foto och film (av Lynx Educate)",
         "blocks": [
-          "Foto, film och offentlig kommunikation bygger på separata, frivilliga tillstånd. Att tacka nej till något av mediavalen påverkar varken anmälan eller deltagandet.",
+          "Foto, film och offentlig kommunikation bygger på separata, frivilliga tillstånd. Att tacka nej till de här tillstånden påverkar varken anmälan eller deltagandet.",
           "Samtycke är inte den rättsliga grunden för de centrala aktiviteterna kring anmälan, genomförande eller barns trygghet som beskrivs ovan."
         ]
       },
@@ -3856,7 +3874,6 @@
           "Programmet genomförs i en privat och modererad lärmiljö.",
           [
             "Varje barns profil är kopplad till ett konto för en förälder eller vårdnadshavare.",
-            "Barnen deltar bara under sitt förnamn – aldrig med sina kontaktuppgifter.",
             "Endast anmälda deltagare och kontrollerade ledare får delta.",
             "Kommunikationen sker i grupp och under uppsikt.",
             "Det finns inga privata direktmeddelanden mellan barn.",
@@ -3931,7 +3948,7 @@
           "Att återkalla ett samtycke påverkar inte den behandling som var laglig innan återkallelsen.",
           "Barn får kontakta oss direkt om sina egna uppgifter. Föräldrar och vårdnadshavare kan också göra en begäran för ett barn, med hänsyn till barnets egna rättigheter, ålder och mognad.",
           "Det förekommer inget helt automatiserat beslutsfattande som får rättsliga följder eller på liknande sätt i betydande grad påverkar deltagarna.",
-          "Skicka din begäran till <strong>admin@lynxeducate.com</strong> eller <strong>{supportEmail}</strong>. Organisationerna samordnar svaret och skickar vidare de frågor som rör Roblox till Roblox när det behövs.",
+          "Skicka din begäran till <strong>support@lynxeducate.com</strong> eller <strong>{supportEmail}</strong>. Organisationerna samordnar svaret och skickar vidare de frågor som rör Roblox till Roblox när det behövs.",
           "Familjer har också rätt att lämna in klagomål till den franska dataskyddsmyndigheten <strong>Commission nationale de l’informatique et des libertés – <linkCnil>CNIL</linkCnil></strong>."
         ]
       },
@@ -3965,7 +3982,7 @@
           "<strong>Lynx Educate SAS</strong>",
           "185 rue Ordener",
           "75018 Paris, Frankrike",
-          "<strong>admin@lynxeducate.com</strong>",
+          "<strong>support@lynxeducate.com</strong>",
           "<strong>School of Gaming Galactic Oy</strong>",
           "Isokatu 56",
           "90100 Uleåborg, Finland",
@@ -4060,7 +4077,7 @@
     "intro": {
       "heading": "Kort sammanfattning",
       "blocks": [
-        "Här förklarar vi vad du anmäler ditt barn till när ni registrerar er för programmet Skaparnas akademi. Det är ett gemensamt program som drivs av Lynx Educate och School of Gaming i samarbete med Roblox. Om något är oklart, mejla <strong>admin@lynxeducate.com</strong>."
+        "Här förklarar vi vad du anmäler ditt barn till när ni registrerar er för programmet Skaparnas akademi. Det är ett gemensamt program som drivs av Lynx Educate och School of Gaming i samarbete med Roblox. Om något är oklart, mejla <strong>support@lynxeducate.com</strong>."
       ]
     },
     "sections": {
@@ -4114,7 +4131,7 @@
       "concern": {
         "heading": "Om du är orolig",
         "blocks": [
-          "Om du är orolig för ditt barns upplevelse i Programmet, kontakta antingen admin@lynxeducate.com eller {supportEmail} – vi ser till att ärendet når rätt personer."
+          "Om du är orolig för ditt barns upplevelse i Programmet, kontakta antingen support@lynxeducate.com eller {supportEmail} – vi ser till att ärendet når rätt personer."
         ]
       },
       "changes": {

@@ -54,15 +54,29 @@
  *     What the cookie-consent banner governs is the *browser scripts* — the
  *     analytics and marketing pixels that load in the page — and that is a
  *     separate mechanism from this one.
- *  2. **The stored value is written at account creation regardless of what the
- *     visitor answered on the banner.** That is the owner's decision (2026-09-03)
- *     and it is **pending counsel**: it is the one question in this area still
- *     out, and it decides whether a partner's numbers are complete or
- *     systematically biased. Until counsel answers, this is the behaviour, and
- *     the write-once design below is what keeps a service-role null path
- *     available if the answer changes — nulling a column nobody but
- *     `service_role` can write is a single statement, where unwinding a
- *     client-writable one is not.
+ *  2. **The stored value is written at account creation only when the visitor's
+ *     consent cookie carries marketing consent.** Counsel has answered, on both
+ *     sides: SOG's in August 2026 and Lynx's on 2026-09-14 both read the UTM
+ *     parameters on a landing link as tracking that needs consent, and Lynx's
+ *     places it under **marketing** consent rather than analytics. So a parent
+ *     who rejected the banner, or chose analytics only, or never answered it,
+ *     creates an account with all three columns NULL — a partner's numbers
+ *     cover the families who agreed to be counted, not every family, and that
+ *     is the accepted cost.
+ *
+ *     What is gated is the **write**, not the read. The values still ride the
+ *     visit in memory exactly as before, because reading them is what the
+ *     banner governs and by point 1 it has already happened on the landing
+ *     request, before any answer could exist; persisting them is the part
+ *     consent can still decide. The gate is {@link utmMetadataForConsent},
+ *     which is the only exported way to build the signup metadata, and it is
+ *     applied **on the server**, from the consent cookie the request itself
+ *     carried — never from a flag a client sends, since a client can send
+ *     whatever it likes.
+ *
+ *     **Rows written before this change are untouched.** Nothing is
+ *     re-examined, cleared or backfilled; the ruling decides what is written
+ *     from now on.
  *  3. **Gamer accounts never carry a value.** Reporting treats a gamer and
  *     their parent as one family unit, so a join through the existing parent
  *     relationship answers "which campaign brought this family" without copying
@@ -82,6 +96,10 @@
  *     different thing legally, and a worse thing to have travelling in public
  *     links that get forwarded and screenshotted.
  */
+
+// Type-only, so nothing from the consent module is bundled: this file runs in
+// the proxy, which is not a Node runtime.
+import type { ConsentState } from "./consent";
 
 /** The three query params a marketing link carries, keyed by the field they fill. */
 export const UTM_QUERY_PARAMS = {
@@ -286,9 +304,14 @@ export function serialiseUtm(utm: UtmAttribution): string | null {
 }
 
 /**
- * The signup-metadata object a registration route hands to
+ * The signup-metadata object a registration route would hand to
  * `admin.auth.admin.createUser`, built from the (unsanitised) values a
  * registration body carried.
+ *
+ * **Not exported, and that is the mechanism.** Every caller goes through
+ * {@link utmMetadataForConsent}, so there is no way to build this payload
+ * without stating what the visitor consented to — the consent gate cannot be
+ * forgotten at a call site because no call site can reach this function.
  *
  * **A field that does not survive is omitted entirely, not sent as null**, so
  * the column simply stays NULL and the metadata a future reader inspects says
@@ -300,7 +323,7 @@ export function serialiseUtm(utm: UtmAttribution): string | null {
  * feed the same trigger; a second copy is how the two would come to disagree
  * about a key name, which fails silently with the column always NULL.
  */
-export function buildUtmMetadata(utm: {
+function buildUtmMetadata(utm: {
   source?: string;
   medium?: string;
   campaign?: string;
@@ -316,6 +339,35 @@ export function buildUtmMetadata(utm: {
   if (campaign !== null) metadata[UTM_QUERY_PARAMS.campaign] = campaign;
 
   return metadata;
+}
+
+/**
+ * The signup metadata for a registration, **or nothing at all when the visitor
+ * did not consent to marketing**.
+ *
+ * The one exported way to build the payload, and the single greppable home of
+ * the rule in point 2 of this module's header: the three `profiles.utm_*`
+ * columns are written at account creation only for a visitor whose stored
+ * consent answer grants the marketing purpose. Anything else — no cookie at
+ * all, a cookie from a superseded version of the question, a refusal, or
+ * analytics-only — produces an empty object, every key is omitted, and the
+ * columns stay NULL.
+ *
+ * **Takes the parsed answer, not the raw header**, so this module stays free of
+ * any cookie handling and the caller keeps one obligation it cannot fake: read
+ * the cookie off the request it is answering, server-side
+ * (`parseConsentCookieHeader`), rather than believe a field in the body.
+ *
+ * `null` is every "no answer we can act on" collapsed into one, exactly as the
+ * consent parser returns it, and it is refused like a refusal — an unanswered
+ * banner is not consent.
+ */
+export function utmMetadataForConsent(
+  consent: ConsentState | null,
+  utm: { source?: string; medium?: string; campaign?: string } | undefined,
+): Record<string, string> {
+  if (consent?.marketing !== true) return {};
+  return buildUtmMetadata(utm);
 }
 
 /**

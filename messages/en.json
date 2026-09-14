@@ -2555,12 +2555,11 @@
         "The following choices are <strong>optional</strong> and will not affect your child’s place:",
         [
           "Emails to the parent from Lynx Educate about future Roblox events and gaming resources.",
-          "Photography or filming for private Programme reporting to Roblox.",
-          "Public use of photographs or footage by Lynx Educate, School of Gaming and Roblox."
+          "Photographs and video of the child, used in session reports which are visible to every family in the child’s group, in impact reporting to Lynx Educate and Roblox, and publicly by Lynx Educate, School of Gaming and Roblox."
         ],
         "Routine online sessions are not recorded. A child will not be photographed or filmed where the required permission has not been given or where the child does not want to take part.",
         "Lynx Educate and School of Gaming do not sell Programme registration information or use it to advertise to children.",
-        "You and your child may ask to see, correct or delete information, withdraw an optional consent, or object to certain uses by contacting <strong>admin@lynxeducate.com</strong> or <strong>{supportEmail}</strong>."
+        "You and your child may ask to see, correct or delete information, withdraw an optional consent, or object to certain uses by contacting <strong>support@lynxeducate.com</strong> or <strong>{supportEmail}</strong>."
       ]
     },
     "sections": {
@@ -2585,7 +2584,7 @@
           "<strong>Lynx Educate SAS</strong>",
           "185 rue Ordener",
           "75018 Paris, France",
-          "Email: <strong>admin@lynxeducate.com</strong>"
+          "Email: <strong>support@lynxeducate.com</strong>"
         ]
       },
       "responsibleSog": {
@@ -2637,7 +2636,7 @@
         "blocks": [
           "Depending on the activity, we may collect:",
           [
-            "The child’s first name, stored alongside the family surname from the parent’s account. Game Educators and other participants never see the surname — the child takes part under their first name.",
+            "First name.",
             "Age, age bracket, or birth month and year rather than a full date of birth.",
             "Roblox username and Roblox User ID.",
             "The course, club, camp, event or group attended.",
@@ -2718,7 +2717,7 @@
       "useMedia": {
         "heading": "Optional photography and filming (by Lynx Educate)",
         "blocks": [
-          "Photography, filming and public communications are based on separate, optional permissions. Declining either media option will not affect registration or participation.",
+          "Photography, filming and public communications are based on separate, optional permissions. Declining these permissions will not affect registration or participation.",
           "Consent is not the legal basis for the core registration, delivery or safeguarding activities described above."
         ]
       },
@@ -2809,7 +2808,6 @@
           "The Programme uses a private and moderated learning environment.",
           [
             "Every child’s profile is linked to a parent or guardian account.",
-            "Children take part under their first name only — never their contact details.",
             "Only registered participants and vetted facilitators may join.",
             "Communication is group-based and supervised.",
             "There is no private direct messaging between children.",
@@ -2884,7 +2882,7 @@
           "Withdrawing consent does not affect processing that was lawful before withdrawal.",
           "Children may contact us directly about their own information. Parents or legal guardians may also make a request for a child, subject to the child’s own rights, age and maturity.",
           "There is no solely automated decision-making that produces legal or similarly significant effects on participants.",
-          "Send requests to <strong>admin@lynxeducate.com</strong> or <strong>{supportEmail}</strong>. The organisations will coordinate the response and route Roblox-related requests to Roblox where necessary.",
+          "Send requests to <strong>support@lynxeducate.com</strong> or <strong>{supportEmail}</strong>. The organisations will coordinate the response and route Roblox-related requests to Roblox where necessary.",
           "Families also have the right to complain to the <strong>Commission nationale de l’informatique et des libertés — <linkCnil>CNIL</linkCnil></strong>."
         ]
       },
@@ -2918,7 +2916,7 @@
           "<strong>Lynx Educate SAS</strong>",
           "185 rue Ordener",
           "75018 Paris, France",
-          "<strong>admin@lynxeducate.com</strong>",
+          "<strong>support@lynxeducate.com</strong>",
           "<strong>School of Gaming Galactic Oy</strong>",
           "Isokatu 56",
           "90100 Oulu, Finland",
@@ -3013,7 +3011,7 @@
     "intro": {
       "heading": "The short version",
       "blocks": [
-        "This explains what you’re signing your child up for when you register for the Creator Academy Programme. It’s a joint programme delivered by Lynx Educate and School of Gaming, in collaboration with Roblox. If anything’s unclear, email <strong>admin@lynxeducate.com</strong>."
+        "This explains what you’re signing your child up for when you register for the Creator Academy Programme. It’s a joint programme delivered by Lynx Educate and School of Gaming, in collaboration with Roblox. If anything’s unclear, email <strong>support@lynxeducate.com</strong>."
       ]
     },
     "sections": {
@@ -3067,7 +3065,7 @@
       "concern": {
         "heading": "If you have a concern",
         "blocks": [
-          "If you’re concerned about your child’s experience in the Programme, contact either admin@lynxeducate.com or {supportEmail} — we’ll make sure it reaches the right people."
+          "If you’re concerned about your child’s experience in the Programme, contact either support@lynxeducate.com or {supportEmail} — we’ll make sure it reaches the right people."
         ]
       },
       "changes": {
@@ -3821,7 +3819,7 @@
           "Optionally, your child’s username in the games their clubs use — today that’s Minecraft and Roblox — and the account id that game gives them, so we can recognise them in the game and so they can connect to our Minecraft server during sessions.",
           "Session records our Game Educators write — attendance, session reports, and short notes that help us support your child in the group.",
           "The technical information any website needs to run — sign-in sessions, request logs and, only if you choose it, anonymous usage statistics. See \"Technical information\" and \"Cookies, analytics and advertising\" below.",
-          "The campaign tag — source, medium and campaign — carried by the link your visit came from. We store it once, when the account is created, so that we and our partners know which outreach actually reaches families."
+          "The campaign tag — source, medium and campaign — carried by the link your visit came from. We store it once, when the account is created, and only if you’ve allowed marketing cookies, so that we and our partners know which outreach actually reaches families. Saying no to marketing later doesn’t remove a tag that was already stored."
         ]
       },
       "technical": {
@@ -3870,8 +3868,7 @@
           "Because a parent has given permission on their child’s behalf (consent).",
           "To meet our legal duties, such as keeping accounting records for payments.",
           "For our legitimate interest in keeping the site secure and working well — always balanced against your privacy.",
-          "For our legitimate interest in understanding which of our outreach efforts reach families — always balanced against your privacy, and you can ask us to stop at any time.",
-          "Your consent, for the analytics and marketing cookies — which you can withdraw at any time from Privacy choices at the bottom of every page."
+          "Your consent, for the analytics and marketing cookies and the campaign tag — which you can withdraw at any time from Privacy choices at the bottom of every page."
         ]
       },
       "providers": {
@@ -3892,6 +3889,26 @@
           "Meta (Facebook and Instagram) — through the Meta Pixel in your browser and reports from our servers, sees how you use our site, so we can show you our ads there and measure how they perform. Only if you allow marketing cookies."
         ]
       },
+      "partners": {
+        "heading": "Programmes we run with a partner",
+        "blocks": [
+          "If you enrol your child in the Creator Academy, the programme we run with Lynx Educate in collaboration with Roblox, we share what the programme needs with Lynx Educate, who deliver it with us, and a limited set with Roblox for its research into the programme. Lynx Educate receives:",
+          [
+            "The campaign tag on your account — source, medium and campaign — so they can see which outreach brought your family to the programme.",
+            "Your first name, surname and email address — so they can reach you about the programme.",
+            "The municipality and country you gave as your family’s home, if you gave one.",
+            "Your child’s first name.",
+            "Your child’s birth month and year — we never hold the day.",
+            "Your child’s Roblox username and the account id Roblox gives it.",
+            "Which terms and policies you accepted when you enrolled, and your answers to the marketing and photography questions.",
+            "The enrolment itself — the club, camp or event, the group your child is in, and when they signed up.",
+            "Whether your child was marked present or absent at each session.",
+            "The title and link of anything your child publishes on Roblox, as a Game Educator records it.",
+            "Photographs attached to a session report — only where you allowed photography."
+          ],
+          "Lynx uses it to run the programme, on the basis of the programme terms you accept when you enrol and its legitimate interest in running it safely — except the campaign tag, which is shared only if you allowed marketing cookies, and photographs, which are shared only where you ticked the box. What Roblox receives, and everything else about the programme, is in the <linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy>."
+        ]
+      },
       "cookies": {
         "heading": "Cookies, analytics and advertising",
         "paragraphs": [
@@ -3901,7 +3918,7 @@
         ],
         "bullets": [
           "Analytics — Vercel’s, and only if you choose it. It counts visits, measures how quickly pages load, and receives a few anonymous events about how the site is used: how someone reached their My SOG, when someone changes the language. It can’t see who you are, and we never hand it to advertisers.",
-          "Marketing — advertising cookies, only if you choose them. They let the advertising platforms named above — today, Meta — see how you use our site, so they can show you our ads and we can tell which ads work. They never run while a gamer is signed in. Switching marketing off deletes these cookies, and the small amount of data Meta’s script keeps in your browser alongside them, but not what the platforms already hold — you can ask them to delete it in your settings with them."
+          "Marketing — advertising cookies, only if you choose them. They let the advertising platforms named above — today, Meta — see how you use our site, so they can show you our ads and we can tell which ads work. If you create an account during a visit, the campaign tag on the link you arrived from is stored on it too. They never run while a gamer is signed in. Switching marketing off deletes these cookies, and the small amount of data Meta’s script keeps in your browser alongside them, but not what the platforms already hold — you can ask them to delete it in your settings with them."
         ]
       },
       "voice": {

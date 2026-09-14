@@ -4,7 +4,10 @@ import { localizedPageMetadata } from "@/lib/metadata/localized-page";
 import { formatDateOnly } from "@/lib/utils";
 import { rawStringArray } from "@/lib/i18n/raw-messages";
 import { PolicyPage } from "@/components/legal/policy-page";
-import { paragraphsThenBullets } from "@/components/legal/policy-content";
+import {
+  paragraphsThenBullets,
+  rawPolicyBlocks,
+} from "@/components/legal/policy-content";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata");
@@ -23,7 +26,11 @@ const LAST_UPDATED = "2026-09-14";
 
 // Section order is owned here, not in the message files, so the same structure
 // renders for every locale. Each key maps to `privacy.sections.<key>` with a
-// `heading`, a `paragraphs` array, and an optional `bullets` array.
+// `heading` and its copy in one of two shapes: the original `paragraphs` array
+// plus an optional trailing `bullets` array, or — where a section has to run
+// paragraph → bullets → paragraph, which that shape cannot express — a single
+// ordered `blocks` array (see `policy-content.ts`). A section declares one or
+// the other; the builder below picks by which key is present.
 const SECTIONS = [
   "whoWeAre",
   "infoWeCollect",
@@ -32,6 +39,7 @@ const SECTIONS = [
   "howWeUse",
   "legalBasis",
   "providers",
+  "partners",
   "cookies",
   "voice",
   "retention",
@@ -62,12 +70,14 @@ export default async function PrivacyPage() {
       }}
       sections={SECTIONS.map((key) => ({
         heading: t(`sections.${key}.heading`),
-        blocks: paragraphsThenBullets(
-          rawStringArray(t.raw(`sections.${key}.paragraphs`)),
-          t.has(`sections.${key}.bullets`)
-            ? rawStringArray(t.raw(`sections.${key}.bullets`))
-            : undefined,
-        ),
+        blocks: t.has(`sections.${key}.blocks`)
+          ? rawPolicyBlocks(t.raw(`sections.${key}.blocks`))
+          : paragraphsThenBullets(
+              rawStringArray(t.raw(`sections.${key}.paragraphs`)),
+              t.has(`sections.${key}.bullets`)
+                ? rawStringArray(t.raw(`sections.${key}.bullets`))
+                : undefined,
+            ),
       }))}
     />
   );

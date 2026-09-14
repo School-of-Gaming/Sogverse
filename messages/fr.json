@@ -3133,7 +3133,7 @@
           "Facultativement, le nom d’utilisateur de votre enfant dans les jeux utilisés par ses clubs — aujourd’hui Minecraft et Roblox — ainsi que l’identifiant de compte que le jeu lui attribue, pour que nous puissions le reconnaître dans le jeu et pour qu’il puisse se connecter à notre serveur Minecraft pendant les sessions.",
           "Ce que nos animateurs notent au fil des sessions — présences, comptes rendus de session et courtes notes qui nous aident à accompagner votre enfant dans le groupe.",
           "Les informations techniques nécessaires au fonctionnement de tout site web — sessions de connexion, journaux de requêtes et, uniquement si vous le choisissez, statistiques d’utilisation anonymes. Voir « Informations techniques » et « Cookies, statistiques et publicité » ci-dessous.",
-          "L’étiquette de campagne — source, support et campagne — portée par le lien à l’origine de votre visite. Nous l’enregistrons une fois, à la création du compte, pour savoir, avec nos partenaires, quelles actions touchent réellement les familles."
+          "L’étiquette de campagne — source, support et campagne — portée par le lien à l’origine de votre visite. Nous l’enregistrons une fois, à la création du compte, et uniquement si vous avez autorisé les cookies marketing, pour savoir, avec nos partenaires, quelles actions touchent réellement les familles. Refuser le marketing par la suite ne supprime pas une étiquette déjà enregistrée."
         ]
       },
       "technical": {
@@ -3182,8 +3182,7 @@
           "Parce qu’un parent a donné son autorisation au nom de son enfant (le consentement).",
           "Pour respecter nos obligations légales, comme la conservation des pièces comptables relatives aux paiements.",
           "Pour notre intérêt légitime à maintenir le site sûr et fonctionnel — toujours mis en balance avec votre vie privée.",
-          "Pour notre intérêt légitime à savoir lesquelles de nos actions touchent les familles — toujours mis en balance avec votre vie privée, et vous pouvez nous demander d’arrêter à tout moment.",
-          "Votre consentement, pour les cookies de statistiques et de marketing — vous pouvez le retirer à tout moment depuis Choix de confidentialité, en bas de chaque page."
+          "Votre consentement, pour les cookies de statistiques et de marketing ainsi que pour l’étiquette de campagne — vous pouvez le retirer à tout moment depuis Choix de confidentialité, en bas de chaque page."
         ]
       },
       "providers": {
@@ -3204,6 +3203,26 @@
           "Meta (Facebook et Instagram) — voit, via le pixel Meta dans votre navigateur et les rapports envoyés par nos serveurs, comment vous utilisez notre site, pour que nous puissions vous y montrer nos publicités et mesurer leurs performances. Uniquement si vous autorisez les cookies marketing."
         ]
       },
+      "partners": {
+        "heading": "Les programmes que nous menons avec un partenaire",
+        "blocks": [
+          "Si vous inscrivez votre enfant à l’Académie des Créateurs, le programme que nous menons avec Lynx Educate en collaboration avec Roblox, nous transmettons à Lynx Educate, qui le met en œuvre avec nous, ce dont le programme a besoin, et un ensemble limité d’informations à Roblox pour sa recherche sur le programme. Lynx Educate reçoit :",
+          [
+            "L’étiquette de campagne enregistrée sur votre compte — source, support et campagne — pour qu’ils sachent quelle action a conduit votre famille jusqu’au programme.",
+            "Vos prénom, nom et adresse e-mail — pour qu’ils puissent vous contacter au sujet du programme.",
+            "La commune et le pays que vous avez indiqués comme domicile de votre famille, le cas échéant.",
+            "Le prénom de votre enfant.",
+            "Le mois et l’année de naissance de votre enfant — nous n’en conservons jamais le jour.",
+            "Le nom d’utilisateur Roblox de votre enfant et l’identifiant de compte que Roblox lui attribue.",
+            "Les conditions et politiques que vous avez acceptées lors de l’inscription, ainsi que vos réponses aux questions sur le marketing et la photographie.",
+            "L’inscription elle-même — le club, le stage ou l’événement, le groupe dans lequel se trouve votre enfant, et la date à laquelle il s’y est inscrit.",
+            "Le fait que votre enfant ait été noté présent ou absent à chaque session.",
+            "Le titre et le lien de ce que votre enfant publie sur Roblox, tel qu’un animateur l’enregistre.",
+            "Les photographies jointes à un compte rendu de session — uniquement lorsque vous avez autorisé la photographie."
+          ],
+          "Lynx s’en sert pour mener le programme, sur la base des conditions du programme que vous acceptez lors de l’inscription et de son intérêt légitime à le mener en toute sécurité — à l’exception de l’étiquette de campagne, transmise uniquement si vous avez autorisé les cookies marketing, et des photographies, transmises uniquement si vous avez coché la case. Ce que reçoit Roblox, et tout le reste au sujet du programme, figure dans la <linkRobloxPrivacy>Politique de confidentialité de l’Académie des Créateurs</linkRobloxPrivacy>."
+        ]
+      },
       "cookies": {
         "heading": "Cookies, statistiques et publicité",
         "paragraphs": [
@@ -3213,7 +3232,7 @@
         ],
         "bullets": [
           "Les statistiques — celles de Vercel, et seulement si vous les acceptez. Elles comptent les visites, mesurent la vitesse d’affichage des pages et reçoivent quelques événements anonymes sur l’usage du site : comment on accède à son My SOG, quand la langue est changée. Elles ne peuvent pas savoir qui vous êtes, et nous ne les transmettons jamais à des annonceurs.",
-          "Le marketing — des cookies publicitaires, et seulement si vous les acceptez. Ils permettent aux plateformes publicitaires citées plus haut — aujourd’hui Meta — de voir comment vous utilisez notre site, afin qu’elles puissent vous montrer nos publicités et que nous sachions lesquelles fonctionnent. Ils ne sont jamais actifs pendant qu’un joueur est connecté. Désactiver le marketing supprime ces cookies, ainsi que le peu de données que le script de Meta conserve à côté d’eux dans votre navigateur, mais pas ce que les plateformes détiennent déjà — vous pouvez leur demander de le supprimer dans vos paramètres chez elles."
+          "Le marketing — des cookies publicitaires, et seulement si vous les acceptez. Ils permettent aux plateformes publicitaires citées plus haut — aujourd’hui Meta — de voir comment vous utilisez notre site, afin qu’elles puissent vous montrer nos publicités et que nous sachions lesquelles fonctionnent. Si vous créez un compte au cours d’une visite, l’étiquette de campagne portée par le lien à l’origine de celle-ci y est également enregistrée. Ils ne sont jamais actifs pendant qu’un joueur est connecté. Désactiver le marketing supprime ces cookies, ainsi que le peu de données que le script de Meta conserve à côté d’eux dans votre navigateur, mais pas ce que les plateformes détiennent déjà — vous pouvez leur demander de le supprimer dans vos paramètres chez elles."
         ]
       },
       "voice": {
@@ -3602,12 +3621,11 @@
         "Les choix suivants sont <strong>facultatifs</strong> et n’ont aucune incidence sur la place de votre enfant :",
         [
           "Les e-mails adressés au parent par Lynx Educate au sujet de futurs événements Roblox et de ressources sur le jeu vidéo.",
-          "La prise de vue ou le tournage à des fins de reporting privé du Programme auprès de Roblox.",
-          "L’usage public des photographies ou des séquences vidéo par Lynx Educate, School of Gaming et Roblox."
+          "Les photographies et vidéos de l’enfant, utilisées dans les comptes rendus de session visibles par toutes les familles du groupe de l’enfant, dans le rapport d’impact auprès de Lynx Educate et de Roblox, ainsi que publiquement par Lynx Educate, School of Gaming et Roblox."
         ],
         "Les sessions en ligne ordinaires ne sont pas enregistrées. Aucun enfant ne sera photographié ni filmé si l’autorisation requise n’a pas été donnée ou si l’enfant ne souhaite pas y participer.",
         "Lynx Educate et School of Gaming ne vendent pas les informations d’inscription au Programme et ne s’en servent pas pour faire de la publicité auprès des enfants.",
-        "Vous et votre enfant pouvez demander à consulter, corriger ou supprimer des informations, retirer un consentement facultatif ou vous opposer à certains usages en écrivant à <strong>admin@lynxeducate.com</strong> ou à <strong>{supportEmail}</strong>."
+        "Vous et votre enfant pouvez demander à consulter, corriger ou supprimer des informations, retirer un consentement facultatif ou vous opposer à certains usages en écrivant à <strong>support@lynxeducate.com</strong> ou à <strong>{supportEmail}</strong>."
       ]
     },
     "sections": {
@@ -3632,7 +3650,7 @@
           "<strong>Lynx Educate SAS</strong>",
           "185 rue Ordener",
           "75018 Paris, France",
-          "E-mail : <strong>admin@lynxeducate.com</strong>"
+          "E-mail : <strong>support@lynxeducate.com</strong>"
         ]
       },
       "responsibleSog": {
@@ -3684,7 +3702,7 @@
         "blocks": [
           "Selon l’activité, nous pouvons collecter :",
           [
-            "Le prénom de l’enfant, conservé aux côtés du nom de famille repris du compte du parent. Les animateurs et les autres participants ne voient jamais ce nom de famille — l’enfant participe sous son prénom.",
+            "Le prénom.",
             "L’âge, une tranche d’âge, ou le mois et l’année de naissance plutôt qu’une date de naissance complète.",
             "Le nom d’utilisateur Roblox et l’identifiant Roblox.",
             "Le cours, le club, le stage, l’événement ou le groupe fréquenté.",
@@ -3765,7 +3783,7 @@
       "useMedia": {
         "heading": "Photographies et tournages facultatifs (par Lynx Educate)",
         "blocks": [
-          "Les photographies, les tournages et les communications publiques reposent sur des autorisations distinctes et facultatives. Refuser l’une ou l’autre des options média n’a aucune incidence sur l’inscription ni sur la participation.",
+          "Les photographies, les tournages et les communications publiques reposent sur des autorisations distinctes et facultatives. Refuser ces autorisations n’a aucune incidence sur l’inscription ni sur la participation.",
           "Le consentement n’est pas la base légale des activités essentielles d’inscription, de mise en œuvre ou de protection de l’enfance décrites ci-dessus."
         ]
       },
@@ -3856,7 +3874,6 @@
           "Le Programme se déroule dans un environnement d’apprentissage privé et modéré.",
           [
             "Le profil de chaque enfant est rattaché à un compte parent ou représentant légal.",
-            "Les enfants participent sous leur seul prénom — jamais avec leurs coordonnées.",
             "Seuls les participants inscrits et les animateurs vérifiés peuvent rejoindre les sessions.",
             "Les échanges se font en groupe et sous supervision.",
             "Il n’existe pas de messagerie privée directe entre enfants.",
@@ -3931,7 +3948,7 @@
           "Le retrait du consentement ne remet pas en cause la licéité du traitement effectué avant ce retrait.",
           "Les enfants peuvent nous contacter directement au sujet de leurs propres informations. Les parents et représentants légaux peuvent également formuler une demande pour un enfant, sous réserve des droits propres de l’enfant, de son âge et de sa maturité.",
           "Aucune décision fondée exclusivement sur un traitement automatisé et produisant des effets juridiques ou des effets significatifs comparables n’est prise à l’égard des participants.",
-          "Adressez vos demandes à <strong>admin@lynxeducate.com</strong> ou à <strong>{supportEmail}</strong>. Les organisations coordonnent leur réponse et transmettent à Roblox les demandes qui le concernent.",
+          "Adressez vos demandes à <strong>support@lynxeducate.com</strong> ou à <strong>{supportEmail}</strong>. Les organisations coordonnent leur réponse et transmettent à Roblox les demandes qui le concernent.",
           "Les familles ont également le droit d’introduire une réclamation auprès de la <strong>Commission nationale de l’informatique et des libertés — <linkCnil>CNIL</linkCnil></strong>."
         ]
       },
@@ -3965,7 +3982,7 @@
           "<strong>Lynx Educate SAS</strong>",
           "185 rue Ordener",
           "75018 Paris, France",
-          "<strong>admin@lynxeducate.com</strong>",
+          "<strong>support@lynxeducate.com</strong>",
           "<strong>School of Gaming Galactic Oy</strong>",
           "Isokatu 56",
           "90100 Oulu, Finlande",
@@ -4060,7 +4077,7 @@
     "intro": {
       "heading": "En bref",
       "blocks": [
-        "Ce document explique ce à quoi vous inscrivez votre enfant lorsque vous vous enregistrez au Programme de l’Académie des Créateurs. Il s’agit d’un programme commun, proposé par Lynx Educate et School of Gaming, en collaboration avec Roblox. Si quelque chose n’est pas clair, écrivez à <strong>admin@lynxeducate.com</strong>."
+        "Ce document explique ce à quoi vous inscrivez votre enfant lorsque vous vous enregistrez au Programme de l’Académie des Créateurs. Il s’agit d’un programme commun, proposé par Lynx Educate et School of Gaming, en collaboration avec Roblox. Si quelque chose n’est pas clair, écrivez à <strong>support@lynxeducate.com</strong>."
       ]
     },
     "sections": {
@@ -4114,7 +4131,7 @@
       "concern": {
         "heading": "Si vous avez une inquiétude",
         "blocks": [
-          "Si l’expérience de votre enfant dans le Programme vous inquiète, écrivez à admin@lynxeducate.com ou à {supportEmail} — nous veillerons à ce que votre message parvienne aux bonnes personnes."
+          "Si l’expérience de votre enfant dans le Programme vous inquiète, écrivez à support@lynxeducate.com ou à {supportEmail} — nous veillerons à ce que votre message parvienne aux bonnes personnes."
         ]
       },
       "changes": {
