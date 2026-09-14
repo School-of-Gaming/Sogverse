@@ -586,9 +586,11 @@ export const ROUTES = {
     municipalityClubs: "/admin/municipality-clubs",
     /**
      * The month a municipality is invoiced for: every club it runs, how many
-     * sessions each ran, and what that comes to. A read-only report beside the
-     * club list it is drawn from, which is why it sits next to it rather than
-     * under it — it is about a month, not about one club.
+     * sessions each ran, and what that comes to. A read-only report over the
+     * municipality clubs, which is why it is a page of its own rather than
+     * something under one club — it is about a month, not about one club. In the
+     * sidebar the owner placed it below Sites, at the end of the operational
+     * entries and above the tooling.
      */
     municipalityInvoicing: "/admin/municipality-invoicing",
     camps: "/admin/camps",

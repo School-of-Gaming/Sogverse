@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useState, type ComponentProps } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   ChevronDown,
@@ -11,6 +11,7 @@ import {
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { CollapsibleRegion } from "@/components/gedu/session-feed/CollapsibleRegion";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { monthsAfter } from "@/lib/calendar-date";
@@ -65,6 +66,7 @@ export function MunicipalityInvoicingPage({
   monthStart,
   initialSnapshot,
   now: pinnedNow,
+  monthHref,
 }: {
   /** The month on screen, as its first day (`YYYY-MM-01`). */
   monthStart: string;
@@ -81,6 +83,16 @@ export function MunicipalityInvoicingPage({
    * clock exactly as it did.
    */
   now?: Date;
+  /**
+   * Where a step of the month stepper goes, given the month it steps to.
+   *
+   * It defaults to the live admin route, which is the only answer a deployment
+   * ever wants. The preview scene passes its own, pointing back at itself,
+   * because a stepper that leaves the preview is a control the reviewer cannot
+   * use on the page they are reviewing — and stepping the month is how the
+   * preview reaches the one state a month with clubs in it cannot show.
+   */
+  monthHref?: (month: string) => MonthHref;
 }) {
   const t = useTranslations("admin.municipalityInvoicing");
   const locale = resolveLocale(useLocale());
@@ -92,14 +104,8 @@ export function MunicipalityInvoicingPage({
   );
 
   const invoice = useMemo(
-    () =>
-      buildMunicipalityInvoicing({
-        snapshot,
-        locale,
-        now,
-        noMunicipalityLabel: t("noMunicipality"),
-      }),
-    [snapshot, locale, now, t],
+    () => buildMunicipalityInvoicing({ snapshot, locale, now }),
+    [snapshot, locale, now],
   );
 
   // Collapsed is the default, so the set holds what is *open* — an empty set is
@@ -108,23 +114,39 @@ export function MunicipalityInvoicingPage({
     () => new Set<string>(),
   );
 
+  /**
+   * Which sections are open belongs to the month they were opened in.
+   *
+   * The shell stays mounted across a step to another month, and a municipality
+   * keeps its id from one month to the next, so without this reset April opens
+   * with exactly May's sections expanded — a page claiming the reader opened
+   * something they have not looked at yet. Reset during render rather than from
+   * an effect, so no frame is painted with the wrong month's expansions.
+   */
+  const [shownMonth, setShownMonth] = useState(monthStart);
+  if (shownMonth !== monthStart) {
+    setShownMonth(monthStart);
+    setOpenKeys(new Set<string>());
+  }
+
   const allOpen =
     invoice.municipalities.length > 0 &&
-    invoice.municipalities.every((one) => openKeys.has(sectionKey(one)));
+    invoice.municipalities.every((one) => openKeys.has(one.id));
 
   return (
-    <div className="space-y-3 pb-12">
-      {/* The page's own title, at the smallest size that still reads as the
-          page's title. This is a working surface rather than a page somebody
-          arrives at, and a display heading over a dense ledger spends a tenth of
-          the first screen naming what the sidebar already named. */}
-      <div>
-        <h1 className="text-xl font-semibold">{t("title")}</h1>
-        <p className="text-sm text-muted-foreground">{t("description")}</p>
-      </div>
+    // The scroll gutter is reserved because expanding a municipality is itself
+    // what makes the document scrollbar appear: without it, the reader's own
+    // click narrows the page under the figures they were reading and moves every
+    // one of them sideways.
+    <div className="space-y-3 pb-12" data-reserve-scroll-gutter>
+      <MunicipalityInvoicingHeading />
 
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <MonthStepper monthStart={invoice.monthStart} locale={locale} />
+        <MonthStepper
+          monthStart={invoice.monthStart}
+          locale={locale}
+          monthHref={monthHref}
+        />
         {/* One control rather than two: the pair is a single state with two
             ends, and a reader who can see that everything is open does not also
             need an "expand all" sitting next to it doing nothing. */}
@@ -136,7 +158,7 @@ export function MunicipalityInvoicingPage({
               setOpenKeys(
                 allOpen
                   ? new Set<string>()
-                  : new Set(invoice.municipalities.map(sectionKey)),
+                  : new Set(invoice.municipalities.map((one) => one.id)),
               )
             }
           >
@@ -153,15 +175,16 @@ export function MunicipalityInvoicingPage({
           <div className="divide-y divide-border border-t border-border">
             {invoice.municipalities.map((municipality) => (
               <MunicipalitySection
-                key={sectionKey(municipality)}
+                key={municipality.id}
                 municipality={municipality}
                 locale={locale}
-                isOpen={openKeys.has(sectionKey(municipality))}
+                isOpen={openKeys.has(municipality.id)}
                 onToggle={() =>
                   setOpenKeys((keys) => {
                     const next = new Set(keys);
-                    const key = sectionKey(municipality);
-                    if (!next.delete(key)) next.add(key);
+                    if (!next.delete(municipality.id)) {
+                      next.add(municipality.id);
+                    }
                     return next;
                   })
                 }
@@ -174,16 +197,34 @@ export function MunicipalityInvoicingPage({
   );
 }
 
+/** A link target the app's own typed `Link` accepts. */
+export type MonthHref = ComponentProps<typeof Link>["href"];
+
 /**
- * A municipality's identity as a section: its own id, or the one name the
- * trailing no-municipality bucket can be told apart by.
+ * The page's title and its one-line description — the two things on it that wait
+ * on nothing.
  *
- * A function rather than an inline `?? "none"` at four call sites, because the
- * open-set's keys and the React keys have to be the same string or a section
- * opens one card and marks another.
+ * It is a component rather than two lines written out twice, because the route
+ * renders them above a failed read as well, where there is no invoice to put
+ * underneath. The two copies had already drifted apart — a display heading over
+ * the failure, a working-surface heading over the ledger — and a page whose title
+ * changes size depending on whether the month loaded looks broken in exactly the
+ * state where the reader is already being told that something went wrong.
+ *
+ * The size is the smallest that still reads as the page's own title: this is a
+ * working surface rather than a page somebody arrives at, and a display heading
+ * over a dense ledger spends a tenth of the first screen naming what the sidebar
+ * named already.
  */
-function sectionKey(municipality: InvoiceMunicipality): string {
-  return municipality.id ?? "none";
+export function MunicipalityInvoicingHeading() {
+  const t = useTranslations("admin.municipalityInvoicing");
+
+  return (
+    <div>
+      <h1 className="text-xl font-semibold">{t("title")}</h1>
+      <p className="text-sm text-muted-foreground">{t("description")}</p>
+    </div>
+  );
 }
 
 /** The one horizontal inset every row on the ledger shares. */
@@ -215,7 +256,7 @@ function MonthSummaryRow({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2",
+        "flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2.5",
         ROW_INSET,
       )}
     >
@@ -224,7 +265,7 @@ function MonthSummaryRow({
           parts={[
             t("municipalityCount", { count: invoice.municipalityCount }),
             t("clubCount", { count: invoice.clubCount }),
-            t("recordedSessions", { count: invoice.recordedCount }),
+            t("sessionCount", { count: invoice.recordedCount }),
           ]}
         />
         {invoice.clubsWithoutFee > 0 && (
@@ -302,9 +343,11 @@ function FeeNotSet() {
 function MonthStepper({
   monthStart,
   locale,
+  monthHref = adminMonthHref,
 }: {
   monthStart: string;
   locale: string;
+  monthHref?: (month: string) => MonthHref;
 }) {
   const t = useTranslations("admin.municipalityInvoicing");
   const previous = monthsAfter(monthStart, -1).slice(0, 7);
@@ -312,7 +355,7 @@ function MonthStepper({
 
   return (
     <div className="flex items-center gap-2">
-      <MonthLink month={previous} label={t("previousMonth")}>
+      <MonthLink href={monthHref(previous)} label={t("previousMonth")}>
         <ChevronLeft className="h-4 w-4" aria-hidden />
       </MonthLink>
       {/* Between its two controls, where the thing being stepped belongs: a
@@ -324,28 +367,30 @@ function MonthStepper({
           year: "numeric",
         })}
       </span>
-      <MonthLink month={next} label={t("nextMonth")}>
+      <MonthLink href={monthHref(next)} label={t("nextMonth")}>
         <ChevronRight className="h-4 w-4" aria-hidden />
       </MonthLink>
     </div>
   );
 }
 
+/** The live page's own answer: another month of this route. */
+function adminMonthHref(month: string): MonthHref {
+  return { pathname: ROUTES.admin.municipalityInvoicing, query: { month } };
+}
+
 function MonthLink({
-  month,
+  href,
   label,
   children,
 }: {
-  month: string;
+  href: MonthHref;
   label: string;
   children: React.ReactNode;
 }) {
   return (
     <Link
-      href={{
-        pathname: ROUTES.admin.municipalityInvoicing,
-        query: { month },
-      }}
+      href={href}
       aria-label={label}
       className="rounded-md border border-border p-1 text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
     >
@@ -395,7 +440,7 @@ function MunicipalitySection({
         aria-expanded={isOpen}
         aria-controls={regionId}
         className={cn(
-          "flex w-full items-baseline gap-2 py-1.5 text-left transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act",
+          "flex w-full items-baseline gap-2 py-2.5 text-left transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act",
           ROW_INSET,
         )}
       >
@@ -406,19 +451,14 @@ function MunicipalitySection({
             isOpen && "rotate-180",
           )}
         />
-        <span
-          className={cn(
-            "shrink-0 text-sm font-semibold",
-            municipality.id === null && "text-warning",
-          )}
-        >
+        <span className="shrink-0 text-sm font-semibold">
           {municipality.name}
         </span>
         <span className="min-w-0 truncate text-xs text-muted-foreground">
           <CountLine
             parts={[
               t("clubCount", { count: municipality.clubs.length }),
-              t("recordedSessions", { count: municipality.recordedCount }),
+              t("sessionCount", { count: municipality.recordedCount }),
             ]}
           />
           {municipality.clubsWithoutFee > 0 && (
@@ -432,11 +472,16 @@ function MunicipalitySection({
           {formatCurrencyFromCents(municipality.totalCents, "eur", locale)}
         </span>
       </button>
-      {isOpen && (
-        <div id={regionId} className={cn("overflow-x-auto pb-1", ROW_INSET)}>
+      {/* The region stays mounted while it is shut — inert, clipped to nothing —
+          which is what lets the line above it name the region it controls at all
+          times. A control pointing `aria-controls` at an element that only exists
+          once it is open is pointing at nothing in the state where assistive tech
+          is asked what it would open. */}
+      <CollapsibleRegion open={isOpen} id={regionId}>
+        <div className={cn("overflow-x-auto pb-1", ROW_INSET)}>
           <ClubTable municipality={municipality} locale={locale} />
         </div>
-      )}
+      </CollapsibleRegion>
     </section>
   );
 }
@@ -476,19 +521,19 @@ function ClubTable({
           {/* The disclosure column. It has no name because the control in it is
               named per club, by the club it belongs to. */}
           <th scope="col" className="w-7" />
-          <th scope="col" className="py-1 pr-2 text-left font-medium">
+          <th scope="col" className="py-1.5 pr-2 text-left font-medium">
             {t("columnClub")}
           </th>
-          <th scope="col" className="w-[22%] py-1 pr-2 text-left font-medium">
+          <th scope="col" className="w-[22%] py-1.5 pr-2 text-left font-medium">
             {t("columnSchedule")}
           </th>
-          <th scope="col" className="w-[14%] py-1 pr-2 text-right font-medium">
+          <th scope="col" className="w-[14%] py-1.5 pr-2 text-right font-medium">
             {t("columnFee")}
           </th>
-          <th scope="col" className="w-[14%] py-1 pr-2 text-right font-medium">
+          <th scope="col" className="w-[14%] py-1.5 pr-2 text-right font-medium">
             {t("columnSessions")}
           </th>
-          <th scope="col" className="w-[16%] py-1 text-right font-medium">
+          <th scope="col" className="w-[16%] py-1.5 text-right font-medium">
             {t("columnTotal")}
           </th>
         </tr>
@@ -519,11 +564,24 @@ function ClubTable({
  * has not happened yet, and a note about one would be indistinguishable at a
  * glance from a note about one that was missed.
  *
+ * **The whole row toggles the dates, and the club's name is the one thing on it
+ * that does not.** A row this dense is read by pointing at it, and a reader
+ * aiming for a five-pixel chevron to see why a number is what it is has been
+ * given a target and not an affordance — so the row takes the click, fills on
+ * hover, and the name stops the click from travelling.
+ *
+ * **The chevron button remains the keyboard target, and the row's click is a
+ * pointer convenience layered over it.** The alternative — `role="button"` and
+ * `tabIndex` on the row itself — would put the club's link *inside* a control,
+ * which is the one arrangement that makes both of them ambiguous: nested
+ * interactive content has no correct answer for a keyboard or a screen reader,
+ * and this codebase's own disclosures are all real `<button>`s carrying their own
+ * name, `aria-expanded` and focus ring. So the accessible disclosure is the
+ * button, exactly as it was, and nothing a keyboard can reach has changed.
+ *
  * The club name links to its admin page, which is the whole repair path for the
  * one thing this page can find wrong — a fee nobody has filled in — so the link
- * is there whether or not the fee is missing. It sits *beside* the disclosure
- * control rather than inside it, because a control nested inside another control
- * is the one arrangement that makes a click ambiguous.
+ * is there whether or not the fee is missing.
  */
 function ClubRows({ club, locale }: { club: InvoiceClub; locale: string }) {
   const t = useTranslations("admin.municipalityInvoicing");
@@ -532,13 +590,26 @@ function ClubRows({ club, locale }: { club: InvoiceClub; locale: string }) {
 
   return (
     <>
-      <tr className="align-baseline">
-        <td className="py-1">
+      <tr
+        onClick={() => setIsOpen((open) => !open)}
+        className="cursor-pointer align-baseline transition-colors hover:bg-hover"
+      >
+        <td className="py-2">
           <button
             type="button"
-            onClick={() => setIsOpen((open) => !open)}
+            onClick={(event) => {
+              // The row is listening too, and a click on the button reaches both.
+              // Left to bubble, the toggle would run twice and land back where
+              // it started — the control that looks most like the disclosure
+              // being the one that appears to do nothing.
+              event.stopPropagation();
+              setIsOpen((open) => !open);
+            }}
             aria-expanded={isOpen}
-            aria-controls={detailId}
+            // Named only while the region it names exists: the detail row is a
+            // `<tr>`, so it cannot stay mounted inside a collapsed wrapper the
+            // way the municipality's region does.
+            aria-controls={isOpen ? detailId : undefined}
             aria-label={t("sessionsFor", { club: club.name })}
             className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
           >
@@ -551,43 +622,52 @@ function ClubRows({ club, locale }: { club: InvoiceClub; locale: string }) {
             />
           </button>
         </td>
-        <td className="py-1 pr-2">
+        <td className="py-2 pr-2">
           {/* Truncated with the whole name on hover: a product name runs long
               and a column that grows to fit the longest one takes the width the
-              figures need. */}
+              figures need. The click is stopped here and nowhere else — this is
+              the one target on the row that is not the disclosure, and it keeps
+              its own underline so it still reads as the way out of the row. */}
           <Link
             href={ROUTES.admin.product("municipality_club", club.id)}
             title={club.name}
+            onClick={(event) => event.stopPropagation()}
             className="block truncate font-medium hover:underline"
           >
             {club.name}
           </Link>
         </td>
         <td
-          className="truncate py-1 pr-2 text-xs text-muted-foreground"
+          className="truncate py-2 pr-2 text-xs text-muted-foreground"
           title={club.scheduleSummary ?? undefined}
         >
           {club.scheduleSummary}
         </td>
-        <td className="py-1 pr-2 text-right tabular-nums">
+        <td className="py-2 pr-2 text-right tabular-nums">
           {club.feeCents === null ? (
             <FeeNotSet />
           ) : (
             formatCurrencyFromCents(club.feeCents, "eur", locale)
           )}
         </td>
-        <td className="py-1 pr-2 text-right tabular-nums">
-          {club.recordedCount}
+        {/* The warning comes first and the count last, so the count ends on the
+            column's right edge like every other figure on the page and the note
+            flows leftward into the column's slack. Read left to right it is also
+            the order the reader wants: what is wrong, then what is being billed.
+            Both halves are one phrase per locale, joined by punctuation rather
+            than by copy, so no locale has to word the pair. */}
+        <td className="py-2 pr-2 text-right tabular-nums">
           {club.unrecordedCount > 0 && (
             <span className="whitespace-nowrap text-xs font-medium text-warning">
-              {SCHEDULE_PART_SEPARATOR}
               {t("unrecordedSessions", { count: club.unrecordedCount })}
+              {SCHEDULE_PART_SEPARATOR}
             </span>
           )}
+          {club.recordedCount}
         </td>
         {/* The money axis. The last column's right edge is the row inset, which
             is the same edge the municipality total and the month total end on. */}
-        <td className="py-1 text-right tabular-nums">
+        <td className="py-2 text-right tabular-nums">
           {club.totalCents === null ? (
             <FeeNotSet />
           ) : (
@@ -620,10 +700,17 @@ function ClubRows({ club, locale }: { club: InvoiceClub; locale: string }) {
  * amounts land on the same axis as the club total above them without having to
  * agree with the outer table's column widths — only with its right edge.
  *
+ * **Three columns, not four: the date and its week number are one cell.** They
+ * are one fact — *when* — and a fixed layout that gave each its own column set
+ * them at opposite ends of half the table's width, where the week read as a
+ * figure belonging to something else. Joined by the same middle dot the rest of
+ * the page joins parts of a line with, they are read together and the status
+ * column takes the width that is left.
+ *
  * It carries no header row of its own. The outer table already named its columns
  * once for the whole municipality, and a second header row per opened club would
- * spend a line on labelling four values a reader can tell apart by their shape:
- * a date, a week number, a word, and a sum of money.
+ * spend a line on labelling three values a reader can tell apart by their shape:
+ * a dated week, a word, and a sum of money.
  */
 function ClubSessionDetail({
   club,
@@ -639,9 +726,8 @@ function ClubSessionDetail({
           somewhere states where above its dates, spanning the lot, and a fixed
           layout reading its widths off a spanning row would have none to read. */}
       <colgroup>
-        <col className="w-[32%]" />
-        <col className="w-[14%]" />
-        <col className="w-[30%]" />
+        <col className="w-[40%]" />
+        <col className="w-[36%]" />
         <col className="w-[24%]" />
       </colgroup>
       <tbody>
@@ -650,7 +736,7 @@ function ClubSessionDetail({
             spoken for. */}
         {club.locationName !== null && (
           <tr>
-            <td colSpan={4} className="pb-0.5 text-muted-foreground">
+            <td colSpan={3} className="pb-1 text-muted-foreground">
               {club.locationName}
             </td>
           </tr>
@@ -669,8 +755,8 @@ function ClubSessionDetail({
 }
 
 /**
- * One dated line: when it was, which week that is, what happened, and what it is
- * worth.
+ * One dated line: when it was — the date and its ISO week, read as one thing —
+ * what happened, and what it is worth.
  *
  * The three kinds read differently on purpose. A recorded session carries the
  * fee and nothing else in the way of explanation — it is the ordinary case and
@@ -700,8 +786,14 @@ function SessionRow({
         session.kind === "unrecorded" && "text-warning",
       )}
     >
-      <td className="py-0.5 pr-2">
-        <span className="flex items-baseline gap-1.5">
+      {/* The week rides with the date rather than in a column of its own: a
+          Finnish admin finds a session by its week, and a week number sitting a
+          third of the table away from the day it belongs to is a figure the
+          reader has to pair up by eye. It keeps the row's own tone — muting it
+          inside a warning row would say the week was the ordinary part of a line
+          that is not. */}
+      <td className="py-1 pr-2">
+        <span className="flex flex-wrap items-baseline gap-x-1.5">
           <span>{formatDateOnly(session.date, locale, { weekday: "short" })}</span>
           <span className="tabular-nums">
             {formatDateOnly(session.date, locale, {
@@ -710,12 +802,13 @@ function SessionRow({
               year: "numeric",
             })}
           </span>
+          <span className="tabular-nums">
+            {SCHEDULE_PART_SEPARATOR}
+            {c("week", { week: session.isoWeek })}
+          </span>
         </span>
       </td>
-      <td className="py-0.5 pr-2 tabular-nums">
-        {c("week", { week: session.isoWeek })}
-      </td>
-      <td className="py-0.5 pr-2">
+      <td className="py-1 pr-2">
         <span className="flex items-center gap-1">
           {session.kind === "unrecorded" && (
             <TriangleAlert className="h-3 w-3 shrink-0" aria-hidden />
@@ -728,7 +821,7 @@ function SessionRow({
       {/* The money column, ending on the same axis as the club's own total. An
           amount with a word beside it flows leftward into the column's slack
           rather than pushing the figure off that axis. */}
-      <td className="py-0.5 text-right tabular-nums">
+      <td className="py-1 text-right tabular-nums">
         <span className="flex items-baseline justify-end gap-1.5">
           {session.kind === "recorded" &&
             (feeCents === null ? (

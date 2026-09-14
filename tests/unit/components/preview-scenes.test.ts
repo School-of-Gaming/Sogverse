@@ -24,7 +24,9 @@ import {
 import {
   MUNICIPALITY_INVOICING_NOW,
   MUNICIPALITY_INVOICING_SCENARIOS,
-  buildMunicipalityInvoicingFixture,
+  MUNICIPALITY_INVOICING_WORKING_MONTH,
+  municipalityInvoicingMonthFixture,
+  resolvePreviewInvoicingMonth,
 } from "@/components/admin/municipality-invoicing/mock-invoicing-fixtures";
 import { buildMunicipalityInvoicing } from "@/components/admin/municipality-invoicing/build-municipality-invoicing";
 import {
@@ -1846,19 +1848,20 @@ describe("the topic prep scene", () => {
  * excluded club would be a scene quietly showing one case fewer.
  */
 describe("the municipality invoicing scene covers every ledger state", () => {
-  const snapshot = buildMunicipalityInvoicingFixture("working-month");
+  const snapshot = municipalityInvoicingMonthFixture(
+    MUNICIPALITY_INVOICING_WORKING_MONTH,
+  );
   const invoice = buildMunicipalityInvoicing({
     snapshot,
     locale: "en",
     now: MUNICIPALITY_INVOICING_NOW,
-    noMunicipalityLabel: "No municipality",
   });
   const clubs = invoice.municipalities.flatMap((one) => one.clubs);
 
   it("is a month of the size the page was designed for", () => {
-    // Twelve municipalities plus the trailing bucket, and every club in the
-    // document on the invoice — no club here is so empty it drops out.
-    expect(invoice.municipalities).toHaveLength(13);
+    // Twelve municipalities, and every club in the document on the invoice — no
+    // club here is so empty it drops out.
+    expect(invoice.municipalities).toHaveLength(12);
     expect(invoice.clubCount).toBe(snapshot.clubs.length);
     expect(invoice.clubCount).toBeGreaterThanOrEqual(30);
     // Several sections deep enough to read as a table, and a few single-club
@@ -1868,14 +1871,13 @@ describe("the municipality invoicing scene covers every ledger state", () => {
     expect(sizes.filter((size) => size === 1).length).toBeGreaterThanOrEqual(2);
   });
 
-  it("puts the clubs with no municipality in the trailing bucket", () => {
-    const last = invoice.municipalities[invoice.municipalities.length - 1];
-    expect(last.id).toBeNull();
-    expect(last.clubs.length).toBeGreaterThan(0);
-    // And nowhere else: every other section is a real municipality.
-    for (const one of invoice.municipalities.slice(0, -1)) {
-      expect(one.id).not.toBeNull();
-    }
+  it("invoices every club to a municipality", () => {
+    // There is no bucket for a club that belongs nowhere, on this page or in
+    // this fixture: the database refuses to answer a month containing one, so a
+    // spec with no municipality is not a state to preview.
+    expect(invoice.municipalities.length).toBe(
+      new Set(snapshot.clubs.map((club) => club.municipality.id)).size,
+    );
   });
 
   it("carries all three kinds of session line", () => {
@@ -1994,25 +1996,34 @@ describe("the municipality invoicing scene covers every ledger state", () => {
       snapshot,
       locale: "sv",
       now: MUNICIPALITY_INVOICING_NOW,
-      noMunicipalityLabel: "Ingen kommun",
     });
     const names = swedish.municipalities.map((one) => one.name);
     expect(names).toContain("Esbo");
     expect(names).toContain("Borgå");
-    const sorted = [...names.slice(0, -1)].sort((a, b) =>
-      a.localeCompare(b, "sv"),
-    );
-    expect(names.slice(0, -1)).toEqual(sorted);
+    const sorted = [...names].sort((a, b) => a.localeCompare(b, "sv"));
+    expect(names).toEqual(sorted);
   });
 
-  it("opens the other scenario on a month with nothing in it", () => {
-    const empty = buildMunicipalityInvoicingFixture("empty-month");
+  it("reaches the empty ledger by stepping the month, not by another scenario", () => {
+    // The scene's whole month resolution, pinned: no parameter and a nonsense
+    // one both land on the working month — a preview that opened empty would be
+    // showing the reviewer nothing — and any other real month is genuinely empty,
+    // because these clubs run one spring term.
+    expect(resolvePreviewInvoicingMonth(null)).toBe(
+      MUNICIPALITY_INVOICING_WORKING_MONTH,
+    );
+    expect(resolvePreviewInvoicingMonth("not-a-month")).toBe(
+      MUNICIPALITY_INVOICING_WORKING_MONTH,
+    );
+    expect(resolvePreviewInvoicingMonth("2026-07")).toBe("2026-07-01");
+
+    const empty = municipalityInvoicingMonthFixture("2026-07-01");
+    expect(empty.month_start).toBe("2026-07-01");
     expect(empty.clubs).toEqual([]);
     const built = buildMunicipalityInvoicing({
       snapshot: empty,
       locale: "en",
       now: MUNICIPALITY_INVOICING_NOW,
-      noMunicipalityLabel: "No municipality",
     });
     expect(built.municipalities).toEqual([]);
     expect(built.totalCents).toBe(0);

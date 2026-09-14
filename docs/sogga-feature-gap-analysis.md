@@ -180,17 +180,24 @@ fees, a status state machine, gedu and admin views, and the CFO's reporting.
 **SOGGA had:** A separate invoicing track per municipality with contact info, per-lesson
 line items, status, and filtered reports.
 
-**Sogverse has:** The product side only — `municipality_club` products with
-`billing_mode = 'external_contract'` and a `municipality_fee_cents` per session, all
-invoiced **off-platform** today (`docs/architecture/products.md`). The `locations`
-hierarchy carries no municipality contact or invoicing fields. The on-platform shape is
-pre-specified: a future `billing_mode = 'municipality_account'`, with code branching on
-`billing_mode` rather than on product type.
+**Sogverse has:** The product side, plus the month report the invoices are raised from.
+`municipality_club` products carry `billing_mode = 'external_contract'` and a
+`municipality_fee_cents` per session (`docs/architecture/products.md`), and the admin
+**Municipality invoicing** page answers one calendar month across every municipality: each
+municipality's clubs, the sessions each club actually recorded, the scheduled dates nobody
+wrote up, the per-session fee, and the club, municipality and month totals — recomputed from
+current facts at read time, with nothing snapshotted. The invoice itself is still raised and
+sent off-platform from those figures. What is missing is the rest of the track: the
+`locations` hierarchy carries no municipality contact or invoicing fields, there is no
+invoicing *period* with a status per municipality, and nothing exports. The on-platform
+billing shape is pre-specified: a future `billing_mode = 'municipality_account'`, with code
+branching on `billing_mode` rather than on product type.
 
-**Priority:** `Critical` — `ROADMAP.md` schedules **Muni Invoicing** for September 2026.
-**Complexity:** `High` — Municipality invoicing details, line items derived from
-sessions × municipality fee, a status per municipality-period, and admin reporting.
-Shares its period and line machinery with item 11.
+**Priority:** `High` — the figures a month is invoiced from are on the platform; what
+remains is the paperwork around them.
+**Complexity:** `Medium` — Municipality contact and invoicing details, a period with a
+status per municipality, line items persisted from the month the report already computes,
+and an export. Shares its period and line machinery with item 11.
 
 ---
 
@@ -199,15 +206,18 @@ Shares its period and line machinery with item 11.
 **SOGGA had:** Municipality invoicing report, municipality summary, Truster per-gedu
 payment report with CSV / JSON export, and a gedu invoicing status overview.
 
-**Sogverse has:** No reports page and no CSV / JSON export anywhere. The admin dashboard
-deliberately dropped revenue and growth reporting because customer money lives in Stripe,
-which owns the reporting an accountant uses. That covers **incoming** money only; SOGGA's
-four reports were all about **outgoing** money (gedu fees, municipality billing), which
-Stripe never sees.
+**Sogverse has:** One of the four — the admin **Municipality invoicing** month report
+(item 12), which is the municipality invoicing report and, on its summary line, the
+municipality summary. It is read-only and has no export: no CSV or JSON export exists
+anywhere in the app. The other two reports, both about gedu payments, have nothing behind
+them yet. The admin dashboard deliberately dropped revenue and growth reporting because
+customer money lives in Stripe, which owns the reporting an accountant uses. That covers
+**incoming** money only; SOGGA's four reports were all about **outgoing** money (gedu fees,
+municipality billing), which Stripe never sees.
 
 **Priority:** `High`
-**Complexity:** `High` — Depends entirely on items 11 and 12; each report is a filtered
-aggregate over their tables plus an export route.
+**Complexity:** `Medium` — The gedu-payment reports depend entirely on item 11; the
+municipality half exists and wants an export route and a filter, not a report.
 
 ---
 

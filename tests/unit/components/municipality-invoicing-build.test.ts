@@ -71,12 +71,7 @@ function build(
     month_start: MONTH,
     clubs,
   };
-  return buildMunicipalityInvoicing({
-    snapshot,
-    locale,
-    now,
-    noMunicipalityLabel: "No municipality",
-  });
+  return buildMunicipalityInvoicing({ snapshot, locale, now });
 }
 
 /** The one club of the one municipality, for the single-club cases. */
@@ -473,31 +468,6 @@ describe("buildMunicipalityInvoicing", () => {
       ]);
     });
 
-    it("puts the clubs with no municipality in a trailing bucket", () => {
-      const view = build([
-        club({
-          id: "a",
-          municipality: null,
-          location: null,
-          sessions: [{ group_id: "g1", session_date: "2026-09-02" }],
-        }),
-        club({
-          id: "b",
-          municipality: MUNICIPALITY_B,
-          sessions: [{ group_id: "g2", session_date: "2026-09-02" }],
-        }),
-      ]);
-
-      // Last, despite "No municipality" sorting before "Helsinki": it is a list
-      // of things to fix rather than a municipality to invoice.
-      expect(view.municipalities.map((m) => m.name)).toEqual([
-        "Helsinki",
-        "No municipality",
-      ]);
-      expect(view.municipalities[1].id).toBeNull();
-      expect(view.municipalities[1].clubs[0].locationName).toBeNull();
-    });
-
     it("orders every club's sessions by date", () => {
       const built = onlyClub([
         club({
@@ -653,22 +623,32 @@ describe("buildMunicipalityInvoicing", () => {
     });
 
     it("agrees with the municipality totals it stands over", () => {
+      // Pinned as literals rather than re-summed from the view: a total checked
+      // against a sum of the same numbers the same function produced would pass
+      // for any arithmetic at all, including none.
       const view = build([
         club({
           id: "a",
           municipality: MUNICIPALITY_A,
+          municipality_fee_cents: 8_750,
           sessions: [{ group_id: "g1", session_date: "2026-09-02" }],
         }),
         club({
           id: "b",
           municipality: MUNICIPALITY_B,
-          sessions: [{ group_id: "g2", session_date: "2026-09-09" }],
+          municipality_fee_cents: 5_000,
+          sessions: [
+            { group_id: "g2", session_date: "2026-09-02" },
+            { group_id: "g2", session_date: "2026-09-09" },
+          ],
         }),
       ]);
 
-      expect(view.totalCents).toBe(
-        view.municipalities.reduce((sum, one) => sum + one.totalCents, 0),
-      );
+      expect(view.municipalities.map((one) => one.totalCents)).toEqual([
+        8_750,
+        10_000,
+      ]);
+      expect(view.totalCents).toBe(18_750);
     });
 
     it("leaves every club with no fee out of the total and says how many", () => {

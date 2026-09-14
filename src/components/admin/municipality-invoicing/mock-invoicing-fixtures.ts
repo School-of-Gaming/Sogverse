@@ -31,9 +31,16 @@ import type { ProductStatus } from "@/types";
  * municipality is what a Finnish reader recognises the row by, so those are the
  * actual names (with the Swedish exonyms a `sv` reader gets, which is also what
  * makes the localized sort worth looking at). The school sites and the club
- * names are invented — plausible Finnish compounds rather than any club School
- * of Gaming actually runs, because a fixture naming a real customer's club is a
- * page that looks like live data.
+ * names are invented — plausible Finnish compounds rather than any school or any
+ * club School of Gaming actually runs, because a fixture naming a real
+ * customer's club, or a real school, is a page that looks like live data. That
+ * cuts both ways and has caught this file out once: three of the sites here were
+ * lifted from real schools and had to be renamed, so a *plausible* compound is
+ * the requirement and a *recognisable* one is the defect.
+ *
+ * **Every club belongs to a municipality, because the database refuses to answer
+ * a month in which one does not.** There is no no-municipality club here to
+ * render, and there is nowhere for one to go.
  *
  * **Club ids are readable rather than UUIDs, on purpose.** Nothing on this page
  * hashes an id into a picture — the avatar-identicon rule that forces real
@@ -43,18 +50,21 @@ import type { ProductStatus } from "@/types";
  */
 
 /**
- * **Two scenarios, and they cannot coexist:** a month with a ledger in it and a
- * month with nothing in it are the same page in its two states.
+ * **One scenario, because the month is a control on the page.**
  *
- * Everything else this page can show belongs in the working month and is in it —
- * every club state, every session state, the exclusion warning, the
- * no-municipality bucket — because states that share one render are compared
- * side by side, and states behind separate links are compared from memory.
+ * The other state this page has is a month with nothing in it, and that is not a
+ * second scenario: the ledger carries a month stepper, so stepping off the
+ * working month is how the reader reaches an empty one — on the same page, with
+ * the same stepper, which is also the only way to see that the empty month
+ * *steps back*. A scenario would have been a second link to a state the page can
+ * already be driven into.
+ *
+ * Everything that can share one render is in the working month — every club
+ * state, every session state, the exclusion warning — because states that share
+ * a render are compared side by side, and states behind separate links are
+ * compared from memory.
  */
-export const MUNICIPALITY_INVOICING_SCENARIOS = [
-  "working-month",
-  "empty-month",
-] as const;
+export const MUNICIPALITY_INVOICING_SCENARIOS = ["working-month"] as const;
 
 export type MunicipalityInvoicingPreviewScenario =
   (typeof MUNICIPALITY_INVOICING_SCENARIOS)[number];
@@ -103,14 +113,13 @@ const TODAY = "2026-05-21";
 const WORKING_MONTH = "2026-05-01";
 
 /**
- * The month the empty scenario opens on: July, when no municipality club runs.
+ * The month the scene opens on, and the only month it has clubs for.
  *
- * An empty month is a real month rather than a contrivance — Finnish schools are
- * out, every spring term has ended and no autumn one has started — which is why
- * it is a different month rather than May with its clubs deleted. Nothing in it
- * is clocked: with no club there is no date to place on either side of today.
+ * Exported because the scene's own link targets and the test that pins its month
+ * resolution both have to name it, and a second literal spelling of the same
+ * month is a fixture that can disagree with itself.
  */
-const EMPTY_MONTH = "2026-07-01";
+export const MUNICIPALITY_INVOICING_WORKING_MONTH = WORKING_MONTH;
 
 /** The ordinary spring term every club here runs, unless it says otherwise. */
 const TERM_START = "2026-01-12";
@@ -154,8 +163,8 @@ interface ClubSpec {
   /** URL-safe and readable: it reaches the DOM only as the club's own link. */
   id: string;
   name: string;
-  /** Null puts the club in the trailing "no municipality" bucket. */
-  municipality: MunicipalityKey | null;
+  /** Which municipality invoices it. Every club has one — see the note above. */
+  municipality: MunicipalityKey;
   /**
    * Where it meets, and as what kind of location. A `site` is a school hall; a
    * `municipality` is an online club pointing at the municipality itself, which
@@ -188,9 +197,9 @@ interface ClubSpec {
 const SESSION_MINUTES = 90;
 
 /**
- * The working month's clubs: thirty-two of them across twelve municipalities and
- * the no-municipality bucket, weighted the way production is — most
- * municipalities with one or two clubs, a few with four to six.
+ * The working month's clubs: thirty-one of them across twelve municipalities,
+ * weighted the way production is — most municipalities with one or two clubs, a
+ * few with four to six.
  *
  * Every state the page can be in is somewhere in this list, and the comment on
  * each line is which one it is there for. The ordinary club — one slot, one
@@ -209,10 +218,10 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     slots: [{ weekday: MON, startTime: "15:00" }],
   },
   {
-    id: "preview-club-havukallio",
-    name: "Peliklubi Havukallio",
+    id: "preview-club-haavikallio",
+    name: "Peliklubi Haavikallio",
     municipality: "espoo",
-    site: { name: "Havukallion koulu" },
+    site: { name: "Haavikallion koulu" },
     feeCents: 8000,
     slots: [{ weekday: TUE, startTime: "15:30" }],
     // One session nobody wrote up: the warning count on a club line.
@@ -266,12 +275,14 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
 
   // Helsinki — the long name, the club with no schedule, and a month of misses.
   {
-    id: "preview-club-pohjois-kaarela",
-    name: "Peliklubi Pohjois-Kaarelan yhtenäiskoulun iltapäiväryhmä",
+    id: "preview-club-pohjois-vuorela",
+    name: "Peliklubi Pohjois-Vuorelan yhtenäiskoulun iltapäiväryhmä",
     municipality: "helsinki",
     // Long on both axes on purpose: the name truncates in the club column and
     // the site name truncates in the detail's location line.
-    site: { name: "Pohjois-Kaarelan yhtenäiskoulun monitoimisali ja kerhotila" },
+    site: {
+      name: "Pohjois-Vuorelan yhtenäiskoulun monitoimisali ja kerhotila",
+    },
     feeCents: 9000,
     slots: [{ weekday: TUE, startTime: "15:15" }],
   },
@@ -498,10 +509,10 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     slots: [{ weekday: THU, startTime: "16:00" }],
   },
   {
-    id: "preview-club-ounasrinne",
-    name: "Peliklubi Ounasrinne",
+    id: "preview-club-ounasniitty",
+    name: "Peliklubi Ounasniitty",
     municipality: "rovaniemi",
-    site: { name: "Ounasrinteen koulu" },
+    site: { name: "Ounasniityn koulu" },
     // The top of the fee range.
     feeCents: 10000,
     slots: [{ weekday: TUE, startTime: "17:00" }],
@@ -515,32 +526,49 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     slots: [{ weekday: WED, startTime: "15:30" }],
   },
 
-  // The trailing bucket: a club whose site hangs off nothing that is a
-  // municipality, so there is nobody to invoice and the page says so.
-  {
-    id: "preview-club-kanervala",
-    name: "Peliklubi Kanervala",
-    municipality: null,
-    site: { name: "Kanervalan kerhotila" },
-    feeCents: 6500,
-    slots: [{ weekday: MON, startTime: "16:45" }],
-  },
 ];
+
+/** `YYYY-MM`, with the year inside this century — the live route's own shape. */
+const PREVIEW_MONTH_PARAM = /^20\d{2}-(0[1-9]|1[0-2])$/;
+
+/**
+ * Which month the scene is showing: the one its `?month=` parameter names, or the
+ * working month.
+ *
+ * **The default is the working month, not last month.** The live route defaults
+ * to the month that just ended, because an invoice is raised for a finished
+ * month; a preview defaults to the month it has clubs in, because a scene that
+ * opened empty would be showing the reviewer nothing. A malformed or absurd
+ * value falls to the same default — the page it selects is fixtures either way,
+ * so there is nothing to refuse.
+ *
+ * Exported and pure so the scene's month resolution is pinned by a unit test
+ * rather than by opening the preview and reading the URL bar.
+ */
+export function resolvePreviewInvoicingMonth(raw: string | null): string {
+  if (raw !== null && PREVIEW_MONTH_PARAM.test(raw)) return `${raw}-01`;
+  return WORKING_MONTH;
+}
 
 /**
  * One month of `get_admin_municipality_invoicing`, as the route would have
- * fetched it.
+ * fetched it — for the month asked for.
  *
- * Pure and cheap: the rows are weekly arithmetic over thirty-two specs, and the
+ * **The working month has the ledger in it and every other month is empty**,
+ * which is the honest answer rather than a contrivance: the clubs here run one
+ * spring term, and an invoicing month outside it genuinely has nothing in it.
+ * That is what makes the scene's stepper worth using — a reader steps off May
+ * and meets the empty state on the same page, in the same chrome, and steps back.
+ *
+ * Pure and cheap: the rows are weekly arithmetic over thirty-one specs, and the
  * whole point of returning the wire document rather than a view is that the
- * scene's numbers come out of the same builder the live page's do.
+ * scene's numbers come out of the same builder the live page's do. A function of
+ * the month alone, so the test can pin both answers without a browser.
  */
-export function buildMunicipalityInvoicingFixture(
-  scenario: MunicipalityInvoicingPreviewScenario,
+export function municipalityInvoicingMonthFixture(
+  month: string,
 ): MunicipalityInvoicingSnapshot {
-  if (scenario === "empty-month") {
-    return { month_start: EMPTY_MONTH, clubs: [] };
-  }
+  if (month !== WORKING_MONTH) return { month_start: month, clubs: [] };
   return {
     month_start: WORKING_MONTH,
     clubs: WORKING_MONTH_CLUBS.map(buildClub),
@@ -559,7 +587,7 @@ function buildClub(spec: ClubSpec): MunicipalityInvoicingClub {
     }),
   );
 
-  const municipality = spec.municipality;
+  const municipality = MUNICIPALITIES[spec.municipality];
 
   return {
     id: spec.id,
@@ -583,17 +611,11 @@ function buildClub(spec: ClubSpec): MunicipalityInvoicingClub {
             name_i18n: null,
             type: spec.site.type ?? "site",
           },
-    municipality:
-      municipality === null
-        ? null
-        : {
-            id: `preview-municipality-${municipality}`,
-            name: MUNICIPALITIES[municipality].name,
-            name_i18n:
-              MUNICIPALITIES[municipality].sv === null
-                ? null
-                : { sv: MUNICIPALITIES[municipality].sv },
-          },
+    municipality: {
+      id: `preview-municipality-${spec.municipality}`,
+      name: municipality.name,
+      name_i18n: municipality.sv === null ? null : { sv: municipality.sv },
+    },
     sessions: storedRows(spec, { startDate, endDate, status, slots }),
   };
 }

@@ -54,10 +54,11 @@ export const municipalityInvoicingLocation = z.object({
  * The municipality a club is invoiced to: the nearest ancestor-or-self of type
  * `municipality` above its own location.
  *
- * Null is a real answer and not an error — a club pointing at a site that hangs
- * off a region with no municipality between them has nowhere to be invoiced,
- * and the page shows it in its own bucket rather than dropping it out of a
- * total nobody would notice was short.
+ * **Always present.** A municipality club whose location chain reaches no
+ * municipality is a club nobody can be billed for, and the function refuses the
+ * whole month rather than shipping it — so there is no "no municipality" answer
+ * to parse here and no bucket for one anywhere above. The state is a data error
+ * to repair at its source, not a shape this page has to render.
  */
 export const municipalityInvoicingMunicipality = z.object({
   id: z.string(),
@@ -100,7 +101,7 @@ export const municipalityInvoicingClub = z.object({
   product_translations: z.array(productName),
   schedule_slots: z.array(municipalityInvoicingScheduleSlot),
   location: municipalityInvoicingLocation.nullable(),
-  municipality: municipalityInvoicingMunicipality.nullable(),
+  municipality: municipalityInvoicingMunicipality,
   sessions: z.array(municipalityInvoicingSession),
 });
 

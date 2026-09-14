@@ -36,6 +36,10 @@ import {
  *   - a schedule slot's `start_time` arrives as a bare `HH:MM` wall clock, which
  *     is what the client contract parses and what the projection reads
  *   - a club whose sessions and term both fall outside the month is absent
+ *   - a club whose location chain reaches NO municipality takes the whole read
+ *     down, naming the product: an invoice is per municipality, so such a club
+ *     cannot be billed to anybody and is a data error to repair rather than a
+ *     shape any page has to render (migration 00253)
  *
  * **Every assertion is scoped to this file's own fixtures.** CI carries the
  * migrations' data *and* `seed.sql` *and* whatever other test files have seeded
@@ -47,7 +51,7 @@ import {
  * every fact this file asserts is about which side of a month boundary a date
  * falls on, and a window that moves while the suite runs cannot state that.
  *
- * Product UUIDs 7f7, 7f8 and 7fa-7fd (see the allocation registry in
+ * Product UUIDs 7f7, 7f8, 7f9 and 7fa-7fd (see the allocation registry in
  * product-helpers.ts).
  */
 
@@ -89,13 +93,33 @@ const P_NO_SESSIONS = "00000000-0000-0000-0000-0000000007f7";
  * insisted on a parent would invoice nobody for it.
  */
 const P_AT_MUNICIPALITY = "00000000-0000-0000-0000-0000000007f8";
+/**
+ * The club that cannot be invoiced: its own location is a *site* hanging
+ * directly off the seeded region, with no municipality anywhere in the chain.
+ *
+ * It is created and torn down inside its own test rather than seeded with the
+ * rest, because its whole effect is to make the RPC refuse — present during the
+ * shared read, it would take every other assertion in this file down with it,
+ * which is exactly the blast radius the refusal is supposed to have.
+ */
+const P_NO_MUNICIPALITY = "00000000-0000-0000-0000-0000000007f9";
+/** A site parented straight to the region, so the walk finds no municipality. */
+const L_REGION_SITE = "00000000-0000-0000-0000-0000000002f9";
 
-const ALL_PRODUCTS = [
+/**
+ * The clubs the shared document is read over. The orphan club is deliberately
+ * NOT among them: it makes the RPC refuse, so seeding it here would fail every
+ * other assertion in this file — which is the refusal's blast radius working as
+ * designed, and the reason it gets a test of its own.
+ */
+const SEEDED_PRODUCTS = [
   P_IN_MONTH,
   P_OUT_OF_MONTH,
   P_NO_SESSIONS,
   P_AT_MUNICIPALITY,
 ];
+/** Everything this file may leave behind, seeded or not. */
+const ALL_PRODUCTS = [...SEEDED_PRODUCTS, P_NO_MUNICIPALITY];
 /** The clubs that meet in the seeded school, one level under the municipality. */
 const IN_PERSON_PRODUCTS = [P_IN_MONTH, P_OUT_OF_MONTH, P_NO_SESSIONS];
 
@@ -138,7 +162,7 @@ describe("get_admin_municipality_invoicing", () => {
     // site. That second step is most of what this file is about: those clubs' own
     // location is the school, and the municipality has to be found above it. The
     // fourth stays online where it was created, on the municipality itself.
-    for (const id of ALL_PRODUCTS) {
+    for (const id of SEEDED_PRODUCTS) {
       const outside = id === P_OUT_OF_MONTH;
       await createTestProduct(admin, {
         id,
@@ -180,7 +204,7 @@ describe("get_admin_municipality_invoicing", () => {
     // Names live in product_translations, and the RPC ships the whole array —
     // so every fixture needs at least one.
     const names = await admin.from("product_translations").insert(
-      ALL_PRODUCTS.map((id) => ({
+      SEEDED_PRODUCTS.map((id) => ({
         product_id: id,
         locale: "en",
         name: `Municipality invoicing fixture ${id.slice(-3)}`,
@@ -226,6 +250,7 @@ describe("get_admin_municipality_invoicing", () => {
 
   afterAll(async () => {
     await deleteTestProducts(admin, ALL_PRODUCTS);
+    await admin.from("locations").delete().eq("id", L_REGION_SITE);
   });
 
   it("refuses a non-admin caller", async () => {
@@ -273,7 +298,7 @@ describe("get_admin_municipality_invoicing", () => {
     const club = invoiced(P_IN_MONTH);
     expect(club?.location?.id).toBe(TEST_IDS.LOCATION_SITE);
     expect(club?.location?.type).toBe("site");
-    expect(club?.municipality?.id).toBe(TEST_IDS.LOCATION_MUNICIPALITY);
+    expect(club?.municipality.id).toBe(TEST_IDS.LOCATION_MUNICIPALITY);
   });
 
   it("carries a club that recorded nothing but was running all month", () => {
@@ -284,7 +309,7 @@ describe("get_admin_municipality_invoicing", () => {
     const club = invoiced(P_NO_SESSIONS);
     expect(club).toBeDefined();
     expect(club?.sessions).toEqual([]);
-    expect(club?.municipality?.id).toBe(TEST_IDS.LOCATION_MUNICIPALITY);
+    expect(club?.municipality.id).toBe(TEST_IDS.LOCATION_MUNICIPALITY);
   });
 
   it("reports a club sitting on the municipality itself as its own answer", () => {
@@ -294,7 +319,7 @@ describe("get_admin_municipality_invoicing", () => {
     const club = invoiced(P_AT_MUNICIPALITY);
     expect(club?.location?.id).toBe(TEST_IDS.LOCATION_MUNICIPALITY);
     expect(club?.location?.type).toBe("municipality");
-    expect(club?.municipality?.id).toBe(club?.location?.id);
+    expect(club?.municipality.id).toBe(club?.location?.id);
   });
 
   it("ships a schedule slot's start time as a bare HH:MM wall clock", () => {
@@ -308,6 +333,61 @@ describe("get_admin_municipality_invoicing", () => {
 
   it("omits a club whose sessions and term both fall outside the month", () => {
     expect(invoiced(P_OUT_OF_MONTH)).toBeUndefined();
+  });
+
+  it("refuses a month holding a club with no municipality at all", async () => {
+    // The schema forces a municipality club to carry a location and stops there:
+    // nothing makes that location's ancestor chain reach a municipality. So this
+    // is the one state the document could still have carried a null for, and the
+    // boundary refuses it — an invoice is per municipality, and a club nobody can
+    // be billed for is a location to repair rather than a row to render outside
+    // every total on the page.
+    await admin.from("locations").delete().eq("id", L_REGION_SITE);
+    const site = await admin.from("locations").insert({
+      id: L_REGION_SITE,
+      name: "Invoicing fixture hall with no municipality",
+      type: "site",
+      parent_id: TEST_IDS.LOCATION_REGION,
+      country_code: "FI",
+    });
+    expect(site.error).toBeNull();
+
+    try {
+      await createTestProduct(admin, {
+        id: P_NO_MUNICIPALITY,
+        productType: "municipality_club",
+        billingMode: "external_contract",
+        status: "running",
+        locationId: TEST_IDS.LOCATION_MUNICIPALITY,
+        startDate: "2026-01-12",
+        endDate: "2026-05-29",
+        seatCount: null,
+        waitlistEnabled: false,
+      });
+      // In person into the orphan hall, the same two-step the fixtures above
+      // take: an in-person product's location must be a site.
+      const moved = await admin
+        .from("products")
+        .update({ is_remote: false, location_id: L_REGION_SITE })
+        .eq("id", P_NO_MUNICIPALITY);
+      expect(moved.error).toBeNull();
+
+      const { data, error } = await adminUser.rpc(
+        "get_admin_municipality_invoicing",
+        { p_month_start: MONTH_START },
+      );
+      expect(data).toBeNull();
+      expect(error?.code).toBe("23514");
+      // The message names the club, because repointing its location is the whole
+      // of the repair and a refusal that did not say which club would send
+      // somebody through every club in the month.
+      expect(error?.message).toContain(P_NO_MUNICIPALITY);
+    } finally {
+      // Torn down here rather than in `afterAll`, so a later file reading this
+      // month does not inherit a database the RPC refuses to answer for.
+      await deleteTestProducts(admin, [P_NO_MUNICIPALITY]);
+      await admin.from("locations").delete().eq("id", L_REGION_SITE);
+    }
   });
 
   it("ships every array, never a null", () => {

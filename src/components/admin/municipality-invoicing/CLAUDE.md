@@ -29,7 +29,9 @@ shown, never counted, and its treatment splits on whether it has passed:
 
 - **Before today — unrecorded.** Worth nothing, shown at zero in a warning tone, because a
   club that was supposed to meet and recorded nothing is the one thing on this page worth
-  investigating.
+  investigating. **The zero is printed even where the club's own fee is unset**, and it is
+  not an inconsistency: a missed session is worth nothing whatever the fee would have been,
+  so the zero is a fact rather than the unknown the fee column has to admit to.
 - **Today or later — upcoming.** Shown muted with no amount at all. It has not happened;
   printing zero against it would send somebody looking for a session nobody has missed.
 
@@ -125,12 +127,15 @@ makes the money axis exact rather than approximate — the month's total, every 
 total and every club's total end on one right inset, because there is one right inset.
 
 **The month states itself on the panel's first line**: how many municipalities, how many
-clubs and how many sessions ran on the left, the month's total on the right, and the
-exclusion warning where one applies travelling along the left-hand line with the counts
-rather than under the figure, so the line stays one line.
+clubs and how many sessions on the left, the month's total on the right, and the exclusion
+warning where one applies travelling along the left-hand line with the counts rather than
+under the figure, so the line stays one line. The session count says "sessions" and not
+"recorded sessions": every session this page counts is one that was recorded, so the word
+was spent per locale on a distinction no line on the page draws — and the one place the
+recording *is* the point, a club's missed count, says so in its own words.
 
 **A municipality is one line, and it opens closed.** Chevron, name, then how many clubs and
-how many sessions ran, with its total on the money axis and the exclusion warning beside the
+how many sessions, with its total on the money axis and the exclusion warning beside the
 counts. The line states the whole answer and opening it is how the reader asks *why*; it is
 identical open and closed, so expanding adds the clubs underneath and moves nothing that was
 already on screen. An expand-all control sits beside the month stepper; which sections are
@@ -149,6 +154,22 @@ furniture, which is where the house style keeps its caps. The club's name is tru
 column and carries the whole name for a pointer, and links to its own admin page, which is
 the repair path for the one thing this page can find wrong.
 
+**The whole row opens the dates, and the club's name is the only thing on it that does
+not.** A row this dense is read by pointing at it, and a reader aiming at a chevron to find
+out why a number is what it is has been handed a target rather than an affordance — so the
+row takes the click and fills on hover, and the name stops the click travelling. The
+*keyboard* target stays the chevron button: a row-level control would have the club's link
+nested inside it, which is the one arrangement that makes both ambiguous for a keyboard and
+a screen reader, and every disclosure in this app is a real button carrying its own name,
+`aria-expanded` and focus ring. A pointer convenience layered over a real control is the
+shape; a control invented to replace one is not.
+
+**A disclosure names the region it opens only while that region exists.** The
+municipality's clubs stay mounted inside a collapsed region — inert and clipped to nothing
+— so its line can name them at all times; a club's dated sessions are a table row, which
+has nowhere to hide, so the club's control names them only when they are open. Either way
+nothing ever points at an element that is not there.
+
 **A club that missed sessions says so on its own line.** The count column carries the missed
 count beside the recorded one, in warning tone — so the problems in a month are visible with
 every club still closed, which is what makes closing them by default affordable. Dates still
@@ -157,17 +178,27 @@ missed, and a note about one would be indistinguishable at a glance from a note 
 that was.
 
 **The dates behind a club's number are a second disclosure, under its own line.** A compact
-table of the club's month — the date with its weekday, the ISO week, what happened in a word,
-and what it is worth — indented under the club's name and sitting on the same ground as the
+table of the club's month — the date with its weekday *and its ISO week, in one cell*, what
+happened in a word, and what it is worth — indented under the club's name and sitting on the same ground as the
 line above it, because an indent and the rule above are what say *these belong to that*, and
 lifting a run of rows off its neighbours would make a club's own dates read as a different
-kind of thing from the club. It carries no column header of its own: the municipality's
-header named those columns once already, and four values a reader tells apart by shape — a
-date, a week number, a word and a sum of money — do not need naming twice. Its amount column
+kind of thing from the club. The week rides with the date rather than
+taking a column: they are one fact — *when* — and a fixed layout that gave each its own
+column set them at opposite ends of half the table, where the week read as a figure
+belonging to something else. It carries no column header of its own: the municipality's
+header named those columns once already, and three values a reader tells apart by shape — a
+dated week, a word and a sum of money — do not need naming twice. Its amount column
 is right-aligned and ends on the same right inset, which is how it joins the money axis
 without having to agree with the outer table's column widths. Where the club meets is stated
 here, once, above its dates, rather than on a line whose width is already spoken for by a
 name and four figures.
+
+**The document's scroll gutter is reserved.** Expanding a municipality is itself what puts
+the page over the fold, so without the reservation the reader's own click summons a
+scrollbar, narrows the viewport and moves every figure they were reading sideways — a shift
+caused by the very action that was supposed to show them more. The opt-in attribute on the
+page's root is the repo's own mechanism for this; the rule lives in
+`src/components/layout/CLAUDE.md`.
 
 **Below the width the columns need, the table scrolls sideways rather than stacking.** This is
 an admin surface read at a desk, and five labelled values stacked per club is a worse answer
@@ -215,20 +246,39 @@ which is not always the stored one: the localized name is what the sort key has 
 Swedish reader is handed a list that is not in alphabetical order for them. Clubs sort the
 same way within a municipality, and sessions run ascending by date.
 
-A club whose location chain reaches no municipality at all goes into a single **trailing**
-bucket under a translated "no municipality" label, in warning tone. It trails whatever it
-is called: it is a list of things to fix rather than a municipality to invoice, and sorting
-it in by name would bury it in the middle.
+## A club that cannot be invoiced is refused at the boundary
+
+**Every club on this page belongs to a municipality, and nothing here renders the case
+where one does not — because the database refuses to answer such a month at all.** A
+municipality club whose location chain reaches no municipality cannot be billed to
+anybody: the invoice *is* per municipality, and there is no arithmetic that turns a club
+with nobody to invoice into an invoice line. The read therefore stops and names the
+product, and the page shows the failure it shows for any other refusal off the wire.
+
+The rule is a deliberate trade, and both halves are worth stating. This page once put such
+clubs in a trailing bucket, which meant a figure printed outside every total on the page —
+the exact shape of a total that is quietly short — and a reader with no way to tell a club
+that was never invoiceable from one whose location was mistyped an hour ago. Refusing sends
+the same person to the same repair, raises no invoice in the meantime, and costs this page
+a state it no longer has to carry anywhere: not in the contract, not in the arithmetic, not
+in the copy, and not in the fixtures.
+
+What the schema guarantees on its own is only that a municipality club carries a location;
+it does not force that location's ancestor chain to reach a municipality. The refusal is
+where that last step is enforced, so it belongs to the read rather than to any one
+surface — a second page over the same document inherits the guarantee rather than having
+to re-decide what to draw.
 
 ## How the page is looked at: the preview scene, not the database
 
 **This page is reviewed from fixtures, in the UI Previews scene, and not by pointing it
 at production data.** It is the densest surface in the app and most of what there is to
-judge about it is a state — a missed session, a fee nobody set, a club with no
-municipality, a term ending mid-month. Live data shows whichever of those the month
-happens to contain, changes between two readings, and cannot be screenshotted twice; a
-month of invented clubs in the shape of production shows all of them at once and shows
-the same ones tomorrow.
+judge about it is a state — a missed session, a fee nobody set, a term ending mid-month.
+Live data shows whichever of those the month happens to contain, changes between two
+readings, and cannot be screenshotted twice; a month of invented clubs in the shape of
+production shows all of them at once and shows the same ones tomorrow. Its invented names
+are held to being *plausible* rather than recognisable: a fixture naming a real school or a
+real customer's club is a page that looks like live data.
 
 The scene renders **this shell**, not a copy of it, over a fixture that satisfies the
 wire contract — so every figure on it is produced by the same pure build the live
@@ -246,10 +296,15 @@ Two things make that possible, and both are deliberately visible in the code:
   admin-gated read behind the preview and replace the fixtures with production's own
   month.
 
-The month stepper and the club names stay real links out to the live admin pages, which
-is the honest behaviour for a control whose whole purpose is to leave the row. The empty
-month is therefore a **scenario** rather than a step: it is the one state the working
-month cannot show alongside itself.
+**The month stepper stays inside the preview, and it is how the empty ledger is reached.**
+The stepper is one of the page's own controls rather than a way out of a row, so the shell
+takes its link target as a prop: the live page points it at another month of itself, and
+the scene points it back at the scene. The fixtures answer the month asked for — the
+working month has the ledger, and every other month is genuinely empty, because these clubs
+run one spring term — so an empty month is a step away and a step back on the same page in
+the same chrome, which is strictly more than a second scenario could have shown. The club
+names remain real links out to the live admin pages, which is the honest behaviour for a
+control whose whole purpose is to leave the row.
 
 ## Which municipality a club belongs to
 
@@ -259,5 +314,6 @@ points at the municipality directly, which is why the walk is ancestor-or-*self*
 
 **The walk passes through retired locations and never filters them.** A school that closed
 last term still sat in its municipality while it was running the sessions being invoiced,
-and dropping a retired row from the chain would move every club that met there into the
-no-municipality bucket — silently, and only for the months where it matters most.
+and dropping a retired row from the chain would leave every club that met there with no
+municipality at all — which is now a refused month rather than a quietly short total, and
+only for the months where it matters most.

@@ -21,10 +21,9 @@ import type {
  * It is a pure function of its arguments: no clock, no query, no locale hook,
  * no `t()`. That is what makes a month's counting testable without a browser,
  * and it is why the shell above it does nothing but read the document and hand
- * it over. **Nothing here is worded** — the one string that arrives from
- * outside is the name of the bucket clubs with no municipality fall into, and
- * it is passed in for the same reason a total is not: the caller owns the
- * copy, this function owns the arithmetic.
+ * it over. **Nothing here is worded**: every name on the invoice is a name out
+ * of the document — a municipality's, a club's, a hall's — and every figure is
+ * arithmetic. The caller owns the copy; this function owns the sums.
  *
  * ## What the month counts
  *
@@ -121,8 +120,7 @@ export interface InvoiceClub {
 }
 
 export interface InvoiceMunicipality {
-  /** Null for the trailing bucket of clubs that resolve to no municipality. */
-  id: string | null;
+  id: string;
   name: string;
   /** The sum of the clubs that have a fee. Clubs without one are not in it. */
   totalCents: number;
@@ -150,7 +148,7 @@ export interface MunicipalityInvoicingView {
   totalCents: number;
   /** How many clubs in the month were left out of `totalCents`. */
   clubsWithoutFee: number;
-  /** How many municipalities are on the invoice, the trailing bucket included. */
+  /** How many municipalities are on the invoice. */
   municipalityCount: number;
   /** How many clubs are on the invoice, across every municipality. */
   clubCount: number;
@@ -164,14 +162,6 @@ export interface BuildMunicipalityInvoicingArgs {
   locale: SupportedLocale;
   /** Request-stable "now". The page's only clock. */
   now: Date;
-  /**
-   * What to call the bucket for clubs whose location chain reaches no
-   * municipality. Passed in rather than resolved here because this module is
-   * pure and has no translator; passed in *at all* rather than left to the
-   * component because the bucket is sorted and rendered like any other, and a
-   * nameless one would have to be special-cased in two places instead of none.
-   */
-  noMunicipalityLabel: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -182,17 +172,17 @@ export function buildMunicipalityInvoicing({
   snapshot,
   locale,
   now,
-  noMunicipalityLabel,
 }: BuildMunicipalityInvoicingArgs): MunicipalityInvoicingView {
   const monthStart = snapshot.month_start;
   const monthEnd = addCalendarDays(monthsAfter(monthStart, 1), -1);
 
-  // Keyed by municipality id, with the empty string standing for "no
-  // municipality" — a Map key rather than a separate list, so the bucket is
-  // filled by the same loop as every other and only its *position* is special.
+  // Keyed by municipality id. Every club has one — the database refuses to
+  // answer a month in which any club's location chain reaches no municipality —
+  // so there is no bucket here for the clubs that do not belong anywhere, and
+  // no branch anywhere below asking whether this one is it.
   const buckets = new Map<
     string,
-    { id: string | null; name: string; clubs: InvoiceClub[] }
+    { id: string; name: string; clubs: InvoiceClub[] }
   >();
 
   for (const club of snapshot.clubs) {
@@ -202,15 +192,11 @@ export function buildMunicipalityInvoicing({
     // would say the club did nothing in a month it was not running in.
     if (built.sessions.length === 0) continue;
 
-    const key = club.municipality?.id ?? "";
-    const bucket = buckets.get(key);
+    const bucket = buckets.get(club.municipality.id);
     if (bucket === undefined) {
-      buckets.set(key, {
-        id: club.municipality?.id ?? null,
-        name:
-          club.municipality === null
-            ? noMunicipalityLabel
-            : localizedLocationName(club.municipality, locale),
+      buckets.set(club.municipality.id, {
+        id: club.municipality.id,
+        name: localizedLocationName(club.municipality, locale),
         clubs: [built],
       });
     } else {
@@ -218,35 +204,27 @@ export function buildMunicipalityInvoicing({
     }
   }
 
-  const named = [...buckets.values()].filter((bucket) => bucket.id !== null);
-  const unnamed = [...buckets.values()].filter((bucket) => bucket.id === null);
-  named.sort((a, b) => a.name.localeCompare(b.name, locale));
-
-  // The no-municipality bucket trails every real one whatever it is called. It
-  // is a list of things to fix rather than a municipality to invoice, and
-  // sorting it in by name would hide it somewhere in the middle.
-  const municipalities: InvoiceMunicipality[] = [...named, ...unnamed].map(
-    (bucket) => {
-      const clubs = [...bucket.clubs].sort((a, b) =>
-        a.name.localeCompare(b.name, locale),
-      );
-      return {
-        id: bucket.id,
-        name: bucket.name,
-        totalCents: sumCents(
-          clubs.flatMap((club) =>
-            club.totalCents === null ? [] : [club.totalCents],
-          ),
-        ),
-        clubsWithoutFee: clubs.filter((club) => club.feeCents === null).length,
-        recordedCount: clubs.reduce(
-          (count, club) => count + club.recordedCount,
-          0,
-        ),
-        clubs,
-      };
-    },
+  const ordered = [...buckets.values()].sort((a, b) =>
+    a.name.localeCompare(b.name, locale),
   );
+
+  const municipalities: InvoiceMunicipality[] = ordered.map((bucket) => {
+    const clubs = [...bucket.clubs].sort((a, b) =>
+      a.name.localeCompare(b.name, locale),
+    );
+    return {
+      id: bucket.id,
+      name: bucket.name,
+      totalCents: sumCents(
+        clubs.flatMap((club) =>
+          club.totalCents === null ? [] : [club.totalCents],
+        ),
+      ),
+      clubsWithoutFee: clubs.filter((club) => club.feeCents === null).length,
+      recordedCount: clubs.reduce((count, club) => count + club.recordedCount, 0),
+      clubs,
+    };
+  });
 
   return {
     monthStart,
