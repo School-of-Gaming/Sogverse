@@ -108,6 +108,13 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // argument object and a permitted admin gets the whole document back — the
   // positive half of the matrix is assertable here without a fixture.
   get_admin_dashboard: { permittedRoles: ["admin"] },
+  // One month of municipality invoicing (00252). The guard runs before the
+  // month check, which is what makes the all-NULL convention work on both
+  // halves: a forbidden role is refused with 42501 and never reaches the
+  // argument, while a permitted admin passes the guard and is then refused by
+  // the first-of-month check with `check_violation` — an error, but not the
+  // forbidden one.
+  get_admin_municipality_invoicing: { permittedRoles: ["admin"] },
   promote_from_waitlist: { permittedRoles: ["admin"] },
   demote_to_waitlist: { permittedRoles: ["admin"] },
   set_gedu_certified: { permittedRoles: ["admin"] },
