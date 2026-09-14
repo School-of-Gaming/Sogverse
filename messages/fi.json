@@ -3132,8 +3132,21 @@
           "Lapsestasi: etunimen, syntymäkuukauden ja -vuoden (emme kysy tarkkaa päivämäärää – vain sen, mitä todella tarvitsemme) ja halutessasi sukupuolen – jotta voimme sijoittaa hänet oikeaan ryhmään ja puhutella häntä oikein. Tallennamme lapsen tilille myös perheesi sukunimen, koska lapsi kuuluu tiliisi. Gedut ja muut pelaajat eivät näe sitä koskaan. Tilillä itsellään on Sogversen sisäinen osoite oikean sähköpostiosoitteen sijaan, ellet anna lapselle kirjautumista hänen omalla sähköpostiosoitteellaan; silloin säilytämme sen osoitteen ja lähetämme hänelle oman kopion viesteistä, jotka lähetämme sinulle hänen kerhoistaan, leireistään ja tapahtumistaan.",
           "Halutessasi lapsesi käyttäjätunnuksen niissä peleissä, joita hänen kerhonsa käyttävät – tällä hetkellä Minecraftissa ja Robloxissa – sekä tilitunnisteen, jonka peli hänelle antaa, jotta tunnistamme hänet pelissä ja jotta hän voi liittyä Minecraft-palvelimellemme tapaamisten aikana.",
           "Pelikasvattajiemme kirjoittamat merkinnät tapaamisista – läsnäolot, tapaamisraportit ja lyhyet muistiinpanot, jotka auttavat meitä tukemaan lastasi ryhmässä.",
-          "Yleisiä, nimettömiä tietoja siitä, miten sivustoa käytetään (katso kohta \"Evästeet, analytiikka ja mainonta\" jäljempänä).",
+          "Tekniset tiedot, joita mikä tahansa verkkosivusto tarvitsee toimiakseen – kirjautumisistunnot, pyyntölokit ja, vain jos valitset sen, nimettömät käyttötilastot. Katso kohdat \"Tekniset tiedot\" ja \"Evästeet, analytiikka ja mainonta\" jäljempänä.",
           "Kampanjatunnisteen – lähteen, välineen ja kampanjan – jonka käyntisi aloittanut linkki kantoi mukanaan. Tallennamme sen kerran, tilin luonnin yhteydessä, jotta me ja kumppanimme tiedämme, mikä viestintä tavoittaa perheitä."
+        ]
+      },
+      "technical": {
+        "heading": "Tekniset tiedot",
+        "paragraphs": [
+          "Verkkosivuston pyörittäminen tarkoittaa, että osa teknisistä tiedoista kulkee niiden yritysten kautta, jotka ylläpitävät ja suojaavat sivustoa puolestamme. Mitään näistä tiedoista emme kysy sinulta, emmekä säilytä niistä kopiota omassa tietokannassamme – ne ovat palveluntarjoajiemme järjestelmissä niin kauan kuin nämä tarvitsevat niitä pitääkseen sivuston toimivana ja turvallisena, emmekä me pidennä sitä aikaa. Tässä on, mistä on kyse ja minne tiedot menevät:"
+        ],
+        "bullets": [
+          "Kirjautumistiedot – kun kirjaudut sisään, tilejämme pyörittävä Supabase säilyttää merkinnän istunnosta: milloin se alkoi, mistä selaimesta se tuli ja mikä sen internetosoite on. Juuri se pitää sinut kirjautuneena ja antaa meidän päättää istunnon, jonka ei kuuluisi olla käynnissä. Merkintä poistetaan istunnon mukana, ja kaikki poistuu, kun tili poistetaan.",
+          "Pyynnöt ja virheet – jokainen avaamasi sivu on pyyntö Vercelille, joka ylläpitää sivustoa. Kuten mikä tahansa ylläpitäjä, Vercel kirjaa sen lokiin: sivun, ajankohdan, selaimesi tyypin ja sen internetosoitteen sekä mahdollisen virheen, jonka pyyntö aiheutti. Käytämme näitä lokeja pitääksemme sivuston toiminnassa ja löytääksemme viat. Vercel myös laskee omilla palvelimillaan pyynnöt sivuston eri osiin – kokonaismääriä, ei ihmisiä – eikä tämä laskenta vaadi evästettä tai suostumusta. Se on eri asia kuin jäljempänä päälle ja pois kytkettävä analytiikka, joka on ainoa, joka seuraa käyntiä sivuston läpi.",
+          "Evästeet ja analytiikka – muutama välttämätön eväste sekä analytiikka ja markkinointi vain, jos valitset ne. Kaikesta tästä kerromme kohdassa \"Evästeet, analytiikka ja mainonta\" jäljempänä.",
+          "Suorat tapaamiset – äänitapaamisen aikana lapsesi laite yhdistää suoraan Daily.co-palveluun, joten Daily näkee sen internetosoitteen ja yhteyden tekniset tiedot puhelun keston ajan. Katso kohta \"Ääni- ja videotapaamiset\" jäljempänä.",
+          "Emme ylläpidä omaa virheenseuranta- tai lokipalvelua, emme koskaan tallenna internetosoitettasi tai selaintietojasi omaan tietokantaamme, eikä mitään näistä tiedoista käytetä sinusta tai lapsestasi tehtävän profiilin rakentamiseen."
         ]
       },
       "childrensPrivacy": {
@@ -3182,30 +3195,32 @@
           "Supabase – tallentaa turvallisesti tili-, perhe- ja kerhotietosi.",
           "Stripe – käsittelee maksut. Korttitietosi menevät suoraan Stripelle, emmekä me näe niitä.",
           "Brevo – lähettää sähköpostimme, kuten kuitit ja muistutukset.",
-          "Daily.co – mahdollistaa suorat ääni- ja videotapaamiset.",
-          "Vercel – ylläpitää sivustoa ja tarjoaa nimettömät käyttötilastot.",
+          "Daily.co – mahdollistaa suorat ääni- ja videotapaamiset; lapsesi laite yhdistää siihen suoraan tapaamisen aikana.",
+          "Vercel – ylläpitää sivustoa, joten jokainen pyyntö kulkee sen kautta (katso kohta \"Tekniset tiedot\"), ja tarjoaa nimettömät käyttötilastot, jos sallit analytiikan.",
           "Meta (WhatsApp) – joidenkin viestien ja muistutusten lähettämiseen perheille, jotka käyttävät mieluummin WhatsAppia.",
           "Roblox – vastaanottaa lapsesi Roblox-tilitunnisteen, jotta voimme varmistaa tilin ja näyttää hänen hahmokuvansa.",
           "Mojang (Microsoft) – vastaanottaa lapsesi Minecraft-käyttäjätunnuksen, jotta voimme varmistaa tilin.",
+          "mc-heads.net – piirtää kuvan lapsesi Minecraft-hahmosta hänen Minecraft-käyttäjätunnuksensa perusteella, joka on pelissä julkinen.",
           "Meta (Facebook ja Instagram) – näkee selaimesi Meta-pikselin ja palvelimiltamme tulevien raporttien kautta, miten käytät sivustoamme, jotta voimme näyttää sinulle mainoksiamme siellä ja mitata, miten ne toimivat. Vain jos sallit markkinointievästeet."
         ]
       },
       "cookies": {
         "heading": "Evästeet, analytiikka ja mainonta",
         "paragraphs": [
-          "Muutama eväste on yksinkertaisesti se, miten sivusto toimii: ne pitävät sinut kirjautuneena, muistavat että syötit vanhemman PIN-koodin, säilyttävät kielesi ja aikavyöhykkeesi ja tallentavat tekemäsi evästevalinnan. Nämä eivät vaadi suostumustasi – ilman niitä ei ole sivustoa, johon suostua.",
+          "Muutama eväste on yksinkertaisesti se, miten sivusto toimii: ne pitävät sinut kirjautuneena ja muistavat, kun olet vaihtanut perheesi tilien välillä, muistavat että syötit vanhemman PIN-koodin, säilyttävät kielesi ja aikavyöhykkeesi, tallentavat tekemäsi evästevalinnan ja muistavat, että olet sulkenut oppaan, jonka näytämme ennen ensimmäistä tapaamista. Nämä eivät vaadi suostumustasi – ilman niitä ei ole sivustoa, johon suostua.",
           "Kaikki muu odottaa sinua. Kysymme asiaa ensimmäisellä käynnilläsi, eikä välttämättömien evästeiden lisäksi käynnisty mitään ennen kuin vastaat. Voit muuttaa mieltäsi milloin tahansa jokaisen sivun alalaidan Yksityisyysvalinnat-linkistä: valinnan poistaminen astuu voimaan heti, eikä se muuta sitä, mitä teimme sen ollessa käytössä.",
           "Kahteen asiaan voit vastata kyllä tai ei:"
         ],
         "bullets": [
           "Analytiikka – Vercelin analytiikka, ja vain jos valitset sen. Se laskee käynnit, mittaa sivujen latausnopeuden ja vastaanottaa muutamia nimettömiä tapahtumia siitä, miten sivustoa käytetään: miten oma My SOG avataan ja milloin kieltä vaihdetaan. Se ei näe, kuka olet, emmekä anna sitä koskaan mainostajille.",
-          "Markkinointi – mainosevästeet, vain jos valitset ne. Niiden avulla yllä mainitut mainosalustat – tällä hetkellä Meta – näkevät, miten käytät sivustoamme, jotta ne voivat näyttää sinulle mainoksiamme ja me näemme, mitkä mainokset toimivat. Ne eivät ole koskaan käytössä, kun pelaaja on kirjautuneena. Markkinoinnin poistaminen käytöstä poistaa nämä evästeet selaimestasi, mutta ei sitä, mitä alustoilla jo on – voit pyytää niitä poistamaan sen omista asetuksistasi niissä."
+          "Markkinointi – mainosevästeet, vain jos valitset ne. Niiden avulla yllä mainitut mainosalustat – tällä hetkellä Meta – näkevät, miten käytät sivustoamme, jotta ne voivat näyttää sinulle mainoksiamme ja me näemme, mitkä mainokset toimivat. Ne eivät ole koskaan käytössä, kun pelaaja on kirjautuneena. Markkinoinnin poistaminen käytöstä poistaa nämä evästeet ja sen pienen tietomäärän, jota Metan skripti säilyttää selaimessasi niiden rinnalla, mutta ei sitä, mitä alustoilla jo on – voit pyytää niitä poistamaan sen omista asetuksistasi niissä."
         ]
       },
       "voice": {
         "heading": "Ääni- ja videotapaamiset",
         "paragraphs": [
-          "Suorat kerhot, leirit ja tapahtumat pidetään äänen ja videon välityksellä Daily.co-palvelun avulla. Koulutetut pelikasvattajamme ohjaavat tapaamiset livenä, ja käytämme palvelua vain sen tapaamisen toteuttamiseen, johon lapsesi ilmoittautui."
+          "Suorat kerhot, leirit ja tapahtumat pidetään äänen ja videon välityksellä Daily.co-palvelun avulla. Koulutetut pelikasvattajamme ohjaavat tapaamiset livenä, ja käytämme palvelua vain sen tapaamisen toteuttamiseen, johon lapsesi ilmoittautui.",
+          "Lapsesi laite yhdistää puhelua varten suoraan Daily.co-palveluun, joten Daily näkee sen internetosoitteen ja yhteyden tekniset tiedot niin kauan kuin tapaaminen kestää, ja Dailyn oma ohjelmisto raportoi selaimessa kohtaamansa viat takaisin Dailylle. Jotta lapsesi päätyy oikeaan huoneeseen, annamme Dailylle hänen etunimensä ja, jos sellainen on lisätty, hänen pelikäyttäjätunnuksensa sekä tilitunnisteen, jonka peli hänelle antaa, jotta Gedu ja muut huoneessa olevat pelaajat näkevät, kuka puhuu. Tapaamisia ei tallenneta."
         ]
       },
       "retention": {
