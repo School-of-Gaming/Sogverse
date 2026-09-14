@@ -3163,11 +3163,13 @@ export default function AdminUIComponentsPage() {
           Lynx&rsquo;s lawyer wants a parent creating a child account to be shown
           the Privacy Policy again and to attest they are that child&rsquo;s
           parent or legal guardian. V1&ndash;V4 ask on page two of the real card,
-          directly above the button that creates the child; V5 gives the ask a
-          third and final page of its own, and page two&rsquo;s affirmative reads
-          Continue. The submit is inert; every box refuses the submit from the
-          card&rsquo;s own error banner. Judge them at 360px too &mdash; the
-          height of page two is what V5 exists to answer.
+          directly above the button that creates the child; V5 moves the two
+          game-account rows off page one onto a third and final page and puts
+          the box under them, so page two&rsquo;s affirmative reads Continue and
+          page three is what creates the child. The submit is inert; every box
+          refuses the submit from the card&rsquo;s own error banner. Judge them
+          at 360px too &mdash; the height of page two is what V5 exists to
+          answer.
         </p>
         <GuardianAttestationDemo />
       </Section>
@@ -4374,38 +4376,68 @@ function AddGamerDialogDemo() {
  */
 function GuardianAttestationDemo() {
   const dismiss = () => {};
-  // V5 first, because it is the one that answers the objection to the other
-  // four; its card opens on the review step it exists to show, which is the
-  // only one of the five whose interesting page is not page two.
+  // V5 first, and twice, because it is the one that answers the objection to
+  // the other four and it is the only one that changes two pages: the card
+  // opens on each of them in turn, so both changes are looked at rather than
+  // one of them being taken on trust. V1–V4 each change page two alone.
   const variants = [
     {
+      id: "v5-details",
       variant: "v5",
-      caption: "V5 — review step, one box, third and final page",
+      caption: "V5 — step one without the game rows",
+      initial: { firstName: "Aino", signIn: "parent", step: "details" },
+    },
+    {
+      id: "v5-accounts",
+      variant: "v5",
+      caption: "V5 — step three: game accounts, then the one box",
       initial: {
         firstName: "Aino",
         signIn: "parent",
-        step: "review",
+        step: "accounts",
         month: "3",
         year: "2013",
+        // One row filled and one empty, which is the ordinary case and the
+        // only arrangement that shows both of the row's states at once.
         minecraftUsername: "AinoBuilds",
       },
     },
-    { variant: "v1", caption: "V1 — one required box", initial: undefined },
-    { variant: "v2", caption: "V2 — data sentence, then the box", initial: undefined },
-    { variant: "v3", caption: "V3 — no box, the button declares", initial: undefined },
-    { variant: "v4", caption: "V4 — the box plus our rules", initial: undefined },
+    {
+      id: "v1",
+      variant: "v1",
+      caption: "V1 — one required box",
+      initial: undefined,
+    },
+    {
+      id: "v2",
+      variant: "v2",
+      caption: "V2 — data sentence, then the box",
+      initial: undefined,
+    },
+    {
+      id: "v3",
+      variant: "v3",
+      caption: "V3 — no box, the button declares",
+      initial: undefined,
+    },
+    {
+      id: "v4",
+      variant: "v4",
+      caption: "V4 — the box plus our rules",
+      initial: undefined,
+    },
   ] as const;
 
   return (
     <div className="grid items-start gap-6 sm:grid-cols-2 xl:grid-cols-3">
-      {variants.map(({ variant, caption, initial }) => (
-        <div key={variant} className="space-y-2">
+      {variants.map(({ id, variant, caption, initial }) => (
+        <div key={id} className="space-y-2">
           <DemoCaption>{caption}</DemoCaption>
           <AddGamerFormCard
             onOpenChange={dismiss}
             onCreate={inertCreateGamer}
             className="max-h-none"
-            idPrefix={`add-gamer-attestation-${variant}`}
+            idPrefix={`add-gamer-attestation-${id}`}
             initial={
               initial ?? { firstName: "Aino", signIn: "parent", step: "signIn" }
             }
