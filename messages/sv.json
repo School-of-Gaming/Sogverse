@@ -2184,6 +2184,7 @@
     "heading": "Före första tillfället",
     "dialogTitle": "Före första tillfället",
     "triggerLabel": "Gör dig redo",
+    "notYetLabel": "Inte än",
     "readyLabel": "Jag är redo",
     "closing": "Om allt fungerar är du redo för tillfället!",
     "topics": {

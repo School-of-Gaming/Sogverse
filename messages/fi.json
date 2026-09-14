@@ -2184,6 +2184,7 @@
     "heading": "Ennen ensimmäistä kertaa",
     "dialogTitle": "Ennen ensimmäistä kertaa",
     "triggerLabel": "Valmistaudu",
+    "notYetLabel": "Ei vielä",
     "readyLabel": "Olen valmis",
     "closing": "Jos kaikki toimii, olet valmiina kertaa varten!",
     "topics": {

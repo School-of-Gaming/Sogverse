@@ -110,7 +110,7 @@ the same catalog:
   dialog, no container. Its heading is a prop, because a page wants one above the intro
   and a dialog has already said the same words in its title. The dialog beside it is a
   container for that body rather than a second renderer of the guide: it titles the guide,
-  scrolls it, and carries the one button that finishes with it.
+  scrolls it, and carries the two buttons that answer it — one finishes with it, the other leaves it for later.
 - **The email section builder** under `src/lib/email-templates/`, for the confirmation
   mail, in HTML and in plain text. It cannot share React, so it shares the data instead.
 
@@ -138,6 +138,14 @@ again — no reopen link, nothing left behind.** The affirmative inside the dial
 only thing that counts as saying so: closing the overlay by any other means leaves the
 affordance exactly where it was, because opening a guide to check one step is reading it,
 not finishing with it.
+
+**Rule: the dialog carries a visible "not yet" control beside the affirmative, and pressing
+it is the same act as closing the overlay — nothing is remembered and the card keeps its
+offer.** It exists because the affirmative standing alone was pressed as the way out, by
+families who had not done the steps: a lone button in a footer reads as a door, and the
+honest exits — Escape, the backdrop — are not controls a thumb can find on a phone.
+Drawing the negative as a lesser button of its own is what lets a family leave without
+claiming a setup they have not finished.
 
 **Rule: the dismissal is remembered in a cookie, keyed by the viewer *and* the
 enrolment.** It is deliberately not a profile column: no migration, no route, no write
