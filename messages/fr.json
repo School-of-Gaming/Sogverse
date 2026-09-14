@@ -1226,8 +1226,8 @@
       "passwordPlaceholder": "Créez un mot de passe solide",
       "confirmPasswordPlaceholder": "Confirmez votre mot de passe",
       "location": "Localisation",
-      "termsLabel": "Je certifie être le parent ou le représentant légal de l’enfant, j’accepte les <terms>conditions générales</terms> et j’ai lu la <privacy>politique de confidentialité</privacy>.",
-      "termsRequired": "Veuillez confirmer que vous êtes le parent ou le représentant légal et que vous acceptez les conditions générales.",
+      "termsLabel": "J’accepte les <terms>conditions générales</terms> et j’ai lu la <privacy>politique de confidentialité</privacy>.",
+      "termsRequired": "Veuillez accepter les conditions générales et confirmer que vous avez lu la politique de confidentialité.",
       "marketingConsentLabel": "School of Gaming peut m’envoyer des actualités et des offres par e-mail.",
       "marketingConsentHint": "Facultatif — vous pouvez modifier ce choix à tout moment dans vos paramètres.",
       "creatingAccount": "Création du compte...",
@@ -1522,7 +1522,9 @@
       "firstNameTooLong": "Le prénom ne doit pas dépasser 32 caractères.",
       "birthMonthRequired": "Choisissez un mois de naissance.",
       "birthYearRequired": "Choisissez une année de naissance.",
-      "genericError": "Impossible d’ajouter ce joueur. Veuillez réessayer."
+      "genericError": "Impossible d’ajouter ce joueur. Veuillez réessayer.",
+      "guardianAttestation": "{name} est mon enfant, ou je suis son représentant légal. J’ai lu la <privacy>politique de confidentialité</privacy>.",
+      "guardianAttestationUnnamed": "Ce joueur est mon enfant, ou je suis son représentant légal. J’ai lu la <privacy>politique de confidentialité</privacy>."
     }
   },
   "familyEnrollment": {

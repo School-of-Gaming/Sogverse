@@ -15,7 +15,7 @@ import {
  *
  * **A `fetch` rather than a service or a React Query mutation, deliberately.**
  * There is no service layer behind this: the route calls the rate-limited RPC
- * directly, writes one row and mails every admin, and nothing on any page reads
+ * directly, writes one row and mails the support inbox, and nothing on any page reads
  * the submissions back — so there is no cache to invalidate and nothing for a
  * query key to name.
  *

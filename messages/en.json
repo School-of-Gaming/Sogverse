@@ -1226,8 +1226,8 @@
       "passwordPlaceholder": "Create a strong password",
       "confirmPasswordPlaceholder": "Confirm your password",
       "location": "Location",
-      "termsLabel": "I confirm that I am a parent or legal guardian, and I agree to the <terms>Terms and Conditions</terms> and have read the <privacy>Privacy Policy</privacy>.",
-      "termsRequired": "Please confirm you are a parent or legal guardian and agree to the terms.",
+      "termsLabel": "I agree to the <terms>Terms and Conditions</terms> and have read the <privacy>Privacy Policy</privacy>.",
+      "termsRequired": "Please agree to the Terms and Conditions and confirm you have read the Privacy Policy.",
       "marketingConsentLabel": "School of Gaming may send me news and offers by email.",
       "marketingConsentHint": "Optional — you can change this anytime in your settings.",
       "creatingAccount": "Creating account...",
@@ -1522,7 +1522,9 @@
       "firstNameTooLong": "First name must be 32 characters or fewer.",
       "birthMonthRequired": "Pick a birth month.",
       "birthYearRequired": "Pick a birth year.",
-      "genericError": "Couldn’t add this gamer. Please try again."
+      "genericError": "Couldn’t add this gamer. Please try again.",
+      "guardianAttestation": "{name} is my child, or I am their legal guardian. I have read the <privacy>Privacy Policy</privacy>.",
+      "guardianAttestationUnnamed": "This gamer is my child, or I am their legal guardian. I have read the <privacy>Privacy Policy</privacy>."
     }
   },
   "familyEnrollment": {

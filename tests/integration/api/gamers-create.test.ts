@@ -72,6 +72,11 @@ const validBody = {
   firstName: "New Gamer",
   dateOfBirth: "2015-06-15",
   gender: "boy",
+  // Every valid body carries it: without the parent's declaration about this
+  // child the schema answers 400 before the handler runs, which is the subject
+  // of its own describe below rather than a condition every other case has to
+  // work around.
+  guardianAttested: true,
 };
 
 /**
@@ -411,7 +416,7 @@ describe("POST /api/gamers/create — v1 minimal body (auto-generated email, pas
       error: { message: "mock-stop" },
     });
 
-    await POST(createRequest({ firstName: "Lily", dateOfBirth: "2018-04-15" }));
+    await POST(createRequest({ firstName: "Lily", dateOfBirth: "2018-04-15", guardianAttested: true }));
 
     expect(mockCreateUser).toHaveBeenCalledTimes(1);
     const callArg = z
@@ -436,7 +441,12 @@ describe("POST /api/gamers/create — v1 minimal body (auto-generated email, pas
     mockAuthenticated();
 
     const response = await POST(
-      createRequest({ firstName: "Lily", dateOfBirth: "2018-04-15", gender: "robot" }),
+      createRequest({
+        firstName: "Lily",
+        dateOfBirth: "2018-04-15",
+        gender: "robot",
+        guardianAttested: true,
+      }),
     );
     const data = await response.json();
 
@@ -453,7 +463,7 @@ describe("POST /api/gamers/create — v1 minimal body (auto-generated email, pas
     });
 
     const response = await POST(
-      createRequest({ firstName: "Lily", dateOfBirth: "2018-04-15" }),
+      createRequest({ firstName: "Lily", dateOfBirth: "2018-04-15", guardianAttested: true }),
     );
 
     // 400 from createUser's mock-stop, not from a gender validation error.
@@ -495,6 +505,10 @@ describe("POST /api/gamers/create — atomic create_gamer RPC", () => {
         p_last_name: "Parentson",
         p_date_of_birth: "2015-06-15",
         p_gender: "boy",
+        // The parent's declaration about this child, recorded by the RPC in the
+        // same transaction as the child. Pinned here because the route is the
+        // only thing carrying it from the box to the database.
+        p_guardian_attested: true,
       }),
     );
     // Returns just the new gamer's id (no read-back) — the only thing callers use.
@@ -532,6 +546,59 @@ describe("POST /api/gamers/create — atomic create_gamer RPC", () => {
   );
 });
 
+/**
+ * **The guardian declaration** (00250): the adult states that this child is
+ * theirs, or that they are the child's legal guardian, having been given the
+ * Privacy Policy to read.
+ *
+ * What these cases are about is WHERE it is refused. The schema is the first
+ * thing the route runs, so an unticked box costs nothing — no auth user is
+ * minted, no third party is asked about a game handle, and there is nothing to
+ * compensate away. A refusal further in would be correct and expensive; a
+ * refusal here is correct and free, and the assertions below pin it by what did
+ * NOT happen rather than by the status alone.
+ */
+describe("POST /api/gamers/create — the guardian declaration", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAuthenticated();
+    mockPreCreateChecks({ emailExists: false, parentLastName: "Parentson" });
+    mockCreateUser.mockResolvedValue({
+      data: { user: { id: "new-gamer-id" } },
+      error: null,
+    });
+    mockDeleteUser.mockResolvedValue({ error: null });
+    mockRpc.mockResolvedValue({ error: null });
+  });
+
+  it.each([
+    ["absent", {}],
+    ["false", { guardianAttested: false }],
+    ["a non-boolean", { guardianAttested: "yes" }],
+  ])("refuses 400 when the declaration is %s, and writes nothing", async (_label, override) => {
+    const { guardianAttested: _omitted, ...withoutDeclaration } = validBody;
+    const response = await POST(
+      createRequest({ ...withoutDeclaration, ...override }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockCreateUser).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
+    // Nothing was created, so there is nothing to compensate away either.
+    expect(mockDeleteUser).not.toHaveBeenCalled();
+  });
+
+  it("passes the declaration through to the RPC when it is true", async () => {
+    const response = await POST(createRequest(validBody));
+
+    expect(response.status).toBe(200);
+    expect(mockRpc).toHaveBeenCalledWith(
+      "create_gamer",
+      expect.objectContaining({ p_guardian_attested: true }),
+    );
+  });
+});
+
 describe("POST /api/gamers/create — the sign-in modes", () => {
   /**
    * The mode decides what auth user is created, and the three shapes are
@@ -552,7 +619,11 @@ describe("POST /api/gamers/create — the sign-in modes", () => {
     mockSendGamerWelcomeEmail.mockResolvedValue(undefined);
   });
 
-  const base = { firstName: "Aino", dateOfBirth: "2015-06-15" };
+  const base = {
+    firstName: "Aino",
+    dateOfBirth: "2015-06-15",
+    guardianAttested: true,
+  };
 
   it("defaults to `parent`: a random handle, no password, no mail", async () => {
     // Absent rather than sent, because a client that predates the modes — a

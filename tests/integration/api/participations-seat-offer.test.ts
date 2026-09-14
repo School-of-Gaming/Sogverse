@@ -114,12 +114,6 @@ function adminTableStub(table: string) {
         ],
         error: null,
       }),
-      // The staff mail's recipient list: every admin account, resolved at send
-      // time off the role column rather than hardcoded to an inbox.
-      eq: async () => ({
-        data: [{ email: "ada@sog.gg" }, { email: "bo@sog.gg" }],
-        error: null,
-      }),
     }),
   };
 }
@@ -318,12 +312,8 @@ describe("POST /api/participations/seat-offer", () => {
 
     await settleDeferred();
     expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
-    // Every admin account rather than an inbox — the same recipient list the
-    // feedback notification resolves, off the role column.
-    expect(mockSendTransactionalEmail.mock.calls[0][0].toEmail).toEqual([
-      "ada@sog.gg",
-      "bo@sog.gg",
-    ]);
+    // The shared support inbox, exactly where the help & feedback mail goes.
+    expect(mockSendTransactionalEmail.mock.calls[0][0].toEmail).toBe("help@sog.gg");
     // No seat, so no signup confirmation — the mail follows the seat rather
     // than the answer.
     expect(mockSendProductConfirmationEmail).not.toHaveBeenCalled();

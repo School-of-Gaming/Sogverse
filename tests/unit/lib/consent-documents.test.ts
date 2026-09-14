@@ -2,11 +2,12 @@ import { describe, it, expect } from "vitest";
 import {
   CONSENT_DOCUMENTS,
   CONSENT_DOCUMENT_BUNDLES,
+  GAMER_CONSENT_DOCUMENTS,
   REGISTRATION_CONSENT_DOCUMENTS,
   completeConsentBundles,
   consentRowSlugs,
   describeRequiredConsents,
-  isAccountConsentSlug,
+  isNonProductConsentSlug,
   isBundledConsentSlug,
 } from "@/lib/constants/consent-documents";
 
@@ -144,39 +145,59 @@ describe("the slugs behind a row", () => {
 });
 
 /**
- * **What opening an account commits the account holder to** (00249).
+ * **What opening an account, and adding a child, commit an adult to** (00249,
+ * 00250).
  *
- * The parent sign-up form asks one question and records two documents against
- * it. These cases pin the things that make the set safe to hand straight to the
- * write RPC: every slug in it is a document this deploy can actually name, and
- * none of them can be offered a second time as a product's enrolment condition.
+ * Two questions asked at two moments, recorded against two subjects: the terms
+ * once for the account, and the guardian declaration once for each child. These
+ * cases pin the things that make both sets safe: every slug in them is a
+ * document this deploy can actually name, and none of them can be offered a
+ * second time as a product's enrolment condition.
  */
-describe("the registration consent set", () => {
+describe("the self-service consent sets", () => {
+  const SELF_SERVICE = [
+    ...REGISTRATION_CONSENT_DOCUMENTS,
+    ...GAMER_CONSENT_DOCUMENTS,
+  ];
+
   it("names only documents the registry knows", () => {
-    // The slugs travel from here into `record_account_consents`, which refuses
-    // one with no published version — so a slug this deploy cannot even name is
-    // a registration whose legal record silently fails to be written.
+    // The registration slugs travel from here into `record_account_consents`,
+    // which refuses one with no published version — so a slug this deploy cannot
+    // even name is a registration whose legal record silently fails to be
+    // written. `create_gamer` refuses the same way for the declaration.
     expect(REGISTRATION_CONSENT_DOCUMENTS.length).toBeGreaterThan(0);
-    for (const slug of REGISTRATION_CONSENT_DOCUMENTS) {
+    expect(GAMER_CONSENT_DOCUMENTS.length).toBeGreaterThan(0);
+    for (const slug of SELF_SERVICE) {
       expect(CONSENT_DOCUMENTS[slug]).toBeDefined();
     }
   });
 
-  it("is exactly the set of account-level slugs", () => {
-    for (const slug of REGISTRATION_CONSENT_DOCUMENTS) {
-      expect(isAccountConsentSlug(slug)).toBe(true);
+  it("keeps the two subjects apart", () => {
+    // The guardian declaration left the registration set in 00250: ticked at
+    // registration it said the account holder is a parent or guardian of
+    // somebody, which says nothing about a child added a year later.
+    expect(REGISTRATION_CONSENT_DOCUMENTS).not.toContain("guardian-declaration");
+    expect(GAMER_CONSENT_DOCUMENTS).toContain("guardian-declaration");
+    for (const slug of GAMER_CONSENT_DOCUMENTS) {
+      expect(REGISTRATION_CONSENT_DOCUMENTS).not.toContain(slug);
     }
-    // The Roblox pair is per enrolment and must stay attachable to a product.
-    expect(isAccountConsentSlug(TERMS)).toBe(false);
-    expect(isAccountConsentSlug(PRIVACY)).toBe(false);
-    expect(isAccountConsentSlug(UNKNOWN)).toBe(false);
   });
 
-  it("keeps an account-level document out of every bundle", () => {
-    // A bundle is a *product's* requirement set offered as one row. An
-    // account-level document belongs to no product, so a bundle naming one
-    // would put back in front of a parent a tick that is already on file.
-    for (const slug of REGISTRATION_CONSENT_DOCUMENTS) {
+  it("is exactly the set no product may require", () => {
+    for (const slug of SELF_SERVICE) {
+      expect(isNonProductConsentSlug(slug)).toBe(true);
+    }
+    // The Roblox pair is per enrolment and must stay attachable to a product.
+    expect(isNonProductConsentSlug(TERMS)).toBe(false);
+    expect(isNonProductConsentSlug(PRIVACY)).toBe(false);
+    expect(isNonProductConsentSlug(UNKNOWN)).toBe(false);
+  });
+
+  it("keeps a self-service document out of every bundle", () => {
+    // A bundle is a *product's* requirement set offered as one row. A document
+    // accepted for the account or for a child belongs to no product, so a bundle
+    // naming one would put back in front of a parent a tick already on file.
+    for (const slug of SELF_SERVICE) {
       expect(isBundledConsentSlug(slug)).toBe(false);
     }
   });

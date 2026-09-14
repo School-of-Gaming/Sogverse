@@ -308,7 +308,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // observed by somebody opening a page that would care, and this is that call.
   "src/app/api/admin/seat-offers/sweep/route.ts": {
     adminClient:
-      "claim_expired_seat_offer_notifications is service_role-only, along with the rest of the seat-offer trio, and the staff mails it feeds read a family whose row the caller has no policy on, and resolve their own recipients from the role column — every admin account, which is in nobody else's view",
+      "claim_expired_seat_offer_notifications is service_role-only, along with the rest of the seat-offer trio, and the staff mails it feeds read a family whose row the caller has no policy on",
     handlers: {
       POST: {
         posture: ADMIN_ONLY,
@@ -478,7 +478,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/auth/register/route.ts": {
     adminClient:
-      "Auth Admin API (self-registration creates the auth user before any session exists), plus the optional home-location write onto the profile that same request creates, plus the registration marketing-consent write — record_registration_marketing_consent (00221) is granted to service_role alone, because it takes the customer as a parameter (no session exists yet) and hardcodes the 'registration' source that set_marketing_consent refuses, so that provenance can only be claimed from here, plus the account-consent write — record_account_consents (00249) is granted to service_role alone for the same reason, and records what the account was opened under (the terms and the guardian declaration) against the version of each that was current",
+      "Auth Admin API (self-registration creates the auth user before any session exists), plus the optional home-location write onto the profile that same request creates, plus the registration marketing-consent write — record_registration_marketing_consent (00221) is granted to service_role alone, because it takes the customer as a parameter (no session exists yet) and hardcodes the 'registration' source that set_marketing_consent refuses, so that provenance can only be claimed from here, plus the account-consent write — record_account_consents (00249) is granted to service_role alone for the same reason, and records what the account was opened under (the terms; the guardian declaration moved to create_gamer in 00250, where it is a statement about one named child) against the version that was current",
     handlers: {
       POST: {
         posture: {
@@ -750,7 +750,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/gamers/create/route.ts": {
     adminClient:
-      "Auth Admin API (user creation, with delete-on-failure compensation)",
+      "Auth Admin API (user creation, with delete-on-failure compensation), plus the promote-and-link RPC — create_gamer (00250) is granted to service_role alone because it takes both the gamer and the parent as parameters (the child has no session and the parent's own client cannot promote a profile), and it is what records the parent's guardian declaration about this child in the same transaction",
     handlers: {
       POST: {
         posture: { kind: "role-gated", roles: ["customer"] },
@@ -997,7 +997,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // path".
   "src/app/api/participations/seat-offer/route.ts": {
     adminClient:
-      "respond_seat_offer is service_role-only because its public sibling has no session to guard on; the caller's ownership of the row is established first, on the caller's own client under their own RLS, and the staff mail reads a product and profiles they hold no policy on — including the role column it resolves its admin recipients from",
+      "respond_seat_offer is service_role-only because its public sibling has no session to guard on; the caller's ownership of the row is established first, on the caller's own client under their own RLS, and the staff mail reads a product and profiles they hold no policy on",
     handlers: {
       POST: {
         posture: { kind: "role-gated", roles: ["customer"] },
@@ -1011,7 +1011,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/seat-offer/respond/route.ts": {
     adminClient:
-      "there is no session on this path at all — the signed token is the authorization — so every read and the write behind it run on the service-role client — the staff mail's admin recipient list included — and the token's compare-and-swap inside respond_seat_offer is what narrows that to one participation and one offer",
+      "there is no session on this path at all — the signed token is the authorization — so every read and the write behind it run on the service-role client, and the token's compare-and-swap inside respond_seat_offer is what narrows that to one participation and one offer",
     handlers: {
       POST: {
         posture: {

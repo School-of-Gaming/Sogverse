@@ -3181,7 +3181,7 @@ export default function AdminUIComponentsPage() {
         {/* One card, rendered unchanged in the parent, gamer and gedu Help
             sections. Every state is here because the three preview scenes can
             only ever show the idle one — a scene must never gain a live submit
-            that emails every admin. */}
+            that emails the support inbox. */}
         <p className="text-sm text-muted-foreground -mt-2">
           The first card of each pair is live &mdash; type into it &mdash;
           because the textarea, the two counters and the
@@ -4287,31 +4287,42 @@ function inertCreateGamer(): Promise<{ gamerId: string }> {
 }
 
 /**
- * Both pages side by side, with page two drawn once per answer.
+ * All three pages side by side, with page two drawn once per answer.
  *
- * The form is two pages for every parent, and the questions about them are
- * comparative: does page two look like it belongs to page one, and do the three
- * answers sit in a box that does not resize as the radio moves between them.
- * States reached by driving one card through the flow would have to be compared
- * from memory, so all four are rendered at once and each is seeded straight into
- * its page through the card's `initial` prop.
+ * The form is three pages for every parent, and the questions about them are
+ * comparative: do the pages look like they belong to one another, does the
+ * declaration read as the last row of page one rather than as a section of its
+ * own, and do the three sign-in answers sit in a box that does not resize as the
+ * radio moves between them. States reached by driving one card through the flow
+ * would have to be compared from memory, so all five are rendered at once and
+ * each is seeded straight into its page through the card's `initial` prop.
  *
- * **No `Dialog` around them.** A dialog is a portal, so four of them would stack
- * in `document.body` on top of one another rather than sitting in a row — and
- * `DialogContent` needs no portal to render, which is the whole reason the card
- * is separable from it. The height cap goes with the dialog: `90vh` is about a
- * viewport, and these are four columns on a page.
+ * Page one is drawn with its box unticked, which is also the state that disables
+ * its Next — the gate is the thing worth seeing, and a ticked box is one click
+ * away in the demo itself.
  *
- * **Each card gets its own `idPrefix`.** Four cards on one page is the case the
+ * **No `Dialog` around them.** A dialog is a portal, so all five of them would
+ * stack in `document.body` on top of one another rather than sitting in a row —
+ * and `DialogContent` needs no portal to render, which is the whole reason the
+ * card is separable from it. The height cap goes with the dialog: `90vh` is
+ * about a viewport, and these are columns on a page.
+ *
+ * **Each card gets its own `idPrefix`.** Five cards on one page is the case the
  * seam exists for: without it every label would point at the first card's input,
- * and all four radio groups would share a `name`, so the browser would treat the
- * twelve radios as one group and let a click in one card clear another's answer.
+ * and the radio groups would all share a `name`, so the browser would treat the
+ * nine radios the three sign-in cards paint as one group and let a click in one
+ * card clear another's answer.
+ *
+ * **The grid is two then three across, so the fifth card sits in a row rather
+ * than trailing one.** Five does not divide into four columns, and a lone card
+ * on a second row reads as a card that did not fit rather than as the last page
+ * of the flow.
  */
 function AddGamerDialogDemo() {
   const dismiss = () => {};
 
   return (
-    <div className="grid items-start gap-4 lg:grid-cols-2 2xl:grid-cols-4">
+    <div className="grid items-start gap-4 lg:grid-cols-2 2xl:grid-cols-3">
       <AddGamerFormCard
         onOpenChange={dismiss}
         onCreate={inertCreateGamer}
@@ -4338,6 +4349,13 @@ function AddGamerDialogDemo() {
         className="max-h-none"
         idPrefix="add-gamer-demo-email"
         initial={{ firstName: "Lily", signIn: "email", step: "signIn" }}
+      />
+      <AddGamerFormCard
+        onOpenChange={dismiss}
+        onCreate={inertCreateGamer}
+        className="max-h-none"
+        idPrefix="add-gamer-demo-accounts"
+        initial={{ firstName: "Lily", signIn: "parent", step: "accounts" }}
       />
     </div>
   );
