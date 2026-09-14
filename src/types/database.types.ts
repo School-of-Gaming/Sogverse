@@ -2842,6 +2842,10 @@ export type Database = {
         Returns: boolean
       }
       get_admin_dashboard: { Args: never; Returns: Json }
+      get_admin_municipality_invoicing: {
+        Args: { p_month_start: string }
+        Returns: Json
+      }
       get_admin_product_sessions: {
         Args: { p_product_id: string }
         Returns: Json

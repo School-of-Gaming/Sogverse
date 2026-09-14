@@ -22,6 +22,14 @@ import {
   buildGeduDashboardFixture,
 } from "@/components/gedu/mock-dashboard-fixtures";
 import {
+  MUNICIPALITY_INVOICING_NOW,
+  MUNICIPALITY_INVOICING_SCENARIOS,
+  MUNICIPALITY_INVOICING_WORKING_MONTH,
+  municipalityInvoicingMonthFixture,
+  resolvePreviewInvoicingMonth,
+} from "@/components/admin/municipality-invoicing/mock-invoicing-fixtures";
+import { buildMunicipalityInvoicing } from "@/components/admin/municipality-invoicing/build-municipality-invoicing";
+import {
   GROUP_WORKSPACE_SCENARIOS,
   buildGroupWorkspaceFixture,
 } from "@/components/group-workspace/mock-workspace-fixtures";
@@ -175,6 +183,12 @@ describe("preview scene registry", () => {
 describe("registry scenarios match their fixtures", () => {
   it("gedu dashboard", () => {
     expect(slugsFor("gedu-dashboard")).toEqual([...GEDU_DASHBOARD_SCENARIOS]);
+  });
+
+  it("municipality invoicing", () => {
+    expect(slugsFor("municipality-invoicing")).toEqual([
+      ...MUNICIPALITY_INVOICING_SCENARIOS,
+    ]);
   });
 
   it("gedu product page", () => {
@@ -1822,5 +1836,196 @@ describe("the topic prep scene", () => {
       expect(remote?.steps, topic).toHaveLength(1);
       expect(resolveTopicPrep(topic, false), topic).toBeNull();
     }
+  });
+});
+
+/**
+ * The municipality invoicing scene's one working month has to carry every state
+ * the ledger can be in, because the only other scenario is the month with
+ * nothing in it. These are those states, each asserted through the page's own
+ * builder rather than against the fixture's literals: what the scene is for is
+ * the *invoice*, so a fixture that stopped producing a missed session or an
+ * excluded club would be a scene quietly showing one case fewer.
+ */
+describe("the municipality invoicing scene covers every ledger state", () => {
+  const snapshot = municipalityInvoicingMonthFixture(
+    MUNICIPALITY_INVOICING_WORKING_MONTH,
+  );
+  const invoice = buildMunicipalityInvoicing({
+    snapshot,
+    locale: "en",
+    now: MUNICIPALITY_INVOICING_NOW,
+  });
+  const clubs = invoice.municipalities.flatMap((one) => one.clubs);
+
+  it("is a month of the size the page was designed for", () => {
+    // Twelve municipalities, and every club in the document on the invoice — no
+    // club here is so empty it drops out.
+    expect(invoice.municipalities).toHaveLength(12);
+    expect(invoice.clubCount).toBe(snapshot.clubs.length);
+    expect(invoice.clubCount).toBeGreaterThanOrEqual(30);
+    // Several sections deep enough to read as a table, and a few single-club
+    // ones — which is the shape the collapsed list has in production.
+    const sizes = invoice.municipalities.map((one) => one.clubs.length);
+    expect(sizes.filter((size) => size >= 4).length).toBeGreaterThanOrEqual(4);
+    expect(sizes.filter((size) => size === 1).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("invoices every club to a municipality", () => {
+    // There is no bucket for a club that belongs nowhere, on this page or in
+    // this fixture: the database refuses to answer a month containing one, so a
+    // spec with no municipality is not a state to preview.
+    expect(invoice.municipalities.length).toBe(
+      new Set(snapshot.clubs.map((club) => club.municipality.id)).size,
+    );
+  });
+
+  it("carries all three kinds of session line", () => {
+    const kinds = new Set(
+      clubs.flatMap((club) => club.sessions.map((session) => session.kind)),
+    );
+    expect(kinds).toEqual(new Set(["recorded", "unrecorded", "upcoming"]));
+  });
+
+  it("has clubs reporting missed sessions on their own line", () => {
+    const missing = clubs.filter((club) => club.unrecordedCount > 0);
+    expect(missing.length).toBeGreaterThanOrEqual(3);
+    // One of them recorded nothing at all, which is the strongest version of
+    // the warning and the only one whose total is zero with a fee set.
+    expect(
+      missing.some((club) => club.recordedCount === 0 && club.totalCents === 0),
+    ).toBe(true);
+  });
+
+  it("excludes exactly one club for an unset fee, and says so at both levels", () => {
+    expect(invoice.clubsWithoutFee).toBe(1);
+    const unpriced = clubs.filter((club) => club.feeCents === null);
+    expect(unpriced).toHaveLength(1);
+    // A club with no fee has no total either — never a zero, which would be a
+    // figure somebody could add up.
+    expect(unpriced[0].totalCents).toBeNull();
+    expect(unpriced[0].recordedCount).toBeGreaterThan(0);
+    expect(
+      invoice.municipalities.filter((one) => one.clubsWithoutFee > 0),
+    ).toHaveLength(1);
+  });
+
+  it("collapses two groups on one date into one billed session", () => {
+    const twoGroups = snapshot.clubs.filter(
+      (club) =>
+        new Set(club.sessions.map((session) => session.group_id)).size === 2,
+    );
+    expect(twoGroups.length).toBeGreaterThanOrEqual(2);
+    for (const club of twoGroups) {
+      const built = clubs.find((one) => one.id === club.id);
+      expect(built, club.id).toBeDefined();
+      const dates = new Set(club.sessions.map((s) => s.session_date));
+      // Twice as many rows as dates, and the count is the dates.
+      expect(club.sessions.length).toBe(dates.size * 2);
+      expect(built!.recordedCount).toBe(dates.size);
+    }
+  });
+
+  it("bills a stored row the schedule never projected", () => {
+    // A Saturday: no club here meets on one, so a recorded line on a Saturday
+    // can only be an orphan row, and it has to count.
+    const orphan = clubs
+      .flatMap((club) => club.sessions)
+      .find((session) => session.date === "2026-05-16");
+    expect(orphan?.kind).toBe("recorded");
+  });
+
+  it("leaves a row written ahead of its own session out of the count", () => {
+    const ahead = clubs.filter((club) =>
+      club.sessions.some(
+        (session) => session.kind === "upcoming" && session.date > "2026-05-21",
+      ),
+    );
+    expect(ahead.length).toBeGreaterThan(0);
+  });
+
+  it("has a club with no schedule at all, still billing its rows", () => {
+    const unscheduled = clubs.filter((club) => club.scheduleSummary === null);
+    expect(unscheduled).toHaveLength(1);
+    expect(unscheduled[0].recordedCount).toBeGreaterThan(0);
+    expect(unscheduled[0].unrecordedCount).toBe(0);
+  });
+
+  it("has a pending club and a cancelled one that bill without projecting", () => {
+    for (const status of ["pending", "cancelled"] as const) {
+      const spec = snapshot.clubs.find((club) => club.status === status);
+      expect(spec, status).toBeDefined();
+      const built = clubs.find((one) => one.id === spec!.id);
+      expect(built, status).toBeDefined();
+      expect(built!.recordedCount, status).toBeGreaterThan(0);
+      // Nothing projected, so nothing can be missing and nothing is upcoming.
+      expect(built!.unrecordedCount, status).toBe(0);
+      expect(built!.sessions.length, status).toBe(built!.recordedCount);
+    }
+  });
+
+  it("prices every club inside the municipality fee range", () => {
+    for (const club of snapshot.clubs) {
+      if (club.municipality_fee_cents === null) continue;
+      expect(club.municipality_fee_cents).toBeGreaterThanOrEqual(4500);
+      expect(club.municipality_fee_cents).toBeLessThanOrEqual(10000);
+    }
+  });
+
+  it("gives the money column a six-figure total to draw", () => {
+    const largest = Math.max(
+      ...invoice.municipalities.map((one) => one.totalCents),
+    );
+    expect(largest).toBeGreaterThanOrEqual(100_000);
+    expect(invoice.totalCents).toBeGreaterThanOrEqual(largest);
+  });
+
+  it("has a name and a site long enough to truncate", () => {
+    expect(clubs.some((club) => club.name.length > 40)).toBe(true);
+    expect(
+      clubs.some(
+        (club) => club.locationName !== null && club.locationName.length > 40,
+      ),
+    ).toBe(true);
+  });
+
+  it("sorts municipalities by the name the reader sees", () => {
+    // Swedish exonyms re-order the list: Åbo and Borgå are not where Turku and
+    // Porvoo were, which is what the localized sort key exists for.
+    const swedish = buildMunicipalityInvoicing({
+      snapshot,
+      locale: "sv",
+      now: MUNICIPALITY_INVOICING_NOW,
+    });
+    const names = swedish.municipalities.map((one) => one.name);
+    expect(names).toContain("Esbo");
+    expect(names).toContain("Borgå");
+    const sorted = [...names].sort((a, b) => a.localeCompare(b, "sv"));
+    expect(names).toEqual(sorted);
+  });
+
+  it("reaches the empty ledger by stepping the month, not by another scenario", () => {
+    // The scene's whole month resolution, pinned: no parameter and a nonsense
+    // one both land on the working month — a preview that opened empty would be
+    // showing the reviewer nothing — and any other real month is genuinely empty,
+    // because these clubs run one spring term.
+    expect(resolvePreviewInvoicingMonth(null)).toBe(
+      MUNICIPALITY_INVOICING_WORKING_MONTH,
+    );
+    expect(resolvePreviewInvoicingMonth("not-a-month")).toBe(
+      MUNICIPALITY_INVOICING_WORKING_MONTH,
+    );
+    expect(resolvePreviewInvoicingMonth("2026-07")).toBe("2026-07-01");
+
+    const empty = municipalityInvoicingMonthFixture("2026-07-01");
+    expect(empty.month_start).toBe("2026-07-01");
+    expect(empty.clubs).toEqual([]);
+    const built = buildMunicipalityInvoicing({
+      snapshot: empty,
+      locale: "en",
+      now: MUNICIPALITY_INVOICING_NOW,
+    });
+    expect(built.municipalities).toEqual([]);
+    expect(built.totalCents).toBe(0);
   });
 });

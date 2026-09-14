@@ -500,6 +500,19 @@ export const PREVIEW_SCENES = [
       },
     ],
   },
+  {
+    surface: "municipality-invoicing",
+    title: "Municipality invoicing",
+    description:
+      "The CFO's monthly ledger over a fixture document, pinned to Thursday 21 May 2026: twelve municipalities, thirty-one clubs and every state a line on this page can be in. Expanding a municipality, opening a club's dated sessions and the expand-all control all work. The month stepper works too and stays in the preview — every month but May is empty, which is how the empty ledger is reached; the club names are real links out to the live admin pages.",
+    chrome: "admin",
+    scenarios: [
+      {
+        slug: "working-month",
+        label: "A month of invoicing",
+      },
+    ],
+  },
 ] as const satisfies readonly PreviewSceneMeta[];
 
 export type PreviewScene = (typeof PREVIEW_SCENES)[number];

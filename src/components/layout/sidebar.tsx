@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   MapPin,
+  Receipt,
   Wrench,
 } from "lucide-react";
 import { useState } from "react";
@@ -27,7 +28,8 @@ import type { StaticAppHref } from "@/lib/constants/routes";
 type SidebarKey =
   | "dashboard" | "users"
   | "uiComponents" | "uiPreviews" | "whatsapp" | "testing" | "settings"
-  | "tools" | "consumerClubs" | "municipalityClubs" | "camps" | "events"
+  | "tools" | "consumerClubs" | "municipalityClubs" | "municipalityInvoicing"
+  | "camps" | "events"
   | "sites";
 
 interface NavItemDef {
@@ -63,6 +65,7 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
     { href: ROUTES.admin.camps, labelKey: "camps", icon: kindIcon("camp") },
     { href: ROUTES.admin.events, labelKey: "events", icon: kindIcon("event") },
     { href: ROUTES.admin.sites, labelKey: "sites", icon: <MapPin className="h-5 w-5" /> },
+    { href: ROUTES.admin.municipalityInvoicing, labelKey: "municipalityInvoicing", icon: <Receipt className="h-5 w-5" /> },
     { href: ROUTES.admin.tools, labelKey: "tools", icon: <Wrench className="h-5 w-5" /> },
     { href: ROUTES.admin.uiComponents, labelKey: "uiComponents", icon: <Palette className="h-5 w-5" /> },
     { href: ROUTES.admin.uiPreviews, labelKey: "uiPreviews", icon: <MonitorPlay className="h-5 w-5" /> },

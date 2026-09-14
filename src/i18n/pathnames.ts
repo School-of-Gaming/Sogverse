@@ -158,6 +158,7 @@ export const PATHNAMES = {
   "/admin/municipality-clubs/[id]/edit": "/admin/municipality-clubs/[id]/edit",
   "/admin/municipality-clubs/[id]/groups/[groupId]":
     "/admin/municipality-clubs/[id]/groups/[groupId]",
+  "/admin/municipality-invoicing": "/admin/municipality-invoicing",
   "/admin/sites": "/admin/sites",
   "/admin/sites/[id]": "/admin/sites/[id]",
   "/admin/testing": "/admin/testing",

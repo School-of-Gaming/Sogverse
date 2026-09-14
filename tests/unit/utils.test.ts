@@ -7,6 +7,7 @@ import {
   formatDate,
   formatDateOnly,
   capitalize,
+  sumCents,
 } from "@/lib/utils";
 
 describe("cn (className merge utility)", () => {
@@ -136,5 +137,24 @@ describe("capitalize", () => {
 
   it("handles empty string", () => {
     expect(capitalize("")).toBe("");
+  });
+});
+
+describe("sumCents", () => {
+  it("adds an ordinary run of cents", () => {
+    expect(sumCents([1, 2, 3])).toBe(6);
+    expect(sumCents([])).toBe(0);
+  });
+
+  it("throws rather than hand back a total that is not an integer", () => {
+    // The guard is the point: money is integer cents, and a fractional value
+    // reaching a total means something upstream divided before it summed.
+    expect(() => sumCents([1.5, 1])).toThrow(/safe integer/);
+  });
+
+  it("throws rather than hand back a total past the safe range", () => {
+    expect(() =>
+      sumCents([Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER]),
+    ).toThrow(/safe integer/);
   });
 });
