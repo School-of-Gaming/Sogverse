@@ -351,10 +351,15 @@ time is rationed, spend it here rather than on the banner.**
       as a use of the photo. Kyle's ruling on 2026-09-14: not his call, the wording is
       Lynx's; the app stays at one box and the text stays verbatim until Lynx answers.
 
-      **Escalated 2026-09-14** — Claude drafted the question for the Lynx × SOG Slack
-      channel (one choice or two; whether the policy should name session reports; the
-      contact addresses; the two mechanism corrections), for Kyle to post. Waiting on
-      Lynx.
+      **Escalated 2026-09-14** — Kyle posted six questions to the Lynx × SOG Slack channel,
+      addressed to Joyce (Lynx) and Mikko (SOG): one choice or two; whether the policy
+      should name session reports; which Lynx contact address; "display name" versus first
+      name; UTM (not a cookie; whether the campaign tag must be gated on marketing consent;
+      the export fields and lawful basis); and whether a data-sharing agreement exists.
+      Waiting on Lynx. The three that come back to this file are the media structure,
+      display name (a product change only if Lynx says a nickname is required) and the
+      recipients entry naming Lynx in the general privacy policy once the fields are
+      confirmed.
 
       **If the answer is two boxes**, the change is bounded and known: the
       `gamer_photo_consent_type` enum gains a second value beside `lynx_educate`, the
@@ -362,15 +367,6 @@ time is rationed, spend it here rather than on the banner.**
       `.mediaPublic` section gains a sponsor-reporting sibling in Lynx's wording. **If
       the answer is one box**, the short version's two bullets and the "either" sentence
       are Lynx's to reword, and the app changes nothing.
-- [ ] **Whether a Gedu's own likeness in a session photo is covered when Lynx or Roblox
-      use it.** Raised 2026-09-07 alongside the box question so it rides to the lawyer at
-      no extra cost. Gedus working these products expect to appear in photos — it is
-      part of the job — and the Gedu contract already grants School of Gaming permission
-      to publish their photo and assigns photos taken on assignment to us. What nothing
-      yet states is whether that permission extends to a *third party's* use: a session
-      photo a Gedu appears in, on Lynx Educate's or Roblox's website. Neither privacy
-      policy mentions Gedu images in either direction. If the answer is that it does not,
-      the fix is a clause in the Gedu contract, not a line in the parent-facing policies.
 
 ## Resolved — ready to apply
 
