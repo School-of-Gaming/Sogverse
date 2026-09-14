@@ -3178,7 +3178,7 @@
           "Le droit de la protection des données (le RGPD) nous impose d’avoir une raison claire d’utiliser vos informations. Les nôtres sont simples :"
         ],
         "bullets": [
-          "Pour vous fournir ce que vous avez souscrit — les clubs et services que vous nous avez achetés (notre contrat avec vous).",
+          "Pour vous fournir ce que vous avez souscrit — les clubs, stages et événements auxquels vous avez inscrit votre enfant, payants ou gratuits (notre contrat avec vous).",
           "Parce qu’un parent a donné son autorisation au nom de son enfant (le consentement).",
           "Pour respecter nos obligations légales, comme la conservation des pièces comptables relatives aux paiements.",
           "Pour notre intérêt légitime à maintenir le site sûr et fonctionnel — toujours mis en balance avec votre vie privée.",
@@ -3204,15 +3204,15 @@
         ]
       },
       "partners": {
-        "heading": "Les programmes que nous menons avec un partenaire",
+        "heading": "L’Académie des Créateurs, menée avec Lynx Educate",
         "blocks": [
-          "Si vous inscrivez votre enfant à l’Académie des Créateurs, le programme que nous menons avec Lynx Educate en collaboration avec Roblox, nous transmettons à Lynx Educate, qui le met en œuvre avec nous, ce dont le programme a besoin, et un ensemble limité d’informations à Roblox pour sa recherche sur le programme. Lynx Educate reçoit :",
+          "Si vous inscrivez votre enfant à l’Académie des Créateurs, que nous menons en collaboration avec Roblox, nous transmettons à Lynx Educate, qui le met en œuvre avec nous, ce dont le programme a besoin, et un ensemble limité d’informations à Roblox pour sa recherche sur le programme. Lynx Educate reçoit :",
           [
             "L’étiquette de campagne enregistrée sur votre compte — source, support et campagne — pour qu’ils sachent quelle action a conduit votre famille jusqu’au programme.",
             "Vos prénom, nom et adresse e-mail — pour qu’ils puissent vous contacter au sujet du programme.",
             "La commune et le pays que vous avez indiqués comme domicile de votre famille, le cas échéant.",
             "Le prénom de votre enfant.",
-            "Le mois et l’année de naissance de votre enfant — nous n’en conservons jamais le jour.",
+            "Le mois et l’année de naissance de votre enfant — nous n’en demandons jamais le jour.",
             "Le nom d’utilisateur Roblox de votre enfant et l’identifiant de compte que Roblox lui attribue.",
             "Les conditions et politiques que vous avez acceptées lors de l’inscription, ainsi que vos réponses aux questions sur le marketing et la photographie.",
             "L’inscription elle-même — le club, le stage ou l’événement, le groupe dans lequel se trouve votre enfant, et la date à laquelle il s’y est inscrit.",

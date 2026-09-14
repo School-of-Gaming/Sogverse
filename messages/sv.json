@@ -3178,7 +3178,7 @@
           "Dataskyddslagstiftningen (EU:s dataskyddsförordning, GDPR) kräver att vi har en tydlig grund för att använda dina uppgifter. Våra grunder är enkla:"
         ],
         "bullets": [
-          "För att leverera det du anmält dig till – de klubbar och tjänster du köpt av oss (vårt avtal med dig).",
+          "För att leverera det du anmält dig till – de klubbar, läger och evenemang du har anmält ditt barn till, betalda eller kostnadsfria (vårt avtal med dig).",
           "Eftersom en förälder har gett tillstånd å barnets vägnar (samtycke).",
           "För att uppfylla våra lagstadgade skyldigheter, till exempel att spara bokföringsuppgifter för betalningar.",
           "För vårt berättigade intresse av att hålla webbplatsen säker och välfungerande – alltid avvägt mot din integritet.",
@@ -3204,15 +3204,15 @@
         ]
       },
       "partners": {
-        "heading": "Program vi driver tillsammans med en partner",
+        "heading": "Skaparnas akademi, som vi driver med Lynx Educate",
         "blocks": [
-          "Om du anmäler ditt barn till Skaparnas akademi, programmet vi driver tillsammans med Lynx Educate i samarbete med Roblox, delar vi det som programmet behöver med Lynx Educate, som genomför det tillsammans med oss, och en begränsad mängd med Roblox för deras forskning om programmet. Lynx Educate får:",
+          "Om du anmäler ditt barn till Skaparnas akademi, som vi driver i samarbete med Roblox, delar vi det som programmet behöver med Lynx Educate, som genomför det tillsammans med oss, och en begränsad mängd med Roblox för deras forskning om programmet. Lynx Educate får:",
           [
             "Kampanjkoden på ditt konto – källa, medium och kampanj – så att de ser vilken information som förde din familj till programmet.",
             "Ditt förnamn, ditt efternamn och din e-postadress – så att de kan nå dig om programmet.",
             "Kommunen och landet du angav som din familjs hemort, om du angav någon.",
             "Ditt barns förnamn.",
-            "Ditt barns födelsemånad och födelseår – vi sparar aldrig dagen.",
+            "Ditt barns födelsemånad och födelseår – vi frågar aldrig efter dagen.",
             "Ditt barns Roblox-användarnamn och det konto-id som Roblox ger det.",
             "Vilka villkor och policyer du godkände när du anmälde dig, och dina svar på frågorna om marknadsföring och foto.",
             "Själva anmälan – klubben, lägret eller evenemanget, gruppen ditt barn är i och när ni anmälde er.",

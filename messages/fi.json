@@ -3178,7 +3178,7 @@
           "Tietosuojalainsäädäntö (EU:n yleinen tietosuoja-asetus eli GDPR) edellyttää, että meillä on selkeä peruste tietojesi käytölle. Meidän perusteemme ovat yksinkertaiset:"
         ],
         "bullets": [
-          "Toimittaaksemme sen, mihin ilmoittauduit – ostamasi kerhot ja palvelut (sopimuksemme kanssasi).",
+          "Toimittaaksemme sen, mihin ilmoittauduit – kerhot, leirit ja tapahtumat, joihin olet ilmoittanut lapsesi, olivatpa ne maksullisia tai maksuttomia (sopimuksemme kanssasi).",
           "Koska vanhempi on antanut luvan lapsensa puolesta (suostumus).",
           "Täyttääksemme lakisääteiset velvollisuutemme, kuten maksujen kirjanpitotietojen säilyttämisen.",
           "Oikeutetun etumme perusteella, kun pidämme sivuston turvallisena ja toimivana – aina yksityisyytesi kanssa tasapainotettuna.",
@@ -3204,15 +3204,15 @@
         ]
       },
       "partners": {
-        "heading": "Ohjelmat, joita pyöritämme kumppanin kanssa",
+        "heading": "Luojien akatemia, jonka toteutamme Lynx Educaten kanssa",
         "blocks": [
-          "Jos ilmoitat lapsesi Luojien akatemiaan – ohjelmaan, jota pyöritämme Lynx Educaten kanssa yhteistyössä Robloxin kanssa – jaamme ohjelman tarvitsemat tiedot Lynx Educaten kanssa, joka toteuttaa sen kanssamme, ja rajatun joukon Robloxille sen ohjelmaa koskevaa tutkimusta varten. Lynx Educate saa:",
+          "Jos ilmoitat lapsesi Luojien akatemiaan, jota pyöritämme yhteistyössä Robloxin kanssa, jaamme ohjelman tarvitsemat tiedot Lynx Educaten kanssa, joka toteuttaa sen kanssamme, ja rajatun joukon Robloxille sen ohjelmaa koskevaa tutkimusta varten. Lynx Educate saa:",
           [
             "Tilisi kampanjatunnisteen – lähteen, välineen ja kampanjan – jotta he näkevät, mikä viestintä toi perheesi ohjelmaan.",
             "Etunimesi, sukunimesi ja sähköpostiosoitteesi – jotta he saavat sinuun yhteyden ohjelmaan liittyen.",
             "Kunnan ja maan, jotka annoit perheesi kotipaikaksi, jos annoit sellaisen.",
             "Lapsesi etunimen.",
-            "Lapsesi syntymäkuukauden ja -vuoden – päivää emme säilytä koskaan.",
+            "Lapsesi syntymäkuukauden ja -vuoden – päivää emme kysy koskaan.",
             "Lapsesi Roblox-käyttäjätunnuksen ja tilitunnisteen, jonka Roblox sille antaa.",
             "Sen, mitkä ehdot ja selosteet hyväksyit ilmoittautuessasi, sekä vastauksesi markkinointia ja valokuvaamista koskeviin kysymyksiin.",
             "Itse ilmoittautumisen – kerhon, leirin tai tapahtuman, lapsesi ryhmän ja sen, milloin hän ilmoittautui.",

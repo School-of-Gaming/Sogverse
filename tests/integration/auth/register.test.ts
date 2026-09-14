@@ -130,17 +130,26 @@ function registerRequest(body: unknown, rawBody?: string): Request {
   });
 }
 
-/** A registration arriving with a given `sog_consent` cookie already set. */
+/**
+ * A registration arriving with a given `sog_consent` cookie already set.
+ *
+ * `version` is the version stamp the cookie was written under, and it defaults
+ * to the current one. It is a literal rather than the exported constant on
+ * purpose: these cases are about the bytes a browser actually carries, so a
+ * future bump to the question has to be written here by hand and thought about,
+ * not followed silently.
+ */
 function registerRequestWithConsent(
   consent: {
     analytics: boolean;
     marketing: boolean;
   },
   body: unknown = validBody,
+  version = 1,
 ): Request {
   const value = encodeURIComponent(
     JSON.stringify({
-      v: 1,
+      v: version,
       at: "2026-09-03T10:15:00.000Z",
       analytics: consent.analytics,
       marketing: consent.marketing,
@@ -461,6 +470,24 @@ describe("POST /api/auth/register", () => {
       ),
     );
 
+    const metadata = signupMetadata();
+    expect(metadata).not.toHaveProperty("utm_source");
+    expect(metadata).not.toHaveProperty("utm_medium");
+    expect(metadata).not.toHaveProperty("utm_campaign");
+  });
+
+  it("drops every utm key when the stored answer is from a superseded version of the question", async () => {
+    // The one refusal the gate cannot express on its own: the version stamp
+    // never reaches the metadata builder, because the parser collapses a cookie
+    // written under an earlier version of the banner into the same `null` that
+    // "no cookie at all" produces. So it can only be exercised here, from the
+    // route, with the bytes a returning visitor's browser would actually carry
+    // — a grant on every purpose, stamped with a version we no longer honour.
+    const response = await POST(
+      registerRequestWithConsent({ analytics: true, marketing: true }, UTM_BODY, 0),
+    );
+
+    expect(response.status).toBe(200);
     const metadata = signupMetadata();
     expect(metadata).not.toHaveProperty("utm_source");
     expect(metadata).not.toHaveProperty("utm_medium");

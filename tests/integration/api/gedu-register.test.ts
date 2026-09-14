@@ -478,6 +478,27 @@ describe("POST /api/gedu/register", () => {
     expect(metadata).not.toHaveProperty("utm_campaign");
   });
 
+  it("drops every utm key when the educator rejected the banner outright", async () => {
+    // A refusal is an answer, and the answer is no. It has to reach the same
+    // place an unanswered banner does — the educator registers, the three
+    // columns stay NULL.
+    const response = await POST(
+      registerRequestWithConsent(
+        { analytics: false, marketing: false },
+        {
+          ...validBody,
+          utm: { source: "Lynx", medium: "email", campaign: "lynx-summer-a" },
+        },
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    const metadata = signupMetadata();
+    expect(metadata).not.toHaveProperty("utm_source");
+    expect(metadata).not.toHaveProperty("utm_medium");
+    expect(metadata).not.toHaveProperty("utm_campaign");
+  });
+
   it("registers successfully with NULL when a utm value is malformed", async () => {
     const response = await POST(
       registerRequestWithConsent(GRANTED, {

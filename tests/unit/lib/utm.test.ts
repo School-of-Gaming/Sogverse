@@ -278,6 +278,11 @@ describe("utmMetadataForConsent", () => {
     // `null` is every unusable answer collapsed into one — no cookie, a cookie
     // from a superseded version of the question, junk. An unanswered banner is
     // not consent, so it is refused exactly like a refusal.
+    //
+    // Which of those it was cannot be distinguished here: this function takes
+    // the parsed answer, and the version stamp is gone by the time it arrives.
+    // The superseded-version case is exercised end to end in the parent
+    // registration route's suite, with a cookie carrying an old stamp.
     expect(utmMetadataForConsent(null, utm)).toEqual({});
   });
 
