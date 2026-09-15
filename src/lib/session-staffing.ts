@@ -126,6 +126,22 @@ export interface SessionStaffing {
   viewerRequest: CoverRequestState | null;
 }
 
+/**
+ * The staffing of a session nobody is assigned to and nobody has filed against
+ * — what {@link deriveSessionStaffing} answers for an empty group.
+ *
+ * It exists because every feed entry carries a staffing and a fixture that is
+ * not *about* staffing still has to hand over one that is true. Frozen and
+ * shared rather than rebuilt per call site: it is a constant, and a mutable
+ * literal handed to a hundred entries is a shared array waiting to be pushed to.
+ */
+export const NO_SESSION_STAFFING: Readonly<SessionStaffing> = Object.freeze({
+  expected: [],
+  requests: [],
+  viewerIsExpected: false,
+  viewerRequest: null,
+});
+
 export interface SessionStaffingArgs {
   /** The group's assignments, with roles, in any order. */
   gedus: readonly StaffingAssignment[];

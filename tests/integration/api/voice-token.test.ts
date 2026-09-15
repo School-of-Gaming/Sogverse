@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { formatInTimeZone } from "date-fns-tz";
 import { NextResponse } from "next/server";
 import { POST } from "@/app/api/voice/token/route";
 import { DailyApiError } from "@/lib/daily";
@@ -64,6 +65,19 @@ const occupantSelect = vi.fn();
 // produce the same empty identity, and only this can tell them apart.
 const gameAccountReads: string[] = [];
 
+/**
+ * Today's calendar date in the fixture product's zone — the date the route
+ * looks a cover up under.
+ *
+ * Computed with the route's own helper rather than restated, because the whole
+ * claim of the cover cases is that the date is the *product's* rather than the
+ * runtime's: a hardcoded string would pass on a Helsinki machine and fail on a
+ * UTC runner for eleven hours of every day.
+ */
+function todayInProductZone(timezone = "Europe/Helsinki"): string {
+  return formatInTimeZone(new Date(), timezone, "yyyy-MM-dd");
+}
+
 function tokenRequest(body: Record<string, unknown>): Request {
   return new Request("http://localhost:3000/api/voice/token", {
     method: "POST",
@@ -100,6 +114,16 @@ function mockTables(opts: {
   } | null;
   participation?: { id: string } | null;
   geduAssignment?: { group_id: string } | null;
+  /**
+   * The gedu's live cover on this group, if any, keyed by the session date the
+   * route asks for. The mock answers a row only when the route's own `eq`
+   * chain asked about a date in this map — which is what makes "admitted on the
+   * covered date, refused on every other" a real assertion rather than a
+   * constant.
+   */
+  coversByDate?: Record<string, boolean>;
+  /** Whether the joining gedu is still certified. Defaults to true. */
+  certified?: boolean;
   minecraftAccount?: { minecraft_username: string | null; minecraft_uuid: string | null } | null;
   robloxAccount?: { roblox_username: string | null; roblox_user_id: number | null } | null;
 }) {
@@ -156,6 +180,41 @@ function mockTables(opts: {
                   .mockResolvedValue(mockSupabaseSuccess(opts.geduAssignment ?? null)),
               }),
             }),
+          }),
+        }),
+      };
+    }
+    if (table === "session_cover_requests") {
+      // The route's chain is .select().eq(group).eq(date).eq(covered_by)
+      // .eq(status).limit().maybeSingle(). The date is the second `eq`, so the
+      // mock captures it and answers from the map.
+      let askedDate = "";
+      const chain = {
+        eq: (_column: string, value: string) => {
+          if (askedDate === "") askedDate = "seen-group";
+          else if (askedDate === "seen-group") askedDate = value;
+          return chain;
+        },
+        limit: () => ({
+          maybeSingle: () =>
+            Promise.resolve(
+              mockSupabaseSuccess(
+                opts.coversByDate?.[askedDate] === true
+                  ? { id: "cover-1" }
+                  : null,
+              ),
+            ),
+        }),
+      };
+      return { select: vi.fn().mockReturnValue(chain) };
+    }
+    if (table === "gedu_profiles") {
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue(
+              mockSupabaseSuccess({ certified: opts.certified ?? true }),
+            ),
           }),
         }),
       };
@@ -319,6 +378,65 @@ describe("POST /api/voice/token", () => {
       const data = await res.json();
       expect(res.status).toBe(403);
       expect(data.error).toBe("You are not assigned to this group");
+    });
+
+    it("admits a sub holding a live cover on this group for today", async () => {
+      // No assignment anywhere on the product — the acceptance case is a gedu
+      // who only ever met this group as somebody's substitute.
+      authAs("sub-id", { role: "gedu", first_name: "Joonas" });
+      mockTables({
+        group: {},
+        geduAssignment: null,
+        coversByDate: { [todayInProductZone()]: true },
+      });
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      expect(res.status).toBe(200);
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: "sub-id" }),
+      );
+    });
+
+    it("refuses a sub whose cover is on another date of the same group", async () => {
+      // The cover arm is DATE-SCOPED where the assignment arm is not: covering
+      // next Monday buys nothing on this Monday's room. Any date but today is
+      // absent from the map, so the route's own lookup finds nothing.
+      authAs("sub-id", { role: "gedu", first_name: "Joonas" });
+      mockTables({
+        group: {},
+        geduAssignment: null,
+        coversByDate: { "2019-01-01": true },
+      });
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      const data = await res.json();
+      expect(res.status).toBe(403);
+      expect(data.error).toBe("You are not assigned to this group");
+    });
+
+    it("refuses a sub who has since been de-certified", async () => {
+      // Certification gates holding a cover, so losing it ends the access
+      // mid-window rather than only at approval time.
+      authAs("sub-id", { role: "gedu", first_name: "Joonas" });
+      mockTables({
+        group: {},
+        geduAssignment: null,
+        coversByDate: { [todayInProductZone()]: true },
+        certified: false,
+      });
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      expect(res.status).toBe(403);
+    });
+
+    it("does not narrow an assigned gedu to their covered dates", async () => {
+      // The cover arm ADDS to the product-wide assignment mobility. An assigned
+      // gedu with no cover at all still joins, and the route never asks.
+      authAs("gedu-id", { role: "gedu", first_name: "Edu" });
+      mockTables({
+        group: {},
+        geduAssignment: { group_id: GROUP_ID },
+        coversByDate: {},
+      });
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      expect(res.status).toBe(200);
     });
 
     it("admin bypasses the membership check", async () => {

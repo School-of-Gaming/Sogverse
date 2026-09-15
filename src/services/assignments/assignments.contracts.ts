@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Constants } from "@/types";
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
+import { sessionStaffGedu } from "@/services/session-cover/session-cover.contracts";
 
 /**
  * Runtime contracts for the gedu assignment RPCs. The generated types can't
@@ -86,7 +87,13 @@ export const geduAssignedProduct = z.object({
       created_at: z.string(),
       is_my_group: z.boolean(),
       participant_count: z.number(),
-      gedus: z.array(z.object({ id: z.string(), first_name: z.string() })),
+      /**
+       * The group's educators, each with the assignment role they hold (00260)
+       * — primary or assistant. Every staff read that *lists* a group's gedus
+       * carries it, because "who is on this group" and "in what capacity" are
+       * one answer and the role is a pay class rather than a figure.
+       */
+      gedus: z.array(sessionStaffGedu),
       // Populated only on the caller's own group; null on sister groups.
       roster: z
         .array(

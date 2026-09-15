@@ -519,6 +519,11 @@ function assignmentRow(opts: {
       translations: [{ locale: "en", name: opts.name, description: "" }],
     },
     groupId: `${opts.id}-group-a`,
+    // A standing assignment — the recurring card these fixtures are all about.
+    // A live cover is its own small card with its own date and is fixtured
+    // where that card is demoed.
+    kind: "assignment",
+    coveredDate: null,
     groupCount: opts.groupCount,
     participantCount: opts.participantCount,
     groupName: opts.groupName,

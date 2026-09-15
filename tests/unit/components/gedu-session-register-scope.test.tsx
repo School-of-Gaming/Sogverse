@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
+import { NO_SESSION_STAFFING } from "@/lib/session-staffing";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { SessionFeed } from "@/components/gedu/session-feed/SessionFeed";
@@ -98,6 +99,7 @@ function pastEntry(): SessionFeedEntry {
     id: PAST_ID,
     startsAt: PAST_STARTS,
     endsAt: PAST_ENDS,
+    staffing: NO_SESSION_STAFFING,
     report: "# Redstone week\n\nWe built item sorters.",
     staffNote: null,
     attendance: { ...STORED_MARKS },

@@ -92,10 +92,18 @@ describe("POST /api/admin/products/[id]/groups/apply", () => {
     mockRpc.mockResolvedValue({ data: { tempMap: {} }, error: null });
 
     const batch: GroupChangeSet = {
-      addedGroups: [{ tempId: "t1", name: "Group A", geduIds: ["g1"] }],
+      addedGroups: [
+        {
+          tempId: "t1",
+          name: "Group A",
+          gedus: [{ geduId: "g1", role: "primary" }],
+        },
+      ],
       renamedGroups: [{ groupId: "G1", name: "Renamed" }],
       deletedGroupIds: ["G2"],
-      geduAssignmentsAdded: [{ groupId: "G1", geduId: "g3" }],
+      geduAssignmentsAdded: [
+        { groupId: "G1", geduId: "g3", role: "assistant" },
+      ],
       geduAssignmentsRemoved: [{ groupId: "G1", geduId: "g4" }],
       participationMoves: [
         { participationId: "p1", toGroupId: "G1" },

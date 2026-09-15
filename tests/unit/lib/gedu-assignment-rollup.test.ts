@@ -42,6 +42,10 @@ function row(over: {
       translations: [{ locale: "en", name: over.name, description: "" }],
     },
     groupId: `${over.id}-group`,
+    // A standing assignment: the rollup this suite is about is the recurring
+    // card's, and a live cover is its own small card keyed to one date.
+    kind: "assignment",
+    coveredDate: null,
     groupCount: 2,
     participantCount: 14,
     groupName: `${over.name} A`,

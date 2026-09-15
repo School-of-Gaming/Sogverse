@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
+import { NO_SESSION_STAFFING } from "@/lib/session-staffing";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { SessionFeed } from "@/components/gedu/session-feed/SessionFeed";
@@ -80,6 +81,7 @@ function liveEntry(attendance: AttendanceMarks = {}): SessionFeedEntry {
     id: ENTRY_ID,
     startsAt: STARTS_AT,
     endsAt: ENDS_AT,
+    staffing: NO_SESSION_STAFFING,
     report: null,
     staffNote: null,
     attendance,
@@ -280,6 +282,7 @@ describe("SessionFeedItem — the live card shows its register", () => {
       id: "group-1:2026-03-23",
       startsAt: new Date("2026-03-23T06:00:00.000Z"),
       endsAt: new Date("2026-03-23T21:00:00.000Z"),
+      staffing: NO_SESSION_STAFFING,
       report: null,
       staffNote: null,
       attendance: {},

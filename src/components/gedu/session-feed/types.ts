@@ -16,6 +16,7 @@
  */
 
 import type { AttendanceMark, SessionPhoto } from "@/components/session-feed";
+import type { SessionStaffing } from "@/lib/session-staffing";
 
 /**
  * One person on the group's roster, as the workspace's session surfaces need
@@ -74,6 +75,23 @@ interface SessionFeedEntryBase {
   startsAt: Date;
   /** Absolute instant the session ends; rendered in the viewer's zone. */
   endsAt: Date;
+  /**
+   * Who is expected to run this one, what is outstanding about it, and what the
+   * viewer may do about it.
+   *
+   * **On the base, so every kind carries it**, including a `no_record` gap: a
+   * request is filed against a (group, date) and a date the schedule projects
+   * with nothing stored on it is as coverable as any other. An entry whose
+   * group has no assignments and no requests carries an empty staffing rather
+   * than none, so no renderer has to decide what a missing one would mean.
+   *
+   * It is derived from the group's assignments and its cover requests, not
+   * stored anywhere: the feed's builder attaches it per date from the two lists
+   * the document carries. A surface with no signed-in gedu — the admin shell,
+   * the preview scenes — gets honest `false`/`null` viewer fields rather than a
+   * guess.
+   */
+  staffing: SessionStaffing;
 }
 
 /**
