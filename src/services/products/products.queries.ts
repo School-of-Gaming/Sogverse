@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.keys";
-import { municipalityInvoicingKeys } from "@/services/municipality-invoicing/municipality-invoicing.keys";
+import { municipalityInvoicingKeys } from "@/services/municipality-invoicing";
 import type { ProductType, ProductBrowseRow } from "@/types";
 import {
   ProductsService,

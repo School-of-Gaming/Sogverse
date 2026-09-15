@@ -434,9 +434,16 @@ function compactDate(date: string): string {
  * the customer at all. Link one more club to a new buyer and every later
  * customer's position shifts by one, so a file downloaded again after that edit
  * would come back under a different number and read as a second invoice for the
- * same month. A Fennoa number belongs to the customer, does not move, and is
- * unique across customers, which makes the number both stable across data
- * changes and unique within a month by construction.
+ * same month. A Fennoa number belongs to the customer and does not move, which
+ * is what makes this number stable across every data change.
+ *
+ * **What it guarantees within a month, stated exactly**: it is unique across
+ * customers whose numbers differ in their *digits*, because the digits are all
+ * it keeps. Every number Fennoa issues differs there, so in practice this is
+ * uniqueness — but `0204` and `F0204` are two customers with one number, and so
+ * are the digitless fallback's first customer and a real `F0001`. Those are
+ * shapes Fennoa does not issue; the column is free text, so they can be typed,
+ * and this is what would happen if they were.
  */
 function provisionalInvoiceNumber(
   customer: InvoiceCustomerRow,

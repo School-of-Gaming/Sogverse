@@ -32,8 +32,8 @@ import { MunicipalityInvoicingService } from "@/services/municipality-invoicing"
  * document rather than of the reader.
  *
  * A refusal is a 409 with a machine-readable `code`, because the two refusals
- * are ordinary states of an ordinary month rather than faults: a club whose fee
- * nobody has filled in, and a customer whose clubs all sat out the month. The
+ * are ordinary states of an ordinary month rather than faults: a club that ran
+ * this month with no fee against it, and a customer with nothing recorded. The
  * page already renders the same two states as a disabled control with the same
  * reason — both from one predicate — so a 409 here is what somebody reaches by
  * pasting a stale link, not by clicking.

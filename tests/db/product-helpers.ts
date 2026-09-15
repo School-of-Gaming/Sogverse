@@ -247,6 +247,8 @@ import { TEST_IDS } from "./constants";
  *                  municipality and the function refuses every call while that
  *                  club stands — so the "the document carries the customer"
  *                  assertions live there rather than beside the table's own
+ *                  cases in invoice-customers.test.ts, which shares a database
+ *                  with that club and so could not call the RPC at all
  *   80d-80f        admin-dashboard.test.ts's invoice-customer pair (00263): two
  *                  municipality clubs identical in everything the attention
  *                  queue reads except the buyer — 80d names none and 80e names

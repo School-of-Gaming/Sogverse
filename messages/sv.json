@@ -399,7 +399,7 @@
       "clubsWithoutCustomer": "{count, plural, one {# klubb utan faktureringskund} other {# klubbar utan faktureringskund}}",
       "customerNotSet": "Faktureringskund saknas",
       "downloadInvoiceFor": "Ladda ner Finvoice-filen för {customer}",
-      "fileBlockedByFee": "{count, plural, one {Ingen fil: # klubb utan avgift} other {Ingen fil: # klubbar utan avgift}}",
+      "fileBlockedByFee": "{count, plural, one {Ingen fil: # klubb hölls utan avgift} other {Ingen fil: # klubbar hölls utan avgift}}",
       "fileBlockedByNothingToInvoice": "Ingen fil: inget registrerat",
       "loadError": "Det gick inte att läsa in faktureringsmånaden. Uppdatera sidan och försök igen.",
       "loadErrorWithReason": "Det gick inte att läsa in faktureringsmånaden – {reason}. Uppdatera sidan och försök igen."

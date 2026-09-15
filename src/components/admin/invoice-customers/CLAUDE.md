@@ -67,6 +67,16 @@ guarantee that holds whatever route a row arrives by. Both trim, both refuse a b
 an emptied optional field becomes a real null rather than travelling as an empty string —
 "no reference" is one state, and the column refuses the other spelling of it.
 
+**The country is stated, not asked.** Finvoice is Finland's e-invoicing format and a
+municipality club is a Finnish product, so every buyer this feature invoices is Finnish:
+the form opens with `FI` in the box and shows it read-only rather than putting a question
+to an admin that has one answer. Read-only and not disabled — a disabled box is out of the
+tab order and skipped by a screen reader, so the one fact it exists to state would be
+unreachable to anybody not looking at it. The column and the form's own contract still
+take any two-letter code, so a row that is not Finnish survives a round trip through the
+form unchanged, and the first buyer in another country is a change to this form rather
+than a change to the schema.
+
 **Every field is required on the wire, including the two nullable ones.** The update
 function assigns every editable column on every call, so an omitted field would clear a
 reference nobody asked to clear; demanding the field is what makes clearing it a deliberate

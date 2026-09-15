@@ -218,12 +218,16 @@ export function InvoiceCustomerForm({
                 label={fieldLabel.country_code}
                 htmlFor="invoice-customer-country"
               >
+                {/* `readOnly`, not `disabled`: a disabled input is out of the
+                    tab order and skipped by a screen reader, so the one fact
+                    this box exists to state would be unreachable to an admin
+                    who is not looking at it. The lifted grey is the read-only
+                    look every other stated-value field in the app wears. */}
                 <Input
                   id="invoice-customer-country"
                   value={draft.country_code}
                   readOnly
-                  disabled
-                  className="font-mono uppercase"
+                  className="bg-lifted font-mono uppercase"
                 />
               </Field>
             </div>

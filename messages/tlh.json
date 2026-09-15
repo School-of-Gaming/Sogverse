@@ -443,7 +443,7 @@
       "clubsWithoutCustomer": "{count, plural, one {# ghomHom DIlwI’ tu’lu’be’} other {# ghomHom DIlwI’ tu’lu’be’}}",
       "customerNotSet": "DIlwI’ wIvlu’pu’be’",
       "downloadInvoiceFor": "{customer} Finvoice-nav yISuq",
-      "fileBlockedByFee": "{count, plural, one {nav tu’lu’be’: # ghomHom DIl SaHbe’} other {nav tu’lu’be’: # ghomHom DIl SaHbe’}}",
+      "fileBlockedByFee": "{count, plural, one {nav tu’lu’be’: # ghomHom qaSpu’ ’ach DIl SaHbe’} other {nav tu’lu’be’: # ghomHom qaSpu’ ’ach DIl SaHbe’}}",
       "fileBlockedByNothingToInvoice": "nav tu’lu’be’: qonlu’pu’be’",
       "loadError": "DIl jar laDlaHbe’. yIchu’qa’ ’ej yInID.",
       "loadErrorWithReason": "DIl jar laDlaHbe’ – {reason}. yIchu’qa’ ’ej yInID."

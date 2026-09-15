@@ -188,14 +188,18 @@ that has to be re-verified against Fennoa rather than reasoned about.
   a month's file twice produces the same file, and there is no counter for a failed
   download to burn. It is the invoiced month followed by the digits of the buyer's Fennoa
   customer number — numeric and above 100, which is the import's own rule for an
-  identifier, and unique within a month because a customer number is. **It is derived from
-  the buyer rather than from where the buyer sits in the month**, because a re-export has
-  to carry the same number as the export it replaces, whatever changed in between: a
-  position moves the moment another club names a new customer, so every later buyer's file
-  would come back under a different number and read as a second invoice for the same
-  month. A customer number that carries no digit at all is not a shape Fennoa issues; that
-  file falls back to the buyer's place in the month, which is stable for as long as the
-  month's list of buyers is.
+  identifier. **Within a month it is unique across buyers whose customer numbers differ in
+  their digits**, which every number Fennoa issues does — so it is unique over real data,
+  and that is the honest size of the guarantee. Two numbers differing only in a letter,
+  `0204` and `F0204`, are one number here; so are a number carrying no digit at all, which
+  falls back to the buyer's padded place in the month, and a real `F0001`. Neither is a
+  shape Fennoa issues, and the field is free text, which is the whole reason either can be
+  written down. **It is derived from the buyer rather than from where the buyer sits in
+  the month**, because a re-export has to carry the same number as the export it replaces,
+  whatever changed in between: a position moves the moment another club names a new
+  customer, so every later buyer's file would come back under a different number and read
+  as a second invoice for the same month. The digitless fallback is the one place a
+  position is used, and it is stable only for as long as the month's list of buyers is.
 - **Payment terms, e-invoice routing and department names live on the customer card** and
   are not sent. They belong to the accounting system; a second copy in the file would be a
   copy that goes stale.

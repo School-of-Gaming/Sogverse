@@ -399,7 +399,7 @@
       "clubsWithoutCustomer": "{count, plural, one {# club sans client de facturation} other {# clubs sans client de facturation}}",
       "customerNotSet": "Client de facturation non défini",
       "downloadInvoiceFor": "Télécharger le fichier Finvoice pour {customer}",
-      "fileBlockedByFee": "{count, plural, one {Pas de fichier : # club sans tarif} other {Pas de fichier : # clubs sans tarif}}",
+      "fileBlockedByFee": "{count, plural, one {Pas de fichier : # club a eu lieu sans tarif} other {Pas de fichier : # clubs ont eu lieu sans tarif}}",
       "fileBlockedByNothingToInvoice": "Pas de fichier : rien d’enregistré",
       "loadError": "Impossible de charger le mois de facturation. Actualisez la page pour réessayer.",
       "loadErrorWithReason": "Impossible de charger le mois de facturation – {reason}. Actualisez la page pour réessayer."

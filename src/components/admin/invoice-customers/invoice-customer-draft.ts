@@ -53,12 +53,14 @@ export type InvoiceCustomerField = (typeof INVOICE_CUSTOMER_FIELDS)[number];
 /**
  * A blank draft for the create form.
  *
- * The country is the one field that opens with an answer in it. Every customer
- * on this table today is Finnish — a municipality club is Finnish by
- * definition — so `FI` is the answer nearly every time, and typing it out is
- * work that buys nothing. It is an ordinary editable field rather than a locked
- * one, because the column takes any ISO code and the first customer in another
- * country must not need a deploy.
+ * The country is the one field that opens with an answer in it, and the form
+ * states that answer rather than asking for it: Finvoice is Finland's
+ * e-invoicing format and a municipality club is a Finnish product, so every
+ * customer this feature invoices is Finnish and there is no question here for
+ * an admin to answer. The contract still enforces the two-letter shape rather
+ * than pinning the value to `FI`, so a row that is not Finnish — one that
+ * arrived some other way — survives a round trip through this form unharmed
+ * instead of being silently rewritten.
  */
 export function emptyInvoiceCustomerDraft(): InvoiceCustomerDraft {
   return {

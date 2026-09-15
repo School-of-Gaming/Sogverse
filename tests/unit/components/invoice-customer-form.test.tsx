@@ -115,6 +115,12 @@ describe("the invoice customer form", () => {
 
     // Not the required message: the box is not empty, and telling an admin to
     // fill in a field they have filled in is the wrong instruction.
+    //
+    // The form no longer lets an admin type a country at all — the box states
+    // `FI` and is read-only — so this case drives the draft directly and is
+    // guarding the contract rather than the control: it is what a row arriving
+    // some other way is checked against, and it is why neither the rule nor the
+    // `errors.countryShape` message it names is dead copy to be swept away.
     expect(screen.getByText("errors.countryShape")).toBeTruthy();
     expect(onSubmit).not.toHaveBeenCalled();
   });

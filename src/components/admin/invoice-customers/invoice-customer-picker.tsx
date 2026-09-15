@@ -37,31 +37,40 @@ export function InvoiceCustomerPicker({
 }) {
   const t = useTranslations("admin.invoiceCustomers");
   const c = useTranslations("common");
-  const { data: customers, isPending, isError } = useInvoiceCustomers();
+  const { data: customers, isError } = useInvoiceCustomers();
   const errorId = useId();
 
-  // The read has answered with a list. Everything the control can safely say —
-  // its options, the linked customer as the selected one, the ability to change
-  // it — waits on this one fact, because a list that is not there cannot hold
-  // the row the form is pointing at.
-  const settled = !isPending && !isError;
+  // The read has answered with a list — and having answered once, it stays
+  // answered. A background refetch that fails leaves the cached rows in place
+  // and only flips the error flag, so the fact the control waits on is the
+  // presence of the list, never the absence of an error: keying off the flag
+  // would blank a working picker because a refresh the admin never asked for
+  // timed out. Everything the control can safely say — its options, the linked
+  // customer as the selected one, the ability to change it — waits on this one
+  // fact, because a list that is not there cannot hold the row the form is
+  // pointing at.
+  const settled = customers !== undefined;
+  // A failure with nothing cached behind it is the only failure the admin has
+  // to be told about: with a list in hand the control still answers the
+  // question correctly, and a stale one is the same list a moment older.
+  const listUnavailable = isError && customers === undefined;
 
   return (
-    <Field
-      label={t("picker.label")}
-      htmlFor="invoice-customer"
-      hint={t("picker.hint")}
-      labelAction={
-        <Link
-          href={ROUTES.admin.invoiceCustomers}
-          className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-        >
-          {t("picker.manage")}
-        </Link>
-      }
-    >
-      {({ hintId }) => (
-        <>
+    <div className="flex flex-col gap-2.5">
+      <Field
+        label={t("picker.label")}
+        htmlFor="invoice-customer"
+        hint={t("picker.hint")}
+        labelAction={
+          <Link
+            href={ROUTES.admin.invoiceCustomers}
+            className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          >
+            {t("picker.manage")}
+          </Link>
+        }
+      >
+        {({ hintId }) => (
           <select
             id="invoice-customer"
             // The empty string is the control's spelling of "no answer" — a
@@ -70,7 +79,9 @@ export function InvoiceCustomerPicker({
             value={settled ? (value ?? "") : ""}
             onChange={(event) => onChange(event.target.value || null)}
             aria-describedby={
-              isError ? [hintId, errorId].filter(Boolean).join(" ") : hintId
+              listUnavailable
+                ? [hintId, errorId].filter(Boolean).join(" ")
+                : hintId
             }
             // Empty and inert until the list lands, rather than showing the
             // options it has: the "not set" option is the one a browser falls back
@@ -81,34 +92,47 @@ export function InvoiceCustomerPicker({
             // dozen rows and lands in a frame or two; if it ever does not, that is
             // an anomaly to investigate rather than a state to design for.
             //
-            // **A read that FAILED is the same emptiness that never ends**, and
-            // it is the case where showing "Not set" would be a lie rather than
-            // a first frame: the club's customer is in the form state either
-            // way, and a control offering one option, selected, would tell the
-            // admin this club has no buyer and let them save that. So the empty,
-            // inert box stays, and the line below says why it is empty — the
-            // field cannot be answered until the list can be read, and the
-            // answer already stored is untouched.
+            // **A first read that FAILED is the same emptiness that never
+            // ends**, and it is the case where showing "Not set" would be a lie
+            // rather than a first frame: the club's customer is in the form
+            // state either way, and a control offering one option, selected,
+            // would tell the admin this club has no buyer and let them save
+            // that. So the empty, inert box stays, and the line at the end of
+            // the field says why it is empty — the field cannot be answered
+            // until the list can be read, and the answer already stored is
+            // untouched.
             disabled={!settled}
             className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
           >
-            {settled && <option value="">{c("notSet")}</option>}
-            {(customers ?? []).map((customer) => (
-              <option key={customer.id} value={customer.id}>
-                {t("picker.option", {
-                  name: customer.invoice_name,
-                  number: customer.fennoa_customer_no,
-                })}
-              </option>
-            ))}
+            {settled && (
+              <>
+                <option value="">{c("notSet")}</option>
+                {customers.map((customer) => (
+                  <option key={customer.id} value={customer.id}>
+                    {t("picker.option", {
+                      name: customer.invoice_name,
+                      number: customer.fennoa_customer_no,
+                    })}
+                  </option>
+                ))}
+              </>
+            )}
           </select>
-          {isError && (
-            <p id={errorId} className="text-sm text-destructive">
-              {t("errors.listUnavailable")}
-            </p>
-          )}
-        </>
+        )}
+      </Field>
+      {/* Below the hint, at the end of the field, because this line arrives on
+          the query's schedule rather than the admin's. The select's own box is
+          rendered at its final size from the first frame and never moves; what
+          a late line cannot be allowed to do is push the hint — and the fees
+          card under it — down the page, so it goes last, where the gap under
+          the field is already slack and its arrival is paid for out of that. The
+          order is load-bearing: a tidy-up that moved this back up beside the
+          control would look tidier and would reintroduce the shift. */}
+      {listUnavailable && (
+        <p id={errorId} className="text-sm text-destructive">
+          {t("errors.listUnavailable")}
+        </p>
       )}
-    </Field>
+    </div>
   );
 }

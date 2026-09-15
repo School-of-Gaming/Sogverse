@@ -34,7 +34,8 @@ import {
  * **A row's name still leaves the preview.** Each is a real link to the live
  * edit page for a fixture's id, which is the honest behaviour for a link whose
  * whole purpose is to be the way out of a row — and following one lands on that
- * page's not-found state, because no customer has the id a fixture carries.
+ * page's not-found state, because a fixture id is a readable stand-in rather
+ * than a UUID, so the read fails on the column's uuid cast before it can miss.
  *
  * The refusal scenario is where the form's error state is judged, and it throws
  * the wire object rather than an `Error` so the form takes the branch it takes

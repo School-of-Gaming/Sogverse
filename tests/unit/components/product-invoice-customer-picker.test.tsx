@@ -177,7 +177,7 @@ describe("the invoice customer picker on the fees section", () => {
     expect(select.disabled).toBe(true);
   });
 
-  it("stays inert and says why when the read fails", () => {
+  it("stays inert and says why when the first read fails", () => {
     // The emptiness that never ends. Offering "Not set" alone here would tell
     // the admin this club has no buyer — and let them save that over the one it
     // has — so the box stays empty and inert, and the line beneath it is what
@@ -196,5 +196,31 @@ describe("the invoice customer picker on the fees section", () => {
     const error = screen.getByText(/errors\.listUnavailable/);
     // Announced with the field rather than merely printed beside it.
     expect(select.getAttribute("aria-describedby")).toContain(error.id);
+  });
+
+  it("keeps working when a refetch fails behind a list it already has", () => {
+    // React Query holds the cached rows through a failed background refetch and
+    // only raises the flag, so a picker keyed on the flag would blank itself —
+    // and drop the club's stored buyer — because of a refresh the admin never
+    // asked for. The list is what the control waits on, so with a list in hand
+    // there is nothing to report and nothing to disable.
+    const chosen = INVOICE_CUSTOMER_FIXTURES[2];
+    mockUseInvoiceCustomers.mockReturnValue({
+      data: INVOICE_CUSTOMER_FIXTURES,
+      isPending: false,
+      isError: true,
+    });
+    // Seeded with a buyer rather than picked, because the club this stands for
+    // is one an admin opened with its customer already linked.
+    const config = PRODUCT_TYPE_CONFIG.municipality_club;
+    const seeded = initialState(config, "en");
+    seeded.invoiceCustomerId = chosen.id;
+    render(<FeesSection state={seeded} setState={() => {}} config={config} />);
+
+    const select = screen.getByLabelText<HTMLSelectElement>(/picker\.label/);
+    expect(select.disabled).toBe(false);
+    expect(select.options).toHaveLength(INVOICE_CUSTOMER_FIXTURES.length + 1);
+    expect(select.value).toBe(chosen.id);
+    expect(screen.queryByText(/errors\.listUnavailable/)).toBeNull();
   });
 });
