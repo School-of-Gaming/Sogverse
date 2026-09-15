@@ -359,6 +359,24 @@
           "waitlistOpenSeatsWithOffers": "{waiting} loStaH · {open, plural, one {# quS} other {# quSmey}} poSmoH · {offers} jang loStaH"
         }
       },
+      "cover": {
+        "title": "lIw tlhobmey",
+        "allClear": "lIw poQbogh may’ tu’lu’be’.",
+        "justNow": "{count, plural, one {DaH # lIw lajlu’} other {DaH # lIwmey lajlu’}}",
+        "listLabel": "lIw poQbogh may’mey",
+        "offersLabel": "lIwmeH tlhobbogh Gedupu’",
+        "away": "pawbe’:",
+        "unnamed": "pong Hutlh Gedu",
+        "reason": {
+          "sick": "rop",
+          "other": "latlh"
+        },
+        "noOffers": "nob tu’lu’be’ DaH.",
+        "openGroup": "ghom’a’ yIpoS",
+        "approve": "yIlaj",
+        "approving": "lajlI’…",
+        "failed": "lajlu’be’ – yInID."
+      },
       "certification": {
         "title": "Gedu patlh",
         "justNow": "DaH patlh nobta’: {count}",
@@ -501,6 +519,11 @@
         "manage": "DIlwI’pu’ yIQorgh",
         "option": "{name} ({number})"
       }
+    },
+    "geduRole": {
+      "primary": "Gedu wa’DIch",
+      "assistant": "Gedu boQwI’",
+      "selectAria": "{name} Qu’"
     },
     "geduContract": {
       "heading": "Gedu quv chut",
@@ -975,6 +998,8 @@
         "noResults": "Gedu lo’wI’ tu’be’lu’.",
         "current": "DaH",
         "alreadyAssigned": "ngu’lu’pu’",
+        "alreadyExpected": "may’vamDaq pawpu’",
+        "absentGedu": "lIwlu’bogh Gedu",
         "notCertified": "patlh ghajbe’"
       },
       "participantPicker": {
@@ -1150,6 +1175,41 @@
           "standard": "ghomHom Qu’mey je Huch nob motlh lo’. Segh ngu’ nob, vaj naDev choHlaH pagh."
         },
         "note": "Dung Huch Huch nob ghaj. ngeHbej poHDaq nob mI’ ngu’ Stripe, vaj DaHjaj Finland nob ’oH."
+      },
+      "staffing": {
+        "setSub": "lIw yIngu’",
+        "nobodyExpectedHint": "may’vamvaD Gedu ngu’lu’be’.",
+        "clearSub": "lIw yIteq",
+        "withdraw": "tlhob yInatlh",
+        "withRole": "{name} · {role}",
+        "absentLabel": "pawbe’",
+        "subLabel": "lIw",
+        "changeSub": "yIchoH",
+        "absentStepTitle": "’Iv pawbe’?",
+        "absentStepBody": "{date} may’vaD Gedupu’ law’ ngu’lu’pu’. pawbe’bogh ghaH yIwIv.",
+        "pickerTitle": "lIw yIwIv",
+        "pickerDescription": "{name} lIwlaH patlh ghajbogh Hoch Gedu. may’vamDaq ngu’lu’pu’bogh Gedupu’ lulaHbe’.",
+        "confirmTitle": "lIw yIngu’",
+        "confirmBody": "{date} may’ Dev ’Iv — pawbe’bogh Gedu tlhoy’ — yIqon.",
+        "approvesOpenRequest": "tlhob poSbogh lajlu’; cha’DIch chenmoHlu’be’.",
+        "replacesCurrentSub": "DaH may’ lIwtaH {name}. ghaH yIchoH.",
+        "reasonLabel": "meq",
+        "reasonUnset": "ja’lu’be’",
+        "reasonSick": "rop",
+        "reasonOther": "latlh",
+        "noteLabel": "yaHvaD qonta’",
+        "notePlaceholder": "lIwvam yaH Sovnis Hoch.",
+        "noteRemaining": "{count} ngutlhmey ratlh",
+        "confirmAction": "lIw yIngu’",
+        "setFailed": "lIw ngu’lu’be’. yIboq.",
+        "clearTitle": "lIw yIteq’a’?",
+        "clearBody": "{date} {name} lIwqa’be’ {sub}, ’ej lIw poQbogh may’mey tetlhDaq cheghqa’ may’.",
+        "clearConfirm": "lIw yIteq",
+        "clearFailed": "lIw teqlu’be’. yIboq.",
+        "withdrawTitle": "tlhob yInatlh’a’?",
+        "withdrawBody": "{date} may’Daq pawqu’ {name}. Hoch nob lunatlhlu’ ’ej lIw qonlu’be’.",
+        "withdrawConfirm": "tlhob yInatlh",
+        "withdrawFailed": "tlhob natlhlu’be’. yIboq."
       },
       "sessions": {
         "loadFailed": "may’mey qonta’ghach laDlaHbe’. nIteb yIchu’qa’.",
@@ -1802,6 +1862,7 @@
     "camps": "raghmey",
     "events": "Qu’mey",
     "myGroupsEmptyStateGedu": "ghom’a’Daq Dalanlu’DI’, may’ veb tlhej naDev leghlu’.",
+    "coverPool": "lIw",
     "billing": "Huch DIl",
     "help": "boQ",
     "tools": "janmey",
@@ -1952,6 +2013,22 @@
     }
   },
   "gedu": {
+    "cover": {
+      "cardEyebrow": "lIw",
+      "cardOpenLabel": "{product} — may’ DalIwbogh",
+      "poolHeading": "lIw poQbogh may’mey",
+      "poolAllClear": "DaH lIw poQbogh may’ tu’lu’be’.",
+      "poolRemote": "HeHDaq",
+      "poolSiteUnknown": "Daq ngu’lu’be’ DaH",
+      "poolRolePrimary": "Gedu wa’DIch",
+      "poolRoleAssistant": "Gedu boQwI’",
+      "poolFee": "{fee} / may’",
+      "poolOfferAction": "jIlIwlaH",
+      "poolOfferPending": "vIngeHtaH…",
+      "poolWithdrawAction": "nob yInatlh",
+      "poolWithdrawPending": "natlhlI’…",
+      "poolActionFailed": "pollu’be’. yIboq."
+    },
     "coverage": {
       "title": "So’ Daqmey",
       "remoteOnlyNote": "ghom’a’Daj qemlaHbe’ latlh Gedu ’e’ luneHchugh, SoH DaDIvmoH. Hop neH DaqaDchugh, yIchIm yImej.",
@@ -2050,7 +2127,33 @@
       "creationsAddedCount": "{added}/{total} chelta’",
       "creationsHint": "may’ Qav ’oH may’vam’e’. Hoch chenmoHta’ ghajDI’ neH rInpu’. pong yIpoS ’ej chenmoHta’ yIchel.",
       "creationsMemberDone": "{name} — chenmoHta’ chelta’",
-      "creationsMemberMissing": "{name} — chenmoHta’ Hutlh"
+      "creationsMemberMissing": "{name} — chenmoHta’ Hutlh",
+      "staffingExpected": "may’vam DevwI’pu’: {names}",
+      "staffingNobodyExpected": "may’vam DevwI’ tu’lu’be’ DaH.",
+      "staffingWithRole": "{name} ({role})",
+      "staffingCoverNeeded": "{name} lIw poQlu’.",
+      "staffingCoveredBy": "{name} lIw ghaH {sub}’e’.",
+      "coverRolePrimary": "Gedu wa’DIch",
+      "coverRoleAssistant": "Gedu boQwI’",
+      "coverRequestAction": "may’vamDaq jIpawlaHbe’",
+      "coverRequestDialogTitle": "may’vamDaq jIpawlaHbe’",
+      "coverRequestDialogBody": "lIw nej yaH. meq qonta’ je lulegh che’wI’pu’ neH.",
+      "coverReasonLabel": "meq",
+      "coverReasonSick": "rop",
+      "coverReasonOther": "latlh",
+      "coverNoteLabel": "yaHvaD qonta’",
+      "coverNotePlaceholder": "yaH Sovnis Hoch",
+      "coverNoteRemaining": "{count, plural, one {# ngutlh ratlh} other {# ngutlhmey ratlh}}",
+      "coverRequestConfirm": "yIchav",
+      "coverRequestFailed": "pollu’be’. yIboq.",
+      "coverRequestStatusOpen": "bIpawlaHbe’ bIja’ta’. lIw nejlu’taH.",
+      "coverRequestStatusOffers": "{count, plural, one {# nob loStaH} other {# nobmey loStaH}}",
+      "coverRequestStatusCovered": "{name} ghaH lIwlIj’e’.",
+      "coverWithdrawAction": "jIpawlaH DaH",
+      "coverWithdrawTitle": "DaH Danatlh’a’?",
+      "coverWithdrawBody": "may’ DaDevqa’, ’ej Hoch lIw nob lunatlhlu’.",
+      "coverWithdrawConfirm": "yInatlh",
+      "coverWithdrawFailed": "pollu’be’. yIboq."
     },
     "groupNotes": {
       "heading": "ghom’a’vam",

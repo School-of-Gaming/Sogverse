@@ -315,6 +315,24 @@
           "waitlistOpenSeatsWithOffers": "{waiting} en liste d’attente · {open, plural, one {# place libre} other {# places libres}} · {offers} en attente de réponse"
         }
       },
+      "cover": {
+        "title": "Demandes de remplacement",
+        "allClear": "Aucune séance n’a besoin d’un remplacement.",
+        "justNow": "{count, plural, one {# remplacement validé à l’instant} other {# remplacements validés à l’instant}}",
+        "listLabel": "Séances ayant besoin d’un remplacement",
+        "offersLabel": "Gedus proposant de remplacer",
+        "away": "Absence :",
+        "unnamed": "Gedu sans nom",
+        "reason": {
+          "sick": "Maladie",
+          "other": "Autre"
+        },
+        "noOffers": "Aucune proposition pour l’instant.",
+        "openGroup": "Ouvrir le groupe",
+        "approve": "Valider",
+        "approving": "Validation…",
+        "failed": "La validation a échoué – réessayez."
+      },
       "certification": {
         "title": "Certification des Gedus",
         "justNow": "{count} certifiés à l’instant",
@@ -457,6 +475,11 @@
         "manage": "Gérer les clients de facturation",
         "option": "{name} ({number})"
       }
+    },
+    "geduRole": {
+      "primary": "Gedu principal",
+      "assistant": "Gedu assistant",
+      "selectAria": "Rôle de {name}"
     },
     "geduContract": {
       "heading": "Contrat Gedu",
@@ -931,6 +954,8 @@
         "noResults": "Aucun Gedu ne correspond à votre recherche.",
         "current": "Actuel",
         "alreadyAssigned": "Déjà affecté",
+        "alreadyExpected": "Déjà sur cette séance",
+        "absentGedu": "Le Gedu remplacé",
         "notCertified": "Non certifié"
       },
       "participantPicker": {
@@ -1106,6 +1131,41 @@
           "standard": "Les clubs et les événements payants sont vendus au taux normal finlandais. Le taux découle du type de produit et ne se modifie pas ici."
         },
         "note": "Le prix ci-dessus est TTC. Stripe calcule le montant exact au moment de la vente, il s’agit donc du taux finlandais en vigueur aujourd’hui."
+      },
+      "staffing": {
+        "setSub": "Définir un remplacement",
+        "nobodyExpectedHint": "Aucun Gedu n’est prévu à cette séance.",
+        "clearSub": "Retirer le remplacement",
+        "withdraw": "Annuler la demande",
+        "withRole": "{name} · {role}",
+        "absentLabel": "Absence",
+        "subLabel": "Remplacement",
+        "changeSub": "Modifier",
+        "absentStepTitle": "Qui ne sera pas là ?",
+        "absentStepBody": "Plusieurs Gedus sont prévus à la séance du {date}. Choisissez celui qui ne sera pas là.",
+        "pickerTitle": "Choisir un remplacement",
+        "pickerDescription": "N’importe quel Gedu certifié peut remplacer {name}. Les Gedus déjà prévus à cette séance ne sont pas disponibles.",
+        "confirmTitle": "Définir un remplacement",
+        "confirmBody": "Indiquez qui anime la séance du {date} à la place du Gedu absent.",
+        "approvesOpenRequest": "Cela valide la demande ouverte au lieu d’en créer une seconde.",
+        "replacesCurrentSub": "Cela remplace {name}, qui assure la séance pour le moment.",
+        "reasonLabel": "Motif",
+        "reasonUnset": "Non précisé",
+        "reasonSick": "Maladie",
+        "reasonOther": "Autre",
+        "noteLabel": "Note pour le bureau",
+        "notePlaceholder": "Ce que le bureau devrait savoir sur ce remplacement.",
+        "noteRemaining": "{count} caractères restants",
+        "confirmAction": "Définir le remplacement",
+        "setFailed": "Le remplacement n’a pas pu être défini. Réessayez.",
+        "clearTitle": "Retirer le remplacement ?",
+        "clearBody": "{sub} ne remplace plus {name} le {date}, et la séance revient dans la file d’attente comme séance cherchant un remplacement.",
+        "clearConfirm": "Retirer le remplacement",
+        "clearFailed": "Le remplacement n’a pas pu être retiré. Réessayez.",
+        "withdrawTitle": "Annuler la demande ?",
+        "withdrawBody": "{name} assurera finalement la séance du {date}. Les propositions reçues sont abandonnées et personne n’est enregistré comme remplacement.",
+        "withdrawConfirm": "Annuler la demande",
+        "withdrawFailed": "La demande n’a pas pu être annulée. Réessayez."
       },
       "sessions": {
         "loadFailed": "Impossible de charger le suivi des séances. Rechargez la page pour réessayer.",
@@ -1758,6 +1818,7 @@
     "camps": "Stages",
     "events": "Événements",
     "myGroupsEmptyStateGedu": "Dès qu’un groupe vous est attribué, il apparaîtra ici avec sa prochaine séance.",
+    "coverPool": "Remplacements",
     "billing": "Facturation",
     "help": "Aide",
     "tools": "Outils",
@@ -1912,6 +1973,22 @@
     }
   },
   "gedu": {
+    "cover": {
+      "cardEyebrow": "Remplacement",
+      "cardOpenLabel": "{product} — séance que vous assurez en remplacement",
+      "poolHeading": "Séances cherchant un remplacement",
+      "poolAllClear": "Aucune séance ne cherche de remplacement pour le moment.",
+      "poolRemote": "En ligne",
+      "poolSiteUnknown": "Lieu à confirmer",
+      "poolRolePrimary": "Gedu principal",
+      "poolRoleAssistant": "Gedu assistant",
+      "poolFee": "{fee} par séance",
+      "poolOfferAction": "Je peux assurer cette séance",
+      "poolOfferPending": "Envoi…",
+      "poolWithdrawAction": "Retirer ma proposition",
+      "poolWithdrawPending": "Retrait…",
+      "poolActionFailed": "Cela n’a pas été enregistré. Réessayez."
+    },
     "coverage": {
       "title": "Zones où vous pouvez animer",
       "remoteOnlyNote": "Sert à vous proposer comme remplaçant quand un autre Gedu ne peut pas assurer son club. Laissez vide si vous ne remplacez qu’à distance.",
@@ -2010,7 +2087,33 @@
       "creationsAddedCount": "{added} sur {total} ajoutées",
       "creationsHint": "C’est la dernière séance du cycle, et elle n’est terminée que lorsque chacun a une création. Ouvrez un nom pour en ajouter une.",
       "creationsMemberDone": "{name} — création ajoutée",
-      "creationsMemberMissing": "{name} — création manquante"
+      "creationsMemberMissing": "{name} — création manquante",
+      "staffingExpected": "Séance animée par : {names}",
+      "staffingNobodyExpected": "Personne n’anime encore cette séance.",
+      "staffingWithRole": "{name} ({role})",
+      "staffingCoverNeeded": "Un remplacement est nécessaire pour {name}.",
+      "staffingCoveredBy": "{sub} remplace {name}.",
+      "coverRolePrimary": "Gedu principal",
+      "coverRoleAssistant": "Gedu assistant",
+      "coverRequestAction": "Je ne peux pas assurer cette séance",
+      "coverRequestDialogTitle": "Je ne peux pas assurer cette séance",
+      "coverRequestDialogBody": "Le bureau cherchera un remplacement. Votre motif et votre note ne sont visibles que par les admins.",
+      "coverReasonLabel": "Motif",
+      "coverReasonSick": "Maladie",
+      "coverReasonOther": "Autre chose",
+      "coverNoteLabel": "Note pour le bureau",
+      "coverNotePlaceholder": "Ce que le bureau devrait savoir",
+      "coverNoteRemaining": "{count, plural, one {# caractère restant} other {# caractères restants}}",
+      "coverRequestConfirm": "Confirmer",
+      "coverRequestFailed": "Cela n’a pas été enregistré. Réessayez.",
+      "coverRequestStatusOpen": "Vous avez signalé votre absence pour cette séance. En attente d’un remplacement.",
+      "coverRequestStatusOffers": "{count, plural, one {# proposition en attente} other {# propositions en attente}}",
+      "coverRequestStatusCovered": "{name} vous remplace.",
+      "coverWithdrawAction": "Finalement, je serai là",
+      "coverWithdrawTitle": "Annuler ce signalement ?",
+      "coverWithdrawBody": "Vous animez de nouveau la séance et toutes les propositions de remplacement sont abandonnées.",
+      "coverWithdrawConfirm": "Annuler le signalement",
+      "coverWithdrawFailed": "Cela n’a pas été enregistré. Réessayez."
     },
     "groupNotes": {
       "heading": "À propos du groupe",

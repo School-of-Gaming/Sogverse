@@ -315,6 +315,24 @@
           "waitlistOpenSeatsWithOffers": "{waiting} i kö · {open, plural, one {# plats} other {# platser}} lediga · {offers} väntar på svar"
         }
       },
+      "cover": {
+        "title": "Vikarieförfrågningar",
+        "allClear": "Inget tillfälle behöver en vikarie.",
+        "justNow": "{count, plural, one {# vikarie godkänd nyss} other {# vikarier godkända nyss}}",
+        "listLabel": "Tillfällen som behöver en vikarie",
+        "offersLabel": "Geduer som erbjuder sig att vikariera",
+        "away": "Borta:",
+        "unnamed": "Namnlös Gedu",
+        "reason": {
+          "sick": "Sjuk",
+          "other": "Annat"
+        },
+        "noOffers": "Inga erbjudanden än.",
+        "openGroup": "Öppna gruppen",
+        "approve": "Godkänn",
+        "approving": "Godkänner…",
+        "failed": "Godkännandet misslyckades – försök igen."
+      },
       "certification": {
         "title": "Gedu-certifiering",
         "justNow": "{count} certifierade nyss",
@@ -457,6 +475,11 @@
         "manage": "Hantera faktureringskunder",
         "option": "{name} ({number})"
       }
+    },
+    "geduRole": {
+      "primary": "Huvud-Gedu",
+      "assistant": "Assisterande Gedu",
+      "selectAria": "Roll för {name}"
     },
     "geduContract": {
       "heading": "Gedu-avtal",
@@ -931,6 +954,8 @@
         "noResults": "Inga Geduer matchar din sökning.",
         "current": "Nuvarande",
         "alreadyAssigned": "Redan tilldelad",
+        "alreadyExpected": "Redan på tillfället",
+        "absentGedu": "Gedun som vikarieras",
         "notCertified": "Inte certifierad"
       },
       "participantPicker": {
@@ -1106,6 +1131,41 @@
           "standard": "Klubbar och avgiftsbelagda evenemang säljs med Finlands allmänna momssats. Satsen följer av produkttypen och kan inte ändras här."
         },
         "note": "Priset ovan innehåller moms. Stripe räknar ut det exakta beloppet när köpet sker, så det här är Finlands sats i dag."
+      },
+      "staffing": {
+        "setSub": "Ange vikarie",
+        "nobodyExpectedHint": "Ingen Gedu är inbokad på det här tillfället.",
+        "clearSub": "Ta bort vikarie",
+        "withdraw": "Dra tillbaka förfrågan",
+        "withRole": "{name} · {role}",
+        "absentLabel": "Borta",
+        "subLabel": "Vikarie",
+        "changeSub": "Ändra",
+        "absentStepTitle": "Vem är borta?",
+        "absentStepBody": "Fler än en Gedu är inbokad på tillfället den {date}. Välj den som inte kommer att vara där.",
+        "pickerTitle": "Välj en vikarie",
+        "pickerDescription": "Vilken certifierad Gedu som helst kan vikariera för {name}. Geduer som redan är inbokade på tillfället är inte tillgängliga.",
+        "confirmTitle": "Ange vikarie",
+        "confirmBody": "Registrera vem som leder tillfället den {date} i den frånvarande Geduns ställe.",
+        "approvesOpenRequest": "Det här godkänner den öppna förfrågan i stället för att skapa en ny.",
+        "replacesCurrentSub": "Det här ersätter {name}, som vikarierar på tillfället just nu.",
+        "reasonLabel": "Orsak",
+        "reasonUnset": "Inte angiven",
+        "reasonSick": "Sjuk",
+        "reasonOther": "Annat",
+        "noteLabel": "Notering till kontoret",
+        "notePlaceholder": "Något kontoret bör veta om det här vikariatet.",
+        "noteRemaining": "{count} tecken kvar",
+        "confirmAction": "Ange vikarien",
+        "setFailed": "Vikarien kunde inte anges. Försök igen.",
+        "clearTitle": "Ta bort vikarien?",
+        "clearBody": "{sub} slutar vikariera för {name} den {date}, och tillfället går tillbaka till kön som ett tillfälle som behöver vikarie.",
+        "clearConfirm": "Ta bort vikarien",
+        "clearFailed": "Vikarien kunde inte tas bort. Försök igen.",
+        "withdrawTitle": "Dra tillbaka förfrågan?",
+        "withdrawBody": "{name} kommer till tillfället den {date} ändå. Alla erbjudanden på förfrågan stryks och ingen registreras som vikarie.",
+        "withdrawConfirm": "Dra tillbaka förfrågan",
+        "withdrawFailed": "Förfrågan kunde inte dras tillbaka. Försök igen."
       },
       "sessions": {
         "loadFailed": "Dokumentationen av tillfällena kunde inte laddas. Ladda om sidan för att försöka igen.",
@@ -1758,6 +1818,7 @@
     "camps": "Läger",
     "events": "Evenemang",
     "myGroupsEmptyStateGedu": "När du tilldelas en grupp visas den här tillsammans med sitt nästa tillfälle.",
+    "coverPool": "Vikariat",
     "billing": "Fakturering",
     "help": "Hjälp",
     "tools": "Verktyg",
@@ -1912,6 +1973,22 @@
     }
   },
   "gedu": {
+    "cover": {
+      "cardEyebrow": "Vikariat",
+      "cardOpenLabel": "{product} – tillfälle du vikarierar på",
+      "poolHeading": "Tillfällen som behöver en vikarie",
+      "poolAllClear": "Inga tillfällen behöver en vikarie just nu.",
+      "poolRemote": "På distans",
+      "poolSiteUnknown": "Plats bekräftas senare",
+      "poolRolePrimary": "Huvud-Gedu",
+      "poolRoleAssistant": "Assisterande Gedu",
+      "poolFee": "{fee} per tillfälle",
+      "poolOfferAction": "Jag kan vikariera",
+      "poolOfferPending": "Skickar…",
+      "poolWithdrawAction": "Dra tillbaka erbjudandet",
+      "poolWithdrawPending": "Drar tillbaka…",
+      "poolActionFailed": "Det sparades inte. Försök igen."
+    },
     "coverage": {
       "title": "Områden du täcker",
       "remoteOnlyNote": "Används för att matcha dig som vikarie när en annan Gedu inte kan hålla sin klubb. Lämna tomt om du bara vikarierar på distans.",
@@ -2010,7 +2087,33 @@
       "creationsAddedCount": "{added} av {total} tillagda",
       "creationsHint": "Det här är omgångens sista tillfälle, så det är inte klart förrän alla har en skapelse. Öppna ett namn för att lägga till en.",
       "creationsMemberDone": "{name} – skapelse tillagd",
-      "creationsMemberMissing": "{name} – skapelse saknas"
+      "creationsMemberMissing": "{name} – skapelse saknas",
+      "staffingExpected": "Leder det här tillfället: {names}",
+      "staffingNobodyExpected": "Ingen leder det här tillfället än.",
+      "staffingWithRole": "{name} ({role})",
+      "staffingCoverNeeded": "{name} behöver en vikarie.",
+      "staffingCoveredBy": "{sub} vikarierar för {name}.",
+      "coverRolePrimary": "Huvud-Gedu",
+      "coverRoleAssistant": "Assisterande Gedu",
+      "coverRequestAction": "Jag kan inte vara med på det här tillfället",
+      "coverRequestDialogTitle": "Jag kan inte vara med på det här tillfället",
+      "coverRequestDialogBody": "Kontoret letar efter en vikarie. Din orsak och din notering syns bara för administratörer.",
+      "coverReasonLabel": "Orsak",
+      "coverReasonSick": "Sjuk",
+      "coverReasonOther": "Något annat",
+      "coverNoteLabel": "Notering till kontoret",
+      "coverNotePlaceholder": "Något kontoret bör veta",
+      "coverNoteRemaining": "{count, plural, one {# tecken kvar} other {# tecken kvar}}",
+      "coverRequestConfirm": "Bekräfta",
+      "coverRequestFailed": "Det sparades inte. Försök igen.",
+      "coverRequestStatusOpen": "Du har sagt att du inte kan vara med på det här tillfället. Väntar på en vikarie.",
+      "coverRequestStatusOffers": "{count, plural, one {# erbjudande väntar} other {# erbjudanden väntar}}",
+      "coverRequestStatusCovered": "{name} vikarierar för dig.",
+      "coverWithdrawAction": "Jag kan ändå vara med",
+      "coverWithdrawTitle": "Ta tillbaka det här?",
+      "coverWithdrawBody": "Du leder tillfället igen, och alla erbjudanden om att vikariera stryks.",
+      "coverWithdrawConfirm": "Ta tillbaka",
+      "coverWithdrawFailed": "Det sparades inte. Försök igen."
     },
     "groupNotes": {
       "heading": "Om gruppen",
