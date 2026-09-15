@@ -203,6 +203,32 @@ describe("the admin dashboard's cover requests panel", () => {
     expect(screen.queryByText("admin.dashboard.cover.justNow")).toBeNull();
   });
 
+  it("hands every offer back on a row that survived its own approval", async () => {
+    render(
+      <CoverRequestsPanel
+        requests={[WITH_OFFERS]}
+        onApproveOffer={() => Promise.resolve()}
+      />,
+    );
+
+    const pressed = screen.getAllByRole("button", {
+      name: "admin.dashboard.cover.approve",
+    })[0];
+    await act(async () => pressed.click());
+
+    // The row is the one the case above describes: approved, and offered again
+    // by the source. It is the *same* component instance — the panel keys the
+    // list item by the request id — so the committing flag it set on the click
+    // is still the one deciding whether anything here may be pressed. Left set,
+    // every offer on a live request would be unpressable for the rest of the
+    // sitting, with no second admin around to undo it.
+    const buttons = screen.getAllByRole<HTMLButtonElement>("button", {
+      name: "admin.dashboard.cover.approve",
+    });
+    expect(buttons).toHaveLength(2);
+    for (const button of buttons) expect(button.disabled).toBe(false);
+  });
+
   it("keeps the receipt on screen after the last request collapses the panel", async () => {
     // The live ordering, reproduced: the refetch behind the write lands first —
     // which is what the shell's awaited invalidation buys — and the promise

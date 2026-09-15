@@ -701,13 +701,6 @@ const SCENE_VIEWER = "Sanna";
 const SIMULATED_CHECK_MS = 800;
 
 /**
- * Roughly what a fan-out of a dozen mails costs the live route, and longer than
- * the lookup above for the same reason the real one is: the send waits on a
- * provider accepting every address, not on one name being resolved. Long enough
- * to watch the spinner sit in the button's own slot and see that nothing under
- * the card moves when the label lands.
- */
-/**
  * The viewer's own first name, for the request this scene files on their
  * behalf.
  *
@@ -717,6 +710,13 @@ const SIMULATED_CHECK_MS = 800;
  */
 const VIEWER_FIRST_NAME = "Sanna";
 
+/**
+ * Roughly what a fan-out of a dozen mails costs the live route, and longer than
+ * the lookup above for the same reason the real one is: the send waits on a
+ * provider accepting every address, not on one name being resolved. Long enough
+ * to watch the spinner sit in the button's own slot and see that nothing under
+ * the card moves when the label lands.
+ */
 const SIMULATED_SEND_MS = 1400;
 
 /**

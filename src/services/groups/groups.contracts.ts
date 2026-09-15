@@ -48,8 +48,9 @@ export const groupChangeSet = z.object({
   /**
    * Assignments to create **or re-state**. The RPC upserts on (group, gedu) and
    * updates the role, so changing somebody's role is one added element rather
-   * than a remove plus an add — which is what lets the panel stage a role
-   * change beside every other change and save them together.
+   * than a remove plus an add — which is what lets the panel save a role change
+   * the moment it is made, as the one element of an otherwise empty change set.
+   * The panel stages nothing: every assignment action is its own save.
    */
   geduAssignmentsAdded: z.array(
     z.object({

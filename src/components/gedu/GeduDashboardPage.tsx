@@ -28,7 +28,10 @@ import {
   useGeduAssignmentSummaries,
   type GeduAssignmentSummary,
 } from "@/services/gedu-sessions";
-import type { OpenCoverRequest } from "@/services/session-cover";
+import {
+  useOpenCoverRequests,
+  type OpenCoverRequest,
+} from "@/services/session-cover";
 import { GeduCoverPoolSection } from "./GeduCoverPoolSection";
 import { GeduDashboardPageBody } from "./gedu-dashboard-page-body";
 import { GeduDashboardSkeleton } from "./GeduDashboardSkeleton";
@@ -81,9 +84,10 @@ export function GeduDashboardPage({
    * The pool, prefetched by the route — or `null` when that read failed or was
    * never made (an uncertified gedu asks nothing).
    *
-   * `null` is "ask from the browser", not "nothing needs cover": the section
-   * renders nothing until an answer arrives rather than telling a gedu the
-   * queue is clear on the strength of a failed read.
+   * `null` is "ask from the browser", not "nothing needs cover": the section —
+   * heading, nav chip and body alike — is withheld whole until an answer
+   * arrives, rather than telling a gedu the queue is clear on the strength of a
+   * failed read.
    */
   initialCoverRequests: OpenCoverRequest[] | null;
   certified: boolean;
@@ -110,6 +114,21 @@ export function GeduDashboardPage({
   const { data: summaries } = useGeduAssignmentSummaries(
     initialSummaries === null ? undefined : { initialData: initialSummaries },
   );
+  /**
+   * The pool, read here rather than inside the section it feeds — because
+   * *whether there is a section at all* is this page's decision and the answer
+   * is what settles it.
+   *
+   * `enabled` is certification: an uncertified caller may cover nothing and
+   * every write behind the section refuses them server-side, so the honest
+   * answer is not to ask. `undefined` therefore means two things at once, and
+   * both want the same treatment — nobody to ask for, or nobody has answered
+   * yet — so neither renders a heading.
+   */
+  const { data: coverRequests } = useOpenCoverRequests({
+    enabled: certified,
+    initialData: initialCoverRequests ?? undefined,
+  });
 
   const cards = useMemo(
     () =>
@@ -132,17 +151,17 @@ export function GeduDashboardPage({
     <GeduDashboardPageBody
       assignments={cards.assignments}
       covers={cards.covers}
-      // `null` for an uncertified gedu, which withholds the heading and the nav
-      // entry as well as the body: certification is what gates offering and
-      // holding a cover, server-side, so an all-clear line there would be a
-      // promise about a queue this account is not in.
+      // `null` for an uncertified gedu, and `null` until the read answers —
+      // both withhold the heading and the nav entry as well as the body.
+      // Certification is what gates offering and holding a cover, server-side,
+      // so an all-clear line there would be a promise about a queue this
+      // account is not in; and a heading painted before its body has one means
+      // the card arrives above what the reader is already looking at, on data's
+      // own schedule. Heading and body appear together or not at all.
       coverPool={
-        certified ? (
-          <GeduCoverPoolSection
-            certified={certified}
-            initialRequests={initialCoverRequests ?? undefined}
-          />
-        ) : null
+        coverRequests === undefined ? null : (
+          <GeduCoverPoolSection requests={coverRequests} />
+        )
       }
       certified={certified}
       contractAccepted={contractAccepted}

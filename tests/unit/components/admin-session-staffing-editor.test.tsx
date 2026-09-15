@@ -210,6 +210,30 @@ describe("the admin session staffing editor", () => {
     expect(isDisabled(joonas)).toBe(false);
   });
 
+  it("refuses the sub already filling a covered request, as one more expected gedu", () => {
+    // Petra is nobody’s assignment here — she is on this session only because
+    // she is covering Sanna — and the picker still has to refuse her: seating
+    // her as somebody else’s sub would collapse two seats onto one person.
+    // Nothing in the picker’s caller says so specially, and nothing needs to:
+    // the derivation puts a covered request’s sub into `expected`, which is the
+    // set the refusal is built from. This case is what keeps that true.
+    renderEditor({
+      gedus: TWO_SEATS,
+      requests: [coveredRequest(SANNA, "Sanna", JOONAS, "Joonas")],
+    });
+
+    fireEvent.click(button(copy.setSub));
+    fireEvent.click(screen.getByRole("radio", { name: /Sanna/ }));
+    fireEvent.click(button(messages.common.continue));
+
+    const joonas = pickerRow(JOONAS);
+    expect(within(joonas).getByText(pickerCopy.alreadyExpected)).not.toBeNull();
+    expect(isDisabled(joonas)).toBe(true);
+    // And the seat being answered is refused for the other reason, which is the
+    // pair the map only ever holds.
+    expect(within(pickerRow(SANNA)).getByText(pickerCopy.absentGedu)).not.toBeNull();
+  });
+
   it("carries an optional reason and note into the write", async () => {
     const { onSetCover } = renderEditor({ gedus: ONE_PRIMARY });
 

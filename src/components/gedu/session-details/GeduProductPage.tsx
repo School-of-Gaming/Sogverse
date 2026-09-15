@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import type { GameAccountStatus } from "@/components/game-account";
@@ -17,6 +18,7 @@ import { productLocalDate } from "@/lib/session-occurrence";
 import { useNow } from "@/providers";
 import { useGeduAssignedProduct } from "@/services/assignments";
 import {
+  geduSessionKeys,
   useAddSessionImage,
   useDeleteSessionImage,
   useEmailSessionReport,
@@ -251,6 +253,9 @@ function Workspace({
   // that filed the absence redraws itself with nothing here refetching by hand.
   const requestSessionCover = useRequestSessionCover();
   const withdrawSessionCoverRequest = useWithdrawSessionCoverRequest();
+  // Only the two cover writes above use it, and only to wait on this page's own
+  // document after them — see `settleCoverWrite`.
+  const queryClient = useQueryClient();
 
   /**
    * The account ids whose Roblox figure this roster needs — verified rows only,
@@ -495,6 +500,25 @@ function Workspace({
     });
 
   /**
+   * The half of a cover write the mutation does not supply: this page's own
+   * document, read again before the card lets go of its committing flag.
+   *
+   * Every cover write invalidates five roots in its `onSuccess` without waiting
+   * for any of them, which is right for the four documents this page is not
+   * reading and not enough for the one it is. The card holds its flag until the
+   * promise it is given settles, and the card **survives** the write — the feed
+   * keys an entry by (group, date) — so a promise resolving on the receipt
+   * would hand back a control over staffing the write has just changed, or
+   * leave the flag set for ever on a card that never unmounts. Awaiting the
+   * gedu-sessions key means the card is already rebuilt from the new `covers`
+   * by the time the region clears. It is the same shape the admin shell's
+   * staffing editor uses, one key over.
+   */
+  const settleCoverWrite = async () => {
+    await queryClient.invalidateQueries({ queryKey: geduSessionKeys.all });
+  };
+
+  /**
    * "I can't make this session", from the card that offers it.
    *
    * **The entry is turned back into its (group, date) pair here**, in the
@@ -521,10 +545,12 @@ function Workspace({
       reason: draft.reason,
       ...(note.length > 0 ? { reasonNote: note } : {}),
     });
+    await settleCoverWrite();
   };
 
   const handleWithdrawCoverRequest = async (requestId: string) => {
     await withdrawSessionCoverRequest.mutateAsync({ requestId });
+    await settleCoverWrite();
   };
 
   const handleSaveGroupNotes = async (draft: GroupNotesDraft) => {
