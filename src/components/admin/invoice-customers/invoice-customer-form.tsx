@@ -181,11 +181,14 @@ export function InvoiceCustomerForm({
             />
           </Field>
 
-          {/* Two short fields that are one answer, side by side from the small
-              breakpoint up and stacked below it. The postal code is given the
-              narrower half because it is five characters wide in every country
-              we bill in, and a full-width box for five characters reads as a
-              field somebody forgot to fill in. */}
+          {/* Three short fields that are one answer, side by side from the small
+              breakpoint up and stacked below it. The postal code is given a
+              narrow box because it is five characters wide, and a full-width
+              box for five characters reads as a field somebody forgot to fill
+              in. The country is shown but not editable: every customer this
+              feature invoices is Finnish — Finvoice is Finland's e-invoicing
+              format and the municipality club is a Finnish product — so the
+              draft carries FI and the box states it rather than asking. */}
           <div className="flex flex-col gap-4 sm:flex-row">
             <div className="sm:w-40">
               <Field
@@ -210,27 +213,20 @@ export function InvoiceCustomerForm({
                 />
               </Field>
             </div>
-          </div>
-
-          <div className="sm:w-40">
-            <Field
-              label={fieldLabel.country_code}
-              htmlFor="invoice-customer-country"
-              hint={t("hints.country")}
-            >
-              {({ hintId }) => (
+            <div className="sm:w-24">
+              <Field
+                label={fieldLabel.country_code}
+                htmlFor="invoice-customer-country"
+              >
                 <Input
                   id="invoice-customer-country"
                   value={draft.country_code}
-                  onChange={(event) => set("country_code")(event.target.value)}
-                  aria-describedby={hintId}
-                  maxLength={2}
+                  readOnly
+                  disabled
                   className="font-mono uppercase"
-                  autoComplete="off"
-                  autoCapitalize="characters"
                 />
-              )}
-            </Field>
+              </Field>
+            </div>
           </div>
 
           <Field

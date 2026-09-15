@@ -438,7 +438,6 @@
       "hints": {
         "number": "The F0037-style number on the customer’s card in Fennoa. Fennoa matches an imported invoice to the customer on this number.",
         "invoiceName": "Exactly as it reads on the Fennoa customer card.",
-        "country": "A two-letter country code, such as FI.",
         "yourReference": "A purchase order number or a contact person the customer wants printed on every invoice.",
         "invoiceText": "Extra lines printed at the top of the invoice text, such as a framework agreement reference. Plain text — it reaches the invoice exactly as typed."
       },

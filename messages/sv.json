@@ -438,7 +438,6 @@
       "hints": {
         "number": "Numret på kundens kort i Fennoa, till exempel F0037. Fennoa kopplar en importerad faktura till kunden med det här numret.",
         "invoiceName": "Exakt som det står på kundkortet i Fennoa.",
-        "country": "En tvåbokstavskod för landet, till exempel FI.",
         "yourReference": "Ett inköpsordernummer eller en kontaktperson som kunden vill ha på varje faktura.",
         "invoiceText": "Extra rader högst upp i fakturatexten, till exempel en hänvisning till ramavtalet. Ren text – den når fakturan precis som den skrivs."
       },

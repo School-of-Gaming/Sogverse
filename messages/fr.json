@@ -438,7 +438,6 @@
       "hints": {
         "number": "Le numéro figurant sur la fiche client dans Fennoa, par exemple F0037. C’est par ce numéro que Fennoa rattache une facture importée au client.",
         "invoiceName": "Exactement tel qu’il figure sur la fiche client Fennoa.",
-        "country": "Un code pays à deux lettres, par exemple FI.",
         "yourReference": "Un numéro de bon de commande ou un contact que le client veut voir sur chaque facture.",
         "invoiceText": "Des lignes supplémentaires en haut du texte de la facture, par exemple une référence d’accord-cadre. Texte brut – il arrive sur la facture tel qu’il est saisi."
       },
