@@ -145,6 +145,18 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // exactly as it is for the two RPCs above.
   admin_move_participation: { permittedRoles: ["admin"] },
 
+  // --- the admin half of session covers (00260) -----------------------------
+  //
+  // The office's four staffing actions. All four are assertable on BOTH halves
+  // of the matrix with no fixture, which is unusual on this surface and worth
+  // naming: each asks "does this row exist" before it asks anything about the
+  // caller's reach, and a NULL id is nobody's row — so a permitted admin is
+  // refused with P0002 or check_violation rather than with a second 42501.
+  approve_session_cover_offer: { permittedRoles: ["admin"] },
+  set_session_cover: { permittedRoles: ["admin"] },
+  clear_session_cover: { permittedRoles: ["admin"] },
+  withdraw_session_cover_request_as_admin: { permittedRoles: ["admin"] },
+
   // --- customer-gated ------------------------------------------------------
   // Phase 3's grant-plus-guard conversion. Past the role guard, a customer
   // reaches the engine with a NULL product id and is refused with
@@ -238,6 +250,47 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // enforcement epoch, so a gedu with no assignments gets an empty list rather
   // than a refusal.
   get_my_gedu_assignment_summaries: { permittedRoles: ["gedu"] },
+
+  // --- the gedu half of session covers (00260) ------------------------------
+  //
+  // Four writes and one read. The read is the assertable one, for the same
+  // reason the summaries RPC above is: it takes no id, so a gedu with nothing to
+  // cover gets an empty list rather than a refusal. An UNCERTIFIED gedu also
+  // gets an empty list rather than a refusal, which is deliberate — certification
+  // is one of the four refusals inside the may-cover predicate the list filters
+  // on, not a gate on the function.
+  get_open_cover_requests: { permittedRoles: ["gedu"] },
+  request_session_cover: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "the authorization here IS the derivation: past the role guard a gedu must " +
+      "be EXPECTED at the session, and nobody is expected at a NULL group on a " +
+      "NULL date, so the second question answers with a second 42501. Positive " +
+      "path: session-cover.test.ts.",
+  },
+  withdraw_session_cover_request: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "a NULL request id is no row, and a row that is not there is refused " +
+      "exactly as somebody else's is — 42501 either way, deliberately, so this " +
+      "cannot be used as an oracle for real request ids. Positive path: " +
+      "session-cover.test.ts.",
+  },
+  offer_session_cover: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "the same no-such-row refusal as the withdraw above, and for the same " +
+      "anti-oracle reason: a NULL request id answers 42501 rather than " +
+      "distinguishing itself from a request the caller may not see. Positive " +
+      "path: session-cover.test.ts.",
+  },
+  withdraw_session_cover_offer: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "keyed on the REQUEST rather than the offer, so a NULL argument is the " +
+      "same no-such-row 42501 as the two above. Positive path: " +
+      "session-cover.test.ts.",
+  },
   // Since 00200 the four writers below — and the site-notes writer further
   // down — admit an ADMIN beside the assigned gedu. The guard itself is one
   // call that asserts whichever of the two roles the caller holds, so the
@@ -491,6 +544,20 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   is_voice_group_moderator: {
     scopeTest: "tests/db/exposed-function-scope.test.ts",
     why: "boolean about the caller's own moderator standing in a voice group",
+  },
+  // The one cover predicate of the four that is exposed (00260), and it is here
+  // for the reason gedu_teaches_gamer below is: the gedus_read_assigned_groups
+  // policy on product_groups calls it, and an RLS policy is evaluated as the
+  // querying role, so a policy cannot call a private helper. The plan had this
+  // inlined as an EXISTS to keep the predicate internal; inlining is what
+  // actually costs more, because a policy expression reads the table AS THE
+  // CALLER and would have needed both a SELECT grant and a read policy on
+  // session_cover_requests. The three sibling policies on the same table already
+  // compose a granted SECURITY DEFINER predicate for this exact reason. The two
+  // new cover TABLES still grant `authenticated` nothing at all.
+  gedu_covers_group: {
+    scopeTest: "tests/db/session-cover.test.ts",
+    why: "boolean about the CALLER — do I hold a live cover on this group — where 'live' means a `covered` request whose holder is still certified and whose access window is open. No argument can name a different asker: the covered_by comparison is against auth.uid() inside the body, so a gedu handed another gedu's group id learns only about their own standing on it. Total: an unknown group id is false, never NULL, so the USING clause it feeds is never handed a three-valued answer. The scope test asks the same group of a covering gedu, a non-covering gedu and the absent gedu and requires three different answers, and walks the window's far edge so the boolean is shown FLIPPING rather than merely being true once",
   },
   gedu_teaches_gamer: {
     scopeTest: "tests/db/gamer-photo-consents.test.ts",
