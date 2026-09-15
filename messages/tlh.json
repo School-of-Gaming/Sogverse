@@ -1541,7 +1541,7 @@
       },
       "scope": {
         "heading": "veH — nuq legh API",
-        "p1": "mIw'a' neH legh API — latlh pagh. mIw'a' ghaj De'wI' qaSDI' muvmeH Roblox mIw'a' chutmey laj 'e' nIS. ra'wI' chel qup De'wI' chenmoHlu'DI', 'ej mIw'a'vaD chenmoHlu'bogh Hoch De'wI' qeng.",
+        "p1": "The API sees the Programme and nothing else. A product belongs to the Programme when enrolling on it requires accepting the Creator Academy Terms & Conditions; that requirement is set by an admin when the product is created, and every product built for the Programme carries it. Whether the product is listed in the shop makes no difference: an unlisted Programme product is returned like any other.",
         "p2": "wa' chutvo' Hoch latlh tlhap. qorDu' veH 'el wa' puqDaj Daq ghajDI' mIw'a' De'wI'Daq, 'ej puqpu'vetlh neH nobbogh. muvmoHghach veH 'el mIw'a' De'wI'Daq. qorDu' latlh Qu' Sogverse-Daq — ghom'a' Minecraft, jIH — reH nobbe'lu', veH 'elbogh qorDu'vaD je.",
         "p3": "leghmeH neH 'oH API. cha' Lynx ghomwI'pu' Sogverse ra'wI' account ghaj 'ej rap De' legh ra'wI' Daq. API tu'lu'mo' Lynx jan mob laD — nuvHom poHbe'."
       },
@@ -1555,16 +1555,15 @@
         "baseUrlLabel": "wa'DIch URL",
         "envelopeTitle": "tetlh nagh beQ",
         "items": {
-          "formats": "JSON jangmey. Hoch poH ISO 8601 UTC; Hoch jaj <code>YYYY-MM-DD</code> De'wI' poH Daq; Hoch pong UUID — reH choHbe'.",
-          "pagination": "Hoch tetlh Daq kursor lo'. <code>limit</code> yInob (100 'oH ghaytan, 500 'oH tIn law') je wa'Hu' nav <code>next_cursor</code> <code>cursor</code> mojmoH; <code>null</code> <code>next_cursor</code> 'oH nav Qav'e'.",
-          "updatedSince": "Hoch tetlh Daq <code>updated_since</code> laj (ISO 8601 poH), 'ej poHvetlhDaq qoj poHvetlh ghoDaq choHbogh De'wI'mey neH nob. mach nItebmeH yIlo'; 'ach Hoch jaj Hoch De' yItlhap.",
+          "formats": "Responses are JSON. Every timestamp is ISO 8601 in UTC; every date is <code>YYYY-MM-DD</code>, a product’s dates being calendar days in the product’s own timezone and a traffic day a calendar day in UTC; every identifier is a UUID that never changes.",
+          "pagination": "Every resource that returns records is paginated by cursor. Pass <code>limit</code> (default 100, maximum 500) and the <code>next_cursor</code> from the previous page as <code>cursor</code>; a <code>null</code> <code>next_cursor</code> is the last page. <code>/traffic</code> returns one aggregate and takes <code>from</code> and <code>to</code> instead.",
+          "updatedSince": "Every resource that returns records accepts <code>updated_since</code> (an ISO 8601 timestamp) and returns only records changed at or after that instant. Use it for incremental pulls; do a full pull without it at least daily.",
           "erasure": "Hoch De'vo' chIlbogh De'wI' — qorDu' tlhobmo' teqlu'pu'. rap boq poHDaq Lynx janvo' yIteq. tombstone tu'be'lu'.",
           "consent": "tlhob poHDaq chaw' Dotlh 'ang. lujbogh chaw' <code>granted: false</code> 'oH tlhap veb, 'ej Lynx Qu' 'oH.",
           "errors": "wa' Segh ghaj Qaghmey:"
         }
       },
       "resources": {
-        "heading": "De'meywIj",
         "products": {
           "title": "mIw'a' De'wI' tetlh",
           "intro": "mIw'a' ghaj Hoch De'wI', ghommey je. tetlhvam ghoS Hoch latlh <code>product_id</code>.",
@@ -1573,17 +1572,14 @@
           },
           "fields": {
             "id": "De'wI' pong mI'.",
-            "name": "Hoch Hol De'wI' pong, Hol ngoq lo' (<code>en</code>, <code>fr</code>, <code>fi</code>, <code>sv</code>).",
+            "name": "The product’s name in every locale it has been written in, keyed by locale code. At least one is always present; which ones depends on the product.",
             "type": "nuq Segh De'wI'. Hoch Hogh qaS ghom'a' — Qav Hutlh; ragh je wanI' jaj wIvlu'bogh qaS.",
             "delivery": "chay' qaS. mIw'a' qaSmoHmeH Lynx pongmey — Daq pagh polbe'lu'; <code>type</code> je <code>delivery</code> cha'vam 'oH ngoDmey pongmey ghoSbogh'e'.",
-            "location": "nuvDaq qaSbogh De'wI' veng je ISO 3166-1 alpha-2 Sep; <code>null</code> DIvI' Daq qaSDI'.",
+            "location": "The municipality and the two-letter country code of the site the product runs at. An in-person product always has one; an online product has one only when it is a municipality club attached to a site, and is <code>null</code> otherwise.",
             "status": "<code>pending</code> taghpa', <code>running</code> tagh jajvo' muvwI' mI' veH chavlu'DI', <code>completed</code> qaSpu'DI' 'ej Qav jaj juSpu'DI', <code>expired</code> Qav jaj juSpu'DI' 'ach not taghpu'DI'. laDDI' toghlu': jajmey, veH, je DaH muvwI' mI' — pagh pollu', vaj not qan De'.",
-            "dates": "ghorgh qaS. Qav Hutlh ghom'a'.",
+            "dates": "When it runs. A consumer club has no end date; every other product has one.",
             "timezone": "IANA poH Daq — De'wI' jajmey je poHmey Daq.",
             "ageRange": "De'wI' laj puq ben mI'mey, veHmey je.",
-            "seats": "Daq mI' (<code>null</code> Hutlh veHDI'), DaH Daq yInbogh, je loStaHbogh tetlh tIq.",
-            "registrationOpensAt": "ghorgh muvlaH qorDu'pu' wa'DIch.",
-            "requiresCreations": "Hoch puq chenmoHpu'bogh 'ang 'e' loS'a' mIw'a' De'wI' Qavpa'.",
             "groups": "ghommey De'wI' qaSbogh. ghomDaq juS poHmey je 'elmeymey."
           }
         },
@@ -1598,14 +1594,13 @@
             "id": "qorDu' pong mI' — vav account pong mI' 'oH. muvmoHghachmey qorDu'Daq yIjon; 'oH pongvam'e' ngoQ Hutlh — QIn Daq 'oHbe'.",
             "email": "vav QIn Daq — tu'lu' neH <code>marketing_consent.granted</code> <code>true</code> 'oHtaHvIS. latlhDaq <code>null</code>, 'ej chaw' lujDI' <code>null</code> mojqa'.",
             "createdAt": "ghorgh chenmoHlu' vav account: He'So' wa'DIch nuq — qorDu' chenmoHlu'.",
-            "locale": "Hol lo'bogh vav Sogverse-Daq.",
-            "location": "qorDu' juH veng je Sep, qorDu' jatlhpu'bogh; <code>null</code> vav 'angbe'DI'.",
+            "location": "The family’s self-reported home municipality and its two-letter country code, or <code>null</code> when the parent has not set one.",
             "utm": "tlhegh <code>utm_source</code>, <code>utm_medium</code> je <code>utm_campaign</code> — account chenmoHlu'bogh tlhegh; Hoch <code>null</code> Hutlhbogh. wa'logh neH ghItlhlu' muvDI', 'ej ngeH chab laj leghwI'DI' neH — vaj puS De'wI' wej null qeng. LynxvaD chenmoHlu'bogh mIwmey <code>lynx-</code> qeng.",
             "marketingConsent": "DaH Lynx ngeH chaw'vaD vav jang: <code>granted</code> 'ej ghorgh choHlu' Qav. <code>null</code>: not yu'lu'pu' — ngeHmeH <code>false</code> rur.",
             "gamers": "mIw'a' De'wI'Daq Daq ghajbogh qorDu' puqpu', Hoch wa' ghItlh. puq pong Hutlh, boghjaj Hutlh, jatlhmeH Daq Hutlh; pong mI' je Roblox account neH.",
             "gamersId": "puq pong mI' — muvmoHghachmey <code>gamer_id</code> qengbogh.",
             "gamersCreatedAt": "ghorgh chenmoHlu' puq De': He'So' cha'DIch nuq.",
-            "gamersAge": "DaHjaj puq ben mI' naQ. boghjaj not 'anglu'; muvmoHghach qeng ben mI' De'wI' taghDI'.",
+            "gamersAge": "The child’s age in whole years today, as a range. Sogverse stores the birth month and never the day, so <code>min</code> is the youngest the child could be and <code>max</code> the oldest; the two are the same number except while today falls inside the child’s birth month. The birth month itself is never exposed. An enrolment carries the same range measured at the product’s start.",
             "gamersRoblox": "qorDu' nobbogh Roblox pong je Roblox lo'wI' mI' mojbogh. <code>verified</code> <code>true</code> neH Sogverse pong ngu'pu'DI' Robloxvo' 'ej lo'wI' mI' ghajDI'; ngu'be'lu'bogh pong ghaj <code>user_id: null</code>. <code>null</code> pong nobbe'lu'DI'.",
             "gamersPhotoConsent": "DaH puqvam Lynx nagh beQ chaw': <code>granted</code> 'ej ghorgh choHlu' Qav. <code>null</code>: not yu'lu'pu' — Hoch Daq chaw' Hutlh rur.",
             "updatedAt": "De'wI'Daq Hoch Daqvo' choH Qav: vav choH, chaw' choH, qoj puq choH. <code>updated_since</code> tlhapDaq nargh qorDu' — 'ay' vIH Hoch poH."
@@ -1625,12 +1620,11 @@
             "id": "muvmoHghach pong mI'.",
             "productGroupId": "De'wI', je ghom — puq chelbogh Daq. <code>group_id</code> <code>null</code> 'oH ra'wI' Daq chelpa'.",
             "gamerFamilyId": "puq, je qorDu' — account Daq qeng.",
-            "status": "<code>active</code> qengbogh Daq, <code>waitlisted</code> loSbogh qorDu', <code>completed</code> De'wI' Qavpu'DI'. not chergh Daqmey nobbe'lu'.",
+            "status": "<code>active</code> for a held seat, <code>waitlisted</code> for a family waiting for one, <code>completed</code> once the product has finished.",
             "signedUpAt": "ghorgh muv qorDu' De'wI'Daq: He'So' wejDIch nuq — muvmoHghach.",
-            "groupJoinedAt": "ghorgh 'el Daq ghomDaj.",
-            "ageAtStart": "De'wI' tagh jajDaq puq ben mI' naQ; <code>null</code> De'wI' tagh jaj Hutlh'a'.",
-            "attendance": "DaH puq ghomDaq qaSpu'bogh poHmey, 'ar puq tu'lu'pu', je wa'DIch Qav poH je juSpu'bogh. <code>sessions_present</code> 1 law' puq — He'So'Daq “juSpu'” 'oH.",
-            "creations": "De'wI' poHDaq puq chenmoHbogh, Gedu' ghItlhpu'bogh: Hoch Doch pong je tlhegh, 'ang mIwDaq. <code>is_roblox_url</code> <code>true</code> 'oH tlhegh roblox.com ghoSDI'. chIm tetlh: not ghItlhlu'.",
+            "ageAtStart": "The child’s age range on the product’s start date, in the same shape as the family record’s <code>age</code>; <code>null</code> while the product has no start date.",
+            "attendance": "How many sessions of the child’s group have a record so far, and how many of those the child was marked present at. A session is recorded when a Game Educator writes it up or marks attendance, so a session nobody wrote up is not counted. A child with <code>sessions_present</code> of at least 1 counts as “attended” in the funnel.",
+            "creations": "What the child published during this product, as recorded by their Game Educator in the child’s current group: a title and a link per item, in display order. <code>is_roblox_url</code> is <code>true</code> when the link points at roblox.com. An empty array means nothing recorded yet.",
             "creationsUpdatedAt": "ghorgh ghItlhlu' chenmoHghach tetlh Qav. Dochmey poH nIteb Hutlh."
           }
         },
@@ -1646,9 +1640,9 @@
             "id": "poH pong mI'.",
             "productGroupId": "De'wI' je ghom — poH Daq.",
             "times": "poH qaSmeH ngutlh.",
-            "attendance": "Gedu' tu'pu'bogh Hoch puqvaD wa' ghItlh, <code>present</code> qoj <code>absent</code>. tu'be'lu'bogh puq 'angbe'lu'.",
-            "images": "The photographs the educator attached to the session report, in the order they were added: mostly in-game screenshots, sometimes a photograph of the room. Each is a public URL that needs no credential, and the same URL every family in the group already sees in the report. A child is photographed only where the media permission stands, so a photograph here is one that permission covers.",
-            "imagesUrl": "Fetch it as-is and do not rewrite it. The object’s name is an unguessable identifier and that name is the whole of its access control, so the URL is not to be published on a page that lists it. When an educator or an admin removes a photograph the URL stops resolving; a copy Lynx holds is Lynx’s to remove under the same permission.",
+            "attendance": "One entry per child the Game Educator marked, <code>present</code> or <code>absent</code>. A child not yet marked does not appear.",
+            "images": "The photographs the Game Educator attached to the session report, in the order they were added: mostly in-game screenshots, sometimes a photograph of the room. Each is a public URL that needs no credential, and the same URL every family in the group already sees in the report. A child is photographed only where the media permission stands, so a photograph here is one that permission covers.",
+            "imagesUrl": "Fetch it as-is and do not rewrite it. The object’s name is an unguessable identifier and that name is the whole of its access control, so the URL is not to be published on a page that lists it. When a Game Educator or an admin removes a photograph the URL stops resolving; a copy Lynx holds is Lynx’s to remove under the same permission.",
             "imagesSize": "The pixel size of the image."
           }
         },
@@ -1673,36 +1667,19 @@
         },
         "robloxResearch": {
           "title": "RobloxvaD De' ghom",
-          "intro": "mIw'a' pegh chut chaw'bogh puq De' — Robloxvad qelmeH neH, latlh pagh. muvmoghach Hoch wa' tlhegh, wovmoHbe'lu'taHvIS nobmeH pIm. Hoch yotlh 'oH chut pongbogh'e'.",
+          "intro": "The individual-level dataset the Programme’s privacy policy allows to be passed to Roblox for impact research, and nothing beyond it. One row per enrolment, ready to forward without filtering. Every field is within what the policy names.",
           "params": {
             "productId": "De'wI'vam tlheghmey neH.",
             "fromTo": "veHvamDaq taghpu'bogh De'wI' ghajbogh tlheghmey neH, veHmey je."
           },
           "fields": {
             "roblox": "puq Roblox account. <code>roblox_user_id</code> <code>null</code> 'oH Sogverse pong ngu'laHbe'DI'; tlheghmeyvam yInob neH Roblox pong mob laj'a'.",
-            "location": "qorDu' Daq.",
-            "age": "Qu' jajDaq puq ben mI' naQ.",
-            "interventionDate": "De'wI' tagh jaj — qel De' ghom pong lo'bogh.",
-            "activity": "juSbogh De'wI': pong mI', DIvI' Hol pong, Segh, je chay' qaS. Segh je chay' qaS: cha'vam ghoS mIw'a' qaSmoHmeH Lynx pongmey.",
+            "location": "The family’s home municipality and country.",
+            "age": "The child’s age range on the activity’s start date, in the same shape as the family record’s <code>age</code>; <code>null</code> while the product has no start date.",
+            "activity": "The activity attended: the product’s identifier, English name, type, delivery and start date. Type and delivery together are what Lynx’s names for its ways of delivering the Programme map onto, and the start date is the intervention date the research asks for.",
             "publishedGameUrl": "De'wI'vamvaD puq chenmoHghachDaq wa'DIch roblox.com tlhegh, qoj <code>null</code> pagh ghItlhlu'DI'."
           },
-          "note": "tlheghvamDaq puq qorDu' je pong mI' tu'be'lu'. tlhegh tlhegh'a' Sam Lynx'a'? <code>/enrolments</code>-vo' yItlhap; qel De' ghom jonlu'laHbe' — wIwIvpu'."
-        },
-        "stats": {
-          "title": "He'So', mI'mey neH",
-          "intro": "mIw'a' vagh mI'mey — leghmeH Daq He'So' 'angchoHlaH nuv De' qengbe'taHvIS. mIw'a' naQ mI'mey; ghIq De'wI' mIwmey je mI'mey. account chenmoHbogh qorDu', chenmoHlu'bogh puq De', muvmoHghach, juSbogh puq, chenmoHlu'bogh Quj: He'So' 'oH — mIwDaj tlha'.",
-          "params": {
-            "fromTo": "veHvamDaq chenmoHlu'bogh accountmey, muvmoHghachmey, je qaSbogh poHmey neH yItogh. Hoch poH DanejDI' yIwoDHa'."
-          },
-          "fields": {
-            "familiesCreated": "veH 'elbogh qorDu'pu', vav account chenmoHlu' jaj tlha'.",
-            "gamersCreated": "veH 'elbogh puq De'mey, De' chenmoHlu' jaj tlha'.",
-            "enrolments": "mIw'a' De'wI'meyDaq qengbogh qoj Qavbogh Daqmey, loSbogh je, muv jaj tlha'.",
-            "attended": "wa' poHDaq tu'lu'bogh muvmoHghachmey.",
-            "gamesPublished": "wa' roblox.com tlhegh ghajbogh muvmoHghachmey.",
-            "byProduct": "Hoch De'wI' muvmoHghach, juS, je chenmoHghach mI'mey.",
-            "byCampaign": "qorDu' <code>utm_campaign</code> tlha' ghomlu'bogh qorDu', puq, je muvmoHghach mI'mey. <code>null</code> tlhegh: mIw Hutlhbogh Hoch qorDu' — ngeH chab lajbe'bogh qorDu'pu' je."
-          }
+          "note": "No identifier of the child or family is on this row. If Lynx needs to trace a row back to a family, pull it from <code>/enrolments</code> instead; the research dataset is deliberately not joinable to a person."
         },
         "traffic": {
           "title": "mut nav, mIw tlha'",
@@ -1714,9 +1691,9 @@
             "range": "mI'mey So'bogh jajmey.",
             "pageviews": "veHDaq mut nav leghghachmey — nuq qem 'e' qelbe'lu'.",
             "byCampaign": "tlhegh wej UTM mI'mey tlha' leghghachmey Sep. wej null qengbogh tlhegh: mIw Hutlhbogh Hoch leghghach — Daq ghItlhbogh leghwI', qoj per Hutlhbogh tlhegh tlha'bogh je.",
-            "byDay": "Hoch jaj wa' tlhegh: leghghachmey, je 'ar jan pIm qem. Hoch jaj wa'logh toghlu' jan, 'ej Vercel ngu' — maHbe'. vaj mI' 'oH jaj tInmeH'e', nuv mI' 'oHbe'; jajmey chelDI' rap jan toghqa'."
+            "byDay": "The views per calendar day, for a time series."
           },
-          "note": "Vercel ghItlh vangtaH neH leghwI' chab beQDaq De' ghom laj. 'ej qorDu' De'wI'Daq UTM mI'mey ghItlhlu' neH leghwI' ngeH lajDI'. cha' veHmey pIm, 'ej De' ghom veH tIn law'; vaj naDev <code>pageviews</code> je <code>/stats</code>-Daq <code>families_created</code> rapbe': Hoch lajbogh leghwI' cha'Daq tu'lu'; De' ghom neH lajbogh naDev neH; chab beQ lajbe'bogh pagh Daq."
+          "note": "Vercel’s script runs only for a visitor who accepted analytics on the cookie banner, and the UTM values on a family record are written only for a visitor who accepted marketing. The two gates differ, and analytics is the wider one, so a view counted here and a family in <code>/families</code> are not the same population: a visitor who accepted everything is in both, one who accepted analytics alone is here only, and one who rejected the banner is in neither."
         }
       },
       "errors": {
@@ -1738,7 +1715,7 @@
           "consent": "chaw' choH 'angbogh boq poHDaq yIQu'. qorDu' <code>marketing_consent.granted</code> <code>false</code> mojDI' — rap jaj Lynx tetlhvo' mej; puq <code>photo_consent.granted</code> <code>false</code> mojDI' — Lynx SeHbogh Hoch Dochvo' teqlu'.",
           "erasure": "chIlbogh yIteq. Hoch De' tlhapDaq Hutlhbogh De'wI' — qorDu' De' DIb tlha' teqlu'pu', 'ej mIw'a' pegh chut cha' ghom ra'.",
           "derived": "“juSpu'” je “chenmoHpu'” — toghlu'bogh, polbe'lu'bogh. Dungdaq yotlh Delmey cha'vam 'ang, Lynx mI'mey maj mI'mey je rapmeH; qech choHnISDI', naDev yIchoH wa'DIch.",
-          "readOnly": "naDev pagh ghItlh. muvmoHghach, chaw', je chenmoHghach — Sogverse-Daq qorDu'pu' Gedu'pu' je ghItlh; API 'oH Qorwaghvetlh'e'."
+          "readOnly": "Nothing here writes. Enrolment, consent and creations are recorded in Sogverse by families and Game Educators; the API is a window onto them."
         }
       },
       "notIncluded": {
@@ -1746,7 +1723,7 @@
         "items": {
           "childIdentity": "puqpu' pongmey, boghjajmey, je loD/be'. qel De' He'So' je pagh nIS; mIw'a' pegh chut ben mI' qoj ben veH nob — boghjaj nobbe'.",
           "parentContact": "vavpu' pongmey je jatlhmeH mI'mey. Lynx ngeH chaw' QIn Daq neH Say'moH.",
-          "releases": "qun De', jatlh De', je ngeH De' chaw'mey. ghItlh chaw'mey 'oH, Daq HurDaq Suqlu'.",
+          "releases": "Case-study and testimonial releases. The one media permission Sogverse holds already covers public use of a photograph by Lynx Educate, School of Gaming and Roblox; a child’s full name, a case study, a quotation or content linked to the child need a separate written release obtained outside the platform.",
           "deliveryModel": "mIw Segh pong. De'wI' Segh SovtaH Sogverse, 'ej DIvI' Daq qoj nuvDaq qaS 'e' SovtaH; mIw Seghmey chenmoHmeH Lynx Qu' 'oH — cha' yotlh Dung.",
           "analytics": "mut nav Hutlhbogh Hoch nav lengmey, je wa' leghwI' De' Hoch. <code>/traffic</code> bIngDaq De' ghom pegh qaD wa'DIch: 'elpu'DI' qorDu' pawbogh nav ghaHvaD 'oH; 'ej leghwI' 'oH mI''e' — not De'wI'."
         }

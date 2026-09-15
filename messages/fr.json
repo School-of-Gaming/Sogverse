@@ -1497,7 +1497,7 @@
       },
       "scope": {
         "heading": "Périmètre — ce que l’API peut voir",
-        "p1": "L’API voit le Programme et rien d’autre. Un produit relève du Programme lorsque s’y inscrire impose d’accepter les conditions générales du Programme Roblox ; cette exigence est définie par un administrateur à la création du produit, et tout produit conçu pour le Programme la porte.",
+        "p1": "The API sees the Programme and nothing else. A product belongs to the Programme when enrolling on it requires accepting the Creator Academy Terms & Conditions; that requirement is set by an admin when the product is created, and every product built for the Programme carries it. Whether the product is listed in the shop makes no difference: an unlisted Programme product is returned like any other.",
         "p2": "Tout le reste découle de cette seule règle. Une famille entre dans le périmètre lorsqu’un de ses enfants occupe une place sur un produit du Programme, et seuls ces enfants-là sont renvoyés avec elle. Une inscription entre dans le périmètre lorsqu’elle porte sur un produit du Programme. Le reste de l’activité d’une famille sur Sogverse, un club Minecraft par exemple, n’est jamais renvoyé, même pour une famille qui est dans le périmètre.",
         "p3": "L’API est en lecture seule. Deux membres de l’équipe Lynx disposent également de comptes administrateur Sogverse et voient les mêmes données dans l’interface d’administration ; l’API existe pour que les outils de Lynx puissent les lire sans intervention humaine."
       },
@@ -1511,16 +1511,15 @@
         "baseUrlLabel": "URL de base",
         "envelopeTitle": "Enveloppe de liste",
         "items": {
-          "formats": "Les réponses sont en JSON. Chaque horodatage est au format ISO 8601 en UTC ; chaque date est au format <code>YYYY-MM-DD</code> dans le fuseau horaire propre au produit ; chaque identifiant est un UUID qui ne change jamais.",
-          "pagination": "Chaque point de terminaison de liste est paginé par curseur. Transmettez <code>limit</code> (100 par défaut, 500 au maximum) et le <code>next_cursor</code> de la page précédente dans <code>cursor</code> ; un <code>next_cursor</code> à <code>null</code> signale la dernière page.",
-          "updatedSince": "Chaque point de terminaison de liste accepte <code>updated_since</code> (un horodatage ISO 8601) et ne renvoie que les enregistrements modifiés à cet instant ou après. Utilisez-le pour les récupérations incrémentales ; effectuez au moins une fois par jour une récupération complète sans ce paramètre.",
+          "formats": "Responses are JSON. Every timestamp is ISO 8601 in UTC; every date is <code>YYYY-MM-DD</code>, a product’s dates being calendar days in the product’s own timezone and a traffic day a calendar day in UTC; every identifier is a UUID that never changes.",
+          "pagination": "Every resource that returns records is paginated by cursor. Pass <code>limit</code> (default 100, maximum 500) and the <code>next_cursor</code> from the previous page as <code>cursor</code>; a <code>null</code> <code>next_cursor</code> is the last page. <code>/traffic</code> returns one aggregate and takes <code>from</code> and <code>to</code> instead.",
+          "updatedSince": "Every resource that returns records accepts <code>updated_since</code> (an ISO 8601 timestamp) and returns only records changed at or after that instant. Use it for incremental pulls; do a full pull without it at least daily.",
           "erasure": "Un enregistrement qui disparaît d’une récupération complète a été effacé à la demande de la famille et doit être supprimé des systèmes de Lynx lors de cette même synchronisation. Il n’y a pas de marqueur de suppression.",
           "consent": "Un consentement est rapporté tel qu’il est au moment de la requête. Un consentement retiré apparaît avec <code>granted: false</code> à la récupération suivante, et Lynx doit en tenir compte.",
           "errors": "Les erreurs ont une seule forme :"
         }
       },
       "resources": {
-        "heading": "Ressources",
         "products": {
           "title": "le catalogue du Programme",
           "intro": "Chaque produit qui relève du Programme, avec les groupes dans lesquels il est délivré. C’est la liste vers laquelle pointe le <code>product_id</code> de toutes les autres ressources.",
@@ -1529,17 +1528,14 @@
           },
           "fields": {
             "id": "L’identifiant du produit.",
-            "name": "Le nom du produit dans chaque langue dans laquelle il a été rédigé, indexé par code de langue (<code>en</code>, <code>fr</code>, <code>fi</code>, <code>sv</code>).",
+            "name": "The product’s name in every locale it has been written in, keyed by locale code. At least one is always present; which ones depends on the product.",
             "type": "Le type de produit. Un club a lieu chaque semaine sans fin déterminée ; un camp et un événement se déroulent sur des dates fixées.",
             "delivery": "Son mode de déroulement. Les noms que Lynx donne à ses manières de mener le Programme ne sont stockés nulle part ; <code>type</code> et <code>delivery</code> sont ensemble les deux faits sur lesquels ces noms se projettent.",
-            "location": "Ville et pays au format ISO 3166-1 alpha-2 du lieu, pour un produit en présentiel ; <code>null</code> lorsqu’il est en ligne.",
+            "location": "The municipality and the two-letter country code of the site the product runs at. An in-person product always has one; an online product has one only when it is a municipality club attached to a site, and is <code>null</code> otherwise.",
             "status": "<code>pending</code> tant qu’il n’a pas commencé, <code>running</code> à partir de sa date de début dès qu’un éventuel seuil d’inscriptions est atteint, <code>completed</code> une fois qu’il s’est déroulé et que sa date de fin est passée, et <code>expired</code> lorsque la date de fin est passée sans qu’il ait jamais commencé. La valeur est dérivée à la lecture, à partir des dates, du seuil et du nombre d’inscriptions en temps réel ; rien n’est stocké, elle n’est donc jamais périmée.",
-            "dates": "Quand il se déroule. Un club n’a pas de date de fin.",
+            "dates": "When it runs. A consumer club has no end date; every other product has one.",
             "timezone": "Le fuseau horaire IANA dans lequel les dates et les sessions du produit sont programmées.",
             "ageRange": "Les âges admis par le produit, bornes comprises.",
-            "seats": "La capacité (<code>null</code> lorsqu’elle est illimitée), les places actuellement occupées et la longueur de la liste d’attente.",
-            "registrationOpensAt": "À partir de quand les familles ont pu s’inscrire.",
-            "requiresCreations": "Si le Programme attend de chaque enfant qu’il ait publié quelque chose à la fin de ce produit.",
             "groups": "Les groupes dans lesquels le produit est délivré. Les sessions et la présence se rattachent à un groupe."
           }
         },
@@ -1554,14 +1550,13 @@
             "id": "L’identifiant de la famille, qui est celui du compte parent. Utilisez-le pour rattacher les inscriptions à la famille : c’est lui la clé stable, pas l’adresse e-mail.",
             "email": "L’adresse e-mail du parent, présente uniquement tant que <code>marketing_consent.granted</code> vaut <code>true</code>. Elle vaut <code>null</code> sinon, et elle redevient <code>null</code> lorsque le consentement est retiré.",
             "createdAt": "La date de création du compte parent : la première étape de l’entonnoir, une famille créée.",
-            "locale": "La langue dans laquelle le parent utilise Sogverse.",
-            "location": "Ville et pays de la commune de résidence déclarée par la famille, ou <code>null</code> lorsque le parent n’en a pas renseigné.",
+            "location": "The family’s self-reported home municipality and its two-letter country code, or <code>null</code> when the parent has not set one.",
             "utm": "Les <code>utm_source</code>, <code>utm_medium</code> et <code>utm_campaign</code> du lien par lequel le compte a été créé, chacun à <code>null</code> en leur absence. Ils sont écrits une seule fois à l’inscription et uniquement lorsque le visiteur a accepté les cookies marketing : la plupart des enregistrements portent donc trois valeurs nulles. Par convention, les campagnes créées pour Lynx sont préfixées <code>lynx-</code>.",
             "marketingConsent": "La réponse actuelle du parent au consentement marketing de Lynx : <code>granted</code> et la date du dernier changement. <code>null</code> signifie que la question ne lui a jamais été posée, ce qui, pour l’envoi, équivaut à <code>false</code>.",
             "gamers": "Les enfants de la famille qui occupent une place sur un produit du Programme, une entrée chacun. Un enfant ne porte ni nom, ni date de naissance, ni coordonnées : son identité, ce sont l’identifiant et le compte Roblox.",
             "gamersId": "L’identifiant de l’enfant, celui que les inscriptions portent sous le nom <code>gamer_id</code>.",
             "gamersCreatedAt": "La date de création du profil de l’enfant : la deuxième étape de l’entonnoir.",
-            "gamersAge": "L’âge de l’enfant en années révolues aujourd’hui. La date de naissance elle-même n’est jamais exposée ; une inscription porte l’âge au début du produit.",
+            "gamersAge": "The child’s age in whole years today, as a range. Sogverse stores the birth month and never the day, so <code>min</code> is the youngest the child could be and <code>max</code> the oldest; the two are the same number except while today falls inside the child’s birth month. The birth month itself is never exposed. An enrolment carries the same range measured at the product’s start.",
             "gamersRoblox": "Le pseudo Roblox communiqué par la famille et l’identifiant utilisateur Roblox auquel il a été résolu. <code>verified</code> vaut <code>true</code> uniquement lorsque Sogverse a confirmé le pseudo auprès de Roblox et détient l’identifiant utilisateur ; un pseudo non vérifié a <code>user_id: null</code>. Vaut <code>null</code> lorsqu’aucun pseudo n’a été communiqué.",
             "gamersPhotoConsent": "L’autorisation média Lynx en vigueur pour cet enfant : <code>granted</code> et la date du dernier changement. <code>null</code> signifie que la question n’a jamais été posée, ce que toutes les interfaces traitent comme une absence d’autorisation.",
             "updatedAt": "Le changement le plus récent n’importe où dans l’enregistrement : celui du parent lui-même, celui d’un consentement ou celui d’un enfant. Une famille ressort d’une récupération <code>updated_since</code> dès que l’une de ses parties a bougé."
@@ -1581,12 +1576,11 @@
             "id": "L’identifiant de l’inscription.",
             "productGroupId": "Le produit, et le groupe en son sein dans lequel l’enfant a été placé. <code>group_id</code> vaut <code>null</code> tant qu’un administrateur n’a pas affecté la place.",
             "gamerFamilyId": "L’enfant, et la famille dont le compte détient la place.",
-            "status": "<code>active</code> pour une place occupée, <code>waitlisted</code> pour une famille en liste d’attente, <code>completed</code> une fois le produit terminé. Les places qui n’ont jamais été confirmées ne sont pas renvoyées.",
+            "status": "<code>active</code> for a held seat, <code>waitlisted</code> for a family waiting for one, <code>completed</code> once the product has finished.",
             "signedUpAt": "La date à laquelle la famille s’est inscrite au produit : la troisième étape de l’entonnoir, une inscription.",
-            "groupJoinedAt": "La date à laquelle la place a rejoint son groupe.",
-            "ageAtStart": "L’âge de l’enfant en années révolues à la date de début du produit ; <code>null</code> tant que le produit n’a pas de date de début.",
-            "attendance": "Les sessions tenues jusqu’ici dans le groupe de l’enfant, le nombre de celles où il a été noté présent, ainsi que la première et la dernière session auxquelles il a assisté. Un enfant dont <code>sessions_present</code> vaut au moins 1 compte comme « a participé » dans l’entonnoir.",
-            "creations": "Ce que l’enfant a publié pendant ce produit, tel que l’animateur l’a consigné : un titre et un lien par élément, dans l’ordre d’affichage. <code>is_roblox_url</code> vaut <code>true</code> lorsque le lien pointe vers roblox.com. Un tableau vide signifie que rien n’a encore été consigné.",
+            "ageAtStart": "The child’s age range on the product’s start date, in the same shape as the family record’s <code>age</code>; <code>null</code> while the product has no start date.",
+            "attendance": "How many sessions of the child’s group have a record so far, and how many of those the child was marked present at. A session is recorded when a Game Educator writes it up or marks attendance, so a session nobody wrote up is not counted. A child with <code>sessions_present</code> of at least 1 counts as “attended” in the funnel.",
+            "creations": "What the child published during this product, as recorded by their Game Educator in the child’s current group: a title and a link per item, in display order. <code>is_roblox_url</code> is <code>true</code> when the link points at roblox.com. An empty array means nothing recorded yet.",
             "creationsUpdatedAt": "La date de la dernière écriture de la liste des créations. Les éléments ne portent pas d’horodatage individuel."
           }
         },
@@ -1602,9 +1596,9 @@
             "id": "L’identifiant de la session.",
             "productGroupId": "Le produit et le groupe auxquels la session appartient.",
             "times": "La plage horaire programmée de la session.",
-            "attendance": "Une entrée par enfant pointé par l’animateur, <code>present</code> ou <code>absent</code>. Un enfant qui n’a pas encore été pointé n’apparaît pas.",
-            "images": "The photographs the educator attached to the session report, in the order they were added: mostly in-game screenshots, sometimes a photograph of the room. Each is a public URL that needs no credential, and the same URL every family in the group already sees in the report. A child is photographed only where the media permission stands, so a photograph here is one that permission covers.",
-            "imagesUrl": "Fetch it as-is and do not rewrite it. The object’s name is an unguessable identifier and that name is the whole of its access control, so the URL is not to be published on a page that lists it. When an educator or an admin removes a photograph the URL stops resolving; a copy Lynx holds is Lynx’s to remove under the same permission.",
+            "attendance": "One entry per child the Game Educator marked, <code>present</code> or <code>absent</code>. A child not yet marked does not appear.",
+            "images": "The photographs the Game Educator attached to the session report, in the order they were added: mostly in-game screenshots, sometimes a photograph of the room. Each is a public URL that needs no credential, and the same URL every family in the group already sees in the report. A child is photographed only where the media permission stands, so a photograph here is one that permission covers.",
+            "imagesUrl": "Fetch it as-is and do not rewrite it. The object’s name is an unguessable identifier and that name is the whole of its access control, so the URL is not to be published on a page that lists it. When a Game Educator or an admin removes a photograph the URL stops resolving; a copy Lynx holds is Lynx’s to remove under the same permission.",
             "imagesSize": "The pixel size of the image."
           }
         },
@@ -1629,36 +1623,19 @@
         },
         "robloxResearch": {
           "title": "le jeu de données destiné à Roblox",
-          "intro": "Le jeu de données individuelles que la politique de confidentialité du Programme autorise à transmettre à Roblox pour la recherche sur l’impact, et rien de plus. Une ligne par inscription, prête à être transmise sans filtrage. Chaque champ est un champ que la politique nomme.",
+          "intro": "The individual-level dataset the Programme’s privacy policy allows to be passed to Roblox for impact research, and nothing beyond it. One row per enrolment, ready to forward without filtering. Every field is within what the policy names.",
           "params": {
             "productId": "Uniquement les lignes de ce produit.",
             "fromTo": "Uniquement les lignes dont le produit a commencé dans cette plage, bornes comprises."
           },
           "fields": {
             "roblox": "Le compte Roblox de l’enfant. <code>roblox_user_id</code> vaut <code>null</code> lorsque Sogverse n’a pas pu vérifier le pseudo ; ne transmettez ces lignes que si Roblox accepte un pseudo seul.",
-            "location": "La localisation de la famille.",
-            "age": "L’âge de l’enfant en années révolues à la date d’intervention.",
-            "interventionDate": "La date de début du produit, sous le nom que lui donne le jeu de données de recherche.",
-            "activity": "Le produit suivi : son identifiant, son nom en anglais, son type et son mode de délivrance. Le type et le mode de délivrance sont ensemble ce sur quoi se projettent les noms que Lynx donne à ses manières de mener le Programme.",
+            "location": "The family’s home municipality and country.",
+            "age": "The child’s age range on the activity’s start date, in the same shape as the family record’s <code>age</code>; <code>null</code> while the product has no start date.",
+            "activity": "The activity attended: the product’s identifier, English name, type, delivery and start date. Type and delivery together are what Lynx’s names for its ways of delivering the Programme map onto, and the start date is the intervention date the research asks for.",
             "publishedGameUrl": "Le premier lien roblox.com parmi les créations de l’enfant pour ce produit, ou <code>null</code> lorsqu’aucun n’a été consigné."
           },
-          "note": "Aucun identifiant de l’enfant ou de la famille ne figure sur cette ligne. Si Lynx a besoin de remonter à la source d’une ligne, récupérez-la plutôt depuis <code>/enrolments</code> : le jeu de données de recherche n’est délibérément pas jointable."
-        },
-        "stats": {
-          "title": "l’entonnoir, agrégé",
-          "intro": "Les cinq indicateurs clés du Programme sous forme de décomptes, pour qu’un tableau de bord puisse afficher l’entonnoir sans détenir la moindre donnée personnelle. Les totaux sur l’ensemble du Programme, puis les mêmes décomptes par produit et par campagne. Une famille qui a créé son compte, un profil enfant créé, une inscription, un enfant qui a participé, un jeu publié : voilà l’entonnoir, dans l’ordre.",
-          "params": {
-            "fromTo": "Ne compter que les comptes créés, les inscriptions effectuées et les sessions tenues dans cette plage. À omettre pour couvrir toute la période."
-          },
-          "fields": {
-            "familiesCreated": "Les familles dans le périmètre, par date de création du compte parent.",
-            "gamersCreated": "Les profils enfants dans le périmètre, par date de création du profil.",
-            "enrolments": "Les places occupées ou terminées sur des produits du Programme, plus celles en liste d’attente, par date d’inscription.",
-            "attended": "Les inscriptions comptant au moins une session où l’enfant a été noté présent.",
-            "gamesPublished": "Les inscriptions comptant au moins un lien roblox.com parmi leurs créations.",
-            "byProduct": "Les décomptes d’inscriptions, de participation et de publications pour chaque produit.",
-            "byCampaign": "Les décomptes de familles, d’enfants et d’inscriptions groupés par l’<code>utm_campaign</code> de la famille. La ligne <code>null</code> regroupe toutes les familles dont le compte ne porte pas de campagne, y compris celles qui ont refusé les cookies marketing."
-          }
+          "note": "No identifier of the child or family is on this row. If Lynx needs to trace a row back to a family, pull it from <code>/enrolments</code> instead; the research dataset is deliberately not joinable to a person."
         },
         "traffic": {
           "title": "la page d’atterrissage, par campagne",
@@ -1670,9 +1647,9 @@
             "range": "Les jours que les décomptes couvrent.",
             "pageviews": "Les vues de la page d’atterrissage sur la plage, quelle qu’en soit la provenance.",
             "byCampaign": "Les vues ventilées selon les trois valeurs UTM du lien. La ligne aux trois valeurs nulles regroupe toutes les vues sans campagne, y compris celles d’un visiteur qui a saisi l’adresse ou suivi un lien non balisé.",
-            "byDay": "Une ligne par jour : les vues, et le nombre d’appareils distincts d’où elles proviennent. Un appareil est compté une fois par jour et identifié par Vercel, pas par nous : le chiffre est donc un ordre de grandeur quotidien plutôt qu’un décompte de personnes, et l’additionner sur plusieurs jours recompte le même appareil."
+            "byDay": "The views per calendar day, for a time series."
           },
-          "note": "Le script de Vercel ne s’exécute que pour un visiteur ayant accepté les statistiques dans le bandeau de cookies, et les valeurs UTM d’un enregistrement de famille ne sont écrites que pour un visiteur ayant accepté le marketing. Les deux conditions diffèrent, et celle des statistiques est la plus large : <code>pageviews</code> ici et <code>families_created</code> dans <code>/stats</code> ne portent donc pas sur la même population. Un visiteur qui a tout accepté figure dans les deux, un visiteur qui n’a accepté que les statistiques ne figure qu’ici, et un visiteur qui a refusé le bandeau ne figure dans aucun des deux."
+          "note": "Vercel’s script runs only for a visitor who accepted analytics on the cookie banner, and the UTM values on a family record are written only for a visitor who accepted marketing. The two gates differ, and analytics is the wider one, so a view counted here and a family in <code>/families</code> are not the same population: a visitor who accepted everything is in both, one who accepted analytics alone is here only, and one who rejected the banner is in neither."
         }
       },
       "errors": {
@@ -1694,7 +1671,7 @@
           "consent": "Tenez compte des changements de consentement dès la synchronisation qui les révèle. Une famille dont <code>marketing_consent.granted</code> est passé à <code>false</code> sort de la liste de Lynx le jour même ; un enfant dont <code>photo_consent.granted</code> est passé à <code>false</code> est retiré de tout support que Lynx maîtrise.",
           "erasure": "Supprimez ce qui disparaît. Un enregistrement absent d’une récupération complète a été effacé au titre des droits de la famille sur ses données, et la politique de confidentialité du Programme engage les deux organisations à le respecter.",
           "derived": "« A participé » et « a publié » sont des valeurs dérivées, non stockées. Toutes deux sont définies dans les descriptions de champs ci-dessus pour que les chiffres de Lynx et les nôtres concordent ; si la définition doit changer, changez-la ici d’abord.",
-          "readOnly": "Rien ici n’écrit. Les inscriptions, les consentements et les créations sont consignés dans Sogverse par les familles et les animateurs ; l’API n’est qu’une fenêtre sur ces données."
+          "readOnly": "Nothing here writes. Enrolment, consent and creations are recorded in Sogverse by families and Game Educators; the API is a window onto them."
         }
       },
       "notIncluded": {
@@ -1702,7 +1679,7 @@
         "items": {
           "childIdentity": "Les noms, dates de naissance et genre des enfants. Ni le jeu de données de recherche ni l’entonnoir n’en ont besoin ; la politique de confidentialité du Programme promet un âge ou une tranche d’âge plutôt qu’une date de naissance.",
           "parentContact": "Les noms et numéros de téléphone des parents. Le consentement marketing de Lynx ne couvre que l’adresse e-mail.",
-          "releases": "Les autorisations d’étude de cas, de témoignage et d’usage promotionnel. Ce sont des autorisations écrites recueillies en dehors de la plateforme.",
+          "releases": "Case-study and testimonial releases. The one media permission Sogverse holds already covers public use of a photograph by Lynx Educate, School of Gaming and Roblox; a child’s full name, a case study, a quotation or content linked to the child need a separate written release obtained outside the platform.",
           "deliveryModel": "Une étiquette de modèle de délivrance. Sogverse détient le type d’un produit et le fait qu’il soit en ligne ou en présentiel ; c’est à Lynx de poser une taxonomie de modèles par-dessus ces deux champs.",
           "analytics": "Le trafic de toute page autre que la page d’atterrissage, et tout ce qui concerne un visiteur en particulier. Les statistiques derrière <code>/traffic</code> sont conçues pour préserver la vie privée : une page qu’une famille atteint après s’être connectée lui appartient, et un visiteur est un décompte, jamais un enregistrement."
         }

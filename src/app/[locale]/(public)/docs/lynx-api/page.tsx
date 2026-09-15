@@ -107,9 +107,12 @@ function RowTable({
               key={row.name}
               className="block border-b border-border py-1 last:border-0 md:table-row md:py-0"
             >
-              <td className={`${BODY_CELL} inline-block md:table-cell`}>
+              <th
+                scope="row"
+                className={`${BODY_CELL} inline-block text-left font-normal md:table-cell`}
+              >
                 <Code>{row.name}</Code>
-              </td>
+              </th>
               <td
                 className={`${BODY_CELL} inline-block text-xs text-muted-foreground md:table-cell`}
               >
@@ -157,7 +160,7 @@ function Section({ id, children }: { id: string; children: React.ReactNode }) {
  * record and the fields that record carries.
  *
  * Every resource is drawn by this one component so the reading order is the
- * same in all eight — an engineer who has read one knows where to look in the
+ * same in all seven — an engineer who has read one knows where to look in the
  * next.
  */
 function Resource({
@@ -292,17 +295,6 @@ const PRODUCTS_FIELDS = [
     type: "object",
     key: "resources.products.fields.ageRange",
   },
-  { name: "seats", type: "object", key: "resources.products.fields.seats" },
-  {
-    name: "registration_opens_at",
-    type: "timestamp",
-    key: "resources.products.fields.registrationOpensAt",
-  },
-  {
-    name: "requires_creations",
-    type: "boolean",
-    key: "resources.products.fields.requiresCreations",
-  },
   { name: "groups", type: "array", key: "resources.products.fields.groups" },
   { name: "created_at, updated_at", type: "timestamp" },
 ] as const;
@@ -333,7 +325,6 @@ const FAMILIES_FIELDS = [
     type: "timestamp",
     key: "resources.families.fields.createdAt",
   },
-  { name: "locale", type: "string", key: "resources.families.fields.locale" },
   {
     name: "location",
     type: "object | null",
@@ -358,7 +349,7 @@ const FAMILIES_FIELDS = [
   },
   {
     name: "gamers[].age",
-    type: "integer",
+    type: "object",
     key: "resources.families.fields.gamersAge",
   },
   {
@@ -425,13 +416,8 @@ const ENROLMENTS_FIELDS = [
     key: "resources.enrolments.fields.signedUpAt",
   },
   {
-    name: "group_joined_at",
-    type: "timestamp | null",
-    key: "resources.enrolments.fields.groupJoinedAt",
-  },
-  {
     name: "age_at_start",
-    type: "integer | null",
+    type: "object | null",
     key: "resources.enrolments.fields.ageAtStart",
   },
   {
@@ -555,7 +541,7 @@ const RESEARCH_PARAMS = [
     type: "date",
     key: "resources.robloxResearch.params.fromTo",
   },
-  { name: "limit, cursor", key: "common.seeConventions" },
+  ...PAGING_ROWS,
 ] as const;
 
 const RESEARCH_FIELDS = [
@@ -571,13 +557,8 @@ const RESEARCH_FIELDS = [
   },
   {
     name: "age",
-    type: "integer | null",
+    type: "object | null",
     key: "resources.robloxResearch.fields.age",
-  },
-  {
-    name: "intervention_date",
-    type: "date",
-    key: "resources.robloxResearch.fields.interventionDate",
   },
   {
     name: "activity",
@@ -588,48 +569,6 @@ const RESEARCH_FIELDS = [
     name: "published_game_url",
     type: "string | null",
     key: "resources.robloxResearch.fields.publishedGameUrl",
-  },
-] as const;
-
-const STATS_PARAMS = [
-  { name: "from, to", type: "date", key: "resources.stats.params.fromTo" },
-] as const;
-
-const STATS_FIELDS = [
-  {
-    name: "totals.families_created",
-    type: "integer",
-    key: "resources.stats.fields.familiesCreated",
-  },
-  {
-    name: "totals.gamers_created",
-    type: "integer",
-    key: "resources.stats.fields.gamersCreated",
-  },
-  {
-    name: "totals.enrolments",
-    type: "integer",
-    key: "resources.stats.fields.enrolments",
-  },
-  {
-    name: "totals.attended",
-    type: "integer",
-    key: "resources.stats.fields.attended",
-  },
-  {
-    name: "totals.games_published",
-    type: "integer",
-    key: "resources.stats.fields.gamesPublished",
-  },
-  {
-    name: "by_product",
-    type: "array",
-    key: "resources.stats.fields.byProduct",
-  },
-  {
-    name: "by_campaign",
-    type: "array",
-    key: "resources.stats.fields.byCampaign",
   },
 ] as const;
 
@@ -668,7 +607,6 @@ const RESOURCE_PATHS = {
   sessions: "/sessions",
   feedback: "/feedback",
   "roblox-research": "/roblox-research",
-  stats: "/stats",
   traffic: "/traffic",
 } as const;
 
@@ -683,9 +621,6 @@ const PRODUCTS_EXAMPLE = `{
   "end_date": "2026-10-23",
   "timezone": "Europe/Paris",
   "age_range": { "min": 13, "max": 17 },
-  "seats": { "capacity": 24, "active": 21, "waitlisted": 3 },
-  "registration_opens_at": "2026-09-01T08:00:00Z",
-  "requires_creations": true,
   "groups": [
     { "id": "0e2b6a7e-6d2a-4f6c-b3a1-3f1f9c8e5a21", "name": "Group A" }
   ],
@@ -697,7 +632,6 @@ const FAMILIES_EXAMPLE = `{
   "id": "9c3e2b4a-7f11-4d0e-8b6a-1a2b3c4d5e6f",
   "email": "parent@example.com",
   "created_at": "2026-09-02T18:41:07Z",
-  "locale": "fr",
   "location": { "city": "Lyon", "country_code": "FR" },
   "utm": { "source": "lynx", "medium": "email", "campaign": "lynx-autumn-a" },
   "marketing_consent": { "granted": true, "updated_at": "2026-09-02T18:43:12Z" },
@@ -705,7 +639,7 @@ const FAMILIES_EXAMPLE = `{
     {
       "id": "b7d1c0e2-3a4f-4b5c-9d6e-7f8a9b0c1d2e",
       "created_at": "2026-09-02T18:45:30Z",
-      "age": 14,
+      "age": { "min": 14, "max": 14 },
       "roblox": { "username": "builder_leo", "user_id": 1234567890, "verified": true },
       "photo_consent": { "granted": true, "updated_at": "2026-09-02T18:46:01Z" }
     }
@@ -721,14 +655,8 @@ const ENROLMENTS_EXAMPLE = `{
   "family_id": "9c3e2b4a-7f11-4d0e-8b6a-1a2b3c4d5e6f",
   "status": "active",
   "signed_up_at": "2026-09-02T18:47:15Z",
-  "group_joined_at": "2026-09-05T09:30:00Z",
-  "age_at_start": 14,
-  "attendance": {
-    "sessions_held": 5,
-    "sessions_present": 4,
-    "first_present_at": "2026-10-19T09:00:00Z",
-    "last_present_at": "2026-10-23T09:00:00Z"
-  },
+  "age_at_start": { "min": 14, "max": 14 },
+  "attendance": { "sessions_held": 5, "sessions_present": 4 },
   "creations": [
     { "title": "Obby Escape", "url": "https://www.roblox.com/games/123456789/Obby-Escape", "is_roblox_url": true }
   ],
@@ -780,38 +708,15 @@ const RESEARCH_EXAMPLE = `{
   "roblox_user_id": 1234567890,
   "country_code": "FR",
   "city": "Lyon",
-  "age": 14,
-  "intervention_date": "2026-10-19",
+  "age": { "min": 14, "max": 14 },
   "activity": {
     "product_id": "5a1f8e1c-1b0e-4a3e-9a9c-2c9a4d8f0b11",
     "name": "Roblox Creator Camp — Paris",
     "type": "camp",
-    "delivery": "in_person"
+    "delivery": "in_person",
+    "start_date": "2026-10-19"
   },
   "published_game_url": "https://www.roblox.com/games/123456789/Obby-Escape"
-}`;
-
-const STATS_EXAMPLE = `{
-  "range": { "from": null, "to": null },
-  "totals": {
-    "families_created": 412,
-    "gamers_created": 468,
-    "enrolments": 503,
-    "attended": 377,
-    "games_published": 214
-  },
-  "by_product": [
-    {
-      "product_id": "5a1f8e1c-1b0e-4a3e-9a9c-2c9a4d8f0b11",
-      "enrolments": 24,
-      "attended": 21,
-      "games_published": 17
-    }
-  ],
-  "by_campaign": [
-    { "utm_campaign": "lynx-autumn-a", "families_created": 88, "gamers_created": 97, "enrolments": 101 },
-    { "utm_campaign": null, "families_created": 260, "gamers_created": 301, "enrolments": 322 }
-  ]
 }`;
 
 const TRAFFIC_EXAMPLE = `{
@@ -823,8 +728,8 @@ const TRAFFIC_EXAMPLE = `{
     { "utm_source": null, "utm_medium": null, "utm_campaign": null, "pageviews": 1117 }
   ],
   "by_day": [
-    { "date": "2026-09-01", "pageviews": 212, "unique_visitors": 178 },
-    { "date": "2026-09-02", "pageviews": 240, "unique_visitors": 199 }
+    { "date": "2026-09-01", "pageviews": 212 },
+    { "date": "2026-09-02", "pageviews": 240 }
   ]
 }`;
 
@@ -1057,18 +962,6 @@ export default function LynxApiDocsPage() {
           />
 
           <Resource
-            id="stats"
-            path={RESOURCE_PATHS.stats}
-            title={t("resources.stats.title")}
-            intro={rich("resources.stats.intro")}
-            labels={labels}
-            exampleTitle={t("common.exampleResponse")}
-            example={STATS_EXAMPLE}
-            params={rows(STATS_PARAMS)}
-            fields={rows(STATS_FIELDS)}
-          />
-
-          <Resource
             id="traffic"
             path={RESOURCE_PATHS.traffic}
             title={t("resources.traffic.title")}
@@ -1103,9 +996,12 @@ export default function LynxApiDocsPage() {
                       key={code}
                       className="block border-b border-border py-1 last:border-0 md:table-row md:py-0"
                     >
-                      <td className={`${BODY_CELL} block md:table-cell`}>
+                      <th
+                        scope="row"
+                        className={`${BODY_CELL} block text-left font-normal md:table-cell`}
+                      >
                         <Code>{code}</Code>
-                      </td>
+                      </th>
                       <td
                         className={`${BODY_CELL} block pt-0 text-muted-foreground md:table-cell md:pt-2.5`}
                       >
