@@ -1640,21 +1640,21 @@
           "note": "Ingen identifierare för barnet eller familjen finns på den här raden. Om Lynx behöver spåra en rad tillbaka till en familj, hämta den från <code>/enrolments</code> i stället; forskningsdatat är medvetet inte sammankopplingsbart till en person."
         },
         "traffic": {
-          "title": "the pages a campaign lands on, by campaign",
-          "intro": "Views of the pages a Lynx campaign can land on, grouped by the campaign that brought them, so the top of the funnel has a number too: the Roblox landing page, the shop, and each Programme product’s own page. The counts come from Vercel Web Analytics. We copy them into our own store once a day, so the history runs from the day the copying began rather than the 30 days Vercel keeps. Aggregate only: no visitor identifiers, and no page beyond those three kinds. A page’s views count every language it is served in as one page.",
+          "title": "sidorna en kampanj landar på, per kampanj",
+          "intro": "Visningar av de sidor en Lynx-kampanj kan landa på, grupperade efter kampanjen som förde dem dit, så att även trattens överkant får en siffra: Roblox-landningssidan, butiken, och den egna sidan för varje produkt i Programmet. Antalen kommer från Vercel Web Analytics. Vi kopierar dem till vårt eget lager en gång om dagen, så historiken börjar den dag kopieringen startade och inte de 30 dagar Vercel sparar. Bara aggregerat: inga besökaridentifierare, och ingen sida utöver de tre slagen. En sidas visningar räknar varje språk den serveras på som en och samma sida.",
           "params": {
-            "page": "Only pages of this kind. Omit for all three.",
-            "productId": "Only this product’s page. Implies <code>page=product</code>.",
+            "page": "Bara sidor av det här slaget. Utelämna för alla tre.",
+            "productId": "Bara den här produktens sida. Innebär <code>page=product</code>.",
             "fromTo": "Bara dagar inom det här intervallet, gränserna inräknade. Utelämna för hela historiken."
           },
           "fields": {
             "range": "De dagar antalen täcker.",
-            "pages": "One entry per page: the landing page, the shop, and one per Programme product that had a view in the range.",
-            "pagesPage": "Which kind of page. The shop page is shared with everything School of Gaming sells, so its views are not Programme-only; a product page’s views are.",
-            "pagesProductId": "The product whose page it is; <code>null</code> for the landing page and the shop.",
-            "pagesPageviews": "Views of the page in the range, whatever brought them.",
-            "pagesByCampaign": "The views split by the three UTM values on the link. The row with three nulls is every view that carried no campaign, including a visitor who typed the address or followed an untagged link.",
-            "pagesByDay": "The views per calendar day, for a time series."
+            "pages": "En post per sida: landningssidan, butiken, och en per produkt i Programmet som hade en visning i intervallet.",
+            "pagesPage": "Vilket slags sida det är. Butikssidan delas med allt School of Gaming säljer, så dess visningar gäller inte bara Programmet; en produktsidas visningar gör det.",
+            "pagesProductId": "Produkten vars sida det är; <code>null</code> för landningssidan och butiken.",
+            "pagesPageviews": "Visningar av sidan i intervallet, oavsett vad som förde dem dit.",
+            "pagesByCampaign": "Visningarna uppdelade efter länkens tre UTM-värden. Raden med tre null är varje visning som inte bar någon kampanj, inklusive en besökare som skrev in adressen eller följde en omärkt länk.",
+            "pagesByDay": "Visningarna per kalenderdag, för en tidsserie."
           },
           "note": "Vercels skript körs bara för en besökare som accepterat analys i cookiebannern, och UTM-värdena på en familjepost skrivs bara för en besökare som accepterat marknadsföring. De två villkoren skiljer sig åt, och analysvillkoret är det bredare, så en visning som räknas här och en familj i <code>/families</code> är inte samma population: en besökare som accepterat allt finns i båda, en som bara accepterat analys finns bara här, och en som avvisat bannern finns i ingendera."
         }
@@ -1687,7 +1687,7 @@
           "childIdentity": "Barnens efternamn, födelsedagar och kön, och föräldrarnas telefonnummer. Inget av det Lynx gör med uppgifterna behöver dem, och Programmets integritetspolicy utlovar en födelsemånad snarare än ett födelsedatum.",
           "releases": "Medgivanden för fallstudier och omdömen. Det enda mediatillstånd Sogverse håller täcker redan att Lynx Educate, School of Gaming och Roblox använder ett fotografi offentligt; ett barns fullständiga namn, en fallstudie, ett citat eller innehåll kopplat till barnet kräver ett separat skriftligt medgivande som hämtas in utanför plattformen.",
           "deliveryModel": "En etikett för leveransmodell. Sogverse håller en produkts typ och om den är online eller på plats; en modelltaxonomi är Lynx sak att lägga över de två fälten.",
-          "analytics": "Traffic anywhere but the landing page, the shop and the Programme’s product pages, and anything about a single visitor. The analytics behind <code>/traffic</code> are privacy-first by design: a page a family reaches after signing in is theirs, and a visitor is a count, never a record."
+          "analytics": "Trafik på någon annan sida än landningssidan, butiken och Programmets produktsidor, och allt som rör en enskild besökare. Analysen bakom <code>/traffic</code> är integritetsvänlig från grunden: en sida som en familj når efter inloggning tillhör familjen, och en besökare är ett antal, aldrig en post."
         }
       }
     }
