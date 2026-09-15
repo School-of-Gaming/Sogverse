@@ -1,9 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import {
-  createClient,
-  type QueryData,
-  type SupabaseClient,
-} from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
@@ -14,88 +10,66 @@ import {
 } from "./product-helpers";
 
 /**
- * Pins the purchaser carve-out: a product the public can no longer read stays
- * readable for the customer who bought a place on it, so it keeps its spot in
- * their "My Clubs / Camps / Events" rail and its detail page keeps opening.
+ * Pins the parent-side dashboard reads against a product whose term ended long
+ * ago: the "My Clubs / Camps / Events" rail join and the detail join the
+ * upcoming-sessions read runs. Both walk `participations` → `products` →
+ * (`schedule_slots`, `product_translations`), and each of those tables decides
+ * the product half with the same read predicate, so a product that dropped out
+ * of any layer would take the family's own history off their dashboard.
  *
- * The predicate under test is the purchaser branch of `can_read_product`. It
- * complements the public branch — which returns every row whose end date has
- * not passed, and since 00168 asks nothing about `is_visible` — by adding a
- * per-customer carve-out: any product the viewer has an `active` or
- * `waitlisted` participation on becomes readable however long ago it finished.
+ * **What this file used to be, and why it is smaller now.** It pinned a
+ * *purchaser carve-out*: a product the public could no longer read stayed
+ * readable for the customer who bought a place on it, and the negative controls
+ * were the point — a `reserving` row, no participation at all, another
+ * customer's participation and an anonymous visitor each had to come back
+ * empty. There is no carve-out to pin any more. Every product stays readable by
+ * direct link forever (owner decision, 2026-09-15), so nobody is refused and
+ * five cases were deleted rather than inverted:
  *
- * **The fixtures ended in the past, and that is load-bearing.** A passed end
- * date is now the only thing that closes the public branch: an unlisted product
- * is publicly readable by design (an ad campaign's landing page has to work), so
- * an `is_visible = false` fixture would be readable by everyone and every
- * negative assertion below would be exercising nothing.
+ *   - "customer with only a reserving row CANNOT SELECT the closed product"
+ *   - "customer with no participation CANNOT SELECT the closed product"
+ *   - "a different customer's active participation does NOT grant access"
+ *   - "anon CANNOT SELECT a closed product"
+ *   - the rail join's third row, whose whole job was to be RLS-nulled
  *
- * The carve-out is exactly those two participation statuses and nothing else.
- * This file pins that with a positive control (active/waitlisted DO grant
- * access) and a negative one: a row in any other status does NOT. `reserving`
- * plays the negative role — it is a retired status now (paid seats are created
- * at payment confirmation, so nothing writes it), which makes it the cleanest
- * stand-in for "some status the policy has no opinion about".
+ * Each of them asserted that some caller could not read a product, and no
+ * caller cannot. The predicate's own before/after — every caller gets the same
+ * answer for any product that exists, and `false` only for an id no product has
+ * — is proved once, in `exposed-function-scope.test.ts`. What is left here is
+ * the *surface* claim, which is not a predicate claim and did not move: these
+ * two joins hand the dashboard a whole product, slots and names included.
  */
 
 /**
  * A term that ended long ago, in a zone that cannot argue about it: the
- * fixtures' timezone is UTC and the date is years back, so "the end date has
- * passed" is true wherever and whenever this suite runs. That is what closes
- * the public read branch, and it is the only thing that does.
+ * fixtures' timezone is UTC and the date is years back. It no longer closes a
+ * read — nothing does — but it is still what makes these the *history* reads
+ * rather than ordinary ones.
  */
 const CLOSED_END = "2020-01-31";
 
 const CLOSED_ACTIVE_PRODUCT = "00000000-0000-0000-0000-0000000005e5";
 const CLOSED_WAITLISTED_PRODUCT = "00000000-0000-0000-0000-0000000005e6";
-const CLOSED_RESERVING_PRODUCT = "00000000-0000-0000-0000-0000000005e7";
-const CLOSED_UNPURCHASED_PRODUCT = "00000000-0000-0000-0000-0000000005e8";
-const ALL_PRODUCTS = [
-  CLOSED_ACTIVE_PRODUCT,
-  CLOSED_WAITLISTED_PRODUCT,
-  CLOSED_RESERVING_PRODUCT,
-  CLOSED_UNPURCHASED_PRODUCT,
-];
-
-const supabaseUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321";
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-
-function createAnonClient(): SupabaseClient<Database> {
-  return createClient<Database>(supabaseUrl, anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-}
+const ALL_PRODUCTS = [CLOSED_ACTIVE_PRODUCT, CLOSED_WAITLISTED_PRODUCT];
 
 describe("products purchaser-read RLS (00047)", () => {
   let admin: SupabaseClient<Database>;
   let customerClient: SupabaseClient<Database>;
-  let customer2Client: SupabaseClient<Database>;
-  let anonClient: SupabaseClient<Database>;
 
   beforeAll(async () => {
     admin = createAdminTestClient();
-    anonClient = createAnonClient();
     customerClient = await createAuthenticatedClient(
       TEST_CREDENTIALS.CUSTOMER.email,
       TEST_CREDENTIALS.CUSTOMER.password,
     );
-    customer2Client = await createAuthenticatedClient(
-      TEST_CREDENTIALS.CUSTOMER_2.email,
-      TEST_CREDENTIALS.CUSTOMER_2.password,
-    );
 
     await deleteTestProducts(admin, ALL_PRODUCTS);
 
-    // Four products, all finished — i.e. all past the public branch. The
-    // participation kind is the only axis that varies between them, so what
-    // discriminates access is the carve-out's participation-status filter and
-    // nothing else.
     for (const id of ALL_PRODUCTS) {
       await createTestProduct(admin, { id, endDate: CLOSED_END, seatCount: 10 });
     }
 
-    // CUSTOMER's participations on three of the four products.
+    // CUSTOMER's participations, one of each kind the rail renders.
     // RLS would block these inserts for a customer client; admin client
     // bypasses RLS so we can stage rows that mirror the post-purchase
     // state without going through the SECURITY DEFINER signup RPC.
@@ -113,22 +87,15 @@ describe("products purchaser-read RLS (00047)", () => {
         status: "waitlisted",
         waitlisted_at: new Date().toISOString(),
       },
-      {
-        product_id: CLOSED_RESERVING_PRODUCT,
-        participant_id: TEST_IDS.GAMER,
-        customer_id: TEST_IDS.CUSTOMER,
-        status: "reserving",
-      },
     ]);
     if (seed.error) throw seed.error;
 
     // The parent dashboard's `getMyUpcomingSessions("customer")` embeds the
     // product's schedule slots and translations under the product. Seed both
-    // on the active product so the detail-join assertion can prove the
-    // purchaser reaches the *children*, not just the product row. The child
-    // tables carry their own RLS and were never extended to purchasers — so
-    // the product survives while its slots (→ dropped session) and
-    // translations (→ blank name) come back empty.
+    // on the active product so the detail-join assertion can prove the read
+    // reaches the *children*, not just the product row — an empty slots array
+    // drops the session from the dashboard and an empty translations array
+    // renders a blank product name.
     await createScheduleSlot(admin, CLOSED_ACTIVE_PRODUCT, {
       weekday: 1,
       startTime: "10:00",
@@ -147,12 +114,7 @@ describe("products purchaser-read RLS (00047)", () => {
     await deleteTestProducts(admin, ALL_PRODUCTS);
   });
 
-  // ---------------------------------------------------------------------------
-  // Positive: active / waitlisted participation grants the purchaser read
-  // access to a product the public can no longer read.
-  // ---------------------------------------------------------------------------
-
-  it("customer with an active participation can SELECT the closed product", async () => {
+  it("customer with an active participation can SELECT the ended product", async () => {
     const { data, error } = await customerClient
       .from("products")
       .select("id, end_date")
@@ -161,13 +123,12 @@ describe("products purchaser-read RLS (00047)", () => {
 
     expect(error).toBeNull();
     expect(data?.id).toBe(CLOSED_ACTIVE_PRODUCT);
-    // Pin that the row really is outside the published statuses — otherwise
-    // the assertion would pass via the public branch and we would not be
-    // exercising the carve-out at all.
+    // Non-vacuity: the row really is one whose term is years over, which is the
+    // shape the dashboard has to keep rendering.
     expect(data?.end_date).toBe(CLOSED_END);
   });
 
-  it("customer with a waitlisted participation can SELECT the closed product", async () => {
+  it("customer with a waitlisted participation can SELECT the ended product", async () => {
     const { data, error } = await customerClient
       .from("products")
       .select("id, end_date")
@@ -179,115 +140,29 @@ describe("products purchaser-read RLS (00047)", () => {
     expect(data?.end_date).toBe(CLOSED_END);
   });
 
-  // ---------------------------------------------------------------------------
-  // Negative: reserving / no participation / wrong customer / anon all
-  // hit the baseline "outside the published statuses ⇒ no read" path.
-  // ---------------------------------------------------------------------------
-
-  it("customer with only a reserving row CANNOT SELECT the closed product", async () => {
-    // The carve-out names active and waitlisted; a row in any other status is
-    // a row it has nothing to say about, so the product's status decides.
-    const { data, error } = await customerClient
-      .from("products")
-      .select("id")
-      .eq("id", CLOSED_RESERVING_PRODUCT);
-
-    expect(error).toBeNull();
-    expect(data).toEqual([]);
-  });
-
-  it("customer with no participation CANNOT SELECT the closed product", async () => {
-    const { data, error } = await customerClient
-      .from("products")
-      .select("id")
-      .eq("id", CLOSED_UNPURCHASED_PRODUCT);
-
-    expect(error).toBeNull();
-    expect(data).toEqual([]);
-  });
-
-  it("a different customer's active participation does NOT grant access", async () => {
-    // CUSTOMER_2 has no participation on CLOSED_ACTIVE_PRODUCT — only
-    // CUSTOMER does. The carve-out keys on `customer_id = auth.uid()`, so
-    // a customer can only piggyback on their own participations.
-    const { data, error } = await customer2Client
-      .from("products")
-      .select("id")
-      .eq("id", CLOSED_ACTIVE_PRODUCT);
-
-    expect(error).toBeNull();
-    expect(data).toEqual([]);
-  });
-
-  it("anon CANNOT SELECT a closed product (no session = no participation)", async () => {
-    const { data, error } = await anonClient
-      .from("products")
-      .select("id")
-      .eq("id", CLOSED_ACTIVE_PRODUCT);
-
-    expect(error).toBeNull();
-    expect(data).toEqual([]);
-  });
-
-  // ---------------------------------------------------------------------------
-  // Purchaser product-read RLS: assert the embedded product join comes through
-  // for a customer's active/waitlisted participations and is nulled out for
-  // reserving rows. This is the carve-out that lets a customer view a product
-  // they bought a place on even after it leaves the published statuses.
-  // ---------------------------------------------------------------------------
-
-  it("rail join: active + waitlisted rows carry the product; reserving's product is filtered", async () => {
+  it("rail join: the active and waitlisted rows both carry their product", async () => {
     // A customer reads their own participations with the product embedded
-    // (just the columns the assertion needs). RLS nulls the embedded product
-    // for rows the viewer isn't allowed to see; this asserts that shape.
-    //
-    // The embedded `product` is typed non-null by PostgREST because
-    // `participations.product_id` is NOT NULL — but RLS can still
-    // null it out for rows the viewer isn't allowed to see (the whole
-    // point of this assertion). Widen the QueryData row to admit null
-    // at compile time so the runtime check on the reserving row works —
-    // a widening annotation, not a narrowing cast.
-    const query = customerClient
+    // (just the columns the assertion needs). This is the shape the rail
+    // renders from: a row whose embedded product came back null is a card with
+    // no club on it.
+    const { data, error } = await customerClient
       .from("participations")
       .select("product_id, status, product:products(id, end_date)")
-      .in("product_id", [
-        CLOSED_ACTIVE_PRODUCT,
-        CLOSED_WAITLISTED_PRODUCT,
-        CLOSED_RESERVING_PRODUCT,
-      ]);
-
-    const { data, error } = await query;
-
-    type QueryRow = QueryData<typeof query>[number];
-    type RailRow = Omit<QueryRow, "product"> & {
-      product: QueryRow["product"] | null;
-    };
+      .in("product_id", ALL_PRODUCTS);
 
     expect(error).toBeNull();
-    const rows: RailRow[] = data ?? [];
-    const byProduct = new Map(rows.map((row) => [row.product_id, row]));
+    const byProduct = new Map((data ?? []).map((row) => [row.product_id, row]));
 
-    expect(byProduct.get(CLOSED_ACTIVE_PRODUCT)?.product?.id).toBe(
+    expect(byProduct.get(CLOSED_ACTIVE_PRODUCT)?.product.id).toBe(
       CLOSED_ACTIVE_PRODUCT,
     );
-    expect(byProduct.get(CLOSED_WAITLISTED_PRODUCT)?.product?.id).toBe(
+    expect(byProduct.get(CLOSED_WAITLISTED_PRODUCT)?.product.id).toBe(
       CLOSED_WAITLISTED_PRODUCT,
     );
-    // Reserving row exists, but the product join is RLS-nulled.
-    expect(byProduct.get(CLOSED_RESERVING_PRODUCT)?.status).toBe("reserving");
-    expect(byProduct.get(CLOSED_RESERVING_PRODUCT)?.product).toBeNull();
+    expect(byProduct.get(CLOSED_WAITLISTED_PRODUCT)?.status).toBe("waitlisted");
   });
 
-  // ---------------------------------------------------------------------------
-  // Dashboard surface: `getMyUpcomingSessions("customer")` embeds the product's
-  // schedule slots and translations. The purchaser carve-out lets the product
-  // row through, but the child tables need their own matching policy. Without
-  // it the embedded slots array is empty (the dashboard drops the session —
-  // Kyle's reported empty-Sessions bug) and the translations array is empty
-  // (blank product name). Assert the purchaser reaches both children.
-  // ---------------------------------------------------------------------------
-
-  it("detail join: purchaser reads the closed product's slots and translations", async () => {
+  it("detail join: the purchaser reads the ended product's slots and translations", async () => {
     const { data: row, error } = await customerClient
       .from("products")
       .select(
@@ -298,9 +173,9 @@ describe("products purchaser-read RLS (00047)", () => {
 
     expect(error).toBeNull();
     expect(row?.id).toBe(CLOSED_ACTIVE_PRODUCT);
-    // Pin that the row really is past the public branch, so the assertion
-    // exercises the purchaser carve-out rather than the public path.
     expect(row?.end_date).toBe(CLOSED_END);
+    // The product row is not enough: the satellite tables carry their own
+    // policies, and the dashboard reads both through this join.
     expect(row?.schedule_slots.length).toBeGreaterThan(0);
     expect(row?.product_translations.length).toBeGreaterThan(0);
   });

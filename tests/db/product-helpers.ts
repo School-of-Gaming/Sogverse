@@ -15,8 +15,11 @@ import { TEST_IDS } from "./constants";
  *
  * Allocation registry — keep this current when adding a v2 db test. The
  * suffix is the last byte of the UUID (`...0000000005XX`):
- *   5a1–5a3, 5aa   exposed-function-scope.test.ts (5a3 is its product_groups
- *                  id; 5aa is its unlisted-but-published product)
+ *   5a1–5a3, 5aa,  exposed-function-scope.test.ts (5a3 is its product_groups
+ *   5af            id; 5aa is its unlisted-but-published product; 5af is an id
+ *                  no product may ever hold, backing the one case
+ *                  `can_read_product` still answers false for — declared here
+ *                  for the same reason 6ee and 6ff below are)
  *   5a4–5a9        write-idor.test.ts (5a4 is the product; 5a5, 5a6 and 5a9
  *                  are the group / zone / slot fixtures it seeds)
  *   5b1–5b5        participations-race.test.ts (5b2 is its soft-cap product)
@@ -28,8 +31,12 @@ import { TEST_IDS } from "./constants";
  *   5c7            waitlist-admin.test.ts (its muni product; see also 5f6)
  *   5c8–5ca        admin-participation-rpcs.test.ts (5ca is its free club)
  *   5d1–5da        session-credits-cron.test.ts
- *   5e1–5e4        products-gamer-rls.test.ts
- *   5e5–5e8        products-purchaser-rls.test.ts
+ *   5e1–5e4        products-gamer-rls.test.ts (5e3 and 5e4 are FREE: they held
+ *                  the reserving-row and the no-participation products, the
+ *                  negative controls for a carve-out that stopped existing when
+ *                  every product became readable by direct link)
+ *   5e5–5e8        products-purchaser-rls.test.ts (5e7 and 5e8 are FREE, for
+ *                  the same reason as 5e3 and 5e4)
  *   5f1, 5f2, 5f7, 5f8, 5ff
  *                  update-product.test.ts (5f7 is the product its 00171
  *                  waitlist-deletion cases seed participations on, kept apart
@@ -110,12 +117,13 @@ import { TEST_IDS } from "./constants";
  *                  asked — and 683 the queue's own club, kept apart from 680 so
  *                  the already-enrolled gate can never stand in for the consent
  *                  refusal the waitlist cases are asserting)
- *   690-691        marketing-consents.test.ts (two products, and the pair is the
- *                  whole point: 690 is PUBLISHED, so its marketing-consent ask
- *                  is readable by a stranger browsing the shop, and 691 is
- *                  CANCELLED, so the same ask is readable by nobody but an
- *                  admin. `can_read_product` is what separates them, and a
- *                  single product cannot hold both answers)
+ *   690-691        marketing-consents.test.ts (two products: 690 is PUBLISHED
+ *                  and LISTED, the state a shop page is read in, and 691 is
+ *                  unlisted with a term that ended years ago. The pair used to
+ *                  be a readability contrast — `can_read_product` separated
+ *                  them — and since every product became readable by direct
+ *                  link it is the opposite: the ask is as readable on the
+ *                  ended, unlisted one as on the listed one)
  *   6a0-6a3, 6a9   session-images.test.ts (two products 6a0/6a1 with their
  *                  groups 6a2/6a3; 6a9 is an image id that must never exist,
  *                  declared here for the same reason 6ee and 6ff below are)
@@ -130,12 +138,11 @@ import { TEST_IDS } from "./constants";
  *                  kept apart because its cases satisfy the other three
  *                  conditions and would otherwise move the counts every other
  *                  block asserts on)
- *   6c0-6c3, 6cf   gamer-photo-consents.test.ts (6c0 PUBLISHED and 6c1
- *                  CANCELLED are the readability pair, for the reason the
- *                  690/691 pair above has one: `can_read_product` is what
- *                  separates them and a single product cannot hold both
- *                  answers. 6c2 is a third product with its group 6c3, kept
- *                  apart from both because it is the only one with a gedu
+ *   6c0-6c3, 6cf   gamer-photo-consents.test.ts (6c0 PUBLISHED and listed, 6c1
+ *                  unlisted with a long-past term — the same pair as 690/691
+ *                  above and read the same way now: the ask is as readable on
+ *                  one as on the other. 6c2 is a third product with its group
+ *                  6c3, kept apart from both because it is the only one with a gedu
  *                  assignment and a roster on it — the fixture the whole staff
  *                  read arm is asserted against, and one whose membership
  *                  changes inside a case. 6cf is that file's must-NOT-exist

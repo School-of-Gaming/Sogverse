@@ -43,9 +43,10 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
 
 const PRODUCT_PUBLISHED = "00000000-0000-0000-0000-0000000006c0";
 /**
- * A term that ended long ago, in the helper's default UTC zone, so "the end date
- * has passed" is true wherever and whenever this suite runs. That is what closes
- * the public arm of `can_read_product`.
+ * A term that ended long ago, in the helper's default UTC zone, so "this
+ * product has ended" is true wherever and whenever this suite runs. It closes
+ * nothing: since the 2026-09-15 ruling an ended product is readable by
+ * everybody, and the fixture is here as the hardest case for that claim.
  */
 const FINISHED_END = "2020-01-31";
 
@@ -148,9 +149,10 @@ describe("gamer photo consents (00244)", () => {
       isVisible: true,
       seatCount: null,
     });
-    // Long finished and unlisted, so the same predicate is false for anyone but
-    // an admin. Its ask set is seeded identically, so a difference in what comes
-    // back can only be the predicate.
+    // Long finished AND unlisted — the two states that were once each thought
+    // to close a read, on one product. Its ask set is seeded identically to the
+    // published one's, so a difference in what comes back could only be the
+    // predicate, and there is no longer a difference to find.
     await createTestProduct(admin, {
       id: PRODUCT_FINISHED,
       endDate: FINISHED_END,
@@ -851,7 +853,13 @@ describe("gamer photo consents (00244)", () => {
   });
 
   // -------------------------------------------------------------------------
-  // A product's ask is exactly as visible as the product
+  // A product's ask is exactly as visible as the product — which, since the
+  // 2026-09-15 ruling that every product stays readable by direct link forever,
+  // means visible to everybody. One case was deleted here when the ruling
+  // landed ("tells the same stranger nothing about a product they cannot read"):
+  // there is no product a stranger cannot read, so it had nothing left to
+  // prove. The case that replaced it asserts the ask arrives on the ended,
+  // unlisted product too — the read a parent following an old link makes.
   // -------------------------------------------------------------------------
 
   describe("product_gamer_photo_consents readability", () => {
@@ -884,16 +892,19 @@ describe("gamer photo consents (00244)", () => {
       expect(res.data).toEqual([{ consent_type: LYNX }]);
     });
 
-    it("tells the same stranger nothing about a product they cannot read", async () => {
+    it("tells the same stranger about an ended, unlisted product too", async () => {
+      // The ruling where it bites: a parent opening a link to last spring's
+      // club has no session at the moment they open it, and the page still has
+      // to say what signing up would ask.
       const res = await anon
         .from("product_gamer_photo_consents")
         .select("consent_type")
         .eq("product_id", PRODUCT_FINISHED);
       expect(res.error).toBeNull();
-      expect(res.data).toEqual([]);
+      expect(res.data).toEqual([{ consent_type: LYNX }]);
     });
 
-    it("shows an admin both, because can_read_product's first arm is theirs", async () => {
+    it("shows an admin both, by the same predicate as everybody else", async () => {
       const res = await adminAuth
         .from("product_gamer_photo_consents")
         .select("product_id")

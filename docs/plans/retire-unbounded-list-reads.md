@@ -94,7 +94,12 @@ municipality page's not-found gate can fire wrongly.
 
 a. **Push the ended-club predicate into the query.** The "this club has ended" judgement
    runs entirely in JS after the fetch, so every past term's clubs consume row budget
-   while contributing nothing. Mirror the client-side ended judgement (the
+   while contributing nothing — and nothing upstream narrows them out first. There is no
+   stored status column to filter on (the lifecycle is derived from the term dates at read
+   time, and nothing writes it anywhere), and the database's read rule deliberately does
+   not filter by date either: every product stays readable by direct link forever, so an
+   ended club arrives in the response by design and it is this query's job to leave it
+   there. Mirror the client-side ended judgement (the
    effective-status helpers in `src/lib/`) as query filters. **Timezone constraint:** the
    judgement compares against dates in the product's own zone (products are authored in
    `Europe/Helsinki`); the query-side predicate must not quietly substitute UTC "today" —

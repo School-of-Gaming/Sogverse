@@ -83,8 +83,9 @@ export const municipalityInvoicingSession = z.object({
 
 /**
  * One municipality club the month has something to say about: either it
- * recorded a session, or its term overlapped the month while it was running or
- * completed.
+ * recorded a session, or its term overlapped the month at all. The term is the
+ * whole of that second test — there is no status on the wire and none in the
+ * database to ask about.
  *
  * `municipality_fee_cents` is the product's *current* fee, read at page load
  * with no snapshotting, and null means the field has never been filled in. Null
