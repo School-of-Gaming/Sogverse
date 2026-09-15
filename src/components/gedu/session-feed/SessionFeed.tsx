@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTimezone } from "@/providers";
 import { cn, formatDate } from "@/lib/utils";
@@ -12,6 +12,7 @@ import {
   type SessionFeedRowContext,
 } from "@/components/session-feed";
 import { SessionFeedItem } from "./SessionFeedItem";
+import type { SessionCoverRequestDraft } from "./SessionStaffingRegion";
 import {
   entryCompleteness,
   entryOwesCreations,
@@ -156,6 +157,33 @@ interface SessionFeedProps {
    * needs the *product's* ask set, which a feed does not carry.
    */
   photoConsents?: ReadonlyMap<string, boolean> | null;
+  /**
+   * File "I can't make this session" against one entry. **Awaited**, on the
+   * same terms as the save: the dialog stays open and disabled until it
+   * settles, and a refusal leaves the reason and note where the gedu can try
+   * again.
+   *
+   * Omitted on a surface that is not a gedu looking at their own sessions — the
+   * admin shell supplies {@link renderStaffingEditor} instead — and the action
+   * is then not rendered at all. That is the whole gate: no role flag reaches
+   * this component, and the surface decides by what it supplies.
+   */
+  onRequestCover?: (
+    entry: SessionFeedEntry,
+    draft: SessionCoverRequestDraft,
+  ) => void | Promise<void>;
+  /** Take the viewer's own open request back. Awaited on the same terms. */
+  onWithdrawCoverRequest?: (requestId: string) => void | Promise<void>;
+  /**
+   * The staffing editor to draw on each card, in the same region as the gedu's
+   * own action — the admin shell's half of the pair above.
+   *
+   * A render prop rather than a node, because the editor is per-entry: it acts
+   * on one session's requests, and one node could not be four cards' editors.
+   * A surface with no such tool omits it, which is the gedu answer and the
+   * default.
+   */
+  renderStaffingEditor?: (entry: SessionFeedEntry) => ReactNode;
   className?: string;
 }
 
@@ -246,6 +274,9 @@ export function SessionFeed({
   onAddPhoto,
   onRemovePhoto,
   photoConsents = null,
+  onRequestCover,
+  onWithdrawCoverRequest,
+  renderStaffingEditor,
   className,
 }: SessionFeedProps) {
   const t = useTranslations("gedu.sessionFeed");
@@ -788,6 +819,16 @@ export function SessionFeed({
             }}
             photoConsents={photoConsents}
             creations={creationsFor(entry)}
+            // Bound to this entry here rather than in the card, so the card
+            // never has to turn its own id back into the (group, date) pair a
+            // cover request is keyed by — the same split the save already has.
+            onRequestCover={
+              onRequestCover === undefined
+                ? undefined
+                : (draft) => onRequestCover(entry, draft)
+            }
+            onWithdrawCoverRequest={onWithdrawCoverRequest}
+            staffingEditor={renderStaffingEditor?.(entry) ?? null}
             registerEditButton={(node) => {
               if (node === null) editButtons.current.delete(entry.id);
               else editButtons.current.set(entry.id, node);

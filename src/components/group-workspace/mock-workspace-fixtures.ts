@@ -16,6 +16,11 @@ import {
 import type { SessionFeedEntry, SessionFeedGamer } from "@/components/gedu/session-feed";
 import { platformForTopic } from "@/lib/products/topics";
 import { sessionEntryId } from "@/lib/session-occurrence";
+import {
+  deriveSessionStaffing,
+  type CoverRequestInput,
+  type StaffingAssignment,
+} from "@/lib/session-staffing";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type {
   GamerCreation,
@@ -188,6 +193,21 @@ export interface GroupWorkspaceFixture {
    * that rule instead of exercising it.
    */
   photoConsentRows: readonly GamerPhotoConsent[] | null;
+  /**
+   * The group's cover requests as **stored rows**, and the other two inputs the
+   * staffing derivation takes.
+   *
+   * The entries above already carry the staffing derived from them, so a scene
+   * that only renders needs none of this. What it is for is a scene that
+   * *files* one: filing an absence adds a row, and the card's action turning
+   * into a status line is the derivation being run again on the new list rather
+   * than a state the scene toggled. A fixture that handed over only the
+   * finished staffing could not show that at all.
+   */
+  coverRequests: readonly CoverRequestInput[];
+  staffingGedus: readonly StaffingAssignment[];
+  /** Whose workspace this is — the viewer every card's action is offered to. */
+  viewerId: string;
 }
 
 /** Gedu ids. Real UUIDs because each one renders as an identicon chip. */
@@ -197,6 +217,21 @@ const GEDU_IDS = {
   joonas: "d2826073-1d3f-4023-b45e-f42fea4332ca",
   markus: "a79fc7fd-8527-4826-8062-94d25ed30873",
 } as const;
+
+/**
+ * Who this workspace's own group is staffed by, and **who is reading it**.
+ *
+ * Sanna is the viewer on every scenario: the page is her workspace, so the card
+ * that offers "I can't make this session" offers it to her, and the request she
+ * files is the one whose status line and Withdraw are on show. The live shell
+ * resolves the same id server-side and hands it down; a scene simply names it.
+ */
+const VIEWER_GEDU_ID = GEDU_IDS.sanna;
+
+const ASSIGNED_GROUP_GEDUS: readonly StaffingAssignment[] = [
+  { id: GEDU_IDS.sanna, firstName: "Sanna", role: "primary" },
+  { id: GEDU_IDS.petra, firstName: "Petra", role: "primary" },
+];
 
 /** A camp's five weekday slots; a club's single weekly one. */
 const CLUB_SLOTS = [{ weekday: 0, start_time: "16:30", duration_minutes: 90 }];
@@ -1574,9 +1609,29 @@ export function buildGroupWorkspaceFixture(
    */
   const dateOf = (startsAt: Date) =>
     formatInTimeZone(startsAt, feed.timeZone, "yyyy-MM-dd");
-  const entries = feed.entries.map((entry) => ({
+  const rekeyed = feed.entries.map((entry) => ({
     ...entry,
     id: sessionEntryId(groupId, dateOf(entry.startsAt)),
+  }));
+
+  /**
+   * The group's cover requests, and the per-date staffing derived from them.
+   *
+   * **Derived rather than authored**, through the very function both staff
+   * feeds' builder calls: the rule that decides who is expected — and therefore
+   * which card offers the action and which shows a status line — is the thing
+   * under review, so a fixture that wrote the answers down would be asserting
+   * it instead of exercising it. What the fixture supplies is the rows.
+   */
+  const covers = coverRequestsFor(scenario, rekeyed, dateOf);
+  const entries = rekeyed.map((entry) => ({
+    ...entry,
+    staffing: deriveSessionStaffing({
+      gedus: ASSIGNED_GROUP_GEDUS,
+      requests: covers,
+      sessionDate: dateOf(entry.startsAt),
+      viewerId: VIEWER_GEDU_ID,
+    }),
   }));
   const sendOutcomes = new Map(
     feed.entries.flatMap((entry, index) => {
@@ -1628,10 +1683,11 @@ export function buildGroupWorkspaceFixture(
     participant_count: SESSION_FEED_ROSTER.length,
     // Two primaries: the ordinary staffing of a club this size, and the shape
     // that lets a fixture take one of them out without leaving the group empty.
-    gedus: [
-      { id: GEDU_IDS.sanna, first_name: "Sanna", role: "primary" },
-      { id: GEDU_IDS.petra, first_name: "Petra", role: "primary" },
-    ],
+    gedus: ASSIGNED_GROUP_GEDUS.map((gedu) => ({
+      id: gedu.id,
+      first_name: gedu.firstName,
+      role: gedu.role,
+    })),
     // Read off the topic rather than passed beside it, so the shell and the rows
     // cannot disagree about which identity this product is about — the same
     // function the page itself resolves the question with.
@@ -1692,7 +1748,82 @@ export function buildGroupWorkspaceFixture(
     photoConsentRows: config.asksGamerPhotoConsent
       ? SESSION_FEED_PHOTO_CONSENTS
       : null,
+    coverRequests: covers,
+    staffingGedus: ASSIGNED_GROUP_GEDUS,
+    viewerId: VIEWER_GEDU_ID,
   };
+}
+
+/**
+ * The group's cover requests — **the club's alone**, and three of them, because
+ * three is what it takes to put every state of the card's staffing region on one
+ * page.
+ *
+ * They sit on the three soonest future sessions, in the order a reader meets
+ * them coming down from the top of the feed:
+ *
+ * 1. the **viewer's own** open request, with two offers waiting — the status
+ *    line and the Withdraw beside it, and the one card where the action is
+ *    *absent* because somebody who has filed an absence is no longer expected;
+ * 2. a colleague's request **covered** by a third gedu, which names the sub on
+ *    the staffing line for everybody;
+ * 3. a colleague's request still **open** — "Cover needed", the state the queue
+ *    on the dashboard is fed from.
+ *
+ * Every other card on every scenario carries no request and therefore no
+ * staffing line at all, which is the state to check as much as the three above:
+ * a fifty-week feed that printed its staffing on every card would bury the
+ * handful of dates where something is actually outstanding.
+ *
+ * The offer count rides only on the viewer's own request, because that is the
+ * only one a gedu is entitled to it on — on somebody else's it is `null`, which
+ * is "not disclosed" rather than zero.
+ */
+function coverRequestsFor(
+  scenario: GroupWorkspaceScenario,
+  entries: readonly SessionFeedEntry[],
+  dateOf: (startsAt: Date) => string,
+): CoverRequestInput[] {
+  if (scenario !== "club") return [];
+
+  // The feed is strictly descending, so the future block's *last* entries are
+  // the soonest ones. Reading them off the feed rather than computing dates
+  // keeps a request on a day the schedule actually projects.
+  const future = entries.filter((entry) => entry.kind === "future");
+  const soonest = future.slice(-3).reverse();
+  if (soonest.length < 3) return [];
+
+  const [next, second, third] = soonest;
+
+  return [
+    {
+      id: "mock-cover-request-mine",
+      sessionDate: dateOf(next.startsAt),
+      requestedBy: { id: GEDU_IDS.sanna, firstName: "Sanna" },
+      role: "primary",
+      status: "open",
+      coveredBy: null,
+      offerCount: 2,
+    },
+    {
+      id: "mock-cover-request-covered",
+      sessionDate: dateOf(second.startsAt),
+      requestedBy: { id: GEDU_IDS.petra, firstName: "Petra" },
+      role: "primary",
+      status: "covered",
+      coveredBy: { id: GEDU_IDS.joonas, firstName: "Joonas" },
+      offerCount: null,
+    },
+    {
+      id: "mock-cover-request-open",
+      sessionDate: dateOf(third.startsAt),
+      requestedBy: { id: GEDU_IDS.petra, firstName: "Petra" },
+      role: "primary",
+      status: "open",
+      coveredBy: null,
+      offerCount: null,
+    },
+  ];
 }
 
 /**

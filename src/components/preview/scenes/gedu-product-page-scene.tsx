@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameAccountStatus } from "@/components/game-account";
 import { platformForTopic } from "@/lib/products/topics";
 import {
@@ -20,6 +20,11 @@ import {
   type GroupWorkspaceScenario,
 } from "@/components/group-workspace/mock-workspace-fixtures";
 import { ATTACHABLE_GAMER_PHOTO_CONSENT_TYPES } from "@/lib/constants/gamer-photo-consents";
+import { productLocalDate } from "@/lib/session-occurrence";
+import {
+  deriveSessionStaffing,
+  type CoverRequestInput,
+} from "@/lib/session-staffing";
 import { useNow } from "@/providers";
 import { resolveGamerPhotoConsents } from "@/services/gamer-photo-consents";
 import type {
@@ -185,6 +190,39 @@ export function GeduProductPageScene({
   const [gamerCreations, setGamerCreations] = useState<
     Record<string, readonly GamerCreation[]>
   >(() => fixture.memberFlair.creations);
+  /**
+   * The group's cover requests as stored rows, live against local state.
+   *
+   * Held as the **rows** rather than as the finished staffing, because that is
+   * what filing an absence actually changes: the derivation below runs again on
+   * the new list, and the card's action turning into a status line is that
+   * derivation rather than a flag this scene flipped.
+   */
+  const [covers, setCovers] = useState<readonly CoverRequestInput[]>(
+    () => fixture.coverRequests,
+  );
+
+  /**
+   * The entries with their staffing derived from the current rows — the one
+   * place the two pieces of state meet.
+   *
+   * The entries carry their own staffing out of the fixture already; deriving
+   * it again here is idempotent for a scene nobody has touched and is what
+   * makes one that has been touched correct.
+   */
+  const staffedEntries = useMemo(
+    () =>
+      entries.map((entry) => ({
+        ...entry,
+        staffing: deriveSessionStaffing({
+          gedus: fixture.staffingGedus,
+          requests: covers,
+          sessionDate: productLocalDate(entry.startsAt, fixture.sourceTimeZone),
+          viewerId: fixture.viewerId,
+        }),
+      })),
+    [entries, covers, fixture],
+  );
 
   /**
    * Which identity this scenario's roster shows, read off the fixture's own
@@ -380,6 +418,46 @@ export function GeduProductPageScene({
     return Promise.resolve();
   };
 
+  /**
+   * "I can't make this session", locally and to nobody.
+   *
+   * It adds a row to the same list the fixture seeded, and the staffing above
+   * is derived again from it — so the card's action really does turn into a
+   * status line with a Withdraw beside it, and the staffing line really does
+   * grow a "Cover needed" entry, both through the derivation the live page
+   * runs. Nothing is stored; a reload puts the scene back.
+   *
+   * The count is `null`, not a number: a request nobody has offered on yet and
+   * a request whose count the reader is not entitled to are different facts,
+   * and the seeded one already shows what an offered request reads like.
+   */
+  const handleRequestCover = (entry: SessionFeedEntry) => {
+    const sessionDate = productLocalDate(entry.startsAt, fixture.sourceTimeZone);
+    setCovers((prev) => [
+      ...prev,
+      {
+        id: `scene-cover-${sessionDate}`,
+        sessionDate,
+        requestedBy: { id: fixture.viewerId, firstName: VIEWER_FIRST_NAME },
+        role: "primary",
+        status: "open",
+        coveredBy: null,
+        offerCount: null,
+      },
+    ]);
+  };
+
+  /** Take one back — withdrawn rather than removed, as the database does it. */
+  const handleWithdrawCoverRequest = (requestId: string) => {
+    setCovers((prev) =>
+      prev.map((request) =>
+        request.id === requestId
+          ? { ...request, status: "withdrawn" as const }
+          : request,
+      ),
+    );
+  };
+
   const handleSaveGroupNotes = (draft: GroupNotesDraft) => {
     setGroupNotes({
       publicNote: draft.publicNote.length > 0 ? draft.publicNote : null,
@@ -548,7 +626,7 @@ export function GeduProductPageScene({
   return (
     <GroupWorkspace
       data={data}
-      entries={entries}
+      entries={staffedEntries}
       // The same frozen instant the fixture's sessions were laid out around.
       feedNow={now}
       feedRoster={fixture.feedRoster}
@@ -575,6 +653,12 @@ export function GeduProductPageScene({
       onSendReport={handleSendReport}
       onAddPhoto={handleAddPhoto}
       onRemovePhoto={handleRemovePhoto}
+      // The gedu half of the staffing pair, live against local state: this is
+      // the shell a gedu meets, so it supplies the two callbacks and no
+      // staffing editor. No editor appears anywhere on these scenes as a
+      // result, which is itself the thing to check.
+      onRequestCover={handleRequestCover}
+      onWithdrawCoverRequest={handleWithdrawCoverRequest}
       onSaveGameUsername={handleSaveGameUsername}
       gameStatuses={gameStatuses}
       // Every scenario has one, because the page requires one. Passed whole at
@@ -623,6 +707,16 @@ const SIMULATED_CHECK_MS = 800;
  * to watch the spinner sit in the button's own slot and see that nothing under
  * the card moves when the label lands.
  */
+/**
+ * The viewer's own first name, for the request this scene files on their
+ * behalf.
+ *
+ * It is the one name a scene has to know that the fixture's ids do not carry:
+ * the live page's request comes back from the database with the requester's
+ * name on it, and here there is nobody to ask.
+ */
+const VIEWER_FIRST_NAME = "Sanna";
+
 const SIMULATED_SEND_MS = 1400;
 
 /**

@@ -173,6 +173,14 @@ vi.mock("@/services/roblox", () => ({
   useRobloxRenders: () => ({ data: undefined }),
 }));
 
+// The two writes a gedu may make about their own seat. Stubbed for the same
+// reason every other mutation here is: this suite is about the roster's flair,
+// and an unstubbed hook reaches for a QueryClient this tree does not provide.
+vi.mock("@/services/session-cover", () => ({
+  useRequestSessionCover: noopMutation,
+  useWithdrawSessionCoverRequest: noopMutation,
+}));
+
 vi.mock("@/services/member-flair", () => ({
   useSetGamerGroupNote: () => ({ mutateAsync: setNote, isPending: false }),
   useSetGamerGroupCreations: () => ({

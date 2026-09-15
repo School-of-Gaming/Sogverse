@@ -6,11 +6,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { GameAccountStatus } from "@/components/game-account";
 import {
   resolveInGroupSince,
+  type SessionCoverRequestDraft,
+  type SessionFeedEntry,
   type SessionFeedGamer,
 } from "@/components/gedu/session-feed";
 import { showsNewcomerBadge } from "@/components/member-flair";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
 import { platformForTopic } from "@/lib/products/topics";
+import { productLocalDate } from "@/lib/session-occurrence";
 import { useNow } from "@/providers";
 import { useGeduAssignedProduct } from "@/services/assignments";
 import {
@@ -34,6 +37,10 @@ import {
   useSetGamerGroupNote,
 } from "@/services/member-flair";
 import { useUpdateGroupMemberMinecraft } from "@/services/minecraft";
+import {
+  useRequestSessionCover,
+  useWithdrawSessionCoverRequest,
+} from "@/services/session-cover";
 import {
   useRobloxRenders,
   useUpdateGroupMemberRoblox,
@@ -91,6 +98,13 @@ import { GeduProductPageSkeleton } from "./GeduProductPageSkeleton";
 export function GeduProductPage({
   productId,
   /**
+   * Which group of the product to open, from the route's `?groupId=` — `null`
+   * for the caller's own assignment, which is every ordinary visit. It is a
+   * segment of the read's cache key as well as an argument to it, so two groups
+   * of one product never share a cached document.
+   */
+  groupId: requestedGroupId = null,
+  /**
    * The signed-in gedu, resolved by the route's server half.
    *
    * It is a prop rather than something read from a client auth context for two
@@ -102,10 +116,13 @@ export function GeduProductPage({
   viewerId,
 }: {
   productId: string;
+  groupId?: string | null;
   viewerId: string | null;
 }) {
-  const { data: product, isPending: productPending } =
-    useGeduAssignedProduct(productId);
+  const { data: product, isPending: productPending } = useGeduAssignedProduct(
+    productId,
+    requestedGroupId,
+  );
 
   // Only asked once the assignment read has told us which group is ours; until
   // then there is nothing to key it by.
@@ -229,6 +246,11 @@ function Workspace({
   // by hand, and neither can drift into refreshing a different set.
   const setGamerNote = useSetGamerGroupNote(groupId);
   const setGamerCreations = useSetGamerGroupCreations(groupId);
+  // The two writes a gedu may make about their own seat. Both invalidate the
+  // five documents a cover moves — this page's feed among them — so the card
+  // that filed the absence redraws itself with nothing here refetching by hand.
+  const requestSessionCover = useRequestSessionCover();
+  const withdrawSessionCoverRequest = useWithdrawSessionCoverRequest();
 
   /**
    * The account ids whose Roblox figure this roster needs — verified rows only,
@@ -472,6 +494,39 @@ function Workspace({
       deleteSessionImage,
     });
 
+  /**
+   * "I can't make this session", from the card that offers it.
+   *
+   * **The entry is turned back into its (group, date) pair here**, in the
+   * product's own zone — the same identity the row is keyed by in Postgres and
+   * the same conversion every other write on this page makes. The card never
+   * sees a date at all.
+   *
+   * The note is **omitted rather than sent as null** when there is nothing to
+   * say: the RPC's parameter carries a SQL default, and the type generator
+   * types no RPC argument as nullable, so the absence of the key is how "no
+   * note" is spelled.
+   *
+   * Awaited, and its rejection is allowed through: the dialog holds the
+   * committing flag and hands its own control back on a refusal.
+   */
+  const handleRequestCover = async (
+    entry: SessionFeedEntry,
+    draft: SessionCoverRequestDraft,
+  ) => {
+    const note = draft.note.trim();
+    await requestSessionCover.mutateAsync({
+      groupId,
+      sessionDate: productLocalDate(entry.startsAt, feed.product.timezone),
+      reason: draft.reason,
+      ...(note.length > 0 ? { reasonNote: note } : {}),
+    });
+  };
+
+  const handleWithdrawCoverRequest = async (requestId: string) => {
+    await withdrawSessionCoverRequest.mutateAsync({ requestId });
+  };
+
   const handleSaveGroupNotes = async (draft: GroupNotesDraft) => {
     await setGroupNotes.mutateAsync({
       publicNote: draft.publicNote,
@@ -554,6 +609,11 @@ function Workspace({
       onSendReport={sendReport}
       onAddPhoto={addPhoto}
       onRemovePhoto={removePhoto}
+      // The gedu half of the staffing pair: a gedu may speak for their own
+      // seat and for nothing else, so this shell supplies the two callbacks and
+      // no staffing editor. The admin shell does the opposite.
+      onRequestCover={handleRequestCover}
+      onWithdrawCoverRequest={handleWithdrawCoverRequest}
       onSaveGameUsername={handleSaveGameUsername}
       gameStatuses={gameStatuses}
       robloxAvatarUrls={robloxAvatarUrls}
