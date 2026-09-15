@@ -59,6 +59,12 @@ const BODY_CELL = "py-2.5 pr-4 align-top";
 /**
  * Tables are the widest thing on the page, so each one carries its own
  * horizontal scroll: the document body never scrolls sideways on a phone.
+ *
+ * Below `md` a three-column table cannot hold a description beside its name
+ * without pushing it off-screen, so each row stacks instead: the name and type
+ * share a line and the description sits under them. The table semantics stay
+ * (a screen reader still meets a table); only the display changes, and the
+ * column headings are dropped because a stacked row labels itself.
  */
 function RowTable({
   rows,
@@ -73,8 +79,8 @@ function RowTable({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[36rem] border-collapse text-sm">
-        <thead>
+      <table className="w-full border-collapse text-sm md:min-w-[36rem]">
+        <thead className="hidden md:table-header-group">
           <tr className="border-b border-border">
             <th scope="col" className={`${HEAD_CELL} w-[15rem]`}>
               {nameHeading}
@@ -89,14 +95,21 @@ function RowTable({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.name} className="border-b border-border last:border-0">
-              <td className={BODY_CELL}>
+            <tr
+              key={row.name}
+              className="block border-b border-border py-1 last:border-0 md:table-row md:py-0"
+            >
+              <td className={`${BODY_CELL} inline-block md:table-cell`}>
                 <Code>{row.name}</Code>
               </td>
-              <td className={`${BODY_CELL} text-xs text-muted-foreground`}>
+              <td
+                className={`${BODY_CELL} inline-block text-xs text-muted-foreground md:table-cell`}
+              >
                 {row.type ? <span className="font-mono">{row.type}</span> : null}
               </td>
-              <td className={`${BODY_CELL} text-muted-foreground`}>
+              <td
+                className={`${BODY_CELL} block pt-0 text-muted-foreground md:table-cell md:pt-2.5`}
+              >
                 {row.description}
               </td>
             </tr>
@@ -962,8 +975,9 @@ export default function LynxApiDocsPage() {
           <Section id="errors">
             <SectionHeading>{t("errors.heading")}</SectionHeading>
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[30rem] border-collapse text-sm">
-                <thead>
+              {/* Stacks below `md` on the same reasoning as RowTable. */}
+              <table className="w-full border-collapse text-sm md:min-w-[30rem]">
+                <thead className="hidden md:table-header-group">
                   <tr className="border-b border-border">
                     <th scope="col" className={`${HEAD_CELL} w-24`}>
                       {t("common.columnStatus")}
@@ -977,12 +991,14 @@ export default function LynxApiDocsPage() {
                   {ERROR_ROWS.map(({ code, key }) => (
                     <tr
                       key={code}
-                      className="border-b border-border last:border-0"
+                      className="block border-b border-border py-1 last:border-0 md:table-row md:py-0"
                     >
-                      <td className={BODY_CELL}>
+                      <td className={`${BODY_CELL} block md:table-cell`}>
                         <Code>{code}</Code>
                       </td>
-                      <td className={`${BODY_CELL} text-muted-foreground`}>
+                      <td
+                        className={`${BODY_CELL} block pt-0 text-muted-foreground md:table-cell md:pt-2.5`}
+                      >
                         {rich(key)}
                       </td>
                     </tr>
