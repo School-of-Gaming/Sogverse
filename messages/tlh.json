@@ -36,6 +36,7 @@
       "registerGedu": "Gedu yImoj!",
       "about": "maH tIqel",
       "minecraftApi": "Minecraft Server API",
+      "lynxApi": "Lynx Educate boq API",
       "adminDashboard": "Admin QaD",
       "adminMunicipalityInvoicing": "veng DIlmeH ghItlh",
       "adminTools": "janmey",
@@ -1514,6 +1515,227 @@
         "note3": "<code1>allowed: true</code1> DaleghDI’, <code2>endTime</code2> yIlo’ — tIqmeH qoj boq. back-to-back poHmey tu’lu’chugh, wa’DIch toy’wI’ voq.",
         "note4": "<code>404</code> — toy’wI’ Minecraft account Sogverse jonbe’lu’. chaH leghmoH — Sogverse profile Daq jonmoH.",
         "note5": "Hoch Qagh jangmey <code>'{ \"error\": \"mu''\" }'</code> lo'."
+      }
+    },
+    "lynxApi": {
+      "title": "Lynx Educate boq API",
+      "lead": "leghmeH API neH — ghItlhlaHbe'. Lynx Educate De'wI'meyvaD Roblox mIw'a' De' nob: mIw'a'Daq qorDu'pu', De'wI'mey, muvmoHmey je; chaw'mey lo'laHbogh Lynx; je puq De' mIw'a' pegh chut chaw'bogh — RobloxvaD qelmeH.",
+      "proposal": {
+        "title": "chenmoHlu'pa' yIqel",
+        "body": "DaHjaj nav'amDaq pagh yIn. chenmoHmeH ngoq neH 'oH, ghItlhlu'pu'mo' Lynx jonwI'pu' veH je De' qellaH chenmoHlu'pa'. yotlh pongmey, wovmoHwI'mey je enum mu'mey choHlaH."
+      },
+      "contents": {
+        "heading": "nav'amDaq"
+      },
+      "common": {
+        "queryParameters": "tlhob ngoQmey",
+        "fields": "yotlhmey",
+        "columnName": "pong",
+        "columnType": "Segh",
+        "columnDescription": "Del",
+        "columnStatus": "Dotlh",
+        "columnMeaning": "qech",
+        "exampleRecord": "pab De'wI'",
+        "exampleResponse": "pab jang",
+        "seeConventions": "chutmey yIlegh."
+      },
+      "scope": {
+        "heading": "veH — nuq legh API",
+        "p1": "mIw'a' neH legh API — latlh pagh. mIw'a' ghaj De'wI' qaSDI' muvmeH Creator Academy Terms & Conditions laj 'e' nIS. ra'wI' chel qup De'wI' chenmoHlu'DI', 'ej mIw'a'vaD chenmoHlu'bogh Hoch De'wI' qeng. malja' DaqDaq 'angchoHlu''a'? qelbe'lu': 'angbe'lu'bogh mIw'a' De'wI' nob rap.",
+        "p2": "wa' chutvo' Hoch latlh tlhap. qorDu' veH 'el wa' puqDaj Daq ghajDI' mIw'a' De'wI'Daq, qoj rInmoHpu'DI', qoj Daq loStaHvIS; 'ej puqpu'vetlh neH nobbogh. muvmoHghach veH 'el mIw'a' De'wI'Daq. qorDu' latlh Qu' Sogverse-Daq — ghom'a' Minecraft, jIH — reH nobbe'lu', veH 'elbogh qorDu'vaD je.",
+        "p3": "leghmeH neH 'oH API. cha' Lynx ghomwI'pu' Sogverse ra'wI' account ghaj 'ej rap De' legh ra'wI' Daq. API tu'lu'mo' Lynx jan mob laD — nuvHom poHbe'. De' lo'meH chutmey 'oH mIw'a' pegh chut Delbogh'e': mIw'a' qaSmoHmeH 'ej ja'meH, RobloxvaD qel De' ghom, je QIn laj vav."
+      },
+      "authentication": {
+        "heading": "ngoQHa' yIchel",
+        "description": "Hoch tlhob API key ngeng — Bearer token <code>Authorization</code> Daq. School of Gaming key nob LynxvaD, 'ej key veH 'ang: wa' key, wa' boqwI', wa' mIw'a'.",
+        "keyNote": "server Daq key yIpol. Sogverse ghom yIjatlh choHmeH qoj HaghmoHmeH; choHlu'pu'bogh key DaH Qapbe'. Lynx boq He wIvlu'pu'bogh Daq School of Gaming key nob, 'ej Sogverse nIDmeH Daqvad cha'DIch key nob — pa' tu'lu' nIDmeH qorDu'pu' je De'wI'mey, vaj teHbe'bogh De'Daq boq chenmoHlu' 'ej qeqlu'. chenmoHlu'DI', API OpenAPI Del tlhej."
+      },
+      "conventions": {
+        "heading": "chutmey",
+        "baseUrlLabel": "wa'DIch URL",
+        "envelopeTitle": "tetlh nagh beQ",
+        "items": {
+          "formats": "JSON jangmey. Hoch poH ISO 8601 UTC. Hoch jaj <code>YYYY-MM-DD</code>: De'wI' jajmey — De'wI' poH DaqDaq jajmey; leng jaj — UTC jaj. Hoch pong UUID — reH choHbe'.",
+          "pagination": "De'wI'mey nobbogh Hoch De'meywIj kursor lo', <code>updated_at</code> tlha' 'ej ghIq pong mI' tlha' Dat — vaj tlhaptaHvIS ratlh mIw. <code>limit</code> yInob (100 'oH ghaytan, 500 'oH tIn law') je wa'Hu' nav <code>next_cursor</code> <code>cursor</code> mojmoH; <code>null</code> <code>next_cursor</code> 'oH nav Qav'e'. kursor 'oH So'lu'bogh'e', nobbogh wovmoHwI'meyDaj ghaj, 'ej not Qav. <code>/traffic</code> wa' ghom De' nob neH, 'ej <code>from</code> <code>to</code> je laj; wa' jaj wa' nav jangDaj maj DaqDaq wa' rep pol.",
+          "updatedSince": "De'wI'mey nobbogh Hoch De'meywIj <code>updated_since</code> laj (ISO 8601 poH), 'ej poHvetlhDaq qoj poHvetlh ghoDaq choHbogh De'wI'mey neH nob. mach nItebmeH yIlo'; 'ach Hoch jaj Hoch De' yItlhap. tlhob poHDaq laDlu' Hoch De'meywIj.",
+          "erasure": "Hoch De' tlhapDaq Hutlhbogh De'wI' veH 'elqa'be': qorDu' teqmeH tlhob, qoj Daq lonlu', qoj mIw'a'vo' mej De'wI' — Hoch DochvaD rap. rap boq poHDaq Lynx Daqvo' mej. tombstone tu'be'lu', 'ej vaj Hoch jaj Hoch De' tlhap 'oH qech 'ay''e' — chImbe'.",
+          "consent": "tlhob poHDaq chaw' Dotlh 'ang, choHlu'bogh poH Qav tlhej, 'ach qun Hutlh. lujbogh ngeH chaw' <code>granted: false</code> 'ang tlhap vebDaq, 'ej QIn Daq Hutlh; ghIq vav QIn Hevbe', 'ej mIw'a' pegh chut chaw'bogh mach botwI' ghItlh pollaH Lynx — vaj chelqa'be'lu'.",
+          "changePolicy": "API'amvaD chelmey — chu' yotlh, chu' wovmoHwI' — 'ang pagh 'ej ngeHlu'. teqlu'bogh qoj pongqa'lu'bogh yotlh, qoj choHbogh qech ghajbogh mI' — chu' He bIngDaq chu' mIw 'oH. Dalo'bogh yotlhmey yIchenmoH, latlh yIbuSHa'.",
+          "errors": "wa' Segh ghaj Qaghmey:"
+        }
+      },
+      "resources": {
+        "products": {
+          "title": "mIw'a' De'wI' tetlh",
+          "intro": "mIw'a' ghaj Hoch De'wI', ghommey je. tetlhvam ghoS Hoch latlh <code>product_id</code>.",
+          "params": {
+            "status": "Dotlhvam De'wI'mey neH."
+          },
+          "fields": {
+            "id": "De'wI' pong mI'.",
+            "name": "Hoch Hol De'wI' pong, Hol ngoq lo'. reH wa' tu'lu' puS; nuq 'oH De'wI' 'e' wIv.",
+            "type": "nuq Segh De'wI'. Hoch Hogh qaS ghom'a' — Qav Hutlh; ragh je wanI' jaj wIvlu'bogh qaS.",
+            "delivery": "chay' qaS. mIw'a' qaSmoHmeH Lynx pongmey — Daq pagh polbe'lu'; <code>type</code> je <code>delivery</code> cha'vam 'oH ngoDmey pongmey ghoSbogh'e'.",
+            "location": "De'wI' qaSbogh Daq veng je cha' ghItlh Sep ngoq. nuvDaq qaSbogh De'wI' ghaj — 'ach DaqDaj veng Hutlh'a', ghajbe'; DIvI' Daq qaSbogh De'wI' ghaj neH veng ghom'a' Daq boqDI'; latlhDaq <code>null</code>.",
+            "status": "<code>pending</code> taghpa', <code>running</code> tagh jajvo' muvwI' mI' veH chavlu'DI', <code>completed</code> qaSpu'DI' 'ej Qav jaj juSpu'DI', <code>expired</code> Qav jaj juSpu'DI' 'ach not taghpu'DI'. laDDI' toghlu': jajmey, veH, je DaH muvwI' mI' — pagh pollu', vaj not qan De'.",
+            "dates": "ghorgh qaS. je'wI' ghom'a' Qav jaj ghajbe' net chaw'; Hoch latlh De'wI' ghaj.",
+            "timezone": "IANA poH Daq — De'wI' jajmey je poHmey Daq.",
+            "ageRange": "De'wI' laj puq ben mI'mey, veHmey je.",
+            "groups": "ghommey De'wI' qaSbogh. ghomDaq juS poHmey je 'elmeymey."
+          }
+        },
+        "families": {
+          "title": "vav je puqpu'Daj",
+          "intro": "mIw'a' De'wI'Daq puq ghajbogh Hoch qorDu': account ghajbogh vav, je veH 'elbogh puqpu'Daj — qoDDaq chellu'. qorDu' 'oH Sogverse Qu' juHHom'e'. wa' vav account chaw'mey, ghoSwI' De', je Daq qeng; Hoch puq tlhap, vaj nuv De' wa' De'wI' rur — cha' tetlh jonnISbogh 'oHbe'. QIn Daq tu'lu' neH vav Lynx ngeH chaw' nobDI'.",
+          "params": {
+            "marketingConsent": "DaH Lynx ngeH chaw' nobbogh qorDu'pu' neH. tetlhvam 'oH ngeH tetlh'e'.",
+            "utmCampaign": "tlhegh qengbogh mIw pongvam lo'taHvIS chenmoHlu'bogh account ghajbogh qorDu'pu' neH."
+          },
+          "fields": {
+            "id": "qorDu' pong mI' — vav account pong mI' 'oH. muvmoHghachmey qorDu'Daq yIjon; 'oH pongvam'e' ngoQ Hutlh — QIn Daq 'oHbe'.",
+            "parentName": "vav pong, ghItlhpu'bogh ghaH.",
+            "email": "vav QIn Daq — tu'lu' neH <code>marketing_consent.granted</code> <code>true</code> 'oHtaHvIS. latlhDaq <code>null</code>, 'ej chaw' lujDI' <code>null</code> mojqa'.",
+            "createdAt": "ghorgh chenmoHlu' vav account: He'So' wa'DIch nuq — qorDu' chenmoHlu'.",
+            "location": "qorDu' jatlhpu'bogh juH veng je cha' ghItlh Sep ngoq, qoj <code>null</code> vav 'angbe'DI'.",
+            "utm": "tlhegh <code>utm_source</code>, <code>utm_medium</code> je <code>utm_campaign</code> — account chenmoHlu'bogh tlhegh; Hoch <code>null</code> Hutlhbogh. wa'logh neH ghItlhlu' muvDI', 'ej ngeH chab laj leghwI'DI' neH — vaj puS De'wI' wej null qeng. LynxvaD chenmoHlu'bogh mIwmey <code>lynx-</code> qeng.",
+            "marketingConsent": "DaH Lynx ngeH chaw'vaD vav jang: <code>granted</code> 'ej ghorgh choHlu' Qav. <code>null</code>: not yu'lu'pu' — ngeHmeH <code>false</code> rur.",
+            "gamers": "mIw'a' De'wI'Daq Daq ghajbogh, rInmoHpu'bogh, qoj Daq loSbogh qorDu' puqpu', Hoch wa' ghItlh. puq qeng wa'DIch pong neH — latlh jatlhmeH Daq Hutlh; pong mI' je Roblox account neH.",
+            "gamersId": "puq pong mI' — muvmoHghachmey <code>gamer_id</code> qengbogh.",
+            "gamersFirstName": "puq wa'DIch pong, ghItlhpu'bogh vav.",
+            "gamersCreatedAt": "ghorgh chenmoHlu' puq De': He'So' cha'DIch nuq.",
+            "gamersBirthMonth": "puq bogh jar je DIS, <code>YYYY-MM</code> rur. jar neH tlhob Sogverse vavvo' — not jaj; vaj Hoch pollu'bogh 'oH. ben mI' toghlu'bogh nIv — 'ach puq bogh jarDaq Qagh.",
+            "gamersRoblox": "qorDu' nobbogh Roblox pong je Roblox lo'wI' mI' mojbogh. <code>verified</code> <code>true</code> neH Sogverse pong ngu'pu'DI' Robloxvo' 'ej lo'wI' mI' ghajDI'; ngu'be'lu'bogh pong ghaj <code>user_id: null</code>. <code>null</code> pong nobbe'lu'DI'.",
+            "gamersPhotoConsent": "DaH puqvam Lynx nagh beQ chaw': <code>granted</code> 'ej ghorgh choHlu' Qav. <code>null</code>: not yu'lu'pu' — Hoch Daq chaw' Hutlh rur.",
+            "updatedAt": "De'wI'Daq Hoch Daqvo' choH Qav: vav choH, chaw' choH, qoj puq choH. <code>updated_since</code> tlhapDaq nargh qorDu' — 'ay' vIH Hoch poH."
+          },
+          "note": "nagh beQ chaw' neH tu'lu' Daq De'Daq. qun De', jatlh De', je ngeH De' chaw'mey — ghItlh chaw'mey pIm 'oH, Sogverse HurDaq mIw'a' Suq, 'ej API 'ang laHbe'."
+        },
+        "enrolments": {
+          "title": "De'wI'Daq puq",
+          "intro": "mIw'a' De'wI'Daq puq ghajbogh Hoch Daq wa' De'wI': ghorgh muv, 'ar juS, nuq chenmoHpu'. De'wI'vam lo'lu' He'So' chenmoHmeH je Roblox qel De' chenmoHmeH.",
+          "params": {
+            "productId": "De'wI'vam muvmoHghachmey neH.",
+            "gamerId": "puqvam muvmoHghachmey neH.",
+            "familyId": "qorDu'vam muvmoHghachmey neH.",
+            "status": "Dotlhvam muvmoHghachmey neH."
+          },
+          "fields": {
+            "id": "muvmoHghach pong mI'.",
+            "productGroupId": "De'wI', je ghom — puq chelbogh Daq. <code>group_id</code> <code>null</code> 'oH ra'wI' Daq chelpa'.",
+            "gamerFamilyId": "puq, je qorDu' — account Daq qeng.",
+            "status": "<code>active</code> qengbogh Daq, <code>waitlisted</code> loSbogh qorDu', <code>completed</code> De'wI' Qavpu'DI'.",
+            "signedUpAt": "ghorgh muv qorDu' De'wI'Daq: He'So' wejDIch nuq — muvmoHghach.",
+            "consents": "muvmoHghachvamvaD Creator Academy Terms & Conditions je Creator Academy Privacy Policy laj vav: Hoch ghItlh mIw — 'angchoHlu' jaj — je lajlu' poH. Hoch mIw'a' De'wI' cha' nIS, vaj Hoch muvmoHghach cha' qeng.",
+            "attendance": "'ar puq ghom poHmey ghItlh ghaj, 'ej chaHvo' 'ar puq tu'lu'pu'. poH ghItlhlu' Gedu' ja'chuq ghItlhDI' qoj tu'wI'pu' ghItlhDI'; vaj ghItlhbe'lu'bogh poH toghbe'lu'. ghom mI' 'oH, 'ej ghomDaq puq 'elpa' poHmey je qeng. Daq ghomDaq chellu'pa' 0 cha'. <code>sessions_present</code> 1 law' puq — He'So'Daq “juSpu'” 'oH.",
+            "creations": "De'wI' poHDaq puq chenmoHbogh, DaH ghomDajDaq Gedu'Daj qoj ra'wI' ghItlhpu'bogh: Hoch Doch pong je tlhegh, 'ang mIwDaq. <code>is_roblox_url</code> <code>true</code> 'oH tlhegh roblox.com ghoSDI'. chIm tetlh: not ghItlhlu'.",
+            "creationsUpdatedAt": "ghorgh ghItlhlu' chenmoHghach tetlh Qav. Dochmey poH nIteb Hutlh."
+          }
+        },
+        "sessions": {
+          "title": "Hoch ghomDaq qaSbogh",
+          "intro": "mIw'a' ghom ghItlhpu'bogh Hoch poH, tu'lu' ghItlhmey je ja'chuqDaq Gedu' chelbogh nagh beQmey je. Gedu' ja'chuq ghItlhDI' qoj tu'wI'pu' ghItlhDI' ghItlh ghaj poH; vaj qaSpa' qaSmoHlu'bogh poH naDev tu'be'lu'. poH nIteb leghmeH yIlo' — Qam chIlbogh He rur; puq mI'mey muvmoHghachDaq tu'lu' vaj.",
+          "params": {
+            "productId": "De'wI'vam ghommey poHmey neH.",
+            "groupId": "ghomvam poHmey neH.",
+            "fromTo": "jaj veH QamDaq taghbogh poHmey neH, veHmey je."
+          },
+          "fields": {
+            "id": "poH pong mI'.",
+            "productGroupId": "De'wI' je ghom — poH Daq.",
+            "times": "poH qaSmeH ngutlh.",
+            "attendance": "Gedu' tu'pu'bogh Hoch puqvaD wa' ghItlh, <code>present</code> qoj <code>absent</code>. tu'be'lu'bogh puq 'angbe'lu'.",
+            "images": "ja'chuqDaq Gedu' chelbogh nagh beQmey, chellu'bogh mIwDaq: Quj nagh beQmey law', pa' nagh beQ puS. Hoch 'oH Hoch leghlaHbogh URL'e' — ngoq Hutlh, 'ej ghom qorDu'pu' ja'chuqDaq leghtaHbogh URL rap. poHvaD nagh beQ ghaj — puqvaD ghajbe': nagh beQDaq 'Iv 'ang 'e' ghItlhbe' Sogverse, vaj nagh beQ chaw'Daq nagh beQ jonlaHbe' API. nagh beQ chaw' yIntaHvIS neH puq nagh beQ chenmoHlu', 'ej chaw' luj vavDI', SeHbogh HeDaqmeyvo' De' teq School of Gaming — ta'laHbogh naDev, mIw'a' pegh chut jatlhbogh rur; teqlu'pu'bogh nagh beQ URL Qapbe'choH.",
+            "imagesUrl": "De' velQo' — 'oHvaD yIboq; vaj maj Daqvo' teq 'oH tlhIH Daqvo' teq je. Qapbe'choHbogh URL Sambogh tlhap — 'oH lonnIS. Lynx jan ja'chuqmey je qoDDaq URL lo'laH — QobHa'. Doch pong 'oH pong ngu'laHbe'lu'bogh'e', 'ej pongvetlh 'oH Hoch 'el SeH'e'; vaj wa' Doch neH ta'lu'be'nIS: Hoch tetlhlaHbogh navDaq URL 'angbe'nIS.",
+            "imagesId": "nagh beQ pong mI' — Doch pong je 'oH.",
+            "imagesSize": "nagh beQ tIn, nagh mI' tlha'."
+          }
+        },
+        "feedback": {
+          "title": "mejDI' puq jatlhbogh",
+          "intro": "wa' poH Qavdaq wa' puq jangbogh: vagh maqmey, vagh nISwI' naQDaq toghlu'; wIvbogh QIn puq mu'mey; je chay' mej. DaHjaj DIvI' Daq poHmey Qav neH jang ghomlu'. jangbe'bogh puq tlhegh chenmoHbe', vaj jang mI' 'oH tetlhvam <code>/sessions</code> DIvI' Daq poHmey qelbogh'e'; wa' tlhegh 'oH wa' puq wa' poHDaq'e', vaj tlheghmey bID toghDI' Hoch jangpu'bogh poHvaD wa'logh puq toghlu'.",
+          "params": {
+            "productId": "De'wI'vam ghommey jangmey neH.",
+            "groupId": "ghomvam jangmey neH.",
+            "gamerId": "puqvam jangmey neH.",
+            "fromTo": "jaj veHvamDaq poSmoHlu'bogh poHmey neH, veHmey je."
+          },
+          "fields": {
+            "gamerGroupProductId": "jangbogh, je ghom De'wI' je — poH Daq. De'wI' pong mI' nIteb Hutlh: <code>gamer_id</code>, <code>group_id</code> je <code>session_opened_at</code> — wa' ngoQ chenmoH; 'ej poHvetlhvaD puq rap jang veb — ngoQvetlhDaq wa'Hu' jang lonmoH.",
+            "sessionId": "<code>/sessions</code>-Daq poH jang qengbogh, ghom jaj je tlha' jonlu'; <code>null</code> jajvetlhvaD poH tlhegh ghItlhbe'lu'DI'.",
+            "sessionOpenedAt": "ghorgh poSlu' poH jangbogh puq.",
+            "answers": "Hoch maqvaD puq togh, maq pong ngoQ lo'; juSbogh maq Hutlh. wa'vo' vagh togh: ghobe', chIch ghobe', puS, HIja', HIja'qu'. DaHjaj maqmey: <code>learned</code> (vIghoj), <code>fun</code> (jItIv), <code>geduKnowledgeable</code> (Gedu Sov), <code>geduKind</code> (Gedu pung), je <code>groupListens</code> (ghomwI' mu'meywIj 'Ij 'ej muyaj). maq chellu' qoj teqlu' — 'ang pagh; vaj DaSovbogh ngoQmey yIlaD, latlh yIbuSHa'. RobloxvaD ghomlu'bogh belHom mI'mey neH jaH; tlheghmey 'e' ratlh LynxvaD.",
+            "note": "wIvbogh QINDaq puq ghItlhbogh, mu'meyDaj HolDaj je; chIm ghItlhbe'DI'.",
+            "exitReason": "<code>left</code> mej 'e' wIvDI' puq; <code>ended</code> ghaH retlhDaq poH Qavpu'DI'.",
+            "updatedAt": "ghorgh pol puq Qav. mejbogh, muvqa'bogh, mejqa'bogh puq — wa'Hu' jangDaj lonmoH."
+          }
+        },
+        "robloxResearch": {
+          "title": "RobloxvaD De' ghom",
+          "intro": "mIw'a' pegh chut chaw'bogh puq De' — RobloxvaD qelmeH neH, latlh pagh. muvmoHghach Hoch wa' tlhegh, wovmoHbe'lu'taHvIS nobmeH pIm. chut pongbogh veHDaq ratlh Hoch yotlh.",
+          "params": {
+            "productId": "De'wI'vam tlheghmey neH.",
+            "fromTo": "veHvamDaq taghpu'bogh De'wI' ghajbogh tlheghmey neH, veHmey je."
+          },
+          "fields": {
+            "roblox": "puq Roblox account. <code>roblox_user_id</code> <code>null</code> 'oH Sogverse pong ngu'laHbe'DI'; tlheghmeyvam yInob neH Roblox pong mob laj'a'.",
+            "location": "qorDu' juH veng je Sep; <code>null</code> vav 'angbe'DI'.",
+            "age": "Qu' tagh jajDaq puq ben mI' naQ, veH rur: bogh jar qeng Sogverse — jaj qengbe'; vaj <code>min</code> 'oH Qup law''e', <code>max</code> 'oH qan law''e', 'ej rap cha' mI' — 'ach tagh jaj puq bogh jarDaq ghoSDI' pIm. <code>null</code> De'wI' tagh jaj Hutlh'a'. ben mI' qeng tlhegh — bogh jar qengbe' — qel De' ghom ben mI' pongmo'.",
+            "activity": "juSbogh Qu': De'wI' pong mI'; DIvI' Hol pong ghItlhlu'pu'DI', latlhDaq De'wI' wa'DIch Hol pong; Segh, chay' qaS, je tagh jaj. Segh je chay' qaS: cha'vam ghoS mIw'a' qaSmoHmeH Lynx pongmey, 'ej tagh jaj 'oH qel tlhobbogh Qu' jaj'e'.",
+            "publishedGameUrl": "De'wI'vamvaD puq chenmoHghachDaq wa'DIch roblox.com tlhegh, qoj <code>null</code> pagh ghItlhlu'DI'."
+          },
+          "note": "tlheghvamDaq puq qorDu' je pong mI' tu'be'lu', vaj De' ghom nobqa'laH rap; Hoch tlhegh Suqlu'bogh muvmoHghach mIw tlha' navmey Sep, 'ej <code>updated_since</code> muvmoHghachvetlh choHmey tlha'. qorDu' De'wI'Daq je Roblox account tu'lu', vaj nIStaHvIS qorDu'Daq tlhegh Sam Lynx: Hoch De' tlhapvo' qorDu' mejDI', naDev tlheghmeyDaj yIteq je; 'ej RobloxvaD tlhegh nobpu'lu'DI', Roblox De' vumeH ghItlh tlha' tlhob yInobqa' — mIw'a' pegh chut ra'bogh."
+        },
+        "traffic": {
+          "title": "mIw pawbogh navmey, mIw tlha'",
+          "intro": "Lynx mIw pawlaHbogh navmey leghghachmey, qemtaHbogh mIw tlha' ghomlu', vaj He'So' 'etlh je mI' ghaj: Roblox mut nav, malja' nav, je Hoch mIw'a' De'wI' nav nIteb. tlhob poHDaq Vercel Web Analytics-vo' mI'mey laDlu', 'ej Vercel polbogh poH naQ ghoS — DaHjaj cha' DIS 'oH, jar vagh 2026 Qavvo', De' ghom chu'lu'DI'. ghomlu'bogh mI'mey neH: leghwI' pong mI' pagh, 'ej wej Segh navmey neH. wa' nav leghghachmeyDaq Hoch Hol wa' nav rur, 'ej DaHjaj jaj naQbe' Qavpa'.",
+          "params": {
+            "page": "Seghvam navmey neH. Hoch wej DanejDI' yIwoDHa'.",
+            "productId": "De'wI'vam nav neH. <code>page=product</code> 'oS.",
+            "fromTo": "veHvamDaq jajmey neH, veHmey je. wejmaH jaj Qav DanejDI' yIwoDHa'."
+          },
+          "fields": {
+            "range": "mI'mey So'bogh jajmey.",
+            "pages": "Hoch nav wa' ghItlh: mut nav, malja' nav, je Hoch mIw'a' De'wI' veHDaq leghghach ghajbogh wa'.",
+            "pagesPage": "nuq Segh nav. malja' nav boq School of Gaming ngevbogh Hoch — vaj leghghachmeyDaj mIw'a' neH qelbe'; De'wI' nav leghghachmey qel.",
+            "pagesProductId": "De'wI' — nav ghajbogh; <code>null</code> mut navvaD malja' navvaD je.",
+            "pagesPageviews": "veHDaq nav leghghachmey — nuq qem 'e' qelbe'lu'.",
+            "pagesByCampaign": "tlhegh <code>utm_campaign</code> tlha' leghghachmey Sep. <code>null</code> tlhegh: 'oH Hutlhbogh Hoch leghghach — Daq ghItlhbogh leghwI', qoj per Hutlhbogh tlhegh tlha'bogh je.",
+            "pagesBySourceMedium": "leghghachmey rap, 'ach <code>utm_source</code> je <code>utm_medium</code> boqDaj tlha' Sep — Huch leng, ghom leng, je QIn leng pIm leghmeH. cha' Sepmey leghghachmey rap qel, 'ej Hoch <code>pageviews</code> chav; latlh SepvaD chIm tetlh chenmoHbe'.",
+            "pagesByDay": "Hoch jaj leghghachmey, UTC-Daq, poH tlhegh chenmoHmeH."
+          },
+          "note": "Vercel ghItlh vangtaH neH leghwI' chab beQDaq De' ghom laj, 'ej qorDu' De'wI'Daq UTM mI'mey ghItlhlu' neH leghwI' ngeH lajDI'. cha' veHmey pIm, 'ej De' ghom veH tIn law'; vaj naDev toghlu'bogh leghghach je <code>/families</code>-Daq qorDu' rapbe': Hoch lajbogh leghwI' cha'Daq tu'lu'; De' ghom neH lajbogh naDev neH; chab beQ lajbe'bogh pagh Daq."
+        }
+      },
+      "errors": {
+        "heading": "Qaghmey",
+        "e400": "tlhob ngoQ Qagh: UUID mI'Ha', <code>YYYY-MM-DD</code> 'oHbe'bogh jaj, 500 tIn law' <code>limit</code>, Sovbe'lu'bogh enum mu', qoj latlh Daqvo' <code>cursor</code>.",
+        "e401": "API key Hutlh, Qagh, qoj teqlu'pu'.",
+        "e404": "He 'oHbe' Dungdaq De'meywIj'e'.",
+        "e429": "tlhobmey law'qu': Hoch key Hoch tup javmaH tlhob chaw'lu'. <code>Retry-After</code> lup mI' yIloS 'ej yInIDqa'; ram Hoch De' tlhap je wa'maH vagh tup Hoch mach tlhap — veH bIng luSoy'.",
+        "e500": "maHvaD Qagh qaS. yIboq 'ej yInIDqa'; taHchugh, HIja'."
+      },
+      "example": {
+        "heading": "pab"
+      },
+      "integrationNotes": {
+        "heading": "boq De'mey",
+        "items": {
+          "sync": "boq 'oH chenmoHlu'bogh mIw'e' — DaH tlhob 'oHbe': poH wIvlu'bogh tlha' Lynx Daq Hoch De'meywIj tlhaplu', 'ej Daqvetlh Daq leghmeH chenmoHlu'. ram Hoch De' tlhap je wa'maH vagh tup Hoch <code>updated_since</code> tlhap — bIHvaD veHmey juvlu'pu'.",
+          "join": "pong mI'mey 'oH jonmeH ngoQmey'e'. qorDu' QIn Daq nargh, chIl, narghqa' chaw' choHtaHvIS; <code>id</code>Daj not choH.",
+          "consent": "chaw' choHmey je chIlmey: 'angbogh boq poHDaq vangnISlu' 'e' qechlu'. qorDu' <code>marketing_consent.granted</code> <code>false</code> mojDI' — rap jaj QIn Hevbe'choH; 'ej Hoch De' tlhapvo' mejbogh De'wI' — rap jaj Lynx Daqvo' mej. cha' ghom ra' mIw'a' pegh chut, 'ej Hoch jaj Hoch De' tlhap chaw' Dochvam.",
+          "derived": "“juSpu'” je “chenmoHpu'” — toghlu'bogh, polbe'lu'bogh. Dungdaq yotlh Delmey cha'vam 'ang, Lynx mI'mey maj mI'mey je rapmeH; qech choHnISDI', naDev yIchoH wa'DIch.",
+          "readOnly": "naDev pagh ghItlh. muvmoHghach, chaw', je chenmoHghach — Sogverse-Daq qorDu'pu' Gedu'pu' je ghItlh; API 'oH Qorwaghvetlh'e'."
+        }
+      },
+      "notIncluded": {
+        "heading": "API qengbe'bogh",
+        "intro": "Sogverse qengbogh Dochmey, qoj yu'lu'bogh Dochmey, ngoqvam lonbogh. Lynxvad wa' potlhchugh, yIja' — maja'chuq.",
+        "items": {
+          "childIdentity": "puqpu' qorDu' pongmey, bogh jajmey, loD/be' je; vavpu' jatlhmeH mI'mey je. mIw'a' pegh chut bogh jar nob — bogh jaj nobbe'; 'ej latlh lo'be' leghmeH Daqmey Roblox ja'chuq je.",
+          "releases": "qun De' je jatlh De' chaw'mey. Sogverse qengbogh wa' nagh beQ chaw' So' vaj: Lynx Educate, School of Gaming, je Roblox nagh beQ lo' Hoch DaqDaq. 'ach puq pong naQ, qun De', mu'tlhegh, qoj puqDaq boqbogh De' — pIm ghItlh chaw' nIS, Daq HurDaq Suqlu'bogh.",
+          "deliveryModel": "mIw Segh pong. De'wI' Segh SovtaH Sogverse, 'ej DIvI' Daq qoj nuvDaq qaS 'e' SovtaH; mIw Seghmey chenmoHmeH Lynx Qu' 'oH — cha' yotlh Dung.",
+          "analytics": "mut nav, malja' nav, je mIw'a' De'wI' navmey Hutlhbogh Hoch nav lengmey, je wa' leghwI' De' Hoch. <code>/traffic</code> bIngDaq De' ghom pegh qaD wa'DIch: 'elpu'DI' qorDu' pawbogh nav ghaHvaD 'oH; 'ej leghwI' 'oH mI''e' — not De'wI'."
+        }
       }
     }
   },

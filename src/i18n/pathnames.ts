@@ -115,6 +115,7 @@ export const PATHNAMES = {
 
   // --- Public, English segments in every locale -----------------------------
   "/docs/minecraft-api": "/docs/minecraft-api",
+  "/docs/lynx-api": "/docs/lynx-api",
   "/roblox": "/roblox",
   "/roblox/privacy": "/roblox/privacy",
   "/roblox/safeguarding": "/roblox/safeguarding",

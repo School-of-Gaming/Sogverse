@@ -1,0 +1,1136 @@
+import type { Metadata } from "next";
+import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("metadata.pages");
+  return {
+    title: t("lynxApi"),
+    robots: { index: false, follow: false },
+  };
+}
+
+/**
+ * An inline machine value: a field name, an enum value, a literal.
+ *
+ * The pill's vertical padding is a hairline, and every run of prose that holds
+ * one carries `leading-relaxed`: an inline background does not push lines
+ * apart, so a pill taller than its line box overlaps the pill on the next line
+ * the moment a sentence wraps. `box-decoration-clone` keeps both ends of a
+ * pill drawn when the name itself breaks across lines.
+ */
+function Code({ children }: { children: React.ReactNode }) {
+  return (
+    <code className="box-decoration-clone rounded bg-lifted px-1.5 py-px font-mono text-[0.875em]">
+      {children}
+    </code>
+  );
+}
+
+function CodeBlock({ children, title }: { children: string; title?: string }) {
+  return (
+    <div className="overflow-x-auto rounded-lg border border-border bg-lifted">
+      {title && (
+        <div className="border-b border-border px-4 py-2 text-xs font-medium text-muted-foreground">
+          {title}
+        </div>
+      )}
+      <pre className="p-4 font-mono text-sm leading-relaxed">
+        <code>{children}</code>
+      </pre>
+    </div>
+  );
+}
+
+/**
+ * One row of a parameter or field table, ready to render: a literal name, a
+ * literal type, and the one translated cell.
+ *
+ * `type` and `description` are both optional because the proposal leaves some
+ * rows without one — a paging row has no single type, and a record's
+ * `created_at`/`updated_at` need no gloss. An absent cell is left empty rather
+ * than filled with invented copy.
+ */
+type Row = {
+  name: string;
+  type?: string;
+  description?: React.ReactNode;
+};
+
+/** Column headers are furniture — the one place the house style keeps caps. */
+const HEAD_CELL =
+  "py-2 pr-4 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground";
+const BODY_CELL = "py-2.5 pr-4 align-top";
+
+/**
+ * Tables are the widest thing on the page, so each one carries its own
+ * horizontal scroll: the document body never scrolls sideways on a phone.
+ *
+ * Below `md` a three-column table cannot hold a description beside its name
+ * without pushing it off-screen, so each row stacks instead: the name and type
+ * share a line and the description sits under them. `display: block` on the
+ * cells drops the table roles in Chrome and Firefox, so what keeps a stacked
+ * row readable is the `<th scope="row">` holding the name: the description
+ * beside it is still announced against the thing it describes. The column
+ * headings are dropped because a stacked row labels itself.
+ */
+function RowTable({
+  rows,
+  nameHeading,
+  typeHeading,
+  descriptionHeading,
+}: {
+  rows: Row[];
+  nameHeading: string;
+  typeHeading: string;
+  descriptionHeading: string;
+}) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse text-sm leading-relaxed md:min-w-[36rem]">
+        <thead className="hidden md:table-header-group">
+          <tr className="border-b border-border">
+            <th scope="col" className={`${HEAD_CELL} w-[15rem]`}>
+              {nameHeading}
+            </th>
+            <th scope="col" className={`${HEAD_CELL} w-[12rem]`}>
+              {typeHeading}
+            </th>
+            <th scope="col" className={HEAD_CELL}>
+              {descriptionHeading}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr
+              key={row.name}
+              className="block border-b border-border py-1 last:border-0 md:table-row md:py-0"
+            >
+              <th
+                scope="row"
+                className={`${BODY_CELL} inline-block text-left font-normal md:table-cell`}
+              >
+                <Code>{row.name}</Code>
+              </th>
+              <td
+                className={`${BODY_CELL} inline-block text-xs text-muted-foreground md:table-cell`}
+              >
+                {row.type ? <span className="font-mono">{row.type}</span> : null}
+              </td>
+              <td
+                className={`${BODY_CELL} block pt-0 text-muted-foreground md:table-cell md:pt-2.5`}
+              >
+                {row.description}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return <h2 className="text-2xl font-semibold">{children}</h2>;
+}
+
+/** A heading a reader scans for structure rather than reads as prose. */
+function SubHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="mt-8 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+      {children}
+    </h3>
+  );
+}
+
+function Section({ id, children }: { id: string; children: React.ReactNode }) {
+  return (
+    <section
+      id={id}
+      className="mt-16 scroll-mt-[calc(var(--header-height)+1rem)] first:mt-0"
+    >
+      {children}
+    </section>
+  );
+}
+
+/**
+ * A resource: its method and path, what it is, how it is filtered, one example
+ * record and the fields that record carries.
+ *
+ * Every resource is drawn by this one component so the reading order is the
+ * same in all seven — an engineer who has read one knows where to look in the
+ * next.
+ */
+function Resource({
+  id,
+  path,
+  title,
+  intro,
+  params,
+  example,
+  exampleTitle,
+  fields,
+  note,
+  labels,
+}: {
+  id: string;
+  path: string;
+  title: string;
+  intro: React.ReactNode;
+  params: Row[];
+  example: string;
+  exampleTitle: string;
+  fields: Row[];
+  note?: React.ReactNode;
+  labels: {
+    queryParameters: string;
+    fields: string;
+    columnName: string;
+    columnType: string;
+    columnDescription: string;
+  };
+}) {
+  return (
+    <Section id={id}>
+      <div className="flex flex-wrap items-center gap-3">
+        <Badge variant="outline" className="font-mono">GET</Badge>
+        <h2 className="break-all font-mono text-xl font-semibold">{path}</h2>
+      </div>
+      <p className="mt-2 text-muted-foreground">{title}</p>
+      <p className="mt-4 text-muted-foreground">{intro}</p>
+
+      <SubHeading>{labels.queryParameters}</SubHeading>
+      <div className="mt-2">
+        <RowTable
+          rows={params}
+          nameHeading={labels.columnName}
+          typeHeading={labels.columnType}
+          descriptionHeading={labels.columnDescription}
+        />
+      </div>
+
+      <div className="mt-8">
+        <CodeBlock title={exampleTitle}>{example}</CodeBlock>
+      </div>
+
+      <SubHeading>{labels.fields}</SubHeading>
+      <div className="mt-2">
+        <RowTable
+          rows={fields}
+          nameHeading={labels.columnName}
+          typeHeading={labels.columnType}
+          descriptionHeading={labels.columnDescription}
+        />
+      </div>
+
+      {note && (
+        <p className="mt-6 text-sm leading-relaxed text-muted-foreground">{note}</p>
+      )}
+    </Section>
+  );
+}
+
+/**
+ * The machine-readable half of the reference, declared as data rather than as
+ * JSX: a parameter's or a field's name and type are protocol literals, and the
+ * only translated thing about a row is the sentence describing it, named here
+ * by its message key under `docs.lynxApi`. Keeping it out of the markup is also
+ * what keeps a page of literal field names honest under the no-literal-string
+ * rule — nothing here is copy, so nothing here should look like copy.
+ *
+ * `as const` is load-bearing: it keeps every `key` a literal type, so the
+ * compiler checks each one against the catalog at the point it is rendered.
+ */
+const PAGING_ROWS = [
+  { name: "updated_since, limit, cursor", key: "common.seeConventions" },
+] as const;
+
+const PRODUCTS_PARAMS = [
+  {
+    name: "status",
+    type: "pending | running | completed | expired",
+    key: "resources.products.params.status",
+  },
+  {
+    name: "updated_since",
+    type: "ISO 8601",
+    key: "common.seeConventions",
+  },
+  { name: "limit, cursor", key: "common.seeConventions" },
+] as const;
+
+const PRODUCTS_FIELDS = [
+  { name: "id", type: "uuid", key: "resources.products.fields.id" },
+  { name: "name", type: "object", key: "resources.products.fields.name" },
+  {
+    name: "type",
+    type: "consumer_club | municipality_club | camp | event",
+    key: "resources.products.fields.type",
+  },
+  {
+    name: "delivery",
+    type: "online | in_person",
+    key: "resources.products.fields.delivery",
+  },
+  {
+    name: "location",
+    type: "object | null",
+    key: "resources.products.fields.location",
+  },
+  { name: "status", type: "enum", key: "resources.products.fields.status" },
+  {
+    name: "start_date, end_date",
+    type: "date | null",
+    key: "resources.products.fields.dates",
+  },
+  {
+    name: "timezone",
+    type: "string",
+    key: "resources.products.fields.timezone",
+  },
+  {
+    name: "age_range",
+    type: "object",
+    key: "resources.products.fields.ageRange",
+  },
+  { name: "groups", type: "array", key: "resources.products.fields.groups" },
+  { name: "created_at, updated_at", type: "timestamp" },
+] as const;
+
+const FAMILIES_PARAMS = [
+  {
+    name: "marketing_consent",
+    type: "granted",
+    key: "resources.families.params.marketingConsent",
+  },
+  {
+    name: "utm_campaign",
+    type: "string",
+    key: "resources.families.params.utmCampaign",
+  },
+  ...PAGING_ROWS,
+] as const;
+
+const FAMILIES_FIELDS = [
+  { name: "id", type: "uuid", key: "resources.families.fields.id" },
+  {
+    name: "first_name, last_name",
+    type: "string",
+    key: "resources.families.fields.parentName",
+  },
+  {
+    name: "email",
+    type: "string | null",
+    key: "resources.families.fields.email",
+  },
+  {
+    name: "created_at",
+    type: "timestamp",
+    key: "resources.families.fields.createdAt",
+  },
+  {
+    name: "location",
+    type: "object | null",
+    key: "resources.families.fields.location",
+  },
+  { name: "utm", type: "object", key: "resources.families.fields.utm" },
+  {
+    name: "marketing_consent",
+    type: "object | null",
+    key: "resources.families.fields.marketingConsent",
+  },
+  { name: "gamers", type: "array", key: "resources.families.fields.gamers" },
+  {
+    name: "gamers[].id",
+    type: "uuid",
+    key: "resources.families.fields.gamersId",
+  },
+  {
+    name: "gamers[].first_name",
+    type: "string",
+    key: "resources.families.fields.gamersFirstName",
+  },
+  {
+    name: "gamers[].created_at",
+    type: "timestamp",
+    key: "resources.families.fields.gamersCreatedAt",
+  },
+  {
+    name: "gamers[].birth_month",
+    type: "string",
+    key: "resources.families.fields.gamersBirthMonth",
+  },
+  {
+    name: "gamers[].roblox",
+    type: "object | null",
+    key: "resources.families.fields.gamersRoblox",
+  },
+  {
+    name: "gamers[].photo_consent",
+    type: "object | null",
+    key: "resources.families.fields.gamersPhotoConsent",
+  },
+  {
+    name: "updated_at",
+    type: "timestamp",
+    key: "resources.families.fields.updatedAt",
+  },
+] as const;
+
+const ENROLMENTS_PARAMS = [
+  {
+    name: "product_id",
+    type: "uuid",
+    key: "resources.enrolments.params.productId",
+  },
+  {
+    name: "gamer_id",
+    type: "uuid",
+    key: "resources.enrolments.params.gamerId",
+  },
+  {
+    name: "family_id",
+    type: "uuid",
+    key: "resources.enrolments.params.familyId",
+  },
+  {
+    name: "status",
+    type: "active | waitlisted | completed",
+    key: "resources.enrolments.params.status",
+  },
+  ...PAGING_ROWS,
+] as const;
+
+const ENROLMENTS_FIELDS = [
+  { name: "id", type: "uuid", key: "resources.enrolments.fields.id" },
+  {
+    name: "product_id, group_id",
+    type: "uuid",
+    key: "resources.enrolments.fields.productGroupId",
+  },
+  {
+    name: "gamer_id, family_id",
+    type: "uuid",
+    key: "resources.enrolments.fields.gamerFamilyId",
+  },
+  {
+    name: "status",
+    type: "enum",
+    key: "resources.enrolments.fields.status",
+  },
+  {
+    name: "signed_up_at",
+    type: "timestamp",
+    key: "resources.enrolments.fields.signedUpAt",
+  },
+  {
+    name: "consents",
+    type: "object",
+    key: "resources.enrolments.fields.consents",
+  },
+  {
+    name: "attendance",
+    type: "object",
+    key: "resources.enrolments.fields.attendance",
+  },
+  {
+    name: "creations",
+    type: "array",
+    key: "resources.enrolments.fields.creations",
+  },
+  {
+    name: "creations_updated_at",
+    type: "timestamp | null",
+    key: "resources.enrolments.fields.creationsUpdatedAt",
+  },
+  { name: "updated_at", type: "timestamp" },
+] as const;
+
+const SESSIONS_PARAMS = [
+  {
+    name: "product_id",
+    type: "uuid",
+    key: "resources.sessions.params.productId",
+  },
+  {
+    name: "group_id",
+    type: "uuid",
+    key: "resources.sessions.params.groupId",
+  },
+  { name: "from, to", type: "date", key: "resources.sessions.params.fromTo" },
+  ...PAGING_ROWS,
+] as const;
+
+const SESSIONS_FIELDS = [
+  { name: "id", type: "uuid", key: "resources.sessions.fields.id" },
+  {
+    name: "product_id, group_id",
+    type: "uuid",
+    key: "resources.sessions.fields.productGroupId",
+  },
+  {
+    name: "starts_at, ends_at",
+    type: "timestamp",
+    key: "resources.sessions.fields.times",
+  },
+  {
+    name: "attendance",
+    type: "array",
+    key: "resources.sessions.fields.attendance",
+  },
+  { name: "images", type: "array", key: "resources.sessions.fields.images" },
+  {
+    name: "images[].url",
+    type: "string",
+    key: "resources.sessions.fields.imagesUrl",
+  },
+  {
+    name: "images[].id",
+    type: "uuid",
+    key: "resources.sessions.fields.imagesId",
+  },
+  {
+    name: "images[].width, images[].height",
+    type: "integer",
+    key: "resources.sessions.fields.imagesSize",
+  },
+  { name: "updated_at", type: "timestamp" },
+] as const;
+
+const FEEDBACK_PARAMS = [
+  {
+    name: "product_id",
+    type: "uuid",
+    key: "resources.feedback.params.productId",
+  },
+  { name: "group_id", type: "uuid", key: "resources.feedback.params.groupId" },
+  { name: "gamer_id", type: "uuid", key: "resources.feedback.params.gamerId" },
+  { name: "from, to", type: "date", key: "resources.feedback.params.fromTo" },
+  ...PAGING_ROWS,
+] as const;
+
+const FEEDBACK_FIELDS = [
+  {
+    name: "gamer_id, group_id, product_id",
+    type: "uuid",
+    key: "resources.feedback.fields.gamerGroupProductId",
+  },
+  {
+    name: "session_id",
+    type: "uuid | null",
+    key: "resources.feedback.fields.sessionId",
+  },
+  {
+    name: "session_opened_at",
+    type: "timestamp",
+    key: "resources.feedback.fields.sessionOpenedAt",
+  },
+  {
+    name: "answers",
+    type: "object",
+    key: "resources.feedback.fields.answers",
+  },
+  { name: "note", type: "string", key: "resources.feedback.fields.note" },
+  {
+    name: "exit_reason",
+    type: "left | ended",
+    key: "resources.feedback.fields.exitReason",
+  },
+  {
+    name: "updated_at",
+    type: "timestamp",
+    key: "resources.feedback.fields.updatedAt",
+  },
+] as const;
+
+const RESEARCH_PARAMS = [
+  {
+    name: "product_id",
+    type: "uuid",
+    key: "resources.robloxResearch.params.productId",
+  },
+  {
+    name: "from, to",
+    type: "date",
+    key: "resources.robloxResearch.params.fromTo",
+  },
+  ...PAGING_ROWS,
+] as const;
+
+const RESEARCH_FIELDS = [
+  {
+    name: "roblox_username, roblox_user_id",
+    type: "string, integer | null",
+    key: "resources.robloxResearch.fields.roblox",
+  },
+  {
+    name: "country_code, city",
+    type: "string | null",
+    key: "resources.robloxResearch.fields.location",
+  },
+  {
+    name: "age",
+    type: "object | null",
+    key: "resources.robloxResearch.fields.age",
+  },
+  {
+    name: "activity",
+    type: "object",
+    key: "resources.robloxResearch.fields.activity",
+  },
+  {
+    name: "published_game_url",
+    type: "string | null",
+    key: "resources.robloxResearch.fields.publishedGameUrl",
+  },
+] as const;
+
+const TRAFFIC_PARAMS = [
+  {
+    name: "page",
+    type: "landing | shop | product",
+    key: "resources.traffic.params.page",
+  },
+  {
+    name: "product_id",
+    type: "uuid",
+    key: "resources.traffic.params.productId",
+  },
+  { name: "from, to", type: "date", key: "resources.traffic.params.fromTo" },
+] as const;
+
+const TRAFFIC_FIELDS = [
+  { name: "range", type: "object", key: "resources.traffic.fields.range" },
+  { name: "pages", type: "array", key: "resources.traffic.fields.pages" },
+  {
+    name: "pages[].page",
+    type: "landing | shop | product",
+    key: "resources.traffic.fields.pagesPage",
+  },
+  {
+    name: "pages[].product_id",
+    type: "uuid | null",
+    key: "resources.traffic.fields.pagesProductId",
+  },
+  {
+    name: "pages[].pageviews",
+    type: "integer",
+    key: "resources.traffic.fields.pagesPageviews",
+  },
+  {
+    name: "pages[].by_campaign",
+    type: "array",
+    key: "resources.traffic.fields.pagesByCampaign",
+  },
+  {
+    name: "pages[].by_source_medium",
+    type: "array",
+    key: "resources.traffic.fields.pagesBySourceMedium",
+  },
+  {
+    name: "pages[].by_day",
+    type: "array",
+    key: "resources.traffic.fields.pagesByDay",
+  },
+] as const;
+
+const ERROR_ROWS = [
+  { code: "400", key: "errors.e400" },
+  { code: "401", key: "errors.e401" },
+  { code: "404", key: "errors.e404" },
+  { code: "429", key: "errors.e429" },
+  { code: "500", key: "errors.e500" },
+] as const;
+
+/** The resource paths, in the order the page and its contents rail read them. */
+const RESOURCE_PATHS = {
+  products: "/products",
+  families: "/families",
+  enrolments: "/enrolments",
+  sessions: "/sessions",
+  feedback: "/feedback",
+  "roblox-research": "/roblox-research",
+  traffic: "/traffic",
+} as const;
+
+const PRODUCTS_EXAMPLE = `{
+  "id": "5a1f8e1c-1b0e-4a3e-9a9c-2c9a4d8f0b11",
+  "name": { "en": "Roblox Creator Camp — Paris", "fr": "Camp Créateur Roblox — Paris" },
+  "type": "camp",
+  "delivery": "in_person",
+  "location": { "city": "Paris", "country_code": "FR" },
+  "status": "running",
+  "start_date": "2026-10-19",
+  "end_date": "2026-10-23",
+  "timezone": "Europe/Paris",
+  "age_range": { "min": 13, "max": 17 },
+  "groups": [
+    { "id": "0e2b6a7e-6d2a-4f6c-b3a1-3f1f9c8e5a21", "name": "Group A" }
+  ],
+  "created_at": "2026-08-20T09:12:44Z",
+  "updated_at": "2026-09-14T16:03:10Z"
+}`;
+
+const FAMILIES_EXAMPLE = `{
+  "id": "9c3e2b4a-7f11-4d0e-8b6a-1a2b3c4d5e6f",
+  "first_name": "Camille",
+  "last_name": "Martin",
+  "email": "parent@example.com",
+  "created_at": "2026-09-02T18:41:07Z",
+  "location": { "city": "Lyon", "country_code": "FR" },
+  "utm": { "source": "lynx", "medium": "email", "campaign": "lynx-autumn-a" },
+  "marketing_consent": { "granted": true, "updated_at": "2026-09-02T18:43:12Z" },
+  "gamers": [
+    {
+      "id": "b7d1c0e2-3a4f-4b5c-9d6e-7f8a9b0c1d2e",
+      "first_name": "Léo",
+      "created_at": "2026-09-02T18:45:30Z",
+      "birth_month": "2012-03",
+      "roblox": { "username": "builder_leo", "user_id": 1234567890, "verified": true },
+      "photo_consent": { "granted": true, "updated_at": "2026-09-02T18:46:01Z" }
+    }
+  ],
+  "updated_at": "2026-09-10T12:00:00Z"
+}`;
+
+const ENROLMENTS_EXAMPLE = `{
+  "id": "e4f5a6b7-c8d9-4e0f-a1b2-c3d4e5f6a7b8",
+  "product_id": "5a1f8e1c-1b0e-4a3e-9a9c-2c9a4d8f0b11",
+  "group_id": "0e2b6a7e-6d2a-4f6c-b3a1-3f1f9c8e5a21",
+  "gamer_id": "b7d1c0e2-3a4f-4b5c-9d6e-7f8a9b0c1d2e",
+  "family_id": "9c3e2b4a-7f11-4d0e-8b6a-1a2b3c4d5e6f",
+  "status": "active",
+  "signed_up_at": "2026-09-02T18:47:15Z",
+  "consents": {
+    "terms": { "version": "2026-08-01", "accepted_at": "2026-09-02T18:47:15Z" },
+    "privacy_policy": { "version": "2026-08-01", "accepted_at": "2026-09-02T18:47:15Z" }
+  },
+  "attendance": { "sessions_recorded": 5, "sessions_present": 4 },
+  "creations": [
+    { "title": "Obby Escape", "url": "https://www.roblox.com/games/123456789/Obby-Escape", "is_roblox_url": true }
+  ],
+  "creations_updated_at": "2026-10-23T12:10:00Z",
+  "updated_at": "2026-10-23T12:10:00Z"
+}`;
+
+const SESSIONS_EXAMPLE = `{
+  "id": "c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f",
+  "product_id": "5a1f8e1c-1b0e-4a3e-9a9c-2c9a4d8f0b11",
+  "group_id": "0e2b6a7e-6d2a-4f6c-b3a1-3f1f9c8e5a21",
+  "starts_at": "2026-10-19T09:00:00Z",
+  "ends_at": "2026-10-19T12:00:00Z",
+  "attendance": [
+    { "gamer_id": "b7d1c0e2-3a4f-4b5c-9d6e-7f8a9b0c1d2e", "status": "present" },
+    { "gamer_id": "6f7a8b9c-0d1e-4f2a-b3c4-d5e6f7a8b9c0", "status": "absent" }
+  ],
+  "images": [
+    {
+      "id": "7d8e9f0a-1b2c-4d3e-8f4a-5b6c7d8e9f0a",
+      "url": "https://<project>.supabase.co/storage/v1/object/public/session-images/7d8e9f0a-1b2c-4d3e-8f4a-5b6c7d8e9f0a.jpg",
+      "width": 1920,
+      "height": 1080
+    }
+  ],
+  "updated_at": "2026-10-19T12:30:00Z"
+}`;
+
+const FEEDBACK_EXAMPLE = `{
+  "gamer_id": "b7d1c0e2-3a4f-4b5c-9d6e-7f8a9b0c1d2e",
+  "group_id": "0e2b6a7e-6d2a-4f6c-b3a1-3f1f9c8e5a21",
+  "product_id": "5a1f8e1c-1b0e-4a3e-9a9c-2c9a4d8f0b11",
+  "session_id": "c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f",
+  "session_opened_at": "2026-10-19T08:55:00Z",
+  "answers": {
+    "learned": 4,
+    "fun": 5,
+    "geduKnowledgeable": 5,
+    "geduKind": 5,
+    "groupListens": 3
+  },
+  "note": "I finished my obby!",
+  "exit_reason": "left",
+  "updated_at": "2026-10-19T12:02:41Z"
+}`;
+
+const RESEARCH_EXAMPLE = `{
+  "roblox_username": "builder_leo",
+  "roblox_user_id": 1234567890,
+  "country_code": "FR",
+  "city": "Lyon",
+  "age": { "min": 14, "max": 14 },
+  "activity": {
+    "product_id": "5a1f8e1c-1b0e-4a3e-9a9c-2c9a4d8f0b11",
+    "name": "Roblox Creator Camp — Paris",
+    "type": "camp",
+    "delivery": "in_person",
+    "start_date": "2026-10-19"
+  },
+  "published_game_url": "https://www.roblox.com/games/123456789/Obby-Escape"
+}`;
+
+const TRAFFIC_EXAMPLE = `{
+  "range": { "from": "2026-09-01", "to": "2026-09-14" },
+  "pages": [
+    {
+      "page": "landing",
+      "product_id": null,
+      "pageviews": 3184,
+      "by_campaign": [
+        { "utm_campaign": "lynx-autumn-a", "pageviews": 1412 },
+        { "utm_campaign": "lynx-autumn-b", "pageviews": 655 },
+        { "utm_campaign": null, "pageviews": 1117 }
+      ],
+      "by_source_medium": [
+        { "utm_source": "lynx", "utm_medium": "email", "pageviews": 1412 },
+        { "utm_source": "lynx", "utm_medium": "social", "pageviews": 655 },
+        { "utm_source": null, "utm_medium": null, "pageviews": 1117 }
+      ],
+      "by_day": [
+        { "date": "2026-09-01", "pageviews": 212 },
+        { "date": "2026-09-02", "pageviews": 240 }
+      ]
+    },
+    {
+      "page": "product",
+      "product_id": "5a1f8e1c-1b0e-4a3e-9a9c-2c9a4d8f0b11",
+      "pageviews": 927,
+      "by_campaign": [
+        { "utm_campaign": "lynx-autumn-a", "pageviews": 611 },
+        { "utm_campaign": null, "pageviews": 316 }
+      ],
+      "by_source_medium": [
+        { "utm_source": "lynx", "utm_medium": "email", "pageviews": 611 },
+        { "utm_source": null, "utm_medium": null, "pageviews": 316 }
+      ],
+      "by_day": [
+        { "date": "2026-09-01", "pageviews": 54 },
+        { "date": "2026-09-02", "pageviews": 71 }
+      ]
+    }
+  ]
+}`;
+
+const LIST_ENVELOPE = `{
+  "data": [ … ],
+  "next_cursor": "eyJ1cGRhdGVkX2F0IjoiMjAyNi0wOS0xNVQxMDowMDowMFoifQ"
+}`;
+
+const AUTH_HEADER = `Authorization: Bearer <LYNX_API_KEY>`;
+
+const ERROR_SHAPE = `{ "error": { "code": "…", "message": "…" } }`;
+
+export default function LynxApiDocsPage() {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const t = useTranslations("docs.lynxApi");
+
+  /**
+   * Every prose string on this page may carry `<code>` spans, so one helper
+   * renders them all rather than each call site restating the tag map.
+   */
+  const rich = (key: Parameters<typeof t.rich>[0]) =>
+    t.rich(key, { code: (chunks) => <Code>{chunks}</Code> });
+
+  /** Turns a declared row into a rendered one, resolving its message key. */
+  const rows = <
+    S extends {
+      name: string;
+      type?: string;
+      key?: Parameters<typeof t.rich>[0];
+    },
+  >(
+    specs: readonly S[]
+  ): Row[] =>
+    specs.map((spec) => ({
+      name: spec.name,
+      type: spec.type,
+      description: spec.key ? rich(spec.key) : undefined,
+    }));
+
+  const apiBase = `${baseUrl}/api/partner/v1`;
+
+  const labels = {
+    queryParameters: t("common.queryParameters"),
+    fields: t("common.fields"),
+    columnName: t("common.columnName"),
+    columnType: t("common.columnType"),
+    columnDescription: t("common.columnDescription"),
+  };
+
+  const exampleRecord = t("common.exampleRecord");
+
+  const contents: { id: string; label: React.ReactNode }[] = [
+    { id: "scope", label: t("scope.heading") },
+    { id: "authentication", label: t("authentication.heading") },
+    { id: "conventions", label: t("conventions.heading") },
+    ...Object.entries(RESOURCE_PATHS).map(([id, path]) => ({
+      id,
+      label: <span className="font-mono">{path}</span>,
+    })),
+    { id: "errors", label: t("errors.heading") },
+    { id: "example", label: t("example.heading") },
+    { id: "integration-notes", label: t("integrationNotes.heading") },
+    { id: "not-included", label: t("notIncluded.heading") },
+  ];
+
+  return (
+    <div className="container mx-auto max-w-6xl px-4 py-12">
+      {/* The header spans the same width as the reference below it: a narrower
+          measure here read as a page that had been left-aligned by accident. */}
+      <header>
+        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <p className="mt-4 text-lg text-muted-foreground">{t("lead")}</p>
+        <Alert variant="warning" className="mt-6">
+          <div>
+            <AlertTitle>{t("proposal.title")}</AlertTitle>
+            <AlertDescription className="mt-1">
+              {t("proposal.body")}
+            </AlertDescription>
+          </div>
+        </Alert>
+      </header>
+
+      <div className="mt-12 lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-12">
+        {/* On a wide screen this is a sticky rail beside the reference; at
+            phone width it is simply the list the page opens with. */}
+        <nav
+          aria-label={t("contents.heading")}
+          className="lg:sticky lg:top-[calc(var(--header-height)+1.5rem)] lg:max-h-[calc(100vh-var(--header-height)-3rem)] lg:self-start lg:overflow-y-auto"
+        >
+          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            {t("contents.heading")}
+          </h2>
+          <ul className="mt-3 space-y-1.5 text-sm leading-relaxed">
+            {contents.map(({ id, label }) => (
+              <li key={id}>
+                <a
+                  href={`#${id}`}
+                  className="block text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div className="mt-12 min-w-0 lg:mt-0">
+          {/* Scope */}
+          <Section id="scope">
+            <SectionHeading>{t("scope.heading")}</SectionHeading>
+            <div className="mt-4 space-y-4 text-muted-foreground">
+              <p>{t("scope.p1")}</p>
+              <p>{t("scope.p2")}</p>
+              <p>{t("scope.p3")}</p>
+            </div>
+          </Section>
+
+          {/* Authentication */}
+          <Section id="authentication">
+            <SectionHeading>{t("authentication.heading")}</SectionHeading>
+            <p className="mt-4 text-muted-foreground">
+              {rich("authentication.description")}
+            </p>
+            <div className="mt-4">
+              <CodeBlock>{AUTH_HEADER}</CodeBlock>
+            </div>
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+              {t("authentication.keyNote")}
+            </p>
+          </Section>
+
+          {/* Conventions */}
+          <Section id="conventions">
+            <SectionHeading>{t("conventions.heading")}</SectionHeading>
+            <div className="mt-4">
+              <CodeBlock title={t("conventions.baseUrlLabel")}>
+                {apiBase}
+              </CodeBlock>
+            </div>
+            <ul className="mt-6 list-disc space-y-3 pl-5 text-muted-foreground">
+              <li>{rich("conventions.items.formats")}</li>
+              <li>{rich("conventions.items.pagination")}</li>
+              <li>{rich("conventions.items.updatedSince")}</li>
+              <li>{rich("conventions.items.erasure")}</li>
+              <li>{rich("conventions.items.consent")}</li>
+              <li>{rich("conventions.items.changePolicy")}</li>
+              <li>
+                {t("conventions.items.errors")} <Code>{ERROR_SHAPE}</Code>
+              </li>
+            </ul>
+            <div className="mt-6">
+              <CodeBlock title={t("conventions.envelopeTitle")}>
+                {LIST_ENVELOPE}
+              </CodeBlock>
+            </div>
+          </Section>
+
+          {/* Resources */}
+          <Resource
+            id="products"
+            path={RESOURCE_PATHS.products}
+            title={t("resources.products.title")}
+            intro={rich("resources.products.intro")}
+            labels={labels}
+            exampleTitle={exampleRecord}
+            example={PRODUCTS_EXAMPLE}
+            params={rows(PRODUCTS_PARAMS)}
+            fields={rows(PRODUCTS_FIELDS)}
+          />
+
+          <Resource
+            id="families"
+            path={RESOURCE_PATHS.families}
+            title={t("resources.families.title")}
+            intro={rich("resources.families.intro")}
+            labels={labels}
+            exampleTitle={exampleRecord}
+            example={FAMILIES_EXAMPLE}
+            params={rows(FAMILIES_PARAMS)}
+            fields={rows(FAMILIES_FIELDS)}
+            note={t("resources.families.note")}
+          />
+
+          <Resource
+            id="enrolments"
+            path={RESOURCE_PATHS.enrolments}
+            title={t("resources.enrolments.title")}
+            intro={rich("resources.enrolments.intro")}
+            labels={labels}
+            exampleTitle={exampleRecord}
+            example={ENROLMENTS_EXAMPLE}
+            params={rows(ENROLMENTS_PARAMS)}
+            fields={rows(ENROLMENTS_FIELDS)}
+          />
+
+          <Resource
+            id="sessions"
+            path={RESOURCE_PATHS.sessions}
+            title={t("resources.sessions.title")}
+            intro={rich("resources.sessions.intro")}
+            labels={labels}
+            exampleTitle={exampleRecord}
+            example={SESSIONS_EXAMPLE}
+            params={rows(SESSIONS_PARAMS)}
+            fields={rows(SESSIONS_FIELDS)}
+          />
+
+          <Resource
+            id="feedback"
+            path={RESOURCE_PATHS.feedback}
+            title={t("resources.feedback.title")}
+            intro={rich("resources.feedback.intro")}
+            labels={labels}
+            exampleTitle={exampleRecord}
+            example={FEEDBACK_EXAMPLE}
+            params={rows(FEEDBACK_PARAMS)}
+            fields={rows(FEEDBACK_FIELDS)}
+          />
+
+          <Resource
+            id="roblox-research"
+            path={RESOURCE_PATHS["roblox-research"]}
+            title={t("resources.robloxResearch.title")}
+            intro={rich("resources.robloxResearch.intro")}
+            labels={labels}
+            exampleTitle={exampleRecord}
+            example={RESEARCH_EXAMPLE}
+            params={rows(RESEARCH_PARAMS)}
+            fields={rows(RESEARCH_FIELDS)}
+            note={rich("resources.robloxResearch.note")}
+          />
+
+          <Resource
+            id="traffic"
+            path={RESOURCE_PATHS.traffic}
+            title={t("resources.traffic.title")}
+            intro={rich("resources.traffic.intro")}
+            labels={labels}
+            exampleTitle={t("common.exampleResponse")}
+            example={TRAFFIC_EXAMPLE}
+            params={rows(TRAFFIC_PARAMS)}
+            fields={rows(TRAFFIC_FIELDS)}
+            note={rich("resources.traffic.note")}
+          />
+
+          {/* Errors */}
+          <Section id="errors">
+            <SectionHeading>{t("errors.heading")}</SectionHeading>
+            <div className="mt-4 overflow-x-auto">
+              {/* Stacks below `md` on the same reasoning as RowTable. */}
+              <table className="w-full border-collapse text-sm leading-relaxed md:min-w-[30rem]">
+                <thead className="hidden md:table-header-group">
+                  <tr className="border-b border-border">
+                    <th scope="col" className={`${HEAD_CELL} w-24`}>
+                      {t("common.columnStatus")}
+                    </th>
+                    <th scope="col" className={HEAD_CELL}>
+                      {t("common.columnMeaning")}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ERROR_ROWS.map(({ code, key }) => (
+                    <tr
+                      key={code}
+                      className="block border-b border-border py-1 last:border-0 md:table-row md:py-0"
+                    >
+                      <th
+                        scope="row"
+                        className={`${BODY_CELL} block text-left font-normal md:table-cell`}
+                      >
+                        <Code>{code}</Code>
+                      </th>
+                      <td
+                        className={`${BODY_CELL} block pt-0 text-muted-foreground md:table-cell md:pt-2.5`}
+                      >
+                        {rich(key)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Section>
+
+          {/* Example */}
+          <Section id="example">
+            <SectionHeading>{t("example.heading")}</SectionHeading>
+            <div className="mt-4">
+              {/* eslint-disable-next-line i18next/no-literal-string -- curl code sample; code is never translated */}
+              <CodeBlock title="curl">{`curl -H "Authorization: Bearer <key>" \\
+  "${apiBase}/enrolments?product_id=5a1f8e1c-1b0e-4a3e-9a9c-2c9a4d8f0b11&limit=100"`}</CodeBlock>
+            </div>
+          </Section>
+
+          {/* Integration notes */}
+          <Section id="integration-notes">
+            <SectionHeading>{t("integrationNotes.heading")}</SectionHeading>
+            <ul className="mt-4 list-disc space-y-3 pl-5 text-muted-foreground">
+              <li>{rich("integrationNotes.items.sync")}</li>
+              <li>{rich("integrationNotes.items.join")}</li>
+              <li>{rich("integrationNotes.items.consent")}</li>
+              <li>{rich("integrationNotes.items.derived")}</li>
+              <li>{rich("integrationNotes.items.readOnly")}</li>
+            </ul>
+          </Section>
+
+          {/* Not included */}
+          <Section id="not-included">
+            <SectionHeading>{t("notIncluded.heading")}</SectionHeading>
+            <p className="mt-4 text-muted-foreground">{t("notIncluded.intro")}</p>
+            <ul className="mt-4 list-disc space-y-3 pl-5 text-muted-foreground">
+              <li>{rich("notIncluded.items.childIdentity")}</li>
+              <li>{rich("notIncluded.items.releases")}</li>
+              <li>{rich("notIncluded.items.deliveryModel")}</li>
+              <li>{rich("notIncluded.items.analytics")}</li>
+            </ul>
+          </Section>
+        </div>
+      </div>
+    </div>
+  );
+}
