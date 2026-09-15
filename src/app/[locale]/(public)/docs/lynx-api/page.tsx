@@ -70,9 +70,11 @@ const BODY_CELL = "py-2.5 pr-4 align-top";
  *
  * Below `md` a three-column table cannot hold a description beside its name
  * without pushing it off-screen, so each row stacks instead: the name and type
- * share a line and the description sits under them. The table semantics stay
- * (a screen reader still meets a table); only the display changes, and the
- * column headings are dropped because a stacked row labels itself.
+ * share a line and the description sits under them. `display: block` on the
+ * cells drops the table roles in Chrome and Firefox, so what keeps a stacked
+ * row readable is the `<th scope="row">` holding the name: the description
+ * beside it is still announced against the thing it describes. The column
+ * headings are dropped because a stacked row labels itself.
  */
 function RowTable({
   rows,
@@ -487,6 +489,11 @@ const SESSIONS_FIELDS = [
     key: "resources.sessions.fields.imagesUrl",
   },
   {
+    name: "images[].id",
+    type: "uuid",
+    key: "resources.sessions.fields.imagesId",
+  },
+  {
     name: "images[].width, images[].height",
     type: "integer",
     key: "resources.sessions.fields.imagesSize",
@@ -562,7 +569,7 @@ const RESEARCH_FIELDS = [
   },
   {
     name: "country_code, city",
-    type: "string",
+    type: "string | null",
     key: "resources.robloxResearch.fields.location",
   },
   {

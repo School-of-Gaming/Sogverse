@@ -1534,7 +1534,7 @@
             "delivery": "How it is delivered. Lynx’s own names for its ways of delivering the Programme are not stored anywhere; <code>type</code> and <code>delivery</code> together are the two facts those names map onto.",
             "location": "The municipality and the two-letter country code of the site the product runs at. An in-person product has one unless its site has no municipality above it; an online product has one only when it is a municipality club attached to a site; <code>null</code> otherwise.",
             "status": "<code>pending</code> until it has started, <code>running</code> from its start date once any signup threshold is met, <code>completed</code> once it ran and its end date has passed, <code>expired</code> when the end date passed without it ever starting. Derived at read time from the dates, the threshold and the live sign-up count; nothing is stored, so the value is never stale.",
-            "dates": "When it runs. A consumer club has no end date; every other product has one.",
+            "dates": "When it runs. A consumer club may have no end date; every other product has one.",
             "timezone": "The IANA timezone the product’s dates and sessions are scheduled in.",
             "ageRange": "The ages the product admits, inclusive.",
             "groups": "The groups the product is delivered in. Sessions and attendance hang off a group."
@@ -1555,7 +1555,7 @@
             "location": "The family’s self-reported home municipality and its two-letter country code, or <code>null</code> when the parent has not set one.",
             "utm": "The <code>utm_source</code>, <code>utm_medium</code> and <code>utm_campaign</code> of the link the account was created through, each <code>null</code> when absent. They are written once at registration and only where the visitor accepted marketing cookies, so most records carry three nulls. Campaigns issued for Lynx are prefixed <code>lynx-</code> by convention.",
             "marketingConsent": "The parent’s current answer to Lynx’s marketing consent: <code>granted</code> and when it was last changed. <code>null</code> means the parent has never been asked, which for sending purposes is the same as <code>false</code>.",
-            "gamers": "The family’s children who hold a seat on a Programme product, one entry each. A child carries a first name and no other contact detail; identity is the identifier and the Roblox account.",
+            "gamers": "The family’s children who hold a seat on a Programme product, have completed one, or are waiting for one, one entry each. A child carries a first name and no other contact detail; identity is the identifier and the Roblox account.",
             "gamersId": "The child’s identifier, the one enrolments carry as <code>gamer_id</code>.",
             "gamersFirstName": "The child’s first name, as the parent entered it.",
             "gamersCreatedAt": "When the child’s profile was created: the second step of the funnel.",
@@ -1583,7 +1583,7 @@
             "signedUpAt": "When the family registered for the product: the third step of the funnel, a registration.",
             "consents": "The parent’s acceptance of the Creator Academy Terms & Conditions and of the Creator Academy Privacy Policy for this enrolment: the version of each document, as the date it was published, and when it was accepted. Every Programme product requires both, so every enrolment carries both.",
             "attendance": "How many sessions of the child’s group have a record, and how many of those the child was marked present at. A session is recorded when a Game Educator writes it up or marks attendance, so a session nobody wrote up is not counted; the count is the group’s, and includes sessions before the child joined it. Both are 0 while the seat has not been placed in a group. A child with <code>sessions_present</code> of at least 1 counts as “attended” in the funnel.",
-            "creations": "What the child published during this product, as recorded by their Game Educator in the child’s current group: a title and a link per item, in display order. <code>is_roblox_url</code> is <code>true</code> when the link points at roblox.com. An empty array means nothing recorded yet.",
+            "creations": "What the child published during this product, as recorded by their Game Educator or an admin in the child’s current group: a title and a link per item, in display order. <code>is_roblox_url</code> is <code>true</code> when the link points at roblox.com. An empty array means nothing recorded yet.",
             "creationsUpdatedAt": "When the creations list was last written. Items carry no individual timestamp."
           }
         },
@@ -1600,8 +1600,9 @@
             "productGroupId": "The product and group the session belongs to.",
             "times": "The session’s scheduled window.",
             "attendance": "One entry per child the Game Educator marked, <code>present</code> or <code>absent</code>. A child not yet marked does not appear.",
-            "images": "The photographs the Game Educator attached to the session report, in the order they were added: mostly in-game screenshots, sometimes a photograph of the room. Each is a public URL that needs no credential, and the same URL every family in the group already sees in the report. A photograph belongs to the session, not to a child: Sogverse does not record which children an image shows, so the API cannot tie an image to a media permission. A child is photographed only where the permission stands, and when a parent withdraws it School of Gaming removes any photograph showing the child, after which its URL stops resolving.",
+            "images": "The photographs the Game Educator attached to the session report, in the order they were added: mostly in-game screenshots, sometimes a photograph of the room. Each is a public URL that needs no credential, and the same URL every family in the group already sees in the report. A photograph belongs to the session, not to a child: Sogverse does not record which children an image shows, so the API cannot tie an image to a media permission. A child is photographed only where the permission stands, and when a parent withdraws it School of Gaming removes the material from the channels it controls where that is reasonably possible, as the Programme’s privacy policy says; a removed photograph’s URL stops resolving.",
             "imagesUrl": "Link to it rather than copying the file, so a removal on our side is a removal on yours; a pull that finds a URL no longer resolving should drop it. The URL is safe to use inside Lynx’s own tools and reports. Its object name is an unguessable identifier and that name is the whole of its access control, so the one thing not to do is publish the URL on a page anyone can list.",
+            "imagesId": "The photograph’s identifier, which is also its object name.",
             "imagesSize": "The pixel size of the image."
           }
         },
@@ -1618,7 +1619,7 @@
             "gamerGroupProductId": "Who answered, and the group and product the session belonged to. A record has no identifier of its own: <code>gamer_id</code>, <code>group_id</code> and <code>session_opened_at</code> together are its key, and a later answer from the same child about the same session replaces the earlier one under that key.",
             "sessionId": "The session in <code>/sessions</code> the answer belongs to, matched by group and date; <code>null</code> if no session row was written for that day.",
             "sessionOpenedAt": "When the session the child answered about opened.",
-            "answers": "The child’s rating of each statement, keyed by the statement’s stable identifier, with a statement they skipped absent. Ratings run 1 to 5: no, not really, a bit, yes, definitely. The statements asked today are <code>learned</code> (I learned something), <code>fun</code> (I had fun), <code>geduKnowledgeable</code> (the Gedu knew what they were doing), <code>geduKind</code> (the Gedu was kind), and <code>groupListens</code> (the group listens to each other); a statement may be added or retired without notice, so read the keys you know and ignore the rest.",
+            "answers": "The child’s rating of each statement, keyed by the statement’s stable identifier, with a statement they skipped absent. Ratings run 1 to 5: no, not really, a bit, yes, definitely. The statements asked today are <code>learned</code> (I learned something), <code>fun</code> (I had fun), <code>geduKnowledgeable</code> (the Game Educator knew what they were doing), <code>geduKind</code> (the Game Educator was kind), and <code>groupListens</code> (my group listens to and understands me); a statement may be added or retired without notice, so read the keys you know and ignore the rest. Only aggregated satisfaction figures go to Roblox; the rows themselves stay with Lynx.",
             "note": "What the child wrote in the optional note, in their own words and their own language; empty when they wrote nothing.",
             "exitReason": "<code>left</code> when the child chose to leave; <code>ended</code> when the session ended around them.",
             "updatedAt": "When the child last saved. A child who leaves, rejoins and leaves again overwrites their earlier answer."
@@ -1633,12 +1634,12 @@
           },
           "fields": {
             "roblox": "The child’s Roblox account. <code>roblox_user_id</code> is <code>null</code> when Sogverse could not verify the username; forward such rows only if Roblox accepts a username alone.",
-            "location": "The family’s home municipality and country.",
+            "location": "The family’s home municipality and country, <code>null</code> when the parent has not set one.",
             "age": "The child’s age in whole years on the activity’s start date, as a range: Sogverse holds the birth month and not the day, so <code>min</code> is the youngest the child could have been and <code>max</code> the oldest, and the two are the same number unless the start date fell inside the child’s birth month. <code>null</code> while the product has no start date. The row carries the age rather than the birth month because the age is what the research dataset names.",
             "activity": "The activity attended: the product’s identifier, its name in English where one has been written and otherwise in the product’s first language, its type, delivery and start date. Type and delivery together are what Lynx’s names for its ways of delivering the Programme map onto, and the start date is the intervention date the research asks for.",
             "publishedGameUrl": "The first roblox.com link in the child’s creations for this product, or <code>null</code> when none has been recorded."
           },
-          "note": "No Sogverse identifier is on this row, so the dataset can be forwarded as it is. The Roblox account is on the family record too, so Lynx can trace a row back to a family when it has to: when a family leaves a full pull, delete its rows here as well, and where a row has already been forwarded to Roblox, pass the request on under the Roblox data processing addendum, as the Programme’s privacy policy provides."
+          "note": "No identifier of the child or family is on this row, so the dataset can be forwarded as it is; rows page in the order of the enrolment each derives from, and <code>updated_since</code> follows that enrolment’s changes. The Roblox account is on the family record too, so Lynx can trace a row back to a family when it has to: when a family leaves a full pull, delete its rows here as well, and where a row has already been forwarded to Roblox, pass the request on under the Roblox data processing addendum, as the Programme’s privacy policy provides."
         },
         "traffic": {
           "title": "the pages a campaign lands on, by campaign",

@@ -120,7 +120,8 @@ How to read traffic/perf *measurements* for the prod app programmatically (team 
   unique devices). `v1` and unversioned paths 404. No per-path breakdown endpoint found
   — the dashboard's Analytics → Pages panel is the fallback.
 - **Prefer the documented public API over that internal endpoint for anything durable** —
-  its shape is no longer a guess: the bullet above records it as verified against prod.
+  its shape is no longer a guess: the REST-endpoint bullet in the Web Analytics section
+  records it as verified against prod, params and quirks included.
 - **Auth: `vercel metrics` rides the CLI's own login and needs no token handling**, so
   any session can run it directly — prefer it for that reason alone.
 - **The script reads the CLI's auth file directly, and that file moves.** The CLI keeps
