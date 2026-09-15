@@ -1499,7 +1499,7 @@
       "scope": {
         "heading": "Scope — what the API can see",
         "p1": "The API sees the Programme and nothing else. A product belongs to the Programme when enrolling on it requires accepting the Roblox Programme Terms; that requirement is set by an admin when the product is created, and every product built for the Programme carries it.",
-        "p2": "Everything else follows from that one rule. A parent is in scope when one of their children holds a seat on a Programme product. A gamer is in scope when they hold such a seat. An enrolment is in scope when it is on a Programme product. A family’s other activity on Sogverse, such as a Minecraft club, is never returned, even for a family that is in scope.",
+        "p2": "Everything else follows from that one rule. A family is in scope when one of its children holds a seat on a Programme product, and only those children are returned with it. An enrolment is in scope when it is on a Programme product. A family’s other activity on Sogverse, such as a Minecraft club, is never returned, even for a family that is in scope.",
         "p3": "The API is read-only. Two Lynx team members also hold Sogverse admin accounts and can see the same data in the admin interface; the API exists so Lynx’s own tooling can read it without a person in the loop."
       },
       "authentication": {
@@ -1532,7 +1532,7 @@
             "id": "The product’s identifier.",
             "name": "The product’s name in every locale it has been written in, keyed by locale code (<code>en</code>, <code>fr</code>, <code>fi</code>, <code>sv</code>).",
             "type": "What kind of product it is. A club runs weekly with no fixed end; a camp and an event run over set dates.",
-            "delivery": "How it is delivered. Together with <code>type</code> this is the closest thing to a delivery model; the API does not carry a separate model label.",
+            "delivery": "How it is delivered. Lynx’s own names for its ways of delivering the Programme are not stored anywhere; <code>type</code> and <code>delivery</code> together are the two facts those names map onto.",
             "location": "City and ISO 3166-1 alpha-2 country of the site for an in-person product; <code>null</code> when online.",
             "status": "<code>pending</code> before it starts, <code>running</code>, <code>completed</code>, or <code>cancelled</code>.",
             "dates": "When it runs. A club has no end date.",
@@ -1544,41 +1544,28 @@
             "groups": "The groups the product is delivered in. Sessions and attendance hang off a group."
           }
         },
-        "parents": {
-          "title": "the adults who hold the accounts",
-          "intro": "Every parent with a child on a Programme product. The email address is included only where the parent has granted Lynx’s marketing consent; otherwise the record carries the parent’s identifier, attribution and consent status and no contact details.",
+        "families": {
+          "title": "a parent and their children",
+          "intro": "Every family with a child on a Programme product: the parent who holds the account, and the children of theirs who are in scope, nested inside. A family is the unit Sogverse works in. One parent account holds the consents, the attribution and the location, and every child inherits them, so the person-level data arrives as one record rather than two lists to join. The email address is included only where the parent has granted Lynx’s marketing consent.",
           "params": {
-            "marketingConsent": "Only parents whose Lynx marketing consent is currently granted. This is the mailing list.",
-            "utmCampaign": "Only parents whose account was created through a link carrying this exact campaign value."
+            "marketingConsent": "Only families whose Lynx marketing consent is currently granted. This is the mailing list.",
+            "utmCampaign": "Only families whose account was created through a link carrying this exact campaign value."
           },
           "fields": {
-            "id": "The parent’s identifier. Use it to link gamers and enrolments to the parent; it is the stable key, not the email.",
+            "id": "The family’s identifier, which is the parent account’s. Use it to link enrolments to the family; it is the stable key, not the email.",
             "email": "The parent’s email address, present only while <code>marketing_consent.granted</code> is <code>true</code>. It is <code>null</code> otherwise, and it becomes <code>null</code> again when consent is withdrawn.",
-            "createdAt": "When the account was created. This is the “parent account created” event in the funnel.",
+            "createdAt": "When the parent account was created: the first step of the funnel, a family created.",
             "locale": "The language the parent uses Sogverse in.",
             "location": "City and country of the family’s self-reported home municipality, or <code>null</code> when the parent has not set one.",
             "utm": "The <code>utm_source</code>, <code>utm_medium</code> and <code>utm_campaign</code> of the link the account was created through, each <code>null</code> when absent. They are written once at registration and only where the visitor accepted marketing cookies, so most records carry three nulls. Campaigns issued for Lynx are prefixed <code>lynx-</code> by convention.",
             "marketingConsent": "The parent’s current answer to Lynx’s marketing consent: <code>granted</code> and when it was last changed. <code>null</code> means the parent has never been asked, which for sending purposes is the same as <code>false</code>.",
-            "gamerIds": "The identifiers of this parent’s children who are in scope.",
-            "updatedAt": "The later of the parent’s own last change and their consent’s."
-          }
-        },
-        "gamers": {
-          "title": "the children",
-          "intro": "Every child holding a seat on a Programme product. A child carries no name, no birth date and no contact details; identity is the identifier, the Roblox account and the parent link.",
-          "params": {
-            "parentId": "Only the children of this parent.",
-            "photoConsent": "Only children whose Lynx media permission is currently granted.",
-            "roblox": "Only children whose Roblox username resolved to a Roblox user id."
-          },
-          "fields": {
-            "id": "The child’s identifier.",
-            "parentId": "The parent whose account this child belongs to.",
-            "createdAt": "When the child’s profile was created. This is the “child profile created” event in the funnel.",
-            "age": "The child’s age in whole years today. The birth date itself is never exposed; an enrolment carries the age at the product’s start.",
-            "location": "The family’s location, copied from the parent for convenience.",
-            "roblox": "The Roblox username the family gave and the Roblox user id it resolved to. <code>verified</code> is <code>true</code> only when Sogverse confirmed the username with Roblox and holds the user id; an unverified username has <code>user_id: null</code>. <code>null</code> when no username has been given.",
-            "photoConsent": "The current Lynx media permission for this child: <code>granted</code> and when it last changed. <code>null</code> means never asked, which every surface treats as not granted."
+            "gamers": "The family’s children who hold a seat on a Programme product, one entry each. A child carries no name, no birth date and no contact details; identity is the identifier and the Roblox account.",
+            "gamersId": "The child’s identifier, the one enrolments carry as <code>gamer_id</code>.",
+            "gamersCreatedAt": "When the child’s profile was created: the second step of the funnel.",
+            "gamersAge": "The child’s age in whole years today. The birth date itself is never exposed; an enrolment carries the age at the product’s start.",
+            "gamersRoblox": "The Roblox username the family gave and the Roblox user id it resolved to. <code>verified</code> is <code>true</code> only when Sogverse confirmed the username with Roblox and holds the user id; an unverified username has <code>user_id: null</code>. <code>null</code> when no username has been given.",
+            "gamersPhotoConsent": "The current Lynx media permission for this child: <code>granted</code> and when it last changed. <code>null</code> means never asked, which every surface treats as not granted.",
+            "updatedAt": "The latest change anywhere in the record: the parent’s own, a consent’s, or a child’s. A family shows up in an <code>updated_since</code> pull whenever any part of it moved."
           },
           "note": "Only the media permission exists as platform data. Case-study, testimonial and promotional-use releases are separate written releases the Programme obtains outside Sogverse, and the API cannot report them."
         },
@@ -1588,14 +1575,15 @@
           "params": {
             "productId": "Only enrolments on this product.",
             "gamerId": "Only this child’s enrolments.",
+            "familyId": "Only this family’s enrolments.",
             "status": "Only enrolments in this state."
           },
           "fields": {
             "id": "The enrolment’s identifier.",
             "productGroupId": "The product, and the group within it the child was placed in. <code>group_id</code> is <code>null</code> until an admin places the seat.",
-            "gamerParentId": "The child, and the parent whose account holds the seat.",
+            "gamerFamilyId": "The child, and the family whose account holds the seat.",
             "status": "<code>active</code> for a held seat, <code>waitlisted</code> for a family waiting for one, <code>completed</code> once the product has finished. Seats that were never confirmed are not returned.",
-            "signedUpAt": "When the family registered for the product. This is the “event registration” event in the funnel.",
+            "signedUpAt": "When the family registered for the product: the third step of the funnel, a registration.",
             "groupJoinedAt": "When the seat entered its group.",
             "ageAtStart": "The child’s age in whole years on the product’s start date; <code>null</code> while the product has no start date.",
             "attendance": "Sessions held so far in the child’s group, how many the child was marked present at, and the first and last session they attended. A child with <code>sessions_present</code> of at least 1 counts as “attended” in the funnel.",
@@ -1624,33 +1612,47 @@
           "intro": "The individual-level dataset the Programme’s privacy policy allows to be passed to Roblox for impact research, and nothing beyond it. One row per enrolment, ready to forward without filtering. Every field is one the policy names.",
           "params": {
             "productId": "Only rows for this product.",
-            "fromTo": "Only rows whose intervention date falls within this range, inclusive."
+            "fromTo": "Only rows whose product started within this range, inclusive."
           },
           "fields": {
             "roblox": "The child’s Roblox account. <code>roblox_user_id</code> is <code>null</code> when Sogverse could not verify the username; forward such rows only if Roblox accepts a username alone.",
             "location": "The family’s location.",
             "age": "The child’s age in whole years on the intervention date.",
-            "interventionDate": "The product’s start date.",
-            "activity": "The product attended: its identifier, English name, type and delivery. Type and delivery together stand in for the delivery model.",
+            "interventionDate": "The product’s start date, under the name the research dataset uses for it.",
+            "activity": "The product attended: its identifier, English name, type and delivery. Type and delivery together are what Lynx’s names for its ways of delivering the Programme map onto.",
             "publishedGameUrl": "The first roblox.com link in the child’s creations for this product, or <code>null</code> when none has been recorded."
           },
-          "note": "No identifier of the child or parent is on this row. If Lynx needs to trace a row back, pull it from <code>/enrolments</code> instead; the research dataset is deliberately not joinable."
+          "note": "No identifier of the child or family is on this row. If Lynx needs to trace a row back, pull it from <code>/enrolments</code> instead; the research dataset is deliberately not joinable."
         },
         "stats": {
           "title": "the funnel, aggregated",
-          "intro": "The five Programme KPIs as counts, so a dashboard can show the funnel without holding any personal data at all. Totals across the Programme, then the same counts per product and per campaign.",
+          "intro": "The five Programme KPIs as counts, so a dashboard can show the funnel without holding any personal data at all. Totals across the Programme, then the same counts per product and per campaign. A family that created its account, a child profile created, a registration, a child who attended, a game published: that is the funnel, in order.",
           "params": {
             "fromTo": "Count only accounts created, registrations made and sessions held within this range. Omit for all time."
           },
           "fields": {
-            "parentsCreated": "Parent accounts in scope, by account creation date.",
+            "familiesCreated": "Families in scope, by the parent account’s creation date.",
             "gamersCreated": "Child profiles in scope, by profile creation date.",
             "enrolments": "Seats held or completed on Programme products, plus waitlisted ones, by sign-up date.",
             "attended": "Enrolments with at least one session marked present.",
             "gamesPublished": "Enrolments with at least one roblox.com link in their creations.",
             "byProduct": "The enrolment, attendance and publication counts for each product.",
-            "byCampaign": "The account and enrolment counts grouped by the parent’s <code>utm_campaign</code>. The <code>null</code> row is every family whose account carries no campaign, which includes families who declined marketing cookies."
+            "byCampaign": "The family, child and enrolment counts grouped by the family’s <code>utm_campaign</code>. The <code>null</code> row is every family whose account carries no campaign, which includes families who declined marketing cookies."
           }
+        },
+        "traffic": {
+          "title": "the landing page, by campaign",
+          "intro": "Views of the Roblox landing page, grouped by the campaign that brought them, so the top of the funnel has a number too. The counts come from Vercel Web Analytics. We copy them into our own store once a day, so the history runs from the day the copying began rather than the 30 days Vercel keeps. Aggregate only: no visitor identifiers, and no page but the landing page.",
+          "params": {
+            "fromTo": "Only days within this range, inclusive. Omit for the whole history."
+          },
+          "fields": {
+            "range": "The days the counts cover.",
+            "pageviews": "Views of the landing page in the range, whatever brought them.",
+            "byCampaign": "The views split by the three UTM values on the link. The row with three nulls is every view that carried no campaign, including a visitor who typed the address or followed an untagged link.",
+            "byDay": "One row per day: views, and how many distinct devices they came from. A device is counted once per day and identified by Vercel, not by us, so the figure is a daily order of magnitude rather than a headcount, and summing it across days counts the same device again."
+          },
+          "note": "Vercel’s script runs only for a visitor who accepted analytics on the cookie banner, and the UTM values on a family record are written only for a visitor who accepted marketing. The two gates differ, and analytics is the wider one, so <code>pageviews</code> here and <code>families_created</code> in <code>/stats</code> are not the same population: a visitor who accepted everything is in both, one who accepted analytics alone is here only, and one who rejected the banner is in neither."
         }
       },
       "errors": {
@@ -1668,8 +1670,8 @@
         "heading": "Integration notes",
         "items": {
           "sync": "Sync, do not query live. Pull each resource into Lynx’s own store on a schedule and build the dashboard on that store. A nightly full pull plus hourly <code>updated_since</code> pulls is the intended pattern.",
-          "join": "Join on identifiers, never on email. A parent’s email can appear, disappear and reappear as consent changes; their <code>id</code> never does.",
-          "consent": "Act on consent changes on the same sync that shows them. A parent whose <code>marketing_consent.granted</code> turned <code>false</code> comes off Lynx’s list that day; a child whose <code>photo_consent.granted</code> turned <code>false</code> comes out of any material Lynx controls.",
+          "join": "Join on identifiers, never on email. A family’s email can appear, disappear and reappear as consent changes; its <code>id</code> never does.",
+          "consent": "Act on consent changes on the same sync that shows them. A family whose <code>marketing_consent.granted</code> turned <code>false</code> comes off Lynx’s list that day; a child whose <code>photo_consent.granted</code> turned <code>false</code> comes out of any material Lynx controls.",
           "erasure": "Delete what disappears. A record missing from a full pull was erased under the family’s data rights, and the Programme’s privacy policy commits both organisations to honouring that.",
           "derived": "“Attended” and “published” are derived, not stored. Both are defined in the field descriptions above so Lynx’s numbers and ours agree; if the definition needs to change, change it here first.",
           "readOnly": "Nothing here writes. Enrolment, consent and creations are recorded in Sogverse by families and educators; the API is a window onto them."
@@ -1683,7 +1685,7 @@
           "feedback": "Individual session feedback. A child’s answers are theirs; the policy allows only aggregated satisfaction reporting, which is a candidate for “Later”.",
           "releases": "Case-study, testimonial and promotional-use consents. They are written releases obtained outside the platform.",
           "deliveryModel": "A delivery model label. Sogverse holds a product’s type and whether it is online or in person; a model taxonomy is Lynx’s to lay over those two fields.",
-          "analytics": "Landing-page analytics. Page views of the Roblox landing page by campaign live in Vercel’s privacy-first analytics, not in Sogverse’s database, and are shared from there."
+          "analytics": "Traffic anywhere but the landing page, and anything about a single visitor. The analytics behind <code>/traffic</code> are privacy-first by design: a page a family reaches after signing in is theirs, and a visitor is a count, never a record."
         }
       },
       "later": {

@@ -1499,7 +1499,7 @@
       "scope": {
         "heading": "Omfattning — vad API:et kan se",
         "p1": "API:et ser Programmet och inget annat. En produkt hör till Programmet när en anmälan till den kräver att man godkänner Roblox-programmets användarvillkor. Kravet sätts av en administratör när produkten skapas, och varje produkt som byggts för Programmet bär det.",
-        "p2": "Allt annat följer av den enda regeln. En förälder omfattas när ett av deras barn har en plats på en produkt i Programmet. En spelare omfattas när hen har en sådan plats. En anmälan omfattas när den gäller en produkt i Programmet. En familjs övriga aktivitet i Sogverse, till exempel en Minecraft-klubb, returneras aldrig, inte heller för en familj som omfattas.",
+        "p2": "Everything else follows from that one rule. A family is in scope when one of its children holds a seat on a Programme product, and only those children are returned with it. An enrolment is in scope when it is on a Programme product. A family’s other activity on Sogverse, such as a Minecraft club, is never returned, even for a family that is in scope.",
         "p3": "API:et är skrivskyddat. Två medarbetare på Lynx har även administratörskonton i Sogverse och ser samma uppgifter i administratörsgränssnittet; API:et finns för att Lynx egna verktyg ska kunna läsa dem utan en människa i loopen."
       },
       "authentication": {
@@ -1532,7 +1532,7 @@
             "id": "Produktens identifierare.",
             "name": "Produktens namn på varje språk det har skrivits på, med språkkoden som nyckel (<code>en</code>, <code>fr</code>, <code>fi</code>, <code>sv</code>).",
             "type": "Vilken sorts produkt det är. En klubb går varje vecka utan fast slut; ett läger och ett evenemang går över bestämda datum.",
-            "delivery": "Hur den levereras. Tillsammans med <code>type</code> är detta det närmaste en leveransmodell; API:et bär ingen separat modelletikett.",
+            "delivery": "How it is delivered. Lynx’s own names for its ways of delivering the Programme are not stored anywhere; <code>type</code> and <code>delivery</code> together are the two facts those names map onto.",
             "location": "Ort och land enligt ISO 3166-1 alpha-2 för platsen vid en fysisk produkt; <code>null</code> när den är online.",
             "status": "<code>pending</code> innan den börjar, <code>running</code>, <code>completed</code> eller <code>cancelled</code>.",
             "dates": "När den pågår. En klubb har inget slutdatum.",
@@ -1544,43 +1544,30 @@
             "groups": "De grupper produkten levereras i. Sessioner och närvaro hänger på en grupp."
           }
         },
-        "parents": {
-          "title": "de vuxna som har kontona",
-          "intro": "Varje förälder med ett barn på en produkt i Programmet. E-postadressen finns med bara där föräldern har gett Lynx marknadsföringssamtycke; annars bär posten förälderns identifierare, attribution och samtyckesstatus och inga kontaktuppgifter.",
+        "families": {
+          "title": "a parent and their children",
+          "intro": "Every family with a child on a Programme product: the parent who holds the account, and the children of theirs who are in scope, nested inside. A family is the unit Sogverse works in. One parent account holds the consents, the attribution and the location, and every child inherits them, so the person-level data arrives as one record rather than two lists to join. The email address is included only where the parent has granted Lynx’s marketing consent.",
           "params": {
-            "marketingConsent": "Bara föräldrar vars samtycke till Lynx marknadsföring är gällande just nu. Det här är sändlistan.",
-            "utmCampaign": "Bara föräldrar vars konto skapades via en länk med exakt detta kampanjvärde."
+            "marketingConsent": "Only families whose Lynx marketing consent is currently granted. This is the mailing list.",
+            "utmCampaign": "Only families whose account was created through a link carrying this exact campaign value."
           },
           "fields": {
-            "id": "Förälderns identifierare. Använd den för att koppla spelare och anmälningar till föräldern; det är den stabila nyckeln, inte e-postadressen.",
-            "email": "Förälderns e-postadress, som finns med bara så länge <code>marketing_consent.granted</code> är <code>true</code>. Den är <code>null</code> annars, och den blir <code>null</code> igen när samtycket återkallas.",
-            "createdAt": "När kontot skapades. Det här är händelsen ”föräldrakonto skapat” i tratten.",
-            "locale": "Det språk föräldern använder Sogverse på.",
-            "location": "Ort och land för familjens egenrapporterade hemkommun, eller <code>null</code> när föräldern inte har angett någon.",
-            "utm": "<code>utm_source</code>, <code>utm_medium</code> och <code>utm_campaign</code> för den länk kontot skapades via, var och en <code>null</code> när den saknas. De skrivs en gång vid registreringen och bara där besökaren accepterade marknadsföringscookies, så de flesta poster bär tre null. Kampanjer som tagits fram för Lynx har enligt konvention prefixet <code>lynx-</code>.",
-            "marketingConsent": "Förälderns nuvarande svar på Lynx marknadsföringssamtycke: <code>granted</code> och när det senast ändrades. <code>null</code> betyder att föräldern aldrig har blivit tillfrågad, vilket för utskick är samma sak som <code>false</code>.",
-            "gamerIds": "Identifierarna för den här förälderns barn som omfattas.",
-            "updatedAt": "Den senaste av förälderns egen ändring och samtyckets."
-          }
-        },
-        "gamers": {
-          "title": "barnen",
-          "intro": "Varje barn som har en plats på en produkt i Programmet. Ett barn bär inget namn, inget födelsedatum och inga kontaktuppgifter; identiteten är identifieraren, Roblox-kontot och kopplingen till föräldern.",
-          "params": {
-            "parentId": "Bara den här förälderns barn.",
-            "photoConsent": "Bara barn vars mediatillstånd från Lynx är gällande just nu.",
-            "roblox": "Bara barn vars Roblox-användarnamn kunde slås upp till ett Roblox-användar-id."
+            "id": "The family’s identifier, which is the parent account’s. Use it to link enrolments to the family; it is the stable key, not the email.",
+            "email": "The parent’s email address, present only while <code>marketing_consent.granted</code> is <code>true</code>. It is <code>null</code> otherwise, and it becomes <code>null</code> again when consent is withdrawn.",
+            "createdAt": "When the parent account was created: the first step of the funnel, a family created.",
+            "locale": "The language the parent uses Sogverse in.",
+            "location": "City and country of the family’s self-reported home municipality, or <code>null</code> when the parent has not set one.",
+            "utm": "The <code>utm_source</code>, <code>utm_medium</code> and <code>utm_campaign</code> of the link the account was created through, each <code>null</code> when absent. They are written once at registration and only where the visitor accepted marketing cookies, so most records carry three nulls. Campaigns issued for Lynx are prefixed <code>lynx-</code> by convention.",
+            "marketingConsent": "The parent’s current answer to Lynx’s marketing consent: <code>granted</code> and when it was last changed. <code>null</code> means the parent has never been asked, which for sending purposes is the same as <code>false</code>.",
+            "gamers": "The family’s children who hold a seat on a Programme product, one entry each. A child carries no name, no birth date and no contact details; identity is the identifier and the Roblox account.",
+            "gamersId": "The child’s identifier, the one enrolments carry as <code>gamer_id</code>.",
+            "gamersCreatedAt": "When the child’s profile was created: the second step of the funnel.",
+            "gamersAge": "The child’s age in whole years today. The birth date itself is never exposed; an enrolment carries the age at the product’s start.",
+            "gamersRoblox": "The Roblox username the family gave and the Roblox user id it resolved to. <code>verified</code> is <code>true</code> only when Sogverse confirmed the username with Roblox and holds the user id; an unverified username has <code>user_id: null</code>. <code>null</code> when no username has been given.",
+            "gamersPhotoConsent": "The current Lynx media permission for this child: <code>granted</code> and when it last changed. <code>null</code> means never asked, which every surface treats as not granted.",
+            "updatedAt": "The latest change anywhere in the record: the parent’s own, a consent’s, or a child’s. A family shows up in an <code>updated_since</code> pull whenever any part of it moved."
           },
-          "fields": {
-            "id": "Barnets identifierare.",
-            "parentId": "Den förälder vars konto barnet hör till.",
-            "createdAt": "När barnets profil skapades. Det här är händelsen ”barnprofil skapad” i tratten.",
-            "age": "Barnets ålder i hela år i dag. Själva födelsedatumet exponeras aldrig; en anmälan bär åldern vid produktens start.",
-            "location": "Familjens plats, kopierad från föräldern för enkelhets skull.",
-            "roblox": "Det Roblox-användarnamn familjen angav och det Roblox-användar-id det slogs upp till. <code>verified</code> är <code>true</code> bara när Sogverse har bekräftat användarnamnet hos Roblox och har användar-id:t; ett obekräftat användarnamn har <code>user_id: null</code>. <code>null</code> när inget användarnamn har angetts.",
-            "photoConsent": "Det nuvarande mediatillståndet från Lynx för det här barnet: <code>granted</code> och när det senast ändrades. <code>null</code> betyder aldrig tillfrågad, vilket varje yta behandlar som att tillstånd saknas."
-          },
-          "note": "Bara mediatillståndet finns som plattformsdata. Medgivanden för fallstudier, omdömen och marknadsföringsanvändning är separata skriftliga medgivanden som Programmet hämtar in utanför Sogverse, och API:et kan inte rapportera dem."
+          "note": "Only the media permission exists as platform data. Case-study, testimonial and promotional-use releases are separate written releases the Programme obtains outside Sogverse, and the API cannot report them."
         },
         "enrolments": {
           "title": "ett barn på en produkt",
@@ -1588,14 +1575,15 @@
           "params": {
             "productId": "Bara anmälningar på den här produkten.",
             "gamerId": "Bara det här barnets anmälningar.",
+            "familyId": "Only this family’s enrolments.",
             "status": "Bara anmälningar i detta tillstånd."
           },
           "fields": {
             "id": "Anmälans identifierare.",
             "productGroupId": "Produkten, och gruppen inom den som barnet placerades i. <code>group_id</code> är <code>null</code> tills en administratör placerar platsen.",
-            "gamerParentId": "Barnet, och föräldern vars konto håller platsen.",
+            "gamerFamilyId": "The child, and the family whose account holds the seat.",
             "status": "<code>active</code> för en innehavd plats, <code>waitlisted</code> för en familj som står i kö, <code>completed</code> när produkten är avslutad. Platser som aldrig bekräftades returneras inte.",
-            "signedUpAt": "När familjen anmälde sig till produkten. Det här är händelsen ”anmälan till evenemang” i tratten.",
+            "signedUpAt": "When the family registered for the product: the third step of the funnel, a registration.",
             "groupJoinedAt": "När platsen kom in i sin grupp.",
             "ageAtStart": "Barnets ålder i hela år på produktens startdatum; <code>null</code> så länge produkten saknar startdatum.",
             "attendance": "Sessioner som hållits hittills i barnets grupp, hur många barnet markerats närvarande vid, och den första och sista session de deltog i. Ett barn med <code>sessions_present</code> på minst 1 räknas som ”deltagit” i tratten.",
@@ -1624,33 +1612,47 @@
           "intro": "Det individdata som Programmets integritetspolicy tillåter att lämna vidare till Roblox för effektforskning, och inget därutöver. En rad per anmälan, redo att skickas vidare utan filtrering. Varje fält är ett som policyn nämner.",
           "params": {
             "productId": "Bara rader för den här produkten.",
-            "fromTo": "Bara rader vars interventionsdatum faller inom det här intervallet, gränserna inräknade."
+            "fromTo": "Only rows whose product started within this range, inclusive."
           },
           "fields": {
             "roblox": "Barnets Roblox-konto. <code>roblox_user_id</code> är <code>null</code> när Sogverse inte kunde verifiera användarnamnet; skicka bara vidare sådana rader om Roblox accepterar enbart ett användarnamn.",
             "location": "Familjens plats.",
             "age": "Barnets ålder i hela år på interventionsdatumet.",
-            "interventionDate": "Produktens startdatum.",
-            "activity": "Produkten som deltogs i: dess identifierare, engelska namn, typ och leverans. Typ och leverans står tillsammans för leveransmodellen.",
+            "interventionDate": "The product’s start date, under the name the research dataset uses for it.",
+            "activity": "The product attended: its identifier, English name, type and delivery. Type and delivery together are what Lynx’s names for its ways of delivering the Programme map onto.",
             "publishedGameUrl": "Den första roblox.com-länken bland barnets skapelser för den här produkten, eller <code>null</code> när ingen har antecknats."
           },
-          "note": "Ingen identifierare för barnet eller föräldern finns på den här raden. Om Lynx behöver spåra en rad tillbaka, hämta den från <code>/enrolments</code> i stället; forskningsdatat är medvetet inte sammankopplingsbart."
+          "note": "No identifier of the child or family is on this row. If Lynx needs to trace a row back, pull it from <code>/enrolments</code> instead; the research dataset is deliberately not joinable."
         },
         "stats": {
           "title": "tratten, aggregerad",
-          "intro": "Programmets fem nyckeltal som antal, så att en dashboard kan visa tratten utan att hålla några personuppgifter alls. Totaler för hela Programmet, sedan samma antal per produkt och per kampanj.",
+          "intro": "The five Programme KPIs as counts, so a dashboard can show the funnel without holding any personal data at all. Totals across the Programme, then the same counts per product and per campaign. A family that created its account, a child profile created, a registration, a child who attended, a game published: that is the funnel, in order.",
           "params": {
             "fromTo": "Räkna bara konton som skapats, anmälningar som gjorts och sessioner som hållits inom det här intervallet. Utelämna för all tid."
           },
           "fields": {
-            "parentsCreated": "Föräldrakonton som omfattas, efter datum då kontot skapades.",
+            "familiesCreated": "Families in scope, by the parent account’s creation date.",
             "gamersCreated": "Barnprofiler som omfattas, efter datum då profilen skapades.",
             "enrolments": "Platser som innehas eller slutförts på produkter i Programmet, plus köade, efter anmälningsdatum.",
             "attended": "Anmälningar med minst en session markerad som närvarande.",
             "gamesPublished": "Anmälningar med minst en roblox.com-länk bland sina skapelser.",
             "byProduct": "Antalet anmälningar, deltaganden och publiceringar för varje produkt.",
-            "byCampaign": "Antalet konton och anmälningar grupperade efter förälderns <code>utm_campaign</code>. Raden <code>null</code> är varje familj vars konto saknar kampanj, vilket inkluderar familjer som tackade nej till marknadsföringscookies."
+            "byCampaign": "The family, child and enrolment counts grouped by the family’s <code>utm_campaign</code>. The <code>null</code> row is every family whose account carries no campaign, which includes families who declined marketing cookies."
           }
+        },
+        "traffic": {
+          "title": "the landing page, by campaign",
+          "intro": "Views of the Roblox landing page, grouped by the campaign that brought them, so the top of the funnel has a number too. The counts come from Vercel Web Analytics. We copy them into our own store once a day, so the history runs from the day the copying began rather than the 30 days Vercel keeps. Aggregate only: no visitor identifiers, and no page but the landing page.",
+          "params": {
+            "fromTo": "Only days within this range, inclusive. Omit for the whole history."
+          },
+          "fields": {
+            "range": "The days the counts cover.",
+            "pageviews": "Views of the landing page in the range, whatever brought them.",
+            "byCampaign": "The views split by the three UTM values on the link. The row with three nulls is every view that carried no campaign, including a visitor who typed the address or followed an untagged link.",
+            "byDay": "One row per day: views, and how many distinct devices they came from. A device is counted once per day and identified by Vercel, not by us, so the figure is a daily order of magnitude rather than a headcount, and summing it across days counts the same device again."
+          },
+          "note": "Vercel’s script runs only for a visitor who accepted analytics on the cookie banner, and the UTM values on a family record are written only for a visitor who accepted marketing. The two gates differ, and analytics is the wider one, so <code>pageviews</code> here and <code>families_created</code> in <code>/stats</code> are not the same population: a visitor who accepted everything is in both, one who accepted analytics alone is here only, and one who rejected the banner is in neither."
         }
       },
       "errors": {
@@ -1668,8 +1670,8 @@
         "heading": "Integrationsanteckningar",
         "items": {
           "sync": "Synkronisera, fråga inte live. Hämta varje resurs till Lynx eget lager enligt schema och bygg dashboarden på det lagret. En nattlig full hämtning plus <code>updated_since</code>-hämtningar varje timme är det avsedda mönstret.",
-          "join": "Koppla på identifierare, aldrig på e-post. En förälders e-postadress kan dyka upp, försvinna och dyka upp igen när samtycket ändras; deras <code>id</code> gör det aldrig.",
-          "consent": "Agera på samtyckesändringar vid samma synkronisering som visar dem. En förälder vars <code>marketing_consent.granted</code> blev <code>false</code> lämnar Lynx lista samma dag; ett barn vars <code>photo_consent.granted</code> blev <code>false</code> plockas ur allt material Lynx råder över.",
+          "join": "Join on identifiers, never on email. A family’s email can appear, disappear and reappear as consent changes; its <code>id</code> never does.",
+          "consent": "Act on consent changes on the same sync that shows them. A family whose <code>marketing_consent.granted</code> turned <code>false</code> comes off Lynx’s list that day; a child whose <code>photo_consent.granted</code> turned <code>false</code> comes out of any material Lynx controls.",
           "erasure": "Radera det som försvinner. En post som saknas i en full hämtning har raderats med stöd av familjens dataskyddsrättigheter, och Programmets integritetspolicy förbinder båda organisationerna att respektera det.",
           "derived": "”Deltagit” och ”publicerat” är härledda, inte lagrade. Båda definieras i fältbeskrivningarna ovan så att Lynx siffror och våra stämmer; om definitionen behöver ändras, ändra den här först.",
           "readOnly": "Inget här skriver. Anmälan, samtycke och skapelser antecknas i Sogverse av familjer och spelfostrare; API:et är ett fönster mot dem."
@@ -1683,7 +1685,7 @@
           "feedback": "Enskild sessionsfeedback. Ett barns svar är barnets egna; policyn tillåter bara aggregerad nöjdhetsrapportering, som är en kandidat för ”Senare”.",
           "releases": "Medgivanden för fallstudier, omdömen och marknadsföringsanvändning. De är skriftliga medgivanden som hämtas in utanför plattformen.",
           "deliveryModel": "En etikett för leveransmodell. Sogverse håller en produkts typ och om den är online eller på plats; en modelltaxonomi är Lynx sak att lägga över de två fälten.",
-          "analytics": "Analys av landningssidan. Sidvisningar av Roblox-landningssidan per kampanj ligger i Vercels integritetsvänliga analys, inte i Sogverses databas, och delas därifrån."
+          "analytics": "Traffic anywhere but the landing page, and anything about a single visitor. The analytics behind <code>/traffic</code> are privacy-first by design: a page a family reaches after signing in is theirs, and a visitor is a count, never a record."
         }
       },
       "later": {

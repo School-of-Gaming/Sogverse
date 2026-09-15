@@ -1543,7 +1543,7 @@
       "scope": {
         "heading": "veH — nuq legh API",
         "p1": "mIw'a' neH legh API — latlh pagh. mIw'a' ghaj De'wI' qaSDI' muvmeH Roblox mIw'a' chutmey laj 'e' nIS. ra'wI' chel qup De'wI' chenmoHlu'DI', 'ej mIw'a'vaD chenmoHlu'bogh Hoch De'wI' qeng.",
-        "p2": "wa' chutvo' Hoch latlh tlhap. vav veH 'el puqDaj Daq ghaj mIw'a' De'wI'Daq. toy'wI' veH 'el Daq ghaj. muvmoHghach veH 'el mIw'a' De'wI'Daq. qorDu' latlh Qu' Sogverse-Daq — ghom'a' Minecraft, jIH — reH nobbe'lu', veH 'elbogh qorDu'vaD je.",
+        "p2": "Everything else follows from that one rule. A family is in scope when one of its children holds a seat on a Programme product, and only those children are returned with it. An enrolment is in scope when it is on a Programme product. A family’s other activity on Sogverse, such as a Minecraft club, is never returned, even for a family that is in scope.",
         "p3": "leghmeH neH 'oH API. cha' Lynx ghomwI'pu' Sogverse ra'wI' account ghaj 'ej rap De' legh ra'wI' Daq. API tu'lu'mo' Lynx jan mob laD — nuvHom poHbe'."
       },
       "authentication": {
@@ -1576,7 +1576,7 @@
             "id": "De'wI' pong mI'.",
             "name": "Hoch Hol De'wI' pong, Hol ngoq lo' (<code>en</code>, <code>fr</code>, <code>fi</code>, <code>sv</code>).",
             "type": "nuq Segh De'wI'. Hoch Hogh qaS ghom'a' — Qav Hutlh; ragh je wanI' jaj wIvlu'bogh qaS.",
-            "delivery": "chay' qaS. <code>type</code> je: cha'vam rur mIw Segh; API mIw pong pIm ghajbe'.",
+            "delivery": "How it is delivered. Lynx’s own names for its ways of delivering the Programme are not stored anywhere; <code>type</code> and <code>delivery</code> together are the two facts those names map onto.",
             "location": "nuvDaq qaSbogh De'wI' veng je ISO 3166-1 alpha-2 Sep; <code>null</code> DIvI' Daq qaSDI'.",
             "status": "<code>pending</code> taghpa', <code>running</code>, <code>completed</code>, qoj <code>cancelled</code>.",
             "dates": "ghorgh qaS. Qav Hutlh ghom'a'.",
@@ -1588,43 +1588,30 @@
             "groups": "ghommey De'wI' qaSbogh. ghomDaq juS poHmey je 'elmeymey."
           }
         },
-        "parents": {
-          "title": "account ghajbogh nuvpu' quv",
-          "intro": "Hoch vav, puqDaj mIw'a' De'wI'Daq. QIn Daq tu'lu' neH vav Lynx ngeH chaw' nobDI'; latlhDaq De'wI' qeng vav pong mI', ghoSwI' De' je chaw' Dotlh — jatlhmeH Daq Hutlh.",
+        "families": {
+          "title": "a parent and their children",
+          "intro": "Every family with a child on a Programme product: the parent who holds the account, and the children of theirs who are in scope, nested inside. A family is the unit Sogverse works in. One parent account holds the consents, the attribution and the location, and every child inherits them, so the person-level data arrives as one record rather than two lists to join. The email address is included only where the parent has granted Lynx’s marketing consent.",
           "params": {
-            "marketingConsent": "DaH Lynx ngeH chaw' nobbogh vavpu' neH. tetlhvam 'oH ngeH tetlh'e'.",
-            "utmCampaign": "tlhegh qengbogh mIw pongvam lo'taHvIS chenmoHlu'bogh account vavpu' neH."
+            "marketingConsent": "Only families whose Lynx marketing consent is currently granted. This is the mailing list.",
+            "utmCampaign": "Only families whose account was created through a link carrying this exact campaign value."
           },
           "fields": {
-            "id": "vav pong mI'. toy'wI'pu' je muvmoHghachmey vavDaq yIjon; 'oH pongvam'e' ngoQ Hutlh — QIn Daq 'oHbe'.",
-            "email": "vav QIn Daq — tu'lu' neH <code>marketing_consent.granted</code> <code>true</code> 'oHtaHvIS. latlhDaq <code>null</code>, 'ej chaw' lujDI' <code>null</code> mojqa'.",
-            "createdAt": "ghorgh chenmoHlu' account. wanI'vam 'oH “vav account chenmoHlu'” He'So'Daq.",
-            "locale": "Hol lo'bogh vav Sogverse-Daq.",
-            "location": "qorDu' juH veng je Sep, qorDu' jatlhpu'bogh; <code>null</code> vav 'angbe'DI'.",
-            "utm": "tlhegh <code>utm_source</code>, <code>utm_medium</code> je <code>utm_campaign</code> — account chenmoHlu'bogh tlhegh; Hoch <code>null</code> Hutlhbogh. wa'logh neH ghItlhlu' muvDI', 'ej ngeH chab laj leghwI'DI' neH — vaj puS De'wI' wej null qeng. LynxvaD chenmoHlu'bogh mIwmey <code>lynx-</code> qeng.",
-            "marketingConsent": "DaH Lynx ngeH chaw'vaD vav jang: <code>granted</code> 'ej ghorgh choHlu' Qav. <code>null</code>: not yu'lu'pu' — ngeHmeH <code>false</code> rur.",
-            "gamerIds": "veH 'elbogh vavvam puqpu' pong mI'mey.",
-            "updatedAt": "cha'vo' Qav: vav choH qoj chaw' choH."
-          }
-        },
-        "gamers": {
-          "title": "puqpu'",
-          "intro": "mIw'a' De'wI'Daq Daq ghajbogh Hoch puq. puq pong Hutlh, boghjaj Hutlh, jatlhmeH Daq Hutlh; pong mI', Roblox account, vav tlhegh je neH.",
-          "params": {
-            "parentId": "vavvam puqpu' neH.",
-            "photoConsent": "DaH Lynx nagh beQ chaw' ghajbogh puqpu' neH.",
-            "roblox": "Roblox pong Roblox lo'wI' mI' mojbogh puqpu' neH."
+            "id": "The family’s identifier, which is the parent account’s. Use it to link enrolments to the family; it is the stable key, not the email.",
+            "email": "The parent’s email address, present only while <code>marketing_consent.granted</code> is <code>true</code>. It is <code>null</code> otherwise, and it becomes <code>null</code> again when consent is withdrawn.",
+            "createdAt": "When the parent account was created: the first step of the funnel, a family created.",
+            "locale": "The language the parent uses Sogverse in.",
+            "location": "City and country of the family’s self-reported home municipality, or <code>null</code> when the parent has not set one.",
+            "utm": "The <code>utm_source</code>, <code>utm_medium</code> and <code>utm_campaign</code> of the link the account was created through, each <code>null</code> when absent. They are written once at registration and only where the visitor accepted marketing cookies, so most records carry three nulls. Campaigns issued for Lynx are prefixed <code>lynx-</code> by convention.",
+            "marketingConsent": "The parent’s current answer to Lynx’s marketing consent: <code>granted</code> and when it was last changed. <code>null</code> means the parent has never been asked, which for sending purposes is the same as <code>false</code>.",
+            "gamers": "The family’s children who hold a seat on a Programme product, one entry each. A child carries no name, no birth date and no contact details; identity is the identifier and the Roblox account.",
+            "gamersId": "The child’s identifier, the one enrolments carry as <code>gamer_id</code>.",
+            "gamersCreatedAt": "When the child’s profile was created: the second step of the funnel.",
+            "gamersAge": "The child’s age in whole years today. The birth date itself is never exposed; an enrolment carries the age at the product’s start.",
+            "gamersRoblox": "The Roblox username the family gave and the Roblox user id it resolved to. <code>verified</code> is <code>true</code> only when Sogverse confirmed the username with Roblox and holds the user id; an unverified username has <code>user_id: null</code>. <code>null</code> when no username has been given.",
+            "gamersPhotoConsent": "The current Lynx media permission for this child: <code>granted</code> and when it last changed. <code>null</code> means never asked, which every surface treats as not granted.",
+            "updatedAt": "The latest change anywhere in the record: the parent’s own, a consent’s, or a child’s. A family shows up in an <code>updated_since</code> pull whenever any part of it moved."
           },
-          "fields": {
-            "id": "puq pong mI'.",
-            "parentId": "vav — account ghaj puqvam.",
-            "createdAt": "ghorgh chenmoHlu' puq De'. wanI'vam 'oH “puq De' chenmoHlu'” He'So'Daq.",
-            "age": "DaHjaj puq ben mI' naQ. boghjaj not 'anglu'; muvmoHghach qeng ben mI' De'wI' taghDI'.",
-            "location": "qorDu' Daq — vavvo' velqa'lu'.",
-            "roblox": "qorDu' nobbogh Roblox pong je Roblox lo'wI' mI' mojbogh. <code>verified</code> <code>true</code> neH Sogverse pong ngu'pu'DI' Robloxvo' 'ej lo'wI' mI' ghajDI'; ngu'be'lu'bogh pong ghaj <code>user_id: null</code>. <code>null</code> pong nobbe'lu'DI'.",
-            "photoConsent": "DaH puqvam Lynx nagh beQ chaw': <code>granted</code> 'ej ghorgh choHlu' Qav. <code>null</code>: not yu'lu'pu' — Hoch Daq chaw' Hutlh rur."
-          },
-          "note": "nagh beQ chaw' neH tu'lu' Daq De'Daq. qun De', jatlh De', je ngeH De' chaw'mey — ghItlh chaw'mey pIm 'oH, Sogverse HurDaq mIw'a' Suq, 'ej API 'ang laHbe'."
+          "note": "Only the media permission exists as platform data. Case-study, testimonial and promotional-use releases are separate written releases the Programme obtains outside Sogverse, and the API cannot report them."
         },
         "enrolments": {
           "title": "De'wI'Daq puq",
@@ -1632,14 +1619,15 @@
           "params": {
             "productId": "De'wI'vam muvmoHghachmey neH.",
             "gamerId": "puqvam muvmoHghachmey neH.",
+            "familyId": "Only this family’s enrolments.",
             "status": "Dotlhvam muvmoHghachmey neH."
           },
           "fields": {
             "id": "muvmoHghach pong mI'.",
             "productGroupId": "De'wI', je ghom — puq chelbogh Daq. <code>group_id</code> <code>null</code> 'oH ra'wI' Daq chelpa'.",
-            "gamerParentId": "puq, je vav — account Daq qeng.",
+            "gamerFamilyId": "The child, and the family whose account holds the seat.",
             "status": "<code>active</code> qengbogh Daq, <code>waitlisted</code> loSbogh qorDu', <code>completed</code> De'wI' Qavpu'DI'. not chergh Daqmey nobbe'lu'.",
-            "signedUpAt": "ghorgh muv qorDu' De'wI'Daq. wanI'vam 'oH “wanI'Daq muvlu'” He'So'Daq.",
+            "signedUpAt": "When the family registered for the product: the third step of the funnel, a registration.",
             "groupJoinedAt": "ghorgh 'el Daq ghomDaj.",
             "ageAtStart": "De'wI' tagh jajDaq puq ben mI' naQ; <code>null</code> De'wI' tagh jaj Hutlh'a'.",
             "attendance": "DaH puq ghomDaq qaSpu'bogh poHmey, 'ar puq tu'lu'pu', je wa'DIch Qav poH je juSpu'bogh. <code>sessions_present</code> 1 law' puq — He'So'Daq “juSpu'” 'oH.",
@@ -1668,33 +1656,47 @@
           "intro": "mIw'a' pegh chut chaw'bogh puq De' — Robloxvad qelmeH neH, latlh pagh. muvmoghach Hoch wa' tlhegh, wovmoHbe'lu'taHvIS nobmeH pIm. Hoch yotlh 'oH chut pongbogh'e'.",
           "params": {
             "productId": "De'wI'vam tlheghmey neH.",
-            "fromTo": "veHvamDaq ghoSbogh Qu' jaj ghajbogh tlheghmey neH, veHmey je."
+            "fromTo": "Only rows whose product started within this range, inclusive."
           },
           "fields": {
             "roblox": "puq Roblox account. <code>roblox_user_id</code> <code>null</code> 'oH Sogverse pong ngu'laHbe'DI'; tlheghmeyvam yInob neH Roblox pong mob laj'a'.",
             "location": "qorDu' Daq.",
             "age": "Qu' jajDaq puq ben mI' naQ.",
-            "interventionDate": "De'wI' tagh jaj.",
-            "activity": "juSbogh De'wI': pong mI', DIvI' Hol pong, Segh, je chay' qaS. Segh je chay' qaS — cha'vam rur mIw Segh.",
+            "interventionDate": "The product’s start date, under the name the research dataset uses for it.",
+            "activity": "The product attended: its identifier, English name, type and delivery. Type and delivery together are what Lynx’s names for its ways of delivering the Programme map onto.",
             "publishedGameUrl": "De'wI'vamvaD puq chenmoHghachDaq wa'DIch roblox.com tlhegh, qoj <code>null</code> pagh ghItlhlu'DI'."
           },
-          "note": "tlheghvamDaq puq vav je pong mI' tu'be'lu'. tlhegh tlhegh'a' Sam Lynx'a'? <code>/enrolments</code>-vo' yItlhap; qel De' ghom jonlu'laHbe' — wIwIvpu'."
+          "note": "No identifier of the child or family is on this row. If Lynx needs to trace a row back, pull it from <code>/enrolments</code> instead; the research dataset is deliberately not joinable."
         },
         "stats": {
           "title": "He'So', mI'mey neH",
-          "intro": "mIw'a' vagh mI'mey — leghmeH Daq He'So' 'angchoHlaH nuv De' qengbe'taHvIS. mIw'a' naQ mI'mey; ghIq De'wI' mIwmey je mI'mey.",
+          "intro": "The five Programme KPIs as counts, so a dashboard can show the funnel without holding any personal data at all. Totals across the Programme, then the same counts per product and per campaign. A family that created its account, a child profile created, a registration, a child who attended, a game published: that is the funnel, in order.",
           "params": {
             "fromTo": "veHvamDaq chenmoHlu'bogh accountmey, muvmoHghachmey, je qaSbogh poHmey neH yItogh. Hoch poH DanejDI' yIwoDHa'."
           },
           "fields": {
-            "parentsCreated": "veH 'elbogh vav accountmey, account chenmoHlu' jaj tlha'.",
+            "familiesCreated": "Families in scope, by the parent account’s creation date.",
             "gamersCreated": "veH 'elbogh puq De'mey, De' chenmoHlu' jaj tlha'.",
             "enrolments": "mIw'a' De'wI'meyDaq qengbogh qoj Qavbogh Daqmey, loSbogh je, muv jaj tlha'.",
             "attended": "wa' poHDaq tu'lu'bogh muvmoHghachmey.",
             "gamesPublished": "wa' roblox.com tlhegh ghajbogh muvmoHghachmey.",
             "byProduct": "Hoch De'wI' muvmoHghach, juS, je chenmoHghach mI'mey.",
-            "byCampaign": "vav <code>utm_campaign</code> tlha' ghomlu'bogh account je muvmoHghach mI'mey. <code>null</code> tlhegh: mIw Hutlhbogh Hoch qorDu' — ngeH chab lajbe'bogh qorDu'pu' je."
+            "byCampaign": "The family, child and enrolment counts grouped by the family’s <code>utm_campaign</code>. The <code>null</code> row is every family whose account carries no campaign, which includes families who declined marketing cookies."
           }
+        },
+        "traffic": {
+          "title": "the landing page, by campaign",
+          "intro": "Views of the Roblox landing page, grouped by the campaign that brought them, so the top of the funnel has a number too. The counts come from Vercel Web Analytics. We copy them into our own store once a day, so the history runs from the day the copying began rather than the 30 days Vercel keeps. Aggregate only: no visitor identifiers, and no page but the landing page.",
+          "params": {
+            "fromTo": "Only days within this range, inclusive. Omit for the whole history."
+          },
+          "fields": {
+            "range": "The days the counts cover.",
+            "pageviews": "Views of the landing page in the range, whatever brought them.",
+            "byCampaign": "The views split by the three UTM values on the link. The row with three nulls is every view that carried no campaign, including a visitor who typed the address or followed an untagged link.",
+            "byDay": "One row per day: views, and how many distinct devices they came from. A device is counted once per day and identified by Vercel, not by us, so the figure is a daily order of magnitude rather than a headcount, and summing it across days counts the same device again."
+          },
+          "note": "Vercel’s script runs only for a visitor who accepted analytics on the cookie banner, and the UTM values on a family record are written only for a visitor who accepted marketing. The two gates differ, and analytics is the wider one, so <code>pageviews</code> here and <code>families_created</code> in <code>/stats</code> are not the same population: a visitor who accepted everything is in both, one who accepted analytics alone is here only, and one who rejected the banner is in neither."
         }
       },
       "errors": {
@@ -1712,8 +1714,8 @@
         "heading": "boq De'mey",
         "items": {
           "sync": "yIboqmoH — DaH yItlhobQo'. poH wIvlu'bogh tlha' Lynx Daq De'wI'mey yItlhap, 'ej Daqvetlh Daq leghmeH yIchenmoH. ram Hoch De' tlhap je rep Hoch <code>updated_since</code> tlhap — mIw wIwIvpu'.",
-          "join": "pong mI'mey yIjon; QIn Daq not yIjon. vav QIn Daq nargh, chIl, narghqa' chaw' choHtaHvIS; <code>id</code>Daj not choH.",
-          "consent": "chaw' choH 'angbogh boq poHDaq yIQu'. vav <code>marketing_consent.granted</code> <code>false</code> mojDI' — rap jaj Lynx tetlhvo' mej; puq <code>photo_consent.granted</code> <code>false</code> mojDI' — Lynx SeHbogh Hoch Dochvo' teqlu'.",
+          "join": "Join on identifiers, never on email. A family’s email can appear, disappear and reappear as consent changes; its <code>id</code> never does.",
+          "consent": "Act on consent changes on the same sync that shows them. A family whose <code>marketing_consent.granted</code> turned <code>false</code> comes off Lynx’s list that day; a child whose <code>photo_consent.granted</code> turned <code>false</code> comes out of any material Lynx controls.",
           "erasure": "chIlbogh yIteq. Hoch De' tlhapDaq Hutlhbogh De'wI' — qorDu' De' DIb tlha' teqlu'pu', 'ej mIw'a' pegh chut cha' ghom ra'.",
           "derived": "“juSpu'” je “chenmoHpu'” — toghlu'bogh, polbe'lu'bogh. Dungdaq yotlh Delmey cha'vam 'ang, Lynx mI'mey maj mI'mey je rapmeH; qech choHnISDI', naDev yIchoH wa'DIch.",
           "readOnly": "naDev pagh ghItlh. muvmoHghach, chaw', je chenmoHghach — Sogverse-Daq qorDu'pu' Gedu'pu' je ghItlh; API 'oH Qorwaghvetlh'e'."
@@ -1727,7 +1729,7 @@
           "feedback": "poH jangmey nIteb. puq jangmey ghaHvaD; chut ghomlu'pu'bogh belHom De' neH chaw' — “pIq” wIvwI' 'oH.",
           "releases": "qun De', jatlh De', je ngeH De' chaw'mey. ghItlh chaw'mey 'oH, Daq HurDaq Suqlu'.",
           "deliveryModel": "mIw Segh pong. De'wI' Segh SovtaH Sogverse, 'ej DIvI' Daq qoj nuvDaq qaS 'e' SovtaH; mIw Seghmey chenmoHmeH Lynx Qu' 'oH — cha' yotlh Dung.",
-          "analytics": "mut nav De'. mIw tlha' Roblox mut nav leghghachmey — Vercel pegh Qapbogh De'Daq tu'lu', Sogverse De' qachDaq tu'be'lu'; pa'vo' nobbe'lu'."
+          "analytics": "Traffic anywhere but the landing page, and anything about a single visitor. The analytics behind <code>/traffic</code> are privacy-first by design: a page a family reaches after signing in is theirs, and a visitor is a count, never a record."
         }
       },
       "later": {

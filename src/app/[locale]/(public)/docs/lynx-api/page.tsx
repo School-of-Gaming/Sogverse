@@ -307,100 +307,75 @@ const PRODUCTS_FIELDS = [
   { name: "created_at, updated_at", type: "timestamp" },
 ] as const;
 
-const PARENTS_PARAMS = [
+const FAMILIES_PARAMS = [
   {
     name: "marketing_consent",
     type: "granted",
-    key: "resources.parents.params.marketingConsent",
+    key: "resources.families.params.marketingConsent",
   },
   {
     name: "utm_campaign",
     type: "string",
-    key: "resources.parents.params.utmCampaign",
+    key: "resources.families.params.utmCampaign",
   },
   ...PAGING_ROWS,
 ] as const;
 
-const PARENTS_FIELDS = [
-  { name: "id", type: "uuid", key: "resources.parents.fields.id" },
+const FAMILIES_FIELDS = [
+  { name: "id", type: "uuid", key: "resources.families.fields.id" },
   {
     name: "email",
     type: "string | null",
-    key: "resources.parents.fields.email",
+    key: "resources.families.fields.email",
   },
   {
     name: "created_at",
     type: "timestamp",
-    key: "resources.parents.fields.createdAt",
+    key: "resources.families.fields.createdAt",
   },
-  { name: "locale", type: "string", key: "resources.parents.fields.locale" },
+  { name: "locale", type: "string", key: "resources.families.fields.locale" },
   {
     name: "location",
     type: "object | null",
-    key: "resources.parents.fields.location",
+    key: "resources.families.fields.location",
   },
-  { name: "utm", type: "object", key: "resources.parents.fields.utm" },
+  { name: "utm", type: "object", key: "resources.families.fields.utm" },
   {
     name: "marketing_consent",
     type: "object | null",
-    key: "resources.parents.fields.marketingConsent",
+    key: "resources.families.fields.marketingConsent",
+  },
+  { name: "gamers", type: "array", key: "resources.families.fields.gamers" },
+  {
+    name: "gamers[].id",
+    type: "uuid",
+    key: "resources.families.fields.gamersId",
   },
   {
-    name: "gamer_ids",
-    type: "array",
-    key: "resources.parents.fields.gamerIds",
+    name: "gamers[].created_at",
+    type: "timestamp",
+    key: "resources.families.fields.gamersCreatedAt",
+  },
+  {
+    name: "gamers[].age",
+    type: "integer",
+    key: "resources.families.fields.gamersAge",
+  },
+  {
+    name: "gamers[].roblox",
+    type: "object | null",
+    key: "resources.families.fields.gamersRoblox",
+  },
+  {
+    name: "gamers[].photo_consent",
+    type: "object | null",
+    key: "resources.families.fields.gamersPhotoConsent",
   },
   {
     name: "updated_at",
     type: "timestamp",
-    key: "resources.parents.fields.updatedAt",
+    key: "resources.families.fields.updatedAt",
   },
-] as const;
-
-const GAMERS_PARAMS = [
-  { name: "parent_id", type: "uuid", key: "resources.gamers.params.parentId" },
-  {
-    name: "photo_consent",
-    type: "granted",
-    key: "resources.gamers.params.photoConsent",
-  },
-  {
-    name: "roblox",
-    type: "verified",
-    key: "resources.gamers.params.roblox",
-  },
-  ...PAGING_ROWS,
-] as const;
-
-const GAMERS_FIELDS = [
-  { name: "id", type: "uuid", key: "resources.gamers.fields.id" },
-  {
-    name: "parent_id",
-    type: "uuid",
-    key: "resources.gamers.fields.parentId",
-  },
-  {
-    name: "created_at",
-    type: "timestamp",
-    key: "resources.gamers.fields.createdAt",
-  },
-  { name: "age", type: "integer", key: "resources.gamers.fields.age" },
-  {
-    name: "location",
-    type: "object | null",
-    key: "resources.gamers.fields.location",
-  },
-  {
-    name: "roblox",
-    type: "object | null",
-    key: "resources.gamers.fields.roblox",
-  },
-  {
-    name: "photo_consent",
-    type: "object | null",
-    key: "resources.gamers.fields.photoConsent",
-  },
-  { name: "updated_at", type: "timestamp" },
 ] as const;
 
 const ENROLMENTS_PARAMS = [
@@ -413,6 +388,11 @@ const ENROLMENTS_PARAMS = [
     name: "gamer_id",
     type: "uuid",
     key: "resources.enrolments.params.gamerId",
+  },
+  {
+    name: "family_id",
+    type: "uuid",
+    key: "resources.enrolments.params.familyId",
   },
   {
     name: "status",
@@ -430,9 +410,9 @@ const ENROLMENTS_FIELDS = [
     key: "resources.enrolments.fields.productGroupId",
   },
   {
-    name: "gamer_id, parent_id",
+    name: "gamer_id, family_id",
     type: "uuid",
-    key: "resources.enrolments.fields.gamerParentId",
+    key: "resources.enrolments.fields.gamerFamilyId",
   },
   {
     name: "status",
@@ -565,9 +545,9 @@ const STATS_PARAMS = [
 
 const STATS_FIELDS = [
   {
-    name: "totals.parents_created",
+    name: "totals.families_created",
     type: "integer",
-    key: "resources.stats.fields.parentsCreated",
+    key: "resources.stats.fields.familiesCreated",
   },
   {
     name: "totals.gamers_created",
@@ -601,6 +581,25 @@ const STATS_FIELDS = [
   },
 ] as const;
 
+const TRAFFIC_PARAMS = [
+  { name: "from, to", type: "date", key: "resources.traffic.params.fromTo" },
+] as const;
+
+const TRAFFIC_FIELDS = [
+  { name: "range", type: "object", key: "resources.traffic.fields.range" },
+  {
+    name: "pageviews",
+    type: "integer",
+    key: "resources.traffic.fields.pageviews",
+  },
+  {
+    name: "by_campaign",
+    type: "array",
+    key: "resources.traffic.fields.byCampaign",
+  },
+  { name: "by_day", type: "array", key: "resources.traffic.fields.byDay" },
+] as const;
+
 const ERROR_ROWS = [
   { code: "400", key: "errors.e400" },
   { code: "401", key: "errors.e401" },
@@ -612,12 +611,12 @@ const ERROR_ROWS = [
 /** The resource paths, in the order the page and its contents rail read them. */
 const RESOURCE_PATHS = {
   products: "/products",
-  parents: "/parents",
-  gamers: "/gamers",
+  families: "/families",
   enrolments: "/enrolments",
   sessions: "/sessions",
   "roblox-research": "/roblox-research",
   stats: "/stats",
+  traffic: "/traffic",
 } as const;
 
 const PRODUCTS_EXAMPLE = `{
@@ -641,7 +640,7 @@ const PRODUCTS_EXAMPLE = `{
   "updated_at": "2026-09-14T16:03:10Z"
 }`;
 
-const PARENTS_EXAMPLE = `{
+const FAMILIES_EXAMPLE = `{
   "id": "9c3e2b4a-7f11-4d0e-8b6a-1a2b3c4d5e6f",
   "email": "parent@example.com",
   "created_at": "2026-09-02T18:41:07Z",
@@ -649,18 +648,15 @@ const PARENTS_EXAMPLE = `{
   "location": { "city": "Lyon", "country_code": "FR" },
   "utm": { "source": "lynx", "medium": "email", "campaign": "lynx-autumn-a" },
   "marketing_consent": { "granted": true, "updated_at": "2026-09-02T18:43:12Z" },
-  "gamer_ids": ["b7d1c0e2-3a4f-4b5c-9d6e-7f8a9b0c1d2e"],
-  "updated_at": "2026-09-02T18:43:12Z"
-}`;
-
-const GAMERS_EXAMPLE = `{
-  "id": "b7d1c0e2-3a4f-4b5c-9d6e-7f8a9b0c1d2e",
-  "parent_id": "9c3e2b4a-7f11-4d0e-8b6a-1a2b3c4d5e6f",
-  "created_at": "2026-09-02T18:45:30Z",
-  "age": 14,
-  "location": { "city": "Lyon", "country_code": "FR" },
-  "roblox": { "username": "builder_leo", "user_id": 1234567890, "verified": true },
-  "photo_consent": { "granted": true, "updated_at": "2026-09-02T18:46:01Z" },
+  "gamers": [
+    {
+      "id": "b7d1c0e2-3a4f-4b5c-9d6e-7f8a9b0c1d2e",
+      "created_at": "2026-09-02T18:45:30Z",
+      "age": 14,
+      "roblox": { "username": "builder_leo", "user_id": 1234567890, "verified": true },
+      "photo_consent": { "granted": true, "updated_at": "2026-09-02T18:46:01Z" }
+    }
+  ],
   "updated_at": "2026-09-10T12:00:00Z"
 }`;
 
@@ -669,7 +665,7 @@ const ENROLMENTS_EXAMPLE = `{
   "product_id": "5a1f8e1c-1b0e-4a3e-9a9c-2c9a4d8f0b11",
   "group_id": "0e2b6a7e-6d2a-4f6c-b3a1-3f1f9c8e5a21",
   "gamer_id": "b7d1c0e2-3a4f-4b5c-9d6e-7f8a9b0c1d2e",
-  "parent_id": "9c3e2b4a-7f11-4d0e-8b6a-1a2b3c4d5e6f",
+  "family_id": "9c3e2b4a-7f11-4d0e-8b6a-1a2b3c4d5e6f",
   "status": "active",
   "signed_up_at": "2026-09-02T18:47:15Z",
   "group_joined_at": "2026-09-05T09:30:00Z",
@@ -720,7 +716,7 @@ const RESEARCH_EXAMPLE = `{
 const STATS_EXAMPLE = `{
   "range": { "from": null, "to": null },
   "totals": {
-    "parents_created": 412,
+    "families_created": 412,
     "gamers_created": 468,
     "enrolments": 503,
     "attended": 377,
@@ -735,8 +731,22 @@ const STATS_EXAMPLE = `{
     }
   ],
   "by_campaign": [
-    { "utm_campaign": "lynx-autumn-a", "parents_created": 88, "gamers_created": 97, "enrolments": 101 },
-    { "utm_campaign": null, "parents_created": 260, "gamers_created": 301, "enrolments": 322 }
+    { "utm_campaign": "lynx-autumn-a", "families_created": 88, "gamers_created": 97, "enrolments": 101 },
+    { "utm_campaign": null, "families_created": 260, "gamers_created": 301, "enrolments": 322 }
+  ]
+}`;
+
+const TRAFFIC_EXAMPLE = `{
+  "range": { "from": "2026-09-01", "to": "2026-09-14" },
+  "pageviews": 3184,
+  "by_campaign": [
+    { "utm_source": "lynx", "utm_medium": "email", "utm_campaign": "lynx-autumn-a", "pageviews": 1412 },
+    { "utm_source": "lynx", "utm_medium": "social", "utm_campaign": "lynx-autumn-b", "pageviews": 655 },
+    { "utm_source": null, "utm_medium": null, "utm_campaign": null, "pageviews": 1117 }
+  ],
+  "by_day": [
+    { "date": "2026-09-01", "pageviews": 212, "unique_visitors": 178 },
+    { "date": "2026-09-02", "pageviews": 240, "unique_visitors": 199 }
   ]
 }`;
 
@@ -906,28 +916,16 @@ export default function LynxApiDocsPage() {
           />
 
           <Resource
-            id="parents"
-            path={RESOURCE_PATHS.parents}
-            title={t("resources.parents.title")}
-            intro={rich("resources.parents.intro")}
+            id="families"
+            path={RESOURCE_PATHS.families}
+            title={t("resources.families.title")}
+            intro={rich("resources.families.intro")}
             labels={labels}
             exampleTitle={exampleRecord}
-            example={PARENTS_EXAMPLE}
-            params={rows(PARENTS_PARAMS)}
-            fields={rows(PARENTS_FIELDS)}
-          />
-
-          <Resource
-            id="gamers"
-            path={RESOURCE_PATHS.gamers}
-            title={t("resources.gamers.title")}
-            intro={rich("resources.gamers.intro")}
-            labels={labels}
-            exampleTitle={exampleRecord}
-            example={GAMERS_EXAMPLE}
-            params={rows(GAMERS_PARAMS)}
-            fields={rows(GAMERS_FIELDS)}
-            note={t("resources.gamers.note")}
+            example={FAMILIES_EXAMPLE}
+            params={rows(FAMILIES_PARAMS)}
+            fields={rows(FAMILIES_FIELDS)}
+            note={t("resources.families.note")}
           />
 
           <Resource
@@ -977,6 +975,19 @@ export default function LynxApiDocsPage() {
             example={STATS_EXAMPLE}
             params={rows(STATS_PARAMS)}
             fields={rows(STATS_FIELDS)}
+          />
+
+          <Resource
+            id="traffic"
+            path={RESOURCE_PATHS.traffic}
+            title={t("resources.traffic.title")}
+            intro={rich("resources.traffic.intro")}
+            labels={labels}
+            exampleTitle={t("common.exampleResponse")}
+            example={TRAFFIC_EXAMPLE}
+            params={rows(TRAFFIC_PARAMS)}
+            fields={rows(TRAFFIC_FIELDS)}
+            note={rich("resources.traffic.note")}
           />
 
           {/* Errors */}
