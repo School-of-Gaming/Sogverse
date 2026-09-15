@@ -1478,7 +1478,7 @@
       "lead": "Ett skrivskyddat API för Lynx Educates egna dashboards och rapportering om Roblox-Programmet. Det exponerar de familjer, produkter och anmälningar som hör till Programmet, de samtycken Lynx får agera på, och det individdata som Programmets integritetspolicy tillåter Lynx att lämna vidare till Roblox för effektforskning.",
       "proposal": {
         "title": "Förslag för granskning",
-        "body": "Nothing on this page is live yet. This is the shape we propose to build, written down so Lynx’s engineers can review the scope and the data before anything is implemented. Field names, filters and the exact wording of enum values may still change."
+        "body": "Inget på den här sidan är i drift ännu. Det här är den utformning vi föreslår att vi bygger, nedskriven så att ingenjörerna på Lynx kan granska omfattningen och uppgifterna innan något implementeras. Fältnamn, filter och den exakta formuleringen av enum-värden kan fortfarande ändras."
       },
       "contents": {
         "heading": "På den här sidan"
@@ -1498,13 +1498,13 @@
       "scope": {
         "heading": "Omfattning — vad API:et kan se",
         "p1": "API:et ser Programmet och inget annat. En produkt hör till Programmet när en anmälan till den kräver att man godkänner Användarvillkor för Skaparnas akademi. Kravet sätts av en administratör när produkten skapas, och varje produkt som byggts för Programmet bär det. Om produkten är listad i butiken spelar ingen roll: en olistad produkt i Programmet returneras som vilken annan som helst.",
-        "p2": "Everything else follows from that one rule. A family is in scope when one of its children holds a seat on a Programme product, has completed one, or is waiting for one, and only those children are returned with it. An enrolment is in scope when it is on a Programme product. A family’s other activity on Sogverse, such as a Minecraft club, is never returned, even for a family that is in scope.",
+        "p2": "Allt annat följer av den enda regeln. En familj omfattas när ett av dess barn har en plats på en produkt i Programmet, har slutfört en sådan eller står i kö till en, och bara de barnen returneras med familjen. En anmälan omfattas när den gäller en produkt i Programmet. En familjs övriga aktivitet i Sogverse, till exempel en Minecraft-klubb, returneras aldrig, inte heller för en familj som omfattas.",
         "p3": "API:et är skrivskyddat. Två medarbetare på Lynx har även administratörskonton i Sogverse och ser samma uppgifter i administratörsgränssnittet; API:et finns för att Lynx egna verktyg ska kunna läsa dem utan en människa i loopen. Vad uppgifterna får användas till är det som Programmets integritetspolicy beskriver: att genomföra Programmet och rapportera om det, forskningsdatat till Roblox, och den post en förälder har samtyckt till att ta emot."
       },
       "authentication": {
         "heading": "Autentisering",
         "description": "Varje förfrågan bär en statisk API-nyckel som en Bearer-token i <code>Authorization</code>-headern. Nyckeln utfärdas till Lynx av School of Gaming och är det som avgränsar svaret: en nyckel, en partner, ett Program.",
-        "keyNote": "Keep the key server-side. Contact the Sogverse team to rotate it or if it may have leaked; a rotated key stops working immediately. School of Gaming hands the key over on a channel agreed with Lynx, and issues a second key for Sogverse’s staging environment, which holds test families and products so an integration can be built and rehearsed against data that is not real. An OpenAPI description of the API accompanies the implementation."
+        "keyNote": "Håll nyckeln på serversidan. Kontakta Sogverse-teamet för att rotera den eller om den kan ha läckt; en roterad nyckel slutar fungera omedelbart. School of Gaming lämnar över nyckeln via en kanal som avtalats med Lynx, och utfärdar en andra nyckel till Sogverses stagingmiljö, som innehåller testfamiljer och testprodukter så att en integration kan byggas och övas mot data som inte är verklig. En OpenAPI-beskrivning av API:et följer med implementationen."
       },
       "conventions": {
         "heading": "Konventioner",
@@ -1512,11 +1512,11 @@
         "envelopeTitle": "Svarskuvert för listor",
         "items": {
           "formats": "Svaren är JSON. Varje tidsstämpel är ISO 8601 i UTC. Varje datum är <code>YYYY-MM-DD</code>, där en produkts datum är kalenderdagar i produktens egen tidszon medan en trafikdag är en kalenderdag i UTC. Varje identifierare är ett UUID som aldrig ändras.",
-          "pagination": "Every resource that returns records is paginated by cursor, in ascending order of <code>updated_at</code> and then of identifier, so the order is stable while a pull is in progress. Pass <code>limit</code> (default 100, maximum 500) and the <code>next_cursor</code> from the previous page as <code>cursor</code>; a <code>null</code> <code>next_cursor</code> is the last page. A cursor is opaque, belongs to the filters it was issued with, and does not expire. <code>/traffic</code> returns one aggregate and takes <code>from</code> and <code>to</code> instead; its answer for a given day and page is cached on our side for an hour.",
-          "updatedSince": "Every resource that returns records accepts <code>updated_since</code> (an ISO 8601 timestamp) and returns only records changed at or after that instant. Use it for incremental pulls; do a full pull without it at least daily. Every resource is read live at the moment of the request.",
-          "erasure": "A record that is missing from a full pull is no longer in scope, whether because the family asked for erasure, a seat was cancelled or a product left the Programme, and it leaves Lynx’s store on that same sync in every case. There is no tombstone, which is why the daily full pull is part of the contract rather than a convenience.",
-          "consent": "A consent is reported as it stands at the moment of the request, with when it last changed and no history. A withdrawn marketing consent shows up as <code>granted: false</code> with the email address gone on the next pull; from then on the parent is not mailed, and Lynx may keep the minimal suppression record the Programme’s privacy policy allows so they are not added back.",
-          "changePolicy": "Additions to this API, a new field or a new filter, ship without notice; a field removed or renamed, or a value that changes meaning, is a new version under a new path. Build against the fields you use and ignore the rest.",
+          "pagination": "Varje resurs som returnerar poster pagineras med cursor, i stigande ordning efter <code>updated_at</code> och därefter efter identifierare, så att ordningen är stabil medan en hämtning pågår. Skicka <code>limit</code> (standard 100, högst 500) och föregående sidas <code>next_cursor</code> som <code>cursor</code>; ett <code>next_cursor</code> som är <code>null</code> är sista sidan. En cursor är ogenomskinlig, hör till de filter den utfärdades med, och löper inte ut. <code>/traffic</code> returnerar ett enda aggregat och tar <code>from</code> och <code>to</code> i stället; dess svar för en viss dag och sida cachas hos oss i en timme.",
+          "updatedSince": "Varje resurs som returnerar poster tar emot <code>updated_since</code> (en ISO 8601-tidsstämpel) och returnerar bara poster som ändrats vid eller efter det ögonblicket. Använd den för inkrementella hämtningar och gör en full hämtning utan den minst en gång per dygn. Varje resurs läses live i samma stund som förfrågan görs.",
+          "erasure": "En post som saknas i en full hämtning omfattas inte längre, vare sig det beror på att familjen begärt radering, att en plats avbokats eller att en produkt lämnat Programmet, och den lämnar Lynx lager vid samma synkronisering i samtliga fall. Det finns ingen raderingsmarkering, och det är därför den dagliga fulla hämtningen är en del av överenskommelsen snarare än en bekvämlighet.",
+          "consent": "Ett samtycke rapporteras som det står i samma stund som förfrågan görs, med uppgift om när det senast ändrades och utan historik. Ett återkallat marknadsföringssamtycke visas som <code>granted: false</code> med e-postadressen borta vid nästa hämtning; därefter får föräldern ingen post, och Lynx får behålla den minimala spärrnotering som Programmets integritetspolicy tillåter, så att föräldern inte läggs tillbaka.",
+          "changePolicy": "Tillägg till det här API:et, ett nytt fält eller ett nytt filter, släpps utan förvarning; ett fält som tas bort eller byter namn, eller ett värde som ändrar innebörd, blir en ny version under en ny sökväg. Bygg mot de fält ni använder och strunta i resten.",
           "errors": "Fel har en enda form:"
         }
       },
@@ -1532,7 +1532,7 @@
             "name": "Produktens namn på varje språk det har skrivits på, med språkkoden som nyckel. Minst ett finns alltid med; vilka beror på produkten.",
             "type": "Vilken sorts produkt det är. En klubb går varje vecka utan fast slut; ett läger och ett evenemang går över bestämda datum.",
             "delivery": "Hur den levereras. Lynx egna namn på sina sätt att genomföra Programmet lagras ingenstans; <code>type</code> och <code>delivery</code> är tillsammans de två fakta som de namnen avbildas på.",
-            "location": "The municipality and the two-letter country code of the site the product runs at. An in-person product has one unless its site has no municipality above it; an online product has one only when it is a municipality club attached to a site; <code>null</code> otherwise.",
+            "location": "Kommunen och den tvåbokstaviga landskoden för den plats produkten körs på. En fysisk produkt har en, om inte dess plats saknar kommun ovanför sig; en onlineprodukt har en bara när den är en kommunal klubb knuten till en plats; <code>null</code> i övriga fall.",
             "status": "<code>pending</code> tills den har börjat, <code>running</code> från startdatumet när en eventuell anmälningströskel är uppnådd, <code>completed</code> när den har genomförts och slutdatumet har passerat, och <code>expired</code> när slutdatumet passerade utan att den någonsin startade. Värdet härleds vid läsningen ur datumen, tröskeln och det aktuella antalet anmälningar; inget lagras, så värdet är aldrig inaktuellt.",
             "dates": "När den pågår. En konsumentklubb har inget slutdatum; alla andra produkter har det.",
             "timezone": "Den IANA-tidszon som produktens datum och sessioner är schemalagda i.",
@@ -1581,15 +1581,15 @@
             "gamerFamilyId": "Barnet, och familjen vars konto håller platsen.",
             "status": "<code>active</code> för en innehavd plats, <code>waitlisted</code> för en familj som står i kö, <code>completed</code> när produkten är avslutad.",
             "signedUpAt": "När familjen anmälde sig till produkten: trattens tredje steg, en anmälan.",
-            "consents": "The parent’s acceptance of the Creator Academy Terms & Conditions and of the Creator Academy Privacy Policy for this enrolment: the version of each document, as the date it was published, and when it was accepted. Every Programme product requires both, so every enrolment carries both.",
-            "attendance": "How many sessions of the child’s group have a record, and how many of those the child was marked present at. A session is recorded when a Game Educator writes it up or marks attendance, so a session nobody wrote up is not counted; the count is the group’s, and includes sessions before the child joined it. Both are 0 while the seat has not been placed in a group. A child with <code>sessions_present</code> of at least 1 counts as “attended” in the funnel.",
+            "consents": "Förälderns godkännande av Användarvillkor för Skaparnas akademi och av Integritetspolicy för Skaparnas akademi för den här anmälan: versionen av varje dokument, angiven som datumet det publicerades, och när det godkändes. Varje produkt i Programmet kräver båda, så varje anmälan bär båda.",
+            "attendance": "Hur många av sessionerna i barnets grupp som har en anteckning, och vid hur många av dem barnet markerats närvarande. En session antecknas när en spelfostrare skriver ihop den eller markerar närvaro, så en session som ingen skrev ihop räknas inte; antalet är gruppens och omfattar även sessioner före barnet kom med i den. Båda är 0 så länge platsen inte har placerats i en grupp. Ett barn med <code>sessions_present</code> på minst 1 räknas som ”deltagit” i tratten.",
             "creations": "Vad barnet publicerade under den här produkten, så som barnets spelfostrare antecknat det i barnets nuvarande grupp: en titel och en länk per objekt, i visningsordning. <code>is_roblox_url</code> är <code>true</code> när länken pekar på roblox.com. En tom array betyder att inget är antecknat ännu.",
             "creationsUpdatedAt": "När listan över skapelser senast skrevs. Enskilda objekt bär ingen egen tidsstämpel."
           }
         },
         "sessions": {
           "title": "vad som hände i varje grupp",
-          "intro": "Every session a Programme group has recorded, with the attendance marks and the photographs the Game Educator attached to its report. A session has a record once a Game Educator writes it up or marks attendance, so a scheduled session that has not happened yet is not here. Use it for per-session views such as a drop-off curve; the per-child totals are already on the enrolment.",
+          "intro": "Varje session en grupp i Programmet har antecknat, med närvaromarkeringarna och de fotografier spelfostraren bifogade rapporten. En session har en anteckning så snart en spelfostrare skriver ihop den eller markerar närvaro, så en schemalagd session som ännu inte ägt rum finns inte här. Använd den för vyer per session, som en avhoppskurva; totalerna per barn finns redan på anmälan.",
           "params": {
             "productId": "Bara sessioner i den här produktens grupper.",
             "groupId": "Bara den här gruppens sessioner.",
@@ -1600,14 +1600,14 @@
             "productGroupId": "Produkten och gruppen som sessionen hör till.",
             "times": "Sessionens schemalagda fönster.",
             "attendance": "En post per barn som spelfostraren markerat, <code>present</code> eller <code>absent</code>. Ett barn som ännu inte markerats finns inte med.",
-            "images": "The photographs the Game Educator attached to the session report, in the order they were added: mostly in-game screenshots, sometimes a photograph of the room. Each is a public URL that needs no credential, and the same URL every family in the group already sees in the report. A photograph belongs to the session, not to a child: Sogverse does not record which children an image shows, so the API cannot tie an image to a media permission. A child is photographed only where the permission stands, and when a parent withdraws it School of Gaming removes any photograph showing the child, after which its URL stops resolving.",
-            "imagesUrl": "Link to it rather than copying the file, so a removal on our side is a removal on yours; a pull that finds a URL no longer resolving should drop it. The URL is safe to use inside Lynx’s own tools and reports. Its object name is an unguessable identifier and that name is the whole of its access control, so the one thing not to do is publish the URL on a page anyone can list.",
+            "images": "De fotografier spelfostraren bifogade sessionsrapporten, i den ordning de lades till: mestadels skärmbilder från spelet, ibland ett fotografi av rummet. Var och en är en publik URL som inte kräver någon behörighet, och samma URL som varje familj i gruppen redan ser i rapporten. Ett fotografi hör till sessionen, inte till ett barn: Sogverse antecknar inte vilka barn en bild visar, så API:et kan inte knyta en bild till ett mediatillstånd. Ett barn fotograferas bara där tillståndet gäller, och när en förälder återkallar det tar School of Gaming bort varje fotografi som visar barnet, varefter dess URL slutar fungera.",
+            "imagesUrl": "Länka till den i stället för att kopiera filen, så att en borttagning hos oss blir en borttagning hos er; en hämtning som hittar en URL som inte längre fungerar bör släppa den. URL:en är trygg att använda i Lynx egna verktyg och rapporter. Objektets namn är en ogissbar identifierare och det namnet är hela dess åtkomstkontroll, så det enda man inte ska göra är att publicera URL:en på en sida som vem som helst kan lista.",
             "imagesSize": "Bildens storlek i pixlar."
           }
         },
         "feedback": {
           "title": "vad ett barn sa på vägen ut",
-          "intro": "What one child answered at the end of one session: five statements rated on a five-point bar, an optional note in their own words, and how they left. Today feedback is collected after online sessions only. A child who answers nothing leaves no row, so the response rate is this list against the online sessions in <code>/sessions</code>; one row is one child at one session, so a percentage over rows counts a child once per session they answered.",
+          "intro": "Vad ett barn svarade i slutet av en session: fem påståenden graderade på en femgradig stapel, en frivillig kommentar med barnets egna ord, och hur barnet lämnade. I dag samlas feedback bara in efter sessioner online. Ett barn som inte svarar något lämnar ingen rad, så svarsfrekvensen är den här listan ställd mot onlinesessionerna i <code>/sessions</code>; en rad är ett barn vid en session, så en procentsats över rader räknar ett barn en gång per session det svarade om.",
           "params": {
             "productId": "Bara feedback från den här produktens grupper.",
             "groupId": "Bara den här gruppens feedback.",
@@ -1615,7 +1615,7 @@
             "fromTo": "Bara sessioner som öppnades inom det här datumintervallet, gränserna inräknade."
           },
           "fields": {
-            "gamerGroupProductId": "Who answered, and the group and product the session belonged to. A record has no identifier of its own: <code>gamer_id</code>, <code>group_id</code> and <code>session_opened_at</code> together are its key, and a later answer from the same child about the same session replaces the earlier one under that key.",
+            "gamerGroupProductId": "Vem som svarade, och gruppen och produkten sessionen hörde till. En post har ingen egen identifierare: <code>gamer_id</code>, <code>group_id</code> och <code>session_opened_at</code> utgör tillsammans dess nyckel, och ett senare svar från samma barn om samma session ersätter det tidigare under den nyckeln.",
             "sessionId": "Den session i <code>/sessions</code> som svaret hör till, matchad på grupp och datum; <code>null</code> om ingen sessionsrad skrevs för den dagen.",
             "sessionOpenedAt": "När sessionen barnet svarade om öppnades.",
             "answers": "Barnets gradering av varje påstående, med påståendets stabila identifierare som nyckel; ett påstående barnet hoppade över saknas. Graderingarna går från 1 till 5: nej, inte riktigt, lite, ja, absolut. De påståenden som ställs i dag är <code>learned</code> (jag lärde mig något), <code>fun</code> (jag hade roligt), <code>geduKnowledgeable</code> (Gedun visste vad hen gjorde), <code>geduKind</code> (Gedun var snäll) och <code>groupListens</code> (gruppen lyssnar på varandra). Ett påstående kan läggas till eller tas bort utan förvarning, så läs de nycklar du känner till och strunta i resten.",
@@ -1635,18 +1635,18 @@
             "roblox": "Barnets Roblox-konto. <code>roblox_user_id</code> är <code>null</code> när Sogverse inte kunde verifiera användarnamnet; skicka bara vidare sådana rader om Roblox accepterar enbart ett användarnamn.",
             "location": "Familjens hemkommun och land.",
             "age": "Barnets ålder i hela år på aktivitetens startdatum, som ett intervall: Sogverse har födelsemånaden och inte dagen, så <code>min</code> är det yngsta barnet kunde ha varit och <code>max</code> det äldsta, och de två är samma tal om inte startdatumet föll inom barnets födelsemånad. <code>null</code> så länge produkten saknar startdatum. Raden bär åldern i stället för födelsemånaden eftersom det är åldern forskningsdatamängden nämner.",
-            "activity": "The activity attended: the product’s identifier, its name in English where one has been written and otherwise in the product’s first language, its type, delivery and start date. Type and delivery together are what Lynx’s names for its ways of delivering the Programme map onto, and the start date is the intervention date the research asks for.",
+            "activity": "Aktiviteten som deltogs i: produktens identifierare, dess namn på engelska där ett sådant har skrivits och annars på produktens första språk, samt dess typ, leverans och startdatum. Typ och leverans är tillsammans det som Lynx egna namn på sina sätt att genomföra Programmet avbildas på, och startdatumet är det interventionsdatum forskningen efterfrågar.",
             "publishedGameUrl": "Den första roblox.com-länken bland barnets skapelser för den här produkten, eller <code>null</code> när ingen har antecknats."
           },
-          "note": "No Sogverse identifier is on this row, so the dataset can be forwarded as it is. The Roblox account is on the family record too, so Lynx can trace a row back to a family when it has to: when a family leaves a full pull, delete its rows here as well, and where a row has already been forwarded to Roblox, pass the request on under the Roblox data processing addendum, as the Programme’s privacy policy provides."
+          "note": "Ingen Sogverse-identifierare finns på den här raden, så datamängden kan vidarebefordras som den är. Roblox-kontot finns även på familjeposten, så Lynx kan spåra en rad tillbaka till en familj när det behövs: när en familj lämnar en full hämtning, radera dess rader även här, och där en rad redan har vidarebefordrats till Roblox, för begäran vidare enligt Roblox databehandlingsbilaga, så som Programmets integritetspolicy föreskriver."
         },
         "traffic": {
           "title": "sidorna en kampanj landar på, per kampanj",
-          "intro": "Views of the pages a Lynx campaign can land on, grouped by the campaign that brought them, so the top of the funnel has a number too: the Roblox landing page, the shop, and each Programme product’s own page. The counts are read from Vercel Web Analytics at the moment of the request and reach back as far as Vercel keeps, which today is two years, from the end of May 2026 when analytics was switched on. Aggregate only: no visitor identifiers, and no page beyond those three kinds. A page’s views count every language it is served in as one page, and the current day is partial until it ends.",
+          "intro": "Visningar av de sidor en Lynx-kampanj kan landa på, grupperade efter kampanjen som förde dem dit, så att även trattens överkant får en siffra: Roblox-landningssidan, butiken, och den egna sidan för varje produkt i Programmet. Antalen läses från Vercel Web Analytics i samma stund som förfrågan görs och sträcker sig så långt tillbaka som Vercel sparar dem, vilket i dag är två år, från slutet av maj 2026 när analysen slogs på. Bara aggregerat: inga besökaridentifierare, och ingen sida utöver de tre slagen. En sidas visningar räknar varje språk den serveras på som en och samma sida, och den innevarande dagen är ofullständig tills den är slut.",
           "params": {
             "page": "Bara sidor av det här slaget. Utelämna för alla tre.",
             "productId": "Bara den här produktens sida. Innebär <code>page=product</code>.",
-            "fromTo": "Only days within this range, inclusive. Omit for the last 30 days."
+            "fromTo": "Bara dagar inom det här intervallet, gränserna inräknade. Utelämna för de senaste 30 dagarna."
           },
           "fields": {
             "range": "De dagar antalen täcker.",
@@ -1654,9 +1654,9 @@
             "pagesPage": "Vilket slags sida det är. Butikssidan delas med allt School of Gaming säljer, så dess visningar gäller inte bara Programmet; en produktsidas visningar gör det.",
             "pagesProductId": "Produkten vars sida det är; <code>null</code> för landningssidan och butiken.",
             "pagesPageviews": "Visningar av sidan i intervallet, oavsett vad som förde dem dit.",
-            "pagesByCampaign": "The views split by the <code>utm_campaign</code> on the link. The <code>null</code> row is every view that carried none, including a visitor who typed the address or followed an untagged link.",
-            "pagesBySourceMedium": "The same views split by <code>utm_source</code> and <code>utm_medium</code> together, for reading paid, social and email traffic apart. The two splits are of the same views and each sums to <code>pageviews</code>; they are not a cross-tab of one another.",
-            "pagesByDay": "The views per calendar day, in UTC, for a time series."
+            "pagesByCampaign": "Visningarna uppdelade efter <code>utm_campaign</code> på länken. Raden <code>null</code> är varje visning som inte bar någon, inklusive en besökare som skrev in adressen eller följde en omärkt länk.",
+            "pagesBySourceMedium": "Samma visningar uppdelade efter <code>utm_source</code> och <code>utm_medium</code> tillsammans, för att kunna läsa betald trafik, social trafik och e-posttrafik var för sig. De två uppdelningarna gäller samma visningar och var och en summerar till <code>pageviews</code>; de är inte en korstabell av varandra.",
+            "pagesByDay": "Visningarna per kalenderdag, i UTC, för en tidsserie."
           },
           "note": "Vercels skript körs bara för en besökare som accepterat analys i cookiebannern, och UTM-värdena på en familjepost skrivs bara för en besökare som accepterat marknadsföring. De två villkoren skiljer sig åt, och analysvillkoret är det bredare, så en visning som räknas här och en familj i <code>/families</code> är inte samma population: en besökare som accepterat allt finns i båda, en som bara accepterat analys finns bara här, och en som avvisat bannern finns i ingendera."
         }
@@ -1666,7 +1666,7 @@
         "e400": "En frågeparameter är felformad: ett trasigt UUID, ett datum som inte är <code>YYYY-MM-DD</code>, ett <code>limit</code> över 500, ett okänt enum-värde, eller en <code>cursor</code> från en annan endpoint.",
         "e401": "Saknad, felformad eller återkallad API-nyckel.",
         "e404": "Sökvägen är ingen av resurserna ovan.",
-        "e429": "Too many requests: the limit is 60 requests a minute per key. Wait for the number of seconds in <code>Retry-After</code> and try again; a nightly full pull and incremental pulls every fifteen minutes stay well inside it.",
+        "e429": "För många förfrågningar: gränsen är 60 förfrågningar per minut och nyckel. Vänta det antal sekunder som står i <code>Retry-After</code> och försök igen; en nattlig full hämtning och inkrementella hämtningar var femtonde minut håller sig med god marginal under den.",
         "e500": "Något gick fel hos oss. Försök igen med fördröjning; hör av dig om det håller i sig."
       },
       "example": {
@@ -1675,18 +1675,18 @@
       "integrationNotes": {
         "heading": "Integrationsanteckningar",
         "items": {
-          "sync": "The shape this is built for is a sync, not a live query: each resource pulled into Lynx’s own store on a schedule, and the dashboard built on that store. A nightly full pull plus <code>updated_since</code> pulls as often as every fifteen minutes is what the limits are sized for.",
-          "join": "Identifiers are the join keys. A family’s email can appear, disappear and reappear as consent changes; its <code>id</code> never does.",
-          "consent": "Consent changes and disappearances are meant to be acted on in the same sync that shows them: a family whose <code>marketing_consent.granted</code> turned <code>false</code> stops being mailed that day, and a record that has left a full pull leaves Lynx’s store that day. The Programme’s privacy policy commits both organisations to that, and the daily full pull is what makes it possible.",
+          "sync": "Det här är byggt för en synkronisering, inte en live-fråga: varje resurs hämtas till Lynx eget lager enligt schema, och dashboarden byggs på det lagret. Gränserna är dimensionerade för en nattlig full hämtning plus <code>updated_since</code>-hämtningar så ofta som var femtonde minut.",
+          "join": "Identifierarna är nycklarna att koppla på. En familjs e-postadress kan dyka upp, försvinna och dyka upp igen när samtycket ändras; dess <code>id</code> gör det aldrig.",
+          "consent": "Samtyckesändringar och försvinnanden är tänkta att hanteras vid samma synkronisering som visar dem: en familj vars <code>marketing_consent.granted</code> blev <code>false</code> slutar få post samma dag, och en post som lämnat en full hämtning lämnar Lynx lager samma dag. Programmets integritetspolicy förbinder båda organisationerna till det, och den dagliga fulla hämtningen är det som gör det möjligt.",
           "derived": "”Deltagit” och ”publicerat” är härledda, inte lagrade. Båda definieras i fältbeskrivningarna ovan så att Lynx siffror och våra stämmer; om definitionen behöver ändras, ändra den här först.",
           "readOnly": "Inget här skriver. Anmälan, samtycke och skapelser antecknas i Sogverse av familjer och spelfostrare; API:et är ett fönster mot dem."
         }
       },
       "notIncluded": {
-        "heading": "What the API does not carry",
-        "intro": "Things Sogverse holds, or is asked about, that this proposal leaves out. If one of them turns out to matter to Lynx, say so and we will talk about it.",
+        "heading": "Vad API:et inte bär",
+        "intro": "Sådant som Sogverse håller, eller får frågor om, och som det här förslaget lämnar utanför. Om något av det visar sig spela roll för Lynx, säg till så pratar vi om det.",
         "items": {
-          "childIdentity": "Children’s surnames, birth days and gender, and parents’ phone numbers. The Programme’s privacy policy promises a birth month rather than a birth date, and the rest is not something the dashboards or the Roblox report use.",
+          "childIdentity": "Barnens efternamn, födelsedagar och kön, och föräldrarnas telefonnummer. Programmets integritetspolicy utlovar en födelsemånad snarare än ett födelsedatum, och resten är inget som dashboarderna eller Roblox-rapporten använder.",
           "releases": "Medgivanden för fallstudier och omdömen. Det enda mediatillstånd Sogverse håller täcker redan att Lynx Educate, School of Gaming och Roblox använder ett fotografi offentligt; ett barns fullständiga namn, en fallstudie, ett citat eller innehåll kopplat till barnet kräver ett separat skriftligt medgivande som hämtas in utanför plattformen.",
           "deliveryModel": "En etikett för leveransmodell. Sogverse håller en produkts typ och om den är online eller på plats; en modelltaxonomi är Lynx sak att lägga över de två fälten.",
           "analytics": "Trafik på någon annan sida än landningssidan, butiken och Programmets produktsidor, och allt som rör en enskild besökare. Analysen bakom <code>/traffic</code> är integritetsvänlig från grunden: en sida som en familj når efter inloggning tillhör familjen, och en besökare är ett antal, aldrig en post."
