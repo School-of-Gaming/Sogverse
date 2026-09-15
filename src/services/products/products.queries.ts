@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.keys";
+import { municipalityInvoicingKeys } from "@/services/municipality-invoicing/municipality-invoicing.keys";
 import type { ProductType, ProductBrowseRow } from "@/types";
 import {
   ProductsService,
@@ -105,6 +106,9 @@ export function useCreateProduct() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
       queryClient.invalidateQueries({ queryKey: adminDashboardKeys.all });
+      // A municipality club's fee, customer, term and schedule are all read by
+      // the invoicing ledger, so a cached month is stale the moment one is saved.
+      queryClient.invalidateQueries({ queryKey: municipalityInvoicingKeys.all });
     },
   });
 }
@@ -121,6 +125,7 @@ export function useUpdateProduct(id: string) {
       queryClient.invalidateQueries({ queryKey: productKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: productKeys.adminDetail(id) });
       queryClient.invalidateQueries({ queryKey: adminDashboardKeys.all });
+      queryClient.invalidateQueries({ queryKey: municipalityInvoicingKeys.all });
     },
   });
 }
