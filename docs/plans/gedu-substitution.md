@@ -148,9 +148,12 @@ route's body changes but its posture does not.
   render on no feed, and the admin queue must tolerate a date the schedule no longer
   projects (it orders by date, never by a derived instant).
 - The `gedus_read_assigned_groups` RLS policy is evaluated as the querying role, so a
-  policy that *calls* the cover predicate would force a grant to `authenticated` plus
-  spine classification. The cover `EXISTS` is inlined in the policy, as the assignment
-  half already is, and the predicate stays internal.
+  policy that *calls* the cover predicate forces a grant to `authenticated` plus spine
+  classification. **Step 1 found that inlining the `EXISTS` costs MORE, not less, and
+  the policy calls the predicate instead** — see "Notes from Step 1" below. The
+  assignment half is inlined only because `gedu_group_assignments` already carries a
+  SELECT grant and a gedu-reads-own-rows policy; `session_cover_requests` carries
+  neither and must not.
 - The gedu certification column's comment says it gates exactly two things. It now also
   gates offering and holding a cover; update the comment.
 - The assignment-summaries RPC's comment warns its owed-work logic has a TypeScript twin
@@ -383,7 +386,12 @@ are listed.
 ## Steps
 
 1. Migration + types regeneration + DB tests. Push, regenerate, add aliases in
-   `src/types/index.ts`.
+   `src/types/index.ts`. **Done** — see "Notes from Step 1". Three migrations, not one:
+   `00260_a_session_cover_is_a_request_somebody_answered.sql` (everything),
+   `00261_the_db_suite_can_read_a_policy_expression.sql` (the catalog helper the
+   completeness check needs) and
+   `00262_an_optional_reason_is_an_optional_parameter.sql` (trailing DEFAULTs on the two
+   reason parameters). All three are applied to staging and recorded in its history.
 2. Service, contracts, derivation helper and its unit tests; the voice token route.
 3. Gedu surfaces. 4. Admin surfaces. (3 and 4 in parallel; disjoint files.)
 5. Copy in five locales; docs; delete this plan.
@@ -414,6 +422,89 @@ are listed.
 - A retention rule for `reason` / `reason_note`: a `sick` category is health-related
   data about a contractor. The Discord tickets carry the same today; nothing new is
   disclosed, but no rule exists for either.
+
+## Notes from Step 1 (the database), for Steps 2–5
+
+Deviations and decisions the later steps have to know about. Everything not listed here
+was built as the plan and the cold-read answers say.
+
+**Three migrations, and how they were pushed.** `00259` was claimed on staging by
+`feat/fennoa-finvoice-export` between authoring and push, so this work is `00260`, and
+`db push` refuses outright while remote history holds a version with no local file — the
+documented pathway was used instead (`psql -f` per file, then `migration repair --status
+applied`). `00261` adds `_list_policy_expressions()`, the catalog helper the DB suite
+needs to read policy text at all — without it the completeness check's policy half could
+only live inside `00260`'s own one-shot assertion block, which is the wrong home for a
+check that has to fail on CI's from-scratch build. `00262` gives `p_reason` and
+`p_reason_note` trailing `DEFAULT NULL` on both writers: the type generator never types
+an RPC argument as nullable, so with no default a caller with nothing to send could
+neither pass `null` nor omit the parameter. **The service omits them rather than passing
+null.**
+
+**`gedu_covers_group` is granted to `authenticated` and the policy CALLS it.** Inlining
+the `EXISTS` cannot work: a policy expression reads its tables AS THE QUERYING ROLE, so
+an inlined read of `session_cover_requests` would need both a table SELECT grant and a
+read policy on that table — strictly more Data API surface than one boolean, and the
+opposite of the intent behind keeping the table ungranted. The three sibling policies on
+`product_groups` already compose a granted `SECURITY DEFINER` predicate for exactly this
+reason. It is classified self-scoping in the spine with a scope test. The other three
+cover predicates stay internal, and both new tables grant `authenticated` nothing.
+
+**`claim_group_session_report_email` stopped calling `gedu_teaches_group`.** That
+predicate now admits a cover on any of the group's dates, and the mail is at-most-once,
+so the claim spells the assignment half out inline and adds `gedu_covers_session` for the
+claimed date. **`gedu_teaches_gamer` needed no edit at all** — it composes
+`gedu_teaches_group`, which is the whole reason it was written that way.
+
+**The family feed is not widened, and carries no `role`.** "Every read that lists a
+group's gedus carries the role" was applied to the staff reads only. The family document
+is the app's one `.strict()` client schema, so a widened member would fail the old app's
+parse rather than be stripped by it, and a family learns nothing from a pay class. It is
+annotated assignment-only in the completeness check with that reason.
+
+**The `covers` element's admin fields are keyed to the CALLER, not to the RPC.**
+`get_gedu_group_feed` is served to an admin too (the admin group details page renders the
+gedu workspace's body), so `reason`/`reason_note` ride when `is_admin()` and are emitted
+as JSON `null` otherwise. `offer_count` rides for an admin and for the requester
+themselves, `null` for anyone else. Keys are always present — the document keeps ONE
+shape, so a zod schema never branches on which keys arrived.
+
+**Field names for the zod schemas.** The one request document
+(`public.cover_request_document`) every write returns and both feeds' `covers` element is
+built from: `id`, `group_id`, `session_date`, `role`, `status`, `created_at`,
+`requested_by`, `requested_by_first_name`, `covered_by`, `covered_by_first_name`,
+`approved_at`, `is_requester`, `offer_count`, `reason`, `reason_note`.
+`get_open_cover_requests` rows: `request_id`, `group_id`, `group_name`, `session_date`,
+`role`, `fee_cents`, `has_offered`, `product{id, product_type, topic,
+spoken_language_code, timezone, is_remote, start_date, end_date, site_name, translations[],
+schedule_slots[]}`. The admin dashboard's `cover_requests` rows: `id`, `group_id`,
+`group_name`, `session_date`, `role`, `reason`, `reason_note`, `created_at`,
+`requested_by`, `requested_by_first_name`, `requested_by_last_name`, `product{id,
+product_type, timezone, is_remote, translations[]}`, `offers[]{id, gedu_id, first_name,
+last_name, certified, criminal_record_check_at, created_at}`. Both staff feeds also gain
+`gedus[]{id, first_name, role}` — the admin product-session document per group, the gedu
+feed at the root — which is the staffing helper's other input.
+
+**Two internal helpers exist beyond the four predicates**, and neither is granted to
+`authenticated`: `cover_request_document(row, include_reason, viewer)` so the wire shape
+has one definition, and `cascade_withdraw_orphaned_cover_requests(group, date)`, the
+fixpoint sweep the three unseating admin writes call.
+
+**Still open for Step 2.** The voice token route's TypeScript gedu branch is not widened
+yet, and the unit test enumerating `gedu_group_assignments` under `src/` therefore does
+not exist yet — write both together, or the test fails on the route it exists to police.
+The TypeScript owed-work twin has not learned the new rule either (SQL side: a date the
+viewer holds a non-withdrawn request on is not owed by them). `get_my_assigned_products`
+now returns cover rows, and `AssignmentsService` passes them through unfiltered — so the
+gedu dashboard renders a cover as an ordinary assignment card until Step 3 gives it its
+own.
+
+**One consequence of shared staging to clean up at merge.** Types were regenerated
+against staging, which already carries `feat/fennoa-finvoice-export`'s `00259`, so
+`database.types.ts` on this branch also describes `invoice_customers`,
+`products.invoice_customer_id` and the two invoice-customer RPCs. Four product fixtures
+gained a one-line `invoice_customer_id: null` to keep `tsc` green; that other branch adds
+the same line to the same four files. Regenerating after both land on `dev` settles it.
 
 ## Answers from the cold-read (settled; the implementer does not re-decide these)
 

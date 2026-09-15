@@ -910,18 +910,21 @@ export type Database = {
           gedu_id: string
           group_id: string
           product_id: string
+          role: Database["public"]["Enums"]["gedu_assignment_role"]
         }
         Insert: {
           created_at?: string
           gedu_id: string
           group_id: string
           product_id: string
+          role?: Database["public"]["Enums"]["gedu_assignment_role"]
         }
         Update: {
           created_at?: string
           gedu_id?: string
           group_id?: string
           product_id?: string
+          role?: Database["public"]["Enums"]["gedu_assignment_role"]
         }
         Relationships: [
           {
@@ -1213,6 +1216,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      invoice_customers: {
+        Row: {
+          city: string
+          country_code: string
+          created_at: string
+          fennoa_customer_no: string
+          id: string
+          invoice_name: string
+          invoice_text: string | null
+          postal_code: string
+          street: string
+          updated_at: string
+          your_reference: string | null
+        }
+        Insert: {
+          city: string
+          country_code?: string
+          created_at?: string
+          fennoa_customer_no: string
+          id?: string
+          invoice_name: string
+          invoice_text?: string | null
+          postal_code: string
+          street: string
+          updated_at?: string
+          your_reference?: string | null
+        }
+        Update: {
+          city?: string
+          country_code?: string
+          created_at?: string
+          fennoa_customer_no?: string
+          id?: string
+          invoice_name?: string
+          invoice_text?: string | null
+          postal_code?: string
+          street?: string
+          updated_at?: string
+          your_reference?: string | null
+        }
+        Relationships: []
       }
       locations: {
         Row: {
@@ -1918,6 +1963,7 @@ export type Database = {
           id: string
           image_id: string | null
           image_path: string | null
+          invoice_customer_id: string | null
           is_remote: boolean
           is_visible: boolean
           location_id: string | null
@@ -1950,6 +1996,7 @@ export type Database = {
           id?: string
           image_id?: string | null
           image_path?: string | null
+          invoice_customer_id?: string | null
           is_remote: boolean
           is_visible?: boolean
           location_id?: string | null
@@ -1982,6 +2029,7 @@ export type Database = {
           id?: string
           image_id?: string | null
           image_path?: string | null
+          invoice_customer_id?: string | null
           is_remote?: boolean
           is_visible?: boolean
           location_id?: string | null
@@ -2023,6 +2071,13 @@ export type Database = {
             columns: ["image_id"]
             isOneToOne: false
             referencedRelation: "product_images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_invoice_customer_id_fkey"
+            columns: ["invoice_customer_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_customers"
             referencedColumns: ["id"]
           },
           {
@@ -2229,6 +2284,147 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "group_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_cover_offers: {
+        Row: {
+          created_at: string
+          gedu_id: string
+          id: string
+          request_id: string
+        }
+        Insert: {
+          created_at?: string
+          gedu_id: string
+          id?: string
+          request_id: string
+        }
+        Update: {
+          created_at?: string
+          gedu_id?: string
+          id?: string
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_cover_offers_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_cover_offers_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_cover_offers_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "session_cover_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_cover_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          covered_by: string | null
+          created_at: string
+          group_id: string
+          id: string
+          reason: Database["public"]["Enums"]["cover_reason"] | null
+          reason_note: string | null
+          requested_by: string
+          role: Database["public"]["Enums"]["gedu_assignment_role"]
+          session_date: string
+          status: Database["public"]["Enums"]["cover_request_status"]
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          covered_by?: string | null
+          created_at?: string
+          group_id: string
+          id?: string
+          reason?: Database["public"]["Enums"]["cover_reason"] | null
+          reason_note?: string | null
+          requested_by: string
+          role: Database["public"]["Enums"]["gedu_assignment_role"]
+          session_date: string
+          status?: Database["public"]["Enums"]["cover_request_status"]
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          covered_by?: string | null
+          created_at?: string
+          group_id?: string
+          id?: string
+          reason?: Database["public"]["Enums"]["cover_reason"] | null
+          reason_note?: string | null
+          requested_by?: string
+          role?: Database["public"]["Enums"]["gedu_assignment_role"]
+          session_date?: string
+          status?: Database["public"]["Enums"]["cover_request_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_cover_requests_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_cover_requests_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_cover_requests_covered_by_fkey"
+            columns: ["covered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_cover_requests_covered_by_fkey"
+            columns: ["covered_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_cover_requests_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_cover_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_cover_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
             referencedColumns: ["id"]
           },
         ]
@@ -2646,6 +2842,14 @@ export type Database = {
           is_strict: boolean
         }[]
       }
+      _list_policy_expressions: {
+        Args: never
+        Returns: {
+          expression: string
+          policy_name: string
+          table_name: string
+        }[]
+      }
       _list_replicated_tables: {
         Args: never
         Returns: {
@@ -2738,6 +2942,10 @@ export type Database = {
         }
         Returns: Json
       }
+      approve_session_cover_offer: {
+        Args: { p_offer_id: string }
+        Returns: Json
+      }
       assert_admin: { Args: never; Returns: undefined }
       assert_can_delete_session_image: {
         Args: { p_image_id: string }
@@ -2752,6 +2960,10 @@ export type Database = {
       cancel_participation: {
         Args: { p_participation_id: string; p_reason: string }
         Returns: Json
+      }
+      cascade_withdraw_orphaned_cover_requests: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: undefined
       }
       chat_body_mentions_are_roster: {
         Args: { p_body: string; p_channel_id: string }
@@ -2773,6 +2985,7 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: Json
       }
+      clear_session_cover: { Args: { p_request_id: string }; Returns: Json }
       confirm_paid_participation: {
         Args: {
           p_checkout_session_id: string
@@ -2783,6 +2996,14 @@ export type Database = {
         Returns: Json
       }
       count_active_seats: { Args: { p_product_id: string }; Returns: number }
+      cover_request_document: {
+        Args: {
+          p_include_reason: boolean
+          p_request: Database["public"]["Tables"]["session_cover_requests"]["Row"]
+          p_viewer_id: string
+        }
+        Returns: Json
+      }
       create_gamer: {
         Args: {
           p_date_of_birth: string
@@ -2799,6 +3020,19 @@ export type Database = {
           p_sign_in?: Database["public"]["Enums"]["gamer_sign_in"]
         }
         Returns: undefined
+      }
+      create_invoice_customer: {
+        Args: {
+          p_city: string
+          p_country_code?: string
+          p_fennoa_customer_no: string
+          p_invoice_name: string
+          p_invoice_text?: string
+          p_postal_code: string
+          p_street: string
+          p_your_reference?: string
+        }
+        Returns: string
       }
       create_participation: {
         Args: {
@@ -2818,6 +3052,7 @@ export type Database = {
           p_end_date?: string
           p_for_gamers: boolean
           p_for_parents: boolean
+          p_invoice_customer_id?: string
           p_is_remote: boolean
           p_is_visible?: boolean
           p_location_id?: string
@@ -2886,6 +3121,24 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: string
       }
+      gedu_covers_group: { Args: { p_group_id: string }; Returns: boolean }
+      gedu_covers_session: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: boolean
+      }
+      gedu_is_expected_at_session: {
+        Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
+        Returns: boolean
+      }
+      gedu_may_cover_session: {
+        Args: {
+          p_absent_gedu_id: string
+          p_gedu_id: string
+          p_group_id: string
+          p_session_date: string
+        }
+        Returns: boolean
+      }
       gedu_teaches_gamer: { Args: { p_gamer_id: string }; Returns: boolean }
       gedu_teaches_group: { Args: { p_group_id: string }; Returns: boolean }
       gedu_teaches_group_product: {
@@ -2910,7 +3163,7 @@ export type Database = {
         }[]
       }
       get_gedu_assigned_product: {
-        Args: { p_product_id: string }
+        Args: { p_group_id?: string; p_product_id: string }
         Returns: Json
       }
       get_gedu_group_feed: { Args: { p_group_id: string }; Returns: Json }
@@ -2918,10 +3171,12 @@ export type Database = {
       get_my_assigned_products: {
         Args: never
         Returns: {
+          covered_date: string
           end_date: string
           group_count: number
           group_id: string
           is_remote: boolean
+          kind: string
           participant_count: number
           product_id: string
           product_translations: Json
@@ -3008,6 +3263,7 @@ export type Database = {
           waitlist_position: number
         }[]
       }
+      get_open_cover_requests: { Args: never; Returns: Json }
       get_product_groups_with_details: {
         Args: { p_product_id: string }
         Returns: Json
@@ -3087,6 +3343,7 @@ export type Database = {
       }
       location_search_separator: { Args: never; Returns: string }
       mark_chat_image_stored: { Args: { p_id: string }; Returns: string }
+      offer_session_cover: { Args: { p_request_id: string }; Returns: Json }
       participation_state: {
         Args: {
           p_group_id: string
@@ -3151,6 +3408,15 @@ export type Database = {
         Returns: boolean
       }
       request_my_verification_email: { Args: never; Returns: boolean }
+      request_session_cover: {
+        Args: {
+          p_group_id: string
+          p_reason?: Database["public"]["Enums"]["cover_reason"]
+          p_reason_note?: string
+          p_session_date: string
+        }
+        Returns: Json
+      }
       respond_seat_offer: {
         Args: {
           p_accept: boolean
@@ -3268,6 +3534,17 @@ export type Database = {
         Args: { p_product_id: string; p_slugs: string[] }
         Returns: undefined
       }
+      set_session_cover: {
+        Args: {
+          p_absent_gedu_id: string
+          p_group_id: string
+          p_reason?: Database["public"]["Enums"]["cover_reason"]
+          p_reason_note?: string
+          p_session_date: string
+          p_sub_gedu_id: string
+        }
+        Returns: Json
+      }
       set_site_notes: {
         Args: {
           p_gedu_note: string
@@ -3285,6 +3562,20 @@ export type Database = {
         Args: { p_code: string; p_message_id: string }
         Returns: boolean
       }
+      update_invoice_customer: {
+        Args: {
+          p_city: string
+          p_country_code?: string
+          p_fennoa_customer_no: string
+          p_id: string
+          p_invoice_name: string
+          p_invoice_text?: string
+          p_postal_code: string
+          p_street: string
+          p_your_reference?: string
+        }
+        Returns: string
+      }
       update_product: {
         Args: {
           p_assistant_gedu_fee_cents?: number
@@ -3293,6 +3584,7 @@ export type Database = {
           p_for_gamers: boolean
           p_for_parents: boolean
           p_id: string
+          p_invoice_customer_id?: string
           p_is_remote: boolean
           p_is_visible?: boolean
           p_location_id?: string
@@ -3324,13 +3616,28 @@ export type Database = {
         Args: { p_pin: string; p_user_ids: string[] }
         Returns: string
       }
+      withdraw_session_cover_offer: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
+      withdraw_session_cover_request: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
+      withdraw_session_cover_request_as_admin: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       billing_mode: "paid" | "free" | "external_contract"
       chat_channel_type: "group_session"
+      cover_reason: "sick" | "other"
+      cover_request_status: "open" | "covered" | "withdrawn"
       effective_product_status: "pending" | "running" | "completed" | "expired"
       gamer_photo_consent_type: "lynx_educate"
       gamer_sign_in: "parent" | "username" | "email"
+      gedu_assignment_role: "primary" | "assistant"
       gender_type: "boy" | "girl" | "non_binary"
       location_type: "country" | "region" | "municipality" | "district" | "site"
       marketing_consent_type: "school_of_gaming" | "lynx_educate"
@@ -3486,9 +3793,12 @@ export const Constants = {
     Enums: {
       billing_mode: ["paid", "free", "external_contract"],
       chat_channel_type: ["group_session"],
+      cover_reason: ["sick", "other"],
+      cover_request_status: ["open", "covered", "withdrawn"],
       effective_product_status: ["pending", "running", "completed", "expired"],
       gamer_photo_consent_type: ["lynx_educate"],
       gamer_sign_in: ["parent", "username", "email"],
+      gedu_assignment_role: ["primary", "assistant"],
       gender_type: ["boy", "girl", "non_binary"],
       location_type: ["country", "region", "municipality", "district", "site"],
       marketing_consent_type: ["school_of_gaming", "lynx_educate"],

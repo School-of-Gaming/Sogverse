@@ -38,6 +38,15 @@ export const myAssignedProductRows = z.array(
     participant_count: z.number(),
     product_translations: z.array(productTranslationSummary),
     schedule_slots: z.array(scheduleSlotSummary),
+    /**
+     * Which kind of seat the row is (00260): a standing `assignment`, or a live
+     * `cover` on one date. Two arms of one RPC because they share every
+     * product-shell column and the dashboard card differs in its chrome rather
+     * than in the facts it needs.
+     */
+    kind: z.enum(["assignment", "cover"]),
+    /** The covered date on a `cover` row; null on an `assignment` row. */
+    covered_date: z.string().nullable(),
   })
 );
 

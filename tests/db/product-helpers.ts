@@ -218,6 +218,17 @@ import { TEST_IDS } from "./constants";
  *
  * The 7xx block runs out at 7ff, so allocation continues in 8xx
  * (`...00000000008XX`):
+ *   810-817        session-cover.test.ts (the REMOTE club 810 with sister groups
+ *                  811 and 812 — two, because the whole point of the cover model
+ *                  is that a gedu may cover a group of a product they already
+ *                  teach, and one group cannot be both the caller's own and the
+ *                  one they are covering; the IN-PERSON club 813 at its own
+ *                  `locations` row 814 with group 815, its own site rather than
+ *                  the seeded Test School because site_details is keyed by
+ *                  location and shared across products, so writing notes on the
+ *                  seeded site would race the gedu feed's suite in a parallel
+ *                  worker; and the club 816 with group 817 that neither gedu
+ *                  touches, so a refusal there is the ACTOR half alone)
  *   801-804        session-feedback.test.ts (club 801 with group 803, where
  *                  BOTH seeded children hold an active seat — the sibling pair
  *                  is what makes "a member reads only their own row" provable

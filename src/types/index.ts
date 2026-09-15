@@ -413,6 +413,41 @@ export type ProductGroupUpdate = Database["public"]["Tables"]["product_groups"][
 export type GeduGroupAssignment = Database["public"]["Tables"]["gedu_group_assignments"]["Row"];
 export type GeduGroupAssignmentInsert = Database["public"]["Tables"]["gedu_group_assignments"]["Insert"];
 
+// Which capacity an educator holds a group in (00260). A group holds any number
+// of each, and the only thing the role decides is pay — the product carries a
+// per-session fee for each.
+export type GeduAssignmentRole = Database["public"]["Enums"]["gedu_assignment_role"];
+
+// ---------------------------------------------------------------------------
+// session covers (00260) — "I can't make this session", and who stood in
+// ---------------------------------------------------------------------------
+
+// session_cover_requests — one row per (group, session date, ABSENT GEDU). The
+// seat is the person rather than the role, because two primaries of one group
+// may both be out the same day. Neither table grants anything to
+// `authenticated`: every read and write goes through the SECURITY DEFINER RPCs
+// in src/services/session-cover/, so these aliases serve the service-role side
+// (db tests, admin tooling) rather than browser queries — the same posture as
+// GroupSession above.
+export type SessionCoverRequest = Database["public"]["Tables"]["session_cover_requests"]["Row"];
+export type SessionCoverRequestInsert = Database["public"]["Tables"]["session_cover_requests"]["Insert"];
+export type SessionCoverRequestUpdate = Database["public"]["Tables"]["session_cover_requests"]["Update"];
+
+// session_cover_offers — "I can cover this", one row per (request, gedu).
+// Withdrawing an offer DELETES the row, so there is no status column and no
+// Update alias worth having.
+export type SessionCoverOffer = Database["public"]["Tables"]["session_cover_offers"]["Row"];
+export type SessionCoverOfferInsert = Database["public"]["Tables"]["session_cover_offers"]["Insert"];
+
+// Why the gedu is away — admin-visible only, and nullable on the row because
+// the gedu path requires it (RPC-enforced) while an admin recording an
+// off-platform cover may not know it.
+export type CoverReason = Database["public"]["Enums"]["cover_reason"];
+// `open` -> `covered` (an admin approved someone) or `withdrawn` (the absence is
+// off). "Unfilled" is deliberately NOT a value: it is a derived state of an open
+// request whose date has passed, and the date already says it.
+export type CoverRequestStatus = Database["public"]["Enums"]["cover_request_status"];
+
 // ---------------------------------------------------------------------------
 // products — session records (the gedu session feed)
 // ---------------------------------------------------------------------------
@@ -755,10 +790,28 @@ type _MyAssignedProductGenerated =
   Database["public"]["Functions"]["get_my_assigned_products"]["Returns"][number];
 export type MyAssignedProductRow = Omit<
   _MyAssignedProductGenerated,
-  "start_date" | "end_date" | "product_translations" | "schedule_slots"
+  | "start_date"
+  | "end_date"
+  | "product_translations"
+  | "schedule_slots"
+  | "kind"
+  | "covered_date"
 > & {
   start_date: string | null;
   end_date: string | null;
+  /**
+   * Which kind of seat this row is (00260). An `assignment` row is one per
+   * `gedu_group_assignments` row, exactly as this RPC always returned; a `cover`
+   * row is one per live covered date. Narrowed from the generated `string`
+   * because the RPC emits a closed pair and every consumer branches on it.
+   */
+  kind: "assignment" | "cover";
+  /**
+   * The date a `cover` row covers, and null on an `assignment` row — which the
+   * generator cannot see, because a RETURNS TABLE column is typed from the
+   * column type alone.
+   */
+  covered_date: string | null;
   product_translations: Array<{
     locale: string;
     name: string;
