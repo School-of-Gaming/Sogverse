@@ -316,6 +316,11 @@ const FAMILIES_PARAMS = [
 const FAMILIES_FIELDS = [
   { name: "id", type: "uuid", key: "resources.families.fields.id" },
   {
+    name: "first_name, last_name",
+    type: "string",
+    key: "resources.families.fields.parentName",
+  },
+  {
     name: "email",
     type: "string | null",
     key: "resources.families.fields.email",
@@ -343,14 +348,19 @@ const FAMILIES_FIELDS = [
     key: "resources.families.fields.gamersId",
   },
   {
+    name: "gamers[].first_name",
+    type: "string",
+    key: "resources.families.fields.gamersFirstName",
+  },
+  {
     name: "gamers[].created_at",
     type: "timestamp",
     key: "resources.families.fields.gamersCreatedAt",
   },
   {
-    name: "gamers[].age",
-    type: "object",
-    key: "resources.families.fields.gamersAge",
+    name: "gamers[].birth_month",
+    type: "string",
+    key: "resources.families.fields.gamersBirthMonth",
   },
   {
     name: "gamers[].roblox",
@@ -416,9 +426,9 @@ const ENROLMENTS_FIELDS = [
     key: "resources.enrolments.fields.signedUpAt",
   },
   {
-    name: "age_at_start",
-    type: "object | null",
-    key: "resources.enrolments.fields.ageAtStart",
+    name: "consents",
+    type: "object",
+    key: "resources.enrolments.fields.consents",
   },
   {
     name: "attendance",
@@ -630,6 +640,8 @@ const PRODUCTS_EXAMPLE = `{
 
 const FAMILIES_EXAMPLE = `{
   "id": "9c3e2b4a-7f11-4d0e-8b6a-1a2b3c4d5e6f",
+  "first_name": "Camille",
+  "last_name": "Martin",
   "email": "parent@example.com",
   "created_at": "2026-09-02T18:41:07Z",
   "location": { "city": "Lyon", "country_code": "FR" },
@@ -638,8 +650,9 @@ const FAMILIES_EXAMPLE = `{
   "gamers": [
     {
       "id": "b7d1c0e2-3a4f-4b5c-9d6e-7f8a9b0c1d2e",
+      "first_name": "Léo",
       "created_at": "2026-09-02T18:45:30Z",
-      "age": { "min": 14, "max": 14 },
+      "birth_month": "2012-03",
       "roblox": { "username": "builder_leo", "user_id": 1234567890, "verified": true },
       "photo_consent": { "granted": true, "updated_at": "2026-09-02T18:46:01Z" }
     }
@@ -655,7 +668,10 @@ const ENROLMENTS_EXAMPLE = `{
   "family_id": "9c3e2b4a-7f11-4d0e-8b6a-1a2b3c4d5e6f",
   "status": "active",
   "signed_up_at": "2026-09-02T18:47:15Z",
-  "age_at_start": { "min": 14, "max": 14 },
+  "consents": {
+    "terms": { "version": "2026-08-01", "accepted_at": "2026-09-02T18:47:15Z" },
+    "privacy_policy": { "version": "2026-08-01", "accepted_at": "2026-09-02T18:47:15Z" }
+  },
   "attendance": { "sessions_held": 5, "sessions_present": 4 },
   "creations": [
     { "title": "Obby Escape", "url": "https://www.roblox.com/games/123456789/Obby-Escape", "is_roblox_url": true }
@@ -1042,7 +1058,6 @@ export default function LynxApiDocsPage() {
             <SectionHeading>{t("notIncluded.heading")}</SectionHeading>
             <ul className="mt-4 list-disc space-y-3 pl-5 text-muted-foreground">
               <li>{rich("notIncluded.items.childIdentity")}</li>
-              <li>{rich("notIncluded.items.parentContact")}</li>
               <li>{rich("notIncluded.items.releases")}</li>
               <li>{rich("notIncluded.items.deliveryModel")}</li>
               <li>{rich("notIncluded.items.analytics")}</li>
