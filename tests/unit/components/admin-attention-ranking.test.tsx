@@ -88,7 +88,7 @@ function product(
 afterEach(cleanup);
 
 describe("the attention queue's ranking", () => {
-  it("is these six kinds in this order, with the empty group below the waitlist and above the fees", () => {
+  it("is these seven kinds in this order, with the empty group below the waitlist and above the fees", () => {
     expect(PRODUCT_ISSUE_KINDS).toEqual([
       "unassigned-gamers",
       "group-without-gedu",
@@ -96,11 +96,21 @@ describe("the attention queue's ranking", () => {
       "empty-group-without-gedu",
       "missing-gedu-fee",
       "missing-municipality-fee",
+      "missing-invoice-customer",
     ]);
     // Spelled out separately because it is the claim the two unstaffed-group
     // kinds are built on: the same fact about a group ranks near the top when
     // somebody is in it and near the bottom when nobody is.
     expect(PRODUCT_ISSUE_KINDS.indexOf("empty-group-without-gedu")).toBe(3);
+    // And the claim the two invoicing kinds are built on: they are the same
+    // blank-field omission twice, so they sit together at the bottom with the
+    // fee immediately above the customer. Asserted as adjacency rather than as
+    // two indexes, because what matters is that nothing gets inserted between
+    // them — their own order is the one place in this list nothing turns on.
+    expect(PRODUCT_ISSUE_KINDS.indexOf("missing-invoice-customer")).toBe(
+      PRODUCT_ISSUE_KINDS.indexOf("missing-municipality-fee") + 1,
+    );
+    expect(PRODUCT_ISSUE_KINDS.at(-1)).toBe("missing-invoice-customer");
   });
 
   it("keeps the warning kinds a prefix of the ranking and the muted ones the rest", () => {
@@ -149,6 +159,7 @@ describe("the attention grid's sort", () => {
           kind: "group-without-gedu",
           values: { group: "Tiistai A" },
         },
+        { id: "g", kind: "missing-invoice-customer" },
       ]),
     ]);
 
@@ -159,6 +170,7 @@ describe("the attention grid's sort", () => {
       "Empty group Tiistai C has no Gedu",
       "Gedu fee not set",
       "Municipality fee not set",
+      "Invoice customer not set",
     ]);
   });
 
@@ -178,6 +190,11 @@ describe("the attention grid's sort", () => {
       product("p-group", "Turku", [
         { id: "d", kind: "group-without-gedu", values: { group: "Kerho 1" } },
       ]),
+      // The bottom of the ranking: a club whose only gap is the buyer its
+      // invoice would be addressed to.
+      product("p-customer", "Vaasa", [
+        { id: "e", kind: "missing-invoice-customer" },
+      ]),
     ]);
 
     // Worst line first, and nothing else consulted: each product carries one
@@ -188,6 +205,7 @@ describe("the attention grid's sort", () => {
       "Turku",
       "Espoo",
       "Vantaa",
+      "Vaasa",
     ]);
   });
 

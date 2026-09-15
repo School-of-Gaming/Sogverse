@@ -310,6 +310,7 @@
           "waitlistOpenSeats": "{waiting} jonossa · {open, plural, one {# paikka} other {# paikkaa}} vapaana",
           "missingGeduFee": "Gedun palkkio puuttuu",
           "missingMunicipalityFee": "Kunnan maksu puuttuu",
+          "missingInvoiceCustomer": "Laskutusasiakas puuttuu",
           "waitlistOpenSeatsWithOffers": "{waiting} jonossa · {open, plural, one {# paikka} other {# paikkaa}} vapaana · {offers} odottaa vastausta"
         }
       },

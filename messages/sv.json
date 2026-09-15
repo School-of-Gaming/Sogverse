@@ -310,6 +310,7 @@
           "waitlistOpenSeats": "{waiting} i kö · {open, plural, one {# plats} other {# platser}} lediga",
           "missingGeduFee": "Gedu-arvode saknas",
           "missingMunicipalityFee": "Kommunavgift saknas",
+          "missingInvoiceCustomer": "Faktureringskund saknas",
           "waitlistOpenSeatsWithOffers": "{waiting} i kö · {open, plural, one {# plats} other {# platser}} lediga · {offers} väntar på svar"
         }
       },

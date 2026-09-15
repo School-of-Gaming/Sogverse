@@ -310,6 +310,7 @@
           "waitlistOpenSeats": "{waiting} waitlisted · {open, plural, one {# seat} other {# seats}} open",
           "missingGeduFee": "Gedu fee not set",
           "missingMunicipalityFee": "Municipality fee not set",
+          "missingInvoiceCustomer": "Invoice customer not set",
           "waitlistOpenSeatsWithOffers": "{waiting} waitlisted · {open, plural, one {# seat} other {# seats}} open · {offers} awaiting an answer"
         }
       },

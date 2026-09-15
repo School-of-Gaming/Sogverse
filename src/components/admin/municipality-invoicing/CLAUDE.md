@@ -140,8 +140,10 @@ to. Read as one condition the two would each say the wrong thing about the other
 clubs.
 
 **It is optional at creation and flagged here**, exactly like the fee: a club is created
-before anybody has agreed who pays for it, so the gap is reported where the invoicing
-happens rather than by a constraint that would stop an admin saving a club at all.
+before anybody has agreed who pays for it, so the gap is reported rather than refused by a
+constraint that would stop an admin saving a club at all. Reported in two places, again
+exactly like the fee — here, where it costs a file, and on the admin dashboard's attention
+queue, where an admin still has time to close it before a month's invoices are raised.
 
 **A club with no municipality still refuses the whole month; a club with no customer
 does not.** The asymmetry is the point. A club nobody can be billed for cannot be

@@ -247,6 +247,17 @@ import { TEST_IDS } from "./constants";
  *                  municipality and the function refuses every call while that
  *                  club stands — so the "the document carries the customer"
  *                  assertions live there rather than beside the table's own
+ *   80d-80f        admin-dashboard.test.ts's invoice-customer pair (00263): two
+ *                  municipality clubs identical in everything the attention
+ *                  queue reads except the buyer — 80d names none and 80e names
+ *                  80f, which is an `invoice_customers` row rather than a
+ *                  product. Two clubs because one cannot be both named and
+ *                  unnamed, and the second is what makes "the missing buyer is
+ *                  why it is in the queue" provable rather than merely true.
+ *                  They sit apart from that file's own 620-629 block because the
+ *                  block was full when they arrived; the file is named twice
+ *                  here rather than the ids being squeezed in somewhere they
+ *                  would collide
  *   637           write-idor.test.ts's product_images entry. It sits outside
  *                  that file's 5a4-5a9 block because the block was full when
  *                  the catalogue arrived; the file is named twice here rather

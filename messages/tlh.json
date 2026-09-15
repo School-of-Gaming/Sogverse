@@ -354,6 +354,7 @@
           "waitlistOpenSeats": "{waiting} loStaH · {open, plural, one {# quS} other {# quSmey}} poSmoH",
           "missingGeduFee": "Gedu Huch Hutlh",
           "missingMunicipalityFee": "veng Huch Hutlh",
+          "missingInvoiceCustomer": "DIlwI’ Hutlh",
           "waitlistOpenSeatsWithOffers": "{waiting} loStaH · {open, plural, one {# quS} other {# quSmey}} poSmoH · {offers} jang loStaH"
         }
       },

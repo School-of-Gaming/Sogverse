@@ -116,7 +116,7 @@ export const adminDashboardWaitlistPressure = z.object({
 /**
  * A live product with at least one thing wrong with it. A product with nothing
  * wrong is absent from the list entirely, so every entry here has at least one
- * of the six issues populated.
+ * of the seven issues populated.
  *
  * The issues are facts, not sentences: the page words and orders them, because
  * the wording is translated copy and the order is a ranking the page owns.
@@ -152,6 +152,17 @@ export const adminDashboardAttentionProduct = z.object({
   missing_gedu_fee: z.boolean(),
   /** Municipality clubs only; false everywhere else by construction. */
   missing_municipality_fee: z.boolean(),
+  /**
+   * The club names no invoice customer (00263). Municipality clubs only, on the
+   * same terms as the fee above — the column the flag reads is one the CHECK
+   * forbids on every other product type.
+   *
+   * It puts a club in the queue on its own. The link is nullable because a club
+   * is created before anybody has agreed who pays for it, and by the time it
+   * starts both the fee and the buyer are meant to be set; a club still missing
+   * one is an admin omission rather than an ordinary state.
+   */
+  missing_invoice_customer: z.boolean(),
 });
 
 /** One recurring session slot, in the product's own timezone. */

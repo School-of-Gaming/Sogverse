@@ -259,6 +259,13 @@ function toProductAttention(
     });
   }
 
+  if (product.missing_invoice_customer) {
+    issues.push({
+      id: `${product.id}-missing-invoice-customer`,
+      kind: "missing-invoice-customer",
+    });
+  }
+
   return {
     productId: product.id,
     name: productName(product.translations, locale),

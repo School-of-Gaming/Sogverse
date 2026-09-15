@@ -41,11 +41,16 @@ would make a national billing arrangement a property of the world map, and the f
 outside that country would carry columns that mean nothing. The only edge between the two
 systems is the club, which points at a place and at a buyer independently.
 
-**A club's customer is optional at creation and reported at invoicing**, exactly like its
-fee. A club is created before anybody has agreed who pays for it, so a constraint here
-would stop an admin saving a club at all; the gap is flagged where it costs something,
-which is the invoicing ledger (`../municipality-invoicing/`), and the club's own page is
-the repair.
+**A club's customer is optional at creation and reported in two places, exactly like its
+fee.** A club is created before anybody has agreed who pays for it, so a constraint here
+would stop an admin saving a club at all. The gap is flagged where it costs something —
+the invoicing ledger (`../municipality-invoicing/`), which refuses to write that buyer's
+file — and it is flagged again where somebody can still act on it in time: the admin
+dashboard's attention queue lists the club alongside the one missing its municipality fee,
+because every municipality club is meant to have both its fee and its buyer set by the
+time it starts, and a club still missing one is an omission rather than an ordinary state.
+The ledger is where the gap is paid for and the dashboard is where it is found; the club's
+own page is the repair in both cases.
 
 ## The write path
 
