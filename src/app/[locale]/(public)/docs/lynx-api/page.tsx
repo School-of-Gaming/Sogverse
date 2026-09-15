@@ -196,7 +196,7 @@ function Resource({
         <h2 className="break-all font-mono text-xl font-semibold">{path}</h2>
       </div>
       <p className="mt-2 text-muted-foreground">{title}</p>
-      <p className="mt-4 max-w-3xl text-muted-foreground">{intro}</p>
+      <p className="mt-4 text-muted-foreground">{intro}</p>
 
       <SubHeading>{labels.queryParameters}</SubHeading>
       <div className="mt-2">
@@ -223,7 +223,7 @@ function Resource({
       </div>
 
       {note && (
-        <p className="mt-6 max-w-3xl text-sm leading-relaxed text-muted-foreground">{note}</p>
+        <p className="mt-6 text-sm leading-relaxed text-muted-foreground">{note}</p>
       )}
     </Section>
   );
@@ -815,7 +815,9 @@ export default function LynxApiDocsPage() {
 
   return (
     <div className="container mx-auto max-w-6xl px-4 py-12">
-      <header className="max-w-3xl">
+      {/* The header spans the same width as the reference below it: a narrower
+          measure here read as a page that had been left-aligned by accident. */}
+      <header>
         <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
         <p className="mt-4 text-lg text-muted-foreground">{t("lead")}</p>
         <Alert variant="warning" className="mt-6">
@@ -856,7 +858,7 @@ export default function LynxApiDocsPage() {
           {/* Scope */}
           <Section id="scope">
             <SectionHeading>{t("scope.heading")}</SectionHeading>
-            <div className="mt-4 max-w-3xl space-y-4 text-muted-foreground">
+            <div className="mt-4 space-y-4 text-muted-foreground">
               <p>{t("scope.p1")}</p>
               <p>{t("scope.p2")}</p>
               <p>{t("scope.p3")}</p>
@@ -866,13 +868,13 @@ export default function LynxApiDocsPage() {
           {/* Authentication */}
           <Section id="authentication">
             <SectionHeading>{t("authentication.heading")}</SectionHeading>
-            <p className="mt-4 max-w-3xl text-muted-foreground">
+            <p className="mt-4 text-muted-foreground">
               {rich("authentication.description")}
             </p>
             <div className="mt-4">
               <CodeBlock>{AUTH_HEADER}</CodeBlock>
             </div>
-            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
               {t("authentication.keyNote")}
             </p>
           </Section>
@@ -885,7 +887,7 @@ export default function LynxApiDocsPage() {
                 {apiBase}
               </CodeBlock>
             </div>
-            <ul className="mt-6 max-w-3xl list-disc space-y-3 pl-5 text-muted-foreground">
+            <ul className="mt-6 list-disc space-y-3 pl-5 text-muted-foreground">
               <li>{rich("conventions.items.formats")}</li>
               <li>{rich("conventions.items.pagination")}</li>
               <li>{rich("conventions.items.updatedSince")}</li>
@@ -1040,7 +1042,7 @@ export default function LynxApiDocsPage() {
           {/* Integration notes */}
           <Section id="integration-notes">
             <SectionHeading>{t("integrationNotes.heading")}</SectionHeading>
-            <ul className="mt-4 max-w-3xl list-disc space-y-3 pl-5 text-muted-foreground">
+            <ul className="mt-4 list-disc space-y-3 pl-5 text-muted-foreground">
               <li>{rich("integrationNotes.items.sync")}</li>
               <li>{rich("integrationNotes.items.join")}</li>
               <li>{rich("integrationNotes.items.consent")}</li>
@@ -1053,7 +1055,7 @@ export default function LynxApiDocsPage() {
           {/* Not included */}
           <Section id="not-included">
             <SectionHeading>{t("notIncluded.heading")}</SectionHeading>
-            <ul className="mt-4 max-w-3xl list-disc space-y-3 pl-5 text-muted-foreground">
+            <ul className="mt-4 list-disc space-y-3 pl-5 text-muted-foreground">
               <li>{rich("notIncluded.items.childIdentity")}</li>
               <li>{rich("notIncluded.items.parentContact")}</li>
               <li>{rich("notIncluded.items.feedback")}</li>
@@ -1066,7 +1068,7 @@ export default function LynxApiDocsPage() {
           {/* Later */}
           <Section id="later">
             <SectionHeading>{t("later.heading")}</SectionHeading>
-            <ul className="mt-4 max-w-3xl list-disc space-y-3 pl-5 text-muted-foreground">
+            <ul className="mt-4 list-disc space-y-3 pl-5 text-muted-foreground">
               <li>{rich("later.items.photos")}</li>
               <li>{rich("later.items.satisfaction")}</li>
               <li>{rich("later.items.webhook")}</li>
