@@ -18,6 +18,7 @@ import {
   type DragSubject,
   type SwitchTargetSource,
 } from "@/components/admin/products/groups/panel-rules";
+import { effectiveStatus } from "@/lib/products/effective-status";
 import type { GroupParticipationDetail, ProductGroupsSnapshot } from "@/types";
 
 // resolveDrop's third argument, named at the call sites so the boolean reads.
@@ -707,7 +708,7 @@ const runningClub: SwitchTargetSource = {
   maxAge: null,
   regionLockCountry: null,
   startDate: "2026-01-01",
-  timezone: "Europe/Helsinki",
+  status: "running",
   seatCount: null,
 };
 
@@ -793,26 +794,21 @@ describe("switchTargetSeats", () => {
 
 describe("switchTargetFacts", () => {
   it("states nothing about a club with no range, no cap, no lock and a start behind it", () => {
-    expect(switchTargetFacts(runningClub, 11, undefined, NOW)).toEqual([]);
+    expect(switchTargetFacts(runningClub, 11, undefined)).toEqual([]);
   });
 
   it("states a closed range beside the gamer's age", () => {
     expect(
-      switchTargetFacts(
-        { ...runningClub, minAge: 8, maxAge: 12 },
-        14,
-        undefined,
-        NOW,
-      ),
+      switchTargetFacts({ ...runningClub, minAge: 8, maxAge: 12 }, 14, undefined),
     ).toEqual([{ kind: "ageRange", minAge: 8, maxAge: 12, gamerAge: 14 }]);
   });
 
   it("states a range open at either end", () => {
     expect(
-      switchTargetFacts({ ...runningClub, minAge: 8 }, 11, undefined, NOW),
+      switchTargetFacts({ ...runningClub, minAge: 8 }, 11, undefined),
     ).toEqual([{ kind: "ageRange", minAge: 8, maxAge: null, gamerAge: 11 }]);
     expect(
-      switchTargetFacts({ ...runningClub, maxAge: 12 }, 11, undefined, NOW),
+      switchTargetFacts({ ...runningClub, maxAge: 12 }, 11, undefined),
     ).toEqual([{ kind: "ageRange", minAge: null, maxAge: 12, gamerAge: 11 }]);
   });
 
@@ -822,62 +818,71 @@ describe("switchTargetFacts", () => {
         { ...runningClub, minAge: 8, maxAge: 12 },
         null,
         undefined,
-        NOW,
       ),
     ).toEqual([{ kind: "ageRange", minAge: 8, maxAge: 12, gamerAge: null }]);
   });
 
   it("states the seats of a capped club, and holds the line before the snapshot lands", () => {
     expect(
-      switchTargetFacts({ ...runningClub, seatCount: 12 }, 11, snapshotOf([4], 2), NOW),
+      switchTargetFacts({ ...runningClub, seatCount: 12 }, 11, snapshotOf([4], 2)),
     ).toEqual([{ kind: "seats", taken: 6, capacity: 12 }]);
     expect(
-      switchTargetFacts({ ...runningClub, seatCount: 12 }, 11, undefined, NOW),
+      switchTargetFacts({ ...runningClub, seatCount: 12 }, 11, undefined),
     ).toEqual([{ kind: "seats", taken: null, capacity: 12 }]);
   });
 
   it("states a region lock whatever country it names", () => {
     expect(
-      switchTargetFacts(
-        { ...runningClub, regionLockCountry: "FI" },
-        11,
-        undefined,
-        NOW,
-      ),
+      switchTargetFacts({ ...runningClub, regionLockCountry: "FI" }, 11, undefined),
     ).toEqual([{ kind: "regionLocked", country: "FI" }]);
   });
 
-  it("states a start only for a club that has not started", () => {
+  it("states a start for a pending club and for no other status", () => {
     expect(
       switchTargetFacts(
-        { ...runningClub, startDate: "2026-09-01" },
+        { ...runningClub, status: "pending", startDate: "2026-09-01" },
         11,
         undefined,
-        NOW,
       ),
     ).toEqual([{ kind: "notStarted", startDate: "2026-09-01" }]);
-    // No start date authored is no day it began on, so it has not started.
-    expect(
-      switchTargetFacts({ ...runningClub, startDate: null }, 11, undefined, NOW),
-    ).toEqual([{ kind: "notStarted", startDate: null }]);
-    expect(switchTargetFacts(runningClub, 11, undefined, NOW)).toEqual([]);
-  });
-
-  it("reads the start against the club's own calendar day, not the reader's", () => {
-    // 2026-06-14T22:00Z is already the 15th in Helsinki and still the 14th in
-    // Los Angeles, so at one instant the same start date has arrived for one
-    // club and not for the other.
-    const midnightish = new Date("2026-06-14T22:00:00Z");
-    const club = { ...runningClub, startDate: "2026-06-15" };
-    expect(switchTargetFacts(club, 11, undefined, midnightish)).toEqual([]);
+    // A club with no start date authored still reads as pending, and the fact
+    // carries the nothing it has.
     expect(
       switchTargetFacts(
-        { ...club, timezone: "America/Los_Angeles" },
+        { ...runningClub, status: "pending", startDate: null },
         11,
         undefined,
-        midnightish,
       ),
-    ).toEqual([{ kind: "notStarted", startDate: "2026-06-15" }]);
+    ).toEqual([{ kind: "notStarted", startDate: null }]);
+    for (const status of ["running", "completed", "expired"] as const) {
+      expect(switchTargetFacts({ ...runningClub, status }, 11, undefined)).toEqual(
+        [],
+      );
+    }
+  });
+
+  it("agrees with the chip on a threshold-bearing club whose start is behind it", () => {
+    // The sheet derives the status with a sign-up count of 0, so a club short
+    // of its threshold is pending however long ago its start date passed —
+    // and the fact says so rather than reading the date on its own.
+    const club = {
+      ...runningClub,
+      status: effectiveStatus(
+        {
+          start_date: "2026-01-01",
+          end_date: null,
+          signup_threshold: 5,
+          timezone: "Europe/Helsinki",
+        },
+        NOW,
+        0,
+      ),
+      startDate: "2026-01-01",
+    };
+    expect(club.status).toBe("pending");
+    expect(switchTargetFacts(club, 11, undefined)).toEqual([
+      { kind: "notStarted", startDate: "2026-01-01" },
+    ]);
   });
 
   it("carries every fact that applies, in the order they are stated", () => {
@@ -888,12 +893,11 @@ describe("switchTargetFacts", () => {
           maxAge: 12,
           regionLockCountry: "SE",
           startDate: "2026-09-01",
-          timezone: "Europe/Helsinki",
+          status: "pending",
           seatCount: 6,
         },
         14,
         snapshotOf([2], 1),
-        NOW,
       ).map((fact) => fact.kind),
     ).toEqual(["ageRange", "seats", "regionLocked", "notStarted"]);
   });

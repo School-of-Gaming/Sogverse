@@ -4,6 +4,7 @@ import {
   isSubscriptionShaped,
 } from "@/lib/constants/billing";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
+import type { EffectiveProductStatus } from "@/lib/products/effective-status";
 import type { RobloxRenderMap } from "@/services/roblox";
 import { formatInTimeZone } from "date-fns-tz";
 import type {
@@ -571,8 +572,8 @@ export interface SwitchTargetSource {
   maxAge: number | null;
   regionLockCountry: string | null;
   startDate: string | null;
-  /** The club's own zone — `startDate` is a calendar date in it, not an instant. */
-  timezone: string;
+  /** The club's derived lifecycle status, as the sheet's own chip states it. */
+  status: EffectiveProductStatus;
   seatCount: number | null;
 }
 
@@ -607,19 +608,18 @@ export function switchTargetSeats(
  * it is true of this club: an unlocked club states no region, one that has
  * already begun states no start.
  *
- * "Has not started" is the start date measured against the club's OWN today,
- * because `startDate` is a calendar date in the club's zone rather than an
- * instant — the same comparison the lifecycle derivation makes. A club with no
- * start date authored has not started either: there is no day it began on. The
- * signup threshold is deliberately not consulted, because this panel holds no
- * sign-up count for the target and the prorating this line is about turns on
- * the date.
+ * "Has not started" is not a second opinion about the dates: it is the club's
+ * derived lifecycle status, `pending` and nothing else. The status is derived
+ * once by the sheet, which states it as a chip beside the club's name and hands
+ * the same value in here, so the chip and the fact cannot disagree about
+ * whether the club has begun. A sign-up count of 0 is the approximation both
+ * share, because the panel holds no count for the target — a club still short
+ * of its signup threshold therefore reads as not started on both.
  */
 export function switchTargetFacts(
   target: SwitchTargetSource,
   gamerAge: number | null,
   snapshot: ProductGroupsSnapshot | undefined,
-  now: Date,
 ): SwitchTargetFact[] {
   const facts: SwitchTargetFact[] = [];
 
@@ -638,8 +638,7 @@ export function switchTargetFacts(
   if (target.regionLockCountry !== null) {
     facts.push({ kind: "regionLocked", country: target.regionLockCountry });
   }
-  const todayThere = formatInTimeZone(now, target.timezone, "yyyy-MM-dd");
-  if (target.startDate === null || target.startDate > todayThere) {
+  if (target.status === "pending") {
     facts.push({ kind: "notStarted", startDate: target.startDate });
   }
 

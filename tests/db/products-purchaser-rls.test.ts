@@ -136,7 +136,7 @@ describe("products purchaser-read RLS (00047)", () => {
     const trans = await admin.from("product_translations").insert({
       product_id: CLOSED_ACTIVE_PRODUCT,
       locale: "en",
-      name: "Cancelled Active Camp",
+      name: "Finished Camp",
       short_description: "Seeded for the detail-join RLS assertion.",
     });
     if (trans.error) throw trans.error;

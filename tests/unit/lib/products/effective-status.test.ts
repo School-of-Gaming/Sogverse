@@ -154,6 +154,22 @@ describe("effectiveStatus", () => {
       expect(effectiveStatus(p, lateNight, 0)).toBe("completed");
     });
 
+    it("start_date has arrived on the product's own calendar day, not the reader's", () => {
+      // 2026-06-14T22:00:00Z is already the 15th in Helsinki (UTC+3 in
+      // summer) and still the 14th in Los Angeles, so at one instant the
+      // same start date has arrived for one product and not for the other.
+      const midnightish = new Date("2026-06-14T22:00:00Z");
+      const p = lifecycle({ start_date: "2026-06-15" });
+      expect(effectiveStatus(p, midnightish, 0)).toBe("running");
+      expect(
+        effectiveStatus(
+          { ...p, timezone: "America/Los_Angeles" },
+          midnightish,
+          0,
+        ),
+      ).toBe("pending");
+    });
+
     it("a Pacific-timezone product compared at the same UTC moment is still running today", () => {
       // 2026-04-28T22:00:00Z = 2026-04-28T15:00 Los Angeles. Same calendar
       // day in LA, so end_date=today hasn't passed yet there.
