@@ -89,8 +89,11 @@ export function GeduDashboardPageBody({
    * pool is a self-contained thing with two backend writes behind it, so a
    * shell hands it over finished and a preview scene hands over the same
    * component over fixtures. `null` withholds the heading and the nav entry as
-   * well as the body — the case is an uncertified gedu, who may cover nothing
-   * and would be reading an all-clear about a queue they are not in.
+   * well as the body, and it covers two cases the page treats alike: an
+   * uncertified gedu, who may cover nothing and would be reading an all-clear
+   * about a queue they are not in, and a read that has not answered yet — a
+   * heading painted ahead of its own body would be a card arriving above the
+   * reader on data's own schedule. Heading and body appear together.
    */
   coverPool?: React.ReactNode | null;
   /**

@@ -98,11 +98,18 @@ export function SessionStaffingRegion({
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   /**
    * Live from the click that starts a write until the document the write
-   * changes comes back — never cleared on success, because what ends the state
-   * is this card being rebuilt from the refetched staffing.
+   * changes comes back.
    *
    * Set synchronously before the mutation runs, so there is no render between
-   * the click and the disabled control in which a second press could land.
+   * the click and the disabled control in which a second press could land —
+   * and **cleared on settle, whichever way it settles**, because this card
+   * outlives its own write. The feed keys an entry by (group, date), so filing
+   * an absence rebuilds this region rather than unmounting it; a flag left set
+   * on success would disable the Withdraw the very same write just put on
+   * screen, for the rest of the visit. What makes clearing safe is the other
+   * half of the pair: the callbacks this region is handed do not resolve until
+   * the surface has re-read the document the write changed, so by the time the
+   * flag drops the controls are already the new ones.
    */
   const [committing, setCommitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -128,10 +135,11 @@ export function SessionStaffingRegion({
       await onRequestCover(draft);
       setRequestOpen(false);
     } catch {
-      // The gedu has to be able to try again, so this is one of the two
-      // outcomes that hands the control back.
-      setCommitting(false);
+      // A refusal keeps the dialog up with the reason and the note where the
+      // gedu left them, and names what went wrong.
       setError(t("coverRequestFailed"));
+    } finally {
+      setCommitting(false);
     }
   };
 
@@ -143,8 +151,9 @@ export function SessionStaffingRegion({
       await onWithdrawCoverRequest(viewerRequest.id);
       setWithdrawOpen(false);
     } catch {
-      setCommitting(false);
       setError(t("coverWithdrawFailed"));
+    } finally {
+      setCommitting(false);
     }
   };
 

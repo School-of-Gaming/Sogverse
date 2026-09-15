@@ -1,62 +1,50 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
 import { buildCoverPoolRows } from "@/lib/gedu-cover-pool";
 import {
+  sessionCoverKeys,
   useOfferSessionCover,
-  useOpenCoverRequests,
   useWithdrawSessionCoverOffer,
   type OpenCoverRequest,
 } from "@/services/session-cover";
 import { GeduCoverPoolSectionView } from "./GeduCoverPoolSectionView";
 
 /**
- * The data shell behind **Sessions needing cover**: one read, two writes.
+ * The **Sessions needing cover** section: the pool's two writes, over rows the
+ * page has already read.
  *
- * **The read is asked only of a certified gedu.** Certification is what gates
- * offering and holding a cover, server-side, so an uncertified caller may cover
- * nothing and the honest thing is not to ask — which is exactly what the hook's
- * `enabled` does. The section is then withheld whole by the page rather than
- * rendered empty: an all-clear line on the dashboard of somebody who could not
- * take a session anyway is a promise about a queue they are not in.
+ * **The read is the page's, not this component's**, and that is what lets the
+ * dashboard withhold the heading and the nav chip until the first answer is in.
+ * A section that fetched its own rows could only render nothing while they
+ * landed, leaving a heading with no body under it and then a card arriving
+ * above what the reader was already looking at — a reveal on data's own
+ * schedule, which is the one kind the layout rule forbids. So the page asks,
+ * the page decides whether there is a section at all, and this component is
+ * handed the answer.
  *
- * **It renders nothing while the first answer lands.** The read is a small,
- * indexed, bounded one — open requests inside a sixty-day window, filtered by a
- * predicate the database applies — so it is the middle category of the loading
- * rule: a container that is already its final size, with nothing in it, and no
- * skeleton. The ordinary visit has it prefetched by the route and never sees
- * even that.
- *
- * **The committing flag is set before the mutation runs and cleared only where
- * the button has to come back.** An offer that lands is followed by the
- * invalidation that flips the row into its offered state, so the control stays
- * disabled straight through rather than re-enabling for a frame in which a
- * second press could land.
+ * **The committing flag is set before the mutation runs and cleared on settle,
+ * once the pool has been read again.** It holds every button on the section, so
+ * leaving it set on success would freeze the whole queue for the rest of the
+ * visit — nothing here unmounts when an offer lands, the row simply redraws as
+ * the withdrawal beside it. What makes the clear safe is the awaited
+ * invalidation in front of it: the mutation's own `onSuccess` fires five
+ * invalidations and waits for none of them, so the write resolves on the
+ * receipt, and the one document this section draws from is read again here
+ * before the flag drops.
  */
 export function GeduCoverPoolSection({
-  certified,
-  initialRequests,
+  requests,
 }: {
   /**
-   * Has an admin certified this gedu? It is what `enabled` is: an uncertified
-   * caller may cover nothing, every write behind this section refuses them
-   * server-side, and the read would come back empty for a reason the page
-   * cannot explain. The dashboard withholds the whole section — heading, nav
-   * entry and all — for the same account, so this flag is the *read's* gate
-   * rather than the section's visibility; both exist because they answer
-   * different questions and a page that rendered the node would otherwise make
-   * the request anyway.
+   * Every open request this gedu could take, as the page read them. An empty
+   * list is the all-clear line; "no answer yet" is not a value this component
+   * can be in, because the page renders none of it until there is one.
    */
-  certified: boolean;
-  /**
-   * The route's own server-side copy of the read, or `undefined` when that
-   * prefetch failed. `undefined` is not an empty list: it means "ask from the
-   * browser", and the section renders nothing until the answer arrives rather
-   * than telling a gedu that nothing needs cover.
-   */
-  initialRequests?: OpenCoverRequest[];
+  requests: readonly OpenCoverRequest[];
 }) {
   const t = useTranslations("gedu.cover");
   const locale = resolveLocale(useLocale());
@@ -68,30 +56,30 @@ export function GeduCoverPoolSection({
     message: string;
   } | null>(null);
 
-  const { data: requests } = useOpenCoverRequests({
-    enabled: certified,
-    initialData: initialRequests,
-  });
   const offerCover = useOfferSessionCover();
   const withdrawOffer = useWithdrawSessionCoverOffer();
+  const queryClient = useQueryClient();
 
   const rows = useMemo(
-    () => (requests === undefined ? [] : buildCoverPoolRows(requests, locale)),
+    () => buildCoverPoolRows(requests, locale),
     [requests, locale],
   );
-
-  if (!certified || requests === undefined) return null;
 
   const run = async (requestId: string, write: () => Promise<unknown>) => {
     setError(null);
     setCommittingRequestId(requestId);
     try {
       await write();
+      // The half the mutation does not supply: this section's own read, waited
+      // on, so the row is already redrawn in its new state by the time every
+      // button on the section comes back.
+      await queryClient.invalidateQueries({ queryKey: sessionCoverKeys.all });
     } catch {
-      // The only outcome that hands the button back: the row is still in the
-      // pool and the gedu may try again.
-      setCommittingRequestId(null);
+      // The row is still in the pool and the gedu may try again, so the refusal
+      // is named on it.
       setError({ requestId, message: t("poolActionFailed") });
+    } finally {
+      setCommittingRequestId(null);
     }
   };
 

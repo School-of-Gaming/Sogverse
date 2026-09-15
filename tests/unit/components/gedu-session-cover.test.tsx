@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
 import { NowProvider } from "@/providers/now-provider";
@@ -310,6 +311,175 @@ describe("the staffing editor slot", () => {
   it("is empty on the gedu side, which supplies none", () => {
     renderFeed({ entries: [futureEntry([], SANNA)] });
     expect(screen.queryByRole("button", { name: "Staffing editor" })).toBeNull();
+  });
+});
+
+/**
+ * ============================================================================
+ * What happens after the write lands
+ * ============================================================================
+ *
+ * The region holds one `committing` flag across both of its controls, and this
+ * card **survives its own write**: the feed keys an entry by (group, date), so
+ * filing an absence rebuilds the region rather than unmounting it. A flag that
+ * was only ever cleared on a refusal therefore left the *next* action disabled
+ * for the rest of the visit — the Withdraw the file had just put on screen,
+ * and the file the withdraw had just handed back.
+ *
+ * The harness is the shape the live shell has: the callback does not resolve
+ * until the document behind the card has been re-read, so the region is looking
+ * at the new staffing by the time it lets go.
+ */
+function CoverHarness({
+  settleFile,
+  settleWithdraw,
+  initialRequests = [],
+}: {
+  settleFile?: Promise<void>;
+  settleWithdraw?: Promise<void>;
+  initialRequests?: readonly CoverRequestInput[];
+}) {
+  const [requests, setRequests] =
+    useState<readonly CoverRequestInput[]>(initialRequests);
+
+  return (
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <TimezoneProvider initialTimezone="Europe/Helsinki">
+        <NowProvider initialNow={NOW}>
+          <SessionFeed
+            entries={[futureEntry(requests, SANNA)]}
+            now={NOW}
+            roster={ROSTER}
+            sourceTimeZone="Europe/Helsinki"
+            editingEntryId={null}
+            onEditEntry={() => {}}
+            onSaveEntry={() => {}}
+            onSendReport={() =>
+              Promise.resolve({ sent: 0, failed: 0, skipped: 0 })
+            }
+            onAddPhoto={() => Promise.resolve("")}
+            onRemovePhoto={() => Promise.resolve()}
+            onRequestCover={async () => {
+              await settleFile;
+              setRequests([openRequest({ id: SANNA, firstName: "Sanna" })]);
+            }}
+            onWithdrawCoverRequest={async () => {
+              await settleWithdraw;
+              setRequests([]);
+            }}
+          />
+        </NowProvider>
+      </TimezoneProvider>
+    </NextIntlClientProvider>
+  );
+}
+
+/** A deferred, so a write can be held open and then let go inside `act`. */
+function deferred(): { promise: Promise<void>; resolve: () => void } {
+  let resolve: () => void = () => {};
+  const promise = new Promise<void>((settle) => {
+    resolve = settle;
+  });
+  return { promise, resolve };
+}
+
+function isDisabled(element: HTMLElement | null): boolean {
+  return element !== null && element.hasAttribute("disabled");
+}
+
+describe("the staffing region after a write lands", () => {
+  it("hands back the Withdraw the file itself put on screen", async () => {
+    const file = deferred();
+    render(<CoverHarness settleFile={file.promise} />);
+
+    fireEvent.click(screen.getByRole("button", { name: copy.coverRequestAction }));
+    fireEvent.click(
+      screen.getByRole("button", { name: copy.coverRequestConfirm }),
+    );
+
+    // Still in the air: nothing on the card may be pressed.
+    expect(
+      isDisabled(screen.getByRole("button", { name: copy.coverRequestConfirm })),
+    ).toBe(true);
+
+    await act(async () => {
+      file.resolve();
+    });
+
+    // The card is rebuilt from the new staffing rather than unmounted, so this
+    // is the very region that was committing a moment ago.
+    expect(actionButton()).toBeNull();
+    const withdraw = withdrawButton();
+    expect(withdraw).not.toBeNull();
+    expect(isDisabled(withdraw)).toBe(false);
+  });
+
+  it("hands back the file action the withdraw itself put on screen", async () => {
+    const withdraw = deferred();
+    render(
+      <CoverHarness
+        settleWithdraw={withdraw.promise}
+        initialRequests={[openRequest({ id: SANNA, firstName: "Sanna" })]}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: copy.coverWithdrawAction }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: copy.coverWithdrawConfirm }),
+    );
+    expect(
+      isDisabled(screen.getByRole("button", { name: copy.coverWithdrawConfirm })),
+    ).toBe(true);
+
+    await act(async () => {
+      withdraw.resolve();
+    });
+
+    expect(withdrawButton()).toBeNull();
+    const action = actionButton();
+    expect(action).not.toBeNull();
+    expect(isDisabled(action)).toBe(false);
+  });
+
+  it("keeps the dialog up and hands the control back when the write is refused", async () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <TimezoneProvider initialTimezone="Europe/Helsinki">
+          <NowProvider initialNow={NOW}>
+            <SessionFeed
+              entries={[futureEntry([], SANNA)]}
+              now={NOW}
+              roster={ROSTER}
+              sourceTimeZone="Europe/Helsinki"
+              editingEntryId={null}
+              onEditEntry={() => {}}
+              onSaveEntry={() => {}}
+              onSendReport={() =>
+                Promise.resolve({ sent: 0, failed: 0, skipped: 0 })
+              }
+              onAddPhoto={() => Promise.resolve("")}
+              onRemovePhoto={() => Promise.resolve()}
+              onRequestCover={() => Promise.reject(new Error("nope"))}
+              onWithdrawCoverRequest={() => {}}
+            />
+          </NowProvider>
+        </TimezoneProvider>
+      </NextIntlClientProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: copy.coverRequestAction }));
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: copy.coverRequestConfirm }),
+      );
+    });
+
+    expect(screen.getByText(copy.coverRequestFailed)).toBeTruthy();
+    expect(
+      isDisabled(screen.getByRole("button", { name: copy.coverRequestConfirm })),
+    ).toBe(false);
   });
 });
 

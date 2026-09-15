@@ -40,7 +40,10 @@ const EMPTY_LINE = messages.dashboardSections.myGroupsEmptyStateGedu;
 
 function dashboardHtml(
   assignments: readonly GeduAssignmentCardData[],
-  { certified = true }: { certified?: boolean } = {},
+  {
+    certified = true,
+    coverPool = null,
+  }: { certified?: boolean; coverPool?: React.ReactNode | null } = {},
 ): string {
   return renderToStaticMarkup(
     <NextIntlClientProvider locale="en" messages={messages}>
@@ -57,6 +60,7 @@ function dashboardHtml(
             // against.
             contractAccepted
             criminalRecordCheckPassed
+            coverPool={coverPool}
             toolsCard={<div />}
             instantRoomCard={<div />}
             // Marked rather than anonymous: whether the section still renders
@@ -163,5 +167,36 @@ describe("a gedu who runs one kind of thing", () => {
 
   it("never shows the empty line under a section that has cards", () => {
     expect(html).not.toContain(EMPTY_LINE);
+  });
+});
+
+/**
+ * **Sessions needing cover appears whole or not at all.**
+ *
+ * The heading, the nav chip and the body are one decision, and the page hands
+ * over `null` for both cases that have nothing to show: a gedu who may cover
+ * nothing, and a read that has not answered yet. A heading rendered ahead of
+ * its own body would be a card arriving above what the reader is already
+ * looking at, on data’s own schedule — which is the reveal the layout rule
+ * forbids and the reason the answer, not the certification flag, is what the
+ * section is gated on.
+ */
+describe("the cover pool section", () => {
+  it("withholds the heading and the chip along with the body", () => {
+    const html = dashboardHtml([]);
+
+    expect(html).not.toContain('id="cover-pool"');
+    expect(html).not.toContain('href="#cover-pool"');
+    expect(html).not.toContain(`>${messages.gedu.cover.poolHeading}</h2>`);
+  });
+
+  it("renders heading, chip and body together once there is an answer", () => {
+    const html = dashboardHtml([], {
+      coverPool: <div id="cover-pool-body" />,
+    });
+
+    expect(html).toContain('href="#cover-pool"');
+    expect(html).toContain(`>${messages.gedu.cover.poolHeading}</h2>`);
+    expect(html).toContain('id="cover-pool-body"');
   });
 });

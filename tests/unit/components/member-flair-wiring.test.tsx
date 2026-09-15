@@ -8,6 +8,7 @@ import {
   within,
 } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import messages from "@/../messages/en.json";
 import { NO_SESSION_STAFFING } from "@/lib/session-staffing";
 import { NowProvider } from "@/providers/now-provider";
@@ -176,7 +177,10 @@ vi.mock("@/services/roblox", () => ({
 // The two writes a gedu may make about their own seat. Stubbed for the same
 // reason every other mutation here is: this suite is about the roster's flair,
 // and an unstubbed hook reaches for a QueryClient this tree does not provide.
-vi.mock("@/services/session-cover", () => ({
+// Everything else is kept real — the note-length cap the cover dialog reads is
+// a constant of this module, and a wholesale mock makes it `undefined` here.
+vi.mock("@/services/session-cover", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/session-cover")>()),
   useRequestSessionCover: noopMutation,
   useWithdrawSessionCoverRequest: noopMutation,
 }));
@@ -330,18 +334,23 @@ function renderPage(
   reads.feed = adjustFeed(groupFeed(productType));
 
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
-      <TimezoneProvider initialTimezone="Europe/Helsinki">
-        <NowProvider initialNow={NOW}>
-          {/* The viewer decides the session staffing's own fields — who is
-              expected on a date, and therefore whether a card offers "I can't
-              make this session". Nothing in this suite is about that, and the
-              fixture's group has no staff at all, so it is only here because
-              the page asks for it. */}
-          <GeduProductPage productId={IDS.product} viewerId={IDS.gedu} />
-        </NowProvider>
-      </TimezoneProvider>
-    </NextIntlClientProvider>,
+    // A real client, unmocked: the page holds one only to wait on its own
+    // document after a cover write, and there is nothing in here for it to
+    // invalidate — but the hook that reaches for it still needs a provider.
+    <QueryClientProvider client={new QueryClient()}>
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <TimezoneProvider initialTimezone="Europe/Helsinki">
+          <NowProvider initialNow={NOW}>
+            {/* The viewer decides the session staffing's own fields — who is
+                expected on a date, and therefore whether a card offers "I can't
+                make this session". Nothing in this suite is about that, and the
+                fixture's group has no staff at all, so it is only here because
+                the page asks for it. */}
+            <GeduProductPage productId={IDS.product} viewerId={IDS.gedu} />
+          </NowProvider>
+        </TimezoneProvider>
+      </NextIntlClientProvider>
+    </QueryClientProvider>,
   );
 }
 
@@ -908,18 +917,23 @@ function renderEndedRun(
   feedEntries.value = [finalSessionEntry(), ...earlierSessions];
 
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
-      <TimezoneProvider initialTimezone="Europe/Helsinki">
-        <NowProvider initialNow={NOW}>
-          {/* The viewer decides the session staffing's own fields — who is
-              expected on a date, and therefore whether a card offers "I can't
-              make this session". Nothing in this suite is about that, and the
-              fixture's group has no staff at all, so it is only here because
-              the page asks for it. */}
-          <GeduProductPage productId={IDS.product} viewerId={IDS.gedu} />
-        </NowProvider>
-      </TimezoneProvider>
-    </NextIntlClientProvider>,
+    // A real client, unmocked: the page holds one only to wait on its own
+    // document after a cover write, and there is nothing in here for it to
+    // invalidate — but the hook that reaches for it still needs a provider.
+    <QueryClientProvider client={new QueryClient()}>
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <TimezoneProvider initialTimezone="Europe/Helsinki">
+          <NowProvider initialNow={NOW}>
+            {/* The viewer decides the session staffing's own fields — who is
+                expected on a date, and therefore whether a card offers "I can't
+                make this session". Nothing in this suite is about that, and the
+                fixture's group has no staff at all, so it is only here because
+                the page asks for it. */}
+            <GeduProductPage productId={IDS.product} viewerId={IDS.gedu} />
+          </NowProvider>
+        </TimezoneProvider>
+      </NextIntlClientProvider>
+    </QueryClientProvider>,
   );
 }
 
@@ -1040,18 +1054,23 @@ function renderUpcomingRun(): ReturnType<typeof render> {
   feedEntries.value = [upcomingFinalSessionEntry()];
 
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
-      <TimezoneProvider initialTimezone="Europe/Helsinki">
-        <NowProvider initialNow={NOW}>
-          {/* The viewer decides the session staffing's own fields — who is
-              expected on a date, and therefore whether a card offers "I can't
-              make this session". Nothing in this suite is about that, and the
-              fixture's group has no staff at all, so it is only here because
-              the page asks for it. */}
-          <GeduProductPage productId={IDS.product} viewerId={IDS.gedu} />
-        </NowProvider>
-      </TimezoneProvider>
-    </NextIntlClientProvider>,
+    // A real client, unmocked: the page holds one only to wait on its own
+    // document after a cover write, and there is nothing in here for it to
+    // invalidate — but the hook that reaches for it still needs a provider.
+    <QueryClientProvider client={new QueryClient()}>
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <TimezoneProvider initialTimezone="Europe/Helsinki">
+          <NowProvider initialNow={NOW}>
+            {/* The viewer decides the session staffing's own fields — who is
+                expected on a date, and therefore whether a card offers "I can't
+                make this session". Nothing in this suite is about that, and the
+                fixture's group has no staff at all, so it is only here because
+                the page asks for it. */}
+            <GeduProductPage productId={IDS.product} viewerId={IDS.gedu} />
+          </NowProvider>
+        </TimezoneProvider>
+      </NextIntlClientProvider>
+    </QueryClientProvider>,
   );
 }
 

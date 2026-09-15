@@ -34,10 +34,20 @@ import { PRODUCT_TYPE_PRESENTATION } from "./product-type-presentation";
  * settles the whole request — the other offers are simply not selected — so a
  * second press on the same row is either a duplicate of the write already
  * running or a decision the admin has not been given the chance to see the
- * outcome of. The flag is set synchronously before the write and is never
- * cleared on success, because on success this row is about to leave the list;
- * clearing it would re-enable the buttons for the frame between the write
- * landing and the row unmounting.
+ * outcome of. The flag is set synchronously before the write, and cleared on
+ * settle whichever way it settles.
+ *
+ * **It is cleared on success because this row can survive its own approval.**
+ * The usual outcome is that the refetched snapshot has dropped the request and
+ * the panel unmounts the row, which needs no clear — but the panel deliberately
+ * tolerates a request the source is still offering after an approval, which is
+ * what a second admin clearing the sub in between produces, and it hands the
+ * row back rather than filtering it out on a receipt that is no longer true. A
+ * flag left set there would leave every offer on a live request permanently
+ * unpressable. The clear costs no re-enabled frame in the ordinary case: the
+ * promise resolves only once the write has landed *and* the snapshot behind it
+ * has come back, so the state that unmounts the row is already queued when this
+ * one is.
  *
  * **A request with no offers is not a failure state and is not tinted as one.**
  * Nobody has volunteered *yet*, and what an admin does about it is on the
@@ -66,10 +76,13 @@ export function CoverRequestRow({
   function approve(offerId: string) {
     setCommittingOfferId(offerId);
     setFailedOfferId(null);
-    void onApproveOffer(offerId).catch(() => {
-      setCommittingOfferId(null);
-      setFailedOfferId(offerId);
-    });
+    void onApproveOffer(offerId)
+      .catch(() => {
+        setFailedOfferId(offerId);
+      })
+      .finally(() => {
+        setCommittingOfferId(null);
+      });
   }
 
   return (
