@@ -719,7 +719,8 @@ describe("get_admin_dashboard", () => {
     it("flags a municipality club with no municipality fee", () => {
       const product = attention(P_MUNI);
       expect(product?.missing_municipality_fee).toBe(true);
-      // Its gedu fee is set, so the municipality fee is the only thing wrong.
+      // Its gedu fee is set, so the municipality fee is the only fee wrong; it
+      // names no invoice customer either, which the next case covers on its own.
       expect(product?.missing_gedu_fee).toBe(false);
       expect(product?.unassigned_count).toBe(0);
     });

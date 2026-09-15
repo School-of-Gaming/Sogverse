@@ -122,12 +122,13 @@ export function InvoiceCustomerPicker({
       </Field>
       {/* Below the hint, at the end of the field, because this line arrives on
           the query's schedule rather than the admin's. The select's own box is
-          rendered at its final size from the first frame and never moves; what
-          a late line cannot be allowed to do is push the hint — and the fees
-          card under it — down the page, so it goes last, where the gap under
-          the field is already slack and its arrival is paid for out of that. The
+          rendered at its final size from the first frame and never moves, and
+          placing the line after the hint keeps the hint where it was too; the
+          sections below the fees card still move down by the line's height
+          when it appears, which is accepted — a slot reserved for a line that
+          almost never appears would be dead space under every club form. The
           order is load-bearing: a tidy-up that moved this back up beside the
-          control would look tidier and would reintroduce the shift. */}
+          control would look tidier and would push the hint down as well. */}
       {listUnavailable && (
         <p id={errorId} className="text-sm text-destructive">
           {t("errors.listUnavailable")}
