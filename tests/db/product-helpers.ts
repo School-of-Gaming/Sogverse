@@ -87,7 +87,7 @@ import { TEST_IDS } from "./constants";
  *                  per row of the matrix, because the thing under test is how
  *                  many groups a product has and no single product can hold
  *                  three answers)
- *   670-67a        seat-offer.test.ts (670 is the offerable club — free, capped
+ *   670-678        seat-offer.test.ts (670 is the offerable club — free, capped
  *                  and with exactly ONE group, 671, because "exactly one" is
  *                  the condition the offer exists to depend on; 672/673 are a
  *                  PAID club and its group, 674 with groups 675/676 is the
@@ -98,12 +98,9 @@ import { TEST_IDS } from "./constants";
  *                  attention product: capped, queued, no groups and its gedu
  *                  fee set, so the waitlist flag is the ONLY issue it can
  *                  raise and "the product dropped out of the list" is
- *                  assertable rather than merely likely. 679 is a CANCELLED
- *                  club with group 67a, otherwise shaped exactly like 670 —
- *                  its own product for the same reason the refusals above have
- *                  theirs: flipping 670's status inside a case and flipping it
- *                  back leaves every later case in this file depending on a
- *                  restore that a failed assertion would have skipped)
+ *                  assertable rather than merely likely. 679 and 67a are FREE:
+ *                  they held a cancelled club and its group until product
+ *                  cancellation was removed from the schema)
  *   680-683        required-consents.test.ts (four products, because the thing
  *                  under test is what a product REQUIRES and no single product
  *                  can hold four answers: 680 is a free club requiring both
@@ -245,7 +242,6 @@ export interface ProductOptions {
   /** Fixed product_topic enum value. Default: "minecraft_java". */
   topic?: Database["public"]["Enums"]["product_topic"];
   billingMode?: Database["public"]["Enums"]["billing_mode"];
-  status?: Database["public"]["Enums"]["product_status"];
   /** null = unlimited seats. Default: 1 (small enough for race tests). */
   seatCount?: number | null;
   signupThreshold?: number | null;
@@ -280,9 +276,9 @@ export interface ProductOptions {
 }
 
 /**
- * Creates a v2 product with sensible defaults: paid consumer_club, 1 seat,
- * status='pending' so create_participation accepts signups, registration
- * already open. Returns the product id.
+ * Creates a v2 product with sensible defaults: paid consumer_club, 1 seat, no
+ * dates and no threshold — which derives as `pending`, so create_participation
+ * accepts signups — and registration already open. Returns the product id.
  *
  * The caller is responsible for deletion (CASCADE handles participations
  * and the seat-count rollup row).
@@ -299,7 +295,6 @@ export async function createTestProduct(
     topic: options.topic ?? "minecraft_java",
     product_type: options.productType ?? "consumer_club",
     billing_mode: options.billingMode ?? "paid",
-    status: options.status ?? "pending",
     seat_count: options.seatCount === undefined ? 1 : options.seatCount,
     signup_threshold: options.signupThreshold ?? null,
     start_date: options.startDate ?? null,

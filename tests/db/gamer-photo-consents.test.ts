@@ -42,14 +42,21 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  */
 
 const PRODUCT_PUBLISHED = "00000000-0000-0000-0000-0000000006c0";
-const PRODUCT_CANCELLED = "00000000-0000-0000-0000-0000000006c1";
+/**
+ * A term that ended long ago, in the helper's default UTC zone, so "the end date
+ * has passed" is true wherever and whenever this suite runs. That is what closes
+ * the public arm of `can_read_product`.
+ */
+const FINISHED_END = "2020-01-31";
+
+const PRODUCT_FINISHED = "00000000-0000-0000-0000-0000000006c1";
 const PRODUCT_TAUGHT = "00000000-0000-0000-0000-0000000006c2";
 const GROUP_TAUGHT = "00000000-0000-0000-0000-0000000006c3";
 const PRODUCT_NOWHERE = "00000000-0000-0000-0000-0000000006cf";
 
 const ALL_TEST_PRODUCTS = [
   PRODUCT_PUBLISHED,
-  PRODUCT_CANCELLED,
+  PRODUCT_FINISHED,
   PRODUCT_TAUGHT,
 ];
 
@@ -138,25 +145,21 @@ describe("gamer photo consents (00244)", () => {
     // which is the state a shop page is read in.
     await createTestProduct(admin, {
       id: PRODUCT_PUBLISHED,
-      status: "pending",
       isVisible: true,
       seatCount: null,
     });
-    // Cancelled and unlisted, so the same predicate is false for anyone but an
-    // admin. Its ask set is seeded identically, so a difference in what comes
+    // Long finished and unlisted, so the same predicate is false for anyone but
+    // an admin. Its ask set is seeded identically, so a difference in what comes
     // back can only be the predicate.
     await createTestProduct(admin, {
-      id: PRODUCT_CANCELLED,
-      status: "cancelled",
+      id: PRODUCT_FINISHED,
+      endDate: FINISHED_END,
       isVisible: false,
       seatCount: null,
     });
     // The club whose roster the gedu arm of the read policy is asserted on.
     await createTestProduct(admin, {
       id: PRODUCT_TAUGHT,
-      status: "running",
-      // A running product must carry a start date
-      // (`chk_products_running_has_start_date`); the helper's default is null.
       startDate: "2026-01-12",
       isVisible: true,
       seatCount: null,
@@ -855,7 +858,7 @@ describe("gamer photo consents (00244)", () => {
     beforeAll(async () => {
       const seeded = await admin.from("product_gamer_photo_consents").insert([
         { product_id: PRODUCT_PUBLISHED, consent_type: LYNX },
-        { product_id: PRODUCT_CANCELLED, consent_type: LYNX },
+        { product_id: PRODUCT_FINISHED, consent_type: LYNX },
       ]);
       if (seeded.error) {
         throw new Error(`seeding asks failed: ${seeded.error.message}`);
@@ -885,7 +888,7 @@ describe("gamer photo consents (00244)", () => {
       const res = await anon
         .from("product_gamer_photo_consents")
         .select("consent_type")
-        .eq("product_id", PRODUCT_CANCELLED);
+        .eq("product_id", PRODUCT_FINISHED);
       expect(res.error).toBeNull();
       expect(res.data).toEqual([]);
     });
@@ -894,10 +897,10 @@ describe("gamer photo consents (00244)", () => {
       const res = await adminAuth
         .from("product_gamer_photo_consents")
         .select("product_id")
-        .in("product_id", [PRODUCT_PUBLISHED, PRODUCT_CANCELLED]);
+        .in("product_id", [PRODUCT_PUBLISHED, PRODUCT_FINISHED]);
       expect(res.error).toBeNull();
       expect(new Set((res.data ?? []).map((r) => r.product_id))).toEqual(
-        new Set([PRODUCT_PUBLISHED, PRODUCT_CANCELLED]),
+        new Set([PRODUCT_PUBLISHED, PRODUCT_FINISHED]),
       );
     });
   });

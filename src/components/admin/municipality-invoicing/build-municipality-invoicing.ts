@@ -55,10 +55,11 @@ import type {
  * club's own local day, and an educator writing a session up in the afternoon is
  * recording one that ran.
  *
- * **Projection is only offered for a club whose status is `running` or
- * `completed`,** and only where it has a term to clip against. A club that has
- * not started, or was cancelled, or carries no start date, contributes its
- * stored rows alone.
+ * **Projection is offered wherever the club has a start date to clip against.**
+ * That date is the whole of the "has it begun" rule: the walk starts at the
+ * later of it and the month, so a club whose term starts after this month
+ * projects nothing here anyway. A club with no start date contributes its stored
+ * rows alone, because there is no day to start walking from.
  *
  * **Money is integer cents from end to end.** The recorded count is multiplied
  * by the fee in cents, the cents are summed, and the division into euros
@@ -319,11 +320,12 @@ function buildClub(
  * Every date the club's weekly schedule puts inside the month, clipped to its
  * own term.
  *
- * Three things decide whether there is anything to project at all. A club that
- * is `pending` has not started and a `cancelled` one did not happen, so
- * projecting onto either would invent sessions nobody was ever going to run. A
- * club with no start date has no day to start walking from, and guessing one
- * would do the same. And a club with no slots has no weekly claim to project.
+ * Two things decide whether there is anything to project at all. A club with no
+ * start date has no day to start walking from, and guessing one would invent
+ * sessions nobody was ever going to run. And a club with no slots has no weekly
+ * claim to project. The start date is also what says whether the club had begun:
+ * the walk is clipped to it, so a term starting after this month yields nothing
+ * without a separate test for it.
  *
  * The walk itself is bare-date arithmetic on UTC-pinned dates, which is exact:
  * these are the club's own calendar dates, a weekday cannot drift under
@@ -334,7 +336,6 @@ function projectedDates(
   monthStart: string,
   monthEnd: string,
 ): string[] {
-  if (club.status !== "running" && club.status !== "completed") return [];
   // Type-driven, not reachable: a municipality club always carries both ends of
   // its term and a location by CHECK constraint, so these nulls exist only in
   // the generated types. Handled rather than asserted, because a page that

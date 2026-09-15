@@ -28,14 +28,21 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  * Product UUIDs 5a1, 5a2, 5aa (see the product-helpers allocation registry).
  */
 
+/**
+ * A term that ended long ago, in the helper's default UTC zone, so "the end date
+ * has passed" is true wherever and whenever this suite runs. That is what closes
+ * the public arm of `can_read_product`.
+ */
+const FINISHED_END = "2020-01-31";
+
 /** Published + listed: readable by the whole world, including anon. */
 const PUBLIC_PRODUCT = "00000000-0000-0000-0000-0000000005a1";
 /**
- * Cancelled, carrying the group fixtures. Status is what closes the public
- * branch — since 00168 an unlisted product is publicly readable, so unlisting
- * one would not isolate anything — and with that branch shut, each remaining
- * branch of can_read_product (admin, enrolled gamer, purchasing parent,
- * assigned gedu) is exercised alone on it.
+ * Long finished, carrying the group fixtures. A passed end date is what closes
+ * the public branch — since 00168 an unlisted product is publicly readable, so
+ * unlisting one would not isolate anything — and with that branch shut, each
+ * remaining branch of can_read_product (admin, enrolled gamer, purchasing
+ * parent, assigned gedu) is exercised alone on it.
  */
 const PRIVATE_PRODUCT = "00000000-0000-0000-0000-0000000005a2";
 const GROUP_ID = "00000000-0000-0000-0000-0000000005a3";
@@ -87,19 +94,17 @@ describe("self-scoping exposed functions", () => {
 
     await createTestProduct(admin, {
       id: PUBLIC_PRODUCT,
-      status: "pending",
       isVisible: true,
       seatCount: null,
     });
     await createTestProduct(admin, {
       id: PRIVATE_PRODUCT,
-      status: "cancelled",
+      endDate: FINISHED_END,
       isVisible: false,
       seatCount: null,
     });
     await createTestProduct(admin, {
       id: UNLISTED_PRODUCT,
-      status: "pending",
       isVisible: false,
       seatCount: null,
     });

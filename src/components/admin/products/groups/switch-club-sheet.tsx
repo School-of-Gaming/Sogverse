@@ -216,8 +216,8 @@ export function SwitchClubSheet({
   const target = products?.find((p) => p.id === targetId) ?? null;
 
   const candidates = useMemo(
-    () => (products ?? []).filter((p) => isSwitchTarget(p, productId)),
-    [products, productId],
+    () => (products ?? []).filter((p) => isSwitchTarget(p, productId, now)),
+    [products, productId, now],
   );
 
   // One line of facts per row, and the same line again above the group list in
@@ -257,15 +257,16 @@ export function SwitchClubSheet({
       ? []
       : switchTargetFacts(
           {
-            status: target.status,
             minAge: target.min_age,
             maxAge: target.max_age,
             regionLockCountry: target.region_lock_country,
             startDate: target.start_date,
+            timezone: target.timezone,
             seatCount: target.seat_count,
           },
           gamerAge,
           targetGroups.data,
+          now,
         );
 
   const refusals = check.data?.refusals ?? [];

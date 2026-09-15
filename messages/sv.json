@@ -779,7 +779,6 @@
         "pending": "Väntar på start",
         "running": "Pågår",
         "completed": "Avslutat",
-        "cancelled": "Avbrutet",
         "expired": "Utgången"
       },
       "schedule": {

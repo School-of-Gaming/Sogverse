@@ -38,9 +38,16 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  */
 
 const PRODUCT_PUBLISHED = "00000000-0000-0000-0000-000000000690";
-const PRODUCT_CANCELLED = "00000000-0000-0000-0000-000000000691";
+/**
+ * A term that ended long ago, in the helper's default UTC zone, so "the end date
+ * has passed" is true wherever and whenever this suite runs. That is what closes
+ * the public arm of `can_read_product`.
+ */
+const FINISHED_END = "2020-01-31";
 
-const ALL_TEST_PRODUCTS = [PRODUCT_PUBLISHED, PRODUCT_CANCELLED];
+const PRODUCT_FINISHED = "00000000-0000-0000-0000-000000000691";
+
+const ALL_TEST_PRODUCTS = [PRODUCT_PUBLISHED, PRODUCT_FINISHED];
 
 const SOG = "school_of_gaming" as const;
 const LYNX = "lynx_educate" as const;
@@ -102,16 +109,15 @@ describe("marketing consents (00220)", () => {
     // which is the state a shop page is read in.
     await createTestProduct(admin, {
       id: PRODUCT_PUBLISHED,
-      status: "pending",
       isVisible: true,
       seatCount: null,
     });
-    // Cancelled and unlisted, so the same predicate is false for anyone but an
-    // admin. Its ask set is seeded identically, so a difference in what comes
+    // Long finished and unlisted, so the same predicate is false for anyone but
+    // an admin. Its ask set is seeded identically, so a difference in what comes
     // back can only be the predicate.
     await createTestProduct(admin, {
-      id: PRODUCT_CANCELLED,
-      status: "cancelled",
+      id: PRODUCT_FINISHED,
+      endDate: FINISHED_END,
       isVisible: false,
       seatCount: null,
     });
@@ -606,7 +612,7 @@ describe("marketing consents (00220)", () => {
     beforeAll(async () => {
       const seeded = await admin.from("product_marketing_consents").insert([
         { product_id: PRODUCT_PUBLISHED, consent_type: LYNX },
-        { product_id: PRODUCT_CANCELLED, consent_type: LYNX },
+        { product_id: PRODUCT_FINISHED, consent_type: LYNX },
       ]);
       if (seeded.error) {
         throw new Error(`seeding asks failed: ${seeded.error.message}`);
@@ -636,7 +642,7 @@ describe("marketing consents (00220)", () => {
       const res = await anon
         .from("product_marketing_consents")
         .select("consent_type")
-        .eq("product_id", PRODUCT_CANCELLED);
+        .eq("product_id", PRODUCT_FINISHED);
       expect(res.error).toBeNull();
       expect(res.data).toEqual([]);
     });
@@ -649,15 +655,15 @@ describe("marketing consents (00220)", () => {
       expect(published.error).toBeNull();
       expect(published.data).toEqual([{ consent_type: LYNX }]);
 
-      // A customer with no participation on the cancelled product reads it no
+      // A customer with no participation on the finished product reads it no
       // better than an anonymous visitor does — the predicate is about the
       // product, not about being signed in.
-      const cancelled = await customer
+      const finished = await customer
         .from("product_marketing_consents")
         .select("consent_type")
-        .eq("product_id", PRODUCT_CANCELLED);
-      expect(cancelled.error).toBeNull();
-      expect(cancelled.data).toEqual([]);
+        .eq("product_id", PRODUCT_FINISHED);
+      expect(finished.error).toBeNull();
+      expect(finished.data).toEqual([]);
     });
 
     it("shows an admin both, because can_read_product's first arm is theirs", async () => {

@@ -455,7 +455,7 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   },
   can_read_product: {
     scopeTest: "tests/db/exposed-function-scope.test.ts",
-    why: "read predicate behind the product policies; anon-reachable on purpose, and its anon branch returns true only for products in a published status (pending/running). Since 00168 it does not ask about is_visible — that column decides whether a product is LISTED on the browse pages, and an unlisted product is deliberately readable by direct link, so the public branch is bounded by status alone",
+    why: "read predicate behind the product policies; anon-reachable on purpose, and its anon branch returns true only for a product whose end date has not passed in the product's own timezone. Since 00256 that is a date test on the row rather than a stored status, and the two say the same thing: with the lifecycle derived, pending-or-running IS end-date-not-passed. It is written inline rather than as a call to effective_status() precisely so this anon-reachable predicate needs no grant on a SECURITY DEFINER function that counts other families' sign-ups. Since 00168 it does not ask about is_visible — that column decides whether a product is LISTED on the browse pages, and an unlisted product is deliberately readable by direct link, so the public branch is bounded by the term alone",
   },
   has_active_participation_on_product: {
     scopeTest: "tests/db/exposed-function-scope.test.ts",

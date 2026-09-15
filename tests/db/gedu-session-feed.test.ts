@@ -1688,7 +1688,7 @@ describe("gedu session feed", () => {
       });
       await admin
         .from("products")
-        .update({ is_visible: true, status: "running" })
+        .update({ is_visible: true })
         .eq("id", PRODUCT_MINE);
     });
 

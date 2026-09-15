@@ -92,10 +92,9 @@ per-municipality page, which narrows client-side. Past 1000 rows the oldest club
 from their municipality's page, the index stops flagging that municipality, and the
 municipality page's not-found gate can fire wrongly.
 
-a. **Push the ended-club predicate into the query.** The SQL filter keeps clubs whose
-   stored status is pending/running while the "this club has ended" judgement runs in JS
-   after the fetch (nothing ever flips stored status), so every past term's clubs consume
-   row budget while contributing nothing. Mirror the client-side ended judgement (the
+a. **Push the ended-club predicate into the query.** The "this club has ended" judgement
+   runs entirely in JS after the fetch, so every past term's clubs consume row budget
+   while contributing nothing. Mirror the client-side ended judgement (the
    effective-status helpers in `src/lib/`) as query filters. **Timezone constraint:** the
    judgement compares against dates in the product's own zone (products are authored in
    `Europe/Helsinki`); the query-side predicate must not quietly substitute UTC "today" —

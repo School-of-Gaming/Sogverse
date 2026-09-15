@@ -93,7 +93,6 @@ export const municipalityInvoicingSession = z.object({
  */
 export const municipalityInvoicingClub = z.object({
   id: z.string(),
-  status: z.enum(Constants.public.Enums.product_status),
   timezone: z.string(),
   start_date: z.string().nullable(),
   end_date: z.string().nullable(),

@@ -42,7 +42,6 @@ function club(
   overrides: Partial<MunicipalityInvoicingClub> & { id: string },
 ): MunicipalityInvoicingClub {
   return {
-    status: "running",
     timezone: HELSINKI,
     start_date: "2026-08-10",
     end_date: "2026-12-18",
@@ -344,29 +343,40 @@ describe("buildMunicipalityInvoicing", () => {
     });
   });
 
-  describe("status decides whether there is anything to project", () => {
-    it("projects for a completed club", () => {
+  describe("the start date is the whole of the has-it-begun rule", () => {
+    // There is no lifecycle state anywhere in this arithmetic, and that is the
+    // point: a stored one used to gate projection here, it never advanced past
+    // its initial value, and the missed-session flagging the page exists for was
+    // therefore dead for every club on the invoice.
+    it("projects a full month for a club whose term spans it, however long ago it began", () => {
       expect(
-        onlyClub([club({ id: "a", status: "completed" })]).sessions,
+        onlyClub([club({ id: "a", start_date: "2020-01-06" })]).sessions,
       ).toHaveLength(5);
     });
 
-    for (const status of ["pending", "cancelled"] as const) {
-      it(`projects nothing for a ${status} club but keeps its rows`, () => {
-        const built = onlyClub([
-          club({
-            id: "a",
-            status,
-            sessions: [{ group_id: "g1", session_date: "2026-09-09" }],
-          }),
-        ]);
+    it("projects for a club whose term has already finished, up to its last day", () => {
+      const built = onlyClub([club({ id: "a", end_date: "2026-09-09" })]);
+      expect(built.sessions.map((session) => session.date)).toEqual([
+        "2026-09-02",
+        "2026-09-09",
+      ]);
+    });
 
-        expect(built.sessions).toEqual([
-          { date: "2026-09-09", isoWeek: 37, kind: "recorded" },
-        ]);
-        expect(built.totalCents).toBe(8_750);
-      });
-    }
+    it("projects nothing for a club whose term starts after the month, and keeps its rows", () => {
+      const built = onlyClub([
+        club({
+          id: "a",
+          start_date: "2026-11-02",
+          end_date: null,
+          sessions: [{ group_id: "g1", session_date: "2026-09-09" }],
+        }),
+      ]);
+
+      expect(built.sessions).toEqual([
+        { date: "2026-09-09", isoWeek: 37, kind: "recorded" },
+      ]);
+      expect(built.totalCents).toBe(8_750);
+    });
   });
 
   describe("a month with nothing in it", () => {

@@ -14,16 +14,15 @@ import type { EffectiveProductStatus } from "@/lib/products/effective-status";
  * This map existed twice — byte-identical, in the list row and on the details
  * page — which is the shape of duplication that gets fixed in one copy and not
  * the other. A product's state is one fact and it has one colour, so both
- * surfaces render this component now and a fifth status cannot arrive in one
+ * surfaces render this component now and a new status cannot arrive in one
  * place looking different from the other.
  *
- * **One shape for all five: a neutral edge, no fill, and the word in the
- * state's own colour.** The map used to say five things in three unrelated
+ * **One shape for all four: a neutral edge, no fill, and the word in the
+ * state's own colour.** The map used to say its states in three unrelated
  * languages — the call-to-action colour as a tint for `pending`, the same
- * colour as a fill for `running`, a grey for `completed` and `expired`, a
- * status hue for `cancelled` — and a chip that changes shape between states is
- * a chip a reader has to re-learn per row. Cancelled already had the shape the
- * other four have taken.
+ * colour as a fill for `running`, a grey for `completed` and `expired` — and a
+ * chip that changes shape between states is a chip a reader has to re-learn per
+ * row.
  *
  * **Act appears in no state, and that is the point of the rework.** A lifecycle
  * state is not the thing to do; spending the app's one *press this* colour on
@@ -43,13 +42,12 @@ import type { EffectiveProductStatus } from "@/lib/products/effective-status";
  * table noise rather than a nudge, which is the attention queue's job.
  * `completed` and `expired` spend no colour at all: they are the quiet end of
  * the lifecycle, and a green tick on every finished club would be the loudest
- * thing in a long list. `cancelled` keeps its red.
+ * thing in a long list.
  */
 const STATUS_STYLE: Record<EffectiveProductStatus, string> = {
   pending: "text-info",
   running: "text-success",
   completed: "text-muted-foreground",
-  cancelled: "text-destructive",
   expired: "text-muted-foreground",
 };
 

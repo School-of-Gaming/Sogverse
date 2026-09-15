@@ -17,24 +17,32 @@ import {
 /**
  * Regression gate for the enrolled-gamer read (migration 00067).
  *
- * The bug it fixes: a product leaves the statuses the public can read. The
+ * The bug it fixes: a product passes the last day the public can read it. The
  * parent keeps access through the purchaser carve-out and the gedu through the
  * assignment one, but the *gamer* — the child signed in to their own account —
  * had no matching branch, so the product dropped out of the `products!inner`
  * join in `getMyUpcomingSessions("gamer")` and the session vanished from their
- * dashboard. A cancelled club a family is still owed the history of is exactly
+ * dashboard. A finished club a family is still owed the history of is exactly
  * that case.
  *
  * Mirrors `products-purchaser-rls.test.ts`, keyed on `participant_id` instead of
- * `customer_id`: active/waitlisted grant the gamer read of a product outside
- * the published statuses; any other status / no participation do not.
+ * `customer_id`: active/waitlisted grant the gamer read of a product the public
+ * branch has let go; any other participation status / no participation do not.
  * (`reserving` stands in for "any other status" — it is a retired value nothing
  * writes any more.)
  *
- * **The fixtures are `cancelled`, and that is load-bearing** — since 00168 an
+ * **The fixtures ended in the past, and that is load-bearing** — since 00168 an
  * unlisted product is publicly readable by design, so `is_visible = false`
  * fixtures would make every negative assertion here vacuous.
  */
+
+/**
+ * A term that ended long ago, in a zone that cannot argue about it: the
+ * fixtures' timezone is UTC and the date is years back, so "the end date has
+ * passed" is true wherever and whenever this suite runs. That is what closes
+ * the public read branch, and it is the only thing that does.
+ */
+const CLOSED_END = "2020-01-31";
 
 const CLOSED_ACTIVE_PRODUCT = "00000000-0000-0000-0000-0000000005e1";
 const CLOSED_WAITLISTED_PRODUCT = "00000000-0000-0000-0000-0000000005e2";
@@ -79,7 +87,7 @@ describe("products gamer-read RLS (00067)", () => {
 
     await deleteTestProducts(admin, ALL_PRODUCTS);
     for (const id of ALL_PRODUCTS) {
-      await createTestProduct(admin, { id, status: "cancelled", seatCount: 10 });
+      await createTestProduct(admin, { id, endDate: CLOSED_END, seatCount: 10 });
     }
 
     // The active product gets a real group so the gamer's participation can
@@ -149,28 +157,28 @@ describe("products gamer-read RLS (00067)", () => {
   it("gamer with an active participation can SELECT the closed product", async () => {
     const { data, error } = await gamerClient
       .from("products")
-      .select("id, status")
+      .select("id, end_date")
       .eq("id", CLOSED_ACTIVE_PRODUCT)
       .maybeSingle();
 
     expect(error).toBeNull();
     expect(data?.id).toBe(CLOSED_ACTIVE_PRODUCT);
-    // Pin that the row really is outside the published statuses — otherwise
-    // the assertion would pass via the public branch and the enrolled-gamer
-    // branch would not be exercised at all.
-    expect(data?.status).toBe("cancelled");
+    // Pin that the row really is past the public branch — otherwise the
+    // assertion would pass via that branch and the enrolled-gamer one would not
+    // be exercised at all.
+    expect(data?.end_date).toBe(CLOSED_END);
   });
 
   it("gamer with a waitlisted participation can SELECT the closed product", async () => {
     const { data, error } = await gamerClient
       .from("products")
-      .select("id, status")
+      .select("id, end_date")
       .eq("id", CLOSED_WAITLISTED_PRODUCT)
       .maybeSingle();
 
     expect(error).toBeNull();
     expect(data?.id).toBe(CLOSED_WAITLISTED_PRODUCT);
-    expect(data?.status).toBe("cancelled");
+    expect(data?.end_date).toBe(CLOSED_END);
   });
 
   // ---------------------------------------------------------------------------
@@ -220,7 +228,7 @@ describe("products gamer-read RLS (00067)", () => {
     const query = gamerClient
       .from("participations")
       .select(
-        "participant_id, group_id, product:products!inner(id, status, schedule_slots(weekday), product_translations(locale, name))",
+        "participant_id, group_id, product:products!inner(id, end_date, schedule_slots(weekday), product_translations(locale, name))",
       )
       .eq("participant_id", TEST_IDS.GAMER)
       .eq("status", "active")
@@ -233,7 +241,7 @@ describe("products gamer-read RLS (00067)", () => {
     const rows: QueryData<typeof query> = data ?? [];
     expect(rows).toHaveLength(1);
     expect(rows[0].product.id).toBe(CLOSED_ACTIVE_PRODUCT);
-    expect(rows[0].product.status).toBe("cancelled");
+    expect(rows[0].product.end_date).toBe(CLOSED_END);
     // The product surviving the inner join isn't enough: the dashboard reads
     // the embedded children too. An empty slots array makes the occurrence
     // walk drop the row (the reported empty-Sessions bug); an empty

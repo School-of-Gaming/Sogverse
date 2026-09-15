@@ -779,7 +779,6 @@
         "pending": "Odottaa alkua",
         "running": "Käynnissä",
         "completed": "Päättynyt",
-        "cancelled": "Peruttu",
         "expired": "Vanhentunut"
       },
       "schedule": {

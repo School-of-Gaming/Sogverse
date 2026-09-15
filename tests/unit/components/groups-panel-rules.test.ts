@@ -695,14 +695,19 @@ describe("seatOfferAvailability", () => {
 // The club switch's picker
 // ---------------------------------------------------------------------------
 
+// The instant every case below is read at. Fixed rather than `new Date()`, so a
+// case about "has this club started" is about the dates it names and not about
+// the day the suite happens to run.
+const NOW = new Date("2026-06-15T09:00:00Z");
+
 // An ordinary running club with no range, no lock and no cap — the boring
 // target each test below bends one field of.
 const runningClub: SwitchTargetSource = {
-  status: "running",
   minAge: null,
   maxAge: null,
   regionLockCountry: null,
   startDate: "2026-01-01",
+  timezone: "Europe/Helsinki",
   seatCount: null,
 };
 
@@ -788,7 +793,7 @@ describe("switchTargetSeats", () => {
 
 describe("switchTargetFacts", () => {
   it("states nothing about a club with no range, no cap, no lock and a start behind it", () => {
-    expect(switchTargetFacts(runningClub, 11, undefined)).toEqual([]);
+    expect(switchTargetFacts(runningClub, 11, undefined, NOW)).toEqual([]);
   });
 
   it("states a closed range beside the gamer's age", () => {
@@ -797,16 +802,17 @@ describe("switchTargetFacts", () => {
         { ...runningClub, minAge: 8, maxAge: 12 },
         14,
         undefined,
+        NOW,
       ),
     ).toEqual([{ kind: "ageRange", minAge: 8, maxAge: 12, gamerAge: 14 }]);
   });
 
   it("states a range open at either end", () => {
     expect(
-      switchTargetFacts({ ...runningClub, minAge: 8 }, 11, undefined),
+      switchTargetFacts({ ...runningClub, minAge: 8 }, 11, undefined, NOW),
     ).toEqual([{ kind: "ageRange", minAge: 8, maxAge: null, gamerAge: 11 }]);
     expect(
-      switchTargetFacts({ ...runningClub, maxAge: 12 }, 11, undefined),
+      switchTargetFacts({ ...runningClub, maxAge: 12 }, 11, undefined, NOW),
     ).toEqual([{ kind: "ageRange", minAge: null, maxAge: 12, gamerAge: 11 }]);
   });
 
@@ -816,16 +822,17 @@ describe("switchTargetFacts", () => {
         { ...runningClub, minAge: 8, maxAge: 12 },
         null,
         undefined,
+        NOW,
       ),
     ).toEqual([{ kind: "ageRange", minAge: 8, maxAge: 12, gamerAge: null }]);
   });
 
   it("states the seats of a capped club, and holds the line before the snapshot lands", () => {
     expect(
-      switchTargetFacts({ ...runningClub, seatCount: 12 }, 11, snapshotOf([4], 2)),
+      switchTargetFacts({ ...runningClub, seatCount: 12 }, 11, snapshotOf([4], 2), NOW),
     ).toEqual([{ kind: "seats", taken: 6, capacity: 12 }]);
     expect(
-      switchTargetFacts({ ...runningClub, seatCount: 12 }, 11, undefined),
+      switchTargetFacts({ ...runningClub, seatCount: 12 }, 11, undefined, NOW),
     ).toEqual([{ kind: "seats", taken: null, capacity: 12 }]);
   });
 
@@ -835,6 +842,7 @@ describe("switchTargetFacts", () => {
         { ...runningClub, regionLockCountry: "FI" },
         11,
         undefined,
+        NOW,
       ),
     ).toEqual([{ kind: "regionLocked", country: "FI" }]);
   });
@@ -842,30 +850,50 @@ describe("switchTargetFacts", () => {
   it("states a start only for a club that has not started", () => {
     expect(
       switchTargetFacts(
-        { ...runningClub, status: "pending", startDate: "2026-09-01" },
+        { ...runningClub, startDate: "2026-09-01" },
         11,
         undefined,
+        NOW,
       ),
     ).toEqual([{ kind: "notStarted", startDate: "2026-09-01" }]);
+    // No start date authored is no day it began on, so it has not started.
     expect(
-      switchTargetFacts({ ...runningClub, status: "pending", startDate: null }, 11, undefined),
+      switchTargetFacts({ ...runningClub, startDate: null }, 11, undefined, NOW),
     ).toEqual([{ kind: "notStarted", startDate: null }]);
-    expect(switchTargetFacts(runningClub, 11, undefined)).toEqual([]);
+    expect(switchTargetFacts(runningClub, 11, undefined, NOW)).toEqual([]);
+  });
+
+  it("reads the start against the club's own calendar day, not the reader's", () => {
+    // 2026-06-14T22:00Z is already the 15th in Helsinki and still the 14th in
+    // Los Angeles, so at one instant the same start date has arrived for one
+    // club and not for the other.
+    const midnightish = new Date("2026-06-14T22:00:00Z");
+    const club = { ...runningClub, startDate: "2026-06-15" };
+    expect(switchTargetFacts(club, 11, undefined, midnightish)).toEqual([]);
+    expect(
+      switchTargetFacts(
+        { ...club, timezone: "America/Los_Angeles" },
+        11,
+        undefined,
+        midnightish,
+      ),
+    ).toEqual([{ kind: "notStarted", startDate: "2026-06-15" }]);
   });
 
   it("carries every fact that applies, in the order they are stated", () => {
     expect(
       switchTargetFacts(
         {
-          status: "pending",
           minAge: 8,
           maxAge: 12,
           regionLockCountry: "SE",
           startDate: "2026-09-01",
+          timezone: "Europe/Helsinki",
           seatCount: 6,
         },
         14,
         snapshotOf([2], 1),
+        NOW,
       ).map((fact) => fact.kind),
     ).toEqual(["ageRange", "seats", "regionLocked", "notStarted"]);
   });
@@ -983,41 +1011,65 @@ describe("isSwitchTarget", () => {
     id: "club-b",
     product_type: "consumer_club",
     billing_mode: "paid",
-    status: "running",
+    end_date: null,
+    timezone: "Europe/Helsinki",
   } as const;
 
-  it("admits a paid consumer club that is running or pending", () => {
-    expect(isSwitchTarget(club, "club-a")).toBe(true);
-    expect(isSwitchTarget({ ...club, status: "pending" }, "club-a")).toBe(true);
+  it("admits a paid consumer club whose term has not ended", () => {
+    expect(isSwitchTarget(club, "club-a", NOW)).toBe(true);
+    expect(
+      isSwitchTarget({ ...club, end_date: "2026-12-31" }, "club-a", NOW),
+    ).toBe(true);
   });
 
   it("refuses the product the seat is already on", () => {
-    expect(isSwitchTarget(club, "club-b")).toBe(false);
+    expect(isSwitchTarget(club, "club-b", NOW)).toBe(false);
   });
 
   it("refuses anything that is not subscription-shaped", () => {
     // A free club creates no subscription for the seat's to move onto, and a
     // camp or event is paid once rather than monthly.
-    expect(isSwitchTarget({ ...club, billing_mode: "free" }, "club-a")).toBe(
-      false,
-    );
     expect(
-      isSwitchTarget({ ...club, billing_mode: "external_contract" }, "club-a"),
+      isSwitchTarget({ ...club, billing_mode: "free" }, "club-a", NOW),
     ).toBe(false);
-    expect(isSwitchTarget({ ...club, product_type: "camp" }, "club-a")).toBe(
-      false,
-    );
     expect(
-      isSwitchTarget({ ...club, product_type: "municipality_club" }, "club-a"),
+      isSwitchTarget(
+        { ...club, billing_mode: "external_contract" },
+        "club-a",
+        NOW,
+      ),
+    ).toBe(false);
+    expect(
+      isSwitchTarget({ ...club, product_type: "camp" }, "club-a", NOW),
+    ).toBe(false);
+    expect(
+      isSwitchTarget(
+        { ...club, product_type: "municipality_club" },
+        "club-a",
+        NOW,
+      ),
     ).toBe(false);
   });
 
-  it("refuses a finished or cancelled club", () => {
-    expect(isSwitchTarget({ ...club, status: "completed" }, "club-a")).toBe(
-      false,
-    );
-    expect(isSwitchTarget({ ...club, status: "cancelled" }, "club-a")).toBe(
-      false,
-    );
+  it("refuses a club whose last day has passed", () => {
+    expect(
+      isSwitchTarget({ ...club, end_date: "2026-01-31" }, "club-a", NOW),
+    ).toBe(false);
+  });
+
+  it("reads the last day in the club's own zone", () => {
+    // A club is over the day AFTER its end date, read where the club is: at
+    // 2026-06-14T22:00Z a club ending on the 14th is finished in Helsinki and
+    // still running in Los Angeles.
+    const midnightish = new Date("2026-06-14T22:00:00Z");
+    const ending = { ...club, end_date: "2026-06-14" };
+    expect(isSwitchTarget(ending, "club-a", midnightish)).toBe(false);
+    expect(
+      isSwitchTarget(
+        { ...ending, timezone: "America/Los_Angeles" },
+        "club-a",
+        midnightish,
+      ),
+    ).toBe(true);
   });
 });

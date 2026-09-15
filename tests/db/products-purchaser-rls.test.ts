@@ -19,16 +19,16 @@ import {
  * their "My Clubs / Camps / Events" rail and its detail page keeps opening.
  *
  * The predicate under test is the purchaser branch of `can_read_product`. It
- * complements the public branch — which returns rows whose status is `pending`
- * or `running`, and since 00168 asks nothing about `is_visible` — by adding a
+ * complements the public branch — which returns every row whose end date has
+ * not passed, and since 00168 asks nothing about `is_visible` — by adding a
  * per-customer carve-out: any product the viewer has an `active` or
- * `waitlisted` participation on becomes readable whatever its status.
+ * `waitlisted` participation on becomes readable however long ago it finished.
  *
- * **The fixtures are `cancelled`, and that is load-bearing.** Status is now the
- * only thing that closes the public branch: an unlisted product is publicly
- * readable by design (an ad campaign's landing page has to work), so a
- * `is_visible = false` fixture would be readable by everyone and every negative
- * assertion below would be exercising nothing.
+ * **The fixtures ended in the past, and that is load-bearing.** A passed end
+ * date is now the only thing that closes the public branch: an unlisted product
+ * is publicly readable by design (an ad campaign's landing page has to work), so
+ * an `is_visible = false` fixture would be readable by everyone and every
+ * negative assertion below would be exercising nothing.
  *
  * The carve-out is exactly those two participation statuses and nothing else.
  * This file pins that with a positive control (active/waitlisted DO grant
@@ -37,6 +37,14 @@ import {
  * at payment confirmation, so nothing writes it), which makes it the cleanest
  * stand-in for "some status the policy has no opinion about".
  */
+
+/**
+ * A term that ended long ago, in a zone that cannot argue about it: the
+ * fixtures' timezone is UTC and the date is years back, so "the end date has
+ * passed" is true wherever and whenever this suite runs. That is what closes
+ * the public read branch, and it is the only thing that does.
+ */
+const CLOSED_END = "2020-01-31";
 
 const CLOSED_ACTIVE_PRODUCT = "00000000-0000-0000-0000-0000000005e5";
 const CLOSED_WAITLISTED_PRODUCT = "00000000-0000-0000-0000-0000000005e6";
@@ -79,12 +87,12 @@ describe("products purchaser-read RLS (00047)", () => {
 
     await deleteTestProducts(admin, ALL_PRODUCTS);
 
-    // Four products, all cancelled — i.e. all past the public branch. The
+    // Four products, all finished — i.e. all past the public branch. The
     // participation kind is the only axis that varies between them, so what
     // discriminates access is the carve-out's participation-status filter and
     // nothing else.
     for (const id of ALL_PRODUCTS) {
-      await createTestProduct(admin, { id, status: "cancelled", seatCount: 10 });
+      await createTestProduct(admin, { id, endDate: CLOSED_END, seatCount: 10 });
     }
 
     // CUSTOMER's participations on three of the four products.
@@ -147,7 +155,7 @@ describe("products purchaser-read RLS (00047)", () => {
   it("customer with an active participation can SELECT the closed product", async () => {
     const { data, error } = await customerClient
       .from("products")
-      .select("id, status")
+      .select("id, end_date")
       .eq("id", CLOSED_ACTIVE_PRODUCT)
       .maybeSingle();
 
@@ -156,19 +164,19 @@ describe("products purchaser-read RLS (00047)", () => {
     // Pin that the row really is outside the published statuses — otherwise
     // the assertion would pass via the public branch and we would not be
     // exercising the carve-out at all.
-    expect(data?.status).toBe("cancelled");
+    expect(data?.end_date).toBe(CLOSED_END);
   });
 
   it("customer with a waitlisted participation can SELECT the closed product", async () => {
     const { data, error } = await customerClient
       .from("products")
-      .select("id, status")
+      .select("id, end_date")
       .eq("id", CLOSED_WAITLISTED_PRODUCT)
       .maybeSingle();
 
     expect(error).toBeNull();
     expect(data?.id).toBe(CLOSED_WAITLISTED_PRODUCT);
-    expect(data?.status).toBe("cancelled");
+    expect(data?.end_date).toBe(CLOSED_END);
   });
 
   // ---------------------------------------------------------------------------
@@ -241,7 +249,7 @@ describe("products purchaser-read RLS (00047)", () => {
     // a widening annotation, not a narrowing cast.
     const query = customerClient
       .from("participations")
-      .select("product_id, status, product:products(id, status)")
+      .select("product_id, status, product:products(id, end_date)")
       .in("product_id", [
         CLOSED_ACTIVE_PRODUCT,
         CLOSED_WAITLISTED_PRODUCT,
@@ -283,16 +291,16 @@ describe("products purchaser-read RLS (00047)", () => {
     const { data: row, error } = await customerClient
       .from("products")
       .select(
-        "id, status, schedule_slots(weekday), product_translations(locale, name)",
+        "id, end_date, schedule_slots(weekday), product_translations(locale, name)",
       )
       .eq("id", CLOSED_ACTIVE_PRODUCT)
       .maybeSingle();
 
     expect(error).toBeNull();
     expect(row?.id).toBe(CLOSED_ACTIVE_PRODUCT);
-    // Pin that the row really is outside the published statuses, so the
-    // assertion exercises the purchaser carve-out rather than the public path.
-    expect(row?.status).toBe("cancelled");
+    // Pin that the row really is past the public branch, so the assertion
+    // exercises the purchaser carve-out rather than the public path.
+    expect(row?.end_date).toBe(CLOSED_END);
     expect(row?.schedule_slots.length).toBeGreaterThan(0);
     expect(row?.product_translations.length).toBeGreaterThan(0);
   });

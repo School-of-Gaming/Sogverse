@@ -64,11 +64,16 @@ column is simply empty rather than printing a weekly cadence it does not have. W
 never do is fail: one such club would otherwise take the whole month's invoice down with it, so the
 build is required to survive every document the wire contract accepts.
 
-**Projection is only offered for a club that is running or completed, and only where it has
-a start date.** A club that has not started, or that was cancelled, did not run the
-sessions its weekly schedule describes, and a club with no first day has no date to start
-walking from — guessing one would invent work. Any such club can still appear on the
+**Projection is offered wherever the club has a start date.** That date is the whole of the
+"had it begun" rule: the walk is clipped to it, so a term that starts after the month being
+invoiced projects nothing without a second test for it. A club with no first day has no date
+to start walking from — guessing one would invent work — and it can still appear on the
 invoice, on the strength of its stored rows alone.
+
+A club's lifecycle is nowhere in this page's arithmetic, deliberately. A stored status was
+here once, and it was the defect: it never advanced past its initial value, so a test on it
+was a test that never passed, and the missed-session flagging this page exists for was dead
+for every club on the invoice. The term dates say everything a projection needs to know.
 
 **A club is on the invoice iff it has at least one line of any kind in the month**, and a
 municipality is on it iff at least one of its clubs is. An empty club row would say it did
