@@ -1478,7 +1478,7 @@
       "lead": "Une API en lecture seule destinée aux tableaux de bord et au reporting de Lynx Educate sur le Programme Roblox. Elle expose les familles, les produits et les inscriptions qui relèvent du Programme, les consentements sur lesquels Lynx peut agir, et le jeu de données individuelles que la politique de confidentialité du Programme autorise Lynx à transmettre à Roblox pour la recherche sur l’impact.",
       "proposal": {
         "title": "Proposition soumise à examen",
-        "body": "The routes below are live today. Each one authenticates the caller, checks its query parameters and answers the documented shape with no records, so authentication and parsing can be integrated against right away; the data arrives resource by resource as each one is built. Field names, filters and the exact wording of enum values may still change."
+        "body": "Les routes ci-dessous sont en service dès aujourd’hui. Chacune authentifie l’appelant, vérifie ses paramètres de requête et renvoie la forme documentée sans aucun enregistrement : l’authentification et l’analyse peuvent donc être intégrées dès maintenant, et les données arriveront ressource par ressource, à mesure que chacune sera construite. Les noms de champs, les filtres et la formulation exacte des valeurs d’énumération peuvent encore changer."
       },
       "contents": {
         "heading": "Sur cette page"
