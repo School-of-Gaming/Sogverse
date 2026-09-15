@@ -1725,7 +1725,7 @@
       },
       "gamer": {
         "description": "Stuck on something, or got an idea for us? Write it here and we will read it.",
-        "replyNote": "Your Gedu may follow up with you during your next session.",
+        "replyNote": "If we write back, we will email your parent.",
         "placeholder": "What do you need help with?",
         "thankYou": "Thank you — we got your message.",
         "failed": "We could not send your message. Try again.",

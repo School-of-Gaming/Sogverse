@@ -1725,7 +1725,7 @@
       },
       "gamer": {
         "description": "Jäitkö jumiin tai keksitkö meille idean? Kirjoita se tähän, niin luemme sen.",
-        "replyNote": "Gedusi saattaa palata asiaasi seuraavan kerran aikana.",
+        "replyNote": "Jos vastaamme, lähetämme sähköpostia vanhemmallesi.",
         "placeholder": "Missä tarvitset apua?",
         "thankYou": "Kiitos — saimme viestisi.",
         "failed": "Viestin lähettäminen epäonnistui. Yritä uudelleen.",

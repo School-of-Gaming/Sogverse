@@ -1725,7 +1725,7 @@
       },
       "gamer": {
         "description": "Tu bloques sur quelque chose, ou tu as une idée pour nous ? Écris-la ici, on la lira.",
-        "replyNote": "Ton Gedu pourra en reparler avec toi lors de ta prochaine session.",
+        "replyNote": "Si on te répond, on enverra un e-mail à ton parent.",
         "placeholder": "Sur quoi as-tu besoin d’aide ?",
         "thankYou": "Merci — on a bien reçu ton message.",
         "failed": "Nous n’avons pas pu envoyer ton message. Réessaie.",

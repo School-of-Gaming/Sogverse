@@ -1725,7 +1725,7 @@
       },
       "gamer": {
         "description": "Har du fastnat på något, eller fått en idé till oss? Skriv den här så läser vi den.",
-        "replyNote": "Din Gedu kan följa upp med dig under nästa session.",
+        "replyNote": "Om vi svarar skickar vi ett mejl till din förälder.",
         "placeholder": "Vad behöver du hjälp med?",
         "thankYou": "Tack — vi har fått ditt meddelande.",
         "failed": "Vi kunde inte skicka ditt meddelande. Försök igen.",
