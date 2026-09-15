@@ -115,6 +115,46 @@ many were left out. It lives in the pure build beside the counts it is printed w
 many municipalities, how many clubs, how many sessions ran), because a figure the finance
 officer reads first has no business being the one figure nothing tests.
 
+## Who the invoice is addressed to
+
+**The buyer is a customer, not a municipality, and the link is per club.** One city
+can be two customers — library clubs bought by one department under one agreement,
+school clubs by another under another — and an association can buy clubs that run
+inside a municipality it is not. So nothing here may derive a buyer from where a club
+meets, and the two questions the page answers are genuinely independent: which
+municipality a club belongs to decides the section it sits in, and which customer it is
+invoiced to decides the file it ends up in.
+
+**A club's customer is carried whole, never reduced to a flag.** An invoice is addressed
+to that buyer, so the customer number, the billing name and the postal address all
+travel with the club — the accounting system that raises the invoice wants the address
+stated on the invoice itself even though the buyer's own record already holds one.
+
+**A missing customer costs no figure.** It is the fee's opposite number in that respect,
+and the counts beside it are deliberately separate: a club with no fee is missing from a
+total, while a club with no customer is missing from nothing — its sessions and its
+money are on the page in full, and what it lacks is only somebody to send the invoice
+to. Read as one condition the two would each say the wrong thing about the other's
+clubs.
+
+**It is optional at creation and flagged here**, exactly like the fee: a club is created
+before anybody has agreed who pays for it, so the gap is reported where the invoicing
+happens rather than by a constraint that would stop an admin saving a club at all.
+
+**A club with no municipality still refuses the whole month; a club with no customer
+does not.** The asymmetry is the point. A club nobody can be billed for cannot be
+rendered on a page organised by municipality and has no arithmetic to belong to, so the
+read stops. A club with no buyer renders perfectly well, so refusing would take every
+other club on the invoice down with it.
+
+**Invoicing data never references the locations table.** Location data is geography and
+has to keep working for every country we ever operate in; a customer's billing address,
+its number and its invoice name are contract data about one country's arrangements.
+Coupling them would make a national billing arrangement a property of the world map, and
+the first site outside that country would carry columns that mean nothing. The customer
+carries its own address, and the only edge between the two systems is the club, which
+points at a place and at a buyer independently.
+
 ## How the month is read
 
 **This is a ledger, and it is read the way a ledger is read: down the columns.** A month

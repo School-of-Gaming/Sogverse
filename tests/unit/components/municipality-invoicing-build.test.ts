@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildMunicipalityInvoicing } from "@/components/admin/municipality-invoicing/build-municipality-invoicing";
+import type { InvoiceCustomerRow } from "@/services/invoice-customers";
 import type {
   MunicipalityInvoicingClub,
   MunicipalityInvoicingSnapshot,
@@ -56,7 +57,31 @@ function club(
       type: "site",
     },
     municipality: MUNICIPALITY_A,
+    // No Fennoa customer unless a case says otherwise. Null is the ordinary
+    // state of a club nobody has agreed a buyer for, and — unlike a null fee —
+    // it changes no figure this file asserts on, which is itself something the
+    // cases below pin.
+    invoice_customer: null,
     sessions: [],
+    ...overrides,
+  };
+}
+
+/** One Fennoa customer, for the cases that need a club to have a buyer. */
+function customer(
+  id: string,
+  overrides: Partial<InvoiceCustomerRow> = {},
+): InvoiceCustomerRow {
+  return {
+    id,
+    fennoa_customer_no: `F0${id}`,
+    invoice_name: `Customer ${id}`,
+    street: "Virastokuja 1",
+    postal_code: "02070",
+    city: "Espoo",
+    country_code: "FI",
+    your_reference: null,
+    invoice_text: null,
     ...overrides,
   };
 }
@@ -416,6 +441,140 @@ describe("buildMunicipalityInvoicing", () => {
       expect(priced.totalCents).toBe(8_750);
       expect(municipality.totalCents).toBe(8_750);
       expect(municipality.clubsWithoutFee).toBe(1);
+      // Neither club names a buyer and only one is short a fee, so the two
+      // counts cannot be standing in for one another here.
+      expect(municipality.clubsWithoutCustomer).toBe(2);
+    });
+  });
+
+  describe("the Fennoa customer a club is invoiced to", () => {
+    it("passes the whole customer through untouched", () => {
+      // The serializer downstream writes the number, the name and the address
+      // into a file, so the builder's job here is to carry the row rather than
+      // to reduce it to a flag.
+      const buyer = customer("1", {
+        fennoa_customer_no: "F0204",
+        invoice_name: "Espoon kaupunki",
+        your_reference: "TIL-2026-0418",
+        invoice_text: "Laskutusviite jokaiselle riville.",
+      });
+      const built = onlyClub([
+        club({
+          id: "a",
+          invoice_customer: buyer,
+          sessions: [{ group_id: "g1", session_date: "2026-09-02" }],
+        }),
+      ]);
+
+      expect(built.invoiceCustomer).toEqual(buyer);
+    });
+
+    it("changes no total when a club has none", () => {
+      // The whole point of the separation: a missing buyer blocks a file and
+      // touches no money. Same club twice, once with a customer and once
+      // without, and every figure has to match.
+      const withBuyer = build([
+        club({
+          id: "a",
+          invoice_customer: customer("1"),
+          sessions: [{ group_id: "g1", session_date: "2026-09-02" }],
+        }),
+      ]);
+      const without = build([
+        club({
+          id: "a",
+          sessions: [{ group_id: "g1", session_date: "2026-09-02" }],
+        }),
+      ]);
+
+      expect(without.totalCents).toBe(withBuyer.totalCents);
+      expect(without.recordedCount).toBe(withBuyer.recordedCount);
+      expect(without.clubsWithoutFee).toBe(0);
+      expect(without.municipalities[0].totalCents).toBe(8_750);
+      expect(without.municipalities[0].clubs[0].invoiceCustomer).toBeNull();
+    });
+
+    it("counts the clubs with no customer at both levels", () => {
+      // Across two municipalities, so the month's count is not one
+      // municipality's count read twice — the same shape the fee count uses.
+      const view = build([
+        club({
+          id: "a",
+          municipality: MUNICIPALITY_A,
+          sessions: [{ group_id: "g1", session_date: "2026-09-02" }],
+        }),
+        club({
+          id: "b",
+          municipality: MUNICIPALITY_B,
+          sessions: [{ group_id: "g2", session_date: "2026-09-02" }],
+        }),
+        club({
+          id: "c",
+          municipality: MUNICIPALITY_B,
+          invoice_customer: customer("1"),
+          sessions: [{ group_id: "g3", session_date: "2026-09-09" }],
+        }),
+      ]);
+
+      expect(view.clubsWithoutCustomer).toBe(2);
+      expect(
+        view.municipalities.map((one) => one.clubsWithoutCustomer),
+      ).toEqual([1, 1]);
+      // And the money is untouched by any of it.
+      expect(view.totalCents).toBe(8_750 * 3);
+      expect(view.clubsWithoutFee).toBe(0);
+    });
+
+    it("keeps a missing fee and a missing customer as two separate counts", () => {
+      // One club short a fee, a different club short a buyer. Read as one
+      // condition the numbers would both be 2 and the page would say the wrong
+      // thing about both clubs.
+      const view = build([
+        club({
+          id: "a",
+          municipality_fee_cents: null,
+          invoice_customer: customer("1"),
+          sessions: [{ group_id: "g1", session_date: "2026-09-02" }],
+        }),
+        club({
+          id: "b",
+          sessions: [{ group_id: "g2", session_date: "2026-09-02" }],
+        }),
+      ]);
+
+      expect(view.clubsWithoutFee).toBe(1);
+      expect(view.clubsWithoutCustomer).toBe(1);
+      const [municipality] = view.municipalities;
+      expect(municipality.clubsWithoutFee).toBe(1);
+      expect(municipality.clubsWithoutCustomer).toBe(1);
+    });
+
+    it("lets one municipality's clubs be billed to two different customers", () => {
+      // The Tampere shape: two departments of one city buying under two
+      // agreements. A link derived from the municipality could not express it,
+      // and this is the case that says so.
+      const library = customer("1", { fennoa_customer_no: "F0211" });
+      const schools = customer("2", { fennoa_customer_no: "F0212" });
+      const view = build([
+        club({
+          id: "a",
+          invoice_customer: library,
+          sessions: [{ group_id: "g1", session_date: "2026-09-02" }],
+        }),
+        club({
+          id: "b",
+          invoice_customer: schools,
+          sessions: [{ group_id: "g2", session_date: "2026-09-02" }],
+        }),
+      ]);
+
+      expect(view.municipalities).toHaveLength(1);
+      expect(
+        view.municipalities[0].clubs.map(
+          (one) => one.invoiceCustomer?.fennoa_customer_no,
+        ),
+      ).toEqual(["F0211", "F0212"]);
+      expect(view.municipalities[0].clubsWithoutCustomer).toBe(0);
     });
   });
 
@@ -720,6 +879,7 @@ describe("buildMunicipalityInvoicing", () => {
       expect(view.clubCount).toBe(0);
       expect(view.recordedCount).toBe(0);
       expect(view.clubsWithoutFee).toBe(0);
+      expect(view.clubsWithoutCustomer).toBe(0);
     });
   });
 });

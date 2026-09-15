@@ -270,6 +270,22 @@ export type Product = Database["public"]["Tables"]["products"]["Row"];
 export type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
 export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 
+// invoice_customers (00259) — the Fennoa customers municipality clubs are
+// invoiced to. A buyer is a CUSTOMER and not a municipality: one city can be
+// two customers, and an association can buy clubs sited in a municipality it is
+// not, so the link is per club (`products.invoice_customer_id`) and is never
+// derived from a location. The table deliberately holds its own postal address
+// rather than pointing at `locations`: location data is geography and has to
+// work for every country, while this is Finnish contract data.
+//
+// Row alias only. The table carries no write grant for any Data API role — the
+// only writers are `create_invoice_customer` and `update_invoice_customer` — so
+// an Insert type here would name a statement nothing in the app is allowed to
+// make. The two write SHAPES live in the feature's own zod contracts, which is
+// also where the trimming and country-code rules are stated.
+export type InvoiceCustomer =
+  Database["public"]["Tables"]["invoice_customers"]["Row"];
+
 // product_staff_details — the staff-only half of a product, split off `products`
 // because that table is readable by anon and by every parent, and PostgREST lets
 // a caller pick the columns it wants. Sparse: a product with nothing staff-only

@@ -40,6 +40,10 @@ import {
  *     down, naming the product: an invoice is per municipality, so such a club
  *     cannot be billed to anybody and is a data error to repair rather than a
  *     shape any page has to render (migration 00253)
+ *   - the club carries the WHOLE Fennoa customer it is invoiced to, or null
+ *     where nobody has named a buyer — and a null there does NOT refuse the
+ *     month, unlike a null municipality, because only that club's own file is
+ *     blocked by it (migration 00259)
  *
  * **Every assertion is scoped to this file's own fixtures.** CI carries the
  * migrations' data *and* `seed.sql` *and* whatever other test files have seeded
@@ -105,6 +109,20 @@ const P_AT_MUNICIPALITY = "00000000-0000-0000-0000-0000000007f8";
 const P_NO_MUNICIPALITY = "00000000-0000-0000-0000-0000000007f9";
 /** A site parented straight to the region, so the walk finds no municipality. */
 const L_REGION_SITE = "00000000-0000-0000-0000-0000000002f9";
+/**
+ * The Fennoa customer the in-month club is invoiced to (00259).
+ *
+ * The customer coverage lives in this file rather than beside the table's own,
+ * because this file is the only one that may call the invoicing RPC at all: the
+ * orphan case above seeds a club with no municipality, and the function refuses
+ * every call while that club stands — so a second file reading the same month
+ * in a parallel worker would fail for a reason that is not a bug.
+ *
+ * Its number is a value no other file uses, because `fennoa_customer_no` is the
+ * one UNIQUE text column in this schema two files could collide on.
+ */
+const INVOICE_CUSTOMER = "00000000-0000-0000-0000-00000000080c";
+const INVOICE_CUSTOMER_NUMBER = "F980C";
 
 /**
  * The clubs the shared document is read over. The orphan club is deliberately
@@ -200,6 +218,31 @@ describe("get_admin_municipality_invoicing", () => {
       .eq("id", P_IN_MONTH);
     expect(fee.error).toBeNull();
 
+    // One club gets a Fennoa customer and the rest do not, which is what makes
+    // "the document carries the whole row" and "null where nobody has said who
+    // pays" two facts about the same read rather than one fixture each.
+    await admin.from("invoice_customers").delete().eq("id", INVOICE_CUSTOMER);
+    await admin
+      .from("invoice_customers")
+      .delete()
+      .eq("fennoa_customer_no", INVOICE_CUSTOMER_NUMBER);
+    const buyer = await admin.from("invoice_customers").insert({
+      id: INVOICE_CUSTOMER,
+      fennoa_customer_no: INVOICE_CUSTOMER_NUMBER,
+      invoice_name: "Invoicing fixture library services",
+      street: "Kirjastokuja 5",
+      postal_code: "33101",
+      city: "Tampere",
+      your_reference: "KIRJ-2026-77",
+    });
+    expect(buyer.error).toBeNull();
+
+    const linked = await admin
+      .from("products")
+      .update({ invoice_customer_id: INVOICE_CUSTOMER })
+      .eq("id", P_IN_MONTH);
+    expect(linked.error).toBeNull();
+
     // Names live in product_translations, and the RPC ships the whole array —
     // so every fixture needs at least one.
     const names = await admin.from("product_translations").insert(
@@ -248,8 +291,11 @@ describe("get_admin_municipality_invoicing", () => {
   });
 
   afterAll(async () => {
+    // Products first: the invoice-customer foreign key is ON DELETE RESTRICT,
+    // so a customer a club still points at cannot go.
     await deleteTestProducts(admin, ALL_PRODUCTS);
     await admin.from("locations").delete().eq("id", L_REGION_SITE);
+    await admin.from("invoice_customers").delete().eq("id", INVOICE_CUSTOMER);
   });
 
   it("refuses a non-admin caller", async () => {
@@ -385,6 +431,34 @@ describe("get_admin_municipality_invoicing", () => {
       await deleteTestProducts(admin, [P_NO_MUNICIPALITY]);
       await admin.from("locations").delete().eq("id", L_REGION_SITE);
     }
+  });
+
+  it("carries the whole Fennoa customer against the club it invoices", () => {
+    // The WHOLE row rather than an id, because what reads it next is a
+    // serializer building a Finvoice file: the number Fennoa matches the buyer
+    // on, the invoice name and the postal address the import demands all have
+    // to be in the document. It parses as part of the snapshot parse above, so
+    // what is asserted here is the values.
+    expect(invoiced(P_IN_MONTH)?.invoice_customer).toEqual({
+      id: INVOICE_CUSTOMER,
+      fennoa_customer_no: INVOICE_CUSTOMER_NUMBER,
+      invoice_name: "Invoicing fixture library services",
+      street: "Kirjastokuja 5",
+      postal_code: "33101",
+      city: "Tampere",
+      country_code: "FI",
+      your_reference: "KIRJ-2026-77",
+      invoice_text: null,
+    });
+  });
+
+  it("carries null for a club nobody has named a buyer for, and still answers", () => {
+    // The asymmetry with a missing municipality, which refuses the whole read.
+    // A club with no customer renders on the page in full and only its own file
+    // is blocked, so refusing the month would take every other club's file down
+    // with it — and that this very document exists is the proof.
+    expect(invoiced(P_NO_SESSIONS)?.invoice_customer).toBeNull();
+    expect(invoiced(P_AT_MUNICIPALITY)?.invoice_customer).toBeNull();
   });
 
   it("ships every array, never a null", () => {

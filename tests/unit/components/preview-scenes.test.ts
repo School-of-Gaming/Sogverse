@@ -1915,6 +1915,79 @@ describe("the municipality invoicing scene covers every ledger state", () => {
     expect(
       invoice.municipalities.filter((one) => one.clubsWithoutFee > 0),
     ).toHaveLength(1);
+    // And that club HAS a buyer, so the two gaps are visibly independent on
+    // the page rather than always arriving together.
+    expect(unpriced[0].invoiceCustomer).not.toBeNull();
+  });
+
+  it("blocks exactly one club's file for want of a customer, and no money", () => {
+    // A missing buyer costs a file and never a total, so the scene carries the
+    // state without it being able to move a figure — which is the thing a
+    // reviewer has to be able to see beside the fee warning it sits near.
+    expect(invoice.clubsWithoutCustomer).toBe(1);
+    const unlinked = clubs.filter((club) => club.invoiceCustomer === null);
+    expect(unlinked).toHaveLength(1);
+    expect(unlinked[0].recordedCount).toBeGreaterThan(0);
+    expect(unlinked[0].totalCents).toBeGreaterThan(0);
+    expect(
+      invoice.municipalities.filter((one) => one.clubsWithoutCustomer > 0),
+    ).toHaveLength(1);
+  });
+
+  it("has a municipality whose clubs share one customer", () => {
+    const shared = invoice.municipalities.filter((one) => {
+      const numbers = new Set(
+        one.clubs.map((club) => club.invoiceCustomer?.fennoa_customer_no),
+      );
+      return one.clubs.length >= 4 && numbers.size === 1 && !numbers.has(undefined);
+    });
+    expect(shared.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("has a municipality whose clubs split across two customers", () => {
+    // The Tampere shape — library clubs and school clubs bought by two
+    // departments under two agreements — which is the case a per-municipality
+    // link could not express at all.
+    const split = invoice.municipalities.filter(
+      (one) =>
+        new Set(
+          one.clubs.flatMap((club) =>
+            club.invoiceCustomer === null
+              ? []
+              : [club.invoiceCustomer.fennoa_customer_no],
+          ),
+        ).size > 1,
+    );
+    expect(split.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("has a buyer that is not the municipality its clubs meet in", () => {
+    // The association case: a customer whose invoice name is nobody's
+    // municipality name, so nothing on this page can be deriving the buyer
+    // from where a club meets.
+    const municipalityNames = new Set(
+      invoice.municipalities.map((one) => one.name),
+    );
+    const outsiders = clubs.filter(
+      (club) =>
+        club.invoiceCustomer !== null &&
+        ![...municipalityNames].some((name) =>
+          club.invoiceCustomer!.invoice_name.startsWith(name),
+        ),
+    );
+    expect(outsiders.length).toBeGreaterThan(0);
+  });
+
+  it("carries a buyer with a reference and extra invoice text, and ones without", () => {
+    // Both optional fields are optional in the data too, so the serializer's
+    // two branches each have a fixture behind them.
+    const buyers = clubs.flatMap((club) =>
+      club.invoiceCustomer === null ? [] : [club.invoiceCustomer],
+    );
+    expect(buyers.some((one) => one.your_reference !== null)).toBe(true);
+    expect(buyers.some((one) => one.your_reference === null)).toBe(true);
+    expect(buyers.some((one) => one.invoice_text !== null)).toBe(true);
+    expect(buyers.every((one) => /^[A-Z]{2}$/.test(one.country_code))).toBe(true);
   });
 
   it("collapses two groups on one date into one billed session", () => {

@@ -102,6 +102,7 @@ const validBody = {
   primary_gedu_fee_cents: null,
   assistant_gedu_fee_cents: null,
   municipality_fee_cents: null,
+  invoice_customer_id: null,
 };
 
 function updateRequest(
@@ -264,6 +265,43 @@ describe("POST /api/admin/products/[id]/update", () => {
     // the RPC's DEFAULT NULL turns the omission into the cleared column.
     const args = mockUserRpc.mock.calls[0][1];
     expect(args.p_tag).toBeUndefined();
+  });
+
+  it("carries an invoice customer through, and unlinks by omitting the argument", async () => {
+    const CUSTOMER_ID = "7c1f6a4e-2b58-4f0a-9d3c-51ae7b208f64";
+    mockAuthenticatedAdmin();
+
+    await POST(
+      updateRequest({
+        data: { ...validBody, invoice_customer_id: CUSTOMER_ID },
+      }),
+      { params },
+    );
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "update_product",
+      expect.objectContaining({ p_invoice_customer_id: CUSTOMER_ID }),
+    );
+
+    mockUserRpc.mockClear();
+    await POST(updateRequest({ data: validBody }), { params });
+    // A null customer is a deliberate unlink, exactly as a null tag is a
+    // deliberate clear: the RPC assigns the column on every call and its
+    // parameter defaults to NULL, so the omission is what writes it.
+    const args = mockUserRpc.mock.calls[0][1];
+    expect(args.p_invoice_customer_id).toBeUndefined();
+  });
+
+  it("returns 400 when the invoice customer field is missing", async () => {
+    // The wire-level guard the defaulted parameter needs, and the update half
+    // is where it bites: an omitted field would unlink a club from its buyer
+    // during an edit made for some entirely other reason.
+    mockAuthenticatedAdmin();
+    const { invoice_customer_id: _id, ...noCustomer } = validBody;
+
+    const response = await POST(updateRequest({ data: noCustomer }), { params });
+
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
   });
 
   it("returns 400 when the tag field is missing", async () => {

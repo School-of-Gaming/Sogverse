@@ -133,6 +133,11 @@ export const POST = defineRoute({
       p_primary_gedu_fee_cents: body.primary_gedu_fee_cents ?? undefined,
       p_assistant_gedu_fee_cents: body.assistant_gedu_fee_cents ?? undefined,
       p_municipality_fee_cents: body.municipality_fee_cents ?? undefined,
+      // Unlinking a club from its buyer IS an omission here, exactly as
+      // clearing a tag is — the RPC assigns `invoice_customer_id` on every call
+      // and its parameter defaults to NULL. Safe only because the contract
+      // demands the field: a caller that forgot it never reaches this line.
+      p_invoice_customer_id: body.invoice_customer_id ?? undefined,
     };
 
     const { data: productId, error: rpcError } = await supabase.rpc(

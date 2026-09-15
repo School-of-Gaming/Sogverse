@@ -218,6 +218,29 @@ import { TEST_IDS } from "./constants";
  *
  * The 7xx block runs out at 7ff, so allocation continues in 8xx
  * (`...00000000008XX`):
+ *   805-809        invoice-customers.test.ts (805 is the municipality club the
+ *                  products-side cases hang off and 806 the consumer club that
+ *                  must refuse the column — one product cannot be both, since
+ *                  the CHECK is keyed on product_type; 807 and 808 are two
+ *                  `invoice_customers` rows rather than products, kept in this
+ *                  one registry for the reason the product_images ids are, and
+ *                  two because the RESTRICT-on-delete case needs a customer
+ *                  nothing points at beside the one a club does. 809 is a
+ *                  customer id that must NEVER exist, backing the case that the
+ *                  update RPC refuses an unknown id — declared here for the same
+ *                  reason 6ee and 6ff are)
+ *   80a            create-product.test.ts's invoice customer (see the note
+ *                  below: that file reserves no PRODUCT id and this is not one)
+ *   80b            update-product.test.ts's invoice customer, kept apart from
+ *                  80a because the two files run in separate workers and the
+ *                  Fennoa customer number is UNIQUE — one shared row would race
+ *                  on insert rather than on a primary key
+ *   80c            admin-municipality-invoicing.test.ts's invoice customer. That
+ *                  file owns the invoicing RPC and is the only one that may call
+ *                  it, because one of its cases seeds a club with no
+ *                  municipality and the function refuses every call while that
+ *                  club stands — so the "the document carries the customer"
+ *                  assertions live there rather than beside the table's own
  *   801-804        session-feedback.test.ts (club 801 with group 803, where
  *                  BOTH seeded children hold an active seat — the sibling pair
  *                  is what makes "a member reads only their own row" provable
@@ -236,11 +259,13 @@ import { TEST_IDS } from "./constants";
  *                  pointing at a row that exists, which is the one thing it
  *                  must never do.
  *
- * One file reserves nothing and is listed anyway, so nobody goes looking for
- * its range: **create-product.test.ts**. It is the only file that calls
+ * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
+ * for its range: **create-product.test.ts**. It is the only file that calls
  * `create_product`, which mints its own id and accepts none, so it has no
- * fixture UUID to collide on — it collects the ids the RPC hands back and
- * deletes those.
+ * product UUID to collide on — it collects the ids the RPC hands back and
+ * deletes those. It does reserve 80a, which is an `invoice_customers` row: that
+ * table's rows are not minted by the RPC under test and its Fennoa number is
+ * unique, so it collides like any other fixture.
  */
 
 export interface ProductOptions {

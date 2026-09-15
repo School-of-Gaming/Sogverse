@@ -216,6 +216,14 @@ export interface FormState {
   assistantGeduFee: FeeDraft<AssistantGeduFeeStatus>;
   municipalityFee: FeeDraft<MunicipalityFeeStatus>;
 
+  // The Fennoa customer a municipality club is invoiced to, as that customer's
+  // row id, or null where nobody has agreed who pays yet. Surfaced only for
+  // municipality clubs, exactly like `municipalityFee` above; for every other
+  // type it stays at its default and is forced to null at build time, because
+  // the database refuses a customer on any product that is not a municipality
+  // club.
+  invoiceCustomerId: string | null;
+
   // Registration timing — `immediately` accepts signups as soon as the
   // product is published; `scheduled` opens at the picked date+time, read as a
   // wall clock in the product's own `timezone` above. The date/hour/minute
@@ -361,6 +369,10 @@ export function initialState(
     primaryGeduFee: { status: "unknown", amount: "" },
     assistantGeduFee: { status: "none", amount: "" },
     municipalityFee: { status: "unknown", amount: "" },
+    // No buyer until somebody says who it is. A club is created before the
+    // agreement behind it is signed, so the resting state is unlinked — and the
+    // invoicing page is what flags it, at the point a file would be produced.
+    invoiceCustomerId: null,
     // Capacity defaults — see `capacityDefaultsToCapped` for who caps and why.
     uncapped: !startsCapped,
     // The waitlist only exists behind a cap, so it follows the same answer.

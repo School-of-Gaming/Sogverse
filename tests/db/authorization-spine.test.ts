@@ -115,6 +115,17 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // the first-of-month check with `check_violation` — an error, but not the
   // forbidden one.
   get_admin_municipality_invoicing: { permittedRoles: ["admin"] },
+  // The two writers of invoice_customers (00259) — the Fennoa customers a
+  // municipality club's invoice is addressed to. They exist as RPCs rather than
+  // as table writes for the §3.3 reason: the table carries no write grant for
+  // `authenticated` at all, so a guarded SECURITY DEFINER function is the only
+  // path in from a browser. The positive half of the matrix IS assertable with
+  // no fixture for both: past the admin guard, all-NULL arguments fail the
+  // field validation with `check_violation` — an error, but not the forbidden
+  // one — which is also what makes the guard's position provable, since a
+  // forbidden role never reaches the validation at all.
+  create_invoice_customer: { permittedRoles: ["admin"] },
+  update_invoice_customer: { permittedRoles: ["admin"] },
   promote_from_waitlist: { permittedRoles: ["admin"] },
   demote_to_waitlist: { permittedRoles: ["admin"] },
   set_gedu_certified: { permittedRoles: ["admin"] },

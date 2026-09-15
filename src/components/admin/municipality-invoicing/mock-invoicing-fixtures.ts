@@ -1,4 +1,5 @@
 import { addCalendarDays, monthsAfter, weekdayOf } from "@/lib/calendar-date";
+import type { InvoiceCustomerRow } from "@/services/invoice-customers";
 import type {
   MunicipalityInvoicingClub,
   MunicipalityInvoicingLocation,
@@ -157,6 +158,173 @@ const MUNICIPALITIES = {
 
 type MunicipalityKey = keyof typeof MUNICIPALITIES;
 
+/**
+ * The Fennoa customers these clubs are invoiced to.
+ *
+ * **A buyer is a customer, not a municipality, and three of the entries here
+ * are the whole reason that distinction is in the schema.** Most municipalities
+ * buy their clubs themselves and appear once. Tampere appears **twice** — two
+ * departments buying under two agreements, which is the shape that makes a
+ * per-municipality link impossible. And one association buys clubs sited in a
+ * municipality it is not, which is the shape that makes deriving the buyer from
+ * a club's location impossible even for the single-customer case.
+ *
+ * The billing names follow the municipalities, which are real for the reason
+ * stated above — a Finnish reader recognises the row by them. Everything else
+ * is invented on the same terms as the school and club names: a customer
+ * number, a department name, an association or a street that belonged to a real
+ * customer would be a page that looks like live data, so the numbers are
+ * F-prefixed and plausible rather than anybody's.
+ */
+const INVOICE_CUSTOMERS = {
+  espoo: {
+    no: "F0204",
+    name: "Espoon kaupunki",
+    street: "Virastokuja 1",
+    postalCode: "02070",
+    city: "Espoo",
+    yourReference: "TIL-2026-0418",
+    invoiceText: null,
+  },
+  helsinki: {
+    no: "F0207",
+    name: "Helsingin kaupunki",
+    street: "Virastokatu 3",
+    postalCode: "00099",
+    city: "Helsinki",
+    yourReference: "PO 4471182",
+    invoiceText: "Laskutusviite merkittävä jokaiselle riville.",
+  },
+  // The association: it buys the Vantaa clubs, and it is not Vantaa. A page
+  // that derived the buyer from the club's location would address every one of
+  // these invoices to the wrong party and still look entirely correct.
+  lekvanner: {
+    no: "F0219",
+    name: "Föreningen Lekvänner rf",
+    street: "Sjöstigen 12 A",
+    postalCode: "01300",
+    city: "Vantaa",
+    yourReference: null,
+    invoiceText: null,
+  },
+  // Tampere, twice. Library clubs and school clubs are bought by two
+  // departments under two agreements, so one city is two customers and the
+  // link has to be per club.
+  tampereLibrary: {
+    no: "F0211",
+    name: "Tampereen kaupunki, kirjastopalvelut",
+    street: "Kirjastokuja 5",
+    postalCode: "33101",
+    city: "Tampere",
+    yourReference: "KIRJ-2026-77",
+    invoiceText: null,
+  },
+  tampereSchools: {
+    no: "F0212",
+    name: "Tampereen kaupunki, kasvatus- ja opetuspalvelut",
+    street: "Opintie 14",
+    postalCode: "33101",
+    city: "Tampere",
+    yourReference: "KASVA-2026-310",
+    invoiceText: null,
+  },
+  turku: {
+    no: "F0221",
+    name: "Turun kaupunki",
+    street: "Raatihuoneenkuja 2",
+    postalCode: "20101",
+    city: "Turku",
+    yourReference: null,
+    invoiceText: null,
+  },
+  oulu: {
+    no: "F0224",
+    name: "Oulun kaupunki",
+    street: "Pohjoisväylä 9",
+    postalCode: "90015",
+    city: "Oulu",
+    yourReference: null,
+    invoiceText: null,
+  },
+  jyvaskyla: {
+    no: "F0228",
+    name: "Jyväskylän kaupunki",
+    street: "Järvikatu 7",
+    postalCode: "40101",
+    city: "Jyväskylä",
+    yourReference: null,
+    invoiceText: null,
+  },
+  kuopio: {
+    no: "F0231",
+    name: "Kuopion kaupunki",
+    street: "Kallaveden puistotie 4",
+    postalCode: "70101",
+    city: "Kuopio",
+    yourReference: null,
+    invoiceText: null,
+  },
+  lahti: {
+    no: "F0234",
+    name: "Lahden kaupunki",
+    street: "Harjukuja 11",
+    postalCode: "15111",
+    city: "Lahti",
+    yourReference: null,
+    invoiceText: null,
+  },
+  joensuu: {
+    no: "F0237",
+    name: "Joensuun kaupunki",
+    street: "Pielisentie 6",
+    postalCode: "80101",
+    city: "Joensuu",
+    yourReference: null,
+    invoiceText: null,
+  },
+  rovaniemi: {
+    no: "F0241",
+    name: "Rovaniemen kaupunki",
+    street: "Napapiirinkuja 8",
+    postalCode: "96101",
+    city: "Rovaniemi",
+    yourReference: null,
+    invoiceText: null,
+  },
+  porvoo: {
+    no: "F0244",
+    name: "Porvoon kaupunki",
+    street: "Jokirannankuja 3",
+    postalCode: "06100",
+    city: "Porvoo",
+    yourReference: null,
+    invoiceText: null,
+  },
+} as const;
+
+type CustomerKey = keyof typeof INVOICE_CUSTOMERS;
+
+/**
+ * Which customer a club is billed to when its spec does not say.
+ *
+ * Only the municipalities whose clubs all share one buyer have an entry:
+ * Tampere is absent because its clubs split across two customers and a default
+ * would hide exactly the case it is here to show, and Vantaa is absent because
+ * an association buys its clubs — both name their customer per club instead.
+ */
+const DEFAULT_CUSTOMER: Partial<Record<MunicipalityKey, CustomerKey>> = {
+  espoo: "espoo",
+  helsinki: "helsinki",
+  turku: "turku",
+  oulu: "oulu",
+  jyvaskyla: "jyvaskyla",
+  kuopio: "kuopio",
+  lahti: "lahti",
+  joensuu: "joensuu",
+  rovaniemi: "rovaniemi",
+  porvoo: "porvoo",
+};
+
 /** One club, in the vocabulary the wire document uses. */
 interface ClubSpec {
   /** URL-safe and readable: it reaches the DOM only as the club's own link. */
@@ -172,6 +340,12 @@ interface ClubSpec {
   site: { name: string; type?: MunicipalityInvoicingLocation["type"] } | null;
   /** Current per-session fee in cents. Null is a fee nobody has filled in. */
   feeCents: number | null;
+  /**
+   * Which Fennoa customer invoices it. Omitted means the municipality's own
+   * customer (`DEFAULT_CUSTOMER`); an explicit `null` is a club nobody has
+   * named a buyer for, which blocks its file and nothing else.
+   */
+  customer?: CustomerKey | null;
   startDate?: string;
   endDate?: string | null;
   /** Weekly slots. Empty is a club whose schedule was never filled in. */
@@ -254,6 +428,10 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     site: { name: "Kaislarannan koulu" },
     // The fee nobody has filled in: "Fee not set" on the fee, on the total and
     // on every recorded row, and the club out of both totals above it.
+    //
+    // It DOES have a customer, which is the pairing worth having on the page:
+    // the two gaps are independent, so a club can be short a fee and not a
+    // buyer, and the flags beside it must not read as one condition.
     feeCents: null,
     slots: [{ weekday: FRI, startTime: "15:00" }],
   },
@@ -324,14 +502,21 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     municipality: "helsinki",
     site: { name: "Aallonharjan koulu" },
     feeCents: 5500,
+    // The club nobody has named a buyer for. Its sessions and its money are on
+    // the page in full — a missing customer costs no total anything — and the
+    // one thing it cannot do is have a file produced for it.
+    customer: null,
     slots: [{ weekday: FRI, startTime: "14:30" }],
   },
 
-  // Vantaa — the two clubs that bill without projecting anything.
+  // Vantaa — the two clubs that bill without projecting anything, and the
+  // municipality whose clubs an ASSOCIATION buys: the buyer is not Vantaa, so
+  // nothing here may derive a customer from where a club meets.
   {
     id: "preview-club-ruskolintu",
     name: "Peliklubi Ruskolintu",
     municipality: "vantaa",
+    customer: "lekvanner",
     site: { name: "Ruskolinnun koulu" },
     feeCents: 7000,
     slots: [{ weekday: MON, startTime: "15:45" }],
@@ -340,6 +525,7 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     id: "preview-club-kartanonrinne",
     name: "Peliklubi Kartanonrinne",
     municipality: "vantaa",
+    customer: "lekvanner",
     site: { name: "Kartanonrinteen koulu" },
     feeCents: 7000,
     slots: [{ weekday: TUE, startTime: "16:00" }],
@@ -349,6 +535,7 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     id: "preview-club-lammaskoski",
     name: "Peliklubi Lammaskoski",
     municipality: "vantaa",
+    customer: "lekvanner",
     site: { name: "Lammaskosken koulu" },
     feeCents: 6000,
     // A term that has not begun: it starts in August, so the projection clips
@@ -364,6 +551,7 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     id: "preview-club-ilvesmaki",
     name: "Peliklubi Ilvesmäki",
     municipality: "vantaa",
+    customer: "lekvanner",
     site: { name: "Ilvesmäen koulu" },
     feeCents: 6500,
     slots: [{ weekday: THU, startTime: "15:30" }],
@@ -374,6 +562,7 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     id: "preview-club-vuoreskallio",
     name: "Peliklubi Vuoreskallio",
     municipality: "tampere",
+    customer: "tampereLibrary",
     site: { name: "Vuoreskallion koulu" },
     feeCents: 9000,
     slots: [{ weekday: MON, startTime: "16:15" }],
@@ -382,6 +571,7 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     id: "preview-club-hallilanmaki",
     name: "Peliklubi Hallilanmäki",
     municipality: "tampere",
+    customer: "tampereLibrary",
     site: { name: "Hallilanmäen koulu" },
     feeCents: 8000,
     // A term ending on the 13th: the projection is clipped to the term's last
@@ -394,6 +584,7 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     id: "preview-club-pyynikinportti",
     name: "Peliklubi Pyynikinportti",
     municipality: "tampere",
+    customer: "tampereSchools",
     site: { name: "Pyynikinportin koulu" },
     feeCents: 7500,
     slots: [{ weekday: THU, startTime: "15:00" }],
@@ -404,6 +595,7 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     id: "preview-club-tesomanharju",
     name: "Peliklubi Tesomanharju",
     municipality: "tampere",
+    customer: "tampereSchools",
     site: { name: "Tesomanharjun koulu" },
     // The bottom of the fee range.
     feeCents: 4500,
@@ -609,7 +801,38 @@ function buildClub(spec: ClubSpec): MunicipalityInvoicingClub {
       name: municipality.name,
       name_i18n: municipality.sv === null ? null : { sv: municipality.sv },
     },
+    invoice_customer: invoiceCustomerOf(spec),
     sessions: storedRows(spec, { startDate, endDate, slots }),
+  };
+}
+
+/**
+ * The customer row a club is billed to, as the RPC ships it: the whole row
+ * against every club, not an id.
+ *
+ * `undefined` on the spec falls back to the municipality's own customer, an
+ * explicit `null` is a club nobody has named a buyer for, and a named key is
+ * how Tampere's two departments and the association that buys Vantaa's clubs
+ * reach the document.
+ */
+function invoiceCustomerOf(spec: ClubSpec): InvoiceCustomerRow | null {
+  const key =
+    spec.customer === undefined
+      ? DEFAULT_CUSTOMER[spec.municipality]
+      : spec.customer;
+  if (key === undefined || key === null) return null;
+
+  const customer = INVOICE_CUSTOMERS[key];
+  return {
+    id: `preview-invoice-customer-${key}`,
+    fennoa_customer_no: customer.no,
+    invoice_name: customer.name,
+    street: customer.street,
+    postal_code: customer.postalCode,
+    city: customer.city,
+    country_code: "FI",
+    your_reference: customer.yourReference,
+    invoice_text: customer.invoiceText,
   };
 }
 

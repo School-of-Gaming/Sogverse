@@ -9,6 +9,7 @@ import {
 } from "@/lib/products/format-product-schedule";
 import { productLocalDate } from "@/lib/session-occurrence";
 import { sumCents } from "@/lib/utils";
+import type { InvoiceCustomerRow } from "@/services/invoice-customers";
 import type {
   MunicipalityInvoicingClub,
   MunicipalityInvoicingSnapshot,
@@ -66,6 +67,13 @@ import type {
  * happens once, at render. A null fee is never worth zero: the club's total is
  * null, it is excluded from its municipality's total, and the municipality
  * carries a count of how many of its clubs are in that state.
+ *
+ * **A club's Fennoa customer is carried, never counted.** It decides who an
+ * invoice is addressed to and nothing about what the invoice says, so a club
+ * with no customer is in every total exactly as it would be with one — the
+ * counts of clubs without a customer sit beside the counts of clubs without a
+ * fee precisely so the two cannot be read as the same kind of gap. The missing
+ * fee costs money off a total; the missing customer costs a file.
  */
 
 // ---------------------------------------------------------------------------
@@ -102,6 +110,20 @@ export interface InvoiceClub {
   scheduleSummary: string | null;
   /** The club's current per-session fee in cents, or null where it is unset. */
   feeCents: number | null;
+  /**
+   * The Fennoa customer this club is invoiced to, whole, or null where nobody
+   * has said who pays yet.
+   *
+   * Passed straight through from the document rather than reduced to a flag,
+   * because what reads it next is a file: the customer number, the invoice
+   * name and the postal address all have to reach the serializer, and a club is
+   * the only thing that knows which customer they came from.
+   *
+   * **A missing one costs no money.** It changes nothing about any total on
+   * this page — it decides only whether a file can be produced for this club,
+   * which is why the counts beside it are separate from `clubsWithoutFee`.
+   */
+  invoiceCustomer: InvoiceCustomerRow | null;
   /** Distinct dates with a stored row that has arrived — what bills. */
   recordedCount: number;
   /**
@@ -127,6 +149,17 @@ export interface InvoiceMunicipality {
   totalCents: number;
   /** How many of this municipality's clubs were left out of that total. */
   clubsWithoutFee: number;
+  /**
+   * How many of this municipality's clubs name no Fennoa customer.
+   *
+   * Counted like `clubsWithoutFee` and meaning something entirely different: a
+   * club with no fee is missing from a *total*, while a club with no customer
+   * is missing from nothing — its sessions and its money are on this page in
+   * full. What it cannot do is have a file produced for it, so this is a count
+   * of blocked exports rather than of excluded money, and the two are separate
+   * numbers because a club can be either, both or neither.
+   */
+  clubsWithoutCustomer: number;
   /** Sessions that ran across this municipality's clubs — what bills. */
   recordedCount: number;
   clubs: readonly InvoiceClub[];
@@ -149,6 +182,13 @@ export interface MunicipalityInvoicingView {
   totalCents: number;
   /** How many clubs in the month were left out of `totalCents`. */
   clubsWithoutFee: number;
+  /**
+   * How many clubs in the month name no Fennoa customer, across every
+   * municipality — the month-level twin of the count on each municipality, and
+   * the same distinction: it is a count of clubs whose file is blocked, never
+   * of money missing from `totalCents`, which it does not touch.
+   */
+  clubsWithoutCustomer: number;
   /** How many municipalities are on the invoice. */
   municipalityCount: number;
   /** How many clubs are on the invoice, across every municipality. */
@@ -222,6 +262,9 @@ export function buildMunicipalityInvoicing({
         ),
       ),
       clubsWithoutFee: clubs.filter((club) => club.feeCents === null).length,
+      clubsWithoutCustomer: clubs.filter(
+        (club) => club.invoiceCustomer === null,
+      ).length,
       recordedCount: clubs.reduce((count, club) => count + club.recordedCount, 0),
       clubs,
     };
@@ -236,6 +279,10 @@ export function buildMunicipalityInvoicing({
     totalCents: sumCents(municipalities.map((one) => one.totalCents)),
     clubsWithoutFee: municipalities.reduce(
       (count, one) => count + one.clubsWithoutFee,
+      0,
+    ),
+    clubsWithoutCustomer: municipalities.reduce(
+      (count, one) => count + one.clubsWithoutCustomer,
       0,
     ),
     municipalityCount: municipalities.length,
@@ -307,6 +354,10 @@ function buildClub(
         : localizedLocationName(club.location, locale),
     scheduleSummary: scheduleSummary(club, locale, now),
     feeCents,
+    // Straight through. Nothing here reads it — a missing customer changes no
+    // count and no total — and that is the point: it is carried so the file the
+    // export writes comes out of the same build every figure on this page does.
+    invoiceCustomer: club.invoice_customer,
     recordedCount,
     unrecordedCount: lines.filter((line) => line.kind === "unrecorded").length,
     // One multiplication in cents, through the same guard every sum goes
