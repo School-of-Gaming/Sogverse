@@ -4,8 +4,10 @@ import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { isoWeekOf } from "@/lib/iso-week";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import {
+  formatWeekday,
   formatProductSchedule,
   joinScheduleGroups,
+  type ProductScheduleSummary,
 } from "@/lib/products/format-product-schedule";
 import { productLocalDate } from "@/lib/session-occurrence";
 import { sumCents } from "@/lib/utils";
@@ -104,10 +106,43 @@ export interface InvoiceSession {
 export interface InvoiceClub {
   id: string;
   name: string;
+  /**
+   * The municipality this club is billed under, localized — the same name the
+   * section it sits in is headed with.
+   *
+   * Carried on the club as well as on the section because the export's own row
+   * text names it, and a customer's clubs can come from several sections: an
+   * association buys clubs sited in a municipality it is not, so a file's rows
+   * cannot take the municipality from the section they were rendered under.
+   */
+  municipalityName: string;
   /** The school hall it meets in. Null is type-driven only — see `buildClub`. */
   locationName: string | null;
+  /**
+   * Whether the club's own location *is* its municipality, which is what a
+   * remote club looks like: it points at the municipality directly rather than
+   * at a hall inside one.
+   *
+   * The page prints `locationName` either way — "Oulu" above an online club's
+   * dates is the honest answer to where it meets. An invoice row must not,
+   * because it already names the municipality first and would otherwise read
+   * "Oulu - Oulu - Verkkoklubi".
+   */
+  locationIsMunicipality: boolean;
   /** One line of weekdays and clock faces, or null where it has no slots. */
   scheduleSummary: string | null;
+  /**
+   * The same weekly cadence in its shortest form — two-letter weekdays and an
+   * en dash, e.g. `ma 14:15–15:30` — or null where the club has no slots.
+   *
+   * A second rendering rather than a reformatting of the line above, because
+   * the two are read in different places: a ledger column has room for the
+   * weekday's own name, and an invoice row shares one line with three names and
+   * has to say the same thing in a third of the width. Both come out of the one
+   * schedule formatter and in the one locale the build was asked for, so they
+   * cannot disagree about which day or which clock face.
+   */
+  compactSchedule: string | null;
   /** The club's current per-session fee in cents, or null where it is unset. */
   feeCents: number | null;
   /**
@@ -163,6 +198,55 @@ export interface InvoiceMunicipality {
   /** Sessions that ran across this municipality's clubs — what bills. */
   recordedCount: number;
   clubs: readonly InvoiceClub[];
+  /**
+   * The Fennoa customers that appear among this municipality's clubs, each as
+   * its **month-wide** summary rather than a municipality-scoped one.
+   *
+   * That is deliberate and it is the whole reason the summary is shared rather
+   * than recomputed per section: one customer gets one file for the month
+   * across every municipality it appears under, so the readiness shown beside a
+   * municipality's name is a claim about that whole file. A count scoped to the
+   * section would say a file can be produced while a club in the next section
+   * blocks it.
+   */
+  customers: readonly InvoiceCustomerSummary[];
+}
+
+/**
+ * One Fennoa customer's whole month, across every municipality its clubs sit
+ * in — what the export is addressed to, and what decides whether it can be.
+ *
+ * **The unit is the customer, not the municipality.** A buyer is a contract
+ * party: one city can be two of them, and an association can buy clubs running
+ * in a municipality it is not. So the summary is collected across the month's
+ * sections rather than inside one, and the municipalities it appears under are
+ * carried as a fact about the customer rather than as its address.
+ *
+ * It lives in the pure build for the same reason every total does: the page
+ * renders a control per entry and has to say whether the file behind it can be
+ * produced, and a component counting clubs itself would be a second definition
+ * of readiness that nothing holds to the first.
+ */
+export interface InvoiceCustomerSummary {
+  /** The customer, whole — the number, the billing name and the address. */
+  customer: InvoiceCustomerRow;
+  /**
+   * Every club in the month billed to this customer, in the order the ledger
+   * renders them: municipality by localized name, then club by localized name.
+   */
+  clubs: readonly InvoiceClub[];
+  /** `clubs.length`, stated so a reader of the summary need not count. */
+  clubCount: number;
+  /** Sessions that ran across those clubs — what the file's rows will bill. */
+  recordedCount: number;
+  /**
+   * How many of those clubs have no fee. **Non-zero refuses the whole file**:
+   * an invoice missing a club's money is a total that is quietly short, and a
+   * short total is the one failure this feature cannot afford.
+   */
+  clubsWithoutFee: number;
+  /** The municipalities its clubs sit under, localized and in ledger order. */
+  municipalityNames: readonly string[];
 }
 
 export interface MunicipalityInvoicingView {
@@ -189,6 +273,16 @@ export interface MunicipalityInvoicingView {
    * of money missing from `totalCents`, which it does not touch.
    */
   clubsWithoutCustomer: number;
+  /**
+   * Every Fennoa customer with at least one club in the month, ordered by
+   * customer number.
+   *
+   * **The order is part of the file.** A customer's provisional invoice number
+   * is derived from its position in this list, so the order has to be the same
+   * answer for every reader — which rules out sorting by the billing name, the
+   * one key that depends on the locale the month was built in.
+   */
+  customers: readonly InvoiceCustomerSummary[];
   /** How many municipalities are on the invoice. */
   municipalityCount: number;
   /** How many clubs are on the invoice, across every municipality. */
@@ -249,30 +343,53 @@ export function buildMunicipalityInvoicing({
     a.name.localeCompare(b.name, locale),
   );
 
-  const municipalities: InvoiceMunicipality[] = ordered.map((bucket) => {
-    const clubs = [...bucket.clubs].sort((a, b) =>
-      a.name.localeCompare(b.name, locale),
-    );
-    return {
-      id: bucket.id,
-      name: bucket.name,
-      totalCents: sumCents(
-        clubs.flatMap((club) =>
-          club.totalCents === null ? [] : [club.totalCents],
+  const sections: Omit<InvoiceMunicipality, "customers">[] = ordered.map(
+    (bucket) => {
+      const clubs = [...bucket.clubs].sort((a, b) =>
+        a.name.localeCompare(b.name, locale),
+      );
+      return {
+        id: bucket.id,
+        name: bucket.name,
+        totalCents: sumCents(
+          clubs.flatMap((club) =>
+            club.totalCents === null ? [] : [club.totalCents],
+          ),
         ),
+        clubsWithoutFee: clubs.filter((club) => club.feeCents === null).length,
+        clubsWithoutCustomer: clubs.filter(
+          (club) => club.invoiceCustomer === null,
+        ).length,
+        recordedCount: clubs.reduce(
+          (count, club) => count + club.recordedCount,
+          0,
+        ),
+        clubs,
+      };
+    },
+  );
+
+  // Collected across the sections rather than inside them: a customer's file is
+  // its whole month, and two of the shapes this feature exists for — one city
+  // buying under two agreements, one association buying clubs sited elsewhere —
+  // are precisely the cases where a customer and a municipality are not the
+  // same set of clubs.
+  const customers = summarizeCustomers(sections);
+
+  const municipalities: InvoiceMunicipality[] = sections.map((section) => {
+    const ids = new Set(section.clubs.map((club) => club.id));
+    return {
+      ...section,
+      customers: customers.filter((one) =>
+        one.clubs.some((club) => ids.has(club.id)),
       ),
-      clubsWithoutFee: clubs.filter((club) => club.feeCents === null).length,
-      clubsWithoutCustomer: clubs.filter(
-        (club) => club.invoiceCustomer === null,
-      ).length,
-      recordedCount: clubs.reduce((count, club) => count + club.recordedCount, 0),
-      clubs,
     };
   });
 
   return {
     monthStart,
     municipalities,
+    customers,
     // The month is summed from the municipality totals rather than from the
     // clubs again: one arithmetic, stated once, so the figure at the top of the
     // page cannot disagree with the figures it is standing over.
@@ -292,6 +409,77 @@ export function buildMunicipalityInvoicing({
       0,
     ),
   };
+}
+
+/**
+ * Every Fennoa customer with a club in the month, with the facts that decide
+ * whether a file can be produced for it.
+ *
+ * Walked in section order, so a customer's clubs and the municipalities it
+ * appears under both come out in the order the ledger prints them — a file's
+ * rows then read down the page the CFO checked them against.
+ *
+ * **Ordered by customer number, not by name.** The position in this list is
+ * part of each customer's provisional invoice number, and the billing name
+ * sorts differently per locale, so a name-ordered list would number the same
+ * month's files differently for a Swedish reader than for a Finnish one.
+ */
+function summarizeCustomers(
+  sections: readonly Omit<InvoiceMunicipality, "customers">[],
+): InvoiceCustomerSummary[] {
+  const collected = new Map<
+    string,
+    {
+      customer: InvoiceCustomerRow;
+      clubs: InvoiceClub[];
+      municipalityNames: string[];
+    }
+  >();
+
+  for (const section of sections) {
+    for (const club of section.clubs) {
+      const customer = club.invoiceCustomer;
+      // A club nobody has named a buyer for is in every total on the page and
+      // in no file. It is counted as `clubsWithoutCustomer` and is not a
+      // customer of its own here — there is nothing to address.
+      if (customer === null) continue;
+
+      const entry = collected.get(customer.id);
+      if (entry === undefined) {
+        collected.set(customer.id, {
+          customer,
+          clubs: [club],
+          municipalityNames: [section.name],
+        });
+      } else {
+        entry.clubs.push(club);
+        if (!entry.municipalityNames.includes(section.name)) {
+          entry.municipalityNames.push(section.name);
+        }
+      }
+    }
+  }
+
+  return [...collected.values()]
+    .map((entry) => ({
+      customer: entry.customer,
+      clubs: entry.clubs,
+      clubCount: entry.clubs.length,
+      recordedCount: entry.clubs.reduce(
+        (count, club) => count + club.recordedCount,
+        0,
+      ),
+      clubsWithoutFee: entry.clubs.filter((club) => club.feeCents === null)
+        .length,
+      municipalityNames: entry.municipalityNames,
+    }))
+    .sort((a, b) =>
+      a.customer.fennoa_customer_no < b.customer.fennoa_customer_no
+        ? -1
+        : a.customer.fennoa_customer_no > b.customer.fennoa_customer_no
+          ? 1
+          : 0,
+    );
 }
 
 interface ClubContext {
@@ -345,14 +533,27 @@ function buildClub(
   const feeCents = club.municipality_fee_cents;
   const recordedCount = billableDates.size;
 
+  const schedule = scheduleSummary(club, locale, now);
+
   return {
     id: club.id,
     name: resolveTranslation(club.product_translations, locale)?.name ?? "",
+    municipalityName: localizedLocationName(club.municipality, locale),
     locationName:
       club.location === null
         ? null
         : localizedLocationName(club.location, locale),
-    scheduleSummary: scheduleSummary(club, locale, now),
+    // An online club points at the municipality itself rather than at a hall
+    // inside one — the ancestor-or-*self* half of the invoice's walk up the
+    // chain — and the comparison is on the row rather than on the location's
+    // type, because a `municipality` row that is not this club's own
+    // municipality would still be a place worth naming.
+    locationIsMunicipality:
+      club.location !== null && club.location.id === club.municipality.id,
+    scheduleSummary:
+      schedule === null ? null : joinScheduleGroups(schedule.groups) || null,
+    compactSchedule:
+      schedule === null ? null : compactSchedule(schedule, locale),
     feeCents,
     // Straight through. Nothing here reads it — a missing customer changes no
     // count and no total — and that is the point: it is carried so the file the
@@ -414,9 +615,12 @@ function projectedDates(
   return [...dates];
 }
 
+/** A weekly schedule the formatter recognised — the only kind a club has. */
+type RecurringSchedule = Extract<ProductScheduleSummary, { kind: "recurring" }>;
+
 /**
- * The club's weekly cadence on one line, through the same formatter the admin
- * product rows use.
+ * The club's weekly cadence, through the same formatter the admin product rows
+ * use — resolved once per club, because both renderings below read it.
  *
  * It is rendered in the **club's own zone**, which is the one place this page
  * departs from the app's general "times render in the viewer's zone" rule, and
@@ -431,7 +635,7 @@ function scheduleSummary(
   club: MunicipalityInvoicingClub,
   locale: SupportedLocale,
   now: Date,
-): string | null {
+): RecurringSchedule | null {
   const summary = formatProductSchedule({
     product: {
       product_type: "municipality_club",
@@ -444,6 +648,29 @@ function scheduleSummary(
     timeZone: club.timezone,
     now,
   });
-  if (summary.kind !== "recurring") return null;
-  return joinScheduleGroups(summary.groups) || null;
+  return summary.kind === "recurring" ? summary : null;
+}
+
+/**
+ * The same cadence written as short as it goes: `ma 14:15–15:30`, and
+ * `ma, ke 17:00–18:30, pe 15:00–16:00` where the club meets more than once.
+ *
+ * The weekday is always the **short** form, even for a group of one, which is
+ * where this parts company with the ledger's line: the shared join picks the
+ * long name whenever a group has a single weekday, and an invoice row that has
+ * to carry a municipality, a hall and a club name before it gets here cannot
+ * spend nine characters on saying Monday. The clock faces are the formatter's
+ * own, so the two renderings can differ in width and never in fact.
+ */
+function compactSchedule(
+  summary: RecurringSchedule,
+  locale: SupportedLocale,
+): string | null {
+  const parts = summary.groups.map((group) => {
+    const days = group.weekdays
+      .map((weekday) => formatWeekday(weekday, locale, "short"))
+      .join(", ");
+    return `${days} ${group.startTime}–${group.endTime}`;
+  });
+  return parts.join(", ") || null;
 }

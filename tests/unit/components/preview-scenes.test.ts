@@ -30,6 +30,7 @@ import {
   resolvePreviewInvoicingMonth,
 } from "@/components/admin/municipality-invoicing/mock-invoicing-fixtures";
 import { buildMunicipalityInvoicing } from "@/components/admin/municipality-invoicing/build-municipality-invoicing";
+import { finvoiceReadiness } from "@/lib/finvoice";
 import {
   INVOICE_CUSTOMER_EDIT_FIXTURE,
   INVOICE_CUSTOMER_FIXTURES,
@@ -1943,6 +1944,29 @@ describe("the municipality invoicing scene covers every ledger state", () => {
     expect(
       invoice.municipalities.filter((one) => one.clubsWithoutCustomer > 0),
     ).toHaveLength(1);
+  });
+
+  it("shows a downloadable file, and both reasons one can be refused", () => {
+    // The scene is where the export is reviewed, so every state its controls
+    // can be in has to be on the one working month: a file that can be taken,
+    // a file blocked by a club with no fee, and a file blocked by a customer
+    // whose clubs did not run. The third is the one a month of ordinary clubs
+    // would never produce by itself, which is why a customer here buys exactly
+    // one club and that club recorded nothing.
+    const readiness = invoice.customers.map((one) => finvoiceReadiness(one));
+
+    expect(readiness.filter((one) => one.ok).length).toBeGreaterThanOrEqual(1);
+    expect(
+      readiness.flatMap((one) => (one.ok ? [] : [one.reason])).sort(),
+    ).toEqual(["club_without_fee", "nothing_to_invoice"]);
+  });
+
+  it("shows a municipality line carrying two customers' files", () => {
+    // The Tampere shape, read from the summaries the line actually renders.
+    const several = invoice.municipalities.filter(
+      (one) => one.customers.length > 1,
+    );
+    expect(several.length).toBeGreaterThanOrEqual(1);
   });
 
   it("has a municipality whose clubs share one customer", () => {

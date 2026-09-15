@@ -504,7 +504,7 @@ export const PREVIEW_SCENES = [
     surface: "municipality-invoicing",
     title: "Municipality invoicing",
     description:
-      "The CFO's monthly ledger over a fixture document, pinned to Thursday 21 May 2026: twelve municipalities, thirty-one clubs and every state a line on this page can be in. Expanding a municipality, opening a club's dated sessions and the expand-all control all work. The month stepper works too and stays in the preview — every month but May is empty, which is how the empty ledger is reached; the club names are real links out to the live admin pages.",
+      "The CFO's monthly ledger over a fixture document, pinned to Thursday 21 May 2026: twelve municipalities, thirty-one clubs and every state a line on this page can be in, including the per-customer Finvoice downloads — Tampere's two departments, the association buying Vantaa's clubs, Espoo refused for a club with no fee, Helsinki's youth department refused for having nothing to invoice, and a club nobody has named a buyer for. Expanding a municipality, opening a club's dated sessions and the expand-all control all work. The month stepper works too and stays in the preview — every month but May is empty, which is how the empty ledger is reached; the club names and the download links are real links out to the live admin pages and the live export route.",
     chrome: "admin",
     scenarios: [
       {

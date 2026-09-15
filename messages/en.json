@@ -394,6 +394,12 @@
       "upcoming": "Upcoming",
       "unrecordedSessions": "{count, plural, one {# not recorded} other {# not recorded}}",
       "sessionsFor": "Sessions of {club}",
+      "clubsIn": "Clubs in {municipality}",
+      "clubsWithoutCustomer": "{count, plural, one {# club with no customer} other {# clubs with no customer}}",
+      "customerNotSet": "Customer not set",
+      "downloadInvoiceFor": "Download the Finvoice file for {customer}",
+      "fileBlockedByFee": "{count, plural, one {No file: # club has no fee} other {No file: # clubs have no fee}}",
+      "fileBlockedByNothingToInvoice": "No file: nothing recorded",
       "loadError": "Could not load the invoicing month. Refresh to try again.",
       "loadErrorWithReason": "Could not load the invoicing month — {reason}. Refresh to try again."
     },

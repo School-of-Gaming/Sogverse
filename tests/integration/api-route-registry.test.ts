@@ -178,6 +178,8 @@ const TESTS = {
     "tests/integration/api/tools-minecraft-password-reset.test.ts",
   minecraftJoinCheck: "tests/integration/api/minecraft-join-check.test.ts",
   minecraftVerify: "tests/integration/api/minecraft-verify.test.ts",
+  municipalityInvoicingFinvoice:
+    "tests/integration/api/municipality-invoicing-finvoice.test.ts",
   pin: "tests/integration/auth/pin.test.ts",
   productImagesManage: "tests/integration/api/product-images-manage.test.ts",
   productImagesReplace: "tests/integration/api/product-images-replace.test.ts",
@@ -246,6 +248,20 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: ADMIN_ONLY,
         body: { kind: "json", schema: "adminGameAccountBody" },
         test: TESTS.adminUserGameAccount,
+      },
+    },
+  },
+
+  // The one route on this surface that answers with a document rather than a
+  // payload: a Finvoice XML file, as an attachment. Query-only by nature — a
+  // download is a navigation the ledger links to, so there is no body to
+  // discipline and nothing is written, which is also why it is a GET.
+  "src/app/api/admin/municipality-invoicing/finvoice/route.ts": {
+    handlers: {
+      GET: {
+        posture: ADMIN_ONLY,
+        body: { kind: "none" },
+        test: TESTS.municipalityInvoicingFinvoice,
       },
     },
   },

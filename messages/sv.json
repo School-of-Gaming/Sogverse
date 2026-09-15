@@ -394,6 +394,12 @@
       "upcoming": "Kommande",
       "unrecordedSessions": "{count, plural, one {# oregistrerat} other {# oregistrerade}}",
       "sessionsFor": "Tillfällen för {club}",
+      "clubsIn": "Klubbar i {municipality}",
+      "clubsWithoutCustomer": "{count, plural, one {# klubb utan faktureringskund} other {# klubbar utan faktureringskund}}",
+      "customerNotSet": "Faktureringskund saknas",
+      "downloadInvoiceFor": "Ladda ner Finvoice-filen för {customer}",
+      "fileBlockedByFee": "{count, plural, one {Ingen fil: # klubb utan avgift} other {Ingen fil: # klubbar utan avgift}}",
+      "fileBlockedByNothingToInvoice": "Ingen fil: inget registrerat",
       "loadError": "Det gick inte att läsa in faktureringsmånaden. Uppdatera sidan och försök igen.",
       "loadErrorWithReason": "Det gick inte att läsa in faktureringsmånaden – {reason}. Uppdatera sidan och försök igen."
     },

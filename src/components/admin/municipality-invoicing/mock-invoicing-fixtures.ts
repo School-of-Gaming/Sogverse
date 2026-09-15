@@ -161,13 +161,20 @@ type MunicipalityKey = keyof typeof MUNICIPALITIES;
 /**
  * The Fennoa customers these clubs are invoiced to.
  *
- * **A buyer is a customer, not a municipality, and three of the entries here
+ * **A buyer is a customer, not a municipality, and five of the entries here
  * are the whole reason that distinction is in the schema.** Most municipalities
  * buy their clubs themselves and appear once. Tampere appears **twice** — two
  * departments buying under two agreements, which is the shape that makes a
- * per-municipality link impossible. And one association buys clubs sited in a
- * municipality it is not, which is the shape that makes deriving the buyer from
- * a club's location impossible even for the single-customer case.
+ * per-municipality link impossible — and so does Helsinki, whose second
+ * department buys the one club that recorded nothing all month. And one
+ * association buys clubs sited in a municipality it is not, which is the shape
+ * that makes deriving the buyer from a club's location impossible even for the
+ * single-customer case.
+ *
+ * Between them the customers here cover both halves of the export's readiness
+ * rule and the state that has neither: Espoo's file is refused because one of
+ * its clubs has no fee, Helsinki's youth department's because its one club has
+ * nothing to invoice, and every other customer's can be downloaded.
  *
  * The billing names follow the municipalities, which are real for the reason
  * stated above — a Finnish reader recognises the row by them. Everything else
@@ -194,6 +201,20 @@ const INVOICE_CUSTOMERS = {
     city: "Helsinki",
     yourReference: "PO 4471182",
     invoiceText: "Laskutusviite merkittävä jokaiselle riville.",
+  },
+  // Helsinki's second department, and the one customer here with nothing to
+  // invoice: it buys exactly one club, and that club recorded no sessions at
+  // all this month. Its download is refused for a reason that is not a missing
+  // fee, which is the other half of the export's readiness rule and the one a
+  // month of ordinary clubs would never show.
+  helsinkiYouth: {
+    no: "F0208",
+    name: "Helsingin kaupunki, nuorisopalvelut",
+    street: "Nuorisokuja 2",
+    postalCode: "00099",
+    city: "Helsinki",
+    yourReference: null,
+    invoiceText: null,
   },
   // The association: it buys the Vantaa clubs, and it is not Vantaa. A page
   // that derived the buyer from the club's location would address every one of
@@ -466,6 +487,11 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     id: "preview-club-vuorenpeikko",
     name: "Peliklubi Vuorenpeikko",
     municipality: "helsinki",
+    // Its own customer, buying nothing else. A club that recorded nothing is
+    // already the strongest thing on the page to notice; giving it a buyer of
+    // its own is what makes that buyer's file refusable for having nothing to
+    // invoice rather than for a missing fee.
+    customer: "helsinkiYouth",
     site: { name: "Vuorenpeikon koulu" },
     feeCents: 6500,
     slots: [{ weekday: WED, startTime: "15:00" }],

@@ -394,6 +394,12 @@
       "upcoming": "Tulossa",
       "unrecordedSessions": "{count, plural, one {# kirjaamatta} other {# kirjaamatta}}",
       "sessionsFor": "Kerhon {club} kerrat",
+      "clubsIn": "Kunnan {municipality} kerhot",
+      "clubsWithoutCustomer": "{count, plural, one {# kerholta puuttuu laskutusasiakas} other {# kerholta puuttuu laskutusasiakas}}",
+      "customerNotSet": "Laskutusasiakasta ei ole asetettu",
+      "downloadInvoiceFor": "Lataa Finvoice-tiedosto asiakkaalle {customer}",
+      "fileBlockedByFee": "{count, plural, one {Ei tiedostoa: # kerholta puuttuu maksu} other {Ei tiedostoa: # kerholta puuttuu maksu}}",
+      "fileBlockedByNothingToInvoice": "Ei tiedostoa: ei kirjattuja kertoja",
       "loadError": "Laskutuskuukauden lataus epäonnistui. Päivitä sivu ja yritä uudelleen.",
       "loadErrorWithReason": "Laskutuskuukauden lataus epäonnistui – {reason}. Päivitä sivu ja yritä uudelleen."
     },
