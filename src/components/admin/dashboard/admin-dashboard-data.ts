@@ -353,13 +353,20 @@ export interface CoverOffer {
 /**
  * One open cover request an admin has to staff.
  *
- * **The date carries no clock face, and that is what the wire allows.** The
- * dashboard's cover member ships the product's timezone but not its schedule
- * slots, so there is no wall clock to resolve the session's start from and the
- * row states the calendar date alone — a bare date, UTC-pinned like every other
- * zoneless date on this page. An orphaned request (an admin moved the
- * schedule's weekday after it was filed) therefore renders like any other,
- * which is what the queue's date-ordering already assumes.
+ * **The date is the product's and the clock face is the reader's**, and the two
+ * are deliberately not resolved into one zone. The date is the request's own
+ * key — (group, date, absent gedu) — and is what every other surface that names
+ * this session states, so converting it would leave the queue and the group
+ * page disagreeing about which day is short-staffed. The time is a clock face,
+ * and every clock face on this page is the viewer's, which is what the zone
+ * abbreviation beside the schedule discloses. For a Helsinki admin reading
+ * Helsinki products — the ordinary case, and the one the abbreviation stays
+ * `null` for — there is nothing to reconcile.
+ *
+ * An **orphaned** request (an admin moved the schedule's weekday after it was
+ * filed) resolves to no occurrence at all and carries `sessionTime: null`,
+ * rendering as the bare date. That is the case the queue exists to tolerate:
+ * it orders by date and never by a derived instant.
  *
  * The reason travels here and nowhere else on the platform: a `sick` category
  * is health-related data about a contractor, and this surface is the one it was
@@ -374,6 +381,17 @@ export interface CoverRequest {
   productType: ProductType;
   /** The session's product-local calendar date, already formatted. */
   sessionDate: string;
+  /**
+   * When the session runs, as `HH:MM–HH:MM` in the **viewer's** zone — or
+   * `null` where the product's schedule puts no slot on that weekday.
+   *
+   * Both ends, unlike a schedule chip, which states a start and keeps its
+   * duration in a `title`. A chip sits in a grid of a hundred others where the
+   * start is what places it; a queue row is a handful of sessions an admin is
+   * finding somebody for, and how long they would be there is half of what
+   * they are being asked.
+   */
+  sessionTime: string | null;
   /** The role being covered — the absent gedu's, and what the sub is paid as. */
   role: GeduAssignmentRole;
   reason: CoverReason | null;

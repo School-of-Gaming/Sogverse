@@ -3,6 +3,10 @@ import { ROUTES } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { dateTimeInstant } from "@/lib/schedule-occurrence";
+import {
+  occurrenceOnDate,
+  type SessionDateOccurrence,
+} from "@/lib/session-date-occurrence";
 import { formatDate, formatDateOnly } from "@/lib/utils";
 import type {
   AdminDashboardAttentionProduct,
@@ -401,18 +405,37 @@ export function relativeWait(
  * list is the read no longer returning it, which the invalidation behind an
  * approval already arranges.
  *
- * **The session date renders as itself, in no zone at all.** The wire carries
- * the product's timezone but not its schedule slots, so there is no wall clock
- * to hang on the date and nothing here to convert — a bare calendar date, which
+ * **The session date renders as itself, in no zone at all**, and the clock face
+ * beside it renders in the viewer's. The date is a bare calendar date, which
  * this app pins to UTC at both ends precisely so it reads the same for every
- * viewer. The extract's stamp beside it *is* an instant and does convert, which
- * is why the two go through different formatters two lines apart.
+ * viewer — and it is this request's own key, so it has to name the same day the
+ * group page does. The occurrence *is* a pair of instants, and every instant on
+ * this page is shown in the viewer's zone, the extract's stamp two lines below
+ * included.
+ *
+ * **The occurrence is resolved from the request's own product**, never by
+ * looking the product up in the snapshot's `schedule_products`: that is a
+ * narrower set — bounded by its own window and dropping cancelled and completed
+ * products — so a join would answer for some rows and not others with nothing
+ * to tell them apart. Resolved from the slots that travel with the request, the
+ * only absence left is "no slot names this weekday", which is the orphaned
+ * request, and `null` is how it reaches the row.
  */
 function toCoverRequest(
   request: AdminDashboardCoverRequest,
   locale: SupportedLocale,
   viewerTimeZone: string,
 ): CoverRequest {
+  const occurrence = occurrenceOnDate({
+    sessionDate: request.session_date,
+    slots: request.product.schedule_slots.map((slot) => ({
+      weekday: slot.weekday,
+      startTime: slot.start_time,
+      durationMinutes: slot.duration_minutes,
+    })),
+    timezone: request.product.timezone,
+  });
+
   return {
     id: request.id,
     groupId: request.group_id,
@@ -428,6 +451,8 @@ function toCoverRequest(
       day: "numeric",
       month: "short",
     }),
+    sessionTime:
+      occurrence === null ? null : clockFace(occurrence, viewerTimeZone),
     role: request.role,
     reason: request.reason,
     reasonNote: request.reason_note,
@@ -455,6 +480,28 @@ function toCoverRequest(
             }),
     })),
   };
+}
+
+/**
+ * One occurrence as a clock face: `HH:MM–HH:MM` in the viewer's zone.
+ *
+ * 24-hour and locale-blind, exactly as the schedule chips are — the times on
+ * this page are a column to be scanned rather than a sentence to be read, and a
+ * chip and a queue row stating the same session two panels apart must state it
+ * the same way. The en dash is punctuation for the same reason the seat counts'
+ * slash is: it reads identically in every locale and stays out of the catalog.
+ *
+ * Exported for the preview scene's fixtures, which resolve their own occurrences
+ * and must word them the way the live mapping does — the same reason the
+ * coming-up comparator and the relative-wait phrasing are exported beside it.
+ */
+export function clockFace(
+  occurrence: SessionDateOccurrence,
+  viewerTimeZone: string,
+): string {
+  const start = formatInTimeZone(occurrence.start, viewerTimeZone, "HH:mm");
+  const end = formatInTimeZone(occurrence.end, viewerTimeZone, "HH:mm");
+  return `${start}–${end}`;
 }
 
 /**

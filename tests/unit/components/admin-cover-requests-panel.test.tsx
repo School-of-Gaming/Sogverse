@@ -60,6 +60,7 @@ const WITH_OFFERS: CoverRequest = {
   productName: "Minecraft-klubi Espoo",
   productType: "consumer_club",
   sessionDate: "Tue 18 Aug",
+  sessionTime: "17:00–18:30",
   role: "primary",
   reason: "sick",
   reasonNote: "Flunssa.",
@@ -84,6 +85,9 @@ const WITHOUT_OFFERS: CoverRequest = {
   productName: "Roblox Studio -leiri Espoo",
   productType: "camp",
   sessionDate: "Tue 25 Aug",
+  // The orphan: an admin moved the schedule's weekday after this request was
+  // filed, so no slot names its date and the row has no time to state.
+  sessionTime: null,
   reasonNote: null,
   groupHref: ROUTES.admin.productGroup("camp", "camp-2", "group-b"),
   offers: [],
@@ -111,6 +115,9 @@ describe("the admin dashboard's cover requests panel", () => {
     expect(staffed.getByText("Minecraft-klubi Espoo")).toBeTruthy();
     expect(staffed.getByText("Ryhmä A")).toBeTruthy();
     expect(staffed.getByText("Tue 18 Aug")).toBeTruthy();
+    // The clock face sits beside the date, so an admin staffing a group that
+    // meets twice on one day knows which of the two is short-staffed.
+    expect(staffed.getByText("17:00–18:30")).toBeTruthy();
     expect(staffed.getByText("Milo Korhonen")).toBeTruthy();
     expect(staffed.getByText("Flunssa.")).toBeTruthy();
     expect(staffed.getByText("Eeli Virtanen")).toBeTruthy();
@@ -139,6 +146,24 @@ describe("the admin dashboard's cover requests panel", () => {
     ).toBe("/admin/camps/camp-2/groups/group-b");
     // Nothing to approve, so nothing is pressable on this row.
     expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  /**
+   * An orphaned request — the schedule's weekday moved after it was filed —
+   * still has a date and no longer has an occurrence. It stays in the queue,
+   * which is the whole reason the queue orders by date rather than by a derived
+   * instant, and it states the date alone rather than a time nothing projects.
+   */
+  it("renders a request the schedule no longer projects with its date and no time", () => {
+    render(
+      <CoverRequestsPanel
+        requests={[WITHOUT_OFFERS]}
+        onApproveOffer={() => Promise.resolve()}
+      />,
+    );
+
+    expect(screen.getByText("Tue 25 Aug")).toBeTruthy();
+    expect(screen.queryByText(/\d\d:\d\d/)).toBeNull();
   });
 
   it("approves the offer that was pressed, by the offer's own id", async () => {

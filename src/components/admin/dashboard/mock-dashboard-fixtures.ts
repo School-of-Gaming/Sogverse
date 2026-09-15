@@ -16,9 +16,11 @@ import type {
   UncertifiedGedu,
 } from "./admin-dashboard-data";
 import {
+  clockFace,
   compareComingUpCohorts,
   relativeWait,
 } from "./build-admin-dashboard-data";
+import { occurrenceOnDate } from "@/lib/session-date-occurrence";
 import { addCalendarDays, mondayOf, monthsAfter, weekdayOf } from "@/lib/calendar-date";
 
 /**
@@ -876,6 +878,13 @@ function uncertifiedGedus(locale: SupportedLocale): UncertifiedGedu[] {
  * guarantees: a request whose date has passed is *unfilled* and drops out of
  * this list on its own. They are in the order the RPC promises — date, then
  * product — and the panel renders them as delivered.
+ *
+ * **The middle one is the orphan**, and it is one for free rather than by
+ * construction: its date falls on a weekday its product does not meet, so the
+ * occurrence resolves to nothing and the row states its date alone. That is the
+ * state the queue exists to tolerate — an admin moved the schedule after the
+ * request was filed — and the scene shows it beside two rows that do state a
+ * time, which is the only way the difference is visible as a difference.
  */
 const COVER_REQUEST_SPECS: readonly {
   id: string;
@@ -980,6 +989,16 @@ function coverRequests(
       // impossible. Fail at build time instead.
       throw new Error(`Fixture references unknown product: ${spec.productId}`);
     }
+    // Resolved from the product's own slots, exactly as the live mapping
+    // resolves them from the slots the wire carries — so a spec dated on a
+    // weekday its product does not meet renders the bare date, which is the
+    // orphaned request and the last of the row's states.
+    const occurrence = occurrenceOnDate({
+      sessionDate: spec.sessionDate,
+      slots: product.slots,
+      timezone: ADMIN_DASHBOARD_TIMEZONE,
+    });
+
     return {
       id: spec.id,
       groupId: spec.groupId,
@@ -993,6 +1012,10 @@ function coverRequests(
         day: "numeric",
         month: "short",
       }),
+      sessionTime:
+        occurrence === null
+          ? null
+          : clockFace(occurrence, ADMIN_DASHBOARD_TIMEZONE),
       role: spec.role,
       reason: spec.reason,
       reasonNote: spec.reasonNote,
