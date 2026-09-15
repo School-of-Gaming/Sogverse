@@ -1577,7 +1577,7 @@
             "type": "nuq Segh De'wI'. Hoch Hogh qaS ghom'a' — Qav Hutlh; ragh je wanI' jaj wIvlu'bogh qaS.",
             "delivery": "chay' qaS. mIw'a' qaSmoHmeH Lynx pongmey — Daq pagh polbe'lu'; <code>type</code> je <code>delivery</code> cha'vam 'oH ngoDmey pongmey ghoSbogh'e'.",
             "location": "nuvDaq qaSbogh De'wI' veng je ISO 3166-1 alpha-2 Sep; <code>null</code> DIvI' Daq qaSDI'.",
-            "status": "<code>pending</code> until it has started, <code>running</code> from its start date once any signup threshold is met, <code>completed</code> once it ran and its end date has passed, <code>expired</code> when the end date passed without it ever starting. Derived at read time from the dates, the threshold and the live sign-up count; nothing is stored, so the value is never stale.",
+            "status": "<code>pending</code> taghpa', <code>running</code> tagh jajvo' muvwI' mI' veH chavlu'DI', <code>completed</code> qaSpu'DI' 'ej Qav jaj juSpu'DI', <code>expired</code> Qav jaj juSpu'DI' 'ach not taghpu'DI'. laDDI' toghlu': jajmey, veH, je DaH muvwI' mI' — pagh pollu', vaj not qan De'.",
             "dates": "ghorgh qaS. Qav Hutlh ghom'a'.",
             "timezone": "IANA poH Daq — De'wI' jajmey je poHmey Daq.",
             "ageRange": "De'wI' laj puq ben mI'mey, veHmey je.",
