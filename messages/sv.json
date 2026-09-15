@@ -1477,7 +1477,7 @@
       "title": "Lynx Educate partner-API",
       "lead": "Ett skrivskyddat API för Lynx Educates egna dashboards och rapportering om Roblox-Programmet. Det exponerar de familjer, produkter och anmälningar som hör till Programmet, de samtycken Lynx får agera på, och det individdata som Programmets integritetspolicy tillåter Lynx att lämna vidare till Roblox för effektforskning.",
       "proposal": {
-        "title": "A proposal, with live routes",
+        "title": "Ett förslag, med rutter i drift",
         "body": "Rutterna nedan är i drift redan i dag. Var och en autentiserar anroparen, kontrollerar sina frågeparametrar och svarar med den dokumenterade formen utan poster, så autentisering och parsning går att integrera mot direkt; data kommer resurs för resurs allteftersom var och en byggs. Fältnamn, filter och den exakta ordalydelsen för enum-värden kan fortfarande ändras."
       },
       "contents": {

@@ -1477,7 +1477,7 @@
       "title": "API partenaire Lynx Educate",
       "lead": "Une API en lecture seule destinée aux tableaux de bord et au reporting de Lynx Educate sur le Programme Roblox. Elle expose les familles, les produits et les inscriptions qui relèvent du Programme, les consentements sur lesquels Lynx peut agir, et le jeu de données individuelles que la politique de confidentialité du Programme autorise Lynx à transmettre à Roblox pour la recherche sur l’impact.",
       "proposal": {
-        "title": "A proposal, with live routes",
+        "title": "Une proposition, avec des routes en service",
         "body": "Les routes ci-dessous sont en service dès aujourd’hui. Chacune authentifie l’appelant, vérifie ses paramètres de requête et renvoie la forme documentée sans aucun enregistrement : l’authentification et l’analyse peuvent donc être intégrées dès maintenant, et les données arriveront ressource par ressource, à mesure que chacune sera construite. Les noms de champs, les filtres et la formulation exacte des valeurs d’énumération peuvent encore changer."
       },
       "contents": {

@@ -1477,7 +1477,7 @@
       "title": "Lynx Educaten kumppani-API",
       "lead": "Vain luettava rajapinta Lynx Educaten omia koontinäyttöjä ja Roblox-Ohjelman raportointia varten. Se avaa Ohjelmaan kuuluvat perheet, tuotteet ja ilmoittautumiset, ne suostumukset, joiden perusteella Lynx voi toimia, sekä yksilötason aineiston, jonka Ohjelman tietosuojaseloste sallii Lynxin luovuttaa Robloxille vaikuttavuustutkimusta varten.",
       "proposal": {
-        "title": "A proposal, with live routes",
+        "title": "Ehdotus, jonka reitit ovat jo käytössä",
         "body": "Alla olevat reitit ovat jo käytössä. Jokainen niistä todentaa kutsujan, tarkistaa kyselyparametrit ja vastaa dokumentoidussa muodossa ilman yhtään tietuetta, joten autentikoinnin ja jäsennyksen voi integroida heti; tiedot saapuvat resurssi kerrallaan, sitä mukaa kuin kukin resurssi rakennetaan. Kenttien nimet, suodattimet ja enum-arvojen tarkat sanamuodot voivat vielä muuttua."
       },
       "contents": {
