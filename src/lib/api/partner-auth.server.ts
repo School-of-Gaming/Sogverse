@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 
 /**
- * The partner API's authorization and error envelope — one helper for every
- * route under `/api/partner`, because a per-route copy is how one of them ends
- * up comparing its key with `===` or answering a shape the published contract
- * does not describe.
+ * The partner API's wire layer: how a caller is authorized, how a response is
+ * built, and the headers every response carries. One module for every route
+ * under `/api/partner`, because a per-route copy is how one of them ends up
+ * comparing its key with `===`, answering a shape the published contract does
+ * not describe, or letting a page of children's data be cached.
  *
  * The contract itself is the public documentation page at `/docs/lynx-api`:
  * a static key issued to one partner, presented as a Bearer token, and errors
@@ -34,6 +35,25 @@ const STATUS_BY_CODE: Readonly<Record<PartnerErrorCode, number>> = {
 };
 
 /**
+ * The headers every partner response carries, success and failure alike.
+ *
+ * `private, no-store` because the answer is scoped to the key that asked for
+ * it and is, by design, personal data about families and children: nothing
+ * between us and Lynx — a proxy, a CDN, the partner's own HTTP cache — may
+ * keep a copy, and an erasure honoured in one pull must not be undone by a
+ * cached page of the previous one. It sits on the one response builder rather
+ * than on each route so a route cannot forget it.
+ */
+const PARTNER_HEADERS: Readonly<Record<string, string>> = {
+  "Cache-Control": "private, no-store",
+};
+
+/** The one way a partner route builds a response. */
+export function partnerJson(body: unknown, status = 200): NextResponse {
+  return NextResponse.json(body, { status, headers: PARTNER_HEADERS });
+}
+
+/**
  * The one way a partner route answers a failure. The status follows from the
  * code, so a route cannot ship a 401 labelled `invalid_query`.
  *
@@ -44,10 +64,7 @@ export function partnerError(
   code: PartnerErrorCode,
   message: string,
 ): NextResponse {
-  return NextResponse.json(
-    { error: { code, message } },
-    { status: STATUS_BY_CODE[code] },
-  );
+  return partnerJson({ error: { code, message } }, STATUS_BY_CODE[code]);
 }
 
 /**
@@ -84,15 +101,22 @@ export function requirePartnerKey(request: Request): NextResponse | null {
     );
   }
 
-  const header = request.headers.get("authorization");
-  if (!header?.startsWith("Bearer ")) {
+  // The scheme is case-insensitive per RFC 7235, and an HTTP client that sends
+  // `bearer` is not malformed — refusing it would be our bug presented as the
+  // partner's. What must be there is a non-empty token after it.
+  const header = request.headers.get("authorization") ?? "";
+  const token = /^Bearer\s+(.*)$/i.exec(header)?.[1].trim() ?? "";
+  // Length, not equality: a presence check is not a secret comparison, and
+  // writing it as one both reads as a leak and trips the lint rule that hunts
+  // for real ones.
+  if (token.length === 0) {
     return partnerError(
       "unauthorized",
       "Missing or malformed Authorization header",
     );
   }
 
-  if (!secretsMatch(apiKey, header.slice("Bearer ".length))) {
+  if (!secretsMatch(apiKey, token)) {
     return partnerError("unauthorized", "Invalid API key");
   }
 

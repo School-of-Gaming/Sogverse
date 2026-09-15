@@ -119,8 +119,13 @@ const ROUTES: readonly {
 /** The six resources that return records; `/traffic` returns an aggregate. */
 const LIST_ROUTES = ROUTES.filter((route) => route.path !== "traffic");
 
+/** The resources that take a `from`/`to` window. */
+const RANGE_PATHS = ["sessions", "feedback", "roblox-research", "traffic"];
+const RANGE_ROUTES = ROUTES.filter((route) => RANGE_PATHS.includes(route.path));
+
 const cases = ROUTES.map((route) => [route.path, route] as const);
 const listCases = LIST_ROUTES.map((route) => [route.path, route] as const);
+const rangeCases = RANGE_ROUTES.map((route) => [route.path, route] as const);
 
 // --- Tests ---
 //
@@ -177,6 +182,20 @@ describe("the Lynx Educate partner API", () => {
       const response = route.handler(
         createRequest(route.path, "", `Bearer ${API_KEY.slice(0, -1)}X`),
       );
+      expect(response.status).toBe(401);
+    });
+
+    it.each(cases)("%s accepts a lowercase scheme", (_path, route) => {
+      // RFC 7235 makes the scheme case-insensitive; refusing `bearer` would be
+      // our bug presented as the partner's.
+      const response = route.handler(
+        createRequest(route.path, "", `bearer ${API_KEY}`),
+      );
+      expect(response.status).toBe(200);
+    });
+
+    it.each(cases)("%s answers 401 to a Bearer with no token", (_path, route) => {
+      const response = route.handler(createRequest(route.path, "", "Bearer "));
       expect(response.status).toBe(401);
     });
 
@@ -237,6 +256,51 @@ describe("the Lynx Educate partner API", () => {
       expect(body.error.message).toContain("updated_since");
     });
 
+    it.each(rangeCases)("%s rejects a reversed date range", async (_path, route) => {
+      // A reversed range is empty, so accepting it would answer a typo with a
+      // confident, permanently empty pull — the one failure a scheduled sync
+      // would not notice.
+      const response = route.handler(
+        createRequest(route.path, "?from=2026-10-31&to=2026-10-01"),
+      );
+      expect(response.status).toBe(400);
+      const body = await response.json();
+      expect(body.error.message).toContain("from");
+      expect(body.error.message).toContain("to");
+    });
+
+    it.each(rangeCases)("%s accepts a single-day range", (_path, route) => {
+      const response = route.handler(
+        createRequest(route.path, "?from=2026-10-01&to=2026-10-01"),
+      );
+      expect(response.status).toBe(200);
+    });
+
+    it("rejects a product_id on /traffic asking for another kind of page", async () => {
+      const response = getTraffic(
+        createRequest(
+          "traffic",
+          "?page=landing&product_id=5a1f8e1c-1b0e-4a3e-9a9c-2c9a4d8f0b11",
+        ),
+      );
+      expect(response.status).toBe(400);
+      const body = await response.json();
+      expect(body.error.message).toContain("product_id");
+      expect(body.error.message).toContain("page");
+    });
+
+    it("accepts a product_id on /traffic with the page it implies, or none", () => {
+      const productId = "5a1f8e1c-1b0e-4a3e-9a9c-2c9a4d8f0b11";
+      expect(
+        getTraffic(createRequest("traffic", `?product_id=${productId}`)).status,
+      ).toBe(200);
+      expect(
+        getTraffic(
+          createRequest("traffic", `?page=product&product_id=${productId}`),
+        ).status,
+      ).toBe(200);
+    });
+
     it("takes no paging on /traffic, and ignores what it is not given", () => {
       // The aggregate is not paginated, and zod strips what the schema does not
       // name — so a stray `limit` is ignored rather than refused.
@@ -273,17 +337,36 @@ describe("the Lynx Educate partner API", () => {
     });
 
     it("defaults the traffic range to the last thirty days", async () => {
-      const response = getTraffic(createRequest("traffic"));
-      const body = await response.json();
-
-      const today = new Date().toISOString().slice(0, 10);
-      expect(body.range.to).toBe(today);
-      const days =
-        (Date.parse(`${body.range.to}T00:00:00Z`) -
-          Date.parse(`${body.range.from}T00:00:00Z`)) /
-        86_400_000;
-      // Thirty days counted inclusively: today and the twenty-nine before it.
-      expect(days).toBe(29);
+      // The clock is pinned rather than recomputed at assertion time: a test
+      // that derives its expectation the same way the code does asserts only
+      // that the two agree, and would pass a window of any length. It is also
+      // the one case that can straddle midnight UTC.
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-09-15T23:59:00Z"));
+      try {
+        const body = await getTraffic(createRequest("traffic")).json();
+        // Thirty days counted inclusively: today and the twenty-nine before it.
+        expect(body.range).toEqual({ from: "2026-08-17", to: "2026-09-15" });
+      } finally {
+        vi.useRealTimers();
+      }
     });
+  });
+
+  // --- Caching ---
+
+  it.each(cases)("%s forbids caching its answer", (_path, route) => {
+    // The body is scoped to the key that asked for it and is personal data
+    // about families and children, so nothing between us and Lynx may keep a
+    // copy — an erasure honoured in one pull must not be undone by a cached
+    // page of the previous one.
+    const response = route.handler(createRequest(route.path));
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+  });
+
+  it.each(cases)("%s forbids caching a refusal too", (_path, route) => {
+    const response = route.handler(createRequest(route.path, "", null));
+    expect(response.status).toBe(401);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
   });
 });

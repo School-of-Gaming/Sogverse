@@ -1477,7 +1477,7 @@
       "title": "Lynx Educate Partner API",
       "lead": "A read-only API for Lynx Educate’s own dashboards and reporting on the Roblox Programme. It exposes the families, products and enrolments that belong to the Programme, the consents Lynx may act on, and the individual-level dataset the Programme’s privacy policy allows Lynx to pass to Roblox for impact research.",
       "proposal": {
-        "title": "Proposal for review",
+        "title": "A proposal, with live routes",
         "body": "The routes below are live today. Each one authenticates the caller, checks its query parameters and answers the documented shape with no records, so authentication and parsing can be integrated against right away; the data arrives resource by resource as each one is built. Field names, filters and the exact wording of enum values may still change."
       },
       "contents": {

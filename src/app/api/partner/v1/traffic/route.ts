@@ -1,5 +1,8 @@
-import { NextResponse } from "next/server";
-import { partnerError, requirePartnerKey } from "@/lib/api/partner-auth.server";
+import {
+  partnerError,
+  partnerJson,
+  requirePartnerKey,
+} from "@/lib/api/partner-auth.server";
 import { parseSearchParams } from "@/lib/api/query-params.server";
 import {
   partnerTrafficQuery,
@@ -47,7 +50,7 @@ export function GET(request: Request) {
   const query = parseSearchParams(request.url, partnerTrafficQuery);
   if (!query.ok) return partnerError("invalid_query", query.message);
 
-  return NextResponse.json(
+  return partnerJson(
     partnerTrafficResponse.parse({
       range: resolveRange(query.data.from, query.data.to),
       pages: [],

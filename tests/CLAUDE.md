@@ -180,6 +180,9 @@ or the build fails. Three things about maintaining it:
 - **A posture that is not role-gated needs a written reason.** Reasons are the whole
   point: a deliberately public route and a route missing its gate look identical
   without one. Write the sentence you would want to read in a security review.
+- **An api-key posture also names the primitive that performs its check**, and the
+  checks assert the file really calls it — a reason alone cannot tell a route that
+  authenticates from one whose only gate was deleted.
 - **Warts are recorded, not excused.** A route standing off the shared primitive, a
   handler with no test, a body parsed without a schema — each has a slot in the
   registry. Recording one keeps it countable; hiding it is how it survives.

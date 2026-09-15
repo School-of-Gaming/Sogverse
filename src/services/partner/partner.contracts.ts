@@ -93,10 +93,25 @@ const isoDate = z
   .regex(/^\d{4}-\d{2}-\d{2}$/, "must be a YYYY-MM-DD date")
   .refine(isCalendarDay, "must be a real calendar date");
 
-/** An instant, ISO 8601. Offsets are accepted; UTC is what we emit. */
-const isoTimestamp = z
+/**
+ * An instant a caller sends us: ISO 8601, and an offset is accepted. Being
+ * liberal here costs nothing — the instant is the same one however it is
+ * written, and refusing `+03:00` would only make an incremental pull harder to
+ * build from a language whose clock formats that way.
+ */
+const isoTimestampIn = z
   .string()
   .datetime({ offset: true, message: "must be an ISO 8601 timestamp" });
+
+/**
+ * An instant we emit: ISO 8601 in UTC, so the `Z` is required. The
+ * documentation page promises every timestamp in UTC, and a promise nothing
+ * checks is one a later implementation breaks by handing out whatever the
+ * database column happened to serialize to.
+ */
+const isoTimestampUtc = z
+  .string()
+  .datetime({ message: "must be an ISO 8601 timestamp in UTC" });
 
 /** A month, `YYYY-MM` — the whole of what is held about a child's birthday. */
 const isoMonth = z
@@ -112,7 +127,7 @@ const place = z.object({
 /** A consent as it stands right now, with no history. */
 const consentState = z.object({
   granted: z.boolean(),
-  updated_at: isoTimestamp,
+  updated_at: isoTimestampUtc,
 });
 
 // ---------------------------------------------------------------------------
@@ -133,7 +148,7 @@ const pagingQuery = {
     .max(500, "limit must be at most 500")
     .default(100),
   cursor: z.string().min(1).optional(),
-  updated_since: isoTimestamp.optional(),
+  updated_since: isoTimestampIn.optional(),
 };
 
 export const partnerProductsQuery = z.object({
@@ -157,40 +172,82 @@ export const partnerEnrolmentsQuery = z.object({
   ...pagingQuery,
 });
 
-export const partnerSessionsQuery = z.object({
-  product_id: uuid.optional(),
-  group_id: uuid.optional(),
+/**
+ * The date range every windowed resource takes, inclusive at both ends.
+ *
+ * The order is checked rather than tolerated: a reversed range is empty, so
+ * accepting it would answer a caller's typo with a confident, permanently
+ * empty pull — the one failure a partner syncing on a schedule would not
+ * notice. Days sort as strings because they are zero-padded.
+ */
+const dateRangeQuery = {
   from: isoDate.optional(),
   to: isoDate.optional(),
-  ...pagingQuery,
-});
+};
 
-export const partnerFeedbackQuery = z.object({
-  product_id: uuid.optional(),
-  group_id: uuid.optional(),
-  gamer_id: uuid.optional(),
-  from: isoDate.optional(),
-  to: isoDate.optional(),
-  ...pagingQuery,
-});
+function withOrderedRange<S extends z.ZodTypeAny>(schema: S) {
+  return schema.refine(
+    (value: { from?: string; to?: string }) =>
+      value.from === undefined ||
+      value.to === undefined ||
+      value.from <= value.to,
+    { message: "must be on or before to", path: ["from"] },
+  );
+}
 
-export const partnerRobloxResearchQuery = z.object({
-  product_id: uuid.optional(),
-  from: isoDate.optional(),
-  to: isoDate.optional(),
-  ...pagingQuery,
-});
+export const partnerSessionsQuery = withOrderedRange(
+  z.object({
+    product_id: uuid.optional(),
+    group_id: uuid.optional(),
+    ...dateRangeQuery,
+    ...pagingQuery,
+  }),
+);
+
+export const partnerFeedbackQuery = withOrderedRange(
+  z.object({
+    product_id: uuid.optional(),
+    group_id: uuid.optional(),
+    gamer_id: uuid.optional(),
+    ...dateRangeQuery,
+    ...pagingQuery,
+  }),
+);
+
+export const partnerRobloxResearchQuery = withOrderedRange(
+  z.object({
+    product_id: uuid.optional(),
+    ...dateRangeQuery,
+    ...pagingQuery,
+  }),
+);
 
 /**
  * `/traffic` is the one resource that returns an aggregate rather than records,
  * so it takes neither paging nor `updated_since`.
+ *
+ * Its two filters are not independent: a product's page is a `product` page, so
+ * asking for one product's views under `page=landing` describes nothing that
+ * exists. The documentation page says `product_id` implies `page=product`, and
+ * a contradiction is refused rather than silently resolved in one of the two
+ * directions the caller might not have meant.
  */
-export const partnerTrafficQuery = z.object({
-  page: z.enum(TRAFFIC_PAGE).optional(),
-  product_id: uuid.optional(),
-  from: isoDate.optional(),
-  to: isoDate.optional(),
-});
+export const partnerTrafficQuery = withOrderedRange(
+  z.object({
+    page: z.enum(TRAFFIC_PAGE).optional(),
+    product_id: uuid.optional(),
+    ...dateRangeQuery,
+  }),
+).refine(
+  (value) =>
+    value.product_id === undefined ||
+    value.page === undefined ||
+    value.page === "product",
+  {
+    message: "implies page=product and cannot be combined with another page",
+    path: ["product_id"],
+  },
+);
 
 // ---------------------------------------------------------------------------
 // Response schemas
@@ -209,8 +266,17 @@ function listEnvelope<S extends z.ZodTypeAny>(record: S) {
 
 const partnerProduct = z.object({
   id: uuid,
-  /** Locale code → name. At least one locale is always present. */
-  name: z.record(z.string(), z.string()),
+  /**
+   * Locale code → name. At least one locale is always present, and the schema
+   * says so: a product whose every name was missing would serialize to `{}`
+   * and give the partner's dashboard nothing to print.
+   */
+  name: z
+    .record(z.string(), z.string())
+    .refine(
+      (names) => Object.keys(names).length > 0,
+      "must carry a name in at least one locale",
+    ),
   type: z.enum(PRODUCT_TYPE),
   delivery: z.enum(DELIVERY),
   location: place.nullable(),
@@ -220,14 +286,14 @@ const partnerProduct = z.object({
   timezone: z.string(),
   age_range: z.object({ min: z.number().int(), max: z.number().int() }),
   groups: z.array(z.object({ id: uuid, name: z.string() })),
-  created_at: isoTimestamp,
-  updated_at: isoTimestamp,
+  created_at: isoTimestampUtc,
+  updated_at: isoTimestampUtc,
 });
 
 const partnerGamer = z.object({
   id: uuid,
   first_name: z.string(),
-  created_at: isoTimestamp,
+  created_at: isoTimestampUtc,
   birth_month: isoMonth,
   roblox: z
     .object({
@@ -246,7 +312,7 @@ const partnerFamily = z.object({
   last_name: z.string(),
   /** Present only while the Lynx marketing consent stands. */
   email: z.string().nullable(),
-  created_at: isoTimestamp,
+  created_at: isoTimestampUtc,
   location: place.nullable(),
   utm: z.object({
     source: z.string().nullable(),
@@ -256,13 +322,13 @@ const partnerFamily = z.object({
   /** Null where the parent has never been asked. */
   marketing_consent: consentState.nullable(),
   gamers: z.array(partnerGamer),
-  updated_at: isoTimestamp,
+  updated_at: isoTimestampUtc,
 });
 
 const acceptedDocument = z.object({
   /** The document's version, as the date it was published. */
   version: isoDate,
-  accepted_at: isoTimestamp,
+  accepted_at: isoTimestampUtc,
 });
 
 const partnerEnrolment = z.object({
@@ -273,7 +339,7 @@ const partnerEnrolment = z.object({
   gamer_id: uuid,
   family_id: uuid,
   status: z.enum(ENROLMENT_STATUS),
-  signed_up_at: isoTimestamp,
+  signed_up_at: isoTimestampUtc,
   consents: z.object({
     terms: acceptedDocument,
     privacy_policy: acceptedDocument,
@@ -289,16 +355,16 @@ const partnerEnrolment = z.object({
       is_roblox_url: z.boolean(),
     }),
   ),
-  creations_updated_at: isoTimestamp.nullable(),
-  updated_at: isoTimestamp,
+  creations_updated_at: isoTimestampUtc.nullable(),
+  updated_at: isoTimestampUtc,
 });
 
 const partnerSession = z.object({
   id: uuid,
   product_id: uuid,
   group_id: uuid,
-  starts_at: isoTimestamp,
-  ends_at: isoTimestamp,
+  starts_at: isoTimestampUtc,
+  ends_at: isoTimestampUtc,
   /** One entry per child the Game Educator marked; an unmarked child is absent. */
   attendance: z.array(
     z.object({ gamer_id: uuid, status: z.enum(ATTENDANCE_MARK) }),
@@ -311,7 +377,7 @@ const partnerSession = z.object({
       height: z.number().int(),
     }),
   ),
-  updated_at: isoTimestamp,
+  updated_at: isoTimestampUtc,
 });
 
 const partnerFeedback = z.object({
@@ -320,7 +386,7 @@ const partnerFeedback = z.object({
   product_id: uuid,
   /** Null when no session row was written for that day. */
   session_id: uuid.nullable(),
-  session_opened_at: isoTimestamp,
+  session_opened_at: isoTimestampUtc,
   /**
    * Statement key → rating, 1 to 5, a skipped statement absent. The keys are
    * open by design: a statement may be added or retired without notice, so the
@@ -329,7 +395,7 @@ const partnerFeedback = z.object({
   answers: z.record(z.string(), z.number().int().min(1).max(5)),
   note: z.string(),
   exit_reason: z.enum(EXIT_REASON),
-  updated_at: isoTimestamp,
+  updated_at: isoTimestampUtc,
 });
 
 /**

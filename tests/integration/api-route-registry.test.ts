@@ -87,8 +87,16 @@ type Posture =
   | { kind: "optional-auth"; reason: string }
   /** A third party's signature over the raw body is the authorization. */
   | { kind: "webhook"; verifier: WebhookVerifier; reason: string }
-  /** Server-to-server, authorized by a shared secret rather than a session. */
-  | { kind: "api-key"; reason: string };
+  /**
+   * Server-to-server, authorized by a shared secret rather than a session.
+   *
+   * `primitive` names the symbol the file must contain to be running that
+   * check at all — the api-key twin of `defineRoute` / `requireRole` below. A
+   * shared helper is the answer wherever one exists; a file still comparing
+   * its own secret inline names the compare it uses, which records the
+   * hand-roll as a wart rather than excusing it.
+   */
+  | { kind: "api-key"; reason: string; primitive: string };
 
 /**
  * Webhook verifier strategies, recorded per handler because their error
@@ -225,6 +233,7 @@ const ADMIN_ONLY: Posture = { kind: "role-gated", roles: ["admin"] };
  */
 const PARTNER_KEY: Posture = {
   kind: "api-key",
+  primitive: "requirePartnerKey",
   reason:
     "Lynx Educate's own tooling pulls the Programme's data server-to-server on a schedule; there is no person in the loop and no Sogverse session to present. The issued bearer token, compared in constant time, is both the partner's identity and the whole of its scope, and every handler is read-only — it reaches no database and can mutate nothing",
 };
@@ -962,6 +971,11 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
       GET: {
         posture: {
           kind: "api-key",
+          // The wart: this route compares its own key inline instead of going
+          // through a shared helper, so what it names is the constant-time
+          // compare itself. Moving it onto the shared partner-style gate would
+          // also change its error bodies, which the game server reads.
+          primitive: "timingSafeEqual",
           reason:
             "the game server calls this on player join; it has no user session to present. A bearer token compared in constant time is the authorization, and the endpoint fails closed — it admits nobody at all until the gating is rebuilt",
         },
@@ -1334,6 +1348,15 @@ function readSource(path: string): string {
   return readFileSync(join(process.cwd(), path), "utf8");
 }
 
+/**
+ * Does this source actually CALL the named check, rather than merely mention
+ * it? An import is not a call, and a route that imports its gate and then
+ * forgets to run it is precisely the failure the api-key check is about.
+ */
+function runsKeyCheck(source: string, primitive: string): boolean {
+  return source.includes(`${primitive}(`);
+}
+
 /** Handler exports really present in a route file's source. */
 function exportedMethods(source: string): Method[] {
   const pattern =
@@ -1475,6 +1498,48 @@ describe("check 2 — static conformance: gated routes contain the primitive", (
     REGISTRY_PATHS.filter((path) => ROUTE_REGISTRY[path].offPrimitive !== undefined),
   )("%s gives a reason for standing off the primitive", (path) => {
     expect(ROUTE_REGISTRY[path].offPrimitive?.trim().length).toBeGreaterThan(0);
+  });
+
+  // An api-key handler is gated too — by a shared secret rather than by a
+  // session — and the same silence applies to it: a route that forgot its key
+  // check and a route that never needed one look identical from outside. So
+  // every api-key entry names the primitive that performs its check, and the
+  // file has to contain it. Without this, deleting the one line that
+  // authenticates a partner route would publish the Programme's data to the
+  // internet and pass CI.
+  //
+  // Per entry rather than one repo-wide name, because the surface has two
+  // answers: the partner routes share a helper, and the Minecraft join-check
+  // still compares its own key inline. Naming each one keeps the hand-roll
+  // visible and still verified, instead of exempting it.
+  const keyedHandlers = REGISTERED_HANDLERS.flatMap((h) =>
+    h.handler.posture.kind === "api-key"
+      ? [[h.label, h.path, h.handler.posture.primitive] as const]
+      : [],
+  );
+
+  it("found api-key routes to check", () => {
+    expect(keyedHandlers.length).toBeGreaterThan(0);
+  });
+
+  it.each(keyedHandlers)(
+    "%s runs the key check it declares",
+    (_label, path, primitive) => {
+      expect(
+        runsKeyCheck(readSource(path), primitive),
+        `${path} is registered as api-key but contains no call to ${primitive}. An api-key route that does not run its key check is open to the internet.`,
+      ).toBe(true);
+    },
+  );
+
+  // The detector's own negative case. Every assertion above is a positive one,
+  // and a detector that answered `true` to anything would pass all of them
+  // while verifying nothing — the same vacuity guard check 1 keeps on its
+  // lists, one level down.
+  it("would fail a handler that dropped its key check", () => {
+    expect(
+      runsKeyCheck("export function GET() {\n  return Response.json({});\n}", "requirePartnerKey"),
+    ).toBe(false);
   });
 
   // The wrapper reads the request body only when a body schema is declared, so

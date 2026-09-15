@@ -43,6 +43,9 @@ full pull treats a record's absence as "no longer in scope", so a resource must 
 fake a record and must never answer 200 with a shape the page does not describe.
 
 What the skeleton deliberately does not do, and what an implementation owes: no database
-reads, no Vercel Web Analytics call and no caching behind it, no rate limiting, and no
-cursor logic beyond accepting the parameter. Each is documented on the page, so each is a
-promise outstanding rather than a decision made here.
+reads, no Vercel Web Analytics call and no caching behind it, no rate limiting (so no 429
+and no `Retry-After`), no cursor logic beyond accepting the parameter, and no 404 in the
+documented envelope — an unknown path under this prefix gets the framework's HTML 404
+today, where the page promises the same `{ error: { code, message } }` as everything
+else. Each is documented on the page, so each is a promise outstanding rather than a
+decision made here.
