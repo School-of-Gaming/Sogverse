@@ -411,3 +411,127 @@ are listed.
 - Gedu-filed retroactive requests.
 - A sub fee above the base fee (a nullable per-request override; nothing in v1 needs it).
 - Session cancellation, and the unfilled request's hand-off to it.
+- A retention rule for `reason` / `reason_note`: a `sick` category is health-related
+  data about a contractor. The Discord tickets carry the same today; nothing new is
+  disclosed, but no rule exists for either.
+
+## Answers from the cold-read (settled; the implementer does not re-decide these)
+
+**Schema and predicates**
+
+- The `role` column is readable wherever assignments already are (parents read their
+  child's group's assignments through the existing policy). Accepted: it is a pay class
+  label, not a figure, and the fee columns on `products` are already public.
+- Both new tables get `GRANT ALL ... TO service_role` and nothing else, exactly like
+  `group_sessions`; add them to the access-control grant registry as such. The
+  `updated_at` trigger is attached to the requests table; the offers table has none.
+- `covered_by` and `requested_by` stay `ON DELETE RESTRICT`, matching assignments. A
+  sub must hold a gedu account; every gedu does.
+- `set_site_notes` gets an inlined location-shaped branch: a live cover on any group
+  of an in-person product at that location.
+- The two voice predicates keep their `(p_group_id)` signature; "the session in
+  question" is **today in the product's timezone**, evaluated at call time. A cover on
+  a group therefore reaches the voice room and the chat channel (which is gated by the
+  same predicate) on the covered date only. The chat roster function stays
+  assignment-only; a cover becomes mentionable once they send, as its comment says.
+- The voice branches *add* to the existing product-wide assignment mobility; the
+  assignment half is not narrowed. The acceptance criterion about the voice room is
+  for a sub who holds no assignment on that product.
+- The window compares against product-local midnight:
+  `now() < COALESCE(gs.report_emailed_at + interval '24 hours', ((r.session_date + 15)::timestamp AT TIME ZONE p.timezone))`,
+  evaluated per covered request with that request's own date's session row.
+- `get_my_assigned_products` is `RETURNS TABLE`; widening it is DROP + CREATE +
+  re-GRANT in the one migration. Accepted as the deploy window.
+- The *expected* predicate takes `(p_gedu_id, p_group_id, p_session_date)`; it is
+  internal (no grant), so it needs no spine classification. Where a gedu is both
+  assigned and holds a cover on the same group (only an admin edit can produce it), the
+  assignment supplies the role.
+
+**RPC semantics**
+
+- Every write returns the request document in the same shape the feeds' `covers`
+  element uses. `offer_session_cover` is `ON CONFLICT DO NOTHING` and returns the
+  request. Withdrawing a losing offer on a request covered by someone else is allowed.
+- `reason_note` is trimmed, nulled when empty, capped at 500 characters, plain text.
+- The gedu date guard is date-only and deliberately looser than the card, which hides
+  the action once the session's end has passed (the feed's future kind). Same posture
+  as "write validation is deliberately loose".
+- `get_open_cover_requests` uses the *may cover* predicate for its exclusion, does not
+  name the absent gedu (naming them half-reveals a private reason; the seat is the
+  group's), and is bounded to dates within the next 60 days.
+- `approve_session_cover_offer` locks the request `FOR UPDATE` and re-checks *may
+  cover* for the offerer at approval time.
+- `set_session_cover` on an absent gedu who is already `covered` **re-points the
+  cover** (replace a sub in one action). `approved_by` is the acting admin on every
+  admin path.
+- The cascade after clear, withdraw and replace is a fixpoint sweep over that (group,
+  date): withdraw every non-withdrawn request whose requester no longer holds a seat
+  there (neither assigned nor the `covered_by` of a live covered request), repeating
+  until nothing changes. Withdrawing a request whose requester was meanwhile unassigned
+  restores nobody and is allowed.
+- `apply_group_changes`: an added assignment upserts with `ON CONFLICT (group_id,
+  gedu_id) DO UPDATE SET role`, so a role change is one add. An added group's element
+  carries `gedus: [{ geduId, role }]`; the RPC still reads a legacy `geduIds` array as
+  primaries for the deploy window. The apply route's body schema grows `role`; the
+  posture registry entry is unchanged (it records the parse mechanism, not the schema).
+
+**Feeds and derivation**
+
+- The `covers` list is every non-withdrawn request on the group, unbounded, exactly as
+  the feeds already return every stored row. The gedu feed document also gains the
+  group's assignments with roles (`id, first_name, role`) so the staffing helper has its
+  inputs. Staffing attaches to every entry kind; a projected date with no row carries
+  its requests like any other. The requester-only `offer_count` is included when the
+  caller is the requester (always in the admin document).
+- The TypeScript owed-work twin learns the same rule as the SQL: an entry on a date
+  where the viewer holds a non-withdrawn request is not owed by that viewer. Step 2
+  names it.
+- `get_gedu_assigned_product(p_product_id, p_group_id default null)`: with a group id
+  the caller is assigned to or covers, that group is `my_group_id`; without one, the
+  assignment group as today. The cover card's link carries the group id as a query
+  param, so a gedu covering a sibling group of a product they teach lands in the right
+  workspace.
+- The dashboard rollup keys on (product, group) instead of product; a cover row's
+  identity is (group, date), one card per covered date. A "live" cover is `covered`
+  with its access window open; the card lasts as long as the window.
+
+**Gedu UI**
+
+- The "I can't make this session" action renders only for a gedu viewer who is expected
+  on that date. The admin shell supplies the staffing editor in that slot instead — the
+  surface decides by which callbacks it supplies, as the site panel already does.
+- The staffing line renders only on dates carrying a request, on staff surfaces only.
+- The "Sessions needing cover" section sits above the assignment sections and is hidden
+  for an uncertified gedu (the server shell already knows `certified`).
+- The cover card is its own small card (product, group, date and time, site or Join,
+  the one-session attention badge), not the recurring assignment card.
+
+**Admin UI**
+
+- `cover_requests` is a fifth top-level member of the dashboard document; an empty array
+  is the all-clear. Offerers ship the same stamps the certification queue ships.
+- The gedu picker sheet's disabled rule is parameterised: for a sub it disables the
+  absent gedu, anyone already expected at that session, and the uncertified; the
+  candidate list is the same role read the product page uses. Set a sub is one dialog
+  with two steps (absent gedu when more than one, then the picker); on an open request
+  it reads as approving that request. Role control on the pill is a small select,
+  staged with the panel's batch save like every other change. No affordance links the
+  session editor to the permanent editor, deliberately.
+
+**Tests and docs**
+
+- The completeness query matches function bodies and policy text for the table name; a
+  body that reaches assignments only through a predicate call is covered by the
+  predicate being a member. The cover branch is a reference to
+  `session_cover_requests`, `gedu_covers_group` or `gedu_covers_session`. The
+  TypeScript side is a **unit** test enumerating every occurrence of the table name
+  under `src/`, each annotated or carrying the branch.
+- Spine opt-outs for NULL-argument calls are the implementer's, with reasons. The voice
+  token route's registry entry is unchanged if its test name is.
+- `products.md`: edit the unification sentence to name cancellation only; update both
+  reserved-name paragraphs. Root `CLAUDE.md` Documentation table gains the new service
+  row. Certification: column comment and `src/services/gedu/CLAUDE.md` both, noting the
+  cover gate is server-side.
+- Vocabulary: **sub** is the person, **cover** is the act and the request. fr/sv/tlh
+  follow the catalogues' existing conventions. Message namespaces follow the nearest
+  existing surface namespace.
