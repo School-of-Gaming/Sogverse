@@ -583,22 +583,47 @@ const RESEARCH_FIELDS = [
 ] as const;
 
 const TRAFFIC_PARAMS = [
+  {
+    name: "page",
+    type: "landing | shop | product",
+    key: "resources.traffic.params.page",
+  },
+  {
+    name: "product_id",
+    type: "uuid",
+    key: "resources.traffic.params.productId",
+  },
   { name: "from, to", type: "date", key: "resources.traffic.params.fromTo" },
 ] as const;
 
 const TRAFFIC_FIELDS = [
   { name: "range", type: "object", key: "resources.traffic.fields.range" },
+  { name: "pages", type: "array", key: "resources.traffic.fields.pages" },
   {
-    name: "pageviews",
+    name: "pages[].page",
+    type: "landing | shop | product",
+    key: "resources.traffic.fields.pagesPage",
+  },
+  {
+    name: "pages[].product_id",
+    type: "uuid | null",
+    key: "resources.traffic.fields.pagesProductId",
+  },
+  {
+    name: "pages[].pageviews",
     type: "integer",
-    key: "resources.traffic.fields.pageviews",
+    key: "resources.traffic.fields.pagesPageviews",
   },
   {
-    name: "by_campaign",
+    name: "pages[].by_campaign",
     type: "array",
-    key: "resources.traffic.fields.byCampaign",
+    key: "resources.traffic.fields.pagesByCampaign",
   },
-  { name: "by_day", type: "array", key: "resources.traffic.fields.byDay" },
+  {
+    name: "pages[].by_day",
+    type: "array",
+    key: "resources.traffic.fields.pagesByDay",
+  },
 ] as const;
 
 const ERROR_ROWS = [
@@ -737,15 +762,34 @@ const RESEARCH_EXAMPLE = `{
 
 const TRAFFIC_EXAMPLE = `{
   "range": { "from": "2026-09-01", "to": "2026-09-14" },
-  "pageviews": 3184,
-  "by_campaign": [
-    { "utm_source": "lynx", "utm_medium": "email", "utm_campaign": "lynx-autumn-a", "pageviews": 1412 },
-    { "utm_source": "lynx", "utm_medium": "social", "utm_campaign": "lynx-autumn-b", "pageviews": 655 },
-    { "utm_source": null, "utm_medium": null, "utm_campaign": null, "pageviews": 1117 }
-  ],
-  "by_day": [
-    { "date": "2026-09-01", "pageviews": 212 },
-    { "date": "2026-09-02", "pageviews": 240 }
+  "pages": [
+    {
+      "page": "landing",
+      "product_id": null,
+      "pageviews": 3184,
+      "by_campaign": [
+        { "utm_source": "lynx", "utm_medium": "email", "utm_campaign": "lynx-autumn-a", "pageviews": 1412 },
+        { "utm_source": "lynx", "utm_medium": "social", "utm_campaign": "lynx-autumn-b", "pageviews": 655 },
+        { "utm_source": null, "utm_medium": null, "utm_campaign": null, "pageviews": 1117 }
+      ],
+      "by_day": [
+        { "date": "2026-09-01", "pageviews": 212 },
+        { "date": "2026-09-02", "pageviews": 240 }
+      ]
+    },
+    {
+      "page": "product",
+      "product_id": "5a1f8e1c-1b0e-4a3e-9a9c-2c9a4d8f0b11",
+      "pageviews": 927,
+      "by_campaign": [
+        { "utm_source": "lynx", "utm_medium": "email", "utm_campaign": "lynx-autumn-a", "pageviews": 611 },
+        { "utm_source": null, "utm_medium": null, "utm_campaign": null, "pageviews": 316 }
+      ],
+      "by_day": [
+        { "date": "2026-09-01", "pageviews": 54 },
+        { "date": "2026-09-02", "pageviews": 71 }
+      ]
+    }
   ]
 }`;
 

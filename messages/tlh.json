@@ -1684,16 +1684,21 @@
           "note": "tlheghvamDaq puq qorDu' je pong mI' tu'be'lu'. qorDu'Daq tlhegh Sam Lynx'a'? <code>/enrolments</code>-vo' yItlhap; qel De' ghom nuvDaq jonlu'laHbe' — wIwIvpu'."
         },
         "traffic": {
-          "title": "mut nav, mIw tlha'",
-          "intro": "Roblox mut nav leghghachmey, qemtaHbogh mIw tlha' ghomlu'. vaj He'So' 'etlh je mI' ghaj. Vercel Web Analytics-vo' mI'mey tu'lu'. Hoch jaj wa'logh maj DaqDaq wIvel, vaj qun tagh velmeH jaj — Vercel polbogh wejmaH jaj 'oHbe'. ghomlu'bogh mI'mey neH: leghwI' pong mI' pagh, 'ej mut nav neH — latlh nav pagh.",
+          "title": "the pages a campaign lands on, by campaign",
+          "intro": "Views of the pages a Lynx campaign can land on, grouped by the campaign that brought them, so the top of the funnel has a number too: the Roblox landing page, the shop, and each Programme product’s own page. The counts come from Vercel Web Analytics. We copy them into our own store once a day, so the history runs from the day the copying began rather than the 30 days Vercel keeps. Aggregate only: no visitor identifiers, and no page beyond those three kinds. A page’s views count every language it is served in as one page.",
           "params": {
+            "page": "Only pages of this kind. Omit for all three.",
+            "productId": "Only this product’s page. Implies <code>page=product</code>.",
             "fromTo": "veHvamDaq jajmey neH, veHmey je. Hoch qun DanejDI' yIwoDHa'."
           },
           "fields": {
             "range": "mI'mey So'bogh jajmey.",
-            "pageviews": "veHDaq mut nav leghghachmey — nuq qem 'e' qelbe'lu'.",
-            "byCampaign": "tlhegh wej UTM mI'mey tlha' leghghachmey Sep. wej null qengbogh tlhegh: mIw Hutlhbogh Hoch leghghach — Daq ghItlhbogh leghwI', qoj per Hutlhbogh tlhegh tlha'bogh je.",
-            "byDay": "Hoch jaj leghghachmey, poH tlhegh chenmoHmeH."
+            "pages": "One entry per page: the landing page, the shop, and one per Programme product that had a view in the range.",
+            "pagesPage": "Which kind of page. The shop page is shared with everything School of Gaming sells, so its views are not Programme-only; a product page’s views are.",
+            "pagesProductId": "The product whose page it is; <code>null</code> for the landing page and the shop.",
+            "pagesPageviews": "Views of the page in the range, whatever brought them.",
+            "pagesByCampaign": "The views split by the three UTM values on the link. The row with three nulls is every view that carried no campaign, including a visitor who typed the address or followed an untagged link.",
+            "pagesByDay": "The views per calendar day, for a time series."
           },
           "note": "Vercel ghItlh vangtaH neH leghwI' chab beQDaq De' ghom laj, 'ej qorDu' De'wI'Daq UTM mI'mey ghItlhlu' neH leghwI' ngeH lajDI'. cha' veHmey pIm, 'ej De' ghom veH tIn law'; vaj naDev toghlu'bogh leghghach je <code>/families</code>-Daq qorDu' rapbe': Hoch lajbogh leghwI' cha'Daq tu'lu'; De' ghom neH lajbogh naDev neH; chab beQ lajbe'bogh pagh Daq."
         }
@@ -1726,7 +1731,7 @@
           "childIdentity": "puqpu' qorDu' pongmey, bogh jajmey, loD/be' je; vavpu' jatlhmeH mI'mey je. De' lo'taHvIS Lynx pagh nIS, 'ej mIw'a' pegh chut bogh jar nob — bogh jaj nobbe'.",
           "releases": "qun De' je jatlh De' chaw'mey. Sogverse qengbogh wa' nagh beQ chaw' So' vaj: Lynx Educate, School of Gaming, je Roblox nagh beQ lo' Hoch DaqDaq. 'ach puq pong naQ, qun De', mu'tlhegh, qoj puqDaq boqbogh De' — pIm ghItlh chaw' nIS, Daq HurDaq Suqlu'bogh.",
           "deliveryModel": "mIw Segh pong. De'wI' Segh SovtaH Sogverse, 'ej DIvI' Daq qoj nuvDaq qaS 'e' SovtaH; mIw Seghmey chenmoHmeH Lynx Qu' 'oH — cha' yotlh Dung.",
-          "analytics": "mut nav Hutlhbogh Hoch nav lengmey, je wa' leghwI' De' Hoch. <code>/traffic</code> bIngDaq De' ghom pegh qaD wa'DIch: 'elpu'DI' qorDu' pawbogh nav ghaHvaD 'oH; 'ej leghwI' 'oH mI''e' — not De'wI'."
+          "analytics": "Traffic anywhere but the landing page, the shop and the Programme’s product pages, and anything about a single visitor. The analytics behind <code>/traffic</code> are privacy-first by design: a page a family reaches after signing in is theirs, and a visitor is a count, never a record."
         }
       }
     }

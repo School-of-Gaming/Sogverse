@@ -1640,16 +1640,21 @@
           "note": "No identifier of the child or family is on this row. If Lynx needs to trace a row back to a family, pull it from <code>/enrolments</code> instead; the research dataset is deliberately not joinable to a person."
         },
         "traffic": {
-          "title": "the landing page, by campaign",
-          "intro": "Views of the Roblox landing page, grouped by the campaign that brought them, so the top of the funnel has a number too. The counts come from Vercel Web Analytics. We copy them into our own store once a day, so the history runs from the day the copying began rather than the 30 days Vercel keeps. Aggregate only: no visitor identifiers, and no page but the landing page.",
+          "title": "the pages a campaign lands on, by campaign",
+          "intro": "Views of the pages a Lynx campaign can land on, grouped by the campaign that brought them, so the top of the funnel has a number too: the Roblox landing page, the shop, and each Programme product’s own page. The counts come from Vercel Web Analytics. We copy them into our own store once a day, so the history runs from the day the copying began rather than the 30 days Vercel keeps. Aggregate only: no visitor identifiers, and no page beyond those three kinds. A page’s views count every language it is served in as one page.",
           "params": {
+            "page": "Only pages of this kind. Omit for all three.",
+            "productId": "Only this product’s page. Implies <code>page=product</code>.",
             "fromTo": "Only days within this range, inclusive. Omit for the whole history."
           },
           "fields": {
             "range": "The days the counts cover.",
-            "pageviews": "Views of the landing page in the range, whatever brought them.",
-            "byCampaign": "The views split by the three UTM values on the link. The row with three nulls is every view that carried no campaign, including a visitor who typed the address or followed an untagged link.",
-            "byDay": "The views per calendar day, for a time series."
+            "pages": "One entry per page: the landing page, the shop, and one per Programme product that had a view in the range.",
+            "pagesPage": "Which kind of page. The shop page is shared with everything School of Gaming sells, so its views are not Programme-only; a product page’s views are.",
+            "pagesProductId": "The product whose page it is; <code>null</code> for the landing page and the shop.",
+            "pagesPageviews": "Views of the page in the range, whatever brought them.",
+            "pagesByCampaign": "The views split by the three UTM values on the link. The row with three nulls is every view that carried no campaign, including a visitor who typed the address or followed an untagged link.",
+            "pagesByDay": "The views per calendar day, for a time series."
           },
           "note": "Vercel’s script runs only for a visitor who accepted analytics on the cookie banner, and the UTM values on a family record are written only for a visitor who accepted marketing. The two gates differ, and analytics is the wider one, so a view counted here and a family in <code>/families</code> are not the same population: a visitor who accepted everything is in both, one who accepted analytics alone is here only, and one who rejected the banner is in neither."
         }
@@ -1682,7 +1687,7 @@
           "childIdentity": "Children’s surnames, birth days and gender, and parents’ phone numbers. Nothing Lynx does with the data needs them, and the Programme’s privacy policy promises a birth month rather than a birth date.",
           "releases": "Case-study and testimonial releases. The one media permission Sogverse holds already covers public use of a photograph by Lynx Educate, School of Gaming and Roblox; a child’s full name, a case study, a quotation or content linked to the child need a separate written release obtained outside the platform.",
           "deliveryModel": "A delivery model label. Sogverse holds a product’s type and whether it is online or in person; a model taxonomy is Lynx’s to lay over those two fields.",
-          "analytics": "Traffic anywhere but the landing page, and anything about a single visitor. The analytics behind <code>/traffic</code> are privacy-first by design: a page a family reaches after signing in is theirs, and a visitor is a count, never a record."
+          "analytics": "Traffic anywhere but the landing page, the shop and the Programme’s product pages, and anything about a single visitor. The analytics behind <code>/traffic</code> are privacy-first by design: a page a family reaches after signing in is theirs, and a visitor is a count, never a record."
         }
       }
     }

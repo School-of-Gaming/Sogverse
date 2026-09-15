@@ -1640,16 +1640,21 @@
           "note": "Rivillä ei ole lapsen eikä perheen tunnistetta. Jos Lynxin täytyy jäljittää rivi takaisin perheeseen, hae se päätepisteestä <code>/enrolments</code>; tutkimusaineisto ei ole tarkoituksella yhdistettävissä henkilöön."
         },
         "traffic": {
-          "title": "laskeutumissivu kampanjoittain",
-          "intro": "Roblox-laskeutumissivun sivunäytöt ryhmiteltyinä sen kampanjan mukaan, joka ne toi, jotta suppilon yläpäähänkin saadaan luku. Luvut tulevat Vercelin Web Analyticsista. Kopioimme ne omaan tietovarastoomme kerran vuorokaudessa, joten historia alkaa siitä päivästä, jona kopiointi aloitettiin, eikä Vercelin säilyttämistä 30 päivästä. Vain koostetasolla: ei kävijätunnisteita eikä muita sivuja kuin laskeutumissivu.",
+          "title": "the pages a campaign lands on, by campaign",
+          "intro": "Views of the pages a Lynx campaign can land on, grouped by the campaign that brought them, so the top of the funnel has a number too: the Roblox landing page, the shop, and each Programme product’s own page. The counts come from Vercel Web Analytics. We copy them into our own store once a day, so the history runs from the day the copying began rather than the 30 days Vercel keeps. Aggregate only: no visitor identifiers, and no page beyond those three kinds. A page’s views count every language it is served in as one page.",
           "params": {
+            "page": "Only pages of this kind. Omit for all three.",
+            "productId": "Only this product’s page. Implies <code>page=product</code>.",
             "fromTo": "Vain tälle välille osuvat päivät, rajat mukaan lukien. Jätä pois, jos haluat koko historian."
           },
           "fields": {
             "range": "Päivät, jotka luvut kattavat.",
-            "pageviews": "Laskeutumissivun sivunäytöt tällä välillä, tulivatpa ne mistä tahansa.",
-            "byCampaign": "Sivunäytöt jaoteltuina linkin kolmen UTM-arvon mukaan. Rivi, jolla on kolme null-arvoa, kattaa kaikki sivunäytöt ilman kampanjaa, mukaan lukien kävijä, joka kirjoitti osoitteen itse tai seurasi merkitsemätöntä linkkiä.",
-            "byDay": "Sivunäytöt kalenteripäivittäin aikasarjaa varten."
+            "pages": "One entry per page: the landing page, the shop, and one per Programme product that had a view in the range.",
+            "pagesPage": "Which kind of page. The shop page is shared with everything School of Gaming sells, so its views are not Programme-only; a product page’s views are.",
+            "pagesProductId": "The product whose page it is; <code>null</code> for the landing page and the shop.",
+            "pagesPageviews": "Views of the page in the range, whatever brought them.",
+            "pagesByCampaign": "The views split by the three UTM values on the link. The row with three nulls is every view that carried no campaign, including a visitor who typed the address or followed an untagged link.",
+            "pagesByDay": "The views per calendar day, for a time series."
           },
           "note": "Vercelin skripti käynnistyy vain kävijälle, joka on hyväksynyt analytiikan evästebannerissa, ja perhetietueen UTM-arvot kirjoitetaan vain kävijälle, joka on hyväksynyt markkinoinnin. Ehdot ovat eri, ja analytiikan ehto on laajempi, joten tässä laskettu sivunäyttö ja <code>/families</code>-resurssin perhe eivät kuvaa samaa joukkoa: kaiken hyväksynyt kävijä on molemmissa, pelkän analytiikan hyväksynyt vain tässä, ja bannerin hylännyt ei kummassakaan."
         }
@@ -1682,7 +1687,7 @@
           "childIdentity": "Lasten sukunimet, syntymäpäivät ja sukupuoli sekä vanhempien puhelinnumerot. Mikään, mitä Lynx tiedoilla tekee, ei niitä tarvitse, ja Ohjelman tietosuojaseloste lupaa syntymäkuukauden eikä syntymäaikaa.",
           "releases": "Tapaustutkimus- ja suositteluluvat. Sogversen hallussa oleva yksi medialupa kattaa jo sen, että Lynx Educate, School of Gaming ja Roblox käyttävät valokuvaa julkisesti; lapsen koko nimi, tapaustutkimus, sitaatti tai lapseen yhdistetty sisältö vaativat erillisen kirjallisen luvan, joka hankitaan alustan ulkopuolella.",
           "deliveryModel": "Toteutusmallin nimike. Sogverse tietää tuotteen tyypin ja sen, onko tuote verkossa vai paikan päällä; mallien luokittelu on Lynxin asia rakentaa näiden kahden kentän päälle.",
-          "analytics": "Muun kuin laskeutumissivun liikenne ja kaikki yksittäistä kävijää koskeva tieto. Päätepisteen <code>/traffic</code> taustalla oleva analytiikka on suunniteltu tietosuoja edellä: sivu, jolle perhe päätyy kirjautumisen jälkeen, on perheen oma, ja kävijä on luku, ei koskaan tietue."
+          "analytics": "Traffic anywhere but the landing page, the shop and the Programme’s product pages, and anything about a single visitor. The analytics behind <code>/traffic</code> are privacy-first by design: a page a family reaches after signing in is theirs, and a visitor is a count, never a record."
         }
       }
     }

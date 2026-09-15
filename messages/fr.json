@@ -1640,16 +1640,21 @@
           "note": "Aucun identifiant de l’enfant ou de la famille ne figure sur cette ligne. Si Lynx a besoin de remonter d’une ligne à une famille, récupérez-la plutôt depuis <code>/enrolments</code> : le jeu de données de recherche n’est délibérément pas rattachable à une personne."
         },
         "traffic": {
-          "title": "la page d’atterrissage, par campagne",
-          "intro": "Les vues de la page d’atterrissage Roblox, groupées par la campagne qui les a amenées, afin que le haut de l’entonnoir ait lui aussi un chiffre. Les décomptes proviennent de Vercel Web Analytics. Nous les recopions dans notre propre stockage une fois par jour : l’historique commence donc le jour où cette recopie a débuté, et non sur les 30 jours que Vercel conserve. Agrégé uniquement : aucun identifiant de visiteur, et aucune page autre que la page d’atterrissage.",
+          "title": "the pages a campaign lands on, by campaign",
+          "intro": "Views of the pages a Lynx campaign can land on, grouped by the campaign that brought them, so the top of the funnel has a number too: the Roblox landing page, the shop, and each Programme product’s own page. The counts come from Vercel Web Analytics. We copy them into our own store once a day, so the history runs from the day the copying began rather than the 30 days Vercel keeps. Aggregate only: no visitor identifiers, and no page beyond those three kinds. A page’s views count every language it is served in as one page.",
           "params": {
+            "page": "Only pages of this kind. Omit for all three.",
+            "productId": "Only this product’s page. Implies <code>page=product</code>.",
             "fromTo": "Uniquement les jours compris dans cette plage, bornes comprises. À omettre pour tout l’historique."
           },
           "fields": {
             "range": "Les jours que les décomptes couvrent.",
-            "pageviews": "Les vues de la page d’atterrissage sur la plage, quelle qu’en soit la provenance.",
-            "byCampaign": "Les vues ventilées selon les trois valeurs UTM du lien. La ligne aux trois valeurs nulles regroupe toutes les vues sans campagne, y compris celles d’un visiteur qui a saisi l’adresse ou suivi un lien non balisé.",
-            "byDay": "Les vues par jour calendaire, pour une série temporelle."
+            "pages": "One entry per page: the landing page, the shop, and one per Programme product that had a view in the range.",
+            "pagesPage": "Which kind of page. The shop page is shared with everything School of Gaming sells, so its views are not Programme-only; a product page’s views are.",
+            "pagesProductId": "The product whose page it is; <code>null</code> for the landing page and the shop.",
+            "pagesPageviews": "Views of the page in the range, whatever brought them.",
+            "pagesByCampaign": "The views split by the three UTM values on the link. The row with three nulls is every view that carried no campaign, including a visitor who typed the address or followed an untagged link.",
+            "pagesByDay": "The views per calendar day, for a time series."
           },
           "note": "Le script de Vercel ne s’exécute que pour un visiteur ayant accepté les statistiques dans le bandeau de cookies, et les valeurs UTM d’un enregistrement de famille ne sont écrites que pour un visiteur ayant accepté le marketing. Les deux conditions diffèrent, et celle des statistiques est la plus large : une vue comptée ici et une famille dans <code>/families</code> ne portent donc pas sur la même population. Un visiteur qui a tout accepté figure dans les deux, un visiteur qui n’a accepté que les statistiques ne figure qu’ici, et un visiteur qui a refusé le bandeau ne figure dans aucun des deux."
         }
@@ -1682,7 +1687,7 @@
           "childIdentity": "Les noms de famille, jours de naissance et genre des enfants, ainsi que les numéros de téléphone des parents. Rien de ce que Lynx fait avec les données n’en a besoin, et la politique de confidentialité du Programme promet un mois de naissance plutôt qu’une date de naissance.",
           "releases": "Les autorisations d’étude de cas et de témoignage. L’unique autorisation média que détient Sogverse couvre déjà l’usage public d’une photographie par Lynx Educate, School of Gaming et Roblox ; le nom complet d’un enfant, une étude de cas, une citation ou un contenu rattaché à l’enfant exigent une autorisation écrite distincte, recueillie en dehors de la plateforme.",
           "deliveryModel": "Une étiquette de mode de prestation. Sogverse détient le type d’un produit et le fait qu’il soit en ligne ou en présentiel ; c’est à Lynx de poser une taxonomie de modèles par-dessus ces deux champs.",
-          "analytics": "Le trafic de toute page autre que la page d’atterrissage, et tout ce qui concerne un visiteur en particulier. Les statistiques derrière <code>/traffic</code> sont conçues pour préserver la vie privée : une page qu’une famille atteint après s’être connectée lui appartient, et un visiteur est un décompte, jamais un enregistrement."
+          "analytics": "Traffic anywhere but the landing page, the shop and the Programme’s product pages, and anything about a single visitor. The analytics behind <code>/traffic</code> are privacy-first by design: a page a family reaches after signing in is theirs, and a visitor is a count, never a record."
         }
       }
     }
