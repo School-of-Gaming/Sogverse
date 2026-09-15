@@ -622,7 +622,7 @@ describe("buildMunicipalityInvoicing", () => {
       }
     });
 
-    it("counts a customer's clubs with no fee, which is what blocks its file", () => {
+    it("counts a customer's clubs that RAN with no fee, which is what blocks its file", () => {
       const buyer = customer("1", { fennoa_customer_no: "F0204" });
       const view = build([
         metOnce("a", { invoice_customer: buyer }),
@@ -632,7 +632,27 @@ describe("buildMunicipalityInvoicing", () => {
         }),
       ]);
 
-      expect(view.customers[0].clubsWithoutFee).toBe(1);
+      expect(view.customers[0].clubsThatRanWithoutFee).toBe(1);
+    });
+
+    it("leaves a fee-less club that never met out of that count", () => {
+      // The count is about what a FILE would be wrong about. A club that
+      // recorded nothing puts no row and no money on the invoice whatever its
+      // price, so it cannot make one short — while the month's own
+      // `clubsWithoutFee`, which is about the data, still reports it.
+      const buyer = customer("1", { fennoa_customer_no: "F0204" });
+      const view = build([
+        metOnce("a", { invoice_customer: buyer }),
+        club({
+          id: "b",
+          invoice_customer: buyer,
+          municipality_fee_cents: null,
+          sessions: [],
+        }),
+      ]);
+
+      expect(view.customers[0].clubsThatRanWithoutFee).toBe(0);
+      expect(view.clubsWithoutFee).toBe(1);
     });
 
     it("orders customers by their Fennoa number, not by their billing name", () => {

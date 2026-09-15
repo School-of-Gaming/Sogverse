@@ -218,6 +218,12 @@ import { TEST_IDS } from "./constants";
  *
  * The 7xx block runs out at 7ff, so allocation continues in 8xx
  * (`...00000000008XX`):
+ *   801-804        session-feedback.test.ts (club 801 with group 803, where
+ *                  BOTH seeded children hold an active seat — the sibling pair
+ *                  is what makes "a member reads only their own row" provable
+ *                  rather than merely true — and club 802 with group 804, where
+ *                  nobody is seated, so every "refused in a group they are not
+ *                  in" case fails for the group clause alone)
  *   805-809        invoice-customers.test.ts (805 is the municipality club the
  *                  products-side cases hang off and 806 the consumer club that
  *                  must refuse the column — one product cannot be both, since
@@ -241,12 +247,6 @@ import { TEST_IDS } from "./constants";
  *                  municipality and the function refuses every call while that
  *                  club stands — so the "the document carries the customer"
  *                  assertions live there rather than beside the table's own
- *   801-804        session-feedback.test.ts (club 801 with group 803, where
- *                  BOTH seeded children hold an active seat — the sibling pair
- *                  is what makes "a member reads only their own row" provable
- *                  rather than merely true — and club 802 with group 804, where
- *                  nobody is seated, so every "refused in a group they are not
- *                  in" case fails for the group clause alone)
  *   637           write-idor.test.ts's product_images entry. It sits outside
  *                  that file's 5a4-5a9 block because the block was full when
  *                  the catalogue arrived; the file is named twice here rather

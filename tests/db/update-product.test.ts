@@ -131,7 +131,9 @@ describe("update_product", () => {
       registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
       seat_count: 10,
       waitlist_enabled: false,
-      // chk_products_non_consumer_has_end_date.
+      // chk_products_non_consumer_has_end_date: a municipality club needs one,
+      // always. (Until 00169 a 'draft' row was exempt; that value and its escape
+      // hatch are both gone, and so is the stored status they belonged to.)
       end_date: "2099-12-31",
       is_visible: false,
       created_by: TEST_IDS.ADMIN,
@@ -508,28 +510,7 @@ describe("update_product", () => {
   });
 
   it("accepts a positive but rejects a zero municipality fee on a muni club", async () => {
-    await deleteTestProducts(admin, [MUNI_PRODUCT_ID]);
-    await admin.from("products").insert({
-      id: MUNI_PRODUCT_ID,
-      product_type: "municipality_club",
-      billing_mode: "external_contract",
-      topic: "minecraft_java",
-      min_age: 7,
-      max_age: 12,
-      spoken_language_code: "en",
-      is_remote: true,
-      location_id: TEST_IDS.LOCATION_MUNICIPALITY, // muni clubs need a location
-      timezone: "Europe/Helsinki",
-      registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
-      seat_count: 10,
-      waitlist_enabled: false,
-      // chk_products_non_consumer_has_end_date: a municipality club needs one,
-      // always. (Until 00169 a 'draft' row was exempt; that value and its escape
-      // hatch are both gone, and so is the stored status they belonged to.)
-      end_date: "2099-12-31",
-      is_visible: false,
-      created_by: TEST_IDS.ADMIN,
-    });
+    await freshMuniProduct();
 
     const positive = await admin
       .from("products")

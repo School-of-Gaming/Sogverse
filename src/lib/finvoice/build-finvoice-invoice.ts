@@ -41,8 +41,8 @@ import {
  * ## What it refuses, and why refusing beats answering
  *
  * Both refusals are typed values rather than exceptions, because both are
- * ordinary states of an ordinary month rather than faults: a club whose fee
- * nobody has filled in yet, and a customer whose clubs all sat out the month.
+ * ordinary states of an ordinary month rather than faults: a club that ran with
+ * no fee filled in, and a customer whose clubs all sat out the month.
  * The caller renders them — the page as a disabled control with the reason, the
  * route as a 409 — and the same predicate decides both, so a control that says
  * a file can be produced and a route that then refuses to produce it cannot
@@ -83,9 +83,10 @@ export interface FinvoiceInvoice {
   /** The month invoiced, as its first day (`YYYY-MM-01`). */
   monthStart: string;
   /**
-   * Our provisional number for the invoice. **Fennoa assigns the real one when
-   * the invoice is sent**, so this exists to identify the file rather than the
-   * invoice, and re-exporting a month produces the same number again.
+   * Our provisional number for the invoice — the month and the customer's own
+   * Fennoa number. **Fennoa assigns the real one when the invoice is sent**, so
+   * this exists to identify the file rather than the invoice, and re-exporting a
+   * month produces the same number again however the month's data has moved.
    */
   invoiceNumber: string;
   /** `CCYYMMDD` — the first day of the month *after* the one invoiced. */
@@ -107,10 +108,14 @@ export interface FinvoiceInvoice {
  *   is what a stale link or a hand-typed id reaches, and it is not an error
  *   about the customer: the customer may exist and simply have had no clubs
  *   running.
- * - `club_without_fee` — at least one of the customer's clubs has no
+ * - `club_without_fee` — at least one club that **ran** this month has no
  *   per-session fee. **The whole file is refused rather than the club being
- *   dropped**, because a file that silently omits a club is a total that is
- *   short, and a short total is the one thing nobody downstream catches.
+ *   dropped**, because a file that silently omits a club that ran is a total
+ *   that is short, and a short total is the one thing nobody downstream
+ *   catches. A club that recorded nothing is not in this count: it puts no row
+ *   and no money on the file whatever its fee, so it cannot make the file
+ *   wrong — its missing fee is a data problem, reported where data problems
+ *   are, on the club's own line and on the admin dashboard.
  * - `nothing_to_invoice` — every one of the customer's clubs recorded no
  *   sessions. An invoice for nothing is a document somebody has to explain.
  */
@@ -121,7 +126,10 @@ export type FinvoiceRefusalReason = FinvoiceBlockedReason | "unknown_customer";
 export interface FinvoiceRefusal {
   ok: false;
   reason: FinvoiceRefusalReason;
-  /** How many of the customer's clubs have no fee. Zero for the other reasons. */
+  /**
+   * How many of the customer's clubs ran this month with no fee set. Zero for
+   * the other reasons.
+   */
   clubsWithoutFee: number;
 }
 
@@ -147,15 +155,23 @@ export type FinvoiceReadiness =
  * Exported so the page and the route answer the question with the same code:
  * the page disables a download and says why, the route answers 409 and says the
  * same thing, and neither re-derives the rule.
+ *
+ * **What it asks is whether the FILE would be wrong, never whether the data
+ * is.** Those are different questions with different readers: a fee nobody has
+ * set is an admin error, and it is already named on the club's own line in the
+ * ledger and raised as an attention item on the admin dashboard. A refusal here
+ * on top of that is a third alarm for the same thing — and a wrong one where the
+ * club never met, because such a club is on no invoice at all and its price
+ * therefore changes no figure in the file.
  */
 export function finvoiceReadiness(
   summary: InvoiceCustomerSummary,
 ): FinvoiceReadiness {
-  if (summary.clubsWithoutFee > 0) {
+  if (summary.clubsThatRanWithoutFee > 0) {
     return {
       ok: false,
       reason: "club_without_fee",
-      clubsWithoutFee: summary.clubsWithoutFee,
+      clubsWithoutFee: summary.clubsThatRanWithoutFee,
     };
   }
   if (summary.recordedCount === 0) {
@@ -201,18 +217,23 @@ export function buildFinvoiceInvoice({
   }
 
   const invoiceDate = monthsAfter(view.monthStart, 1);
+  const customer = stripZeroWidthFromCustomer(summary.customer);
 
   return {
     ok: true,
     invoice: {
-      customer: summary.customer,
+      customer,
       monthStart: view.monthStart,
-      invoiceNumber: provisionalInvoiceNumber(view.monthStart, position),
+      invoiceNumber: provisionalInvoiceNumber(
+        customer,
+        view.monthStart,
+        position,
+      ),
       invoiceDate: compactDate(invoiceDate),
       dueDate: compactDate(
         addCalendarDays(invoiceDate, FINVOICE_PAYMENT_TERM_DAYS),
       ),
-      freeText: freeTextFor(summary.customer, view.monthStart),
+      freeText: freeTextFor(customer, view.monthStart),
       rows,
       // The three totals are the sums of the rows and nothing else, which is
       // what makes the invoice foot by construction.
@@ -259,8 +280,9 @@ export function buildFinvoiceForMonth({
 // ---------------------------------------------------------------------------
 
 function buildRow(club: InvoiceClub, rowNumber: number): FinvoiceRow {
-  // Non-null by `finvoiceReadiness`, which refuses the whole file when any of
-  // the customer's clubs has no fee. Coerced rather than asserted so a future
+  // Non-null by `finvoiceReadiness`, which refuses the whole file when any club
+  // that ran has no fee — and only a club that ran becomes a row. Coerced
+  // rather than asserted so a future
   // caller that skipped the check produces a visible zero rather than a crash
   // halfway through writing a file.
   const unitPriceCents = club.feeCents ?? 0;
@@ -328,6 +350,43 @@ function stripZeroWidth(value: string): string {
 }
 
 /**
+ * The same strip over every value the buyer's half of the file is written from.
+ *
+ * The names on a club's row are not the only text somebody typed: the buyer's
+ * own fields are typed into the customer form, arrive by paste as often as not,
+ * and land in the two places a zero-width character costs the most — the
+ * identifier and name Fennoa matches the buyer on, where an invisible byte makes
+ * a file match nobody and **create a customer**, and the address and free text
+ * that print on the letter a municipality's accounts payable reads.
+ *
+ * Done once, here, so the invoice carries a clean customer and neither the
+ * serializer nor the free-text block has to remember. `id` is left alone: it is
+ * our own key, it is never written into a file, and stripping it would quietly
+ * change what the invoice says it is for.
+ */
+function stripZeroWidthFromCustomer(
+  customer: InvoiceCustomerRow,
+): InvoiceCustomerRow {
+  return {
+    ...customer,
+    fennoa_customer_no: stripZeroWidth(customer.fennoa_customer_no),
+    invoice_name: stripZeroWidth(customer.invoice_name),
+    street: stripZeroWidth(customer.street),
+    postal_code: stripZeroWidth(customer.postal_code),
+    city: stripZeroWidth(customer.city),
+    country_code: stripZeroWidth(customer.country_code),
+    your_reference:
+      customer.your_reference === null
+        ? null
+        : stripZeroWidth(customer.your_reference),
+    invoice_text:
+      customer.invoice_text === null
+        ? null
+        : stripZeroWidth(customer.invoice_text),
+  };
+}
+
+/**
  * The free-text block: whatever the customer asked for on every invoice, then
  * the period this one covers, then what the rows are counting.
  *
@@ -359,23 +418,38 @@ function compactDate(date: string): string {
 }
 
 /**
- * Our provisional number for a month's file: the month, then the customer's
- * 1-based position in the month's customer list, padded to two digits.
+ * Our provisional number for a month's file: the month, then the digits of the
+ * customer's Fennoa number. `F0037` in May 2026 is `2026050037`.
  *
  * **Fennoa assigns the real invoice number on send**, so this one never reaches
  * an accounting ledger and the export stays stateless — nothing is written when
  * a file is produced, and producing one twice produces the same file. What the
- * number still has to be is numeric and greater than 100, which is Fennoa's own
- * rule for an imported identifier, and deterministic, so that a re-export after
- * a fee correction replaces the earlier file rather than looking like a second
- * invoice.
+ * number has to be is numeric and greater than 100, which is Fennoa's own rule
+ * for an imported identifier: the `YYYYMM` alone already clears that, and the
+ * customer's digits only make it longer.
  *
- * Two digits is enough by a wide margin: it is the count of *customers billed
- * in one month*, which is a number of municipal agreements rather than a number
- * of clubs. A month with a hundred customers would roll into three digits and
- * stay both numeric and unique, so the padding is a shape rather than a limit.
+ * **It is derived from the customer rather than from the customer's place in
+ * the month**, because a re-export has to carry the same number as the export it
+ * replaces, whatever changed in between — and a position is not a property of
+ * the customer at all. Link one more club to a new buyer and every later
+ * customer's position shifts by one, so a file downloaded again after that edit
+ * would come back under a different number and read as a second invoice for the
+ * same month. A Fennoa number belongs to the customer, does not move, and is
+ * unique across customers, which makes the number both stable across data
+ * changes and unique within a month by construction.
  */
-function provisionalInvoiceNumber(monthStart: string, position: number): string {
+function provisionalInvoiceNumber(
+  customer: InvoiceCustomerRow,
+  monthStart: string,
+  position: number,
+): string {
   const yearMonth = `${monthStart.slice(0, 4)}${monthStart.slice(5, 7)}`;
-  return `${yearMonth}${String(position + 1).padStart(2, "0")}`;
+  const digits = customer.fennoa_customer_no.replace(/\D/g, "");
+  // A customer number with no digit in it is not a shape Fennoa issues, but the
+  // column is free text, so there has to be an answer: the customer's 1-based
+  // position in the month, padded to four. It is stable only for as long as the
+  // month's customer list is, which is the most a number carrying nothing of the
+  // customer's own can promise.
+  const tail = digits === "" ? String(position + 1).padStart(4, "0") : digits;
+  return `${yearMonth}${tail}`;
 }

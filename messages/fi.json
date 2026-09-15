@@ -394,7 +394,7 @@
       "upcoming": "Tulossa",
       "unrecordedSessions": "{count, plural, one {# kirjaamatta} other {# kirjaamatta}}",
       "sessionsFor": "Kerhon {club} kerrat",
-      "clubsIn": "Kunnan {municipality} kerhot",
+      "clubsIn": "Kerhot kunnassa {municipality}",
       "clubsWithoutCustomer": "{count, plural, one {# kerholta puuttuu laskutusasiakas} other {# kerholta puuttuu laskutusasiakas}}",
       "customerNotSet": "Laskutusasiakasta ei ole asetettu",
       "downloadInvoiceFor": "Lataa Finvoice-tiedosto asiakkaalle {customer}",
@@ -446,7 +446,8 @@
         "countryShape": "Käytä kaksikirjaimista maatunnusta, esimerkiksi FI.",
         "duplicateNumber": "Fennoan asiakasnumero {number} on jo toisella asiakkaalla.",
         "saveFailed": "Asiakkaan tallennus epäonnistui. Yritä uudelleen.",
-        "saveFailedWithReason": "Asiakkaan tallennus epäonnistui – {reason}"
+        "saveFailedWithReason": "Asiakkaan tallennus epäonnistui – {reason}",
+        "listUnavailable": "Asiakaslistaa ei voitu ladata. Päivitä sivu, jotta voit valita asiakkaan."
       },
       "picker": {
         "label": "Laskutusasiakas",

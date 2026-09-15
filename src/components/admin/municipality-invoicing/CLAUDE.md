@@ -184,7 +184,16 @@ that has to be re-verified against Fennoa rather than reasoned about.
 - **Fennoa assigns the invoice number when the invoice is sent.** Ours is provisional, it
   never reaches an accounting ledger, and it is what makes the export stateless: producing
   a month's file twice produces the same file, and there is no counter for a failed
-  download to burn.
+  download to burn. It is the invoiced month followed by the digits of the buyer's Fennoa
+  customer number — numeric and above 100, which is the import's own rule for an
+  identifier, and unique within a month because a customer number is. **It is derived from
+  the buyer rather than from where the buyer sits in the month**, because a re-export has
+  to carry the same number as the export it replaces, whatever changed in between: a
+  position moves the moment another club names a new customer, so every later buyer's file
+  would come back under a different number and read as a second invoice for the same
+  month. A customer number that carries no digit at all is not a shape Fennoa issues; that
+  file falls back to the buyer's place in the month, which is stable for as long as the
+  month's list of buyers is.
 - **Payment terms, e-invoice routing and department names live on the customer card** and
   are not sent. They belong to the accounting system; a second copy in the file would be a
   copy that goes stale.
@@ -197,15 +206,29 @@ municipality's name is a claim about the customer's whole month, not about that 
 share of it, and a row takes its municipality from its own club rather than from the
 section the reader clicked in.
 
-**A file is refused rather than trimmed, on two grounds.** A customer with **any** club
-lacking a fee gets no file at all: dropping the club would produce an invoice short by
-whatever that club was worth, with nothing in it saying so, and a short total is the one
-error nobody downstream catches. A customer whose clubs recorded **nothing** gets no file
-either — an invoice for nothing is a document somebody has to explain. Both are ordinary
-states of an ordinary month rather than faults, so both are values the callers render: the
-page shows the control disabled with the reason, and the download answers a conflict with
-the same reason. **One predicate decides both**, because a control that says a file cannot
-be produced and a route that then produces one is the worst outcome available.
+**A file is refused rather than trimmed, on two grounds.** A customer with a club that
+**ran** and has no fee gets no file at all: dropping the club would produce an invoice
+short by whatever that club was worth, with nothing in it saying so, and a short total is
+the one error nobody downstream catches. A customer whose clubs recorded **nothing** gets
+no file either — an invoice for nothing is a document somebody has to explain. Both are
+ordinary states of an ordinary month rather than faults, so both are values the callers
+render: the page shows the control disabled with the reason, and the download answers a
+conflict with the same reason. **One predicate decides both**, because a control that says
+a file cannot be produced and a route that then produces one is the worst outcome
+available.
+
+**What the refusal asks is whether the FILE would be wrong, never whether the data is.**
+Those are two questions with two readers. A club that ran without a fee makes the file
+short, so the file is refused. A club that ran **nothing** is not on the file at all —
+exactly as it is not in the ledger's total — so no price it lacks can change a figure in
+it, and refusing would stop every real club of that buyer being invoiced over a club that
+did not meet. The missing fee is an admin error either way, and it stays reported where
+data problems are reported: on the club's own line here, in the counts of clubs left out of
+a municipality's total and out of the month's, and as an attention item on the admin
+dashboard. The export is not a third alarm for it. So the number a customer's refusal
+carries is its own, under its own name, and it is not the count printed beside a
+municipality: one says what a file would be wrong about, the other what the month is
+missing.
 
 **The money rule is the one improvement over the files the previous system wrote, whose
 totals sometimes did not foot.** Integer cents end to end: a row's net is its session count
@@ -222,9 +245,12 @@ municipality's accounts payable, so every name in it — the municipality, the h
 the ledger in Swedish exports the same bytes as one reading it in Finnish. A row names the
 hall **only where the club's location is not the municipality itself**, because a remote
 club points at its municipality directly and the row would otherwise say the same word
-twice. Zero-width characters are stripped from every name: one production school name
-carries a zero-width space that survives every round trip, is invisible in the admin UI,
-and would reach the buyer's system as a byte their own search will not match.
+twice. Zero-width characters are stripped from every name **and from every field the buyer
+half of the file is written from** — the customer number, the invoice name, the address and
+the two free-text fields: one production school name carries a zero-width space that
+survives every round trip, is invisible in the admin UI, and would reach the buyer's system
+as a byte their own search will not match — or, in the identifier Fennoa matches on, as a
+buyer that matches nobody and is therefore created.
 
 **The seller, the article, the cost dimension, the VAT rate, the unit, the overdue
 interest and the two standing free-text lines are company constants in the repo, not

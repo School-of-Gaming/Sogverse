@@ -490,7 +490,8 @@
         "countryShape": "cha’ mu’qad Sep ngoq yIlo’, FI rurbogh.",
         "duplicateNumber": "Fennoa DIlwI’ mI’ {number} ghaj latlh DIlwI’.",
         "saveFailed": "DIlwI’ pollu’be’. yInIDqa’.",
-        "saveFailedWithReason": "DIlwI’ pollu’be’ – {reason}"
+        "saveFailedWithReason": "DIlwI’ pollu’be’ – {reason}",
+        "listUnavailable": "DIlwI’ tetlh laDlu’be’. HaSta yIchu’qa’."
       },
       "picker": {
         "label": "DIlwI’",

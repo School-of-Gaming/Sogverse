@@ -446,7 +446,8 @@
         "countryShape": "Utilisez un code pays à deux lettres, par exemple FI.",
         "duplicateNumber": "Le numéro client Fennoa {number} appartient déjà à un autre client.",
         "saveFailed": "Le client n’a pas pu être enregistré. Réessayez.",
-        "saveFailedWithReason": "Le client n’a pas pu être enregistré – {reason}"
+        "saveFailedWithReason": "Le client n’a pas pu être enregistré – {reason}",
+        "listUnavailable": "La liste des clients n’a pas pu être chargée. Actualisez la page pour en choisir un."
       },
       "picker": {
         "label": "Facturé à",

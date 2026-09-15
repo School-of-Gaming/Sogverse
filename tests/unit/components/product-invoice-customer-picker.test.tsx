@@ -46,7 +46,11 @@ import { PRODUCT_TYPE_CONFIG } from "@/components/admin/products/product-type-co
 import { INVOICE_CUSTOMER_FIXTURES } from "@/components/admin/invoice-customers/mock-invoice-customer-fixtures";
 import type { ProductType } from "@/types";
 
-const CUSTOMERS = { data: INVOICE_CUSTOMER_FIXTURES, isPending: false };
+const CUSTOMERS = {
+  data: INVOICE_CUSTOMER_FIXTURES,
+  isPending: false,
+  isError: false,
+};
 
 /**
  * The section over real form state, with the latest state readable afterwards.
@@ -158,7 +162,11 @@ describe("the invoice customer picker on the fees section", () => {
   });
 
   it("is empty and inert until the customers land", () => {
-    mockUseInvoiceCustomers.mockReturnValue({ data: undefined, isPending: true });
+    mockUseInvoiceCustomers.mockReturnValue({
+      data: undefined,
+      isPending: true,
+      isError: false,
+    });
     renderFees("municipality_club");
 
     const select = screen.getByLabelText<HTMLSelectElement>(/picker\.label/);
@@ -167,5 +175,26 @@ describe("the invoice customer picker on the fees section", () => {
     // frames claiming it has none.
     expect(select.options).toHaveLength(0);
     expect(select.disabled).toBe(true);
+  });
+
+  it("stays inert and says why when the read fails", () => {
+    // The emptiness that never ends. Offering "Not set" alone here would tell
+    // the admin this club has no buyer — and let them save that over the one it
+    // has — so the box stays empty and inert, and the line beneath it is what
+    // turns a dead control into a state the reader can act on.
+    mockUseInvoiceCustomers.mockReturnValue({
+      data: undefined,
+      isPending: false,
+      isError: true,
+    });
+    renderFees("municipality_club");
+
+    const select = screen.getByLabelText<HTMLSelectElement>(/picker\.label/);
+    expect(select.options).toHaveLength(0);
+    expect(select.disabled).toBe(true);
+
+    const error = screen.getByText(/errors\.listUnavailable/);
+    // Announced with the field rather than merely printed beside it.
+    expect(select.getAttribute("aria-describedby")).toContain(error.id);
   });
 });

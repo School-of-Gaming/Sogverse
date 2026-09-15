@@ -446,7 +446,8 @@
         "countryShape": "Använd en tvåbokstavskod för landet, till exempel FI.",
         "duplicateNumber": "Fennoas kundnummer {number} tillhör redan en annan kund.",
         "saveFailed": "Kunden kunde inte sparas. Försök igen.",
-        "saveFailedWithReason": "Kunden kunde inte sparas – {reason}"
+        "saveFailedWithReason": "Kunden kunde inte sparas – {reason}",
+        "listUnavailable": "Kundlistan kunde inte läsas in. Uppdatera sidan för att välja en kund."
       },
       "picker": {
         "label": "Faktureras till",

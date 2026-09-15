@@ -117,8 +117,8 @@ function refusalMessage(refusal: FinvoiceRefusal): string {
       return "No club in this month is invoiced to that customer.";
     case "club_without_fee":
       return refusal.clubsWithoutFee === 1
-        ? "One of this customer's clubs has no fee set, so the invoice would be short. Set the fee and export again."
-        : `${refusal.clubsWithoutFee} of this customer's clubs have no fee set, so the invoice would be short. Set the fees and export again.`;
+        ? "One of this customer's clubs ran this month with no fee set, so the invoice would be short. Set the fee and export again."
+        : `${refusal.clubsWithoutFee} of this customer's clubs ran this month with no fee set, so the invoice would be short. Set the fees and export again.`;
     case "nothing_to_invoice":
       return "This customer's clubs recorded no sessions in this month, so there is nothing to invoice.";
   }

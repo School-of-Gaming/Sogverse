@@ -446,7 +446,8 @@
         "countryShape": "Use a two-letter country code, such as FI.",
         "duplicateNumber": "Fennoa customer number {number} already belongs to another customer.",
         "saveFailed": "The customer could not be saved. Try again.",
-        "saveFailedWithReason": "The customer could not be saved — {reason}"
+        "saveFailedWithReason": "The customer could not be saved — {reason}",
+        "listUnavailable": "The customer list could not be loaded. Reload the page to pick a customer."
       },
       "picker": {
         "label": "Invoiced to",

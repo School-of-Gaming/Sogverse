@@ -33,7 +33,11 @@ export function finvoiceHref(monthStart: string, customerId: string): string {
  * is free text in the database, and a `Content-Disposition` filename carrying a
  * quote, a semicolon or a non-ASCII byte is a header a browser may read as two
  * parameters. Anything outside the safe set becomes an underscore rather than
- * being dropped, so two customers cannot collapse to one filename.
+ * being dropped, which is what the substitution guarantees: a name that is
+ * always non-empty and always safe to put in the header. It does not guarantee
+ * distinctness — `F 37` and `F/37` both come out `F_37` — but two customers
+ * whose numbers differ only in characters a filename cannot carry is not a shape
+ * Fennoa issues, and the file's own contents name the buyer either way.
  */
 export function finvoiceFileName(
   monthStart: string,

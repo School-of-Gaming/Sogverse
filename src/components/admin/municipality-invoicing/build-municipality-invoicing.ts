@@ -240,11 +240,20 @@ export interface InvoiceCustomerSummary {
   /** Sessions that ran across those clubs — what the file's rows will bill. */
   recordedCount: number;
   /**
-   * How many of those clubs have no fee. **Non-zero refuses the whole file**:
-   * an invoice missing a club's money is a total that is quietly short, and a
-   * short total is the one failure this feature cannot afford.
+   * How many of those clubs **ran and have no fee**. Non-zero refuses the whole
+   * file: the club's sessions belong on the invoice and there is no price to put
+   * on them, so the file would be quietly short by whatever they were worth, and
+   * a short total is the one failure this feature cannot afford.
+   *
+   * Deliberately narrower than the `clubsWithoutFee` counts on a municipality
+   * and on the month, which are about the *data*: every club whose fee is unset,
+   * whether or not it met. A club that recorded nothing contributes no row and
+   * no money to the file, so its missing fee cannot make the file wrong — and it
+   * is still an admin error, still warned about on the club's own line here and
+   * still raised on the dashboard. Hence the different name: this one counts
+   * what a file would be wrong about, not what the month is missing.
    */
-  clubsWithoutFee: number;
+  clubsThatRanWithoutFee: number;
   /** The municipalities its clubs sit under, localized and in ledger order. */
   municipalityNames: readonly string[];
 }
@@ -277,10 +286,13 @@ export interface MunicipalityInvoicingView {
    * Every Fennoa customer with at least one club in the month, ordered by
    * customer number.
    *
-   * **The order is part of the file.** A customer's provisional invoice number
-   * is derived from its position in this list, so the order has to be the same
-   * answer for every reader — which rules out sorting by the billing name, the
-   * one key that depends on the locale the month was built in.
+   * **The order is the same answer for every reader**, which rules out sorting
+   * by the billing name — the one key that depends on the locale the month was
+   * built in, and the one that would put a Swedish admin's list in a different
+   * order from a Finnish admin's. The customer number does not move and does not
+   * translate, so a position in this list means the same thing wherever it is
+   * read, which is what the export's own fallback number leans on for a customer
+   * whose number carries no digit at all.
    */
   customers: readonly InvoiceCustomerSummary[];
   /** How many municipalities are on the invoice. */
@@ -419,10 +431,12 @@ export function buildMunicipalityInvoicing({
  * appears under both come out in the order the ledger prints them — a file's
  * rows then read down the page the CFO checked them against.
  *
- * **Ordered by customer number, not by name.** The position in this list is
- * part of each customer's provisional invoice number, and the billing name
- * sorts differently per locale, so a name-ordered list would number the same
- * month's files differently for a Swedish reader than for a Finnish one.
+ * **Ordered by customer number, not by name.** A billing name sorts differently
+ * per locale, so a name-ordered list would put the same month's buyers in one
+ * order for a Swedish reader and another for a Finnish one — and the export
+ * falls back to a position in this list for the one customer shape it cannot
+ * number from the customer itself. A customer number neither moves nor
+ * translates.
  */
 function summarizeCustomers(
   sections: readonly Omit<InvoiceMunicipality, "customers">[],
@@ -469,8 +483,9 @@ function summarizeCustomers(
         (count, club) => count + club.recordedCount,
         0,
       ),
-      clubsWithoutFee: entry.clubs.filter((club) => club.feeCents === null)
-        .length,
+      clubsThatRanWithoutFee: entry.clubs.filter(
+        (club) => club.recordedCount > 0 && club.feeCents === null,
+      ).length,
       municipalityNames: entry.municipalityNames,
     }))
     .sort((a, b) =>

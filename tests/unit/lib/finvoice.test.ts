@@ -384,6 +384,33 @@ describe("the invoice free text", () => {
     expect(invoice.freeText.includes("\r")).toBe(false);
     expect(invoice.freeText.split("\n")).toHaveLength(4);
   });
+
+  it("strips zero-width characters out of the buyer's own fields too", () => {
+    // The same invisible byte the club names carry, in the half of the file the
+    // buyer is matched and addressed by: pasted into the customer form it
+    // survives every round trip and reaches Fennoa as a name that matches
+    // nobody and an address line a clerk cannot search for.
+    const buyer = customer({
+      id: "cust-zw",
+      fennoa_customer_no: "F02​10",
+      invoice_name: "Espoon​ kaupunki",
+      street: "Virastokuja​ 1",
+      city: "Es​poo",
+      your_reference: "TIL-2026​-0418",
+      invoice_text: "Sopimus​ 12/2025",
+    });
+    const invoice = invoiceFor(
+      [club({ id: "a", name: "Klubi A", invoiceCustomer: buyer })],
+      buyer.id,
+    );
+
+    expect(invoice.customer.fennoa_customer_no).toBe("F0210");
+    expect(invoice.customer.invoice_name).toBe("Espoon kaupunki");
+    expect(invoice.customer.street).toBe("Virastokuja 1");
+    expect(invoice.customer.city).toBe("Espoo");
+    expect(invoice.customer.your_reference).toBe("TIL-2026-0418");
+    expect(invoice.freeText.startsWith("Sopimus 12/2025\n")).toBe(true);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -398,7 +425,7 @@ describe("the invoice's dates and number", () => {
     expect(invoice.dueDate).toBe("20260615");
   });
 
-  it("numbers a file by the month and the customer's place in it", () => {
+  it("numbers a file by the month and the customer's Fennoa number", () => {
     // Numeric and above 100, which is Fennoa's own rule for an imported
     // identifier, and the same answer every time the month is exported —
     // Fennoa replaces it with the real invoice number when the invoice is sent.
@@ -408,9 +435,30 @@ describe("the invoice's dates and number", () => {
       club({ id: "b", name: "Klubi B", invoiceCustomer: second }),
     ];
 
-    expect(invoiceFor(clubs).invoiceNumber).toBe("20260501");
-    expect(invoiceFor(clubs, second.id).invoiceNumber).toBe("20260502");
+    expect(invoiceFor(clubs).invoiceNumber).toBe("2026050204");
+    expect(invoiceFor(clubs, second.id).invoiceNumber).toBe("2026050999");
     expect(Number(invoiceFor(clubs).invoiceNumber)).toBeGreaterThan(100);
+  });
+
+  it("keeps a customer's number across a change to the rest of the month", () => {
+    // The property the derivation exists for: a re-export has to carry the same
+    // number as the export it replaces. Linking one more club to a new buyer
+    // moves every later customer's place in the month, so a number derived from
+    // that place would come back different and read as a second invoice.
+    const later = customer({ id: "cust-b", fennoa_customer_no: "F0999" });
+    const newcomer = customer({ id: "cust-new", fennoa_customer_no: "F0001" });
+    const before = [
+      club({ id: "a", name: "Klubi A" }),
+      club({ id: "b", name: "Klubi B", invoiceCustomer: later }),
+    ];
+    const after = [
+      club({ id: "c", name: "Klubi C", invoiceCustomer: newcomer }),
+      ...before,
+    ];
+
+    expect(invoiceFor(after, later.id).invoiceNumber).toBe(
+      invoiceFor(before, later.id).invoiceNumber,
+    );
   });
 
   it("numbers by customer number, so the reader's locale cannot change it", () => {
@@ -427,8 +475,22 @@ describe("the invoice's dates and number", () => {
       club({ id: "b", name: "Klubi B", invoiceCustomer: first }),
     ];
 
-    expect(invoiceFor(clubs, first.id).invoiceNumber).toBe("20260501");
-    expect(invoiceFor(clubs, second.id).invoiceNumber).toBe("20260502");
+    expect(invoiceFor(clubs, first.id).invoiceNumber).toBe("2026050100");
+    expect(invoiceFor(clubs, second.id).invoiceNumber).toBe("2026050200");
+  });
+
+  it("falls back to the customer's place where the number has no digits", () => {
+    // Not a shape Fennoa issues, but the column is free text and the number
+    // still has to be numeric: the month plus the customer's 1-based position,
+    // padded to four.
+    const wordy = customer({ id: "cust-wordy", fennoa_customer_no: "ESPOO" });
+    const invoice = invoiceFor(
+      [club({ id: "a", name: "Klubi A", invoiceCustomer: wordy })],
+      wordy.id,
+    );
+
+    expect(invoice.invoiceNumber).toBe("2026050001");
+    expect(Number(invoice.invoiceNumber)).toBeGreaterThan(100);
   });
 });
 
@@ -447,32 +509,39 @@ describe("what refuses a file", () => {
     });
   });
 
-  it("refuses the whole file when any of the customer's clubs has no fee", () => {
+  it("refuses the whole file when a club that RAN has no fee", () => {
     // Dropping the club would produce a file that is short by however much that
     // club was worth, with nothing in it saying so. Refusing sends the CFO to
     // the club's own page, which is where the gap is repaired.
     const result = buildFor([
       club({ id: "a", name: "Klubi A" }),
       club({ id: "b", name: "Klubi B", feeCents: null }),
+      club({ id: "c", name: "Klubi C", feeCents: null }),
     ]);
 
+    // The count is of the clubs that ran without a price, because that is what
+    // the ledger's line and the route's refusal both say out loud.
     expect(result).toEqual({
       ok: false,
       reason: "club_without_fee",
-      clubsWithoutFee: 1,
+      clubsWithoutFee: 2,
     });
   });
 
-  it("refuses on a missing fee even where that club recorded nothing", () => {
-    // The club would not have been a row anyway, and the refusal is still
-    // right: the page counts it as a club with no fee, so a download that
-    // succeeded here would contradict the warning printed beside it.
-    const result = buildFor([
+  it("produces the file where the only fee-less club recorded nothing", () => {
+    // A club that did not meet is on no invoice, so its missing price cannot
+    // make one short — the file is about what ran. The gap is still an admin
+    // error, and it is still reported where data problems are reported: on the
+    // club's own line in the ledger and on the admin dashboard. Refusing the
+    // file for it would be a third alarm, and one that stops the month's real
+    // clubs being invoiced.
+    const invoice = invoiceFor([
       club({ id: "a", name: "Klubi A" }),
       club({ id: "b", name: "Klubi B", feeCents: null, dates: [] }),
     ]);
 
-    expect(result.ok).toBe(false);
+    expect(invoice.rows.map((row) => row.clubId)).toEqual(["a"]);
+    expect(invoice.netCents).toBe(6_500);
   });
 
   it("refuses a customer whose clubs all recorded nothing", () => {
@@ -538,7 +607,7 @@ const EXPECTED_DOCUMENT = `<?xml version="1.0" encoding="UTF-8"?>
   <MessageTransmissionDetails>
     <MessageSenderDetails><FromIdentifier>003731104611</FromIdentifier><FromIntermediator>003721291126</FromIntermediator></MessageSenderDetails>
     <MessageReceiverDetails><ToIdentifier></ToIdentifier><ToIntermediator></ToIntermediator></MessageReceiverDetails>
-    <MessageDetails><MessageIdentifier>20260501</MessageIdentifier><MessageTimeStamp>2026-06-03T09:12:34</MessageTimeStamp></MessageDetails>
+    <MessageDetails><MessageIdentifier>2026050204</MessageIdentifier><MessageTimeStamp>2026-06-03T09:12:34</MessageTimeStamp></MessageDetails>
   </MessageTransmissionDetails>
   <SellerPartyDetails>
     <SellerPartyIdentifier>3110461-1</SellerPartyIdentifier>
@@ -557,7 +626,7 @@ const EXPECTED_DOCUMENT = `<?xml version="1.0" encoding="UTF-8"?>
   <DeliveryDetails><DeliveryMethodText>Electronic invoice</DeliveryMethodText></DeliveryDetails>
   <InvoiceDetails>
     <InvoiceTypeCode>INV01</InvoiceTypeCode><InvoiceTypeText>LASKU</InvoiceTypeText><OriginCode>Original</OriginCode>
-    <InvoiceNumber>20260501</InvoiceNumber>
+    <InvoiceNumber>2026050204</InvoiceNumber>
     <InvoiceDate Format="CCYYMMDD">20260601</InvoiceDate>
     <InvoiceTotalVatExcludedAmount AmountCurrencyIdentifier="EUR">130.00</InvoiceTotalVatExcludedAmount>
     <InvoiceTotalVatAmount AmountCurrencyIdentifier="EUR">33.15</InvoiceTotalVatAmount>
