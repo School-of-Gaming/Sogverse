@@ -49,8 +49,25 @@ export interface MyAssignedProductSessionRow {
      */
     translations: MyAssignedProductRow["product_translations"];
   };
-  /** The gedu's own assigned group_id for this product. */
+  /** The gedu's group on this product — assigned, or the one they cover. */
   groupId: string;
+  /**
+   * Which kind of seat this row is (00260): a standing `assignment`, or one
+   * live `cover` on one date.
+   *
+   * Two arms of one read because they share every product-shell fact and
+   * differ only in the card's chrome — a cover is its own small card, named as
+   * a cover and dated, rather than the recurring assignment card. A consumer
+   * that ignored this would render a sub's one covered afternoon as though they
+   * taught the club every week.
+   */
+  kind: "assignment" | "cover";
+  /**
+   * The date a `cover` row covers, product-local `YYYY-MM-DD`; null on an
+   * `assignment` row. It is the other half of a cover card's identity — one
+   * card per covered date, lasting as long as that cover's access window.
+   */
+  coveredDate: string | null;
   /** Total number of groups in the product (every `product_groups` row). */
   groupCount: number;
   /** Active participations summed across every group in the product. */
@@ -85,13 +102,28 @@ export class AssignmentsService {
    * the RPC raises 42501 when the caller isn't a gedu or isn't assigned to
    * the product, which we surface as `null` so the route can render a clean
    * "not your session" empty state instead of throwing.
+   *
+   * **`groupId` names which group of the product is "mine" (00260).** Without
+   * one the answer is the caller's assignment group, as it always was; with one
+   * they are assigned to or covering, that group is. A sub has no assignment
+   * row to resolve a group from, and a gedu covering a *sibling* group of a
+   * product they already teach would otherwise be sent to their own group's
+   * workspace — so the cover card's link carries the group, and this is what it
+   * carries it to.
    */
   async getAssignedProductDetail(
     productId: string,
+    groupId: string | null = null,
   ): Promise<GeduAssignedProduct | null> {
     const { data, error } = await this.supabase.rpc(
       "get_gedu_assigned_product",
-      { p_product_id: productId },
+      {
+        p_product_id: productId,
+        // Omitted rather than sent as null when there is none: the parameter
+        // carries a SQL default, and the generator types no RPC argument as
+        // nullable, so "no group named" is the absence of the key.
+        ...(groupId !== null ? { p_group_id: groupId } : {}),
+      },
     );
 
     if (error) {
@@ -117,6 +149,8 @@ function toMyAssignedProductSessionRow(
       translations: row.product_translations,
     },
     groupId: row.group_id,
+    kind: row.kind,
+    coveredDate: row.covered_date,
     groupCount: row.group_count,
     participantCount: row.participant_count,
     slots: row.schedule_slots.map((s) => ({

@@ -36,9 +36,33 @@ export async function GeduProductWorkspace({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <GeduProductPage productId={productId} />
+      <GeduProductPage productId={productId} viewerId={await viewerId()} />
     </HydrationBoundary>
   );
+}
+
+/**
+ * Who is reading the workspace, resolved on the server.
+ *
+ * The page's session staffing needs it: the document says who is expected and
+ * who filed which absence, but not which of those people is at the keyboard —
+ * and that is what decides whether a card offers "I can't make this session".
+ *
+ * **Resolved here rather than read from a client auth context**, so it is
+ * settled before the first paint and the server render and the first client
+ * render cannot disagree about whose workspace this is. `null` on a failure to
+ * find out, which offers nothing rather than offering the wrong person's
+ * absence — and the proxy has already established that somebody is signed in,
+ * so it is not a state the page is expected to meet.
+ */
+async function viewerId(): Promise<string | null> {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getClaims();
+    return data?.claims.sub ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /**

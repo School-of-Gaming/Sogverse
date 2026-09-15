@@ -36,7 +36,7 @@ Request `{ groupId }`. Gates, in order:
 
 1. **Role** — `requireRole(["gedu","gamer","admin","customer"])`. Customers are admitted for their **own** seat only (see membership); the role gate also applies the parent-PIN check to them, so a locked parent session can't mint a token.
 2. **Group + remoteness** — group must exist and its product must be `is_remote = true`; else 404.
-3. **Membership** — seat-holder (gamer **or** customer): active `participations` row for `(group_id, participant_id)`. One query serves both — `participant_id` is whoever occupies the seat, so a parent's own seat on a for-parents product satisfies it and a parent has no path to their *child's* seat (that row carries the child's id). Gedu: a `gedu_group_assignments` row on **product_id** (cross-group voice mobility). Admin: bypass.
+3. **Membership** — seat-holder (gamer **or** customer): active `participations` row for `(group_id, participant_id)`. One query serves both — `participant_id` is whoever occupies the seat, so a parent's own seat on a for-parents product satisfies it and a parent has no path to their *child's* seat (that row carries the child's id). Gedu: a `gedu_group_assignments` row on **product_id** (cross-group voice mobility), **or** a live `session_cover_requests` row seating them as this group's sub for **today in the product's timezone**. The cover arm is date-scoped where the assignment arm is not — a sub joins the room on the day they cover and on no other day of the group — and it adds to the assignment arm rather than narrowing it. Admin: bypass.
 4. **Session window** — at least one slot must currently be open; the first open slot drives the room name and token `exp`.
 5. **Private-zone `canReceive` bake** — the route reads the current window's `voice_private_zone_occupants` and bakes the joiner's `canReceive` (see the private-zone section) so the SFU won't forward a private member's media to them before they even connect.
 6. **Issuance** — `is_owner = (role is gedu or admin)`. **Rule: moderator rights come from a positive allow-list of roles, never from excluding one.** The flag is doubled at the mint — the Daily helper feeds it to both `is_owner` and `enable_screenshare` — so it is the token's entire moderator surface, and a negative test ("not a gamer") hands moderation *and* screen share to whichever role is admitted next. That is not hypothetical: it is exactly what admitting customers would have done. The Daily token also sets `user_id = profiles.id` (so peers' `participant.user_id` matches what `canReceive.byUserId` keys on). `exp = windowClosesAt + grace`. The response returns `sessionOpensAt` so the client can stamp occupancy rows with the current window.
@@ -45,7 +45,7 @@ There is **no separate locked-room endpoint** — one room per session, so this 
 
 | Capability | Admin | Gedu | Gamer | Customer (parent) |
 |---|---|---|---|---|
-| Join (in window) | any group | assigned product | active participation | active participation on their **own** seat |
+| Join (in window) | any group | assigned product, or a group they cover today | active participation | active participation on their **own** seat |
 | Camera / mic | yes | yes | yes | yes |
 | Move self to a non-locked zone | yes | yes | yes | yes |
 | Screen share / broadcast / deafen | yes | yes | no | no |

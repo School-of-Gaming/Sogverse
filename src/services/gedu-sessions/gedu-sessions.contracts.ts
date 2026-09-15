@@ -2,6 +2,10 @@ import { z } from "zod";
 import { Constants } from "@/types";
 import { NORMALIZE_IMAGE_ERROR_CODES } from "@/lib/images/normalize-image";
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
+import {
+  coverRequestDocument,
+  sessionStaffGedu,
+} from "@/services/session-cover/session-cover.contracts";
 
 /**
  * Wire contracts for the gedu session-feed RPCs.
@@ -304,6 +308,26 @@ export const geduGroupFeed = z.object({
   site: geduFeedSite.nullable(),
   roster: z.array(geduFeedRosterEntry),
   sessions: z.array(geduFeedSession),
+  /**
+   * The group's staff, with the role each holds — the first of the two inputs
+   * the staffing derivation takes. It is on the document rather than derived
+   * from anything else here because nothing else on the workspace knows who
+   * teaches the group: the roster is the children.
+   */
+  gedus: z.array(sessionStaffGedu),
+  /**
+   * Every **non-withdrawn** cover request on the group, unbounded and in no
+   * particular date order — exactly as this document already returns every
+   * stored session row. A withdrawn request changes nothing about who is
+   * expected, so it is the one status that does not travel.
+   *
+   * The client merges these onto its entries by date; a projected date with no
+   * session row carries its requests like any other, which is why the list is
+   * the group's rather than one date's. The admin-only fields inside each
+   * element are keyed to the caller — this document is served to an admin too —
+   * and that rule lives with the element's own schema.
+   */
+  covers: z.array(coverRequestDocument),
 });
 
 export type GeduGroupFeed = z.infer<typeof geduGroupFeed>;
@@ -335,6 +359,12 @@ export type GeduFeedSite = z.infer<typeof geduFeedSite>;
  * product (no `end_date`) has no final session, so it may be flagged and never
  * owes — documented behaviour, not an error.
  *
+ * **A date the caller holds a non-withdrawn cover request on is not their work
+ * and is not counted**, whichever kind of seat the row is: they have said they
+ * cannot be there, whoever ends up running it. That holds while the request is
+ * still open, once it is covered, and for the second link of a sub-of-sub
+ * chain alike.
+ *
  * **This derivation exists twice and the two must agree** — here in SQL for the
  * badge, and in TypeScript in the gedu feed's entry-state module for the card.
  * A change to either half is a change to both, in the same commit, or the badge
@@ -344,6 +374,26 @@ export const geduAssignmentSummary = z.object({
   product_id: z.string(),
   group_id: z.string(),
   group_name: z.string(),
+  /**
+   * Which kind of seat this row is (00260). An `assignment` row is one per
+   * standing assignment, exactly as this read always returned; a `cover` row is
+   * one per **live covered date** — covered, the holder still certified, the
+   * access window still open — so a sub gets a card that lasts as long as their
+   * access does and no longer.
+   *
+   * The rollup keys on (product, group) rather than on product because of it: a
+   * cover's identity is (group, date), and one gedu may cover a sibling group
+   * of a product they already teach.
+   */
+  kind: z.enum(["assignment", "cover"]),
+  /**
+   * The date a `cover` row covers; null on an `assignment` row.
+   *
+   * It is also what scopes the count beside it: a cover owes exactly the one
+   * date it covers, which is the same four conditions applied to a set of one
+   * occurrence rather than a second computation.
+   */
+  covered_date: z.string().nullable(),
   /** Active participations in THIS group, not across the product. */
   group_participant_count: z.number(),
   /** The site name on in-person products; `null` when there is no building. */

@@ -709,6 +709,12 @@ export interface GeduAssignedProductRosterEntry {
 export interface GeduAssignedProductGroupGedu {
   id: string;
   first_name: string;
+  /**
+   * The assignment role this educator holds on the group (00260) — primary or
+   * assistant. Every staff read that lists a group's gedus carries it, and the
+   * rail's peer-group chips are one of them.
+   */
+  role: GeduAssignmentRole;
 }
 
 export interface GeduAssignedProductGroup {

@@ -10,18 +10,53 @@ import { Constants } from "@/types";
  * where it's consumed.
  */
 
+/**
+ * The pay class an assignment carries (00260). Every assignment has one, and
+ * the panel's per-pill select is what writes it.
+ */
+export const geduAssignmentRole = z.enum(
+  Constants.public.Enums.gedu_assignment_role
+);
+
 export const groupChangeSet = z.object({
   addedGroups: z.array(
     z.object({
       tempId: z.string(),
       name: z.string(),
-      geduIds: z.array(z.string()),
+      /**
+       * The educators to create the group with, each with their role. An object
+       * rather than a bare id because there is no longer such a thing as an
+       * assignment without a pay class.
+       */
+      gedus: z.array(
+        z.object({ geduId: z.string(), role: geduAssignmentRole })
+      ),
+      /**
+       * The shape this replaced — a bare array of ids, every one a primary.
+       *
+       * It is still **accepted** rather than rejected, and only for the deploy
+       * window: a browser still running the previous bundle posts it, and the
+       * RPC reads it as primaries. Nothing in this app writes it. It is not a
+       * second way to say the same thing — a caller sending both gets both
+       * assignments — so it comes out once no deployed client can be sending it.
+       */
+      geduIds: z.array(z.string()).optional(),
     })
   ),
   renamedGroups: z.array(z.object({ groupId: z.string(), name: z.string() })),
   deletedGroupIds: z.array(z.string()),
+  /**
+   * Assignments to create **or re-state**. The RPC upserts on (group, gedu) and
+   * updates the role, so changing somebody's role is one added element rather
+   * than a remove plus an add — which is what lets the panel stage a role
+   * change beside every other change and save them together.
+   */
   geduAssignmentsAdded: z.array(
-    z.object({ groupId: z.string(), geduId: z.string() })
+    z.object({
+      groupId: z.string(),
+      geduId: z.string(),
+      role: geduAssignmentRole,
+    })
   ),
   geduAssignmentsRemoved: z.array(
     z.object({ groupId: z.string(), geduId: z.string() })
@@ -166,6 +201,13 @@ export const groupGeduDetail = z.object({
   id: z.string(),
   first_name: z.string(),
   email: z.string().nullable(),
+  /**
+   * The assignment role this pill carries, and what its role select reads and
+   * writes back. This panel is the **permanent** assignment editor; the session
+   * card's staffing editor is a different tool for a different question, and the
+   * two deliberately do not link to one another.
+   */
+  role: geduAssignmentRole,
 });
 
 export const productGroupWithDetails = z.object({

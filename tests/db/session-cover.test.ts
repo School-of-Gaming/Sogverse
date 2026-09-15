@@ -2,6 +2,12 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { Constants, type Database } from "@/types";
+import { adminDashboardCoverRequest } from "@/services/admin-dashboard/admin-dashboard.contracts";
+import {
+  coverRequestDocument,
+  openCoverRequests,
+  sessionStaffGedu,
+} from "@/services/session-cover/session-cover.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
@@ -95,108 +101,19 @@ function slotInstants(date: string): { starts_at: string; ends_at: string } {
 }
 
 // ---------------------------------------------------------------------------
-// The wire shapes. There is no `src/services/session-cover/` yet — the service
-// and its zod contracts are the next step — so the schemas the assertions parse
-// through live here, written from the RPC bodies. When the contracts land, these
-// move out and this file imports them, exactly as every other feature's db test
-// parses through the feature's own schemas.
+// The wire shapes are the app's own, imported rather than restated: every
+// assertion below parses real RPC output through the very schemas the client
+// parses it through, which is what makes this suite the thing that keeps
+// Postgres and TypeScript honest about each other. Only the two shapes with no
+// client reader — the catalog rows the completeness check reads — are local.
 // ---------------------------------------------------------------------------
 
-const coverRequestDocument = z.object({
-  id: z.string(),
-  group_id: z.string(),
-  session_date: z.string(),
-  role: z.enum(Constants.public.Enums.gedu_assignment_role),
-  status: z.enum(Constants.public.Enums.cover_request_status),
-  created_at: z.string(),
-  requested_by: z.string(),
-  requested_by_first_name: z.string().nullable(),
-  covered_by: z.string().nullable(),
-  covered_by_first_name: z.string().nullable(),
-  approved_at: z.string().nullable(),
-  is_requester: z.boolean(),
-  offer_count: z.number().nullable(),
-  reason: z.enum(Constants.public.Enums.cover_reason).nullable(),
-  reason_note: z.string().nullable(),
-});
-
-const openCoverRequests = z.array(
-  z.object({
-    request_id: z.string(),
-    group_id: z.string(),
-    group_name: z.string(),
-    session_date: z.string(),
-    role: z.enum(Constants.public.Enums.gedu_assignment_role),
-    fee_cents: z.number().nullable(),
-    has_offered: z.boolean(),
-    product: z.object({
-      id: z.string(),
-      product_type: z.enum(Constants.public.Enums.product_type),
-      topic: z.enum(Constants.public.Enums.product_topic),
-      spoken_language_code: z.enum(Constants.public.Enums.spoken_language),
-      timezone: z.string(),
-      is_remote: z.boolean(),
-      start_date: z.string().nullable(),
-      end_date: z.string().nullable(),
-      site_name: z.string().nullable(),
-      translations: z.array(
-        z.object({ locale: z.string(), name: z.string(), description: z.string() }),
-      ),
-      schedule_slots: z.array(
-        z.object({
-          weekday: z.number(),
-          start_time: z.string(),
-          duration_minutes: z.number(),
-        }),
-      ),
-    }),
-  }),
-);
-
-const dashboardCoverRequests = z.array(
-  z.object({
-    id: z.string(),
-    group_id: z.string(),
-    group_name: z.string(),
-    session_date: z.string(),
-    role: z.enum(Constants.public.Enums.gedu_assignment_role),
-    reason: z.enum(Constants.public.Enums.cover_reason).nullable(),
-    reason_note: z.string().nullable(),
-    created_at: z.string(),
-    requested_by: z.string(),
-    requested_by_first_name: z.string().nullable(),
-    requested_by_last_name: z.string().nullable(),
-    product: z.object({
-      id: z.string(),
-      product_type: z.enum(Constants.public.Enums.product_type),
-      timezone: z.string(),
-      is_remote: z.boolean(),
-      translations: z.array(z.object({ locale: z.string(), name: z.string() })),
-    }),
-    offers: z.array(
-      z.object({
-        id: z.string(),
-        gedu_id: z.string(),
-        first_name: z.string().nullable(),
-        last_name: z.string().nullable(),
-        certified: z.boolean(),
-        criminal_record_check_at: z.string().nullable(),
-        created_at: z.string(),
-      }),
-    ),
-  }),
-);
-
 const geduFeedCoverHalves = z.object({
-  gedus: z.array(
-    z.object({
-      id: z.string(),
-      first_name: z.string().nullable(),
-      role: z.enum(Constants.public.Enums.gedu_assignment_role),
-    }),
-  ),
+  gedus: z.array(sessionStaffGedu),
   covers: z.array(coverRequestDocument),
 });
+
+const dashboardCoverRequests = z.array(adminDashboardCoverRequest);
 
 const assignmentSummaries = z.array(
   z.object({

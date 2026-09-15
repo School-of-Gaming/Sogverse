@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { formatInTimeZone } from "date-fns-tz";
 import { z } from "zod";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
@@ -29,8 +30,11 @@ import { voiceTokenResponse } from "@/services/voice/voice.contracts";
  * Gates:
  *   1. Membership — participants (a gamer, or a parent holding their own seat
  *      on a for-parents product) via an active participation, gedus via a
- *      product-level assignment (cross-group voice mobility), admins pass
- *      through.
+ *      product-level assignment (cross-group voice mobility) **or a live cover
+ *      on this group for today in the product's timezone**, admins pass
+ *      through. The cover arm is date-scoped where the assignment arm is not:
+ *      a sub joins the room on the day they are covering and on none of the
+ *      group's other days.
  *   2. Session window — at least one slot's window must be open right now.
  *
  * Notably absent: there is no "did you enroll before this session started?"
@@ -121,7 +125,12 @@ export const POST = defineRoute({
         .limit(1)
         .maybeSingle();
 
-      if (!assignment) {
+      // A cover reaches the room on the date they are covering and on no other
+      // date of the group — the one place on this surface where the cover arm
+      // is DATE-SCOPED. It *adds* to the assignment arm above rather than
+      // narrowing it: a gedu assigned to the product keeps the product-wide
+      // mobility they already had.
+      if (!assignment && !(await coversToday(admin, groupId, productTimezone, user.id))) {
         return NextResponse.json(
           { error: "You are not assigned to this group" },
           { status: 403 },
@@ -266,6 +275,66 @@ export const POST = defineRoute({
     };
   },
 });
+
+/**
+ * Does this gedu hold a live cover on this group for **today in the product's
+ * timezone**?
+ *
+ * The TypeScript twin of the database's own date-scoped cover predicate, which
+ * the two voice predicates call with exactly this date. It is written out here
+ * rather than called because this route runs on the **service-role** client,
+ * which bypasses RLS and carries no `auth.uid()` for a SECURITY DEFINER
+ * predicate to read — so a predicate call from here would be asking the
+ * database about nobody.
+ *
+ * Three of the predicate's four conditions are restated: the covered request on
+ * that (group, date), the caller being its sub, and the holder still being
+ * certified — de-certifying an educator ends their cover access at once, which
+ * is why it is asked here rather than only at approval time. The fourth, the
+ * access window, is **not**, and that is deliberate rather than an omission:
+ * the window closes 24 hours after the session's report was mailed or 15
+ * product-local days after the session date, and this asks only about *today* —
+ * a report mailed today is less than a day old and midnight fifteen days from
+ * today has not arrived, so both arms are open by construction. Restating the
+ * arithmetic would be a second definition of a window that has exactly one, and
+ * it could only ever disagree with it.
+ *
+ * "Today" is read in the product's zone, never the runtime's: a club in
+ * Helsinki and one in Los Angeles each get their own day.
+ */
+async function coversToday(
+  admin: ReturnType<typeof createAdminClient>,
+  groupId: string,
+  productTimezone: string,
+  userId: string,
+): Promise<boolean> {
+  const today = formatInTimeZone(new Date(), productTimezone, "yyyy-MM-dd");
+
+  const { data: cover } = await admin
+    .from("session_cover_requests")
+    .select("id")
+    .eq("group_id", groupId)
+    .eq("session_date", today)
+    .eq("covered_by", userId)
+    .eq("status", "covered")
+    .limit(1)
+    .maybeSingle();
+
+  if (!cover) return false;
+
+  // A second round trip rather than an embed: `covered_by` points at
+  // `profiles`, and `gedu_profiles` hangs off `profiles` too, so there is no
+  // foreign key for PostgREST to walk between the two — an embed here would
+  // fail at runtime rather than at compile time. It is only reached when a
+  // cover row was actually found.
+  const { data: gedu } = await admin
+    .from("gedu_profiles")
+    .select("certified")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  return gedu?.certified === true;
+}
 
 /**
  * The joiner's own row on the platform this room is about — one table per

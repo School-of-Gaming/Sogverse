@@ -19,6 +19,10 @@ import {
   rosterScopedMarks,
 } from "@/components/gedu/session-feed/entry-state";
 import type { CreationsObligation } from "@/components/gedu/session-feed/entry-state";
+import {
+  deriveSessionStaffing,
+  NO_SESSION_STAFFING,
+} from "@/lib/session-staffing";
 import type {
   FutureSessionFeedEntry,
   NoRecordSessionFeedEntry,
@@ -112,6 +116,10 @@ function past(
     kind: "past",
     id,
     ...WHEN,
+    // Nobody absent by default. The cases that are about an absence build their
+    // own staffing with `absentViewer`, and everything else here is indifferent
+    // to who is running the session.
+    staffing: NO_SESSION_STAFFING,
     report: null,
     staffNote: null,
     attendance: {},
@@ -147,7 +155,7 @@ function unowedPast(
   return past(id, { ...fields, owed: false });
 }
 function noRecord(id: string): NoRecordSessionFeedEntry {
-  return { kind: "no_record", id, ...WHEN };
+  return { kind: "no_record", id, ...WHEN, staffing: NO_SESSION_STAFFING };
 }
 /** A session finished on all three parts: marked off, written up, and sent. */
 function sentPast(
@@ -173,6 +181,7 @@ function future(
     kind: "future",
     id,
     ...WHEN,
+    staffing: NO_SESSION_STAFFING,
     report: null,
     staffNote: null,
     attendance: {},
@@ -902,6 +911,96 @@ describe("entryCompleteness — the creations condition", () => {
   });
 });
 
+describe("entryCompleteness — a session the viewer has filed an absence for", () => {
+  const VIEWER = "de3c0a6f-1b8e-4c25-9f70-2a41d8b3c5e9";
+  const OTHER = "7b5f1d92-4c08-4e31-8a6d-1f90c2e73b48";
+
+  /**
+   * The staffing of a date the viewer has a live request on, in whichever
+   * state. Built through the real derivation rather than hand-shaped, so a case
+   * here cannot assert against a staffing the module would never produce.
+   */
+  function absentViewer(status: "open" | "covered") {
+    return deriveSessionStaffing({
+      gedus: [{ id: VIEWER, firstName: "Sanna", role: "primary" }],
+      requests: [
+        {
+          id: "req-1",
+          sessionDate: "2026-03-16",
+          requestedBy: { id: VIEWER, firstName: "Sanna" },
+          role: "primary",
+          status,
+          coveredBy:
+            status === "covered" ? { id: OTHER, firstName: "Joonas" } : null,
+        },
+      ],
+      sessionDate: "2026-03-16",
+      viewerId: VIEWER,
+    });
+  }
+
+  it("withholds the warning while the request stands, open or covered", () => {
+    // The gedu said they cannot be there. Whoever ends up running it, an
+    // unfinished register on that date is not this viewer's work outstanding —
+    // which is the same date the SQL badge drops out of its own count.
+    expect(
+      entryCompleteness(past("p", { staffing: absentViewer("open") }), ROSTER),
+    ).toBeNull();
+    expect(
+      entryCompleteness(past("p", { staffing: absentViewer("covered") }), ROSTER),
+    ).toBeNull();
+    // And the same entry with nobody absent is flagged, so the case above is
+    // about the request rather than about anything else on the entry.
+    expect(entryCompleteness(past("p"), ROSTER)).toBe("needs_attention");
+  });
+
+  it("still awards the check when somebody else finished it", () => {
+    // Deliberately not symmetrical with the warning: a session that is finished
+    // is finished, and saying so to the gedu who was away is more use than
+    // silence.
+    expect(
+      entryCompleteness(
+        sentPast("p", { staffing: absentViewer("covered") }),
+        ROSTER,
+      ),
+    ).toBe("complete");
+  });
+
+  it("goes on flagging it for a surface with no viewer", () => {
+    // The admin group page renders the same card and has no request of its own,
+    // so the session it still has to chase keeps its warning.
+    const staffing = deriveSessionStaffing({
+      gedus: [{ id: VIEWER, firstName: "Sanna", role: "primary" }],
+      requests: [
+        {
+          id: "req-1",
+          sessionDate: "2026-03-16",
+          requestedBy: { id: VIEWER, firstName: "Sanna" },
+          role: "primary",
+          status: "open",
+          coveredBy: null,
+          isMine: false,
+        },
+      ],
+      sessionDate: "2026-03-16",
+    });
+    expect(entryCompleteness(past("p", { staffing }), ROSTER)).toBe(
+      "needs_attention",
+    );
+  });
+
+  it("drops the entry out of the alert-badge count", () => {
+    // The count reads the same derivation, so the two cannot disagree about
+    // which sessions are the gedu's outstanding work.
+    const entries = [
+      past("a"),
+      past("b", { staffing: absentViewer("open") }),
+      past("c"),
+    ];
+    expect(countEntriesNeedingAttention(entries, ROSTER)).toBe(2);
+  });
+});
+
 describe("planEditorStateFromEntry / planDraftFromEditorState", () => {
   it("seeds a session with no notes on it with empty fields", () => {
     expect(planEditorStateFromEntry(future("f"))).toEqual({
@@ -952,6 +1051,9 @@ describe("applyPlanDraftToEntry", () => {
       id: "f",
       startsAt: START,
       endsAt: END,
+      // Carried through with the identity and the schedule: who is expected at
+      // a session is not something writing notes for it changes.
+      staffing: NO_SESSION_STAFFING,
       report: "Lighthouse week.",
       staffNote: "Bring the spare mouse.",
       // A future entry carries a sheet now, because one of them can be the
@@ -1408,6 +1510,9 @@ describe("applyDraftToEntry", () => {
       id: "g",
       startsAt: START,
       endsAt: END,
+      // Carried through with the identity and the schedule: who was expected at
+      // a session is not something writing it up changes.
+      staffing: NO_SESSION_STAFFING,
       // Carried through untouched: saving a session does not change whether it
       // was ever asked for.
       owed: true,

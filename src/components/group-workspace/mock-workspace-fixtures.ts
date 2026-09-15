@@ -23,6 +23,7 @@ import type {
   GeduAssignedProduct,
   GeduAssignedProductGroup,
   GeduAssignedProductRosterEntry,
+  GeduAssignmentRole,
   ProductTopic,
 } from "@/types";
 
@@ -308,14 +309,36 @@ interface ScenarioConfig {
     name: string;
     participantCount: number;
     /** The gedus teaching the peer group — each id renders an identicon. */
-    gedus: readonly { id: string; firstName: string }[];
+    gedus: readonly {
+      id: string;
+      firstName: string;
+      role: GeduAssignmentRole;
+    }[];
   }[];
 }
 
-/** The gedus who show up as peer-group teachers, as identicon chips. */
-const PETRA = { id: GEDU_IDS.petra, firstName: "Petra" } as const;
-const JOONAS = { id: GEDU_IDS.joonas, firstName: "Joonas" } as const;
-const MARKUS = { id: GEDU_IDS.markus, firstName: "Markus" } as const;
+/**
+ * The gedus who show up as peer-group teachers, as identicon chips.
+ *
+ * Markus is the fixture's assistant, so every scenario carrying peers carries
+ * one of each role — the pair a reader has to be able to tell apart at a
+ * glance, and the one arrangement a single-role fixture cannot show.
+ */
+const PETRA = {
+  id: GEDU_IDS.petra,
+  firstName: "Petra",
+  role: "primary",
+} as const;
+const JOONAS = {
+  id: GEDU_IDS.joonas,
+  firstName: "Joonas",
+  role: "primary",
+} as const;
+const MARKUS = {
+  id: GEDU_IDS.markus,
+  firstName: "Markus",
+  role: "assistant",
+} as const;
 
 /**
  * **The camp's future block, and the volume case for the whole feed.**
@@ -1603,9 +1626,11 @@ export function buildGroupWorkspaceFixture(
     created_at: startDate,
     is_my_group: true,
     participant_count: SESSION_FEED_ROSTER.length,
+    // Two primaries: the ordinary staffing of a club this size, and the shape
+    // that lets a fixture take one of them out without leaving the group empty.
     gedus: [
-      { id: GEDU_IDS.sanna, first_name: "Sanna" },
-      { id: GEDU_IDS.petra, first_name: "Petra" },
+      { id: GEDU_IDS.sanna, first_name: "Sanna", role: "primary" },
+      { id: GEDU_IDS.petra, first_name: "Petra", role: "primary" },
     ],
     // Read off the topic rather than passed beside it, so the shell and the rows
     // cannot disagree about which identity this product is about — the same
@@ -1622,6 +1647,7 @@ export function buildGroupWorkspaceFixture(
     gedus: peer.gedus.map((gedu) => ({
       id: gedu.id,
       first_name: gedu.firstName,
+      role: gedu.role,
     })),
     roster: null,
   }));

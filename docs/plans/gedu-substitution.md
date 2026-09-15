@@ -393,6 +393,7 @@ are listed.
    `00262_an_optional_reason_is_an_optional_parameter.sql` (trailing DEFAULTs on the two
    reason parameters). All three are applied to staging and recorded in its history.
 2. Service, contracts, derivation helper and its unit tests; the voice token route.
+   **Done** — see "Notes from Step 2".
 3. Gedu surfaces. 4. Admin surfaces. (3 and 4 in parallel; disjoint files.)
 5. Copy in five locales; docs; delete this plan.
 
@@ -490,14 +491,15 @@ feed at the root — which is the staffing helper's other input.
 has one definition, and `cascade_withdraw_orphaned_cover_requests(group, date)`, the
 fixpoint sweep the three unseating admin writes call.
 
-**Still open for Step 2.** The voice token route's TypeScript gedu branch is not widened
-yet, and the unit test enumerating `gedu_group_assignments` under `src/` therefore does
-not exist yet — write both together, or the test fails on the route it exists to police.
-The TypeScript owed-work twin has not learned the new rule either (SQL side: a date the
-viewer holds a non-withdrawn request on is not owed by them). `get_my_assigned_products`
-now returns cover rows, and `AssignmentsService` passes them through unfiltered — so the
-gedu dashboard renders a cover as an ordinary assignment card until Step 3 gives it its
-own.
+**Still open for Step 2.** (All closed — see "Notes from Step 2" below.) The voice token
+route's TypeScript gedu branch is not widened yet, and the unit test enumerating
+`gedu_group_assignments` under `src/` therefore does not exist yet — write both together,
+or the test fails on the route it exists to police. The TypeScript owed-work twin has not
+learned the new rule either (SQL side: a date the viewer holds a non-withdrawn request on
+is not owed by them). `get_my_assigned_products` now returns cover rows, and
+`AssignmentsService` passes them through unfiltered — as of Step 2 each row carries its
+`kind` and `coveredDate`, but the gedu dashboard still renders a cover as an ordinary
+assignment card until Step 3 gives it its own.
 
 **One consequence of shared staging to clean up at merge.** Types were regenerated
 against staging, which already carries `feat/fennoa-finvoice-export`'s `00259`, so
@@ -505,6 +507,74 @@ against staging, which already carries `feat/fennoa-finvoice-export`'s `00259`, 
 `products.invoice_customer_id` and the two invoice-customer RPCs. Four product fixtures
 gained a one-line `invoice_customer_id: null` to keep `tsc` green; that other branch adds
 the same line to the same four files. Regenerating after both land on `dev` settles it.
+
+## Notes from Step 2 (the service, the contracts and the wiring), for Steps 3–5
+
+Deviations and decisions the UI steps have to know about. Everything not listed here was
+built as the plan and the cold-read answers say.
+
+**There is one staff feed builder, not two.** The plan says "both staff feeds' entry
+builders attach it"; in fact the gedu workspace and the admin group page already call the
+*same* builder (`src/lib/gedu-session-feed.ts`) over the same session shape, because one
+card component renders both documents. So the staffing attaches in one place. The builder
+grew three arguments — the group's gedus, the group's covers and the viewer — and the two
+call sites hand over their own document's copies.
+
+**`staffing` is REQUIRED on every feed entry**, on the base type, so every kind carries
+one including `no_record`. A fixture that is not about staffing hands over
+`NO_SESSION_STAFFING`, a frozen empty value exported from the derivation module — an
+optional field would have meant every consumer writing `?.` for a value the builder never
+omits.
+
+**The wire → structural mapping lives in the builder**, not in the service. The derivation
+takes structural inputs on purpose (it depends on no generated type), and the builder is
+the one place either staff document's shape meets it.
+
+**The owed-work twin reads `staffing.viewerRequest`, not `holdsLiveCoverRequest`.** The
+rule is in `entryCompleteness`, exactly where the SQL's comment says its twin lives, and
+it withholds the **warning** only — a session somebody else finished still earns its
+green check, which the SQL has no opinion about because it only counts. The entry already
+carries the derivation for its own date and viewer, so re-scanning the raw array would be
+a second answer to a question already answered; `holdsLiveCoverRequest` remains the form
+for a caller that holds a raw request array and no derivation.
+
+**The viewer reaches the gedu workspace as a PROP, resolved server-side.** `viewerId` is
+read in the route's server half and passed to `GeduProductPage`, rather than pulled from
+the client auth context: it is then settled before first paint (SSR and the first client
+render cannot disagree about whose workspace this is), and the page body stays drivable
+from fixtures, which is what will let a preview scene render the workspace as a
+*particular* gedu. The admin group page passes `null` — an admin is not one of the
+group's staff, and the shell supplies the staffing editor in that slot instead.
+
+**`assignmentKeys.assignedProductDetail` gained a group-id segment.** The RPC's new
+`p_group_id` genuinely changes the answer, so two groups of one product must not share a
+cache entry. The key factory takes `(productId, groupId = null)` and both the hook and the
+route's prefetch call it. Step 3's cover card links carry the group id as a query param;
+threading that param from the route into the workspace is Step 3's.
+
+**The apply route's body still accepts a legacy `geduIds` array**, optional, alongside the
+new `gedus: [{ geduId, role }]`. The RPC reads both for the deploy window, which only
+means anything if the route lets the old shape through. Nothing in this app writes it, and
+it comes out once no deployed client can be sending it.
+
+**`GroupsService.addGedu` is also the role setter.** The RPC upserts on (group, gedu) and
+updates the role, so a role change is one add; `useAddGedu` takes an optional `role`
+(default `primary`) and its optimistic patch updates an existing pill's role rather than
+no-opping. Step 4's role select posts through it.
+
+**The DB suite now imports the client contracts** rather than restating them
+(`tests/db/session-cover.test.ts`), as that file's own comment asked. Two name fields were
+**tightened** to non-null in the process — the requester's first name and both name fields
+on an offer — because each is reached through a `NOT NULL` column under an inner join or
+an `ON DELETE RESTRICT` foreign key; a parse failure there would mean an invariant stopped
+holding.
+
+**The TypeScript completeness check is `tests/unit/cover-gate-surface.test.ts`**, and it
+walks `.ts`, `.tsx` **and `.md`** under `src/`. A colocated doc describing a gate is part
+of that gate's surface, and `src/components/voice/CLAUDE.md` was updated in this step
+rather than annotated, because it described a membership rule the route no longer has.
+Three files are annotated assignment-only: the admin product-list filter, the product read
+that feeds it, and the prose reference in the assignments service.
 
 ## Answers from the cold-read (settled; the implementer does not re-decide these)
 

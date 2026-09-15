@@ -12,6 +12,26 @@ export const assignmentKeys = {
   all: ["assignments"] as const,
   myAssignedProducts: () =>
     [...assignmentKeys.all, "my-assigned-products"] as const,
-  assignedProductDetail: (productId: string | undefined) =>
-    [...assignmentKeys.all, "assigned-product-detail", productId] as const,
+  /**
+   * The workspace document for one product — and, since 00260, for **one group
+   * of it**.
+   *
+   * The group id is part of the key rather than a detail of the call because
+   * the answer genuinely differs by it: a gedu covering a sibling group of a
+   * product they already teach asks the same RPC for a different workspace, and
+   * two documents sharing one cache entry would hand whichever arrived first to
+   * whichever page asked second. `null` is the ordinary case — no group named,
+   * resolve my assignment — and it is spelled out rather than omitted so the
+   * key has one length.
+   */
+  assignedProductDetail: (
+    productId: string | undefined,
+    groupId: string | null = null,
+  ) =>
+    [
+      ...assignmentKeys.all,
+      "assigned-product-detail",
+      productId,
+      groupId,
+    ] as const,
 };

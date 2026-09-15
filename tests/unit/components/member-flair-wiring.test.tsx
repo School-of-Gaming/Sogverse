@@ -9,6 +9,7 @@ import {
 } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
+import { NO_SESSION_STAFFING } from "@/lib/session-staffing";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { GeduProductPage } from "@/components/gedu/session-details/GeduProductPage";
@@ -90,6 +91,8 @@ const IDS = {
   oskar: "e030b484-cbc1-4b39-ba30-0b164ecb409e",
   /** A join stamp and no note. */
   emil: "e293b898-5caa-4920-85a1-8336c282c3d7",
+  /** The signed-in gedu — the page's own viewer, not a roster member. */
+  gedu: "5c4a0e71-93b8-4f2d-8a16-7d0e62b4c9f3",
 } as const;
 
 const NOW = new Date("2026-03-16T12:00:00.000Z");
@@ -298,6 +301,12 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
       feedMember(IDS.emil, "Emil", { group_joined_at: JOINED_RECENTLY }),
     ],
     sessions: [],
+    // The staffing derivation's two inputs. Empty: nothing in this suite is
+    // about who runs the sessions, and an empty pair is a true answer rather
+    // than a placeholder — a group with one gedu and no absences reads the
+    // same way to everything under test here.
+    gedus: [],
+    covers: [],
   };
 }
 
@@ -316,7 +325,12 @@ function renderPage(
     <NextIntlClientProvider locale="en" messages={messages}>
       <TimezoneProvider initialTimezone="Europe/Helsinki">
         <NowProvider initialNow={NOW}>
-          <GeduProductPage productId={IDS.product} />
+          {/* The viewer decides the session staffing's own fields — who is
+              expected on a date, and therefore whether a card offers "I can't
+              make this session". Nothing in this suite is about that, and the
+              fixture's group has no staff at all, so it is only here because
+              the page asks for it. */}
+          <GeduProductPage productId={IDS.product} viewerId={IDS.gedu} />
         </NowProvider>
       </TimezoneProvider>
     </NextIntlClientProvider>,
@@ -843,6 +857,7 @@ function finalSessionEntry(): PastSessionFeedEntry {
     id: `${IDS.group}:${RUN_END_DATE}`,
     startsAt: new Date("2026-03-09T14:30:00.000Z"),
     endsAt: new Date("2026-03-09T16:00:00.000Z"),
+    staffing: NO_SESSION_STAFFING,
     report: "# The last session",
     staffNote: null,
     attendance: {
@@ -888,7 +903,12 @@ function renderEndedRun(
     <NextIntlClientProvider locale="en" messages={messages}>
       <TimezoneProvider initialTimezone="Europe/Helsinki">
         <NowProvider initialNow={NOW}>
-          <GeduProductPage productId={IDS.product} />
+          {/* The viewer decides the session staffing's own fields — who is
+              expected on a date, and therefore whether a card offers "I can't
+              make this session". Nothing in this suite is about that, and the
+              fixture's group has no staff at all, so it is only here because
+              the page asks for it. */}
+          <GeduProductPage productId={IDS.product} viewerId={IDS.gedu} />
         </NowProvider>
       </TimezoneProvider>
     </NextIntlClientProvider>,
@@ -986,6 +1006,7 @@ function upcomingFinalSessionEntry(): FutureSessionFeedEntry {
     id: `${IDS.group}:${UPCOMING_END_DATE}`,
     startsAt: new Date("2026-03-23T14:30:00.000Z"),
     endsAt: new Date("2026-03-23T16:00:00.000Z"),
+    staffing: NO_SESSION_STAFFING,
     report: null,
     staffNote: null,
     attendance: {},
@@ -1014,7 +1035,12 @@ function renderUpcomingRun(): ReturnType<typeof render> {
     <NextIntlClientProvider locale="en" messages={messages}>
       <TimezoneProvider initialTimezone="Europe/Helsinki">
         <NowProvider initialNow={NOW}>
-          <GeduProductPage productId={IDS.product} />
+          {/* The viewer decides the session staffing's own fields — who is
+              expected on a date, and therefore whether a card offers "I can't
+              make this session". Nothing in this suite is about that, and the
+              fixture's group has no staff at all, so it is only here because
+              the page asks for it. */}
+          <GeduProductPage productId={IDS.product} viewerId={IDS.gedu} />
         </NowProvider>
       </TimezoneProvider>
     </NextIntlClientProvider>,

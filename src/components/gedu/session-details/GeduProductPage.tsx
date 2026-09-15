@@ -88,7 +88,22 @@ import { GeduProductPageSkeleton } from "./GeduProductPageSkeleton";
  * pending branches are what a client-side navigation, a refetch and a failed
  * prefetch all still land on, and they stay exactly as they were.
  */
-export function GeduProductPage({ productId }: { productId: string }) {
+export function GeduProductPage({
+  productId,
+  /**
+   * The signed-in gedu, resolved by the route's server half.
+   *
+   * It is a prop rather than something read from a client auth context for two
+   * reasons: it is settled before the first paint, so the server render and the
+   * first client render cannot disagree about whose workspace this is; and the
+   * page's presentational body stays drivable from fixtures, which is what lets
+   * a preview scene render the workspace as a *particular* gedu.
+   */
+  viewerId,
+}: {
+  productId: string;
+  viewerId: string | null;
+}) {
   const { data: product, isPending: productPending } =
     useGeduAssignedProduct(productId);
 
@@ -103,7 +118,7 @@ export function GeduProductPage({ productId }: { productId: string }) {
 
   if (!product || !feed) return <NotAssignedState />;
 
-  return <Workspace product={product} feed={feed} />;
+  return <Workspace product={product} feed={feed} viewerId={viewerId} />;
 }
 
 /** The page frame around the "this isn't your product" answer. */
@@ -135,9 +150,16 @@ function NotAssignedState() {
 function Workspace({
   product,
   feed,
+  viewerId,
 }: {
   product: GeduAssignedProduct;
   feed: GeduGroupFeed;
+  /**
+   * Who is reading — the one thing the feed's staffing cannot derive from the
+   * document alone. It says who is expected and who filed which absence; it
+   * does not say which of those people is at the keyboard.
+   */
+  viewerId: string | null;
 }) {
   const liveNow = useNow();
   const groupId = feed.group.id;
@@ -250,9 +272,15 @@ function Workspace({
         startDate: feed.product.start_date,
         endDate: feed.product.end_date,
         sessions: feed.sessions,
+        // The staffing derivation's two inputs, straight off the same document
+        // the sessions come from — and the viewer, which is what decides whether
+        // a card offers "I can't make this session" at all.
+        gedus: feed.gedus,
+        covers: feed.covers,
+        viewerId,
         now,
       }),
-    [groupId, feed.product, feed.sessions, now],
+    [groupId, feed.product, feed.sessions, feed.gedus, feed.covers, viewerId, now],
   );
 
   /**

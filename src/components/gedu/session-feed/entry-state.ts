@@ -296,13 +296,24 @@ export type SessionCompleteness = "needs_attention" | "complete";
  * final session ignores it here exactly as the badge ignores it there, and
  * history keeps its check.
  *
+ * **A session the viewer has filed an absence for is nobody's warning to them.**
+ * A gedu who said they cannot make a date is not the person who owes its
+ * write-up, whether the session is still waiting for a cover, already covered,
+ * or the second link of a sub-of-sub chain — so the warning is withheld from
+ * *that* viewer while the request stands, and returns if they withdraw it. It
+ * is read off the entry's own staffing rather than re-derived, so the date the
+ * rule is applied to can never be a different date from the one the card is
+ * about. The check is not withheld with it: a session somebody else finished is
+ * finished, and saying so is more use than silence.
+ *
  * **This derivation exists twice — here for the card, and in SQL for the
  * dashboard badge — and now on FOUR conditions.** A change to either half is a
  * change to both, in the same commit: a badge counting a session the card calls
  * finished is worse than either being wrong alone. The SQL side derives the
  * final session from the schedule with a seven-day walk back from the end date;
  * the client derives the same date the same way and hands it in as
- * {@link CreationsObligation}.
+ * {@link CreationsObligation}. The absence rule above is the same pairing: the
+ * SQL drops such a date out of the count, and this drops it out of the warning.
  */
 export function entryCompleteness(
   entry: SessionFeedEntry,
@@ -317,6 +328,15 @@ export function entryCompleteness(
       (entry.reportEmailedAt !== null &&
         !entryOwesCreations(entry, roster, creations)));
   if (finished) return "complete";
+  // The viewer said they cannot be there, so this session is not their work
+  // outstanding — whoever ends up running it, and whether the request is still
+  // open, already covered, or the second link of a sub-of-sub chain. The green
+  // check is deliberately NOT withheld the same way: a session somebody else
+  // finished is finished, and the absent gedu seeing so is the truth.
+  //
+  // `viewerRequest` is null for a surface with no viewer, which is what keeps
+  // the admin group page flagging a session the admin still has to chase.
+  if (entry.staffing.viewerRequest !== null) return null;
   return entry.owed && roster.length > 0 ? "needs_attention" : null;
 }
 
@@ -639,7 +659,10 @@ export function applyDraftToEntry(
   entry: SessionFeedEntry,
   draft: SessionRecordDraft,
 ): SessionFeedEntry {
-  const { id, startsAt, endsAt } = entry;
+  // The staffing rides through untouched, like the identity and the schedule
+  // beside it: who is expected at a session is not something writing up that
+  // session changes.
+  const { id, startsAt, endsAt, staffing } = entry;
   const written = {
     report: draft.report.length > 0 ? draft.report : null,
     staffNote: draft.staffNote.length > 0 ? draft.staffNote : null,
@@ -656,7 +679,7 @@ export function applyDraftToEntry(
   };
 
   if (entry.kind === "future") {
-    return { kind: "future", id, startsAt, endsAt, ...written };
+    return { kind: "future", id, startsAt, endsAt, staffing, ...written };
   }
 
   return {
@@ -664,6 +687,7 @@ export function applyDraftToEntry(
     id,
     startsAt,
     endsAt,
+    staffing,
     owed: entry.kind === "past" ? entry.owed : false,
     // Carried through untouched, for the same reason the last editor is: the
     // stamp belongs to the database. Saving a report cannot have emailed it,

@@ -79,6 +79,9 @@ function snapshot(
     certification_queue: [],
     attention_products: [],
     schedule_products: [],
+    // The all-clear: the cover queue is a member of this document, and an empty
+    // array is what nothing-to-staff looks like on the wire.
+    cover_requests: [],
     ...overrides,
   };
 }

@@ -399,9 +399,19 @@ function Workspace({
         startDate: sessions.product.start_date,
         endDate: sessions.product.end_date,
         sessions: group.sessions,
+        // The staffing derivation's two inputs, from the admin product
+        // document's own copy of them — same shapes as the gedu feed's, because
+        // one card component renders both.
+        gedus: group.gedus,
+        covers: group.covers,
+        // **No viewer.** An admin is not a member of the group's staff, so
+        // there is nobody here for "am I expected" to be about: the shell
+        // supplies the staffing editor in that slot instead, as it already does
+        // for the site panel.
+        viewerId: null,
         now,
       }),
-    [groupId, sessions.product, group.sessions, now],
+    [groupId, sessions.product, group.sessions, group.gedus, group.covers, now],
   );
 
   // The attendance checklist takes id + first name and the instant from which
@@ -500,6 +510,7 @@ function Workspace({
         gedus: (gedusByGroup.get(candidate.id) ?? []).map((gedu) => ({
           id: gedu.id,
           first_name: gedu.first_name,
+          role: gedu.role,
         })),
         roster: candidate.id === groupId ? feed.roster : null,
       })),

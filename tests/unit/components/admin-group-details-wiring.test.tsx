@@ -308,6 +308,10 @@ function adminSessions(): AdminProductSessions {
           { participant_id: IDS.emil, first_name: "Emil" },
         ],
         sessions: [],
+        // The staffing derivation's two inputs. Empty: this suite is about the
+        // admin shell's wiring, not about who is running the sessions.
+        gedus: [],
+        covers: [],
       },
       {
         id: IDS.peerGroup,
@@ -317,6 +321,10 @@ function adminSessions(): AdminProductSessions {
         gedu_note: null,
         roster: [],
         sessions: [],
+        // The staffing derivation's two inputs. Empty: this suite is about the
+        // admin shell's wiring, not about who is running the sessions.
+        gedus: [],
+        covers: [],
       },
     ],
   };
@@ -354,6 +362,8 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
       feedMember(IDS.emil, "Emil", { group_joined_at: JOINED_RECENTLY }),
     ],
     sessions: [],
+    gedus: [],
+    covers: [],
   };
 }
 
