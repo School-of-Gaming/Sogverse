@@ -39,6 +39,16 @@ once as the TypeScript derivation helper in `src/lib/` that the staff feeds atta
 every entry. The two are meant to be read against each other; a behaviour one has and the
 other does not is a divergence, not a simplification. **Do not add a third.**
 
+**Every write that can unseat somebody sweeps the requests it orphans.** An absence filed
+by a person who no longer holds a seat at the session is not an absence anybody can cover,
+and answering one would seat a sub for nobody and hand them the group's workspace for the
+day. Clearing a cover, withdrawing a request, re-pointing a sub and — less obviously —
+**removing an assignment through the admin groups panel** all leave somebody unseated, and
+the last of those is the trap, because it unseats without touching a cover row at all. The
+sweep is a fixpoint, because unseating cascades. Approval re-asks under its lock as a
+second line of defence, and **refuses** rather than tidying up: the refusal aborts the
+transaction, so a withdraw written beside it would be rolled back with everything else.
+
 **Two questions, two sources.** The derivation answers *who is expected*. The rows answer
 *who did which job, in which role, for whom* — including a chain, where a sub asked for a
 sub of their own and the link between the two is simply one person appearing as one row's
@@ -70,17 +80,42 @@ There is exactly one wire shape for a request, built by one database function, a
 write returns it while both staff feeds' `covers` arrays are arrays of it. Six copies of
 one shape is how six surfaces come to disagree about what a cover request is.
 
-Three of its fields are keyed to the **caller** rather than to the read, because the gedu
+Three things on it are keyed to the **caller** rather than to the read, because the gedu
 workspace's document is served to admins too:
 
 - the reason and its note travel for an admin only;
 - the offer count travels for an admin and for the requester on their own request — how
   many colleagues volunteered for somebody else's absence is not a third party's
-  business, and offerers never learn who else offered.
+  business, and offerers never learn who else offered;
+- **who is absent** travels for an admin, for the requester themselves, and for **staff on
+  the group** — and for nobody else. See below.
 
 **The keys are always present**, emitted as JSON null where the reader is not entitled to
 them. The document keeps one shape for both readers, so no client schema ever branches on
 which keys arrived.
+
+## Who is absent is a disclosure, not a field
+
+The reader has to be entitled to the *name*, not only to the reason. Two surfaces are
+entitled and they are entitled for different reasons, so the rule is stated per surface:
+
+- **The group's workspace** names them, admin or not. It is reached only by staff on the
+  group — assigned to its product, or holding a live cover on it — and its session card
+  draws "X is away, Y is covering", which cannot be written without the name. The
+  *reason* still travels for an admin alone, so a colleague learns that somebody is away
+  and never that it was `sick`.
+- **Every admin document** names them, because admin documents carry the reason already.
+- **The requester** sees their own name, on their own request, by the same arm.
+
+**A volunteer never does.** The pool list omits the absent gedu, and so does the document
+the offer and the offer-withdrawal return — otherwise the anonymity would be one
+button-press deep, which is exactly what it was until it was fixed. Those two writes parse
+their result through a separate schema whose requester fields are nullable, so the
+difference is a type rather than a comment; a withdrawal by somebody holding no offer is
+**refused** rather than answered, because a write that writes nothing must not be a read.
+
+The SQL flag that reveals the requester **defaults to closed**, so a caller added later
+that forgets it conceals — a missing name on a screen, rather than a disclosure.
 
 ## The pool names the session, never the absent gedu
 
@@ -111,6 +146,16 @@ dates: the **voice room** (both database predicates and the voice token route, w
 mirrors them in TypeScript because it runs on the service-role client) and the **family
 report mail**, which is at-most-once — a sub must not send a report for a session they did
 not run.
+
+**A session is not a day, and the voice room is the surface where that bites.** A session
+dated Monday can run past local midnight, and one starting at 00:10 has its whole
+pre-window on the day before — so "does this gedu cover *today*" drops a cover out of the
+room and its chat at 00:00 and refuses them before a small-hours start. The route knows
+which slot is open and asks about **that session's own date**; the SQL predicates are
+handed a group and nothing else, so they accept a cover dated **today or yesterday** in the
+product's timezone. One day of overlap is the cost, and the voice window is only open
+around a session, so there is nothing to rejoin on the extra day. The membership and
+moderator predicates move together, always — the chat channel is gated by the pair.
 
 ## Invalidation reaches five roots
 

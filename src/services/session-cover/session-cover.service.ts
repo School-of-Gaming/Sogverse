@@ -1,7 +1,9 @@
 import type { AppSupabaseClient, CoverReason } from "@/types";
 import {
+  anonymousCoverRequestDocument,
   coverRequestDocument,
   openCoverRequests,
+  type AnonymousCoverRequestDocument,
   type CoverRequestDocument,
   type OpenCoverRequest,
 } from "./session-cover.contracts";
@@ -84,28 +86,38 @@ export class SessionCoverService {
   /**
    * "I can cover this." Idempotent on the (request, gedu) unique key, so a
    * double-tap is one offer rather than an error.
+   *
+   * **Returns the anonymous document**: volunteering does not tell you whose
+   * absence you volunteered for, exactly as the pool row it came from does not.
    */
-  async offerCover(requestId: string): Promise<CoverRequestDocument> {
+  async offerCover(requestId: string): Promise<AnonymousCoverRequestDocument> {
     const { data, error } = await this.supabase.rpc("offer_session_cover", {
       p_request_id: requestId,
     });
     if (error) throw error;
-    return coverRequestDocument.parse(data);
+    return anonymousCoverRequestDocument.parse(data);
   }
 
   /**
    * Take an offer back. Keyed on the **request**, because that is what the pool
    * row knows about — an offer id would be a second identifier for the caller's
-   * one row. Refused only when the caller is the approved cover: taking back an
-   * offer somebody has already staffed you on is a new absence, not an un-offer.
+   * one row. Refused when the caller is the approved cover (taking back an offer
+   * somebody has already staffed you on is a new absence, not an un-offer) and
+   * refused when the caller holds no offer at all — a withdraw that deletes
+   * nothing would be a read of somebody else's absence wearing a write's
+   * clothes.
+   *
+   * **Returns the anonymous document**, as `offerCover` does.
    */
-  async withdrawOffer(requestId: string): Promise<CoverRequestDocument> {
+  async withdrawOffer(
+    requestId: string,
+  ): Promise<AnonymousCoverRequestDocument> {
     const { data, error } = await this.supabase.rpc(
       "withdraw_session_cover_offer",
       { p_request_id: requestId },
     );
     if (error) throw error;
-    return coverRequestDocument.parse(data);
+    return anonymousCoverRequestDocument.parse(data);
   }
 
   /**

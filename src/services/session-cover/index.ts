@@ -13,6 +13,7 @@ export {
 } from "./session-cover.queries";
 export {
   COVER_REASON_NOTE_MAX_LENGTH,
+  anonymousCoverRequestDocument,
   coverReason,
   coverRequestDocument,
   coverRequestStatus,
@@ -22,6 +23,7 @@ export {
   sessionStaffGedu,
 } from "./session-cover.contracts";
 export type {
+  AnonymousCoverRequestDocument,
   CoverRequestDocument,
   OpenCoverRequest,
   SessionStaffGedu,

@@ -3048,6 +3048,7 @@ export type Database = {
         Args: {
           p_include_reason: boolean
           p_request: Database["public"]["Tables"]["session_cover_requests"]["Row"]
+          p_reveal_requester?: boolean
           p_viewer_id: string
         }
         Returns: Json
@@ -3172,6 +3173,10 @@ export type Database = {
       gedu_covers_group: { Args: { p_group_id: string }; Returns: boolean }
       gedu_covers_session: {
         Args: { p_group_id: string; p_session_date: string }
+        Returns: boolean
+      }
+      gedu_holds_seat_at_session: {
+        Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
         Returns: boolean
       }
       gedu_is_expected_at_session: {
