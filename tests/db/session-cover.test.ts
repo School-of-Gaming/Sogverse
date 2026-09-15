@@ -4,6 +4,7 @@ import { z } from "zod";
 import { Constants, type Database } from "@/types";
 import { adminDashboardCoverRequest } from "@/services/admin-dashboard/admin-dashboard.contracts";
 import {
+  anonymousCoverRequestDocument,
   coverRequestDocument,
   openCoverRequests,
   sessionStaffGedu,
@@ -443,10 +444,19 @@ describe("session covers", () => {
      * excludes those by design (PostgREST cannot invoke one, so it is not a
      * callable surface). 00260's own end-of-migration block, which reads pg_proc
      * directly, does name it.
+     *
+     * **Two blind spots this check cannot see, and neither is theoretical.** A
+     * function whose body is `BEGIN ATOMIC` has a NULL `prosrc` — the catalogs
+     * hold its parse tree instead of its text — so it would arrive with an empty
+     * expression and be read as referencing nothing; today there are none, and
+     * the schema-wide parse of this file's `functionSurface` (a non-nullable
+     * `body`) is what would fail the moment one appeared. And a VIEW that joins
+     * `gedu_group_assignments` is not a function or a policy, so it is not a
+     * member at all; views are held to the `security_invoker` rule and the
+     * spine's own registry instead, which is a different mechanism rather than
+     * this one applied more widely.
      */
     const ASSIGNMENT_ONLY: Record<string, string> = {
-      "function:apply_group_changes":
-        "the assignment WRITER. It creates and removes the permanent relationship; a cover is not a thing it can write, and the role it upserts is a property of that relationship.",
       "function:chat_channel_roster_ids":
         "LISTS who a channel can name rather than gating on it. Its own comment carries the decision: a covering gedu becomes mentionable once they send.",
       "function:get_my_family_product_feed":
@@ -463,13 +473,18 @@ describe("session covers", () => {
       "gedu_covers_session",
     ];
 
-    async function members() {
+    /**
+     * Every function body and every policy expression in `public` — the pool the
+     * member set is drawn from, and also what the leaf check below searches for
+     * references to an annotated member.
+     */
+    async function surface() {
       const functions = await admin.rpc("_list_function_authorization_surface");
       expect(functions.error).toBeNull();
       const policies = await admin.rpc("_list_policy_expressions");
       expect(policies.error).toBeNull();
 
-      const rows = [
+      return [
         ...functionSurface
           .parse(functions.data)
           .map((fn) => ({
@@ -482,9 +497,13 @@ describe("session covers", () => {
             key: `policy:${policy.table_name}.${policy.policy_name}`,
             expression: policy.expression,
           })),
-      ].filter((row) => row.expression.includes("gedu_group_assignments"));
+      ];
+    }
 
-      return rows;
+    async function members() {
+      return (await surface()).filter((row) =>
+        row.expression.includes("gedu_group_assignments"),
+      );
     }
 
     it("every gate on gedu_group_assignments carries a cover branch or is annotated", async () => {
@@ -530,6 +549,51 @@ describe("session covers", () => {
       ).toEqual([]);
     });
 
+    /**
+     * The annotated members that are NOT leaves, with every body that composes
+     * them — see the test below for why an unlisted composer is a hole.
+     */
+    const ANNOTATED_COMPOSERS: Record<string, string[]> = {
+      "function:chat_channel_roster_ids": [
+        "function:chat_body_mentions_are_roster",
+        "function:get_chat_channel_roster",
+        "function:set_chat_lock",
+      ],
+    };
+
+    it("no annotated member is composed by a body this check never sees", async () => {
+      // The hole an annotation can hide in. A member is a body that NAMES
+      // gedu_group_assignments, so a helper that names it and is annotated
+      // "not a gate" takes its callers out of the set with it: they reference
+      // the helper, not the table, so they are never members and never have to
+      // carry a cover branch — and one of them may be exactly the gate the
+      // annotation said this one was not.
+      //
+      // The rule is therefore: an annotated member is a LEAF, or its composers
+      // are written down here, because the annotation has to be true of them
+      // too. A new composer fails this and is decided by a person.
+      const rows = await surface();
+
+      for (const key of Object.keys(ASSIGNMENT_ONLY)) {
+        // A policy composes nothing — no expression can name one.
+        if (!key.startsWith("function:")) continue;
+        const name = key.slice("function:".length);
+
+        const composers = rows
+          .filter((row) => row.key !== key && row.expression.includes(name))
+          .map((row) => row.key)
+          .sort();
+
+        expect(
+          composers,
+          `${key} is annotated as not-a-gate, and these bodies compose it — ` +
+            "each inherits the annotation without being checked for one. Either " +
+            "list them in ANNOTATED_COMPOSERS having satisfied yourself the " +
+            "reason holds for them too, or widen the member itself",
+        ).toEqual((ANNOTATED_COMPOSERS[key] ?? []).slice().sort());
+      }
+    });
+
     it("every widened gate names the cover branch", async () => {
       // Named positively as well, so a gate that was widened and later reverted
       // fails here rather than quietly rejoining the annotated list.
@@ -540,6 +604,14 @@ describe("session covers", () => {
       );
 
       for (const key of [
+        // Not a gate — the assignment writer, which was annotated as such until
+        // 00265 gave it the orphan SWEEP: removing an assignment unseats
+        // somebody, and every other unseating already withdraws the cover
+        // requests it orphans. The reference is real, so the honest answer is
+        // that it is branched; it is named here rather than annotated so that
+        // losing the sweep fails loudly instead of quietly rejoining the
+        // annotated list.
+        "function:apply_group_changes",
         "function:gedu_teaches_group",
         "function:gedu_teaches_group_product",
         "function:is_voice_group_member",
@@ -556,27 +628,76 @@ describe("session covers", () => {
     });
   });
 
+  /**
+   * The PERMANENT home of the access-posture checks 00260 also asserts at the
+   * foot of itself. Two things about that migration's copy are worth knowing
+   * here, because this is the copy that runs on every build:
+   *
+   * - **Its grant sweep asks about four privileges** — SELECT, INSERT, UPDATE
+   *   and DELETE — and a table can be granted TRUNCATE, REFERENCES or TRIGGER
+   *   too. None of the three is a read or a write of rows, but REFERENCES lets a
+   *   grantee build a foreign key onto the table (an existence oracle, and a
+   *   lock on deletes) and TRIGGER lets them attach code to it. The sweep below
+   *   covers all seven, and proves it can SEE all seven rather than asserting an
+   *   empty list against a helper that might only ever report four.
+   * - **Its role-backfill assertion is vacuous on a fresh database.** "No
+   *   assignment has a role other than primary" is true and worth asserting, and
+   *   CI builds its database from `migrations/` with no assignments in it, so
+   *   that clause proves the backfill nowhere but on staging. The column's
+   *   DEFAULT — which is what makes the backfill correct — is asserted from
+   *   `information_schema` in the same block and is not vacuous.
+   */
   describe("the two cover tables are off the Data API", () => {
+    /** Every privilege `information_schema` can report on a table. */
+    const TABLE_PRIVILEGES = [
+      "SELECT",
+      "INSERT",
+      "UPDATE",
+      "DELETE",
+      "TRUNCATE",
+      "REFERENCES",
+      "TRIGGER",
+    ];
+    const COVER_TABLES = ["session_cover_requests", "session_cover_offers"];
+
+    async function coverTableGrants(grantee: string) {
+      const { data, error } = await admin.rpc("_list_table_grants", {
+        p_grantee: grantee,
+      });
+      expect(error).toBeNull();
+      return z
+        .array(z.object({ table_name: z.string(), privilege_type: z.string() }))
+        .parse(data)
+        .filter((row) => COVER_TABLES.includes(row.table_name));
+    }
+
     it("neither authenticated nor anon holds any grant on them", async () => {
       for (const grantee of ["authenticated", "anon"]) {
-        const { data, error } = await admin.rpc("_list_table_grants", {
-          p_grantee: grantee,
-        });
-        expect(error).toBeNull();
-        const reachable = z
-          .array(z.object({ table_name: z.string(), privilege_type: z.string() }))
-          .parse(data)
-          .filter((row) =>
-            ["session_cover_requests", "session_cover_offers"].includes(
-              row.table_name,
-            ),
-          );
-
         expect(
-          reachable,
+          await coverTableGrants(grantee),
           `${grantee} can reach a cover table directly — every read and write ` +
             "goes through a SECURITY DEFINER RPC, the same posture as group_sessions",
         ).toEqual([]);
+      }
+    });
+
+    it("and the sweep can see every privilege a table can carry", async () => {
+      // Without this the assertion above could pass for the wrong reason: a
+      // helper that only ever reported the four DML privileges would return an
+      // empty list for a table granted TRUNCATE and look like proof. service_role
+      // holds GRANT ALL on both tables, so all seven must come back for each.
+      const granted = await coverTableGrants("service_role");
+
+      for (const table of COVER_TABLES) {
+        expect(
+          granted
+            .filter((row) => row.table_name === table)
+            .map((row) => row.privilege_type)
+            .sort(),
+          `the grant sweep cannot see every privilege type on ${table}, so the ` +
+            "empty result it reports for authenticated and anon proves less " +
+            "than it appears to",
+        ).toEqual([...TABLE_PRIVILEGES].sort());
       }
     });
 
@@ -963,6 +1084,51 @@ describe("session covers", () => {
   // -------------------------------------------------------------------------
 
   describe("the voice room admits a cover on the covered date only", () => {
+    async function voiceArms() {
+      const member = await subAuth.rpc("is_voice_group_member", {
+        p_group_id: GROUP_A,
+      });
+      expect(member.error).toBeNull();
+      const moderator = await subAuth.rpc("is_voice_group_moderator", {
+        p_group_id: GROUP_A,
+      });
+      expect(moderator.error).toBeNull();
+      return { member: member.data, moderator: moderator.data };
+    }
+
+    it("admits a cover dated YESTERDAY, so a session running past midnight keeps it", async () => {
+      // A session dated Monday that runs to 00:30 is still Monday's session at
+      // 00:10 on Tuesday, and a 00:10 start has its whole pre-window on Monday.
+      // Asking only about today ejected the cover from the room and the chat at
+      // local midnight; the predicates now take today OR yesterday.
+      //
+      // TWO ROWS, and the second one is not slack — it is what makes this case
+      // immune to the run crossing UTC midnight between these two statements.
+      // If the database still calls today what the runner does, the -1 row is
+      // yesterday and it is the yesterday arm that admits. If midnight has
+      // passed, the -1 row is two days back and the +1 row has become today, so
+      // the case still passes rather than flaking; the two-days-back case below
+      // is deterministic under either reading and is what proves the window is
+      // exactly two days wide.
+      await seedRequest({ date: utcDate(-1), coveredBy: subId });
+      await seedRequest({ date: utcDate(1), coveredBy: subId });
+
+      expect(await voiceArms()).toEqual({ member: true, moderator: true });
+    });
+
+    it("refuses a cover dated TWO DAYS ago, so the overlap is one day and not a week", async () => {
+      // Deterministic however the run straddles midnight: two days back reads as
+      // two or three days back, and neither is admitted.
+      await seedRequest({ date: utcDate(-2), coveredBy: subId });
+
+      expect(await voiceArms()).toEqual({ member: false, moderator: false });
+
+      // …while the group-wide gate is open on the same fixture — the access
+      // window runs fifteen days — which is what makes this case about the DATE
+      // arm rather than about the cover having expired.
+      expect(await coversGroup(subAuth)).toBe(true);
+    });
+
     it("refuses a cover whose date is not today", async () => {
       // A week out, so no reading of "today" can reach it however the run
       // straddles UTC midnight.
@@ -1280,6 +1446,65 @@ describe("session covers", () => {
       expect(late.error?.code).toBe(CHECK_VIOLATION);
     });
 
+    it("never names the absent gedu to the gedu who offers", async () => {
+      // The pool list omits the absent person on purpose, and before 00265 the
+      // offer that followed it handed them over: the document every write
+      // returns always carried requested_by. One button-press was the whole
+      // attack, and it worked on any open request in the pool.
+      const id = await seedRequest({ date: utcDate(5) });
+      await admin
+        .from("session_cover_requests")
+        .update({ reason: "sick", reason_note: "private" })
+        .eq("id", id);
+
+      const { data, error } = await subAuth.rpc("offer_session_cover", {
+        p_request_id: id,
+      });
+      expect(error).toBeNull();
+
+      const doc = anonymousCoverRequestDocument.parse(data);
+      expect(doc.requested_by).toBeNull();
+      expect(doc.requested_by_first_name).toBeNull();
+      expect(doc.is_requester).toBe(false);
+      // Nor by any other route off the same document.
+      expect(doc.reason).toBeNull();
+      expect(doc.reason_note).toBeNull();
+      expect(doc.offer_count).toBeNull();
+      expect(JSON.stringify(doc)).not.toContain(TEST_IDS.GEDU);
+    });
+
+    it("refuses a withdraw from a gedu holding no offer, rather than answering with the document", async () => {
+      // The same leak without even a write: withdrawing an offer that was never
+      // made deleted nothing and returned the request anyway, which made this
+      // RPC a free lookup of who is away, keyed by request id. 42501 is the
+      // answer an unknown id already gets, so it is not an existence oracle
+      // either.
+      const id = await seedRequest({ date: utcDate(5) });
+
+      const { data, error } = await thirdAuth.rpc(
+        "withdraw_session_cover_offer",
+        { p_request_id: id },
+      );
+
+      expect(error?.code).toBe(FORBIDDEN);
+      expect(data).toBeNull();
+    });
+
+    it("conceals the absent gedu on a withdraw that does delete an offer", async () => {
+      const id = await seedRequest({ date: utcDate(5) });
+      await subAuth.rpc("offer_session_cover", { p_request_id: id });
+
+      const { data, error } = await subAuth.rpc("withdraw_session_cover_offer", {
+        p_request_id: id,
+      });
+      expect(error).toBeNull();
+
+      const doc = anonymousCoverRequestDocument.parse(data);
+      expect(doc.requested_by).toBeNull();
+      expect(doc.requested_by_first_name).toBeNull();
+      expect(JSON.stringify(doc)).not.toContain(TEST_IDS.GEDU);
+    });
+
     it("lets a losing offerer withdraw from a request somebody else took", async () => {
       const id = await seedRequest({ date: utcDate(5) });
       await thirdAuth.rpc("offer_session_cover", { p_request_id: id });
@@ -1439,6 +1664,42 @@ describe("session covers", () => {
         p_offer_id: second,
       });
       expect(again.error?.code).toBe(CHECK_VIOLATION);
+    });
+
+    it("refuses to seat a sub for a requester who no longer holds a seat", async () => {
+      // The second line of defence behind the groups panel's own sweep: a
+      // request whose requester has been unassigned by any route at all is not
+      // an absence anybody can cover, and approving it would put a stranger in
+      // the group's workspace to stand in for nobody. The row is emptied here
+      // by deleting the assignment directly, which is the state the sweep is
+      // meant to make impossible — this asserts what happens if it ever is not.
+      const id = await seedRequest({ date: utcDate(5) });
+      await subAuth.rpc("offer_session_cover", { p_request_id: id });
+      const { data: offers } = await admin
+        .from("session_cover_offers")
+        .select("id")
+        .eq("request_id", id);
+
+      await admin
+        .from("gedu_group_assignments")
+        .delete()
+        .eq("group_id", GROUP_A)
+        .eq("gedu_id", TEST_IDS.GEDU);
+
+      const refused = await adminAuth.rpc("approve_session_cover_offer", {
+        p_offer_id: offers?.[0]?.id ?? "",
+      });
+      expect(refused.error?.code).toBe(CHECK_VIOLATION);
+      expect((await statusOf(id))?.status).toBe("open");
+
+      // Restored for the rest of the file: the seeded assignment is fixture,
+      // not state this block owns.
+      await admin.from("gedu_group_assignments").insert({
+        group_id: GROUP_A,
+        gedu_id: TEST_IDS.GEDU,
+        product_id: PRODUCT,
+        role: "primary",
+      });
     });
 
     it("sets a sub on a PAST session with no request at all", async () => {
@@ -1684,6 +1945,17 @@ describe("session covers", () => {
       expect(subCovers[0].reason).toBeNull();
       expect(subCovers[0].is_requester).toBe(false);
       expect(subCovers[0].offer_count).toBeNull();
+
+      // …and STILL NAMES WHO IS AWAY, to the colleague as much as to the admin.
+      // This is the one document that reveals the requester to a non-admin, and
+      // it is the line the pool's anonymity is not about: the workspace is
+      // reached only by staff on the group, and the session card says "X is
+      // away, Y is covering". Withholding the name here would leave the
+      // staffing line undrawable — which is exactly what happened when the
+      // concealment was first written against the admin flag alone.
+      expect(subCovers[0].requested_by).toBe(TEST_IDS.GEDU);
+      expect(subCovers[0].requested_by_first_name).toBeTruthy();
+      expect(adminCovers[0].requested_by).toBe(TEST_IDS.GEDU);
     });
 
     it("the admin product-session document carries roles and covers per group", async () => {
@@ -1944,6 +2216,79 @@ describe("session covers", () => {
         .eq("gedu_id", subId)
         .single();
       expect(data?.role).toBe("primary");
+    });
+
+    it("withdraws the live requests a REMOVAL orphans", async () => {
+      // Removing a gedu from a group unseats them without touching a cover row,
+      // which is what made this the one unseating that left live requests
+      // behind: an open request by somebody who is no longer expected, ready for
+      // an admin to answer with a sub for nobody.
+      const open = await seedRequest({ date: utcDate(5) });
+      const covered = await seedRequest({ date: utcDate(6), coveredBy: subId });
+
+      const { error } = await adminAuth.rpc("apply_group_changes", {
+        p_product_id: PRODUCT,
+        p_gedu_assignments_removed: [
+          { groupId: GROUP_A, geduId: TEST_IDS.GEDU },
+        ],
+      });
+      expect(error).toBeNull();
+
+      // Both go, and the covered one is emptied rather than merely closed: a
+      // withdrawn row carries no sub, so invoicing finds no phantom
+      // substitution for a session nobody was absent from.
+      expect((await statusOf(open))?.status).toBe("withdrawn");
+      const swept = await statusOf(covered);
+      expect(swept?.status).toBe("withdrawn");
+      expect(swept?.covered_by).toBeNull();
+      expect(swept?.approved_by).toBeNull();
+      expect(swept?.approved_at).toBeNull();
+
+      await admin.from("gedu_group_assignments").insert({
+        group_id: GROUP_A,
+        gedu_id: TEST_IDS.GEDU,
+        product_id: PRODUCT,
+        role: "primary",
+      });
+    });
+
+    it("sweeps by the derivation and not by the name in the removal", async () => {
+      // The sweep is only correct if it is narrow. It withdraws every request on
+      // the touched (group, date) whose requester no longer holds a seat — so a
+      // colleague who is still assigned keeps their absence on the very same
+      // date, and another group of the same product is not swept at all.
+      const date = utcDate(5);
+      await admin.from("gedu_group_assignments").insert([
+        { group_id: GROUP_A, gedu_id: thirdId, product_id: PRODUCT, role: "assistant" },
+        { group_id: GROUP_B, gedu_id: subId, product_id: PRODUCT, role: "primary" },
+      ]);
+
+      const removed = await seedRequest({ date });
+      const colleague = await seedRequest({ date, absent: thirdId });
+      const otherGroup = await seedRequest({
+        groupId: GROUP_B,
+        date,
+        absent: subId,
+      });
+
+      const { error } = await adminAuth.rpc("apply_group_changes", {
+        p_product_id: PRODUCT,
+        p_gedu_assignments_removed: [
+          { groupId: GROUP_A, geduId: TEST_IDS.GEDU },
+        ],
+      });
+      expect(error).toBeNull();
+
+      expect((await statusOf(removed))?.status).toBe("withdrawn");
+      expect((await statusOf(colleague))?.status).toBe("open");
+      expect((await statusOf(otherGroup))?.status).toBe("open");
+
+      await admin.from("gedu_group_assignments").insert({
+        group_id: GROUP_A,
+        gedu_id: TEST_IDS.GEDU,
+        product_id: PRODUCT,
+        role: "primary",
+      });
     });
 
     it("reads an added group's inline gedus with their roles, and the legacy id array", async () => {

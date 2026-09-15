@@ -29,9 +29,11 @@ export const coverRequestStatus = z.enum(
  * How long a reason note may be, and the code-side twin of the cap the writers
  * apply.
  *
- * The database trims the note, nulls it when empty and truncates at this
- * figure; the dialog counts against the same number so a gedu is told before
- * they lose the end of a sentence rather than after. Two copies of one bound,
+ * The database trims the note and nulls it when empty — and **refuses** one
+ * longer than this, by a CHECK on the column rather than by truncating it. That
+ * is why the dialog counts against the same number: a gedu is stopped before
+ * they write a sentence the save would throw away, and a client that let one
+ * through would get a `check_violation` and no row. Two copies of one bound,
  * and this comment is the reason they have to move together.
  */
 export const COVER_REASON_NOTE_MAX_LENGTH = 500;
@@ -44,7 +46,7 @@ export const COVER_REASON_NOTE_MAX_LENGTH = 500;
  * function. A second schema here would be a second description of that one
  * function, and the two would disagree the first time a field was added.
  *
- * Three fields are keyed to the **caller** rather than to the RPC, and the
+ * Three things are keyed to the **caller** rather than to the RPC, and the
  * document keeps one shape either way — the keys are always present, emitted as
  * JSON null where the reader is not entitled to them, so no consumer branches
  * on which keys arrived:
@@ -57,12 +59,18 @@ export const COVER_REASON_NOTE_MAX_LENGTH = 500;
  *   request. How many colleagues volunteered for somebody else's absence is not
  *   a third party's business, and offerers never learn who else offered. `null`
  *   is therefore "not disclosed", which is a different fact from zero.
+ * - `requested_by` / `requested_by_first_name` — **who is absent** — travel for
+ *   an admin, for the requester themselves, and for staff on the group, whose
+ *   session card draws a staffing line naming them. They do **not** travel to a
+ *   volunteer answering the pool: see {@link anonymousCoverRequestDocument}.
  *
- * `covered_by_first_name` is null exactly when `covered_by` is — the pair
- * travels together. `requested_by_first_name` is non-null because the requester
- * is a `NOT NULL` column under an `ON DELETE RESTRICT` foreign key, so the
- * profile behind it cannot go: a parse failure here would mean that invariant
- * stopped holding, which is worth failing loudly over.
+ * This schema is the **named** shape, used everywhere the requester is
+ * disclosed, and it is deliberately strict about it: `requested_by_first_name`
+ * is non-null because the requester is a `NOT NULL` column under an
+ * `ON DELETE RESTRICT` foreign key, so the profile behind it cannot go — a
+ * parse failure here would mean that invariant stopped holding, which is worth
+ * failing loudly over. `covered_by_first_name` is null exactly when
+ * `covered_by` is; the pair travels together.
  */
 export const coverRequestDocument = z.object({
   id: z.string(),
@@ -86,6 +94,34 @@ export const coverRequestDocument = z.object({
 });
 
 export type CoverRequestDocument = z.infer<typeof coverRequestDocument>;
+
+/**
+ * **The same document with the absent gedu withheld** — what the two offer RPCs
+ * return to the gedu who answered the pool.
+ *
+ * Volunteering must not be a way to learn who is off sick. The pool list never
+ * names the absent gedu, and before this the offer that followed it did: the
+ * write returned the full document, so one button-press unmasked the person the
+ * list had deliberately left out — and withdrawing an offer the caller never
+ * made did the same without writing anything at all (the database now refuses
+ * that outright).
+ *
+ * A second schema rather than a nullable field on the first, because the two
+ * documents are read by different surfaces and the difference is worth being a
+ * type: everything that renders a requester's name reads the named shape and
+ * keeps its guarantee, while the offer mutations — whose callers use the result
+ * for nothing but invalidation — say in their return type that the name is not
+ * theirs to have. The keys are still present and still null, exactly as every
+ * other withheld field on this document is.
+ */
+export const anonymousCoverRequestDocument = coverRequestDocument.extend({
+  requested_by: z.string().nullable(),
+  requested_by_first_name: z.string().nullable(),
+});
+
+export type AnonymousCoverRequestDocument = z.infer<
+  typeof anonymousCoverRequestDocument
+>;
 
 /** One recurring slot, as the pool list emits it for the client's calendar walk. */
 const coverScheduleSlot = z.object({

@@ -65,17 +65,42 @@ const occupantSelect = vi.fn();
 // produce the same empty identity, and only this can tell them apart.
 const gameAccountReads: string[] = [];
 
+// Every session date the route looked a cover up under, in order. The
+// cross-midnight cases are claims about *which date* is asked for, and a 200
+// cannot distinguish "asked for the session's date" from "asked for today and
+// the two happened to match".
+const coverDatesAsked: string[] = [];
+
 /**
- * Today's calendar date in the fixture product's zone — the date the route
- * looks a cover up under.
+ * A calendar date in the fixture product's zone.
  *
  * Computed with the route's own helper rather than restated, because the whole
  * claim of the cover cases is that the date is the *product's* rather than the
  * runtime's: a hardcoded string would pass on a Helsinki machine and fail on a
  * UTC runner for eleven hours of every day.
  */
-function todayInProductZone(timezone = "Europe/Helsinki"): string {
-  return formatInTimeZone(new Date(), timezone, "yyyy-MM-dd");
+function dateInProductZone(
+  instant: Date = new Date(),
+  timezone = "Europe/Helsinki",
+): string {
+  return formatInTimeZone(instant, timezone, "yyyy-MM-dd");
+}
+
+/**
+ * Make the window mock report an open session starting at `sessionStart`.
+ *
+ * The cover cases derive the date they seed **from this same instant**, so
+ * nothing in them is keyed to the wall clock: a run that crossed local midnight
+ * between seeding a cover and reading the route would otherwise flip, which is
+ * a real non-determinism rather than a flake to re-run.
+ */
+function openWindowFor(sessionStart: Date) {
+  mockComputeSessionWindow.mockReturnValue({
+    isOpen: true,
+    nextSessionStart: sessionStart,
+    windowOpensAt: new Date(sessionStart.getTime() - 300_000),
+    windowClosesAt: new Date(sessionStart.getTime() + 3600_000),
+  });
 }
 
 function tokenRequest(body: Record<string, unknown>): Request {
@@ -185,25 +210,29 @@ function mockTables(opts: {
       };
     }
     if (table === "session_cover_requests") {
-      // The route's chain is .select().eq(group).eq(date).eq(covered_by)
-      // .eq(status).limit().maybeSingle(). The date is the second `eq`, so the
-      // mock captures it and answers from the map.
-      let askedDate = "";
+      // The route's chain is .select().eq(group).in(dates).eq(covered_by)
+      // .eq(status).limit().maybeSingle(). The dates arrive as one `in`, which
+      // the mock captures — both to answer from the map and to record on
+      // `coverDatesAsked`, because *which* dates the route asked about is the
+      // claim of the cross-midnight cases and not something a 200 alone proves.
+      let askedDates: string[] = [];
       const chain = {
-        eq: (_column: string, value: string) => {
-          if (askedDate === "") askedDate = "seen-group";
-          else if (askedDate === "seen-group") askedDate = value;
+        eq: () => chain,
+        in: (_column: string, values: string[]) => {
+          askedDates = values;
           return chain;
         },
         limit: () => ({
-          maybeSingle: () =>
-            Promise.resolve(
+          maybeSingle: () => {
+            coverDatesAsked.push(...askedDates);
+            return Promise.resolve(
               mockSupabaseSuccess(
-                opts.coversByDate?.[askedDate] === true
+                askedDates.some((date) => opts.coversByDate?.[date] === true)
                   ? { id: "cover-1" }
                   : null,
               ),
-            ),
+            );
+          },
         }),
       };
       return { select: vi.fn().mockReturnValue(chain) };
@@ -260,6 +289,7 @@ describe("POST /api/voice/token", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     gameAccountReads.length = 0;
+    coverDatesAsked.length = 0;
     // Rebuild the prune chain each test (clearAllMocks wipes return values).
     placementLt.mockResolvedValue({ error: null });
     placementEq.mockReturnValue({ lt: placementLt });
@@ -380,14 +410,16 @@ describe("POST /api/voice/token", () => {
       expect(data.error).toBe("You are not assigned to this group");
     });
 
-    it("admits a sub holding a live cover on this group for today", async () => {
+    it("admits a sub holding a live cover on the session being joined", async () => {
       // No assignment anywhere on the product — the acceptance case is a gedu
       // who only ever met this group as somebody's substitute.
+      const sessionStart = new Date();
+      openWindowFor(sessionStart);
       authAs("sub-id", { role: "gedu", first_name: "Joonas" });
       mockTables({
         group: {},
         geduAssignment: null,
-        coversByDate: { [todayInProductZone()]: true },
+        coversByDate: { [dateInProductZone(sessionStart)]: true },
       });
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
       expect(res.status).toBe(200);
@@ -398,8 +430,8 @@ describe("POST /api/voice/token", () => {
 
     it("refuses a sub whose cover is on another date of the same group", async () => {
       // The cover arm is DATE-SCOPED where the assignment arm is not: covering
-      // next Monday buys nothing on this Monday's room. Any date but today is
-      // absent from the map, so the route's own lookup finds nothing.
+      // next Monday buys nothing on this Monday's room. Any date but the
+      // session's own is absent from the map, so the lookup finds nothing.
       authAs("sub-id", { role: "gedu", first_name: "Joonas" });
       mockTables({
         group: {},
@@ -412,14 +444,90 @@ describe("POST /api/voice/token", () => {
       expect(data.error).toBe("You are not assigned to this group");
     });
 
-    it("refuses a sub who has since been de-certified", async () => {
-      // Certification gates holding a cover, so losing it ends the access
-      // mid-window rather than only at approval time.
+    it("keeps a cover in a session that runs past local midnight", async () => {
+      // A Monday 23:30 Helsinki session, read at 00:10 on Tuesday: the room is
+      // still Monday's. Asking "does this gedu cover TODAY", which is what this
+      // route used to ask, would look Tuesday up and eject them at midnight —
+      // so the assertion is on the DATE ASKED FOR, not only on the 200.
+      const sessionStart = new Date("2026-03-09T21:30:00.000Z"); // 23:30 Helsinki
+      openWindowFor(sessionStart);
       authAs("sub-id", { role: "gedu", first_name: "Joonas" });
       mockTables({
         group: {},
         geduAssignment: null,
-        coversByDate: { [todayInProductZone()]: true },
+        coversByDate: { "2026-03-09": true },
+      });
+
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+
+      expect(res.status).toBe(200);
+      expect(coverDatesAsked).toEqual(["2026-03-09"]);
+    });
+
+    it("admits the cover of a session that STARTS after local midnight, during its pre-window", async () => {
+      // The mirror case, and the one a today-only lookup got wrong in the other
+      // direction: a 00:10 Tuesday start opens its window at 23:55 on Monday,
+      // when "today" is still Monday and the session is dated Tuesday.
+      const sessionStart = new Date("2026-03-09T22:10:00.000Z"); // 00:10 Tue Helsinki
+      openWindowFor(sessionStart);
+      authAs("sub-id", { role: "gedu", first_name: "Joonas" });
+      mockTables({
+        group: {},
+        geduAssignment: null,
+        coversByDate: { "2026-03-10": true },
+      });
+
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+
+      expect(res.status).toBe(200);
+      expect(coverDatesAsked).toEqual(["2026-03-10"]);
+    });
+
+    it("falls back to today and yesterday when no slot is open, and still refuses on the window", async () => {
+      // With no session in progress there is no session date to be about, so
+      // the membership arm asks the SQL predicates' own pair. It admits — and
+      // the window gate refuses a moment later, which is the documented order:
+      // a non-member and a member both learn only "not assigned" or "not open",
+      // never which groups are in session.
+      mockComputeSessionWindow.mockReturnValue({
+        isOpen: false,
+        nextSessionStart: new Date(Date.now() + 86400_000),
+        windowOpensAt: new Date(Date.now() + 86100_000),
+        windowClosesAt: new Date(Date.now() + 90000_000),
+      });
+      const today = dateInProductZone();
+      authAs("sub-id", { role: "gedu", first_name: "Joonas" });
+      mockTables({
+        group: {},
+        geduAssignment: null,
+        coversByDate: { [today]: true },
+      });
+
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      const data = await res.json();
+
+      expect(res.status).toBe(403);
+      expect(data.error).toBe("Room is not open yet");
+      expect(coverDatesAsked).toHaveLength(2);
+      expect(coverDatesAsked[0]).toBe(today);
+      // Yesterday, derived from the product-local calendar rather than from a
+      // flat 24-hour step — which lands back on today the day a clock goes back.
+      const [year, month, day] = today.split("-").map(Number);
+      expect(coverDatesAsked[1]).toBe(
+        new Date(Date.UTC(year, month - 1, day - 1)).toISOString().slice(0, 10),
+      );
+    });
+
+    it("refuses a sub who has since been de-certified", async () => {
+      // Certification gates holding a cover, so losing it ends the access
+      // mid-window rather than only at approval time.
+      const sessionStart = new Date();
+      openWindowFor(sessionStart);
+      authAs("sub-id", { role: "gedu", first_name: "Joonas" });
+      mockTables({
+        group: {},
+        geduAssignment: null,
+        coversByDate: { [dateInProductZone(sessionStart)]: true },
         certified: false,
       });
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
