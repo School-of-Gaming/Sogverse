@@ -42,7 +42,12 @@ How to read traffic/perf *measurements* for the prod app programmatically (team 
 - **Web Analytics is two metrics, not one — pick deliberately.**
   `vercel.analytics_pageview.count` is **pageviews**, and is what any "where do people go"
   question wants: dimensions `route`, `request_path`, `referrer_hostname`,
-  `request_hostname`, `device_type`, `browser_name`, `os_name`, `country`, `visitor_id`.
+  `request_hostname`, `device_type`, `browser_name`, `os_name`, `country`, `visitor_id`,
+  and (re-verified 2026-09-15) the five UTM fields `utm_source`, `utm_medium`,
+  `utm_campaign`, `utm_content`, `utm_term` — so "views of a landing page by campaign" is
+  a `--group-by utm_campaign` read, not a dashboard-only one. Remember what feeds it: the
+  script mounts only for a visitor who accepted analytics on the cookie banner, so every
+  pageview count is of consenting visitors.
   `vercel.analytics_event.count` is **custom events only** — dimensions incl. `event_name`,
   `event_data/<prop>`, `request_path`, `route`, `visitor_id`. E.g.
   `--filter "event_name eq 'dashboard_nav'" --group-by event_data/role --since 30d`;

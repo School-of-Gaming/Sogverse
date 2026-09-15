@@ -12,10 +12,18 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-/** An inline machine value: a field name, an enum value, a literal. */
+/**
+ * An inline machine value: a field name, an enum value, a literal.
+ *
+ * The pill's vertical padding is a hairline, and every run of prose that holds
+ * one carries `leading-relaxed`: an inline background does not push lines
+ * apart, so a pill taller than its line box overlaps the pill on the next line
+ * the moment a sentence wraps. `box-decoration-clone` keeps both ends of a
+ * pill drawn when the name itself breaks across lines.
+ */
 function Code({ children }: { children: React.ReactNode }) {
   return (
-    <code className="rounded bg-lifted px-1.5 py-0.5 font-mono text-[0.9em]">
+    <code className="box-decoration-clone rounded bg-lifted px-1.5 py-px font-mono text-[0.875em]">
       {children}
     </code>
   );
@@ -79,7 +87,7 @@ function RowTable({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-sm md:min-w-[36rem]">
+      <table className="w-full border-collapse text-sm leading-relaxed md:min-w-[36rem]">
         <thead className="hidden md:table-header-group">
           <tr className="border-b border-border">
             <th scope="col" className={`${HEAD_CELL} w-[15rem]`}>
@@ -215,7 +223,7 @@ function Resource({
       </div>
 
       {note && (
-        <p className="mt-6 max-w-3xl text-sm text-muted-foreground">{note}</p>
+        <p className="mt-6 max-w-3xl text-sm leading-relaxed text-muted-foreground">{note}</p>
       )}
     </Section>
   );
@@ -820,7 +828,7 @@ export default function LynxApiDocsPage() {
           <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
             {t("contents.heading")}
           </h2>
-          <ul className="mt-3 space-y-1.5 text-sm">
+          <ul className="mt-3 space-y-1.5 text-sm leading-relaxed">
             {contents.map(({ id, label }) => (
               <li key={id}>
                 <a
@@ -854,7 +862,7 @@ export default function LynxApiDocsPage() {
             <div className="mt-4">
               <CodeBlock>{AUTH_HEADER}</CodeBlock>
             </div>
-            <p className="mt-4 max-w-3xl text-sm text-muted-foreground">
+            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted-foreground">
               {t("authentication.keyNote")}
             </p>
           </Section>
@@ -976,7 +984,7 @@ export default function LynxApiDocsPage() {
             <SectionHeading>{t("errors.heading")}</SectionHeading>
             <div className="mt-4 overflow-x-auto">
               {/* Stacks below `md` on the same reasoning as RowTable. */}
-              <table className="w-full border-collapse text-sm md:min-w-[30rem]">
+              <table className="w-full border-collapse text-sm leading-relaxed md:min-w-[30rem]">
                 <thead className="hidden md:table-header-group">
                   <tr className="border-b border-border">
                     <th scope="col" className={`${HEAD_CELL} w-24`}>
