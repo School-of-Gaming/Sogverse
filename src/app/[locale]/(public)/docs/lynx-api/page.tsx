@@ -408,8 +408,10 @@ const ENROLMENTS_PARAMS = [
 const ENROLMENTS_FIELDS = [
   { name: "id", type: "uuid", key: "resources.enrolments.fields.id" },
   {
+    // `group_id` is null until an admin places the seat, which the description
+    // says and the type has to say too.
     name: "product_id, group_id",
-    type: "uuid",
+    type: "uuid, uuid | null",
     key: "resources.enrolments.fields.productGroupId",
   },
   {
