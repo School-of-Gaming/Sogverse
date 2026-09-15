@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -20,7 +21,12 @@ import {
   type SessionFeedGamer,
 } from "@/components/gedu/session-feed";
 import { showsNewcomerBadge } from "@/components/member-flair";
+import {
+  SessionStaffingEditor,
+  type SetSessionCoverDraft,
+} from "@/components/admin/products/session-staffing-editor";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
+import { sessionEntryId } from "@/lib/session-occurrence";
 import { ROUTES } from "@/lib/constants";
 import { useNow } from "@/providers";
 import {
@@ -32,6 +38,7 @@ import {
   useAdminSetGroupNotes,
   useAdminSetSessionNotes,
   useAdminSetSiteNotes,
+  adminSessionKeys,
   type AdminProductSessions,
   type AdminSessionGroup,
 } from "@/services/admin-sessions";
@@ -55,11 +62,17 @@ import {
   useRobloxRenders,
   useUpdateGroupMemberRoblox,
 } from "@/services/roblox";
+import {
+  useClearSessionCover,
+  useSetSessionCover,
+  useWithdrawSessionCoverRequestAsAdmin,
+} from "@/services/session-cover";
 import type {
   GeduAssignedProduct,
   ProductGroupsSnapshot,
   ProductType,
 } from "@/types";
+import type { SessionFeedEntry } from "@/components/gedu/session-feed";
 import { platformForTopic } from "@/lib/products/topics";
 import type { AppHref } from "@/lib/constants/routes";
 
@@ -308,6 +321,7 @@ function Workspace({
 }) {
   const s = useTranslations("admin.products.sessions");
   const liveNow = useNow();
+  const queryClient = useQueryClient();
   const groupId = group.id;
   const productId = product.id;
 
@@ -367,6 +381,13 @@ function Workspace({
   // member's flair, so an edit here relights the button on the gedu's page too.
   const setGamerNote = useSetGamerGroupNote(groupId);
   const setGamerCreations = useSetGamerGroupCreations(groupId);
+  // The three admin cover writes. They are the one capability this shell holds
+  // that the gedu shell does not, and they are bound here for the same reason
+  // every other write on this page is: which document has to be read again
+  // afterwards is the shell's knowledge, not the shared body's.
+  const setSessionCover = useSetSessionCover();
+  const clearSessionCover = useClearSessionCover();
+  const withdrawCoverRequest = useWithdrawSessionCoverRequestAsAdmin();
 
   /**
    * The account ids whose Roblox figure this roster needs — verified rows only,
@@ -637,6 +658,64 @@ function Workspace({
     sessions.site === null ? undefined : ROUTES.admin.site(sessions.site.location_id);
 
   /**
+   * The three admin staffing writes, each finished off by reading this page's
+   * own document again.
+   *
+   * **The awaited invalidation is the half the mutation cannot supply.** Every
+   * cover write invalidates five roots in its `onSuccess` without waiting for
+   * any of them, which is right for the four documents this page is not reading
+   * and not enough for the one it is: the editor holds its committing flag
+   * until the promise it is given settles, so a promise that resolved on the
+   * receipt would re-enable a control over the staffing the write has just
+   * changed. Awaiting the admin-sessions key means the card is already rebuilt
+   * from the new `covers` by the time the editor lets go.
+   */
+  const settleCoverWrite = async () => {
+    await queryClient.invalidateQueries({ queryKey: adminSessionKeys.all });
+  };
+
+  const handleSetCover = async (
+    sessionDate: string,
+    draft: SetSessionCoverDraft,
+  ) => {
+    await setSessionCover.mutateAsync({ groupId, sessionDate, ...draft });
+    await settleCoverWrite();
+  };
+
+  const handleClearCover = async (requestId: string) => {
+    await clearSessionCover.mutateAsync({ requestId });
+    await settleCoverWrite();
+  };
+
+  const handleWithdrawRequest = async (requestId: string) => {
+    await withdrawCoverRequest.mutateAsync({ requestId });
+    await settleCoverWrite();
+  };
+
+  /**
+   * The staffing editor this shell draws on every card — **past sessions
+   * included**, because recording an off-platform cover after the fact is what
+   * the admin path exists for.
+   *
+   * The date is read back off the entry's id rather than re-derived from its
+   * instant, exactly as the card's own saves read it: the id is what the row is
+   * keyed by in Postgres, so the two agree by construction and cannot drift if a
+   * snapshot's instant ever disagrees with the date it was filed under.
+   */
+  const renderStaffingEditor = (entry: SessionFeedEntry) => {
+    const sessionDate = entry.id.slice(sessionEntryId(groupId, "").length);
+    return (
+      <SessionStaffingEditor
+        staffing={entry.staffing}
+        sessionDate={sessionDate}
+        onSetCover={(draft) => handleSetCover(sessionDate, draft)}
+        onClearCover={handleClearCover}
+        onWithdrawRequest={handleWithdrawRequest}
+      />
+    );
+  };
+
+  /**
    * An admin correcting a child's game username, with the platform's real round
    * trip behind it — **the same implementation the gedu workspace runs**,
    * imported rather than reproduced, so a save that finds an account lands
@@ -705,6 +784,10 @@ function Workspace({
       onAddPhoto={addPhoto}
       onRemovePhoto={removePhoto}
       onSaveGameUsername={handleSaveGameUsername}
+      // The admin shell's one extra power over the gedu's, and the body learns
+      // it by being handed one: an editor, and neither of the two cover
+      // callbacks a gedu speaks for their own seat with.
+      renderStaffingEditor={renderStaffingEditor}
       gameStatuses={gameStatuses}
       robloxAvatarUrls={robloxAvatarUrls}
       memberFlair={memberFlair}

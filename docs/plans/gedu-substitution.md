@@ -862,3 +862,127 @@ intent reaching the shell through the view. The dashboard panel rides the existi
 admin-dashboard scene, where `busy` carries three requests (two with offers, one without)
 and `quiet` is the collapsed all-clear — the fewest scenarios that still cover the
 mutually exclusive states.
+
+## Notes from Step 4c (the queue states a time), for 4b–5
+
+Deviation 1 of Step 4a — "the cover row states a DATE and no time, because the wire
+carries no slots" — is closed the way that note said to close it: the RPC's `product` was
+widened, not joined in the browser.
+
+**Migration `00264`.** `00263` was claimed on staging by another branch between Step 4a and
+this one, so this is `00264`. `db push` still refuses outright (remote history holds `00259`
+and `00263` with no local file), so the documented pathway was used again: `psql -f`, then
+`migration repair --status applied 00264`, then the history table verified. The body is
+`00260`'s verbatim with one key added to one `jsonb_build_object` and the paragraph in
+section 5 that explains it; the diff against the extracted `00260` body is exactly those two
+hunks. Types were regenerated and are **byte-identical** — the RPC returns `jsonb`, so its
+document shape has never been in the generated types, and nothing from `00263` leaked in.
+
+**The slots ride on the REQUEST's product, and that is the whole point.** Joining the same
+document's `schedule_products` was the alternative and is still wrong: that set is narrower
+(its own -30-day/+4-month window, and cancelled and completed products dropped), so a join
+would answer for some rows and not others with nothing on screen to tell them apart.
+Carried on the request's own shell, the only absence left is "no slot names this weekday",
+which **is** the orphaned request — and `null` is how it reaches the row.
+
+**The date is the product's, the clock face is the viewer's, and they are deliberately not
+one zone.** The date is the request's key — (group, date, absent gedu) — and is what every
+other surface naming this session states, so converting it would leave the queue and the
+group page disagreeing about which day is short-staffed; the existing mapping test that
+pins it across two viewer zones stands unchanged. The time is a clock face, and the page's
+own rule is that every clock face on it is the viewer's — which is what the schedule's zone
+abbreviation exists to disclose. For a Helsinki admin reading Helsinki products, the case
+the abbreviation stays `null` for, there is nothing to reconcile.
+
+**Both ends, not just the start.** A schedule chip states a start and keeps its duration in
+a `title`, because it sits in a grid of a hundred others where the start is what places it.
+A queue row is a handful of sessions an admin is finding somebody for, and how long they
+would be there is half of what they are being asked. `HH:MM–HH:MM`, 24-hour and
+locale-blind like the chips, the en dash punctuation for the same reason the seat counts'
+slash is.
+
+**The derivation is in the builder, not the row.** `admin-dashboard-data.ts` says everything
+it carries is already derived and the body never converts anything, so `CoverRequest` gained
+`sessionTime: string | null` and `toCoverRequest` resolves it through the shared
+`occurrenceOnDate`. `clockFace` is exported from the builder for the preview fixtures, which
+resolve their own occurrences from the catalogue's slots — the same reason
+`compareComingUpCohorts` and `relativeWait` are exported beside it. The `busy` scene's three
+requests therefore state real times derived from their products' real schedules, and the
+middle one turns out to be **the orphan for free** — its date falls on a weekday its product
+does not meet — so the scene shows the state beside two that do carry a time, with no new
+scenario and no spec written to produce it.
+
+**Tests.** The mapping test gained the slots on its wire fixture and three cases — the
+viewer-zone resolution across Helsinki and Los Angeles, the orphan stating no time, and two
+slots on one weekday resolving to the earlier. The panel test asserts the clock face on the
+staffed row and its absence on the orphan. The DB suite's dashboard-member assertion now
+checks the seeded seven-weekday slot set arrives on the product shell; the zod parse it
+already ran through `adminDashboardCoverRequest` makes the key's presence a failing test
+rather than a missing sentence, which is why the migration's own assertion block is
+structural (guard-first on `assert_admin`, and a staging database with no open request would
+pass any output query vacuously).
+
+## Notes from Step 4b (the admin group page's staffing editor), for Step 5
+
+Deviations and decisions the copy step and any later reader have to know about.
+Everything not listed here was built as the plan and the cold-read answers say.
+
+**The seat an admin may act on is NOT "expected" — it is expected plus everyone holding a
+live request.** This is the one correction to the plan's own wording, and the database is
+what settles it: `set_session_cover` demands the absent gedu be expected **only where
+there is no non-withdrawn request to cover in place**. A gedu who has filed is no longer
+expected by the derivation, so an editor offering `staffing.expected` alone could never
+reach the two cases the plan explicitly asks it to name — "this approves the open request"
+and "this replaces the current sub", both of which are about a seat that has already
+filed. The editor therefore builds an `AbsentSeat` list — the expected gedus, then every
+requester — and that list is what decides whether the first step is asked at all.
+
+**The per-request actions could not be put beside their state line, and are named
+instead.** The staffing line lives in `SessionStaffingRegion`, which is the gedu tree's
+file and outside this step's ownership; the editor arrives as one node in that region's
+right-packed trailing group. So each live request gets its own small row on the right,
+led by the absent gedu's first name — without it, two seats out on one date would leave
+two identical pairs of buttons with nothing saying which request each belonged to. If the
+region is ever reworked to interleave a per-request slot, that label is what comes out.
+
+**A selection closes the picker, so the sheet's close handler has to read the state it is
+replacing.** `GeduPickerSheet` calls `onSelect` and then closes itself in the same event;
+a close handler that unconditionally walked the flow back would undo the choice that
+triggered it, which is exactly what it did on the first run. The handler is a functional
+`setFlow` that stands down unless the picker is still the current step. Worth knowing
+because every future caller of that sheet inherits the same ordering.
+
+**The dialog and the sheet are never open together.** The picker is the middle of three
+phases (absent → picker → confirm), not an overlay above a standing dialog. The reason is
+Escape: the dialog primitive answers one keypress by depth through its own register, and
+`Sheet` is not in that register, so a keypress with both up would close the picker *and*
+the dialog behind it — the precise failure the register was written to prevent for two
+dialogs. The optional reason and note are held one level up, in the flow component, so
+walking back to change the sub does not throw the draft away.
+
+**The shell awaits the admin-sessions invalidation, as the dashboard shell does.** The
+editor holds its committing flag until the promise it is handed settles, and the control
+survives a successful write (unlike the gedu's action, which disappears with the state
+that offered it) — so a promise resolving on the mutation's receipt would re-enable a
+button over staffing the write has just changed. `handleSetCover`/`handleClearCover`/
+`handleWithdrawRequest` each `mutateAsync` and then await
+`invalidateQueries(adminSessionKeys.all)`.
+
+**The session date is read back off the entry id**, with the same one-liner the card's own
+saves use, rather than re-derived from the entry's instant: the id is what Postgres keys
+the row by, so the two agree by construction.
+
+**No preview scene exists for the admin group page**, so the editor is covered in jsdom
+only (`tests/unit/components/admin-session-staffing-editor.test.tsx`, twelve cases: the
+three writes' arguments, the two-step flow, the `unavailable` map's two reasons, the
+optional reason/note, both context lines, the committing discipline and the failure line).
+Building one is a piece of work in its own right — the page folds four documents into the
+shared workspace body — and it is a follow-up rather than part of this step.
+`admin-group-details-wiring.test.tsx` gained a real `QueryClientProvider` (the shell now
+reads a query client), a `@/services/session-cover` mock and the real `adminSessionKeys`.
+
+**Message namespace: `admin.products.staffing`, 33 English-only keys.** Role labels are
+*not* among them — the pill's `admin.geduRole.primary|assistant` is reused, so the two
+admin surfaces cannot drift about what a pay class is called. As with Steps 3 and 4a, the
+only `tsc` failure on the branch is `src/i18n/messages.ts`, four errors, one per non-`en`
+locale.

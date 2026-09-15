@@ -8,6 +8,7 @@ import {
   within,
 } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import messages from "@/../messages/en.json";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
@@ -111,7 +112,11 @@ vi.mock("@/services/products", () => ({
   useProductAdmin: () => ({ data: reads.product, isPending: false }),
 }));
 
-vi.mock("@/services/admin-sessions", () => ({
+// The hooks are stubbed and the key factory is kept real: the shell awaits an
+// invalidation on it after every cover write, and a stubbed key would let a
+// rename through.
+vi.mock("@/services/admin-sessions", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/admin-sessions")>()),
   useAdminProductSessions: () => ({ data: reads.sessions, isPending: false }),
   useAdminSetSessionNotes: noopMutation,
   useAdminRecordAttendance: noopMutation,
@@ -152,6 +157,16 @@ vi.mock("@/services/minecraft", () => ({
 vi.mock("@/services/roblox", () => ({
   useUpdateGroupMemberRoblox: noopMutation,
   useRobloxRenders: () => ({ data: undefined }),
+}));
+
+// The three admin cover writes the staffing editor is bound to. Nothing here
+// opens that editor — the feed is empty below, so there is no card to draw one
+// on — but the shell binds all three on every render.
+vi.mock("@/services/session-cover", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/session-cover")>()),
+  useSetSessionCover: noopMutation,
+  useClearSessionCover: noopMutation,
+  useWithdrawSessionCoverRequestAsAdmin: noopMutation,
 }));
 
 vi.mock("@/services/member-flair", () => ({
@@ -392,18 +407,25 @@ function renderPage(productType: ProductType) {
   reads.feed = groupFeed(productType);
   reads.snapshot = groupsSnapshot();
 
+  // A real client, because the shell reads one: every cover write finishes by
+  // awaiting an invalidation on the admin-sessions key, and an empty cache
+  // settles that immediately.
+  const queryClient = new QueryClient();
+
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
-      <TimezoneProvider initialTimezone="Europe/Helsinki">
-        <NowProvider initialNow={NOW}>
-          <AdminGroupDetailsPage
-            productType={productType === "camp" ? "camp" : "consumer_club"}
-            productId={IDS.product}
-            groupId={IDS.group}
-          />
-        </NowProvider>
-      </TimezoneProvider>
-    </NextIntlClientProvider>,
+    <QueryClientProvider client={queryClient}>
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <TimezoneProvider initialTimezone="Europe/Helsinki">
+          <NowProvider initialNow={NOW}>
+            <AdminGroupDetailsPage
+              productType={productType === "camp" ? "camp" : "consumer_club"}
+              productId={IDS.product}
+              groupId={IDS.group}
+            />
+          </NowProvider>
+        </TimezoneProvider>
+      </NextIntlClientProvider>
+    </QueryClientProvider>,
   );
 }
 
