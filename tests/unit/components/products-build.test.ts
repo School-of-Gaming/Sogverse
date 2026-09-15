@@ -18,7 +18,7 @@ import type { ProductAdminDetailRow } from "@/services/products";
 // tested without rendering. These tests cover the *complex, easily-broken*
 // rules: per-product-type branching, weekday math (JS Sun-first vs schema
 // Mon-first), end-date derivation for events, prices→cents conversion,
-// scheduled-registration ISO assembly, and the visibility/status pairing.
+// scheduled-registration ISO assembly, and listing.
 
 const consumerConfig = PRODUCT_TYPE_CONFIG.consumer_club;
 const eventConfig = PRODUCT_TYPE_CONFIG.event;
@@ -802,25 +802,23 @@ describe("buildCreateInput", () => {
     });
   });
 
-  describe("status / listing independence", () => {
-    // The form only ever creates fully-validated products, so it always emits
-    // `status: "pending"` — the first state of the lifecycle. Listing is its
-    // own knob and says nothing about the lifecycle: an unlisted product is
-    // pending exactly like a listed one, and just as purchasable by link.
-    it("listed product is created as pending", () => {
-      const s = validConsumerState();
-      s.isVisible = true;
-      const out = buildCreateInput(s, "consumer_club", consumerConfig);
-      expect(out.is_visible).toBe(true);
-      expect(out.status).toBe("pending");
-    });
+  describe("listing is its own knob", () => {
+    // Listing says nothing about where a product is in its life: an unlisted
+    // product is exactly as purchasable by link as a listed one, and its
+    // lifecycle is derived from its dates either way. The payload carries no
+    // lifecycle field at all, which is what makes that unambiguous.
+    it("carries listing and nothing about the lifecycle", () => {
+      const listed = validConsumerState();
+      listed.isVisible = true;
+      expect(
+        buildCreateInput(listed, "consumer_club", consumerConfig).is_visible,
+      ).toBe(true);
 
-    it("unlisted product is also created as pending", () => {
-      const s = validConsumerState();
-      s.isVisible = false;
-      const out = buildCreateInput(s, "consumer_club", consumerConfig);
-      expect(out.is_visible).toBe(false);
-      expect(out.status).toBe("pending");
+      const unlisted = validConsumerState();
+      unlisted.isVisible = false;
+      expect(
+        buildCreateInput(unlisted, "consumer_club", consumerConfig).is_visible,
+      ).toBe(false);
     });
   });
 
@@ -1524,7 +1522,6 @@ function mockDetailRow(
     created_by: "admin-1",
     updated_at: "2026-01-01T00:00:00Z",
     product_type: "consumer_club",
-    status: "pending",
     billing_mode: "paid",
     is_visible: true,
     is_remote: true,
@@ -1673,7 +1670,6 @@ describe("cloneFormState", () => {
     );
     const out = buildCreateInput(state, "consumer_club", consumerConfig);
     expect(out.image_id).toBe("6f0f5e6c-1a4d-4b8a-9f27-2f6a0e5c9d31");
-    expect(out.status).toBe("pending");
     expect(out.translations).toContainEqual({
       locale: "en",
       name: "Summer Club (Copy)",

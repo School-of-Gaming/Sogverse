@@ -779,7 +779,6 @@
         "pending": "Awaiting start",
         "running": "Running",
         "completed": "Completed",
-        "cancelled": "Cancelled",
         "expired": "Expired"
       },
       "schedule": {

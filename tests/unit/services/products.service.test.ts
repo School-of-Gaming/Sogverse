@@ -21,7 +21,6 @@ describe("ProductsService.listVisibleByTypes", () => {
   // runtime filter only ever touches these fields.)
   function row(overrides: {
     id: string;
-    status: string;
     end_date: string | null;
     start_date?: string | null;
     signup_threshold?: number | null;
@@ -50,15 +49,15 @@ describe("ProductsService.listVisibleByTypes", () => {
 
   it("hides running products whose end_date has already passed", async () => {
     const rows = [
-      row({ id: "past", status: "running", end_date: "2026-06-03" }),
-      row({ id: "future", status: "running", end_date: "2026-12-31" }),
-      row({ id: "open-ended", status: "running", end_date: null }),
+      row({ id: "past", start_date: "2026-01-01", end_date: "2026-06-03" }),
+      row({ id: "future", start_date: "2026-01-01", end_date: "2026-12-31" }),
+      row({ id: "open-ended", start_date: "2026-01-01", end_date: null }),
     ];
     fetchMock.mockResolvedValue(postgrestJson(rows));
 
     const result = await service.listVisibleByTypes(["consumer_club"]);
 
-    // The real builder issued the browse query with its type + status filters.
+    // The real builder issued the browse query with its type + listing filters.
     const url = requestedUrl(fetchMock.mock.calls[0][0]);
     expect(url.pathname).toBe("/rest/v1/products");
     expect(url.searchParams.get("product_type")).toBe("in.(consumer_club)");
@@ -69,7 +68,7 @@ describe("ProductsService.listVisibleByTypes", () => {
 
   it("keeps a product whose end_date is today (ends end-of-day local)", async () => {
     const rows = [
-      row({ id: "ends-today", status: "running", end_date: "2026-06-04" }),
+      row({ id: "ends-today", start_date: "2026-01-01", end_date: "2026-06-04" }),
     ];
     fetchMock.mockResolvedValue(postgrestJson(rows));
 
@@ -82,14 +81,12 @@ describe("ProductsService.listVisibleByTypes", () => {
     const rows = [
       row({
         id: "expired",
-        status: "pending",
         start_date: "2026-01-01",
         signup_threshold: 5,
         end_date: "2026-06-03",
       }),
       row({
         id: "pending-future",
-        status: "pending",
         start_date: "2026-07-01",
         end_date: "2026-08-01",
       }),
@@ -110,13 +107,13 @@ describe("ProductsService.listVisibleByTypes", () => {
     const rows = [
       row({
         id: "kiritimati-today",
-        status: "running",
+        start_date: "2026-01-01",
         end_date: "2026-06-04",
         timezone: "Pacific/Kiritimati",
       }),
       row({
         id: "helsinki-past",
-        status: "running",
+        start_date: "2026-01-01",
         end_date: "2026-06-03",
         timezone: "Europe/Helsinki",
       }),
@@ -194,7 +191,6 @@ describe("ProductsService.listVisibleByTypes", () => {
       expect(select).toContain("locations(");
       expect(select).toContain("parent:parent_id(");
       for (const column of [
-        "status",
         "start_date",
         "end_date",
         "signup_threshold",
@@ -219,7 +215,7 @@ describe("ProductsService.listVisibleByTypes", () => {
 
       const full = requestedUrl(fetchMock.mock.calls[0][0]);
       const narrow = requestedUrl(fetchMock.mock.calls[1][0]);
-      for (const param of ["product_type", "is_visible", "status", "order"]) {
+      for (const param of ["product_type", "is_visible", "order"]) {
         expect(narrow.searchParams.get(param)).toBe(
           full.searchParams.get(param),
         );
@@ -228,8 +224,8 @@ describe("ProductsService.listVisibleByTypes", () => {
 
     it("drops ended products exactly as the full listing does", async () => {
       const rows = [
-        row({ id: "past", status: "running", end_date: "2026-06-03" }),
-        row({ id: "future", status: "running", end_date: "2026-12-31" }),
+        row({ id: "past", start_date: "2026-01-01", end_date: "2026-06-03" }),
+        row({ id: "future", start_date: "2026-01-01", end_date: "2026-12-31" }),
       ];
       fetchMock.mockResolvedValue(postgrestJson(rows));
 

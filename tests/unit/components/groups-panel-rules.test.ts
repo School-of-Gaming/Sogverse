@@ -18,6 +18,7 @@ import {
   type DragSubject,
   type SwitchTargetSource,
 } from "@/components/admin/products/groups/panel-rules";
+import { effectiveStatus } from "@/lib/products/effective-status";
 import type { GroupParticipationDetail, ProductGroupsSnapshot } from "@/types";
 
 // resolveDrop's third argument, named at the call sites so the boolean reads.
@@ -695,14 +696,19 @@ describe("seatOfferAvailability", () => {
 // The club switch's picker
 // ---------------------------------------------------------------------------
 
+// The instant every case below is read at. Fixed rather than `new Date()`, so a
+// case about "has this club started" is about the dates it names and not about
+// the day the suite happens to run.
+const NOW = new Date("2026-06-15T09:00:00Z");
+
 // An ordinary running club with no range, no lock and no cap — the boring
 // target each test below bends one field of.
 const runningClub: SwitchTargetSource = {
-  status: "running",
   minAge: null,
   maxAge: null,
   regionLockCountry: null,
   startDate: "2026-01-01",
+  status: "running",
   seatCount: null,
 };
 
@@ -793,11 +799,7 @@ describe("switchTargetFacts", () => {
 
   it("states a closed range beside the gamer's age", () => {
     expect(
-      switchTargetFacts(
-        { ...runningClub, minAge: 8, maxAge: 12 },
-        14,
-        undefined,
-      ),
+      switchTargetFacts({ ...runningClub, minAge: 8, maxAge: 12 }, 14, undefined),
     ).toEqual([{ kind: "ageRange", minAge: 8, maxAge: 12, gamerAge: 14 }]);
   });
 
@@ -831,15 +833,11 @@ describe("switchTargetFacts", () => {
 
   it("states a region lock whatever country it names", () => {
     expect(
-      switchTargetFacts(
-        { ...runningClub, regionLockCountry: "FI" },
-        11,
-        undefined,
-      ),
+      switchTargetFacts({ ...runningClub, regionLockCountry: "FI" }, 11, undefined),
     ).toEqual([{ kind: "regionLocked", country: "FI" }]);
   });
 
-  it("states a start only for a club that has not started", () => {
+  it("states a start for a pending club and for no other status", () => {
     expect(
       switchTargetFacts(
         { ...runningClub, status: "pending", startDate: "2026-09-01" },
@@ -847,21 +845,55 @@ describe("switchTargetFacts", () => {
         undefined,
       ),
     ).toEqual([{ kind: "notStarted", startDate: "2026-09-01" }]);
+    // A club with no start date authored still reads as pending, and the fact
+    // carries the nothing it has.
     expect(
-      switchTargetFacts({ ...runningClub, status: "pending", startDate: null }, 11, undefined),
+      switchTargetFacts(
+        { ...runningClub, status: "pending", startDate: null },
+        11,
+        undefined,
+      ),
     ).toEqual([{ kind: "notStarted", startDate: null }]);
-    expect(switchTargetFacts(runningClub, 11, undefined)).toEqual([]);
+    for (const status of ["running", "completed", "expired"] as const) {
+      expect(switchTargetFacts({ ...runningClub, status }, 11, undefined)).toEqual(
+        [],
+      );
+    }
+  });
+
+  it("agrees with the chip on a threshold-bearing club whose start is behind it", () => {
+    // The sheet derives the status with a sign-up count of 0, so a club short
+    // of its threshold is pending however long ago its start date passed —
+    // and the fact says so rather than reading the date on its own.
+    const club = {
+      ...runningClub,
+      status: effectiveStatus(
+        {
+          start_date: "2026-01-01",
+          end_date: null,
+          signup_threshold: 5,
+          timezone: "Europe/Helsinki",
+        },
+        NOW,
+        0,
+      ),
+      startDate: "2026-01-01",
+    };
+    expect(club.status).toBe("pending");
+    expect(switchTargetFacts(club, 11, undefined)).toEqual([
+      { kind: "notStarted", startDate: "2026-01-01" },
+    ]);
   });
 
   it("carries every fact that applies, in the order they are stated", () => {
     expect(
       switchTargetFacts(
         {
-          status: "pending",
           minAge: 8,
           maxAge: 12,
           regionLockCountry: "SE",
           startDate: "2026-09-01",
+          status: "pending",
           seatCount: 6,
         },
         14,
@@ -983,41 +1015,65 @@ describe("isSwitchTarget", () => {
     id: "club-b",
     product_type: "consumer_club",
     billing_mode: "paid",
-    status: "running",
+    end_date: null,
+    timezone: "Europe/Helsinki",
   } as const;
 
-  it("admits a paid consumer club that is running or pending", () => {
-    expect(isSwitchTarget(club, "club-a")).toBe(true);
-    expect(isSwitchTarget({ ...club, status: "pending" }, "club-a")).toBe(true);
+  it("admits a paid consumer club whose term has not ended", () => {
+    expect(isSwitchTarget(club, "club-a", NOW)).toBe(true);
+    expect(
+      isSwitchTarget({ ...club, end_date: "2026-12-31" }, "club-a", NOW),
+    ).toBe(true);
   });
 
   it("refuses the product the seat is already on", () => {
-    expect(isSwitchTarget(club, "club-b")).toBe(false);
+    expect(isSwitchTarget(club, "club-b", NOW)).toBe(false);
   });
 
   it("refuses anything that is not subscription-shaped", () => {
     // A free club creates no subscription for the seat's to move onto, and a
     // camp or event is paid once rather than monthly.
-    expect(isSwitchTarget({ ...club, billing_mode: "free" }, "club-a")).toBe(
-      false,
-    );
     expect(
-      isSwitchTarget({ ...club, billing_mode: "external_contract" }, "club-a"),
+      isSwitchTarget({ ...club, billing_mode: "free" }, "club-a", NOW),
     ).toBe(false);
-    expect(isSwitchTarget({ ...club, product_type: "camp" }, "club-a")).toBe(
-      false,
-    );
     expect(
-      isSwitchTarget({ ...club, product_type: "municipality_club" }, "club-a"),
+      isSwitchTarget(
+        { ...club, billing_mode: "external_contract" },
+        "club-a",
+        NOW,
+      ),
+    ).toBe(false);
+    expect(
+      isSwitchTarget({ ...club, product_type: "camp" }, "club-a", NOW),
+    ).toBe(false);
+    expect(
+      isSwitchTarget(
+        { ...club, product_type: "municipality_club" },
+        "club-a",
+        NOW,
+      ),
     ).toBe(false);
   });
 
-  it("refuses a finished or cancelled club", () => {
-    expect(isSwitchTarget({ ...club, status: "completed" }, "club-a")).toBe(
-      false,
-    );
-    expect(isSwitchTarget({ ...club, status: "cancelled" }, "club-a")).toBe(
-      false,
-    );
+  it("refuses a club whose last day has passed", () => {
+    expect(
+      isSwitchTarget({ ...club, end_date: "2026-01-31" }, "club-a", NOW),
+    ).toBe(false);
+  });
+
+  it("reads the last day in the club's own zone", () => {
+    // A club is over the day AFTER its end date, read where the club is: at
+    // 2026-06-14T22:00Z a club ending on the 14th is finished in Helsinki and
+    // still running in Los Angeles.
+    const midnightish = new Date("2026-06-14T22:00:00Z");
+    const ending = { ...club, end_date: "2026-06-14" };
+    expect(isSwitchTarget(ending, "club-a", midnightish)).toBe(false);
+    expect(
+      isSwitchTarget(
+        { ...ending, timezone: "America/Los_Angeles" },
+        "club-a",
+        midnightish,
+      ),
+    ).toBe(true);
   });
 });

@@ -6,7 +6,6 @@ import type {
   MunicipalityInvoicingSession,
   MunicipalityInvoicingSnapshot,
 } from "@/services/municipality-invoicing";
-import type { ProductStatus } from "@/types";
 
 /**
  * Fixtures for the municipality invoicing preview scene: one month of a Finnish
@@ -173,7 +172,6 @@ interface ClubSpec {
   site: { name: string; type?: MunicipalityInvoicingLocation["type"] } | null;
   /** Current per-session fee in cents. Null is a fee nobody has filled in. */
   feeCents: number | null;
-  status?: ProductStatus;
   startDate?: string;
   endDate?: string | null;
   /** Weekly slots. Empty is a club whose schedule was never filled in. */
@@ -353,9 +351,10 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     municipality: "vantaa",
     site: { name: "Lammaskosken koulu" },
     feeCents: 6000,
-    // Pending, and starting in August: nothing to project, and a stray row in
-    // May all the same. It bills, and the schedule beside it claims nothing.
-    status: "pending",
+    // A term that has not begun: it starts in August, so the projection clips
+    // to a window entirely after this month and claims nothing. A stray row in
+    // May all the same, so it bills its evidence and the schedule beside it
+    // stays silent.
     startDate: "2026-08-17",
     endDate: null,
     slots: [{ weekday: WED, startTime: "15:00" }],
@@ -367,11 +366,7 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     municipality: "vantaa",
     site: { name: "Ilvesmäen koulu" },
     feeCents: 6500,
-    // Cancelled, with a row from before it was called off. Same shape as the
-    // pending club: it bills its evidence and projects nothing.
-    status: "cancelled",
     slots: [{ weekday: THU, startTime: "15:30" }],
-    extraDates: ["2026-05-07"],
   },
 
   // Tampere — a term that ends inside the month.
@@ -389,9 +384,9 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     municipality: "tampere",
     site: { name: "Hallilanmäen koulu" },
     feeCents: 8000,
-    // Completed on the 13th: the projection is clipped to the term's last day,
-    // so this club has no upcoming line while every other Wednesday club does.
-    status: "completed",
+    // A term ending on the 13th: the projection is clipped to the term's last
+    // day, so this club has no upcoming line while every other Wednesday club
+    // does.
     endDate: "2026-05-13",
     slots: [{ weekday: WED, startTime: "15:00" }],
   },
@@ -578,7 +573,6 @@ export function municipalityInvoicingMonthFixture(
 function buildClub(spec: ClubSpec): MunicipalityInvoicingClub {
   const startDate = spec.startDate ?? TERM_START;
   const endDate = spec.endDate === undefined ? TERM_END : spec.endDate;
-  const status = spec.status ?? "running";
   const slots: MunicipalityInvoicingScheduleSlot[] = (spec.slots ?? []).map(
     (slot) => ({
       weekday: slot.weekday,
@@ -591,7 +585,6 @@ function buildClub(spec: ClubSpec): MunicipalityInvoicingClub {
 
   return {
     id: spec.id,
-    status,
     timezone: MUNICIPALITY_INVOICING_TIMEZONE,
     start_date: startDate,
     end_date: endDate,
@@ -616,7 +609,7 @@ function buildClub(spec: ClubSpec): MunicipalityInvoicingClub {
       name: municipality.name,
       name_i18n: municipality.sv === null ? null : { sv: municipality.sv },
     },
-    sessions: storedRows(spec, { startDate, endDate, status, slots }),
+    sessions: storedRows(spec, { startDate, endDate, slots }),
   };
 }
 
@@ -626,16 +619,15 @@ function buildClub(spec: ClubSpec): MunicipalityInvoicingClub {
  *
  * A row exists for every date the club's schedule projected that has arrived,
  * minus the ones the spec says nobody wrote up, plus whatever dates the spec
- * adds by hand. That last part is the whole of a club with no projection: a
- * pending or cancelled club, or one whose slots were never filled in, reaches
- * the invoice on its rows alone.
+ * adds by hand. That last part is the whole of a club with no projection: a club
+ * whose term falls outside the month, or one whose slots were never filled in,
+ * reaches the invoice on its rows alone.
  */
 function storedRows(
   spec: ClubSpec,
   context: {
     startDate: string;
     endDate: string | null;
-    status: ProductStatus;
     slots: readonly MunicipalityInvoicingScheduleSlot[];
   },
 ): MunicipalityInvoicingSession[] {
@@ -661,22 +653,18 @@ function storedRows(
  * its term — the same walk the invoice makes, because the fixture has to agree
  * with it about what "a date the schedule projects" means.
  *
- * A club that is neither running nor completed projects nothing, which is what
- * makes the pending and cancelled specs carry their rows by hand.
+ * A club whose term does not reach into the month projects nothing, which is
+ * what makes the not-yet-started spec carry its row by hand.
  */
 function projectedDates({
   startDate,
   endDate,
-  status,
   slots,
 }: {
   startDate: string;
   endDate: string | null;
-  status: ProductStatus;
   slots: readonly MunicipalityInvoicingScheduleSlot[];
 }): string[] {
-  if (status !== "running" && status !== "completed") return [];
-
   const monthEnd = addCalendarDays(monthsAfter(WORKING_MONTH, 1), -1);
   const from = startDate > WORKING_MONTH ? startDate : WORKING_MONTH;
   const until = endDate !== null && endDate < monthEnd ? endDate : monthEnd;

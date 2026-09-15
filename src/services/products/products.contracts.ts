@@ -219,9 +219,6 @@ const productDataBase = z.object({
 /** The JSON body of POST /api/admin/products/create. */
 export const createProductData = productDataBase.extend({
   product_type: z.enum(Constants.public.Enums.product_type),
-  // Optional: the RPC defaults it (p_status?) and the old route tolerated
-  // absence, though the admin form always sends it.
-  status: z.enum(Constants.public.Enums.product_status).optional(),
 });
 
 /** The JSON body of POST /api/admin/products/[id]/update. */

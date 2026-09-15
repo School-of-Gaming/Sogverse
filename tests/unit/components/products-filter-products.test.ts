@@ -55,7 +55,6 @@ function row(overrides: {
     seat_count: null,
     signup_threshold: null,
     spoken_language_code: overrides.spokenLanguageCode ?? "en",
-    status: "running",
     timezone: "Europe/Helsinki",
     topic: overrides.topic,
     waitlist_enabled: false,

@@ -188,7 +188,6 @@ function productRow(productType: ProductType): ProductAdminDetailRow {
     created_by: "admin-1",
     updated_at: "2025-08-01T00:00:00.000Z",
     product_type: productType,
-    status: "running",
     billing_mode: "paid",
     is_visible: true,
     is_remote: false,

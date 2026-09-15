@@ -127,7 +127,6 @@ export const POST = defineRoute({
       p_spoken_language_code: body.spoken_language_code,
       p_is_remote: body.is_remote,
       p_timezone: body.timezone,
-      p_status: body.status,
       p_is_visible: body.is_visible,
       p_waitlist_enabled: body.waitlist_enabled,
       p_material_url: body.material_url ?? undefined,

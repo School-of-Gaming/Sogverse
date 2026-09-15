@@ -6,17 +6,17 @@ import {
   type PendingHintInputs,
 } from "@/lib/products/effective-status";
 
-// effectiveStatus is the fact that drives the admin list status pill and
-// (eventually) what parents see on browse. Since it derives from stored
-// columns rather than a cron, regressions are silent — the column says
-// `pending` and the list page displays `pending` even though the start
-// date passed two weeks ago. These tests pin the derivation rules.
+// effectiveStatus is the fact that drives the admin list status pill and what
+// parents see on browse. There is no stored status behind it: the answer is a
+// function of the dates, the threshold and the live sign-up count, so a
+// regression here is a page saying "awaiting start" about a club that began two
+// weeks ago, with nothing anywhere to contradict it. These tests pin the
+// derivation rules.
 
 const NOW = new Date("2026-04-28T12:00:00Z");
 
 function lifecycle(over: Partial<LifecycleInputs>): LifecycleInputs {
   return {
-    status: "pending",
     start_date: null,
     end_date: null,
     signup_threshold: null,
@@ -26,69 +26,55 @@ function lifecycle(over: Partial<LifecycleInputs>): LifecycleInputs {
 }
 
 describe("effectiveStatus", () => {
-  it("passes through cancelled untouched", () => {
-    expect(
-      effectiveStatus(lifecycle({ status: "cancelled" }), NOW, 0),
-    ).toBe("cancelled");
-  });
+  describe("a run that has begun", () => {
+    it("is running while end_date is in the future", () => {
+      const p = lifecycle({ start_date: "2026-01-01", end_date: "2026-12-01" });
+      expect(effectiveStatus(p, NOW, 0)).toBe("running");
+    });
 
-  it("passes through completed", () => {
-    expect(
-      effectiveStatus(lifecycle({ status: "completed" }), NOW, 0),
-    ).toBe("completed");
-  });
+    it("is running indefinitely when end_date is null", () => {
+      const p = lifecycle({ start_date: "2026-01-01" });
+      expect(effectiveStatus(p, NOW, 0)).toBe("running");
+    });
 
-  describe("running → completed", () => {
-    it("downgrades running once end_date is in the past", () => {
-      const p = lifecycle({ status: "running", end_date: "2026-01-01" });
+    it("is completed once end_date is in the past", () => {
+      const p = lifecycle({ start_date: "2026-01-01", end_date: "2026-02-01" });
       expect(effectiveStatus(p, NOW, 0)).toBe("completed");
     });
-
-    it("stays running when end_date is in the future", () => {
-      const p = lifecycle({ status: "running", end_date: "2026-12-01" });
-      expect(effectiveStatus(p, NOW, 0)).toBe("running");
-    });
-
-    it("stays running when end_date is null", () => {
-      const p = lifecycle({ status: "running" });
-      expect(effectiveStatus(p, NOW, 0)).toBe("running");
-    });
   });
 
-  describe("pending — neither date nor threshold", () => {
-    it("stays pending forever (admin must manually start)", () => {
-      const p = lifecycle({ status: "pending" });
-      expect(effectiveStatus(p, NOW, 0)).toBe("pending");
+  describe("neither date nor threshold", () => {
+    it("stays pending forever — nothing could start it", () => {
+      expect(effectiveStatus(lifecycle({}), NOW, 0)).toBe("pending");
     });
 
-    it("becomes expired if end_date passes (manual start window closed)", () => {
-      // No date, no threshold, but end_date is set and has passed.
-      // Admin can never manually start now — the window is gone.
-      const p = lifecycle({ status: "pending", end_date: "2026-01-01" });
+    it("becomes expired once end_date passes", () => {
+      // No start date, no threshold, but end_date is set and has passed:
+      // whatever this product was waiting for can never happen now.
+      const p = lifecycle({ end_date: "2026-01-01" });
       expect(effectiveStatus(p, NOW, 0)).toBe("expired");
     });
   });
 
-  describe("pending → running upgrade", () => {
-    it("upgrades when start_date has passed and there's no threshold", () => {
-      const p = lifecycle({ status: "pending", start_date: "2026-01-01" });
+  describe("pending → running", () => {
+    it("runs when start_date has passed and there's no threshold", () => {
+      const p = lifecycle({ start_date: "2026-01-01" });
       expect(effectiveStatus(p, NOW, 0)).toBe("running");
     });
 
     it("stays pending when start_date is in the future", () => {
-      const p = lifecycle({ status: "pending", start_date: "2026-12-01" });
+      const p = lifecycle({ start_date: "2026-12-01" });
       expect(effectiveStatus(p, NOW, 0)).toBe("pending");
     });
 
     it("stays pending until threshold is met (no date set)", () => {
-      const p = lifecycle({ status: "pending", signup_threshold: 10 });
+      const p = lifecycle({ signup_threshold: 10 });
       expect(effectiveStatus(p, NOW, 5)).toBe("pending");
       expect(effectiveStatus(p, NOW, 10)).toBe("running");
     });
 
     it("requires both date AND threshold when both are set", () => {
       const p = lifecycle({
-        status: "pending",
         start_date: "2026-01-01", // passed
         signup_threshold: 10,
       });
@@ -98,7 +84,6 @@ describe("effectiveStatus", () => {
 
     it("stays pending when threshold met but date hasn't been reached", () => {
       const p = lifecycle({
-        status: "pending",
         start_date: "2026-12-01",
         signup_threshold: 10,
       });
@@ -109,7 +94,6 @@ describe("effectiveStatus", () => {
   describe("pending → running → completed (skip)", () => {
     it("skips straight to completed when start passed AND end passed AND no threshold", () => {
       const p = lifecycle({
-        status: "pending",
         start_date: "2026-01-01",
         end_date: "2026-02-01",
       });
@@ -118,7 +102,6 @@ describe("effectiveStatus", () => {
 
     it("skips to completed when both dates passed AND threshold was met", () => {
       const p = lifecycle({
-        status: "pending",
         start_date: "2026-01-01",
         end_date: "2026-02-01",
         signup_threshold: 10,
@@ -127,11 +110,9 @@ describe("effectiveStatus", () => {
     });
   });
 
-  describe("pending → expired (start window closed without ever running)", () => {
+  describe("expired — the window closed without it ever running", () => {
     it("threshold-bearing product whose start passed and end passed without enough signups → expired", () => {
-      // The bug fix case: this used to silently stay "pending" forever.
       const p = lifecycle({
-        status: "pending",
         start_date: "2026-01-01",
         end_date: "2026-02-01",
         signup_threshold: 10,
@@ -141,7 +122,6 @@ describe("effectiveStatus", () => {
 
     it("threshold-only product whose end passed without enough signups → expired", () => {
       const p = lifecycle({
-        status: "pending",
         end_date: "2026-02-01",
         signup_threshold: 10,
       });
@@ -157,7 +137,7 @@ describe("effectiveStatus", () => {
       // is afternoon in Helsinki — same calendar day. So end_date=today
       // (2026-04-28) has NOT yet passed.
       const p = lifecycle({
-        status: "running",
+        start_date: "2026-01-01",
         end_date: "2026-04-28",
       });
       expect(effectiveStatus(p, NOW, 0)).toBe("running");
@@ -168,10 +148,26 @@ describe("effectiveStatus", () => {
       // (DST). end_date = 2026-04-28 has now passed in Helsinki.
       const lateNight = new Date("2026-04-28T22:00:00Z");
       const p = lifecycle({
-        status: "running",
+        start_date: "2026-01-01",
         end_date: "2026-04-28",
       });
       expect(effectiveStatus(p, lateNight, 0)).toBe("completed");
+    });
+
+    it("start_date has arrived on the product's own calendar day, not the reader's", () => {
+      // 2026-06-14T22:00:00Z is already the 15th in Helsinki (UTC+3 in
+      // summer) and still the 14th in Los Angeles, so at one instant the
+      // same start date has arrived for one product and not for the other.
+      const midnightish = new Date("2026-06-14T22:00:00Z");
+      const p = lifecycle({ start_date: "2026-06-15" });
+      expect(effectiveStatus(p, midnightish, 0)).toBe("running");
+      expect(
+        effectiveStatus(
+          { ...p, timezone: "America/Los_Angeles" },
+          midnightish,
+          0,
+        ),
+      ).toBe("pending");
     });
 
     it("a Pacific-timezone product compared at the same UTC moment is still running today", () => {
@@ -179,7 +175,7 @@ describe("effectiveStatus", () => {
       // day in LA, so end_date=today hasn't passed yet there.
       const lateNight = new Date("2026-04-28T22:00:00Z");
       const p = lifecycle({
-        status: "running",
+        start_date: "2026-01-01",
         end_date: "2026-04-28",
         timezone: "America/Los_Angeles",
       });

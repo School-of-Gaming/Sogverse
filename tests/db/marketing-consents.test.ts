@@ -38,9 +38,17 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  */
 
 const PRODUCT_PUBLISHED = "00000000-0000-0000-0000-000000000690";
-const PRODUCT_CANCELLED = "00000000-0000-0000-0000-000000000691";
+/**
+ * A term that ended long ago, in the helper's default UTC zone, so "this
+ * product has ended" is true wherever and whenever this suite runs. It closes
+ * nothing: since the 2026-09-15 ruling an ended product is readable by
+ * everybody, and the fixture is here as the hardest case for that claim.
+ */
+const FINISHED_END = "2020-01-31";
 
-const ALL_TEST_PRODUCTS = [PRODUCT_PUBLISHED, PRODUCT_CANCELLED];
+const PRODUCT_FINISHED = "00000000-0000-0000-0000-000000000691";
+
+const ALL_TEST_PRODUCTS = [PRODUCT_PUBLISHED, PRODUCT_FINISHED];
 
 const SOG = "school_of_gaming" as const;
 const LYNX = "lynx_educate" as const;
@@ -102,16 +110,16 @@ describe("marketing consents (00220)", () => {
     // which is the state a shop page is read in.
     await createTestProduct(admin, {
       id: PRODUCT_PUBLISHED,
-      status: "pending",
       isVisible: true,
       seatCount: null,
     });
-    // Cancelled and unlisted, so the same predicate is false for anyone but an
-    // admin. Its ask set is seeded identically, so a difference in what comes
-    // back can only be the predicate.
+    // Long finished AND unlisted — the two states that were once each thought
+    // to close a read, on one product. Its ask set is seeded identically to the
+    // published one's, so a difference in what comes back could only be the
+    // predicate, and there is no longer a difference to find.
     await createTestProduct(admin, {
-      id: PRODUCT_CANCELLED,
-      status: "cancelled",
+      id: PRODUCT_FINISHED,
+      endDate: FINISHED_END,
       isVisible: false,
       seatCount: null,
     });
@@ -599,14 +607,20 @@ describe("marketing consents (00220)", () => {
   });
 
   // -------------------------------------------------------------------------
-  // A product's ask is exactly as visible as the product
+  // A product's ask is exactly as visible as the product — which, since the
+  // 2026-09-15 ruling that every product stays readable by direct link forever,
+  // means visible to everybody. One case was deleted here when the ruling
+  // landed ("tells the same stranger nothing about a product they cannot read"):
+  // there is no product a stranger cannot read, so it had nothing left to
+  // prove. The case that replaced it asserts the ask arrives on the ended,
+  // unlisted product too — the read a parent following an old link makes.
   // -------------------------------------------------------------------------
 
   describe("product_marketing_consents readability", () => {
     beforeAll(async () => {
       const seeded = await admin.from("product_marketing_consents").insert([
         { product_id: PRODUCT_PUBLISHED, consent_type: LYNX },
-        { product_id: PRODUCT_CANCELLED, consent_type: LYNX },
+        { product_id: PRODUCT_FINISHED, consent_type: LYNX },
       ]);
       if (seeded.error) {
         throw new Error(`seeding asks failed: ${seeded.error.message}`);
@@ -632,35 +646,33 @@ describe("marketing consents (00220)", () => {
       expect(res.data).toEqual([{ consent_type: LYNX }]);
     });
 
-    it("tells the same stranger nothing about a product they cannot read", async () => {
+    it("tells the same stranger about an ended, unlisted product too", async () => {
+      // The ruling where it bites: a parent opening a link to last spring's
+      // club has no session at the moment they open it, and the page still has
+      // to say what signing up would ask.
       const res = await anon
         .from("product_marketing_consents")
         .select("consent_type")
-        .eq("product_id", PRODUCT_CANCELLED);
+        .eq("product_id", PRODUCT_FINISHED);
       expect(res.error).toBeNull();
-      expect(res.data).toEqual([]);
+      expect(res.data).toEqual([{ consent_type: LYNX }]);
     });
 
     it("follows a signed-in customer's own product view", async () => {
-      const published = await customer
+      // A customer with no participation on either product reads them both
+      // exactly as an anonymous visitor does — the predicate is about the
+      // product existing, not about who is asking.
+      const res = await customer
         .from("product_marketing_consents")
-        .select("consent_type")
-        .eq("product_id", PRODUCT_PUBLISHED);
-      expect(published.error).toBeNull();
-      expect(published.data).toEqual([{ consent_type: LYNX }]);
-
-      // A customer with no participation on the cancelled product reads it no
-      // better than an anonymous visitor does — the predicate is about the
-      // product, not about being signed in.
-      const cancelled = await customer
-        .from("product_marketing_consents")
-        .select("consent_type")
-        .eq("product_id", PRODUCT_CANCELLED);
-      expect(cancelled.error).toBeNull();
-      expect(cancelled.data).toEqual([]);
+        .select("product_id")
+        .in("product_id", ALL_TEST_PRODUCTS);
+      expect(res.error).toBeNull();
+      expect(new Set((res.data ?? []).map((r) => r.product_id))).toEqual(
+        new Set(ALL_TEST_PRODUCTS),
+      );
     });
 
-    it("shows an admin both, because can_read_product's first arm is theirs", async () => {
+    it("shows an admin both, by the same predicate as everybody else", async () => {
       const res = await adminAuth
         .from("product_marketing_consents")
         .select("product_id")

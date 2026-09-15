@@ -88,7 +88,6 @@ describe("create_product", () => {
       p_for_parents: false,
       p_min_age: 7,
       p_max_age: 12,
-      p_status: "pending",
       p_is_visible: false,
       p_waitlist_enabled: false,
       p_seat_count: 10,

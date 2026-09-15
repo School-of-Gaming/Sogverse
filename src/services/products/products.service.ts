@@ -4,7 +4,6 @@ import type {
   ProductTopic,
   ProductTag,
   BillingMode,
-  ProductStatus,
   SpokenLanguageCode,
   MarketingConsentType,
   GamerPhotoConsentType,
@@ -59,7 +58,6 @@ function buildVisibleProductsQuery<Select extends string>(
     .select(select)
     .in("product_type", types)
     .eq("is_visible", true)
-    .in("status", ["pending", "running"])
     .order("created_at", { ascending: false });
 }
 
@@ -82,11 +80,11 @@ function buildVisibleProductsQuery<Select extends string>(
  * (`buildProductDetailQuery`) and keeps `product_translations(*)`.
  */
 const BROWSE_SELECT =
-  "id, product_type, billing_mode, topic, tag, min_age, max_age, for_gamers, for_parents, spoken_language_code, image_path, is_remote, seat_count, waitlist_enabled, registration_opens_at, status, start_date, end_date, timezone, signup_threshold, product_translations(locale, name, short_description), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
+  "id, product_type, billing_mode, topic, tag, min_age, max_age, for_gamers, for_parents, spoken_language_code, image_path, is_remote, seat_count, waitlist_enabled, registration_opens_at, start_date, end_date, timezone, signup_threshold, product_translations(locale, name, short_description), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
 
 /**
  * The same listing read by a caller that wants only *where* each product is:
- * the location embed, plus the five lifecycle columns `effectiveStatus()` needs
+ * the location embed, plus the four lifecycle columns `effectiveStatus()` needs
  * to finish the visibility filter in JS. None of the twenty columns a card
  * paints: no translations, no prices, no schedule slots.
  *
@@ -95,7 +93,7 @@ const BROWSE_SELECT =
  * between this and the full row is most of its server fetch.
  */
 const LOCATION_ONLY_SELECT =
-  "status, start_date, end_date, signup_threshold, timezone, locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
+  "start_date, end_date, signup_threshold, timezone, locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
 
 function buildBrowseQuery(supabase: AppSupabaseClient, types: ProductType[]) {
   return buildVisibleProductsQuery(supabase, types, BROWSE_SELECT);
@@ -108,20 +106,19 @@ function buildVisibleLocationsQuery(
   return buildVisibleProductsQuery(supabase, types, LOCATION_ONLY_SELECT);
 }
 
-// The half of the visibility rule the database cannot answer, shared by every
+// The half of the visibility rule the query does not make, shared by every
 // caller of the listing above so the two selects can never disagree about what
 // is on sale.
 //
-// The stored-status filter in the query keeps cancelled/completed rows out, but
-// it can't catch a row stored as `running` whose `end_date` has already passed
-// — that product has finished and must not appear in the storefront. There is
-// no cron flipping stored status, so the call is made here in JS:
-// `effectiveStatus()` downgrades such a row to `completed` (or `expired`) and
-// we drop it. The comparison is date-only against the product's *own* timezone
-// (a finished-yesterday camp in Helsinki must not linger for a UTC viewer —
-// CLAUDE.md "Date & Time"); `effectiveStatus()` already projects `now` into
-// `product.timezone`. The active-participation count is irrelevant to the ended
-// decision (only `end_date` drives completed/expired), so 0 is safe to pass.
+// A product that has finished must not appear in the storefront, and "finished"
+// is a date question the row answers for itself. The comparison is date-only
+// against the product's *own* timezone (a finished-yesterday camp in Helsinki
+// must not linger for a UTC viewer — CLAUDE.md "Date & Time"), which is what
+// `effectiveStatus()` does: it projects `now` into `product.timezone`. The
+// active-participation count is irrelevant to the ended decision (only
+// `end_date` separates completed/expired from running/pending), so 0 is safe to
+// pass. A `.lte()` on `end_date` could not do this: the cut-off is per row,
+// because it is each product's own local calendar day.
 function dropEndedProducts<Row extends LifecycleInputs>(rows: Row[]): Row[] {
   const now = new Date();
   return rows.filter((row) => {
@@ -244,9 +241,9 @@ export type ProductDetailRow = NonNullable<
 
 // Admin-only single-product detail, inferred from buildAdminProductQuery
 // (`NonNullable` strips the `maybeSingle()` `| null`). Unlike the browse row
-// this is NOT filtered on listing or status, so admins can fetch unlisted and
-// cancelled rows alike. Carries the IDs the form needs to round-trip an edit
-// plus readable strings (the location chain).
+// this is NOT filtered on listing, so admins can fetch an unlisted product and
+// a long-finished one alike. Carries the IDs the form needs to round-trip an
+// edit plus readable strings (the location chain).
 export type ProductAdminDetailRow = NonNullable<
   QueryData<ReturnType<typeof buildAdminProductQuery>>
 >;
@@ -356,7 +353,6 @@ export type CreateProductInput = {
   material_url: string | null;
   location_id: string | null;
   is_remote: boolean;
-  status: ProductStatus;
   signup_threshold: number | null;
   start_date: string | null;
   end_date: string | null;
@@ -418,10 +414,8 @@ export type CreateProductInput = {
 };
 
 // Shape accepted by /api/admin/products/[id]/update. Mirrors
-// update_product() RPC args. Differs from CreateProductInput in:
+// update_product() RPC args. Differs from CreateProductInput in one field:
 //   - no `product_type` (immutable; URL-locked)
-//   - no `status` (preserved by the RPC; effective status re-derives
-//     from the data fields this input edits)
 export type UpdateProductInput = {
   billing_mode: BillingMode;
   translations: ProductTranslationInput[];
@@ -497,12 +491,14 @@ export class ProductsService {
     return data;
   }
 
-  // Parent-facing list: only visible products in a parent-relevant lifecycle
-  // state. RLS already restricts anon/customer reads to the same predicate
-  // (per redesign §5.8) — the explicit filters in the query are defensive and
-  // let admins (who can see everything) call this same hook from the public
-  // pages without seeing cancelled rows. Joins everything the browse card
-  // needs in one round trip.
+  // Parent-facing list: the visible products a parent should be offered. The
+  // listing half of that is the query's `is_visible` filter; the lifecycle half
+  // is the ended filter applied here in JS, and that filter is now the *sole*
+  // thing keeping a finished product out of the storefront. The database read
+  // rule deliberately does not narrow by lifecycle — it admits every product
+  // that exists, to every caller — so nothing behind this call is a second line
+  // of defence and the filter must not be trimmed as though it were one.
+  // Joins everything the browse card needs in one round trip.
   async listVisibleByTypes(types: ProductType[]): Promise<ProductBrowseRow[]> {
     const { data, error } = await buildBrowseQuery(this.supabase, types);
 
@@ -533,13 +529,14 @@ export class ProductsService {
   // Single-product detail fetch for the parent-facing detail page
   // (`/shop/[id]`).
   //
-  // RLS is the sole gate: a viewer reaches this row if the product is in a
-  // published status (pending/running — listed or not, which is the point of
-  // the direct link) OR they hold an active/waitlisted participation on it.
-  // The detail page renders the marketing layout for the former and the
-  // purchased layout for the latter — both branches need the row, so there are
-  // deliberately no listing or status filters here. Returns null on miss so the
-  // page can render a clean "not found" state.
+  // There is no gate to pass: every viewer reaches every product row that
+  // exists, by owner decision — listed or not, running or long finished, with
+  // or without a seat on it, because a link out of last spring's confirmation
+  // mail has to open and the crawler rendering its preview holds no session at
+  // all. What the page renders it decides for itself from the registration
+  // state and the dates, so there are deliberately no listing or lifecycle
+  // filters here. Returns null on miss so the page can render a clean "not
+  // found" state; a miss now means only that no product carries that id.
   async getDetailById(id: string): Promise<ProductDetailRow | null> {
     const { data, error } = await buildProductDetailQuery(this.supabase, id);
 
@@ -568,11 +565,12 @@ export class ProductsService {
     return parseJsonResponse(response, productIdResponse);
   }
 
-  // Admin-only single-product fetch. Same join shape as getDetailById, read
-  // through the admin branch of the product read predicate, so an admin sees
-  // every row — unlisted, cancelled and completed included. Carries the IDs the
-  // form needs to round-trip an edit (tag_id, calendar_id) plus readable
-  // strings for the read-only details page.
+  // Admin-only single-product fetch. Same join shape as getDetailById, and the
+  // read rule it goes through is the same one too — it has no admin arm to
+  // take, because it already admits every row that exists to every caller,
+  // unlisted and finished alike. What makes this the admin read is the payload:
+  // the IDs the form needs to round-trip an edit (tag_id, calendar_id) plus
+  // readable strings for the read-only details page.
   async getByIdForAdmin(
     id: string,
   ): Promise<ProductAdminDetailRow | null> {

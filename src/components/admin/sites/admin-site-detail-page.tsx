@@ -13,6 +13,8 @@ import {
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { PRODUCT_TYPE_CONFIG } from "@/components/admin/products/product-type-config";
 import { ProductStatusChip } from "@/components/admin/products/product-status-chip";
+import { effectiveStatus } from "@/lib/products/effective-status";
+import { useNow } from "@/providers";
 import {
   SitePanel,
   type SiteNotesDraft,
@@ -179,6 +181,9 @@ function SiteBody({
 }) {
   const t = useTranslations("admin.sites");
   const c = useTranslations("common");
+  // One `now` for the whole list so every row derives its status from the same
+  // instant, and server-seeded so the first client render agrees with the HTML.
+  const now = useNow();
 
   if (pending) return null;
   if (failed) return <Notice>{c("somethingWentWrong")}</Notice>;
@@ -224,7 +229,11 @@ function SiteBody({
           ) : (
             <div className="space-y-2">
               {products.map((product) => (
-                <ConnectedProductRow key={product.id} product={product} />
+                <ConnectedProductRow
+                  key={product.id}
+                  product={product}
+                  now={now}
+                />
               ))}
             </div>
           )}
@@ -322,12 +331,20 @@ function SiteEditor({
 /**
  * One product connected to this site, linking to its own admin page.
  *
- * The chip carries the **stored** status rather than the effective one. This
- * page is a reference list, not a lifecycle surface: deriving "expired" needs
- * the product's dates, its timezone and its live sign-up count, none of which
- * this read carries and all of which the product's own page already resolves.
+ * The chip is derived from the row's own dates, like every other status chip in
+ * the app. The sign-up count is the one input this read does not carry — it is
+ * a reference list, not a lifecycle surface, and counting sign-ups per product
+ * here would be a query per row — so a threshold-bearing club reads as pending
+ * until its start date arrives. Its own page resolves the count and says
+ * otherwise.
  */
-function ConnectedProductRow({ product }: { product: SiteProductRow }) {
+function ConnectedProductRow({
+  product,
+  now,
+}: {
+  product: SiteProductRow;
+  now: Date;
+}) {
   const p = useTranslations("admin.products");
   const locale = useLocale();
 
@@ -353,7 +370,7 @@ function ConnectedProductRow({ product }: { product: SiteProductRow }) {
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <ProductStatusChip status={product.status} />
+        <ProductStatusChip status={effectiveStatus(product, now, 0)} />
         <NavChevron size="sm" />
       </div>
     </Link>

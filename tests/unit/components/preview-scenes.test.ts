@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { formatInTimeZone } from "date-fns-tz";
+import { addCalendarDays, monthsAfter } from "@/lib/calendar-date";
 import {
   PREVIEW_SCENES,
   PREVIEW_SCENE_LIST,
@@ -1857,6 +1858,12 @@ describe("the municipality invoicing scene covers every ledger state", () => {
     now: MUNICIPALITY_INVOICING_NOW,
   });
   const clubs = invoice.municipalities.flatMap((one) => one.clubs);
+  // The last day of the month the scene is built for — what a club's own start
+  // date is compared against to say whether its term reaches this month at all.
+  const MONTH_END = addCalendarDays(
+    monthsAfter(MUNICIPALITY_INVOICING_WORKING_MONTH, 1),
+    -1,
+  );
 
   it("is a month of the size the page was designed for", () => {
     // Twelve municipalities, and every club in the document on the invoice — no
@@ -1951,17 +1958,17 @@ describe("the municipality invoicing scene covers every ledger state", () => {
     expect(unscheduled[0].unrecordedCount).toBe(0);
   });
 
-  it("has a pending club and a cancelled one that bill without projecting", () => {
-    for (const status of ["pending", "cancelled"] as const) {
-      const spec = snapshot.clubs.find((club) => club.status === status);
-      expect(spec, status).toBeDefined();
-      const built = clubs.find((one) => one.id === spec!.id);
-      expect(built, status).toBeDefined();
-      expect(built!.recordedCount, status).toBeGreaterThan(0);
-      // Nothing projected, so nothing can be missing and nothing is upcoming.
-      expect(built!.unrecordedCount, status).toBe(0);
-      expect(built!.sessions.length, status).toBe(built!.recordedCount);
-    }
+  it("has a club whose term starts after the month, billing without projecting", () => {
+    const spec = snapshot.clubs.find(
+      (club) => club.start_date !== null && club.start_date > MONTH_END,
+    );
+    expect(spec).toBeDefined();
+    const built = clubs.find((one) => one.id === spec!.id);
+    expect(built).toBeDefined();
+    expect(built!.recordedCount).toBeGreaterThan(0);
+    // Nothing projected, so nothing can be missing and nothing is upcoming.
+    expect(built!.unrecordedCount).toBe(0);
+    expect(built!.sessions.length).toBe(built!.recordedCount);
   });
 
   it("prices every club inside the municipality fee range", () => {

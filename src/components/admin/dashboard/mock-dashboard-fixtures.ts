@@ -1,7 +1,7 @@
 import { ROUTES } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { formatDate } from "@/lib/utils";
-import type { ProductStatus, ProductType } from "@/types";
+import type { ProductType } from "@/types";
 import type {
   AdminDashboardData,
   ComingUpCohort,
@@ -135,14 +135,6 @@ interface ProductSpec {
   id: string;
   name: string;
   productType: ProductType;
-  /**
-   * Internal to the fixture, and never surfaced to the body: nothing on the
-   * dashboard displays a product's status any more. It survives here because
-   * resolution needs it — a cancelled or completed run has no occurrences
-   * whatever its slots still say, and a completed camp sitting in last week's
-   * rows would be a lie the schedule told about itself.
-   */
-  status: ProductStatus;
   startDate: string;
   endDate: string | null;
   /** `null` is uncapped — not "no seats". */
@@ -282,7 +274,6 @@ function consumerClubs(): ProductSpec[] {
       id,
       name,
       productType: "consumer_club",
-      status: pendingStart === undefined ? "running" : "pending",
       startDate: pendingStart ?? TERM_START,
       // Most consumer clubs are open-ended subscriptions with no last day, so
       // they never appear on the coming-up feed's "ends" side at all.
@@ -308,7 +299,6 @@ function municipalityClubs(): ProductSpec[] {
       id,
       name,
       productType: "municipality_club",
-      status: waveTwo ? "pending" : "running",
       startDate: waveTwo ? MUNICIPALITY_WAVE_TWO_START : TERM_START,
       endDate: MUNICIPALITY_TERM_END,
       seatCount,
@@ -331,7 +321,6 @@ const CAMP_SPECS: readonly {
   end: string;
   seats: number;
   active: number;
-  status: ProductStatus;
 }[] = [
   {
     name: "Minecraft-leiri Helsinki",
@@ -339,7 +328,6 @@ const CAMP_SPECS: readonly {
     end: "2026-08-14",
     seats: 24,
     active: 24,
-    status: "completed",
   },
   {
     name: "Roblox Studio -leiri Espoo",
@@ -347,7 +335,6 @@ const CAMP_SPECS: readonly {
     end: "2026-08-28",
     seats: 20,
     active: 17,
-    status: "running",
   },
   {
     name: "Game Design -leiri Otaniemi",
@@ -355,7 +342,6 @@ const CAMP_SPECS: readonly {
     end: "2026-09-11",
     seats: 18,
     active: 11,
-    status: "pending",
   },
   {
     name: "Fortnite-leiri Tapiola",
@@ -363,7 +349,6 @@ const CAMP_SPECS: readonly {
     end: "2026-10-02",
     seats: 20,
     active: 6,
-    status: "pending",
   },
   {
     name: "Syyslomaleiri Kamppi",
@@ -371,7 +356,6 @@ const CAMP_SPECS: readonly {
     end: "2026-10-16",
     seats: 30,
     active: 22,
-    status: "pending",
   },
   {
     name: "Minecraft Redstone -leiri Vantaa",
@@ -379,7 +363,6 @@ const CAMP_SPECS: readonly {
     end: "2026-10-16",
     seats: 18,
     active: 18,
-    status: "pending",
   },
   {
     name: "Roblox-leiri Kirkkonummi",
@@ -387,7 +370,6 @@ const CAMP_SPECS: readonly {
     end: "2026-10-14",
     seats: 16,
     active: 9,
-    status: "pending",
   },
   {
     name: "Esports-leiri Pasila",
@@ -395,7 +377,6 @@ const CAMP_SPECS: readonly {
     end: "2026-11-06",
     seats: 24,
     active: 13,
-    status: "pending",
   },
   {
     name: "Minecraft-leiri Turku",
@@ -403,7 +384,6 @@ const CAMP_SPECS: readonly {
     end: "2026-11-20",
     seats: 20,
     active: 4,
-    status: "pending",
   },
   {
     name: "Roblox Studio -leiri Tampere",
@@ -411,7 +391,6 @@ const CAMP_SPECS: readonly {
     end: "2026-12-23",
     seats: 16,
     active: 2,
-    status: "pending",
   },
 ];
 
@@ -420,7 +399,6 @@ function camps(): ProductSpec[] {
     id: `camp-${index + 1}`,
     name: spec.name,
     productType: "camp",
-    status: spec.status,
     startDate: spec.start,
     endDate: spec.end,
     seatCount: spec.seats,
@@ -444,7 +422,6 @@ const EVENT_SPECS: readonly {
   durationMinutes: number;
   seats: number | null;
   active: number;
-  status: ProductStatus;
 }[] = [
   {
     name: "LAN-ilta Kaapelitehdas",
@@ -453,7 +430,6 @@ const EVENT_SPECS: readonly {
     durationMinutes: 240,
     seats: 60,
     active: 47,
-    status: "running",
   },
   {
     name: "Perheiden peli-ilta Espoo",
@@ -462,7 +438,6 @@ const EVENT_SPECS: readonly {
     durationMinutes: 180,
     seats: null,
     active: 82,
-    status: "pending",
   },
   {
     name: "Minecraft-turnaus Helsinki",
@@ -471,7 +446,6 @@ const EVENT_SPECS: readonly {
     durationMinutes: 240,
     seats: 48,
     active: 31,
-    status: "pending",
   },
   {
     name: "Vanhempainilta: pelaaminen ja lapset",
@@ -480,7 +454,6 @@ const EVENT_SPECS: readonly {
     durationMinutes: 90,
     seats: 40,
     active: 12,
-    status: "pending",
   },
   {
     name: "Sogverse-avoimet ovet Tapiola",
@@ -489,7 +462,6 @@ const EVENT_SPECS: readonly {
     durationMinutes: 240,
     seats: null,
     active: 5,
-    status: "pending",
   },
 ];
 
@@ -498,7 +470,6 @@ function events(): ProductSpec[] {
     id: `event-${index + 1}`,
     name: spec.name,
     productType: "event",
-    status: spec.status,
     startDate: spec.date,
     endDate: spec.date,
     seatCount: spec.seats,
@@ -520,7 +491,6 @@ function quietCatalogue(): ProductSpec[] {
       id: "consumer-club-1",
       name: "Minecraft-klubi Espoo",
       productType: "consumer_club",
-      status: "running",
       startDate: TERM_START,
       endDate: null,
       seatCount: 12,
@@ -534,7 +504,6 @@ function quietCatalogue(): ProductSpec[] {
       id: "consumer-club-2",
       name: "Roblox Studio -klubi Kamppi",
       productType: "consumer_club",
-      status: "running",
       startDate: TERM_START,
       endDate: null,
       seatCount: 16,
@@ -545,7 +514,6 @@ function quietCatalogue(): ProductSpec[] {
       id: "municipality-club-1",
       name: "Minecraft-kerho Tapiolan koulu",
       productType: "municipality_club",
-      status: "running",
       startDate: TERM_START,
       endDate: MUNICIPALITY_TERM_END,
       seatCount: 10,
@@ -556,7 +524,6 @@ function quietCatalogue(): ProductSpec[] {
       id: "municipality-club-2",
       name: "Pelikerho Leppävaaran koulu",
       productType: "municipality_club",
-      status: "running",
       startDate: TERM_START,
       endDate: MUNICIPALITY_TERM_END,
       seatCount: 12,
@@ -567,7 +534,6 @@ function quietCatalogue(): ProductSpec[] {
       id: "camp-1",
       name: "Roblox Studio -leiri Espoo",
       productType: "camp",
-      status: "running",
       startDate: "2026-08-24",
       endDate: "2026-08-28",
       seatCount: 20,
@@ -582,7 +548,6 @@ function quietCatalogue(): ProductSpec[] {
       id: "event-1",
       name: "LAN-ilta Kaapelitehdas",
       productType: "event",
-      status: "running",
       startDate: "2026-08-19",
       endDate: "2026-08-19",
       seatCount: 60,
@@ -907,9 +872,10 @@ function resolveWeeks(
     const chips: ScheduleChip[] = [];
 
     for (const spec of specs) {
-      // A cancelled or completed product is history: it has no occurrences to
-      // resolve, whatever its slots still say.
-      if (spec.status === "cancelled" || spec.status === "completed") continue;
+      // A run whose last day has passed is history: it has no occurrences to
+      // resolve, whatever its slots still say, and a finished camp sitting in
+      // last week's rows would be a lie the schedule told about itself.
+      if (spec.endDate !== null && spec.endDate < TODAY) continue;
 
       const runsThisWeek = spec.slots.some((entry) =>
         withinRun(spec, addCalendarDays(weekStart, entry.weekday)),
@@ -1004,7 +970,8 @@ function buildComingUp(specs: readonly ProductSpec[]): ComingUpDay[] {
   };
 
   for (const spec of specs) {
-    if (spec.status === "cancelled" || spec.status === "completed") continue;
+    // A run whose last day has passed has nothing left to announce.
+    if (spec.endDate !== null && spec.endDate < TODAY) continue;
 
     if (spec.endDate === spec.startDate) {
       if (inHorizon(spec.startDate)) add(spec.startDate, "runs", spec);

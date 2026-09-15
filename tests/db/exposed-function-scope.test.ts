@@ -25,26 +25,42 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  * waitlist-admin.test.ts (get_waitlist_position), and
  * get-my-participation-subscription-states.test.ts.
  *
- * Product UUIDs 5a1, 5a2, 5aa (see the product-helpers allocation registry).
+ * Product UUIDs 5a1, 5a2, 5aa and 5af (see the product-helpers allocation
+ * registry).
  */
+
+/**
+ * A term that ended long ago, in the helper's default UTC zone, so "this
+ * product has ended" is true wherever and whenever this suite runs. Since the
+ * 2026-09-15 ruling that is a fact about the product and not about who may read
+ * it — every product stays readable by direct link forever — so the fixture is
+ * here to prove exactly that, rather than to close anything.
+ */
+const FINISHED_END = "2020-01-31";
 
 /** Published + listed: readable by the whole world, including anon. */
 const PUBLIC_PRODUCT = "00000000-0000-0000-0000-0000000005a1";
 /**
- * Cancelled, carrying the group fixtures. Status is what closes the public
- * branch — since 00168 an unlisted product is publicly readable, so unlisting
- * one would not isolate anything — and with that branch shut, each remaining
- * branch of can_read_product (admin, enrolled gamer, purchasing parent,
- * assigned gedu) is exercised alone on it.
+ * Long finished, unlisted, and carrying the group fixtures — the enrolled
+ * gamer, the purchasing parent and the assigned gedu all hang off it. It used
+ * to be this file's *unreadable* product, sitting on the two axes once thought
+ * to close a read; neither closes one, so what it is now is the product the
+ * party-to predicates are asserted on, and the ended product `can_read_product`
+ * still answers true for.
  */
-const PRIVATE_PRODUCT = "00000000-0000-0000-0000-0000000005a2";
+const ENROLLED_PRODUCT = "00000000-0000-0000-0000-0000000005a2";
 const GROUP_ID = "00000000-0000-0000-0000-0000000005a3";
 /**
  * Published but NOT listed: the shape 00168 exists for. Nobody is a party to
- * it, so the only branch that can answer for it is the public one — which is
- * the whole claim being pinned.
+ * it, so nothing but the product's own existence can answer for it.
  */
 const UNLISTED_PRODUCT = "00000000-0000-0000-0000-0000000005aa";
+/**
+ * An id no product has — the only input `can_read_product` still answers
+ * `false` for. Allocated in this file's own sub-range (see the product-helpers
+ * registry) so no other suite can create a product underneath it.
+ */
+const NO_SUCH_PRODUCT = "00000000-0000-0000-0000-0000000005af";
 
 describe("self-scoping exposed functions", () => {
   let admin: SupabaseClient<Database>;
@@ -81,25 +97,23 @@ describe("self-scoping exposed functions", () => {
 
     await deleteTestProducts(admin, [
       PUBLIC_PRODUCT,
-      PRIVATE_PRODUCT,
+      ENROLLED_PRODUCT,
       UNLISTED_PRODUCT,
     ]);
 
     await createTestProduct(admin, {
       id: PUBLIC_PRODUCT,
-      status: "pending",
       isVisible: true,
       seatCount: null,
     });
     await createTestProduct(admin, {
-      id: PRIVATE_PRODUCT,
-      status: "cancelled",
+      id: ENROLLED_PRODUCT,
+      endDate: FINISHED_END,
       isVisible: false,
       seatCount: null,
     });
     await createTestProduct(admin, {
       id: UNLISTED_PRODUCT,
-      status: "pending",
       isVisible: false,
       seatCount: null,
     });
@@ -124,14 +138,14 @@ describe("self-scoping exposed functions", () => {
 
     await admin
       .from("product_groups")
-      .insert({ id: GROUP_ID, product_id: PRIVATE_PRODUCT, name: "Scope" });
+      .insert({ id: GROUP_ID, product_id: ENROLLED_PRODUCT, name: "Scope" });
     await admin.from("gedu_group_assignments").insert({
       group_id: GROUP_ID,
       gedu_id: TEST_IDS.GEDU,
-      product_id: PRIVATE_PRODUCT,
+      product_id: ENROLLED_PRODUCT,
     });
     await admin.from("participations").insert({
-      product_id: PRIVATE_PRODUCT,
+      product_id: ENROLLED_PRODUCT,
       group_id: GROUP_ID,
       participant_id: TEST_IDS.GAMER,
       customer_id: TEST_IDS.CUSTOMER,
@@ -142,7 +156,7 @@ describe("self-scoping exposed functions", () => {
   afterAll(async () => {
     await deleteTestProducts(admin, [
       PUBLIC_PRODUCT,
-      PRIVATE_PRODUCT,
+      ENROLLED_PRODUCT,
       UNLISTED_PRODUCT,
     ]);
   });
@@ -236,77 +250,96 @@ describe("self-scoping exposed functions", () => {
     });
   });
 
+  /**
+   * The owner's 2026-09-15 ruling, stated as a test: every product that exists
+   * is readable by everybody, and the only `false` the predicate has left is
+   * for an id no product has. Listing is decided by `is_visible` and the browse
+   * queries; buying is decided by the term dates, the seat cap and the
+   * registration window. Neither is this predicate's business.
+   *
+   * **Three assertions were deleted here when the ruling landed**, each of them
+   * a claim that some caller could NOT read a product: an ended product
+   * answering `false` for an unrelated customer, the same for anon, and the
+   * products row failing to arrive for anon. No caller is refused any more, so
+   * there was nothing left for them to prove. What stands in their place is the
+   * positive form — every caller gets the identical answer — which is also what
+   * keeps this a scope test worth the name: a predicate that answers every
+   * caller the same has no scope to leak.
+   */
   describe("can_read_product", () => {
-    it("is true for everyone, session or not, on a published listed product", async () => {
-      for (const client of [anon, customer2, gamer, gedu, adminAuth]) {
-        const { data } = await client.rpc("can_read_product", {
-          p_product_id: PUBLIC_PRODUCT,
-        });
-        expect(data).toBe(true);
+    it("is true for every caller on a product that exists, listed or not, ended or not", async () => {
+      for (const product of [
+        PUBLIC_PRODUCT,
+        UNLISTED_PRODUCT,
+        ENROLLED_PRODUCT,
+      ]) {
+        for (const client of [
+          anon,
+          customer,
+          customer2,
+          gamer,
+          gedu,
+          adminAuth,
+        ]) {
+          const { data } = await client.rpc("can_read_product", {
+            p_product_id: product,
+          });
+          expect(data).toBe(true);
+        }
       }
     });
 
-    it("is true for everyone on a published product that is not listed", async () => {
-      // The 00168 decision, stated as a test: `is_visible` governs listing, not
-      // access. Nobody here is a party to this product, so a `true` can only
-      // have come from the public branch — and the row itself has to arrive
-      // too, along with the satellite tables whose policies defer to this same
-      // predicate, or a direct link would land on a page with no content.
-      for (const client of [anon, customer2, gamer, gedu, adminAuth]) {
-        const { data } = await client.rpc("can_read_product", {
-          p_product_id: UNLISTED_PRODUCT,
-        });
-        expect(data).toBe(true);
-      }
-
-      const row = await anon
-        .from("products")
-        .select("id, is_visible, product_translations(locale), product_prices(currency)")
-        .eq("id", UNLISTED_PRODUCT)
-        .maybeSingle();
-      expect(row.error).toBeNull();
-      expect(row.data?.id).toBe(UNLISTED_PRODUCT);
-      // Non-vacuity: the row really is the unlisted one, so the read above went
-      // through the relaxed public branch rather than a listed-product path.
-      expect(row.data?.is_visible).toBe(false);
-      expect(row.data?.product_translations.length).toBeGreaterThan(0);
-      expect(row.data?.product_prices.length).toBeGreaterThan(0);
-    });
-
-    it("is true on a product outside the published statuses only for parties to it", async () => {
-      // admin (sees everything), the enrolled gamer, the purchasing parent, and
-      // the assigned gedu — one branch of the predicate each.
-      for (const client of [adminAuth, gamer, customer, gedu]) {
-        const { data } = await client.rpc("can_read_product", {
-          p_product_id: PRIVATE_PRODUCT,
-        });
-        expect(data).toBe(true);
-      }
-
-      // An unrelated customer is not a party to it.
-      const asCustomer2 = await customer2.rpc("can_read_product", {
-        p_product_id: PRIVATE_PRODUCT,
-      });
-      expect(asCustomer2.data).toBe(false);
-
-      // anon answers a real `false`, and that is worth pinning: anon has no
-      // profiles row, so `get_user_role() = 'admin'` is NULL and the whole OR
-      // chain evaluates to NULL under SQL's three-valued logic. Phase 4 wrapped
-      // the chain in COALESCE(…, false) so the predicate is a total boolean.
-      // The deny was never in doubt — a policy's USING clause treats NULL as
-      // deny too, which is what read_products relied on and what the read below
-      // proves — but a predicate that can answer NULL is a trap for the next
-      // consumer, which may not be a USING clause.
-      const asAnon = await anon.rpc("can_read_product", {
-        p_product_id: PRIVATE_PRODUCT,
-      });
-      expect(asAnon.data).toBe(false);
-
-      const readable = await anon
+    it("is false for every caller on an id no product has", async () => {
+      // Non-vacuity: the id really is absent, read with RLS bypassed. A `false`
+      // from a product that quietly exists would prove the opposite of this.
+      const absent = await admin
         .from("products")
         .select("id")
-        .eq("id", PRIVATE_PRODUCT);
-      expect(readable.data).toEqual([]);
+        .eq("id", NO_SUCH_PRODUCT);
+      expect(absent.data).toEqual([]);
+
+      for (const client of [anon, customer, customer2, gamer, gedu, adminAuth]) {
+        const { data } = await client.rpc("can_read_product", {
+          p_product_id: NO_SUCH_PRODUCT,
+        });
+        // A plain `false`, not NULL. anon has no profiles row, and the
+        // predicate is wrapped in COALESCE so it answers a total boolean for a
+        // caller who has none — a predicate that can answer NULL is a trap for
+        // the next consumer, which may not be a policy's USING clause.
+        expect(data).toBe(false);
+      }
+    });
+
+    it("carries the row and its satellites to a stranger, unlisted or ended", async () => {
+      // This is the read a parent following last spring's link actually makes,
+      // and the one a link-preview crawler makes with no session at all. The
+      // products row alone is not enough: the name and the price live in
+      // satellite tables whose SELECT policies are this same predicate, and
+      // without them a direct link lands on a page with no content and a
+      // preview card falls back to the site default.
+      const unlisted = await anon
+        .from("products")
+        .select(
+          "id, is_visible, product_translations(locale), product_prices(currency)",
+        )
+        .eq("id", UNLISTED_PRODUCT)
+        .maybeSingle();
+      expect(unlisted.error).toBeNull();
+      expect(unlisted.data?.id).toBe(UNLISTED_PRODUCT);
+      // Non-vacuity: the row really is the unlisted one.
+      expect(unlisted.data?.is_visible).toBe(false);
+      expect(unlisted.data?.product_translations.length).toBeGreaterThan(0);
+      expect(unlisted.data?.product_prices.length).toBeGreaterThan(0);
+
+      const ended = await anon
+        .from("products")
+        .select("id, end_date")
+        .eq("id", ENROLLED_PRODUCT)
+        .maybeSingle();
+      expect(ended.error).toBeNull();
+      expect(ended.data?.id).toBe(ENROLLED_PRODUCT);
+      // Non-vacuity again: the term really has ended, years ago.
+      expect(ended.data?.end_date).toBe(FINISHED_END);
     });
   });
 
@@ -321,17 +354,18 @@ describe("self-scoping exposed functions", () => {
     it("is true for both parties to the participation and no one else", async () => {
       for (const client of [customer, gamer]) {
         const { data } = await client.rpc("has_active_participation_on_product", {
-          p_product_id: PRIVATE_PRODUCT,
+          p_product_id: ENROLLED_PRODUCT,
         });
         expect(data).toBe(true);
       }
 
       // The assigned gedu and the admin are not *parties* — they reach the
-      // product by other routes, which is precisely why this predicate is not
-      // the same question as can_read_product.
+      // product by other routes entirely, which is precisely why this predicate
+      // is not the same question as can_read_product (which now answers true
+      // for all three of them, and for everybody else).
       for (const client of [customer2, gedu, adminAuth]) {
         const { data } = await client.rpc("has_active_participation_on_product", {
-          p_product_id: PRIVATE_PRODUCT,
+          p_product_id: ENROLLED_PRODUCT,
         });
         expect(data).toBe(false);
       }

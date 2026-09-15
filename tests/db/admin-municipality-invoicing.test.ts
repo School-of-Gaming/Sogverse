@@ -80,8 +80,8 @@ const GROUP_OUT_OF_MONTH = "00000000-0000-0000-0000-0000000007fd";
  * The club that was running right across the month and recorded nothing at all:
  * no group, no session row, no schedule slot.
  *
- * It pins the *second* half of the candidate union — status running with a term
- * overlapping the month — which nothing else in this file reaches, because every
+ * It pins the *second* half of the candidate union — a term overlapping the
+ * month — which nothing else in this file reaches, because every
  * other club here is carried in by a stored row. It is also the club this page
  * exists for: one that was supposed to run and wrote nothing up is the thing a
  * CFO has to see before invoicing, and dropping it would be invisible.
@@ -168,7 +168,6 @@ describe("get_admin_municipality_invoicing", () => {
         id,
         productType: "municipality_club",
         billingMode: "external_contract",
-        status: "running",
         locationId: TEST_IDS.LOCATION_MUNICIPALITY,
         startDate: outside ? "2026-06-01" : "2026-01-12",
         endDate: outside ? "2026-07-31" : "2026-05-29",
@@ -276,7 +275,6 @@ describe("get_admin_municipality_invoicing", () => {
   it("carries a club that recorded a session in the month, with that session", () => {
     const club = invoiced(P_IN_MONTH);
     expect(club).toBeDefined();
-    expect(club?.status).toBe("running");
     expect(club?.municipality_fee_cents).toBe(8750);
     expect(club?.start_date).toBe("2026-01-12");
     expect(club?.end_date).toBe("2026-05-29");
@@ -301,9 +299,9 @@ describe("get_admin_municipality_invoicing", () => {
     expect(club?.municipality.id).toBe(TEST_IDS.LOCATION_MUNICIPALITY);
   });
 
-  it("carries a club that recorded nothing but was running all month", () => {
+  it("carries a club that recorded nothing but ran all month", () => {
     // The second half of the candidate union, and the only fixture here that
-    // reaches it: no group, no row, nothing but a status and a term. A read that
+    // reaches it: no group, no row, nothing but a term. A read that
     // kept only the clubs with stored rows would hide exactly the club a CFO has
     // to look at before invoicing, and the omission would look like a quiet month.
     const club = invoiced(P_NO_SESSIONS);
@@ -357,7 +355,6 @@ describe("get_admin_municipality_invoicing", () => {
         id: P_NO_MUNICIPALITY,
         productType: "municipality_club",
         billingMode: "external_contract",
-        status: "running",
         locationId: TEST_IDS.LOCATION_MUNICIPALITY,
         startDate: "2026-01-12",
         endDate: "2026-05-29",
