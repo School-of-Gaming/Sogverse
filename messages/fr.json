@@ -1478,7 +1478,7 @@
       "lead": "Une API en lecture seule destinée aux tableaux de bord et au reporting de Lynx Educate sur le Programme Roblox. Elle expose les familles, les produits et les inscriptions qui relèvent du Programme, les consentements sur lesquels Lynx peut agir, et le jeu de données individuelles que la politique de confidentialité du Programme autorise Lynx à transmettre à Roblox pour la recherche sur l’impact.",
       "proposal": {
         "title": "Proposition soumise à examen",
-        "body": "Rien sur cette page n’est encore en service. Il s’agit de la forme que nous proposons de construire, mise par écrit pour que les ingénieurs de Lynx puissent examiner le périmètre et les données avant toute implémentation. Les noms de champs, les filtres et la formulation exacte des valeurs d’énumération peuvent encore changer ; les règles de périmètre, elles, ne seront pas assouplies."
+        "body": "Nothing on this page is live yet. This is the shape we propose to build, written down so Lynx’s engineers can review the scope and the data before anything is implemented. Field names, filters and the exact wording of enum values may still change."
       },
       "contents": {
         "heading": "Sur cette page"
@@ -1498,13 +1498,13 @@
       "scope": {
         "heading": "Périmètre — ce que l’API peut voir",
         "p1": "L’API voit le Programme et rien d’autre. Un produit relève du Programme lorsque s’y inscrire impose d’accepter les Conditions générales d’utilisation de l’Académie des Créateurs ; cette exigence est définie par un administrateur à la création du produit, et tout produit conçu pour le Programme la porte. Que le produit soit référencé ou non dans la boutique ne change rien : un produit du Programme non référencé est renvoyé comme n’importe quel autre.",
-        "p2": "Tout le reste découle de cette seule règle. Une famille entre dans le périmètre lorsqu’un de ses enfants occupe une place sur un produit du Programme, et seuls ces enfants-là sont renvoyés avec elle. Une inscription entre dans le périmètre lorsqu’elle porte sur un produit du Programme. Le reste de l’activité d’une famille sur Sogverse, un club Minecraft par exemple, n’est jamais renvoyé, même pour une famille qui est dans le périmètre.",
+        "p2": "Everything else follows from that one rule. A family is in scope when one of its children holds a seat on a Programme product, has completed one, or is waiting for one, and only those children are returned with it. An enrolment is in scope when it is on a Programme product. A family’s other activity on Sogverse, such as a Minecraft club, is never returned, even for a family that is in scope.",
         "p3": "L’API est en lecture seule. Deux membres de l’équipe Lynx disposent également de comptes administrateur Sogverse et voient les mêmes données dans l’interface d’administration ; l’API existe pour que les outils de Lynx puissent les lire sans intervention humaine. L’usage qui peut en être fait est celui que décrit la politique de confidentialité du Programme : mettre en œuvre le Programme et en rendre compte, le jeu de données de recherche destiné à Roblox, et les messages qu’un parent a accepté de recevoir."
       },
       "authentication": {
         "heading": "Authentification",
         "description": "Chaque requête porte une clé d’API statique transmise en tant que jeton Bearer dans l’en-tête <code>Authorization</code>. La clé est délivrée à Lynx par School of Gaming et c’est elle qui délimite la réponse : une clé, un partenaire, un Programme.",
-        "keyNote": "Gardez la clé côté serveur. Contactez l’équipe Sogverse pour la renouveler ou si elle a pu fuiter ; une clé renouvelée cesse de fonctionner immédiatement."
+        "keyNote": "Keep the key server-side. Contact the Sogverse team to rotate it or if it may have leaked; a rotated key stops working immediately. School of Gaming hands the key over on a channel agreed with Lynx, and issues a second key for Sogverse’s staging environment, which holds test families and products so an integration can be built and rehearsed against data that is not real. An OpenAPI description of the API accompanies the implementation."
       },
       "conventions": {
         "heading": "Conventions",
@@ -1512,10 +1512,11 @@
         "envelopeTitle": "Enveloppe de liste",
         "items": {
           "formats": "Les réponses sont en JSON. Chaque horodatage est au format ISO 8601 en UTC. Chaque date est au format <code>YYYY-MM-DD</code> : les dates d’un produit sont des jours calendaires dans le fuseau horaire propre au produit, tandis qu’un jour de trafic est un jour calendaire en UTC. Chaque identifiant est un UUID qui ne change jamais.",
-          "pagination": "Chaque ressource qui renvoie des enregistrements est paginée par curseur. Transmettez <code>limit</code> (100 par défaut, 500 au maximum) et le <code>next_cursor</code> de la page précédente dans <code>cursor</code> ; un <code>next_cursor</code> à <code>null</code> signale la dernière page. <code>/traffic</code> renvoie un unique agrégat et prend <code>from</code> et <code>to</code> à la place.",
-          "updatedSince": "Chaque ressource qui renvoie des enregistrements accepte <code>updated_since</code> (un horodatage ISO 8601) et ne renvoie que les enregistrements modifiés à cet instant ou après. Utilisez-le pour les récupérations incrémentales ; effectuez au moins une fois par jour une récupération complète sans ce paramètre.",
-          "erasure": "Un enregistrement qui disparaît d’une récupération complète a été effacé à la demande de la famille et doit être supprimé des systèmes de Lynx lors de cette même synchronisation. Il n’y a pas de marqueur de suppression.",
-          "consent": "Un consentement est rapporté tel qu’il est au moment de la requête. Un consentement retiré apparaît avec <code>granted: false</code> à la récupération suivante, et Lynx doit s’y conformer.",
+          "pagination": "Every resource that returns records is paginated by cursor, in ascending order of <code>updated_at</code> and then of identifier, so the order is stable while a pull is in progress. Pass <code>limit</code> (default 100, maximum 500) and the <code>next_cursor</code> from the previous page as <code>cursor</code>; a <code>null</code> <code>next_cursor</code> is the last page. A cursor is opaque, belongs to the filters it was issued with, and does not expire. <code>/traffic</code> returns one aggregate and takes <code>from</code> and <code>to</code> instead; its answer for a given day and page is cached on our side for an hour.",
+          "updatedSince": "Every resource that returns records accepts <code>updated_since</code> (an ISO 8601 timestamp) and returns only records changed at or after that instant. Use it for incremental pulls; do a full pull without it at least daily. Every resource is read live at the moment of the request.",
+          "erasure": "A record that is missing from a full pull is no longer in scope, whether because the family asked for erasure, a seat was cancelled or a product left the Programme, and it leaves Lynx’s store on that same sync in every case. There is no tombstone, which is why the daily full pull is part of the contract rather than a convenience.",
+          "consent": "A consent is reported as it stands at the moment of the request, with when it last changed and no history. A withdrawn marketing consent shows up as <code>granted: false</code> with the email address gone on the next pull; from then on the parent is not mailed, and Lynx may keep the minimal suppression record the Programme’s privacy policy allows so they are not added back.",
+          "changePolicy": "Additions to this API, a new field or a new filter, ship without notice; a field removed or renamed, or a value that changes meaning, is a new version under a new path. Build against the fields you use and ignore the rest.",
           "errors": "Les erreurs ont une seule forme :"
         }
       },
@@ -1531,7 +1532,7 @@
             "name": "Le nom du produit dans chaque langue dans laquelle il a été rédigé, indexé par code de langue. Il y en a toujours au moins un ; lesquels dépend du produit.",
             "type": "Le type de produit. Un club a lieu chaque semaine sans fin déterminée ; un camp et un événement se déroulent sur des dates fixées.",
             "delivery": "Son mode de prestation. Les noms que Lynx donne à ses manières de mener le Programme ne sont stockés nulle part ; <code>type</code> et <code>delivery</code> sont ensemble les deux faits sur lesquels ces noms se projettent.",
-            "location": "La commune et le code pays à deux lettres du lieu où se déroule le produit. Un produit en présentiel en a toujours un ; un produit en ligne n’en a un que s’il s’agit d’un club municipal rattaché à un lieu, et vaut <code>null</code> sinon.",
+            "location": "The municipality and the two-letter country code of the site the product runs at. An in-person product has one unless its site has no municipality above it; an online product has one only when it is a municipality club attached to a site; <code>null</code> otherwise.",
             "status": "<code>pending</code> tant qu’il n’a pas commencé, <code>running</code> à partir de sa date de début dès qu’un éventuel seuil d’inscriptions est atteint, <code>completed</code> une fois qu’il s’est déroulé et que sa date de fin est passée, et <code>expired</code> lorsque la date de fin est passée sans qu’il ait jamais commencé. La valeur est dérivée à la lecture, à partir des dates, du seuil et du nombre d’inscriptions en temps réel ; rien n’est stocké, elle n’est donc jamais périmée.",
             "dates": "Quand il se déroule. Un club grand public n’a pas de date de fin ; tous les autres produits en ont une.",
             "timezone": "Le fuseau horaire IANA dans lequel les dates et les sessions du produit sont programmées.",
@@ -1580,15 +1581,15 @@
             "gamerFamilyId": "L’enfant, et la famille dont le compte détient la place.",
             "status": "<code>active</code> pour une place occupée, <code>waitlisted</code> pour une famille en liste d’attente, <code>completed</code> une fois le produit terminé.",
             "signedUpAt": "La date à laquelle la famille s’est inscrite au produit : la troisième étape de l’entonnoir, une inscription.",
-            "consents": "L’acceptation par le parent des Conditions générales d’utilisation de l’Académie des Créateurs et de la Politique de confidentialité de l’Académie des Créateurs pour cette inscription : la version de chaque document, sous la forme de sa date de publication, et la date d’acceptation. Chaque inscription porte les deux, car une place ne peut pas être prise sans elles.",
-            "attendance": "Combien de sessions du groupe de l’enfant ont un compte rendu à ce jour, et à combien d’entre elles l’enfant a été noté présent. Une session est enregistrée lorsqu’un animateur en rédige le compte rendu ou pointe les présences : une session dont personne n’a rendu compte n’est donc pas comptée. Un enfant dont <code>sessions_present</code> vaut au moins 1 compte comme « a participé » dans l’entonnoir.",
+            "consents": "The parent’s acceptance of the Creator Academy Terms & Conditions and of the Creator Academy Privacy Policy for this enrolment: the version of each document, as the date it was published, and when it was accepted. Every Programme product requires both, so every enrolment carries both.",
+            "attendance": "How many sessions of the child’s group have a record, and how many of those the child was marked present at. A session is recorded when a Game Educator writes it up or marks attendance, so a session nobody wrote up is not counted; the count is the group’s, and includes sessions before the child joined it. Both are 0 while the seat has not been placed in a group. A child with <code>sessions_present</code> of at least 1 counts as “attended” in the funnel.",
             "creations": "Ce que l’enfant a publié pendant ce produit, tel que son animateur l’a consigné dans le groupe actuel de l’enfant : un titre et un lien par élément, dans l’ordre d’affichage. <code>is_roblox_url</code> vaut <code>true</code> lorsque le lien pointe vers roblox.com. Un tableau vide signifie que rien n’a encore été consigné.",
             "creationsUpdatedAt": "La date de la dernière écriture de la liste des créations. Les éléments ne portent pas d’horodatage individuel."
           }
         },
         "sessions": {
           "title": "ce qui s’est passé dans chaque groupe",
-          "intro": "Chaque session qu’un groupe du Programme a tenue ou programmée, avec les pointages de présence et les photographies que l’animateur a jointes à son compte rendu. Utilisez-la pour les vues par session, comme une courbe d’abandon ; les totaux par enfant figurent déjà sur l’inscription.",
+          "intro": "Every session a Programme group has recorded, with the attendance marks and the photographs the Game Educator attached to its report. A session has a record once a Game Educator writes it up or marks attendance, so a scheduled session that has not happened yet is not here. Use it for per-session views such as a drop-off curve; the per-child totals are already on the enrolment.",
           "params": {
             "productId": "Uniquement les sessions des groupes de ce produit.",
             "groupId": "Uniquement les sessions de ce groupe.",
@@ -1599,14 +1600,14 @@
             "productGroupId": "Le produit et le groupe auxquels la session appartient.",
             "times": "La plage horaire programmée de la session.",
             "attendance": "Une entrée par enfant pointé par l’animateur, <code>present</code> ou <code>absent</code>. Un enfant qui n’a pas encore été pointé n’apparaît pas.",
-            "images": "Les photographies que l’animateur a jointes au compte rendu de session, dans l’ordre où elles ont été ajoutées : le plus souvent des captures d’écran en jeu, parfois une photographie de la salle. Chacune est une URL publique qui ne demande aucune authentification, et c’est la même URL que chaque famille du groupe voit déjà dans le compte rendu. Un enfant n’est photographié que là où l’autorisation média est en vigueur : une photographie présente ici est donc couverte par cette autorisation.",
-            "imagesUrl": "Récupérez-la telle quelle et ne la réécrivez pas. Le nom de l’objet est un identifiant impossible à deviner, et ce nom constitue à lui seul tout son contrôle d’accès : l’URL ne doit donc pas être publiée sur une page qui les énumère. Lorsqu’un animateur ou un administrateur supprime une photographie, l’URL cesse de répondre ; une copie détenue par Lynx est à Lynx de supprimer, au titre de la même autorisation.",
+            "images": "The photographs the Game Educator attached to the session report, in the order they were added: mostly in-game screenshots, sometimes a photograph of the room. Each is a public URL that needs no credential, and the same URL every family in the group already sees in the report. A photograph belongs to the session, not to a child: Sogverse does not record which children an image shows, so the API cannot tie an image to a media permission. A child is photographed only where the permission stands, and when a parent withdraws it School of Gaming removes any photograph showing the child, after which its URL stops resolving.",
+            "imagesUrl": "Link to it rather than copying the file, so a removal on our side is a removal on yours; a pull that finds a URL no longer resolving should drop it. The URL is safe to use inside Lynx’s own tools and reports. Its object name is an unguessable identifier and that name is the whole of its access control, so the one thing not to do is publish the URL on a page anyone can list.",
             "imagesSize": "La taille de l’image en pixels."
           }
         },
         "feedback": {
           "title": "ce qu’un enfant a dit en partant",
-          "intro": "Ce qu’un enfant a répondu à la fin d’une session : cinq affirmations notées sur une barre à cinq niveaux, un commentaire facultatif avec ses propres mots, et la manière dont il est parti. Un enfant qui ne répond à rien ne laisse aucune ligne : le taux de réponse s’obtient donc en rapportant cette liste aux sessions de <code>/sessions</code>.",
+          "intro": "What one child answered at the end of one session: five statements rated on a five-point bar, an optional note in their own words, and how they left. Today feedback is collected after online sessions only. A child who answers nothing leaves no row, so the response rate is this list against the online sessions in <code>/sessions</code>; one row is one child at one session, so a percentage over rows counts a child once per session they answered.",
           "params": {
             "productId": "Uniquement les retours des groupes de ce produit.",
             "groupId": "Uniquement les retours de ce groupe.",
@@ -1614,7 +1615,7 @@
             "fromTo": "Uniquement les sessions ouvertes dans cette plage de dates, bornes comprises."
           },
           "fields": {
-            "gamerGroupProductId": "Qui a répondu, ainsi que le groupe et le produit auxquels la session appartenait. Un enregistrement par enfant et par session.",
+            "gamerGroupProductId": "Who answered, and the group and product the session belonged to. A record has no identifier of its own: <code>gamer_id</code>, <code>group_id</code> and <code>session_opened_at</code> together are its key, and a later answer from the same child about the same session replaces the earlier one under that key.",
             "sessionId": "La session de <code>/sessions</code> à laquelle la réponse se rattache, appariée par groupe et par date ; <code>null</code> si aucune ligne de session n’a été écrite pour ce jour-là.",
             "sessionOpenedAt": "Le moment où s’est ouverte la session sur laquelle l’enfant a répondu.",
             "answers": "La note donnée par l’enfant à chaque affirmation, indexée par l’identifiant stable de l’affirmation ; une affirmation passée est absente. Les notes vont de 1 à 5 : non, pas vraiment, un peu, oui, tout à fait. Les affirmations posées aujourd’hui sont <code>learned</code> (j’ai appris quelque chose), <code>fun</code> (j’ai passé un bon moment), <code>geduKnowledgeable</code> (le Gedu maîtrisait son sujet), <code>geduKind</code> (le Gedu a fait preuve de gentillesse) et <code>groupListens</code> (le groupe s’écoute). Une affirmation peut être ajoutée ou retirée sans préavis : lisez les clés que vous connaissez et ignorez les autres.",
@@ -1634,18 +1635,18 @@
             "roblox": "Le compte Roblox de l’enfant. <code>roblox_user_id</code> vaut <code>null</code> lorsque Sogverse n’a pas pu vérifier le pseudo ; ne transmettez ces lignes que si Roblox accepte un pseudo seul.",
             "location": "La commune de résidence de la famille et son pays.",
             "age": "L’âge de l’enfant en années révolues à la date de début de l’activité, sous forme d’intervalle : Sogverse conserve le mois de naissance et non le jour, si bien que <code>min</code> est l’âge le plus jeune que l’enfant pouvait avoir et <code>max</code> le plus élevé, les deux étant identiques sauf si la date de début tombait dans le mois anniversaire de l’enfant. Vaut <code>null</code> tant que le produit n’a pas de date de début. La ligne porte l’âge plutôt que le mois de naissance parce que c’est l’âge que nomme le jeu de données de recherche.",
-            "activity": "L’activité suivie : l’identifiant du produit, son nom en anglais, son type, son mode de prestation et sa date de début. Le type et le mode de prestation sont ensemble ce sur quoi se projettent les noms que Lynx donne à ses manières de mener le Programme, et la date de début est la date d’intervention que demande la recherche.",
+            "activity": "The activity attended: the product’s identifier, its name in English where one has been written and otherwise in the product’s first language, its type, delivery and start date. Type and delivery together are what Lynx’s names for its ways of delivering the Programme map onto, and the start date is the intervention date the research asks for.",
             "publishedGameUrl": "Le premier lien roblox.com parmi les créations de l’enfant pour ce produit, ou <code>null</code> lorsqu’aucun n’a été consigné."
           },
-          "note": "Aucun identifiant de l’enfant ou de la famille ne figure sur cette ligne. Si Lynx a besoin de remonter d’une ligne à une famille, récupérez-la plutôt depuis <code>/enrolments</code> : le jeu de données de recherche n’est délibérément pas rattachable à une personne."
+          "note": "No Sogverse identifier is on this row, so the dataset can be forwarded as it is. The Roblox account is on the family record too, so Lynx can trace a row back to a family when it has to: when a family leaves a full pull, delete its rows here as well, and where a row has already been forwarded to Roblox, pass the request on under the Roblox data processing addendum, as the Programme’s privacy policy provides."
         },
         "traffic": {
           "title": "les pages sur lesquelles une campagne atterrit, par campagne",
-          "intro": "Les vues des pages sur lesquelles une campagne Lynx peut atterrir, groupées par la campagne qui les a amenées, afin que le haut de l’entonnoir ait lui aussi un chiffre : la page d’atterrissage Roblox, la boutique, et la page propre à chaque produit du Programme. Les décomptes proviennent de Vercel Web Analytics. Nous les recopions dans notre propre stockage une fois par jour : l’historique commence donc le jour où cette recopie a débuté, et non sur les 30 jours que Vercel conserve. Agrégé uniquement : aucun identifiant de visiteur, et aucune page au-delà de ces trois types. Les vues d’une page comptent comme une seule page toutes les langues dans lesquelles elle est servie.",
+          "intro": "Views of the pages a Lynx campaign can land on, grouped by the campaign that brought them, so the top of the funnel has a number too: the Roblox landing page, the shop, and each Programme product’s own page. The counts are read from Vercel Web Analytics at the moment of the request and reach back as far as Vercel keeps, which today is two years, from the end of May 2026 when analytics was switched on. Aggregate only: no visitor identifiers, and no page beyond those three kinds. A page’s views count every language it is served in as one page, and the current day is partial until it ends.",
           "params": {
             "page": "Uniquement les pages de ce type. À omettre pour les trois.",
             "productId": "Uniquement la page de ce produit. Implique <code>page=product</code>.",
-            "fromTo": "Uniquement les jours compris dans cette plage, bornes comprises. À omettre pour tout l’historique."
+            "fromTo": "Only days within this range, inclusive. Omit for the last 30 days."
           },
           "fields": {
             "range": "Les jours que les décomptes couvrent.",
@@ -1653,8 +1654,9 @@
             "pagesPage": "Le type de page. La page de la boutique est partagée avec tout ce que vend School of Gaming : ses vues ne relèvent donc pas du seul Programme, contrairement à celles d’une page produit.",
             "pagesProductId": "Le produit dont c’est la page ; <code>null</code> pour la page d’atterrissage et pour la boutique.",
             "pagesPageviews": "Les vues de la page sur la plage, quelle qu’en soit la provenance.",
-            "pagesByCampaign": "Les vues ventilées selon les trois valeurs UTM du lien. La ligne aux trois valeurs nulles regroupe toutes les vues sans campagne, y compris celles d’un visiteur qui a saisi l’adresse ou suivi un lien non balisé.",
-            "pagesByDay": "Les vues par jour calendaire, pour une série temporelle."
+            "pagesByCampaign": "The views split by the <code>utm_campaign</code> on the link. The <code>null</code> row is every view that carried none, including a visitor who typed the address or followed an untagged link.",
+            "pagesBySourceMedium": "The same views split by <code>utm_source</code> and <code>utm_medium</code> together, for reading paid, social and email traffic apart. The two splits are of the same views and each sums to <code>pageviews</code>; they are not a cross-tab of one another.",
+            "pagesByDay": "The views per calendar day, in UTC, for a time series."
           },
           "note": "Le script de Vercel ne s’exécute que pour un visiteur ayant accepté les statistiques dans le bandeau de cookies, et les valeurs UTM d’un enregistrement de famille ne sont écrites que pour un visiteur ayant accepté le marketing. Les deux conditions diffèrent, et celle des statistiques est la plus large : une vue comptée ici et une famille dans <code>/families</code> ne portent donc pas sur la même population. Un visiteur qui a tout accepté figure dans les deux, un visiteur qui n’a accepté que les statistiques ne figure qu’ici, et un visiteur qui a refusé le bandeau ne figure dans aucun des deux."
         }
@@ -1664,7 +1666,7 @@
         "e400": "Un paramètre de requête est mal formé : un UUID incorrect, une date qui n’est pas au format <code>YYYY-MM-DD</code>, un <code>limit</code> supérieur à 500, une valeur d’énumération inconnue, ou un <code>cursor</code> provenant d’un autre point de terminaison.",
         "e401": "Clé d’API absente, mal formée ou révoquée.",
         "e404": "Le chemin ne correspond à aucune des ressources ci-dessus.",
-        "e429": "Trop de requêtes. Attendez le nombre de secondes indiqué dans <code>Retry-After</code> et réessayez ; une récupération complète nocturne et des récupérations incrémentales toutes les quinze minutes restent largement sous la limite.",
+        "e429": "Too many requests: the limit is 60 requests a minute per key. Wait for the number of seconds in <code>Retry-After</code> and try again; a nightly full pull and incremental pulls every fifteen minutes stay well inside it.",
         "e500": "Quelque chose a échoué de notre côté. Réessayez avec un délai progressif ; si cela persiste, dites-le-nous."
       },
       "example": {
@@ -1673,18 +1675,18 @@
       "integrationNotes": {
         "heading": "Notes d’intégration",
         "items": {
-          "sync": "Synchronisez, n’interrogez pas en direct. Récupérez chaque ressource dans le stockage propre à Lynx selon un calendrier et construisez le tableau de bord sur ce stockage. Une récupération complète nocturne assortie de récupérations <code>updated_since</code> jusqu’à toutes les quinze minutes est le schéma prévu, et c’est sur lui que les limites sont dimensionnées.",
-          "join": "Faites les jointures sur les identifiants, jamais sur l’adresse e-mail. L’adresse e-mail d’une famille peut apparaître, disparaître et réapparaître au gré des consentements ; son <code>id</code>, jamais.",
-          "consent": "Donnez suite aux changements de consentement dès la synchronisation qui les révèle. Une famille dont <code>marketing_consent.granted</code> est passé à <code>false</code> sort de la liste de Lynx le jour même ; un enfant dont <code>photo_consent.granted</code> est passé à <code>false</code> est retiré de tout support que Lynx maîtrise.",
-          "erasure": "Supprimez ce qui disparaît. Un enregistrement absent d’une récupération complète a été effacé au titre des droits de la famille sur ses données, et la politique de confidentialité du Programme engage les deux organisations à le respecter.",
+          "sync": "The shape this is built for is a sync, not a live query: each resource pulled into Lynx’s own store on a schedule, and the dashboard built on that store. A nightly full pull plus <code>updated_since</code> pulls as often as every fifteen minutes is what the limits are sized for.",
+          "join": "Identifiers are the join keys. A family’s email can appear, disappear and reappear as consent changes; its <code>id</code> never does.",
+          "consent": "Consent changes and disappearances are meant to be acted on in the same sync that shows them: a family whose <code>marketing_consent.granted</code> turned <code>false</code> stops being mailed that day, and a record that has left a full pull leaves Lynx’s store that day. The Programme’s privacy policy commits both organisations to that, and the daily full pull is what makes it possible.",
           "derived": "« A participé » et « a publié » sont des valeurs dérivées, non stockées. Toutes deux sont définies dans les descriptions de champs ci-dessus pour que les chiffres de Lynx et les nôtres concordent ; si la définition doit changer, changez-la ici d’abord.",
           "readOnly": "Rien ici n’écrit. Les inscriptions, les consentements et les créations sont consignés dans Sogverse par les familles et les animateurs ; l’API n’est qu’une fenêtre sur ces données."
         }
       },
       "notIncluded": {
-        "heading": "Ce qui n’est pas inclus, et pourquoi",
+        "heading": "What the API does not carry",
+        "intro": "Things Sogverse holds, or is asked about, that this proposal leaves out. If one of them turns out to matter to Lynx, say so and we will talk about it.",
         "items": {
-          "childIdentity": "Les noms de famille, jours de naissance et genre des enfants, ainsi que les numéros de téléphone des parents. Rien de ce que Lynx fait avec les données n’en a besoin, et la politique de confidentialité du Programme promet un mois de naissance plutôt qu’une date de naissance.",
+          "childIdentity": "Children’s surnames, birth days and gender, and parents’ phone numbers. The Programme’s privacy policy promises a birth month rather than a birth date, and the rest is not something the dashboards or the Roblox report use.",
           "releases": "Les autorisations d’étude de cas et de témoignage. L’unique autorisation média que détient Sogverse couvre déjà l’usage public d’une photographie par Lynx Educate, School of Gaming et Roblox ; le nom complet d’un enfant, une étude de cas, une citation ou un contenu rattaché à l’enfant exigent une autorisation écrite distincte, recueillie en dehors de la plateforme.",
           "deliveryModel": "Une étiquette de mode de prestation. Sogverse détient le type d’un produit et le fait qu’il soit en ligne ou en présentiel ; c’est à Lynx de poser une taxonomie de modèles par-dessus ces deux champs.",
           "analytics": "Le trafic de toute page autre que la page d’atterrissage, la boutique et les pages produit du Programme, et tout ce qui concerne un visiteur en particulier. Les statistiques derrière <code>/traffic</code> sont conçues pour préserver la vie privée : une page qu’une famille atteint après s’être connectée lui appartient, et un visiteur est un décompte, jamais un enregistrement."

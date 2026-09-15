@@ -23,9 +23,11 @@ How to read traffic/perf *measurements* for the prod app programmatically (team 
   auto-chosen bucket) whenever the question is "what is the distribution" rather than "what
   is the top handful". Ordering is by the count aggregation even when you asked for
   uniques, so a uniques listing comes back in the wrong order — sort it yourself.
-- **Pro serves the latest 30 days only** — `--since 45d` is a hard `bad_request`, not a
-  clamp. Compare windows by stepping inside that month (`--since 14d --until 7d`); a
-  regression older than 30 days cannot be dated from here at all.
+- **The 30-day floor is `vercel metrics`' observability query, not the account** —
+  `--since 45d` is a hard `bad_request`, not a clamp. Compare windows by stepping inside
+  that month (`--since 14d --until 7d`); a regression older than 30 days cannot be dated
+  from the CLI at all. The Web Analytics REST endpoint below is not bound by it and
+  reaches back 24 months on our entitlement, so date an old regression there instead.
 - **Prefetch share is a zero-code read: `vercel.request.count` carries
   `is_prefetch_request`.** Its `path_type eq 'streaming_func'` slice equals
   `vercel.function_invocation.count` request for request (verified 2026-09-08, same
@@ -54,6 +56,25 @@ How to read traffic/perf *measurements* for the prod app programmatically (team 
   `--aggregation unique/visitor_id` for uniques on either. Custom events carry
   `request_path`/`route` automatically. The docs' "2 properties per custom event on Pro"
   is **not** observed to truncate — a 3-property event arrives whole.
+- **Web Analytics is reachable from a script by plain bearer token, through the
+  documented REST endpoint — re-verified 2026-09-15 against prod, and the thing to build
+  anything durable on.** `GET https://api.vercel.com/v1/query/web-analytics/visits/aggregate`
+  with `teamId`, `projectId`, `since`, `until` and up to two `by` dimensions
+  (`by=day&by=utmCampaign`); a third is rejected. `limit` caps at 100 and the overflow is
+  **folded into a literal `"Others"` row** rather than dropped, so a listing that could
+  exceed 100 wants a narrower `filter`, not a bigger limit — and an unnoticed `"Others"`
+  row is how a top-N read gets mistaken for the whole distribution. `filter` takes
+  `eq`/`ne`/`in`/`and`/`or`/`not`/`startswith`, e.g. `route eq '/shop'` for one page
+  across every language or `startswith(requestPath,'/shop/')` for a subtree. Each bucket
+  returns `pageviews` and `visitors`; buckets are UTC midnight, so a daily series here is
+  not the Helsinki day the CLI's `--bucket-timezone` gives, and **an absent UTM value
+  comes back as the empty string, not null** — group keys have to be normalised before
+  they are joined to anything. Rate limit 400 per minute window, 0.4–1.0 s per call. The
+  team holds the `web-analytics-plus` entitlement, so the window is **24 months** (data
+  from 2026-05-31, when analytics was switched on). Separately: the CLI's `vercel metrics`
+  posts to an undocumented `POST /v2/observability/query`, which does allow four `groupBy`
+  dimensions and a `bucketTimezone` — reach for it only when two dimensions genuinely will
+  not do, because nothing about it is in the REST docs and it can change without notice.
 - **`route` is one row per page across every language; `request_path` keeps the split.**
   The app supplies `route` itself as the untranslated, locale-stripped route template, so
   `-f "route eq '/shop'"` covers `/fi/kauppa` and `/sv/butik` too — group by
@@ -98,10 +119,8 @@ How to read traffic/perf *measurements* for the prod app programmatically (team 
   `Authorization: Bearer <CLI token>`. Overview returns `{total, devices}` (pageviews,
   unique devices). `v1` and unversioned paths 404. No per-path breakdown endpoint found
   — the dashboard's Analytics → Pages panel is the fallback.
-- **A public, documented Web Analytics API exists**
-  (`api.vercel.com/v1/query/web-analytics/visits/aggregate`, groupBy
-  time/route/country/referrer). Prefer it for anything durable; shape unverified as of
-  2026-08-18.
+- **Prefer the documented public API over that internal endpoint for anything durable** —
+  its shape is no longer a guess: the bullet above records it as verified against prod.
 - **Auth: `vercel metrics` rides the CLI's own login and needs no token handling**, so
   any session can run it directly — prefer it for that reason alone.
 - **The script reads the CLI's auth file directly, and that file moves.** The CLI keeps

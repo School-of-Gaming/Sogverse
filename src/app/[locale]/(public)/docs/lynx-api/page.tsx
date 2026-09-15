@@ -620,6 +620,11 @@ const TRAFFIC_FIELDS = [
     key: "resources.traffic.fields.pagesByCampaign",
   },
   {
+    name: "pages[].by_source_medium",
+    type: "array",
+    key: "resources.traffic.fields.pagesBySourceMedium",
+  },
+  {
     name: "pages[].by_day",
     type: "array",
     key: "resources.traffic.fields.pagesByDay",
@@ -697,7 +702,7 @@ const ENROLMENTS_EXAMPLE = `{
     "terms": { "version": "2026-08-01", "accepted_at": "2026-09-02T18:47:15Z" },
     "privacy_policy": { "version": "2026-08-01", "accepted_at": "2026-09-02T18:47:15Z" }
   },
-  "attendance": { "sessions_held": 5, "sessions_present": 4 },
+  "attendance": { "sessions_recorded": 5, "sessions_present": 4 },
   "creations": [
     { "title": "Obby Escape", "url": "https://www.roblox.com/games/123456789/Obby-Escape", "is_roblox_url": true }
   ],
@@ -768,9 +773,14 @@ const TRAFFIC_EXAMPLE = `{
       "product_id": null,
       "pageviews": 3184,
       "by_campaign": [
-        { "utm_source": "lynx", "utm_medium": "email", "utm_campaign": "lynx-autumn-a", "pageviews": 1412 },
-        { "utm_source": "lynx", "utm_medium": "social", "utm_campaign": "lynx-autumn-b", "pageviews": 655 },
-        { "utm_source": null, "utm_medium": null, "utm_campaign": null, "pageviews": 1117 }
+        { "utm_campaign": "lynx-autumn-a", "pageviews": 1412 },
+        { "utm_campaign": "lynx-autumn-b", "pageviews": 655 },
+        { "utm_campaign": null, "pageviews": 1117 }
+      ],
+      "by_source_medium": [
+        { "utm_source": "lynx", "utm_medium": "email", "pageviews": 1412 },
+        { "utm_source": "lynx", "utm_medium": "social", "pageviews": 655 },
+        { "utm_source": null, "utm_medium": null, "pageviews": 1117 }
       ],
       "by_day": [
         { "date": "2026-09-01", "pageviews": 212 },
@@ -782,8 +792,12 @@ const TRAFFIC_EXAMPLE = `{
       "product_id": "5a1f8e1c-1b0e-4a3e-9a9c-2c9a4d8f0b11",
       "pageviews": 927,
       "by_campaign": [
-        { "utm_source": "lynx", "utm_medium": "email", "utm_campaign": "lynx-autumn-a", "pageviews": 611 },
-        { "utm_source": null, "utm_medium": null, "utm_campaign": null, "pageviews": 316 }
+        { "utm_campaign": "lynx-autumn-a", "pageviews": 611 },
+        { "utm_campaign": null, "pageviews": 316 }
+      ],
+      "by_source_medium": [
+        { "utm_source": "lynx", "utm_medium": "email", "pageviews": 611 },
+        { "utm_source": null, "utm_medium": null, "pageviews": 316 }
       ],
       "by_day": [
         { "date": "2026-09-01", "pageviews": 54 },
@@ -935,6 +949,7 @@ export default function LynxApiDocsPage() {
               <li>{rich("conventions.items.updatedSince")}</li>
               <li>{rich("conventions.items.erasure")}</li>
               <li>{rich("conventions.items.consent")}</li>
+              <li>{rich("conventions.items.changePolicy")}</li>
               <li>
                 {t("conventions.items.errors")} <Code>{ERROR_SHAPE}</Code>
               </li>
@@ -1091,7 +1106,6 @@ export default function LynxApiDocsPage() {
               <li>{rich("integrationNotes.items.sync")}</li>
               <li>{rich("integrationNotes.items.join")}</li>
               <li>{rich("integrationNotes.items.consent")}</li>
-              <li>{rich("integrationNotes.items.erasure")}</li>
               <li>{rich("integrationNotes.items.derived")}</li>
               <li>{rich("integrationNotes.items.readOnly")}</li>
             </ul>
@@ -1100,6 +1114,7 @@ export default function LynxApiDocsPage() {
           {/* Not included */}
           <Section id="not-included">
             <SectionHeading>{t("notIncluded.heading")}</SectionHeading>
+            <p className="mt-4 text-muted-foreground">{t("notIncluded.intro")}</p>
             <ul className="mt-4 list-disc space-y-3 pl-5 text-muted-foreground">
               <li>{rich("notIncluded.items.childIdentity")}</li>
               <li>{rich("notIncluded.items.releases")}</li>
