@@ -1592,7 +1592,7 @@
         },
         "sessions": {
           "title": "vad som hände i varje grupp",
-          "intro": "Varje session en grupp i Programmet har hållit eller schemalagt, med närvaromarkeringarna. Använd den för vyer per session, som en avhoppskurva; totalerna per barn finns redan på anmälan.",
+          "intro": "Every session a Programme group has held or scheduled, with the attendance marks and the photographs the educator attached to its report. Use it for per-session views such as a drop-off curve; the per-child totals are already on the enrolment.",
           "params": {
             "productId": "Bara sessioner i den här produktens grupper.",
             "groupId": "Bara den här gruppens sessioner.",
@@ -1603,7 +1603,28 @@
             "productGroupId": "Produkten och gruppen som sessionen hör till.",
             "times": "Sessionens schemalagda fönster.",
             "attendance": "En post per barn som spelfostraren markerat, <code>present</code> eller <code>absent</code>. Ett barn som ännu inte markerats finns inte med.",
-            "photoCount": "Hur många fotografier spelfostraren bifogade sessionsrapporten. Fotografierna själva ingår inte i v1; se ”Senare”."
+            "images": "The photographs the educator attached to the session report, in the order they were added: mostly in-game screenshots, sometimes a photograph of the room. Each is a public URL that needs no credential, and the same URL every family in the group already sees in the report. A child is photographed only where the media permission stands, so a photograph here is one that permission covers.",
+            "imagesUrl": "Fetch it as-is and do not rewrite it. The object’s name is an unguessable identifier and that name is the whole of its access control, so the URL is not to be published on a page that lists it. When an educator or an admin removes a photograph the URL stops resolving; a copy Lynx holds is Lynx’s to remove under the same permission.",
+            "imagesSize": "The pixel size of the image."
+          }
+        },
+        "feedback": {
+          "title": "what a child said on the way out",
+          "intro": "What one child answered at the end of one online session: five statements rated on a five-point bar, an optional note in their own words, and how they left. Only online sessions ask, because the question is put on the screen as the room closes; an in-person session has no row here. A child who answers nothing leaves no row, so the response rate is this list against the online sessions in <code>/sessions</code>.",
+          "params": {
+            "productId": "Only feedback from this product’s groups.",
+            "groupId": "Only this group’s feedback.",
+            "gamerId": "Only this child’s feedback.",
+            "fromTo": "Only sessions that opened within this date range, inclusive."
+          },
+          "fields": {
+            "gamerGroupProductId": "Who answered, and the group and product the session belonged to. One record per child per session.",
+            "sessionId": "The session in <code>/sessions</code> the answer belongs to, matched by group and date; <code>null</code> if no session row was written for that day.",
+            "sessionOpenedAt": "When the room the child was in opened.",
+            "answers": "The child’s rating of each statement, keyed by the statement’s stable identifier, with a statement they skipped absent. Ratings run 1 to 5: no, not really, a bit, yes, definitely. The statements asked today are <code>learned</code> (I learned something), <code>fun</code> (I had fun), <code>geduKnowledgeable</code> (the Gedu knew what they were doing), <code>geduKind</code> (the Gedu was kind), and <code>groupListens</code> (the group listens to each other); a statement may be added or retired without notice, so read the keys you know and ignore the rest.",
+            "note": "What the child wrote in the optional note, empty when they wrote nothing. Free text from a child, in their own words and their own language: treat it as personal data and never publish it without the separate written release the Programme’s privacy policy requires.",
+            "exitReason": "<code>left</code> when the child pressed Leave; <code>ended</code> when the room closed around them, which includes a dropped connection.",
+            "updatedAt": "When the child last saved. A child who leaves, rejoins and leaves again overwrites their earlier answer."
           }
         },
         "robloxResearch": {
@@ -1681,18 +1702,9 @@
         "items": {
           "childIdentity": "Barnens namn, födelsedatum och kön. Varken forskningsdatat eller tratten behöver något av dem; Programmets integritetspolicy utlovar ålder eller ett åldersintervall i stället för ett födelsedatum.",
           "parentContact": "Föräldrarnas namn och telefonnummer. Lynx marknadsföringssamtycke täcker enbart e-postadressen.",
-          "feedback": "Enskild sessionsfeedback. Ett barns svar är barnets egna; policyn tillåter bara aggregerad nöjdhetsrapportering, som är en kandidat för ”Senare”.",
           "releases": "Medgivanden för fallstudier, omdömen och marknadsföringsanvändning. De är skriftliga medgivanden som hämtas in utanför plattformen.",
           "deliveryModel": "En etikett för leveransmodell. Sogverse håller en produkts typ och om den är online eller på plats; en modelltaxonomi är Lynx sak att lägga över de två fälten.",
           "analytics": "Trafik på någon annan sida än landningssidan, och allt som rör en enskild besökare. Analysen bakom <code>/traffic</code> är integritetsvänlig från grunden: en sida som en familj når efter inloggning är deras, och en besökare är ett antal, aldrig en post."
-        }
-      },
-      "later": {
-        "heading": "Senare",
-        "items": {
-          "photos": "Sessionsfotografier. <code>photo_count</code> finns redan på sessionen; en v2 skulle servera kortlivade signerade URL:er till fotografierna, var och en villkorad av mediatillståndet för varje barn på bilden.",
-          "satisfaction": "Aggregerad nöjdhet per produkt, från den sessionsfeedback barnen ger.",
-          "webhook": "En webhook för återkallade samtycken och raderingar, för partner som vill agera snabbare än en daglig synkronisering."
         }
       }
     }

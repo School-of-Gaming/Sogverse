@@ -1592,7 +1592,7 @@
         },
         "sessions": {
           "title": "what happened in each group",
-          "intro": "Every session a Programme group has held or scheduled, with the attendance marks. Use it for per-session views such as a drop-off curve; the per-child totals are already on the enrolment.",
+          "intro": "Every session a Programme group has held or scheduled, with the attendance marks and the photographs the educator attached to its report. Use it for per-session views such as a drop-off curve; the per-child totals are already on the enrolment.",
           "params": {
             "productId": "Only sessions of this product’s groups.",
             "groupId": "Only this group’s sessions.",
@@ -1603,7 +1603,28 @@
             "productGroupId": "The product and group the session belongs to.",
             "times": "The session’s scheduled window.",
             "attendance": "One entry per child the educator marked, <code>present</code> or <code>absent</code>. A child not yet marked does not appear.",
-            "photoCount": "How many photographs the educator attached to the session report. The photographs themselves are not in v1; see “Later”."
+            "images": "The photographs the educator attached to the session report, in the order they were added: mostly in-game screenshots, sometimes a photograph of the room. Each is a public URL that needs no credential, and the same URL every family in the group already sees in the report. A child is photographed only where the media permission stands, so a photograph here is one that permission covers.",
+            "imagesUrl": "Fetch it as-is and do not rewrite it. The object’s name is an unguessable identifier and that name is the whole of its access control, so the URL is not to be published on a page that lists it. When an educator or an admin removes a photograph the URL stops resolving; a copy Lynx holds is Lynx’s to remove under the same permission.",
+            "imagesSize": "The pixel size of the image."
+          }
+        },
+        "feedback": {
+          "title": "what a child said on the way out",
+          "intro": "What one child answered at the end of one online session: five statements rated on a five-point bar, an optional note in their own words, and how they left. Only online sessions ask, because the question is put on the screen as the room closes; an in-person session has no row here. A child who answers nothing leaves no row, so the response rate is this list against the online sessions in <code>/sessions</code>.",
+          "params": {
+            "productId": "Only feedback from this product’s groups.",
+            "groupId": "Only this group’s feedback.",
+            "gamerId": "Only this child’s feedback.",
+            "fromTo": "Only sessions that opened within this date range, inclusive."
+          },
+          "fields": {
+            "gamerGroupProductId": "Who answered, and the group and product the session belonged to. One record per child per session.",
+            "sessionId": "The session in <code>/sessions</code> the answer belongs to, matched by group and date; <code>null</code> if no session row was written for that day.",
+            "sessionOpenedAt": "When the room the child was in opened.",
+            "answers": "The child’s rating of each statement, keyed by the statement’s stable identifier, with a statement they skipped absent. Ratings run 1 to 5: no, not really, a bit, yes, definitely. The statements asked today are <code>learned</code> (I learned something), <code>fun</code> (I had fun), <code>geduKnowledgeable</code> (the Gedu knew what they were doing), <code>geduKind</code> (the Gedu was kind), and <code>groupListens</code> (the group listens to each other); a statement may be added or retired without notice, so read the keys you know and ignore the rest.",
+            "note": "What the child wrote in the optional note, empty when they wrote nothing. Free text from a child, in their own words and their own language: treat it as personal data and never publish it without the separate written release the Programme’s privacy policy requires.",
+            "exitReason": "<code>left</code> when the child pressed Leave; <code>ended</code> when the room closed around them, which includes a dropped connection.",
+            "updatedAt": "When the child last saved. A child who leaves, rejoins and leaves again overwrites their earlier answer."
           }
         },
         "robloxResearch": {
@@ -1681,18 +1702,9 @@
         "items": {
           "childIdentity": "Children’s names, birth dates and gender. The research dataset and the funnel need none of them; the Programme’s privacy policy promises age or an age bracket rather than a birth date.",
           "parentContact": "Parents’ names and phone numbers. Lynx’s marketing consent covers the email address alone.",
-          "feedback": "Individual session feedback. A child’s answers are theirs; the policy allows only aggregated satisfaction reporting, which is a candidate for “Later”.",
           "releases": "Case-study, testimonial and promotional-use consents. They are written releases obtained outside the platform.",
           "deliveryModel": "A delivery model label. Sogverse holds a product’s type and whether it is online or in person; a model taxonomy is Lynx’s to lay over those two fields.",
           "analytics": "Traffic anywhere but the landing page, and anything about a single visitor. The analytics behind <code>/traffic</code> are privacy-first by design: a page a family reaches after signing in is theirs, and a visitor is a count, never a record."
-        }
-      },
-      "later": {
-        "heading": "Later",
-        "items": {
-          "photos": "Session photographs. <code>photo_count</code> is on the session already; a v2 would serve short-lived signed URLs to the photographs, each gated on the media permission of every child in it.",
-          "satisfaction": "Aggregated satisfaction per product, from the session feedback children give.",
-          "webhook": "A webhook for consent withdrawals and erasures, for partners who want to act faster than a daily sync."
         }
       }
     }

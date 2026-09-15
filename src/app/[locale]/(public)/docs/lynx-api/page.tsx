@@ -157,7 +157,7 @@ function Section({ id, children }: { id: string; children: React.ReactNode }) {
  * record and the fields that record carries.
  *
  * Every resource is drawn by this one component so the reading order is the
- * same in all seven — an engineer who has read one knows where to look in the
+ * same in all eight — an engineer who has read one knows where to look in the
  * next.
  */
 function Resource({
@@ -484,12 +484,64 @@ const SESSIONS_FIELDS = [
     type: "array",
     key: "resources.sessions.fields.attendance",
   },
+  { name: "images", type: "array", key: "resources.sessions.fields.images" },
   {
-    name: "photo_count",
+    name: "images[].url",
+    type: "string",
+    key: "resources.sessions.fields.imagesUrl",
+  },
+  {
+    name: "images[].width, images[].height",
     type: "integer",
-    key: "resources.sessions.fields.photoCount",
+    key: "resources.sessions.fields.imagesSize",
   },
   { name: "updated_at", type: "timestamp" },
+] as const;
+
+const FEEDBACK_PARAMS = [
+  {
+    name: "product_id",
+    type: "uuid",
+    key: "resources.feedback.params.productId",
+  },
+  { name: "group_id", type: "uuid", key: "resources.feedback.params.groupId" },
+  { name: "gamer_id", type: "uuid", key: "resources.feedback.params.gamerId" },
+  { name: "from, to", type: "date", key: "resources.feedback.params.fromTo" },
+  ...PAGING_ROWS,
+] as const;
+
+const FEEDBACK_FIELDS = [
+  {
+    name: "gamer_id, group_id, product_id",
+    type: "uuid",
+    key: "resources.feedback.fields.gamerGroupProductId",
+  },
+  {
+    name: "session_id",
+    type: "uuid | null",
+    key: "resources.feedback.fields.sessionId",
+  },
+  {
+    name: "session_opened_at",
+    type: "timestamp",
+    key: "resources.feedback.fields.sessionOpenedAt",
+  },
+  {
+    name: "answers",
+    type: "object",
+    key: "resources.feedback.fields.answers",
+  },
+  { name: "note", type: "string", key: "resources.feedback.fields.note" },
+  {
+    name: "exit_reason",
+    type: "left | ended",
+    key: "resources.feedback.fields.exitReason",
+  },
+  {
+    name: "updated_at",
+    type: "timestamp",
+    key: "resources.feedback.fields.updatedAt",
+  },
 ] as const;
 
 const RESEARCH_PARAMS = [
@@ -614,6 +666,7 @@ const RESOURCE_PATHS = {
   families: "/families",
   enrolments: "/enrolments",
   sessions: "/sessions",
+  feedback: "/feedback",
   "roblox-research": "/roblox-research",
   stats: "/stats",
   traffic: "/traffic",
@@ -693,8 +746,33 @@ const SESSIONS_EXAMPLE = `{
     { "gamer_id": "b7d1c0e2-3a4f-4b5c-9d6e-7f8a9b0c1d2e", "status": "present" },
     { "gamer_id": "6f7a8b9c-0d1e-4f2a-b3c4-d5e6f7a8b9c0", "status": "absent" }
   ],
-  "photo_count": 3,
+  "images": [
+    {
+      "id": "7d8e9f0a-1b2c-4d3e-8f4a-5b6c7d8e9f0a",
+      "url": "https://<project>.supabase.co/storage/v1/object/public/session-images/7d8e9f0a-1b2c-4d3e-8f4a-5b6c7d8e9f0a.jpg",
+      "width": 1920,
+      "height": 1080
+    }
+  ],
   "updated_at": "2026-10-19T12:30:00Z"
+}`;
+
+const FEEDBACK_EXAMPLE = `{
+  "gamer_id": "b7d1c0e2-3a4f-4b5c-9d6e-7f8a9b0c1d2e",
+  "group_id": "0e2b6a7e-6d2a-4f6c-b3a1-3f1f9c8e5a21",
+  "product_id": "5a1f8e1c-1b0e-4a3e-9a9c-2c9a4d8f0b11",
+  "session_id": "c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f",
+  "session_opened_at": "2026-10-19T08:55:00Z",
+  "answers": {
+    "learned": 4,
+    "fun": 5,
+    "geduKnowledgeable": 5,
+    "geduKind": 5,
+    "groupListens": 3
+  },
+  "note": "I finished my obby!",
+  "exit_reason": "left",
+  "updated_at": "2026-10-19T12:02:41Z"
 }`;
 
 const RESEARCH_EXAMPLE = `{
@@ -810,7 +888,6 @@ export default function LynxApiDocsPage() {
     { id: "example", label: t("example.heading") },
     { id: "integration-notes", label: t("integrationNotes.heading") },
     { id: "not-included", label: t("notIncluded.heading") },
-    { id: "later", label: t("later.heading") },
   ];
 
   return (
@@ -955,6 +1032,18 @@ export default function LynxApiDocsPage() {
           />
 
           <Resource
+            id="feedback"
+            path={RESOURCE_PATHS.feedback}
+            title={t("resources.feedback.title")}
+            intro={rich("resources.feedback.intro")}
+            labels={labels}
+            exampleTitle={exampleRecord}
+            example={FEEDBACK_EXAMPLE}
+            params={rows(FEEDBACK_PARAMS)}
+            fields={rows(FEEDBACK_FIELDS)}
+          />
+
+          <Resource
             id="roblox-research"
             path={RESOURCE_PATHS["roblox-research"]}
             title={t("resources.robloxResearch.title")}
@@ -1058,20 +1147,9 @@ export default function LynxApiDocsPage() {
             <ul className="mt-4 list-disc space-y-3 pl-5 text-muted-foreground">
               <li>{rich("notIncluded.items.childIdentity")}</li>
               <li>{rich("notIncluded.items.parentContact")}</li>
-              <li>{rich("notIncluded.items.feedback")}</li>
               <li>{rich("notIncluded.items.releases")}</li>
               <li>{rich("notIncluded.items.deliveryModel")}</li>
               <li>{rich("notIncluded.items.analytics")}</li>
-            </ul>
-          </Section>
-
-          {/* Later */}
-          <Section id="later">
-            <SectionHeading>{t("later.heading")}</SectionHeading>
-            <ul className="mt-4 list-disc space-y-3 pl-5 text-muted-foreground">
-              <li>{rich("later.items.photos")}</li>
-              <li>{rich("later.items.satisfaction")}</li>
-              <li>{rich("later.items.webhook")}</li>
             </ul>
           </Section>
         </div>

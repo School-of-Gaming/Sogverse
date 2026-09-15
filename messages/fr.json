@@ -1592,7 +1592,7 @@
         },
         "sessions": {
           "title": "ce qui s’est passé dans chaque groupe",
-          "intro": "Chaque session qu’un groupe du Programme a tenue ou programmée, avec les pointages de présence. Utilisez-la pour les vues par session, comme une courbe d’abandon ; les totaux par enfant figurent déjà sur l’inscription.",
+          "intro": "Every session a Programme group has held or scheduled, with the attendance marks and the photographs the educator attached to its report. Use it for per-session views such as a drop-off curve; the per-child totals are already on the enrolment.",
           "params": {
             "productId": "Uniquement les sessions des groupes de ce produit.",
             "groupId": "Uniquement les sessions de ce groupe.",
@@ -1603,7 +1603,28 @@
             "productGroupId": "Le produit et le groupe auxquels la session appartient.",
             "times": "La plage horaire programmée de la session.",
             "attendance": "Une entrée par enfant pointé par l’animateur, <code>present</code> ou <code>absent</code>. Un enfant qui n’a pas encore été pointé n’apparaît pas.",
-            "photoCount": "Le nombre de photographies que l’animateur a jointes au compte rendu de session. Les photographies elles-mêmes ne sont pas dans la v1 ; voir « Plus tard »."
+            "images": "The photographs the educator attached to the session report, in the order they were added: mostly in-game screenshots, sometimes a photograph of the room. Each is a public URL that needs no credential, and the same URL every family in the group already sees in the report. A child is photographed only where the media permission stands, so a photograph here is one that permission covers.",
+            "imagesUrl": "Fetch it as-is and do not rewrite it. The object’s name is an unguessable identifier and that name is the whole of its access control, so the URL is not to be published on a page that lists it. When an educator or an admin removes a photograph the URL stops resolving; a copy Lynx holds is Lynx’s to remove under the same permission.",
+            "imagesSize": "The pixel size of the image."
+          }
+        },
+        "feedback": {
+          "title": "what a child said on the way out",
+          "intro": "What one child answered at the end of one online session: five statements rated on a five-point bar, an optional note in their own words, and how they left. Only online sessions ask, because the question is put on the screen as the room closes; an in-person session has no row here. A child who answers nothing leaves no row, so the response rate is this list against the online sessions in <code>/sessions</code>.",
+          "params": {
+            "productId": "Only feedback from this product’s groups.",
+            "groupId": "Only this group’s feedback.",
+            "gamerId": "Only this child’s feedback.",
+            "fromTo": "Only sessions that opened within this date range, inclusive."
+          },
+          "fields": {
+            "gamerGroupProductId": "Who answered, and the group and product the session belonged to. One record per child per session.",
+            "sessionId": "The session in <code>/sessions</code> the answer belongs to, matched by group and date; <code>null</code> if no session row was written for that day.",
+            "sessionOpenedAt": "When the room the child was in opened.",
+            "answers": "The child’s rating of each statement, keyed by the statement’s stable identifier, with a statement they skipped absent. Ratings run 1 to 5: no, not really, a bit, yes, definitely. The statements asked today are <code>learned</code> (I learned something), <code>fun</code> (I had fun), <code>geduKnowledgeable</code> (the Gedu knew what they were doing), <code>geduKind</code> (the Gedu was kind), and <code>groupListens</code> (the group listens to each other); a statement may be added or retired without notice, so read the keys you know and ignore the rest.",
+            "note": "What the child wrote in the optional note, empty when they wrote nothing. Free text from a child, in their own words and their own language: treat it as personal data and never publish it without the separate written release the Programme’s privacy policy requires.",
+            "exitReason": "<code>left</code> when the child pressed Leave; <code>ended</code> when the room closed around them, which includes a dropped connection.",
+            "updatedAt": "When the child last saved. A child who leaves, rejoins and leaves again overwrites their earlier answer."
           }
         },
         "robloxResearch": {
@@ -1681,18 +1702,9 @@
         "items": {
           "childIdentity": "Les noms, dates de naissance et genre des enfants. Ni le jeu de données de recherche ni l’entonnoir n’en ont besoin ; la politique de confidentialité du Programme promet un âge ou une tranche d’âge plutôt qu’une date de naissance.",
           "parentContact": "Les noms et numéros de téléphone des parents. Le consentement marketing de Lynx ne couvre que l’adresse e-mail.",
-          "feedback": "Les retours individuels sur les sessions. Les réponses d’un enfant lui appartiennent ; la politique n’autorise qu’un reporting de satisfaction agrégé, candidat à la rubrique « Plus tard ».",
           "releases": "Les autorisations d’étude de cas, de témoignage et d’usage promotionnel. Ce sont des autorisations écrites recueillies en dehors de la plateforme.",
           "deliveryModel": "Une étiquette de modèle de délivrance. Sogverse détient le type d’un produit et le fait qu’il soit en ligne ou en présentiel ; c’est à Lynx de poser une taxonomie de modèles par-dessus ces deux champs.",
           "analytics": "Le trafic de toute page autre que la page d’atterrissage, et tout ce qui concerne un visiteur en particulier. Les statistiques derrière <code>/traffic</code> sont conçues pour préserver la vie privée : une page qu’une famille atteint après s’être connectée lui appartient, et un visiteur est un décompte, jamais un enregistrement."
-        }
-      },
-      "later": {
-        "heading": "Plus tard",
-        "items": {
-          "photos": "Les photographies de session. <code>photo_count</code> figure déjà sur la session ; une v2 servirait des URL signées à durée de vie courte vers les photographies, chacune conditionnée à l’autorisation média de chaque enfant qui y figure.",
-          "satisfaction": "La satisfaction agrégée par produit, à partir des retours de session donnés par les enfants.",
-          "webhook": "Un webhook pour les retraits de consentement et les effacements, pour les partenaires qui veulent agir plus vite qu’une synchronisation quotidienne."
         }
       }
     }
