@@ -52,7 +52,7 @@ const CLOSED_ACTIVE_PRODUCT = "00000000-0000-0000-0000-0000000005e5";
 const CLOSED_WAITLISTED_PRODUCT = "00000000-0000-0000-0000-0000000005e6";
 const ALL_PRODUCTS = [CLOSED_ACTIVE_PRODUCT, CLOSED_WAITLISTED_PRODUCT];
 
-describe("products purchaser-read RLS (00047)", () => {
+describe("purchaser dashboard: product join shapes on an ended term", () => {
   let admin: SupabaseClient<Database>;
   let customerClient: SupabaseClient<Database>;
 

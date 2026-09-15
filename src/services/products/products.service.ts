@@ -491,12 +491,14 @@ export class ProductsService {
     return data;
   }
 
-  // Parent-facing list: only visible products in a parent-relevant lifecycle
-  // state. RLS already restricts anon/customer reads to the same predicate
-  // (per redesign §5.8) — the explicit filters in the query are defensive and
-  // let admins (who can see everything) call this same hook from the public
-  // pages without seeing cancelled rows. Joins everything the browse card
-  // needs in one round trip.
+  // Parent-facing list: the visible products a parent should be offered. The
+  // listing half of that is the query's `is_visible` filter; the lifecycle half
+  // is the ended filter applied here in JS, and that filter is now the *sole*
+  // thing keeping a finished product out of the storefront. The database read
+  // rule deliberately does not narrow by lifecycle — it admits every product
+  // that exists, to every caller — so nothing behind this call is a second line
+  // of defence and the filter must not be trimmed as though it were one.
+  // Joins everything the browse card needs in one round trip.
   async listVisibleByTypes(types: ProductType[]): Promise<ProductBrowseRow[]> {
     const { data, error } = await buildBrowseQuery(this.supabase, types);
 
@@ -527,13 +529,14 @@ export class ProductsService {
   // Single-product detail fetch for the parent-facing detail page
   // (`/shop/[id]`).
   //
-  // RLS is the sole gate: a viewer reaches this row if the product's end date
-  // has not passed (listed or not, which is the point of the direct link) OR
-  // they hold an active/waitlisted participation on it. The detail page renders
-  // the marketing layout for the former and the purchased layout for the latter
-  // — both branches need the row, so there are deliberately no listing or
-  // lifecycle filters here. Returns null on miss so the page can render a clean
-  // "not found" state.
+  // There is no gate to pass: every viewer reaches every product row that
+  // exists, by owner decision — listed or not, running or long finished, with
+  // or without a seat on it, because a link out of last spring's confirmation
+  // mail has to open and the crawler rendering its preview holds no session at
+  // all. What the page renders it decides for itself from the registration
+  // state and the dates, so there are deliberately no listing or lifecycle
+  // filters here. Returns null on miss so the page can render a clean "not
+  // found" state; a miss now means only that no product carries that id.
   async getDetailById(id: string): Promise<ProductDetailRow | null> {
     const { data, error } = await buildProductDetailQuery(this.supabase, id);
 
@@ -562,11 +565,12 @@ export class ProductsService {
     return parseJsonResponse(response, productIdResponse);
   }
 
-  // Admin-only single-product fetch. Same join shape as getDetailById, read
-  // through the admin branch of the product read predicate, so an admin sees
-  // every row — unlisted, cancelled and completed included. Carries the IDs the
-  // form needs to round-trip an edit (tag_id, calendar_id) plus readable
-  // strings for the read-only details page.
+  // Admin-only single-product fetch. Same join shape as getDetailById, and the
+  // read rule it goes through is the same one too — it has no admin arm to
+  // take, because it already admits every row that exists to every caller,
+  // unlisted and finished alike. What makes this the admin read is the payload:
+  // the IDs the form needs to round-trip an edit (tag_id, calendar_id) plus
+  // readable strings for the read-only details page.
   async getByIdForAdmin(
     id: string,
   ): Promise<ProductAdminDetailRow | null> {

@@ -53,7 +53,7 @@ const CLOSED_ACTIVE_PRODUCT = "00000000-0000-0000-0000-0000000005e1";
 const CLOSED_WAITLISTED_PRODUCT = "00000000-0000-0000-0000-0000000005e2";
 const ALL_PRODUCTS = [CLOSED_ACTIVE_PRODUCT, CLOSED_WAITLISTED_PRODUCT];
 
-describe("products gamer-read RLS (00067)", () => {
+describe("gamer dashboard: product join shapes on an ended term", () => {
   let admin: SupabaseClient<Database>;
   let adminAuth: SupabaseClient<Database>;
   let gamerClient: SupabaseClient<Database>;
