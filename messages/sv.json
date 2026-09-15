@@ -1533,7 +1533,7 @@
             "type": "Vilken sorts produkt det är. En klubb går varje vecka utan fast slut; ett läger och ett evenemang går över bestämda datum.",
             "delivery": "Hur den levereras. Lynx egna namn på sina sätt att genomföra Programmet lagras ingenstans; <code>type</code> och <code>delivery</code> är tillsammans de två fakta som de namnen avbildas på.",
             "location": "Ort och land enligt ISO 3166-1 alpha-2 för platsen vid en fysisk produkt; <code>null</code> när den är online.",
-            "status": "<code>pending</code> innan den börjar, <code>running</code>, <code>completed</code> eller <code>cancelled</code>.",
+            "status": "<code>pending</code> until it has started, <code>running</code> from its start date once any signup threshold is met, <code>completed</code> once it ran and its end date has passed, <code>expired</code> when the end date passed without it ever starting. Derived at read time from the dates, the threshold and the live sign-up count; nothing is stored, so the value is never stale.",
             "dates": "När den pågår. En klubb har inget slutdatum.",
             "timezone": "Den IANA-tidszon som produktens datum och sessioner är schemalagda i.",
             "ageRange": "De åldrar produkten tar emot, gränserna inräknade.",

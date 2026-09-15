@@ -1533,7 +1533,7 @@
             "type": "Le type de produit. Un club a lieu chaque semaine sans fin déterminée ; un camp et un événement se déroulent sur des dates fixées.",
             "delivery": "Son mode de déroulement. Les noms que Lynx donne à ses manières de mener le Programme ne sont stockés nulle part ; <code>type</code> et <code>delivery</code> sont ensemble les deux faits sur lesquels ces noms se projettent.",
             "location": "Ville et pays au format ISO 3166-1 alpha-2 du lieu, pour un produit en présentiel ; <code>null</code> lorsqu’il est en ligne.",
-            "status": "<code>pending</code> avant le début, <code>running</code>, <code>completed</code> ou <code>cancelled</code>.",
+            "status": "<code>pending</code> until it has started, <code>running</code> from its start date once any signup threshold is met, <code>completed</code> once it ran and its end date has passed, <code>expired</code> when the end date passed without it ever starting. Derived at read time from the dates, the threshold and the live sign-up count; nothing is stored, so the value is never stale.",
             "dates": "Quand il se déroule. Un club n’a pas de date de fin.",
             "timezone": "Le fuseau horaire IANA dans lequel les dates et les sessions du produit sont programmées.",
             "ageRange": "Les âges admis par le produit, bornes comprises.",

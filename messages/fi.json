@@ -1533,7 +1533,7 @@
             "type": "Minkätyyppinen tuote on. Kerho kokoontuu viikoittain ilman kiinteää päättymistä; leiri ja tapahtuma järjestetään sovittuina päivinä.",
             "delivery": "Miten tuote toteutetaan. Lynxin omia nimiä sen tavoille toteuttaa Ohjelmaa ei ole tallennettu mihinkään; <code>type</code> ja <code>delivery</code> ovat yhdessä ne kaksi tietoa, joihin nuo nimet kiinnittyvät.",
             "location": "Lähitoteutuksen toimipaikan kaupunki ja ISO 3166-1 alpha-2 -maakoodi; <code>null</code>, kun tuote on verkossa.",
-            "status": "<code>pending</code> ennen alkua, <code>running</code>, <code>completed</code> tai <code>cancelled</code>.",
+            "status": "<code>pending</code> until it has started, <code>running</code> from its start date once any signup threshold is met, <code>completed</code> once it ran and its end date has passed, <code>expired</code> when the end date passed without it ever starting. Derived at read time from the dates, the threshold and the live sign-up count; nothing is stored, so the value is never stale.",
             "dates": "Milloin tuote toteutetaan. Kerholla ei ole päättymispäivää.",
             "timezone": "IANA-aikavyöhyke, jonka mukaan tuotteen päivämäärät ja istunnot on aikataulutettu.",
             "ageRange": "Iät, jotka tuotteeseen hyväksytään, rajat mukaan lukien.",

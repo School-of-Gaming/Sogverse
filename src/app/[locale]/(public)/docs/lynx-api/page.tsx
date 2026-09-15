@@ -247,7 +247,7 @@ const PAGING_ROWS = [
 const PRODUCTS_PARAMS = [
   {
     name: "status",
-    type: "pending | running | completed | cancelled",
+    type: "pending | running | completed | expired",
     key: "resources.products.params.status",
   },
   {

@@ -1533,7 +1533,7 @@
             "type": "What kind of product it is. A club runs weekly with no fixed end; a camp and an event run over set dates.",
             "delivery": "How it is delivered. Lynx’s own names for its ways of delivering the Programme are not stored anywhere; <code>type</code> and <code>delivery</code> together are the two facts those names map onto.",
             "location": "City and ISO 3166-1 alpha-2 country of the site for an in-person product; <code>null</code> when online.",
-            "status": "<code>pending</code> before it starts, <code>running</code>, <code>completed</code>, or <code>cancelled</code>.",
+            "status": "<code>pending</code> until it has started, <code>running</code> from its start date once any signup threshold is met, <code>completed</code> once it ran and its end date has passed, <code>expired</code> when the end date passed without it ever starting. Derived at read time from the dates, the threshold and the live sign-up count; nothing is stored, so the value is never stale.",
             "dates": "When it runs. A club has no end date.",
             "timezone": "The IANA timezone the product’s dates and sessions are scheduled in.",
             "ageRange": "The ages the product admits, inclusive.",
