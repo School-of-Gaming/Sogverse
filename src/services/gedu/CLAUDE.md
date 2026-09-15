@@ -63,11 +63,12 @@ instead of tripping the `profiles.phone` CHECK).
 ## Certification
 
 A new gedu starts **uncertified but with broad platform access** — certification gates a
-gedu's **operational capabilities**: being assigned to work, and the tools that come with
-running a session. It does not gate the platform, and an uncertified gedu still signs in,
-reads My SOG, edits their profile and coverage, and accepts the contract. **The
-authoritative list of what it gates is the code**: the `requireCertifiedGedu` routes in
-the route posture registry plus the assignment gate below. An enumeration here would be a
+gedu's **operational capabilities**: being assigned to work, the tools that come with
+running a session, and offering or holding a cover for somebody else's session. It does
+not gate the platform, and an uncertified gedu still signs in, reads My SOG, edits their
+profile and coverage, and accepts the contract. **The authoritative list of what it gates
+is the code**: the `requireCertifiedGedu` routes in the route posture registry plus the
+assignment and session-cover gates below. An enumeration here would be a
 second list to keep current, and the last one was wrong.
 
 - **`set_gedu_certified(gedu_id, certified)` RPC** — admin-only (guard-first `assert_admin()`),
@@ -79,6 +80,15 @@ second list to keep current, and the last one was wrong.
   because admins are always trusted and assignment is an admin-only action driven entirely
   by this picker. If a non-admin assignment path is ever added, move the `certified` check
   into `apply_group_changes` — until then a DB-level check would be redundant.
+- **Session-cover gate (server-side, required)**: covering a session is *gedu-initiated*,
+  so unlike assignment this one is enforced in the database rather than in the picker.
+  Certification is part of the may-cover guard every cover write shares, the pool of open
+  requests reads back empty for an uncertified gedu, and the access a live cover grants to
+  the covered group's workspace is re-checked on every read — so withdrawing certification
+  mid-cover closes it at once rather than at the window's end. An admin arranging a sub by
+  hand passes the same guard, so no path seats an uncertified cover. The contrast with the
+  bullet above is the whole rule: assignment has one caller and it is an admin, a cover is
+  offered by any gedu who sees the request.
 - **Instant-voice-room gate (server-side, required)**: unlike assignment, spinning up,
   ending, or moderating an instant voice room is *gedu-initiated*, so a UI gate is not
   enough. An uncertified gedu is treated as a non-moderator across all three of that
