@@ -36,6 +36,10 @@ import type { SessionPhotoEditing } from "./staged-photos";
 import { SessionPlanEditor } from "./SessionPlanEditor";
 import { SessionRecordEditor } from "./SessionRecordEditor";
 import { SessionReportSend } from "./SessionReportSend";
+import {
+  SessionStaffingRegion,
+  type SessionCoverRequestDraft,
+} from "./SessionStaffingRegion";
 import { StaffNoteBlock } from "./StaffNoteBlock";
 import type {
   SessionEntryDraft,
@@ -146,6 +150,24 @@ interface SessionFeedItemProps {
    * whole feed.
    */
   registerEditButton: (node: HTMLButtonElement | null) => void;
+  /**
+   * File "I can't make this session" for **this** session — bound to the entry
+   * by the feed, so the card never has to turn its own id back into the (group,
+   * date) pair a cover request is keyed by.
+   *
+   * Absent on a surface that is not a gedu looking at their own session, which
+   * is what withholds the action; see the staffing region's own note on why the
+   * surface decides by what it supplies.
+   */
+  onRequestCover?: (draft: SessionCoverRequestDraft) => void | Promise<void>;
+  /** Take the viewer's own open request back. Awaited, like the save. */
+  onWithdrawCoverRequest?: (requestId: string) => void | Promise<void>;
+  /**
+   * The staffing editor this surface supplies for this entry, or nothing —
+   * rendered in the same region as the gedu's own action, because it is the
+   * other answer to the same question.
+   */
+  staffingEditor?: ReactNode;
   /** Open this entry's editor (or close it if it is already open). */
   onToggleEdit: () => void;
   onCancelEdit: () => void;
@@ -181,6 +203,14 @@ interface SessionFeedItemProps {
  * same corner. A card whose whole header was the click target taught a
  * different gesture for one state, which is exactly the state a gedu meets
  * least often and would have to relearn each time.
+ *
+ * **Who is running the session is its own region, under the header and outside
+ * both collapsing ones.** It carries the staffing line on a date with something
+ * outstanding, the viewer's own "I can't make this session" or the status of
+ * the absence they already filed, and the slot a shell with more power than a
+ * gedu puts its staffing editor in. It draws nothing on an ordinary card, which
+ * is nearly all of them — see the region's own note for why the line is
+ * withheld on a date with no request on it.
  *
  * **A past session says one of two things, or nothing.** An owed session missing
  * either half — a register that is not finished, a report that was never written
@@ -275,6 +305,9 @@ export function SessionFeedItem({
   photoConsents,
   creations,
   registerEditButton,
+  onRequestCover,
+  onWithdrawCoverRequest,
+  staffingEditor = null,
   onToggleEdit,
   onCancelEdit,
   onSave,
@@ -363,6 +396,31 @@ export function SessionFeedItem({
       />
     );
 
+  /**
+   * Who is running this one, and what this surface may do about it.
+   *
+   * **Outside both collapsing regions**, so it is on the card whether an editor
+   * is open or not: staffing is a fact about the session rather than part of
+   * anybody's draft, and nothing in it is committed by the editor's Save.
+   *
+   * `canRequestCover` is the entry's kind and nothing else. The action is for a
+   * session dated **today or later in the product's zone**, and a `future`
+   * entry is exactly that by construction: the kind flips at the session's
+   * *end*, so a future entry has not finished, and a session that has not
+   * finished cannot be dated before today in the zone its own day is measured
+   * in. Asking the clock a second time here would be a second answer free to
+   * disagree with the tag in the header.
+   */
+  const staffingRegion = (
+    <SessionStaffingRegion
+      staffing={entry.staffing}
+      canRequestCover={entry.kind === "future"}
+      onRequestCover={onRequestCover}
+      onWithdrawCoverRequest={onWithdrawCoverRequest}
+      staffingEditor={staffingEditor}
+    />
+  );
+
   const recordEditor = recordable && (
     <CollapsibleRegion open={editing} instant id={editorId}>
       <SessionRecordEditor
@@ -408,6 +466,12 @@ export function SessionFeedItem({
             </Button>
           </div>
         </div>
+        {/* A pre-epoch gap carries the region like any other row, and on an
+            ordinary one it draws nothing at all: the line renders only on a
+            date with a request, and no gedu can file one on a date this far in
+            the past. What it is here for is the admin path, which may record an
+            off-platform cover on any date the schedule projects. */}
+        {staffingRegion}
         {recordEditor}
       </div>
     );
@@ -522,6 +586,8 @@ export function SessionFeedItem({
           )}
         </div>
       </div>
+
+      {staffingRegion}
 
       <CollapsibleRegion open={!editing} instant>
         <SessionEntryBody

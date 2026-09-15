@@ -288,26 +288,26 @@ export const PREVIEW_SCENES = [
     surface: "gedu-dashboard",
     title: "Gedu dashboard",
     description:
-      "The body /gedu renders, over fixtures: the next-step band, one roll-up card per group grouped by type noun, the Tools section beneath, and Help & feedback last. Badge counts are counted out of the feed each card links to.",
+      "The body /gedu renders, over fixtures: the next-step band, the sessions-needing-cover queue, one roll-up card per group grouped by type noun, the Tools section beneath, and Help & feedback last. Badge counts are counted out of the feed each card links to.",
     chrome: "dashboard",
     scenarios: [
       {
         slug: "default",
         label: "Working dashboard",
         description:
-          "The working dashboard: all three type nouns and every card state that can share a page, under an unsigned contract band.",
+          "The working dashboard: all three type nouns and every card state that can share a page — a cover card among them — over a populated cover queue, under an unsigned contract band.",
       },
       {
         slug: "clubs-only",
         label: "Clubs only",
         description:
-          "The single-noun composition, at the card count where the grid wraps — and the page with no band at all.",
+          "The single-noun composition, at the card count where the grid wraps — the page with no band at all, and the cover queue's all-clear line.",
       },
       {
         slug: "uncertified",
         label: "Awaiting certification",
         description:
-          "An account awaiting approval, which by definition has no assignments — under the criminal-record band, the other of the two.",
+          "An account awaiting approval, which by definition has no assignments and no cover queue — under the criminal-record band, the other of the two.",
       },
     ],
   },
@@ -341,7 +341,7 @@ export const PREVIEW_SCENES = [
         slug: "club",
         label: "Club — remote, weekly",
         description:
-          "The kitchen sink: a year of history, every session state, and an unstaffed peer group.",
+          "The kitchen sink: a year of history, every session state, an unstaffed peer group, and the three cover states on the three soonest future cards.",
       },
       {
         slug: "camp",
@@ -483,7 +483,7 @@ export const PREVIEW_SCENES = [
     surface: "admin-dashboard",
     title: "Admin dashboard (draft redesign)",
     description:
-      "The /admin redesign over fixtures, pinned to a fixed Monday: the users strip, the needs-attention queue, Gedu certification, and the week's schedule. Filters, week steps and Certify work against local state.",
+      "The /admin redesign over fixtures, pinned to a fixed Monday: the users strip, the needs-attention queue, the cover requests, Gedu certification, and the week's schedule. Filters, week steps, Certify and Approve work against local state.",
     chrome: "admin",
     scenarios: [
       {

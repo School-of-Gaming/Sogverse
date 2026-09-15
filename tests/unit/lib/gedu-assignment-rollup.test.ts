@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  geduAssignmentKey,
+  geduCoverKey,
   rollUpGeduAssignments,
+  rollUpGeduCovers,
   type GeduAssignmentRow,
 } from "@/lib/gedu-assignment-rollup";
 // The roll-up's output is what the card asks its run-state questions of, so the
@@ -72,9 +75,9 @@ function rollUp(
     rows,
     now,
     locale: "en",
-    hrefByProductId: Object.fromEntries(
+    hrefByAssignment: Object.fromEntries(
       rows.map((r) => [
-        r.product.id,
+        geduAssignmentKey(r.product.id, r.groupId),
         {
           pathname: "/preview/[surface]/[scenario]",
           params: { surface: "gedu-product", scenario: r.product.id },
@@ -313,7 +316,7 @@ describe("rollUpGeduAssignments", () => {
     const summaries = rollUp(
       [row({ id: "p1", name: "A" }), row({ id: "p2", name: "B" })],
       now,
-      { attentionByProductId: { p1: 3 } },
+      { attentionByAssignment: { [geduAssignmentKey("p1", "p1-group")]: 3 } },
     );
     const byId = new Map(summaries.map((s) => [s.productId, s.attentionCount]));
     expect(byId.get("p1")).toBe(3);
@@ -325,8 +328,11 @@ describe("rollUpGeduAssignments", () => {
       [row({ id: "p1", name: "Remote Club", isRemote: true })],
       now,
       {
-        voiceHrefByProductId: {
-          p1: { pathname: "/voice/group/[id]", params: { id: "p1-group" } },
+        voiceHrefByAssignment: {
+          [geduAssignmentKey("p1", "p1-group")]: {
+            pathname: "/voice/group/[id]",
+            params: { id: "p1-group" },
+          },
         },
       },
     );
@@ -342,8 +348,8 @@ describe("rollUpGeduAssignments", () => {
       [row({ id: "onsite", name: "Onsite Club", isRemote: false })],
       now,
       {
-        voiceHrefByProductId: {
-          onsite: {
+        voiceHrefByAssignment: {
+          [geduAssignmentKey("onsite", "onsite-group")]: {
             pathname: "/voice/group/[id]",
             params: { id: "onsite-group" },
           },
@@ -411,5 +417,231 @@ describe("rollUpGeduAssignments", () => {
       now,
     );
     expect(summaries[0].siteName).toBeNull();
+  });
+
+  /**
+   * **The key moved from product to (product, group), and a cover is why.**
+   *
+   * A gedu holds at most one assignment per product, which is what made a
+   * product id look like a key. It stops being one the moment the same gedu can
+   * also cover a *sibling* group of that product: under a product key the two
+   * seats share a badge count, a workspace link and a voice room, and whichever
+   * the caller wrote last wins.
+   */
+  it("keys per-seat facts by (product, group), not by product", () => {
+    const mine = row({ id: "p1", name: "Club" });
+    const sibling: GeduAssignmentRow = {
+      ...row({ id: "p1", name: "Club" }),
+      groupId: "p1-group-b",
+    };
+
+    const summaries = rollUpGeduAssignments({
+      rows: [mine, sibling],
+      now,
+      locale: "en",
+      attentionByAssignment: {
+        [geduAssignmentKey("p1", "p1-group")]: 3,
+        [geduAssignmentKey("p1", "p1-group-b")]: 0,
+      },
+      hrefByAssignment: {
+        [geduAssignmentKey("p1", "p1-group")]: {
+          pathname: "/gedu/clubs/[id]",
+          params: { id: "p1" },
+        },
+        [geduAssignmentKey("p1", "p1-group-b")]: {
+          pathname: "/gedu/clubs/[id]",
+          params: { id: "p1" },
+        },
+      },
+      voiceHrefByAssignment: {
+        [geduAssignmentKey("p1", "p1-group")]: {
+          pathname: "/voice/group/[id]",
+          params: { id: "p1-group" },
+        },
+        [geduAssignmentKey("p1", "p1-group-b")]: {
+          pathname: "/voice/group/[id]",
+          params: { id: "p1-group-b" },
+        },
+      },
+    });
+
+    const byGroup = new Map(summaries.map((s) => [s.groupId, s]));
+    expect(byGroup.get("p1-group")?.attentionCount).toBe(3);
+    expect(byGroup.get("p1-group-b")?.attentionCount).toBe(0);
+    // The room is the group's, so the two seats must never land in one.
+    expect(byGroup.get("p1-group")?.voiceHref).toEqual({
+      pathname: "/voice/group/[id]",
+      params: { id: "p1-group" },
+    });
+    expect(byGroup.get("p1-group-b")?.voiceHref).toEqual({
+      pathname: "/voice/group/[id]",
+      params: { id: "p1-group-b" },
+    });
+  });
+
+  it("ignores cover rows — a cover is one afternoon, not a run", () => {
+    const summaries = rollUp(
+      [
+        row({ id: "p1", name: "Club" }),
+        { ...row({ id: "p2", name: "Covered Club" }), kind: "cover" as const, coveredDate: "2026-02-16" },
+      ],
+      now,
+    );
+    expect(summaries.map((s) => s.productId)).toEqual(["p1"]);
+  });
+});
+
+/**
+ * ============================================================================
+ * The cover roll-up
+ * ============================================================================
+ *
+ * A cover is one dated afternoon, so what has to hold is the opposite of the
+ * assignment roll-up's contract: no schedule walk, no run state, one card per
+ * covered date, and a workspace link that names the group — because a sub has
+ * no assignment row for one to be resolved from.
+ */
+describe("rollUpGeduCovers", () => {
+  // No clock: the database decides how long a cover card lasts (the access
+  // window), so this roll-up takes no `now` and there is none to pin here.
+
+  function coverRow(over: {
+    id: string;
+    name: string;
+    groupId?: string;
+    coveredDate: string;
+    isRemote?: boolean;
+    siteName?: string | null;
+    weekday?: number;
+  }): GeduAssignmentRow {
+    return {
+      ...row({
+        id: over.id,
+        name: over.name,
+        weekday: over.weekday ?? 0,
+        isRemote: over.isRemote ?? true,
+        siteName: over.siteName ?? null,
+      }),
+      groupId: over.groupId ?? `${over.id}-group`,
+      kind: "cover",
+      coveredDate: over.coveredDate,
+    };
+  }
+
+  function rollUpCovers(
+    rows: GeduAssignmentRow[],
+    extra: Partial<Parameters<typeof rollUpGeduCovers>[0]> = {},
+  ) {
+    return rollUpGeduCovers({
+      rows,
+      locale: "en",
+      hrefByAssignment: Object.fromEntries(
+        rows.map((r) => [
+          geduAssignmentKey(r.product.id, r.groupId),
+          { pathname: "/gedu/clubs/[id]", params: { id: r.product.id } },
+        ]),
+      ),
+      ...extra,
+    });
+  }
+
+  it("emits one card per covered date and skips assignment rows", () => {
+    const covers = rollUpCovers([
+      row({ id: "mine", name: "My Club" }),
+      // 16 Feb 2026 is a Monday, which is the weekday `row` slots by default.
+      coverRow({ id: "p1", name: "Covered Club", coveredDate: "2026-02-16" }),
+      coverRow({
+        id: "p1",
+        name: "Covered Club",
+        groupId: "p1-group-b",
+        coveredDate: "2026-02-23",
+      }),
+    ]);
+    expect(covers).toHaveLength(2);
+    expect(covers.map((c) => c.coveredDate)).toEqual([
+      "2026-02-16",
+      "2026-02-23",
+    ]);
+  });
+
+  it("resolves the covered session's instants from the date and the slots", () => {
+    const [cover] = rollUpCovers([
+      coverRow({ id: "p1", name: "Club", coveredDate: "2026-02-16" }),
+    ]);
+    // 16:30 Helsinki on 16 Feb is 14:30 UTC; the slot runs 90 minutes.
+    expect(cover.startsAt?.toISOString()).toBe("2026-02-16T14:30:00.000Z");
+    expect(cover.endsAt?.toISOString()).toBe("2026-02-16T16:00:00.000Z");
+  });
+
+  it("carries a date the schedule no longer projects, with no instants", () => {
+    // A Tuesday, on a club whose only slot is a Monday — an orphaned request,
+    // which is history rather than a fault and must not take the card away.
+    const [cover] = rollUpCovers([
+      coverRow({ id: "p1", name: "Club", coveredDate: "2026-02-17" }),
+    ]);
+    expect(cover.coveredDate).toBe("2026-02-17");
+    expect(cover.startsAt).toBeNull();
+    expect(cover.endsAt).toBeNull();
+  });
+
+  it("puts the group on the workspace link", () => {
+    const [cover] = rollUpCovers([
+      coverRow({
+        id: "p1",
+        name: "Club",
+        groupId: "sibling-group",
+        coveredDate: "2026-02-16",
+      }),
+    ]);
+    expect(cover.openHref).toEqual({
+      pathname: "/gedu/clubs/[id]",
+      params: { id: "p1" },
+      query: { groupId: "sibling-group" },
+    });
+  });
+
+  it("keys the attention count by (group, covered date)", () => {
+    const covers = rollUpCovers(
+      [
+        coverRow({ id: "p1", name: "Club", coveredDate: "2026-02-16" }),
+        coverRow({ id: "p1", name: "Club", coveredDate: "2026-02-23" }),
+      ],
+      {
+        attentionByCover: {
+          [geduCoverKey("p1-group", "2026-02-16")]: 1,
+        },
+      },
+    );
+    const byDate = new Map(covers.map((c) => [c.coveredDate, c.attentionCount]));
+    expect(byDate.get("2026-02-16")).toBe(1);
+    expect(byDate.get("2026-02-23")).toBe(0);
+  });
+
+  it("sorts soonest first and sinks an orphaned date to the foot", () => {
+    const covers = rollUpCovers([
+      coverRow({ id: "c", name: "Later", coveredDate: "2026-02-23" }),
+      coverRow({ id: "b", name: "Orphan", coveredDate: "2026-02-17" }),
+      coverRow({ id: "a", name: "Sooner", coveredDate: "2026-02-16" }),
+    ]);
+    expect(covers.map((c) => c.productName)).toEqual([
+      "Sooner",
+      "Later",
+      "Orphan",
+    ]);
+  });
+
+  it("gives an in-person cover its site and no room", () => {
+    const [cover] = rollUpCovers([
+      coverRow({
+        id: "p1",
+        name: "Camp",
+        coveredDate: "2026-02-16",
+        isRemote: false,
+        siteName: "Sello Library, Espoo",
+      }),
+    ]);
+    expect(cover.hasVoiceRoom).toBe(false);
+    expect(cover.siteName).toBe("Sello Library, Espoo");
+    expect(cover.voiceHref).toBe(INERT_HREF);
   });
 });

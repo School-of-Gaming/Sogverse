@@ -1,0 +1,330 @@
+import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/../messages/en.json";
+import { NowProvider } from "@/providers/now-provider";
+import { TimezoneProvider } from "@/providers/timezone-provider";
+import { SessionFeed } from "@/components/gedu/session-feed/SessionFeed";
+import type {
+  FutureSessionFeedEntry,
+  PastSessionFeedEntry,
+  SessionFeedGamer,
+} from "@/components/gedu/session-feed/types";
+import {
+  deriveSessionStaffing,
+  NO_SESSION_STAFFING,
+  type CoverRequestInput,
+  type StaffingAssignment,
+} from "@/lib/session-staffing";
+
+// Nothing here opens an editor or types into a note, so the markdown editor is
+// opaque — and it is by a wide margin the heaviest thing a feed suite loads.
+vi.mock("@/components/ui/rich-text-editor", () =>
+  import("../../mocks/rich-text-editor"),
+);
+
+/**
+ * ============================================================================
+ * Who is running this session, on the card that says so
+ * ============================================================================
+ *
+ * The staffing region is a three-way switch and every arm of it is a different
+ * page for the same gedu:
+ *
+ *   - **expected** → the "I can't make this session" action, and no status;
+ *   - **holding their own request** → the status line and the Withdraw beside
+ *     it, and *no* action, because somebody who has filed an absence is no
+ *     longer expected and must not be able to file a second one;
+ *   - **neither** → nothing at all, which is the state a colleague's session
+ *     card is in and the one an over-eager renderer gets wrong.
+ *
+ * The other half is the **staffing line**, which renders only on a date
+ * carrying a request. A fifty-week feed that printed its staffing on every card
+ * would repeat what the rail already says fifty times and bury the handful of
+ * dates where something is outstanding — so its absence on an ordinary card is
+ * as much the behaviour as its presence on a covered one.
+ *
+ * Everything is driven through the real feed rather than the region alone: what
+ * decides whether the action is offered is the entry's *kind*, and only the feed
+ * and the card together produce one.
+ */
+
+/** Real generated UUIDs — an id that reaches an identicon is never a stub. */
+const SANNA = "4a84d001-b789-41f5-ace3-cfcffa139869";
+const PETRA = "96e29545-ad63-4948-b783-14e91189ad75";
+const JOONAS = "d2826073-1d3f-4023-b45e-f42fea4332ca";
+
+const GEDUS: readonly StaffingAssignment[] = [
+  { id: SANNA, firstName: "Sanna", role: "primary" },
+  { id: PETRA, firstName: "Petra", role: "assistant" },
+];
+
+const FOUNDED = new Date("2020-01-01T00:00:00.000Z");
+const ROSTER: readonly SessionFeedGamer[] = [
+  {
+    id: "d9d0f5a8-6f97-4b0a-9a51-01d5a25a0f1e",
+    firstName: "Aino",
+    inGroupSince: FOUNDED,
+  },
+];
+
+const NOW = new Date("2026-03-16T09:00:00.000Z");
+/** A session still ahead of `NOW`, so the card's kind is `future`. */
+const FUTURE_DATE = "2026-03-16";
+const FUTURE_START = new Date("2026-03-16T14:30:00.000Z");
+const FUTURE_END = new Date("2026-03-16T16:00:00.000Z");
+/** A session that finished a week earlier — a `past` card, which never offers. */
+const PAST_DATE = "2026-03-09";
+const PAST_START = new Date("2026-03-09T14:30:00.000Z");
+const PAST_END = new Date("2026-03-09T16:00:00.000Z");
+
+function futureEntry(requests: readonly CoverRequestInput[], viewerId: string) {
+  return {
+    kind: "future",
+    id: `group-1:${FUTURE_DATE}`,
+    startsAt: FUTURE_START,
+    endsAt: FUTURE_END,
+    staffing: deriveSessionStaffing({
+      gedus: GEDUS,
+      requests,
+      sessionDate: FUTURE_DATE,
+      viewerId,
+    }),
+    report: null,
+    staffNote: null,
+    attendance: {},
+    images: [],
+    lastEditedBy: null,
+  } satisfies FutureSessionFeedEntry;
+}
+
+function pastEntry(requests: readonly CoverRequestInput[], viewerId: string) {
+  return {
+    kind: "past",
+    id: `group-1:${PAST_DATE}`,
+    startsAt: PAST_START,
+    endsAt: PAST_END,
+    staffing: deriveSessionStaffing({
+      gedus: GEDUS,
+      requests,
+      sessionDate: PAST_DATE,
+      viewerId,
+    }),
+    report: null,
+    staffNote: null,
+    attendance: {},
+    images: [],
+    owed: true,
+    reportEmailedAt: null,
+    lastEditedBy: null,
+  } satisfies PastSessionFeedEntry;
+}
+
+/** An open request somebody filed on the future session. */
+function openRequest(by: { id: string; firstName: string }): CoverRequestInput {
+  return {
+    id: `request-${by.id}`,
+    sessionDate: FUTURE_DATE,
+    requestedBy: by,
+    role: "primary",
+    status: "open",
+    coveredBy: null,
+    offerCount: null,
+  };
+}
+
+function renderFeed({
+  entries,
+  withCallbacks = true,
+  renderStaffingEditor,
+}: {
+  entries: readonly (FutureSessionFeedEntry | PastSessionFeedEntry)[];
+  /** Whether this surface supplies the gedu's two cover callbacks. */
+  withCallbacks?: boolean;
+  renderStaffingEditor?: () => React.ReactNode;
+}) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <TimezoneProvider initialTimezone="Europe/Helsinki">
+        <NowProvider initialNow={NOW}>
+          <SessionFeed
+            entries={entries}
+            now={NOW}
+            roster={ROSTER}
+            sourceTimeZone="Europe/Helsinki"
+            editingEntryId={null}
+            onEditEntry={() => {}}
+            onSaveEntry={() => {}}
+            onSendReport={() => Promise.resolve({ sent: 0, failed: 0, skipped: 0 })}
+            onAddPhoto={() => Promise.resolve("")}
+            onRemovePhoto={() => Promise.resolve()}
+            onRequestCover={withCallbacks ? () => {} : undefined}
+            onWithdrawCoverRequest={withCallbacks ? () => {} : undefined}
+            renderStaffingEditor={renderStaffingEditor}
+          />
+        </NowProvider>
+      </TimezoneProvider>
+    </NextIntlClientProvider>,
+  );
+}
+
+const copy = messages.gedu.sessionFeed;
+
+function actionButton() {
+  return screen.queryByRole("button", { name: copy.coverRequestAction });
+}
+
+function withdrawButton() {
+  return screen.queryByRole("button", { name: copy.coverWithdrawAction });
+}
+
+describe("the session card's staffing region", () => {
+  it("offers the action to a gedu expected on a future session", () => {
+    renderFeed({ entries: [futureEntry([], SANNA)] });
+    expect(actionButton()).not.toBeNull();
+    expect(withdrawButton()).toBeNull();
+  });
+
+  it("swaps the action for a status line once that gedu has filed", () => {
+    renderFeed({
+      entries: [
+        futureEntry(
+          [{ ...openRequest({ id: SANNA, firstName: "Sanna" }), offerCount: 2 }],
+          SANNA,
+        ),
+      ],
+    });
+    // The two can never be up together: a gedu who has filed is no longer
+    // expected, which is the derivation's own sentence rather than a branch
+    // this card makes.
+    expect(actionButton()).toBeNull();
+    expect(withdrawButton()).not.toBeNull();
+    expect(screen.getByText("2 offers waiting")).toBeTruthy();
+  });
+
+  it("shows no count where the reader is not told one", () => {
+    renderFeed({
+      entries: [futureEntry([openRequest({ id: SANNA, firstName: "Sanna" })], SANNA)],
+    });
+    // `null` is "not disclosed", which is a different fact from zero — so the
+    // line says the request is open and invents no number for it.
+    expect(screen.getByText(copy.coverRequestStatusOpen)).toBeTruthy();
+    expect(screen.queryByText(/offers waiting/)).toBeNull();
+  });
+
+  it("names the sub on a covered request, for everybody", () => {
+    renderFeed({
+      entries: [
+        futureEntry(
+          [
+            {
+              ...openRequest({ id: PETRA, firstName: "Petra" }),
+              status: "covered",
+              coveredBy: { id: JOONAS, firstName: "Joonas" },
+            },
+          ],
+          SANNA,
+        ),
+      ],
+    });
+    expect(screen.getByText("Joonas is covering for Petra.")).toBeTruthy();
+  });
+
+  it("offers nothing to a viewer who is neither expected nor a requester", () => {
+    // A signed-in gedu looking at a group they do not teach — the admin shell
+    // and the preview scenes reach the same state with no viewer at all.
+    renderFeed({ entries: [futureEntry([], "somebody-else")] });
+    expect(actionButton()).toBeNull();
+    expect(withdrawButton()).toBeNull();
+  });
+
+  it("offers nothing on a session that has already finished", () => {
+    // The action is for a session dated today or later, and a `past` entry is
+    // by construction neither.
+    renderFeed({ entries: [pastEntry([], SANNA)] });
+    expect(actionButton()).toBeNull();
+  });
+
+  it("withholds the action from a surface that supplies no callback", () => {
+    // The gate is what the surface hands over, not who is looking: the admin
+    // shell supplies the staffing editor in this slot instead.
+    renderFeed({ entries: [futureEntry([], SANNA)], withCallbacks: false });
+    expect(actionButton()).toBeNull();
+  });
+});
+
+describe("the staffing line", () => {
+  it("renders only on a date carrying a request", () => {
+    renderFeed({ entries: [futureEntry([], SANNA)] });
+    expect(screen.queryByText(/Running this session/)).toBeNull();
+    cleanup();
+
+    renderFeed({
+      entries: [futureEntry([openRequest({ id: PETRA, firstName: "Petra" })], SANNA)],
+    });
+    expect(screen.getByText(/Running this session/)).toBeTruthy();
+    expect(screen.getByText("Cover needed for Petra.")).toBeTruthy();
+  });
+
+  it("names who is expected, with the role each is paid for", () => {
+    renderFeed({
+      entries: [futureEntry([openRequest({ id: PETRA, firstName: "Petra" })], SANNA)],
+    });
+    // Petra has filed, so only Sanna is expected — and her pay class rides with
+    // her name, because that is what the line is for.
+    expect(
+      screen.getByText("Running this session: Sanna (Primary)"),
+    ).toBeTruthy();
+  });
+
+  it("says so when a request has left nobody expected", () => {
+    renderFeed({
+      entries: [
+        futureEntry(
+          [
+            openRequest({ id: SANNA, firstName: "Sanna" }),
+            openRequest({ id: PETRA, firstName: "Petra" }),
+          ],
+          SANNA,
+        ),
+      ],
+    });
+    expect(screen.getByText(copy.staffingNobodyExpected)).toBeTruthy();
+  });
+});
+
+describe("the staffing editor slot", () => {
+  it("renders whatever the surface supplies, on every card", () => {
+    renderFeed({
+      entries: [futureEntry([], SANNA), pastEntry([], SANNA)],
+      withCallbacks: false,
+      renderStaffingEditor: () => (
+        <button type="button">Staffing editor</button>
+      ),
+    });
+    expect(
+      screen.getAllByRole("button", { name: "Staffing editor" }),
+    ).toHaveLength(2);
+  });
+
+  it("is empty on the gedu side, which supplies none", () => {
+    renderFeed({ entries: [futureEntry([], SANNA)] });
+    expect(screen.queryByRole("button", { name: "Staffing editor" })).toBeNull();
+  });
+});
+
+/**
+ * The frozen empty staffing every fixture that is not about staffing hands
+ * over. It has to leave the card exactly as it was before any of this existed —
+ * which is what makes it safe to require the field on every entry kind.
+ */
+describe("NO_SESSION_STAFFING", () => {
+  it("draws nothing at all", () => {
+    renderFeed({
+      entries: [{ ...futureEntry([], SANNA), staffing: NO_SESSION_STAFFING }],
+    });
+    expect(actionButton()).toBeNull();
+    expect(withdrawButton()).toBeNull();
+    expect(screen.queryByText(/Running this session/)).toBeNull();
+  });
+});

@@ -17,9 +17,15 @@ import {
 } from "@/lib/products/format-product-schedule";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import {
+  geduAssignmentKey,
+  geduCoverKey,
   rollUpGeduAssignments,
+  rollUpGeduCovers,
   type GeduAssignmentRow,
+  type GeduCoverSummary,
 } from "@/lib/gedu-assignment-rollup";
+import { buildCoverPoolRows, type CoverPoolRow } from "@/lib/gedu-cover-pool";
+import type { OpenCoverRequest } from "@/services/session-cover";
 
 /**
  * Fixtures for the gedu dashboard preview scene — a plausible week for a gedu
@@ -66,13 +72,23 @@ import {
  *    footer zone holds the card's height open whether or not a button lands in
  *    it.
  *
+ * It also carries the two things a **sub** sees, because neither can be looked
+ * at anywhere else and both coexist with everything above: the **cover card**,
+ * one dated afternoon of a club this gedu does not teach, sitting at the head of
+ * the Clubs grid where it has to be told apart from the four recurring cards
+ * beside it; and the **pool section** above the whole page, with its rows
+ * differing in every way a row can differ — remote and in person, primary and
+ * assistant, a fee set and a fee not set, and one row already offered on.
+ *
  * `clubs-only` is the single-noun composition: one heading, one pill entry — and
  * **seven clubs**, because the other thing it exists to show is the grid. Two
  * cards tell you nothing about how the tiles wrap; seven fill a three-column
  * row and start a second one, which is where an uneven last row, a ragged bottom
  * edge or a card that grows on one breakpoint and not another actually becomes
  * visible. Their next sessions are spread across the week and a couple carry a
- * backlog, so the grid is not a row of identical tiles either.
+ * backlog, so the grid is not a row of identical tiles either. It is also where
+ * the pool's **all-clear** line lives — a certified gedu with nothing
+ * outstanding, which cannot share a render with the populated queue above.
  *
  * `uncertified` is the account an admin has not approved yet, which swaps the
  * instant-room panel for a notice and cannot be true at the same time as the
@@ -80,7 +96,9 @@ import {
  * page the account it describes actually meets: certification is what gates group
  * assignment, so a gedu waiting on it has nothing to be assigned to yet. It
  * therefore doubles as the empty-state scenario — the unheaded section with the
- * "when you're assigned to a group" line, which no other scenario can show.
+ * "when you're assigned to a group" line, which no other scenario can show. It
+ * is also the page with **no pool section at all**, heading and nav entry
+ * included: certification is what gates offering a cover too.
  */
 export const GEDU_DASHBOARD_SCENARIOS = [
   "default",
@@ -97,6 +115,26 @@ export function isGeduDashboardScenario(s: string): s is GeduDashboardScenario {
 export interface GeduDashboardFixture {
   /** One roll-up card per assignment, soonest next session first. */
   assignments: GeduAssignmentCardData[];
+  /**
+   * One card per live cover — a single session this gedu is standing in for,
+   * soonest covered date first.
+   *
+   * Non-empty on the `default` scenario alone: it is the composition worth
+   * looking at (a cover card beside the recurring cards it must not be mistaken
+   * for), and it cannot coexist with the uncertified page, which by definition
+   * has no seats of any kind.
+   */
+  covers: GeduCoverSummary[];
+  /**
+   * The pool the section above the cards lists, or `null` for the page that
+   * does not render the section at all.
+   *
+   * Built through the real derivation from real wire-shaped rows, so the scene
+   * shows the calendar maths the live page does rather than an imitation of it
+   * — a fixture that authored its own start and end instants would be the one
+   * place a wrong weekday could not show up.
+   */
+  coverPool: CoverPoolRow[] | null;
   certified: boolean;
   /** Whether the contract band is on the page. */
   contractAccepted: boolean;
@@ -113,6 +151,17 @@ const CAMP_PRODUCT_ID = "mock-dashboard-roblox-camp";
 const UPCOMING_CLUB_PRODUCT_ID = "mock-dashboard-fortnite-club";
 const EVENT_PRODUCT_ID = "mock-dashboard-lan-event";
 const ENDED_CLUB_PRODUCT_ID = "mock-dashboard-splatoon-club";
+/** The club this gedu is covering one session of, rather than teaching. */
+const COVER_PRODUCT_ID = "mock-dashboard-zelda-club";
+
+/**
+ * The covered session's own backlog: one, because that is the only non-zero a
+ * cover can have. A cover owes the session it covers and nothing else, so the
+ * badge is either absent or reads `1` — and `1` is the interesting one, since
+ * the whole argument for putting the badge on this card is that a sub's
+ * write-up is as owed as anybody's.
+ */
+const COVER_ATTENTION = 1;
 
 /**
  * The site the one-day event runs at.
@@ -358,6 +407,35 @@ export function buildGeduDashboardFixture(
     }),
   ];
 
+  /**
+   * One session this gedu is covering for somebody else — a club they do not
+   * teach, two days out.
+   *
+   * **Remote, so the card renders a Join**, which is the half of the cover
+   * card's footer that has to be seen beside the assignment cards' own: the two
+   * kinds of card share a grid row and must come out the same height without
+   * either of them holding a gap. It carries a backlog of one, which is the
+   * only count a cover can ever have — a cover owes one session, not a term.
+   */
+  const coverRows: GeduAssignmentRow[] = [
+    assignmentRow({
+      now,
+      id: COVER_PRODUCT_ID,
+      name: "Zelda Explorers Club",
+      productType: "consumer_club",
+      isRemote: true,
+      slots: [futureSlot(now, 2, "16:00", 90, SESSION_FEED_TIMEZONE)],
+      startedDaysAgo: 28,
+      endsInDays: null,
+      groupCount: 2,
+      participantCount: 12,
+      groupName: "Wednesday A",
+      groupParticipantCount: 6,
+      kind: "cover",
+      coveredDate: calendarDate(now, 2, SESSION_FEED_TIMEZONE),
+    }),
+  ];
+
   // An uncertified gedu has nothing assigned — certification is the gate on
   // group assignment — so the scenario that shows the awaiting-approval notice
   // is also the one that shows the empty state, and no card is built for it.
@@ -366,28 +444,63 @@ export function buildGeduDashboardFixture(
       ? []
       : scenario === "clubs-only"
         ? [...clubRows, ...extraClubRows]
-        : [...clubRows, ...endedRows, ...otherRows];
+        : [...clubRows, ...endedRows, ...otherRows, ...coverRows];
+
+  // Every per-seat map is keyed by (product, group), the same key the live
+  // dashboard builds — a product id alone stopped being unique the moment one
+  // gedu could hold an assignment on one group and a cover on another.
+  const hrefByAssignment = Object.fromEntries(
+    Object.entries(SCENE_BY_PRODUCT).map(([productId, sceneScenario]) => [
+      geduAssignmentKey(productId, `${productId}-group-a`),
+      previewSceneHref("gedu-product", sceneScenario),
+    ]),
+  );
 
   const assignments = rollUpGeduAssignments({
     rows,
     now,
     locale,
-    attentionByProductId: { ...sceneAttention, ...AUTHORED_ATTENTION },
-    hrefByProductId: Object.fromEntries(
-      Object.entries(SCENE_BY_PRODUCT).map(([productId, sceneScenario]) => [
-        productId,
-        previewSceneHref("gedu-product", sceneScenario),
-      ]),
-    ),
+    attentionByAssignment: keyedByAssignment({
+      ...sceneAttention,
+      ...AUTHORED_ATTENTION,
+    }),
+    hrefByAssignment,
     // Left empty on purpose: a preview has no room to join, so every Join
     // button collapses to its inert form while still rendering its real
     // open/locked state.
-    voiceHrefByProductId: {},
+    voiceHrefByAssignment: {},
+  });
+
+  const covers = rollUpGeduCovers({
+    rows,
+    locale,
+    attentionByCover: Object.fromEntries(
+      coverRows.map((row) => [
+        geduCoverKey(row.groupId, row.coveredDate!),
+        COVER_ATTENTION,
+      ]),
+    ),
+    hrefByAssignment,
+    voiceHrefByAssignment: {},
   });
 
   const rowsById = new Map(rows.map((row) => [row.product.id, row]));
 
   return {
+    covers,
+    // Withheld on the scenario whose account may cover nothing, which is what
+    // the live page does with it — there is no section, no heading and no nav
+    // entry for an uncertified gedu.
+    // Three scenarios, three answers, because no two of them can share a
+    // render: the populated queue, the all-clear line a certified gedu with
+    // nothing outstanding reads, and no section at all for the account that may
+    // cover nothing.
+    coverPool:
+      scenario === "uncertified"
+        ? null
+        : scenario === "clubs-only"
+          ? []
+          : buildCoverPoolRows(coverPoolRequests(now), locale),
     assignments: assignments.map((assignment) => {
       const row = rowsById.get(assignment.productId);
       return {
@@ -485,6 +598,133 @@ function sceneBackedFacts(now: Date): {
   return { attention, siteNames };
 }
 
+/**
+ * A product-keyed record rekeyed to (product, group) — the fixtures' groups are
+ * all `<product>-group-a`, so the map is mechanical.
+ *
+ * It exists so the authored numbers above stay readable (a product id is what a
+ * fixture author is thinking in) while the roll-up still receives the key it
+ * actually looks things up by.
+ */
+function keyedByAssignment(
+  byProductId: Readonly<Record<string, number>>,
+): Record<string, number> {
+  return Object.fromEntries(
+    Object.entries(byProductId).map(([productId, value]) => [
+      geduAssignmentKey(productId, `${productId}-group-a`),
+      value,
+    ]),
+  );
+}
+
+/**
+ * The pool, as the RPC would hand it over — four open requests a certified gedu
+ * could take, chosen to put every line of the row side by side on one screen.
+ *
+ * Wire rows rather than shaped ones on purpose: the scene runs them through the
+ * real derivation, so the weekday arithmetic that turns a bare date into a clock
+ * face in the viewer's zone is the arithmetic under review rather than something
+ * a fixture asserted for it.
+ *
+ * What they differ in is the whole point: a remote club and an in-person camp
+ * (the two answers to "where"), a primary seat and an assistant one, a fee set
+ * and a fee not set, and one row the caller has **already offered** on — which
+ * is the only way to see the button's offered state beside its offer state.
+ */
+function coverPoolRequests(now: Date): OpenCoverRequest[] {
+  const slot = (daysAhead: number, startTime: string, minutes: number) => {
+    const built = futureSlot(now, daysAhead, startTime, minutes, SESSION_FEED_TIMEZONE);
+    return [
+      {
+        weekday: built.weekday,
+        start_time: built.startTime,
+        duration_minutes: built.durationMinutes,
+      },
+    ];
+  };
+
+  return [
+    {
+      request_id: "mock-pool-request-1",
+      group_id: "mock-pool-group-1",
+      group_name: "Tuesday B",
+      session_date: calendarDate(now, 1, SESSION_FEED_TIMEZONE),
+      role: "primary",
+      fee_cents: 6500,
+      has_offered: false,
+      product: {
+        id: "mock-pool-product-1",
+        product_type: "consumer_club",
+        topic: "minecraft_java",
+        spoken_language_code: "fi",
+        timezone: SESSION_FEED_TIMEZONE,
+        is_remote: true,
+        start_date: calendarDate(now, -60, SESSION_FEED_TIMEZONE),
+        end_date: null,
+        site_name: null,
+        translations: [
+          { locale: "en", name: "Minecraft Redstone Club", description: "" },
+        ],
+        schedule_slots: slot(1, "17:00", 90),
+      },
+    },
+    {
+      request_id: "mock-pool-request-2",
+      group_id: "mock-pool-group-2",
+      group_name: "Greens",
+      session_date: calendarDate(now, 3, SESSION_FEED_TIMEZONE),
+      role: "assistant",
+      // Unset, which is the ordinary state of an assistant fee: the row simply
+      // says nothing about money rather than flagging a gap nobody is expected
+      // to close.
+      fee_cents: null,
+      has_offered: false,
+      product: {
+        id: "mock-pool-product-2",
+        product_type: "camp",
+        topic: "roblox_studio",
+        spoken_language_code: "en",
+        timezone: SESSION_FEED_TIMEZONE,
+        is_remote: false,
+        start_date: calendarDate(now, -2, SESSION_FEED_TIMEZONE),
+        end_date: calendarDate(now, 5, SESSION_FEED_TIMEZONE),
+        site_name: "Sello Library, Espoo",
+        translations: [
+          { locale: "en", name: "Roblox Studio Camp", description: "" },
+        ],
+        schedule_slots: slot(3, "10:00", 180),
+      },
+    },
+    {
+      request_id: "mock-pool-request-3",
+      group_id: "mock-pool-group-3",
+      group_name: "Thursday A",
+      session_date: calendarDate(now, 4, SESSION_FEED_TIMEZONE),
+      role: "primary",
+      fee_cents: 7500,
+      // Already offered — the other resting state of the one control, which
+      // cannot be seen on the same row as the offer state and has to be on a
+      // row of its own.
+      has_offered: true,
+      product: {
+        id: "mock-pool-product-3",
+        product_type: "municipality_club",
+        topic: "fortnite",
+        spoken_language_code: "sv",
+        timezone: SESSION_FEED_TIMEZONE,
+        is_remote: true,
+        start_date: calendarDate(now, -90, SESSION_FEED_TIMEZONE),
+        end_date: null,
+        site_name: null,
+        translations: [
+          { locale: "en", name: "Fortnite Creative Club", description: "" },
+        ],
+        schedule_slots: slot(4, "16:30", 90),
+      },
+    },
+  ];
+}
+
 function assignmentRow(opts: {
   now: Date;
   id: string;
@@ -504,6 +744,13 @@ function assignmentRow(opts: {
   groupParticipantCount: number;
   /** The site, on in-person products. Remote products have no building. */
   siteName?: string | null;
+  /**
+   * Which kind of seat the row is. `assignment` unless a fixture says
+   * otherwise, because the recurring card is what most of these are about.
+   */
+  kind?: GeduAssignmentRow["kind"];
+  /** The covered date, on a `cover` row — product-local `YYYY-MM-DD`. */
+  coveredDate?: string;
 }): GeduAssignmentRow {
   return {
     product: {
@@ -519,11 +766,11 @@ function assignmentRow(opts: {
       translations: [{ locale: "en", name: opts.name, description: "" }],
     },
     groupId: `${opts.id}-group-a`,
-    // A standing assignment — the recurring card these fixtures are all about.
-    // A live cover is its own small card with its own date and is fixtured
-    // where that card is demoed.
-    kind: "assignment",
-    coveredDate: null,
+    // A standing assignment unless a fixture says otherwise — the recurring
+    // card these fixtures are mostly about. A live cover is its own small card
+    // with its own date, and the pair of fields below is what makes one.
+    kind: opts.kind ?? "assignment",
+    coveredDate: opts.coveredDate ?? null,
     groupCount: opts.groupCount,
     participantCount: opts.participantCount,
     groupName: opts.groupName,

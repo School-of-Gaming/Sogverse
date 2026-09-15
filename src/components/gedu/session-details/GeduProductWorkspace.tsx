@@ -28,17 +28,56 @@ import { GeduProductPage } from "./GeduProductPage";
  */
 export async function GeduProductWorkspace({
   productId,
+  groupIdParam,
 }: {
   productId: string;
+  /**
+   * The URL's `?groupId=`, exactly as Next hands it over — a string, a repeated
+   * param's array, or nothing.
+   *
+   * **A cover card's link is what carries it.** A gedu covering one afternoon
+   * of a group they are not assigned to has no assignment row to resolve a
+   * group from, and one covering a *sibling* group of a product they already
+   * teach would otherwise be sent to their own group's workspace — the right
+   * product, the wrong roster.
+   *
+   * It is parsed here rather than in each of the three routes, so there is one
+   * copy of the rule: anything that is not a single uuid is **ignored** rather
+   * than rejected, because the path is what has to resolve and the param is a
+   * lens over a page that exists. A uuid naming a group the caller can reach
+   * neither by assignment nor by a live cover is refused by the RPC, which
+   * renders the ordinary not-yours state.
+   */
+  groupIdParam?: string | string[];
 }) {
+  const groupId = parseGroupId(groupIdParam);
   const queryClient = new QueryClient();
-  await seedWorkspace(queryClient, productId);
+  await seedWorkspace(queryClient, productId, groupId);
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <GeduProductPage productId={productId} viewerId={await viewerId()} />
+      <GeduProductPage
+        productId={productId}
+        groupId={groupId}
+        viewerId={await viewerId()}
+      />
     </HydrationBoundary>
   );
+}
+
+/**
+ * A `?groupId=` that is a single uuid, or `null`.
+ *
+ * Shape-checked rather than merely non-empty: the value is handed straight to a
+ * `uuid` RPC parameter, and Postgres answers a malformed one with a 22P02 that
+ * would take the whole page down instead of rendering it on the caller's own
+ * group. A repeated param is a URL nobody meant to build and is ignored whole.
+ */
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function parseGroupId(raw: string | string[] | undefined): string | null {
+  return typeof raw === "string" && UUID_PATTERN.test(raw) ? raw : null;
 }
 
 /**
@@ -85,15 +124,19 @@ async function viewerId(): Promise<string | null> {
 async function seedWorkspace(
   queryClient: QueryClient,
   productId: string,
+  groupId: string | null,
 ): Promise<void> {
   try {
     const supabase = await createClient();
 
     const product = await new AssignmentsService(
       supabase,
-    ).getAssignedProductDetail(productId);
+    ).getAssignedProductDetail(productId, groupId);
+    // The group id is a segment of the key as well as an argument of the call,
+    // so a seed made for one group cannot be handed to a page asking about
+    // another — see the key factory's own note.
     queryClient.setQueryData(
-      assignmentKeys.assignedProductDetail(productId),
+      assignmentKeys.assignedProductDetail(productId, groupId),
       product,
     );
     if (product === null) return;

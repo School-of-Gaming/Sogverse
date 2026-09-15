@@ -576,6 +576,96 @@ rather than annotated, because it described a membership rule the route no longe
 Three files are annotated assignment-only: the admin product-list filter, the product read
 that feeds it, and the prose reference in the assignments service.
 
+## Notes from Step 3 (the gedu surfaces), for Steps 4–5
+
+Deviations and decisions the later steps have to know about. Everything not listed here
+was built as the plan and the cold-read answers say.
+
+**The card's staffing is ONE region, outside both collapsing regions.**
+`SessionStaffingRegion` (in `src/components/gedu/session-feed/`) holds the staffing line,
+the gedu's own action or the status of the absence they filed, and the slot the admin
+shell's editor lands in — because the three answer one question between them and two of
+them are mutually exclusive anyway (a gedu who has filed is no longer expected). It sits
+under the card header and outside the display/editor pair, so it survives an editor
+opening; it renders on the pre-epoch dashed row too, where it draws nothing unless an
+admin has recorded something on that date. It returns `null` when it has nothing to say,
+which is nearly every card.
+
+**The date test for "I can't make this session" is the entry's KIND and nothing else.**
+A `future` entry has not *ended*, and a session that has not ended cannot be dated before
+today in the zone its own day is measured in — so `kind === "future"` already is "today or
+later, product-local", and asking the clock again in the card would be a second answer
+free to disagree with the tag two inches above it.
+
+**Three props, not one, and they thread `SessionFeed` → `GroupWorkspace` unchanged.**
+`onRequestCover(entry, draft)`, `onWithdrawCoverRequest(requestId)` and
+`renderStaffingEditor(entry)`. **Step 4 supplies the render prop and neither callback.**
+It is a render prop rather than a node because the editor acts on *one* session. The rule
+is written into `src/components/group-workspace/CLAUDE.md`, where it is recorded as the
+one real departure from "what a shell owns is where the data comes from": staffing is the
+first genuine *capability* difference between the two shells.
+
+**`useGeduAssignedProduct` gained a `groupId` argument** — a one-line change in
+`src/services/assignments/assignments.queries.ts`, which Step 3 nominally does not own.
+The key factory already took the segment (Step 2); without the hook taking it too the
+query would have read a key nobody writes. The workspace component owns the single copy
+of the param rule: `?groupId=` is validated as one uuid and **ignored** otherwise (the
+path is what must resolve), and the three routes pass it through raw.
+
+**The roll-up's per-seat maps are keyed by `geduAssignmentKey(product, group)`**, and a
+cover's own identity is `geduCoverKey(group, coveredDate)`. `rollUpGeduAssignments` now
+*filters out* cover rows, and a sibling `rollUpGeduCovers` emits `GeduCoverSummary` — a
+deliberately different shape, since almost every field of the assignment summary answers a
+question about a run. The cover roll-up takes **no clock**: how long a cover card lasts is
+the access window, which the database decides by returning the row or not.
+
+**The dashboard's join key gained the kind and the covered date.** Group id alone stopped
+being unique once one group can be both somebody's assignment and somebody's covered
+Monday, and two covered Mondays of one group are two rows with two counts.
+
+**Cover cards share the type-noun grid, at the head of their section.** Not a section of
+their own: a gedu's week is one week whichever seat put a session in it, and a gedu with
+one cover would otherwise get a whole heading for one card. The body takes `covers` as a
+second list beside `assignments` and merges them.
+
+**The pool section is a NODE the page hands the body** (`coverPool`), like the two tool
+panels — `null` for an uncertified gedu, which withholds the heading and the nav entry as
+well as the body. The container additionally passes `enabled: certified` to the hook, so
+the read is not made for a page nobody will see. **It is server-prefetched**: the route
+already makes four reads in one `Promise.all`, and a failed prefetch answers `null`
+("ask again") rather than an empty list.
+
+**New shared helper `src/lib/session-date-occurrence.ts`** — `occurrenceOnDate(date,
+slots, timezone)`, the inverse of the schedule walk. Both the cover card and the pool row
+need it, and `null` (a weekday the schedule no longer projects) is a real answer that
+falls back to the bare date rather than dropping the row.
+
+**Message namespaces.** The card's copy joined `gedu.sessionFeed`, where the component
+that renders it already reads. The dashboard's cover copy is a **new** `gedu.cover`
+namespace (card + pool), because no gedu-dashboard namespace existed; the pool's nav chip
+is `dashboardSections.coverPool`. Vocabulary is the plan's: "sub" for the person, "cover"
+for the act.
+
+**English only, and type-check is therefore NOT green on this branch.** `Messages` is
+`typeof en`, so every en-only key fails `src/i18n/messages.ts`'s assignment for fi/sv/fr
+and tlh. Step 5 closes it. At the end of Step 3 the missing set was 60 keys — 41 from
+these surfaces (`gedu.cover.*` 14, `gedu.sessionFeed.*` 26, `dashboardSections.coverPool`)
+and 19 from Step 4's. Nothing else in the tree fails `tsc`.
+
+**Preview scenes: extended, not added.** `gedu-dashboard/default` gained the cover card and
+a populated pool; `clubs-only` shows the pool's all-clear line; `uncertified` shows no
+section at all — three states that cannot share a render, one per existing scenario.
+`gedu-product/club` gained the three cover states on its three soonest future cards, and
+its scene files and withdraws against local **rows**, re-deriving the staffing, so the
+action really does turn into a status line.
+
+**Tests.** `tests/unit/components/gedu-session-cover.test.tsx` (the three-way switch, the
+line's date-gating, the editor slot, `NO_SESSION_STAFFING` drawing nothing),
+`tests/unit/components/gedu-cover-card.test.tsx`, and `tests/unit/lib/
+gedu-assignment-rollup.test.ts` extended with the key change and the cover roll-up.
+`member-flair-wiring.test.tsx` needed a `@/services/session-cover` mock, because the gedu
+workspace now binds two more mutations.
+
 ## Answers from the cold-read (settled; the implementer does not re-decide these)
 
 **Schema and predicates**
@@ -696,3 +786,79 @@ that feeds it, and the prose reference in the assignments service.
 - Vocabulary: **sub** is the person, **cover** is the act and the request. fr/sv/tlh
   follow the catalogues' existing conventions. Message namespaces follow the nearest
   existing surface namespace.
+
+## Notes from Step 4a (the dashboard panel, the role control, the picker), for 4b–5
+
+Deviations and decisions the rest of the admin work and the copy step have to know
+about. Everything not listed here was built as the plan and the cold-read answers say.
+
+**The cover row states a DATE and no time, because the wire carries no slots.** The plan
+says the queue emits "the date plus the product's slots and timezone for the client to
+compute instants, exactly as the feeds do" — true of `get_open_cover_requests` (the gedu
+pool) and **not** of the dashboard's `cover_requests` member, whose `product` carries
+`{id, product_type, timezone, is_remote, translations[]}` and nothing else. So the row
+renders `session_date` as a bare calendar date, UTC-pinned like every other zoneless date
+in this app, with a weekday in front of it. Joining to the same document's
+`schedule_products` for slots was considered and dropped: an orphaned request — the one
+case the queue exists to tolerate — is precisely where that join would print a time the
+schedule no longer projects. **If a time is wanted here, the fix is to widen the RPC's
+`product` with `schedule_slots`, not to join in the browser.**
+
+**There is no batch save on the groups panel, so the role select does not stage.** The
+plan and the cold-read both say the role control is "staged with the panel's batch save
+like every other change"; in fact every control on that panel persists immediately
+(optimistic patch, settle refetch, no Save button — the per-action auto-save contract at
+the top of the groups query module). The select therefore posts on change through the
+add-gedu mutation carrying the new role, which is the upsert the RPC was given for
+exactly this, and that mutation's optimistic patch already moves an existing pill's role
+rather than no-opping. Nothing was staged, because there is nothing to stage into.
+
+**The add-gedu flow asks for no role.** An add assigns `primary`, and the pill's own
+select is where the other value is chosen, one press later. The picker sheet has no
+confirm step today — a row selects and closes in one press — so adding one would have
+made every add answer a question whose answer is `primary` nearly every time. Recorded
+because the plan left the choice to the implementer.
+
+**The picker's disabled rule is a reason, not a list.** `excludeIds?: string[]` is gone;
+the prop is `unavailable?: ReadonlyMap<string, GeduPickerUnavailability>`, where
+`GeduPickerUnavailability = "assigned" | "expected" | "absent"`, exported from
+`src/components/admin/products/gedu-picker-sheet.tsx`. The badge on a refused row names
+the caller's reason. The sheet keeps its own two refusals and neither is in the union:
+the id in `highlightId` (badged "current") and an uncertified account (badged "not
+certified", still failing closed when the certification read errors). Where both apply the
+caller's reason wins the badge. **The session staffing editor builds against this map**,
+with `absent` for the gedu being covered and `expected` for anyone already due there.
+
+**The receipt lives on the panel, not on the list** — the opposite of the certification
+queue, and for the same underlying reason. That section is permanent, so its list cannot
+unmount under its own receipt; this one collapses to an all-clear row, so approving the
+last request would take the confirmation away at the moment there is most to confirm. The
+collapse keeps the panel's title and puts the all-clear line, the receipt and the check in
+one right-packed group opposite it — the attention panel replaces its title instead,
+because "Needs attention · all clear" reads as a heading denying itself and "Cover
+requests · nothing needs a sub" does not.
+
+**The dashboard shell awaits its own invalidation.** The approve mutation fires five
+invalidations without waiting for any of them, which is right for the four documents this
+page is not reading and not enough for the one it is: the panel's row has to leave exactly
+once. So the shell awaits the admin-dashboard key after the write, exactly as the certify
+handler does, and only then does the promise the panel is holding settle.
+
+**`src/types/index.ts` gained the two cover-dashboard re-exports.** The offer and request
+types were exported from the admin-dashboard service's own index in Step 2 but not through
+`@/types`, which every other member of that document goes through. Two lines, so the build
+layer's imports read like their neighbours.
+
+**Type-check does not pass on this branch yet, and the reason is Step 5.** Every locale but
+`en` is typed against `en`'s shape, so the English-only keys this step and Step 3 both
+added leave `fi`/`sv`/`fr`/`tlh` incomplete until the copy step lands. That is the only
+class of error `tsc` reports for this work.
+
+**No preview home for the role control.** The groups panel has neither a preview scene nor
+a style-guide demo, and building one is a piece of work in its own right — the board
+carries drag-and-drop, three overlays and a snapshot-shaped prop set. The select is
+covered by a jsdom test instead: the pill's own narrowing of the `<select>` value, and the
+intent reaching the shell through the view. The dashboard panel rides the existing
+admin-dashboard scene, where `busy` carries three requests (two with offers, one without)
+and `quiet` is the collapsed all-clear — the fewest scenarios that still cover the
+mutually exclusive states.

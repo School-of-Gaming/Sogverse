@@ -22,6 +22,11 @@ import {
   GeduSessionsService,
   type GeduAssignmentSummary,
 } from "@/services/gedu-sessions";
+// The service class rather than the package index, for the same reason the
+// contract service is imported directly above: that index re-exports "use
+// client" query hooks.
+import { SessionCoverService } from "@/services/session-cover/session-cover.service";
+import type { OpenCoverRequest } from "@/services/session-cover/session-cover.contracts";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -68,6 +73,36 @@ async function getInitialAssignmentSummaries(): Promise<
     const supabase = await createClient();
     const service = new GeduSessionsService(supabase);
     return await service.getMyAssignmentSummaries();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Prefetch the cover pool — every open request this gedu could take.
+ *
+ * **Asked only of a certified gedu**, because certification is what gates
+ * offering and holding a cover server-side: an uncertified caller may cover
+ * nothing, the section is withheld from them whole, and a read made for a page
+ * nobody will see is a read nobody wanted.
+ *
+ * **Failure answers `null`, not an empty list**, the same distinction the
+ * summaries above draw: an empty pool is a real and common answer, and rendering
+ * "nothing needs cover" on the strength of a Supabase blip would tell a gedu the
+ * queue is clear when it is not. `null` sends the client to ask again.
+ *
+ * It is prefetched rather than left client-only because the existing shell
+ * already makes four server reads for this page in one `Promise.all` and hands
+ * the answers down as props — a fifth costs nothing and keeps the section from
+ * being the one thing on the dashboard that lands a round trip late.
+ */
+async function getInitialCoverRequests(
+  certified: boolean,
+): Promise<OpenCoverRequest[] | null> {
+  if (!certified) return null;
+  try {
+    const supabase = await createClient();
+    return await new SessionCoverService(supabase).getOpenRequests();
   } catch {
     return null;
   }
@@ -167,10 +202,16 @@ export default async function GeduDashboardRoute() {
     getHasCriminalRecordCheck(),
   ]);
 
+  // Sequential with the four above rather than beside them: whether to ask for
+  // the pool at all depends on certification, and asking for a page nobody will
+  // see is a read nobody wanted.
+  const initialCoverRequests = await getInitialCoverRequests(certified);
+
   return (
     <GeduDashboardPage
       initialRows={initialRows}
       initialSummaries={initialSummaries}
+      initialCoverRequests={initialCoverRequests}
       certified={certified}
       contractAccepted={contractAccepted}
       criminalRecordCheckPassed={criminalRecordCheckPassed}
