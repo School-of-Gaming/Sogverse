@@ -20,7 +20,10 @@ import {
 import { useSeatOfferSweepOnMount } from "@/services/participations";
 import type { ProductAudience } from "@/lib/products/product-audience";
 import { ParticipantPickerSheet } from "../participant-picker-sheet";
-import { GeduPickerSheet } from "../gedu-picker-sheet";
+import {
+  GeduPickerSheet,
+  type GeduPickerUnavailability,
+} from "../gedu-picker-sheet";
 import { GroupsPanelView, type GroupsPanelActions } from "./groups-panel-view";
 import { SwitchClubSheet } from "./switch-club-sheet";
 import { robloxIdsFrom } from "./panel-rules";
@@ -180,16 +183,17 @@ export function GroupsPanel({
     return ids;
   }, [snapshot]);
 
-  // One Gedu per product (DB unique constraint), so the picker excludes anyone
-  // already assigned to any group. Removals aren't optimistic, so a Gedu mid-
-  // removal stays excluded until the settle refetch — correct.
-  const allAssignedGeduIds = useMemo(() => {
-    if (!snapshot) return [];
-    const ids = new Set<string>();
+  // One Gedu per product (DB unique constraint), so the picker refuses anyone
+  // already assigned to any group — and says so on the row, which is what the
+  // reason in this map is for. Removals aren't optimistic, so a Gedu mid-
+  // removal stays refused until the settle refetch — correct.
+  const alreadyAssigned = useMemo(() => {
+    const byId = new Map<string, GeduPickerUnavailability>();
+    if (!snapshot) return byId;
     for (const g of snapshot.groups) {
-      for (const ge of g.gedus) ids.add(ge.id);
+      for (const ge of g.gedus) byId.set(ge.id, "assigned");
     }
-    return Array.from(ids);
+    return byId;
   }, [snapshot]);
 
   // One batched lookup for the entire snapshot — groups, inbox and waitlist
@@ -216,6 +220,25 @@ export function GroupsPanel({
     onDeleteGroup: (groupId) => deleteGroup.mutate({ groupId }),
     onCreateGroup: (name) => createGroup.mutate({ name }),
     onRemoveGedu: (groupId, geduId) => removeGedu.mutate({ groupId, geduId }),
+    // A role change IS an add: the assignment writer upserts on (group, gedu)
+    // and updates the role, so the pill's select posts through the same
+    // mutation the picker does — which is also why the optimistic patch moves
+    // an existing pill's role rather than no-opping on a duplicate id. The
+    // name and address come off the snapshot the pill was drawn from, so the
+    // patch redraws the same person rather than blanking them for a frame.
+    onSetGeduRole: (groupId, geduId, role) => {
+      const gedu = snapshot?.groups
+        .find((g) => g.id === groupId)
+        ?.gedus.find((ge) => ge.id === geduId);
+      if (!gedu) return;
+      addGedu.mutate({
+        groupId,
+        geduId,
+        firstName: gedu.first_name,
+        email: gedu.email,
+        role,
+      });
+    },
     onRequestAddGedu: setPickerForGroupId,
     onRequestAddParticipant: () => setParticipantPickerOpen(true),
     // `mutateAsync`, unlike every intent above it: the row's Invite button has
@@ -276,14 +299,20 @@ export function GroupsPanel({
               name: groupBeingStaffed?.name ?? "",
             })}
             description={t("picker.addDescription")}
-            excludeIds={allAssignedGeduIds}
+            unavailable={alreadyAssigned}
             onSelect={(gedu) => {
               if (!pickerForGroupId) return;
+              // No role step: an add assigns as `primary`, which is what every
+              // assignment was before roles existed and what nearly all of them
+              // stay. The pill's own select is where the other value is chosen,
+              // one press later, rather than in a question every add has to
+              // answer.
               addGedu.mutate({
                 groupId: pickerForGroupId,
                 geduId: gedu.id,
                 firstName: gedu.first_name,
                 email: gedu.email,
+                role: "primary",
               });
               setPickerForGroupId(null);
             }}

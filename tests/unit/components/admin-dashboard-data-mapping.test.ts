@@ -6,6 +6,7 @@ import {
 } from "@/components/admin/dashboard/build-admin-dashboard-data";
 import type {
   AdminDashboardAttentionProduct,
+  AdminDashboardCoverRequest,
   AdminDashboardScheduleProduct,
   AdminDashboardSnapshot,
 } from "@/types";
@@ -826,10 +827,134 @@ describe("the certification queue", () => {
   });
 });
 
+describe("the cover queue", () => {
+  const request: AdminDashboardCoverRequest = {
+    id: "request-1",
+    group_id: "group-1",
+    group_name: "Ryhmä A",
+    session_date: "2026-08-21",
+    role: "assistant",
+    reason: "sick",
+    reason_note: "Flunssa.",
+    created_at: "2026-08-17T06:00:00Z",
+    requested_by: "gedu-1",
+    requested_by_first_name: "Milo",
+    requested_by_last_name: "Korhonen",
+    product: {
+      id: "product-1",
+      product_type: "camp",
+      timezone: HELSINKI,
+      is_remote: false,
+      translations: [
+        { locale: "en", name: "Roblox camp" },
+        { locale: "fi", name: "Roblox-leiri" },
+      ],
+    },
+    offers: [
+      {
+        id: "offer-1",
+        gedu_id: "gedu-2",
+        first_name: "Eeli",
+        last_name: "Virtanen",
+        certified: true,
+        criminal_record_check_at: "2026-05-04T08:00:00Z",
+        created_at: "2026-08-17T07:00:00Z",
+      },
+    ],
+  };
+
+  it("names the product in the reader's locale and links at the group's own page", () => {
+    const [row] = build(snapshot({ cover_requests: [request] })).coverRequests;
+
+    expect(row.productName).toBe("Roblox camp");
+    expect(row.groupName).toBe("Ryhmä A");
+    expect(row.requesterName).toBe("Milo Korhonen");
+    expect(row.role).toBe("assistant");
+    expect(row.reason).toBe("sick");
+    expect(row.reasonNote).toBe("Flunssa.");
+    expect(row.groupHref).toEqual({
+      pathname: "/admin/camps/[id]/groups/[groupId]",
+      params: { id: "product-1", groupId: "group-1" },
+    });
+  });
+
+  /**
+   * The session date carries no clock face — the wire ships the product's zone
+   * but not its slots — so it is a zoneless calendar date and renders as
+   * itself. A viewer on the other side of the world reading it a day earlier is
+   * exactly the case a viewer-zone conversion would get wrong.
+   */
+  it("renders the session date as itself, in every viewer's zone", () => {
+    const helsinki = build(snapshot({ cover_requests: [request] }), HELSINKI);
+    const losAngeles = build(
+      snapshot({ cover_requests: [request] }),
+      LOS_ANGELES,
+    );
+
+    expect(helsinki.coverRequests[0].sessionDate).toBe("Fri, Aug 21");
+    expect(losAngeles.coverRequests[0].sessionDate).toBe(
+      helsinki.coverRequests[0].sessionDate,
+    );
+  });
+
+  /** The offerer's extract IS an instant, so it converts — unlike the date above. */
+  it("converts each offer's record-check stamp into the viewer's zone", () => {
+    const helsinki = build(snapshot({ cover_requests: [request] }), HELSINKI);
+    const losAngeles = build(
+      snapshot({ cover_requests: [request] }),
+      LOS_ANGELES,
+    );
+
+    expect(helsinki.coverRequests[0].offers[0].criminalRecordCheckOn).toBe(
+      "May 4, 2026",
+    );
+    expect(losAngeles.coverRequests[0].offers[0].criminalRecordCheckOn).toBe(
+      "May 4, 2026",
+    );
+    expect(helsinki.coverRequests[0].offers[0].certified).toBe(true);
+  });
+
+  it("hands an unnamed account over as null, for the row to word", () => {
+    const [row] = build(
+      snapshot({
+        cover_requests: [
+          {
+            ...request,
+            requested_by_first_name: "",
+            requested_by_last_name: "  ",
+            offers: [
+              { ...request.offers[0], first_name: " ", last_name: "" },
+            ],
+          },
+        ],
+      }),
+    ).coverRequests;
+
+    expect(row.requesterName).toBeNull();
+    expect(row.offers[0].name).toBeNull();
+  });
+
+  it("keeps the read's own order — date, then product — without re-sorting", () => {
+    const later: AdminDashboardCoverRequest = {
+      ...request,
+      id: "request-2",
+      session_date: "2026-08-28",
+      product: { ...request.product, translations: [{ locale: "en", name: "A club" }] },
+    };
+    const data = build(snapshot({ cover_requests: [request, later] }));
+
+    expect(data.coverRequests.map((row) => row.id)).toEqual([
+      "request-1",
+      "request-2",
+    ]);
+  });
+});
+
 describe("an empty platform", () => {
   it("still offers a full week window, with nothing in it", () => {
     const data = build(snapshot());
 
+    expect(data.coverRequests).toEqual([]);
     expect(data.products).toEqual([]);
     expect(buildCertificationQueue([], "en", NOW, HELSINKI)).toEqual([]);
     expect(data.comingUp).toEqual([]);

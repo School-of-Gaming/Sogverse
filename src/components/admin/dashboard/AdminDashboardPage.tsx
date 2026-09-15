@@ -13,6 +13,7 @@ import {
 } from "@/services/admin-dashboard";
 import { useSetGeduCertified } from "@/services/gedu";
 import { useSeatOfferSweepOnMount } from "@/services/participations";
+import { useApproveSessionCoverOffer } from "@/services/session-cover";
 import { AdminDashboardPageBody } from "./admin-dashboard-page-body";
 import {
   buildAdminDashboardData,
@@ -104,6 +105,7 @@ export function AdminDashboardPage({
     enabled: sweepSettled,
   });
   const setCertified = useSetGeduCertified();
+  const approveCoverOffer = useApproveSessionCoverOffer();
 
   const viewerDay = formatInTimeZone(now, timeZone, "yyyy-MM-dd");
 
@@ -199,7 +201,33 @@ export function AdminDashboardPage({
     [setCertified, queryClient],
   );
 
+  /**
+   * Seat the gedu behind one offer, and wait for the queue to agree.
+   *
+   * `mutateAsync` for the reason the certification write uses it — the panel
+   * drops a row on the resolution and shows a retry on the rejection, and a
+   * fire-and-forget call could tell it neither. The awaited invalidation is the
+   * other half of that contract: the mutation's own `onSuccess` fires five
+   * invalidations without waiting for any of them, which is right for the four
+   * documents nothing on this page is reading, and not enough for the one it
+   * is. Awaiting the dashboard key here means the refetched snapshot has
+   * already dropped the request by the time the promise settles — so the row
+   * leaves once, rather than leaving on the receipt and coming back for a
+   * frame when the old document re-renders.
+   */
+  const handleApproveCoverOffer = useCallback(
+    async (offerId: string) => {
+      await approveCoverOffer.mutateAsync({ offerId });
+      await queryClient.invalidateQueries({ queryKey: adminDashboardKeys.all });
+    },
+    [approveCoverOffer, queryClient],
+  );
+
   return (
-    <AdminDashboardPageBody data={data} onCertifyGedu={handleCertifyGedu} />
+    <AdminDashboardPageBody
+      data={data}
+      onCertifyGedu={handleCertifyGedu}
+      onApproveCoverOffer={handleApproveCoverOffer}
+    />
   );
 }

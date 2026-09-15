@@ -1,4 +1,9 @@
-import type { ProductType, UserRole } from "@/types";
+import type {
+  CoverReason,
+  GeduAssignmentRole,
+  ProductType,
+  UserRole,
+} from "@/types";
 import type { AppHref } from "@/lib/constants/routes";
 
 /**
@@ -311,6 +316,78 @@ export interface ComingUpDay {
   cohorts: readonly ComingUpCohort[];
 }
 
+/**
+ * One gedu who has volunteered to cover a session, and the two standings an
+ * admin weighs before seating them.
+ *
+ * They are the certification queue's two standings in the certification
+ * queue's own shape, deliberately: an admin choosing a sub is asking what they
+ * ask when certifying somebody, and a second vocabulary for "certified" and
+ * "extract recorded" would be a second thing to keep in step. Neither gates the
+ * action — the database has already refused anybody who may not cover — so both
+ * inform and nothing here is disabled by them.
+ */
+export interface CoverOffer {
+  /**
+   * The **offer's** id, not the gedu's: it is what Approve posts, because the
+   * approval is of one offer on one request rather than of a person.
+   */
+  id: string;
+  /**
+   * The offerer's account id. Real, because the identicon beside the name is
+   * hashed out of its hex bytes.
+   */
+  geduId: string;
+  /** `null` where the account carries no name; the row words the stand-in. */
+  name: string | null;
+  certified: boolean;
+  /**
+   * When an admin recorded seeing this offerer's criminal record extract,
+   * already formatted as a calendar date in the viewer's zone — or `null` where
+   * none has been recorded. Pre-formatted for the reason the certification
+   * queue's twin is: it is an `Intl` product rather than translated copy.
+   */
+  criminalRecordCheckOn: string | null;
+}
+
+/**
+ * One open cover request an admin has to staff.
+ *
+ * **The date carries no clock face, and that is what the wire allows.** The
+ * dashboard's cover member ships the product's timezone but not its schedule
+ * slots, so there is no wall clock to resolve the session's start from and the
+ * row states the calendar date alone — a bare date, UTC-pinned like every other
+ * zoneless date on this page. An orphaned request (an admin moved the
+ * schedule's weekday after it was filed) therefore renders like any other,
+ * which is what the queue's date-ordering already assumes.
+ *
+ * The reason travels here and nowhere else on the platform: a `sick` category
+ * is health-related data about a contractor, and this surface is the one it was
+ * collected for.
+ */
+export interface CoverRequest {
+  id: string;
+  groupId: string;
+  groupName: string;
+  /** The product's name in the reader's locale — never truncated, as on a card. */
+  productName: string;
+  productType: ProductType;
+  /** The session's product-local calendar date, already formatted. */
+  sessionDate: string;
+  /** The role being covered — the absent gedu's, and what the sub is paid as. */
+  role: GeduAssignmentRole;
+  reason: CoverReason | null;
+  reasonNote: string | null;
+  /** The absent gedu's account id — the identicon's input, so a real UUID. */
+  requesterId: string;
+  /** `null` where the account carries no name; the row words the stand-in. */
+  requesterName: string | null;
+  /** The group's own admin page — where a request with no offers is dealt with. */
+  groupHref: AppHref;
+  /** As delivered: the RPC orders by date then product, and so does the panel. */
+  offers: readonly CoverOffer[];
+}
+
 /** Everything the draft body renders. */
 export interface AdminDashboardData {
   /** The instant the page is "now" for — the highlighted weekday row. */
@@ -338,6 +415,11 @@ export interface AdminDashboardData {
   timeZoneAbbrev: string | null;
   /** Products needing an admin. Empty means nothing is wrong with any of them. */
   products: readonly ProductAttention[];
+  /**
+   * Open cover requests, dated today or later, in the order the read delivered
+   * them (date, then product). Empty is the all-clear.
+   */
+  coverRequests: readonly CoverRequest[];
   /** Gedu accounts waiting on a certification decision. */
   uncertifiedGedus: readonly UncertifiedGedu[];
   users: readonly AdminUserRoleStat[];
