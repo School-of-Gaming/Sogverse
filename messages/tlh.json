@@ -1578,7 +1578,7 @@
             "delivery": "chay' qaS. mIw'a' qaSmoHmeH Lynx pongmey — Daq pagh polbe'lu'; <code>type</code> je <code>delivery</code> cha'vam 'oH ngoDmey pongmey ghoSbogh'e'.",
             "location": "De'wI' qaSbogh Daq veng je cha' ghItlh Sep ngoq. nuvDaq qaSbogh De'wI' ghaj — 'ach DaqDaj veng Hutlh'a', ghajbe'; DIvI' Daq qaSbogh De'wI' ghaj neH veng ghom'a' Daq boqDI'; latlhDaq <code>null</code>.",
             "status": "<code>pending</code> taghpa', <code>running</code> tagh jajvo' muvwI' mI' veH chavlu'DI', <code>completed</code> qaSpu'DI' 'ej Qav jaj juSpu'DI', <code>expired</code> Qav jaj juSpu'DI' 'ach not taghpu'DI'. laDDI' toghlu': jajmey, veH, je DaH muvwI' mI' — pagh pollu', vaj not qan De'.",
-            "dates": "When it runs. A consumer club may have no end date; every other product has one.",
+            "dates": "ghorgh qaS. je'wI' ghom'a' Qav jaj ghajbe' net chaw'; Hoch latlh De'wI' ghaj.",
             "timezone": "IANA poH Daq — De'wI' jajmey je poHmey Daq.",
             "ageRange": "De'wI' laj puq ben mI'mey, veHmey je.",
             "groups": "ghommey De'wI' qaSbogh. ghomDaq juS poHmey je 'elmeymey."
@@ -1599,7 +1599,7 @@
             "location": "qorDu' jatlhpu'bogh juH veng je cha' ghItlh Sep ngoq, qoj <code>null</code> vav 'angbe'DI'.",
             "utm": "tlhegh <code>utm_source</code>, <code>utm_medium</code> je <code>utm_campaign</code> — account chenmoHlu'bogh tlhegh; Hoch <code>null</code> Hutlhbogh. wa'logh neH ghItlhlu' muvDI', 'ej ngeH chab laj leghwI'DI' neH — vaj puS De'wI' wej null qeng. LynxvaD chenmoHlu'bogh mIwmey <code>lynx-</code> qeng.",
             "marketingConsent": "DaH Lynx ngeH chaw'vaD vav jang: <code>granted</code> 'ej ghorgh choHlu' Qav. <code>null</code>: not yu'lu'pu' — ngeHmeH <code>false</code> rur.",
-            "gamers": "The family’s children who hold a seat on a Programme product, have completed one, or are waiting for one, one entry each. A child carries a first name and no other contact detail; identity is the identifier and the Roblox account.",
+            "gamers": "mIw'a' De'wI'Daq Daq ghajbogh, rInmoHpu'bogh, qoj Daq loSbogh qorDu' puqpu', Hoch wa' ghItlh. puq qeng wa'DIch pong neH — latlh jatlhmeH Daq Hutlh; pong mI' je Roblox account neH.",
             "gamersId": "puq pong mI' — muvmoHghachmey <code>gamer_id</code> qengbogh.",
             "gamersFirstName": "puq wa'DIch pong, ghItlhpu'bogh vav.",
             "gamersCreatedAt": "ghorgh chenmoHlu' puq De': He'So' cha'DIch nuq.",
@@ -1627,7 +1627,7 @@
             "signedUpAt": "ghorgh muv qorDu' De'wI'Daq: He'So' wejDIch nuq — muvmoHghach.",
             "consents": "muvmoHghachvamvaD Creator Academy Terms & Conditions je Creator Academy Privacy Policy laj vav: Hoch ghItlh mIw — 'angchoHlu' jaj — je lajlu' poH. Hoch mIw'a' De'wI' cha' nIS, vaj Hoch muvmoHghach cha' qeng.",
             "attendance": "'ar puq ghom poHmey ghItlh ghaj, 'ej chaHvo' 'ar puq tu'lu'pu'. poH ghItlhlu' Gedu' ja'chuq ghItlhDI' qoj tu'wI'pu' ghItlhDI'; vaj ghItlhbe'lu'bogh poH toghbe'lu'. ghom mI' 'oH, 'ej ghomDaq puq 'elpa' poHmey je qeng. Daq ghomDaq chellu'pa' 0 cha'. <code>sessions_present</code> 1 law' puq — He'So'Daq “juSpu'” 'oH.",
-            "creations": "What the child published during this product, as recorded by their Game Educator or an admin in the child’s current group: a title and a link per item, in display order. <code>is_roblox_url</code> is <code>true</code> when the link points at roblox.com. An empty array means nothing recorded yet.",
+            "creations": "De'wI' poHDaq puq chenmoHbogh, DaH ghomDajDaq Gedu'Daj qoj ra'wI' ghItlhpu'bogh: Hoch Doch pong je tlhegh, 'ang mIwDaq. <code>is_roblox_url</code> <code>true</code> 'oH tlhegh roblox.com ghoSDI'. chIm tetlh: not ghItlhlu'.",
             "creationsUpdatedAt": "ghorgh ghItlhlu' chenmoHghach tetlh Qav. Dochmey poH nIteb Hutlh."
           }
         },
@@ -1644,9 +1644,9 @@
             "productGroupId": "De'wI' je ghom — poH Daq.",
             "times": "poH qaSmeH ngutlh.",
             "attendance": "Gedu' tu'pu'bogh Hoch puqvaD wa' ghItlh, <code>present</code> qoj <code>absent</code>. tu'be'lu'bogh puq 'angbe'lu'.",
-            "images": "The photographs the Game Educator attached to the session report, in the order they were added: mostly in-game screenshots, sometimes a photograph of the room. Each is a public URL that needs no credential, and the same URL every family in the group already sees in the report. A photograph belongs to the session, not to a child: Sogverse does not record which children an image shows, so the API cannot tie an image to a media permission. A child is photographed only where the permission stands, and when a parent withdraws it School of Gaming removes the material from the channels it controls where that is reasonably possible, as the Programme’s privacy policy says; a removed photograph’s URL stops resolving.",
+            "images": "ja'chuqDaq Gedu' chelbogh nagh beQmey, chellu'bogh mIwDaq: Quj nagh beQmey law', pa' nagh beQ puS. Hoch 'oH Hoch leghlaHbogh URL'e' — ngoq Hutlh, 'ej ghom qorDu'pu' ja'chuqDaq leghtaHbogh URL rap. poHvaD nagh beQ ghaj — puqvaD ghajbe': nagh beQDaq 'Iv 'ang 'e' ghItlhbe' Sogverse, vaj nagh beQ chaw'Daq nagh beQ jonlaHbe' API. nagh beQ chaw' yIntaHvIS neH puq nagh beQ chenmoHlu', 'ej chaw' luj vavDI', SeHbogh HeDaqmeyvo' De' teq School of Gaming — ta'laHbogh naDev, mIw'a' pegh chut jatlhbogh rur; teqlu'pu'bogh nagh beQ URL Qapbe'choH.",
             "imagesUrl": "De' velQo' — 'oHvaD yIboq; vaj maj Daqvo' teq 'oH tlhIH Daqvo' teq je. Qapbe'choHbogh URL Sambogh tlhap — 'oH lonnIS. Lynx jan ja'chuqmey je qoDDaq URL lo'laH — QobHa'. Doch pong 'oH pong ngu'laHbe'lu'bogh'e', 'ej pongvetlh 'oH Hoch 'el SeH'e'; vaj wa' Doch neH ta'lu'be'nIS: Hoch tetlhlaHbogh navDaq URL 'angbe'nIS.",
-            "imagesId": "The photograph’s identifier, which is also its object name.",
+            "imagesId": "nagh beQ pong mI' — Doch pong je 'oH.",
             "imagesSize": "nagh beQ tIn, nagh mI' tlha'."
           }
         },
@@ -1663,7 +1663,7 @@
             "gamerGroupProductId": "jangbogh, je ghom De'wI' je — poH Daq. De'wI' pong mI' nIteb Hutlh: <code>gamer_id</code>, <code>group_id</code> je <code>session_opened_at</code> — wa' ngoQ chenmoH; 'ej poHvetlhvaD puq rap jang veb — ngoQvetlhDaq wa'Hu' jang lonmoH.",
             "sessionId": "<code>/sessions</code>-Daq poH jang qengbogh, ghom jaj je tlha' jonlu'; <code>null</code> jajvetlhvaD poH tlhegh ghItlhbe'lu'DI'.",
             "sessionOpenedAt": "ghorgh poSlu' poH jangbogh puq.",
-            "answers": "The child’s rating of each statement, keyed by the statement’s stable identifier, with a statement they skipped absent. Ratings run 1 to 5: no, not really, a bit, yes, definitely. The statements asked today are <code>learned</code> (I learned something), <code>fun</code> (I had fun), <code>geduKnowledgeable</code> (the Game Educator knew what they were doing), <code>geduKind</code> (the Game Educator was kind), and <code>groupListens</code> (my group listens to and understands me); a statement may be added or retired without notice, so read the keys you know and ignore the rest. Only aggregated satisfaction figures go to Roblox; the rows themselves stay with Lynx.",
+            "answers": "Hoch maqvaD puq togh, maq pong ngoQ lo'; juSbogh maq Hutlh. wa'vo' vagh togh: ghobe', chIch ghobe', puS, HIja', HIja'qu'. DaHjaj maqmey: <code>learned</code> (vIghoj), <code>fun</code> (jItIv), <code>geduKnowledgeable</code> (Gedu Sov), <code>geduKind</code> (Gedu pung), je <code>groupListens</code> (ghomwI' mu'meywIj 'Ij 'ej muyaj). maq chellu' qoj teqlu' — 'ang pagh; vaj DaSovbogh ngoQmey yIlaD, latlh yIbuSHa'. RobloxvaD ghomlu'bogh belHom mI'mey neH jaH; tlheghmey 'e' ratlh LynxvaD.",
             "note": "wIvbogh QINDaq puq ghItlhbogh, mu'meyDaj HolDaj je; chIm ghItlhbe'DI'.",
             "exitReason": "<code>left</code> mej 'e' wIvDI' puq; <code>ended</code> ghaH retlhDaq poH Qavpu'DI'.",
             "updatedAt": "ghorgh pol puq Qav. mejbogh, muvqa'bogh, mejqa'bogh puq — wa'Hu' jangDaj lonmoH."
@@ -1678,12 +1678,12 @@
           },
           "fields": {
             "roblox": "puq Roblox account. <code>roblox_user_id</code> <code>null</code> 'oH Sogverse pong ngu'laHbe'DI'; tlheghmeyvam yInob neH Roblox pong mob laj'a'.",
-            "location": "The family’s home municipality and country, <code>null</code> when the parent has not set one.",
+            "location": "qorDu' juH veng je Sep; <code>null</code> vav 'angbe'DI'.",
             "age": "Qu' tagh jajDaq puq ben mI' naQ, veH rur: bogh jar qeng Sogverse — jaj qengbe'; vaj <code>min</code> 'oH Qup law''e', <code>max</code> 'oH qan law''e', 'ej rap cha' mI' — 'ach tagh jaj puq bogh jarDaq ghoSDI' pIm. <code>null</code> De'wI' tagh jaj Hutlh'a'. ben mI' qeng tlhegh — bogh jar qengbe' — qel De' ghom ben mI' pongmo'.",
             "activity": "juSbogh Qu': De'wI' pong mI'; DIvI' Hol pong ghItlhlu'pu'DI', latlhDaq De'wI' wa'DIch Hol pong; Segh, chay' qaS, je tagh jaj. Segh je chay' qaS: cha'vam ghoS mIw'a' qaSmoHmeH Lynx pongmey, 'ej tagh jaj 'oH qel tlhobbogh Qu' jaj'e'.",
             "publishedGameUrl": "De'wI'vamvaD puq chenmoHghachDaq wa'DIch roblox.com tlhegh, qoj <code>null</code> pagh ghItlhlu'DI'."
           },
-          "note": "No identifier of the child or family is on this row, so the dataset can be forwarded as it is; rows page in the order of the enrolment each derives from, and <code>updated_since</code> follows that enrolment’s changes. The Roblox account is on the family record too, so Lynx can trace a row back to a family when it has to: when a family leaves a full pull, delete its rows here as well, and where a row has already been forwarded to Roblox, pass the request on under the Roblox data processing addendum, as the Programme’s privacy policy provides."
+          "note": "tlheghvamDaq puq qorDu' je pong mI' tu'be'lu', vaj De' ghom nobqa'laH rap; Hoch tlhegh Suqlu'bogh muvmoHghach mIw tlha' navmey Sep, 'ej <code>updated_since</code> muvmoHghachvetlh choHmey tlha'. qorDu' De'wI'Daq je Roblox account tu'lu', vaj nIStaHvIS qorDu'Daq tlhegh Sam Lynx: Hoch De' tlhapvo' qorDu' mejDI', naDev tlheghmeyDaj yIteq je; 'ej RobloxvaD tlhegh nobpu'lu'DI', Roblox De' vumeH ghItlh tlha' tlhob yInobqa' — mIw'a' pegh chut ra'bogh."
         },
         "traffic": {
           "title": "mIw pawbogh navmey, mIw tlha'",
