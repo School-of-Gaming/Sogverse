@@ -139,6 +139,23 @@ describe("proxy", () => {
         expect(response.status).toBe(200);
       }
     );
+
+    it("passes the partner API through with no session at all", async () => {
+      // Lynx's own tooling presents an issued API key and no cookie. The
+      // `/api/` prefix is what exempts it from the locale ladder and the
+      // session gates alike — asserted here per resource path rather than only
+      // through the generic `/api/*` case, because a gate reaching for "any
+      // /api route with no session" would break the integration silently.
+      mockNoUser();
+      for (const path of [
+        "/api/partner/v1/products",
+        "/api/partner/v1/families",
+        "/api/partner/v1/traffic",
+      ]) {
+        const response = await proxy(createNextRequest(path));
+        expect(response.status, path).toBe(200);
+      }
+    });
   });
 
   // --- (public) route-group ⇄ proxy PUBLIC_ROUTES drift guard ---

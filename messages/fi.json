@@ -1478,7 +1478,7 @@
       "lead": "Vain luettava rajapinta Lynx Educaten omia koontinäyttöjä ja Roblox-Ohjelman raportointia varten. Se avaa Ohjelmaan kuuluvat perheet, tuotteet ja ilmoittautumiset, ne suostumukset, joiden perusteella Lynx voi toimia, sekä yksilötason aineiston, jonka Ohjelman tietosuojaseloste sallii Lynxin luovuttaa Robloxille vaikuttavuustutkimusta varten.",
       "proposal": {
         "title": "Ehdotus arvioitavaksi",
-        "body": "Mikään tällä sivulla ei ole vielä käytössä. Tämä on ehdotus siitä, millaiseksi rajapinta rakennettaisiin, kirjattuna muotoon, jossa Lynxin insinöörit voivat arvioida rajauksen ja tiedot ennen kuin mitään toteutetaan. Kenttien nimet, suodattimet ja enum-arvojen tarkat sanamuodot voivat vielä muuttua."
+        "body": "The routes below are live today. Each one authenticates the caller, checks its query parameters and answers the documented shape with no records, so authentication and parsing can be integrated against right away; the data arrives resource by resource as each one is built. Field names, filters and the exact wording of enum values may still change."
       },
       "contents": {
         "heading": "Tällä sivulla"

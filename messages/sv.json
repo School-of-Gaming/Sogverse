@@ -1478,7 +1478,7 @@
       "lead": "Ett skrivskyddat API för Lynx Educates egna dashboards och rapportering om Roblox-Programmet. Det exponerar de familjer, produkter och anmälningar som hör till Programmet, de samtycken Lynx får agera på, och det individdata som Programmets integritetspolicy tillåter Lynx att lämna vidare till Roblox för effektforskning.",
       "proposal": {
         "title": "Förslag för granskning",
-        "body": "Inget på den här sidan är i drift ännu. Det här är den utformning vi föreslår att vi bygger, nedskriven så att ingenjörerna på Lynx kan granska omfattningen och uppgifterna innan något implementeras. Fältnamn, filter och den exakta formuleringen av enum-värden kan fortfarande ändras."
+        "body": "The routes below are live today. Each one authenticates the caller, checks its query parameters and answers the documented shape with no records, so authentication and parsing can be integrated against right away; the data arrives resource by resource as each one is built. Field names, filters and the exact wording of enum values may still change."
       },
       "contents": {
         "heading": "På den här sidan"

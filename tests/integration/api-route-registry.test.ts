@@ -178,6 +178,7 @@ const TESTS = {
     "tests/integration/api/tools-minecraft-password-reset.test.ts",
   minecraftJoinCheck: "tests/integration/api/minecraft-join-check.test.ts",
   minecraftVerify: "tests/integration/api/minecraft-verify.test.ts",
+  partnerApi: "tests/integration/api/partner-api.test.ts",
   pin: "tests/integration/auth/pin.test.ts",
   productImagesManage: "tests/integration/api/product-images-manage.test.ts",
   productImagesReplace: "tests/integration/api/product-images-replace.test.ts",
@@ -216,6 +217,17 @@ const TESTS = {
 } as const;
 
 const ADMIN_ONLY: Posture = { kind: "role-gated", roles: ["admin"] };
+
+/**
+ * The Lynx Educate partner API's one posture, shared by its seven read-only
+ * resources because the key is what scopes all of them: one key, one partner,
+ * one Programme.
+ */
+const PARTNER_KEY: Posture = {
+  kind: "api-key",
+  reason:
+    "Lynx Educate's own tooling pulls the Programme's data server-to-server on a schedule; there is no person in the loop and no Sogverse session to present. The issued bearer token, compared in constant time, is both the partner's identity and the whole of its scope, and every handler is read-only — it reaches no database and can mutate nothing",
+};
 
 const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // --- Admin surfaces ------------------------------------------------------
@@ -970,6 +982,57 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         body: { kind: "none" },
         test: TESTS.minecraftVerify,
       },
+    },
+  },
+
+  // --- Partner API (Lynx Educate) ------------------------------------------
+  //
+  // Seven read-only resources published at `/docs/lynx-api`, all on one issued
+  // key and all the same posture. They are skeletons: each authenticates,
+  // validates its query against the contract schema and answers the documented
+  // shape with no records, so the partner can integrate against auth and
+  // parsing while the resources are filled in one at a time. No route reaches
+  // the database, which is why none of them justifies a client of any kind.
+
+  "src/app/api/partner/v1/products/route.ts": {
+    handlers: {
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+    },
+  },
+
+  "src/app/api/partner/v1/families/route.ts": {
+    handlers: {
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+    },
+  },
+
+  "src/app/api/partner/v1/enrolments/route.ts": {
+    handlers: {
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+    },
+  },
+
+  "src/app/api/partner/v1/sessions/route.ts": {
+    handlers: {
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+    },
+  },
+
+  "src/app/api/partner/v1/feedback/route.ts": {
+    handlers: {
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+    },
+  },
+
+  "src/app/api/partner/v1/roblox-research/route.ts": {
+    handlers: {
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+    },
+  },
+
+  "src/app/api/partner/v1/traffic/route.ts": {
+    handlers: {
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
     },
   },
 
