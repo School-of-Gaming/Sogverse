@@ -95,9 +95,21 @@ export function CoverRequestRow({
           <Users className="h-3 w-3 shrink-0" aria-hidden />
           {request.groupName}
         </span>
+        {/* The date and, where the schedule still projects one, the clock face
+            — in the schedule chips' own tabular numerals, because the two
+            panels state the same sessions and a reader comparing them is
+            comparing numbers. A request the schedule no longer projects states
+            the date alone; that orphan is the case the queue exists to
+            tolerate, and a row that guessed a time for it would be inventing
+            one. */}
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
           <CalendarDays className="h-3 w-3 shrink-0" aria-hidden />
           {request.sessionDate}
+          {request.sessionTime !== null && (
+            <span className="font-medium tabular-nums">
+              {request.sessionTime}
+            </span>
+          )}
         </span>
       </div>
 

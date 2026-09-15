@@ -800,6 +800,12 @@ describe("the cover queue", () => {
         { locale: "en", name: "Roblox camp" },
         { locale: "fi", name: "Roblox-leiri" },
       ],
+      // 2026-08-21 is a Friday, and weekday 4 is Friday in the app's own
+      // 0 = Monday convention — so this product's schedule does project the
+      // session the request names.
+      schedule_slots: [
+        { weekday: 4, start_time: "17:00", duration_minutes: 90 },
+      ],
     },
     offers: [
       {
@@ -830,10 +836,11 @@ describe("the cover queue", () => {
   });
 
   /**
-   * The session date carries no clock face — the wire ships the product's zone
-   * but not its slots — so it is a zoneless calendar date and renders as
-   * itself. A viewer on the other side of the world reading it a day earlier is
-   * exactly the case a viewer-zone conversion would get wrong.
+   * The session date is the request's own key — (group, date, absent gedu) —
+   * and is what every other surface naming this session states, so it is a
+   * zoneless calendar date and renders as itself. A viewer on the other side of
+   * the world reading it a day earlier is exactly the case a viewer-zone
+   * conversion would get wrong.
    */
   it("renders the session date as itself, in every viewer's zone", () => {
     const helsinki = build(snapshot({ cover_requests: [request] }), HELSINKI);
@@ -846,6 +853,78 @@ describe("the cover queue", () => {
     expect(losAngeles.coverRequests[0].sessionDate).toBe(
       helsinki.coverRequests[0].sessionDate,
     );
+  });
+
+  /**
+   * The clock face, unlike the date beside it, IS a pair of instants — resolved
+   * from the slots the request's own product now carries — and every instant on
+   * this page is shown in the viewer's zone, which is what the schedule's zone
+   * abbreviation discloses.
+   */
+  it("resolves the session's start and end from the product's slots, in the viewer's zone", () => {
+    const helsinki = build(snapshot({ cover_requests: [request] }), HELSINKI);
+    const losAngeles = build(
+      snapshot({ cover_requests: [request] }),
+      LOS_ANGELES,
+    );
+
+    expect(helsinki.coverRequests[0].sessionTime).toBe("17:00–18:30");
+    // 17:00 Helsinki on an August Friday is 07:00 the same morning in LA.
+    expect(losAngeles.coverRequests[0].sessionTime).toBe("07:00–08:30");
+  });
+
+  /**
+   * The orphan: an admin moved the schedule's weekday after the request was
+   * filed, so no slot names the day the request is keyed on. The row keeps its
+   * date and states no time — the queue orders by date and never by a derived
+   * instant, which is what lets an orphaned request stay in the list at all.
+   */
+  it("states no time for a date the schedule no longer projects", () => {
+    const [row] = build(
+      snapshot({
+        cover_requests: [
+          {
+            ...request,
+            product: {
+              ...request.product,
+              // Monday — the request's date is a Friday.
+              schedule_slots: [
+                { weekday: 0, start_time: "17:00", duration_minutes: 90 },
+              ],
+            },
+          },
+        ],
+      }),
+    ).coverRequests;
+
+    expect(row.sessionDate).toBe("Fri, Aug 21");
+    expect(row.sessionTime).toBeNull();
+  });
+
+  /**
+   * A product meeting twice on one day — a camp's morning and afternoon block —
+   * is "that day's session" at the earlier of the two, which is the rule the
+   * shared occurrence helper states and every cover surface inherits.
+   */
+  it("takes the earliest of two slots on the same weekday", () => {
+    const [row] = build(
+      snapshot({
+        cover_requests: [
+          {
+            ...request,
+            product: {
+              ...request.product,
+              schedule_slots: [
+                { weekday: 4, start_time: "13:00", duration_minutes: 120 },
+                { weekday: 4, start_time: "09:00", duration_minutes: 180 },
+              ],
+            },
+          },
+        ],
+      }),
+    ).coverRequests;
+
+    expect(row.sessionTime).toBe("09:00–12:00");
   });
 
   /** The offerer's extract IS an instant, so it converts — unlike the date above. */

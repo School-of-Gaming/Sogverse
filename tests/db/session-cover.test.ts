@@ -1745,6 +1745,22 @@ describe("session covers", () => {
       expect(mine?.reason_note).toBe("flu");
       expect(mine?.requested_by).toBe(TEST_IDS.GEDU);
       expect(mine?.product.translations.length).toBeGreaterThan(0);
+      // The product shell carries the schedule slots beside the timezone, which
+      // is the pair a client resolves the session's clock face from — the queue
+      // states a time, not only a day. Seeded as one 10:00 slot of an hour on
+      // every weekday, so the request's own date is necessarily projected and
+      // the row is never the orphan.
+      expect(mine?.product.schedule_slots.length).toBe(7);
+      expect(
+        mine?.product.schedule_slots.every(
+          (slot) => slot.start_time === "10:00" && slot.duration_minutes === 60,
+        ),
+      ).toBe(true);
+      expect(
+        mine?.product.schedule_slots
+          .map((slot) => slot.weekday)
+          .sort((a, b) => a - b),
+      ).toEqual([0, 1, 2, 3, 4, 5, 6]);
       expect(mine?.offers.length).toBe(1);
       expect(mine?.offers[0].gedu_id).toBe(subId);
       expect(mine?.offers[0].certified).toBe(true);

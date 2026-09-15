@@ -250,6 +250,20 @@ export const adminDashboardCoverRequest = z.object({
     timezone: z.string(),
     is_remote: z.boolean(),
     translations: z.array(productName),
+    /**
+     * The product's recurring slots, in its own zone — the same shape the
+     * schedule set ships, and the other half of what a clock face is computed
+     * from.
+     *
+     * They ride on the **request's** product rather than being looked up in
+     * `schedule_products`, which is a different and narrower set: an orphaned
+     * request may name a product that set has dropped, and a browser-side join
+     * would then print a time for some rows and nothing for others with no way
+     * to tell which. Here the only absence is "no slot names this weekday",
+     * which is exactly the orphan — and is the case the row renders as a bare
+     * date.
+     */
+    schedule_slots: z.array(adminDashboardScheduleSlot),
   }),
   offers: z.array(adminDashboardCoverOffer),
 });
