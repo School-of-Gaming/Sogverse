@@ -398,7 +398,7 @@ function weekdayFromDateString(dateStr: string): number {
 /**
  * Fields that go into both the create and update payload. Everything the
  * form lets an admin change lives here; create/update wrap with their
- * unique fields (product_type+status / nothing).
+ * unique fields (product_type / nothing).
  *
  * Assumes `validate(state, config)` returned null — numeric strings parse,
  * locales are filled, prices are present when paid, etc.
@@ -662,16 +662,13 @@ export function buildCreateInput(
   return {
     ...buildSharedFields(state, config),
     product_type: productType,
-    status: "pending",
   };
 }
 
 /**
  * Build the request payload for /api/admin/products/[id]/update.
- * Mirrors `buildCreateInput` minus the immutable fields:
- *   - `product_type` is fixed by the URL.
- *   - `status` is preserved by the RPC; effective status re-derives
- *     from the data fields this payload edits.
+ * Mirrors `buildCreateInput` minus the one immutable field: `product_type` is
+ * fixed by the URL.
  */
 export function buildUpdateInput(
   state: FormState,
@@ -964,9 +961,9 @@ export function existingFormState(
  *     is nudged to rename. The suffix is applied to every locale's name using
  *     the admin's UI-locale string — the active-locale name is what they see.
  *
- * `status` is not represented in FormState; `buildCreateInput` always writes
- * `pending`, so a clone starts pending + (copied) visibility just like any
- * freshly created product.
+ * A lifecycle state is not represented in FormState and is not sent on a create:
+ * it is derived from the dates and threshold the clone copies, so a clone reads
+ * exactly as the product it was cloned from would if it had those dates.
  *
  * **The picture is copied**, along with everything else. It used to be cleared,
  * because a picture was a file one product owned and editing one product's

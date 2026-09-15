@@ -16,7 +16,7 @@ import type { ProductType, Product } from "@/types";
 // and registration goes through the city's own flow).
 //
 // Decision tree (top-down, first match wins):
-//   ended         ← effectiveStatus in { completed, expired, cancelled }
+//   ended         ← effectiveStatus in { completed, expired }
 //   closed_pre    ← registration_opens_at > now
 //   running_late  ← effectiveStatus = running AND either
 //                     product_type = camp (locks at local midnight on
@@ -25,7 +25,7 @@ import type { ProductType, Product } from "@/types";
 //                     instant (start_date + its slot's start_time +
 //                     duration_minutes, read in product.timezone). An event
 //                     with no slot falls back to the camp rule.
-//   pending_thr   ← raw status = pending AND signup_threshold IS NOT NULL
+//   pending_thr   ← signup_threshold IS NOT NULL
 //                   AND participations_count < signup_threshold
 //   full_waitlist ← seat_count IS NOT NULL
 //                   AND participations_count >= seat_count
@@ -38,24 +38,24 @@ import type { ProductType, Product } from "@/types";
 // How these states reach a card — there are two routes, and telling them
 // apart matters more than it looks.
 //
-// A browse row is filtered twice on its way to becoming a card: the query asks
-// only for visible products whose stored status is pending or running (so
-// cancelled and completed never arrive at all), and the service then drops
-// anything whose effective status has already reached completed or expired.
-// Every state above except `ended` survives both and can arrive in a response.
+// A browse row is filtered on its way to becoming a card: the query asks only
+// for visible products, and the service then drops anything whose derived
+// status has already reached completed or expired. Every state above except
+// `ended` survives that and can arrive in a response.
 //
-// `ended` cannot. It requires an effective status of completed, expired or
-// cancelled, and between them those two filters exclude all three, so no fetch
-// ever hands a browse card an ended product. It is still reachable, and its
-// rendering branch is live code: this function is called with `useNow()`,
-// which ticks every 30 seconds, so a shop tab left open past a product's local
-// midnight re-derives `ended` in place, under a card already on screen, with
-// no refetch anywhere in between.
+// `ended` cannot, and it does not need to: the detail page calls this same
+// function, and every product stays readable by direct link forever (owner
+// decision, Sep 2026) — so a parent following a link to last spring's club
+// opens its page and this branch renders, which is the whole reason that
+// decision was made. The branch is ordinary live code on an ordinary surface.
 //
-// So: never reason "the list filters that out, therefore a card cannot see
-// it" about anything derived from `useNow()`. The filter runs once, at fetch.
-// This function runs every tick, for as long as the tab is open. That
-// inference has already come close to deleting this state as dead code.
+// It also arrives on a browse card, which is the subtler route: this function
+// is called with `useNow()`, which ticks every 30 seconds, so a shop tab left
+// open past a product's local midnight re-derives `ended` in place, under a
+// card already on screen, with no refetch anywhere in between. So: never
+// reason "the list filters that out, therefore a card cannot see it" about
+// anything derived from `useNow()`. The filter runs once, at fetch. This
+// function runs every tick, for as long as the tab is open.
 //
 // The same tick moves other states under a reader mid-visit: closed_pre → open
 // when registration opens, open → running_late when a camp reaches its start
@@ -141,7 +141,6 @@ export type RegistrationState =
 // (the browse and detail queries both do) satisfies it.
 export type RegistrationStateInputs = Pick<
   Product,
-  | "status"
   | "start_date"
   | "end_date"
   | "signup_threshold"
@@ -223,7 +222,7 @@ export function deriveRegistrationState({
 }: DeriveRegistrationStateArgs): RegistrationState {
   const status = effectiveStatus(product, now, participationsCount);
 
-  if (status === "completed" || status === "expired" || status === "cancelled") {
+  if (status === "completed" || status === "expired") {
     return { kind: "ended" };
   }
 
@@ -255,11 +254,11 @@ export function deriveRegistrationState({
     // full event shows full_waitlist / full_closed rather than "open".
   }
 
-  // Threshold-bearing pending products that haven't met their threshold
-  // yet show the "pending" pill. Once the threshold is met, effectiveStatus
-  // promotes to `running`, so this branch only fires while truly under-met.
+  // Threshold-bearing products that haven't met their threshold yet show the
+  // "pending" pill. The threshold test is the whole condition: once it is met
+  // the product is running, so a status test beside it would be restating the
+  // same fact.
   if (
-    product.status === "pending" &&
     product.signup_threshold !== null &&
     participationsCount < product.signup_threshold
   ) {

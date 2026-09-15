@@ -222,7 +222,6 @@ describe("product audience", () => {
         product_type: "consumer_club" as const,
         billing_mode: "free" as const,
         topic: "minecraft_java" as const,
-        status: "pending" as const,
         is_remote: true,
         is_visible: false,
         timezone: "UTC",

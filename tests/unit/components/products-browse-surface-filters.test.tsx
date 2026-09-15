@@ -113,7 +113,6 @@ const SCHOOL_CLUB: ProductBrowseRow = {
   seat_count: null,
   signup_threshold: null,
   spoken_language_code: "fi",
-  status: "running",
   timezone: "Europe/Helsinki",
   topic: "minecraft_education",
   waitlist_enabled: false,

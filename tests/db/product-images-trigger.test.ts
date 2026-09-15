@@ -229,7 +229,6 @@ describe("product_images and the image_path trigger", () => {
         seat_count: 1,
         waitlist_enabled: true,
         is_visible: false,
-        status: "pending",
         created_by: TEST_IDS.ADMIN,
         image_id: ENTRY_A,
         // Deliberately wrong, and deliberately present: the INSERT branch has
@@ -296,7 +295,6 @@ describe("product_images and the image_path trigger", () => {
         seat_count: 1,
         waitlist_enabled: true,
         is_visible: false,
-        status: "pending",
         created_by: TEST_IDS.ADMIN,
         image_id: null,
         image_path: "legacy/before-the-catalogue.png",

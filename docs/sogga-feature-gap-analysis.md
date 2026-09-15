@@ -266,11 +266,11 @@ pick carousel for educators, and admin CRUD.
 used for dropdowns and classifications across the app.
 
 **Sogverse has:** Postgres enums flowing through codegen (`billing_mode`, `product_type`,
-`product_status`, `participation_status`, `product_topic`, `product_tag`,
-`spoken_language`, `user_role` and others) with labels in `messages/`, plus TS const
-tuples for locales. `docs/investigations/enum-candidates.md` records the bar a value must
-clear to be an enum and the disqualifier: anything that is genuinely data with admin CRUD
-is a table instead — `locations`, `product_images`, `postal_codes`.
+`participation_status`, `product_topic`, `product_tag`, `spoken_language`, `user_role`
+and others) with labels in `messages/`, plus TS const tuples for locales.
+`docs/investigations/enum-candidates.md` records the bar a value must clear to be an
+enum and the disqualifier: anything that is genuinely data with admin CRUD is a table
+instead — `locations`, `product_images`, `postal_codes`.
 
 **Still open:** Only the question of whether any enum will ever need runtime editing. No
 current need; treat this item as closed unless one appears.

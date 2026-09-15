@@ -1933,7 +1933,6 @@ export type Database = {
           signup_threshold: number | null
           spoken_language_code: Database["public"]["Enums"]["spoken_language"]
           start_date: string | null
-          status: Database["public"]["Enums"]["product_status"]
           tag: Database["public"]["Enums"]["product_tag"] | null
           timezone: string
           topic: Database["public"]["Enums"]["product_topic"]
@@ -1966,7 +1965,6 @@ export type Database = {
           signup_threshold?: number | null
           spoken_language_code: Database["public"]["Enums"]["spoken_language"]
           start_date?: string | null
-          status?: Database["public"]["Enums"]["product_status"]
           tag?: Database["public"]["Enums"]["product_tag"] | null
           timezone: string
           topic: Database["public"]["Enums"]["product_topic"]
@@ -1999,7 +1997,6 @@ export type Database = {
           signup_threshold?: number | null
           spoken_language_code?: Database["public"]["Enums"]["spoken_language"]
           start_date?: string | null
-          status?: Database["public"]["Enums"]["product_status"]
           tag?: Database["public"]["Enums"]["product_tag"] | null
           timezone?: string
           topic?: Database["public"]["Enums"]["product_topic"]
@@ -2840,7 +2837,6 @@ export type Database = {
           p_signup_threshold?: number
           p_spoken_language_code: Database["public"]["Enums"]["spoken_language"]
           p_start_date?: string
-          p_status?: Database["public"]["Enums"]["product_status"]
           p_tag?: Database["public"]["Enums"]["product_tag"]
           p_timezone: string
           p_topic: Database["public"]["Enums"]["product_topic"]
@@ -3332,12 +3328,7 @@ export type Database = {
     Enums: {
       billing_mode: "paid" | "free" | "external_contract"
       chat_channel_type: "group_session"
-      effective_product_status:
-        | "pending"
-        | "running"
-        | "completed"
-        | "cancelled"
-        | "expired"
+      effective_product_status: "pending" | "running" | "completed" | "expired"
       gamer_photo_consent_type: "lynx_educate"
       gamer_sign_in: "parent" | "username" | "email"
       gender_type: "boy" | "girl" | "non_binary"
@@ -3349,7 +3340,6 @@ export type Database = {
         | "subscription_invoice"
         | "single_payment"
         | "reservation_duplicate"
-      product_status: "pending" | "running" | "completed" | "cancelled"
       product_tag: "neuroinclusive" | "beginner" | "advanced"
       product_topic:
         | "minecraft_java"
@@ -3496,13 +3486,7 @@ export const Constants = {
     Enums: {
       billing_mode: ["paid", "free", "external_contract"],
       chat_channel_type: ["group_session"],
-      effective_product_status: [
-        "pending",
-        "running",
-        "completed",
-        "cancelled",
-        "expired",
-      ],
+      effective_product_status: ["pending", "running", "completed", "expired"],
       gamer_photo_consent_type: ["lynx_educate"],
       gamer_sign_in: ["parent", "username", "email"],
       gender_type: ["boy", "girl", "non_binary"],
@@ -3515,7 +3499,6 @@ export const Constants = {
         "single_payment",
         "reservation_duplicate",
       ],
-      product_status: ["pending", "running", "completed", "cancelled"],
       product_tag: ["neuroinclusive", "beginner", "advanced"],
       product_topic: [
         "minecraft_java",

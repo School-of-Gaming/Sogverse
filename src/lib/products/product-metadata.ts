@@ -61,9 +61,9 @@ export const PRODUCT_ROBOTS_ONLY: Metadata = {
  * costs nothing to survive here. The picture is the product's own and is not
  * localized; only the text moves.
  *
- * A missing product (a bad id, or one no anonymous reader may see) returns the
- * robots-only metadata unchanged — exactly what these routes served before the
- * card existed.
+ * A missing product — which now means only a bad id, since every product that
+ * exists is readable — returns the robots-only metadata unchanged, exactly what
+ * these routes served before the card existed.
  */
 export async function buildProductMetadata(
   id: string,

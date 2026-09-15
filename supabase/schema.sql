@@ -67,7 +67,6 @@ CREATE TYPE public.effective_product_status AS ENUM (
     'pending',
     'running',
     'completed',
-    'cancelled',
     'expired'
 );
 
@@ -76,7 +75,7 @@ CREATE TYPE public.effective_product_status AS ENUM (
 -- Name: TYPE effective_product_status; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TYPE public.effective_product_status IS 'The lifecycle as a reader sees it: product_status plus ''expired'', the derived state of a pending product whose end date passed without its start conditions ever being met. Computed at read time, never stored.';
+COMMENT ON TYPE public.effective_product_status IS 'The lifecycle a reader sees, computed at read time and stored nowhere: pending (start conditions not met yet), running (met, end date not passed), completed (met and the end date has passed), expired (the end date passed without the start conditions ever being met). Derived from start_date, signup_threshold, end_date and the active participation count, every date compared against today in the product''s own timezone.';
 
 
 --
@@ -176,25 +175,6 @@ CREATE TYPE public.payment_purpose AS ENUM (
     'single_payment',
     'reservation_duplicate'
 );
-
-
---
--- Name: product_status; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.product_status AS ENUM (
-    'pending',
-    'running',
-    'completed',
-    'cancelled'
-);
-
-
---
--- Name: TYPE product_status; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TYPE public.product_status IS 'The admin-stored lifecycle of a product: pending → running → completed, with cancelled as the admin kill. ''draft'' was removed in 00169 — nothing ever wrote it and the save-incomplete flow it was reserved for was never built. Visibility is a separate axis and means listing, not access.';
 
 
 --
@@ -1448,35 +1428,12 @@ CREATE FUNCTION public.can_read_product(p_product_id uuid) RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
+  -- EXISTS is already total — it answers true or false and never NULL — so the
+  -- COALESCE is belt and braces: it is what keeps the predicate a total boolean
+  -- if an arm that can answer NULL is ever added back. The arm that made it
+  -- load-bearing (comparing a caller's role, which is NULL for anon) is gone.
   SELECT COALESCE(
-    -- admin sees everything (mirrors admin_full_access_* FOR ALL)
-    (SELECT public.get_user_role()) = 'admin'::public.user_role
-    -- public: published. `is_visible` is NOT tested here, and its absence is
-    -- the point: that column governs LISTING only — the browse queries filter
-    -- on it — while a direct link to an unlisted product is meant to lead to a
-    -- page a parent can read and buy from. The consequence is that an unlisted
-    -- product is readable, and therefore enumerable, through the Data API:
-    -- obscurity rather than secrecy, accepted by owner decision (Aug 2026).
-    -- What keeps a product unbuyable is its status, its seat cap and its
-    -- registration window — never its visibility.
-    OR EXISTS (
-      SELECT 1 FROM public.products pr
-      WHERE pr.id = p_product_id
-        AND pr.status IN ('pending'::public.product_status, 'running'::public.product_status)
-    )
-    -- enrolled gamer (child's own login) OR purchaser (parent), active/waitlisted
-    OR EXISTS (
-      SELECT 1 FROM public.participations p
-      WHERE p.product_id = p_product_id
-        AND (p.participant_id = (SELECT auth.uid()) OR p.customer_id = (SELECT auth.uid()))
-        AND p.status IN ('active'::public.participation_status, 'waitlisted'::public.participation_status)
-    )
-    -- assigned gedu
-    OR EXISTS (
-      SELECT 1 FROM public.gedu_group_assignments a
-      WHERE a.product_id = p_product_id
-        AND a.gedu_id = (SELECT auth.uid())
-    ),
+    EXISTS (SELECT 1 FROM public.products pr WHERE pr.id = p_product_id),
     false
   );
 $$;
@@ -1486,7 +1443,7 @@ $$;
 -- Name: FUNCTION can_read_product(p_product_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.can_read_product(p_product_id uuid) IS 'Read predicate behind the products SELECT policy and the satellite tables that follow it (translations, prices, schedule slots, marketing consents, required consents). True for: an admin; anyone at all on a product whose status is pending or running; a parent or gamer party to an active or waitlisted participation on it; an assigned gedu. It does NOT test is_visible — since 00168 that column means "not publicly listed" and is applied by the browse queries, so an unlisted product stays readable (and enumerable) by direct link. Wrapped in COALESCE so it answers a total boolean rather than NULL for a caller with no profiles row.';
+COMMENT ON FUNCTION public.can_read_product(p_product_id uuid) IS 'Read predicate behind the products SELECT policy and the six satellite tables that defer to it: translations, prices, schedule slots, marketing consents, gamer photo consents, required consents. True for ANY product that exists; false only for an id no product has. Every product is readable by direct link forever, by owner decision (2026-09-15): a parent following a link to a term that ended should land on the product''s page and read that it is over, with the product''s own picture in the link preview, rather than meet a not-found page and the site''s default card — and the crawler that renders that preview holds no session either. is_visible governs LISTING alone — the browse queries apply it, alongside their own date filters — so a finished or unlisted product is absent from the shop and present at its URL. Whether a place can be BOUGHT is decided somewhere else entirely: the term dates, the seat cap and the registration window. The former arms — an admin, a party to an active or waitlisted participation, an assigned gedu, and the term test that used to bound the public one — are removed rather than left dormant: with the public answer true for every product none of them could decide anything, and a security predicate whose branches cannot decide is one the next reader has to reason about for nothing. It remains a function rather than a USING (true) written into each policy, so those seven policies keep ONE predicate to tighten if the decision is ever revisited, and it remains SECURITY DEFINER because it runs inside the products SELECT policy and must not depend on the caller''s own RLS. Wrapped in COALESCE so it answers a total boolean whatever a future arm returns.';
 
 
 --
@@ -2224,10 +2181,10 @@ COMMENT ON FUNCTION public.create_participation(p_product_id uuid, p_participant
 
 
 --
--- Name: create_product(public.product_type, public.billing_mode, jsonb, public.product_topic, public.spoken_language, boolean, text, timestamp with time zone, boolean, boolean, integer, integer, public.product_status, boolean, boolean, uuid, integer, date, date, integer, jsonb, jsonb, integer, integer, integer, text, public.product_tag, text, text[], boolean); Type: FUNCTION; Schema: public; Owner: -
+-- Name: create_product(public.product_type, public.billing_mode, jsonb, public.product_topic, public.spoken_language, boolean, text, timestamp with time zone, boolean, boolean, integer, integer, boolean, boolean, uuid, integer, date, date, integer, jsonb, jsonb, integer, integer, integer, text, public.product_tag, text, text[], boolean); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer DEFAULT NULL::integer, p_max_age integer DEFAULT NULL::integer, p_status public.product_status DEFAULT 'pending'::public.product_status, p_is_visible boolean DEFAULT false, p_waitlist_enabled boolean DEFAULT true, p_location_id uuid DEFAULT NULL::uuid, p_signup_threshold integer DEFAULT NULL::integer, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_seat_count integer DEFAULT NULL::integer, p_schedule_slots jsonb DEFAULT NULL::jsonb, p_prices jsonb DEFAULT NULL::jsonb, p_primary_gedu_fee_cents integer DEFAULT NULL::integer, p_assistant_gedu_fee_cents integer DEFAULT NULL::integer, p_municipality_fee_cents integer DEFAULT NULL::integer, p_material_url text DEFAULT NULL::text, p_tag public.product_tag DEFAULT NULL::public.product_tag, p_region_lock_country text DEFAULT NULL::text, p_required_consent_slugs text[] DEFAULT NULL::text[], p_requires_gamer_creations boolean DEFAULT false) RETURNS uuid
+CREATE FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer DEFAULT NULL::integer, p_max_age integer DEFAULT NULL::integer, p_is_visible boolean DEFAULT false, p_waitlist_enabled boolean DEFAULT true, p_location_id uuid DEFAULT NULL::uuid, p_signup_threshold integer DEFAULT NULL::integer, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_seat_count integer DEFAULT NULL::integer, p_schedule_slots jsonb DEFAULT NULL::jsonb, p_prices jsonb DEFAULT NULL::jsonb, p_primary_gedu_fee_cents integer DEFAULT NULL::integer, p_assistant_gedu_fee_cents integer DEFAULT NULL::integer, p_municipality_fee_cents integer DEFAULT NULL::integer, p_material_url text DEFAULT NULL::text, p_tag public.product_tag DEFAULT NULL::public.product_tag, p_region_lock_country text DEFAULT NULL::text, p_required_consent_slugs text[] DEFAULT NULL::text[], p_requires_gamer_creations boolean DEFAULT false) RETURNS uuid
     LANGUAGE plpgsql
     SET search_path TO ''
     AS $$
@@ -2252,7 +2209,7 @@ BEGIN
   INSERT INTO public.products (
     product_type, billing_mode, topic,
     min_age, max_age, spoken_language_code,
-    location_id, is_remote, status, signup_threshold,
+    location_id, is_remote, signup_threshold,
     start_date, end_date, timezone,
     seat_count, waitlist_enabled, registration_opens_at,
     is_visible, created_by,
@@ -2263,7 +2220,7 @@ BEGIN
   VALUES (
     p_product_type, p_billing_mode, p_topic,
     p_min_age, p_max_age, p_spoken_language_code,
-    p_location_id, p_is_remote, p_status, p_signup_threshold,
+    p_location_id, p_is_remote, p_signup_threshold,
     p_start_date, p_end_date, p_timezone,
     p_seat_count, p_waitlist_enabled, p_registration_opens_at,
     p_is_visible, auth.uid(),
@@ -2338,10 +2295,10 @@ $$;
 
 
 --
--- Name: FUNCTION create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean) IS 'Admin-gated product create: the parent row plus its translations, schedule slots, prices, the staff-only material link and, since 00210, the consent documents enrolling on it requires. SECURITY INVOKER — the assert_admin() first statement runs as the caller, which is also why assert_admin itself is granted to authenticated. p_for_gamers/p_for_parents are non-defaulted on purpose: a defaulted audience is one an omitting caller could set without meaning to. p_tag (00178) IS defaulted, and for the opposite reason: null is a legal value for a tag, no CHECK backstops it, and codegen cannot express an explicit null for a non-defaulted argument at all — so omission is how "untagged" reaches the column, and the required-nullable wire schema is what stops an accidental omission upstream. p_region_lock_country (00193) is defaulted for exactly that reason too, and carries one more thing worth knowing: the lock it writes is enforced in the UI alone, because a family''s location is self-attested — see the column comment. p_required_consent_slugs (00210) is defaulted on the same argument and is NOT written inline: this function is SECURITY INVOKER and product_required_consents carries no write grant, so the row goes through set_product_required_consents, the join table''s single guarded writer. p_requires_gamer_creations (00227) is defaulted to FALSE rather than to null, because the column is NOT NULL and false is the resting state of that whole feature — so an omitting caller creates an unflagged product, which is what omission should mean, and an explicit null is refused loudly by the column rather than silently becoming false. This function does NOT take a picture: 00198 dropped p_image_path, because a product''s picture is the product_images entry its image_id points at, written by the route in a second statement, and the served image_path column is derived from that link by trg_products_apply_image_path. Since 00199 p_spoken_language_code is public.spoken_language rather than text, because the reference table it used to name is gone.';
+COMMENT ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean) IS 'Admin-gated product create: the parent row plus its translations, schedule slots, prices, the staff-only material link and, since 00210, the consent documents enrolling on it requires. Since 00256 it takes NO status: a product''s lifecycle is derived from its dates, its signup threshold and the live count of active participations, so there is nothing for a creating caller to choose and nothing stored for a later reader to mistake for a fact. SECURITY INVOKER — the assert_admin() first statement runs as the caller, which is also why assert_admin itself is granted to authenticated. p_for_gamers/p_for_parents are non-defaulted on purpose: a defaulted audience is one an omitting caller could set without meaning to. p_tag (00178) IS defaulted, and for the opposite reason: null is a legal value for a tag, no CHECK backstops it, and codegen cannot express an explicit null for a non-defaulted argument at all — so omission is how "untagged" reaches the column, and the required-nullable wire schema is what stops an accidental omission upstream. p_region_lock_country (00193) is defaulted for exactly that reason too, and carries one more thing worth knowing: the lock it writes is enforced in the UI alone, because a family''s location is self-attested — see the column comment. p_required_consent_slugs (00210) is defaulted on the same argument and is NOT written inline: this function is SECURITY INVOKER and product_required_consents carries no write grant, so the row goes through set_product_required_consents, the join table''s single guarded writer. p_requires_gamer_creations (00227) is defaulted to FALSE rather than to null, because the column is NOT NULL and false is the resting state of that whole feature — so an omitting caller creates an unflagged product, which is what omission should mean, and an explicit null is refused loudly by the column rather than silently becoming false. This function does NOT take a picture: 00198 dropped p_image_path, because a product''s picture is the product_images entry its image_id points at, written by the route in a second statement, and the served image_path column is derived from that link by trg_products_apply_image_path. Since 00199 p_spoken_language_code is public.spoken_language rather than text, because the reference table it used to name is gone.';
 
 
 --
@@ -2609,7 +2566,6 @@ CREATE FUNCTION public.effective_status(p_product_id uuid) RETURNS public.effect
     SET search_path TO ''
     AS $$
 DECLARE
-  v_status            public.product_status;
   v_start_date        DATE;
   v_end_date          DATE;
   v_signup_threshold  INTEGER;
@@ -2621,10 +2577,10 @@ DECLARE
   v_has_threshold     BOOLEAN;
   v_start_reached     BOOLEAN;
   v_threshold_met     BOOLEAN;
-  v_would_run         BOOLEAN;
+  v_started           BOOLEAN;
 BEGIN
-  SELECT status, start_date, end_date, signup_threshold, timezone
-    INTO v_status, v_start_date, v_end_date, v_signup_threshold, v_timezone
+  SELECT start_date, end_date, signup_threshold, timezone
+    INTO v_start_date, v_end_date, v_signup_threshold, v_timezone
     FROM public.products
     WHERE id = p_product_id;
 
@@ -2633,17 +2589,12 @@ BEGIN
       USING ERRCODE = 'no_data_found';
   END IF;
 
-  IF v_status = 'cancelled' THEN RETURN 'cancelled'; END IF;
-  IF v_status = 'completed' THEN RETURN 'completed'; END IF;
-
   v_now_local := (NOW() AT TIME ZONE v_timezone)::DATE;
   v_end_passed := v_end_date IS NOT NULL AND v_end_date < v_now_local;
 
-  IF v_status = 'running' THEN
-    RETURN CASE WHEN v_end_passed THEN 'completed' ELSE 'running' END;
-  END IF;
-
-  -- v_status = 'pending'
+  -- A product with neither a start date nor a threshold has nothing that could
+  -- start it, so it stays pending however long it sits there: that is a product
+  -- whose dates have not been filled in, not one that is under way.
   v_has_date := v_start_date IS NOT NULL;
   v_has_threshold := v_signup_threshold IS NOT NULL;
   v_start_reached := NOT v_has_date OR v_start_date <= v_now_local;
@@ -2657,15 +2608,22 @@ BEGIN
     v_threshold_met := TRUE;
   END IF;
 
-  v_would_run := (v_has_date OR v_has_threshold) AND v_start_reached AND v_threshold_met;
+  v_started := (v_has_date OR v_has_threshold) AND v_start_reached AND v_threshold_met;
 
-  IF v_would_run THEN
+  IF v_started THEN
     RETURN CASE WHEN v_end_passed THEN 'completed' ELSE 'running' END;
   END IF;
 
   RETURN CASE WHEN v_end_passed THEN 'expired' ELSE 'pending' END;
 END;
 $$;
+
+
+--
+-- Name: FUNCTION effective_status(p_product_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.effective_status(p_product_id uuid) IS 'The lifecycle of one product, derived from its own columns and the live count of active participations on it. Nothing about the answer is stored, so nothing can be stale: a product is running once its start date has arrived and its signup threshold (if it has one) is met, completed once the end date has passed on a product that did start, expired once the end date has passed on one that never did, and pending until then. A product carrying neither a start date nor a threshold stays pending — there is nothing that could start it. Every date comparison is against today in the product''s OWN timezone, because start_date and end_date are calendar dates in that zone rather than instants. SECURITY DEFINER and granted to service_role alone: it reads participations across families, and a policy that needs the same question answered asks the date predicate inline instead (see can_read_product).';
 
 
 SET default_tablespace = '';
@@ -3148,8 +3106,7 @@ BEGIN
       WITH candidate AS (
         SELECT p.*
           FROM public.products p
-         WHERE p.status <> 'cancelled'
-           AND public.effective_status(p.id) IN ('pending', 'running')
+         WHERE public.effective_status(p.id) IN ('pending', 'running')
       )
       SELECT c.id AS product_id,
              jsonb_build_object(
@@ -3293,8 +3250,7 @@ BEGIN
                    ((now() AT TIME ZONE p.timezone)::date
                      + INTERVAL '4 months')::date             AS window_end
           ) w
-         WHERE p.status NOT IN ('cancelled', 'completed')
-           AND (
+         WHERE (
                  public.effective_status(p.id) IN ('pending', 'running')
               OR (p.end_date IS NOT NULL
                   AND p.end_date >= w.window_start
@@ -3356,7 +3312,7 @@ $$;
 -- Name: FUNCTION get_admin_dashboard(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — either can be NULL, where the stat has no meaning: certified only means something for an educator, and verified is NULL for a role none of whose accounts holds a real address, which is every gamer unless their parent chose sign-in mode email), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Since 00201 each queue candidate also carries contract_accepted_at — when they accepted the current gedu contract, or NULL — which informs the certification decision without gating it; since 00202 that standing is judged on the version''s BASE, so either equally binding language of the current version counts, and a candidate holding both carries the earlier of the two signatures. Since 00213 each candidate additionally carries criminal_record_check_at — when an admin recorded seeing their criminal record extract, or NULL — which informs the same decision on the same terms and gates nothing either; the flag beside it is not shipped because the stamp is non-NULL exactly when the flag is true. Since 00207 the waitlist attention item asks whether there is something for an admin to DO rather than what state the product is in: an open seat that already carries a live seat offer is subtracted, so a product whose every open seat has been offered drops out of the queue, and a decline or an expiry raises it again on its own. The count rides in the emitted object as live_offer_count so the page can explain the absence. Since 00241 an unstaffed group with NO active member is named too, in its own empty_groups_without_gedu array beside groups_without_gedu, and can put a product in the queue by itself: the empty group used to be carved out of the group check entirely, on the reasoning that an admin pre-building next term has not made a mistake, and that reasoning now decides its RANK on the page rather than hiding it. The two arrays are disjoint by construction and neither holds a group somebody is assigned to. Both product sections ask effective_status() rather than products.status, and every date window is computed in the product''s own timezone. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
+COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — either can be NULL, where the stat has no meaning: certified only means something for an educator, and verified is NULL for a role none of whose accounts holds a real address, which is every gamer unless their parent chose sign-in mode email), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Since 00201 each queue candidate also carries contract_accepted_at — when they accepted the current gedu contract, or NULL — which informs the certification decision without gating it; since 00202 that standing is judged on the version''s BASE, so either equally binding language of the current version counts, and a candidate holding both carries the earlier of the two signatures. Since 00213 each candidate additionally carries criminal_record_check_at — when an admin recorded seeing their criminal record extract, or NULL — which informs the same decision on the same terms and gates nothing either; the flag beside it is not shipped because the stamp is non-NULL exactly when the flag is true. Since 00207 the waitlist attention item asks whether there is something for an admin to DO rather than what state the product is in: an open seat that already carries a live seat offer is subtracted, so a product whose every open seat has been offered drops out of the queue, and a decline or an expiry raises it again on its own. The count rides in the emitted object as live_offer_count so the page can explain the absence. Since 00241 an unstaffed group with NO active member is named too, in its own empty_groups_without_gedu array beside groups_without_gedu, and can put a product in the queue by itself: the empty group used to be carved out of the group check entirely, on the reasoning that an admin pre-building next term has not made a mistake, and that reasoning now decides its RANK on the page rather than hiding it. The two arrays are disjoint by construction and neither holds a group somebody is assigned to. Both product sections ask effective_status() and nothing else: since 00256 there is no stored status to pre-filter on, so the derived answer is the only lifecycle test either candidate set makes, and every date window is computed in the product''s own timezone. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
 
 
 --
@@ -3403,8 +3359,7 @@ BEGIN
                   AND gs.session_date <= v_month_end
              )
           OR (
-               p.status IN ('running', 'completed')
-               AND p.start_date IS NOT NULL
+               p.start_date IS NOT NULL
                AND p.start_date <= v_month_end
                AND (p.end_date IS NULL OR p.end_date >= p_month_start)
              )
@@ -3458,7 +3413,6 @@ BEGIN
       SELECT c.id,
              jsonb_build_object(
                'id',                     c.id,
-               'status',                 c.status,
                'timezone',               c.timezone,
                'start_date',             c.start_date,
                'end_date',               c.end_date,
@@ -3563,7 +3517,7 @@ $$;
 -- Name: FUNCTION get_admin_municipality_invoicing(p_month_start date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_admin_municipality_invoicing(p_month_start date) IS 'One calendar month of municipality-club invoicing, as a single document: every municipality club that either recorded a session in the month or could have (status running/completed with a term overlapping it), each with its status, timezone, term dates, current municipality_fee_cents, the whole product_translations array, its weekly schedule slots, its own location row, the nearest ancestor-or-self location of type municipality, and every stored group_sessions row in the month as a raw (group_id, session_date) pair. Admin-only, guard-first on assert_admin, and deliberately not STRICT so the guard cannot be skipped on NULL input. p_month_start must be the first day of a month; anything else raises check_violation. A session RAN iff a group_sessions row exists — those rows are lazily materialized when an educator records a report, note or attendance, so a row is the evidence somebody was there — and the client counts one session per club per calendar date, because a club with two groups meeting on one day ran one session. The schedule ships so the client can project what was supposed to run and flag a scheduled date with no row; a projection is never counted and never billed, and a stored row on an unscheduled date still counts. The municipality walk climbs parent_id THROUGH retired rows and never filters them, because a school that has since closed still sat in its municipality. Every club in the document HAS a municipality: a club whose chain reaches none cannot be invoiced to anybody, so the whole read raises check_violation naming those product ids rather than shipping a null the caller would have to render somewhere outside every total. The fee is the current column value with no snapshotting, and NULL means unset — the client shows that as a blank to fix, never as zero. Every array ships as [] rather than null.';
+COMMENT ON FUNCTION public.get_admin_municipality_invoicing(p_month_start date) IS 'One calendar month of municipality-club invoicing, as a single document: every municipality club that either recorded a session in the month or could have (a term that overlaps it), each with its timezone, term dates, current municipality_fee_cents, the whole product_translations array, its weekly schedule slots, its own location row, the nearest ancestor-or-self location of type municipality, and every stored group_sessions row in the month as a raw (group_id, session_date) pair. Admin-only, guard-first on assert_admin, and deliberately not STRICT so the guard cannot be skipped on NULL input. p_month_start must be the first day of a month; anything else raises check_violation. A session RAN iff a group_sessions row exists — those rows are lazily materialized when an educator records a report, note or attendance, so a row is the evidence somebody was there — and the client counts one session per club per calendar date, because a club with two groups meeting on one day ran one session. The schedule ships so the client can project what was supposed to run and flag a scheduled date with no row; a projection is never counted and never billed, and a stored row on an unscheduled date still counts. Since 00256 the candidate test is the term alone and the document carries no status: the second arm used to demand a stored running/completed status as well, which no club ever held, so a club with no recorded session never reached the invoice and nothing was ever flagged as missed. The municipality walk climbs parent_id THROUGH retired rows and never filters them, because a school that has since closed still sat in its municipality. Every club in the document HAS a municipality: a club whose chain reaches none cannot be invoiced to anybody, so the whole read raises check_violation naming those product ids rather than shipping a null the caller would have to render somewhere outside every total. The fee is the current column value with no snapshotting, and NULL means unset — the client shows that as a blank to fix, never as zero. Every array ships as [] rather than null.';
 
 
 --
@@ -7051,7 +7005,7 @@ CREATE FUNCTION public.respond_seat_offer(p_participation_id uuid, p_offer_sent_
     AS $$
 DECLARE
   v_product_id        uuid;
-  v_product_status    public.product_status;
+  v_locked_product_id uuid;
   v_status            public.participation_status;
   v_sent_at           timestamptz;
   v_customer_id       uuid;
@@ -7069,33 +7023,32 @@ BEGIN
   END IF;
 
   -- The same gate lock, so an admin drag-promoting this very row and a parent
-  -- pressing Accept cannot both write it. The status rides back on the lock
-  -- rather than being read in a second statement, because the answer has to be
-  -- the one the lock is holding still.
-  SELECT status INTO v_product_status
+  -- pressing Accept cannot both write it. The id is selected rather than any
+  -- column of interest because the lock is the whole point of the statement:
+  -- since 00256 there is no stored status to carry back, the product's lifecycle
+  -- being derived from dates nobody is racing us to write.
+  SELECT id INTO v_locked_product_id
     FROM public.products WHERE id = v_product_id FOR UPDATE;
 
-  -- THE ONE FACT AN HONOURED INVITE ALWAYS REQUIRES: the product still exists
-  -- and still stands. Everything else about the offer is grandfathered (see the
-  -- header) — the terms it went out on survive an admin's edit, because we
-  -- asked and they said yes. The product itself is not one of those terms. An
-  -- invitation to a club that has been cancelled is an invitation to nothing,
-  -- and seating a family into it would be worse than refusing them.
+  -- THE ONE FACT AN HONOURED INVITE ALWAYS REQUIRES: the product still exists.
+  -- Everything else about the offer is grandfathered (see the header) — the
+  -- terms it went out on survive an admin's edit, because we asked and they said
+  -- yes. The product's own existence is not one of those terms: an invitation to
+  -- something that is gone is an invitation to nothing.
   --
   -- NOT FOUND is reachable even though the participation was found a statement
   -- ago: participations.product_id cascades on delete, so a product dropped
   -- between the two takes the row with it and this lock finds nothing.
   --
-  -- Both answer `stale`, which is the outcome every other "this is no longer
+  -- It answers `stale`, which is the outcome every other "this is no longer
   -- open" case already produces — deliberately not a new kind. THIS IS ALSO THE
   -- ONE REFUSAL THAT STAYS GENERIC ALL THE WAY OUT. A `stale` answer is re-read
   -- against the row by the caller, and every shape that means the offer was
   -- consumed — accepted, promoted, declined, withdrawn, superseded — resolves
   -- to `used`. A row still holding this exact offer inside its window cannot be
   -- any of those, so it is this guard that refused, and it resolves to the
-  -- generic `invalid` instead: a distinguishable answer would let an
-  -- unauthenticated caller ask which products have been cancelled.
-  IF NOT FOUND OR v_product_status = 'cancelled'::public.product_status THEN
+  -- generic `invalid` instead.
+  IF NOT FOUND THEN
     RETURN jsonb_build_object('kind', 'stale');
   END IF;
 
@@ -7231,7 +7184,7 @@ $$;
 -- Name: FUNCTION respond_seat_offer(p_participation_id uuid, p_offer_sent_at timestamp with time zone, p_accept boolean); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.respond_seat_offer(p_participation_id uuid, p_offer_sent_at timestamp with time zone, p_accept boolean) IS 'A family''s answer to a seat offer, under the product gate lock. Compare-and-swap on p_offer_sent_at against the stored stamp: every way an offer ends moves that value, so a used link, a stale tab and a superseded offer all come back ''stale'' with no revocation table anywhere. The five-day window is re-checked here rather than trusted from the token, because the in-app path (a parent pressing Accept in My SOG) carries no token. THE WINDOW BINDS ACCEPT ALONE. A DECLINE succeeds for as long as the row exists, late or not: the deadline is there to stop a seat being claimed after we have offered it elsewhere, and none of that reasoning reaches a family giving a place back. THE DECLINED RESULT CARRIES TWO FLAGS AND THEY ANSWER DIFFERENT QUESTIONS. within_window says the answer beat the deadline. already_notified says seat_offer_expiry_notified_at was set when we read it — read before the DELETE, because the DELETE takes the column with it and after that nothing can tell whether staff were ever told this offer went unanswered. The caller mails on within_window OR NOT already_notified, which skips the mail only where the no-response mail demonstrably went: expiry here is OBSERVED rather than scheduled, so an offer nobody looked at between its fifth day and a late answer was never reported, and treating lateness alone as proof of notification made staff learn less from an answer than from silence. The already_notified read is deliberately not locked against a concurrent sweep — this transaction holds the product gate lock, not the participation row — so the worst case is one duplicate staff mail, which is the recoverable direction. THE PRODUCT IS RE-CHECKED BY ID ON THE LOCK: a MISSING or ''cancelled'' product answers ''stale'' and grants nothing. That is the boundary of this function''s grandfathering — the TERMS the offer went out on survive an admin''s edit (the billing mode is deliberately not re-read), but the product''s own existence and standing are not terms, and the one fact an honoured invite always requires is that the product it names still exists and stands. A product that has merely run out of dates is NOT guarded: it still exists and nothing has been withdrawn. That guard is also the one refusal that stays generic all the way out to the reader: every other ''stale'' resolves to ''used'' when the caller re-reads the row, and only a row still holding this exact live offer resolves to ''invalid'', because a distinguishable answer would let an unauthenticated caller ask which products have been cancelled. ACCEPT activates the seat and places it in the product''s single group, resolved again at answer time — if the product no longer has exactly one group the seat is still granted and lands unassigned, because a placement question is ours and not a reason to withdraw an invitation. There is no seat-count gate, deliberately: the same capacity override promote_from_waitlist makes, with a stronger claim behind it, so a product that refilled while the family was deciding goes one over. DECLINE hard-deletes the row, matching leave_my_waitlist_spot, and returns the four identifiers the staff mail names because they cannot be read afterwards. No EXECUTE grant to authenticated: the public landing route has no session to guard on — the signed token is the authorization — and the in-app route establishes the parent''s ownership before calling.';
+COMMENT ON FUNCTION public.respond_seat_offer(p_participation_id uuid, p_offer_sent_at timestamp with time zone, p_accept boolean) IS 'A family''s answer to a seat offer, under the product gate lock. Compare-and-swap on p_offer_sent_at against the stored stamp: every way an offer ends moves that value, so a used link, a stale tab and a superseded offer all come back ''stale'' with no revocation table anywhere. The five-day window is re-checked here rather than trusted from the token, because the in-app path (a parent pressing Accept in My SOG) carries no token. THE WINDOW BINDS ACCEPT ALONE. A DECLINE succeeds for as long as the row exists, late or not: the deadline is there to stop a seat being claimed after we have offered it elsewhere, and none of that reasoning reaches a family giving a place back. THE DECLINED RESULT CARRIES TWO FLAGS AND THEY ANSWER DIFFERENT QUESTIONS. within_window says the answer beat the deadline. already_notified says seat_offer_expiry_notified_at was set when we read it — read before the DELETE, because the DELETE takes the column with it and after that nothing can tell whether staff were ever told this offer went unanswered. The caller mails on within_window OR NOT already_notified, which skips the mail only where the no-response mail demonstrably went: expiry here is OBSERVED rather than scheduled, so an offer nobody looked at between its fifth day and a late answer was never reported, and treating lateness alone as proof of notification made staff learn less from an answer than from silence. The already_notified read is deliberately not locked against a concurrent sweep — this transaction holds the product gate lock, not the participation row — so the worst case is one duplicate staff mail, which is the recoverable direction. THE PRODUCT IS RE-CHECKED BY ID ON THE LOCK: a MISSING product answers ''stale'' and grants nothing. That is the boundary of this function''s grandfathering — the TERMS the offer went out on survive an admin''s edit (the billing mode is deliberately not re-read), but the product''s own existence is not a term, and the one fact an honoured invite always requires is that the product it names still exists. A product that has merely run out of dates is NOT guarded: it still exists and nothing has been withdrawn. Since 00256 existence is the whole of the test — the lock used to carry a stored status back and refuse a ''cancelled'' product, and there is no such state any more. That guard is also the one refusal that stays generic all the way out to the reader: every other ''stale'' resolves to ''used'' when the caller re-reads the row, and only a row still holding this exact live offer resolves to ''invalid''. ACCEPT activates the seat and places it in the product''s single group, resolved again at answer time — if the product no longer has exactly one group the seat is still granted and lands unassigned, because a placement question is ours and not a reason to withdraw an invitation. There is no seat-count gate, deliberately: the same capacity override promote_from_waitlist makes, with a stronger claim behind it, so a product that refilled while the family was deciding goes one over. DECLINE hard-deletes the row, matching leave_my_waitlist_spot, and returns the four identifiers the staff mail names because they cannot be read afterwards. No EXECUTE grant to authenticated: the public landing route has no session to guard on — the signed token is the authorization — and the in-app route establishes the parent''s ownership before calling.';
 
 
 --
@@ -10813,7 +10766,6 @@ CREATE TABLE public.products (
     image_path text,
     location_id uuid,
     is_remote boolean NOT NULL,
-    status public.product_status DEFAULT 'pending'::public.product_status NOT NULL,
     signup_threshold integer,
     start_date date,
     end_date date,
@@ -10851,7 +10803,6 @@ END),
     CONSTRAINT chk_products_online_muni_has_location CHECK (((NOT ((is_remote = true) AND (product_type = 'municipality_club'::public.product_type))) OR (location_id IS NOT NULL))),
     CONSTRAINT chk_products_online_non_muni_no_location CHECK (((NOT ((is_remote = true) AND (product_type <> 'municipality_club'::public.product_type))) OR (location_id IS NULL))),
     CONSTRAINT chk_products_region_lock_country_shape CHECK (((region_lock_country IS NULL) OR (region_lock_country ~ '^[A-Z]{2}$'::text))),
-    CONSTRAINT chk_products_running_has_start_date CHECK (((status <> 'running'::public.product_status) OR (start_date IS NOT NULL))),
     CONSTRAINT chk_products_threshold_within_seat_count CHECK (((signup_threshold IS NULL) OR (seat_count IS NULL) OR (signup_threshold <= seat_count))),
     CONSTRAINT products_assistant_gedu_fee_cents_check CHECK (((assistant_gedu_fee_cents IS NULL) OR (assistant_gedu_fee_cents >= 0))),
     CONSTRAINT products_max_age_check CHECK (((max_age IS NULL) OR (max_age >= 0))),
@@ -12025,13 +11976,6 @@ CREATE INDEX idx_products_location ON public.products USING btree (location_id) 
 --
 
 CREATE INDEX idx_products_reg_opens_at ON public.products USING btree (registration_opens_at);
-
-
---
--- Name: idx_products_status; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_products_status ON public.products USING btree (status);
 
 
 --
@@ -14554,12 +14498,12 @@ GRANT ALL ON FUNCTION public.create_participation(p_product_id uuid, p_participa
 
 
 --
--- Name: FUNCTION create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean) TO authenticated;
-GRANT ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean) TO service_role;
+REVOKE ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean) TO authenticated;
+GRANT ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean) TO service_role;
 
 
 --

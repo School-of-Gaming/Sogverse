@@ -5,14 +5,13 @@ import {
   type RegistrationStateInputs,
 } from "@/components/public/products/derive-registration-state";
 
-// Test fixtures only need the columns the deriver reads. Default to a
-// running consumer club with registration already open and no caps so
+// Test fixtures only need the columns the deriver reads. Default to a consumer
+// club whose term is under way, with registration already open and no caps, so
 // each test only has to override the columns it cares about.
 function product(
   over: Partial<RegistrationStateInputs>,
 ): RegistrationStateInputs {
   return {
-    status: "running",
     start_date: "2026-04-01",
     end_date: "2026-12-31",
     signup_threshold: null,
@@ -42,7 +41,6 @@ const EVENT_SLOT = [
 function event(over: Partial<RegistrationStateInputs> = {}) {
   return product({
     product_type: "event",
-    status: "running",
     start_date: EVENT_DATE,
     end_date: EVENT_DATE,
     schedule_slots: EVENT_SLOT,
@@ -54,7 +52,6 @@ describe("deriveRegistrationState", () => {
   it("ended → completed product (end_date in past)", () => {
     const state = deriveRegistrationState({
       product: product({
-        status: "completed",
         start_date: "2026-01-01",
         end_date: "2026-02-01",
       }),
@@ -64,19 +61,9 @@ describe("deriveRegistrationState", () => {
     expect(state.kind).toBe("ended");
   });
 
-  it("ended → cancelled product", () => {
-    const state = deriveRegistrationState({
-      product: product({ status: "cancelled" }),
-      now: NOW,
-      participationsCount: 0,
-    });
-    expect(state.kind).toBe("ended");
-  });
-
   it("ended → effectiveStatus rolls running into completed once end_date passes", () => {
     const state = deriveRegistrationState({
       product: product({
-        status: "running",
         start_date: "2026-01-01",
         end_date: "2026-02-01",
       }),
@@ -89,7 +76,6 @@ describe("deriveRegistrationState", () => {
   it("closed_pre → registration_opens_at in future", () => {
     const state = deriveRegistrationState({
       product: product({
-        status: "pending",
         registration_opens_at: "2026-05-15T00:00:00Z",
       }),
       now: NOW,
@@ -107,7 +93,6 @@ describe("deriveRegistrationState", () => {
     // so. 15 seats, 2 already placed → 13 left, before anyone can register.
     const state = deriveRegistrationState({
       product: product({
-        status: "pending",
         registration_opens_at: "2026-05-15T00:00:00Z",
         seat_count: 15,
         waitlist_enabled: true,
@@ -126,7 +111,6 @@ describe("deriveRegistrationState", () => {
   it("closed_pre on an uncapped product reports no capacity at all", () => {
     const state = deriveRegistrationState({
       product: product({
-        status: "pending",
         registration_opens_at: "2026-05-15T00:00:00Z",
         seat_count: null,
       }),
@@ -146,7 +130,6 @@ describe("deriveRegistrationState", () => {
     // two disagreed, the bar would change (or appear) under a cursor already on
     // the CTA. Same row, same count, one second either side of the drop.
     const row = product({
-      status: "pending",
       registration_opens_at: "2026-04-29T12:00:00Z",
       seat_count: 15,
       waitlist_enabled: true,
@@ -183,7 +166,6 @@ describe("deriveRegistrationState", () => {
     const state = deriveRegistrationState({
       product: product({
         product_type: "camp",
-        status: "running",
         start_date: "2026-04-01",
         end_date: "2026-05-30",
       }),
@@ -272,7 +254,6 @@ describe("deriveRegistrationState", () => {
     const state = deriveRegistrationState({
       product: product({
         product_type: "camp",
-        status: "running",
         start_date: EVENT_DATE,
         end_date: "2026-05-03",
         schedule_slots: EVENT_SLOT,
@@ -316,7 +297,6 @@ describe("deriveRegistrationState", () => {
     const state = deriveRegistrationState({
       product: product({
         product_type: "consumer_club",
-        status: "running",
       }),
       now: NOW,
       participationsCount: 0,
@@ -327,7 +307,6 @@ describe("deriveRegistrationState", () => {
   it("pending_thr → pending product with unmet threshold", () => {
     const state = deriveRegistrationState({
       product: product({
-        status: "pending",
         signup_threshold: 5,
         // start_date in future so effectiveStatus stays pending
         start_date: "2026-06-01",
@@ -350,7 +329,6 @@ describe("deriveRegistrationState", () => {
     // it needs the trio for the same no-shift reason `closed_pre` does.
     const state = deriveRegistrationState({
       product: product({
-        status: "pending",
         signup_threshold: 6,
         start_date: "2026-06-01",
         end_date: "2026-08-30",
@@ -372,7 +350,6 @@ describe("deriveRegistrationState", () => {
   it("pending_thr on an uncapped product reports no capacity", () => {
     const state = deriveRegistrationState({
       product: product({
-        status: "pending",
         signup_threshold: 6,
         start_date: "2026-06-01",
         end_date: "2026-08-30",
@@ -392,7 +369,6 @@ describe("deriveRegistrationState", () => {
     // start_date past + threshold met → effectiveStatus = running → open
     const state = deriveRegistrationState({
       product: product({
-        status: "pending",
         signup_threshold: 5,
         start_date: "2026-04-01",
         end_date: "2026-08-30",
@@ -511,7 +487,6 @@ describe("deriveRegistrationState", () => {
     const state = deriveRegistrationState({
       product: product({
         product_type: "camp",
-        status: "running",
         start_date: "2026-01-01",
         end_date: "2026-02-01",
       }),
@@ -526,7 +501,6 @@ describe("deriveRegistrationState", () => {
     // pill component drops the N/M caption when count is 0.
     const state = deriveRegistrationState({
       product: product({
-        status: "pending",
         signup_threshold: 8,
         start_date: "2026-06-01",
         end_date: "2026-08-30",

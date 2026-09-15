@@ -4,12 +4,13 @@ import {
   isSubscriptionShaped,
 } from "@/lib/constants/billing";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
+import type { EffectiveProductStatus } from "@/lib/products/effective-status";
 import type { RobloxRenderMap } from "@/services/roblox";
+import { formatInTimeZone } from "date-fns-tz";
 import type {
   BillingMode,
   GroupParticipationDetail,
   ProductGroupsSnapshot,
-  ProductStatus,
   ProductType,
 } from "@/types";
 
@@ -567,11 +568,12 @@ export type SwitchTargetFact =
 
 /** The target club's own columns, as the admin product list row carries them. */
 export interface SwitchTargetSource {
-  status: ProductStatus;
   minAge: number | null;
   maxAge: number | null;
   regionLockCountry: string | null;
   startDate: string | null;
+  /** The club's derived lifecycle status, as the sheet's own chip states it. */
+  status: EffectiveProductStatus;
   seatCount: number | null;
 }
 
@@ -603,8 +605,16 @@ export function switchTargetSeats(
  * The age range is stated whenever either end is authored — an open-ended range
  * is honoured on the end it has — and is silent on a club that authored
  * neither, where there is nothing to say. Everything else is present only when
- * it is true of this club: an unlocked club states no region, a running one
- * states no start.
+ * it is true of this club: an unlocked club states no region, one that has
+ * already begun states no start.
+ *
+ * "Has not started" is not a second opinion about the dates: it is the club's
+ * derived lifecycle status, `pending` and nothing else. The status is derived
+ * once by the sheet, which states it as a chip beside the club's name and hands
+ * the same value in here, so the chip and the fact cannot disagree about
+ * whether the club has begun. A sign-up count of 0 is the approximation both
+ * share, because the panel holds no count for the target — a club still short
+ * of its signup threshold therefore reads as not started on both.
  */
 export function switchTargetFacts(
   target: SwitchTargetSource,
@@ -690,27 +700,33 @@ export function orderSwitchTargets<T extends SwitchTargetOrderRow>(
 
 /**
  * Whether a club is a legal destination for a switch: subscription-shaped (the
- * predicate whose SQL twin the RPC asks of every target), still `pending` or
- * `running`, and not the product the seat is already on. Completed and
- * cancelled clubs are dropped because moving a family onto one is never the
- * answer to "they changed their mind"; spoken language and region are
- * deliberately **not** filtered on — the admin knows the family, and the region
- * lock is a warning above rather than a gate.
+ * predicate whose SQL twin the RPC asks of every target), not yet over, and not
+ * the product the seat is already on. A finished club is dropped because moving
+ * a family onto one is never the answer to "they changed their mind"; spoken
+ * language and region are deliberately **not** filtered on — the admin knows the
+ * family, and the region lock is a warning above rather than a gate.
+ *
+ * "Not yet over" is the end date against the club's OWN today, which is the
+ * whole of the test: a lifecycle is pending or running exactly while its end
+ * date has not passed, so there is nothing a sign-up count could add here.
  */
 export function isSwitchTarget(
   candidate: {
     id: string;
     product_type: ProductType;
     billing_mode: BillingMode;
-    status: ProductStatus;
+    end_date: string | null;
+    timezone: string;
   },
   sourceProductId: string,
+  now: Date,
 ): boolean {
   if (candidate.id === sourceProductId) return false;
   if (!isSubscriptionShaped(candidate.product_type, candidate.billing_mode)) {
     return false;
   }
-  return candidate.status === "pending" || candidate.status === "running";
+  if (candidate.end_date === null) return true;
+  return candidate.end_date >= formatInTimeZone(now, candidate.timezone, "yyyy-MM-dd");
 }
 
 /** What the held-place derivation reads off one of the gamer's participations. */

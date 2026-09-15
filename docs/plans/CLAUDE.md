@@ -22,6 +22,13 @@ them from `TODO.md`, and do not leave a `TODO.md` stub pointing at one. If work 
 `TODO.md` item and later gets designed into a plan, remove the `TODO.md` item when the plan
 lands, so there is exactly one home for it.
 
+**A plan is a handoff, not a prerequisite.** It exists for work that is more detailed than a
+`TODO.md` item but is being parked — there is no time or context window left to build it
+now, so a later session has to pick it up cold. When the scope is well defined, the owner
+and the session are aligned, and the session can carry the build, start the work directly
+and skip the plan: writing one for work that begins in the same conversation produces a
+file that is deleted the moment the work lands.
+
 ## Scope: a v1 foundation, from what we know now
 
 **A plan contains only what the feature needs.** Not extra features, not pre-optimisations,
