@@ -25,13 +25,48 @@ import {
 import { cn, matchesAllTerms, searchTerms } from "@/lib/utils";
 import type { Profile } from "@/types";
 
+/**
+ * **Why the caller will not take a candidate.**
+ *
+ * The sheet owns two refusals of its own and neither is in this list: the
+ * person already filling the slot, and an uncertified account, which it knows
+ * about because it holds the certification read. Everything else is a property
+ * of what the caller is staffing, and the caller is the only side that can
+ * answer it — so it arrives as a reason rather than as a bare id, and the row
+ * says *which* rule refused it rather than being silently unpressable.
+ *
+ * - `assigned` — already on a group of this product. The permanent assignment
+ *   editor's rule: a Gedu holds at most one group per product.
+ * - `expected` — already due at the session being staffed. Seating them as
+ *   somebody else's sub would collapse two seats onto one person and make "who
+ *   did which job" unanswerable.
+ * - `absent` — the Gedu being covered. Nobody subs for themselves.
+ */
+export type GeduPickerUnavailability = "assigned" | "expected" | "absent";
+
+/** Which badge names each refusal. A literal map so `t()` keeps its key type. */
+const UNAVAILABILITY_MESSAGE_KEY = {
+  assigned: "alreadyAssigned",
+  expected: "alreadyExpected",
+  absent: "absentGedu",
+} as const satisfies Record<GeduPickerUnavailability, string>;
+
 interface GeduPickerSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   description: string;
-  /** IDs that should show the "already assigned" disabled state. */
-  excludeIds?: string[];
+  /**
+   * The caller's own refusals, keyed by Gedu id — each row it names is drawn
+   * disabled with that reason in place of its status.
+   *
+   * A map rather than a list of ids because "why" is the half that has to reach
+   * the row: this sheet staffs a permanent assignment on one surface and a
+   * single session's sub on another, and the two refuse different people for
+   * different reasons. A candidate absent from the map is selectable unless one
+   * of the sheet's own two rules refuses them.
+   */
+  unavailable?: ReadonlyMap<string, GeduPickerUnavailability>;
   /** The id currently filling this slot — shown with a "current" badge. */
   highlightId?: string;
   onSelect: (gedu: Profile) => void;
@@ -73,7 +108,7 @@ export function GeduPickerSheet({
   onOpenChange,
   title,
   description,
-  excludeIds,
+  unavailable,
   highlightId,
   onSelect,
 }: GeduPickerSheetProps) {
@@ -179,21 +214,21 @@ export function GeduPickerSheet({
           <div className="space-y-2">
             {filtered.map((g) => {
               const isCurrent = g.id === highlightId;
-              const isAssigned = excludeIds?.includes(g.id) ?? false;
+              const refusal = unavailable?.get(g.id) ?? null;
               // Uncertified gedus can't be assigned until an admin approves them
               // (a UI-only gate — sufficient because only trusted admins assign;
               // see src/services/gedu/CLAUDE.md). This one keeps failing closed
               // when the certification read errors: withholding an assignment we
               // cannot justify is the safe direction for a gate.
               const isUncertified = !(certification.map.get(g.id)?.certified ?? false);
-              const isDisabled = isCurrent || isAssigned || isUncertified;
+              const isDisabled = isCurrent || refusal !== null || isUncertified;
               return (
                 <GeduRow
                   key={g.id}
                   gedu={g}
                   languageName={languageName}
                   isCurrent={isCurrent}
-                  isAssigned={isAssigned}
+                  refusal={refusal}
                   isUncertified={isUncertified}
                   isDisabled={isDisabled}
                   onClick={() => {
@@ -226,7 +261,8 @@ interface GeduRowProps {
    */
   languageName: ReturnType<typeof useLanguageNames>;
   isCurrent: boolean;
-  isAssigned: boolean;
+  /** The caller's reason for refusing this row, or null where it has none. */
+  refusal: GeduPickerUnavailability | null;
   isUncertified: boolean;
   isDisabled: boolean;
   onClick: () => void;
@@ -236,7 +272,7 @@ function GeduRow({
   gedu,
   languageName,
   isCurrent,
-  isAssigned,
+  refusal,
   isUncertified,
   isDisabled,
   onClick,
@@ -265,12 +301,12 @@ function GeduRow({
               {t("current")}
             </Badge>
           )}
-          {isAssigned && !isCurrent && (
+          {refusal !== null && !isCurrent && (
             <Badge variant="outline" className="shrink-0">
-              {t("alreadyAssigned")}
+              {t(UNAVAILABILITY_MESSAGE_KEY[refusal])}
             </Badge>
           )}
-          {isUncertified && !isCurrent && !isAssigned && (
+          {isUncertified && !isCurrent && refusal === null && (
             <Badge variant="outline" className="shrink-0 text-destructive">
               {t("notCertified")}
             </Badge>

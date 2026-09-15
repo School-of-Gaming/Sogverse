@@ -3,10 +3,11 @@ import { ROUTES } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { dateTimeInstant } from "@/lib/schedule-occurrence";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatDateOnly } from "@/lib/utils";
 import type {
   AdminDashboardAttentionProduct,
   AdminDashboardCertificationCandidate,
+  AdminDashboardCoverRequest,
   AdminDashboardScheduleProduct,
   AdminDashboardSnapshot,
   AdminDashboardUserStat,
@@ -18,6 +19,8 @@ import type {
   ComingUpCohort,
   ComingUpDay,
   ComingUpItem,
+  CoverOffer,
+  CoverRequest,
   ProductAttention,
   ProductIssue,
   ScheduleChip,
@@ -156,6 +159,9 @@ export function buildAdminDashboardData({
       toProductAttention(product, locale),
     ),
     users: orderUsers(snapshot.users),
+    coverRequests: snapshot.cover_requests.map((request) =>
+      toCoverRequest(request, locale, viewerTimeZone),
+    ),
     weeks,
     currentWeekIndex,
     comingUp: buildComingUp(snapshot.schedule_products, locale, today),
@@ -307,16 +313,12 @@ function toUncertifiedGedu(
   now: Date,
   viewerTimeZone: string,
 ): UncertifiedGedu {
-  const name = [candidate.first_name, candidate.last_name]
-    .filter((part) => part.trim().length > 0)
-    .join(" ");
-
   return {
     id: candidate.id,
     // The account is real and the name may not be; an unnamed row still has to
     // be actionable, and its identicon is keyed to the id either way. The
     // stand-in wording belongs to the card, so the absence travels as `null`.
-    name: name.length > 0 ? name : null,
+    name: personName(candidate.first_name, candidate.last_name),
     registeredAgo: relativeWait(candidate.created_at, now, locale),
     // The wire's null already means "not standing under the terms in force",
     // whether that is because nothing was ever signed or because what was
@@ -377,6 +379,88 @@ export function relativeWait(
   if (Math.abs(weeks) < 9) return format.format(-weeks, "week");
 
   return format.format(-Math.round(days / 30), "month");
+}
+
+// ---------------------------------------------------------------------------
+// The cover queue
+// ---------------------------------------------------------------------------
+
+/**
+ * One open cover request as the panel renders it.
+ *
+ * **Day-granular, so it rides with the schedule rather than with the ticking
+ * clock.** Nothing on a cover row ages while the page sits open: a session date
+ * is a calendar fact and an extract's date is one too. What drops a row off the
+ * list is the read no longer returning it, which the invalidation behind an
+ * approval already arranges.
+ *
+ * **The session date renders as itself, in no zone at all.** The wire carries
+ * the product's timezone but not its schedule slots, so there is no wall clock
+ * to hang on the date and nothing here to convert — a bare calendar date, which
+ * this app pins to UTC at both ends precisely so it reads the same for every
+ * viewer. The extract's stamp beside it *is* an instant and does convert, which
+ * is why the two go through different formatters two lines apart.
+ */
+function toCoverRequest(
+  request: AdminDashboardCoverRequest,
+  locale: SupportedLocale,
+  viewerTimeZone: string,
+): CoverRequest {
+  return {
+    id: request.id,
+    groupId: request.group_id,
+    groupName: request.group_name,
+    productName: productName(request.product.translations, locale),
+    productType: request.product.product_type,
+    // A weekday beside the date, because what an admin is staffing is a
+    // *session* and "Friday" is how the office talks about one; the year is
+    // left off because the queue only ever holds dates from today forward
+    // inside the schedule's own horizon.
+    sessionDate: formatDateOnly(request.session_date, locale, {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    }),
+    role: request.role,
+    reason: request.reason,
+    reasonNote: request.reason_note,
+    requesterId: request.requested_by,
+    requesterName: personName(
+      request.requested_by_first_name,
+      request.requested_by_last_name,
+    ),
+    groupHref: ROUTES.admin.productGroup(
+      request.product.product_type,
+      request.product.id,
+      request.group_id,
+    ),
+    offers: request.offers.map((offer): CoverOffer => ({
+      id: offer.id,
+      geduId: offer.gedu_id,
+      name: personName(offer.first_name, offer.last_name),
+      certified: offer.certified,
+      criminalRecordCheckOn:
+        offer.criminal_record_check_at === null
+          ? null
+          : formatDate(offer.criminal_record_check_at, locale, {
+              dateStyle: "medium",
+              timeZone: viewerTimeZone,
+            }),
+    })),
+  };
+}
+
+/**
+ * A person's display name, or `null` where the account carries none.
+ *
+ * The absence travels as `null` rather than as a stand-in string because the
+ * stand-in is translated copy and this module has no locale for copy — only for
+ * `Intl`. Shared by the two queues that name people, so "unnamed" means the
+ * same thing on a certification row and on a cover offer.
+ */
+function personName(first: string, last: string): string | null {
+  const name = [first, last].filter((part) => part.trim().length > 0).join(" ");
+  return name.length > 0 ? name : null;
 }
 
 // ---------------------------------------------------------------------------

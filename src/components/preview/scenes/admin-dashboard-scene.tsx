@@ -53,6 +53,13 @@ export function AdminDashboardScene({
   );
 
   const [certified, setCertified] = useState<ReadonlySet<string>>(new Set());
+  /**
+   * The cover queue's half of the same trick, keyed by **request** rather than
+   * by offer: approving one offer settles the request, and what leaves the list
+   * is the request. The panel's own receipt prunes itself against whatever this
+   * scene goes on offering, exactly as it does against a refetched snapshot.
+   */
+  const [covered, setCovered] = useState<ReadonlySet<string>>(new Set());
 
   /**
    * Certifications belong to the scenario they were made in. The two scenarios
@@ -66,6 +73,7 @@ export function AdminDashboardScene({
   if (shownScenario !== scenario) {
     setShownScenario(scenario);
     setCertified(new Set());
+    setCovered(new Set());
   }
 
   const data = useMemo(
@@ -74,8 +82,11 @@ export function AdminDashboardScene({
       uncertifiedGedus: fixture.uncertifiedGedus.filter(
         (gedu) => !certified.has(gedu.id),
       ),
+      coverRequests: fixture.coverRequests.filter(
+        (request) => !covered.has(request.id),
+      ),
     }),
-    [fixture, certified],
+    [fixture, certified, covered],
   );
 
   const handleCertify = useCallback((geduId: string) => {
@@ -83,5 +94,31 @@ export function AdminDashboardScene({
     return Promise.resolve();
   }, []);
 
-  return <AdminDashboardPageBody data={data} onCertifyGedu={handleCertify} />;
+  /**
+   * Approving in the preview drops the request the offer belongs to, which is
+   * the fixture standing in for the refetched snapshot. The offer id is what
+   * the panel hands over — it is what the RPC takes — so the request it settles
+   * is found here rather than being carried alongside it, the way the live path
+   * finds it by simply not returning it again.
+   */
+  const handleApproveCover = useCallback(
+    (offerId: string) => {
+      const request = fixture.coverRequests.find((candidate) =>
+        candidate.offers.some((offer) => offer.id === offerId),
+      );
+      if (request !== undefined) {
+        setCovered((current) => new Set(current).add(request.id));
+      }
+      return Promise.resolve();
+    },
+    [fixture],
+  );
+
+  return (
+    <AdminDashboardPageBody
+      data={data}
+      onCertifyGedu={handleCertify}
+      onApproveCoverOffer={handleApproveCover}
+    />
+  );
 }

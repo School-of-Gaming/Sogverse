@@ -606,6 +606,8 @@ export type {
 export type {
   AdminDashboardAttentionProduct,
   AdminDashboardCertificationCandidate,
+  AdminDashboardCoverOffer,
+  AdminDashboardCoverRequest,
   AdminDashboardGroupWithoutGedu,
   AdminDashboardScheduleProduct,
   AdminDashboardScheduleSlot,

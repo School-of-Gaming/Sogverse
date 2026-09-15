@@ -310,6 +310,24 @@
           "waitlistOpenSeatsWithOffers": "{waiting} waitlisted · {open, plural, one {# seat} other {# seats}} open · {offers} awaiting an answer"
         }
       },
+      "cover": {
+        "title": "Cover requests",
+        "allClear": "No session needs a sub.",
+        "justNow": "{count, plural, one {# sub approved just now} other {# subs approved just now}}",
+        "listLabel": "Sessions needing a sub",
+        "offersLabel": "Gedus offering to cover",
+        "away": "Away:",
+        "unnamed": "Unnamed Gedu",
+        "reason": {
+          "sick": "Sick",
+          "other": "Other"
+        },
+        "noOffers": "No offers yet.",
+        "openGroup": "Open the group",
+        "approve": "Approve",
+        "approving": "Approving…",
+        "failed": "Could not approve — try again."
+      },
       "certification": {
         "title": "Gedu certification",
         "justNow": "{count} certified just now",
@@ -393,6 +411,11 @@
       "sessionsFor": "Sessions of {club}",
       "loadError": "Could not load the invoicing month. Refresh to try again.",
       "loadErrorWithReason": "Could not load the invoicing month — {reason}. Refresh to try again."
+    },
+    "geduRole": {
+      "primary": "Primary",
+      "assistant": "Assistant",
+      "selectAria": "Role for {name}"
     },
     "geduContract": {
       "heading": "Gedu contract",
@@ -886,6 +909,8 @@
         "noResults": "No Gedus match your search.",
         "current": "Current",
         "alreadyAssigned": "Already assigned",
+        "alreadyExpected": "Already at this session",
+        "absentGedu": "The Gedu being covered",
         "notCertified": "Not certified"
       },
       "participantPicker": {
@@ -1481,6 +1506,7 @@
     "camps": "Camps",
     "events": "Events",
     "myGroupsEmptyStateGedu": "When you’re assigned to a group, it will appear here with its next session.",
+    "coverPool": "Cover",
     "billing": "Billing",
     "help": "Help",
     "tools": "Tools",
@@ -1635,6 +1661,22 @@
     }
   },
   "gedu": {
+    "cover": {
+      "cardEyebrow": "Cover",
+      "cardOpenLabel": "{product} — session you’re covering",
+      "poolHeading": "Sessions needing cover",
+      "poolAllClear": "No sessions need cover right now.",
+      "poolRemote": "Remote",
+      "poolSiteUnknown": "Place to be confirmed",
+      "poolRolePrimary": "Primary",
+      "poolRoleAssistant": "Assistant",
+      "poolFee": "{fee} per session",
+      "poolOfferAction": "I can cover this",
+      "poolOfferPending": "Sending…",
+      "poolWithdrawAction": "Withdraw offer",
+      "poolWithdrawPending": "Withdrawing…",
+      "poolActionFailed": "That didn’t save. Try again."
+    },
     "coverage": {
       "title": "Coverage areas",
       "remoteOnlyNote": "Used to match you as a substitute when another Gedu can’t cover their club. Leave empty if you only sub remotely.",
@@ -1733,7 +1775,33 @@
       "creationsAddedCount": "{added} of {total} added",
       "creationsHint": "This is the run’s last session, so it isn’t finished until everyone here has a creation. Open a name to add one.",
       "creationsMemberDone": "{name} — creation added",
-      "creationsMemberMissing": "{name} — creation still needed"
+      "creationsMemberMissing": "{name} — creation still needed",
+      "staffingExpected": "Running this session: {names}",
+      "staffingNobodyExpected": "Nobody is running this session yet.",
+      "staffingWithRole": "{name} ({role})",
+      "staffingCoverNeeded": "Cover needed for {name}.",
+      "staffingCoveredBy": "{sub} is covering for {name}.",
+      "coverRolePrimary": "Primary",
+      "coverRoleAssistant": "Assistant",
+      "coverRequestAction": "I can’t make this session",
+      "coverRequestDialogTitle": "I can’t make this session",
+      "coverRequestDialogBody": "The office will look for a sub. Your reason and note are shown to admins only.",
+      "coverReasonLabel": "Reason",
+      "coverReasonSick": "Sick",
+      "coverReasonOther": "Something else",
+      "coverNoteLabel": "Note for the office",
+      "coverNotePlaceholder": "Anything the office should know",
+      "coverNoteRemaining": "{count, plural, one {# character left} other {# characters left}}",
+      "coverRequestConfirm": "Confirm",
+      "coverRequestFailed": "That didn’t save. Try again.",
+      "coverRequestStatusOpen": "You’ve said you can’t make this one. Waiting for a sub.",
+      "coverRequestStatusOffers": "{count, plural, one {# offer waiting} other {# offers waiting}}",
+      "coverRequestStatusCovered": "{name} is covering for you.",
+      "coverWithdrawAction": "I can make it after all",
+      "coverWithdrawTitle": "Take this back?",
+      "coverWithdrawBody": "You go back to running the session, and any offers to cover it are dropped.",
+      "coverWithdrawConfirm": "Take it back",
+      "coverWithdrawFailed": "That didn’t save. Try again."
     },
     "groupNotes": {
       "heading": "About this group",

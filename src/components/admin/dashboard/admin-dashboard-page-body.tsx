@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import type { AdminDashboardData } from "./admin-dashboard-data";
+import { CoverRequestsPanel } from "./cover-requests-panel";
 import { GeduCertificationPanel } from "./gedu-certification-panel";
 import { NeedsAttentionPanel } from "./needs-attention-panel";
 import { ProductTypeKeyRail } from "./product-type-key-rail";
@@ -64,10 +65,16 @@ import { UsersStrip } from "./users-strip";
 export function AdminDashboardPageBody({
   data,
   onCertifyGedu,
+  onApproveCoverOffer,
 }: {
   data: AdminDashboardData;
   /** Certify one gedu. Resolves once the write landed; rejects if it did not. */
   onCertifyGedu: (geduId: string) => Promise<void>;
+  /**
+   * Seat the gedu behind one cover offer. Resolves once the write landed *and*
+   * the refetched snapshot has dropped the request; rejects if it did not.
+   */
+  onApproveCoverOffer: (offerId: string) => Promise<void>;
 }) {
   const t = useTranslations("admin.dashboard");
 
@@ -99,6 +106,18 @@ export function AdminDashboardPageBody({
           <UsersStrip stats={data.users} />
 
           <NeedsAttentionPanel products={data.products} />
+
+          {/* Between the two, because it is the second thing on this page an
+              admin can *finish*: a colleague is out, somebody has offered, and
+              one press seats them. Above certification for the reason
+              certification is below the queue at all — that section is people
+              waiting on somebody who is not in this building, and this one is
+              not. Below the product queue because a child with nobody teaching
+              them outranks a session with a volunteer already standing by. */}
+          <CoverRequestsPanel
+            requests={data.coverRequests}
+            onApproveOffer={onApproveCoverOffer}
+          />
 
           {/* Directly under the queue, because the two are read together — what
               needs doing, then who is standing by — and above the schedule,
