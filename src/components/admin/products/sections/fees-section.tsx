@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { findOption } from "@/lib/utils";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants";
+import { InvoiceCustomerPicker } from "@/components/admin/invoice-customers/invoice-customer-picker";
 import { FormSection } from "../form-primitives";
 import {
   ASSISTANT_GEDU_FEE_STATUS_VALUES,
@@ -149,6 +150,19 @@ export function FeesSection({ state, setState, config }: FeesSectionProps) {
           amountLabel={amountLabel}
           draft={state.municipalityFee}
           onChange={(municipalityFee) => setState({ ...state, municipalityFee })}
+        />
+      )}
+      {/* Directly under the fee it is the other half of: the fee says what one
+          session is worth and this says who is sent the bill for it, and both
+          are optional at creation and reported by the same page. Mounted only
+          for a municipality club, which is also what keeps the customer list off
+          every other product form — no other type may carry one. */}
+      {isMuni && (
+        <InvoiceCustomerPicker
+          value={state.invoiceCustomerId}
+          onChange={(invoiceCustomerId) =>
+            setState({ ...state, invoiceCustomerId })
+          }
         />
       )}
     </FormSection>

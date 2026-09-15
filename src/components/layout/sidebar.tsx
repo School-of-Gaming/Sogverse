@@ -10,6 +10,7 @@ import {
   Settings,
   FlaskConical,
   MessageCircle,
+  Building2,
   ChevronLeft,
   ChevronRight,
   MapPin,
@@ -29,6 +30,7 @@ type SidebarKey =
   | "dashboard" | "users"
   | "uiComponents" | "uiPreviews" | "whatsapp" | "testing" | "settings"
   | "tools" | "consumerClubs" | "municipalityClubs" | "municipalityInvoicing"
+  | "invoiceCustomers"
   | "camps" | "events"
   | "sites";
 
@@ -66,6 +68,10 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
     { href: ROUTES.admin.events, labelKey: "events", icon: kindIcon("event") },
     { href: ROUTES.admin.sites, labelKey: "sites", icon: <MapPin className="h-5 w-5" /> },
     { href: ROUTES.admin.municipalityInvoicing, labelKey: "municipalityInvoicing", icon: <Receipt className="h-5 w-5" /> },
+    // Directly under the ledger it serves: a customer is only ever looked up
+    // because an invoice is being raised, and the ledger is where a club with
+    // no customer is reported.
+    { href: ROUTES.admin.invoiceCustomers, labelKey: "invoiceCustomers", icon: <Building2 className="h-5 w-5" /> },
     { href: ROUTES.admin.tools, labelKey: "tools", icon: <Wrench className="h-5 w-5" /> },
     { href: ROUTES.admin.uiComponents, labelKey: "uiComponents", icon: <Palette className="h-5 w-5" /> },
     { href: ROUTES.admin.uiPreviews, labelKey: "uiPreviews", icon: <MonitorPlay className="h-5 w-5" /> },

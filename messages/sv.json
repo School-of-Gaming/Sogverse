@@ -38,6 +38,9 @@
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Administratörspanel",
       "adminMunicipalityInvoicing": "Kommunfakturering",
+      "adminInvoiceCustomers": "Faktureringskunder",
+      "adminInvoiceCustomerNew": "Ny faktureringskund",
+      "adminInvoiceCustomerEdit": "Redigera faktureringskund",
       "adminTools": "Verktyg",
       "parentDashboard": "Min SOG",
       "geduDashboard": "Min SOG",
@@ -393,6 +396,59 @@
       "sessionsFor": "Tillfällen för {club}",
       "loadError": "Det gick inte att läsa in faktureringsmånaden. Uppdatera sidan och försök igen.",
       "loadErrorWithReason": "Det gick inte att läsa in faktureringsmånaden – {reason}. Uppdatera sidan och försök igen."
+    },
+    "invoiceCustomers": {
+      "title": "Faktureringskunder",
+      "subtitle": "Fennoa-kunderna som en kommunklubbs tillfällen faktureras till.",
+      "addCustomer": "Lägg till en kund",
+      "columns": {
+        "number": "Fennoa-nr",
+        "invoiceName": "Fakturanamn",
+        "city": "Ort",
+        "reference": "Referens"
+      },
+      "hasReference": "Har en referens",
+      "noReference": "Ingen referens",
+      "empty": "Inga faktureringskunder ännu. Lägg till den första.",
+      "backToList": "Tillbaka till faktureringskunder",
+      "notFound": "Det finns ingen faktureringskund med det här id:t.",
+      "newPage": {
+        "title": "Ny faktureringskund",
+        "submit": "Skapa kund"
+      },
+      "editPage": {
+        "title": "Redigera faktureringskund"
+      },
+      "fields": {
+        "number": "Fennoas kundnummer",
+        "invoiceName": "Fakturanamn",
+        "street": "Gatuadress",
+        "postalCode": "Postnummer",
+        "city": "Ort",
+        "country": "Land",
+        "yourReference": "Er referens",
+        "invoiceText": "Fakturatext"
+      },
+      "hints": {
+        "number": "Numret på kundens kort i Fennoa, till exempel F0037. Fennoa kopplar en importerad faktura till kunden med det här numret.",
+        "invoiceName": "Exakt som det står på kundkortet i Fennoa.",
+        "country": "En tvåbokstavskod för landet, till exempel FI.",
+        "yourReference": "Ett inköpsordernummer eller en kontaktperson som kunden vill ha på varje faktura.",
+        "invoiceText": "Extra rader högst upp i fakturatexten, till exempel en hänvisning till ramavtalet. Ren text – den når fakturan precis som den skrivs."
+      },
+      "errors": {
+        "required": "{field} måste fyllas i.",
+        "countryShape": "Använd en tvåbokstavskod för landet, till exempel FI.",
+        "duplicateNumber": "Fennoas kundnummer {number} tillhör redan en annan kund.",
+        "saveFailed": "Kunden kunde inte sparas. Försök igen.",
+        "saveFailedWithReason": "Kunden kunde inte sparas – {reason}"
+      },
+      "picker": {
+        "label": "Faktureras till",
+        "hint": "Kunden som den här klubbens tillfällen faktureras till. En klubb utan kund flaggas på faktureringssidan och ger ingen fakturafil.",
+        "manage": "Hantera faktureringskunder",
+        "option": "{name} ({number})"
+      }
     },
     "geduContract": {
       "heading": "Gedu-avtal",
@@ -2362,6 +2418,7 @@
     "consumerClubs": "Konsumentklubbar",
     "municipalityClubs": "Kommunklubbar",
     "municipalityInvoicing": "Kommunfakturering",
+    "invoiceCustomers": "Faktureringskunder",
     "camps": "Läger",
     "events": "Evenemang",
     "sites": "Lokaler",

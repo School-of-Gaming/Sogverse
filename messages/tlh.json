@@ -38,6 +38,9 @@
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Admin QaD",
       "adminMunicipalityInvoicing": "veng DIlmeH ghItlh",
+      "adminInvoiceCustomers": "DIlwI’pu’",
+      "adminInvoiceCustomerNew": "DIlwI’ chu’",
+      "adminInvoiceCustomerEdit": "DIlwI’ yIchoH",
       "adminTools": "janmey",
       "parentDashboard": "jIH SOG",
       "geduDashboard": "jIH SOG",
@@ -437,6 +440,59 @@
       "sessionsFor": "{club} qaSpu'",
       "loadError": "DIl jar laDlaHbe’. yIchu’qa’ ’ej yInID.",
       "loadErrorWithReason": "DIl jar laDlaHbe’ – {reason}. yIchu’qa’ ’ej yInID."
+    },
+    "invoiceCustomers": {
+      "title": "DIlwI’pu’",
+      "subtitle": "Fennoa DIlwI’pu’: veng ghomHom qaSpu’ DIlbogh ghotpu’.",
+      "addCustomer": "DIlwI’ yIchel",
+      "columns": {
+        "number": "Fennoa mI’",
+        "invoiceName": "ghItlh pong",
+        "city": "veng",
+        "reference": "ngoq"
+      },
+      "hasReference": "ngoq ghaj",
+      "noReference": "ngoq ghajbe’",
+      "empty": "DIlwI’ pagh. wa’DIch yIchel.",
+      "backToList": "DIlwI’pu’vo’ yIchegh",
+      "notFound": "ngoqvam ghajbogh DIlwI’ tu’lu’be’.",
+      "newPage": {
+        "title": "DIlwI’ chu’",
+        "submit": "DIlwI’ yIchenmoH"
+      },
+      "editPage": {
+        "title": "DIlwI’ yIchoH"
+      },
+      "fields": {
+        "number": "Fennoa DIlwI’ mI’",
+        "invoiceName": "ghItlh pong",
+        "street": "He pong",
+        "postalCode": "QIn mI’",
+        "city": "veng",
+        "country": "Sep",
+        "yourReference": "DIlwI’ ngoq",
+        "invoiceText": "ghItlh mu’mey"
+      },
+      "hints": {
+        "number": "Fennoa nav’e’ lutu’lu’bogh mI’, F0037 rurbogh. mI’vam lo’ Fennoa ’ej ghItlh DIlwI’ je boqmoH.",
+        "invoiceName": "Fennoa navDaq qonlu’pu’bogh pong rap.",
+        "country": "cha’ mu’qad Sep ngoq, FI rurbogh.",
+        "yourReference": "je’meH mI’ pagh ghot pong ’e’ poQbogh DIlwI’ — Hoch ghItlhDaq qonlu’.",
+        "invoiceText": "ghItlh mu’mey tIQDaq chelbogh mu’mey. mu’mey neH – qonlu’pu’bogh rap ghItlhDaq jaH."
+      },
+      "errors": {
+        "required": "{field} yIqon.",
+        "countryShape": "cha’ mu’qad Sep ngoq yIlo’, FI rurbogh.",
+        "duplicateNumber": "Fennoa DIlwI’ mI’ {number} ghaj latlh DIlwI’.",
+        "saveFailed": "DIlwI’ pollu’be’. yInIDqa’.",
+        "saveFailedWithReason": "DIlwI’ pollu’be’ – {reason}"
+      },
+      "picker": {
+        "label": "DIlwI’",
+        "hint": "ghomHomvam qaSpu’ DIlbogh ghot. DIlwI’ ghajbe’bogh ghomHom — DIl ghItlh chenbe’, ’ej DIl HaqwI’Daq ngoQlu’.",
+        "manage": "DIlwI’pu’ yIQorgh",
+        "option": "{name} ({number})"
+      }
     },
     "geduContract": {
       "heading": "Gedu quv chut",
@@ -2402,6 +2458,7 @@
     "consumerClubs": "ghomHom tlhIngan",
     "municipalityClubs": "ghomHom veng",
     "municipalityInvoicing": "veng DIlmeH ghItlh",
+    "invoiceCustomers": "DIlwI’pu’",
     "camps": "pa’ Qugh",
     "events": "Qu’mey",
     "sites": "Daqmey",

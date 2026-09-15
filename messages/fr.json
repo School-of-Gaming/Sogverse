@@ -38,6 +38,9 @@
       "minecraftApi": "API du serveur Minecraft",
       "adminDashboard": "Tableau de bord admin",
       "adminMunicipalityInvoicing": "Facturation municipale",
+      "adminInvoiceCustomers": "Clients de facturation",
+      "adminInvoiceCustomerNew": "Nouveau client de facturation",
+      "adminInvoiceCustomerEdit": "Modifier le client de facturation",
       "adminTools": "Outils",
       "parentDashboard": "Mon SOG",
       "geduDashboard": "Mon SOG",
@@ -393,6 +396,59 @@
       "sessionsFor": "Séances de {club}",
       "loadError": "Impossible de charger le mois de facturation. Actualisez la page pour réessayer.",
       "loadErrorWithReason": "Impossible de charger le mois de facturation – {reason}. Actualisez la page pour réessayer."
+    },
+    "invoiceCustomers": {
+      "title": "Clients de facturation",
+      "subtitle": "Les clients Fennoa à qui les séances d’un club municipal sont facturées.",
+      "addCustomer": "Ajouter un client",
+      "columns": {
+        "number": "N° Fennoa",
+        "invoiceName": "Nom de facturation",
+        "city": "Ville",
+        "reference": "Référence"
+      },
+      "hasReference": "Possède une référence",
+      "noReference": "Aucune référence",
+      "empty": "Aucun client de facturation pour l’instant. Ajoutez le premier.",
+      "backToList": "Retour aux clients de facturation",
+      "notFound": "Aucun client de facturation ne correspond à cet identifiant.",
+      "newPage": {
+        "title": "Nouveau client de facturation",
+        "submit": "Créer le client"
+      },
+      "editPage": {
+        "title": "Modifier le client de facturation"
+      },
+      "fields": {
+        "number": "Numéro client Fennoa",
+        "invoiceName": "Nom de facturation",
+        "street": "Adresse",
+        "postalCode": "Code postal",
+        "city": "Ville",
+        "country": "Pays",
+        "yourReference": "Votre référence",
+        "invoiceText": "Texte de la facture"
+      },
+      "hints": {
+        "number": "Le numéro figurant sur la fiche client dans Fennoa, par exemple F0037. C’est par ce numéro que Fennoa rattache une facture importée au client.",
+        "invoiceName": "Exactement tel qu’il figure sur la fiche client Fennoa.",
+        "country": "Un code pays à deux lettres, par exemple FI.",
+        "yourReference": "Un numéro de bon de commande ou un contact que le client veut voir sur chaque facture.",
+        "invoiceText": "Des lignes supplémentaires en haut du texte de la facture, par exemple une référence d’accord-cadre. Texte brut – il arrive sur la facture tel qu’il est saisi."
+      },
+      "errors": {
+        "required": "Le champ {field} est obligatoire.",
+        "countryShape": "Utilisez un code pays à deux lettres, par exemple FI.",
+        "duplicateNumber": "Le numéro client Fennoa {number} appartient déjà à un autre client.",
+        "saveFailed": "Le client n’a pas pu être enregistré. Réessayez.",
+        "saveFailedWithReason": "Le client n’a pas pu être enregistré – {reason}"
+      },
+      "picker": {
+        "label": "Facturé à",
+        "hint": "Le client à qui les séances de ce club sont facturées. Un club sans client est signalé sur la page de facturation et ne produit aucun fichier de facture.",
+        "manage": "Gérer les clients de facturation",
+        "option": "{name} ({number})"
+      }
     },
     "geduContract": {
       "heading": "Contrat Gedu",
@@ -2362,6 +2418,7 @@
     "consumerClubs": "Clubs grand public",
     "municipalityClubs": "Clubs municipaux",
     "municipalityInvoicing": "Facturation municipale",
+    "invoiceCustomers": "Clients de facturation",
     "camps": "Stages",
     "events": "Événements",
     "sites": "Sites",

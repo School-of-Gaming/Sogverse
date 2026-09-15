@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { isAdminDashboardScenario } from "@/components/admin/dashboard/mock-dashboard-fixtures";
+import { isInvoiceCustomerScenario } from "@/components/admin/invoice-customers/mock-invoice-customer-fixtures";
 import { isMunicipalityInvoicingScenario } from "@/components/admin/municipality-invoicing/mock-invoicing-fixtures";
 import { isChatSceneScenario } from "@/components/chat/mock-chat-fixtures";
 import { isFamilyProductScenario } from "@/components/family/product-page/mock-fixtures";
@@ -29,6 +30,7 @@ import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
 import { GamerDashboardScene } from "./scenes/gamer-dashboard-scene";
 import { GeduContractScene } from "./scenes/gedu-contract-scene";
 import { GeduDashboardScene } from "./scenes/gedu-dashboard-scene";
+import { InvoiceCustomersScene } from "./scenes/invoice-customers-scene";
 import { MunicipalityInvoicingScene } from "./scenes/municipality-invoicing-scene";
 import { ParentDashboardScene } from "./scenes/parent-dashboard-scene";
 import { GeduProductPageScene } from "./scenes/gedu-product-page-scene";
@@ -194,6 +196,10 @@ const SCENE_RENDERERS: Record<
   "municipality-invoicing": (scenario) => {
     if (!isMunicipalityInvoicingScenario(scenario)) notFound();
     return <MunicipalityInvoicingScene scenario={scenario} />;
+  },
+  "invoice-customers": (scenario) => {
+    if (!isInvoiceCustomerScenario(scenario)) notFound();
+    return <InvoiceCustomersScene scenario={scenario} />;
   },
   // The one scene with no product behind it: it enumerates the topic registry
   // itself, so its scenarios are the two forms a guide filters into rather than

@@ -597,6 +597,26 @@ export const ROUTES = {
      * entries and above the tooling.
      */
     municipalityInvoicing: "/admin/municipality-invoicing",
+    /**
+     * The Fennoa customers a municipality club can be invoiced to — the contract
+     * parties the CFO's monthly files are addressed to.
+     *
+     * A collection of its own rather than a field on a club, because a customer
+     * is bought from by several clubs and is not a place: one city can be two
+     * customers, and an association can buy clubs running in a municipality it
+     * is not. It sits beside the invoicing ledger because that is the page its
+     * gaps are reported on.
+     */
+    invoiceCustomers: "/admin/invoice-customers",
+    /** The create form. */
+    invoiceCustomerNew: "/admin/invoice-customers/new",
+    /**
+     * One customer's page, which is its edit form — there is no read-only
+     * detail page between the list and the form, because a customer is eight
+     * fields and the list already shows the ones that tell two apart.
+     */
+    invoiceCustomer: (id: string) =>
+      ({ pathname: "/admin/invoice-customers/[id]", params: { id } }) as const,
     camps: "/admin/camps",
     events: "/admin/events",
     /**

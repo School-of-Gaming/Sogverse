@@ -159,6 +159,9 @@ export const PATHNAMES = {
   "/admin/municipality-clubs/[id]/groups/[groupId]":
     "/admin/municipality-clubs/[id]/groups/[groupId]",
   "/admin/municipality-invoicing": "/admin/municipality-invoicing",
+  "/admin/invoice-customers": "/admin/invoice-customers",
+  "/admin/invoice-customers/new": "/admin/invoice-customers/new",
+  "/admin/invoice-customers/[id]": "/admin/invoice-customers/[id]",
   "/admin/sites": "/admin/sites",
   "/admin/sites/[id]": "/admin/sites/[id]",
   "/admin/testing": "/admin/testing",

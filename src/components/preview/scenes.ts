@@ -513,6 +513,28 @@ export const PREVIEW_SCENES = [
       },
     ],
   },
+  {
+    surface: "invoice-customers",
+    title: "Invoice customers",
+    description:
+      "The Fennoa buyers a municipality club is invoiced to: the list an admin manages them from, and the form behind it. Both bodies are the live ones over fixtures — typing works, the contract's refusals are real, and the save is inert except on the refused scenario, where it answers with the duplicate-number violation the database raises.",
+    chrome: "admin",
+    scenarios: [
+      { slug: "list", label: "Customers on file" },
+      {
+        slug: "list-empty",
+        label: "Nothing on file yet",
+        description: "The empty state, which a populated table cannot show.",
+      },
+      { slug: "form-new", label: "New customer" },
+      {
+        slug: "form-refused",
+        label: "Editing — the number is taken",
+        description:
+          "Every field filled, and the one refusal the form re-words rather than quoting.",
+      },
+    ],
+  },
 ] as const satisfies readonly PreviewSceneMeta[];
 
 export type PreviewScene = (typeof PREVIEW_SCENES)[number];

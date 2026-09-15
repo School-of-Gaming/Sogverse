@@ -31,6 +31,11 @@ import {
 } from "@/components/admin/municipality-invoicing/mock-invoicing-fixtures";
 import { buildMunicipalityInvoicing } from "@/components/admin/municipality-invoicing/build-municipality-invoicing";
 import {
+  INVOICE_CUSTOMER_EDIT_FIXTURE,
+  INVOICE_CUSTOMER_FIXTURES,
+  INVOICE_CUSTOMER_SCENARIOS,
+} from "@/components/admin/invoice-customers/mock-invoice-customer-fixtures";
+import {
   GROUP_WORKSPACE_SCENARIOS,
   buildGroupWorkspaceFixture,
 } from "@/components/group-workspace/mock-workspace-fixtures";
@@ -189,6 +194,12 @@ describe("registry scenarios match their fixtures", () => {
   it("municipality invoicing", () => {
     expect(slugsFor("municipality-invoicing")).toEqual([
       ...MUNICIPALITY_INVOICING_SCENARIOS,
+    ]);
+  });
+
+  it("invoice customers", () => {
+    expect(slugsFor("invoice-customers")).toEqual([
+      ...INVOICE_CUSTOMER_SCENARIOS,
     ]);
   });
 
@@ -2107,5 +2118,69 @@ describe("the municipality invoicing scene covers every ledger state", () => {
     });
     expect(built.municipalities).toEqual([]);
     expect(built.totalCents).toBe(0);
+  });
+});
+
+/**
+ * The invoice-customer scene's fixtures.
+ *
+ * The list body renders exactly the rows it is handed, in exactly the order it
+ * is handed them — it sorts nothing — so an unsorted fixture would be a preview
+ * of a page the database cannot produce. The three shapes the schema exists for
+ * are pinned here too: one city as two customers, a buyer that is not a
+ * municipality, and both states of the optional reference on one screen.
+ */
+describe("the invoice customers scene", () => {
+  it("is in the order the read delivers: invoice name, then id", () => {
+    const sorted = [...INVOICE_CUSTOMER_FIXTURES].sort(
+      (a, b) =>
+        a.invoice_name.localeCompare(b.invoice_name) ||
+        a.id.localeCompare(b.id),
+    );
+    expect(INVOICE_CUSTOMER_FIXTURES.map((row) => row.id)).toEqual(
+      sorted.map((row) => row.id),
+    );
+  });
+
+  it("shows the two shapes a per-municipality link could not express", () => {
+    // One city, two customers: two rows sharing a city and nothing else.
+    const tampere = INVOICE_CUSTOMER_FIXTURES.filter(
+      (row) => row.city === "Tampere",
+    );
+    expect(tampere).toHaveLength(2);
+    expect(new Set(tampere.map((row) => row.fennoa_customer_no)).size).toBe(2);
+
+    // And a buyer whose name is nobody's municipality — the association that
+    // buys clubs sited somewhere it is not.
+    expect(
+      INVOICE_CUSTOMER_FIXTURES.some(
+        (row) => !row.invoice_name.includes(row.city),
+      ),
+    ).toBe(true);
+  });
+
+  it("puts both states of the optional fields on the one list", () => {
+    expect(
+      INVOICE_CUSTOMER_FIXTURES.some((row) => row.your_reference !== null),
+    ).toBe(true);
+    expect(
+      INVOICE_CUSTOMER_FIXTURES.some((row) => row.your_reference === null),
+    ).toBe(true);
+  });
+
+  it("opens the refused form on the row that fills every field", () => {
+    // The form scenario that shows an error is also the one that shows every
+    // field with something in it, so the create scenario beside it is the only
+    // place a field is empty.
+    expect(INVOICE_CUSTOMER_FIXTURES).toContain(INVOICE_CUSTOMER_EDIT_FIXTURE);
+    expect(INVOICE_CUSTOMER_EDIT_FIXTURE.your_reference).not.toBeNull();
+    expect(INVOICE_CUSTOMER_EDIT_FIXTURE.invoice_text).not.toBeNull();
+  });
+
+  it("gives every customer a unique Fennoa number, which is the join key", () => {
+    const numbers = INVOICE_CUSTOMER_FIXTURES.map(
+      (row) => row.fennoa_customer_no,
+    );
+    expect(new Set(numbers).size).toBe(numbers.length);
   });
 });
