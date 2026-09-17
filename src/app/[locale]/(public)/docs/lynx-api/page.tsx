@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -48,7 +47,7 @@ function CodeBlock({ children, title }: { children: string; title?: string }) {
  * One row of a parameter or field table, ready to render: a literal name, a
  * literal type, and the one translated cell.
  *
- * `type` and `description` are both optional because the proposal leaves some
+ * `type` and `description` are both optional because the page leaves some
  * rows without one — a paging row has no single type, and a record's
  * `created_at` needs no gloss. An absent cell is left empty rather
  * than filled with invented copy.
@@ -683,12 +682,21 @@ const CAMPAIGNS_FIELDS = [
   },
 ] as const;
 
+/**
+ * Every failure the API answers in its documented envelope: the HTTP status
+ * and the stable `code` the partner branches on. Two codes share a 500, which
+ * is why a row is keyed by its code and not its status.
+ */
 const ERROR_ROWS = [
-  { code: "400", key: "errors.e400" },
-  { code: "401", key: "errors.e401" },
-  { code: "404", key: "errors.e404" },
-  { code: "429", key: "errors.e429" },
-  { code: "500", key: "errors.e500" },
+  { status: "400", code: "invalid_query", key: "errors.e400" },
+  { status: "401", code: "unauthorized", key: "errors.e401" },
+  { status: "404", code: "not_found", key: "errors.e404" },
+  { status: "500", code: "internal_error", key: "errors.e500" },
+  {
+    status: "500",
+    code: "server_misconfigured",
+    key: "errors.e500Misconfigured",
+  },
 ] as const;
 
 /** The resource paths, in the order the page and its contents rail read them. */
@@ -949,14 +957,6 @@ export default function LynxApiDocsPage() {
       <header>
         <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
         <p className="mt-4 text-lg text-muted-foreground">{t("lead")}</p>
-        <Alert variant="warning" className="mt-6">
-          <div>
-            <AlertTitle>{t("proposal.title")}</AlertTitle>
-            <AlertDescription className="mt-1">
-              {t("proposal.body")}
-            </AlertDescription>
-          </div>
-        </Alert>
       </header>
 
       <div className="mt-12 lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-12">
@@ -1137,13 +1137,20 @@ export default function LynxApiDocsPage() {
           {/* Errors */}
           <Section id="errors">
             <SectionHeading>{t("errors.heading")}</SectionHeading>
+            <p className="mt-4 leading-relaxed text-muted-foreground">
+              {rich("errors.intro")}
+            </p>
             <div className="mt-4 overflow-x-auto">
-              {/* Stacks below `md` on the same reasoning as RowTable. */}
-              <table className="w-full border-collapse text-sm leading-relaxed md:min-w-[30rem]">
+              {/* Stacks below `md` on the same reasoning as RowTable: the
+                  status and the code share a line, the meaning sits under. */}
+              <table className="w-full border-collapse text-sm leading-relaxed md:min-w-[36rem]">
                 <thead className="hidden md:table-header-group">
                   <tr className="border-b border-border">
                     <th scope="col" className={`${HEAD_CELL} w-24`}>
                       {t("common.columnStatus")}
+                    </th>
+                    <th scope="col" className={`${HEAD_CELL} w-[13rem]`}>
+                      {t("common.columnCode")}
                     </th>
                     <th scope="col" className={HEAD_CELL}>
                       {t("common.columnMeaning")}
@@ -1151,14 +1158,19 @@ export default function LynxApiDocsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {ERROR_ROWS.map(({ code, key }) => (
+                  {ERROR_ROWS.map(({ status, code, key }) => (
                     <tr
                       key={code}
                       className="block border-b border-border py-1 last:border-0 md:table-row md:py-0"
                     >
+                      <td
+                        className={`${BODY_CELL} inline-block md:table-cell`}
+                      >
+                        <Code>{status}</Code>
+                      </td>
                       <th
                         scope="row"
-                        className={`${BODY_CELL} block text-left font-normal md:table-cell`}
+                        className={`${BODY_CELL} inline-block text-left font-normal md:table-cell`}
                       >
                         <Code>{code}</Code>
                       </th>
