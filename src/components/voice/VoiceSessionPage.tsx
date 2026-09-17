@@ -276,9 +276,6 @@ function VoiceSessionInner({
           groupId,
           sessionOpensAt,
           result,
-          // Which way out this is: the Leave button, or the room closing under
-          // everyone. Only knowable here, and no later reader could recover it.
-          exitReason: leftForFeedback ? "left" : "ended",
         },
         {
           onSuccess: () => {
@@ -294,7 +291,6 @@ function VoiceSessionInner({
     [
       backHref,
       groupId,
-      leftForFeedback,
       prefill.data,
       // The mutate function, not the mutation object: the object is a fresh
       // identity on every render, so depending on it would rebuild this

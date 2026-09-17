@@ -2237,7 +2237,6 @@ export type Database = {
         Row: {
           answers: Json
           created_at: string
-          exit_reason: string | null
           group_id: string
           note: string
           participant_id: string
@@ -2247,7 +2246,6 @@ export type Database = {
         Insert: {
           answers?: Json
           created_at?: string
-          exit_reason?: string | null
           group_id: string
           note?: string
           participant_id: string
@@ -2257,7 +2255,6 @@ export type Database = {
         Update: {
           answers?: Json
           created_at?: string
-          exit_reason?: string | null
           group_id?: string
           note?: string
           participant_id?: string

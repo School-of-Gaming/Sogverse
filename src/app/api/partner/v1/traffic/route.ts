@@ -1,59 +1,57 @@
 import {
   partnerError,
   partnerJson,
+  partnerRead,
   requirePartnerKey,
 } from "@/lib/api/partner-auth.server";
 import { parseSearchParams } from "@/lib/api/query-params.server";
+import { vercelAnalyticsConfig } from "@/lib/vercel-analytics.server";
 import {
   partnerTrafficQuery,
   partnerTrafficResponse,
 } from "@/services/partner/partner.contracts";
-
-/** A UTC calendar day, `YYYY-MM-DD` — the day a traffic count is bucketed by. */
-function utcDay(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
-
-const DAY_MS = 86_400_000;
-
-function shiftDays(day: string, days: number): string {
-  return utcDay(new Date(Date.parse(`${day}T00:00:00Z`) + days * DAY_MS));
-}
-
-/**
- * The range the answer covers: what the caller asked for, and the documented
- * last thirty days where they asked for nothing. The aggregate always says
- * which days it counted, so the skeleton resolves the window even though it
- * counts nothing in it — the alternative is a response that would have to
- * change shape once the counts arrive.
- */
-function resolveRange(from: string | undefined, to: string | undefined) {
-  const end = to ?? utcDay(new Date());
-  return { from: from ?? shiftDays(end, -29), to: end };
-}
+import { partnerDb } from "@/services/partner/partner-shared-db.server";
+import { readPartnerTraffic } from "@/services/partner/partner-traffic.server";
 
 /**
  * GET /api/partner/v1/traffic — views of the pages a Lynx campaign can land on,
  * grouped by the campaign that brought them.
  *
- * Skeleton: it authenticates the caller and validates the query exactly as
- * `/docs/lynx-api` documents, then answers the documented aggregate with an
- * empty `pages` array. See `src/app/api/partner/CLAUDE.md`. Nothing here calls
- * Vercel Web Analytics; that call, and the hour-long cache the documentation
- * promises around it, are what the implementation adds. The page filters are
- * validated and deliberately unread for the same reason.
+ * Read from Vercel Web Analytics: the Roblox landing page, the shop, and each
+ * Programme product's page that had a view, every language of a page counted
+ * as one. Each page's views are split by campaign, by source and medium, and by
+ * UTC day, and each split sums to the page's total. `from`/`to` are UTC days,
+ * defaulting to the last thirty. The resolved answer is cached for the hour, so
+ * counts can be up to an hour old. See `/docs/lynx-api` for the contract.
+ *
+ * Unset Vercel credentials are our misconfiguration, not the caller's mistake,
+ * so they answer 500 `server_misconfigured` — the same answer, and the same
+ * place in the order, as an unset partner key: after the gate, before the query
+ * is read.
  */
-export function GET(request: Request) {
+export async function GET(request: Request) {
   const denied = requirePartnerKey(request);
   if (denied) return denied;
 
-  const query = parseSearchParams(request.url, partnerTrafficQuery);
-  if (!query.ok) return partnerError("invalid_query", query.message);
+  const analytics = vercelAnalyticsConfig();
+  if (!analytics.ok) {
+    console.error(
+      `partner API traffic: Vercel Web Analytics is not configured (${analytics.missing.join(", ")} unset)`,
+    );
+    return partnerError(
+      "server_misconfigured",
+      "The traffic source is not configured",
+    );
+  }
 
-  return partnerJson(
-    partnerTrafficResponse.parse({
-      range: resolveRange(query.data.from, query.data.to),
-      pages: [],
-    }),
-  );
+  return partnerRead("traffic", async () => {
+    const query = parseSearchParams(request.url, partnerTrafficQuery);
+    if (!query.ok) return partnerError("invalid_query", query.message);
+
+    return partnerJson(
+      partnerTrafficResponse.parse(
+        await readPartnerTraffic(partnerDb(), analytics.config, query.data, new Date()),
+      ),
+    );
+  });
 }

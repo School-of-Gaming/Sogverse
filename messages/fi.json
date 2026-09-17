@@ -1476,10 +1476,6 @@
     "lynxApi": {
       "title": "Lynx Educaten kumppani-API",
       "lead": "Vain luettava rajapinta Lynx Educaten omia koontinäyttöjä ja Roblox-Ohjelman raportointia varten. Se avaa Ohjelmaan kuuluvat perheet, tuotteet ja ilmoittautumiset, ne suostumukset, joiden perusteella Lynx voi toimia, sekä yksilötason aineiston, jonka Ohjelman tietosuojaseloste sallii Lynxin luovuttaa Robloxille vaikuttavuustutkimusta varten.",
-      "proposal": {
-        "title": "Ehdotus, jonka reitit ovat jo käytössä",
-        "body": "Alla olevat reitit ovat jo käytössä. Jokainen niistä todentaa kutsujan, tarkistaa kyselyparametrit ja vastaa dokumentoidussa muodossa ilman yhtään tietuetta, joten autentikoinnin ja jäsennyksen voi integroida heti; tiedot saapuvat resurssi kerrallaan, sitä mukaa kuin kukin resurssi rakennetaan. Kenttien nimet, suodattimet ja enum-arvojen tarkat sanamuodot voivat vielä muuttua."
-      },
       "contents": {
         "heading": "Tällä sivulla"
       },
@@ -1490,6 +1486,7 @@
         "columnType": "Tyyppi",
         "columnDescription": "Kuvaus",
         "columnStatus": "Tila",
+        "columnCode": "Koodi",
         "columnMeaning": "Merkitys",
         "exampleRecord": "Esimerkkitietue",
         "exampleResponse": "Esimerkkivastaus",
@@ -1504,7 +1501,7 @@
       "authentication": {
         "heading": "Autentikointi",
         "description": "Jokainen pyyntö sisältää staattisen API-avaimen Bearer-tokenina <code>Authorization</code>-otsakkeessa. School of Gaming myöntää avaimen Lynxille, ja avain määrittää vastauksen rajauksen: yksi avain, yksi kumppani, yksi Ohjelma.",
-        "keyNote": "Pidä avain palvelinpuolella. Ota yhteyttä Sogverse-tiimiin, jos avain pitää vaihtaa tai se on voinut vuotaa; vaihdettu avain lakkaa toimimasta välittömästi. School of Gaming luovuttaa avaimen Lynxin kanssa sovittua kanavaa pitkin ja myöntää toisen avaimen Sogversen staging-ympäristöön, jossa on testiperheitä ja -tuotteita, jotta integraatio voidaan rakentaa ja harjoitella aineistolla, joka ei ole todellista. Toteutuksen mukana tulee rajapinnan OpenAPI-kuvaus."
+        "keyNote": "Pidä avain palvelinpuolella. Ota yhteyttä Sogverse-tiimiin, jos avain pitää vaihtaa tai se on voinut vuotaa; vaihdettu avain lakkaa toimimasta välittömästi. School of Gaming luovuttaa avaimen Lynxin kanssa sovittua kanavaa pitkin ja myöntää toisen avaimen Sogversen staging-ympäristöön, jossa on testiperheitä ja -tuotteita, jotta integraatio voidaan rakentaa ja harjoitella aineistolla, joka ei ole todellista."
       },
       "conventions": {
         "heading": "Käytännöt",
@@ -1512,7 +1509,7 @@
         "envelopeTitle": "Listavastauksen kuori",
         "items": {
           "formats": "Vastaukset ovat JSON-muotoisia. Jokainen aikaleima on ISO 8601 -muodossa UTC-ajassa. Jokainen päivämäärä on <code>YYYY-MM-DD</code>, ja tuotteen päivämäärät ovat kalenteripäiviä tuotteen omassa aikavyöhykkeessä, kun taas liikennepäivä on kalenteripäivä UTC-ajassa. Jokainen tunniste on UUID, joka ei koskaan muutu.",
-          "pagination": "Jokainen tietueita palauttava resurssi on sivutettu kursorilla tunnisteen mukaan nousevassa järjestyksessä, joten järjestys pysyy vakaana kesken haun; resurssi, jonka tietueilla ei ole omaa tunnistetta, sivutetaan omassa vakaassa järjestyksessään. Anna <code>limit</code> (oletus 100, enintään 500) ja edellisen sivun <code>next_cursor</code> parametrina <code>cursor</code>; <code>null</code>-arvoinen <code>next_cursor</code> tarkoittaa viimeistä sivua. Kursori on läpinäkymätön, kuuluu niihin suodattimiin, joiden kanssa se annettiin, eikä vanhene. <code>/traffic</code> palauttaa yhden koosteen ja ottaa niiden sijaan parametrit <code>from</code> ja <code>to</code>; sen vastaus tietylle päivälle ja sivulle on välimuistissa meidän päässämme tunnin ajan. Myös <code>/campaigns</code> palauttaa yhden koosteen, ja se ottaa parametrit <code>from</code> ja <code>to</code> kuukausina.",
+          "pagination": "Jokainen tietueita palauttava resurssi on sivutettu kursorilla tunnisteen mukaan nousevassa järjestyksessä, joten järjestys pysyy vakaana kesken haun; resurssi, jonka tietueilla ei ole omaa tunnistetta, sivutetaan omassa vakaassa järjestyksessään. Anna <code>limit</code> (oletus 100, enintään 500) ja edellisen sivun <code>next_cursor</code> parametrina <code>cursor</code>; <code>null</code>-arvoinen <code>next_cursor</code> tarkoittaa viimeistä sivua. Kursori on läpinäkymätön, kuuluu niihin suodattimiin, joiden kanssa se annettiin, eikä vanhene. <code>/traffic</code> palauttaa yhden koosteen ja ottaa niiden sijaan parametrit <code>from</code> ja <code>to</code>; sen luvut voivat olla enintään tunnin vanhoja. Myös <code>/campaigns</code> palauttaa yhden koosteen, ja se ottaa parametrit <code>from</code> ja <code>to</code> kuukausina.",
           "erasure": "Tietue, joka puuttuu täydestä hausta, ei enää kuulu rajaukseen — johtui se sitten perheen poistopyynnöstä, perutusta paikasta tai siitä, että tuote on poistunut Ohjelmasta — ja se poistuu Lynxin tietovarastosta saman synkronoinnin yhteydessä joka tapauksessa. Erillistä poistomerkintää ei ole: tietueen puuttuminen on ainoa merkki, joten päättele se vain hausta, joka on edennyt viimeiselle sivulleen asti.",
           "consent": "Suostumus raportoidaan sellaisena kuin se on pyyntöhetkellä, mukana tieto viimeisimmästä muutoksesta mutta ei historiaa. Peruttu markkinointisuostumus näkyy seuraavassa haussa muodossa <code>granted: false</code>, ja sähköpostiosoite on poissa; siitä eteenpäin vanhemmalle ei lähetetä postia, ja Lynx voi säilyttää sen vähimmäismerkinnän estolistastaan, jonka Ohjelman tietosuojaseloste sallii, jottei vanhempaa lisätä takaisin.",
           "changePolicy": "Lisäykset tähän rajapintaan, uusi kenttä tai uusi suodatin, julkaistaan ilman ennakkoilmoitusta; poistettu tai uudelleennimetty kenttä sekä arvo, jonka merkitys muuttuu, ovat uusi versio uuden polun takana. Rakenna niiden kenttien varaan, joita käytät, ja ohita loput.",
@@ -1532,8 +1529,8 @@
             "type": "Minkätyyppinen tuote on. Kerho kokoontuu viikoittain ilman kiinteää päättymistä; leiri ja tapahtuma järjestetään sovittuina päivinä.",
             "delivery": "Miten tuote toteutetaan. Lynxin omia nimiä sen tavoille toteuttaa Ohjelmaa ei ole tallennettu mihinkään; <code>type</code> ja <code>delivery</code> ovat yhdessä ne kaksi tietoa, joihin nuo nimet kiinnittyvät.",
             "audience": "Kuka voi saada paikan tuotteessa: <code>gamers</code> on <code>true</code>, kun paikka voi olla lapsella, ja <code>parents</code> on <code>true</code>, kun aikuinen voi itse ottaa paikan. Vähintään toinen on aina <code>true</code>, ja tuote, jossa molemmat ovat <code>true</code>, on tarkoitettu vanhemmille ja lapsille yhdessä.",
-            "location": "Toimipaikan kunta ja kaksikirjaiminen maakoodi. Lähitoteutuksella on toimipaikka, ellei sen toimipisteellä ole kuntaa yläpuolellaan; verkkototeutuksella on se vain silloin, kun kyseessä on toimipaikkaan liitetty kunnan kerho; muutoin arvo on <code>null</code>.",
-            "status": "<code>pending</code>, kunnes tuote on alkanut, <code>running</code> alkamispäivästä lähtien, kun mahdollinen ilmoittautumisraja on täyttynyt, <code>completed</code>, kun tuote on toteutunut ja sen päättymispäivä on mennyt, ja <code>expired</code>, kun päättymispäivä meni ilman että tuote koskaan alkoi. Arvo johdetaan lukuhetkellä päivämääristä, rajasta ja ilmoittautumisten senhetkisestä määrästä; mitään ei tallenneta, joten arvo ei vanhene koskaan.",
+            "location": "Kunta, jonka alueella tuotteen sijainti on, ja kunnan kaksikirjaiminen maakoodi; <code>city</code> on kunnan nimi. Sääntö on sama verkko- ja lähitoteutuksille: arvo on <code>null</code>, jos tuotteella ei ole sijaintia tai sen sijainti ei ole minkään kunnan alueella.",
+            "status": "<code>pending</code> ennen alkamispäivää, <code>running</code> alkamispäivästä lähtien ja <code>completed</code>, kun päättymispäivä on mennyt. Arvo johdetaan lukuhetkellä tuotteen päivämääristä sen omalla aikavyöhykkeellä, joten se ei vanhene koskaan.",
             "dates": "Milloin tuote toteutetaan. Kuluttajakerholla ei välttämättä ole päättymispäivää; kaikilla muilla tuotteilla on.",
             "timezone": "IANA-aikavyöhyke, jonka mukaan tuotteen päivämäärät ja istunnot on aikataulutettu.",
             "ageRange": "Niiden lasten iät, jotka tuotteeseen hyväksytään, rajat mukaan lukien. <code>null</code> täsmälleen silloin, kun <code>audience.gamers</code> on <code>false</code>: tuotteella, johon osallistuu vain aikuisia, ei ole ikärajausta.",
@@ -1544,8 +1541,8 @@
           "title": "vanhempi ja hänen lapsensa",
           "intro": "Jokainen perhe, jonka jäsen on Ohjelman tuotteessa: sen vanhemmat ja rajaukseen kuuluvat lapset, kumpikin omana sisäkkäisenä listanaan. Perhe on se yksikkö, jossa Sogverse toimii. Vanhemmilla on tili, suostumukset, attribuutiotiedot ja sijainti, joten henkilötason tiedot saapuvat yhtenä tietueena eikä yhdistettävinä listoina. Vanhemman sähköpostiosoite on mukana vain, jos juuri tämä vanhempi on antanut Lynxin markkinointisuostumuksen. Perheellä ei ole omaa tunnistetta eikä aikaleimaa, koska Sogverse ei tallenna sellaisia: perhe on toisiinsa liitetyt vanhemmat ja lapset, joten tallenna jokainen vanhempi ja lapsi omalla tunnisteellaan. Vanhempi tai lapsi, joka puuttuu täyden haun kaikista perheistä, ei enää kuulu rajaukseen; henkilö, joka siirtyy toiseen perheeseen, ei ole poistunut rajauksesta.",
           "params": {
-            "marketingConsent": "Vain perheet, joissa jonkin vanhemman Lynxin markkinointisuostumus on tällä hetkellä voimassa. Tämä on postituslista: lähetä postia jokaiselle vanhemmalle, jonka oma suostumus on voimassa, älä perheelle.",
-            "utmCampaign": "Vain perheet, joissa jonkin vanhemman tili on luotu linkistä, jossa on täsmälleen tämä kampanja-arvo."
+            "marketingConsent": "Vain perheet, joissa vähintään yhden vanhemman Lynxin markkinointisuostumus on tällä hetkellä voimassa. Tämä on postituslista: lähetä postia jokaiselle vanhemmalle, jonka oma suostumus on voimassa, älä perheelle.",
+            "utmCampaign": "Vain perheet, joissa jonkin vanhemman tili on luotu linkistä, jossa on täsmälleen tämä kampanja-arvo. Isot ja pienet kirjaimet erotellaan: <code>lynx-autumn-a</code> ei vastaa arvoa <code>Lynx-Autumn-A</code>."
           },
           "fields": {
             "parents": "Perheen vanhemmat, kukin omana merkintänään. Lista ei ole koskaan tyhjä. Käsittele sitä listana: Sogverse liittää lapsen nykyään yhteen vanhempaan, joten jokaisessa perheessä on täsmälleen yksi merkintä, mutta perhe, jolla on toinen vanhempi, saapuu samassa muodossa eikä uutena versiona.",
@@ -1553,7 +1550,7 @@
             "parentsName": "Vanhemman nimi sellaisena kuin hän on sen itse kirjoittanut.",
             "parentsEmail": "Vanhemman sähköpostiosoite, mukana vain niin kauan kuin hänen <code>marketing_consent.granted</code>-arvonsa on <code>true</code>. Muutoin se on <code>null</code>, ja se palaa <code>null</code>-arvoon, kun suostumus perutaan.",
             "parentsCreatedAt": "Milloin vanhemman tili luotiin: suppilon ensimmäinen vaihe, perhe luotu.",
-            "parentsLocation": "Vanhemman itse ilmoittama kotikunta ja sen kaksikirjaiminen maakoodi, tai <code>null</code>, jos vanhempi ei ole ilmoittanut sitä.",
+            "parentsLocation": "Kunta, jonka alueella vanhemman itse ilmoittama kotisijainti on, ja kunnan kaksikirjaiminen maakoodi; <code>city</code> on kunnan nimi. <code>null</code>, jos vanhempi ei ole ilmoittanut kotisijaintia tai se ei ole minkään kunnan alueella.",
             "parentsUtm": "Sen linkin <code>utm_source</code>, <code>utm_medium</code> ja <code>utm_campaign</code>, jonka kautta tili luotiin, kukin <code>null</code>, jos arvoa ei ole. Ne kirjoitetaan kerran rekisteröitymisen yhteydessä ja vain, jos kävijä hyväksyi markkinointievästeet, joten useimmissa tietueissa on kolme null-arvoa. Lynxille luoduissa kampanjoissa on sovittu etuliite <code>lynx-</code>.",
             "parentsMarketingConsent": "Tämän vanhemman nykyinen vastaus Lynxin markkinointisuostumukseen: <code>granted</code> ja milloin sitä viimeksi muutettiin. <code>null</code> tarkoittaa, ettei vanhemmalta ole koskaan kysytty, mikä lähettämisen kannalta vastaa arvoa <code>false</code>.",
             "gamers": "Perheen lapset, joilla on paikka Ohjelman tuotteessa, jotka ovat suorittaneet sellaisen tai jotka jonottavat paikkaa, kukin omana merkintänään. Lista on tyhjä, kun perhe kuuluu rajaukseen vain vanhemman oman paikan kautta. Lapsesta välitetään etunimi eikä mitään muita yhteystietoja; tunnistetiedot ovat tunniste ja Roblox-tili.",
@@ -1579,11 +1576,11 @@
             "id": "Ilmoittautumisen tunniste.",
             "productGroupId": "Tuote ja sen ryhmä, johon lapsi sijoitettiin. <code>group_id</code> on <code>null</code>, kunnes ylläpitäjä sijoittaa paikan ryhmään.",
             "participantParentId": "Kenen paikka on ja vanhempi, jonka tilillä se on. <code>participant_id</code> on lapsen tunniste kentästä <code>gamers[].id</code> tai vanhemman omalla paikalla hänen tunnisteensa kentästä <code>parents[].id</code>, jolloin se on sama kuin <code>parent_id</code>.",
-            "status": "<code>active</code> varatulle paikalle, <code>waitlisted</code> jonottavalle perheelle ja <code>completed</code>, kun tuote on päättynyt.",
+            "status": "<code>active</code> varatulle paikalle, <code>waitlisted</code> jonottavalle perheelle ja <code>completed</code>, kun tuote on päättynyt: varattu paikka tuotteessa, jonka <code>status</code> on <code>completed</code>, ilmoitetaan arvolla <code>completed</code>, ja jonossa oleva paikka pysyy arvossa <code>waitlisted</code>. Suodatin <code>status</code> vertaa tässä ilmoitettuun arvoon.",
             "signedUpAt": "Milloin perhe ilmoittautui tuotteeseen: suppilon kolmas vaihe, ilmoittautuminen.",
-            "consents": "Vanhemman hyväksyntä Luojien akatemian käyttöehdoille ja Luojien akatemian tietosuojaselosteelle tämän ilmoittautumisen osalta: kummankin asiakirjan versio julkaisupäivänä ilmaistuna sekä hyväksymisajankohta. Jokainen Ohjelman tuote edellyttää molempia, joten molemmat ovat mukana jokaisessa ilmoittautumisessa.",
-            "attendance": "Kuinka monesta osallistujan ryhmän istunnosta on merkintä ja kuinka moneen niistä osallistuja on merkitty läsnä olevaksi. Istunto kirjataan, kun pelikasvattaja kirjoittaa siitä raportin tai merkitsee läsnäolot, joten istuntoa, josta kukaan ei kirjoittanut, ei lasketa mukaan; luku on ryhmän luku ja sisältää myös istunnot ennen osallistujan liittymistä ryhmään. Molemmat ovat 0 niin kauan kuin paikkaa ei ole sijoitettu ryhmään. Osallistuja, jonka <code>sessions_present</code> on vähintään 1, lasketaan suppilossa osallistuneeksi.",
-            "creations": "Mitä osallistuja julkaisi tämän tuotteen aikana, hänen pelikasvattajansa tai ylläpitäjän kirjaamana osallistujan nykyisessä ryhmässä: otsikko ja linkki kutakin kohdetta kohti näyttöjärjestyksessä. <code>is_roblox_url</code> on <code>true</code>, kun linkki osoittaa osoitteeseen roblox.com. Tyhjä taulukko tarkoittaa, ettei mitään ole vielä kirjattu."
+            "consents": "Vanhemman hyväksyntä Luojien akatemian käyttöehdoille ja Luojien akatemian tietosuojaselosteelle tämän ilmoittautumisen osalta: kummankin asiakirjan versio julkaisupäivänä ilmaistuna sekä hyväksymisajankohta. Jokainen Ohjelman tuote edellyttää molempia, joten molemmat ovat mukana jokaisessa ilmoittautumisessa. Jos paikalle ei ole kirjattu hyväksyntää, esimerkiksi kun ylläpitäjä on ilmoittanut lapsen perheen puolesta, versio on viimeisin versio, joka on julkaistu viimeistään <code>signed_up_at</code>-hetken päivänä UTC-ajassa, tai varhaisin julkaistu versio, jos yhtään ei ollut julkaistu siihen mennessä, ja <code>accepted_at</code> on sama kuin <code>signed_up_at</code>.",
+            "attendance": "Kuinka monesta osallistujan ryhmän istunnosta on merkintä ja kuinka moneen niistä osallistuja on merkitty läsnä olevaksi. Istunto kirjataan, kun pelikasvattaja kirjoittaa siitä raportin tai merkitsee läsnäolot, joten istuntoa, jossa ei ole kumpaakaan, ei lasketa mukaan; luku on ryhmän luku ja sisältää myös istunnot ennen osallistujan liittymistä ryhmään. Molemmat ovat 0 niin kauan kuin paikkaa ei ole sijoitettu ryhmään. Osallistuja, jonka <code>sessions_present</code> on vähintään 1, lasketaan suppilossa osallistuneeksi.",
+            "creations": "Mitä osallistuja julkaisi tämän tuotteen aikana, hänen pelikasvattajansa tai ylläpitäjän kirjaamana osallistujan nykyisessä ryhmässä: otsikko ja linkki kutakin kohdetta kohti näyttöjärjestyksessä. <code>is_roblox_url</code> on <code>true</code>, kun linkki osoittaa osoitteeseen roblox.com tai sen aliverkkotunnukseen, kuten www.roblox.com. Tyhjä taulukko tarkoittaa, ettei mitään ole vielä kirjattu."
           }
         },
         "sessions": {
@@ -1592,7 +1589,7 @@
           "params": {
             "productId": "Vain tämän tuotteen ryhmien istunnot.",
             "groupId": "Vain tämän ryhmän istunnot.",
-            "fromTo": "Vain istunnot, jotka alkavat tällä aikavälillä, rajat mukaan lukien."
+            "fromTo": "Vain istunnot, joiden päivämäärä tuotteen aikavyöhykkeen kalenteripäivänä on tällä aikavälillä, rajat mukaan lukien."
           },
           "fields": {
             "id": "Istunnon tunniste.",
@@ -1607,45 +1604,44 @@
         },
         "feedback": {
           "title": "mitä lapsi sanoi lähtiessään",
-          "intro": "Mitä yksi lapsi vastasi yhden istunnon lopuksi: viisi väittämää arvioituna viisiportaisella palkilla, vapaaehtoinen viesti hänen omin sanoin ja se, miten hän poistui. Tällä hetkellä palautetta kerätään vain verkossa pidettyjen istuntojen jälkeen. Lapsi, joka ei vastaa mitään, ei jätä riviä, joten vastausprosentti saadaan vertaamalla tätä listaa <code>/sessions</code>-resurssin verkkoistuntoihin; yksi rivi on yksi lapsi yhdessä istunnossa, joten riveistä laskettu prosenttiosuus laskee lapsen kerran kutakin istuntoa kohti, johon hän vastasi.",
+          "intro": "Mitä yksi lapsi vastasi yhden istunnon lopuksi: viisi väittämää arvioituna viisiportaisella palkilla ja vapaaehtoinen viesti hänen omin sanoin. Tällä hetkellä palautetta kerätään vain verkossa pidettyjen istuntojen jälkeen. Lapsi, joka ei arvioi yhtään väittämää eikä kirjoita viestiä, ei jätä riviä, joten vastausprosentti saadaan vertaamalla tätä listaa <code>/sessions</code>-resurssin verkkoistuntoihin; yksi rivi on yksi lapsi yhdessä istunnossa, joten riveistä laskettu prosenttiosuus laskee lapsen kerran kutakin istuntoa kohti, johon hän vastasi.",
           "params": {
             "productId": "Vain tämän tuotteen ryhmien palautteet.",
             "groupId": "Vain tämän ryhmän palautteet.",
             "participantId": "Vain tämän lapsen palautteet.",
-            "fromTo": "Vain istunnot, jotka avattiin tällä aikavälillä, rajat mukaan lukien."
+            "fromTo": "Vain palaute istunnoista, joiden päivämäärä tuotteen aikavyöhykkeen kalenteripäivänä on tällä aikavälillä, rajat mukaan lukien."
           },
           "fields": {
             "participantGroupProductId": "Kuka vastasi sekä ryhmä ja tuote, joihin istunto kuului. Palautetta kysytään vain lapsilta, joten <code>participant_id</code> on aina lapsen tunniste kentästä <code>gamers[].id</code>. Tietueella ei ole omaa tunnistetta: <code>participant_id</code>, <code>group_id</code> ja <code>session_opened_at</code> muodostavat yhdessä sen avaimen, ja saman lapsen myöhempi vastaus samasta istunnosta korvaa aiemman tuolla avaimella.",
-            "sessionId": "Istunto <code>/sessions</code>-resurssissa, johon vastaus kuuluu, yhdistettynä ryhmän ja päivämäärän perusteella; <code>null</code>, jos kyseiselle päivälle ei kirjoitettu istuntoriviä.",
-            "sessionOpenedAt": "Milloin istunto, jota lapsen vastaus koskee, avattiin.",
+            "sessionId": "Istunto <code>/sessions</code>-resurssissa, johon vastaus kuuluu, yhdistettynä ryhmän ja päivämäärän perusteella; <code>null</code>, jos <code>/sessions</code>-resurssissa ei ole istuntoa kyseiselle ryhmälle sinä päivänä.",
+            "sessionOpenedAt": "Milloin istunto, jota lapsen vastaus koskee, avattiin: hetki, jolloin istunnon verkkohuoneeseen pääsi liittymään, eli viisi minuuttia ennen istunnon aikataulun mukaista alkua.",
             "answers": "Lapsen arvio kustakin väittämästä, avaimena väittämän pysyvä tunniste; ohitettu väittämä puuttuu. Arviot ovat 1–5: ei, ei oikeastaan, vähän, kyllä, ehdottomasti. Tänään kysyttävät väittämät ovat <code>learned</code> (opin jotain), <code>fun</code> (minulla oli hauskaa), <code>geduKnowledgeable</code> (pelikasvattaja tiesi, mitä teki), <code>geduKind</code> (pelikasvattaja oli ystävällinen) ja <code>groupListens</code> (ryhmäni kuuntelee ja ymmärtää minua). Väittämä voidaan lisätä tai poistaa ilman ennakkoilmoitusta, joten lue ne avaimet, jotka tunnet, ja ohita loput. Robloxille menevät vain koostetut tyytyväisyysluvut; rivit itsessään jäävät Lynxille.",
-            "note": "Mitä lapsi kirjoitti vapaaehtoiseen viestiin, hänen omin sanoin ja omalla kielellään; tyhjä, jos hän ei kirjoittanut mitään.",
-            "exitReason": "<code>left</code>, kun lapsi päätti itse poistua; <code>ended</code>, kun istunto päättyi hänen ympäriltään."
+            "note": "Mitä lapsi kirjoitti vapaaehtoiseen viestiin, hänen omin sanoin ja omalla kielellään; tyhjä, jos hän ei kirjoittanut mitään."
           }
         },
         "robloxResearch": {
           "title": "Robloxille luovutettava aineisto",
-          "intro": "Yksilötason aineisto, jonka Ohjelman tietosuojaseloste sallii luovuttaa Robloxille vaikuttavuustutkimusta varten, eikä mitään sen yli. Yksi rivi lapsen ilmoittautumista kohti, valmiina välitettäväksi ilman suodatusta; vanhemman omasta paikasta ei tule riviä. Jokainen kenttä mahtuu siihen, mitä seloste nimeää.",
+          "intro": "Yksilötason aineisto, jonka Ohjelman tietosuojaseloste sallii luovuttaa Robloxille vaikuttavuustutkimusta varten, eikä mitään sen yli. Yksi rivi lapsen ilmoittautumista kohti samoilla tiloilla kuin <code>/enrolments</code>-resurssissa, valmiina välitettäväksi ilman suodatusta. Vanhemman omasta paikasta ei tule riviä, eikä myöskään lapsesta, jonka Roblox-käyttäjänimeä ei ole tallennettu: rivi on Roblox-tili, joten ilman sitä ei ole mitään välitettävää. Jokainen kenttä mahtuu siihen, mitä seloste nimeää.",
           "params": {
             "productId": "Vain tämän tuotteen rivit.",
             "fromTo": "Vain rivit, joiden tuote alkoi tällä välillä, rajat mukaan lukien."
           },
           "fields": {
             "roblox": "Lapsen Roblox-tili. <code>roblox_user_id</code> on <code>null</code>, kun Sogverse ei voinut varmistaa käyttäjänimeä; välitä tällaiset rivit vain, jos Roblox hyväksyy pelkän käyttäjänimen.",
-            "location": "Sen vanhemman kotikunta ja maa, jonka tilillä paikka on, <code>null</code>, jos vanhempi ei ole ilmoittanut sitä.",
+            "location": "Sen vanhemman kotikunta ja maa, jonka tilillä paikka on, samalla säännöllä kuin <code>/families</code>-resurssin <code>parents[].location</code>. Molemmat ovat <code>null</code>, jos vanhempi ei ole ilmoittanut kotisijaintia; pelkkä <code>city</code> on <code>null</code>, jos sijainti ei ole minkään kunnan alueella.",
             "age": "Lapsen ikä täysinä vuosina toiminnan alkamispäivänä vaihteluvälinä: Sogversessa on syntymäkuukausi eikä päivää, joten <code>min</code> on nuorin ja <code>max</code> vanhin mahdollinen ikä, ja luvut ovat samat, ellei alkamispäivä osunut lapsen syntymäkuukauteen. <code>null</code> niin kauan kuin tuotteella ei ole alkamispäivää. Rivillä on ikä eikä syntymäkuukausi, koska tutkimusaineisto nimeää nimenomaan iän.",
-            "activity": "Toiminta, johon osallistuttiin: tuotteen tunniste, sen nimi englanniksi, jos sellainen on kirjoitettu, ja muutoin tuotteen ensimmäisellä kielellä, sekä tyyppi, toteutustapa ja alkamispäivä. Tyyppi ja toteutustapa ovat yhdessä ne tiedot, joihin Lynxin omat nimet sen tavoille toteuttaa Ohjelmaa kiinnittyvät, ja alkamispäivä on tutkimuksen pyytämä interventiopäivä.",
+            "activity": "Toiminta, johon osallistuttiin: tuotteen tunniste, sen nimi englanniksi, jos sellainen on kirjoitettu, muutoin tuotteen toteutuskielellä ja viimeisenä vaihtoehtona sillä kieliversiolla, jonka koodi on aakkosjärjestyksessä ensimmäinen, sekä tyyppi, toteutustapa ja alkamispäivä. Tyyppi ja toteutustapa ovat yhdessä ne tiedot, joihin Lynxin omat nimet sen tavoille toteuttaa Ohjelmaa kiinnittyvät, ja alkamispäivä on tutkimuksen pyytämä interventiopäivä.",
             "publishedGameUrl": "Ensimmäinen roblox.com-linkki lapsen julkaisuissa tässä tuotteessa, tai <code>null</code>, jos sellaista ei ole kirjattu."
           },
           "note": "Rivillä ei ole lapsen eikä perheen tunnistetta, joten aineiston voi välittää sellaisenaan; rivit sivutetaan sen ilmoittautumisen järjestyksessä, josta kukin on johdettu. Roblox-tili on myös perhetietueessa, joten Lynx voi tarvittaessa jäljittää rivin takaisin perheeseen: kun perhe poistuu täydestä hausta, poista myös sen rivit täältä, ja jos rivi on jo välitetty Robloxille, välitä pyyntö eteenpäin Robloxin tietojenkäsittelyliitteen mukaisesti, kuten Ohjelman tietosuojaseloste edellyttää."
         },
         "traffic": {
           "title": "sivut, joille kampanja johtaa, kampanjoittain",
-          "intro": "Niiden sivujen sivunäytöt, joille Lynxin kampanja voi johtaa, ryhmiteltyinä sen kampanjan mukaan, joka ne toi, jotta suppilon yläpäähänkin saadaan luku: Roblox-laskeutumissivu, kauppa ja kunkin Ohjelman tuotteen oma sivu. Luvut luetaan Vercelin Web Analyticsista pyyntöhetkellä, ja ne ulottuvat niin pitkälle taaksepäin kuin Vercel niitä säilyttää, mikä on tällä hetkellä kaksi vuotta, toukokuun 2026 lopusta, jolloin analytiikka otettiin käyttöön. Vain koostetasolla: ei kävijätunnisteita eikä muita kuin näitä kolmea sivutyyppiä. Sivun sivunäytöissä kaikki kielet, joilla sivu näytetään, lasketaan yhdeksi sivuksi, ja kuluva päivä on vajaa, kunnes se päättyy.",
+          "intro": "Niiden sivujen sivunäytöt, joille Lynxin kampanja voi johtaa, ryhmiteltyinä sen kampanjan mukaan, joka ne toi, jotta suppilon yläpäähänkin saadaan luku: Roblox-laskeutumissivu, kauppa ja kunkin Ohjelman tuotteen oma sivu. Luvut luetaan Vercelin Web Analyticsista, ne voivat olla enintään tunnin vanhoja, ja ne ulottuvat niin pitkälle taaksepäin kuin Vercel niitä säilyttää, mikä on tällä hetkellä kaksi vuotta, toukokuun 2026 lopusta, jolloin analytiikka otettiin käyttöön. Vain koostetasolla: ei kävijätunnisteita eikä muita kuin näitä kolmea sivutyyppiä. Sivun sivunäytöissä kaikki kielet, joilla sivu näytetään, lasketaan yhdeksi sivuksi, ja kuluva päivä on vajaa, kunnes se päättyy.",
           "params": {
             "page": "Vain tämäntyyppiset sivut. Jätä pois, jos haluat kaikki kolme.",
             "productId": "Vain tämän tuotteen sivu. Merkitsee samalla arvoa <code>page=product</code>.",
-            "fromTo": "Vain tälle välille osuvat päivät, rajat mukaan lukien. Jätä pois, jos haluat viimeiset 30 päivää."
+            "fromTo": "Vain tälle välille osuvat päivät, rajat mukaan lukien. Jätä pois, jos haluat viimeiset 30 päivää. Jos väli ulottuu kauemmas menneisyyteen kuin luvut tai tämän päivän yli, vastaus kattaa ne välin päivät, joilta lukuja on, ja <code>range</code> kertoo, mitkä ne ovat. Väli, jolla ei ole yhtään tällaista päivää, hylätään."
           },
           "fields": {
             "range": "Päivät, jotka luvut kattavat.",
@@ -1661,13 +1657,13 @@
         },
         "campaigns": {
           "title": "perheet, jotka kampanja tuo, kampanjoittain",
-          "intro": "Kuinka monta perhettä kukin Lynxin kampanja toi Sogverseen ja kuinka pitkälle ne etenivät: luodut tilit, lisätyt lapset, Ohjelman ikäiset lapset ja ilmoittautuneet perheet. Tämä on suppilo ennen kuin perhe kuuluu rajaukseen, lukuina eikä listana: ei tunnisteita, ei yhdenkään perheen tietuetta, ja liian pieni luku jätetään näyttämättä. Kampanja on Lynxin, kun sen <code>utm_campaign</code> alkaa etuliitteellä <code>lynx-</code>, kirjainkoosta riippumatta. Jokaisessa Lynxille luodussa linkissä on oltava tämä etuliite: kampanjaa ilman sitä ei koskaan lasketa, eikä tilille tallennettua kampanjaa voi muuttaa jälkikäteen.",
+          "intro": "Kuinka monta perhettä kukin Lynxin kampanja toi Sogverseen ja kuinka pitkälle ne etenivät: luodut tilit, lisätyt lapset, Ohjelman ikäiset lapset ja ilmoittautuneet perheet. Tämä on suppilo ennen kuin perhe kuuluu rajaukseen, lukuina eikä listana: ei tunnisteita, ei yhdenkään perheen tietuetta, ja vähimmäismäärää pienempi luku jätetään näyttämättä. Kampanja on Lynxin, kun sen <code>utm_campaign</code> alkaa etuliitteellä <code>lynx-</code>, kirjainkoosta riippumatta. Jokaisessa Lynxille luodussa linkissä on oltava tämä etuliite: kampanjaa ilman sitä ei koskaan lasketa, eikä tilille tallennettua kampanjaa voi muuttaa jälkikäteen.",
           "params": {
             "fromTo": "Vain perheet, joiden vanhemman tili on luotu näinä kuukausina, rajat mukaan lukien, UTC-ajassa. Jätä <code>to</code> pois, jos haluat kuluvan kuukauden, joka on vajaa sen loppuun asti; jätä <code>from</code> pois, jos haluat saman kuukauden kuin <code>to</code>."
           },
           "fields": {
             "range": "Kuukaudet, jotka luvut kattavat.",
-            "minimumCount": "Pienin luku, jonka vastaus näyttää. Sitä pienempi luku, myös nolla, on <code>null</code>, jotta pieni kampanja ei voi osoittaa yksittäiseen perheeseen.",
+            "minimumCount": "Pienin luku, jonka vastaus näyttää. Sitä pienempi luku, myös nolla, on <code>null</code>.",
             "campaigns": "Yksi merkintä jokaisesta Lynxin kampanjasta, joka toi välillä vähintään yhden vanhemman tilin.",
             "utmCampaign": "Kampanja täsmälleen sellaisena kuin se on tallennettu laskettuihin tileihin. Arvot, jotka eroavat vain kirjainkooltaan, ovat erillisiä merkintöjä, kuten myös resurssissa <code>/traffic</code>.",
             "accountsCreated": "Vanhempien tilit, jotka luotiin välillä tämän kampanjan sisältävän linkin kautta: suppilon ensimmäinen vaihe.",
@@ -1675,16 +1671,17 @@
             "childrenEligible": "Ne lapsista, joiden ikä pyyntöpäivänä UTC-ajassa on Ohjelman ikärajojen 13–17 sisällä. Sogverse tallentaa syntymäkuukauden eikä päivää, joten lapsi, joka voi olla jompaakumpaa kahdesta iästä, lasketaan mukaan, kun kumpi tahansa osuu rajoihin, samalla tavalla kuin ilmoittautumisessa.",
             "enrolled": "Ne tileistä, joiden perheellä on paikka Ohjelman tuotteessa, joiden perhe on suorittanut sellaisen tai joiden perhe jonottaa paikkaa: kolmas vaihe ja kohta, jossa perhe tulee resurssiin <code>/families</code>."
           },
-          "note": "Tilin kampanja kirjoitetaan kerran tilin luonnin yhteydessä ja vain, jos kävijä hyväksyi markkinointievästeet, joten luvut kattavat nämä perheet eivätkä koskaan muita; se on sama kampanja, jonka <code>/families</code> näyttää kentässä <code>parents[].utm</code>, kun perhe ilmoittautuu. Jokainen luku luetaan reaaliaikaisesti pyyntöhetkellä. Väli annetaan kuukausina eikä päivinä, jotta kahta vastausta vertaamalla ei voi koskaan erottaa yksittäistä perhettä."
+          "note": "Tilin kampanja kirjoitetaan kerran tilin luonnin yhteydessä ja vain, jos kävijä hyväksyi markkinointievästeet, joten luvut kattavat nämä perheet eivätkä koskaan muita; se on sama kampanja, jonka <code>/families</code> näyttää kentässä <code>parents[].utm</code>, kun perhe ilmoittautuu. Jokainen luku luetaan reaaliaikaisesti pyyntöhetkellä, joten sama väli voi antaa toisena päivänä eri vastauksen: perheet lisäävät lapsia ja ilmoittautuvat edelleen, ja kuluvalle kuukaudelle kertyy tilejä sen loppuun asti."
         }
       },
       "errors": {
         "heading": "Virheet",
-        "e400": "Kyselyparametri on virheellinen: väärä UUID, päivämäärä, joka ei ole <code>YYYY-MM-DD</code>, kuukausi, joka ei ole <code>YYYY-MM</code>, yli 500:n <code>limit</code>, tuntematon enum-arvo tai toisesta päätepisteestä peräisin oleva <code>cursor</code>.",
+        "intro": "Jokainen virhe palautetaan Käytännöt-osiossa kuvatussa muodossa. Käsittele virhe arvon <code>code</code> perusteella, sillä se pysyy samana; <code>message</code> on englanninkielinen teksti lokia varten, ei näytettäväksi.",
+        "e400": "Kyselyparametri on virheellinen: väärä UUID, päivämäärä, joka ei ole <code>YYYY-MM-DD</code>, kuukausi, joka ei ole <code>YYYY-MM</code>, yli 500:n <code>limit</code>, tuntematon enum-arvo, <code>from</code>, joka on myöhempi kuin <code>to</code>, tai <code>cursor</code>, joka on virheellinen, peräisin toisesta päätepisteestä tai annettu eri suodattimilla.",
         "e401": "Puuttuva, virheellinen tai peruttu API-avain.",
-        "e404": "Polku ei ole mikään yllä kuvatuista resursseista.",
-        "e429": "Liikaa pyyntöjä: raja on 60 pyyntöä minuutissa avainta kohti. Odota <code>Retry-After</code>-otsakkeen ilmoittama sekuntimäärä ja yritä uudelleen; kaikkien resurssien hakeminen vartin välein pysyy selvästi sen alapuolella.",
-        "e500": "Jokin meni vikaan meidän päässämme. Yritä uudelleen kasvavalla viiveellä, ja jos ongelma jatkuu, kerro meille."
+        "e404": "Polku ei ole mikään yllä kuvatuista resursseista. Avain tarkistetaan ensin, joten pyyntö ilman kelvollista avainta saa vastauksen 401 polusta riippumatta. Suodatin, joka nimeää Ohjelmaan kuulumattoman tuotteen, ei tuota vastausta 404: se ei vain vastaa mitään.",
+        "e500": "Jokin meni vikaan meidän päässämme. Yritä uudelleen kasvavalla viiveellä, ja jos ongelma jatkuu, kerro meille.",
+        "e500Misconfigured": "Rajapintaa ei ole määritetty oikein meidän päässämme. Uudelleenyrittäminen ei auta ennen kuin korjaamme asian, joten kerro meille."
       },
       "example": {
         "heading": "Esimerkki"
@@ -1692,7 +1689,7 @@
       "integrationNotes": {
         "heading": "Integraatio-ohjeet",
         "items": {
-          "sync": "Tämä on rakennettu synkronointia eikä reaaliaikaista kyselyä varten: jokainen resurssi haetaan aikataulun mukaan Lynxin omaan tietovarastoon, ja näkymä rakennetaan sen varaan. Jokainen haku palauttaa kaiken rajaukseen kuuluvan sellaisena kuin se on pyyntöhetkellä, joten sen vastaus korvaa sen, mitä Lynxillä oli aiemmin; rajat on mitoitettu kaikkien resurssien hakemiseen jopa vartin välein.",
+          "sync": "Tämä on rakennettu synkronointia eikä reaaliaikaista kyselyä varten: jokainen resurssi haetaan aikataulun mukaan Lynxin omaan tietovarastoon, ja näkymä rakennetaan sen varaan. Jokainen haku palauttaa kaiken rajaukseen kuuluvan sellaisena kuin se on pyyntöhetkellä, joten sen vastaus korvaa sen, mitä Lynxillä oli aiemmin.",
           "join": "Tunnisteet ovat yhdistämisen avaimet. Vanhemman sähköpostiosoite voi ilmestyä, kadota ja ilmestyä uudelleen suostumuksen mukana; hänen <code>id</code>-tunnisteensa ei koskaan.",
           "consent": "Suostumusmuutoksiin ja katoamisiin on tarkoitus reagoida samalla synkronoinnilla, joka ne näyttää: perhe, jonka <code>marketing_consent.granted</code> muuttui arvoon <code>false</code>, jää samana päivänä pois postituksista, ja tietue, joka on poistunut täydestä hausta, poistuu samana päivänä Lynxin tietovarastosta. Ohjelman tietosuojaseloste velvoittaa molemmat organisaatiot tähän, ja vähintään kerran vuorokaudessa tehtävä haku tekee sen mahdolliseksi.",
           "derived": "”Osallistunut” ja ”julkaissut” ovat johdettuja, eivät tallennettuja tietoja. Molemmat on määritelty yllä olevissa kenttäkuvauksissa, jotta Lynxin ja meidän luvut täsmäävät; jos määritelmää pitää muuttaa, muuta se ensin täällä.",
@@ -1701,7 +1698,7 @@
       },
       "notIncluded": {
         "heading": "Mitä rajapinta ei sisällä",
-        "intro": "Asioita, joita Sogversessa on tai joista kysytään ja jotka tämä ehdotus jättää ulkopuolelle. Jos jokin niistä osoittautuu Lynxille tärkeäksi, kerro siitä, niin keskustellaan asiasta.",
+        "intro": "Asioita, joita Sogversessa on tai joista kysytään ja jotka tämä rajapinta jättää ulkopuolelle. Jos jokin niistä osoittautuu Lynxille tärkeäksi, kerro siitä, niin keskustellaan asiasta.",
         "items": {
           "childIdentity": "Lasten sukunimet, syntymäpäivät ja sukupuoli sekä vanhempien puhelinnumerot. Ohjelman tietosuojaseloste lupaa syntymäkuukauden eikä syntymäaikaa, eikä loppuja tarvita näkymissä tai Robloxin raportissa.",
           "releases": "Tapaustutkimus- ja suositteluluvat. Sogversen hallussa oleva yksi medialupa kattaa jo sen, että Lynx Educate, School of Gaming ja Roblox käyttävät valokuvaa julkisesti; lapsen koko nimi, tapaustutkimus, sitaatti tai lapseen yhdistetty sisältö vaativat erillisen kirjallisen luvan, joka hankitaan alustan ulkopuolella.",

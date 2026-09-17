@@ -1,6 +1,7 @@
 import {
   partnerError,
   partnerJson,
+  partnerRead,
   requirePartnerKey,
 } from "@/lib/api/partner-auth.server";
 import { parseSearchParams } from "@/lib/api/query-params.server";
@@ -8,23 +9,29 @@ import {
   partnerSessionsQuery,
   partnerSessionsResponse,
 } from "@/services/partner/partner.contracts";
+import { readPartnerSessions } from "@/services/partner/partner-sessions.server";
+import { partnerDb } from "@/services/partner/partner-shared-db.server";
 
 /**
  * GET /api/partner/v1/sessions — every session a Programme group has recorded.
  *
- * Skeleton: it authenticates the caller and validates the query exactly as
- * `/docs/lynx-api` documents, then answers the documented envelope with no
- * records. See `src/app/api/partner/CLAUDE.md`. The validated filters are
- * deliberately unread — reading them is what the implementation adds.
+ * A session is returned once a Game Educator has written its report or marked
+ * anyone's attendance; a session row holding only a staff note or a photograph
+ * is not one. Each carries its product and group, its scheduled window, one
+ * mark per marked participant and the report's photographs as public URLs;
+ * ascending by session id, a page at a time. `from`/`to` bound the session's
+ * calendar day in its product's timezone. See `/docs/lynx-api` for the contract.
  */
-export function GET(request: Request) {
+export async function GET(request: Request) {
   const denied = requirePartnerKey(request);
   if (denied) return denied;
 
-  const query = parseSearchParams(request.url, partnerSessionsQuery);
-  if (!query.ok) return partnerError("invalid_query", query.message);
+  return partnerRead("sessions", async () => {
+    const query = parseSearchParams(request.url, partnerSessionsQuery);
+    if (!query.ok) return partnerError("invalid_query", query.message);
 
-  return partnerJson(
-    partnerSessionsResponse.parse({ data: [], next_cursor: null }),
-  );
+    return partnerJson(
+      partnerSessionsResponse.parse(await readPartnerSessions(partnerDb(), query.data)),
+    );
+  });
 }

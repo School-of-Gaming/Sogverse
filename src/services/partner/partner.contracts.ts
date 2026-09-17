@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Constants } from "@/types";
-import type { ParticipationStatus } from "@/types";
+import type { EffectiveProductStatusDB, ParticipationStatus } from "@/types";
 
 /**
  * The wire contracts of the Lynx Educate partner API — one query schema and one
@@ -10,12 +10,12 @@ import type { ParticipationStatus } from "@/types";
  * file is that contract written down where a machine can hold us to it. The
  * routes under `src/app/api/partner/v1/` parse their query strings with the
  * query schemas and validate what they return against the response schemas, so
- * the skeleton's empty answers are the same shape a filled-in resource will
- * have to produce.
+ * no answer leaves in a shape the page does not describe — an empty page and a
+ * full one are held to the same contract.
  *
- * This is a contracts-only feature directory: the partner is an outside caller
- * with its own client, so there is no service class and no query hooks on our
- * side, and nothing here is imported by the app's UI.
+ * The partner is an outside caller with its own client, so the feature has no
+ * service class and no query hooks: the reads behind the routes are server-only
+ * modules beside this file, and nothing here is imported by the app's UI.
  *
  * Enum values come from the generated `Constants` wherever the vocabulary is
  * the database's. Where it is the API's own — an invented word the database
@@ -31,7 +31,7 @@ import type { ParticipationStatus } from "@/types";
  * property of the product's location and topic rather than as an enum of its
  * own, and the documentation page names these two words, so they are the API's.
  */
-const DELIVERY = ["online", "in_person"] as const;
+export const DELIVERY = ["online", "in_person"] as const;
 
 /**
  * API-only vocabulary: the kinds of page `/traffic` counts. These are pages of
@@ -48,20 +48,18 @@ const TRAFFIC_PAGE = ["landing", "shop", "product"] as const;
 export const LYNX_CAMPAIGN_PREFIX = "lynx-";
 
 /**
- * The smallest count `/campaigns` shows. Below it a count is withheld as null,
- * so a small campaign cannot point to a single family; the response schema
- * refuses a smaller number outright, which is what keeps an implementation
- * from leaking one by accident.
+ * The smallest count `/campaigns` shows. Below it a count is withheld as null;
+ * the response schema refuses a smaller number outright, which is what keeps
+ * an implementation from showing one by accident. It bounds each count on its
+ * own and nothing more: two counts, or two answers, can still differ by one.
  */
 export const CAMPAIGN_MINIMUM_COUNT = 5;
 
 /**
- * API-only vocabulary: how a child left a feedback prompt, and how a Game
- * Educator marked them. Both are stored as booleans/derived state rather than
- * as enums, and the documentation page names the words.
+ * API-only vocabulary: how a Game Educator marked a child. It is not a
+ * database enum, and the documentation page names the words.
  */
-const EXIT_REASON = ["left", "ended"] as const;
-const ATTENDANCE_MARK = ["present", "absent"] as const;
+export const ATTENDANCE_MARK = ["present", "absent"] as const;
 
 /**
  * The enrolment states the API reports — the participation states minus
@@ -70,14 +68,26 @@ const ATTENDANCE_MARK = ["present", "absent"] as const;
  * narrowing honest: a rename in the generated enum fails to compile here rather
  * than silently leaving the API describing a state that no longer exists.
  */
-const ENROLMENT_STATUS = [
+export const ENROLMENT_STATUS = [
   "active",
   "waitlisted",
   "completed",
 ] as const satisfies readonly ParticipationStatus[];
 
-/** The four derived product states, generated: `effective_product_status`. */
-const PRODUCT_STATUS = Constants.public.Enums.effective_product_status;
+/**
+ * API-only vocabulary: the product states the API reports — the lifecycle a
+ * product supports, before, from and after its dates. The database's
+ * `effective_product_status` also derives `expired`, which only a signup
+ * threshold or a missing start date can produce, and the admin UI blocks both;
+ * so the API does not describe it, and a product that derives it is a broken
+ * invariant that answers 500 rather than a value the page never states. The
+ * `satisfies` keeps a rename in the generated enum a compile error here.
+ */
+export const PRODUCT_STATUS = [
+  "pending",
+  "running",
+  "completed",
+] as const satisfies readonly EffectiveProductStatusDB[];
 
 /** The product kinds, generated: `product_type`. */
 const PRODUCT_TYPE = Constants.public.Enums.product_type;
@@ -104,7 +114,7 @@ function isCalendarDay(value: string): boolean {
 }
 
 /** A calendar day, `YYYY-MM-DD`, as every date the documentation page names. */
-const isoDate = z
+export const isoDate = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "must be a YYYY-MM-DD date")
   .refine(isCalendarDay, "must be a real calendar date");
@@ -151,9 +161,12 @@ const consentState = z.object({
 
 /**
  * Cursor paging, on every resource that returns records. `limit` defaults to
- * 100 and is capped at 500; `cursor` is opaque to the caller and, for now, to
- * us — the skeleton accepts it and returns no records, so no cursor it hands
- * back can be stale.
+ * 100 and is capped at 500. `cursor` is opaque to the caller; to us it is the
+ * last key of the previous page, bound to the resource and to the filters it was
+ * issued under, so the schema only asks for a non-empty string and the route
+ * decodes the rest (`src/lib/api/partner-cursor.server.ts`). A cursor that does
+ * not decode — malformed, another resource's, or issued under other filters — is
+ * a 400 `invalid_query` like any other bad parameter.
  */
 const pagingQuery = {
   limit: z.coerce
@@ -247,11 +260,10 @@ export const partnerRobloxResearchQuery = withOrderedRange(
  * directions the caller might not have meant.
  */
 /**
- * `/campaigns` takes its range in whole months, never days: counts over two
- * day ranges one day apart would differ by that one day's families, and a
- * difference of one is a single family however large both counts are. Months
- * compared with months only ever difference whole months, which the minimum
- * count then covers. Months sort as strings because they are zero-padded.
+ * `/campaigns` takes its range in whole UTC months, never days — the shape of
+ * the question, a funnel per campaign month, and not a privacy property: two
+ * answers can still differ by one family. Months sort as strings because they
+ * are zero-padded.
  */
 export const partnerCampaignsQuery = withOrderedRange(
   z.object({
@@ -283,7 +295,8 @@ export const partnerTrafficQuery = withOrderedRange(
 
 /**
  * The list envelope every record-returning resource answers in. A `null`
- * `next_cursor` is the last page — which is every page the skeleton serves.
+ * `next_cursor` is the last page; a string is handed back verbatim as `cursor`
+ * to read the next one.
  */
 function listEnvelope<S extends z.ZodTypeAny>(record: S) {
   return z.object({
@@ -444,7 +457,6 @@ const partnerFeedback = z.object({
    */
   answers: z.record(z.string(), z.number().int().min(1).max(5)),
   note: z.string(),
-  exit_reason: z.enum(EXIT_REASON),
 });
 
 /**
@@ -546,3 +558,40 @@ export const partnerCampaignsResponse = z.object({
     }),
   ),
 });
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+//
+// What the read modules behind the routes build, named once here so a record
+// is typed against the contract it will be validated with rather than against
+// a hand-written twin of it. Output types (`z.infer`), because these are the
+// shapes after parsing: a query's `limit` is a number with its default applied,
+// never the raw string the URL carried.
+
+export type PartnerPlace = z.infer<typeof place>;
+export type PartnerConsentState = z.infer<typeof consentState>;
+export type PartnerAcceptedDocument = z.infer<typeof acceptedDocument>;
+export type PartnerDelivery = (typeof DELIVERY)[number];
+export type PartnerEnrolmentStatus = (typeof ENROLMENT_STATUS)[number];
+export type PartnerProductStatus = (typeof PRODUCT_STATUS)[number];
+export type PartnerAttendanceMark = (typeof ATTENDANCE_MARK)[number];
+
+export type PartnerProduct = z.infer<typeof partnerProduct>;
+export type PartnerFamily = z.infer<typeof partnerFamily>;
+export type PartnerParent = z.infer<typeof partnerParent>;
+export type PartnerGamer = z.infer<typeof partnerGamer>;
+export type PartnerEnrolment = z.infer<typeof partnerEnrolment>;
+export type PartnerSession = z.infer<typeof partnerSession>;
+export type PartnerFeedback = z.infer<typeof partnerFeedback>;
+export type PartnerResearchRow = z.infer<typeof partnerResearchRow>;
+export type PartnerCampaignsResponse = z.infer<typeof partnerCampaignsResponse>;
+
+export type PartnerProductsQuery = z.infer<typeof partnerProductsQuery>;
+export type PartnerFamiliesQuery = z.infer<typeof partnerFamiliesQuery>;
+export type PartnerEnrolmentsQuery = z.infer<typeof partnerEnrolmentsQuery>;
+export type PartnerSessionsQuery = z.infer<typeof partnerSessionsQuery>;
+export type PartnerFeedbackQuery = z.infer<typeof partnerFeedbackQuery>;
+export type PartnerRobloxResearchQuery = z.infer<typeof partnerRobloxResearchQuery>;
+export type PartnerTrafficQuery = z.infer<typeof partnerTrafficQuery>;
+export type PartnerCampaignsQuery = z.infer<typeof partnerCampaignsQuery>;

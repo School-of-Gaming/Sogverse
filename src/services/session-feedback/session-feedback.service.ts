@@ -29,13 +29,9 @@ export interface SessionFeedbackKey {
   sessionOpensAt: string;
 }
 
-/** Which way out the child left by, as the column spells the two. */
-export type SessionFeedbackExitReason = "left" | "ended";
-
 export interface SaveSessionFeedbackInput extends SessionFeedbackKey {
   /** What the screen collected, skips and all. */
   result: SessionFeedbackResult;
-  exitReason: SessionFeedbackExitReason;
 }
 
 export class SessionFeedbackService {
@@ -87,7 +83,6 @@ export class SessionFeedbackService {
       session_opens_at: input.sessionOpensAt,
       answers: answersForStorage(input.result.answers),
       note: noteForStorage(input.result.note),
-      exit_reason: input.exitReason,
     };
 
     const { error } = await this.supabase

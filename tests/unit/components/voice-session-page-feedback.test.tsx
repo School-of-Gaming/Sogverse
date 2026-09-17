@@ -119,7 +119,6 @@ const feedback = vi.hoisted(() => ({
   saves: [] as {
     groupId: string;
     sessionOpensAt: string;
-    exitReason: string;
     result: { answers: Record<string, number | undefined>; note: string };
   }[],
   /** Whether the save refuses. */
@@ -326,9 +325,7 @@ describe("who the voice session page asks for feedback", () => {
  *     than rows — but an empty form over a row that was loaded writes, or a
  *     child who cleared their answers would be left with the old ones
  *     standing. A read that never answered loaded nothing, so it skips too.
- *  3. **The exit reason is only knowable here**, and no later reader could
- *     reconstruct which of the two ways out a row came from.
- *  4. **A failed save keeps the child on the form, with a working Done.** The
+ *  3. **A failed save keeps the child on the form, with a working Done.** The
  *     opposite — navigating anyway — throws the answers away silently, which is
  *     the exact outcome the screen exists to stop.
  */
@@ -473,16 +470,7 @@ describe("what the voice session page does with a gamer's answers", () => {
     expect(feedback.saves[0].result.answers.learned).toBe(5);
   });
 
-  it("records the Leave button as the way out", async () => {
-    renderPage(true);
-    await leaveAndWait();
-    answerFirstStatement(messages.voice.feedback.scale.yes);
-    pressDone();
-
-    expect(feedback.saves[0].exitReason).toBe("left");
-  });
-
-  it("records the room closing as the way out", async () => {
+  it("writes the same row when the room closed rather than the child leaving", async () => {
     room.joinSticks = false;
     renderPage(true);
     await waitFor(() => {
@@ -491,7 +479,10 @@ describe("what the voice session page does with a gamer's answers", () => {
     answerFirstStatement(messages.voice.feedback.scale.yes);
     pressDone();
 
-    expect(feedback.saves[0].exitReason).toBe("ended");
+    expect(feedback.saves).toHaveLength(1);
+    expect(feedback.saves[0].groupId).toBe(GROUP_ID);
+    expect(feedback.saves[0].sessionOpensAt).toBe(feedback.sessionOpensAt);
+    expect(feedback.saves[0].result.answers.learned).toBe(4);
   });
 
   it("keeps the child on the form, and Done working, when the save is refused", async () => {

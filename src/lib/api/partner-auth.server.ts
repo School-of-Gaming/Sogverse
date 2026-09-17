@@ -25,13 +25,23 @@ export type PartnerErrorCode =
   | "unauthorized"
   /** The key is not configured on our side — never the caller's fault. */
   | "server_misconfigured"
-  /** A query parameter failed the documented schema. */
-  | "invalid_query";
+  /** A query parameter failed the documented schema, the cursor included. */
+  | "invalid_query"
+  /** No resource lives at this path under `/api/partner`. */
+  | "not_found"
+  /**
+   * Something failed on our side while answering — a read, or an answer that
+   * would not have matched the published shape. Logged in full server-side;
+   * the caller learns only that it was not their fault.
+   */
+  | "internal_error";
 
 const STATUS_BY_CODE: Readonly<Record<PartnerErrorCode, number>> = {
   unauthorized: 401,
   server_misconfigured: 500,
   invalid_query: 400,
+  not_found: 404,
+  internal_error: 500,
 };
 
 /**
@@ -65,6 +75,67 @@ export function partnerError(
   message: string,
 ): NextResponse {
   return partnerJson({ error: { code, message } }, STATUS_BY_CODE[code]);
+}
+
+/**
+ * A caller's mistake found below the route — a cursor that does not decode, in
+ * practice — thrown so the read that found it need not thread a result type
+ * back up through every layer between it and the handler.
+ *
+ * `partnerRead` turns it into a 400 `invalid_query` carrying this message, so
+ * the message follows the same rule as `parseSearchParams`: it names the
+ * parameter it is about (`cursor: …`) and is English for a log.
+ */
+export class PartnerQueryError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PartnerQueryError";
+  }
+}
+
+/**
+ * Run a partner route's body and guarantee the answer is in the envelope.
+ *
+ *   export async function GET(request: Request) {
+ *     const denied = requirePartnerKey(request);
+ *     if (denied) return denied;
+ *     return partnerRead("products", async () => {
+ *       const query = parseSearchParams(request.url, partnerProductsQuery);
+ *       if (!query.ok) return partnerError("invalid_query", query.message);
+ *       return partnerJson(partnerProductsResponse.parse(await read(query.data)));
+ *     });
+ *   }
+ *
+ * Without it a failed read or a response that fails its own schema would reach
+ * the partner as Next's HTML 500 — the one shape the published page promises
+ * never to send. With it:
+ *
+ * - a thrown `PartnerQueryError` answers 400 `invalid_query` with its message;
+ * - anything else thrown answers 500 `internal_error` with a fixed message, and
+ *   the error itself goes to the server log under `label`, never to the caller:
+ *   what failed and why is ours to read, and a database message quoted back
+ *   over the wire tells an outsider about our schema.
+ *
+ * The key check stays outside, called by the route itself: the route registry
+ * asserts each partner route file contains that call, and a gate hidden inside
+ * a helper is a gate the check cannot see.
+ */
+export async function partnerRead(
+  label: string,
+  body: () => Promise<NextResponse>,
+): Promise<NextResponse> {
+  try {
+    return await body();
+  } catch (error) {
+    if (error instanceof PartnerQueryError) {
+      return partnerError("invalid_query", error.message);
+    }
+    console.error(`partner API ${label}: answering internal_error`, error);
+    return partnerError(
+      "internal_error",
+      "The request could not be answered because of an error on our side",
+    );
+  }
 }
 
 /**
