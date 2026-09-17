@@ -94,16 +94,6 @@ const isoDate = z
   .refine(isCalendarDay, "must be a real calendar date");
 
 /**
- * An instant a caller sends us: ISO 8601, and an offset is accepted. Being
- * liberal here costs nothing — the instant is the same one however it is
- * written, and refusing `+03:00` would only make an incremental pull harder to
- * build from a language whose clock formats that way.
- */
-const isoTimestampIn = z
-  .string()
-  .datetime({ offset: true, message: "must be an ISO 8601 timestamp" });
-
-/**
  * An instant we emit: ISO 8601 in UTC, so the `Z` is required. The
  * documentation page promises every timestamp in UTC, and a promise nothing
  * checks is one a later implementation breaks by handing out whatever the
@@ -148,7 +138,6 @@ const pagingQuery = {
     .max(500, "limit must be at most 500")
     .default(100),
   cursor: z.string().min(1).optional(),
-  updated_since: isoTimestampIn.optional(),
 };
 
 export const partnerProductsQuery = z.object({
@@ -166,8 +155,8 @@ export const partnerFamiliesQuery = z.object({
 
 export const partnerEnrolmentsQuery = z.object({
   product_id: uuid.optional(),
-  gamer_id: uuid.optional(),
-  family_id: uuid.optional(),
+  participant_id: uuid.optional(),
+  parent_id: uuid.optional(),
   status: z.enum(ENROLMENT_STATUS).optional(),
   ...pagingQuery,
 });
@@ -208,7 +197,7 @@ export const partnerFeedbackQuery = withOrderedRange(
   z.object({
     product_id: uuid.optional(),
     group_id: uuid.optional(),
-    gamer_id: uuid.optional(),
+    participant_id: uuid.optional(),
     ...dateRangeQuery,
     ...pagingQuery,
   }),
@@ -224,7 +213,7 @@ export const partnerRobloxResearchQuery = withOrderedRange(
 
 /**
  * `/traffic` is the one resource that returns an aggregate rather than records,
- * so it takes neither paging nor `updated_since`.
+ * so it takes no paging.
  *
  * Its two filters are not independent: a product's page is a `product` page, so
  * asking for one product's views under `page=landing` describes nothing that
@@ -279,15 +268,27 @@ const partnerProduct = z.object({
     ),
   type: z.enum(PRODUCT_TYPE),
   delivery: z.enum(DELIVERY),
+  /**
+   * Who may hold a seat, as the two independent flags the database stores. The
+   * database refuses a product with neither, and so does the schema.
+   */
+  audience: z
+    .object({ gamers: z.boolean(), parents: z.boolean() })
+    .refine(
+      (audience) => audience.gamers || audience.parents,
+      "must admit gamers, parents or both",
+    ),
   location: place.nullable(),
   status: z.enum(PRODUCT_STATUS),
   start_date: isoDate.nullable(),
   end_date: isoDate.nullable(),
   timezone: z.string(),
-  age_range: z.object({ min: z.number().int(), max: z.number().int() }),
+  /** Null exactly when the audience admits no gamers, as the database holds it. */
+  age_range: z
+    .object({ min: z.number().int(), max: z.number().int() })
+    .nullable(),
   groups: z.array(z.object({ id: uuid, name: z.string() })),
   created_at: isoTimestampUtc,
-  updated_at: isoTimestampUtc,
 });
 
 const partnerGamer = z.object({
@@ -306,7 +307,7 @@ const partnerGamer = z.object({
   photo_consent: consentState.nullable(),
 });
 
-const partnerFamily = z.object({
+const partnerParent = z.object({
   id: uuid,
   first_name: z.string(),
   last_name: z.string(),
@@ -321,8 +322,20 @@ const partnerFamily = z.object({
   }),
   /** Null where the parent has never been asked. */
   marketing_consent: consentState.nullable(),
+});
+
+/**
+ * A family is not an account: the database links parents to gamers many to
+ * many and holds no family row. `parents` is a list for that reason, although
+ * the app links a gamer to one parent today — a record shaped for one parent
+ * would make the second one a breaking change.
+ *
+ * For the same reason the record carries no `id` and no `updated_at`: there is
+ * no stored family for either to belong to, so the people inside are the keys.
+ */
+const partnerFamily = z.object({
+  parents: z.array(partnerParent).min(1, "a family always has a parent"),
   gamers: z.array(partnerGamer),
-  updated_at: isoTimestampUtc,
 });
 
 const acceptedDocument = z.object({
@@ -336,8 +349,9 @@ const partnerEnrolment = z.object({
   product_id: uuid,
   /** Null until an admin places the seat in a group. */
   group_id: uuid.nullable(),
-  gamer_id: uuid,
-  family_id: uuid,
+  /** A gamer's id, or on a parent's own seat the parent's — then equal to `parent_id`. */
+  participant_id: uuid,
+  parent_id: uuid,
   status: z.enum(ENROLMENT_STATUS),
   signed_up_at: isoTimestampUtc,
   consents: z.object({
@@ -355,8 +369,6 @@ const partnerEnrolment = z.object({
       is_roblox_url: z.boolean(),
     }),
   ),
-  creations_updated_at: isoTimestampUtc.nullable(),
-  updated_at: isoTimestampUtc,
 });
 
 const partnerSession = z.object({
@@ -365,9 +377,9 @@ const partnerSession = z.object({
   group_id: uuid,
   starts_at: isoTimestampUtc,
   ends_at: isoTimestampUtc,
-  /** One entry per child the Game Educator marked; an unmarked child is absent. */
+  /** One entry per participant the Game Educator marked; an unmarked one is absent. */
   attendance: z.array(
-    z.object({ gamer_id: uuid, status: z.enum(ATTENDANCE_MARK) }),
+    z.object({ participant_id: uuid, status: z.enum(ATTENDANCE_MARK) }),
   ),
   images: z.array(
     z.object({
@@ -377,11 +389,10 @@ const partnerSession = z.object({
       height: z.number().int(),
     }),
   ),
-  updated_at: isoTimestampUtc,
 });
 
 const partnerFeedback = z.object({
-  gamer_id: uuid,
+  participant_id: uuid,
   group_id: uuid,
   product_id: uuid,
   /** Null when no session row was written for that day. */
@@ -395,7 +406,6 @@ const partnerFeedback = z.object({
   answers: z.record(z.string(), z.number().int().min(1).max(5)),
   note: z.string(),
   exit_reason: z.enum(EXIT_REASON),
-  updated_at: isoTimestampUtc,
 });
 
 /**

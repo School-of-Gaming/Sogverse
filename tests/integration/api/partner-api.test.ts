@@ -76,10 +76,10 @@ const ROUTES: readonly {
     path: "enrolments",
     handler: getEnrolments,
     response: partnerEnrolmentsResponse,
-    badQuery: "?family_id=not-a-uuid",
-    badParam: "family_id",
+    badQuery: "?parent_id=not-a-uuid",
+    badParam: "parent_id",
     validQuery:
-      "?family_id=9c3e2b4a-7f11-4d0e-8b6a-1a2b3c4d5e6f&status=waitlisted",
+      "?parent_id=9c3e2b4a-7f11-4d0e-8b6a-1a2b3c4d5e6f&status=waitlisted",
   },
   {
     path: "sessions",
@@ -93,8 +93,8 @@ const ROUTES: readonly {
     path: "feedback",
     handler: getFeedback,
     response: partnerFeedbackResponse,
-    badQuery: "?gamer_id=abc",
-    badParam: "gamer_id",
+    badQuery: "?participant_id=abc",
+    badParam: "participant_id",
     validQuery: "?group_id=0e2b6a7e-6d2a-4f6c-b3a1-3f1f9c8e5a21",
   },
   {
@@ -229,11 +229,11 @@ describe("the Lynx Educate partner API", () => {
       expect(response.status).toBe(200);
     });
 
-    it.each(listCases)("%s accepts a cursor and an updated_since", (_path, route) => {
+    it.each(listCases)("%s accepts a cursor", (_path, route) => {
       const response = route.handler(
         createRequest(
           route.path,
-          "?cursor=eyJ1cGRhdGVkX2F0IjoiMjAyNi0wOS0xNVQxMDowMDowMFoifQ&updated_since=2026-09-15T10:00:00Z",
+          "?cursor=eyJpZCI6IjVhMWY4ZTFjLTFiMGUtNGEzZS05YTljLTJjOWE0ZDhmMGIxMSJ9",
         ),
       );
       expect(response.status).toBe(200);
@@ -245,15 +245,6 @@ describe("the Lynx Educate partner API", () => {
 
     it.each(listCases)("%s rejects a non-numeric limit", (_path, route) => {
       expect(route.handler(createRequest(route.path, "?limit=many")).status).toBe(400);
-    });
-
-    it("rejects an updated_since that is not a timestamp", async () => {
-      const response = getProducts(
-        createRequest("products", "?updated_since=2026-09-15"),
-      );
-      expect(response.status).toBe(400);
-      const body = await response.json();
-      expect(body.error.message).toContain("updated_since");
     });
 
     it.each(rangeCases)("%s rejects a reversed date range", async (_path, route) => {

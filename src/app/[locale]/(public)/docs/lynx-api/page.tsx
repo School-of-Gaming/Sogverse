@@ -50,7 +50,7 @@ function CodeBlock({ children, title }: { children: string; title?: string }) {
  *
  * `type` and `description` are both optional because the proposal leaves some
  * rows without one — a paging row has no single type, and a record's
- * `created_at`/`updated_at` need no gloss. An absent cell is left empty rather
+ * `created_at` needs no gloss. An absent cell is left empty rather
  * than filled with invented copy.
  */
 type Row = {
@@ -246,7 +246,7 @@ function Resource({
  * compiler checks each one against the catalog at the point it is rendered.
  */
 const PAGING_ROWS = [
-  { name: "updated_since, limit, cursor", key: "common.seeConventions" },
+  { name: "limit, cursor", key: "common.seeConventions" },
 ] as const;
 
 const PRODUCTS_PARAMS = [
@@ -255,12 +255,7 @@ const PRODUCTS_PARAMS = [
     type: "pending | running | completed | expired",
     key: "resources.products.params.status",
   },
-  {
-    name: "updated_since",
-    type: "ISO 8601",
-    key: "common.seeConventions",
-  },
-  { name: "limit, cursor", key: "common.seeConventions" },
+  ...PAGING_ROWS,
 ] as const;
 
 const PRODUCTS_FIELDS = [
@@ -275,6 +270,11 @@ const PRODUCTS_FIELDS = [
     name: "delivery",
     type: "online | in_person",
     key: "resources.products.fields.delivery",
+  },
+  {
+    name: "audience",
+    type: "object",
+    key: "resources.products.fields.audience",
   },
   {
     name: "location",
@@ -294,11 +294,11 @@ const PRODUCTS_FIELDS = [
   },
   {
     name: "age_range",
-    type: "object",
+    type: "object | null",
     key: "resources.products.fields.ageRange",
   },
   { name: "groups", type: "array", key: "resources.products.fields.groups" },
-  { name: "created_at, updated_at", type: "timestamp" },
+  { name: "created_at", type: "timestamp" },
 ] as const;
 
 const FAMILIES_PARAMS = [
@@ -316,32 +316,41 @@ const FAMILIES_PARAMS = [
 ] as const;
 
 const FAMILIES_FIELDS = [
-  { name: "id", type: "uuid", key: "resources.families.fields.id" },
+  { name: "parents", type: "array", key: "resources.families.fields.parents" },
   {
-    name: "first_name, last_name",
+    name: "parents[].id",
+    type: "uuid",
+    key: "resources.families.fields.parentsId",
+  },
+  {
+    name: "parents[].first_name, parents[].last_name",
     type: "string",
-    key: "resources.families.fields.parentName",
+    key: "resources.families.fields.parentsName",
   },
   {
-    name: "email",
+    name: "parents[].email",
     type: "string | null",
-    key: "resources.families.fields.email",
+    key: "resources.families.fields.parentsEmail",
   },
   {
-    name: "created_at",
+    name: "parents[].created_at",
     type: "timestamp",
-    key: "resources.families.fields.createdAt",
+    key: "resources.families.fields.parentsCreatedAt",
   },
   {
-    name: "location",
+    name: "parents[].location",
     type: "object | null",
-    key: "resources.families.fields.location",
+    key: "resources.families.fields.parentsLocation",
   },
-  { name: "utm", type: "object", key: "resources.families.fields.utm" },
   {
-    name: "marketing_consent",
+    name: "parents[].utm",
+    type: "object",
+    key: "resources.families.fields.parentsUtm",
+  },
+  {
+    name: "parents[].marketing_consent",
     type: "object | null",
-    key: "resources.families.fields.marketingConsent",
+    key: "resources.families.fields.parentsMarketingConsent",
   },
   { name: "gamers", type: "array", key: "resources.families.fields.gamers" },
   {
@@ -374,11 +383,6 @@ const FAMILIES_FIELDS = [
     type: "object | null",
     key: "resources.families.fields.gamersPhotoConsent",
   },
-  {
-    name: "updated_at",
-    type: "timestamp",
-    key: "resources.families.fields.updatedAt",
-  },
 ] as const;
 
 const ENROLMENTS_PARAMS = [
@@ -388,14 +392,14 @@ const ENROLMENTS_PARAMS = [
     key: "resources.enrolments.params.productId",
   },
   {
-    name: "gamer_id",
+    name: "participant_id",
     type: "uuid",
-    key: "resources.enrolments.params.gamerId",
+    key: "resources.enrolments.params.participantId",
   },
   {
-    name: "family_id",
+    name: "parent_id",
     type: "uuid",
-    key: "resources.enrolments.params.familyId",
+    key: "resources.enrolments.params.parentId",
   },
   {
     name: "status",
@@ -415,9 +419,9 @@ const ENROLMENTS_FIELDS = [
     key: "resources.enrolments.fields.productGroupId",
   },
   {
-    name: "gamer_id, family_id",
+    name: "participant_id, parent_id",
     type: "uuid",
-    key: "resources.enrolments.fields.gamerFamilyId",
+    key: "resources.enrolments.fields.participantParentId",
   },
   {
     name: "status",
@@ -444,12 +448,6 @@ const ENROLMENTS_FIELDS = [
     type: "array",
     key: "resources.enrolments.fields.creations",
   },
-  {
-    name: "creations_updated_at",
-    type: "timestamp | null",
-    key: "resources.enrolments.fields.creationsUpdatedAt",
-  },
-  { name: "updated_at", type: "timestamp" },
 ] as const;
 
 const SESSIONS_PARAMS = [
@@ -500,7 +498,6 @@ const SESSIONS_FIELDS = [
     type: "integer",
     key: "resources.sessions.fields.imagesSize",
   },
-  { name: "updated_at", type: "timestamp" },
 ] as const;
 
 const FEEDBACK_PARAMS = [
@@ -510,16 +507,20 @@ const FEEDBACK_PARAMS = [
     key: "resources.feedback.params.productId",
   },
   { name: "group_id", type: "uuid", key: "resources.feedback.params.groupId" },
-  { name: "gamer_id", type: "uuid", key: "resources.feedback.params.gamerId" },
+  {
+    name: "participant_id",
+    type: "uuid",
+    key: "resources.feedback.params.participantId",
+  },
   { name: "from, to", type: "date", key: "resources.feedback.params.fromTo" },
   ...PAGING_ROWS,
 ] as const;
 
 const FEEDBACK_FIELDS = [
   {
-    name: "gamer_id, group_id, product_id",
+    name: "participant_id, group_id, product_id",
     type: "uuid",
-    key: "resources.feedback.fields.gamerGroupProductId",
+    key: "resources.feedback.fields.participantGroupProductId",
   },
   {
     name: "session_id",
@@ -541,11 +542,6 @@ const FEEDBACK_FIELDS = [
     name: "exit_reason",
     type: "left | ended",
     key: "resources.feedback.fields.exitReason",
-  },
-  {
-    name: "updated_at",
-    type: "timestamp",
-    key: "resources.feedback.fields.updatedAt",
   },
 ] as const;
 
@@ -664,6 +660,7 @@ const PRODUCTS_EXAMPLE = `{
   "name": { "en": "Roblox Creator Camp — Paris", "fr": "Camp Créateur Roblox — Paris" },
   "type": "camp",
   "delivery": "in_person",
+  "audience": { "gamers": true, "parents": false },
   "location": { "city": "Paris", "country_code": "FR" },
   "status": "running",
   "start_date": "2026-10-19",
@@ -673,19 +670,22 @@ const PRODUCTS_EXAMPLE = `{
   "groups": [
     { "id": "0e2b6a7e-6d2a-4f6c-b3a1-3f1f9c8e5a21", "name": "Group A" }
   ],
-  "created_at": "2026-08-20T09:12:44Z",
-  "updated_at": "2026-09-14T16:03:10Z"
+  "created_at": "2026-08-20T09:12:44Z"
 }`;
 
 const FAMILIES_EXAMPLE = `{
-  "id": "9c3e2b4a-7f11-4d0e-8b6a-1a2b3c4d5e6f",
-  "first_name": "Camille",
-  "last_name": "Martin",
-  "email": "parent@example.com",
-  "created_at": "2026-09-02T18:41:07Z",
-  "location": { "city": "Lyon", "country_code": "FR" },
-  "utm": { "source": "lynx", "medium": "email", "campaign": "lynx-autumn-a" },
-  "marketing_consent": { "granted": true, "updated_at": "2026-09-02T18:43:12Z" },
+  "parents": [
+    {
+      "id": "9c3e2b4a-7f11-4d0e-8b6a-1a2b3c4d5e6f",
+      "first_name": "Camille",
+      "last_name": "Martin",
+      "email": "parent@example.com",
+      "created_at": "2026-09-02T18:41:07Z",
+      "location": { "city": "Lyon", "country_code": "FR" },
+      "utm": { "source": "lynx", "medium": "email", "campaign": "lynx-autumn-a" },
+      "marketing_consent": { "granted": true, "updated_at": "2026-09-02T18:43:12Z" }
+    }
+  ],
   "gamers": [
     {
       "id": "b7d1c0e2-3a4f-4b5c-9d6e-7f8a9b0c1d2e",
@@ -695,16 +695,15 @@ const FAMILIES_EXAMPLE = `{
       "roblox": { "username": "builder_leo", "user_id": 1234567890, "verified": true },
       "photo_consent": { "granted": true, "updated_at": "2026-09-02T18:46:01Z" }
     }
-  ],
-  "updated_at": "2026-09-10T12:00:00Z"
+  ]
 }`;
 
 const ENROLMENTS_EXAMPLE = `{
   "id": "e4f5a6b7-c8d9-4e0f-a1b2-c3d4e5f6a7b8",
   "product_id": "5a1f8e1c-1b0e-4a3e-9a9c-2c9a4d8f0b11",
   "group_id": "0e2b6a7e-6d2a-4f6c-b3a1-3f1f9c8e5a21",
-  "gamer_id": "b7d1c0e2-3a4f-4b5c-9d6e-7f8a9b0c1d2e",
-  "family_id": "9c3e2b4a-7f11-4d0e-8b6a-1a2b3c4d5e6f",
+  "participant_id": "b7d1c0e2-3a4f-4b5c-9d6e-7f8a9b0c1d2e",
+  "parent_id": "9c3e2b4a-7f11-4d0e-8b6a-1a2b3c4d5e6f",
   "status": "active",
   "signed_up_at": "2026-09-02T18:47:15Z",
   "consents": {
@@ -714,9 +713,7 @@ const ENROLMENTS_EXAMPLE = `{
   "attendance": { "sessions_recorded": 5, "sessions_present": 4 },
   "creations": [
     { "title": "Obby Escape", "url": "https://www.roblox.com/games/123456789/Obby-Escape", "is_roblox_url": true }
-  ],
-  "creations_updated_at": "2026-10-23T12:10:00Z",
-  "updated_at": "2026-10-23T12:10:00Z"
+  ]
 }`;
 
 const SESSIONS_EXAMPLE = `{
@@ -726,8 +723,8 @@ const SESSIONS_EXAMPLE = `{
   "starts_at": "2026-10-19T09:00:00Z",
   "ends_at": "2026-10-19T12:00:00Z",
   "attendance": [
-    { "gamer_id": "b7d1c0e2-3a4f-4b5c-9d6e-7f8a9b0c1d2e", "status": "present" },
-    { "gamer_id": "6f7a8b9c-0d1e-4f2a-b3c4-d5e6f7a8b9c0", "status": "absent" }
+    { "participant_id": "b7d1c0e2-3a4f-4b5c-9d6e-7f8a9b0c1d2e", "status": "present" },
+    { "participant_id": "6f7a8b9c-0d1e-4f2a-b3c4-d5e6f7a8b9c0", "status": "absent" }
   ],
   "images": [
     {
@@ -736,12 +733,11 @@ const SESSIONS_EXAMPLE = `{
       "width": 1920,
       "height": 1080
     }
-  ],
-  "updated_at": "2026-10-19T12:30:00Z"
+  ]
 }`;
 
 const FEEDBACK_EXAMPLE = `{
-  "gamer_id": "b7d1c0e2-3a4f-4b5c-9d6e-7f8a9b0c1d2e",
+  "participant_id": "b7d1c0e2-3a4f-4b5c-9d6e-7f8a9b0c1d2e",
   "group_id": "0e2b6a7e-6d2a-4f6c-b3a1-3f1f9c8e5a21",
   "product_id": "5a1f8e1c-1b0e-4a3e-9a9c-2c9a4d8f0b11",
   "session_id": "c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f",
@@ -754,8 +750,7 @@ const FEEDBACK_EXAMPLE = `{
     "groupListens": 3
   },
   "note": "I finished my obby!",
-  "exit_reason": "left",
-  "updated_at": "2026-10-19T12:02:41Z"
+  "exit_reason": "left"
 }`;
 
 const RESEARCH_EXAMPLE = `{
@@ -818,7 +813,7 @@ const TRAFFIC_EXAMPLE = `{
 
 const LIST_ENVELOPE = `{
   "data": [ … ],
-  "next_cursor": "eyJ1cGRhdGVkX2F0IjoiMjAyNi0wOS0xNVQxMDowMDowMFoifQ"
+  "next_cursor": "eyJpZCI6IjVhMWY4ZTFjLTFiMGUtNGEzZS05YTljLTJjOWE0ZDhmMGIxMSJ9"
 }`;
 
 const AUTH_HEADER = `Authorization: Bearer <LYNX_API_KEY>`;
@@ -955,7 +950,6 @@ export default function LynxApiDocsPage() {
             <ul className="mt-6 list-disc space-y-3 pl-5 text-muted-foreground">
               <li>{rich("conventions.items.formats")}</li>
               <li>{rich("conventions.items.pagination")}</li>
-              <li>{rich("conventions.items.updatedSince")}</li>
               <li>{rich("conventions.items.erasure")}</li>
               <li>{rich("conventions.items.consent")}</li>
               <li>{rich("conventions.items.changePolicy")}</li>
