@@ -8,6 +8,7 @@ import {
   PARTNER_TEST_KEY,
   columnFilters,
   emptyTables,
+  filteringTable,
   inList,
   partnerRequest,
   postgrestTables,
@@ -36,6 +37,10 @@ const GROUP = "50000000-0000-4000-8000-000000000001";
 const OTHER_GROUP = "50000000-0000-4000-8000-000000000002";
 const GAMER = "20000000-0000-4000-8000-000000000001";
 const GAMER_2 = "20000000-0000-4000-8000-000000000002";
+/** A child whose seat was cancelled after they answered. */
+const CANCELLED_GAMER = "20000000-0000-4000-8000-000000000003";
+/** A child moved to another product after they answered. */
+const MOVED_GAMER = "20000000-0000-4000-8000-000000000004";
 const PARENT = "30000000-0000-4000-8000-000000000001";
 
 const RECORDED_SESSION = "60000000-0000-4000-8000-000000000001";
@@ -95,6 +100,31 @@ const FEEDBACK: FeedbackRow[] = [
   // Out of scope: a parent's row, and a row on a product outside the Programme.
   feedback({ participant_id: PARENT, role: "customer" }),
   feedback({ participant_id: GAMER_2, group_id: OTHER_GROUP, programme: false }),
+  // Out of scope: rows left behind by a seat that is gone from their product.
+  feedback({ participant_id: CANCELLED_GAMER }),
+  feedback({ participant_id: MOVED_GAMER }),
+];
+
+type SeatRow = { participant_id: string; product_id: string; status: string };
+
+function seatRow(n: number, seat: SeatRow) {
+  return {
+    id: `40000000-0000-4000-8000-${String(n).padStart(12, "0")}`,
+    group_id: null,
+    customer_id: PARENT,
+    signed_up_at: "2026-09-01T10:00:00+00:00",
+    programme: { programme_terms: [{ document_slug: "roblox-programme-terms" }] },
+    ...seat,
+  };
+}
+
+/** Every seat on file, live or not: the read has to narrow to the live ones itself. */
+const SEATS: SeatRow[] = [
+  { participant_id: GAMER, product_id: PRODUCT, status: "active" },
+  { participant_id: GAMER, product_id: OTHER_PRODUCT, status: "completed" },
+  { participant_id: GAMER_2, product_id: PRODUCT, status: "waitlisted" },
+  { participant_id: CANCELLED_GAMER, product_id: PRODUCT, status: "cancelled" },
+  { participant_id: MOVED_GAMER, product_id: OTHER_PRODUCT, status: "active" },
 ];
 
 const GROUP_SESSIONS = [
@@ -146,8 +176,9 @@ function keysetKey(url: URL): string[] | null {
  * keyset, the order and the limit the page read sends, as PostgREST would, so a
  * filter the read forgot to send is a filter the answer does not apply.
  */
-function tables(rows: FeedbackRow[] = FEEDBACK) {
+function tables(rows: FeedbackRow[] = FEEDBACK, seats: SeatRow[] = SEATS) {
   return postgrestTables({
+    participations: filteringTable(seats.map((seat, i) => seatRow(i + 1, seat))),
     session_feedback: (url) => {
       const after = keysetKey(url);
       const matches = (row: FeedbackRow) => {
@@ -303,6 +334,60 @@ describe("GET /api/partner/v1/feedback", () => {
     expect(url.searchParams.get("order")).toBe(
       "participant_id.asc,group_id.asc,session_opens_at.asc",
     );
+  });
+
+  it("drops a row whose child no longer holds a live seat on the row's product", async () => {
+    const body = await readPage();
+    const participants = new Set(body.data.map((record) => record.participant_id));
+    // Cancelled outright, and moved to another product: their rows stay
+    // behind in the table and never leave through the API.
+    expect(participants.has(CANCELLED_GAMER)).toBe(false);
+    expect(participants.has(MOVED_GAMER)).toBe(false);
+    expect(await readPage(`?participant_id=${CANCELLED_GAMER}`)).toEqual({
+      data: [],
+      next_cursor: null,
+    });
+
+    // One batched seat read per fetch, scoped to live Programme seats.
+    const seatRead = readsOf(db.fetch, "participations")[0];
+    expect(seatRead.searchParams.get("status")).toBe("in.(active,waitlisted,completed)");
+    expect(seatRead.searchParams.get("programme.programme_terms.document_slug")).toBe(
+      "eq.roblox-programme-terms",
+    );
+    expect(inList(seatRead, "participant_id").sort()).toEqual(
+      [GAMER, GAMER_2, CANCELLED_GAMER, MOVED_GAMER].sort(),
+    );
+  });
+
+  it("pages exactly past rows dropped for a seat that is gone", async () => {
+    // Kept and dropped children interleaved in key order, one row each.
+    const children = Array.from(
+      { length: 6 },
+      (_, i) => `20000000-0000-4000-8000-0000000001${String(i).padStart(2, "0")}`,
+    );
+    const live = new Set([children[0], children[2], children[5]]);
+    db.fetch = tables(
+      children.map((participant_id) => feedback({ participant_id })),
+      children.map((participant_id) => ({
+        participant_id,
+        product_id: PRODUCT,
+        status: live.has(participant_id) ? "active" : "cancelled",
+      })),
+    );
+
+    const seen: string[] = [];
+    const cursors: (string | null)[] = [];
+    let cursor: string | null = null;
+    do {
+      const body = await readPage(`?limit=1${cursor ? `&cursor=${cursor}` : ""}`);
+      seen.push(...body.data.map((record) => record.participant_id));
+      cursor = body.next_cursor;
+      cursors.push(cursor);
+    } while (cursor !== null);
+
+    expect(seen).toEqual([children[0], children[2], children[5]]);
+    // A cursor only when a kept record follows: the last page is the last record.
+    expect(cursors.map((c) => c !== null)).toEqual([true, true, false]);
   });
 
   it("answers an empty last page when there is no feedback", async () => {

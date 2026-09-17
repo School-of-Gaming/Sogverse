@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 
+import { PartnerQueryError } from "@/lib/api/partner-auth.server";
 import {
   buildTrafficPage,
+  earliestTrafficDay,
   productPagePaths,
   resolveTrafficRange,
 } from "@/services/partner/partner-traffic.server";
@@ -24,9 +26,9 @@ describe("resolveTrafficRange", () => {
   });
 
   it("counts thirty days back from a named end, and keeps a named start", () => {
-    expect(resolveTrafficRange(undefined, "2026-03-01", now)).toEqual({
-      from: "2026-01-31",
-      to: "2026-03-01",
+    expect(resolveTrafficRange(undefined, "2026-08-01", now)).toEqual({
+      from: "2026-07-03",
+      to: "2026-08-01",
     });
     expect(resolveTrafficRange("2026-09-01", undefined, now)).toEqual({
       from: "2026-09-01",
@@ -36,6 +38,52 @@ describe("resolveTrafficRange", () => {
       from: "2026-09-01",
       to: "2026-09-02",
     });
+  });
+
+  it("clamps a range reaching before the counts begin to the earliest day kept", () => {
+    expect(resolveTrafficRange("2020-01-01", undefined, now)).toEqual({
+      from: "2026-05-31",
+      to: "2026-09-17",
+    });
+    // A defaulted start that falls before the counts begin clamps the same way.
+    expect(resolveTrafficRange(undefined, "2026-06-10", now)).toEqual({
+      from: "2026-05-31",
+      to: "2026-06-10",
+    });
+  });
+
+  it("clamps a range reaching past today to today", () => {
+    expect(resolveTrafficRange("2026-09-01", "9999-12-31", now)).toEqual({
+      from: "2026-09-01",
+      to: "2026-09-17",
+    });
+  });
+
+  it("refuses a from later than the to a default completed, naming from", () => {
+    const read = () => resolveTrafficRange("2027-01-01", undefined, now);
+    expect(read).toThrow(PartnerQueryError);
+    expect(read).toThrow(/^from: .*today \(2026-09-17\)/);
+  });
+
+  it("refuses a range that shares no day with the counts", () => {
+    const before = () => resolveTrafficRange("2020-01-01", "2020-12-31", now);
+    expect(before).toThrow(PartnerQueryError);
+    expect(before).toThrow(/^to: must be on or after 2026-05-31/);
+
+    const after = () => resolveTrafficRange("2027-01-01", "2027-02-01", now);
+    expect(after).toThrow(PartnerQueryError);
+    expect(after).toThrow(/^from: must be on or before today \(2026-09-17\)/);
+
+    const defaultedAfter = () => resolveTrafficRange(undefined, "2030-01-01", now);
+    expect(defaultedAfter).toThrow(/^from: defaults to .*2029-12-03/);
+  });
+});
+
+describe("earliestTrafficDay", () => {
+  it("is the day analytics was switched on until two years of retention pass it", () => {
+    expect(earliestTrafficDay(new Date("2026-09-17T23:30:00Z"))).toBe("2026-05-31");
+    expect(earliestTrafficDay(new Date("2028-05-31T12:00:00Z"))).toBe("2026-05-31");
+    expect(earliestTrafficDay(new Date("2028-09-17T00:00:00Z"))).toBe("2026-09-17");
   });
 });
 

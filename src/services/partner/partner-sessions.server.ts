@@ -9,6 +9,8 @@ import type { PartnerSession, PartnerSessionsQuery } from "./partner.contracts";
 import {
   PROGRAMME_PRODUCT_EMBED,
   PROGRAMME_PRODUCT_FILTER,
+  readSeatHolders,
+  seatHolderKey,
 } from "./partner-scope.server";
 import type { PartnerDb } from "./partner-shared-db.server";
 import { readAttendance } from "./partner-shared-lookups.server";
@@ -88,8 +90,18 @@ async function readImages(
  * filter cannot state, so the page reader walks every session the filters match
  * and the build drops the ones that were only ever a staff note or a
  * photograph. The keyset stays exact because the cursor is a position in that
- * one order, recorded or not. The marks read for the decision are the marks the
- * record reports, so the two can never disagree.
+ * one order, recorded or not.
+ *
+ * **Recorded is decided on every mark; only in-scope marks are reported.**
+ * Whether a session was recorded is a fact about the session — a Game
+ * Educator wrote it up or marked attendance — and is read the same way
+ * `/enrolments` counts `sessions_recorded` and `/feedback` matches
+ * `session_id` (the shared recorded-sessions read), so a child's seat ending
+ * never makes a session disappear for the children still in its group. A mark
+ * references a person, not a seat, and outlives a seat cancelled, removed or
+ * moved, so the record carries a mark only while its participant holds a live
+ * seat on the session's product; a session whose every mark was dropped is
+ * still served, with an empty `attendance`.
  */
 export async function readPartnerSessions(
   db: PartnerDb,
@@ -124,10 +136,18 @@ export async function readPartnerSessions(
       const recorded = rows.filter((row) =>
         isRecordedSession(row.report, attendance.get(row.id)?.length ?? 0),
       );
-      const images = await readImages(
-        db,
-        recorded.map((row) => row.id),
-      );
+      const [images, holders] = await Promise.all([
+        readImages(
+          db,
+          recorded.map((row) => row.id),
+        ),
+        readSeatHolders(
+          db,
+          recorded.flatMap((row) =>
+            (attendance.get(row.id) ?? []).map((mark) => mark.participant_id),
+          ),
+        ),
+      ]);
 
       const recordedIds = new Set(recorded.map((row) => row.id));
       return rows.map((row): PartnerSession | null => {
@@ -138,7 +158,9 @@ export async function readPartnerSessions(
           group_id: row.group_id,
           starts_at: toUtcIso(row.starts_at),
           ends_at: toUtcIso(row.ends_at),
-          attendance: attendance.get(row.id) ?? [],
+          attendance: (attendance.get(row.id) ?? []).filter((mark) =>
+            holders.has(seatHolderKey(mark.participant_id, row.group.product_id)),
+          ),
           images: images.get(row.id) ?? [],
         };
       });

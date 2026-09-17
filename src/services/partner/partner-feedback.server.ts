@@ -14,6 +14,8 @@ import {
 import {
   PROGRAMME_PRODUCT_EMBED,
   PROGRAMME_PRODUCT_FILTER,
+  readSeatHolders,
+  seatHolderKey,
 } from "./partner-scope.server";
 import type { PartnerDb } from "./partner-shared-db.server";
 import { readRecordedSessionsByGroup } from "./partner-shared-lookups.server";
@@ -103,10 +105,14 @@ function dayStartMs(day: string): number {
  * The scope (Programme products, gamers only), `product_id`, `group_id` and
  * `participant_id` are database filters, as is a range on the opening instant
  * wide enough to hold every row whose session day could be in `from`/`to`.
- * **Two conditions are decided in the build instead**, because PostgREST
+ * **Three conditions are decided in the build instead**, because PostgREST
  * cannot state them: the exact session day, which needs each row's product
- * timezone, and the empty row, which needs a trimmed note. The keyset stays
- * exact because the cursor is a position in the one order, kept or dropped.
+ * timezone; the empty row, which needs a trimmed note; and the live seat. A
+ * feedback row references a person, not a seat, and outlives a seat cancelled,
+ * removed or moved, so a row is kept only while its child holds a live seat on
+ * the row's product — read per batch for the rows that survive the first two.
+ * The keyset stays exact because the cursor is a position in the one order,
+ * kept or dropped.
  *
  * `session_id` is the group's recorded session on the row's session day —
  * the same session `/sessions` serves — and `null` when that group has no
@@ -161,18 +167,31 @@ export async function readPartnerFeedback(
         .limit(take);
     },
     build: async (rows) => {
-      const candidates = rows.map((row) => {
+      const said = rows.map((row) => {
         const answers = storedAnswers.parse(row.answers);
         const sessionDate = feedbackSessionDate(
           row.session_opens_at,
           row.group.product.timezone,
         );
-        const kept =
+        const inRange =
           !isEmptyFeedback(answers, row.note) &&
           (query.from === undefined || sessionDate >= query.from) &&
           (query.to === undefined || sessionDate <= query.to);
-        return { row, answers, sessionDate, kept };
+        return { row, answers, sessionDate, inRange };
       });
+
+      // A row outlives the seat it was left under, so it is in scope only
+      // while its child still holds a live seat on the row's product.
+      const holders = await readSeatHolders(
+        db,
+        said.filter((c) => c.inRange).map((c) => c.row.participant_id),
+      );
+      const candidates = said.map(({ inRange, ...candidate }) => ({
+        ...candidate,
+        kept:
+          inRange &&
+          holders.has(seatHolderKey(candidate.row.participant_id, candidate.row.group.product_id)),
+      }));
 
       const sessions = await readRecordedSessionsByGroup(
         db,

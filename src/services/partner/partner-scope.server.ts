@@ -182,6 +182,31 @@ export async function readInScopeSeats(
   return [...seats.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }
 
+/** The key `readSeatHolders` answers with: one participant on one product. */
+export function seatHolderKey(participantId: string, productId: string): string {
+  return `${participantId}|${productId}`;
+}
+
+/**
+ * Which of these participants holds a live seat on which Programme product, as
+ * a set of `seatHolderKey`s — through `readInScopeSeats`, so batched and
+ * chunked like it.
+ *
+ * For a resource whose rows reference a person rather than a seat (feedback,
+ * attendance marks): cancelling, removing or moving a seat leaves those rows
+ * behind, so a row is in scope only while its person still holds a live seat
+ * on the row's product, and this is the set a build checks that against.
+ */
+export async function readSeatHolders(
+  db: PartnerDb,
+  participantIds: readonly string[],
+): Promise<Set<string>> {
+  const seats = await readInScopeSeats(db, {
+    participantIds: [...new Set(participantIds)],
+  });
+  return new Set(seats.map((seat) => seatHolderKey(seat.participant_id, seat.product_id)));
+}
+
 // ---------------------------------------------------------------------------
 // Product status
 // ---------------------------------------------------------------------------

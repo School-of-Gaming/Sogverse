@@ -370,7 +370,7 @@ describe("GET /api/partner/v1/traffic", () => {
   });
 
   it("answers the landing page and the shop with zeros when nothing was viewed", async () => {
-    const body = await read("?from=2025-01-01&to=2025-01-31");
+    const body = await read("?from=2026-06-01&to=2026-06-30");
     expect(body.pages).toEqual([
       { page: "landing", product_id: null, pageviews: 0, by_campaign: [], by_source_medium: [], by_day: [] },
       { page: "shop", product_id: null, pageviews: 0, by_campaign: [], by_source_medium: [], by_day: [] },
@@ -378,13 +378,54 @@ describe("GET /api/partner/v1/traffic", () => {
   });
 
   it("chunks a long range's day reads so no response can hold more than 100 days", async () => {
-    await read("?page=landing&from=2025-06-01&to=2026-09-17");
+    await read("?page=landing&from=2026-05-31&to=2026-09-17");
     const dayWindows = vercelCalls(vercel)
       .filter((url) => url.searchParams.getAll("by").includes("day"))
       .map((url) => (Number(url.searchParams.get("until")) + 1 - Number(url.searchParams.get("since"))) / DAY_MS);
     expect(dayWindows.length).toBeGreaterThan(1);
     expect(Math.max(...dayWindows)).toBeLessThanOrEqual(100);
-    expect(dayWindows.reduce((a, b) => a + b, 0)).toBe(474);
+    expect(dayWindows.reduce((a, b) => a + b, 0)).toBe(110);
+  });
+
+  it("answers a range reaching past the counts for the days they cover, and reads only those", async () => {
+    const body = await read("?page=landing&from=2000-01-01&to=9999-12-31");
+    expect(body.range).toEqual({ from: "2026-05-31", to: "2026-09-17" });
+    expect(body.pages[0].pageviews).toBe(185);
+
+    const calls = vercelCalls(vercel);
+    const since = Math.min(...calls.map((url) => Number(url.searchParams.get("since"))));
+    const until = Math.max(...calls.map((url) => Number(url.searchParams.get("until"))));
+    expect(since).toBe(Date.parse("2026-05-31T00:00:00Z"));
+    expect(until).toBe(Date.parse("2026-09-18T00:00:00Z") - 1);
+    // Three splits, the day split in two windows: not a read per hundred days since 2000.
+    expect(calls).toHaveLength(4);
+  });
+
+  it.each([
+    ["a from after the to a default completed", "?from=2027-01-01", "from"],
+    ["a range wholly before the counts begin", "?from=2020-01-01&to=2020-12-31", "to"],
+    ["a range wholly after today", "?from=2027-01-01&to=2027-02-01", "from"],
+  ])("answers 400 invalid_query for %s, naming the parameter, and reads nothing", async (_, query, parameter) => {
+    const response = await GET(request(query));
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error.code).toBe("invalid_query");
+    expect(body.error.message.startsWith(`${parameter}:`)).toBe(true);
+    expect(vercel).not.toHaveBeenCalled();
+    expect(db.fetch).not.toHaveBeenCalled();
+  });
+
+  it("counts a campaign genuinely named Others like any other", async () => {
+    vi.stubGlobal(
+      "fetch",
+      fakeVercel([
+        ...VIEWS,
+        { path: "/en/roblox", route: LANDING, day: "2026-09-03", campaign: "Others", views: 4 },
+      ]),
+    );
+    const body = await read("?page=landing&from=2026-09-01&to=2026-09-10");
+    expect(body.pages[0].by_campaign).toContainEqual({ utm_campaign: "Others", pageviews: 4 });
+    expect(body.pages[0].pageviews).toBe(89);
   });
 
   it("counts every campaign when a range has more than Vercel folds into Others", async () => {

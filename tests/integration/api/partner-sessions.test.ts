@@ -8,6 +8,7 @@ import {
   PARTNER_TEST_KEY,
   columnFilters,
   emptyTables,
+  filteringTable,
   inList,
   partnerRequest,
   postgrestTables,
@@ -36,6 +37,11 @@ const GROUP = "50000000-0000-4000-8000-000000000001";
 const OTHER_GROUP = "50000000-0000-4000-8000-000000000002";
 const GAMER = "20000000-0000-4000-8000-000000000001";
 const GAMER_2 = "20000000-0000-4000-8000-000000000002";
+/** A child whose seat was cancelled after they were marked. */
+const CANCELLED_GAMER = "20000000-0000-4000-8000-000000000003";
+/** A child moved to another product after they were marked. */
+const MOVED_GAMER = "20000000-0000-4000-8000-000000000004";
+const PARENT = "30000000-0000-4000-8000-000000000001";
 
 const REPORTED = "60000000-0000-4000-8000-000000000001";
 const NOTE_ONLY = "60000000-0000-4000-8000-000000000002";
@@ -83,18 +89,49 @@ const SESSIONS: SessionRow[] = [
   }),
 ];
 
-const ATTENDANCE = [
+type Mark = { session_id: string; participant_id: string; status: string };
+
+const ATTENDANCE: Mark[] = [
   { session_id: MARKED, participant_id: GAMER, status: "present" },
   { session_id: MARKED, participant_id: GAMER_2, status: "absent" },
+  // Marks left behind by seats that are gone from the session's product.
+  { session_id: MARKED, participant_id: CANCELLED_GAMER, status: "present" },
+  { session_id: MARKED, participant_id: MOVED_GAMER, status: "present" },
 ];
+
+type SeatRow = { participant_id: string; product_id: string; status: string };
+
+/** Every seat on file, live or not: the read has to narrow to the live ones itself. */
+const SEATS: SeatRow[] = [
+  { participant_id: GAMER, product_id: PRODUCT, status: "active" },
+  { participant_id: GAMER_2, product_id: PRODUCT, status: "waitlisted" },
+  { participant_id: CANCELLED_GAMER, product_id: PRODUCT, status: "cancelled" },
+  { participant_id: MOVED_GAMER, product_id: OTHER_PRODUCT, status: "active" },
+];
+
+function seatRow(n: number, seat: SeatRow) {
+  return {
+    id: `40000000-0000-4000-8000-${String(n).padStart(12, "0")}`,
+    group_id: null,
+    customer_id: PARENT,
+    signed_up_at: "2026-09-01T10:00:00+00:00",
+    programme: { programme_terms: [{ document_slug: "roblox-programme-terms" }] },
+    ...seat,
+  };
+}
 
 /**
  * The fixture database: `group_sessions` applies the filters, keyset and limit
  * the page read sends, as PostgREST would, so a filter the read forgot to send is
  * a filter the answer does not apply.
  */
-function tables(sessions: SessionRow[] = SESSIONS) {
+function tables(
+  sessions: SessionRow[] = SESSIONS,
+  attendance: Mark[] = ATTENDANCE,
+  seats: SeatRow[] = SEATS,
+) {
   return postgrestTables({
+    participations: filteringTable(seats.map((seat, i) => seatRow(i + 1, seat))),
     group_sessions: (url) => {
       const matches = (row: SessionRow) => {
         const checks: [string, string][] = [
@@ -125,7 +162,7 @@ function tables(sessions: SessionRow[] = SESSIONS) {
         }));
     },
     session_attendance: (url) =>
-      ATTENDANCE.filter((row) => inList(url, "session_id").includes(row.session_id)),
+      attendance.filter((row) => inList(url, "session_id").includes(row.session_id)),
     group_session_images: (url) =>
       inList(url, "session_id").includes(MARKED)
         ? [
@@ -221,6 +258,48 @@ describe("GET /api/partner/v1/sessions", () => {
       "eq.roblox-programme-terms",
     );
     expect(url.searchParams.get("order")).toBe("id.asc");
+  });
+
+  it("reports only the marks of participants who still hold a live seat on the session's product", async () => {
+    const body = await readPage();
+    const marked = body.data.find((record) => record.id === MARKED);
+    // Cancelled outright, and moved to another product: their marks stay
+    // behind in the table and never leave through the API.
+    expect(marked?.attendance.map((mark) => mark.participant_id)).toEqual([GAMER, GAMER_2]);
+
+    // One batched seat read per fetch, scoped to live Programme seats.
+    const seatReads = readsOf(db.fetch, "participations");
+    expect(seatReads).toHaveLength(1);
+    expect(seatReads[0].searchParams.get("status")).toBe("in.(active,waitlisted,completed)");
+    expect(seatReads[0].searchParams.get("programme.programme_terms.document_slug")).toBe(
+      "eq.roblox-programme-terms",
+    );
+    expect(inList(seatReads[0], "participant_id").sort()).toEqual(
+      [GAMER, GAMER_2, CANCELLED_GAMER, MOVED_GAMER].sort(),
+    );
+  });
+
+  it("still serves a session recorded only by marks whose seats are gone, with no marks, and pages exactly", async () => {
+    // Recorded is a fact about the session — the Game Educator marked it — the
+    // same reading /enrolments counts sessions_recorded by; only the marks
+    // themselves are scoped.
+    const onlyGone = session("60000000-0000-4000-8000-000000000010", {
+      session_date: "2026-10-27",
+    });
+    const kept = session("60000000-0000-4000-8000-000000000011", { report: "Showcase" });
+    db.fetch = tables(
+      [onlyGone, kept],
+      [{ session_id: onlyGone.id, participant_id: CANCELLED_GAMER, status: "present" }],
+    );
+
+    const first = await readPage("?limit=1");
+    expect(first.data).toEqual([
+      expect.objectContaining({ id: onlyGone.id, attendance: [] }),
+    ]);
+    expect(first.next_cursor).not.toBeNull();
+    const second = await readPage(`?limit=1&cursor=${first.next_cursor}`);
+    expect(ids(second)).toEqual([kept.id]);
+    expect(second.next_cursor).toBeNull();
   });
 
   it("answers an empty last page when nothing is recorded", async () => {

@@ -15,11 +15,20 @@ import { z } from "zod";
  *
  * - splits a day-grouped read into windows of at most 100 days up front, so no
  *   response can have more than 100 day rows to fold;
- * - on an `"Others"` row in any other grouping, halves the range and asks again,
- *   summing the halves — pageviews add across disjoint ranges, which is why the
- *   reader returns pageviews and never visitors;
+ * - on a folded response in any other grouping, halves the range and asks
+ *   again, summing the halves — pageviews add across disjoint ranges, which is
+ *   why the reader returns pageviews and never visitors;
  * - throws when a single day still folds, rather than returning a count that is
  *   silently short.
+ *
+ * **A response has folded only when it is full and carries an `"Others"` row.**
+ * `"Others"` is also a value anybody can put in a link
+ * (`?utm_campaign=Others`), and a small response carrying it is that visitor's
+ * campaign, counted like any other — were the label alone the signal, one such
+ * link would make every read covering its day throw. A fold happens only past
+ * the cap, so a response under `MAX_GROUPS` rows cannot have folded whatever it
+ * holds. A full one with a genuine `"Others"` is indistinguishable from a fold
+ * and is halved as one, which costs calls and never a miscount.
  *
  * Calls go through a small fixed concurrency (the endpoint allows 400 calls a
  * minute and takes 0.4–1 s each), each with a timeout, and any refusal throws
@@ -38,7 +47,12 @@ const REQUEST_TIMEOUT_MS = 10_000;
  */
 const CONCURRENCY = 3;
 
-/** The most groups one response carries before folding the rest into `"Others"`. */
+/**
+ * The most groups one response carries before folding the rest into
+ * `"Others"`. Whether the fold row is the hundredth row or a hundred-and-first
+ * is not documented, so a response of at least this many rows counts as full
+ * either way.
+ */
 const MAX_GROUPS = 100;
 
 /** The label the endpoint gives the groups it folded. */
@@ -232,7 +246,7 @@ export class VercelAnalyticsClient {
     return [...merged.values()];
   }
 
-  /** One HTTP call: its groups, and whether any of them is the folded one. */
+  /** One HTTP call: its groups, and whether the response folded some of them. */
   private async call(
     query: PageviewsQuery,
   ): Promise<{ groups: PageviewsGroup[]; folded: boolean }> {
@@ -271,7 +285,6 @@ export class VercelAnalyticsClient {
       );
     }
 
-    let folded = false;
     const groups = parsed.data.data.map((row): PageviewsGroup => {
       const values: PageviewsGroup["values"] = {};
       for (const dimension of query.by) {
@@ -288,10 +301,17 @@ export class VercelAnalyticsClient {
         // Null and the empty string are both "no value"; kept as the empty
         // string, which is how the endpoint reports an absent one.
         values[dimension] = value.data ?? "";
-        if (value.data === FOLDED_GROUP) folded = true;
       }
       return { values, pageviews: row.pageviews };
     });
+    // Only a full response can have folded; below the cap "Others" is a value.
+    const folded =
+      groups.length >= MAX_GROUPS &&
+      groups.some((group) =>
+        Object.entries(group.values).some(
+          ([dimension, value]) => dimension !== "day" && value === FOLDED_GROUP,
+        ),
+      );
     return { groups, folded };
   }
 }

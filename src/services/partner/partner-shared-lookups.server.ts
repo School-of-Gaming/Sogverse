@@ -457,6 +457,13 @@ export async function readAttendance(
  * mark (`isRecordedSession`) — keyed by group id, ascending by session id, with
  * the marks attached. A group with none is absent from the map.
  *
+ * Recorded is decided on every mark the session carries, whoever it is for:
+ * it is a fact about the session, and `/sessions` decides it the same way. The
+ * attached marks are unscoped for the same reason — a mark outlives its
+ * participant's seat — so a caller that reports a mark checks its participant
+ * holds a live seat on the product first (`readSeatHolders`); one that reads
+ * only a live seat's own marks already has.
+ *
  * Timestamps are as stored; normalise with `toUtcIso` when emitting them.
  */
 export async function readRecordedSessionsByGroup(

@@ -70,7 +70,12 @@ completed seat on a Programme product; a reservation is never one. A resource th
 seats, sessions, feedback or products selects through the scope's inner embeds rather
 than restating the join or fetching an id list, and the `!inner` on every step of such an
 embed is load-bearing: without it the filter narrows only the embedded rows and every
-parent row still comes back. `/campaigns` is the one resource that starts outside the
+parent row still comes back. A row that references a person rather than a seat — a
+feedback row, an attendance mark — outlives the seat it was made under, since cancelling,
+removing or moving a seat deletes neither, so such a row is in scope only while its person
+holds a live seat on the row's product, checked per batch against the scope's seat read.
+Whether a session was recorded is not scoped that way: it is a fact about the session, and
+a child leaving never makes one disappear for the children still in its group. `/campaigns` is the one resource that starts outside the
 scope, from parent accounts, and it is safe only because nothing leaves it but counts,
 each withheld below the published minimum — and a count under it fails the response
 schema, so a mistake there is a 500, never a leak.
@@ -147,7 +152,11 @@ and before the query is read, exactly as an unset partner key does. The resolved
 cached in Next's data cache across instances, keyed by the normalised query and the
 current UTC hour, so no entry outlives the hour it was computed in and the page's "up to
 an hour old" stays true. Each page's splits must sum to its total, and Vercel folding
-groups into an "Others" row is a thrown error: a miscount is never answered.
+groups into an "Others" row is a thrown error: a miscount is never answered. A fold is a
+full response carrying that row — "Others" under the cap is somebody's real campaign. The
+range is clamped to the days a count can exist on, from the earliest day the page says the
+data reaches back to through today, because `range` is the days the counts cover; a range
+sharing no day with them is refused.
 
 **Rule: there is no rate limiting (owner decision).** Lynx is trusted to pace its own
 pulls, so no resource answers 429 or sends `Retry-After`, and the page promises neither.

@@ -32,6 +32,18 @@ function dayOfMs(ms: string | null): string {
   return new Date(Number(ms)).toISOString().slice(0, 10);
 }
 
+/**
+ * A full response that folded: `rows` first, padded with filler campaigns to
+ * the 100-group cap, the last of them the `"Others"` row.
+ */
+function foldedResponse(rows: { utmCampaign: string; pageviews: number }[], others: number) {
+  const filler = Array.from({ length: 99 - rows.length }, (_, i) => ({
+    utmCampaign: `filler-${i}`,
+    pageviews: 0,
+  }));
+  return { data: [...rows, ...filler, { utmCampaign: "Others", pageviews: others }] };
+}
+
 describe("vercelAnalyticsConfig", () => {
   afterEach(() => vi.unstubAllEnvs());
 
@@ -190,19 +202,14 @@ describe("VercelAnalyticsClient", () => {
 
   it("halves a folded range until nothing folds, and sums the halves", async () => {
     // Four days, one view per campaign per day; any response spanning more
-    // than one day folds, as a response over the 100-group cap would.
+    // than one day is full and folds, as a response over the 100-group cap would.
     fetchMock.mockImplementation(async (input) => {
       const url = urlOf(input);
       const since = Number(url.searchParams.get("since"));
       const until = Number(url.searchParams.get("until"));
       const days = Math.round((until + 1 - since) / DAY_MS);
       if (days > 1) {
-        return json({
-          data: [
-            { utmCampaign: "lynx-a", pageviews: days },
-            { utmCampaign: "Others", pageviews: days },
-          ],
-        });
+        return json(foldedResponse([{ utmCampaign: "lynx-a", pageviews: days }], days));
       }
       return json({
         data: [
@@ -233,10 +240,36 @@ describe("VercelAnalyticsClient", () => {
     expect(groups.some((group) => group.values.utmCampaign === "Others")).toBe(false);
   });
 
-  it("throws rather than answer a count that folds within a single day", async () => {
-    fetchMock.mockImplementation(async () =>
-      json({ data: [{ utmCampaign: "Others", pageviews: 500 }] }),
+  it("counts a genuine \"Others\" campaign in a response under the cap", async () => {
+    // Anyone can land on a page with ?utm_campaign=Others; a response that is
+    // not full cannot have folded, so the row is that campaign's views.
+    fetchMock.mockResolvedValue(
+      json({
+        data: [
+          { utmCampaign: "lynx-a", pageviews: 5 },
+          { utmCampaign: "Others", pageviews: 2 },
+        ],
+      }),
     );
+    const client = new VercelAnalyticsClient(CONFIG);
+
+    const groups = await client.aggregatePageviews({
+      by: ["utmCampaign"],
+      filter: "",
+      from: "2026-09-01",
+      to: "2026-09-04",
+    });
+
+    expect(groups).toEqual([
+      { values: { utmCampaign: "lynx-a" }, pageviews: 5 },
+      { values: { utmCampaign: "Others" }, pageviews: 2 },
+    ]);
+    // Counted from the one response, never halved.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("throws rather than answer a count that folds within a single day", async () => {
+    fetchMock.mockImplementation(async () => json(foldedResponse([], 500)));
     const client = new VercelAnalyticsClient(CONFIG);
     await expect(
       client.aggregatePageviews({

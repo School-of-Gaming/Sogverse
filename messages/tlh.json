@@ -1622,7 +1622,7 @@
             "participantParentId": "Daq ghajbogh ghot, je Daq qengbogh account ghajbogh vav. <code>participant_id</code> 'oH puq pong mI' <code>gamers[].id</code>vo', qoj vav Daq nItebDaq vav pong mI' <code>parents[].id</code>vo' — <code>parent_id</code> rap.",
             "status": "<code>active</code> qengbogh Daq, <code>waitlisted</code> loSbogh qorDu', <code>completed</code> De'wI' Qavpu'DI'. <code>status</code> <code>completed</code> ghajbogh De'wI'Daq qengbogh Daq <code>completed</code> ja'; loSbogh Daq <code>waitlisted</code> ratlh. <code>status</code> waHwI' naDev ja'lu'bogh mu' rap.",
             "signedUpAt": "ghorgh muv qorDu' De'wI'Daq: He'So' wejDIch nuq — muvmoHghach.",
-            "consents": "muvmoHghachvamvaD Creator Academy Terms & Conditions je Creator Academy Privacy Policy laj vav: Hoch ghItlh mIw — 'angchoHlu' jaj — je lajlu' poH. Hoch mIw'a' De'wI' cha' nIS, vaj Hoch muvmoHghach cha' qeng. laj ghItlhbe'lu'chugh — qorDu'vaD ra'wI' puq muvmoHDI' — <code>signed_up_at</code> pa' 'angchoHlu'bogh ghItlh ret lo'lu', 'ej <code>accepted_at</code> <code>signed_up_at</code> rap.",
+            "consents": "muvmoHghachvamvaD Creator Academy Terms & Conditions je Creator Academy Privacy Policy laj vav: Hoch ghItlh mIw — 'angchoHlu' jaj — je lajlu' poH. Hoch mIw'a' De'wI' cha' nIS, vaj Hoch muvmoHghach cha' qeng. laj ghItlhbe'lu'chugh — qorDu'vaD ra'wI' puq muvmoHDI' — <code>signed_up_at</code> jaj pa' 'angchoHlu'bogh ghItlh ret lo'lu' (tu'lu'be'chugh, ghItlh 'angchoHlu'bogh wa'DIch lo'lu'), 'ej <code>accepted_at</code> <code>signed_up_at</code> rap.",
             "attendance": "'ar ghot ghom poHmey ghItlh ghaj, 'ej chaHvo' 'ar ghot tu'lu'pu'. poH ghItlhlu' Gedu' ja'chuq ghItlhDI' qoj tu'wI'pu' ghItlhDI'; vaj cha'vam Hutlhbogh poH toghbe'lu'. ghom mI' 'oH, 'ej ghomDaq ghot 'elpa' poHmey je qeng. Daq ghomDaq chellu'pa' 0 cha'. <code>sessions_present</code> 1 law' ghot — He'So'Daq “juSpu'” 'oH.",
             "creations": "De'wI' poHDaq ghot chenmoHbogh, DaH ghomDajDaq Gedu'Daj qoj ra'wI' ghItlhpu'bogh: Hoch Doch pong je tlhegh, 'ang mIwDaq. <code>is_roblox_url</code> <code>true</code> 'oH tlhegh roblox.com qoj www.roblox.com rur puqloDDaj ghoSDI'. chIm tetlh: not ghItlhlu'."
           }
@@ -1686,7 +1686,7 @@
           "params": {
             "page": "Seghvam navmey neH. Hoch wej DanejDI' yIwoDHa'.",
             "productId": "De'wI'vam nav neH. <code>page=product</code> 'oS.",
-            "fromTo": "veHvamDaq jajmey neH, veHmey je. wejmaH jaj Qav DanejDI' yIwoDHa'."
+            "fromTo": "veHvamDaq jajmey neH, veHmey je. wejmaH jaj Qav DanejDI' yIwoDHa'. mI'mey veH juchchugh veH, jajmey mI'mey ghajbogh neH jang; <code>range</code> yIlegh. mI'mey jaj pagh ghajchugh veH, lajQo'lu'."
           },
           "fields": {
             "range": "mI'mey So'bogh jajmey.",

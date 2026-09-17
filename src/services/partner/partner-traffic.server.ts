@@ -2,6 +2,7 @@ import "server-only";
 
 import { unstable_cache } from "next/cache";
 
+import { PartnerQueryError } from "@/lib/api/partner-auth.server";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import {
   VercelAnalyticsClient,
@@ -56,6 +57,15 @@ const DISCOVERY_CHUNK = 10;
 /** The documented default window: the last thirty UTC days, today included. */
 const DEFAULT_RANGE_DAYS = 30;
 
+/**
+ * The first UTC day Vercel Web Analytics holds for this project: analytics was
+ * switched on at the end of May 2026, as the documentation page says.
+ */
+export const TRAFFIC_DATA_START = "2026-05-31";
+
+/** How far back Vercel keeps the counts on the team's plan: two years, as the page says. */
+const TRAFFIC_RETENTION_YEARS = 2;
+
 const DAY_MS = 86_400_000;
 
 // ---------------------------------------------------------------------------
@@ -63,21 +73,78 @@ const DAY_MS = 86_400_000;
 // ---------------------------------------------------------------------------
 
 /**
+ * The earliest UTC day any count reaches back to at `now`: the later of the day
+ * analytics was switched on and the day the two-year retention reaches.
+ */
+export function earliestTrafficDay(now: Date): string {
+  const retained = new Date(
+    Date.UTC(
+      now.getUTCFullYear() - TRAFFIC_RETENTION_YEARS,
+      now.getUTCMonth(),
+      now.getUTCDate(),
+    ),
+  )
+    .toISOString()
+    .slice(0, 10);
+  return retained > TRAFFIC_DATA_START ? retained : TRAFFIC_DATA_START;
+}
+
+/**
  * The range the answer covers: what the caller asked for, else the thirty UTC
- * days ending on `to` — which itself defaults to today, in UTC.
+ * days ending on `to` — which itself defaults to today, in UTC — clamped to the
+ * days a count can exist on.
+ *
+ * **Clamped, because `range` is the days the counts cover.** The page says the
+ * counts reach back to `earliestTrafficDay` and no further, and a day after
+ * today has none yet, so a range reaching past either end is answered for the
+ * days it shares with them and `range` names exactly those — the truthful
+ * answer, and one that bounds the Vercel reads: an unbounded `from` or `to`
+ * would otherwise fan out into a read per hundred days across years.
+ *
+ * Refused as the caller's mistake (→ 400 naming the parameter):
+ *
+ * - a `from` later than the `to` a default completed — the query schema
+ *   refuses a reversed pair it can see, not one a default made, and `/campaigns`
+ *   refuses the same case the same way;
+ * - a range that shares no day with the counts at all — wholly before the
+ *   earliest day, or wholly after today — which has no truthful `range` to
+ *   answer with.
  */
 export function resolveTrafficRange(
   from: string | undefined,
   to: string | undefined,
   now: Date,
 ): { from: string; to: string } {
-  const end = to ?? now.toISOString().slice(0, 10);
+  const today = now.toISOString().slice(0, 10);
+  const end = to ?? today;
   const start =
     from ??
     new Date(Date.parse(`${end}T00:00:00Z`) - (DEFAULT_RANGE_DAYS - 1) * DAY_MS)
       .toISOString()
       .slice(0, 10);
-  return { from: start, to: end };
+  if (start > end) {
+    throw new PartnerQueryError(
+      `from: must be on or before to, which defaults to today (${end})`,
+    );
+  }
+
+  const earliest = earliestTrafficDay(now);
+  if (end < earliest) {
+    throw new PartnerQueryError(
+      `to: must be on or after ${earliest}, the earliest day traffic is kept for`,
+    );
+  }
+  if (start > today) {
+    throw new PartnerQueryError(
+      from === undefined
+        ? `from: defaults to the 30 days ending on to (${start}), which lies after today (${today})`
+        : `from: must be on or before today (${today})`,
+    );
+  }
+  return {
+    from: start < earliest ? earliest : start,
+    to: end > today ? today : end,
+  };
 }
 
 /**

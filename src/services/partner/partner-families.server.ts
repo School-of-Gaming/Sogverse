@@ -123,7 +123,12 @@ export function assembleFamilies(
   return families.sort((a, b) => byId(familyKey(a), familyKey(b)));
 }
 
-/** A family's key and page position: its smallest parent id. */
+/**
+ * A family's key and page position: its smallest parent id. Stable only while
+ * each child has one parent, which is the app's rule today: a second parent
+ * linked or unlinked mid-pull joins or splits a family, can move its smallest
+ * parent id across the cursor, and so skips or repeats that family.
+ */
 function familyKey(family: FamilyMembers): string {
   return family.parentIds[0];
 }
@@ -256,7 +261,11 @@ async function readPhotoConsents(
  *
  * **The cursor is a parent id, not an offset**, so a family that changes between
  * two pages — a seat added or cancelled, a consent withdrawn — appears or
- * disappears at its own position, and the families around it keep theirs.
+ * disappears at its own position, and the families around it keep theirs. That
+ * position holds only while each child has one parent, which is the app's rule
+ * today: a second parent linked or unlinked mid-pull merges or splits a family,
+ * can move its smallest parent id across the cursor, and may skip or repeat
+ * that family on that pull; the next full pull reads it whole.
  *
  * **What a record reports is read for the page alone:** a parent's email only
  * while their own Lynx marketing consent is granted, a gamer's birth month from
