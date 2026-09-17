@@ -13,8 +13,9 @@ import { z } from "zod";
  * them, so a read that trusted a single response would pass a top-100 off as
  * the whole distribution. `aggregatePageviews` therefore:
  *
- * - splits a day-grouped read into windows of at most 100 days up front, so no
- *   response can have more than 100 day rows to fold;
+ * - splits a day-grouped read into windows of at most 62 days up front — the
+ *   endpoint refuses a day grouping over more than that, and it keeps every
+ *   response well under the fold cap;
  * - on a folded response in any other grouping, halves the range and asks
  *   again, summing the halves — pageviews add across disjoint ranges, which is
  *   why the reader returns pageviews and never visitors;
@@ -49,11 +50,18 @@ const CONCURRENCY = 3;
 
 /**
  * The most groups one response carries before folding the rest into
- * `"Others"`. Whether the fold row is the hundredth row or a hundred-and-first
- * is not documented, so a response of at least this many rows counts as full
- * either way.
+ * `"Others"`. Observed against the live endpoint, the fold row comes on top of
+ * the limit (a limit of 10 answers ten groups and an eleventh "Others"); a
+ * response of at least this many rows counts as full, which holds either way.
  */
 const MAX_GROUPS = 100;
+
+/**
+ * The most days one day-grouped call may span. Not in the endpoint's
+ * documentation: past it the call is refused with `invalid_group_by` ("Can only
+ * query up to 62 days of data").
+ */
+const MAX_DAYS_PER_DAY_READ = 62;
 
 /** The label the endpoint gives the groups it folded. */
 const FOLDED_GROUP = "Others";
@@ -215,7 +223,7 @@ export class VercelAnalyticsClient {
   async aggregatePageviews(query: PageviewsQuery): Promise<PageviewsGroup[]> {
     const merged = new Map<string, PageviewsGroup>();
     const windows = query.by.includes("day")
-      ? splitDays(query.from, query.to, MAX_GROUPS)
+      ? splitDays(query.from, query.to, MAX_DAYS_PER_DAY_READ)
       : [{ from: query.from, to: query.to }];
     const results = await Promise.all(
       windows.map((window) => this.unfolded({ ...query, ...window })),

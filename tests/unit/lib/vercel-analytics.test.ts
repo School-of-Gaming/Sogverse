@@ -165,7 +165,7 @@ describe("VercelAnalyticsClient", () => {
     ).toEqual([{ values: { utmCampaign: "" }, pageviews: 2 }]);
   });
 
-  it("splits a day-grouped read into windows of at most 100 days", async () => {
+  it("splits a day-grouped read into windows of at most 62 days", async () => {
     fetchMock.mockImplementation(async (input) => {
       const url = urlOf(input);
       return json({
@@ -189,14 +189,18 @@ describe("VercelAnalyticsClient", () => {
       }))
       .sort((a, b) => (a.from < b.from ? -1 : 1));
     expect(windows).toEqual([
-      { from: "2026-01-01", to: "2026-04-10" },
-      { from: "2026-04-11", to: "2026-07-19" },
-      { from: "2026-07-20", to: "2026-09-07" },
+      { from: "2026-01-01", to: "2026-03-03" },
+      { from: "2026-03-04", to: "2026-05-04" },
+      { from: "2026-05-05", to: "2026-07-05" },
+      { from: "2026-07-06", to: "2026-09-05" },
+      { from: "2026-09-06", to: "2026-09-07" },
     ]);
     expect(groups.map((group) => group.values.day).sort()).toEqual([
       "2026-01-01",
-      "2026-04-11",
-      "2026-07-20",
+      "2026-03-04",
+      "2026-05-05",
+      "2026-07-06",
+      "2026-09-06",
     ]);
   });
 
