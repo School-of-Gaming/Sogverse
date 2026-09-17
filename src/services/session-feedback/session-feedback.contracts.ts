@@ -66,8 +66,8 @@ export const storedSessionFeedbackAnswers = z
 /**
  * One stored row as the screen's initial state.
  *
- * The row carries more than the form does — the key it is filed under, the exit
- * path, the timestamps — and none of it is the form's business, so the parse is
+ * The row carries more than the form does — the key it is filed under and the
+ * timestamps — and none of it is the form's business, so the parse is
  * also the projection.
  */
 export const storedSessionFeedback = z

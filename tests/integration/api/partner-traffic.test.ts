@@ -377,13 +377,13 @@ describe("GET /api/partner/v1/traffic", () => {
     ]);
   });
 
-  it("chunks a long range's day reads so no response can hold more than 100 days", async () => {
+  it("chunks a long range's day reads into the 62-day windows Vercel accepts", async () => {
     await read("?page=landing&from=2026-05-31&to=2026-09-17");
     const dayWindows = vercelCalls(vercel)
       .filter((url) => url.searchParams.getAll("by").includes("day"))
       .map((url) => (Number(url.searchParams.get("until")) + 1 - Number(url.searchParams.get("since"))) / DAY_MS);
     expect(dayWindows.length).toBeGreaterThan(1);
-    expect(Math.max(...dayWindows)).toBeLessThanOrEqual(100);
+    expect(Math.max(...dayWindows)).toBeLessThanOrEqual(62);
     expect(dayWindows.reduce((a, b) => a + b, 0)).toBe(110);
   });
 

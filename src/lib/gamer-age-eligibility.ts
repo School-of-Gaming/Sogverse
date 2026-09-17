@@ -12,8 +12,9 @@
  * forms asks a parent for the day of the month — `gamer-birth.ts` assembles
  * `date_of_birth` as the 1st of the chosen month — so a stored `2017-03-01`
  * means "born some time in March 2017" and the child's real age today is one of
- * two adjacent numbers. (The schema does not enforce the 1st, and rows carrying
- * other days exist; `possibleAgeOnDate` below reads the month alone.) That ambiguity is resolved *in the family's favour* at
+ * two adjacent numbers. (The schema does not enforce the 1st, so both the band
+ * and the range below read the year and month alone.) That ambiguity is
+ * resolved *in the family's favour* at
  * both ends, because the cost of the two errors is not symmetric: letting a
  * child who might be in range enrol is a conversation, and locking a child who
  * really is in range out of a club is a family we never hear from again. So:
@@ -54,7 +55,7 @@ export interface GamerAgeEligibilityInput {
   maxAge: number | null;
   /**
    * `gamer_profiles.date_of_birth`, `YYYY-MM-DD`. The forms write the 1st, but
-   * nothing enforces it; the minimum below is tested against the stored day.
+   * nothing enforces it; only its year and month are read.
    */
   dateOfBirth: string;
   /** Today as a calendar date in the viewer's zone, `YYYY-MM-DD`. */
@@ -79,10 +80,11 @@ export function gamerAgeBlock({
     // dates — no parsing, and so no zone to get wrong.
     const reference =
       startDate !== null && startDate > today ? startDate : today;
-    // The oldest they could be, when the stored day is the 1st every form
-    // writes: the earliest day of the month they could have been born on. A
-    // row carrying a later day is tested against that day as stored.
-    if (ageOnDate(dateOfBirth, reference) < minAge) return "under";
+    // The oldest they could be: born on the 1st of the stored month, whatever
+    // day the row happens to carry.
+    if (ageOnDate(firstDayOfBirthMonth(dateOfBirth), reference) < minAge) {
+      return "under";
+    }
   }
 
   if (maxAge !== null) {

@@ -29,7 +29,8 @@ import { z } from "zod";
  * link would make every read covering its day throw. A fold happens only past
  * the cap, so a response under `MAX_GROUPS` rows cannot have folded whatever it
  * holds. A full one with a genuine `"Others"` is indistinguishable from a fold
- * and is halved as one, which costs calls and never a miscount.
+ * and is halved as one: extra calls, and at worst a single day that still
+ * reads as folded and throws — a 500, never a miscount.
  *
  * Calls go through a small fixed concurrency (the endpoint allows 400 calls a
  * minute and takes 0.4–1 s each), each with a timeout, and any refusal throws
