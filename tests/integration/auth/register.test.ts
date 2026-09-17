@@ -130,14 +130,26 @@ function registerRequest(body: unknown, rawBody?: string): Request {
   });
 }
 
-/** A registration arriving with a given `sog_consent` cookie already set. */
-function registerRequestWithConsent(consent: {
-  analytics: boolean;
-  marketing: boolean;
-}): Request {
+/**
+ * A registration arriving with a given `sog_consent` cookie already set.
+ *
+ * `version` is the version stamp the cookie was written under, and it defaults
+ * to the current one. It is a literal rather than the exported constant on
+ * purpose: these cases are about the bytes a browser actually carries, so a
+ * future bump to the question has to be written here by hand and thought about,
+ * not followed silently.
+ */
+function registerRequestWithConsent(
+  consent: {
+    analytics: boolean;
+    marketing: boolean;
+  },
+  body: unknown = validBody,
+  version = 1,
+): Request {
   const value = encodeURIComponent(
     JSON.stringify({
-      v: 1,
+      v: version,
       at: "2026-09-03T10:15:00.000Z",
       analytics: consent.analytics,
       marketing: consent.marketing,
@@ -149,7 +161,7 @@ function registerRequestWithConsent(consent: {
       "Content-Type": "application/json",
       cookie: `locale=en; ${CONSENT_COOKIE_NAME}=${value}`,
     },
-    body: JSON.stringify(validBody),
+    body: JSON.stringify(body),
   });
 }
 
@@ -396,14 +408,23 @@ describe("POST /api/auth/register", () => {
   });
 
   // -- UTM attribution --
+  //
+  // Counsel — SOG's and Lynx's both — reads the UTM parameters on a landing
+  // link as tracking, and Lynx's places it under the MARKETING purpose rather
+  // than analytics. So the three `profiles.utm_*` columns are filled only for a
+  // visitor whose own consent cookie granted marketing, and the decision is
+  // made HERE, on the server, from the `Cookie` header this request carried —
+  // never from anything the body claims. What follows are the four answers a
+  // banner can be in and what each one persists.
 
-  it("passes valid utm values through to the signup metadata", async () => {
-    await POST(
-      registerRequest({
-        ...validBody,
-        utm: { source: "Lynx", medium: "email", campaign: "lynx-summer-a" },
-      }),
-    );
+  const GRANTED = { analytics: true, marketing: true };
+  const UTM_BODY = {
+    ...validBody,
+    utm: { source: "Lynx", medium: "email", campaign: "lynx-summer-a" },
+  };
+
+  it("passes valid utm values through to the signup metadata when marketing consent was granted", async () => {
+    await POST(registerRequestWithConsent(GRANTED, UTM_BODY));
 
     const metadata = signupMetadata();
     expect(metadata.utm_source).toBe("Lynx");
@@ -411,12 +432,84 @@ describe("POST /api/auth/register", () => {
     expect(metadata.utm_campaign).toBe("lynx-summer-a");
   });
 
+  it("drops every utm key when the request carries no consent cookie", async () => {
+    // No cookie is not an answer, and an unanswered banner is not consent — so
+    // the account is created and all three columns stay NULL.
+    const response = await POST(registerRequest(UTM_BODY));
+
+    expect(response.status).toBe(200);
+    const metadata = signupMetadata();
+    expect(metadata).not.toHaveProperty("utm_source");
+    expect(metadata).not.toHaveProperty("utm_medium");
+    expect(metadata).not.toHaveProperty("utm_campaign");
+  });
+
+  it("drops every utm key on analytics-only, which is the case the ruling turns on", async () => {
+    // The one answer that would look like consent if the purpose had been read
+    // as analytics. It was not: a parent who agreed to measurement and refused
+    // advertising produces no attribution tag.
+    const response = await POST(
+      registerRequestWithConsent(
+        { analytics: true, marketing: false },
+        UTM_BODY,
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    const metadata = signupMetadata();
+    expect(metadata).not.toHaveProperty("utm_source");
+    expect(metadata).not.toHaveProperty("utm_medium");
+    expect(metadata).not.toHaveProperty("utm_campaign");
+  });
+
+  it("drops every utm key when the parent rejected the banner outright", async () => {
+    await POST(
+      registerRequestWithConsent(
+        { analytics: false, marketing: false },
+        UTM_BODY,
+      ),
+    );
+
+    const metadata = signupMetadata();
+    expect(metadata).not.toHaveProperty("utm_source");
+    expect(metadata).not.toHaveProperty("utm_medium");
+    expect(metadata).not.toHaveProperty("utm_campaign");
+  });
+
+  it("drops every utm key when the stored answer is from a superseded version of the question", async () => {
+    // The one refusal the gate cannot express on its own: the version stamp
+    // never reaches the metadata builder, because the parser collapses a cookie
+    // written under an earlier version of the banner into the same `null` that
+    // "no cookie at all" produces. So it can only be exercised here, from the
+    // route, with the bytes a returning visitor's browser would actually carry
+    // — a grant on every purpose, stamped with a version we no longer honour.
+    const response = await POST(
+      registerRequestWithConsent({ analytics: true, marketing: true }, UTM_BODY, 0),
+    );
+
+    expect(response.status).toBe(200);
+    const metadata = signupMetadata();
+    expect(metadata).not.toHaveProperty("utm_source");
+    expect(metadata).not.toHaveProperty("utm_medium");
+    expect(metadata).not.toHaveProperty("utm_campaign");
+  });
+
+  it("ignores the body's own marketing checkbox, which answers a different question", async () => {
+    // `marketingConsent` is the mailing-list tick on the form. It is not the
+    // banner's answer, it arrives in a body a stranger controls, and it must
+    // not be able to buy an attribution the cookie refused.
+    await POST(registerRequest({ ...UTM_BODY, marketingConsent: true }));
+
+    const metadata = signupMetadata();
+    expect(metadata).not.toHaveProperty("utm_campaign");
+  });
+
   it("registers successfully with no key at all when a value is malformed", async () => {
     // A 400 here would let whoever authored the marketing link break somebody
     // else's registration. The fields are independent, so the well-formed
     // campaign beside the refused source still lands.
     const response = await POST(
-      registerRequest({
+      registerRequestWithConsent(GRANTED, {
         ...validBody,
         utm: { source: "=SUM(A1)", campaign: "lynx-summer-a" },
       }),
@@ -429,7 +522,7 @@ describe("POST /api/auth/register", () => {
   });
 
   it("sends no utm keys at all when the parent arrived without any", async () => {
-    await POST(registerRequest(validBody));
+    await POST(registerRequestWithConsent(GRANTED));
 
     const metadata = signupMetadata();
     expect(metadata).not.toHaveProperty("utm_source");

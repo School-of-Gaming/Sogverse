@@ -125,8 +125,6 @@ which here means success.
 - **The old platform (SOGGA / Chargebee).** A family that predates Sogverse may still be
   held there. Not covered by this procedure; say so when reporting the erasure done.
 
-## Last executed
-
-Prod, 2026-09-11: a customer with one gamer and no second parent; no payments,
-subscriptions, Stripe customer, participations or storage objects. The single delete
-removed both auth users; the re-scan returned zero hits. The old platform was not checked.
+The same procedure removes an account made by mistake (a would-be gedu who signed up as a
+parent), which frees the address to sign up again. That is housekeeping, not an erasure
+request.

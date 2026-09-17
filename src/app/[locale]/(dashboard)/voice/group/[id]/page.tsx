@@ -67,5 +67,14 @@ export default async function VoiceGroupSessionPage({
 
   const backHref = resolveInternalPath(sp.back, ROLE_DASHBOARD_PATHS[role]);
 
-  return <VoiceSessionPage groupId={id} backHref={backHref} />;
+  return (
+    <VoiceSessionPage
+      groupId={id}
+      backHref={backHref}
+      // The role is already resolved here, so the question of who is asked how
+      // the session went is answered once, server-side, rather than derived a
+      // second time in the browser.
+      askForFeedback={role === "gamer"}
+    />
+  );
 }

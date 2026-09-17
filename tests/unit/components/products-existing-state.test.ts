@@ -39,7 +39,6 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     product_staff_details: null,
     location_id: null,
     is_remote: true,
-    status: "pending",
     signup_threshold: null,
     start_date: "2026-09-01",
     end_date: null,

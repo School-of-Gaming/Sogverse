@@ -129,6 +129,25 @@ function signInFieldsAreConsistent(body: {
 const SIGN_IN_FIELDS_MESSAGE =
   "Sign-in mode `username` needs a username and a password, `email` needs an email address, and `parent` takes none of them";
 
+/**
+ * The parent's declaration that the child being created is theirs, or that they
+ * are the child's legal guardian — made having been shown the Privacy Policy.
+ *
+ * **`z.literal(true)` rather than a boolean**, because there is no false case to
+ * carry: an unticked box is a request that must not create anybody, and the
+ * cheapest place to say so is the schema, which answers 400 before the handler
+ * runs and therefore before the auth user is minted. A missing key, `false` and
+ * a non-boolean all fail the same way and all get the same sentence — the one
+ * below, which names the field rather than the box, because this message is
+ * read in a log and never by a parent (the form gates its own button).
+ */
+export const guardianAttestedValue = z.literal(true, {
+  errorMap: () => ({
+    message:
+      "guardianAttested must be true — a gamer is only created once the parent has declared they are the child's parent or legal guardian",
+  }),
+});
+
 /** Request body of POST /api/gamers/create. */
 export const createGamerBody = z
   .object({
@@ -154,6 +173,14 @@ export const createGamerBody = z
     username: gamerUsernameValue.optional(),
     email: gamerEmailValue.optional(),
     password: accountPasswordValue.optional(),
+    /**
+     * Required and required to be `true`, and deliberately NOT defaulted the
+     * way `signIn` is: a default would let a client that predates the
+     * declaration go on creating children without one, which is the single
+     * thing this field exists to stop. An old bundle gets a 400 it can only fix
+     * by reloading, and that is the correct outcome.
+     */
+    guardianAttested: guardianAttestedValue,
   })
   .refine(signInFieldsAreConsistent, { message: SIGN_IN_FIELDS_MESSAGE });
 

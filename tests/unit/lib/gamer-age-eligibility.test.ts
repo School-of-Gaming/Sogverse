@@ -58,6 +58,15 @@ describe("the lower end resolves the unknown day in the child's favour", () => {
     ).toBeNull();
   });
 
+  it("reads the month alone when a row carries a later day", () => {
+    // Nothing enforces the 1st. A row stored as the 20th is still "born some
+    // time in September 2018", so it is admitted exactly as the 1st is —
+    // reading the stored day would lock the child out until the 20th.
+    expect(
+      gamerAgeBlock({ ...BAND, dateOfBirth: "2018-09-20", today: "2026-09-10" }),
+    ).toBeNull();
+  });
+
   it("refuses them on the last day before that month", () => {
     // One day earlier and no day of September can have happened yet.
     expect(

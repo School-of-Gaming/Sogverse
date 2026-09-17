@@ -39,6 +39,18 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
  */
 
 const TERMS = "terms-and-conditions";
+/**
+ * The guardian declaration, which 00250 moved off the account and onto each
+ * child — the register route no longer names it, and `create_gamer` records it
+ * per gamer instead.
+ *
+ * It stays here as a second published document because these cases are about
+ * `record_account_consents` itself: writing two slugs in one call, and replaying
+ * that call, are claims about the writer rather than about registration. The
+ * historical account-level rows are still readable and still true, so a document
+ * this function can legitimately be pointed at is exactly what the multi-slug
+ * cases need.
+ */
 const DECLARATION = "guardian-declaration";
 
 /**

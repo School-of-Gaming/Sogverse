@@ -43,12 +43,16 @@ const SLOT = "00000000-0000-0000-0000-0000000005a9";
 // registered in product-helpers.ts alongside it.
 const IMAGE = "00000000-0000-0000-0000-000000000637";
 const WHATSAPP_PHONE = "358900000005";
+// The session window the seeded session_feedback row is keyed to. A fixed
+// instant rather than `new Date()`, because the attacker's UPDATE has to name
+// the same key the victim row carries.
+const FEEDBACK_WINDOW = "2026-06-16T10:00:00+00:00";
 
 const tableGrantRows = z.array(
   z.object({ table_name: z.string(), privilege_type: z.string() })
 );
 
-const ATTACKERS = ["customer", "customer2", "gedu", "gamer"] as const;
+const ATTACKERS = ["customer", "customer2", "gedu", "gamer", "gamer2"] as const;
 type Attacker = (typeof ATTACKERS)[number];
 
 const ATTACKER_CREDENTIALS: Record<
@@ -59,6 +63,11 @@ const ATTACKER_CREDENTIALS: Record<
   customer2: TEST_CREDENTIALS.CUSTOMER_2,
   gedu: TEST_CREDENTIALS.GEDU,
   gamer: TEST_CREDENTIALS.GAMER,
+  // The second child, seeded into the same group as the first below — the sharp
+  // attacker for any table keyed to one child's own seat, because the group
+  // half of the policy is satisfied and only the participant half stands
+  // between them and the row.
+  gamer2: TEST_CREDENTIALS.GAMER_2,
 };
 
 /** What a write attempt actually achieved. */
@@ -377,6 +386,35 @@ const CASES: Record<string, IdorCase> = {
       ),
   },
 
+  session_feedback: {
+    // Both children hold an active seat in GROUP, so gamer2 satisfies the
+    // group half of the policy outright. What stops them is the participant
+    // half alone — which is exactly the clause under test, and the reason a
+    // non-member attacker would prove less.
+    attacker: "gamer2",
+    why: "the second gamer is an active member of the same group — only `participant_id = auth.uid()` keeps them off the first gamer's answers",
+    probe: async (admin) =>
+      (
+        await admin
+          .from("session_feedback")
+          .select("*")
+          .eq("group_id", GROUP)
+          .eq("participant_id", TEST_IDS.GAMER)
+          .eq("session_opens_at", FEEDBACK_WINDOW)
+          .maybeSingle()
+      ).data,
+    update: async (client) =>
+      outcomeOf(
+        await client
+          .from("session_feedback")
+          .update({ answers: { learned: 1 }, note: "Defaced" })
+          .eq("group_id", GROUP)
+          .eq("participant_id", TEST_IDS.GAMER)
+          .eq("session_opens_at", FEEDBACK_WINDOW)
+          .select("participant_id")
+      ),
+  },
+
   gedu_locations: {
     attacker: "customer2",
     why: "coverage rows are self-managed by gedus; nobody else may touch them",
@@ -641,6 +679,23 @@ describe("write-path IDOR (§3.4 check 3)", () => {
       participant_id: TEST_IDS.GAMER,
       customer_id: TEST_IDS.CUSTOMER,
       status: "active",
+    });
+    // The sibling holds a seat in the SAME group, which is what makes them the
+    // sharp attacker for session_feedback: the group clause of that table's
+    // policy is satisfied, so only the participant clause is left to fail.
+    await admin.from("participations").insert({
+      product_id: PRODUCT,
+      group_id: GROUP,
+      participant_id: TEST_IDS.GAMER_2,
+      customer_id: TEST_IDS.CUSTOMER,
+      status: "active",
+    });
+    await admin.from("session_feedback").insert({
+      group_id: GROUP,
+      participant_id: TEST_IDS.GAMER,
+      session_opens_at: FEEDBACK_WINDOW,
+      answers: { learned: 5, fun: 4 },
+      note: "IDOR fixture",
     });
     await admin.from("voice_zones").insert({
       id: ZONE,

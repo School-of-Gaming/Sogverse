@@ -36,7 +36,9 @@
       "registerGedu": "Ryhdy pelikasvattajaksi",
       "about": "Tietoa meistä",
       "minecraftApi": "Minecraft Server API",
+      "lynxApi": "Lynx Educaten kumppani-API",
       "adminDashboard": "Ylläpidon hallintapaneeli",
+      "adminMunicipalityInvoicing": "Kuntalaskutus",
       "adminTools": "Työkalut",
       "parentDashboard": "Oma SOG",
       "geduDashboard": "Oma SOG",
@@ -365,6 +367,33 @@
         "label": "Tuotetyyppien selite",
         "heading": "Tuotetyypit"
       }
+    },
+    "municipalityInvoicing": {
+      "title": "Kuntalaskutus",
+      "description": "Kuukauden kuntakerhot: montako kertaa kukin kokoontui ja mitä kunta maksaa niistä.",
+      "previousMonth": "Edellinen kuukausi",
+      "nextMonth": "Seuraava kuukausi",
+      "expandAll": "Avaa kaikki",
+      "collapseAll": "Sulje kaikki",
+      "monthTotal": "Kuukauden summa",
+      "municipalityCount": "{count, plural, one {# kunta} other {# kuntaa}}",
+      "clubCount": "{count, plural, one {# kerho} other {# kerhoa}}",
+      "sessionCount": "{count, plural, one {# kerta} other {# kertaa}}",
+      "columnClub": "Kerho",
+      "columnSchedule": "Aikataulu",
+      "columnFee": "Kertamaksu",
+      "columnSessions": "Kerrat",
+      "columnTotal": "Summa",
+      "recorded": "Kirjattu",
+      "emptyMonth": "Yhdelläkään kuntakerholla ei ole tälle kuukaudelle kirjattuja tai aikataulutettuja kertoja.",
+      "excludedClubs": "{count, plural, one {Summasta puuttuu # kerho, jolle ei ole asetettu maksua} other {Summasta puuttuu # kerhoa, joille ei ole asetettu maksua}}",
+      "feeNotSet": "Maksua ei ole asetettu",
+      "notRecorded": "Ei kirjattu",
+      "upcoming": "Tulossa",
+      "unrecordedSessions": "{count, plural, one {# kirjaamatta} other {# kirjaamatta}}",
+      "sessionsFor": "Kerhon {club} kerrat",
+      "loadError": "Laskutuskuukauden lataus epäonnistui. Päivitä sivu ja yritä uudelleen.",
+      "loadErrorWithReason": "Laskutuskuukauden lataus epäonnistui – {reason}. Päivitä sivu ja yritä uudelleen."
     },
     "geduContract": {
       "heading": "Gedu-sopimus",
@@ -751,7 +780,6 @@
         "pending": "Odottaa alkua",
         "running": "Käynnissä",
         "completed": "Päättynyt",
-        "cancelled": "Peruttu",
         "expired": "Vanhentunut"
       },
       "schedule": {
@@ -1226,8 +1254,8 @@
       "passwordPlaceholder": "Luo vahva salasana",
       "confirmPasswordPlaceholder": "Vahvista salasanasi",
       "location": "Sijainti",
-      "termsLabel": "Vahvistan olevani lapsen vanhempi tai laillinen huoltaja, hyväksyn <terms>käyttöehdot</terms> ja olen lukenut <privacy>tietosuojaselosteen</privacy>.",
-      "termsRequired": "Vahvista, että olet lapsen vanhempi tai laillinen huoltaja ja hyväksyt käyttöehdot.",
+      "termsLabel": "Hyväksyn <terms>käyttöehdot</terms> ja olen lukenut <privacy>tietosuojaselosteen</privacy>.",
+      "termsRequired": "Hyväksy käyttöehdot ja vahvista, että olet lukenut tietosuojaselosteen.",
       "marketingConsentLabel": "School of Gaming saa lähettää minulle uutisia ja tarjouksia sähköpostitse.",
       "marketingConsentHint": "Vapaaehtoinen — voit muuttaa tätä milloin tahansa asetuksissasi.",
       "creatingAccount": "Luodaan tiliä...",
@@ -1444,6 +1472,240 @@
         "note4": "<code>404</code> tarkoittaa, ettei pelaaja ole vielä linkittänyt Minecraft-tiliään Sogversessä. Voit näyttää viestin, joka kehottaa linkittämään tilin profiiliasetuksissa.",
         "note5": "Kaikki virheresponssit noudattavat muotoa <code>'{ \"error\": \"viesti\" }'</code>."
       }
+    },
+    "lynxApi": {
+      "title": "Lynx Educaten kumppani-API",
+      "lead": "Vain luettava rajapinta Lynx Educaten omia koontinäyttöjä ja Roblox-Ohjelman raportointia varten. Se avaa Ohjelmaan kuuluvat perheet, tuotteet ja ilmoittautumiset, ne suostumukset, joiden perusteella Lynx voi toimia, sekä yksilötason aineiston, jonka Ohjelman tietosuojaseloste sallii Lynxin luovuttaa Robloxille vaikuttavuustutkimusta varten.",
+      "contents": {
+        "heading": "Tällä sivulla"
+      },
+      "common": {
+        "queryParameters": "Kyselyparametrit",
+        "fields": "Kentät",
+        "columnName": "Nimi",
+        "columnType": "Tyyppi",
+        "columnDescription": "Kuvaus",
+        "columnStatus": "Tila",
+        "columnCode": "Koodi",
+        "columnMeaning": "Merkitys",
+        "exampleRecord": "Esimerkkitietue",
+        "exampleResponse": "Esimerkkivastaus",
+        "seeConventions": "Katso Käytännöt."
+      },
+      "scope": {
+        "heading": "Rajaus — mitä rajapinta näkee",
+        "p1": "Rajapinta näkee Ohjelman eikä mitään muuta. Tuote kuuluu Ohjelmaan, kun siihen ilmoittautuminen edellyttää Luojien akatemian käyttöehtojen hyväksymistä. Vaatimuksen asettaa ylläpitäjä tuotetta luotaessa, ja se on jokaisessa Ohjelmaa varten rakennetussa tuotteessa. Sillä, näkyykö tuote kaupassa, ei ole merkitystä: kaupassa listaamaton Ohjelman tuote palautetaan kuten mikä tahansa muu.",
+        "p2": "Kaikki muu seuraa tuosta yhdestä säännöstä. Perhe kuuluu rajaukseen, kun jollakin sen jäsenistä on paikka Ohjelman tuotteessa, kun jäsen on suorittanut sellaisen tai kun hän jonottaa paikkaa. Jäsen on yleensä lapsi, mutta se voi olla myös vanhempi tuotteessa, johon aikuiset voivat osallistua. Rajaukseen kuuluva perhe palautetaan vanhempiensa kanssa ja vain niiden lastensa kanssa, jotka itse kuuluvat rajaukseen. Ilmoittautuminen kuuluu rajaukseen, kun se kohdistuu Ohjelman tuotteeseen. Perheen muuta toimintaa Sogversessa, esimerkiksi Minecraft-kerhoa, ei palauteta koskaan, ei myöskään rajaukseen kuuluvalta perheeltä. <code>/campaigns</code> on ainoa resurssi, joka ulottuu Ohjelman ulkopuolelle: se laskee perheet, jotka tulivat Lynxin kampanjan kautta, riippumatta siitä, ovatko ne ilmoittautuneet, ja se sisältää vain lukumääriä, ei koskaan yksittäisen perheen tietuetta.",
+        "p3": "Rajapinta on vain luettava. Kahdella Lynxin tiimin jäsenellä on myös Sogversen ylläpitotili, ja he näkevät samat tiedot ylläpitokäyttöliittymässä. Rajapinta on olemassa, jotta Lynxin omat työkalut voivat lukea tiedot ilman, että ihminen on välissä. Käyttötarkoitukset ovat ne, jotka Ohjelman tietosuojaseloste kuvaa: Ohjelman toteuttaminen ja siitä raportointi, Robloxin tutkimusaineisto sekä posti, jonka vastaanottamiseen vanhempi on suostunut."
+      },
+      "authentication": {
+        "heading": "Autentikointi",
+        "description": "Jokainen pyyntö sisältää staattisen API-avaimen Bearer-tokenina <code>Authorization</code>-otsakkeessa. School of Gaming myöntää avaimen Lynxille, ja avain määrittää vastauksen rajauksen: yksi avain, yksi kumppani, yksi Ohjelma.",
+        "keyNote": "Pidä avain palvelinpuolella. Ota yhteyttä Sogverse-tiimiin, jos avain pitää vaihtaa tai se on voinut vuotaa; vaihdettu avain lakkaa toimimasta välittömästi. School of Gaming luovuttaa avaimen Lynxin kanssa sovittua kanavaa pitkin ja myöntää toisen avaimen Sogversen staging-ympäristöön, jossa on testiperheitä ja -tuotteita, jotta integraatio voidaan rakentaa ja harjoitella aineistolla, joka ei ole todellista."
+      },
+      "conventions": {
+        "heading": "Käytännöt",
+        "baseUrlLabel": "Perus-URL",
+        "envelopeTitle": "Listavastauksen kuori",
+        "items": {
+          "formats": "Vastaukset ovat JSON-muotoisia. Jokainen aikaleima on ISO 8601 -muodossa UTC-ajassa. Jokainen päivämäärä on <code>YYYY-MM-DD</code>, ja tuotteen päivämäärät ovat kalenteripäiviä tuotteen omassa aikavyöhykkeessä, kun taas liikennepäivä on kalenteripäivä UTC-ajassa. Jokainen tunniste on UUID, joka ei koskaan muutu.",
+          "pagination": "Jokainen tietueita palauttava resurssi on sivutettu kursorilla tunnisteen mukaan nousevassa järjestyksessä, joten järjestys pysyy vakaana kesken haun; resurssi, jonka tietueilla ei ole omaa tunnistetta, sivutetaan omassa vakaassa järjestyksessään. Anna <code>limit</code> (oletus 100, enintään 500) ja edellisen sivun <code>next_cursor</code> parametrina <code>cursor</code>; <code>null</code>-arvoinen <code>next_cursor</code> tarkoittaa viimeistä sivua. Kursori on läpinäkymätön, kuuluu niihin suodattimiin, joiden kanssa se annettiin, eikä vanhene. <code>/traffic</code> palauttaa yhden koosteen ja ottaa niiden sijaan parametrit <code>from</code> ja <code>to</code>; sen luvut voivat olla enintään tunnin vanhoja. Myös <code>/campaigns</code> palauttaa yhden koosteen, ja se ottaa parametrit <code>from</code> ja <code>to</code> kuukausina.",
+          "erasure": "Tietue, joka puuttuu täydestä hausta, ei enää kuulu rajaukseen — johtui se sitten perheen poistopyynnöstä, perutusta paikasta tai siitä, että tuote on poistunut Ohjelmasta — ja se poistuu Lynxin tietovarastosta saman synkronoinnin yhteydessä joka tapauksessa. Erillistä poistomerkintää ei ole: tietueen puuttuminen on ainoa merkki, joten päättele se vain hausta, joka on edennyt viimeiselle sivulleen asti.",
+          "consent": "Suostumus raportoidaan sellaisena kuin se on pyyntöhetkellä, mukana tieto viimeisimmästä muutoksesta mutta ei historiaa. Peruttu markkinointisuostumus näkyy seuraavassa haussa muodossa <code>granted: false</code>, ja sähköpostiosoite on poissa; siitä eteenpäin vanhemmalle ei lähetetä postia, ja Lynx voi säilyttää sen vähimmäismerkinnän estolistastaan, jonka Ohjelman tietosuojaseloste sallii, jottei vanhempaa lisätä takaisin.",
+          "changePolicy": "Lisäykset tähän rajapintaan, uusi kenttä tai uusi suodatin, julkaistaan ilman ennakkoilmoitusta; poistettu tai uudelleennimetty kenttä sekä arvo, jonka merkitys muuttuu, ovat uusi versio uuden polun takana. Rakenna niiden kenttien varaan, joita käytät, ja ohita loput.",
+          "errors": "Virheillä on yksi muoto:"
+        }
+      },
+      "resources": {
+        "products": {
+          "title": "Ohjelman tuotevalikoima",
+          "intro": "Jokainen Ohjelmaan kuuluva tuote ja ryhmät, joissa se toteutetaan. Tähän listaan viittaavat kaikkien muiden resurssien <code>product_id</code>-kentät.",
+          "params": {
+            "status": "Vain tässä tilassa olevat tuotteet."
+          },
+          "fields": {
+            "id": "Tuotteen tunniste.",
+            "name": "Tuotteen nimi kaikilla kielillä, joilla se on kirjoitettu, avaimena kielikoodi. Vähintään yksi on aina mukana; se, mitkä niistä, riippuu tuotteesta.",
+            "type": "Minkätyyppinen tuote on. Kerho kokoontuu viikoittain ilman kiinteää päättymistä; leiri ja tapahtuma järjestetään sovittuina päivinä.",
+            "delivery": "Miten tuote toteutetaan. Lynxin omia nimiä sen tavoille toteuttaa Ohjelmaa ei ole tallennettu mihinkään; <code>type</code> ja <code>delivery</code> ovat yhdessä ne kaksi tietoa, joihin nuo nimet kiinnittyvät.",
+            "audience": "Kuka voi saada paikan tuotteessa: <code>gamers</code> on <code>true</code>, kun paikka voi olla lapsella, ja <code>parents</code> on <code>true</code>, kun aikuinen voi itse ottaa paikan. Vähintään toinen on aina <code>true</code>, ja tuote, jossa molemmat ovat <code>true</code>, on tarkoitettu vanhemmille ja lapsille yhdessä.",
+            "location": "Kunta, jonka alueella tuotteen sijainti on, ja kunnan kaksikirjaiminen maakoodi; <code>city</code> on kunnan nimi. Sääntö on sama verkko- ja lähitoteutuksille: arvo on <code>null</code>, jos tuotteella ei ole sijaintia tai sen sijainti ei ole minkään kunnan alueella.",
+            "status": "<code>pending</code> ennen alkamispäivää, <code>running</code> alkamispäivästä lähtien ja <code>completed</code>, kun päättymispäivä on mennyt. Arvo johdetaan lukuhetkellä tuotteen päivämääristä sen omalla aikavyöhykkeellä, joten se ei vanhene koskaan.",
+            "dates": "Milloin tuote toteutetaan. Kuluttajakerholla ei välttämättä ole päättymispäivää; kaikilla muilla tuotteilla on.",
+            "timezone": "IANA-aikavyöhyke, jonka mukaan tuotteen päivämäärät ja istunnot on aikataulutettu.",
+            "ageRange": "Niiden lasten iät, jotka tuotteeseen hyväksytään, rajat mukaan lukien. <code>null</code> täsmälleen silloin, kun <code>audience.gamers</code> on <code>false</code>: tuotteella, johon osallistuu vain aikuisia, ei ole ikärajausta.",
+            "groups": "Ryhmät, joissa tuote toteutetaan. Istunnot ja läsnäolot kiinnittyvät ryhmään."
+          }
+        },
+        "families": {
+          "title": "vanhempi ja hänen lapsensa",
+          "intro": "Jokainen perhe, jonka jäsen on Ohjelman tuotteessa: sen vanhemmat ja rajaukseen kuuluvat lapset, kumpikin omana sisäkkäisenä listanaan. Perhe on se yksikkö, jossa Sogverse toimii. Vanhemmilla on tili, suostumukset, attribuutiotiedot ja sijainti, joten henkilötason tiedot saapuvat yhtenä tietueena eikä yhdistettävinä listoina. Vanhemman sähköpostiosoite on mukana vain, jos juuri tämä vanhempi on antanut Lynxin markkinointisuostumuksen. Perheellä ei ole omaa tunnistetta eikä aikaleimaa, koska Sogverse ei tallenna sellaisia: perhe on toisiinsa liitetyt vanhemmat ja lapset, joten tallenna jokainen vanhempi ja lapsi omalla tunnisteellaan. Vanhempi tai lapsi, joka puuttuu täyden haun kaikista perheistä, ei enää kuulu rajaukseen; henkilö, joka siirtyy toiseen perheeseen, ei ole poistunut rajauksesta.",
+          "params": {
+            "marketingConsent": "Vain perheet, joissa vähintään yhden vanhemman Lynxin markkinointisuostumus on tällä hetkellä voimassa. Tämä on postituslista: lähetä postia jokaiselle vanhemmalle, jonka oma suostumus on voimassa, älä perheelle.",
+            "utmCampaign": "Vain perheet, joissa jonkin vanhemman tili on luotu linkistä, jossa on täsmälleen tämä kampanja-arvo. Isot ja pienet kirjaimet erotellaan: <code>lynx-autumn-a</code> ei vastaa arvoa <code>Lynx-Autumn-A</code>."
+          },
+          "fields": {
+            "parents": "Perheen vanhemmat, kukin omana merkintänään. Lista ei ole koskaan tyhjä. Käsittele sitä listana: Sogverse liittää lapsen nykyään yhteen vanhempaan, joten jokaisessa perheessä on täsmälleen yksi merkintä, mutta perhe, jolla on toinen vanhempi, saapuu samassa muodossa eikä uutena versiona.",
+            "parentsId": "Vanhemman tunniste: sama, jota ilmoittautumiset kantavat nimellä <code>parent_id</code> ja vanhemman omalla paikalla nimellä <code>participant_id</code>.",
+            "parentsName": "Vanhemman nimi sellaisena kuin hän on sen itse kirjoittanut.",
+            "parentsEmail": "Vanhemman sähköpostiosoite, mukana vain niin kauan kuin hänen <code>marketing_consent.granted</code>-arvonsa on <code>true</code>. Muutoin se on <code>null</code>, ja se palaa <code>null</code>-arvoon, kun suostumus perutaan.",
+            "parentsCreatedAt": "Milloin vanhemman tili luotiin: suppilon ensimmäinen vaihe, perhe luotu.",
+            "parentsLocation": "Kunta, jonka alueella vanhemman itse ilmoittama kotisijainti on, ja kunnan kaksikirjaiminen maakoodi; <code>city</code> on kunnan nimi. <code>null</code>, jos vanhempi ei ole ilmoittanut kotisijaintia tai se ei ole minkään kunnan alueella.",
+            "parentsUtm": "Sen linkin <code>utm_source</code>, <code>utm_medium</code> ja <code>utm_campaign</code>, jonka kautta tili luotiin, kukin <code>null</code>, jos arvoa ei ole. Ne kirjoitetaan kerran rekisteröitymisen yhteydessä ja vain, jos kävijä hyväksyi markkinointievästeet, joten useimmissa tietueissa on kolme null-arvoa. Lynxille luoduissa kampanjoissa on sovittu etuliite <code>lynx-</code>.",
+            "parentsMarketingConsent": "Tämän vanhemman nykyinen vastaus Lynxin markkinointisuostumukseen: <code>granted</code> ja milloin sitä viimeksi muutettiin. <code>null</code> tarkoittaa, ettei vanhemmalta ole koskaan kysytty, mikä lähettämisen kannalta vastaa arvoa <code>false</code>.",
+            "gamers": "Perheen lapset, joilla on paikka Ohjelman tuotteessa, jotka ovat suorittaneet sellaisen tai jotka jonottavat paikkaa, kukin omana merkintänään. Lista on tyhjä, kun perhe kuuluu rajaukseen vain vanhemman oman paikan kautta. Lapsesta välitetään etunimi eikä mitään muita yhteystietoja; tunnistetiedot ovat tunniste ja Roblox-tili.",
+            "gamersId": "Lapsen tunniste, sama, jota ilmoittautumiset kantavat nimellä <code>participant_id</code>.",
+            "gamersFirstName": "Lapsen etunimi sellaisena kuin vanhempi on sen kirjoittanut.",
+            "gamersCreatedAt": "Milloin lapsen profiili luotiin: suppilon toinen vaihe.",
+            "gamersBirthMonth": "Kuukausi ja vuosi, jona lapsi on syntynyt, muodossa <code>YYYY-MM</code>. Sogverse kysyy vanhemmalta kuukauden eikä koskaan päivää, joten tämä on kaikki, mitä tiedosta on tallessa; tästä laskettu ikä on tarkka paitsi lapsen syntymäkuukauden aikana.",
+            "gamersRoblox": "Perheen ilmoittama Roblox-käyttäjänimi ja Roblox-käyttäjätunnus, joksi se ratkesi. <code>verified</code> on <code>true</code> vain, kun Sogverse on varmistanut käyttäjänimen Robloxilta ja sillä on käyttäjätunnus; varmistamattomalla käyttäjänimellä on <code>user_id: null</code>. <code>null</code>, kun käyttäjänimeä ei ole annettu.",
+            "gamersPhotoConsent": "Tämän lapsen nykyinen Lynxin medialupa: <code>granted</code> ja milloin sitä viimeksi muutettiin. <code>null</code> tarkoittaa, ettei lupaa ole koskaan kysytty, minkä jokainen näkymä tulkitsee samoin kuin puuttuvan luvan."
+          },
+          "note": "Alustan tietona on vain medialupa. Tapaustutkimus-, suosittelu- ja mainoskäyttöluvat ovat erillisiä kirjallisia lupia, jotka Ohjelma hankkii Sogversen ulkopuolella, eikä rajapinta voi raportoida niitä."
+        },
+        "enrolments": {
+          "title": "lapsi tuotteessa",
+          "intro": "Yksi tietue jokaisesta Ohjelman tuotteen paikasta: milloin paikan osallistuja ilmoittautui, kuinka paljon hän osallistui ja mitä hän julkaisi. Tästä tietueesta rakennetaan sekä suppilo että Robloxin tutkimusaineisto.",
+          "params": {
+            "productId": "Vain tämän tuotteen ilmoittautumiset.",
+            "participantId": "Vain tämän osallistujan ilmoittautumiset.",
+            "parentId": "Vain tämän vanhemman tilillä olevat ilmoittautumiset, myös vanhemman omat paikat.",
+            "status": "Vain tässä tilassa olevat ilmoittautumiset."
+          },
+          "fields": {
+            "id": "Ilmoittautumisen tunniste.",
+            "productGroupId": "Tuote ja sen ryhmä, johon lapsi sijoitettiin. <code>group_id</code> on <code>null</code>, kunnes ylläpitäjä sijoittaa paikan ryhmään.",
+            "participantParentId": "Kenen paikka on ja vanhempi, jonka tilillä se on. <code>participant_id</code> on lapsen tunniste kentästä <code>gamers[].id</code> tai vanhemman omalla paikalla hänen tunnisteensa kentästä <code>parents[].id</code>, jolloin se on sama kuin <code>parent_id</code>.",
+            "status": "<code>active</code> varatulle paikalle, <code>waitlisted</code> jonottavalle perheelle ja <code>completed</code>, kun tuote on päättynyt: varattu paikka tuotteessa, jonka <code>status</code> on <code>completed</code>, ilmoitetaan arvolla <code>completed</code>, ja jonossa oleva paikka pysyy arvossa <code>waitlisted</code>. Suodatin <code>status</code> vertaa tässä ilmoitettuun arvoon.",
+            "signedUpAt": "Milloin perhe ilmoittautui tuotteeseen: suppilon kolmas vaihe, ilmoittautuminen.",
+            "consents": "Vanhemman hyväksyntä Luojien akatemian käyttöehdoille ja Luojien akatemian tietosuojaselosteelle tämän ilmoittautumisen osalta: kummankin asiakirjan versio julkaisupäivänä ilmaistuna sekä hyväksymisajankohta. Jokainen Ohjelman tuote edellyttää molempia, joten molemmat ovat mukana jokaisessa ilmoittautumisessa. Jos paikalle ei ole kirjattu hyväksyntää, esimerkiksi kun ylläpitäjä on ilmoittanut lapsen perheen puolesta, versio on viimeisin versio, joka on julkaistu viimeistään <code>signed_up_at</code>-hetken päivänä UTC-ajassa, tai varhaisin julkaistu versio, jos yhtään ei ollut julkaistu siihen mennessä, ja <code>accepted_at</code> on sama kuin <code>signed_up_at</code>.",
+            "attendance": "Kuinka monesta osallistujan ryhmän istunnosta on merkintä ja kuinka moneen niistä osallistuja on merkitty läsnä olevaksi. Istunto kirjataan, kun pelikasvattaja kirjoittaa siitä raportin tai merkitsee läsnäolot, joten istuntoa, jossa ei ole kumpaakaan, ei lasketa mukaan; luku on ryhmän luku ja sisältää myös istunnot ennen osallistujan liittymistä ryhmään. Molemmat ovat 0 niin kauan kuin paikkaa ei ole sijoitettu ryhmään. Osallistuja, jonka <code>sessions_present</code> on vähintään 1, lasketaan suppilossa osallistuneeksi.",
+            "creations": "Mitä osallistuja julkaisi tämän tuotteen aikana, hänen pelikasvattajansa tai ylläpitäjän kirjaamana osallistujan nykyisessä ryhmässä: otsikko ja linkki kutakin kohdetta kohti näyttöjärjestyksessä. <code>is_roblox_url</code> on <code>true</code>, kun linkki osoittaa osoitteeseen roblox.com tai sen aliverkkotunnukseen, kuten www.roblox.com. Tyhjä taulukko tarkoittaa, ettei mitään ole vielä kirjattu."
+          }
+        },
+        "sessions": {
+          "title": "mitä kussakin ryhmässä tapahtui",
+          "intro": "Jokainen istunto, jonka Ohjelman ryhmä on kirjannut, sekä läsnäolomerkinnät ja valokuvat, jotka pelikasvattaja liitti istuntoraporttiin. Istunnosta on merkintä heti kun pelikasvattaja kirjoittaa siitä raportin tai merkitsee läsnäolot, joten aikataulutettu istunto, jota ei ole vielä pidetty, ei ole täällä. Käytä sitä istuntokohtaisiin näkymiin, kuten poistumakäyrään; lapsikohtaiset summat ovat jo ilmoittautumisessa.",
+          "params": {
+            "productId": "Vain tämän tuotteen ryhmien istunnot.",
+            "groupId": "Vain tämän ryhmän istunnot.",
+            "fromTo": "Vain istunnot, joiden päivämäärä tuotteen aikavyöhykkeen kalenteripäivänä on tällä aikavälillä, rajat mukaan lukien."
+          },
+          "fields": {
+            "id": "Istunnon tunniste.",
+            "productGroupId": "Tuote ja ryhmä, johon istunto kuuluu.",
+            "times": "Istunnon aikataulutettu ajankohta.",
+            "attendance": "Yksi merkintä jokaisesta osallistujasta, jonka pelikasvattaja on merkinnyt, tunnisteena <code>participant_id</code>, <code>present</code> tai <code>absent</code>. Osallistuja, jota ei ole vielä merkitty, ei näy listassa.",
+            "images": "Valokuvat, jotka pelikasvattaja liitti istuntoraporttiin siinä järjestyksessä kuin ne lisättiin: enimmäkseen kuvakaappauksia pelistä, toisinaan valokuva tilasta. Kukin on julkinen URL-osoite, joka ei vaadi tunnistautumista, ja sama osoite, jonka jokainen ryhmän perhe jo näkee raportissa. Valokuva kuuluu istunnolle eikä lapselle: Sogverse ei kirjaa, ketkä lapset kuvassa näkyvät, joten rajapinta ei voi yhdistää kuvaa medialupaan. Lasta valokuvataan vain silloin, kun lupa on voimassa, ja kun vanhempi peruu sen, School of Gaming poistaa aineiston hallitsemistaan kanavista siltä osin kuin se on kohtuudella mahdollista, kuten Ohjelman tietosuojaselosteessa todetaan; poistetun valokuvan osoite lakkaa toimimasta.",
+            "imagesUrl": "Linkitä siihen sen sijaan, että kopioisit tiedoston, jotta poisto meidän päässämme on poisto myös teidän päässänne; jos haku löytää osoitteen, joka ei enää toimi, se kannattaa pudottaa pois. Osoitetta voi turvallisesti käyttää Lynxin omissa työkaluissa ja raporteissa. Objektin nimi on arvaamaton tunniste, ja tuo nimi on koko sen pääsynhallinta, joten ainoa asia, jota ei pidä tehdä, on julkaista osoite sivulla, jonka kuka tahansa voi listata.",
+            "imagesId": "Valokuvan tunniste, joka on samalla sen objektin nimi.",
+            "imagesSize": "Kuvan koko kuvapisteinä."
+          }
+        },
+        "feedback": {
+          "title": "mitä lapsi sanoi lähtiessään",
+          "intro": "Mitä yksi lapsi vastasi yhden istunnon lopuksi: viisi väittämää arvioituna viisiportaisella palkilla ja vapaaehtoinen viesti hänen omin sanoin. Tällä hetkellä palautetta kerätään vain verkossa pidettyjen istuntojen jälkeen. Lapsi, joka ei arvioi yhtään väittämää eikä kirjoita viestiä, ei jätä riviä, joten vastausprosentti saadaan vertaamalla tätä listaa <code>/sessions</code>-resurssin verkkoistuntoihin; yksi rivi on yksi lapsi yhdessä istunnossa, joten riveistä laskettu prosenttiosuus laskee lapsen kerran kutakin istuntoa kohti, johon hän vastasi.",
+          "params": {
+            "productId": "Vain tämän tuotteen ryhmien palautteet.",
+            "groupId": "Vain tämän ryhmän palautteet.",
+            "participantId": "Vain tämän lapsen palautteet.",
+            "fromTo": "Vain palaute istunnoista, joiden päivämäärä tuotteen aikavyöhykkeen kalenteripäivänä on tällä aikavälillä, rajat mukaan lukien."
+          },
+          "fields": {
+            "participantGroupProductId": "Kuka vastasi sekä ryhmä ja tuote, joihin istunto kuului. Palautetta kysytään vain lapsilta, joten <code>participant_id</code> on aina lapsen tunniste kentästä <code>gamers[].id</code>. Tietueella ei ole omaa tunnistetta: <code>participant_id</code>, <code>group_id</code> ja <code>session_opened_at</code> muodostavat yhdessä sen avaimen, ja saman lapsen myöhempi vastaus samasta istunnosta korvaa aiemman tuolla avaimella.",
+            "sessionId": "Istunto <code>/sessions</code>-resurssissa, johon vastaus kuuluu, yhdistettynä ryhmän ja päivämäärän perusteella; <code>null</code>, jos <code>/sessions</code>-resurssissa ei ole istuntoa kyseiselle ryhmälle sinä päivänä.",
+            "sessionOpenedAt": "Milloin istunto, jota lapsen vastaus koskee, avattiin: hetki, jolloin istunnon verkkohuoneeseen pääsi liittymään, eli viisi minuuttia ennen istunnon aikataulun mukaista alkua.",
+            "answers": "Lapsen arvio kustakin väittämästä, avaimena väittämän pysyvä tunniste; ohitettu väittämä puuttuu. Arviot ovat 1–5: ei, ei oikeastaan, vähän, kyllä, ehdottomasti. Tänään kysyttävät väittämät ovat <code>learned</code> (opin jotain), <code>fun</code> (minulla oli hauskaa), <code>geduKnowledgeable</code> (pelikasvattaja tiesi, mitä teki), <code>geduKind</code> (pelikasvattaja oli ystävällinen) ja <code>groupListens</code> (ryhmäni kuuntelee ja ymmärtää minua). Väittämä voidaan lisätä tai poistaa ilman ennakkoilmoitusta, joten lue ne avaimet, jotka tunnet, ja ohita loput. Robloxille menevät vain koostetut tyytyväisyysluvut; rivit itsessään jäävät Lynxille.",
+            "note": "Mitä lapsi kirjoitti vapaaehtoiseen viestiin, hänen omin sanoin ja omalla kielellään; tyhjä, jos hän ei kirjoittanut mitään."
+          }
+        },
+        "robloxResearch": {
+          "title": "Robloxille luovutettava aineisto",
+          "intro": "Yksilötason aineisto, jonka Ohjelman tietosuojaseloste sallii luovuttaa Robloxille vaikuttavuustutkimusta varten, eikä mitään sen yli. Yksi rivi lapsen ilmoittautumista kohti samoilla tiloilla kuin <code>/enrolments</code>-resurssissa, valmiina välitettäväksi ilman suodatusta. Vanhemman omasta paikasta ei tule riviä, eikä myöskään lapsesta, jonka Roblox-käyttäjänimeä ei ole tallennettu: rivi on Roblox-tili, joten ilman sitä ei ole mitään välitettävää. Jokainen kenttä mahtuu siihen, mitä seloste nimeää.",
+          "params": {
+            "productId": "Vain tämän tuotteen rivit.",
+            "fromTo": "Vain rivit, joiden tuote alkoi tällä välillä, rajat mukaan lukien."
+          },
+          "fields": {
+            "roblox": "Lapsen Roblox-tili. <code>roblox_user_id</code> on <code>null</code>, kun Sogverse ei voinut varmistaa käyttäjänimeä; välitä tällaiset rivit vain, jos Roblox hyväksyy pelkän käyttäjänimen.",
+            "location": "Sen vanhemman kotikunta ja maa, jonka tilillä paikka on, samalla säännöllä kuin <code>/families</code>-resurssin <code>parents[].location</code>. Molemmat ovat <code>null</code>, jos vanhempi ei ole ilmoittanut kotisijaintia; pelkkä <code>city</code> on <code>null</code>, jos sijainti ei ole minkään kunnan alueella.",
+            "age": "Lapsen ikä täysinä vuosina toiminnan alkamispäivänä vaihteluvälinä: Sogversessa on syntymäkuukausi eikä päivää, joten <code>min</code> on nuorin ja <code>max</code> vanhin mahdollinen ikä, ja luvut ovat samat, ellei alkamispäivä osunut lapsen syntymäkuukauteen. <code>null</code> niin kauan kuin tuotteella ei ole alkamispäivää. Rivillä on ikä eikä syntymäkuukausi, koska tutkimusaineisto nimeää nimenomaan iän.",
+            "activity": "Toiminta, johon osallistuttiin: tuotteen tunniste, sen nimi englanniksi, jos sellainen on kirjoitettu, muutoin tuotteen toteutuskielellä ja viimeisenä vaihtoehtona sillä kieliversiolla, jonka koodi on aakkosjärjestyksessä ensimmäinen, sekä tyyppi, toteutustapa ja alkamispäivä. Tyyppi ja toteutustapa ovat yhdessä ne tiedot, joihin Lynxin omat nimet sen tavoille toteuttaa Ohjelmaa kiinnittyvät, ja alkamispäivä on tutkimuksen pyytämä interventiopäivä.",
+            "publishedGameUrl": "Ensimmäinen roblox.com-linkki lapsen julkaisuissa tässä tuotteessa, tai <code>null</code>, jos sellaista ei ole kirjattu."
+          },
+          "note": "Rivillä ei ole lapsen eikä perheen tunnistetta, joten aineiston voi välittää sellaisenaan; rivit sivutetaan sen ilmoittautumisen järjestyksessä, josta kukin on johdettu. Roblox-tili on myös perhetietueessa, joten Lynx voi tarvittaessa jäljittää rivin takaisin perheeseen: kun perhe poistuu täydestä hausta, poista myös sen rivit täältä, ja jos rivi on jo välitetty Robloxille, välitä pyyntö eteenpäin Robloxin tietojenkäsittelyliitteen mukaisesti, kuten Ohjelman tietosuojaseloste edellyttää."
+        },
+        "traffic": {
+          "title": "sivut, joille kampanja johtaa, kampanjoittain",
+          "intro": "Niiden sivujen sivunäytöt, joille Lynxin kampanja voi johtaa, ryhmiteltyinä sen kampanjan mukaan, joka ne toi, jotta suppilon yläpäähänkin saadaan luku: Roblox-laskeutumissivu, kauppa ja kunkin Ohjelman tuotteen oma sivu. Luvut luetaan Vercelin Web Analyticsista, ne voivat olla enintään tunnin vanhoja, ja ne ulottuvat niin pitkälle taaksepäin kuin Vercel niitä säilyttää, mikä on tällä hetkellä kaksi vuotta, toukokuun 2026 lopusta, jolloin analytiikka otettiin käyttöön. Vain koostetasolla: ei kävijätunnisteita eikä muita kuin näitä kolmea sivutyyppiä. Sivun sivunäytöissä kaikki kielet, joilla sivu näytetään, lasketaan yhdeksi sivuksi, ja kuluva päivä on vajaa, kunnes se päättyy.",
+          "params": {
+            "page": "Vain tämäntyyppiset sivut. Jätä pois, jos haluat kaikki kolme.",
+            "productId": "Vain tämän tuotteen sivu. Merkitsee samalla arvoa <code>page=product</code>.",
+            "fromTo": "Vain tälle välille osuvat päivät, rajat mukaan lukien. Jätä pois, jos haluat viimeiset 30 päivää. Jos väli ulottuu kauemmas menneisyyteen kuin luvut tai tämän päivän yli, vastaus kattaa ne välin päivät, joilta lukuja on, ja <code>range</code> kertoo, mitkä ne ovat. Väli, jolla ei ole yhtään tällaista päivää, hylätään."
+          },
+          "fields": {
+            "range": "Päivät, jotka luvut kattavat.",
+            "pages": "Yksi merkintä sivua kohti: laskeutumissivu, kauppa ja yksi kutakin Ohjelman tuotetta kohti, jonka sivulla oli sivunäyttöjä aikavälillä.",
+            "pagesPage": "Minkätyyppinen sivu on. Kauppasivu on yhteinen kaiken sen kanssa, mitä School of Gaming myy, joten sen sivunäytöt eivät koske pelkkää Ohjelmaa; tuotesivun sivunäytöt koskevat.",
+            "pagesProductId": "Tuote, jonka sivusta on kyse; <code>null</code> laskeutumissivulle ja kaupalle.",
+            "pagesPageviews": "Sivun sivunäytöt tällä välillä, tulivatpa ne mistä tahansa.",
+            "pagesByCampaign": "Sivunäytöt jaoteltuina linkin kentän <code>utm_campaign</code> mukaan. <code>null</code>-rivi kattaa kaikki sivunäytöt, joissa sitä ei ollut, mukaan lukien kävijä, joka kirjoitti osoitteen itse tai seurasi merkitsemätöntä linkkiä.",
+            "pagesBySourceMedium": "Samat sivunäytöt jaoteltuina kenttien <code>utm_source</code> ja <code>utm_medium</code> yhdistelmän mukaan, jotta maksettu, sosiaalinen ja sähköpostiliikenne erottuvat toisistaan. Molemmat jaottelut koskevat samoja sivunäyttöjä, ja kumpikin summautuu arvoon <code>pageviews</code>; ne eivät ole toistensa ristiintaulukointi.",
+            "pagesByDay": "Sivunäytöt kalenteripäivittäin UTC-ajassa aikasarjaa varten."
+          },
+          "note": "Vercelin skripti käynnistyy vain kävijälle, joka on hyväksynyt analytiikan evästebannerissa, ja perhetietueen UTM-arvot kirjoitetaan vain kävijälle, joka on hyväksynyt markkinoinnin. Ehdot ovat eri, ja analytiikan ehto on laajempi, joten tässä laskettu sivunäyttö ja <code>/families</code>-resurssin perhe eivät kuvaa samaa joukkoa: kaiken hyväksynyt kävijä on molemmissa, pelkän analytiikan hyväksynyt vain tässä, ja bannerin hylännyt ei kummassakaan."
+        },
+        "campaigns": {
+          "title": "perheet, jotka kampanja tuo, kampanjoittain",
+          "intro": "Kuinka monta perhettä kukin Lynxin kampanja toi Sogverseen ja kuinka pitkälle ne etenivät: luodut tilit, lisätyt lapset, Ohjelman ikäiset lapset ja ilmoittautuneet perheet. Tämä on suppilo ennen kuin perhe kuuluu rajaukseen, lukuina eikä listana: ei tunnisteita, ei yhdenkään perheen tietuetta, ja vähimmäismäärää pienempi luku jätetään näyttämättä. Kampanja on Lynxin, kun sen <code>utm_campaign</code> alkaa etuliitteellä <code>lynx-</code>, kirjainkoosta riippumatta. Jokaisessa Lynxille luodussa linkissä on oltava tämä etuliite: kampanjaa ilman sitä ei koskaan lasketa, eikä tilille tallennettua kampanjaa voi muuttaa jälkikäteen.",
+          "params": {
+            "fromTo": "Vain perheet, joiden vanhemman tili on luotu näinä kuukausina, rajat mukaan lukien, UTC-ajassa. Jätä <code>to</code> pois, jos haluat kuluvan kuukauden, joka on vajaa sen loppuun asti; jätä <code>from</code> pois, jos haluat saman kuukauden kuin <code>to</code>."
+          },
+          "fields": {
+            "range": "Kuukaudet, jotka luvut kattavat.",
+            "minimumCount": "Pienin luku, jonka vastaus näyttää. Sitä pienempi luku, myös nolla, on <code>null</code>.",
+            "campaigns": "Yksi merkintä jokaisesta Lynxin kampanjasta, joka toi välillä vähintään yhden vanhemman tilin.",
+            "utmCampaign": "Kampanja täsmälleen sellaisena kuin se on tallennettu laskettuihin tileihin. Arvot, jotka eroavat vain kirjainkooltaan, ovat erillisiä merkintöjä, kuten myös resurssissa <code>/traffic</code>.",
+            "accountsCreated": "Vanhempien tilit, jotka luotiin välillä tämän kampanjan sisältävän linkin kautta: suppilon ensimmäinen vaihe.",
+            "childrenAdded": "Näihin tileihin pyyntöhetkellä liitetyt lapset riippumatta siitä, milloin heidät lisättiin: toinen vaihe.",
+            "childrenEligible": "Ne lapsista, joiden ikä pyyntöpäivänä UTC-ajassa on Ohjelman ikärajojen 13–17 sisällä. Sogverse tallentaa syntymäkuukauden eikä päivää, joten lapsi, joka voi olla jompaakumpaa kahdesta iästä, lasketaan mukaan, kun kumpi tahansa osuu rajoihin, samalla tavalla kuin ilmoittautumisessa.",
+            "enrolled": "Ne tileistä, joiden perheellä on paikka Ohjelman tuotteessa, joiden perhe on suorittanut sellaisen tai joiden perhe jonottaa paikkaa: kolmas vaihe ja kohta, jossa perhe tulee resurssiin <code>/families</code>."
+          },
+          "note": "Tilin kampanja kirjoitetaan kerran tilin luonnin yhteydessä ja vain, jos kävijä hyväksyi markkinointievästeet, joten luvut kattavat nämä perheet eivätkä koskaan muita; se on sama kampanja, jonka <code>/families</code> näyttää kentässä <code>parents[].utm</code>, kun perhe ilmoittautuu. Jokainen luku luetaan reaaliaikaisesti pyyntöhetkellä, joten sama väli voi antaa toisena päivänä eri vastauksen: perheet lisäävät lapsia ja ilmoittautuvat edelleen, ja kuluvalle kuukaudelle kertyy tilejä sen loppuun asti."
+        }
+      },
+      "errors": {
+        "heading": "Virheet",
+        "intro": "Jokainen virhe palautetaan Käytännöt-osiossa kuvatussa muodossa. Käsittele virhe arvon <code>code</code> perusteella, sillä se pysyy samana; <code>message</code> on englanninkielinen teksti lokia varten, ei näytettäväksi.",
+        "e400": "Kyselyparametri on virheellinen: väärä UUID, päivämäärä, joka ei ole <code>YYYY-MM-DD</code>, kuukausi, joka ei ole <code>YYYY-MM</code>, yli 500:n <code>limit</code>, tuntematon enum-arvo, <code>from</code>, joka on myöhempi kuin <code>to</code>, tai <code>cursor</code>, joka on virheellinen, peräisin toisesta päätepisteestä tai annettu eri suodattimilla.",
+        "e401": "Puuttuva, virheellinen tai peruttu API-avain.",
+        "e404": "Polku ei ole mikään yllä kuvatuista resursseista. Avain tarkistetaan ensin, joten pyyntö ilman kelvollista avainta saa vastauksen 401 polusta riippumatta. Suodatin, joka nimeää Ohjelmaan kuulumattoman tuotteen, ei tuota vastausta 404: se ei vain vastaa mitään.",
+        "e500": "Jokin meni vikaan meidän päässämme. Yritä uudelleen kasvavalla viiveellä, ja jos ongelma jatkuu, kerro meille.",
+        "e500Misconfigured": "Rajapintaa ei ole määritetty oikein meidän päässämme. Uudelleenyrittäminen ei auta ennen kuin korjaamme asian, joten kerro meille."
+      },
+      "example": {
+        "heading": "Esimerkki"
+      },
+      "integrationNotes": {
+        "heading": "Integraatio-ohjeet",
+        "items": {
+          "sync": "Tämä on rakennettu synkronointia eikä reaaliaikaista kyselyä varten: jokainen resurssi haetaan aikataulun mukaan Lynxin omaan tietovarastoon, ja näkymä rakennetaan sen varaan. Jokainen haku palauttaa kaiken rajaukseen kuuluvan sellaisena kuin se on pyyntöhetkellä, joten sen vastaus korvaa sen, mitä Lynxillä oli aiemmin.",
+          "join": "Tunnisteet ovat yhdistämisen avaimet. Vanhemman sähköpostiosoite voi ilmestyä, kadota ja ilmestyä uudelleen suostumuksen mukana; hänen <code>id</code>-tunnisteensa ei koskaan.",
+          "consent": "Suostumusmuutoksiin ja katoamisiin on tarkoitus reagoida samalla synkronoinnilla, joka ne näyttää: perhe, jonka <code>marketing_consent.granted</code> muuttui arvoon <code>false</code>, jää samana päivänä pois postituksista, ja tietue, joka on poistunut täydestä hausta, poistuu samana päivänä Lynxin tietovarastosta. Ohjelman tietosuojaseloste velvoittaa molemmat organisaatiot tähän, ja vähintään kerran vuorokaudessa tehtävä haku tekee sen mahdolliseksi.",
+          "derived": "”Osallistunut” ja ”julkaissut” ovat johdettuja, eivät tallennettuja tietoja. Molemmat on määritelty yllä olevissa kenttäkuvauksissa, jotta Lynxin ja meidän luvut täsmäävät; jos määritelmää pitää muuttaa, muuta se ensin täällä.",
+          "readOnly": "Mikään täällä ei kirjoita. Ilmoittautumiset, suostumukset ja julkaisut kirjaavat Sogverseen perheet ja pelikasvattajat; rajapinta on vain ikkuna niihin."
+        }
+      },
+      "notIncluded": {
+        "heading": "Mitä rajapinta ei sisällä",
+        "intro": "Asioita, joita Sogversessa on tai joista kysytään ja jotka tämä rajapinta jättää ulkopuolelle. Jos jokin niistä osoittautuu Lynxille tärkeäksi, kerro siitä, niin keskustellaan asiasta.",
+        "items": {
+          "childIdentity": "Lasten sukunimet, syntymäpäivät ja sukupuoli sekä vanhempien puhelinnumerot. Ohjelman tietosuojaseloste lupaa syntymäkuukauden eikä syntymäaikaa, eikä loppuja tarvita näkymissä tai Robloxin raportissa.",
+          "releases": "Tapaustutkimus- ja suositteluluvat. Sogversen hallussa oleva yksi medialupa kattaa jo sen, että Lynx Educate, School of Gaming ja Roblox käyttävät valokuvaa julkisesti; lapsen koko nimi, tapaustutkimus, sitaatti tai lapseen yhdistetty sisältö vaativat erillisen kirjallisen luvan, joka hankitaan alustan ulkopuolella.",
+          "deliveryModel": "Toteutusmallin nimike. Sogverse tietää tuotteen tyypin ja sen, onko tuote verkossa vai paikan päällä; mallien luokittelu on Lynxin asia rakentaa näiden kahden kentän päälle.",
+          "analytics": "Muiden kuin laskeutumissivun, kaupan ja Ohjelman tuotesivujen liikenne sekä kaikki yksittäistä kävijää koskeva tieto. Päätepisteen <code>/traffic</code> taustalla oleva analytiikka on suunniteltu tietosuoja edellä: sivu, jolle perhe päätyy kirjautumisen jälkeen, on perheen oma, ja kävijä on luku, ei koskaan tietue."
+        }
+      }
     }
   },
   "dashboardSections": {
@@ -1476,7 +1738,7 @@
       },
       "gamer": {
         "description": "Jäitkö jumiin tai keksitkö meille idean? Kirjoita se tähän, niin luemme sen.",
-        "replyNote": "Gedusi saattaa palata asiaasi seuraavan kerran aikana.",
+        "replyNote": "Jos vastaamme, lähetämme sähköpostia vanhemmallesi.",
         "placeholder": "Missä tarvitset apua?",
         "thankYou": "Kiitos — saimme viestisi.",
         "failed": "Viestin lähettäminen epäonnistui. Yritä uudelleen.",
@@ -1506,6 +1768,7 @@
     },
     "addGamerForm": {
       "title": "Lisää pelaaja",
+      "accountsTitle": "Pelaajan {name} pelitilit",
       "firstNameLabel": "Etunimi",
       "firstNamePlaceholder": "esim. Lilja",
       "birthMonthLabel": "Syntymäkuukausi",
@@ -1522,7 +1785,9 @@
       "firstNameTooLong": "Etunimessä saa olla enintään 32 merkkiä.",
       "birthMonthRequired": "Valitse syntymäkuukausi.",
       "birthYearRequired": "Valitse syntymävuosi.",
-      "genericError": "Pelaajan lisääminen epäonnistui. Yritä uudelleen."
+      "genericError": "Pelaajan lisääminen epäonnistui. Yritä uudelleen.",
+      "guardianAttestation": "{name} on lapseni, tai olen hänen laillinen huoltajansa. Olen lukenut <privacy>tietosuojaselosteen</privacy>.",
+      "guardianAttestationUnnamed": "Tämä pelaaja on lapseni, tai olen hänen laillinen huoltajansa. Olen lukenut <privacy>tietosuojaselosteen</privacy>."
     }
   },
   "familyEnrollment": {
@@ -2181,6 +2446,7 @@
     "heading": "Ennen ensimmäistä kertaa",
     "dialogTitle": "Ennen ensimmäistä kertaa",
     "triggerLabel": "Valmistaudu",
+    "notYetLabel": "Ei vielä",
     "readyLabel": "Olen valmis",
     "closing": "Jos kaikki toimii, olet valmiina kertaa varten!",
     "topics": {
@@ -2330,6 +2596,7 @@
     "users": "Käyttäjät",
     "consumerClubs": "Kuluttajakerhot",
     "municipalityClubs": "Kuntakerhot",
+    "municipalityInvoicing": "Kuntalaskutus",
     "camps": "Leirit",
     "events": "Tapahtumat",
     "sites": "Toimipisteet",
@@ -2805,6 +3072,27 @@
         "ready": "Huoneesi on valmis",
         "join": "Liity"
       }
+    },
+    "feedback": {
+      "heading": "Miten meni?",
+      "items": {
+        "learned": "Opin jotain uutta.",
+        "fun": "Minulla oli kiva.",
+        "geduKnowledgeable": "Geduni osasi asiansa ja auttoi minua.",
+        "geduKind": "Geduni oli ystävällinen ja mukava.",
+        "groupListens": "Ryhmäni kuuntelee ja ymmärtää minua."
+      },
+      "scale": {
+        "no": "Ei",
+        "notReally": "Vähän",
+        "aBit": "Jonkin verran",
+        "yes": "Kyllä",
+        "definitely": "Ehdottomasti"
+      },
+      "notePrompt": "Haluatko kertoa vielä jotain tämän päivän kerrasta?",
+      "audience": "Gedusi ja School of Gamingin tiimi lukevat palautteesi. Kiitos!",
+      "saveFailed": "Vastauksiasi ei tallennettu. Paina Valmis ja yritä uudelleen.",
+      "done": "Valmis"
     }
   },
   "voiceButton": {
@@ -3094,7 +3382,6 @@
     }
   },
   "legal": {
-    "draftNotice": "Luonnos – tämän sivun sisältöä viimeistellään edelleen, eikä sitä ole vielä hyväksytty. Yksityiskohdat voivat muuttua.",
     "opensInNewTab": "(avautuu uuteen välilehteen)"
   },
   "privacy": {
@@ -3133,8 +3420,23 @@
           "Lapsestasi: etunimen, syntymäkuukauden ja -vuoden (emme kysy tarkkaa päivämäärää – vain sen, mitä todella tarvitsemme) ja halutessasi sukupuolen – jotta voimme sijoittaa hänet oikeaan ryhmään ja puhutella häntä oikein. Tallennamme lapsen tilille myös perheesi sukunimen, koska lapsi kuuluu tiliisi. Gedut ja muut pelaajat eivät näe sitä koskaan. Tilillä itsellään on Sogversen sisäinen osoite oikean sähköpostiosoitteen sijaan, ellet anna lapselle kirjautumista hänen omalla sähköpostiosoitteellaan; silloin säilytämme sen osoitteen ja lähetämme hänelle oman kopion viesteistä, jotka lähetämme sinulle hänen kerhoistaan, leireistään ja tapahtumistaan.",
           "Halutessasi lapsesi käyttäjätunnuksen niissä peleissä, joita hänen kerhonsa käyttävät – tällä hetkellä Minecraftissa ja Robloxissa – sekä tilitunnisteen, jonka peli hänelle antaa, jotta tunnistamme hänet pelissä ja jotta hän voi liittyä Minecraft-palvelimellemme tapaamisten aikana.",
           "Pelikasvattajiemme kirjoittamat merkinnät tapaamisista – läsnäolot, tapaamisraportit ja lyhyet muistiinpanot, jotka auttavat meitä tukemaan lastasi ryhmässä.",
-          "Yleisiä, nimettömiä tietoja siitä, miten sivustoa käytetään (katso kohta \"Evästeet, analytiikka ja mainonta\" jäljempänä).",
-          "Kampanjatunnisteen – lähteen, välineen ja kampanjan – jonka käyntisi aloittanut linkki kantoi mukanaan. Tallennamme sen kerran, tilin luonnin yhteydessä, jotta me ja kumppanimme tiedämme, mikä viestintä tavoittaa perheitä."
+          "Viestit, joita lapsesi lähettää tapaamisen chatissa – jotta pelikasvattaja ja muu ryhmä voivat lukea ne tapaamisen aikana ja jotta voimme selvittää mahdollisen huolen jälkikäteen. Lapsesi poistama viesti piilotetaan ryhmältä, mutta se säilytetään tilin sulkemiseen asti.",
+          "Palaute, jonka lapsesi antaa meille tapaamisistaan – arviot ja mahdollisen viestin, jotka hän itse päättää antaa, kun kysymme, miten tapaaminen sujui – jotta näemme, miten tapaamisemme sujuvat, ja voimme tehdä niistä parempia.",
+          "Tekniset tiedot, joita mikä tahansa verkkosivusto tarvitsee toimiakseen – kirjautumisistunnot, pyyntölokit ja, vain jos valitset sen, nimettömät käyttötilastot. Katso kohdat \"Tekniset tiedot\" ja \"Evästeet, analytiikka ja mainonta\" jäljempänä.",
+          "Kampanjatunnisteen – lähteen, välineen ja kampanjan – jonka käyntisi aloittanut linkki kantoi mukanaan. Tallennamme sen kerran, tilin luonnin yhteydessä ja vain jos olet sallinut markkinointievästeet, jotta me ja kumppanimme tiedämme, mikä viestintä tavoittaa perheitä. Markkinoinnista kieltäytyminen myöhemmin ei poista jo tallennettua tunnistetta."
+        ]
+      },
+      "technical": {
+        "heading": "Tekniset tiedot",
+        "paragraphs": [
+          "Verkkosivuston pyörittäminen tarkoittaa, että osa teknisistä tiedoista kulkee niiden yritysten kautta, jotka ylläpitävät ja suojaavat sivustoa puolestamme. Mitään näistä tiedoista emme kysy sinulta, emmekä säilytä niistä kopiota missään omassa taulussamme – ne ovat palveluntarjoajiemme järjestelmissä niin kauan kuin nämä tarvitsevat niitä pitääkseen sivuston toimivana ja turvallisena, emmekä me pidennä sitä aikaa. Tässä on, mistä on kyse ja minne tiedot menevät:"
+        ],
+        "bullets": [
+          "Merkinnät kirjautumisista – kun kirjaudut sisään, tilejämme pyörittävä Supabase säilyttää merkinnän istunnosta: milloin se alkoi, mistä selaimesta ja laitteesta se tuli ja mikä sen internetosoite on. Juuri se pitää sinut kirjautuneena ja antaa meidän päättää istunnon, jonka ei kuuluisi olla käynnissä. Merkintä poistetaan, kun istunto päättyy, ja kaikki poistuu, kun tili poistetaan.",
+          "Pyynnöt ja virheet – jokainen avaamasi sivu on pyyntö Vercelille, joka ylläpitää sivustoa. Kuten mikä tahansa ylläpitäjä, Vercel kirjaa sen lokiin: sivun, ajankohdan, selaimesi ja laitteesi tyypin ja sen internetosoitteen sekä mahdollisen virheen, jonka pyyntö aiheutti. Käytämme näitä lokeja pitääksemme sivuston toiminnassa ja löytääksemme viat. Vercel myös laskee omilla palvelimillaan pyynnöt sivuston eri osiin – kokonaismääriä, ei ihmisiä – eikä tämä laskenta vaadi evästettä tai suostumusta. Se on eri asia kuin jäljempänä päälle ja pois kytkettävä analytiikka.",
+          "Evästeet ja analytiikka – muutama välttämätön eväste sekä analytiikka ja markkinointi vain, jos valitset ne. Kaikesta tästä kerromme kohdassa \"Evästeet, analytiikka ja mainonta\" jäljempänä.",
+          "Suorat tapaamiset – äänitapaamisen aikana lapsesi laite yhdistää suoraan Daily.co-palveluun, joten Daily näkee sen internetosoitteen ja yhteyden tekniset tiedot puhelun keston ajan. Katso kohta \"Ääni- ja videotapaamiset\" jäljempänä.",
+          "Mitä emme tee – emme ylläpidä omaa virheenseuranta- tai lokipalvelua, emme koskaan tallenna internetosoitettasi tai selaintietojasi mihinkään omaan tauluumme, eikä mitään näistä tiedoista käytetä sinusta tai lapsestasi tehtävän profiilin rakentamiseen."
         ]
       },
       "childrensPrivacy": {
@@ -3142,7 +3444,7 @@
         "paragraphs": [
           "Suurin osa Sogversen käyttäjistä on lapsia, joten heidän turvallisuutensa ja yksityisyytensä on meille tärkeintä.",
           "Lapsi ei voi koskaan luoda omaa tiliään itse. Vain vanhempi tai huoltaja luo lapsen tilin, päättää mitä tietoja jaetaan ja antaa luvan lapsen puolesta. Näin täytämme lapsia koskevat velvollisuutemme tietosuojalainsäädännön mukaan.",
-          "Kerromme edellä kohdassa \"Mitä tietoja keräämme\", mitä lapsesta säilytämme. Emme kerää lapsesta muuta kuin sen, mitä kerhojen, leirien ja tapahtumien järjestäminen vaatii. Emme koskaan näytä lapsille mainoksia emmekä koskaan myy tai jaa heidän tietojaan markkinointiin. Kun lapsesi on kirjautuneena pelaajana, mitään hänen selailustaan ei lähetetä mainosalustoille, vaikka markkinointi olisi laitteella päällä. Tapaamisia ohjaavat koulutetut pelikasvattajamme (kutsumme heitä Geduiksi).",
+          "Kerromme edellä kohdissa \"Mitä tietoja keräämme\" ja \"Tekniset tiedot\", mitä lapsesta säilytämme. Emme kerää lapsesta muuta kuin sen, mitä kerhojen, leirien ja tapahtumien järjestäminen vaatii. Emme koskaan näytä lapsille mainoksia emmekä koskaan myy tai jaa heidän tietojaan markkinointiin. Kun lapsesi on kirjautuneena pelaajana, mitään hänen selailustaan ei lähetetä mainosalustoille, vaikka markkinointi olisi laitteella päällä. Tapaamisia ohjaavat koulutetut pelikasvattajamme (kutsumme heitä Geduiksi).",
           "Jos haluat milloin tahansa nähdä, muuttaa tai poistaa lapsesi tiedot, lähetä viesti osoitteeseen {supportEmail}, niin hoidamme asian."
         ]
       },
@@ -3166,12 +3468,11 @@
           "Tietosuojalainsäädäntö (EU:n yleinen tietosuoja-asetus eli GDPR) edellyttää, että meillä on selkeä peruste tietojesi käytölle. Meidän perusteemme ovat yksinkertaiset:"
         ],
         "bullets": [
-          "Toimittaaksemme sen, mihin ilmoittauduit – ostamasi kerhot ja palvelut (sopimuksemme kanssasi).",
+          "Toimittaaksemme sen, mihin ilmoittauduit – kerhot, leirit ja tapahtumat, joihin olet ilmoittanut lapsesi, olivatpa ne maksullisia tai maksuttomia (sopimuksemme kanssasi).",
           "Koska vanhempi on antanut luvan lapsensa puolesta (suostumus).",
           "Täyttääksemme lakisääteiset velvollisuutemme, kuten maksujen kirjanpitotietojen säilyttämisen.",
           "Oikeutetun etumme perusteella, kun pidämme sivuston turvallisena ja toimivana – aina yksityisyytesi kanssa tasapainotettuna.",
-          "Oikeutetun etumme perusteella, kun selvitämme, mikä viestintämme tavoittaa perheitä – aina yksityisyytesi kanssa tasapainotettuna, ja voit milloin tahansa pyytää meitä lopettamaan.",
-          "Suostumuksesi analytiikka- ja markkinointievästeisiin – voit peruuttaa sen milloin tahansa jokaisen sivun alalaidan Yksityisyysvalinnat-linkistä."
+          "Suostumuksesi analytiikka- ja markkinointievästeisiin sekä kampanjatunnisteeseen – voit peruuttaa sen milloin tahansa jokaisen sivun alalaidan Yksityisyysvalinnat-linkistä."
         ]
       },
       "providers": {
@@ -3183,30 +3484,52 @@
           "Supabase – tallentaa turvallisesti tili-, perhe- ja kerhotietosi.",
           "Stripe – käsittelee maksut. Korttitietosi menevät suoraan Stripelle, emmekä me näe niitä.",
           "Brevo – lähettää sähköpostimme, kuten kuitit ja muistutukset.",
-          "Daily.co – mahdollistaa suorat ääni- ja videotapaamiset.",
-          "Vercel – ylläpitää sivustoa ja tarjoaa nimettömät käyttötilastot.",
+          "Daily.co – mahdollistaa suorat ääni- ja videotapaamiset; lapsesi laite yhdistää siihen suoraan tapaamisen aikana.",
+          "Vercel – ylläpitää sivustoa, joten jokainen pyyntö kulkee sen kautta (katso kohta \"Tekniset tiedot\"), ja tarjoaa nimettömät käyttötilastot, jos sallit analytiikan.",
           "Meta (WhatsApp) – joidenkin viestien ja muistutusten lähettämiseen perheille, jotka käyttävät mieluummin WhatsAppia.",
-          "Roblox – vastaanottaa lapsesi Roblox-tilitunnisteen, jotta voimme varmistaa tilin ja näyttää hänen hahmokuvansa.",
+          "Roblox – vastaanottaa lapsesi Roblox-tilitunnisteen, jotta voimme varmistaa tilin, ja selaimesi hakee hänen hahmokuvansa suoraan Robloxilta.",
           "Mojang (Microsoft) – vastaanottaa lapsesi Minecraft-käyttäjätunnuksen, jotta voimme varmistaa tilin.",
+          "mc-heads.net – selaimesi hakee kuvan lapsesi Minecraft-hahmosta suoraan siltä hänen Minecraft-käyttäjätunnuksensa perusteella, joka on pelissä julkinen. Se on ilmainen julkinen palvelu eikä meidän alihankkijamme, ja se näkee vain tämän pyynnön.",
           "Meta (Facebook ja Instagram) – näkee selaimesi Meta-pikselin ja palvelimiltamme tulevien raporttien kautta, miten käytät sivustoamme, jotta voimme näyttää sinulle mainoksiamme siellä ja mitata, miten ne toimivat. Vain jos sallit markkinointievästeet."
+        ]
+      },
+      "partners": {
+        "heading": "Luojien akatemia, jonka toteutamme Lynx Educaten kanssa",
+        "blocks": [
+          "Jos ilmoitat lapsesi Luojien akatemiaan, jota pyöritämme yhteistyössä Robloxin kanssa, jaamme ohjelman tarvitsemat tiedot Lynx Educaten kanssa, joka toteuttaa sen kanssamme, ja rajatun joukon Robloxille sen ohjelmaa koskevaa tutkimusta varten. Lynx Educate saa:",
+          [
+            "Tilisi kampanjatunnisteen – lähteen, välineen ja kampanjan – jotta he näkevät, mikä viestintä toi perheesi ohjelmaan.",
+            "Etunimesi, sukunimesi ja sähköpostiosoitteesi – jotta he saavat sinuun yhteyden ohjelmaan liittyen.",
+            "Kunnan ja maan, jotka annoit perheesi kotipaikaksi, jos annoit sellaisen.",
+            "Lapsesi etunimen.",
+            "Lapsesi syntymäkuukauden ja -vuoden – päivää emme kysy koskaan.",
+            "Lapsesi Roblox-käyttäjätunnuksen ja tilitunnisteen, jonka Roblox sille antaa.",
+            "Sen, mitkä ehdot ja selosteet hyväksyit ilmoittautuessasi, sekä vastauksesi markkinointia ja valokuvaamista koskeviin kysymyksiin.",
+            "Itse ilmoittautumisen – kerhon, leirin tai tapahtuman, lapsesi ryhmän ja sen, milloin hän ilmoittautui.",
+            "Sen, merkittiinkö lapsesi kussakin tapaamisessa paikalle vai poissa olevaksi.",
+            "Lapsesi Robloxissa julkaiseman työn nimen ja linkin sellaisena kuin pelikasvattaja sen kirjaa.",
+            "Tapaamisraporttiin liitetyt valokuvat – vain jos olet sallinut valokuvaamisen."
+          ],
+          "Lynx käyttää tietoja ohjelman pyörittämiseen ilmoittautumisen yhteydessä hyväksymiesi ohjelman ehtojen ja oman oikeutetun etunsa perusteella, joka on ohjelman turvallinen toteuttaminen – lukuun ottamatta kampanjatunnistetta, joka jaetaan vain jos olet sallinut markkinointievästeet, ja valokuvia, jotka jaetaan vain jos olet rastittanut ruudun. Se, mitä Roblox saa, ja kaikki muu ohjelmasta on <linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy>."
         ]
       },
       "cookies": {
         "heading": "Evästeet, analytiikka ja mainonta",
         "paragraphs": [
-          "Muutama eväste on yksinkertaisesti se, miten sivusto toimii: ne pitävät sinut kirjautuneena, muistavat että syötit vanhemman PIN-koodin, säilyttävät kielesi ja aikavyöhykkeesi ja tallentavat tekemäsi evästevalinnan. Nämä eivät vaadi suostumustasi – ilman niitä ei ole sivustoa, johon suostua.",
-          "Kaikki muu odottaa sinua. Kysymme asiaa ensimmäisellä käynnilläsi, eikä välttämättömien evästeiden lisäksi käynnisty mitään ennen kuin vastaat. Voit muuttaa mieltäsi milloin tahansa jokaisen sivun alalaidan Yksityisyysvalinnat-linkistä: valinnan poistaminen astuu voimaan heti, eikä se muuta sitä, mitä teimme sen ollessa käytössä.",
+          "Muutama eväste on yksinkertaisesti se, miten sivusto toimii: ne pitävät sinut kirjautuneena ja muistavat, että olet vaihtanut perheesi tilien välillä, muistavat että syötit vanhemman PIN-koodin, säilyttävät kielesi ja aikavyöhykkeesi, tallentavat tekemäsi evästevalinnan ja muistavat, että olet sulkenut oppaan, jonka näytämme ennen ensimmäistä tapaamista. Nämä eivät vaadi suostumustasi – ilman niitä ei ole sivustoa, johon suostua.",
+          "Kaikki muu odottaa sinua. Kysymme asiaa ensimmäisellä käynnilläsi, eikä välttämättömien evästeiden lisäksi käynnisty selaimessasi mitään ennen kuin vastaat. Voit muuttaa mieltäsi milloin tahansa jokaisen sivun alalaidan Yksityisyysvalinnat-linkistä: valinnan poistaminen astuu voimaan heti, eikä se muuta sitä, mitä teimme sen ollessa käytössä.",
           "Kahteen asiaan voit vastata kyllä tai ei:"
         ],
         "bullets": [
           "Analytiikka – Vercelin analytiikka, ja vain jos valitset sen. Se laskee käynnit, mittaa sivujen latausnopeuden ja vastaanottaa muutamia nimettömiä tapahtumia siitä, miten sivustoa käytetään: miten oma My SOG avataan ja milloin kieltä vaihdetaan. Se ei näe, kuka olet, emmekä anna sitä koskaan mainostajille.",
-          "Markkinointi – mainosevästeet, vain jos valitset ne. Niiden avulla yllä mainitut mainosalustat – tällä hetkellä Meta – näkevät, miten käytät sivustoamme, jotta ne voivat näyttää sinulle mainoksiamme ja me näemme, mitkä mainokset toimivat. Ne eivät ole koskaan käytössä, kun pelaaja on kirjautuneena. Markkinoinnin poistaminen käytöstä poistaa nämä evästeet selaimestasi, mutta ei sitä, mitä alustoilla jo on – voit pyytää niitä poistamaan sen omista asetuksistasi niissä."
+          "Markkinointi – mainosevästeet, vain jos valitset ne. Niiden avulla yllä mainitut mainosalustat – tällä hetkellä Meta – näkevät, miten käytät sivustoamme, jotta ne voivat näyttää sinulle mainoksiamme ja me näemme, mitkä mainokset toimivat. Jos luot tilin käynnin aikana, myös sen linkin kampanjatunniste, jonka kautta saavuit, tallennetaan tilille. Ne eivät ole koskaan käytössä, kun pelaaja on kirjautuneena. Markkinoinnin poistaminen käytöstä poistaa nämä evästeet ja sen pienen tietomäärän, jota Metan skripti säilyttää selaimessasi niiden rinnalla, mutta ei sitä, mitä alustoilla jo on – voit pyytää niitä poistamaan sen omista asetuksistasi niissä."
         ]
       },
       "voice": {
         "heading": "Ääni- ja videotapaamiset",
         "paragraphs": [
-          "Suorat kerhot, leirit ja tapahtumat pidetään äänen ja videon välityksellä Daily.co-palvelun avulla. Koulutetut pelikasvattajamme ohjaavat tapaamiset livenä, ja käytämme palvelua vain sen tapaamisen toteuttamiseen, johon lapsesi ilmoittautui."
+          "Suorat kerhot, leirit ja tapahtumat pidetään äänen ja videon välityksellä Daily.co-palvelun avulla. Koulutetut pelikasvattajamme ohjaavat tapaamiset livenä, ja käytämme palvelua vain sen tapaamisen toteuttamiseen, johon lapsesi ilmoittautui.",
+          "Lapsesi laite yhdistää puhelua varten suoraan Daily.co-palveluun, joten Daily näkee sen internetosoitteen ja yhteyden tekniset tiedot niin kauan kuin tapaaminen kestää, ja Dailyn oma ohjelmisto raportoi selaimessa kohtaamansa viat takaisin Dailylle. Jotta lapsesi päätyy oikeaan huoneeseen, annamme Dailylle hänen etunimensä ja, jos sellainen on lisätty, hänen pelikäyttäjätunnuksensa sekä tilitunnisteen, jonka peli hänelle antaa, jotta Gedu ja muut huoneessa olevat pelaajat näkevät, kuka puhuu. Ääntä ja videota ei tallenneta."
         ]
       },
       "retention": {
@@ -3572,35 +3895,35 @@
   },
   "robloxPrivacy": {
     "title": "Luojien akatemian tietosuojaseloste",
-    "subtitle": "Perheille, jotka ilmoittautuvat Ranskassa järjestettävään nuorten digitaalisen luovuuden Ohjelmaan, jonka toteuttavat Lynx Educate ja School of Gaming ja jota Roblox tukee.",
+    "subtitle": "Perheille, jotka ilmoittautuvat Ranskan digitaalisen koulutuksen Ohjelmaan, jonka toteuttavat Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa.",
     "lastUpdated": "Päivitetty viimeksi: {date}",
     "intro": {
       "heading": "Lyhyesti – vanhemmille ja nuorille",
       "blocks": [
-        "Ohjelma on tarkoitettu 13–17-vuotiaille nuorille Ranskassa. Ilmoittautumisen tekee vanhempi tai muu huoltaja.",
+        "Luojien akatemian Ohjelma on tarkoitettu <strong>13–17</strong>-vuotiaille nuorille Ranskassa. Ilmoittautumisen tekee vanhempi tai muu huoltaja.",
         "Keräämme vain ne tiedot, joita tarvitsemme lapsen ilmoittamiseen, Ohjelman turvalliseen toteuttamiseen ja sen arviointiin, toimiiko Ohjelma. Näihin kuuluvat vanhemman yhteystiedot, rajattu määrä lasta koskevia tietoja, lapsen Roblox-käyttäjätunnus tai Roblox-käyttäjätunniste sekä tiedot osallistumisesta, suorittamisesta ja pelien julkaisemisesta.",
         "School of Gaming käyttää tietoja ilmoittautumis- ja oppimisalustan ylläpitämiseen. Lynx Educate käsittelee Ohjelman tietoja siinä laajuudessa kuin toteutuksen hallinnointi edellyttää. Kullakin organisaatiolla on erilainen vastuu sen mukaan, mistä toiminnasta on kyse ja mihin tarkoitukseen henkilötietoja käytetään.",
         [
+          "Lynx Educate on rekisterinpitäjä Ohjelman toteuttamisen ja vapaaehtoisen sähköpostiviestinnän osalta.",
           "School of Gaming on rekisterinpitäjä Sogversen toiminnan osalta ja niiden henkilötietojen osalta, joita se käsittelee omia alustapalvelujaan varten.",
-          "Robloxin lukuun tehtävässä rajatussa vaikuttavuustutkimuksessa Roblox on rekisterinpitäjä, Lynx Educate toimii Robloxin henkilötietojen käsittelijänä ja School of Gaming Lynx Educaten hyväksymänä alikäsittelijänä.",
-          "Kun Lynx Educate käsittelee henkilötietoja omiin, itsenäisesti määrittelemiinsä tarkoituksiin, kuten vapaaehtoisiin Lynxin sähköposteihin, Lynx Educate on tämän käsittelyn rekisterinpitäjä."
+          "Robloxin lukuun tehtävässä rajatussa vaikuttavuustutkimuksessa Roblox on rekisterinpitäjä, Lynx Educate toimii Robloxin henkilötietojen käsittelijänä ja School of Gaming Lynx Educaten hyväksymänä alikäsittelijänä."
         ],
-        "Seuraavat valinnat ovat vapaaehtoisia, eivätkä ne vaikuta lapsesi paikkaan:",
+        "Seuraavat valinnat ovat <strong>vapaaehtoisia</strong>, eivätkä ne vaikuta lapsesi paikkaan:",
         [
           "Lynx Educaten vanhemmalle lähettämät sähköpostit tulevista Roblox-tapahtumista ja pelaamiseen liittyvistä aineistoista.",
-          "Lapsesta otetut valokuvat ja videot tapaamisraporteissa, Lynx Educatelle ja Robloxille tehtävässä vaikuttavuusraportoinnissa sekä Lynx Educaten, School of Gamingin ja Robloxin julkisessa käytössä."
+          "Lapsesta otetut valokuvat ja videot, joita käytetään tapaamisraporteissa – ne näkyvät kaikille lapsen ryhmän perheille – sekä Lynx Educatelle ja Robloxille tehtävässä vaikuttavuusraportoinnissa ja joita Lynx Educate, School of Gaming ja Roblox käyttävät julkisesti."
         ],
-        "Verkkotapaamisia ei tallenneta. Lasta ei valokuvata eikä videokuvata, jos tarvittavaa lupaa ei ole annettu tai jos lapsi ei halua osallistua.",
+        "Tavanomaisia verkkotapaamisia ei tallenneta. Lasta ei valokuvata eikä videokuvata, jos tarvittavaa lupaa ei ole annettu tai jos lapsi ei halua osallistua.",
         "Lynx Educate ja School of Gaming eivät myy Ohjelman ilmoittautumistietoja eivätkä käytä niitä lapsille suunnattuun mainontaan.",
-        "Sinä ja lapsesi voitte pyytää saada nähdä, korjata tai poistaa tietoja, peruuttaa vapaaehtoisen suostumuksen tai vastustaa tiettyä käyttöä ottamalla yhteyttä osoitteeseen support@lynxeducate.com tai {supportEmail}."
+        "Sinä ja lapsesi voitte pyytää saada nähdä, korjata tai poistaa tietoja, peruuttaa vapaaehtoisen suostumuksen tai vastustaa tiettyä käyttöä ottamalla yhteyttä osoitteeseen <strong>support@lynxeducate.com</strong> tai <strong>{supportEmail}</strong>."
       ]
     },
     "sections": {
       "applies": {
         "heading": "Keitä tämä seloste koskee",
         "blocks": [
-          "Tämä seloste koskee vanhempia, huoltajia ja nuoria, jotka ilmoittautuvat Luojien akatemiaan, Ranskassa järjestettävään nuorten digitaalisen luovuuden Ohjelmaan (Ohjelma).",
-          "Ohjelma on tarkoitettu 13–17-vuotiaille nuorille. Vanhemman tai huoltajan on tehtävä ilmoittautuminen ja vahvistettava, että hänellä on oikeus ilmoittaa lapsi mukaan.",
+          "Tämä seloste koskee vanhempia, huoltajia ja nuoria, jotka ilmoittautuvat Ranskassa järjestettävään digitaalisen koulutuksen ohjelmaan, jonka toteuttavat Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa (Ohjelma).",
+          "Ohjelma on tarkoitettu <strong>13–17</strong>-vuotiaille nuorille. Vanhemman tai huoltajan on tehtävä ilmoittautuminen ja vahvistettava, että hänellä on oikeus ilmoittaa lapsi mukaan.",
           "Seloste kattaa Ohjelmaan ilmoittautumisen, hallinnoinnin, oppimistapaamiset, tapahtumat, tuen, lasten turvallisuuden ja vaikuttavuuden arvioinnin. Se täydentää School of Gamingin <linkPrivacy>yleistä tietosuojaselostetta</linkPrivacy>. Jos selosteet ovat tämän Ohjelman osalta ristiriidassa, sovelletaan tätä Ohjelmaa koskevaa selostetta.",
           "Lapsen omaan Roblox-tilin, Roblox Studion tai muun Roblox-palvelun käyttöön sovelletaan Robloxin omaa tietosuojaselostetta ja käyttöehtoja.",
           "<linkRobloxTerms>Ohjelman ehdoissa</linkRobloxTerms> määritellään 13–17 vuoden ikäraja, vanhemman tekemä ilmoittautuminen ja Ohjelmaan liittyvä tietojen jakaminen."
@@ -3614,21 +3937,21 @@
         "heading": "Lynx Educate SAS",
         "blocks": [
           "Lynx Educate vastaa osallistujien rekrytoinnista, Ohjelman hallinnoinnista, käytännön toteutuksesta, osallistujaviestinnästä ja raportoinnista.",
-          "Lynx Educate SAS",
+          "<strong>Lynx Educate SAS</strong>",
           "185 rue Ordener",
           "75018 Pariisi, Ranska",
-          "Sähköposti: support@lynxeducate.com"
+          "Sähköposti: <strong>support@lynxeducate.com</strong>"
         ]
       },
       "responsibleSog": {
         "heading": "School of Gaming Galactic Oy",
         "blocks": [
-          "School of Gaming ylläpitää Sogversea, hallinnoi ilmoittautumis- ja oppimisympäristöä, tuottaa tapaamisten sisällöt ja pelikasvattajat, ohjaa oppimistapaamiset ja huolehtii lasten turvallisuuden valvonnasta.",
-          "School of Gaming Galactic Oy",
+          "School of Gaming ylläpitää Sogversea, hallinnoi ilmoittautumis- ja oppimisympäristöä, tuottaa opetussuunnitelman ja ohjaajat, ohjaa oppimistapaamiset ja huolehtii lasten turvallisuuden valvonnasta.",
+          "<strong>School of Gaming Galactic Oy</strong>",
           "Y-tunnus: 3110461-1",
           "Isokatu 56",
           "90100 Oulu, Suomi",
-          "Sähköposti: {supportEmail}"
+          "Sähköposti: <strong>{supportEmail}</strong>"
         ]
       },
       "responsibleRoblox": {
@@ -3669,16 +3992,15 @@
         "blocks": [
           "Toiminnasta riippuen voimme kerätä seuraavat tiedot:",
           [
-            "Lapsen etunimi ja sen rinnalla vanhemman tililtä tallennettu perheen sukunimi. Pelikasvattajat ja muut osallistujat eivät koskaan näe sukunimeä – lapsi osallistuu etunimellään.",
+            "Etunimi.",
             "Ikä, ikäryhmä tai syntymäkuukausi ja -vuosi täydellisen syntymäajan sijaan.",
             "Roblox-käyttäjätunnus ja Roblox-käyttäjätunniste.",
-            "Kerho, leiri, tapahtuma tai ryhmä, johon lapsi osallistuu.",
+            "Kurssi, kerho, leiri, tapahtuma tai ryhmä, johon lapsi osallistuu.",
             "Läsnäolo, osallistuminen, oppimisen eteneminen ja suorittaminen.",
             "Tieto siitä, julkaiseeko lapsi ensimmäisen Roblox-pelinsä, -kokemuksensa tai -digitaalisen esineensä.",
             "Julkaistun kokemuksen nimi tai linkki, kun se on tarpeen Ohjelman tuloksen todentamiseksi.",
             "Oppijan palaute ja vapaaehtoiset kyselyvastaukset.",
             "Rajatut moderointia, käyttäytymistä tai turvallisuutta koskevat tiedot, kun ne ovat tarpeen osallistujien turvallisuuden vuoksi.",
-            "Saavutettavuutta, ruokavaliota tai terveyttä koskevat tiedot, jotka on annettu tiettyä tapahtumaa varten, vain silloin kun se on välttämätöntä.",
             "Valokuvat, videomateriaali, äänitteet ja niihin liittyvä aineisto, kun asiaa koskeva vapaaehtoinen lupa on annettu."
           ],
           "Emme kysy lapsen Roblox-salasanaa. Lapsen ei tarvitse antaa erillistä sähköpostiosoitetta Sogversea varten, kun tiliä hallinnoidaan vanhemman tai huoltajan kautta."
@@ -3703,7 +4025,7 @@
         "blocks": []
       },
       "useDeliver": {
-        "heading": "Ilmoittautumiseen ja Ohjelman toteuttamiseen",
+        "heading": "Ilmoittautumiseen ja Ohjelman toteuttamiseen (Lynx Educate)",
         "blocks": [
           "Käytämme tili-, ikä-, ilmoittautumis- ja yhteystietoja seuraaviin tarkoituksiin:",
           [
@@ -3718,7 +4040,7 @@
         ]
       },
       "useSafety": {
-        "heading": "Lasten ja palvelun turvallisuuden varmistamiseen",
+        "heading": "Lasten ja palvelun turvallisuuden varmistamiseen (Lynx Educate)",
         "blocks": [
           "Käytämme rajattuja tili-, tapaamis-, moderointi- ja tapahtumatietoja seuraaviin tarkoituksiin:",
           [
@@ -3727,13 +4049,13 @@
             "Valitusten ja turvallisuushuolien selvittäminen.",
             "Yhteydenpito vanhempaan tai huoltajaan.",
             "Yhteydenotto hätäpalveluihin tai toimivaltaisiin viranomaisiin, kun se on tarpeen.",
-            "Osallistujien, pelikasvattajien ja muiden ihmisten oikeuksien, turvallisuuden ja hyvinvoinnin suojaaminen."
+            "Osallistujien, ohjaajien ja muiden ihmisten oikeuksien, turvallisuuden ja hyvinvoinnin suojaaminen."
           ],
           "Perusteena on oikeutettu etumme turvallisen Ohjelman ylläpitämisessä, sovellettavat lakisääteiset velvoitteet ja hätätilanteessa jonkun elintärkeiden etujen suojaaminen."
         ]
       },
       "useEvaluate": {
-        "heading": "Ohjelman arviointiin",
+        "heading": "Ohjelman arviointiin (Lynx Educate)",
         "blocks": [
           "Käytämme osallistumista, suorittamista, julkaisutuloksia, vanhempien osallistumista ja kyselyvastauksia koskevia tietoja arvioidaksemme, saavuttaako Ohjelma tavoitteensa, sekä Ohjelman raporttien laatimiseen.",
           "Raporteissa käytetään mahdollisuuksien mukaan koostettuja tai anonymisoituja tietoja, joista yksittäistä lasta ei voi tunnistaa.",
@@ -3741,17 +4063,17 @@
         ]
       },
       "useEmail": {
-        "heading": "Vapaaehtoinen sähköpostiviestintä",
+        "heading": "Vapaaehtoinen sähköpostiviestintä (Lynx Educate)",
         "blocks": [
           "Lynx Educate käyttää vanhemman sähköpostiosoitetta tulevia Roblox-tapahtumia ja pelaamiseen liittyviä aineistoja koskevaan viestintään vain silloin, kun vanhempi rastittaa vapaaehtoisen sähköpostivalinnan.",
           "Käyttö perustuu vanhemman suostumukseen. Se ei ole edellytys osallistumiselle, ja sen voi lopettaa jokaisessa viestissä olevasta peruutuslinkistä tai ottamalla yhteyttä Lynx Educateen.",
-          "School of Gaming ja Roblox eivät saa vanhemman sähköpostiosoitetta tämän valinnan perusteella omaa markkinointiaan varten."
+          "Roblox ei saa vanhemman sähköpostiosoitetta tämän valinnan perusteella omaa markkinointiaan varten."
         ]
       },
       "useMedia": {
-        "heading": "Vapaaehtoinen valokuvaaminen ja videokuvaaminen",
+        "heading": "Vapaaehtoinen valokuvaaminen ja videokuvaaminen (Lynx Educate)",
         "blocks": [
-          "Valokuvaaminen, videokuvaaminen ja julkinen viestintä perustuvat yhteen vapaaehtoiseen lupaan, joka annetaan lapsikohtaisesti. Luvan epääminen ei vaikuta ilmoittautumiseen eikä osallistumiseen.",
+          "Valokuvaaminen, videokuvaaminen ja julkinen viestintä perustuvat erillisiin vapaaehtoisiin lupiin. Näistä luvista kieltäytyminen ei vaikuta ilmoittautumiseen eikä osallistumiseen.",
           "Suostumus ei ole oikeusperuste edellä kuvatulle ilmoittautumiselle, Ohjelman toteuttamiselle tai lasten turvallisuuden varmistamiselle."
         ]
       },
@@ -3760,10 +4082,12 @@
         "blocks": [
           "Ohjelman voimassa olevan tietojenkäsittelyliitteen mukaan Robloxille sisäistä vaikuttavuustutkimusta varten mahdollisesti luovutettavat tunnistetiedot rajoittuvat seuraaviin:",
           [
-            "Roblox-käyttäjätunnus.",
-            "Roblox-käyttäjätunniste.",
-            "Ohjelman tiliin liitetty sähköpostiosoite, joka voi olla vanhemman tai huoltajan osoite.",
-            "Ohjelman palvelu tai toiminta, johon on osallistuttu."
+            "Roblox-käyttäjätunnus",
+            "Roblox-käyttäjätunniste",
+            "Sijainti (kaupunki ja maa)",
+            "Lapsen ikä",
+            "Ohjelman palvelu tai toiminta, johon on osallistuttu",
+            "Lapsen julkaiseman pelin URL-osoite"
           ],
           "Roblox käyttää tätä tietojoukkoa sisäiseen tutkimukseen Ohjelman hyödyistä ja vaikuttavuudesta. Sitä ei luovuteta Ohjelman kautta mainontaan eikä suoramarkkinointiin.",
           "Roblox voi lisäksi saada koostettua raportointia osallistumisesta, suorittamisesta, julkaisemisesta ja tyytyväisyydestä. Tästä raportoinnista ei voi tunnistaa yksittäisiä perheitä.",
@@ -3788,34 +4112,34 @@
       "media": {
         "heading": "Valokuvaaminen, videokuvaaminen ja julkinen käyttö",
         "blocks": [
-          "Verkkotapaamisia ei tallenneta. Jos johonkin tapaamiseen tai tapahtumaan on suunniteltu valokuvausta tai videokuvausta, perheille kerrotaan siitä etukäteen.",
-          "Mediavalintoja on yksi, ja se tehdään lapsikohtaisesti. Valinta tehdään, kun lapsi ilmoitetaan Luojien akatemian toimintaan, ja sen voi muuttaa milloin tahansa lapsen sivulla My SOG -näkymässä."
+          "Tavanomaisia verkkotapaamisia ei tallenneta. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun yksikään lapsi ei ole tunnistettavissa.",
+          "Jos johonkin tapaamiseen tai tapahtumaan on suunniteltu tunnistettavaa valokuvausta tai videokuvausta, perheille kerrotaan siitä etukäteen.",
+          "Kun medialupa on annettu, tapaamisen aikana otettu valokuva voidaan liittää tapaamisraporttiin, jonka kaikki lapsen ryhmän perheet näkevät."
         ]
       },
-      "mediaChoice": {
-        "heading": "Mitä mediavalinta kattaa",
+      "mediaPublic": {
+        "heading": "Julkinen vaikuttavuusviestintä",
         "blocks": [
-          "Yksi vapaaehtoinen valintaruutu kattaa kaiken lapsen valokuvien ja videomateriaalin käytön. Kun ruutu on rastitettu, lapsesta otettuja valokuvia ja videoita voidaan:",
+          "Tämä valinta antaa Lynx Educatelle, School of Gamingille ja Robloxille luvan käyttää valokuvia tai videomateriaalia julkisesti Ohjelman vaikuttavuuden esittelemiseen, muun muassa seuraavissa yhteyksissä:",
           [
-            "Liittää tapaamisraportteihin, jotka jokainen ryhmän perhe näkee ryhmän sivulla ja saa sähköpostitse.",
-            "Jakaa Lynx Educatelle ja Robloxille vaikuttavuusraportointia varten, mukaan lukien sisäiset vaikuttavuusraportit, toteutuskatsaukset ja tukijalle pidettävät esitykset.",
-            "Käyttää julkisesti Lynx Educaten, School of Gamingin ja Robloxin verkkosivuilla ja sosiaalisen median kanavissa."
+            "Niiden verkkosivuilla.",
+            "Niiden sosiaalisen median kanavissa.",
+            "Lehdistö- ja viestintäaineistoissa.",
+            "Ohjelmaa ja sen vaikuttavuutta koskevassa viestinnässä."
           ],
-          "Julkinen sisältö voi olla saatavilla maailmanlaajuisesti, ja muut käyttäjät voivat kopioida tai jakaa sitä ilman, että organisaatiot voivat vaikuttaa siihen.",
-          "Jos ruutua ei ole rastitettu, lapsi jätetään pois tapaamisten valokuvista ja tunnistettavasta materiaalista. Mitään hänet tunnistettavaksi tekevää ei liitetä tapaamisraporttiin, jaeta Lynx Educatelle tai Robloxille eikä käytetä julkisesti. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun yksikään lapsi ei ole tunnistettavissa."
+          "Julkinen sisältö voi olla saatavilla maailmanlaajuisesti, ja muut käyttäjät voivat kopioida tai jakaa sitä ilman, että organisaatiot voivat vaikuttaa siihen. Roblox, Lynx Educate ja School of Gaming ovat tällaisten tietojen osalta erillisiä ja itsenäisiä rekisterinpitäjiä."
         ]
       },
       "mediaChildAgrees": {
         "heading": "Myös lapsen on suostuttava",
         "blocks": [
           "Vanhemman on hyvä keskustella mediavalinnasta lapsen kanssa ennen sen tekemistä. Selitämme valokuvaamisen tai videokuvaamisen myös lapselle hänen ikätasolleen sopivalla tavalla.",
-          "Pelikasvattaja kysyy lapselta ennen valokuvan ottamista, vaikka vanhempi olisi rastittanut ruudun, eikä lasta valokuvata tai videokuvata tarkoituksellisesti, jos hän vastustaa sitä. Lapsi, jonka vanhempi ei ole rastittanut ruutua, jätetään pois tapaamisten valokuvista ja tunnistettavasta materiaalista. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun yksikään lapsi ei ole tunnistettavissa."
+          "Emme valokuvaa emmekä videokuvaa tarkoituksellisesti lasta, joka vastustaa sitä, vaikka vanhempi olisi aiemmin rastittanut mediavalinnan. Henkilöstö toteuttaa kohtuulliset käytännön toimet, joilla lapset, joilla ei ole lupaa, jätetään pois tunnistettavasta materiaalista."
         ]
       },
       "mediaCaseStudies": {
         "heading": "Tapausesittelyt, nimet ja osallistujien luoma sisältö",
         "blocks": [
-          "Mediavalinnan valintaruutu koskee vain valokuvia ja videomateriaalia.",
           "Erillinen kirjallinen lupa pyydetään ennen kuin käytetään seuraavia:",
           [
             "Lapsen koko nimi.",
@@ -3831,7 +4155,7 @@
       "mediaChanging": {
         "heading": "Mediavalinnan muuttaminen",
         "blocks": [
-          "Vanhempi voi muuttaa mediavalintaa milloin tahansa lapsen sivulla My SOG -näkymässä tai ottamalla meihin yhteyttä. Myös lapsi voi pyytää meitä peruuttamaan luvan.",
+          "Vanhempi tai lapsi voi peruuttaa medialuvan ottamalla yhteyttä osoitteeseen {supportEmail}, tai vanhempi voi muuttaa sitä milloin tahansa lapsen sivulla My SOG -näkymässä.",
           "Peruuttamisen jälkeen lopetamme uuden käytön ja poistamme aineiston hallinnassamme olevista kanavista, jos se on kohtuudella mahdollista. Peruuttaminen ei voi tehdä aiemmasta lainmukaisesta käytöstä lainvastaista, perua jo jaettuja painotuotteita eikä taata sitä, että kolmansien osapuolten jo jakamat kopiot poistetaan."
         ]
       },
@@ -3841,11 +4165,10 @@
           "Ohjelma toteutetaan yksityisessä ja moderoidussa oppimisympäristössä.",
           [
             "Jokaisen lapsen profiili on liitetty vanhemman tai huoltajan tiliin.",
-            "Lapset osallistuvat pelkällä etunimellään – eivät koskaan yhteystiedoillaan.",
-            "Mukaan pääsevät vain ilmoittautuneet osallistujat ja taustatarkistetut pelikasvattajat.",
+            "Mukaan pääsevät vain ilmoittautuneet osallistujat ja taustatarkistetut ohjaajat.",
             "Viestintä tapahtuu ryhmässä ja valvotusti.",
             "Lasten välillä ei ole yksityisiä suoraviestejä.",
-            "Tapaamisia ei tallenneta.",
+            "Tavanomaisia tapaamisia ei tallenneta.",
             "Lynx Educate ja School of Gaming eivät käytä Ohjelman ilmoittautumistietoja lapsille suunnattuun käyttäytymiseen perustuvaan mainontaan."
           ],
           "Turvallisuushuolet käsitellään yhteisen <linkRobloxSafeguarding>lasten turvallisuuden toimintaohjeen</linkRobloxSafeguarding> mukaisesti. School of Gaming hoitaa arjen tilanteet ensisijaisesti ja siirtää vakavat asiat Lynx Educaten käsiteltäviksi. Jos lapsi voi olla välittömässä vaarassa, hätäpalveluihin otetaan yhteyttä ensin.",
@@ -3866,11 +4189,11 @@
           ],
           "School of Gamingin tärkeimmät tekniset palveluntarjoajat ovat tällä hetkellä:",
           [
-            "Supabase, tili- ja Ohjelmatietoja varten.",
-            "Brevo, toiminnallisia sähköposteja ja muistutuksia varten.",
-            "Daily.co, reaaliaikaisia ääni- ja videotoimintoja varten.",
-            "Vercel, sivuston ylläpitoa ja yksityisyyttä kunnioittavaa analytiikkaa varten.",
-            "Meta/WhatsApp, vain silloin kun perhe valitsee WhatsApp-viestinnän."
+            "<strong>Supabase</strong>, tili- ja Ohjelmatietoja varten.",
+            "<strong>Brevo</strong>, toiminnallisia sähköposteja ja muistutuksia varten.",
+            "<strong>Daily.co</strong>, reaaliaikaisia ääni- ja videotoimintoja varten.",
+            "<strong>Vercel</strong>, sivuston ylläpitoa ja yksityisyyttä kunnioittavaa analytiikkaa varten.",
+            "<strong>Meta/WhatsApp</strong>, vain silloin kun perhe valitsee WhatsApp-viestinnän."
           ],
           "Nämä palveluntarjoajat saavat käsitellä tietoja vain sopimuksensa mukaisten palvelujen tuottamiseen, ja niiden on suojattava tiedot asianmukaisesti."
         ]
@@ -3889,13 +4212,13 @@
         "blocks": [
           "Emme säilytä kaikkia tietoryhmiä yhtä kauan.",
           [
-            "Sogverse-tilin tiedot: säilytetään niin kauan kuin perheen tili on aktiivinen, minkä jälkeen ne poistetaan tai anonymisoidaan, paitsi jos rajattu tieto on lain mukaan säilytettävä.",
-            "Ohjelman hallinnointi- ja osallistumistiedot: säilytetään, kunnes Ohjelman toteutus, loppuraportointi ja kohtuullinen jälkiseuranta ovat valmiit, minkä jälkeen ne poistetaan tai anonymisoidaan.",
-            "Robloxin tutkimustietojoukko: palautetaan tai poistetaan turvallisesti, kun kyseiset käsittelypalvelut päättyvät, ellei sovellettava laki edellytä rajattua säilyttämistä.",
-            "Markkinointitiedot: säilytetään, kunnes vanhempi peruuttaa tilauksen.",
-            "Media-aineisto ja medialuvat: säilytetään sallittua raportointi- tai julkaisutarkoitusta varten ja tarkistetaan määräajoin.",
-            "Turvallisuutta, tapahtumia ja oikeudellisia asioita koskevat tiedot: voidaan säilyttää pidempään, jos se on tarpeen lapsen suojelemiseksi, huolen selvittämiseksi, lain noudattamiseksi tai oikeudellisen vaateen laatimiseksi tai puolustamiseksi.",
-            "Tietoturvalokit: säilytetään vain sen ajan, joka on kohtuudella tarpeen palvelun suojaamiseksi ja tutkimiseksi."
+            "<strong>Sogverse-tilin tiedot:</strong> säilytetään niin kauan kuin perheen tili on aktiivinen, minkä jälkeen ne poistetaan tai anonymisoidaan, paitsi jos rajattu tieto on lain mukaan säilytettävä.",
+            "<strong>Ohjelman hallinnointi- ja osallistumistiedot:</strong> säilytetään, kunnes Ohjelman toteutus, loppuraportointi ja kohtuullinen jälkiseuranta ovat valmiit, minkä jälkeen ne poistetaan tai anonymisoidaan.",
+            "<strong>Robloxin tutkimustietojoukko:</strong> palautetaan tai poistetaan turvallisesti, kun kyseiset käsittelypalvelut päättyvät, ellei sovellettava laki edellytä rajattua säilyttämistä.",
+            "<strong>Markkinointitiedot:</strong> säilytetään, kunnes vanhempi peruuttaa tilauksen.",
+            "<strong>Media-aineisto ja medialuvat:</strong> säilytetään sallittua raportointi- tai julkaisutarkoitusta varten ja tarkistetaan määräajoin.",
+            "<strong>Turvallisuutta, tapahtumia ja oikeudellisia asioita koskevat tiedot:</strong> voidaan säilyttää pidempään, jos se on tarpeen lapsen suojelemiseksi, huolen selvittämiseksi, lain noudattamiseksi tai oikeudellisen vaateen laatimiseksi tai puolustamiseksi.",
+            "<strong>Tietoturvalokit:</strong> säilytetään vain sen ajan, joka on kohtuudella tarpeen palvelun suojaamiseksi ja tutkimiseksi."
           ],
           "Sogverse-tilin sulkeminen ei automaattisesti sulje erillistä Roblox-tiliä eikä poista Robloxissa julkaistua kokemusta."
         ]
@@ -3916,8 +4239,8 @@
           "Suostumuksen peruuttaminen ei vaikuta ennen peruutusta tapahtuneen käsittelyn lainmukaisuuteen.",
           "Lapset voivat ottaa meihin yhteyttä suoraan omia tietojaan koskevissa asioissa. Myös vanhempi tai huoltaja voi tehdä pyynnön lapsen puolesta ottaen huomioon lapsen omat oikeudet, iän ja kehitystason.",
           "Osallistujiin ei kohdisteta pelkästään automaattiseen käsittelyyn perustuvaa päätöksentekoa, jolla on oikeusvaikutuksia tai vastaavalla tavalla merkittäviä vaikutuksia.",
-          "Lähetä pyynnöt osoitteeseen support@lynxeducate.com tai {supportEmail}. Organisaatiot sovittavat vastauksensa yhteen ja välittävät Robloxia koskevat pyynnöt Robloxille tarvittaessa.",
-          "Perheillä on myös oikeus tehdä valitus Ranskan tietosuojaviranomaiselle, joka on Commission nationale de l’informatique et des libertés – <linkCnil>CNIL</linkCnil>."
+          "Lähetä pyynnöt osoitteeseen <strong>support@lynxeducate.com</strong> tai <strong>{supportEmail}</strong>. Organisaatiot sovittavat vastauksensa yhteen ja välittävät Robloxia koskevat pyynnöt Robloxille tarvittaessa.",
+          "Perheillä on myös oikeus tehdä valitus Ranskan tietosuojaviranomaiselle, joka on <strong>Commission nationale de l’informatique et des libertés – <linkCnil>CNIL</linkCnil></strong>."
         ]
       },
       "security": {
@@ -3947,14 +4270,14 @@
       "contact": {
         "heading": "Yhteystiedot",
         "blocks": [
-          "Lynx Educate SAS",
+          "<strong>Lynx Educate SAS</strong>",
           "185 rue Ordener",
           "75018 Pariisi, Ranska",
-          "support@lynxeducate.com",
-          "School of Gaming Galactic Oy",
+          "<strong>support@lynxeducate.com</strong>",
+          "<strong>School of Gaming Galactic Oy</strong>",
           "Isokatu 56",
           "90100 Oulu, Suomi",
-          "{supportEmail}"
+          "<strong>{supportEmail}</strong>"
         ]
       }
     }
@@ -4040,12 +4363,12 @@
   },
   "robloxTerms": {
     "title": "Luojien akatemian käyttöehdot",
-    "subtitle": "Koskee perheitä, jotka ilmoittautuvat Luojien akatemiaan Ranskassa – Lynx Educate × School of Gaming, yhteistyössä Robloxin kanssa.",
+    "subtitle": "Perheille, jotka ilmoittautuvat Ranskan digitaalisen koulutuksen Ohjelmaan, jonka toteuttavat Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa.",
     "lastUpdated": "Päivitetty: {date}",
     "intro": {
       "heading": "Lyhyesti",
       "blocks": [
-        "Tässä kerrotaan, mihin ilmoitat lapsesi, kun ilmoittaudut Luojien akatemiaan. Kyseessä on Lynx Educaten ja School of Gamingin yhteinen ohjelma, jota Roblox tukee. Jos jokin jää epäselväksi, lähetä sähköpostia osoitteeseen support@lynxeducate.com."
+        "Tässä kerrotaan, mihin ilmoitat lapsesi, kun ilmoittaudut Luojien akatemian Ohjelmaan. Kyseessä on Lynx Educaten ja School of Gamingin yhdessä toteuttama ohjelma, joka tehdään yhteistyössä Robloxin kanssa. Jos jokin jää epäselväksi, lähetä sähköpostia osoitteeseen <strong>support@lynxeducate.com</strong>."
       ]
     },
     "sections": {
@@ -4053,8 +4376,8 @@
         "heading": "Keitä tässä on mukana",
         "blocks": [
           [
-            "Lynx Educate SAS ja School of Gaming Galactic Oy (”SOG”) suunnittelevat ja toteuttavat tämän Ohjelman yhdessä. Tässä asiakirjassa ”me” tarkoittaa molempia yhdessä, ellei toisin mainita.",
-            "Roblox Corporation (”Roblox”) tukee Ohjelmaa ja tarjoaa alustan, jolla lapsesi rakentaa. Roblox ei ole näiden ehtojen osapuoli."
+            "<strong>Lynx Educate SAS</strong> ja <strong>School of Gaming Galactic Oy (”SOG”)</strong> suunnittelevat ja toteuttavat tämän Ohjelman yhdessä. Tässä asiakirjassa ”me” tarkoittaa molempia yhdessä, ellei toisin mainita.",
+            "<strong>Roblox Corporation</strong> (”Roblox”) tukee Ohjelmaa ja tarjoaa alustan, jolla lapsesi rakentaa. Roblox ei ole näiden ehtojen osapuoli."
           ],
           "Ilmoittautuminen ja tapaamiset tapahtuvat School of Gamingin alustalla (”Sogverse”). Ilmoittautumalla hyväksyt nämä Ohjelmaa koskevat ehdot, joita sovelletaan <linkTerms>School of Gamingin</linkTerms> ja Lynxin yleisten käyttöehtojen rinnalla. Jos ehdot ovat keskenään ristiriidassa, nämä Ohjelman ehdot menevät edelle."
         ]
@@ -4080,26 +4403,26 @@
       "safety": {
         "heading": "Turvallisuus ja valvonta",
         "blocks": [
-          "Jokaista tapaamista valvoo koulutettu pelikasvattaja. Käyttäytymistä ja lasten turvallisuutta koskeva toimintatapamme on kuvattu yhteisessä <linkRobloxSafeguarding>lasten turvallisuuden toimintaohjeessamme</linkRobloxSafeguarding>."
+          "Jokaista tapaamista valvoo koulutettu ohjaaja. Käyttäytymistä ja lasten turvallisuutta koskeva toimintatapamme on kuvattu yhteisessä <strong><linkRobloxSafeguarding>lasten turvallisuuden toimintaohjeessamme</linkRobloxSafeguarding></strong>, joka on saatavilla pyynnöstä."
         ]
       },
       "information": {
         "heading": "Sinun tietosi",
         "blocks": [
-          "<linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy> kerrotaan, miten käytämme sinun ja lapsesi tietoja. Ilmoittautumalla vahvistat lukeneesi ja ymmärtäneesi sen.",
-          "Kun ilmoittaudut Luojien akatemiaan, School of Gaming -tiliisi liittyvät tiedot (mukaan lukien yhteystietosi ja lapsesi tilitiedot) jaetaan myös Lynx Educatelle ohjelman toteuttamista varten ja Robloxille ohjelman vaikuttavuustutkimusta varten."
+          "<strong><linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy></strong> kerrotaan, miten käytämme sinun ja lapsesi tietoja. Ilmoittautumalla vahvistat lukeneesi ja ymmärtäneesi sen.",
+          "Kun ilmoittaudut Roblox-ohjelmaan, School of Gaming -tiliisi liittyvät tiedot (mukaan lukien yhteystietosi ja lapsesi tilitiedot) jaetaan myös Lynx Educatelle ohjelman toteuttamista varten ja Robloxille ohjelman vaikuttavuustutkimusta varten. Lisätietoja on <strong><linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy></strong>."
         ]
       },
       "media": {
         "heading": "Valokuvat, video ja markkinointi",
         "blocks": [
-          "Se, näkyykö lapsesi valokuvissa tai videoissa, on yksi vapaaehtoinen valinta, joka tehdään ilmoittaessasi hänet Luojien akatemian toimintaan. Voit muuttaa sitä milloin tahansa lapsesi sivulla My SOG -näkymässä. Lapsi, jolla ei ole tätä lupaa, jätetään pois tapaamisten valokuvista ja tunnistettavasta materiaalista. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun yksikään lapsi ei ole tunnistettavissa."
+          "Se, valokuvataanko tai videokuvataanko lastasi ja käytetäänkö kuvia markkinointiin, riippuu kokonaan niistä valinnoista, jotka teet ilmoittautumisen yhteydessä. Valinnat ovat vapaaehtoisia, ja voit muuttaa mieltäsi milloin tahansa lapsesi sivulla My SOG -näkymässä."
         ]
       },
       "concern": {
         "heading": "Jos sinulla on huoli",
         "blocks": [
-          "Jos olet huolissasi lapsesi kokemuksesta Ohjelmassa, ota yhteyttä School of Gamingiin osoitteeseen {supportEmail} tai Lynx Educateen osoitteeseen support@lynxeducate.com – huolehdimme siitä, että viesti tavoittaa oikeat ihmiset."
+          "Jos olet huolissasi lapsesi kokemuksesta Ohjelmassa, ota yhteyttä joko osoitteeseen support@lynxeducate.com tai {supportEmail} – huolehdimme siitä, että viesti tavoittaa oikeat ihmiset."
         ]
       },
       "changes": {

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { isAdminDashboardScenario } from "@/components/admin/dashboard/mock-dashboard-fixtures";
+import { isMunicipalityInvoicingScenario } from "@/components/admin/municipality-invoicing/mock-invoicing-fixtures";
 import { isChatSceneScenario } from "@/components/chat/mock-chat-fixtures";
 import { isFamilyProductScenario } from "@/components/family/product-page/mock-fixtures";
 import { isGamerDashboardScenario } from "@/components/gamer/mock-dashboard-fixtures";
@@ -28,6 +29,7 @@ import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
 import { GamerDashboardScene } from "./scenes/gamer-dashboard-scene";
 import { GeduContractScene } from "./scenes/gedu-contract-scene";
 import { GeduDashboardScene } from "./scenes/gedu-dashboard-scene";
+import { MunicipalityInvoicingScene } from "./scenes/municipality-invoicing-scene";
 import { ParentDashboardScene } from "./scenes/parent-dashboard-scene";
 import { GeduProductPageScene } from "./scenes/gedu-product-page-scene";
 import { ProductDetailScene } from "./scenes/product-detail-scene";
@@ -37,6 +39,8 @@ import {
   TopicPrepScene,
   isTopicPrepScenario,
 } from "./scenes/topic-prep-scene";
+import { SessionFeedbackScene } from "./scenes/session-feedback-scene";
+import { isSessionFeedbackScenario } from "./scenes/session-feedback-scenarios";
 import { ShopBrowseScene } from "./scenes/shop-browse-scene";
 import { VoiceRoomScene } from "./scenes/voice-room-scene";
 
@@ -160,6 +164,13 @@ const SCENE_RENDERERS: Record<
     if (!isVoiceRoomScenario(scenario)) notFound();
     return <VoiceRoomScene scenario={scenario} />;
   },
+  // Two scenarios, because the two live paths differ by the line above the
+  // heading: the room closing at the window's end says so, and the reader who
+  // pressed Leave is told nothing they do not already know.
+  "voice-feedback": (scenario) => {
+    if (!isSessionFeedbackScenario(scenario)) notFound();
+    return <SessionFeedbackScene scenario={scenario} />;
+  },
   // Two surfaces, one body and one set of fixtures. The audience is the whole
   // difference between them, which is exactly what the pair of scenes is for:
   // opening both in adjacent tabs is how you check that the gamer's copy is the
@@ -179,6 +190,10 @@ const SCENE_RENDERERS: Record<
   "admin-dashboard": (scenario) => {
     if (!isAdminDashboardScenario(scenario)) notFound();
     return <AdminDashboardScene scenario={scenario} />;
+  },
+  "municipality-invoicing": (scenario) => {
+    if (!isMunicipalityInvoicingScenario(scenario)) notFound();
+    return <MunicipalityInvoicingScene scenario={scenario} />;
   },
   // The one scene with no product behind it: it enumerates the topic registry
   // itself, so its scenarios are the two forms a guide filters into rather than

@@ -65,7 +65,8 @@ export function GamerDashboardPageBody({
   /**
    * The ask-for-help-or-send-feedback form, in its child-facing wording. A node
    * so the shell owns the POST behind it and a preview scene can hand over an
-   * inert one — a scene must never gain a live submit that emails every admin.
+   * inert one — a scene must never gain a live submit that emails the support
+   * inbox.
    */
   helpForm: React.ReactNode;
 }) {

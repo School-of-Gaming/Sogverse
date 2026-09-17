@@ -6,7 +6,8 @@ import { lookupRobloxProfile } from "@/lib/roblox";
 import { toE164Digits } from "@/lib/utils";
 import { detectLocaleFromHeader, resolveLocale } from "@/lib/constants/locales";
 import { registerGeduBody } from "@/services/gedu/gedu-registration.contracts";
-import { buildUtmMetadata } from "@/lib/utm";
+import { utmMetadataForConsent } from "@/lib/utm";
+import { parseConsentCookieHeader } from "@/lib/consent";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
@@ -55,7 +56,18 @@ export const POST = defineRoute({
     // them, so a malformed one must not become a 400 that blocks their
     // registration. A bad value degrades to null and the account is created
     // without that field — the same outcome as arriving with no link at all.
-    const utmMetadata = buildUtmMetadata(utm);
+    //
+    // GATED ON MARKETING CONSENT, read off this request's own `Cookie` header,
+    // exactly as the parent route does it: counsel reads the UTM parameters on
+    // a landing link as tracking under the marketing purpose, so the three
+    // `profiles.utm_*` columns are written only for a visitor whose stored
+    // answer granted it. An educator who refused the banner, chose
+    // analytics-only or never answered creates an account with all three NULL.
+    // `src/lib/utm.ts` has the ruling.
+    const utmMetadata = utmMetadataForConsent(
+      parseConsentCookieHeader(request.headers.get("cookie")),
+      utm,
+    );
 
     // Phone → digits to match the profiles.phone CHECK (^\d{7,15}$). Empty or
     // absent stays "" and the RPC NULLIFs it.

@@ -27,7 +27,6 @@ function row(
     seat_count: null,
     signup_threshold: null,
     spoken_language_code: "en",
-    status: "running",
     timezone: "Europe/Helsinki",
     topic: "minecraft_java",
     waitlist_enabled: false,

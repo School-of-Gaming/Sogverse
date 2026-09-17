@@ -15,7 +15,7 @@ import {
  * looking like itself, with the textarea, the character counters and the
  * disabled-until-long-enough button all working — those are pure UI over local
  * state. What must not happen is a POST, because that one writes a row and
- * mails every admin on the platform.
+ * mails the support inbox.
  *
  * Typing is live for the same reason the other scenes' inert panels keep their
  * local behaviour: a form nobody can type into stops reading as the real one.

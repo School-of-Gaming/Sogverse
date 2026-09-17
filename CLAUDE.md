@@ -90,12 +90,14 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | WhatsApp | `src/services/whatsapp/` |
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |
 | Group workspace — shared gedu/admin group page body | `src/components/group-workspace/` |
+| Municipality invoicing — the CFO's monthly invoice page | `src/components/admin/municipality-invoicing/` |
 | Family product page (a family's club/camp/event page) | `src/components/family/product-page/` |
 | Topic prep — the "Before the first session" guide | `src/components/topic-prep/` |
 | Chat components | `src/components/chat/` |
 | Voice — scheduled group rooms | `src/components/voice/` |
 | Voice — instant rooms | `src/components/voice/instant/` |
 | Discord bot | `src/app/api/discord/` |
+| Partner API (Lynx Educate) | `src/app/api/partner/` |
 | SOG-UI — the UI language package and its demo | `packages/sog-ui/` |
 | Database / migrations | `supabase/` |
 | Testing conventions | `tests/` |

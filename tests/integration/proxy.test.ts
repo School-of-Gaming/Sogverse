@@ -139,6 +139,28 @@ describe("proxy", () => {
         expect(response.status).toBe(200);
       }
     );
+
+    it.each([
+      "/api/partner/v1/products",
+      "/api/partner/v1/families",
+      "/api/partner/v1/traffic",
+    ])("serves %s untouched with no session at all", async (path) => {
+      // Lynx's own tooling presents an issued API key and no cookie. The
+      // `/api/` prefix is what exempts it from the locale ladder and the
+      // session gates alike — asserted per resource path rather than only
+      // through the generic `/api/*` case, because a gate reaching for "any
+      // /api route with no session" would break the integration silently.
+      //
+      // Untouched is the assertion, not merely "not a 401": a 307 to a
+      // localized twin would hand the partner an HTML page, and a rewrite
+      // would send the request to a route that does not exist.
+      mockNoUser();
+      const response = await proxy(createBareRequest(path, "locale=fi"));
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("location")).toBeNull();
+      expect(response.headers.get("x-middleware-rewrite")).toBeNull();
+    });
   });
 
   // --- (public) route-group ⇄ proxy PUBLIC_ROUTES drift guard ---

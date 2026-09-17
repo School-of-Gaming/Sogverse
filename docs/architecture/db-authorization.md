@@ -398,19 +398,25 @@ widening is deliberate rather than accidental: what it actually requires is that
 *caller's own identity, not an argument, determines the answer's scope*. A `SECURITY
 INVOKER` function reading only tables the caller's RLS already governs qualifies — it
 cannot return a row a direct select would not, so there is no scope for an argument to
-aim it at someone else. Two members are of this second kind: the product read predicate
-the RLS policies evaluate, and the location search behind the public picker. Both are
-also `anon`-reachable, which is a separate allowlist and a separate decision.
+aim it at someone else. The location search behind the public picker is the member of
+this second kind. It is also `anon`-reachable, which is a separate allowlist and a
+separate decision.
 
 There is a third and widest kind, and it is worth naming so it is not mistaken for an
-oversight: **a function that reads no table at all.** The location search's fold
-primitives — strip diacritics, return the term separator, join a row's searchable strings
-— are pure functions of their arguments, holding no privilege and returning nothing the
-caller did not pass in. There is no scope for an argument to aim because there is no data
-behind them. They are granted rather than hidden because both paths that reach them are
-checked as the *caller*: a `SECURITY INVOKER` function calling them, and a generated
-column whose expression Postgres evaluates under the privileges of whoever writes the row.
-Revoking them hides nothing — it only makes the feature fail closed. The
+oversight: **a function whose answer does not depend on who is asking at all.** Its
+plainest shape reads no table. The location search's fold primitives — strip diacritics,
+return the term separator, join a row's searchable strings — are pure functions of their
+arguments, holding no privilege and returning nothing the caller did not pass in. There
+is no scope for an argument to aim because there is no data behind them. The product read
+predicate the RLS policies evaluate is the other shape: `SECURITY DEFINER`, and it does
+read a table, but it answers only whether a product exists, identically for every caller
+and with no arm keyed to anyone's identity — so an argument has nothing to aim at either,
+and what it can reveal is which ids exist rather than anything about a person. It too is
+`anon`-reachable, which is a separate allowlist and a separate decision. The primitives
+are granted rather than hidden because both paths that reach them are checked as the
+*caller*: a `SECURITY INVOKER` function calling them, and a generated column whose
+expression Postgres evaluates under the privileges of whoever writes the row. Revoking
+them hides nothing — it only makes the feature fail closed. The
 requirement that each entry name a scope test is what keeps the widening honest — a
 function classified this way has to be *shown* answering identically regardless of who
 asks.
@@ -611,7 +617,7 @@ fourteen routes, the feedback partial, and three non-route modules.
 ```csv
 module,model,shape,justification
 src/app/api/participations/waitlist/route.ts,C,1,customer waitlist-join now runs on the user client against a customer-guarded RPC that reads the actor from the session
-src/app/api/feedback/route.ts,C+A,1,the submission write moved to a self-scoping RPC on the user client; the admin client survives only for the notification fan-out (every admin's email; a gamer's parent's) which is not in the submitter's RLS view and must not be returnable from an RPC
+src/app/api/feedback/route.ts,C+A,1,the submission write moved to a self-scoping RPC on the user client; the admin client survives only for the notification's reply-to lookup (a gamer's parent's email) which is not in the submitter's RLS view and must not be returnable from an RPC
 src/app/api/admin/whatsapp/send/route.ts,B,3,contacts upsert + message insert run under the pre-existing admin-only policies; the message policy also pins direction to outbound
 src/app/api/auth/pin/forgot/route.ts,B,3,reads the caller's own PIN hash, already inside their RLS view
 src/app/api/minecraft/account/route.ts,B,3,self-write policies added; the row key comes from the session and never from the request
@@ -683,8 +689,8 @@ src/lib/supabase/admin.ts,-,-,the client factory itself
   recorded as a Phase 4 candidate rather than forced here. (Phase 4 designed it and did
   not ship it either — for a sharper reason than this one; see its design note.)
 - **The feedback route is a partial conversion and is recorded as such.** Its write is
-  Model C; its notification fan-out stays Model A. Folding the recipient lookup into the
-  RPC would make every admin's email address readable by any authenticated caller who
+  Model C; its notification stays Model A. Folding the reply-to lookup into the RPC
+  would make a gamer's parent's email address readable by any authenticated caller who
   invoked that RPC directly, which is worse than the thing it would fix.
 
 Phase 4 cleared the backlog Phase 3 left: the two participation predicates went into

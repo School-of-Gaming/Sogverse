@@ -1402,7 +1402,6 @@ function buildBaseProduct(
     id,
     product_type: productType,
     billing_mode: billingMode,
-    status: pickStatus(state, config),
     is_visible: true,
     is_remote: isRemote,
     // Audience, and the age range the schema ties to it: `min_age`/`max_age`
@@ -1758,28 +1757,3 @@ function buildPriceRows(
   }));
 }
 
-// ---------- Product status ----------
-
-// `status` is the stored DB status. The panel renders from the authored
-// `state`, not this, but matching the shape a real row would carry avoids
-// confusing future readers: open/ended products stay 'running', full or
-// pre-launch ones sit in 'pending'. A club whose start date has not arrived is
-// 'pending' whatever its registration state says — signups are open, the club
-// is not.
-function pickStatus(
-  state: RegistrationState,
-  config: ScenarioConfig,
-): "pending" | "running" {
-  if (config.startsInDays !== undefined) return "pending";
-  switch (state.kind) {
-    case "full_closed":
-    case "full_waitlist":
-    case "pending_thr":
-    case "closed_pre":
-      return "pending";
-    case "open":
-    case "running_late":
-    case "ended":
-      return "running";
-  }
-}

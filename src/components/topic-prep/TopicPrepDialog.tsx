@@ -13,17 +13,26 @@ import { TopicPrepContent } from "./TopicPrepContent";
 import type { TopicPrepPlan } from "@/lib/products/topics";
 
 /**
- * The "Before the first session" guide as an overlay, with the one button that
- * puts it away for good.
+ * The "Before the first session" guide as an overlay, with two ways out and
+ * only one of them putting it away for good.
  *
  * **Reading the guide is not finishing with it.** Opening the dialog, scrolling
  * it, closing it to go and install something and coming back are all the same
  * act — reading — and none of them says the family is set up. Only the
- * affirmative button says that, so it is the only thing that reports a
- * dismissal: Escape, the backdrop and a back gesture all close the overlay and
- * leave the affordance exactly where it was. That asymmetry is the whole
- * behaviour of this component, and it is why "close" and "I'm ready" are two
- * different outcomes rather than one.
+ * affirmative says that, so it is the only thing that reports a dismissal: the
+ * negative button, Escape, the backdrop and a back gesture all close the
+ * overlay and leave the affordance exactly where it was. That asymmetry is the
+ * whole behaviour of this component, and it is why closing and answering are
+ * two different outcomes rather than one.
+ *
+ * **The negative gets a visible button because the honest exit had none.** With
+ * the affirmative alone in the footer, a single button is read as the door
+ * rather than as an answer, and families who had not done a step pressed it to
+ * get out — spending the card's one offer on a guide they never followed. The
+ * ways to leave without answering were all there and none of them was a control
+ * a thumb could find: Escape is not on a phone at all, and a backdrop is not
+ * something a reader knows is clickable. So the honest exit is drawn as what it
+ * always was — a second, lesser button, saying the same thing as closing.
  *
  * **The body scrolls inside the box rather than growing it.** The Roblox Studio
  * guide is three steps with per-platform notes and a four-item checklist, which
@@ -80,13 +89,18 @@ export function TopicPrepDialog({
           <TopicPrepContent plan={plan} />
         </div>
 
-        {/* One button, and it is the affirmative — so it is last in the DOM and
-            lands on the right of the row, exactly where every other dialog in
-            the app puts the answer to its own question. There is no negative
-            half to pair it with: the question is "have you done this yet", and
-            "not yet" is answered by closing the overlay rather than by a button
-            that would have to claim the family is not ready. */}
+        {/* The two halves of one question — "have you done this yet" — so they
+            take the order every other dialog in the app uses: the negative
+            first in the DOM, the affirmative last, which puts the answer on the
+            right of the row and on top of the stack. The footer already carries
+            that shape, so nothing here arranges it. The negative is the lesser
+            of the two and is drawn as one, because it asks for nothing: it
+            closes the overlay and reports nothing, exactly as every other way
+            of leaving does. */}
         <DialogFooter className="mt-0 p-6 pt-4">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            {t("notYetLabel")}
+          </Button>
           <Button
             onClick={() => {
               onReady();

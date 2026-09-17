@@ -8,11 +8,13 @@
  * action cannot apply to is refused where the parent can see it, not after the
  * click.
  *
- * **The stored birth date is a month, not a day.** Nothing in the product ever
- * asks a parent for the day of the month — `gamer-birth.ts` assembles
+ * **The stored birth date is a month, not a day.** Nothing in the product's
+ * forms asks a parent for the day of the month — `gamer-birth.ts` assembles
  * `date_of_birth` as the 1st of the chosen month — so a stored `2017-03-01`
  * means "born some time in March 2017" and the child's real age today is one of
- * two adjacent numbers. That ambiguity is resolved *in the family's favour* at
+ * two adjacent numbers. (The schema does not enforce the 1st, so both the band
+ * and the range below read the year and month alone.) That ambiguity is
+ * resolved *in the family's favour* at
  * both ends, because the cost of the two errors is not symmetric: letting a
  * child who might be in range enrol is a conversation, and locking a child who
  * really is in range out of a club is a family we never hear from again. So:
@@ -51,7 +53,10 @@ export interface GamerAgeEligibilityInput {
   minAge: number | null;
   /** `products.max_age` — null on a product that names no upper bound. */
   maxAge: number | null;
-  /** `gamer_profiles.date_of_birth`, `YYYY-MM-DD` and always the 1st. */
+  /**
+   * `gamer_profiles.date_of_birth`, `YYYY-MM-DD`. The forms write the 1st, but
+   * nothing enforces it; only its year and month are read.
+   */
   dateOfBirth: string;
   /** Today as a calendar date in the viewer's zone, `YYYY-MM-DD`. */
   today: string;
@@ -75,9 +80,11 @@ export function gamerAgeBlock({
     // dates — no parsing, and so no zone to get wrong.
     const reference =
       startDate !== null && startDate > today ? startDate : today;
-    // The oldest they could be: the stored 1st is the earliest day of the month
-    // they could have been born on.
-    if (ageOnDate(dateOfBirth, reference) < minAge) return "under";
+    // The oldest they could be: born on the 1st of the stored month, whatever
+    // day the row happens to carry.
+    if (ageOnDate(firstDayOfBirthMonth(dateOfBirth), reference) < minAge) {
+      return "under";
+    }
   }
 
   if (maxAge !== null) {
@@ -118,6 +125,45 @@ export function ageOnDate(birth: string, on: string): number {
   let years = onY - birthY;
   if (onM < birthM || (onM === birthM && onD < birthD)) years--;
   return years;
+}
+
+/**
+ * **Every age the child could be on a given calendar date**, as the inclusive
+ * range the birth month allows: `max` is the age of somebody born on the
+ * month's 1st, `min` the age of somebody born on its last day. The two are
+ * equal except in the child's birth month, where the real birthday may or may
+ * not have passed.
+ *
+ * **Only the year and month of `dateOfBirth` are read; its day is ignored.** The
+ * forms write the 1st, but nothing in the schema enforces it, and rows with
+ * other days exist. A reader of this range treats the birth date as a month —
+ * the partner API publishes nothing finer — so the answer must be the same for
+ * every day of that month: otherwise a stored day would shift the range on a
+ * date inside the birth month, and the range would disclose part of the day.
+ *
+ * The same reading of the same ambiguity as the band above, stated as a range
+ * rather than resolved in anyone's favour — for a reader that reports the
+ * uncertainty instead of deciding on it (the partner API's research ages), or
+ * that has to ask whether an age is *possibly* in range (`min <= band max` and
+ * `max >= band min`).
+ */
+export function possibleAgeOnDate(
+  dateOfBirth: string,
+  on: string,
+): { min: number; max: number } {
+  return {
+    min: ageOnDate(lastDayOfBirthMonth(dateOfBirth), on),
+    max: ageOnDate(firstDayOfBirthMonth(dateOfBirth), on),
+  };
+}
+
+/**
+ * The stored birth month's 1st, as a `YYYY-MM-DD` string — the earliest day the
+ * child could have been born on, whatever day the row happens to carry.
+ */
+function firstDayOfBirthMonth(dateOfBirth: string): string {
+  const [year, month] = dateOfBirth.split("-").map(Number);
+  return `${year}-${String(month).padStart(2, "0")}-01`;
 }
 
 /**

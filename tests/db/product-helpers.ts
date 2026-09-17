@@ -15,8 +15,11 @@ import { TEST_IDS } from "./constants";
  *
  * Allocation registry — keep this current when adding a v2 db test. The
  * suffix is the last byte of the UUID (`...0000000005XX`):
- *   5a1–5a3, 5aa   exposed-function-scope.test.ts (5a3 is its product_groups
- *                  id; 5aa is its unlisted-but-published product)
+ *   5a1–5a3, 5aa,  exposed-function-scope.test.ts (5a3 is its product_groups
+ *   5af            id; 5aa is its unlisted-but-published product; 5af is an id
+ *                  no product may ever hold, backing the one case
+ *                  `can_read_product` still answers false for — declared here
+ *                  for the same reason 6ee and 6ff below are)
  *   5a4–5a9        write-idor.test.ts (5a4 is the product; 5a5, 5a6 and 5a9
  *                  are the group / zone / slot fixtures it seeds)
  *   5b1–5b5        participations-race.test.ts (5b2 is its soft-cap product)
@@ -28,8 +31,12 @@ import { TEST_IDS } from "./constants";
  *   5c7            waitlist-admin.test.ts (its muni product; see also 5f6)
  *   5c8–5ca        admin-participation-rpcs.test.ts (5ca is its free club)
  *   5d1–5da        session-credits-cron.test.ts
- *   5e1–5e4        products-gamer-rls.test.ts
- *   5e5–5e8        products-purchaser-rls.test.ts
+ *   5e1–5e4        products-gamer-rls.test.ts (5e3 and 5e4 are FREE: they held
+ *                  the reserving-row and the no-participation products, the
+ *                  negative controls for a carve-out that stopped existing when
+ *                  every product became readable by direct link)
+ *   5e5–5e8        products-purchaser-rls.test.ts (5e7 and 5e8 are FREE, for
+ *                  the same reason as 5e3 and 5e4)
  *   5f1, 5f2, 5f7, 5f8, 5ff
  *                  update-product.test.ts (5f7 is the product its 00171
  *                  waitlist-deletion cases seed participations on, kept apart
@@ -87,7 +94,7 @@ import { TEST_IDS } from "./constants";
  *                  per row of the matrix, because the thing under test is how
  *                  many groups a product has and no single product can hold
  *                  three answers)
- *   670-67a        seat-offer.test.ts (670 is the offerable club — free, capped
+ *   670-678        seat-offer.test.ts (670 is the offerable club — free, capped
  *                  and with exactly ONE group, 671, because "exactly one" is
  *                  the condition the offer exists to depend on; 672/673 are a
  *                  PAID club and its group, 674 with groups 675/676 is the
@@ -98,12 +105,9 @@ import { TEST_IDS } from "./constants";
  *                  attention product: capped, queued, no groups and its gedu
  *                  fee set, so the waitlist flag is the ONLY issue it can
  *                  raise and "the product dropped out of the list" is
- *                  assertable rather than merely likely. 679 is a CANCELLED
- *                  club with group 67a, otherwise shaped exactly like 670 —
- *                  its own product for the same reason the refusals above have
- *                  theirs: flipping 670's status inside a case and flipping it
- *                  back leaves every later case in this file depending on a
- *                  restore that a failed assertion would have skipped)
+ *                  assertable rather than merely likely. 679 and 67a are FREE:
+ *                  they held a cancelled club and its group until product
+ *                  cancellation was removed from the schema)
  *   680-683        required-consents.test.ts (four products, because the thing
  *                  under test is what a product REQUIRES and no single product
  *                  can hold four answers: 680 is a free club requiring both
@@ -113,12 +117,13 @@ import { TEST_IDS } from "./constants";
  *                  asked — and 683 the queue's own club, kept apart from 680 so
  *                  the already-enrolled gate can never stand in for the consent
  *                  refusal the waitlist cases are asserting)
- *   690-691        marketing-consents.test.ts (two products, and the pair is the
- *                  whole point: 690 is PUBLISHED, so its marketing-consent ask
- *                  is readable by a stranger browsing the shop, and 691 is
- *                  CANCELLED, so the same ask is readable by nobody but an
- *                  admin. `can_read_product` is what separates them, and a
- *                  single product cannot hold both answers)
+ *   690-691        marketing-consents.test.ts (two products: 690 is PUBLISHED
+ *                  and LISTED, the state a shop page is read in, and 691 is
+ *                  unlisted with a term that ended years ago. The pair used to
+ *                  be a readability contrast — `can_read_product` separated
+ *                  them — and since every product became readable by direct
+ *                  link it is the opposite: the ask is as readable on the
+ *                  ended, unlisted one as on the listed one)
  *   6a0-6a3, 6a9   session-images.test.ts (two products 6a0/6a1 with their
  *                  groups 6a2/6a3; 6a9 is an image id that must never exist,
  *                  declared here for the same reason 6ee and 6ff below are)
@@ -133,12 +138,11 @@ import { TEST_IDS } from "./constants";
  *                  kept apart because its cases satisfy the other three
  *                  conditions and would otherwise move the counts every other
  *                  block asserts on)
- *   6c0-6c3, 6cf   gamer-photo-consents.test.ts (6c0 PUBLISHED and 6c1
- *                  CANCELLED are the readability pair, for the reason the
- *                  690/691 pair above has one: `can_read_product` is what
- *                  separates them and a single product cannot hold both
- *                  answers. 6c2 is a third product with its group 6c3, kept
- *                  apart from both because it is the only one with a gedu
+ *   6c0-6c3, 6cf   gamer-photo-consents.test.ts (6c0 PUBLISHED and listed, 6c1
+ *                  unlisted with a long-past term — the same pair as 690/691
+ *                  above and read the same way now: the ask is as readable on
+ *                  one as on the other. 6c2 is a third product with its group
+ *                  6c3, kept apart from both because it is the only one with a gedu
  *                  assignment and a roster on it — the fixture the whole staff
  *                  read arm is asserted against, and one whose membership
  *                  changes inside a case. 6cf is that file's must-NOT-exist
@@ -194,10 +198,32 @@ import { TEST_IDS } from "./constants";
  *                  two is always on summer time — and a fixed-offset zone in
  *                  which it is just after local midnight, which is what
  *                  exercises the SQL window search's adjacent-day probe)
+ *   7f7-7fd        admin-municipality-invoicing.test.ts (five municipality
+ *                  clubs, two of them with a group: 7fa/7fb recorded a session
+ *                  inside the month under test, 7fc/7fd sit wholly outside it in
+ *                  both their term and their one session row, 7f7 was running
+ *                  right across the month and recorded nothing at all, 7f8 is
+ *                  the online club whose own location is the municipality, and
+ *                  7f9 is the club in a hall hanging off a region with no
+ *                  municipality between them, which the RPC refuses a month for
+ *                  — seeded and torn down inside its own test, because present
+ *                  during the shared read it would refuse that read too. One
+ *                  product per fact, because no single product can be both
+ *                  inside and outside a month, both silent and recorded, or both
+ *                  under a municipality and in one)
  *   7f5-7f6       gamer-sign-in.test.ts (one club 7f5 with one group 7f6 — the
  *                  smallest document that can carry a roster, which is all the
  *                  boundary half needs: a gedu-readable feed that would show a
  *                  child's address if any RPC ever emitted one)
+ *
+ * The 7xx block runs out at 7ff, so allocation continues in 8xx
+ * (`...00000000008XX`):
+ *   801-804        session-feedback.test.ts (club 801 with group 803, where
+ *                  BOTH seeded children hold an active seat — the sibling pair
+ *                  is what makes "a member reads only their own row" provable
+ *                  rather than merely true — and club 802 with group 804, where
+ *                  nobody is seated, so every "refused in a group they are not
+ *                  in" case fails for the group clause alone)
  *   637           write-idor.test.ts's product_images entry. It sits outside
  *                  that file's 5a4-5a9 block because the block was full when
  *                  the catalogue arrived; the file is named twice here rather
@@ -223,7 +249,6 @@ export interface ProductOptions {
   /** Fixed product_topic enum value. Default: "minecraft_java". */
   topic?: Database["public"]["Enums"]["product_topic"];
   billingMode?: Database["public"]["Enums"]["billing_mode"];
-  status?: Database["public"]["Enums"]["product_status"];
   /** null = unlimited seats. Default: 1 (small enough for race tests). */
   seatCount?: number | null;
   signupThreshold?: number | null;
@@ -258,9 +283,9 @@ export interface ProductOptions {
 }
 
 /**
- * Creates a v2 product with sensible defaults: paid consumer_club, 1 seat,
- * status='pending' so create_participation accepts signups, registration
- * already open. Returns the product id.
+ * Creates a v2 product with sensible defaults: paid consumer_club, 1 seat, no
+ * dates and no threshold — which derives as `pending`, so create_participation
+ * accepts signups — and registration already open. Returns the product id.
  *
  * The caller is responsible for deletion (CASCADE handles participations
  * and the seat-count rollup row).
@@ -277,7 +302,6 @@ export async function createTestProduct(
     topic: options.topic ?? "minecraft_java",
     product_type: options.productType ?? "consumer_club",
     billing_mode: options.billingMode ?? "paid",
-    status: options.status ?? "pending",
     seat_count: options.seatCount === undefined ? 1 : options.seatCount,
     signup_threshold: options.signupThreshold ?? null,
     start_date: options.startDate ?? null,

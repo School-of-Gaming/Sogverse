@@ -216,8 +216,8 @@ export function SwitchClubSheet({
   const target = products?.find((p) => p.id === targetId) ?? null;
 
   const candidates = useMemo(
-    () => (products ?? []).filter((p) => isSwitchTarget(p, productId)),
-    [products, productId],
+    () => (products ?? []).filter((p) => isSwitchTarget(p, productId, now)),
+    [products, productId, now],
   );
 
   // One line of facts per row, and the same line again above the group list in
@@ -248,20 +248,26 @@ export function SwitchClubSheet({
     [candidates, search, source],
   );
 
+  // One derivation of the chosen club's lifecycle, feeding both the chip beside
+  // its name and the "has not started" fact below it — two statements about the
+  // same thing that must not be allowed to disagree. A sign-up count of 0 is
+  // the approximation: this sheet holds no count for the target.
+  const targetStatus = target === null ? null : effectiveStatus(target, now, 0);
+
   // The chosen club's own facts, stated as information under the money. The
   // seat count is the only one that arrives after the stage does, and it is
   // present as a fact from the first render (with nothing in it yet), so the
   // block stands at its final height before the snapshot lands.
   const facts: SwitchTargetFact[] =
-    target === null
+    target === null || targetStatus === null
       ? []
       : switchTargetFacts(
           {
-            status: target.status,
             minAge: target.min_age,
             maxAge: target.max_age,
             regionLockCountry: target.region_lock_country,
             startDate: target.start_date,
+            status: targetStatus,
             seatCount: target.seat_count,
           },
           gamerAge,
@@ -412,14 +418,14 @@ export function SwitchClubSheet({
             />
           ) : (
             <div className="space-y-4">
-              {target && (
+              {target && targetStatus && (
                 <div className="rounded-lg border border-border p-3">
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-medium">
                       {resolveTranslation(target.product_translations, uiLocale)
                         ?.name ?? ""}
                     </p>
-                    <ProductStatusChip status={effectiveStatus(target, now, 0)} />
+                    <ProductStatusChip status={targetStatus} />
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {factsOf(target)}

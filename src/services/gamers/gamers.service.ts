@@ -123,49 +123,6 @@ export class GamerService {
   }
 
   /**
-   * The sign-in mode of each named gamer, as `{ user_id, sign_in }` rows.
-   *
-   * For the admin users list, which prints a different identity line per mode —
-   * a mailbox, a username, or nothing at all — and cannot ask per row without
-   * turning one list into a query per child. One read alongside the profiles
-   * read it is already doing answers the whole page.
-   *
-   * **Keyed, not walked, and the ids come from the page.** The caller is
-   * already holding the users it is about to render — a page of them, or a
-   * search result — so asking about every gamer on the platform to print a line
-   * beside a couple of dozen is a read whose cost grows with the table while
-   * the page it feeds does not. Keyed also removes the truncation trap that
-   * made the walk necessary: `gamer_profiles` is one row per user, so a chunk
-   * asking for N ids can come back with at most N rows, and
-   * `KEY_LOOKUP_CHUNK_SIZE` is comfortably under `max_rows` — a short page here
-   * means the id had no row, which is exactly the answer the list wants.
-   *
-   * Ids that are not gamers cost nothing: this is a lookup, and a missing row
-   * is simply absent from the map the caller builds.
-   *
-   * Admin RLS (`admin_full_access_gamer_profiles`) is what permits the
-   * cross-user read; a parent calling this gets only their own children, which
-   * is correct rather than a limitation.
-   */
-  async getGamerSignIns(
-    userIds: readonly string[],
-  ): Promise<Pick<GamerProfile, "user_id" | "sign_in">[]> {
-    if (userIds.length === 0) return [];
-
-    const rows: Pick<GamerProfile, "user_id" | "sign_in">[] = [];
-    for (const batch of chunkKeys(userIds)) {
-      const { data, error } = await this.supabase
-        .from("gamer_profiles")
-        .select("user_id,sign_in")
-        .in("user_id", batch);
-
-      if (error) throw error;
-      rows.push(...data);
-    }
-    return rows;
-  }
-
-  /**
    * The birth date of each named gamer, as `{ user_id, date_of_birth }` rows.
    *
    * For a surface that has to know how old several children are at once and
@@ -175,10 +132,13 @@ export class GamerService {
    * one of them — it lives on `gamer_profiles` — so this is the second read the
    * panel makes about the roster it is already holding.
    *
-   * **Keyed, not walked, exactly like the sign-in read above**, and for the
-   * same reasons: the caller is holding the children it is about to paint, one
-   * row per user means a chunk of N ids yields at most N rows, and an id with
-   * no row is simply absent from the map the caller builds.
+   * **Keyed, not walked**: the caller is holding the children it is about to
+   * paint, so asking about every gamer on the platform to print an age beside a
+   * few is a read whose cost grows with the table while the page it feeds does
+   * not. One row per user means a chunk of N ids yields at most N rows — and
+   * `KEY_LOOKUP_CHUNK_SIZE` is comfortably under `max_rows`, so a short page
+   * means the id had no row — and an id with no row is simply absent from the
+   * map the caller builds.
    *
    * A parent's own session is what authorizes this: `authenticated` holds
    * SELECT on `gamer_profiles` and `parents_read_linked_gamer_profiles` scopes
@@ -256,6 +216,11 @@ export class GamerService {
         username: input.username,
         email: input.email,
         password: input.password,
+        // The parent's declaration about this child. Carried through like every
+        // other field rather than hardcoded here, so the service never asserts
+        // on the parent's behalf: the value has to arrive from a caller, and the
+        // form that makes this call refuses to submit until the box is ticked.
+        guardianAttested: input.guardianAttested,
       }),
     });
 

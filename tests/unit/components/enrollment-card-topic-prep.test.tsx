@@ -68,6 +68,7 @@ const PARTICIPATION_ID = "e0b5b0c3-7c8f-4b3e-9a11-5f2c6d7e8a90";
 const VIEWER_ID = "9c1f0f2e-3a4b-4c5d-8e9f-0a1b2c3d4e5f";
 
 const TRIGGER = "topicPrep.triggerLabel";
+const NOT_YET = "topicPrep.notYetLabel";
 const READY = "topicPrep.readyLabel";
 const DIALOG_TITLE = "topicPrep.dialogTitle";
 const JOIN = "voiceButton.joinVoice";
@@ -174,6 +175,24 @@ describe("the prep guide in the Join's slot", () => {
 
     expect(screen.queryByText(TRIGGER)).toBeNull();
     expect(lockedJoin()).toBeTruthy();
+  });
+
+  it("keeps the offer, and writes nothing, on Not yet", () => {
+    renderCard();
+
+    act(() => {
+      screen.getByText(TRIGGER).click();
+    });
+    act(() => {
+      screen.getByRole("button", { name: NOT_YET }).click();
+    });
+
+    // The negative is the same act as closing the overlay: the card is exactly
+    // as it was, and the browser has been told nothing to remember.
+    expect(screen.queryByText(DIALOG_TITLE)).toBeNull();
+    expect(screen.getByText(TRIGGER)).toBeTruthy();
+    expect(lockedJoin()).toBeNull();
+    expect(storedCookie()).toBe("");
   });
 
   /**

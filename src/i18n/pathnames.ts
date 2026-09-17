@@ -115,6 +115,7 @@ export const PATHNAMES = {
 
   // --- Public, English segments in every locale -----------------------------
   "/docs/minecraft-api": "/docs/minecraft-api",
+  "/docs/lynx-api": "/docs/lynx-api",
   "/roblox": "/roblox",
   "/roblox/privacy": "/roblox/privacy",
   "/roblox/safeguarding": "/roblox/safeguarding",
@@ -158,6 +159,7 @@ export const PATHNAMES = {
   "/admin/municipality-clubs/[id]/edit": "/admin/municipality-clubs/[id]/edit",
   "/admin/municipality-clubs/[id]/groups/[groupId]":
     "/admin/municipality-clubs/[id]/groups/[groupId]",
+  "/admin/municipality-invoicing": "/admin/municipality-invoicing",
   "/admin/sites": "/admin/sites",
   "/admin/sites/[id]": "/admin/sites/[id]",
   "/admin/testing": "/admin/testing",

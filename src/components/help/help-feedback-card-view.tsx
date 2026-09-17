@@ -66,7 +66,7 @@ export interface HelpFeedbackCardViewProps {
  * It owns no fetch, no mutation and no router: the caller hands it the whole
  * state and takes the submit. That is what lets a preview scene render the real
  * form with the submit inert — a scene must never gain a live submit that
- * emails every admin — and it is why the three dashboards are looking at one
+ * emails the support inbox — and it is why the three dashboards are looking at one
  * component rather than at three copies of one.
  *
  * The result appears **below the submit button** once a submit has answered, and
@@ -141,15 +141,16 @@ export function HelpFeedbackCardView({
             ) : (
               <>
                 <p>{t("gamer.description")}</p>
-                {/* Nothing routes this submission to the child's Gedu, and a
-                    gamer account has no mailbox of its own — so the note
-                    promises no reply channel and names no address, because
-                    either would be an answer the child cannot use. What it
-                    does is set the expectation: an answer, if one comes,
-                    comes in person at the next session. Its own line rather
-                    than appended to the sentence above: it is a different
-                    fact, and one the child's parent may be reading over their
-                    shoulder. */}
+                {/* Where an answer goes, stated as what happens: staff answer
+                    by email, and a gamer's reply always goes to their linked
+                    parent — whatever sign-in the child holds, because we never
+                    answer a child alone. So the note names the parent and
+                    promises the child nothing directly, not even a child who
+                    reads their own email: staff may add them to the reply, but
+                    that is decided per message rather than something the
+                    product does. Its own line rather than appended to the
+                    sentence above: it is a different fact, and one the child's
+                    parent may be reading over their shoulder. */}
                 <p>{t("gamer.replyNote")}</p>
               </>
             )}

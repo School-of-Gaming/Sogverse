@@ -11,9 +11,9 @@ import type { AppHref } from "@/lib/constants/routes";
  * aggregation against real rows. Keeping the shapes in the middle is what makes
  * the swap a change of one module rather than a rewrite of the page.
  *
- * The vocabulary deliberately mirrors the database's: `product_type`,
- * `product_status`, seat counts as `activeCount` / `seatCount` (null meaning
- * uncapped), calendar dates as bare `YYYY-MM-DD` strings, weekdays as
+ * The vocabulary deliberately mirrors the database's: `product_type`, seat
+ * counts as `activeCount` / `seatCount` (null meaning uncapped), calendar dates
+ * as bare `YYYY-MM-DD` strings, weekdays as
  * `0 = Monday … 6 = Sunday` exactly as `schedule_slots.weekday` stores them.
  * A shape that renamed those would only have to be translated back.
  */
@@ -202,11 +202,12 @@ export interface AdminUserRoleStat {
 /**
  * One resolved occurrence of a product, on one day of the visible week.
  *
- * **`product_status` is deliberately not on it, or anywhere else on this page.**
- * The four statuses collapse, for an admin looking at a schedule, into three
- * facts — this is coming, this is happening, this is over — and the schedule
- * already says all three by construction: a chip in the week rows is happening,
- * a line in the coming-up feed is coming, and a run that is over resolves to
+ * **A lifecycle state is deliberately not on it, or anywhere else on this
+ * page.** The four states collapse, for an admin looking at a schedule, into
+ * three facts — this is coming, this is happening, this is over — and the
+ * schedule already says all three by construction: a chip in the week rows is
+ * happening, a line in the coming-up feed is coming, and a run that is over
+ * resolves to
  * nothing at all. A status chip beside those would restate what the reader has
  * already been told by *where* they are reading.
  */

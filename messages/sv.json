@@ -36,7 +36,9 @@
       "registerGedu": "Bli spelfostrare",
       "about": "Om oss",
       "minecraftApi": "Minecraft Server API",
+      "lynxApi": "Lynx Educate partner-API",
       "adminDashboard": "Administratörspanel",
+      "adminMunicipalityInvoicing": "Kommunfakturering",
       "adminTools": "Verktyg",
       "parentDashboard": "Min SOG",
       "geduDashboard": "Min SOG",
@@ -365,6 +367,33 @@
         "label": "Förklaring av produkttyper",
         "heading": "Produkttyper"
       }
+    },
+    "municipalityInvoicing": {
+      "title": "Kommunfakturering",
+      "description": "En månad kommunklubbar: vad varje klubb genomförde och vad kommunen ska betala för det.",
+      "previousMonth": "Föregående månad",
+      "nextMonth": "Nästa månad",
+      "expandAll": "Öppna alla",
+      "collapseAll": "Stäng alla",
+      "monthTotal": "Totalt för månaden",
+      "municipalityCount": "{count, plural, one {# kommun} other {# kommuner}}",
+      "clubCount": "{count, plural, one {# klubb} other {# klubbar}}",
+      "sessionCount": "{count, plural, one {# tillfälle} other {# tillfällen}}",
+      "columnClub": "Klubb",
+      "columnSchedule": "Schema",
+      "columnFee": "Avgift/tillfälle",
+      "columnSessions": "Tillfällen",
+      "columnTotal": "Totalt",
+      "recorded": "Registrerat",
+      "emptyMonth": "Ingen kommunklubb har något registrerat eller inplanerat den här månaden.",
+      "excludedClubs": "{count, plural, one {Exklusive # klubb utan avgift} other {Exklusive # klubbar utan avgift}}",
+      "feeNotSet": "Avgift saknas",
+      "notRecorded": "Inte registrerat",
+      "upcoming": "Kommande",
+      "unrecordedSessions": "{count, plural, one {# oregistrerat} other {# oregistrerade}}",
+      "sessionsFor": "Tillfällen för {club}",
+      "loadError": "Det gick inte att läsa in faktureringsmånaden. Uppdatera sidan och försök igen.",
+      "loadErrorWithReason": "Det gick inte att läsa in faktureringsmånaden – {reason}. Uppdatera sidan och försök igen."
     },
     "geduContract": {
       "heading": "Gedu-avtal",
@@ -751,7 +780,6 @@
         "pending": "Väntar på start",
         "running": "Pågår",
         "completed": "Avslutat",
-        "cancelled": "Avbrutet",
         "expired": "Utgången"
       },
       "schedule": {
@@ -1226,8 +1254,8 @@
       "passwordPlaceholder": "Skapa ett starkt lösenord",
       "confirmPasswordPlaceholder": "Bekräfta ditt lösenord",
       "location": "Plats",
-      "termsLabel": "Jag intygar att jag är förälder eller vårdnadshavare, jag godkänner <terms>användarvillkoren</terms> och har läst <privacy>integritetspolicyn</privacy>.",
-      "termsRequired": "Bekräfta att du är förälder eller vårdnadshavare och godkänner användarvillkoren.",
+      "termsLabel": "Jag godkänner <terms>användarvillkoren</terms> och har läst <privacy>integritetspolicyn</privacy>.",
+      "termsRequired": "Godkänn användarvillkoren och bekräfta att du har läst integritetspolicyn.",
       "marketingConsentLabel": "School of Gaming får skicka mig nyheter och erbjudanden via e-post.",
       "marketingConsentHint": "Valfritt — du kan ändra detta när som helst i dina inställningar.",
       "creatingAccount": "Skapar konto...",
@@ -1444,6 +1472,240 @@
         "note4": "En <code>404</code> betyder att spelaren inte har kopplat sitt Minecraft-konto i Sogverse ännu. Du kan visa ett meddelande om att koppla sitt konto i profilinställningarna.",
         "note5": "Alla felsvar följer formatet <code>'{ \"error\": \"message\" }'</code>."
       }
+    },
+    "lynxApi": {
+      "title": "Lynx Educate partner-API",
+      "lead": "Ett skrivskyddat API för Lynx Educates egna dashboards och rapportering om Roblox-Programmet. Det exponerar de familjer, produkter och anmälningar som hör till Programmet, de samtycken Lynx får agera på, och det individdata som Programmets integritetspolicy tillåter Lynx att lämna vidare till Roblox för effektforskning.",
+      "contents": {
+        "heading": "På den här sidan"
+      },
+      "common": {
+        "queryParameters": "Frågeparametrar",
+        "fields": "Fält",
+        "columnName": "Namn",
+        "columnType": "Typ",
+        "columnDescription": "Beskrivning",
+        "columnStatus": "Status",
+        "columnCode": "Kod",
+        "columnMeaning": "Betydelse",
+        "exampleRecord": "Exempelpost",
+        "exampleResponse": "Exempelsvar",
+        "seeConventions": "Se Konventioner."
+      },
+      "scope": {
+        "heading": "Omfattning — vad API:et kan se",
+        "p1": "API:et ser Programmet och inget annat. En produkt hör till Programmet när en anmälan till den kräver att man godkänner Användarvillkor för Skaparnas akademi. Kravet sätts av en administratör när produkten skapas, och varje produkt som byggts för Programmet bär det. Om produkten är listad i butiken spelar ingen roll: en olistad produkt i Programmet returneras som vilken annan som helst.",
+        "p2": "Allt annat följer av den enda regeln. En familj omfattas när en av dess medlemmar har en plats på en produkt i Programmet, har slutfört en sådan eller står i kö till en. Den medlemmen är oftast ett barn, och kan vara en förälder på en produkt som tar emot vuxna. En familj som omfattas returneras med sina föräldrar, och bara med de av sina barn som själva omfattas. En anmälan omfattas när den gäller en produkt i Programmet. En familjs övriga aktivitet i Sogverse, till exempel en Minecraft-klubb, returneras aldrig, inte heller för en familj som omfattas. <code>/campaigns</code> är den enda resursen som når utanför Programmet: den räknar familjer som kom via en Lynx-kampanj, oavsett om de har anmält sig, och den innehåller bara antal, aldrig en post om en familj.",
+        "p3": "API:et är skrivskyddat. Två medarbetare på Lynx har även administratörskonton i Sogverse och ser samma uppgifter i administratörsgränssnittet; API:et finns för att Lynx egna verktyg ska kunna läsa dem utan en människa i loopen. Vad uppgifterna får användas till är det som Programmets integritetspolicy beskriver: att genomföra Programmet och rapportera om det, forskningsdatat till Roblox, och den post en förälder har samtyckt till att ta emot."
+      },
+      "authentication": {
+        "heading": "Autentisering",
+        "description": "Varje förfrågan bär en statisk API-nyckel som en Bearer-token i <code>Authorization</code>-headern. Nyckeln utfärdas till Lynx av School of Gaming och är det som avgränsar svaret: en nyckel, en partner, ett Program.",
+        "keyNote": "Håll nyckeln på serversidan. Kontakta Sogverse-teamet för att rotera den eller om den kan ha läckt; en roterad nyckel slutar fungera omedelbart. School of Gaming lämnar över nyckeln via en kanal som avtalats med Lynx, och utfärdar en andra nyckel till Sogverses stagingmiljö, som innehåller testfamiljer och testprodukter så att en integration kan byggas och övas mot data som inte är verklig."
+      },
+      "conventions": {
+        "heading": "Konventioner",
+        "baseUrlLabel": "Bas-URL",
+        "envelopeTitle": "Svarskuvert för listor",
+        "items": {
+          "formats": "Svaren är JSON. Varje tidsstämpel är ISO 8601 i UTC. Varje datum är <code>YYYY-MM-DD</code>, där en produkts datum är kalenderdagar i produktens egen tidszon medan en trafikdag är en kalenderdag i UTC. Varje identifierare är ett UUID som aldrig ändras.",
+          "pagination": "Varje resurs som returnerar poster pagineras med cursor, i stigande ordning efter identifierare, så att ordningen är stabil medan en hämtning pågår; en resurs vars poster saknar egen identifierare pagineras i en egen stabil ordning. Skicka <code>limit</code> (standard 100, högst 500) och föregående sidas <code>next_cursor</code> som <code>cursor</code>; ett <code>next_cursor</code> som är <code>null</code> är sista sidan. En cursor är ogenomskinlig, hör till de filter den utfärdades med, och löper inte ut. <code>/traffic</code> returnerar ett enda aggregat och tar <code>from</code> och <code>to</code> i stället; dess antal kan vara upp till en timme gamla. Även <code>/campaigns</code> returnerar ett enda aggregat, och tar <code>from</code> och <code>to</code> som månader.",
+          "erasure": "En post som saknas i en full hämtning omfattas inte längre, vare sig det beror på att familjen begärt radering, att en plats avbokats eller att en produkt lämnat Programmet, och den lämnar Lynx lager vid samma synkronisering i samtliga fall. Det finns ingen raderingsmarkering: att en post saknas är den enda signalen, så läs den bara ur en hämtning som nått sin sista sida.",
+          "consent": "Ett samtycke rapporteras som det står i samma stund som förfrågan görs, med uppgift om när det senast ändrades och utan historik. Ett återkallat marknadsföringssamtycke visas som <code>granted: false</code> med e-postadressen borta vid nästa hämtning; därefter får föräldern ingen post, och Lynx får behålla den minimala spärrnotering som Programmets integritetspolicy tillåter, så att föräldern inte läggs tillbaka.",
+          "changePolicy": "Tillägg till det här API:et, ett nytt fält eller ett nytt filter, släpps utan förvarning; ett fält som tas bort eller byter namn, eller ett värde som ändrar innebörd, blir en ny version under en ny sökväg. Bygg mot de fält ni använder och strunta i resten.",
+          "errors": "Fel har en enda form:"
+        }
+      },
+      "resources": {
+        "products": {
+          "title": "Programmets produktkatalog",
+          "intro": "Varje produkt som hör till Programmet, med de grupper den levereras i. Det är den här listan som alla andra resursers <code>product_id</code> pekar in i.",
+          "params": {
+            "status": "Bara produkter i detta tillstånd."
+          },
+          "fields": {
+            "id": "Produktens identifierare.",
+            "name": "Produktens namn på varje språk det har skrivits på, med språkkoden som nyckel. Minst ett finns alltid med; vilka beror på produkten.",
+            "type": "Vilken sorts produkt det är. En klubb går varje vecka utan fast slut; ett läger och ett evenemang går över bestämda datum.",
+            "delivery": "Hur den levereras. Lynx egna namn på sina sätt att genomföra Programmet lagras ingenstans; <code>type</code> och <code>delivery</code> är tillsammans de två fakta som de namnen avbildas på.",
+            "audience": "Vem som kan ha en plats på produkten: <code>gamers</code> är <code>true</code> när barn kan det, och <code>parents</code> är <code>true</code> när vuxna själva kan ta en plats. Minst en av de två är alltid <code>true</code>, och en produkt där båda är <code>true</code> är en som föräldrar och barn går på tillsammans.",
+            "location": "Kommunen som produktens plats är eller ligger inom, och dess tvåbokstaviga landskod; <code>city</code> är kommunens namn. Regeln är densamma för online- och fysiska produkter: <code>null</code> när produkten saknar plats eller dess plats inte ligger inom någon kommun.",
+            "status": "<code>pending</code> före startdatumet, <code>running</code> från startdatumet och <code>completed</code> när slutdatumet har passerat. Värdet härleds vid läsningen ur produktens datum i dess egen tidszon, så det är aldrig inaktuellt.",
+            "dates": "När den pågår. En konsumentklubb behöver inte ha något slutdatum; alla andra produkter har ett.",
+            "timezone": "Den IANA-tidszon som produktens datum och sessioner är schemalagda i.",
+            "ageRange": "Åldrarna på de barn produkten tar emot, gränserna inräknade. <code>null</code> exakt när <code>audience.gamers</code> är <code>false</code>: en produkt som bara vuxna går på har inget åldersspann.",
+            "groups": "De grupper produkten levereras i. Sessioner och närvaro hänger på en grupp."
+          }
+        },
+        "families": {
+          "title": "en förälder och barnen i familjen",
+          "intro": "Varje familj med en medlem på en produkt i Programmet: dess föräldrar och de barn som omfattas, var för sig som en lista nästlad inuti. Familjen är den enhet Sogverse arbetar i. Föräldrarna håller kontot, samtyckena, attributionen och platsen, så persondata kommer som en enda post i stället för listor att koppla ihop. En förälders e-postadress finns med bara där just den föräldern har gett Lynx marknadsföringssamtycke. En familj har ingen egen identifierare eller tidsstämpel, eftersom Sogverse inte lagrar någon: den är de föräldrar och barn som är kopplade till varandra, så lagra varje förälder och barn under sin egen identifierare. En förälder eller ett barn som saknas i alla familjer i en full hämtning omfattas inte längre; den som flyttar till en annan familj har inte lämnat.",
+          "params": {
+            "marketingConsent": "Bara familjer där minst en förälders samtycke till Lynx marknadsföring är gällande just nu. Det här är sändlistan: skicka till varje förälder vars eget samtycke gäller, inte till familjen.",
+            "utmCampaign": "Bara familjer där en förälders konto skapades via en länk med exakt detta kampanjvärde. Matchningen skiljer på versaler och gemener: <code>lynx-autumn-a</code> matchar inte <code>Lynx-Autumn-A</code>."
+          },
+          "fields": {
+            "parents": "Familjens föräldrar, en post var, och aldrig tom. Läs den som en lista: i dag kopplar Sogverse ett barn till en förälder, så varje familj har exakt en post, men en familj med en andra förälder kommer i samma form och inte som en ny version.",
+            "parentsId": "Förälderns identifierare: den som anmälningar bär som <code>parent_id</code> och, på en plats föräldern själv har, som <code>participant_id</code>.",
+            "parentsName": "Förälderns namn, så som föräldern skrev in det.",
+            "parentsEmail": "Förälderns e-postadress, som finns med bara så länge förälderns <code>marketing_consent.granted</code> är <code>true</code>. Den är <code>null</code> annars, och den blir <code>null</code> igen när samtycket återkallas.",
+            "parentsCreatedAt": "När föräldrakontot skapades: trattens första steg, en familj skapad.",
+            "parentsLocation": "Kommunen som förälderns egenrapporterade hemort är eller ligger inom, och dess tvåbokstaviga landskod; <code>city</code> är kommunens namn. <code>null</code> när föräldern inte har angett någon hemort, eller när den inte ligger inom någon kommun.",
+            "parentsUtm": "<code>utm_source</code>, <code>utm_medium</code> och <code>utm_campaign</code> för den länk kontot skapades via, var och en <code>null</code> när den saknas. De skrivs en gång vid registreringen och bara där besökaren accepterade marknadsföringscookies, så de flesta poster bär tre null. Kampanjer som tagits fram för Lynx har enligt konvention prefixet <code>lynx-</code>.",
+            "parentsMarketingConsent": "Den här förälderns nuvarande svar på Lynx marknadsföringssamtycke: <code>granted</code> och när det senast ändrades. <code>null</code> betyder att föräldern aldrig har blivit tillfrågad, vilket för utskick är samma sak som <code>false</code>.",
+            "gamers": "Familjens barn som har en plats på en produkt i Programmet, har slutfört en sådan eller står i kö till en, en post var. Tom när familjen omfattas bara genom en plats som en förälder själv har. Ett barn bär ett förnamn och inga andra kontaktuppgifter; identiteten är identifieraren och Roblox-kontot.",
+            "gamersId": "Barnets identifierare, den som anmälningar bär som <code>participant_id</code>.",
+            "gamersFirstName": "Barnets förnamn, så som föräldern skrev in det.",
+            "gamersCreatedAt": "När barnets profil skapades: trattens andra steg.",
+            "gamersBirthMonth": "Månaden och året då barnet föddes, som <code>YYYY-MM</code>. Sogverse frågar föräldern om månaden och aldrig om dagen, så det här är allt som finns lagrat; en ålder beräknad av det är exakt utom under barnets födelsemånad.",
+            "gamersRoblox": "Det Roblox-användarnamn familjen angav och det Roblox-användar-id det slogs upp till. <code>verified</code> är <code>true</code> bara när Sogverse har bekräftat användarnamnet hos Roblox och har användar-id:t; ett obekräftat användarnamn har <code>user_id: null</code>. <code>null</code> när inget användarnamn har angetts.",
+            "gamersPhotoConsent": "Det mediatillstånd föräldern för närvarande har gett Lynx för det här barnet: <code>granted</code> och när det senast ändrades. <code>null</code> betyder aldrig tillfrågad, vilket varje yta behandlar som att tillstånd saknas."
+          },
+          "note": "Bara mediatillståndet finns som plattformsdata. Medgivanden för fallstudier, omdömen och marknadsföringsanvändning är separata skriftliga medgivanden som Programmet hämtar in utanför Sogverse, och API:et kan inte rapportera dem."
+        },
+        "enrolments": {
+          "title": "ett barn på en produkt",
+          "intro": "En post per plats på en produkt i Programmet: när deltagaren anmälde sig, hur mycket de deltog och vad de publicerade. Det är den här posten som både tratten och forskningsdatat till Roblox byggs av.",
+          "params": {
+            "productId": "Bara anmälningar på den här produkten.",
+            "participantId": "Bara den här deltagarens anmälningar.",
+            "parentId": "Bara anmälningar på den här förälderns konto, även platser föräldern själv har.",
+            "status": "Bara anmälningar i detta tillstånd."
+          },
+          "fields": {
+            "id": "Anmälans identifierare.",
+            "productGroupId": "Produkten, och gruppen inom den som barnet placerades i. <code>group_id</code> är <code>null</code> tills en administratör placerar platsen.",
+            "participantParentId": "Vem som har platsen, och föräldern vars konto håller den. <code>participant_id</code> är ett barns identifierare från <code>gamers[].id</code> eller, på en plats en förälder själv har, förälderns identifierare från <code>parents[].id</code>, och är då lika med <code>parent_id</code>.",
+            "status": "<code>active</code> för en innehavd plats, <code>waitlisted</code> för en familj som står i kö, <code>completed</code> när produkten är avslutad: en innehavd plats på en produkt vars <code>status</code> är <code>completed</code> rapporteras som <code>completed</code>, och en köplats förblir <code>waitlisted</code>. Filtret <code>status</code> matchar värdet som rapporteras här.",
+            "signedUpAt": "När familjen anmälde sig till produkten: trattens tredje steg, en anmälan.",
+            "consents": "Förälderns godkännande av Användarvillkor för Skaparnas akademi och av Integritetspolicy för Skaparnas akademi för den här anmälan: versionen av varje dokument, angiven som datumet det publicerades, och när det godkändes. Varje produkt i Programmet kräver båda, så varje anmälan bär båda. Där inget godkännande finns registrerat för en plats, till exempel när en administratör anmälde barnet för familjens räkning, är versionen den som senast publicerades på eller före dagen för <code>signed_up_at</code> i UTC, eller den tidigast publicerade versionen om ingen hade publicerats då, och <code>accepted_at</code> är lika med <code>signed_up_at</code>.",
+            "attendance": "Hur många av sessionerna i deltagarens grupp som har en anteckning, och vid hur många av dem deltagaren markerats närvarande. En session antecknas när en spelfostrare skriver ihop den eller markerar närvaro, så en session utan någotdera räknas inte; antalet är gruppens och omfattar även sessioner före deltagaren kom med i den. Båda är 0 så länge platsen inte har placerats i en grupp. En deltagare med <code>sessions_present</code> på minst 1 räknas som ”deltagit” i tratten.",
+            "creations": "Vad deltagaren publicerade under den här produkten, så som deltagarens spelfostrare eller en administratör antecknat det i deltagarens nuvarande grupp: en titel och en länk per objekt, i visningsordning. <code>is_roblox_url</code> är <code>true</code> när länken pekar på roblox.com eller en av dess underdomäner, som www.roblox.com. En tom array betyder att inget är antecknat ännu."
+          }
+        },
+        "sessions": {
+          "title": "vad som hände i varje grupp",
+          "intro": "Varje session en grupp i Programmet har antecknat, med närvaromarkeringarna och de fotografier spelfostraren bifogade rapporten. En session har en anteckning så snart en spelfostrare skriver ihop den eller markerar närvaro, så en schemalagd session som ännu inte ägt rum finns inte här. Använd den för vyer per session, som en avhoppskurva; totalerna per barn finns redan på anmälan.",
+          "params": {
+            "productId": "Bara sessioner i den här produktens grupper.",
+            "groupId": "Bara den här gruppens sessioner.",
+            "fromTo": "Bara sessioner vars datum, som kalenderdag i produktens tidszon, ligger inom det här intervallet, gränserna inräknade."
+          },
+          "fields": {
+            "id": "Sessionens identifierare.",
+            "productGroupId": "Produkten och gruppen som sessionen hör till.",
+            "times": "Sessionens schemalagda fönster.",
+            "attendance": "En post per deltagare som spelfostraren markerat, identifierad med <code>participant_id</code>, <code>present</code> eller <code>absent</code>. En deltagare som ännu inte markerats finns inte med.",
+            "images": "De fotografier spelfostraren bifogade sessionsrapporten, i den ordning de lades till: mestadels skärmbilder från spelet, ibland ett fotografi av rummet. Var och en är en publik URL som inte kräver någon behörighet, och samma URL som varje familj i gruppen redan ser i rapporten. Ett fotografi hör till sessionen, inte till ett barn: Sogverse antecknar inte vilka barn en bild visar, så API:et kan inte knyta en bild till ett mediatillstånd. Ett barn fotograferas bara där tillståndet gäller, och när en förälder återkallar det tar School of Gaming bort materialet från de kanaler företaget råder över i den mån det rimligen går, så som Programmets integritetspolicy anger; ett borttaget fotografis URL slutar fungera.",
+            "imagesUrl": "Länka till den i stället för att kopiera filen, så att en borttagning hos oss blir en borttagning hos er; en hämtning som hittar en URL som inte längre fungerar bör släppa den. URL:en är trygg att använda i Lynx egna verktyg och rapporter. Objektets namn är en ogissbar identifierare och det namnet är hela dess åtkomstkontroll, så det enda man inte ska göra är att publicera URL:en på en sida som vem som helst kan lista.",
+            "imagesId": "Fotografiets identifierare, som också är dess objektnamn.",
+            "imagesSize": "Bildens storlek i pixlar."
+          }
+        },
+        "feedback": {
+          "title": "vad ett barn sa på vägen ut",
+          "intro": "Vad ett barn svarade i slutet av en session: fem påståenden graderade på en femgradig stapel och en frivillig kommentar med barnets egna ord. I dag samlas feedback bara in efter sessioner online. Ett barn som inte graderar något påstående och inte skriver någon kommentar lämnar ingen rad, så svarsfrekvensen är den här listan ställd mot onlinesessionerna i <code>/sessions</code>; en rad är ett barn vid en session, så en procentsats över rader räknar ett barn en gång per session det svarade om.",
+          "params": {
+            "productId": "Bara feedback från den här produktens grupper.",
+            "groupId": "Bara den här gruppens feedback.",
+            "participantId": "Bara det här barnets feedback.",
+            "fromTo": "Bara feedback från sessioner vars datum, som kalenderdag i produktens tidszon, ligger inom det här intervallet, gränserna inräknade."
+          },
+          "fields": {
+            "participantGroupProductId": "Vem som svarade, och gruppen och produkten sessionen hörde till. Feedback efterfrågas bara av barn, så <code>participant_id</code> är alltid ett barns identifierare från <code>gamers[].id</code>. En post har ingen egen identifierare: <code>participant_id</code>, <code>group_id</code> och <code>session_opened_at</code> utgör tillsammans dess nyckel, och ett senare svar från samma barn om samma session ersätter det tidigare under den nyckeln.",
+            "sessionId": "Den session i <code>/sessions</code> som svaret hör till, matchad på grupp och datum; <code>null</code> när <code>/sessions</code> saknar en session för den gruppen den dagen.",
+            "sessionOpenedAt": "När sessionen barnet svarade om öppnades: då sessionens onlinerum gick att ansluta till, fem minuter före sessionens schemalagda start.",
+            "answers": "Barnets gradering av varje påstående, med påståendets stabila identifierare som nyckel; ett påstående barnet hoppade över saknas. Graderingarna går från 1 till 5: nej, inte riktigt, lite, ja, absolut. De påståenden som ställs i dag är <code>learned</code> (jag lärde mig något), <code>fun</code> (jag hade roligt), <code>geduKnowledgeable</code> (spelfostraren visste vad hen gjorde), <code>geduKind</code> (spelfostraren var snäll) och <code>groupListens</code> (min grupp lyssnar på mig och förstår mig). Ett påstående kan läggas till eller tas bort utan förvarning, så läs de nycklar du känner till och strunta i resten. Bara aggregerade nöjdhetssiffror går till Roblox; raderna själva stannar hos Lynx.",
+            "note": "Vad barnet skrev i den frivilliga kommentaren, med sina egna ord och på sitt eget språk; tom när barnet inte skrev något."
+          }
+        },
+        "robloxResearch": {
+          "title": "datamängden för Roblox",
+          "intro": "Det individdata som Programmets integritetspolicy tillåter att lämna vidare till Roblox för effektforskning, och inget därutöver. En rad per anmälan av ett barn, med samma statusar som <code>/enrolments</code>, redo att skickas vidare utan filtrering. En plats som en förälder själv har ger ingen rad, och inte heller ett barn utan registrerat Roblox-användarnamn: raden är Roblox-kontot, så utan ett sådant finns inget att skicka vidare. Varje fält ryms inom det policyn nämner.",
+          "params": {
+            "productId": "Bara rader för den här produkten.",
+            "fromTo": "Bara rader vars produkt startade inom det här intervallet, gränserna inräknade."
+          },
+          "fields": {
+            "roblox": "Barnets Roblox-konto. <code>roblox_user_id</code> är <code>null</code> när Sogverse inte kunde verifiera användarnamnet; skicka bara vidare sådana rader om Roblox accepterar enbart ett användarnamn.",
+            "location": "Hemkommun och land för föräldern vars konto håller platsen, enligt samma regel som <code>parents[].location</code> i <code>/families</code>. Båda är <code>null</code> när föräldern inte har angett någon hemort; bara <code>city</code> är <code>null</code> när hemorten inte ligger inom någon kommun.",
+            "age": "Barnets ålder i hela år på aktivitetens startdatum, som ett intervall: Sogverse har födelsemånaden och inte dagen, så <code>min</code> är det yngsta barnet kunde ha varit och <code>max</code> det äldsta, och de två är samma tal om inte startdatumet föll inom barnets födelsemånad. <code>null</code> så länge produkten saknar startdatum. Raden bär åldern i stället för födelsemånaden eftersom det är åldern forskningsdatamängden nämner.",
+            "activity": "Aktiviteten som deltogs i: produktens identifierare, dess namn på engelska där ett sådant har skrivits, annars på det språk produkten hålls på, och i sista hand på den språkversion vars kod kommer först i bokstavsordning, samt dess typ, leverans och startdatum. Typ och leverans är tillsammans det som Lynx egna namn på sina sätt att genomföra Programmet avbildas på, och startdatumet är det interventionsdatum forskningen efterfrågar.",
+            "publishedGameUrl": "Den första roblox.com-länken bland barnets skapelser för den här produkten, eller <code>null</code> när ingen har antecknats."
+          },
+          "note": "Ingen identifierare för barnet eller familjen finns på den här raden, så datamängden kan vidarebefordras som den är; raderna pagineras i ordningen för den anmälan var och en härleds från. Roblox-kontot finns även på familjeposten, så Lynx kan spåra en rad tillbaka till en familj när det behövs: när en familj lämnar en full hämtning, radera dess rader även här, och där en rad redan har vidarebefordrats till Roblox, för begäran vidare enligt Roblox databehandlingsbilaga, så som Programmets integritetspolicy föreskriver."
+        },
+        "traffic": {
+          "title": "sidorna en kampanj landar på, per kampanj",
+          "intro": "Visningar av de sidor en Lynx-kampanj kan landa på, grupperade efter kampanjen som förde dem dit, så att även trattens överkant får en siffra: Roblox-landningssidan, butiken, och den egna sidan för varje produkt i Programmet. Antalen läses från Vercel Web Analytics, kan vara upp till en timme gamla och sträcker sig så långt tillbaka som Vercel sparar dem, vilket i dag är två år, från slutet av maj 2026 när analysen slogs på. Bara aggregerat: inga besökaridentifierare, och ingen sida utöver de tre slagen. En sidas visningar räknar varje språk den serveras på som en och samma sida, och den innevarande dagen är ofullständig tills den är slut.",
+          "params": {
+            "page": "Bara sidor av det här slaget. Utelämna för alla tre.",
+            "productId": "Bara den här produktens sida. Innebär <code>page=product</code>.",
+            "fromTo": "Bara dagar inom det här intervallet, gränserna inräknade. Utelämna för de senaste 30 dagarna. Ett intervall som sträcker sig längre bakåt än antalen, eller förbi i dag, besvaras för de dagar det delar med dem, vilket <code>range</code> visar; ett intervall som inte delar någon dag med dem avvisas."
+          },
+          "fields": {
+            "range": "De dagar antalen täcker.",
+            "pages": "En post per sida: landningssidan, butiken, och en per produkt i Programmet som hade en visning i intervallet.",
+            "pagesPage": "Vilket slags sida det är. Butikssidan delas med allt School of Gaming säljer, så dess visningar gäller inte bara Programmet; en produktsidas visningar gör det.",
+            "pagesProductId": "Produkten vars sida det är; <code>null</code> för landningssidan och butiken.",
+            "pagesPageviews": "Visningar av sidan i intervallet, oavsett vad som förde dem dit.",
+            "pagesByCampaign": "Visningarna uppdelade efter <code>utm_campaign</code> på länken. Raden <code>null</code> är varje visning som inte bar någon, inklusive en besökare som skrev in adressen eller följde en omärkt länk.",
+            "pagesBySourceMedium": "Samma visningar uppdelade efter <code>utm_source</code> och <code>utm_medium</code> tillsammans, för att kunna läsa betald trafik, social trafik och e-posttrafik var för sig. De två uppdelningarna gäller samma visningar och var och en summerar till <code>pageviews</code>; de är inte en korstabell av varandra.",
+            "pagesByDay": "Visningarna per kalenderdag, i UTC, för en tidsserie."
+          },
+          "note": "Vercels skript körs bara för en besökare som accepterat analys i cookiebannern, och UTM-värdena på en familjepost skrivs bara för en besökare som accepterat marknadsföring. De två villkoren skiljer sig åt, och analysvillkoret är det bredare, så en visning som räknas här och en familj i <code>/families</code> är inte samma population: en besökare som accepterat allt finns i båda, en som bara accepterat analys finns bara här, och en som avvisat bannern finns i ingendera."
+        },
+        "campaigns": {
+          "title": "familjerna en kampanj för in, per kampanj",
+          "intro": "Hur många familjer varje Lynx-kampanj förde till Sogverse, och hur långt de kom: skapade konton, tillagda barn, barn i Programmets ålder och familjer som anmälde sig. Det är tratten innan en familj omfattas, räknad snarare än listad: inga identifierare, ingen post om någon enskild familj, och varje antal under minimigränsen döljs. En kampanj är Lynx när dess <code>utm_campaign</code> börjar med <code>lynx-</code>, oavsett skiftläge. Varje länk som tas fram för Lynx måste ha det prefixet: en kampanj utan det räknas aldrig, och kampanjen på ett konto kan inte ändras när den väl är skriven.",
+          "params": {
+            "fromTo": "Bara familjer vars föräldrakonto skapades under dessa månader, gränserna inräknade, i UTC. Utelämna <code>to</code> för innevarande månad, som är ofullständig tills den tar slut; utelämna <code>from</code> för den månad <code>to</code> anger."
+          },
+          "fields": {
+            "range": "De månader antalen täcker.",
+            "minimumCount": "Det minsta antal svaret visar. Ett antal under det, noll inräknat, är <code>null</code>.",
+            "campaigns": "En post per Lynx-kampanj som förde in minst ett föräldrakonto under perioden.",
+            "utmCampaign": "Kampanjen, exakt så som den lagrades på de konton den räknar. Värden som bara skiljer sig i skiftläge är separata poster, precis som i <code>/traffic</code>.",
+            "accountsCreated": "Föräldrakonton som skapades under perioden via en länk med den här kampanjen: trattens första steg.",
+            "childrenAdded": "Barn kopplade till de kontona när förfrågan görs, oavsett när de lades till: det andra steget.",
+            "childrenEligible": "De av barnen vars ålder på förfrågningsdagen, i UTC, ligger inom Programmets 13 till 17. Sogverse lagrar en födelsemånad och inte en dag, så ett barn som kan ha endera av två åldrar räknas när någon av dem ligger inom spannet, på samma sätt som vid anmälan.",
+            "enrolled": "De av kontona vars familj har en plats på en produkt i Programmet, har slutfört en sådan eller står i kö till en: det tredje steget, och den punkt där en familj kommer in i <code>/families</code>."
+          },
+          "note": "Kampanjen på ett konto skrivs en gång, när kontot skapas, och bara där besökaren accepterade marknadsföringscookies, så antalen omfattar de familjerna och aldrig de andra; det är samma kampanj som <code>/families</code> visar i <code>parents[].utm</code> när en familj har anmält sig. Varje antal läses live i samma stund som förfrågan görs, så samma period kan ge ett annat svar en annan dag: familjer fortsätter att lägga till barn och anmäla sig, och innevarande månad får nya konton tills den tar slut."
+        }
+      },
+      "errors": {
+        "heading": "Fel",
+        "intro": "Varje fel besvaras i formen under Konventioner. Bygg din felhantering på <code>code</code>, som är stabil; <code>message</code> är engelska skriven för en logg, aldrig för visning.",
+        "e400": "En frågeparameter är felformad: ett trasigt UUID, ett datum som inte är <code>YYYY-MM-DD</code>, en månad som inte är <code>YYYY-MM</code>, ett <code>limit</code> över 500, ett okänt enum-värde, ett <code>from</code> som ligger efter sitt <code>to</code>, eller en <code>cursor</code> som är felformad, kommer från en annan endpoint eller utfärdades med andra filter.",
+        "e401": "Saknad, felformad eller återkallad API-nyckel.",
+        "e404": "Sökvägen är ingen av resurserna ovan. Nyckeln kontrolleras först, så en förfrågan utan giltig nyckel får 401 oavsett sökväg. Ett filter som anger en produkt som inte hör till Programmet ger inte 404: det matchar helt enkelt ingenting.",
+        "e500": "Något gick fel hos oss. Försök igen med fördröjning; hör av dig om det håller i sig.",
+        "e500Misconfigured": "API:et är inte korrekt konfigurerat hos oss. Att försöka igen hjälper inte förrän vi har rättat det, så hör av dig."
+      },
+      "example": {
+        "heading": "Exempel"
+      },
+      "integrationNotes": {
+        "heading": "Integrationsanteckningar",
+        "items": {
+          "sync": "Det här är byggt för en synkronisering, inte en live-fråga: varje resurs hämtas till Lynx eget lager enligt schema, och dashboarden byggs på det lagret. Varje hämtning returnerar allt som omfattas, läst live i samma stund som förfrågan görs, så svaret ersätter det Lynx hade innan.",
+          "join": "Identifierarna är nycklarna att koppla på. En förälders e-postadress kan dyka upp, försvinna och dyka upp igen när samtycket ändras; förälderns <code>id</code> gör det aldrig.",
+          "consent": "Samtyckesändringar och försvinnanden är tänkta att hanteras vid samma synkronisering som visar dem: en familj vars <code>marketing_consent.granted</code> blev <code>false</code> slutar få post samma dag, och en post som lämnat en full hämtning lämnar Lynx lager samma dag. Programmets integritetspolicy förbinder båda organisationerna till det, och en hämtning minst en gång per dygn är det som gör det möjligt.",
+          "derived": "”Deltagit” och ”publicerat” är härledda, inte lagrade. Båda definieras i fältbeskrivningarna ovan så att Lynx siffror och våra stämmer; om definitionen behöver ändras, ändra den här först.",
+          "readOnly": "Inget här skriver. Anmälan, samtycke och skapelser antecknas i Sogverse av familjer och spelfostrare; API:et är ett fönster mot dem."
+        }
+      },
+      "notIncluded": {
+        "heading": "Vad API:et inte bär",
+        "intro": "Sådant som Sogverse håller, eller får frågor om, och som det här API:et lämnar utanför. Om något av det visar sig spela roll för Lynx, säg till så pratar vi om det.",
+        "items": {
+          "childIdentity": "Barnens efternamn, födelsedagar och kön, och föräldrarnas telefonnummer. Programmets integritetspolicy utlovar en födelsemånad snarare än ett födelsedatum, och resten är inget som dashboarderna eller Roblox-rapporten använder.",
+          "releases": "Medgivanden för fallstudier och omdömen. Det enda mediatillstånd Sogverse håller täcker redan att Lynx Educate, School of Gaming och Roblox använder ett fotografi offentligt; ett barns fullständiga namn, en fallstudie, ett citat eller innehåll kopplat till barnet kräver ett separat skriftligt medgivande som hämtas in utanför plattformen.",
+          "deliveryModel": "En etikett för leveransmodell. Sogverse håller en produkts typ och om den är online eller på plats; en modelltaxonomi är Lynx sak att lägga över de två fälten.",
+          "analytics": "Trafik på någon annan sida än landningssidan, butiken och Programmets produktsidor, och allt som rör en enskild besökare. Analysen bakom <code>/traffic</code> är integritetsvänlig från grunden: en sida som en familj når efter inloggning tillhör familjen, och en besökare är ett antal, aldrig en post."
+        }
+      }
     }
   },
   "dashboardSections": {
@@ -1476,7 +1738,7 @@
       },
       "gamer": {
         "description": "Har du fastnat på något, eller fått en idé till oss? Skriv den här så läser vi den.",
-        "replyNote": "Din Gedu kan följa upp med dig under nästa session.",
+        "replyNote": "Om vi svarar skickar vi ett mejl till din förälder.",
         "placeholder": "Vad behöver du hjälp med?",
         "thankYou": "Tack — vi har fått ditt meddelande.",
         "failed": "Vi kunde inte skicka ditt meddelande. Försök igen.",
@@ -1506,6 +1768,7 @@
     },
     "addGamerForm": {
       "title": "Lägg till en gamer",
+      "accountsTitle": "Spelkonton för {name}",
       "firstNameLabel": "Förnamn",
       "firstNamePlaceholder": "t.ex. Saga",
       "birthMonthLabel": "Födelsemånad",
@@ -1522,7 +1785,9 @@
       "firstNameTooLong": "Förnamnet får vara högst 32 tecken.",
       "birthMonthRequired": "Välj en födelsemånad.",
       "birthYearRequired": "Välj ett födelseår.",
-      "genericError": "Det gick inte att lägga till gamern. Försök igen."
+      "genericError": "Det gick inte att lägga till gamern. Försök igen.",
+      "guardianAttestation": "{name} är mitt barn, eller så är jag barnets vårdnadshavare. Jag har läst <privacy>integritetspolicyn</privacy>.",
+      "guardianAttestationUnnamed": "Den här gamern är mitt barn, eller så är jag barnets vårdnadshavare. Jag har läst <privacy>integritetspolicyn</privacy>."
     }
   },
   "familyEnrollment": {
@@ -2181,6 +2446,7 @@
     "heading": "Före första tillfället",
     "dialogTitle": "Före första tillfället",
     "triggerLabel": "Gör dig redo",
+    "notYetLabel": "Inte än",
     "readyLabel": "Jag är redo",
     "closing": "Om allt fungerar är du redo för tillfället!",
     "topics": {
@@ -2330,6 +2596,7 @@
     "users": "Användare",
     "consumerClubs": "Konsumentklubbar",
     "municipalityClubs": "Kommunklubbar",
+    "municipalityInvoicing": "Kommunfakturering",
     "camps": "Läger",
     "events": "Evenemang",
     "sites": "Lokaler",
@@ -2805,6 +3072,27 @@
         "ready": "Ditt rum är redo",
         "join": "Gå med"
       }
+    },
+    "feedback": {
+      "heading": "Hur gick det?",
+      "items": {
+        "learned": "Jag lärde mig något nytt.",
+        "fun": "Jag hade roligt.",
+        "geduKnowledgeable": "Min Gedu kunde sin sak och hjälpte mig.",
+        "geduKind": "Min Gedu var trevlig och snäll.",
+        "groupListens": "Min grupp lyssnar på mig och förstår mig."
+      },
+      "scale": {
+        "no": "Nej",
+        "notReally": "Inte riktigt",
+        "aBit": "Lite",
+        "yes": "Ja",
+        "definitely": "Absolut"
+      },
+      "notePrompt": "Vill du berätta något mer om dagens session?",
+      "audience": "Din Gedu och teamet på School of Gaming läser din feedback. Tack!",
+      "saveFailed": "Dina svar sparades inte. Tryck på Klart för att försöka igen.",
+      "done": "Klart"
     }
   },
   "voiceButton": {
@@ -3094,7 +3382,6 @@
     }
   },
   "legal": {
-    "draftNotice": "Utkast – innehållet på den här sidan håller fortfarande på att färdigställas och har ännu inte godkänts. Detaljer kan ändras.",
     "opensInNewTab": "(öppnas i en ny flik)"
   },
   "privacy": {
@@ -3133,8 +3420,23 @@
           "Om ditt barn: förnamn, födelsemånad och födelseår (vi frågar inte efter det exakta datumet – bara det vi verkligen behöver) och eventuellt kön – så att vi kan placera barnet i rätt grupp och tilltala det rätt. Vi lagrar också ditt efternamn på barnets konto, eftersom barnet hör till ditt konto. Geduer och andra spelare ser det aldrig. Själva kontot har en intern Sogverse-adress i stället för en riktig e-postadress, om du inte väljer att ge barnet en inloggning med en egen e-postadress; då sparar vi den adressen och skickar barnet en egen kopia av de mejl vi skickar dig om barnets klubbar, läger och evenemang.",
           "Eventuellt barnets användarnamn i de spel som barnets klubbar använder – i dag Minecraft och Roblox – och det konto-id som spelet ger barnet, så att vi känner igen barnet i spelet och så att barnet kan ansluta till vår Minecraft-server under träffarna.",
           "Våra spelfostrares anteckningar från träffarna – närvaro, träffrapporter och korta noteringar som hjälper oss att stötta ditt barn i gruppen.",
-          "Allmän, anonym information om hur webbplatsen används (se \"Cookies, analys och annonsering\" nedan).",
-          "Kampanjkoden – källa, medium och kampanj – som fanns i länken ditt besök kom från. Vi sparar den en gång, när kontot skapas, så att vi och våra partner vet vilken information som faktiskt når familjer."
+          "Meddelanden som ditt barn skickar i chatten under en träff – så att spelfostraren och gruppen kan läsa dem under träffen och så att vi kan utreda en oro i efterhand. Ett meddelande som ditt barn tar bort döljs för gruppen, men sparas tills kontot avslutas.",
+          "Återkoppling som ditt barn ger oss om sina träffar – de omdömen och det eventuella meddelande barnet självt väljer att ge när vi frågar hur en träff gick – så att vi ser hur våra träffar går och kan göra dem bättre.",
+          "Den tekniska information som varje webbplats behöver för att fungera – inloggningssessioner, förfrågningsloggar och, bara om du väljer det, anonym användningsstatistik. Se \"Teknisk information\" och \"Cookies, analys och annonsering\" nedan.",
+          "Kampanjkoden – källa, medium och kampanj – som fanns i länken ditt besök kom från. Vi sparar den en gång, när kontot skapas, och bara om du har tillåtit cookies för marknadsföring, så att vi och våra partner vet vilken information som faktiskt når familjer. Att senare tacka nej till marknadsföring tar inte bort en kod som redan har sparats."
+        ]
+      },
+      "technical": {
+        "heading": "Teknisk information",
+        "paragraphs": [
+          "Att driva en webbplats innebär att en del teknisk information passerar genom de företag som är värdar för den och håller den säker åt oss. Inget av det är något vi ber dig om, och vi sparar ingen kopia av det i någon tabell hos oss – det finns i våra leverantörers system så länge de behöver det för att hålla webbplatsen igång och säker, och vi förlänger inte det. Här är vad det är och vart det tar vägen:"
+        ],
+        "bullets": [
+          "Noteringar om inloggningar – när du loggar in sparar Supabase, som driver våra konton, en notering om sessionen: när den startade, vilken webbläsare och enhet den kom från och dess internetadress. Det är det som låter oss hålla dig inloggad och avsluta en session som inte borde finnas. Noteringen raderas när sessionen avslutas, och allt försvinner när kontot gör det.",
+          "Förfrågningar och fel – varje sida du öppnar är en förfrågan till Vercel, som är värd för webbplatsen. Som alla webbvärdar loggar Vercel den: sidan, tidpunkten, din webbläsar- och enhetstyp och dess internetadress, och eventuella fel som uppstod. Vi använder de loggarna för att hålla webbplatsen igång och för att hitta fel. Vercel räknar också förfrågningar till varje del av webbplatsen på sina egna servrar – summor, inte personer – och den räkningen sker utan någon cookie och utan samtycke. Den är skild från den analys du kan slå på eller av nedan.",
+          "Cookies och analys – några nödvändiga cookies, och analys och marknadsföring bara om du väljer dem. Allt det beskrivs under \"Cookies, analys och annonsering\" nedan.",
+          "Direktsända träffar – under en rösträff ansluter ditt barns enhet direkt till Daily.co, så Daily ser enhetens internetadress och anslutningsuppgifter så länge samtalet pågår. Se \"Röst- och videoträffar\" nedan.",
+          "Vad vi inte gör – vi driver ingen egen tjänst för felspårning eller loggning, vi lagrar aldrig din internetadress eller dina webbläsaruppgifter i någon tabell hos oss, och inget av det här används för att bygga en profil av dig eller ditt barn."
         ]
       },
       "childrensPrivacy": {
@@ -3142,7 +3444,7 @@
         "paragraphs": [
           "De flesta som använder Sogverse är barn, så deras trygghet och integritet är vår högsta prioritet.",
           "Ett barn kan aldrig skapa ett eget konto. Endast en förälder eller vårdnadshavare skapar barnets konto, väljer vad som delas och ger tillstånd å barnets vägnar. Så uppfyller vi våra skyldigheter enligt dataskyddslagstiftningen när det gäller barn.",
-          "Vad vi lagrar om ett barn står ovan under \"Vilka uppgifter vi samlar in\", och vi samlar inte in något om ett barn utöver det vi behöver för att driva våra klubbar, läger och evenemang. Vi visar aldrig reklam för barn och vi säljer eller delar aldrig deras uppgifter för marknadsföring. När ditt barn är inloggat som spelare skickas ingenting om barnets surfande till en annonsplattform, även om marknadsföring är påslagen på enheten. Träffarna leds av våra utbildade spelfostrare (vi kallar dem Geduer).",
+          "Vad vi lagrar om ett barn står ovan under \"Vilka uppgifter vi samlar in\" och \"Teknisk information\", och vi samlar inte in något om ett barn utöver det vi behöver för att driva våra klubbar, läger och evenemang. Vi visar aldrig reklam för barn och vi säljer eller delar aldrig deras uppgifter för marknadsföring. När ditt barn är inloggat som spelare skickas ingenting om barnets surfande till en annonsplattform, även om marknadsföring är påslagen på enheten. Träffarna leds av våra utbildade spelfostrare (vi kallar dem Geduer).",
           "Om du när som helst vill se, ändra eller radera ditt barns uppgifter är det bara att mejla {supportEmail}, så ordnar vi det."
         ]
       },
@@ -3166,12 +3468,11 @@
           "Dataskyddslagstiftningen (EU:s dataskyddsförordning, GDPR) kräver att vi har en tydlig grund för att använda dina uppgifter. Våra grunder är enkla:"
         ],
         "bullets": [
-          "För att leverera det du anmält dig till – de klubbar och tjänster du köpt av oss (vårt avtal med dig).",
+          "För att leverera det du anmält dig till – de klubbar, läger och evenemang du har anmält ditt barn till, betalda eller kostnadsfria (vårt avtal med dig).",
           "Eftersom en förälder har gett tillstånd å barnets vägnar (samtycke).",
           "För att uppfylla våra lagstadgade skyldigheter, till exempel att spara bokföringsuppgifter för betalningar.",
           "För vårt berättigade intresse av att hålla webbplatsen säker och välfungerande – alltid avvägt mot din integritet.",
-          "För vårt berättigade intresse av att veta vilka av våra insatser som når familjer – alltid avvägt mot din integritet, och du kan när som helst be oss sluta.",
-          "Ditt samtycke, för cookies för analys och marknadsföring – som du kan återkalla när som helst via Integritetsval längst ner på varje sida."
+          "Ditt samtycke, för cookies för analys och marknadsföring och för kampanjkoden – som du kan återkalla när som helst via Integritetsval längst ner på varje sida."
         ]
       },
       "providers": {
@@ -3183,30 +3484,52 @@
           "Supabase – lagrar dina konto-, familje- och klubbuppgifter säkert.",
           "Stripe – hanterar betalningar. Dina kortuppgifter går direkt till Stripe, och vi ser dem aldrig.",
           "Brevo – skickar våra e-postmeddelanden, till exempel kvitton och påminnelser.",
-          "Daily.co – möjliggör de direktsända röst- och videoträffarna.",
-          "Vercel – är värd för webbplatsen och tillhandahåller anonym användningsstatistik.",
+          "Daily.co – möjliggör de direktsända röst- och videoträffarna; ditt barns enhet ansluter direkt till tjänsten under en träff.",
+          "Vercel – är värd för webbplatsen, så varje förfrågan passerar genom Vercel (se \"Teknisk information\"), och tillhandahåller anonym användningsstatistik om du tillåter analys.",
           "Meta (WhatsApp) – för att skicka vissa meddelanden och påminnelser till familjer som hellre använder WhatsApp.",
-          "Roblox – tar emot ditt barns Roblox-konto-id, så att vi kan bekräfta kontot och visa barnets avatarbild.",
+          "Roblox – tar emot ditt barns Roblox-konto-id, så att vi kan bekräfta kontot, och din webbläsare hämtar barnets avatarbild direkt från Roblox.",
           "Mojang (Microsoft) – tar emot ditt barns Minecraft-användarnamn, så att vi kan bekräfta kontot.",
+          "mc-heads.net – din webbläsare hämtar bilden av ditt barns Minecraft-figur direkt därifrån, utifrån barnets Minecraft-användarnamn, som är offentligt i spelet. Det är en gratis offentlig tjänst och inte en underleverantör till oss, och den ser bara den förfrågan.",
           "Meta (Facebook och Instagram) – ser via Meta-pixeln i din webbläsare och rapporter från våra servrar hur du använder vår webbplats, så att vi kan visa dig våra annonser där och mäta hur de presterar. Bara om du tillåter cookies för marknadsföring."
+        ]
+      },
+      "partners": {
+        "heading": "Skaparnas akademi, som vi driver med Lynx Educate",
+        "blocks": [
+          "Om du anmäler ditt barn till Skaparnas akademi, som vi driver i samarbete med Roblox, delar vi det som programmet behöver med Lynx Educate, som genomför det tillsammans med oss, och en begränsad mängd med Roblox för deras forskning om programmet. Lynx Educate får:",
+          [
+            "Kampanjkoden på ditt konto – källa, medium och kampanj – så att de ser vilken information som förde din familj till programmet.",
+            "Ditt förnamn, ditt efternamn och din e-postadress – så att de kan nå dig om programmet.",
+            "Kommunen och landet du angav som din familjs hemort, om du angav någon.",
+            "Ditt barns förnamn.",
+            "Ditt barns födelsemånad och födelseår – vi frågar aldrig efter dagen.",
+            "Ditt barns Roblox-användarnamn och det konto-id som Roblox ger det.",
+            "Vilka villkor och policyer du godkände när du anmälde dig, och dina svar på frågorna om marknadsföring och foto.",
+            "Själva anmälan – klubben, lägret eller evenemanget, gruppen ditt barn är i och när ni anmälde er.",
+            "Om ditt barn antecknades som närvarande eller frånvarande vid varje träff.",
+            "Titeln på och länken till det ditt barn publicerar på Roblox, så som en spelfostrare antecknar det.",
+            "Foton som bifogats en träffrapport – bara där du har tillåtit foto."
+          ],
+          "Lynx använder uppgifterna för att driva programmet, med stöd av programmets villkor som du godkänner när du anmäler dig och av deras berättigade intresse av att driva det tryggt – utom kampanjkoden, som delas bara om du har tillåtit cookies för marknadsföring, och foton, som delas bara där du har kryssat i rutan. Vad Roblox får, och allt annat om programmet, står i <linkRobloxPrivacy>Integritetspolicyn för Skaparnas akademi</linkRobloxPrivacy>."
         ]
       },
       "cookies": {
         "heading": "Cookies, analys och annonsering",
         "paragraphs": [
-          "Några cookies är helt enkelt hur webbplatsen fungerar: de håller dig inloggad, kommer ihåg att du angett din föräldra-PIN, sparar ditt språk och din tidszon och lagrar det cookieval du gör. De kräver inte ditt samtycke – utan dem finns det ingen webbplats att samtycka till.",
-          "Allt annat väntar på dig. Första gången du besöker oss frågar vi, och inget utöver de nödvändiga cookiesarna startar förrän du svarar. Du kan ändra dig när som helst via Integritetsval längst ner på varje sida: att stänga av något gäller direkt, och ändrar inte det vi redan gjort medan det var på.",
+          "Några cookies är helt enkelt hur webbplatsen fungerar: de håller dig inloggad och kommer ihåg när du har bytt mellan kontona i din familj, kommer ihåg att du angett din föräldra-PIN, sparar ditt språk och din tidszon, lagrar det cookieval du gör och kommer ihåg att du har stängt guiden som vi visar inför en första träff. De kräver inte ditt samtycke – utan dem finns det ingen webbplats att samtycka till.",
+          "Allt annat väntar på dig. Första gången du besöker oss frågar vi, och inget utöver de nödvändiga cookiesarna startar i din webbläsare förrän du svarar. Du kan ändra dig när som helst via Integritetsval längst ner på varje sida: att stänga av något gäller direkt, och ändrar inte det vi redan gjort medan det var på.",
           "Det finns två saker att säga ja eller nej till:"
         ],
         "bullets": [
           "Analys – Vercels, och bara om du väljer den. Den räknar besök, mäter hur snabbt sidorna laddas och tar emot några anonyma händelser om hur webbplatsen används: hur någon tar sig till sin My SOG och när språket byts. Den kan inte se vem du är, och vi lämnar den aldrig till annonsörer.",
-          "Marknadsföring – annonscookies, och bara om du väljer dem. De låter annonsplattformarna som nämns ovan – i dag Meta – se hur du använder vår webbplats, så att de kan visa dig våra annonser och vi kan se vilka annonser som fungerar. De är aldrig igång medan en spelare är inloggad. Att stänga av marknadsföring raderar dessa cookies från din webbläsare, men inte det plattformarna redan har – du kan be dem radera det i dina inställningar hos dem."
+          "Marknadsföring – annonscookies, och bara om du väljer dem. De låter annonsplattformarna som nämns ovan – i dag Meta – se hur du använder vår webbplats, så att de kan visa dig våra annonser och vi kan se vilka annonser som fungerar. Om du skapar ett konto under ett besök sparas även kampanjkoden från länken du kom från på kontot. De är aldrig igång medan en spelare är inloggad. Att stänga av marknadsföring raderar dessa cookies, och den lilla mängd data som Metas skript sparar i din webbläsare vid sidan av dem, men inte det plattformarna redan har – du kan be dem radera det i dina inställningar hos dem."
         ]
       },
       "voice": {
         "heading": "Röst- och videoträffar",
         "paragraphs": [
-          "Direktsända klubbar, läger och evenemang hålls via röst och video med hjälp av Daily.co. Träffarna leds live av våra utbildade spelfostrare, och vi använder tjänsten endast för att genomföra den träff som ditt barn anmält sig till."
+          "Direktsända klubbar, läger och evenemang hålls via röst och video med hjälp av Daily.co. Träffarna leds live av våra utbildade spelfostrare, och vi använder tjänsten endast för att genomföra den träff som ditt barn anmält sig till.",
+          "Ditt barns enhet ansluter direkt till Daily.co för samtalet, så Daily ser enhetens internetadress och anslutningsuppgifter så länge träffen pågår, och Dailys egen programvara rapporterar fel som den möter i webbläsaren tillbaka till Daily. För att placera ditt barn i rätt rum ger vi Daily barnets förnamn och, om barnet har lagt till ett sådant, barnets spelanvändarnamn och det id som spelet ger barnet, så att spelfostraren och de andra spelarna i rummet ser vem som talar. Ljudet och videon spelas inte in."
         ]
       },
       "retention": {
@@ -3572,35 +3895,35 @@
   },
   "robloxPrivacy": {
     "title": "Integritetspolicy för Skaparnas akademi",
-    "subtitle": "För familjer som anmäler sig till Programmet för ungas digitala kreativitet i Frankrike, som drivs av Lynx Educate och School of Gaming och sponsras av Roblox.",
+    "subtitle": "För familjer som anmäler sig till Programmet för digital utbildning i Frankrike, som drivs av Lynx Educate och School of Gaming i samarbete med Roblox.",
     "lastUpdated": "Senast uppdaterad: {date}",
     "intro": {
       "heading": "Kort sammanfattning – för föräldrar och unga",
       "blocks": [
-        "Programmet riktar sig till unga i Frankrike i åldern 13–17 år. Anmälan måste göras av en förälder eller vårdnadshavare.",
+        "Programmet Skaparnas akademi riktar sig till unga i Frankrike i åldern <strong>13–17</strong> år. Anmälan måste göras av en förälder eller vårdnadshavare.",
         "Vi samlar bara in det vi behöver för att anmäla ditt barn, genomföra Programmet på ett tryggt sätt och förstå om det fungerar. Det omfattar förälderns kontaktuppgifter, begränsade uppgifter om barnet, barnets Roblox-användarnamn eller Roblox-ID samt uppgifter om närvaro, slutförande och publicering av spel.",
         "School of Gaming använder uppgifterna för att driva anmälnings- och lärplattformen. Lynx Educate behandlar Programmets uppgifter i den utsträckning som behövs för att sköta genomförandet. Organisationerna har olika ansvar beroende på aktiviteten och på ändamålet med behandlingen av personuppgifterna.",
         [
+          "Lynx Educate är personuppgiftsansvarig för genomförandet av Programmet och för den frivilliga e-postkommunikationen.",
           "School of Gaming är personuppgiftsansvarig för driften av Sogverse och för de personuppgifter som behandlas inom företagets egna plattformstjänster.",
-          "För den begränsade effektforskning som utförs på uppdrag av Roblox är Roblox personuppgiftsansvarig, Lynx Educate är personuppgiftsbiträde åt Roblox och School of Gaming är godkänt underbiträde åt Lynx Educate.",
-          "När Lynx Educate behandlar personuppgifter för egna, självständigt bestämda ändamål – till exempel frivilliga e-postutskick från Lynx – är Lynx Educate personuppgiftsansvarig för den behandlingen."
+          "För den begränsade effektforskning som utförs på uppdrag av Roblox är Roblox personuppgiftsansvarig, Lynx Educate är personuppgiftsbiträde åt Roblox och School of Gaming är godkänt underbiträde åt Lynx Educate."
         ],
-        "Följande val är frivilliga och påverkar inte ditt barns plats:",
+        "Följande val är <strong>frivilliga</strong> och påverkar inte ditt barns plats:",
         [
           "E-post till föräldern från Lynx Educate om kommande Roblox-evenemang och resurser om spel.",
-          "Foton och filmer på barnet, i träffrapporter, i effektrapportering till Lynx Educate och Roblox och i offentlig användning av Lynx Educate, School of Gaming och Roblox."
+          "Foton och filmmaterial på barnet, som används i träffrapporter som är synliga för alla familjer i barnets grupp, i effektrapportering till Lynx Educate och Roblox och offentligt av Lynx Educate, School of Gaming och Roblox."
         ],
-        "Träffar online spelas inte in. Inget barn fotograferas eller filmas om det nödvändiga tillståndet saknas eller om barnet inte vill vara med.",
+        "Ordinarie träffar online spelas inte in. Inget barn fotograferas eller filmas om det nödvändiga tillståndet saknas eller om barnet inte vill vara med.",
         "Lynx Educate och School of Gaming säljer inte anmälningsuppgifter från Programmet och använder dem inte för reklam riktad till barn.",
-        "Du och ditt barn kan begära att få se, rätta eller radera uppgifter, återkalla ett frivilligt samtycke eller invända mot viss användning genom att kontakta support@lynxeducate.com eller {supportEmail}."
+        "Du och ditt barn kan begära att få se, rätta eller radera uppgifter, återkalla ett frivilligt samtycke eller invända mot viss användning genom att kontakta <strong>support@lynxeducate.com</strong> eller <strong>{supportEmail}</strong>."
       ]
     },
     "sections": {
       "applies": {
         "heading": "Vem policyn gäller",
         "blocks": [
-          "Den här policyn gäller föräldrar, vårdnadshavare och unga som anmäler sig till Skaparnas akademi, programmet för ungas digitala kreativitet i Frankrike (Programmet).",
-          "Programmet riktar sig till unga i åldern 13–17 år. En förälder eller vårdnadshavare måste göra anmälan och bekräfta att hen har rätt att anmäla barnet.",
+          "Den här policyn gäller föräldrar, vårdnadshavare och unga som anmäler sig till det program för digital utbildning i Frankrike som drivs av Lynx Educate och School of Gaming i samarbete med Roblox (Programmet).",
+          "Programmet riktar sig till unga i åldern <strong>13–17</strong> år. En förälder eller vårdnadshavare måste göra anmälan och bekräfta att hen har rätt att anmäla barnet.",
           "Policyn omfattar anmälan till Programmet, administration, lärandeträffar, evenemang, support, barns trygghet och utvärdering av effekt. Den kompletterar School of Gamings <linkPrivacy>allmänna integritetspolicy</linkPrivacy>. Om de två policyerna står i konflikt med varandra när det gäller Programmet gäller den här programspecifika policyn.",
           "Barnets egen användning av ett Roblox-konto, Roblox Studio eller någon annan Roblox-tjänst omfattas av Roblox egen integritetspolicy och egna villkor.",
           "<linkRobloxTerms>Programmets villkor</linkRobloxTerms> fastställer åldersspannet 13–17 år, att anmälan görs av föräldern och den datadelning som är specifik för Programmet."
@@ -3614,21 +3937,21 @@
         "heading": "Lynx Educate SAS",
         "blocks": [
           "Lynx Educate sköter rekrytering av deltagare, administration av Programmet, det praktiska genomförandet, deltagarkommunikation och rapportering.",
-          "Lynx Educate SAS",
+          "<strong>Lynx Educate SAS</strong>",
           "185 rue Ordener",
           "75018 Paris, Frankrike",
-          "E-post: support@lynxeducate.com"
+          "E-post: <strong>support@lynxeducate.com</strong>"
         ]
       },
       "responsibleSog": {
         "heading": "School of Gaming Galactic Oy",
         "blocks": [
-          "School of Gaming driver Sogverse, sköter anmälnings- och lärmiljön, tillhandahåller innehållet och spelfostrarna, håller i lärandeträffarna och ansvarar för tillsynen av barns trygghet.",
-          "School of Gaming Galactic Oy",
+          "School of Gaming driver Sogverse, sköter anmälnings- och lärmiljön, tillhandahåller kursplanen och ledarna, håller i lärandeträffarna och ansvarar för tillsynen av barns trygghet.",
+          "<strong>School of Gaming Galactic Oy</strong>",
           "FO-nummer: 3110461-1",
           "Isokatu 56",
           "90100 Uleåborg, Finland",
-          "E-post: {supportEmail}"
+          "E-post: <strong>{supportEmail}</strong>"
         ]
       },
       "responsibleRoblox": {
@@ -3669,16 +3992,15 @@
         "blocks": [
           "Beroende på aktivitet kan vi samla in:",
           [
-            "Barnets förnamn, med familjens efternamn från förälderns konto lagrat bredvid. Spelfostrare och andra deltagare ser aldrig efternamnet – barnet deltar under sitt förnamn.",
+            "Förnamn.",
             "Ålder, åldersgrupp eller födelsemånad och födelseår i stället för fullständigt födelsedatum.",
             "Roblox-användarnamn och Roblox-ID.",
-            "Klubben, lägret, evenemanget eller gruppen som barnet deltar i.",
+            "Kursen, klubben, lägret, evenemanget eller gruppen som barnet deltar i.",
             "Närvaro, deltagande, lärandeframsteg och slutförande.",
             "Om barnet publicerar sitt första Roblox-spel, sin första upplevelse eller sitt första digitala föremål.",
             "Namnet på eller länken till en publicerad upplevelse, när det behövs för att bekräfta resultatet i Programmet.",
             "Deltagarens återkoppling och frivilliga enkätsvar.",
             "Begränsade uppgifter om moderering, beteende eller trygghet när de behövs för att hålla deltagarna trygga.",
-            "Uppgifter om tillgänglighet, kost eller hälsa som lämnas inför ett visst evenemang, men bara när det är nödvändigt.",
             "Foton, filmmaterial, ljud eller liknande material när det aktuella frivilliga tillståndet har getts."
           ],
           "Vi frågar aldrig efter barnets Roblox-lösenord. Barnet behöver ingen egen e-postadress för Sogverse när kontot sköts via föräldern eller vårdnadshavaren."
@@ -3703,7 +4025,7 @@
         "blocks": []
       },
       "useDeliver": {
-        "heading": "För att anmäla deltagare och genomföra Programmet",
+        "heading": "För att anmäla deltagare och genomföra Programmet (av Lynx Educate)",
         "blocks": [
           "Vi använder konto-, ålders-, anmälnings- och kontaktuppgifter för att:",
           [
@@ -3718,7 +4040,7 @@
         ]
       },
       "useSafety": {
-        "heading": "För att hålla barnen och tjänsten trygga",
+        "heading": "För att hålla barnen och tjänsten trygga (av Lynx Educate)",
         "blocks": [
           "Vi använder begränsade konto-, sessions-, modererings- och incidentuppgifter för att:",
           [
@@ -3727,13 +4049,13 @@
             "Utreda klagomål och oro som rör barns trygghet.",
             "Kommunicera med en förälder eller vårdnadshavare.",
             "Kontakta räddningstjänst eller behöriga myndigheter när det behövs.",
-            "Skydda deltagarnas, spelfostrarnas och andra personers rättigheter, säkerhet och välbefinnande."
+            "Skydda deltagarnas, ledarnas och andra personers rättigheter, säkerhet och välbefinnande."
           ],
           "Vi stöder oss på våra berättigade intressen av att driva ett tryggt Program, på tillämpliga rättsliga skyldigheter och, i en nödsituation, på skyddet av någons grundläggande intressen."
         ]
       },
       "useEvaluate": {
-        "heading": "För att utvärdera Programmet",
+        "heading": "För att utvärdera Programmet (av Lynx Educate)",
         "blocks": [
           "Vi använder uppgifter om närvaro, slutförande, publicering, föräldrars deltagande och enkätsvar för att förstå om Programmet når sina mål och för att ta fram rapporter om Programmet.",
           "När det är möjligt bygger rapporterna på aggregerade eller anonymiserade uppgifter som inte identifierar något enskilt barn.",
@@ -3741,17 +4063,17 @@
         ]
       },
       "useEmail": {
-        "heading": "Frivillig e-postkommunikation",
+        "heading": "Frivillig e-postkommunikation (av Lynx Educate)",
         "blocks": [
           "Lynx Educate använder förälderns e-postadress för att skicka information om kommande Roblox-evenemang och resurser om spel enbart när föräldern kryssar i den frivilliga e-postrutan.",
           "Den här användningen grundar sig på förälderns samtycke. Den krävs inte för att delta och kan när som helst avslutas via avregistreringslänken i varje utskick eller genom att kontakta Lynx Educate.",
-          "School of Gaming och Roblox får inte förälderns e-postadress via den här rutan för egen marknadsföring."
+          "Roblox får inte förälderns e-postadress via den här rutan för egen marknadsföring."
         ]
       },
       "useMedia": {
-        "heading": "Frivilligt foto och film",
+        "heading": "Frivilligt foto och film (av Lynx Educate)",
         "blocks": [
-          "Foto, film och offentlig kommunikation bygger på ett enda frivilligt tillstånd, som ges för varje barn. Att tacka nej påverkar varken anmälan eller deltagandet.",
+          "Foto, film och offentlig kommunikation bygger på separata, frivilliga tillstånd. Att tacka nej till de här tillstånden påverkar varken anmälan eller deltagandet.",
           "Samtycke är inte den rättsliga grunden för de centrala aktiviteterna kring anmälan, genomförande eller barns trygghet som beskrivs ovan."
         ]
       },
@@ -3760,10 +4082,12 @@
         "blocks": [
           "Enligt Programmets nuvarande personuppgiftsbiträdesavtal är de identifierbara uppgifter som får lämnas till Roblox för intern effektforskning begränsade till:",
           [
-            "Roblox-användarnamn.",
-            "Roblox-ID.",
-            "E-postadressen som är kopplad till kontot i Programmet, vilket kan vara förälderns eller vårdnadshavarens adress.",
-            "Den specifika tjänst eller aktivitet i Programmet som barnet deltagit i."
+            "Roblox-användarnamn",
+            "Roblox-ID",
+            "Plats (stad och land)",
+            "Barnets ålder",
+            "Den specifika tjänst eller aktivitet i Programmet som barnet deltagit i",
+            "URL till barnets publicerade spel"
           ],
           "Roblox använder datamängden för intern forskning om Programmets nytta och effekt. Den lämnas inte via Programmet för reklam eller direktmarknadsföring.",
           "Roblox kan också få aggregerad rapportering om närvaro, slutförande, publicering och nöjdhet som inte identifierar enskilda familjer.",
@@ -3788,34 +4112,34 @@
       "media": {
         "heading": "Foto, film och offentlig användning",
         "blocks": [
-          "Träffar online spelas inte in. Om foto eller film planeras vid en viss träff eller ett visst evenemang får familjerna veta det i förväg.",
-          "Det finns ett enda frivilligt mediaval per barn. Det görs när barnet anmäls till en aktivitet i Skaparnas akademi och kan ändras när som helst på barnets sida i My SOG."
+          "Ordinarie träffar online spelas inte in. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera.",
+          "Om identifierbar fotografering eller filmning planeras vid en viss träff eller ett visst evenemang får familjerna veta det i förväg.",
+          "När mediatillstånd har getts kan ett foto som tagits under en träff tas med i träffrapporten, som alla familjer i barnets grupp kan se."
         ]
       },
-      "mediaChoice": {
-        "heading": "Vad mediavalet omfattar",
+      "mediaPublic": {
+        "heading": "Offentlig kommunikation om Programmets effekt",
         "blocks": [
-          "En enda frivillig ruta omfattar all användning av ett barns foton och filmmaterial. När rutan är ikryssad får foton och filmer på barnet:",
+          "Det här valet ger Lynx Educate, School of Gaming och Roblox rätt att använda foton eller filmmaterial offentligt för att visa Programmets effekt, bland annat:",
           [
-            "Tas med i träffrapporter, som varje familj i barnets grupp ser på gruppens sida och får per e-post.",
-            "Delas med Lynx Educate och Roblox för effektrapportering, bland annat i interna effektrapporter, lägesuppdateringar och presentationer för sponsorn.",
-            "Användas offentligt av Lynx Educate, School of Gaming och Roblox på deras webbplatser och kanaler i sociala medier."
+            "På deras webbplatser.",
+            "I deras kanaler i sociala medier.",
+            "I press- och PR-material.",
+            "I kommunikation om Programmet och dess effekt."
           ],
-          "Offentligt innehåll kan vara tillgängligt i hela världen och kan kopieras eller delas vidare av andra användare utan att organisationerna kan styra det.",
-          "Är rutan inte ikryssad hålls barnet utanför träffarnas foton och identifierbart material. Ingenting som identifierar barnet tas med i en träffrapport, delas med Lynx Educate eller Roblox eller används offentligt. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
+          "Offentligt innehåll kan vara tillgängligt i hela världen och kan kopieras eller delas vidare av andra användare utan att organisationerna kan styra det. Roblox, Lynx Educate och School of Gaming är separata och självständiga personuppgiftsansvariga för sådana uppgifter."
         ]
       },
       "mediaChildAgrees": {
         "heading": "Barnet måste också vara med på det",
         "blocks": [
           "Föräldern bör prata med barnet om mediavalet innan det görs. Vi förklarar också fotograferingen eller filmningen för barnet på ett sätt som passar barnets ålder.",
-          "En spelfostrare frågar barnet innan ett foto tas, även när föräldern kryssat i rutan, och vi fotograferar eller filmar aldrig medvetet ett barn som säger nej. Ett barn vars förälder inte kryssat i rutan hålls utanför träffarnas foton och identifierbart material. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
+          "Vi fotograferar eller filmar aldrig medvetet ett barn som säger nej, även om en förälder tidigare har kryssat i en mediaruta. Personalen vidtar rimliga praktiska åtgärder för att hålla barn utan tillstånd utanför identifierbart material."
         ]
       },
       "mediaCaseStudies": {
         "heading": "Fallbeskrivningar, namn och innehåll som deltagarna skapat",
         "blocks": [
-          "Mediarutan omfattar bara foton och filmmaterial.",
           "Ett separat skriftligt medgivande inhämtas innan följande används:",
           [
             "Ett barns fullständiga namn.",
@@ -3831,7 +4155,7 @@
       "mediaChanging": {
         "heading": "Ändra ett mediaval",
         "blocks": [
-          "En förälder kan ändra mediavalet när som helst på barnets sida i My SOG, eller genom att kontakta oss. Ett barn kan också be oss återkalla tillståndet.",
+          "En förälder eller ett barn kan återkalla ett mediatillstånd genom att kontakta {supportEmail}, eller så kan föräldern ändra det när som helst på barnets sida i My SOG.",
           "Efter återkallelsen slutar vi använda materialet på nya sätt och tar bort det från kanaler vi själva styr över, när det rimligen går. En återkallelse kan inte göra tidigare laglig användning olaglig, ta tillbaka tryckt material som redan spridits eller garantera att kopior som tredje part redan delat raderas."
         ]
       },
@@ -3841,11 +4165,10 @@
           "Programmet genomförs i en privat och modererad lärmiljö.",
           [
             "Varje barns profil är kopplad till ett konto för en förälder eller vårdnadshavare.",
-            "Barnen deltar bara under sitt förnamn – aldrig med sina kontaktuppgifter.",
-            "Endast anmälda deltagare och kontrollerade spelfostrare får delta.",
+            "Endast anmälda deltagare och kontrollerade ledare får delta.",
             "Kommunikationen sker i grupp och under uppsikt.",
             "Det finns inga privata direktmeddelanden mellan barn.",
-            "Träffar spelas inte in.",
+            "Ordinarie träffar spelas inte in.",
             "Lynx Educate och School of Gaming använder inte anmälningsuppgifter från Programmet för beteendebaserad reklam riktad till barn."
           ],
           "Oro som rör barns trygghet hanteras enligt den gemensamma <linkRobloxSafeguarding>barnskyddspolicyn</linkRobloxSafeguarding>. School of Gaming hanterar vardagliga ärenden i första hand och för allvarliga ärenden vidare till Lynx Educate. Räddningstjänsten kontaktas först om ett barn kan vara i omedelbar fara.",
@@ -3866,11 +4189,11 @@
           ],
           "School of Gamings viktigaste tekniska leverantörer är för närvarande:",
           [
-            "Supabase, för konto- och programuppgifter.",
-            "Brevo, för e-post om driften och påminnelser.",
-            "Daily.co, för ljud och video i realtid.",
-            "Vercel, för webbhotell och integritetsvänlig statistik.",
-            "Meta/WhatsApp, endast när en familj väljer kommunikation via WhatsApp."
+            "<strong>Supabase</strong>, för konto- och programuppgifter.",
+            "<strong>Brevo</strong>, för e-post om driften och påminnelser.",
+            "<strong>Daily.co</strong>, för ljud och video i realtid.",
+            "<strong>Vercel</strong>, för webbhotell och integritetsvänlig statistik.",
+            "<strong>Meta/WhatsApp</strong>, endast när en familj väljer kommunikation via WhatsApp."
           ],
           "Leverantörerna får bara behandla uppgifterna för att utföra de tjänster som avtalats och måste skydda dem på lämpligt sätt."
         ]
@@ -3889,13 +4212,13 @@
         "blocks": [
           "Vi sparar inte alla typer av uppgifter lika länge.",
           [
-            "Uppgifter om Sogverse-kontot: sparas så länge familjens konto är aktivt och raderas eller anonymiseras sedan, utom när en begränsad uppgift måste sparas enligt lag.",
-            "Uppgifter om administration och deltagande i Programmet: sparas tills genomförandet, slutrapporteringen och rimlig uppföljning är klara, och raderas eller anonymiseras därefter.",
-            "Roblox forskningsdata: återlämnas eller raderas säkert när de aktuella behandlingstjänsterna upphör, om inte tillämplig lag kräver begränsad lagring.",
-            "Marknadsföringsuppgifter: sparas tills föräldern avregistrerar sig.",
-            "Material och mediatillstånd: sparas för det tillåtna rapporterings- eller publiceringsändamålet och ses över regelbundet.",
-            "Uppgifter om trygghet, incidenter och rättsliga ärenden: kan sparas längre när det behövs för att skydda ett barn, utreda en oro, följa lag eller fastställa, göra gällande eller försvara rättsliga anspråk.",
-            "Säkerhetsloggar: sparas bara så länge som rimligen behövs för att skydda och utreda tjänsten."
+            "<strong>Uppgifter om Sogverse-kontot:</strong> sparas så länge familjens konto är aktivt och raderas eller anonymiseras sedan, utom när en begränsad uppgift måste sparas enligt lag.",
+            "<strong>Uppgifter om administration och deltagande i Programmet:</strong> sparas tills genomförandet, slutrapporteringen och rimlig uppföljning är klara, och raderas eller anonymiseras därefter.",
+            "<strong>Roblox forskningsdata:</strong> återlämnas eller raderas säkert när de aktuella behandlingstjänsterna upphör, om inte tillämplig lag kräver begränsad lagring.",
+            "<strong>Marknadsföringsuppgifter:</strong> sparas tills föräldern avregistrerar sig.",
+            "<strong>Material och mediatillstånd:</strong> sparas för det tillåtna rapporterings- eller publiceringsändamålet och ses över regelbundet.",
+            "<strong>Uppgifter om trygghet, incidenter och rättsliga ärenden:</strong> kan sparas längre när det behövs för att skydda ett barn, utreda en oro, följa lag eller fastställa, göra gällande eller försvara rättsliga anspråk.",
+            "<strong>Säkerhetsloggar:</strong> sparas bara så länge som rimligen behövs för att skydda och utreda tjänsten."
           ],
           "Att stänga ett Sogverse-konto stänger inte automatiskt ett separat Roblox-konto och tar inte bort en upplevelse som publicerats på Roblox."
         ]
@@ -3916,8 +4239,8 @@
           "Att återkalla ett samtycke påverkar inte den behandling som var laglig innan återkallelsen.",
           "Barn får kontakta oss direkt om sina egna uppgifter. Föräldrar och vårdnadshavare kan också göra en begäran för ett barn, med hänsyn till barnets egna rättigheter, ålder och mognad.",
           "Det förekommer inget helt automatiserat beslutsfattande som får rättsliga följder eller på liknande sätt i betydande grad påverkar deltagarna.",
-          "Skicka din begäran till support@lynxeducate.com eller {supportEmail}. Organisationerna samordnar svaret och skickar vidare de frågor som rör Roblox till Roblox när det behövs.",
-          "Familjer har också rätt att lämna in klagomål till den franska dataskyddsmyndigheten Commission nationale de l’informatique et des libertés – <linkCnil>CNIL</linkCnil>."
+          "Skicka din begäran till <strong>support@lynxeducate.com</strong> eller <strong>{supportEmail}</strong>. Organisationerna samordnar svaret och skickar vidare de frågor som rör Roblox till Roblox när det behövs.",
+          "Familjer har också rätt att lämna in klagomål till den franska dataskyddsmyndigheten <strong>Commission nationale de l’informatique et des libertés – <linkCnil>CNIL</linkCnil></strong>."
         ]
       },
       "security": {
@@ -3947,14 +4270,14 @@
       "contact": {
         "heading": "Kontakt",
         "blocks": [
-          "Lynx Educate SAS",
+          "<strong>Lynx Educate SAS</strong>",
           "185 rue Ordener",
           "75018 Paris, Frankrike",
-          "support@lynxeducate.com",
-          "School of Gaming Galactic Oy",
+          "<strong>support@lynxeducate.com</strong>",
+          "<strong>School of Gaming Galactic Oy</strong>",
           "Isokatu 56",
           "90100 Uleåborg, Finland",
-          "{supportEmail}"
+          "<strong>{supportEmail}</strong>"
         ]
       }
     }
@@ -4040,12 +4363,12 @@
   },
   "robloxTerms": {
     "title": "Användarvillkor för Skaparnas akademi",
-    "subtitle": "Gäller familjer som anmäler sig till Skaparnas akademi i Frankrike – Lynx Educate × School of Gaming, i samarbete med Roblox.",
+    "subtitle": "För familjer som anmäler sig till Programmet för digital utbildning i Frankrike, som drivs av Lynx Educate och School of Gaming i samarbete med Roblox.",
     "lastUpdated": "Uppdaterad: {date}",
     "intro": {
       "heading": "Kort sammanfattning",
       "blocks": [
-        "Här förklarar vi vad du anmäler ditt barn till när ni registrerar er för Skaparnas akademi. Det är ett gemensamt program mellan Lynx Educate och School of Gaming, sponsrat av Roblox. Om något är oklart, mejla support@lynxeducate.com."
+        "Här förklarar vi vad du anmäler ditt barn till när ni registrerar er för programmet Skaparnas akademi. Det är ett gemensamt program som drivs av Lynx Educate och School of Gaming i samarbete med Roblox. Om något är oklart, mejla <strong>support@lynxeducate.com</strong>."
       ]
     },
     "sections": {
@@ -4053,8 +4376,8 @@
         "heading": "Vilka som är med",
         "blocks": [
           [
-            "Lynx Educate SAS och School of Gaming Galactic Oy (”SOG”) utformar och genomför Programmet tillsammans – i det här dokumentet betyder ”vi” båda parterna gemensamt, om vi inte säger något annat.",
-            "Roblox Corporation (”Roblox”) sponsrar Programmet och tillhandahåller plattformen som ditt barn bygger på. Roblox är inte part i dessa villkor."
+            "<strong>Lynx Educate SAS</strong> och <strong>School of Gaming Galactic Oy (”SOG”)</strong> utformar och genomför Programmet tillsammans – i det här dokumentet betyder ”vi” båda parterna gemensamt, om vi inte säger något annat.",
+            "<strong>Roblox Corporation</strong> (”Roblox”) sponsrar Programmet och tillhandahåller plattformen som ditt barn bygger på. Roblox är inte part i dessa villkor."
           ],
           "Anmälan och träffar sker på School of Gamings plattform (”Sogverse”). Genom att anmäla dig godkänner du dessa programspecifika villkor, som gäller vid sidan av <linkTerms>School of Gamings</linkTerms> och Lynx ordinarie användarvillkor och som har företräde om villkoren skulle stå i strid med varandra."
         ]
@@ -4080,26 +4403,26 @@
       "safety": {
         "heading": "Trygghet och tillsyn",
         "blocks": [
-          "Varje träff leds av en utbildad spelfostrare. Vår hållning till beteende och barns trygghet framgår av vår gemensamma <linkRobloxSafeguarding>barnskyddspolicy</linkRobloxSafeguarding>."
+          "Varje träff leds av en utbildad ledare. Vår hållning till beteende och barns trygghet framgår av vår gemensamma <strong><linkRobloxSafeguarding>barnskyddspolicy</linkRobloxSafeguarding></strong>, som finns tillgänglig på begäran."
         ]
       },
       "information": {
         "heading": "Dina uppgifter",
         "blocks": [
-          "Hur vi använder dina och ditt barns uppgifter förklaras i vår <linkRobloxPrivacy>Integritetspolicy för Skaparnas akademi</linkRobloxPrivacy>. Genom att anmäla dig bekräftar du att du har läst och förstått den.",
-          "När du anmäler dig till Skaparnas akademi delas även uppgifterna som är kopplade till ditt School of Gaming-konto (inklusive dina kontaktuppgifter och ditt barns kontouppgifter) med Lynx Educate för att genomföra programmet och med Roblox för forskning om programmets effekter."
+          "Hur vi använder dina och ditt barns uppgifter förklaras i vår <strong><linkRobloxPrivacy>Integritetspolicy för Skaparnas akademi</linkRobloxPrivacy></strong>. Genom att anmäla dig bekräftar du att du har läst och förstått den.",
+          "När du anmäler dig till ett Roblox-program delas även uppgifterna som är kopplade till ditt School of Gaming-konto (inklusive dina kontaktuppgifter och ditt barns kontouppgifter) med Lynx Educate för att genomföra programmet och med Roblox för forskning om programmets effekter. Läs mer i <strong><linkRobloxPrivacy>Integritetspolicyn för Skaparnas akademi</linkRobloxPrivacy></strong>."
         ]
       },
       "media": {
         "heading": "Foto, video och marknadsföring",
         "blocks": [
-          "Om ditt barn syns på foton eller film är ett enda frivilligt val, som du gör när du anmäler barnet till en aktivitet i Skaparnas akademi. Du kan ändra det när som helst på barnets sida i My SOG. Ett barn utan det tillståndet hålls utanför träffarnas foton och identifierbart material. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
+          "Om ditt barn fotograferas eller filmas, och om materialet används i marknadsföring, avgörs helt av de val du gör vid anmälan. Valen är frivilliga och du kan ändra dig när som helst på barnets sida i My SOG."
         ]
       },
       "concern": {
         "heading": "Om du är orolig",
         "blocks": [
-          "Om du är orolig för ditt barns upplevelse i Programmet, kontakta School of Gaming på {supportEmail} eller Lynx Educate på support@lynxeducate.com – vi ser till att ärendet når rätt personer."
+          "Om du är orolig för ditt barns upplevelse i Programmet, kontakta antingen support@lynxeducate.com eller {supportEmail} – vi ser till att ärendet når rätt personer."
         ]
       },
       "changes": {

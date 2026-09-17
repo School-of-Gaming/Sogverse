@@ -65,7 +65,6 @@ export default async function RobloxSafeguardingPage() {
         date: formatDateOnly(LAST_UPDATED, locale, { dateStyle: "long" }),
       })}
       newTabLabel={tLegal("opensInNewTab")}
-      draftNotice={tLegal("draftNotice")}
       intro={{
         heading: t("intro.heading"),
         blocks: rawPolicyBlocks(t.raw("intro.blocks")),

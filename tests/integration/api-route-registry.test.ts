@@ -87,8 +87,16 @@ type Posture =
   | { kind: "optional-auth"; reason: string }
   /** A third party's signature over the raw body is the authorization. */
   | { kind: "webhook"; verifier: WebhookVerifier; reason: string }
-  /** Server-to-server, authorized by a shared secret rather than a session. */
-  | { kind: "api-key"; reason: string };
+  /**
+   * Server-to-server, authorized by a shared secret rather than a session.
+   *
+   * `primitive` names the symbol the file must contain to be running that
+   * check at all — the api-key twin of `defineRoute` / `requireRole` below. A
+   * shared helper is the answer wherever one exists; a file still comparing
+   * its own secret inline names the compare it uses, which records the
+   * hand-roll as a wart rather than excusing it.
+   */
+  | { kind: "api-key"; reason: string; primitive: string };
 
 /**
  * Webhook verifier strategies, recorded per handler because their error
@@ -178,6 +186,19 @@ const TESTS = {
     "tests/integration/api/tools-minecraft-password-reset.test.ts",
   minecraftJoinCheck: "tests/integration/api/minecraft-join-check.test.ts",
   minecraftVerify: "tests/integration/api/minecraft-verify.test.ts",
+  // The partner API: one suite for what its resources share (the key, query
+  // validation, the envelope, the catch-all), and one per resource for what
+  // that resource answers. A resource entry names its own suite once that
+  // suite exists; the shared suite exercises every route either way.
+  partnerApi: "tests/integration/api/partner-api.test.ts",
+  partnerCampaigns: "tests/integration/api/partner-campaigns.test.ts",
+  partnerEnrolments: "tests/integration/api/partner-enrolments.test.ts",
+  partnerFamilies: "tests/integration/api/partner-families.test.ts",
+  partnerFeedback: "tests/integration/api/partner-feedback.test.ts",
+  partnerProducts: "tests/integration/api/partner-products.test.ts",
+  partnerRobloxResearch: "tests/integration/api/partner-roblox-research.test.ts",
+  partnerSessions: "tests/integration/api/partner-sessions.test.ts",
+  partnerTraffic: "tests/integration/api/partner-traffic.test.ts",
   pin: "tests/integration/auth/pin.test.ts",
   productImagesManage: "tests/integration/api/product-images-manage.test.ts",
   productImagesReplace: "tests/integration/api/product-images-replace.test.ts",
@@ -216,6 +237,18 @@ const TESTS = {
 } as const;
 
 const ADMIN_ONLY: Posture = { kind: "role-gated", roles: ["admin"] };
+
+/**
+ * The Lynx Educate partner API's one posture, shared by its eight read-only
+ * resources and the catch-all beneath them because the key is what scopes all
+ * of them: one key, one partner, one Programme.
+ */
+const PARTNER_KEY: Posture = {
+  kind: "api-key",
+  primitive: "requirePartnerKey",
+  reason:
+    "Lynx Educate's own tooling pulls the Programme's data server-to-server on a schedule; there is no person in the loop and no Sogverse session to present. The issued bearer token, compared in constant time, is both the partner's identity and the whole of its scope. Every handler is read-only: it reads families' and children's Programme data through the service-role client (there is no session for a row policy to evaluate), bounded by the Programme scope the partner read modules apply and by response schemas that admit no field the published documentation does not describe, and it writes nothing",
+};
 
 const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // --- Admin surfaces ------------------------------------------------------
@@ -308,7 +341,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // observed by somebody opening a page that would care, and this is that call.
   "src/app/api/admin/seat-offers/sweep/route.ts": {
     adminClient:
-      "claim_expired_seat_offer_notifications is service_role-only, along with the rest of the seat-offer trio, and the staff mails it feeds read a family whose row the caller has no policy on, and resolve their own recipients from the role column — every admin account, which is in nobody else's view",
+      "claim_expired_seat_offer_notifications is service_role-only, along with the rest of the seat-offer trio, and the staff mails it feeds read a family whose row the caller has no policy on",
     handlers: {
       POST: {
         posture: ADMIN_ONLY,
@@ -478,7 +511,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/auth/register/route.ts": {
     adminClient:
-      "Auth Admin API (self-registration creates the auth user before any session exists), plus the optional home-location write onto the profile that same request creates, plus the registration marketing-consent write — record_registration_marketing_consent (00221) is granted to service_role alone, because it takes the customer as a parameter (no session exists yet) and hardcodes the 'registration' source that set_marketing_consent refuses, so that provenance can only be claimed from here, plus the account-consent write — record_account_consents (00249) is granted to service_role alone for the same reason, and records what the account was opened under (the terms and the guardian declaration) against the version of each that was current",
+      "Auth Admin API (self-registration creates the auth user before any session exists), plus the optional home-location write onto the profile that same request creates, plus the registration marketing-consent write — record_registration_marketing_consent (00221) is granted to service_role alone, because it takes the customer as a parameter (no session exists yet) and hardcodes the 'registration' source that set_marketing_consent refuses, so that provenance can only be claimed from here, plus the account-consent write — record_account_consents (00249) is granted to service_role alone for the same reason, and records what the account was opened under (the terms; the guardian declaration moved to create_gamer in 00250, where it is a statement about one named child) against the version that was current",
     handlers: {
       POST: {
         posture: {
@@ -750,7 +783,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/gamers/create/route.ts": {
     adminClient:
-      "Auth Admin API (user creation, with delete-on-failure compensation)",
+      "Auth Admin API (user creation, with delete-on-failure compensation), plus the promote-and-link RPC — create_gamer (00250) is granted to service_role alone because it takes both the gamer and the parent as parameters (the child has no session and the parent's own client cannot promote a profile), and it is what records the parent's guardian declaration about this child in the same transaction",
     handlers: {
       POST: {
         posture: { kind: "role-gated", roles: ["customer"] },
@@ -950,6 +983,11 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
       GET: {
         posture: {
           kind: "api-key",
+          // The wart: this route compares its own key inline instead of going
+          // through a shared helper, so what it names is the constant-time
+          // compare itself. Moving it onto the shared partner-style gate would
+          // also change its error bodies, which the game server reads.
+          primitive: "timingSafeEqual",
           reason:
             "the game server calls this on player join; it has no user session to present. A bearer token compared in constant time is the authorization, and the endpoint fails closed — it admits nobody at all until the gating is rebuilt",
         },
@@ -970,6 +1008,77 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         body: { kind: "none" },
         test: TESTS.minecraftVerify,
       },
+    },
+  },
+
+  // --- Partner API (Lynx Educate) ------------------------------------------
+  //
+  // Eight read-only resources published at `/docs/lynx-api`, all on one issued
+  // key and all the same posture, plus the catch-all that answers every other
+  // path under the prefix with the documented 404. Each authenticates, validates
+  // its query against the contract schema, and answers the documented shape.
+  //
+  // None of these files names the service-role factory, and none carries an
+  // `adminClient` clause: the partner reads construct it in exactly one module,
+  // pinned in NON_ROUTE_ADMIN_CLIENT_SITES with the one justification they all
+  // share, and check 3 confines that module's accessor to the partner surface —
+  // so the justification cannot be borrowed by anything else.
+
+  "src/app/api/partner/[...path]/route.ts": {
+    handlers: {
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+      POST: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+      PUT: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+      PATCH: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+      DELETE: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+    },
+  },
+
+  "src/app/api/partner/v1/products/route.ts": {
+    handlers: {
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerProducts },
+    },
+  },
+
+  "src/app/api/partner/v1/campaigns/route.ts": {
+    handlers: {
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerCampaigns },
+    },
+  },
+
+  "src/app/api/partner/v1/families/route.ts": {
+    handlers: {
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerFamilies },
+    },
+  },
+
+  "src/app/api/partner/v1/enrolments/route.ts": {
+    handlers: {
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerEnrolments },
+    },
+  },
+
+  "src/app/api/partner/v1/sessions/route.ts": {
+    handlers: {
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerSessions },
+    },
+  },
+
+  "src/app/api/partner/v1/feedback/route.ts": {
+    handlers: {
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerFeedback },
+    },
+  },
+
+  "src/app/api/partner/v1/roblox-research/route.ts": {
+    handlers: {
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerRobloxResearch },
+    },
+  },
+
+  "src/app/api/partner/v1/traffic/route.ts": {
+    handlers: {
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerTraffic },
     },
   },
 
@@ -997,7 +1106,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // path".
   "src/app/api/participations/seat-offer/route.ts": {
     adminClient:
-      "respond_seat_offer is service_role-only because its public sibling has no session to guard on; the caller's ownership of the row is established first, on the caller's own client under their own RLS, and the staff mail reads a product and profiles they hold no policy on — including the role column it resolves its admin recipients from",
+      "respond_seat_offer is service_role-only because its public sibling has no session to guard on; the caller's ownership of the row is established first, on the caller's own client under their own RLS, and the staff mail reads a product and profiles they hold no policy on",
     handlers: {
       POST: {
         posture: { kind: "role-gated", roles: ["customer"] },
@@ -1011,7 +1120,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/seat-offer/respond/route.ts": {
     adminClient:
-      "there is no session on this path at all — the signed token is the authorization — so every read and the write behind it run on the service-role client — the staff mail's admin recipient list included — and the token's compare-and-swap inside respond_seat_offer is what narrows that to one participation and one offer",
+      "there is no session on this path at all — the signed token is the authorization — so every read and the write behind it run on the service-role client, and the token's compare-and-swap inside respond_seat_offer is what narrows that to one participation and one offer",
     handlers: {
       POST: {
         posture: {
@@ -1246,7 +1355,23 @@ const NON_ROUTE_ADMIN_CLIENT_SITES: Record<string, string> = {
     "the shared family resolver — a gamer legitimately reads siblings beyond their own view",
   "src/app/[locale]/select-profile/page.tsx":
     "the profile chooser prefetch, through the same family resolver as the family-list route",
+  "src/services/partner/partner-shared-db.server.ts":
+    "the partner API's one construction site: Lynx Educate's tooling authenticates with an issued key and holds no Sogverse session for a row policy to evaluate, so every partner read runs as the service role, scoped to the Programme by the partner read modules and shaped by the published contract. Its accessor is confined to the partner routes and services by check 3",
 };
+
+/**
+ * The partner API reaches the service role through an accessor rather than by
+ * naming the factory, so the pin above is one entry for the whole surface. The
+ * price of that is this list: the directories allowed to name the accessor at
+ * all. A file outside them reaching for it is reaching for the service role
+ * without a justification of its own, which is exactly what check 3 exists to
+ * stop.
+ */
+const PARTNER_DB_ACCESSOR = /\bpartnerDb\b/;
+const PARTNER_DB_SURFACE = [
+  "src/app/api/partner/",
+  "src/services/partner/",
+] as const;
 
 // ---------------------------------------------------------------------------
 // Surface enumeration
@@ -1269,6 +1394,15 @@ function walk(dir: string, matches: (name: string) => boolean): string[] {
 function readSource(path: string): string {
   // eslint-disable-next-line security/detect-non-literal-fs-filename -- reads a file discovered by the fixed in-repo walk above
   return readFileSync(join(process.cwd(), path), "utf8");
+}
+
+/**
+ * Does this source actually CALL the named check, rather than merely mention
+ * it? An import is not a call, and a route that imports its gate and then
+ * forgets to run it is precisely the failure the api-key check is about.
+ */
+function runsKeyCheck(source: string, primitive: string): boolean {
+  return source.includes(`${primitive}(`);
 }
 
 /** Handler exports really present in a route file's source. */
@@ -1414,6 +1548,48 @@ describe("check 2 — static conformance: gated routes contain the primitive", (
     expect(ROUTE_REGISTRY[path].offPrimitive?.trim().length).toBeGreaterThan(0);
   });
 
+  // An api-key handler is gated too — by a shared secret rather than by a
+  // session — and the same silence applies to it: a route that forgot its key
+  // check and a route that never needed one look identical from outside. So
+  // every api-key entry names the primitive that performs its check, and the
+  // file has to contain it. Without this, deleting the one line that
+  // authenticates a partner route would publish the Programme's data to the
+  // internet and pass CI.
+  //
+  // Per entry rather than one repo-wide name, because the surface has two
+  // answers: the partner routes share a helper, and the Minecraft join-check
+  // still compares its own key inline. Naming each one keeps the hand-roll
+  // visible and still verified, instead of exempting it.
+  const keyedHandlers = REGISTERED_HANDLERS.flatMap((h) =>
+    h.handler.posture.kind === "api-key"
+      ? [[h.label, h.path, h.handler.posture.primitive] as const]
+      : [],
+  );
+
+  it("found api-key routes to check", () => {
+    expect(keyedHandlers.length).toBeGreaterThan(0);
+  });
+
+  it.each(keyedHandlers)(
+    "%s runs the key check it declares",
+    (_label, path, primitive) => {
+      expect(
+        runsKeyCheck(readSource(path), primitive),
+        `${path} is registered as api-key but contains no call to ${primitive}. An api-key route that does not run its key check is open to the internet.`,
+      ).toBe(true);
+    },
+  );
+
+  // The detector's own negative case. Every assertion above is a positive one,
+  // and a detector that answered `true` to anything would pass all of them
+  // while verifying nothing — the same vacuity guard check 1 keeps on its
+  // lists, one level down.
+  it("would fail a handler that dropped its key check", () => {
+    expect(
+      runsKeyCheck("export function GET() {\n  return Response.json({});\n}", "requirePartnerKey"),
+    ).toBe(false);
+  });
+
   // The wrapper reads the request body only when a body schema is declared, so
   // a raw-body posture must never be wrapped: a consumed stream cannot be
   // re-read, and the signature is over the bytes.
@@ -1484,6 +1660,28 @@ describe("check 3 — admin-client pinning", () => {
     expect(nonRouteImporters).toEqual(
       Object.keys(NON_ROUTE_ADMIN_CLIENT_SITES).sort(),
     );
+  });
+
+  const sourceFiles = walk(join(process.cwd(), "src"), (name) =>
+    /\.tsx?$/.test(name),
+  ).map(repoPath);
+
+  const partnerDbUsers = sourceFiles
+    .filter((path) => PARTNER_DB_ACCESSOR.test(readSource(path)))
+    .sort();
+
+  it("found the partner API's service-role accessor in use", () => {
+    expect(partnerDbUsers.length).toBeGreaterThan(0);
+  });
+
+  it("confines the partner API's service-role accessor to the partner surface", () => {
+    const outside = partnerDbUsers.filter(
+      (path) => !PARTNER_DB_SURFACE.some((prefix) => path.startsWith(prefix)),
+    );
+    expect(
+      outside,
+      "the partner API's service-role accessor is named outside the partner routes and services; justify a service-role client of that file's own instead",
+    ).toEqual([]);
   });
 });
 

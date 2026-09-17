@@ -72,6 +72,30 @@ export function decimalToCents(value: string): number | null {
   return Math.round(n * 100);
 }
 
+/**
+ * Add a run of integer cents, refusing to hand back a number that has stopped
+ * being one.
+ *
+ * Money in this app is an integer number of cents precisely so that no total is
+ * ever the sum of two roundings. The guard is what makes that a fact rather than
+ * an intention: a fee that arrived as a fraction, a count multiplied past
+ * `Number.MAX_SAFE_INTEGER`, or anything else that would make the arithmetic
+ * silently approximate stops the caller instead of printing a plausible wrong
+ * number.
+ */
+export function sumCents(values: Iterable<number>): number {
+  let total = 0;
+  for (const value of values) {
+    total += value;
+    if (!Number.isSafeInteger(total)) {
+      throw new Error(
+        `sumCents: running total is not a safe integer (${total})`,
+      );
+    }
+  }
+  return total;
+}
+
 // `locale` and `timeZone` are both required: a time-of-day always renders in
 // an explicit viewer zone, never the runtime default (CLAUDE.md viewer-zone
 // rule). The required `timeZone` is the type-level enforcement of that rule —

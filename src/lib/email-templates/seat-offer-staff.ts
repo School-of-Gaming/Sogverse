@@ -42,12 +42,10 @@ export interface SeatOfferStaffEmailOptions {
  * The staff mail that turns one family's answer into the next family's
  * invitation.
  *
- * It goes to **every admin account**, resolved at send time from the role
- * column — the same recipient list the feedback notification uses, and for the
- * same reason: what this mail asks for is done in the admin UI, so it goes to
- * the people who can do it rather than to an inbox they would have to be
- * watching. Its Reply-To is the support inbox all the same; see the send site
- * for which half of the two-kinds convention that answers.
+ * It goes to **the shared support inbox**, the same place the help & feedback
+ * mail goes, and for the same reason: whoever is on the inbox picks it up, and
+ * a recipient list assembled from the profiles table changes whenever staff do.
+ * See the send site for its Reply-To.
  *
  * **Everything the two reasons share has to be true of both of them.** The
  * variant owns the whole of what happened — the subject, the heading and one

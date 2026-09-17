@@ -18,7 +18,7 @@ import { useNow, useTimezone } from "@/providers";
  * enrollments under the type nouns, and the Help section that ends the page.
  *
  * The help form is the real one with its submit inert — a scene must never gain
- * a live submit that emails every admin.
+ * a live submit that emails the support inbox.
  *
  * The fixture is built once from the first `useNow()` value and held in state,
  * for the same reason the parent and gedu scenes hold theirs — see

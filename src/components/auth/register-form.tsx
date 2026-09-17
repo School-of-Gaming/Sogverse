@@ -91,10 +91,13 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [homeLocation, setHomeLocation] = useState<LocationPick | null>(null);
-  // The required acknowledgement: parent or legal guardian, and agreement to
-  // the terms. Unticked by default for the same reason the optional box below
-  // is — a pre-ticked box is not an agreement — and here the stakes are higher:
-  // a declaration we ticked for them is a declaration nobody made.
+  // The required acknowledgement: agreement to the terms, having been given the
+  // Privacy Policy to read. It used to carry a parent-or-guardian declaration
+  // too; that moved to the add-gamer form, where the child is named and the
+  // declaration can be about somebody in particular — see the consent-document
+  // registry for why an account-level version answered the wrong question.
+  // Unticked by default for the same reason the optional box below is: a
+  // pre-ticked box is not an agreement.
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   // Unticked by default, and it stays that way unless the parent ticks it: an
   // opt-in that arrives pre-ticked is not an opt-in.

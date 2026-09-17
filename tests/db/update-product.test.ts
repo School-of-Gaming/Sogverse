@@ -15,8 +15,7 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  *   - the design tag (00178) round-trips, and an OMITTED p_tag clears it —
  *     the defaulted-parameter half that has no CHECK behind it.
  *   - non-admin denied (customer client gets 42501).
- *   - product_type and status are NOT mutable through this RPC (the
- *     stored status is preserved across an update).
+ *   - product_type is NOT mutable through this RPC.
  *   - relaxed locale rule: any single locale is accepted (sv-only is
  *     fine); empty translation set is rejected.
  *   - translation BEFORE-DELETE trigger doesn't trip on wipe-and-replace
@@ -41,8 +40,9 @@ const MUNI_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f2";
 const WAITLIST_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f7";
 // A decoy with its own waitlisted row, asserted untouched by every
 // queue-clearing save. This is the only thing anywhere that pins the delete's
-// `product_id = p_id` scoping: the migration's DO block checks the status
-// predicate and the carve-out but not the product key, so without this row a
+// `product_id = p_id` scoping: the migration's DO block checks the
+// participation-status predicate and the carve-out but not the product key, so
+// without this row a
 // predicate that lost its product scoping — one uncap wiping every queue in
 // the database — would pass the migration's own assertions and every test.
 const DECOY_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f8";
@@ -100,7 +100,6 @@ describe("update_product", () => {
       seat_count: 10,
       waitlist_enabled: true,
       is_visible: false,
-      status: "pending",
       created_by: TEST_IDS.ADMIN,
     });
     // Seed one of every child set so the wipe-and-replace assertions have
@@ -155,7 +154,7 @@ describe("update_product", () => {
 
     const { data: row } = await admin
       .from("products")
-      .select("min_age, max_age, seat_count, waitlist_enabled, is_visible, status, product_type")
+      .select("min_age, max_age, seat_count, waitlist_enabled, is_visible, product_type")
       .eq("id", PRODUCT_ID)
       .single();
     expect(row).toMatchObject({
@@ -164,7 +163,6 @@ describe("update_product", () => {
       seat_count: 20,
       waitlist_enabled: false,
       is_visible: true,
-      status: "pending",            // preserved
       product_type: "consumer_club", // immutable
     });
 
@@ -193,40 +191,6 @@ describe("update_product", () => {
       .select("currency, price_cents")
       .eq("product_id", PRODUCT_ID);
     expect(prices?.length).toBe(3);
-  });
-
-  it("preserves stored status across an update", async () => {
-    await freshProduct();
-    await admin
-      .from("products")
-      .update({ status: "cancelled" })
-      .eq("id", PRODUCT_ID);
-
-    const { error } = await adminAuth.rpc("update_product", {
-      p_id: PRODUCT_ID,
-      p_billing_mode: "paid",
-      p_translations: [{ locale: "en", name: "Whatever", short_description: "" }],
-      p_topic: "minecraft_java",
-      p_for_gamers: true,
-      p_for_parents: false,
-      p_min_age: 7,
-      p_max_age: 12,
-      p_spoken_language_code: "en",
-      p_is_remote: true,
-      p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date().toISOString(),
-      // A concrete cap; seat_count may also be null for any billing mode
-      // (uncapped) since 00083 dropped chk_products_seat_count_null_requires_free.
-      p_seat_count: 10,
-    });
-    expect(error).toBeNull();
-
-    const { data: row } = await admin
-      .from("products")
-      .select("status")
-      .eq("id", PRODUCT_ID)
-      .single();
-    expect(row?.status).toBe("cancelled");
   });
 
   it("non-admin (customer) is rejected with 42501", async () => {
@@ -472,10 +436,9 @@ describe("update_product", () => {
       registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
       seat_count: 10,
       waitlist_enabled: false,
-      status: "pending",
       // chk_products_non_consumer_has_end_date: a municipality club needs one,
-      // in every status. (Until 00169 a 'draft' row was exempt; the value and
-      // its escape hatch are both gone.)
+      // always. (Until 00169 a 'draft' row was exempt; that value and its escape
+      // hatch are both gone, and so is the stored status they belonged to.)
       end_date: "2099-12-31",
       is_visible: false,
       created_by: TEST_IDS.ADMIN,

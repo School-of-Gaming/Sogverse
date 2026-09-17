@@ -508,8 +508,12 @@ export const ROUTES = {
   /**
    * The Programme's own privacy policy, supplementing the platform one at
    * `/privacy`. Shares `/roblox`'s unpublished posture exactly — noindex, no
-   * sitemap entry, no nav link, reachable only from `/roblox` itself — and
-   * flips to published in the same change that publishes `/roblox`.
+   * sitemap entry, no nav link — and flips to published in the same change that
+   * publishes `/roblox`. It is reached from `/roblox` itself and from the
+   * general privacy policy's section on the Creator Academy, which links it for
+   * everything that section does not itself state; being linked from a
+   * published page changes nothing about the noindex posture, which is the
+   * page's own and not a consequence of who points at it.
    */
   robloxPrivacy: "/roblox/privacy",
   /**
@@ -584,6 +588,15 @@ export const ROUTES = {
     productGroup: adminProductGroupHref,
     consumerClubs: "/admin/consumer-clubs",
     municipalityClubs: "/admin/municipality-clubs",
+    /**
+     * The month a municipality is invoiced for: every club it runs, how many
+     * sessions each ran, and what that comes to. A read-only report over the
+     * municipality clubs, which is why it is a page of its own rather than
+     * something under one club — it is about a month, not about one club. In the
+     * sidebar the owner placed it below Sites, at the end of the operational
+     * entries and above the tooling.
+     */
+    municipalityInvoicing: "/admin/municipality-invoicing",
     camps: "/admin/camps",
     events: "/admin/events",
     /**

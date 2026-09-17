@@ -85,6 +85,30 @@ function isPolicyExternalTag(tag: string): tag is PolicyExternalTag {
 }
 
 /**
+ * The one tag in the copy that is **markup rather than a destination**: the
+ * emphasis a source document carries in its own body text. It sits beside the
+ * two href maps rather than in either of them precisely because it names no
+ * page — nothing to keep in step with `ROUTES`, nothing to approve, and the
+ * renderer turns it into a `<strong>` element rather than a link.
+ *
+ * It exists because two of these documents are a lawyer's text carried word for
+ * word, and the bolding in that text is part of what was signed off: the
+ * addresses a family is told to write to, the organisation that is the data
+ * controller for a given activity, the label on a retention period. Dropping it
+ * would be editing the document, so the copy keeps it and this is how it
+ * renders. A tag can wrap a cross-reference — a bolded document name is a link
+ * inside emphasis — and the splitter parses that nesting rather than choking on
+ * it; nothing nests the other way round.
+ *
+ * The closed-list posture is unchanged. This is one more known tag, not an
+ * opening: anything the renderer does not recognise still unwraps to its own
+ * words, and the unit suite's tag census compares this tag across locales key
+ * for key exactly as it does the link tags, so a translation that loses a bold
+ * run fails CI.
+ */
+const POLICY_EMPHASIS_TAG = "strong";
+
+/**
  * Values a policy string may name instead of spelling out, and where each one
  * really comes from. Same reasoning as the cross-reference allow-list above: a
  * message file should never carry a fact the app already defines elsewhere,
@@ -123,11 +147,10 @@ function fillPolicyValues(text: string): string {
 }
 
 /**
- * A run of policy copy, split into the pieces the page renders: plain text, a
- * stretch of text that links to one of our other legal pages, or one that links
- * off-site to a supervisory authority.
+ * Where a run of policy copy points, if anywhere: nowhere, at one of our other
+ * legal pages, or off-site at a supervisory authority.
  */
-export type PolicySegment =
+type PolicyDestination =
   /** Plain words, no link. */
   | { text: string; href?: undefined; external?: undefined }
   /** A link to one of our own pages — a typed route, so it localizes. */
@@ -142,16 +165,20 @@ export type PolicySegment =
   | { text: string; href: string; external: true };
 
 /**
- * Splits one policy string into {@link PolicySegment}s, turning the tags in
- * {@link POLICY_LINK_HREFS} and {@link POLICY_EXTERNAL_HREFS} into links and
+ * A run of policy copy, split into the pieces the page renders: where it points
+ * (if anywhere) and whether the document emphasises it. The two are independent
+ * — a bolded document name is both at once — so emphasis is a flag on every
+ * destination rather than a fourth kind of segment. It is absent rather than
+ * `false` on an unemphasised run, the same shape `external` already has, so a
+ * plain segment stays deep-equal to the bare `{ text }` it has always been.
+ */
+export type PolicySegment = PolicyDestination & { strong?: true };
+
+/**
+ * Splits an already-filled run into {@link PolicyDestination}s, turning the tags
+ * in {@link POLICY_LINK_HREFS} and {@link POLICY_EXTERNAL_HREFS} into links and
  * leaving everything else as text. Both maps feed the one tag-matching path, so
  * an unknown tag behaves identically whichever list a reader expected it in.
- * Any {@link POLICY_VALUES} the string names are filled in first, so a value
- * that lands inside a linked run still reads as part of that run.
- *
- * This is where the filling happens because it is the one place *all* authored
- * policy prose passes through — the subtitle reaches the page component on its
- * own, not via the block builders below, so filling at ingest would miss it.
  *
  * **An unrecognised tag unwraps to its own words rather than becoming a link or
  * disappearing** — the same philosophy as the shared markdown renderer's
@@ -161,12 +188,11 @@ export type PolicySegment =
  * invent a destination nobody chose. Malformed markup (an unclosed tag, a stray
  * `<`) never matches at all, so it survives as the literal text it already is.
  */
-export function policyTextSegments(source: string): PolicySegment[] {
-  const text = fillPolicyValues(source);
+function policyLinkSegments(text: string): PolicyDestination[] {
   // Declared here rather than at module scope: a `g` regex carries `lastIndex`
   // between calls, and a shared one would make each call depend on the last.
   const tagPattern = /<([A-Za-z][A-Za-z0-9]*)>([^<]*)<\/\1>/g;
-  const segments: PolicySegment[] = [];
+  const segments: PolicyDestination[] = [];
   let cursor = 0;
   let match: RegExpExecArray | null;
 
@@ -193,6 +219,56 @@ export function policyTextSegments(source: string): PolicySegment[] {
 
   if (cursor === 0) return [{ text }];
   if (cursor < text.length) segments.push({ text: text.slice(cursor) });
+  return segments;
+}
+
+/**
+ * Splits one policy string into {@link PolicySegment}s. Any
+ * {@link POLICY_VALUES} the string names are filled in first, so a value that
+ * lands inside a linked or emphasised run still reads as part of that run; the
+ * string is then split on {@link POLICY_EMPHASIS_TAG} and each piece handed to
+ * the link splitter, so a cross-reference nested inside emphasis comes back as a
+ * link that is also bold.
+ *
+ * Emphasis is peeled off first, and only in that direction, because it is the
+ * one tag whose content may itself contain markup — the link splitter's own
+ * pattern deliberately refuses a `<` inside a label, which is what keeps
+ * malformed markup from swallowing half a sentence. An unclosed `<strong>`
+ * therefore matches nothing and survives as the literal text it already is,
+ * exactly like an unclosed link tag.
+ *
+ * This is where the filling happens because it is the one place *all* authored
+ * policy prose passes through — the subtitle reaches the page component on its
+ * own, not via the block builders below, so filling at ingest would miss it.
+ */
+export function policyTextSegments(source: string): PolicySegment[] {
+  const text = fillPolicyValues(source);
+  // Same reasoning as the link pattern above: a `g` regex is per call.
+  const emphasisPattern = new RegExp(
+    `<${POLICY_EMPHASIS_TAG}>([\\s\\S]*?)</${POLICY_EMPHASIS_TAG}>`,
+    "g",
+  );
+  const segments: PolicySegment[] = [];
+  let cursor = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = emphasisPattern.exec(text)) !== null) {
+    const [whole, emphasised] = match;
+    if (match.index > cursor) {
+      segments.push(...policyLinkSegments(text.slice(cursor, match.index)));
+    }
+    if (emphasised.length > 0) {
+      for (const segment of policyLinkSegments(emphasised)) {
+        segments.push({ ...segment, strong: true });
+      }
+    }
+    cursor = match.index + whole.length;
+  }
+
+  if (cursor === 0) return policyLinkSegments(text);
+  if (cursor < text.length) {
+    segments.push(...policyLinkSegments(text.slice(cursor)));
+  }
   return segments;
 }
 
