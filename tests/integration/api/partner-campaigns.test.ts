@@ -2,12 +2,14 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 import { GET } from "@/app/api/partner/v1/campaigns/route";
 import { partnerCampaignsResponse } from "@/services/partner/partner.contracts";
-import { requestedUrl, type FetchMock } from "../../mocks/postgrest-fetch";
+import type { FetchMock } from "../../mocks/postgrest-fetch";
 import {
   PARTNER_TEST_KEY,
   emptyTables,
+  inList,
   partnerRequest,
   postgrestTables,
+  readsOf,
 } from "../../mocks/partner-api";
 
 // --- Mocks ---
@@ -108,12 +110,6 @@ const SEATS = [
   { participant_id: C(7), customer_id: B(1), status: "active" },
 ];
 
-/** The values of an `in.(…)` filter. */
-function inList(url: URL, column: string): string[] {
-  const value = url.searchParams.get(column) ?? "";
-  return /^in\.\((.*)\)$/.exec(value)?.[1].split(",") ?? [];
-}
-
 /**
  * `profiles` applies the filters the account read sends — role, the prefix
  * pattern, and the half-open creation window — so the range is exercised
@@ -175,9 +171,7 @@ async function readAnswer(query = "") {
 }
 
 function accountReads(): URL[] {
-  return (db.fetch?.mock.calls ?? [])
-    .map(([input]) => requestedUrl(input))
-    .filter((url) => url.pathname.endsWith("/profiles"));
+  return readsOf(db.fetch, "profiles");
 }
 
 // --- Tests ---

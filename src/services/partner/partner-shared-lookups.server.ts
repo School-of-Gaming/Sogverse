@@ -291,6 +291,66 @@ export async function readCreations(
 }
 
 // ---------------------------------------------------------------------------
+// Families
+// ---------------------------------------------------------------------------
+
+/** One `parent_gamer` row: a parent and one of their gamers. */
+export interface ParentGamerLink {
+  parent_id: string;
+  gamer_id: string;
+}
+
+/**
+ * The `parent_gamer` links of these people, read from either end: by
+ * `gamer_id` for a set of gamers' parents, by `parent_id` for a set of parents'
+ * gamers. Ascending by link id within each chunk of ids.
+ *
+ * Unique per pair, not per person — a gamer may have a second parent, a parent
+ * several gamers — so the chunk bounds only the URL and each chunk is walked.
+ */
+export async function readParentGamerLinks(
+  db: PartnerDb,
+  by: "parent_id" | "gamer_id",
+  ids: readonly string[],
+): Promise<ParentGamerLink[]> {
+  const links: ParentGamerLink[] = [];
+  for (const chunk of chunkKeys(unique(ids))) {
+    links.push(
+      ...(await walkPages("partner parent-gamer links", (from, to) =>
+        db
+          .from("parent_gamer")
+          .select("parent_id, gamer_id", { count: "exact" })
+          .in(by, chunk)
+          .order("id")
+          .range(from, to),
+      )),
+    );
+  }
+  return links;
+}
+
+/**
+ * Each gamer's stored date of birth, `YYYY-MM-DD` and always the 1st, keyed by
+ * gamer id. One row per id — the primary key — so bounded by the chunk. A
+ * gamer with no profile row is absent from the map.
+ */
+export async function readBirthDates(
+  db: PartnerDb,
+  gamerIds: readonly string[],
+): Promise<Map<string, string>> {
+  const births = new Map<string, string>();
+  for (const chunk of chunkKeys(unique(gamerIds))) {
+    const { data, error } = await db
+      .from("gamer_profiles")
+      .select("user_id, date_of_birth")
+      .in("user_id", chunk);
+    if (error) throw error;
+    for (const row of data) births.set(row.user_id, row.date_of_birth);
+  }
+  return births;
+}
+
+// ---------------------------------------------------------------------------
 // Roblox accounts
 // ---------------------------------------------------------------------------
 
@@ -336,6 +396,12 @@ export async function readRobloxAccounts(
 // Recorded sessions
 // ---------------------------------------------------------------------------
 
+/** One attendance mark on a session. */
+export interface AttendanceMark {
+  participant_id: string;
+  status: PartnerAttendanceMark;
+}
+
 /** A session that exists for the API (D6), with its attendance marks. */
 export interface RecordedSession {
   id: string;
@@ -343,11 +409,47 @@ export interface RecordedSession {
   session_date: string;
   starts_at: string;
   ends_at: string;
-  attendance: { participant_id: string; status: PartnerAttendanceMark }[];
+  attendance: AttendanceMark[];
 }
 
 function isAttendanceMark(status: string): status is PartnerAttendanceMark {
   return (ATTENDANCE_MARK as readonly string[]).includes(status);
+}
+
+/**
+ * Each session's attendance marks, keyed by session id, ascending by
+ * participant. Chunked for the URL and walked for the rows: a session carries a
+ * mark per child on the roster, so a chunk of sessions is not a bound on what
+ * comes back. A session with no marks is absent from the map.
+ */
+export async function readAttendance(
+  db: PartnerDb,
+  sessionIds: readonly string[],
+): Promise<Map<string, AttendanceMark[]>> {
+  const marks = new Map<string, AttendanceMark[]>();
+  for (const chunk of chunkKeys(unique(sessionIds))) {
+    const rows = await walkPages("partner session attendance", (from, to) =>
+      db
+        .from("session_attendance")
+        .select("session_id, participant_id, status", { count: "exact" })
+        .in("session_id", chunk)
+        .order("session_id")
+        .order("participant_id")
+        .range(from, to),
+    );
+    for (const row of rows) {
+      // The table's CHECK admits exactly these two; narrowed, not filtered.
+      if (!isAttendanceMark(row.status)) {
+        throw new Error(
+          `partner session attendance: session ${row.session_id} carries status ${row.status}`,
+        );
+      }
+      const list = marks.get(row.session_id) ?? [];
+      list.push({ participant_id: row.participant_id, status: row.status });
+      marks.set(row.session_id, list);
+    }
+  }
+  return marks;
 }
 
 /**
@@ -384,28 +486,10 @@ export async function readRecordedSessionsByGroup(
     );
   }
 
-  const marks = new Map<string, RecordedSession["attendance"]>();
-  for (const chunk of chunkKeys(sessions.map((session) => session.id))) {
-    const rows = await walkPages("partner session attendance", (from, to) =>
-      db
-        .from("session_attendance")
-        .select("session_id, participant_id, status", { count: "exact" })
-        .in("session_id", chunk)
-        .order("session_id")
-        .order("participant_id")
-        .range(from, to),
-    );
-    for (const row of rows) {
-      if (!isAttendanceMark(row.status)) {
-        throw new Error(
-          `partner session attendance: session ${row.session_id} carries status ${row.status}`,
-        );
-      }
-      const list = marks.get(row.session_id) ?? [];
-      list.push({ participant_id: row.participant_id, status: row.status });
-      marks.set(row.session_id, list);
-    }
-  }
+  const marks = await readAttendance(
+    db,
+    sessions.map((session) => session.id),
+  );
 
   const byGroup = new Map<string, RecordedSession[]>();
   for (const session of [...sessions].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))) {

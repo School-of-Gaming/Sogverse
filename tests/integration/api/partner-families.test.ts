@@ -3,12 +3,14 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { GET } from "@/app/api/partner/v1/families/route";
 import { encodeCursor } from "@/lib/api/partner-cursor.server";
 import { partnerFamiliesResponse } from "@/services/partner/partner.contracts";
-import { requestedUrl, type FetchMock } from "../../mocks/postgrest-fetch";
+import type { FetchMock } from "../../mocks/postgrest-fetch";
 import {
   PARTNER_TEST_KEY,
   emptyTables,
+  inList,
   partnerRequest,
   postgrestTables,
+  readsOf,
 } from "../../mocks/partner-api";
 
 // --- Mocks ---
@@ -163,12 +165,6 @@ function world(): World {
   };
 }
 
-/** The values of an `in.(…)` filter. */
-function inList(url: URL, column: string): string[] {
-  const value = url.searchParams.get(column) ?? "";
-  return /^in\.\((.*)\)$/.exec(value)?.[1].split(",") ?? [];
-}
-
 const chainNode = (id: string, type: string, name: string, parent: unknown = null) => ({
   id,
   name,
@@ -266,12 +262,6 @@ function members(body: Awaited<ReturnType<typeof readPage>>) {
   ]);
 }
 
-function readsOf(table: string): URL[] {
-  return (db.fetch?.mock.calls ?? [])
-    .map(([input]) => requestedUrl(input))
-    .filter((url) => url.pathname.endsWith(`/${table}`));
-}
-
 // --- Tests ---
 
 describe("GET /api/partner/v1/families", () => {
@@ -356,8 +346,8 @@ describe("GET /api/partner/v1/families", () => {
   it("reads each in-scope gamer's links once, and only theirs", async () => {
     await readPage();
 
-    const [links] = readsOf("parent_gamer");
-    expect(readsOf("parent_gamer")).toHaveLength(1);
+    const [links] = readsOf(db.fetch, "parent_gamer");
+    expect(readsOf(db.fetch, "parent_gamer")).toHaveLength(1);
     expect(inList(links, "gamer_id").sort()).toEqual([G1, G2, G3]);
   });
 
@@ -373,7 +363,7 @@ describe("GET /api/partner/v1/families", () => {
       [[P1], []],
       [[P3, P4], [G3]],
     ]);
-    const [granted] = readsOf("marketing_consents").filter((url) => url.searchParams.has("granted"));
+    const [granted] = readsOf(db.fetch, "marketing_consents").filter((url) => url.searchParams.has("granted"));
     expect(granted.searchParams.get("consent_type")).toBe("eq.lynx_educate");
   });
 

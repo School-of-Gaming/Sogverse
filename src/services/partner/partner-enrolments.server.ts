@@ -10,7 +10,7 @@ import type {
   PartnerEnrolmentsQuery,
 } from "./partner.contracts";
 import {
-  IN_SCOPE_SEAT_EMBED,
+  IN_SCOPE_SEAT_COLUMNS,
   IN_SCOPE_SEAT_FILTER,
   readEffectiveStatuses,
 } from "./partner-scope.server";
@@ -24,6 +24,7 @@ import {
 import {
   LIVE_SEAT_STATUSES,
   PROGRAMME_TERMS_SLUG,
+  isLiveStatus,
   reportedEnrolmentStatus,
   toUtcIso,
 } from "./partner-shared-values";
@@ -41,8 +42,6 @@ import {
  * products; `status=completed` fetches active and completed seats and drops the
  * active ones on products that have not completed.
  */
-
-const SEAT_COLUMNS = `id, product_id, group_id, participant_id, customer_id, status, signed_up_at, ${IN_SCOPE_SEAT_EMBED}`;
 
 const EFFECTIVE_PRODUCT_STATUSES = Constants.public.Enums.effective_product_status;
 
@@ -63,10 +62,6 @@ function storedStatusesReporting(
   );
 }
 
-function isLiveStatus(status: string): status is PartnerEnrolmentStatus {
-  return (LIVE_SEAT_STATUSES as readonly string[]).includes(status);
-}
-
 const seatId = z.string().uuid();
 
 export async function readEnrolments(
@@ -77,7 +72,7 @@ export async function readEnrolments(
   const fetchSeats = (after: string | null, take: number) => {
     let seats = db
       .from("participations")
-      .select(SEAT_COLUMNS, { count: "exact" })
+      .select(IN_SCOPE_SEAT_COLUMNS, { count: "exact" })
       .in("status", storedStatusesReporting(query.status))
       .eq(IN_SCOPE_SEAT_FILTER, PROGRAMME_TERMS_SLUG);
     if (query.product_id !== undefined) seats = seats.eq("product_id", query.product_id);

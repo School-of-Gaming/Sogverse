@@ -11,6 +11,10 @@ import {
   type PartnerFeedback,
   type PartnerFeedbackQuery,
 } from "./partner.contracts";
+import {
+  PROGRAMME_PRODUCT_EMBED,
+  PROGRAMME_PRODUCT_FILTER,
+} from "./partner-scope.server";
 import type { PartnerDb } from "./partner-shared-db.server";
 import { readRecordedSessionsByGroup } from "./partner-shared-lookups.server";
 import { PROGRAMME_TERMS_SLUG, toUtcIso } from "./partner-shared-values";
@@ -22,17 +26,16 @@ import { PROGRAMME_TERMS_SLUG, toUtcIso } from "./partner-shared-values";
 
 /**
  * The embeds that scope a `session_feedback` select, without an id list in the
- * URL: an inner join through the row's group to its product and on to that
- * product's requirement of the Programme's terms, and an inner join to the
- * participant's profile so only a gamer's rows come back (D8). Every `!inner`
- * is load-bearing — without one, its filter narrows only an embedded value and
- * every row still comes back. The group's `product_id` and the product's
- * `timezone` ride along: the record's `product_id`, the column the `product_id`
- * filter narrows, and the zone a row's session day is read in.
+ * URL: the Programme product embed, reached through the row's group and that
+ * group's product, and an inner join to the participant's profile so only a
+ * gamer's rows come back (D8). Every `!inner` is load-bearing — without one,
+ * its filter narrows only an embedded value and every row still comes back.
+ * The group's `product_id` and the product's `timezone` ride along: the
+ * record's `product_id`, the column the `product_id` filter narrows, and the
+ * zone a row's session day is read in.
  */
-const FEEDBACK_SCOPE_EMBED =
-  "group:product_groups!inner(product_id, product:products!inner(timezone, programme_terms:product_required_consents!inner(document_slug))), participant:profiles!inner(role)";
-const FEEDBACK_SCOPE_FILTER = "group.product.programme_terms.document_slug";
+const FEEDBACK_SCOPE_EMBED = `group:product_groups!inner(product_id, product:products!inner(timezone, ${PROGRAMME_PRODUCT_EMBED})), participant:profiles!inner(role)`;
+const FEEDBACK_SCOPE_FILTER = `group.product.${PROGRAMME_PRODUCT_FILTER}`;
 const FEEDBACK_PARTICIPANT_FILTER = "participant.role";
 
 const FEEDBACK_COLUMNS = `participant_id, group_id, session_opens_at, answers, note, exit_reason, ${FEEDBACK_SCOPE_EMBED}`;

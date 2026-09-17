@@ -6,6 +6,7 @@ import type {
 } from "@/services/locations/locations.service";
 import {
   ENROLMENT_STATUS,
+  type PartnerDelivery,
   type PartnerEnrolmentStatus,
   type PartnerPlace,
 } from "./partner.contracts";
@@ -69,6 +70,15 @@ export const PROGRAMME_AGE_RANGE = { min: 13, max: 17 } as const;
 export const LIVE_SEAT_STATUSES = ENROLMENT_STATUS;
 
 /**
+ * Narrow a stored seat status to a live one. A read that filters on
+ * `LIVE_SEAT_STATUSES` refuses nothing with it that the database did not
+ * already refuse; it is how the row's status gets the enrolment status type.
+ */
+export function isLiveStatus(status: string): status is PartnerEnrolmentStatus {
+  return (LIVE_SEAT_STATUSES as readonly string[]).includes(status);
+}
+
+/**
  * The status an enrolment reports (D3). A seat keeps `active` in storage after
  * its product has run its course — nothing flips it — so an active seat on a
  * completed product reports `completed`, as does a stored `completed`. A
@@ -101,6 +111,14 @@ export function toUtcIso(value: string): string {
     throw new Error(`partner API: ${JSON.stringify(value)} is not a timestamp`);
   }
   return new Date(time).toISOString();
+}
+
+/**
+ * How a product is delivered, in the API's two words: a remote product is
+ * `online`, every other one `in_person`.
+ */
+export function productDelivery(isRemote: boolean): PartnerDelivery {
+  return isRemote ? "online" : "in_person";
 }
 
 /**

@@ -23,6 +23,7 @@ import {
 import {
   LIVE_SEAT_STATUSES,
   PROGRAMME_TERMS_SLUG,
+  productDelivery,
 } from "./partner-shared-values";
 
 /**
@@ -165,7 +166,7 @@ export async function readRobloxResearch(
             row.activity.spoken_language_code,
           ),
           type: row.activity.product_type,
-          delivery: row.activity.is_remote ? "online" : "in_person",
+          delivery: productDelivery(row.activity.is_remote),
           start_date,
         },
         published_game_url: published?.url ?? null,

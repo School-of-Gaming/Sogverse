@@ -3,12 +3,13 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { GET } from "@/app/api/partner/v1/roblox-research/route";
 import { encodeCursor } from "@/lib/api/partner-cursor.server";
 import type { FetchMock } from "../../mocks/postgrest-fetch";
-import { requestedUrl } from "../../mocks/postgrest-fetch";
 import {
   PARTNER_TEST_KEY,
   emptyTables,
+  filteringTable,
   partnerRequest,
   postgrestTables,
+  readsOf,
   type TableHandler,
 } from "../../mocks/partner-api";
 
@@ -140,67 +141,9 @@ function chainNode(
   return { id, name, name_i18n: null, type, parent_id: null, country_code, external_code: null, parent };
 }
 
-/** The value or values at a dotted path, reading through embedded arrays. */
-function valuesAt(value: unknown, path: readonly string[]): unknown[] {
-  if (path.length === 0) return [value];
-  if (Array.isArray(value)) return value.flatMap((item) => valuesAt(item, path));
-  if (typeof value !== "object" || value === null) return [];
-  const entry = Object.entries(value).find(([name]) => name === path[0]);
-  return entry === undefined ? [] : valuesAt(entry[1], path.slice(1));
-}
-
-function matches(operator: string, operand: string, value: unknown): boolean {
-  if (typeof value !== "string") return false;
-  switch (operator) {
-    case "eq":
-      return value === operand;
-    case "gt":
-      return value > operand;
-    case "gte":
-      return value >= operand;
-    case "lte":
-      return value <= operand;
-    case "in":
-      return operand
-        .slice(1, -1)
-        .split(",")
-        .map((item) => item.replace(/^"|"$/g, ""))
-        .includes(value);
-    default:
-      throw new Error(`the fixture does not evaluate the ${operator} operator`);
-  }
-}
-
-const NOT_FILTERS = new Set(["select", "order", "limit", "offset"]);
-
-/**
- * A table handler that applies the request's filters and its limit to rows
- * already in the requested order. A filter on an embedded column narrows the
- * top-level rows, as the `!inner` embeds the read uses make it — and a null
- * never matches a comparison, as in SQL.
- */
-function table(rows: readonly unknown[]): TableHandler {
-  return (url) => {
-    const filtered = rows.filter((row) =>
-      [...url.searchParams].every(([name, expression]) => {
-        if (NOT_FILTERS.has(name)) return true;
-        const dot = expression.indexOf(".");
-        const operator = expression.slice(0, dot);
-        const operand = expression.slice(dot + 1);
-        return valuesAt(row, name.split(".")).some((value) =>
-          matches(operator, operand, value),
-        );
-      }),
-    );
-    const offset = Number(url.searchParams.get("offset") ?? 0);
-    const limit = url.searchParams.get("limit");
-    return filtered.slice(offset, limit === null ? undefined : offset + Number(limit));
-  };
-}
-
 const TABLES = {
-  participations: table(SEATS),
-  roblox_accounts: table([
+  participations: filteringTable(SEATS),
+  roblox_accounts: filteringTable([
     { user_id: GAMER_A, roblox_username: "builder_leo", roblox_user_id: 1234567890 },
     { user_id: GAMER_B, roblox_username: "obby_ana", roblox_user_id: null },
     { user_id: GAMER_C, roblox_username: null, roblox_user_id: null },
@@ -208,7 +151,7 @@ const TABLES = {
     // A parent with a Roblox account of their own is still not a child.
     { user_id: PARENT_A, roblox_username: "dad_builds", roblox_user_id: 7 },
   ]),
-  locations: table([
+  locations: filteringTable([
     {
       ...chainNode(
         L_SITE,
@@ -226,7 +169,7 @@ const TABLES = {
       updated_at: "2026-01-01T00:00:00+00:00",
     },
   ]),
-  product_translations: table([
+  product_translations: filteringTable([
     { product_id: P_CAMP, locale: "en", name: "Roblox Creator Camp — Lyon" },
     { product_id: P_CAMP, locale: "fr", name: "Camp Créateur Roblox — Lyon" },
     { product_id: P_CLUB, locale: "fi", name: "Roblox-kerho" },
@@ -235,7 +178,7 @@ const TABLES = {
     { product_id: P_EVENT, locale: "fr", name: "Journée Roblox" },
     { product_id: P_EVENT, locale: "sv", name: "Roblox-dag" },
   ]),
-  gamer_group_creations: table([
+  gamer_group_creations: filteringTable([
     {
       group_id: GROUP_1,
       participant_id: GAMER_A,
@@ -262,9 +205,7 @@ function usernames(body: { data: { roblox_username: string }[] }): string[] {
 }
 
 function participationsUrls(): URL[] {
-  return (db.fetch?.mock.calls ?? [])
-    .map(([input]) => requestedUrl(input))
-    .filter((url) => url.pathname.endsWith("/participations"));
+  return readsOf(db.fetch, "participations");
 }
 
 // --- Tests ---
@@ -450,7 +391,7 @@ describe("GET /api/partner/v1/roblox-research", () => {
     const broken = seat(R1, { product_id: P_CAMP, participant_id: GAMER_A });
     db.fetch = postgrestTables({
       ...TABLES,
-      participations: table([{ ...broken, child: { role: "gamer", gamer_profiles: null } }]),
+      participations: filteringTable([{ ...broken, child: { role: "gamer", gamer_profiles: null } }]),
     });
     const { response, body } = await get();
 

@@ -5,13 +5,13 @@ import { z } from "zod";
 import { readPartnerPage } from "@/lib/api/partner-cursor.server";
 import { sessionImageUrl } from "@/lib/images/session-image-url";
 import { chunkKeys, walkPages } from "@/lib/supabase/paging";
+import type { PartnerSession, PartnerSessionsQuery } from "./partner.contracts";
 import {
-  ATTENDANCE_MARK,
-  type PartnerAttendanceMark,
-  type PartnerSession,
-  type PartnerSessionsQuery,
-} from "./partner.contracts";
+  PROGRAMME_PRODUCT_EMBED,
+  PROGRAMME_PRODUCT_FILTER,
+} from "./partner-scope.server";
 import type { PartnerDb } from "./partner-shared-db.server";
+import { readAttendance } from "./partner-shared-lookups.server";
 import {
   PROGRAMME_TERMS_SLUG,
   isRecordedSession,
@@ -25,66 +25,24 @@ import {
 
 /**
  * The embed that scopes a `group_sessions` select to the Programme, without a
- * product id list in the URL: an inner join through the session's group to its
- * product, and on to that product's requirement of the Programme's terms,
- * filtered on `SESSION_SCOPE_FILTER`. Every `!inner` is load-bearing — without
- * one, the filter narrows only an embedded value and every session still comes
- * back. The group's `product_id` rides along, as the record's `product_id` and
- * as the column the `product_id` filter narrows.
+ * product id list in the URL: the Programme product embed, reached through the
+ * session's group and that group's product, filtered on `SESSION_SCOPE_FILTER`.
+ * Every `!inner` on the way is load-bearing — without one, the filter narrows
+ * only an embedded value and every session still comes back. The group's
+ * `product_id` rides along, as the record's `product_id` and as the column the
+ * `product_id` filter narrows.
  */
-const SESSION_SCOPE_EMBED =
-  "group:product_groups!inner(product_id, product:products!inner(programme_terms:product_required_consents!inner(document_slug)))";
-const SESSION_SCOPE_FILTER = "group.product.programme_terms.document_slug";
+const SESSION_SCOPE_EMBED = `group:product_groups!inner(product_id, product:products!inner(${PROGRAMME_PRODUCT_EMBED}))`;
+const SESSION_SCOPE_FILTER = `group.product.${PROGRAMME_PRODUCT_FILTER}`;
 
 const SESSION_COLUMNS = `id, group_id, starts_at, ends_at, report, ${SESSION_SCOPE_EMBED}`;
 
-type Attendance = PartnerSession["attendance"];
 type Images = PartnerSession["images"];
-
-function isAttendanceMark(status: string): status is PartnerAttendanceMark {
-  return (ATTENDANCE_MARK as readonly string[]).includes(status);
-}
-
-/**
- * Each session's attendance marks, keyed by session id, ascending by
- * participant. Chunked for the URL and walked for the rows: a session carries a
- * mark per child on the roster, so a chunk of sessions is not a bound on what
- * comes back.
- */
-async function readAttendance(
-  db: PartnerDb,
-  sessionIds: readonly string[],
-): Promise<Map<string, Attendance>> {
-  const marks = new Map<string, Attendance>();
-  for (const chunk of chunkKeys(sessionIds)) {
-    const rows = await walkPages("partner session attendance", (from, to) =>
-      db
-        .from("session_attendance")
-        .select("session_id, participant_id, status", { count: "exact" })
-        .in("session_id", chunk)
-        .order("session_id")
-        .order("participant_id")
-        .range(from, to),
-    );
-    for (const row of rows) {
-      // The table's CHECK admits exactly these two; narrowed, not filtered.
-      if (!isAttendanceMark(row.status)) {
-        throw new Error(
-          `partner session attendance: session ${row.session_id} carries status ${row.status}`,
-        );
-      }
-      const list = marks.get(row.session_id) ?? [];
-      list.push({ participant_id: row.participant_id, status: row.status });
-      marks.set(row.session_id, list);
-    }
-  }
-  return marks;
-}
 
 /**
  * Each session's report photographs, keyed by session id, in the order they
  * were added — `(created_at, id)`, the order every renderer of a report uses.
- * Chunked and walked, as the marks are.
+ * Chunked for the URL and walked for the rows, as the attendance marks are.
  */
 async function readImages(
   db: PartnerDb,

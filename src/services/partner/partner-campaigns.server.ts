@@ -4,7 +4,7 @@ import { formatInTimeZone } from "date-fns-tz";
 
 import { PartnerQueryError } from "@/lib/api/partner-auth.server";
 import { possibleAgeOnDate } from "@/lib/gamer-age-eligibility";
-import { chunkKeys, walkPages } from "@/lib/supabase/paging";
+import { walkPages } from "@/lib/supabase/paging";
 import { escapeLikePattern } from "@/lib/utils";
 import {
   CAMPAIGN_MINIMUM_COUNT,
@@ -14,6 +14,10 @@ import {
 } from "./partner.contracts";
 import { readInScopeSeats } from "./partner-scope.server";
 import type { PartnerDb } from "./partner-shared-db.server";
+import {
+  readBirthDates,
+  readParentGamerLinks,
+} from "./partner-shared-lookups.server";
 import { PROGRAMME_AGE_RANGE } from "./partner-shared-values";
 
 /**
@@ -111,40 +115,12 @@ async function readChildren(
   accountIds: readonly string[],
 ): Promise<Map<string, string[]>> {
   const children = new Map<string, string[]>();
-  for (const chunk of chunkKeys(accountIds)) {
-    // Several children per parent: the chunk bounds the URL, the walk the rows.
-    const rows = await walkPages("partner campaign children", (from, to) =>
-      db
-        .from("parent_gamer")
-        .select("parent_id, gamer_id", { count: "exact" })
-        .in("parent_id", chunk)
-        .order("id")
-        .range(from, to),
-    );
-    for (const row of rows) {
-      const list = children.get(row.parent_id) ?? [];
-      list.push(row.gamer_id);
-      children.set(row.parent_id, list);
-    }
+  for (const link of await readParentGamerLinks(db, "parent_id", accountIds)) {
+    const list = children.get(link.parent_id) ?? [];
+    list.push(link.gamer_id);
+    children.set(link.parent_id, list);
   }
   return children;
-}
-
-/** Each gamer's stored date of birth; one row per id, so bounded by the chunk. */
-async function readBirthDates(
-  db: PartnerDb,
-  gamerIds: readonly string[],
-): Promise<Map<string, string>> {
-  const births = new Map<string, string>();
-  for (const chunk of chunkKeys(gamerIds)) {
-    const { data, error } = await db
-      .from("gamer_profiles")
-      .select("user_id, date_of_birth")
-      .in("user_id", chunk);
-    if (error) throw error;
-    for (const row of data) births.set(row.user_id, row.date_of_birth);
-  }
-  return births;
 }
 
 // ---------------------------------------------------------------------------

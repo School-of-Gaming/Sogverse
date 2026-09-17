@@ -3,12 +3,15 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { GET } from "@/app/api/partner/v1/sessions/route";
 import { encodeCursor } from "@/lib/api/partner-cursor.server";
 import { partnerSessionsResponse } from "@/services/partner/partner.contracts";
-import { requestedUrl, type FetchMock } from "../../mocks/postgrest-fetch";
+import type { FetchMock } from "../../mocks/postgrest-fetch";
 import {
   PARTNER_TEST_KEY,
+  columnFilters,
   emptyTables,
+  inList,
   partnerRequest,
   postgrestTables,
+  readsOf,
 } from "../../mocks/partner-api";
 
 // --- Mocks ---
@@ -85,20 +88,6 @@ const ATTENDANCE = [
   { session_id: MARKED, participant_id: GAMER_2, status: "absent" },
 ];
 
-/** The values of an `in.(…)` filter. */
-function inList(url: URL, column: string): string[] {
-  const value = url.searchParams.get(column) ?? "";
-  return /^in\.\((.*)\)$/.exec(value)?.[1].split(",") ?? [];
-}
-
-/** Every PostgREST `op.value` filter on a column, split. */
-function filters(url: URL, column: string): { op: string; value: string }[] {
-  return url.searchParams.getAll(column).map((raw) => {
-    const at = raw.indexOf(".");
-    return { op: raw.slice(0, at), value: raw.slice(at + 1) };
-  });
-}
-
 /**
  * The fixture database: `group_sessions` applies the filters, keyset and limit
  * the page read sends, as PostgREST would, so a filter the read forgot to send is
@@ -115,7 +104,7 @@ function tables(sessions: SessionRow[] = SESSIONS) {
           ["session_date", row.session_date],
         ];
         return checks.every(([column, value]) =>
-          filters(url, column).every((f) => {
+          columnFilters(url, column).every((f) => {
             if (f.op === "eq") return value === f.value;
             if (f.op === "gt") return value > f.value;
             if (f.op === "gte") return value >= f.value;
@@ -164,9 +153,7 @@ function ids(body: { data: { id: string }[] }): string[] {
 
 /** The page reads — every `group_sessions` request. */
 function pageReads(): URL[] {
-  return (db.fetch?.mock.calls ?? [])
-    .map(([input]) => requestedUrl(input))
-    .filter((url) => url.pathname.endsWith("/group_sessions"));
+  return readsOf(db.fetch, "group_sessions");
 }
 
 // --- Tests ---
@@ -213,9 +200,7 @@ describe("GET /api/partner/v1/sessions", () => {
     expect(body.data[0]).toMatchObject({ id: REPORTED, attendance: [], images: [] });
 
     // Photographs in the order they were added, as every report renders them.
-    const imageRead = (db.fetch?.mock.calls ?? [])
-      .map(([input]) => requestedUrl(input))
-      .find((url) => url.pathname.endsWith("/group_session_images"));
+    const imageRead = readsOf(db.fetch, "group_session_images").at(0);
     expect(imageRead?.searchParams.get("order")).toBe("session_id.asc,created_at.asc,id.asc");
   });
 

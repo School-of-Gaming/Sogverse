@@ -10,6 +10,7 @@ import type { PartnerDb } from "./partner-shared-db.server";
 import {
   LIVE_SEAT_STATUSES,
   PROGRAMME_TERMS_SLUG,
+  isLiveStatus,
 } from "./partner-shared-values";
 
 /**
@@ -24,6 +25,28 @@ import {
 // ---------------------------------------------------------------------------
 // Programme products
 // ---------------------------------------------------------------------------
+
+/**
+ * The embed that scopes a select to Programme products, without a product id
+ * list in the URL: an inner join from a product to its requirement of the
+ * Programme's terms, filtered on `PROGRAMME_PRODUCT_FILTER` equal to
+ * `PROGRAMME_TERMS_SLUG`. A `products` select uses the pair as it stands; a
+ * select of anything that belongs to a product nests the embed inside an inner
+ * embed of that product and prefixes the filter with the path to it:
+ *
+ *   db.from("products")
+ *     .select(`id, ${PROGRAMME_PRODUCT_EMBED}`, { count: "exact" })
+ *     .eq(PROGRAMME_PRODUCT_FILTER, PROGRAMME_TERMS_SLUG)
+ *
+ * The `!inner` is load-bearing, and so is every `!inner` on the path down to
+ * it: without one, the filter narrows only an embedded value and every row
+ * still comes back.
+ */
+export const PROGRAMME_PRODUCT_EMBED =
+  "programme_terms:product_required_consents!inner(document_slug)";
+
+/** The embedded column `PROGRAMME_PRODUCT_EMBED` is filtered on, from its product. */
+export const PROGRAMME_PRODUCT_FILTER = "programme_terms.document_slug";
 
 /**
  * Every Programme product's id (D2), ascending. Walked: one row per product that
@@ -48,8 +71,8 @@ export async function readProgrammeProductIds(db: PartnerDb): Promise<string[]> 
 
 /**
  * The embed that scopes a `participations` select to Programme products,
- * without a product id list in the URL: an inner join through the seat's
- * product to that product's requirement of the Programme's terms. Use it with
+ * without a product id list in the URL: `PROGRAMME_PRODUCT_EMBED`, reached
+ * through the seat's product. Use it with
  * `IN_SCOPE_SEAT_FILTER`, and the live statuses, on a keyset page over seats:
  *
  *   db.from("participations")
@@ -62,11 +85,10 @@ export async function readProgrammeProductIds(db: PartnerDb): Promise<string[]> 
  * embedded array and every seat still comes back. The embed adds a small
  * `programme` object to each row, which a record builder ignores.
  */
-export const IN_SCOPE_SEAT_EMBED =
-  "programme:products!inner(programme_terms:product_required_consents!inner(document_slug))";
+export const IN_SCOPE_SEAT_EMBED = `programme:products!inner(${PROGRAMME_PRODUCT_EMBED})`;
 
 /** The embedded column `IN_SCOPE_SEAT_EMBED` is filtered on. */
-export const IN_SCOPE_SEAT_FILTER = "programme.programme_terms.document_slug";
+export const IN_SCOPE_SEAT_FILTER = `programme.${PROGRAMME_PRODUCT_FILTER}`;
 
 /** A live seat on a Programme product — the unit every family-facing resource starts from. */
 export interface InScopeSeat {
@@ -85,11 +107,11 @@ export interface InScopeSeatFilter {
   customerIds?: readonly string[];
 }
 
-const SEAT_COLUMNS = `id, product_id, group_id, participant_id, customer_id, status, signed_up_at, ${IN_SCOPE_SEAT_EMBED}`;
-
-function isLiveStatus(status: string): status is PartnerEnrolmentStatus {
-  return (LIVE_SEAT_STATUSES as readonly string[]).includes(status);
-}
+/**
+ * An `InScopeSeat`'s columns with the scoping embed, for a resource that pages
+ * its own select of seats rather than reading all of them.
+ */
+export const IN_SCOPE_SEAT_COLUMNS = `id, product_id, group_id, participant_id, customer_id, status, signed_up_at, ${IN_SCOPE_SEAT_EMBED}`;
 
 /**
  * Every in-scope seat — live, on a Programme product — optionally narrowed to
@@ -108,7 +130,7 @@ export async function readInScopeSeats(
   const base = () =>
     db
       .from("participations")
-      .select(SEAT_COLUMNS, { count: "exact" })
+      .select(IN_SCOPE_SEAT_COLUMNS, { count: "exact" })
       .in("status", LIVE_SEAT_STATUSES)
       .eq(IN_SCOPE_SEAT_FILTER, PROGRAMME_TERMS_SLUG);
 

@@ -5,10 +5,18 @@ import { z } from "zod";
 import { readPartnerPage } from "@/lib/api/partner-cursor.server";
 import { chunkKeys, walkPages } from "@/lib/supabase/paging";
 import type { PartnerProduct, PartnerProductsQuery } from "./partner.contracts";
-import { readEffectiveStatuses } from "./partner-scope.server";
+import {
+  PROGRAMME_PRODUCT_EMBED,
+  PROGRAMME_PRODUCT_FILTER,
+  readEffectiveStatuses,
+} from "./partner-scope.server";
 import type { PartnerDb } from "./partner-shared-db.server";
 import { readPlaces, readProductNames } from "./partner-shared-lookups.server";
-import { PROGRAMME_TERMS_SLUG, toUtcIso } from "./partner-shared-values";
+import {
+  PROGRAMME_TERMS_SLUG,
+  productDelivery,
+  toUtcIso,
+} from "./partner-shared-values";
 
 /**
  * `/products` — the Programme catalogue: every product that requires the
@@ -16,17 +24,7 @@ import { PROGRAMME_TERMS_SLUG, toUtcIso } from "./partner-shared-values";
  * product id.
  */
 
-/**
- * The embed that scopes a `products` select to the Programme: an inner join to
- * the product's requirement of the Programme's terms, filtered on
- * `PROGRAMME_SCOPE_FILTER`. The `!inner` is load-bearing — without it the filter
- * narrows only the embedded array and every product still comes back.
- */
-const PROGRAMME_SCOPE_EMBED =
-  "programme_terms:product_required_consents!inner(document_slug)";
-const PROGRAMME_SCOPE_FILTER = "programme_terms.document_slug";
-
-const PRODUCT_COLUMNS = `id, product_type, is_remote, for_gamers, for_parents, location_id, start_date, end_date, timezone, min_age, max_age, created_at, ${PROGRAMME_SCOPE_EMBED}`;
+const PRODUCT_COLUMNS = `id, product_type, is_remote, for_gamers, for_parents, location_id, start_date, end_date, timezone, min_age, max_age, created_at, ${PROGRAMME_PRODUCT_EMBED}`;
 
 /** A product's groups as the record lists them. */
 type ProductGroup = PartnerProduct["groups"][number];
@@ -93,7 +91,7 @@ export async function readPartnerProducts(
       const base = db
         .from("products")
         .select(PRODUCT_COLUMNS, { count: "exact" })
-        .eq(PROGRAMME_SCOPE_FILTER, PROGRAMME_TERMS_SLUG);
+        .eq(PROGRAMME_PRODUCT_FILTER, PROGRAMME_TERMS_SLUG);
       return (after === null ? base : base.gt("id", after))
         .order("id")
         .limit(take);
@@ -154,7 +152,7 @@ export async function readPartnerProducts(
           id: row.id,
           name,
           type: row.product_type,
-          delivery: row.is_remote ? "online" : "in_person",
+          delivery: productDelivery(row.is_remote),
           audience: { gamers: row.for_gamers, parents: row.for_parents },
           location: row.location_id === null ? null : placeOf(row.location_id),
           status: statusOf(row.id),

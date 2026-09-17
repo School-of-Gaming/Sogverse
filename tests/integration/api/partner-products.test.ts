@@ -3,12 +3,14 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { GET } from "@/app/api/partner/v1/products/route";
 import { encodeCursor } from "@/lib/api/partner-cursor.server";
 import { partnerProductsResponse } from "@/services/partner/partner.contracts";
-import { requestedUrl, type FetchMock } from "../../mocks/postgrest-fetch";
+import type { FetchMock } from "../../mocks/postgrest-fetch";
 import {
   PARTNER_TEST_KEY,
   emptyTables,
+  inList,
   partnerRequest,
   postgrestTables,
+  readsOf,
 } from "../../mocks/partner-api";
 
 // --- Mocks ---
@@ -108,12 +110,6 @@ const chainNode = (id: string, type: string, name: string, parent: unknown = nul
   parent,
 });
 
-/** The values of an `in.(…)` filter. */
-function inList(url: URL, column: string): string[] {
-  const value = url.searchParams.get(column) ?? "";
-  return /^in\.\((.*)\)$/.exec(value)?.[1].split(",") ?? [];
-}
-
 /**
  * The fixture database: `products` answers the page read (scoped, keyset,
  * limited, as PostgREST would) and the keyed status read; every other table
@@ -177,9 +173,9 @@ async function readPage(query = "") {
 
 /** The page read — the one `products` request that carries the scope filter. */
 function pageReads(): URL[] {
-  return (db.fetch?.mock.calls ?? [])
-    .map(([input]) => requestedUrl(input))
-    .filter((url) => url.pathname.endsWith("/products") && url.searchParams.has("programme_terms.document_slug"));
+  return readsOf(db.fetch, "products").filter((url) =>
+    url.searchParams.has("programme_terms.document_slug"),
+  );
 }
 
 // --- Tests ---

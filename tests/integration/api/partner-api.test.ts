@@ -13,7 +13,7 @@ import {
   CAMPAIGN_MINIMUM_COUNT,
   partnerCampaignsResponse,
 } from "@/services/partner/partner.contracts";
-import type { FetchMock } from "../../mocks/postgrest-fetch";
+import { requestedUrl, type FetchMock } from "../../mocks/postgrest-fetch";
 import {
   PARTNER_TEST_KEY,
   emptyTables,
@@ -27,8 +27,8 @@ import {
 // `/traffic` reads Vercel Web Analytics. Nothing in this file is about what
 // either returns — every case here is decided before a read, or is indifferent
 // to it — but a route must never reach a real database or the network from a
-// test, so both are replaced: every table answers empty, and any other fetch
-// is refused.
+// test, so both are replaced: every table and every Vercel query answers empty,
+// and any other fetch is refused.
 
 const db = vi.hoisted(() => ({ fetch: undefined as FetchMock | undefined }));
 
@@ -41,6 +41,16 @@ vi.mock("@/lib/supabase/admin", async () => {
     },
   };
 });
+
+// `/traffic` caches its answer in Next's data cache, which only exists inside a
+// running Next server. Nothing here is about caching (its own suite is), so the
+// cache is a pass-through.
+vi.mock("next/cache", () => ({
+  unstable_cache:
+    <A extends unknown[], R>(body: (...args: A) => Promise<R>) =>
+    (...args: A) =>
+      body(...args),
+}));
 
 // --- Helpers ---
 
@@ -127,7 +137,14 @@ describe("the Lynx Educate partner API", () => {
     db.fetch = postgrestTables(emptyTables);
     vi.stubGlobal(
       "fetch",
-      vi.fn(() => Promise.reject(new Error("the network is not reachable from this suite"))),
+      vi.fn(async (input: RequestInfo | URL) =>
+        requestedUrl(input).hostname === "api.vercel.com"
+          ? new Response(JSON.stringify({ data: [] }), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            })
+          : Promise.reject(new Error("the network is not reachable from this suite")),
+      ),
     );
   });
   afterEach(() => {

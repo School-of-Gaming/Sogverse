@@ -3,12 +3,15 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { GET } from "@/app/api/partner/v1/feedback/route";
 import { compareKeys, encodeCursor } from "@/lib/api/partner-cursor.server";
 import { partnerFeedbackResponse } from "@/services/partner/partner.contracts";
-import { requestedUrl, type FetchMock } from "../../mocks/postgrest-fetch";
+import type { FetchMock } from "../../mocks/postgrest-fetch";
 import {
   PARTNER_TEST_KEY,
+  columnFilters,
   emptyTables,
+  inList,
   partnerRequest,
   postgrestTables,
+  readsOf,
 } from "../../mocks/partner-api";
 
 // --- Mocks ---
@@ -123,20 +126,6 @@ const GROUP_SESSIONS = [
 
 const ATTENDANCE = [{ session_id: MIDNIGHT_SESSION, participant_id: GAMER, status: "present" }];
 
-/** The values of an `in.(…)` filter. */
-function inList(url: URL, column: string): string[] {
-  const value = url.searchParams.get(column) ?? "";
-  return /^in\.\((.*)\)$/.exec(value)?.[1].split(",") ?? [];
-}
-
-/** Every PostgREST `op.value` filter on a column, split. */
-function filters(url: URL, column: string): { op: string; value: string }[] {
-  return url.searchParams.getAll(column).map((raw) => {
-    const at = raw.indexOf(".");
-    return { op: raw.slice(0, at), value: raw.slice(at + 1) };
-  });
-}
-
 function keyOf(row: FeedbackRow): string[] {
   return [row.participant_id, row.group_id, row.session_opens_at];
 }
@@ -173,13 +162,13 @@ function tables(rows: FeedbackRow[] = FEEDBACK) {
           ],
         ];
         const scalar = equal.every(([column, value]) =>
-          filters(url, column).every((f) => {
+          columnFilters(url, column).every((f) => {
             if (f.op === "eq") return value === f.value;
             throw new Error(`unexpected filter ${column}=${f.op}`);
           }),
         );
         const opened = Date.parse(row.session_opens_at);
-        const inWindow = filters(url, "session_opens_at").every((f) => {
+        const inWindow = columnFilters(url, "session_opens_at").every((f) => {
           if (f.op === "gte") return opened >= Date.parse(f.value);
           if (f.op === "lt") return opened < Date.parse(f.value);
           throw new Error(`unexpected filter session_opens_at=${f.op}`);
@@ -229,9 +218,7 @@ function keys(body: { data: { participant_id: string; group_id: string; session_
 
 /** The page reads — every `session_feedback` request. */
 function pageReads(): URL[] {
-  return (db.fetch?.mock.calls ?? [])
-    .map(([input]) => requestedUrl(input))
-    .filter((url) => url.pathname.endsWith("/session_feedback"));
+  return readsOf(db.fetch, "session_feedback");
 }
 
 // --- Tests ---

@@ -3,12 +3,13 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { GET } from "@/app/api/partner/v1/enrolments/route";
 import { encodeCursor } from "@/lib/api/partner-cursor.server";
 import type { FetchMock } from "../../mocks/postgrest-fetch";
-import { requestedUrl } from "../../mocks/postgrest-fetch";
 import {
   PARTNER_TEST_KEY,
   emptyTables,
+  filteringTable,
   partnerRequest,
   postgrestTables,
+  readsOf,
   type TableHandler,
 } from "../../mocks/partner-api";
 
@@ -143,80 +144,21 @@ function session(id: string, group_id: string, report: string | null) {
   };
 }
 
-/** The value or values at a dotted path, reading through embedded arrays. */
-function valuesAt(value: unknown, path: readonly string[]): unknown[] {
-  if (path.length === 0) return [value];
-  if (Array.isArray(value)) return value.flatMap((item) => valuesAt(item, path));
-  if (typeof value !== "object" || value === null) return [];
-  const entry = Object.entries(value).find(([name]) => name === path[0]);
-  return entry === undefined ? [] : valuesAt(entry[1], path.slice(1));
-}
-
-function matches(operator: string, operand: string, value: unknown): boolean {
-  if (typeof value !== "string") return false;
-  switch (operator) {
-    case "eq":
-      return value === operand;
-    case "gt":
-      return value > operand;
-    case "gte":
-      return value >= operand;
-    case "lte":
-      return value <= operand;
-    case "in":
-      return operand
-        .slice(1, -1)
-        .split(",")
-        .map((item) => item.replace(/^"|"$/g, ""))
-        .includes(value);
-    default:
-      throw new Error(`the fixture does not evaluate the ${operator} operator`);
-  }
-}
-
-const NOT_FILTERS = new Set(["select", "order", "limit", "offset"]);
-
-/**
- * A table handler that applies the request's filters and its limit to rows
- * already in the requested order — enough PostgREST for these reads, and what
- * lets the fixtures below be the whole world rather than one answer per call.
- * A filter on an embedded column narrows the top-level rows, as the `!inner`
- * embeds the reads use make it.
- */
-function table(rows: readonly unknown[]): TableHandler {
-  return (url) => {
-    const filtered = rows.filter((row) =>
-      [...url.searchParams].every(([name, expression]) => {
-        if (NOT_FILTERS.has(name)) return true;
-        const dot = expression.indexOf(".");
-        const operator = expression.slice(0, dot);
-        const operand = expression.slice(dot + 1);
-        return valuesAt(row, name.split(".")).some((value) =>
-          matches(operator, operand, value),
-        );
-      }),
-    );
-    const offset = Number(url.searchParams.get("offset") ?? 0);
-    const limit = url.searchParams.get("limit");
-    return filtered.slice(offset, limit === null ? undefined : offset + Number(limit));
-  };
-}
-
 const TABLES = {
-  participations: table(SEATS),
-  products: table([
+  participations: filteringTable(SEATS),
+  products: filteringTable([
     product(P_RUNNING, "2026-09-01", "2026-12-31"),
     product(P_DONE, "2026-06-01", "2026-08-31"),
   ]),
-  product_seat_counts: table([]),
-  consent_document_versions: table([
+  product_seat_counts: filteringTable([]),
+  consent_document_versions: filteringTable([
     { document_slug: "roblox-privacy-policy", version: "2026-08-01" },
     { document_slug: "roblox-programme-terms", version: "2026-05-01" },
     { document_slug: "roblox-programme-terms", version: "2026-08-01" },
   ]),
   // E1's parent accepted both documents at checkout; every other seat has
   // nothing on file and reports the D1 fallback.
-  consent_acceptances: table([
+  consent_acceptances: filteringTable([
     {
       id: "70000000-0000-4000-8000-000000000001",
       customer_id: PARENT_A,
@@ -236,7 +178,7 @@ const TABLES = {
       accepted_at: "2026-09-02T18:47:11+00:00",
     },
   ]),
-  group_sessions: table([
+  group_sessions: filteringTable([
     session(S1, GROUP_1, "We built an obby"),
     // Recorded by its marks alone.
     session(S2, GROUP_1, null),
@@ -244,12 +186,12 @@ const TABLES = {
     session(S3, GROUP_1, null),
     session(S4, GROUP_2, "Final showcase"),
   ]),
-  session_attendance: table([
+  session_attendance: filteringTable([
     { session_id: S1, participant_id: GAMER_A, status: "present" },
     { session_id: S2, participant_id: GAMER_A, status: "absent" },
     { session_id: S4, participant_id: GAMER_A, status: "present" },
   ]),
-  gamer_group_creations: table([
+  gamer_group_creations: filteringTable([
     {
       group_id: GROUP_1,
       participant_id: GAMER_A,
@@ -269,9 +211,7 @@ async function get(query = "") {
 }
 
 function participationsUrls(): URL[] {
-  return (db.fetch?.mock.calls ?? [])
-    .map(([input]) => requestedUrl(input))
-    .filter((url) => url.pathname.endsWith("/participations"));
+  return readsOf(db.fetch, "participations");
 }
 
 // --- Tests ---
@@ -474,7 +414,7 @@ describe("GET /api/partner/v1/enrolments", () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     db.fetch = postgrestTables({
       ...TABLES,
-      consent_document_versions: table([
+      consent_document_versions: filteringTable([
         { document_slug: "roblox-privacy-policy", version: "v2" },
         { document_slug: "roblox-programme-terms", version: "2026-08-01" },
       ]),

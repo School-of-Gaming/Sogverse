@@ -14,7 +14,13 @@ import type {
 } from "./partner.contracts";
 import { readInScopeSeats, type InScopeSeat } from "./partner-scope.server";
 import type { PartnerDb } from "./partner-shared-db.server";
-import { readPlaces, readRobloxAccounts } from "./partner-shared-lookups.server";
+import {
+  readBirthDates,
+  readParentGamerLinks,
+  readPlaces,
+  readRobloxAccounts,
+  type ParentGamerLink,
+} from "./partner-shared-lookups.server";
 import { toUtcIso } from "./partner-shared-values";
 
 /**
@@ -46,11 +52,6 @@ const LYNX_PHOTO: GamerPhotoConsentType = "lynx_educate";
 export interface FamilyMembers {
   parentIds: string[];
   gamerIds: string[];
-}
-
-export interface ParentGamerLink {
-  parent_id: string;
-  gamer_id: string;
 }
 
 function byId(a: string, b: string): number {
@@ -131,29 +132,6 @@ function familyKey(family: FamilyMembers): string {
 // The scope and the filters, as ids
 // ---------------------------------------------------------------------------
 
-/** The `parent_gamer` rows of these gamers. */
-async function readParentLinks(
-  db: PartnerDb,
-  gamerIds: readonly string[],
-): Promise<ParentGamerLink[]> {
-  const links: ParentGamerLink[] = [];
-  for (const chunk of chunkKeys(gamerIds)) {
-    // Unique per pair, not per gamer — a gamer may have a second parent — so
-    // the chunk bounds only the URL and each chunk is walked.
-    links.push(
-      ...(await walkPages("partner family links", (from, to) =>
-        db
-          .from("parent_gamer")
-          .select("parent_id, gamer_id", { count: "exact" })
-          .in("gamer_id", chunk)
-          .order("id")
-          .range(from, to),
-      )),
-    );
-  }
-  return links;
-}
-
 /** Every parent whose Lynx marketing consent is granted right now. */
 async function readGrantedParents(db: PartnerDb): Promise<Set<string>> {
   const rows = await walkPages("partner families granted marketing", (from, to) =>
@@ -221,23 +199,6 @@ async function readProfiles(
     for (const row of data) profiles.set(row.id, row);
   }
   return profiles;
-}
-
-/** Each gamer's stored date of birth, `YYYY-MM-DD` and always the 1st. */
-async function readBirthDates(
-  db: PartnerDb,
-  gamerIds: readonly string[],
-): Promise<Map<string, string>> {
-  const births = new Map<string, string>();
-  for (const chunk of chunkKeys(gamerIds)) {
-    const { data, error } = await db
-      .from("gamer_profiles")
-      .select("user_id, date_of_birth")
-      .in("user_id", chunk);
-    if (error) throw error;
-    for (const row of data) births.set(row.user_id, row.date_of_birth);
-  }
-  return births;
 }
 
 function consentState(row: { granted: boolean; updated_at: string }): PartnerConsentState {
@@ -327,7 +288,7 @@ export async function readPartnerFamilies(
   ];
   const families = assembleFamilies(
     seats,
-    await readParentLinks(db, seatedGamerIds),
+    await readParentGamerLinks(db, "gamer_id", seatedGamerIds),
   ).filter(
     (family) =>
       (granted === null || family.parentIds.some((id) => granted.has(id))) &&
