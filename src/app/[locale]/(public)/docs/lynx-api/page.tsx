@@ -162,7 +162,7 @@ function Section({ id, children }: { id: string; children: React.ReactNode }) {
  * record and the fields that record carries.
  *
  * Every resource is drawn by this one component so the reading order is the
- * same in all seven — an engineer who has read one knows where to look in the
+ * same in all eight — an engineer who has read one knows where to look in the
  * next.
  */
 function Resource({
@@ -636,6 +636,53 @@ const TRAFFIC_FIELDS = [
   },
 ] as const;
 
+const CAMPAIGNS_PARAMS = [
+  {
+    name: "from, to",
+    type: "month",
+    key: "resources.campaigns.params.fromTo",
+  },
+] as const;
+
+const CAMPAIGNS_FIELDS = [
+  { name: "range", type: "object", key: "resources.campaigns.fields.range" },
+  {
+    name: "minimum_count",
+    type: "integer",
+    key: "resources.campaigns.fields.minimumCount",
+  },
+  {
+    name: "campaigns",
+    type: "array",
+    key: "resources.campaigns.fields.campaigns",
+  },
+  {
+    name: "campaigns[].utm_campaign",
+    type: "string",
+    key: "resources.campaigns.fields.utmCampaign",
+  },
+  {
+    name: "campaigns[].accounts_created",
+    type: "integer | null",
+    key: "resources.campaigns.fields.accountsCreated",
+  },
+  {
+    name: "campaigns[].children_added",
+    type: "integer | null",
+    key: "resources.campaigns.fields.childrenAdded",
+  },
+  {
+    name: "campaigns[].children_eligible",
+    type: "integer | null",
+    key: "resources.campaigns.fields.childrenEligible",
+  },
+  {
+    name: "campaigns[].enrolled",
+    type: "integer | null",
+    key: "resources.campaigns.fields.enrolled",
+  },
+] as const;
+
 const ERROR_ROWS = [
   { code: "400", key: "errors.e400" },
   { code: "401", key: "errors.e401" },
@@ -653,6 +700,7 @@ const RESOURCE_PATHS = {
   feedback: "/feedback",
   "roblox-research": "/roblox-research",
   traffic: "/traffic",
+  campaigns: "/campaigns",
 } as const;
 
 const PRODUCTS_EXAMPLE = `{
@@ -811,6 +859,27 @@ const TRAFFIC_EXAMPLE = `{
   ]
 }`;
 
+const CAMPAIGNS_EXAMPLE = `{
+  "range": { "from": "2026-09", "to": "2026-09" },
+  "minimum_count": 5,
+  "campaigns": [
+    {
+      "utm_campaign": "lynx-autumn-a",
+      "accounts_created": 42,
+      "children_added": 51,
+      "children_eligible": 38,
+      "enrolled": 17
+    },
+    {
+      "utm_campaign": "lynx-autumn-b",
+      "accounts_created": 9,
+      "children_added": 11,
+      "children_eligible": 6,
+      "enrolled": null
+    }
+  ]
+}`;
+
 const LIST_ENVELOPE = `{
   "data": [ … ],
   "next_cursor": "eyJpZCI6IjVhMWY4ZTFjLTFiMGUtNGEzZS05YTljLTJjOWE0ZDhmMGIxMSJ9"
@@ -920,7 +989,7 @@ export default function LynxApiDocsPage() {
             <SectionHeading>{t("scope.heading")}</SectionHeading>
             <div className="mt-4 space-y-4 text-muted-foreground">
               <p>{t("scope.p1")}</p>
-              <p>{t("scope.p2")}</p>
+              <p>{rich("scope.p2")}</p>
               <p>{t("scope.p3")}</p>
             </div>
           </Section>
@@ -1050,6 +1119,19 @@ export default function LynxApiDocsPage() {
             params={rows(TRAFFIC_PARAMS)}
             fields={rows(TRAFFIC_FIELDS)}
             note={rich("resources.traffic.note")}
+          />
+
+          <Resource
+            id="campaigns"
+            path={RESOURCE_PATHS.campaigns}
+            title={t("resources.campaigns.title")}
+            intro={rich("resources.campaigns.intro")}
+            labels={labels}
+            exampleTitle={t("common.exampleResponse")}
+            example={CAMPAIGNS_EXAMPLE}
+            params={rows(CAMPAIGNS_PARAMS)}
+            fields={rows(CAMPAIGNS_FIELDS)}
+            note={rich("resources.campaigns.note")}
           />
 
           {/* Errors */}

@@ -1498,7 +1498,7 @@
       "scope": {
         "heading": "Scope — what the API can see",
         "p1": "The API sees the Programme and nothing else. A product belongs to the Programme when enrolling on it requires accepting the Creator Academy Terms & Conditions; that requirement is set by an admin when the product is created, and every product built for the Programme carries it. Whether the product is listed in the shop makes no difference: an unlisted Programme product is returned like any other.",
-        "p2": "Everything else follows from that one rule. A family is in scope when one of its members holds a seat on a Programme product, has completed one, or is waiting for one. That member is usually a child, and can be a parent on a product whose audience admits adults. A family in scope is returned with its parents, and with only those of its children who are in scope themselves. An enrolment is in scope when it is on a Programme product. A family’s other activity on Sogverse, such as a Minecraft club, is never returned, even for a family that is in scope.",
+        "p2": "Everything else follows from that one rule. A family is in scope when one of its members holds a seat on a Programme product, has completed one, or is waiting for one. That member is usually a child, and can be a parent on a product whose audience admits adults. A family in scope is returned with its parents, and with only those of its children who are in scope themselves. An enrolment is in scope when it is on a Programme product. A family’s other activity on Sogverse, such as a Minecraft club, is never returned, even for a family that is in scope. <code>/campaigns</code> is the one resource that reaches beyond the Programme: it counts families who arrived through a Lynx campaign whether or not they have enrolled, and it carries counts only, never a record of a family.",
         "p3": "The API is read-only. Two Lynx team members also hold Sogverse admin accounts and can see the same data in the admin interface; the API exists so Lynx’s own tooling can read it without a person in the loop. What the data is for is what the Programme’s privacy policy describes: delivering and reporting on the Programme, the research dataset for Roblox, and the mail a parent has agreed to receive."
       },
       "authentication": {
@@ -1512,7 +1512,7 @@
         "envelopeTitle": "List envelope",
         "items": {
           "formats": "Responses are JSON. Every timestamp is ISO 8601 in UTC; every date is <code>YYYY-MM-DD</code>, a product’s dates being calendar days in the product’s own timezone and a traffic day a calendar day in UTC; every identifier is a UUID that never changes.",
-          "pagination": "Every resource that returns records is paginated by cursor, in ascending order of identifier, so the order is stable while a pull is in progress; a resource whose records have no identifier of their own pages in a stable order of its own. Pass <code>limit</code> (default 100, maximum 500) and the <code>next_cursor</code> from the previous page as <code>cursor</code>; a <code>null</code> <code>next_cursor</code> is the last page. A cursor is opaque, belongs to the filters it was issued with, and does not expire. <code>/traffic</code> returns one aggregate and takes <code>from</code> and <code>to</code> instead; its answer for a given day and page is cached on our side for an hour.",
+          "pagination": "Every resource that returns records is paginated by cursor, in ascending order of identifier, so the order is stable while a pull is in progress; a resource whose records have no identifier of their own pages in a stable order of its own. Pass <code>limit</code> (default 100, maximum 500) and the <code>next_cursor</code> from the previous page as <code>cursor</code>; a <code>null</code> <code>next_cursor</code> is the last page. A cursor is opaque, belongs to the filters it was issued with, and does not expire. <code>/traffic</code> returns one aggregate and takes <code>from</code> and <code>to</code> instead; its answer for a given day and page is cached on our side for an hour. <code>/campaigns</code> returns one aggregate too, and takes <code>from</code> and <code>to</code> as months.",
           "erasure": "A record that is missing from a full pull is no longer in scope, whether because the family asked for erasure, a seat was cancelled or a product left the Programme, and it leaves Lynx’s store on that same sync in every case. There is no tombstone: a record’s absence is the only signal, so read it only from a pull that reached its last page.",
           "consent": "A consent is reported as it stands at the moment of the request, with when it last changed and no history. A withdrawn marketing consent shows up as <code>granted: false</code> with the email address gone on the next pull; from then on the parent is not mailed, and Lynx may keep the minimal suppression record the Programme’s privacy policy allows so they are not added back.",
           "changePolicy": "Additions to this API, a new field or a new filter, ship without notice; a field removed or renamed, or a value that changes meaning, is a new version under a new path. Build against the fields you use and ignore the rest.",
@@ -1658,11 +1658,29 @@
             "pagesByDay": "The views per calendar day, in UTC, for a time series."
           },
           "note": "Vercel’s script runs only for a visitor who accepted analytics on the cookie banner, and the UTM values on a family record are written only for a visitor who accepted marketing. The two gates differ, and analytics is the wider one, so a view counted here and a family in <code>/families</code> are not the same population: a visitor who accepted everything is in both, one who accepted analytics alone is here only, and one who rejected the banner is in neither."
+        },
+        "campaigns": {
+          "title": "the families a campaign brings in, by campaign",
+          "intro": "How many families each Lynx campaign brought to Sogverse, and how far they went: accounts created, children added, children of Programme age, and families that enrolled. It is the funnel before a family is in scope, counted rather than listed: no identifier, no record of any single family, and a count too small to be safe is withheld. A campaign is Lynx’s when its <code>utm_campaign</code> starts with <code>lynx-</code>, in any letter case. Every link issued for Lynx must carry that prefix: a campaign without it is never counted, and the campaign on an account cannot be changed once written.",
+          "params": {
+            "fromTo": "Only families whose parent account was created in these months, inclusive, in UTC. Omit <code>to</code> for the current month, which is partial until it ends; omit <code>from</code> for the month <code>to</code> names."
+          },
+          "fields": {
+            "range": "The months the counts cover.",
+            "minimumCount": "The smallest count the answer shows. A count below it, zero included, is <code>null</code>, so a small campaign cannot point to a single family.",
+            "campaigns": "One entry per Lynx campaign that brought at least one parent account in the range.",
+            "utmCampaign": "The campaign, exactly as it was stored on the accounts it counts. Values that differ only in letter case are separate entries, as they are in <code>/traffic</code>.",
+            "accountsCreated": "Parent accounts created in the range through a link carrying this campaign: the first step of the funnel.",
+            "childrenAdded": "Children linked to those accounts at the moment of the request, whenever they were added: the second step.",
+            "childrenEligible": "Those children whose age on the day of the request, in UTC, is within the Programme’s 13 to 17. Sogverse holds a birth month rather than a day, so a child who could be either of two ages counts when either one is in range, the same reading enrolment uses.",
+            "enrolled": "Those accounts whose family holds a seat on a Programme product, has completed one, or is waiting for one: the third step, and the point where a family enters <code>/families</code>."
+          },
+          "note": "The campaign on an account is written once, when the account is created, and only where the visitor accepted marketing cookies, so these counts cover the families who did and never the others; it is the same campaign <code>/families</code> reports in <code>parents[].utm</code> once a family enrols. Every count is read live at the moment of the request. The range is in months rather than days so that comparing two answers can never single out one family."
         }
       },
       "errors": {
         "heading": "Errors",
-        "e400": "A query parameter is malformed: a bad UUID, a date that is not <code>YYYY-MM-DD</code>, a <code>limit</code> over 500, an unknown enum value, or a <code>cursor</code> from a different endpoint.",
+        "e400": "A query parameter is malformed: a bad UUID, a date that is not <code>YYYY-MM-DD</code>, a month that is not <code>YYYY-MM</code>, a <code>limit</code> over 500, an unknown enum value, or a <code>cursor</code> from a different endpoint.",
         "e401": "Missing, malformed or revoked API key.",
         "e404": "The path is not one of the resources above.",
         "e429": "Too many requests: the limit is 60 requests a minute per key. Wait for the number of seconds in <code>Retry-After</code> and try again; pulling every resource every fifteen minutes stays well inside it.",

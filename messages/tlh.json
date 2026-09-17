@@ -1542,7 +1542,7 @@
       "scope": {
         "heading": "veH — nuq legh API",
         "p1": "mIw'a' neH legh API — latlh pagh. mIw'a' ghaj De'wI' qaSDI' muvmeH Creator Academy Terms & Conditions laj 'e' nIS. ra'wI' chel qup De'wI' chenmoHlu'DI', 'ej mIw'a'vaD chenmoHlu'bogh Hoch De'wI' qeng. malja' DaqDaq 'angchoHlu''a'? qelbe'lu': 'angbe'lu'bogh mIw'a' De'wI' nob rap.",
-        "p2": "wa' chutvo' Hoch latlh tlhap. qorDu' veH 'el wa' ghotDaj Daq ghajDI' mIw'a' De'wI'Daq, qoj rInmoHpu'DI', qoj Daq loStaHvIS — pIj puq 'oH, 'ach qanpu' laj De'wI'Daq vav 'oHlaH je. vavpu'Daj je veH 'elbogh puqpu'Daj neH je nobbogh. muvmoHghach veH 'el mIw'a' De'wI'Daq. qorDu' latlh Qu' Sogverse-Daq — ghom'a' Minecraft, jIH — reH nobbe'lu', veH 'elbogh qorDu'vaD je.",
+        "p2": "wa' chutvo' Hoch latlh tlhap. qorDu' veH 'el wa' ghotDaj Daq ghajDI' mIw'a' De'wI'Daq, qoj rInmoHpu'DI', qoj Daq loStaHvIS — pIj puq 'oH, 'ach qanpu' laj De'wI'Daq vav 'oHlaH je. vavpu'Daj je veH 'elbogh puqpu'Daj neH je nobbogh. muvmoHghach veH 'el mIw'a' De'wI'Daq. qorDu' latlh Qu' Sogverse-Daq — ghom'a' Minecraft, jIH — reH nobbe'lu', veH 'elbogh qorDu'vaD je. <code>/campaigns</code> 'oH mIw'a' veH juSbogh wa' De'meywIj'e': Lynx mIw lo'taHvIS pawbogh qorDu'pu' togh — muvpu'bogh muvbe'pu'bogh je; mI'mey neH nob, not qorDu' De'wI'.",
         "p3": "leghmeH neH 'oH API. cha' Lynx ghomwI'pu' Sogverse ra'wI' account ghaj 'ej rap De' legh ra'wI' Daq. API tu'lu'mo' Lynx jan mob laD — nuvHom poHbe'. De' lo'meH chutmey 'oH mIw'a' pegh chut Delbogh'e': mIw'a' qaSmoHmeH 'ej ja'meH, RobloxvaD qel De' ghom, je QIn laj vav."
       },
       "authentication": {
@@ -1556,7 +1556,7 @@
         "envelopeTitle": "tetlh nagh beQ",
         "items": {
           "formats": "JSON jangmey. Hoch poH ISO 8601 UTC. Hoch jaj <code>YYYY-MM-DD</code>: De'wI' jajmey — De'wI' poH DaqDaq jajmey; leng jaj — UTC jaj. Hoch pong UUID — reH choHbe'.",
-          "pagination": "De'wI'mey nobbogh Hoch De'meywIj kursor lo', pong mI' tlha' Dat — vaj tlhaptaHvIS ratlh mIw. pong mI' nIteb Hutlhbogh De'wI'mey — mIw ratlh nIteb lo'. <code>limit</code> yInob (100 'oH ghaytan, 500 'oH tIn law') je wa'Hu' nav <code>next_cursor</code> <code>cursor</code> mojmoH; <code>null</code> <code>next_cursor</code> 'oH nav Qav'e'. kursor 'oH So'lu'bogh'e', nobbogh wovmoHwI'meyDaj ghaj, 'ej not Qav. <code>/traffic</code> wa' ghom De' nob neH, 'ej <code>from</code> <code>to</code> je laj; wa' jaj wa' nav jangDaj maj DaqDaq wa' rep pol.",
+          "pagination": "De'wI'mey nobbogh Hoch De'meywIj kursor lo', pong mI' tlha' Dat — vaj tlhaptaHvIS ratlh mIw. pong mI' nIteb Hutlhbogh De'wI'mey — mIw ratlh nIteb lo'. <code>limit</code> yInob (100 'oH ghaytan, 500 'oH tIn law') je wa'Hu' nav <code>next_cursor</code> <code>cursor</code> mojmoH; <code>null</code> <code>next_cursor</code> 'oH nav Qav'e'. kursor 'oH So'lu'bogh'e', nobbogh wovmoHwI'meyDaj ghaj, 'ej not Qav. <code>/traffic</code> wa' ghom De' nob neH, 'ej <code>from</code> <code>to</code> je laj; wa' jaj wa' nav jangDaj maj DaqDaq wa' rep pol. <code>/campaigns</code> je wa' ghom De' nob, 'ej <code>from</code> <code>to</code> je jarmey rur laj.",
           "erasure": "Hoch De' tlhapDaq Hutlhbogh De'wI' veH 'elqa'be': qorDu' teqmeH tlhob, qoj Daq lonlu', qoj mIw'a'vo' mej De'wI' — Hoch DochvaD rap. rap boq poHDaq Lynx Daqvo' mej. tombstone tu'be'lu': Hutlhghach neH 'oH QIn'e', vaj nav Qav pawbogh tlhapDaq neH yIlaD.",
           "consent": "tlhob poHDaq chaw' Dotlh 'ang, choHlu'bogh poH Qav tlhej, 'ach qun Hutlh. lujbogh ngeH chaw' <code>granted: false</code> 'ang tlhap vebDaq, 'ej QIn Daq Hutlh; ghIq vav QIn Hevbe', 'ej mIw'a' pegh chut chaw'bogh mach botwI' ghItlh pollaH Lynx — vaj chelqa'be'lu'.",
           "changePolicy": "API'amvaD chelmey — chu' yotlh, chu' wovmoHwI' — 'ang pagh 'ej ngeHlu'. teqlu'bogh qoj pongqa'lu'bogh yotlh, qoj choHbogh qech ghajbogh mI' — chu' He bIngDaq chu' mIw 'oH. Dalo'bogh yotlhmey yIchenmoH, latlh yIbuSHa'.",
@@ -1702,11 +1702,29 @@
             "pagesByDay": "Hoch jaj leghghachmey, UTC-Daq, poH tlhegh chenmoHmeH."
           },
           "note": "Vercel ghItlh vangtaH neH leghwI' chab beQDaq De' ghom laj, 'ej qorDu' De'wI'Daq UTM mI'mey ghItlhlu' neH leghwI' ngeH lajDI'. cha' veHmey pIm, 'ej De' ghom veH tIn law'; vaj naDev toghlu'bogh leghghach je <code>/families</code>-Daq qorDu' rapbe': Hoch lajbogh leghwI' cha'Daq tu'lu'; De' ghom neH lajbogh naDev neH; chab beQ lajbe'bogh pagh Daq."
+        },
+        "campaigns": {
+          "title": "mIw qengbogh qorDu'pu', mIw tlha'",
+          "intro": "Hoch Lynx mIw Sogverse-Daq qorDu'pu' 'ar qeng, 'ej 'ar ghoS chaH: account chenmoHlu'pu'bogh, puqpu' chellu'pu'bogh, mIw'a' ben mI' ghajbogh puqpu', muvpu'bogh qorDu'pu' je. veH 'elpa' qorDu' He'So' 'oH — toghlu', tetlhbe'lu': pong mI' Hutlh, wa' qorDu' De'wI' Hutlh, 'ej Hoch mI' mach law' So'lu'. Lynx mIw 'oH <code>utm_campaign</code> <code>lynx-</code>vo' taghDI' — ghItlh tIn mach je rap. LynxvaD chenmoHlu'bogh Hoch tlhegh ghaj ghItlhvam: ghajbe'bogh mIw not toghlu', 'ej accountDaq ghItlhlu'pu'bogh mIw not choHlu'.",
+          "params": {
+            "fromTo": "jarmeyvamDaq chenmoHlu'bogh vav account ghajbogh qorDu'pu' neH, veHmey je, UTC. DaH jar DaneHDI' <code>to</code> yIwoDHa' — rInpa' naQbe'; <code>to</code> jar DaneHDI' <code>from</code> yIwoDHa'."
+          },
+          "fields": {
+            "range": "mI'mey So'bogh jarmey.",
+            "minimumCount": "jang 'angbogh mI' mach law'. mI' machqu' — pagh je — <code>null</code> 'oH; vaj wa' qorDu' ngu'laHbe' mIw machHom.",
+            "campaigns": "veHDaq wa' vav account qengpu'bogh Hoch Lynx mIwvaD wa' ghItlh.",
+            "utmCampaign": "mIw — togh account'e' pollu'meH ghItlhlu'pu'bogh rap. ghItlh tIn mach neH Qo'bogh mu'mey chevlu' — <code>/traffic</code>Daq rur.",
+            "accountsCreated": "veHDaq mIwvam qengbogh tlhegh lo'taHvIS chenmoHlu'bogh vav accountmey: He'So' wa'DIch nuq.",
+            "childrenAdded": "tlhob poHDaq accountmeyvetlh rarlu'bogh puqpu' — ghorgh chellu'pu' 'e' Qo'lu': cha'DIch nuq.",
+            "childrenEligible": "tlhob jajDaq, UTC, mIw'a' ben mI' 13–17 ghajbogh puqpu'. bogh jar neH pol Sogverse — jaj polbe'; vaj cha' ben mI' ghajlaHbogh puq togh wa' veHDaq 'elDI' — muvDI' rur.",
+            "enrolled": "mIw'a' De'wI'Daq Daq ghajbogh, rInmoHpu'bogh, qoj Daq loSbogh qorDu' ghajbogh accountmey: wejDIch nuq, 'ej <code>/families</code>Daq 'el qorDu'."
+          },
+          "note": "account chenmoHlu'DI' wa'logh neH ghItlhlu' mIw, 'ej ngeH chab laj leghwI'DI' neH; vaj qorDu'pu'vetlh neH togh mI'mey — latlh not. <code>/families</code> <code>parents[].utm</code>Daq 'angbogh mIw rap 'oH, muvDI' qorDu'. tlhob poHDaq laDlu' Hoch mI'. jarmey lo'lu' — jajmey lo'be'lu' — vaj cha' jang nuDDI' not wa' qorDu' ngu'lu'."
         }
       },
       "errors": {
         "heading": "Qaghmey",
-        "e400": "tlhob ngoQ Qagh: UUID mI'Ha', <code>YYYY-MM-DD</code> 'oHbe'bogh jaj, 500 tIn law' <code>limit</code>, Sovbe'lu'bogh enum mu', qoj latlh Daqvo' <code>cursor</code>.",
+        "e400": "tlhob ngoQ Qagh: UUID mI'Ha', <code>YYYY-MM-DD</code> 'oHbe'bogh jaj, <code>YYYY-MM</code> 'oHbe'bogh jar, 500 tIn law' <code>limit</code>, Sovbe'lu'bogh enum mu', qoj latlh Daqvo' <code>cursor</code>.",
         "e401": "API key Hutlh, Qagh, qoj teqlu'pu'.",
         "e404": "He 'oHbe' Dungdaq De'meywIj'e'.",
         "e429": "tlhobmey law'qu': Hoch key Hoch tup javmaH tlhob chaw'lu'. <code>Retry-After</code> lup mI' yIloS 'ej yInIDqa'; wa'maH vagh tup Hoch Hoch De'meywIj tlhap — veH bIng luSoy'.",

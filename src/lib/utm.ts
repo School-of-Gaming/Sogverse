@@ -25,8 +25,10 @@
  * with the partner's slug and a hyphen** — `lynx-summer-a`, `rblx-launch`. This
  * cannot be retrofitted, because the value is immutable on a profile once
  * written, and it is the only thing that lets a partner's campaigns be picked
- * out of the set without a hand-kept mapping. It is documentation, not a rule
- * the sanitiser enforces.
+ * out of the set without a hand-kept mapping. The sanitiser does not enforce
+ * it, but for Lynx it is load-bearing: the partner API's `/campaigns` counts
+ * only campaigns carrying the `lynx-` prefix, so a link issued without it is
+ * never counted.
  *
  * ---------------------------------------------------------------------------
  * WHAT IS LOAD-BEARING FOR THE LEGAL POSITION
