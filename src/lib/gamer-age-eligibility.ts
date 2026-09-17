@@ -121,6 +121,29 @@ export function ageOnDate(birth: string, on: string): number {
 }
 
 /**
+ * **Every age the child could be on a given calendar date**, as the inclusive
+ * range the stored birth month allows: `max` is the age of somebody born on the
+ * 1st (the stored date), `min` the age of somebody born on the month's last day.
+ * The two are equal except in the child's birth month, where the real birthday
+ * may or may not have passed.
+ *
+ * The same reading of the same ambiguity as the band above, stated as a range
+ * rather than resolved in anyone's favour — for a reader that reports the
+ * uncertainty instead of deciding on it (the partner API's research ages), or
+ * that has to ask whether an age is *possibly* in range (`min <= band max` and
+ * `max >= band min`).
+ */
+export function possibleAgeOnDate(
+  dateOfBirth: string,
+  on: string,
+): { min: number; max: number } {
+  return {
+    min: ageOnDate(lastDayOfBirthMonth(dateOfBirth), on),
+    max: ageOnDate(dateOfBirth, on),
+  };
+}
+
+/**
  * The stored birth month's last day, as a `YYYY-MM-DD` string — the latest day
  * the child could actually have been born on.
  *

@@ -186,7 +186,19 @@ const TESTS = {
     "tests/integration/api/tools-minecraft-password-reset.test.ts",
   minecraftJoinCheck: "tests/integration/api/minecraft-join-check.test.ts",
   minecraftVerify: "tests/integration/api/minecraft-verify.test.ts",
+  // The partner API: one suite for what its resources share (the key, query
+  // validation, the envelope, the catch-all), and one per resource for what
+  // that resource answers. A resource entry names its own suite once that
+  // suite exists; the shared suite exercises every route either way.
   partnerApi: "tests/integration/api/partner-api.test.ts",
+  partnerCampaigns: "tests/integration/api/partner-campaigns.test.ts",
+  partnerEnrolments: "tests/integration/api/partner-enrolments.test.ts",
+  partnerFamilies: "tests/integration/api/partner-families.test.ts",
+  partnerFeedback: "tests/integration/api/partner-feedback.test.ts",
+  partnerProducts: "tests/integration/api/partner-products.test.ts",
+  partnerRobloxResearch: "tests/integration/api/partner-roblox-research.test.ts",
+  partnerSessions: "tests/integration/api/partner-sessions.test.ts",
+  partnerTraffic: "tests/integration/api/partner-traffic.test.ts",
   pin: "tests/integration/auth/pin.test.ts",
   productImagesManage: "tests/integration/api/product-images-manage.test.ts",
   productImagesReplace: "tests/integration/api/product-images-replace.test.ts",
@@ -228,14 +240,14 @@ const ADMIN_ONLY: Posture = { kind: "role-gated", roles: ["admin"] };
 
 /**
  * The Lynx Educate partner API's one posture, shared by its eight read-only
- * resources because the key is what scopes all of them: one key, one partner,
- * one Programme.
+ * resources and the catch-all beneath them because the key is what scopes all
+ * of them: one key, one partner, one Programme.
  */
 const PARTNER_KEY: Posture = {
   kind: "api-key",
   primitive: "requirePartnerKey",
   reason:
-    "Lynx Educate's own tooling pulls the Programme's data server-to-server on a schedule; there is no person in the loop and no Sogverse session to present. The issued bearer token, compared in constant time, is both the partner's identity and the whole of its scope, and every handler is read-only — it reaches no database and can mutate nothing",
+    "Lynx Educate's own tooling pulls the Programme's data server-to-server on a schedule; there is no person in the loop and no Sogverse session to present. The issued bearer token, compared in constant time, is both the partner's identity and the whole of its scope. Every handler is read-only: it reads families' and children's Programme data through the service-role client (there is no session for a row policy to evaluate), bounded by the Programme scope the partner read modules apply and by response schemas that admit no field the published documentation does not describe, and it writes nothing",
 };
 
 const ROUTE_REGISTRY: Record<string, RouteEntry> = {
@@ -1001,12 +1013,26 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   // --- Partner API (Lynx Educate) ------------------------------------------
   //
-  // Seven read-only resources published at `/docs/lynx-api`, all on one issued
-  // key and all the same posture. They are skeletons: each authenticates,
-  // validates its query against the contract schema and answers the documented
-  // shape with no records, so the partner can integrate against auth and
-  // parsing while the resources are filled in one at a time. No route reaches
-  // the database, which is why none of them justifies a client of any kind.
+  // Eight read-only resources published at `/docs/lynx-api`, all on one issued
+  // key and all the same posture, plus the catch-all that answers every other
+  // path under the prefix with the documented 404. Each authenticates, validates
+  // its query against the contract schema, and answers the documented shape.
+  //
+  // None of these files names the service-role factory, and none carries an
+  // `adminClient` clause: the partner reads construct it in exactly one module,
+  // pinned in NON_ROUTE_ADMIN_CLIENT_SITES with the one justification they all
+  // share, and check 3 confines that module's accessor to the partner surface —
+  // so the justification cannot be borrowed by anything else.
+
+  "src/app/api/partner/[...path]/route.ts": {
+    handlers: {
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+      POST: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+      PUT: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+      PATCH: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+      DELETE: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+    },
+  },
 
   "src/app/api/partner/v1/products/route.ts": {
     handlers: {
@@ -1329,7 +1355,23 @@ const NON_ROUTE_ADMIN_CLIENT_SITES: Record<string, string> = {
     "the shared family resolver — a gamer legitimately reads siblings beyond their own view",
   "src/app/[locale]/select-profile/page.tsx":
     "the profile chooser prefetch, through the same family resolver as the family-list route",
+  "src/services/partner/partner-shared-db.server.ts":
+    "the partner API's one construction site: Lynx Educate's tooling authenticates with an issued key and holds no Sogverse session for a row policy to evaluate, so every partner read runs as the service role, scoped to the Programme by the partner read modules and shaped by the published contract. Its accessor is confined to the partner routes and services by check 3",
 };
+
+/**
+ * The partner API reaches the service role through an accessor rather than by
+ * naming the factory, so the pin above is one entry for the whole surface. The
+ * price of that is this list: the directories allowed to name the accessor at
+ * all. A file outside them reaching for it is reaching for the service role
+ * without a justification of its own, which is exactly what check 3 exists to
+ * stop.
+ */
+const PARTNER_DB_ACCESSOR = /\bpartnerDb\b/;
+const PARTNER_DB_SURFACE = [
+  "src/app/api/partner/",
+  "src/services/partner/",
+] as const;
 
 // ---------------------------------------------------------------------------
 // Surface enumeration
@@ -1618,6 +1660,28 @@ describe("check 3 — admin-client pinning", () => {
     expect(nonRouteImporters).toEqual(
       Object.keys(NON_ROUTE_ADMIN_CLIENT_SITES).sort(),
     );
+  });
+
+  const sourceFiles = walk(join(process.cwd(), "src"), (name) =>
+    /\.tsx?$/.test(name),
+  ).map(repoPath);
+
+  const partnerDbUsers = sourceFiles
+    .filter((path) => PARTNER_DB_ACCESSOR.test(readSource(path)))
+    .sort();
+
+  it("found the partner API's service-role accessor in use", () => {
+    expect(partnerDbUsers.length).toBeGreaterThan(0);
+  });
+
+  it("confines the partner API's service-role accessor to the partner surface", () => {
+    const outside = partnerDbUsers.filter(
+      (path) => !PARTNER_DB_SURFACE.some((prefix) => path.startsWith(prefix)),
+    );
+    expect(
+      outside,
+      "the partner API's service-role accessor is named outside the partner routes and services; justify a service-role client of that file's own instead",
+    ).toEqual([]);
   });
 });
 

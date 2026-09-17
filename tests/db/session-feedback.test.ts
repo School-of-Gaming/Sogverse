@@ -80,7 +80,7 @@ const SEEDED_ROWS = [
     session_opens_at: WINDOW_SIBLING,
     answers: { learned: 3 },
     note: "",
-    exit_reason: null,
+    exit_reason: "ended",
   },
   {
     group_id: GROUP_X,
@@ -281,6 +281,9 @@ describe("session_feedback RLS + shape constraints", () => {
         session_opens_at: "2026-06-17T10:00:00+00:00",
         answers: { learned: 1 },
         note: "Written by somebody else",
+        // Every column the schema requires is present, so the policy is the
+        // only thing that can refuse the row.
+        exit_reason: "left",
       });
       expect(error).not.toBeNull();
     });
@@ -293,6 +296,7 @@ describe("session_feedback RLS + shape constraints", () => {
         participant_id: TEST_IDS.GAMER_2,
         session_opens_at: "2026-06-17T11:00:00+00:00",
         answers: { learned: 5 },
+        exit_reason: "left",
       });
       expect(error).not.toBeNull();
     });
@@ -303,6 +307,7 @@ describe("session_feedback RLS + shape constraints", () => {
         participant_id: TEST_IDS.CUSTOMER_2,
         session_opens_at: "2026-06-17T12:00:00+00:00",
         answers: { learned: 5 },
+        exit_reason: "left",
       });
       expect(error).not.toBeNull();
     });
@@ -317,6 +322,7 @@ describe("session_feedback RLS + shape constraints", () => {
         session_opens_at: "2026-06-17T13:00:00+00:00",
         answers: { learned: 5 },
         note: "Written by a parent",
+        exit_reason: "left",
       });
       expect(error).not.toBeNull();
     });
@@ -396,11 +402,14 @@ describe("session_feedback RLS + shape constraints", () => {
       note?: string;
       exit_reason?: string;
     }): Promise<{ error: unknown }> {
+      // A valid exit reason unless the case is about the exit reason, so every
+      // other shape case is refused or admitted on the column it names.
       const { error } = await gamerAuth.from("session_feedback").insert({
         group_id: GROUP_X,
         participant_id: TEST_IDS.GAMER,
         session_opens_at: WINDOW_SHAPE,
         ...row,
+        exit_reason: row.exit_reason ?? "left",
       });
       if (!error) {
         await admin
