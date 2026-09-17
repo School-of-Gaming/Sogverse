@@ -40,7 +40,7 @@ const NOW = new Date("2026-09-17T12:00:00Z");
 const RUNNING = "10000000-0000-4000-8000-000000000001";
 const PENDING = "10000000-0000-4000-8000-000000000002";
 const COMPLETED = "10000000-0000-4000-8000-000000000003";
-const EXPIRED = "10000000-0000-4000-8000-000000000004";
+const PENDING_2 = "10000000-0000-4000-8000-000000000004";
 const RUNNING_2 = "10000000-0000-4000-8000-000000000005";
 const GROUP_A = "50000000-0000-4000-8000-000000000001";
 const GROUP_B = "50000000-0000-4000-8000-000000000002";
@@ -94,8 +94,7 @@ const CATALOGUE: ProductRow[] = [
     max_age: null,
   }),
   product(COMPLETED, { start_date: "2026-06-01", end_date: "2026-08-01" }),
-  // Its end date passed with its threshold never met: it never started.
-  product(EXPIRED, { start_date: "2026-06-01", end_date: "2026-08-01", signup_threshold: 5 }),
+  product(PENDING_2, { start_date: "2026-11-01", end_date: "2026-11-30" }),
   product(RUNNING_2, { location_id: null, is_remote: true, end_date: "2026-12-01" }),
 ];
 
@@ -237,7 +236,7 @@ describe("GET /api/partner/v1/products", () => {
       [RUNNING, "running"],
       [PENDING, "pending"],
       [COMPLETED, "completed"],
-      [EXPIRED, "expired"],
+      [PENDING_2, "pending"],
       [RUNNING_2, "running"],
     ]);
     expect(body.next_cursor).toBeNull();
@@ -264,8 +263,41 @@ describe("GET /api/partner/v1/products", () => {
     expect(body.data.map((record) => record.id)).toEqual([RUNNING, RUNNING_2]);
     expect(body.next_cursor).toBeNull();
 
-    expect((await readPage("?status=expired")).data.map((record) => record.id)).toEqual([EXPIRED]);
+    expect((await readPage("?status=pending")).data.map((record) => record.id)).toEqual([
+      PENDING,
+      PENDING_2,
+    ]);
     expect((await readPage("?status=completed")).data.map((record) => record.id)).toEqual([COMPLETED]);
+  });
+
+  it("refuses a status the API does not describe", async () => {
+    // The database derives a fourth state, `expired`; v1 describes only the
+    // lifecycle a product supports, so asking for it is a bad request.
+    const response = await GET(request("?status=expired"));
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error.code).toBe("invalid_query");
+    expect(body.error.message).toContain("status");
+  });
+
+  it("answers internal_error for a product deriving expired, rather than publishing it", async () => {
+    // No start date and an end date in the past derives `expired`, a product
+    // the admin UI cannot produce: a loud 500, never a value the page states.
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    db.fetch = tables([
+      ...CATALOGUE,
+      product("10000000-0000-4000-8000-000000000006", { start_date: null, end_date: "2026-08-01" }),
+    ]);
+
+    for (const query of ["", "?status=running"]) {
+      const response = await GET(request(query));
+      expect(response.status).toBe(500);
+      const body = await response.json();
+      expect(body.error.code).toBe("internal_error");
+      expect(JSON.stringify(body)).not.toContain("expired");
+    }
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 
   it("pages through the catalogue with next_cursor", async () => {

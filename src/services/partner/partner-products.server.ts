@@ -4,7 +4,12 @@ import { z } from "zod";
 
 import { readPartnerPage } from "@/lib/api/partner-cursor.server";
 import { chunkKeys, walkPages } from "@/lib/supabase/paging";
-import type { PartnerProduct, PartnerProductsQuery } from "./partner.contracts";
+import {
+  PRODUCT_STATUS,
+  type PartnerProduct,
+  type PartnerProductStatus,
+  type PartnerProductsQuery,
+} from "./partner.contracts";
 import {
   PROGRAMME_PRODUCT_EMBED,
   PROGRAMME_PRODUCT_FILTER,
@@ -63,8 +68,9 @@ async function readGroups(
  * One page of the Programme catalogue, ascending by product id.
  *
  * **`status` is derived, so it cannot be a database filter.** A product's
- * effective status is a function of its dates, its threshold, the live seat
- * count and `now` — nothing is stored to filter on. The page reader walks every
+ * effective status is a function of its dates, its timezone and `now` (and of
+ * the live seat count, for a threshold the admin UI blocks) — nothing
+ * is stored to filter on. The page reader walks every
  * Programme product in id order and the build drops the ones whose status does
  * not match, deciding each batch's statuses before enriching the survivors, so a
  * narrow filter costs a status read per batch and nothing more. Dropping rather
@@ -73,7 +79,10 @@ async function readGroups(
  *
  * A product with no translation at all, or a gamer product without its ages,
  * throws: the database refuses both, so either is a broken invariant, and a
- * loud 500 beats a record the contract would have to lie about.
+ * loud 500 beats a record the contract would have to lie about. So does a
+ * product deriving a status the API does not describe (`expired`): only a
+ * signup threshold or a missing start date produces it, the admin UI blocks
+ * both, and it is never mapped onto a state the page does state.
  */
 export async function readPartnerProducts(
   db: PartnerDb,
@@ -102,10 +111,16 @@ export async function readPartnerProducts(
         rows.map((row) => row.id),
         now,
       );
-      const statusOf = (id: string) => {
-        const status = statuses.get(id);
-        if (status === undefined) {
+      const statusOf = (id: string): PartnerProductStatus => {
+        const derived = statuses.get(id);
+        if (derived === undefined) {
           throw new Error(`partner products: product ${id} has no effective status`);
+        }
+        const status = PRODUCT_STATUS.find((value) => value === derived);
+        if (status === undefined) {
+          throw new Error(
+            `partner products: product ${id} derives ${derived}, which the API does not describe`,
+          );
         }
         return status;
       };

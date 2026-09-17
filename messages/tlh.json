@@ -1574,7 +1574,7 @@
             "delivery": "chay' qaS. mIw'a' qaSmoHmeH Lynx pongmey — Daq pagh polbe'lu'; <code>type</code> je <code>delivery</code> cha'vam 'oH ngoDmey pongmey ghoSbogh'e'.",
             "audience": "De'wI'Daq Daq ghajlaHbogh: <code>gamers</code> <code>true</code> puqpu' ghajlaHDI', <code>parents</code> <code>true</code> vavpu' ghajlaHDI'. reH wa' <code>true</code> 'oH; cha' <code>true</code>DI' qorDu' Hoch jaH — vavpu' puqpu' je.",
             "location": "De'wI' Daq ngaSbogh veng je cha' ghItlh Sep ngoq; <code>city</code> 'oH veng pong'e'. DIvI' Daq nuvDaq je rap chut: <code>null</code> Daq Hutlhchugh De'wI' qoj vengDaq ngaSbe'chugh DaqDaj.",
-            "status": "<code>pending</code> taghpa', <code>running</code> tagh jajvo' muvwI' mI' veH chavlu'DI', <code>completed</code> qaSpu'DI' 'ej Qav jaj juSpu'DI', <code>expired</code> Qav jaj juSpu'DI' 'ach not taghpu'DI'. laDDI' toghlu': jajmey, veH, je DaH muvwI' mI' — pagh pollu', vaj not qan De'.",
+            "status": "<code>pending</code> tagh jaj qaSpa', <code>running</code> tagh jajvo', <code>completed</code> Qav jaj juSpu'DI'. laDDI' toghlu': De'wI' jajmey, De'wI' poH Daqvo' — pagh pollu', vaj not qan De'.",
             "dates": "ghorgh qaS. je'wI' ghom'a' Qav jaj ghajbe' net chaw'; Hoch latlh De'wI' ghaj.",
             "timezone": "IANA poH Daq — De'wI' jajmey je poHmey Daq.",
             "ageRange": "De'wI' laj puq ben mI'mey, veHmey je. <code>audience.gamers</code> <code>false</code>DI' <code>null</code> 'oH: qanpu' neH jaHbogh De'wI' ben mI' Hutlh.",

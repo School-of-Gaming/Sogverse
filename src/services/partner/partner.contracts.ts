@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Constants } from "@/types";
-import type { ParticipationStatus } from "@/types";
+import type { EffectiveProductStatusDB, ParticipationStatus } from "@/types";
 
 /**
  * The wire contracts of the Lynx Educate partner API — one query schema and one
@@ -74,8 +74,20 @@ export const ENROLMENT_STATUS = [
   "completed",
 ] as const satisfies readonly ParticipationStatus[];
 
-/** The four derived product states, generated: `effective_product_status`. */
-const PRODUCT_STATUS = Constants.public.Enums.effective_product_status;
+/**
+ * API-only vocabulary: the product states the API reports — the lifecycle a
+ * product supports, before, from and after its dates. The database's
+ * `effective_product_status` also derives `expired`, which only a signup
+ * threshold or a missing start date can produce, and the admin UI blocks both;
+ * so the API does not describe it, and a product that derives it is a broken
+ * invariant that answers 500 rather than a value the page never states. The
+ * `satisfies` keeps a rename in the generated enum a compile error here.
+ */
+export const PRODUCT_STATUS = [
+  "pending",
+  "running",
+  "completed",
+] as const satisfies readonly EffectiveProductStatusDB[];
 
 /** The product kinds, generated: `product_type`. */
 const PRODUCT_TYPE = Constants.public.Enums.product_type;
@@ -562,6 +574,7 @@ export type PartnerConsentState = z.infer<typeof consentState>;
 export type PartnerAcceptedDocument = z.infer<typeof acceptedDocument>;
 export type PartnerDelivery = (typeof DELIVERY)[number];
 export type PartnerEnrolmentStatus = (typeof ENROLMENT_STATUS)[number];
+export type PartnerProductStatus = (typeof PRODUCT_STATUS)[number];
 export type PartnerAttendanceMark = (typeof ATTENDANCE_MARK)[number];
 
 export type PartnerProduct = z.infer<typeof partnerProduct>;
