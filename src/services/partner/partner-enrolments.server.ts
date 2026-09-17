@@ -34,7 +34,7 @@ import {
  * product — paged by seat id.
  *
  * Every filter but one is a column of the seat and goes to the database as it
- * stands. The exception is `status`, which filters on the REPORTED value (D3),
+ * stands. The exception is `status`, which filters on the REPORTED value,
  * and that value depends on the product's effective status, which the database
  * does not store. So the query narrows to the stored statuses that can report
  * the asked-for value, and `build` drops the seats whose product decided

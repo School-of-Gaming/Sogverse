@@ -20,7 +20,7 @@ import {
 
 /**
  * `/products` — the Programme catalogue: every product that requires the
- * Programme's terms (D2), listed or not, one record per product, paged by
+ * Programme's terms, listed or not, one record per product, paged by
  * product id.
  */
 

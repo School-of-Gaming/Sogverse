@@ -28,7 +28,7 @@ import { PROGRAMME_TERMS_SLUG, toUtcIso } from "./partner-shared-values";
  * The embeds that scope a `session_feedback` select, without an id list in the
  * URL: the Programme product embed, reached through the row's group and that
  * group's product, and an inner join to the participant's profile so only a
- * gamer's rows come back (D8). Every `!inner` is load-bearing — without one,
+ * gamer's rows come back. Every `!inner` is load-bearing — without one,
  * its filter narrows only an embedded value and every row still comes back.
  * The group's `product_id` and the product's `timezone` ride along: the
  * record's `product_id`, the column the `product_id` filter narrows, and the
@@ -61,7 +61,7 @@ function isExitReason(value: string): value is PartnerExitReason {
 
 /**
  * The calendar day, in its product's timezone, of the session a feedback row
- * belongs to (D7). The row carries the instant the voice window OPENED, which is
+ * belongs to. The row carries the instant the voice window OPENED, which is
  * `SESSION_WINDOW_BEFORE_MINUTES` before the session starts; `session_date` is
  * the day of the start, so the day is read from the start, not from the
  * opening — a session starting at 00:02 opened the evening before.
@@ -73,7 +73,7 @@ export function feedbackSessionDate(sessionOpensAt: string, timezone: string): s
 }
 
 /**
- * A row a child left with nothing on it (D8): no statement rated and no note.
+ * A row a child left with nothing on it: no statement rated and no note.
  * An emptied form is stored rather than deleted, and the published page
  * promises such a child "leaves no row".
  */
@@ -108,7 +108,7 @@ function dayStartMs(day: string): number {
  * timezone, and the empty row, which needs a trimmed note. The keyset stays
  * exact because the cursor is a position in the one order, kept or dropped.
  *
- * `session_id` is the group's recorded session (D6) on the row's session day —
+ * `session_id` is the group's recorded session on the row's session day —
  * the same session `/sessions` serves — and `null` when that group has no
  * recorded session on that day, including one that exists only as a staff note
  * or a photograph.

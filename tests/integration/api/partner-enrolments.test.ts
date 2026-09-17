@@ -85,7 +85,7 @@ const SEATS = [
     group_id: GROUP_1,
     status: "active",
   }),
-  // Held on a product that has finished: reports completed (D3).
+  // Held on a product that has finished: reports completed.
   seat(E2, {
     product_id: P_DONE,
     participant_id: GAMER_A,
@@ -157,7 +157,7 @@ const TABLES = {
     { document_slug: "roblox-programme-terms", version: "2026-08-01" },
   ]),
   // E1's parent accepted both documents at checkout; every other seat has
-  // nothing on file and reports the D1 fallback.
+  // nothing on file and reports the fallback.
   consent_acceptances: filteringTable([
     {
       id: "70000000-0000-4000-8000-000000000001",
@@ -182,7 +182,7 @@ const TABLES = {
     session(S1, GROUP_1, "We built an obby"),
     // Recorded by its marks alone.
     session(S2, GROUP_1, null),
-    // A row for a staff note or an image: not a session (D6).
+    // A row for a staff note or an image: not a session.
     session(S3, GROUP_1, null),
     session(S4, GROUP_2, "Final showcase"),
   ]),
@@ -270,7 +270,7 @@ describe("GET /api/partner/v1/enrolments", () => {
     });
 
     // No group: no sessions to count and nothing published. Nothing on file:
-    // consented at sign-up on the version then current (D1).
+    // consented at sign-up on the version then current.
     expect(body.data[2]).toEqual({
       id: E3,
       product_id: P_RUNNING,

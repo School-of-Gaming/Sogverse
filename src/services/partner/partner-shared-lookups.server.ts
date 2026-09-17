@@ -42,7 +42,7 @@ function unique(ids: readonly string[]): string[] {
 // ---------------------------------------------------------------------------
 
 /**
- * Each location id's place as the API names it (D5) — see `resolvePlace`.
+ * Each location id's place as the API names it — see `resolvePlace`.
  * Through the locations service's keyed chain read, so the ancestor walk is the
  * same one every other surface uses; a retired location still resolves.
  */
@@ -106,7 +106,7 @@ export type ConsentSeat = Pick<
 >;
 
 /**
- * A document version is free text in the database and a date on the wire (D4).
+ * A document version is free text in the database and a date on the wire.
  * A version that is not a real calendar date throws: admins publish versions,
  * admins are trusted, and a loud 500 is the accepted handling of the one state
  * the admin UI should never have produced.
@@ -128,7 +128,7 @@ function versionDate(slug: string, version: string): string {
  * - **An acceptance on file** (for this seat's customer, participant and
  *   product) reports the latest one accepted at or before `now`: its version and
  *   when it was accepted.
- * - **None on file** is still consented (D1, owner decision): an admin moved the
+ * - **None on file** is still consented (an owner decision): an admin moved the
  *   seat, the requirement arrived after it, or it predates acceptance tracking,
  *   and in each an admin acted for the parent. It reports the latest version
  *   published on or before the seat's sign-up day (UTC), else the earliest
@@ -354,7 +354,7 @@ export async function readBirthDates(
 // Roblox accounts
 // ---------------------------------------------------------------------------
 
-/** A Roblox account as the API reports it (D12). */
+/** A Roblox account as the API reports it. */
 export interface RobloxAccount {
   username: string;
   user_id: number | null;
@@ -402,7 +402,7 @@ export interface AttendanceMark {
   status: PartnerAttendanceMark;
 }
 
-/** A session that exists for the API (D6), with its attendance marks. */
+/** A session that exists for the API, with its attendance marks. */
 export interface RecordedSession {
   id: string;
   group_id: string;

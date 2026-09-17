@@ -64,13 +64,13 @@ export function vercelAnalyticsConfig():
   | { ok: true; config: VercelAnalyticsConfig }
   | { ok: false; missing: string[] } {
   const token = process.env.VERCEL_ANALYTICS_TOKEN;
-  const teamId = process.env.VERCEL_TEAM_ID;
-  const projectId = process.env.VERCEL_PROJECT_ID;
+  const teamId = process.env.VERCEL_ANALYTICS_TEAM_ID;
+  const projectId = process.env.VERCEL_ANALYTICS_PROJECT_ID;
   if (!token || !teamId || !projectId) {
     const variables: [name: string, value: string | undefined][] = [
       ["VERCEL_ANALYTICS_TOKEN", token],
-      ["VERCEL_TEAM_ID", teamId],
-      ["VERCEL_PROJECT_ID", projectId],
+      ["VERCEL_ANALYTICS_TEAM_ID", teamId],
+      ["VERCEL_ANALYTICS_PROJECT_ID", projectId],
     ];
     return {
       ok: false,

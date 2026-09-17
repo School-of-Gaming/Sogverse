@@ -49,7 +49,7 @@ export const PROGRAMME_PRODUCT_EMBED =
 export const PROGRAMME_PRODUCT_FILTER = "programme_terms.document_slug";
 
 /**
- * Every Programme product's id (D2), ascending. Walked: one row per product that
+ * Every Programme product's id, ascending. Walked: one row per product that
  * requires the Programme's terms, which grows with every term the Programme
  * runs.
  */

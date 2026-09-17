@@ -20,7 +20,7 @@ import {
 
 /**
  * `/sessions` — what happened in each Programme group: every recorded session
- * (D6) with its attendance marks and report photographs, paged by session id.
+ * with its attendance marks and report photographs, paged by session id.
  */
 
 /**
@@ -79,10 +79,10 @@ async function readImages(
  *
  * The scope, `product_id`, `group_id` and the date range are all database
  * filters. `from`/`to` compare `session_date`, which is already the session's
- * calendar day in its product's timezone (D7) — the day the group's schedule
+ * calendar day in its product's timezone — the day the group's schedule
  * put it on — so no conversion is needed or wanted.
  *
- * **Whether a session is recorded (D6) is decided in the build, not the
+ * **Whether a session is recorded is decided in the build, not the
  * fetch.** "A non-blank report or at least one attendance mark" is an `or`
  * across a trimmed column and the existence of child rows, which a PostgREST
  * filter cannot state, so the page reader walks every session the filters match

@@ -46,7 +46,7 @@ function programmeDocumentSlugs(): { terms: string; privacy: string } {
 const PROGRAMME_SLUGS = programmeDocumentSlugs();
 
 /**
- * The slug that makes a product a Programme product (D2): a product is in the
+ * The slug that makes a product a Programme product: a product is in the
  * Programme exactly when it requires this document. `is_visible` plays no part.
  */
 export const PROGRAMME_TERMS_SLUG = PROGRAMME_SLUGS.terms;
@@ -63,7 +63,7 @@ export const PROGRAMME_PRIVACY_SLUG = PROGRAMME_SLUGS.privacy;
 export const PROGRAMME_AGE_RANGE = { min: 13, max: 17 } as const;
 
 /**
- * The seat states that put a seat in scope (D3): everything a family holds,
+ * The seat states that put a seat in scope: everything a family holds,
  * never `reserving`. The same tuple as the contract's enrolment statuses, since
  * a live seat is exactly one the API may report.
  */
@@ -79,7 +79,7 @@ export function isLiveStatus(status: string): status is PartnerEnrolmentStatus {
 }
 
 /**
- * The status an enrolment reports (D3). A seat keeps `active` in storage after
+ * The status an enrolment reports. A seat keeps `active` in storage after
  * its product has run its course — nothing flips it — so an active seat on a
  * completed product reports `completed`, as does a stored `completed`. A
  * waitlisted seat stays `waitlisted` whatever the product did: it never held a
@@ -100,7 +100,7 @@ export function reportedEnrolmentStatus(
 // ---------------------------------------------------------------------------
 
 /**
- * Every timestamp the API emits, normalised to ISO 8601 UTC with a `Z` (D19).
+ * Every timestamp the API emits, normalised to ISO 8601 UTC with a `Z`.
  * PostgREST serialises a timestamptz with an offset (`+00:00`), which the
  * contract's timestamp schema refuses, and the published page promises UTC.
  * An unparseable value throws rather than emitting `Invalid Date`'s refusal.
@@ -122,7 +122,7 @@ export function productDelivery(isRemote: boolean): PartnerDelivery {
 }
 
 /**
- * Is this a link to Roblox (D13)? An `http` or `https` URL whose host is
+ * Is this a link to Roblox? An `http` or `https` URL whose host is
  * `roblox.com` or a subdomain of it. The host is compared as the URL parser
  * reads it, so `roblox.com.evil.example`, `evilroblox.com` and a `roblox.com`
  * hidden in the path or the userinfo are all no.
@@ -144,7 +144,7 @@ export function isRobloxUrl(value: string): boolean {
 // ---------------------------------------------------------------------------
 
 /**
- * Does a session exist for the API (D6)? Only once somebody recorded it: a
+ * Does a session exist for the API? Only once somebody recorded it: a
  * written report, or at least one attendance mark. A `group_sessions` row made
  * only to hold a staff note or an image is staff scaffolding, not a session a
  * partner should count. A report of nothing but whitespace is not written.
@@ -161,7 +161,7 @@ export function isRecordedSession(
 // ---------------------------------------------------------------------------
 
 /**
- * A location as the API names it (D5): `place` is the nearest
+ * A location as the API names it: `place` is the nearest
  * municipality, self included, with its country; `country_code` is the
  * location's country whether or not a municipality was found — the research row
  * reports a country without a city.

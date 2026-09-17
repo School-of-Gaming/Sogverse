@@ -71,7 +71,7 @@ function session(id: string, overrides: Partial<SessionRow> = {}): SessionRow {
 
 const SESSIONS: SessionRow[] = [
   session(REPORTED, { report: "We built an obby", session_date: "2026-10-12" }),
-  // A row made only to hold a staff note or a photograph: not a session (D6).
+  // A row made only to hold a staff note or a photograph: not a session.
   session(NOTE_ONLY, { session_date: "2026-10-13" }),
   session(MARKED, { session_date: "2026-10-19" }),
   session(BLANK_REPORT, { report: "  \n ", session_date: "2026-10-20" }),
@@ -204,7 +204,7 @@ describe("GET /api/partner/v1/sessions", () => {
     expect(imageRead?.searchParams.get("order")).toBe("session_id.asc,created_at.asc,id.asc");
   });
 
-  it("returns only sessions with a written report or an attendance mark (D6)", async () => {
+  it("returns only sessions with a written report or an attendance mark", async () => {
     const body = await readPage();
     expect(ids(body)).toEqual([REPORTED, MARKED, OTHER_GROUPS]);
     expect(body.next_cursor).toBeNull();
@@ -237,7 +237,7 @@ describe("GET /api/partner/v1/sessions", () => {
     expect(urls[1].searchParams.get("group_id")).toBe(`eq.${GROUP}`);
   });
 
-  it("filters on the session's product-local date, inclusive at both ends (D7)", async () => {
+  it("filters on the session's product-local date, inclusive at both ends", async () => {
     const body = await readPage("?from=2026-10-12&to=2026-10-19");
     expect(ids(body)).toEqual([REPORTED, MARKED]);
 

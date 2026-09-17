@@ -233,8 +233,8 @@ describe("GET /api/partner/v1/traffic", () => {
     vi.setSystemTime(NOW);
     vi.stubEnv("LYNX_PARTNER_API_KEY", PARTNER_TEST_KEY);
     vi.stubEnv("VERCEL_ANALYTICS_TOKEN", "test-vercel-token");
-    vi.stubEnv("VERCEL_TEAM_ID", "team_test");
-    vi.stubEnv("VERCEL_PROJECT_ID", "prj_test");
+    vi.stubEnv("VERCEL_ANALYTICS_TEAM_ID", "team_test");
+    vi.stubEnv("VERCEL_ANALYTICS_PROJECT_ID", "prj_test");
     db.fetch = tables();
     vercel = fakeVercel(VIEWS);
     vi.stubGlobal("fetch", vercel);
@@ -250,7 +250,7 @@ describe("GET /api/partner/v1/traffic", () => {
   });
 
   describe("configuration", () => {
-    it.each(["VERCEL_ANALYTICS_TOKEN", "VERCEL_TEAM_ID", "VERCEL_PROJECT_ID"])(
+    it.each(["VERCEL_ANALYTICS_TOKEN", "VERCEL_ANALYTICS_TEAM_ID", "VERCEL_ANALYTICS_PROJECT_ID"])(
       "answers 500 server_misconfigured without %s, and reads nothing",
       async (name) => {
         vi.stubEnv(name, "");

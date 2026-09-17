@@ -141,8 +141,8 @@ filter: a session's product-local calendar day for sessions and feedback, the pr
 start date for research rows, UTC days for traffic and UTC months for campaigns.
 
 **Rule: `/traffic` reads Vercel Web Analytics, and its answer is at most an hour old.**
-The source is configured by `VERCEL_ANALYTICS_TOKEN`, `VERCEL_TEAM_ID` and
-`VERCEL_PROJECT_ID`; any of them unset answers 500 `server_misconfigured`, after the gate
+The source is configured by `VERCEL_ANALYTICS_TOKEN`, `VERCEL_ANALYTICS_TEAM_ID` and
+`VERCEL_ANALYTICS_PROJECT_ID`; any of them unset answers 500 `server_misconfigured`, after the gate
 and before the query is read, exactly as an unset partner key does. The resolved answer is
 cached in Next's data cache across instances, keyed by the normalised query and the
 current UTC hour, so no entry outlives the hour it was computed in and the page's "up to

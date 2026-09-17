@@ -28,7 +28,7 @@ import { PROGRAMME_AGE_RANGE } from "./partner-shared-values";
  * The one resource that reaches beyond the Programme: it starts from parent
  * accounts, not seats, so a family that never enrolled is counted too. What
  * keeps that safe is that nothing leaves but counts, each withheld below the
- * minimum, over whole months (D7) — and the response schema refuses a count
+ * minimum, over whole months — and the response schema refuses a count
  * under the minimum outright, so a mistake here is a 500, never a leak.
  */
 
@@ -152,7 +152,7 @@ function possiblyProgrammeAge(dateOfBirth: string, day: string): boolean {
  * - `children_added`: the distinct gamers linked to those accounts now,
  *   whenever they were linked.
  * - `children_eligible`: those gamers possibly aged 13 to 17 on the request's
- *   UTC day (D11). A gamer whose birth date could not be read — deleted while
+ *   UTC day. A gamer whose birth date could not be read — deleted while
  *   the request was reading — is not counted as eligible.
  * - `enrolled`: those accounts where the account itself or a linked gamer holds
  *   a live seat on a Programme product.

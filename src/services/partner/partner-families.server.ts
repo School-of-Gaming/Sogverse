@@ -24,7 +24,7 @@ import {
 import { toUtcIso } from "./partner-shared-values";
 
 /**
- * `/families` — a parent and the children of theirs who are in scope (D9).
+ * `/families` — a parent and the children of theirs who are in scope.
  *
  * **There is no family row, so a family is computed.** Its members are the
  * people holding an in-scope seat: a gamer on their own seat, or a parent on a
@@ -248,7 +248,7 @@ async function readPhotoConsents(
 /**
  * One page of families, ascending by each family's smallest parent id.
  *
- * **The filters (D9) admit a whole family, and apply before paging.**
+ * **The filters admit a whole family, and apply before paging.**
  * `marketing_consent=granted` admits a family in which any parent's Lynx
  * marketing consent is granted; `utm_campaign` one in which any parent's stored
  * campaign is exactly the value. Each is read once, as the set of parents it

@@ -78,7 +78,7 @@ const FEEDBACK: FeedbackRow[] = [
   feedback(),
   // The next week's session in the same group: no session row that day.
   feedback({ session_opens_at: "2026-10-26T06:55:00+00:00", exit_reason: "ended" }),
-  // A child who rated nothing and wrote only whitespace: no row (D8).
+  // A child who rated nothing and wrote only whitespace: no row.
   feedback({ session_opens_at: "2026-11-02T06:55:00+00:00", answers: {}, note: "  \n" }),
   // A session starting at midnight Helsinki time opened the evening before, in
   // UTC and locally alike; its day is the day it started.
@@ -90,7 +90,7 @@ const FEEDBACK: FeedbackRow[] = [
     session_opens_at: "2026-10-19T05:55:00.5+00:00",
     note: "",
   }),
-  // A note-only session row that day: /sessions does not serve it (D6).
+  // A note-only session row that day: /sessions does not serve it.
   feedback({ participant_id: GAMER_2, session_opens_at: "2026-10-12T05:55:00+00:00" }),
   // Out of scope: a parent's row, and a row on a product outside the Programme.
   feedback({ participant_id: PARENT, role: "customer" }),
@@ -260,7 +260,7 @@ describe("GET /api/partner/v1/feedback", () => {
     expect(body.next_cursor).toBeNull();
   });
 
-  it("keeps a row with only a note or only ratings, and drops one with neither (D8)", async () => {
+  it("keeps a row with only a note or only ratings, and drops one with neither", async () => {
     const body = await readPage();
     const noteOnly = body.data.find((record) => record.note === "Hei");
     expect(noteOnly?.answers).toEqual({});
@@ -278,7 +278,7 @@ describe("GET /api/partner/v1/feedback", () => {
 
     // No session row that day.
     expect(sessionOn("2026-10-26T06:55:00.000Z")).toBeNull();
-    // A session row holding only a staff note is not a session (D6).
+    // A session row holding only a staff note is not a session.
     expect(sessionOn("2026-10-12T05:55:00.000Z")).toBeNull();
     // Opened on 8 November, started on 9 November in Helsinki: 9 November's session.
     expect(sessionOn("2026-11-08T21:55:00.000Z")).toBe(MIDNIGHT_SESSION);
@@ -325,7 +325,7 @@ describe("GET /api/partner/v1/feedback", () => {
     expect(urls[2].searchParams.get("group_id")).toBe(`eq.${OTHER_GROUP}`);
   });
 
-  it("filters on the session's product-local day, inclusive at both ends (D7)", async () => {
+  it("filters on the session's product-local day, inclusive at both ends", async () => {
     // The midnight session opened on 8 November UTC but is 9 November's.
     expect(keys(await readPage("?from=2026-11-09&to=2026-11-09"))).toEqual([
       [GAMER, GROUP, "2026-11-08T21:55:00.000Z"],

@@ -82,7 +82,7 @@ describe("readSeatConsents", () => {
     expect(url.searchParams.get("accepted_at")).toBe(`lte.${NOW.toISOString()}`);
   });
 
-  it("treats a seat with nothing on file as consented at sign-up, on the version then current (D1)", async () => {
+  it("treats a seat with nothing on file as consented at sign-up, on the version then current", async () => {
     const fetch = postgrestTables({
       consent_document_versions: () => versions,
       consent_acceptances: () => [],
@@ -106,7 +106,7 @@ describe("readSeatConsents", () => {
     expect(consents.get(seat.id)?.terms.version).toBe("2026-05-01");
   });
 
-  it("fails loudly on a version that is not a date (D4)", async () => {
+  it("fails loudly on a version that is not a date", async () => {
     const fetch = postgrestTables({
       consent_document_versions: () => [...versions, { document_slug: "roblox-privacy-policy", version: "v2" }],
       consent_acceptances: () => [],
@@ -259,7 +259,7 @@ describe("readRecordedSessionsByGroup", () => {
     const fetch = postgrestTables({
       group_sessions: () => [
         session(S1, G1, "We built an obby"),
-        // A row made only for a staff note or an image: not a session (D6).
+        // A row made only for a staff note or an image: not a session.
         session(S2, G1, null),
         session(S3, G2, "   "),
       ],

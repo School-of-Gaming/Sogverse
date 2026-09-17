@@ -37,18 +37,18 @@ describe("vercelAnalyticsConfig", () => {
 
   it("names every unset variable, and only those", () => {
     vi.stubEnv("VERCEL_ANALYTICS_TOKEN", "");
-    vi.stubEnv("VERCEL_TEAM_ID", "team_test");
-    vi.stubEnv("VERCEL_PROJECT_ID", "");
+    vi.stubEnv("VERCEL_ANALYTICS_TEAM_ID", "team_test");
+    vi.stubEnv("VERCEL_ANALYTICS_PROJECT_ID", "");
     expect(vercelAnalyticsConfig()).toEqual({
       ok: false,
-      missing: ["VERCEL_ANALYTICS_TOKEN", "VERCEL_PROJECT_ID"],
+      missing: ["VERCEL_ANALYTICS_TOKEN", "VERCEL_ANALYTICS_PROJECT_ID"],
     });
   });
 
   it("returns the configuration when all three are set", () => {
     vi.stubEnv("VERCEL_ANALYTICS_TOKEN", CONFIG.token);
-    vi.stubEnv("VERCEL_TEAM_ID", CONFIG.teamId);
-    vi.stubEnv("VERCEL_PROJECT_ID", CONFIG.projectId);
+    vi.stubEnv("VERCEL_ANALYTICS_TEAM_ID", CONFIG.teamId);
+    vi.stubEnv("VERCEL_ANALYTICS_PROJECT_ID", CONFIG.projectId);
     expect(vercelAnalyticsConfig()).toEqual({ ok: true, config: CONFIG });
   });
 });

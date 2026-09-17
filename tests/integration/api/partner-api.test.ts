@@ -132,8 +132,8 @@ describe("the Lynx Educate partner API", () => {
     // Configured, so a resource that checks its own configuration before or
     // after validating cannot turn a validation case into a 500.
     vi.stubEnv("VERCEL_ANALYTICS_TOKEN", "test-vercel-token");
-    vi.stubEnv("VERCEL_TEAM_ID", "team_test");
-    vi.stubEnv("VERCEL_PROJECT_ID", "prj_test");
+    vi.stubEnv("VERCEL_ANALYTICS_TEAM_ID", "team_test");
+    vi.stubEnv("VERCEL_ANALYTICS_PROJECT_ID", "prj_test");
     db.fetch = postgrestTables(emptyTables);
     vi.stubGlobal(
       "fetch",

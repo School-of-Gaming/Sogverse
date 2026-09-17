@@ -118,7 +118,7 @@ const SEATS = [
   }),
   // No start date, no group, no home location, an unverified username.
   seat(R2, { product_id: P_CLUB, participant_id: GAMER_B, status: "waitlisted" }),
-  // A cleared username: no account, so no row (D10).
+  // A cleared username: no account, so no row.
   seat(R3, { product_id: P_CAMP, participant_id: GAMER_C, status: "completed" }),
   // A parent's own seat: never a research row.
   seat(R4, { product_id: P_CAMP, participant_id: PARENT_A, role: "customer" }),

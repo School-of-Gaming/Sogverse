@@ -26,7 +26,7 @@ import type { PartnerDb } from "./partner-shared-db.server";
  * disagree is read once more, and a second disagreement is thrown rather than
  * answered.
  *
- * **The whole resolved answer is cached for the hour** (D23) — see
+ * **The whole resolved answer is cached for the hour** — see
  * `readPartnerTraffic`.
  */
 
@@ -295,7 +295,7 @@ export async function computePartnerTraffic(
 
   const readProducts = async (): Promise<TrafficPage[]> => {
     const programme = await readProgrammeProductIds(db);
-    // An unknown or non-Programme product matches nothing (D17).
+    // An unknown or non-Programme product matches nothing.
     const candidates =
       key.product_id === null ? programme : programme.filter((id) => id === key.product_id);
     const viewed = await readViewedProducts(client, candidates, range);
@@ -321,7 +321,7 @@ export async function computePartnerTraffic(
 
 /**
  * The traffic answer for a parsed query, cached across instances for the hour
- * (D23) through Next's data cache.
+ * through Next's data cache.
  *
  * **The key is the normalized query, never the raw one**: the resolved range
  * (so a defaulted window and the same window named explicitly share an entry),

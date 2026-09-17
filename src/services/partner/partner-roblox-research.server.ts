@@ -34,14 +34,14 @@ import {
  * **The row names nobody.** Nothing on it identifies the child or the family:
  * the Roblox account, the parent's home municipality, an age range and the
  * activity. The seat id is the paging key, so it travels inside the cursor —
- * which is only a position, never a field of a row (D18) — and the row builder
+ * which is only a position, never a field of a row — and the row builder
  * below is the one place that decides what leaves; the response schema admits
  * nothing else.
  *
  * Scope and the two filters go to the database: the seat must be live on a
  * Programme product, its participant a gamer (a seat a parent holds themselves
  * has no row), and `product_id`, `from` and `to` narrow on the seat's product.
- * One rule cannot: a child with no Roblox username on file yields no row (D10),
+ * One rule cannot: a child with no Roblox username on file yields no row,
  * because the row is the Roblox account — `build` drops those.
  */
 
@@ -56,7 +56,7 @@ const RESEARCH_SEAT_COLUMNS = `id, product_id, group_id, participant_id, ${IN_SC
 const seatId = z.string().uuid();
 
 /**
- * The activity's name (D10): English where one has been written, else the
+ * The activity's name: English where one has been written, else the
  * language the product is delivered in, else the locale whose code sorts
  * first. Every product carries at least one name, so none is a broken product.
  */
@@ -154,7 +154,7 @@ export async function readRobloxResearch(
         roblox_username: account.username,
         roblox_user_id: account.user_id,
         // City and country together name the municipality; without one the
-        // country still comes from the location's own chain (D5).
+        // country still comes from the location's own chain.
         country_code: home?.place?.country_code ?? home?.country_code ?? null,
         city: home?.place?.city ?? null,
         age: start_date === null ? null : possibleAgeOnDate(dateOfBirth, start_date),
