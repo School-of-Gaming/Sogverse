@@ -330,8 +330,9 @@ export async function readParentGamerLinks(
 }
 
 /**
- * Each gamer's stored date of birth, `YYYY-MM-DD` and always the 1st, keyed by
- * gamer id. One row per id — the primary key — so bounded by the chunk. A
+ * Each gamer's stored date of birth, `YYYY-MM-DD` as stored, keyed by gamer id.
+ * The day is not always the 1st, so a reader derives ages from the month alone
+ * (`possibleAgeOnDate`) and publishes nothing finer than the month. One row per id — the primary key — so bounded by the chunk. A
  * gamer with no profile row is absent from the map.
  */
 export async function readBirthDates(

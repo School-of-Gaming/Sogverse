@@ -1648,7 +1648,7 @@
         },
         "feedback": {
           "title": "mejDI' puq jatlhbogh",
-          "intro": "wa' poH Qavdaq wa' puq jangbogh: vagh maqmey, vagh nISwI' naQDaq toghlu'; wIvbogh QIn puq mu'mey; je chay' mej. DaHjaj DIvI' Daq poHmey Qav neH jang ghomlu'. maq toghbe'bogh 'ej QIn ghItlhbe'bogh puq tlhegh chenmoHbe', vaj jang mI' 'oH tetlhvam <code>/sessions</code> DIvI' Daq poHmey qelbogh'e'; wa' tlhegh 'oH wa' puq wa' poHDaq'e', vaj tlheghmey bID toghDI' Hoch jangpu'bogh poHvaD wa'logh puq toghlu'.",
+          "intro": "wa' poH Qavdaq wa' puq jangbogh: vagh maqmey, vagh nISwI' naQDaq toghlu'; wIvbogh QIn puq mu'mey je. DaHjaj DIvI' Daq poHmey Qav neH jang ghomlu'. maq toghbe'bogh 'ej QIn ghItlhbe'bogh puq tlhegh chenmoHbe', vaj jang mI' 'oH tetlhvam <code>/sessions</code> DIvI' Daq poHmey qelbogh'e'; wa' tlhegh 'oH wa' puq wa' poHDaq'e', vaj tlheghmey bID toghDI' Hoch jangpu'bogh poHvaD wa'logh puq toghlu'.",
           "params": {
             "productId": "De'wI'vam ghommey jangmey neH.",
             "groupId": "ghomvam jangmey neH.",
@@ -1658,10 +1658,9 @@
           "fields": {
             "participantGroupProductId": "jangbogh, je ghom De'wI' je — poH Daq. puqpu' neH tlhoblu', vaj reH puq pong mI' <code>gamers[].id</code>vo' 'oH <code>participant_id</code>'e'. De'wI' pong mI' nIteb Hutlh: <code>participant_id</code>, <code>group_id</code> je <code>session_opened_at</code> — wa' ngoQ chenmoH; 'ej poHvetlhvaD puq rap jang veb — ngoQvetlhDaq wa'Hu' jang lonmoH.",
             "sessionId": "<code>/sessions</code>-Daq poH jang qengbogh, ghom jaj je tlha' jonlu'; <code>null</code> jajvetlhDaq ghomvetlhvaD poH ghajbe'DI' <code>/sessions</code>.",
-            "sessionOpenedAt": "ghorgh poSlu' poH jangbogh puq.",
+            "sessionOpenedAt": "ghorgh poSlu' poH jangbogh puq: DIvI' Daq pa' 'elchoHlaHDI' puqpu', poSlu'. poH nab tagh pa' vagh tup poSlu'.",
             "answers": "Hoch maqvaD puq togh, maq pong ngoQ lo'; juSbogh maq Hutlh. wa'vo' vagh togh: ghobe', chIch ghobe', puS, HIja', HIja'qu'. DaHjaj maqmey: <code>learned</code> (vIghoj), <code>fun</code> (jItIv), <code>geduKnowledgeable</code> (Gedu Sov), <code>geduKind</code> (Gedu pung), je <code>groupListens</code> (ghomwI' mu'meywIj 'Ij 'ej muyaj). maq chellu' qoj teqlu' — 'ang pagh; vaj DaSovbogh ngoQmey yIlaD, latlh yIbuSHa'. RobloxvaD ghomlu'bogh belHom mI'mey neH jaH; tlheghmey 'e' ratlh LynxvaD.",
-            "note": "wIvbogh QINDaq puq ghItlhbogh, mu'meyDaj HolDaj je; chIm ghItlhbe'DI'.",
-            "exitReason": "<code>left</code> mej 'e' wIvDI' puq; <code>ended</code> ghaH retlhDaq poH Qavpu'DI'."
+            "note": "wIvbogh QINDaq puq ghItlhbogh, mu'meyDaj HolDaj je; chIm ghItlhbe'DI'."
           }
         },
         "robloxResearch": {

@@ -53,7 +53,6 @@ type FeedbackRow = {
   session_opens_at: string;
   answers: Record<string, number>;
   note: string;
-  exit_reason: string;
   // The embedded facts the scope filters on.
   product_id: string;
   timezone: string;
@@ -69,7 +68,6 @@ function feedback(overrides: Partial<FeedbackRow> = {}): FeedbackRow {
     session_opens_at: "2026-10-19T05:55:00+00:00",
     answers: { learned: 4, fun: 5 },
     note: "I finished my obby!",
-    exit_reason: "left",
     product_id: PRODUCT,
     timezone: "Europe/Helsinki",
     role: "gamer",
@@ -82,7 +80,7 @@ function feedback(overrides: Partial<FeedbackRow> = {}): FeedbackRow {
 const FEEDBACK: FeedbackRow[] = [
   feedback(),
   // The next week's session in the same group: no session row that day.
-  feedback({ session_opens_at: "2026-10-26T06:55:00+00:00", exit_reason: "ended" }),
+  feedback({ session_opens_at: "2026-10-26T06:55:00+00:00" }),
   // A child who rated nothing and wrote only whitespace: no row.
   feedback({ session_opens_at: "2026-11-02T06:55:00+00:00", answers: {}, note: "  \n" }),
   // A session starting at midnight Helsinki time opened the evening before, in
@@ -275,7 +273,6 @@ describe("GET /api/partner/v1/feedback", () => {
       session_opened_at: "2026-10-19T05:55:00.000Z",
       answers: { learned: 4, fun: 5 },
       note: "I finished my obby!",
-      exit_reason: "left",
     });
   });
 

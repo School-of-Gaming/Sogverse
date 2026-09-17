@@ -90,7 +90,7 @@ describe("reading a stored answers object back", () => {
         answers: { fun: 4, nonsense: 4 },
         note: "We built a castle.",
         // Whatever else the row carries is not the form's business.
-        exit_reason: "left",
+        updated_at: "2026-09-14T10:40:00+00:00",
       }),
     ).toEqual({ answers: { fun: 4 }, note: "We built a castle." });
   });

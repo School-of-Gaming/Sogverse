@@ -56,11 +56,9 @@ export const LYNX_CAMPAIGN_PREFIX = "lynx-";
 export const CAMPAIGN_MINIMUM_COUNT = 5;
 
 /**
- * API-only vocabulary: how a child left a feedback prompt, and how a Game
- * Educator marked them. Both are stored as booleans/derived state rather than
- * as enums, and the documentation page names the words.
+ * API-only vocabulary: how a Game Educator marked a child. It is not a
+ * database enum, and the documentation page names the words.
  */
-export const EXIT_REASON = ["left", "ended"] as const;
 export const ATTENDANCE_MARK = ["present", "absent"] as const;
 
 /**
@@ -447,7 +445,6 @@ const partnerFeedback = z.object({
    */
   answers: z.record(z.string(), z.number().int().min(1).max(5)),
   note: z.string(),
-  exit_reason: z.enum(EXIT_REASON),
 });
 
 /**
@@ -565,7 +562,6 @@ export type PartnerConsentState = z.infer<typeof consentState>;
 export type PartnerAcceptedDocument = z.infer<typeof acceptedDocument>;
 export type PartnerDelivery = (typeof DELIVERY)[number];
 export type PartnerEnrolmentStatus = (typeof ENROLMENT_STATUS)[number];
-export type PartnerExitReason = (typeof EXIT_REASON)[number];
 export type PartnerAttendanceMark = (typeof ATTENDANCE_MARK)[number];
 
 export type PartnerProduct = z.infer<typeof partnerProduct>;

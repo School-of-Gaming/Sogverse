@@ -5,12 +5,7 @@ import { z } from "zod";
 import { keysetAfter, readPartnerPage } from "@/lib/api/partner-cursor.server";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { productLocalDate } from "@/lib/session-occurrence";
-import {
-  EXIT_REASON,
-  type PartnerExitReason,
-  type PartnerFeedback,
-  type PartnerFeedbackQuery,
-} from "./partner.contracts";
+import type { PartnerFeedback, PartnerFeedbackQuery } from "./partner.contracts";
 import {
   PROGRAMME_PRODUCT_EMBED,
   PROGRAMME_PRODUCT_FILTER,
@@ -40,7 +35,7 @@ const FEEDBACK_SCOPE_EMBED = `group:product_groups!inner(product_id, product:pro
 const FEEDBACK_SCOPE_FILTER = `group.product.${PROGRAMME_PRODUCT_FILTER}`;
 const FEEDBACK_PARTICIPANT_FILTER = "participant.role";
 
-const FEEDBACK_COLUMNS = `participant_id, group_id, session_opens_at, answers, note, exit_reason, ${FEEDBACK_SCOPE_EMBED}`;
+const FEEDBACK_COLUMNS = `participant_id, group_id, session_opens_at, answers, note, ${FEEDBACK_SCOPE_EMBED}`;
 
 /**
  * The key, in the order the fetch sorts by. Both uuids compare as their
@@ -56,10 +51,6 @@ const feedbackKey = z.tuple([z.string().uuid(), z.string().uuid(), z.string().mi
 
 /** The stored shape; the table's CHECK already guarantees it. */
 const storedAnswers = z.record(z.string(), z.number().int().min(1).max(5));
-
-function isExitReason(value: string): value is PartnerExitReason {
-  return (EXIT_REASON as readonly string[]).includes(value);
-}
 
 /**
  * The calendar day, in its product's timezone, of the session a feedback row
@@ -206,13 +197,6 @@ export async function readPartnerFeedback(
 
       return candidates.map(({ row, answers, sessionDate, kept }): PartnerFeedback | null => {
         if (!kept) return null;
-        // The column is NOT NULL and its CHECK admits exactly these two;
-        // narrowed, not filtered.
-        if (!isExitReason(row.exit_reason)) {
-          throw new Error(
-            `partner feedback: a row of group ${row.group_id} carries exit_reason ${row.exit_reason}`,
-          );
-        }
         return {
           participant_id: row.participant_id,
           group_id: row.group_id,
@@ -221,7 +205,6 @@ export async function readPartnerFeedback(
           session_opened_at: toUtcIso(row.session_opens_at),
           answers,
           note: row.note,
-          exit_reason: row.exit_reason,
         };
       });
     },

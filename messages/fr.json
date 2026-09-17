@@ -1604,7 +1604,7 @@
         },
         "feedback": {
           "title": "ce qu’un enfant a dit en partant",
-          "intro": "Ce qu’un enfant a répondu à la fin d’une session : cinq affirmations notées sur une barre à cinq niveaux, un commentaire facultatif avec ses propres mots, et la manière dont il est parti. Aujourd’hui, les retours ne sont recueillis qu’après les sessions en ligne. Un enfant qui ne note aucune affirmation et n’écrit aucun commentaire ne laisse aucune ligne : le taux de réponse s’obtient donc en rapportant cette liste aux sessions en ligne de <code>/sessions</code> ; une ligne correspond à un enfant pour une session, si bien qu’un pourcentage calculé sur les lignes compte un enfant une fois par session à laquelle il a répondu.",
+          "intro": "Ce qu’un enfant a répondu à la fin d’une session : cinq affirmations notées sur une barre à cinq niveaux et un commentaire facultatif avec ses propres mots. Aujourd’hui, les retours ne sont recueillis qu’après les sessions en ligne. Un enfant qui ne note aucune affirmation et n’écrit aucun commentaire ne laisse aucune ligne : le taux de réponse s’obtient donc en rapportant cette liste aux sessions en ligne de <code>/sessions</code> ; une ligne correspond à un enfant pour une session, si bien qu’un pourcentage calculé sur les lignes compte un enfant une fois par session à laquelle il a répondu.",
           "params": {
             "productId": "Uniquement les retours des groupes de ce produit.",
             "groupId": "Uniquement les retours de ce groupe.",
@@ -1614,10 +1614,9 @@
           "fields": {
             "participantGroupProductId": "Qui a répondu, ainsi que le groupe et le produit auxquels la session appartenait. Les retours ne sont demandés qu’aux enfants : <code>participant_id</code> est donc toujours l’identifiant d’un enfant tiré de <code>gamers[].id</code>. Un enregistrement n’a pas d’identifiant propre : <code>participant_id</code>, <code>group_id</code> et <code>session_opened_at</code> forment ensemble sa clé, et une réponse ultérieure du même enfant sur la même session remplace la précédente sous cette clé.",
             "sessionId": "La session de <code>/sessions</code> à laquelle la réponse se rattache, appariée par groupe et par date ; <code>null</code> lorsque <code>/sessions</code> n’a aucune session pour ce groupe ce jour-là.",
-            "sessionOpenedAt": "Le moment où s’est ouverte la session sur laquelle l’enfant a répondu.",
+            "sessionOpenedAt": "Le moment où s’est ouverte la session sur laquelle l’enfant a répondu : celui où sa salle en ligne est devenue accessible, cinq minutes avant le début prévu de la session.",
             "answers": "La note donnée par l’enfant à chaque affirmation, indexée par l’identifiant stable de l’affirmation ; une affirmation passée est absente. Les notes vont de 1 à 5 : non, pas vraiment, un peu, oui, tout à fait. Les affirmations posées aujourd’hui sont <code>learned</code> (j’ai appris quelque chose), <code>fun</code> (j’ai passé un bon moment), <code>geduKnowledgeable</code> (l’animateur maîtrisait son sujet), <code>geduKind</code> (l’animateur a fait preuve de gentillesse) et <code>groupListens</code> (mon groupe m’écoute et me comprend). Une affirmation peut être ajoutée ou retirée sans préavis : lisez les clés que vous connaissez et ignorez les autres. Seuls des chiffres de satisfaction agrégés sont transmis à Roblox ; les lignes elles-mêmes restent chez Lynx.",
-            "note": "Ce que l’enfant a écrit dans le commentaire facultatif, avec ses propres mots et dans sa propre langue ; vide s’il n’a rien écrit.",
-            "exitReason": "<code>left</code> lorsque l’enfant a choisi de partir ; <code>ended</code> lorsque la session s’est terminée autour de lui."
+            "note": "Ce que l’enfant a écrit dans le commentaire facultatif, avec ses propres mots et dans sa propre langue ; vide s’il n’a rien écrit."
           }
         },
         "robloxResearch": {

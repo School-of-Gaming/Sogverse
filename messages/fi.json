@@ -1604,7 +1604,7 @@
         },
         "feedback": {
           "title": "mitä lapsi sanoi lähtiessään",
-          "intro": "Mitä yksi lapsi vastasi yhden istunnon lopuksi: viisi väittämää arvioituna viisiportaisella palkilla, vapaaehtoinen viesti hänen omin sanoin ja se, miten hän poistui. Tällä hetkellä palautetta kerätään vain verkossa pidettyjen istuntojen jälkeen. Lapsi, joka ei arvioi yhtään väittämää eikä kirjoita viestiä, ei jätä riviä, joten vastausprosentti saadaan vertaamalla tätä listaa <code>/sessions</code>-resurssin verkkoistuntoihin; yksi rivi on yksi lapsi yhdessä istunnossa, joten riveistä laskettu prosenttiosuus laskee lapsen kerran kutakin istuntoa kohti, johon hän vastasi.",
+          "intro": "Mitä yksi lapsi vastasi yhden istunnon lopuksi: viisi väittämää arvioituna viisiportaisella palkilla ja vapaaehtoinen viesti hänen omin sanoin. Tällä hetkellä palautetta kerätään vain verkossa pidettyjen istuntojen jälkeen. Lapsi, joka ei arvioi yhtään väittämää eikä kirjoita viestiä, ei jätä riviä, joten vastausprosentti saadaan vertaamalla tätä listaa <code>/sessions</code>-resurssin verkkoistuntoihin; yksi rivi on yksi lapsi yhdessä istunnossa, joten riveistä laskettu prosenttiosuus laskee lapsen kerran kutakin istuntoa kohti, johon hän vastasi.",
           "params": {
             "productId": "Vain tämän tuotteen ryhmien palautteet.",
             "groupId": "Vain tämän ryhmän palautteet.",
@@ -1614,10 +1614,9 @@
           "fields": {
             "participantGroupProductId": "Kuka vastasi sekä ryhmä ja tuote, joihin istunto kuului. Palautetta kysytään vain lapsilta, joten <code>participant_id</code> on aina lapsen tunniste kentästä <code>gamers[].id</code>. Tietueella ei ole omaa tunnistetta: <code>participant_id</code>, <code>group_id</code> ja <code>session_opened_at</code> muodostavat yhdessä sen avaimen, ja saman lapsen myöhempi vastaus samasta istunnosta korvaa aiemman tuolla avaimella.",
             "sessionId": "Istunto <code>/sessions</code>-resurssissa, johon vastaus kuuluu, yhdistettynä ryhmän ja päivämäärän perusteella; <code>null</code>, jos <code>/sessions</code>-resurssissa ei ole istuntoa kyseiselle ryhmälle sinä päivänä.",
-            "sessionOpenedAt": "Milloin istunto, jota lapsen vastaus koskee, avattiin.",
+            "sessionOpenedAt": "Milloin istunto, jota lapsen vastaus koskee, avattiin: hetki, jolloin istunnon verkkohuoneeseen pääsi liittymään, eli viisi minuuttia ennen istunnon aikataulun mukaista alkua.",
             "answers": "Lapsen arvio kustakin väittämästä, avaimena väittämän pysyvä tunniste; ohitettu väittämä puuttuu. Arviot ovat 1–5: ei, ei oikeastaan, vähän, kyllä, ehdottomasti. Tänään kysyttävät väittämät ovat <code>learned</code> (opin jotain), <code>fun</code> (minulla oli hauskaa), <code>geduKnowledgeable</code> (pelikasvattaja tiesi, mitä teki), <code>geduKind</code> (pelikasvattaja oli ystävällinen) ja <code>groupListens</code> (ryhmäni kuuntelee ja ymmärtää minua). Väittämä voidaan lisätä tai poistaa ilman ennakkoilmoitusta, joten lue ne avaimet, jotka tunnet, ja ohita loput. Robloxille menevät vain koostetut tyytyväisyysluvut; rivit itsessään jäävät Lynxille.",
-            "note": "Mitä lapsi kirjoitti vapaaehtoiseen viestiin, hänen omin sanoin ja omalla kielellään; tyhjä, jos hän ei kirjoittanut mitään.",
-            "exitReason": "<code>left</code>, kun lapsi päätti itse poistua; <code>ended</code>, kun istunto päättyi hänen ympäriltään."
+            "note": "Mitä lapsi kirjoitti vapaaehtoiseen viestiin, hänen omin sanoin ja omalla kielellään; tyhjä, jos hän ei kirjoittanut mitään."
           }
         },
         "robloxResearch": {

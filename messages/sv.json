@@ -1604,7 +1604,7 @@
         },
         "feedback": {
           "title": "vad ett barn sa på vägen ut",
-          "intro": "Vad ett barn svarade i slutet av en session: fem påståenden graderade på en femgradig stapel, en frivillig kommentar med barnets egna ord, och hur barnet lämnade. I dag samlas feedback bara in efter sessioner online. Ett barn som inte graderar något påstående och inte skriver någon kommentar lämnar ingen rad, så svarsfrekvensen är den här listan ställd mot onlinesessionerna i <code>/sessions</code>; en rad är ett barn vid en session, så en procentsats över rader räknar ett barn en gång per session det svarade om.",
+          "intro": "Vad ett barn svarade i slutet av en session: fem påståenden graderade på en femgradig stapel och en frivillig kommentar med barnets egna ord. I dag samlas feedback bara in efter sessioner online. Ett barn som inte graderar något påstående och inte skriver någon kommentar lämnar ingen rad, så svarsfrekvensen är den här listan ställd mot onlinesessionerna i <code>/sessions</code>; en rad är ett barn vid en session, så en procentsats över rader räknar ett barn en gång per session det svarade om.",
           "params": {
             "productId": "Bara feedback från den här produktens grupper.",
             "groupId": "Bara den här gruppens feedback.",
@@ -1614,10 +1614,9 @@
           "fields": {
             "participantGroupProductId": "Vem som svarade, och gruppen och produkten sessionen hörde till. Feedback efterfrågas bara av barn, så <code>participant_id</code> är alltid ett barns identifierare från <code>gamers[].id</code>. En post har ingen egen identifierare: <code>participant_id</code>, <code>group_id</code> och <code>session_opened_at</code> utgör tillsammans dess nyckel, och ett senare svar från samma barn om samma session ersätter det tidigare under den nyckeln.",
             "sessionId": "Den session i <code>/sessions</code> som svaret hör till, matchad på grupp och datum; <code>null</code> när <code>/sessions</code> saknar en session för den gruppen den dagen.",
-            "sessionOpenedAt": "När sessionen barnet svarade om öppnades.",
+            "sessionOpenedAt": "När sessionen barnet svarade om öppnades: då sessionens onlinerum gick att ansluta till, fem minuter före sessionens schemalagda start.",
             "answers": "Barnets gradering av varje påstående, med påståendets stabila identifierare som nyckel; ett påstående barnet hoppade över saknas. Graderingarna går från 1 till 5: nej, inte riktigt, lite, ja, absolut. De påståenden som ställs i dag är <code>learned</code> (jag lärde mig något), <code>fun</code> (jag hade roligt), <code>geduKnowledgeable</code> (spelfostraren visste vad hen gjorde), <code>geduKind</code> (spelfostraren var snäll) och <code>groupListens</code> (min grupp lyssnar på mig och förstår mig). Ett påstående kan läggas till eller tas bort utan förvarning, så läs de nycklar du känner till och strunta i resten. Bara aggregerade nöjdhetssiffror går till Roblox; raderna själva stannar hos Lynx.",
-            "note": "Vad barnet skrev i den frivilliga kommentaren, med sina egna ord och på sitt eget språk; tom när barnet inte skrev något.",
-            "exitReason": "<code>left</code> när barnet valde att lämna; <code>ended</code> när sessionen tog slut omkring barnet."
+            "note": "Vad barnet skrev i den frivilliga kommentaren, med sina egna ord och på sitt eget språk; tom när barnet inte skrev något."
           }
         },
         "robloxResearch": {

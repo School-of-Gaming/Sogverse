@@ -1604,7 +1604,7 @@
         },
         "feedback": {
           "title": "what a child said on the way out",
-          "intro": "What one child answered at the end of one session: five statements rated on a five-point bar, an optional note in their own words, and how they left. Today feedback is collected after online sessions only. A child who rates no statement and writes no note leaves no row, so the response rate is this list against the online sessions in <code>/sessions</code>; one row is one child at one session, so a percentage over rows counts a child once per session they answered.",
+          "intro": "What one child answered at the end of one session: five statements rated on a five-point bar and an optional note in their own words. Today feedback is collected after online sessions only. A child who rates no statement and writes no note leaves no row, so the response rate is this list against the online sessions in <code>/sessions</code>; one row is one child at one session, so a percentage over rows counts a child once per session they answered.",
           "params": {
             "productId": "Only feedback from this product’s groups.",
             "groupId": "Only this group’s feedback.",
@@ -1614,10 +1614,9 @@
           "fields": {
             "participantGroupProductId": "Who answered, and the group and product the session belonged to. Feedback is asked of children only, so <code>participant_id</code> is always a child’s identifier from <code>gamers[].id</code>. A record has no identifier of its own: <code>participant_id</code>, <code>group_id</code> and <code>session_opened_at</code> together are its key, and a later answer from the same child about the same session replaces the earlier one under that key.",
             "sessionId": "The session in <code>/sessions</code> the answer belongs to, matched by group and date; <code>null</code> when <code>/sessions</code> has no session for that group on that day.",
-            "sessionOpenedAt": "When the session the child answered about opened.",
+            "sessionOpenedAt": "When the session the child answered about opened: the moment its online room became joinable, which is five minutes before the session’s scheduled start.",
             "answers": "The child’s rating of each statement, keyed by the statement’s stable identifier, with a statement they skipped absent. Ratings run 1 to 5: no, not really, a bit, yes, definitely. The statements asked today are <code>learned</code> (I learned something), <code>fun</code> (I had fun), <code>geduKnowledgeable</code> (the Game Educator knew what they were doing), <code>geduKind</code> (the Game Educator was kind), and <code>groupListens</code> (my group listens to and understands me); a statement may be added or retired without notice, so read the keys you know and ignore the rest. Only aggregated satisfaction figures go to Roblox; the rows themselves stay with Lynx.",
-            "note": "What the child wrote in the optional note, in their own words and their own language; empty when they wrote nothing.",
-            "exitReason": "<code>left</code> when the child chose to leave; <code>ended</code> when the session ended around them."
+            "note": "What the child wrote in the optional note, in their own words and their own language; empty when they wrote nothing."
           }
         },
         "robloxResearch": {

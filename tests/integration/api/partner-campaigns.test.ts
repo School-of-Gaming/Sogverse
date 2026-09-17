@@ -115,7 +115,11 @@ const SEATS = [
  * pattern, and the half-open creation window — so the range is exercised
  * rather than assumed. Every other table answers its `in` list.
  */
-function tables(profiles: Profile[] = PROFILES) {
+function tables(
+  profiles: Profile[] = PROFILES,
+  links: typeof LINKS = LINKS,
+  births: Record<string, string> = BIRTHS,
+) {
   return postgrestTables({
     profiles: (url) => {
       const role = url.searchParams.get("role")?.replace(/^eq\./, "");
@@ -140,10 +144,10 @@ function tables(profiles: Profile[] = PROFILES) {
     },
     parent_gamer: (url) => {
       const parents = inList(url, "parent_id");
-      return LINKS.filter((link) => parents.includes(link.parent_id));
+      return links.filter((link) => parents.includes(link.parent_id));
     },
     gamer_profiles: (url) =>
-      inList(url, "user_id").map((user_id) => ({ user_id, date_of_birth: BIRTHS[user_id] })),
+      inList(url, "user_id").map((user_id) => ({ user_id, date_of_birth: births[user_id] })),
     participations: (url) => {
       const participants = inList(url, "participant_id");
       return SEATS.filter((row) => participants.includes(row.participant_id)).map(
@@ -224,6 +228,40 @@ describe("GET /api/partner/v1/campaigns", () => {
         },
       ],
     });
+  });
+
+  it("reads a child's possible age from the birth month alone, whatever day the row stores", async () => {
+    // 10 September, inside every September birth month below. Each account
+    // brings one child and holds no seat.
+    vi.setSystemTime(new Date("2026-09-10T12:00:00Z"));
+    const midMonth: Record<string, string> = {
+      // Born 20 September 2013: read as a date, only ever 12 today. Born any
+      // day of that September, possibly 13 — so eligible.
+      [C(11)]: "2013-09-20",
+      [C(12)]: "2013-09-05", // possibly 13
+      [C(13)]: "2008-09-20", // possibly still 17
+      [C(14)]: "2008-09-05", // possibly still 17
+      [C(15)]: "2010-05-15", // 16
+      [C(16)]: "2014-09-20", // 12 whatever day of September
+      [C(17)]: "2007-09-05", // 18 whatever day of September
+    };
+    const children = Object.keys(midMonth);
+    db.fetch = tables(
+      children.map((_, i) => account(A(11 + i), "lynx-midmonth")),
+      children.map((gamer_id, i) => ({ parent_id: A(11 + i), gamer_id })),
+      midMonth,
+    );
+
+    expect((await readAnswer()).campaigns).toEqual([
+      {
+        utm_campaign: "lynx-midmonth",
+        accounts_created: 7,
+        children_added: 7,
+        // Five exactly: C11 read by its stored day would withhold the count.
+        children_eligible: 5,
+        enrolled: null,
+      },
+    ]);
   });
 
   it("reads parent accounts by a literal, case-insensitive prefix over whole UTC months", async () => {

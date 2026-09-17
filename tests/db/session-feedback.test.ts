@@ -27,8 +27,7 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  *     the error AND on the row still reading back unchanged.
  *   - The shape checks: `{}` is legal, a level of 9 is not, a value that merely
  *     CONTAINS a level or holds none — an array, an object, a null — is not, a
- *     note over 2000 characters is not, and an exit reason outside the two
- *     words is not.
+ *     note over 2000 characters is not.
  *   - The upsert on the natural key updates rather than duplicating, which is
  *     what "the last Done wins" rests on.
  *
@@ -72,7 +71,6 @@ const SEEDED_ROWS = [
     session_opens_at: WINDOW_OWN,
     answers: { learned: 5, fun: 4 },
     note: "It was good",
-    exit_reason: "left",
   },
   {
     group_id: GROUP_X,
@@ -80,7 +78,6 @@ const SEEDED_ROWS = [
     session_opens_at: WINDOW_SIBLING,
     answers: { learned: 3 },
     note: "",
-    exit_reason: "ended",
   },
   {
     group_id: GROUP_X,
@@ -88,7 +85,6 @@ const SEEDED_ROWS = [
     session_opens_at: WINDOW_REKEY,
     answers: { learned: 2 },
     note: "mine",
-    exit_reason: "left",
   },
 ];
 
@@ -188,20 +184,18 @@ describe("session_feedback RLS + shape constraints", () => {
         session_opens_at: WINDOW_WRITE,
         answers: { learned: 5, fun: 4 },
         note: "It was good",
-        exit_reason: "left",
       });
       expect(error).toBeNull();
 
       const { data } = await gamerAuth
         .from("session_feedback")
-        .select("answers, note, exit_reason")
+        .select("answers, note")
         .eq("group_id", GROUP_X)
         .eq("participant_id", TEST_IDS.GAMER)
         .eq("session_opens_at", WINDOW_WRITE)
         .maybeSingle();
       expect(data?.answers).toEqual({ learned: 5, fun: 4 });
       expect(data?.note).toBe("It was good");
-      expect(data?.exit_reason).toBe("left");
     });
 
     it("reads only their own row, not their group-mate's", async () => {
@@ -232,7 +226,6 @@ describe("session_feedback RLS + shape constraints", () => {
           session_opens_at: WINDOW_UPSERT,
           answers: { learned: 2 },
           note: "first",
-          exit_reason: "ended",
         },
         { onConflict: "group_id,participant_id,session_opens_at" },
       );
@@ -247,7 +240,6 @@ describe("session_feedback RLS + shape constraints", () => {
           session_opens_at: WINDOW_UPSERT,
           answers: {},
           note: "",
-          exit_reason: "left",
         },
         { onConflict: "group_id,participant_id,session_opens_at" },
       );
@@ -255,14 +247,13 @@ describe("session_feedback RLS + shape constraints", () => {
 
       const { data } = await admin
         .from("session_feedback")
-        .select("answers, note, exit_reason")
+        .select("answers, note")
         .eq("group_id", GROUP_X)
         .eq("participant_id", TEST_IDS.GAMER)
         .eq("session_opens_at", WINDOW_UPSERT);
       expect((data ?? []).length).toBe(1);
       expect(data?.[0].answers).toEqual({});
       expect(data?.[0].note).toBe("");
-      expect(data?.[0].exit_reason).toBe("left");
     });
   });
 
@@ -281,9 +272,6 @@ describe("session_feedback RLS + shape constraints", () => {
         session_opens_at: "2026-06-17T10:00:00+00:00",
         answers: { learned: 1 },
         note: "Written by somebody else",
-        // Every column the schema requires is present, so the policy is the
-        // only thing that can refuse the row.
-        exit_reason: "left",
       });
       expect(error).not.toBeNull();
     });
@@ -296,7 +284,6 @@ describe("session_feedback RLS + shape constraints", () => {
         participant_id: TEST_IDS.GAMER_2,
         session_opens_at: "2026-06-17T11:00:00+00:00",
         answers: { learned: 5 },
-        exit_reason: "left",
       });
       expect(error).not.toBeNull();
     });
@@ -307,7 +294,6 @@ describe("session_feedback RLS + shape constraints", () => {
         participant_id: TEST_IDS.CUSTOMER_2,
         session_opens_at: "2026-06-17T12:00:00+00:00",
         answers: { learned: 5 },
-        exit_reason: "left",
       });
       expect(error).not.toBeNull();
     });
@@ -322,7 +308,6 @@ describe("session_feedback RLS + shape constraints", () => {
         session_opens_at: "2026-06-17T13:00:00+00:00",
         answers: { learned: 5 },
         note: "Written by a parent",
-        exit_reason: "left",
       });
       expect(error).not.toBeNull();
     });
@@ -400,16 +385,12 @@ describe("session_feedback RLS + shape constraints", () => {
     async function insertShape(row: {
       answers?: Json;
       note?: string;
-      exit_reason?: string;
     }): Promise<{ error: unknown }> {
-      // A valid exit reason unless the case is about the exit reason, so every
-      // other shape case is refused or admitted on the column it names.
       const { error } = await gamerAuth.from("session_feedback").insert({
         group_id: GROUP_X,
         participant_id: TEST_IDS.GAMER,
         session_opens_at: WINDOW_SHAPE,
         ...row,
-        exit_reason: row.exit_reason ?? "left",
       });
       if (!error) {
         await admin
@@ -506,11 +487,6 @@ describe("session_feedback RLS + shape constraints", () => {
     it("accepts a note of exactly 2000 characters", async () => {
       const { error } = await insertShape({ note: "x".repeat(2000) });
       expect(error).toBeNull();
-    });
-
-    it("refuses an exit reason outside the two words", async () => {
-      const { error } = await insertShape({ exit_reason: "kicked" });
-      expect(error).not.toBeNull();
     });
   });
 });

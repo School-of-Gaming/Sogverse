@@ -537,11 +537,6 @@ const FEEDBACK_FIELDS = [
     key: "resources.feedback.fields.answers",
   },
   { name: "note", type: "string", key: "resources.feedback.fields.note" },
-  {
-    name: "exit_reason",
-    type: "left | ended",
-    key: "resources.feedback.fields.exitReason",
-  },
 ] as const;
 
 const RESEARCH_PARAMS = [
@@ -805,8 +800,7 @@ const FEEDBACK_EXAMPLE = `{
     "geduKind": 5,
     "groupListens": 3
   },
-  "note": "I finished my obby!",
-  "exit_reason": "left"
+  "note": "I finished my obby!"
 }`;
 
 const RESEARCH_EXAMPLE = `{

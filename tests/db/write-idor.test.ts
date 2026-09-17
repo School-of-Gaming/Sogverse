@@ -696,7 +696,6 @@ describe("write-path IDOR (§3.4 check 3)", () => {
       session_opens_at: FEEDBACK_WINDOW,
       answers: { learned: 5, fun: 4 },
       note: "IDOR fixture",
-      exit_reason: "left",
     });
     await admin.from("voice_zones").insert({
       id: ZONE,

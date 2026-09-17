@@ -1,7 +1,6 @@
 export {
   SessionFeedbackService,
   type SaveSessionFeedbackInput,
-  type SessionFeedbackExitReason,
   type SessionFeedbackKey,
 } from "./session-feedback.service";
 export {
