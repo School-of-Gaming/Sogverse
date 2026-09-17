@@ -1036,49 +1036,49 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/partner/v1/products/route.ts": {
     handlers: {
-      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerProducts },
     },
   },
 
   "src/app/api/partner/v1/campaigns/route.ts": {
     handlers: {
-      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerCampaigns },
     },
   },
 
   "src/app/api/partner/v1/families/route.ts": {
     handlers: {
-      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerFamilies },
     },
   },
 
   "src/app/api/partner/v1/enrolments/route.ts": {
     handlers: {
-      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerEnrolments },
     },
   },
 
   "src/app/api/partner/v1/sessions/route.ts": {
     handlers: {
-      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerSessions },
     },
   },
 
   "src/app/api/partner/v1/feedback/route.ts": {
     handlers: {
-      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerFeedback },
     },
   },
 
   "src/app/api/partner/v1/roblox-research/route.ts": {
     handlers: {
-      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerRobloxResearch },
     },
   },
 
   "src/app/api/partner/v1/traffic/route.ts": {
     handlers: {
-      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerTraffic },
     },
   },
 
