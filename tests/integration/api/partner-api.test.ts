@@ -8,7 +8,10 @@ import { GET as getSessions } from "@/app/api/partner/v1/sessions/route";
 import { GET as getFeedback } from "@/app/api/partner/v1/feedback/route";
 import { GET as getRobloxResearch } from "@/app/api/partner/v1/roblox-research/route";
 import { GET as getTraffic } from "@/app/api/partner/v1/traffic/route";
+import { GET as getCampaigns } from "@/app/api/partner/v1/campaigns/route";
 import {
+  CAMPAIGN_MINIMUM_COUNT,
+  partnerCampaignsResponse,
   partnerEnrolmentsResponse,
   partnerFamiliesResponse,
   partnerFeedbackResponse,
@@ -114,12 +117,22 @@ const ROUTES: readonly {
     badParam: "page",
     validQuery: "?page=product&from=2026-09-01&to=2026-09-14",
   },
+  {
+    path: "campaigns",
+    handler: getCampaigns,
+    response: partnerCampaignsResponse,
+    // Shaped like a month and not a month: the shape alone would pass it.
+    badQuery: "?from=2026-13",
+    badParam: "from",
+    validQuery: "?from=2026-08&to=2026-09",
+  },
 ];
 
-/** The six resources that return records; `/traffic` returns an aggregate. */
-const LIST_ROUTES = ROUTES.filter((route) => route.path !== "traffic");
+/** The six resources that return records; `/traffic` and `/campaigns` return aggregates. */
+const AGGREGATE_PATHS = ["traffic", "campaigns"];
+const LIST_ROUTES = ROUTES.filter((route) => !AGGREGATE_PATHS.includes(route.path));
 
-/** The resources that take a `from`/`to` window. */
+/** The resources that take a `from`/`to` window of days; `/campaigns` takes months. */
 const RANGE_PATHS = ["sessions", "feedback", "roblox-research", "traffic"];
 const RANGE_ROUTES = ROUTES.filter((route) => RANGE_PATHS.includes(route.path));
 
@@ -292,6 +305,26 @@ describe("the Lynx Educate partner API", () => {
       ).toBe(200);
     });
 
+    it("rejects a reversed month range on /campaigns", async () => {
+      const response = getCampaigns(
+        createRequest("campaigns", "?from=2026-10&to=2026-09"),
+      );
+      expect(response.status).toBe(400);
+      const body = await response.json();
+      expect(body.error.message).toContain("from");
+    });
+
+    it("refuses a day where /campaigns takes a month", async () => {
+      // Months are the privacy property, not a formatting preference: a day
+      // range would let two answers be differenced down to one family.
+      const response = getCampaigns(
+        createRequest("campaigns", "?from=2026-09-01"),
+      );
+      expect(response.status).toBe(400);
+      const body = await response.json();
+      expect(body.error.message).toContain("from");
+    });
+
     it("takes no paging on /traffic, and ignores what it is not given", () => {
       // The aggregate is not paginated, and zod strips what the schema does not
       // name — so a stray `limit` is ignored rather than refused.
@@ -341,6 +374,76 @@ describe("the Lynx Educate partner API", () => {
       } finally {
         vi.useRealTimers();
       }
+    });
+  });
+
+  describe("the campaign counts", () => {
+    it("echoes the requested months and the minimum with no campaigns", async () => {
+      const body = await getCampaigns(
+        createRequest("campaigns", "?from=2026-08&to=2026-09"),
+      ).json();
+      expect(body).toEqual({
+        range: { from: "2026-08", to: "2026-09" },
+        minimum_count: CAMPAIGN_MINIMUM_COUNT,
+        campaigns: [],
+      });
+      expect(() => partnerCampaignsResponse.parse(body)).not.toThrow();
+    });
+
+    it("defaults to the current month, and from to the month to names", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-09-30T23:59:00Z"));
+      try {
+        const now = await getCampaigns(createRequest("campaigns")).json();
+        expect(now.range).toEqual({ from: "2026-09", to: "2026-09" });
+        const toOnly = await getCampaigns(
+          createRequest("campaigns", "?to=2026-06"),
+        ).json();
+        expect(toOnly.range).toEqual({ from: "2026-06", to: "2026-06" });
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    // The contract is what stops a filled-in resource from leaking a small
+    // count or another partner's campaign, so it is tested as the guard it is.
+    const answer = (entry: Record<string, unknown>) => ({
+      range: { from: "2026-09", to: "2026-09" },
+      minimum_count: CAMPAIGN_MINIMUM_COUNT,
+      campaigns: [
+        {
+          utm_campaign: "lynx-autumn-a",
+          accounts_created: 42,
+          children_added: 51,
+          children_eligible: 38,
+          enrolled: null,
+          ...entry,
+        },
+      ],
+    });
+
+    it("accepts counts at the minimum and withheld counts", () => {
+      expect(() =>
+        partnerCampaignsResponse.parse(answer({ enrolled: CAMPAIGN_MINIMUM_COUNT })),
+      ).not.toThrow();
+      expect(() => partnerCampaignsResponse.parse(answer({}))).not.toThrow();
+    });
+
+    it("refuses a count under the minimum, zero included", () => {
+      for (const count of [0, 1, CAMPAIGN_MINIMUM_COUNT - 1]) {
+        expect(() =>
+          partnerCampaignsResponse.parse(answer({ enrolled: count })),
+        ).toThrow();
+      }
+    });
+
+    it("refuses a campaign that is not Lynx's, whatever its letter case", () => {
+      expect(() =>
+        partnerCampaignsResponse.parse(answer({ utm_campaign: "Lynx-Autumn" })),
+      ).not.toThrow();
+      expect(() =>
+        partnerCampaignsResponse.parse(answer({ utm_campaign: "rblx-launch" })),
+      ).toThrow();
     });
   });
 

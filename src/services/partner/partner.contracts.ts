@@ -40,6 +40,22 @@ const DELIVERY = ["online", "in_person"] as const;
 const TRAFFIC_PAGE = ["landing", "shop", "product"] as const;
 
 /**
+ * API-only rule: a campaign is Lynx's when its `utm_campaign` starts with this,
+ * in any letter case. The prefix is the partner convention written down where
+ * UTM attribution is captured, and `/campaigns` is what makes it binding: a
+ * campaign without it is never counted, and a stored campaign cannot change.
+ */
+export const LYNX_CAMPAIGN_PREFIX = "lynx-";
+
+/**
+ * The smallest count `/campaigns` shows. Below it a count is withheld as null,
+ * so a small campaign cannot point to a single family; the response schema
+ * refuses a smaller number outright, which is what keeps an implementation
+ * from leaking one by accident.
+ */
+export const CAMPAIGN_MINIMUM_COUNT = 5;
+
+/**
  * API-only vocabulary: how a child left a feedback prompt, and how a Game
  * Educator marked them. Both are stored as booleans/derived state rather than
  * as enums, and the documentation page names the words.
@@ -107,6 +123,15 @@ const isoTimestampUtc = z
 const isoMonth = z
   .string()
   .regex(/^\d{4}-\d{2}$/, "must be a YYYY-MM month");
+
+/**
+ * A month a caller sends us, `YYYY-MM`. Stricter than the emitted shape above:
+ * `2026-13` has the shape and is not a month, and refusing it is cheaper than
+ * a route doing month arithmetic on it and answering 500.
+ */
+const isoMonthIn = z
+  .string()
+  .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "must be a real YYYY-MM month");
 
 /** A municipality and its two-letter country code. */
 const place = z.object({
@@ -221,6 +246,20 @@ export const partnerRobloxResearchQuery = withOrderedRange(
  * a contradiction is refused rather than silently resolved in one of the two
  * directions the caller might not have meant.
  */
+/**
+ * `/campaigns` takes its range in whole months, never days: counts over two
+ * day ranges one day apart would differ by that one day's families, and a
+ * difference of one is a single family however large both counts are. Months
+ * compared with months only ever difference whole months, which the minimum
+ * count then covers. Months sort as strings because they are zero-padded.
+ */
+export const partnerCampaignsQuery = withOrderedRange(
+  z.object({
+    from: isoMonthIn.optional(),
+    to: isoMonthIn.optional(),
+  }),
+);
+
 export const partnerTrafficQuery = withOrderedRange(
   z.object({
     page: z.enum(TRAFFIC_PAGE).optional(),
@@ -473,3 +512,37 @@ export const partnerTrafficResponse = z.object({
 });
 
 export type PartnerTrafficResponse = z.infer<typeof partnerTrafficResponse>;
+
+/** A count as `/campaigns` shows it: at least the minimum, or withheld as null. */
+const campaignCount = z
+  .number()
+  .int()
+  .min(CAMPAIGN_MINIMUM_COUNT, "a count below the minimum must be withheld")
+  .nullable();
+
+/**
+ * The campaign funnel: counts only, per Lynx campaign, over the months the
+ * answer names. It carries no identifier and no record of any family, which is
+ * why it may reach families who have not enrolled — and the schema holds it to
+ * that: a count under the minimum and a campaign that is not Lynx's are both
+ * refused here rather than trusted to the code that fills it.
+ */
+export const partnerCampaignsResponse = z.object({
+  range: z.object({ from: isoMonth, to: isoMonth }),
+  minimum_count: z.literal(CAMPAIGN_MINIMUM_COUNT),
+  campaigns: z.array(
+    z.object({
+      utm_campaign: z
+        .string()
+        .refine(
+          (campaign) =>
+            campaign.toLowerCase().startsWith(LYNX_CAMPAIGN_PREFIX),
+          `must start with ${LYNX_CAMPAIGN_PREFIX}`,
+        ),
+      accounts_created: campaignCount,
+      children_added: campaignCount,
+      children_eligible: campaignCount,
+      enrolled: campaignCount,
+    }),
+  ),
+});

@@ -37,8 +37,8 @@ generated `Constants` wherever the vocabulary is the database's, and the tuples 
 the API's own invention say so in a comment.
 
 **Rule: an empty answer is a well-formed answer.** A record-returning resource answers
-`{ "data": [], "next_cursor": null }` — a last page, not an error and not a 501 — and the
-aggregate answers with an empty page list and the range it covers. Every partner pull is a
+`{ "data": [], "next_cursor": null }` — a last page, not an error and not a 501 — and an
+aggregate answers with its empty list and the range it covers. Every partner pull is a
 full pull that treats a record's absence as "no longer in scope", so a resource must never
 fake a record and must never answer 200 with a shape the page does not describe.
 

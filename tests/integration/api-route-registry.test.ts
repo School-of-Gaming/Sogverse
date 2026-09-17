@@ -227,7 +227,7 @@ const TESTS = {
 const ADMIN_ONLY: Posture = { kind: "role-gated", roles: ["admin"] };
 
 /**
- * The Lynx Educate partner API's one posture, shared by its seven read-only
+ * The Lynx Educate partner API's one posture, shared by its eight read-only
  * resources because the key is what scopes all of them: one key, one partner,
  * one Programme.
  */
@@ -1009,6 +1009,12 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // the database, which is why none of them justifies a client of any kind.
 
   "src/app/api/partner/v1/products/route.ts": {
+    handlers: {
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
+    },
+  },
+
+  "src/app/api/partner/v1/campaigns/route.ts": {
     handlers: {
       GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerApi },
     },
