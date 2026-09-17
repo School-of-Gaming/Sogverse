@@ -10958,11 +10958,9 @@ CREATE TABLE public.session_feedback (
     session_opens_at timestamp with time zone NOT NULL,
     answers jsonb DEFAULT '{}'::jsonb NOT NULL,
     note text DEFAULT ''::text NOT NULL,
-    exit_reason text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT chk_session_feedback_answers_shape CHECK (((jsonb_typeof(answers) = 'object'::text) AND (jsonb_array_length(jsonb_path_query_array(answers, '$.keyvalue()'::jsonpath)) <= 32) AND (NOT (answers @? 'strict $.*?(((@.type() != "number" || @ < 1) || @ > 5) || @.floor() != @)'::jsonpath)))),
-    CONSTRAINT chk_session_feedback_exit_reason CHECK (((exit_reason IS NULL) OR (exit_reason = ANY (ARRAY['left'::text, 'ended'::text])))),
     CONSTRAINT chk_session_feedback_note_length CHECK ((char_length(note) <= 2000))
 );
 
@@ -10986,13 +10984,6 @@ COMMENT ON COLUMN public.session_feedback.session_opens_at IS 'The instant the s
 --
 
 COMMENT ON COLUMN public.session_feedback.answers IS 'Item key -> level, for the answered items only; `{}` is a legal stored value and is what an emptied form writes. Keys are the catalogue''s stable text identifiers and are deliberately unconstrained, so adding or removing a statement is a code edit with no migration; a reader ignores keys the catalogue no longer holds. Only the shape is checked.';
-
-
---
--- Name: COLUMN session_feedback.exit_reason; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.session_feedback.exit_reason IS '`left` (the child pressed Leave) or `ended` (Daily closed the room), kept because it is only knowable at write time — the page knows which path it is on and no later reader could reconstruct it. `ended` includes any post-join disconnect, a failed network among them; separating those is a reader''s problem and deliberately not solved here.';
 
 
 --
