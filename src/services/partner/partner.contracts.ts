@@ -48,10 +48,10 @@ const TRAFFIC_PAGE = ["landing", "shop", "product"] as const;
 export const LYNX_CAMPAIGN_PREFIX = "lynx-";
 
 /**
- * The smallest count `/campaigns` shows. Below it a count is withheld as null,
- * so a small campaign cannot point to a single family; the response schema
- * refuses a smaller number outright, which is what keeps an implementation
- * from leaking one by accident.
+ * The smallest count `/campaigns` shows. Below it a count is withheld as null;
+ * the response schema refuses a smaller number outright, which is what keeps
+ * an implementation from showing one by accident. It bounds each count on its
+ * own and nothing more: two counts, or two answers, can still differ by one.
  */
 export const CAMPAIGN_MINIMUM_COUNT = 5;
 
@@ -250,11 +250,10 @@ export const partnerRobloxResearchQuery = withOrderedRange(
  * directions the caller might not have meant.
  */
 /**
- * `/campaigns` takes its range in whole months, never days: counts over two
- * day ranges one day apart would differ by that one day's families, and a
- * difference of one is a single family however large both counts are. Months
- * compared with months only ever difference whole months, which the minimum
- * count then covers. Months sort as strings because they are zero-padded.
+ * `/campaigns` takes its range in whole UTC months, never days — the shape of
+ * the question, a funnel per campaign month, and not a privacy property: two
+ * answers can still differ by one family. Months sort as strings because they
+ * are zero-padded.
  */
 export const partnerCampaignsQuery = withOrderedRange(
   z.object({

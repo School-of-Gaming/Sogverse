@@ -1702,13 +1702,13 @@
         },
         "campaigns": {
           "title": "mIw qengbogh qorDu'pu', mIw tlha'",
-          "intro": "Hoch Lynx mIw Sogverse-Daq qorDu'pu' 'ar qeng, 'ej 'ar ghoS chaH: account chenmoHlu'pu'bogh, puqpu' chellu'pu'bogh, mIw'a' ben mI' ghajbogh puqpu', muvpu'bogh qorDu'pu' je. veH 'elpa' qorDu' He'So' 'oH — toghlu', tetlhbe'lu': pong mI' Hutlh, wa' qorDu' De'wI' Hutlh, 'ej Hoch mI' mach law' So'lu'. Lynx mIw 'oH <code>utm_campaign</code> <code>lynx-</code>vo' taghDI' — ghItlh tIn mach je rap. LynxvaD chenmoHlu'bogh Hoch tlhegh ghaj ghItlhvam: ghajbe'bogh mIw not toghlu', 'ej accountDaq ghItlhlu'pu'bogh mIw not choHlu'.",
+          "intro": "Hoch Lynx mIw Sogverse-Daq qorDu'pu' 'ar qeng, 'ej 'ar ghoS chaH: account chenmoHlu'pu'bogh, puqpu' chellu'pu'bogh, mIw'a' ben mI' ghajbogh puqpu', muvpu'bogh qorDu'pu' je. veH 'elpa' qorDu' He'So' 'oH — toghlu', tetlhbe'lu': pong mI' Hutlh, wa' qorDu' De'wI' Hutlh, 'ej mI' mach law' puSbogh Hoch mI' So'lu'. Lynx mIw 'oH <code>utm_campaign</code> <code>lynx-</code>vo' taghDI' — ghItlh tIn mach je rap. LynxvaD chenmoHlu'bogh Hoch tlhegh ghaj ghItlhvam: ghajbe'bogh mIw not toghlu', 'ej accountDaq ghItlhlu'pu'bogh mIw not choHlu'.",
           "params": {
             "fromTo": "jarmeyvamDaq chenmoHlu'bogh vav account ghajbogh qorDu'pu' neH, veHmey je, UTC. DaH jar DaneHDI' <code>to</code> yIwoDHa' — rInpa' naQbe'; <code>to</code> jar DaneHDI' <code>from</code> yIwoDHa'."
           },
           "fields": {
             "range": "mI'mey So'bogh jarmey.",
-            "minimumCount": "jang 'angbogh mI' mach law'. mI' machqu' — pagh je — <code>null</code> 'oH; vaj wa' qorDu' ngu'laHbe' mIw machHom.",
+            "minimumCount": "jang 'angbogh mI' mach law'. mI' machqu' — pagh je — <code>null</code> 'oH.",
             "campaigns": "veHDaq wa' vav account qengpu'bogh Hoch Lynx mIwvaD wa' ghItlh.",
             "utmCampaign": "mIw — togh account'e' pollu'meH ghItlhlu'pu'bogh rap. ghItlh tIn mach neH Qo'bogh mu'mey chevlu' — <code>/traffic</code>Daq rur.",
             "accountsCreated": "veHDaq mIwvam qengbogh tlhegh lo'taHvIS chenmoHlu'bogh vav accountmey: He'So' wa'DIch nuq.",
@@ -1716,7 +1716,7 @@
             "childrenEligible": "tlhob jajDaq, UTC, mIw'a' ben mI' 13–17 ghajbogh puqpu'. bogh jar neH pol Sogverse — jaj polbe'; vaj cha' ben mI' ghajlaHbogh puq togh wa' veHDaq 'elDI' — muvDI' rur.",
             "enrolled": "mIw'a' De'wI'Daq Daq ghajbogh, rInmoHpu'bogh, qoj Daq loSbogh qorDu' ghajbogh accountmey: wejDIch nuq, 'ej <code>/families</code>Daq 'el qorDu'."
           },
-          "note": "account chenmoHlu'DI' wa'logh neH ghItlhlu' mIw, 'ej ngeH chab laj leghwI'DI' neH; vaj qorDu'pu'vetlh neH togh mI'mey — latlh not. <code>/families</code> <code>parents[].utm</code>Daq 'angbogh mIw rap 'oH, muvDI' qorDu'. tlhob poHDaq laDlu' Hoch mI'. jarmey lo'lu' — jajmey lo'be'lu' — vaj cha' jang nuDDI' not wa' qorDu' ngu'lu'."
+          "note": "account chenmoHlu'DI' wa'logh neH ghItlhlu' mIw, 'ej ngeH chab laj leghwI'DI' neH; vaj qorDu'pu'vetlh neH togh mI'mey — latlh not. <code>/families</code> <code>parents[].utm</code>Daq 'angbogh mIw rap 'oH, muvDI' qorDu'. tlhob poHDaq laDlu' Hoch mI'; vaj latlh jajDaq pIm jang veH rap: puqpu' chel 'ej muv qorDu'pu' — ratlh — 'ej DaH jar rInpa' account chenmoHlu'taH."
         }
       },
       "errors": {

@@ -76,9 +76,12 @@ removing or moving a seat deletes neither, so such a row is in scope only while 
 holds a live seat on the row's product, checked per batch against the scope's seat read.
 Whether a session was recorded is not scoped that way: it is a fact about the session, and
 a child leaving never makes one disappear for the children still in its group. `/campaigns` is the one resource that starts outside the
-scope, from parent accounts, and it is safe only because nothing leaves it but counts,
-each withheld below the published minimum — and a count under it fails the response
-schema, so a mistake there is a 500, never a leak.
+scope, from parent accounts, so nothing leaves it but counts — no identifier and no record
+of any family — each withheld below the published minimum, and a count under it fails the
+response schema, so a mistake there is a 500 rather than a small count. The minimum bounds
+each count on its own and nothing more: two counts in one answer, the same range read on
+two days, or two overlapping ranges can differ by one family, and the page promises no
+more than that.
 
 **Rule: seats placed without an acceptance on file count as consented (owner decision).**
 An admin moving a seat, a requirement added after the seat, or a seat older than

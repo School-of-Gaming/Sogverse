@@ -1658,13 +1658,13 @@
         },
         "campaigns": {
           "title": "the families a campaign brings in, by campaign",
-          "intro": "How many families each Lynx campaign brought to Sogverse, and how far they went: accounts created, children added, children of Programme age, and families that enrolled. It is the funnel before a family is in scope, counted rather than listed: no identifier, no record of any single family, and a count too small to be safe is withheld. A campaign is Lynx’s when its <code>utm_campaign</code> starts with <code>lynx-</code>, in any letter case. Every link issued for Lynx must carry that prefix: a campaign without it is never counted, and the campaign on an account cannot be changed once written.",
+          "intro": "How many families each Lynx campaign brought to Sogverse, and how far they went: accounts created, children added, children of Programme age, and families that enrolled. It is the funnel before a family is in scope, counted rather than listed: no identifier, no record of any single family, and any count below the minimum is withheld. A campaign is Lynx’s when its <code>utm_campaign</code> starts with <code>lynx-</code>, in any letter case. Every link issued for Lynx must carry that prefix: a campaign without it is never counted, and the campaign on an account cannot be changed once written.",
           "params": {
             "fromTo": "Only families whose parent account was created in these months, inclusive, in UTC. Omit <code>to</code> for the current month, which is partial until it ends; omit <code>from</code> for the month <code>to</code> names."
           },
           "fields": {
             "range": "The months the counts cover.",
-            "minimumCount": "The smallest count the answer shows. A count below it, zero included, is <code>null</code>, so a small campaign cannot point to a single family.",
+            "minimumCount": "The smallest count the answer shows. A count below it, zero included, is <code>null</code>.",
             "campaigns": "One entry per Lynx campaign that brought at least one parent account in the range.",
             "utmCampaign": "The campaign, exactly as it was stored on the accounts it counts. Values that differ only in letter case are separate entries, as they are in <code>/traffic</code>.",
             "accountsCreated": "Parent accounts created in the range through a link carrying this campaign: the first step of the funnel.",
@@ -1672,7 +1672,7 @@
             "childrenEligible": "Those children whose age on the day of the request, in UTC, is within the Programme’s 13 to 17. Sogverse holds a birth month rather than a day, so a child who could be either of two ages counts when either one is in range, the same reading enrolment uses.",
             "enrolled": "Those accounts whose family holds a seat on a Programme product, has completed one, or is waiting for one: the third step, and the point where a family enters <code>/families</code>."
           },
-          "note": "The campaign on an account is written once, when the account is created, and only where the visitor accepted marketing cookies, so these counts cover the families who did and never the others; it is the same campaign <code>/families</code> reports in <code>parents[].utm</code> once a family enrols. Every count is read live at the moment of the request. The range is in months rather than days so that comparing two answers can never single out one family."
+          "note": "The campaign on an account is written once, when the account is created, and only where the visitor accepted marketing cookies, so these counts cover the families who did and never the others; it is the same campaign <code>/families</code> reports in <code>parents[].utm</code> once a family enrols. Every count is read live at the moment of the request, so the same range can answer differently on another day: families go on adding children and enrolling, and the current month gains accounts until it ends."
         }
       },
       "errors": {

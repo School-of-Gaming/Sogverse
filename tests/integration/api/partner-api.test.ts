@@ -274,8 +274,8 @@ describe("the Lynx Educate partner API", () => {
     });
 
     it("refuses a day where /campaigns takes a month", async () => {
-      // Months are the privacy property, not a formatting preference: a day
-      // range would let two answers be differenced down to one family.
+      // The range is whole months, so a day is refused rather than widened to
+      // the month it falls in.
       const response = await getCampaigns(request("campaigns", "?from=2026-09-01"));
       expect(response.status).toBe(400);
       const body = await response.json();

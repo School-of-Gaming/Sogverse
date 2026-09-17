@@ -26,10 +26,12 @@ import { PROGRAMME_AGE_RANGE } from "./partner-shared-values";
  * accounts whose family enrolled.
  *
  * The one resource that reaches beyond the Programme: it starts from parent
- * accounts, not seats, so a family that never enrolled is counted too. What
- * keeps that safe is that nothing leaves but counts, each withheld below the
- * minimum, over whole months — and the response schema refuses a count
- * under the minimum outright, so a mistake here is a 500, never a leak.
+ * accounts, not seats, so a family that never enrolled is counted too. Nothing
+ * leaves but counts — no identifier and no record of any family — each
+ * withheld below the minimum, and the response schema refuses a count under
+ * the minimum outright, so a mistake here is a 500 rather than a small count.
+ * The minimum bounds each count on its own: two counts, or two answers, can
+ * still differ by one family.
  */
 
 // ---------------------------------------------------------------------------

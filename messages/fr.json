@@ -1658,13 +1658,13 @@
         },
         "campaigns": {
           "title": "les familles qu’une campagne amène, par campagne",
-          "intro": "Combien de familles chaque campagne Lynx a amenées sur Sogverse, et jusqu’où elles sont allées : comptes créés, enfants ajoutés, enfants en âge du Programme et familles inscrites. C’est l’entonnoir avant qu’une famille n’entre dans le périmètre, compté plutôt que listé : aucun identifiant, aucun enregistrement d’une famille en particulier, et un décompte trop petit pour être sûr est masqué. Une campagne est celle de Lynx lorsque son <code>utm_campaign</code> commence par <code>lynx-</code>, quelle que soit la casse. Chaque lien créé pour Lynx doit porter ce préfixe : une campagne sans lui n’est jamais comptée, et la campagne enregistrée sur un compte ne peut plus être modifiée.",
+          "intro": "Combien de familles chaque campagne Lynx a amenées sur Sogverse, et jusqu’où elles sont allées : comptes créés, enfants ajoutés, enfants en âge du Programme et familles inscrites. C’est l’entonnoir avant qu’une famille n’entre dans le périmètre, compté plutôt que listé : aucun identifiant, aucun enregistrement d’une famille en particulier, et tout décompte inférieur au minimum est masqué. Une campagne est celle de Lynx lorsque son <code>utm_campaign</code> commence par <code>lynx-</code>, quelle que soit la casse. Chaque lien créé pour Lynx doit porter ce préfixe : une campagne sans lui n’est jamais comptée, et la campagne enregistrée sur un compte ne peut plus être modifiée.",
           "params": {
             "fromTo": "Uniquement les familles dont le compte parent a été créé pendant ces mois, bornes comprises, en UTC. Omettez <code>to</code> pour le mois en cours, partiel jusqu’à sa fin ; omettez <code>from</code> pour le mois désigné par <code>to</code>."
           },
           "fields": {
             "range": "Les mois que les décomptes couvrent.",
-            "minimumCount": "Le plus petit décompte affiché par la réponse. Un décompte inférieur, zéro compris, vaut <code>null</code>, afin qu’une petite campagne ne puisse pas désigner une seule famille.",
+            "minimumCount": "Le plus petit décompte affiché par la réponse. Un décompte inférieur, zéro compris, vaut <code>null</code>.",
             "campaigns": "Une entrée par campagne Lynx ayant amené au moins un compte parent sur la période.",
             "utmCampaign": "La campagne, exactement telle qu’elle a été enregistrée sur les comptes qu’elle compte. Des valeurs qui ne diffèrent que par la casse sont des entrées distinctes, comme dans <code>/traffic</code>.",
             "accountsCreated": "Les comptes parents créés sur la période via un lien portant cette campagne : la première étape de l’entonnoir.",
@@ -1672,7 +1672,7 @@
             "childrenEligible": "Ceux de ces enfants dont l’âge le jour de la requête, en UTC, est compris dans la tranche du Programme, de 13 à 17 ans. Sogverse conserve un mois de naissance et non un jour : un enfant qui peut avoir l’un de deux âges est compté lorsque l’un ou l’autre est dans la tranche, selon la même lecture que l’inscription.",
             "enrolled": "Ceux de ces comptes dont la famille occupe une place sur un produit du Programme, en a terminé un, ou attend une place : la troisième étape, et le moment où une famille entre dans <code>/families</code>."
           },
-          "note": "La campagne d’un compte est écrite une seule fois, à sa création, et uniquement lorsque le visiteur a accepté les cookies marketing : ces décomptes couvrent donc ces familles-là et jamais les autres ; c’est la même campagne que <code>/families</code> indique dans <code>parents[].utm</code> une fois la famille inscrite. Chaque décompte est lu en direct au moment de la requête. La période est exprimée en mois plutôt qu’en jours afin que la comparaison de deux réponses ne puisse jamais isoler une famille."
+          "note": "La campagne d’un compte est écrite une seule fois, à sa création, et uniquement lorsque le visiteur a accepté les cookies marketing : ces décomptes couvrent donc ces familles-là et jamais les autres ; c’est la même campagne que <code>/families</code> indique dans <code>parents[].utm</code> une fois la famille inscrite. Chaque décompte est lu en direct au moment de la requête : la même période peut donc donner une autre réponse un autre jour, car les familles continuent d’ajouter des enfants et de s’inscrire, et le mois en cours gagne des comptes jusqu’à sa fin."
         }
       },
       "errors": {

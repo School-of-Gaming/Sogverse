@@ -1658,13 +1658,13 @@
         },
         "campaigns": {
           "title": "perheet, jotka kampanja tuo, kampanjoittain",
-          "intro": "Kuinka monta perhettä kukin Lynxin kampanja toi Sogverseen ja kuinka pitkälle ne etenivät: luodut tilit, lisätyt lapset, Ohjelman ikäiset lapset ja ilmoittautuneet perheet. Tämä on suppilo ennen kuin perhe kuuluu rajaukseen, lukuina eikä listana: ei tunnisteita, ei yhdenkään perheen tietuetta, ja liian pieni luku jätetään näyttämättä. Kampanja on Lynxin, kun sen <code>utm_campaign</code> alkaa etuliitteellä <code>lynx-</code>, kirjainkoosta riippumatta. Jokaisessa Lynxille luodussa linkissä on oltava tämä etuliite: kampanjaa ilman sitä ei koskaan lasketa, eikä tilille tallennettua kampanjaa voi muuttaa jälkikäteen.",
+          "intro": "Kuinka monta perhettä kukin Lynxin kampanja toi Sogverseen ja kuinka pitkälle ne etenivät: luodut tilit, lisätyt lapset, Ohjelman ikäiset lapset ja ilmoittautuneet perheet. Tämä on suppilo ennen kuin perhe kuuluu rajaukseen, lukuina eikä listana: ei tunnisteita, ei yhdenkään perheen tietuetta, ja vähimmäismäärää pienempi luku jätetään näyttämättä. Kampanja on Lynxin, kun sen <code>utm_campaign</code> alkaa etuliitteellä <code>lynx-</code>, kirjainkoosta riippumatta. Jokaisessa Lynxille luodussa linkissä on oltava tämä etuliite: kampanjaa ilman sitä ei koskaan lasketa, eikä tilille tallennettua kampanjaa voi muuttaa jälkikäteen.",
           "params": {
             "fromTo": "Vain perheet, joiden vanhemman tili on luotu näinä kuukausina, rajat mukaan lukien, UTC-ajassa. Jätä <code>to</code> pois, jos haluat kuluvan kuukauden, joka on vajaa sen loppuun asti; jätä <code>from</code> pois, jos haluat saman kuukauden kuin <code>to</code>."
           },
           "fields": {
             "range": "Kuukaudet, jotka luvut kattavat.",
-            "minimumCount": "Pienin luku, jonka vastaus näyttää. Sitä pienempi luku, myös nolla, on <code>null</code>, jotta pieni kampanja ei voi osoittaa yksittäiseen perheeseen.",
+            "minimumCount": "Pienin luku, jonka vastaus näyttää. Sitä pienempi luku, myös nolla, on <code>null</code>.",
             "campaigns": "Yksi merkintä jokaisesta Lynxin kampanjasta, joka toi välillä vähintään yhden vanhemman tilin.",
             "utmCampaign": "Kampanja täsmälleen sellaisena kuin se on tallennettu laskettuihin tileihin. Arvot, jotka eroavat vain kirjainkooltaan, ovat erillisiä merkintöjä, kuten myös resurssissa <code>/traffic</code>.",
             "accountsCreated": "Vanhempien tilit, jotka luotiin välillä tämän kampanjan sisältävän linkin kautta: suppilon ensimmäinen vaihe.",
@@ -1672,7 +1672,7 @@
             "childrenEligible": "Ne lapsista, joiden ikä pyyntöpäivänä UTC-ajassa on Ohjelman ikärajojen 13–17 sisällä. Sogverse tallentaa syntymäkuukauden eikä päivää, joten lapsi, joka voi olla jompaakumpaa kahdesta iästä, lasketaan mukaan, kun kumpi tahansa osuu rajoihin, samalla tavalla kuin ilmoittautumisessa.",
             "enrolled": "Ne tileistä, joiden perheellä on paikka Ohjelman tuotteessa, joiden perhe on suorittanut sellaisen tai joiden perhe jonottaa paikkaa: kolmas vaihe ja kohta, jossa perhe tulee resurssiin <code>/families</code>."
           },
-          "note": "Tilin kampanja kirjoitetaan kerran tilin luonnin yhteydessä ja vain, jos kävijä hyväksyi markkinointievästeet, joten luvut kattavat nämä perheet eivätkä koskaan muita; se on sama kampanja, jonka <code>/families</code> näyttää kentässä <code>parents[].utm</code>, kun perhe ilmoittautuu. Jokainen luku luetaan reaaliaikaisesti pyyntöhetkellä. Väli annetaan kuukausina eikä päivinä, jotta kahta vastausta vertaamalla ei voi koskaan erottaa yksittäistä perhettä."
+          "note": "Tilin kampanja kirjoitetaan kerran tilin luonnin yhteydessä ja vain, jos kävijä hyväksyi markkinointievästeet, joten luvut kattavat nämä perheet eivätkä koskaan muita; se on sama kampanja, jonka <code>/families</code> näyttää kentässä <code>parents[].utm</code>, kun perhe ilmoittautuu. Jokainen luku luetaan reaaliaikaisesti pyyntöhetkellä, joten sama väli voi antaa toisena päivänä eri vastauksen: perheet lisäävät lapsia ja ilmoittautuvat edelleen, ja kuluvalle kuukaudelle kertyy tilejä sen loppuun asti."
         }
       },
       "errors": {
