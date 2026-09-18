@@ -202,8 +202,8 @@ budget is tight enough that the last figure is the one to design against. *Check
 So a running branch bills until something deletes it, and Supabase deletes one only when
 a PR closes, which `feat/*` branches do not have. The owner has ruled out a scheduled
 cleanup job of our own as a pattern. What is left is to make forgetting impossible
-rather than cleaned up after: **a branch database never outlives the process that needs
-it** (see the proposal). Deleting and recreating is sound by construction (state is
+rather than cleaned up after: **a branch database is a lease held by a process, released
+at the end of a paid hour once idle** (see the proposal). Deleting and recreating is sound by construction (state is
 migrations + seed) and costs under a minute. `branches pause` exists but helps nothing
 here: it needs the same knowledge of when work stopped that deletion does.
 
@@ -309,28 +309,32 @@ The design:
   are. One script owns ensure / delete / sweep and is the only reader of the access
   token; `/worktree-flow` calls it and writes the branch's keys into the worktree's
   `.env.local`.
-- **A branch database is scoped to a process, never to a worktree or a session.** No
-  session can know the owner has walked away, Supabase no longer pauses an idle branch,
-  and a scheduled cleanup job is ruled out, so nothing may be left running that relies
-  on someone remembering it. Two commands own every database:
-  - *Apply*: create, push migrations and seeds, regenerate the types and the schema
-    directory, delete. One to two minutes, deleted in a `finally`. Creating and deleting
-    are free, but Supabase bills compute by the *started* hour, so each run costs one
-    Micro hour, $0.01344; a hundred runs a month is $1.34. This is all a migration
-    needs, including one written directly on `dev`. DB tests still run in CI only.
-  - *Preview*: a wrapper script, not the agent, owns the lifetime. It creates the
-    database, pushes, and starts the dev server as its child with the branch's URL and
-    keys set in the child's environment, which Next prefers over `.env.local`, so that
-    file is never rewritten. It watches the request lines the dev server logs; after a
-    set period with none, or at a hard maximum age, it stops the server, deletes the
-    database and exits. That is the idle pause Supabase dropped, held by the process
-    that owns the resource. Data entered during a preview dies with it, by design; the
-    next run starts from the seeds again.
-  Both delete any leftover branch carrying their worktree's name before creating, so a
-  hard-killed run is healed by the next one. `/worktree-flow`'s teardown deletes by
-  name after its tree kill (which a `finally` does not survive), and
-  `/cleanup-branches` deletes any Supabase branch whose git branch is gone. Those are
-  steps of flows the owner already runs, not a scheduled job.
+- **One leased database per worktree, held by a keeper process and released at the end
+  of a paid hour.** Three facts shape it. No session can know the owner has walked
+  away; Supabase no longer pauses an idle branch; and compute bills by the *started*
+  hour per instance (documented for projects as clock-hour buckets, with a part hour
+  charged in full), so deleting early throws away time already paid for, and an apply
+  followed by a separate preview database would bill two hours for twenty minutes'
+  work. So:
+  - The first command in a worktree that needs a database (*apply*: push, regenerate
+    types and the schema directory; or *preview*: run the dev server against it) starts
+    a small detached keeper, which creates the branch and owns its deletion. Later
+    commands in that worktree reuse the same database.
+  - Every use touches the lease: an apply when it runs, the preview wrapper on each
+    request line the dev server logs. The wrapper passes the branch's URL and keys in
+    the dev server's environment, which Next prefers over `.env.local`, so that file is
+    never rewritten.
+  - Shortly before each paid hour ends the keeper looks at the lease. Used recently: it
+    holds for another hour. Idle: it stops any preview server, deletes the database and
+    exits. Cost is the number of hours actually touched; twenty minutes of work is one
+    Micro hour, $0.01344, and a forgotten database wastes at most the rest of an hour
+    that was already paid.
+  - Data entered during a preview dies with the database, by design; the next lease
+    starts from the seeds.
+  - A keeper can be killed (shutdown, a tree kill). Every command start deletes any
+    Supabase branch with no live keeper, `/worktree-flow`'s teardown deletes by name,
+    and `/cleanup-branches` deletes any whose git branch is gone. Those are steps of
+    things the owner already runs, not a scheduled job. DB tests still run in CI only.
 - **A shared Vercel preview is the deliberate exception.** Vercel still deploys every
   pushed branch, and that deployment still points at staging. For a branch with no
   migration that is today's behaviour and is fine. For a schema-changing branch it runs
@@ -454,7 +458,7 @@ commitment, 2026-09-18).
 
 Each step pays off even if the next is never taken.
 
-1. Per-process databases: the apply and preview commands, their use in
+1. Leased per-worktree databases: the keeper, the apply and preview commands, their use in
    `/worktree-flow` and `/cleanup-branches`, the rich example seed. Ends every
    shared-staging collision at once.
 2. CI pushes `dev` to staging; staging's credentials leave `.env.local`; rewrite
@@ -487,8 +491,9 @@ Each step pays off even if the next is never taken.
   `--include-all`, and that mixed 5- and 14-digit versions sort as expected.
 - That Vercel's per-git-branch preview env vars can be set from a script, for the
   opt-in shared preview.
-- That branch compute bills by the started hour as project compute is documented to
-  (the branching usage page does not say), by reading the invoice after a few runs.
+- How branch compute hours are counted, by reading the usage page after a few runs:
+  that a part hour bills in full as documented for projects, and whether the buckets
+  are clock hours or run from the branch's creation. The keeper aligns to whichever.
 - That `pg_dump`'s per-object headers split cleanly into files for every object class
   in the snapshot, and that the split is stable when an unrelated object is added.
 - That `gen types --local` output in CI matches the hosted output byte for byte.
