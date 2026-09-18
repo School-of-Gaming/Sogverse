@@ -1,3 +1,8 @@
+---
+name: vercel-env-vars
+description: Add, change, rotate or mark sensitive an environment variable on Vercel (preview, production or development) without corrupting it — values go through the CLI, never the UI, and a redeploy follows. Also the first hypothesis when an integration starts answering Invalid API key after an env change.
+---
+
 # Vercel environment variables
 
 How to add or change env vars on Vercel without silently corrupting them. Both rules

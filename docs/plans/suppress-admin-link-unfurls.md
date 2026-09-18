@@ -49,7 +49,7 @@ with `?redirect=` intact.
    to `/login?redirect=…`).
 3. After production release: paste an admin product URL into any Slack channel and
    confirm no card renders; paste a shop URL and confirm the product card still does.
-4. Add the outcome to `docs/runbooks/slack-integration.md` — its "Link previews"
+4. Add the outcome to `docs/architecture/slack-purchase-notifications.md` — its "Link previews"
    section points at this plan today.
 
 ## Acceptance criteria

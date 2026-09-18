@@ -17,13 +17,16 @@ read that file before adding or editing a doc there. Pick the category by what t
 | A living description of a cross-cutting system or repo-wide topic, definitive and current | `architecture/` |
 | An open exploration — researched, nothing decided | `investigations/` |
 | A decided, ready-to-build piece of work | `plans/` |
-| A procedure a person executes against live systems | `runbooks/` |
 | A frozen story behind how something got the way it is | `records/` |
 | Input from outside the repo — things to consider, not things to do | `feedback/` |
 
 A doc that genuinely fits no category sits at this top level — an escape hatch, not a
 default. If top-level files start clustering into a recognizable type, that is a new
 category: give it a directory and a `CLAUDE.md` in the same change.
+
+A **procedure** run against live systems is not a doc at all: it is a skill in
+`.claude/skills/`, whose description keeps it in context without a pointer
+(`.claude/skills/CLAUDE.md`).
 
 ## When to write or update one
 
@@ -32,7 +35,7 @@ developer — or a future session — get it wrong without this written down? Sk
 renames, typos, and isolated refactors with no behavior change. The categories above
 name the trigger: an architecture shift updates its architecture doc in the same change;
 a messy bug that left a lesson earns a record; research without a decision lands as an
-investigation; a changed procedure updates its runbook.
+investigation.
 
 ## House style
 

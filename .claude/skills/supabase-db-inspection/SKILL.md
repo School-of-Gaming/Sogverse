@@ -1,8 +1,13 @@
+---
+name: supabase-db-inspection
+description: Investigate a remote Supabase database's IO, performance, storage or egress (prod or staging), including Disk IO Budget and usage emails — supabase inspect db, pg_stat_statements and catalog queries over psql, and where the CLI and psql run out and the dashboard takes over.
+---
+
 # Supabase DB inspection (IO / perf / storage)
 
 How to investigate a remote Supabase DB (prod or staging) for IO, performance, or
 storage questions — methodology, not point-in-time facts. Connection details live in
-`remote-supabase-psql.md`; incident forensics in `prod-incident-investigation.md`.
+the `remote-supabase` skill; incident forensics in the `prod-incident-investigation` skill.
 
 ## `supabase inspect db` (the fast path)
 

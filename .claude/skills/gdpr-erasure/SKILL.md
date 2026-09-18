@@ -1,7 +1,12 @@
+---
+name: gdpr-erasure
+description: Erase a user's account and their family's data from prod on request (GDPR right to erasure), or remove an account created by mistake so the address can sign up again. Inventory read-only, owner confirms, delete once, re-scan — nothing is written before the owner's go-ahead.
+---
+
 # GDPR Right to Erasure
 
 Erasing an account on request. There is no in-app flow, so this is a hand operation
-against prod over psql. Connection details: `remote-supabase-psql.md`.
+against prod over psql. Connection details: the `remote-supabase` skill.
 
 The shape is **inventory read-only, delete once, re-scan**. The delete cannot be undone,
 so nothing is written until the inventory is complete and the owner has confirmed it.
@@ -104,7 +109,7 @@ COMMIT;
   so a gamer who unexpectedly survives is caught before commit, not after.
 - **psql, not the Admin API**, because the prod service-role key is deliberately absent
   from `.env.local`. For a delete, raw SQL on `auth.users` is safe; the reason to prefer
-  the Admin API for an email change (`correct-user-email.md`) doesn't apply when the row
+  the Admin API for an email change (the `correct-user-email` skill) doesn't apply when the row
   is removed rather than updated. Storage objects are the exception: a SQL delete leaves
   the file in the bucket, so a storage hit in step 2 is removed through the Storage API
   first.

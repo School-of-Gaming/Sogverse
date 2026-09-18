@@ -28,7 +28,7 @@ RSC prefetch runs on Next's default (`prefetch={true}`; the `prefetch={false}` w
 
 ## Real-user data (Speed Insights)
 
-Vercel Speed Insights collects Core Web Vitals (TTFB/FCP/LCP/INP/CLS plus a Real Experience Score) from real production visitors. Two readers, both owned by `../runbooks/vercel-analytics.md`:
+Vercel Speed Insights collects Core Web Vitals (TTFB/FCP/LCP/INP/CLS plus a Real Experience Score) from real production visitors. Two readers, both owned by the `vercel-analytics` skill:
 
 - **`vercel metrics` for a specific question.** The vitals are first-class metrics there, sliceable by route, device, day and `attribution_target` — the CSS path of the LCP element, which is what turns an LCP number into a diagnosis. It rides the CLI's own login, so it needs no token handling and any session can run it. The Pro plan serves the latest 30 days only.
 - **`npm run perf:insights` (`scripts/speed-insights.mjs`) for a broad periodic pull** — every metric × device × percentile plus per-route breakdowns in one command. No official read API stands behind it (the documented Speed Insights API is intake-only), so it calls the internal endpoint the dashboard itself uses, authenticating with the local Vercel CLI login.

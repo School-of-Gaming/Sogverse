@@ -5,7 +5,7 @@ import { z } from "zod";
 /**
  * A reader for Vercel Web Analytics pageview counts, through the one documented
  * REST endpoint for them: `GET /v1/query/web-analytics/visits/aggregate`
- * (`docs/runbooks/vercel-analytics.md` records its verified parameters and
+ * (the `vercel-analytics` skill records its verified parameters and
  * quirks). Server-only, because the token reads every page of the project.
  *
  * **Its one promise is a complete count.** The endpoint answers at most 100

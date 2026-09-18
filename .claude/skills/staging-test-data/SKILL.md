@@ -1,7 +1,12 @@
+---
+name: staging-test-data
+description: Create test data on staging — products, prices, groups, anything product-shaped — through the real admin RPCs over psql with impersonated admin claims, never by hand-INSERT. Also verifying Stripe test-mode outcomes.
+---
+
 # Creating staging test data through real RPCs
 
 To create test data on **staging** through the real admin RPCs — so every RAISE, CHECK
-and RLS policy applies — run them via psql (connection: `remote-supabase-psql.md`) with
+and RLS policy applies — run them via psql (connection: the `remote-supabase` skill) with
 transaction-local claims impersonating an admin. **Never hand-INSERT product-shaped
 data**; the RPCs are the only writers that keep the invariants.
 

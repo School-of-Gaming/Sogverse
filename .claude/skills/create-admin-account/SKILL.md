@@ -1,9 +1,14 @@
+---
+name: create-admin-account
+description: Create a new admin account on staging or prod by hand, since no UI or route mints one — a passwordless auth user through the Admin API, then the profile promoted over psql.
+---
+
 # Creating an admin account by hand
 
 There is no registration route, script, or admin UI that mints an **admin** account —
 the signup trigger hardcodes `customer`, and the gamer/gedu RPCs are the only promotion
 paths. Admins are made by hand, in two steps (connection details:
-`remote-supabase-psql.md`):
+the `remote-supabase` skill):
 
 1. `POST {SUPABASE_URL}/auth/v1/admin/users` with the service-role key — `email`,
    `email_confirm: true`, and `user_metadata` carrying `first_name` / `last_name` /

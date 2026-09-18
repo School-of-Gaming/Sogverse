@@ -1,4 +1,4 @@
-# Slack Integration — purchase notifications
+# Slack purchase notifications
 
 **Purchase notifications to the internal staff channel** are live, and **no Sogverse code
 runs in the path**: a Stripe Dashboard Workflow reads Checkout Session metadata and the
@@ -7,6 +7,9 @@ metadata when it creates the session. Everything you might change is in the Stri
 Dashboard, not in this repo — do not build an app-side helper to get these notifications.
 (Sogverse sending a Slack message *itself* is a separate, unbuilt idea: see
 `../investigations/slack-sending-from-sogverse.md`.)
+
+This doc is how the mechanism works and what Sogverse owes it. Building, testing and
+editing the workflow in the Dashboard is the `slack-purchase-notifications` skill.
 
 ## Shape of the mechanism
 
@@ -17,30 +20,8 @@ Dashboard, not in this repo — do not build an app-side helper to get these not
   Sogverse for this path.
 - **Sogverse's half of the contract is metadata on the Checkout Session** — everything the
   message says that Stripe does not already know comes from there.
-
-## One-time setup
-
-1. Install **Stripe Workflows for Slack** from the Stripe App Marketplace.
-2. Connect the Slack workspace in the app's settings.
-3. `/invite @Stripe` into the target channel — the app only lists channels it is a member
-   of, so the workflow's Slack action cannot see the channel until this is done. The action
-   then picks it from a dropdown.
-
-**The workflow that posts to the staff channel is live-mode only.** A test-mode copy pointed
-at the same channel would post every staging and local development checkout to it.
-
-To iterate on a workflow, build a test-mode or sandbox copy pointed at a **scratch channel**,
-and repoint to the staff channel only once the message reads correctly. Two ways to feed it:
-
-- `stripe trigger checkout.session.completed` with `--add
-  checkout_session:metadata[key]=value` for each key — fast, no deploy, and the right loop for
-  wording and for settling the unverified mechanics below. A synthetic fixture does not fill
-  `customer_details`, so name and email render empty here.
-- A real test-mode checkout against a running build — slower, and the only test that proves the
-  metadata keys the code actually writes match the names the template reads.
-
-Account limit: 50 workflows in total, all of which may be active. Workflows have drafts,
-versioning, and per-run observability in the Dashboard — a failed run is diagnosable there.
+- **The workflow that posts to the staff channel is live-mode only.** A test-mode copy pointed
+  at the same channel would post every staging and local development checkout to it.
 
 ## Why there is no raw Stripe → Slack webhook
 
@@ -139,20 +120,16 @@ spoofed origin is a phishing vector aimed at our own team.
 leaves the code correct while links in already-posted messages go stale. Acceptable because
 such a message is read within minutes of the purchase.
 
-## Message template mechanics
+## Metadata visibility
 
-- Slack mrkdwn is supported: `*bold*`, `_italic_`, `~strike~`, inline and fenced code, block
-  quotes, `:emoji:`, and lists. Line breaks are preserved.
-- Hyperlinks are `<url|display text>`. Mentions use Slack ids, not display names.
-- **`Include dashboard link` gives exactly one native Stripe deep link**, keyed to a single
-  object id. Any further Stripe links must be written into the template by hand.
+- **Metadata is never shown to customers** — absent from Checkout, receipts, invoices and
+  the billing portal. It *is* visible to anyone with Stripe Dashboard access, and to
+  everyone in the Slack channel.
+- The customer-visible sibling field is the object's `description`, which parents do read in
+  the hosted billing portal.
+- Put nothing sensitive in either.
 
-Two mechanics are **unverified** — confirm them in a sandbox before relying on either:
-
-- whether a variable interpolates *inside* a URL string;
-- the exact variable path the Dashboard's picker uses for metadata keys.
-
-## Operational cautions
+## What the channel does not tell staff
 
 - **The channel is not a complete signup feed — only paid Stripe checkouts appear.** A free
   product, a municipality (externally-contracted) club and a waitlist join all confirm their
@@ -169,68 +146,6 @@ Two mechanics are **unverified** — confirm them in a sandbox before relying on
   code does the same — both render as a zero amount. A partial promotion or a proration
   shows a reduced figure rather than the list price.
 
-## Metadata visibility
-
-- **Metadata is never shown to customers** — absent from Checkout, receipts, invoices and
-  the billing portal. It *is* visible to anyone with Stripe Dashboard access, and now to
-  everyone in the Slack channel.
-- The customer-visible sibling field is the object's `description`, which parents do read in
-  the hosted billing portal.
-- Put nothing sensitive in either.
-
-## Editing the message template: paste, don't click
-
-Editing the workflow's message template field-by-field is slow — each variable is a
-picker click — so build the whole template and paste it in one shot. Verified working
-2026-08-14.
-
-The template field is a **Draft.js** editor. Two consequences:
-
-- **Replacing the DOM/`innerHTML` does nothing.** Draft's ContentState is the source of
-  truth and the next render discards outside mutation. Don't offer this.
-- **Pasted HTML *is* parsed, including variable chips.** Put the template on the
-  clipboard as a **CF_HTML flavour** and paste — the chips reconstruct.
-
-A chip is a span whose `data-template-variable` attribute holds this JSON
-(double-quoted attribute, so inner quotes are `&quot;`):
-
-```json
-{"variableKey":"0","dynamicValue":{"type":"dynamic",
- "step":{"type":"trigger","triggerSchemaId":"stripe.api.v1_checkout_session_completed"},
- "propertyPath":["metadata"],"triggerSourceType":"trigger_payload","mapKey":"productName"}}
-```
-
-`propertyPath` is the object path; `mapKey` names the key inside a map and is **free
-text**, so a key need not have appeared in any past event. Omit `mapKey` for plain
-fields (`["amount_total"]`, `["customer_details","name"]`). Sequential `variableKey`
-values work. Slack's labelled-link form is literal text around a chip —
-`&lt;CHIP|Admin product&gt;` — so only the URL is dynamic.
-
-Two traps that cost real time:
-
-- **Keep the HTML pure ASCII.** .NET's `DataObject.SetData("HTML Format", …)` mangles
-  non-ASCII on the way to the clipboard — use entities (`&#183;`). The plain-text
-  fallback flavour is fine as-is.
-- **Run PowerShell with `-STA`**, and build the CF_HTML header manually with **byte**
-  offsets (`Version:0.9`, `StartHTML`, `EndHTML`, `StartFragment`, `EndFragment`). Set
-  both the HTML flavour and a plain-text fallback on one `DataObject`.
-
-**A Checkout Session has several metadata maps — pick the right one in the chip.** The
-picker offers all of them: `metadata` (the session's own — **the Slack keys live
-here**), `invoice_creation.invoice_data.metadata` (the finance snapshot, one-off
-purchases only), `subscription_data.metadata` (subscription checkouts only). Pointing a
-chip at the wrong map never resolves.
-
-Constraints that rule out the obvious approaches:
-
-- **Workflows have no API** — the workflow endpoints all 404 (missing endpoint, not a
-  permissions wall). Dashboard-only: a session cannot read or edit a workflow and must
-  ask for a screenshot of the trigger, conditions, and template.
-- **Workflows and Stripe Apps are per-mode** — an app installed on live shows "App not
-  installed" in test mode and needs installing again there.
-- **`stripe trigger` fires test-mode events only**, so a live workflow cannot be
-  exercised synthetically — only by a real purchase.
-
 ## Link previews (unfurls)
 
 The message's three links all unfurl. The shop link unfurls correctly (real product
@@ -238,7 +153,7 @@ image and name, built on purpose by the product metadata). The two admin links u
 as the useless "Sign In" card — a gated URL 307s to `/login`, a public page with a
 genuine OG card — tripling every message's height. The owner's ruling (2026-08-23):
 exactly one preview, the shop link. The decided fix is
-`docs/plans/suppress-admin-link-unfurls.md`; when it lands, this section gains the
+`../plans/suppress-admin-link-unfurls.md`; when it lands, this section gains the
 result. Verified dead ends (do not re-try): robots.txt is live and correct but is not
 the lever; the labelled-link form still unfurls; there is no Stripe-side or Slack-side
 per-link toggle; backticking a URL kills the unfurl and the clickability together.

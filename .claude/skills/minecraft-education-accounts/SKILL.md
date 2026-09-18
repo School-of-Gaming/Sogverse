@@ -1,10 +1,15 @@
+---
+name: minecraft-education-accounts
+description: Manage the @gamer.sog.gg Minecraft Education account pool and the SOGGeduNN pool logins in Entra ID — a full term reset, adding accounts to the live pool, licence capacity and A3 seats, the naming and password schemes, and the handout sheet. Runs scripts/minecraft-edu-accounts.mjs.
+---
+
 # Minecraft Education Accounts
 
-Runbook for the `@gamer.sog.gg` account pool — the shared Minecraft Education
+The `@gamer.sog.gg` account pool — the shared Minecraft Education
 class logins a gedu hands out at the start of a session.
 
 The pool is generated in bulk, used for a term, then wiped and regenerated.
-`scripts/minecraft-edu-accounts.mjs` performs every step below; this document
+`scripts/minecraft-edu-accounts.mjs` performs every step below; this skill
 explains *why* each step is shaped the way it is, because most of the design is
 working around platform behaviour that is not documented anywhere obvious.
 
@@ -38,7 +43,7 @@ on the educator domain, and the two mechanisms must not be mixed: `department`
 is what the Dynamic Gamers rule matches, so a gedu account carrying it joins a
 group whose entire meaning is "the gamer pool" and makes that group's membership
 count stop answering the question it exists to answer. The static group is the
-one this document otherwise says to leave alone; a `SOGGeduNN` login is the one
+one this skill otherwise says to leave alone; a `SOGGeduNN` login is the one
 sanctioned write to it.
 
 **The trade-off that comes with it:** an explicit membership write licenses

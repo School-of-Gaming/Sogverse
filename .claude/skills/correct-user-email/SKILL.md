@@ -1,10 +1,15 @@
+---
+name: correct-user-email
+description: Change or correct a user's email address on staging or prod (a signup typo, or a duplicate account already holding the right address) — there is no in-app flow. Runs scripts/correct-user-email.ts and covers the duplicate-account case.
+---
+
 # Correcting a user's email by hand
 
 There is no email-change flow in the app — `profiles.email` carries no UPDATE grant for
 `authenticated`, so even an admin session cannot write it through PostgREST. The signup
 typo is therefore a hand operation.
 
-`scripts/correct-user-email.ts` is the how; this file is the why. Report-only unless
+`scripts/correct-user-email.ts` is the how; this skill is the why. Report-only unless
 told otherwise, and safe to repeat:
 
 ```bash
@@ -13,7 +18,7 @@ npx tsx scripts/correct-user-email.ts --user <uuid> --email <new> --prod --apply
 ```
 
 Without `--prod` it runs against staging. Connection details for reading the result back:
-`remote-supabase-psql.md`.
+the `remote-supabase` skill.
 
 ## The two writes, and why the order is fixed
 

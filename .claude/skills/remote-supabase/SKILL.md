@@ -1,6 +1,11 @@
+---
+name: remote-supabase
+description: Connect to the remote staging or prod Supabase database with psql, or call its REST/Auth APIs from a script. Use before any query, inspection or hand write against a remote Sogverse database — host and credentials, which keys are staging and which prod, the read-only-session trap on writes, and why curl fails against REST/Auth.
+---
+
 # Remote Supabase via psql (staging and prod)
 
-How to connect to the remote Supabase databases with psql. Several other runbooks build
+How to connect to the remote Supabase databases with psql. Several other skills build
 on this one.
 
 - Pooler host is `aws-1-eu-north-1.pooler.supabase.com` (NOT `aws-0` — aws-0 answers
@@ -43,5 +48,5 @@ on this one.
   the signature of the curl trap above. `sb-project-ref` on the same response confirms
   which project answered. The body is empty, so the headers are the only signal.
 - For prod incident forensics (the `auth` schema tables, Vercel logs) see
-  `prod-incident-investigation.md`; for IO/perf/storage investigation see
-  `supabase-db-inspection.md`.
+  the `prod-incident-investigation` skill; for IO/perf/storage investigation see
+  the `supabase-db-inspection` skill.

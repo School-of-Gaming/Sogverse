@@ -48,7 +48,7 @@ made over sixty bot commits to keep `schema.sql` current.
 
 1. **Agents never write to staging or prod on their own initiative.** They read them to
    investigate; every write a piece of work needs goes to a seed file or a local
-   database. A runbook run at the owner's explicit instruction (creating an admin
+   database. A procedure skill run at the owner's explicit instruction (creating an admin
    account, correcting an email, putting test data on staging) is the exception and
    stays as it is. This is a written rule, not a mechanism: `.env.local` stays a plain
    copy with its current keys.
@@ -286,12 +286,12 @@ land (see there).
    the own-branch staleness warning and the "objects outside `public`" section, both of
    which this retires) and every live reference to `schema.sql`: the root `CLAUDE.md`,
    the CI workflow, doc comments in the service contract files, the database
-   authorization architecture doc, the runbooks, and the other open plan that cites it.
+   authorization architecture doc, the procedure skills in `.claude/skills/`, and the other open plan that cites it.
    Nothing executable reads the file. Delete the `TODO.md` item about the snapshot's bot
    commit blocking release PRs: removing the bot commit resolves it.
 6. **The rich example seed**, as its own file, not in `config.toml`. Built through the
    admin RPCs under impersonated admin claims (the pattern in
-   `docs/runbooks/staging-test-data.md`): products of every type and lifecycle state,
+   the `staging-test-data` skill): products of every type and lifecycle state,
    families with gamers, certified and uncertified gedus, groups with sessions and
    feedback. It is a `.sql` file the local stack script applies after `seed.sql`:
    accounts as direct auth inserts exactly as `seed.sql` does them (same shared test

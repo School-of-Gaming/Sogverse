@@ -1,3 +1,8 @@
+---
+name: prod-incident-investigation
+description: Investigate a production incident — the site was broken, errors, failed sign-ins in a past time window — with Vercel logs and the prod Supabase auth tables. Covers the vercel logs flags without which history reads as empty, and where auth forensics live when the audit log is empty.
+---
+
 # Investigating a prod incident (Vercel + Supabase logs)
 
 How to investigate "the site was broken N minutes ago" with the Vercel and Supabase
@@ -37,7 +42,7 @@ CLIs — the reusable methodology, with the gotchas that each cost trial-and-err
 
 ## Supabase prod (NOT staging)
 
-- Connection: `remote-supabase-psql.md`. Always confirm which project you are on before
+- Connection: the `remote-supabase` skill. Always confirm which project you are on before
   drawing conclusions — the plain `SUPABASE_*` keys point at staging.
 - **`auth.audit_log_entries` is EMPTY on prod** (audit logging disabled). For
   sign-in/signup/session forensics query the `auth` schema directly: `auth.sessions`
@@ -46,7 +51,7 @@ CLIs — the reusable methodology, with the gotchas that each cost trial-and-err
   timestamps to confirm a theory.
 - Supabase's own service-level logs live in Logflare analytics, reachable via the
   Management API with `SUPABASE_ACCESS_TOKEN` (in `.env.local`; see
-  `supabase-db-inspection.md` for what it can and cannot reach). In practice the
+  the `supabase-db-inspection` skill for what it can and cannot reach). In practice the
   DB-password psql path plus Vercel's `--level error` logs already capture what is
   needed.
 

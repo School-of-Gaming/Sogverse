@@ -477,6 +477,6 @@ box, generates zero traffic, and a moderator's remove control is its repair.
 image bytes are kept indefinitely and nothing deletes them, but the app reads only the
 latest 200 messages of the channel a room is currently in and never shows a past session's
 log at all — so an incident reported that evening is answered through
-`docs/runbooks/remote-supabase-psql.md`. That path is also why the row records who removed
+the `remote-supabase` skill. That path is also why the row records who removed
 a message: nothing on this surface draws it, and "who took this down" still has to be
 answerable.

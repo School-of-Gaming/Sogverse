@@ -72,8 +72,8 @@ readings that cannot be compared to last week's three readings.
 
 The first pass reasoned about instruments without asking where anyone actually is. These
 numbers reorder the conclusions, so they come before them. Traffic is from Web Analytics
-(see `../runbooks/vercel-analytics.md`); session and attendance counts are from prod
-Postgres (`../runbooks/remote-supabase-psql.md`).
+(see the `vercel-analytics` skill); session and attendance counts are from prod
+Postgres (the `remote-supabase` skill).
 
 ### Where people are — 30 days, production
 

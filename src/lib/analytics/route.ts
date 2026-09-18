@@ -11,7 +11,7 @@
  * So the route is derived here instead, from the same pathnames map the proxy
  * normalizes against: the **internal template**, with the locale segment
  * dropped. Every locale of a page lands on one row (`/shop`, `/shop/[id]`), and
- * the `route` filters in the analytics runbook keep working unchanged. `path`
+ * the `route` filters in the `vercel-analytics` skill keep working unchanged. `path`
  * stays the raw browser pathname, so the per-language split is still readable
  * from `request_path`.
  *

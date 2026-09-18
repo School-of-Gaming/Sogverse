@@ -295,8 +295,8 @@ The instrument the probe list did not know about: `vercel.request.count` carries
 `is_prefetch_request` dimension, and its `path_type eq 'streaming_func'` slice equals
 `vercel.function_invocation.count` request for request (Monday Sep 7: 28,972 + 4,566 =
 33,538 on both metrics). So the prefetch share of function invocations is a zero-code read,
-and the proxy log line the probe proposed is not needed. The runbook
-`docs/runbooks/vercel-analytics.md` records the read.
+and the proxy log line the probe proposed is not needed. The `vercel-analytics`
+skill records the read.
 
 | Window (Helsinki days) | Prefetch invocations | Real invocations | Prefetch share | Pageviews | Invocations : pageview |
 |---|---|---|---|---|---|
@@ -532,7 +532,7 @@ measurements, cheap, each answering exactly one question.
 2. **Role-lookup incidence and cost.** Same temporary proxy line records whether the
    request skipped the lookup (PIN short-circuit) or paid it; on the database side,
    `pg_stat_statements` gives the role query's call count and total exec time as a share
-   of everything (the remote-inspection runbook covers access). Settles whether (d)'s
+   of everything (the `supabase-db-inspection` skill covers access). Settles whether (d)'s
    bar is met with a number instead of an upper bound.
 3. **Click-latency control for (a).** Repeat the F1 benchmark protocol (real-browser
    trace on `/admin/users`, warm, signed-in — the canonical regression benchmark) on a

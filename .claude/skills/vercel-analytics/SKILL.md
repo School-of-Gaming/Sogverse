@@ -1,8 +1,13 @@
+---
+name: vercel-analytics
+description: Read Vercel Web Analytics and Speed Insights for the prod app — pageviews, visitors, UTM campaigns, Core Web Vitals and LCP diagnosis, prefetch share, function-invocation or edge-request spike alerts, traffic baselines. Covers vercel metrics, the Web Analytics REST endpoint, npm run perf:insights, and the flags that silently truncate results.
+---
+
 # Reading Vercel Web Analytics & Speed Insights
 
 How to read traffic/perf *measurements* for the prod app programmatically (team slug
 `school-of-gaming`, projectId `prj_25TSZ5ipsOc5Jx8s3nNMqrnXtVWA`). Distinct from
-`prod-incident-investigation.md`, which owns incident forensics via `vercel logs`.
+the `prod-incident-investigation` skill, which owns incident forensics via `vercel logs`.
 
 - **`vercel metrics` (re-verified 2026-08-28, CLI 59.4.0) is the easiest read — no token
   handling at all.** Needs CLI ≥ 59. `vercel metrics schema` lists every metric;
@@ -34,7 +39,7 @@ How to read traffic/perf *measurements* for the prod app programmatically (team 
   number on both metrics for a whole day), so `--group-by is_prefetch_request --group-by
   path_type` splits function invocations into prefetches and real navigations directly.
   Term-time reading: prefetch is 84–86% of invocations and 57% of all edge requests
-  (`../investigations/request-amplification.md`). Two consequences for reading alerts:
+  (`docs/investigations/request-amplification.md`). Two consequences for reading alerts:
   Vercel's "function invocations spike" / "edge requests spike" anomaly mails fire on the
   Monday-after-weekend ramp (weekend days run 5–12k invocations, weekdays 30–48k), and a
   single admin browser working the sidebar-and-list pages can be a quarter of a day's
@@ -108,7 +113,7 @@ How to read traffic/perf *measurements* for the prod app programmatically (team 
   `vercel metrics` filters accept dimensions only, the measure is not one
   (`-f "lcp_ms ge 2500"` → `invalid_query`), and there is no rating dimension, so no
   combination of flags gets there. Percentiles are reproducible; bucket shares are not.
-  That matters because `../architecture/performance.md` grades on the poor-bucket share
+  That matters because `docs/architecture/performance.md` grades on the poor-bucket share
   as well as p75 — **a snapshot pulled only from `vercel metrics` is missing half of
   what a verdict is supposed to weigh.** Use `vercel metrics` for a specific question,
   the script for a snapshot, and do not retire the script on the strength of the metrics
