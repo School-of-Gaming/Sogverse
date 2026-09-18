@@ -311,8 +311,10 @@ The design:
   - *On:* the owner asks; Claude creates a branch of the **staging** project (not of
     prod: *proven 2026-09-18*, see the probe below), pushes the worktree's migrations
     and both seeds through the session pooler, and points the worktree's running dev
-    server at it. After feedback that changes a migration, Claude resets and re-pushes
-    (half a minute).
+    server at it. After feedback that changes the schema, Claude pushes to the *running*
+    database: a new migration is a plain push; an edited one is a reset of the
+    database's contents followed by a push (half a minute). The instance, its keys and
+    its billed hour stay the same. It is never deleted and recreated for this.
   - *Off:* the owner says so, or the feature lands: `/worktree-flow`'s teardown deletes
     the branch, and `/cleanup-branches` deletes any whose git branch is gone. Data
     entered while testing dies with it; the next one starts from the seeds.
@@ -328,14 +330,21 @@ The design:
   Prod's project never gains branches, a mistake is confined to the staging project,
   and staging needs no cutover: its URL, Vercel env vars and Stripe webhook targets
   stay as they are.
-- **CI is the generator.** Its DB job already builds a database from the branch's
-  migrations on every push. It also produces the types and the schema directory and
-  uploads them as an artifact; the agent downloads and commits them. That replaces
-  "push to staging, then regenerate" with no hosted database, at the price of a CI
-  round trip (about four minutes) where a hosted apply took one. The first push of a
-  new migration is red on the comparison step by construction, and green once the
-  artifact is committed. One generator also means one `pg_dump` and one CLI version, so
-  the generated files cannot differ by who produced them.
+- **A manual GitHub Action is the generator.** A dedicated workflow, run on demand
+  against a ref, does one job: start a bare database, apply that ref's migrations,
+  produce the types and the schema directory, and upload them as an artifact. It runs
+  no lint, no tests and no build, and it commits nothing. The agent triggers it, waits,
+  downloads the artifact, and commits the files in its own feature commit, as the types
+  are committed today. That replaces "push to staging, then regenerate" with no hosted
+  database; it should take about two minutes; and the history carries no bot commits.
+  One generator also means one `pg_dump` and one CLI version, so the generated files
+  cannot differ by who produced them.
+  - The action needs the ref on GitHub, and a pushed branch triggers the full CI. So
+    the agent pushes the migration to a scratch ref the full CI ignores, generates
+    from that, and deletes it. The real branch is pushed once, complete and green.
+  - The full CI keeps the comparison: its DB job already builds from migrations, so
+    requiring what it generates to equal what was committed costs nothing extra, and
+    it is what catches a stale, hand-edited or wrongly merged generated file.
 - **A shared Vercel preview is the same switch with one more step.** Vercel still deploys every
   pushed branch, and that deployment still points at staging. For a branch with no
   migration that is today's behaviour and is fine. For a schema-changing branch it runs
@@ -372,9 +381,9 @@ The design:
   in `supabase/schema/`: a file per table holding the table with its indexes,
   constraints, policies, triggers, grants and comments; a file per function with its
   grants and comment; one for types. A script produces it by splitting `pg_dump` on the
-  object headers the dump already carries. CI generates it from the *branch's*
-  migrations in the same step as the types, the branch commits it, and it is never
-  hand-edited, exactly like the types. Today's snapshot is generated only on `dev`,
+  object headers the dump already carries. The manual action generates it from the
+  *branch's* migrations in the same run as the types, the branch commits it, and it is
+  never hand-edited, exactly like the types. Today's snapshot is generated only on `dev`,
   which is why it lags and is stale for whatever your own branch touched.
 - **CI verifies instead of committing:** the same job requires what it generated to be
   identical to what the branch committed. The bot commit to `dev` (62 so far) goes
@@ -424,9 +433,8 @@ CLI (Micro, `eu-north-1`), with no GitHub integration involved:
   not an extra instance. The probe ran for 40 minutes (under one cent) and was deleted.
 
 **Work done directly on `dev`** (small changes that skip `/worktree-flow`) stays
-workable. Without a migration nothing changes. With one, the generated files still come
-from CI: push the commit to a scratch ref so CI runs without touching `dev`, commit the
-artifact, then push `dev` green. The version is stamped at commit, which *is* landing,
+workable. Without a migration nothing changes. With one, the generated files come from
+the same manual action and scratch ref, then `dev` is pushed once, green. The version is stamped at commit, which *is* landing,
 so order holds; if the push is rejected because `dev` moved, rebase and restamp. What
 such a change skips is review, exactly as today; the release PR's required checks still
 stand between it and prod.
@@ -459,7 +467,7 @@ commitment, 2026-09-18).
 
 Each step pays off even if the next is never taken.
 
-1. CI as the generator (types now, the schema directory in step 4); the on/off branch
+1. The manual generate action (types now, the schema directory in step 4); the on/off branch
    database with its deletion in `/worktree-flow` and `/cleanup-branches`; the rich
    example seed. Agents stop pushing to staging, which ends every shared-staging
    collision at once.
@@ -495,8 +503,10 @@ Each step pays off even if the next is never taken.
 - How branch compute hours are counted, by reading the usage page after a few uses:
   that a part hour bills in full as documented for projects, and whether the buckets
   are clock hours or run from the branch's creation.
-- GitHub Actions minutes: what the extra generation pushes cost against the plan's
-  allowance.
+- GitHub Actions minutes: what the generate runs cost against the plan's allowance.
+- That the contents of a running branch database can be reset in place from the CLI
+  (not tried on the probe), and that `gen types` against CI's local stack matches what
+  the hosted database produced.
 - That `pg_dump`'s per-object headers split cleanly into files for every object class
   in the snapshot, and that the split is stable when an unrelated object is added.
 - That `gen types --local` output in CI matches the hosted output byte for byte.
