@@ -504,12 +504,34 @@ export const PREVIEW_SCENES = [
     surface: "municipality-invoicing",
     title: "Municipality invoicing",
     description:
-      "The CFO's monthly ledger over a fixture document, pinned to Thursday 21 May 2026: twelve municipalities, thirty-one clubs and every state a line on this page can be in. Expanding a municipality, opening a club's dated sessions and the expand-all control all work. The month stepper works too and stays in the preview — every month but May is empty, which is how the empty ledger is reached; the club names are real links out to the live admin pages.",
+      "The CFO's monthly ledger over a fixture document, pinned to Thursday 21 May 2026: twelve municipalities, thirty-one clubs and every state a line on this page can be in, including the per-customer Finvoice downloads — Tampere's two departments, the association buying Vantaa's clubs, Espoo refused for a club with no fee, Helsinki's youth department refused for having nothing to invoice, and a club nobody has named a buyer for. Expanding a municipality, opening a club's dated sessions and the expand-all control all work. The month stepper works too and stays in the preview — every month but May is empty, which is how the empty ledger is reached; the club names and the download links are real links out to the live admin pages and the live export route.",
     chrome: "admin",
     scenarios: [
       {
         slug: "working-month",
         label: "A month of invoicing",
+      },
+    ],
+  },
+  {
+    surface: "invoice-customers",
+    title: "Invoice customers",
+    description:
+      "The Fennoa buyers a municipality club is invoiced to: the list an admin manages them from, and the form behind it. Both bodies are the live ones over fixtures — typing works, the contract's refusals are real, and the save is inert except on the refused scenario, where it answers with the duplicate-number violation the database raises.",
+    chrome: "admin",
+    scenarios: [
+      { slug: "list", label: "Customers on file" },
+      {
+        slug: "list-empty",
+        label: "Nothing on file yet",
+        description: "The empty state, which a populated table cannot show.",
+      },
+      { slug: "form-new", label: "New customer" },
+      {
+        slug: "form-refused",
+        label: "Editing — the number is taken",
+        description:
+          "Every field filled, and the one refusal the form re-words rather than quoting.",
       },
     ],
   },

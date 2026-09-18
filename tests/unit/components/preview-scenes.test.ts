@@ -30,6 +30,12 @@ import {
   resolvePreviewInvoicingMonth,
 } from "@/components/admin/municipality-invoicing/mock-invoicing-fixtures";
 import { buildMunicipalityInvoicing } from "@/components/admin/municipality-invoicing/build-municipality-invoicing";
+import { finvoiceReadiness } from "@/lib/finvoice";
+import {
+  INVOICE_CUSTOMER_EDIT_FIXTURE,
+  INVOICE_CUSTOMER_FIXTURES,
+  INVOICE_CUSTOMER_SCENARIOS,
+} from "@/components/admin/invoice-customers/mock-invoice-customer-fixtures";
 import {
   GROUP_WORKSPACE_SCENARIOS,
   buildGroupWorkspaceFixture,
@@ -189,6 +195,12 @@ describe("registry scenarios match their fixtures", () => {
   it("municipality invoicing", () => {
     expect(slugsFor("municipality-invoicing")).toEqual([
       ...MUNICIPALITY_INVOICING_SCENARIOS,
+    ]);
+  });
+
+  it("invoice customers", () => {
+    expect(slugsFor("invoice-customers")).toEqual([
+      ...INVOICE_CUSTOMER_SCENARIOS,
     ]);
   });
 
@@ -1915,6 +1927,102 @@ describe("the municipality invoicing scene covers every ledger state", () => {
     expect(
       invoice.municipalities.filter((one) => one.clubsWithoutFee > 0),
     ).toHaveLength(1);
+    // And that club HAS a buyer, so the two gaps are visibly independent on
+    // the page rather than always arriving together.
+    expect(unpriced[0].invoiceCustomer).not.toBeNull();
+  });
+
+  it("blocks exactly one club's file for want of a customer, and no money", () => {
+    // A missing buyer costs a file and never a total, so the scene carries the
+    // state without it being able to move a figure — which is the thing a
+    // reviewer has to be able to see beside the fee warning it sits near.
+    expect(invoice.clubsWithoutCustomer).toBe(1);
+    const unlinked = clubs.filter((club) => club.invoiceCustomer === null);
+    expect(unlinked).toHaveLength(1);
+    expect(unlinked[0].recordedCount).toBeGreaterThan(0);
+    expect(unlinked[0].totalCents).toBeGreaterThan(0);
+    expect(
+      invoice.municipalities.filter((one) => one.clubsWithoutCustomer > 0),
+    ).toHaveLength(1);
+  });
+
+  it("shows a downloadable file, and both reasons one can be refused", () => {
+    // The scene is where the export is reviewed, so every state its controls
+    // can be in has to be on the one working month: a file that can be taken,
+    // a file blocked by a club with no fee, and a file blocked by a customer
+    // whose clubs did not run. The third is the one a month of ordinary clubs
+    // would never produce by itself, which is why a customer here buys exactly
+    // one club and that club recorded nothing.
+    const readiness = invoice.customers.map((one) => finvoiceReadiness(one));
+
+    expect(readiness.filter((one) => one.ok).length).toBeGreaterThanOrEqual(1);
+    expect(
+      readiness.flatMap((one) => (one.ok ? [] : [one.reason])).sort(),
+    ).toEqual(["club_without_fee", "nothing_to_invoice"]);
+  });
+
+  it("shows a municipality line carrying two customers' files", () => {
+    // The Tampere shape, read from the summaries the line actually renders.
+    const several = invoice.municipalities.filter(
+      (one) => one.customers.length > 1,
+    );
+    expect(several.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("has a municipality whose clubs share one customer", () => {
+    const shared = invoice.municipalities.filter((one) => {
+      const numbers = new Set(
+        one.clubs.map((club) => club.invoiceCustomer?.fennoa_customer_no),
+      );
+      return one.clubs.length >= 4 && numbers.size === 1 && !numbers.has(undefined);
+    });
+    expect(shared.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("has a municipality whose clubs split across two customers", () => {
+    // The Tampere shape — library clubs and school clubs bought by two
+    // departments under two agreements — which is the case a per-municipality
+    // link could not express at all.
+    const split = invoice.municipalities.filter(
+      (one) =>
+        new Set(
+          one.clubs.flatMap((club) =>
+            club.invoiceCustomer === null
+              ? []
+              : [club.invoiceCustomer.fennoa_customer_no],
+          ),
+        ).size > 1,
+    );
+    expect(split.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("has a buyer that is not the municipality its clubs meet in", () => {
+    // The association case: a customer whose invoice name is nobody's
+    // municipality name, so nothing on this page can be deriving the buyer
+    // from where a club meets.
+    const municipalityNames = new Set(
+      invoice.municipalities.map((one) => one.name),
+    );
+    const outsiders = clubs.filter(
+      (club) =>
+        club.invoiceCustomer !== null &&
+        ![...municipalityNames].some((name) =>
+          club.invoiceCustomer!.invoice_name.startsWith(name),
+        ),
+    );
+    expect(outsiders.length).toBeGreaterThan(0);
+  });
+
+  it("carries a buyer with a reference and extra invoice text, and ones without", () => {
+    // Both optional fields are optional in the data too, so the serializer's
+    // two branches each have a fixture behind them.
+    const buyers = clubs.flatMap((club) =>
+      club.invoiceCustomer === null ? [] : [club.invoiceCustomer],
+    );
+    expect(buyers.some((one) => one.your_reference !== null)).toBe(true);
+    expect(buyers.some((one) => one.your_reference === null)).toBe(true);
+    expect(buyers.some((one) => one.invoice_text !== null)).toBe(true);
+    expect(buyers.every((one) => /^[A-Z]{2}$/.test(one.country_code))).toBe(true);
   });
 
   it("collapses two groups on one date into one billed session", () => {
@@ -2034,5 +2142,69 @@ describe("the municipality invoicing scene covers every ledger state", () => {
     });
     expect(built.municipalities).toEqual([]);
     expect(built.totalCents).toBe(0);
+  });
+});
+
+/**
+ * The invoice-customer scene's fixtures.
+ *
+ * The list body renders exactly the rows it is handed, in exactly the order it
+ * is handed them — it sorts nothing — so an unsorted fixture would be a preview
+ * of a page the database cannot produce. The three shapes the schema exists for
+ * are pinned here too: one city as two customers, a buyer that is not a
+ * municipality, and both states of the optional reference on one screen.
+ */
+describe("the invoice customers scene", () => {
+  it("is in the order the read delivers: invoice name, then id", () => {
+    const sorted = [...INVOICE_CUSTOMER_FIXTURES].sort(
+      (a, b) =>
+        a.invoice_name.localeCompare(b.invoice_name) ||
+        a.id.localeCompare(b.id),
+    );
+    expect(INVOICE_CUSTOMER_FIXTURES.map((row) => row.id)).toEqual(
+      sorted.map((row) => row.id),
+    );
+  });
+
+  it("shows the two shapes a per-municipality link could not express", () => {
+    // One city, two customers: two rows sharing a city and nothing else.
+    const tampere = INVOICE_CUSTOMER_FIXTURES.filter(
+      (row) => row.city === "Tampere",
+    );
+    expect(tampere).toHaveLength(2);
+    expect(new Set(tampere.map((row) => row.fennoa_customer_no)).size).toBe(2);
+
+    // And a buyer whose name is nobody's municipality — the association that
+    // buys clubs sited somewhere it is not.
+    expect(
+      INVOICE_CUSTOMER_FIXTURES.some(
+        (row) => !row.invoice_name.includes(row.city),
+      ),
+    ).toBe(true);
+  });
+
+  it("puts both states of the optional fields on the one list", () => {
+    expect(
+      INVOICE_CUSTOMER_FIXTURES.some((row) => row.your_reference !== null),
+    ).toBe(true);
+    expect(
+      INVOICE_CUSTOMER_FIXTURES.some((row) => row.your_reference === null),
+    ).toBe(true);
+  });
+
+  it("opens the refused form on the row that fills every field", () => {
+    // The form scenario that shows an error is also the one that shows every
+    // field with something in it, so the create scenario beside it is the only
+    // place a field is empty.
+    expect(INVOICE_CUSTOMER_FIXTURES).toContain(INVOICE_CUSTOMER_EDIT_FIXTURE);
+    expect(INVOICE_CUSTOMER_EDIT_FIXTURE.your_reference).not.toBeNull();
+    expect(INVOICE_CUSTOMER_EDIT_FIXTURE.invoice_text).not.toBeNull();
+  });
+
+  it("gives every customer a unique Fennoa number, which is the join key", () => {
+    const numbers = INVOICE_CUSTOMER_FIXTURES.map(
+      (row) => row.fennoa_customer_no,
+    );
+    expect(new Set(numbers).size).toBe(numbers.length);
   });
 });

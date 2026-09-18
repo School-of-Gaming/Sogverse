@@ -186,6 +186,8 @@ const TESTS = {
     "tests/integration/api/tools-minecraft-password-reset.test.ts",
   minecraftJoinCheck: "tests/integration/api/minecraft-join-check.test.ts",
   minecraftVerify: "tests/integration/api/minecraft-verify.test.ts",
+  municipalityInvoicingFinvoice:
+    "tests/integration/api/municipality-invoicing-finvoice.test.ts",
   // The partner API: one suite for what its resources share (the key, query
   // validation, the envelope, the catch-all), and one per resource for what
   // that resource answers. A resource entry names its own suite once that
@@ -279,6 +281,20 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: ADMIN_ONLY,
         body: { kind: "json", schema: "adminGameAccountBody" },
         test: TESTS.adminUserGameAccount,
+      },
+    },
+  },
+
+  // The one route on this surface that answers with a document rather than a
+  // payload: a Finvoice XML file, as an attachment. Query-only by nature — a
+  // download is a navigation the ledger links to, so there is no body to
+  // discipline and nothing is written, which is also why it is a GET.
+  "src/app/api/admin/municipality-invoicing/finvoice/route.ts": {
+    handlers: {
+      GET: {
+        posture: ADMIN_ONLY,
+        body: { kind: "none" },
+        test: TESTS.municipalityInvoicingFinvoice,
       },
     },
   },

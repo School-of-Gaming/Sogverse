@@ -119,6 +119,7 @@ const validBody = {
   primary_gedu_fee_cents: null,
   assistant_gedu_fee_cents: null,
   municipality_fee_cents: null,
+  invoice_customer_id: null,
 };
 
 function createRequest(
@@ -302,6 +303,52 @@ describe("POST /api/admin/products/create", () => {
     // DEFAULT NULL fills in the omission — untagged reaches the column.
     const args = mockUserRpc.mock.calls[0][1];
     expect(args.p_tag).toBeUndefined();
+  });
+
+  it("passes an invoice customer through, and sends an omission for a club with none", async () => {
+    const CUSTOMER_ID = "7c1f6a4e-2b58-4f0a-9d3c-51ae7b208f64";
+    mockAuthenticatedAdmin();
+    await POST(
+      createRequest({
+        data: {
+          ...validBody,
+          product_type: "municipality_club",
+          invoice_customer_id: CUSTOMER_ID,
+        },
+      }),
+    );
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "create_product",
+      expect.objectContaining({ p_invoice_customer_id: CUSTOMER_ID }),
+    );
+
+    mockUserRpc.mockClear();
+    await POST(createRequest({ data: validBody }));
+    // Same shape as an untagged product: null maps to undefined, supabase-js
+    // drops the key, and the RPC's DEFAULT NULL writes "nobody has said who
+    // pays yet" — which is what a club looks like the day it is created.
+    const args = mockUserRpc.mock.calls[0][1];
+    expect(args.p_invoice_customer_id).toBeUndefined();
+  });
+
+  it("returns 400 when the invoice customer field is missing", async () => {
+    // Required-nullable for the reason the tag is: the RPC parameter is
+    // defaulted, so a caller that forgets the field would unlink a club rather
+    // than leave it alone.
+    mockAuthenticatedAdmin();
+    const { invoice_customer_id: _id, ...noCustomer } = validBody;
+    const response = await POST(createRequest({ data: noCustomer }));
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when the invoice customer is not a uuid", async () => {
+    mockAuthenticatedAdmin();
+    const response = await POST(
+      createRequest({ data: { ...validBody, invoice_customer_id: "F0204" } }),
+    );
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
   });
 
   it("returns 400 when the tag field is missing", async () => {

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import {
   Coins,
   Building2,
+  ReceiptText,
   UserMinus,
   UserRoundX,
   UserX,
@@ -78,6 +79,11 @@ export const ISSUE_PRESENTATION: Record<ProductIssueKind, IssuePresentation> = {
   "empty-group-without-gedu": { icon: UserMinus, tone: "muted" },
   "missing-gedu-fee": { icon: Coins, tone: "muted" },
   "missing-municipality-fee": { icon: Building2, tone: "muted" },
+  // A receipt rather than the `Building2` above it: the two lines are adjacent
+  // and say almost the same thing, so repeating the glyph would leave the pair
+  // reading as one sentence printed twice. What differs is what is missing — a
+  // price the city pays, and the party the invoice is addressed to.
+  "missing-invoice-customer": { icon: ReceiptText, tone: "muted" },
 };
 
 /** Rank of an issue kind — lower is worse. Drives both sorts on this page. */
@@ -210,6 +216,8 @@ function useIssueText(issue: ProductIssue): string {
       return t("missingGeduFee");
     case "missing-municipality-fee":
       return t("missingMunicipalityFee");
+    case "missing-invoice-customer":
+      return t("missingInvoiceCustomer");
   }
 }
 

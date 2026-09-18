@@ -401,6 +401,19 @@ export type CreateProductInput = {
   assistant_gedu_fee_cents: number | null;
   municipality_fee_cents: number | null;
   /**
+   * The Fennoa customer a municipality club is invoiced to, or `null` where
+   * nobody has agreed who pays yet — the ordinary state at creation, and the
+   * one the invoicing page flags before a file can be produced.
+   *
+   * Per club and never derived from the club's location: one city can be two
+   * customers, and an association can buy clubs sited in a municipality it is
+   * not. Required and nullable for the same reason `tag` is — the RPC parameter
+   * is `DEFAULT NULL`, so an omitted field would unlink a club rather than
+   * leave it alone. A non-municipality product may not carry one at all, which
+   * the database's own CHECK refuses.
+   */
+  invoice_customer_id: string | null;
+  /**
    * The catalogue entry this product's picture comes from, or `null` for a
    * product with no picture. Required and nullable for the same reason `tag`
    * is: the route writes the column on every save, so an omitted field would
@@ -475,6 +488,10 @@ export type UpdateProductInput = {
   primary_gedu_fee_cents: number | null;
   assistant_gedu_fee_cents: number | null;
   municipality_fee_cents: number | null;
+  /** The club's Fennoa invoice customer — see CreateProductInput. Required and
+   *  nullable on the update half too, and that is the load-bearing one: the RPC
+   *  assigns every editable column, so an omitted id unlinks the club. */
+  invoice_customer_id: string | null;
   /** Catalogue entry id, or `null` for no picture — see CreateProductInput.
    *  Required and nullable on the update half too, and that is the
    *  load-bearing one: the route writes the column on every save. */

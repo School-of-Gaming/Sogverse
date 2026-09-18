@@ -1214,6 +1214,48 @@ export type Database = {
           },
         ]
       }
+      invoice_customers: {
+        Row: {
+          city: string
+          country_code: string
+          created_at: string
+          fennoa_customer_no: string
+          id: string
+          invoice_name: string
+          invoice_text: string | null
+          postal_code: string
+          street: string
+          updated_at: string
+          your_reference: string | null
+        }
+        Insert: {
+          city: string
+          country_code?: string
+          created_at?: string
+          fennoa_customer_no: string
+          id?: string
+          invoice_name: string
+          invoice_text?: string | null
+          postal_code: string
+          street: string
+          updated_at?: string
+          your_reference?: string | null
+        }
+        Update: {
+          city?: string
+          country_code?: string
+          created_at?: string
+          fennoa_customer_no?: string
+          id?: string
+          invoice_name?: string
+          invoice_text?: string | null
+          postal_code?: string
+          street?: string
+          updated_at?: string
+          your_reference?: string | null
+        }
+        Relationships: []
+      }
       locations: {
         Row: {
           country_code: string | null
@@ -1918,6 +1960,7 @@ export type Database = {
           id: string
           image_id: string | null
           image_path: string | null
+          invoice_customer_id: string | null
           is_remote: boolean
           is_visible: boolean
           location_id: string | null
@@ -1950,6 +1993,7 @@ export type Database = {
           id?: string
           image_id?: string | null
           image_path?: string | null
+          invoice_customer_id?: string | null
           is_remote: boolean
           is_visible?: boolean
           location_id?: string | null
@@ -1982,6 +2026,7 @@ export type Database = {
           id?: string
           image_id?: string | null
           image_path?: string | null
+          invoice_customer_id?: string | null
           is_remote?: boolean
           is_visible?: boolean
           location_id?: string | null
@@ -2023,6 +2068,13 @@ export type Database = {
             columns: ["image_id"]
             isOneToOne: false
             referencedRelation: "product_images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_invoice_customer_id_fkey"
+            columns: ["invoice_customer_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_customers"
             referencedColumns: ["id"]
           },
           {
@@ -2797,6 +2849,19 @@ export type Database = {
         }
         Returns: undefined
       }
+      create_invoice_customer: {
+        Args: {
+          p_city: string
+          p_country_code?: string
+          p_fennoa_customer_no: string
+          p_invoice_name: string
+          p_invoice_text?: string
+          p_postal_code: string
+          p_street: string
+          p_your_reference?: string
+        }
+        Returns: string
+      }
       create_participation: {
         Args: {
           p_consented_documents?: string[]
@@ -2815,6 +2880,7 @@ export type Database = {
           p_end_date?: string
           p_for_gamers: boolean
           p_for_parents: boolean
+          p_invoice_customer_id?: string
           p_is_remote: boolean
           p_is_visible?: boolean
           p_location_id?: string
@@ -3282,6 +3348,20 @@ export type Database = {
         Args: { p_code: string; p_message_id: string }
         Returns: boolean
       }
+      update_invoice_customer: {
+        Args: {
+          p_city: string
+          p_country_code?: string
+          p_fennoa_customer_no: string
+          p_id: string
+          p_invoice_name: string
+          p_invoice_text?: string
+          p_postal_code: string
+          p_street: string
+          p_your_reference?: string
+        }
+        Returns: string
+      }
       update_product: {
         Args: {
           p_assistant_gedu_fee_cents?: number
@@ -3290,6 +3370,7 @@ export type Database = {
           p_for_gamers: boolean
           p_for_parents: boolean
           p_id: string
+          p_invoice_customer_id?: string
           p_is_remote: boolean
           p_is_visible?: boolean
           p_location_id?: string

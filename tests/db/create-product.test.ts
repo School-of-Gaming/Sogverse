@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
-import { TEST_CREDENTIALS } from "./constants";
+import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
 
 /**
@@ -30,6 +30,18 @@ import { deleteTestProducts } from "./product-helpers";
 const CONSENT_TERMS = "roblox-programme-terms";
 const CONSENT_PRIVACY = "roblox-privacy-policy";
 
+/**
+ * The Fennoa invoice customer this file points a municipality club at (00259).
+ *
+ * The one fixture UUID this file reserves, and it is not a product: the RPC
+ * under test mints its own product ids and accepts none, but a customer has to
+ * exist before a club can name one. Its Fennoa number is a value no other file
+ * uses, because that column is UNIQUE and two files sharing it would race on an
+ * insert rather than on a primary key.
+ */
+const INVOICE_CUSTOMER = "00000000-0000-0000-0000-00000000080a";
+const INVOICE_CUSTOMER_NUMBER = "F980A";
+
 describe("create_product", () => {
   /** Service-role client — bypasses RLS, used to read back and to clean up. */
   let admin: SupabaseClient<Database>;
@@ -49,10 +61,28 @@ describe("create_product", () => {
       TEST_CREDENTIALS.ADMIN.email,
       TEST_CREDENTIALS.ADMIN.password,
     );
+
+    await admin.from("invoice_customers").delete().eq("id", INVOICE_CUSTOMER);
+    await admin
+      .from("invoice_customers")
+      .delete()
+      .eq("fennoa_customer_no", INVOICE_CUSTOMER_NUMBER);
+    const buyer = await admin.from("invoice_customers").insert({
+      id: INVOICE_CUSTOMER,
+      fennoa_customer_no: INVOICE_CUSTOMER_NUMBER,
+      invoice_name: "Create-product fixture customer",
+      street: "Virastokuja 1",
+      postal_code: "02070",
+      city: "Espoo",
+    });
+    expect(buyer.error).toBeNull();
   });
 
   afterAll(async () => {
+    // Products first: the invoice-customer foreign key is ON DELETE RESTRICT,
+    // so a customer a club still points at cannot go.
     await deleteTestProducts(admin, created);
+    await admin.from("invoice_customers").delete().eq("id", INVOICE_CUSTOMER);
   });
 
   /**
@@ -218,6 +248,91 @@ describe("create_product", () => {
       .select("document_slug")
       .eq("product_id", id);
     expect(data).toEqual([]);
+  });
+
+  it("stores the Fennoa invoice customer on a municipality club", async () => {
+    // The fourth column of the same kind as `tag` — a defaulted parameter whose
+    // absence from the INSERT list would look exactly like the ordinary "no
+    // buyer agreed yet" product. A municipality club, because the CHECK refuses
+    // the column on every other type, and online against the seeded
+    // municipality, which is the only location such a club may carry.
+    const { data: newId, error } = await adminAuth.rpc("create_product", {
+      p_product_type: "municipality_club",
+      p_billing_mode: "external_contract",
+      p_translations: [
+        { locale: "en", name: "Invoiced", short_description: "Invoiced desc" },
+      ],
+      p_topic: "minecraft_java",
+      p_spoken_language_code: "en",
+      p_is_remote: true,
+      p_location_id: TEST_IDS.LOCATION_MUNICIPALITY,
+      p_timezone: "Europe/Helsinki",
+      p_registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+      p_for_gamers: true,
+      p_for_parents: false,
+      p_min_age: 7,
+      p_max_age: 12,
+      p_start_date: "2026-01-12",
+      p_end_date: "2026-05-29",
+      p_invoice_customer_id: INVOICE_CUSTOMER,
+    });
+    expect(error).toBeNull();
+    expect(newId).not.toBeNull();
+    created.push(newId!);
+
+    const { data: row } = await admin
+      .from("products")
+      .select("invoice_customer_id, tag")
+      .eq("id", newId!)
+      .single();
+    // The tag stays null in the same read: the two defaulted columns are
+    // independent, and a create that crossed them would be caught here.
+    expect(row).toMatchObject({
+      invoice_customer_id: INVOICE_CUSTOMER,
+      tag: null,
+    });
+  });
+
+  it("creates a club with no customer when p_invoice_customer_id is omitted", async () => {
+    // The ordinary state of a club on the day it is created: the agreement
+    // behind it has not been signed, and "no buyer" has to be reachable without
+    // a wire shape for "explicitly null" — the same argument the tag and
+    // region-lock cases above make about their own defaults.
+    const id = await createProduct();
+
+    const { data: row } = await admin
+      .from("products")
+      .select("invoice_customer_id")
+      .eq("id", id)
+      .single();
+    expect(row?.invoice_customer_id).toBeNull();
+  });
+
+  it("refuses an invoice customer on a product that is not a municipality club", async () => {
+    // chk_products_invoice_customer_only_for_muni, reached through the RPC
+    // rather than through a direct write: a consumer club has no municipality
+    // to invoice, so a buyer on one is a row nothing could produce a file from.
+    // Loud rather than silently dropped, which is why this is a refusal.
+    const { data, error } = await adminAuth.rpc("create_product", {
+      p_product_type: "consumer_club",
+      p_billing_mode: "free",
+      p_translations: [
+        { locale: "en", name: "Wrong type", short_description: "" },
+      ],
+      p_topic: "minecraft_java",
+      p_spoken_language_code: "en",
+      p_is_remote: true,
+      p_timezone: "Europe/Helsinki",
+      p_registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+      p_for_gamers: true,
+      p_for_parents: false,
+      p_min_age: 7,
+      p_max_age: 12,
+      p_invoice_customer_id: INVOICE_CUSTOMER,
+    });
+    expect(data).toBeNull();
+    expect(error?.code).toBe("23514"); // check_violation
+    expect(error?.message).toMatch(/invoice_customer/i);
   });
 
   it("refuses a malformed country code with a CHECK violation", async () => {

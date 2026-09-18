@@ -52,6 +52,15 @@ const DECOY_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f8";
 // renamed slug pass on both sides at once.
 const CONSENT_TERMS = "roblox-programme-terms";
 const CONSENT_PRIVACY = "roblox-privacy-policy";
+/**
+ * The Fennoa invoice customer (00259) the municipality club is pointed at.
+ *
+ * Its own row and its own Fennoa number rather than a shared fixture: that
+ * column is UNIQUE, so two files sharing a value would race on an insert rather
+ * than on a primary key, and these files run in separate workers.
+ */
+const INVOICE_CUSTOMER = "00000000-0000-0000-0000-00000000080b";
+const INVOICE_CUSTOMER_NUMBER = "F980B";
 
 describe("update_product", () => {
   /** Service-role client — bypasses RLS, used to seed and to read back. */
@@ -70,16 +79,96 @@ describe("update_product", () => {
       TEST_CREDENTIALS.ADMIN.email,
       TEST_CREDENTIALS.ADMIN.password,
     );
+
+    await admin.from("invoice_customers").delete().eq("id", INVOICE_CUSTOMER);
+    await admin
+      .from("invoice_customers")
+      .delete()
+      .eq("fennoa_customer_no", INVOICE_CUSTOMER_NUMBER);
+    const buyer = await admin.from("invoice_customers").insert({
+      id: INVOICE_CUSTOMER,
+      fennoa_customer_no: INVOICE_CUSTOMER_NUMBER,
+      invoice_name: "Update-product fixture customer",
+      street: "Virastokuja 1",
+      postal_code: "02070",
+      city: "Espoo",
+    });
+    expect(buyer.error).toBeNull();
   });
 
   afterAll(async () => {
+    // Products first: the invoice-customer foreign key is ON DELETE RESTRICT,
+    // so a customer a club still points at cannot go.
     await deleteTestProducts(admin, [
       PRODUCT_ID,
       MUNI_PRODUCT_ID,
       WAITLIST_PRODUCT_ID,
       DECOY_PRODUCT_ID,
     ]);
+    await admin.from("invoice_customers").delete().eq("id", INVOICE_CUSTOMER);
   });
+
+  /**
+   * A fresh municipality club, for the cases that need a product the muni-only
+   * CHECKs admit. Delete-and-insert like `freshProduct` below, so a case is
+   * never reading the residue of the one before it.
+   */
+  async function freshMuniProduct(): Promise<void> {
+    await deleteTestProducts(admin, [MUNI_PRODUCT_ID]);
+    const inserted = await admin.from("products").insert({
+      id: MUNI_PRODUCT_ID,
+      product_type: "municipality_club",
+      billing_mode: "external_contract",
+      topic: "minecraft_java",
+      min_age: 7,
+      max_age: 12,
+      spoken_language_code: "en",
+      is_remote: true,
+      // A municipality club needs a location, and an ONLINE one may point only
+      // at a country, region or municipality — so the seeded municipality.
+      location_id: TEST_IDS.LOCATION_MUNICIPALITY,
+      timezone: "Europe/Helsinki",
+      registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+      seat_count: 10,
+      waitlist_enabled: false,
+      // chk_products_non_consumer_has_end_date: a municipality club needs one,
+      // always. (Until 00169 a 'draft' row was exempt; that value and its escape
+      // hatch are both gone, and so is the stored status they belonged to.)
+      end_date: "2099-12-31",
+      is_visible: false,
+      created_by: TEST_IDS.ADMIN,
+    });
+    expect(inserted.error).toBeNull();
+  }
+
+  /**
+   * A complete, valid `update_product` call for the municipality club — every
+   * non-defaulted argument, and nothing else. Cases add the one argument they
+   * are about, which is what makes an OMISSION assertable: the RPC assigns
+   * every editable column on every call, so the omitted arguments here are
+   * writing their defaults deliberately.
+   */
+  function muniUpdateArgs() {
+    return {
+      p_id: MUNI_PRODUCT_ID,
+      p_billing_mode: "external_contract" as const,
+      p_translations: [
+        { locale: "en", name: "Muni club", short_description: "" },
+      ],
+      p_topic: "minecraft_java" as const,
+      p_for_gamers: true,
+      p_for_parents: false,
+      p_min_age: 7,
+      p_max_age: 12,
+      p_spoken_language_code: "en" as const,
+      p_is_remote: true,
+      p_location_id: TEST_IDS.LOCATION_MUNICIPALITY,
+      p_timezone: "Europe/Helsinki",
+      p_registration_opens_at: new Date().toISOString(),
+      p_end_date: "2099-12-31",
+      p_seat_count: 10,
+    };
+  }
 
   // Recreate a fresh product before each path so we're testing update,
   // not the residue of a previous test. Bypassing create_product() and
@@ -421,28 +510,7 @@ describe("update_product", () => {
   });
 
   it("accepts a positive but rejects a zero municipality fee on a muni club", async () => {
-    await deleteTestProducts(admin, [MUNI_PRODUCT_ID]);
-    await admin.from("products").insert({
-      id: MUNI_PRODUCT_ID,
-      product_type: "municipality_club",
-      billing_mode: "external_contract",
-      topic: "minecraft_java",
-      min_age: 7,
-      max_age: 12,
-      spoken_language_code: "en",
-      is_remote: true,
-      location_id: TEST_IDS.LOCATION_MUNICIPALITY, // muni clubs need a location
-      timezone: "Europe/Helsinki",
-      registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
-      seat_count: 10,
-      waitlist_enabled: false,
-      // chk_products_non_consumer_has_end_date: a municipality club needs one,
-      // always. (Until 00169 a 'draft' row was exempt; that value and its escape
-      // hatch are both gone, and so is the stored status they belonged to.)
-      end_date: "2099-12-31",
-      is_visible: false,
-      created_by: TEST_IDS.ADMIN,
-    });
+    await freshMuniProduct();
 
     const positive = await admin
       .from("products")
@@ -457,6 +525,51 @@ describe("update_product", () => {
       .update({ municipality_fee_cents: 0 })
       .eq("id", MUNI_PRODUCT_ID);
     expect(zero.error?.code).toBe("23514"); // check_violation
+  });
+
+  // The Fennoa invoice customer (00259) — the municipality fee's neighbour, and
+  // `tag`'s shape: a DEFAULTED parameter the RPC assigns on every call, so
+  // omitting it unlinks the club rather than leaving it alone.
+  it("round-trips an invoice customer through update_product, and unlinks on omission", async () => {
+    await freshMuniProduct();
+
+    const linked = await adminAuth.rpc("update_product", {
+      ...muniUpdateArgs(),
+      p_invoice_customer_id: INVOICE_CUSTOMER,
+    });
+    expect(linked.error).toBeNull();
+
+    const { data: withBuyer } = await admin
+      .from("products")
+      .select("invoice_customer_id")
+      .eq("id", MUNI_PRODUCT_ID)
+      .single();
+    expect(withBuyer?.invoice_customer_id).toBe(INVOICE_CUSTOMER);
+
+    // Omitted, which is the only expressible way to unlink one — the same
+    // `DEFAULT NULL` half the tag case below pins, and the reason the wire
+    // schema requires the field on every save.
+    const unlinked = await adminAuth.rpc("update_product", muniUpdateArgs());
+    expect(unlinked.error).toBeNull();
+
+    const { data: without } = await admin
+      .from("products")
+      .select("invoice_customer_id")
+      .eq("id", MUNI_PRODUCT_ID)
+      .single();
+    expect(without?.invoice_customer_id).toBeNull();
+  });
+
+  it("rejects an invoice customer on a non-municipality product", async () => {
+    await freshProduct(); // consumer_club
+    // chk_products_invoice_customer_only_for_muni — the twin of the muni-fee
+    // CHECK above, and the sole server-side guard of the invariant the form
+    // enforces by forcing the column to null for every non-muni type.
+    const { error } = await admin
+      .from("products")
+      .update({ invoice_customer_id: INVOICE_CUSTOMER })
+      .eq("id", PRODUCT_ID);
+    expect(error?.code).toBe("23514"); // check_violation
   });
 
   // Design tag (00178). One nullable enum column, threaded through the RPC the

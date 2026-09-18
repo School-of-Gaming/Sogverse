@@ -90,7 +90,8 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | WhatsApp | `src/services/whatsapp/` |
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |
 | Group workspace — shared gedu/admin group page body | `src/components/group-workspace/` |
-| Municipality invoicing — the CFO's monthly invoice page | `src/components/admin/municipality-invoicing/` |
+| Municipality invoicing — the CFO's monthly invoice page and its Finvoice export | `src/components/admin/municipality-invoicing/` |
+| Invoice customers — the Fennoa buyers a municipality club is invoiced to | `src/components/admin/invoice-customers/` |
 | Family product page (a family's club/camp/event page) | `src/components/family/product-page/` |
 | Topic prep — the "Before the first session" guide | `src/components/topic-prep/` |
 | Chat components | `src/components/chat/` |

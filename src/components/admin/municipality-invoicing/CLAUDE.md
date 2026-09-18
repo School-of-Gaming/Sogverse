@@ -2,8 +2,10 @@
 
 The admin-only page a finance officer opens once a month to raise the invoices School of
 Gaming sends Finnish municipalities for the clubs it runs there. One month, one
-municipality at a time, every club beneath it, every session behind every club's number.
-It is read-only end to end: it writes nothing, snapshots nothing and exports nothing.
+municipality at a time, every club beneath it, every session behind every club's number,
+and the file each buyer's invoice is imported from. It **writes nothing and snapshots
+nothing**: every figure on it, and every figure in every file it produces, is recomputed
+from today's facts each time it is read.
 
 The page is one pure build over one document. The route fetches the month before the
 first paint, the builder turns it into the invoice, and the components render it — so
@@ -115,6 +117,160 @@ many were left out. It lives in the pure build beside the counts it is printed w
 many municipalities, how many clubs, how many sessions ran), because a figure the finance
 officer reads first has no business being the one figure nothing tests.
 
+## Who the invoice is addressed to
+
+**The buyer is a customer, not a municipality, and the link is per club.** One city
+can be two customers — library clubs bought by one department under one agreement,
+school clubs by another under another — and an association can buy clubs that run
+inside a municipality it is not. So nothing here may derive a buyer from where a club
+meets, and the two questions the page answers are genuinely independent: which
+municipality a club belongs to decides the section it sits in, and which customer it is
+invoiced to decides the file it ends up in.
+
+**A club's customer is carried whole, never reduced to a flag.** An invoice is addressed
+to that buyer, so the customer number, the billing name and the postal address all
+travel with the club — the accounting system that raises the invoice wants the address
+stated on the invoice itself even though the buyer's own record already holds one.
+
+**A missing customer costs no figure, and it costs a file.** It is the fee's opposite number in that respect,
+and the counts beside it are deliberately separate: a club with no fee is missing from a
+total, while a club with no customer is missing from nothing — its sessions and its
+money are on the page in full, and what it lacks is only somebody to send the invoice
+to. Read as one condition the two would each say the wrong thing about the other's
+clubs.
+
+**It is optional at creation and flagged here**, exactly like the fee: a club is created
+before anybody has agreed who pays for it, so the gap is reported rather than refused by a
+constraint that would stop an admin saving a club at all. Reported in two places, again
+exactly like the fee — here, where it costs a file, and on the admin dashboard's attention
+queue, where an admin still has time to close it before a month's invoices are raised.
+
+**A club with no municipality still refuses the whole month; a club with no customer
+does not.** The asymmetry is the point. A club nobody can be billed for cannot be
+rendered on a page organised by municipality and has no arithmetic to belong to, so the
+read stops. A club with no buyer renders perfectly well, so refusing would take every
+other club on the invoice down with it.
+
+**Invoicing data never references the locations table.** Location data is geography and
+has to keep working for every country we ever operate in; a customer's billing address,
+its number and its invoice name are contract data about one country's arrangements.
+Coupling them would make a national billing arrangement a property of the world map, and
+the first site outside that country would carry columns that mean nothing. The customer
+carries its own address, and the only edge between the two systems is the club, which
+points at a place and at a buyer independently.
+
+## The Finvoice export
+
+The invoices are raised in **Fennoa**, the accounting system, by importing **Finvoice 3.0
+XML** — one file per buyer per month. The page produces those files; nothing else in the
+app does, and nothing about producing one is recorded.
+
+The export's own code — the company constants, the month-to-invoice build and the
+document writer — lives in `src/lib/finvoice/`, because the route layer is what consumes
+it and no API route in this app reaches into a component directory. It reads this page's
+built view rather than the wire document, so the file and the ledger cannot disagree about
+a figure; the rules it follows are all here.
+
+**Everything below about what the import needs was established with the CFO by importing
+files generated from production data.** It is verified behaviour of a system we do not
+control, not a reading of a specification, so a change to the document's shape is a change
+that has to be re-verified against Fennoa rather than reasoned about.
+
+- **Fennoa matches the buyer on the customer number**, which is the whole reason a club
+  names a customer at all. A file whose buyer identifier is not an existing customer
+  number does not fail — it **creates a customer**, which is the failure this feature
+  exists to avoid, because nobody notices until the same municipality has two cards.
+- **The buyer's postal address has to be in the file**, and the import refuses one without
+  it, even though the customer card already holds an address. So the customer carries its
+  own address and the serializer states it.
+- **Fennoa assigns the invoice number when the invoice is sent.** Ours is provisional, it
+  never reaches an accounting ledger, and it is what makes the export stateless: producing
+  a month's file twice produces the same file, and there is no counter for a failed
+  download to burn. It is the invoiced month followed by the digits of the buyer's Fennoa
+  customer number — numeric and above 100, which is the import's own rule for an
+  identifier. **Within a month it is unique across buyers whose customer numbers differ in
+  their digits**, which every number Fennoa issues does — so it is unique over real data,
+  and that is the honest size of the guarantee. Two numbers differing only in a letter,
+  `0204` and `F0204`, are one number here; so are a number carrying no digit at all, which
+  falls back to the buyer's padded place in the month, and a real `F0001`. Neither is a
+  shape Fennoa issues, and the field is free text, which is the whole reason either can be
+  written down. **It is derived from the buyer rather than from where the buyer sits in
+  the month**, because a re-export has to carry the same number as the export it replaces,
+  whatever changed in between: a position moves the moment another club names a new
+  customer, so every later buyer's file would come back under a different number and read
+  as a second invoice for the same month. The digitless fallback is the one place a
+  position is used, and it is stable only for as long as the month's list of buyers is.
+- **Payment terms, e-invoice routing and department names live on the customer card** and
+  are not sent. They belong to the accounting system; a second copy in the file would be a
+  copy that goes stale.
+
+**One file is one customer's whole month, across every municipality.** A buyer is a
+contract party rather than a place, so a customer's clubs can sit in several sections of
+the ledger and still be one invoice — and one city can be two customers and therefore two
+files. Everything the export decides follows from that: the readiness shown beside a
+municipality's name is a claim about the customer's whole month, not about that section's
+share of it, and a row takes its municipality from its own club rather than from the
+section the reader clicked in.
+
+**A file is refused rather than trimmed, on two grounds.** A customer with a club that
+**ran** and has no fee gets no file at all: dropping the club would produce an invoice
+short by whatever that club was worth, with nothing in it saying so, and a short total is
+the one error nobody downstream catches. A customer whose clubs recorded **nothing** gets
+no file either — an invoice for nothing is a document somebody has to explain. Both are
+ordinary states of an ordinary month rather than faults, so both are values the callers
+render: the page shows the control disabled with the reason, and the download answers a
+conflict with the same reason. **One predicate decides both**, because a control that says
+a file cannot be produced and a route that then produces one is the worst outcome
+available.
+
+**What the refusal asks is whether the FILE would be wrong, never whether the data is.**
+Those are two questions with two readers. A club that ran without a fee makes the file
+short, so the file is refused. A club that ran **nothing** is not on the file at all —
+exactly as it is not in the ledger's total — so no price it lacks can change a figure in
+it, and refusing would stop every real club of that buyer being invoiced over a club that
+did not meet. The missing fee is an admin error either way, and it stays reported where
+data problems are reported: on the club's own line here, in the counts of clubs left out of
+a municipality's total and out of the month's, and as an attention item on the admin
+dashboard. The export is not a third alarm for it. So the number a customer's refusal
+carries is its own, under its own name, and it is not the count printed beside a
+municipality: one says what a file would be wrong about, the other what the month is
+missing.
+
+**The money rule is the one improvement over the files the previous system wrote, whose
+totals sometimes did not foot.** Integer cents end to end: a row's net is its session count
+times its fee, its VAT is that net at the rate rounded half up, its gross is the two added
+— and the invoice's three totals are **the sums of the rows**, never a second calculation
+over the invoice's own net. The two differ by a cent exactly where it matters most: three
+identical rows of €65.00 are €16.58 of VAT each and €49.74 on the invoice, while rounding
+the €195.00 in one step gives €49.73. The buyer's system adds the rows, so the sum is the
+answer that foots. The division into euros happens once, when the amounts are written.
+
+**The file is Finnish whatever locale the admin reads the ledger in.** It goes to a Finnish
+municipality's accounts payable, so every name in it — the municipality, the hall, the club
+— and the weekday abbreviations in a row's schedule are the Finnish ones. An admin reading
+the ledger in Swedish exports the same bytes as one reading it in Finnish. A row names the
+hall **only where the club's location is not the municipality itself**, because a remote
+club points at its municipality directly and the row would otherwise say the same word
+twice. Zero-width characters are stripped from every name **and from every field the buyer
+half of the file is written from** — the customer number, the invoice name, the address and
+the two free-text fields: one production school name carries a zero-width space that
+survives every round trip, is invisible in the admin UI, and would reach the buyer's system
+as a byte their own search will not match — or, in the identifier Fennoa matches on, as a
+buyer that matches nobody and is therefore created.
+
+**The seller, the article, the cost dimension, the VAT rate, the unit, the overdue
+interest and the two standing free-text lines are company constants in the repo, not
+environment variables.** None of them differs between deployments — there is one company,
+one bank account, one VAT registration — and a staging deployment invoicing from a
+different IBAN would be a worse answer than one invoicing from this one. Being in the repo
+is also what lets the serializer's test assert the whole document rather than the half of
+it that is not configuration.
+
+**There is no "download the month" and no zip, deliberately.** A zip is a dependency and a
+second thing to get right, and the import is per file anyway: the CFO works down the
+collapsed ledger taking one file per buyer, which is the same number of clicks as
+unpacking an archive would be. Revisit it when a month's customer count makes that false.
+
 ## How the month is read
 
 **This is a ledger, and it is read the way a ledger is read: down the columns.** A month
@@ -140,12 +296,28 @@ was spent per locale on a distinction no line on the page draws — and the one 
 recording *is* the point, a club's missed count, says so in its own words.
 
 **A municipality is one line, and it opens closed.** Chevron, name, then how many clubs and
-how many sessions, with its total on the money axis and the exclusion warning beside the
-counts. The line states the whole answer and opening it is how the reader asks *why*; it is
-identical open and closed, so expanding adds the clubs underneath and moves nothing that was
-already on screen. An expand-all control sits beside the month stepper; which sections are
-open is where the reader is in the page rather than what the page is about, so it is local
-state, in neither the URL nor storage.
+how many sessions, then one download per Fennoa customer among its clubs, with its total on
+the money axis and both warnings — clubs left out of the total, clubs with no buyer —
+beside the counts. The line states the whole answer and opening it is how the reader asks
+*why*; it is identical open and closed, so expanding adds the clubs underneath and moves
+nothing that was already on screen. An expand-all control sits beside the month stepper;
+which sections are open is where the reader is in the page rather than what the page is
+about, so it is local state, in neither the URL nor storage.
+
+**The line is also where the month is actually sent, which is why it carries links and
+therefore why it is not itself a button.** A download is a navigation, so each one is a
+real anchor to the export route; an anchor inside a button is the one arrangement that has
+no correct answer for a keyboard or a screen reader. So this line takes the same shape the
+club rows already take: the row is an ordinary element with a pointer convenience on it,
+the disclosure is a real button carrying its own name, `aria-expanded` and focus ring, and
+every link on the row stops its own click from travelling. A blocked file stays on the line
+as a disabled-looking span with its reason in warning tone rather than disappearing — a
+control that vanished when a club lost its fee would leave the reader looking for a file
+with nothing on the page saying why it is gone.
+
+**The whole-month line gains the count and nothing else.** There is no download there,
+because there is nothing a month-wide control could hand over that the per-customer ones do
+not — see the export section on why there is no zip.
 
 **A club is one line of five columns, and the columns are one table for the whole
 municipality.** In the order the arithmetic runs: what the club is, when it meets, what one
@@ -178,6 +350,13 @@ municipality's clubs stay mounted inside a collapsed region — inert and clippe
 — so its line can name them at all times; a club's dated sessions are a table row, which
 has nowhere to hide, so the club's control names them only when they are open. Either way
 nothing ever points at an element that is not there.
+
+**A club nobody has named a buyer for says so beside its own name**, in the same warning
+tone and the same shape as the fee it sits two columns away from, because they are the same
+kind of thing to the reader: a gap in a club's setup that this page found and the club's own
+admin page repairs. It carries no link — the club's name beside it is already a link to
+exactly that page, and a second anchor on one row would give the reader two targets for one
+repair.
 
 **A club that missed sessions says so on its own line.** The count column carries the missed
 count beside the recorded one, in warning tone — so the problems in a month are visible with
@@ -309,6 +488,14 @@ Two things make that possible, and both are deliberately visible in the code:
   default one-minute staleness would otherwise let a window focus fire the real
   admin-gated read behind the preview and replace the fixtures with production's own
   month.
+
+**The download links are real and cost the scene nothing.** Each points at the live export
+route with the fixture's own month and customer id, so what a reviewer sees is the href the
+live page would build — and an anchor is fetched when it is followed, not when it is
+rendered, so the scene still reaches the network exactly as often as it did before: never.
+The fixtures carry a customer whose file is blocked by a club with no fee and one whose
+file is blocked by having nothing to invoice, because a month of ordinary clubs would show
+neither.
 
 **The month stepper stays inside the preview, and it is how the empty ledger is reached.**
 The stepper is one of the page's own controls rather than a way out of a row, so the shell

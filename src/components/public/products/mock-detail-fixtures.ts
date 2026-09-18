@@ -1466,6 +1466,7 @@ function buildBaseProduct(
     primary_gedu_fee_cents: null,
     assistant_gedu_fee_cents: null,
     municipality_fee_cents: null,
+    invoice_customer_id: null,
     created_at: refTimestamp,
     updated_at: refTimestamp,
     created_by: "mock-admin",

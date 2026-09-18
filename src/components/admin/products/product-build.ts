@@ -639,6 +639,16 @@ function buildSharedFields(
             state.municipalityFee.amount,
           )
         : null,
+    // The club's Fennoa buyer, on the same terms as the municipality fee above
+    // and for the same two reasons: it exists only on municipality clubs, so
+    // every other type is forced to null before the DB CHECK
+    // (chk_products_invoice_customer_only_for_muni) can trip on a stale draft —
+    // and the answer travels on every save, `null` included, because the RPC
+    // parameter is DEFAULT NULL and an omission unlinks rather than preserves.
+    invoice_customer_id:
+      config.productType === "municipality_club"
+        ? state.invoiceCustomerId
+        : null,
   };
 }
 
@@ -944,6 +954,11 @@ export function existingFormState(
     primaryGeduFee: primaryGeduFeeDraft(product.primary_gedu_fee_cents),
     assistantGeduFee: assistantGeduFeeDraft(product.assistant_gedu_fee_cents),
     municipalityFee: municipalityFeeDraft(product.municipality_fee_cents),
+    // Straight through: a nullable uuid column and a nullable id field, with no
+    // empty state between them to translate. Deliberately unfiltered against
+    // the customer list — a link is a foreign key with ON DELETE RESTRICT
+    // behind it, so a stored id always names a row that exists.
+    invoiceCustomerId: product.invoice_customer_id,
     registrationOpensMode: mode,
     registrationOpensDate: opensDate,
     registrationOpensHour: opensHour,

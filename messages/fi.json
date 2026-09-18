@@ -39,6 +39,9 @@
       "lynxApi": "Lynx Educaten kumppani-API",
       "adminDashboard": "Ylläpidon hallintapaneeli",
       "adminMunicipalityInvoicing": "Kuntalaskutus",
+      "adminInvoiceCustomers": "Laskutusasiakkaat",
+      "adminInvoiceCustomerNew": "Uusi laskutusasiakas",
+      "adminInvoiceCustomerEdit": "Muokkaa laskutusasiakasta",
       "adminTools": "Työkalut",
       "parentDashboard": "Oma SOG",
       "geduDashboard": "Oma SOG",
@@ -308,6 +311,7 @@
           "waitlistOpenSeats": "{waiting} jonossa · {open, plural, one {# paikka} other {# paikkaa}} vapaana",
           "missingGeduFee": "Gedun palkkio puuttuu",
           "missingMunicipalityFee": "Kunnan maksu puuttuu",
+          "missingInvoiceCustomer": "Laskutusasiakas puuttuu",
           "waitlistOpenSeatsWithOffers": "{waiting} jonossa · {open, plural, one {# paikka} other {# paikkaa}} vapaana · {offers} odottaa vastausta"
         }
       },
@@ -392,8 +396,67 @@
       "upcoming": "Tulossa",
       "unrecordedSessions": "{count, plural, one {# kirjaamatta} other {# kirjaamatta}}",
       "sessionsFor": "Kerhon {club} kerrat",
+      "clubsIn": "Kerhot: {municipality}",
+      "clubsWithoutCustomer": "{count, plural, one {# kerholta puuttuu laskutusasiakas} other {# kerholta puuttuu laskutusasiakas}}",
+      "customerNotSet": "Laskutusasiakasta ei ole asetettu",
+      "downloadInvoiceFor": "Lataa Finvoice-tiedosto asiakkaalle {customer}",
+      "fileBlockedByFee": "{count, plural, one {Ei tiedostoa: # kerho kokoontui ilman maksua} other {Ei tiedostoa: # kerhoa kokoontui ilman maksua}}",
+      "fileBlockedByNothingToInvoice": "Ei tiedostoa: ei kirjattuja kertoja",
       "loadError": "Laskutuskuukauden lataus epäonnistui. Päivitä sivu ja yritä uudelleen.",
       "loadErrorWithReason": "Laskutuskuukauden lataus epäonnistui – {reason}. Päivitä sivu ja yritä uudelleen."
+    },
+    "invoiceCustomers": {
+      "title": "Laskutusasiakkaat",
+      "subtitle": "Fennoa-asiakkaat, joille kuntakerhojen kerrat laskutetaan.",
+      "addCustomer": "Lisää asiakas",
+      "columns": {
+        "number": "Fennoa-nro",
+        "invoiceName": "Laskutusnimi",
+        "city": "Postitoimipaikka",
+        "reference": "Viite"
+      },
+      "hasReference": "Viite on asetettu",
+      "noReference": "Ei viitettä",
+      "empty": "Ei vielä laskutusasiakkaita. Lisää ensimmäinen.",
+      "backToList": "Takaisin laskutusasiakkaisiin",
+      "notFound": "Tällä tunnuksella ei ole laskutusasiakasta.",
+      "newPage": {
+        "title": "Uusi laskutusasiakas",
+        "submit": "Luo asiakas"
+      },
+      "editPage": {
+        "title": "Muokkaa laskutusasiakasta"
+      },
+      "fields": {
+        "number": "Fennoan asiakasnumero",
+        "invoiceName": "Laskutusnimi",
+        "street": "Katuosoite",
+        "postalCode": "Postinumero",
+        "city": "Postitoimipaikka",
+        "country": "Maa",
+        "yourReference": "Asiakkaan viite",
+        "invoiceText": "Laskun teksti"
+      },
+      "hints": {
+        "number": "Fennoan asiakaskortilla oleva numero, esimerkiksi F0037. Fennoa yhdistää tuodun laskun asiakkaaseen tällä numerolla.",
+        "invoiceName": "Täsmälleen samassa muodossa kuin Fennoan asiakaskortilla.",
+        "yourReference": "Ostotilauksen numero tai yhteyshenkilö, jonka asiakas haluaa jokaiseen laskuun.",
+        "invoiceText": "Lisärivit laskun tekstin alkuun, esimerkiksi puitesopimuksen viite. Pelkkää tekstiä – se päätyy laskulle juuri niin kuin sen kirjoitat."
+      },
+      "errors": {
+        "required": "Täytä kenttä {field}.",
+        "countryShape": "Käytä kaksikirjaimista maatunnusta, esimerkiksi FI.",
+        "duplicateNumber": "Fennoan asiakasnumero {number} on jo toisella asiakkaalla.",
+        "saveFailed": "Asiakkaan tallennus epäonnistui. Yritä uudelleen.",
+        "saveFailedWithReason": "Asiakkaan tallennus epäonnistui – {reason}",
+        "listUnavailable": "Asiakaslistaa ei voitu ladata. Päivitä sivu, jotta voit valita asiakkaan."
+      },
+      "picker": {
+        "label": "Laskutusasiakas",
+        "hint": "Asiakas, jolle tämän kerhon kerrat laskutetaan. Ilman asiakasta kerho merkitään laskutussivulla puutteelliseksi, eikä siitä synny laskutiedostoa.",
+        "manage": "Hallinnoi laskutusasiakkaita",
+        "option": "{name} ({number})"
+      }
     },
     "geduContract": {
       "heading": "Gedu-sopimus",
@@ -2597,6 +2660,7 @@
     "consumerClubs": "Kuluttajakerhot",
     "municipalityClubs": "Kuntakerhot",
     "municipalityInvoicing": "Kuntalaskutus",
+    "invoiceCustomers": "Laskutusasiakkaat",
     "camps": "Leirit",
     "events": "Tapahtumat",
     "sites": "Toimipisteet",

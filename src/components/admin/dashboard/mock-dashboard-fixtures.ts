@@ -44,7 +44,7 @@ import { addCalendarDays, mondayOf, monthsAfter, weekdayOf } from "@/lib/calenda
  * **Two scenarios**, and they cannot coexist: a full attention queue and an
  * empty one are the same component in its two states.
  *
- * `busy` is the platform under real load — sixty products, twenty-one of them
+ * `busy` is the platform under real load — sixty products, twenty-four of them
  * needing something, five gedus not yet certified. `quiet` is six products with
  * nothing wrong anywhere and nobody left to certify.
  *
@@ -572,10 +572,17 @@ function quietCatalogue(): ProductSpec[] {
  *
  * Authored as `(product, issue facts)` pairs so the queue reads the way an admin
  * thinks — *this product, these problems* — rather than as ten category lists a
- * reader has to reassemble a product from. Twenty-two products across all six
+ * reader has to reassemble a product from. Twenty-four products across all seven
  * kinds of problem, deliberately uneven: three carry a stack of three, most
  * carry one, and two carry two group lines each, because a card whose only shape
  * is "one line" says nothing about how a card with several reads.
+ *
+ * **The two invoicing kinds appear together on one card and apart on another**,
+ * for the reason the unstaffed-group pair below does: they are the two lines a
+ * reader is most likely to read as one sentence said twice, and whether they are
+ * distinguishable is only checkable with the two of them adjacent — and the club
+ * whose only gap is its buyer is the shape that made the kind worth adding,
+ * because before it existed that club was absent from the queue altogether.
  *
  * **The two unstaffed-group kinds appear together on one card and apart on
  * another**, because that pair is the hardest thing on this panel to get right:
@@ -716,6 +723,24 @@ const PRODUCT_ISSUE_SPECS: readonly {
   {
     productId: "municipality-club-19",
     issues: [{ kind: "missing-municipality-fee" }],
+  },
+  {
+    // Both invoicing gaps on one card, fee first: the two lowest kinds in the
+    // ranking, saying almost the same thing about the same club, and the only
+    // place a reader can judge whether they read as two omissions rather than
+    // one repeated.
+    productId: "municipality-club-3",
+    issues: [
+      { kind: "missing-municipality-fee" },
+      { kind: "missing-invoice-customer" },
+    ],
+  },
+  {
+    // The buyer standing alone: a club whose fee is agreed and whose sessions
+    // are all on the ledger, with nobody to address the invoice to. It is the
+    // bottom of the queue with nothing under it.
+    productId: "municipality-club-11",
+    issues: [{ kind: "missing-invoice-customer" }],
   },
 ];
 

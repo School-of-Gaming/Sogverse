@@ -50,6 +50,7 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     primary_gedu_fee_cents: null,
     assistant_gedu_fee_cents: null,
     municipality_fee_cents: null,
+    invoice_customer_id: null,
     is_visible: true,
     created_by: "admin-1",
     created_at: new Date().toISOString(),

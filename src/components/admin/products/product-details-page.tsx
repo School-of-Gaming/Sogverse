@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import {
   AlertTriangle,
   ArrowLeft,
+  Building2,
   Calendar,
   CalendarCheck,
   Camera,
@@ -53,6 +54,7 @@ import {
 } from "@/lib/constants/consent-documents";
 import { describeMarketingConsents } from "@/lib/constants/marketing-consents";
 import { describeGamerPhotoConsents } from "@/lib/constants/gamer-photo-consents";
+import { useInvoiceCustomer } from "@/services/invoice-customers";
 import {
   useProductAdmin,
   type ProductAdminDetailRow,
@@ -324,6 +326,23 @@ function OperationalFacts({
   c: ReturnType<typeof useTranslations<"common">>;
 }) {
   const isMuni = product.product_type === "municipality_club";
+  // The invoice customer's own namespace, so the label over the row below and
+  // the label over the picker that sets it are one string rather than two that
+  // can drift apart.
+  const tInvoiceCustomers = useTranslations("admin.invoiceCustomers");
+  /**
+   * The Fennoa buyer this club's sessions are invoiced to.
+   *
+   * The product read carries the link as an id and nothing else — the admin
+   * product row is not the invoicing document, and widening it to embed a whole
+   * billing address would put contract data on every read of every product. So
+   * the name is resolved here, by one lookup by primary key that the hook skips
+   * entirely for a product with no customer, which is every product but a
+   * municipality club.
+   */
+  const { data: invoiceCustomer } = useInvoiceCustomer(
+    product.invoice_customer_id,
+  );
   // Same flag the form reads, so a type with no region-lock control has no
   // region-lock row here either — an empty "Not region locked" line on a
   // municipality club would advertise a setting that does not exist for it.
@@ -549,6 +568,37 @@ function OperationalFacts({
         {isMuni && (
           <Fact icon={Landmark} label={t("detailsPage.fields.municipalityFee")}>
             {renderFee(product.municipality_fee_cents, "unknown")}
+          </Fact>
+        )}
+
+        {/* Beside the fee, because the two are one arrangement: what a session
+            is worth, and who is billed for it. The label is the picker's own, so
+            the form and this page call one thing one thing.
+
+            Nothing is rendered in place of the name while the lookup is in
+            flight: it is one row by primary key and it lands in a frame or two,
+            and this fact is last in its own cell, so the name arrives into space
+            the grid already holds. */}
+        {isMuni && (
+          <Fact
+            icon={Building2}
+            label={tInvoiceCustomers("picker.label")}
+          >
+            {product.invoice_customer_id === null ? (
+              <span className="text-muted-foreground">{c("notSet")}</span>
+            ) : (
+              invoiceCustomer && (
+                <Link
+                  href={ROUTES.admin.invoiceCustomer(invoiceCustomer.id)}
+                  className="underline-offset-2 hover:underline"
+                >
+                  {tInvoiceCustomers("picker.option", {
+                    name: invoiceCustomer.invoice_name,
+                    number: invoiceCustomer.fennoa_customer_no,
+                  })}
+                </Link>
+              )
+            )}
           </Fact>
         )}
 

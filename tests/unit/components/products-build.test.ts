@@ -1065,6 +1065,65 @@ describe("audience and ages on the wire", () => {
   });
 });
 
+// The Fennoa invoice customer is the municipality fee's neighbour on the
+// payload — the same municipality-only shape, forced to null everywhere else so
+// a stale draft cannot trip the DB CHECK — and answers the other half of the
+// invoicing question: the fee says what a session costs, this says who is
+// billed for it.
+describe("the invoice customer on the wire", () => {
+  it("creates a club with no customer by default", () => {
+    const s = initialState(muniConfig, "en");
+    expect(s.invoiceCustomerId).toBeNull();
+
+    const out = buildCreateInput(
+      validConsumerState(),
+      "municipality_club",
+      muniConfig,
+    );
+    // Present and null, never absent: the wire schema requires the field and
+    // the RPC parameter is DEFAULT NULL, so a missing key would be a 400
+    // rather than a club quietly left with no buyer.
+    expect(out).toHaveProperty("invoice_customer_id");
+    expect(out.invoice_customer_id).toBeNull();
+  });
+
+  it("carries a chosen customer through to both payloads", () => {
+    const CUSTOMER_ID = "7c1f6a4e-2b58-4f0a-9d3c-51ae7b208f64";
+    const s = validConsumerState();
+    s.invoiceCustomerId = CUSTOMER_ID;
+    expect(
+      buildCreateInput(s, "municipality_club", muniConfig).invoice_customer_id,
+    ).toBe(CUSTOMER_ID);
+    expect(buildUpdateInput(s, muniConfig).invoice_customer_id).toBe(
+      CUSTOMER_ID,
+    );
+  });
+
+  it("emits an explicit null when a club is unlinked again", () => {
+    // The update RPC assigns the column on every call, so "leave the buyer
+    // alone" and "unlink the club" would be the same wire shape if the field
+    // could go missing.
+    const s = validConsumerState();
+    s.invoiceCustomerId = null;
+    const cleared = buildUpdateInput(s, muniConfig);
+    expect(cleared).toHaveProperty("invoice_customer_id");
+    expect(cleared.invoice_customer_id).toBeNull();
+  });
+
+  it("forces the customer to null for non-municipality products", () => {
+    // A stale draft carried across a type change must not leak — the DB CHECK
+    // (chk_products_invoice_customer_only_for_muni) refuses a customer on
+    // anything but a municipality club, exactly as it refuses a muni fee.
+    const s = validConsumerState();
+    s.invoiceCustomerId = "7c1f6a4e-2b58-4f0a-9d3c-51ae7b208f64";
+    expect(
+      buildCreateInput(s, "consumer_club", consumerConfig)
+        .invoice_customer_id,
+    ).toBeNull();
+    expect(buildUpdateInput(s, consumerConfig).invoice_customer_id).toBeNull();
+  });
+});
+
 // The design tag rides on the same payload as the audience above but answers a
 // different question — who the sessions were built for, not who may hold a seat
 // — so it gets its own block rather than being folded into the audience cases.
@@ -1551,6 +1610,7 @@ function mockDetailRow(
     primary_gedu_fee_cents: null,
     assistant_gedu_fee_cents: null,
     municipality_fee_cents: null,
+    invoice_customer_id: null,
     registration_opens_at: "2020-01-01T00:00:00Z",
     timezone: "Europe/Helsinki",
     product_translations: [

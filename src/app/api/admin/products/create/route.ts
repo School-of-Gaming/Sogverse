@@ -147,6 +147,12 @@ export const POST = defineRoute({
       p_primary_gedu_fee_cents: body.primary_gedu_fee_cents ?? undefined,
       p_assistant_gedu_fee_cents: body.assistant_gedu_fee_cents ?? undefined,
       p_municipality_fee_cents: body.municipality_fee_cents ?? undefined,
+      // No customer yet is an omission for the same reason untagged is: the
+      // RPC's DEFAULT NULL writes the null, and the contract requires the field
+      // so the omission is a deliberate null rather than a forgotten one. The
+      // database refuses a customer on a product that is not a municipality
+      // club, which is the one rule not restated here.
+      p_invoice_customer_id: body.invoice_customer_id ?? undefined,
     };
 
     // Call the RPC through the user's session client — SECURITY INVOKER means

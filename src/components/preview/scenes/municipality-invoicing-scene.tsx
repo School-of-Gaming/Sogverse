@@ -58,6 +58,14 @@ import type { MonthHref } from "@/components/admin/municipality-invoicing/munici
  * scene's queue rows do. The month stepper used to be in that company and no
  * longer is, for the reason above: it does not leave a row, it drives the page.
  *
+ * **So do the Finvoice downloads, and they cost the scene nothing.** Each one
+ * points at the live export route with this fixture's own month and customer
+ * id, so a reviewer can see the real href rather than a stub — and an anchor is
+ * fetched when it is followed rather than when it is rendered, so opening the
+ * preview reaches the network exactly as often as it did before: never. Follow
+ * one and it answers for real, which for a fixture's customer id is the export
+ * route's own "no club in this month is invoiced to that customer".
+ *
  * Everything else the page does on its own works: expanding a municipality,
  * expanding a club's dated sessions, and the one control that opens and closes
  * the lot.
