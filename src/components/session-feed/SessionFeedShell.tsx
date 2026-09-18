@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLocale } from "next-intl";
+import { useScrollSentinel } from "@/hooks/use-scroll-sentinel";
 import { cn } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import { NowDivider } from "./NowDivider";
@@ -158,7 +159,6 @@ export function SessionFeedShell<T extends FeedShellEntry>({
 
   const anchor = useViewportAnchor();
   const dividerRef = useRef<HTMLLIElement>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
   /** Named so the divider's toggle can say which region it reveals into. */
   const listId = useId();
 
@@ -210,28 +210,18 @@ export function SessionFeedShell<T extends FeedShellEntry>({
   /**
    * Reveal the next chunk of history as the sentinel comes into view.
    *
-   * Re-armed on every reveal, which is what makes a run of chunks work: an
-   * observer only reports a *change* of intersection, so a sentinel that is
-   * still on screen after a reveal would never fire again. Rebuilding the
-   * observer asks the question afresh, and it answers immediately while the
-   * sentinel is still in view — so a tall viewport walks through several chunks
-   * in as many frames and then stops, because the last reveal unmounts the
-   * sentinel and this effect finds nothing to observe.
+   * The shared sentinel re-arms after every reveal, which is what makes a run of
+   * chunks work: it answers again while the sentinel is still in view, so a tall
+   * viewport walks through several chunks in as many frames and then stops,
+   * because the last reveal takes the sentinel off the page. Nothing is in
+   * flight between reveals — the whole history is already in memory — so the
+   * sentinel stays armed for as long as anything remains.
    */
-  useEffect(() => {
-    const node = sentinelRef.current;
-    if (node === null) return;
-    const observer = new IntersectionObserver(
-      (observed) => {
-        if (observed.some((entry) => entry.isIntersecting)) {
-          setChunksRevealed((revealed) => revealed + 1);
-        }
-      },
-      { rootMargin: SENTINEL_ROOT_MARGIN },
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [pastWindow.remaining]);
+  const sentinelRef = useScrollSentinel({
+    enabled: pastWindow.remaining > 0,
+    onReach: () => setChunksRevealed((revealed) => revealed + 1),
+    rootMargin: SENTINEL_ROOT_MARGIN,
+  });
 
   const toggleLater = () => {
     // Captured before the state change, while the divider is still where the

@@ -83,10 +83,11 @@ export type PageFetcher<Row> = (
  * skips the one that moved across the boundary. The count reconciliation cannot
  * see this — the walk still ends with the number of rows the server promised —
  * and the duplicated row can go on to collide as a React key wherever the list
- * is rendered. Keyset paging would close it and is deliberately not implemented:
- * these reads are rare, idempotent, and refetched by the query cache, so the
- * exposure is at most one wrong row for one load, self-correcting on the next
- * fetch. That is the accepted tolerance, React-key collision included.
+ * is rendered. It is tolerated *here* because a walk is one load: idempotent,
+ * refetched by the query cache, so the exposure is at most one wrong row for one
+ * load and it self-corrects on the next fetch. A list a person pages through
+ * interactively has no such tolerance and is keyset-paged instead — `keyset.ts`
+ * beside this, and the rule in this directory's `CLAUDE.md`.
  */
 export async function walkPages<Row>(
   label: string,
