@@ -63,6 +63,14 @@ Branches are named `feat/<kebab-summary>`; feature work merges back into `dev`
 with a real merge commit (`--no-ff`) whose subject reads `Merge the <thing> into
 dev`. Releases go `dev` → `main` through the `/pr-dev-to-main` command.
 
+**Rule: `dev` is always safe to push, including commits on it that are not
+yours.** A commit on `dev` means the work is ready for staging — that is what
+committing there says. An unpushed commit on local `dev` is a push delayed for
+convenience, because more was known to be arriving soon, never one held back for
+safety. So a session landing its own work does not stop to ask about somebody
+else's unpushed commit: when local `dev` and `origin/dev` have diverged, rebase
+the local commits onto `origin/dev`, merge, and push the lot.
+
 For work that wants its own worktree — the usual shape when several things are in
 flight at once — `/worktree-flow` runs the whole lifecycle, from cutting the
 branch to tearing the worktree down after the merge.
