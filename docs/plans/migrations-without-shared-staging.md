@@ -46,9 +46,12 @@ made over sixty bot commits to keep `schema.sql` current.
 
 ## The decision
 
-1. **Agents never write to staging or prod.** They read them to investigate; every write
-   goes to a seed file or a branch database. This is a written rule, not a mechanism:
-   `.env.local` stays a plain copy with its current keys.
+1. **Agents never write to staging or prod on their own initiative.** They read them to
+   investigate; every write a piece of work needs goes to a seed file or a branch
+   database. A runbook run at the owner's explicit instruction (creating an admin
+   account, correcting an email, putting test data on staging) is the exception and
+   stays as it is. This is a written rule, not a mechanism: `.env.local` stays a plain
+   copy with its current keys.
 2. **A manual GitHub Action generates the database files.** Run on demand against a
    branch, it does one job: start a bare database, apply that branch's migrations,
    generate `database.types.ts` and the schema directory (decision 4), and upload them as
@@ -68,12 +71,14 @@ made over sixty bot commits to keep `schema.sql` current.
    generators feed it:
    - *The split*, for `public`: raw `pg_dump` cut on the object headers the dump already
      carries.
-   - *A second, name-filtered generator* for the few objects outside `public` that today
+   - *A second generator* for the few objects outside `public` that today
      can only be learned by grepping migrations: the extensions the migrations create,
      our triggers on `auth.users`, our policies on `storage.objects`, and the rows that
-     define storage buckets and cron jobs. It must select ours by name and leave the
-     platform's own auth and storage objects out, because those change with every CLI
-     bump.
+     define storage buckets and cron jobs. "Ours" is **what the migrations added**: the
+     difference, for those catalogs, between the bare stack and the migrated one. No
+     list of names to maintain, so a future migration cannot be silently left out, and
+     the platform's own auth and storage objects, which change with every CLI bump,
+     never enter.
 5. **The comparison plus git is the conflict detector.** Two branches changing one object
    change one file, so git raises a conflict when the later branch syncs with `dev`
    (including an edit racing a drop). A merge git resolves cleanly but the migrations do
@@ -114,7 +119,8 @@ made over sixty bot commits to keep `schema.sql` current.
     - *Visibility:* whenever a database is switched on, and when `/worktree-flow` lands,
       list the branch databases that are up with their age and cost so far.
 11. **Two seeds.** `supabase/seed.sql` stays the deliberately minimal fixture set the DB
-    tests are written against, and the only seed `config.toml` knows about. A second,
+    tests are written against, and the only seed the CLI loads (`config.toml` has no seed
+    section; `seed.sql` is the default, and stays the default). A second,
     rich example seed builds a realistic catalogue for previews through the admin RPCs;
     only the branch database script applies it. It exists to help a human review UI, so
     CI never touches it.
@@ -183,11 +189,20 @@ land (see there).
    remaining sections change with the step that changes their subject. This step gates
    step 3: CI must not own staging while the documented workflow still tells agents to
    push there.
-2. **The generate action and the comparison**, for the types. A workflow with a manual
-   trigger and a branch input; the local stack with only what type generation needs;
-   the pinned CLI and `--schema public`. Add the comparison to the full CI's database
-   job. Before relying on it, confirm the generated file is byte-identical to the
-   committed one on current `dev`; if not, find out why first. Replace the migration
+2. **The generate action and the comparison**, for the types. A separate workflow file
+   with a manual trigger and no inputs: the branch is the ref it is dispatched on
+   (`gh workflow run … --ref <branch>`). **GitHub only dispatches a workflow whose file
+   exists on the default branch, which is `main`**, so the first act of this step is
+   shipping the bare workflow file to `main` through `/hotfix-to-main`; later edits to
+   it take effect on a branch without another release, because a dispatched run uses the
+   ref's copy. The local stack with only what type generation needs; the pinned CLI;
+   `gen types typescript --local --schema public`, which replaces the documented
+   staging command wholesale rather than sitting beside it. Add the comparison to the
+   full CI's database job. Before relying on it, compare the generated file with the
+   committed one on current `dev`. The committed file was generated from staging, which
+   carries known cosmetic drift (a moved column ordinal), so a difference is likely:
+   confirm it is drift and not a missing migration, then commit the from-migrations
+   output as the new truth. Replace the migration
    workflow in `supabase/CLAUDE.md`: write → push the branch → run the action → commit
    the artifact. For a migration written directly on `dev`: push it to a short-lived
    ordinary branch, generate, commit, push `dev`, delete the branch. Also state the
@@ -195,8 +210,12 @@ land (see there).
    decision 5's inspection before committing anything.
 3. **CI pushes `dev` to staging.** A job on push to `dev`, with no `needs`, a
    `concurrency` group so two pushes never run `db push` against staging at once, and
-   only the CLI installed. Two new repository secrets from the owner: staging's project
-   ref and database password. *Before the first run*, reconcile staging's migration
+   only the CLI installed. It connects as the prod job does (`supabase link`, then
+   `db push`); the session-pooler constraint below was measured on a branch database
+   and is the script's concern, not this job's. Two new repository secrets from the
+   owner, named apart from prod's (`SUPABASE_STAGING_PROJECT_REF`,
+   `SUPABASE_STAGING_DB_PASSWORD`); the existing `SUPABASE_ACCESS_TOKEN` secret serves
+   both. *Before the first run*, reconcile staging's migration
    history with `dev`: list versions on staging with no file on `dev` (leftovers of
    abandoned branches) and resolve each with the owner, because a remote version with no
    local file makes `db push` refuse outright. State the recovery for a failed push:
@@ -207,11 +226,16 @@ land (see there).
    `/worktree-flow` Phase 5 gains decision 8 for migration-bearing branches;
    `/hotfix-to-main` refuses a commit carrying a migration when `dev` holds an older
    unreleased one, and says why; a tripwire in the full CI on `dev` asserts every
-   migration a push adds sorts above every one already there (it fires after the fact,
-   and is the only gate covering direct-on-`dev` work); delete the "staging is shared,
+   *timestamped* migration a push adds sorts above every one already there, and that no
+   push adds a numbered one unless it also deletes numbered ones (which is the squash,
+   and nothing else); it fires after the fact, and is the only gate covering
+   direct-on-`dev` work; delete the "staging is shared,
    and migration numbers are contended" section of `supabase/CLAUDE.md`; update the
    reference-data generators under `scripts/`, which hold migration file names as
-   literals and tell the operator to pick "the next free number".
+   literals (so an applied migration is never regenerated) and tell the operator to pick
+   "the next free number": new files come from `supabase migration new`, and whatever
+   the generators key on must survive the landing restamp, so key on the descriptive
+   part of the name, not the version.
 5. **The schema directory.** The two generators; the action and the comparison produce
    and check the directory alongside the types; delete `schema.sql` and the CI step that
    commits it; keep that step's guard against a dump that silently lost an object
@@ -227,6 +251,7 @@ land (see there).
      `schema.sql` has in `.gitattributes`, and for the same reason: a CHECK constraint
      holds a literal carriage return, and line-ending normalisation would make the
      comparison unmatchable forever.
+   - One subdirectory per object class, since a table and a function may share a name.
    - Within an object class the dump is alphabetical, so adding an unrelated object
      moves no other file's bytes; keep dump order inside each file.
    Rewrite "Current state lives in snapshot files" in `supabase/CLAUDE.md` (including
@@ -240,7 +265,11 @@ land (see there).
    admin RPCs under impersonated admin claims (the pattern in
    `docs/runbooks/staging-test-data.md`): products of every type and lifecycle state,
    families with gamers, certified and uncertified gedus, groups with sessions and
-   feedback. Fixed Stripe test-mode price ids (test mode is one shared account). Because
+   feedback. It is a `.sql` file the branch database script applies after `seed.sql`:
+   accounts as direct auth inserts exactly as `seed.sql` does them (same shared test
+   password), everything product-shaped through the RPCs. **Prices only have to
+   render.** A branch database receives no Stripe webhooks, so checkout and billing are
+   verified on staging as today, and the seed creates nothing in Stripe. Because
    it calls the RPCs, it fails loudly when one's contract has changed; that surfaces
    when a database is switched on, and is fixed then.
 7. **The branch database script** under `scripts/`: `on`, `off`, `push`, `reset`, `list`.
@@ -276,14 +305,20 @@ land (see there).
      this needs step 5), the types, and a data-only dump of `public` must be identical.
      The migration history table is excluded; it differs by construction. Run it in a
      one-off manual action.
-   - **History, an operator step the owner approves at the time:** assert the versions in
-     the environment's history are exactly the files being squashed, then mark every
+   - **History, an operator step the owner approves at the time:** assert the *numbered*
+     versions in the environment's history are exactly the numbered files being
+     squashed (timestamped ones that landed meanwhile are expected and untouched; no
+     hold on other work is needed), then mark every
      version below the baseline's as reverted with `migration repair`. It touches the
      history table only. Staging: just before the squash merges into `dev`. **Prod: in
      the same sitting as the release that carries it, immediately before the release
      merge**, because between the repair and that deploy `main` still holds the old
      files and any `db push` from it (a hotfix) would try to replay the whole history.
      Rollback at any point before the deploy: mark the same versions applied again.
+     Until that release has gone out, the squash branch leaves a notice at the top of
+     the root `CLAUDE.md` saying the next release owes prod's history repair first, and
+     why; the release that pays it deletes the notice. A release that skips it fails
+     safe: prod's `db push` refuses and the production promotion is held.
    - A feature branch open across the squash syncs as usual; git resolves the deleted
      files. If it had also touched `schema.sql` or a numbered migration, regenerate.
    - Rewrite prose in `CLAUDE.md` files and `docs/` that sends a reader to a numbered
@@ -358,11 +393,13 @@ Measured on a probe branch of the staging project, 2026-09-18, unless noted.
 
 ## Owner decisions and actions
 
+- Merge the hotfix PR that ships the generate workflow file to `main` (step 2).
 - Add the two staging secrets to the repository (step 3).
 - Resolve any staging history versions that have no file on `dev` (step 3).
 - Approve each `migration repair` pass of the squash, staging and then prod (step 8).
   It rewrites the history table only, but it is prod.
-- Anything in the rich seed that touches Stripe beyond fixed test-mode price ids.
+- What the rich seed's catalogue should look like, where the implementer's draft of it
+  needs a product owner's eye (names, ages, prices that read as real).
 
 ## Follow-ups
 
