@@ -156,7 +156,7 @@ Which pages are promoted to crawlers, which are reachable but not promoted, and 
 
 **Klingon is excluded from `hreflang` and the sitemap, and its pages serve `noindex` instead of a robots disallow.** An easter egg does not belong in search results or in an alternate-language annotation; a disallow would be the wrong tool because a URL that is never fetched never reads the tag and can still be indexed bare. Pages that are `noindex` for their own reasons — product pages, the schools pages, the programme pages, the API docs — emit no alternates at all. The robots disallow covers each gated prefix bare **and** under every locale, Klingon included: a prefixed dashboard URL is as real as a bare one.
 
-**The analytics `route` dimension is supplied by the app, not computed by the framework's wrapper.** It is the internal template with the locale segment dropped, so every language of a page lands on one row while `request_path` keeps the per-language split (the `vercel-analytics` skill).
+**The analytics `route` dimension is supplied by the app, not computed by the framework's wrapper.** It is the internal template with the locale segment dropped, so every language of a page lands on one row while `request_path` keeps the per-language split.
 
 ## Usage patterns
 

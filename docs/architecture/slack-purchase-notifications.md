@@ -8,9 +8,6 @@ Dashboard, not in this repo — do not build an app-side helper to get these not
 (Sogverse sending a Slack message *itself* is a separate, unbuilt idea: see
 `../investigations/slack-sending-from-sogverse.md`.)
 
-This doc is how the mechanism works and what Sogverse owes it. Building, testing and
-editing the workflow in the Dashboard is the `slack-purchase-notifications` skill.
-
 ## Shape of the mechanism
 
 - A **Stripe Dashboard Workflow** triggers on a Stripe event, optionally retrieves related

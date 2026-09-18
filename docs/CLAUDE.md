@@ -24,10 +24,6 @@ A doc that genuinely fits no category sits at this top level — an escape hatch
 default. If top-level files start clustering into a recognizable type, that is a new
 category: give it a directory and a `CLAUDE.md` in the same change.
 
-A **procedure** run against live systems is not a doc at all: it is a skill in
-`.claude/skills/`, whose description keeps it in context without a pointer
-(`.claude/skills/CLAUDE.md`).
-
 ## When to write or update one
 
 After non-trivial work, ask *"is a doc now stale or missing?"* The bar: would another

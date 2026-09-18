@@ -190,8 +190,7 @@ drift the migration system exists to prevent — hence the ruling (2026-08-27). 
 costs: fix-up migrations in history, and a replacement function's assertion block must
 deliberately re-assert the invariants of the migration it supersedes (re-derive them;
 a hand-copy dropped a clause once). psql remains the right tool for *checking* staging
-state and reconciling drift that already happened — see
-the `remote-supabase` skill — just not as a workflow.
+state and reconciling drift that already happened — just not as a workflow.
 
 The same version-matching behaviour has a second edge: a new file whose **version
 number already exists in remote history is silently treated as applied** — the name is

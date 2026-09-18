@@ -476,7 +476,6 @@ box, generates zero traffic, and a moderator's remove control is its repair.
 **Rule: reviewing a past session's chat is a psql session, not a screen.** Messages and
 image bytes are kept indefinitely and nothing deletes them, but the app reads only the
 latest 200 messages of the channel a room is currently in and never shows a past session's
-log at all — so an incident reported that evening is answered through
-the `remote-supabase` skill. That path is also why the row records who removed
-a message: nothing on this surface draws it, and "who took this down" still has to be
-answerable.
+log at all — so an incident reported that evening is answered over psql against prod.
+That path is also why the row records who removed a message: nothing on this surface
+draws it, and "who took this down" still has to be answerable.
