@@ -314,26 +314,40 @@ The design:
   and a scheduled cleanup job is ruled out, so nothing may be left running that relies
   on someone remembering it. Two commands own every database:
   - *Apply*: create, push migrations and seeds, regenerate the types and the schema
-    directory, delete. One to two minutes, deleted in a `finally`, about $0.0005 a run.
-    This is all a migration needs, including one written directly on `dev`.
-  - *Preview*: create, push, start the dev server against it, and delete when the
-    server exits. The wrapper owns an idle timeout: no request to the dev server for a
-    set period and it stops the server and deletes the database. That is the idle
-    pause Supabase dropped, held by the process that owns the resource.
+    directory, delete. One to two minutes, deleted in a `finally`. Creating and deleting
+    are free, but Supabase bills compute by the *started* hour, so each run costs one
+    Micro hour, $0.01344; a hundred runs a month is $1.34. This is all a migration
+    needs, including one written directly on `dev`. DB tests still run in CI only.
+  - *Preview*: a wrapper script, not the agent, owns the lifetime. It creates the
+    database, pushes, and starts the dev server as its child with the branch's URL and
+    keys set in the child's environment, which Next prefers over `.env.local`, so that
+    file is never rewritten. It watches the request lines the dev server logs; after a
+    set period with none, or at a hard maximum age, it stops the server, deletes the
+    database and exits. That is the idle pause Supabase dropped, held by the process
+    that owns the resource. Data entered during a preview dies with it, by design; the
+    next run starts from the seeds again.
   Both delete any leftover branch carrying their worktree's name before creating, so a
-  hard-killed run is healed by the next one rather than by a timer.
-- **A shared Vercel preview is the deliberate exception.** It is rare (most team review
-  happens on staging after the merge), so it is an explicit command: create a database
-  for the branch, point that git branch's Vercel preview env vars at it, and print what
-  it costs per day. It lives until the branch lands or the owner deletes it, and the
-  flow's landing step deletes it.
+  hard-killed run is healed by the next one. `/worktree-flow`'s teardown deletes by
+  name after its tree kill (which a `finally` does not survive), and
+  `/cleanup-branches` deletes any Supabase branch whose git branch is gone. Those are
+  steps of flows the owner already runs, not a scheduled job.
+- **A shared Vercel preview is the deliberate exception.** Vercel still deploys every
+  pushed branch, and that deployment still points at staging. For a branch with no
+  migration that is today's behaviour and is fine. For a schema-changing branch it runs
+  new code against a schema that lacks the branch's migrations, so its new parts break.
+  Sharing one with the team before a merge is rare (most team review happens on staging
+  afterwards), so it is an explicit command the owner asks for: create a long-lived
+  database for the branch, set that git branch's Vercel preview env vars to it,
+  redeploy, and print the URL and the cost (≈ $0.32 a day). Landing deletes the
+  database and the env vars; `/cleanup-branches` catches one that was abandoned.
+  Stripe webhooks do not reach it, and the branch's auth redirect URLs must admit the
+  preview domain.
 - **Worktrees read shared environments and never write them.** Reading staging or prod
   to fact-check a feature stays useful; every write goes to a seed file or a branch
-  database. A rule alone does not make that true while the worktree's `.env.local` is
-  a copy holding the database passwords and prod's service-role key, so the worktree's
-  file is generated: read-only database roles for staging and prod, and no write-capable
-  secret. The write credentials stay in the main checkout. (Creating a read-only role
-  on prod is an owner decision: it reads children's data.)
+  database. This is a written rule in `supabase/CLAUDE.md` and nothing more for now
+  (owner's ruling, 2026-09-18): `.env.local` stays a copy. Enforcing it with read-only
+  database roles and a generated worktree env file is a future improvement, to build
+  only if the rule is seen to fail.
 - **CI pushes `dev` to staging**, as it already pushes `main` to prod. The `db push`
   to staging leaves the agent workflow entirely.
 - **An unlanded migration is mutable.** On its own database an agent edits the file and
@@ -441,8 +455,8 @@ commitment, 2026-09-18).
 Each step pays off even if the next is never taken.
 
 1. Per-process databases: the apply and preview commands, their use in
-   `/worktree-flow`, the rich example seed, the generated worktree `.env.local`. Ends
-   every shared-staging collision at once.
+   `/worktree-flow` and `/cleanup-branches`, the rich example seed. Ends every
+   shared-staging collision at once.
 2. CI pushes `dev` to staging; staging's credentials leave `.env.local`; rewrite
    `supabase/CLAUDE.md`'s workflow and delete its contention section.
 3. Timestamps assigned at landing, the CI-green landing gate, the tripwire, the hotfix
@@ -473,8 +487,8 @@ Each step pays off even if the next is never taken.
   `--include-all`, and that mixed 5- and 14-digit versions sort as expected.
 - That Vercel's per-git-branch preview env vars can be set from a script, for the
   opt-in shared preview.
-- What a read-only role needs on staging and prod to be useful for investigation
-  without bypassing more than it must.
+- That branch compute bills by the started hour as project compute is documented to
+  (the branching usage page does not say), by reading the invoice after a few runs.
 - That `pg_dump`'s per-object headers split cleanly into files for every object class
   in the snapshot, and that the split is stable when an unrelated object is added.
 - That `gen types --local` output in CI matches the hosted output byte for byte.
