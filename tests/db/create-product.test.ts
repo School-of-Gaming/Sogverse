@@ -31,7 +31,7 @@ const CONSENT_TERMS = "roblox-programme-terms";
 const CONSENT_PRIVACY = "roblox-privacy-policy";
 
 /**
- * The Fennoa invoice customer this file points a municipality club at (00259).
+ * The Fennoa invoice customer this file points a municipality club at (00268).
  *
  * The one fixture UUID this file reserves, and it is not a product: the RPC
  * under test mints its own product ids and accepts none, but a customer has to

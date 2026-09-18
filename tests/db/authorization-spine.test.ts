@@ -115,7 +115,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // the first-of-month check with `check_violation` — an error, but not the
   // forbidden one.
   get_admin_municipality_invoicing: { permittedRoles: ["admin"] },
-  // The two writers of invoice_customers (00259) — the Fennoa customers a
+  // The two writers of invoice_customers (00268) — the Fennoa customers a
   // municipality club's invoice is addressed to. They exist as RPCs rather than
   // as table writes for the §3.3 reason: the table carries no write grant for
   // `authenticated` at all, so a guarded SECURITY DEFINER function is the only

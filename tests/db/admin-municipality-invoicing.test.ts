@@ -43,7 +43,7 @@ import {
  *   - the club carries the WHOLE Fennoa customer it is invoiced to, or null
  *     where nobody has named a buyer — and a null there does NOT refuse the
  *     month, unlike a null municipality, because only that club's own file is
- *     blocked by it (migration 00259)
+ *     blocked by it (migration 00268)
  *
  * **Every assertion is scoped to this file's own fixtures.** CI carries the
  * migrations' data *and* `seed.sql` *and* whatever other test files have seeded
@@ -110,7 +110,7 @@ const P_NO_MUNICIPALITY = "00000000-0000-0000-0000-0000000007f9";
 /** A site parented straight to the region, so the walk finds no municipality. */
 const L_REGION_SITE = "00000000-0000-0000-0000-0000000002f9";
 /**
- * The Fennoa customer the in-month club is invoiced to (00259).
+ * The Fennoa customer the in-month club is invoiced to (00268).
  *
  * The customer coverage lives in this file rather than beside the table's own,
  * because this file is the only one that may call the invoicing RPC at all: the

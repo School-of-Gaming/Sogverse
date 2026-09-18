@@ -14,7 +14,7 @@ import {
 } from "@/services/invoice-customers/invoice-customers.contracts";
 
 /**
- * `invoice_customers` and its two writers (migration 00259) — the Fennoa
+ * `invoice_customers` and its two writers (migration 00268) — the Fennoa
  * customers a municipality club's invoice is addressed to.
  *
  * The table is the §3.3 grant-lockdown posture: no write grant for any Data API

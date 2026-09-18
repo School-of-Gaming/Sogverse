@@ -69,8 +69,8 @@ const P_ENDED = "00000000-0000-0000-0000-000000000628";
 const GROUP_STAFFED = "00000000-0000-0000-0000-000000000629";
 /**
  * A municipality club whose fees are both set and which names no invoice
- * customer (00263). Its presence in the queue is the missing buyer and nothing
- * else — which is the whole behaviour change, because before 00263 this club was
+ * customer (00269). Its presence in the queue is the missing buyer and nothing
+ * else — which is the whole behaviour change, because before 00269 this club was
  * absent from the list.
  */
 const P_MUNI_NO_CUSTOMER = "00000000-0000-0000-0000-00000000080d";
@@ -260,7 +260,7 @@ describe("get_admin_dashboard", () => {
       startDate: utcDay(-200),
       endDate: utcDay(-100),
     });
-    // The invoice-customer pair (00263): two municipality clubs identical in
+    // The invoice-customer pair (00269): two municipality clubs identical in
     // every respect the queue reads except the buyer. One cannot be both, which
     // is why there are two.
     for (const id of [P_MUNI_NO_CUSTOMER, P_MUNI_INVOICEABLE]) {
@@ -728,7 +728,7 @@ describe("get_admin_dashboard", () => {
     it("puts a municipality club in the queue for a missing invoice customer alone", () => {
       // Both fees are set, it has no cap, no queue, no groups and nobody
       // enrolled — so the buyer is the only thing it lacks, and its presence
-      // here is the whole of what 00263 changed: before it, this club was
+      // here is the whole of what 00269 changed: before it, this club was
       // absent from the list.
       const product = attention(P_MUNI_NO_CUSTOMER);
       expect(product).toBeDefined();

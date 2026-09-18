@@ -270,7 +270,7 @@ export type Product = Database["public"]["Tables"]["products"]["Row"];
 export type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
 export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 
-// invoice_customers (00259) — the Fennoa customers municipality clubs are
+// invoice_customers (00268) — the Fennoa customers municipality clubs are
 // invoiced to. A buyer is a CUSTOMER and not a municipality: one city can be
 // two customers, and an association can buy clubs sited in a municipality it is
 // not, so the link is per club (`products.invoice_customer_id`) and is never

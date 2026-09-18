@@ -53,7 +53,7 @@ const DECOY_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f8";
 const CONSENT_TERMS = "roblox-programme-terms";
 const CONSENT_PRIVACY = "roblox-privacy-policy";
 /**
- * The Fennoa invoice customer (00259) the municipality club is pointed at.
+ * The Fennoa invoice customer (00268) the municipality club is pointed at.
  *
  * Its own row and its own Fennoa number rather than a shared fixture: that
  * column is UNIQUE, so two files sharing a value would race on an insert rather
@@ -527,7 +527,7 @@ describe("update_product", () => {
     expect(zero.error?.code).toBe("23514"); // check_violation
   });
 
-  // The Fennoa invoice customer (00259) — the municipality fee's neighbour, and
+  // The Fennoa invoice customer (00268) — the municipality fee's neighbour, and
   // `tag`'s shape: a DEFAULTED parameter the RPC assigns on every call, so
   // omitting it unlinks the club rather than leaving it alone.
   it("round-trips an invoice customer through update_product, and unlinks on omission", async () => {

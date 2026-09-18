@@ -153,7 +153,7 @@ export const adminDashboardAttentionProduct = z.object({
   /** Municipality clubs only; false everywhere else by construction. */
   missing_municipality_fee: z.boolean(),
   /**
-   * The club names no invoice customer (00263). Municipality clubs only, on the
+   * The club names no invoice customer (00269). Municipality clubs only, on the
    * same terms as the fee above — the column the flag reads is one the CHECK
    * forbids on every other product type.
    *
