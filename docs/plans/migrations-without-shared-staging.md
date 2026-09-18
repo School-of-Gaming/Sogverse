@@ -61,19 +61,31 @@ made over sixty bot commits to keep `schema.sql` current.
 4. **Current schema is a generated directory, `supabase/schema/`, one file per object,
    replacing `schema.sql`.** A file per table holds the table with its indexes,
    constraints, policies, triggers, grants and comments; a file per function holds its
-   definition, grants and comment; enums and other types share one. It also covers the
-   few objects outside `public` that today can only be learned by grepping migrations:
-   the triggers on `auth.users`, the policies on `storage.objects`, and the rows that
-   define storage buckets and cron jobs. It is produced by splitting `pg_dump` output on
-   the object headers the dump already carries, never hand-edited, and committed by the
-   branch that changed it, exactly like the types. Migrations become write-only:
-   written and applied, never read to learn state.
+   definition, grants and comment; enums and other types share one; what belongs to no
+   object (the schema's own block, default privileges) shares another. It is never
+   hand-edited and is committed by the branch that changed it, exactly like the types.
+   Migrations become write-only: written and applied, never read to learn state. Two
+   generators feed it:
+   - *The split*, for `public`: raw `pg_dump` cut on the object headers the dump already
+     carries.
+   - *A second, name-filtered generator* for the few objects outside `public` that today
+     can only be learned by grepping migrations: the extensions the migrations create,
+     our triggers on `auth.users`, our policies on `storage.objects`, and the rows that
+     define storage buckets and cron jobs. It must select ours by name and leave the
+     platform's own auth and storage objects out, because those change with every CLI
+     bump.
 5. **The comparison plus git is the conflict detector.** Two branches changing one object
-   change one file, so git raises the conflict when the later branch syncs with `dev`.
-   A merge git resolves cleanly but the migrations do not reproduce (both hunks kept in
-   the file, the last writer's body in the database) fails the comparison. The rule for
-   a conflict or a mismatch in a generated file: never edit it; write the migration that
-   combines both changes, then regenerate.
+   change one file, so git raises a conflict when the later branch syncs with `dev`
+   (including an edit racing a drop). A merge git resolves cleanly but the migrations do
+   not reproduce (both hunks kept in the file, the last writer's body in the database)
+   fails the comparison. **The rule, wherever git conflicted in a generated file or the
+   regenerated output differs from what git merged: never hand-edit; take the
+   regenerated output, then read both sides' changes to that object and confirm each
+   survives in it.** When both survive (two branches each added a column or a policy to
+   one table, and only the order differs) commit the regenerated file. When one is
+   missing, write the migration that combines them, and regenerate. The same inspection
+   applies to a red comparison on `dev`: committing the regenerated output unread would
+   accept the last writer and turn the build green over a lost change.
 6. **CI pushes `dev` to staging**, as it already pushes `main` to prod, but deliberately
    unlike that job it does not wait for the test jobs, so staging's schema trails its
    code by about a minute rather than by a whole CI run. Runs are serialized.
@@ -107,8 +119,8 @@ made over sixty bot commits to keep `schema.sql` current.
     only the branch database script applies it. It exists to help a human review UI, so
     CI never touches it.
 12. **The numbered history is squashed into a baseline**, once, right after a release,
-    covering exactly the migrations prod has applied. Prod and staging are told the
-    baseline is applied; no SQL runs on either.
+    covering exactly the migrations prod has applied. On prod and staging only the
+    migration history table is edited; no SQL of the baseline runs on either.
 
 ## Rejected alternatives
 
@@ -179,7 +191,8 @@ land (see there).
    workflow in `supabase/CLAUDE.md`: write → push the branch → run the action → commit
    the artifact. For a migration written directly on `dev`: push it to a short-lived
    ordinary branch, generate, commit, push `dev`, delete the branch. Also state the
-   recovery for a red comparison on `dev`: run the action against `dev`, commit.
+   recovery for a red comparison on `dev`: run the action against `dev`, then apply
+   decision 5's inspection before committing anything.
 3. **CI pushes `dev` to staging.** A job on push to `dev`, with no `needs`, a
    `concurrency` group so two pushes never run `db push` against staging at once, and
    only the CLI installed. Two new repository secrets from the owner: staging's project
@@ -199,12 +212,30 @@ land (see there).
    and migration numbers are contended" section of `supabase/CLAUDE.md`; update the
    reference-data generators under `scripts/`, which hold migration file names as
    literals and tell the operator to pick "the next free number".
-5. **The schema directory.** The split script; the action and the comparison produce
+5. **The schema directory.** The two generators; the action and the comparison produce
    and check the directory alongside the types; delete `schema.sql` and the CI step that
    commits it; keep that step's guard against a dump that silently lost an object
-   class. Rewrite "Current state lives in snapshot files" in `supabase/CLAUDE.md`
-   (including the own-branch staleness warning and the "objects outside `public`"
-   section, both of which this retires) and every other doc that points at `schema.sql`.
+   class. What the split has to get right, from the dump as it is today:
+   - Constraint, trigger, policy and row-security headers name their table, so they
+     attribute mechanically. **Index headers carry only the index name**: take the table
+     from the statement's `ON` clause.
+   - **Grant headers spell a function's signature with parameter names; function headers
+     use types only.** Normalise both to one key, in a way that still works the day an
+     overload appears (there are none today, and no sequences or column defaults emitted
+     as separate entries).
+   - Give `supabase/schema/**` the `-text linguist-generated=true` attribute
+     `schema.sql` has in `.gitattributes`, and for the same reason: a CHECK constraint
+     holds a literal carriage return, and line-ending normalisation would make the
+     comparison unmatchable forever.
+   - Within an object class the dump is alphabetical, so adding an unrelated object
+     moves no other file's bytes; keep dump order inside each file.
+   Rewrite "Current state lives in snapshot files" in `supabase/CLAUDE.md` (including
+   the own-branch staleness warning and the "objects outside `public`" section, both of
+   which this retires) and every live reference to `schema.sql`: the root `CLAUDE.md`,
+   the CI workflow, doc comments in the service contract files, the database
+   authorization architecture doc, the runbooks, and the other open plan that cites it.
+   Nothing executable reads the file. Delete the `TODO.md` item about the snapshot's bot
+   commit blocking release PRs: removing the bot commit resolves it.
 6. **The rich example seed**, as its own file, not in `config.toml`. Built through the
    admin RPCs under impersonated admin claims (the pattern in
    `docs/runbooks/staging-test-data.md`): products of every type and lifecycle state,
@@ -223,19 +254,38 @@ land (see there).
    immediately after a release, while the migrations on `dev` are exactly the ones prod
    has applied; any migration that lands during the work stays a separate file after
    the baseline.
-   - The baseline is one timestamped migration holding the schema **and the data the
-     old migrations created**: the reference data (location tree, postal codes), lookup
-     rows, storage buckets and cron jobs. Data comes from a data dump of a
-     from-migrations database, not from keeping the old data migrations, because later
-     migrations altered and backfilled what earlier ones inserted.
+   - **The baseline is two files: schema, then reference data**, so nobody scrolls
+     megabytes of inserts to read the DDL. They keep **5-digit versions, the highest two
+     of the files they replace**: numbered files sort before every timestamp, so a
+     migration that landed during the work still runs after the baseline on a fresh
+     build (a baseline stamped at landing would sort *above* it and break every fresh
+     build); and every environment that applied the old history already records those
+     two versions as applied.
+   - The schema file is more than a `public` schema dump. It also creates the extensions
+     the old migrations created, our triggers on `auth.users`, our policies on
+     `storage.objects`, and the bucket and cron definitions, written as statements. A
+     plain `public` dump would silently cost every fresh database the new-user profile
+     trigger and all storage RLS.
+   - The data file holds what the old migrations inserted (location tree, postal codes,
+     lookup rows), taken from a data dump of a from-migrations database rather than by
+     keeping the old data migrations, because later migrations wiped, re-pointed and
+     backfilled what earlier ones inserted. The reference-data generators are
+     unaffected: they emit new migrations, which apply on top of a baseline as before.
    - **Proof, mechanical and required:** build one database from the old files and one
-     from the baseline (no seeds); the schema directory, the types and a data-only dump
-     must be identical. Run it in a one-off manual action.
+     from the baseline (no seeds); the schema directory (both generators, which is why
+     this needs step 5), the types, and a data-only dump of `public` must be identical.
+     The migration history table is excluded; it differs by construction. Run it in a
+     one-off manual action.
    - **History, an operator step the owner approves at the time:** assert the versions in
-     the environment's history are exactly the files being squashed, then mark them
-     reverted and the baseline applied with `migration repair`. Staging before the
-     squash merges into `dev`; prod before the release that carries it. Otherwise CI's
-     `db push` refuses, because the history holds versions with no local file.
+     the environment's history are exactly the files being squashed, then mark every
+     version below the baseline's as reverted with `migration repair`. It touches the
+     history table only. Staging: just before the squash merges into `dev`. **Prod: in
+     the same sitting as the release that carries it, immediately before the release
+     merge**, because between the repair and that deploy `main` still holds the old
+     files and any `db push` from it (a hotfix) would try to replay the whole history.
+     Rollback at any point before the deploy: mark the same versions applied again.
+   - A feature branch open across the squash syncs as usual; git resolves the deleted
+     files. If it had also touched `schema.sql` or a numbered migration, regenerate.
    - Rewrite prose in `CLAUDE.md` files and `docs/` that sends a reader to a numbered
      migration ("as 00127 does", "model it on the highest-numbered migrations") so it
      states its rule without the number.
@@ -255,8 +305,9 @@ land (see there).
 - "Switch the database on" yields a worktree dev server showing the rich seed's data
   within about two minutes; "off" leaves no preview branch on the staging project;
   landing a branch whose database is still up deletes it.
-- After the squash: the proof passed; `migrations/` holds the baseline plus only what
-  landed since; `db push --dry-run` reports nothing to apply on staging and on prod.
+- After the squash: the proof passed; `migrations/` holds the two baseline files plus
+  only what landed since; a fresh build still has the new-user profile trigger and
+  storage RLS; `db push --dry-run` reports nothing to apply on staging and on prod.
 - `npm run lint`, `type-check`, `test` clean; DB tests green in CI.
 
 ## Constraints discovered while deciding
