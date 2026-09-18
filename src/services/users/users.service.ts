@@ -250,7 +250,10 @@ export class UsersService {
    */
   async getUserListPage(
     filters: UserListFilters,
-    { cursor }: { cursor?: KeysetCursor } = {},
+    {
+      cursor,
+      withTotal = false,
+    }: { cursor?: KeysetCursor; withTotal?: boolean } = {},
   ): Promise<UserListPage> {
     const needle = filters.search.trim();
     const terms = searchFilterTerms(needle);
@@ -261,10 +264,12 @@ export class UsersService {
 
     let query = this.supabase.from("user_list_entries").select(
       USER_LIST_ENTRY_COLUMNS,
-      // Only the first page asks. The count is an aggregate over the whole
-      // match set, so it cannot change as the reader scrolls, and PostgREST
-      // would recompute it per page for a number the surface read once.
-      cursor === undefined ? { count: "exact" } : undefined,
+      // Only a surface that renders the number asks, and only on the first
+      // page. The count is an aggregate over the whole match set: it cannot
+      // change as the reader scrolls, and under a search it is a second pass
+      // evaluating the family blob for every row in the table — the expensive
+      // half of the read, spent on nothing where no count line shows it.
+      withTotal && cursor === undefined ? { count: "exact" } : undefined,
     );
 
     if (filters.role !== null) query = query.eq("role", filters.role);
@@ -294,7 +299,7 @@ export class UsersService {
     // matching.
     return {
       rows: z.array(userListEntry).parse(data),
-      total: cursor === undefined ? count : null,
+      total: withTotal && cursor === undefined ? count : null,
     };
   }
 

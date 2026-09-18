@@ -90,6 +90,7 @@ function listWith(overrides: Record<string, unknown> = {}) {
     isPending: false,
     isPlaceholderData: false,
     hasNextPage: true,
+    isFetching: false,
     isFetchingNextPage: false,
     fetchNextPage,
     ...overrides,
@@ -146,7 +147,19 @@ describe("the admin users list grows as it is scrolled", () => {
   });
 
   it("does not ask again while a page is already in flight", () => {
-    listState = listWith({ isFetchingNextPage: true });
+    listState = listWith({ isFetching: true, isFetchingNextPage: true });
+    render(<AdminUsersPage />);
+
+    reachTheBottom();
+
+    expect(fetchNextPage).not.toHaveBeenCalled();
+  });
+
+  // Asking for the next page cancels a refresh in flight, so reaching the
+  // bottom while an invalidation re-reads the loaded pages would discard that
+  // refresh and leave the stale rows on screen marked fresh.
+  it("does not ask for more while the loaded pages are being refreshed", () => {
+    listState = listWith({ isFetching: true, isFetchingNextPage: false });
     render(<AdminUsersPage />);
 
     reachTheBottom();

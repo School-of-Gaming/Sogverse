@@ -165,7 +165,9 @@ discipline the route registry uses).
   sheets. They are **built**: one keyset-paged read of a view, server-side search and
   filters, infinite scroll. Nothing in this plan applies to them, and the whole-table
   profile, parent-link and gedu-certification reads they used are gone rather than
-  walked.
+  walked. One walked people read survives outside those three surfaces: the product
+  list's gedu filter still reads every educator, which scales with gedus rather than
+  families and stays a walk.
 - **Keyset paging for the reads named here** — rejected above.
 - **Audited and deliberately unchanged** (bounded by construction; recorded so the next
   sweep doesn't re-litigate): voice zone/occupant reads (one group's roster), per-family

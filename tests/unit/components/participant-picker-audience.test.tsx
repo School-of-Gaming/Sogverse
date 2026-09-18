@@ -99,6 +99,7 @@ vi.mock("@/services/users", () => ({
     isPending: false,
     isPlaceholderData: false,
     hasNextPage: false,
+    isFetching: false,
     isFetchingNextPage: false,
     fetchNextPage: () => Promise.resolve(),
   }),

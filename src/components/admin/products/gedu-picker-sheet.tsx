@@ -101,7 +101,8 @@ export function GeduPickerSheet({
 
   const list = useUserList(
     { search, role: "gedu", spokenLanguage: languageFilter },
-    { enabled: hasOpened },
+    // The one surface with a count line, so the one surface that asks for it.
+    { enabled: hasOpened, withTotal: true },
   );
 
   /**
@@ -114,7 +115,7 @@ export function GeduPickerSheet({
    */
   const everyGedu = useUserList(
     { search: "", role: "gedu", spokenLanguage: null },
-    { enabled: hasOpened },
+    { enabled: hasOpened, withTotal: true },
   );
 
   const gedus = useMemo(
@@ -127,7 +128,11 @@ export function GeduPickerSheet({
   // the cursor the pages on screen yield belongs to the query they answered.
   const sentinelRef = useScrollSentinel({
     enabled:
-      list.hasNextPage && !list.isFetchingNextPage && !list.isPlaceholderData,
+      // `isFetching`, not `isFetchingNextPage`: asking for the next page
+      // cancels a refresh in flight, so a sentinel firing while an invalidation
+      // is re-reading the loaded pages would throw that refresh away and leave
+      // the stale rows on screen marked fresh.
+      list.hasNextPage && !list.isFetching && !list.isPlaceholderData,
     onReach: () => {
       void list.fetchNextPage();
     },

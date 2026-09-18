@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { userListGamer } from "@/services/users/users.contracts";
+import { keysetPage, type KeysetCursor } from "@/lib/supabase/keyset";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
@@ -375,36 +376,48 @@ describe("user_list_entries", () => {
     expect((data ?? []).map((row) => row.id)).toContain(TEST_IDS.GEDU);
   });
 
-  // The keyset page, exactly as the app sends it: everything strictly after the
-  // last row of the previous page under `(created_at DESC, id ASC)`.
-  it("resumes a page from the last row's created_at and id", async () => {
-    const first = await adminClient
+  // The keyset walk, through the app's own paging helper rather than a filter
+  // spelled by hand: the helper double-quotes the cursor's timestamp, whose
+  // `+`, `:` and `.` are all characters the filter grammar also uses, and this
+  // is the only place that string meets a real PostgREST. Pages of two walk the
+  // whole view, and the walk has to reproduce the single ordered read exactly —
+  // a row repeated across a boundary or skipped at one fails it, and fixture
+  // rows seeded in one transaction share a `created_at`, so the `id` tiebreaker
+  // is exercised rather than assumed.
+  it("walks the whole list in keyset pages with no row repeated or skipped", async () => {
+    const PAGE = 2;
+
+    const whole = await adminClient
       .from("user_list_entries")
-      .select("id, created_at")
+      .select("id")
       .order("created_at", { ascending: false })
-      .order("id")
-      .limit(2);
+      .order("id");
+    expect(whole.error).toBeNull();
+    const expected = (whole.data ?? []).map((row) => row.id);
+    expect(expected.length).toBeGreaterThan(PAGE);
 
-    expect(first.error).toBeNull();
-    const page = first.data ?? [];
-    expect(page.length).toBe(2);
+    const walked: (string | null)[] = [];
+    let cursor: KeysetCursor | undefined;
+    // Bounded by the list's own length: a cursor that failed to advance would
+    // otherwise walk forever instead of failing.
+    for (let page = 0; page <= expected.length; page += 1) {
+      const { data, error } = await keysetPage(
+        adminClient.from("user_list_entries").select("id, created_at"),
+        { cursor, pageSize: PAGE },
+      );
+      expect(error).toBeNull();
 
-    const last = page[page.length - 1];
-    const second = await adminClient
-      .from("user_list_entries")
-      .select("id, created_at")
-      .or(
-        `created_at.lt.${last.created_at},and(created_at.eq.${last.created_at},id.gt.${last.id})`,
-      )
-      .order("created_at", { ascending: false })
-      .order("id")
-      .limit(2);
+      const rows = data ?? [];
+      walked.push(...rows.map((row) => row.id));
+      if (rows.length < PAGE) break;
 
-    expect(second.error).toBeNull();
-    const ids = new Set(page.map((row) => row.id));
-    for (const row of second.data ?? []) {
-      expect(ids.has(row.id)).toBe(false);
+      // The view cannot carry NOT NULL through the catalog, so the generated
+      // type is nullable where the table is not.
+      const last = rows[rows.length - 1];
+      cursor = { createdAt: last.created_at!, id: last.id! };
     }
+
+    expect(walked).toEqual(expected);
   });
 
   // =========================================================================

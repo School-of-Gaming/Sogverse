@@ -163,7 +163,11 @@ export function ParticipantPickerSheet({
   // yield belongs to the needle they answered, not the one now in the box.
   const sentinelRef = useScrollSentinel({
     enabled:
-      list.hasNextPage && !list.isFetchingNextPage && !list.isPlaceholderData,
+      // `isFetching`, not `isFetchingNextPage`: asking for the next page
+      // cancels a refresh in flight, so a sentinel firing while an invalidation
+      // is re-reading the loaded pages would throw that refresh away and leave
+      // the stale rows on screen marked fresh.
+      list.hasNextPage && !list.isFetching && !list.isPlaceholderData,
     onReach: () => {
       void list.fetchNextPage();
     },

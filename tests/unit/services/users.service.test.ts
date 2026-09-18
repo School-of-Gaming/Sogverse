@@ -141,15 +141,29 @@ describe("UsersService.getUserListPage", () => {
     expect(select).not.toContain("family_search_blob");
   });
 
-  it("asks for an exact count on the first page", async () => {
+  it("asks for an exact count on the first page when the surface wants one", async () => {
     fetchMock.mockResolvedValue(
       postgrestPage(listRows(ADMIN_PEOPLE_LIST_PAGE_SIZE), { from: 0, total: 312 }),
     );
 
-    const page = await service.getUserListPage(NO_FILTERS);
+    const page = await service.getUserListPage(NO_FILTERS, { withTotal: true });
 
     expect(requestedCountPreference(fetchMock)).toContain("count=exact");
     expect(page.total).toBe(312);
+  });
+
+  // Under a search the exact count is a second pass evaluating the family blob
+  // for every row in the table, so a surface with no count line must not pay
+  // for it. Only the gedu picker renders the number; the default is not to ask.
+  it("asks for no count unless the surface wants one, and reports none", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestJson(listRows(ADMIN_PEOPLE_LIST_PAGE_SIZE)),
+    );
+
+    const page = await service.getUserListPage(NO_FILTERS);
+
+    expect(requestedCountPreference(fetchMock)).not.toContain("count=exact");
+    expect(page.total).toBeNull();
   });
 
   // The count is an aggregate over the whole match set, so it cannot change as
@@ -159,6 +173,7 @@ describe("UsersService.getUserListPage", () => {
     fetchMock.mockResolvedValue(postgrestJson(listRows(2, 25)));
 
     const page = await service.getUserListPage(NO_FILTERS, {
+      withTotal: true,
       cursor: { createdAt: "2026-01-02T00:00:00.000Z", id: "user-24" },
     });
 

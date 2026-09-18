@@ -13,7 +13,10 @@ import { minecraftKeys } from "@/services/minecraft/minecraft.queries";
 import { robloxKeys } from "@/services/roblox/roblox.queries";
 import { ADMIN_PEOPLE_LIST_PAGE_SIZE } from "@/lib/constants/admin-people-lists";
 import { nextKeysetCursor, type KeysetCursor } from "@/lib/supabase/keyset";
-import type { AdminGameAccountBody } from "./users.contracts";
+import {
+  USER_LIST_SEARCH_MIN_QUERY,
+  type AdminGameAccountBody,
+} from "./users.contracts";
 import type { ProfileUpdate, UserRole } from "@/types";
 
 /**
@@ -32,7 +35,11 @@ export const userKeys = {
   // Every argument that changes the answer is in the key, and nothing else:
   // React Query hashes the object deterministically, so two callers asking the
   // same question share one cache entry however they spelled it.
-  list: (filters: UserListFilters) => [...userKeys.lists(), filters] as const,
+  // `withTotal` is one of them: a page read without its total holds `null`
+  // where the counting surface expects a number, so the two must not share an
+  // entry — otherwise whichever surface asked first decides what the other sees.
+  list: (filters: UserListFilters, withTotal: boolean) =>
+    [...userKeys.lists(), filters, { withTotal }] as const,
   details: () => [...userKeys.all, "detail"] as const,
   detail: (id: string) => [...userKeys.details(), id] as const,
   byRole: (role: UserRole) => [...userKeys.all, "role", role] as const,
@@ -78,15 +85,25 @@ export function useProfile(userId: string) {
  */
 export function useUserList(
   filters: UserListFilters,
-  options?: { enabled?: boolean },
+  options?: { enabled?: boolean; withTotal?: boolean },
 ) {
   const supabase = getClient();
   const service = new UsersService(supabase);
 
+  // Off unless a surface renders the number. An exact count of a *search* is a
+  // second pass over the whole table evaluating the family blob for every row,
+  // which is the expensive half of the read — so it is paid only where a count
+  // line exists to show it.
+  const withTotal = options?.withTotal ?? false;
+
   // Normalised once and used for the key *and* the read, so "ada" and "ada "
-  // cannot become two cache entries answering the same question.
+  // cannot become two cache entries answering the same question. A needle below
+  // the search floor normalises to empty for the same reason: the read ignores
+  // it and answers with the plain newest page, so keyed on its own it would be
+  // a second request for a page already in the cache.
+  const trimmed = filters.search.trim();
   const normalized: UserListFilters = {
-    search: filters.search.trim(),
+    search: trimmed.length < USER_LIST_SEARCH_MIN_QUERY ? "" : trimmed,
     role: filters.role,
     spokenLanguage: filters.spokenLanguage,
   };
@@ -99,9 +116,9 @@ export function useUserList(
   const firstPage: KeysetCursor | undefined = undefined;
 
   return useInfiniteQuery({
-    queryKey: userKeys.list(normalized),
+    queryKey: userKeys.list(normalized, withTotal),
     queryFn: ({ pageParam }: { pageParam: KeysetCursor | undefined }) =>
-      service.getUserListPage(normalized, { cursor: pageParam }),
+      service.getUserListPage(normalized, { cursor: pageParam, withTotal }),
     initialPageParam: firstPage,
     // The keyset module owns what "there is more" means — a page shorter than
     // it asked for is the end of the list — so the page size here and the one
