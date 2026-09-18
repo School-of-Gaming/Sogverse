@@ -1,61 +1,61 @@
 # CLAUDE.md
 
 > [!CAUTION]
-> ## STOP — staging changed under this branch while it was paused (2026-09-18)
+> ## STOP — staging and `dev` changed under this branch while it was paused (2026-09-18)
 >
 > **Read this before any other work on `feat/gedu-substitution`, and tell the owner you
 > have seen it.** This section exists only on this branch and must be deleted — in the
 > same commit as the fix migration below — before the branch merges.
 >
 > **What happened.** While this branch was paused, `feat/fennoa-finvoice-export` landed on
-> `dev`. Its migration **00263** made `get_admin_dashboard` return a new attention flag,
+> `dev`. One of its migrations (claimed on staging as 00263, **renumbered on `dev` to
+> 00269**, see below) made `get_admin_dashboard` return a new attention flag,
 > `missing_invoice_customer` (a municipality club with no invoice customer), and put a club
 > with that flag alone into the attention list. This branch's **00264** was pushed to
-> staging *after* 00263 and rebuilt `get_admin_dashboard` from a pre-00263 body, silently
+> staging *after* it and rebuilt `get_admin_dashboard` from an older body, silently
 > dropping the flag — which broke the admin dashboard for `dev` ("Could not load the
 > dashboard": `dev`'s contract requires the field).
 >
 > **What was done to staging.** `get_admin_dashboard` on staging was replaced by hand (psql,
-> no migration-history row) with **00264's body plus 00263's two additions**: the
+> no migration-history row) with **00264's body plus 00269's two additions**: the
 > `missing_invoice_customer` key beside `missing_municipality_fee` in each attention doc,
 > and the matching `OR (c.product_type = 'municipality_club' AND c.invoice_customer_id IS
 > NULL)` in the candidate filter. Grants as 00264 states them. So staging's live function
 > no longer matches any migration file on this branch — it is a superset of 00264, and this
 > branch's code works against it unchanged (zod strips the extra key).
 >
+> **Migration numbers moved too.** Prod (and `main`) already hold **00266 and 00267**
+> (prod's history runs 00258 → 00266 → 00267), and the release job's plain `supabase db
+> push` **refuses** a migration numbered below the remote's latest ("Found local migration
+> files to be inserted before the last migration on remote database… `--include-all`").
+> **No test or CI check catches this before the release job fails.** So `dev`'s two
+> Fennoa migrations were renumbered 00259 → **00268** and 00263 → **00269**, and staging's
+> history was moved to match. `dev` and staging now top out at **00269**. The convention
+> itself is under review in `docs/investigations/` (migration ordering) — check whether it
+> has changed before following the renumbering steps below.
+>
 > **What this branch must do before it merges:**
 >
-> 1. Merge `dev` into this branch, so 00263 and the dashboard contract's
+> 1. Merge `dev` into this branch, so 00268/00269 and the dashboard contract's
 >    `missing_invoice_customer` field are here.
-> 2. Add a **new** migration (next free number — `dev` already holds 00266/00267, so
->    00268 or later; re-verify against `supabase_migrations.schema_migrations` at push
->    time) that `CREATE OR REPLACE`s `get_admin_dashboard` as this branch's latest body
->    plus 00263's two additions, with the REVOKE/GRANTs restated. Never edit 00264 — it
->    is pushed. Without this migration, 00264 drops the flag in every from-scratch build:
->    CI's DB tests on `dev` and the prod release.
-> 3. Any further change to `get_admin_dashboard` on this branch starts from that combined
->    body. **Never `psql -f` 00260 or 00264's dashboard body onto staging again** — it
+> 2. **Renumber all five of this branch's migrations — 00260, 00261, 00262, 00264 and
+>    00265 — above the highest on `dev`, `main` and staging's history** (00269 today, so
+>    00270–00274), keeping their relative order. They are already applied on staging under
+>    the old versions, so move staging's record with them: `npx supabase migration repair
+>    --status reverted <old versions>`, then `--status applied <new versions>` (or one
+>    `UPDATE supabase_migrations.schema_migrations SET version = …` in a transaction) —
+>    this rewrites only this branch's own history, and the objects are already in place,
+>    so no SQL re-runs. Verify the history table afterwards.
+> 3. Add a **new** migration, numbered after all of step 2's (re-verify against
+>    `supabase_migrations.schema_migrations` at push time), that `CREATE OR REPLACE`s
+>    `get_admin_dashboard` as this branch's latest body plus 00269's two additions, with
+>    the REVOKE/GRANTs restated. Never edit a pushed migration's SQL. Renumbering does not
+>    make this step unnecessary: the renumbered 00264 still runs after 00269 in every
+>    from-scratch build — CI's DB tests and the prod release — and still drops the flag.
+> 4. Any further change to `get_admin_dashboard` on this branch starts from that combined
+>    body. **Never `psql -f` this branch's older dashboard bodies onto staging again** — it
 >    breaks `dev`'s admin dashboard for everyone.
-> 4. Delete this section in the same commit as step 2.
->
-> ### And: this branch's migration numbers sort below prod's latest
->
-> Prod (and `main`) already hold **00266 and 00267** (checked 2026-09-18: prod's history
-> runs 00258 → 00266 → 00267). This branch's **00260, 00264 and 00265** sort below that,
-> and the release job's plain `supabase db push` against prod **refuses** migrations older
-> than the remote's latest ("Found local migration files to be inserted before the last
-> migration on remote database… `--include-all`"). **No test or CI check catches this
-> before the release job fails** — nothing compares migration numbers against `main`.
->
-> So before this branch merges, **renumber 00260, 00264 and 00265 above the highest
-> migration on `main` *and* on staging's history**, keeping their relative order, and
-> number step 2's fix migration after all of them. They are already applied on staging
-> under the old versions, so the renumber also moves staging's record: `npx supabase
-> migration repair --status reverted 00260 00264 00265`, then `--status applied <the new
-> versions>` — this rewrites only this branch's own history, and the objects are already
-> in place, so no SQL re-runs. Verify `supabase_migrations.schema_migrations` afterwards.
-> (Renumbering does not make step 2 unnecessary: the renumbered 00264 still runs after
-> 00263 and still drops the flag.)
+> 5. Delete this section in the same commit as step 3.
 
 ## Commands
 
