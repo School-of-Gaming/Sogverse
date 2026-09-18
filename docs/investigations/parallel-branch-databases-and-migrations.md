@@ -202,8 +202,8 @@ budget is tight enough that the last figure is the one to design against. *Check
 So a running branch bills until something deletes it, and Supabase deletes one only when
 a PR closes, which `feat/*` branches do not have. The owner has ruled out a scheduled
 cleanup job of our own as a pattern. What is left is to make forgetting impossible
-rather than cleaned up after: **a branch database is a lease held by a process, released
-at the end of a paid hour once idle** (see the proposal). Deleting and recreating is sound by construction (state is
+rather than cleaned up after: **a branch database exists only while the owner has asked
+for one** (see the proposal), and everything that can be done without one is. Deleting and recreating is sound by construction (state is
 migrations + seed) and costs under a minute. `branches pause` exists but helps nothing
 here: it needs the same knowledge of when work stopped that deletion does.
 
@@ -290,9 +290,11 @@ the morning; restamp + C at midday), both of which worked around the current sha
 
 Three principles, each removing a class rather than policing it:
 
-1. **No agent shares mutable state with another.** Every worktree gets its own
-   disposable database. `staging` and prod are written by CI from a git ref and by
-   nothing else; agents hold no credentials for either.
+1. **No agent shares mutable state with another.** An agent's schema work needs no
+   hosted database: CI builds what it needs from the branch's own migrations. `staging`
+   and prod are written by CI from a git ref and by nothing else; agents read them and
+   never write them. The one hosted database a feature ever gets is the disposable one
+   the owner switches on to verify it.
 2. **Every database is a pure function of a git ref** (migrations + seed). Anything can
    be thrown away and rebuilt, so nothing is repaired by hand.
 3. **Conflicts surface in git as text**, where agents resolve them well, never in a
@@ -300,49 +302,48 @@ Three principles, each removing a class rather than policing it:
 
 The design:
 
-- **A database per schema-changing worktree, as a branch of the *staging* project, not
-  of prod** (*proven 2026-09-18*, see the probe below). Created the first time the
-  worktree adds a migration, deleted when parked or landed. Work that touches no
-  migration keeps reading staging and costs nothing. Prod's project never gains
-  branches, an agent's mistake is confined to the staging project, and staging itself
-  needs no cutover: its URL, Vercel env vars and Stripe webhook targets stay as they
-  are. One script owns ensure / delete / sweep and is the only reader of the access
-  token; `/worktree-flow` calls it and writes the branch's keys into the worktree's
-  `.env.local`.
-- **One leased database per worktree, held by a keeper process and released at the end
-  of a paid hour.** Three facts shape it. No session can know the owner has walked
-  away; Supabase no longer pauses an idle branch; and compute bills by the *started*
-  hour per instance (documented for projects as clock-hour buckets, with a part hour
-  charged in full), so deleting early throws away time already paid for, and an apply
-  followed by a separate preview database would bill two hours for twenty minutes'
-  work. So:
-  - The first command in a worktree that needs a database (*apply*: push, regenerate
-    types and the schema directory; or *preview*: run the dev server against it) starts
-    a small detached keeper, which creates the branch and owns its deletion. Later
-    commands in that worktree reuse the same database.
-  - Every use touches the lease: an apply when it runs, the preview wrapper on each
-    request line the dev server logs. The wrapper passes the branch's URL and keys in
-    the dev server's environment, which Next prefers over `.env.local`, so that file is
-    never rewritten.
-  - Shortly before each paid hour ends the keeper looks at the lease. Used recently: it
-    holds for another hour. Idle: it stops any preview server, deletes the database and
-    exits. Cost is the number of hours actually touched; twenty minutes of work is one
-    Micro hour, $0.01344, and a forgotten database wastes at most the rest of an hour
-    that was already paid.
-  - Data entered during a preview dies with the database, by design; the next lease
-    starts from the seeds.
-  - A keeper can be killed (shutdown, a tree kill). Every command start deletes any
-    Supabase branch with no live keeper, `/worktree-flow`'s teardown deletes by name,
-    and `/cleanup-branches` deletes any whose git branch is gone. Those are steps of
-    things the owner already runs, not a scheduled job. DB tests still run in CI only.
-- **A shared Vercel preview is the deliberate exception.** Vercel still deploys every
+- **The only thing that costs money is a running branch database, and only a human
+  verifying UI needs one, so the owner switches it on and off by saying so** (owner's
+  ruling, 2026-09-18). Earlier drafts automated the lifetime (a nightly delete, a
+  database per command, an hourly lease); all are dropped, because each is a system
+  guessing when the owner needs something the owner can simply state. Everything else
+  in the workflow is free and needs no hosted database at all.
+  - *On:* the owner asks; Claude creates a branch of the **staging** project (not of
+    prod: *proven 2026-09-18*, see the probe below), pushes the worktree's migrations
+    and both seeds through the session pooler, and points the worktree's running dev
+    server at it. After feedback that changes a migration, Claude resets and re-pushes
+    (half a minute).
+  - *Off:* the owner says so, or the feature lands: `/worktree-flow`'s teardown deletes
+    the branch, and `/cleanup-branches` deletes any whose git branch is gone. Data
+    entered while testing dies with it; the next one starts from the seeds.
+  - *Never otherwise.* An agent does not create a branch database on its own
+    initiative, including to verify its own work in a browser; it asks. This is a rule
+    in `supabase/CLAUDE.md`.
+  - *Visibility, not automation:* whenever a flow starts or lands, and whenever a
+    database is switched on, Claude lists the branch databases that are up with their
+    age and cost so far, so one left running is seen rather than guessed at.
+  - Compute bills by the started hour per instance, so switching off and on again
+    within the hour bills twice; leaving one up across a short break is the cheaper
+    call, and it is the owner's.
+  Prod's project never gains branches, a mistake is confined to the staging project,
+  and staging needs no cutover: its URL, Vercel env vars and Stripe webhook targets
+  stay as they are.
+- **CI is the generator.** Its DB job already builds a database from the branch's
+  migrations on every push. It also produces the types and the schema directory and
+  uploads them as an artifact; the agent downloads and commits them. That replaces
+  "push to staging, then regenerate" with no hosted database, at the price of a CI
+  round trip (about four minutes) where a hosted apply took one. The first push of a
+  new migration is red on the comparison step by construction, and green once the
+  artifact is committed. One generator also means one `pg_dump` and one CLI version, so
+  the generated files cannot differ by who produced them.
+- **A shared Vercel preview is the same switch with one more step.** Vercel still deploys every
   pushed branch, and that deployment still points at staging. For a branch with no
   migration that is today's behaviour and is fine. For a schema-changing branch it runs
   new code against a schema that lacks the branch's migrations, so its new parts break.
   Sharing one with the team before a merge is rare (most team review happens on staging
-  afterwards), so it is an explicit command the owner asks for: create a long-lived
-  database for the branch, set that git branch's Vercel preview env vars to it,
-  redeploy, and print the URL and the cost (≈ $0.32 a day). Landing deletes the
+  afterwards), so it is something the owner asks for: switch the branch's database on,
+  set that git branch's Vercel preview env vars to it, redeploy, and print the URL and
+  the cost (≈ $0.32 a day). Landing deletes the
   database and the env vars; `/cleanup-branches` catches one that was abandoned.
   Stripe webhooks do not reach it, and the branch's auth redirect URLs must admit the
   preview domain.
@@ -354,8 +355,9 @@ The design:
   only if the rule is seen to fail.
 - **CI pushes `dev` to staging**, as it already pushes `main` to prod. The `db push`
   to staging leaves the agent workflow entirely.
-- **An unlanded migration is mutable.** On its own database an agent edits the file and
-  resets, instead of stacking fix-up migrations. Immutability starts at landing, which
+- **An unlanded migration is mutable.** No shared database has applied it (CI builds
+  from scratch every run, and a branch database resets in half a minute), so an agent
+  edits the file instead of stacking fix-up migrations. Immutability starts at landing, which
   retires "never amend a pushed migration" for everything before that point.
 - **Versions are timestamps, assigned at landing.** Landing is already serialized
   through one human, so it is a merge queue: sync with `dev`, restamp the branch's
@@ -370,13 +372,13 @@ The design:
   in `supabase/schema/`: a file per table holding the table with its indexes,
   constraints, policies, triggers, grants and comments; a file per function with its
   grants and comment; one for types. A script produces it by splitting `pg_dump` on the
-  object headers the dump already carries. It is generated from the branch's *own*
-  database in the same step as the types, and never hand-edited, exactly like the types.
-  That was impossible while staging was shared, which is the only reason the snapshot
-  is CI-maintained, lags `dev`, and is stale for whatever your own branch touched.
-- **CI verifies instead of committing:** build from `migrations/`, generate the
-  directory, and require it identical to what the branch committed. The bot commit to
-  `dev` (62 so far) goes away.
+  object headers the dump already carries. CI generates it from the *branch's*
+  migrations in the same step as the types, the branch commits it, and it is never
+  hand-edited, exactly like the types. Today's snapshot is generated only on `dev`,
+  which is why it lags and is stale for whatever your own branch touched.
+- **CI verifies instead of committing:** the same job requires what it generated to be
+  identical to what the branch committed. The bot commit to `dev` (62 so far) goes
+  away.
 - **That check plus git is option D, exactly, for one build instead of four.** Two
   branches changing one object change one file, so git raises the conflict at sync; and
   a merge git resolves cleanly but the migrations do not reproduce (the 00263/00264
@@ -384,9 +386,8 @@ The design:
   comparison. It covers every object class, needs no authoring change, no generator and
   no idempotent object files, which is why it replaces the one-file-per-function idea
   this proposal first carried. The rule for a conflict in a generated file: never edit
-  it; write the migration that combines both changes, reset, regenerate.
-- **After syncing with `dev`, reset and rebuild the branch database.** It takes half a
-  minute, so it is the universal answer to "my database and my files disagree".
+  it; write the migration that combines both changes, push, and commit what CI
+  generates.
 - **CI also regenerates the types from its from-migrations stack and diffs them against
   the committed file**, so the types cannot disagree with `migrations/` after a merge.
 - **Landing requires the branch's CI green on the synced, restamped commit.** DB tests
@@ -396,9 +397,9 @@ The design:
   minimal fixture set the DB tests are written against. A rich example seed is what
   previews run on: it builds a detailed, realistic catalogue through the admin RPCs
   (products of every type and state, families with gamers, certified and uncertified
-  gedus, groups with sessions), the preview command applies it (and uploads a few
+  gedus, groups with sessions), switching a database on applies it (and uploads a few
   images), and CI applies it after the DB tests to prove it still runs. It ships with
-  the per-process databases, because without it a preview is an empty app.
+  the first step, because without it a preview is an empty app.
 
 **The probe, 2026-09-18.** A preview branch was created on the staging project from the
 CLI (Micro, `eu-north-1`), with no GitHub integration involved:
@@ -423,12 +424,12 @@ CLI (Micro, `eu-north-1`), with no GitHub integration involved:
   not an extra instance. The probe ran for 40 minutes (under one cent) and was deleted.
 
 **Work done directly on `dev`** (small changes that skip `/worktree-flow`) stays
-workable. Without a migration nothing changes. With one, the same branch script runs
-from the main checkout: create a database, apply, regenerate types, commit, push,
-delete. The version is stamped at commit, which *is* landing, so order holds; if the
-push is rejected because `dev` moved, rebase and restamp. What such a change skips is
-the CI-green-before-landing gate, exactly as it skips review today: `dev` goes red
-after the fact and the release PR's required checks still stand between it and prod.
+workable. Without a migration nothing changes. With one, the generated files still come
+from CI: push the commit to a scratch ref so CI runs without touching `dev`, commit the
+artifact, then push `dev` green. The version is stamped at commit, which *is* landing,
+so order holds; if the push is rejected because `dev` moved, rebase and restamp. What
+such a change skips is review, exactly as today; the release PR's required checks still
+stand between it and prod.
 
 **The existing 00001–00269 keep their names.** Timestamps sort after them, so nothing is
 renamed; renaming applied history buys nothing and costs a history rewrite on prod.
@@ -458,16 +459,16 @@ commitment, 2026-09-18).
 
 Each step pays off even if the next is never taken.
 
-1. Leased per-worktree databases: the keeper, the apply and preview commands, their use in
-   `/worktree-flow` and `/cleanup-branches`, the rich example seed. Ends every
-   shared-staging collision at once.
+1. CI as the generator (types now, the schema directory in step 4); the on/off branch
+   database with its deletion in `/worktree-flow` and `/cleanup-branches`; the rich
+   example seed. Agents stop pushing to staging, which ends every shared-staging
+   collision at once.
 2. CI pushes `dev` to staging; staging's credentials leave `.env.local`; rewrite
    `supabase/CLAUDE.md`'s workflow and delete its contention section.
 3. Timestamps assigned at landing, the CI-green landing gate, the tripwire, the hotfix
    rule.
 4. The generated schema directory replaces `schema.sql`: the split script, generation
-   beside the types, CI verifying instead of committing, the types check. Needs step 1,
-   since it is generated from the branch's own database.
+   beside the types, CI verifying instead of committing.
 5. The opt-in shared Vercel preview command.
 6. Squash the migration history; reset staging to clear its drift.
 
@@ -491,9 +492,11 @@ Each step pays off even if the next is never taken.
   `--include-all`, and that mixed 5- and 14-digit versions sort as expected.
 - That Vercel's per-git-branch preview env vars can be set from a script, for the
   opt-in shared preview.
-- How branch compute hours are counted, by reading the usage page after a few runs:
+- How branch compute hours are counted, by reading the usage page after a few uses:
   that a part hour bills in full as documented for projects, and whether the buckets
-  are clock hours or run from the branch's creation. The keeper aligns to whichever.
+  are clock hours or run from the branch's creation.
+- GitHub Actions minutes: what the extra generation pushes cost against the plan's
+  allowance.
 - That `pg_dump`'s per-object headers split cleanly into files for every object class
   in the snapshot, and that the split is stable when an unrelated object is added.
 - That `gen types --local` output in CI matches the hosted output byte for byte.
