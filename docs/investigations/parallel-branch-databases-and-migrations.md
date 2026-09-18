@@ -184,9 +184,12 @@ budget is tight enough that the last figure is the one to design against. *Check
 - **Preview branches auto-pause after inactivity and wake on the next request** (the
   first connection may time out). Persistent branches never pause. No rendered docs
   page states the threshold, but the docs' own shared config sets the branching
-  inactivity period to **5 minutes**. Not yet confirmed by measurement: the probe's
-  control-plane status still read `ACTIVE_HEALTHY` nearly nine minutes idle, so either
-  the figure is stale or that status does not reflect an auto-pause.
+  inactivity period to **5 minutes**. **The probe did not pause.** Left untouched for
+  11 minutes 36 seconds (no connections, no control-plane polling), its status still
+  read `ACTIVE_HEALTHY` and `pg_postmaster_start_time()` was unchanged from creation,
+  so Postgres had never stopped. Whether that is a stale figure, or auto-pause not
+  applying to a CLI-created branch with no git association, is unknown. Cost controls
+  must not assume it.
 - The pinned CLI has explicit **`branches pause` and `branches unpause`**.
 - Supabase's billing docs count compute hours for active instances only. Whether a
   paused branch bills anything else (disk) is to measure.
@@ -374,8 +377,10 @@ CLI (Micro, `eu-north-1`), with no GitHub integration involved:
   locally, 17.6 in CI; the script strips that line) and comments citing the migrations
   renumbered that morning, which CI had not yet regenerated. A branch-generated
   snapshot and a CI-generated one are therefore comparable as plain text.
-- The branch's control-plane status is readable without touching its database, which
-  is how its idle auto-pause is being timed.
+- The branch's control-plane status is readable without touching its database.
+- Creating the first branch enables Branching on the project, which leaves a default
+  `main` entry in `branches list` for the staging project itself. It is the project,
+  not an extra instance. The probe ran for 40 minutes (under one cent) and was deleted.
 
 **Work done directly on `dev`** (small changes that skip `/worktree-flow`) stays
 workable. Without a migration nothing changes. With one, the same branch script runs
@@ -439,9 +444,9 @@ Each step pays off even if the next is never taken.
 
 - On a scratch database with `db push --dry-run`: the refusal's error text,
   `--include-all`, and that mixed 5- and 14-digit versions sort as expected.
-- The idle auto-pause threshold of a preview branch in practice (documented as 5
-  minutes; the probe has not confirmed it), and that a scheduled CI job can list and
-  delete preview branches with the org token.
+- That a scheduled CI job can list and delete preview branches with the org token.
+  (Auto-pause is settled for planning purposes: documented at 5 minutes, not observed
+  at 11½, so the nightly delete is the control.)
 - That `pg_dump`'s per-object headers split cleanly into files for every object class
   in the snapshot, and that the split is stable when an unrelated object is added.
 - That `gen types --local` output in CI matches the hosted output byte for byte.
