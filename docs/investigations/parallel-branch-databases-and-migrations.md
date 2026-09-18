@@ -181,15 +181,16 @@ working day, ≈ $0.32 if left up for 24 hours, ≈ $9.70 if forgotten for a mon
 budget is tight enough that the last figure is the one to design against. *Checked
 2026-09-18:*
 
-- **Preview branches auto-pause after inactivity and wake on the next request** (the
-  first connection may time out). Persistent branches never pause. No rendered docs
-  page states the threshold, but the docs' own shared config sets the branching
-  inactivity period to **5 minutes**. **The probe did not pause.** Left untouched for
-  11 minutes 36 seconds (no connections, no control-plane polling), its status still
-  read `ACTIVE_HEALTHY` and `pg_postmaster_start_time()` was unchanged from creation,
-  so Postgres had never stopped. Whether that is a stale figure, or auto-pause not
-  applying to a CLI-created branch with no git association, is unknown. Cost controls
-  must not assume it.
+- **Preview branches no longer auto-pause when idle.** They did: in January 2025 the
+  branching lead documented a pause after 5 minutes of inactivity with a wake on the
+  next request. On 2026-08-11 the same engineer merged a docs change removing it as
+  "outdated guidance", leaving deletion on PR merge or close as the only automatic
+  lifecycle. The probe agrees: untouched for 11 minutes 36 seconds (no connections, no
+  control-plane polling) its status read `ACTIVE_HEALTHY` and
+  `pg_postmaster_start_time()` was unchanged from creation, so Postgres never stopped.
+  What still says otherwise is stale: the branching troubleshooting page, an unused
+  5-minute constant in the docs' shared config, and the "aren't automatically paused"
+  wording on persistent branches.
 - The pinned CLI has explicit **`branches pause` and `branches unpause`**.
 - Supabase's billing docs count compute hours for active instances only. Whether a
   paused branch bills anything else (disk) is to measure.
@@ -198,14 +199,13 @@ budget is tight enough that the last figure is the one to design against. *Check
 - `--size nano` is offered by the CLI; the branching docs price only Micro as the
   default. On paid orgs Nano is believed to bill at the Micro rate. To verify.
 
-So the controls are about running hours, not size: **a branch exists only for a worktree
-that changes the schema** (UI-only and docs work keeps reading staging, as today, and
-creates nothing); and **a scheduled job outside any session deletes every preview
-branch nightly**, because no session can know the owner has walked away. Supabase's
-auto-pause is a second backstop, not the control. Deleting and recreating is sound by
-construction (state is migrations + seed); it costs a rebuild and a rewritten
-`.env.local`, since the new branch has a new ref and keys. At three schema-changing
-pieces of work a week, two active days each, that is roughly $2.50 a month.
+So a running branch bills until something deletes it, and Supabase deletes one only when
+a PR closes, which `feat/*` branches do not have. The owner has ruled out a scheduled
+cleanup job of our own as a pattern. What is left is to make forgetting impossible
+rather than cleaned up after: **a branch database never outlives the process that needs
+it** (see the proposal). Deleting and recreating is sound by construction (state is
+migrations + seed) and costs under a minute. `branches pause` exists but helps nothing
+here: it needs the same knowledge of when work stopped that deletion does.
 
 **The shape:**
 
@@ -309,12 +309,31 @@ The design:
   are. One script owns ensure / delete / sweep and is the only reader of the access
   token; `/worktree-flow` calls it and writes the branch's keys into the worktree's
   `.env.local`.
-- **A reaper that does not depend on any session.** A session cannot know the owner has
-  walked away, so nothing about cost may rest on a session ending well. A scheduled CI
-  job deletes every preview branch nightly. Nothing is lost, because a branch database
-  is a pure function of its git ref, and "ensure" rebuilds one in under a minute the
-  next time it is needed. That caps a forgotten branch at one day's hours (≈ $0.32)
-  whatever Supabase's own auto-pause does, and makes what a paused branch bills moot.
+- **A branch database is scoped to a process, never to a worktree or a session.** No
+  session can know the owner has walked away, Supabase no longer pauses an idle branch,
+  and a scheduled cleanup job is ruled out, so nothing may be left running that relies
+  on someone remembering it. Two commands own every database:
+  - *Apply*: create, push migrations and seeds, regenerate the types and the schema
+    directory, delete. One to two minutes, deleted in a `finally`, about $0.0005 a run.
+    This is all a migration needs, including one written directly on `dev`.
+  - *Preview*: create, push, start the dev server against it, and delete when the
+    server exits. The wrapper owns an idle timeout: no request to the dev server for a
+    set period and it stops the server and deletes the database. That is the idle
+    pause Supabase dropped, held by the process that owns the resource.
+  Both delete any leftover branch carrying their worktree's name before creating, so a
+  hard-killed run is healed by the next one rather than by a timer.
+- **A shared Vercel preview is the deliberate exception.** It is rare (most team review
+  happens on staging after the merge), so it is an explicit command: create a database
+  for the branch, point that git branch's Vercel preview env vars at it, and print what
+  it costs per day. It lives until the branch lands or the owner deletes it, and the
+  flow's landing step deletes it.
+- **Worktrees read shared environments and never write them.** Reading staging or prod
+  to fact-check a feature stays useful; every write goes to a seed file or a branch
+  database. A rule alone does not make that true while the worktree's `.env.local` is
+  a copy holding the database passwords and prod's service-role key, so the worktree's
+  file is generated: read-only database roles for staging and prod, and no write-capable
+  secret. The write credentials stay in the main checkout. (Creating a read-only role
+  on prod is an owner decision: it reads children's data.)
 - **CI pushes `dev` to staging**, as it already pushes `main` to prod. The `db push`
   to staging leaves the agent workflow entirely.
 - **An unlanded migration is mutable.** On its own database an agent edits the file and
@@ -355,10 +374,13 @@ The design:
 - **Landing requires the branch's CI green on the synced, restamped commit.** DB tests
   are CI-only and are not in the landing gates today; with this, the combined migration
   set is built and checked before `dev` sees it, without PRs.
-- **Two seeds.** `seed.sql` stays the minimal test fixture set. A preview seed builds a
-  realistic catalogue through the admin RPCs; the branch script applies it at creation
-  (and uploads a few images), and CI applies it after the DB tests to prove it still
-  runs.
+- **Two seeds, and the second is a priority, not a follow-up.** `seed.sql` stays the
+  minimal fixture set the DB tests are written against. A rich example seed is what
+  previews run on: it builds a detailed, realistic catalogue through the admin RPCs
+  (products of every type and state, families with gamers, certified and uncertified
+  gedus, groups with sessions), the preview command applies it (and uploads a few
+  images), and CI applies it after the DB tests to prove it still runs. It ships with
+  the per-process databases, because without it a preview is an empty app.
 
 **The probe, 2026-09-18.** A preview branch was created on the staging project from the
 CLI (Micro, `eu-north-1`), with no GitHub integration involved:
@@ -412,10 +434,15 @@ pausing branches rather than deleting them (rests cost on knowing when work stop
 
 ## Order, if committed to
 
+Assumes `feat/gedu-substitution`, the last branch under the old numbering with
+migrations already on staging, has merged into `dev` before any of this starts (owner's
+commitment, 2026-09-18).
+
 Each step pays off even if the next is never taken.
 
-1. Per-worktree databases: the branch script, its use in `/worktree-flow`, the nightly
-   reaper. Ends every shared-staging collision at once.
+1. Per-process databases: the apply and preview commands, their use in
+   `/worktree-flow`, the rich example seed, the generated worktree `.env.local`. Ends
+   every shared-staging collision at once.
 2. CI pushes `dev` to staging; staging's credentials leave `.env.local`; rewrite
    `supabase/CLAUDE.md`'s workflow and delete its contention section.
 3. Timestamps assigned at landing, the CI-green landing gate, the tripwire, the hotfix
@@ -423,7 +450,7 @@ Each step pays off even if the next is never taken.
 4. The generated schema directory replaces `schema.sql`: the split script, generation
    beside the types, CI verifying instead of committing, the types check. Needs step 1,
    since it is generated from the branch's own database.
-5. The preview seed.
+5. The opt-in shared Vercel preview command.
 6. Squash the migration history; reset staging to clear its drift.
 
 ## What would change the answer
@@ -444,9 +471,10 @@ Each step pays off even if the next is never taken.
 
 - On a scratch database with `db push --dry-run`: the refusal's error text,
   `--include-all`, and that mixed 5- and 14-digit versions sort as expected.
-- That a scheduled CI job can list and delete preview branches with the org token.
-  (Auto-pause is settled for planning purposes: documented at 5 minutes, not observed
-  at 11½, so the nightly delete is the control.)
+- That Vercel's per-git-branch preview env vars can be set from a script, for the
+  opt-in shared preview.
+- What a read-only role needs on staging and prod to be useful for investigation
+  without bypassing more than it must.
 - That `pg_dump`'s per-object headers split cleanly into files for every object class
   in the snapshot, and that the split is stable when an unrelated object is added.
 - That `gen types --local` output in CI matches the hosted output byte for byte.
@@ -463,4 +491,7 @@ Each step pays off even if the next is never taken.
 Sources: [Branching docs](https://supabase.com/docs/guides/deployment/branching) ·
 [Manage Branching usage](https://supabase.com/docs/guides/platform/manage-your-usage/branching) ·
 [Introducing Branching 2.0](https://supabase.com/blog/branching-2-0) ·
-[Branching without Git is now the default](https://supabase.com/blog/branching-without-git-is-now-the-default)
+[Branching without Git is now the default](https://supabase.com/blog/branching-without-git-is-now-the-default) ·
+[docs PR documenting the 5-minute auto-pause, 2025-01](https://github.com/supabase/supabase/pull/32854) ·
+[docs PR removing it as outdated, 2026-08](https://github.com/supabase/supabase/pull/48744) ·
+[docs PR on branches as clones of the base project, 2026-08](https://github.com/supabase/supabase/pull/49594)
