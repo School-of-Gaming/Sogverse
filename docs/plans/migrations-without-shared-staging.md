@@ -104,8 +104,8 @@ made over sixty bot commits to keep `schema.sql` current.
 11. **Two seeds.** `supabase/seed.sql` stays the deliberately minimal fixture set the DB
     tests are written against, and the only seed `config.toml` knows about. A second,
     rich example seed builds a realistic catalogue for previews through the admin RPCs;
-    only the branch database script applies it. The full CI applies it *after* the DB
-    tests, purely to prove it still runs.
+    only the branch database script applies it. It exists to help a human review UI, so
+    CI never touches it.
 12. **The numbered history is squashed into a baseline**, once, right after a release,
     covering exactly the migrations prod has applied. Prod and staging are told the
     baseline is applied; no SQL runs on either.
@@ -144,6 +144,13 @@ made over sixty bot commits to keep `schema.sql` current.
 - **Listing the rich seed in `config.toml`'s seed paths.** That governs the local stack,
   so it would load the rich seed into CI's database *before* the DB tests, whose
   whole-table claims are written against the minimal fixtures.
+- **A CI step applying the rich seed to prove it still runs.** Owner's ruling: the rich
+  seed is rich to help humans review UI, and is not something CI needs.
+- **A comparison that only warns on feature branches**, failing hard on `dev` and `main`
+  alone. One behaviour everywhere is simpler and catches a stale file before it lands.
+- **Requiring the branch's full CI green before every migration-bearing landing.** The
+  sync-and-regenerate check of decision 8 catches a conflicting merge in about two
+  minutes; the full CI stays advisory, as it is today.
 - **Read-only database roles and a generated worktree env file** to enforce decision 1.
   Deferred by the owner: see whether the written rule holds first.
 - **`--with-data`**, to give previews staging's data. Makes a database depend on
@@ -202,8 +209,9 @@ land (see there).
    admin RPCs under impersonated admin claims (the pattern in
    `docs/runbooks/staging-test-data.md`): products of every type and lifecycle state,
    families with gamers, certified and uncertified gedus, groups with sessions and
-   feedback. Fixed Stripe test-mode price ids (test mode is one shared account). A full
-   CI step applies it after the DB tests.
+   feedback. Fixed Stripe test-mode price ids (test mode is one shared account). Because
+   it calls the RPCs, it fails loudly when one's contract has changed; that surfaces
+   when a database is switched on, and is fixed then.
 7. **The branch database script** under `scripts/`: `on`, `off`, `push`, `reset`, `list`.
    Needs step 6. It is the only reader of `SUPABASE_ACCESS_TOKEN`. `on` writes the
    branch's URL and keys into the *worktree's* `.env.local`, keeping the staging values
