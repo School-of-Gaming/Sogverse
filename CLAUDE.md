@@ -37,6 +37,25 @@
 >    body. **Never `psql -f` 00260 or 00264's dashboard body onto staging again** — it
 >    breaks `dev`'s admin dashboard for everyone.
 > 4. Delete this section in the same commit as step 2.
+>
+> ### And: this branch's migration numbers sort below prod's latest
+>
+> Prod (and `main`) already hold **00266 and 00267** (checked 2026-09-18: prod's history
+> runs 00258 → 00266 → 00267). This branch's **00260, 00264 and 00265** sort below that,
+> and the release job's plain `supabase db push` against prod **refuses** migrations older
+> than the remote's latest ("Found local migration files to be inserted before the last
+> migration on remote database… `--include-all`"). **No test or CI check catches this
+> before the release job fails** — nothing compares migration numbers against `main`.
+>
+> So before this branch merges, **renumber 00260, 00264 and 00265 above the highest
+> migration on `main` *and* on staging's history**, keeping their relative order, and
+> number step 2's fix migration after all of them. They are already applied on staging
+> under the old versions, so the renumber also moves staging's record: `npx supabase
+> migration repair --status reverted 00260 00264 00265`, then `--status applied <the new
+> versions>` — this rewrites only this branch's own history, and the objects are already
+> in place, so no SQL re-runs. Verify `supabase_migrations.schema_migrations` afterwards.
+> (Renumbering does not make step 2 unnecessary: the renumbered 00264 still runs after
+> 00263 and still drops the flag.)
 
 ## Commands
 
