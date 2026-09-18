@@ -119,6 +119,8 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 
 **Rule: A doc states only what a reader would otherwise get wrong — omit what Claude does by default.** Every line of a `CLAUDE.md` is in context whenever its directory is, so a rule guarding against a direction nobody would take costs every session and plants the idea it guards against. Before writing a line, ask whether Claude would get it wrong without it. Don't announce a new direction, a retired concept, or a migration from an old one — a future reader never knew the old way — and don't point at what is already in context, such as a skill, whose description loads in every session.
 
+**Rule: Knowledge about this repo goes in a `CLAUDE.md` (or a doc or skill), never in local memory.** Local memory is not version-controlled and is lost between machines. It holds only three things: preferences that belong to the owner alone, quirks of the machine the session runs on, and personal data about real people, which never enters the repo.
+
 ## Environment Variables
 
 All env vars are in `.env.local`. Keys for Supabase, Stripe, and Daily.co — including `SUPABASE_DB_PASSWORD` and `SUPABASE_PROJECT_REF`, which the Supabase CLI commands in `supabase/CLAUDE.md` read from there.
