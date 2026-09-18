@@ -300,6 +300,11 @@ Order matters — several of these steps block the next one if skipped.
       tree mode and can leave grandchildren behind.
    5. Re-check the port is free, and that the user's own ports are still up.
 
+   A server whose wrapper died but whose child survived serves broken pages
+   ("Jest worker encountered 2 child process exceptions, exceeding retry
+   limit"). That is the wounded server, not an app bug: kill it and start
+   clean rather than debugging the page.
+
 3. **Leave the worktree** — `ExitWorktree` with `keep`, which returns the session
    to the main checkout. `remove` will refuse here, because the worktree was
    created by hand rather than by `EnterWorktree`.
@@ -320,7 +325,9 @@ Order matters — several of these steps block the next one if skipped.
    text. If `dev` gained commits since Phase 1, the push publishes a union CI
    has not seen — that is accepted; CI on `dev` judges it (step 7).
 
-5. **Remove the worktree — junctions first.** Any nested-install junction
+5. **Remove the worktree — junctions first.** If the worktree's `.env.local`
+   gained lines, copy them back to the main checkout's file first; they die
+   with the worktree otherwise. Any nested-install junction
    Phase 1 created is a link into the main checkout's real `node_modules`, and
    Git Bash's `rm -rf` follows a junction and empties the folder behind it.
    So unlink each one first, with a command that removes only the link:
@@ -328,6 +335,12 @@ Order matters — several of these steps block the next one if skipped.
    ```
    cmd /c rmdir "<absolute-worktree-path>\packages\<name>\node_modules"
    ```
+
+   Run it from the PowerShell tool, as a call of its own, and `Test-Path` that
+   the link is gone before anything recursive runs. Inside the Bash tool
+   `cmd /c` can open an interactive shell instead of executing, and a
+   recursive fallback chained after it then walks the live junction — that
+   has emptied the main checkout's `node_modules` once. Never chain the two.
 
    Confirm the main checkout's `packages/<name>/node_modules` is still
    populated, then `git worktree remove <absolute-path>`. If it refuses
@@ -366,7 +379,10 @@ edits to one file are a merge conflict manufactured on purpose.
 
 - The shared upward `node_modules` is what makes parallel worktrees cheap:
   no per-worktree install (same dependency-change exception as Phase 1, and
-  the same nested-install junctions, one set per worktree).
+  the same nested-install junctions, one set per worktree). Because it is
+  shared, never install or repair it while another npm or node process is
+  working the same tree — two concurrent `npm ci` runs kill each other with
+  EPERM unlinks. Check running node processes' command lines and wait.
 - Give each agent its **absolute** worktree path and tell it to work only
   there. An agent cannot be redirected from one worktree into another — if a
   piece has to move, relaunch a fresh agent rather than re-aiming a running

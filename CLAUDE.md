@@ -15,6 +15,15 @@ npm run test:ui          # Vitest with UI
 npm run test:smoke       # Build + smoke check (serves a production build, asserts headers/CSP)
 ```
 
+**When served output disagrees with the source, the `.next` cache is stale — delete it.**
+It shows as type-check errors in routes that no longer exist, CSS or JS lagging a branch
+switch, or a Turbopack panic on every page ("creating new process … 0xc0000142") after a dev
+server died mid-write. Restarting the server does not clear it, and a stale and a fresh
+build can serve the same chunk URL, so compare chunk contents against the source, never the
+URL. To prove the source innocent first, compile `src/app/globals.css` standalone through
+`postcss` with `@tailwindcss/postcss` from the repo root. After deleting, hard-reload the
+browser.
+
 ## Where the rules live
 
 Rules live next to the code they govern, in nested `CLAUDE.md` files that load when that
