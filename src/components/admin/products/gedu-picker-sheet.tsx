@@ -15,15 +15,20 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { useUsersByRole } from "@/services/users";
-import { useGeduCertificationMap } from "@/services/gedu";
+import { useScrollSentinel } from "@/hooks/use-scroll-sentinel";
+import { useUserList, type UserListEntry } from "@/services/users";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import {
   SPOKEN_LANGUAGES,
   type SpokenLanguageCode,
 } from "@/lib/constants/spoken-languages";
-import { cn, matchesAllTerms, searchTerms } from "@/lib/utils";
-import type { Profile } from "@/types";
+import { cn } from "@/lib/utils";
+
+/**
+ * How far below the last row counts as reached — the same margin the sibling
+ * participant picker uses, because both are the same narrow scrolling column.
+ */
+const SENTINEL_ROOT_MARGIN = "400px 0px";
 
 interface GeduPickerSheetProps {
   open: boolean;
@@ -34,40 +39,32 @@ interface GeduPickerSheetProps {
   excludeIds?: string[];
   /** The id currently filling this slot — shown with a "current" badge. */
   highlightId?: string;
-  onSelect: (gedu: Profile) => void;
+  onSelect: (gedu: UserListEntry) => void;
 }
 
 /**
- * The text one gedu is matched against, and the reason it is only these three
- * fields.
+ * The picker that staffs a group: educators newest first, searched and filtered
+ * server-side.
  *
- * This is the browser's half of a rule the database also implements: the admin
- * user search matches the same terms against a `search_blob` that additionally
- * carries a phone number and both game handles. The two fields are left out for
- * two different reasons, and it is worth keeping them apart:
+ * **One page at a time, and the same read the admin users list and the
+ * participant picker use.** There used to be a second definition of what
+ * "matches what I typed" means here — a browser-side match over three fields of
+ * a list of every gedu on the platform — and the two agreed only by habit,
+ * which is exactly how this picker once became unable to find a surname the
+ * users list could. Asking the shared read leaves one definition of a match,
+ * and it reaches further than the local one ever could: a phone number
+ * recognised before the tokenizer splits it, and both game handles, which live
+ * in tables a `Profile` row cannot see.
  *
- * - **A game handle is genuinely not here.** It lives in `minecraft_accounts` /
- *   `roblox_accounts`, and this picker holds `Profile` rows. Reaching it means
- *   pointing the picker at the shared query, which is the larger change below.
- * - **A phone number *is* here** — `Profile` carries `phone`, and the list read
- *   selects it — and is omitted anyway, because reaching it honestly needs more
- *   than one more field. A number is typed with spaces inside it, so the search
- *   side recognises a digit-shaped query *before* tokenizing and matches its
- *   trailing digits; nothing in the browser does that. Appending `gedu.phone`
- *   here would find a number pasted in stored form and miss the same number
- *   typed the way a person writes it — which is precisely the two surfaces
- *   beginning to disagree about what a phone search means.
+ * **Certification comes off the row.** It is a column of the read rather than a
+ * separate whole-table lookup, so it is on screen with the name it is about,
+ * and the fail-closed gate below cannot be left waiting on anything.
  *
- * **The two halves existing at all is the thing to be uncomfortable about**,
- * not the field list. Pointing this picker at the shared search instead would
- * leave one definition of a match rather than two that agree by habit; it is
- * deferred rather than settled, and the surname bug this replaced is what a
- * second implementation drifting looks like.
+ * **The sheet is mounted from the groups panel's first render and reads nothing
+ * until it has been opened once** — staying mounted is what lets it animate,
+ * and the latch is what stops a product page nobody staffed from fetching a
+ * page of educators.
  */
-export function geduSearchText(gedu: Profile): string {
-  return `${gedu.first_name} ${gedu.last_name} ${gedu.email}`;
-}
-
 export function GeduPickerSheet({
   open,
   onOpenChange,
@@ -82,10 +79,84 @@ export function GeduPickerSheet({
   const [languageFilter, setLanguageFilter] =
     useState<SpokenLanguageCode | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
-
-  const { data: gedus } = useUsersByRole("gedu");
-  const certification = useGeduCertificationMap();
+  const bodyRef = useRef<HTMLDivElement>(null);
   const languageName = useLanguageNames();
+
+  // The open transition, in the shape the sibling sheets in this panel use: it
+  // fires on the false → true edge, during the render that sees the new prop,
+  // so a reopened sheet is a fresh one and nothing is rewritten underneath the
+  // closing animation. `hasOpened` latches and never clears, which is what
+  // keeps the reads off a product page nobody opened this on while leaving the
+  // educators already in hand across a close and a reopen.
+  const [wasOpen, setWasOpen] = useState(open);
+  const [hasOpened, setHasOpened] = useState(open);
+  if (wasOpen !== open) {
+    setWasOpen(open);
+    if (open) {
+      setHasOpened(true);
+      setSearch("");
+      setLanguageFilter(null);
+    }
+  }
+
+  const list = useUserList(
+    { search, role: "gedu", spokenLanguage: languageFilter },
+    // The one surface with a count line, so the one surface that asks for it.
+    { enabled: hasOpened, withTotal: true },
+  );
+
+  /**
+   * The unfiltered educator count, for the second half of the count line.
+   *
+   * The same hook, so it is the same cache entry the picker itself lands on
+   * whenever the box is empty and no chip is chosen — which is how the sheet
+   * opens. An admin who then types pays for one more first page, and going
+   * back to the unfiltered view costs nothing.
+   */
+  const everyGedu = useUserList(
+    { search: "", role: "gedu", spokenLanguage: null },
+    { enabled: hasOpened, withTotal: true },
+  );
+
+  const gedus = useMemo(
+    () => list.data?.pages.flatMap((page) => page.rows) ?? [],
+    [list.data],
+  );
+
+  // The sheet body is the scroller while a sheet is open, so that box is what
+  // the sentinel is judged against. `isPlaceholderData` is in the gate because
+  // the cursor the pages on screen yield belongs to the query they answered.
+  const sentinelRef = useScrollSentinel({
+    enabled:
+      // `isFetching`, not `isFetchingNextPage`: asking for the next page
+      // cancels a refresh in flight, so a sentinel firing while an invalidation
+      // is re-reading the loaded pages would throw that refresh away and leave
+      // the stale rows on screen marked fresh.
+      list.hasNextPage && !list.isFetching && !list.isPlaceholderData,
+    onReach: () => {
+      void list.fetchNextPage();
+    },
+    rootMargin: SENTINEL_ROOT_MARGIN,
+    root: bodyRef,
+  });
+
+  /**
+   * The two numbers the count line states, or null while either is unknown.
+   *
+   * Both are server counts off a first page, and both deliberately come from
+   * the *same* pair of queries that drew the rows — so the line always
+   * describes what is on screen, including while a keystroke's page is in
+   * flight and the previous one is still being shown. Null until the first
+   * page of each has landed: printing zeros there would claim there are no
+   * educators, which is the one thing nobody has asked yet.
+   */
+  const counts = useMemo(() => {
+    const filtered = list.data?.pages[0]?.total;
+    const total = everyGedu.data?.pages[0]?.total;
+    if (filtered === undefined || filtered === null) return null;
+    if (total === undefined || total === null) return null;
+    return { filtered, total };
+  }, [list.data, everyGedu.data]);
 
   useEffect(() => {
     if (open) {
@@ -94,30 +165,10 @@ export function GeduPickerSheet({
     }
   }, [open]);
 
-  const handleOpenChange = (next: boolean) => {
-    if (!next) {
-      setSearch("");
-      setLanguageFilter(null);
-    }
-    onOpenChange(next);
-  };
-
-  const filtered = useMemo(() => {
-    if (!gedus) return [];
-    const terms = searchTerms(search);
-    return gedus.filter((g) => {
-      if (languageFilter && !g.spoken_languages.includes(languageFilter)) {
-        return false;
-      }
-      if (terms.length === 0) return true;
-      return matchesAllTerms(geduSearchText(g), terms);
-    });
-  }, [gedus, search, languageFilter]);
-
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent>
-        <SheetHeader onClose={() => handleOpenChange(false)}>
+        <SheetHeader onClose={() => onOpenChange(false)}>
           <SheetTitle>{title}</SheetTitle>
           <SheetDescription>{description}</SheetDescription>
         </SheetHeader>
@@ -167,25 +218,26 @@ export function GeduPickerSheet({
             ))}
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            {t("countSummary", {
-              filtered: filtered.length,
-              total: gedus?.length ?? 0,
-            })}
+          {/* The line keeps its own height while it has nothing to say, so the
+              counts arriving fills a box that was already there rather than
+              pushing the list below it down. */}
+          <p className="min-h-4 text-xs text-muted-foreground">
+            {counts === null ? "" : t("countSummary", counts)}
           </p>
         </div>
 
-        <SheetBody>
+        <SheetBody ref={bodyRef}>
           <div className="space-y-2">
-            {filtered.map((g) => {
+            {gedus.map((g) => {
               const isCurrent = g.id === highlightId;
               const isAssigned = excludeIds?.includes(g.id) ?? false;
-              // Uncertified gedus can't be assigned until an admin approves them
-              // (a UI-only gate — sufficient because only trusted admins assign;
-              // see src/services/gedu/CLAUDE.md). This one keeps failing closed
-              // when the certification read errors: withholding an assignment we
-              // cannot justify is the safe direction for a gate.
-              const isUncertified = !(certification.map.get(g.id)?.certified ?? false);
+              // Uncertified gedus can't be assigned until an admin approves
+              // them (a UI-only gate — sufficient because only trusted admins
+              // assign; see src/services/gedu/CLAUDE.md). The flag is a column
+              // of this row, so the gate never has to decide what to do about
+              // an answer that has not arrived: a row on screen carries its
+              // own verdict.
+              const isUncertified = !g.certified;
               const isDisabled = isCurrent || isAssigned || isUncertified;
               return (
                 <GeduRow
@@ -199,17 +251,25 @@ export function GeduPickerSheet({
                   onClick={() => {
                     if (isDisabled) return;
                     onSelect(g);
-                    handleOpenChange(false);
+                    onOpenChange(false);
                   }}
                 />
               );
             })}
-            {filtered.length === 0 && (
+            {/* Only once the first page has answered: "no results" is a claim
+                about who exists, and a page of 25 off an indexed view lands in
+                a frame or two, so nothing stands in for it in the meantime. */}
+            {gedus.length === 0 && !list.isPending && (
               <p className="py-8 text-center text-sm text-muted-foreground">
                 {t("noResults")}
               </p>
             )}
           </div>
+          {/* Below every row, so a revealed page appends into the body's own
+              slack and nothing already read moves. */}
+          {list.hasNextPage && (
+            <div ref={sentinelRef} aria-hidden className="h-px" />
+          )}
         </SheetBody>
       </SheetContent>
     </Sheet>
@@ -217,12 +277,12 @@ export function GeduPickerSheet({
 }
 
 interface GeduRowProps {
-  gedu: Profile;
+  gedu: UserListEntry;
   /**
    * Threaded down rather than taken from the hook here. Every call to
-   * `useLanguageNames` constructs an `Intl.DisplayNames`, and this list is
-   * uncapped — a row-level hook builds one per gedu the moment the sheet opens.
-   * The parent already holds one for the filter chips, so the rows share it.
+   * `useLanguageNames` constructs an `Intl.DisplayNames`, and a row-level hook
+   * would build one per educator on the page. The parent already holds one for
+   * the filter chips, so the rows share it.
    */
   languageName: ReturnType<typeof useLanguageNames>;
   isCurrent: boolean;

@@ -6,7 +6,8 @@ import {
   type ProductAudience,
 } from "@/lib/products/product-audience";
 import { Constants } from "@/types/database.types";
-import type { Profile, UserRole } from "@/types";
+import type { UserListEntry, UserListGamer } from "@/services/users";
+import type { UserRole } from "@/types";
 
 /**
  * Who the admin comp-enrollment picker offers an Add button to, in two layers:
@@ -41,14 +42,31 @@ const IDS = {
   lonelyParent: "87d4478d-8f5c-47d5-8c13-e0a6a125d388",
 } as const;
 
-function profile(id: string, firstName: string, role: UserRole): Profile {
+function child(id: string, firstName: string): UserListGamer {
+  return {
+    id,
+    first_name: firstName,
+    last_name: "Virtanen",
+    email: `${firstName.toLowerCase()}@gamer.sogverse.internal`,
+    email_verified_at: null,
+    role: "gamer",
+    created_at: "2026-01-01T00:00:00.000Z",
+    sign_in: "parent",
+  };
+}
+
+function family(
+  id: string,
+  firstName: string,
+  gamers: UserListGamer[],
+): UserListEntry {
   return {
     id,
     first_name: firstName,
     last_name: "Virtanen",
     email: `${firstName.toLowerCase()}@example.test`,
     email_verified_at: null,
-    role,
+    role: "customer",
     phone: null,
     currency: null,
     locale: null,
@@ -59,21 +77,31 @@ function profile(id: string, firstName: string, role: UserRole): Profile {
     spoken_languages: [],
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
+    certified: false,
+    criminal_record_check_passed: false,
+    linked_gamers: gamers,
   };
 }
 
-const PARENT = profile(IDS.parent, "Marja", "customer");
-const CHILD = profile(IDS.child, "Oona", "gamer");
+const CHILD = child(IDS.child, "Oona");
+const PARENT = family(IDS.parent, "Marja", [CHILD]);
 // The family with no linked child: it has to keep appearing whatever the
 // audience says, because a parents-only product is exactly what such a family
-// signs up for.
-const LONELY_PARENT = profile(IDS.lonelyParent, "Petri", "customer");
+// signs up for. The read asks for the customer role, so it is a row like any
+// other rather than something the browser has to remember to keep.
+const LONELY_PARENT = family(IDS.lonelyParent, "Petri", []);
 
+// The children ride inside their family's row now, so the picker nests nothing
+// and the fixture is one page of the shared read.
 vi.mock("@/services/users", () => ({
-  useUsers: () => ({ data: [PARENT, CHILD, LONELY_PARENT], isLoading: false }),
-  useSearchUsers: () => ({ data: undefined, isLoading: false }),
-  useParentGamerLinks: () => ({
-    data: [{ parent_id: IDS.parent, gamer_id: IDS.child }],
+  useUserList: () => ({
+    data: { pages: [{ rows: [PARENT, LONELY_PARENT], total: 2 }] },
+    isPending: false,
+    isPlaceholderData: false,
+    hasNextPage: false,
+    isFetching: false,
+    isFetchingNextPage: false,
+    fetchNextPage: () => Promise.resolve(),
   }),
 }));
 

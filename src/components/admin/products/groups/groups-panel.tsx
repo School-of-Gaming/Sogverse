@@ -81,10 +81,13 @@ interface GroupsPanelProps {
  * moved is only which side of the boundary each piece sits on.
  *
  * The two picker sheets stay here, because they are the only parts that read
- * reference data of their own (every gedu, every eligible participant). They are
- * handed to the view through its `overlays` slot rather than rendered around it,
- * so the view keeps deciding where in the dnd tree an always-mounted subtree may
- * sit.
+ * people of their own — a page at a time off the shared admin people list,
+ * searched and filtered server-side, and **not until each sheet has been opened
+ * once**. They are in the tree from this component's first render so they can
+ * animate open and closed, and each latches "has been opened" to keep its read
+ * off a product page where nobody touched it. They are handed to the view
+ * through its `overlays` slot rather than rendered around it, so the view keeps
+ * deciding where in the dnd tree an always-mounted subtree may sit.
  */
 export function GroupsPanel({
   productId,

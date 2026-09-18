@@ -6,16 +6,20 @@ import { UserRow } from "@/components/admin/user-row";
 import type { UserRole } from "@/types";
 
 /**
- * **A mark on an admin row is a claim, and the absence of an answer is not one.**
+ * **A mark on an admin row is a claim, and only a positive answer prints one.**
  *
- * The certification mark used to be driven by an `uncertified` boolean that the
- * page computed as `!isError && role === "gedu" && !certified`. Read the failure
+ * The certification mark was once driven by an `uncertified` boolean the page
+ * computed as `!isError && role === "gedu" && !certified`. Read the failure
  * path: when the certification query *failed*, `uncertified` came out false for
  * everyone, and the row rendered the shield on the strength of it — so a broken
- * read printed "Certified" across every educator on the page. That is the exact
- * inverse of what the page's own comment said it was doing, and it is the reason
- * the signal is three-valued now: `true`, `false`, and `null` for "we could not
- * find out". Only `true` prints.
+ * read printed "Certified" across every educator on the page.
+ *
+ * That whole class is gone rather than guarded: the flag is a column of the
+ * list's own row now, so there is no second read to fail and no "we could not
+ * find out" to represent — a row on screen carries its own verdict. What the
+ * cases below still hold is the half that is a property of the component: a
+ * `false` and an absent answer both print nothing, a non-gedu is never
+ * shielded, and the mark order is fixed.
  *
  * Static markup, because none of this depends on an effect — the shield is in
  * the server's first frame or it is nowhere.
@@ -44,7 +48,7 @@ const GEDU: RowUser = {
 
 function rowHtml(props: {
   user?: RowUser;
-  certified?: boolean | null;
+  certified?: boolean;
 }): string {
   return renderToStaticMarkup(
     <NextIntlClientProvider locale="en" messages={messages}>
@@ -62,11 +66,6 @@ describe("UserRow certification mark", () => {
     expect(rowHtml({ certified: false })).not.toContain(CERTIFIED_LABEL);
   });
 
-  // The regression this file exists for.
-  it("withholds the shield when the certification read failed", () => {
-    expect(rowHtml({ certified: null })).not.toContain(CERTIFIED_LABEL);
-  });
-
   it("withholds the shield when nobody passed an answer at all", () => {
     expect(rowHtml({})).not.toContain(CERTIFIED_LABEL);
   });
@@ -79,11 +78,11 @@ describe("UserRow certification mark", () => {
   });
 
   /**
-   * The two marks are independent: an unknown certification must not swallow the
-   * email check, which is read straight off the row and never in doubt.
+   * The two marks are independent: an uncertified educator must not lose the
+   * email check, which is about an address rather than a person.
    */
-  it("still shows the verified-email check while certification is unknown", () => {
-    expect(rowHtml({ certified: null })).toContain(VERIFIED_LABEL);
+  it("still shows the verified-email check on an uncertified educator", () => {
+    expect(rowHtml({ certified: false })).toContain(VERIFIED_LABEL);
   });
 
   it("keeps certification first and verification second when both hold", () => {

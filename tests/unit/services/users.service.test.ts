@@ -1,12 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { UsersService } from "@/services/users/users.service";
 import {
-  searchedProfile,
-  SEARCHED_PROFILE_COLUMNS,
+  userListEntry,
+  USER_LIST_ENTRY_COLUMNS,
 } from "@/services/users/users.contracts";
+import { ADMIN_PEOPLE_LIST_PAGE_SIZE } from "@/lib/constants/admin-people-lists";
 import type { Profile } from "@/types";
 import {
   createFetchStubbedClient,
+  postgrestJson,
   postgrestPage,
   requestedUrl,
   type FetchMock,
@@ -16,14 +18,14 @@ import {
 // tests/mocks/postgrest-fetch.ts), so the assertions below are on the PostgREST
 // request the genuine query builder produced.
 //
-// What they pin is the caller's half of the paging contract: the walk primitive
-// guarantees nothing unless each query asks for an exact count and imposes a
-// total order, and both are invisible at the call site. `created_at` alone ties
-// across accounts written in the same transaction, so the `id` tiebreaker is
-// what makes a page boundary safe — and nothing but a test notices if it is
-// dropped.
+// What they pin is the caller's half of two paging contracts, neither of which
+// is visible at the call site. The keyset page needs its order and its cursor
+// filter to agree — `created_at` alone ties across accounts written in the same
+// transaction, so the `id` tiebreaker is what makes a page boundary safe — and
+// the walked read needs an exact count and a total order or the walk stops
+// early on a truncated page and says nothing.
 
-const PAGE_SIZE = 1000;
+const WALK_PAGE_SIZE = 1000;
 
 function profileRows(count: number, offset = 0): Profile[] {
   return Array.from({ length: count }, (_, i) => ({
@@ -46,27 +48,66 @@ function profileRows(count: number, offset = 0): Profile[] {
   }));
 }
 
+/**
+ * Rows shaped as the view emits them: a profile, the two gedu standing flags,
+ * and the family's children as parsed JSON.
+ *
+ * `family_search_blob` is deliberately absent, because the select does not ask
+ * for it — a fixture that carried it would let the column list quietly start
+ * asking and nothing here would notice.
+ */
+function listRows(count: number, offset = 0) {
+  return profileRows(count, offset).map((profile, i) => ({
+    ...profile,
+    // Distinct instants, so a cursor derived from the last row of a page is a
+    // value no other row shares.
+    created_at: `2026-01-0${(offset + i) % 9 + 1}T00:00:00.000Z`,
+    certified: false,
+    criminal_record_check_passed: false,
+    linked_gamers: [],
+  }));
+}
+
+/** One embedded child, as the view builds it. */
+const CHILD = {
+  id: "gamer-1",
+  first_name: "Oona",
+  last_name: "Virtanen",
+  email: "oona@gamer.sogverse.internal",
+  email_verified_at: null,
+  role: "gamer" as const,
+  created_at: "2026-01-01T00:00:00.000Z",
+  sign_in: "parent" as const,
+};
+
 function firstUrl(fetchMock: FetchMock): URL {
   return requestedUrl(fetchMock.mock.calls[0][0]);
 }
 
-/** Every walked read asks for the count via the same header preference. */
+/** The count preference a query asked for, or "null" when it asked for none. */
 function requestedCountPreference(fetchMock: FetchMock, call = 0): string {
   const init = fetchMock.mock.calls[call][1];
   return String(new Headers(init?.headers).get("prefer"));
 }
 
 /**
- * The blob filters one search sent, in order.
+ * The blob filters one read sent, in order.
  *
  * Repeated params are the point — PostgREST ANDs them, which is how a
  * multi-word query narrows — so this reads them all rather than the first.
  */
-function searchBlobFilters(fetchMock: FetchMock): string[] {
-  return firstUrl(fetchMock).searchParams.getAll("search_blob");
+function blobFilters(fetchMock: FetchMock): string[] {
+  return firstUrl(fetchMock).searchParams.getAll("family_search_blob");
 }
 
-describe("UsersService walked reads", () => {
+/** Filters with nothing typed and no pill chosen: the plain newest page. */
+const NO_FILTERS = {
+  search: "",
+  role: null,
+  spokenLanguage: null,
+} as const;
+
+describe("UsersService.getUserListPage", () => {
   let fetchMock: FetchMock;
   let service: UsersService;
 
@@ -75,18 +116,281 @@ describe("UsersService walked reads", () => {
     service = new UsersService(createFetchStubbedClient(fetchMock));
   });
 
-  it("getAllUsers orders newest-first with an id tiebreaker and asks for the count", async () => {
-    fetchMock.mockResolvedValue(postgrestPage(profileRows(3), { from: 0, total: 3 }));
+  // The whole shape in one request: the view, the columns, the order, the page.
+  it("reads one keyset page of the view, newest first with the id tiebreaker", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(listRows(3), { from: 0, total: 3 }));
 
-    await service.getAllUsers();
+    await service.getUserListPage(NO_FILTERS);
 
-    expect(firstUrl(fetchMock).searchParams.get("order")).toBe(
-      "created_at.desc,id.asc",
-    );
-    expect(requestedCountPreference(fetchMock)).toContain("count=exact");
+    const url = firstUrl(fetchMock);
+    expect(url.pathname).toContain("user_list_entries");
+    expect(url.searchParams.get("order")).toBe("created_at.desc,id.asc");
+    expect(url.searchParams.get("limit")).toBe(String(ADMIN_PEOPLE_LIST_PAGE_SIZE));
   });
 
-  it("getUsersByRole filters to the role and keeps the same total order", async () => {
+  // The blob is every searchable string of a whole family. The filter reads it
+  // server-side; putting it on the wire would pay for all of it per row to
+  // render none of it.
+  it("selects the row's columns and never the search blob", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(listRows(1), { from: 0, total: 1 }));
+
+    await service.getUserListPage(NO_FILTERS);
+
+    const select = firstUrl(fetchMock).searchParams.get("select");
+    expect(select).toBe(USER_LIST_ENTRY_COLUMNS);
+    expect(select).not.toContain("family_search_blob");
+  });
+
+  it("asks for an exact count on the first page when the surface wants one", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestPage(listRows(ADMIN_PEOPLE_LIST_PAGE_SIZE), { from: 0, total: 312 }),
+    );
+
+    const page = await service.getUserListPage(NO_FILTERS, { withTotal: true });
+
+    expect(requestedCountPreference(fetchMock)).toContain("count=exact");
+    expect(page.total).toBe(312);
+  });
+
+  // Under a search the exact count is a second pass evaluating the family blob
+  // for every row in the table, so a surface with no count line must not pay
+  // for it. Only the gedu picker renders the number; the default is not to ask.
+  it("asks for no count unless the surface wants one, and reports none", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestJson(listRows(ADMIN_PEOPLE_LIST_PAGE_SIZE)),
+    );
+
+    const page = await service.getUserListPage(NO_FILTERS);
+
+    expect(requestedCountPreference(fetchMock)).not.toContain("count=exact");
+    expect(page.total).toBeNull();
+  });
+
+  // The count is an aggregate over the whole match set, so it cannot change as
+  // the reader scrolls — paying for it per page would buy a number the surface
+  // already read. `null` afterwards says "not asked", never "none".
+  it("asks for no count once a cursor is carried, and reports none", async () => {
+    fetchMock.mockResolvedValue(postgrestJson(listRows(2, 25)));
+
+    const page = await service.getUserListPage(NO_FILTERS, {
+      withTotal: true,
+      cursor: { createdAt: "2026-01-02T00:00:00.000Z", id: "user-24" },
+    });
+
+    expect(requestedCountPreference(fetchMock)).not.toContain("count=exact");
+    expect(page.total).toBeNull();
+  });
+
+  // The cursor is the query's one top-level `or`, and it carries the previous
+  // page's last row verbatim — re-serialising a timestamptz through a Date
+  // truncates it and re-reads every row written inside that millisecond.
+  it("resumes strictly after the cursor it was handed", async () => {
+    fetchMock.mockResolvedValue(postgrestJson(listRows(1, 25)));
+
+    await service.getUserListPage(NO_FILTERS, {
+      cursor: { createdAt: "2026-09-18T08:43:12.123456+00:00", id: "user-24" },
+    });
+
+    const ors = firstUrl(fetchMock).searchParams.getAll("or");
+    expect(ors).toEqual([
+      '(created_at.lt."2026-09-18T08:43:12.123456+00:00",and(created_at.eq."2026-09-18T08:43:12.123456+00:00",id.gt."user-24"))',
+    ]);
+  });
+
+  it("filters by role as an equality, leaving the cursor the only or", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(listRows(1), { from: 0, total: 1 }));
+
+    await service.getUserListPage({ ...NO_FILTERS, role: "gedu" });
+
+    const url = firstUrl(fetchMock);
+    expect(url.searchParams.get("role")).toBe("eq.gedu");
+    expect(url.searchParams.getAll("or")).toEqual([]);
+  });
+
+  it("filters by spoken language as array containment", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(listRows(1), { from: 0, total: 1 }));
+
+    await service.getUserListPage({
+      ...NO_FILTERS,
+      role: "gedu",
+      spokenLanguage: "sv",
+    });
+
+    expect(firstUrl(fetchMock).searchParams.get("spoken_languages")).toBe(
+      "cs.{sv}",
+    );
+  });
+
+  // Three filters, three parameters, ANDed by PostgREST — which is what lets
+  // the list, the search and the pills be one query rather than three surfaces'
+  // worth of code that agree by habit.
+  it("composes a needle, a role and a language into one request", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(listRows(1), { from: 0, total: 1 }));
+
+    await service.getUserListPage({
+      search: "Anna Virtanen",
+      role: "gedu",
+      spokenLanguage: "fi",
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const url = firstUrl(fetchMock);
+    expect(url.searchParams.get("role")).toBe("eq.gedu");
+    expect(url.searchParams.get("spoken_languages")).toBe("cs.{fi}");
+    expect(url.searchParams.getAll("family_search_blob")).toEqual([
+      "ilike.%Anna%",
+      "ilike.%Virtanen%",
+    ]);
+  });
+
+  it("matches a single term against the blob", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(listRows(1), { from: 0, total: 1 }));
+
+    await service.getUserListPage({ ...NO_FILTERS, search: "smith" });
+
+    expect(blobFilters(fetchMock)).toEqual(["ilike.%smith%"]);
+  });
+
+  // A comma is how a name gets typed surname-first.
+  it("cuts terms on a comma as well as whitespace", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(listRows(1), { from: 0, total: 1 }));
+
+    await service.getUserListPage({ ...NO_FILTERS, search: "Smith, Jon" });
+
+    expect(blobFilters(fetchMock)).toEqual(["ilike.%Smith%", "ilike.%Jon%"]);
+  });
+
+  // PostgREST reads `*` as a wildcard for ilike before the pattern reaches SQL,
+  // so a stray one left in the needle matches everybody rather than nobody.
+  it("does not let a wildcard through as a term", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(listRows(1), { from: 0, total: 1 }));
+
+    await service.getUserListPage({ ...NO_FILTERS, search: "Jon*" });
+
+    expect(blobFilters(fetchMock)).toEqual(["ilike.%Jon%"]);
+  });
+
+  // SQL's own wildcards, which reach the pattern by a different route than `*`
+  // and are neutralised by a different mechanism — escaping rather than
+  // splitting. Unescaped, "100%" matches every row the caller can read instead
+  // of none, and a wrong result set arrives with no error to notice.
+  it.each([
+    ["100%", "ilike.%100\\%%"],
+    ["a_b", "ilike.%a\\_b%"],
+  ])("escapes the SQL wildcard in %s", async (typed, expected) => {
+    fetchMock.mockResolvedValue(postgrestPage(listRows(1), { from: 0, total: 1 }));
+
+    await service.getUserListPage({ ...NO_FILTERS, search: typed });
+
+    expect(blobFilters(fetchMock)).toEqual([expected]);
+  });
+
+  // A number is one value typed with spaces inside it. Tokenized as words it
+  // would demand a family matching "040" and "123" and "4567" separately,
+  // which is nobody — so it has to be recognised before the split.
+  it.each([
+    ["+358 40 123 4567", "international, spaced"],
+    ["040 123 4567", "national, spaced"],
+    ["0401234567", "national, run together"],
+    ["358401234567", "exactly as stored"],
+  ])("matches %s (%s) on its trailing digits", async (typed) => {
+    fetchMock.mockResolvedValue(postgrestPage(listRows(1), { from: 0, total: 1 }));
+
+    await service.getUserListPage({ ...NO_FILTERS, search: typed });
+
+    // The stored value is `358401234567`; every form above shares this tail.
+    expect(blobFilters(fetchMock)).toEqual(["ilike.%1234567%"]);
+  });
+
+  // The guard against treating any digits as a number: a game handle carrying
+  // a couple of digits is a name, and must stay one word rather than being
+  // reduced to its tail.
+  it("treats a handle with digits in it as a word, not a number", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(listRows(1), { from: 0, total: 1 }));
+
+    await service.getUserListPage({ ...NO_FILTERS, search: "EnderDragon42" });
+
+    expect(blobFilters(fetchMock)).toEqual(["ilike.%EnderDragon42%"]);
+  });
+
+  // The floor: one character is a scan matching nearly everybody, so "the
+  // newest 25 of nearly everybody" would be the unfiltered page dressed up as
+  // an answer. The read therefore ignores the needle and lists.
+  it("ignores a needle shorter than the floor and lists instead", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(listRows(3), { from: 0, total: 3 }));
+
+    await service.getUserListPage({ ...NO_FILTERS, search: "a" });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(blobFilters(fetchMock)).toEqual([]);
+  });
+
+  // Above the floor, though, something was typed — and something typed that
+  // cannot match anybody must not be answered with the newest page. The needle
+  // is long enough to clear the floor and still yields no term at all, which is
+  // the case the floor cannot cover.
+  it("answers an unsearchable needle without asking the database", async () => {
+    const page = await service.getUserListPage({ ...NO_FILTERS, search: " , ,, " });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(page).toEqual({ rows: [], total: 0 });
+  });
+
+  it("hands back the parsed rows with their families inside them", async () => {
+    const [row] = listRows(1);
+    fetchMock.mockResolvedValue(
+      postgrestPage([{ ...row, certified: true, linked_gamers: [CHILD] }], {
+        from: 0,
+        total: 1,
+      }),
+    );
+
+    const page = await service.getUserListPage(NO_FILTERS);
+
+    expect(page.rows).toHaveLength(1);
+    expect(page.rows[0].certified).toBe(true);
+    expect(page.rows[0].linked_gamers[0]?.sign_in).toBe("parent");
+  });
+
+  // PostgreSQL cannot carry NOT NULL through a view, so the generated row type
+  // is nullable on every column and the parse is the only thing putting the
+  // guarantee back. A view that stopped matching must fail loudly here rather
+  // than hand a half-null person to a list.
+  it("refuses a row the view could not have produced", async () => {
+    const [row] = listRows(1);
+    fetchMock.mockResolvedValue(
+      postgrestPage([{ ...row, email: null }], { from: 0, total: 1 }),
+    );
+
+    await expect(service.getUserListPage(NO_FILTERS)).rejects.toThrow();
+  });
+
+  // The jsonb half, where the compiler can say nothing at all: `Json` admits
+  // any document, so only this parse stands between a changed view and a row
+  // component reading a field that is not there.
+  it("refuses a family whose children are the wrong shape", async () => {
+    const [row] = listRows(1);
+    fetchMock.mockResolvedValue(
+      postgrestPage(
+        [{ ...row, linked_gamers: [{ id: "gamer-1", first_name: "Oona" }] }],
+        { from: 0, total: 1 },
+      ),
+    );
+
+    await expect(service.getUserListPage(NO_FILTERS)).rejects.toThrow();
+  });
+});
+
+describe("UsersService.getUsersByRole", () => {
+  let fetchMock: FetchMock;
+  let service: UsersService;
+
+  beforeEach(() => {
+    fetchMock = vi.fn<typeof fetch>();
+    service = new UsersService(createFetchStubbedClient(fetchMock));
+  });
+
+  it("filters to the role, orders totally, and asks for the count", async () => {
     fetchMock.mockResolvedValue(postgrestPage(profileRows(2), { from: 0, total: 2 }));
 
     await service.getUsersByRole("gedu");
@@ -97,221 +401,28 @@ describe("UsersService walked reads", () => {
     expect(requestedCountPreference(fetchMock)).toContain("count=exact");
   });
 
-  // `parent_gamer` has no column a surface wants to sort by — but a walk still
-  // needs a total order, and the surrogate primary key is the only column here
-  // that is unique on its own.
-  it("getAllParentGamerLinks orders by the primary key and asks for the count", async () => {
-    fetchMock.mockResolvedValue(
-      postgrestPage([{ id: "link-1", parent_id: "p", gamer_id: "g" }], {
-        from: 0,
-        total: 1,
-      }),
-    );
-
-    await service.getAllParentGamerLinks();
-
-    expect(firstUrl(fetchMock).searchParams.get("order")).toBe("id.asc");
-    expect(requestedCountPreference(fetchMock)).toContain("count=exact");
-  });
-
-  // The reason all three walk at all: past PostgREST's max_rows a plain select
+  // The reason it walks at all: past PostgREST's max_rows a plain select
   // returns a prefix and says nothing. A two-page walk is the smallest case
   // that would catch the walk being dropped back to a single request.
-  it("getAllUsers walks past the first page and concatenates in order", async () => {
-    const TOTAL = PAGE_SIZE + 12;
+  it("walks past the first page and concatenates in order", async () => {
+    const TOTAL = WALK_PAGE_SIZE + 12;
     fetchMock
       .mockResolvedValueOnce(
-        postgrestPage(profileRows(PAGE_SIZE, 0), { from: 0, total: TOTAL }),
+        postgrestPage(profileRows(WALK_PAGE_SIZE, 0), { from: 0, total: TOTAL }),
       )
       .mockResolvedValueOnce(
-        postgrestPage(profileRows(12, PAGE_SIZE), { from: PAGE_SIZE, total: TOTAL }),
+        postgrestPage(profileRows(12, WALK_PAGE_SIZE), {
+          from: WALK_PAGE_SIZE,
+          total: TOTAL,
+        }),
       );
 
-    const result = await service.getAllUsers();
+    const result = await service.getUsersByRole("gedu");
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(result).toHaveLength(TOTAL);
     expect(result[0]?.id).toBe("user-0");
     expect(result.at(-1)?.id).toBe(`user-${TOTAL - 1}`);
-  });
-});
-
-describe("UsersService.searchUsers", () => {
-  let fetchMock: FetchMock;
-  let service: UsersService;
-
-  beforeEach(() => {
-    fetchMock = vi.fn<typeof fetch>();
-    service = new UsersService(createFetchStubbedClient(fetchMock));
-  });
-
-  // Capped rather than walked on purpose — it runs on every keystroke — so the
-  // cap and the true total are what the surface needs to tell a complete answer
-  // from a clipped one.
-  it("caps the page, orders newest-first with a tiebreaker, and asks for the count", async () => {
-    fetchMock.mockResolvedValue(postgrestPage(profileRows(20), { from: 0, total: 47 }));
-
-    await service.searchUsers("ada");
-
-    const url = firstUrl(fetchMock);
-    expect(url.searchParams.get("limit")).toBe("20");
-    expect(url.searchParams.get("order")).toBe("created_at.desc,id.asc");
-    expect(requestedCountPreference(fetchMock)).toContain("count=exact");
-  });
-
-  // The view is what puts a phone number and a game handle in reach at all; a
-  // search that quietly went back to `profiles` would still pass every
-  // name-and-email case below while silently losing both.
-  it("searches the view, and does not put the blob on the wire", async () => {
-    fetchMock.mockResolvedValue(postgrestPage(profileRows(1), { from: 0, total: 1 }));
-
-    await service.searchUsers("ada");
-
-    const url = firstUrl(fetchMock);
-    expect(url.pathname).toContain("user_search_index");
-    expect(url.searchParams.get("select")).toBe(SEARCHED_PROFILE_COLUMNS);
-  });
-
-  it("returns the capped rows alongside the true match total", async () => {
-    fetchMock.mockResolvedValue(postgrestPage(profileRows(20), { from: 0, total: 47 }));
-
-    const result = await service.searchUsers("ada");
-
-    expect(result.results).toHaveLength(20);
-    expect(result.total).toBe(47);
-  });
-
-  it("reports a complete answer when the matches fit under the cap", async () => {
-    fetchMock.mockResolvedValue(postgrestPage(profileRows(3), { from: 0, total: 3 }));
-
-    const result = await service.searchUsers("ada");
-
-    expect(result.results).toHaveLength(3);
-    expect(result.total).toBe(3);
-  });
-
-  it("matches a single term against the blob", async () => {
-    fetchMock.mockResolvedValue(postgrestPage(profileRows(1), { from: 0, total: 1 }));
-
-    await service.searchUsers("smith");
-
-    expect(searchBlobFilters(fetchMock)).toEqual(["ilike.%smith%"]);
-  });
-
-  // The bug this started as: a full name is a first name and a surname, so
-  // matching the whole typed string as one value finds nobody — even though
-  // either word alone finds them. One filter per word, ANDed by PostgREST.
-  it("requires every word of a full name to match", async () => {
-    fetchMock.mockResolvedValue(postgrestPage(profileRows(1), { from: 0, total: 1 }));
-
-    await service.searchUsers("Jon Smith");
-
-    expect(searchBlobFilters(fetchMock)).toEqual([
-      "ilike.%Jon%",
-      "ilike.%Smith%",
-    ]);
-  });
-
-  // A comma is how a name gets typed surname-first. It no longer breaks the
-  // request (one filter, not an `or=(…)` whose branches it would split), but it
-  // still has to separate the two words rather than ride along inside one.
-  it("cuts terms on a comma as well as whitespace", async () => {
-    fetchMock.mockResolvedValue(postgrestPage(profileRows(1), { from: 0, total: 1 }));
-
-    await service.searchUsers("Smith, Jon");
-
-    expect(searchBlobFilters(fetchMock)).toEqual([
-      "ilike.%Smith%",
-      "ilike.%Jon%",
-    ]);
-  });
-
-  // PostgREST reads `*` as a wildcard for ilike before the pattern reaches SQL,
-  // so a stray one left in the needle matches everybody rather than nobody.
-  it("does not let a wildcard through as a term", async () => {
-    fetchMock.mockResolvedValue(postgrestPage(profileRows(1), { from: 0, total: 1 }));
-
-    await service.searchUsers("Jon*");
-
-    expect(searchBlobFilters(fetchMock)).toEqual(["ilike.%Jon%"]);
-  });
-
-  // SQL's own wildcards, which reach the pattern by a different route than `*`
-  // and are neutralised by a different mechanism — escaping rather than
-  // splitting. Unescaped, "100%" matches every profile the caller can read
-  // instead of none, and a wrong result set arrives with no error to notice.
-  it.each([
-    ["100%", "ilike.%100\\%%"],
-    ["a_b", "ilike.%a\\_b%"],
-  ])("escapes the SQL wildcard in %s", async (typed, expected) => {
-    fetchMock.mockResolvedValue(postgrestPage(profileRows(1), { from: 0, total: 1 }));
-
-    await service.searchUsers(typed);
-
-    expect(searchBlobFilters(fetchMock)).toEqual([expected]);
-  });
-
-  // A number is one value typed with spaces inside it. Tokenized as words it
-  // would demand a profile matching "040" and "123" and "4567" separately,
-  // which is nobody — so it has to be recognised before the split.
-  it.each([
-    ["+358 40 123 4567", "international, spaced"],
-    ["040 123 4567", "national, spaced"],
-    ["0401234567", "national, run together"],
-    ["358401234567", "exactly as stored"],
-  ])("matches %s (%s) on its trailing digits", async (typed) => {
-    fetchMock.mockResolvedValue(postgrestPage(profileRows(1), { from: 0, total: 1 }));
-
-    await service.searchUsers(typed);
-
-    // The stored value is `358401234567`; every form above shares this tail.
-    expect(searchBlobFilters(fetchMock)).toEqual(["ilike.%1234567%"]);
-  });
-
-  // The guard against treating any digits as a number: a game handle carrying
-  // a couple of digits is a name, and must stay one word rather than being
-  // reduced to its tail.
-  it("treats a handle with digits in it as a word, not a number", async () => {
-    fetchMock.mockResolvedValue(postgrestPage(profileRows(1), { from: 0, total: 1 }));
-
-    await service.searchUsers("EnderDragon42");
-
-    expect(searchBlobFilters(fetchMock)).toEqual(["ilike.%EnderDragon42%"]);
-  });
-
-  // The digit floor, which the case above does not reach — that one is excluded
-  // by having letters in it, so a regression dropping PHONE_MIN_DIGITS to zero
-  // would leave it passing. An all-digit needle under the floor is a house
-  // number or a fragment, and must stay the literal term the user typed rather
-  // than being silently re-read as the tail of a phone number.
-  it("does not treat a short run of digits as a phone number", async () => {
-    fetchMock.mockResolvedValue(postgrestPage(profileRows(1), { from: 0, total: 1 }));
-
-    await service.searchUsers("42");
-
-    expect(searchBlobFilters(fetchMock)).toEqual(["ilike.%42%"]);
-  });
-
-  // Without the guard this reads the view with no filter at all and the twenty
-  // newest accounts come back looking like matches.
-  it("answers a query with no searchable term without asking the database", async () => {
-    const result = await service.searchUsers(" , ");
-
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(result).toEqual({ results: [], total: 0 });
-  });
-
-  // PostgreSQL cannot carry NOT NULL through a view, so the generated row type
-  // is nullable on every column and the parse is the only thing putting the
-  // guarantee back. A view that stopped matching must fail loudly here rather
-  // than hand a half-null profile to the page.
-  it("refuses a row the view could not have produced", async () => {
-    const [row] = profileRows(1);
-    fetchMock.mockResolvedValue(
-      postgrestPage([{ ...row, email: null }], { from: 0, total: 1 }),
-    );
-
-    await expect(service.searchUsers("ada")).rejects.toThrow();
   });
 });
 
@@ -373,10 +484,10 @@ describe("UsersService.sendVerificationEmail", () => {
 // The literal select string is what the Supabase client infers the response
 // shape from, so it cannot be derived from the schema — which leaves exactly
 // one way for the two to drift apart, and this is it.
-describe("the searched-profile column list", () => {
-  it("names precisely the columns the schema parses", () => {
-    expect(SEARCHED_PROFILE_COLUMNS.split(",")).toEqual(
-      Object.keys(searchedProfile.shape),
+describe("the user-list column list", () => {
+  it("names precisely the columns the schema parses, in order", () => {
+    expect(USER_LIST_ENTRY_COLUMNS.split(",")).toEqual(
+      Object.keys(userListEntry.shape),
     );
   });
 });

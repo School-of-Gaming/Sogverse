@@ -1,17 +1,13 @@
 export {
-  useGeduProfiles,
   useGeduProfile,
-  useGeduCertificationMap,
   useSetGeduCertified,
   useSetGeduCriminalRecordCheck,
   geduProfileKeys,
-  type GeduCertificationLookup,
 } from "./gedu-profiles.queries";
 export {
   GeduProfilesService,
   isGeduCertified,
   getGeduCriminalRecordCheck,
-  type GeduCertification,
   type GeduCertificationDetail,
   type GeduCriminalRecordCheck,
 } from "./gedu-profiles.service";

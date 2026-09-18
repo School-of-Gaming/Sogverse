@@ -6,25 +6,26 @@ import type { Profile } from "@/types";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 
 /**
- * A profile as it comes back off `user_search_index`.
+ * The `profiles` columns a `user_list_entries` row carries, with the NOT NULLs
+ * put back.
  *
  * **The view is where this schema earns its place.** PostgreSQL does not carry
  * a column's NOT NULL through a view, so the type generator — reading the
  * catalog faithfully — types every one of these columns as nullable, including
- * the eight `profiles` declares NOT NULL and that a LEFT JOIN cannot null
- * anyway (the join nulls its right-hand side, never the profile). Without this
- * the search would answer `(string | null)[]` where every caller wants
- * `Profile[]`, and the honest ways to bridge that are a cast, which lint
- * forbids and which would go stale in silence, or this.
+ * the eight `profiles` declares NOT NULL and that nothing in the view's
+ * predicate can null. Without this the list would answer `(string | null)[]`
+ * where every surface wants a person, and the honest ways to bridge that are a
+ * cast, which lint forbids and which would go stale in silence, or this.
  *
- * `satisfies z.ZodType<Profile>` is the half that does not rot: the schema is
- * checked against `Profile` — the *table's* row type, not the view's — so a
+ * `satisfies z.ZodType<Profile>` below is the half that does not rot: the shape
+ * is checked against `Profile` — the *table's* row type, not the view's — so a
  * column added to `profiles` fails to compile here until it is given a rule.
  * Leaving it out of the view does not clear that: the check knows nothing about
- * which columns the view selects. The only other way out is for the search to
- * stop answering in `Profile`, which is a larger decision than adding a line.
+ * which columns the view selects. The only other way out is for the list to
+ * stop answering in the table's own row type, which is a larger decision than
+ * adding a line.
  */
-export const searchedProfile = z.object({
+const userListProfileColumns = {
   id: z.string(),
   email: z.string(),
   email_verified_at: z.string().nullable(),
@@ -41,28 +42,94 @@ export const searchedProfile = z.object({
   spoken_languages: z.array(z.enum(Constants.public.Enums.spoken_language)),
   created_at: z.string(),
   updated_at: z.string(),
-}) satisfies z.ZodType<Profile>;
+};
+
+/** The profile half alone, carrying the check the doc above describes. */
+const userListProfile = z.object(
+  userListProfileColumns,
+) satisfies z.ZodType<Profile>;
 
 /**
- * The columns the search selects.
+ * One child riding inside its family's row.
  *
- * `search_blob` is deliberately absent. It is the longest value on the row and
- * carries nothing the other columns do not, so selecting it would put every
- * searchable string about twenty people on the wire to be thrown away. Naming
- * the columns is also what keeps the schema above honest: `*` returns a wider
- * row, and a wider row parses against a narrower schema without complaint,
- * because zod strips what it does not know.
+ * **The column is `jsonb`, so the generated type is `Json` and the compiler can
+ * say nothing at all about what is inside it** — not even that it is an array.
+ * This schema is the whole of that knowledge, which is why it is shared rather
+ * than restated per surface: the two list surfaces and the DB test that parses
+ * real view output all have to mean the same thing by "a linked gamer", and the
+ * test parsing the database's own rows through this very schema is what proves
+ * the shape describes the view rather than what somebody assumed it holds.
+ *
+ * Every field is one a list row renders or gates on, `sign_in` included —
+ * the fact whose per-gamer lookup used to be thirty sequential keyed batches on
+ * the end of the old whole-table read. It is nullable because the extension row
+ * is a LEFT JOIN: a profile with the gamer role but no `gamer_profiles` row
+ * contributes null rather than dropping the child from the family.
+ */
+export const userListGamer = z.object({
+  id: z.string(),
+  first_name: z.string(),
+  last_name: z.string(),
+  email: z.string(),
+  email_verified_at: z.string().nullable(),
+  role: z.enum(Constants.public.Enums.user_role),
+  created_at: z.string(),
+  sign_in: z.enum(Constants.public.Enums.gamer_sign_in).nullable(),
+});
+
+export type UserListGamer = z.infer<typeof userListGamer>;
+
+/**
+ * One row of `user_list_entries`: a top-level list entry and its whole family.
+ *
+ * The two gedu standing flags are booleans rather than three-state, because the
+ * view coalesces a missing `gedu_profiles` row to `false` — `role` is the
+ * discriminator for whether either value means anything, and it is on the row
+ * already. That is what retires the "we could not find out" state the surfaces
+ * used to carry: a certification flag that rides along with the row it is about
+ * cannot be missing while the row is present.
+ */
+export const userListEntry = userListProfile.extend({
+  certified: z.boolean(),
+  criminal_record_check_passed: z.boolean(),
+  linked_gamers: z.array(userListGamer),
+});
+
+export type UserListEntry = z.infer<typeof userListEntry>;
+
+/**
+ * The columns a page of the list selects.
+ *
+ * `family_search_blob` is deliberately absent. It is the longest value on the
+ * row — every searchable string of a whole family — and carries nothing a
+ * surface renders, so selecting it would put all of it on the wire to be thrown
+ * away. The filter reads it server-side, which is the only place it is needed.
+ * Naming the columns is also what keeps the schema above honest: `*` returns a
+ * wider row, and a wider row parses against a narrower schema without
+ * complaint, because zod strips what it does not know.
  *
  * **Spelled out as a literal rather than joined from the schema's keys**, even
  * though the joined form cannot drift. The Supabase client infers the response
  * shape *from this string*, so a value computed at runtime is just `string` to
  * the compiler and collapses that inference — which would leave the zod parse
- * below as the only thing standing between a mistyped column and production.
- * The drift the literal reintroduces is closed by a unit test asserting these
- * are exactly the schema's keys.
+ * as the only thing standing between a mistyped column and production. The
+ * drift the literal reintroduces is closed by a unit test asserting these are
+ * exactly the schema's keys, in order.
  */
-export const SEARCHED_PROFILE_COLUMNS =
-  "id,email,email_verified_at,first_name,last_name,role,phone,currency,home_location_id,utm_source,utm_medium,utm_campaign,locale,spoken_languages,created_at,updated_at" as const;
+export const USER_LIST_ENTRY_COLUMNS =
+  "id,email,email_verified_at,first_name,last_name,role,phone,currency,home_location_id,utm_source,utm_medium,utm_campaign,locale,spoken_languages,created_at,updated_at,certified,criminal_record_check_passed,linked_gamers" as const;
+
+/**
+ * How much has to be typed before the box is searching rather than listing.
+ *
+ * Below it the needle is ignored entirely and the surface shows the newest
+ * page, which is what it was already showing — so a first keystroke costs no
+ * request and asserts nothing. It is not a performance floor: the filter is an
+ * unanchored `ILIKE` over a derived blob, so a one-character needle is a scan
+ * that matches nearly everybody, and "the newest 25 of nearly everybody" is the
+ * unfiltered page dressed up as an answer to a question nobody finished asking.
+ */
+export const USER_LIST_SEARCH_MIN_QUERY = 2;
 
 /**
  * Wire shapes for the admin's edit of somebody else's game identity

@@ -228,31 +228,16 @@ export function escapeLikePattern(str: string): string {
  * pattern ever reaches SQL, so a stray one would match everybody rather than
  * nobody. None of the three means anything inside a name, an email or a handle.
  *
- * **This lives here, rather than beside either caller, because two of them
- * exist**: the admin user search matches these terms in SQL, and the gedu
- * picker matches them in the browser over a list it already holds. What counts
- * as a term cannot be allowed to differ between the two — the failure is silent
- * and asymmetric, one surface quietly ceasing to find a person the other still
- * finds.
+ * **There is one implementation of a match, and it is in the database.** This
+ * function is its front half: it decides what counts as a term, and each term
+ * becomes one `ILIKE` the database ANDs with the rest. A browser-side companion
+ * lived beside it while a picker matched a list it already held, and the two
+ * agreed only by habit — which is how that picker once became unable to find a
+ * surname the users list could. Every people surface asks the shared read now,
+ * so nothing outside the database decides whether somebody matches.
  */
 export function searchTerms(query: string): string[] {
   return query.split(/[\s,*]+/).filter(Boolean);
-}
-
-/**
- * Whether every term appears somewhere in one person's searchable text.
- *
- * The rule is shared; the haystack is not. A caller assembles whichever fields
- * it can both see and match honestly — the database reaches a person's game
- * handles across two more tables, and recognises a phone number before it
- * tokenizes; a picker narrowing a list of profiles does neither — and this
- * decides what matching those fields *means*. Keeping the rule here and the
- * field list at the call site is what lets the two surfaces differ in reach
- * without differing in behaviour.
- */
-export function matchesAllTerms(haystack: string, terms: string[]): boolean {
-  const hay = haystack.toLowerCase();
-  return terms.every((term) => hay.includes(term.toLowerCase()));
 }
 
 export function capitalize(str: string): string {

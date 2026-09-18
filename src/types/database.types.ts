@@ -45,7 +45,7 @@ export type Database = {
             foreignKeyName: "account_consent_acceptances_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -98,7 +98,7 @@ export type Database = {
             foreignKeyName: "chat_channel_locks_locked_by_fkey"
             columns: ["locked_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -112,7 +112,7 @@ export type Database = {
             foreignKeyName: "chat_channel_locks_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -214,7 +214,7 @@ export type Database = {
             foreignKeyName: "chat_messages_hidden_by_fkey"
             columns: ["hidden_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -235,7 +235,7 @@ export type Database = {
             foreignKeyName: "chat_messages_sender_id_fkey"
             columns: ["sender_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -288,7 +288,7 @@ export type Database = {
             foreignKeyName: "chat_reactions_sender_id_fkey"
             columns: ["sender_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -336,7 +336,7 @@ export type Database = {
             foreignKeyName: "consent_acceptances_accepted_by_fkey"
             columns: ["accepted_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -350,7 +350,7 @@ export type Database = {
             foreignKeyName: "consent_acceptances_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -371,7 +371,7 @@ export type Database = {
             foreignKeyName: "consent_acceptances_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -452,7 +452,7 @@ export type Database = {
             foreignKeyName: "customer_profiles_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -509,7 +509,7 @@ export type Database = {
             foreignKeyName: "family_subscriptions_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -552,7 +552,7 @@ export type Database = {
             foreignKeyName: "feedback_submissions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -591,7 +591,7 @@ export type Database = {
             foreignKeyName: "gamer_consent_acceptances_accepted_by_fkey"
             columns: ["accepted_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -654,7 +654,7 @@ export type Database = {
             foreignKeyName: "gamer_group_creations_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -668,7 +668,7 @@ export type Database = {
             foreignKeyName: "gamer_group_creations_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -717,7 +717,7 @@ export type Database = {
             foreignKeyName: "gamer_group_notes_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -731,7 +731,7 @@ export type Database = {
             foreignKeyName: "gamer_group_notes_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -776,7 +776,7 @@ export type Database = {
             foreignKeyName: "gamer_photo_consent_events_answered_by_fkey"
             columns: ["answered_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -848,7 +848,7 @@ export type Database = {
             foreignKeyName: "gamer_profiles_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -935,7 +935,7 @@ export type Database = {
             foreignKeyName: "gedu_group_assignments_gedu_id_fkey"
             columns: ["gedu_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -982,7 +982,7 @@ export type Database = {
             foreignKeyName: "gedu_locations_gedu_id_fkey"
             columns: ["gedu_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -1034,7 +1034,7 @@ export type Database = {
             foreignKeyName: "gedu_profiles_certified_by_fkey"
             columns: ["certified_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -1048,7 +1048,7 @@ export type Database = {
             foreignKeyName: "gedu_profiles_criminal_record_check_by_fkey"
             columns: ["criminal_record_check_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -1062,7 +1062,7 @@ export type Database = {
             foreignKeyName: "gedu_profiles_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -1104,7 +1104,7 @@ export type Database = {
             foreignKeyName: "group_session_images_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -1174,7 +1174,7 @@ export type Database = {
             foreignKeyName: "group_sessions_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -1195,7 +1195,7 @@ export type Database = {
             foreignKeyName: "group_sessions_report_emailed_by_fkey"
             columns: ["report_emailed_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -1209,7 +1209,7 @@ export type Database = {
             foreignKeyName: "group_sessions_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -1349,7 +1349,7 @@ export type Database = {
             foreignKeyName: "marketing_consent_events_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -1385,7 +1385,7 @@ export type Database = {
             foreignKeyName: "marketing_consents_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -1418,7 +1418,7 @@ export type Database = {
             foreignKeyName: "minecraft_accounts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -1457,7 +1457,7 @@ export type Database = {
             foreignKeyName: "parent_gamer_gamer_id_fkey"
             columns: ["gamer_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -1471,7 +1471,7 @@ export type Database = {
             foreignKeyName: "parent_gamer_parent_id_fkey"
             columns: ["parent_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -1537,7 +1537,7 @@ export type Database = {
             foreignKeyName: "participations_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -1558,7 +1558,7 @@ export type Database = {
             foreignKeyName: "participations_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -1619,7 +1619,7 @@ export type Database = {
             foreignKeyName: "payments_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -2060,7 +2060,7 @@ export type Database = {
             foreignKeyName: "products_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -2179,7 +2179,7 @@ export type Database = {
             foreignKeyName: "roblox_accounts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -2259,7 +2259,7 @@ export type Database = {
             foreignKeyName: "session_attendance_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -2273,7 +2273,7 @@ export type Database = {
             foreignKeyName: "session_attendance_recorded_by_fkey"
             columns: ["recorded_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -2332,7 +2332,7 @@ export type Database = {
             foreignKeyName: "session_feedback_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -2426,7 +2426,7 @@ export type Database = {
             foreignKeyName: "verification_email_requests_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -2478,7 +2478,7 @@ export type Database = {
             foreignKeyName: "voice_private_zone_occupants_placed_by_fkey"
             columns: ["placed_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -2492,7 +2492,7 @@ export type Database = {
             foreignKeyName: "voice_private_zone_occupants_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -2553,7 +2553,7 @@ export type Database = {
             foreignKeyName: "voice_zones_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -2632,20 +2632,23 @@ export type Database = {
       }
     }
     Views: {
-      user_search_index: {
+      user_list_entries: {
         Row: {
+          certified: boolean | null
           created_at: string | null
+          criminal_record_check_passed: boolean | null
           currency: string | null
           email: string | null
           email_verified_at: string | null
+          family_search_blob: string | null
           first_name: string | null
           home_location_id: string | null
           id: string | null
           last_name: string | null
+          linked_gamers: Json | null
           locale: string | null
           phone: string | null
           role: Database["public"]["Enums"]["user_role"] | null
-          search_blob: string | null
           spoken_languages:
             | Database["public"]["Enums"]["spoken_language"][]
             | null
@@ -2653,6 +2656,54 @@ export type Database = {
           utm_campaign: string | null
           utm_medium: string | null
           utm_source: string | null
+        }
+        Insert: {
+          certified?: never
+          created_at?: string | null
+          criminal_record_check_passed?: never
+          currency?: string | null
+          email?: string | null
+          email_verified_at?: string | null
+          family_search_blob?: never
+          first_name?: string | null
+          home_location_id?: string | null
+          id?: string | null
+          last_name?: string | null
+          linked_gamers?: never
+          locale?: string | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          spoken_languages?:
+            | Database["public"]["Enums"]["spoken_language"][]
+            | null
+          updated_at?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          certified?: never
+          created_at?: string | null
+          criminal_record_check_passed?: never
+          currency?: string | null
+          email?: string | null
+          email_verified_at?: string | null
+          family_search_blob?: never
+          first_name?: string | null
+          home_location_id?: string | null
+          id?: string | null
+          last_name?: string | null
+          linked_gamers?: never
+          locale?: string | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          spoken_languages?:
+            | Database["public"]["Enums"]["spoken_language"][]
+            | null
+          updated_at?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Relationships: [
           {

@@ -74,11 +74,14 @@ second list to keep current, and the last one was wrong.
   stamps `certified_at = now()` / `certified_by = auth.uid()` server-side. Granted to
   `authenticated`; called from the admin user-detail page via the admin's own session.
 - **Assignment gate (UI-only, sufficient)**: the gedu picker disables uncertified gedus and
-  badges them. **This is a UI-only gate by design.** Assignment runs
-  through `apply_group_changes`, which does *not* re-check `certified`; the invariant holds
-  because admins are always trusted and assignment is an admin-only action driven entirely
-  by this picker. If a non-admin assignment path is ever added, move the `certified` check
-  into `apply_group_changes` — until then a DB-level check would be redundant.
+  badges them, reading the flag off the row it is drawing — the admin people list's paged
+  read carries it as a column, so the gate never waits on a second query and a row on
+  screen always carries its own verdict. **This is a UI-only gate by design.** Assignment
+  runs through `apply_group_changes`, which does *not* re-check `certified`; the invariant
+  holds because admins are always trusted and assignment is an admin-only action driven
+  entirely by this picker. If a non-admin assignment path is ever added, move the
+  `certified` check into `apply_group_changes` — until then a DB-level check would be
+  redundant.
 - **Instant-voice-room gate (server-side, required)**: unlike assignment, spinning up,
   ending, or moderating an instant voice room is *gedu-initiated*, so a UI gate is not
   enough. An uncertified gedu is treated as a non-moderator across all three of that
@@ -98,9 +101,13 @@ second list to keep current, and the last one was wrong.
 - **Backfill**: every gedu that existed before this feature was marked certified
   (`certified_by` NULL) — they were all admin-invited and already trusted.
 
-Certification state is read via `useGeduProfiles` / `useGeduCertificationMap`
-(lists/picker) and `useGeduProfile` (detail, seeded with a server fetch).
-`useSetGeduCertified` invalidates the whole `gedu-profiles` key on success.
+Certification state reaches a surface two ways, and which one it uses is decided by
+whether the surface is a *list*. A list reads the flag as a column of its own paged
+people read — it is one of the two standing flags the admin list view carries — so no
+list or picker holds a certification map of its own; the detail card reads the whole
+extension row, seeded with a server fetch. The consequence for writes: the certify and
+record-check mutations invalidate the gedu-profiles root **and** the people-list key,
+because the fact now lives on rows under both.
 
 ## The criminal record check
 

@@ -316,11 +316,18 @@ function SheetDescription({
   );
 }
 
-function SheetBody({
-  className,
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+/**
+ * The panel's scrolling region — and therefore the scroll root of anything
+ * inside it that is judged against a viewport.
+ *
+ * **Props are `ComponentProps<"div">` rather than `HTMLAttributes` so a `ref`
+ * rides through the spread**, which is what a caller needs to hand this
+ * element to an `IntersectionObserver`: a list that grows as the reader scrolls
+ * has to be observed against *this* box, not the page, because the page does
+ * not scroll while a sheet is open. React 19 passes a `ref` in props straight
+ * to the element, so no forwarding wrapper is involved.
+ */
+function SheetBody({ className, children, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn("flex-1 overflow-y-auto px-6 py-4", className)}
