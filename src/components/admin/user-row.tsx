@@ -44,22 +44,26 @@ interface UserRowProps {
   user: UserRowUser;
   linkedGamers?: UserRowUser[];
   /**
-   * Whether an admin has certified this educator: `true` shows the mark, `false`
-   * withholds it, and `null` means the answer is unknown — the read failed, or
-   * this row is not a gedu and the question does not arise. Three states rather
-   * than two because "not certified" and "we could not find out" must not
-   * collapse into each other; only a positive answer may print the mark.
+   * Whether an admin has certified this educator: `true` shows the mark,
+   * `false` withholds it.
+   *
+   * **Two states, because the flag rides along on the row it is about.** It
+   * used to be three — a `null` for "the certification read failed, so we know
+   * nothing about anybody" — and that state went with the read: the list's own
+   * query carries the flag now, so a row on screen has a definite answer and a
+   * row with no answer is not on screen at all. Meaningless on a non-gedu row,
+   * which is what `role` is for.
    */
-  certified?: boolean | null;
+  certified?: boolean;
   /**
    * What this educator's standing is missing, or `null` where that is not
-   * known — either read failed, either read has not answered yet, or the row is
+   * known — the acceptance read failed, it has not answered yet, or the row is
    * not a gedu.
    *
-   * Same three-state honesty as `certified` and for the same reason: a warning
-   * mark is a claim that somebody has *not* done something, and a read that did
-   * not land cannot support one. `null` is not "nothing missing"; it is
-   * silence.
+   * Three states rather than two, and this is the only mark that still needs
+   * them: a warning is a claim that somebody has *not* done something, and a
+   * read that did not land cannot support one. `null` is not "nothing
+   * missing"; it is silence.
    */
   standingWarnings?: GeduStandingWarnings | null;
 }
@@ -87,14 +91,14 @@ interface UserRowProps {
  * **The order is load-bearing and this list is right-packed, so nothing here
  * may be reordered on aesthetic grounds.** The group sits at the row's right
  * edge, so a mark that arrives after first paint has to be inserted at the
- * *left* end or it pushes the marks already painted sideways. Both warnings and
- * the shield arrive late, from two different reads; the shield's read is one of
- * the two the warnings wait for, so the warnings can never land first, and
- * putting them leftmost is what makes both arrivals grow the group leftward
- * into the row's slack. That is also why the warnings arrive as **one object**
- * rather than two flags: their two reads can resolve in either order, and a
- * caller that rendered each as it landed would let the second one push the
- * first across the row.
+ * *left* end or it pushes the marks already painted sideways. The shield and
+ * the green check come with the row and are on screen from its first frame;
+ * the two warnings are the only late arrivals, because one of their facts is
+ * contract acceptance, which is a separate read. Putting them leftmost is what
+ * makes that arrival grow the group leftward into the row's slack rather than
+ * shove the marks beside it. That is also why they arrive as **one object**
+ * rather than two flags: rendered independently, the late half would push the
+ * half that came with the row across the row.
  *
  * A gamer gets none of them, and prints no address either. A child's stored
  * address is either a synthetic `@gamer.sogverse.internal` handle nobody has
@@ -106,8 +110,8 @@ interface UserRowProps {
  *
  * **Every mark is printed only on a definite answer.** A mark is a claim
  * somebody made, so the absence of an answer has to read as silence rather than
- * as its opposite — see `certified` and `standingWarnings` for the three states
- * that keeps honest.
+ * as its opposite — see `standingWarnings` for the three states that keeps
+ * honest, and `certified` for why that mark no longer needs them.
  */
 export function UserRow({
   user,

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
+import { userListGamer } from "@/services/users/users.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
@@ -68,25 +69,15 @@ describe("user_list_entries", () => {
   const SPOKEN: Database["public"]["Enums"]["spoken_language"][] = ["sv"];
 
   /**
-   * One embedded child, as the view builds it.
+   * One embedded child — **the application's own schema**, not a copy of it.
    *
    * The column is `jsonb`, so the generated type is `Json` and the compiler can
-   * say nothing about what is inside it. This schema is what says it instead,
-   * and parsing real view output is what proves the schema describes the
-   * database rather than describing what somebody assumed it holds. Every field
-   * is one the two list surfaces render or gate on.
+   * say nothing about what is inside it; that schema is the whole of the
+   * knowledge, and this file is where it is checked against the database rather
+   * than against what somebody assumed. A second definition here would prove
+   * only that two pieces of code agree.
    */
-  const embeddedGamer = z.object({
-    id: z.string().uuid(),
-    first_name: z.string(),
-    last_name: z.string(),
-    email: z.string(),
-    email_verified_at: z.string().nullable(),
-    role: z.enum(["admin", "customer", "gamer", "gedu"]),
-    created_at: z.string(),
-    sign_in: z.enum(["parent", "username", "email"]).nullable(),
-  });
-  const embeddedGamers = z.array(embeddedGamer);
+  const embeddedGamers = z.array(userListGamer);
 
   beforeAll(async () => {
     admin = createAdminTestClient();
@@ -241,27 +232,40 @@ describe("user_list_entries", () => {
   // And the side that would lose a child altogether. A gamer whose parent link
   // was deleted is reachable from no family row, so the list has to carry them
   // itself or they exist in the database and nowhere else.
+  // Built from a gamer who never had a link, and never by unlinking a seeded
+  // one: deleting a gamer's last parent link fires a trigger that deletes the
+  // gamer's auth user outright, so "unlink, look, relink" destroys the seed
+  // account and takes every later suite that reads it down with it. It is also
+  // the honest shape of the case — the app cannot produce an orphan, so the rows
+  // this branch of the view exists for are ones that arrived without a link.
   it("lists a gamer with no parent link as a top-level row", async () => {
-    await admin
-      .from("parent_gamer")
-      .delete()
-      .eq("id", TEST_IDS.PARENT_GAMER_2_LINK);
+    const { data: created, error: createError } =
+      await admin.auth.admin.createUser({
+        email: `user-list-unlinked-${Date.now()}@gamer.sogverse.internal`,
+        password: "testpassword123",
+        email_confirm: true,
+        user_metadata: { first_name: "Unlinked", last_name: "Gamer" },
+      });
+    expect(createError).toBeNull();
+    const gamerId = created.user!.id;
 
     try {
+      // handle_new_user lands every signup as a customer; the gamer role is set
+      // afterwards, and the customer extension row goes with the role it was for.
+      await admin.from("profiles").update({ role: "gamer" }).eq("id", gamerId);
+      await admin.from("customer_profiles").delete().eq("user_id", gamerId);
+
       const { data, error } = await adminClient
         .from("user_list_entries")
-        .select("id, role")
-        .eq("id", TEST_IDS.GAMER_2)
+        .select("id, role, linked_gamers")
+        .eq("id", gamerId)
         .single();
 
       expect(error).toBeNull();
       expect(data!.role).toBe("gamer");
+      expect(data!.linked_gamers).toEqual([]);
     } finally {
-      await admin.from("parent_gamer").insert({
-        id: TEST_IDS.PARENT_GAMER_2_LINK,
-        parent_id: TEST_IDS.CUSTOMER,
-        gamer_id: TEST_IDS.GAMER_2,
-      });
+      await admin.auth.admin.deleteUser(gamerId);
     }
   });
 

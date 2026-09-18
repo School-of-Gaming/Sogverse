@@ -3020,9 +3020,10 @@ export default function AdminUIComponentsPage() {
             }}
             certified={false}
           />
-          {/* And the third state: the certification read failed, so nobody's
-              status is known. It has to look like the "no" above rather than
-              like the "yes" — a mark is a claim, and there is nobody here to
+          {/* An educator whose standing has not been answered yet: the two
+              warnings come from a read that lands after the rows do, and until
+              it does the row says nothing about them. A warning is a claim
+              that somebody has NOT done something, and there is nobody here to
               make it. */}
           <UserRow
             user={{
@@ -3033,7 +3034,8 @@ export default function AdminUIComponentsPage() {
               email_verified_at: null,
               role: "gedu",
             }}
-            certified={null}
+            certified={false}
+            standingWarnings={null}
           />
           {/* A parent who has never confirmed their address: no mark at all,
               which is the ordinary state of a new account. */}

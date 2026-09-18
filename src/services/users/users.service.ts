@@ -1,18 +1,20 @@
 import { z } from "zod";
-import type { Profile, ProfileUpdate, UserRole, ParentGamer, AppSupabaseClient } from "@/types";
+import type { Profile, ProfileUpdate, UserRole, AppSupabaseClient } from "@/types";
 import { escapeLikePattern, searchTerms } from "@/lib/utils";
 import { walkPages } from "@/lib/supabase/paging";
+import { keysetPage, type KeysetCursor } from "@/lib/supabase/keyset";
+import { ADMIN_PEOPLE_LIST_PAGE_SIZE } from "@/lib/constants/admin-people-lists";
+import type { SpokenLanguageCode } from "@/lib/constants/spoken-languages";
 import { parseJsonResponse, readErrorMessage } from "@/lib/api/json-response";
 import {
   adminGameAccountWriteResult,
-  searchedProfile,
-  SEARCHED_PROFILE_COLUMNS,
+  userListEntry,
+  USER_LIST_ENTRY_COLUMNS,
+  USER_LIST_SEARCH_MIN_QUERY,
   type AdminGameAccountBody,
   type AdminGameAccountWriteResult,
+  type UserListEntry,
 } from "./users.contracts";
-
-/** How many matches one user search returns. */
-const USER_SEARCH_LIMIT = 20;
 
 /**
  * What one verification-email send resolved to.
@@ -68,18 +70,56 @@ function phoneTerm(query: string): string | null {
 }
 
 /**
- * A capped page of search matches, plus how many there really were.
+ * The terms a needle becomes, or `null` when there is no needle to speak of.
  *
- * The total is what lets a surface tell a complete answer from a capped one.
- * Without it a search returning exactly the cap looks identical to a search
- * that found exactly that many people, and an admin has no way to know the
- * account they are looking for was cut off the end.
+ * Three answers, not two, and the third is the one worth naming: `null` means
+ * the box is *listing* rather than searching, so the read applies no text
+ * filter at all; an **empty array** means something was typed that cannot match
+ * anybody — punctuation alone — and the caller answers it with no rows rather
+ * than with an unfiltered page pretending to be matches.
  */
-export interface UserSearchResult {
-  /** The capped page of matches, newest first. */
-  results: Profile[];
-  /** How many profiles matched in total, before the cap. */
-  total: number;
+function searchFilterTerms(needle: string): string[] | null {
+  if (needle.length < USER_LIST_SEARCH_MIN_QUERY) return null;
+
+  // A phone number is one value typed with spaces inside it, so it has to be
+  // recognised before the tokenizer gets to split it into three useless
+  // fragments. Everything else is words.
+  const phone = phoneTerm(needle);
+  return phone ? [phone] : searchTerms(needle);
+}
+
+/**
+ * Which people one page of an admin list is about.
+ *
+ * Every field narrows the same query rather than choosing between queries: a
+ * search, a role and a spoken language are three independent PostgREST
+ * parameters the database ANDs, which is what lets the list and the search be
+ * one read instead of two surfaces' worth of agreeing-by-habit code.
+ */
+export interface UserListFilters {
+  /** What the admin typed. Trimmed by the caller; empty is "no search". */
+  search: string;
+  /** One role, or null for every role. */
+  role: UserRole | null;
+  /** A language the person must speak, or null for any. */
+  spokenLanguage: SpokenLanguageCode | null;
+}
+
+/** One keyset page of the admin people list. */
+export interface UserListPage {
+  /** The page's rows, newest first. */
+  rows: UserListEntry[];
+  /**
+   * How many entries match the filters — **on the first page only**, `null`
+   * after it.
+   *
+   * The count is an aggregate over the whole match set, so asking for it on
+   * every page would pay for it per page to learn a number that cannot have
+   * changed. `null` therefore means "not asked", never "none": a surface
+   * printing a count reads it off the first page and says nothing until that
+   * page has landed.
+   */
+  total: number | null;
 }
 
 export class UsersService {
@@ -188,31 +228,88 @@ export class UsersService {
   }
 
   /**
-   * Every profile, newest first.
+   * One keyset page of the admin people list, filtered as the surface asked.
+   *
+   * **The one read behind three surfaces** — the users page, the participant
+   * picker and the gedu picker — and the reason each of them is a screenful
+   * rather than a table. What it replaces is a whole-table walk of `profiles`
+   * plus a whole-table walk of `parent_gamer` plus a per-gedu certification
+   * read, with the family nesting, the role filter and the needle matching all
+   * done in the browser afterwards; past 3,000 profiles that was four
+   * sequential pages and about 1.2 MB before a single row could paint.
+   *
+   * **Listing and searching are the same query**, which is the whole point: the
+   * view carries a family-wide search blob, so a hit on a child's name returns
+   * the row that child is *inside* rather than one the surface then has to
+   * collapse away, and every filter below is an ordinary PostgREST parameter
+   * the database ANDs with the rest.
+   *
+   * `keysetPage` owns the order, the resume filter and the limit together, and
+   * it owns the query's only top-level `or` — which is exactly why every filter
+   * here is an `eq`, an `ilike` or a `contains` rather than a second `or`.
+   */
+  async getUserListPage(
+    filters: UserListFilters,
+    { cursor }: { cursor?: KeysetCursor } = {},
+  ): Promise<UserListPage> {
+    const needle = filters.search.trim();
+    const terms = searchFilterTerms(needle);
+
+    // Something unsearchable was typed. Answering it with an unfiltered read
+    // would hand back the newest page as if it had matched something.
+    if (terms !== null && terms.length === 0) return { rows: [], total: 0 };
+
+    let query = this.supabase.from("user_list_entries").select(
+      USER_LIST_ENTRY_COLUMNS,
+      // Only the first page asks. The count is an aggregate over the whole
+      // match set, so it cannot change as the reader scrolls, and PostgREST
+      // would recompute it per page for a number the surface read once.
+      cursor === undefined ? { count: "exact" } : undefined,
+    );
+
+    if (filters.role !== null) query = query.eq("role", filters.role);
+    if (filters.spokenLanguage !== null) {
+      query = query.contains("spoken_languages", [filters.spokenLanguage]);
+    }
+
+    // One filter per term, and PostgREST ANDs repeated filters — so "jon smith"
+    // asks for a family whose blob contains "jon" *and* "smith", in either
+    // order and across any of the strings the view folded into it. That is what
+    // makes adding the surname narrow the results rather than change the
+    // question.
+    for (const term of terms ?? []) {
+      query = query.ilike("family_search_blob", `%${escapeLikePattern(term)}%`);
+    }
+
+    const { data, error, count } = await keysetPage(query, {
+      cursor,
+      pageSize: ADMIN_PEOPLE_LIST_PAGE_SIZE,
+    });
+
+    if (error) throw error;
+
+    // The view cannot promise NOT NULL through PostgreSQL's catalog, and a
+    // `jsonb` column tells the compiler nothing at all, so the parse is what
+    // puts both guarantees back — loudly, if the view's shape ever stops
+    // matching.
+    return {
+      rows: z.array(userListEntry).parse(data),
+      total: cursor === undefined ? count : null,
+    };
+  }
+
+  /**
+   * One role's profiles, newest first.
    *
    * A paged walk rather than a plain select: `profiles` only grows — parents,
    * gamers and gedus all live there and nothing deletes them — so past
    * PostgREST's `max_rows` an unbounded read silently drops the *oldest*
-   * accounts. That does not merely shorten the admin users list; the page
-   * builds its parent↔gamer nesting from this array, so a truncated read
-   * un-links whole families and makes them vanish from search results too.
+   * accounts.
    *
    * `created_at` alone is not a total order — two accounts written in the same
    * transaction tie — and a page boundary under a partial order both duplicates
    * and drops rows, hence the `id` tiebreaker.
    */
-  async getAllUsers(): Promise<Profile[]> {
-    return walkPages("getAllUsers", (from, to) =>
-      this.supabase
-        .from("profiles")
-        .select("*", { count: "exact" })
-        .order("created_at", { ascending: false })
-        .order("id")
-        .range(from, to),
-    );
-  }
-
-  /** One role's profiles, newest first. Paged for the same reason as above. */
   async getUsersByRole(role: UserRole): Promise<Profile[]> {
     return walkPages("getUsersByRole", (from, to) =>
       this.supabase
@@ -225,80 +322,4 @@ export class UsersService {
     );
   }
 
-  /**
-   * The newest profiles matching a needle, capped, with the true match count.
-   *
-   * Runs against `user_search_index` rather than `profiles`, which is what puts
-   * a phone number and a game handle within reach: the view carries one
-   * `search_blob` per person holding every string they can be found by, so an
-   * admin working from a WhatsApp message or a gedu's "who is EnderDragon42?"
-   * asks the same question as one working from a name. A platform added later
-   * changes the view and nothing here.
-   *
-   * Capped rather than walked on purpose: this runs on every keystroke and a
-   * two-letter needle matches half the table. The count is the price of
-   * capping — it costs one extra aggregate and it is what stops the cap being
-   * invisible to whoever is searching.
-   */
-  async searchUsers(query: string): Promise<UserSearchResult> {
-    // A phone number is one value typed with spaces inside it, so it has to be
-    // recognised before the tokenizer gets to split it into three useless
-    // fragments. Everything else is words.
-    const phone = phoneTerm(query);
-    const terms = phone ? [phone] : searchTerms(query);
-
-    // Nothing searchable was typed — punctuation alone, say. Answering it with
-    // an unfiltered read would hand back the twenty newest accounts as if they
-    // had matched something.
-    if (terms.length === 0) return { results: [], total: 0 };
-
-    let search = this.supabase
-      .from("user_search_index")
-      .select(SEARCHED_PROFILE_COLUMNS, { count: "exact" });
-
-    // One filter per term, and PostgREST ANDs repeated filters — so "jon smith"
-    // asks for somebody whose blob contains "jon" *and* "smith", in either
-    // order and across any of the fields the view folded into it. That is what
-    // makes adding the surname narrow the results rather than change the
-    // question, which is the whole bug this started as.
-    for (const term of terms) {
-      search = search.ilike("search_blob", `%${escapeLikePattern(term)}%`);
-    }
-
-    const { data, error, count } = await search
-      .order("created_at", { ascending: false })
-      .order("id")
-      .limit(USER_SEARCH_LIMIT);
-
-    if (error) throw error;
-
-    // The view cannot promise NOT NULL through PostgreSQL's catalog, so the
-    // generated row type is nullable everywhere and the parse is what puts the
-    // guarantee back — loudly, if the view's shape ever stops matching.
-    return {
-      results: z.array(searchedProfile).parse(data),
-      // `count` is only absent if `count: "exact"` were dropped above; falling
-      // back to what arrived keeps the shape total rather than making it lie.
-      total: count ?? data.length,
-    };
-  }
-
-  /**
-   * Every parent↔gamer link. Walked for the same reason as the profile reads —
-   * the admin users list nests families through this array, so a truncated read
-   * silently unlinks whoever fell off the end.
-   *
-   * Ordered by the surrogate primary key. No surface cares about the order, but
-   * a paged walk needs a *total* one, and `id` is the only column here that is
-   * unique on its own.
-   */
-  async getAllParentGamerLinks(): Promise<ParentGamer[]> {
-    return walkPages("getAllParentGamerLinks", (from, to) =>
-      this.supabase
-        .from("parent_gamer")
-        .select("*", { count: "exact" })
-        .order("id")
-        .range(from, to),
-    );
-  }
 }

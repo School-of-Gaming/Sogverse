@@ -10,157 +10,102 @@ import {
   findGeduContractAcceptance,
   GEDU_CONTRACT_CURRENT_VERSION,
 } from "@/components/gedu/contract/documents";
-import { useUsers, useSearchUsers, useParentGamerLinks } from "@/services/users";
-import {
-  useGeduCertificationMap,
-  useGeduContractAcceptanceMap,
-} from "@/services/gedu";
+import { useUserList, type UserListEntry } from "@/services/users";
+import { useGeduContractAcceptanceMap } from "@/services/gedu";
+import { useScrollSentinel } from "@/hooks/use-scroll-sentinel";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import type { Profile, UserRole } from "@/types";
+import type { UserRole } from "@/types";
+
+/**
+ * How far below the last row counts as reached. A page is a screenful, so
+ * asking one viewport early is what makes a continuous scroll continuous rather
+ * than a stutter at every page boundary.
+ */
+const SENTINEL_ROOT_MARGIN = "800px 0px";
 
 export default function AdminUsersPage() {
   const t = useTranslations('admin.users');
   const c = useTranslations('common');
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRole | null>(null);
-  const { data: allUsers, isLoading: isLoadingAll } = useUsers();
-  const { data: searchResults, isLoading: isSearching } = useSearchUsers(searchQuery);
-  const { data: parentGamerLinks, isLoading: isLoadingLinks } = useParentGamerLinks();
-  const certification = useGeduCertificationMap();
-  const acceptances = useGeduContractAcceptanceMap();
 
   /**
-   * The two warning marks are a **block**, and it stays silent until both reads
-   * behind it have answered — or gives up entirely if either failed.
+   * The list, the search and the role filter are one server-side query.
    *
-   * Two reasons, and both are about honesty rather than caution. A warning
-   * asserts that an educator has *not* done something, and an unanswered or
-   * failed read cannot support that: an empty acceptance map would badge every
-   * gedu on the platform as unsigned, which is the precise wrong answer rather
-   * than a degraded one. And the two facts come from two independent queries
-   * that can resolve in either order, so rendering each as it lands would let
-   * the second one push the first sideways in the row's right-packed mark group
-   * — the shift `UserRow`'s ordering note exists to prevent. Waiting for both
-   * makes the pair one insertion at the left end of that group, which moves
+   * Nothing here narrows anything in the browser any more: the needle matches a
+   * family-wide blob in the database — so a hit on a child's name returns the
+   * family row the child is inside — and the role pill is an equality filter on
+   * the same read. The children are already nested inside their family's row,
+   * which is what the page used to build from two whole-table reads.
+   */
+  const list = useUserList({
+    search: searchQuery,
+    role: roleFilter,
+    spokenLanguage: null,
+  });
+  const acceptances = useGeduContractAcceptanceMap();
+
+  const rows = useMemo(
+    () => list.data?.pages.flatMap((page) => page.rows) ?? [],
+    [list.data],
+  );
+
+  /**
+   * Reveal the next page as the reader reaches the bottom of this one.
+   *
+   * Three conditions, and the third is the one that is easy to miss: while the
+   * hook is showing the *previous* needle's pages, the cursor those pages yield
+   * belongs to the previous question, so asking for more would resume the new
+   * query from the old query's boundary. The other two are the ordinary
+   * discipline — nothing left to fetch, or a fetch already in flight.
+   */
+  const sentinelRef = useScrollSentinel({
+    enabled:
+      list.hasNextPage && !list.isFetchingNextPage && !list.isPlaceholderData,
+    onReach: () => {
+      void list.fetchNextPage();
+    },
+    rootMargin: SENTINEL_ROOT_MARGIN,
+  });
+
+  /**
+   * The two warning marks are a **block**, and it stays silent until the one
+   * read behind it has answered — or gives up entirely if it failed.
+   *
+   * The record check now rides along on the row itself, so only contract
+   * acceptance arrives a round trip after the rows do. The block is still
+   * atomic for the reason it always was: a warning asserts that an educator has
+   * *not* done something, and an unanswered or failed read cannot support one —
+   * an empty acceptance map would badge every gedu on the platform as unsigned,
+   * which is the precise wrong answer rather than a degraded one. Rendering the
+   * record-check mark on its own in the meantime would also let the contract
+   * mark push it sideways when it lands, in the row's right-packed mark group;
+   * waiting makes the pair one insertion at that group's left end, which moves
    * nothing.
    */
-  const standingKnown =
-    !certification.isPending &&
-    !certification.isError &&
-    !acceptances.isPending &&
-    !acceptances.isError;
+  const standingKnown = !acceptances.isPending && !acceptances.isError;
 
-  const geduStandingWarnings = useMemo(() => {
-    if (!standingKnown) return new Map<string, GeduStandingWarnings>();
-    const warnings = new Map<string, GeduStandingWarnings>();
-    for (const [geduId, profile] of certification.map) {
-      warnings.set(geduId, {
-        // Matched on the base version, like every other "is this educator
-        // current" check: the two languages of one version are the same
-        // agreement, so signing either counts.
-        contract:
-          findGeduContractAcceptance(
-            acceptances.map.get(geduId) ?? [],
-            GEDU_CONTRACT_CURRENT_VERSION,
-          ) === null,
-        criminalRecordCheck: !profile.criminal_record_check_passed,
-      });
-    }
-    return warnings;
-  }, [standingKnown, certification.map, acceptances.map]);
+  const standingWarningsFor = (row: UserListEntry): GeduStandingWarnings | null => {
+    if (row.role !== "gedu" || !standingKnown) return null;
+    return {
+      // Matched on the base version, like every other "is this educator
+      // current" check: the two languages of one version are the same
+      // agreement, so signing either counts.
+      contract:
+        findGeduContractAcceptance(
+          acceptances.map.get(row.id) ?? [],
+          GEDU_CONTRACT_CURRENT_VERSION,
+        ) === null,
+      criminalRecordCheck: !row.criminal_record_check_passed,
+    };
+  };
 
   const ROLE_FILTERS: { value: UserRole; label: string }[] = [
     { value: "admin", label: c(ROLE_LABEL_KEYS.admin) },
     { value: "customer", label: c(ROLE_LABEL_KEYS.customer) },
     { value: "gedu", label: c(ROLE_LABEL_KEYS.gedu) },
   ];
-
-  const isSearchActive = searchQuery.length >= 2;
-  const baseUsers = isSearchActive ? searchResults?.results : allUsers;
-  // The links read is part of the gate too: the children nest *under* their
-  // parent's row, so a parent painted before its links arrive would grow a
-  // block beneath itself on data's own schedule and push every row below it
-  // (CLAUDE.md layout rule). The read is small and lands well before the
-  // profile walk in practice, so waiting on it costs nothing.
-  const isLoading = (isSearchActive ? isSearching : isLoadingAll) || isLoadingLinks;
-
-  // Search is capped server-side, so a full page of hits and a complete answer
-  // look identical without this. Rendered *below* whichever branch is showing:
-  // it appears as a search resolves, which is data's own schedule rather than
-  // the user's, so it must not push anything already painted (CLAUDE.md layout
-  // rule). It has to survive the empty branch too — a role filter or the
-  // gamer→parent collapse can empty the display while the search was capped,
-  // and "no users match" with no further word is exactly the lie this prevents.
-  const cappedSearch =
-    isSearchActive && searchResults && searchResults.total > searchResults.results.length
-      ? { shown: searchResults.results.length, total: searchResults.total }
-      : null;
-
-  // Build maps from ALL users (not just search results) so gamer nesting always works
-  const allUsersById = useMemo(
-    () => new Map(allUsers?.map((u) => [u.id, u]) ?? []),
-    [allUsers]
-  );
-
-  // parentId → gamer Profile[], and set of all gamer IDs that have a parent
-  const { parentToGamers, gamerToParentIds } = useMemo(() => {
-    const map = new Map<string, Profile[]>();
-    const gamerParents = new Map<string, string[]>();
-
-    if (!parentGamerLinks || !allUsers) return { parentToGamers: map, gamerToParentIds: gamerParents };
-
-    for (const link of parentGamerLinks) {
-      const gamer = allUsersById.get(link.gamer_id);
-      if (!gamer) continue;
-
-      const existing = map.get(link.parent_id) || [];
-      existing.push(gamer);
-      map.set(link.parent_id, existing);
-
-      const parents = gamerParents.get(link.gamer_id) || [];
-      parents.push(link.parent_id);
-      gamerParents.set(link.gamer_id, parents);
-    }
-
-    return { parentToGamers: map, gamerToParentIds: gamerParents };
-  }, [parentGamerLinks, allUsers, allUsersById]);
-
-  // Build the display list: filter out gamers (they nest under parents),
-  // and when searching for a gamer, pull their parent into the results
-  const users = useMemo(() => {
-    if (!baseUsers) return undefined;
-
-    const result: Profile[] = [];
-    const added = new Set<string>();
-
-    for (const user of baseUsers) {
-      if (user.role === "gamer" && gamerToParentIds.has(user.id)) {
-        // Gamer with a parent — don't show standalone, but ensure parent is in the list
-        for (const parentId of gamerToParentIds.get(user.id)!) {
-          if (!added.has(parentId)) {
-            const parent = allUsersById.get(parentId);
-            if (parent) {
-              result.push(parent);
-              added.add(parentId);
-            }
-          }
-        }
-        continue;
-      }
-
-      if (!added.has(user.id)) {
-        result.push(user);
-        added.add(user.id);
-      }
-    }
-
-    if (roleFilter) {
-      return result.filter((u) => u.role === roleFilter);
-    }
-
-    return result;
-  }, [baseUsers, gamerToParentIds, allUsersById, roleFilter]);
 
   return (
     // Reserve the document scrollbar gutter so the list/search results loading
@@ -219,66 +164,41 @@ export default function AdminUsersPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
+          {/* The first page is a keyset page of 25 off an indexed view — a
+              small, bounded read that lands in a frame or two — so nothing is
+              painted in its place: no skeleton, no spinner. What must not
+              appear in the meantime is the empty line, which would claim
+              nobody matches before anyone has been asked. */}
+          {rows.length > 0 ? (
             <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-4 rounded-lg border border-border p-4 animate-pulse"
-                >
-                  <div className="h-10 w-10 rounded-md bg-lifted" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 w-32 rounded bg-lifted" />
-                    <div className="h-3 w-48 rounded bg-lifted" />
-                  </div>
-                </div>
+              {rows.map((row) => (
+                <UserRow
+                  key={row.id}
+                  user={row}
+                  linkedGamers={row.linked_gamers}
+                  certified={row.certified}
+                  // Absent for every non-gedu, and for every gedu until the
+                  // acceptance read has answered — see the block above. `null`
+                  // is silence, never "nothing missing".
+                  standingWarnings={standingWarningsFor(row)}
+                />
               ))}
             </div>
-          ) : (
-            <>
-              {users && users.length > 0 ? (
-                <div className="space-y-4">
-                  {users.map((user) => (
-                    <UserRow
-                      key={user.id}
-                      user={user}
-                      linkedGamers={parentToGamers.get(user.id)}
-                      // An absent entry means "not certified" only when the read
-                      // succeeded. If it failed we know nothing about anyone, so
-                      // the answer is `null` and the badge is withheld rather
-                      // than asserted — printing it across every gedu is the
-                      // precise wrong answer, not a degraded one.
-                      certified={
-                        certification.isError
-                          ? null
-                          : certification.map.get(user.id)?.certified ?? false
-                      }
-                      // Absent for every non-gedu, and for every gedu until
-                      // both standing reads have answered — see the block
-                      // above. `null` is silence, never "nothing missing".
-                      standingWarnings={
-                        geduStandingWarnings.get(user.id) ?? null
-                      }
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="py-8 text-center text-muted-foreground">
-                  {searchQuery || roleFilter
-                    ? t('noFilterResults')
-                    : t('noUsers')}
-                </div>
-              )}
-              {cappedSearch && (
-                <p className="pt-4 text-center text-sm text-muted-foreground">
-                  {t('searchCapped', cappedSearch)}
-                </p>
-              )}
-            </>
+          ) : list.isPending ? null : (
+            <div className="py-8 text-center text-muted-foreground">
+              {searchQuery || roleFilter
+                ? t('noFilterResults')
+                : t('noUsers')}
+            </div>
+          )}
+          {/* Below every row, so a revealed page lands where the container's
+              slack already is and nothing painted moves. Unmounted once there
+              is nothing left to reach for. */}
+          {list.hasNextPage && (
+            <div ref={sentinelRef} aria-hidden className="h-px" />
           )}
         </CardContent>
       </Card>
     </div>
   );
 }
-

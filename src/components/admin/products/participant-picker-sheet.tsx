@@ -22,8 +22,20 @@ import {
 } from "@/lib/products/product-audience";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { useParentGamerLinks, useSearchUsers, useUsers } from "@/services/users";
-import type { Profile } from "@/types";
+import { useScrollSentinel } from "@/hooks/use-scroll-sentinel";
+import {
+  useUserList,
+  type UserListEntry,
+  type UserListGamer,
+} from "@/services/users";
+import type { UserRole } from "@/types";
+
+/**
+ * How far below the last family counts as reached. Shorter than the page's own
+ * margin because a sheet is a narrow column: one screenful of rows is a much
+ * smaller scroll distance here than on the users page.
+ */
+const SENTINEL_ROOT_MARGIN = "400px 0px";
 
 interface ParticipantPickerSheetProps {
   open: boolean;
@@ -39,22 +51,30 @@ interface ParticipantPickerSheetProps {
   onAddParticipant: (participantId: string) => Promise<void>;
 }
 
-interface FamilyBlock {
-  parent: Profile;
-  gamers: Profile[];
-}
-
 /**
- * The admin comp-enrollment picker: every family, with the parent as a header
- * row and their children nested under it.
+ * The admin comp-enrollment picker: families newest first, with the parent as a
+ * header row and their children nested under it.
+ *
+ * **One page of families at a time, searched server-side.** A page is a
+ * screenful and grows as the admin scrolls into it; the box asks the database,
+ * against a blob carrying every string a whole family can be found by. That is
+ * what makes a hit on a child's *name* — or on their Minecraft handle, or on a
+ * phone number typed the way a person writes it — surface the family the child
+ * is inside, without this component nesting or hoisting anything: the children
+ * arrive already inside their family's row.
+ *
+ * **The sheet is mounted from the panel's first render and reads nothing until
+ * it has been opened once.** Staying mounted is what lets it animate in and
+ * out; the latch below is what stops a product page nobody clicked from
+ * fetching a page of accounts.
  *
  * **The parent row is selectable, and a childless parent is still listed.**
  * Both were once true only of the children. A for-parents product needs a seat
  * given to the adult, and the family with no linked gamer is precisely the
  * family most likely to want one — a parent who signed up for a parents' event
- * and has never created a child account. Filtering them out (which this sheet
- * did until adults could hold seats) made those families unreachable from the
- * only surface that can comp a seat.
+ * and has never created a child account. The read asks for the customer role,
+ * so such a family is a row like any other rather than something the browser
+ * has to remember to keep.
  *
  * **The product's audience withholds the Add button, and nothing else.**
  * Someone the audience cannot seat still has their row — the family block, the
@@ -69,15 +89,15 @@ interface FamilyBlock {
  * error below still carries every other refusal it can raise — already
  * enrolled, seat rules, a race — and only the audience case stops arriving
  * there. Deciding it in the browser at all is sound for the reason the sibling
- * gedu picker's verification gate is: only admins open either sheet, and an
+ * gedu picker's certification gate is: only admins open either sheet, and an
  * admin is trusted to act through the admin UI.
  *
  * **That sibling settled the copy question the other way, and the divergence is
  * deliberate rather than overlooked.** Its unpickable rows say why — a
  * "Not verified" badge beside the name — where these say nothing, and the two
  * sheets open from the same panel minutes apart. The case for the badge there
- * is that unverified is a *fixable state of that person*, so naming it tells an
- * admin what to go and do. An audience is a settled property of the product
+ * is that uncertified is a *fixable state of that person*, so naming it tells
+ * an admin what to go and do. An audience is a settled property of the product
  * they are already looking at, so the same sentence would explain a thing
  * nobody is currently deciding. If an admin ever reads a buttonless list as a
  * broken render rather than as a rule, this is the decision to revisit, and the
@@ -91,10 +111,6 @@ export function ParticipantPickerSheet({
   onAddParticipant,
 }: ParticipantPickerSheetProps) {
   const t = useTranslations("admin.products.participantPicker");
-  // The capped-search notice is the same statement about the same query this
-  // sheet already runs (the shared user search), so it reuses that string
-  // rather than keeping a second copy of it in five locale files.
-  const tUsers = useTranslations("admin.users");
   const [search, setSearch] = useState("");
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   // Participants added in the current session — shows the "Added" affordance
@@ -105,10 +121,55 @@ export function ParticipantPickerSheet({
   // the rest of the in-progress batch.
   const [errorById, setErrorById] = useState<Record<string, string>>({});
   const searchRef = useRef<HTMLInputElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
-  const { data: allUsers, isLoading: isLoadingAll } = useUsers();
-  const { data: searchResults, isLoading: isSearching } = useSearchUsers(search);
-  const { data: parentLinks } = useParentGamerLinks();
+  // The open transition does what unmounting used to: a reopened sheet is a
+  // fresh one. It fires on the false → true edge rather than on close, because
+  // resetting on close would rewrite the list underneath the sheet while its
+  // exit animation is still playing. And it adjusts state *during* the render
+  // that sees the new prop, React's own shape for derived-from-props state — an
+  // effect doing the same would paint the stale search for a frame first.
+  //
+  // The same transition latches `hasOpened`, which is what lets the read stay
+  // unfired until an admin actually asks for it: the sheet is in the tree from
+  // the groups panel's first render, and reading a page of accounts for a
+  // product page nobody opened a picker on is a cost with no reader. The latch
+  // never clears, so closing and reopening keeps the families already in hand.
+  const [wasOpen, setWasOpen] = useState(open);
+  const [hasOpened, setHasOpened] = useState(open);
+  if (wasOpen !== open) {
+    setWasOpen(open);
+    if (open) {
+      setHasOpened(true);
+      setSearch("");
+      setAddedIds(new Set());
+      setErrorById({});
+    }
+  }
+
+  const list = useUserList(
+    { search, role: "customer", spokenLanguage: null },
+    { enabled: hasOpened },
+  );
+
+  const families = useMemo(
+    () => list.data?.pages.flatMap((page) => page.rows) ?? [],
+    [list.data],
+  );
+
+  // The sheet body is the scroller, not the page — the document's scroll is
+  // held while a sheet is open — so the sentinel is judged against that box.
+  // `isPlaceholderData` is part of the gate because the cursor those pages
+  // yield belongs to the needle they answered, not the one now in the box.
+  const sentinelRef = useScrollSentinel({
+    enabled:
+      list.hasNextPage && !list.isFetchingNextPage && !list.isPlaceholderData,
+    onReach: () => {
+      void list.fetchNextPage();
+    },
+    rootMargin: SENTINEL_ROOT_MARGIN,
+    root: bodyRef,
+  });
 
   useEffect(() => {
     if (open) {
@@ -116,108 +177,6 @@ export function ParticipantPickerSheet({
       return () => window.clearTimeout(id);
     }
   }, [open]);
-
-  const handleOpenChange = (next: boolean) => {
-    if (!next) {
-      setSearch("");
-      setAddedIds(new Set());
-      setErrorById({});
-    }
-    onOpenChange(next);
-  };
-
-  // Lookup tables built from the full user list so gamer nesting always works,
-  // even when the search results only contain a gamer (we then surface the
-  // gamer's family block in the picker).
-  const { allUsersById, parentToGamers, gamerToParentIds } = useMemo(() => {
-    const byId = new Map<string, Profile>();
-    const parentMap = new Map<string, Profile[]>();
-    const gamerMap = new Map<string, string[]>();
-
-    if (!allUsers) {
-      return {
-        allUsersById: byId,
-        parentToGamers: parentMap,
-        gamerToParentIds: gamerMap,
-      };
-    }
-    for (const u of allUsers) byId.set(u.id, u);
-
-    if (parentLinks) {
-      for (const link of parentLinks) {
-        const gamer = byId.get(link.gamer_id);
-        if (!gamer) continue;
-        const existing = parentMap.get(link.parent_id) ?? [];
-        existing.push(gamer);
-        parentMap.set(link.parent_id, existing);
-
-        const parents = gamerMap.get(link.gamer_id) ?? [];
-        parents.push(link.parent_id);
-        gamerMap.set(link.gamer_id, parents);
-      }
-    }
-
-    return {
-      allUsersById: byId,
-      parentToGamers: parentMap,
-      gamerToParentIds: gamerMap,
-    };
-  }, [allUsers, parentLinks]);
-
-  const isSearchActive = search.trim().length >= 2;
-  const isLoading = isSearchActive ? isSearching : isLoadingAll;
-
-  // This sheet narrows the search hits harder than the admin users list does —
-  // only customers and their linked gamers survive — so a capped page of 20 that
-  // happens to contain none renders "no results" while hundreds matched. The cap
-  // keeps the *newest* matches, so the family being looked for can be an old one
-  // and reported as nonexistent. Hence the notice below is rendered in the empty
-  // branch as much as beside results: empty is where the omission reads as an
-  // answer.
-  const cappedSearch =
-    isSearchActive && !isLoading && searchResults && searchResults.total > searchResults.results.length
-      ? { shown: searchResults.results.length, total: searchResults.total }
-      : null;
-
-  // Build the family blocks to render. When searching, the base list is the
-  // search hit set: matched customers stay; matched gamers pull in their
-  // parents. When not searching, every customer renders — including the ones
-  // with no linked gamer, whose block is just the selectable parent row.
-  const familyBlocks = useMemo<FamilyBlock[]>(() => {
-    const baseUsers = isSearchActive ? searchResults?.results : allUsers;
-    if (!baseUsers) return [];
-
-    const seenParentIds = new Set<string>();
-    const blocks: FamilyBlock[] = [];
-
-    const pushParent = (parent: Profile) => {
-      if (seenParentIds.has(parent.id)) return;
-      seenParentIds.add(parent.id);
-      blocks.push({ parent, gamers: parentToGamers.get(parent.id) ?? [] });
-    };
-
-    for (const user of baseUsers) {
-      if (user.role === "customer") {
-        pushParent(user);
-      } else if (user.role === "gamer") {
-        const parents = gamerToParentIds.get(user.id);
-        if (!parents) continue;
-        for (const parentId of parents) {
-          const parent = allUsersById.get(parentId);
-          if (parent) pushParent(parent);
-        }
-      }
-    }
-
-    return blocks;
-  }, [
-    isSearchActive,
-    searchResults,
-    allUsers,
-    allUsersById,
-    parentToGamers,
-    gamerToParentIds,
-  ]);
 
   const handleAdd = async (participantId: string) => {
     setPendingIds((prev) => {
@@ -251,9 +210,9 @@ export function ParticipantPickerSheet({
   };
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent>
-        <SheetHeader onClose={() => handleOpenChange(false)}>
+        <SheetHeader onClose={() => onOpenChange(false)}>
           <SheetTitle>{t("title")}</SheetTitle>
           <SheetDescription>{t("description")}</SheetDescription>
         </SheetHeader>
@@ -272,45 +231,36 @@ export function ParticipantPickerSheet({
           <p className="text-xs text-muted-foreground">{t("searchHint")}</p>
         </div>
 
-        <SheetBody>
-          {isLoading ? (
-            <div className="space-y-3">
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="h-20 animate-pulse rounded-lg border border-border bg-lifted"
+        <SheetBody ref={bodyRef}>
+          {/* A keyset page of 25 off an indexed view lands in a frame or two,
+              so nothing stands in for it: no skeleton, no spinner. What must
+              not appear meanwhile is either empty line — both are claims about
+              who exists, and nobody has been asked yet. */}
+          {families.length > 0 ? (
+            <div className="space-y-4">
+              {families.map((family) => (
+                <FamilyBlockRow
+                  key={family.id}
+                  parent={family}
+                  gamers={family.linked_gamers}
+                  audience={audience}
+                  enrolledParticipantIds={enrolledParticipantIds}
+                  addedIds={addedIds}
+                  pendingIds={pendingIds}
+                  errorById={errorById}
+                  onAdd={handleAdd}
                 />
               ))}
             </div>
-          ) : (
-            <>
-              {familyBlocks.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  {isSearchActive ? t("noSearchResults") : t("noParents")}
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {familyBlocks.map(({ parent, gamers }) => (
-                    <FamilyBlockRow
-                      key={parent.id}
-                      parent={parent}
-                      gamers={gamers}
-                      audience={audience}
-                      enrolledParticipantIds={enrolledParticipantIds}
-                      addedIds={addedIds}
-                      pendingIds={pendingIds}
-                      errorById={errorById}
-                      onAdd={handleAdd}
-                    />
-                  ))}
-                </div>
-              )}
-              {cappedSearch && (
-                <p className="pt-4 text-center text-xs text-muted-foreground">
-                  {tUsers("searchCapped", cappedSearch)}
-                </p>
-              )}
-            </>
+          ) : list.isPending ? null : (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              {search.trim().length > 0 ? t("noSearchResults") : t("noParents")}
+            </p>
+          )}
+          {/* Below every family, so a revealed page appends into the body's
+              own slack and nothing already read moves. */}
+          {list.hasNextPage && (
+            <div ref={sentinelRef} aria-hidden className="h-px" />
           )}
         </SheetBody>
       </SheetContent>
@@ -319,8 +269,8 @@ export function ParticipantPickerSheet({
 }
 
 interface FamilyBlockRowProps {
-  parent: Profile;
-  gamers: Profile[];
+  parent: UserListEntry;
+  gamers: UserListGamer[];
   audience: ProductAudience;
   enrolledParticipantIds: Set<string>;
   addedIds: Set<string>;
@@ -345,18 +295,20 @@ interface FamilyBlockRowProps {
  * Asked of the row's own `role` rather than of where it sits in the block: the
  * header is the person the family is keyed on and the nested rows are their
  * linked children, but nothing here has to trust that, and the seat rule is
- * stated about roles.
+ * stated about roles. Taking the two fields it reads rather than a whole row is
+ * what lets one function answer for a family header and an embedded child
+ * alike, which are two different shapes carrying the same two facts.
  */
 function showsAddButton(
-  profile: Profile,
+  person: { id: string; role: UserRole },
   audience: ProductAudience,
   enrolledParticipantIds: Set<string>,
   addedIds: Set<string>,
 ): boolean {
   return (
-    audienceAdmitsRole(audience, profile.role) ||
-    enrolledParticipantIds.has(profile.id) ||
-    addedIds.has(profile.id)
+    audienceAdmitsRole(audience, person.role) ||
+    enrolledParticipantIds.has(person.id) ||
+    addedIds.has(person.id)
   );
 }
 
@@ -449,7 +401,7 @@ function FamilyBlockRow({
 }
 
 interface GamerPickerRowProps {
-  gamer: Profile;
+  gamer: UserListGamer;
   /** See `showsAddButton` — false renders no button at all, not a disabled one. */
   showsButton: boolean;
   isEnrolled: boolean;

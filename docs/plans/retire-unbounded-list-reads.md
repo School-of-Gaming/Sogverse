@@ -10,11 +10,12 @@ staging project on 2026-07-30: an anon select on `locations` (~35k rows) returns
 set-returning RPCs; RPCs returning a single jsonb document are immune, and relations
 embedded inside a row ride along uncapped.
 
-The pattern that kills this class already exists and is proven: the admin users surface
-was fixed in August 2026 via the shared paging primitive in `src/lib/supabase/`
-(`walkPages` — pages until a short page, **requires and enforces** `count: "exact"`,
-cross-checks the collected total, and demands a total order; its colocated `CLAUDE.md`
-states the rules). A full-repo sweep on 2026-08-05 inventoried every remaining list read.
+The pattern that kills this class already exists and is proven in production: the shared
+paging primitive in `src/lib/supabase/` (`walkPages` — pages until a short page,
+**requires and enforces** `count: "exact"`, cross-checks the collected total, and demands
+a total order; its colocated `CLAUDE.md` states the rules, including which reads take the
+keyset shape beside it instead). A full-repo sweep on 2026-08-05 inventoried every
+remaining list read.
 This plan converts the remaining risky ones and adds a ratchet so the class cannot
 quietly return.
 
@@ -40,17 +41,19 @@ makes an unregistered unbounded read a build failure.
 ## Rejected alternatives
 
 - **Raising `max_rows`.** Moves the cliff and keeps it silent. Rejected.
-- **Keyset (cursor) paging.** Would close the offset race a concurrent insert can cause
-  mid-walk, but was rejected as not worth the complexity: these reads are rare,
-  idempotent, and refetched by the query cache. The race is documented in the primitive's
-  doc comment as an accepted tolerance. Do not implement it here.
+- **Keyset (cursor) paging for the reads in this plan.** It exists beside the walk now,
+  because an interactive list needed it — but every read here is a walk whose result is
+  one load, idempotent and refetched by the query cache, so the offset race costs at most
+  one wrong row for one load and self-corrects. The paging rules state which shape a read
+  takes; converting these does not follow from keyset existing. Do not implement it here.
 - **Fixing only the urgent reads and leaving the rest as TODOs.** The whole point of this
   plan is that the class dies: the cheap hardenings cost minutes each once the pattern is
   set, and the ratchet is what prevents regression.
 - **Client-side search/filtering as a substitute for capped server reads** (considered
   for the admin users page): rejected because it forks matching semantics across surfaces
-  and dies anyway under any future server-side pagination. Search stays server-side with
-  a truncation indicator — the admin users page shows the settled shape.
+  and dies anyway under server-side pagination. Search stays server-side — the admin
+  people surfaces show the settled shape: one paged query answering both the list and
+  the needle, with nothing in the browser deciding what matches.
 
 ## Workstreams
 
@@ -158,15 +161,12 @@ discipline the route registry uses).
 
 ## Explicitly out of scope
 
-- **The `/admin/users` server-side pagination restructure** — deliberately deferred with
-  a written trigger (~5k profiles / DOM weight); tracked in `TODO.md`, not here. A second
-  surface now rides the same walked read and the same deferred trigger: the admin
-  comp-enrollment participant picker renders **every** customer when nothing is typed —
-  childless parents included since parents can hold their own seats — as one identicon
-  block per profile with no virtualization. The read is complete (it walks), so this is
-  DOM weight rather than a truncation bug, and the picker's *search* path is capped and
-  says so. Whoever takes the `/admin/users` restructure should take this picker with it.
-- **Keyset paging** — rejected above.
+- **The three admin people surfaces** — the users page and the two product-page picker
+  sheets. They are **built**: one keyset-paged read of a view, server-side search and
+  filters, infinite scroll. Nothing in this plan applies to them, and the whole-table
+  profile, parent-link and gedu-certification reads they used are gone rather than
+  walked.
+- **Keyset paging for the reads named here** — rejected above.
 - **Audited and deliberately unchanged** (bounded by construction; recorded so the next
   sweep doesn't re-litigate): voice zone/occupant reads (one group's roster), per-family
   participation and subscription reads, parent↔gamer link reads by parent or gamer, the
@@ -196,7 +196,7 @@ discipline the route registry uses).
 ## Acceptance criteria
 
 - Every read named in workstreams 1–4 walks or chunks, with unit tests pinning its total
-  order and exact count (the users/gedu-profiles service tests are the template).
+  order and exact count (the users service test's walked-read cases are the template).
 - The `/schools` fetch excludes ended clubs in SQL, and the per-municipality page fetches
   one municipality under its own query key. (The third clause of this criterion — no
   browse read selects `long_description` — is already met; see 3d.)
