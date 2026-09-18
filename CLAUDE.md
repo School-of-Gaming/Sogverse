@@ -1,6 +1,42 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+> [!CAUTION]
+> ## STOP — staging changed under this branch while it was paused (2026-09-18)
+>
+> **Read this before any other work on `feat/gedu-substitution`, and tell the owner you
+> have seen it.** This section exists only on this branch and must be deleted — in the
+> same commit as the fix migration below — before the branch merges.
+>
+> **What happened.** While this branch was paused, `feat/fennoa-finvoice-export` landed on
+> `dev`. Its migration **00263** made `get_admin_dashboard` return a new attention flag,
+> `missing_invoice_customer` (a municipality club with no invoice customer), and put a club
+> with that flag alone into the attention list. This branch's **00264** was pushed to
+> staging *after* 00263 and rebuilt `get_admin_dashboard` from a pre-00263 body, silently
+> dropping the flag — which broke the admin dashboard for `dev` ("Could not load the
+> dashboard": `dev`'s contract requires the field).
+>
+> **What was done to staging.** `get_admin_dashboard` on staging was replaced by hand (psql,
+> no migration-history row) with **00264's body plus 00263's two additions**: the
+> `missing_invoice_customer` key beside `missing_municipality_fee` in each attention doc,
+> and the matching `OR (c.product_type = 'municipality_club' AND c.invoice_customer_id IS
+> NULL)` in the candidate filter. Grants as 00264 states them. So staging's live function
+> no longer matches any migration file on this branch — it is a superset of 00264, and this
+> branch's code works against it unchanged (zod strips the extra key).
+>
+> **What this branch must do before it merges:**
+>
+> 1. Merge `dev` into this branch, so 00263 and the dashboard contract's
+>    `missing_invoice_customer` field are here.
+> 2. Add a **new** migration (next free number — `dev` already holds 00266/00267, so
+>    00268 or later; re-verify against `supabase_migrations.schema_migrations` at push
+>    time) that `CREATE OR REPLACE`s `get_admin_dashboard` as this branch's latest body
+>    plus 00263's two additions, with the REVOKE/GRANTs restated. Never edit 00264 — it
+>    is pushed. Without this migration, 00264 drops the flag in every from-scratch build:
+>    CI's DB tests on `dev` and the prod release.
+> 3. Any further change to `get_admin_dashboard` on this branch starts from that combined
+>    body. **Never `psql -f` 00260 or 00264's dashboard body onto staging again** — it
+>    breaks `dev`'s admin dashboard for everyone.
+> 4. Delete this section in the same commit as step 2.
 
 ## Commands
 
