@@ -1974,6 +1974,79 @@ COMMENT ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_fir
 
 
 --
+-- Name: create_invoice_customer(text, text, text, text, text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.create_invoice_customer(p_fennoa_customer_no text, p_invoice_name text, p_street text, p_postal_code text, p_city text, p_country_code text DEFAULT 'FI'::text, p_your_reference text DEFAULT NULL::text, p_invoice_text text DEFAULT NULL::text) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $_$
+DECLARE
+  v_id             uuid;
+  v_customer_no    text;
+  v_invoice_name   text;
+  v_street         text;
+  v_postal_code    text;
+  v_city           text;
+  v_country_code   text;
+  v_your_reference text;
+  v_invoice_text   text;
+BEGIN
+  PERFORM public.assert_admin();
+
+  v_customer_no    := btrim(COALESCE(p_fennoa_customer_no, ''));
+  v_invoice_name   := btrim(COALESCE(p_invoice_name, ''));
+  v_street         := btrim(COALESCE(p_street, ''));
+  v_postal_code    := btrim(COALESCE(p_postal_code, ''));
+  v_city           := btrim(COALESCE(p_city, ''));
+  v_country_code   := upper(btrim(COALESCE(p_country_code, '')));
+  v_your_reference := NULLIF(btrim(COALESCE(p_your_reference, '')), '');
+  v_invoice_text   := NULLIF(btrim(COALESCE(p_invoice_text, '')), '');
+
+  -- Written out here and again in update_invoice_customer rather than factored
+  -- into a shared assertion: a private helper would be a third function in the
+  -- schema that no role may call, and the two copies are the same eight lines
+  -- next to each other in one file.
+  IF v_customer_no = '' THEN
+    RAISE EXCEPTION 'A Fennoa customer number is required'
+      USING ERRCODE = 'check_violation';
+  END IF;
+  IF v_invoice_name = '' THEN
+    RAISE EXCEPTION 'An invoice name is required'
+      USING ERRCODE = 'check_violation';
+  END IF;
+  IF v_street = '' OR v_postal_code = '' OR v_city = '' THEN
+    RAISE EXCEPTION 'A street, postal code and city are required — the Finvoice import refuses a file with no buyer address'
+      USING ERRCODE = 'check_violation';
+  END IF;
+  IF v_country_code !~ '^[A-Z]{2}$' THEN
+    RAISE EXCEPTION 'The country must be a two-letter ISO 3166-1 code (got %)', v_country_code
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  INSERT INTO public.invoice_customers (
+    fennoa_customer_no, invoice_name, street, postal_code, city,
+    country_code, your_reference, invoice_text
+  )
+  VALUES (
+    v_customer_no, v_invoice_name, v_street, v_postal_code, v_city,
+    v_country_code, v_your_reference, v_invoice_text
+  )
+  RETURNING id INTO v_id;
+
+  RETURN v_id;
+END;
+$_$;
+
+
+--
+-- Name: FUNCTION create_invoice_customer(p_fennoa_customer_no text, p_invoice_name text, p_street text, p_postal_code text, p_city text, p_country_code text, p_your_reference text, p_invoice_text text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.create_invoice_customer(p_fennoa_customer_no text, p_invoice_name text, p_street text, p_postal_code text, p_city text, p_country_code text, p_your_reference text, p_invoice_text text) IS 'Admin-gated create of a Fennoa invoice customer, and one of the two ways any row reaches invoice_customers at all: the table carries no write grant for authenticated, so a browser''s only path in is this function. SECURITY DEFINER with an empty search_path, guard-first on assert_admin() so the authorization decision is made before an argument is read, and deliberately not STRICT — a STRICT function skips its body on NULL input and would skip the guard with it. Returns the new row''s id. Every text field is trimmed and the country code upper-cased before the write, and a blank optional field folds to NULL, so "no reference" is one state rather than two; the table''s own CHECKs are the backstop for any row arriving another way. The validation mirrors those CHECKs and raises check_violation with a readable sentence, because the admin form shows an RPC''s message verbatim and a raw constraint name is not something an admin can act on. p_country_code defaults to FI, the column''s own default and the resting state of a Finnish contract system, so an omitting caller writes FI rather than failing; p_your_reference and p_invoice_text default NULL because null is their legal empty and codegen cannot express an explicit null for a non-defaulted argument — which is why the wire schema demands both fields, so omission stays deliberate.';
+
+
+--
 -- Name: create_participation(uuid, uuid, uuid, text, text, text[]); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2181,10 +2254,10 @@ COMMENT ON FUNCTION public.create_participation(p_product_id uuid, p_participant
 
 
 --
--- Name: create_product(public.product_type, public.billing_mode, jsonb, public.product_topic, public.spoken_language, boolean, text, timestamp with time zone, boolean, boolean, integer, integer, boolean, boolean, uuid, integer, date, date, integer, jsonb, jsonb, integer, integer, integer, text, public.product_tag, text, text[], boolean); Type: FUNCTION; Schema: public; Owner: -
+-- Name: create_product(public.product_type, public.billing_mode, jsonb, public.product_topic, public.spoken_language, boolean, text, timestamp with time zone, boolean, boolean, integer, integer, boolean, boolean, uuid, integer, date, date, integer, jsonb, jsonb, integer, integer, integer, text, public.product_tag, text, text[], boolean, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer DEFAULT NULL::integer, p_max_age integer DEFAULT NULL::integer, p_is_visible boolean DEFAULT false, p_waitlist_enabled boolean DEFAULT true, p_location_id uuid DEFAULT NULL::uuid, p_signup_threshold integer DEFAULT NULL::integer, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_seat_count integer DEFAULT NULL::integer, p_schedule_slots jsonb DEFAULT NULL::jsonb, p_prices jsonb DEFAULT NULL::jsonb, p_primary_gedu_fee_cents integer DEFAULT NULL::integer, p_assistant_gedu_fee_cents integer DEFAULT NULL::integer, p_municipality_fee_cents integer DEFAULT NULL::integer, p_material_url text DEFAULT NULL::text, p_tag public.product_tag DEFAULT NULL::public.product_tag, p_region_lock_country text DEFAULT NULL::text, p_required_consent_slugs text[] DEFAULT NULL::text[], p_requires_gamer_creations boolean DEFAULT false) RETURNS uuid
+CREATE FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer DEFAULT NULL::integer, p_max_age integer DEFAULT NULL::integer, p_is_visible boolean DEFAULT false, p_waitlist_enabled boolean DEFAULT true, p_location_id uuid DEFAULT NULL::uuid, p_signup_threshold integer DEFAULT NULL::integer, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_seat_count integer DEFAULT NULL::integer, p_schedule_slots jsonb DEFAULT NULL::jsonb, p_prices jsonb DEFAULT NULL::jsonb, p_primary_gedu_fee_cents integer DEFAULT NULL::integer, p_assistant_gedu_fee_cents integer DEFAULT NULL::integer, p_municipality_fee_cents integer DEFAULT NULL::integer, p_material_url text DEFAULT NULL::text, p_tag public.product_tag DEFAULT NULL::public.product_tag, p_region_lock_country text DEFAULT NULL::text, p_required_consent_slugs text[] DEFAULT NULL::text[], p_requires_gamer_creations boolean DEFAULT false, p_invoice_customer_id uuid DEFAULT NULL::uuid) RETURNS uuid
     LANGUAGE plpgsql
     SET search_path TO ''
     AS $$
@@ -2215,7 +2288,7 @@ BEGIN
     is_visible, created_by,
     primary_gedu_fee_cents, assistant_gedu_fee_cents, municipality_fee_cents,
     for_gamers, for_parents, tag, region_lock_country,
-    requires_gamer_creations
+    requires_gamer_creations, invoice_customer_id
   )
   VALUES (
     p_product_type, p_billing_mode, p_topic,
@@ -2228,7 +2301,10 @@ BEGIN
     p_for_gamers, p_for_parents, p_tag, p_region_lock_country,
     -- NOT coalesced: the column is NOT NULL, so an explicit null is refused
     -- loudly rather than silently becoming false.
-    p_requires_gamer_creations
+    p_requires_gamer_creations,
+    -- The Fennoa customer (00259). Null is the ordinary state and the CHECK
+    -- refuses one on any product that is not a municipality club.
+    p_invoice_customer_id
   )
   RETURNING id INTO v_product_id;
 
@@ -2295,10 +2371,10 @@ $$;
 
 
 --
--- Name: FUNCTION create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean, p_invoice_customer_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean) IS 'Admin-gated product create: the parent row plus its translations, schedule slots, prices, the staff-only material link and, since 00210, the consent documents enrolling on it requires. Since 00256 it takes NO status: a product''s lifecycle is derived from its dates, its signup threshold and the live count of active participations, so there is nothing for a creating caller to choose and nothing stored for a later reader to mistake for a fact. SECURITY INVOKER — the assert_admin() first statement runs as the caller, which is also why assert_admin itself is granted to authenticated. p_for_gamers/p_for_parents are non-defaulted on purpose: a defaulted audience is one an omitting caller could set without meaning to. p_tag (00178) IS defaulted, and for the opposite reason: null is a legal value for a tag, no CHECK backstops it, and codegen cannot express an explicit null for a non-defaulted argument at all — so omission is how "untagged" reaches the column, and the required-nullable wire schema is what stops an accidental omission upstream. p_region_lock_country (00193) is defaulted for exactly that reason too, and carries one more thing worth knowing: the lock it writes is enforced in the UI alone, because a family''s location is self-attested — see the column comment. p_required_consent_slugs (00210) is defaulted on the same argument and is NOT written inline: this function is SECURITY INVOKER and product_required_consents carries no write grant, so the row goes through set_product_required_consents, the join table''s single guarded writer. p_requires_gamer_creations (00227) is defaulted to FALSE rather than to null, because the column is NOT NULL and false is the resting state of that whole feature — so an omitting caller creates an unflagged product, which is what omission should mean, and an explicit null is refused loudly by the column rather than silently becoming false. This function does NOT take a picture: 00198 dropped p_image_path, because a product''s picture is the product_images entry its image_id points at, written by the route in a second statement, and the served image_path column is derived from that link by trg_products_apply_image_path. Since 00199 p_spoken_language_code is public.spoken_language rather than text, because the reference table it used to name is gone.';
+COMMENT ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean, p_invoice_customer_id uuid) IS 'Admin-gated product create: the parent row plus its translations, schedule slots, prices, the staff-only material link and, since 00210, the consent documents enrolling on it requires. Since 00256 it takes NO status: a product''s lifecycle is derived from its dates, its signup threshold and the live count of active participations, so there is nothing for a creating caller to choose and nothing stored for a later reader to mistake for a fact. SECURITY INVOKER — the assert_admin() first statement runs as the caller, which is also why assert_admin itself is granted to authenticated. p_for_gamers/p_for_parents are non-defaulted on purpose: a defaulted audience is one an omitting caller could set without meaning to. p_tag (00178) IS defaulted, and for the opposite reason: null is a legal value for a tag, no CHECK backstops it, and codegen cannot express an explicit null for a non-defaulted argument at all — so omission is how "untagged" reaches the column, and the required-nullable wire schema is what stops an accidental omission upstream. p_region_lock_country (00193) is defaulted for exactly that reason too, and carries one more thing worth knowing: the lock it writes is enforced in the UI alone, because a family''s location is self-attested — see the column comment. p_required_consent_slugs (00210) is defaulted on the same argument and is NOT written inline: this function is SECURITY INVOKER and product_required_consents carries no write grant, so the row goes through set_product_required_consents, the join table''s single guarded writer. p_requires_gamer_creations (00227) is defaulted to FALSE rather than to null, because the column is NOT NULL and false is the resting state of that whole feature — so an omitting caller creates an unflagged product, which is what omission should mean, and an explicit null is refused loudly by the column rather than silently becoming false. p_invoice_customer_id (00259) is defaulted on the same argument as p_tag — null is legal, nothing backstops its absence, and codegen cannot express an explicit null — and names the FENNOA CUSTOMER a municipality club is invoiced to; it is per club and never derived from a location, and chk_products_invoice_customer_only_for_muni refuses one on any other product type. This function does NOT take a picture: 00198 dropped p_image_path, because a product''s picture is the product_images entry its image_id points at, written by the route in a second statement, and the served image_path column is derived from that link by trg_products_apply_image_path. Since 00199 p_spoken_language_code is public.spoken_language rather than text, because the reference table it used to name is gone.';
 
 
 --
@@ -3073,8 +3149,8 @@ BEGIN
   -- ---------------------------------------------------------------------------
   -- 3. The attention queue: live products with at least one thing wrong.
   --
-  -- Six kinds of wrong, and each is stated as the fact rather than as a sentence
-  -- — the page words them, because the wording is translated copy.
+  -- Seven kinds of wrong, and each is stated as the fact rather than as a
+  -- sentence — the page words them, because the wording is translated copy.
   --
   --   * `unassigned_count`  — active seats sitting in no group. A child enrolled
   --                           and nobody looking after them is the worst of these.
@@ -3097,6 +3173,13 @@ BEGIN
   --                           means "no assistant", which is the ordinary case.
   --   * `missing_municipality_fee` — municipality clubs only; the CHECK already
   --                           forbids the column elsewhere.
+  --   * `missing_invoice_customer` — municipality clubs only, on the same terms
+  --                           as the fee beside it: the link is nullable because
+  --                           a club is created before anybody has agreed who
+  --                           pays for it, and by the time it starts both the
+  --                           fee and the buyer are meant to be set. A club with
+  --                           neither is one nobody can raise an invoice for, so
+  --                           the omission belongs in the same queue as the fee's.
   --
   -- A product with none of them is not in the list at all.
   -- ---------------------------------------------------------------------------
@@ -3132,7 +3215,10 @@ BEGIN
                'missing_gedu_fee', (c.primary_gedu_fee_cents IS NULL),
                'missing_municipality_fee',
                  (c.product_type = 'municipality_club'
-                  AND c.municipality_fee_cents IS NULL)
+                  AND c.municipality_fee_cents IS NULL),
+               'missing_invoice_customer',
+                 (c.product_type = 'municipality_club'
+                  AND c.invoice_customer_id IS NULL)
              ) AS doc
         FROM candidate c
         CROSS JOIN LATERAL (
@@ -3230,6 +3316,8 @@ BEGIN
           OR c.primary_gedu_fee_cents IS NULL
           OR (c.product_type = 'municipality_club'
               AND c.municipality_fee_cents IS NULL)
+          OR (c.product_type = 'municipality_club'
+              AND c.invoice_customer_id IS NULL)
     ) a;
 
   -- ---------------------------------------------------------------------------
@@ -3312,7 +3400,7 @@ $$;
 -- Name: FUNCTION get_admin_dashboard(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — either can be NULL, where the stat has no meaning: certified only means something for an educator, and verified is NULL for a role none of whose accounts holds a real address, which is every gamer unless their parent chose sign-in mode email), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Since 00201 each queue candidate also carries contract_accepted_at — when they accepted the current gedu contract, or NULL — which informs the certification decision without gating it; since 00202 that standing is judged on the version''s BASE, so either equally binding language of the current version counts, and a candidate holding both carries the earlier of the two signatures. Since 00213 each candidate additionally carries criminal_record_check_at — when an admin recorded seeing their criminal record extract, or NULL — which informs the same decision on the same terms and gates nothing either; the flag beside it is not shipped because the stamp is non-NULL exactly when the flag is true. Since 00207 the waitlist attention item asks whether there is something for an admin to DO rather than what state the product is in: an open seat that already carries a live seat offer is subtracted, so a product whose every open seat has been offered drops out of the queue, and a decline or an expiry raises it again on its own. The count rides in the emitted object as live_offer_count so the page can explain the absence. Since 00241 an unstaffed group with NO active member is named too, in its own empty_groups_without_gedu array beside groups_without_gedu, and can put a product in the queue by itself: the empty group used to be carved out of the group check entirely, on the reasoning that an admin pre-building next term has not made a mistake, and that reasoning now decides its RANK on the page rather than hiding it. The two arrays are disjoint by construction and neither holds a group somebody is assigned to. Both product sections ask effective_status() and nothing else: since 00256 there is no stored status to pre-filter on, so the derived answer is the only lifecycle test either candidate set makes, and every date window is computed in the product''s own timezone. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
+COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — either can be NULL, where the stat has no meaning: certified only means something for an educator, and verified is NULL for a role none of whose accounts holds a real address, which is every gamer unless their parent chose sign-in mode email), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Since 00201 each queue candidate also carries contract_accepted_at — when they accepted the current gedu contract, or NULL — which informs the certification decision without gating it; since 00202 that standing is judged on the version''s BASE, so either equally binding language of the current version counts, and a candidate holding both carries the earlier of the two signatures. Since 00213 each candidate additionally carries criminal_record_check_at — when an admin recorded seeing their criminal record extract, or NULL — which informs the same decision on the same terms and gates nothing either; the flag beside it is not shipped because the stamp is non-NULL exactly when the flag is true. Since 00207 the waitlist attention item asks whether there is something for an admin to DO rather than what state the product is in: an open seat that already carries a live seat offer is subtracted, so a product whose every open seat has been offered drops out of the queue, and a decline or an expiry raises it again on its own. The count rides in the emitted object as live_offer_count so the page can explain the absence. Since 00241 an unstaffed group with NO active member is named too, in its own empty_groups_without_gedu array beside groups_without_gedu, and can put a product in the queue by itself: the empty group used to be carved out of the group check entirely, on the reasoning that an admin pre-building next term has not made a mistake, and that reasoning now decides its RANK on the page rather than hiding it. The two arrays are disjoint by construction and neither holds a group somebody is assigned to. Both product sections ask effective_status() and nothing else: since 00256 there is no stored status to pre-filter on, so the derived answer is the only lifecycle test either candidate set makes, and every date window is computed in the product''s own timezone. Since 00263 each attention candidate also carries missing_invoice_customer — municipality clubs only, true when the club names no Fennoa invoice customer, and false everywhere else by construction because the CHECK forbids the column on any other product type. It puts a club in the queue on its own, exactly as the municipality fee beside it does: the link is nullable because a club is created before anybody has agreed who pays for it, and by the time it starts both the fee and the buyer are meant to be set, so a club still missing one is an admin omission rather than an ordinary state. The two are the bottom of the page''s ranking and sit together there, because both are a blank field on one form with one consequence — a month of invoices that cannot be written for that buyer. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
 
 
 --
@@ -3436,11 +3524,33 @@ BEGIN
                              'name_i18n', m.name_i18n
                            )
                  END,
+               -- The buyer of this club, whole rather than by id: the caller
+               -- turns it into a Finvoice file, so a second admin-gated round
+               -- trip per club would buy nothing. Null where nobody has said
+               -- who pays yet — flagged by the page, refused by the export.
+               'invoice_customer',
+                 CASE WHEN ic.id IS NULL THEN NULL
+                      ELSE jsonb_build_object(
+                             'id',                 ic.id,
+                             'fennoa_customer_no', ic.fennoa_customer_no,
+                             'invoice_name',       ic.invoice_name,
+                             'street',             ic.street,
+                             'postal_code',        ic.postal_code,
+                             'city',               ic.city,
+                             'country_code',       ic.country_code,
+                             'your_reference',     ic.your_reference,
+                             'invoice_text',       ic.invoice_text
+                           )
+                 END,
                'sessions',               se.items
              ) AS doc
         FROM candidate c
         LEFT JOIN public.locations l ON l.id = c.location_id
         LEFT JOIN municipality m ON m.origin_id = c.location_id
+        -- The link is the club's own column and never the location's: one city
+        -- can be two customers, and an association can buy clubs sited in a
+        -- municipality it is not.
+        LEFT JOIN public.invoice_customers ic ON ic.id = c.invoice_customer_id
         CROSS JOIN LATERAL (
           SELECT COALESCE((
                    SELECT jsonb_agg(
@@ -3493,6 +3603,13 @@ BEGIN
   -- products, which is the whole of the repair instruction. Checked against the
   -- document that was built rather than against a second walk of the tree,
   -- because what matters is what would have been emitted.
+  --
+  -- A missing invoice CUSTOMER is deliberately NOT refused here, and the
+  -- difference is real: a club with no municipality has nobody to bill and
+  -- cannot be rendered on a page that is organised by municipality, while a club
+  -- with no customer renders perfectly well and simply cannot have a file
+  -- produced for it yet. Refusing the month would take every other file down
+  -- with it.
   SELECT string_agg(club.value ->> 'id', ', ' ORDER BY club.value ->> 'id')
     INTO v_orphans
     FROM jsonb_array_elements(v_clubs) AS club(value)
@@ -3517,7 +3634,7 @@ $$;
 -- Name: FUNCTION get_admin_municipality_invoicing(p_month_start date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_admin_municipality_invoicing(p_month_start date) IS 'One calendar month of municipality-club invoicing, as a single document: every municipality club that either recorded a session in the month or could have (a term that overlaps it), each with its timezone, term dates, current municipality_fee_cents, the whole product_translations array, its weekly schedule slots, its own location row, the nearest ancestor-or-self location of type municipality, and every stored group_sessions row in the month as a raw (group_id, session_date) pair. Admin-only, guard-first on assert_admin, and deliberately not STRICT so the guard cannot be skipped on NULL input. p_month_start must be the first day of a month; anything else raises check_violation. A session RAN iff a group_sessions row exists — those rows are lazily materialized when an educator records a report, note or attendance, so a row is the evidence somebody was there — and the client counts one session per club per calendar date, because a club with two groups meeting on one day ran one session. The schedule ships so the client can project what was supposed to run and flag a scheduled date with no row; a projection is never counted and never billed, and a stored row on an unscheduled date still counts. Since 00256 the candidate test is the term alone and the document carries no status: the second arm used to demand a stored running/completed status as well, which no club ever held, so a club with no recorded session never reached the invoice and nothing was ever flagged as missed. The municipality walk climbs parent_id THROUGH retired rows and never filters them, because a school that has since closed still sat in its municipality. Every club in the document HAS a municipality: a club whose chain reaches none cannot be invoiced to anybody, so the whole read raises check_violation naming those product ids rather than shipping a null the caller would have to render somewhere outside every total. The fee is the current column value with no snapshotting, and NULL means unset — the client shows that as a blank to fix, never as zero. Every array ships as [] rather than null.';
+COMMENT ON FUNCTION public.get_admin_municipality_invoicing(p_month_start date) IS 'One calendar month of municipality-club invoicing, as a single document: every municipality club that either recorded a session in the month or could have (a term that overlaps it), each with its timezone, term dates, current municipality_fee_cents, the whole product_translations array, its weekly schedule slots, its own location row, the nearest ancestor-or-self location of type municipality, the FENNOA INVOICE CUSTOMER it is billed to, and every stored group_sessions row in the month as a raw (group_id, session_date) pair. Admin-only, guard-first on assert_admin, and deliberately not STRICT so the guard cannot be skipped on NULL input. p_month_start must be the first day of a month; anything else raises check_violation. A session RAN iff a group_sessions row exists — those rows are lazily materialized when an educator records a report, note or attendance, so a row is the evidence somebody was there — and the client counts one session per club per calendar date, because a club with two groups meeting on one day ran one session. The schedule ships so the client can project what was supposed to run and flag a scheduled date with no row; a projection is never counted and never billed, and a stored row on an unscheduled date still counts. Since 00256 the candidate test is the term alone and the document carries no lifecycle column: the second arm used to demand a stored running/completed state as well, which no club ever held, so a club with no recorded session never reached the invoice and nothing was ever flagged as missed. The municipality walk climbs parent_id THROUGH retired rows and never filters them, because a school that has since closed still sat in its municipality. Every club in the document HAS a municipality: a club whose chain reaches none cannot be invoiced to anybody, so the whole read raises check_violation naming those product ids rather than shipping a null the caller would have to render somewhere outside every total. Since 00259 each club also carries invoice_customer — the WHOLE customer row (number, invoice name, address, optional reference and invoice text) rather than an id, because the caller turns it into a Finvoice file — or null where nobody has said who pays yet. A null customer is NOT refused, unlike a null municipality: such a club renders on the page perfectly well and only its own file is blocked, so refusing the month would take every other file down with it. The link is the club''s own column and is never derived from its location, because one city can be two customers and an association can buy clubs sited in a municipality it is not. The fee is the current column value with no snapshotting, and NULL means unset — the client shows that as a blank to fix, never as zero. Every array ships as [] rather than null.';
 
 
 --
@@ -8837,10 +8954,92 @@ $$;
 
 
 --
--- Name: update_product(uuid, public.billing_mode, jsonb, public.product_topic, public.spoken_language, boolean, text, timestamp with time zone, boolean, boolean, integer, integer, boolean, boolean, uuid, integer, date, date, integer, jsonb, jsonb, integer, integer, integer, text, public.product_tag, text, text[], boolean); Type: FUNCTION; Schema: public; Owner: -
+-- Name: update_invoice_customer(uuid, text, text, text, text, text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer DEFAULT NULL::integer, p_max_age integer DEFAULT NULL::integer, p_is_visible boolean DEFAULT false, p_waitlist_enabled boolean DEFAULT true, p_location_id uuid DEFAULT NULL::uuid, p_signup_threshold integer DEFAULT NULL::integer, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_seat_count integer DEFAULT NULL::integer, p_schedule_slots jsonb DEFAULT NULL::jsonb, p_prices jsonb DEFAULT NULL::jsonb, p_primary_gedu_fee_cents integer DEFAULT NULL::integer, p_assistant_gedu_fee_cents integer DEFAULT NULL::integer, p_municipality_fee_cents integer DEFAULT NULL::integer, p_material_url text DEFAULT NULL::text, p_tag public.product_tag DEFAULT NULL::public.product_tag, p_region_lock_country text DEFAULT NULL::text, p_required_consent_slugs text[] DEFAULT NULL::text[], p_requires_gamer_creations boolean DEFAULT false) RETURNS uuid
+CREATE FUNCTION public.update_invoice_customer(p_id uuid, p_fennoa_customer_no text, p_invoice_name text, p_street text, p_postal_code text, p_city text, p_country_code text DEFAULT 'FI'::text, p_your_reference text DEFAULT NULL::text, p_invoice_text text DEFAULT NULL::text) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $_$
+DECLARE
+  v_customer_no    text;
+  v_invoice_name   text;
+  v_street         text;
+  v_postal_code    text;
+  v_city           text;
+  v_country_code   text;
+  v_your_reference text;
+  v_invoice_text   text;
+BEGIN
+  PERFORM public.assert_admin();
+
+  v_customer_no    := btrim(COALESCE(p_fennoa_customer_no, ''));
+  v_invoice_name   := btrim(COALESCE(p_invoice_name, ''));
+  v_street         := btrim(COALESCE(p_street, ''));
+  v_postal_code    := btrim(COALESCE(p_postal_code, ''));
+  v_city           := btrim(COALESCE(p_city, ''));
+  v_country_code   := upper(btrim(COALESCE(p_country_code, '')));
+  v_your_reference := NULLIF(btrim(COALESCE(p_your_reference, '')), '');
+  v_invoice_text   := NULLIF(btrim(COALESCE(p_invoice_text, '')), '');
+
+  -- The same eight lines its create sibling carries, for the reason stated
+  -- there: a private validator would be a third function no role may call.
+  IF v_customer_no = '' THEN
+    RAISE EXCEPTION 'A Fennoa customer number is required'
+      USING ERRCODE = 'check_violation';
+  END IF;
+  IF v_invoice_name = '' THEN
+    RAISE EXCEPTION 'An invoice name is required'
+      USING ERRCODE = 'check_violation';
+  END IF;
+  IF v_street = '' OR v_postal_code = '' OR v_city = '' THEN
+    RAISE EXCEPTION 'A street, postal code and city are required — the Finvoice import refuses a file with no buyer address'
+      USING ERRCODE = 'check_violation';
+  END IF;
+  IF v_country_code !~ '^[A-Z]{2}$' THEN
+    RAISE EXCEPTION 'The country must be a two-letter ISO 3166-1 code (got %)', v_country_code
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- Every editable column is assigned on every call, which is why a new column
+  -- has to reach this statement in the same change that adds it: a column this
+  -- function does not know about is cleared by the next admin edit. Both
+  -- optional fields are exactly that shape — their parameters default NULL, so
+  -- an omitting caller clears them, which IS how one is cleared, and the wire
+  -- schema demanding the field is what stops it happening by accident.
+  UPDATE public.invoice_customers SET
+    fennoa_customer_no = v_customer_no,
+    invoice_name       = v_invoice_name,
+    street             = v_street,
+    postal_code        = v_postal_code,
+    city               = v_city,
+    country_code       = v_country_code,
+    your_reference     = v_your_reference,
+    invoice_text       = v_invoice_text
+  WHERE id = p_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Invoice customer not found'
+      USING ERRCODE = 'no_data_found';
+  END IF;
+
+  RETURN p_id;
+END;
+$_$;
+
+
+--
+-- Name: FUNCTION update_invoice_customer(p_id uuid, p_fennoa_customer_no text, p_invoice_name text, p_street text, p_postal_code text, p_city text, p_country_code text, p_your_reference text, p_invoice_text text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.update_invoice_customer(p_id uuid, p_fennoa_customer_no text, p_invoice_name text, p_street text, p_postal_code text, p_city text, p_country_code text, p_your_reference text, p_invoice_text text) IS 'Admin-gated edit of a Fennoa invoice customer — the second and last way a row in invoice_customers changes, because the table carries no write grant for authenticated. SECURITY DEFINER with an empty search_path, guard-first on assert_admin(), not STRICT for the reason its create sibling is not, and returns the edited row''s id. It ASSIGNS EVERY EDITABLE COLUMN on every call, so a column added later has to reach this statement in the same change or the next admin edit clears it. Both optional fields have that shape already: their parameters default NULL, so omission is how one is cleared — the only expressible way — and the wire schema demanding the field on every save is what keeps a clearing deliberate. Normalisation and validation are its create sibling''s, unchanged: trimmed text, an upper-cased country code, a blank optional field folded to NULL, and check_violation carrying a sentence. An id no customer has raises no_data_found rather than silently affecting zero rows, because an edit that changed nothing and said so is a save the admin would believe.';
+
+
+--
+-- Name: update_product(uuid, public.billing_mode, jsonb, public.product_topic, public.spoken_language, boolean, text, timestamp with time zone, boolean, boolean, integer, integer, boolean, boolean, uuid, integer, date, date, integer, jsonb, jsonb, integer, integer, integer, text, public.product_tag, text, text[], boolean, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer DEFAULT NULL::integer, p_max_age integer DEFAULT NULL::integer, p_is_visible boolean DEFAULT false, p_waitlist_enabled boolean DEFAULT true, p_location_id uuid DEFAULT NULL::uuid, p_signup_threshold integer DEFAULT NULL::integer, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_seat_count integer DEFAULT NULL::integer, p_schedule_slots jsonb DEFAULT NULL::jsonb, p_prices jsonb DEFAULT NULL::jsonb, p_primary_gedu_fee_cents integer DEFAULT NULL::integer, p_assistant_gedu_fee_cents integer DEFAULT NULL::integer, p_municipality_fee_cents integer DEFAULT NULL::integer, p_material_url text DEFAULT NULL::text, p_tag public.product_tag DEFAULT NULL::public.product_tag, p_region_lock_country text DEFAULT NULL::text, p_required_consent_slugs text[] DEFAULT NULL::text[], p_requires_gamer_creations boolean DEFAULT false, p_invoice_customer_id uuid DEFAULT NULL::uuid) RETURNS uuid
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -8884,6 +9083,10 @@ BEGIN
   -- an omitting caller UNFLAGS the product rather than failing, which is the
   -- same "omission clears it" semantics `tag` has, and the same required wire
   -- field is what keeps it deliberate.
+  -- `invoice_customer_id` (00259) is `tag`'s shape exactly: a defaulted
+  -- parameter whose omission clears the club's Fennoa customer, kept deliberate
+  -- by a required-nullable wire field. Editable for a club's whole life, because
+  -- who buys a club can genuinely change between terms.
   --
   -- `image_path` is the one editable-looking column this statement must NOT
   -- name, and 00198 removed the assignment along with the parameter that fed
@@ -8913,7 +9116,8 @@ BEGIN
     primary_gedu_fee_cents   = p_primary_gedu_fee_cents,
     assistant_gedu_fee_cents = p_assistant_gedu_fee_cents,
     municipality_fee_cents   = p_municipality_fee_cents,
-    requires_gamer_creations = p_requires_gamer_creations
+    requires_gamer_creations = p_requires_gamer_creations,
+    invoice_customer_id      = p_invoice_customer_id
   WHERE id = p_id;
 
   -- A product with no waitlist holds no queue. The admin form turns the flag
@@ -9050,10 +9254,10 @@ $$;
 
 
 --
--- Name: FUNCTION update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean, p_invoice_customer_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean) IS 'Admin-gated product edit: parent row plus wipe-and-replace of translations, schedule slots, prices, the staff-only material link and — since 00210 — the set of consent documents enrolling on it requires, under the product gate lock. Since 00171 it also DELETES the product''s waitlist whenever the saved waitlist_enabled is false — the flag goes off by unticking it or by uncapping, and the groups panel draws its waitlist column only while it is on, so a surviving queue would be invisible to every affordance that could work it. Deletion rather than promotion: promoting would grant seats with no subscription behind them, while the edit itself opens seats, so a dropped family can simply sign up again. It is silent by owner decision — no confirmation, warning or email — and keyed to the flag''s value rather than to it changing, so it also heals a queue stranded before the rule existed. One exception: a waitlisted row carrying a LIVE subscription (a family_subscriptions row with status <> ''cancelled'', 00170''s predicate) is skipped, because the FK cascades and deleting it would orphan billing Stripe still runs. SECURITY DEFINER since 00171 — participations grants authenticated no writes, so the delete cannot run as the caller; the assert_admin() first statement is what authorizes the whole function. Since 00173 it assigns for_gamers/for_parents, which are non-defaulted parameters precisely because this statement assigns every editable column on every call. Since 00178 it also assigns tag, whose parameter IS defaulted — null is a legal tag and no CHECK backstops it, so omission is the only expressible way to clear one, and the required-nullable wire schema is what keeps that deliberate. Since 00193 it assigns region_lock_country the same way, and that column is deliberately editable on a live product: the lock gates future enrolments only, is never re-run against a seat already held, and is enforced in the UI alone because a family''s location is self-attested. Since 00198 it does NOT assign image_path and takes no p_image_path: that column is derived from image_id by trg_products_apply_image_path on this very UPDATE, so the assignment was always overwritten a moment later. Since 00199 p_spoken_language_code is public.spoken_language rather than text, because the reference table it used to name is gone. Since 00210 p_required_consent_slugs replaces the requirement set through set_product_required_consents — NULL clears it, and past acceptances are never touched, because dropping a requirement changes what future enrolments must agree to and says nothing about what past ones did. Since 00227 it assigns requires_gamer_creations, whose parameter defaults FALSE rather than null because the column is NOT NULL — so an omitting caller unflags the product, the same "omission clears it" semantics tag has, kept deliberate by the required wire field.';
+COMMENT ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean, p_invoice_customer_id uuid) IS 'Admin-gated product edit: parent row plus wipe-and-replace of translations, schedule slots, prices, the staff-only material link and — since 00210 — the set of consent documents enrolling on it requires, under the product gate lock. Since 00171 it also DELETES the product''s waitlist whenever the saved waitlist_enabled is false — the flag goes off by unticking it or by uncapping, and the groups panel draws its waitlist column only while it is on, so a surviving queue would be invisible to every affordance that could work it. Deletion rather than promotion: promoting would grant seats with no subscription behind them, while the edit itself opens seats, so a dropped family can simply sign up again. It is silent by owner decision — no confirmation, warning or email — and keyed to the flag''s value rather than to it changing, so it also heals a queue stranded before the rule existed. One exception: a waitlisted row carrying a LIVE subscription (a family_subscriptions row with status <> ''cancelled'', 00170''s predicate) is skipped, because the FK cascades and deleting it would orphan billing Stripe still runs. SECURITY DEFINER since 00171 — participations grants authenticated no writes, so the delete cannot run as the caller; the assert_admin() first statement is what authorizes the whole function. Since 00173 it assigns for_gamers/for_parents, which are non-defaulted parameters precisely because this statement assigns every editable column on every call. Since 00178 it also assigns tag, whose parameter IS defaulted — null is a legal tag and no CHECK backstops it, so omission is the only expressible way to clear one, and the required-nullable wire schema is what keeps that deliberate. Since 00193 it assigns region_lock_country the same way, and that column is deliberately editable on a live product: the lock gates future enrolments only, is never re-run against a seat already held, and is enforced in the UI alone because a family''s location is self-attested. Since 00198 it does NOT assign image_path and takes no p_image_path: that column is derived from image_id by trg_products_apply_image_path on this very UPDATE, so the assignment was always overwritten a moment later. Since 00199 p_spoken_language_code is public.spoken_language rather than text, because the reference table it used to name is gone. Since 00210 p_required_consent_slugs replaces the requirement set through set_product_required_consents — NULL clears it, and past acceptances are never touched, because dropping a requirement changes what future enrolments must agree to and says nothing about what past ones did. Since 00227 it assigns requires_gamer_creations, whose parameter defaults FALSE rather than null because the column is NOT NULL — so an omitting caller unflags the product, the same "omission clears it" semantics tag has, kept deliberate by the required wire field. Since 00259 it assigns invoice_customer_id, the FENNOA CUSTOMER a municipality club is invoiced to — tag''s shape exactly, a defaulted parameter whose omission clears the link, kept deliberate by a required-nullable wire field, and editable for the club''s whole life because who buys a club can change between terms. It is per club and never derived from a location, and chk_products_invoice_customer_only_for_muni refuses one on any other product type.';
 
 
 --
@@ -10213,6 +10417,110 @@ COMMENT ON COLUMN public.group_sessions.report_emailed_by IS 'The gedu whose cli
 
 
 --
+-- Name: invoice_customers; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.invoice_customers (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    fennoa_customer_no text NOT NULL,
+    invoice_name text NOT NULL,
+    street text NOT NULL,
+    postal_code text NOT NULL,
+    city text NOT NULL,
+    country_code text DEFAULT 'FI'::text NOT NULL,
+    your_reference text,
+    invoice_text text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT chk_invoice_customers_city_present CHECK ((btrim(city) <> ''::text)),
+    CONSTRAINT chk_invoice_customers_country_code_shape CHECK ((country_code ~ '^[A-Z]{2}$'::text)),
+    CONSTRAINT chk_invoice_customers_fennoa_customer_no_present CHECK ((btrim(fennoa_customer_no) <> ''::text)),
+    CONSTRAINT chk_invoice_customers_invoice_name_present CHECK ((btrim(invoice_name) <> ''::text)),
+    CONSTRAINT chk_invoice_customers_invoice_text_present_if_set CHECK (((invoice_text IS NULL) OR (btrim(invoice_text) <> ''::text))),
+    CONSTRAINT chk_invoice_customers_postal_code_present CHECK ((btrim(postal_code) <> ''::text)),
+    CONSTRAINT chk_invoice_customers_street_present CHECK ((btrim(street) <> ''::text)),
+    CONSTRAINT chk_invoice_customers_your_reference_present_if_set CHECK (((your_reference IS NULL) OR (btrim(your_reference) <> ''::text)))
+);
+
+
+--
+-- Name: TABLE invoice_customers; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.invoice_customers IS 'One row per FENNOA CUSTOMER School of Gaming invoices for municipality clubs — the buyer a Finvoice 3.0 file is addressed to, matched by Fennoa on fennoa_customer_no. A buyer is a CUSTOMER and not a municipality: one city can be two customers (library clubs and school clubs bought by two departments under two agreements) and an association can be the customer for clubs running inside a municipality it is not. So the link is per CLUB — products.invoice_customer_id — and nothing may derive one from a club''s location. THIS TABLE NEVER REFERENCES `locations`, by owner rule: location data is geography and has to work for every country we operate in, while this is Finnish contract data, so the customer carries its own postal address rather than pointing at a place. What lives here is only what the FILE needs: the customer number, the invoice name, the address, an optional "your reference" (a PO number or a contact) and optional extra invoice text. Payment terms, e-invoice routing and department names stay on the Fennoa customer card, which owns them. Admin-only end to end: SELECT for authenticated behind an admin policy, and no write grant at all — the only writers are create_invoice_customer and update_invoice_customer. No delete in v1: a customer a club points at cannot go anyway, because that foreign key is ON DELETE RESTRICT.';
+
+
+--
+-- Name: COLUMN invoice_customers.fennoa_customer_no; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.invoice_customers.fennoa_customer_no IS 'The customer''s number in Fennoa, e.g. F0037. This is the join key between the exported file and Fennoa''s own ledger: it is written into BuyerPartyIdentifier and is how the import finds the buyer. UNIQUE, because two rows claiming one Fennoa customer would produce two files Fennoa would post to the same account with no way to tell which was meant.';
+
+
+--
+-- Name: COLUMN invoice_customers.invoice_name; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.invoice_customers.invoice_name IS 'The buyer''s name as it must read on the invoice — the legal or agreed billing name, which is not always the name anybody says out loud. Stored rather than derived from a municipality''s name for exactly that reason, and because a customer may be an association with no municipality name to derive from.';
+
+
+--
+-- Name: COLUMN invoice_customers.street; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.invoice_customers.street IS 'The buyer''s street address. Required even though Fennoa''s own customer card holds one, because the Finvoice import demands a buyer postal address INSIDE the file — a file without it is refused.';
+
+
+--
+-- Name: COLUMN invoice_customers.postal_code; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.invoice_customers.postal_code IS 'The buyer''s postal code. Free text rather than a reference to the postal code table: this is the address printed on an invoice to a buyer who may be outside Finland, and validating it against Finnish geography would refuse a correct foreign address.';
+
+
+--
+-- Name: COLUMN invoice_customers.city; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.invoice_customers.city IS 'The buyer''s post town. Part of the address block, and unrelated to which municipality a club runs in — a customer''s billing address and a club''s location are two different facts and are allowed to disagree.';
+
+
+--
+-- Name: COLUMN invoice_customers.country_code; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.invoice_customers.country_code IS 'ISO 3166-1 alpha-2, uppercase, defaulting to FI because every customer today is Finnish. A CHECK on the SHAPE and nothing more: which countries we bill in is contract data that moves as agreements land, so an enum would need a migration per country.';
+
+
+--
+-- Name: COLUMN invoice_customers.your_reference; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.invoice_customers.your_reference IS 'The buyer''s own reference for the invoice — a purchase-order number, or the person at the customer who owns the agreement. Optional: many customers ask for none, and the serializer omits the element when there is nothing to put in it. NULL or a real value, never a blank string.';
+
+
+--
+-- Name: COLUMN invoice_customers.invoice_text; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.invoice_customers.invoice_text IS 'Extra free text the customer wants on every invoice, as authored lines. Optional, and NULL or real for the same reason your_reference is. Not markdown and not rendered anywhere in the app: it is copy for a Finvoice document, so it travels as typed.';
+
+
+--
+-- Name: COLUMN invoice_customers.created_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.invoice_customers.created_at IS 'When the customer was recorded. Server-stamped.';
+
+
+--
+-- Name: COLUMN invoice_customers.updated_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.invoice_customers.updated_at IS 'When the customer was last edited, maintained by the invoice_customers_updated_at trigger rather than by any writer — a timestamp a caller supplies proves nothing about when the row changed.';
+
+
+--
 -- Name: locations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -10787,6 +11095,7 @@ CREATE TABLE public.products (
     region_lock_country text,
     image_id uuid,
     requires_gamer_creations boolean DEFAULT false NOT NULL,
+    invoice_customer_id uuid,
     CONSTRAINT chk_products_age_range CHECK (((min_age IS NULL) OR (max_age IS NULL) OR (max_age >= min_age))),
     CONSTRAINT chk_products_ages_iff_for_gamers CHECK (
 CASE
@@ -10798,6 +11107,7 @@ END),
     CONSTRAINT chk_products_external_contract_muni CHECK (((billing_mode <> 'external_contract'::public.billing_mode) OR (product_type = 'municipality_club'::public.product_type))),
     CONSTRAINT chk_products_has_an_audience CHECK ((for_gamers OR for_parents)),
     CONSTRAINT chk_products_in_person_has_location CHECK (((is_remote = true) OR (location_id IS NOT NULL))),
+    CONSTRAINT chk_products_invoice_customer_only_for_muni CHECK (((invoice_customer_id IS NULL) OR (product_type = 'municipality_club'::public.product_type))),
     CONSTRAINT chk_products_municipality_fee_only_for_muni CHECK (((municipality_fee_cents IS NULL) OR (product_type = 'municipality_club'::public.product_type))),
     CONSTRAINT chk_products_non_consumer_has_end_date CHECK (((product_type = 'consumer_club'::public.product_type) OR (end_date IS NOT NULL))),
     CONSTRAINT chk_products_online_muni_has_location CHECK (((NOT ((is_remote = true) AND (product_type = 'municipality_club'::public.product_type))) OR (location_id IS NOT NULL))),
@@ -10861,6 +11171,13 @@ COMMENT ON COLUMN public.products.image_id IS 'The catalogue entry this product 
 --
 
 COMMENT ON COLUMN public.products.requires_gamer_creations IS 'Does this product contractually require a creation from every member? An ADMIN decision, deliberately not derived from `topic`: not every roblox_studio product is Roblox-sponsored, so a contract obligation is stated rather than inferred. STAFF-FACING ONLY — a family sees nothing different on a flagged product, and no family document carries this column. What it changes is SIGNALS, never the authoring surface: adding a creation is the same gesture on every product, and the flag only makes the final session''s completeness gain a fourth condition (every current roster member has at least one creation) beside attendance, the report and the report mail. Defaults false, so flagging a product IS the opt-in and no epoch gating is needed. An open-ended product (end_date NULL) may be flagged and never owes, because it has no final session.';
+
+
+--
+-- Name: COLUMN products.invoice_customer_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.products.invoice_customer_id IS 'The Fennoa customer this municipality club is invoiced to, or NULL where nobody has said yet. Per CLUB rather than per municipality on purpose: one city can be two customers (library clubs and school clubs under two agreements) and an association can be the customer for clubs running in a municipality it is not, so this may NEVER be derived from location_id. Nullable and refused later, exactly like municipality_fee_cents: a club is created before anybody has agreed who pays for it, so the invoicing page is what flags a club with no customer and blocks its file. Restricted to municipality clubs by chk_products_invoice_customer_only_for_muni, the same shape the fee column carries. ON DELETE RESTRICT, which is what makes "no delete in v1" free: a customer a club points at cannot be removed. NOTE ON EXPOSURE: `products` carries a table-level SELECT grant for `anon`, so this column joins the set an unauthenticated reader can select — known and accepted by the owner for the fee columns already, and what leaks is an opaque id, since invoice_customers itself is admin-only and holds everything that would say who the customer is.';
 
 
 --
@@ -11383,6 +11700,22 @@ COMMENT ON CONSTRAINT group_sessions_group_date_key ON public.group_sessions IS 
 
 ALTER TABLE ONLY public.group_sessions
     ADD CONSTRAINT group_sessions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: invoice_customers invoice_customers_fennoa_customer_no_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.invoice_customers
+    ADD CONSTRAINT invoice_customers_fennoa_customer_no_key UNIQUE (fennoa_customer_no);
+
+
+--
+-- Name: invoice_customers invoice_customers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.invoice_customers
+    ADD CONSTRAINT invoice_customers_pkey PRIMARY KEY (id);
 
 
 --
@@ -11956,6 +12289,13 @@ CREATE INDEX idx_products_image_id ON public.products USING btree (image_id);
 
 
 --
+-- Name: idx_products_invoice_customer; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_products_invoice_customer ON public.products USING btree (invoice_customer_id) WHERE (invoice_customer_id IS NOT NULL);
+
+
+--
 -- Name: idx_products_location; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -12135,6 +12475,13 @@ CREATE TRIGGER gamer_group_notes_updated_at BEFORE UPDATE ON public.gamer_group_
 --
 
 CREATE TRIGGER group_sessions_updated_at BEFORE UPDATE ON public.group_sessions FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- Name: invoice_customers invoice_customers_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER invoice_customers_updated_at BEFORE UPDATE ON public.invoice_customers FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 
 --
@@ -12970,6 +13317,14 @@ ALTER TABLE ONLY public.products
 
 
 --
+-- Name: products products_invoice_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.products
+    ADD CONSTRAINT products_invoice_customer_id_fkey FOREIGN KEY (invoice_customer_id) REFERENCES public.invoice_customers(id) ON DELETE RESTRICT;
+
+
+--
 -- Name: products products_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -13383,6 +13738,13 @@ CREATE POLICY admins_read_gedu_contract_acceptances ON public.gedu_contract_acce
 
 
 --
+-- Name: invoice_customers admins_read_invoice_customers; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY admins_read_invoice_customers ON public.invoice_customers FOR SELECT TO authenticated USING (( SELECT public.is_admin() AS is_admin));
+
+
+--
 -- Name: marketing_consent_events admins_read_marketing_consent_events; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -13759,6 +14121,12 @@ ALTER TABLE public.group_session_images ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.group_sessions ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: invoice_customers; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.invoice_customers ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: locations; Type: ROW SECURITY; Schema: public; Owner: -
@@ -14481,6 +14849,15 @@ GRANT ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_f
 
 
 --
+-- Name: FUNCTION create_invoice_customer(p_fennoa_customer_no text, p_invoice_name text, p_street text, p_postal_code text, p_city text, p_country_code text, p_your_reference text, p_invoice_text text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.create_invoice_customer(p_fennoa_customer_no text, p_invoice_name text, p_street text, p_postal_code text, p_city text, p_country_code text, p_your_reference text, p_invoice_text text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.create_invoice_customer(p_fennoa_customer_no text, p_invoice_name text, p_street text, p_postal_code text, p_city text, p_country_code text, p_your_reference text, p_invoice_text text) TO authenticated;
+GRANT ALL ON FUNCTION public.create_invoice_customer(p_fennoa_customer_no text, p_invoice_name text, p_street text, p_postal_code text, p_city text, p_country_code text, p_your_reference text, p_invoice_text text) TO service_role;
+
+
+--
 -- Name: FUNCTION create_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_purchase_shape text, p_currency text, p_consented_documents text[]); Type: ACL; Schema: public; Owner: -
 --
 
@@ -14489,12 +14866,12 @@ GRANT ALL ON FUNCTION public.create_participation(p_product_id uuid, p_participa
 
 
 --
--- Name: FUNCTION create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean, p_invoice_customer_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean) TO authenticated;
-GRANT ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean) TO service_role;
+REVOKE ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean, p_invoice_customer_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean, p_invoice_customer_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean, p_invoice_customer_id uuid) TO service_role;
 
 
 --
@@ -15320,12 +15697,21 @@ GRANT ALL ON FUNCTION public.trg_seed_product_seat_counts() TO service_role;
 
 
 --
--- Name: FUNCTION update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION update_invoice_customer(p_id uuid, p_fennoa_customer_no text, p_invoice_name text, p_street text, p_postal_code text, p_city text, p_country_code text, p_your_reference text, p_invoice_text text); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean) TO authenticated;
-GRANT ALL ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean) TO service_role;
+REVOKE ALL ON FUNCTION public.update_invoice_customer(p_id uuid, p_fennoa_customer_no text, p_invoice_name text, p_street text, p_postal_code text, p_city text, p_country_code text, p_your_reference text, p_invoice_text text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.update_invoice_customer(p_id uuid, p_fennoa_customer_no text, p_invoice_name text, p_street text, p_postal_code text, p_city text, p_country_code text, p_your_reference text, p_invoice_text text) TO authenticated;
+GRANT ALL ON FUNCTION public.update_invoice_customer(p_id uuid, p_fennoa_customer_no text, p_invoice_name text, p_street text, p_postal_code text, p_city text, p_country_code text, p_your_reference text, p_invoice_text text) TO service_role;
+
+
+--
+-- Name: FUNCTION update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean, p_invoice_customer_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean, p_invoice_customer_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean, p_invoice_customer_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[], p_requires_gamer_creations boolean, p_invoice_customer_id uuid) TO service_role;
 
 
 --
@@ -15604,6 +15990,14 @@ GRANT ALL ON TABLE public.group_session_images TO service_role;
 --
 
 GRANT ALL ON TABLE public.group_sessions TO service_role;
+
+
+--
+-- Name: TABLE invoice_customers; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.invoice_customers TO authenticated;
+GRANT ALL ON TABLE public.invoice_customers TO service_role;
 
 
 --
