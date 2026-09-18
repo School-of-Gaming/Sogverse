@@ -59,28 +59,29 @@ made over sixty bot commits to keep `schema.sql` current.
    feature commit. The script builds the database the way CI does (same pinned CLI, the
    CLI's default service versions, `pg_dump` run inside the database container), so the
    two produce the same bytes.
-3. **The full CI compares.** Its database job already builds from `migrations/`; it
-   generates the same files from that build and fails, on every branch, when they differ
-   from what is committed. A red comparison always means something: stale or hand-edited
-   files, or the two generators drifting apart.
+3. **The full CI compares, and its output is the authority.** Its database job already
+   builds from `migrations/`; it generates the same files from that build, fails on every
+   branch when they differ from what is committed, and uploads what it generated as an
+   artifact whether it passed or not. Local generation is the fast path, not a second
+   source of truth: when the two disagree, or on a day the local database will not start,
+   the agent takes CI's files, so schema work never waits on the owner's machine being
+   healthy. **A red comparison is triaged in this order:** regenerate locally and compare
+   again (the committed files were stale or hand-edited); where git merged or conflicted
+   in a generated file, apply decision 5's inspection; where local output still differs
+   from CI's for an object nobody changed, the generators have drifted (usually the CLI
+   pin moved): commit CI's artifact and fix the script.
 4. **Current schema is a generated directory, `supabase/schema/`, one file per object,
    replacing `schema.sql`.** A file per table holds the table with its indexes,
    constraints, policies, triggers, grants and comments; a file per function holds its
    definition, grants and comment; enums and other types share one; what belongs to no
    object (the schema's own block, default privileges) shares another. It is never
    hand-edited and is committed by the branch that changed it, exactly like the types.
-   Migrations become write-only: written and applied, never read to learn state. Two
-   generators feed it:
-   - *The split*, for `public`: raw `pg_dump` cut on the object headers the dump already
-     carries.
-   - *A second generator* for the few objects outside `public` that today
-     can only be learned by grepping migrations: the extensions the migrations create,
-     our triggers on `auth.users`, our policies on `storage.objects`, and the rows that
-     define storage buckets and cron jobs. "Ours" is **what the migrations added**: the
-     difference, for those catalogs, between the bare stack and the migrated one. No
-     list of names to maintain, so a future migration cannot be silently left out, and
-     the platform's own auth and storage objects, which change with every CLI bump,
-     never enter.
+   For `public`, migrations become write-only: written and applied, never read to learn
+   state. It is raw `pg_dump` of `public`, cut on the object headers the dump already
+   carries. The few objects of ours outside `public` (the extensions the migrations
+   create, our triggers on `auth.users`, our policies on `storage.objects`, the rows that
+   define storage buckets and cron jobs) are not in it: that set is small and rarely
+   changes, and it is still learned from the migration that last touched it.
 5. **The comparison plus git is the conflict detector.** Two branches changing one object
    change one file, so git raises a conflict when the later branch syncs with `dev`
    (including an edit racing a drop). A merge git resolves cleanly but the migrations do
@@ -100,7 +101,8 @@ made over sixty bot commits to keep `schema.sql` current.
    produces), assigned at landing.** Landing is already serialized through one human, so
    it is the queue.
 8. **A branch carrying migrations lands synced.** Merge `origin/dev` into the branch,
-   restamp the branch's own migrations to now (relative order kept), regenerate, and
+   restamp the branch's own migrations to now (relative order kept), regenerate (or,
+   with no local database that day, push the synced branch and take CI's artifact), and
    require the output to equal the working tree. A difference in a file both sides
    touched is decision 5's conflict. Then merge `--no-ff` as today. Waiting for the
    branch's full CI is advisory, as it is today. Branches without migrations land exactly
@@ -160,9 +162,20 @@ made over sixty bot commits to keep `schema.sql` current.
 - **A manual GitHub Action as the generator.** One generator makes byte equality free,
   but every generation costs a push, a wait and an artifact download; the workflow file
   has to reach `main` before it can be dispatched at all; and a branch's first push is
-  red by design. **It is the fallback**: if the local and CI outputs cannot be made
-  identical (step 2 verifies this first), generation moves to an on-demand action that
-  does only that job, and the rest of this plan is unchanged.
+  red by design. The escape hatch it offered (files from somewhere other than the
+  owner's machine) is what the full CI's uploaded artifact gives, with no second
+  workflow.
+- **A second generator for our objects outside `public`**, committed beside the schema
+  directory and defined as "what the migrations added" to the auth, storage, extension
+  and cron catalogs. The Problem never asked for it; the set is small and stable; and
+  finding what the migrations added needs a bare reference database, which CI does not
+  build, so it is the one place where two generators agreeing byte for byte is
+  unsolved. The squash, the only step where losing one of those objects is a live risk,
+  compares them once, locally (step 8). Listed in Follow-ups.
+- **A version check in place of the script installing the CLI**, with the install
+  recorded in the owner's machine-config repo. The version that must be installed is
+  this repo's pin, so the thing that reads the pin does the install; the stack is
+  agent-managed end to end, and a printed command is one more thing to run by hand.
 - **A hosted database to regenerate the files.** Costs a billed hour per use for
   something a local container does for free.
 - **Letting the full CI generate and bot-commit the files.** Slower, and it puts machine
@@ -210,7 +223,10 @@ land (see there).
    directly. In this step it gains `generate`. What it owns:
    - *The boundary.* Its real logic is shell files run inside the distro; it translates
      the worktree's path, sets the Linux `PATH` itself, and keeps the noise WSL writes
-     to stderr out of its output. See the constraints for what goes wrong otherwise.
+     to stderr out of its output. It holds a keep-alive session for as long as a
+     database of its own is running, and releases it with the last one, so a running
+     stack never depends on a terminal happening to be open. See the constraints for
+     what goes wrong otherwise.
    - *The CLI.* It installs the Linux release of the Supabase CLI inside the distro at
      the version `package.json` pins, and reinstalls when the pin moves, so local and
      CI never run different versions.
@@ -223,19 +239,24 @@ land (see there).
    - *`generate`.* Database container only; types through the CLI pointed at the
      database URL (the `--local` form is broken in the pinned CLI, see constraints; check
      whether CI's copy of the command is affected the same way); remove the database.
-   Add the comparison to the full CI's database job. **Before relying on any of it,
-   prove the two generators agree**: generate locally, push, and let the comparison run.
-   If they cannot be made identical, fall back to the on-demand action (Rejected
-   alternatives). Separately, compare the generated types with the committed file on
+   Add the comparison to the full CI's database job, and have it upload what it
+   generated as an artifact on every run, pass or fail (the job already does this for
+   the snapshot it regenerates today). **Before relying on any of it, prove the two
+   generators agree**: generate locally, push, and let the comparison run. Where they
+   cannot be made identical, CI's artifact is the source and the difference is a defect
+   in the script (decision 3). Separately, compare the generated types with the committed file on
    current `dev`: the committed one came from staging, so a difference is expected (it
    was measured as boilerplate only: a PostgREST version block and the parenthesisation
    of the helper types, with no table, column, enum or function differing). Confirm
    that is still all it is, then commit the from-migrations output as the new truth.
    Replace the migration workflow in `supabase/CLAUDE.md`: write → generate → commit,
-   the same in a worktree and directly on `dev`. State the recovery for a red
-   comparison on `dev`: regenerate from `dev`, then apply decision 5's inspection before
-   committing anything. Correct the statements that this machine has no Docker
-   (`tests/CLAUDE.md`); the DB tests stay CI-only until the follow-up says otherwise.
+   the same in a worktree and directly on `dev`, with decision 3's triage order for a red
+   comparison, on a branch or on `dev`, and where to download CI's artifact. The
+   statement that this machine has no Docker (`tests/CLAUDE.md`) is the stated reason
+   the DB tests are CI-only; replace the reason rather than deleting it: nothing wires
+   the test runner to a local stack yet, and improvising one against the repo's own
+   `supabase/` directory dirties it (constraints). The rule itself stays until the
+   follow-up is taken.
 3. **CI pushes `dev` to staging.** A job on push to `dev`, with no `needs`, a
    `concurrency` group so two pushes never run `db push` against staging at once, and
    only the CLI installed. It connects as the prod job does (`supabase link`, then
@@ -263,7 +284,7 @@ land (see there).
    "the next free number": new files come from `supabase migration new`, and whatever
    the generators key on must survive the landing restamp, so key on the descriptive
    part of the name, not the version.
-5. **The schema directory.** The two generators; `generate` and the comparison produce
+5. **The schema directory.** The split; `generate` and the comparison produce
    and check the directory alongside the types; delete `schema.sql` and the CI step that
    commits it; keep that step's guard against a dump that silently lost an object
    class. What the split has to get right, from the dump as it is today:
@@ -283,8 +304,9 @@ land (see there).
    - Within an object class the dump is alphabetical, so adding an unrelated object
      moves no other file's bytes; keep dump order inside each file.
    Rewrite "Current state lives in snapshot files" in `supabase/CLAUDE.md` (including
-   the own-branch staleness warning and the "objects outside `public`" section, both of
-   which this retires) and every live reference to `schema.sql`: the root `CLAUDE.md`,
+   the own-branch staleness warning, which this retires; the "objects outside `public`"
+   section stays, because those objects are still learned from migrations) and every
+   live reference to `schema.sql`: the root `CLAUDE.md`,
    the CI workflow, doc comments in the service contract files, the database
    authorization architecture doc, the procedure skills in `.claude/skills/`, and the other open plan that cites it.
    Nothing executable reads the file. Delete the `TODO.md` item about the snapshot's bot
@@ -303,15 +325,16 @@ land (see there).
 7. **Local stacks.** Needs steps 2 and 6. The script gains `up`, `park`, `down`, `reset`
    and `list`. `up` allocates the stack's port block, starts the trimmed service set,
    applies both seeds, and writes the stack's URL and keys into the *worktree's*
-   `.env.local`, keeping the staging values aside to restore on `down`. `list` shows
+   `.env.local`, keeping the staging values aside to restore on `down`. A worktree's
+   `.env.local` is sometimes edited on purpose, so `down` restores only the keys `up`
+   replaced and leaves the rest; the main checkout's `.env.local` is never touched by
+   the script and is the recovery copy when `down` never ran. `list` shows
    every stack, running or parked, with its worktree and its memory, and flags one whose
-   worktree is gone. `/worktree-flow`: Phase 3 brings a stack up when the change is
-   schema-dependent, without asking; stopping the worktree's dev server parks it;
-   teardown runs `down` after its tree kill. `/cleanup-branches` also removes any stack
-   whose git branch is gone, in the same confirmation table. Two things to settle while
-   building, both cheap: whether the distro keeps running with no WSL session attached
-   (see constraints; the keep-alive is known to work if it does not), and the app
-   running end to end against a stack, which was only proven at the HTTP level.
+   worktree is gone; that flag is the only orphan sweep. `/worktree-flow`: Phase 3 brings
+   a stack up when the change is schema-dependent, without asking; stopping the
+   worktree's dev server parks it; teardown runs `down` after its tree kill. One thing
+   to settle while building: the app running end to end against a stack, which was only
+   proven at the HTTP level.
 8. **The squash.** Needs steps 3 and 5. *Constraint on timing:* it is built and landed
    immediately after a release, while the migrations on `dev` are exactly the ones prod
    has applied; any migration that lands during the work stays a separate file after
@@ -334,9 +357,13 @@ land (see there).
      backfilled what earlier ones inserted. The reference-data generators are
      unaffected: they emit new migrations, which apply on top of a baseline as before.
    - **Proof, mechanical and required:** build one local database from the old files and
-     one from the baseline (no seeds); the schema directory (both generators, which is
-     why this needs step 5), the types, and a data-only dump of `public` must be
-     identical. The migration history table is excluded; it differs by construction.
+     one from the baseline (no seeds); the schema directory (which is why this needs
+     step 5), the types, and a data-only dump of `public` must be identical. So must,
+     as a one-off for this proof, a listing of our objects outside `public` taken the
+     same way from both: extensions, triggers on `auth.users`, policies on
+     `storage.objects`, and the bucket and cron rows. That listing is what proves the
+     previous bullet. The migration history table is excluded; it differs by
+     construction.
    - **History, an operator step the owner approves at the time:** assert the *numbered*
      versions in the environment's history are exactly the numbered files being
      squashed (timestamped ones that landed meanwhile are expected and untouched; no
@@ -360,7 +387,8 @@ land (see there).
 ## Acceptance criteria
 
 - A migration written in a worktree reaches a green branch CI, on its first push, with
-  regenerated files and **no connection to staging** at any point.
+  regenerated files and **no connection to staging** at any point. With the local
+  database unavailable, the same migration still lands, from CI's artifact.
 - Two branches each adding a migration land in either order with no renaming by hand and
   no edit to any history table; prod's plain `db push` applies both.
 - Two branches that each replace the same function cannot both land silently: the second
@@ -370,8 +398,9 @@ land (see there).
 - Hand-editing `database.types.ts` or any file under `supabase/schema/` fails the full
   CI. `schema.sql` is gone and nothing refers to it.
 - A schema-changing worktree's dev server shows the rich seed's data from its own local
-  stack within about two minutes, without the owner doing anything and at no cost; three
-  such stacks run at once; a parked stack holds no memory and comes back with its data
+  stack within about two minutes, without the owner doing anything and at no cost; two
+  such stacks run at once (three when the machine's other work leaves the memory for
+  it); a parked stack holds no memory and comes back with its data
   in under a minute; landing the branch removes its stack and its data. No caller ever
   invokes the distro directly, and the repo stays clean after every script command.
 - After the squash: the proof passed; `migrations/` holds the two baseline files plus
@@ -409,8 +438,8 @@ the pinned CLI, unless noted.
   a trimmed stack, which is fine because the seeds create accounts directly.
 - **The CLI's help text lists the wrong names for excluding services.** The valid names
   are the ones its own warning prints, and an invalid name is ignored with a warning,
-  not an error: the service starts anyway. Assert the running set instead of trusting
-  the flag.
+  not an error: the service starts anyway. The cost of getting one wrong is memory, and
+  `list` shows each stack's.
 - Stacks coexist when the project id and every port differ, and nothing else has to.
   `env()` substitution works for a port (verified on the API port only) and **not** for
   the project id. `config.toml` has three project ids (its own and one per remote):
@@ -436,10 +465,16 @@ the pinned CLI, unless noted.
   every stack; a parked stack adds only its data. A CLI version bump downloads new
   images and leaves the old ones until pruned, and the distro's virtual disk on `C:`
   does not shrink when they are.
-- **Not verified:** whether the distro, and so the containers, stays up with no WSL
-  session attached; the owner had a terminal open in it throughout. Systemd being
-  enabled may be enough. A detached `sleep infinity` session held from the Windows side
-  is a keep-alive that was shown to work and to clean up.
+- **Whether the distro stays up with nothing attached could not be isolated**, in two
+  attempts. A container answered from the Windows side for five minutes with no
+  `wsl.exe` process on the machine and was never restarted, but interactive shells
+  were alive inside the distro both times, and they cannot be ruled out as what kept it
+  up. So the script does not depend on the answer: it holds a keep-alive while anything
+  of its own is running. A detached `sleep infinity` session started hidden from the
+  Windows side was shown to work and to clean up.
+- A script piped into the distro from PowerShell arrives with a byte-order mark, which
+  silently turns its first line into a command that is not found. Start such a script
+  with a throwaway line.
 - **Not verified:** that local and CI generation are byte-identical (step 2 proves it
   first), and the app running end to end against a local stack.
 - CI builds its database with a trimmed `supabase start` and runs raw `pg_dump` inside
@@ -476,6 +511,8 @@ Cut from this plan on purpose. Proposed to the owner by headline when the plan i
 deleted; only the ones named are kept.
 
 - Run the DB tests locally against a stack, instead of only in CI.
+- A generated record of our objects outside `public`, beside the schema directory, once
+  there is a cheap bare reference to diff against in CI.
 - A shared Vercel preview for a schema-changing branch. Only a hosted database can back
   one, so it would be a hosted preview branch switched on for that purpose, plus that
   git branch's Vercel preview env vars. Until then such a preview runs new code against
