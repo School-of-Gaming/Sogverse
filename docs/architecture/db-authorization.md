@@ -132,6 +132,11 @@ decision, not a stylistic one.
 Decision order: storage/auth-admin/webhook work → A. Otherwise, writes a sensitive
 table → C or D. Otherwise → B. A is the exception, not the rule.
 
+The read-side counterpart, when a read is a function rather than a plain query and what
+such a function returns, is in `supabase/CLAUDE.md` ("Logic lives in database functions on
+purpose"). It rests on a fact this doc's write models do not state: reads are
+browser-direct, so for a read the database is the only trust boundary there is.
+
 ### The exposed-function landscape
 
 Functions granted to `authenticated` (~40; the authoritative list is the DB

@@ -157,6 +157,11 @@ always-on tripwires:
   write-IDOR case. The spine's completeness checks fail the build otherwise.
 - **All new tables must enable RLS**, and **RLS INSERT/UPDATE policies must authorize
   both the actor AND the target** (checking only `column = auth.uid()` is an IDOR hole).
+- **The many database functions are the design, not drift.** The browser reads the
+  database directly, so a function is where a read crosses an access boundary and hands
+  back a narrowed slice. When something is a function, what it returns, and why moving the
+  logic into TypeScript was measured and turned down, are in `supabase/CLAUDE.md`
+  ("Logic lives in database functions on purpose").
 
 ## Testing
 

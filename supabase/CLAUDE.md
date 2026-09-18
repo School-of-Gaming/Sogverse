@@ -344,6 +344,52 @@ DELETE needs a write-IDOR case proving a wrong user's statement affects zero row
 coverage (every table has it), the `security_invoker` sweep over every view, and the
 table-level write-grant allowlist live in the access-control test. (DB tests run against a real Postgres in CI — see `tests/CLAUDE.md`.)
 
+## Logic lives in database functions on purpose
+
+**The browser reads the database directly.** A service's read methods run in the browser,
+against the Data API, with the signed-in user's token; only a write that needs a server
+secret goes through an API route. No trusted server stands between an untrusted client and
+the data, so the database is the only place a read can be authorized. That is the standard
+Supabase shape, and everything in this section follows from it. It is why there are many
+functions, and it is not drift to be corrected.
+
+**Rule: what the caller's grants and RLS already admit is a plain query in the service
+layer, never a function.** A function that only re-selects rows a policy would have
+returned anyway adds a migration to every change and protects nothing.
+
+**Rule: a `SECURITY DEFINER` function exists to cross an access boundary and hand back
+less than the tables behind it, and its comment names which boundary.** There are three:
+
+- **Rows the caller has no policy for, narrowed to the caller's own scope**: a gedu
+  reading the families on their own roster, a family reading a first name out of a staff
+  profile, anyone reading the staff tables that carry no `authenticated` grant at all.
+- **An aggregate over rows the caller must never see**: a waitlist position, a seat
+  count. No policy can express these; the answer is a count of other people's rows.
+- **A write to a grant-locked table, or one that has to lock or be atomic across
+  tables**: the write models in `docs/architecture/db-authorization.md`.
+
+**A function is a data-minimisation device, so never widen RLS to retire one.** A policy
+that admits the same rows publishes the raw table, every column of it, to that role's
+browser through the Data API. That is a wider exposure than the function ever was, and
+most of these tables hold children's data.
+
+**Rule: a read function returns the whole of what its caller may see in that scope, as
+stable entity-shaped data, and the page shaping happens in TypeScript.** "The whole" means
+every field of the already-narrowed entities, not only the fields today's page renders;
+the boundary the function enforces does not move. A function that returns exactly one
+page's JSON turns each new UI field into a migration, and replacing a function body is the
+one schema change two branches cannot merge: the last writer silently wins. This applies
+when a function is next touched. It is not a sweep.
+
+**Moving this logic into TypeScript over a direct Postgres connection does not fit, and
+the measurements are in `docs/records/logic-in-database-evaluation-2026-09.md`.** A
+connection running as the signed-in user can take over only the reads RLS already admits,
+which was 5 of the 21 the app calls; every other read would need either wider RLS (above)
+or a privileged server connection, a second authorization regime in TypeScript beside the
+spine, and each browser read re-routed through a server route. Reopen it only on a new
+fact, such as reads no longer being browser-direct, not on the observation that there are
+a lot of functions.
+
 ## `now()` is frozen at transaction start
 
 **Rule: When a timestamp is an ordering/sequence key compared across concurrent
