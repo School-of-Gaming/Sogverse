@@ -78,10 +78,11 @@ made over sixty bot commits to keep `schema.sql` current.
    hand-edited and is committed by the branch that changed it, exactly like the types.
    For `public`, migrations become write-only: written and applied, never read to learn
    state. It is raw `pg_dump` of `public`, cut on the object headers the dump already
-   carries. The few objects of ours outside `public` (the extensions the migrations
-   create, our triggers on `auth.users`, our policies on `storage.objects`, the rows that
-   define storage buckets and cron jobs) are not in it: that set is small and rarely
-   changes, and it is still learned from the migration that last touched it.
+   carries. The few things of ours a `public` dump does not carry (the extensions the
+   migrations create, our triggers on `auth.users`, our policies on `storage.objects`,
+   the rows that define storage buckets and cron jobs, and which tables belong to the
+   realtime publication) are not in it: that set is small and rarely changes, and it is
+   still learned from the migration that last touched it.
 5. **The comparison plus git is the conflict detector.** Two branches changing one object
    change one file, so git raises a conflict when the later branch syncs with `dev`
    (including an edit racing a drop). A merge git resolves cleanly but the migrations do
@@ -215,8 +216,11 @@ land (see there).
    migration procedure, for worktrees *and* for work done directly on `dev`; the flows
    reference it rather than restating it. In this step: the read-never-write rule and
    "never amend a *landed* migration". The remaining sections change with the step that
-   changes their subject. This step gates step 3: CI must not own staging while the
-   documented workflow still tells agents to push there.
+   changes their subject. Until step 2 lands there is no other way to regenerate the
+   types, so the rule ships with one named exception, the existing push-then-generate
+   workflow, and step 2 deletes the exception with the workflow. This step gates step 3:
+   CI must not own staging while the documented workflow still tells agents to push
+   there.
 2. **The local database script, generation, and the comparison**, for the types. One
    script under `scripts/`, exposed as an npm script, is the only thing that knows the
    database lives in WSL; every caller, agent or flow, uses it and never the distro
@@ -233,15 +237,24 @@ land (see there).
    - *The shadow workdir.* The CLI is never run against the worktree's own `supabase/`
      directory. The script builds a directory outside the repo holding a rewritten copy
      of `config.toml` (its own project id; every port shifted) with `migrations/` and
-     the seed linked back to the worktree. This is what lets several databases coexist,
+     the seed linked back to the worktree. It lives in the distro's own filesystem, not
+     on the Windows side. This is what lets several databases coexist,
      keeps the repo clean, and, because a shadow workdir carries no linked-project
      version pins, gives the CLI's default service versions, which is what CI gets.
    - *`generate`.* Database container only; types through the CLI pointed at the
-     database URL (the `--local` form is broken in the pinned CLI, see constraints; check
-     whether CI's copy of the command is affected the same way); remove the database.
+     database URL with `--schema public` (the `--local` form is broken in the pinned
+     CLI, see constraints, and without the schema flag a local database's exposed-schema
+     list brings back the `graphql_public` block `supabase/CLAUDE.md` exists to keep
+     out); remove the database. CI runs the identical command: it has never generated
+     types, so this is a new step there, not a changed one.
+   Confirm from inside a worktree that the isolation guard admits the npm script, since
+   the guard refuses commands it cannot verify stay inside the worktree and this one
+   writes outside it by design.
    Add the comparison to the full CI's database job, and have it upload what it
-   generated as an artifact on every run, pass or fail (the job already does this for
-   the snapshot it regenerates today). **Before relying on any of it, prove the two
+   generated as an artifact on every run, pass or fail. **Generate, compare and upload
+   before the DB tests run**: today the job regenerates its snapshot after them, so a
+   red test run produces no files at all, which is exactly when decision 3's escape
+   hatch is needed. **Before relying on any of it, prove the two
    generators agree**: generate locally, push, and let the comparison run. Where they
    cannot be made identical, CI's artifact is the source and the difference is a defect
    in the script (decision 3). Separately, compare the generated types with the committed file on
@@ -255,20 +268,30 @@ land (see there).
    statement that this machine has no Docker (`tests/CLAUDE.md`) is the stated reason
    the DB tests are CI-only; replace the reason rather than deleting it: nothing wires
    the test runner to a local stack yet, and improvising one against the repo's own
-   `supabase/` directory dirties it (constraints). The rule itself stays until the
-   follow-up is taken.
+   `supabase/` directory dirties it (constraints). The rule itself stays absolute until
+   the follow-up is taken, including once step 7's stacks exist: a stack carries the
+   rich seed, and the DB tests' whole-table claims are written against the minimal one.
+   **Steps 2 and 3 land back to back.** In between, nothing pushes to staging
+   automatically, so whoever lands a migration on `dev` pushes `dev`'s migrations to
+   staging by hand, which is the same command CI is about to run.
 3. **CI pushes `dev` to staging.** A job on push to `dev`, with no `needs`, a
    `concurrency` group so two pushes never run `db push` against staging at once, and
    only the CLI installed. It connects as the prod job does (`supabase link`, then
    `db push`). Two new repository secrets from the
    owner, named apart from prod's (`SUPABASE_STAGING_PROJECT_REF`,
-   `SUPABASE_STAGING_DB_PASSWORD`); the existing `SUPABASE_ACCESS_TOKEN` secret serves
-   both. *Before the first run*, reconcile staging's migration
+   `SUPABASE_STAGING_DB_PASSWORD`; prod's keep their current names, asymmetry
+   accepted); the existing `SUPABASE_ACCESS_TOKEN` secret serves
+   both. It runs only on `dev`, so it is neither a required check on `main` nor a
+   Vercel deployment check, and the workflow header's two edits outside the repo do not
+   apply. *Before the first run*, reconcile staging's migration
    history with `dev`: list versions on staging with no file on `dev` (leftovers of
    abandoned branches) and resolve each with the owner, because a remote version with no
-   local file makes `db push` refuse outright. State the recovery for a failed push:
-   each migration is its own transaction, so staging holds the ones before the failure;
-   fix forward with a new migration, never by editing staging.
+   local file makes `db push` refuse outright. **The job lands only once both owner
+   items are done**, the secrets and the reconciliation; it is not written to skip
+   quietly without them. State the recovery for a failed push:
+   each migration is its own transaction, so staging holds the ones before the failure
+   and `dev`'s run stays red until the fix; fix forward with a new migration, never by
+   editing staging.
 4. **Timestamps at landing.** A small restamp script (renames the migrations a branch
    adds relative to `origin/dev` to fresh timestamps, preserving order);
    `/worktree-flow` Phase 5 gains decision 8 for migration-bearing branches;
@@ -276,8 +299,13 @@ land (see there).
    unreleased one, and says why; a tripwire in the full CI on `dev` asserts every
    *timestamped* migration a push adds sorts above every one already there, and that no
    push adds a numbered one unless it also deletes numbered ones (which is the squash,
-   and nothing else); it fires after the fact, and is the only gate covering
-   direct-on-`dev` work; delete the "staging is shared,
+   and nothing else); it fails the run, fires after the fact, and is the only gate
+   covering direct-on-`dev` work. Its remedy: staging's `db push` refuses an
+   out-of-order file for the same reason prod's would, so no environment has applied
+   it; rename it to a fresh timestamp in a follow-up commit, the one case in which a
+   landed file is renamed. A restamped branch is not pushed again before it merges: the
+   local regenerate-and-compare is the gate and `dev`'s own CI run follows the merge
+   (the no-local-database path pushes only because CI is then the generator). Delete the "staging is shared,
    and migration numbers are contended" section of `supabase/CLAUDE.md`; update the
    reference-data generators under `scripts/`, which hold migration file names as
    literals (so an applied migration is never regenerated) and tell the operator to pick
@@ -306,9 +334,12 @@ land (see there).
    Rewrite "Current state lives in snapshot files" in `supabase/CLAUDE.md` (including
    the own-branch staleness warning, which this retires; the "objects outside `public`"
    section stays, because those objects are still learned from migrations) and every
-   live reference to `schema.sql`: the root `CLAUDE.md`,
-   the CI workflow, doc comments in the service contract files, the database
-   authorization architecture doc, the procedure skills in `.claude/skills/`, and the other open plan that cites it.
+   live reference to `schema.sql`. Find them with a grep on the day; where they were at
+   the time of writing, not a complete list: the root `CLAUDE.md`, the CI workflow, doc
+   comments in the service contract files and one DB test, the architecture docs
+   (database authorization, products), the procedure skills in `.claude/skills/`,
+   `TODO.md`, and the other open plan that cites it. Investigations are point-in-time
+   and stay as written. The dump keeps the filters today's step applies to it.
    Nothing executable reads the file. Delete the `TODO.md` item about the snapshot's bot
    commit blocking release PRs: removing the bot commit resolves it.
 6. **The rich example seed**, as its own file, not in `config.toml`. Built through the
@@ -321,18 +352,27 @@ land (see there).
    render.** A local stack's users do not exist in Stripe's test mode, so checkout and
    billing are verified on staging as today, and the seed creates nothing in Stripe.
    Because it calls the RPCs, it fails loudly when one's contract has changed; that
-   surfaces when a stack is brought up, and is fixed then.
+   surfaces when a stack is brought up, and is fixed then. It needs a database and
+   nothing else (it runs over a plain database connection under transaction-local
+   claims, no HTTP service involved), so it is written and proven against step 2's
+   database-only build, before step 7 exists.
 7. **Local stacks.** Needs steps 2 and 6. The script gains `up`, `park`, `down`, `reset`
    and `list`. `up` allocates the stack's port block, starts the trimmed service set,
    applies both seeds, and writes the stack's URL and keys into the *worktree's*
-   `.env.local`, keeping the staging values aside to restore on `down`. A worktree's
+   `.env.local`, keeping the staging values aside to restore on `down`. It replaces
+   only what the app reads to reach Supabase: the URL, the anon key and the service-role
+   key. The linked-project ref, the database password and the staging sign-in
+   credentials stay, deliberately: the CLI commands and the procedure skills in a
+   worktree keep meaning staging. A worktree's
    `.env.local` is sometimes edited on purpose, so `down` restores only the keys `up`
    replaced and leaves the rest; the main checkout's `.env.local` is never touched by
    the script and is the recovery copy when `down` never ran. `list` shows
    every stack, running or parked, with its worktree and its memory, and flags one whose
-   worktree is gone; that flag is the only orphan sweep. `/worktree-flow`: Phase 3 brings
-   a stack up when the change is schema-dependent, without asking; stopping the
-   worktree's dev server parks it; teardown runs `down` after its tree kill. One thing
+   worktree is gone; that flag is the only orphan sweep. `/worktree-flow`: Phase 3 stays
+   what it is, the preview of a UI change; when the branch also carries a migration it
+   brings a stack up first, without asking. A schema change with nothing to look at
+   never gets a stack: `generate` is all it needs. Stopping the
+   worktree's dev server parks the stack; teardown runs `down` after its tree kill. One thing
    to settle while building: the app running end to end against a stack, which was only
    proven at the HTTP level.
 8. **The squash.** Needs steps 3 and 5. *Constraint on timing:* it is built and landed
@@ -345,30 +385,36 @@ land (see there).
      migration that landed during the work still runs after the baseline on a fresh
      build (a baseline stamped at landing would sort *above* it and break every fresh
      build); and every environment that applied the old history already records those
-     two versions as applied.
+     two versions as applied. The schema file takes the lower of the two, so the DDL
+     runs before the inserts.
    - The schema file is more than a `public` schema dump. It also creates the extensions
      the old migrations created, our triggers on `auth.users`, our policies on
-     `storage.objects`, and the bucket and cron definitions, written as statements. A
-     plain `public` dump would silently cost every fresh database the new-user profile
-     trigger and all storage RLS.
+     `storage.objects`, the bucket and cron definitions, and the realtime publication's
+     table membership, written as statements. A plain `public` dump would silently cost
+     every fresh database the new-user profile trigger, all storage RLS, and realtime on
+     the chat tables.
    - The data file holds what the old migrations inserted (location tree, postal codes,
      lookup rows), taken from a data dump of a from-migrations database rather than by
      keeping the old data migrations, because later migrations wiped, re-pointed and
-     backfilled what earlier ones inserted. The reference-data generators are
-     unaffected: they emit new migrations, which apply on top of a baseline as before.
+     backfilled what earlier ones inserted. The reference-data generators still emit new
+     migrations that apply on top of a baseline, but their record of which countries are
+     already seeded names files the squash deletes: drop those entries in the same
+     change, so a re-run for a country the baseline already holds fails instead of
+     re-seeding it.
    - **Proof, mechanical and required:** build one local database from the old files and
      one from the baseline (no seeds); the schema directory (which is why this needs
      step 5), the types, and a data-only dump of `public` must be identical. So must,
      as a one-off for this proof, a listing of our objects outside `public` taken the
      same way from both: extensions, triggers on `auth.users`, policies on
-     `storage.objects`, and the bucket and cron rows. That listing is what proves the
-     previous bullet. The migration history table is excluded; it differs by
+     `storage.objects`, the bucket and cron rows, and the realtime publication's tables.
+     That listing is what proves the schema-file bullet above. The migration history table is excluded; it differs by
      construction.
    - **History, an operator step the owner approves at the time:** assert the *numbered*
-     versions in the environment's history are exactly the numbered files being
-     squashed (timestamped ones that landed meanwhile are expected and untouched; no
-     hold on other work is needed), then mark every
-     version below the baseline's as reverted with `migration repair`. It touches the
+     versions the environment's history records as applied are exactly the numbered
+     files being squashed (timestamped ones that landed meanwhile are expected and
+     untouched; no hold on other work is needed), then mark every
+     version below the lower baseline version as reverted with `migration repair`,
+     leaving both baseline versions applied. It touches the
      history table only. Staging: just before the squash merges into `dev`. **Prod: in
      the same sitting as the release that carries it, immediately before the release
      merge**, because between the repair and that deploy `main` still holds the old
@@ -377,7 +423,9 @@ land (see there).
      Until that release has gone out, the squash branch leaves a notice at the top of
      the root `CLAUDE.md` saying the next release owes prod's history repair first, and
      why; the release that pays it deletes the notice. A release that skips it fails
-     safe: prod's `db push` refuses and the production promotion is held.
+     safe: prod's `db push` refuses and the production promotion is held. This step, and
+     with it the plan, is complete when the squash merges into `dev`: the notice, not
+     the plan file, carries the debt to prod from there.
    - A feature branch open across the squash syncs as usual; git resolves the deleted
      files. If it had also touched `schema.sql` or a numbered migration, regenerate.
    - Rewrite prose in `CLAUDE.md` files and `docs/` that sends a reader to a numbered
@@ -477,6 +525,12 @@ the pinned CLI, unless noted.
   with a throwaway line.
 - **Not verified:** that local and CI generation are byte-identical (step 2 proves it
   first), and the app running end to end against a local stack.
+- **The CLI version is pinned in two places**, `package.json` and the CI workflow's
+  environment, kept equal by convention only (`supabase/CLAUDE.md` says they move in one
+  commit). The script reads the first and CI the second, and byte equality between the
+  generators rests on them matching.
+- `pg_dump` of `public` does not emit the realtime publication's table membership, which
+  is why a DB test asserts it and why the squash has to carry it by hand.
 - CI builds its database with a trimmed `supabase start` and runs raw `pg_dump` inside
   the database container, so the client always matches the server. `supabase db dump`
   silently omits triggers; the directory must be raw `pg_dump` too. Strip the dump's
