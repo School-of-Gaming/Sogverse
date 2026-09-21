@@ -103,7 +103,7 @@ export function GeduCoverCard({ cover }: { cover: GeduCoverSummary }) {
               {/* Two words in the eyebrow's slot, because this card's own kind
                   is the first thing about it that has to be legible — a sub
                   scanning a grid must not read it as another group of theirs. */}
-              <p className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Badge
                   variant="outline"
                   className="px-2 py-0 text-[10px] uppercase tracking-wide text-info"
@@ -113,7 +113,7 @@ export function GeduCoverCard({ cover }: { cover: GeduCoverSummary }) {
                 <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {p(productType)}
                 </span>
-              </p>
+              </div>
               <p className="text-lg font-semibold leading-tight">
                 {productName}
               </p>

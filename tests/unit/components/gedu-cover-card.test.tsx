@@ -60,6 +60,14 @@ describe("GeduCoverCard", () => {
     expect(html).toContain(cover.groupName ?? "");
   });
 
+  // A badge is a div, and a browser closes a paragraph at the first div inside
+  // it — so the server's markup and the client's tree part ways and the whole
+  // dashboard fails hydration. Rendering to a string never parses, so nothing
+  // else here would notice.
+  it("nests no div inside a paragraph", () => {
+    expect(cardHtml(fixtureCover())).not.toMatch(/<p[\s>](?:(?!<\/p>).)*<div/s);
+  });
+
   it("states the covered session's date and clock face", () => {
     const cover = fixtureCover();
     expect(cover.startsAt).not.toBeNull();
