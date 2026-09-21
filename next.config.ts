@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
@@ -47,7 +49,38 @@ function bucketPattern(bucket: string) {
   };
 }
 
+/**
+ * The directory Turbopack treats as the workspace root: the nearest one, from
+ * here upward, that actually holds the installed `next` package.
+ *
+ * **Computed, because a checkout can have a lockfile and no install.** Work in
+ * flight lives in checkouts nested inside the main one, which resolve
+ * `node_modules` upward rather than carrying their own. Turbopack's default is
+ * the directory of the *nearest lockfile*, it compiles nothing outside its
+ * root, and a nested checkout's nearest lockfile is its own — so left to the
+ * default, its dev server cannot find `next` and answers 500 on every route.
+ * In the main checkout and in CI this resolves to the repo root, which is what
+ * the default picks there anyway; in a nested checkout it resolves to the main
+ * one, which still contains it, so every file being compiled stays inside the
+ * root.
+ *
+ * Falls back to this directory when no ancestor holds the package, which is
+ * the default's own answer and leaves a missing install to fail as itself.
+ */
+function workspaceRoot(): string {
+  let dir = __dirname;
+  for (;;) {
+    if (existsSync(path.join(dir, "node_modules", "next", "package.json"))) {
+      return dir;
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) return __dirname;
+    dir = parent;
+  }
+}
+
 const nextConfig: NextConfig = {
+  turbopack: { root: workspaceRoot() },
   // `next dev` otherwise writes a managed `nextjs-agent-rules` block into
   // `CLAUDE.md` and `AGENTS.md` whenever it detects a coding agent, pointing it
   // at the version-matched docs vendored in `node_modules/next/dist/docs/`.
