@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { GroupPending } from "@/services/groups";
-import type { ProductGroupWithDetails } from "@/types";
+import type { GeduAssignmentRole, ProductGroupWithDetails } from "@/types";
 import { ParticipantChip } from "./participant-chip";
 import type { RobloxRenderMap } from "@/services/roblox";
 import { chipGameIdentity } from "./panel-rules";
@@ -64,6 +64,16 @@ interface GroupColumnProps {
   onAddGedu: (groupId: string) => void;
   onRemoveGedu: (groupId: string, geduId: string) => void;
   /**
+   * Change one Gedu's pay class on this group. Optional like the panel's own
+   * two optional intents, and for the same reason: a shell with no write behind
+   * it should draw the role rather than a control that does nothing.
+   */
+  onSetGeduRole?: (
+    groupId: string,
+    geduId: string,
+    role: GeduAssignmentRole,
+  ) => void;
+  /**
    * Participation ids whose chip is greyed and undraggable — an in-flight move
    * or removal, or a club switch committing. Handed down rather than derived
    * from `pending` here, because one of the writes that can busy a chip is not
@@ -87,6 +97,7 @@ export function GroupColumn({
   onAddGedu,
   busyChipIds,
   onRemoveGedu,
+  onSetGeduRole,
 }: GroupColumnProps) {
   const t = useTranslations("admin.products.groupsPanel");
   const c = useTranslations("common");
@@ -302,8 +313,14 @@ export function GroupColumn({
                     geduId={ge.id}
                     firstName={ge.first_name}
                     email={ge.email}
+                    role={ge.role}
                     isSaving={pending.gedus.has(`${group.id}:${ge.id}`)}
                     disabled={busy}
+                    onRoleChange={
+                      onSetGeduRole === undefined || isTemp
+                        ? undefined
+                        : (role) => onSetGeduRole(group.id, ge.id, role)
+                    }
                     onRemove={() => onRemoveGedu(group.id, ge.id)}
                   />
                 ))}

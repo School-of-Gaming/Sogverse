@@ -22,6 +22,7 @@ import {
   GEDU_DASHBOARD_SCENARIOS,
   buildGeduDashboardFixture,
 } from "@/components/gedu/mock-dashboard-fixtures";
+import { GEDU_SUBSTITUTIONS_SCENARIOS } from "@/components/gedu/mock-substitutions-fixtures";
 import {
   MUNICIPALITY_INVOICING_NOW,
   MUNICIPALITY_INVOICING_SCENARIOS,
@@ -167,8 +168,15 @@ describe("preview scene registry", () => {
     const MAX_SCENARIOS: Record<string, number> = {
       "gedu-product": 5,
       "gedu-dashboard": 3,
+      // Two, and there is no third: the page has a populated state and an empty
+      // one, and the uncertified page is the empty one with a section missing.
+      "gedu-substitutions": 2,
     };
-    for (const surface of ["gedu-product", "gedu-dashboard"] as const) {
+    for (const surface of [
+      "gedu-product",
+      "gedu-dashboard",
+      "gedu-substitutions",
+    ] as const) {
       // Through `PREVIEW_SCENE_LIST` rather than `findPreviewScene`, because
       // the registry is `as const` and a scenario that omits its optional
       // `description` has no such property on its literal type — the widened
@@ -190,6 +198,12 @@ describe("preview scene registry", () => {
 describe("registry scenarios match their fixtures", () => {
   it("gedu dashboard", () => {
     expect(slugsFor("gedu-dashboard")).toEqual([...GEDU_DASHBOARD_SCENARIOS]);
+  });
+
+  it("gedu substitutions", () => {
+    expect(slugsFor("gedu-substitutions")).toEqual([
+      ...GEDU_SUBSTITUTIONS_SCENARIOS,
+    ]);
   });
 
   it("municipality invoicing", () => {
@@ -505,7 +519,7 @@ describe("the shop browse scene", () => {
   /**
    * The grid's rows, built the way the scene builds them — through its own copy
    * overrides. Sweeping the *rendered* rows rather than the slug list is what
-   * makes those overrides covered: a name override colliding with another
+   * makes those overrides substituted: a name override colliding with another
    * card's, or a description that swallowed a card's identity, is invisible to
    * a slug-level check. It is also how the tag and the picture are read, since
    * both are row fields now rather than scene-side maps.
@@ -915,7 +929,7 @@ describe("identicon fixture ids are real UUIDs", () => {
 
 /**
  * The product page's reference rail leads with the other groups on the product —
- * the "cover my room for ten minutes" surface. With only two scenarios left,
+ * the "substitution my room for ten minutes" surface. With only two scenarios left,
  * neither may be the one that skips it: an empty rail on half the scenes would
  * mean the peer-cover row is only ever reviewable on one page.
  */

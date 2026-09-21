@@ -50,6 +50,7 @@ export function GeduDashboardScene({
       contractAccepted={fixture.contractAccepted}
       criminalRecordCheckPassed={fixture.criminalRecordCheckPassed}
       assignments={fixture.assignments}
+      substitutions={fixture.substitutions}
       toolsCard={
         // Idle, with the submit inert: the textarea, the parsing and the
         // duplicate/email warnings all still work, because those are pure UI

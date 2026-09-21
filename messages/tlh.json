@@ -57,7 +57,9 @@
       "changePin": "PIN yIchoH",
       "roblox": "chenmoHwI’ DuSaQ",
       "geduContract": "Gedu quv chut",
-      "seatOffer": "quS nob"
+      "seatOffer": "quS nob",
+      "geduSubstitutions": "lIwmey",
+      "adminSubstitutions": "lIwmey"
     },
     "descriptions": {
       "signIn": "School of Gaming account-lIj yI’el. toy’wI’pu’lIj, ghom’a’meychaj, raghmeychaj je Dache’laH.",
@@ -501,6 +503,11 @@
         "manage": "DIlwI’pu’ yIQorgh",
         "option": "{name} ({number})"
       }
+    },
+    "geduRole": {
+      "primary": "Gedu wa’DIch",
+      "assistant": "Gedu boQwI’",
+      "selectAria": "{name} Qu’"
     },
     "geduContract": {
       "heading": "Gedu quv chut",
@@ -975,6 +982,8 @@
         "noResults": "Gedu lo’wI’ tu’be’lu’.",
         "current": "DaH",
         "alreadyAssigned": "ngu’lu’pu’",
+        "alreadyExpected": "may’vamDaq pawpu’",
+        "absentGedu": "lIwlu’bogh Gedu",
         "notCertified": "patlh ghajbe’"
       },
       "participantPicker": {
@@ -1151,6 +1160,44 @@
         },
         "note": "Dung Huch Huch nob ghaj. ngeHbej poHDaq nob mI’ ngu’ Stripe, vaj DaHjaj Finland nob ’oH."
       },
+      "staffing": {
+        "menuLabel": "may’vamvaD latlh vumghachmey",
+        "setSubstitute": "lIw yIwIv",
+        "changeSubstitute": "lIw yIchoH",
+        "changeSubstituteFor": "{name} lIw yIchoH",
+        "clearSubstitute": "lIw yIteq",
+        "clearSubstituteFor": "{name} lIw yIteq",
+        "withdrawRequest": "tlhob yIteq",
+        "withdrawRequestFor": "{name} tlhob yIteq",
+        "withRole": "{name} · {role}",
+        "absentLabel": "pawbe’",
+        "subLabel": "lIw",
+        "changeChoice": "yIchoH",
+        "absentStepTitle": "’Iv pawbe’?",
+        "absentStepBody": "{date} may’vaD wa’logh law’ ghojmoHwI’pu’ tu’lu’. pawbe’bogh yIwIv.",
+        "pickerTitle": "lIw yIwIv",
+        "pickerDescription": "{name} lIwbogh yIwIv. lIwlaHbe’bogh ghojmoHwI’ meq je ’angbogh.",
+        "confirmTitle": "lIw yIwIv",
+        "confirmBody": "{date} may’ qaSmoHbogh yIqon.",
+        "approvesOpenRequest": "tlhob poSbogh chaw’. chu’ chenmoHbe’.",
+        "replacesCurrentSub": "{name} lIwtaHbogh yIchoH.",
+        "reasonLabel": "meq",
+        "reasonSick": "ropchoH",
+        "reasonOther": "latlh",
+        "noteLabel": "yaHvaD QIn",
+        "notePlaceholder": "lIwvam ’ang yaH SovnISbogh.",
+        "noteRemaining": "{count} ngutlh ratlh",
+        "confirmAction": "lIw yIwIv",
+        "setFailed": "lIw wIvlu’laHbe’. yInID je.",
+        "clearTitle": "lIw teqlu’’a’?",
+        "clearBody": "{date} {name} lIwbe’choH {sub}. may’ lIw poQtaH je.",
+        "clearConfirm": "lIw yIteq",
+        "clearFailed": "lIw teqlu’laHbe’. yInID je.",
+        "withdrawTitle": "tlhob teqlu’’a’?",
+        "withdrawBody": "{date} may’Daq pawchoH {name}. tlhob nobmey chIlqu’ ’ej lIw qonlu’be’.",
+        "withdrawConfirm": "tlhob yIteq",
+        "withdrawFailed": "tlhob teqlu’laHbe’. yInID je."
+      },
       "sessions": {
         "loadFailed": "may’mey qonta’ghach laDlaHbe’. nIteb yIchu’qa’.",
         "loading": "ngIq vamvaD may’mey qonta’ghach laDlu’…",
@@ -1308,6 +1355,33 @@
       "notDelivered": "ngeHbe’lu’",
       "today": "DaHjaj",
       "yesterday": "wa’leS"
+    },
+    "substitutions": {
+      "title": "lIwmey",
+      "description": "may’mey pawlaHbe’bogh vay’, ’ej lIwpu’bogh nuv.",
+      "descriptionWithZone": "may’mey pawlaHbe’bogh vay’, ’ej lIwpu’bogh nuv. {zone} poH lo’lu’.",
+      "listLabel": "lIw poQbogh may’mey",
+      "allClear": "lIw poQbogh may’ tu’lu’be’.",
+      "justNow": "{count, plural, one {DaH # lIw lajlu’} other {DaH # lIwmey lajlu’}}",
+      "offersLabel": "lIwmeH tlhobbogh Gedupu’",
+      "away": "pawbe’:",
+      "unnamed": "pong Hutlh Gedu",
+      "reason": {
+        "sick": "rop",
+        "other": "latlh"
+      },
+      "noOffers": "nob tu’lu’be’ DaH.",
+      "openGroup": "ghom’a’ yIpoS",
+      "approve": "yIlaj",
+      "failed": "lajlu’be’ – yInID.",
+      "loadError": "lIwmey laDlaHbe’.",
+      "loadErrorWithReason": "lIwmey laDlaHbe’: {reason}",
+      "approveConfirmTitle": "{name} lIwwI' 'oH 'e' DalajlaH'a'?",
+      "approveConfirmBody": "{product} — {group} may' {when} tlhap {name}, {absent} qaStaHvIS. DaH Hoch lIwmey ghItlhDaj My SOG je luchaw'. may' 'oH 'e' bIH 48 rep pa' ghom pa' poSmoH. vay' ja'be'lu': latlh tlhobwI'pu' tetlhvo' may' mej, 'ej DaH ja' may' 'echleth: {absent} lIw {name}.",
+      "approveFailedOfferGone": "nobDaj teq {name}. lajmeH pagh tu'lu'.",
+      "approveFailedAlreadySettled": "latlh vay' may'vam rIntaH.",
+      "approveFailedSeatGone": "may'vam ghaj {absent} 'e' mev. lIwmeH pagh tu'lu'.",
+      "approveFailedIneligible": "may'vam tlhaplaHbe' {name} DaH."
     }
   },
   "auth": {
@@ -1952,6 +2026,41 @@
     }
   },
   "gedu": {
+    "substitution": {
+      "cardEyebrow": "lIw",
+      "cardOpenLabel": "{product} — may’ DalIwbogh",
+      "cardLockedLabel": "{product} — may’ DalIwbogh. may’ qaSpa’ loSmaH chorgh rep poSmoH Qu’meH pa’.",
+      "accessOpens": "{date} {time}Daq poSmoH Qu’meH pa’",
+      "poolHeading": "lIw poQbogh may’mey",
+      "poolAllClear": "DaH lIw poQbogh may’ tu’lu’be’.",
+      "poolRemote": "HeHDaq",
+      "poolSiteUnknown": "Daq ngu’lu’be’ DaH",
+      "poolRolePrimary": "Gedu wa’DIch",
+      "poolRoleAssistant": "Gedu boQwI’",
+      "poolFee": "{fee} / may’",
+      "poolOfferAction": "jIlIwlaH",
+      "poolWithdrawAction": "nob yInatlh",
+      "poolWithdrawPending": "natlhlI’…",
+      "poolActionFailed": "pollu’be’. yIboq.",
+      "pageTitle": "lIwmey",
+      "back": "jIH SOGDaq yIchegh",
+      "mineHeading": "DalIwbogh may’mey",
+      "mineAllClear": "may’ DalIwbogh tu’lu’be’.",
+      "fileAction": "may’ DapawlaHbe’’a’?",
+      "filePickTitle": "nuq may’ DapawlaHbe’?",
+      "filePickBody": "may’ yIwIv. meq ghantoHmey je leghlaH ra’wI’pu’ neH.",
+      "fileAlreadyRequested": "lIw tlhobta’lu’bogh",
+      "filePickWeekThis": "hoghvam",
+      "filePickWeekNext": "hogh veb",
+      "filePickWeekOf": "hogh {date}",
+      "filePickShowLater": "may’mey veb yI’ang",
+      "filePickGroupLabel": "ghom",
+      "filePickAllGroups": "ghommey Hoch",
+      "fileFiled": "lIw tlhobta’lu’: {product}, {when}. DaH may’vam ngoqDaq ’angchoHlu’.",
+      "fileFiledLink": "ghom vumtaHghach yIpoSmoH",
+      "offerConfirmTitle": "bIlIwqang’a’?",
+      "offerConfirmBody": "{when} {product} may’ DalIwqang. lIwwI’ wIv School of Gaming, vaj chaw’lu’pa’ bIbaghbe’ — chaw’lu’pa’ nob yInatlh net chaw’. chaw’lu’DI’, may’ qaSpa’ loSmaH chorgh rep poSmoH Qu’meH pa’."
+    },
     "coverage": {
       "title": "So’ Daqmey",
       "remoteOnlyNote": "ghom’a’Daj qemlaHbe’ latlh Gedu ’e’ luneHchugh, SoH DaDIvmoH. Hop neH DaqaDchugh, yIchIm yImej.",
@@ -2050,7 +2159,38 @@
       "creationsAddedCount": "{added}/{total} chelta’",
       "creationsHint": "may’ Qav ’oH may’vam’e’. Hoch chenmoHta’ ghajDI’ neH rInpu’. pong yIpoS ’ej chenmoHta’ yIchel.",
       "creationsMemberDone": "{name} — chenmoHta’ chelta’",
-      "creationsMemberMissing": "{name} — chenmoHta’ Hutlh"
+      "creationsMemberMissing": "{name} — chenmoHta’ Hutlh",
+      "staffingExpectedLabel": "may’vam DevwI’pu’:",
+      "staffingNobodyExpected": "may’vam DevwI’ tu’lu’be’ DaH.",
+      "staffingWithRole": "{name} ({role})",
+      "staffingSubstitutionNeeded": "{name} lIw poQlu’.",
+      "staffingSubstitutedBy": "{name} lIw ghaH {sub}’e’.",
+      "substitutionRolePrimary": "Gedu wa’DIch",
+      "substitutionRoleAssistant": "Gedu boQwI’",
+      "substitutionMenuLabel": "may’vamvaD latlh vumghachmey",
+      "substitutionRequestAction": "jIHaw’nIS",
+      "substitutionRequestDialogTitle": "may’vamDaq jIpawlaHbe’",
+      "substitutionRequestDialogBody": "qaStaH may’. lIw nej yaH. meq qonta’ je lulegh che’wI’pu’ neH.",
+      "substitutionReasonLabel": "meq",
+      "substitutionReasonSick": "rop",
+      "substitutionReasonOther": "latlh",
+      "substitutionNoteLabel": "yaHvaD qonta’",
+      "substitutionNotePlaceholder": "yaH Sovnis Hoch",
+      "substitutionNoteRemaining": "{count, plural, one {# ngutlh ratlh} other {# ngutlhmey ratlh}}",
+      "substitutionRequestConfirm": "yIchav",
+      "substitutionRequestFailed": "pollu’be’. yIboq.",
+      "substitutionRequestFailedAlreadyAsked": "lIw Datlhobta’ net Sov.",
+      "substitutionRequestFailedNotExpected": "lIw Datlhobta’, pagh may’vam DaDevbe’ DaH.",
+      "substitutionRequestFailedPastSession": "ret qaSpu’ may’vam.",
+      "substitutionRequestFailedNotScheduled": "may’vam lIjpu’ qonta’.",
+      "substitutionRequestStatusOpen": "lIw Datlhobta’. lIw nejlu’taH.",
+      "substitutionRequestStatusOffers": "{count, plural, one {# nob loStaH} other {# nobmey loStaH}}",
+      "substitutionRequestStatusSubstituted": "{name} ghaH lIwlIj’e’.",
+      "substitutionWithdrawAction": "jIpawlaH DaH",
+      "substitutionWithdrawTitle": "DaH Danatlh’a’?",
+      "substitutionWithdrawBody": "may’ DaDevqa’, ’ej Hoch lIw nob lunatlhlu’.",
+      "substitutionWithdrawConfirm": "yInatlh",
+      "substitutionWithdrawFailed": "pollu’be’. yIboq."
     },
     "groupNotes": {
       "heading": "ghom’a’vam",
@@ -2240,7 +2380,9 @@
       "shop": "ngevwI’",
       "yty": "Yty",
       "about": "maH",
-      "faq": "ghelmeH"
+      "faq": "ghelmeH",
+      "substitutions": "qa’meH",
+      "substitutionsPhone": "qa’meH"
     },
     "accountMenu": "qa’ De’wI’ – {name}",
     "continueToAccount": "qa’lIj yIghoS",
@@ -2690,7 +2832,8 @@
     "settings": "ngoQmey",
     "tools": "janmey",
     "expandSidebar": "HeDmey ’an",
-    "collapseSidebar": "HeDmey SoQmoH"
+    "collapseSidebar": "HeDmey SoQmoH",
+    "substitutions": "lIwmey"
   },
   "home": {
     "hero": {

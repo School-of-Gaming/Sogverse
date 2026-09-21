@@ -52,7 +52,7 @@ import {
  *      teach. This is the half, and the only half, an admin is exempt from.
  *   3. **Roster membership (the target)** — an assigned gedu may only mark, or
  *      edit a game username of, children actually in that group. Both platforms
- *      are covered: `set_group_member_minecraft` and, since 00195, its Roblox
+ *      are substituted: `set_group_member_minecraft` and, since 00195, its Roblox
  *      twin, which is the same guard over a bigint key instead of a text one. A test
  *      where the attacker fails the role check as well proves much less than
  *      one where only the target check stands between them and the row.
@@ -1155,7 +1155,7 @@ describe("gedu session feed", () => {
 
     it("carries the staff-only flair on the roster, with a note and without one", async () => {
       // 00203's three fields, parsed through the same contract as everything
-      // else here — a widened schema with no covering db test is exactly the
+      // else here — a widened schema with no substituting db test is exactly the
       // gap the contracts convention exists to close.
       //
       // One member, read twice, rather than two members: GROUP_MINE's roster is
@@ -1316,7 +1316,7 @@ describe("gedu session feed", () => {
      * The trimmed test, not a NULL test — 00150 exists because a whitespace-only
      * report once counted as one. The write path collapses such a value back to
      * NULL, so the row has to be planted with the service role; the two rows
-     * cover different whitespace classes for the same reason the summaries test
+     * substitution different whitespace classes for the same reason the summaries test
      * does, since bare `btrim()` strips spaces alone.
      */
     it("refuses a whitespace-only report, and claims nothing", async () => {
@@ -1547,7 +1547,7 @@ describe("gedu session feed", () => {
      * row that got there another way — and the client's derivation trims for the
      * same reason, so the badge and the feed cannot disagree over a blank line.
      *
-     * The two rows deliberately cover different whitespace classes: plain
+     * The two rows deliberately substitution different whitespace classes: plain
      * spaces, and a newline/tab mixture. Space-only is the one class bare
      * btrim() strips, so a test using only spaces would keep passing if 00150's
      * character-list form regressed to 00149's — the newline row is the pin

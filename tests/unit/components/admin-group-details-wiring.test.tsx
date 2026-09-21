@@ -8,6 +8,7 @@ import {
   within,
 } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import messages from "@/../messages/en.json";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
@@ -30,7 +31,7 @@ vi.mock("@/components/ui/rich-text-editor", () =>
  * ============================================================================
  *
  * The body is shared and is tested where it lives; the marks themselves are
- * pure and covered in `member-flair-newcomer.test.ts`. What only this shell can
+ * pure and substituted in `member-flair-newcomer.test.ts`. What only this shell can
  * get wrong is the seam it owns — **four documents folded into the one shape
  * that body takes**:
  *
@@ -111,7 +112,11 @@ vi.mock("@/services/products", () => ({
   useProductAdmin: () => ({ data: reads.product, isPending: false }),
 }));
 
-vi.mock("@/services/admin-sessions", () => ({
+// The hooks are stubbed and the key factory is kept real: the shell awaits an
+// invalidation on it after every substitution write, and a stubbed key would let a
+// rename through.
+vi.mock("@/services/admin-sessions", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/admin-sessions")>()),
   useAdminProductSessions: () => ({ data: reads.sessions, isPending: false }),
   useAdminSetSessionNotes: noopMutation,
   useAdminRecordAttendance: noopMutation,
@@ -152,6 +157,16 @@ vi.mock("@/services/minecraft", () => ({
 vi.mock("@/services/roblox", () => ({
   useUpdateGroupMemberRoblox: noopMutation,
   useRobloxRenders: () => ({ data: undefined }),
+}));
+
+// The three admin substitution writes the staffing editor is bound to. Nothing here
+// opens that editor — the feed is empty below, so there is no card to draw one
+// on — but the shell binds all three on every render.
+vi.mock("@/services/session-substitution", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/session-substitution")>()),
+  useSetSessionSubstitution: noopMutation,
+  useClearSessionSubstitution: noopMutation,
+  useWithdrawSessionSubstitutionRequestAsAdmin: noopMutation,
 }));
 
 vi.mock("@/services/member-flair", () => ({
@@ -308,6 +323,10 @@ function adminSessions(): AdminProductSessions {
           { participant_id: IDS.emil, first_name: "Emil" },
         ],
         sessions: [],
+        // The staffing derivation's two inputs. Empty: this suite is about the
+        // admin shell's wiring, not about who is running the sessions.
+        gedus: [],
+        substitutions: [],
       },
       {
         id: IDS.peerGroup,
@@ -317,6 +336,10 @@ function adminSessions(): AdminProductSessions {
         gedu_note: null,
         roster: [],
         sessions: [],
+        // The staffing derivation's two inputs. Empty: this suite is about the
+        // admin shell's wiring, not about who is running the sessions.
+        gedus: [],
+        substitutions: [],
       },
     ],
   };
@@ -354,6 +377,8 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
       feedMember(IDS.emil, "Emil", { group_joined_at: JOINED_RECENTLY }),
     ],
     sessions: [],
+    gedus: [],
+    substitutions: [],
   };
 }
 
@@ -381,18 +406,25 @@ function renderPage(productType: ProductType) {
   reads.feed = groupFeed(productType);
   reads.snapshot = groupsSnapshot();
 
+  // A real client, because the shell reads one: every substitution write finishes by
+  // awaiting an invalidation on the admin-sessions key, and an empty cache
+  // settles that immediately.
+  const queryClient = new QueryClient();
+
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
-      <TimezoneProvider initialTimezone="Europe/Helsinki">
-        <NowProvider initialNow={NOW}>
-          <AdminGroupDetailsPage
-            productType={productType === "camp" ? "camp" : "consumer_club"}
-            productId={IDS.product}
-            groupId={IDS.group}
-          />
-        </NowProvider>
-      </TimezoneProvider>
-    </NextIntlClientProvider>,
+    <QueryClientProvider client={queryClient}>
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <TimezoneProvider initialTimezone="Europe/Helsinki">
+          <NowProvider initialNow={NOW}>
+            <AdminGroupDetailsPage
+              productType={productType === "camp" ? "camp" : "consumer_club"}
+              productId={IDS.product}
+              groupId={IDS.group}
+            />
+          </NowProvider>
+        </TimezoneProvider>
+      </NextIntlClientProvider>
+    </QueryClientProvider>,
   );
 }
 

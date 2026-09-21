@@ -47,14 +47,25 @@ export function useMyAssignedProducts(options: {
  * There is no `initialData` parameter for that reason — the seeding reaches
  * this hook through the cache rather than through the call site, which is what
  * lets the route also seed the *second*, group-keyed read it unlocks.
+ *
+ * **`groupId` says which group of the product is "mine" (00272)**, and it is
+ * part of the cache key because it genuinely changes the answer: a gedu
+ * substituting a sibling group of a product they already teach asks this same RPC
+ * for a different workspace, and the two documents must not share an entry.
+ * `null` — the ordinary case — resolves the caller's assignment group as it
+ * always did. It reaches the page from the URL's `?groupId=`, which is what a
+ * substitution card's link carries.
  */
-export function useGeduAssignedProduct(productId: string | undefined) {
+export function useGeduAssignedProduct(
+  productId: string | undefined,
+  groupId: string | null = null,
+) {
   const supabase = getClient();
   const service = new AssignmentsService(supabase);
 
   return useQuery({
-    queryKey: assignmentKeys.assignedProductDetail(productId),
-    queryFn: () => service.getAssignedProductDetail(productId!),
+    queryKey: assignmentKeys.assignedProductDetail(productId, groupId),
+    queryFn: () => service.getAssignedProductDetail(productId!, groupId),
     enabled: !!productId,
   });
 }

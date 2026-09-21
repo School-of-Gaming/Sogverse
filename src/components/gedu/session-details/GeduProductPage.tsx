@@ -1,19 +1,24 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import type { GameAccountStatus } from "@/components/game-account";
 import {
   resolveInGroupSince,
+  type SessionSubstitutionRequestDraft,
+  type SessionFeedEntry,
   type SessionFeedGamer,
 } from "@/components/gedu/session-feed";
 import { showsNewcomerBadge } from "@/components/member-flair";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
 import { platformForTopic } from "@/lib/products/topics";
+import { productLocalDate } from "@/lib/session-occurrence";
 import { useNow } from "@/providers";
 import { useGeduAssignedProduct } from "@/services/assignments";
 import {
+  geduSessionKeys,
   useAddSessionImage,
   useDeleteSessionImage,
   useEmailSessionReport,
@@ -34,6 +39,10 @@ import {
   useSetGamerGroupNote,
 } from "@/services/member-flair";
 import { useUpdateGroupMemberMinecraft } from "@/services/minecraft";
+import {
+  useRequestSessionSubstitution,
+  useWithdrawSessionSubstitutionRequest,
+} from "@/services/session-substitution";
 import {
   useRobloxRenders,
   useUpdateGroupMemberRoblox,
@@ -88,9 +97,34 @@ import { GeduProductPageSkeleton } from "./GeduProductPageSkeleton";
  * pending branches are what a client-side navigation, a refetch and a failed
  * prefetch all still land on, and they stay exactly as they were.
  */
-export function GeduProductPage({ productId }: { productId: string }) {
-  const { data: product, isPending: productPending } =
-    useGeduAssignedProduct(productId);
+export function GeduProductPage({
+  productId,
+  /**
+   * Which group of the product to open, from the route's `?groupId=` — `null`
+   * for the caller's own assignment, which is every ordinary visit. It is a
+   * segment of the read's cache key as well as an argument to it, so two groups
+   * of one product never share a cached document.
+   */
+  groupId: requestedGroupId = null,
+  /**
+   * The signed-in gedu, resolved by the route's server half.
+   *
+   * It is a prop rather than something read from a client auth context for two
+   * reasons: it is settled before the first paint, so the server render and the
+   * first client render cannot disagree about whose workspace this is; and the
+   * page's presentational body stays drivable from fixtures, which is what lets
+   * a preview scene render the workspace as a *particular* gedu.
+   */
+  viewerId,
+}: {
+  productId: string;
+  groupId?: string | null;
+  viewerId: string | null;
+}) {
+  const { data: product, isPending: productPending } = useGeduAssignedProduct(
+    productId,
+    requestedGroupId,
+  );
 
   // Only asked once the assignment read has told us which group is ours; until
   // then there is nothing to key it by.
@@ -103,7 +137,7 @@ export function GeduProductPage({ productId }: { productId: string }) {
 
   if (!product || !feed) return <NotAssignedState />;
 
-  return <Workspace product={product} feed={feed} />;
+  return <Workspace product={product} feed={feed} viewerId={viewerId} />;
 }
 
 /** The page frame around the "this isn't your product" answer. */
@@ -135,9 +169,16 @@ function NotAssignedState() {
 function Workspace({
   product,
   feed,
+  viewerId,
 }: {
   product: GeduAssignedProduct;
   feed: GeduGroupFeed;
+  /**
+   * Who is reading — the one thing the feed's staffing cannot derive from the
+   * document alone. It says who is expected and who filed which absence; it
+   * does not say which of those people is at the keyboard.
+   */
+  viewerId: string | null;
 }) {
   const liveNow = useNow();
   const groupId = feed.group.id;
@@ -207,6 +248,14 @@ function Workspace({
   // by hand, and neither can drift into refreshing a different set.
   const setGamerNote = useSetGamerGroupNote(groupId);
   const setGamerCreations = useSetGamerGroupCreations(groupId);
+  // The two writes a gedu may make about their own seat. Both invalidate the
+  // five documents a substitution moves — this page's feed among them — so the card
+  // that filed the absence redraws itself with nothing here refetching by hand.
+  const requestSessionSubstitution = useRequestSessionSubstitution();
+  const withdrawSessionSubstitutionRequest = useWithdrawSessionSubstitutionRequest();
+  // Only the two substitution writes above use it, and only to wait on this page's own
+  // document after them — see `settleSubstitutionWrite`.
+  const queryClient = useQueryClient();
 
   /**
    * The account ids whose Roblox figure this roster needs — verified rows only,
@@ -250,9 +299,15 @@ function Workspace({
         startDate: feed.product.start_date,
         endDate: feed.product.end_date,
         sessions: feed.sessions,
+        // The staffing derivation's two inputs, straight off the same document
+        // the sessions come from — and the viewer, which is what decides whether
+        // a card offers "I can't make this session" at all.
+        gedus: feed.gedus,
+        substitutions: feed.substitutions,
+        viewerId,
         now,
       }),
-    [groupId, feed.product, feed.sessions, now],
+    [groupId, feed.product, feed.sessions, feed.gedus, feed.substitutions, viewerId, now],
   );
 
   /**
@@ -444,6 +499,60 @@ function Workspace({
       deleteSessionImage,
     });
 
+  /**
+   * The half of a substitution write the mutation does not supply: this page's own
+   * document, read again before the card lets go of its committing flag.
+   *
+   * Every substitution write invalidates five roots in its `onSuccess` without waiting
+   * for any of them, which is right for the four documents this page is not
+   * reading and not enough for the one it is. The card holds its flag until the
+   * promise it is given settles, and the card **survives** the write — the feed
+   * keys an entry by (group, date) — so a promise resolving on the receipt
+   * would hand back a control over staffing the write has just changed, or
+   * leave the flag set for ever on a card that never unmounts. Awaiting the
+   * gedu-sessions key means the card is already rebuilt from the new `substitutions`
+   * by the time the region clears. It is the same shape the admin shell's
+   * staffing editor uses, one key over.
+   */
+  const settleSubstitutionWrite = async () => {
+    await queryClient.invalidateQueries({ queryKey: geduSessionKeys.all });
+  };
+
+  /**
+   * "I can't make this session", from the card that offers it.
+   *
+   * **The entry is turned back into its (group, date) pair here**, in the
+   * product's own zone — the same identity the row is keyed by in Postgres and
+   * the same conversion every other write on this page makes. The card never
+   * sees a date at all.
+   *
+   * The note is **omitted rather than sent as null** when there is nothing to
+   * say: the RPC's parameter carries a SQL default, and the type generator
+   * types no RPC argument as nullable, so the absence of the key is how "no
+   * note" is spelled.
+   *
+   * Awaited, and its rejection is allowed through: the dialog holds the
+   * committing flag and hands its own control back on a refusal.
+   */
+  const handleRequestSubstitution = async (
+    entry: SessionFeedEntry,
+    draft: SessionSubstitutionRequestDraft,
+  ) => {
+    const note = draft.note.trim();
+    await requestSessionSubstitution.mutateAsync({
+      groupId,
+      sessionDate: productLocalDate(entry.startsAt, feed.product.timezone),
+      reason: draft.reason,
+      ...(note.length > 0 ? { reasonNote: note } : {}),
+    });
+    await settleSubstitutionWrite();
+  };
+
+  const handleWithdrawSubstitutionRequest = async (requestId: string) => {
+    await withdrawSessionSubstitutionRequest.mutateAsync({ requestId });
+    await settleSubstitutionWrite();
+  };
+
   const handleSaveGroupNotes = async (draft: GroupNotesDraft) => {
     await setGroupNotes.mutateAsync({
       publicNote: draft.publicNote,
@@ -526,6 +635,11 @@ function Workspace({
       onSendReport={sendReport}
       onAddPhoto={addPhoto}
       onRemovePhoto={removePhoto}
+      // The gedu half of the staffing pair: a gedu may speak for their own
+      // seat and for nothing else, so this shell supplies the two callbacks and
+      // no staffing editor. The admin shell does the opposite.
+      onRequestSubstitution={handleRequestSubstitution}
+      onWithdrawSubstitutionRequest={handleWithdrawSubstitutionRequest}
       onSaveGameUsername={handleSaveGameUsername}
       gameStatuses={gameStatuses}
       robloxAvatarUrls={robloxAvatarUrls}

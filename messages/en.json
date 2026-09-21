@@ -64,7 +64,9 @@
       "robloxSafeguarding": "Creator Academy Child Safeguarding Policy",
       "robloxTerms": "Creator Academy Terms & Conditions",
       "geduContract": "Gedu contract",
-      "seatOffer": "Seat offer"
+      "seatOffer": "Seat offer",
+      "geduSubstitutions": "Substitutions",
+      "adminSubstitutions": "Substitutions"
     },
     "descriptions": {
       "signIn": "Sign in to your School of Gaming account to see your gamers’ upcoming sessions, manage enrolments and keep your family’s details up to date.",
@@ -457,6 +459,11 @@
         "manage": "Manage invoice customers",
         "option": "{name} ({number})"
       }
+    },
+    "geduRole": {
+      "primary": "Primary",
+      "assistant": "Assistant",
+      "selectAria": "Role for {name}"
     },
     "geduContract": {
       "heading": "Gedu contract",
@@ -931,6 +938,8 @@
         "noResults": "No Gedus match your search.",
         "current": "Current",
         "alreadyAssigned": "Already assigned",
+        "alreadyExpected": "Already at this session",
+        "absentGedu": "The Gedu being substituted for",
         "notCertified": "Not certified"
       },
       "participantPicker": {
@@ -1107,6 +1116,44 @@
         },
         "note": "The price above includes VAT. Stripe works out the exact amount when the sale happens, so this is Finland’s rate today."
       },
+      "staffing": {
+        "menuLabel": "More actions for this session",
+        "setSubstitute": "Set a substitute",
+        "changeSubstitute": "Change substitute",
+        "changeSubstituteFor": "Change substitute for {name}",
+        "clearSubstitute": "Clear substitute",
+        "clearSubstituteFor": "Clear substitute for {name}",
+        "withdrawRequest": "Withdraw request",
+        "withdrawRequestFor": "Withdraw request for {name}",
+        "withRole": "{name} · {role}",
+        "absentLabel": "Away",
+        "subLabel": "Substitute",
+        "changeChoice": "Change",
+        "absentStepTitle": "Who is away?",
+        "absentStepBody": "More than one Gedu is due at the session on {date}. Pick the one who will not be there.",
+        "pickerTitle": "Choose a substitute",
+        "pickerDescription": "Choose who substitutes for {name}. A Gedu who can’t is shown with the reason.",
+        "confirmTitle": "Set a substitute",
+        "confirmBody": "Record who runs the session on {date} in the absent Gedu’s place.",
+        "approvesOpenRequest": "This approves the open request, rather than filing a second one.",
+        "replacesCurrentSub": "This replaces {name}, who is substituting at the session at the moment.",
+        "reasonLabel": "Reason",
+        "reasonSick": "Sick",
+        "reasonOther": "Something else",
+        "noteLabel": "Note for the office",
+        "notePlaceholder": "Anything the office should know about this substitution.",
+        "noteRemaining": "{count} characters left",
+        "confirmAction": "Set the substitute",
+        "setFailed": "The substitute could not be set. Try again.",
+        "clearTitle": "Clear the substitute?",
+        "clearBody": "{sub} stops substituting for {name} on {date}, and the session goes back to the queue as needing a substitute.",
+        "clearConfirm": "Clear the substitute",
+        "clearFailed": "The substitute could not be cleared. Try again.",
+        "withdrawTitle": "Withdraw the request?",
+        "withdrawBody": "{name} is attending the session on {date} after all. Any offers on the request are dropped and nobody is recorded as substituting.",
+        "withdrawConfirm": "Withdraw the request",
+        "withdrawFailed": "The request could not be withdrawn. Try again."
+      },
       "sessions": {
         "loadFailed": "The session record could not be loaded. Reload the page to try again.",
         "loading": "Loading this product's session record.",
@@ -1264,6 +1311,33 @@
       "notDelivered": "Not delivered",
       "today": "Today",
       "yesterday": "Yesterday"
+    },
+    "substitutions": {
+      "title": "Substitutions",
+      "description": "Sessions somebody cannot make, and who stood in.",
+      "descriptionWithZone": "Sessions somebody cannot make, and who stood in. Times are shown in {zone}.",
+      "listLabel": "Sessions needing a substitute",
+      "allClear": "No session needs a substitute.",
+      "justNow": "{count, plural, one {# substitute approved just now} other {# substitutes approved just now}}",
+      "offersLabel": "Gedus offering to substitute",
+      "away": "Away:",
+      "unnamed": "Unnamed Gedu",
+      "reason": {
+        "sick": "Sick",
+        "other": "Other"
+      },
+      "noOffers": "No offers yet.",
+      "openGroup": "Open the group",
+      "approve": "Approve",
+      "failed": "Could not approve — try again.",
+      "loadError": "The substitutions could not be loaded.",
+      "loadErrorWithReason": "The substitutions could not be loaded: {reason}",
+      "approveConfirmTitle": "Approve {name} as the substitute?",
+      "approveConfirmBody": "{name} takes {product} — {group} on {when}, in {absent}’s place. They see the session on their Substitutions page and on My SOG straight away, and the group’s workspace opens to them 48 hours before it starts. Nobody is notified: the session leaves the other volunteers’ list, and its card now says {name} is substituting for {absent}.",
+      "approveFailedOfferGone": "{name} has taken their offer back, so there is nobody to approve.",
+      "approveFailedAlreadySettled": "This session has already been settled by someone else.",
+      "approveFailedSeatGone": "{absent} no longer has this session, so there is nothing to substitute for.",
+      "approveFailedIneligible": "{name} can no longer take this session."
     }
   },
   "auth": {
@@ -1912,9 +1986,44 @@
     }
   },
   "gedu": {
+    "substitution": {
+      "cardEyebrow": "Substitution",
+      "cardOpenLabel": "{product} — session you’re substituting for",
+      "cardLockedLabel": "{product} — session you’re substituting for. The group’s workspace opens 48 hours before it starts.",
+      "accessOpens": "Workspace opens {date} at {time}",
+      "poolHeading": "Sessions needing a substitute",
+      "poolAllClear": "No sessions need a substitute right now.",
+      "poolRemote": "Remote",
+      "poolSiteUnknown": "Place to be confirmed",
+      "poolRolePrimary": "Primary",
+      "poolRoleAssistant": "Assistant",
+      "poolFee": "{fee} per session",
+      "poolOfferAction": "Offer to substitute",
+      "poolWithdrawAction": "Withdraw offer",
+      "poolWithdrawPending": "Withdrawing…",
+      "poolActionFailed": "That didn’t save. Try again.",
+      "pageTitle": "Substitutions",
+      "back": "Back to My SOG",
+      "mineHeading": "You’re substituting",
+      "mineAllClear": "You have no substitutions coming up.",
+      "fileAction": "Can’t make a session?",
+      "filePickTitle": "Which session can’t you make?",
+      "filePickBody": "Pick the session you can’t make. Your reason and note are shown to admins only.",
+      "fileAlreadyRequested": "Already asked for a substitute",
+      "filePickWeekThis": "This week",
+      "filePickWeekNext": "Next week",
+      "filePickWeekOf": "Week of {date}",
+      "filePickShowLater": "Show later sessions",
+      "filePickGroupLabel": "Group",
+      "filePickAllGroups": "All groups",
+      "fileFiled": "Substitute requested for {product} on {when}. It now shows on that session’s card.",
+      "fileFiledLink": "Open the group’s workspace",
+      "offerConfirmTitle": "Offer to substitute?",
+      "offerConfirmBody": "You’re offering to run {product} on {when}. School of Gaming chooses who substitutes, so an offer is not a commitment until it is approved — you can withdraw it until then. Once it is approved, the group’s workspace opens to you 48 hours before the session starts."
+    },
     "coverage": {
       "title": "Coverage areas",
-      "remoteOnlyNote": "Used to match you as a substitute when another Gedu can’t cover their club. Leave empty if you only sub remotely.",
+      "remoteOnlyNote": "Used to match you as a substitute when another Gedu can’t make their club. Leave empty if you only substitute remotely.",
       "selectedHeading": "Selected ({count})",
       "noneSelected": "No areas selected",
       "remove": "Remove {name}",
@@ -2010,7 +2119,38 @@
       "creationsAddedCount": "{added} of {total} added",
       "creationsHint": "This is the run’s last session, so it isn’t finished until everyone here has a creation. Open a name to add one.",
       "creationsMemberDone": "{name} — creation added",
-      "creationsMemberMissing": "{name} — creation still needed"
+      "creationsMemberMissing": "{name} — creation still needed",
+      "staffingExpectedLabel": "Running this session:",
+      "staffingNobodyExpected": "Nobody is running this session yet.",
+      "staffingWithRole": "{name} ({role})",
+      "staffingSubstitutionNeeded": "Substitute needed for {name}.",
+      "staffingSubstitutedBy": "{sub} is substituting for {name}.",
+      "substitutionRolePrimary": "Primary",
+      "substitutionRoleAssistant": "Assistant",
+      "substitutionMenuLabel": "More actions for this session",
+      "substitutionRequestAction": "I need to cancel",
+      "substitutionRequestDialogTitle": "I can’t make this session",
+      "substitutionRequestDialogBody": "The session still runs — the office looks for a substitute to take your place. Your reason and note are shown to admins only.",
+      "substitutionReasonLabel": "Reason",
+      "substitutionReasonSick": "Sick",
+      "substitutionReasonOther": "Something else",
+      "substitutionNoteLabel": "Note for the office",
+      "substitutionNotePlaceholder": "Anything the office should know",
+      "substitutionNoteRemaining": "{count, plural, one {# character left} other {# characters left}}",
+      "substitutionRequestConfirm": "Confirm",
+      "substitutionRequestFailed": "That didn’t save. Try again.",
+      "substitutionRequestFailedAlreadyAsked": "You’ve already asked for a substitute for this session.",
+      "substitutionRequestFailedNotExpected": "You’ve already asked for a substitute for this session, or you’re no longer down to run it.",
+      "substitutionRequestFailedPastSession": "This session’s date has already passed.",
+      "substitutionRequestFailedNotScheduled": "This session is no longer on the schedule.",
+      "substitutionRequestStatusOpen": "You’ve asked for a substitute for this session. Waiting for one.",
+      "substitutionRequestStatusOffers": "{count, plural, one {# offer waiting} other {# offers waiting}}",
+      "substitutionRequestStatusSubstituted": "{name} is substituting for you.",
+      "substitutionWithdrawAction": "I can make it after all",
+      "substitutionWithdrawTitle": "Take this back?",
+      "substitutionWithdrawBody": "You go back to running the session, and any offers to substitute are dropped.",
+      "substitutionWithdrawConfirm": "Take it back",
+      "substitutionWithdrawFailed": "That didn’t save. Try again."
     },
     "groupNotes": {
       "heading": "About this group",
@@ -2200,7 +2340,9 @@
       "shop": "Shop",
       "yty": "Yty",
       "about": "About",
-      "faq": "FAQ"
+      "faq": "FAQ",
+      "substitutions": "Substitutions",
+      "substitutionsPhone": "Substitutions"
     },
     "accountMenu": "Account menu – {name}",
     "continueToAccount": "Continue to your account",
@@ -2650,7 +2792,8 @@
     "settings": "Settings",
     "tools": "Tools",
     "expandSidebar": "Expand sidebar",
-    "collapseSidebar": "Collapse sidebar"
+    "collapseSidebar": "Collapse sidebar",
+    "substitutions": "Substitutions"
   },
   "home": {
     "hero": {

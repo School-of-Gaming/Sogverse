@@ -8,7 +8,9 @@ import {
   within,
 } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import messages from "@/../messages/en.json";
+import { NO_SESSION_STAFFING } from "@/lib/session-staffing";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { GeduProductPage } from "@/components/gedu/session-details/GeduProductPage";
@@ -41,7 +43,7 @@ vi.mock("@/components/ui/rich-text-editor", () =>
  * ============================================================================
  *
  * The marks themselves are settled and tested elsewhere: `newcomerDaysIn` and
- * `showsNewcomerBadge` are pure and exhaustively covered in
+ * `showsNewcomerBadge` are pure and exhaustively substituted in
  * `member-flair-newcomer.test.ts`, and the badge and the dialog are components
  * with no wiring of their own. What no amount of that catches is the seam this
  * file is about — the **shell** turning a roster document into the one flair
@@ -90,6 +92,8 @@ const IDS = {
   oskar: "e030b484-cbc1-4b39-ba30-0b164ecb409e",
   /** A join stamp and no note. */
   emil: "e293b898-5caa-4920-85a1-8336c282c3d7",
+  /** The signed-in gedu — the page's own viewer, not a roster member. */
+  gedu: "5c4a0e71-93b8-4f2d-8a16-7d0e62b4c9f3",
 } as const;
 
 const NOW = new Date("2026-03-16T12:00:00.000Z");
@@ -168,6 +172,17 @@ vi.mock("@/services/minecraft", () => ({
 vi.mock("@/services/roblox", () => ({
   useUpdateGroupMemberRoblox: noopMutation,
   useRobloxRenders: () => ({ data: undefined }),
+}));
+
+// The two writes a gedu may make about their own seat. Stubbed for the same
+// reason every other mutation here is: this suite is about the roster's flair,
+// and an unstubbed hook reaches for a QueryClient this tree does not provide.
+// Everything else is kept real — the note-length cap the substitution dialog reads is
+// a constant of this module, and a wholesale mock makes it `undefined` here.
+vi.mock("@/services/session-substitution", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/session-substitution")>()),
+  useRequestSessionSubstitution: noopMutation,
+  useWithdrawSessionSubstitutionRequest: noopMutation,
 }));
 
 vi.mock("@/services/member-flair", () => ({
@@ -298,6 +313,12 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
       feedMember(IDS.emil, "Emil", { group_joined_at: JOINED_RECENTLY }),
     ],
     sessions: [],
+    // The staffing derivation's two inputs. Empty: nothing in this suite is
+    // about who runs the sessions, and an empty pair is a true answer rather
+    // than a placeholder — a group with one gedu and no absences reads the
+    // same way to everything under test here.
+    gedus: [],
+    substitutions: [],
   };
 }
 
@@ -313,13 +334,23 @@ function renderPage(
   reads.feed = adjustFeed(groupFeed(productType));
 
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
-      <TimezoneProvider initialTimezone="Europe/Helsinki">
-        <NowProvider initialNow={NOW}>
-          <GeduProductPage productId={IDS.product} />
-        </NowProvider>
-      </TimezoneProvider>
-    </NextIntlClientProvider>,
+    // A real client, unmocked: the page holds one only to wait on its own
+    // document after a substitution write, and there is nothing in here for it to
+    // invalidate — but the hook that reaches for it still needs a provider.
+    <QueryClientProvider client={new QueryClient()}>
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <TimezoneProvider initialTimezone="Europe/Helsinki">
+          <NowProvider initialNow={NOW}>
+            {/* The viewer decides the session staffing's own fields — who is
+                expected on a date, and therefore whether a card offers "I can't
+                make this session". Nothing in this suite is about that, and the
+                fixture's group has no staff at all, so it is only here because
+                the page asks for it. */}
+            <GeduProductPage productId={IDS.product} viewerId={IDS.gedu} />
+          </NowProvider>
+        </TimezoneProvider>
+      </NextIntlClientProvider>
+    </QueryClientProvider>,
   );
 }
 
@@ -843,6 +874,7 @@ function finalSessionEntry(): PastSessionFeedEntry {
     id: `${IDS.group}:${RUN_END_DATE}`,
     startsAt: new Date("2026-03-09T14:30:00.000Z"),
     endsAt: new Date("2026-03-09T16:00:00.000Z"),
+    staffing: NO_SESSION_STAFFING,
     report: "# The last session",
     staffNote: null,
     attendance: {
@@ -885,13 +917,23 @@ function renderEndedRun(
   feedEntries.value = [finalSessionEntry(), ...earlierSessions];
 
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
-      <TimezoneProvider initialTimezone="Europe/Helsinki">
-        <NowProvider initialNow={NOW}>
-          <GeduProductPage productId={IDS.product} />
-        </NowProvider>
-      </TimezoneProvider>
-    </NextIntlClientProvider>,
+    // A real client, unmocked: the page holds one only to wait on its own
+    // document after a substitution write, and there is nothing in here for it to
+    // invalidate — but the hook that reaches for it still needs a provider.
+    <QueryClientProvider client={new QueryClient()}>
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <TimezoneProvider initialTimezone="Europe/Helsinki">
+          <NowProvider initialNow={NOW}>
+            {/* The viewer decides the session staffing's own fields — who is
+                expected on a date, and therefore whether a card offers "I can't
+                make this session". Nothing in this suite is about that, and the
+                fixture's group has no staff at all, so it is only here because
+                the page asks for it. */}
+            <GeduProductPage productId={IDS.product} viewerId={IDS.gedu} />
+          </NowProvider>
+        </TimezoneProvider>
+      </NextIntlClientProvider>
+    </QueryClientProvider>,
   );
 }
 
@@ -986,6 +1028,7 @@ function upcomingFinalSessionEntry(): FutureSessionFeedEntry {
     id: `${IDS.group}:${UPCOMING_END_DATE}`,
     startsAt: new Date("2026-03-23T14:30:00.000Z"),
     endsAt: new Date("2026-03-23T16:00:00.000Z"),
+    staffing: NO_SESSION_STAFFING,
     report: null,
     staffNote: null,
     attendance: {},
@@ -1011,13 +1054,23 @@ function renderUpcomingRun(): ReturnType<typeof render> {
   feedEntries.value = [upcomingFinalSessionEntry()];
 
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
-      <TimezoneProvider initialTimezone="Europe/Helsinki">
-        <NowProvider initialNow={NOW}>
-          <GeduProductPage productId={IDS.product} />
-        </NowProvider>
-      </TimezoneProvider>
-    </NextIntlClientProvider>,
+    // A real client, unmocked: the page holds one only to wait on its own
+    // document after a substitution write, and there is nothing in here for it to
+    // invalidate — but the hook that reaches for it still needs a provider.
+    <QueryClientProvider client={new QueryClient()}>
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <TimezoneProvider initialTimezone="Europe/Helsinki">
+          <NowProvider initialNow={NOW}>
+            {/* The viewer decides the session staffing's own fields — who is
+                expected on a date, and therefore whether a card offers "I can't
+                make this session". Nothing in this suite is about that, and the
+                fixture's group has no staff at all, so it is only here because
+                the page asks for it. */}
+            <GeduProductPage productId={IDS.product} viewerId={IDS.gedu} />
+          </NowProvider>
+        </TimezoneProvider>
+      </NextIntlClientProvider>
+    </QueryClientProvider>,
   );
 }
 

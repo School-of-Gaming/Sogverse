@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { formatInTimeZone } from "date-fns-tz";
 import { z } from "zod";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
@@ -29,9 +30,19 @@ import { voiceTokenResponse } from "@/services/voice/voice.contracts";
  * Gates:
  *   1. Membership — participants (a gamer, or a parent holding their own seat
  *      on a for-parents product) via an active participation, gedus via a
- *      product-level assignment (cross-group voice mobility), admins pass
- *      through.
+ *      product-level assignment (cross-group voice mobility) **or a live substitution
+ *      on this group for the session being joined**, admins pass through. The
+ *      substitution arm is date-scoped where the assignment arm is not: a sub joins
+ *      the room on the session they are substituting and on none of the group's
+ *      other sessions.
  *   2. Session window — at least one slot's window must be open right now.
+ *
+ * The two gates answer in that order and the order is the contract — a
+ * non-member is refused whether or not a session is running, so this route
+ * cannot be used to probe which groups are in session. The open slot is
+ * *computed* before gate 1 all the same, because gate 1 needs the date of the
+ * session being joined to look a substitution up under; nothing is decided by it until
+ * gate 2.
  *
  * Notably absent: there is no "did you enroll before this session started?"
  * gate. Active membership is the binary access predicate. (Credit-based
@@ -89,6 +100,42 @@ export const POST = defineRoute({
     const productTimezone = group.product.timezone;
     const slots = group.product.slots;
 
+    // ---- Which session is being joined ----
+    // Iterate every slot; the first whose window is currently open wins.
+    // Mon-11pm + Tue-5am sessions for the same group sit on different slots
+    // (and end up with distinct Daily room names below), so checking each slot
+    // independently is correct.
+    //
+    // Computed here rather than after the membership gate because the substitution arm
+    // of that gate needs the SESSION DATE, and the open slot is what knows it.
+    // Nothing is refused on it yet — the gates still answer in their documented
+    // order below.
+    const now = new Date();
+    let openSlot: {
+      windowOpensAt: Date;
+      windowClosesAt: Date;
+      sessionStartsAt: Date;
+    } | null = null;
+    for (const slot of slots) {
+      const window = computeSessionWindow(
+        {
+          day_of_week: slot.weekday,
+          start_time: slot.start_time,
+          timezone: productTimezone,
+          duration_minutes: slot.duration_minutes,
+        },
+        now,
+      );
+      if (window.isOpen) {
+        openSlot = {
+          windowOpensAt: window.windowOpensAt,
+          windowClosesAt: window.windowClosesAt,
+          sessionStartsAt: window.nextSessionStart,
+        };
+        break;
+      }
+    }
+
     // ---- Membership gate ----
     // One participant-keyed query for both seat-holding roles: `participant_id`
     // is whoever occupies the seat, so a gamer's row and a parent's own row are
@@ -121,7 +168,16 @@ export const POST = defineRoute({
         .limit(1)
         .maybeSingle();
 
-      if (!assignment) {
+      // A substitute reaches the room on the session they are substituting and on no
+      // other session of the group — the one place on this surface where the
+      // substitution arm is DATE-SCOPED. It *adds* to the assignment arm above rather
+      // than narrowing it: a gedu assigned to the product keeps the
+      // product-wide mobility they already had.
+      const substitutionDates = sessionDatesToAdmit(openSlot, productTimezone);
+      if (
+        !assignment &&
+        !(await holdsSubstitutionOn(admin, groupId, substitutionDates, user.id))
+      ) {
         return NextResponse.json(
           { error: "You are not assigned to this group" },
           { status: 403 },
@@ -131,30 +187,8 @@ export const POST = defineRoute({
     // admin passes through.
 
     // ---- Session window gate ----
-    // Iterate every slot; the first whose window is currently open wins.
-    // Mon-11pm + Tue-5am sessions for the same group sit on different slots
-    // (and end up with distinct Daily room names below), so checking each slot
-    // independently is correct.
-    const now = new Date();
-    let openSlot: { windowOpensAt: Date; windowClosesAt: Date } | null = null;
-    for (const slot of slots) {
-      const window = computeSessionWindow(
-        {
-          day_of_week: slot.weekday,
-          start_time: slot.start_time,
-          timezone: productTimezone,
-          duration_minutes: slot.duration_minutes,
-        },
-        now,
-      );
-      if (window.isOpen) {
-        openSlot = {
-          windowOpensAt: window.windowOpensAt,
-          windowClosesAt: window.windowClosesAt,
-        };
-        break;
-      }
-    }
+    // The slot was resolved above, before the membership gate that needed its
+    // date. This is where it decides anything.
     if (!openSlot) {
       return NextResponse.json(
         { error: "Room is not open yet" },
@@ -266,6 +300,108 @@ export const POST = defineRoute({
     };
   },
 });
+
+/**
+ * Which session date(s) a substitution may be admitted for on this join.
+ *
+ * **The open slot knows the answer, so it is asked first.** A session dated
+ * Monday that runs to 00:30 is still Monday's session at 00:10 on Tuesday, and
+ * a session starting at 00:10 has its whole pre-window on the day before — so
+ * "today in the product's timezone", which is what this route used to ask, drops
+ * a substitute out of the room at local midnight and refuses them before a
+ * small-hours start. The open slot carries the session's own start instant, and
+ * the product-local date of *that* is the session's date however the window
+ * straddles midnight.
+ *
+ * With no slot open there is no session to be about, and the answer is the
+ * SQL predicates' own: today or yesterday in the product's timezone. Nothing is
+ * admitted on it — gate 2 refuses the join a moment later — but the two arms of
+ * the gate are then answering about the same thing, which is what keeps a
+ * refusal readable.
+ *
+ * Yesterday is derived from today's calendar date rather than from `now` minus
+ * 24 hours: the day a clock goes back, a flat 24-hour step lands back on today.
+ */
+function sessionDatesToAdmit(
+  openSlot: { sessionStartsAt: Date } | null,
+  productTimezone: string,
+): string[] {
+  if (openSlot) {
+    return [
+      formatInTimeZone(openSlot.sessionStartsAt, productTimezone, "yyyy-MM-dd"),
+    ];
+  }
+
+  const today = formatInTimeZone(new Date(), productTimezone, "yyyy-MM-dd");
+  const [year, month, day] = today.split("-").map(Number);
+  const yesterday = new Date(Date.UTC(year, month - 1, day - 1))
+    .toISOString()
+    .slice(0, 10);
+
+  return [today, yesterday];
+}
+
+/**
+ * Does this gedu hold a live substitution on this group for one of these session
+ * dates?
+ *
+ * The TypeScript twin of the database's own date-scoped substitution predicate, which
+ * the two voice predicates call with the same dates. It is written out here
+ * rather than called because this route runs on the **service-role** client,
+ * which bypasses RLS and carries no `auth.uid()` for a SECURITY DEFINER
+ * predicate to read — so a predicate call from here would be asking the
+ * database about nobody.
+ *
+ * Three of the predicate's four conditions are restated: the substituted request on
+ * that (group, date), the caller being its sub, and the holder still being
+ * certified — de-certifying an educator ends their substitution access at once, which
+ * is why it is asked here rather than only at approval time. The fourth, the
+ * access window, is **not**, and that is deliberate rather than an omission:
+ * the dates asked about here are today, yesterday, or the session currently in
+ * progress, and **both** of the window's bounds are open on all three by
+ * construction. It opens 48 hours before the session's own start, and a session
+ * dated today or yesterday started no later than the end of today, so that
+ * instant is at least a day behind us; a room whose window is open is closer
+ * still. It closes 24 hours after the session's report was mailed or 15
+ * product-local days after the session date, and a report mailed within the
+ * last day is less than a day old while midnight fifteen days out has not
+ * arrived. Restating either arm would be a second definition of a bound that
+ * has exactly one, and it could only ever disagree with it.
+ *
+ * Dates are read in the product's zone, never the runtime's: a club in Helsinki
+ * and one in Los Angeles each get their own calendar.
+ */
+async function holdsSubstitutionOn(
+  admin: ReturnType<typeof createAdminClient>,
+  groupId: string,
+  sessionDates: string[],
+  userId: string,
+): Promise<boolean> {
+  const { data: substitution } = await admin
+    .from("session_substitution_requests")
+    .select("id")
+    .eq("group_id", groupId)
+    .in("session_date", sessionDates)
+    .eq("substitute_id", userId)
+    .eq("status", "substituted")
+    .limit(1)
+    .maybeSingle();
+
+  if (!substitution) return false;
+
+  // A second round trip rather than an embed: `substitute_id` points at
+  // `profiles`, and `gedu_profiles` hangs off `profiles` too, so there is no
+  // foreign key for PostgREST to walk between the two — an embed here would
+  // fail at runtime rather than at compile time. It is only reached when a
+  // substitution row was actually found.
+  const { data: gedu } = await admin
+    .from("gedu_profiles")
+    .select("certified")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  return gedu?.certified === true;
+}
 
 /**
  * The joiner's own row on the platform this room is about — one table per

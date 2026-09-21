@@ -17,8 +17,12 @@ import {
 } from "@/lib/products/format-product-schedule";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import {
+  geduAssignmentKey,
+  geduSubstitutionKey,
   rollUpGeduAssignments,
+  rollUpGeduSubstitutions,
   type GeduAssignmentRow,
+  type GeduSubstitutionSummary,
 } from "@/lib/gedu-assignment-rollup";
 
 /**
@@ -66,6 +70,13 @@ import {
  *    footer zone holds the card's height open whether or not a button lands in
  *    it.
  *
+ * It also carries the one thing a **sub** sees here, because it can be looked
+ * at nowhere else and coexists with everything above: the **substitution card**,
+ * one dated afternoon of a club this gedu does not teach, sitting at the head of
+ * the Clubs grid where it has to be told apart from the four recurring cards
+ * beside it. The open queue is not on this page at all — it has a page of its
+ * own, and a scene of its own with it.
+ *
  * `clubs-only` is the single-noun composition: one heading, one pill entry — and
  * **seven clubs**, because the other thing it exists to show is the grid. Two
  * cards tell you nothing about how the tiles wrap; seven fill a three-column
@@ -97,6 +108,16 @@ export function isGeduDashboardScenario(s: string): s is GeduDashboardScenario {
 export interface GeduDashboardFixture {
   /** One roll-up card per assignment, soonest next session first. */
   assignments: GeduAssignmentCardData[];
+  /**
+   * One card per live substitution — a single session this gedu is standing in for,
+   * soonest substitution date first.
+   *
+   * Non-empty on the `default` scenario alone: it is the composition worth
+   * looking at (a substitution card beside the recurring cards it must not be mistaken
+   * for), and it cannot coexist with the uncertified page, which by definition
+   * has no seats of any kind.
+   */
+  substitutions: GeduSubstitutionSummary[];
   certified: boolean;
   /** Whether the contract band is on the page. */
   contractAccepted: boolean;
@@ -113,6 +134,19 @@ const CAMP_PRODUCT_ID = "mock-dashboard-roblox-camp";
 const UPCOMING_CLUB_PRODUCT_ID = "mock-dashboard-fortnite-club";
 const EVENT_PRODUCT_ID = "mock-dashboard-lan-event";
 const ENDED_CLUB_PRODUCT_ID = "mock-dashboard-splatoon-club";
+/** The club this gedu is substituting one session of, rather than teaching. */
+const SUBSTITUTION_PRODUCT_ID = "mock-dashboard-zelda-club";
+/** A second substitution, far enough out that its workspace has not opened yet. */
+const LOCKED_SUBSTITUTION_PRODUCT_ID = "mock-dashboard-pokemon-club";
+
+/**
+ * The substituted session's own backlog: one, because that is the only non-zero a
+ * substitution can have. A substitution owes the session it substitutes for and nothing else, so the
+ * badge is either absent or reads `1` — and `1` is the interesting one, since
+ * the whole argument for putting the badge on this card is that a sub's
+ * write-up is as owed as anybody's.
+ */
+const SUBSTITUTION_ATTENTION = 1;
 
 /**
  * The site the one-day event runs at.
@@ -358,6 +392,65 @@ export function buildGeduDashboardFixture(
     }),
   ];
 
+  /**
+   * The two sessions this gedu is substituting for somebody else — clubs they do
+   * not teach — and **the two states a substitution card has**, side by side.
+   *
+   * A substitution card appears the moment the substitution is approved, but the group's
+   * workspace behind it opens 48 hours before the substituted session. So the two
+   * are deliberately placed either side of that boundary and nowhere near it:
+   * **tomorrow**, whose workspace opened yesterday, and **six days out**, whose
+   * workspace opens in four. Neither can drift into the other's state whatever
+   * hour the scene is opened, which the single two-day-out substitution this replaced
+   * could not say — it sat within hours of the boundary and showed whichever
+   * state the afternoon happened to fall on.
+   *
+   * **Both remote, so the pair differs in exactly one thing.** The open one
+   * renders the locked Join every other future card renders; the locked one
+   * renders no Join at all, because until the workspace opens there is no room
+   * to promise and the footer's one answer is when it opens. Reading them
+   * together is how you see that the height is held either way.
+   *
+   * The open one carries a backlog of one, which is the only non-zero a substitution
+   * can have. The locked one carries none, and that is not a choice: a substitution
+   * still locked is still in the future, and nothing is owed until a session
+   * has been run.
+   */
+  const substitutionRows: GeduAssignmentRow[] = [
+    assignmentRow({
+      now,
+      id: SUBSTITUTION_PRODUCT_ID,
+      name: "Zelda Explorers Club",
+      productType: "consumer_club",
+      isRemote: true,
+      slots: [futureSlot(now, 1, "16:00", 90, SESSION_FEED_TIMEZONE)],
+      startedDaysAgo: 28,
+      endsInDays: null,
+      groupCount: 2,
+      participantCount: 12,
+      groupName: "Wednesday A",
+      groupParticipantCount: 6,
+      kind: "substitution",
+      substitutionDate: calendarDate(now, 1, SESSION_FEED_TIMEZONE),
+    }),
+    assignmentRow({
+      now,
+      id: LOCKED_SUBSTITUTION_PRODUCT_ID,
+      name: "Pokémon GO Club",
+      productType: "consumer_club",
+      isRemote: true,
+      slots: [futureSlot(now, 6, "17:30", 90, SESSION_FEED_TIMEZONE)],
+      startedDaysAgo: 40,
+      endsInDays: null,
+      groupCount: 1,
+      participantCount: 9,
+      groupName: "Explorers",
+      groupParticipantCount: 9,
+      kind: "substitution",
+      substitutionDate: calendarDate(now, 6, SESSION_FEED_TIMEZONE),
+    }),
+  ];
+
   // An uncertified gedu has nothing assigned — certification is the gate on
   // group assignment — so the scenario that shows the awaiting-approval notice
   // is also the one that shows the empty state, and no card is built for it.
@@ -366,28 +459,54 @@ export function buildGeduDashboardFixture(
       ? []
       : scenario === "clubs-only"
         ? [...clubRows, ...extraClubRows]
-        : [...clubRows, ...endedRows, ...otherRows];
+        : [...clubRows, ...endedRows, ...otherRows, ...substitutionRows];
+
+  // Every per-seat map is keyed by (product, group), the same key the live
+  // dashboard builds — a product id alone stopped being unique the moment one
+  // gedu could hold an assignment on one group and a substitution on another.
+  const hrefByAssignment = Object.fromEntries(
+    Object.entries(SCENE_BY_PRODUCT).map(([productId, sceneScenario]) => [
+      geduAssignmentKey(productId, `${productId}-group-a`),
+      previewSceneHref("gedu-product", sceneScenario),
+    ]),
+  );
 
   const assignments = rollUpGeduAssignments({
     rows,
     now,
     locale,
-    attentionByProductId: { ...sceneAttention, ...AUTHORED_ATTENTION },
-    hrefByProductId: Object.fromEntries(
-      Object.entries(SCENE_BY_PRODUCT).map(([productId, sceneScenario]) => [
-        productId,
-        previewSceneHref("gedu-product", sceneScenario),
-      ]),
-    ),
+    attentionByAssignment: keyedByAssignment({
+      ...sceneAttention,
+      ...AUTHORED_ATTENTION,
+    }),
+    hrefByAssignment,
     // Left empty on purpose: a preview has no room to join, so every Join
     // button collapses to its inert form while still rendering its real
     // open/locked state.
-    voiceHrefByProductId: {},
+    voiceHrefByAssignment: {},
+  });
+
+  const substitutions = rollUpGeduSubstitutions({
+    rows,
+    locale,
+    // The backlog is on the OPEN substitution alone. A substitution whose workspace has not
+    // opened is a session that has not run, and nothing is owed for one of
+    // those — a badge on the locked card would be the fixture showing a state
+    // the live page cannot produce.
+    attentionBySubstitution: {
+      [geduSubstitutionKey(
+        `${SUBSTITUTION_PRODUCT_ID}-group-a`,
+        calendarDate(now, 1, SESSION_FEED_TIMEZONE),
+      )]: SUBSTITUTION_ATTENTION,
+    },
+    hrefByAssignment,
+    voiceHrefByAssignment: {},
   });
 
   const rowsById = new Map(rows.map((row) => [row.product.id, row]));
 
   return {
+    substitutions,
     assignments: assignments.map((assignment) => {
       const row = rowsById.get(assignment.productId);
       return {
@@ -485,6 +604,25 @@ function sceneBackedFacts(now: Date): {
   return { attention, siteNames };
 }
 
+/**
+ * A product-keyed record rekeyed to (product, group) — the fixtures' groups are
+ * all `<product>-group-a`, so the map is mechanical.
+ *
+ * It exists so the authored numbers above stay readable (a product id is what a
+ * fixture author is thinking in) while the roll-up still receives the key it
+ * actually looks things up by.
+ */
+function keyedByAssignment(
+  byProductId: Readonly<Record<string, number>>,
+): Record<string, number> {
+  return Object.fromEntries(
+    Object.entries(byProductId).map(([productId, value]) => [
+      geduAssignmentKey(productId, `${productId}-group-a`),
+      value,
+    ]),
+  );
+}
+
 function assignmentRow(opts: {
   now: Date;
   id: string;
@@ -504,6 +642,13 @@ function assignmentRow(opts: {
   groupParticipantCount: number;
   /** The site, on in-person products. Remote products have no building. */
   siteName?: string | null;
+  /**
+   * Which kind of seat the row is. `assignment` unless a fixture says
+   * otherwise, because the recurring card is what most of these are about.
+   */
+  kind?: GeduAssignmentRow["kind"];
+  /** The substitution date, on a `substitution` row — product-local `YYYY-MM-DD`. */
+  substitutionDate?: string;
 }): GeduAssignmentRow {
   return {
     product: {
@@ -519,6 +664,11 @@ function assignmentRow(opts: {
       translations: [{ locale: "en", name: opts.name, description: "" }],
     },
     groupId: `${opts.id}-group-a`,
+    // A standing assignment unless a fixture says otherwise — the recurring
+    // card these fixtures are mostly about. A live substitution is its own small card
+    // with its own date, and the pair of fields below is what makes one.
+    kind: opts.kind ?? "assignment",
+    substitutionDate: opts.substitutionDate ?? null,
     groupCount: opts.groupCount,
     participantCount: opts.participantCount,
     groupName: opts.groupName,

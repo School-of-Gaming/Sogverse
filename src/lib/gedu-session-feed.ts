@@ -12,11 +12,21 @@ import {
   undatedPastFloor,
   type SlotShape,
 } from "@/lib/session-occurrence";
+import {
+  deriveSessionStaffing,
+  type SubstitutionRequestInput,
+  type SessionStaffing,
+  type StaffingAssignment,
+} from "@/lib/session-staffing";
 import type {
   SessionEditor,
   SessionFeedEntry,
 } from "@/components/gedu/session-feed";
 import type { GeduFeedSession } from "@/services/gedu-sessions/gedu-sessions.contracts";
+import type {
+  SubstitutionRequestDocument,
+  SessionStaffGedu,
+} from "@/services/session-substitution/session-substitution.contracts";
 
 /**
  * Turning one group's stored session rows and its product's weekly schedule
@@ -67,6 +77,25 @@ export interface GeduSessionFeedArgs {
   endDate: string | null;
   /** Every stored row for this group, in any order. */
   sessions: readonly GeduFeedSession[];
+  /**
+   * The group's staff with their roles, exactly as either staff document emits
+   * them — the first input the per-date staffing derivation takes.
+   */
+  gedus: readonly SessionStaffGedu[];
+  /**
+   * Every non-withdrawn substitution request on the group, any date, as either staff
+   * document emits them. The whole array reaches every entry and the derivation
+   * picks out the date it was asked about, which is what lets a projected date
+   * with no stored row carry its requests like any other.
+   */
+  substitutions: readonly SubstitutionRequestDocument[];
+  /**
+   * The signed-in gedu, where the surface has one. `null` on the admin shell
+   * and in the preview scenes, which is the honest answer rather than a guess:
+   * it is what gates the "I can't make this session" action, so a wrong id
+   * would offer one person's absence under another's name.
+   */
+  viewerId?: string | null;
   now: Date;
   /**
    * The product-local date from which write-ups are owed. Defaults to the
@@ -95,9 +124,23 @@ export function buildGeduSessionFeed(
     startDate,
     endDate,
     sessions,
+    gedus,
+    substitutions,
+    viewerId = null,
     now,
     epoch = SESSION_RECORDING_EPOCH,
   } = args;
+
+  // Mapped once for the whole feed rather than per entry: the derivation's
+  // inputs are structural on purpose — it depends on no generated type — and
+  // this is the one place either staff document's wire shape is turned into
+  // them.
+  const staffingGedus: StaffingAssignment[] = gedus.map((gedu) => ({
+    id: gedu.id,
+    firstName: gedu.first_name,
+    role: gedu.role,
+  }));
+  const staffingRequests: SubstitutionRequestInput[] = substitutions.map(toSubstitutionRequestInput);
 
   const startBoundary = startDateToCutoff(startDate, timezone);
   const endBoundary = endDateToCutoff(endDate, timezone);
@@ -146,6 +189,11 @@ export function buildGeduSessionFeed(
     sessions.map((session) => [session.session_date, session]),
   );
 
+  // A substitution request contributes no date of its own, deliberately. One filed
+  // against a date the schedule no longer projects and that nobody recorded
+  // against has no instants to render with — an orphaned request is history,
+  // and the admin queue is where it is cleared, because that list orders by
+  // date and never by a derived instant.
   const dates = new Set([...projected.keys(), ...rowsByDate.keys()]);
   const entries: SessionFeedEntry[] = [];
 
@@ -169,6 +217,15 @@ export function buildGeduSessionFeed(
         startsAt: when.startsAt,
         endsAt: when.endsAt,
         row,
+        // The whole array goes in and the derivation picks its own date out —
+        // one call per entry, and no second place that decides what "this
+        // date's requests" means.
+        staffing: deriveSessionStaffing({
+          gedus: staffingGedus,
+          requests: staffingRequests,
+          sessionDate: date,
+          viewerId,
+        }),
         now,
         epoch,
       }),
@@ -232,10 +289,11 @@ function toEntry(args: {
   startsAt: Date;
   endsAt: Date;
   row: GeduFeedSession | undefined;
+  staffing: SessionStaffing;
   now: Date;
   epoch: string;
 }): SessionFeedEntry {
-  const { id, date, startsAt, endsAt, row, now, epoch } = args;
+  const { id, date, startsAt, endsAt, row, staffing, now, epoch } = args;
 
   if (endsAt.getTime() > now.getTime()) {
     return {
@@ -243,6 +301,7 @@ function toEntry(args: {
       id,
       startsAt,
       endsAt,
+      staffing,
       report: row?.report ?? null,
       staffNote: row?.gedu_note ?? null,
       // Carried on a future entry because one of them can be **in progress**,
@@ -267,7 +326,7 @@ function toEntry(args: {
   const withinEnforcement = date >= epoch;
 
   if (row === undefined && !withinEnforcement) {
-    return { kind: "no_record", id, startsAt, endsAt };
+    return { kind: "no_record", id, startsAt, endsAt, staffing };
   }
 
   return {
@@ -275,6 +334,7 @@ function toEntry(args: {
     id,
     startsAt,
     endsAt,
+    staffing,
     // No end test here any more: reaching this branch *is* having finished,
     // since the kind flips at the end instant a few lines up. The epoch is the
     // only remaining question, and it is the same one the SQL count asks.
@@ -303,6 +363,43 @@ function toEntry(args: {
 function toReportEmailedAt(row: GeduFeedSession | undefined): Date | null {
   const stamped = row?.report_emailed_at ?? null;
   return stamped === null ? null : new Date(stamped);
+}
+
+/**
+ * One substitution request, from the shape the database emits into the shape the
+ * derivation takes.
+ *
+ * The two differ only in casing and in nesting the two people into objects, and
+ * that is the point: the derivation is written against structure rather than
+ * against generated types, so it can be unit-tested and reasoned about without
+ * a wire document anywhere near it. This function is the only place the two
+ * meet.
+ *
+ * `is_requester` is carried across as `isMine` and is the fallback the
+ * derivation uses when no viewer id is supplied — the document already answered
+ * the question for the caller it was served to, and an explicit id, where the
+ * surface has one, is the stronger answer and wins.
+ */
+function toSubstitutionRequestInput(request: SubstitutionRequestDocument): SubstitutionRequestInput {
+  return {
+    id: request.id,
+    sessionDate: request.session_date,
+    requestedBy: {
+      id: request.requested_by,
+      firstName: request.requested_by_first_name,
+    },
+    role: request.role,
+    status: request.status,
+    substituteId:
+      request.substitute_id === null || request.substitute_first_name === null
+        ? null
+        : {
+            id: request.substitute_id,
+            firstName: request.substitute_first_name,
+          },
+    offerCount: request.offer_count,
+    isMine: request.is_requester,
+  };
 }
 
 /**

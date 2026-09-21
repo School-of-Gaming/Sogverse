@@ -145,6 +145,23 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // exactly as it is for the two RPCs above.
   admin_move_participation: { permittedRoles: ["admin"] },
 
+  // --- the admin half of session substitutions (00272) -----------------------------
+  //
+  // The office's four staffing actions. All four are assertable on BOTH halves
+  // of the matrix with no fixture, which is unusual on this surface and worth
+  // naming: each asks "does this row exist" before it asks anything about the
+  // caller's reach, and a NULL id is nobody's row — so a permitted admin is
+  // refused with P0002 or check_violation rather than with a second 42501.
+  approve_session_substitution_offer: { permittedRoles: ["admin"] },
+  set_session_substitution: { permittedRoles: ["admin"] },
+  clear_session_substitution: { permittedRoles: ["admin"] },
+  withdraw_session_substitution_request_as_admin: { permittedRoles: ["admin"] },
+  // The Substitutions page's whole document. Assertable on both halves with no
+  // fixture for the reason the other argument-less reads here are: it takes no
+  // id, so a permitted admin gets a document — empty or not — rather than a
+  // second refusal, and every other role is stopped by the guard.
+  get_admin_substitution_requests: { permittedRoles: ["admin"] },
+
   // --- customer-gated ------------------------------------------------------
   // Phase 3's grant-plus-guard conversion. Past the role guard, a customer
   // reaches the engine with a NULL product id and is refused with
@@ -238,6 +255,47 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // enforcement epoch, so a gedu with no assignments gets an empty list rather
   // than a refusal.
   get_my_gedu_assignment_summaries: { permittedRoles: ["gedu"] },
+
+  // --- the gedu half of session substitutions (00272) ------------------------------
+  //
+  // Four writes and one read. The read is the assertable one, for the same
+  // reason the summaries RPC above is: it takes no id, so a gedu with nothing to
+  // substitute at gets an empty list rather than a refusal. An UNCERTIFIED gedu also
+  // gets an empty list rather than a refusal, which is deliberate — certification
+  // is one of the four refusals inside the may-substitute predicate the list filters
+  // on, not a gate on the function.
+  get_open_substitution_requests: { permittedRoles: ["gedu"] },
+  request_session_substitution: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "the authorization here IS the derivation: past the role guard a gedu must " +
+      "be EXPECTED at the session, and nobody is expected at a NULL group on a " +
+      "NULL date, so the second question answers with a second 42501. Positive " +
+      "path: session-substitution.test.ts.",
+  },
+  withdraw_session_substitution_request: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "a NULL request id is no row, and a row that is not there is refused " +
+      "exactly as somebody else's is — 42501 either way, deliberately, so this " +
+      "cannot be used as an oracle for real request ids. Positive path: " +
+      "session-substitution.test.ts.",
+  },
+  offer_session_substitution: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "the same no-such-row refusal as the withdraw above, and for the same " +
+      "anti-oracle reason: a NULL request id answers 42501 rather than " +
+      "distinguishing itself from a request the caller may not see. Positive " +
+      "path: session-substitution.test.ts.",
+  },
+  withdraw_session_substitution_offer: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "keyed on the REQUEST rather than the offer, so a NULL argument is the " +
+      "same no-such-row 42501 as the two above. Positive path: " +
+      "session-substitution.test.ts.",
+  },
   // Since 00200 the four writers below — and the site-notes writer further
   // down — admit an ADMIN beside the assigned gedu. The guard itself is one
   // call that asserts whichever of the two roles the caller holds, so the
@@ -491,6 +549,20 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   is_voice_group_moderator: {
     scopeTest: "tests/db/exposed-function-scope.test.ts",
     why: "boolean about the caller's own moderator standing in a voice group",
+  },
+  // The one substitution predicate of the four that is exposed (00272), and it is here
+  // for the reason gedu_teaches_gamer below is: the gedus_read_assigned_groups
+  // policy on product_groups calls it, and an RLS policy is evaluated as the
+  // querying role, so a policy cannot call a private helper. The plan had this
+  // inlined as an EXISTS to keep the predicate internal; inlining is what
+  // actually costs more, because a policy expression reads the table AS THE
+  // CALLER and would have needed both a SELECT grant and a read policy on
+  // session_substitution_requests. The three sibling policies on the same table already
+  // compose a granted SECURITY DEFINER predicate for this exact reason. The two
+  // new substitution TABLES still grant `authenticated` nothing at all.
+  gedu_substitutes_group: {
+    scopeTest: "tests/db/session-substitution.test.ts",
+    why: "boolean about the CALLER — do I hold a live substitution on this group — where 'live' means a `substituted` request whose holder is still certified and whose access window is open on BOTH bounds: open from 48 hours before the substituted session's own start (product-local midnight of that date where the schedule no longer projects it, which opens earlier than any real session that day would rather than opening on the spot), and closed 24 hours after that session's report is mailed or 15 product-local days after the date if it never is. A substitution approved further out than 48 hours is therefore visible to its holder on My SOG and reaches nothing. No argument can name a different asker: the substitute_id comparison is against auth.uid() inside the body, so a gedu handed another gedu's group id learns only about their own standing on it. Total: an unknown group id is false, never NULL, so the USING clause it feeds is never handed a three-valued answer. The scope test asks the same group of a substituting gedu, a non-substituting gedu and the absent gedu and requires three different answers, and walks both of the window's edges so the boolean is shown FLIPPING at each rather than merely being true once",
   },
   gedu_teaches_gamer: {
     scopeTest: "tests/db/gamer-photo-consents.test.ts",

@@ -2,6 +2,10 @@ import { z } from "zod";
 import { Constants } from "@/types";
 import { NORMALIZE_IMAGE_ERROR_CODES } from "@/lib/images/normalize-image";
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
+import {
+  substitutionRequestDocument,
+  sessionStaffGedu,
+} from "@/services/session-substitution/session-substitution.contracts";
 
 /**
  * Wire contracts for the gedu session-feed RPCs.
@@ -304,6 +308,26 @@ export const geduGroupFeed = z.object({
   site: geduFeedSite.nullable(),
   roster: z.array(geduFeedRosterEntry),
   sessions: z.array(geduFeedSession),
+  /**
+   * The group's staff, with the role each holds — the first of the two inputs
+   * the staffing derivation takes. It is on the document rather than derived
+   * from anything else here because nothing else on the workspace knows who
+   * teaches the group: the roster is the children.
+   */
+  gedus: z.array(sessionStaffGedu),
+  /**
+   * Every **non-withdrawn** substitution request on the group, unbounded and in no
+   * particular date order — exactly as this document already returns every
+   * stored session row. A withdrawn request changes nothing about who is
+   * expected, so it is the one status that does not travel.
+   *
+   * The client merges these onto its entries by date; a projected date with no
+   * session row carries its requests like any other, which is why the list is
+   * the group's rather than one date's. The admin-only fields inside each
+   * element are keyed to the caller — this document is served to an admin too —
+   * and that rule lives with the element's own schema.
+   */
+  substitutions: z.array(substitutionRequestDocument),
 });
 
 export type GeduGroupFeed = z.infer<typeof geduGroupFeed>;
@@ -335,6 +359,12 @@ export type GeduFeedSite = z.infer<typeof geduFeedSite>;
  * product (no `end_date`) has no final session, so it may be flagged and never
  * owes — documented behaviour, not an error.
  *
+ * **A date the caller holds a non-withdrawn substitution request on is not their work
+ * and is not counted**, whichever kind of seat the row is: they have said they
+ * cannot be there, whoever ends up running it. That holds while the request is
+ * still open, once it is substituted, and for the second link of a sub-of-sub
+ * chain alike.
+ *
  * **This derivation exists twice and the two must agree** — here in SQL for the
  * badge, and in TypeScript in the gedu feed's entry-state module for the card.
  * A change to either half is a change to both, in the same commit, or the badge
@@ -344,6 +374,28 @@ export const geduAssignmentSummary = z.object({
   product_id: z.string(),
   group_id: z.string(),
   group_name: z.string(),
+  /**
+   * Which kind of seat this row is (00272). An `assignment` row is one per
+   * standing assignment, exactly as this read always returned; a `substitution` row is
+   * one per **unexpired substitution date** — substituted, the holder still certified,
+   * the window not yet closed — so a sub gets a card from the moment the substitution
+   * is theirs. The group's workspace opens later, 48 hours before the substituted
+   * session, and a card that waited for it would hide the afternoon a sub had
+   * agreed to take.
+   *
+   * The rollup keys on (product, group) rather than on product because of it: a
+   * substitution's identity is (group, date), and one gedu may substitute on a sibling group
+   * of a product they already teach.
+   */
+  kind: z.enum(["assignment", "substitution"]),
+  /**
+   * The date a `substitution` row is for; null on an `assignment` row.
+   *
+   * It is also what scopes the count beside it: a substitution owes exactly the one
+   * date it substitutes for, which is the same four conditions applied to a set of one
+   * occurrence rather than a second computation.
+   */
+  substitution_date: z.string().nullable(),
   /** Active participations in THIS group, not across the product. */
   group_participant_count: z.number(),
   /** The site name on in-person products; `null` when there is no building. */

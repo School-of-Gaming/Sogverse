@@ -64,7 +64,9 @@
       "robloxSafeguarding": "Barnskyddspolicy för Skaparnas akademi",
       "robloxTerms": "Användarvillkor för Skaparnas akademi",
       "geduContract": "Gedu-avtal",
-      "seatOffer": "Platserbjudande"
+      "seatOffer": "Platserbjudande",
+      "geduSubstitutions": "Vikariat",
+      "adminSubstitutions": "Vikariat"
     },
     "descriptions": {
       "signIn": "Logga in på ditt School of Gaming-konto för att se dina spelares kommande tillfällen, hantera anmälningar och hålla familjens uppgifter aktuella.",
@@ -457,6 +459,11 @@
         "manage": "Hantera faktureringskunder",
         "option": "{name} ({number})"
       }
+    },
+    "geduRole": {
+      "primary": "Huvud-Gedu",
+      "assistant": "Assisterande Gedu",
+      "selectAria": "Roll för {name}"
     },
     "geduContract": {
       "heading": "Gedu-avtal",
@@ -931,6 +938,8 @@
         "noResults": "Inga Geduer matchar din sökning.",
         "current": "Nuvarande",
         "alreadyAssigned": "Redan tilldelad",
+        "alreadyExpected": "Redan på tillfället",
+        "absentGedu": "Gedun som vikarieras",
         "notCertified": "Inte certifierad"
       },
       "participantPicker": {
@@ -1107,6 +1116,44 @@
         },
         "note": "Priset ovan innehåller moms. Stripe räknar ut det exakta beloppet när köpet sker, så det här är Finlands sats i dag."
       },
+      "staffing": {
+        "menuLabel": "Fler åtgärder för det här tillfället",
+        "setSubstitute": "Ange vikarie",
+        "changeSubstitute": "Byt vikarie",
+        "changeSubstituteFor": "Byt vikarie för {name}",
+        "clearSubstitute": "Ta bort vikarie",
+        "clearSubstituteFor": "Ta bort vikarie för {name}",
+        "withdrawRequest": "Dra tillbaka förfrågan",
+        "withdrawRequestFor": "Dra tillbaka förfrågan för {name}",
+        "withRole": "{name} · {role}",
+        "absentLabel": "Borta",
+        "subLabel": "Vikarie",
+        "changeChoice": "Byt",
+        "absentStepTitle": "Vem är borta?",
+        "absentStepBody": "Fler än en Gedu är inbokad på tillfället den {date}. Välj den som inte kan vara med.",
+        "pickerTitle": "Välj en vikarie",
+        "pickerDescription": "Välj vem som vikarierar för {name}. En Gedu som inte kan visas med orsaken.",
+        "confirmTitle": "Ange vikarie",
+        "confirmBody": "Registrera vem som håller tillfället den {date} i den frånvarande Gedu’ns ställe.",
+        "approvesOpenRequest": "Det här godkänner den öppna förfrågan i stället för att skapa en ny.",
+        "replacesCurrentSub": "Det här ersätter {name}, som vikarierar på tillfället just nu.",
+        "reasonLabel": "Orsak",
+        "reasonSick": "Sjuk",
+        "reasonOther": "Något annat",
+        "noteLabel": "Kommentar till kontoret",
+        "notePlaceholder": "Vad kontoret behöver veta om det här vikariatet.",
+        "noteRemaining": "{count} tecken kvar",
+        "confirmAction": "Ange vikarien",
+        "setFailed": "Vikarien kunde inte anges. Försök igen.",
+        "clearTitle": "Ta bort vikarien?",
+        "clearBody": "{sub} vikarierar inte längre för {name} den {date}, och tillfället går tillbaka till kön och behöver en vikarie.",
+        "clearConfirm": "Ta bort vikarien",
+        "clearFailed": "Vikarien kunde inte tas bort. Försök igen.",
+        "withdrawTitle": "Dra tillbaka förfrågan?",
+        "withdrawBody": "{name} är med på tillfället den {date} ändå. Erbjudandena på förfrågan faller bort och ingen registreras som vikarie.",
+        "withdrawConfirm": "Dra tillbaka förfrågan",
+        "withdrawFailed": "Förfrågan kunde inte dras tillbaka. Försök igen."
+      },
       "sessions": {
         "loadFailed": "Dokumentationen av tillfällena kunde inte laddas. Ladda om sidan för att försöka igen.",
         "loading": "Laddar dokumentationen av produktens tillfällen.",
@@ -1264,6 +1311,33 @@
       "notDelivered": "Ej levererat",
       "today": "Idag",
       "yesterday": "Igår"
+    },
+    "substitutions": {
+      "title": "Vikariat",
+      "description": "Tillfällen som någon inte kan ta, och vem som hoppade in.",
+      "descriptionWithZone": "Tillfällen som någon inte kan ta, och vem som hoppade in. Tiderna visas i {zone}.",
+      "listLabel": "Tillfällen som behöver en vikarie",
+      "allClear": "Inget tillfälle behöver en vikarie.",
+      "justNow": "{count, plural, one {# vikarie godkänd nyss} other {# vikarier godkända nyss}}",
+      "offersLabel": "Geduer som erbjuder sig att vikariera",
+      "away": "Borta:",
+      "unnamed": "Namnlös Gedu",
+      "reason": {
+        "sick": "Sjuk",
+        "other": "Annat"
+      },
+      "noOffers": "Inga erbjudanden än.",
+      "openGroup": "Öppna gruppen",
+      "approve": "Godkänn",
+      "failed": "Godkännandet misslyckades – försök igen.",
+      "loadError": "Vikariaten kunde inte laddas.",
+      "loadErrorWithReason": "Vikariaten kunde inte laddas: {reason}",
+      "approveConfirmTitle": "Godkänn {name} som vikarie?",
+      "approveConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på My SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Ingen får något meddelande: tillfället försvinner från de andra frivilligas lista, och på kortet står nu att {name} vikarierar för {absent}.",
+      "approveFailedOfferGone": "{name} har tagit tillbaka sitt erbjudande, så det finns inget att godkänna.",
+      "approveFailedAlreadySettled": "Någon annan har redan löst det här tillfället.",
+      "approveFailedSeatGone": "{absent} har inte längre det här tillfället, så det finns inget att vikariera för.",
+      "approveFailedIneligible": "{name} kan inte längre ta det här tillfället."
     }
   },
   "auth": {
@@ -1912,6 +1986,41 @@
     }
   },
   "gedu": {
+    "substitution": {
+      "cardEyebrow": "Vikariat",
+      "cardOpenLabel": "{product} – tillfälle du vikarierar på",
+      "cardLockedLabel": "{product} – tillfälle du vikarierar på. Gruppens arbetsyta öppnar 48 timmar innan det börjar.",
+      "accessOpens": "Arbetsytan öppnar {date} kl. {time}",
+      "poolHeading": "Tillfällen som behöver en vikarie",
+      "poolAllClear": "Inga tillfällen behöver en vikarie just nu.",
+      "poolRemote": "På distans",
+      "poolSiteUnknown": "Plats bekräftas senare",
+      "poolRolePrimary": "Huvud-Gedu",
+      "poolRoleAssistant": "Assisterande Gedu",
+      "poolFee": "{fee} per tillfälle",
+      "poolOfferAction": "Jag kan vikariera",
+      "poolWithdrawAction": "Dra tillbaka erbjudandet",
+      "poolWithdrawPending": "Drar tillbaka…",
+      "poolActionFailed": "Det sparades inte. Försök igen.",
+      "pageTitle": "Vikariat",
+      "back": "Tillbaka till Min SOG",
+      "mineHeading": "Dina vikariat",
+      "mineAllClear": "Du har inga kommande vikariat.",
+      "fileAction": "Kan du inte vara med på ett tillfälle?",
+      "filePickTitle": "Vilket tillfälle kan du inte vara med på?",
+      "filePickBody": "Välj tillfället du inte kan vara med på. Din orsak och din kommentar visas bara för administratörer.",
+      "fileAlreadyRequested": "Vikarie är redan efterfrågad",
+      "filePickWeekThis": "Den här veckan",
+      "filePickWeekNext": "Nästa vecka",
+      "filePickWeekOf": "Veckan från {date}",
+      "filePickShowLater": "Visa senare tillfällen",
+      "filePickGroupLabel": "Grupp",
+      "filePickAllGroups": "Alla grupper",
+      "fileFiled": "Vikarie efterfrågad för {product} den {when}. Det syns nu på det tillfällets kort.",
+      "fileFiledLink": "Öppna gruppens arbetsyta",
+      "offerConfirmTitle": "Erbjuda dig att vikariera?",
+      "offerConfirmBody": "Du erbjuder dig att hålla {product} {when}. School of Gaming väljer vikarien, så ett erbjudande binder dig inte förrän det har godkänts — fram till dess kan du dra tillbaka det. Efter godkännandet öppnas gruppens arbetsyta för dig 48 timmar innan tillfället börjar."
+    },
     "coverage": {
       "title": "Områden du täcker",
       "remoteOnlyNote": "Används för att matcha dig som vikarie när en annan Gedu inte kan hålla sin klubb. Lämna tomt om du bara vikarierar på distans.",
@@ -2010,7 +2119,38 @@
       "creationsAddedCount": "{added} av {total} tillagda",
       "creationsHint": "Det här är omgångens sista tillfälle, så det är inte klart förrän alla har en skapelse. Öppna ett namn för att lägga till en.",
       "creationsMemberDone": "{name} – skapelse tillagd",
-      "creationsMemberMissing": "{name} – skapelse saknas"
+      "creationsMemberMissing": "{name} – skapelse saknas",
+      "staffingExpectedLabel": "Leder det här tillfället:",
+      "staffingNobodyExpected": "Ingen leder det här tillfället än.",
+      "staffingWithRole": "{name} ({role})",
+      "staffingSubstitutionNeeded": "{name} behöver en vikarie.",
+      "staffingSubstitutedBy": "{sub} vikarierar för {name}.",
+      "substitutionRolePrimary": "Huvud-Gedu",
+      "substitutionRoleAssistant": "Assisterande Gedu",
+      "substitutionMenuLabel": "Fler åtgärder för det här tillfället",
+      "substitutionRequestAction": "Jag måste lämna återbud",
+      "substitutionRequestDialogTitle": "Jag kan inte vara med på det här tillfället",
+      "substitutionRequestDialogBody": "Tillfället hålls ändå – kontoret letar efter en vikarie som tar din plats. Din orsak och din notering syns bara för administratörer.",
+      "substitutionReasonLabel": "Orsak",
+      "substitutionReasonSick": "Sjuk",
+      "substitutionReasonOther": "Något annat",
+      "substitutionNoteLabel": "Notering till kontoret",
+      "substitutionNotePlaceholder": "Något kontoret bör veta",
+      "substitutionNoteRemaining": "{count, plural, one {# tecken kvar} other {# tecken kvar}}",
+      "substitutionRequestConfirm": "Bekräfta",
+      "substitutionRequestFailed": "Det sparades inte. Försök igen.",
+      "substitutionRequestFailedAlreadyAsked": "Du har redan bett om en vikarie för det här tillfället.",
+      "substitutionRequestFailedNotExpected": "Du har redan bett om en vikarie för det här tillfället, eller så är du inte längre inbokad på det.",
+      "substitutionRequestFailedPastSession": "Datumet för det här tillfället har redan passerat.",
+      "substitutionRequestFailedNotScheduled": "Det här tillfället finns inte längre i schemat.",
+      "substitutionRequestStatusOpen": "Du har bett om en vikarie för det här tillfället. Väntar på en vikarie.",
+      "substitutionRequestStatusOffers": "{count, plural, one {# erbjudande väntar} other {# erbjudanden väntar}}",
+      "substitutionRequestStatusSubstituted": "{name} vikarierar för dig.",
+      "substitutionWithdrawAction": "Jag kan ändå vara med",
+      "substitutionWithdrawTitle": "Ta tillbaka det här?",
+      "substitutionWithdrawBody": "Du leder tillfället igen, och alla erbjudanden om att vikariera stryks.",
+      "substitutionWithdrawConfirm": "Ta tillbaka",
+      "substitutionWithdrawFailed": "Det sparades inte. Försök igen."
     },
     "groupNotes": {
       "heading": "Om gruppen",
@@ -2200,7 +2340,9 @@
       "shop": "Butik",
       "yty": "Yty",
       "about": "Om oss",
-      "faq": "FAQ"
+      "faq": "FAQ",
+      "substitutions": "Vikariat",
+      "substitutionsPhone": "Vikariat"
     },
     "accountMenu": "Kontomeny – {name}",
     "continueToAccount": "Fortsätt till ditt konto",
@@ -2650,7 +2792,8 @@
     "settings": "Inställningar",
     "tools": "Verktyg",
     "expandSidebar": "Expandera sidopanel",
-    "collapseSidebar": "Minimera sidopanel"
+    "collapseSidebar": "Minimera sidopanel",
+    "substitutions": "Vikariat"
   },
   "home": {
     "hero": {

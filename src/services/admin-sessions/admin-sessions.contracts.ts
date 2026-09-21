@@ -4,6 +4,10 @@ import {
   geduFeedSite,
   scheduleSlotSummary,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
+import {
+  substitutionRequestDocument,
+  sessionStaffGedu,
+} from "@/services/session-substitution/session-substitution.contracts";
 
 /**
  * Wire contract for the admin product's session document.
@@ -47,6 +51,23 @@ export const adminSessionGroup = z.object({
   gedu_note: z.string().nullable(),
   roster: z.array(adminSessionRosterEntry),
   sessions: z.array(geduFeedSession),
+  /**
+   * The group's staff with their roles, and every non-withdrawn substitution request
+   * on it — the staffing derivation's two inputs, in the gedu feed's shapes
+   * verbatim.
+   *
+   * They are imported rather than restated for the same reason the session and
+   * site shapes above are: **one card component renders both documents**, so a
+   * second description of either would be a second place the database's shape
+   * is written down.
+   *
+   * The one difference is not in the shape but in what rides inside it — the
+   * reason and its note travel on every element here, because this document is
+   * admin-only end to end and the reason is what the staffing editor shows
+   * beside a request.
+   */
+  gedus: z.array(sessionStaffGedu),
+  substitutions: z.array(substitutionRequestDocument),
 });
 
 /**

@@ -12,6 +12,7 @@ import {
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
+import { NO_SESSION_STAFFING } from "@/lib/session-staffing";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { buttonVariants } from "@/components/ui/button";
@@ -88,6 +89,7 @@ function pastEntry(
     id: ENTRY_ID,
     startsAt: STARTS_AT,
     endsAt: ENDS_AT,
+    staffing: NO_SESSION_STAFFING,
     report: "# Redstone week\n\nWe built item sorters.",
     staffNote: null,
     attendance: {},

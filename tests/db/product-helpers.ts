@@ -271,6 +271,27 @@ import { TEST_IDS } from "./constants";
  *                  allocate it to a real fixture and that test quietly starts
  *                  pointing at a row that exists, which is the one thing it
  *                  must never do.
+ *   810-817        session-substitution.test.ts (the REMOTE club 810 with sister groups
+ *                  811 and 812 — two, because the whole point of the substitution model
+ *                  is that a gedu may substitute on a group of a product they already
+ *                  teach, and one group cannot be both the caller's own and the
+ *                  one they are substituting; the IN-PERSON club 813 at its own
+ *                  `locations` row 814 with group 815, its own site rather than
+ *                  the seeded Test School because site_details is keyed by
+ *                  location and shared across products, so writing notes on the
+ *                  seeded site would race the gedu feed's suite in a parallel
+ *                  worker; and the club 816 with group 817 that neither gedu
+ *                  touches, so a refusal there is the ACTOR half alone)
+ *   818-81b        session-substitution.test.ts again, for the window's NEAR edge: the
+ *                  evening club 818 with group 819 and its twin 81a with group
+ *                  81b. Both sit in a timezone the suite picks from the clock
+ *                  so that it is currently midday there, which is what lets a
+ *                  20:00 slot tell "48 hours before the session starts" apart
+ *                  from "48 hours before that date's local midnight" at any
+ *                  hour CI runs. The twins differ in one thing only — 81a's
+ *                  schedule skips the weekday the cases use — so the same
+ *                  date is an ordinary session on one and an orphan on the
+ *                  other
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

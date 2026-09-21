@@ -8,6 +8,10 @@ import { GeduProductWorkspace } from "@/components/gedu/session-details/GeduProd
 // the product id to the shared workspace component, which server-prefetches the
 // page's two reads and hydrates them into the client shell. Keeps gedu-friendly
 // URLs without forking the rendering.
+//
+// `?groupId=` rides along unparsed: it names which group of the product to open
+// — what a substitution card's link carries — and the workspace component owns the one
+// copy of the rule for reading it, so the three routes stay identical.
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -16,9 +20,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function GeduClubDetailRoute({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ groupId?: string | string[] }>;
 }) {
-  const { id } = await params;
-  return <GeduProductWorkspace productId={id} />;
+  const [{ id }, { groupId }] = await Promise.all([params, searchParams]);
+  return <GeduProductWorkspace productId={id} groupIdParam={groupId} />;
 }

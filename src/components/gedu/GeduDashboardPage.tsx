@@ -9,11 +9,12 @@ import {
   formatProductSchedule,
   scheduleCardLines,
 } from "@/lib/products/format-product-schedule";
-import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import {
+  geduAssignmentKey,
   rollUpGeduAssignments,
-  type GeduAssignmentRow,
+  rollUpGeduSubstitutions,
+  type GeduSubstitutionSummary,
 } from "@/lib/gedu-assignment-rollup";
 import { useNow, useTimezone } from "@/providers";
 import {
@@ -24,6 +25,11 @@ import {
   useGeduAssignmentSummaries,
   type GeduAssignmentSummary,
 } from "@/services/gedu-sessions";
+import {
+  geduSeatHrefs,
+  geduSubstitutionAttention,
+  joinGeduSeatRows,
+} from "./gedu-seat-rows";
 import { GeduDashboardPageBody } from "./gedu-dashboard-page-body";
 import { GeduDashboardSkeleton } from "./GeduDashboardSkeleton";
 import type { GeduAssignmentCardData } from "./GeduAssignmentsSectionView";
@@ -54,6 +60,11 @@ import type { GeduAssignmentCardData } from "./GeduAssignmentsSectionView";
  *
  * Both reads are server-prefetched by the route, so the ordinary visit paints
  * complete on the first frame with no loading state at all.
+ *
+ * **The open substitution queue is not here.** It is other people's absences,
+ * and it has a page of its own at `/gedu/substitutions` — what stays on My SOG
+ * is a substitution this gedu has already taken, because that is a session in
+ * their own week.
  */
 export function GeduDashboardPage({
   initialRows,
@@ -94,16 +105,15 @@ export function GeduDashboardPage({
   const { data: summaries } = useGeduAssignmentSummaries(
     initialSummaries === null ? undefined : { initialData: initialSummaries },
   );
-
-  const assignments = useMemo(
+  const cards = useMemo(
     () =>
       summaries === undefined
         ? null
-        : buildAssignmentCards({ rows, summaries, locale, timeZone, now }),
+        : buildDashboardCards({ rows, summaries, locale, timeZone, now }),
     [rows, summaries, locale, timeZone, now],
   );
 
-  if (assignments === null)
+  if (cards === null)
     return (
       <GeduDashboardSkeleton
         contractAccepted={contractAccepted}
@@ -114,7 +124,8 @@ export function GeduDashboardPage({
 
   return (
     <GeduDashboardPageBody
-      assignments={assignments}
+      assignments={cards.assignments}
+      substitutions={cards.substitutions}
       certified={certified}
       contractAccepted={contractAccepted}
       criminalRecordCheckPassed={criminalRecordCheckPassed}
@@ -128,60 +139,54 @@ export function GeduDashboardPage({
 }
 
 /**
- * Join the two reads and roll them up into one card each.
+ * Join the two reads and roll them up into the cards this page draws — one per
+ * standing assignment, and one per live substitution.
  *
- * The join is on **group id**, because that is what an assignment is: a gedu
- * holds at most one group per product, so the two lists are the same list seen
- * from two RPCs. A row with no matching summary still renders — a card missing
- * its group name is a worse answer than no card only if you think the gedu came
- * here for the group name, and they came for the next session — so the missing
- * facts fall back rather than dropping the assignment.
+ * **The join is on (group, kind, substitution date), because that is what a seat
+ * is.** A gedu holds at most one *assignment* per product, which is what used
+ * to make group id alone sufficient; since substitutions exist, one group can be both
+ * somebody's assignment and somebody's substituted Monday, and two substituted Mondays
+ * of one group are two rows. A row with no matching summary still renders — a
+ * card missing its group name is a worse answer than no card only if you think
+ * the gedu came here for the group name, and they came for the next session —
+ * so the missing facts fall back rather than dropping the seat.
  */
-function buildAssignmentCards(args: {
+function buildDashboardCards(args: {
   rows: MyAssignedProductSessionRow[];
   summaries: GeduAssignmentSummary[];
   locale: ReturnType<typeof resolveLocale>;
   timeZone: string;
   now: Date;
-}): GeduAssignmentCardData[] {
+}): { assignments: GeduAssignmentCardData[]; substitutions: GeduSubstitutionSummary[] } {
   const { rows, summaries, locale, timeZone, now } = args;
 
-  const summaryByGroup = new Map(summaries.map((s) => [s.group_id, s]));
-
-  const assignmentRows: GeduAssignmentRow[] = rows.map((row) => {
-    const summary = summaryByGroup.get(row.groupId);
-    return {
-      ...row,
-      groupName: summary?.group_name ?? null,
-      groupParticipantCount: summary?.group_participant_count ?? 0,
-      // Null on anything remote, and the RPC has already applied that test
-      // against `is_remote` rather than against the presence of a location — a
-      // remote municipality club carries one and has no building.
-      siteName: summary?.site_name ?? null,
-    };
-  });
+  const seatRows = joinGeduSeatRows(rows, summaries);
+  const { hrefByAssignment, voiceHrefByAssignment } = geduSeatHrefs(rows);
 
   const assignments = rollUpGeduAssignments({
-    rows: assignmentRows,
+    rows: seatRows,
     now,
     locale,
-    attentionByProductId: Object.fromEntries(
-      summaries.map((s) => [s.product_id, s.attention_count]),
+    attentionByAssignment: Object.fromEntries(
+      summaries
+        .filter((s) => s.kind === "assignment")
+        .map((s) => [geduAssignmentKey(s.product_id, s.group_id), s.attention_count]),
     ),
-    hrefByProductId: Object.fromEntries(
-      rows.map((row) => [
-        row.product.id,
-        ROUTES.gedu.assignedProduct(row.product.productType, row.product.id),
-      ]),
-    ),
-    voiceHrefByProductId: Object.fromEntries(
-      rows.map((row) => [row.product.id, ROUTES.voice.groupSession(row.groupId)]),
-    ),
+    hrefByAssignment,
+    voiceHrefByAssignment,
+  });
+
+  const substitutions = rollUpGeduSubstitutions({
+    rows: seatRows,
+    locale,
+    attentionBySubstitution: geduSubstitutionAttention(summaries),
+    hrefByAssignment,
+    voiceHrefByAssignment,
   });
 
   const rowsById = new Map(rows.map((row) => [row.product.id, row]));
 
-  return assignments.map((assignment) => {
+  const assignmentCards = assignments.map((assignment) => {
     const row = rowsById.get(assignment.productId);
     return {
       assignment,
@@ -211,4 +216,6 @@ function buildAssignmentCards(args: {
             ),
     };
   });
+
+  return { assignments: assignmentCards, substitutions };
 }

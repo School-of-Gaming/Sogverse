@@ -111,6 +111,8 @@ document.addEventListener("click", (event) => {
 });
 
 const MY_SOG = messages.dashboardSections.pageTitle;
+/** The nav row a gedu's header hands down at phone width — the header's key. */
+const ABOUT = messages.header.nav.about;
 const SETTINGS = messages.common.settings;
 const SIGN_OUT = messages.common.signOut;
 const PARENT_ROLE = messages.common.roleParent;
@@ -126,6 +128,8 @@ interface MenuProps {
   userId: string;
   role: UserRole;
   firstName: string;
+  /** The header's scene-only nav override, handed down unchanged. */
+  navRole?: UserRole;
 }
 
 const PARENT: MenuProps = {
@@ -412,7 +416,9 @@ describe("AccountMenu — identity lives on the trigger, not in the list", () =>
     renderMenu(GEDU);
     openMenu();
 
-    expect(rowTexts()).toEqual([MY_SOG, SETTINGS, SIGN_OUT]);
+    // The About row between My SOG and Settings is the header's doing, not a
+    // household one — see the rehoused-nav-row cases below.
+    expect(rowTexts()).toEqual([MY_SOG, ABOUT, SETTINGS, SIGN_OUT]);
     // /api/family/list is gated to customers and gamers; asking would 403 on
     // every navigation.
     expect(mockUseFamily).toHaveBeenCalledWith({ enabled: false });
@@ -423,6 +429,93 @@ describe("AccountMenu — identity lives on the trigger, not in the list", () =>
     openMenu();
 
     expect(rowTexts()).toEqual([messages.common.dashboard, SETTINGS, SIGN_OUT]);
+  });
+});
+
+/**
+ * The one nav row this menu carries, and the other half of a decision the
+ * header makes: a signed-in gedu's strip is one item longer than anyone else's,
+ * which at 360px leaves no room for all three words, so About lands here
+ * instead — at phone width only, where it is actually off the strip.
+ */
+describe("AccountMenu — the rehoused About row", () => {
+  function aboutRow() {
+    return row(ABOUT);
+  }
+
+  it("sits between the dashboard row and Settings, at phone width only", () => {
+    renderMenu(GEDU);
+    openMenu();
+
+    expect(rowTexts()).toEqual([MY_SOG, ABOUT, SETTINGS, SIGN_OUT]);
+    // From `sm` up it is back on the strip, and two ways to one page in one
+    // chrome is one too many.
+    expect(aboutRow().className).toContain("sm:hidden");
+    expect(aboutRow().getAttribute("href")).toBe("/about");
+  });
+
+  it("is a fixed row like the three around it — leading icon, no chevron", () => {
+    renderMenu(GEDU);
+    openMenu();
+
+    expect(aboutRow().querySelector(".lucide-chevron-right")).toBe(null);
+    expect(aboutRow().querySelector("svg")).not.toBe(null);
+  });
+
+  it("joins the arrow-key traversal in its own place", () => {
+    renderMenu(GEDU);
+    openMenu();
+
+    for (const text of [MY_SOG, ABOUT, SETTINGS, SIGN_OUT]) {
+      press("ArrowDown");
+      expect(document.activeElement).toBe(row(text));
+    }
+    press("ArrowDown");
+    expect(document.activeElement).toBe(row(MY_SOG));
+    press("ArrowUp");
+    expect(document.activeElement).toBe(row(SIGN_OUT));
+  });
+
+  it("goes out of service with every other row while a commit is in flight", () => {
+    const { container } = renderMenu(GEDU);
+    openMenu();
+
+    const form = container.querySelector("form");
+    if (!form) throw new Error("No sign-out form rendered");
+    fireEvent.submit(form);
+
+    expect(isBlocked(aboutRow())).toBe(true);
+    press("ArrowDown");
+    expect(document.activeElement).not.toBe(aboutRow());
+  });
+
+  it.each([["customer"], ["gamer"], ["admin"]] as const)(
+    "is absent for a %s, whose strip never gave About up",
+    (role) => {
+      renderMenu({ userId: IDS.parent, role, firstName: "Riikka" });
+      openMenu();
+
+      expect(rowTexts()).not.toContain(ABOUT);
+    },
+  );
+
+  it("follows the header's scene-only override rather than the real role", () => {
+    // A gedu scene is opened by an admin, so the menu is the admin's — but the
+    // nav row has to match the strip the scene is showing.
+    renderMenu({
+      userId: IDS.gedu,
+      role: "admin",
+      firstName: "Kyle",
+      navRole: "gedu",
+    });
+    openMenu();
+
+    expect(rowTexts()).toEqual([
+      messages.common.dashboard,
+      ABOUT,
+      SETTINGS,
+      SIGN_OUT,
+    ]);
   });
 });
 

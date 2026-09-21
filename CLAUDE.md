@@ -99,6 +99,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Billing portal | `src/services/billing/` |
 | Parent PIN | `src/services/pin/` |
 | Gedu profiles, certification and the record check | `src/services/gedu/` |
+| Session substitutions — absences, offers and the sub an admin seats | `src/services/session-substitution/` |
 | i18n | `src/i18n/` |
 | Email templates | `src/lib/email-templates/` |
 | Calendar invitations (the mailed `.ics`) | `src/lib/calendar-invitations/` |
@@ -195,6 +196,17 @@ work under `tests/`). Two things worth knowing from anywhere:
   exist or does not reference the route.
 
 ## Code Style
+
+### Site copy is UK English; code and database identifiers are American English
+
+**Rule: what a reader sees is spelled the British way, and what a developer types is
+spelled the American way.** Strings in `messages/`, emails and every other user-facing
+sentence take `-ise`, `-our` and `-re`; identifiers — tables, columns, enum values,
+functions, types, variables, files, message *keys* — take the American spelling, because
+that is what the surrounding language, libraries and tooling already speak. The two
+halves may therefore name one thing with two different words, and that is the design
+rather than a slip to tidy up: a rename that "fixes" a spelling has to say which half it
+is changing, and changing one half never obliges the other.
 
 ### Lint must be clean — treat warnings as design signals
 

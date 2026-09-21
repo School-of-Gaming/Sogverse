@@ -64,7 +64,9 @@
       "robloxSafeguarding": "Politique de protection de l’enfance de l’Académie des Créateurs",
       "robloxTerms": "Conditions générales d’utilisation de l’Académie des Créateurs",
       "geduContract": "Contrat Gedu",
-      "seatOffer": "Proposition de place"
+      "seatOffer": "Proposition de place",
+      "geduSubstitutions": "Remplacements",
+      "adminSubstitutions": "Remplacements"
     },
     "descriptions": {
       "signIn": "Connectez-vous à votre compte School of Gaming pour suivre les séances à venir de vos joueurs, gérer les inscriptions et tenir vos informations à jour.",
@@ -457,6 +459,11 @@
         "manage": "Gérer les clients de facturation",
         "option": "{name} ({number})"
       }
+    },
+    "geduRole": {
+      "primary": "Gedu principal",
+      "assistant": "Gedu assistant",
+      "selectAria": "Rôle de {name}"
     },
     "geduContract": {
       "heading": "Contrat Gedu",
@@ -931,6 +938,8 @@
         "noResults": "Aucun Gedu ne correspond à votre recherche.",
         "current": "Actuel",
         "alreadyAssigned": "Déjà affecté",
+        "alreadyExpected": "Déjà sur cette séance",
+        "absentGedu": "Le Gedu remplacé",
         "notCertified": "Non certifié"
       },
       "participantPicker": {
@@ -1107,6 +1116,44 @@
         },
         "note": "Le prix ci-dessus est TTC. Stripe calcule le montant exact au moment de la vente, il s’agit donc du taux finlandais en vigueur aujourd’hui."
       },
+      "staffing": {
+        "menuLabel": "Plus d’actions pour cette séance",
+        "setSubstitute": "Définir un remplacement",
+        "changeSubstitute": "Changer le remplacement",
+        "changeSubstituteFor": "Changer le remplacement de {name}",
+        "clearSubstitute": "Retirer le remplacement",
+        "clearSubstituteFor": "Retirer le remplacement de {name}",
+        "withdrawRequest": "Retirer la demande",
+        "withdrawRequestFor": "Retirer la demande de {name}",
+        "withRole": "{name} · {role}",
+        "absentLabel": "Absent",
+        "subLabel": "Remplacement",
+        "changeChoice": "Changer",
+        "absentStepTitle": "Qui est absent ?",
+        "absentStepBody": "Plusieurs Gedus sont prévus à la séance du {date}. Choisissez celui qui ne sera pas là.",
+        "pickerTitle": "Choisir un remplacement",
+        "pickerDescription": "Choisissez qui remplace {name}. Un Gedu qui ne peut pas apparaît avec le motif.",
+        "confirmTitle": "Définir un remplacement",
+        "confirmBody": "Enregistrez qui assure la séance du {date} à la place du Gedu absent.",
+        "approvesOpenRequest": "Ceci approuve la demande ouverte au lieu d’en créer une seconde.",
+        "replacesCurrentSub": "Ceci remplace {name}, qui assure actuellement la séance.",
+        "reasonLabel": "Motif",
+        "reasonSick": "Maladie",
+        "reasonOther": "Autre chose",
+        "noteLabel": "Note pour le bureau",
+        "notePlaceholder": "Ce que le bureau doit savoir sur ce remplacement.",
+        "noteRemaining": "{count} caractères restants",
+        "confirmAction": "Définir le remplacement",
+        "setFailed": "Le remplacement n’a pas pu être défini. Réessayez.",
+        "clearTitle": "Retirer le remplacement ?",
+        "clearBody": "{sub} ne remplace plus {name} le {date}, et la séance retourne dans la file en attente d’un remplacement.",
+        "clearConfirm": "Retirer le remplacement",
+        "clearFailed": "Le remplacement n’a pas pu être retiré. Réessayez.",
+        "withdrawTitle": "Retirer la demande ?",
+        "withdrawBody": "{name} assure finalement la séance du {date}. Les propositions sur la demande sont abandonnées et personne n’est enregistré comme remplacement.",
+        "withdrawConfirm": "Retirer la demande",
+        "withdrawFailed": "La demande n’a pas pu être retirée. Réessayez."
+      },
       "sessions": {
         "loadFailed": "Impossible de charger le suivi des séances. Rechargez la page pour réessayer.",
         "loading": "Chargement du suivi des séances de ce produit.",
@@ -1264,6 +1311,33 @@
       "notDelivered": "Non remis",
       "today": "Aujourd’hui",
       "yesterday": "Hier"
+    },
+    "substitutions": {
+      "title": "Remplacements",
+      "description": "Séances qu’une personne ne peut pas assurer, et qui l’a remplacée.",
+      "descriptionWithZone": "Séances qu’une personne ne peut pas assurer, et qui l’a remplacée. Les horaires sont affichés en {zone}.",
+      "listLabel": "Séances ayant besoin d’un remplacement",
+      "allClear": "Aucune séance n’a besoin d’un remplacement.",
+      "justNow": "{count, plural, one {# remplacement validé à l’instant} other {# remplacements validés à l’instant}}",
+      "offersLabel": "Gedus proposant de remplacer",
+      "away": "Absence :",
+      "unnamed": "Gedu sans nom",
+      "reason": {
+        "sick": "Maladie",
+        "other": "Autre"
+      },
+      "noOffers": "Aucune proposition pour l’instant.",
+      "openGroup": "Ouvrir le groupe",
+      "approve": "Valider",
+      "failed": "La validation a échoué – réessayez.",
+      "loadError": "Impossible de charger les remplacements.",
+      "loadErrorWithReason": "Impossible de charger les remplacements : {reason}",
+      "approveConfirmTitle": "Valider {name} pour ce remplacement ?",
+      "approveConfirmBody": "{name} prend {product} — {group} le {when}, à la place de {absent}. La séance apparaît aussitôt sur sa page Remplacements et sur My SOG, et l’espace de travail du groupe lui est ouvert 48 heures avant le début. Personne n’est prévenu : la séance disparaît de la liste des autres volontaires, et sa fiche indique désormais que {name} remplace {absent}.",
+      "approveFailedOfferGone": "{name} a retiré sa proposition, il n’y a donc rien à valider.",
+      "approveFailedAlreadySettled": "Quelqu’un d’autre a déjà réglé cette séance.",
+      "approveFailedSeatGone": "{absent} n’a plus cette séance, il n’y a donc personne à remplacer.",
+      "approveFailedIneligible": "{name} ne peut plus prendre cette séance."
     }
   },
   "auth": {
@@ -1912,9 +1986,44 @@
     }
   },
   "gedu": {
+    "substitution": {
+      "cardEyebrow": "Remplacement",
+      "cardOpenLabel": "{product} — séance que vous assurez en remplacement",
+      "cardLockedLabel": "{product} — séance que vous assurez en remplacement. L’espace de travail du groupe ouvre 48 heures avant son début.",
+      "accessOpens": "L’espace de travail ouvre le {date} à {time}",
+      "poolHeading": "Séances cherchant un remplacement",
+      "poolAllClear": "Aucune séance ne cherche de remplacement pour le moment.",
+      "poolRemote": "En ligne",
+      "poolSiteUnknown": "Lieu à confirmer",
+      "poolRolePrimary": "Gedu principal",
+      "poolRoleAssistant": "Gedu assistant",
+      "poolFee": "{fee} par séance",
+      "poolOfferAction": "Je peux assurer cette séance",
+      "poolWithdrawAction": "Retirer ma proposition",
+      "poolWithdrawPending": "Retrait…",
+      "poolActionFailed": "Cela n’a pas été enregistré. Réessayez.",
+      "pageTitle": "Remplacements",
+      "back": "Retour à Mon SOG",
+      "mineHeading": "Vos remplacements",
+      "mineAllClear": "Vous n’avez aucun remplacement à venir.",
+      "fileAction": "Vous ne pouvez pas assurer une séance ?",
+      "filePickTitle": "Quelle séance ne pouvez-vous pas assurer ?",
+      "filePickBody": "Choisissez la séance que vous ne pouvez pas assurer. Votre motif et votre note ne sont visibles que par les administrateurs.",
+      "fileAlreadyRequested": "Remplacement déjà demandé",
+      "filePickWeekThis": "Cette semaine",
+      "filePickWeekNext": "La semaine prochaine",
+      "filePickWeekOf": "Semaine du {date}",
+      "filePickShowLater": "Afficher les séances suivantes",
+      "filePickGroupLabel": "Groupe",
+      "filePickAllGroups": "Tous les groupes",
+      "fileFiled": "Remplacement demandé pour {product} le {when}. Il apparaît maintenant sur la fiche de cette séance.",
+      "fileFiledLink": "Ouvrir l’espace de travail du groupe",
+      "offerConfirmTitle": "Proposer un remplacement ?",
+      "offerConfirmBody": "Vous proposez d’assurer {product} le {when}. School of Gaming choisit qui remplace, donc une proposition ne vous engage pas tant qu’elle n’est pas approuvée — vous pouvez la retirer jusque-là. Une fois approuvée, l’espace de travail du groupe s’ouvre à vous 48 heures avant le début de la séance."
+    },
     "coverage": {
       "title": "Zones où vous pouvez animer",
-      "remoteOnlyNote": "Sert à vous proposer comme remplaçant quand un autre Gedu ne peut pas assurer son club. Laissez vide si vous ne remplacez qu’à distance.",
+      "remoteOnlyNote": "Sert à vous proposer pour un remplacement quand un autre Gedu ne peut pas assurer son club. Laissez vide si vous ne remplacez qu’à distance.",
       "selectedHeading": "Sélection ({count})",
       "noneSelected": "Aucune zone sélectionnée",
       "remove": "Retirer {name}",
@@ -2010,7 +2119,38 @@
       "creationsAddedCount": "{added} sur {total} ajoutées",
       "creationsHint": "C’est la dernière séance du cycle, et elle n’est terminée que lorsque chacun a une création. Ouvrez un nom pour en ajouter une.",
       "creationsMemberDone": "{name} — création ajoutée",
-      "creationsMemberMissing": "{name} — création manquante"
+      "creationsMemberMissing": "{name} — création manquante",
+      "staffingExpectedLabel": "Séance animée par :",
+      "staffingNobodyExpected": "Personne n’anime encore cette séance.",
+      "staffingWithRole": "{name} ({role})",
+      "staffingSubstitutionNeeded": "Un remplacement est nécessaire pour {name}.",
+      "staffingSubstitutedBy": "{sub} remplace {name}.",
+      "substitutionRolePrimary": "Gedu principal",
+      "substitutionRoleAssistant": "Gedu assistant",
+      "substitutionMenuLabel": "Plus d’actions pour cette séance",
+      "substitutionRequestAction": "Je dois me désister",
+      "substitutionRequestDialogTitle": "Je ne peux pas assurer cette séance",
+      "substitutionRequestDialogBody": "La séance a bien lieu — le bureau cherche un remplacement pour vous. Votre motif et votre note ne sont visibles que par les admins.",
+      "substitutionReasonLabel": "Motif",
+      "substitutionReasonSick": "Maladie",
+      "substitutionReasonOther": "Autre chose",
+      "substitutionNoteLabel": "Note pour le bureau",
+      "substitutionNotePlaceholder": "Ce que le bureau devrait savoir",
+      "substitutionNoteRemaining": "{count, plural, one {# caractère restant} other {# caractères restants}}",
+      "substitutionRequestConfirm": "Confirmer",
+      "substitutionRequestFailed": "Cela n’a pas été enregistré. Réessayez.",
+      "substitutionRequestFailedAlreadyAsked": "Vous avez déjà demandé un remplacement pour cette séance.",
+      "substitutionRequestFailedNotExpected": "Vous avez déjà demandé un remplacement pour cette séance, ou elle ne vous est plus attribuée.",
+      "substitutionRequestFailedPastSession": "La date de cette séance est déjà passée.",
+      "substitutionRequestFailedNotScheduled": "Cette séance ne figure plus dans le calendrier.",
+      "substitutionRequestStatusOpen": "Vous avez demandé un remplacement pour cette séance. Recherche en cours.",
+      "substitutionRequestStatusOffers": "{count, plural, one {# proposition en attente} other {# propositions en attente}}",
+      "substitutionRequestStatusSubstituted": "{name} vous remplace.",
+      "substitutionWithdrawAction": "Finalement, je serai là",
+      "substitutionWithdrawTitle": "Annuler ce signalement ?",
+      "substitutionWithdrawBody": "Vous animez de nouveau la séance et toutes les propositions de remplacement sont abandonnées.",
+      "substitutionWithdrawConfirm": "Annuler le signalement",
+      "substitutionWithdrawFailed": "Cela n’a pas été enregistré. Réessayez."
     },
     "groupNotes": {
       "heading": "À propos du groupe",
@@ -2200,7 +2340,9 @@
       "shop": "Boutique",
       "yty": "Yty",
       "about": "À propos",
-      "faq": "FAQ"
+      "faq": "FAQ",
+      "substitutions": "Remplacements",
+      "substitutionsPhone": "Rempl."
     },
     "accountMenu": "Menu du compte – {name}",
     "continueToAccount": "Continuer vers votre compte",
@@ -2650,7 +2792,8 @@
     "settings": "Paramètres",
     "tools": "Outils",
     "expandSidebar": "Déplier la barre latérale",
-    "collapseSidebar": "Replier la barre latérale"
+    "collapseSidebar": "Replier la barre latérale",
+    "substitutions": "Remplacements"
   },
   "home": {
     "hero": {

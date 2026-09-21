@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Constants } from "@/types";
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
+import { sessionStaffGedu } from "@/services/session-substitution/session-substitution.contracts";
 
 /**
  * Runtime contracts for the gedu assignment RPCs. The generated types can't
@@ -38,6 +39,15 @@ export const myAssignedProductRows = z.array(
     participant_count: z.number(),
     product_translations: z.array(productTranslationSummary),
     schedule_slots: z.array(scheduleSlotSummary),
+    /**
+     * Which kind of seat the row is (00272): a standing `assignment`, or a live
+     * `substitution` on one date. Two arms of one RPC because they share every
+     * product-shell column and the dashboard card differs in its chrome rather
+     * than in the facts it needs.
+     */
+    kind: z.enum(["assignment", "substitution"]),
+    /** The substitution date on a `substitution` row; null on an `assignment` row. */
+    substitution_date: z.string().nullable(),
   })
 );
 
@@ -77,7 +87,13 @@ export const geduAssignedProduct = z.object({
       created_at: z.string(),
       is_my_group: z.boolean(),
       participant_count: z.number(),
-      gedus: z.array(z.object({ id: z.string(), first_name: z.string() })),
+      /**
+       * The group's educators, each with the assignment role they hold (00272)
+       * — primary or assistant. Every staff read that *lists* a group's gedus
+       * carries it, because "who is on this group" and "in what capacity" are
+       * one answer and the role is a pay class rather than a figure.
+       */
+      gedus: z.array(sessionStaffGedu),
       // Populated only on the caller's own group; null on sister groups.
       roster: z
         .array(

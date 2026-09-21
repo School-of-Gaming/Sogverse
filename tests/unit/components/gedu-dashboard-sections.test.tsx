@@ -6,6 +6,7 @@ import { GeduDashboardPageBody } from "@/components/gedu/gedu-dashboard-page-bod
 import { buildGeduDashboardFixture } from "@/components/gedu/mock-dashboard-fixtures";
 import { NowProvider, TimezoneProvider } from "@/providers";
 import type { GeduAssignmentCardData } from "@/components/gedu/GeduAssignmentsSectionView";
+import type { GeduSubstitutionSummary } from "@/lib/gedu-assignment-rollup";
 
 /**
  * **The dashboard's headings are the page's shape, and its shape follows what
@@ -40,7 +41,13 @@ const EMPTY_LINE = messages.dashboardSections.myGroupsEmptyStateGedu;
 
 function dashboardHtml(
   assignments: readonly GeduAssignmentCardData[],
-  { certified = true }: { certified?: boolean } = {},
+  {
+    certified = true,
+    substitutions = [],
+  }: {
+    certified?: boolean;
+    substitutions?: readonly GeduSubstitutionSummary[];
+  } = {},
 ): string {
   return renderToStaticMarkup(
     <NextIntlClientProvider locale="en" messages={messages}>
@@ -57,6 +64,7 @@ function dashboardHtml(
             // against.
             contractAccepted
             criminalRecordCheckPassed
+            substitutions={substitutions}
             toolsCard={<div />}
             instantRoomCard={<div />}
             // Marked rather than anonymous: whether the section still renders
@@ -163,5 +171,42 @@ describe("a gedu who runs one kind of thing", () => {
 
   it("never shows the empty line under a section that has cards", () => {
     expect(html).not.toContain(EMPTY_LINE);
+  });
+});
+
+/**
+ * **The open queue is not on My SOG, and what the gedu took still is.**
+ *
+ * Other people's absences are a page of their own; a substitution this gedu has
+ * already accepted is a session in their own week, so it stays here among the
+ * groups. The two halves pull against each other — the obvious way to take the
+ * queue off this page is to take the word off it altogether — so both are
+ * pinned.
+ */
+describe("substitutions on My SOG", () => {
+  it("carries no open queue, heading or chip", () => {
+    const html = dashboardHtml([]);
+
+    expect(html).not.toContain('id="substitution-pool"');
+    expect(html).not.toContain('href="#substitution-pool"');
+    expect(html).not.toContain(`>${messages.gedu.substitution.poolHeading}</h2>`);
+    expect(html).not.toContain(messages.gedu.substitution.poolOfferAction);
+  });
+
+  it("still puts an accepted substitution among the gedu's own cards", () => {
+    const { substitutions } = buildGeduDashboardFixture(
+      NOW,
+      "default",
+      "en",
+      "Europe/Helsinki",
+    );
+    expect(substitutions.length).toBeGreaterThan(0);
+
+    const html = dashboardHtml([], { substitutions });
+
+    // The card's own eyebrow, which is what tells it apart from an assignment
+    // card in the same grid.
+    expect(html).toContain(messages.gedu.substitution.cardEyebrow);
+    expect(html).toContain(substitutions[0].productName);
   });
 });

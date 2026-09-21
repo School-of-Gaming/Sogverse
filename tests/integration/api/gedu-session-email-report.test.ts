@@ -698,10 +698,12 @@ describe("POST /api/gedu/sessions/email-report", () => {
     // A mail is rendered without the reader's own zone, so it says which one it
     // used — and the family page it links to labels the same session in the
     // viewer's zone, which only agrees if this one is named.
-    // The thin spaces around the en dash are Intl's, not ours — spelled out so a
-    // formatter change cannot pass this by producing a different separator.
+    // The spaces around the en dash are plain ones: the formatter rewrites
+    // whichever space Intl's locale data sets there, because that data differs
+    // between runtimes. Spelled out so a formatter change cannot pass this by
+    // producing a different separator.
     expect(mailTo("vaino-parent@test.local").htmlContent).toContain(
-      "16:30\u2009\u2013\u200918:00 GMT+3",
+      "16:30 \u2013 18:00 GMT+3",
     );
     expect(mailTo("aino-parent@test.local").htmlContent).toContain(
       "16.30\u201318.00 UTC+3",

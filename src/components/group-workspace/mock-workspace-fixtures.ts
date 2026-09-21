@@ -16,6 +16,11 @@ import {
 import type { SessionFeedEntry, SessionFeedGamer } from "@/components/gedu/session-feed";
 import { platformForTopic } from "@/lib/products/topics";
 import { sessionEntryId } from "@/lib/session-occurrence";
+import {
+  deriveSessionStaffing,
+  type SubstitutionRequestInput,
+  type StaffingAssignment,
+} from "@/lib/session-staffing";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type {
   GamerCreation,
@@ -23,6 +28,7 @@ import type {
   GeduAssignedProduct,
   GeduAssignedProductGroup,
   GeduAssignedProductRosterEntry,
+  GeduAssignmentRole,
   ProductTopic,
 } from "@/types";
 
@@ -187,6 +193,21 @@ export interface GroupWorkspaceFixture {
    * that rule instead of exercising it.
    */
   photoConsentRows: readonly GamerPhotoConsent[] | null;
+  /**
+   * The group's substitution requests as **stored rows**, and the other two inputs the
+   * staffing derivation takes.
+   *
+   * The entries above already carry the staffing derived from them, so a scene
+   * that only renders needs none of this. What it is for is a scene that
+   * *files* one: filing an absence adds a row, and the card's action turning
+   * into a status line is the derivation being run again on the new list rather
+   * than a state the scene toggled. A fixture that handed over only the
+   * finished staffing could not show that at all.
+   */
+  substitutionRequests: readonly SubstitutionRequestInput[];
+  staffingGedus: readonly StaffingAssignment[];
+  /** Whose workspace this is — the viewer every card's action is offered to. */
+  viewerId: string;
 }
 
 /** Gedu ids. Real UUIDs because each one renders as an identicon chip. */
@@ -196,6 +217,21 @@ const GEDU_IDS = {
   joonas: "d2826073-1d3f-4023-b45e-f42fea4332ca",
   markus: "a79fc7fd-8527-4826-8062-94d25ed30873",
 } as const;
+
+/**
+ * Who this workspace's own group is staffed by, and **who is reading it**.
+ *
+ * Sanna is the viewer on every scenario: the page is her workspace, so the card
+ * that offers "I can't make this session" offers it to her, and the request she
+ * files is the one whose status line and Withdraw are on show. The live shell
+ * resolves the same id server-side and hands it down; a scene simply names it.
+ */
+const VIEWER_GEDU_ID = GEDU_IDS.sanna;
+
+const ASSIGNED_GROUP_GEDUS: readonly StaffingAssignment[] = [
+  { id: GEDU_IDS.sanna, firstName: "Sanna", role: "primary" },
+  { id: GEDU_IDS.petra, firstName: "Petra", role: "primary" },
+];
 
 /** A camp's five weekday slots; a club's single weekly one. */
 const CLUB_SLOTS = [{ weekday: 0, start_time: "16:30", duration_minutes: 90 }];
@@ -308,14 +344,36 @@ interface ScenarioConfig {
     name: string;
     participantCount: number;
     /** The gedus teaching the peer group — each id renders an identicon. */
-    gedus: readonly { id: string; firstName: string }[];
+    gedus: readonly {
+      id: string;
+      firstName: string;
+      role: GeduAssignmentRole;
+    }[];
   }[];
 }
 
-/** The gedus who show up as peer-group teachers, as identicon chips. */
-const PETRA = { id: GEDU_IDS.petra, firstName: "Petra" } as const;
-const JOONAS = { id: GEDU_IDS.joonas, firstName: "Joonas" } as const;
-const MARKUS = { id: GEDU_IDS.markus, firstName: "Markus" } as const;
+/**
+ * The gedus who show up as peer-group teachers, as identicon chips.
+ *
+ * Markus is the fixture's assistant, so every scenario carrying peers carries
+ * one of each role — the pair a reader has to be able to tell apart at a
+ * glance, and the one arrangement a single-role fixture cannot show.
+ */
+const PETRA = {
+  id: GEDU_IDS.petra,
+  firstName: "Petra",
+  role: "primary",
+} as const;
+const JOONAS = {
+  id: GEDU_IDS.joonas,
+  firstName: "Joonas",
+  role: "primary",
+} as const;
+const MARKUS = {
+  id: GEDU_IDS.markus,
+  firstName: "Markus",
+  role: "assistant",
+} as const;
 
 /**
  * **The camp's future block, and the volume case for the whole feed.**
@@ -689,15 +747,15 @@ function yearlongSpecs(): readonly EntrySpec[] {
     [10, "partial"],
   ]);
   /**
-   * The weeks Petra covered. Sanna has the group and writes most of it up; a
+   * The weeks Petra substituted. Sanna has the group and writes most of it up; a
    * scattered handful are Petra's, which is what a regular-plus-stand-in group
    * looks like — and it puts a second face down the scrollback without the
    * chips reading as an alternating pattern. Named indices rather than a
    * modulo, because who ran a given week is a fact about that week.
    */
-  const COVERED_BY_PETRA_AT = new Set([3, 11, 19, 26, 41]);
+  const SUBSTITUTED_BY_PETRA_AT = new Set([3, 11, 19, 26, 41]);
   const editorAt = (index: number) =>
-    COVERED_BY_PETRA_AT.has(index)
+    SUBSTITUTED_BY_PETRA_AT.has(index)
       ? SESSION_FEED_EDITORS.petra
       : SESSION_FEED_EDITORS.sanna;
   /**
@@ -972,7 +1030,7 @@ function clubMemberFlair(now: Date): MemberFlairFixture {
  * **One of them is signed by a Gedu who teaches a different group of this camp**,
  * which is the cross-group mobility the note's authorization actually grants: any
  * Gedu on the *product* may read and write any of its notes, because the
- * substitute covering a session is precisely the person who needs one. The rail
+ * substitute substituting a session is precisely the person who needs one. The rail
  * beside this roster names him on Builders green, so the two halves agree.
  */
 function campMemberFlair(): MemberFlairFixture {
@@ -1551,9 +1609,29 @@ export function buildGroupWorkspaceFixture(
    */
   const dateOf = (startsAt: Date) =>
     formatInTimeZone(startsAt, feed.timeZone, "yyyy-MM-dd");
-  const entries = feed.entries.map((entry) => ({
+  const rekeyed = feed.entries.map((entry) => ({
     ...entry,
     id: sessionEntryId(groupId, dateOf(entry.startsAt)),
+  }));
+
+  /**
+   * The group's substitution requests, and the per-date staffing derived from them.
+   *
+   * **Derived rather than authored**, through the very function both staff
+   * feeds' builder calls: the rule that decides who is expected — and therefore
+   * which card offers the action and which shows a status line — is the thing
+   * under review, so a fixture that wrote the answers down would be asserting
+   * it instead of exercising it. What the fixture supplies is the rows.
+   */
+  const substitutions = substitutionRequestsFor(scenario, rekeyed, dateOf);
+  const entries = rekeyed.map((entry) => ({
+    ...entry,
+    staffing: deriveSessionStaffing({
+      gedus: ASSIGNED_GROUP_GEDUS,
+      requests: substitutions,
+      sessionDate: dateOf(entry.startsAt),
+      viewerId: VIEWER_GEDU_ID,
+    }),
   }));
   const sendOutcomes = new Map(
     feed.entries.flatMap((entry, index) => {
@@ -1603,10 +1681,13 @@ export function buildGroupWorkspaceFixture(
     created_at: startDate,
     is_my_group: true,
     participant_count: SESSION_FEED_ROSTER.length,
-    gedus: [
-      { id: GEDU_IDS.sanna, first_name: "Sanna" },
-      { id: GEDU_IDS.petra, first_name: "Petra" },
-    ],
+    // Two primaries: the ordinary staffing of a club this size, and the shape
+    // that lets a fixture take one of them out without leaving the group empty.
+    gedus: ASSIGNED_GROUP_GEDUS.map((gedu) => ({
+      id: gedu.id,
+      first_name: gedu.firstName,
+      role: gedu.role,
+    })),
     // Read off the topic rather than passed beside it, so the shell and the rows
     // cannot disagree about which identity this product is about — the same
     // function the page itself resolves the question with.
@@ -1622,6 +1703,7 @@ export function buildGroupWorkspaceFixture(
     gedus: peer.gedus.map((gedu) => ({
       id: gedu.id,
       first_name: gedu.firstName,
+      role: gedu.role,
     })),
     roster: null,
   }));
@@ -1666,7 +1748,100 @@ export function buildGroupWorkspaceFixture(
     photoConsentRows: config.asksGamerPhotoConsent
       ? SESSION_FEED_PHOTO_CONSENTS
       : null,
+    substitutionRequests: substitutions,
+    staffingGedus: ASSIGNED_GROUP_GEDUS,
+    viewerId: VIEWER_GEDU_ID,
   };
+}
+
+/**
+ * The group's substitution requests — **the club's alone**, and four of them,
+ * because four is what it takes to put every state of the card's staffing
+ * region on one page.
+ *
+ * They sit on the four soonest future sessions, in the order a reader meets
+ * them coming down from the top of the feed:
+ *
+ * 1. the **viewer's own** open request, with two offers waiting — the loud
+ *    status block with the Withdraw inside it, and the one card where the
+ *    overflow menu is *absent* because somebody who has filed an absence is no
+ *    longer expected;
+ * 2. a colleague's request **substituted** by a third gedu, which names the sub on
+ *    the staffing line for everybody;
+ * 3. a colleague's request still **open** — "Substitute needed", the state the queue
+ *    on the dashboard is fed from;
+ * 4. the **viewer's own** request, substituted — the settled half of the pair in
+ *    1, which cannot share a card with it and would otherwise be unseeable.
+ *
+ * Every other card on every scenario carries no request and therefore no
+ * staffing line at all, which is the state to check as much as the four above:
+ * a fifty-week feed that printed its staffing on every card would bury the
+ * handful of dates where something is actually outstanding.
+ *
+ * The offer count rides only on the viewer's own request, because that is the
+ * only one a gedu is entitled to it on — on somebody else's it is `null`, which
+ * is "not disclosed" rather than zero.
+ */
+function substitutionRequestsFor(
+  scenario: GroupWorkspaceScenario,
+  entries: readonly SessionFeedEntry[],
+  dateOf: (startsAt: Date) => string,
+): SubstitutionRequestInput[] {
+  if (scenario !== "club") return [];
+
+  // The feed is strictly descending, so the future block's *last* entries are
+  // the soonest ones. Reading them off the feed rather than computing dates
+  // keeps a request on a day the schedule actually projects.
+  const future = entries.filter((entry) => entry.kind === "future");
+  const soonest = future.slice(-4).reverse();
+  if (soonest.length < 4) return [];
+
+  const [next, second, third, fourth] = soonest;
+
+  return [
+    {
+      id: "mock-substitution-request-mine",
+      sessionDate: dateOf(next.startsAt),
+      requestedBy: { id: GEDU_IDS.sanna, firstName: "Sanna" },
+      role: "primary",
+      status: "open",
+      substituteId: null,
+      offerCount: 2,
+    },
+    {
+      id: "mock-substitution-request-substituted",
+      sessionDate: dateOf(second.startsAt),
+      requestedBy: { id: GEDU_IDS.petra, firstName: "Petra" },
+      role: "primary",
+      status: "substituted",
+      substituteId: { id: GEDU_IDS.joonas, firstName: "Joonas" },
+      offerCount: null,
+    },
+    {
+      id: "mock-substitution-request-open",
+      sessionDate: dateOf(third.startsAt),
+      requestedBy: { id: GEDU_IDS.petra, firstName: "Petra" },
+      role: "primary",
+      status: "open",
+      substituteId: null,
+      offerCount: null,
+    },
+    {
+      // The viewer's **own** request, answered — the second of the two loud
+      // states a card can be in about the reader themselves, and the only one
+      // that cannot share a card with the first. With it on the page, all
+      // three of the states this feature draws are side by side in one feed:
+      // a card offering nothing but its overflow menu, a card waiting for a
+      // substitute with the way back on it, and this one, which is settled.
+      id: "mock-substitution-request-mine-substituted",
+      sessionDate: dateOf(fourth.startsAt),
+      requestedBy: { id: GEDU_IDS.sanna, firstName: "Sanna" },
+      role: "primary",
+      status: "substituted",
+      substituteId: { id: GEDU_IDS.joonas, firstName: "Joonas" },
+      offerCount: null,
+    },
+  ];
 }
 
 /**

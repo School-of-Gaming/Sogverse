@@ -111,6 +111,9 @@ export function formatTime(date: Date | string, locale: string, timeZone: string
   return new Intl.DateTimeFormat(locale, { ...TIME_OF_DAY, timeZone }).format(d);
 }
 
+/** A thin or narrow no-break space directly before or after a range's en dash. */
+const RANGE_DASH_SPACE = /[\u2009\u202f](?=\u2013)|(?<=\u2013)[\u2009\u202f]/g;
+
 /**
  * A start–end range — one session's clock face — in the given zone, with the
  * zone's short name appended ("16:30 – 18:00 GMT+3"). Both ends are formatted
@@ -123,6 +126,13 @@ export function formatTime(date: Date | string, locale: string, timeZone: string
  * viewer's own zone and omit the name when nothing was adjusted, but a mail can
  * only use the product's zone, and the reader has to be able to see which zone
  * that is.
+ *
+ * The space either side of the dash is rewritten to a plain one. Which space
+ * `formatRange` sets there is a property of the runtime's locale data — newer
+ * data sets a thin space, older a plain one — and the server and the browser
+ * do not carry the same data, so a range rendered on both sides of a hydration
+ * would otherwise differ by a character nobody can see. Only the spaces touching
+ * the dash are rewritten, so a locale that sets none still gets none.
  */
 export function formatTimeRange(
   start: Date | string,
@@ -136,7 +146,9 @@ export function formatTimeRange(
     ...TIME_OF_DAY,
     timeZone,
     timeZoneName: "short",
-  }).formatRange(s, e);
+  })
+    .formatRange(s, e)
+    .replace(RANGE_DASH_SPACE, " ");
 }
 
 // `options` is required and must carry a `timeZone`: an instant always renders

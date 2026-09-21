@@ -23,6 +23,16 @@ export { SessionFeedAlertBadge } from "./SessionFeedAlertBadge";
 export { SessionPhotoConsentList } from "./SessionPhotoConsentList";
 export type { SessionPhotoConsentState } from "./SessionPhotoConsentList";
 export { SessionPhotoStrip } from "./SessionPhotoStrip";
+export { SessionStaffingRegion } from "./SessionStaffingRegion";
+export {
+  SessionCardMenu,
+  type SessionCardMenuItem,
+} from "./SessionCardMenu";
+export { SessionSubstitutionMenu } from "./SessionSubstitutionMenu";
+export {
+  SessionSubstitutionRequestForm,
+  type SessionSubstitutionRequestDraft,
+} from "./SessionSubstitutionRequestDialog";
 export { StaffNoteBlock } from "./StaffNoteBlock";
 export { sessionPhotoErrorCode } from "./photo-failure";
 export {

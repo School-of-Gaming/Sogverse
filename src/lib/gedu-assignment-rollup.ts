@@ -1,7 +1,9 @@
+import { fromZonedTime } from "date-fns-tz";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { runEndedOn } from "@/lib/product-run";
+import { occurrenceOnDate } from "@/lib/session-date-occurrence";
 import {
   endDateToCutoff,
   enumerateRowOccurrences,
@@ -10,7 +12,6 @@ import {
 import type { MyAssignedProductSessionRow } from "@/services/assignments";
 import type { ProductType } from "@/types";
 import type {
-  AppHref,
   AppHrefObject,
   MaybeInertHref,
   MaybeInertHrefObject,
@@ -42,6 +43,21 @@ import { INERT_HREF } from "@/lib/constants/routes";
  * same questions about the same rows. Those derivations live in the neutral
  * modules beside this one (`product-run`, `activity-type`) and are consumed here;
  * only the assignment-shaped roll-up and its ordering are the gedu's own.
+ *
+ * **There are two roll-ups here, over one list of rows.** Since 00272 the
+ * assignment read returns a second kind of seat — a live **substitution**, one row per
+ * substitution date — and the two reduce differently: an assignment collapses a
+ * schedule to its next occurrence, a substitution *is* one occurrence and collapses to
+ * nothing. So they emit different summaries and draw different cards, and each
+ * roll-up ignores the other's rows.
+ *
+ * **Every per-seat fact is keyed by (product, group), never by product alone.**
+ * A gedu holds at most one assignment per product, which is what made a product
+ * id look like a key — but a substitution is on a *group*, and one gedu may substitute on a
+ * sibling group of a product they already teach. Under a product key those two
+ * cards would have shared a badge count, a workspace link and a voice room.
+ * {@link geduAssignmentKey} is that key; a substitution's own identity is (group,
+ * date), which is {@link geduSubstitutionKey}.
  */
 
 /**
@@ -64,6 +80,29 @@ export interface GeduAssignmentRow extends MyAssignedProductSessionRow {
    * means "no building involved" rather than "not loaded".
    */
   siteName: string | null;
+}
+
+/**
+ * The key every per-seat fact is looked up by — a product and the gedu's group
+ * in it, together.
+ *
+ * Product alone was the key until substitutions existed, and it was wrong the moment
+ * they did: two seats on one product (an assignment on one group, a substitution on
+ * another) would have collided on every one of the three maps below, so one
+ * card would have drawn the other's badge and linked to the other's workspace.
+ */
+export function geduAssignmentKey(productId: string, groupId: string): string {
+  return `${productId}:${groupId}`;
+}
+
+/**
+ * A substitution's own identity: the group, and the product-local date it covers.
+ *
+ * One card per substitution date — a sub who substitutes on two Mondays of one
+ * group holds two seats, and they are told apart by nothing else.
+ */
+export function geduSubstitutionKey(groupId: string, substitutionDate: string): string {
+  return `${groupId}:${substitutionDate}`;
 }
 
 /** One rolled-up card: an assignment, its next session, and its backlog. */
@@ -150,12 +189,15 @@ export interface RollUpArgs {
   rows: readonly GeduAssignmentRow[];
   now: Date;
   locale: SupportedLocale;
-  /** Outstanding sessions per product id; missing means none. */
-  attentionByProductId?: Readonly<Record<string, number>>;
-  /** Where each assignment's card navigates, by product id. */
-  hrefByProductId: Readonly<Record<string, AppHref>>;
-  /** Voice-room href per product id; anything missing collapses to `"#"`. */
-  voiceHrefByProductId?: Readonly<Record<string, AppHrefObject>>;
+  /**
+   * Outstanding sessions per seat, keyed by {@link geduAssignmentKey}; missing
+   * means none.
+   */
+  attentionByAssignment?: Readonly<Record<string, number>>;
+  /** Where each seat's card navigates, keyed by {@link geduAssignmentKey}. */
+  hrefByAssignment: Readonly<Record<string, AppHrefObject>>;
+  /** Voice-room href per seat; anything missing collapses to `"#"`. */
+  voiceHrefByAssignment?: Readonly<Record<string, AppHrefObject>>;
 }
 
 /**
@@ -169,15 +211,21 @@ export function rollUpGeduAssignments({
   rows,
   now,
   locale,
-  attentionByProductId,
-  hrefByProductId,
-  voiceHrefByProductId,
+  attentionByAssignment,
+  hrefByAssignment,
+  voiceHrefByAssignment,
 }: RollUpArgs): GeduAssignmentSummary[] {
   const windowCloseMs = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
 
-  const summaries = rows.map((row) => {
+  const summaries = rows
+    // Substitution rows are the other roll-up's: a substitution is one dated afternoon, and
+    // running it through the schedule walk would draw a sub a recurring card
+    // claiming they teach the club every week.
+    .filter((row) => row.kind === "assignment")
+    .map((row) => {
     const next = nextOccurrenceFor(row, now, windowCloseMs);
     const hasVoiceRoom = row.product.isRemote === true;
+    const key = geduAssignmentKey(row.product.id, row.groupId);
     return {
       productId: row.product.id,
       groupId: row.groupId,
@@ -194,16 +242,16 @@ export function rollUpGeduAssignments({
       // Only meaningful when there is a room; an in-person assignment renders no
       // Join at all, so its href is never read.
       voiceHref: hasVoiceRoom
-        ? (voiceHrefByProductId?.[row.product.id] ?? INERT_HREF)
+        ? (voiceHrefByAssignment?.[key] ?? INERT_HREF)
         : INERT_HREF,
       // Never carried by a remote product, whatever the row says: a product
       // with a voice room has no building, and a card showing both would be
       // claiming the group meets in two places.
       siteName: hasVoiceRoom ? null : row.siteName,
-      openHref: hrefByProductId[row.product.id] ?? INERT_HREF,
-      attentionCount: attentionByProductId?.[row.product.id] ?? 0,
+      openHref: hrefByAssignment[key] ?? INERT_HREF,
+      attentionCount: attentionByAssignment?.[key] ?? 0,
     } satisfies GeduAssignmentSummary;
-  });
+    });
 
   // Endedness is resolved once per assignment and carried through the sort
   // rather than recomputed inside the comparator: it is a zone-aware date parse,
@@ -294,4 +342,250 @@ function bySoonestSession(
   if (a.nextSessionStart === null) return 1;
   if (b.nextSessionStart === null) return -1;
   return a.nextSessionStart.getTime() - b.nextSessionStart.getTime();
+}
+
+/**
+ * One **substitution** card: a single afternoon a sub is holding, and the workspace it
+ * opens.
+ *
+ * It is deliberately not a {@link GeduAssignmentSummary} with a date bolted on.
+ * Almost every field on that one answers a question about a *run* — the next
+ * session, the cadence, whether the run has ended, how many children are in the
+ * group week after week — and none of those is a question about one substituted
+ * Monday. What a sub needs is where and when, and the way in.
+ */
+export interface GeduSubstitutionSummary {
+  groupId: string;
+  /** Product-local `YYYY-MM-DD` — the other half of this card's identity. */
+  substitutionDate: string;
+  productId: string;
+  /** Translated product name. */
+  productName: string;
+  productType: ProductType;
+  groupName: string | null;
+  /** The product's own zone, which `substitutionDate` is a date in. */
+  timezone: string;
+  /**
+   * The substituted session's start and end, or `null` when the schedule no longer
+   * projects that weekday.
+   *
+   * `null` is a real answer rather than a failure: a substitution keys on (group,
+   * date) like every session record, so an admin moving the schedule's weekday
+   * afterwards leaves a row naming a day the schedule has stopped producing.
+   * The card then shows the date alone rather than disappearing, which is what
+   * the orphaned-request rule asks of every reader of one.
+   */
+  startsAt: Date | null;
+  endsAt: Date | null;
+  /**
+   * When the group's workspace opens to this sub — 48 hours before the
+   * substituted session starts.
+   *
+   * **The card outlives the lock.** A substitution is on My SOG from the moment it is
+   * approved, so a sub can see the afternoon they agreed to take; what waits
+   * until this instant is the *workspace* behind it, and the database applies
+   * the same 48 hours to every gate that reaches the group. So a card whose
+   * `accessOpensAt` is still ahead is drawn locked rather than withheld.
+   *
+   * **An orphaned date still has one**, and it is the database's own fallback
+   * rather than an absence of one: a date the schedule no longer projects has
+   * no session start, so the SQL counts the 48 hours back from **product-local
+   * midnight of the substitution date** — earlier than any real session that day
+   * would have opened, and never "open now". A `null` here would have drawn an
+   * unlocked, linked card for a workspace every gate behind it still refuses,
+   * landing the sub on the "not assigned" empty state.
+   *
+   * Computed on the instant, never by stepping a date string: 48 hours before
+   * a Monday 17:00 is a Saturday 17:00 in real time, whatever a calendar
+   * subtraction of two days would say across a DST transition.
+   */
+  accessOpensAt: Date;
+  /** Whether there is a room at all — true only on a remote product. */
+  hasVoiceRoom: boolean;
+  /** Where the Join navigates. `"#"` keeps it inert. */
+  voiceHref: MaybeInertHrefObject;
+  /** The building, on an in-person product; `null` on a remote one. */
+  siteName: string | null;
+  /**
+   * The workspace this card opens — **carrying the group as a query param**.
+   *
+   * A sub has no assignment row to resolve a group from, and one substituting a
+   * sibling group of a product they already teach would otherwise land in their
+   * own group's workspace: the right product, the wrong roster. The param is
+   * what the workspace route reads to answer "which group is mine".
+   */
+  openHref: MaybeInertHref;
+  /**
+   * What this one session still owes — the same four conditions every other
+   * count applies, scoped to a set of one occurrence rather than recomputed.
+   * It is 0 or 1 by construction, and the badge is the badge every other card
+   * wears.
+   */
+  attentionCount: number;
+}
+
+/**
+ * How long before a substituted session the group's workspace opens to the sub.
+ *
+ * This is the client's half of a bound the **database** enforces — every gate
+ * that lets a substitution reach the group applies the same lead against the same
+ * session start — so it exists here only to tell a sub when their card will
+ * unlock, and moving it is a migration and this line together.
+ */
+const SUBSTITUTION_ACCESS_LEAD_MS = 48 * 60 * 60 * 1000;
+
+/**
+ * The instant the 48 hours are counted back from: the substituted session's own
+ * start, or — on a date the schedule no longer projects — **product-local
+ * midnight of that date**.
+ *
+ * The fallback is not a client invention; it is the second arm of the SQL
+ * predicate's own `COALESCE`, restated here so the card locks and unlocks at the
+ * moment the database does. Reading the orphan as "never locked" drew an
+ * unlocked card linking into a workspace every gate still refuses, which is the
+ * one thing the locked state exists to prevent.
+ *
+ * Midnight is built as a wall clock in the **product's** zone and converted
+ * once, because that is the zone the date is a date in — never by stepping a
+ * runtime-local Date, which a DST transition would silently move.
+ */
+function substitutionAccessAnchor(
+  occurrence: { start: Date } | null,
+  substitutionDate: string,
+  timezone: string,
+): Date {
+  if (occurrence !== null) return occurrence.start;
+  return fromZonedTime(`${substitutionDate}T00:00:00`, timezone);
+}
+
+export interface SubstitutionRollUpArgs {
+  rows: readonly GeduAssignmentRow[];
+  locale: SupportedLocale;
+  /**
+   * Outstanding work per substitution, keyed by {@link geduSubstitutionKey}; missing means
+   * none.
+   */
+  attentionBySubstitution?: Readonly<Record<string, number>>;
+  /**
+   * Where each seat's workspace lives, keyed by {@link geduAssignmentKey} —
+   * **the same map the assignment roll-up takes**, because a substitution's workspace
+   * is its product's and its group's like any other. The group query param is
+   * added here rather than by the caller, so the rule that a substitution's link
+   * carries its group has one home.
+   */
+  hrefByAssignment: Readonly<Record<string, AppHrefObject>>;
+  /** Voice-room href per seat; anything missing collapses to `"#"`. */
+  voiceHrefByAssignment?: Readonly<Record<string, AppHrefObject>>;
+}
+
+/**
+ * Roll the caller's substitutions up into one card each, **soonest substitution date
+ * first**, with a date the schedule no longer projects last.
+ *
+ * No clock: a substitution card stands from the moment the substitution is approved until the
+ * substitution expires, and the database is what decides that — a row is returned
+ * while the substitution is the caller's and gone once it is not. Filtering again here
+ * against a second clock would be a card disagreeing with the rows the page
+ * actually has.
+ *
+ * The card's *lock* is a different question and is not decided here either:
+ * every card carries the instant its workspace opens, and whether that instant
+ * has passed is asked of the viewer's clock at render, where the rest of the
+ * card's liveness already is.
+ */
+export function rollUpGeduSubstitutions({
+  rows,
+  locale,
+  attentionBySubstitution,
+  hrefByAssignment,
+  voiceHrefByAssignment,
+}: SubstitutionRollUpArgs): GeduSubstitutionSummary[] {
+  const substitutions = rows.flatMap((row) => {
+    // Both halves are what makes the row a substitution, and the type only guarantees
+    // the first — so a `substitution` row with no date is dropped rather than drawn as
+    // a card with nothing to say about when it is.
+    if (row.kind !== "substitution" || row.substitutionDate === null) return [];
+
+    const key = geduAssignmentKey(row.product.id, row.groupId);
+    const occurrence = occurrenceOnDate({
+      sessionDate: row.substitutionDate,
+      slots: row.slots,
+      timezone: row.product.timezone,
+    });
+    const hasVoiceRoom = row.product.isRemote === true;
+    return [
+      {
+        groupId: row.groupId,
+        substitutionDate: row.substitutionDate,
+        productId: row.product.id,
+        productName:
+          resolveTranslation(row.product.translations, locale)?.name ?? "",
+        productType: row.product.productType,
+        groupName: row.groupName,
+        timezone: row.product.timezone,
+        startsAt: occurrence?.start ?? null,
+        endsAt: occurrence?.end ?? null,
+        accessOpensAt: new Date(
+          substitutionAccessAnchor(
+            occurrence,
+            row.substitutionDate,
+            row.product.timezone,
+          ).getTime() - SUBSTITUTION_ACCESS_LEAD_MS,
+        ),
+        hasVoiceRoom,
+        voiceHref: hasVoiceRoom
+          ? (voiceHrefByAssignment?.[key] ?? INERT_HREF)
+          : INERT_HREF,
+        siteName: hasVoiceRoom ? null : row.siteName,
+        openHref: substitutionWorkspaceHref(hrefByAssignment[key], row.groupId),
+        attentionCount:
+          attentionBySubstitution?.[geduSubstitutionKey(row.groupId, row.substitutionDate)] ?? 0,
+      } satisfies GeduSubstitutionSummary,
+    ];
+  });
+
+  substitutions.sort(bySubstitutionMoment);
+  return substitutions;
+}
+
+/**
+ * A substitution's workspace link: the seat's own destination with the group added, or
+ * the inert href when the caller named no destination for that seat.
+ *
+ * The group rides as a query param because a sub has no assignment row for one
+ * to be resolved from — and one substituting a *sibling* group of a product they
+ * already teach would otherwise land on their own group's workspace, which is
+ * the right product and the wrong roster.
+ *
+ * A function rather than an inline ternary so the `undefined` half is a real
+ * parameter type: an index signature says every key is present, and the seat a
+ * preview supplied no link for is exactly the case this has to answer.
+ */
+function substitutionWorkspaceHref(
+  workspace: AppHrefObject | undefined,
+  groupId: string,
+): MaybeInertHref {
+  if (workspace === undefined) return INERT_HREF;
+  return { ...workspace, query: { groupId } };
+}
+
+/**
+ * Soonest substituted session first; an orphaned date — one the schedule no longer
+ * projects — sorts last, by its own date, then by product name.
+ *
+ * The orphan has no instant to be ordered against and is history rather than
+ * work, so it goes to the foot of the run for the same reason a finished
+ * assignment does.
+ */
+function bySubstitutionMoment(a: GeduSubstitutionSummary, b: GeduSubstitutionSummary): number {
+  if ((a.startsAt === null) !== (b.startsAt === null)) {
+    return a.startsAt === null ? 1 : -1;
+  }
+  if (a.startsAt !== null && b.startsAt !== null) {
+    const byStart = a.startsAt.getTime() - b.startsAt.getTime();
+    if (byStart !== 0) return byStart;
+  } else if (a.substitutionDate !== b.substitutionDate) {
+    return a.substitutionDate < b.substitutionDate ? -1 : 1;
+  }
+  return a.productName.localeCompare(b.productName);
 }

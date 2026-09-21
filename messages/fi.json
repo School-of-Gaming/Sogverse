@@ -64,7 +64,9 @@
       "robloxSafeguarding": "Luojien akatemian lasten turvallisuuden toimintaohje",
       "robloxTerms": "Luojien akatemian käyttöehdot",
       "geduContract": "Gedu-sopimus",
-      "seatOffer": "Paikkatarjous"
+      "seatOffer": "Paikkatarjous",
+      "geduSubstitutions": "Tuuraukset",
+      "adminSubstitutions": "Tuuraukset"
     },
     "descriptions": {
       "signIn": "Kirjaudu School of Gaming -tilillesi. Näet pelaajiesi tulevat kerrat, hallitset ilmoittautumisia ja pidät perheesi tiedot ajan tasalla.",
@@ -457,6 +459,11 @@
         "manage": "Hallinnoi laskutusasiakkaita",
         "option": "{name} ({number})"
       }
+    },
+    "geduRole": {
+      "primary": "Vastaava Gedu",
+      "assistant": "Avustava Gedu",
+      "selectAria": "{name} – rooli"
     },
     "geduContract": {
       "heading": "Gedu-sopimus",
@@ -931,6 +938,8 @@
         "noResults": "Hakuehdoilla ei löytynyt Geduja.",
         "current": "Nykyinen",
         "alreadyAssigned": "Jo nimetty",
+        "alreadyExpected": "Jo tällä kerralla",
+        "absentGedu": "Tuurattava Gedu",
         "notCertified": "Ei hyväksytty"
       },
       "participantPicker": {
@@ -1107,6 +1116,44 @@
         },
         "note": "Yllä oleva hinta sisältää arvonlisäveron. Stripe laskee tarkan määrän myyntihetkellä, joten tässä näkyy Suomen tämänhetkinen verokanta."
       },
+      "staffing": {
+        "menuLabel": "Lisää toimintoja tälle kerralle",
+        "setSubstitute": "Aseta tuuraaja",
+        "changeSubstitute": "Vaihda tuuraajaa",
+        "changeSubstituteFor": "Vaihda Gedun {name} tuuraajaa",
+        "clearSubstitute": "Poista tuuraaja",
+        "clearSubstituteFor": "Poista Gedun {name} tuuraaja",
+        "withdrawRequest": "Peru pyyntö",
+        "withdrawRequestFor": "Peru Gedun {name} pyyntö",
+        "withRole": "{name} · {role}",
+        "absentLabel": "Poissa",
+        "subLabel": "Tuuraaja",
+        "changeChoice": "Vaihda",
+        "absentStepTitle": "Kuka on poissa?",
+        "absentStepBody": "Kerralla {date} on merkittynä useampi gedu. Valitse se, joka ei pääse.",
+        "pickerTitle": "Valitse tuuraaja",
+        "pickerDescription": "Valitse, kuka tuuraa Gedua {name}. Jos gedu ei voi tuurata, syy näkyy rivillä.",
+        "confirmTitle": "Aseta tuuraaja",
+        "confirmBody": "Merkitse, kuka pitää kerran {date} poissaolevan gedun sijasta.",
+        "approvesOpenRequest": "Tämä hyväksyy avoimen pyynnön eikä luo uutta.",
+        "replacesCurrentSub": "Tämä korvaa tuuraajan {name}, joka on nyt merkitty tälle kerralle.",
+        "reasonLabel": "Syy",
+        "reasonSick": "Sairaana",
+        "reasonOther": "Jokin muu",
+        "noteLabel": "Viesti toimistolle",
+        "notePlaceholder": "Mitä toimiston olisi hyvä tietää tästä tuurauksesta.",
+        "noteRemaining": "{count} merkkiä jäljellä",
+        "confirmAction": "Aseta tuuraaja",
+        "setFailed": "Tuuraajan asettaminen ei onnistunut. Yritä uudelleen.",
+        "clearTitle": "Poistetaanko tuuraaja?",
+        "clearBody": "{sub} ei enää tuuraa Gedua {name} kerralla {date}, ja kerta palaa jonoon tuuraajaa vaille.",
+        "clearConfirm": "Poista tuuraaja",
+        "clearFailed": "Tuuraajan poistaminen ei onnistunut. Yritä uudelleen.",
+        "withdrawTitle": "Perutaanko pyyntö?",
+        "withdrawBody": "{name} pääseekään kerralle {date}. Pyynnön tarjoukset raukeavat eikä ketkään jää tuuraajaksi.",
+        "withdrawConfirm": "Peru pyyntö",
+        "withdrawFailed": "Pyynnön peruminen ei onnistunut. Yritä uudelleen."
+      },
       "sessions": {
         "loadFailed": "Kertojen kirjauksia ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
         "loading": "Ladataan tämän tuotteen kertojen kirjauksia.",
@@ -1264,6 +1311,33 @@
       "notDelivered": "Ei toimitettu",
       "today": "Tänään",
       "yesterday": "Eilen"
+    },
+    "substitutions": {
+      "title": "Tuuraukset",
+      "description": "Kerrat, joihin joku ei pääse, ja kuka tuurasi.",
+      "descriptionWithZone": "Kerrat, joihin joku ei pääse, ja kuka tuurasi. Ajat näkyvät aikavyöhykkeellä {zone}.",
+      "listLabel": "Kerrat, jotka tarvitsevat tuuraajan",
+      "allClear": "Yksikään kerta ei tarvitse tuuraajaa.",
+      "justNow": "{count, plural, one {# tuuraaja hyväksytty juuri nyt} other {# tuuraajaa hyväksytty juuri nyt}}",
+      "offersLabel": "Tuuraamista tarjoavat Gedut",
+      "away": "Poissa:",
+      "unnamed": "Nimetön Gedu",
+      "reason": {
+        "sick": "Sairaus",
+        "other": "Muu"
+      },
+      "noOffers": "Ei vielä tarjouksia.",
+      "openGroup": "Avaa ryhmä",
+      "approve": "Hyväksy",
+      "failed": "Hyväksyntä epäonnistui – yritä uudelleen.",
+      "loadError": "Tuurauksia ei voitu ladata.",
+      "loadErrorWithReason": "Tuurauksia ei voitu ladata: {reason}",
+      "approveConfirmTitle": "Hyväksytäänkö {name} tuuraajaksi?",
+      "approveConfirmBody": "{name} ottaa kerran {product} — {group} {when}, Gedun {absent} tilalla. Kerta näkyy hänen Tuuraukset-sivullaan ja My SOG -näkymässä heti, ja ryhmän työtila avautuu hänelle 48 tuntia ennen kerran alkua. Kenellekään ei lähetetä ilmoitusta: kerta poistuu muiden tarjoutuneiden listalta, ja sen kortilla lukee nyt, että {name} tuuraa henkilöä {absent}.",
+      "approveFailedOfferGone": "{name} on perunut tarjouksensa, joten hyväksyttävää ei ole.",
+      "approveFailedAlreadySettled": "Joku muu on jo hoitanut tämän kerran.",
+      "approveFailedSeatGone": "{absent} ei ole enää tässä kerrassa, joten tuurattavaa ei ole.",
+      "approveFailedIneligible": "{name} ei voi enää ottaa tätä kertaa."
     }
   },
   "auth": {
@@ -1912,9 +1986,44 @@
     }
   },
   "gedu": {
+    "substitution": {
+      "cardEyebrow": "Tuuraus",
+      "cardOpenLabel": "{product} – tuuraamasi kerta",
+      "cardLockedLabel": "{product} – tuuraamasi kerta. Ryhmän työtila avautuu 48 tuntia ennen kerran alkua.",
+      "accessOpens": "Työtila avautuu {date} klo {time}",
+      "poolHeading": "Kerrat, jotka tarvitsevat tuuraajan",
+      "poolAllClear": "Yksikään kerta ei tarvitse juuri nyt tuuraajaa.",
+      "poolRemote": "Etänä",
+      "poolSiteUnknown": "Paikka varmistuu myöhemmin",
+      "poolRolePrimary": "Vastaava Gedu",
+      "poolRoleAssistant": "Avustava Gedu",
+      "poolFee": "{fee} / kerta",
+      "poolOfferAction": "Voin tuurata",
+      "poolWithdrawAction": "Peru tarjous",
+      "poolWithdrawPending": "Perutaan…",
+      "poolActionFailed": "Tallennus epäonnistui. Yritä uudelleen.",
+      "pageTitle": "Tuuraukset",
+      "back": "Takaisin Omaan SOGiin",
+      "mineHeading": "Tuurauksesi",
+      "mineAllClear": "Sinulla ei ole tulevia tuurauksia.",
+      "fileAction": "Etkö pääse jollekin kerralle?",
+      "filePickTitle": "Mille kerralle et pääse?",
+      "filePickBody": "Valitse kerta, jolle et pääse. Syy ja viesti näkyvät vain ylläpitäjille.",
+      "fileAlreadyRequested": "Tuuraajaa on jo pyydetty",
+      "filePickWeekThis": "Tämä viikko",
+      "filePickWeekNext": "Ensi viikko",
+      "filePickWeekOf": "Viikko {date} alkaen",
+      "filePickShowLater": "Näytä myöhemmät kerrat",
+      "filePickGroupLabel": "Ryhmä",
+      "filePickAllGroups": "Kaikki ryhmät",
+      "fileFiled": "Tuuraajaa pyydetty: {product} {when}. Pyyntö näkyy nyt kyseisen kerran kortilla.",
+      "fileFiledLink": "Avaa ryhmän työtila",
+      "offerConfirmTitle": "Tarjoudutko tuuraajaksi?",
+      "offerConfirmBody": "Tarjoudut vetämään kerran {product} {when}. School of Gaming valitsee tuuraajan, joten tarjous ei sido sinua ennen kuin se on hyväksytty — siihen asti voit perua sen. Hyväksynnän jälkeen ryhmän työtila avautuu sinulle 48 tuntia ennen kerran alkua."
+    },
     "coverage": {
       "title": "Kattamasi alueet",
-      "remoteOnlyNote": "Käytetään sijaisen etsimiseen, kun toinen Gedu ei pääse pitämään kerhoaan. Jätä tyhjäksi, jos toimit vain etänä.",
+      "remoteOnlyNote": "Käytetään tuuraajan etsimiseen, kun toinen Gedu ei pääse pitämään kerhoaan. Jätä tyhjäksi, jos tuuraat vain etänä.",
       "selectedHeading": "Valitut ({count})",
       "noneSelected": "Ei valittuja alueita",
       "remove": "Poista {name}",
@@ -2010,7 +2119,38 @@
       "creationsAddedCount": "{added}/{total} lisätty",
       "creationsHint": "Kauden viimeinen kerta on valmis vasta, kun jokaisella on teos. Avaa nimi ja lisää teos.",
       "creationsMemberDone": "{name} – teos lisätty",
-      "creationsMemberMissing": "{name} – teos puuttuu"
+      "creationsMemberMissing": "{name} – teos puuttuu",
+      "staffingExpectedLabel": "Tämän kerran ohjaajat:",
+      "staffingNobodyExpected": "Tälle kerralle ei ole vielä ohjaajaa.",
+      "staffingWithRole": "{name} ({role})",
+      "staffingSubstitutionNeeded": "{name} tarvitsee tuuraajan.",
+      "staffingSubstitutedBy": "Tuuraajana {sub}, poissa {name}.",
+      "substitutionRolePrimary": "Vastaava Gedu",
+      "substitutionRoleAssistant": "Avustava Gedu",
+      "substitutionMenuLabel": "Lisää toimintoja tälle kerralle",
+      "substitutionRequestAction": "Joudun perumaan",
+      "substitutionRequestDialogTitle": "En pääse tälle kerralle",
+      "substitutionRequestDialogBody": "Kerta järjestetään silti – toimisto etsii tilallesi tuuraajan. Syyn ja viestin näkevät vain ylläpitäjät.",
+      "substitutionReasonLabel": "Syy",
+      "substitutionReasonSick": "Sairaus",
+      "substitutionReasonOther": "Jokin muu",
+      "substitutionNoteLabel": "Viesti toimistolle",
+      "substitutionNotePlaceholder": "Mitä toimiston on hyvä tietää",
+      "substitutionNoteRemaining": "{count, plural, one {# merkki jäljellä} other {# merkkiä jäljellä}}",
+      "substitutionRequestConfirm": "Vahvista",
+      "substitutionRequestFailed": "Tallennus epäonnistui. Yritä uudelleen.",
+      "substitutionRequestFailedAlreadyAsked": "Olet jo pyytänyt tuuraajaa tälle kerralle.",
+      "substitutionRequestFailedNotExpected": "Olet jo pyytänyt tuuraajaa tälle kerralle, tai sinua ei enää odoteta paikalle.",
+      "substitutionRequestFailedPastSession": "Tämän kerran päivä on jo mennyt.",
+      "substitutionRequestFailedNotScheduled": "Tämä kerta ei ole enää aikataulussa.",
+      "substitutionRequestStatusOpen": "Olet pyytänyt tuuraajaa tälle kerralle. Odotetaan tuuraajaa.",
+      "substitutionRequestStatusOffers": "{count, plural, one {# tarjous odottaa} other {# tarjousta odottaa}}",
+      "substitutionRequestStatusSubstituted": "{name} tuuraa sinua.",
+      "substitutionWithdrawAction": "Pääsenkin paikalle",
+      "substitutionWithdrawTitle": "Perutaanko ilmoitus?",
+      "substitutionWithdrawBody": "Ohjaat kerran taas itse, ja kaikki tuuraustarjoukset raukeavat.",
+      "substitutionWithdrawConfirm": "Peru ilmoitus",
+      "substitutionWithdrawFailed": "Tallennus epäonnistui. Yritä uudelleen."
     },
     "groupNotes": {
       "heading": "Tästä ryhmästä",
@@ -2200,7 +2340,9 @@
       "shop": "Kauppa",
       "yty": "Yty",
       "about": "Tietoa",
-      "faq": "UKK"
+      "faq": "UKK",
+      "substitutions": "Tuuraukset",
+      "substitutionsPhone": "Tuuraukset"
     },
     "accountMenu": "Tilivalikko – {name}",
     "continueToAccount": "Jatka tilillesi",
@@ -2650,7 +2792,8 @@
     "settings": "Asetukset",
     "tools": "Työkalut",
     "expandSidebar": "Laajenna sivupalkki",
-    "collapseSidebar": "Pienennä sivupalkki"
+    "collapseSidebar": "Pienennä sivupalkki",
+    "substitutions": "Tuuraukset"
   },
   "home": {
     "hero": {

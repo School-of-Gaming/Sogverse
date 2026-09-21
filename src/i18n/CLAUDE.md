@@ -120,6 +120,8 @@ product page is a confusion, and the carve-out is the cost of not editing a sign
 - **`vous` to adults, `tu` in child-facing strings.**
 - **Never use the middle dot (`Prêt·e`) to dodge gender agreement — reframe instead.** It is visually awkward on screen and contested in France. Open child-facing prompts with a construction that takes no agreement, and where inserting a name would force a participle to inflect, state the event as a noun phrase (an enrolment is confirmed) rather than agreeing with the person.
 
+**Rule: a placeholder never takes a case ending — in Finnish, the case goes on a role noun in front of the name.** A person's name arrives in its basic form and Finnish inflects names by rules a template cannot apply (consonant gradation, stem changes, foreign names), so `{name}:n` is both the wrong form — the colon ending belongs to abbreviations and numerals — and the only one a template can produce. Put the noun the person is there as ahead of the placeholder and let *it* carry the case: the player's settings, the Gedu's request, substituting for the Gedu, each followed by the uninflected name. The same holds for any value a sentence would want to decline — a product, a group, a place.
+
 ## Locale resolution: the URL decides
 
 **Rule: every page URL carries its locale, and the URL wins over cookie, profile and `Accept-Language` alike.** The prefix is `always`, so `/en/…` is as prefixed as `/fi/…` — one URL shape, no "bare means English" special case in the proxy, the normalizer, the picker or a test — and a link therefore pins a language for whoever receives it, crawler included. That is the whole point: a shared link and the social card scraped from it render the language they were sent in.

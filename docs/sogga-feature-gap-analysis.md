@@ -73,24 +73,30 @@ exists.
 
 **SOGGA had:** Materialised lesson rows per club group with date, time, status, notes and
 assignment codes; batch creation for a whole period; a per-lesson status workflow; and
-substitution tracking when another educator covers.
+substitution tracking when another educator substitutes.
 
 **Sogverse has:** Sessions projected from a group's recurring schedule slots,
 materialised lazily as `group_sessions` when a gedu first writes to one.
 Batch creation is replaced by design — the projection *is* the semester. Per-session
-staff writes (report, photos, attendance) exist.
+staff writes (report, photos, attendance) exist. **Substitution tracking is built**, as
+substitution requests rather than reassignment: a gedu files one against a single (group, date),
+every certified gedu can offer, an admin approves one, and the substitute holds that group's
+workspace for a bounded window instead of being permanently assigned to it. An admin can
+also set, clear or withdraw a session's staffing directly — including on past dates, so an
+off-platform substitution is recordable for pay. Every assignment carries a primary/assistant
+role, so who ran a given session, in which role, is answerable per date.
 
-**Still missing:** A per-session status, cancelling or rescheduling a single occurrence,
-and substitution tracking. `did_not_run` / `needs_substitute` columns were added in
-migration 00138 and deliberately dropped in 00151; `cancel_session`,
-`reschedule_session` and `assign_substitute` are reserved names only. `ROADMAP.md`
-plans **Auto substitution** as a cover-request flow (WhatsApp / Discord / email /
-in-app, admin-approved) rather than SOGGA's manual reassignment.
+**Still missing:** A per-session status, and cancelling or rescheduling a single
+occurrence. `did_not_run` / `needs_substitute` columns were added in migration 00138 and
+deliberately dropped in 00151; `cancel_session` and `reschedule_session` are reserved
+names only, and cancellation is where the occurrence expansion first gains a subtraction
+(substitution needed none). The substitution flow is also **in-app only** — the `ROADMAP.md`
+WhatsApp / Discord / email fan-out on **Auto substitution** is not built.
 
-**Priority:** `High`
+**Priority:** `Medium` (down from High — substitution shipped; cancellation is what is left)
 **Complexity:** `Medium` — An occurrence-override shape on `group_sessions` (cancelled,
-moved, covered-by), the projection honouring it, and gedu/admin controls. The data
-model and the feed already exist.
+moved), the three occurrence expanders unified in one pass to honour the subtraction, and
+gedu/admin controls. The data model and the feed already exist.
 
 ---
 
@@ -132,24 +138,28 @@ user detail page.
 
 ---
 
-### 9. Substitute Educator Search — `Gap`
+### 9. Substitute Educator Search — `Partial`
 
 **SOGGA had:** A filtered search for educators available in a weekday / time window,
 by languages, qualifications, skills, attendance types and municipalities.
 
-**Sogverse has:** The group-assignment gedu picker filters on name + email text and a
-single spoken-language chip, and flags uncertified gedus. `gedu_locations` exists for
-exactly this (the locations service names substitute matching as its purpose) but
-nothing reads it for that yet.
+**Sogverse has:** The **substitution-request flow shipped as a broadcast**, which answers the need
+without a search in the common case: an open request appears on every certified gedu's
+dashboard, any of them can offer, and an admin approves one. The office-arranged path uses
+the group-assignment gedu picker — name + email text and a single spoken-language chip,
+uncertified gedus flagged — with the absent gedu, anyone already expected at that session
+and the uncertified disabled. `gedu_locations` exists for matching (the locations service
+names substitute matching as its purpose) but nothing reads it for that yet.
 
-**Still missing:** Availability by weekday / time window, location and attribute filters.
-The attributes themselves depend on item 8. `ROADMAP.md` schedules **Auto substitution**
-as a broadcast-and-approve cover request, which may make the search moot.
+**Still missing:** Eligibility and ranking, on the pool list and the admin queue alike —
+availability by weekday / time window, location, language and schedule clash. Today every
+certified gedu sees every open request, unranked and unfiltered, which the broadcast design
+accepts for v1. The richer attributes depend on item 8.
 
-**Priority:** `Medium`
+**Priority:** `Low` (down from Medium — the broadcast answers the need; filters are an efficiency gain)
 **Complexity:** `Medium` — An availability query over schedule slots plus the profile
-junctions, and a multi-filter picker. Or none of it, if the cover-request flow ships
-first.
+junctions, applied as filtering and ranking on the existing pool read rather than as a new
+search surface.
 
 ---
 
@@ -161,9 +171,10 @@ first.
 gedu, club and pricing tier, a status workflow (Unhandled → Processed / Rejected →
 Invoiced), gedu self-service views and admin management.
 
-**Sogverse has:** Both inputs and no consumer — per-session gedu fees on `products`
-(`primary_gedu_fee_cents`, `assistant_gedu_fee_cents`) and per-session attendance
-(`session_attendance`). No period, line-item or status objects, no routes, no UI.
+**Sogverse has:** Every input and no consumer — per-session gedu fees on `products`
+(`primary_gedu_fee_cents`, `assistant_gedu_fee_cents`), per-session attendance
+(`session_attendance`), and, since substitution landed, who was expected at each (group,
+date) and in which role, substitutions included (see item 5). No period, line-item or status objects, no routes, no UI.
 **Educators are still marking sessions done in SOGGA to get paid**: the in-repo gedu
 handbook (`src/data/gedu-docs/`) instructs it, and describes the Truster collective
 invoicing that follows.
@@ -488,6 +499,6 @@ axes from item 26.
 | Priority | Items |
 |----------|-------|
 | **Critical** | GEDU Invoicing (11), Municipality Invoicing (12) |
-| **High** | Municipality Registration (3), Lesson Management (5), GEDU Profiles (8), Reporting Suite (13), Club Calendar View (26) |
-| **Medium** | Custom Fields (2), Lesson Rewards (7), Substitute Search (9), Achievement System (14), ActiveCampaign CRM (20), Welcome Emails (22), Scheduled Jobs (24), Audit Logging (25), Multi-Entity Search (29) |
-| **Low** | Activity Generator (15), Code Domain System (16), Club Instructions (17), Entities (19), Webflow Webhooks (21), Discord Bot (23) |
+| **High** | Municipality Registration (3), GEDU Profiles (8), Reporting Suite (13), Club Calendar View (26) |
+| **Medium** | Custom Fields (2), Lesson Management (5), Lesson Rewards (7), Achievement System (14), ActiveCampaign CRM (20), Welcome Emails (22), Scheduled Jobs (24), Audit Logging (25), Multi-Entity Search (29) |
+| **Low** | Substitute Search (9), Activity Generator (15), Code Domain System (16), Club Instructions (17), Entities (19), Webflow Webhooks (21), Discord Bot (23) |
