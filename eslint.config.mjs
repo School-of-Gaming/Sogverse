@@ -1194,7 +1194,7 @@ const eslintConfig = defineConfig([
     // have nothing to work from here and are turned off explicitly; what
     // remains is the check that actually earns its place on a run-once script,
     // an undefined identifier in a branch the one manual run never took.
-    files: ["**/*.mjs"],
+    files: ["scripts/**/*.mjs"],
     languageOptions: {
       parserOptions: { project: false },
       globals: {
