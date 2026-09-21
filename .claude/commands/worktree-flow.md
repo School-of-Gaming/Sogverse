@@ -263,14 +263,17 @@ session's context is at its largest, so a command here costs several times what 
 same command cost in Phase 1. Batch what can be batched — independent commands
 belong in one call — and prefer the script wherever one exists.
 
-1. **Confirm clean:** `npm run lint`, `npm run type-check`, and the full
-   `npm run test` all pass — plus `npm run check-translations` if the branch
-   touched `messages/` — and everything is committed. Phase 2's per-file test
-   runs were for iteration; landing gets the whole suite. A run is current
-   as long as HEAD hasn't moved: when the full gates already passed on the
-   exact commit being merged, say so and skip the re-run — the gate exists
-   to catch changes, not to ritualise. Any commit since, however small,
-   voids it.
+1. **Confirm clean:** `npm run gates` — lint, type-check, translations and the
+   full suite, in one call. It runs every gate whatever the earlier ones did,
+   so one invocation returns the complete picture instead of one failure per
+   cycle, and prints nothing for a gate that passes. Phase 2's per-file test
+   runs were for iteration; landing gets the whole suite. Everything must be
+   committed too.
+
+   A run is current as long as HEAD hasn't moved: when the gates already
+   passed on the exact commit being merged, say so and skip the re-run — the
+   gate exists to catch changes, not to ritualise. Any commit since, however
+   small, voids it.
 
 2. **Stop the dev server first, if Phase 3 started one — by port, with a tree
    kill. Every time; this is the procedure, not a recovery.** On Windows,
@@ -297,20 +300,24 @@ belong in one call — and prefer the script wherever one exists.
    to the main checkout. `remove` will refuse here, because the worktree was
    created by hand rather than by `EnterWorktree`.
 
-4. **Merge and push**, from the main checkout on `dev`:
+4. **Merge and push**, from the main checkout — one call:
 
    ```
-   git branch --show-current        # must say dev — check out dev if not
-   git fetch origin dev             # dev moves while worktree work runs
-   git merge --ff-only origin/dev   # fast-forward local dev to the tip
-   git merge --no-ff feat/<branch>
-   git push origin dev
+   [ "$(git branch --show-current)" = dev ] &&
+     git fetch origin dev &&
+     git merge --ff-only origin/dev &&
+     git merge --no-ff feat/<branch> -m "Merge the <thing> into dev" &&
+     git push origin dev
    ```
+
+   The branch test gates everything after it: off `dev`, the chain is a no-op
+   rather than a merge into the wrong place. The fetch and `--ff-only` catch
+   local `dev` up, since it moves while worktree work runs. `-m` is required —
+   without it the merge opens an editor and the run hangs.
 
    The main checkout's home branch is `dev` — start there, end there, and
-   deviate only when the user explicitly says to. Subject line:
-   `Merge the <thing> into dev` — matching the house style, not git's default
-   text. If `dev` gained commits since Phase 1, the push publishes a union CI
+   deviate only when the user explicitly says to. The subject is house style,
+   not git's default text. If `dev` gained commits since Phase 1, the push publishes a union CI
    has not seen — that is accepted; CI on `dev` judges it (step 6).
 
 5. **Tear the worktree down and delete the branch** — one call, from the

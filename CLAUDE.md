@@ -10,6 +10,7 @@ npm run dev:stripe       # Start dev server + Stripe webhook listener
 npm run build            # Production build
 npm run lint             # ESLint
 npm run type-check       # TypeScript check (tsc --noEmit)
+npm run gates            # All landing gates: lint + type-check + translations + tests (runs all, reports every failure)
 npm run test             # Vitest unit tests
 npm run test:ui          # Vitest with UI
 npm run test:smoke       # Build + smoke check (serves a production build, asserts headers/CSP)
