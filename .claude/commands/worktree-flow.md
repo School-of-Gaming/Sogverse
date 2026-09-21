@@ -146,6 +146,26 @@ context?", and if the answer is yes it goes to an agent however simple it looks.
 Only the small interactive kind stays — a review-round fix, a two-file tweak, an
 edit you are already mid-way through.
 
+**One bounded deliverable per agent, then a fresh agent for the next piece.** An
+agent pays to re-read its whole accumulated context on every turn it takes, so its
+cost grows with roughly the square of its length — the Models section below has the
+measured shape. Size each piece so an agent can finish it and hand back; tell it to
+stop and report when the work turns out larger than its brief rather than expanding
+to fill it; and when the next piece is ready **launch a new agent rather than
+sending the finished one back to work**, because continuing keeps its context and
+keeps paying for it where a new one starts clean. Split on deliverable boundaries
+only — an agent stopped mid-refactor costs its successor more to pick up than the
+split saved.
+
+**Write the reading list into the prompt, not just the ownership list.** Reading is
+the largest single thing agents consume, and one left to find its own way in opens
+far more than the work needs, then carries all of it for the rest of its life. Name
+the files to start from, with line ranges where the relevant part is small. When
+several agents need the same background — a plan's section, a schema excerpt, a
+convention — paste the passage into each prompt rather than pointing at the file:
+pointed at one, every agent opens the whole of it. And say not to re-read a file it
+has just edited; the edit result already confirms the write.
+
 The unit of feedback is completed work, not elapsed time: run to done, report,
 take the rulings, fix, repeat. Block mid-build only on a question the work cannot
 proceed without; a judgment call with a buildable, reversible answer gets decided,
@@ -242,6 +262,12 @@ those as decisions it may still challenge on the merits, never as findings it is
 forbidden to make. Independence is the entire point of running it out of
 process; a prompt that fences off the contentious parts hands that back.
 
+Hand it the diff base and the changed-file list outright rather than leaving it to
+work them out, and quote the settled decisions and any plan context inline. Phase
+2's reading-list rule applies here for the same reason and with more force: a
+reviewer told only to review a branch is the agent most likely to open a
+repository's worth of files looking for the few that matter.
+
 Then **assess the findings before relaying them**. Say which you accept, which
 you think are wrong and why, and which are judgement calls for the user. A review
 relayed without an opinion has moved the work no further forward.
@@ -274,6 +300,11 @@ belongs *before* the merge, run against the branch's preview deployment
 afterwards, stop and say so rather than landing the freeze.
 
 Order matters — several of these steps block the next one if skipped.
+
+**These are the most expensive turns of the run.** Landing happens last, when the
+session's context is at its largest, so a command here costs several times what the
+same command cost in Phase 1. Batch what can be batched — independent commands
+belong in one call — and prefer the script wherever one exists.
 
 1. **Confirm clean:** `npm run lint`, `npm run type-check`, and the full
    `npm run test` all pass — plus `npm run check-translations` if the branch
@@ -323,35 +354,35 @@ Order matters — several of these steps block the next one if skipped.
    deviate only when the user explicitly says to. Subject line:
    `Merge the <thing> into dev` — matching the house style, not git's default
    text. If `dev` gained commits since Phase 1, the push publishes a union CI
-   has not seen — that is accepted; CI on `dev` judges it (step 7).
+   has not seen — that is accepted; CI on `dev` judges it (step 6).
 
-5. **Remove the worktree — junctions first.** If the worktree's `.env.local`
-   gained lines, copy them back to the main checkout's file first; they die
-   with the worktree otherwise. Any nested-install junction
-   Phase 1 created is a link into the main checkout's real `node_modules`, and
-   Git Bash's `rm -rf` follows a junction and empties the folder behind it.
-   So unlink each one first, with a command that removes only the link:
+5. **Tear the worktree down and delete the branch** — one call, from the
+   PowerShell tool, in the main checkout:
 
    ```
-   cmd /c rmdir "<absolute-worktree-path>\packages\<name>\node_modules"
+   .claude\scripts\worktree-teardown.ps1 -Worktree <short-name> -DeleteRemote
    ```
 
-   Run it from the PowerShell tool, as a call of its own, and `Test-Path` that
-   the link is gone before anything recursive runs. Inside the Bash tool
-   `cmd /c` can open an interactive shell instead of executing, and a
-   recursive fallback chained after it then walks the live junction — that
-   has emptied the main checkout's `node_modules` once. Never chain the two.
+   It unlinks any nested-install junction Phase 1 created, refuses to run
+   anything recursive while one is still standing, removes the worktree —
+   falling back to a recursive delete and a prune when git objects to
+   `node_modules` or `.next` — and deletes the branch. Pass `-DeleteRemote`
+   whenever the branch was pushed for CI: delete it now rather than leaving it
+   to `cleanup-branches`, because the merge has just proved it safe to delete
+   and that certainty decays.
 
-   Confirm the main checkout's `packages/<name>/node_modules` is still
-   populated, then `git worktree remove <absolute-path>`. If it refuses
-   because `node_modules` or `.next` are present, `rm -rf` the directory —
-   only now that no junction remains — and then `git worktree prune`.
+   It stops rather than proceed when the worktree has uncommitted changes, or
+   when its `.env.local` holds keys the main checkout's does not — copy those
+   across first, since they die with the worktree otherwise. `-DryRun` reports
+   the whole teardown without touching anything.
 
-6. **Delete the branch** — local, and the remote too if it was ever pushed for
-   CI. Do it now rather than leaving it for `cleanup-branches`; the merge just
-   proved it is safe to delete, and that certainty decays.
+   **Do not hand-roll this sequence when the script is in the way.** The
+   junction order is what it exists to enforce: a junction is a link into the
+   main checkout's real `node_modules`, `rm -rf` follows it and empties the
+   folder behind it, and that has cost this repo its `node_modules` once. If
+   the script refuses, read what it refused about — that is the guard working.
 
-7. **Report** what landed, confirm the worktree, branch and server are all
+6. **Report** what landed, confirm the worktree, branch and server are all
    actually gone, and confirm the main checkout is back on `dev`. **Do not
    watch the CI run the push triggers** — the user watches `dev` CI themselves
    and will flag a failure; a session that sits polling it is spending the
@@ -403,6 +434,25 @@ against unprompted agent use does not override it, and a session that quietly
 collapses into single-threaded work because of one has misread the request
 rather than made a judgment call.
 
+**What this command costs, and where it goes.** Measured across twelve runs of it
+(September 2026): the orchestrator was 48% of the spend and the agents 52%, and in
+both tiers 98% of every token was context being re-read rather than anything new
+arriving. Two consequences run underneath the rules below.
+
+A context's cost is its size multiplied by the number of turns it survives, so
+what there is to manage is *length*, not volume — an agent's cost grows with
+roughly the square of its turn count, and in these runs a turn inside a
+250-message agent cost more than twice the same turn inside a 50-message one. The
+longest single agent cost more than two entire orchestrator sessions.
+
+And the session's own turns are the dearest in the flow, because its context is
+the largest and it holds for hours — yet 35% of them went on shell commands and
+edits. That is the orchestrator paying the top rate in the flow to run `git` and
+`npm`. Its context is large *because* it is carrying the whole piece of work,
+which is exactly why cheap mechanical turns do not belong in it. Phase 5's gates
+and merge are the session's own and stay; anything else that is a command rather
+than a decision goes to the agent that wanted it, or to a script.
+
 **Two rules, two different reasons, and they are not interchangeable.**
 Conflating them is how both get weakened — the review rule inherits an escape
 hatch it must not have, and the build rule inherits a rigidity it does not need.
@@ -429,11 +479,22 @@ invisible unless you look.
   through the session's own judgment before being relayed or applied — that
   second tier comes free with orchestration, and is why an independent reviewer
   costs nothing in accuracy.
-- **Below Opus only for a specific task you are very confident does not need
-  it** — a mechanical sweep (locale keys, fixture regeneration, rename
-  plumbing) can run `sonnet` at low effort; the gates catch what it fumbles.
-  Confidence is the bar: when unsure, Opus. This applies to *implementation*
-  only — a review is never run below Opus.
+- **Below Opus only where a mechanical gate will catch the failure.** That is
+  the test, and unlike confidence it is decidable: lint, type-check, the test
+  suite and the schema either read every line this piece of work touches, or
+  they don't. A locale sweep, a fixture regeneration, rename plumbing — the gate
+  covers all of it, so `sonnet` is safe there. Where the failure would be silent
+  — a review that misses a defect, a decomposition that splits the work wrong, a
+  judgment about what lands — nothing downstream catches it and there is no
+  floor beneath Opus. This applies to *implementation* only: a review is never
+  run below Opus, whatever the gates cover.
+
+**Effort is a session setting, not a per-launch one.** An agent launch takes a
+model and no effort, so `model` is the only dial this command turns per agent.
+The session's own level governs the context that has to hold the piece of work
+for hours, and lower effort buys its saving partly by consolidating tool calls —
+a good trade inside a short agent, a poor one in the orchestrator, which is the
+context least able to afford a thinner judgment.
 
 ## Guardrails
 
