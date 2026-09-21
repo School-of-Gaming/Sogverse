@@ -1,28 +1,33 @@
 # Request amplification
 
-The platform serves roughly **fifteen server requests for every page a person actually
-views**, and almost all of the excess is Next.js link prefetching that — on this app's
+The platform served roughly **fifteen server requests for every page a person actually
+viewed**, and almost all of the excess was Next.js link prefetching that — on this app's
 architecture — cannot deliver anything a click can use. This document names the system
 that produces that ratio, ties together the findings in `docs/architecture/performance.md` that each
-saw one face of it, and frames the remedy decision. It ends with a recommendation, but
-the decision is the owner's and is deliberately not being rushed: nothing here is urgent,
-because nothing here is currently failing.
+saw one face of it, and records the remedy decision and what it leaves open.
 
-**Status: decision open.** Written 2026-08-25, triggered by a Vercel billing alert that
-turned out to be the symptom, not the subject. One narrow cut has shipped (the four
-footer legal links no longer prefetch — commit `8bf965de` on `dev`); everything else is
-proposed only. **Probe 1 was settled on 2026-09-08 without any code**: prefetch is
-84–86% of function invocations, measured — see "Probe 1, settled" below. The inference
-the remedy rests on is now a measurement, and it lands at the top of the inferred range. **On 2026-09-09 the owner's goals and the road to "instant" were walked through** —
-see "The owner's frame" below; the decision is still open.
+**Status: remedy (a) shipped 2026-09-21; the investigation stays open.** Written
+2026-08-25, triggered by a Vercel billing alert that turned out to be the symptom, not
+the subject. `prefetch={false}` is now the app-wide default, set once in the shared
+locale-aware navigation module; the eight manual `prefetch={false}` props across four
+files were deleted as redundant (there were zero `prefetch={true}` opt-ins), and the four
+footer legal links — the one cut shipped before this — are now covered by the default
+rather than by their own props. **Probe 1 was settled on 2026-09-08 without any code**:
+prefetch is 84–86% of function invocations, measured — see "Probe 1, settled" below. **On
+2026-09-09 the owner's goals and the road to "instant" were walked through** — see "The
+owner's frame" below. Still open, and why this file stays here: (c)/PPR as the
+end-state, (d), probes 3 and 4 — probe 3 is the falsifier that would trigger the
+one-line revert — and the owner's two outstanding decisions (whether session times render
+in the product's zone or the reader's, and how a background arrival may change layout).
 
 **How to read this doc.** Like F7 in `docs/architecture/performance.md`, every claim is tagged.
 *Measured* means someone ran the query and the date and instrument are given — the
 production numbers below were pulled 2026-08-25 against the `sogverse` Vercel project
 (`vercel metrics`/`vercel usage`, production environment), independently re-run to
 confirm an earlier same-day session's pull; the code-mechanism claims were verified by
-reading the installed `next@16.2.12` source, not its documentation. *Arithmetic* means
-computed from measured inputs with the assumptions stated. *Inferred* means an
+reading the installed `next@16.2.12` source, not its documentation, and re-verified
+against it on 2026-09-21. *Arithmetic* means computed from measured inputs with the
+assumptions stated. *Inferred* means an
 explanation that fits the evidence but was not directly observed — each inferred claim
 comes with the probe that would settle it.
 
@@ -31,23 +36,22 @@ comes with the probe that would settle it.
 No single line of code chose a 15:1 ratio. It is the product of five choices, each
 defensible on its own, that compound:
 
-1. **Every route is dynamically rendered.** The root layout reads the session
-   (`getUserWithProfile()`) and cookies on every request, and the proxy stamps a
-   per-request CSP nonce. Any one of these makes the whole tree dynamic; the app has all
-   of them. Consequence: nothing is served from the CDN — every page view is a function
-   invocation behind a proxy run. This is F2's territory, F2 is open, and the choices
-   have real reasons (auth-aware chrome everywhere, nonce-based CSP, cookie-resolved
-   locale).
+1. **Every route is dynamically rendered.** The root layout reads the session and cookies
+   on every request, and the proxy stamps a per-request CSP nonce. Any one of these makes
+   the whole tree dynamic; the app has all of them. Consequence: nothing is served from
+   the CDN — every page view is a function invocation behind a proxy run. This is F2's
+   territory, F2 is open, and the choices have real reasons (auth-aware chrome
+   everywhere, nonce-based CSP).
 
 2. **The proxy runs on effectively every request** — token refresh, role routing, PIN
    gate, CSP. Also chosen deliberately (it is the single token-refresh point and the
    security boundary), also open-ended in what it multiplies: whatever the request count
    is, the proxy count matches it.
 
-3. **`<Link>` prefetch is on by default, site-wide.** 48 files import `next/link`; until
-   2026-08-25 not one passed `prefetch={false}`. Every link that enters the viewport
-   fires a background request — on every page, for every visitor, whether or not anyone
-   will ever click it.
+3. **`<Link>` prefetch defaulted to on, site-wide.** Every link entering the viewport
+   fired a background request — on every page, for every visitor, whether or not anyone
+   would ever click it. This is the one choice remedy (a) has reversed; every measurement
+   below was taken while it held.
 
 4. **The app has no `loading.tsx` anywhere and no PPR/`cacheComponents`.** Measured: zero
    `loading.tsx` files under `src/app` today, and none has *ever* existed in the
@@ -100,7 +104,7 @@ two clean isolates show the prefetch share is dominant:
   opening's highest-stakes half hour (08:45–09:15 on Aug 24), `/privacy` alone absorbed
   3,583 invocations; the four together were ~35,700 that day, ~14% of opening-day
   invocations, prefetching legal pages for families racing to claim club seats.
-  This is the cut already shipped.
+  These four were the first cut shipped; the app-wide default now covers them.
 - **The club-detail route on opening day.** `/schools/[municipalityName]/[id]` drew
   **77,021 invocations against 3,616 pageviews (21:1)** on Aug 24 — the municipality
   listing renders one card-link per club, Helsinki lists ~43 clubs, and every family
@@ -123,10 +127,22 @@ The claim everything else rests on: *a prefetch here delivers nothing, so disabl
 costs nothing.* Attempts to break it:
 
 - **"It seeds the client router cache."** No — the response contains no segment data and
-  no head (the source comment quoted above). The client learns the route tree shape
-  only; on click it issues the full dynamic RSC request exactly as it would with no
-  prefetch. F1's own benchmark is consistent: prefetches completing at median 93ms while
-  every real navigation still paid its full render.
+  no head (the source comment quoted above); the client learns the route tree shape only.
+  What an *un*prefetched click then costs is the decisive question, and Next 16 answers it
+  in the segment cache's unknown-route path
+  (`dist/client/components/segment-cache/navigation.js`): by its own source comment it does
+  not wait for a prefetch response and goes straight to a full navigation carrying **both
+  static and dynamic data in a single stream**, explicitly contrasting the older
+  implementation, which *did* block the dynamic request on a prefetch. A cold click costs
+  one request, not two — which closes the strongest counter-argument available, that Next
+  16's route-tree cache would make an unprefetched click pay a serialized route-tree fetch
+  before it could ask for segments. F1's benchmark is consistent: prefetches completing at
+  median 93ms while every real navigation still paid its full render.
+- **"Sibling routes lose their predicted structure."** No — the segment cache learns route
+  patterns from real navigations as well as from prefetches (its optimistic-routing module
+  is populated on the unknown-route path too), so a listing of club cards still gets its
+  structure predicted after the first real click. Prefetch only seeded that learning
+  earlier.
 - **"It warms the lambda."** The strongest salvage of `docs/architecture/performance.md`'s "prefetches
   warm caches before clicks" — and it fails on timing plus deployment shape. This is a
   single-bundle deployment: the first request to *any* route warms the function every
@@ -135,10 +151,11 @@ costs nothing.* Attempts to break it:
   prefetches. In the one scenario where warmth has lapsed (user idles on a page past the
   recycle window, then clicks), the viewport prefetch fired at page load and is exactly
   as stale as the page. Only hover-time prefetch could warm just-in-time, and
-  `prefetch={false}` disables hover as well (the installed typings are explicit;
-  `unstable_dynamicOnHover` exists but is unstable) — so the app never had a
-  just-in-time warming path to lose. *Reasoned, not measured*; the click-latency A/B
-  below is the falsifier.
+  `prefetch={false}` disables viewport **and** hover: a link mounted with prefetching
+  disabled is never registered in the structure the hover/touchstart intent handler looks
+  it up in, so the intent path returns early (*measured*, the client link implementation).
+  The app therefore never had a just-in-time warming path to lose. The click-latency
+  control below is the falsifier.
 - **"It warms the database."** No component renders, so no page query runs. The only
   server work is the proxy: a local JWT verify, and a `profiles.role` lookup for
   non-PIN-verified sessions (next section). A prefetch warms at most one already-hot
@@ -147,7 +164,30 @@ costs nothing.* Attempts to break it:
   **12ms** (week average 46ms) — a day where three quarters of invocations were
   prefetch-shaped is a day where the average invocation computes almost nothing.
 
-Verdict: the claim holds. On today's architecture the default prefetch layer is pure
+**The one residual: instance warmth.** Removing ~85% of invocations removes a trickle that
+kept functions warm — the single mechanism pointing the other way. It is small because
+prefetch volume is **proportional to real traffic, not a background heartbeat**: a prefetch
+fires only because somebody is already on a page, so it never warmed anything through a
+genuine lull, and in busy periods real traffic keeps instances warm on its own. What goes
+is everyone else's trickle, not a reader's own prefetch (that fired at page load and is
+exactly as stale as the page), so the residual narrows to one shape — a lone user at a
+quiet hour who reads for minutes and then clicks, whose instance is likelier to have been
+recycled. On Fluid compute that is a tail of a few hundred ms on top of a render already
+costing ~340ms, at the hours with the fewest users: a tail-latency shift at low traffic,
+not a regression class. *Inferred*; Speed Insights p75 TTFB is the existing gauge, so no
+new instrumentation — probe 4's job.
+
+**Channels checked and clear (2026-09-21)**, each read in the repo and carrying no
+behavioural delta, so nobody re-runs them: sessions do not expire sooner from fewer proxy
+runs (the browser Supabase client refreshes its own token in the browser, independently of
+the proxy); the parent PIN does not re-prompt earlier (the proxy reads the PIN cookie but
+never re-issues it, so it is fixed-expiry, not sliding); no `<Link>` targets a
+side-effecting or single-use URL, so no prefetch was consuming one; no parallel or
+intercepting routes exist, so the route-interception deopt is moot; prefetch is
+production-only, so development behaviour is unchanged; and no test asserts prefetch
+behaviour.
+
+Verdict: the claim holds. On this architecture the default prefetch layer is pure
 cost. **This voids the stated justification for F1's revert of `prefetch={false}`**
 ("now a net positive — prefetches warm caches before clicks"), while leaving F1's actual
 work — local `getClaims()` verification — fully intact and correct. F1 changed what each
@@ -196,52 +236,49 @@ volume. But the two sides land on different machines: the registrations land on 
 prefetches land on Vercel and — being PIN-verified customers — mostly skip the one query
 that touches the shared box. The levers pull in opposite directions on the *request
 count*, not materially on the *incident path*. F8's rule survives unamended; it deserves
-one sentence noting the fan-out is Vercel-side (proposed edit below). If remedy (a)
-ships, the tension disappears entirely.
+one sentence noting the fan-out is Vercel-side (proposed edit below). With remedy (a)
+shipped, the tension is closed.
 
 ## Remedies
 
-**Recommendation: (a) — make `prefetch={false}` the app-wide default, through one shared
-link component, now.** Then re-measure, and let (c) — PPR/static shells — remain the
-architectural end-state that F2 and the locale-prefix plan are already walking toward,
-at which point the wrapper's default flips back for the routes that gain real shells.
-The two compose; (a) costs one line to undo when (c) lands.
+**Decided and shipped 2026-09-21: (a) — `prefetch={false}` is the app-wide default, set
+once in the shared navigation module.** Probe 4 re-measures a month on. (c) —
+PPR/static shells — remains the architectural end-state that F2 is walking toward, at
+which point the module's default flips back for the routes that gain real shells. The two
+compose; (a) costs one line to undo when (c) lands.
 
 The case, quantified where possible:
 
-- **Benefit.** If prefetch is 60–85% of invocations (inferred above), (a) cuts the ratio
-  from ~15:1 to roughly 3–6:1 — hundreds of thousands of requests a month, and the
-  opening-day peak minute from ~9,000 invocations toward ~1,500–3,500. Measured floor
-  even if the inference is badly wrong: the two isolates alone (legal links + one
+- **Benefit.** Probe 1 prices it: at the measured 84–86% prefetch share the ratio goes
+  from 13–15:1 to **1.8 : 1** — hundreds of thousands of requests a month, and an
+  opening-day peak minute of ~9,000 invocations cut to a small fraction of that. Measured
+  floor even if that share were badly wrong: the two isolates alone (legal links + one
   listing route on one day) account for >130k requests in the period.
 - **Cost.** Nothing user-visible, *if the load-bearing claim holds* — clicks already pay
   the full dynamic request, so navigation latency is predicted unchanged. That
   prediction is falsifiable and should be checked (probe 3 below) rather than trusted.
-- **Reversibility.** One shared component, one default. The locale-prefix plan
-  (`docs/plans/locale-prefix-routing.md`) already swaps every `next/link` import for a
-  wrapped `Link` exported from one navigation module — this remedy either rides that
-  wrapper when it lands or creates the thin wrapper first and lets the locale work
-  absorb it. Either order, the end state is one file that owns the default and 48 call
-  sites that don't repeat it.
-- **Why now rather than with the next architecture step:** the default is simply wrong
-  for this architecture, and it actively misleads — it polluted this investigation's
-  data, it inflates every capacity number F8-style planning reads, and the standing
-  `docs/architecture/performance.md` claim built on it steers future sessions toward keeping it.
+- **Reversibility.** One module, one default. The remedy rode a wrapper that already
+  existed: locale-prefix routing had made the locale-aware navigation module the app's
+  single `Link` export, so the default landed in one file and no call site repeats it.
+  Opting a link back in is a prop; undoing the remedy is that one default.
+- **Why it went first, rather than with the next architecture step:** the default is
+  simply wrong for this architecture, and it actively misleads — it polluted this
+  investigation's data, it inflates every capacity number F8-style planning reads, and the
+  standing `docs/architecture/performance.md` claim built on it steers future sessions toward keeping it.
 
-**Ranked alternatives, and why each is not the recommendation** (per the house
+**Ranked alternatives, and why none of them was the first step** (per the house
 convention: rejected for reasons a future session can dispute, so it doesn't rebuild
 them):
 
 1. **(c) PPR / `cacheComponents` — right destination, wrong first step.** It is the only
    remedy that makes prefetch *deliver* something: static shells, CDN-cacheable, even
    under a dynamic layout — the amplifier becomes cheap and useful instead of merely
-   absent. But its prerequisite chain is exactly F2's untangling (auth out of the root
-   layout, the per-request CSP nonce rethought for static shells, locale out of the
-   cookie — the locale-prefix plan explicitly scopes static rendering *out* and names
-   the nonce as the remaining blocker). Sequencing it first means months of the current
-   waste while the big project runs. Sequencing (a) first costs the big project nothing:
-   when shells become real, flip the wrapper default for those routes. **Rejected as the
-   first step, endorsed as the end-state.**
+   absent. But its prerequisite chain is exactly F2's untangling: auth out of the root
+   layout, and the per-request CSP nonce rethought for static shells (locale is already
+   out of the cookie and in the URL, which leaves the nonce the remaining blocker).
+   Sequencing it first means months of the current waste while the big project runs.
+   Sequencing (a) first costs the big project nothing: when shells become real, flip the
+   default for those routes. **Rejected as the first step, endorsed as the end-state.**
 2. **(d) Cheapen each request (advisory JWT role, I2 step 2) — deferred, bar not met.**
    It removes the proxy's role lookup, whose measured upper bound at the worst minute of
    the year was ~2 connections' occupancy and negligible CPU, further reduced by the PIN
@@ -254,7 +291,7 @@ them):
    architecture's own.** It is the inverted remedy: it makes every prefetch *more*
    expensive in order to make it useful. With a loading boundary, a prefetch stops
    short-circuiting and renders the tree above the boundary — the root and dashboard
-   layouts run, so `getUserWithProfile()`'s profiles query fires **per prefetch**,
+   layouts run, so the layout's session-and-profile query fires **per prefetch**,
    re-creating the per-request fan-out that F1 existed to kill, relocated from GoTrue to
    Postgres on the same shared box, multiplied by whatever the prefetch count is at that
    moment. It also collides with two standing house rules: the loading affordance is
@@ -266,16 +303,13 @@ them):
    style and default prefetch are architecturally incompatible; (b) resolves the
    incompatibility by surrendering the house style and paying more for the privilege.**
 
-**What would change the recommendation:**
+**What would change the decision:**
 
-- If probe 1 shows prefetch is **under ~30% of invocations**, (a) buys little and the
-  amplification is misattributed — the next suspect list is crawlers, API polling, and
-  RSC navigation requests, and this doc's framing needs revision.
 - If probe 3 shows clicks **got slower** with prefetch off, the load-bearing claim is
   wrong somewhere despite the source reading, and (a) reverts (one line) while the
-  mechanism is re-investigated.
+  mechanism is re-investigated. This is the one live falsifier.
 - If (c) lands sooner than expected — `cacheComponents` adopted, shells real — the
-  wrapper default flips for static routes as part of that work, and this doc's remedy
+  default flips for static routes as part of that work, and this doc's remedy
   section is superseded by it.
 - If Vercel pricing or limits change such that middleware runs (which (a) also removes
   ~10× of) or invocations are billed materially differently, the cost half of the case
@@ -313,8 +347,8 @@ week.
 
 What the measurement changes:
 
-- **The inference is confirmed at the top of its range**, which strengthens remedy (a) and
-  removes the "under ~30%" escape hatch: with prefetch gone, Monday would have been ~4,600
+- **The inference is confirmed at the top of its range**, which is what made remedy (a)
+  decidable: with prefetch gone, Monday would have been ~4,600
   invocations against 2,570 pageviews, a **1.8 : 1** ratio, down from 13.1 : 1. The
   weekday-over-weekend multiple that trips Vercel's anomaly detector shrinks with it —
   the alerts are a prefetch-volume phenomenon as much as a traffic one.
@@ -330,17 +364,18 @@ What the measurement changes:
   like this by construction; a second admin IP shows the same pattern at a fifth the
   volume. It is a cost observation, not a misuse one.
 - **Probe 4's regression gauge has its baseline**: 13–14 invocations per pageview in term
-  time, prefetch share 84–86%. Re-run the same three reads after (a) ships.
+  time, prefetch share 84–86%. Re-run the same three reads a month after (a).
 
-The remaining open probes are 2 (role-lookup cost) and 3 (click-latency control for (a));
-neither blocks the recommendation, and probe 3 remains the one that could overturn it.
+The remaining open probes are 2 (role-lookup cost) and 3 (click-latency control); probe 3
+is the one that would send (a) back.
 
 ## The owner's frame, and what "instant" actually takes (2026-09-09)
 
 Walked through with the owner on 2026-09-09, with the question turned around: not "what
 does prefetch cost" but "what would make the site feel the way I want, and where does
-prefetch sit in that". **Nothing below is decided or planned.** The remedy decision is
-still open; this section records the reasoning a later session would otherwise redo.
+prefetch sit in that". Remedy (a) came out of it and has since shipped; **nothing else
+below is decided or planned** — this section records the reasoning a later session would
+otherwise redo.
 
 **The goals the remedy is judged against.** Two, in the owner's words. (1) A click reacts
 near-instantly. (2) No loading state where one can be avoided; where one cannot, only the
@@ -357,7 +392,7 @@ link), so the wait reads as the click not registering.
 
 | Value | Static target | Dynamic target |
 |---|---|---|
-| default (`null` / `"auto"`) | full page data | up to the nearest `loading` boundary; with none, the route tree only — this app |
+| default (`null` / `"auto"`) | full page data | up to the nearest `loading` boundary; with none, the route tree only — this app's shape |
 | `prefetch={false}` | nothing, not even on hover | nothing, not even on hover |
 | `prefetch={true}` | full page data | full page data, every query, held under the **static** cache lifetime (300s) |
 
@@ -388,12 +423,13 @@ loading boundaries so it delivers layouts and a skeleton (many dashboards do; th
 skeleton on the router's schedule and a layout render per visible link); or keep the
 loading affordance below the route *and* turn the default off, opting links back in where
 prefetch can deliver (apps that care about layout stability, or that show dozens of links
-per viewport). The app is in the incoherent third state — dynamic, no boundaries, prefetch
-on. The framework's own trajectory points the same way: early 13 prefetched full dynamic
-routes and rolled it back; 14 limited it to the boundary; 15 zeroed the dynamic lifetime;
-16's cache components move the value into static shells. A shared link wrapper is one
-primitive, one default, greppable call sites, opt-in per link — the correctness-by-mechanism
-shape the root rules ask for. What *would* make it a patch is stopping there.
+per viewport). The app sat in the incoherent third state — dynamic, no boundaries,
+prefetch on — and (a) moves it into the second. The framework's own trajectory points the
+same way: early 13 prefetched full dynamic routes and rolled it back; 14 limited it to the
+boundary; 15 zeroed the dynamic lifetime; 16's cache components move the value into static
+shells. One navigation module is one primitive, one default, greppable call sites, opt-in
+per link — the correctness-by-mechanism shape the root rules ask for. What *would* make it
+a patch is stopping there.
 
 **F1 stands; only the revert was wrong.** Disabling prefetch would not have been the
 quick fix for the auth incidents. Before F1 every protected request paid three network
@@ -412,10 +448,9 @@ beacon fired on load and on client-side navigation; a prefetch never navigates, 
 pageview counts in this doc are clean, and so is Speed Insights. What it pollutes is the
 server side: function invocations, edge requests, per-route counts, observability events,
 logs, and therefore the anomaly detector. On contention: an empty prefetch is ~12ms of
-function time plus a local-verify proxy run; Fluid compute absorbed the peak minute with no
-error statuses and no visible queueing, and the constant trickle keeps instances warm if
-anything. Doing nothing costs little; the case for acting is coherence, alert noise and
-clean numbers, not speed.
+function time plus a local-verify proxy run, and Fluid compute absorbed the peak minute
+with no error statuses and no visible queueing. The case for (a) is coherence, alert noise
+and clean numbers, not speed.
 
 **What makes a click instant — two halves, plus feedback.** *Feedback*: a pending state on
 the link itself, within a frame, independent of everything else; most of "reacts
@@ -461,14 +496,14 @@ only for remote products and readers abroad; whether to do it is the owner's cal
 
 **Hydration needs agreement, not a per-request read.** The root layout's per-request reads
 exist to keep SSR HTML and the first client render in lockstep, and that requirement is
-real. It is met two other ways: put the value in the URL (locale — the locale-prefix plan),
-or defer it to after mount in a container that already has its size. Of the root layout's
-reads, only the locale is needed by the About page's HTML, and only the CSP nonce has no
-static-safe alternative short of a different policy:
+real. It is met two other ways: put the value in the URL, or defer it to after mount in a
+container that already has its size. Of the root layout's reads, the only one the About
+page's HTML needs is the locale, which is now in the URL; the CSP nonce is the only read
+left with no static-safe alternative short of a different policy:
 
 | Read | Static-safe alternative |
 |---|---|
-| locale and messages | the URL segment |
+| locale and messages | the URL segment — **done** |
 | timezone cookie, initial clock | read where a time renders, or a streamed hole |
 | consent cookie | mount optional scripts after hydration — they load after it anyway |
 | session and profile | the header's user slot from the client cache, or a hole |
@@ -502,23 +537,23 @@ My SOG is the customer's and personal to the byte.
 | Shop | products, prices, translations; live seat counts | static catalogue regenerated on demand from the admin product write; counts into a fixed-width slot per card |
 | My SOG | participations, waitlist, family, billing | stays server-rendered and server-seeded; a click from elsewhere paints from cache; the cold path gets faster by shedding the root layout's reads |
 
-The public three share one prerequisite in three pieces: **the locale-prefix plan**
-(`docs/plans/locale-prefix-routing.md`), which removes the cookie blocker and — by its own
-scope statement — leaves pages dynamic and the CSP untouched; **the root-layout
-untangling** (F2's list, not in the plan); and **a public-route CSP without a per-request
-nonce**, the second blocker the plan names and leaves alone. Only after all three does a
-public page become static, and only then does the wrapper default flip back to prefetch on
-for those routes. The proxy still runs on static paths to make the redirect decision; on
-those paths it must stay an edge cookie check and never read the profile.
+The public three share one prerequisite in two remaining pieces: **the root-layout
+untangling** (F2's list), and **a public-route CSP without a per-request nonce**. The
+third piece is done — locale-prefix routing put the locale in the URL, which removed the
+cookie blocker while leaving pages dynamic and the CSP untouched. Only after both
+remaining pieces does a public page become static, and only then does the navigation
+module's default flip back to prefetch on for those routes. The proxy still runs on static
+paths to make the redirect decision; on those paths it must stay an edge cookie check and
+never read the profile.
 
-**Direction, as walked through — not decided, not planned.** (1) Remedy (a), through the
-shared link wrapper, with probe 3 on the preview and probe 4 a month on. (2) Click
-feedback: a pending state on links and navigation buttons. (3) Warm the data layer from the
-dashboard for the pages one hop away. (4) The structural work: the locale-prefix plan, the
-root-layout untangling, the public CSP, then partial prerendering and the wrapper default
-flipped for static routes. Two decisions along the way are the owner's: whether session
-times render in the product's zone or the reader's, and how a background arrival may
-change the layout.
+**Direction, as walked through.** (1) Remedy (a), through the shared navigation module —
+shipped, with probe 3 on the preview and probe 4 a month on. The rest is walked through,
+not decided or planned: (2) click feedback, a pending state on links and navigation
+buttons; (3) warm the data layer from the dashboard for the pages one hop away; (4) the
+structural work — the root-layout untangling, the public CSP, then partial prerendering
+and the default flipped for static routes. Two decisions along the way are the owner's:
+whether session times render in the product's zone or the reader's, and how a background
+arrival may change the layout.
 
 ## Probes that settle the open questions
 
@@ -534,14 +569,17 @@ measurements, cheap, each answering exactly one question.
    `pg_stat_statements` gives the role query's call count and total exec time as a share
    of everything (the `supabase-db-inspection` skill covers access). Settles whether (d)'s
    bar is met with a number instead of an upper bound.
-3. **Click-latency control for (a).** Repeat the F1 benchmark protocol (real-browser
-   trace on `/admin/users`, warm, signed-in — the canonical regression benchmark) on a
-   preview deployment with the wrapper default off. Prediction, stated in advance:
-   click-to-render unchanged within noise, prefetch request count near zero. If
-   navigation is measurably slower, the recommendation's premise fails.
-4. **Post-(a) re-measure.** The same three headline queries as this doc (invocations,
-   proxy runs, pageviews, month window) one month after shipping. The ratio is the
-   regression gauge; append the result here.
+3. **Click-latency control for (a) — the falsifier.** Repeat the F1 benchmark protocol
+   (real-browser trace on `/admin/users`, warm, signed-in — the canonical regression
+   benchmark) on a preview deployment. Prediction, stated in advance: click-to-render
+   unchanged within noise, prefetch request count near zero. Measurably slower navigation
+   means the load-bearing claim fails somewhere and (a) reverts — one line, the module's
+   default.
+4. **Post-(a) re-measure — baseline already recorded.** The same three headline reads as
+   this doc (invocations, proxy runs, pageviews) one month after shipping, against the
+   term-time baseline in "Probe 1, settled": 13–14 invocations per pageview, prefetch
+   share 84–86%. The ratio is the regression gauge, and Speed Insights p75 TTFB is where
+   the instance-warmth residual would show. Append the result here.
 
 ## Cost, for completeness — it was the trigger, not the subject
 
@@ -568,30 +606,13 @@ The pageview-driven lines (Speed Insights events, Web Analytics events) are the 
 term and are untouched by it. Urgency on money alone: none; the case for (a) is
 coherence and alert noise, not the bill.
 
-## Proposed edits to `docs/architecture/performance.md` (not made here)
-
-- **The prefetch paragraph above "Real-user data"** (currently: reverted
-  `prefetch={false}`, "now a net positive — prefetches warm caches before clicks"):
-  annotate or rewrite. The verified mechanism is that without a `loading` boundary or
-  PPR a prefetch returns router state only — no render data — so there is no cache it
-  can warm that survives to the click; the accurate statement is "each prefetch is now
-  *cheap* (local verify), not that it is *useful*." Point here for the full reading.
-- **The F1 completed entry**: a one-line annotation on the revert sentence — the revert
-  removed a correct workaround on an incorrect justification; the `getClaims` work
-  stands untouched.
-- **F8's planning rule**: one sentence noting that a more pre-registered cohort shifts
-  load from GoTrue registrations to signed-in request volume, that the volume lands
-  Vercel-side (PIN-verified sessions skip the proxy's role query), and pointing here.
-- **The 2026-05-31 incident's mechanism section**: optionally, one line noting the
-  prefetches in the fan-out were empty-response requests for the app's entire history —
-  the multiplier was buying nothing even before F1 made it cheap.
-
 ## Relationship to the rest of the record
 
 This doc is connective tissue, not a rehash: F1 priced a prefetch, F2 explains why every
 route is dynamic, F3 prices the role lookup, F7 established that the shared box's CPU
 and GoTrue's pool are coupled, F8 measured what an opening does to all of it — and each
 was written without the request *count* being anyone's subject. The count is this doc's
-subject. When a remedy ships, its measurements belong in `docs/architecture/performance.md`'s log
-like any other improvement, with this doc updated to point at them; if (c) eventually
+subject. A shipped remedy's measurements belong in `docs/architecture/performance.md`'s log
+like any other improvement — (a)'s once probe 4 runs — with this doc updated to point at
+them; if (c) eventually
 retires the fully-dynamic architecture, this doc retires with it.
