@@ -103,15 +103,14 @@ describe("readInScopeSeats", () => {
 });
 
 describe("readEffectiveStatuses", () => {
-  it("derives each product's status from its dates and its active seat count", async () => {
+  it("derives each product's status from its own two dates", async () => {
     const fetch = postgrestTables({
       products: () => [
-        // Started, threshold met by the count, end date passed → completed.
-        { id: P1, start_date: "2026-06-01", end_date: "2026-08-31", signup_threshold: 2, timezone: "Europe/Paris" },
-        // Threshold unmet (no count row reads as zero), end passed → expired.
-        { id: P2, start_date: "2026-06-01", end_date: "2026-08-31", signup_threshold: 2, timezone: "Europe/Paris" },
+        // Started and finished, both in the product's own zone → completed.
+        { id: P1, start_date: "2026-06-01", end_date: "2026-08-31", timezone: "Europe/Paris" },
+        // Start date still ahead of `now` → pending.
+        { id: P2, start_date: "2026-11-01", end_date: "2026-12-31", timezone: "Europe/Paris" },
       ],
-      product_seat_counts: () => [{ product_id: P1, active_count: 3 }],
     });
     const statuses = await readEffectiveStatuses(
       createFetchStubbedClient(fetch),
@@ -121,7 +120,7 @@ describe("readEffectiveStatuses", () => {
     expect(statuses).toEqual(
       new Map([
         [P1, "completed"],
-        [P2, "expired"],
+        [P2, "pending"],
       ]),
     );
   });

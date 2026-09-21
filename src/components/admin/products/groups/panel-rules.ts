@@ -564,14 +564,14 @@ export type SwitchTargetFact =
   /** The club admits families in one country only. */
   | { kind: "regionLocked"; country: string }
   /** The club has not started; a switch onto it bills prorated from today. */
-  | { kind: "notStarted"; startDate: string | null };
+  | { kind: "notStarted"; startDate: string };
 
 /** The target club's own columns, as the admin product list row carries them. */
 export interface SwitchTargetSource {
   minAge: number | null;
   maxAge: number | null;
   regionLockCountry: string | null;
-  startDate: string | null;
+  startDate: string;
   /** The club's derived lifecycle status, as the sheet's own chip states it. */
   status: EffectiveProductStatus;
   seatCount: number | null;
@@ -612,9 +612,7 @@ export function switchTargetSeats(
  * derived lifecycle status, `pending` and nothing else. The status is derived
  * once by the sheet, which states it as a chip beside the club's name and hands
  * the same value in here, so the chip and the fact cannot disagree about
- * whether the club has begun. A sign-up count of 0 is the approximation both
- * share, because the panel holds no count for the target — a club still short
- * of its signup threshold therefore reads as not started on both.
+ * whether the club has begun.
  */
 export function switchTargetFacts(
   target: SwitchTargetSource,
@@ -650,7 +648,7 @@ export interface SwitchTargetOrderRow {
   id: string;
   spoken_language_code: string;
   schedule_slots: readonly { weekday: number }[];
-  start_date: string | null;
+  start_date: string;
 }
 
 /**
@@ -687,11 +685,7 @@ export function orderSwitchTargets<T extends SwitchTargetOrderRow>(
     const [bLanguage, bDay] = likeness(b);
     if (aLanguage !== bLanguage) return aLanguage - bLanguage;
     if (aDay !== bDay) return aDay - bDay;
-    // A club with no start date authored sorts after every dated one: there is
-    // nothing to compare it on, and it is the less finished row of the two.
     if (a.start_date !== b.start_date) {
-      if (a.start_date === null) return 1;
-      if (b.start_date === null) return -1;
       return a.start_date < b.start_date ? -1 : 1;
     }
     return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
@@ -708,7 +702,7 @@ export function orderSwitchTargets<T extends SwitchTargetOrderRow>(
  *
  * "Not yet over" is the end date against the club's OWN today, which is the
  * whole of the test: a lifecycle is pending or running exactly while its end
- * date has not passed, so there is nothing a sign-up count could add here.
+ * date has not passed.
  */
 export function isSwitchTarget(
   candidate: {

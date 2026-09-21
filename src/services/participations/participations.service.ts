@@ -604,8 +604,8 @@ export class ParticipationsService {
   }
 
   /**
-   * Aggregate counts feeding the seat-left pill, threshold progress, and
-   * "already signed up" detection for the listed products.
+   * Aggregate counts feeding the seat-left pill and the "already signed up"
+   * detection for the listed products.
    *
    * Reads `product_seat_counts` (public-readable, RLS-permissive) for
    * the live counts; `myGamerStates` is derived per-customer by looking

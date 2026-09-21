@@ -29,11 +29,11 @@ import type {
 // The set is curated down to the *visually distinct* surfaces worth eyeballing,
 // grouped by product type:
 //   • Consumer club — a subscription club, open; a free one (billing is a
-//     per-product choice on every type now); one full behind a waitlist; one
-//     capped club still short of its signup threshold; and two that have not
-//     started yet, which is where deferred billing is looked at — one close
-//     enough that the first charge lands on the start date, one far enough out
-//     that Stripe's ceiling pulls the charge earlier than the club begins.
+//     per-product choice on every type now); one full behind a waitlist; and
+//     two that have not started yet, which is where deferred billing is looked
+//     at — one close enough that the first charge lands on the start date, one
+//     far enough out that Stripe's ceiling pulls the charge earlier than the
+//     club begins.
 //   • Municipality club — the full seat-fill range, plus the pre-launch
 //     countdown across the three auth states a parent can be in, one of them
 //     with places already comped away.
@@ -75,7 +75,6 @@ export type PreviewScenario =
   | "consumer-club"
   | "consumer-club-free"
   | "consumer-club-full-waitlist"
-  | "consumer-club-threshold"
   | "consumer-club-future-start"
   | "consumer-club-future-start-clamped"
   | "consumer-club-parents-only"
@@ -288,36 +287,6 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     priceCentsEur: 4500,
     auth: "signed-in-with-gamers",
     state: { kind: "full_waitlist", seatCount: 12 },
-  },
-  "consumer-club-threshold": {
-    // The state easiest to forget exists. A club that needs a
-    // minimum intake before it can run sits here until the signups arrive, and
-    // it is deliberately undramatic: threshold handling is deferred, so there
-    // is no meter and no countdown, and the card is an ordinary openable one
-    // carrying an ordinary "View". That sameness *is* the thing to eyeball —
-    // it is why the state is easy to forget exists.
-    //
-    // Capped, and that is the one thing about it that is *not* undramatic: a
-    // minimum intake and a maximum are independent numbers, and the panel now
-    // draws the seat bar here exactly as it does on an open product. This is
-    // the only scenario that shows the bar on a threshold-pending product, so
-    // uncapping it would take that surface off the style guide entirely. The
-    // two counts agree on purpose — 2 of 6 signed up, 18 of 20 seats left.
-    label: "€45/mo — awaiting threshold",
-    productType: "consumer_club",
-    billingMode: "paid",
-    seatCount: 20,
-    waitlistEnabled: false,
-    priceCentsEur: 4500,
-    auth: "signed-in-with-gamers",
-    state: {
-      kind: "pending_thr",
-      threshold: 6,
-      count: 2,
-      seatCount: 20,
-      seatsLeft: 18,
-      waitlistEnabled: false,
-    },
   },
   "consumer-club-future-start": {
     // A club listed for signup before it opens its doors — the ordinary
@@ -646,7 +615,6 @@ const SCENARIO_ORDER: PreviewScenario[] = [
   "consumer-club",
   "consumer-club-free",
   "consumer-club-full-waitlist",
-  "consumer-club-threshold",
   "consumer-club-future-start",
   "consumer-club-future-start-clamped",
   "consumer-club-parents-only",
@@ -735,7 +703,7 @@ const SCENARIO_TAG: Partial<Record<PreviewScenario, ProductTag>> = {
   "consumer-club": "beginner",
   "consumer-club-free": "neuroinclusive",
   "consumer-club-full-waitlist": "advanced",
-  "consumer-club-threshold": "beginner",
+  "consumer-club-future-start": "beginner",
   "camp-open": "beginner",
   "event-both-audiences": "neuroinclusive",
 };
@@ -833,7 +801,7 @@ export interface ShopCatalogEntry {
  *   tag bottom-left and an audience badge top-right, both over a bright photo;
  * - the parents-only club and event untagged, so the top-right slot is seen
  *   carrying a badge with no tag opposite it;
- * - the threshold club un-imaged **but tagged**, which is the nastiest
+ * - the not-yet-started club un-imaged **but tagged**, which is the nastiest
  *   combination on the page: a chip over the muted fallback banner rather than
  *   over a photograph, and the one most likely to read badly;
  * - the full-with-waitlist club under a deliberately long Finnish name, because
@@ -867,10 +835,10 @@ export const SHOP_SCENE_TAGGED_CATALOG: readonly ShopCatalogEntry[] = [
       "Full with a waitlist, so it still opens and still says View — indistinguishable from an open card, which is inherited behaviour. The name is deliberately long: this is the card the full-width title row is judged on.",
   },
   {
-    slug: "consumer-club-threshold",
+    slug: "consumer-club-future-start",
     nameOverride: "Fortnite Creative Workshop",
     descriptionOverride:
-      "The only card with no image, on purpose: it is here to judge the SOG fallback banner in the grid rather than on its own — and, since it is tagged, to show a chip over that muted ground instead of over a photograph. Awaiting its signup threshold, which the card says nothing about.",
+      "The only card with no image, on purpose: it is here to judge the SOG fallback banner in the grid rather than on its own — and, since it is tagged, to show a chip over that muted ground instead of over a photograph.",
   },
   {
     slug: "consumer-club-parents-only",
@@ -966,7 +934,7 @@ export function buildBrowseFixture(
   const dayShift = Math.floor((now.getTime() - STATIC_REF_MS) / DAY_MS);
   return {
     ...product,
-    start_date: shiftDateOnly(product.start_date, dayShift),
+    start_date: addDaysToDateOnly(product.start_date, dayShift),
     end_date: shiftDateOnly(product.end_date, dayShift),
     registration_opens_at:
       "opensInMs" in config
@@ -1119,12 +1087,8 @@ export function scenarioFilledSeats(slug: PreviewScenario): number {
   if (c.seatCount === null) return 0;
   if ("opensInMs" in c) return Math.min(c.compSeats ?? 0, c.seatCount);
   switch (c.state.kind) {
-    // The three states that carry live capacity read it the same way. A
-    // threshold-pending product has a cap like any other — a minimum intake and
-    // a maximum are independent numbers — so it cannot be lumped in with the
-    // states below that have no seats to report.
+    // The two states that carry live capacity read it the same way.
     case "open":
-    case "pending_thr":
     case "closed_pre":
       return c.state.seatsLeft === null ? 0 : c.seatCount - c.state.seatsLeft;
     case "full_waitlist":
@@ -1432,12 +1396,6 @@ function buildBaseProduct(
     // There is deliberately no lesson-material field here. It moved off
     // `products` into `product_staff_details` precisely so that no family-facing
     // read path can reach it, and this fixture stands for one of those.
-    // Taken from the authored state rather than pinned null, so a
-    // threshold-pending scenario's row agrees with the state sitting beside it
-    // — the card reads the state, but a row claiming no threshold while the
-    // state names one is a fixture that contradicts itself, and the next
-    // person to build a surface off `product` inherits the contradiction.
-    signup_threshold: state.kind === "pending_thr" ? state.threshold : null,
     start_date: startDate,
     end_date: endDate,
     timezone: FIXTURE_TIMEZONE,

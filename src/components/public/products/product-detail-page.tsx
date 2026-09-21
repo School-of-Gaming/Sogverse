@@ -405,9 +405,9 @@ export function ProductDetailPage({
     };
   })();
 
-  // Seats are held by active participations alone — the seat-left pill and the
-  // threshold check both read that one number, and so does the capacity gate in
-  // the database. A parent part-way through Stripe Checkout holds no seat.
+  // Seats are held by active participations alone — the seat-left pill reads
+  // that one number, and so does the capacity gate in the database. A parent
+  // part-way through Stripe Checkout holds no seat.
   const participationsCount = myCount?.activeCount ?? 0;
 
   const state = deriveRegistrationState({

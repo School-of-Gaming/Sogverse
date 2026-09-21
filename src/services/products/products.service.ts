@@ -80,12 +80,12 @@ function buildVisibleProductsQuery<Select extends string>(
  * (`buildProductDetailQuery`) and keeps `product_translations(*)`.
  */
 const BROWSE_SELECT =
-  "id, product_type, billing_mode, topic, tag, min_age, max_age, for_gamers, for_parents, spoken_language_code, image_path, is_remote, seat_count, waitlist_enabled, registration_opens_at, start_date, end_date, timezone, signup_threshold, product_translations(locale, name, short_description), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
+  "id, product_type, billing_mode, topic, tag, min_age, max_age, for_gamers, for_parents, spoken_language_code, image_path, is_remote, seat_count, waitlist_enabled, registration_opens_at, start_date, end_date, timezone, product_translations(locale, name, short_description), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
 
 /**
  * The same listing read by a caller that wants only *where* each product is:
- * the location embed, plus the four lifecycle columns `effectiveStatus()` needs
- * to finish the visibility filter in JS. None of the twenty columns a card
+ * the location embed, plus the three lifecycle columns `effectiveStatus()`
+ * needs to finish the visibility filter in JS. None of the twenty columns a card
  * paints: no translations, no prices, no schedule slots.
  *
  * `/schools` is that caller — it groups municipality clubs by municipality and
@@ -93,7 +93,7 @@ const BROWSE_SELECT =
  * between this and the full row is most of its server fetch.
  */
 const LOCATION_ONLY_SELECT =
-  "start_date, end_date, signup_threshold, timezone, locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
+  "start_date, end_date, timezone, locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
 
 function buildBrowseQuery(supabase: AppSupabaseClient, types: ProductType[]) {
   return buildVisibleProductsQuery(supabase, types, BROWSE_SELECT);
@@ -114,17 +114,12 @@ function buildVisibleLocationsQuery(
 // is a date question the row answers for itself. The comparison is date-only
 // against the product's *own* timezone (a finished-yesterday camp in Helsinki
 // must not linger for a UTC viewer — CLAUDE.md "Date & Time"), which is what
-// `effectiveStatus()` does: it projects `now` into `product.timezone`. The
-// active-participation count is irrelevant to the ended decision (only
-// `end_date` separates completed/expired from running/pending), so 0 is safe to
-// pass. A `.lte()` on `end_date` could not do this: the cut-off is per row,
-// because it is each product's own local calendar day.
+// `effectiveStatus()` does: it projects `now` into `product.timezone`. A
+// `.lte()` on `end_date` could not do this: the cut-off is per row, because it
+// is each product's own local calendar day.
 function dropEndedProducts<Row extends LifecycleInputs>(rows: Row[]): Row[] {
   const now = new Date();
-  return rows.filter((row) => {
-    const status = effectiveStatus(row, now, 0);
-    return status !== "completed" && status !== "expired";
-  });
+  return rows.filter((row) => effectiveStatus(row, now) !== "completed");
 }
 
 // Joined shape consumed by the parent-facing browse pages
@@ -353,8 +348,7 @@ export type CreateProductInput = {
   material_url: string | null;
   location_id: string | null;
   is_remote: boolean;
-  signup_threshold: number | null;
-  start_date: string | null;
+  start_date: string;
   end_date: string | null;
   timezone: string;
   seat_count: number | null;
@@ -461,8 +455,7 @@ export type UpdateProductInput = {
   material_url: string | null;
   location_id: string | null;
   is_remote: boolean;
-  signup_threshold: number | null;
-  start_date: string | null;
+  start_date: string;
   end_date: string | null;
   timezone: string;
   seat_count: number | null;

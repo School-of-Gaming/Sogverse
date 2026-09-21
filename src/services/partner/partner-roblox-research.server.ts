@@ -157,7 +157,7 @@ export async function readRobloxResearch(
         // country still comes from the location's own chain.
         country_code: home?.place?.country_code ?? home?.country_code ?? null,
         city: home?.place?.city ?? null,
-        age: start_date === null ? null : possibleAgeOnDate(dateOfBirth, start_date),
+        age: possibleAgeOnDate(dateOfBirth, start_date),
         activity: {
           product_id: row.product_id,
           name: activityName(

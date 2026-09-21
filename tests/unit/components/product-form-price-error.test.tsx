@@ -78,7 +78,6 @@ function paidClubState(month: string): FormState {
   s.spokenLanguageCode = "en";
   s.isRemote = true;
   s.locationId = null;
-  s.startMode = "date";
   s.startDate = "2026-09-01";
   s.scheduleSlots = [{ weekday: 1, start_time: "16:00", duration_minutes: 90 }];
   s.paidMode = "paid";

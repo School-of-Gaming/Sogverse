@@ -1973,9 +1973,8 @@ export type Database = {
           registration_opens_at: string
           requires_gamer_creations: boolean
           seat_count: number | null
-          signup_threshold: number | null
           spoken_language_code: Database["public"]["Enums"]["spoken_language"]
-          start_date: string | null
+          start_date: string
           tag: Database["public"]["Enums"]["product_tag"] | null
           timezone: string
           topic: Database["public"]["Enums"]["product_topic"]
@@ -2006,9 +2005,8 @@ export type Database = {
           registration_opens_at: string
           requires_gamer_creations?: boolean
           seat_count?: number | null
-          signup_threshold?: number | null
           spoken_language_code: Database["public"]["Enums"]["spoken_language"]
-          start_date?: string | null
+          start_date: string
           tag?: Database["public"]["Enums"]["product_tag"] | null
           timezone: string
           topic: Database["public"]["Enums"]["product_topic"]
@@ -2039,9 +2037,8 @@ export type Database = {
           registration_opens_at?: string
           requires_gamer_creations?: boolean
           seat_count?: number | null
-          signup_threshold?: number | null
           spoken_language_code?: Database["public"]["Enums"]["spoken_language"]
-          start_date?: string | null
+          start_date?: string
           tag?: Database["public"]["Enums"]["product_tag"] | null
           timezone?: string
           topic?: Database["public"]["Enums"]["product_topic"]
@@ -2948,7 +2945,6 @@ export type Database = {
           p_requires_gamer_creations?: boolean
           p_schedule_slots?: Json
           p_seat_count?: number
-          p_signup_threshold?: number
           p_spoken_language_code: Database["public"]["Enums"]["spoken_language"]
           p_start_date?: string
           p_tag?: Database["public"]["Enums"]["product_tag"]
@@ -3437,7 +3433,6 @@ export type Database = {
           p_requires_gamer_creations?: boolean
           p_schedule_slots?: Json
           p_seat_count?: number
-          p_signup_threshold?: number
           p_spoken_language_code: Database["public"]["Enums"]["spoken_language"]
           p_start_date?: string
           p_tag?: Database["public"]["Enums"]["product_tag"]
@@ -3457,7 +3452,7 @@ export type Database = {
     Enums: {
       billing_mode: "paid" | "free" | "external_contract"
       chat_channel_type: "group_session"
-      effective_product_status: "pending" | "running" | "completed" | "expired"
+      effective_product_status: "pending" | "running" | "completed"
       gamer_photo_consent_type: "lynx_educate"
       gamer_sign_in: "parent" | "username" | "email"
       gender_type: "boy" | "girl" | "non_binary"
@@ -3615,7 +3610,7 @@ export const Constants = {
     Enums: {
       billing_mode: ["paid", "free", "external_contract"],
       chat_channel_type: ["group_session"],
-      effective_product_status: ["pending", "running", "completed", "expired"],
+      effective_product_status: ["pending", "running", "completed"],
       gamer_photo_consent_type: ["lynx_educate"],
       gamer_sign_in: ["parent", "username", "email"],
       gender_type: ["boy", "girl", "non_binary"],

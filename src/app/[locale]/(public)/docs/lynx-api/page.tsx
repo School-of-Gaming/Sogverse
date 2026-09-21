@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
+import { PRODUCT_STATUS } from "@/services/partner/partner.contracts";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -251,7 +252,10 @@ const PAGING_ROWS = [
 const PRODUCTS_PARAMS = [
   {
     name: "status",
-    type: "pending | running | completed",
+    // Read off the published tuple rather than restated: a state the wire
+    // schema does not accept cannot appear here, and one it does accept
+    // cannot go undocumented.
+    type: PRODUCT_STATUS.join(" | "),
     key: "resources.products.params.status",
   },
   ...PAGING_ROWS,
@@ -283,7 +287,7 @@ const PRODUCTS_FIELDS = [
   { name: "status", type: "enum", key: "resources.products.fields.status" },
   {
     name: "start_date, end_date",
-    type: "date | null",
+    type: "date, date | null",
     key: "resources.products.fields.dates",
   },
   {
@@ -566,7 +570,7 @@ const RESEARCH_FIELDS = [
   },
   {
     name: "age",
-    type: "object | null",
+    type: "object",
     key: "resources.robloxResearch.fields.age",
   },
   {

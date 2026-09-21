@@ -662,13 +662,7 @@ describe("product scenarios tell one capacity story", () => {
   it("gives every signup-able state the cap its own product row carries", () => {
     for (const { slug } of PREVIEW_SCENARIOS) {
       const { product, state } = buildScenarioFixture(slug);
-      if (
-        state.kind !== "closed_pre" &&
-        state.kind !== "pending_thr" &&
-        state.kind !== "open"
-      ) {
-        continue;
-      }
+      if (state.kind !== "closed_pre" && state.kind !== "open") continue;
       expect(state.seatCount, slug).toBe(product.seat_count);
       expect(state.seatsLeft, slug).toBe(
         product.seat_count === null
@@ -696,14 +690,6 @@ describe("product scenarios tell one capacity story", () => {
     expect(
       capped.some((s) => scenarioFilledSeats(s.slug) > 0),
     ).toBe(true);
-  });
-
-  it("caps the threshold-pending scenario, the only place that bar is visible", () => {
-    const threshold = PREVIEW_SCENARIOS.map(({ slug }) =>
-      buildScenarioFixture(slug),
-    ).filter((f) => f.state.kind === "pending_thr");
-    expect(threshold.length).toBeGreaterThan(0);
-    expect(threshold.some((f) => f.product.seat_count !== null)).toBe(true);
   });
 });
 

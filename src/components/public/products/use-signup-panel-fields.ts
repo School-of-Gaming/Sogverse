@@ -280,7 +280,7 @@ export function useSignupPanelFields(
   // authoritative figures are on Stripe's own page and on the confirmation.
   const startDate = product.start_date;
   const firstChargeDate = useMemo(() => {
-    if (pricingOption.kind !== "subscription" || startDate === null) return null;
+    if (pricingOption.kind !== "subscription") return null;
     const anchor = firstChargeAnchor(startDate, product.timezone, now);
     if (anchor === null) return null;
     // Clamped-vs-not, and what that means for the rendered date, is decided in

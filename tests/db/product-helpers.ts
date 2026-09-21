@@ -289,8 +289,14 @@ export interface ProductOptions {
   billingMode?: Database["public"]["Enums"]["billing_mode"];
   /** null = unlimited seats. Default: 1 (small enough for race tests). */
   seatCount?: number | null;
-  signupThreshold?: number | null;
-  startDate?: string | null;
+  /**
+   * Calendar date in `timezone`. `products.start_date` is NOT NULL, so the
+   * helper always writes one: the caller's, else `endDate` when the caller gave
+   * one — a single-day product, which is what `chk_products_event_single_date`
+   * wants anyway and which keeps a fixture whose end date is in the past
+   * deriving as `completed` — else tomorrow, which derives as `pending`.
+   */
+  startDate?: string;
   endDate?: string | null;
   /**
    * Location FK. Default: null. Required (and must be a country/region/
@@ -321,9 +327,27 @@ export interface ProductOptions {
 }
 
 /**
- * Creates a v2 product with sensible defaults: paid consumer_club, 1 seat, no
- * dates and no threshold — which derives as `pending`, so create_participation
- * accepts signups — and registration already open. Returns the product id.
+ * Tomorrow as a calendar date, read in the product's OWN zone. `start_date` is
+ * a calendar date in that zone and `effective_status` compares it against today
+ * there, so a date derived in UTC would land on the product's *current* day —
+ * and derive `running` rather than the `pending` this default promises — for a
+ * fixture in a zone ahead of UTC late in the UTC day.
+ */
+function tomorrow(timeZone: string): string {
+  // en-CA renders ISO-8601 (YYYY-MM-DD), which is the shape a date column wants.
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(Date.now() + 86_400_000));
+}
+
+/**
+ * Creates a v2 product with sensible defaults: paid consumer_club, 1 seat,
+ * starting tomorrow and with no end date — which derives as `pending`, so
+ * create_participation accepts signups — and registration already open.
+ * Returns the product id.
  *
  * The caller is responsible for deletion (CASCADE handles participations
  * and the seat-count rollup row).
@@ -334,6 +358,9 @@ export async function createTestProduct(
 ): Promise<string> {
   const productId = options.id ?? crypto.randomUUID();
   const forGamers = options.forGamers ?? true;
+  // Resolved once: the default start date is a calendar date in this zone, so
+  // the two cannot be allowed to disagree about which zone that is.
+  const timezone = options.timezone ?? "UTC";
 
   const { error } = await admin.from("products").insert({
     id: productId,
@@ -341,13 +368,12 @@ export async function createTestProduct(
     product_type: options.productType ?? "consumer_club",
     billing_mode: options.billingMode ?? "paid",
     seat_count: options.seatCount === undefined ? 1 : options.seatCount,
-    signup_threshold: options.signupThreshold ?? null,
-    start_date: options.startDate ?? null,
+    start_date: options.startDate ?? options.endDate ?? tomorrow(timezone),
     end_date: options.endDate ?? null,
     location_id: options.locationId ?? null,
     registration_opens_at:
       options.registrationOpensAt ?? new Date(Date.now() - 60_000).toISOString(),
-    timezone: options.timezone ?? "UTC",
+    timezone,
     waitlist_enabled: options.waitlistEnabled ?? true,
     is_visible: options.isVisible ?? true,
     is_remote: true,

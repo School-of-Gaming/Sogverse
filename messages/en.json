@@ -521,10 +521,7 @@
         "missingMunicipalityFee": "Municipality fee missing",
         "pendingHint": {
           "registrationOpens": "Registration opens {date}",
-          "startDate": "Starts {date}",
-          "threshold": "Starts when {count, plural, one {# parent signs} other {# parents sign}} up",
-          "dateAndThreshold": "Starts {date} if {count, plural, one {# parent signs} other {# parents sign}} up",
-          "pastDateThreshold": "Past start date — awaiting {count, plural, one {# sign-up} other {# sign-ups}}"
+          "startDate": "Starts {date}"
         }
       },
       "translations": {
@@ -562,7 +559,6 @@
           "endDate": "End date",
           "firstSession": "First session",
           "lastSession": "Last session",
-          "signupThreshold": "Signup threshold",
           "termDates": "Term dates",
           "billingMode": "Billing",
           "seats": "Seats",
@@ -664,14 +660,12 @@
         "paidByMunicipality": "Paid by the municipality",
         "seatCount": "Seat count",
         "waitlistToggle": "Enable waitlist when seats are full",
-        "signupThreshold": "Signups needed to start",
         "makeVisible": "List this product on the Shop and Municipality Clubs pages",
         "seatLimit": "Seat limit"
       },
       "placeholders": {
         "selectTopic": "Select a topic…",
         "materialUrl": "https://drive.sog.gg/...",
-        "threshold": "e.g. 8",
         "name": {
           "consumerClub": "e.g. Minecraft Redstone kerho",
           "municipalityClub": "e.g. Tapiola Minecraft Club · Spring 2026",
@@ -723,15 +717,6 @@
           "volunteer": "Volunteer (free)",
           "fee": "Set a fee"
         }
-      },
-      "startModes": {
-        "label": "How does this start?",
-        "date": "On a specific date",
-        "date_and_threshold": "On a specific date, only if enough sign up",
-        "threshold": "When enough gamers have signed up",
-        "dateDescription": "Runs on the selected date, no matter how many parents sign up.",
-        "date_and_thresholdDescription": "Scheduled for the selected date, but only runs if enough parents sign up in time. Otherwise you cancel it and parents are refunded automatically.",
-        "thresholdDescription": "No fixed start date. You pick the first session date once enough parents have signed up — parents see a live counter and know you’ll contact them when it’s ready."
       },
       "registrationModes": {
         "label": "When does registration open?",
@@ -786,8 +771,6 @@
         "municipalityHint": "Municipality clubs are always tied to a specific Finnish municipality — the one paying for it. Parents from that municipality will see it when they browse.",
         "siteHint": "Where sessions physically happen.",
         "eventSingleDay": "Events happen on a single date.",
-        "thresholdOnly": "No fixed start date yet. Parents see a “X of Y needed” counter while it fills up. You press Start once you have enough sign-ups and pick the first session date then.",
-        "thresholdWithDate": "If fewer than this many parents sign up by the start date, you’ll need to cancel and refund from the product’s page.",
         "timezoneEntry": "Session times below are entered in this timezone. Parents see them converted to their own automatically.",
         "timezoneChangeMoves": "Session times below are entered in this timezone. Changing it moves every upcoming session to the same clock time in the new zone, while sessions that already have a report or attendance recorded keep the times they were held at.",
         "timezoneIs": "Times are in {timezone}. Parents see them converted to their local timezone automatically.",
@@ -831,7 +814,6 @@
         "primaryGeduFeeInvalid": "Enter a primary Gedu fee greater than 0, or choose Unknown or Volunteer",
         "assistantGeduFeeInvalid": "Enter an assistant Gedu fee greater than 0, or choose None or Volunteer",
         "municipalityFeeInvalid": "Enter a municipality fee greater than 0, or choose Unknown",
-        "thresholdInvalid": "Signups needed to start must be a positive integer",
         "registrationOpensDateRequired": "Pick a date when registration should open",
         "createFailed": "Failed to create product"
       },
@@ -842,8 +824,7 @@
       "status": {
         "pending": "Awaiting start",
         "running": "Running",
-        "completed": "Completed",
-        "expired": "Expired"
+        "completed": "Completed"
       },
       "schedule": {
         "day": "Day",
@@ -1076,7 +1057,6 @@
             "seats": "{taken} of {capacity} seats taken",
             "regionLocked": "Families in {country} only",
             "notStarted": "Starts {date}. The family pays from today, not from the start date.",
-            "notStartedUndated": "No start date yet. The family pays from today.",
             "subscriptionEnding": "The family has cancelled this subscription; it ends on {date}. This month's price difference will not be invoiced."
           },
           "prices": {
@@ -1691,7 +1671,7 @@
           "fields": {
             "roblox": "The child’s Roblox account. <code>roblox_user_id</code> is <code>null</code> when Sogverse could not verify the username; forward such rows only if Roblox accepts a username alone.",
             "location": "The home municipality and country of the parent whose account holds the seat, by the same rule as <code>parents[].location</code> in <code>/families</code>. Both are <code>null</code> when that parent has not set a home location; <code>city</code> alone is <code>null</code> when that location lies within no municipality.",
-            "age": "The child’s age in whole years on the activity’s start date, as a range: Sogverse holds the birth month and not the day, so <code>min</code> is the youngest the child could have been and <code>max</code> the oldest, and the two are the same number unless the start date fell inside the child’s birth month. <code>null</code> while the product has no start date. The row carries the age rather than the birth month because the age is what the research dataset names.",
+            "age": "The child’s age in whole years on the activity’s start date, as a range: Sogverse holds the birth month and not the day, so <code>min</code> is the youngest the child could have been and <code>max</code> the oldest, and the two are the same number unless the start date fell inside the child’s birth month. The row carries the age rather than the birth month because the age is what the research dataset names.",
             "activity": "The activity attended: the product’s identifier, its name in English where one has been written, otherwise in the language the product is delivered in, and failing both in whichever of its locales has the alphabetically first code, its type, delivery and start date. Type and delivery together are what Lynx’s names for its ways of delivering the Programme map onto, and the start date is the intervention date the research asks for.",
             "publishedGameUrl": "The first roblox.com link in the child’s creations for this product, or <code>null</code> when none has been recorded."
           },

@@ -565,10 +565,7 @@
         "missingMunicipalityFee": "veng Huch Hutlh",
         "pendingHint": {
           "registrationOpens": "{date}: ghIt poSchoH",
-          "startDate": "{date}: tagh",
-          "threshold": "{count, plural, one {# vav qaSchoH} other {# vavpu’ qaSchoH}}DI’ tagh",
-          "dateAndThreshold": "{count, plural, one {# vav qaSchoHchugh} other {# vavpu’ qaSchoHchugh}} {date}: tagh",
-          "pastDateThreshold": "vorgh tagh jaj — {count, plural, one {# vav loS} other {# vavpu’ loS}}"
+          "startDate": "{date}: tagh"
         }
       },
       "translations": {
@@ -606,7 +603,6 @@
           "endDate": "rIn jaj",
           "firstSession": "wa'DIch ghom",
           "lastSession": "Qav ghom",
-          "signupThreshold": "ghIH yum",
           "termDates": "poH",
           "billingMode": "Huch yIv",
           "seats": "quS",
@@ -708,14 +704,12 @@
         "paidByMunicipality": "veng Huch nob",
         "seatCount": "pa’ mI’",
         "waitlistToggle": "pa’ tebDI’, tetlh teb yIchu’",
-        "signupThreshold": "ghItlh mI’ taghmeH",
         "makeVisible": "ngevwI’ tetlh veng ghomHommey tetlh je Doch yIchel",
         "seatLimit": "pa’ mI’ Sub"
       },
       "placeholders": {
         "selectTopic": "Doch yIwIv…",
         "materialUrl": "https://drive.sog.gg/...",
-        "threshold": "e.g. 8",
         "name": {
           "consumerClub": "e.g. Minecraft Redstone ghomHom",
           "municipalityClub": "e.g. Tapiola Minecraft ghomHom · 2026 Hut",
@@ -767,15 +761,6 @@
           "volunteer": "matlh (nob Hutlh)",
           "fee": "Huch yIqon"
         }
-      },
-      "startModes": {
-        "label": "chay’ tagh?",
-        "date": "jaj tagh vIngu’",
-        "date_and_threshold": "jaj tagh vIngu’, chaq law’ ghItlh",
-        "threshold": "qaStaHvIS law’ ghItlh",
-        "dateDescription": "jaj tagh qaS, ghItlh mI’ Sov pagh.",
-        "date_and_thresholdDescription": "jaj tagh vIngu’ ’ach ghItlh law’ neH qaS. ghoS Huch chegh lu’.",
-        "thresholdDescription": "jaj tagh pagh. ghItlh law’ ghoS, qaSlaHmey jaj tagh yIngu’."
       },
       "registrationModes": {
         "label": "ghaytan ghItlh tagh?",
@@ -830,8 +815,6 @@
         "municipalityHint": "ghomHom veng Sub veng — Huch nob veng. veng vavmey neH lulegh.",
         "siteHint": "qaStaHvIS Daq mab.",
         "eventSingleDay": "Qu’mey wa’ jaj qaS.",
-        "thresholdOnly": "jaj tagh DaH pagh. vavmey ”X / Y poQ” laSvargh lulegh teb. ghItlh law’ tIghaj ’ej tagh yIqotlh, jaj tagh yIngu’ qIb.",
-        "thresholdWithDate": "jaj taghDaq ghItlh law’ pumchugh, De’ Daq tlhotlh ’ej Huch chegh.",
         "timezoneEntry": "poH Sepvamdaq ghItlhlu’ bIng poHmey. vavpu’ Daq poHchaj choHlu’.",
         "timezoneChangeMoves": "poH Sepvamdaq ghItlhlu’ bIng poHmey. poH Sep DachoHchugh, vIH Hoch qep pIq: poH rap, Sep chu’. ’ach qepmey ghItlhlu’pu’bogh — ja’chuq ghojwI’pu’ ghap — poHchaj tIQ luSaH: not choHlu’ qun.",
         "timezoneIs": "poHmey {timezone} Daq. vavpu’ Daq poHchaj choHlu’.",
@@ -875,7 +858,6 @@
         "primaryGeduFeeInvalid": "Gedu wa’DIch Huch (0 law’) yIqon, pagh «Sovbe’» «matlh» je yIwIv",
         "assistantGeduFeeInvalid": "Gedu boQwI’ Huch (0 law’) yIqon, pagh «pagh» «matlh» je yIwIv",
         "municipalityFeeInvalid": "veng Huch (0 law’) yIqon, pagh «Sovbe’» yIwIv",
-        "thresholdInvalid": "ghItlh mI’ taghmeH positiv ’oHnIS",
         "registrationOpensDateRequired": "ghItlh tagh jaj yIwIv",
         "createFailed": "De’ chu’ Qap pagh"
       },
@@ -886,8 +868,7 @@
       "status": {
         "pending": "taghbe’",
         "running": "qaS",
-        "completed": "rIn",
-        "expired": "lI’be’"
+        "completed": "rIn"
       },
       "schedule": {
         "day": "jaj",
@@ -1120,7 +1101,6 @@
             "seats": "{taken}/{capacity} quS ngaSlu’",
             "regionLocked": "{country} qorDu’pu’ neH",
             "notStarted": "{date} tagh. DaHjaj DIlchoH qorDu’, taghbogh jaj DIlchoHbe’.",
-            "notStartedUndated": "tagh jaj tu’lu’be’. DaHjaj DIlchoH qorDu’.",
             "subscriptionEnding": "Huch nge’ghach chIl qorDu’; {date} van rIn. jarvam Huch pIm nge’lu’be’."
           },
           "prices": {
@@ -1735,7 +1715,7 @@
           "fields": {
             "roblox": "puq Roblox account. <code>roblox_user_id</code> <code>null</code> 'oH Sogverse pong ngu'laHbe'DI'; tlheghmeyvam yInob neH Roblox pong mob laj'a'.",
             "location": "Daq qengbogh account ghajbogh vav juH veng je Sep, <code>/families</code> <code>parents[].location</code> chut rap. vav 'angbe'DI' <code>null</code> cha'; vengDaq ngaSbe'DI' <code>city</code> neH <code>null</code>.",
-            "age": "Qu' tagh jajDaq puq ben mI' naQ, veH rur: bogh jar qeng Sogverse — jaj qengbe'; vaj <code>min</code> 'oH Qup law''e', <code>max</code> 'oH qan law''e', 'ej rap cha' mI' — 'ach tagh jaj puq bogh jarDaq ghoSDI' pIm. <code>null</code> De'wI' tagh jaj Hutlh'a'. ben mI' qeng tlhegh — bogh jar qengbe' — qel De' ghom ben mI' pongmo'.",
+            "age": "Qu' tagh jajDaq puq ben mI' naQ, veH rur: bogh jar qeng Sogverse — jaj qengbe'; vaj <code>min</code> 'oH Qup law''e', <code>max</code> 'oH qan law''e', 'ej rap cha' mI' — 'ach tagh jaj puq bogh jarDaq ghoSDI' pIm. ben mI' qeng tlhegh — bogh jar qengbe' — qel De' ghom ben mI' pongmo'.",
             "activity": "juSbogh Qu': De'wI' pong mI'; DIvI' Hol pong ghItlhlu'pu'DI', latlhDaq De'wI' qaSmoHbogh Hol pong, 'ej Qav ghItlh mIwDaq wa'DIch Hol pong; Segh, chay' qaS, je tagh jaj. Segh je chay' qaS: cha'vam ghoS mIw'a' qaSmoHmeH Lynx pongmey, 'ej tagh jaj 'oH qel tlhobbogh Qu' jaj'e'.",
             "publishedGameUrl": "De'wI'vamvaD puq chenmoHghachDaq wa'DIch roblox.com tlhegh, qoj <code>null</code> pagh ghItlhlu'DI'."
           },

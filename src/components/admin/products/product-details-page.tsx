@@ -134,7 +134,7 @@ export function ProductDetailsPage({
   }
 
   const tr = resolveTranslation(product.product_translations, uiLocale);
-  const status = effectiveStatus(product, now, 0);
+  const status = effectiveStatus(product, now);
   // Every group on the product shares one schedule, so resolve the voice
   // window once here and thread it into each group's Join button. `useNow`
   // ticks so the live/locked flip happens without a reload. A room only

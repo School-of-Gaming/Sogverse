@@ -5,7 +5,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { formatInTimeZone } from "date-fns-tz";
 import { StatusLine } from "@/components/ui/alert";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { PRODUCT_TIMEZONES } from "@/lib/constants";
 import { formatAdminTermWeeks } from "@/lib/products/format-product-term-dates";
@@ -18,14 +17,8 @@ import { formatTimezoneOptionLabel } from "@/lib/timezone";
 import { cn, formatDateOnly } from "@/lib/utils";
 import { useNow } from "@/providers";
 import { FormSection } from "../form-primitives";
-import { formLocksFor } from "../form-locks";
 import { ScheduleSlotsEditor } from "../schedule-slots-editor";
-import {
-  END_DATE_MODE_VALUES,
-  startModeUsesDate,
-  startModeUsesThreshold,
-  type FormState,
-} from "../product-form-state";
+import { END_DATE_MODE_VALUES, type FormState } from "../product-form-state";
 import type { ProductTypeConfig } from "../product-type-config";
 
 /**
@@ -87,16 +80,6 @@ export function WhenSection({
     : [...PRODUCT_TIMEZONES, storedZone];
 
   const productType = config.productType;
-  const startTriggerOptions = config.allowedStartModes;
-  const usesDate = startModeUsesDate(state.startMode);
-  const usesThreshold = startModeUsesThreshold(state.startMode);
-
-  // Pre-prod UI locks, resolved through form-locks.ts like every other section
-  // — the lock below lifts for no product today, but reading the constant
-  // directly would put a second decision-maker next to the resolver. The start
-  // trigger is pinned to the type's default ("On a specific date").
-  const locks = formLocksFor(config);
-  const lockStartMode = locks.startMode;
   // A consumer club's first charge is deferred to its start date, so the date
   // is now editable — with the warning that moving it later does NOT move the
   // anchor on subscriptions that already exist (that correction is manual in
@@ -186,119 +169,157 @@ export function WhenSection({
       title={t("sections.when")}
       description={t(`sections.whenDescription.${config.i18nKey}`)}
     >
-      {startTriggerOptions.length > 1 && (
-        <Field label={t("startModes.label")}>
-          <div className="space-y-2">
-            {startTriggerOptions.map((option) => (
-              <label
-                key={option}
-                className={cn(
-                  "flex items-start gap-3 rounded-md border border-border p-3 text-sm transition-colors",
-                  state.startMode === option && "border-act",
-                  lockStartMode ? "cursor-not-allowed opacity-60" : "cursor-pointer"
-                )}
-              >
-                <input
-                  type="radio"
-                  name="startTrigger"
-                  checked={state.startMode === option}
-                  disabled={lockStartMode}
-                  onChange={() =>
-                    setState({
-                      ...state,
-                      startMode: option,
-                      signupThreshold:
-                        option === "date" ? "" : state.signupThreshold,
-                      startDate:
-                        option === "threshold" ? "" : state.startDate,
-                      endDate: option === "threshold" ? "" : state.endDate,
-                    })
-                  }
-                  className="mt-1 h-4 w-4 accent-act"
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field
+            label={
+              productType === "event"
+                ? t("labels.eventDate")
+                : t("labels.startDate")
+            }
+            htmlFor="p-start-date"
+            // The two hints are exclusive: the billing anchor is a consumer
+            // club's, the single-date note an event's. The event's used to
+            // sit in the empty second column as a bottom-aligned box beside
+            // the input, which read as misaligned; the field's own hint slot
+            // is where every other hint on this form lives.
+            hint={
+              startDateMovesBilling
+                ? t("hints.startDateBillingAnchor")
+                : productType === "event"
+                  ? t("hints.eventSingleDay")
+                  : undefined
+            }
+          >
+            {({ hintId }) => (
+              <>
+                <DatePicker
+                  id="p-start-date"
+                  value={state.startDate}
+                  onChange={(startDate) => setState({ ...state, startDate })}
+                  today={today}
+                  weekPick={{ edge: "start", weekdays }}
+                  rangeEnd={state.endDate === "" ? null : state.endDate}
+                  aria-describedby={describedBy(
+                    startWarning === null ? undefined : startWarningId,
+                    hintId,
+                  )}
+                  required
                 />
-                <div className="min-w-0 flex-1">
-                  <div className="font-medium">
-                    {t(`startModes.${option}`)}
-                  </div>
-                  <div className="mt-0.5 text-xs text-muted-foreground">
-                    {t(`startModes.${option}Description`)}
-                  </div>
-                </div>
-              </label>
-            ))}
-          </div>
-        </Field>
-      )}
-
-      {usesDate && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {/* The warning sits between the control and the field's own
+                    hint, which is the order the two want: the date being
+                    wrong comes before the billing anchor is worth
+                    explaining. It appears as the direct result of the
+                    admin's own pick, so its reflow is the permitted kind. */}
+                {startWarning !== null && (
+                  <StatusLine
+                    id={startWarningId}
+                    role="status"
+                    status="warning"
+                    size="xs"
+                    muted
+                  >
+                    {startWarning}
+                  </StatusLine>
+                )}
+              </>
+            )}
+          </Field>
+          {productType === "event" || productType === "consumer_club" ? null : (
+            // Municipality clubs and camps always have a fixed end date.
             <Field
               label={
-                productType === "event"
-                  ? t("labels.eventDate")
-                  : t("labels.startDate")
+                productType === "municipality_club"
+                  ? t("labels.seasonEndDate")
+                  : t("labels.endDate")
               }
-              htmlFor="p-start-date"
-              // The two hints are exclusive: the billing anchor is a consumer
-              // club's, the single-date note an event's. The event's used to
-              // sit in the empty second column as a bottom-aligned box beside
-              // the input, which read as misaligned; the field's own hint slot
-              // is where every other hint on this form lives.
-              hint={
-                startDateMovesBilling
-                  ? t("hints.startDateBillingAnchor")
-                  : productType === "event"
-                    ? t("hints.eventSingleDay")
-                    : undefined
-              }
+              htmlFor="p-end-date"
             >
-              {({ hintId }) => (
-                <>
-                  <DatePicker
-                    id="p-start-date"
-                    value={state.startDate}
-                    onChange={(startDate) => setState({ ...state, startDate })}
-                    today={today}
-                    weekPick={{ edge: "start", weekdays }}
-                    rangeEnd={state.endDate === "" ? null : state.endDate}
-                    aria-describedby={describedBy(
-                      startWarning === null ? undefined : startWarningId,
-                      hintId,
-                    )}
-                    required
-                  />
-                  {/* The warning sits between the control and the field's own
-                      hint, which is the order the two want: the date being
-                      wrong comes before the billing anchor is worth
-                      explaining. It appears as the direct result of the
-                      admin's own pick, so its reflow is the permitted kind. */}
-                  {startWarning !== null && (
-                    <StatusLine
-                      id={startWarningId}
-                      role="status"
-                      status="warning"
-                      size="xs"
-                      muted
-                    >
-                      {startWarning}
-                    </StatusLine>
-                  )}
-                </>
+              <DatePicker
+                id="p-end-date"
+                value={state.endDate}
+                onChange={(endDate) => setState({ ...state, endDate })}
+                today={today}
+                weekPick={{ edge: "end", weekdays }}
+                rangeStart={state.startDate === "" ? null : state.startDate}
+                aria-describedby={describedBy(
+                  endWarning === null ? undefined : endWarningId,
+                )}
+                required
+              />
+              {endWarning !== null && (
+                <StatusLine
+                  id={endWarningId}
+                  role="status"
+                  status="warning"
+                  size="xs"
+                  muted
+                >
+                  {endWarning}
+                </StatusLine>
               )}
             </Field>
-            {productType === "event" || productType === "consumer_club" ? null : (
-              // Municipality clubs and camps always have a fixed end date.
-              <Field
-                label={
-                  productType === "municipality_club"
-                    ? t("labels.seasonEndDate")
-                    : t("labels.endDate")
-                }
-                htmlFor="p-end-date"
-              >
+          )}
+        </div>
+
+        {/* The term summary belongs under the pair of dates that produce it,
+            so it rides with the grid — except on a consumer club, whose end
+            date is not in the grid at all and carries the line itself. */}
+        {productType === "event" || productType === "consumer_club"
+          ? null
+          : termLine}
+
+        {/* Consumer clubs are ongoing by default. The admin picks "no end
+            date" or "set an end date"; the date input only shows for the
+            latter — avoids Safari's native date field, which can't be left
+            blank to mean "ongoing". */}
+        {productType === "consumer_club" && (
+          <Field label={t("labels.endDate")}>
+            <div className="space-y-2">
+              {END_DATE_MODE_VALUES.map((option) => {
+                const active = state.hasEndDate === (option === "dated");
+                return (
+                  <label
+                    key={option}
+                    className={cn(
+                      "flex items-start gap-3 rounded-md border border-border p-3 text-sm transition-colors",
+                      active && "border-act",
+                      "cursor-pointer"
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="endDateMode"
+                      checked={active}
+                      onChange={() =>
+                        setState({
+                          ...state,
+                          hasEndDate: option === "dated",
+                          // Clear the date when going back to ongoing so a
+                          // stale value can't leak into the payload.
+                          endDate:
+                            option === "ongoing" ? "" : state.endDate,
+                        })
+                      }
+                      className="mt-1 h-4 w-4 accent-act"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium">
+                        {t(`endDateModes.${option}`)}
+                      </div>
+                      <div className="mt-0.5 text-xs text-muted-foreground">
+                        {t(`endDateModes.${option}Description`)}
+                      </div>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+            {state.hasEndDate && (
+              <div className="mt-3 max-w-[280px] space-y-2">
                 <DatePicker
                   id="p-end-date"
+                  aria-label={t("labels.endDate")}
                   value={state.endDate}
                   onChange={(endDate) => setState({ ...state, endDate })}
                   today={today}
@@ -320,121 +341,12 @@ export function WhenSection({
                     {endWarning}
                   </StatusLine>
                 )}
-              </Field>
-            )}
-          </div>
-
-          {/* The term summary belongs under the pair of dates that produce it,
-              so it rides with the grid — except on a consumer club, whose end
-              date is not in the grid at all and carries the line itself. */}
-          {productType === "event" || productType === "consumer_club"
-            ? null
-            : termLine}
-
-          {/* Consumer clubs are ongoing by default. The admin picks "no end
-              date" or "set an end date"; the date input only shows for the
-              latter — avoids Safari's native date field, which can't be left
-              blank to mean "ongoing". */}
-          {productType === "consumer_club" && (
-            <Field label={t("labels.endDate")}>
-              <div className="space-y-2">
-                {END_DATE_MODE_VALUES.map((option) => {
-                  const active = state.hasEndDate === (option === "dated");
-                  return (
-                    <label
-                      key={option}
-                      className={cn(
-                        "flex items-start gap-3 rounded-md border border-border p-3 text-sm transition-colors",
-                        active && "border-act",
-                        "cursor-pointer"
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        name="endDateMode"
-                        checked={active}
-                        onChange={() =>
-                          setState({
-                            ...state,
-                            hasEndDate: option === "dated",
-                            // Clear the date when going back to ongoing so a
-                            // stale value can't leak into the payload.
-                            endDate:
-                              option === "ongoing" ? "" : state.endDate,
-                          })
-                        }
-                        className="mt-1 h-4 w-4 accent-act"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium">
-                          {t(`endDateModes.${option}`)}
-                        </div>
-                        <div className="mt-0.5 text-xs text-muted-foreground">
-                          {t(`endDateModes.${option}Description`)}
-                        </div>
-                      </div>
-                    </label>
-                  );
-                })}
+                {termLine}
               </div>
-              {state.hasEndDate && (
-                <div className="mt-3 max-w-[280px] space-y-2">
-                  <DatePicker
-                    id="p-end-date"
-                    aria-label={t("labels.endDate")}
-                    value={state.endDate}
-                    onChange={(endDate) => setState({ ...state, endDate })}
-                    today={today}
-                    weekPick={{ edge: "end", weekdays }}
-                    rangeStart={state.startDate === "" ? null : state.startDate}
-                    aria-describedby={describedBy(
-                      endWarning === null ? undefined : endWarningId,
-                    )}
-                    required
-                  />
-                  {endWarning !== null && (
-                    <StatusLine
-                      id={endWarningId}
-                      role="status"
-                      status="warning"
-                      size="xs"
-                      muted
-                    >
-                      {endWarning}
-                    </StatusLine>
-                  )}
-                  {termLine}
-                </div>
-              )}
-            </Field>
-          )}
-        </div>
-      )}
-
-      {usesThreshold && (
-        <Field
-          label={t("labels.signupThreshold")}
-          htmlFor="p-threshold"
-          hint={
-            state.startMode === "threshold"
-              ? t("hints.thresholdOnly")
-              : t("hints.thresholdWithDate")
-          }
-        >
-          <Input
-            id="p-threshold"
-            type="number"
-            min="1"
-            placeholder={t("placeholders.threshold")}
-            value={state.signupThreshold}
-            onChange={(e) =>
-              setState({ ...state, signupThreshold: e.target.value })
-            }
-            className="max-w-[220px]"
-            required
-          />
-        </Field>
-      )}
+            )}
+          </Field>
+        )}
+      </div>
 
       {/* The zone every wall clock below is entered in. It sits directly above
           the schedule rather than in its own section: the times are read in it,

@@ -7,11 +7,7 @@ import type { ProductTag, ProductTopic, SpokenLanguageCode } from "@/types";
 import type { AttachableMarketingConsentType } from "@/lib/constants/marketing-consents";
 import type { AttachableGamerPhotoConsentType } from "@/lib/constants/gamer-photo-consents";
 import { effectiveBillingMode } from "./product-type-config";
-import type {
-  PaidMode,
-  ProductTypeConfig,
-  StartMode,
-} from "./product-type-config";
+import type { PaidMode, ProductTypeConfig } from "./product-type-config";
 import type { ScheduleSlotDraft } from "./schedule-slots-editor";
 
 // Module-level constants — listed here rather than inline so the lint rule
@@ -186,7 +182,6 @@ export interface FormState {
   // rest of the term follows the new zone — which is what the edit form's hint
   // tells the admin, and why that hint is not simply "every session moves".
   timezone: string;
-  startMode: StartMode;
   startDate: string;
   // Whether a consumer club has a fixed end date. `false` ⇒ ongoing (end_date
   // null), `endDate` is ignored. Only the consumer-club form surfaces this
@@ -195,7 +190,6 @@ export interface FormState {
   hasEndDate: boolean;
   endDate: string;
   scheduleSlots: ScheduleSlotDraft[];
-  signupThreshold: string;
 
   // Capacity & billing
   paidMode: PaidMode;
@@ -347,7 +341,6 @@ export function initialState(
     // Finland unless the admin says otherwise — most of what we run is Finnish,
     // and every product that predates the picker carries this zone.
     timezone: DEFAULT_PRODUCT_TIMEZONE,
-    startMode: config.allowedStartModes[0],
     // Blank on every type, consumer clubs included: a club may now start on a
     // future date (billing defers to it), so there is no safe date to pin and
     // `startDateRequired` makes the admin choose one.
@@ -355,7 +348,6 @@ export function initialState(
     hasEndDate: false,
     endDate: "",
     scheduleSlots: defaultSlots(config),
-    signupThreshold: "",
     paidMode: initialPaidMode,
     prices: {
       eur: { session: "", month: "" },
@@ -469,14 +461,6 @@ export function capacityDefaultsToCapped(
 export function withPaidMode(state: FormState, paidMode: PaidMode): FormState {
   if (paidMode !== "free" || !state.uncapped) return { ...state, paidMode };
   return { ...state, paidMode, uncapped: false, waitlistEnabled: true };
-}
-
-export function startModeUsesDate(mode: StartMode): boolean {
-  return mode === "date" || mode === "date_and_threshold";
-}
-
-export function startModeUsesThreshold(mode: StartMode): boolean {
-  return mode === "threshold" || mode === "date_and_threshold";
 }
 
 export function locationPickerMode(

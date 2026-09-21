@@ -760,7 +760,7 @@ export type SessionFeedbackRowInsert =
 
 // get_my_assigned_products RPC — the generator marks every column of an RPC
 // RETURNS TABLE row as non-nullable from the column type alone, missing
-// products columns that are actually nullable (start_date, end_date). It also
+// products columns that are actually nullable (end_date). It also
 // degrades the jsonb arrays (product_translations,
 // schedule_slots) to `Json`, which forces every consumer to cast. Tighten
 // both: nullability matches the underlying products schema, and the

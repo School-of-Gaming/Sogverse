@@ -13,11 +13,6 @@ export type ScheduleShape =
   | "multi_day_bounded"  // camp: multiple weekdays, start/end dates
   | "single_date";       // event: single date, single slot
 
-// Three start triggers from doc §4.11. Types list only the ones that make
-// sense — muni clubs are ticket-drop only ("date"), camps always have a
-// bounded schedule so they can't be threshold-only ("threshold" disallowed).
-export type StartMode = "date" | "date_and_threshold" | "threshold";
-
 export type BillingOption =
   | { mode: "external_contract"; required: true }                       // municipality_club
   | { mode: "free_or_paid" };                                           // consumer_club, camp, event
@@ -72,8 +67,6 @@ export interface ProductTypeConfig {
    *     and accepted; see the `region_lock_country` column comment.
    */
   regionLockable: boolean;
-  /** Start triggers admin can choose from. First entry is the default. */
-  allowedStartModes: StartMode[];
   defaultBillingMode: BillingMode;
 }
 
@@ -102,7 +95,6 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     requiresMunicipalityWhenOnline: false,
     countryBound: null,
     regionLockable: true,
-    allowedStartModes: ["date", "date_and_threshold", "threshold"],
     defaultBillingMode: "paid",
   },
   municipality_club: {
@@ -119,7 +111,6 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     // The one type with no region lock: its country is already settled by
     // `countryBound` above, through an entirely separate mechanism.
     regionLockable: false,
-    allowedStartModes: ["date"],
     defaultBillingMode: "external_contract",
   },
   camp: {
@@ -137,7 +128,6 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     requiresMunicipalityWhenOnline: false,
     countryBound: null,
     regionLockable: true,
-    allowedStartModes: ["date", "date_and_threshold"],
     defaultBillingMode: "paid",
   },
   event: {
@@ -154,7 +144,6 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     requiresMunicipalityWhenOnline: false,
     countryBound: null,
     regionLockable: true,
-    allowedStartModes: ["date", "date_and_threshold", "threshold"],
     defaultBillingMode: "free",
   },
 };
