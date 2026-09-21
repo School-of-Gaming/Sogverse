@@ -947,7 +947,7 @@ describe("every scenario exercises the reference rail's other-groups card", () =
     }
   });
 
-  it("substitutions a peer group with nobody teaching it yet", () => {
+  it("covers a peer group with nobody teaching it yet", () => {
     const unstaffed = GROUP_WORKSPACE_SCENARIOS.flatMap((scenario) => {
       const { data } = buildGroupWorkspaceFixture(now, scenario);
       return data.groups.filter(
@@ -1860,7 +1860,7 @@ describe("the topic prep scene", () => {
  * the *invoice*, so a fixture that stopped producing a missed session or an
  * excluded club would be a scene quietly showing one case fewer.
  */
-describe("the municipality invoicing scene substitutions every ledger state", () => {
+describe("the municipality invoicing scene covers every ledger state", () => {
   const snapshot = municipalityInvoicingMonthFixture(
     MUNICIPALITY_INVOICING_WORKING_MONTH,
   );

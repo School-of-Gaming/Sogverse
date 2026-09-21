@@ -58,7 +58,7 @@ import { deleteTestProducts } from "./product-helpers";
  *     product they already teach, and one group cannot be both.
  *   - SITE_PRODUCT (in-person, at its own SITE) carries GROUP_SITE, so the
  *     location-shaped substitution arm of `set_site_notes` has a building to be about.
- *   - OFF_PRODUCT carries GROUP_OFF, which nobody here teaches or substitutions.
+ *   - OFF_PRODUCT carries GROUP_OFF, which nobody here teaches or substitutes on.
  *   - LATE_PRODUCT (GROUP_LATE) and ORPHAN_PRODUCT (GROUP_ORPHAN) are the pair
  *     the window's NEAR edge is measured against: an evening slot in a zone
  *     where it is currently midday (see MIDDAY_ZONE), identical but for the one
@@ -342,7 +342,7 @@ describe("session substitutions", () => {
       },
       // The two evening clubs the start bound is measured against. They differ
       // in one thing only — whether their schedule projects the weekday the
-      // cases below substitution — so a difference in the answer is a difference in
+      // cases below use — so a difference in the answer is a difference in
       // that and nothing else.
       ...[LATE_PRODUCT, ORPHAN_PRODUCT].map((id) => ({
         id,
@@ -384,7 +384,7 @@ describe("session substitutions", () => {
     );
 
     // The evening clubs' schedules, and the whole of what tells them apart: the
-    // one substituted below runs on every weekday, its twin on every weekday BUT
+    // one used below runs on every weekday, its twin on every weekday BUT
     // the one that date falls on — so on that twin the same date names a day
     // the schedule does not project, which is the orphan case.
     const orphanedWeekday = weekdayOf(middayDate(2));
@@ -763,7 +763,7 @@ describe("session substitutions", () => {
    *   too. None of the three is a read or a write of rows, but REFERENCES lets a
    *   grantee build a foreign key onto the table (an existence oracle, and a
    *   lock on deletes) and TRIGGER lets them attach code to it. The sweep below
-   *   substitutions all seven, and proves it can SEE all seven rather than asserting an
+   *   covers all seven, and proves it can SEE all seven rather than asserting an
    *   empty list against a helper that might only ever report four.
    * - **Its role-backfill assertion is vacuous on a fresh database.** "No
    *   assignment has a role other than primary" is true and worth asserting, and
@@ -1265,7 +1265,7 @@ describe("session substitutions", () => {
     });
 
     it("takes p_group_id so a substitution on a SISTER group lands in the right workspace", async () => {
-      // A gedu assigned to GROUP_A who substitutions GROUP_B. Without the parameter the
+      // A gedu assigned to GROUP_A who substitutes on GROUP_B. Without the parameter the
       // assignment wins, which is exactly why the substitution card's link carries the
       // group id. The MINTED account holds both roles here rather than the seeded
       // one, so the case depends on no certification this file does not own.
@@ -1300,7 +1300,7 @@ describe("session substitutions", () => {
       ).toBe(GROUP_B);
     });
 
-    it("refuses a p_group_id the caller neither teaches nor substitutions", async () => {
+    it("refuses a p_group_id the caller neither teaches nor substitutes on", async () => {
       const { error } = await geduAuth.rpc("get_gedu_assigned_product", {
         p_product_id: PRODUCT,
         p_group_id: GROUP_B,
@@ -1974,7 +1974,7 @@ describe("session substitutions", () => {
       expect(doc.reason).toBeNull();
     });
 
-    it("substitutions an OPEN request rather than filing a second one", async () => {
+    it("fills an OPEN request rather than filing a second one", async () => {
       const date = utcDate(5);
       const id = await seedRequest({ date });
 

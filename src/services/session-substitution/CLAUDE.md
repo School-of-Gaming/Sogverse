@@ -220,6 +220,30 @@ the rest, read inside the dialog with the draft still in place. Closing that gap
 means a read that returns the caller's live (group, date) pairs, which is a
 database change and has not been made.
 
+**Being the backstop, the refusal has to say why** — "that didn't save, try
+again" invites the same press forever — so one shared mapper turns it into a
+line, by SQLSTATE and then by a fragment of the message, and **both** ways into
+the write read it: the picker and the session card's own menu. Anything it
+cannot place falls to the generic line, because the server's words are
+untranslated and name uuids. Two of its answers also mean the seat is spoken
+for, and the picker adds that row to the same in-visit set a successful filing
+feeds, so a gedu is not offered the session again.
+
+**The refusal that cannot be split is the authorization one.** Filing is
+authorized *by the derivation* — you may file only for a session you are
+expected at — and somebody already holding a live request is not expected at it.
+So "you have already asked" and "you no longer hold that seat" are one error
+with one message, and the line says both rather than guessing between them. A
+second, distinguishable check for the first would be a third statement of the
+derivation, which the rule above forbids.
+
+**The picker also freezes its rows while its dialog is open.** The list is
+expanded from a ticking clock, so a session ending would otherwise drop a row
+under a reader mid-list and take the whole control away at zero; the snapshot is
+taken at the press that opens the dialog and the next open picks up the fresher
+list. What that costs — a row offered for a session that has just ended — is
+paid by the write's own refusal, which now says so.
+
 ## The queue is a page; a substitution taken is a session in a week
 
 The open queue is a gedu's Substitutions page and nothing else renders it. What a gedu has
@@ -257,9 +281,13 @@ appearing with it.
 
 Two consequences worth knowing before reading a surface:
 
-- **A date the schedule no longer projects has no start, and fails OPEN.** An admin
-  moving a group's weekday must not lock a sub out of an afternoon they actually ran and
-  still owe a report for.
+- **A date the schedule no longer projects has no start, so the 48 hours run back from
+  product-local midnight of that date.** That is earlier than any real session on it
+  would have opened — an admin moving a group's weekday must not lock a sub out of an
+  afternoon they actually ran and still owe a report for — but it is **not** "open now":
+  an orphan two weeks out is as shut as any other. The client restates that fallback
+  rather than reading a missing start as an absent lock, because a card that unlocked
+  early would link into a workspace every gate behind it still refuses.
 - **The group-wide surfaces are group-wide in both directions.** A sub holding two
   substitutions on one group reaches it from the earlier of the two openings, exactly as
   they keep it until the later of the two closings.

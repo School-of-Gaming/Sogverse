@@ -51,7 +51,7 @@ vi.mock("@/components/ui/rich-text-editor", () =>
  * real editor, presses the real Save, and reads the draft that came out.
  *
  * **Do not delete this as redundant with the unit-level test.** The two substitution
- * different failures: that one substitutions the function, this one substitutions everything
+ * different failures: that one covers the function, this one covers everything
  * between the props and the function.
  */
 

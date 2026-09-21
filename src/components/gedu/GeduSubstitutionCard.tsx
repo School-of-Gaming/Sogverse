@@ -53,7 +53,10 @@ import {
  * this card refuses — so the card states the session and says when it opens,
  * and its two ways in (the stretched link and the corner badge) are inert. A
  * link that led to the workspace's "not assigned" empty state would be the
- * worst of both: a sub who *is* substituting, told they are not.
+ * worst of both: a sub who *is* substituting, told they are not. **A date the
+ * schedule no longer projects is no exception**: it has no session start, so
+ * the 48 hours run back from product-local midnight of that date, exactly as
+ * the SQL's own fallback does.
  *
  * **The footer holds one answer, and while the card is locked the answer is
  * when.** That zone asks "how do I get to this session" — a Join on a remote
@@ -90,10 +93,12 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
    *
    * Asked of the same clock the Join below reads, deliberately: two clocks in
    * one card is a card that can say the room is open while claiming the group
-   * is not. An orphaned date has no `accessOpensAt` and is never locked, which
-   * is the database's own answer on one — it falls open rather than shut.
+   * is not. An orphaned date locks like any other — the roll-up counts its 48
+   * hours back from product-local midnight of the substitution date, which is
+   * the database's own fallback, so this card and every gate behind it open
+   * together.
    */
-  const locked = accessOpensAt !== null && now < accessOpensAt;
+  const locked = now < accessOpensAt;
   const href = locked ? INERT_HREF : openHref;
 
   /**

@@ -313,7 +313,7 @@ export function SessionFeed({
    * which is what stops a second press repeating an operation — and is also what
    * makes it a bad render source on its own, because the `entries` prop the
    * stored photos come from does not move until the feed refetches. This record
-   * substitutions exactly that window; see its own note for the shape of the strip
+   * covers exactly that window; see its own note for the shape of the strip
    * without it.
    *
    * **Cleared when an editor is opened, not when one closes.** A fresh editor

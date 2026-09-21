@@ -240,10 +240,12 @@ function renderEntry({
   sessions,
   filedSessionKeys = [],
   onFile = () => Promise.resolve(),
+  resolveWorkspaceHref = () => null,
 }: {
   sessions: ReturnType<typeof entryFixture>["upcomingSessions"];
   filedSessionKeys?: string[];
   onFile?: FileAbsenceProps["onFile"];
+  resolveWorkspaceHref?: FileAbsenceProps["resolveWorkspaceHref"];
 }) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
@@ -252,13 +254,48 @@ function renderEntry({
           <GeduFileAbsenceEntry
             sessions={sessions}
             filedSessionKeys={filedSessionKeys}
-            resolveWorkspaceHref={() => null}
+            resolveWorkspaceHref={resolveWorkspaceHref}
             onFile={onFile}
           />
         </NowProvider>
       </TimezoneProvider>
     </NextIntlClientProvider>,
   );
+}
+
+/**
+ * The same tree again with a different list — what the page above hands down
+ * once its ticking clock has dropped a session that ended.
+ *
+ * `NowProvider` seeds its clock from `initialNow` once, so moving it here would
+ * change nothing; the shorter list is the observable half of that tick, and it
+ * is the half this component reads.
+ */
+function rerenderEntry(
+  rerender: ReturnType<typeof renderEntry>["rerender"],
+  sessions: ReturnType<typeof entryFixture>["upcomingSessions"],
+) {
+  rerender(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <TimezoneProvider initialTimezone={TIME_ZONE}>
+        <NowProvider initialNow={NOW}>
+          <GeduFileAbsenceEntry
+            sessions={sessions}
+            filedSessionKeys={[]}
+            resolveWorkspaceHref={() => null}
+            onFile={() => Promise.resolve()}
+          />
+        </NowProvider>
+      </TimezoneProvider>
+    </NextIntlClientProvider>,
+  );
+}
+
+/** The note textarea inside the open form. */
+function noteField(): HTMLTextAreaElement {
+  const field = document.querySelector("textarea");
+  if (field === null) throw new Error("the request form has no note field");
+  return field;
 }
 
 /** The session rows on screen, in DOM order across the weeks. */
@@ -452,6 +489,53 @@ describe("the page's file-an-absence entry", () => {
     expect(screen.getByText(/It now shows on that session’s card\./)).toBeTruthy();
   });
 
+  it("puts the workspace link on the confirmation where there is a destination", async () => {
+    // The sentence is half the answer; the link is the other half — "it now
+    // shows on that session's card" is only useful beside the way to that card.
+    const sessions = entryFixture().upcomingSessions;
+    renderEntry({
+      sessions,
+      resolveWorkspaceHref: (session) => ({
+        pathname: "/gedu/clubs/[id]",
+        params: { id: session.productId },
+        // The group rides along for the same reason the substitution card's
+        // link carries it: a seat held as a sub has no assignment row to
+        // resolve a group from.
+        query: { groupId: session.groupId },
+      }),
+    });
+
+    openPicker();
+    fireEvent.click(pickerRows()[0]);
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: feedCopy.substitutionRequestConfirm }),
+      );
+    });
+
+    const link = screen.getByRole("link", { name: copy.fileFiledLink });
+    expect(link.getAttribute("href")).toContain(sessions[0].productId);
+    expect(link.getAttribute("href")).toContain(sessions[0].groupId);
+  });
+
+  it("leaves the confirmation a plain sentence where there is none", async () => {
+    const sessions = entryFixture().upcomingSessions;
+    renderEntry({ sessions });
+
+    openPicker();
+    fireEvent.click(pickerRows()[0]);
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: feedCopy.substitutionRequestConfirm }),
+      );
+    });
+
+    expect(screen.queryByRole("link", { name: copy.fileFiledLink })).toBeNull();
+    // And no dangling space where the link would have been.
+    const line = screen.getByText(/It now shows on that session’s card\./);
+    expect(line.textContent).toBe(line.textContent.trimEnd());
+  });
+
   it("will not offer the same session twice in one visit", async () => {
     const sessions = entryFixture().upcomingSessions;
     renderEntry({ sessions });
@@ -485,7 +569,7 @@ describe("the page's file-an-absence entry", () => {
       );
     });
 
-    expect(screen.getByText(copy.fileFailed)).toBeTruthy();
+    expect(screen.getByText(feedCopy.substitutionRequestFailed)).toBeTruthy();
     const confirm = screen.getByRole("button", {
       name: feedCopy.substitutionRequestConfirm,
     });
@@ -494,6 +578,173 @@ describe("the page's file-an-absence entry", () => {
     expect(
       screen.queryByText(/It now shows on that session’s card\./),
     ).toBeNull();
+  });
+
+  /**
+   * **This picker cannot know which dates the viewer has already filed on**, so
+   * the write's refusal is its backstop — and a backstop that says only "that
+   * didn't save, try again" invites the same press forever. Each refusal the
+   * RPC can raise is therefore read out in the dialog the gedu is still
+   * standing in front of, with the reason and the note where they left them.
+   */
+  const REFUSALS = [
+    {
+      what: "a session already asked for",
+      error: {
+        code: "23505",
+        message:
+          'duplicate key value violates unique constraint "session_substitution_requests_live_seat"',
+      },
+      line: feedCopy.substitutionRequestFailedAlreadyAsked,
+    },
+    {
+      what: "a seat the caller is no longer expected at",
+      error: { code: "42501", message: "Forbidden" },
+      line: feedCopy.substitutionRequestFailedNotExpected,
+    },
+    {
+      what: "a date already behind the product",
+      error: {
+        code: "23514",
+        message:
+          "a substitution request cannot be filed for a past session (2026-03-01)",
+      },
+      line: feedCopy.substitutionRequestFailedPastSession,
+    },
+    {
+      what: "a weekday the schedule no longer names",
+      error: {
+        code: "23514",
+        message: "No scheduled session on 2026-03-18 for this group",
+      },
+      line: feedCopy.substitutionRequestFailedNotScheduled,
+    },
+  ] as const;
+
+  for (const { what, error, line } of REFUSALS) {
+    it(`names ${what} inside the dialog, and holds the draft`, async () => {
+      const sessions = entryFixture().upcomingSessions;
+      renderEntry({ sessions, onFile: () => Promise.reject(error) });
+
+      openPicker();
+      fireEvent.click(pickerRows()[0]);
+      // A note typed before the press, so "the draft survives" is a claim with
+      // something to lose.
+      const note = noteField();
+      fireEvent.change(note, { target: { value: "back on Thursday" } });
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole("button", { name: feedCopy.substitutionRequestConfirm }),
+        );
+      });
+
+      expect(screen.getByText(line)).toBeTruthy();
+      // The generic line never appears beside a named one.
+      expect(screen.queryByText(feedCopy.substitutionRequestFailed)).toBeNull();
+      // Still the form, still the note, still pressable.
+      expect(
+        screen.getByText(feedCopy.substitutionRequestDialogTitle),
+      ).toBeTruthy();
+      expect(noteField().value).toBe("back on Thursday");
+      expect(
+        screen
+          .getByRole("button", { name: feedCopy.substitutionRequestConfirm })
+          .hasAttribute("disabled"),
+      ).toBe(false);
+    });
+  }
+
+  it("stops offering a row the write said was already asked for", async () => {
+    // The reason the refusal is read rather than swallowed: a request filed in
+    // an earlier visit is invisible to every read this page makes, so the
+    // refusal is where the row learns it is spoken for.
+    const sessions = entryFixture().upcomingSessions;
+    renderEntry({
+      sessions,
+      onFile: () => Promise.reject({ code: "42501", message: "Forbidden" }),
+    });
+
+    openPicker();
+    fireEvent.click(pickerRows()[0]);
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: feedCopy.substitutionRequestConfirm }),
+      );
+    });
+
+    // Back to the picker, the same way the gedu would go.
+    fireEvent.click(screen.getByRole("button", { name: messages.common.back }));
+    const rows = pickerRows();
+    expect(rows[0].dataset.sessionKey).toBe(sessions[0].key);
+    expect(rows[0].hasAttribute("disabled")).toBe(true);
+    expect(rows[0].textContent).toContain(copy.fileAlreadyRequested);
+  });
+
+  it("keeps an unplaceable refusal from marking the row", async () => {
+    // A network failure is precisely the case where pressing again is right,
+    // so nothing about the row may change.
+    const sessions = entryFixture().upcomingSessions;
+    renderEntry({
+      sessions,
+      onFile: () => Promise.reject(new Error("Failed to fetch")),
+    });
+
+    openPicker();
+    fireEvent.click(pickerRows()[0]);
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: feedCopy.substitutionRequestConfirm }),
+      );
+    });
+
+    expect(screen.getByText(feedCopy.substitutionRequestFailed)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: messages.common.back }));
+    expect(pickerRows()[0].hasAttribute("disabled")).toBe(false);
+  });
+
+  /**
+   * **The page's list is memoised on the ticking clock**, so every tick past a
+   * session's end rebuilds it one row shorter. The two cases below are that
+   * rebuild arriving under an open dialog — a row dropping out from under a
+   * reader halfway down a term, and the whole control going at zero — which is
+   * a change on data's own schedule and the shift the layout rule forbids.
+   *
+   * The clock is driven through the `sessions` prop rather than through
+   * `NowProvider`, deliberately: the provider seeds its state once, and the
+   * shorter list *is* what a later `now` produces on the page above this one.
+   */
+  it("freezes the picker's rows for the lifetime of one open dialog", () => {
+    const sessions = entryFixture().upcomingSessions;
+    const { rerender } = renderEntry({ sessions });
+    openPicker();
+    const before = pickerRows().map((row) => row.dataset.sessionKey);
+    expect(before.length).toBeGreaterThan(1);
+
+    rerenderEntry(rerender, sessions.slice(1));
+
+    expect(pickerRows().map((row) => row.dataset.sessionKey)).toEqual(before);
+  });
+
+  it("does not take the whole control away under an open dialog", () => {
+    const sessions = entryFixture().upcomingSessions;
+    const { rerender } = renderEntry({ sessions });
+    openPicker();
+
+    rerenderEntry(rerender, []);
+
+    expect(screen.getByText(copy.filePickTitle)).toBeTruthy();
+    expect(pickerRows().length).toBeGreaterThan(0);
+  });
+
+  it("picks the fresher list up on the next open", () => {
+    const sessions = entryFixture().upcomingSessions;
+    const { rerender } = renderEntry({ sessions });
+    openPicker();
+    rerenderEntry(rerender, sessions.slice(1));
+
+    fireEvent.click(screen.getByRole("button", { name: messages.common.cancel }));
+    openPicker();
+    expect(pickerRows()[0].dataset.sessionKey).toBe(sessions[1].key);
   });
 });
 

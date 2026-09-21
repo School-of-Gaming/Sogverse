@@ -332,7 +332,7 @@ describe("isPlannableEntry", () => {
     }
   });
 
-  it("substitutions every entry between them — nothing opens no editor at all", () => {
+  it("covers every entry between them — nothing opens no editor at all", () => {
     const cases: [SessionFeedEntry, Date][] = [
       [future("u"), BEFORE_START],
       [future("live"), MID_SESSION],

@@ -105,8 +105,7 @@ describe("GeduSubstitutionCard", () => {
       // assertable at all.
       attentionCount: 1,
     };
-    expect(substitution.accessOpensAt).not.toBeNull();
-    expect(substitution.accessOpensAt!.getTime()).toBeGreaterThan(NOW.getTime());
+    expect(substitution.accessOpensAt.getTime()).toBeGreaterThan(NOW.getTime());
 
     const html = cardHtml(substitution);
     // Still reads as the session it is about.
@@ -168,7 +167,7 @@ describe("GeduSubstitutionCard", () => {
 
   it("wears the attention badge at a non-zero count and nothing at zero", () => {
     const substitution = fixtureCover();
-    // A substitution owes the one session it substitutions, so its count is 0 or 1 — and 1 is
+    // A substitution owes the one session it covers, so its count is 0 or 1 — and 1 is
     // the state the badge exists for.
     expect(substitution.attentionCount).toBe(1);
     // The badge's accessible name is the whole sentence; asserting on it rather
@@ -180,24 +179,53 @@ describe("GeduSubstitutionCard", () => {
     );
   });
 
-  it("falls back to the bare date when the schedule no longer projects it", () => {
-    // An orphaned substitution — the request keys on (group, date) and an admin moved
-    // the schedule's weekday afterwards. The card is history rather than a
-    // fault and must still render.
-    const orphan: GeduSubstitutionSummary = {
+  /**
+   * An orphaned substitution — the request keys on (group, date) and an admin
+   * moved the schedule's weekday afterwards, so the date names a day the
+   * schedule no longer projects.
+   *
+   * It has no start, but it is **not** unlocked: the SQL counts its 48 hours
+   * back from product-local midnight of the substitution date, and the card has
+   * to lock and unlock at exactly that instant or it links into a workspace
+   * every gate behind it still refuses.
+   */
+  function orphan(substitutionDate: string): GeduSubstitutionSummary {
+    return {
       ...fixtureCover(),
       startsAt: null,
       endsAt: null,
-      accessOpensAt: null,
-      substitutionDate: "2026-02-17",
+      substitutionDate,
+      // Product-local midnight of the date, less 48 hours — the roll-up's own
+      // arithmetic, restated as a literal so this case does not pass by
+      // agreeing with a bug in it.
+      accessOpensAt: new Date(
+        new Date(`${substitutionDate}T00:00:00+02:00`).getTime() -
+          48 * 60 * 60 * 1000,
+      ),
       openHref: WORKSPACE,
     };
-    const html = cardHtml(orphan);
+  }
+
+  it("falls back to the bare date when the schedule no longer projects it", () => {
+    // The card is history rather than a fault and must still render, naming the
+    // day it is about even with no clock face to put beside it.
+    const html = cardHtml(orphan("2026-02-17"));
     expect(html).toContain("Feb");
     expect(html).toContain("17");
-    // And it stays LINKED. An orphaned date has no start to count 48 hours back
-    // from, so there is no lock to apply — the database falls open on one for
-    // the same reason, because the sub may still owe that session a write-up.
+  });
+
+  it("locks an orphaned date whose product-local midnight is still 48 hours off", () => {
+    // Two weeks out, which is exactly the case the null reading got wrong: it
+    // drew an open, linked card for a workspace the database refuses.
+    const html = cardHtml(orphan("2026-02-25"));
+    expect(html).toContain(OPENS_AT);
+    expect(html).not.toContain("/gedu/clubs/product-1");
+  });
+
+  it("links an orphaned date once its own 48 hours have come", () => {
+    // Now is 11 Feb 20:00 UTC, so midnight-less-48h on the 13th is already
+    // behind us — and the sub may still owe that afternoon a write-up.
+    const html = cardHtml(orphan("2026-02-13"));
     expect(html).toContain("/gedu/clubs/product-1");
     expect(html).not.toContain(OPENS_AT);
   });

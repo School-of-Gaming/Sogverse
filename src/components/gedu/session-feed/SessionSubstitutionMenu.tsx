@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useClickOutside } from "@/hooks/use-click-outside";
+import { substitutionRequestFailureKey } from "@/services/session-substitution";
 import { cn } from "@/lib/utils";
 import {
   SessionSubstitutionRequestDialog,
@@ -141,11 +142,12 @@ export function SessionSubstitutionMenu({
     try {
       await onRequestSubstitution(draft);
       setRequestOpen(false);
-    } catch {
+    } catch (refusal) {
       // A refusal keeps the dialog up with the reason and the note where the
       // gedu left them, and names what went wrong inside the dialog they are
-      // still standing in front of.
-      setError(t("substitutionRequestFailed"));
+      // still standing in front of — through the same mapper the page's picker
+      // reads, so one write cannot be explained two ways.
+      setError(t(substitutionRequestFailureKey(refusal)));
     } finally {
       setCommitting(false);
     }

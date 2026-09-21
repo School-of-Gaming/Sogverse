@@ -334,6 +334,7 @@ describe("grouping the list into weeks", () => {
         session("c", "2026-03-31T15:00:00Z"),
       ],
       HELSINKI,
+      NOW,
     );
     expect(weeks.map((week) => week.weekStart)).toEqual([
       "2026-03-16",
@@ -350,6 +351,7 @@ describe("grouping the list into weeks", () => {
         session("c", "2026-03-31T15:00:00Z"),
       ],
       HELSINKI,
+      NOW,
     );
     expect(initiallyShownWeeks(weeks, NOW, HELSINKI)).toEqual([
       "2026-03-16",
@@ -365,11 +367,56 @@ describe("grouping the list into weeks", () => {
         session("c", "2026-04-21T15:00:00Z"),
       ],
       HELSINKI,
+      NOW,
     );
     expect(initiallyShownWeeks(weeks, NOW, HELSINKI)).toEqual([
       "2026-04-06",
       "2026-04-13",
     ]);
+  });
+
+  /**
+   * **An in-progress session that began in the viewer's previous week** — a
+   * slot running across local Sunday midnight, which the list carries because
+   * the write accepts one. Bucketed by its own start it would open a week
+   * *before* this one at the head of the list, and the opening set would then
+   * not be a prefix: the reveal would insert above what is already on screen,
+   * which is the one direction the layout rule charges for, and the focus
+   * target computed from an index would land on a row already there.
+   */
+  it("puts a session already running into this week, whenever it began", () => {
+    // 23:30 Helsinki on Sunday 15 March, still running at 11:00 on Tuesday the
+    // 17th — a four-hour LAN afternoon is the shape that does this.
+    const overnight = session("overnight", "2026-03-15T21:30:00Z");
+    overnight.endsAt = new Date("2026-03-17T12:00:00Z");
+    const weeks = groupSessionsByWeek(
+      [overnight, session("b", "2026-03-19T15:00:00Z")],
+      HELSINKI,
+      NOW,
+    );
+    expect(weeks.map((week) => week.weekStart)).toEqual(["2026-03-16"]);
+    expect(weeks[0].sessions.map((s) => s.key)).toEqual(["overnight", "b"]);
+  });
+
+  it("keeps the opening weeks a prefix when one is already running", () => {
+    const overnight = session("overnight", "2026-03-15T21:30:00Z");
+    overnight.endsAt = new Date("2026-03-17T12:00:00Z");
+    const weeks = groupSessionsByWeek(
+      [
+        overnight,
+        session("b", "2026-03-24T15:00:00Z"),
+        session("c", "2026-04-07T15:00:00Z"),
+      ],
+      HELSINKI,
+      NOW,
+    );
+    const opening = initiallyShownWeeks(weeks, NOW, HELSINKI);
+    expect(opening).toEqual(["2026-03-16", "2026-03-23"]);
+    // The claim the doc makes and the reveal relies on, asserted rather than
+    // assumed: what opens is the head of the list.
+    expect(weeks.slice(0, opening.length).map((week) => week.weekStart)).toEqual(
+      opening,
+    );
   });
 
   it("names the three kinds of week", () => {

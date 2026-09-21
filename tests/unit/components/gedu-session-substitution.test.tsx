@@ -141,11 +141,14 @@ function renderFeed({
   entries,
   withCallbacks = true,
   renderStaffingEditor,
+  onRequestSubstitution = () => {},
 }: {
   entries: readonly (FutureSessionFeedEntry | PastSessionFeedEntry)[];
   /** Whether this surface supplies the gedu's two substitution callbacks. */
   withCallbacks?: boolean;
   renderStaffingEditor?: () => React.ReactNode;
+  /** The filing write, so a case can refuse it the way the database does. */
+  onRequestSubstitution?: () => void | Promise<void>;
 }) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
@@ -162,7 +165,7 @@ function renderFeed({
             onSendReport={() => Promise.resolve({ sent: 0, failed: 0, skipped: 0 })}
             onAddPhoto={() => Promise.resolve("")}
             onRemovePhoto={() => Promise.resolve()}
-            onRequestSubstitution={withCallbacks ? () => {} : undefined}
+            onRequestSubstitution={withCallbacks ? onRequestSubstitution : undefined}
             onWithdrawSubstitutionRequest={withCallbacks ? () => {} : undefined}
             renderStaffingEditor={renderStaffingEditor}
           />
@@ -826,6 +829,77 @@ describe("the staffing region after a write lands", () => {
       isDisabled(screen.getByRole("button", { name: copy.substitutionRequestConfirm })),
     ).toBe(false);
   });
+
+  /**
+   * **The card's menu and the Substitutions page's picker are two ways into one
+   * write, so they explain its refusals with one mapper.** The page is where
+   * the reason matters most — it cannot know what it has already filed on — but
+   * a card refusing in one vocabulary while the page refuses in another would
+   * be the second copy of two questions this feature exists not to have.
+   */
+  const REFUSALS = [
+    {
+      what: "an absence already filed for this session",
+      error: {
+        code: "23505",
+        message:
+          'duplicate key value violates unique constraint "session_substitution_requests_live_seat"',
+      },
+      line: copy.substitutionRequestFailedAlreadyAsked,
+    },
+    {
+      what: "a seat the caller is no longer expected at",
+      error: { code: "42501", message: "Forbidden" },
+      line: copy.substitutionRequestFailedNotExpected,
+    },
+    {
+      what: "a date already behind the product",
+      error: {
+        code: "23514",
+        message:
+          "a substitution request cannot be filed for a past session (2026-03-01)",
+      },
+      line: copy.substitutionRequestFailedPastSession,
+    },
+    {
+      what: "a weekday the schedule no longer names",
+      error: {
+        code: "23514",
+        message: "No scheduled session on 2026-03-18 for this group",
+      },
+      line: copy.substitutionRequestFailedNotScheduled,
+    },
+  ] as const;
+
+  for (const { what, error, line } of REFUSALS) {
+    it(`names ${what} in the card's own dialog`, async () => {
+      renderFeed({
+        entries: [futureEntry([], SANNA)],
+        onRequestSubstitution: () => Promise.reject(error),
+      });
+
+      openRequestDialog();
+      const note = document.querySelector("textarea");
+      if (note === null) throw new Error("the request form has no note field");
+      fireEvent.change(note, { target: { value: "back on Thursday" } });
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole("button", { name: copy.substitutionRequestConfirm }),
+        );
+      });
+
+      expect(screen.getByText(line)).toBeTruthy();
+      expect(screen.queryByText(copy.substitutionRequestFailed)).toBeNull();
+      // The dialog stands, with the draft where the gedu left it.
+      expect(screen.getByText(copy.substitutionRequestDialogTitle)).toBeTruthy();
+      expect(note.value).toBe("back on Thursday");
+      expect(
+        isDisabled(
+          screen.getByRole("button", { name: copy.substitutionRequestConfirm }),
+        ),
+      ).toBe(false);
+    });
+  }
 
   it("names a refused withdraw inside the dialog, not behind it", async () => {
     // The withdraw confirm holds for its own write, so the refusal belongs to

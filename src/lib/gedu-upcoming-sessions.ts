@@ -229,14 +229,26 @@ export function viewerWeekStart(instant: Date, timeZone: string): string {
  * A gap between two weeks is a gap in the schedule, and a heading over nothing
  * is furniture claiming there is something under it. The sessions arrive
  * ordered, so each week's own order is inherited rather than re-sorted.
+ *
+ * **A session already running belongs to this week, whenever it began.** The
+ * list carries an in-progress session — the write accepts one, so the picker
+ * offers one — and a slot that started before local midnight on Sunday started
+ * in the viewer's *previous* week. Bucketed by its own start it would head the
+ * list under a "week of 9 Mar" heading nobody is looking for, and it would put
+ * a week before this one at the top of the list, which is what
+ * {@link initiallyShownWeeks} must never have to skip over. So the week is
+ * taken from the later of the session's start and now.
  */
 export function groupSessionsByWeek(
   sessions: readonly GeduUpcomingSession[],
   timeZone: string,
+  now: Date,
 ): GeduUpcomingSessionWeek[] {
   const weeks = new Map<string, GeduUpcomingSession[]>();
   for (const session of sessions) {
-    const weekStart = viewerWeekStart(session.startsAt, timeZone);
+    const anchor =
+      session.startsAt.getTime() < now.getTime() ? now : session.startsAt;
+    const weekStart = viewerWeekStart(anchor, timeZone);
     const bucket = weeks.get(weekStart);
     if (bucket === undefined) weeks.set(weekStart, [session]);
     else bucket.push(session);
@@ -256,8 +268,14 @@ export function groupSessionsByWeek(
  *
  * **A term that has not started yet would otherwise open on nothing**, so where
  * neither of those two weeks carries a session the first two weeks that do are
- * shown instead. The answer is always a prefix of the list: weeks are
- * ascending, and revealing the rest appends below what is already on screen.
+ * shown instead.
+ *
+ * **The answer is always a prefix of the list**, and that is what lets the
+ * reveal append *below* what is on screen rather than insert above it — the
+ * direction the layout rule asks nothing for. It holds because no week in the
+ * list is earlier than this one: a session yet to start is in its own week, and
+ * one already running is bucketed into this week whatever local Sunday it began
+ * on (see {@link groupSessionsByWeek}).
  */
 export function initiallyShownWeeks(
   weeks: readonly GeduUpcomingSessionWeek[],

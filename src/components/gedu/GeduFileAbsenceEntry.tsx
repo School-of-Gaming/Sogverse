@@ -26,6 +26,10 @@ import {
   type GeduUpcomingSession,
 } from "@/lib/gedu-upcoming-sessions";
 import { useNow, useTimezone } from "@/providers";
+import {
+  substitutionRequestFailureKey,
+  substitutionRequestRefusalMeansAlreadyFiled,
+} from "@/services/session-substitution";
 import { cn, formatDate, formatDateOnly, formatTimeRange } from "@/lib/utils";
 
 /**
@@ -96,6 +100,12 @@ export function GeduFileAbsenceEntry({
   ) => Promise<void>;
 }) {
   const t = useTranslations("gedu.substitution");
+  /**
+   * The refusal lines, which live beside the form that renders them rather than
+   * beside this page — the card's overflow menu reads the very same keys for
+   * the very same write.
+   */
+  const f = useTranslations("gedu.sessionFeed");
   const c = useTranslations("common");
 
   const [open, setOpen] = useState(false);
@@ -125,14 +135,36 @@ export function GeduFileAbsenceEntry({
    */
   const [groupFilter, setGroupFilter] = useState("");
   const [showingLater, setShowingLater] = useState(false);
+  /**
+   * The rows the open dialog is over, captured at the press that opened it.
+   *
+   * The list this component is handed is derived from a ticking clock, so left
+   * live it would drop a row the moment that session ended — under a reader
+   * halfway down a term, shifting everything below it, and taking the whole
+   * control away at zero. That is a change on data's own schedule, which the
+   * layout rule forbids, and it is the account menu's snapshot-on-open rule
+   * applied to the same problem (`src/components/layout/CLAUDE.md`).
+   *
+   * Nothing is lost by freezing it: a session that ended while the dialog was
+   * up is refused by the write, in words, inside the dialog — and the next open
+   * picks up the fresher list.
+   */
+  const [openSessions, setOpenSessions] = useState<
+    readonly GeduUpcomingSession[] | null
+  >(null);
 
-  if (sessions.length === 0) return null;
+  // Nothing to file against and no dialog over a snapshot of one: an account
+  // awaiting certification holds no assignments, and a button that could only
+  // ever open an empty list is worse than no button. The snapshot is what keeps
+  // an open dialog from vanishing when the last of them ends.
+  if (sessions.length === 0 && openSessions === null) return null;
 
   const unavailable = new Set([...filedSessionKeys, ...filedHere]);
 
   const close = () => {
     if (committing) return;
     setOpen(false);
+    setOpenSessions(null);
     setPicked(null);
     setError(null);
     setGroupFilter("");
@@ -148,11 +180,23 @@ export function GeduFileAbsenceEntry({
       setFiled(picked);
       setFiledHere((was) => [...was, picked.key]);
       setOpen(false);
+      setOpenSessions(null);
       setPicked(null);
       setGroupFilter("");
       setShowingLater(false);
-    } catch {
-      setError(t("fileFailed"));
+    } catch (refusal) {
+      // The write's refusal is this picker's only way of learning about a
+      // request filed in an earlier visit, so it is read rather than flattened:
+      // the reason and the note stay where the gedu left them, and the line
+      // above the footer says which of the refusals happened.
+      const key = substitutionRequestFailureKey(refusal);
+      setError(f(key));
+      // And where the refusal means the seat is already spoken for, the row
+      // joins the ones this component filed itself — so pressing Back does not
+      // offer the same session again.
+      if (substitutionRequestRefusalMeansAlreadyFiled(key)) {
+        setFiledHere((was) => (was.includes(picked.key) ? was : [...was, picked.key]));
+      }
     } finally {
       setCommitting(false);
     }
@@ -169,6 +213,9 @@ export function GeduFileAbsenceEntry({
         size="sm"
         onClick={() => {
           setError(null);
+          // Captured here, in the handler, so the dialog opens over the list as
+          // it stood at the press and no later tick can rewrite it underneath.
+          setOpenSessions(sessions);
           setOpen(true);
         }}
       >
@@ -197,7 +244,7 @@ export function GeduFileAbsenceEntry({
             </DialogHeader>
 
             <SessionPicker
-              sessions={sessions}
+              sessions={openSessions ?? sessions}
               unavailable={unavailable}
               groupFilter={groupFilter}
               onGroupFilter={setGroupFilter}
@@ -292,7 +339,7 @@ function SessionPicker({
     groupFilter === ""
       ? sessions
       : sessions.filter((session) => session.groupId === groupFilter);
-  const weeks = groupSessionsByWeek(filtered, timeZone);
+  const weeks = groupSessionsByWeek(filtered, timeZone, now);
   const opening = initiallyShownWeeks(weeks, now, timeZone);
   /**
    * **A list that is one group's is never gated**, whether it is one group
@@ -359,8 +406,23 @@ function SessionPicker({
       )}
 
       {/* The scroll lives here so the footer never moves: the dialog is a
-          column, this is the part of it that is allowed to overflow. */}
-      <div ref={listRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto">
+          column, this is the part of it that is allowed to overflow.
+
+          **The gutter is reserved, and the rows keep their own edges.** A
+          scrollbar drawn over the list painted straight across the right border
+          of every row — the box looked broken rather than scrolled. `stable`
+          puts the bar outside the content box, so the row's border is never
+          under it and nothing moves when the bar appears or goes; it is a no-op
+          where the OS draws overlay bars, which is why the small symmetric
+          padding is there as well — a focus ring sits outside its row and would
+          otherwise be clipped on both sides. **The bottom padding is what lets
+          the last row clear the edge**: without it the end of the scroll cuts
+          the final row (or the reveal control) mid-line, which reads as a
+          rendering fault rather than as something to scroll. */}
+      <div
+        ref={listRef}
+        className="min-h-0 flex-1 space-y-4 overflow-y-auto px-1 pb-3 [scrollbar-gutter:stable]"
+      >
         {shown.map((week) => (
           <section key={week.weekStart} className="space-y-2">
             <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -388,10 +450,19 @@ function SessionPicker({
             size="sm"
             className="w-full"
             onClick={() => {
-              // The first row of the first week about to appear — parked for
-              // the effect, because it does not exist until this render lands.
+              // The first row that is NOT on screen right now — parked for the
+              // effect, because it does not exist until this render lands.
+              // Computed from the ids actually rendered rather than from an
+              // index into the week list: an index is only the right row while
+              // what is shown is a prefix of what there is, which is a property
+              // of the bucketing rather than of this button.
+              const onScreen = new Set(
+                shown.flatMap((week) => week.sessions.map((s) => s.key)),
+              );
               revealFocusRef.current =
-                weeks[shown.length]?.sessions[0]?.key ?? null;
+                weeks
+                  .flatMap((week) => week.sessions)
+                  .find((session) => !onScreen.has(session.key))?.key ?? null;
               onShowLater();
             }}
           >

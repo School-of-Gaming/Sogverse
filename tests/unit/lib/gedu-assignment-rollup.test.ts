@@ -424,7 +424,7 @@ describe("rollUpGeduAssignments", () => {
    *
    * A gedu holds at most one assignment per product, which is what made a
    * product id look like a key. It stops being one the moment the same gedu can
-   * also substitution a *sibling* group of that product: under a product key the two
+   * also substitute on a *sibling* group of that product: under a product key the two
    * seats share a badge count, a workspace link and a voice room, and whichever
    * the caller wrote last wins.
    */
@@ -513,15 +513,19 @@ describe("rollUpGeduSubstitutions", () => {
     isRemote?: boolean;
     siteName?: string | null;
     weekday?: number;
+    /** The PRODUCT's zone — every instant on the card is derived in it. */
+    timezone?: string;
   }): GeduAssignmentRow {
+    const base = row({
+      id: over.id,
+      name: over.name,
+      weekday: over.weekday ?? 0,
+      isRemote: over.isRemote ?? true,
+      siteName: over.siteName ?? null,
+    });
     return {
-      ...row({
-        id: over.id,
-        name: over.name,
-        weekday: over.weekday ?? 0,
-        isRemote: over.isRemote ?? true,
-        siteName: over.siteName ?? null,
-      }),
+      ...base,
+      product: { ...base.product, timezone: over.timezone ?? base.product.timezone },
       groupId: over.groupId ?? `${over.id}-group`,
       kind: "substitution",
       substitutionDate: over.substitutionDate,
@@ -579,20 +583,58 @@ describe("rollUpGeduSubstitutions", () => {
     const [substitution] = rollUpSubstitutions([
       substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-16" }),
     ]);
-    expect(substitution.accessOpensAt?.toISOString()).toBe("2026-02-14T14:30:00.000Z");
+    expect(substitution.accessOpensAt.toISOString()).toBe("2026-02-14T14:30:00.000Z");
     expect(
-      substitution.startsAt!.getTime() - substitution.accessOpensAt!.getTime(),
+      substitution.startsAt!.getTime() - substitution.accessOpensAt.getTime(),
     ).toBe(48 * 60 * 60 * 1000);
   });
 
-  it("has no opening instant on a date the schedule no longer projects", () => {
-    // Nothing to count back from, and the database falls OPEN on one rather
-    // than shut — a sub must not be locked out of a session they ran and still
-    // owe a report for. `null` is what the card reads as "not locked".
+  it("counts an orphaned date back from product-local midnight, as the SQL does", () => {
+    // A Tuesday on a Monday club: there is no session start to count back from,
+    // so the predicate's own COALESCE falls to product-local midnight of the
+    // substitution date. 17 Feb 2026 00:00 Helsinki is 16 Feb 22:00 UTC, and 48
+    // hours before that is 14 Feb 22:00 UTC. Reading the missing start as "no
+    // lock at all" was the defect: it drew an unlocked, linked card for a
+    // workspace every gate behind it still refuses.
     const [substitution] = rollUpSubstitutions([
       substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-17" }),
     ]);
-    expect(substitution.accessOpensAt).toBeNull();
+    expect(substitution.startsAt).toBeNull();
+    expect(substitution.accessOpensAt.toISOString()).toBe("2026-02-14T22:00:00.000Z");
+  });
+
+  it("takes that midnight in the PRODUCT's zone, not the runtime's", () => {
+    // The same orphaned Tuesday on a Los Angeles club. Midnight there is ten
+    // hours later than midnight in Helsinki, so a fallback resolved in the
+    // wrong zone unlocks most of a day early — and the whole point of the lock
+    // is that the card and the database agree to the minute.
+    const [substitution] = rollUpSubstitutions([
+      substitutionRow({
+        id: "p1",
+        name: "Club",
+        substitutionDate: "2026-02-17",
+        timezone: "America/Los_Angeles",
+      }),
+    ]);
+    expect(substitution.accessOpensAt.toISOString()).toBe("2026-02-15T08:00:00.000Z");
+  });
+
+  it("subtracts the 48 hours on the instant across a DST transition", () => {
+    // 30 March 2026 is the Monday after Europe's spring-forward, and the club
+    // meets on Wednesdays — so the date is an orphan whose local midnight falls
+    // in EEST (+3) while the instant 48 hours earlier is still in EET (+2).
+    // Stepping the calendar two days and taking midnight again would land an
+    // hour out; subtracting on the instant cannot.
+    const [substitution] = rollUpSubstitutions([
+      substitutionRow({
+        id: "p1",
+        name: "Club",
+        substitutionDate: "2026-03-30",
+        weekday: 2,
+      }),
+    ]);
+    expect(substitution.startsAt).toBeNull();
+    expect(substitution.accessOpensAt.toISOString()).toBe("2026-03-27T21:00:00.000Z");
   });
 
   it("carries a date the schedule no longer projects, with no instants", () => {

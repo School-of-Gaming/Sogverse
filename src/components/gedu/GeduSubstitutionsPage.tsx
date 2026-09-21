@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useLocale } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
+import type { AppHrefObject } from "@/lib/constants/routes";
 import {
   geduAssignmentKey,
   rollUpGeduSubstitutions,
@@ -135,9 +136,12 @@ export function GeduSubstitutionsPage({
         <GeduFileAbsenceEntry
           sessions={upcomingSessions}
           resolveWorkspaceHref={(session) =>
-            workspaceHrefs[
-              geduAssignmentKey(session.productId, session.groupId)
-            ] ?? null
+            filedWorkspaceHref(
+              workspaceHrefs[
+                geduAssignmentKey(session.productId, session.groupId)
+              ],
+              session.groupId,
+            )
           }
           onFile={async (session, draft) => {
             await requestSubstitution.mutateAsync({
@@ -160,4 +164,27 @@ export function GeduSubstitutionsPage({
       substitutions={substitutions}
     />
   );
+}
+
+/**
+ * Where the confirmation's link goes: the filed session's own workspace,
+ * **carrying the group**.
+ *
+ * The group rides as a query param for the same reason a substitution card's
+ * link carries one — a session the viewer holds as a *sub* has no assignment row
+ * for a group to be resolved from, and one on a sibling group of a product they
+ * already teach would otherwise land them on their own group's roster. It is not
+ * conditional on the kind of seat, because on an assignment seat it names the
+ * group the workspace would have resolved anyway.
+ *
+ * A function rather than an inline ternary so the `undefined` half is a real
+ * parameter type: an index signature says every key is present, and a seat the
+ * page has no destination for is exactly the case this has to answer.
+ */
+function filedWorkspaceHref(
+  workspace: AppHrefObject | undefined,
+  groupId: string,
+): AppHrefObject | null {
+  if (workspace === undefined) return null;
+  return { ...workspace, query: { groupId } };
 }

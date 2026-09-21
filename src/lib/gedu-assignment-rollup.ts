@@ -1,3 +1,4 @@
+import { fromZonedTime } from "date-fns-tz";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
@@ -95,10 +96,10 @@ export function geduAssignmentKey(productId: string, groupId: string): string {
 }
 
 /**
- * A substitution's own identity: the group, and the product-local date it substitutions.
+ * A substitution's own identity: the group, and the product-local date it covers.
  *
- * One card per substitution date — a sub who substitutions two Mondays of one group holds
- * two seats, and they are told apart by nothing else.
+ * One card per substitution date — a sub who substitutes on two Mondays of one
+ * group holds two seats, and they are told apart by nothing else.
  */
 export function geduSubstitutionKey(groupId: string, substitutionDate: string): string {
   return `${groupId}:${substitutionDate}`;
@@ -377,9 +378,8 @@ export interface GeduSubstitutionSummary {
   startsAt: Date | null;
   endsAt: Date | null;
   /**
-   * When the group's workspace opens to this sub — the substituted session's start
-   * less 48 hours — or `null` on an orphaned date, which has no start to count
-   * back from.
+   * When the group's workspace opens to this sub — 48 hours before the
+   * substituted session starts.
    *
    * **The card outlives the lock.** A substitution is on My SOG from the moment it is
    * approved, so a sub can see the afternoon they agreed to take; what waits
@@ -387,16 +387,19 @@ export interface GeduSubstitutionSummary {
    * the same 48 hours to every gate that reaches the group. So a card whose
    * `accessOpensAt` is still ahead is drawn locked rather than withheld.
    *
-   * `null` means the lock does not apply: a date the schedule no longer
-   * projects has no start, and the database's own predicate falls open on it
-   * rather than shut — a sub must not be locked out of a session they ran and
-   * still owe a report for.
+   * **An orphaned date still has one**, and it is the database's own fallback
+   * rather than an absence of one: a date the schedule no longer projects has
+   * no session start, so the SQL counts the 48 hours back from **product-local
+   * midnight of the substitution date** — earlier than any real session that day
+   * would have opened, and never "open now". A `null` here would have drawn an
+   * unlocked, linked card for a workspace every gate behind it still refuses,
+   * landing the sub on the "not assigned" empty state.
    *
    * Computed on the instant, never by stepping a date string: 48 hours before
    * a Monday 17:00 is a Saturday 17:00 in real time, whatever a calendar
    * subtraction of two days would say across a DST transition.
    */
-  accessOpensAt: Date | null;
+  accessOpensAt: Date;
   /** Whether there is a room at all — true only on a remote product. */
   hasVoiceRoom: boolean;
   /** Where the Join navigates. `"#"` keeps it inert. */
@@ -430,6 +433,30 @@ export interface GeduSubstitutionSummary {
  * unlock, and moving it is a migration and this line together.
  */
 const SUBSTITUTION_ACCESS_LEAD_MS = 48 * 60 * 60 * 1000;
+
+/**
+ * The instant the 48 hours are counted back from: the substituted session's own
+ * start, or — on a date the schedule no longer projects — **product-local
+ * midnight of that date**.
+ *
+ * The fallback is not a client invention; it is the second arm of the SQL
+ * predicate's own `COALESCE`, restated here so the card locks and unlocks at the
+ * moment the database does. Reading the orphan as "never locked" drew an
+ * unlocked card linking into a workspace every gate still refuses, which is the
+ * one thing the locked state exists to prevent.
+ *
+ * Midnight is built as a wall clock in the **product's** zone and converted
+ * once, because that is the zone the date is a date in — never by stepping a
+ * runtime-local Date, which a DST transition would silently move.
+ */
+function substitutionAccessAnchor(
+  occurrence: { start: Date } | null,
+  substitutionDate: string,
+  timezone: string,
+): Date {
+  if (occurrence !== null) return occurrence.start;
+  return fromZonedTime(`${substitutionDate}T00:00:00`, timezone);
+}
 
 export interface SubstitutionRollUpArgs {
   rows: readonly GeduAssignmentRow[];
@@ -498,10 +525,13 @@ export function rollUpGeduSubstitutions({
         timezone: row.product.timezone,
         startsAt: occurrence?.start ?? null,
         endsAt: occurrence?.end ?? null,
-        accessOpensAt:
-          occurrence === null
-            ? null
-            : new Date(occurrence.start.getTime() - SUBSTITUTION_ACCESS_LEAD_MS),
+        accessOpensAt: new Date(
+          substitutionAccessAnchor(
+            occurrence,
+            row.substitutionDate,
+            row.product.timezone,
+          ).getTime() - SUBSTITUTION_ACCESS_LEAD_MS,
+        ),
         hasVoiceRoom,
         voiceHref: hasVoiceRoom
           ? (voiceHrefByAssignment?.[key] ?? INERT_HREF)

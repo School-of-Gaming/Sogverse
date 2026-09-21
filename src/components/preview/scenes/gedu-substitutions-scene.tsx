@@ -9,6 +9,7 @@ import {
   buildGeduSubstitutionsFixture,
   type GeduSubstitutionsScenario,
 } from "@/components/gedu/mock-substitutions-fixtures";
+import { previewSceneHref } from "@/components/preview/href";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useNow, useTimezone } from "@/providers";
 
@@ -40,6 +41,17 @@ import { useNow, useTimezone } from "@/providers";
  * from `useNow()` itself — which is what makes the countdown on the soonest
  * card visibly a countdown.
  */
+/**
+ * Where the filed confirmation's link goes in a preview: the workspace scene.
+ *
+ * The picker's seats are fixture products with no route behind them, so the
+ * only honest destination here is the scene that stands for one. `null` was the
+ * other option and it drew the sentence with nothing after it — a correct
+ * fallback for a seat with no destination, and the wrong thing for a scene to
+ * show, since every live seat has one.
+ */
+const WORKSPACE_SCENE = previewSceneHref("gedu-product", "club");
+
 export function GeduSubstitutionsScene({
   scenario,
 }: {
@@ -58,11 +70,7 @@ export function GeduSubstitutionsScene({
         <GeduFileAbsenceEntry
           sessions={fixture.upcomingSessions}
           filedSessionKeys={fixture.filedSessionKeys}
-          // A preview has no workspace to open — the fixture's seats are not
-          // the scene-backed ones — so the confirmation renders its sentence
-          // and no link, which is the same shape the live page falls back to
-          // for a seat it has no destination for.
-          resolveWorkspaceHref={() => null}
+          resolveWorkspaceHref={() => WORKSPACE_SCENE}
           onFile={inertWrite}
         />
       }

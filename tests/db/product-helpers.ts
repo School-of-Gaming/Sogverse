@@ -289,7 +289,7 @@ import { TEST_IDS } from "./constants";
  *                  20:00 slot tell "48 hours before the session starts" apart
  *                  from "48 hours before that date's local midnight" at any
  *                  hour CI runs. The twins differ in one thing only — 81a's
- *                  schedule skips the weekday the cases substitution — so the same
+ *                  schedule skips the weekday the cases use — so the same
  *                  date is an ordinary session on one and an orphan on the
  *                  other
  *

@@ -633,8 +633,7 @@ export const ROUTES = {
       ({ pathname: "/admin/sites/[id]", params: { id } }) as const,
     /**
      * Sessions somebody cannot make, and the offers to stand in — the office's
-     * staffing queue, plus the fortnight of substitutions it has already
-     * settled.
+     * staffing queue, and only that: what has been settled is off it.
      *
      * A page of its own rather than a band on the dashboard: every row is work
      * an admin can finish here and now, and a session nobody has been found for

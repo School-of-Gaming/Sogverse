@@ -548,7 +548,7 @@ function AbsentGeduStep({
  * already recorded.
  *
  * **It says what it is replacing.** An absent gedu with an open request is
- * being approved rather than filed for — the write substitutions that request in
+ * being approved rather than filed for — the write fills that request in
  * place, so a second row is never created — and one already substituted is having
  * their sub swapped. Neither is something an admin should discover from the
  * card afterwards.
