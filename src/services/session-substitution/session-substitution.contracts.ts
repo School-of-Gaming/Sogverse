@@ -184,14 +184,19 @@ export type OpenSubstitutionRequest = z.infer<typeof openSubstitutionRequest>;
 export const openSubstitutionRequests = z.array(openSubstitutionRequest);
 
 /**
- * One gedu who has offered to stand in, with the two standing facts the
- * certification queue ships on its own rows.
+ * One gedu who has offered to stand in, on the admin queue.
  *
- * They are the same two questions in the same shape on purpose: an admin
- * deciding who to seat is asking what they ask when certifying somebody, and a
- * second vocabulary for "certified" and "record seen" would be a second thing
- * to keep in step. `criminal_record_check_at` is null where no check has been
- * recorded — it informs the decision and gates nothing.
+ * **Their name and nothing else.** It carried the certification queue's two
+ * standings — `certified` and the criminal-record stamp — so the page could
+ * draw the same chips; both are gone, and the reason is about the data rather
+ * than the design. An uncertified gedu cannot hold an offer: the database's
+ * *may substitute* predicate requires certification and guards every path that
+ * creates one, approval re-asks it under the request's lock, and the
+ * office-arranged write asks it too. So "certified" was true by construction,
+ * and the one case a chip could have caught — somebody de-certified *after*
+ * offering — is refused at approval, in words, on the row. The extract stamp is
+ * children's-safety data about a contractor, and a surface that does not act on
+ * it is not handed it.
  *
  * Who else offered is never shown to an offerer; this list exists on the admin
  * document alone.
@@ -201,8 +206,6 @@ export const adminSubstitutionOffer = z.object({
   gedu_id: z.string(),
   first_name: z.string(),
   last_name: z.string(),
-  certified: z.boolean(),
-  criminal_record_check_at: z.string().nullable(),
   created_at: z.string(),
 });
 
@@ -215,7 +218,7 @@ const adminSubstitutionProductName = z.object({
 });
 
 /**
- * The product shell both halves of the admin page state a session by.
+ * The product shell the admin queue states a session by.
  *
  * `schedule_slots` rides on the **request's** own product rather than being
  * looked up elsewhere, so the only absence it can carry is "no slot names this
@@ -246,10 +249,10 @@ const adminSubstitutionProduct = z.object({
  *
  * An **orphaned** request is still in this list, deliberately: an admin moving
  * the schedule's weekday after a request was filed leaves a date the schedule
- * no longer projects. The queue orders by date and never by a derived instant,
- * so such a row sorts like any other and an admin can clear it.
+ * no longer projects. The read orders by date and never by a derived instant,
+ * so such a row arrives like any other and an admin can clear it.
  */
-export const adminOpenSubstitutionRequest = z.object({
+export const adminSubstitutionRequest = z.object({
   id: z.string(),
   group_id: z.string(),
   group_name: z.string(),
@@ -267,58 +270,13 @@ export const adminOpenSubstitutionRequest = z.object({
   offers: z.array(adminSubstitutionOffer),
 });
 
-export type AdminOpenSubstitutionRequest = z.infer<
-  typeof adminOpenSubstitutionRequest
->;
+export type AdminSubstitutionRequest = z.infer<typeof adminSubstitutionRequest>;
 
 /**
- * One request the office has already settled, within the fortnight behind the
- * queue — substituted or withdrawn.
- *
- * It exists because "who stood in on Tuesday?" has no other home: an approved
- * request leaves the queue, and the only surface still naming its substitute is
- * the group's own page, which an admin has to already know the group to reach.
- *
- * `substitute_id` and the two name halves are null exactly together, and they
- * are null on every withdrawn row — the table's own CHECK forbids a withdrawn
- * request from carrying a sub, so a withdrawal is "nobody had to stand in after
- * all" rather than a substitution with its sub removed.
+ * The whole document `get_admin_substitution_requests` returns — a bare array,
+ * exactly as the gedu's own pool read returns one.
  */
-export const adminResolvedSubstitution = z.object({
-  id: z.string(),
-  group_id: z.string(),
-  group_name: z.string(),
-  session_date: z.string(),
-  role: geduAssignmentRole,
-  /** Never `open`: the read selects on exactly that. */
-  status: substitutionRequestStatus,
-  reason: substitutionReason.nullable(),
-  reason_note: z.string().nullable(),
-  created_at: z.string(),
-  approved_at: z.string().nullable(),
-  requested_by: z.string(),
-  requested_by_first_name: z.string(),
-  requested_by_last_name: z.string(),
-  substitute_id: z.string().nullable(),
-  substitute_first_name: z.string().nullable(),
-  substitute_last_name: z.string().nullable(),
-  product: adminSubstitutionProduct,
-});
-
-export type AdminResolvedSubstitution = z.infer<
-  typeof adminResolvedSubstitution
->;
-
-/**
- * The whole document `get_admin_substitution_requests` returns: what needs
- * staffing, and what the last fortnight came to.
- */
-export const adminSubstitutionQueue = z.object({
-  open: z.array(adminOpenSubstitutionRequest),
-  recent: z.array(adminResolvedSubstitution),
-});
-
-export type AdminSubstitutionQueue = z.infer<typeof adminSubstitutionQueue>;
+export const adminSubstitutionRequests = z.array(adminSubstitutionRequest);
 
 /**
  * One gedu on a group, with the role they hold — the staffing derivation's

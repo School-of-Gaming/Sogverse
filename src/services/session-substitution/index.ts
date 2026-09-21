@@ -14,10 +14,9 @@ export {
 } from "./session-substitution.queries";
 export {
   SUBSTITUTION_REASON_NOTE_MAX_LENGTH,
-  adminOpenSubstitutionRequest,
-  adminResolvedSubstitution,
   adminSubstitutionOffer,
-  adminSubstitutionQueue,
+  adminSubstitutionRequest,
+  adminSubstitutionRequests,
   anonymousSubstitutionRequestDocument,
   substitutionReason,
   substitutionRequestDocument,
@@ -28,10 +27,8 @@ export {
   sessionStaffGedu,
 } from "./session-substitution.contracts";
 export type {
-  AdminOpenSubstitutionRequest,
-  AdminResolvedSubstitution,
   AdminSubstitutionOffer,
-  AdminSubstitutionQueue,
+  AdminSubstitutionRequest,
   AnonymousSubstitutionRequestDocument,
   SubstitutionRequestDocument,
   OpenSubstitutionRequest,

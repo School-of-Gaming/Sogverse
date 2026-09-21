@@ -1,10 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildAdminSubstitutionsData } from "@/components/admin/substitutions/build-admin-substitutions-data";
-import type {
-  AdminOpenSubstitutionRequest,
-  AdminResolvedSubstitution,
-  AdminSubstitutionQueue,
-} from "@/services/session-substitution";
+import type { AdminSubstitutionRequest } from "@/services/session-substitution";
 
 /**
  * The Substitutions page's mapping: the four claims the page's whole reading
@@ -30,7 +26,6 @@ const NOW = new Date("2026-08-17T09:20:00+03:00");
 const VIEWER_ZONE = "Europe/Helsinki";
 
 const REQUESTER = "dc5d2ed1-5498-450a-8db1-dad9701d10cd";
-const SUBSTITUTE = "ea0111ac-09ed-438c-85ef-f9f138b00209";
 
 /** 0 = Monday, the app's own convention. */
 const MON = 0;
@@ -39,7 +34,7 @@ function product(args: {
   id: string;
   timezone: string;
   slots: readonly { weekday: number; startTime: string }[];
-}): AdminOpenSubstitutionRequest["product"] {
+}): AdminSubstitutionRequest["product"] {
   return {
     id: args.id,
     product_type: "consumer_club",
@@ -57,8 +52,8 @@ function product(args: {
 function openRequest(args: {
   id: string;
   sessionDate: string;
-  product: AdminOpenSubstitutionRequest["product"];
-}): AdminOpenSubstitutionRequest {
+  product: AdminSubstitutionRequest["product"];
+}): AdminSubstitutionRequest {
   return {
     id: args.id,
     group_id: `group-${args.id}`,
@@ -76,9 +71,9 @@ function openRequest(args: {
   };
 }
 
-function build(queue: AdminSubstitutionQueue, now = NOW) {
+function build(requests: AdminSubstitutionRequest[], now = NOW) {
   return buildAdminSubstitutionsData({
-    queue,
+    requests,
     locale: "en",
     viewerTimeZone: VIEWER_ZONE,
     now,
@@ -100,10 +95,9 @@ const STOCKHOLM_AFTERNOON = product({
 
 describe("the admin Substitutions mapping", () => {
   it("orders by the session's own start, not by the date the read delivered", () => {
-    const data = build({
-      // As the read delivers them: same date, ordered by product id, which says
-      // nothing at all about which of the two starts first.
-      open: [
+    // As the read delivers them: same date, ordered by product id, which says
+    // nothing at all about which of the two starts first.
+    const data = build([
         openRequest({
           id: "helsinki",
           sessionDate: "2026-08-17",
@@ -114,9 +108,7 @@ describe("the admin Substitutions mapping", () => {
           sessionDate: "2026-08-17",
           product: STOCKHOLM_AFTERNOON,
         }),
-      ],
-      recent: [],
-    });
+      ]);
 
     expect(data.open.map((request) => request.id)).toEqual([
       "stockholm",
@@ -136,10 +128,7 @@ describe("the admin Substitutions mapping", () => {
         }),
       });
 
-    const data = build({
-      open: [twin("first"), twin("second"), twin("third")],
-      recent: [],
-    });
+    const data = build([twin("first"), twin("second"), twin("third")]);
 
     // A stable sort is what makes a tie mean "the read decided", which is what
     // stops the list reshuffling between two renders of one document.
@@ -169,7 +158,7 @@ describe("the admin Substitutions mapping", () => {
       product: HELSINKI_EVENING,
     });
 
-    const data = build({ open: [after, orphan, before], recent: [] });
+    const data = build([after, orphan, before]);
 
     expect(data.open.map((request) => request.id)).toEqual([
       "before",
@@ -184,8 +173,7 @@ describe("the admin Substitutions mapping", () => {
   });
 
   it("marks a session starting inside the day, and only one that has not begun", () => {
-    const data = build({
-      open: [
+    const data = build([
         // 17:00 today, about eight hours out.
         openRequest({
           id: "today",
@@ -198,9 +186,7 @@ describe("the admin Substitutions mapping", () => {
           sessionDate: "2026-08-24",
           product: HELSINKI_EVENING,
         }),
-      ],
-      recent: [],
-    });
+      ]);
 
     expect(
       data.open.map((request) => [request.id, request.urgent]),
@@ -213,112 +199,49 @@ describe("the admin Substitutions mapping", () => {
     // session that is already running — so the tint goes out rather than
     // shouting about the past.
     const later = build(
-      {
-        open: [
-          openRequest({
-            id: "today",
-            sessionDate: "2026-08-17",
-            product: HELSINKI_EVENING,
-          }),
-        ],
-        recent: [],
-      },
+      [
+        openRequest({
+          id: "today",
+          sessionDate: "2026-08-17",
+          product: HELSINKI_EVENING,
+        }),
+      ],
       new Date("2026-08-17T17:30:00+03:00"),
     );
     expect(later.open[0].urgent).toBe(false);
   });
 
   it("states the session's clock face in the viewer's zone", () => {
-    const data = build({
-      open: [
+    const data = build([
         openRequest({
           id: "stockholm",
           sessionDate: "2026-08-17",
           product: STOCKHOLM_AFTERNOON,
         }),
-      ],
-      recent: [],
-    });
+      ]);
 
     // Authored at 15:00 in Stockholm, read at 16:00 in Helsinki.
     expect(data.open[0].sessionTime).toBe("16:00–17:00");
   });
 
   it("names the viewer's zone only where something converted", () => {
-    const home = build({
-      open: [
+    const home = build([
         openRequest({
           id: "helsinki",
           sessionDate: "2026-08-17",
           product: HELSINKI_EVENING,
         }),
-      ],
-      recent: [],
-    });
+      ]);
     expect(home.timeZoneAbbrev).toBeNull();
 
-    const away = build({
-      open: [
+    const away = build([
         openRequest({
           id: "stockholm",
           sessionDate: "2026-08-17",
           product: STOCKHOLM_AFTERNOON,
         }),
-      ],
-      recent: [],
-    });
+      ]);
     expect(away.timeZoneAbbrev).toBeTruthy();
   });
 
-  it("carries a settled request's substitute, and leaves a withdrawal without one", () => {
-    const base: Omit<
-      AdminResolvedSubstitution,
-      "id" | "status" | "substitute_id" | "substitute_first_name" | "substitute_last_name"
-    > = {
-      group_id: "group-a",
-      group_name: "Group A",
-      session_date: "2026-08-10",
-      role: "primary",
-      reason: "sick",
-      reason_note: null,
-      created_at: "2026-08-09T19:00:00+03:00",
-      approved_at: "2026-08-10T08:00:00+03:00",
-      requested_by: REQUESTER,
-      requested_by_first_name: "Milo",
-      requested_by_last_name: "Korhonen",
-      product: HELSINKI_EVENING,
-    };
-
-    const data = build({
-      open: [],
-      recent: [
-        {
-          ...base,
-          id: "stood-in",
-          status: "substituted",
-          substitute_id: SUBSTITUTE,
-          substitute_first_name: "Saana",
-          substitute_last_name: "Nieminen",
-        },
-        {
-          ...base,
-          id: "withdrawn",
-          status: "withdrawn",
-          approved_at: null,
-          substitute_id: null,
-          substitute_first_name: null,
-          substitute_last_name: null,
-        },
-      ],
-    });
-
-    // Delivered newest-session-first by the read, and not re-sorted here: both
-    // rows are on one date, so the read's order is the order.
-    expect(data.recent.map((row) => row.substituteName)).toEqual([
-      "Saana Nieminen",
-      null,
-    ]);
-    expect(data.recent[0].substituteId).toBe(SUBSTITUTE);
-    expect(data.recent[1].substituteId).toBeNull();
-  });
 });

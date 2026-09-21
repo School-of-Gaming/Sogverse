@@ -2,26 +2,28 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { BadgeCheck, CircleCheck } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BadgeCheck } from "lucide-react";
 import type { SubstitutionRequest } from "./admin-substitutions-data";
 import { SubstitutionRequestRow } from "./substitution-request-row";
 
 /**
  * **Sessions somebody cannot make, and the offers to stand in.**
  *
- * The page's first panel and the reason it exists: every row is work an admin
- * can finish here — a colleague is out, somebody has volunteered, and one press
- * seats them — where the fortnight below it is a record to be consulted.
+ * **A heading over a stack, with no edge of its own.** The requests are peers,
+ * each with its own action, so the *requests* are the cards and this is the
+ * heading that holds them — the card rule's own test applied: take the outer
+ * edge away and the heading and the spacing still say these belong together, so
+ * the edge was saying nothing, and every level of border costs width a 360px
+ * screen does not have.
  *
- * **Empty collapses the panel to one row**, because the good news is the space
- * given back. It does not celebrate: this is a page an admin opens to find
- * work, and an empty queue is the ordinary state rather than an achievement.
+ * **Empty is a line under the heading, not a card holding a line.** The good
+ * news is the space given back, and an empty queue is the ordinary state of
+ * this page rather than an achievement, so it does not celebrate.
  *
- * **The receipt lives here rather than a level down.** The list collapses, so
- * approving the last request would take the confirmation away at the moment
- * there is most to confirm. The state therefore belongs to the component that
- * survives the collapse, and the all-clear row carries the receipt beside it.
+ * **The receipt lives here rather than a level down.** A row unmounts when its
+ * approval lands, so approving the last request would take the confirmation
+ * away at the moment there is most to confirm. The state therefore belongs to
+ * the component that survives the collapse.
  *
  * **The write is the shell's, the ordering is the mapping's.** `onApproveOffer`
  * resolves once the approval has landed *and* the refetched document has
@@ -59,7 +61,7 @@ export function SubstitutionRequestsPanel({
    *
    * An id the source has stopped offering stays in the set for the rest of the
    * sitting, which is what keeps the confirmation on screen after the last
-   * approval collapses the panel.
+   * approval empties the list.
    */
   const openIds = new Set(requests.map((request) => request.id));
   const approved = withoutOpen(approvedIds, openIds);
@@ -67,50 +69,33 @@ export function SubstitutionRequestsPanel({
 
   const waiting = requests.filter((request) => !approved.has(request.id));
 
-  /**
-   * The receipt for an approval, which otherwise leaves no trace: a row simply
-   * vanishing is indistinguishable from a row that was never there.
-   */
-  const receipt =
-    approved.size > 0 ? (
-      <p className="flex items-center gap-1.5 text-xs text-success">
-        <BadgeCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
-        {t("justNow", { count: approved.size })}
-      </p>
-    ) : null;
-
-  if (waiting.length === 0) {
-    return (
-      <Card>
-        {/* The all-clear row. The title stays — "Sessions needing a substitute ·
-            nothing needs a sub" reads as a report. The line, the receipt and
-            the check ride in one right-packed group opposite, where the
-            header's slack already sits, and wrap below the title at 360. */}
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-x-6 gap-y-2 space-y-0">
-          <CardTitle className="text-xl">{t("listLabel")}</CardTitle>
-          <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-1">
-            {receipt}
-            <p className="text-sm text-muted-foreground">{t("allClear")}</p>
-            <CircleCheck className="h-5 w-5 shrink-0 text-success" aria-hidden />
-          </div>
-        </CardHeader>
-      </Card>
-    );
-  }
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-baseline gap-2 text-xl">
-          {t("listLabel")}
+    <section className="space-y-3">
+      <h2 className="flex items-baseline gap-2 text-xl font-semibold">
+        {t("listLabel")}
+        {waiting.length > 0 && (
           <span className="text-sm font-normal text-muted-foreground">
             {waiting.length}
           </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {receipt}
-        <ul aria-label={t("listLabel")} className="space-y-2">
+        )}
+      </h2>
+
+      {/* The receipt for an approval, which otherwise leaves no trace: a row
+          simply vanishing is indistinguishable from a row that was never
+          there. It appears on the press that removed a row, so what it pushes
+          down is a list that has just become shorter — a change the reader
+          asked for, not one on data's own schedule. */}
+      {approved.size > 0 && (
+        <p className="flex items-center gap-1.5 text-xs text-success">
+          <BadgeCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          {t("justNow", { count: approved.size })}
+        </p>
+      )}
+
+      {waiting.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{t("allClear")}</p>
+      ) : (
+        <ul aria-label={t("listLabel")} className="space-y-3">
           {waiting.map((request) => (
             <li key={request.id}>
               <SubstitutionRequestRow
@@ -127,8 +112,8 @@ export function SubstitutionRequestsPanel({
             </li>
           ))}
         </ul>
-      </CardContent>
-    </Card>
+      )}
+    </section>
   );
 }
 

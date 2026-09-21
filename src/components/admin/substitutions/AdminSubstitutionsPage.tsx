@@ -9,7 +9,7 @@ import {
   sessionSubstitutionKeys,
   useAdminSubstitutionQueue,
   useApproveSessionSubstitutionOffer,
-  type AdminSubstitutionQueue,
+  type AdminSubstitutionRequest,
 } from "@/services/session-substitution";
 import { AdminSubstitutionsPageBody } from "./admin-substitutions-page-body";
 import { buildAdminSubstitutionsData } from "./build-admin-substitutions-data";
@@ -32,27 +32,27 @@ import { buildAdminSubstitutionsData } from "./build-admin-substitutions-data";
  * of schedule arithmetic the dashboard samples once a day to avoid.
  */
 export function AdminSubstitutionsPage({
-  initialQueue,
+  initialRequests,
 }: {
-  initialQueue: AdminSubstitutionQueue;
+  initialRequests: AdminSubstitutionRequest[];
 }) {
   const locale = resolveLocale(useLocale());
   const timeZone = useTimezone();
   const now = useNow();
   const queryClient = useQueryClient();
 
-  const { data: queue } = useAdminSubstitutionQueue(initialQueue);
+  const { data: requests } = useAdminSubstitutionQueue(initialRequests);
   const approveOffer = useApproveSessionSubstitutionOffer();
 
   const data = useMemo(
     () =>
       buildAdminSubstitutionsData({
-        queue,
+        requests,
         locale,
         viewerTimeZone: timeZone,
         now,
       }),
-    [queue, locale, timeZone, now],
+    [requests, locale, timeZone, now],
   );
 
   /**
@@ -64,9 +64,9 @@ export function AdminSubstitutionsPage({
    * own `onSuccess` fires its fan-out without waiting for any of it, which is
    * right for the documents nothing on this page is reading, and not enough for
    * the one it is. Awaiting this key means the refetched document has already
-   * moved the request out of the queue and into the fortnight below by the time
-   * the promise settles — so the row leaves once, rather than leaving on the
-   * receipt and coming back for a frame when the old document re-renders.
+   * dropped the request by the time the promise settles — so the row leaves
+   * once, rather than leaving on the receipt and coming back for a frame when
+   * the old document re-renders.
    */
   const handleApproveOffer = useCallback(
     async (offerId: string) => {

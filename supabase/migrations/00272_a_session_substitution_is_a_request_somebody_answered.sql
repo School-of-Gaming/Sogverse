@@ -495,52 +495,6 @@ AS $$
   );
 $$;
 
--- The product shell the admin queue states a session by, defined once because
--- the queue emits it twice — over the open requests and over the fortnight of
--- settled ones — and two copies of a jsonb_build_object is how the two halves of
--- one page come to describe a session differently.
---
--- SLOTS rather than a start instant, for the reason every substitution surface
--- emits them: the client owns the calendar maths, exactly as both session feeds
--- do. They ride on the REQUEST's own product rather than being looked up in a
--- narrower set, so an orphaned request — one whose weekday the schedule no
--- longer names — resolves to no slot at all on the client and renders as a bare
--- date, instead of borrowing some other row's time.
-CREATE FUNCTION public.substitution_queue_product(p_product public.products)
-RETURNS jsonb
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path TO ''
-AS $$
-  SELECT jsonb_build_object(
-    'id',           p_product.id,
-    'product_type', p_product.product_type,
-    'timezone',     p_product.timezone,
-    'is_remote',    p_product.is_remote,
-    'translations', COALESCE((
-      SELECT jsonb_agg(
-               jsonb_build_object('locale', pt.locale, 'name', pt.name)
-               ORDER BY pt.locale
-             )
-        FROM public.product_translations pt
-       WHERE pt.product_id = p_product.id
-    ), '[]'::jsonb),
-    'schedule_slots', COALESCE((
-      SELECT jsonb_agg(
-               jsonb_build_object(
-                 'weekday',          ss.weekday,
-                 'start_time',       to_char(ss.start_time, 'HH24:MI'),
-                 'duration_minutes', ss.duration_minutes
-               )
-               ORDER BY ss.weekday, ss.start_time
-             )
-        FROM public.schedule_slots ss
-       WHERE ss.product_id = p_product.id
-    ), '[]'::jsonb)
-  );
-$$;
-
 -- The sweep that runs after every admin edit which can UNSEAT somebody: clear,
 -- withdraw, and the replace inside set_session_substitution.
 --
@@ -617,9 +571,6 @@ GRANT  EXECUTE ON FUNCTION public.gedu_may_substitute_session(uuid, uuid, date, 
 REVOKE EXECUTE ON FUNCTION public.substitution_request_document(public.session_substitution_requests, boolean, uuid) FROM PUBLIC, anon, authenticated;
 GRANT  EXECUTE ON FUNCTION public.substitution_request_document(public.session_substitution_requests, boolean, uuid) TO service_role;
 
-REVOKE EXECUTE ON FUNCTION public.substitution_queue_product(public.products) FROM PUBLIC, anon, authenticated;
-GRANT  EXECUTE ON FUNCTION public.substitution_queue_product(public.products) TO service_role;
-
 REVOKE EXECUTE ON FUNCTION public.cascade_withdraw_orphaned_substitution_requests(uuid, date) FROM PUBLIC, anon, authenticated;
 GRANT  EXECUTE ON FUNCTION public.cascade_withdraw_orphaned_substitution_requests(uuid, date) TO service_role;
 
@@ -637,9 +588,6 @@ COMMENT ON FUNCTION public.gedu_may_substitute_session(p_gedu_id uuid, p_group_i
 
 COMMENT ON FUNCTION public.substitution_request_document(p_request public.session_substitution_requests, p_include_reason boolean, p_viewer_id uuid) IS
   'Internal: the ONE wire shape of a substitution request. Every substitution write returns it and both staff feeds'' `substitutions` arrays are built from it, so no surface can drift about what a request is. Takes the ROW rather than an id, so a feed aggregates it over a query and a writer hands over the row it just wrote. `p_include_reason` is the ADMIN flag — reason and reason_note travel only when it is true, and are emitted as JSON null otherwise rather than omitted, so the document keeps one shape for both readers. `offer_count` travels for an admin and for the requester themselves and is null for anybody else, because how many people volunteered for a colleague''s absence is not their business. Not granted to `authenticated`.';
-
-COMMENT ON FUNCTION public.substitution_queue_product(p_product public.products) IS
-  'Internal: the product shell the ADMIN SUBSTITUTIONS PAGE states a session by — id, type, timezone, remote flag, the name translations and the recurring schedule_slots. One definition because get_admin_substitution_requests emits it on both of its lists, the open queue and the settled fortnight, and a session described two ways on one page is the drift this exists to prevent. SLOTS rather than a start instant: the client owns the calendar maths on every substitution surface, exactly as both session feeds do, and SQL holds no schedule expansion. They ride on the REQUEST''s own product, so an ORPHANED request — one whose weekday the schedule no longer names — resolves to no slot on the client and renders as a bare date rather than borrowing another row''s time. Not granted to `authenticated`.';
 
 COMMENT ON FUNCTION public.cascade_withdraw_orphaned_substitution_requests(p_group_id uuid, p_session_date date) IS
   'Internal: after an admin edit that can unseat somebody — clear, withdraw, or the replace inside set_session_substitution — withdraw every non-withdrawn request on that (group, date) whose requester no longer holds a seat there, meaning neither assigned nor the substitute_id of a live substituted request. A FIXPOINT sweep rather than one statement, because unseating cascades: clearing X''s substitution withdraws X''s own request, which unseats whoever was substituting that, and so on until a pass changes nothing. Withdrawing a substituted row blanks its three substitution columns — chk_substitution_state forbids a withdrawn row from carrying a sub — which is deliberate: an admin unwinding a mistake leaves no phantom substitution behind for invoicing to bill. Withdrawing a request whose requester was meanwhile unassigned restores nobody and is allowed. Not granted to `authenticated`; called only from inside the admin RPCs.';
@@ -1773,13 +1721,50 @@ BEGIN
 END;
 $$;
 
--- The office's own list: the queue an admin staffs from, and what it settled.
+-- The office's own list: the queue an admin staffs from.
 --
 -- A read of its own rather than a member of the admin dashboard, because the
 -- page it feeds is its own page: one sidebar entry, one document, one
--- invalidation. It is also the one substitution surface that answers the
--- question the rows exist for — who stood in — which the dashboard, being a
--- board of open work, had no place for.
+-- invalidation.
+--
+-- Dated TODAY OR LATER in the product's own timezone — a request whose date has
+-- passed is UNFILLED, which is a derived state of an open request and not
+-- something an admin can still act on, so it drops out on its own with no clock
+-- anywhere. The whole reason travels here (category and note), because this is
+-- the one surface the reason was collected for; everywhere else it is
+-- admin-only or absent.
+--
+-- Each offer carries the offerer's NAME AND NOTHING ELSE. Certification and the
+-- criminal-record stamp used to ride along so the page could draw the
+-- certification queue's chips, and they are gone for a reason that is about the
+-- data rather than about the design: an uncertified gedu cannot hold an offer.
+-- gedu_may_substitute_session requires `certified` and guards every path that
+-- creates one, approve_session_substitution_offer re-asks it under the request's
+-- lock, and set_session_substitution asks it too — so a chip saying "certified"
+-- was always true by construction, and the one case it could have caught (an
+-- offerer de-certified after offering) is refused at approval with a message the
+-- admin reads on the row. The extract stamp is children's-safety data about a
+-- contractor; a page that does not act on it must not be handed it.
+--
+-- An orphaned request (the schedule's weekday moved after it was filed) is still
+-- here, and that is deliberate: it orders by DATE and never by a derived
+-- instant, so a date the schedule no longer projects sorts like any other and an
+-- admin can clear it.
+--
+-- The product shell carries the SCHEDULE SLOTS beside the timezone, because a
+-- row that states a date and no clock face cannot tell an admin which of
+-- Friday's two sessions is short-staffed — and it is what makes the page's
+-- urgency treatment possible at all, since "starts within a day" is a statement
+-- about an instant. Slots rather than a start INSTANT, for the reason every
+-- other substitution surface emits them: the client owns the calendar maths,
+-- exactly as both session feeds do, and SQL holds no expansion. It is also what
+-- keeps the orphan case honest — a date the schedule no longer projects resolves
+-- to no slot at all on the client, which falls back to the bare date rather than
+-- printing a time the schedule would not produce.
+--
+-- Returns a bare ARRAY, exactly as the gedu's own pool read does. It was an
+-- object of two members while the page also carried a fortnight of settled
+-- requests; with one list left, the wrapper named nothing.
 CREATE FUNCTION public.get_admin_substitution_requests()
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -1787,151 +1772,77 @@ STABLE
 SECURITY DEFINER
 SET search_path TO ''
 AS $$
-DECLARE
-  v_open   jsonb;
-  v_recent jsonb;
 BEGIN
   PERFORM public.assert_admin();
 
-  -- ---------------------------------------------------------------------------
-  -- 1. The queue: open requests an admin has to staff.
-  --
-  -- Dated TODAY OR LATER in the product's own timezone — a request whose date
-  -- has passed is UNFILLED, which is a derived state of an open request and not
-  -- something an admin can still act on, so it drops out on its own with no
-  -- clock anywhere. The whole reason travels here (category and note), because
-  -- this is the one surface the reason was collected for; everywhere else it is
-  -- admin-only or absent.
-  --
-  -- Each offer ships the certification queue's own two standing facts —
-  -- certified and criminal_record_check_at — so the panel draws the same chips
-  -- it draws there rather than inventing a second vocabulary for the same two
-  -- questions. An empty array is the all-clear.
-  --
-  -- An orphaned request (the schedule's weekday moved after it was filed) is
-  -- still here, and that is deliberate: it orders by DATE and never by a
-  -- derived instant, so a date the schedule no longer projects sorts like any
-  -- other and an admin can clear it.
-  --
-  -- The product shell carries the SCHEDULE SLOTS beside the timezone, because a
-  -- row that states a date and no clock face cannot tell an admin which of
-  -- Friday's two sessions is short-staffed — and it is what makes the page's
-  -- urgency treatment possible at all, since "starts within a day" is a
-  -- statement about an instant. Slots rather than a start INSTANT, for the
-  -- reason every other substitution surface emits them: the client owns the
-  -- calendar maths, exactly as both session feeds do, and SQL holds no
-  -- expansion. It is also what keeps the orphan case honest — a date the
-  -- schedule no longer projects resolves to no slot at all on the client, which
-  -- falls back to the bare date rather than printing a time the schedule would
-  -- not produce.
-  -- ---------------------------------------------------------------------------
-  SELECT COALESCE(jsonb_agg(q.doc ORDER BY q.session_date, q.product_id, q.id), '[]'::jsonb)
-    INTO v_open
-    FROM (
-      SELECT r.id,
-             r.session_date,
-             p.id AS product_id,
-             jsonb_build_object(
-               'id',           r.id,
-               'group_id',     r.group_id,
-               'group_name',   g.name,
-               'session_date', r.session_date,
-               'role',         r.role,
-               'reason',       r.reason,
-               'reason_note',  r.reason_note,
-               'created_at',   r.created_at,
-               'requested_by', r.requested_by,
-               'requested_by_first_name', rq.first_name,
-               'requested_by_last_name',  rq.last_name,
-               'product',      public.substitution_queue_product(p),
-               'offers', COALESCE((
-                 SELECT jsonb_agg(
-                          jsonb_build_object(
-                            'id',         o.id,
-                            'gedu_id',    o.gedu_id,
-                            'first_name', op.first_name,
-                            'last_name',  op.last_name,
-                            'certified',  COALESCE(ogp.certified, false),
-                            'criminal_record_check_at', ogp.criminal_record_check_at,
-                            'created_at', o.created_at
+  RETURN COALESCE((
+    SELECT jsonb_agg(q.doc ORDER BY q.session_date, q.product_id, q.id)
+      FROM (
+        SELECT r.id,
+               r.session_date,
+               p.id AS product_id,
+               jsonb_build_object(
+                 'id',           r.id,
+                 'group_id',     r.group_id,
+                 'group_name',   g.name,
+                 'session_date', r.session_date,
+                 'role',         r.role,
+                 'reason',       r.reason,
+                 'reason_note',  r.reason_note,
+                 'created_at',   r.created_at,
+                 'requested_by', r.requested_by,
+                 'requested_by_first_name', rq.first_name,
+                 'requested_by_last_name',  rq.last_name,
+                 'product', jsonb_build_object(
+                   'id',           p.id,
+                   'product_type', p.product_type,
+                   'timezone',     p.timezone,
+                   'is_remote',    p.is_remote,
+                   'translations', COALESCE((
+                     SELECT jsonb_agg(
+                              jsonb_build_object('locale', pt.locale, 'name', pt.name)
+                              ORDER BY pt.locale
+                            )
+                       FROM public.product_translations pt
+                      WHERE pt.product_id = p.id
+                   ), '[]'::jsonb),
+                   'schedule_slots', COALESCE((
+                     SELECT jsonb_agg(
+                              jsonb_build_object(
+                                'weekday',          ss.weekday,
+                                'start_time',       to_char(ss.start_time, 'HH24:MI'),
+                                'duration_minutes', ss.duration_minutes
+                              )
+                              ORDER BY ss.weekday, ss.start_time
+                            )
+                       FROM public.schedule_slots ss
+                      WHERE ss.product_id = p.id
+                   ), '[]'::jsonb)
+                 ),
+                 'offers', COALESCE((
+                   SELECT jsonb_agg(
+                            jsonb_build_object(
+                              'id',         o.id,
+                              'gedu_id',    o.gedu_id,
+                              'first_name', op.first_name,
+                              'last_name',  op.last_name,
+                              'created_at', o.created_at
+                            )
+                            ORDER BY o.created_at, o.id
                           )
-                          ORDER BY o.created_at, o.id
-                        )
-                   FROM public.session_substitution_offers o
-                   JOIN public.profiles op ON op.id = o.gedu_id
-                   LEFT JOIN public.gedu_profiles ogp ON ogp.user_id = o.gedu_id
-                  WHERE o.request_id = r.id
-               ), '[]'::jsonb)
-             ) AS doc
-        FROM public.session_substitution_requests r
-        JOIN public.product_groups g ON g.id = r.group_id
-        JOIN public.products p       ON p.id = g.product_id
-        JOIN public.profiles rq      ON rq.id = r.requested_by
-       WHERE r.status = 'open'::public.substitution_request_status
-         AND r.session_date >= (now() AT TIME ZONE p.timezone)::date
-    ) q;
-
-  -- ---------------------------------------------------------------------------
-  -- 2. What it settled: the fortnight behind the queue.
-  --
-  -- "Who stood in on Tuesday?" has no other home on the platform — an approved
-  -- request leaves the queue and the only surface still naming its substitute is
-  -- the group's own page, which an admin has to know the group to reach. So the
-  -- page that staffs a session also says what came of the last fortnight's,
-  -- substituted and withdrawn alike: a withdrawal is equally an answer to
-  -- "nobody had to stand in after all".
-  --
-  -- Bounded by the SESSION DATE, in the product's own zone, and never by when
-  -- the row was resolved: `approved_at` exists only on a substituted row and a
-  -- withdrawal stamps nothing, so the date is the one key both statuses share.
-  -- Today included, and nothing after it — a settled FUTURE session is staffing
-  -- the group page owns, and this list is the record of what has happened.
-  --
-  -- No offers. The losing offers on a settled request are people who were not
-  -- picked, which is a fact about a decision already taken; what this list is
-  -- read for is the substitute, so it carries the substitute and their name.
-  -- ---------------------------------------------------------------------------
-  SELECT COALESCE(jsonb_agg(q.doc ORDER BY q.session_date DESC, q.product_id, q.id), '[]'::jsonb)
-    INTO v_recent
-    FROM (
-      SELECT r.id,
-             r.session_date,
-             p.id AS product_id,
-             jsonb_build_object(
-               'id',           r.id,
-               'group_id',     r.group_id,
-               'group_name',   g.name,
-               'session_date', r.session_date,
-               'role',         r.role,
-               'status',       r.status,
-               'reason',       r.reason,
-               'reason_note',  r.reason_note,
-               'created_at',   r.created_at,
-               'approved_at',  r.approved_at,
-               'requested_by', r.requested_by,
-               'requested_by_first_name', rq.first_name,
-               'requested_by_last_name',  rq.last_name,
-               -- Null together, always: a withdrawn row cannot carry a sub, by
-               -- the table's own chk_substitution_state.
-               'substitute_id',         r.substitute_id,
-               'substitute_first_name', sp.first_name,
-               'substitute_last_name',  sp.last_name,
-               'product',      public.substitution_queue_product(p)
-             ) AS doc
-        FROM public.session_substitution_requests r
-        JOIN public.product_groups g ON g.id = r.group_id
-        JOIN public.products p       ON p.id = g.product_id
-        JOIN public.profiles rq      ON rq.id = r.requested_by
-        LEFT JOIN public.profiles sp ON sp.id = r.substitute_id
-       WHERE r.status <> 'open'::public.substitution_request_status
-         AND r.session_date <= (now() AT TIME ZONE p.timezone)::date
-         AND r.session_date >= (now() AT TIME ZONE p.timezone)::date - 14
-    ) q;
-
-  RETURN jsonb_build_object(
-    'open',   v_open,
-    'recent', v_recent
-  );
+                     FROM public.session_substitution_offers o
+                     JOIN public.profiles op ON op.id = o.gedu_id
+                    WHERE o.request_id = r.id
+                 ), '[]'::jsonb)
+               ) AS doc
+          FROM public.session_substitution_requests r
+          JOIN public.product_groups g ON g.id = r.group_id
+          JOIN public.products p       ON p.id = g.product_id
+          JOIN public.profiles rq      ON rq.id = r.requested_by
+         WHERE r.status = 'open'::public.substitution_request_status
+           AND r.session_date >= (now() AT TIME ZONE p.timezone)::date
+      ) q
+  ), '[]'::jsonb);
 END;
 $$;
 
@@ -2000,7 +1911,7 @@ COMMENT ON FUNCTION public.clear_session_substitution(p_request_id uuid) IS
   '"That sub is not coming": `substituted` -> `open`, blanking substitute_id, approved_by and approved_at, so the session returns to the pool list and to the admin queue. The offers are left alone — they are still people who said they could come. Then the fixpoint cascade runs over that (group, date), which is what withdraws the cleared sub''s OWN request if they had filed one: they no longer hold a seat there to be absent from. The cascade can also withdraw THIS row, when its requester was themselves a sub who has just been unseated, which is why the document is re-read before it is returned.';
 
 COMMENT ON FUNCTION public.get_admin_substitution_requests() IS
-  'The admin Substitutions page, whole: `{ open, recent }`. `open` is every OPEN request dated today or later in its product''s timezone, ordered by date then product then id, each with the group, the product shell (type, timezone, remote flag, translations and schedule_slots), the requester''s name, the role being substituted, the reason and note, and every offer with its offerer''s name, certified flag and criminal_record_check_at — the certification queue''s own two standing facts, so the page draws the same chips rather than inventing a second vocabulary for them. An empty array is the all-clear. A request whose date has PASSED drops out on its own, because "unfilled" is a derived state of an open request and not something an admin can still act on; a request the schedule no longer projects stays in, because this orders by DATE and never by a derived instant. `recent` is the answer to "who stood in on Tuesday?", which has no other home: every non-open request — substituted AND withdrawn — whose session date is within the last 14 days up to and including today in the product''s zone, newest first, carrying the substitute and their name instead of the offers. Bounded by the SESSION DATE rather than by when the row was resolved, because approved_at exists only on a substituted row and a withdrawal stamps nothing, so the date is the one key both statuses share; and nothing after today, because a settled FUTURE session is staffing the group page owns. Admin-only, guard-first. SLOTS and not an instant on both lists: the client owns the calendar maths on every substitution surface, exactly as both session feeds do. This is the ONLY gedu-visible-reason surface besides the admin session document — a `sick` category is health data about a contractor.';
+  'The admin Substitutions page: a bare ARRAY of every OPEN request dated today or later in its product''s timezone, ordered by date then product then id, each with the group, the product shell (type, timezone, remote flag, translations and schedule_slots), the requester''s name, the role being substituted, the reason and note, and every offer with its offerer''s NAME AND NOTHING ELSE. An empty array is the all-clear. A request whose date has PASSED drops out on its own, because "unfilled" is a derived state of an open request and not something an admin can still act on; a request the schedule no longer projects stays in, because this orders by DATE and never by a derived instant. An offer carries NO certified flag and NO criminal_record_check_at, and that is about the data rather than the design: an uncertified gedu cannot hold an offer, because gedu_may_substitute_session requires `certified` and guards every path that creates one, approve_session_substitution_offer re-asks it under the request''s lock and set_session_substitution asks it too — so a "certified" chip was true by construction, and the one case it could have caught (an offerer de-certified after offering) is refused at approval with a message the admin reads. The extract stamp is children''s-safety data about a contractor and is not emitted to a surface that does not act on it. A bare array rather than an object of members, exactly as the gedu''s own pool read returns one. Admin-only, guard-first. SLOTS and not an instant: the client owns the calendar maths on every substitution surface, exactly as both session feeds do. This is the ONLY gedu-visible-reason surface besides the admin session document — a `sick` category is health data about a contractor.';
 
 COMMENT ON FUNCTION public.withdraw_session_substitution_request_as_admin(p_request_id uuid) IS
   '"The absent gedu is attending after all": any non-withdrawn request -> `withdrawn`, from the admin session-card editor. The three substitution columns are blanked with the status, because chk_substitution_state forbids a withdrawn row from carrying a sub — so withdrawing a SUBSTITUTED request unwinds the substitution rather than freezing it, and the same fixpoint cascade as clear_session_substitution then cleans up after the displaced sub. Distinct from withdraw_session_substitution_request, which is the gedu''s own and works on an `open` request only.';
@@ -4045,6 +3956,14 @@ DECLARE
   --                                    panel. Admin-gated; the list is the
   --                                    permanent assignment, which is exactly
   --                                    what that panel edits.
+  --   get_admin_dashboard            — COUNTS the groups that have nobody
+  --                                    assigned, for the attention queue.
+  --                                    Admin-gated, and a substitution branch here
+  --                                    would be wrong rather than missing: a
+  --                                    sub does not staff a group, so a group
+  --                                    whose only body on the day is a
+  --                                    substitute still has no gedu and still
+  --                                    belongs on that queue.
   --   validate_gedu_assignment_product — the assignment TRIGGER. It names the
   --                                    table in a RAISE message.
   --   customers_read_assignments_via_gamers — reads assignment ROWS for a parent.
@@ -4052,6 +3971,7 @@ DECLARE
   v_annotated constant text[] := ARRAY[
     'function:apply_group_changes',
     'function:chat_channel_roster_ids',
+    'function:get_admin_dashboard',
     'function:get_my_family_product_feed',
     'function:get_product_groups_with_details',
     'function:validate_gedu_assignment_product',
@@ -4194,7 +4114,6 @@ BEGIN
   FOREACH v_name IN ARRAY ARRAY[
     'gedu_substitutes_session', 'gedu_is_expected_at_session',
     'gedu_may_substitute_session', 'substitution_request_document',
-    'substitution_queue_product',
     'cascade_withdraw_orphaned_substitution_requests'
   ] LOOP
     IF EXISTS (

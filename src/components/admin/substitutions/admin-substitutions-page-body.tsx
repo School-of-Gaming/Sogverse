@@ -2,21 +2,15 @@
 
 import { useTranslations } from "next-intl";
 import type { AdminSubstitutionsData } from "./admin-substitutions-data";
-import { ResolvedSubstitutionsPanel } from "./resolved-substitutions-panel";
 import { SubstitutionRequestsPanel } from "./substitution-requests-panel";
 
 /**
- * `/admin/substitutions` — the office's staffing queue, and the fortnight it
- * has already settled.
+ * `/admin/substitutions` — the office's staffing queue.
  *
  * **One body, two shells.** The live route wraps it in a data shell that reads
  * the document and owns the approval; the preview scene wraps it in fixtures
  * and a local approval. Neither owns a layout, which is what keeps the scene
  * from becoming a second version of this page.
- *
- * **Two panels, in the order the questions get asked.** What needs staffing
- * comes first because it is the only half anybody can act on; what has already
- * been settled comes second because it is a record consulted after the fact.
  *
  * **The column is narrower than the page.** An admin surface may use its width,
  * and this one is a stack of rows an eye reads left to right — at a monitor's
@@ -59,8 +53,6 @@ export function AdminSubstitutionsPageBody({
         now={data.now}
         onApproveOffer={onApproveOffer}
       />
-
-      <ResolvedSubstitutionsPanel substitutions={data.recent} />
     </div>
   );
 }

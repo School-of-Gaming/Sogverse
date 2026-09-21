@@ -14,7 +14,7 @@ import type { SubstitutionReason } from "@/types";
 import { sessionSubstitutionKeys } from "./session-substitution.keys";
 import { SessionSubstitutionService } from "./session-substitution.service";
 import type {
-  AdminSubstitutionQueue,
+  AdminSubstitutionRequest,
   OpenSubstitutionRequest,
 } from "./session-substitution.contracts";
 
@@ -80,20 +80,22 @@ export function useOpenSubstitutionRequests(options?: {
 }
 
 /**
- * The admin Substitutions page, whole.
+ * The admin Substitutions page's queue.
  *
  * The route awaits this read server-side and hydrates it, so the first paint is
  * the finished page and there is **no loading state anywhere below it** — the
- * snapshot is a required prop, which is what makes `data` non-optional and the
+ * list is a required prop, which is what makes `data` non-optional and the
  * absent loading branch a compile-time fact rather than a convention.
  */
-export function useAdminSubstitutionQueue(initialQueue: AdminSubstitutionQueue) {
+export function useAdminSubstitutionQueue(
+  initialRequests: AdminSubstitutionRequest[],
+) {
   const service = new SessionSubstitutionService(getClient());
 
   return useQuery({
     queryKey: sessionSubstitutionKeys.adminQueue(),
     queryFn: () => service.getAdminQueue(),
-    initialData: initialQueue,
+    initialData: initialRequests,
   });
 }
 

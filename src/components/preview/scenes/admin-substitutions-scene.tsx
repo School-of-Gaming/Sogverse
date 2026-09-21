@@ -45,7 +45,7 @@ export function AdminSubstitutionsScene({
   scenario: AdminSubstitutionsScenario;
 }) {
   const locale = resolveLocale(useLocale());
-  const queue = useMemo(
+  const requests = useMemo(
     () => buildAdminSubstitutionsFixture(scenario),
     [scenario],
   );
@@ -72,7 +72,7 @@ export function AdminSubstitutionsScene({
 
   const data = useMemo(() => {
     const mapped = buildAdminSubstitutionsData({
-      queue,
+      requests,
       locale,
       viewerTimeZone: ADMIN_SUBSTITUTIONS_TIMEZONE,
       now: ADMIN_SUBSTITUTIONS_NOW,
@@ -81,7 +81,7 @@ export function AdminSubstitutionsScene({
       ...mapped,
       open: mapped.open.filter((request) => !substituted.has(request.id)),
     };
-  }, [queue, locale, substituted]);
+  }, [requests, locale, substituted]);
 
   /**
    * Approving drops the request the offer belongs to, which is the fixture
@@ -92,7 +92,7 @@ export function AdminSubstitutionsScene({
    */
   const handleApproveOffer = useCallback(
     (offerId: string) => {
-      const request = queue.open.find((candidate) =>
+      const request = requests.find((candidate) =>
         candidate.offers.some((offer) => offer.id === offerId),
       );
       if (request !== undefined) {
@@ -100,7 +100,7 @@ export function AdminSubstitutionsScene({
       }
       return Promise.resolve();
     },
-    [queue],
+    [requests],
   );
 
   return (

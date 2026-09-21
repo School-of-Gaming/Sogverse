@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   SessionSubstitutionService,
   sessionSubstitutionKeys,
-  type AdminSubstitutionQueue,
+  type AdminSubstitutionRequest,
 } from "@/services/session-substitution";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /** The read, or the reason it did not happen. Never both, never neither. */
 type QueueResult =
-  | { ok: true; queue: AdminSubstitutionQueue }
+  | { ok: true; requests: AdminSubstitutionRequest[] }
   | { ok: false; reason: string | null };
 
 /**
@@ -43,7 +43,7 @@ async function loadQueue(): Promise<QueueResult> {
   const service = new SessionSubstitutionService(supabase);
 
   try {
-    return { ok: true, queue: await service.getAdminQueue() };
+    return { ok: true, requests: await service.getAdminQueue() };
   } catch (error) {
     return { ok: false, reason: wireReason(error) };
   }
@@ -98,11 +98,14 @@ export default async function AdminSubstitutionsRoute() {
   // Named through the hook's own key factory rather than a literal: a key one
   // segment off does not fail, it fills an entry nobody reads and buys nothing.
   const queryClient = new QueryClient();
-  queryClient.setQueryData(sessionSubstitutionKeys.adminQueue(), result.queue);
+  queryClient.setQueryData(
+    sessionSubstitutionKeys.adminQueue(),
+    result.requests,
+  );
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <AdminSubstitutionsPage initialQueue={result.queue} />
+      <AdminSubstitutionsPage initialRequests={result.requests} />
     </HydrationBoundary>
   );
 }

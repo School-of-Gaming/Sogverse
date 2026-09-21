@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { Constants, type Database } from "@/types";
 import {
-  adminSubstitutionQueue,
+  adminSubstitutionRequests,
   anonymousSubstitutionRequestDocument,
   substitutionRequestDocument,
   openSubstitutionRequests,
@@ -575,6 +575,8 @@ describe("session substitutions", () => {
     const ASSIGNMENT_ONLY: Record<string, string> = {
       "function:chat_channel_roster_ids":
         "LISTS who a channel can name rather than gating on it. Its own comment carries the decision: a substituting gedu becomes mentionable once they send.",
+      "function:get_admin_dashboard":
+        "COUNTS the groups that have nobody assigned, for the attention queue. Admin-gated, and a substitution branch here would be WRONG rather than missing: a sub does not staff a group, so a group whose only body on the day is a substitute still has no gedu and still belongs on that queue.",
       "function:get_my_family_product_feed":
         "LISTS the group's gedus by first name for a FAMILY. The report attribution chip already names whoever wrote a report, so a family learns nothing new from a substitution — and this is the app's one STRICT client schema, so a widened document would fail the old app's parse rather than be stripped by it.",
       "function:get_product_groups_with_details":
@@ -2245,7 +2247,7 @@ describe("session substitutions", () => {
       expect(b?.substitutions).toEqual([]);
     });
 
-    it("the admin queue carries the open request with its offers and their standing", async () => {
+    it("the admin queue carries the open request with its offers", async () => {
       const date = utcDate(7);
       const id = await seedRequest({ date });
       await admin
@@ -2259,9 +2261,9 @@ describe("session substitutions", () => {
       );
       expect(error).toBeNull();
 
-      const mine = adminSubstitutionQueue
+      const mine = adminSubstitutionRequests
         .parse(data)
-        .open.find((row) => row.id === id);
+        .find((row) => row.id === id);
       expect(mine).toBeDefined();
       expect(mine?.group_name).toBe("Cohort A");
       expect(mine?.reason).toBe("sick");
@@ -2290,72 +2292,71 @@ describe("session substitutions", () => {
       ).toEqual([0, 1, 2, 3, 4, 5, 6]);
       expect(mine?.offers.length).toBe(1);
       expect(mine?.offers[0].gedu_id).toBe(subId);
-      expect(mine?.offers[0].certified).toBe(true);
-      expect(mine?.offers[0].criminal_record_check_at).toBeNull();
+    });
+
+    /**
+     * The offer carries a name and the two ids, and **nothing about the
+     * offerer's standing** — no certified flag, no criminal-record stamp.
+     *
+     * An uncertified gedu cannot hold an offer (the may-substitute predicate
+     * guards every path that creates one), so a certification flag stated
+     * something true by construction; and an extract date is children's-safety
+     * data about a contractor, which must not be emitted to a surface that does
+     * not act on it. Asserted on the parsed keys rather than on the schema,
+     * because a strict schema would refuse the *document* while what this is
+     * about is the RPC not putting the field on the wire.
+     */
+    it("an offer carries no certification or criminal-record data", async () => {
+      const id = await seedRequest({ date: utcDate(7) });
+      await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+
+      const { data } = await adminAuth.rpc("get_admin_substitution_requests");
+      const raw = z
+        .array(z.object({ id: z.string(), offers: z.array(z.record(z.string(), z.unknown())) }))
+        .parse(data)
+        .find((row) => row.id === id);
+
+      expect(raw?.offers.length).toBe(1);
+      expect(Object.keys(raw?.offers[0] ?? {}).sort()).toEqual([
+        "created_at",
+        "first_name",
+        "gedu_id",
+        "id",
+        "last_name",
+      ]);
     });
 
     it("the admin queue drops an open request whose date has passed", async () => {
       const id = await seedRequest({ date: utcDate(-7) });
       const { data } = await adminAuth.rpc("get_admin_substitution_requests");
-      const queue = adminSubstitutionQueue.parse(data);
       // Unfilled is a derived state of an open request, so the row simply stops
-      // being offered — and it is not history either, so it is in neither list.
-      expect(queue.open.map((row) => row.id)).not.toContain(id);
-      expect(queue.recent.map((row) => row.id)).not.toContain(id);
+      // being offered — nothing sweeps and no clock runs.
+      expect(
+        adminSubstitutionRequests.parse(data).map((row) => row.id),
+      ).not.toContain(id);
     });
 
-    it("the fortnight behind the queue names who stood in, and where nobody had to", async () => {
-      const substitutedId = await seedRequest({
-        date: utcDate(-3),
+    /**
+     * The read answers open requests and only those. A substituted or withdrawn
+     * request is history the group's own page carries; this page is the work
+     * still to be done.
+     */
+    it("the admin queue carries no settled request", async () => {
+      const substituted = await seedRequest({
+        date: utcDate(5),
         substituteId: subId,
       });
-      const withdrawnId = await seedRequest({
-        date: utcDate(-5),
+      const withdrawn = await seedRequest({
+        date: utcDate(6),
         absent: thirdId,
         status: "withdrawn",
       });
 
-      const { data, error } = await adminAuth.rpc(
-        "get_admin_substitution_requests",
-      );
-      expect(error).toBeNull();
-      const recent = adminSubstitutionQueue.parse(data).recent;
-
-      const stood = recent.find((row) => row.id === substitutedId);
-      expect(stood?.status).toBe("substituted");
-      expect(stood?.substitute_id).toBe(subId);
-      expect(stood?.substitute_first_name).toBeTruthy();
-
-      // A withdrawal is an answer of its own — "the absent gedu is attending
-      // after all" — and the table's CHECK is what guarantees it carries no
-      // sub, which is why the page reads the substitute as the branch.
-      const dropped = recent.find((row) => row.id === withdrawnId);
-      expect(dropped?.status).toBe("withdrawn");
-      expect(dropped?.substitute_id).toBeNull();
-      expect(dropped?.substitute_first_name).toBeNull();
-    });
-
-    it("the fortnight is bounded at fourteen days back and at today", async () => {
-      const old = await seedRequest({ date: utcDate(-20), substituteId: subId });
-      const ahead = await seedRequest({
-        date: utcDate(3),
-        absent: thirdId,
-        substituteId: subId,
-      });
-      const inside = await seedRequest({
-        date: utcDate(-1),
-        absent: TEST_IDS.GEDU,
-        substituteId: subId,
-      });
-
       const { data } = await adminAuth.rpc("get_admin_substitution_requests");
-      const ids = adminSubstitutionQueue.parse(data).recent.map((row) => row.id);
+      const ids = adminSubstitutionRequests.parse(data).map((row) => row.id);
 
-      expect(ids).toContain(inside);
-      expect(ids).not.toContain(old);
-      // A settled FUTURE session is staffing the group page owns; this list is
-      // the record of what has already happened.
-      expect(ids).not.toContain(ahead);
+      expect(ids).not.toContain(substituted);
+      expect(ids).not.toContain(withdrawn);
     });
 
     it("get_my_assigned_products discriminates a substitution row from an assignment row", async () => {

@@ -1,10 +1,10 @@
 import type { AppSupabaseClient, SubstitutionReason } from "@/types";
 import {
-  adminSubstitutionQueue,
+  adminSubstitutionRequests,
   anonymousSubstitutionRequestDocument,
   substitutionRequestDocument,
   openSubstitutionRequests,
-  type AdminSubstitutionQueue,
+  type AdminSubstitutionRequest,
   type AnonymousSubstitutionRequestDocument,
   type SubstitutionRequestDocument,
   type OpenSubstitutionRequest,
@@ -52,20 +52,19 @@ export class SessionSubstitutionService {
   }
 
   /**
-   * The admin Substitutions page, whole: what needs staffing, and what the last
-   * fortnight came to.
+   * The admin Substitutions page: every open request, with its offers.
    *
-   * One read for both halves because they are one page and one invalidation — a
-   * single approval empties a row out of `open` and puts it into `recent`, and
-   * two reads would have to land together to show that without a frame in which
-   * the row is in neither list or in both.
+   * Each offer carries the offerer's name and nothing else — an uncertified
+   * gedu cannot hold one, so a certification chip would have been true by
+   * construction, and the criminal-record stamp is children's-safety data a
+   * page that does not act on it has no business being handed.
    */
-  async getAdminQueue(): Promise<AdminSubstitutionQueue> {
+  async getAdminQueue(): Promise<AdminSubstitutionRequest[]> {
     const { data, error } = await this.supabase.rpc(
       "get_admin_substitution_requests",
     );
     if (error) throw error;
-    return adminSubstitutionQueue.parse(data);
+    return adminSubstitutionRequests.parse(data);
   }
 
   /**

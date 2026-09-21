@@ -1289,6 +1289,11 @@ DECLARE
   -- home of this rule, names it positively instead.
   v_annotated constant text[] := ARRAY[
     'function:chat_channel_roster_ids',
+    -- COUNTS the groups with nobody assigned, for the attention queue. A
+    -- substitution branch here would be wrong rather than missing: a sub does
+    -- not staff a group, so a group whose only body on the day is a substitute
+    -- still has no gedu and still belongs on that queue.
+    'function:get_admin_dashboard',
     'function:get_my_family_product_feed',
     'function:get_product_groups_with_details',
     'function:validate_gedu_assignment_product',

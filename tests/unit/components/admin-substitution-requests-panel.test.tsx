@@ -21,8 +21,10 @@ import { ROUTES } from "@/lib/constants";
  *    admin clearing the sub puts the request back, and the row has to come with
  *    it. A panel that dropped the row on the resolution alone would filter it
  *    out of a list that is still offering it, with nothing left to act on.
- * 3. **Empty collapses to one row.** The all-clear is not an empty card with a
- *    sentence in it; it is the panel giving its space back.
+ * 3. **The requests are the cards; the list is a heading over a stack.** Each
+ *    request is a peer with an action of its own, and nothing inside one is
+ *    boxed — the offers are divider-separated rows under a muted label. Empty
+ *    is a line under the heading, not a card holding a line.
  * 4. **Urgency is a tint, not a re-ordering**, and it is carried by the row it
  *    belongs to rather than recomputed from the clock in the component.
  *
@@ -56,8 +58,6 @@ function offer(id: string, geduId: string, name: string): SubstitutionOffer {
     id,
     geduId,
     name,
-    certified: true,
-    criminalRecordCheckOn: "4 May 2026",
   };
 }
 
@@ -123,8 +123,8 @@ describe("the admin Substitutions page's queue panel", () => {
   it("renders one row per request, with the session, the absent gedu and every offer", () => {
     renderPanel([WITH_OFFERS, WITHOUT_OFFERS], () => Promise.resolve());
 
-    // Direct children only: an offers list nests inside a row, so a role query
-    // over the whole subtree would count its items as rows too.
+    // Direct children only: an offers list nests inside a request card, so a
+    // role query over the whole subtree would count its items as rows too.
     const rows = [
       ...screen.getByRole("list", {
         name: "admin.substitutions.listLabel",
@@ -143,10 +143,10 @@ describe("the admin Substitutions page's queue panel", () => {
     expect(staffed.getByText("Flunssa.")).toBeTruthy();
     expect(staffed.getByText("Eeli Virtanen")).toBeTruthy();
     expect(staffed.getByText("Saana Nieminen")).toBeTruthy();
-    // Both standings ship on every offer, as they do on a certification row.
+    // A name and nothing else: no certification chip, no extract stamp.
     expect(
-      staffed.getAllByText("admin.users.certification.certified"),
-    ).toHaveLength(2);
+      staffed.queryByText("admin.users.certification.certified"),
+    ).toBeNull();
   });
 
   /**
@@ -164,14 +164,46 @@ describe("the admin Substitutions page's queue panel", () => {
     ].filter((child): child is HTMLElement => child instanceof HTMLElement);
 
     expect(within(rows[0]).getByText("in 3 hours")).toBeTruthy();
-    // The urgency treatment is the row's own edge and nothing else — one token,
-    // no badge, no second colour.
+    // The urgency treatment is the request CARD's own edge and nothing else —
+    // one token, no badge, no second colour, and no extra box to carry it.
     expect(rows[0].querySelector(".border-l-warning")).toBeTruthy();
 
     // The orphan has no start, so it makes no claim about how soon it is and
     // cannot be urgent.
     expect(within(rows[1]).queryByText("in 3 hours")).toBeNull();
     expect(rows[1].querySelector(".border-l-warning")).toBeNull();
+  });
+
+  /**
+   * The card rule, pinned where it was broken: the panel used to be a card
+   * holding bordered request boxes holding tinted offer boxes — three levels of
+   * edge, each spending a border and two paddings of a 360px screen. Now the
+   * request is the only box, and the offers are rows told apart by dividers.
+   */
+  it("boxes the request and nothing inside it", () => {
+    const { container } = renderPanel(
+      [WITH_OFFERS, WITHOUT_OFFERS],
+      () => Promise.resolve(),
+    );
+
+    const cards = container.querySelectorAll(".rounded-lg.border");
+    expect(cards).toHaveLength(2);
+    for (const card of cards) {
+      // No bordered CONTAINER inside a card — the shape this page used to nest
+      // two deep. Scoped to `div` on purpose: a person chip and the
+      // open-the-group link are a chip and a control, and the rule's own
+      // exceptions cover both, so their borders are theirs to have.
+      expect(
+        card.querySelector("div.rounded-lg.border, div.rounded-md.border"),
+      ).toBeNull();
+    }
+
+    // The offers are rows under a label, joined by dividers rather than boxed.
+    const offers = screen.getByRole("list", {
+      name: "admin.substitutions.offersLabel",
+    });
+    expect(offers.className).toContain("divide-y");
+    expect(offers.children).toHaveLength(2);
   });
 
   it("says nobody has offered and points at the group page", () => {
@@ -291,7 +323,13 @@ describe("the admin Substitutions page's queue panel", () => {
     renderPanel([], () => Promise.resolve());
 
     expect(screen.getByText("admin.substitutions.allClear")).toBeTruthy();
+    // A line under the heading, not a list and not a card holding one.
     expect(screen.queryByRole("list")).toBeNull();
+    // The heading survives the empty state — it is what holds the stack, so it
+    // is the one thing on this panel that is never conditional.
+    expect(
+      screen.getByRole("heading", { name: "admin.substitutions.listLabel" }),
+    ).toBeTruthy();
   });
 
   it("shows a failure on the row that failed and leaves it pressable", async () => {

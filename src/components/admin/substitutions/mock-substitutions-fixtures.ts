@@ -1,8 +1,4 @@
-import type {
-  AdminOpenSubstitutionRequest,
-  AdminResolvedSubstitution,
-  AdminSubstitutionQueue,
-} from "@/services/session-substitution";
+import type { AdminSubstitutionRequest } from "@/services/session-substitution";
 
 /**
  * Fixtures for the Substitutions preview scene.
@@ -31,8 +27,8 @@ export function isAdminSubstitutionsScenario(
  * one morning.
  *
  * Pinned rather than live because every case on this page is arithmetic against
- * a known instant: which sessions are inside the urgent day, which fortnight
- * the settled rows fall in, which order the two same-day requests come out in.
+ * a known instant: which sessions are inside the urgent day, and which order
+ * the two same-day requests come out in.
  */
 export const ADMIN_SUBSTITUTIONS_NOW = new Date("2026-08-17T09:20:00+03:00");
 
@@ -59,7 +55,7 @@ const TUE = 1;
 const WED = 2;
 const FRI = 4;
 
-type WireProduct = AdminOpenSubstitutionRequest["product"];
+type WireProduct = AdminSubstitutionRequest["product"];
 
 function product(args: {
   id: string;
@@ -138,17 +134,12 @@ function offer(args: {
   geduId: string;
   first: string;
   last: string;
-  certified: boolean;
-  /** When an admin recorded the extract, as an instant, or null. */
-  checkedAt: string | null;
-}): AdminOpenSubstitutionRequest["offers"][number] {
+}): AdminSubstitutionRequest["offers"][number] {
   return {
     id: args.id,
     gedu_id: args.geduId,
     first_name: args.first,
     last_name: args.last,
-    certified: args.certified,
-    criminal_record_check_at: args.checkedAt,
     created_at: "2026-08-16T18:05:00+03:00",
   };
 }
@@ -169,7 +160,7 @@ function offer(args: {
  * Monday sessions arrive Espoo-then-Solna and are shown the other way round,
  * because Solna's 15:00 is 16:00 where the reader is.
  */
-const OPEN_REQUESTS: readonly AdminOpenSubstitutionRequest[] = [
+const OPEN_REQUESTS: readonly AdminSubstitutionRequest[] = [
   {
     id: "substitution-request-1",
     group_id: "group-espoo-a",
@@ -189,19 +180,12 @@ const OPEN_REQUESTS: readonly AdminOpenSubstitutionRequest[] = [
         geduId: PERSON_IDS.eeliVirtanen,
         first: "Eeli",
         last: "Virtanen",
-        certified: true,
-        checkedAt: "2026-05-04T11:00:00+03:00",
       }),
-      // Certified, no extract on record. The standing informs and gates
-      // nothing — exactly as it does in the certification queue — so the row
-      // is pressable and only the missing half is tinted.
       offer({
         id: "substitution-offer-2",
         geduId: PERSON_IDS.saanaNieminen,
         first: "Saana",
         last: "Nieminen",
-        certified: true,
-        checkedAt: null,
       }),
     ],
   },
@@ -219,17 +203,11 @@ const OPEN_REQUESTS: readonly AdminOpenSubstitutionRequest[] = [
     requested_by_last_name: "Laine",
     product: STOCKHOLM_CLUB,
     offers: [
-      // An offerer whose certification has been taken away since they
-      // volunteered. Only an admin's own edit can produce it — the write
-      // refuses an uncertified caller — and it is the whole reason the flag
-      // rides on the offer rather than being assumed from the offer existing.
       offer({
         id: "substitution-offer-3",
         geduId: PERSON_IDS.aaroHeikkila,
         first: "Aaro",
         last: "Heikkilä",
-        certified: false,
-        checkedAt: "2026-04-20T09:30:00+03:00",
       }),
     ],
   },
@@ -252,8 +230,6 @@ const OPEN_REQUESTS: readonly AdminOpenSubstitutionRequest[] = [
         geduId: PERSON_IDS.eeliVirtanen,
         first: "Eeli",
         last: "Virtanen",
-        certified: true,
-        checkedAt: "2026-05-04T11:00:00+03:00",
       }),
     ],
   },
@@ -276,67 +252,17 @@ const OPEN_REQUESTS: readonly AdminOpenSubstitutionRequest[] = [
 ];
 
 /**
- * The fortnight behind the queue: one session somebody stood in for, and one
- * where nobody had to.
- *
- * Both outcomes, because the difference between them is the whole of what this
- * list has to make legible — and the pair is the only thing on the page an
- * empty queue could not also show.
- */
-const RECENT: readonly AdminResolvedSubstitution[] = [
-  {
-    id: "substitution-request-5",
-    group_id: "group-espoo-a",
-    group_name: "Ryhmä A",
-    session_date: "2026-08-10",
-    role: "primary",
-    status: "substituted",
-    reason: "sick",
-    reason_note: null,
-    created_at: "2026-08-09T19:00:00+03:00",
-    approved_at: "2026-08-10T08:15:00+03:00",
-    requested_by: PERSON_IDS.miloKorhonen,
-    requested_by_first_name: "Milo",
-    requested_by_last_name: "Korhonen",
-    substitute_id: PERSON_IDS.saanaNieminen,
-    substitute_first_name: "Saana",
-    substitute_last_name: "Nieminen",
-    product: ESPOO_CLUB,
-  },
-  {
-    id: "substitution-request-6",
-    group_id: "group-vantaa-c",
-    group_name: "Ryhmä C",
-    session_date: "2026-08-14",
-    role: "assistant",
-    status: "withdrawn",
-    reason: "other",
-    reason_note: null,
-    created_at: "2026-08-12T10:00:00+03:00",
-    approved_at: null,
-    requested_by: PERSON_IDS.veetiAaltonen,
-    requested_by_first_name: "Veeti",
-    requested_by_last_name: "Aaltonen",
-    substitute_id: null,
-    substitute_first_name: null,
-    substitute_last_name: null,
-    product: VANTAA_CLUB,
-  },
-];
-
-/**
  * The document the read would have returned, for one scenario.
  *
- * `all-clear` empties **both** lists: a platform with four sessions to staff has
- * no way to reach the queue's all-clear line, and a fortnight with something in
- * it has no way to show the settled list's absence.
+ * `all-clear` is the empty queue — the one state a platform with four sessions
+ * to staff has no way to reach.
  */
 export function buildAdminSubstitutionsFixture(
   scenario: AdminSubstitutionsScenario,
-): AdminSubstitutionQueue {
-  if (scenario === "all-clear") return { open: [], recent: [] };
-  // Copied out rather than handed over: the document's own type is mutable
-  // (it is a zod output), and a fixture that let a caller write into the module
+): AdminSubstitutionRequest[] {
+  if (scenario === "all-clear") return [];
+  // Copied out rather than handed over: the document's own type is mutable (it
+  // is a zod output), and a fixture that let a caller write into the module
   // constant would leak one scene's edits into the next one opened.
-  return { open: [...OPEN_REQUESTS], recent: [...RECENT] };
+  return [...OPEN_REQUESTS];
 }

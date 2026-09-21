@@ -6,15 +6,10 @@ import {
   occurrenceOnDate,
   type SessionDateOccurrence,
 } from "@/lib/session-date-occurrence";
-import { formatDate, formatDateOnly } from "@/lib/utils";
-import type {
-  AdminOpenSubstitutionRequest,
-  AdminResolvedSubstitution,
-  AdminSubstitutionQueue,
-} from "@/services/session-substitution";
+import { formatDateOnly } from "@/lib/utils";
+import type { AdminSubstitutionRequest } from "@/services/session-substitution";
 import type {
   AdminSubstitutionsData,
-  ResolvedSubstitution,
   SubstitutionOffer,
   SubstitutionRequest,
 } from "./admin-substitutions-data";
@@ -23,10 +18,10 @@ import type {
  * The Substitutions page's wire document, turned into what its body renders.
  *
  * **Day-granular except for two things, both of which genuinely tick.** A
- * session date is a calendar fact and an extract's date is one too; what moves
- * while the page sits open is how far away a session is and whether it is
- * inside the day that makes it urgent. Those are the two the shell re-runs on
- * the clock, and they are the reason this function takes `now` at all.
+ * session date is a calendar fact; what moves while the page sits open is how
+ * far away a session is and whether it is inside the day that makes it urgent.
+ * Those are the two the shell re-runs on the clock, and they are the reason
+ * this function takes `now` at all.
  *
  * **The occurrence is resolved from each request's own product**, from the
  * slots that travel with it, so the only absence left is "no slot names this
@@ -34,27 +29,24 @@ import type {
  * as a bare date rather than a time the schedule would not produce.
  */
 export function buildAdminSubstitutionsData({
-  queue,
+  requests,
   locale,
   viewerTimeZone,
   now,
 }: {
-  queue: AdminSubstitutionQueue;
+  requests: readonly AdminSubstitutionRequest[];
   locale: SupportedLocale;
   viewerTimeZone: string;
   now: Date;
 }): AdminSubstitutionsData {
   return {
     now,
-    timeZoneAbbrev: viewerZoneAbbrev(queue, viewerTimeZone, locale, now),
+    timeZoneAbbrev: viewerZoneAbbrev(requests, viewerTimeZone, locale, now),
     open: sortBySoonest(
-      queue.open.map((request) => ({
+      requests.map((request) => ({
         row: request,
         request: toSubstitutionRequest(request, locale, viewerTimeZone, now),
       })),
-    ),
-    recent: queue.recent.map((row) =>
-      toResolvedSubstitution(row, locale, viewerTimeZone),
     ),
   };
 }
@@ -88,7 +80,7 @@ const URGENT_WITHIN_MS = 24 * 60 * 60 * 1000;
  * between two renders of the same document.
  */
 function sortBySoonest(
-  rows: readonly { row: AdminOpenSubstitutionRequest; request: SubstitutionRequest }[],
+  rows: readonly { row: AdminSubstitutionRequest; request: SubstitutionRequest }[],
 ): SubstitutionRequest[] {
   return [...rows]
     .sort((a, b) => sortKey(a) - sortKey(b))
@@ -104,7 +96,7 @@ function sortBySoonest(
  * honestly claim, and the middle of it is the least wrong place to say so.
  */
 function sortKey(entry: {
-  row: AdminOpenSubstitutionRequest;
+  row: AdminSubstitutionRequest;
   request: SubstitutionRequest;
 }): number {
   const { startsAt } = entry.request;
@@ -114,7 +106,7 @@ function sortKey(entry: {
 
 /** One open request as the list renders it. */
 function toSubstitutionRequest(
-  request: AdminOpenSubstitutionRequest,
+  request: AdminSubstitutionRequest,
   locale: SupportedLocale,
   viewerTimeZone: string,
   now: Date,
@@ -122,8 +114,22 @@ function toSubstitutionRequest(
   const occurrence = occurrenceFor(request);
 
   return {
-    ...session(request, locale, viewerTimeZone, occurrence),
     id: request.id,
+    groupId: request.group_id,
+    groupName: request.group_name,
+    productName: productName(request.product.translations, locale),
+    productType: request.product.product_type,
+    // A weekday beside the date, because what an admin is staffing is a
+    // *session* and "Friday" is how the office talks about one; the year is
+    // left off because the queue only ever holds dates from today forward
+    // inside the schedule's own horizon.
+    sessionDate: formatDateOnly(request.session_date, locale, {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    }),
+    sessionTime:
+      occurrence === null ? null : clockFace(occurrence, viewerTimeZone),
     startsAt: occurrence?.start ?? null,
     // Strictly in the future as well as within the day: a session that has
     // already begun is not something an admin can still staff, and shouting
@@ -132,89 +138,32 @@ function toSubstitutionRequest(
       occurrence !== null &&
       occurrence.start.getTime() > now.getTime() &&
       occurrence.start.getTime() - now.getTime() <= URGENT_WITHIN_MS,
+    role: request.role,
+    reason: request.reason,
+    reasonNote: request.reason_note,
+    requesterId: request.requested_by,
+    requesterName: personName(
+      request.requested_by_first_name,
+      request.requested_by_last_name,
+    ),
+    groupHref: ROUTES.admin.productGroup(
+      request.product.product_type,
+      request.product.id,
+      request.group_id,
+    ),
     offers: request.offers.map(
       (offer): SubstitutionOffer => ({
         id: offer.id,
         geduId: offer.gedu_id,
         name: personName(offer.first_name, offer.last_name),
-        certified: offer.certified,
-        criminalRecordCheckOn:
-          offer.criminal_record_check_at === null
-            ? null
-            : formatDate(offer.criminal_record_check_at, locale, {
-                dateStyle: "medium",
-                timeZone: viewerTimeZone,
-              }),
       }),
-    ),
-  };
-}
-
-/** One settled request as the fortnight list renders it. */
-function toResolvedSubstitution(
-  row: AdminResolvedSubstitution,
-  locale: SupportedLocale,
-  viewerTimeZone: string,
-): ResolvedSubstitution {
-  return {
-    ...session(row, locale, viewerTimeZone, occurrenceFor(row)),
-    id: row.id,
-    substituteId: row.substitute_id,
-    substituteName:
-      row.substitute_first_name === null || row.substitute_last_name === null
-        ? null
-        : personName(row.substitute_first_name, row.substitute_last_name),
-  };
-}
-
-/**
- * The session facts both halves of the page state, worded once.
- *
- * The two lists answer different questions and say the same things about the
- * session either way — which product, which group, which afternoon — so the
- * wording lives here rather than in each mapping, where the two would drift the
- * first time one of them gained a field.
- */
-function session(
-  row: AdminOpenSubstitutionRequest | AdminResolvedSubstitution,
-  locale: SupportedLocale,
-  viewerTimeZone: string,
-  occurrence: SessionDateOccurrence | null,
-) {
-  return {
-    groupId: row.group_id,
-    groupName: row.group_name,
-    productName: productName(row.product.translations, locale),
-    productType: row.product.product_type,
-    // A weekday beside the date, because what an admin is staffing is a
-    // *session* and "Friday" is how the office talks about one; the year is
-    // left off because both lists only ever hold dates inside a month of today.
-    sessionDate: formatDateOnly(row.session_date, locale, {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-    }),
-    sessionTime:
-      occurrence === null ? null : clockFace(occurrence, viewerTimeZone),
-    role: row.role,
-    reason: row.reason,
-    reasonNote: row.reason_note,
-    requesterId: row.requested_by,
-    requesterName: personName(
-      row.requested_by_first_name,
-      row.requested_by_last_name,
-    ),
-    groupHref: ROUTES.admin.productGroup(
-      row.product.product_type,
-      row.product.id,
-      row.group_id,
     ),
   };
 }
 
 /** Where the session's own product puts it on its date, or `null` for an orphan. */
 function occurrenceFor(
-  row: AdminOpenSubstitutionRequest | AdminResolvedSubstitution,
+  row: AdminSubstitutionRequest,
 ): SessionDateOccurrence | null {
   return occurrenceOnDate({
     sessionDate: row.session_date,
@@ -257,12 +206,12 @@ export function clockFace(
  * abbreviation is the one currently in force (EET in winter, EEST in summer).
  */
 function viewerZoneAbbrev(
-  queue: AdminSubstitutionQueue,
+  requests: readonly AdminSubstitutionRequest[],
   viewerTimeZone: string,
   locale: string,
   now: Date,
 ): string | null {
-  const converts = [...queue.open, ...queue.recent].some(
+  const converts = requests.some(
     (row) => row.product.timezone !== viewerTimeZone,
   );
   if (!converts) return null;

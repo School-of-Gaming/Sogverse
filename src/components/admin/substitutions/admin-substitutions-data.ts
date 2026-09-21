@@ -16,15 +16,16 @@ import type { AppHref } from "@/lib/constants/routes";
  */
 
 /**
- * One gedu who has volunteered to substitute at a session, and the two
- * standings an admin weighs before seating them.
+ * One gedu who has volunteered to substitute at a session — a name, and the ids
+ * behind it.
  *
- * They are the certification queue's two standings in the certification
- * queue's own shape, deliberately: an admin choosing a sub is asking what they
- * ask when certifying somebody, and a second vocabulary for "certified" and
- * "extract recorded" would be a second thing to keep in step. Neither gates the
- * action — the database has already refused anybody who may not substitute — so
- * both inform and nothing here is disabled by them.
+ * **No standings.** It carried `certified` and the criminal-record stamp so the
+ * row could draw the certification queue's chips, and both are gone: the
+ * database refuses an offer from anybody who may not substitute, certification
+ * included, so a "certified" chip said something that was true by construction,
+ * and an extract date is children's-safety data about a contractor that this
+ * page does not act on. The one case the chips could have caught — an offerer
+ * de-certified after offering — is refused at approval and read on the row.
  */
 export interface SubstitutionOffer {
   /**
@@ -39,18 +40,11 @@ export interface SubstitutionOffer {
   geduId: string;
   /** `null` where the account carries no name; the row words the stand-in. */
   name: string | null;
-  certified: boolean;
-  /**
-   * When an admin recorded seeing this offerer's criminal record extract,
-   * already formatted as a calendar date in the viewer's zone — or `null` where
-   * none has been recorded. Pre-formatted for the reason the certification
-   * queue's twin is: it is an `Intl` product rather than translated copy.
-   */
-  criminalRecordCheckOn: string | null;
 }
 
 /**
- * What both halves of the page say about the session a request is against.
+ * One open request, sorted soonest-first and carrying what makes that sort
+ * legible.
  *
  * **The date is the product's and the clock face is the reader's**, and the two
  * are deliberately not resolved into one zone. The date is the request's own
@@ -65,10 +59,11 @@ export interface SubstitutionOffer {
  * An **orphaned** request (an admin moved the schedule's weekday after it was
  * filed) resolves to no occurrence at all and carries `sessionTime: null` and
  * `startsAt: null`, rendering as the bare date with no urgency claimed. That is
- * the case this page exists to tolerate: it orders by date and never by a
+ * the case this page exists to tolerate: the read orders by date and never by a
  * derived instant.
  */
-interface SubstitutionSession {
+export interface SubstitutionRequest {
+  id: string;
   groupId: string;
   groupName: string;
   /** The product's name in the reader's locale — never truncated, as on a card. */
@@ -87,6 +82,23 @@ interface SubstitutionSession {
    * they are being asked.
    */
   sessionTime: string | null;
+  /**
+   * The instant the session begins, or `null` for the orphan.
+   *
+   * Here rather than pre-phrased because how long away it is has to be *said* —
+   * "in 3 hours", "tomorrow" — and the phrasing is the reader's locale's, which
+   * only a formatter in the component has.
+   */
+  startsAt: Date | null;
+  /**
+   * The session begins within a day, and the row says so more loudly.
+   *
+   * Decided in the mapping rather than in the row because it is a fact about
+   * the page's pinned `now` and the session's own start, and a component
+   * recomputing it from the same two values would be a second definition of
+   * "soon".
+   */
+  urgent: boolean;
   /** The role being substituted — the absent gedu's, and what the sub is paid as. */
   role: GeduAssignmentRole;
   reason: SubstitutionReason | null;
@@ -97,52 +109,8 @@ interface SubstitutionSession {
   requesterName: string | null;
   /** The group's own admin page — where a request with no offers is dealt with. */
   groupHref: AppHref;
-}
-
-/**
- * One open request, sorted soonest-first and carrying what makes that sort
- * legible.
- *
- * `startsAt` is the instant the session begins, and it is here rather than
- * pre-phrased because how long away that is has to be *said* — "in 3 hours",
- * "tomorrow" — and the phrasing is the reader's locale's, which only a
- * formatter in the component has. `null` is the orphan: no occurrence, no
- * claim about when it starts, and no urgency.
- */
-export interface SubstitutionRequest extends SubstitutionSession {
-  id: string;
-  startsAt: Date | null;
-  /**
-   * The session begins within a day, and the row says so more loudly.
-   *
-   * Decided here rather than in the row because it is a fact about the page's
-   * pinned `now` and the session's own start, and a component recomputing it
-   * from the same two values would be a second definition of "soon".
-   */
-  urgent: boolean;
   /** As delivered: the read orders by date then product, and so does the list. */
   offers: readonly SubstitutionOffer[];
-}
-
-/**
- * One request the office has already settled, within the fortnight behind the
- * queue.
- *
- * It answers "who stood in on Tuesday?", which has no other home: an approved
- * request leaves the queue, and the only surface still naming its substitute is
- * the group's own page, which an admin has to already know the group to reach.
- *
- * **`substituteId` is what says which of the two outcomes this was.** The
- * database pairs them exactly — a withdrawn request cannot carry a sub, by the
- * table's own CHECK, and a substituted one always does — so a null substitute
- * *is* "nobody had to stand in after all", and the row needs no second field to
- * say so. `substituteName` may be null beside a present id, which is only the
- * ordinary unnamed account and is worded by the row.
- */
-export interface ResolvedSubstitution extends SubstitutionSession {
-  id: string;
-  substituteId: string | null;
-  substituteName: string | null;
 }
 
 /** Everything the page body renders. */
@@ -159,6 +127,4 @@ export interface AdminSubstitutionsData {
   timeZoneAbbrev: string | null;
   /** Open requests, soonest session first. Empty is the all-clear. */
   open: readonly SubstitutionRequest[];
-  /** What the last fortnight came to, newest session first. */
-  recent: readonly ResolvedSubstitution[];
 }
