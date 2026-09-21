@@ -117,11 +117,16 @@ export function Header({ navRole }: HeaderProps) {
   // and gamers route straight there, past the family-selector interstitial).
   // Signed-out visitors go home.
   const logoHref = user && dashboardPath ? dashboardPath : ROUTES.home;
-  // The visual "you're here" state for the logo follows whatever it links to.
+  // The visual "you're here" state for the logo follows whatever it links to —
+  // its dashboard and the pages beneath it — except a page beneath it that has
+  // a nav item of its own. Substitutions lives under the gedu dashboard's path
+  // because that prefix is what role-gates it, and without this carve-out the
+  // strip lit two places at once and named the reader's position twice.
   const isOnLogoTarget =
     logoHref === ROUTES.home
       ? isHome
-      : pathname === logoHref || pathname.startsWith(logoHref + "/");
+      : (pathname === logoHref || pathname.startsWith(logoHref + "/")) &&
+        !isOnSubstitutions;
   // What the logo's destination is called — "Dashboard" for the admin, whose
   // panel is genuinely an admin panel, and "My SOG" for every other role.
   const dashboardLabel =

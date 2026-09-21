@@ -325,8 +325,15 @@ export function AccountMenu({
   const provenance = useSessionProvenance({ enabled: wantsFamily });
 
   const dashboardPath = ROLE_DASHBOARD_PATHS[role];
+  // The dashboard and the pages beneath it — except Substitutions, which sits
+  // under the gedu dashboard's path for its role gate and has a nav item of its
+  // own, so it is not "on My SOG" (the header's logo draws the same line).
   const isOnDashboard =
-    pathname === dashboardPath || pathname.startsWith(dashboardPath + "/");
+    (pathname === dashboardPath || pathname.startsWith(dashboardPath + "/")) &&
+    !(
+      pathname === ROUTES.gedu.substitutions ||
+      pathname.startsWith(ROUTES.gedu.substitutions + "/")
+    );
   /**
    * Whether this menu carries About — the one nav row here, and the other half
    * of a decision the header makes.
