@@ -42,18 +42,12 @@ import {
   effectivePricingShape,
   locationPickerMode,
   offersUncapped,
-  startModeUsesDate,
-  startModeUsesThreshold,
   type FormState,
   type RegistrationOpensMode,
   type TranslationDraft,
 } from "./product-form-state";
 import { effectiveBillingMode } from "./product-type-config";
-import type {
-  PaidMode,
-  ProductTypeConfig,
-  StartMode,
-} from "./product-type-config";
+import type { PaidMode, ProductTypeConfig } from "./product-type-config";
 
 // Constrained to the actual keys under `admin.products.errors` so the
 // caller's t(`errors.${messageKey}`) typechecks without a cast.
@@ -73,7 +67,6 @@ export type ValidationKey =
   | "materialUrlInvalid"
   | "startDateRequired"
   | "endDateRequired"
-  | "thresholdInvalid"
   | "seatCountRequired"
   | "seatCountInvalid"
   | "priceSessionMissing"
@@ -190,21 +183,13 @@ export function validate(
     return err("materialUrlInvalid");
   }
 
-  const usesDate = startModeUsesDate(state.startMode);
-  const usesThreshold = startModeUsesThreshold(state.startMode);
-  if (usesDate) {
-    if (!state.startDate) return err("startDateRequired");
-    if (config.scheduleShape === "weekly_ongoing") {
-      // Consumer clubs are ongoing by default; only require an end date once
-      // the admin has explicitly opted into one (hasEndDate).
-      if (state.hasEndDate && !state.endDate) return err("endDateRequired");
-    } else if (config.scheduleShape !== "single_date" && !state.endDate) {
-      return err("endDateRequired");
-    }
-  }
-  if (usesThreshold) {
-    const thr = Number(state.signupThreshold);
-    if (!Number.isInteger(thr) || thr < 1) return err("thresholdInvalid");
+  if (!state.startDate) return err("startDateRequired");
+  if (config.scheduleShape === "weekly_ongoing") {
+    // Consumer clubs are ongoing by default; only require an end date once
+    // the admin has explicitly opted into one (hasEndDate).
+    if (state.hasEndDate && !state.endDate) return err("endDateRequired");
+  } else if (config.scheduleShape !== "single_date" && !state.endDate) {
+    return err("endDateRequired");
   }
 
   const billingMode = effectiveBillingMode(config, state.paidMode);
@@ -420,8 +405,6 @@ function buildSharedFields(
 ): UpdateProductInput {
   const billingMode = effectiveBillingMode(config, state.paidMode);
   const pricingShape = effectivePricingShape(config);
-  const usesDate = startModeUsesDate(state.startMode);
-  const usesThreshold = startModeUsesThreshold(state.startMode);
   const showPricing =
     billingMode === "paid" && config.pricingShape !== "external";
 
@@ -545,15 +528,10 @@ function buildSharedFields(
     material_url: state.materialUrl.trim() || null,
     location_id: state.locationId,
     is_remote: state.isRemote,
-    signup_threshold:
-      usesThreshold && state.signupThreshold
-        ? Number(state.signupThreshold)
-        : null,
-    start_date: usesDate ? state.startDate || null : null,
-    end_date: !usesDate
-      ? null
-      : config.scheduleShape === "single_date"
-        ? state.startDate || null
+    start_date: state.startDate,
+    end_date:
+      config.scheduleShape === "single_date"
+        ? state.startDate
         : config.scheduleShape === "weekly_ongoing"
           ? // Ongoing unless the admin opted into an end date.
             state.hasEndDate
@@ -721,27 +699,6 @@ function municipalityFeeDraft(
   return { status: "fee", amount: centsToDecimalString(cents) };
 }
 
-/** Infer the StartMode from the persisted (start_date, signup_threshold) pair. */
-function inferStartMode(
-  product: ProductAdminDetailRow,
-  config: ProductTypeConfig,
-): StartMode {
-  const hasDate = product.start_date != null;
-  const hasThreshold = product.signup_threshold != null;
-  let inferred: StartMode;
-  if (hasDate && hasThreshold) inferred = "date_and_threshold";
-  else if (hasDate) inferred = "date";
-  else if (hasThreshold) inferred = "threshold";
-  else inferred = config.allowedStartModes[0];
-
-  // Defensive: if the inferred mode isn't in this type's allowedStartModes
-  // (shouldn't happen with consistent data but guards against schema drift),
-  // fall back to the type's default.
-  return config.allowedStartModes.includes(inferred)
-    ? inferred
-    : config.allowedStartModes[0];
-}
-
 /**
  * Map a fetched product (with all child joins) back into FormState so the
  * edit form re-renders the persisted data faithfully. Inverse of
@@ -901,8 +858,7 @@ export function existingFormState(
     // offering the stored zone as an extra option, so what the admin sees always
     // matches what state holds.
     timezone: product.timezone,
-    startMode: inferStartMode(product, config),
-    startDate: product.start_date ?? "",
+    startDate: product.start_date,
     hasEndDate: product.end_date != null,
     endDate: product.end_date ?? "",
     scheduleSlots: product.schedule_slots.map((s) => ({
@@ -940,8 +896,6 @@ export function existingFormState(
         .map((c) => c.consent_type)
         .filter((type) => isAttachableGamerPhotoConsent(type)),
     ),
-    signupThreshold:
-      product.signup_threshold != null ? String(product.signup_threshold) : "",
     paidMode,
     prices,
     seatCount: product.seat_count != null ? String(product.seat_count) : "",
@@ -977,8 +931,8 @@ export function existingFormState(
  *     the admin's UI-locale string — the active-locale name is what they see.
  *
  * A lifecycle state is not represented in FormState and is not sent on a create:
- * it is derived from the dates and threshold the clone copies, so a clone reads
- * exactly as the product it was cloned from would if it had those dates.
+ * it is derived from the dates the clone copies, so a clone reads exactly as
+ * the product it was cloned from would if it had those dates.
  *
  * **The picture is copied**, along with everything else. It used to be cleared,
  * because a picture was a file one product owned and editing one product's

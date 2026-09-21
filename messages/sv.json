@@ -521,10 +521,7 @@
         "missingMunicipalityFee": "Kommunavgift saknas",
         "pendingHint": {
           "registrationOpens": "Anmälan öppnar {date}",
-          "startDate": "Startar {date}",
-          "threshold": "Startar när {count, plural, one {# förälder anmäler} other {# föräldrar anmäler}} sig",
-          "dateAndThreshold": "Startar {date} om {count, plural, one {# förälder anmäler} other {# föräldrar anmäler}} sig",
-          "pastDateThreshold": "Startdatum passerat — väntar på {count, plural, one {# anmälan} other {# anmälningar}}"
+          "startDate": "Startar {date}"
         }
       },
       "translations": {
@@ -562,7 +559,6 @@
           "endDate": "Slutdatum",
           "firstSession": "Första tillfället",
           "lastSession": "Sista tillfället",
-          "signupThreshold": "Anmälningströskel",
           "termDates": "Period",
           "billingMode": "Fakturering",
           "seats": "Platser",
@@ -664,14 +660,12 @@
         "paidByMunicipality": "Betalas av kommunen",
         "seatCount": "Antal platser",
         "waitlistToggle": "Aktivera väntelista när platserna är fulla",
-        "signupThreshold": "Antal anmälningar för att starta",
         "makeVisible": "Lista produkten på sidorna Butik och Kommunklubbar",
         "seatLimit": "Platsgräns"
       },
       "placeholders": {
         "selectTopic": "Välj ett ämne…",
         "materialUrl": "https://drive.sog.gg/...",
-        "threshold": "t.ex. 8",
         "name": {
           "consumerClub": "t.ex. Minecraft Redstone-klubb",
           "municipalityClub": "t.ex. Tapiola Minecraft-klubb · Vår 2026",
@@ -723,15 +717,6 @@
           "volunteer": "Volontär (gratis)",
           "fee": "Ange ett belopp"
         }
-      },
-      "startModes": {
-        "label": "Hur startar detta?",
-        "date": "På ett specifikt datum",
-        "date_and_threshold": "På ett specifikt datum, endast om tillräckligt många anmäler sig",
-        "threshold": "När tillräckligt många spelare har anmält sig",
-        "dateDescription": "Körs på det valda datumet, oavsett hur många föräldrar som anmäler sig.",
-        "date_and_thresholdDescription": "Schemalagd för det valda datumet, men körs bara om tillräckligt många föräldrar anmäler sig i tid. Annars ställer du in den och föräldrar återbetalas automatiskt.",
-        "thresholdDescription": "Inget fast startdatum. Du väljer första tillfället när tillräckligt många föräldrar anmält sig — föräldrar ser en räknare och vet att du kontaktar dem."
       },
       "registrationModes": {
         "label": "När öppnar anmälan?",
@@ -786,8 +771,6 @@
         "municipalityHint": "Kommunklubbar är alltid kopplade till en specifik finländsk kommun — den som betalar. Föräldrar från den kommunen ser den när de bläddrar.",
         "siteHint": "Var tillfällena fysiskt äger rum.",
         "eventSingleDay": "Evenemang äger rum ett enda datum.",
-        "thresholdOnly": "Inget fast startdatum än. Föräldrar ser en räknare ”X av Y behövs” medan den fylls. Du trycker Starta när du har tillräckligt med anmälningar och väljer första tillfällets datum då.",
-        "thresholdWithDate": "Om färre än så här många föräldrar anmäler sig till startdatumet behöver du ställa in den och återbetala från produktsidan.",
         "timezoneEntry": "Tiderna för tillfällena nedan anges i den här tidszonen. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
         "timezoneChangeMoves": "Tiderna för tillfällena nedan anges i den här tidszonen. Byter du zon flyttas varje kommande tillfälle till samma klockslag i den nya zonen, medan tillfällen som redan har en rapport eller närvaro registrerad behåller de tider de hölls på.",
         "timezoneIs": "Tider är i {timezone}. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
@@ -831,7 +814,6 @@
         "primaryGeduFeeInvalid": "Ange ett huvud-Gedu-arvode större än 0, eller välj Okänt eller Volontär",
         "assistantGeduFeeInvalid": "Ange ett assisterande Gedu-arvode större än 0, eller välj Inget eller Volontär",
         "municipalityFeeInvalid": "Ange en kommunavgift större än 0, eller välj Okänt",
-        "thresholdInvalid": "Antal anmälningar för att starta måste vara ett positivt heltal",
         "registrationOpensDateRequired": "Välj ett datum då anmälan ska öppnas",
         "createFailed": "Det gick inte att skapa produkten"
       },
@@ -842,8 +824,7 @@
       "status": {
         "pending": "Väntar på start",
         "running": "Pågår",
-        "completed": "Avslutat",
-        "expired": "Utgången"
+        "completed": "Avslutat"
       },
       "schedule": {
         "day": "Dag",
@@ -1076,7 +1057,6 @@
             "seats": "{taken} av {capacity} platser tagna",
             "regionLocked": "Endast familjer i {country}",
             "notStarted": "Startar {date}. Familjen betalar från i dag, inte från startdatumet.",
-            "notStartedUndated": "Inget startdatum ännu. Familjen betalar från i dag.",
             "subscriptionEnding": "Familjen har sagt upp prenumerationen och den slutar {date}. Den här månadens prisskillnad faktureras inte."
           },
           "prices": {

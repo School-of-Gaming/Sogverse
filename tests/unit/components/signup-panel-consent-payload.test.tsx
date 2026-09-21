@@ -102,7 +102,7 @@ const PRODUCT = {
   billing_mode: "free" as const,
   product_prices: [],
   for_gamers: true,
-  start_date: null,
+  start_date: "2026-01-12",
   timezone: "Europe/Helsinki",
 };
 

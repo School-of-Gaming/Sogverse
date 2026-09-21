@@ -99,7 +99,7 @@ function renderBar(surface: BrowseSurface) {
 const SCHOOL_CLUB: ProductBrowseRow = {
   id: "school-club",
   billing_mode: "paid",
-  start_date: null,
+  start_date: "2026-01-12",
   end_date: null,
   image_path: null,
   is_remote: false,
@@ -111,7 +111,6 @@ const SCHOOL_CLUB: ProductBrowseRow = {
   product_type: "municipality_club",
   registration_opens_at: "2026-01-01T00:00:00.000Z",
   seat_count: null,
-  signup_threshold: null,
   spoken_language_code: "fi",
   timezone: "Europe/Helsinki",
   topic: "minecraft_education",

@@ -128,6 +128,7 @@ describe("update_product", () => {
       // at a country, region or municipality — so the seeded municipality.
       location_id: TEST_IDS.LOCATION_MUNICIPALITY,
       timezone: "Europe/Helsinki",
+      start_date: "2099-01-01",
       registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
       seat_count: 10,
       waitlist_enabled: false,
@@ -143,10 +144,11 @@ describe("update_product", () => {
 
   /**
    * A complete, valid `update_product` call for the municipality club — every
-   * non-defaulted argument, and nothing else. Cases add the one argument they
-   * are about, which is what makes an OMISSION assertable: the RPC assigns
-   * every editable column on every call, so the omitted arguments here are
-   * writing their defaults deliberately.
+   * non-defaulted argument, plus `p_start_date`, which is defaulted but backed
+   * by a NOT NULL column and so has to be passed on every call, and nothing
+   * else. Cases add the one argument they are about, which is what makes an
+   * OMISSION assertable: the RPC assigns every editable column on every call,
+   * so the omitted arguments here are writing their defaults deliberately.
    */
   function muniUpdateArgs() {
     return {
@@ -165,6 +167,7 @@ describe("update_product", () => {
       p_location_id: TEST_IDS.LOCATION_MUNICIPALITY,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_end_date: "2099-12-31",
       p_seat_count: 10,
     };
@@ -185,6 +188,7 @@ describe("update_product", () => {
       spoken_language_code: "en",
       is_remote: true,
       timezone: "Europe/Helsinki",
+      start_date: "2099-01-01",
       registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
       seat_count: 10,
       waitlist_enabled: true,
@@ -224,6 +228,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_is_visible: true,
       p_seat_count: 20,
       p_waitlist_enabled: false,
@@ -302,6 +307,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
     });
     expect(error).not.toBeNull();
     expect(error?.code).toBe("42501");
@@ -326,6 +332,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_seat_count: 10,
     });
     expect(error).toBeNull();
@@ -353,6 +360,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
     });
     expect(error?.code).toBe("23514"); // check_violation
     expect(error?.message).toMatch(/at least one translation/i);
@@ -373,6 +381,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
     });
     // SQLSTATE P0002 — PL/pgSQL's `no_data_found` condition (the function
     // uses `USING ERRCODE = 'no_data_found'`, which maps to P0002, not the
@@ -411,6 +420,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_seat_count: 10,
     });
     expect(error).toBeNull();
@@ -463,6 +473,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_seat_count: 10,
       // fee → cents, volunteer → 0. The muni-only column is left unset (the
       // RPC defaults it to NULL); the muni round-trip lives in the muni test.
@@ -592,6 +603,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_seat_count: 10,
       p_tag: "neuroinclusive",
     });
@@ -632,6 +644,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_seat_count: 10,
       // p_tag deliberately absent.
     });
@@ -665,6 +678,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_seat_count: 10,
       p_region_lock_country: "FI",
     });
@@ -707,6 +721,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_seat_count: 10,
       // p_region_lock_country deliberately absent.
     });
@@ -742,6 +757,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_seat_count: 10,
       p_region_lock_country: "Finland",
     });
@@ -970,6 +986,7 @@ describe("update_product", () => {
         p_is_remote: true,
         p_timezone: "Europe/Helsinki",
         p_registration_opens_at: new Date().toISOString(),
+        p_start_date: "2099-01-01",
         p_seat_count: fields.seatCount,
         p_waitlist_enabled: fields.waitlistEnabled,
       });

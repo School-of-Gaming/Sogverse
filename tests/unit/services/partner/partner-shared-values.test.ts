@@ -36,7 +36,7 @@ describe("reportedEnrolmentStatus", () => {
     expect(reportedEnrolmentStatus("active", "completed")).toBe("completed");
   });
 
-  it.each(["pending", "running", "expired"] as const)(
+  it.each(["pending", "running"] as const)(
     "leaves an active seat active on a %s product",
     (productStatus) => {
       expect(reportedEnrolmentStatus("active", productStatus)).toBe("active");

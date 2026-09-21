@@ -209,7 +209,6 @@ function productRow(productType: ProductType): ProductAdminDetailRow {
     product_images: null,
     start_date: "2025-09-01",
     end_date: null,
-    signup_threshold: null,
     seat_count: 10,
     waitlist_enabled: false,
     primary_gedu_fee_cents: null,

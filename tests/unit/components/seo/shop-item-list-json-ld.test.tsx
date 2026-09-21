@@ -13,7 +13,7 @@ function row(
   return {
     id,
     billing_mode: "paid",
-    start_date: null,
+    start_date: "2026-01-12",
     end_date: null,
     image_path: null,
     is_remote: true,
@@ -25,7 +25,6 @@ function row(
     product_type: "consumer_club",
     registration_opens_at: "2026-01-01T00:00:00.000Z",
     seat_count: null,
-    signup_threshold: null,
     spoken_language_code: "en",
     timezone: "Europe/Helsinki",
     topic: "minecraft_java",

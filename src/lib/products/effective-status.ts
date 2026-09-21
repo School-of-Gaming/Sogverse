@@ -5,56 +5,46 @@ import type { EffectiveProductStatusDB, Product } from "@/types";
 // used by the admin list to add a "starts when..." caption under the row.
 export type PendingHintInputs = Pick<
   Product,
-  "start_date" | "signup_threshold" | "registration_opens_at" | "timezone"
+  "start_date" | "registration_opens_at" | "timezone"
 >;
 
-export type PendingHintKey =
-  | "registrationOpens"
-  | "dateAndThreshold"
-  | "startDate"
-  | "pastDateThreshold"
-  | "threshold";
+export type PendingHintKey = "registrationOpens" | "startDate";
 
 export interface PendingHint {
   key: PendingHintKey;
   /** Values to interpolate into the message, raw — caller formats dates. */
-  values: { date?: string; count?: number };
+  values: { date: string };
 }
 
-// Lifecycle decisions only need these four columns. Keeping the input type
+// Lifecycle decisions only need these three columns. Keeping the input type
 // narrow lets callers project a smaller select without losing type-safety.
 // `timezone` is required because `start_date` / `end_date` are date-only;
 // "has it passed" depends on the product's local calendar day, not UTC.
 export type LifecycleInputs = Pick<
   Product,
-  "start_date" | "end_date" | "signup_threshold" | "timezone"
+  "start_date" | "end_date" | "timezone"
 >;
 
 /**
  * The status of a product. There is no stored status and never was one worth
- * reading: the lifecycle is a function of the dates, the signup threshold and
- * the live count of sign-ups, so nothing has to be flipped by a cron and no
- * reader can be handed a value that reality has moved past.
+ * reading: the lifecycle is a function of the two dates alone, so nothing has
+ * to be flipped by a cron and no reader can be handed a value that reality has
+ * moved past.
  *
- * - A product has *started* once its start date has been reached and any
- *   signup threshold is met. A product with neither a start date nor a
- *   threshold has nothing that could start it and stays pending — that is a
- *   product whose dates have not been filled in, not one under way.
- * - A started product is `running` until its end date passes, then
- *   `completed`.
- * - A product whose end date passes without ever starting is `expired` —
- *   distinct from `completed`, which means it actually ran.
+ * - A product is `pending` until its start date is reached.
+ * - From then on it is `running` until its end date passes, and `completed`
+ *   after. A product with no end date never leaves `running`.
+ *
+ * There is no state for a product that ended without ever starting: every
+ * product carries a start date, and the database's date-range CHECK keeps the
+ * end date on or after it, so today < start_date <= end_date cannot arise.
  *
  * Date-only fields (start_date / end_date) are compared against `now`
  * after projecting `now` into the product's timezone — so an event with
  * end_date = today stays "running" through end-of-day local time, not
  * UTC midnight.
  *
- * `activeParticipations` is the count of active sign-ups. Pass 0 where the
- * caller has no count to hand; threshold-bearing products then read as pending
- * until a count is threaded through.
- *
- * The database derives the same four values the same way, from the same
+ * The database derives the same three values the same way, from the same
  * columns, through `effective_status(uuid)`.
  */
 export type EffectiveProductStatus = EffectiveProductStatusDB;
@@ -62,37 +52,21 @@ export type EffectiveProductStatus = EffectiveProductStatusDB;
 export function effectiveStatus(
   p: LifecycleInputs,
   now: Date,
-  activeParticipations: number,
 ): EffectiveProductStatus {
   const nowDate = formatInTimeZone(now, p.timezone, "yyyy-MM-dd");
-  const endPassed = p.end_date !== null && p.end_date < nowDate;
 
-  const hasDate = p.start_date !== null;
-  const hasThreshold = p.signup_threshold !== null;
-  const startReached = !hasDate || p.start_date! <= nowDate;
-  const thresholdMet =
-    !hasThreshold || activeParticipations >= p.signup_threshold!;
-  const started = (hasDate || hasThreshold) && startReached && thresholdMet;
-
-  if (started) {
-    return endPassed ? "completed" : "running";
-  }
-
-  // Hasn't started — either still waiting (pending) or the window closed
-  // without ever satisfying the start conditions (expired).
-  return endPassed ? "expired" : "pending";
+  if (p.start_date > nowDate) return "pending";
+  return p.end_date !== null && p.end_date < nowDate ? "completed" : "running";
 }
 
 /**
  * Decide which "still pending because..." caption applies to a product
  * whose effective status is `pending`. Returns null if there's nothing
- * meaningful to say (no scheduled open, no start date, no threshold).
+ * meaningful to say.
  *
- * Order of precedence is deliberate:
- *   1. Registration not yet open (no one can sign up at all).
- *   2. Future start date — combined with threshold if set, else date-only.
- *   3. Past start date but threshold unmet (post-launch wait).
- *   4. Threshold-only (no date involved).
+ * Order of precedence is deliberate: registration not yet open comes first,
+ * because until it does nobody can sign up at all; the start date is what the
+ * caption falls back to.
  *
  * The function returns a structural { key, values } so the list page can
  * map it through next-intl's t() and format the date in the user locale.
@@ -113,26 +87,8 @@ export function pendingHintKey(
   // start_date is date-only; "in the future" means the product's local
   // calendar day hasn't arrived yet.
   const nowDate = formatInTimeZone(now, p.timezone, "yyyy-MM-dd");
-  const startInFuture = p.start_date !== null && p.start_date > nowDate;
-  const startInPast = p.start_date !== null && p.start_date <= nowDate;
-
-  if (startInFuture && p.signup_threshold) {
-    return {
-      key: "dateAndThreshold",
-      values: { date: p.start_date!, count: p.signup_threshold },
-    };
-  }
-  if (startInFuture) {
-    return { key: "startDate", values: { date: p.start_date! } };
-  }
-  if (startInPast && p.signup_threshold) {
-    return {
-      key: "pastDateThreshold",
-      values: { count: p.signup_threshold },
-    };
-  }
-  if (p.signup_threshold) {
-    return { key: "threshold", values: { count: p.signup_threshold } };
+  if (p.start_date > nowDate) {
+    return { key: "startDate", values: { date: p.start_date } };
   }
   return null;
 }

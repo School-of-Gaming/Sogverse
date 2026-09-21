@@ -845,43 +845,31 @@ describe("switchTargetFacts", () => {
         undefined,
       ),
     ).toEqual([{ kind: "notStarted", startDate: "2026-09-01" }]);
-    // A club with no start date authored still reads as pending, and the fact
-    // carries the nothing it has.
-    expect(
-      switchTargetFacts(
-        { ...runningClub, status: "pending", startDate: null },
-        11,
-        undefined,
-      ),
-    ).toEqual([{ kind: "notStarted", startDate: null }]);
-    for (const status of ["running", "completed", "expired"] as const) {
+    for (const status of ["running", "completed"] as const) {
       expect(switchTargetFacts({ ...runningClub, status }, 11, undefined)).toEqual(
         [],
       );
     }
   });
 
-  it("agrees with the chip on a threshold-bearing club whose start is behind it", () => {
-    // The sheet derives the status with a sign-up count of 0, so a club short
-    // of its threshold is pending however long ago its start date passed —
-    // and the fact says so rather than reading the date on its own.
+  it("agrees with the chip a club's own dates derive", () => {
+    // The fact is keyed to the derived status, never to the date read on its
+    // own, so the sheet's caption and its chip cannot disagree about a club.
     const club = {
       ...runningClub,
       status: effectiveStatus(
         {
-          start_date: "2026-01-01",
+          start_date: "2026-12-01",
           end_date: null,
-          signup_threshold: 5,
           timezone: "Europe/Helsinki",
         },
         NOW,
-        0,
       ),
-      startDate: "2026-01-01",
+      startDate: "2026-12-01",
     };
     expect(club.status).toBe("pending");
     expect(switchTargetFacts(club, 11, undefined)).toEqual([
-      { kind: "notStarted", startDate: "2026-01-01" },
+      { kind: "notStarted", startDate: "2026-12-01" },
     ]);
   });
 
@@ -986,11 +974,11 @@ describe("orderSwitchTargets", () => {
     ).toEqual(["c-early", "c-late", "c-other-day", "c-other-language"]);
   });
 
-  it("sorts an undated club last and breaks the final tie on the id", () => {
-    const undated = { ...sameLanguageSameDayEarly, id: "c-b", start_date: null };
-    const twin = { ...sameLanguageSameDayEarly, id: "c-a" };
+  it("breaks the final tie on the id", () => {
+    const twinB = { ...sameLanguageSameDayEarly, id: "c-b" };
+    const twinA = { ...sameLanguageSameDayEarly, id: "c-a" };
     expect(
-      orderSwitchTargets([undated, twin], source).map((row) => row.id),
+      orderSwitchTargets([twinB, twinA], source).map((row) => row.id),
     ).toEqual(["c-a", "c-b"]);
   });
 

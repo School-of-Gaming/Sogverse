@@ -130,7 +130,7 @@ const SEATS = [
 ];
 
 function product(id: string, start_date: string, end_date: string) {
-  return { id, start_date, end_date, signup_threshold: null, timezone: "Europe/Paris" };
+  return { id, start_date, end_date, timezone: "Europe/Paris" };
 }
 
 function session(id: string, group_id: string, report: string | null) {
@@ -150,7 +150,6 @@ const TABLES = {
     product(P_RUNNING, "2026-09-01", "2026-12-31"),
     product(P_DONE, "2026-06-01", "2026-08-31"),
   ]),
-  product_seat_counts: filteringTable([]),
   consent_document_versions: filteringTable([
     { document_slug: "roblox-privacy-policy", version: "2026-08-01" },
     { document_slug: "roblox-programme-terms", version: "2026-05-01" },

@@ -32,36 +32,26 @@ import type { ProductType } from "@/types";
 import { ROUTES } from "@/lib/constants";
 
 // `pendingHintKey` lives in effective-status.ts (UI-free decision tree). This
-// thin wrapper formats the values for display: dates go through the user's
-// locale formatter, counts pass through as numbers. Without current
-// enrollment counts in the list query, threshold messages describe the
-// rule ("starts when N sign up") rather than progress ("3 of 10").
+// thin wrapper formats the value for display, through the user's locale
+// formatter.
 function renderPendingHint(
   hint: ReturnType<typeof pendingHintKey>,
   locale: string,
   timeZone: string,
   t: (
-    key:
-      | "list.pendingHint.registrationOpens"
-      | "list.pendingHint.startDate"
-      | "list.pendingHint.threshold"
-      | "list.pendingHint.dateAndThreshold"
-      | "list.pendingHint.pastDateThreshold",
+    key: "list.pendingHint.registrationOpens" | "list.pendingHint.startDate",
     values?: Record<string, string | number>,
   ) => string,
 ): string | null {
   if (!hint) return null;
-  const formatted: Record<string, string | number> = {};
-  if (hint.values.date !== undefined)
-    // `registrationOpens` carries a `registration_opens_at` timestamptz
-    // instant → render in the viewer's zone; every other dated hint carries
-    // date-only `start_date` → UTC-pinned (a bare calendar date has no zone).
-    formatted.date =
-      hint.key === "registrationOpens"
-        ? formatDate(hint.values.date, locale, { dateStyle: "medium", timeZone })
-        : formatDateOnly(hint.values.date, locale);
-  if (hint.values.count !== undefined) formatted.count = hint.values.count;
-  return t(`list.pendingHint.${hint.key}`, formatted);
+  // `registrationOpens` carries a `registration_opens_at` timestamptz
+  // instant → render in the viewer's zone; `startDate` carries date-only
+  // `start_date` → UTC-pinned (a bare calendar date has no zone).
+  const date =
+    hint.key === "registrationOpens"
+      ? formatDate(hint.values.date, locale, { dateStyle: "medium", timeZone })
+      : formatDateOnly(hint.values.date, locale);
+  return t(`list.pendingHint.${hint.key}`, { date });
 }
 
 // One compact "when" line for a list row: weekday + time, no date. Two
@@ -108,9 +98,7 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
     <div className="space-y-2">
       {products.map((p) => {
         const tr = resolveTranslation(p.product_translations, uiLocale);
-        // TODO: thread real active-participation count when participations
-        // ships. Until then threshold-bearing products read as pending.
-        const status = effectiveStatus(p, now, 0);
+        const status = effectiveStatus(p, now);
         const hint =
           status === "pending"
             ? renderPendingHint(pendingHintKey(p, now), uiLocale, timeZone, t)

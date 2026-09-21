@@ -521,10 +521,7 @@
         "missingMunicipalityFee": "Montant commune manquant",
         "pendingHint": {
           "registrationOpens": "Ouverture des inscriptions le {date}",
-          "startDate": "Début le {date}",
-          "threshold": "Démarre quand {count, plural, one {# parent s’inscrit} other {# parents s’inscrivent}}",
-          "dateAndThreshold": "Démarre le {date} si {count, plural, one {# parent s’inscrit} other {# parents s’inscrivent}}",
-          "pastDateThreshold": "Date de début dépassée — en attente de {count, plural, one {# inscription} other {# inscriptions}}"
+          "startDate": "Début le {date}"
         }
       },
       "translations": {
@@ -562,7 +559,6 @@
           "endDate": "Date de fin",
           "firstSession": "Première séance",
           "lastSession": "Dernière séance",
-          "signupThreshold": "Seuil d’inscriptions",
           "termDates": "Dates de la période scolaire",
           "billingMode": "Facturation",
           "seats": "Places",
@@ -664,14 +660,12 @@
         "paidByMunicipality": "Payé par la commune",
         "seatCount": "Nombre de places",
         "waitlistToggle": "Activer la liste d’attente quand les places sont complètes",
-        "signupThreshold": "Inscriptions nécessaires pour démarrer",
         "makeVisible": "Répertorier ce produit sur les pages Boutique et Clubs municipaux",
         "seatLimit": "Limite de places"
       },
       "placeholders": {
         "selectTopic": "Choisir un thème…",
         "materialUrl": "https://drive.sog.gg/...",
-        "threshold": "ex. 8",
         "name": {
           "consumerClub": "ex. Club Minecraft Redstone",
           "municipalityClub": "ex. Club Minecraft de Montreuil · Printemps 2026",
@@ -723,15 +717,6 @@
           "volunteer": "Bénévole (gratuit)",
           "fee": "Définir un montant"
         }
-      },
-      "startModes": {
-        "label": "Comment cela démarre-t-il ?",
-        "date": "À une date précise",
-        "date_and_threshold": "À une date précise, seulement si assez de personnes s’inscrivent",
-        "threshold": "Quand assez de joueurs se sont inscrits",
-        "dateDescription": "Se déroule à la date choisie, quel que soit le nombre de parents inscrits.",
-        "date_and_thresholdDescription": "Programmé à la date choisie, mais ne se déroule que si assez de parents s’inscrivent à temps. Sinon, vous l’annulez et les parents sont remboursés automatiquement.",
-        "thresholdDescription": "Aucune date de début fixe. Vous choisissez la date de la première session une fois qu’assez de parents se sont inscrits — les parents voient un compteur en direct et savent que vous les contacterez le moment venu."
       },
       "registrationModes": {
         "label": "Quand les inscriptions ouvrent-elles ?",
@@ -786,8 +771,6 @@
         "municipalityHint": "Les clubs municipaux sont toujours rattachés à une commune finlandaise précise — celle qui les finance. Les parents de cette commune le verront en parcourant le catalogue.",
         "siteHint": "Où les sessions se déroulent physiquement.",
         "eventSingleDay": "Les événements ont lieu à une seule date.",
-        "thresholdOnly": "Pas encore de date de début fixe. Les parents voient un compteur « X sur Y requis » pendant le remplissage. Vous appuyez sur Démarrer quand vous avez assez d’inscriptions et vous choisissez alors la date de la première session.",
-        "thresholdWithDate": "Si moins de parents que ce nombre se sont inscrits à la date de début, vous devrez annuler et rembourser depuis la page du produit.",
         "timezoneEntry": "Les horaires des séances ci-dessous sont saisis dans ce fuseau horaire. Les parents les voient automatiquement convertis dans le leur.",
         "timezoneChangeMoves": "Les horaires des séances ci-dessous sont saisis dans ce fuseau horaire. En changer déplace chaque séance à venir au même horaire dans le nouveau fuseau, tandis que les séances dont un compte rendu ou une présence est déjà enregistré conservent les horaires auxquels elles se sont tenues.",
         "timezoneIs": "Les horaires sont exprimés en {timezone}. Les parents les voient automatiquement convertis dans leur fuseau horaire.",
@@ -831,7 +814,6 @@
         "primaryGeduFeeInvalid": "Saisissez une rémunération de Gedu principal supérieure à 0, ou choisissez Inconnu ou Bénévole",
         "assistantGeduFeeInvalid": "Saisissez une rémunération de Gedu assistant supérieure à 0, ou choisissez Aucune ou Bénévole",
         "municipalityFeeInvalid": "Saisissez un montant commune supérieur à 0, ou choisissez Inconnu",
-        "thresholdInvalid": "Le nombre d’inscriptions nécessaires pour démarrer doit être un entier positif",
         "registrationOpensDateRequired": "Choisissez une date d’ouverture des inscriptions",
         "createFailed": "Échec de la création du produit"
       },
@@ -842,8 +824,7 @@
       "status": {
         "pending": "En attente de démarrage",
         "running": "En cours",
-        "completed": "Terminé",
-        "expired": "Expiré"
+        "completed": "Terminé"
       },
       "schedule": {
         "day": "Jour",
@@ -1076,7 +1057,6 @@
             "seats": "{taken} places prises sur {capacity}",
             "regionLocked": "Familles en {country} uniquement",
             "notStarted": "Commence le {date}. La famille paie à partir d’aujourd’hui, pas de la date de début.",
-            "notStartedUndated": "Pas encore de date de début. La famille paie à partir d’aujourd’hui.",
             "subscriptionEnding": "La famille a résilié cet abonnement ; il prend fin le {date}. La différence de prix de ce mois ne sera pas facturée."
           },
           "prices": {

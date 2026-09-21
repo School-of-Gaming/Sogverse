@@ -17,12 +17,11 @@ import type { EffectiveProductStatus } from "@/lib/products/effective-status";
  * surfaces render this component now and a new status cannot arrive in one
  * place looking different from the other.
  *
- * **One shape for all four: a neutral edge, no fill, and the word in the
+ * **One shape for all three: a neutral edge, no fill, and the word in the
  * state's own colour.** The map used to say its states in three unrelated
  * languages — the call-to-action colour as a tint for `pending`, the same
- * colour as a fill for `running`, a grey for `completed` and `expired` — and a
- * chip that changes shape between states is a chip a reader has to re-learn per
- * row.
+ * colour as a fill for `running`, a grey for `completed` — and a chip that
+ * changes shape between states is a chip a reader has to re-learn per row.
  *
  * **Act appears in no state, and that is the point of the rework.** A lifecycle
  * state is not the thing to do; spending the app's one *press this* colour on
@@ -40,15 +39,14 @@ import type { EffectiveProductStatus } from "@/lib/products/effective-status";
  * `warning` was the alternative and was not taken: "not started yet" is true
  * of every product before its first session, and a warning on all of them is
  * table noise rather than a nudge, which is the attention queue's job.
- * `completed` and `expired` spend no colour at all: they are the quiet end of
- * the lifecycle, and a green tick on every finished club would be the loudest
- * thing in a long list.
+ * `completed` spends no colour at all: it is the quiet end of the lifecycle,
+ * and a green tick on every finished club would be the loudest thing in a long
+ * list.
  */
 const STATUS_STYLE: Record<EffectiveProductStatus, string> = {
   pending: "text-info",
   running: "text-success",
   completed: "text-muted-foreground",
-  expired: "text-muted-foreground",
 };
 
 export function ProductStatusChip({

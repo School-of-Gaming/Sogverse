@@ -9,8 +9,8 @@ import type { ProductAdminDetailRow } from "@/services/products";
 // Verifies the `existingFormState` reverse transform: a fetched product
 // row is mapped back into FormState such that round-tripping it through
 // buildUpdateInput re-emits the same values. Catches regressions in
-// startMode inference, currency cents↔decimal conversion, and the
-// registration-mode (immediate vs scheduled) branch.
+// currency cents↔decimal conversion and the registration-mode (immediate vs
+// scheduled) branch.
 
 const consumerConfig = PRODUCT_TYPE_CONFIG.consumer_club;
 
@@ -39,7 +39,6 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     product_staff_details: null,
     location_id: null,
     is_remote: true,
-    signup_threshold: null,
     start_date: "2026-09-01",
     end_date: null,
     timezone: "Europe/Helsinki",
@@ -104,8 +103,6 @@ describe("existingFormState", () => {
     expect(state.maxAge).toBe("12");
     expect(state.startDate).toBe("2026-09-01");
     expect(state.endDate).toBe("");
-    expect(state.startMode).toBe("date"); // start_date set, no threshold
-    expect(state.signupThreshold).toBe("");
     // The stored requirement set, straight through. Unlike the region lock
     // below, a slug the app cannot name is deliberately NOT filtered out —
     // dropping one would let the next save clear a legal condition silently.
@@ -190,25 +187,6 @@ describe("existingFormState", () => {
     expect(state.registrationOpensDate).toBe("");
   });
 
-  it("infers startMode = 'date_and_threshold' when both are set", () => {
-    const product = syntheticConsumerProduct();
-    product.start_date = "2026-09-01";
-    product.signup_threshold = 5;
-    const state = existingFormState(product, consumerConfig, "en");
-
-    expect(state.startMode).toBe("date_and_threshold");
-    expect(state.signupThreshold).toBe("5");
-  });
-
-  it("infers startMode = 'threshold' when only threshold is set", () => {
-    const product = syntheticConsumerProduct();
-    product.start_date = null;
-    product.signup_threshold = 5;
-    const state = existingFormState(product, consumerConfig, "en");
-
-    expect(state.startMode).toBe("threshold");
-  });
-
   it("falls back to en when uiLocale has no translation but en does", () => {
     // Mirrors resolveTranslation's chain: uiLocale → en → first available.
     const product = syntheticConsumerProduct();
@@ -268,7 +246,6 @@ describe("buildUpdateInput round-trip", () => {
     expect(input.max_age).toBe(12);
     expect(input.start_date).toBe("2026-09-01");
     expect(input.end_date).toBe(null);
-    expect(input.signup_threshold).toBe(null);
     // Travels on every save, empty array included: the RPC replaces the whole
     // requirement set, so an omission would clear it rather than preserve it.
     //

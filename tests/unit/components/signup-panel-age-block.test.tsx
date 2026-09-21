@@ -149,7 +149,7 @@ const PRODUCT: Pick<
   billing_mode: "external_contract",
   product_prices: [],
   for_gamers: true,
-  start_date: null,
+  start_date: "2026-01-12",
   timezone: "Europe/Helsinki",
 };
 

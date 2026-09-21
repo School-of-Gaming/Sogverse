@@ -30,13 +30,12 @@ export const SITE_STAFF_DETAILS_COLUMNS = "notes";
  * to name it, badge it and link to the right admin surface, and nothing else.
  * The type is what picks the admin URL, so it cannot be dropped.
  *
- * The four lifecycle columns are here because a product's state is derived
- * rather than stored: a row that wants a status chip has to carry the dates,
- * the threshold and the zone they are read in, and there is no column that
- * answers it on its own.
+ * The three lifecycle columns are here because a product's state is derived
+ * rather than stored: a row that wants a status chip has to carry the dates and
+ * the zone they are read in, and there is no column that answers it on its own.
  */
 export const SITE_PRODUCT_COLUMNS =
-  "id, product_type, is_visible, start_date, end_date, signup_threshold, timezone, product_translations(locale, name)";
+  "id, product_type, is_visible, start_date, end_date, timezone, product_translations(locale, name)";
 
 /**
  * What the tally read asks for. The count is the whole answer, so the only

@@ -225,6 +225,7 @@ describe("product_images and the image_path trigger", () => {
         spoken_language_code: "en",
         is_remote: true,
         timezone: "UTC",
+        start_date: "2099-01-01",
         registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
         seat_count: 1,
         waitlist_enabled: true,
@@ -291,6 +292,7 @@ describe("product_images and the image_path trigger", () => {
         spoken_language_code: "en",
         is_remote: true,
         timezone: "UTC",
+        start_date: "2099-01-01",
         registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
         seat_count: 1,
         waitlist_enabled: true,
@@ -380,6 +382,7 @@ describe("product_images and the image_path trigger", () => {
       p_is_remote: true,
       p_timezone: "UTC",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_seat_count: 5,
     });
     expect(error).toBeNull();

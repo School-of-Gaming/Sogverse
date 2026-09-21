@@ -289,8 +289,14 @@ export interface ProductOptions {
   billingMode?: Database["public"]["Enums"]["billing_mode"];
   /** null = unlimited seats. Default: 1 (small enough for race tests). */
   seatCount?: number | null;
-  signupThreshold?: number | null;
-  startDate?: string | null;
+  /**
+   * Calendar date in `timezone`. `products.start_date` is NOT NULL, so the
+   * helper always writes one: the caller's, else `endDate` when the caller gave
+   * one — a single-day product, which is what `chk_products_event_single_date`
+   * wants anyway and which keeps a fixture whose end date is in the past
+   * deriving as `completed` — else tomorrow, which derives as `pending`.
+   */
+  startDate?: string;
   endDate?: string | null;
   /**
    * Location FK. Default: null. Required (and must be a country/region/
@@ -321,9 +327,19 @@ export interface ProductOptions {
 }
 
 /**
- * Creates a v2 product with sensible defaults: paid consumer_club, 1 seat, no
- * dates and no threshold — which derives as `pending`, so create_participation
- * accepts signups — and registration already open. Returns the product id.
+ * Tomorrow as a calendar date. Read in UTC, which is `createTestProduct`'s
+ * default timezone, so the date the helper writes is the date the product's own
+ * zone reads back.
+ */
+function tomorrow(): string {
+  return new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+}
+
+/**
+ * Creates a v2 product with sensible defaults: paid consumer_club, 1 seat,
+ * starting tomorrow and with no end date — which derives as `pending`, so
+ * create_participation accepts signups — and registration already open.
+ * Returns the product id.
  *
  * The caller is responsible for deletion (CASCADE handles participations
  * and the seat-count rollup row).
@@ -341,8 +357,7 @@ export async function createTestProduct(
     product_type: options.productType ?? "consumer_club",
     billing_mode: options.billingMode ?? "paid",
     seat_count: options.seatCount === undefined ? 1 : options.seatCount,
-    signup_threshold: options.signupThreshold ?? null,
-    start_date: options.startDate ?? null,
+    start_date: options.startDate ?? options.endDate ?? tomorrow(),
     end_date: options.endDate ?? null,
     location_id: options.locationId ?? null,
     registration_opens_at:

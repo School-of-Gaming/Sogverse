@@ -54,8 +54,8 @@ import type { AppHref } from "@/lib/constants/routes";
 // opens, the panel is still being handed `closed_pre` while its own button has
 // already gone live.
 //
-// That gap is why every signup-able state (closed_pre, pending_thr, open,
-// full_waitlist) renders through ONE component, `SignupBody`. React keeps the
+// That gap is why every signup-able state (closed_pre, open, full_waitlist)
+// renders through ONE component, `SignupBody`. React keeps the
 // same instance across a kind change, so the slower clock's swap reconciles in
 // place instead of unmounting a panel and mounting a different one. It has to
 // produce identical geometry as well as identical state: the seat bar is
@@ -375,7 +375,6 @@ export function SignupPanelView(props: SignupPanelViewProps) {
     // individually rather than as a `default` so a new kind has to be placed
     // here deliberately.
     case "closed_pre":
-    case "pending_thr":
     case "open":
     case "full_waitlist":
       return <SignupBody {...props} />;
@@ -453,7 +452,6 @@ function ClosedPanel({ productType }: { productType: ProductType }) {
 function seatBarFor(state: RegistrationState): SeatAvailabilityBarProps | null {
   switch (state.kind) {
     case "closed_pre":
-    case "pending_thr":
     case "open":
       if (state.seatCount === null) return null;
       return {

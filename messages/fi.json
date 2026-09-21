@@ -521,10 +521,7 @@
         "missingMunicipalityFee": "Kunnan maksu puuttuu",
         "pendingHint": {
           "registrationOpens": "Ilmoittautuminen aukeaa {date}",
-          "startDate": "Alkaa {date}",
-          "threshold": "Alkaa kun {count, plural, one {# huoltaja ilmoittautuu} other {# huoltajaa on ilmoittautunut}}",
-          "dateAndThreshold": "Alkaa {date}, jos {count, plural, one {# huoltaja ilmoittautuu} other {# huoltajaa on ilmoittautunut}}",
-          "pastDateThreshold": "Aloituspäivä mennyt — odotetaan {count, plural, one {# ilmoittautumista} other {# ilmoittautumista}}"
+          "startDate": "Alkaa {date}"
         }
       },
       "translations": {
@@ -562,7 +559,6 @@
           "endDate": "Päättymispäivä",
           "firstSession": "Ensimmäinen kerta",
           "lastSession": "Viimeinen kerta",
-          "signupThreshold": "Ilmoittautumiskynnys",
           "termDates": "Kausi",
           "billingMode": "Laskutus",
           "seats": "Paikat",
@@ -664,14 +660,12 @@
         "paidByMunicipality": "Kunta maksaa",
         "seatCount": "Paikkamäärä",
         "waitlistToggle": "Käytä jonotuslistaa, kun paikat täynnä",
-        "signupThreshold": "Ilmoittautumisraja aloitukseen",
         "makeVisible": "Listaa tuote Kauppa- ja Kuntakerhot-sivuille",
         "seatLimit": "Paikkaraja"
       },
       "placeholders": {
         "selectTopic": "Valitse aihe…",
         "materialUrl": "https://drive.sog.gg/...",
-        "threshold": "esim. 8",
         "name": {
           "consumerClub": "esim. Minecraft Redstone -kerho",
           "municipalityClub": "esim. Tapiolan Minecraft-kerho · Kevät 2026",
@@ -723,15 +717,6 @@
           "volunteer": "Vapaaehtoinen (ilmainen)",
           "fee": "Aseta summa"
         }
-      },
-      "startModes": {
-        "label": "Miten tämä alkaa?",
-        "date": "Tiettynä päivänä",
-        "date_and_threshold": "Tiettynä päivänä, jos tarpeeksi ilmoittautuu",
-        "threshold": "Kun tarpeeksi pelaajia on ilmoittautunut",
-        "dateDescription": "Alkaa valittuna päivänä riippumatta ilmoittautuneiden määrästä.",
-        "date_and_thresholdDescription": "Suunniteltu valitulle päivälle, mutta alkaa vain jos riittävästi vanhempia ilmoittautuu ajoissa. Muussa tapauksessa perut sen ja vanhemmille palautetaan automaattisesti.",
-        "thresholdDescription": "Ei kiinteää alkupäivää. Valitset ensimmäisen tapaamisen päivän, kun tarpeeksi vanhempia on ilmoittautunut — vanhemmat näkevät laskurin ja tietävät, että otat yhteyttä."
       },
       "registrationModes": {
         "label": "Milloin ilmoittautuminen avautuu?",
@@ -786,8 +771,6 @@
         "municipalityHint": "Kuntakerhot on aina sidottu tiettyyn Suomen kuntaan — siihen, joka sen maksaa. Sen kunnan vanhemmat näkevät kerhon selatessaan.",
         "siteHint": "Missä kerrat fyysisesti tapahtuvat.",
         "eventSingleDay": "Tapahtumat ovat yhden päivän mittaisia.",
-        "thresholdOnly": "Ei vielä kiinteää alkupäivää. Vanhemmat näkevät ”X / Y tarvitaan” -laskurin sen täyttyessä. Painat Aloita kun ilmoittautuneita on tarpeeksi ja valitset ensimmäisen kerran päivän silloin.",
-        "thresholdWithDate": "Jos vanhempia ilmoittautuu vähemmän kuin tämä alkupäivään mennessä, sinun täytyy perua ja palauttaa maksut tuotesivulta.",
         "timezoneEntry": "Alla olevat kertojen ajat syötetään tällä aikavyöhykkeellä. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
         "timezoneChangeMoves": "Alla olevat kertojen ajat syötetään tällä aikavyöhykkeellä. Vaihto siirtää jokaisen tulevan kerran samaan kellonaikaan uudella aikavyöhykkeellä, mutta kerrat, joille on jo kirjattu raportti tai läsnäolot, säilyttävät ajat, joina ne pidettiin.",
         "timezoneIs": "Ajat ovat aikavyöhykkeellä {timezone}. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
@@ -831,7 +814,6 @@
         "primaryGeduFeeInvalid": "Anna vastaavan Gedun palkkio, joka on suurempi kuin 0, tai valitse Ei tiedossa tai Vapaaehtoinen",
         "assistantGeduFeeInvalid": "Anna avustavan Gedun palkkio, joka on suurempi kuin 0, tai valitse Ei ole tai Vapaaehtoinen",
         "municipalityFeeInvalid": "Anna kunnan maksu, joka on suurempi kuin 0, tai valitse Ei tiedossa",
-        "thresholdInvalid": "Ilmoittautumisrajan on oltava positiivinen kokonaisluku",
         "registrationOpensDateRequired": "Valitse päivämäärä, jolloin ilmoittautuminen avautuu",
         "createFailed": "Tuotteen luonti epäonnistui"
       },
@@ -842,8 +824,7 @@
       "status": {
         "pending": "Odottaa alkua",
         "running": "Käynnissä",
-        "completed": "Päättynyt",
-        "expired": "Vanhentunut"
+        "completed": "Päättynyt"
       },
       "schedule": {
         "day": "Päivä",
@@ -1076,7 +1057,6 @@
             "seats": "Paikkoja varattu {taken}/{capacity}",
             "regionLocked": "Maarajoitus: {country}",
             "notStarted": "Alkaa {date}. Perhe maksaa tästä päivästä, ei alkamispäivästä.",
-            "notStartedUndated": "Ei alkamispäivää. Perhe maksaa tästä päivästä.",
             "subscriptionEnding": "Perhe on irtisanonut tilauksen, ja se päättyy {date}. Tämän kuukauden hintaeroa ei laskuteta."
           },
           "prices": {

@@ -6,9 +6,7 @@ import type { ProductType, Product } from "@/types";
 //
 // Centralising the decision tree here keeps the card rendering branchless
 // beyond a single `kind` switch — same shape as `formatProductSchedule`
-// and `formatProductPrice`. Same function powers today and the
-// post-`participations` future: when participation counts go live,
-// the richer `pending_thr` / `full_*` states light up automatically.
+// and `formatProductPrice`.
 //
 // Muni clubs are intentionally not modelled here — they don't get a
 // browse landing page and their purchased-card surface doesn't need a
@@ -16,7 +14,7 @@ import type { ProductType, Product } from "@/types";
 // and registration goes through the city's own flow).
 //
 // Decision tree (top-down, first match wins):
-//   ended         ← effectiveStatus in { completed, expired }
+//   ended         ← effectiveStatus = completed
 //   closed_pre    ← registration_opens_at > now
 //   running_late  ← effectiveStatus = running AND either
 //                     product_type = camp (locks at local midnight on
@@ -25,8 +23,6 @@ import type { ProductType, Product } from "@/types";
 //                     instant (start_date + its slot's start_time +
 //                     duration_minutes, read in product.timezone). An event
 //                     with no slot falls back to the camp rule.
-//   pending_thr   ← signup_threshold IS NOT NULL
-//                   AND participations_count < signup_threshold
 //   full_waitlist ← seat_count IS NOT NULL
 //                   AND participations_count >= seat_count
 //                   AND waitlist_enabled
@@ -40,8 +36,8 @@ import type { ProductType, Product } from "@/types";
 //
 // A browse row is filtered on its way to becoming a card: the query asks only
 // for visible products, and the service then drops anything whose derived
-// status has already reached completed or expired. Every state above except
-// `ended` survives that and can arrive in a response.
+// status has already reached completed. Every state above except `ended`
+// survives that and can arrive in a response.
 //
 // `ended` cannot, and it does not need to: the detail page calls this same
 // function, and every product stays readable by direct link forever (owner
@@ -74,8 +70,8 @@ import type { ProductType, Product } from "@/types";
  * Capacity as the signup panel's seat bar needs it.
  *
  * Carried by *every* state a capped product can still be signed up on —
- * pre-open, threshold-pending and open alike — because the panel renders the
- * bar in all of them. That uniformity is a layout requirement, not a
+ * pre-open and open alike — because the panel renders the bar in both. That
+ * uniformity is a layout requirement, not a
  * convenience: the panel variant is dispatched off `useNow()`, which ticks
  * every 30 seconds, so a bar that only existed on `open` would mount up to
  * half a minute *after* the countdown hit zero, above a live CTA the parent
@@ -114,11 +110,6 @@ export type RegistrationState =
        */
       phase: "underway" | "over";
     }
-  | ({
-      kind: "pending_thr";
-      threshold: number;
-      count: number;
-    } & SeatAvailability)
   // The two full kinds carry the cap alone, with no `seatsLeft` for a negative
   // to hide in: a soft cap can be exceeded, and "full" is the whole fact. The
   // panel hands the bar a flat 0.
@@ -143,7 +134,6 @@ export type RegistrationStateInputs = Pick<
   Product,
   | "start_date"
   | "end_date"
-  | "signup_threshold"
   | "timezone"
   | "registration_opens_at"
   | "seat_count"
@@ -173,19 +163,16 @@ const LATE_JOIN_LOCKED: Record<ProductType, boolean> = {
 /**
  * The absolute instant an event finishes: its single schedule slot's
  * wall-clock start on `start_date`, read in the product's own timezone, plus
- * the slot duration. Returns `null` when the row can't be timed — no
- * start_date, or no slot (the admin form requires one, so this is a
- * type-level possibility rather than a real one) — and the caller then falls
- * back to the date-only camp rule.
+ * the slot duration. Returns `null` when the row carries no slot (the admin
+ * form requires one, so this is a type-level possibility rather than a real
+ * one), and the caller then falls back to the date-only camp rule.
  *
  * An event is single-date with exactly one slot, so `schedule_slots[0]` is
  * the whole schedule; the weekday on it is derived from `start_date` and adds
  * nothing here.
  */
 function eventEndInstant(product: RegistrationStateInputs): Date | null {
-  if (product.start_date === null || product.schedule_slots.length === 0) {
-    return null;
-  }
+  if (product.schedule_slots.length === 0) return null;
   const slot = product.schedule_slots[0];
   const start = dateTimeInstant(
     product.start_date,
@@ -197,9 +184,9 @@ function eventEndInstant(product: RegistrationStateInputs): Date | null {
 
 /**
  * The seat trio, read straight off the row and the live participation count.
- * One helper rather than three copies because the three signup-able states
- * have to agree exactly — the panel's whole no-shift guarantee rests on the
- * bar being identical either side of the pre-open → open swap.
+ * One helper rather than two copies because the signup-able states have to
+ * agree exactly — the panel's whole no-shift guarantee rests on the bar being
+ * identical either side of the pre-open → open swap.
  */
 function seatAvailability(
   product: RegistrationStateInputs,
@@ -220,11 +207,9 @@ export function deriveRegistrationState({
   now,
   participationsCount,
 }: DeriveRegistrationStateArgs): RegistrationState {
-  const status = effectiveStatus(product, now, participationsCount);
+  const status = effectiveStatus(product, now);
 
-  if (status === "completed" || status === "expired") {
-    return { kind: "ended" };
-  }
+  if (status === "completed") return { kind: "ended" };
 
   if (new Date(product.registration_opens_at).getTime() > now.getTime()) {
     return {
@@ -254,22 +239,6 @@ export function deriveRegistrationState({
     // full event shows full_waitlist / full_closed rather than "open".
   }
 
-  // Threshold-bearing products that haven't met their threshold yet show the
-  // "pending" pill. The threshold test is the whole condition: once it is met
-  // the product is running, so a status test beside it would be restating the
-  // same fact.
-  if (
-    product.signup_threshold !== null &&
-    participationsCount < product.signup_threshold
-  ) {
-    return {
-      kind: "pending_thr",
-      threshold: product.signup_threshold,
-      count: participationsCount,
-      ...seatAvailability(product, participationsCount),
-    };
-  }
-
   if (product.seat_count !== null && participationsCount >= product.seat_count) {
     return product.waitlist_enabled
       ? { kind: "full_waitlist", seatCount: product.seat_count }
@@ -282,8 +251,7 @@ export function deriveRegistrationState({
 // How a state's browse-card CTA behaves:
 //   "primary"  → the card opens: a worded "View" hint with a chevron, and the
 //                whole card surface links to the detail page, where there is
-//                something to do (sign up, watch the threshold, join a
-//                waitlist).
+//                something to do (sign up, join a waitlist).
 //   "disabled" → a dead end — full with no waitlist, a camp already underway,
 //                or an event already over. The label still appears, in the same
 //                place at the same size but muted and without a chevron,
@@ -305,7 +273,6 @@ export function registrationCtaKind(
 ): RegistrationCtaKind {
   switch (state.kind) {
     case "open":
-    case "pending_thr":
     case "closed_pre":
     case "full_waitlist":
       return "primary";

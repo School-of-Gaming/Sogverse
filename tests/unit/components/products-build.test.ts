@@ -41,7 +41,6 @@ function validConsumerState(): FormState {
   s.spokenLanguageCode = "en";
   s.isRemote = true;
   s.locationId = null;
-  s.startMode = "date";
   s.startDate = "2026-09-01";
   s.endDate = "";
   s.scheduleSlots = [{ weekday: 1, start_time: "16:00", duration_minutes: 90 }];
@@ -70,7 +69,6 @@ function validMuniState(): FormState {
   s.spokenLanguageCode = "en";
   s.isRemote = true;
   s.locationId = "00000000-0000-0000-0000-0000000000aa";
-  s.startMode = "date";
   s.startDate = "2026-09-01";
   s.endDate = "2026-12-01";
   s.scheduleSlots = [{ weekday: 1, start_time: "16:00", duration_minutes: 90 }];
@@ -90,7 +88,6 @@ function validCampState(): FormState {
   s.topic = "minecraft_java";
   s.spokenLanguageCode = "en";
   s.isRemote = true;
-  s.startMode = "date";
   s.startDate = "2026-09-01";
   s.endDate = "2026-09-05";
   s.scheduleSlots = [
@@ -112,7 +109,6 @@ function validEventState(): FormState {
   s.topic = "minecraft_java";
   s.spokenLanguageCode = "en";
   s.isRemote = true;
-  s.startMode = "date";
   s.startDate = "2026-09-01";
   s.scheduleSlots = [{ weekday: 0, start_time: "18:00", duration_minutes: 90 }];
   s.seatCount = "30";
@@ -355,26 +351,16 @@ describe("validate", () => {
   });
 
   describe("when", () => {
-    it("requires startDate when startMode uses a date", () => {
+    it("requires a startDate", () => {
       const s = validConsumerState();
-      s.startMode = "date";
       s.startDate = "";
       expect(validate(s, consumerConfig)).toEqual({
         messageKey: "startDateRequired",
       });
     });
 
-    it("does not require startDate for threshold-only mode", () => {
-      const s = validConsumerState();
-      s.startMode = "threshold";
-      s.startDate = "";
-      s.signupThreshold = "5";
-      expect(validate(s, consumerConfig)).toBeNull();
-    });
-
     it("requires endDate for camps and municipality clubs", () => {
       const s = validConsumerState();
-      s.startMode = "date";
       s.startDate = "2026-09-01";
       s.endDate = "";
       // Camp uses multi_day_bounded — endDate is required.
@@ -410,7 +396,6 @@ describe("validate", () => {
       const s = validConsumerState();
       s.endDate = "";
       s.startDate = "2026-09-01";
-      s.startMode = "date";
       s.paidMode = "free";
       s.seatCount = "30";
       // Event needs a single slot.
@@ -418,16 +403,6 @@ describe("validate", () => {
         { weekday: 0, start_time: "18:00", duration_minutes: 90 },
       ];
       expect(validate(s, eventConfig)).toBeNull();
-    });
-
-    it("rejects threshold < 1", () => {
-      const s = validConsumerState();
-      s.startMode = "threshold";
-      s.startDate = "";
-      s.signupThreshold = "0";
-      expect(validate(s, consumerConfig)).toEqual({
-        messageKey: "thresholdInvalid",
-      });
     });
 
     it("requires at least one schedule slot", () => {
@@ -946,20 +921,6 @@ describe("buildCreateInput", () => {
     expect(out.seat_count).toBe(16);
     expect(out.waitlist_enabled).toBe(true);
     expect(out.prices).toEqual([]);
-  });
-
-  it("only emits signup_threshold when the start mode uses one", () => {
-    const s = validConsumerState();
-    s.startMode = "date"; // no threshold
-    s.signupThreshold = "5"; // stale UI input
-    const out = buildCreateInput(s, "consumer_club", consumerConfig);
-    expect(out.signup_threshold).toBeNull();
-
-    s.startMode = "date_and_threshold";
-    s.signupThreshold = "5";
-    s.startDate = "2026-09-01";
-    const out2 = buildCreateInput(s, "consumer_club", consumerConfig);
-    expect(out2.signup_threshold).toBe(5);
   });
 
   it("sends the zone the form holds, not a constant", () => {
@@ -1604,7 +1565,6 @@ function mockDetailRow(
     product_images: { label: "Original art", path: "products/original.png" },
     start_date: "2026-09-01",
     end_date: null,
-    signup_threshold: null,
     seat_count: 10,
     waitlist_enabled: false,
     primary_gedu_fee_cents: null,

@@ -135,8 +135,11 @@ const productDataBase = z.object({
   material_url: z.string().nullable(),
   location_id: z.string().nullable(),
   is_remote: z.boolean(),
-  signup_threshold: z.number().nullable(),
-  start_date: z.string().nullable(),
+  // The day the product begins, and the whole of what starts it. Required and
+  // non-nullable, matching a NOT NULL column: a product nobody could point at a
+  // starting day is not a product, and the lifecycle every reader derives is a
+  // comparison against this date.
+  start_date: z.string(),
   end_date: z.string().nullable(),
   // The IANA zone the product's wall clocks are authored in — its schedule
   // slots and its registration drop.

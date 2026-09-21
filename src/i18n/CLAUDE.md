@@ -50,7 +50,7 @@ A CI script (under `scripts/`) validates translation completeness on every push 
 
 ## Dead copy: orphaned keys
 
-The catalog only rots in one direction, and it is worth knowing which. A key that is **used but missing** is a build failure: `types.ts` registers the catalog as next-intl's `Messages`, so a translator's key parameter is the union of its namespace's keys. That has been verified by execution for a literal key, for one composed at the call site (`` t(`startModes.${option}`) ``, where the compiler expands the union and even suggests the nearest surviving member), for a key read as a plain property off a catalog object, and for one referenced only from `tests/`. So typos and stale references cannot ship.
+The catalog only rots in one direction, and it is worth knowing which. A key that is **used but missing** is a build failure: `types.ts` registers the catalog as next-intl's `Messages`, so a translator's key parameter is the union of its namespace's keys. That has been verified by execution for a literal key, for one composed at the call site (`` t(`endDateModes.${option}`) ``, where the compiler expands the union and even suggests the nearest surviving member), for a key read as a plain property off a catalog object, and for one referenced only from `tests/`. So typos and stale references cannot ship.
 
 Nothing guards the other direction. A key **defined but unreachable** breaks nothing, costs nothing at runtime, and shows up only as translation spend and as copy that reads like a shipping feature to whoever greps the catalog next. 139 such keys had accumulated before anyone counted.
 

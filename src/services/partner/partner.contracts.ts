@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Constants } from "@/types";
-import type { EffectiveProductStatusDB, ParticipationStatus } from "@/types";
+import type { ParticipationStatus } from "@/types";
 
 /**
  * The wire contracts of the Lynx Educate partner API — one query schema and one
@@ -75,19 +75,12 @@ export const ENROLMENT_STATUS = [
 ] as const satisfies readonly ParticipationStatus[];
 
 /**
- * API-only vocabulary: the product states the API reports — the lifecycle a
- * product supports, before, from and after its dates. The database's
- * `effective_product_status` also derives `expired`, which only a signup
- * threshold or a missing start date can produce, and the admin UI blocks both;
- * so the API does not describe it, and a product that derives it is a broken
- * invariant that answers 500 rather than a value the page never states. The
- * `satisfies` keeps a rename in the generated enum a compile error here.
+ * The product states the API reports, generated: `effective_product_status`.
+ * The lifecycle a product moves through before, from and after its dates, and
+ * the API describes all of it — nothing is stored, so every value is one a
+ * reader derives from the two dates.
  */
-export const PRODUCT_STATUS = [
-  "pending",
-  "running",
-  "completed",
-] as const satisfies readonly EffectiveProductStatusDB[];
+export const PRODUCT_STATUS = Constants.public.Enums.effective_product_status;
 
 /** The product kinds, generated: `product_type`. */
 const PRODUCT_TYPE = Constants.public.Enums.product_type;

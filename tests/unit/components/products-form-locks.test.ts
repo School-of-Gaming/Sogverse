@@ -53,14 +53,6 @@ describe("formLocksFor", () => {
   });
 
   describe("the When-section locks", () => {
-    it("stays on for every type", () => {
-      // No product lifts this today; the When section resolves it through this
-      // function anyway so there is only ever one decision-maker.
-      for (const config of EVERY_CONFIG) {
-        expect(formLocksFor(config).startMode).toBe(true);
-      }
-    });
-
     it("no longer carries a consumer-club start-date lock at all", () => {
       // The lock was retired, not flipped off: a consumer club's first charge is
       // deferred to its start date now, so there is nothing left for the flag to

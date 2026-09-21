@@ -41,7 +41,7 @@ function row(overrides: {
   return {
     id: overrides.id,
     billing_mode: overrides.billingMode ?? "paid",
-    start_date: null,
+    start_date: "2026-01-12",
     end_date: null,
     image_path: null,
     is_remote: overrides.isRemote ?? false,
@@ -53,7 +53,6 @@ function row(overrides: {
     product_type: overrides.productType ?? "consumer_club",
     registration_opens_at: "2026-01-01T00:00:00.000Z",
     seat_count: null,
-    signup_threshold: null,
     spoken_language_code: overrides.spokenLanguageCode ?? "en",
     timezone: "Europe/Helsinki",
     topic: overrides.topic,

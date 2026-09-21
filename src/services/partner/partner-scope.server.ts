@@ -213,9 +213,8 @@ export async function readSeatHolders(
 
 /**
  * Each product's effective status at `now` — the same derivation the database's
- * `effective_status()` makes, from the same columns and the maintained count of
- * active seats — batched rather than one RPC per product. An id with no product
- * is absent from the map.
+ * `effective_status()` makes, from the same two dates — batched rather than one
+ * RPC per product. An id with no product is absent from the map.
  */
 export async function readEffectiveStatuses(
   db: PartnerDb,
@@ -226,28 +225,15 @@ export async function readEffectiveStatuses(
   const statuses = new Map<string, EffectiveProductStatus>();
 
   for (const chunk of chunkKeys(wanted)) {
-    // Both keyed on the product id, one row per key: bounded by the chunk.
-    const [products, counts] = await Promise.all([
-      db
-        .from("products")
-        .select("id, start_date, end_date, signup_threshold, timezone")
-        .in("id", chunk),
-      db
-        .from("product_seat_counts")
-        .select("product_id, active_count")
-        .in("product_id", chunk),
-    ]);
+    // Keyed on the product id, one row per key: bounded by the chunk.
+    const products = await db
+      .from("products")
+      .select("id, start_date, end_date, timezone")
+      .in("id", chunk);
     if (products.error) throw products.error;
-    if (counts.error) throw counts.error;
 
-    const active = new Map(
-      counts.data.map((row) => [row.product_id, row.active_count]),
-    );
     for (const product of products.data) {
-      statuses.set(
-        product.id,
-        effectiveStatus(product, now, active.get(product.id) ?? 0),
-      );
+      statuses.set(product.id, effectiveStatus(product, now));
     }
   }
   return statuses;

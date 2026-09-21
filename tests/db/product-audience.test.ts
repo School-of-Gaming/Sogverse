@@ -225,6 +225,8 @@ describe("product audience", () => {
         is_remote: true,
         is_visible: false,
         timezone: "UTC",
+        // Required by the column. Nothing in these probes turns on it.
+        start_date: "2099-01-01",
         spoken_language_code: "en" as const,
         registration_opens_at: new Date().toISOString(),
         created_by: TEST_IDS.ADMIN,
