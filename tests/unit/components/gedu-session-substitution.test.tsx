@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
+import { alertVariants } from "@/components/ui/alert";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { SessionFeed } from "@/components/gedu/session-feed/SessionFeed";
@@ -495,13 +496,145 @@ describe("the staffing line", () => {
   });
 
   it("is unchanged for a colleague looking at the same card", () => {
-    // Petra's card, Sanna's absence: nothing about this viewer makes the line
-    // drop a row, which is what keeps the change a viewer-only one.
+    // Petra's card, Sanna's absence: nothing about this viewer makes the note
+    // drop a row, which is what keeps that change a viewer-only one.
     renderFeed({
       entries: [futureEntry([openRequest({ id: SANNA, firstName: "Sanna" })], PETRA)],
     });
     expect(screen.getByText("Substitute needed for Sanna.")).toBeTruthy();
+    // One message on the card, and it is the colleague note rather than the
+    // viewer's own panel: this reader has filed nothing.
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(withdrawButton()).toBeNull();
+  });
+});
+
+/**
+ * ============================================================================
+ * The staffing note
+ * ============================================================================
+ *
+ * "Running this session: Sanna (Primary) / Substitute needed for Petra" is news
+ * to everybody on the group, and it was small muted print under the date. It is
+ * an **info** message now *(owner, 2026-09)* — promoted by the presence of a
+ * fact about a colleague, and by nothing else, so the card a reader has only
+ * their own request on stays as quiet as it was.
+ *
+ * The colours are the two the app already has and they carry the hierarchy: a
+ * colleague's fact is info, the reader's own open request is warning, and a
+ * card with both reads as two messages of two weights.
+ */
+/** The class tokens one Alert variant wears and the others do not. */
+function alertOnly(variant: "info" | "warning"): string[] {
+  const tokens = (value: string) => value.split(/\s+/).filter(Boolean);
+  const other = new Set(
+    tokens(alertVariants({ variant: variant === "info" ? "warning" : "info" })),
+  );
+  return tokens(alertVariants({ variant })).filter(
+    (className) => !other.has(className),
+  );
+}
+
+describe("the staffing note", () => {
+  it("draws a colleague's fact as the app's info message", () => {
+    renderFeed({
+      entries: [futureEntry([openRequest({ id: PETRA, firstName: "Petra" })], SANNA)],
+    });
+
+    const note = screen.getByRole("status");
+    expect(note.textContent).toContain("Running this session");
+    expect(note.textContent).toContain("Substitute needed for Petra.");
+
+    const worn = new Set(note.className.split(/\s+/));
+    const info = alertOnly("info");
+    expect(info.length).toBeGreaterThan(0);
+    for (const className of info) {
+      expect(worn.has(className), className).toBe(true);
+    }
+    // And none of the warning variant's own: that weight is the reader's own
+    // request's and nothing else on this card may take it.
+    for (const className of alertOnly("warning")) {
+      expect(worn.has(className), className).toBe(false);
+    }
+  });
+
+  it("is absent on a session nothing is outstanding on", () => {
+    // The staffing facts render only on a date carrying a request — an
+    // ordinary week has the group's own gedus on it and nothing to say — so
+    // there is no note to promote.
+    renderFeed({ entries: [futureEntry([], SANNA)] });
     expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByText(/Running this session/)).toBeNull();
+  });
+
+  it("puts the unanswered seat before the answered one", () => {
+    renderFeed({
+      entries: [
+        futureEntry(
+          [
+            {
+              ...openRequest({ id: PETRA, firstName: "Petra" }),
+              status: "substituted",
+              substituteId: { id: JOONAS, firstName: "Joonas" },
+            },
+            openRequest({ id: "9d3a2f61-0c5f-4c4e-9a35-2cf0c0b3a5f2", firstName: "Mikko" }),
+          ],
+          SANNA,
+        ),
+      ],
+    });
+    const text = screen.getByRole("status").textContent;
+    expect(text.indexOf("Substitute needed for Mikko.")).toBeGreaterThan(-1);
+    expect(text.indexOf("Substitute needed for Mikko.")).toBeLessThan(
+      text.indexOf("Joonas is substituting for Petra."),
+    );
+  });
+
+  it("stacks under the viewer's own panel, quieter and first", () => {
+    renderFeed({
+      entries: [
+        futureEntry(
+          [
+            openRequest({ id: PETRA, firstName: "Petra" }),
+            openRequest({ id: SANNA, firstName: "Sanna" }),
+          ],
+          SANNA,
+        ),
+      ],
+    });
+
+    const panels = screen.getAllByRole("status");
+    expect(panels).toHaveLength(2);
+    // The colleague's news first, the reader's own request under it.
+    expect(panels[0].textContent).toContain("Substitute needed for Petra.");
+    expect(panels[1].textContent).toContain(copy.substitutionRequestStatusOpen);
+
+    const first = new Set(panels[0].className.split(/\s+/));
+    const second = new Set(panels[1].className.split(/\s+/));
+    for (const className of alertOnly("info")) {
+      expect(first.has(className), className).toBe(true);
+    }
+    for (const className of alertOnly("warning")) {
+      expect(second.has(className), className).toBe(true);
+    }
+    // And the reader's own is the one carrying the way back.
+    expect(panels[1].contains(withdrawButton())).toBe(true);
+  });
+
+  it("puts no block element inside a paragraph", () => {
+    const { container } = renderFeed({
+      entries: [
+        futureEntry(
+          [
+            openRequest({ id: PETRA, firstName: "Petra" }),
+            openRequest({ id: SANNA, firstName: "Sanna" }),
+          ],
+          SANNA,
+        ),
+      ],
+    });
+    expect(container.querySelectorAll("p div")).toHaveLength(0);
+    expect(container.querySelectorAll("p p")).toHaveLength(0);
   });
 });
 

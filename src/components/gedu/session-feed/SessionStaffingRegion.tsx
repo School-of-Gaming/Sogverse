@@ -82,24 +82,56 @@ export function SessionStaffingRegion({
     viewerRequest.status === "open" &&
     onWithdrawSubstitutionRequest !== undefined;
 
+  /**
+   * The requests about **somebody else**, needed-first.
+   *
+   * Their presence is what promotes the whole staffing note into an info
+   * message: a session where a colleague is away and somebody has to cover is
+   * news to everybody on the group, and it was being drawn as small muted
+   * print under the date *(owner, 2026-09)*. A card whose only request is the
+   * viewer's own has no such news — their own panel below says it in the
+   * second person — so the note stays quiet there.
+   *
+   * Needed before substituted, because an unanswered seat is the one a reader
+   * can still do something about. Both stay **info**: the warning tone on this
+   * card belongs to the viewer's own request and nothing else.
+   */
+  const colleagueRequests = [
+    ...staffing.requests.filter(
+      (request) => !request.isViewers && request.status !== "substituted",
+    ),
+    ...staffing.requests.filter(
+      (request) => !request.isViewers && request.status === "substituted",
+    ),
+  ];
+  const promoted = colleagueRequests.length > 0;
+
   if (!showLine && staffingEditor === null) {
     return null;
   }
 
   return (
     <div className="mt-3 space-y-3 border-t border-border pt-3">
+      {promoted && (
+        <StaffingNote staffing={staffing} requests={colleagueRequests} />
+      )}
+
       {/* The facts on the left, the editor right-packed on the right — the
           trailing-group shape, so a control that only some cards carry grows
           the group leftward into the row's own slack instead of displacing
-          what is already painted. */}
-      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
-        <div className="min-w-0 space-y-0.5 text-xs text-muted-foreground">
-          {showLine && <StaffingLine staffing={staffing} />}
+          what is already painted. The row is dropped entirely where it would
+          hold neither, so the column's own spacing never opens a gap around
+          nothing. */}
+      {(staffingEditor !== null || (showLine && !promoted)) && (
+        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+          <div className="min-w-0 space-y-0.5 text-xs text-muted-foreground">
+            {showLine && !promoted && <ExpectedLine staffing={staffing} />}
+          </div>
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+            {staffingEditor}
+          </div>
         </div>
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-          {staffingEditor}
-        </div>
-      </div>
+      )}
 
       {viewerRequest !== null && (
         <ViewerRequestBlock
@@ -143,50 +175,87 @@ export function SessionStaffingRegion({
 }
 
 /**
- * Who is expected, and what is outstanding — one line for the staffing and one
- * per live request on the date, **except the viewer's own**.
+ * Who the session expects, with the role each is paid for.
+ *
+ * It renders only on a date that carries a request — an ordinary week has the
+ * group's own gedus on it and nothing to say — so it is never on its own
+ * account that this region appears.
+ */
+function ExpectedLine({ staffing }: { staffing: SessionStaffing }) {
+  const t = useTranslations("gedu.sessionFeed");
+  const roleLabel = (role: GeduAssignmentRole) =>
+    role === "primary" ? t("substitutionRolePrimary") : t("substitutionRoleAssistant");
+
+  return (
+    <p>
+      {staffing.expected.length === 0
+        ? t("staffingNobodyExpected")
+        : t("staffingExpected", {
+            // A comma-space join is punctuation between translated names, not
+            // copy of its own — the same reasoning the assignment card's
+            // separator is a pseudo-element for.
+            names: staffing.expected
+              .map((gedu) =>
+                t("staffingWithRole", {
+                  name: gedu.firstName,
+                  role: roleLabel(gedu.role),
+                }),
+              )
+              .join(", "),
+          })}
+    </p>
+  );
+}
+
+/**
+ * **A colleague is away, and that is news.** Who is expected and what is
+ * outstanding, drawn as one informational message rather than as small print
+ * under the date *(owner, 2026-09)*.
+ *
+ * The **info** treatment, which is the app's for a fact a reader needs to take
+ * in and cannot act on — the same tokens the viewer's own settled request
+ * wears. The card's *warning* stays reserved for the reader's own open
+ * request, so a card carrying both reads as two messages of two weights: this
+ * one above, theirs below and louder.
+ *
+ * **One message, not a second card.** The card rule admits a state message
+ * inside a card and nothing deeper, so the lines inside this panel are
+ * paragraphs with spacing — never boxes of their own.
  *
  * The absent gedu is named here and nowhere else on this feed: these are their
  * own colleagues reading a card about a group they all teach, and the seat's
  * identity is the person. What is *not* here is the reason, which is admin-only
  * and never reaches this document for a gedu caller at all.
  *
- * **The viewer's own request is left out because the block below says it in the
- * second person.** "Substitute needed for Sanna" one line above "You've asked
- * for a substitute for this session" is the same fact twice, the first time in
- * the third person about the reader — noise, and the kind that makes the loud
- * part quieter *(owner, 2026-09)*. Every *other* absent gedu still gets their
- * line, so a colleague's card is unchanged and a session two people are away
- * from still names the one the reader is not.
+ * **The viewer's own request is not among these rows**, because the panel below
+ * says it in the second person: "Substitute needed for Sanna" one line above
+ * "You've asked for a substitute for this session" is the same fact twice, the
+ * first time in the third person about the reader.
  */
-function StaffingLine({ staffing }: { staffing: SessionStaffing }) {
+function StaffingNote({
+  staffing,
+  requests,
+}: {
+  staffing: SessionStaffing;
+  /** The colleagues' live requests, needed-first. */
+  requests: readonly SubstitutionRequestState[];
+}) {
   const t = useTranslations("gedu.sessionFeed");
-  const roleLabel = (role: GeduAssignmentRole) =>
-    role === "primary" ? t("substitutionRolePrimary") : t("substitutionRoleAssistant");
 
   return (
-    <>
-      <p>
-        {staffing.expected.length === 0
-          ? t("staffingNobodyExpected")
-          : t("staffingExpected", {
-              // A comma-space join is punctuation between translated names, not
-              // copy of its own — the same reasoning the assignment card's
-              // separator is a pseudo-element for.
-              names: staffing.expected
-                .map((gedu) =>
-                  t("staffingWithRole", {
-                    name: gedu.firstName,
-                    role: roleLabel(gedu.role),
-                  }),
-                )
-                .join(", "),
-            })}
-      </p>
-      {staffing.requests
-        .filter((request) => !request.isViewers)
-        .map((request) => (
-          <p key={request.id}>
+    <Alert variant="info" role="status">
+      <div className="min-w-0 flex-1 space-y-1 text-sm">
+        <ExpectedLine staffing={staffing} />
+        {requests.map((request) => (
+          <p
+            key={request.id}
+            // The unanswered seat is the one a reader can still do something
+            // about, so it carries the weight — inside the same colour, never
+            // a second one.
+            className={
+              request.status === "substituted" ? undefined : "font-medium"
+            }
+          >
             {request.status === "substituted" && request.substituteId !== null
               ? t("staffingSubstitutedBy", {
                   sub: request.substituteId.firstName,
@@ -197,7 +266,8 @@ function StaffingLine({ staffing }: { staffing: SessionStaffing }) {
                 })}
           </p>
         ))}
-    </>
+      </div>
+    </Alert>
   );
 }
 
