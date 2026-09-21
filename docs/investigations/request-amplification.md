@@ -520,7 +520,8 @@ round trip per dynamic navigation — ~30–40ms from the UK or France, ~100ms f
 ~160ms from US West — so expansion makes a mediocre number somewhat worse and changes
 nothing about the plan. What distance really punishes is sequential browser-side reads
 (a page firing five client queries from Seattle pays ~160ms each; parallel is fine, a
-waterfall is not). For expansion, in order: shells from the edge (~20ms anywhere), data
+waterfall is not). For expansion, in order: shells from the edge (a network hop rather
+than a render — tens of milliseconds, unmeasured until it ships), data
 warmed during reading time (hides any round trip, and is the mobile answer), no waterfalls,
 and Supabase read replicas near the users once a cohort justifies them. One rule: the
 functions stay beside the database and the CDN goes beside the user — a function region
