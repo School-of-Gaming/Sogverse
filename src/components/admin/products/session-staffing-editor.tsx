@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Field } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { StatusLine } from "@/components/ui/alert";
@@ -208,11 +209,10 @@ interface PendingRequestAction {
 /**
  * The confirm step in front of clearing a sub or withdrawing a request.
  *
- * Built from the dialog primitive rather than the shared `ConfirmDialog`
- * because that one dismisses itself on the click: the write is awaited here and
- * the dialog stays up, disabled, until it lands — so a refusal is read in front
- * of the button that caused it instead of behind a dialog that has already
- * gone.
+ * **It holds**, because both writes change who is recorded as having worked a
+ * session and the admin is usually answering somebody who is waiting on the
+ * answer: a refusal has to be read in front of the button that caused it rather
+ * than behind a dialog that has already gone.
  */
 function RequestActionDialog({
   pending,
@@ -226,79 +226,31 @@ function RequestActionDialog({
   onConfirm: (requestId: string) => Promise<void>;
 }) {
   const t = useTranslations("admin.products.staffing");
-  const c = useTranslations("common");
   const date = useSessionDateLabel(sessionDate);
-  const [committing, setCommitting] = useState(false);
-  const [failed, setFailed] = useState(false);
 
   const { kind, request } = pending;
   const sub = request.coveredBy?.firstName ?? "";
 
-  const run = () => {
-    setFailed(false);
-    // Synchronously, before the write: there is no render between the click and
-    // the disabled button in which a second press could land.
-    setCommitting(true);
-    void onConfirm(request.id)
-      .then(onClose)
-      .catch(() => {
-        setCommitting(false);
-        setFailed(true);
-      });
-  };
-
   return (
-    <Dialog
+    <ConfirmDialog
       open
       onOpenChange={(next) => {
-        if (committing || next) return;
-        onClose();
+        if (!next) onClose();
       }}
-    >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {kind === "clear" ? t("clearTitle") : t("withdrawTitle")}
-          </DialogTitle>
-          <DialogDescription>
-            {kind === "clear"
-              ? t("clearBody", { sub, name: request.requestedBy.firstName, date })
-              : t("withdrawBody", {
-                  name: request.requestedBy.firstName,
-                  date,
-                })}
-          </DialogDescription>
-        </DialogHeader>
-
-        {failed && (
-          <StatusLine status="destructive" size="xs" role="alert" className="mt-3">
-            {kind === "clear" ? t("clearFailed") : t("withdrawFailed")}
-          </StatusLine>
-        )}
-
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={committing}
-            onClick={onClose}
-          >
-            {c("cancel")}
-          </Button>
-          <Button
-            type="button"
-            disabled={committing}
-            onClick={run}
-            className="gap-1.5"
-          >
-            {committing && (
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-            )}
-            {kind === "clear" ? t("clearConfirm") : t("withdrawConfirm")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      title={kind === "clear" ? t("clearTitle") : t("withdrawTitle")}
+      description={
+        kind === "clear"
+          ? t("clearBody", { sub, name: request.requestedBy.firstName, date })
+          : t("withdrawBody", { name: request.requestedBy.firstName, date })
+      }
+      confirmLabel={kind === "clear" ? t("clearConfirm") : t("withdrawConfirm")}
+      confirmVariant="default"
+      holdWhileCommitting
+      describeError={() =>
+        kind === "clear" ? t("clearFailed") : t("withdrawFailed")
+      }
+      onConfirm={() => onConfirm(request.id)}
+    />
   );
 }
 

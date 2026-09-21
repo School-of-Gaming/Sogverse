@@ -481,6 +481,54 @@ describe("the staffing region after a write lands", () => {
       isDisabled(screen.getByRole("button", { name: copy.coverRequestConfirm })),
     ).toBe(false);
   });
+
+  it("names a refused withdraw inside the dialog, not behind it", async () => {
+    // The withdraw confirm holds for its own write, so the refusal belongs to
+    // the dialog the gedu is standing in front of. Drawn on the card instead,
+    // it would be under the overlay: the one place nobody can read it.
+    const { container } = render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <TimezoneProvider initialTimezone="Europe/Helsinki">
+          <NowProvider initialNow={NOW}>
+            <SessionFeed
+              entries={[
+                futureEntry([openRequest({ id: SANNA, firstName: "Sanna" })], SANNA),
+              ]}
+              now={NOW}
+              roster={ROSTER}
+              sourceTimeZone="Europe/Helsinki"
+              editingEntryId={null}
+              onEditEntry={() => {}}
+              onSaveEntry={() => {}}
+              onSendReport={() =>
+                Promise.resolve({ sent: 0, failed: 0, skipped: 0 })
+              }
+              onAddPhoto={() => Promise.resolve("")}
+              onRemovePhoto={() => Promise.resolve()}
+              onRequestCover={() => {}}
+              onWithdrawCoverRequest={() => Promise.reject(new Error("nope"))}
+            />
+          </NowProvider>
+        </TimezoneProvider>
+      </NextIntlClientProvider>,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: copy.coverWithdrawAction }),
+    );
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: copy.coverWithdrawConfirm }),
+      );
+    });
+
+    expect(screen.getByText(copy.coverWithdrawFailed)).toBeTruthy();
+    // The feed is the harness's own DOM; the dialog is a portal out of it.
+    expect(container.textContent).not.toContain(copy.coverWithdrawFailed);
+    expect(
+      isDisabled(screen.getByRole("button", { name: copy.coverWithdrawConfirm })),
+    ).toBe(false);
+  });
 });
 
 /**

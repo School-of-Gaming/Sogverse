@@ -119,7 +119,7 @@ function renderEditor({
   onClearCover?: ReturnType<typeof vi.fn>;
   onWithdrawRequest?: ReturnType<typeof vi.fn>;
 }) {
-  render(
+  const view = render(
     <NextIntlClientProvider locale="en" messages={messages}>
       <SessionStaffingEditor
         staffing={staffingOf(gedus, requests)}
@@ -130,7 +130,7 @@ function renderEditor({
       />
     </NextIntlClientProvider>,
   );
-  return { onSetCover, onClearCover, onWithdrawRequest };
+  return { ...view, onSetCover, onClearCover, onWithdrawRequest };
 }
 
 function button(name: string | RegExp) {
@@ -378,6 +378,50 @@ describe("the admin session staffing editor", () => {
 
     expect(screen.getByText(copy.setFailed)).not.toBeNull();
     expect(isDisabled(button(copy.confirmAction))).toBe(false);
+  });
+
+  it("keeps the clear confirm disabled while that write is in the air", async () => {
+    let settle: () => void = () => {};
+    const onClearCover = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          settle = resolve;
+        }),
+    );
+    renderEditor({
+      gedus: TWO_SEATS,
+      requests: [coveredRequest(SANNA, "Sanna", JOONAS, "Joonas")],
+      onClearCover,
+    });
+
+    fireEvent.click(button(copy.clearSub));
+    fireEvent.click(button(copy.clearConfirm));
+
+    expect(isDisabled(button(copy.clearConfirm))).toBe(true);
+    expect(isDisabled(button(messages.common.cancel))).toBe(true);
+    await act(async () => {
+      settle();
+    });
+  });
+
+  it("names a refused withdraw in front of the button that caused it", async () => {
+    const onWithdrawRequest = vi.fn(() => Promise.reject(new Error("nope")));
+    const { container } = renderEditor({
+      gedus: TWO_SEATS,
+      requests: [openRequest(SANNA, "Sanna")],
+      onWithdrawRequest,
+    });
+
+    fireEvent.click(button(copy.withdraw));
+    await act(async () => {
+      fireEvent.click(button(copy.withdrawConfirm));
+    });
+
+    expect(screen.getByText(copy.withdrawFailed)).not.toBeNull();
+    // The editor rides a card; the dialog is a portal out of it, and the
+    // refusal has to be in the dialog rather than under its overlay.
+    expect(container.textContent).not.toContain(copy.withdrawFailed);
+    expect(isDisabled(button(copy.withdrawConfirm))).toBe(false);
   });
 });
 

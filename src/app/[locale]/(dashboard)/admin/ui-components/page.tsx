@@ -42,6 +42,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Identicon } from "@/components/ui/identicon";
 import {
   PersonChip,
@@ -713,6 +714,116 @@ function DialogDemo() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </Section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Confirm Dialog Demo                                                */
+/* ------------------------------------------------------------------ */
+
+/** Which of the three fixtures is up; `null` is the section at rest. */
+type ConfirmDemoWrite = "closes" | "holds" | "refused";
+
+/**
+ * The shared confirm dialog, in the two modes a caller picks between and the
+ * refusal only one of them can show.
+ *
+ * A dialog is an overlay, so the three fixtures are three triggers rather than
+ * three cards: only one of them can be on screen, and each is one press from
+ * the last. What they are for is the comparison the modes actually need —
+ * whether the dialog is still there after the press, and what the buttons are
+ * doing while the write is in the air.
+ *
+ * Every write here is a fake promise: `holds` is one that never settles, so the
+ * committing state can be looked at for as long as you like (Escape and the
+ * backdrop are refused — that is the state, not a stuck page; press Cancel
+ * after it, or reload), and `refused` is one that rejects at once, which is how
+ * the failure line arrives without a network.
+ */
+function ConfirmDialogDemo() {
+  const [write, setWrite] = useState<ConfirmDemoWrite | null>(null);
+  const [outcome, setOutcome] = useState<string | null>(null);
+
+  return (
+    <Section title="Confirm dialog">
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          variant="outline"
+          onClick={() => {
+            setOutcome(null);
+            setWrite("closes");
+          }}
+        >
+          Closes on the press
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setOutcome(null);
+            setWrite("holds");
+          }}
+        >
+          Holds — write in flight
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setOutcome(null);
+            setWrite("refused");
+          }}
+        >
+          Holds — write refused
+        </Button>
+      </div>
+
+      {outcome !== null && (
+        <p className="text-sm text-muted-foreground">{outcome}</p>
+      )}
+
+      {write === "closes" && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => !open && setWrite(null)}
+          title="Remove Aino from Tuesday club"
+          description="Their seat goes back to the waiting list."
+          confirmLabel="Remove"
+          onConfirm={() =>
+            setOutcome(
+              "Closed in the same tick as the press — the write runs behind it, and the surface underneath shows that it is.",
+            )
+          }
+        />
+      )}
+
+      {write === "holds" && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => !open && setWrite(null)}
+          title="Withdraw the cover request"
+          description="Every offer your colleagues have made is dropped."
+          confirmLabel="Withdraw"
+          confirmVariant="default"
+          holdWhileCommitting
+          onConfirm={() => new Promise<void>(() => {})}
+        />
+      )}
+
+      {write === "refused" && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => !open && setWrite(null)}
+          title="Withdraw the cover request"
+          description="Every offer your colleagues have made is dropped."
+          confirmLabel="Withdraw"
+          confirmVariant="default"
+          holdWhileCommitting
+          describeError={() =>
+            "That could not be withdrawn. Refresh and try again."
+          }
+          onConfirm={() => Promise.reject(new Error("refused"))}
+        />
+      )}
     </Section>
   );
 }
@@ -2841,6 +2952,8 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       <DialogDemo />
+
+      <ConfirmDialogDemo />
 
       <SwitchProfileDialogDemo />
 

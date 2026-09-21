@@ -5,6 +5,7 @@ import { UserMinus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { StatusLine } from "@/components/ui/alert";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type {
   CoverRequestState,
   GeduAssignmentRole,
@@ -12,7 +13,6 @@ import type {
 } from "@/lib/session-staffing";
 import type { CoverReason } from "@/types";
 import { SessionCoverRequestDialog } from "./SessionCoverRequestDialog";
-import { SessionCoverWithdrawDialog } from "./SessionCoverWithdrawDialog";
 
 export interface SessionCoverRequestDraft {
   reason: CoverReason;
@@ -97,8 +97,12 @@ export function SessionStaffingRegion({
   const [requestOpen, setRequestOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   /**
-   * Live from the click that starts a write until the document the write
-   * changes comes back.
+   * Live from the click that starts the filing write until the document the
+   * write changes comes back.
+   *
+   * It belongs to the request dialog, which carries a form and therefore holds
+   * its committing state out here where the draft's own fields can read it; the
+   * withdraw confirm is a pure confirm and owns its latch itself.
    *
    * Set synchronously before the mutation runs, so there is no render between
    * the click and the disabled control in which a second press could land —
@@ -138,20 +142,6 @@ export function SessionStaffingRegion({
       // A refusal keeps the dialog up with the reason and the note where the
       // gedu left them, and names what went wrong.
       setError(t("coverRequestFailed"));
-    } finally {
-      setCommitting(false);
-    }
-  };
-
-  const withdrawCover = async () => {
-    if (onWithdrawCoverRequest === undefined || viewerRequest === null) return;
-    setError(null);
-    setCommitting(true);
-    try {
-      await onWithdrawCoverRequest(viewerRequest.id);
-      setWithdrawOpen(false);
-    } catch {
-      setError(t("coverWithdrawFailed"));
     } finally {
       setCommitting(false);
     }
@@ -223,14 +213,27 @@ export function SessionStaffingRegion({
         />
       )}
       {canWithdraw && (
-        <SessionCoverWithdrawDialog
+        /* **It is confirmed, unlike the send two blocks down the same card**,
+           and the difference is what the press costs somebody else. A send is
+           idempotent at the server and says everything it does in its own
+           label; withdrawing drops every offer colleagues have already made on
+           a session they set aside time for, and a gedu who meant to press Edit
+           has no way back from it. So the dialog exists to name that
+           consequence, which is the only thing it has to add — and it holds,
+           because a refused withdraw is a fact the gedu has to read before they
+           leave this card believing they are free. */
+        <ConfirmDialog
           open={withdrawOpen}
-          onOpenChange={(next) => {
-            if (committing) return;
-            setWithdrawOpen(next);
+          onOpenChange={setWithdrawOpen}
+          title={t("coverWithdrawTitle")}
+          description={t("coverWithdrawBody")}
+          confirmLabel={t("coverWithdrawConfirm")}
+          confirmVariant="default"
+          holdWhileCommitting
+          describeError={() => t("coverWithdrawFailed")}
+          onConfirm={async () => {
+            await onWithdrawCoverRequest(viewerRequest.id);
           }}
-          committing={committing}
-          onConfirm={() => void withdrawCover()}
         />
       )}
     </div>
