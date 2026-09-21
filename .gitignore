@@ -47,6 +47,9 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# eslint incremental cache; per-checkout, so each worktree keeps its own
+.eslintcache
 next-env.d.ts
 
 # playwright
