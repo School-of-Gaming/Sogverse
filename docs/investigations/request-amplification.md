@@ -26,10 +26,13 @@ production numbers below were pulled 2026-08-25 against the `sogverse` Vercel pr
 (`vercel metrics`/`vercel usage`, production environment), independently re-run to
 confirm an earlier same-day session's pull. *Read in the installed source* is its own
 category, not a measurement, and covers every code-mechanism claim here: verified against
-`next@16.2.12` as installed rather than against its documentation, and re-verified there
-on 2026-09-21. *Arithmetic* means computed from measured inputs with the assumptions
-stated. *Inferred* means an explanation that fits the evidence but was not directly
-observed — each inferred claim comes with the probe that would settle it.
+the installed source rather than against its documentation. Originally verified in
+`next@16.2.12`, re-verified there on 2026-09-21, and re-verified the same day against
+`next@16.3.5` — the repo moved to it for an unrelated dev-server memory fix — where the
+prefetch mechanism below was found unchanged. *Arithmetic* means computed from measured
+inputs with the assumptions stated. *Inferred* means an explanation that fits the
+evidence but was not directly observed — each inferred claim comes with the probe that
+would settle it.
 
 ## The system, named
 
@@ -56,10 +59,15 @@ defensible on its own, that compound:
 4. **The app has no `loading.tsx` anywhere and no PPR/`cacheComponents`.** Measured: zero
    `loading.tsx` files under `src/app` today, and none has *ever* existed in the
    repository's history (`git log --all --diff-filter=A` over `src/app/**/loading.tsx`
-   returns nothing). `next.config.ts` enables neither PPR nor `cacheComponents`.
+   returns nothing). `next.config.ts` enables neither PPR nor `cacheComponents`. Next
+   16.3 adds `partialPrefetching`, which would give each route an App Shell for a
+   prefetch to carry, but it throws unless `cacheComponents` is enabled
+   (`dist/server/config.js`), so this shape is not something a version bump alone
+   changes — only adopting Cache Components would.
 
 5. **On exactly that shape, Next.js short-circuits every prefetch to an empty answer.**
-   Verified in the installed `next@16.2.12` source
+   Verified in the installed `next@16.2.12` source, and re-verified unchanged in
+   `next@16.3.5`
    (`dist/server/app-render/walk-tree-with-flight-router-state.js`): when PPR is
    disabled and the target tree contains no `loading` component, a prefetch request
    returns **only the router state** — Next's own comment says these responses "do not
