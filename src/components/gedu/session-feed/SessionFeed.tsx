@@ -12,7 +12,7 @@ import {
   type SessionFeedRowContext,
 } from "@/components/session-feed";
 import { SessionFeedItem } from "./SessionFeedItem";
-import type { SessionSubstitutionRequestDraft } from "./SessionStaffingRegion";
+import type { SessionSubstitutionRequestDraft } from "./SessionSubstitutionRequestDialog";
 import {
   entryCompleteness,
   entryOwesCreations,

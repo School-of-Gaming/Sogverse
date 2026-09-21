@@ -3,7 +3,12 @@
 import { useMemo } from "react";
 import { useLocale } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
-import { rollUpGeduSubstitutions } from "@/lib/gedu-assignment-rollup";
+import {
+  geduAssignmentKey,
+  rollUpGeduSubstitutions,
+} from "@/lib/gedu-assignment-rollup";
+import { buildGeduUpcomingSessions } from "@/lib/gedu-upcoming-sessions";
+import { useNow } from "@/providers";
 import {
   geduSeatHrefs,
   geduSubstitutionAttention,
@@ -19,13 +24,15 @@ import {
 } from "@/services/gedu-sessions";
 import {
   useOpenSubstitutionRequests,
+  useRequestSessionSubstitution,
   type OpenSubstitutionRequest,
 } from "@/services/session-substitution";
+import { GeduFileAbsenceEntry } from "./GeduFileAbsenceEntry";
 import { GeduSubstitutionPoolSection } from "./GeduSubstitutionPoolSection";
 import { GeduSubstitutionsPageBody } from "./gedu-substitutions-page-body";
 
 /**
- * The Substitutions page's data shell: three reads, no layout.
+ * The Substitutions page's data shell: three reads and one write, no layout.
  *
  * The pool is this feature's own read. The other two are the dashboard's, and
  * they are here for the same reason they are there — the seats a gedu holds
@@ -71,6 +78,8 @@ export function GeduSubstitutionsPage({
   certified: boolean;
 }) {
   const locale = resolveLocale(useLocale());
+  const now = useNow();
+  const requestSubstitution = useRequestSessionSubstitution();
 
   const { data: rows } = useMyAssignedProducts({ initialData: initialRows });
   const { data: summaries } = useGeduAssignmentSummaries(
@@ -94,8 +103,52 @@ export function GeduSubstitutionsPage({
     });
   }, [rows, summaries, locale]);
 
+  /**
+   * The viewer's own upcoming sessions, for the picker.
+   *
+   * Built from the rows this page already holds, through the app's one schedule
+   * expansion — no read of its own, because the client owns the calendar math
+   * and the seats are already here. The summaries are folded in where they have
+   * landed and defaulted to nothing where they have not: a group name is what a
+   * picker row uses to tell two same-named products apart, and a row that named
+   * the session and the product but not the group is still a usable row, while
+   * a button that appeared a beat after the page did would not be.
+   */
+  const upcomingSessions = useMemo(
+    () =>
+      buildGeduUpcomingSessions({
+        rows: joinGeduSeatRows(rows, summaries ?? []),
+        locale,
+        now,
+      }),
+    [rows, summaries, locale, now],
+  );
+
+  const workspaceHrefs = useMemo(
+    () => geduSeatHrefs(rows).hrefByAssignment,
+    [rows],
+  );
+
   return (
     <GeduSubstitutionsPageBody
+      fileAbsence={
+        <GeduFileAbsenceEntry
+          sessions={upcomingSessions}
+          resolveWorkspaceHref={(session) =>
+            workspaceHrefs[
+              geduAssignmentKey(session.productId, session.groupId)
+            ] ?? null
+          }
+          onFile={async (session, draft) => {
+            await requestSubstitution.mutateAsync({
+              groupId: session.groupId,
+              sessionDate: session.sessionDate,
+              reason: draft.reason,
+              reasonNote: draft.note,
+            });
+          }}
+        />
+      }
       // `null` for the account that may substitute for nothing, and only for
       // that account: an answer that has not arrived is the section's own
       // business, so the heading stands either way.

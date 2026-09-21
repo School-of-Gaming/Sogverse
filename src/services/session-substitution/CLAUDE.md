@@ -146,6 +146,65 @@ language match, no schedule-clash check.
 **No instants travel.** The pool emits the date plus the product's timezone and slots, and
 the client owns the calendar math, exactly as both feeds do.
 
+## Filing is quiet and has two ways in; a filed absence is loud
+
+**Rule: the action that *starts* an absence is deliberately out of the way, and
+a request that exists is deliberately the loudest thing on its session card.**
+The two halves are one decision *(owner, 2026-09)* and they are easy to undo
+separately, which is why they are written down together.
+
+Filing is **rare** — most educators will never press it — so it costs nothing on
+the surfaces a gedu reads every day: on a session card it is one row inside the
+header's overflow menu, not a band of the card, and on the Substitutions page it
+is a quiet outlined control under the title. The act colour on that page belongs
+to offering to substitute, which is what the page is asking of whoever is
+reading it; a second filled button beside it would be two things competing for
+one press. A control that is quiet still has to be **findable by somebody
+looking for it**, which is what the overflow menu's `⋯` and its accessible name
+buy: the reader who needs it goes to the session and asks what else can be done
+with it.
+
+**Two entry points, one form, one write.** The page's picker asks *which
+session* and then renders the very same reason-and-note step the card's menu
+opens — the same component, not a copy — because a second copy of two questions
+is how one surface comes to ask something the other does not. The picker exists
+because a gedu who cannot make a date knows the date, not the card it is on, and
+the card's menu exists because a gedu already reading a session should not have
+to go somewhere else to say they cannot make it.
+
+**A live request is the opposite kind of fact.** Once it exists, it is what the
+card is about — is anybody coming, and how do I take it back — so it is a panel
+with a status treatment and the withdraw inside it, not a line of small print.
+The two states are the ones the app already has: the *warning* treatment while
+the seat is still open, because a session with nobody in it is the thing this
+feature exists to prevent, and the *informational* one once a sub is approved,
+because that is settled. No colour is invented for either.
+
+**The two can never be on one card**, and nothing checks for that: a gedu
+holding a non-withdrawn request is not expected at the session, so the menu's
+own condition already excludes them. Do not add a second test for it — a card
+that had both would mean the derivation was wrong, and hiding it is how the
+divergence would survive.
+
+## What the picker can and cannot know
+
+**The picker lists the viewer's own upcoming sessions, expanded on the client
+from the seats they already hold**, inside the same sixty-day window the pool's
+read applies. The window is not a taste about list length: an absence filed
+beyond it would sit in a queue nobody can see until it drifted into range, so
+moving one bound means moving the other.
+
+**What no read on that page carries is which of those dates the viewer has
+already filed on.** The assignment rows are per seat and the summaries are per
+card; a group's own document has the requests, but it is a whole club's history
+and a page of seats cannot fetch one per seat — that is the same reason the
+dashboard's badge is counted in SQL rather than out of a feed. So the picker
+disables the rows it *knows* about — what it has just written itself, plus
+whatever the surface hands it — and the write's own refusal is the backstop for
+the rest, read inside the dialog with the draft still in place. Closing that gap
+means a read that returns the caller's live (group, date) pairs, which is a
+database change and has not been made.
+
 ## The queue is a page; a substitution taken is a session in a week
 
 The open queue is a gedu's Substitutions page and nothing else renders it. What a gedu has

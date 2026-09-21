@@ -1755,23 +1755,26 @@ export function buildGroupWorkspaceFixture(
 }
 
 /**
- * The group's substitution requests — **the club's alone**, and three of them, because
- * three is what it takes to put every state of the card's staffing region on one
- * page.
+ * The group's substitution requests — **the club's alone**, and four of them,
+ * because four is what it takes to put every state of the card's staffing
+ * region on one page.
  *
- * They sit on the three soonest future sessions, in the order a reader meets
+ * They sit on the four soonest future sessions, in the order a reader meets
  * them coming down from the top of the feed:
  *
- * 1. the **viewer's own** open request, with two offers waiting — the status
- *    line and the Withdraw beside it, and the one card where the action is
- *    *absent* because somebody who has filed an absence is no longer expected;
+ * 1. the **viewer's own** open request, with two offers waiting — the loud
+ *    status block with the Withdraw inside it, and the one card where the
+ *    overflow menu is *absent* because somebody who has filed an absence is no
+ *    longer expected;
  * 2. a colleague's request **substituted** by a third gedu, which names the sub on
  *    the staffing line for everybody;
  * 3. a colleague's request still **open** — "Substitute needed", the state the queue
- *    on the dashboard is fed from.
+ *    on the dashboard is fed from;
+ * 4. the **viewer's own** request, substituted — the settled half of the pair in
+ *    1, which cannot share a card with it and would otherwise be unseeable.
  *
  * Every other card on every scenario carries no request and therefore no
- * staffing line at all, which is the state to check as much as the three above:
+ * staffing line at all, which is the state to check as much as the four above:
  * a fifty-week feed that printed its staffing on every card would bury the
  * handful of dates where something is actually outstanding.
  *
@@ -1790,10 +1793,10 @@ function substitutionRequestsFor(
   // the soonest ones. Reading them off the feed rather than computing dates
   // keeps a request on a day the schedule actually projects.
   const future = entries.filter((entry) => entry.kind === "future");
-  const soonest = future.slice(-3).reverse();
-  if (soonest.length < 3) return [];
+  const soonest = future.slice(-4).reverse();
+  if (soonest.length < 4) return [];
 
-  const [next, second, third] = soonest;
+  const [next, second, third, fourth] = soonest;
 
   return [
     {
@@ -1821,6 +1824,21 @@ function substitutionRequestsFor(
       role: "primary",
       status: "open",
       substituteId: null,
+      offerCount: null,
+    },
+    {
+      // The viewer's **own** request, answered — the second of the two loud
+      // states a card can be in about the reader themselves, and the only one
+      // that cannot share a card with the first. With it on the page, all
+      // three of the states this feature draws are side by side in one feed:
+      // a card offering nothing but its overflow menu, a card waiting for a
+      // substitute with the way back on it, and this one, which is settled.
+      id: "mock-substitution-request-mine-substituted",
+      sessionDate: dateOf(fourth.startsAt),
+      requestedBy: { id: GEDU_IDS.sanna, firstName: "Sanna" },
+      role: "primary",
+      status: "substituted",
+      substituteId: { id: GEDU_IDS.joonas, firstName: "Joonas" },
       offerCount: null,
     },
   ];

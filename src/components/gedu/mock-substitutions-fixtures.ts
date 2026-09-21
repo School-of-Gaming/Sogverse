@@ -7,6 +7,10 @@ import {
   buildSubstitutionPoolRows,
   type SubstitutionPoolRow,
 } from "@/lib/gedu-substitution-pool";
+import {
+  buildGeduUpcomingSessions,
+  type GeduUpcomingSession,
+} from "@/lib/gedu-upcoming-sessions";
 import type { OpenSubstitutionRequest } from "@/services/session-substitution";
 import { buildGeduDashboardFixture } from "./mock-dashboard-fixtures";
 
@@ -51,6 +55,21 @@ export interface GeduSubstitutionsFixture {
   pool: SubstitutionPoolRow[];
   /** What this gedu is standing in for, soonest first. */
   substitutions: GeduSubstitutionSummary[];
+  /**
+   * The viewer's **own** upcoming sessions — what the "Can't make a session?"
+   * picker is a list of.
+   *
+   * Expanded from the dashboard fixture's seat rows by the live helper, so the
+   * scene shows the real schedule walk (a weekly club's run of Mondays, a
+   * camp's consecutive days, a substituted afternoon among them) rather than a
+   * hand-written list that could not be wrong.
+   */
+  upcomingSessions: GeduUpcomingSession[];
+  /**
+   * The one picker row that is already asked for, so the disabled state and
+   * the pickable one are on screen together.
+   */
+  filedSessionKeys: string[];
 }
 
 export function buildGeduSubstitutionsFixture(
@@ -60,15 +79,36 @@ export function buildGeduSubstitutionsFixture(
   /** Viewer's IANA zone — the cards render their times in it, like every time. */
   timeZone: string,
 ): GeduSubstitutionsFixture {
-  if (scenario === "empty") return { pool: [], substitutions: [] };
+  const dashboard = buildGeduDashboardFixture(now, "default", locale, timeZone);
+  const upcomingSessions = buildGeduUpcomingSessions({
+    rows: dashboard.rows,
+    locale,
+    now,
+  });
+
+  if (scenario === "empty") {
+    // Nothing outstanding on either section — but the viewer still holds their
+    // seats, so the way into filing an absence is on the page exactly as it is
+    // when the queue is full. A page with no seats at all is the uncertified
+    // one, which has no queue either and is therefore not a scenario here.
+    return {
+      pool: [],
+      substitutions: [],
+      upcomingSessions,
+      filedSessionKeys: [],
+    };
+  }
 
   return {
     pool: buildSubstitutionPoolRows(openRequests(now), locale),
     // The dashboard's pair: one substitution whose workspace has opened and one
     // still locked, which is the whole of what a taken substitution can look
     // like.
-    substitutions: buildGeduDashboardFixture(now, "default", locale, timeZone)
-      .substitutions,
+    substitutions: dashboard.substitutions,
+    upcomingSessions,
+    // The second row, so the picker's two states sit next to each other. The
+    // first is left pickable, because the scene's write has to be reachable.
+    filedSessionKeys: upcomingSessions.slice(1, 2).map((s) => s.key),
   };
 }
 

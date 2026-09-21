@@ -29,12 +29,14 @@ vi.mock("@/components/ui/rich-text-editor", () =>
  * Who is running this session, on the card that says so
  * ============================================================================
  *
- * The staffing region is a three-way switch and every arm of it is a different
- * page for the same gedu:
+ * What a card says about its staffing is a three-way switch, and every arm of
+ * it is a different page for the same gedu:
  *
- *   - **expected** → the "I can't make this session" action, and no status;
- *   - **holding their own request** → the status line and the Withdraw beside
- *     it, and *no* action, because somebody who has filed an absence is no
+ *   - **expected** → the `⋯` menu in the header holding "I can't make this
+ *     session", and no status anywhere on the card. Filing is rare, so it is
+ *     deliberately one press out of sight;
+ *   - **holding their own request** → the loud status block with the Withdraw
+ *     inside it, and *no* menu, because somebody who has filed an absence is no
  *     longer expected and must not be able to file a second one;
  *   - **neither** → nothing at all, which is the state a colleague's session
  *     card is in and the one an over-eager renderer gets wrong.
@@ -171,8 +173,31 @@ function renderFeed({
 
 const copy = messages.gedu.sessionFeed;
 
-function actionButton() {
-  return screen.queryByRole("button", { name: copy.substitutionRequestAction });
+/** The `⋯` button in the card header — the only way to reach the filing form. */
+function menuTrigger() {
+  return screen.queryByRole("button", { name: copy.substitutionMenuLabel });
+}
+
+/** The one row inside it, which exists only while the menu is open. */
+function menuItem() {
+  return screen.queryByRole("menuitem", {
+    name: copy.substitutionRequestAction,
+  });
+}
+
+/** Open the overflow menu and hand back its one row. */
+function openMenu(): HTMLElement {
+  const trigger = menuTrigger();
+  if (trigger === null) throw new Error("no overflow menu on this card");
+  fireEvent.click(trigger);
+  const item = menuItem();
+  if (item === null) throw new Error("the menu opened with no action in it");
+  return item;
+}
+
+/** Open the menu and choose the action, which is what opens the form. */
+function openRequestDialog() {
+  fireEvent.click(openMenu());
 }
 
 function withdrawButton() {
@@ -180,13 +205,21 @@ function withdrawButton() {
 }
 
 describe("the session card's staffing region", () => {
-  it("offers the action to a gedu expected on a future session", () => {
+  it("offers the action from the overflow menu, and nowhere else", () => {
     renderFeed({ entries: [futureEntry([], SANNA)] });
-    expect(actionButton()).not.toBeNull();
+    // **Nothing about filing is on the card until the menu is opened.** The
+    // full-width button this replaced spent a band of every future card on the
+    // rarest thing a gedu ever does with one.
+    expect(
+      screen.queryByRole("button", { name: copy.substitutionRequestAction }),
+    ).toBeNull();
+    expect(menuItem()).toBeNull();
+    expect(menuTrigger()).not.toBeNull();
+    expect(openMenu()).not.toBeNull();
     expect(withdrawButton()).toBeNull();
   });
 
-  it("swaps the action for a status line once that gedu has filed", () => {
+  it("swaps the menu for a status block once that gedu has filed", () => {
     renderFeed({
       entries: [
         futureEntry(
@@ -198,8 +231,13 @@ describe("the session card's staffing region", () => {
     // The two can never be up together: a gedu who has filed is no longer
     // expected, which is the derivation's own sentence rather than a branch
     // this card makes.
-    expect(actionButton()).toBeNull();
+    expect(menuTrigger()).toBeNull();
+    const block = screen.getByRole("status");
+    expect(block.textContent).toContain(copy.substitutionRequestStatusOpen);
     expect(withdrawButton()).not.toBeNull();
+    // The withdraw lives inside the block, so the thing that takes the request
+    // back is in the same panel that says there is one.
+    expect(block.contains(withdrawButton())).toBe(true);
     expect(screen.getByText("2 offers waiting")).toBeTruthy();
   });
 
@@ -208,9 +246,31 @@ describe("the session card's staffing region", () => {
       entries: [futureEntry([openRequest({ id: SANNA, firstName: "Sanna" })], SANNA)],
     });
     // `null` is "not disclosed", which is a different fact from zero — so the
-    // line says the request is open and invents no number for it.
+    // block says the request is open and invents no number for it.
     expect(screen.getByText(copy.substitutionRequestStatusOpen)).toBeTruthy();
     expect(screen.queryByText(/offers waiting/)).toBeNull();
+  });
+
+  it("states the viewer's own substituted request loudly, and offers no menu", () => {
+    renderFeed({
+      entries: [
+        futureEntry(
+          [
+            {
+              ...openRequest({ id: SANNA, firstName: "Sanna" }),
+              status: "substituted",
+              substituteId: { id: JOONAS, firstName: "Joonas" },
+            },
+          ],
+          SANNA,
+        ),
+      ],
+    });
+    const block = screen.getByRole("status");
+    expect(block.textContent).toContain("Joonas is substituting for you.");
+    // Settled, so there is nothing to take back and nothing to file.
+    expect(withdrawButton()).toBeNull();
+    expect(menuTrigger()).toBeNull();
   });
 
   it("names the sub on a substituted request, for everybody", () => {
@@ -235,7 +295,7 @@ describe("the session card's staffing region", () => {
     // A signed-in gedu looking at a group they do not teach — the admin shell
     // and the preview scenes reach the same state with no viewer at all.
     renderFeed({ entries: [futureEntry([], "somebody-else")] });
-    expect(actionButton()).toBeNull();
+    expect(menuTrigger()).toBeNull();
     expect(withdrawButton()).toBeNull();
   });
 
@@ -243,14 +303,87 @@ describe("the session card's staffing region", () => {
     // The action is for a session dated today or later, and a `past` entry is
     // by construction neither.
     renderFeed({ entries: [pastEntry([], SANNA)] });
-    expect(actionButton()).toBeNull();
+    expect(menuTrigger()).toBeNull();
   });
 
   it("withholds the action from a surface that supplies no callback", () => {
     // The gate is what the surface hands over, not who is looking: the admin
     // shell supplies the staffing editor in this slot instead.
     renderFeed({ entries: [futureEntry([], SANNA)], withCallbacks: false });
-    expect(actionButton()).toBeNull();
+    expect(menuTrigger()).toBeNull();
+  });
+});
+
+/**
+ * ============================================================================
+ * The overflow menu
+ * ============================================================================
+ *
+ * There is no dropdown primitive in the kit, so this menu keeps the account
+ * menu's promises by hand — and a hand-kept promise is one a refactor can drop
+ * silently. What is pinned here is what `role="menu"` owes a keyboard: a way
+ * in, a way out that hands focus back, and a dismissal that does not need one.
+ */
+describe("the card's overflow menu", () => {
+  it("is a native button, which is what makes Enter and Space open it", () => {
+    // Activation by Enter and Space is the browser's, not this component's:
+    // a `<button type="button">` gets it for free and a `div` with a click
+    // handler does not. jsdom dispatches no synthetic activation, so the
+    // element's own type is the honest thing to assert.
+    renderFeed({ entries: [futureEntry([], SANNA)] });
+    const trigger = menuTrigger();
+    expect(trigger?.tagName).toBe("BUTTON");
+    expect(trigger?.getAttribute("type")).toBe("button");
+    expect(trigger?.getAttribute("aria-haspopup")).toBe("menu");
+    expect(trigger?.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("is a 44px hit box around a small glyph", () => {
+    // The thumb target, asserted on the classes because jsdom measures
+    // nothing. `h-11 w-11` is 2.75rem — 44 CSS px — and the glyph inside stays
+    // 16px: what grows is the area a finger can miss by, never the mark.
+    renderFeed({ entries: [futureEntry([], SANNA)] });
+    const worn = new Set(menuTrigger()!.className.split(/\s+/));
+    expect(worn.has("h-11")).toBe(true);
+    expect(worn.has("w-11")).toBe(true);
+    const glyph = menuTrigger()!.querySelector("svg");
+    expect(glyph?.getAttribute("class")).toContain("h-4");
+  });
+
+  it("opens on ArrowDown with focus on the action", () => {
+    renderFeed({ entries: [futureEntry([], SANNA)] });
+    const trigger = menuTrigger();
+    fireEvent.keyDown(trigger!, { key: "ArrowDown" });
+    expect(trigger?.getAttribute("aria-expanded")).toBe("true");
+    expect(document.activeElement).toBe(menuItem());
+  });
+
+  it("closes on Escape and hands focus back to the trigger", () => {
+    renderFeed({ entries: [futureEntry([], SANNA)] });
+    const trigger = menuTrigger();
+    openMenu();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(menuItem()).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("closes when the pointer goes somewhere else", () => {
+    renderFeed({ entries: [futureEntry([], SANNA)] });
+    openMenu();
+    fireEvent.mouseDown(document.body);
+    expect(menuItem()).toBeNull();
+  });
+
+  it("opens the request form when the action is chosen", () => {
+    renderFeed({ entries: [futureEntry([], SANNA)] });
+    openRequestDialog();
+    expect(screen.getByText(copy.substitutionRequestDialogTitle)).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: copy.substitutionRequestConfirm }),
+    ).toBeTruthy();
+    // The panel closes behind the dialog: rows painted under a modal are rows
+    // the keyboard cannot reach.
+    expect(menuItem()).toBeNull();
   });
 });
 
@@ -392,7 +525,7 @@ describe("the staffing region after a write lands", () => {
     const file = deferred();
     render(<SubstitutionHarness settleFile={file.promise} />);
 
-    fireEvent.click(screen.getByRole("button", { name: copy.substitutionRequestAction }));
+    openRequestDialog();
     fireEvent.click(
       screen.getByRole("button", { name: copy.substitutionRequestConfirm }),
     );
@@ -408,7 +541,7 @@ describe("the staffing region after a write lands", () => {
 
     // The card is rebuilt from the new staffing rather than unmounted, so this
     // is the very region that was committing a moment ago.
-    expect(actionButton()).toBeNull();
+    expect(menuTrigger()).toBeNull();
     const withdraw = withdrawButton();
     expect(withdraw).not.toBeNull();
     expect(isDisabled(withdraw)).toBe(false);
@@ -438,8 +571,9 @@ describe("the staffing region after a write lands", () => {
     });
 
     expect(withdrawButton()).toBeNull();
-    const action = actionButton();
-    expect(action).not.toBeNull();
+    // The menu the withdraw handed back is a menu, not a button: what has to
+    // be true is that filing is reachable again from this very card.
+    const action = openMenu();
     expect(isDisabled(action)).toBe(false);
   });
 
@@ -469,7 +603,7 @@ describe("the staffing region after a write lands", () => {
       </NextIntlClientProvider>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: copy.substitutionRequestAction }));
+    openRequestDialog();
     await act(async () => {
       fireEvent.click(
         screen.getByRole("button", { name: copy.substitutionRequestConfirm }),
@@ -541,7 +675,7 @@ describe("NO_SESSION_STAFFING", () => {
     renderFeed({
       entries: [{ ...futureEntry([], SANNA), staffing: NO_SESSION_STAFFING }],
     });
-    expect(actionButton()).toBeNull();
+    expect(menuTrigger()).toBeNull();
     expect(withdrawButton()).toBeNull();
     expect(screen.queryByText(/Running this session/)).toBeNull();
   });

@@ -1,8 +1,9 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,7 +19,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { SUBSTITUTION_REASON_NOTE_MAX_LENGTH } from "@/services/session-substitution";
 import { cn } from "@/lib/utils";
 import { Constants, type SubstitutionReason } from "@/types";
-import type { SessionSubstitutionRequestDraft } from "./SessionStaffingRegion";
+
+/** What a gedu tells the office when they file an absence. */
+export interface SessionSubstitutionRequestDraft {
+  reason: SubstitutionReason;
+  /** Trimmed by the caller's RPC; empty means no note at all. */
+  note: string;
+}
 
 /**
  * "I can't make this session" — the whole form, which is two questions long.
@@ -47,11 +54,18 @@ import type { SessionSubstitutionRequestDraft } from "./SessionStaffingRegion";
  * session's card, has to do. Holding the draft out here and clearing it in an
  * effect was the other way to get that, and it is the cascading-render shape
  * React asks callers not to write.
+ *
+ * **There are two ways in and one form.** The session card's overflow menu opens
+ * this dialog; the Substitutions page picks a session first and then renders
+ * {@link SessionSubstitutionRequestForm} as the second step of its own dialog.
+ * Both reach the same write, so the form is the exported piece and this wrapper
+ * is only the card's half of the arrangement.
  */
 export function SessionSubstitutionRequestDialog({
   open,
   onOpenChange,
   committing,
+  error = null,
   onConfirm,
 }: {
   open: boolean;
@@ -63,12 +77,15 @@ export function SessionSubstitutionRequestDialog({
    * before anybody knew whether it had been stored.
    */
   committing: boolean;
+  /** Why the last attempt was refused, or `null`. */
+  error?: string | null;
   onConfirm: (draft: SessionSubstitutionRequestDraft) => void;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <SubstitutionRequestForm
+      <SessionSubstitutionRequestForm
         committing={committing}
+        error={error}
         onCancel={() => onOpenChange(false)}
         onConfirm={onConfirm}
       />
@@ -81,13 +98,31 @@ export function SessionSubstitutionRequestDialog({
  *
  * Mounted by the primitive only while the dialog is open, which is what makes
  * the fields seed themselves cleanly every time without anything clearing them.
+ *
+ * **The refusal is drawn inside the dialog, above the footer.** This form holds
+ * its own fields open through a failed write so the gedu can try again, and a
+ * line painted on the card behind it would be under the overlay — the one place
+ * nobody can read it.
  */
-function SubstitutionRequestForm({
+export function SessionSubstitutionRequestForm({
   committing,
+  error = null,
+  context = null,
+  cancelLabel,
   onCancel,
   onConfirm,
 }: {
   committing: boolean;
+  error?: string | null;
+  /**
+   * What this form is about, where the surface that opened it has to say so —
+   * the Substitutions page names the session that was picked, because its
+   * dialog is the only one that could be about any of several. The card's own
+   * dialog passes nothing: the card *is* the session.
+   */
+  context?: ReactNode;
+  /** Overrides "Cancel" where the negative action is a step back, not a way out. */
+  cancelLabel?: string;
   onCancel: () => void;
   onConfirm: (draft: SessionSubstitutionRequestDraft) => void;
 }) {
@@ -107,6 +142,10 @@ function SubstitutionRequestForm({
         <DialogTitle>{t("substitutionRequestDialogTitle")}</DialogTitle>
         <DialogDescription>{t("substitutionRequestDialogBody")}</DialogDescription>
       </DialogHeader>
+
+      {context !== null && (
+        <p className="mt-3 text-sm font-medium text-foreground">{context}</p>
+      )}
 
       <div className="mt-4 space-y-4">
         <div className="flex flex-col gap-2.5">
@@ -163,6 +202,12 @@ function SubstitutionRequestForm({
             onChange={(event) => setNote(event.target.value)}
           />
         </Field>
+
+        {error !== null && (
+          <StatusLine status="destructive" size="sm" role="alert">
+            {error}
+          </StatusLine>
+        )}
       </div>
 
       <DialogFooter>
@@ -172,7 +217,7 @@ function SubstitutionRequestForm({
           disabled={committing}
           onClick={onCancel}
         >
-          {c("cancel")}
+          {cancelLabel ?? c("cancel")}
         </Button>
         <Button
           type="button"

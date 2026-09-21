@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useLocale } from "next-intl";
+import { GeduFileAbsenceEntry } from "@/components/gedu/GeduFileAbsenceEntry";
 import { GeduSubstitutionPoolSectionView } from "@/components/gedu/GeduSubstitutionPoolSectionView";
 import { GeduSubstitutionsPageBody } from "@/components/gedu/gedu-substitutions-page-body";
 import {
@@ -15,11 +16,14 @@ import { useNow, useTimezone } from "@/providers";
  * The Substitutions page as a gedu meets it: the open queue above, what they
  * have taken below.
  *
- * The real section view over fixture rows, with the two writes inert — the same
- * split every other scene takes. Offering and withdrawing reach the database,
- * so they do nothing here; what is on show is the card itself, the two resting
- * states of its one control, the urgency treatment on the sessions inside the
- * next day, and the confirm dialog the offer opens.
+ * The real section view over fixture rows, with every write inert — the same
+ * split every other scene takes. Offering, withdrawing and filing an absence
+ * reach the database, so they do nothing here; what is on show is the card
+ * itself, the two resting states of its one control, the urgency treatment on
+ * the sessions inside the next day, the confirm dialog the offer opens, and the
+ * quiet "Can't make a session?" entry under the title with its two-step dialog
+ * — the picker over this gedu's own sessions, one of them already asked for,
+ * and the reason form the session cards open from their own overflow menus.
  *
  * **The dialog's confirm resolves rather than rejects**, after a beat. It is
  * the state worth looking at — the question, the held moment, and the dialog
@@ -50,6 +54,18 @@ export function GeduSubstitutionsScene({
 
   return (
     <GeduSubstitutionsPageBody
+      fileAbsence={
+        <GeduFileAbsenceEntry
+          sessions={fixture.upcomingSessions}
+          filedSessionKeys={fixture.filedSessionKeys}
+          // A preview has no workspace to open — the fixture's seats are not
+          // the scene-backed ones — so the confirmation renders its sentence
+          // and no link, which is the same shape the live page falls back to
+          // for a seat it has no destination for.
+          resolveWorkspaceHref={() => null}
+          onFile={inertWrite}
+        />
+      }
       pool={
         <GeduSubstitutionPoolSectionView
           rows={fixture.pool}

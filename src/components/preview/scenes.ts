@@ -330,7 +330,7 @@ export const PREVIEW_SCENES = [
     surface: "gedu-substitutions",
     title: "Gedu substitutions",
     description:
-      "The body /gedu/substitutions renders, over fixtures: the sessions needing a substitute, soonest first and marked where one starts inside the day, then what this gedu has already taken. Offering and withdrawing are inert; the relative-time lines follow the real clock.",
+      "The body /gedu/substitutions renders, over fixtures: the quiet way into filing an absence under the title, the sessions needing a substitute, soonest first and marked where one starts inside the day, then what this gedu has already taken. Every write is inert; the relative-time lines follow the real clock.",
     chrome: "dashboard",
     navRole: "gedu",
     scenarios: [
@@ -380,7 +380,7 @@ export const PREVIEW_SCENES = [
         slug: "club",
         label: "Club — remote, weekly",
         description:
-          "The kitchen sink: a year of history, every session state, an unstaffed peer group, and the three substitution states on the three soonest future cards.",
+          "The kitchen sink: a year of history, every session state, an unstaffed peer group, and every substitution state on the four soonest future cards — the viewer's own request waiting and answered, a colleague's each way, and the quiet overflow menu on every card carrying none.",
       },
       {
         slug: "camp",

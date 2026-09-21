@@ -1,7 +1,9 @@
-import { describe, expect, it } from "vitest";
-import { render } from "@testing-library/react";
+import type { ComponentProps } from "react";
+import { describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
+import { GeduFileAbsenceEntry } from "@/components/gedu/GeduFileAbsenceEntry";
 import { GeduSubstitutionPoolSectionView } from "@/components/gedu/GeduSubstitutionPoolSectionView";
 import { GeduSubstitutionsPageBody } from "@/components/gedu/gedu-substitutions-page-body";
 import {
@@ -51,6 +53,14 @@ function renderPage(scenario: GeduSubstitutionsScenario) {
       <TimezoneProvider initialTimezone={TIME_ZONE}>
         <NowProvider initialNow={NOW}>
           <GeduSubstitutionsPageBody
+            fileAbsence={
+              <GeduFileAbsenceEntry
+                sessions={fixture.upcomingSessions}
+                filedSessionKeys={fixture.filedSessionKeys}
+                resolveWorkspaceHref={() => null}
+                onFile={inertWrite}
+              />
+            }
             // The real section view over the real fixture rows, with the two
             // writes inert — the same split the preview scene takes.
             pool={
@@ -191,6 +201,216 @@ describe("the substitutions page, populated", () => {
     const { container } = renderPage("populated");
     expect(container.querySelectorAll("p div")).toHaveLength(0);
     expect(container.querySelectorAll("p p")).toHaveLength(0);
+  });
+});
+
+/**
+ * ============================================================================
+ * "Can't make a session?" — the page's own way into filing an absence
+ * ============================================================================
+ *
+ * The second of the feature's two entry points (the first is each session
+ * card's overflow menu), and the one with a question to ask first: *which*
+ * session. Four things here are decisions rather than consequences:
+ *
+ * - **It is quiet.** The act colour on this page belongs to "Offer to
+ *   substitute", which is what the page is asking of whoever is reading it, so
+ *   this control is outlined. Asserted against the Button primitive's own
+ *   output, exactly as the offer's colour is above.
+ * - **It is absent where there is nothing to file against** — an account
+ *   awaiting certification holds no assignments, and a button that could only
+ *   ever open an empty list is worse than no button.
+ * - **A session already asked for is shown disabled with the reason in place**,
+ *   rather than reached and refused, which is what every picker over products
+ *   in this app owes its reader.
+ * - **The write is pressed once however many times the button is.** The flag is
+ *   inline because the dialog carries form content, and it is set before the
+ *   render in which a second press could land.
+ */
+const feedCopy = messages.gedu.sessionFeed;
+
+function entryFixture() {
+  return buildGeduSubstitutionsFixture(NOW, "populated", "en", TIME_ZONE);
+}
+
+/** The component's own signature, so a mock of the write is typed by it. */
+type FileAbsenceProps = ComponentProps<typeof GeduFileAbsenceEntry>;
+
+function renderEntry({
+  sessions,
+  filedSessionKeys = [],
+  onFile = () => Promise.resolve(),
+}: {
+  sessions: ReturnType<typeof entryFixture>["upcomingSessions"];
+  filedSessionKeys?: string[];
+  onFile?: FileAbsenceProps["onFile"];
+}) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <TimezoneProvider initialTimezone={TIME_ZONE}>
+        <NowProvider initialNow={NOW}>
+          <GeduFileAbsenceEntry
+            sessions={sessions}
+            filedSessionKeys={filedSessionKeys}
+            resolveWorkspaceHref={() => null}
+            onFile={onFile}
+          />
+        </NowProvider>
+      </TimezoneProvider>
+    </NextIntlClientProvider>,
+  );
+}
+
+function pickerRows(): HTMLElement[] {
+  return screen
+    .getAllByRole("listitem")
+    .map((item) => item.querySelector("button"))
+    .filter((button): button is HTMLButtonElement => button !== null);
+}
+
+describe("the page's file-an-absence entry", () => {
+  it("is outlined rather than drawn in the act colour", () => {
+    const { container } = renderEntry({
+      sessions: entryFixture().upcomingSessions,
+    });
+    const button = [...container.querySelectorAll("button")].find(
+      (candidate) => candidate.textContent.trim() === copy.fileAction,
+    );
+    expect(button).toBeDefined();
+
+    // Whole class tokens, never substrings: `shadow` is a prefix of the
+    // `shadow-sm` the outlined variant legitimately wears, and a substring
+    // check would read one as the other.
+    const classesOf = (value: string) => new Set(value.split(/\s+/).filter(Boolean));
+    const outline = classesOf(buttonVariants({ variant: "outline" }));
+    const filled = classesOf(buttonVariants({ variant: "default" }));
+    const worn = classesOf(button!.className);
+
+    const outlineOnly = [...outline].filter((className) => !filled.has(className));
+    expect(outlineOnly.length).toBeGreaterThan(0);
+    for (const className of outlineOnly) {
+      expect(worn.has(className), className).toBe(true);
+    }
+    // And none of the filled variant's own classes: two act-coloured buttons on
+    // one page is two things competing for the same press.
+    for (const className of filled) {
+      if (outline.has(className)) continue;
+      expect(worn.has(className), className).toBe(false);
+    }
+  });
+
+  it("is absent for a gedu with nothing to file against", () => {
+    const { container } = renderEntry({ sessions: [] });
+    expect(container.textContent).toBe("");
+  });
+
+  it("lists the viewer's own sessions, soonest first", () => {
+    const sessions = entryFixture().upcomingSessions;
+    // The order is the builder's; what this asserts is that the picker draws it
+    // and that the builder really is ascending.
+    const starts = sessions.map((session) => session.startsAt.getTime());
+    expect(starts).toEqual([...starts].sort((a, b) => a - b));
+
+    renderEntry({ sessions });
+    fireEvent.click(screen.getByRole("button", { name: copy.fileAction }));
+
+    const rows = pickerRows();
+    expect(rows).toHaveLength(sessions.length);
+    rows.forEach((row, index) => {
+      expect(row.textContent).toContain(sessions[index].productName);
+    });
+  });
+
+  it("disables a session already asked for and says why", () => {
+    const sessions = entryFixture().upcomingSessions;
+    const filed = sessions[1];
+    renderEntry({ sessions, filedSessionKeys: [filed.key] });
+    fireEvent.click(screen.getByRole("button", { name: copy.fileAction }));
+
+    const rows = pickerRows();
+    expect(rows[1].hasAttribute("disabled")).toBe(true);
+    expect(rows[1].textContent).toContain(copy.fileAlreadyRequested);
+    expect(rows[0].hasAttribute("disabled")).toBe(false);
+    expect(rows[0].textContent).not.toContain(copy.fileAlreadyRequested);
+  });
+
+  it("goes from the picker to the one shared form, and writes once", async () => {
+    const sessions = entryFixture().upcomingSessions;
+    const onFile = vi.fn<FileAbsenceProps["onFile"]>(() => Promise.resolve());
+    renderEntry({ sessions, onFile });
+
+    fireEvent.click(screen.getByRole("button", { name: copy.fileAction }));
+    fireEvent.click(pickerRows()[0]);
+
+    // The card's own dialog, reached the other way round: same title, same
+    // questions, same confirm.
+    expect(
+      screen.getByText(feedCopy.substitutionRequestDialogTitle),
+    ).toBeTruthy();
+
+    const confirm = screen.getByRole("button", {
+      name: feedCopy.substitutionRequestConfirm,
+    });
+    // Two presses, each its own discrete event, exactly as a fast double-tap
+    // arrives: the flag is set before the render the second one lands in, so
+    // the second finds a disabled button and nothing happens.
+    fireEvent.click(confirm);
+    fireEvent.click(confirm);
+    expect(confirm.hasAttribute("disabled")).toBe(true);
+    await act(async () => {});
+
+    expect(onFile).toHaveBeenCalledTimes(1);
+    expect(onFile.mock.calls[0][0]).toBe(sessions[0]);
+    // The dialog closes itself, and what is left on the page says where the
+    // absence now shows.
+    expect(
+      screen.queryByText(feedCopy.substitutionRequestDialogTitle),
+    ).toBeNull();
+    expect(screen.getByText(/It now shows on that session’s card\./)).toBeTruthy();
+  });
+
+  it("will not offer the same session twice in one visit", async () => {
+    const sessions = entryFixture().upcomingSessions;
+    renderEntry({ sessions });
+
+    fireEvent.click(screen.getByRole("button", { name: copy.fileAction }));
+    fireEvent.click(pickerRows()[0]);
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: feedCopy.substitutionRequestConfirm }),
+      );
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: copy.fileAction }));
+    const rows = pickerRows();
+    expect(rows[0].hasAttribute("disabled")).toBe(true);
+    expect(rows[0].textContent).toContain(copy.fileAlreadyRequested);
+  });
+
+  it("keeps a refused write inside the dialog, with the draft intact", async () => {
+    const sessions = entryFixture().upcomingSessions;
+    renderEntry({
+      sessions,
+      onFile: () => Promise.reject(new Error("nope")),
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: copy.fileAction }));
+    fireEvent.click(pickerRows()[0]);
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: feedCopy.substitutionRequestConfirm }),
+      );
+    });
+
+    expect(screen.getByText(copy.fileFailed)).toBeTruthy();
+    const confirm = screen.getByRole("button", {
+      name: feedCopy.substitutionRequestConfirm,
+    });
+    expect(confirm.hasAttribute("disabled")).toBe(false);
+    // Nothing has been confirmed, so nothing is claimed on the page behind it.
+    expect(
+      screen.queryByText(/It now shows on that session’s card\./),
+    ).toBeNull();
   });
 });
 

@@ -36,10 +36,9 @@ import type { SessionPhotoEditing } from "./staged-photos";
 import { SessionPlanEditor } from "./SessionPlanEditor";
 import { SessionRecordEditor } from "./SessionRecordEditor";
 import { SessionReportSend } from "./SessionReportSend";
-import {
-  SessionStaffingRegion,
-  type SessionSubstitutionRequestDraft,
-} from "./SessionStaffingRegion";
+import { SessionStaffingRegion } from "./SessionStaffingRegion";
+import { SessionSubstitutionMenu } from "./SessionSubstitutionMenu";
+import type { SessionSubstitutionRequestDraft } from "./SessionSubstitutionRequestDialog";
 import { StaffNoteBlock } from "./StaffNoteBlock";
 import type {
   SessionEntryDraft,
@@ -402,24 +401,35 @@ export function SessionFeedItem({
    * **Outside both collapsing regions**, so it is on the card whether an editor
    * is open or not: staffing is a fact about the session rather than part of
    * anybody's draft, and nothing in it is committed by the editor's Save.
-   *
-   * `canRequestSubstitution` is the entry's kind and nothing else. The action is for a
-   * session dated **today or later in the product's zone**, and a `future`
-   * entry is exactly that by construction: the kind flips at the session's
-   * *end*, so a future entry has not finished, and a session that has not
-   * finished cannot be dated before today in the zone its own day is measured
-   * in. Asking the clock a second time here would be a second answer free to
-   * disagree with the tag in the header.
    */
   const staffingRegion = (
     <SessionStaffingRegion
       staffing={entry.staffing}
-      canRequestSubstitution={entry.kind === "future"}
-      onRequestSubstitution={onRequestSubstitution}
       onWithdrawSubstitutionRequest={onWithdrawSubstitutionRequest}
       staffingEditor={staffingEditor}
     />
   );
+
+  /**
+   * The filing action for this card, or `undefined` where there is none.
+   *
+   * Three conditions, and they are the same three the action has always
+   * carried. The **kind** is the date test: filing is for a session dated today
+   * or later in the product's zone, and a `future` entry is exactly that by
+   * construction — the kind flips at the session's *end*, so a future entry has
+   * not finished, and a session that has not finished cannot be dated before
+   * today in the zone its own day is measured in. Asking the clock a second
+   * time here would be a second answer free to disagree with the tag two inches
+   * away. **Expected** is the derivation's own sentence: a gedu who has already
+   * filed is no longer expected, which is what makes the menu and the status
+   * block below mutually exclusive without either of them testing for the
+   * other. And the **callback** is how a surface says whose card this is — the
+   * admin shell supplies a staffing editor in that slot instead.
+   */
+  const fileSubstitution =
+    entry.kind === "future" && entry.staffing.viewerIsExpected
+      ? onRequestSubstitution
+      : undefined;
 
   const recordEditor = recordable && (
     <CollapsibleRegion open={editing} instant id={editorId}>
@@ -539,7 +549,13 @@ export function SessionFeedItem({
         signedBy !== null && "pb-8 sm:pb-8",
       )}
     >
-      <div className="flex items-start justify-between gap-3">
+      {/* Wrapping, because the trailing cluster does not shrink: a badge, a
+          completeness mark, Edit and the overflow menu together are wider than
+          a 360px card leaves beside the date, and a row that cannot wrap would
+          push the card past its own container instead. Nothing about the
+          desktop arrangement changes — there is room there for all of it on one
+          line. */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <SessionDateLine labels={labels} />
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           {entry.kind === "future" && (
@@ -583,6 +599,13 @@ export function SessionFeedItem({
               <Pencil className="h-3.5 w-3.5" aria-hidden />
               {t("edit")}
             </Button>
+          )}
+          {/* Last in the trailing cluster, which is both the convention for an
+              overflow menu and what the layout rule asks of a control only some
+              cards carry: it grows the group leftward into the row's own slack
+              and every mark before it holds its position. */}
+          {fileSubstitution !== undefined && (
+            <SessionSubstitutionMenu onRequestSubstitution={fileSubstitution} />
           )}
         </div>
       </div>

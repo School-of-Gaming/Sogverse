@@ -29,8 +29,21 @@ import type { GeduSubstitutionSummary } from "@/lib/gedu-assignment-rollup";
  */
 export function GeduSubstitutionsPageBody({
   pool,
+  fileAbsence = null,
   substitutions,
 }: {
+  /**
+   * The way into filing an absence, or `null` for a gedu with nothing to file
+   * against.
+   *
+   * A node rather than a list, the same split the pool takes: it owns a dialog
+   * and a write, so the shell hands it over finished and a preview scene hands
+   * over the same component with the write made inert. It sits under the title
+   * because that is where somebody who came to this page *because* they cannot
+   * make a session looks first — and it is quiet, because the one act this page
+   * is asking for is offering to substitute.
+   */
+  fileAbsence?: React.ReactNode | null;
   /**
    * The open queue's body, or `null` for a gedu who has no business seeing it.
    *
@@ -68,7 +81,10 @@ export function GeduSubstitutionsPageBody({
         {t("back")}
       </Link>
 
-      <h1 className="text-3xl font-bold tracking-tight">{t("pageTitle")}</h1>
+      <div className="space-y-4">
+        <h1 className="text-3xl font-bold tracking-tight">{t("pageTitle")}</h1>
+        {fileAbsence}
+      </div>
 
       {/* Withheld whole for an account that may substitute for nothing —
           heading included, because a heading over a queue this gedu is not in
