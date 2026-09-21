@@ -199,98 +199,12 @@ export const adminDashboardScheduleProduct = z.object({
   schedule_slots: z.array(adminDashboardScheduleSlot),
 });
 
-/**
- * One gedu who has offered to substitute at a session, with the two standing facts the
- * certification queue ships on its own rows.
- *
- * They are the same two questions in the same shape on purpose: an admin
- * deciding who to seat is asking what they ask when certifying somebody, and a
- * second vocabulary for "certified" and "record seen" would be a second thing
- * to keep in step. `criminal_record_check_at` is null where no check has been
- * recorded — it informs the decision and gates nothing, exactly as in the
- * certification queue.
- *
- * Who else offered is never shown to an offerer; this list exists on the admin
- * document alone.
- */
-export const adminDashboardSubstitutionOffer = z.object({
-  id: z.string(),
-  gedu_id: z.string(),
-  first_name: z.string(),
-  last_name: z.string(),
-  certified: z.boolean(),
-  criminal_record_check_at: z.string().nullable(),
-  created_at: z.string(),
-});
-
-/**
- * One open substitution request an admin has to staff, dated today or later in the
- * product's own timezone.
- *
- * **A request whose date has passed is *unfilled*, and it drops out on its
- * own.** Unfilled is a derived state of an open request rather than a stored
- * one, so nothing sweeps and no clock runs anywhere: the date says it, and the
- * read simply stops returning it.
- *
- * **The whole reason travels here, category and note**, and this is the one
- * surface it was collected for — everywhere else it is admin-only or absent.
- *
- * An **orphaned** request is still in this list, deliberately: an admin moving
- * the schedule's weekday after a request was filed leaves a date the schedule
- * no longer projects, exactly as it does with a stored session row. The queue
- * orders by date and never by a derived instant, so such a row sorts like any
- * other and an admin can clear it.
- */
-export const adminDashboardSubstitutionRequest = z.object({
-  id: z.string(),
-  group_id: z.string(),
-  group_name: z.string(),
-  /** Product-local calendar date, `YYYY-MM-DD`. */
-  session_date: z.string(),
-  /** The role being substituted — the absent gedu's, and what it will be paid as. */
-  role: z.enum(Constants.public.Enums.gedu_assignment_role),
-  reason: z.enum(Constants.public.Enums.substitution_reason).nullable(),
-  reason_note: z.string().nullable(),
-  created_at: z.string(),
-  requested_by: z.string(),
-  requested_by_first_name: z.string(),
-  requested_by_last_name: z.string(),
-  product: z.object({
-    id: z.string(),
-    product_type: z.enum(Constants.public.Enums.product_type),
-    timezone: z.string(),
-    is_remote: z.boolean(),
-    translations: z.array(productName),
-    /**
-     * The product's recurring slots, in its own zone — the same shape the
-     * schedule set ships, and the other half of what a clock face is computed
-     * from.
-     *
-     * They ride on the **request's** product rather than being looked up in
-     * `schedule_products`, which is a different and narrower set: an orphaned
-     * request may name a product that set has dropped, and a browser-side join
-     * would then print a time for some rows and nothing for others with no way
-     * to tell which. Here the only absence is "no slot names this weekday",
-     * which is exactly the orphan — and is the case the row renders as a bare
-     * date.
-     */
-    schedule_slots: z.array(adminDashboardScheduleSlot),
-  }),
-  offers: z.array(adminDashboardSubstitutionOffer),
-});
-
 /** The whole document `get_admin_dashboard` returns. */
 export const adminDashboardSnapshot = z.object({
   users: z.array(adminDashboardUserStat),
   certification_queue: z.array(adminDashboardCertificationCandidate),
   attention_products: z.array(adminDashboardAttentionProduct),
   schedule_products: z.array(adminDashboardScheduleProduct),
-  /**
-   * The substitution queue — a fifth top-level member, ordered by date then product.
-   * An empty array is the all-clear, exactly as the attention queue reads its
-   * own.
-   */
-  substitution_requests: z.array(adminDashboardSubstitutionRequest),
 });
 
 /**
@@ -316,11 +230,5 @@ export type AdminDashboardScheduleSlot = z.infer<
 >;
 export type AdminDashboardScheduleProduct = z.infer<
   typeof adminDashboardScheduleProduct
->;
-export type AdminDashboardSubstitutionOffer = z.infer<
-  typeof adminDashboardSubstitutionOffer
->;
-export type AdminDashboardSubstitutionRequest = z.infer<
-  typeof adminDashboardSubstitutionRequest
 >;
 export type AdminDashboardSnapshot = z.infer<typeof adminDashboardSnapshot>;

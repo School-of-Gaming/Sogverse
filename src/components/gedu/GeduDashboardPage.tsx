@@ -9,14 +9,11 @@ import {
   formatProductSchedule,
   scheduleCardLines,
 } from "@/lib/products/format-product-schedule";
-import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import {
   geduAssignmentKey,
-  geduSubstitutionKey,
   rollUpGeduAssignments,
   rollUpGeduSubstitutions,
-  type GeduAssignmentRow,
   type GeduSubstitutionSummary,
 } from "@/lib/gedu-assignment-rollup";
 import { useNow, useTimezone } from "@/providers";
@@ -29,10 +26,10 @@ import {
   type GeduAssignmentSummary,
 } from "@/services/gedu-sessions";
 import {
-  useOpenSubstitutionRequests,
-  type OpenSubstitutionRequest,
-} from "@/services/session-substitution";
-import { GeduSubstitutionPoolSection } from "./GeduSubstitutionPoolSection";
+  geduSeatHrefs,
+  geduSubstitutionAttention,
+  joinGeduSeatRows,
+} from "./gedu-seat-rows";
 import { GeduDashboardPageBody } from "./gedu-dashboard-page-body";
 import { GeduDashboardSkeleton } from "./GeduDashboardSkeleton";
 import type { GeduAssignmentCardData } from "./GeduAssignmentsSectionView";
@@ -63,11 +60,15 @@ import type { GeduAssignmentCardData } from "./GeduAssignmentsSectionView";
  *
  * Both reads are server-prefetched by the route, so the ordinary visit paints
  * complete on the first frame with no loading state at all.
+ *
+ * **The open substitution queue is not here.** It is other people's absences,
+ * and it has a page of its own at `/gedu/substitutions` — what stays on My SOG
+ * is a substitution this gedu has already taken, because that is a session in
+ * their own week.
  */
 export function GeduDashboardPage({
   initialRows,
   initialSummaries,
-  initialSubstitutionRequests,
   certified,
   contractAccepted,
   criminalRecordCheckPassed,
@@ -80,16 +81,6 @@ export function GeduDashboardPage({
    * group names and badges it does not yet know.
    */
   initialSummaries: GeduAssignmentSummary[] | null;
-  /**
-   * The pool, prefetched by the route — or `null` when that read failed or was
-   * never made (an uncertified gedu asks nothing).
-   *
-   * `null` is "ask from the browser", not "nothing needs a substitute": the section —
-   * heading, nav chip and body alike — is withheld whole until an answer
-   * arrives, rather than telling a gedu the queue is clear on the strength of a
-   * failed read.
-   */
-  initialSubstitutionRequests: OpenSubstitutionRequest[] | null;
   certified: boolean;
   /**
    * Has this gedu accepted the contract version in force? Resolved by the
@@ -114,22 +105,6 @@ export function GeduDashboardPage({
   const { data: summaries } = useGeduAssignmentSummaries(
     initialSummaries === null ? undefined : { initialData: initialSummaries },
   );
-  /**
-   * The pool, read here rather than inside the section it feeds — because
-   * *whether there is a section at all* is this page's decision and the answer
-   * is what settles it.
-   *
-   * `enabled` is certification: an uncertified caller may substitute for nothing and
-   * every write behind the section refuses them server-side, so the honest
-   * answer is not to ask. `undefined` therefore means two things at once, and
-   * both want the same treatment — nobody to ask for, or nobody has answered
-   * yet — so neither renders a heading.
-   */
-  const { data: substitutionRequests } = useOpenSubstitutionRequests({
-    enabled: certified,
-    initialData: initialSubstitutionRequests ?? undefined,
-  });
-
   const cards = useMemo(
     () =>
       summaries === undefined
@@ -151,18 +126,6 @@ export function GeduDashboardPage({
     <GeduDashboardPageBody
       assignments={cards.assignments}
       substitutions={cards.substitutions}
-      // `null` for an uncertified gedu, and `null` until the read answers —
-      // both withhold the heading and the nav entry as well as the body.
-      // Certification is what gates offering and holding a substitution, server-side,
-      // so an all-clear line there would be a promise about a queue this
-      // account is not in; and a heading painted before its body has one means
-      // the card arrives above what the reader is already looking at, on data's
-      // own schedule. Heading and body appear together or not at all.
-      substitutionPool={
-        substitutionRequests === undefined ? null : (
-          <GeduSubstitutionPoolSection requests={substitutionRequests} />
-        )
-      }
       certified={certified}
       contractAccepted={contractAccepted}
       criminalRecordCheckPassed={criminalRecordCheckPassed}
@@ -197,41 +160,8 @@ function buildDashboardCards(args: {
 }): { assignments: GeduAssignmentCardData[]; substitutions: GeduSubstitutionSummary[] } {
   const { rows, summaries, locale, timeZone, now } = args;
 
-  const summaryBySeat = new Map(
-    summaries.map((s) => [seatKey(s.kind, s.group_id, s.substitution_date), s]),
-  );
-
-  const seatRows: GeduAssignmentRow[] = rows.map((row) => {
-    const summary = summaryBySeat.get(
-      seatKey(row.kind, row.groupId, row.substitutionDate),
-    );
-    return {
-      ...row,
-      groupName: summary?.group_name ?? null,
-      groupParticipantCount: summary?.group_participant_count ?? 0,
-      // Null on anything remote, and the RPC has already applied that test
-      // against `is_remote` rather than against the presence of a location — a
-      // remote municipality club carries one and has no building.
-      siteName: summary?.site_name ?? null,
-    };
-  });
-
-  // Every per-seat map is keyed by (product, group): a gedu substituting a sibling
-  // group of a product they already teach holds two seats on one product, and
-  // under a product key they would have shared a badge, a workspace link and a
-  // voice room.
-  const hrefByAssignment = Object.fromEntries(
-    rows.map((row) => [
-      geduAssignmentKey(row.product.id, row.groupId),
-      ROUTES.gedu.assignedProduct(row.product.productType, row.product.id),
-    ]),
-  );
-  const voiceHrefByAssignment = Object.fromEntries(
-    rows.map((row) => [
-      geduAssignmentKey(row.product.id, row.groupId),
-      ROUTES.voice.groupSession(row.groupId),
-    ]),
-  );
+  const seatRows = joinGeduSeatRows(rows, summaries);
+  const { hrefByAssignment, voiceHrefByAssignment } = geduSeatHrefs(rows);
 
   const assignments = rollUpGeduAssignments({
     rows: seatRows,
@@ -249,16 +179,7 @@ function buildDashboardCards(args: {
   const substitutions = rollUpGeduSubstitutions({
     rows: seatRows,
     locale,
-    // A substitution's count is scoped to the one date it substitutions, so its key is the
-    // substitution's own identity rather than the seat's.
-    attentionBySubstitution: Object.fromEntries(
-      summaries
-        .filter((s) => s.kind === "substitution" && s.substitution_date !== null)
-        .map((s) => [
-          geduSubstitutionKey(s.group_id, s.substitution_date!),
-          s.attention_count,
-        ]),
-    ),
+    attentionBySubstitution: geduSubstitutionAttention(summaries),
     hrefByAssignment,
     voiceHrefByAssignment,
   });
@@ -297,22 +218,4 @@ function buildDashboardCards(args: {
   });
 
   return { assignments: assignmentCards, substitutions };
-}
-
-/**
- * Which seat a row or a summary is about: the kind, the group, and — for a
- * substitution — the date it substitutions.
- *
- * Group id alone was the join key while every seat was an assignment. It stops
- * being unique the moment one group can be both somebody's standing assignment
- * and somebody's substituted Monday, and two substituted Mondays of one group are two
- * seats with two counts; joining on the group alone would hand one of them the
- * other's badge.
- */
-function seatKey(
-  kind: "assignment" | "substitution",
-  groupId: string,
-  substitutionDate: string | null,
-): string {
-  return `${kind}:${groupId}:${substitutionDate ?? ""}`;
 }

@@ -1,4 +1,5 @@
 import { DashboardLayout, Footer, Header } from "@/components/layout";
+import type { UserRole } from "@/lib/constants";
 import type { PreviewChromeKind } from "./scenes";
 
 /**
@@ -23,15 +24,18 @@ import type { PreviewChromeKind } from "./scenes";
  */
 export function PreviewChrome({
   chrome,
+  navRole,
   children,
 }: {
   chrome: PreviewChromeKind;
+  /** The scene's `navRole`, if it declares one — see the registry's field. */
+  navRole?: UserRole;
   children: React.ReactNode;
 }) {
   if (chrome === "dashboard" || chrome === "admin") {
     return (
       <>
-        <Header />
+        <Header navRole={navRole} />
         <DashboardLayout showSidebar={chrome === "admin"}>
           {children}
         </DashboardLayout>
@@ -45,7 +49,7 @@ export function PreviewChrome({
   // apart the first time the site's outer frame changes.
   return (
     <div className="flex min-h-screen flex-col">
-      <Header />
+      <Header navRole={navRole} />
       <main
         className={
           chrome === "auth" ? "flex flex-1 items-center justify-center p-4" : "flex-1"

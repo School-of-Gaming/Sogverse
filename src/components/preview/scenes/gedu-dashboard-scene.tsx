@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useLocale } from "next-intl";
-import { GeduSubstitutionPoolSectionView } from "@/components/gedu/GeduSubstitutionPoolSectionView";
 import { GeduDashboardPageBody } from "@/components/gedu/gedu-dashboard-page-body";
 import {
   buildGeduDashboardFixture,
@@ -52,22 +51,6 @@ export function GeduDashboardScene({
       criminalRecordCheckPassed={fixture.criminalRecordCheckPassed}
       assignments={fixture.assignments}
       substitutions={fixture.substitutions}
-      // The real section view over fixture rows, with the two writes inert —
-      // the same split every other panel on this page takes. Offering and
-      // withdrawing reach the database, so they do nothing here; what is on
-      // show is the row itself and the button's two resting states, which the
-      // fixture puts side by side.
-      substitutionPool={
-        fixture.substitutionPool === null ? null : (
-          <GeduSubstitutionPoolSectionView
-            rows={fixture.substitutionPool}
-            committingRequestId={null}
-            error={null}
-            onOffer={noop}
-            onWithdraw={noop}
-          />
-        )
-      }
       toolsCard={
         // Idle, with the submit inert: the textarea, the parsing and the
         // duplicate/email warnings all still work, because those are pure UI

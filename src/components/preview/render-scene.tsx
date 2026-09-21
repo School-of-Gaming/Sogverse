@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { isAdminDashboardScenario } from "@/components/admin/dashboard/mock-dashboard-fixtures";
+import { isAdminSubstitutionsScenario } from "@/components/admin/substitutions/mock-substitutions-fixtures";
 import { isInvoiceCustomerScenario } from "@/components/admin/invoice-customers/mock-invoice-customer-fixtures";
 import { isMunicipalityInvoicingScenario } from "@/components/admin/municipality-invoicing/mock-invoicing-fixtures";
 import { isChatSceneScenario } from "@/components/chat/mock-chat-fixtures";
@@ -7,6 +8,7 @@ import { isFamilyProductScenario } from "@/components/family/product-page/mock-f
 import { isGamerDashboardScenario } from "@/components/gamer/mock-dashboard-fixtures";
 import { isGeduContractScenario } from "@/components/gedu/contract/mock-contract-fixtures";
 import { isGeduDashboardScenario } from "@/components/gedu/mock-dashboard-fixtures";
+import { isGeduSubstitutionsScenario } from "@/components/gedu/mock-substitutions-fixtures";
 import { isGroupWorkspaceScenario } from "@/components/group-workspace/mock-workspace-fixtures";
 import { isParentDashboardScenario } from "@/components/parent/mock-dashboard-fixtures";
 import { isSeatOfferScenario } from "@/components/seat-offer/mock-seat-offer-fixtures";
@@ -25,11 +27,13 @@ import { findConsentScenario } from "@/components/public/products/required-conse
 import type { ProductTopic } from "@/types";
 import type { PreviewSurface } from "./scenes";
 import { AdminDashboardScene } from "./scenes/admin-dashboard-scene";
+import { AdminSubstitutionsScene } from "./scenes/admin-substitutions-scene";
 import { ChatScene } from "./scenes/chat-scene";
 import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
 import { GamerDashboardScene } from "./scenes/gamer-dashboard-scene";
 import { GeduContractScene } from "./scenes/gedu-contract-scene";
 import { GeduDashboardScene } from "./scenes/gedu-dashboard-scene";
+import { GeduSubstitutionsScene } from "./scenes/gedu-substitutions-scene";
 import { InvoiceCustomersScene } from "./scenes/invoice-customers-scene";
 import { MunicipalityInvoicingScene } from "./scenes/municipality-invoicing-scene";
 import { ParentDashboardScene } from "./scenes/parent-dashboard-scene";
@@ -146,6 +150,10 @@ const SCENE_RENDERERS: Record<
     if (!isGeduDashboardScenario(scenario)) notFound();
     return <GeduDashboardScene scenario={scenario} />;
   },
+  "gedu-substitutions": (scenario) => {
+    if (!isGeduSubstitutionsScenario(scenario)) notFound();
+    return <GeduSubstitutionsScene scenario={scenario} />;
+  },
   "gedu-contract": (scenario) => {
     if (!isGeduContractScenario(scenario)) notFound();
     return <GeduContractScene scenario={scenario} />;
@@ -192,6 +200,10 @@ const SCENE_RENDERERS: Record<
   "admin-dashboard": (scenario) => {
     if (!isAdminDashboardScenario(scenario)) notFound();
     return <AdminDashboardScene scenario={scenario} />;
+  },
+  "admin-substitutions": (scenario) => {
+    if (!isAdminSubstitutionsScenario(scenario)) notFound();
+    return <AdminSubstitutionsScene scenario={scenario} />;
   },
   "municipality-invoicing": (scenario) => {
     if (!isMunicipalityInvoicingScenario(scenario)) notFound();

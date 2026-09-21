@@ -146,6 +146,27 @@ language match, no schedule-clash check.
 **No instants travel.** The pool emits the date plus the product's timezone and slots, and
 the client owns the calendar math, exactly as both feeds do.
 
+## The queue is a page; a substitution taken is a session in a week
+
+The open queue is a gedu's Substitutions page and nothing else renders it. What a gedu has
+already been approved for is on that page too **and** on My SOG among their own groups,
+because once it is theirs it is one of the sessions in their week like any other. So the
+two halves of the word live in two places on purpose, and neither is a copy of the other:
+the queue is other people's absences and expires, and the card is the reader's own
+afternoon.
+
+The queue is **ordered by how soon each session starts**, which is not the order the read
+returns (date, then product), and the ordering is a pure helper in `src/lib/` rather than a
+comparator inside a component. A session inside the next day is drawn with the app's
+existing warning status; nothing else about the card changes, because a queue that shouts
+in several registers at once is a queue nobody reads.
+
+**Offering asks a confirm question and holds it open until the write settles; withdrawing
+an offer does not ask at all.** Offering is refusable — the request may have been filled,
+the session may have started — and the refusal is news the volunteer needs before they
+move on, which is what the holding mode is for. Withdrawing is the undo of a decision
+already made, so a question in front of it would be a question about a question.
+
 ## Access, and the two places it is narrower
 
 A substitution is **visible** from approval and **reachable** from 48 hours before the
@@ -186,16 +207,43 @@ voice window is only open around a session, so there is nothing to rejoin on the
 day. The membership and moderator predicates move together, always — the chat channel is
 gated by the pair.
 
-## Invalidation reaches five roots
+## The office has a page, and it is one read
 
-A substitution write moves five documents, and the mutations invalidate all five roots
-rather than naming leaves. Roots, because a single write can move a group the caller was
-not even looking at: unseating somebody cascades, withdrawing every request whose
-requester no longer holds a seat on that date, and a client cannot know which those are.
+`/admin/substitutions` is where an absence is answered — a sidebar entry of its own, not a
+band on the admin dashboard, because every row is work somebody finishes today and a
+session with nobody teaching it is too easy to scroll past on a board of standing
+information. Its read, `get_admin_substitution_requests`, returns the page **whole**:
+`open`, the queue, and `recent`, the requests settled in the last fortnight. One document
+rather than two, so a single approval moves a row from one list to the other with no frame
+in which it is in neither or in both.
 
-The five are this feature's own pool, both staff session documents, the gedu's assignment
-rows (a live substitution *is* a row there) and the admin dashboard (the queue is a member
-of that one document). The fan-out is stated once in the queries module, not per hook.
+`recent` exists because **"who stood in on Tuesday?" has no other home.** An approved
+request leaves the queue, and the only surface still naming its substitute is the group's
+own page, which an admin has to already know the group to reach. It carries withdrawals
+too — "nobody had to stand in after all" is equally an answer — and it is bounded by the
+**session date** rather than by when the row was resolved, because `approved_at` exists
+only on a substituted row and a withdrawal stamps nothing, so the date is the one key both
+statuses share. It stops at today: a settled *future* session is staffing the group page
+owns.
+
+**The page sorts by the session's own start; the read cannot.** No instants travel on any
+substitution surface, so SQL orders by the calendar date and the client resolves each
+request's occurrence from the slots that ride with it. Two products meeting on one day in
+two zones would otherwise sit in an order saying nothing about which is next, on a list an
+admin reads as a run of deadlines. An orphaned request — one whose weekday the schedule no
+longer names — has no start, sorts on its day, and claims no urgency.
+
+## Invalidation reaches four roots
+
+A substitution write moves four roots, and the mutations invalidate all of them rather
+than naming leaves. Roots, because a single write can move a group the caller was not even
+looking at: unseating somebody cascades, withdrawing every request whose requester no
+longer holds a seat on that date, and a client cannot know which those are.
+
+The four are this feature's own key (both the gedu's pool and the admin page's document
+live under it), both staff session documents, and the gedu's assignment rows — a live
+substitution *is* a row there. The fan-out is stated once in the queries module, not per
+hook.
 
 ## What this directory deliberately does not do
 

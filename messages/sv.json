@@ -64,7 +64,9 @@
       "robloxSafeguarding": "Barnskyddspolicy för Skaparnas akademi",
       "robloxTerms": "Användarvillkor för Skaparnas akademi",
       "geduContract": "Gedu-avtal",
-      "seatOffer": "Platserbjudande"
+      "seatOffer": "Platserbjudande",
+      "geduSubstitutions": "Vikariat",
+      "adminSubstitutions": "Vikariat"
     },
     "descriptions": {
       "signIn": "Logga in på ditt School of Gaming-konto för att se dina spelares kommande tillfällen, hantera anmälningar och hålla familjens uppgifter aktuella.",
@@ -314,24 +316,6 @@
           "missingInvoiceCustomer": "Faktureringskund saknas",
           "waitlistOpenSeatsWithOffers": "{waiting} i kö · {open, plural, one {# plats} other {# platser}} lediga · {offers} väntar på svar"
         }
-      },
-      "substitution": {
-        "title": "Vikarieförfrågningar",
-        "allClear": "Inget tillfälle behöver en vikarie.",
-        "justNow": "{count, plural, one {# vikarie godkänd nyss} other {# vikarier godkända nyss}}",
-        "listLabel": "Tillfällen som behöver en vikarie",
-        "offersLabel": "Geduer som erbjuder sig att vikariera",
-        "away": "Borta:",
-        "unnamed": "Namnlös Gedu",
-        "reason": {
-          "sick": "Sjuk",
-          "other": "Annat"
-        },
-        "noOffers": "Inga erbjudanden än.",
-        "openGroup": "Öppna gruppen",
-        "approve": "Godkänn",
-        "approving": "Godkänner…",
-        "failed": "Godkännandet misslyckades – försök igen."
       },
       "certification": {
         "title": "Gedu-certifiering",
@@ -1324,6 +1308,31 @@
       "notDelivered": "Ej levererat",
       "today": "Idag",
       "yesterday": "Igår"
+    },
+    "substitutions": {
+      "title": "Vikariat",
+      "description": "Tillfällen som någon inte kan ta, och vem som hoppade in.",
+      "descriptionWithZone": "Tillfällen som någon inte kan ta, och vem som hoppade in. Tiderna visas i {zone}.",
+      "listLabel": "Tillfällen som behöver en vikarie",
+      "allClear": "Inget tillfälle behöver en vikarie.",
+      "justNow": "{count, plural, one {# vikarie godkänd nyss} other {# vikarier godkända nyss}}",
+      "offersLabel": "Geduer som erbjuder sig att vikariera",
+      "away": "Borta:",
+      "unnamed": "Namnlös Gedu",
+      "reason": {
+        "sick": "Sjuk",
+        "other": "Annat"
+      },
+      "noOffers": "Inga erbjudanden än.",
+      "openGroup": "Öppna gruppen",
+      "approve": "Godkänn",
+      "approving": "Godkänner…",
+      "failed": "Godkännandet misslyckades – försök igen.",
+      "recentLabel": "Avklarat de senaste två veckorna",
+      "substitutedBy": "vikarieras av",
+      "withdrawn": "Kom ändå",
+      "loadError": "Vikariaten kunde inte laddas.",
+      "loadErrorWithReason": "Vikariaten kunde inte laddas: {reason}"
     }
   },
   "auth": {
@@ -1818,7 +1827,6 @@
     "camps": "Läger",
     "events": "Evenemang",
     "myGroupsEmptyStateGedu": "När du tilldelas en grupp visas den här tillsammans med sitt nästa tillfälle.",
-    "substitutionPool": "Vikariat",
     "billing": "Fakturering",
     "help": "Hjälp",
     "tools": "Verktyg",
@@ -1986,10 +1994,15 @@
       "poolRoleAssistant": "Assisterande Gedu",
       "poolFee": "{fee} per tillfälle",
       "poolOfferAction": "Jag kan vikariera",
-      "poolOfferPending": "Skickar…",
       "poolWithdrawAction": "Dra tillbaka erbjudandet",
       "poolWithdrawPending": "Drar tillbaka…",
-      "poolActionFailed": "Det sparades inte. Försök igen."
+      "poolActionFailed": "Det sparades inte. Försök igen.",
+      "pageTitle": "Vikariat",
+      "back": "Tillbaka till Min SOG",
+      "mineHeading": "Dina vikariat",
+      "mineAllClear": "Du har inga kommande vikariat.",
+      "offerConfirmTitle": "Erbjuda dig att vikariera?",
+      "offerConfirmBody": "Du erbjuder dig att hålla {product} {when}. School of Gaming väljer vikarien, så ett erbjudande binder dig inte förrän det har godkänts — fram till dess kan du dra tillbaka det. Efter godkännandet öppnas gruppens arbetsyta för dig 48 timmar innan tillfället börjar."
     },
     "coverage": {
       "title": "Områden du täcker",
@@ -2305,7 +2318,9 @@
       "shop": "Butik",
       "yty": "Yty",
       "about": "Om oss",
-      "faq": "FAQ"
+      "faq": "FAQ",
+      "substitutions": "Vikariat",
+      "substitutionsPhone": "Vikariat"
     },
     "accountMenu": "Kontomeny – {name}",
     "continueToAccount": "Fortsätt till ditt konto",
@@ -2755,7 +2770,8 @@
     "settings": "Inställningar",
     "tools": "Verktyg",
     "expandSidebar": "Expandera sidopanel",
-    "collapseSidebar": "Minimera sidopanel"
+    "collapseSidebar": "Minimera sidopanel",
+    "substitutions": "Vikariat"
   },
   "home": {
     "hero": {

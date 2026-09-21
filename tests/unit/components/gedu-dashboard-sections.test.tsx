@@ -6,6 +6,7 @@ import { GeduDashboardPageBody } from "@/components/gedu/gedu-dashboard-page-bod
 import { buildGeduDashboardFixture } from "@/components/gedu/mock-dashboard-fixtures";
 import { NowProvider, TimezoneProvider } from "@/providers";
 import type { GeduAssignmentCardData } from "@/components/gedu/GeduAssignmentsSectionView";
+import type { GeduSubstitutionSummary } from "@/lib/gedu-assignment-rollup";
 
 /**
  * **The dashboard's headings are the page's shape, and its shape follows what
@@ -42,8 +43,11 @@ function dashboardHtml(
   assignments: readonly GeduAssignmentCardData[],
   {
     certified = true,
-    substitutionPool = null,
-  }: { certified?: boolean; substitutionPool?: React.ReactNode | null } = {},
+    substitutions = [],
+  }: {
+    certified?: boolean;
+    substitutions?: readonly GeduSubstitutionSummary[];
+  } = {},
 ): string {
   return renderToStaticMarkup(
     <NextIntlClientProvider locale="en" messages={messages}>
@@ -60,7 +64,7 @@ function dashboardHtml(
             // against.
             contractAccepted
             criminalRecordCheckPassed
-            substitutionPool={substitutionPool}
+            substitutions={substitutions}
             toolsCard={<div />}
             instantRoomCard={<div />}
             // Marked rather than anonymous: whether the section still renders
@@ -171,32 +175,38 @@ describe("a gedu who runs one kind of thing", () => {
 });
 
 /**
- * **Sessions needing a substitute appears whole or not at all.**
+ * **The open queue is not on My SOG, and what the gedu took still is.**
  *
- * The heading, the nav chip and the body are one decision, and the page hands
- * over `null` for both cases that have nothing to show: a gedu who may substitution
- * nothing, and a read that has not answered yet. A heading rendered ahead of
- * its own body would be a card arriving above what the reader is already
- * looking at, on data’s own schedule — which is the reveal the layout rule
- * forbids and the reason the answer, not the certification flag, is what the
- * section is gated on.
+ * Other people's absences are a page of their own; a substitution this gedu has
+ * already accepted is a session in their own week, so it stays here among the
+ * groups. The two halves pull against each other — the obvious way to take the
+ * queue off this page is to take the word off it altogether — so both are
+ * pinned.
  */
-describe("the substitution pool section", () => {
-  it("withholds the heading and the chip along with the body", () => {
+describe("substitutions on My SOG", () => {
+  it("carries no open queue, heading or chip", () => {
     const html = dashboardHtml([]);
 
     expect(html).not.toContain('id="substitution-pool"');
     expect(html).not.toContain('href="#substitution-pool"');
     expect(html).not.toContain(`>${messages.gedu.substitution.poolHeading}</h2>`);
+    expect(html).not.toContain(messages.gedu.substitution.poolOfferAction);
   });
 
-  it("renders heading, chip and body together once there is an answer", () => {
-    const html = dashboardHtml([], {
-      substitutionPool: <div id="substitution-pool-body" />,
-    });
+  it("still puts an accepted substitution among the gedu's own cards", () => {
+    const { substitutions } = buildGeduDashboardFixture(
+      NOW,
+      "default",
+      "en",
+      "Europe/Helsinki",
+    );
+    expect(substitutions.length).toBeGreaterThan(0);
 
-    expect(html).toContain('href="#substitution-pool"');
-    expect(html).toContain(`>${messages.gedu.substitution.poolHeading}</h2>`);
-    expect(html).toContain('id="substitution-pool-body"');
+    const html = dashboardHtml([], { substitutions });
+
+    // The card's own eyebrow, which is what tells it apart from an assignment
+    // card in the same grid.
+    expect(html).toContain(messages.gedu.substitution.cardEyebrow);
+    expect(html).toContain(substitutions[0].productName);
   });
 });

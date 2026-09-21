@@ -1,8 +1,10 @@
 import type { AppSupabaseClient, SubstitutionReason } from "@/types";
 import {
+  adminSubstitutionQueue,
   anonymousSubstitutionRequestDocument,
   substitutionRequestDocument,
   openSubstitutionRequests,
+  type AdminSubstitutionQueue,
   type AnonymousSubstitutionRequestDocument,
   type SubstitutionRequestDocument,
   type OpenSubstitutionRequest,
@@ -47,6 +49,23 @@ export class SessionSubstitutionService {
     const { data, error } = await this.supabase.rpc("get_open_substitution_requests");
     if (error) throw error;
     return openSubstitutionRequests.parse(data);
+  }
+
+  /**
+   * The admin Substitutions page, whole: what needs staffing, and what the last
+   * fortnight came to.
+   *
+   * One read for both halves because they are one page and one invalidation — a
+   * single approval empties a row out of `open` and puts it into `recent`, and
+   * two reads would have to land together to show that without a frame in which
+   * the row is in neither list or in both.
+   */
+  async getAdminQueue(): Promise<AdminSubstitutionQueue> {
+    const { data, error } = await this.supabase.rpc(
+      "get_admin_substitution_requests",
+    );
+    if (error) throw error;
+    return adminSubstitutionQueue.parse(data);
   }
 
   /**

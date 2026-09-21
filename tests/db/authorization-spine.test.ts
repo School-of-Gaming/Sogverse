@@ -156,6 +156,11 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   set_session_substitution: { permittedRoles: ["admin"] },
   clear_session_substitution: { permittedRoles: ["admin"] },
   withdraw_session_substitution_request_as_admin: { permittedRoles: ["admin"] },
+  // The Substitutions page's whole document. Assertable on both halves with no
+  // fixture for the reason the other argument-less reads here are: it takes no
+  // id, so a permitted admin gets a document — empty or not — rather than a
+  // second refusal, and every other role is stopped by the guard.
+  get_admin_substitution_requests: { permittedRoles: ["admin"] },
 
   // --- customer-gated ------------------------------------------------------
   // Phase 3's grant-plus-guard conversion. Past the role guard, a customer
@@ -215,7 +220,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
     permittedAlsoForbiddenOnNullArgs:
       "past the role guard, a gedu with no assignment on the (NULL) product is " +
       "refused by a second 42501 — the ownership half of this RPC's gate. Its " +
-      "positive path is substituted by get-gedu-assigned-product.test.ts.",
+      "positive path is covered by get-gedu-assigned-product.test.ts.",
   },
 
   // --- the session feed ----------------------------------------------------
@@ -482,7 +487,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // its guard runs as the caller (see migration 00120; update_product was
   // elevated to DEFINER by 00171 and no longer needs the grant, but its
   // sibling still does). They are role-gated by definition, so the matrix
-  // substitutions them like any other.
+  // covers them like any other.
   assert_admin: { permittedRoles: ["admin"] },
   // No role passes: the all-NULL convention hands it a NULL role name, which it
   // refuses outright rather than letting the comparison swallow it. That refusal
@@ -738,7 +743,7 @@ const SELF_SCOPING_VIEWS: Record<string, { scopeTest: string; why: string }> = {
  * Migration 00155 replaced its three-argument signature with a four-argument
  * one (the optional country filter) — a new object with no privileges of its
  * own, which is why that migration re-issues this grant in full. The allowlist
- * keys on the name, so it substitutions whichever signature is live; the guarantee it
+ * keys on the name, so it covers whichever signature is live; the guarantee it
  * rests on is unchanged, because the new argument only narrows the result.
  *
  * `immutable_unaccent` and `location_search_separator` are here because

@@ -1,9 +1,4 @@
-import type {
-  SubstitutionReason,
-  GeduAssignmentRole,
-  ProductType,
-  UserRole,
-} from "@/types";
+import type { ProductType, UserRole } from "@/types";
 import type { AppHref } from "@/lib/constants/routes";
 
 /**
@@ -316,96 +311,6 @@ export interface ComingUpDay {
   cohorts: readonly ComingUpCohort[];
 }
 
-/**
- * One gedu who has volunteered to substitute at a session, and the two standings an
- * admin weighs before seating them.
- *
- * They are the certification queue's two standings in the certification
- * queue's own shape, deliberately: an admin choosing a sub is asking what they
- * ask when certifying somebody, and a second vocabulary for "certified" and
- * "extract recorded" would be a second thing to keep in step. Neither gates the
- * action — the database has already refused anybody who may not substitute — so both
- * inform and nothing here is disabled by them.
- */
-export interface SubstitutionOffer {
-  /**
-   * The **offer's** id, not the gedu's: it is what Approve posts, because the
-   * approval is of one offer on one request rather than of a person.
-   */
-  id: string;
-  /**
-   * The offerer's account id. Real, because the identicon beside the name is
-   * hashed out of its hex bytes.
-   */
-  geduId: string;
-  /** `null` where the account carries no name; the row words the stand-in. */
-  name: string | null;
-  certified: boolean;
-  /**
-   * When an admin recorded seeing this offerer's criminal record extract,
-   * already formatted as a calendar date in the viewer's zone — or `null` where
-   * none has been recorded. Pre-formatted for the reason the certification
-   * queue's twin is: it is an `Intl` product rather than translated copy.
-   */
-  criminalRecordCheckOn: string | null;
-}
-
-/**
- * One open substitution request an admin has to staff.
- *
- * **The date is the product's and the clock face is the reader's**, and the two
- * are deliberately not resolved into one zone. The date is the request's own
- * key — (group, date, absent gedu) — and is what every other surface that names
- * this session states, so converting it would leave the queue and the group
- * page disagreeing about which day is short-staffed. The time is a clock face,
- * and every clock face on this page is the viewer's, which is what the zone
- * abbreviation beside the schedule discloses. For a Helsinki admin reading
- * Helsinki products — the ordinary case, and the one the abbreviation stays
- * `null` for — there is nothing to reconcile.
- *
- * An **orphaned** request (an admin moved the schedule's weekday after it was
- * filed) resolves to no occurrence at all and carries `sessionTime: null`,
- * rendering as the bare date. That is the case the queue exists to tolerate:
- * it orders by date and never by a derived instant.
- *
- * The reason travels here and nowhere else on the platform: a `sick` category
- * is health-related data about a contractor, and this surface is the one it was
- * collected for.
- */
-export interface SubstitutionRequest {
-  id: string;
-  groupId: string;
-  groupName: string;
-  /** The product's name in the reader's locale — never truncated, as on a card. */
-  productName: string;
-  productType: ProductType;
-  /** The session's product-local calendar date, already formatted. */
-  sessionDate: string;
-  /**
-   * When the session runs, as `HH:MM–HH:MM` in the **viewer's** zone — or
-   * `null` where the product's schedule puts no slot on that weekday.
-   *
-   * Both ends, unlike a schedule chip, which states a start and keeps its
-   * duration in a `title`. A chip sits in a grid of a hundred others where the
-   * start is what places it; a queue row is a handful of sessions an admin is
-   * finding somebody for, and how long they would be there is half of what
-   * they are being asked.
-   */
-  sessionTime: string | null;
-  /** The role being substituted — the absent gedu's, and what the sub is paid as. */
-  role: GeduAssignmentRole;
-  reason: SubstitutionReason | null;
-  reasonNote: string | null;
-  /** The absent gedu's account id — the identicon's input, so a real UUID. */
-  requesterId: string;
-  /** `null` where the account carries no name; the row words the stand-in. */
-  requesterName: string | null;
-  /** The group's own admin page — where a request with no offers is dealt with. */
-  groupHref: AppHref;
-  /** As delivered: the RPC orders by date then product, and so does the panel. */
-  offers: readonly SubstitutionOffer[];
-}
-
 /** Everything the draft body renders. */
 export interface AdminDashboardData {
   /** The instant the page is "now" for — the highlighted weekday row. */
@@ -433,11 +338,6 @@ export interface AdminDashboardData {
   timeZoneAbbrev: string | null;
   /** Products needing an admin. Empty means nothing is wrong with any of them. */
   products: readonly ProductAttention[];
-  /**
-   * Open substitution requests, dated today or later, in the order the read delivered
-   * them (date, then product). Empty is the all-clear.
-   */
-  substitutionRequests: readonly SubstitutionRequest[];
   /** Gedu accounts waiting on a certification decision. */
   uncertifiedGedus: readonly UncertifiedGedu[];
   users: readonly AdminUserRoleStat[];

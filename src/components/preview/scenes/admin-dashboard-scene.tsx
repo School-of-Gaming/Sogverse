@@ -53,13 +53,6 @@ export function AdminDashboardScene({
   );
 
   const [certified, setCertified] = useState<ReadonlySet<string>>(new Set());
-  /**
-   * The substitution queue's half of the same trick, keyed by **request** rather than
-   * by offer: approving one offer settles the request, and what leaves the list
-   * is the request. The panel's own receipt prunes itself against whatever this
-   * scene goes on offering, exactly as it does against a refetched snapshot.
-   */
-  const [substituted, setSubstituted] = useState<ReadonlySet<string>>(new Set());
 
   /**
    * Certifications belong to the scenario they were made in. The two scenarios
@@ -73,7 +66,6 @@ export function AdminDashboardScene({
   if (shownScenario !== scenario) {
     setShownScenario(scenario);
     setCertified(new Set());
-    setSubstituted(new Set());
   }
 
   const data = useMemo(
@@ -82,11 +74,8 @@ export function AdminDashboardScene({
       uncertifiedGedus: fixture.uncertifiedGedus.filter(
         (gedu) => !certified.has(gedu.id),
       ),
-      substitutionRequests: fixture.substitutionRequests.filter(
-        (request) => !substituted.has(request.id),
-      ),
     }),
-    [fixture, certified, substituted],
+    [fixture, certified],
   );
 
   const handleCertify = useCallback((geduId: string) => {
@@ -94,31 +83,5 @@ export function AdminDashboardScene({
     return Promise.resolve();
   }, []);
 
-  /**
-   * Approving in the preview drops the request the offer belongs to, which is
-   * the fixture standing in for the refetched snapshot. The offer id is what
-   * the panel hands over — it is what the RPC takes — so the request it settles
-   * is found here rather than being carried alongside it, the way the live path
-   * finds it by simply not returning it again.
-   */
-  const handleApproveSubstitution = useCallback(
-    (offerId: string) => {
-      const request = fixture.substitutionRequests.find((candidate) =>
-        candidate.offers.some((offer) => offer.id === offerId),
-      );
-      if (request !== undefined) {
-        setSubstituted((current) => new Set(current).add(request.id));
-      }
-      return Promise.resolve();
-    },
-    [fixture],
-  );
-
-  return (
-    <AdminDashboardPageBody
-      data={data}
-      onCertifyGedu={handleCertify}
-      onApproveSubstitutionOffer={handleApproveSubstitution}
-    />
-  );
+  return <AdminDashboardPageBody data={data} onCertifyGedu={handleCertify} />;
 }

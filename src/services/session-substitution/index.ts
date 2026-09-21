@@ -1,6 +1,7 @@
 export { SessionSubstitutionService } from "./session-substitution.service";
 export { sessionSubstitutionKeys } from "./session-substitution.keys";
 export {
+  useAdminSubstitutionQueue,
   useApproveSessionSubstitutionOffer,
   useClearSessionSubstitution,
   useOfferSessionSubstitution,
@@ -13,6 +14,10 @@ export {
 } from "./session-substitution.queries";
 export {
   SUBSTITUTION_REASON_NOTE_MAX_LENGTH,
+  adminOpenSubstitutionRequest,
+  adminResolvedSubstitution,
+  adminSubstitutionOffer,
+  adminSubstitutionQueue,
   anonymousSubstitutionRequestDocument,
   substitutionReason,
   substitutionRequestDocument,
@@ -23,6 +28,10 @@ export {
   sessionStaffGedu,
 } from "./session-substitution.contracts";
 export type {
+  AdminOpenSubstitutionRequest,
+  AdminResolvedSubstitution,
+  AdminSubstitutionOffer,
+  AdminSubstitutionQueue,
   AnonymousSubstitutionRequestDocument,
   SubstitutionRequestDocument,
   OpenSubstitutionRequest,

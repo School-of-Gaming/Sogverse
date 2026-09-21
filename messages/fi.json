@@ -64,7 +64,9 @@
       "robloxSafeguarding": "Luojien akatemian lasten turvallisuuden toimintaohje",
       "robloxTerms": "Luojien akatemian käyttöehdot",
       "geduContract": "Gedu-sopimus",
-      "seatOffer": "Paikkatarjous"
+      "seatOffer": "Paikkatarjous",
+      "geduSubstitutions": "Tuuraukset",
+      "adminSubstitutions": "Tuuraukset"
     },
     "descriptions": {
       "signIn": "Kirjaudu School of Gaming -tilillesi. Näet pelaajiesi tulevat kerrat, hallitset ilmoittautumisia ja pidät perheesi tiedot ajan tasalla.",
@@ -314,24 +316,6 @@
           "missingInvoiceCustomer": "Laskutusasiakas puuttuu",
           "waitlistOpenSeatsWithOffers": "{waiting} jonossa · {open, plural, one {# paikka} other {# paikkaa}} vapaana · {offers} odottaa vastausta"
         }
-      },
-      "substitution": {
-        "title": "Tuurauspyynnöt",
-        "allClear": "Yksikään kerta ei tarvitse tuuraajaa.",
-        "justNow": "{count, plural, one {# tuuraaja hyväksytty juuri nyt} other {# tuuraajaa hyväksytty juuri nyt}}",
-        "listLabel": "Kerrat, jotka tarvitsevat tuuraajan",
-        "offersLabel": "Tuuraamista tarjoavat Gedut",
-        "away": "Poissa:",
-        "unnamed": "Nimetön Gedu",
-        "reason": {
-          "sick": "Sairaus",
-          "other": "Muu"
-        },
-        "noOffers": "Ei vielä tarjouksia.",
-        "openGroup": "Avaa ryhmä",
-        "approve": "Hyväksy",
-        "approving": "Hyväksytään…",
-        "failed": "Hyväksyntä epäonnistui – yritä uudelleen."
       },
       "certification": {
         "title": "Gedujen hyväksyntä",
@@ -1324,6 +1308,31 @@
       "notDelivered": "Ei toimitettu",
       "today": "Tänään",
       "yesterday": "Eilen"
+    },
+    "substitutions": {
+      "title": "Tuuraukset",
+      "description": "Kerrat, joihin joku ei pääse, ja kuka tuurasi.",
+      "descriptionWithZone": "Kerrat, joihin joku ei pääse, ja kuka tuurasi. Ajat näkyvät aikavyöhykkeellä {zone}.",
+      "listLabel": "Kerrat, jotka tarvitsevat tuuraajan",
+      "allClear": "Yksikään kerta ei tarvitse tuuraajaa.",
+      "justNow": "{count, plural, one {# tuuraaja hyväksytty juuri nyt} other {# tuuraajaa hyväksytty juuri nyt}}",
+      "offersLabel": "Tuuraamista tarjoavat Gedut",
+      "away": "Poissa:",
+      "unnamed": "Nimetön Gedu",
+      "reason": {
+        "sick": "Sairaus",
+        "other": "Muu"
+      },
+      "noOffers": "Ei vielä tarjouksia.",
+      "openGroup": "Avaa ryhmä",
+      "approve": "Hyväksy",
+      "approving": "Hyväksytään…",
+      "failed": "Hyväksyntä epäonnistui – yritä uudelleen.",
+      "recentLabel": "Kahden viime viikon ratkaisut",
+      "substitutedBy": "tuuraajana",
+      "withdrawn": "Pääsikin paikalle",
+      "loadError": "Tuurauksia ei voitu ladata.",
+      "loadErrorWithReason": "Tuurauksia ei voitu ladata: {reason}"
     }
   },
   "auth": {
@@ -1818,7 +1827,6 @@
     "camps": "Leirit",
     "events": "Tapahtumat",
     "myGroupsEmptyStateGedu": "Kun sinut on liitetty ryhmään, se näkyy täällä seuraavan kerran kanssa.",
-    "substitutionPool": "Tuuraukset",
     "billing": "Laskutus",
     "help": "Apu",
     "tools": "Työkalut",
@@ -1986,10 +1994,15 @@
       "poolRoleAssistant": "Avustava Gedu",
       "poolFee": "{fee} / kerta",
       "poolOfferAction": "Voin tuurata",
-      "poolOfferPending": "Lähetetään…",
       "poolWithdrawAction": "Peru tarjous",
       "poolWithdrawPending": "Perutaan…",
-      "poolActionFailed": "Tallennus epäonnistui. Yritä uudelleen."
+      "poolActionFailed": "Tallennus epäonnistui. Yritä uudelleen.",
+      "pageTitle": "Tuuraukset",
+      "back": "Takaisin Omaan SOGiin",
+      "mineHeading": "Tuurauksesi",
+      "mineAllClear": "Sinulla ei ole tulevia tuurauksia.",
+      "offerConfirmTitle": "Tarjoudutko tuuraajaksi?",
+      "offerConfirmBody": "Tarjoudut vetämään kerran {product} {when}. School of Gaming valitsee tuuraajan, joten tarjous ei sido sinua ennen kuin se on hyväksytty — siihen asti voit perua sen. Hyväksynnän jälkeen ryhmän työtila avautuu sinulle 48 tuntia ennen kerran alkua."
     },
     "coverage": {
       "title": "Kattamasi alueet",
@@ -2305,7 +2318,9 @@
       "shop": "Kauppa",
       "yty": "Yty",
       "about": "Tietoa",
-      "faq": "UKK"
+      "faq": "UKK",
+      "substitutions": "Tuuraukset",
+      "substitutionsPhone": "Tuuraukset"
     },
     "accountMenu": "Tilivalikko – {name}",
     "continueToAccount": "Jatka tilillesi",
@@ -2755,7 +2770,8 @@
     "settings": "Asetukset",
     "tools": "Työkalut",
     "expandSidebar": "Laajenna sivupalkki",
-    "collapseSidebar": "Pienennä sivupalkki"
+    "collapseSidebar": "Pienennä sivupalkki",
+    "substitutions": "Tuuraukset"
   },
   "home": {
     "hero": {

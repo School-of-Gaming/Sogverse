@@ -5,8 +5,6 @@ export {
   adminDashboardSnapshot,
   type AdminDashboardAttentionProduct,
   type AdminDashboardCertificationCandidate,
-  type AdminDashboardSubstitutionOffer,
-  type AdminDashboardSubstitutionRequest,
   type AdminDashboardGroupWithoutGedu,
   type AdminDashboardScheduleProduct,
   type AdminDashboardScheduleSlot,

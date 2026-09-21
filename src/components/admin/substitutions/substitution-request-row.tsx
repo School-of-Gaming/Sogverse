@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   ArrowUpRight,
   CalendarDays,
+  Clock,
   Scale,
   ShieldCheck,
   Users,
@@ -14,21 +15,40 @@ import { StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PersonChip } from "@/components/ui/person-chip";
 import { cn } from "@/lib/utils";
-import type { SubstitutionOffer, SubstitutionRequest } from "./admin-dashboard-data";
-import { PRODUCT_TYPE_PRESENTATION } from "./product-type-presentation";
+import { PRODUCT_TYPE_PRESENTATION } from "@/components/admin/dashboard/product-type-presentation";
+import type {
+  SubstitutionOffer,
+  SubstitutionRequest,
+} from "./admin-substitutions-data";
 
 /**
- * One request: which session is short-staffed, who is away, why, and who has
- * volunteered.
+ * One open request: which session is short-staffed, how soon, who is away, why,
+ * and who has volunteered.
  *
  * **The session comes first and the person second**, which is the reverse of
- * the certification queue next to it. There the row *is* a person and the
+ * the certification queue on the dashboard. There the row *is* a person and the
  * decision is about them; here the decision is about a session — this Friday's
  * group needs a primary — and who is away is a fact about it, carried at the
  * density the reason beside it reads at. It is also the half an admin is least
  * entitled to dwell on: the reason is health-related data about a contractor,
  * shown because the office has to plan around it and nowhere else on the
  * platform.
+ *
+ * **How soon it is, is the row's own sentence.** The list is sorted by it, so
+ * the reader is scanning a run of deadlines and the deadline has to be legible
+ * without arithmetic over a date and a clock face. It is said in words —
+ * "tomorrow", "in 3 hours" — because a relative phrase is the one form that
+ * needs no zone at all, which is precisely what the date-in-the-product's-zone
+ * and clock-face-in-the-viewer's pair beside it cannot claim.
+ *
+ * **The urgency treatment is one tint and one rule, and it fires inside a
+ * day.** A session starting within 24 hours wears `warning` on its own left
+ * edge and on the relative phrase, and nothing else on the row changes — no
+ * second colour, no badge, no reordering. It is the same token the offers'
+ * missing standings wear, which is the point: this page has one colour for
+ * "look here", and an admin scanning the list meets it in one vocabulary. An
+ * orphaned request claims no urgency at all, because it has no start to be
+ * urgent about.
  *
  * **Approve is per offer, and one in flight disables the others.** Approving
  * settles the whole request — the other offers are simply not selected — so a
@@ -38,14 +58,14 @@ import { PRODUCT_TYPE_PRESENTATION } from "./product-type-presentation";
  * settle whichever way it settles.
  *
  * **It is cleared on success because this row can survive its own approval.**
- * The usual outcome is that the refetched snapshot has dropped the request and
- * the panel unmounts the row, which needs no clear — but the panel deliberately
+ * The usual outcome is that the refetched document has dropped the request and
+ * the list unmounts the row, which needs no clear — but the list deliberately
  * tolerates a request the source is still offering after an approval, which is
  * what a second admin clearing the sub in between produces, and it hands the
  * row back rather than filtering it out on a receipt that is no longer true. A
  * flag left set there would leave every offer on a live request permanently
  * unpressable. The clear costs no re-enabled frame in the ordinary case: the
- * promise resolves only once the write has landed *and* the snapshot behind it
+ * promise resolves only once the write has landed *and* the document behind it
  * has come back, so the state that unmounts the row is already queued when this
  * one is.
  *
@@ -56,15 +76,19 @@ import { PRODUCT_TYPE_PRESENTATION } from "./product-type-presentation";
  */
 export function SubstitutionRequestRow({
   request,
+  now,
   onApproveOffer,
 }: {
   request: SubstitutionRequest;
+  /** The page's pinned clock — what the relative phrase is measured against. */
+  now: Date;
   /** Approve one offer. Resolves once the write landed; rejects if it did not. */
   onApproveOffer: (offerId: string) => Promise<void>;
 }) {
-  const t = useTranslations("admin.dashboard.substitution");
+  const t = useTranslations("admin.substitutions");
   const tRole = useTranslations("admin.geduRole");
   const tType = useTranslations("admin.products.types");
+  const format = useFormatter();
   const [committingOfferId, setCommittingOfferId] = useState<string | null>(
     null,
   );
@@ -86,16 +110,23 @@ export function SubstitutionRequestRow({
   }
 
   return (
-    <div className="space-y-2 rounded-md border border-border p-3">
+    <div
+      className={cn(
+        "space-y-2 rounded-md border border-border p-3",
+        // The whole of the urgency treatment: a thicker left edge in the one
+        // token this page uses for "look here". Restrained on purpose — the
+        // list is already sorted soonest-first, so the tint marks where the
+        // near end stops rather than doing the ordering's job over again.
+        request.urgent && "border-l-4 border-l-warning",
+      )}
+    >
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        {/* The eyebrow is the tinted type glyph the whole page speaks in — the
-            attention cards, the schedule chips and the key all wear it, and the
-            rail at the side of the page is what explains it. */}
+        {/* The eyebrow is the tinted type glyph the admin surfaces speak in —
+            the dashboard's attention cards, its schedule chips and its key all
+            wear it, and the rail at the side of that page is what explains
+            it. */}
         <TypeIcon
-          className={cn(
-            "h-4 w-4 shrink-0 translate-y-0.5",
-            presentation.text,
-          )}
+          className={cn("h-4 w-4 shrink-0 translate-y-0.5", presentation.text)}
           aria-label={tType(`${presentation.i18nKey}.label`)}
         />
         {/* Wraps rather than truncates, as it does on an attention card: a
@@ -109,12 +140,12 @@ export function SubstitutionRequestRow({
           {request.groupName}
         </span>
         {/* The date and, where the schedule still projects one, the clock face
-            — in the schedule chips' own tabular numerals, because the two
-            panels state the same sessions and a reader comparing them is
-            comparing numbers. A request the schedule no longer projects states
-            the date alone; that orphan is the case the queue exists to
-            tolerate, and a row that guessed a time for it would be inventing
-            one. */}
+            — in the schedule chips' own tabular numerals, because the admin
+            surfaces state the same sessions in several places and a reader
+            comparing them is comparing numbers. A request the schedule no
+            longer projects states the date alone; that orphan is the case the
+            queue exists to tolerate, and a row that guessed a time for it would
+            be inventing one. */}
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
           <CalendarDays className="h-3 w-3 shrink-0" aria-hidden />
           {request.sessionDate}
@@ -124,6 +155,19 @@ export function SubstitutionRequestRow({
             </span>
           )}
         </span>
+        {request.startsAt !== null && (
+          <span
+            className={cn(
+              "flex items-center gap-1 text-xs",
+              request.urgent
+                ? "font-medium text-warning"
+                : "text-muted-foreground",
+            )}
+          >
+            <Clock className="h-3 w-3 shrink-0" aria-hidden />
+            {format.relativeTime(request.startsAt, now)}
+          </span>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
@@ -206,7 +250,7 @@ function OfferRow({
   failed: boolean;
   onApprove: () => void;
 }) {
-  const t = useTranslations("admin.dashboard.substitution");
+  const t = useTranslations("admin.substitutions");
   const certification = useTranslations("admin.users.certification");
   const check = useTranslations("admin.geduCriminalRecordCheck");
 

@@ -1,13 +1,12 @@
 import { ROUTES } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { formatDate, formatDateOnly } from "@/lib/utils";
-import type { SubstitutionReason, GeduAssignmentRole, ProductType } from "@/types";
+import { formatDate } from "@/lib/utils";
+import type { ProductType } from "@/types";
 import type {
   AdminDashboardData,
   ComingUpCohort,
   ComingUpDay,
   ComingUpItem,
-  SubstitutionRequest,
   ProductAttention,
   ProductIssue,
   ProductIssueFact,
@@ -16,11 +15,9 @@ import type {
   UncertifiedGedu,
 } from "./admin-dashboard-data";
 import {
-  clockFace,
   compareComingUpCohorts,
   relativeWait,
 } from "./build-admin-dashboard-data";
-import { occurrenceOnDate } from "@/lib/session-date-occurrence";
 import { addCalendarDays, mondayOf, monthsAfter, weekdayOf } from "@/lib/calendar-date";
 
 /**
@@ -131,16 +128,6 @@ const PERSON_IDS = {
   iidaLehtonen: "e979b9eb-39a2-4b71-9aa1-3d991969dadc",
   onniRantanen: "66076d29-cdcb-4337-aa06-6cbb8e1b39de",
   helmiKoskinen: "4889fea4-0602-438f-adfe-2cef72d485ff",
-  // The substitution queue's people — three gedus who cannot make a session and three
-  // who have offered to take one. Kept distinct from the five above on purpose:
-  // an account waiting on certification cannot hold a substitution, so a fixture that
-  // reused one would be showing a state the database refuses.
-  miloKorhonen: "dc5d2ed1-5498-450a-8db1-dad9701d10cd",
-  siiriLaine: "174ab045-c53d-45e0-86e2-7281d1a7fe24",
-  veetiAaltonen: "1832e0a5-1359-49cf-951f-f0507a42e288",
-  eeliVirtanen: "2ca12e82-5101-4b6c-aa4d-85867c24fe4c",
-  saanaNieminen: "ea0111ac-09ed-438c-85ef-f9f138b00209",
-  aaroHeikkila: "6b6dd07a-63be-4292-a320-f4670784c45c",
 } as const;
 
 /** One product row, in the vocabulary the database actually stores. */
@@ -860,189 +847,6 @@ function uncertifiedGedus(locale: SupportedLocale): UncertifiedGedu[] {
   }));
 }
 
-// ---------------------------------------------------------------------------
-// The substitution queue
-// ---------------------------------------------------------------------------
-
-/**
- * Three sessions somebody cannot make, substituting every state a row can be in:
- * offers waiting on a decision, and nobody having volunteered yet.
- *
- * They sit in one scenario rather than three because the panel can show all of
- * them at once — which is the whole reason a scene is worth opening: adjacent
- * states compare themselves, states behind separate links are compared from
- * memory. The only state that cannot coexist with these is the empty queue, and
- * that is what `quiet` is.
- *
- * **Dates are today or later against the pinned Monday**, as the read
- * guarantees: a request whose date has passed is *unfilled* and drops out of
- * this list on its own. They are in the order the RPC promises — date, then
- * product — and the panel renders them as delivered.
- *
- * **The middle one is the orphan**, and it is one for free rather than by
- * construction: its date falls on a weekday its product does not meet, so the
- * occurrence resolves to nothing and the row states its date alone. That is the
- * state the queue exists to tolerate — an admin moved the schedule after the
- * request was filed — and the scene shows it beside two rows that do state a
- * time, which is the only way the difference is visible as a difference.
- */
-const SUBSTITUTION_REQUEST_SPECS: readonly {
-  id: string;
-  productId: string;
-  groupId: string;
-  groupName: string;
-  sessionDate: string;
-  role: GeduAssignmentRole;
-  reason: SubstitutionReason | null;
-  reasonNote: string | null;
-  requesterId: string;
-  requesterName: string;
-  offers: readonly {
-    id: string;
-    geduId: string;
-    name: string;
-    certified: boolean;
-    /** When an admin recorded the extract, as an instant, or null. */
-    checkedAt: string | null;
-  }[];
-}[] = [
-  {
-    id: "substitution-request-1",
-    productId: "consumer-club-1",
-    groupId: "group-espoo-a",
-    groupName: "Ryhmä A",
-    sessionDate: "2026-08-18",
-    role: "primary",
-    reason: "sick",
-    reasonNote: "Flunssa, takaisin maanantaina.",
-    requesterId: PERSON_IDS.miloKorhonen,
-    requesterName: "Milo Korhonen",
-    offers: [
-      {
-        id: "substitution-offer-1",
-        geduId: PERSON_IDS.eeliVirtanen,
-        name: "Eeli Virtanen",
-        certified: true,
-        checkedAt: "2026-05-04T11:00:00+03:00",
-      },
-      // Certified, no extract on record. The standing informs and gates
-      // nothing — exactly as it does in the certification queue — so the row
-      // is pressable and only the missing half is tinted.
-      {
-        id: "substitution-offer-2",
-        geduId: PERSON_IDS.saanaNieminen,
-        name: "Saana Nieminen",
-        certified: true,
-        checkedAt: null,
-      },
-    ],
-  },
-  {
-    id: "substitution-request-2",
-    productId: "municipality-club-3",
-    groupId: "group-leppavaara-b",
-    groupName: "Ryhmä B",
-    sessionDate: "2026-08-20",
-    role: "assistant",
-    reason: "other",
-    reasonNote: null,
-    requesterId: PERSON_IDS.siiriLaine,
-    requesterName: "Siiri Laine",
-    offers: [
-      // An offerer whose certification has been taken away since they
-      // volunteered. Only an admin's own edit can produce it — the write
-      // refuses an uncertified caller — and it is the whole reason the flag
-      // rides on the offer rather than being assumed from the offer existing.
-      {
-        id: "substitution-offer-3",
-        geduId: PERSON_IDS.aaroHeikkila,
-        name: "Aaro Heikkilä",
-        certified: false,
-        checkedAt: "2026-04-20T09:30:00+03:00",
-      },
-    ],
-  },
-  {
-    id: "substitution-request-3",
-    productId: "camp-2",
-    groupId: "group-roblox-camp-1",
-    groupName: "Ryhmä 1",
-    sessionDate: "2026-08-25",
-    role: "primary",
-    reason: "sick",
-    reasonNote: null,
-    requesterId: PERSON_IDS.veetiAaltonen,
-    requesterName: "Veeti Aaltonen",
-    offers: [],
-  },
-];
-
-function substitutionRequests(
-  byId: ReadonlyMap<string, ProductSpec>,
-  locale: SupportedLocale,
-): SubstitutionRequest[] {
-  return SUBSTITUTION_REQUEST_SPECS.map((spec) => {
-    const product = byId.get(spec.productId);
-    if (product === undefined) {
-      // A queue naming a product the catalogue does not hold would render a row
-      // linking nowhere, which is exactly the drift a fixture exists to make
-      // impossible. Fail at build time instead.
-      throw new Error(`Fixture references unknown product: ${spec.productId}`);
-    }
-    // Resolved from the product's own slots, exactly as the live mapping
-    // resolves them from the slots the wire carries — so a spec dated on a
-    // weekday its product does not meet renders the bare date, which is the
-    // orphaned request and the last of the row's states.
-    const occurrence = occurrenceOnDate({
-      sessionDate: spec.sessionDate,
-      slots: product.slots,
-      timezone: ADMIN_DASHBOARD_TIMEZONE,
-    });
-
-    return {
-      id: spec.id,
-      groupId: spec.groupId,
-      groupName: spec.groupName,
-      productName: product.name,
-      productType: product.productType,
-      // The same bare-date walk the live mapping runs, so the row reads in the
-      // previewer's own language.
-      sessionDate: formatDateOnly(spec.sessionDate, locale, {
-        weekday: "short",
-        day: "numeric",
-        month: "short",
-      }),
-      sessionTime:
-        occurrence === null
-          ? null
-          : clockFace(occurrence, ADMIN_DASHBOARD_TIMEZONE),
-      role: spec.role,
-      reason: spec.reason,
-      reasonNote: spec.reasonNote,
-      requesterId: spec.requesterId,
-      requesterName: spec.requesterName,
-      groupHref: ROUTES.admin.productGroup(
-        product.productType,
-        product.id,
-        spec.groupId,
-      ),
-      offers: spec.offers.map((offer) => ({
-        id: offer.id,
-        geduId: offer.geduId,
-        name: offer.name,
-        certified: offer.certified,
-        criminalRecordCheckOn:
-          offer.checkedAt === null
-            ? null
-            : formatDate(offer.checkedAt, locale, {
-                dateStyle: "medium",
-                timeZone: ADMIN_DASHBOARD_TIMEZONE,
-              }),
-      })),
-    };
-  });
-}
-
 function buildProductAttention(
   byId: ReadonlyMap<string, ProductSpec>,
 ): ProductAttention[] {
@@ -1250,10 +1054,6 @@ export function buildAdminDashboardFixture(
     // no adjustment to disclose. The live page decides this per snapshot.
     timeZoneAbbrev: null,
     products,
-    // Empty in `quiet` for the reason the certification list is: the collapsed
-    // all-clear row is a state a platform with three sessions to staff has no
-    // way to reach.
-    substitutionRequests: quiet ? [] : substitutionRequests(byId, locale),
     // Empty on both sides in `quiet`: certification is its own section now, so
     // it needs its own empty state, and this is the only scenario that can show
     // one.

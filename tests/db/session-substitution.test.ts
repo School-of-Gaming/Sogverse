@@ -2,8 +2,8 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { Constants, type Database } from "@/types";
-import { adminDashboardSubstitutionRequest } from "@/services/admin-dashboard/admin-dashboard.contracts";
 import {
+  adminSubstitutionQueue,
   anonymousSubstitutionRequestDocument,
   substitutionRequestDocument,
   openSubstitutionRequests,
@@ -185,7 +185,6 @@ const geduFeedSubstitutionHalves = z.object({
   substitutions: z.array(substitutionRequestDocument),
 });
 
-const dashboardSubstitutionRequests = z.array(adminDashboardSubstitutionRequest);
 
 const assignmentSummaries = z.array(
   z.object({
@@ -2246,7 +2245,7 @@ describe("session substitutions", () => {
       expect(b?.substitutions).toEqual([]);
     });
 
-    it("the admin dashboard queues the open request with its offers and their standing", async () => {
+    it("the admin queue carries the open request with its offers and their standing", async () => {
       const date = utcDate(7);
       const id = await seedRequest({ date });
       await admin
@@ -2255,24 +2254,29 @@ describe("session substitutions", () => {
         .eq("id", id);
       await subAuth.rpc("offer_session_substitution", { p_request_id: id });
 
-      const { data, error } = await adminAuth.rpc("get_admin_dashboard");
+      const { data, error } = await adminAuth.rpc(
+        "get_admin_substitution_requests",
+      );
       expect(error).toBeNull();
 
-      const queue = dashboardSubstitutionRequests.parse(
-        z.object({ substitution_requests: z.unknown() }).parse(data).substitution_requests,
-      );
-      const mine = queue.find((row) => row.id === id);
+      const mine = adminSubstitutionQueue
+        .parse(data)
+        .open.find((row) => row.id === id);
       expect(mine).toBeDefined();
       expect(mine?.group_name).toBe("Cohort A");
       expect(mine?.reason).toBe("sick");
       expect(mine?.reason_note).toBe("flu");
+      // The pool's anonymity is a gedu-facing rule and does not reach here: an
+      // admin document names who is away, because it carries the reason already.
       expect(mine?.requested_by).toBe(TEST_IDS.GEDU);
+      expect(mine?.requested_by_first_name).toBeTruthy();
       expect(mine?.product.translations.length).toBeGreaterThan(0);
       // The product shell carries the schedule slots beside the timezone, which
-      // is the pair a client resolves the session's clock face from — the queue
-      // states a time, not only a day. Seeded as one 10:00 slot of an hour on
-      // every weekday, so the request's own date is necessarily projected and
-      // the row is never the orphan.
+      // is the pair a client resolves the session's clock face from — the page
+      // states a time, not only a day, and sorts by the instant it computes
+      // from them. Seeded as one 10:00 slot of an hour on every weekday, so the
+      // request's own date is necessarily projected and the row is never the
+      // orphan.
       expect(mine?.product.schedule_slots.length).toBe(7);
       expect(
         mine?.product.schedule_slots.every(
@@ -2290,13 +2294,68 @@ describe("session substitutions", () => {
       expect(mine?.offers[0].criminal_record_check_at).toBeNull();
     });
 
-    it("the admin dashboard drops a request whose date has passed", async () => {
+    it("the admin queue drops an open request whose date has passed", async () => {
       const id = await seedRequest({ date: utcDate(-7) });
-      const { data } = await adminAuth.rpc("get_admin_dashboard");
-      const queue = dashboardSubstitutionRequests.parse(
-        z.object({ substitution_requests: z.unknown() }).parse(data).substitution_requests,
+      const { data } = await adminAuth.rpc("get_admin_substitution_requests");
+      const queue = adminSubstitutionQueue.parse(data);
+      // Unfilled is a derived state of an open request, so the row simply stops
+      // being offered — and it is not history either, so it is in neither list.
+      expect(queue.open.map((row) => row.id)).not.toContain(id);
+      expect(queue.recent.map((row) => row.id)).not.toContain(id);
+    });
+
+    it("the fortnight behind the queue names who stood in, and where nobody had to", async () => {
+      const substitutedId = await seedRequest({
+        date: utcDate(-3),
+        substituteId: subId,
+      });
+      const withdrawnId = await seedRequest({
+        date: utcDate(-5),
+        absent: thirdId,
+        status: "withdrawn",
+      });
+
+      const { data, error } = await adminAuth.rpc(
+        "get_admin_substitution_requests",
       );
-      expect(queue.map((row) => row.id)).not.toContain(id);
+      expect(error).toBeNull();
+      const recent = adminSubstitutionQueue.parse(data).recent;
+
+      const stood = recent.find((row) => row.id === substitutedId);
+      expect(stood?.status).toBe("substituted");
+      expect(stood?.substitute_id).toBe(subId);
+      expect(stood?.substitute_first_name).toBeTruthy();
+
+      // A withdrawal is an answer of its own — "the absent gedu is attending
+      // after all" — and the table's CHECK is what guarantees it carries no
+      // sub, which is why the page reads the substitute as the branch.
+      const dropped = recent.find((row) => row.id === withdrawnId);
+      expect(dropped?.status).toBe("withdrawn");
+      expect(dropped?.substitute_id).toBeNull();
+      expect(dropped?.substitute_first_name).toBeNull();
+    });
+
+    it("the fortnight is bounded at fourteen days back and at today", async () => {
+      const old = await seedRequest({ date: utcDate(-20), substituteId: subId });
+      const ahead = await seedRequest({
+        date: utcDate(3),
+        absent: thirdId,
+        substituteId: subId,
+      });
+      const inside = await seedRequest({
+        date: utcDate(-1),
+        absent: TEST_IDS.GEDU,
+        substituteId: subId,
+      });
+
+      const { data } = await adminAuth.rpc("get_admin_substitution_requests");
+      const ids = adminSubstitutionQueue.parse(data).recent.map((row) => row.id);
+
+      expect(ids).toContain(inside);
+      expect(ids).not.toContain(old);
+      // A settled FUTURE session is staffing the group page owns; this list is
+      // the record of what has already happened.
+      expect(ids).not.toContain(ahead);
     });
 
     it("get_my_assigned_products discriminates a substitution row from an assignment row", async () => {

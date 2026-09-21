@@ -184,6 +184,143 @@ export type OpenSubstitutionRequest = z.infer<typeof openSubstitutionRequest>;
 export const openSubstitutionRequests = z.array(openSubstitutionRequest);
 
 /**
+ * One gedu who has offered to stand in, with the two standing facts the
+ * certification queue ships on its own rows.
+ *
+ * They are the same two questions in the same shape on purpose: an admin
+ * deciding who to seat is asking what they ask when certifying somebody, and a
+ * second vocabulary for "certified" and "record seen" would be a second thing
+ * to keep in step. `criminal_record_check_at` is null where no check has been
+ * recorded — it informs the decision and gates nothing.
+ *
+ * Who else offered is never shown to an offerer; this list exists on the admin
+ * document alone.
+ */
+export const adminSubstitutionOffer = z.object({
+  id: z.string(),
+  gedu_id: z.string(),
+  first_name: z.string(),
+  last_name: z.string(),
+  certified: z.boolean(),
+  criminal_record_check_at: z.string().nullable(),
+  created_at: z.string(),
+});
+
+export type AdminSubstitutionOffer = z.infer<typeof adminSubstitutionOffer>;
+
+/** One product name, in one locale. */
+const adminSubstitutionProductName = z.object({
+  locale: z.string(),
+  name: z.string(),
+});
+
+/**
+ * The product shell both halves of the admin page state a session by.
+ *
+ * `schedule_slots` rides on the **request's** own product rather than being
+ * looked up elsewhere, so the only absence it can carry is "no slot names this
+ * weekday" — which is the orphaned request, and is what a row renders as a bare
+ * date. Slots and not an instant, because the client owns the calendar math on
+ * every substitution surface.
+ */
+const adminSubstitutionProduct = z.object({
+  id: z.string(),
+  product_type: z.enum(Constants.public.Enums.product_type),
+  timezone: z.string(),
+  is_remote: z.boolean(),
+  translations: z.array(adminSubstitutionProductName),
+  schedule_slots: z.array(substitutionScheduleSlot),
+});
+
+/**
+ * One open request an admin has to staff, dated today or later in the product's
+ * own timezone.
+ *
+ * **A request whose date has passed is *unfilled*, and it drops out on its
+ * own.** Unfilled is a derived state of an open request rather than a stored
+ * one, so nothing sweeps and no clock runs anywhere: the date says it, and the
+ * read simply stops returning it.
+ *
+ * **The whole reason travels here, category and note**, and this is the one
+ * surface it was collected for — everywhere else it is admin-only or absent.
+ *
+ * An **orphaned** request is still in this list, deliberately: an admin moving
+ * the schedule's weekday after a request was filed leaves a date the schedule
+ * no longer projects. The queue orders by date and never by a derived instant,
+ * so such a row sorts like any other and an admin can clear it.
+ */
+export const adminOpenSubstitutionRequest = z.object({
+  id: z.string(),
+  group_id: z.string(),
+  group_name: z.string(),
+  /** Product-local calendar date, `YYYY-MM-DD`. */
+  session_date: z.string(),
+  /** The role being substituted — the absent gedu's, and what it is paid as. */
+  role: geduAssignmentRole,
+  reason: substitutionReason.nullable(),
+  reason_note: z.string().nullable(),
+  created_at: z.string(),
+  requested_by: z.string(),
+  requested_by_first_name: z.string(),
+  requested_by_last_name: z.string(),
+  product: adminSubstitutionProduct,
+  offers: z.array(adminSubstitutionOffer),
+});
+
+export type AdminOpenSubstitutionRequest = z.infer<
+  typeof adminOpenSubstitutionRequest
+>;
+
+/**
+ * One request the office has already settled, within the fortnight behind the
+ * queue — substituted or withdrawn.
+ *
+ * It exists because "who stood in on Tuesday?" has no other home: an approved
+ * request leaves the queue, and the only surface still naming its substitute is
+ * the group's own page, which an admin has to already know the group to reach.
+ *
+ * `substitute_id` and the two name halves are null exactly together, and they
+ * are null on every withdrawn row — the table's own CHECK forbids a withdrawn
+ * request from carrying a sub, so a withdrawal is "nobody had to stand in after
+ * all" rather than a substitution with its sub removed.
+ */
+export const adminResolvedSubstitution = z.object({
+  id: z.string(),
+  group_id: z.string(),
+  group_name: z.string(),
+  session_date: z.string(),
+  role: geduAssignmentRole,
+  /** Never `open`: the read selects on exactly that. */
+  status: substitutionRequestStatus,
+  reason: substitutionReason.nullable(),
+  reason_note: z.string().nullable(),
+  created_at: z.string(),
+  approved_at: z.string().nullable(),
+  requested_by: z.string(),
+  requested_by_first_name: z.string(),
+  requested_by_last_name: z.string(),
+  substitute_id: z.string().nullable(),
+  substitute_first_name: z.string().nullable(),
+  substitute_last_name: z.string().nullable(),
+  product: adminSubstitutionProduct,
+});
+
+export type AdminResolvedSubstitution = z.infer<
+  typeof adminResolvedSubstitution
+>;
+
+/**
+ * The whole document `get_admin_substitution_requests` returns: what needs
+ * staffing, and what the last fortnight came to.
+ */
+export const adminSubstitutionQueue = z.object({
+  open: z.array(adminOpenSubstitutionRequest),
+  recent: z.array(adminResolvedSubstitution),
+});
+
+export type AdminSubstitutionQueue = z.infer<typeof adminSubstitutionQueue>;
+
+/**
  * One gedu on a group, with the role they hold — the staffing derivation's
  * first input, and the shape both staff feeds emit it in.
  *

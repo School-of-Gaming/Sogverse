@@ -64,7 +64,9 @@
       "robloxSafeguarding": "Creator Academy Child Safeguarding Policy",
       "robloxTerms": "Creator Academy Terms & Conditions",
       "geduContract": "Gedu contract",
-      "seatOffer": "Seat offer"
+      "seatOffer": "Seat offer",
+      "geduSubstitutions": "Substitutions",
+      "adminSubstitutions": "Substitutions"
     },
     "descriptions": {
       "signIn": "Sign in to your School of Gaming account to see your gamers’ upcoming sessions, manage enrolments and keep your family’s details up to date.",
@@ -314,24 +316,6 @@
           "missingInvoiceCustomer": "Invoice customer not set",
           "waitlistOpenSeatsWithOffers": "{waiting} waitlisted · {open, plural, one {# seat} other {# seats}} open · {offers} awaiting an answer"
         }
-      },
-      "substitution": {
-        "title": "Substitution requests",
-        "allClear": "No session needs a substitute.",
-        "justNow": "{count, plural, one {# substitute approved just now} other {# substitutes approved just now}}",
-        "listLabel": "Sessions needing a substitute",
-        "offersLabel": "Gedus offering to substitute",
-        "away": "Away:",
-        "unnamed": "Unnamed Gedu",
-        "reason": {
-          "sick": "Sick",
-          "other": "Other"
-        },
-        "noOffers": "No offers yet.",
-        "openGroup": "Open the group",
-        "approve": "Approve",
-        "approving": "Approving…",
-        "failed": "Could not approve — try again."
       },
       "certification": {
         "title": "Gedu certification",
@@ -1324,6 +1308,31 @@
       "notDelivered": "Not delivered",
       "today": "Today",
       "yesterday": "Yesterday"
+    },
+    "substitutions": {
+      "title": "Substitutions",
+      "description": "Sessions somebody cannot make, and who stood in.",
+      "descriptionWithZone": "Sessions somebody cannot make, and who stood in. Times are shown in {zone}.",
+      "listLabel": "Sessions needing a substitute",
+      "allClear": "No session needs a substitute.",
+      "justNow": "{count, plural, one {# substitute approved just now} other {# substitutes approved just now}}",
+      "offersLabel": "Gedus offering to substitute",
+      "away": "Away:",
+      "unnamed": "Unnamed Gedu",
+      "reason": {
+        "sick": "Sick",
+        "other": "Other"
+      },
+      "noOffers": "No offers yet.",
+      "openGroup": "Open the group",
+      "approve": "Approve",
+      "approving": "Approving…",
+      "failed": "Could not approve — try again.",
+      "recentLabel": "Settled in the last two weeks",
+      "substitutedBy": "substituted by",
+      "withdrawn": "Attended after all",
+      "loadError": "The substitutions could not be loaded.",
+      "loadErrorWithReason": "The substitutions could not be loaded: {reason}"
     }
   },
   "auth": {
@@ -1818,7 +1827,6 @@
     "camps": "Camps",
     "events": "Events",
     "myGroupsEmptyStateGedu": "When you’re assigned to a group, it will appear here with its next session.",
-    "substitutionPool": "Substitutions",
     "billing": "Billing",
     "help": "Help",
     "tools": "Tools",
@@ -1986,10 +1994,15 @@
       "poolRoleAssistant": "Assistant",
       "poolFee": "{fee} per session",
       "poolOfferAction": "Offer to substitute",
-      "poolOfferPending": "Sending…",
       "poolWithdrawAction": "Withdraw offer",
       "poolWithdrawPending": "Withdrawing…",
-      "poolActionFailed": "That didn’t save. Try again."
+      "poolActionFailed": "That didn’t save. Try again.",
+      "pageTitle": "Substitutions",
+      "back": "Back to My SOG",
+      "mineHeading": "You’re substituting",
+      "mineAllClear": "You have no substitutions coming up.",
+      "offerConfirmTitle": "Offer to substitute?",
+      "offerConfirmBody": "You’re offering to run {product} on {when}. School of Gaming chooses who substitutes, so an offer is not a commitment until it is approved — you can withdraw it until then. Once it is approved, the group’s workspace opens to you 48 hours before the session starts."
     },
     "coverage": {
       "title": "Coverage areas",
@@ -2305,7 +2318,9 @@
       "shop": "Shop",
       "yty": "Yty",
       "about": "About",
-      "faq": "FAQ"
+      "faq": "FAQ",
+      "substitutions": "Substitutions",
+      "substitutionsPhone": "Substitutions"
     },
     "accountMenu": "Account menu – {name}",
     "continueToAccount": "Continue to your account",
@@ -2755,7 +2770,8 @@
     "settings": "Settings",
     "tools": "Tools",
     "expandSidebar": "Expand sidebar",
-    "collapseSidebar": "Collapse sidebar"
+    "collapseSidebar": "Collapse sidebar",
+    "substitutions": "Substitutions"
   },
   "home": {
     "hero": {

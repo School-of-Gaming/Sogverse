@@ -93,7 +93,7 @@
 --
 -- WHY A SEPARATE MIGRATION
 --
--- 00272, 00274 and 00275 are applied to staging, and an applied migration is
+-- 00272 and 00274 are applied to staging, and an applied migration is
 -- never edited (supabase/CLAUDE.md, "Never amend a pushed migration"): the CLI
 -- matches on version, so an edit there would never run on staging and only CI's
 -- fresh-from-migrations database would ever see it.

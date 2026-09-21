@@ -24,8 +24,6 @@ import {
   type GeduAssignmentRow,
   type GeduSubstitutionSummary,
 } from "@/lib/gedu-assignment-rollup";
-import { buildSubstitutionPoolRows, type SubstitutionPoolRow } from "@/lib/gedu-substitution-pool";
-import type { OpenSubstitutionRequest } from "@/services/session-substitution";
 
 /**
  * Fixtures for the gedu dashboard preview scene — a plausible week for a gedu
@@ -72,13 +70,12 @@ import type { OpenSubstitutionRequest } from "@/services/session-substitution";
  *    footer zone holds the card's height open whether or not a button lands in
  *    it.
  *
- * It also carries the two things a **sub** sees, because neither can be looked
- * at anywhere else and both coexist with everything above: the **substitution card**,
+ * It also carries the one thing a **sub** sees here, because it can be looked
+ * at nowhere else and coexists with everything above: the **substitution card**,
  * one dated afternoon of a club this gedu does not teach, sitting at the head of
  * the Clubs grid where it has to be told apart from the four recurring cards
- * beside it; and the **pool section** above the whole page, with its rows
- * differing in every way a row can differ — remote and in person, primary and
- * assistant, a fee set and a fee not set, and one row already offered on.
+ * beside it. The open queue is not on this page at all — it has a page of its
+ * own, and a scene of its own with it.
  *
  * `clubs-only` is the single-noun composition: one heading, one pill entry — and
  * **seven clubs**, because the other thing it exists to show is the grid. Two
@@ -86,9 +83,7 @@ import type { OpenSubstitutionRequest } from "@/services/session-substitution";
  * row and start a second one, which is where an uneven last row, a ragged bottom
  * edge or a card that grows on one breakpoint and not another actually becomes
  * visible. Their next sessions are spread across the week and a couple carry a
- * backlog, so the grid is not a row of identical tiles either. It is also where
- * the pool's **all-clear** line lives — a certified gedu with nothing
- * outstanding, which cannot share a render with the populated queue above.
+ * backlog, so the grid is not a row of identical tiles either.
  *
  * `uncertified` is the account an admin has not approved yet, which swaps the
  * instant-room panel for a notice and cannot be true at the same time as the
@@ -96,9 +91,7 @@ import type { OpenSubstitutionRequest } from "@/services/session-substitution";
  * page the account it describes actually meets: certification is what gates group
  * assignment, so a gedu waiting on it has nothing to be assigned to yet. It
  * therefore doubles as the empty-state scenario — the unheaded section with the
- * "when you're assigned to a group" line, which no other scenario can show. It
- * is also the page with **no pool section at all**, heading and nav entry
- * included: certification is what gates offering to substitute too.
+ * "when you're assigned to a group" line, which no other scenario can show.
  */
 export const GEDU_DASHBOARD_SCENARIOS = [
   "default",
@@ -125,16 +118,6 @@ export interface GeduDashboardFixture {
    * has no seats of any kind.
    */
   substitutions: GeduSubstitutionSummary[];
-  /**
-   * The pool the section above the cards lists, or `null` for the page that
-   * does not render the section at all.
-   *
-   * Built through the real derivation from real wire-shaped rows, so the scene
-   * shows the calendar maths the live page does rather than an imitation of it
-   * — a fixture that authored its own start and end instants would be the one
-   * place a wrong weekday could not show up.
-   */
-  substitutionPool: SubstitutionPoolRow[] | null;
   certified: boolean;
   /** Whether the contract band is on the page. */
   contractAccepted: boolean;
@@ -524,19 +507,6 @@ export function buildGeduDashboardFixture(
 
   return {
     substitutions,
-    // Withheld on the scenario whose account may substitute for nothing, which is what
-    // the live page does with it — there is no section, no heading and no nav
-    // entry for an uncertified gedu.
-    // Three scenarios, three answers, because no two of them can share a
-    // render: the populated queue, the all-clear line a certified gedu with
-    // nothing outstanding reads, and no section at all for the account that may
-    // substitute for nothing.
-    substitutionPool:
-      scenario === "uncertified"
-        ? null
-        : scenario === "clubs-only"
-          ? []
-          : buildSubstitutionPoolRows(substitutionPoolRequests(now), locale),
     assignments: assignments.map((assignment) => {
       const row = rowsById.get(assignment.productId);
       return {
@@ -651,114 +621,6 @@ function keyedByAssignment(
       value,
     ]),
   );
-}
-
-/**
- * The pool, as the RPC would hand it over — four open requests a certified gedu
- * could take, chosen to put every line of the row side by side on one screen.
- *
- * Wire rows rather than shaped ones on purpose: the scene runs them through the
- * real derivation, so the weekday arithmetic that turns a bare date into a clock
- * face in the viewer's zone is the arithmetic under review rather than something
- * a fixture asserted for it.
- *
- * What they differ in is the whole point: a remote club and an in-person camp
- * (the two answers to "where"), a primary seat and an assistant one, a fee set
- * and a fee not set, and one row the caller has **already offered** on — which
- * is the only way to see the button's offered state beside its offer state.
- */
-function substitutionPoolRequests(now: Date): OpenSubstitutionRequest[] {
-  const slot = (daysAhead: number, startTime: string, minutes: number) => {
-    const built = futureSlot(now, daysAhead, startTime, minutes, SESSION_FEED_TIMEZONE);
-    return [
-      {
-        weekday: built.weekday,
-        start_time: built.startTime,
-        duration_minutes: built.durationMinutes,
-      },
-    ];
-  };
-
-  return [
-    {
-      request_id: "mock-pool-request-1",
-      group_id: "mock-pool-group-1",
-      group_name: "Tuesday B",
-      session_date: calendarDate(now, 1, SESSION_FEED_TIMEZONE),
-      role: "primary",
-      fee_cents: 6500,
-      has_offered: false,
-      product: {
-        id: "mock-pool-product-1",
-        product_type: "consumer_club",
-        topic: "minecraft_java",
-        spoken_language_code: "fi",
-        timezone: SESSION_FEED_TIMEZONE,
-        is_remote: true,
-        start_date: calendarDate(now, -60, SESSION_FEED_TIMEZONE),
-        end_date: null,
-        site_name: null,
-        translations: [
-          { locale: "en", name: "Minecraft Redstone Club", description: "" },
-        ],
-        schedule_slots: slot(1, "17:00", 90),
-      },
-    },
-    {
-      request_id: "mock-pool-request-2",
-      group_id: "mock-pool-group-2",
-      group_name: "Greens",
-      session_date: calendarDate(now, 3, SESSION_FEED_TIMEZONE),
-      role: "assistant",
-      // Unset, which is the ordinary state of an assistant fee: the row simply
-      // says nothing about money rather than flagging a gap nobody is expected
-      // to close.
-      fee_cents: null,
-      has_offered: false,
-      product: {
-        id: "mock-pool-product-2",
-        product_type: "camp",
-        topic: "roblox_studio",
-        spoken_language_code: "en",
-        timezone: SESSION_FEED_TIMEZONE,
-        is_remote: false,
-        start_date: calendarDate(now, -2, SESSION_FEED_TIMEZONE),
-        end_date: calendarDate(now, 5, SESSION_FEED_TIMEZONE),
-        site_name: "Sello Library, Espoo",
-        translations: [
-          { locale: "en", name: "Roblox Studio Camp", description: "" },
-        ],
-        schedule_slots: slot(3, "10:00", 180),
-      },
-    },
-    {
-      request_id: "mock-pool-request-3",
-      group_id: "mock-pool-group-3",
-      group_name: "Thursday A",
-      session_date: calendarDate(now, 4, SESSION_FEED_TIMEZONE),
-      role: "primary",
-      fee_cents: 7500,
-      // Already offered — the other resting state of the one control, which
-      // cannot be seen on the same row as the offer state and has to be on a
-      // row of its own.
-      has_offered: true,
-      product: {
-        id: "mock-pool-product-3",
-        product_type: "municipality_club",
-        topic: "fortnite",
-        spoken_language_code: "sv",
-        timezone: SESSION_FEED_TIMEZONE,
-        is_remote: true,
-        start_date: calendarDate(now, -90, SESSION_FEED_TIMEZONE),
-        end_date: null,
-        site_name: null,
-        translations: [
-          { locale: "en", name: "Fortnite Creative Club", description: "" },
-        ],
-        schedule_slots: slot(4, "16:30", 90),
-      },
-    },
-  ];
 }
 
 function assignmentRow(opts: {

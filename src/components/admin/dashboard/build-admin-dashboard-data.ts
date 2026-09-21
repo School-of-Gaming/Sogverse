@@ -3,15 +3,10 @@ import { ROUTES } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { dateTimeInstant } from "@/lib/schedule-occurrence";
-import {
-  occurrenceOnDate,
-  type SessionDateOccurrence,
-} from "@/lib/session-date-occurrence";
-import { formatDate, formatDateOnly } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import type {
   AdminDashboardAttentionProduct,
   AdminDashboardCertificationCandidate,
-  AdminDashboardSubstitutionRequest,
   AdminDashboardScheduleProduct,
   AdminDashboardSnapshot,
   AdminDashboardUserStat,
@@ -23,8 +18,6 @@ import type {
   ComingUpCohort,
   ComingUpDay,
   ComingUpItem,
-  SubstitutionOffer,
-  SubstitutionRequest,
   ProductAttention,
   ProductIssue,
   ScheduleChip,
@@ -163,9 +156,6 @@ export function buildAdminDashboardData({
       toProductAttention(product, locale),
     ),
     users: orderUsers(snapshot.users),
-    substitutionRequests: snapshot.substitution_requests.map((request) =>
-      toSubstitutionRequest(request, locale, viewerTimeZone),
-    ),
     weeks,
     currentWeekIndex,
     comingUp: buildComingUp(snapshot.schedule_products, locale, today),
@@ -324,12 +314,16 @@ function toUncertifiedGedu(
   now: Date,
   viewerTimeZone: string,
 ): UncertifiedGedu {
+  const name = [candidate.first_name, candidate.last_name]
+    .filter((part) => part.trim().length > 0)
+    .join(" ");
+
   return {
     id: candidate.id,
     // The account is real and the name may not be; an unnamed row still has to
     // be actionable, and its identicon is keyed to the id either way. The
     // stand-in wording belongs to the card, so the absence travels as `null`.
-    name: personName(candidate.first_name, candidate.last_name),
+    name: name.length > 0 ? name : null,
     registeredAgo: relativeWait(candidate.created_at, now, locale),
     // The wire's null already means "not standing under the terms in force",
     // whether that is because nothing was ever signed or because what was
@@ -390,131 +384,6 @@ export function relativeWait(
   if (Math.abs(weeks) < 9) return format.format(-weeks, "week");
 
   return format.format(-Math.round(days / 30), "month");
-}
-
-// ---------------------------------------------------------------------------
-// The substitution queue
-// ---------------------------------------------------------------------------
-
-/**
- * One open substitution request as the panel renders it.
- *
- * **Day-granular, so it rides with the schedule rather than with the ticking
- * clock.** Nothing on a substitution row ages while the page sits open: a session date
- * is a calendar fact and an extract's date is one too. What drops a row off the
- * list is the read no longer returning it, which the invalidation behind an
- * approval already arranges.
- *
- * **The session date renders as itself, in no zone at all**, and the clock face
- * beside it renders in the viewer's. The date is a bare calendar date, which
- * this app pins to UTC at both ends precisely so it reads the same for every
- * viewer — and it is this request's own key, so it has to name the same day the
- * group page does. The occurrence *is* a pair of instants, and every instant on
- * this page is shown in the viewer's zone, the extract's stamp two lines below
- * included.
- *
- * **The occurrence is resolved from the request's own product**, never by
- * looking the product up in the snapshot's `schedule_products`: that is a
- * narrower set — bounded by its own window and dropping cancelled and completed
- * products — so a join would answer for some rows and not others with nothing
- * to tell them apart. Resolved from the slots that travel with the request, the
- * only absence left is "no slot names this weekday", which is the orphaned
- * request, and `null` is how it reaches the row.
- */
-function toSubstitutionRequest(
-  request: AdminDashboardSubstitutionRequest,
-  locale: SupportedLocale,
-  viewerTimeZone: string,
-): SubstitutionRequest {
-  const occurrence = occurrenceOnDate({
-    sessionDate: request.session_date,
-    slots: request.product.schedule_slots.map((slot) => ({
-      weekday: slot.weekday,
-      startTime: slot.start_time,
-      durationMinutes: slot.duration_minutes,
-    })),
-    timezone: request.product.timezone,
-  });
-
-  return {
-    id: request.id,
-    groupId: request.group_id,
-    groupName: request.group_name,
-    productName: productName(request.product.translations, locale),
-    productType: request.product.product_type,
-    // A weekday beside the date, because what an admin is staffing is a
-    // *session* and "Friday" is how the office talks about one; the year is
-    // left off because the queue only ever holds dates from today forward
-    // inside the schedule's own horizon.
-    sessionDate: formatDateOnly(request.session_date, locale, {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-    }),
-    sessionTime:
-      occurrence === null ? null : clockFace(occurrence, viewerTimeZone),
-    role: request.role,
-    reason: request.reason,
-    reasonNote: request.reason_note,
-    requesterId: request.requested_by,
-    requesterName: personName(
-      request.requested_by_first_name,
-      request.requested_by_last_name,
-    ),
-    groupHref: ROUTES.admin.productGroup(
-      request.product.product_type,
-      request.product.id,
-      request.group_id,
-    ),
-    offers: request.offers.map((offer): SubstitutionOffer => ({
-      id: offer.id,
-      geduId: offer.gedu_id,
-      name: personName(offer.first_name, offer.last_name),
-      certified: offer.certified,
-      criminalRecordCheckOn:
-        offer.criminal_record_check_at === null
-          ? null
-          : formatDate(offer.criminal_record_check_at, locale, {
-              dateStyle: "medium",
-              timeZone: viewerTimeZone,
-            }),
-    })),
-  };
-}
-
-/**
- * One occurrence as a clock face: `HH:MM–HH:MM` in the viewer's zone.
- *
- * 24-hour and locale-blind, exactly as the schedule chips are — the times on
- * this page are a column to be scanned rather than a sentence to be read, and a
- * chip and a queue row stating the same session two panels apart must state it
- * the same way. The en dash is punctuation for the same reason the seat counts'
- * slash is: it reads identically in every locale and stays out of the catalog.
- *
- * Exported for the preview scene's fixtures, which resolve their own occurrences
- * and must word them the way the live mapping does — the same reason the
- * coming-up comparator and the relative-wait phrasing are exported beside it.
- */
-export function clockFace(
-  occurrence: SessionDateOccurrence,
-  viewerTimeZone: string,
-): string {
-  const start = formatInTimeZone(occurrence.start, viewerTimeZone, "HH:mm");
-  const end = formatInTimeZone(occurrence.end, viewerTimeZone, "HH:mm");
-  return `${start}–${end}`;
-}
-
-/**
- * A person's display name, or `null` where the account carries none.
- *
- * The absence travels as `null` rather than as a stand-in string because the
- * stand-in is translated copy and this module has no locale for copy — only for
- * `Intl`. Shared by the two queues that name people, so "unnamed" means the
- * same thing on a certification row and on a substitution offer.
- */
-function personName(first: string, last: string): string | null {
-  const name = [first, last].filter((part) => part.trim().length > 0).join(" ");
-  return name.length > 0 ? name : null;
 }
 
 // ---------------------------------------------------------------------------

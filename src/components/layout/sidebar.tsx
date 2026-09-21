@@ -3,6 +3,7 @@
 import { Link } from "@/i18n/navigation";
 import { usePathname } from "@/i18n/navigation";
 import {
+  ArrowLeftRight,
   LayoutDashboard,
   Users,
   Palette,
@@ -32,7 +33,7 @@ type SidebarKey =
   | "tools" | "consumerClubs" | "municipalityClubs" | "municipalityInvoicing"
   | "invoiceCustomers"
   | "camps" | "events"
-  | "sites";
+  | "sites" | "substitutions";
 
 interface NavItemDef {
   href: StaticAppHref;
@@ -62,6 +63,10 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
   admin: [
     { href: ROUTES.admin.dashboard, labelKey: "dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
     { href: ROUTES.admin.users, labelKey: "users", icon: <Users className="h-5 w-5" /> },
+    // Above the product entries because it is the one page here that is a queue
+    // of work rather than a catalogue: a session with nobody teaching it is
+    // answered today, and the clubs are answered whenever.
+    { href: ROUTES.admin.substitutions, labelKey: "substitutions", icon: <ArrowLeftRight className="h-5 w-5" /> },
     { href: ROUTES.admin.consumerClubs, labelKey: "consumerClubs", icon: kindIcon("consumer_club") },
     { href: ROUTES.admin.municipalityClubs, labelKey: "municipalityClubs", icon: kindIcon("municipality_club") },
     { href: ROUTES.admin.camps, labelKey: "camps", icon: kindIcon("camp") },

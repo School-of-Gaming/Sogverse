@@ -22,6 +22,7 @@ import {
   GEDU_DASHBOARD_SCENARIOS,
   buildGeduDashboardFixture,
 } from "@/components/gedu/mock-dashboard-fixtures";
+import { GEDU_SUBSTITUTIONS_SCENARIOS } from "@/components/gedu/mock-substitutions-fixtures";
 import {
   MUNICIPALITY_INVOICING_NOW,
   MUNICIPALITY_INVOICING_SCENARIOS,
@@ -167,8 +168,15 @@ describe("preview scene registry", () => {
     const MAX_SCENARIOS: Record<string, number> = {
       "gedu-product": 5,
       "gedu-dashboard": 3,
+      // Two, and there is no third: the page has a populated state and an empty
+      // one, and the uncertified page is the empty one with a section missing.
+      "gedu-substitutions": 2,
     };
-    for (const surface of ["gedu-product", "gedu-dashboard"] as const) {
+    for (const surface of [
+      "gedu-product",
+      "gedu-dashboard",
+      "gedu-substitutions",
+    ] as const) {
       // Through `PREVIEW_SCENE_LIST` rather than `findPreviewScene`, because
       // the registry is `as const` and a scenario that omits its optional
       // `description` has no such property on its literal type — the widened
@@ -190,6 +198,12 @@ describe("preview scene registry", () => {
 describe("registry scenarios match their fixtures", () => {
   it("gedu dashboard", () => {
     expect(slugsFor("gedu-dashboard")).toEqual([...GEDU_DASHBOARD_SCENARIOS]);
+  });
+
+  it("gedu substitutions", () => {
+    expect(slugsFor("gedu-substitutions")).toEqual([
+      ...GEDU_SUBSTITUTIONS_SCENARIOS,
+    ]);
   });
 
   it("municipality invoicing", () => {

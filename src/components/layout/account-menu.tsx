@@ -11,7 +11,7 @@ import {
 import { Link } from "@/i18n/navigation";
 import { usePathname } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { LayoutDashboard, Loader2, LogOut, Settings } from "lucide-react";
+import { Info, LayoutDashboard, Loader2, LogOut, Settings } from "lucide-react";
 import { StatusLine } from "@/components/ui/alert";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
@@ -103,6 +103,28 @@ const ACTIONABLE_ROW_CLASS =
 const FOCUSABLE_ITEMS =
   "[data-account-menu-item]:not([disabled]):not([data-account-menu-blocked])";
 
+/**
+ * The rows the arrow keys may land on, in DOM order.
+ *
+ * **A row the current width does not render is not one of them.** One row is
+ * phone-only (the About row a gedu's header hands down here), so from `sm` up
+ * it is `display: none` — and `.focus()` on such an element does nothing at
+ * all, which would leave ArrowDown reading the same index forever and the
+ * keyboard stuck on the row above it. The check is on the computed `display`
+ * rather than on a measured box, because a measurement is exactly what is not
+ * available in the environment the rest of this traversal is tested in.
+ *
+ * Module scope, not a closure: the open-focus effect needs it too, and a
+ * function redefined every render would change that effect's dependencies
+ * every render.
+ */
+function menuItems(panel: HTMLElement | null): HTMLElement[] {
+  if (!panel) return [];
+  return Array.from(
+    panel.querySelectorAll<HTMLElement>(FOCUSABLE_ITEMS),
+  ).filter((el) => getComputedStyle(el).display !== "none");
+}
+
 interface AccountMenuProps {
   /** The signed-in viewer's profile id — the avatar's identicon seed. */
   userId: string;
@@ -112,9 +134,22 @@ interface AccountMenuProps {
    * which is where identity lives now.
    */
   firstName: string;
+  /**
+   * The header's nav override, handed down unchanged — preview scenes only,
+   * and documented on `Header`. It decides one thing here and nothing else:
+   * whether this menu carries the nav row the gedu's phone strip gave up. The
+   * dashboard row, the household and every label still follow `role`, because
+   * the account really does belong to whoever is signed in.
+   */
+  navRole?: UserRole;
 }
 
-export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
+export function AccountMenu({
+  userId,
+  role,
+  firstName,
+  navRole,
+}: AccountMenuProps) {
   const pathname = usePathname();
   const locale = useLocale();
   const t = useTranslations("header");
@@ -229,12 +264,7 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
     const want = focusOnOpenRef.current;
     focusOnOpenRef.current = null;
     if (!want) return;
-    // Queried inline rather than through the helper below: a function redefined
-    // every render would make this effect's dependencies change every render.
-    const panel = panelRef.current;
-    const items = panel
-      ? Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE_ITEMS))
-      : [];
+    const items = menuItems(panelRef.current);
     if (items.length === 0) return;
     (want === "first" ? items[0] : items[items.length - 1]).focus();
   }, [open]);
@@ -297,6 +327,18 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
   const dashboardPath = ROLE_DASHBOARD_PATHS[role];
   const isOnDashboard =
     pathname === dashboardPath || pathname.startsWith(dashboardPath + "/");
+  /**
+   * Whether this menu carries About — the one nav row here, and the other half
+   * of a decision the header makes.
+   *
+   * A signed-in gedu's strip is one item longer than anyone else's, which at
+   * 360px leaves no room for all three words; About is the one that gives way,
+   * and it lands here rather than disappearing. Phone-only, because from `sm`
+   * up it is back on the strip and two ways to the same page in one chrome is
+   * one too many.
+   */
+  const carriesAbout = (navRole ?? role) === "gedu";
+  const isOnAbout = pathname === ROUTES.about;
   const isOnSettings =
     pathname === ROUTES.settings || pathname.startsWith(ROUTES.settings + "/");
   // What the dashboard is called to the person using it — "Dashboard" for the
@@ -326,13 +368,6 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
       // the row, so every row in one snapshot carries the same answer.
       gate: switchGateFor(role, provenance.data),
     }));
-
-  function focusableItems(): HTMLElement[] {
-    const panel = panelRef.current;
-    return panel
-      ? Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE_ITEMS))
-      : [];
-  }
 
   /** Opening is also when the row set is snapshotted — see `openedWith`. */
   function openMenu() {
@@ -413,7 +448,7 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
       }
       return;
     }
-    const items = focusableItems();
+    const items = menuItems(panelRef.current);
     if (items.length === 0) return;
     event.preventDefault();
     if (key === "Home") {
@@ -540,6 +575,26 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
                 icon={<LayoutDashboard className="h-4 w-4 shrink-0" />}
                 label={dashboardLabel}
               />
+
+              {/* The rehoused nav row — see `carriesAbout`. A fixed row like
+                  the three around it: leading icon, no chevron, and decided
+                  before the panel opens, so the menu still opens whole. It is
+                  hidden by CSS rather than dropped from the tree, which is why
+                  the arrow-key traversal filters on the computed display
+                  (`menuItems`) instead of trusting the selector alone. The
+                  label is the header's own key: it must read as the same
+                  destination in both places. */}
+              {carriesAbout && (
+                <MenuLinkRow
+                  href={ROUTES.about}
+                  active={isOnAbout}
+                  disabled={busy}
+                  onNavigate={() => setOpen(false)}
+                  icon={<Info className="h-4 w-4 shrink-0" />}
+                  label={t("nav.about")}
+                  className="sm:hidden"
+                />
+              )}
 
               {/* No household in hand — a read still in flight, a read that
                   failed, or a role with nobody to switch to — simply means no
@@ -717,6 +772,7 @@ function MenuLinkRow({
   onNavigate,
   icon,
   label,
+  className,
 }: {
   href: StaticAppHref;
   active: boolean;
@@ -724,6 +780,8 @@ function MenuLinkRow({
   onNavigate: () => void;
   icon: ReactNode;
   label: string;
+  /** Which widths this row exists at — one row is phone-only. */
+  className?: string;
 }) {
   return (
     <Link
@@ -748,6 +806,7 @@ function MenuLinkRow({
         // are on this page.
         active && "text-act",
         disabled && "pointer-events-none opacity-60",
+        className,
       )}
     >
       {icon}

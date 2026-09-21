@@ -1,38 +1,46 @@
 import { describe, expect, it, vi } from "vitest";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
 import { GeduSubstitutionPoolSection } from "@/components/gedu/GeduSubstitutionPoolSection";
+import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import type { OpenSubstitutionRequest } from "@/services/session-substitution";
 
 /**
  * ============================================================================
- * Sessions needing a substitute: what the section is like once a write lands
+ * Sessions needing a substitute: the two writes, answered in two places
  * ============================================================================
  *
- * One `committingRequestId` holds **every** button on the section, because the
- * offers move each other — an approval shortens the queue — and a second press
- * before the first has landed acts on a list that is already stale. That makes
- * the flag's release the whole behaviour: nothing here unmounts when an offer
- * lands, the row simply redraws as its withdrawal, so a flag cleared only on a
- * refusal froze the entire pool for the rest of the visit after one press.
+ * **Offering asks first.** It can be refused — the request filled while the
+ * card was on screen, the session already started — so it runs inside the
+ * shared confirm dialog's holding mode: the dialog stays up until the write
+ * settles, reads the refusal out in place, and closes only once the pool has
+ * been read again. A volunteer must never walk away from a dialog that closed
+ * on the press believing they had offered.
  *
- * The write is deferred by hand so the in-flight frame can be asserted on
- * before it is let go, which is the frame the flag exists for.
+ * **Withdrawing does not.** It is the undo of a decision already made, so it
+ * keeps the inline flag, and the flag's *release* is the whole behaviour:
+ * nothing here unmounts when a withdrawal lands, so a flag cleared only on a
+ * refusal would freeze the queue for the rest of the visit.
+ *
+ * Both writes are deferred by hand so the in-flight frame can be asserted on
+ * before it is let go, which is the frame the discipline exists for.
  */
 
-const offerDeferred = vi.hoisted(() => ({
+const deferred = vi.hoisted(() => ({
   resolve: () => {},
   reject: (_: unknown) => {},
   promise: null as Promise<void> | null,
+  offerCalls: 0,
 }));
 
-function armOffer(): void {
-  offerDeferred.promise = new Promise<void>((resolve, reject) => {
-    offerDeferred.resolve = resolve;
-    offerDeferred.reject = reject;
+function armWrite(): void {
+  deferred.offerCalls = 0;
+  deferred.promise = new Promise<void>((resolve, reject) => {
+    deferred.resolve = resolve;
+    deferred.reject = reject;
   });
 }
 
@@ -44,18 +52,28 @@ function armOffer(): void {
 vi.mock("@/services/session-substitution", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/services/session-substitution")>()),
   useOfferSessionSubstitution: () => ({
-    mutateAsync: () => offerDeferred.promise ?? Promise.resolve(),
+    mutateAsync: () => {
+      deferred.offerCalls += 1;
+      return deferred.promise ?? Promise.resolve();
+    },
   }),
   useWithdrawSessionSubstitutionOffer: () => ({
-    mutateAsync: () => offerDeferred.promise ?? Promise.resolve(),
+    mutateAsync: () => deferred.promise ?? Promise.resolve(),
   }),
 }));
 
 const copy = messages.gedu.substitution;
 const TIME_ZONE = "Europe/Helsinki";
 
-/** One open request, enough of a product for the row to draw itself. */
-function request(id: string, name: string): OpenSubstitutionRequest {
+/** A fixed instant well before the fixture's session, so nothing is urgent. */
+const NOW = new Date("2026-03-10T09:00:00Z");
+
+/** One open request, enough of a product for the card to draw itself. */
+function request(
+  id: string,
+  name: string,
+  hasOffered = false,
+): OpenSubstitutionRequest {
   return {
     request_id: id,
     group_id: `group-${id}`,
@@ -63,7 +81,7 @@ function request(id: string, name: string): OpenSubstitutionRequest {
     session_date: "2026-03-17",
     role: "primary",
     fee_cents: 6500,
-    has_offered: false,
+    has_offered: hasOffered,
     product: {
       id: `product-${id}`,
       product_type: "consumer_club",
@@ -82,67 +100,210 @@ function request(id: string, name: string): OpenSubstitutionRequest {
   };
 }
 
-function renderSection(requests: readonly OpenSubstitutionRequest[]) {
+function renderSection(requests: readonly OpenSubstitutionRequest[] | undefined) {
   return render(
     <QueryClientProvider client={new QueryClient()}>
       <NextIntlClientProvider locale="en" messages={messages}>
         <TimezoneProvider initialTimezone={TIME_ZONE}>
-          <GeduSubstitutionPoolSection requests={requests} />
+          <NowProvider initialNow={NOW}>
+            <GeduSubstitutionPoolSection requests={requests} />
+          </NowProvider>
         </TimezoneProvider>
       </NextIntlClientProvider>
     </QueryClientProvider>,
   );
 }
 
-function offerButtons(): HTMLElement[] {
-  return screen.queryAllByRole("button", { name: copy.poolOfferAction });
+/** The cards' own offer buttons — never the dialog's, which is a portal. */
+function cardOfferButtons(container: HTMLElement): HTMLElement[] {
+  return within(container).queryAllByRole("button", {
+    name: copy.poolOfferAction,
+  });
+}
+
+/**
+ * The open dialog, found by its own backdrop — the same handle the shared
+ * dialog's own suite uses. It is a portal into `document.body`, which is what
+ * makes "inside the dialog" a real assertion here and lets the card's button be
+ * told apart from the dialog's, since the two carry the same label.
+ */
+function dialog(): HTMLElement {
+  const scrim = document.querySelector(".bg-scrim");
+  const root = scrim?.parentElement;
+  if (!(root instanceof HTMLElement)) throw new Error("no dialog is open");
+  return root;
+}
+
+function dialogIsOpen(): boolean {
+  return document.querySelector(".bg-scrim") !== null;
 }
 
 function isDisabled(element: HTMLElement): boolean {
   return element.hasAttribute("disabled");
 }
 
-describe("the substitution pool section", () => {
-  it("gives every row back once the offer has landed", async () => {
-    armOffer();
-    renderSection([request("a", "Redstone Club"), request("b", "Builders")]);
+describe("offering to substitute", () => {
+  it("draws its control as a label and nothing else", () => {
+    const { container } = renderSection([request("a", "Redstone Club")]);
+    const [offer] = cardOfferButtons(container);
+    expect(offer.querySelector("svg")).toBeNull();
+  });
 
-    const [first, second] = offerButtons();
+  it("asks before it writes", () => {
+    armWrite();
+    const { container } = renderSection([request("a", "Redstone Club")]);
+
+    fireEvent.click(cardOfferButtons(container)[0]);
+
+    expect(within(dialog()).getByText(copy.offerConfirmTitle)).toBeTruthy();
+    // The press opened a question, not a write.
+    expect(deferred.offerCalls).toBe(0);
+  });
+
+  it("names the session it is about, and nobody", () => {
+    armWrite();
+    const { container } = renderSection([request("a", "Redstone Club")]);
+    fireEvent.click(cardOfferButtons(container)[0]);
+
+    // The product is in the body; the absent gedu is not in the row at all, so
+    // there is no name for the dialog to leak.
+    expect(dialog().textContent).toContain("Redstone Club");
+  });
+
+  it("writes once on confirm and holds itself open until the write lands", async () => {
+    armWrite();
+    const { container } = renderSection([request("a", "Redstone Club")]);
+    fireEvent.click(cardOfferButtons(container)[0]);
+
+    const confirm = within(dialog()).getByRole("button", {
+      name: copy.poolOfferAction,
+    });
+    fireEvent.click(confirm);
+    // A second press in the same frame must reach nothing.
+    fireEvent.click(confirm);
+
+    expect(deferred.offerCalls).toBe(1);
+    expect(dialogIsOpen()).toBe(true);
+    expect(isDisabled(confirm)).toBe(true);
+
+    await act(async () => {
+      deferred.resolve();
+    });
+
+    expect(dialogIsOpen()).toBe(false);
+  });
+
+  it("stays open and names the refusal in place when the write is refused", async () => {
+    armWrite();
+    const { container } = renderSection([request("a", "Redstone Club")]);
+    fireEvent.click(cardOfferButtons(container)[0]);
+    fireEvent.click(
+      within(dialog()).getByRole("button", { name: copy.poolOfferAction }),
+    );
+
+    await act(async () => {
+      deferred.reject(new Error("nope"));
+    });
+
+    // In front of the button that caused it, never behind the dialog.
+    expect(within(dialog()).getByText(copy.poolActionFailed)).toBeTruthy();
+    // And the card behind it is untouched: still an offer, not an offered.
+    expect(cardOfferButtons(container)).toHaveLength(1);
+  });
+
+  it("writes nothing when the question is cancelled", () => {
+    armWrite();
+    const { container } = renderSection([request("a", "Redstone Club")]);
+    fireEvent.click(cardOfferButtons(container)[0]);
+
+    fireEvent.click(
+      within(dialog()).getByRole("button", { name: messages.common.cancel }),
+    );
+
+    expect(deferred.offerCalls).toBe(0);
+    expect(dialogIsOpen()).toBe(false);
+  });
+});
+
+describe("withdrawing an offer", () => {
+  function withdrawButtons(): HTMLElement[] {
+    return screen.queryAllByRole("button", { name: copy.poolWithdrawAction });
+  }
+
+  it("goes straight through, with no question in front of it", () => {
+    armWrite();
+    renderSection([request("a", "Redstone Club", true)]);
+
+    const [withdraw] = withdrawButtons();
+    expect(withdraw.querySelector("svg")).toBeNull();
+
+    fireEvent.click(withdraw);
+    expect(dialogIsOpen()).toBe(false);
+  });
+
+  it("gives every card back once the withdrawal has landed", async () => {
+    armWrite();
+    renderSection([
+      request("a", "Redstone Club", true),
+      request("b", "Builders", true),
+    ]);
+
+    const [first, second] = withdrawButtons();
     fireEvent.click(first);
 
-    // In flight: the pressed row says so and its neighbour is held with it.
+    // In flight: the pressed card says so and its neighbour is held with it.
     expect(
-      screen.getByRole("button", { name: copy.poolOfferPending }),
+      screen.getByRole("button", { name: copy.poolWithdrawPending }),
     ).toBeTruthy();
     expect(isDisabled(second)).toBe(true);
 
     await act(async () => {
-      offerDeferred.resolve();
+      deferred.resolve();
     });
 
     // The section is still on screen — the pool is what it was, minus this
     // gedu's press — so the flag has to come back off by itself.
-    for (const button of offerButtons()) expect(isDisabled(button)).toBe(false);
+    for (const button of withdrawButtons()) {
+      expect(isDisabled(button)).toBe(false);
+    }
     expect(
-      screen.queryByRole("button", { name: copy.poolOfferPending }),
+      screen.queryByRole("button", { name: copy.poolWithdrawPending }),
     ).toBeNull();
   });
 
-  it("gives every row back when the write is refused, and names it on its own row", async () => {
-    armOffer();
-    renderSection([request("a", "Redstone Club"), request("b", "Builders")]);
+  it("gives every card back when the write is refused, and names it on its own card", async () => {
+    armWrite();
+    renderSection([
+      request("a", "Redstone Club", true),
+      request("b", "Builders", true),
+    ]);
 
-    fireEvent.click(offerButtons()[0]);
+    fireEvent.click(withdrawButtons()[0]);
     await act(async () => {
-      offerDeferred.reject(new Error("nope"));
+      deferred.reject(new Error("nope"));
     });
 
     expect(screen.getByText(copy.poolActionFailed)).toBeTruthy();
-    for (const button of offerButtons()) expect(isDisabled(button)).toBe(false);
+    for (const button of withdrawButtons()) {
+      expect(isDisabled(button)).toBe(false);
+    }
   });
+});
 
+describe("the pool's two empty answers", () => {
   it("says nothing needs a substitute when the answer is an empty pool", () => {
     renderSection([]);
     expect(screen.getByText(copy.poolAllClear)).toBeTruthy();
+  });
+
+  /**
+   * "Nothing needs a substitute" and "nobody has answered yet" are different
+   * facts, and the second one must never be told as the first: a gedu who read
+   * an all-clear line off a read that had not returned would close the page.
+   */
+  it("says nothing at all while the read is still out", () => {
+    const { container } = renderSection(undefined);
+    expect(screen.queryByText(copy.poolAllClear)).toBeNull();
+    expect(cardOfferButtons(container)).toHaveLength(0);
   });
 });

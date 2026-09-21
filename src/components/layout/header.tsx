@@ -11,7 +11,12 @@ import { Identicon } from "@/components/ui/identicon";
 import { UnknownAvatar } from "@/components/ui/unknown-avatar";
 import { useAuth } from "@/providers";
 import { cn } from "@/lib/utils";
-import { ROLE_DASHBOARD_PATHS, ROUTES, SENDER_NAME } from "@/lib/constants";
+import {
+  ROLE_DASHBOARD_PATHS,
+  ROUTES,
+  SENDER_NAME,
+  type UserRole,
+} from "@/lib/constants";
 import { AccountMenu } from "@/components/layout/account-menu";
 import { LocalePicker } from "@/components/layout/locale-picker";
 import { SiteHeaderShell } from "@/components/layout/site-header-shell";
@@ -27,8 +32,8 @@ const LOGO_INTRINSIC = { width: 379, height: 207.5 } as const;
  * tall and `items-center` keeps the text on the same baseline it was on — and
  * `px-2` widens the target so two adjacent links stop sharing an edge.
  *
- * `whitespace-nowrap` picks the failure mode for the 360px floor. The strip has
- * single-digit slack there in the widest locale (see the regrouping note below),
+ * `whitespace-nowrap` picks the failure mode for the 360px floor. The tightest
+ * locale clears it by single digits (the measured table in the nav group below),
  * so a longer word in some future translation will overrun it — and a link
  * allowed to wrap absorbs that silently, breaking to two lines inside a 44px box
  * that then reads as a misaligned smudge nobody reports. Held on one line, the
@@ -38,7 +43,22 @@ const LOGO_INTRINSIC = { width: 379, height: 207.5 } as const;
 const NAV_LINK_CLASS =
   "inline-flex min-h-11 items-center whitespace-nowrap rounded-md px-2 text-sm font-medium transition-colors hover:text-act";
 
-export function Header() {
+interface HeaderProps {
+  /**
+   * Which role's **nav** to draw, in place of the signed-in viewer's own.
+   *
+   * For preview scenes and nothing else. A gedu-facing scene is opened by an
+   * admin — `/preview/*` is admin-gated — so the real header renders the
+   * admin's nav over a page the gedu is supposed to be looking at, and the
+   * strip is part of what a full-page scene exists to let you judge. This
+   * overrides the nav and only the nav: the account slot, the logo's
+   * destination and every analytics call still read the real session, because
+   * a scene is genuinely being looked at by the admin who opened it.
+   */
+  navRole?: UserRole;
+}
+
+export function Header({ navRole }: HeaderProps) {
   const pathname = usePathname();
   const { user, profile, isLoading } = useAuth();
   const t = useTranslations("header");
@@ -49,20 +69,43 @@ export function Header() {
   // stripped from the client bundle and this is a client component.
   const d = useTranslations("dashboardSections");
 
-  // Two links, identical in both auth states — the nav deliberately does not
-  // change with auth. The storefront is a single Shop entry; every browseable
-  // product type — clubs, camps and events — is reached from within it via the
-  // in-page category selector, so the nav never grows a per-type link.
-  //
-  // **Do not add a third link without redoing the per-locale width arithmetic.**
-  // A measured three-link row (About, Shop, Help) overflowed 360px in every
-  // locale but English — French by 41px — which is what retired the public Help
-  // page's nav entry rather than shrinking anything. Two links clear it in every
-  // locale, French tightest at ~6px of slack.
+  // The two public links every visitor gets, in both auth states. The
+  // storefront is a single Shop entry; every browseable product type — clubs,
+  // camps and events — is reached from within it via the in-page category
+  // selector, so the nav never grows a per-type link.
   const navLinks = [
     { href: ROUTES.about, label: t("nav.about") },
     { href: ROUTES.shop, label: t("nav.shop") },
   ];
+
+  /**
+   * Whose nav this is. The signed-in viewer's own role, unless a preview scene
+   * has asked for somebody else's (see `navRole`).
+   *
+   * **The role is known at first paint, so nothing about the nav arrives
+   * late.** The locale layout reads the profile server-side and seeds
+   * `AuthProvider` with it, and the provider only goes looking for a profile
+   * when the server handed it no user at all — so on every ordinary load the
+   * very first render already knows this is a gedu, and the item below is in
+   * the server HTML. There is exactly one residual window, the same one the
+   * brand-text comment names: a session the *server* missed, where the browser
+   * finds one and the profile lands a round trip later. The layout below is
+   * what makes that window harmless — see the nav group's own note.
+   */
+  const navFor = navRole ?? profile?.role ?? null;
+
+  /**
+   * The gedu's own nav item: the sessions looking for a stand-in.
+   *
+   * Gedus only. It is the one place in the chrome where the nav depends on who
+   * is looking, and it is deliberate: substituting is a standing part of the
+   * job rather than something reached from one dashboard card, and no other
+   * role has a page to send here.
+   */
+  const showsSubstitutions = navFor === "gedu";
+  const isOnSubstitutions =
+    pathname === ROUTES.gedu.substitutions ||
+    pathname.startsWith(ROUTES.gedu.substitutions + "/");
 
   const isHome = pathname === ROUTES.home;
 
@@ -127,6 +170,10 @@ export function Header() {
         userId={profile.id}
         role={profile.role}
         firstName={profile.first_name}
+        // Carried through rather than resolved here: the menu's copy of the
+        // override governs only its own nav row (the rehoused About), exactly
+        // as this one governs only the strip.
+        navRole={navRole}
       />
     ) : (
       <Link
@@ -275,21 +322,103 @@ export function Header() {
           group's `-ml-2` hands the outermost 8px of that padding back to the
           space on the logo's side. That does not make the touch targets free,
           and it would be wrong to say it did: two links at `px-2` add 16px
-          each, `-ml-2` returns 8 of the 32, and the `gap-2` holding this group
-          off the account cluster is fixed — so a phone-width strip is roughly
-          24px wider than it was. The 360px floor still clears in the widest
-          locale, but with single-digit slack, which is what `NAV_LINK_CLASS`'s
-          `whitespace-nowrap` is there for: the next word that does not fit
-          overflows visibly instead of wrapping quietly inside its own box.
+          each, `-ml-2` returns 8 of the 32, and the gap holding this group off
+          the account cluster is fixed — so a phone-width strip is roughly 24px
+          wider than it was. The 360px floor still clears in every locale, but
+          the tightest of them by single digits, which is what
+          `NAV_LINK_CLASS`'s `whitespace-nowrap` is there for: the next word
+          that does not fit overflows visibly instead of wrapping quietly
+          inside its own box.
 
           The padding on the *right* is deliberately kept: it separates the last
           link from the locale picker by the gap plus 8px, so the nav words and
           the account chrome don't read as one run.
+
+          **The nav is one item longer for a signed-in gedu, and the arithmetic
+          below is what that costs.** Measured in a real browser, signed in, in
+          px of strip left over — the two-link header every other role gets,
+          then the gedu strip (Substitutions · Shop, About having moved into
+          the avatar menu):
+
+            locale   two links @360   gedu @360   @375   @390
+            en            61.8          16.2      31.2   46.2
+            fi            40.5           9.2      24.2   39.2
+            sv            52.6          55.2      70.2   85.2
+            fr            14.2          32.7      47.7   62.7   (on "Rempl.")
+            tlh           52.4          34.9      49.9   64.9
+
+          Two things fall out of it and neither is decoration. **French needs
+          its phone label**: "Remplacements" is 132.7px against a two-link
+          French strip with 14.2px to spare, so it does not fit at 360 or 390 —
+          which is why the item renders a short word below `sm` and states the
+          whole one as its accessible name. And **Finnish would sit at 5.2px
+          without help**, too thin to trust across font rendering; the
+          one-step-tighter gap between this group and the account cluster is
+          what buys the other 4px back, and it is applied only while the gedu
+          item is on the strip, so every other role's header measures exactly
+          what it measured before.
+
+          **Do not add another item without redoing this table, per locale.**
+          A measured three-link public row (About, Shop, Help) overflowed 360px
+          in every locale but English — French by 41px — which is what retired
+          the public Help page's nav entry rather than shrinking anything. The
+          gedu strip is already at that count, which is why About is the item
+          that gives way on a phone: of the three it is the one a gedu is least
+          likely to want, and it is still one tap away in the avatar menu.
         */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div
+          className={
+            showsSubstitutions
+              ? "flex items-center gap-1 sm:gap-3"
+              : "flex items-center gap-2 sm:gap-3"
+          }
+        >
           <div className="-ml-2 flex items-center sm:gap-2">
+            {/*
+              First in the run, per the owner: a gedu's own destination sits
+              left of the public ones.
+
+              That is also where the slack is, which is what makes the one
+              window where this item can arrive late — a session the server
+              missed — harmless. This whole block is anchored to the strip's
+              right edge, so an item joining at its *leading* edge grows the
+              group leftward into the space beside the logo; About, Shop, the
+              picker and the avatar hold their positions to the pixel. It is the
+              right-packed-run case of the late-arriving-mark rule, and the
+              order is therefore load-bearing: putting this item anywhere else
+              in the run would push the links after it sideways.
+            */}
+            {showsSubstitutions && (
+              <Link
+                href={ROUTES.gedu.substitutions}
+                className={cn(
+                  NAV_LINK_CLASS,
+                  isOnSubstitutions ? "text-act" : "text-muted-foreground",
+                )}
+                aria-current={isOnSubstitutions ? "page" : undefined}
+                // The visible word is a locale's phone form below `sm`, and in
+                // French that is an abbreviation. A screen reader must never be
+                // handed it, so the accessible name is stated here and is the
+                // whole word at every width, in every locale.
+                aria-label={t("nav.substitutions")}
+              >
+                {/* Two spans in every locale, not one per locale that needs it:
+                    four of the five set the same word in both keys, and the
+                    uniform pair is what keeps this component free of any
+                    per-locale branch. */}
+                <span className="sm:hidden">{t("nav.substitutionsPhone")}</span>
+                <span className="hidden sm:inline">
+                  {t("nav.substitutions")}
+                </span>
+              </Link>
+            )}
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
+              // About is what gives way when the gedu item is on the strip, and
+              // only below `sm`, where the arithmetic above runs out. It is not
+              // dropped: `account-menu.tsx` carries it as a phone-only row.
+              const movesToTheMenu =
+                showsSubstitutions && link.href === ROUTES.about;
               return (
                 <Link
                   key={link.href}
@@ -297,6 +426,7 @@ export function Header() {
                   className={cn(
                     NAV_LINK_CLASS,
                     isActive ? "text-act" : "text-muted-foreground",
+                    movesToTheMenu && "hidden sm:inline-flex",
                   )}
                   aria-current={isActive ? "page" : undefined}
                 >

@@ -3207,6 +3207,7 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: Json
       }
+      get_admin_substitution_requests: { Args: never; Returns: Json }
       get_chat_channel_roster: {
         Args: { p_channel_id: string }
         Returns: {

@@ -156,7 +156,7 @@ COMMENT ON FUNCTION public.gedu_substitutes_session(p_group_id uuid, p_session_d
 -- 2. The two dashboard reads ask the sibling
 -- ---------------------------------------------------------------------------
 --
--- Restated whole from their 00272 definitions — 00273-00277 did not touch
+-- Restated whole from their 00272 definitions — 00273-00276 did not touch
 -- either — with one call changed in each and nothing else. Neither signature
 -- moves, so both are a plain replace.
 CREATE OR REPLACE FUNCTION public.get_my_assigned_products() RETURNS TABLE(product_id uuid, group_id uuid, timezone text, start_date date, end_date date, is_remote boolean, product_type public.product_type, product_translations jsonb, schedule_slots jsonb, group_count integer, participant_count integer, kind text, substitution_date date)

@@ -64,7 +64,9 @@
       "robloxSafeguarding": "Politique de protection de l’enfance de l’Académie des Créateurs",
       "robloxTerms": "Conditions générales d’utilisation de l’Académie des Créateurs",
       "geduContract": "Contrat Gedu",
-      "seatOffer": "Proposition de place"
+      "seatOffer": "Proposition de place",
+      "geduSubstitutions": "Remplacements",
+      "adminSubstitutions": "Remplacements"
     },
     "descriptions": {
       "signIn": "Connectez-vous à votre compte School of Gaming pour suivre les séances à venir de vos joueurs, gérer les inscriptions et tenir vos informations à jour.",
@@ -314,24 +316,6 @@
           "missingInvoiceCustomer": "Client de facturation manquant",
           "waitlistOpenSeatsWithOffers": "{waiting} en liste d’attente · {open, plural, one {# place libre} other {# places libres}} · {offers} en attente de réponse"
         }
-      },
-      "substitution": {
-        "title": "Demandes de remplacement",
-        "allClear": "Aucune séance n’a besoin d’un remplacement.",
-        "justNow": "{count, plural, one {# remplacement validé à l’instant} other {# remplacements validés à l’instant}}",
-        "listLabel": "Séances ayant besoin d’un remplacement",
-        "offersLabel": "Gedus proposant de remplacer",
-        "away": "Absence :",
-        "unnamed": "Gedu sans nom",
-        "reason": {
-          "sick": "Maladie",
-          "other": "Autre"
-        },
-        "noOffers": "Aucune proposition pour l’instant.",
-        "openGroup": "Ouvrir le groupe",
-        "approve": "Valider",
-        "approving": "Validation…",
-        "failed": "La validation a échoué – réessayez."
       },
       "certification": {
         "title": "Certification des Gedus",
@@ -1324,6 +1308,31 @@
       "notDelivered": "Non remis",
       "today": "Aujourd’hui",
       "yesterday": "Hier"
+    },
+    "substitutions": {
+      "title": "Remplacements",
+      "description": "Séances qu’une personne ne peut pas assurer, et qui l’a remplacée.",
+      "descriptionWithZone": "Séances qu’une personne ne peut pas assurer, et qui l’a remplacée. Les horaires sont affichés en {zone}.",
+      "listLabel": "Séances ayant besoin d’un remplacement",
+      "allClear": "Aucune séance n’a besoin d’un remplacement.",
+      "justNow": "{count, plural, one {# remplacement validé à l’instant} other {# remplacements validés à l’instant}}",
+      "offersLabel": "Gedus proposant de remplacer",
+      "away": "Absence :",
+      "unnamed": "Gedu sans nom",
+      "reason": {
+        "sick": "Maladie",
+        "other": "Autre"
+      },
+      "noOffers": "Aucune proposition pour l’instant.",
+      "openGroup": "Ouvrir le groupe",
+      "approve": "Valider",
+      "approving": "Validation…",
+      "failed": "La validation a échoué – réessayez.",
+      "recentLabel": "Réglées ces deux dernières semaines",
+      "substitutedBy": "remplacée par",
+      "withdrawn": "Présence finalement assurée",
+      "loadError": "Impossible de charger les remplacements.",
+      "loadErrorWithReason": "Impossible de charger les remplacements : {reason}"
     }
   },
   "auth": {
@@ -1818,7 +1827,6 @@
     "camps": "Stages",
     "events": "Événements",
     "myGroupsEmptyStateGedu": "Dès qu’un groupe vous est attribué, il apparaîtra ici avec sa prochaine séance.",
-    "substitutionPool": "Remplacements",
     "billing": "Facturation",
     "help": "Aide",
     "tools": "Outils",
@@ -1986,10 +1994,15 @@
       "poolRoleAssistant": "Gedu assistant",
       "poolFee": "{fee} par séance",
       "poolOfferAction": "Je peux assurer cette séance",
-      "poolOfferPending": "Envoi…",
       "poolWithdrawAction": "Retirer ma proposition",
       "poolWithdrawPending": "Retrait…",
-      "poolActionFailed": "Cela n’a pas été enregistré. Réessayez."
+      "poolActionFailed": "Cela n’a pas été enregistré. Réessayez.",
+      "pageTitle": "Remplacements",
+      "back": "Retour à Mon SOG",
+      "mineHeading": "Vos remplacements",
+      "mineAllClear": "Vous n’avez aucun remplacement à venir.",
+      "offerConfirmTitle": "Proposer un remplacement ?",
+      "offerConfirmBody": "Vous proposez d’assurer {product} le {when}. School of Gaming choisit qui remplace, donc une proposition ne vous engage pas tant qu’elle n’est pas approuvée — vous pouvez la retirer jusque-là. Une fois approuvée, l’espace de travail du groupe s’ouvre à vous 48 heures avant le début de la séance."
     },
     "coverage": {
       "title": "Zones où vous pouvez animer",
@@ -2305,7 +2318,9 @@
       "shop": "Boutique",
       "yty": "Yty",
       "about": "À propos",
-      "faq": "FAQ"
+      "faq": "FAQ",
+      "substitutions": "Remplacements",
+      "substitutionsPhone": "Rempl."
     },
     "accountMenu": "Menu du compte – {name}",
     "continueToAccount": "Continuer vers votre compte",
@@ -2755,7 +2770,8 @@
     "settings": "Paramètres",
     "tools": "Outils",
     "expandSidebar": "Déplier la barre latérale",
-    "collapseSidebar": "Replier la barre latérale"
+    "collapseSidebar": "Replier la barre latérale",
+    "substitutions": "Remplacements"
   },
   "home": {
     "hero": {

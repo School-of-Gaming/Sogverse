@@ -622,8 +622,6 @@ export type {
 export type {
   AdminDashboardAttentionProduct,
   AdminDashboardCertificationCandidate,
-  AdminDashboardSubstitutionOffer,
-  AdminDashboardSubstitutionRequest,
   AdminDashboardGroupWithoutGedu,
   AdminDashboardScheduleProduct,
   AdminDashboardScheduleSlot,

@@ -61,7 +61,6 @@ import { UncertifiedToolsNotice } from "./uncertified-notice";
 export function GeduDashboardPageBody({
   assignments,
   substitutions = [],
-  substitutionPool = null,
   certified,
   contractAccepted,
   criminalRecordCheckPassed,
@@ -81,21 +80,6 @@ export function GeduDashboardPageBody({
    * week whichever kind of seat put a session in it.
    */
   substitutions?: readonly GeduSubstitutionSummary[];
-  /**
-   * The **Sessions needing a substitute** section's body, or `null` for a gedu who has
-   * no business seeing it.
-   *
-   * A node rather than rows, like the two tool panels and the help form: the
-   * pool is a self-contained thing with two backend writes behind it, so a
-   * shell hands it over finished and a preview scene hands over the same
-   * component over fixtures. `null` withholds the heading and the nav entry as
-   * well as the body, and it substitutions two cases the page treats alike: an
-   * uncertified gedu, who may substitute for nothing and would be reading an all-clear
-   * about a queue they are not in, and a read that has not answered yet — a
-   * heading painted ahead of its own body would be a card arriving above the
-   * reader on data's own schedule. Heading and body appear together.
-   */
-  substitutionPool?: React.ReactNode | null;
   /**
    * Has this gedu accepted the contract version in force? `false` puts the
    * notice band above everything else on the page.
@@ -150,7 +134,6 @@ export function GeduDashboardPageBody({
   helpForm: React.ReactNode;
 }) {
   const t = useTranslations("dashboardSections");
-  const c = useTranslations("gedu.substitution");
   const h = useTranslations("helpSection");
 
   /**
@@ -193,11 +176,6 @@ export function GeduDashboardPageBody({
    * thing.
    */
   const sections: DashboardSection[] = [
-    // First, and only for a gedu who can act on it: the pool is other people's
-    // sessions, and it sits above this gedu's own because it is the one thing
-    // on the page that expires — a session somebody else substitutions is gone from
-    // it, and a session nobody substitutions has nobody in the room.
-    ...(substitutionPool === null ? [] : [{ id: "substitution-pool", label: t("substitutionPool") }]),
     ...activitySections.map((group) => ({
       id: ACTIVITY_HEADING_KEY[group.type],
       label: t(ACTIVITY_HEADING_KEY[group.type]),
@@ -254,25 +232,6 @@ export function GeduDashboardPageBody({
           Tools genuinely is a different section and keeps the wide gap. */}
       <div className="space-y-24 pb-24">
         <div className="space-y-10">
-          {/* Above the gedu's own groups, and inside their rhythm rather than
-              above it: this is another run of this week's sessions, not a
-              different kind of section, so it takes the tight gap the type
-              nouns take rather than the wide one Tools does. */}
-          {substitutionPool !== null && (
-            <section
-              id="substitution-pool"
-              aria-labelledby="substitution-pool-heading"
-              className="scroll-mt-32"
-            >
-              <div className="mx-auto max-w-5xl space-y-6">
-                <h2 id="substitution-pool-heading" className="text-3xl font-bold">
-                  {c("poolHeading")}
-                </h2>
-                {substitutionPool}
-              </div>
-            </section>
-          )}
-
           {activitySections.map((group) => (
             <section
               key={group.type}

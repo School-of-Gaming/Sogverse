@@ -7,25 +7,29 @@ import {
   type QueryClient,
 } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
-import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.keys";
 import { adminSessionKeys } from "@/services/admin-sessions/admin-sessions.keys";
 import { assignmentKeys } from "@/services/assignments/assignments.keys";
 import { geduSessionKeys } from "@/services/gedu-sessions/gedu-sessions.keys";
 import type { SubstitutionReason } from "@/types";
 import { sessionSubstitutionKeys } from "./session-substitution.keys";
 import { SessionSubstitutionService } from "./session-substitution.service";
-import type { OpenSubstitutionRequest } from "./session-substitution.contracts";
+import type {
+  AdminSubstitutionQueue,
+  OpenSubstitutionRequest,
+} from "./session-substitution.contracts";
 
 /** React Query bindings for session substitutions. */
 
 /**
  * **What a substitution write invalidates, stated once.**
  *
- * Every one of the eight writes below moves the same five documents, so they
- * all call this rather than each listing four foreign roots and getting one of
- * them wrong. The five, and why each is in the list:
+ * Every one of the eight writes below moves the same four roots, so they all
+ * call this rather than each listing three foreign ones and getting one of them
+ * wrong. The four, and why each is in the list:
  *
- * - the substitution root — the pool a gedu picks from, which any approval shortens;
+ * - the substitution root — the pool a gedu picks from, which any approval
+ *   shortens, and the admin page's own document, where an approval moves a row
+ *   out of the queue and into the fortnight behind it;
  * - the gedu-sessions root — both the group feed's `substitutions` array and the
  *   dashboard summaries, whose per-card badge stops counting a session on a
  *   date its viewer has filed an absence for;
@@ -33,8 +37,7 @@ import type { OpenSubstitutionRequest } from "./session-substitution.contracts";
  *   is where the staffing editor reads a session's request from;
  * - the assignments root — a live substitution is a row in the gedu's assigned
  *   products, so approving one gives them a card and clearing one takes it
- *   away;
- * - the admin dashboard — the substitution queue is a member of that one document.
+ *   away.
  *
  * Roots rather than leaves on purpose: a write can move a group the caller was
  * not looking at (the cascade withdraws a displaced sub's own request), so
@@ -46,7 +49,6 @@ function invalidateSubstitutionWrite(queryClient: QueryClient): void {
     geduSessionKeys.all,
     adminSessionKeys.all,
     assignmentKeys.all,
-    adminDashboardKeys.all,
   ]) {
     void queryClient.invalidateQueries({ queryKey });
   }
@@ -74,6 +76,24 @@ export function useOpenSubstitutionRequests(options?: {
     queryFn: () => service.getOpenRequests(),
     enabled: options?.enabled ?? true,
     initialData: options?.initialData,
+  });
+}
+
+/**
+ * The admin Substitutions page, whole.
+ *
+ * The route awaits this read server-side and hydrates it, so the first paint is
+ * the finished page and there is **no loading state anywhere below it** — the
+ * snapshot is a required prop, which is what makes `data` non-optional and the
+ * absent loading branch a compile-time fact rather than a convention.
+ */
+export function useAdminSubstitutionQueue(initialQueue: AdminSubstitutionQueue) {
+  const service = new SessionSubstitutionService(getClient());
+
+  return useQuery({
+    queryKey: sessionSubstitutionKeys.adminQueue(),
+    queryFn: () => service.getAdminQueue(),
+    initialData: initialQueue,
   });
 }
 
