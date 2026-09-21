@@ -11,7 +11,7 @@ import {
 import { Link } from "@/i18n/navigation";
 import { usePathname } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Info, LayoutDashboard, Loader2, LogOut, Settings } from "lucide-react";
+import { LayoutDashboard, Loader2, LogOut, School, Settings } from "lucide-react";
 import { StatusLine } from "@/components/ui/alert";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
@@ -590,7 +590,7 @@ export function AccountMenu({
                   active={isOnAbout}
                   disabled={busy}
                   onNavigate={() => setOpen(false)}
-                  icon={<Info className="h-4 w-4 shrink-0" />}
+                  icon={<School className="h-4 w-4 shrink-0" />}
                   label={t("nav.about")}
                   className="sm:hidden"
                 />
