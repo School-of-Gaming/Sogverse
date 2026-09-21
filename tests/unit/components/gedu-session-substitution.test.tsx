@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
 import { alertVariants } from "@/components/ui/alert";
@@ -140,13 +147,13 @@ function openRequest(by: { id: string; firstName: string }): SubstitutionRequest
 function renderFeed({
   entries,
   withCallbacks = true,
-  renderStaffingEditor,
+  renderSessionMenu,
   onRequestSubstitution = () => {},
 }: {
   entries: readonly (FutureSessionFeedEntry | PastSessionFeedEntry)[];
   /** Whether this surface supplies the gedu's two substitution callbacks. */
   withCallbacks?: boolean;
-  renderStaffingEditor?: () => React.ReactNode;
+  renderSessionMenu?: () => React.ReactNode;
   /** The filing write, so a case can refuse it the way the database does. */
   onRequestSubstitution?: () => void | Promise<void>;
 }) {
@@ -167,7 +174,7 @@ function renderFeed({
             onRemovePhoto={() => Promise.resolve()}
             onRequestSubstitution={withCallbacks ? onRequestSubstitution : undefined}
             onWithdrawSubstitutionRequest={withCallbacks ? () => {} : undefined}
-            renderStaffingEditor={renderStaffingEditor}
+            renderSessionMenu={renderSessionMenu}
           />
         </NowProvider>
       </TimezoneProvider>
@@ -176,6 +183,15 @@ function renderFeed({
 }
 
 const copy = messages.gedu.sessionFeed;
+
+/** The staffing line's text, which is a run of nodes rather than one string. */
+function expectedLineText(): string {
+  const line = [...document.querySelectorAll("p")].find((p) =>
+    p.textContent.startsWith(copy.staffingExpectedLabel),
+  );
+  if (line === undefined) throw new Error("no staffing line on this card");
+  return line.textContent.replace(/\s+/g, " ").trim();
+}
 
 /** The `⋯` button in the card header — the only way to reach the filing form. */
 function menuTrigger() {
@@ -424,7 +440,7 @@ describe("the staffing line", () => {
     renderFeed({
       entries: [futureEntry([openRequest({ id: PETRA, firstName: "Petra" })], SANNA)],
     });
-    expect(screen.getByText(/Running this session/)).toBeTruthy();
+    expect(expectedLineText()).toContain("Running this session:");
     expect(screen.getByText("Substitute needed for Petra.")).toBeTruthy();
   });
 
@@ -433,10 +449,64 @@ describe("the staffing line", () => {
       entries: [futureEntry([openRequest({ id: PETRA, firstName: "Petra" })], SANNA)],
     });
     // Petra has filed, so only Sanna is expected — and her pay class rides with
-    // her name, because that is what the line is for.
-    expect(
-      screen.getByText("Running this session: Sanna (Primary)"),
-    ).toBeTruthy();
+    // her name, because that is what the line is for. The run is a node per
+    // person now, so the assertion reads the line rather than one text node.
+    expect(expectedLineText()).toBe("Running this session: Sanna (Primary)");
+  });
+
+  it("separates people with a mark a name cannot contain", () => {
+    // A display name may hold a comma — the seeded "Suhina, Susanna Hiltunen"
+    // does — and a comma-joined run then reads as two people.
+    renderFeed({
+      entries: [
+        futureEntry(
+          [
+            openRequest({
+              id: "0f1a1a3c-5c44-4d3a-93f2-4e3a7f6a1b22",
+              firstName: "Mikko",
+            }),
+          ],
+          SANNA,
+        ),
+      ],
+    });
+
+    const line = expectedLineText();
+    expect(line).toContain("Sanna (Primary)");
+    expect(line).toContain("Petra (Assistant)");
+    expect(line).toContain("·");
+    // Not one comma anywhere in the run: the separator is the only punctuation
+    // between the two people, and neither name carries one here.
+    expect(line).not.toContain(",");
+  });
+
+  it("keeps a name with a comma in it as one unbreakable unit", () => {
+    renderFeed({
+      entries: [
+        futureEntry(
+          [
+            {
+              ...openRequest({ id: PETRA, firstName: "Petra" }),
+              status: "substituted",
+              substituteId: {
+                id: JOONAS,
+                firstName: "Suhina, Susanna Hiltunen",
+              },
+            },
+          ],
+          "somebody-else",
+        ),
+      ],
+    });
+
+    const units = [...document.querySelectorAll(".whitespace-nowrap")].map(
+      (unit) => unit.textContent,
+    );
+    // One node holds the whole name, comma included, so no wrap can fall
+    // inside it and no reader can take it for two people.
+    // The role is the one the request was filed for, which is what the sub is
+    // paid as — Petra's primary seat, not her own assignment's class.
+    expect(units).toContain("Suhina, Susanna Hiltunen (Primary)");
   });
 
   it("says so when a request has left nobody expected", () => {
@@ -466,7 +536,7 @@ describe("the staffing line", () => {
     });
     expect(screen.queryByText("Substitute needed for Sanna.")).toBeNull();
     // Still the line's own job: who is left running it.
-    expect(screen.getByText(/Running this session/)).toBeTruthy();
+    expect(expectedLineText()).toContain("Running this session:");
     // And the block still says it, in the second person.
     expect(
       screen.getByRole("status").textContent,
@@ -655,23 +725,79 @@ describe("the staffing note", () => {
   });
 });
 
-describe("the staffing editor slot", () => {
-  it("renders whatever the surface supplies, on every card", () => {
-    renderFeed({
+/**
+ * ============================================================================
+ * The header's one menu slot
+ * ============================================================================
+ *
+ * **An admin's card is the gedu's card with different rows in the menu**
+ * *(owner, 2026-09)*, and that is a structural claim rather than a stylistic
+ * one: whatever a surface supplies lands in the header's trailing cluster,
+ * last, after Edit — never in a band of its own under the staffing note. These
+ * cases pin the geometry for both roles, because the admin surface reaches it
+ * through the very same slot.
+ */
+describe("the header's menu slot", () => {
+  /** The nearest ancestor of `node` that also holds the card's Edit button. */
+  function trailingCluster(node: HTMLElement): HTMLElement {
+    for (let el = node.parentElement; el !== null; el = el.parentElement) {
+      if (within(el).queryByRole("button", { name: copy.edit }) !== null) {
+        return el;
+      }
+    }
+    throw new Error("no cluster holding Edit above this node");
+  }
+
+  it("puts a supplied menu in the header cluster, last after Edit", () => {
+    const { container } = renderFeed({
       entries: [futureEntry([], SANNA), pastEntry([], SANNA)],
       withCallbacks: false,
-      renderStaffingEditor: () => (
+      renderSessionMenu: () => (
         <button type="button">Staffing editor</button>
       ),
     });
-    expect(
-      screen.getAllByRole("button", { name: "Staffing editor" }),
-    ).toHaveLength(2);
+
+    const supplied = screen.getAllByRole("button", { name: "Staffing editor" });
+    expect(supplied).toHaveLength(2);
+    for (const menu of supplied) {
+      const cluster = trailingCluster(menu);
+      expect(cluster.contains(menu)).toBe(true);
+      // Last in the cluster, which is where the overflow menu belongs and what
+      // keeps every mark before it in place.
+      expect(cluster.lastElementChild).toBe(menu);
+    }
+    // And no band under the staffing note holding it instead.
+    expect(container.querySelectorAll(".border-t")).toHaveLength(0);
+  });
+
+  it("puts the gedu's own menu in the same place", () => {
+    renderFeed({ entries: [futureEntry([], SANNA)] });
+
+    const trigger = menuTrigger();
+    expect(trigger).not.toBeNull();
+    if (trigger === null) throw new Error("no menu on this card");
+    const cluster = trailingCluster(trigger);
+    expect(cluster.contains(trigger)).toBe(true);
+    expect(cluster.lastElementChild?.contains(trigger)).toBe(true);
   });
 
   it("is empty on the gedu side, which supplies none", () => {
     renderFeed({ entries: [futureEntry([], SANNA)] });
     expect(screen.queryByRole("button", { name: "Staffing editor" })).toBeNull();
+  });
+
+  it("draws no staffing band on a card with nothing outstanding", () => {
+    // The band is the border and the padding the staffing facts sit in. A card
+    // with no request has neither, whichever role is looking — which is what
+    // makes the two cards the same height in the same state.
+    const { container } = renderFeed({
+      entries: [futureEntry([], SANNA)],
+      withCallbacks: false,
+      renderSessionMenu: () => (
+        <button type="button">Staffing editor</button>
+      ),
+    });
+    expect(container.querySelectorAll(".border-t")).toHaveLength(0);
   });
 });
 

@@ -702,7 +702,7 @@ function Workspace({
    * keyed by in Postgres, so the two agree by construction and cannot drift if a
    * snapshot's instant ever disagrees with the date it was filed under.
    */
-  const renderStaffingEditor = (entry: SessionFeedEntry) => {
+  const renderSessionMenu = (entry: SessionFeedEntry) => {
     const sessionDate = entry.id.slice(sessionEntryId(groupId, "").length);
     return (
       <SessionStaffingEditor
@@ -787,7 +787,7 @@ function Workspace({
       // The admin shell's one extra power over the gedu's, and the body learns
       // it by being handed one: an editor, and neither of the two substitution
       // callbacks a gedu speaks for their own seat with.
-      renderStaffingEditor={renderStaffingEditor}
+      renderSessionMenu={renderSessionMenu}
       gameStatuses={gameStatuses}
       robloxAvatarUrls={robloxAvatarUrls}
       memberFlair={memberFlair}

@@ -164,7 +164,7 @@ interface SessionFeedProps {
    * again.
    *
    * Omitted on a surface that is not a gedu looking at their own sessions — the
-   * admin shell supplies {@link renderStaffingEditor} instead — and the action
+   * admin shell supplies {@link renderSessionMenu} instead — and the action
    * is then not rendered at all. That is the whole gate: no role flag reaches
    * this component, and the surface decides by what it supplies.
    */
@@ -183,7 +183,7 @@ interface SessionFeedProps {
    * A surface with no such tool omits it, which is the gedu answer and the
    * default.
    */
-  renderStaffingEditor?: (entry: SessionFeedEntry) => ReactNode;
+  renderSessionMenu?: (entry: SessionFeedEntry) => ReactNode;
   className?: string;
 }
 
@@ -276,7 +276,7 @@ export function SessionFeed({
   photoConsents = null,
   onRequestSubstitution,
   onWithdrawSubstitutionRequest,
-  renderStaffingEditor,
+  renderSessionMenu,
   className,
 }: SessionFeedProps) {
   const t = useTranslations("gedu.sessionFeed");
@@ -828,7 +828,7 @@ export function SessionFeed({
                 : (draft) => onRequestSubstitution(entry, draft)
             }
             onWithdrawSubstitutionRequest={onWithdrawSubstitutionRequest}
-            staffingEditor={renderStaffingEditor?.(entry) ?? null}
+            sessionMenu={renderSessionMenu?.(entry) ?? null}
             registerEditButton={(node) => {
               if (node === null) editButtons.current.delete(entry.id);
               else editButtons.current.set(entry.id, node);

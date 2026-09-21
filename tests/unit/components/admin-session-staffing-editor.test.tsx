@@ -243,13 +243,13 @@ describe("the admin session staffing editor", () => {
     expect(isDisabled(joonas)).toBe(false);
   });
 
-  it("refuses the substitute already filling a request, as one more expected gedu", () => {
-    // Petra is nobody’s assignment here — she is on this session only because
-    // she is substituting Sanna — and the picker still has to refuse her: seating
-    // her as somebody else’s sub would collapse two seats onto one person.
-    // Nothing in the picker’s caller says so specially, and nothing needs to:
-    // the derivation puts a substituted request’s sub into `expected`, which is the
-    // set the refusal is built from. This case is what keeps that true.
+  it("badges the substitute being replaced as current, not as a clash", () => {
+    // Joonas is on this session only because he is substituting Sanna, so the
+    // derivation puts him among the expected and the refusal map refuses him
+    // like anybody else already due. Read as "Already at this session" that is
+    // a lie about the one person this flow is about, so the flow names him as
+    // the current holder and the sheet's precedence does the rest
+    // *(owner, 2026-09)*. He stays unpickable either way.
     renderEditor({
       gedus: TWO_SEATS,
       requests: [substitutedRequest(SANNA, "Sanna", JOONAS, "Joonas")],
@@ -260,11 +260,32 @@ describe("the admin session staffing editor", () => {
     choose(copy.changeSubstitute);
 
     const joonas = pickerRow(JOONAS);
-    expect(within(joonas).getByText(pickerCopy.alreadyExpected)).not.toBeNull();
+    expect(within(joonas).getByText(pickerCopy.current)).not.toBeNull();
+    expect(
+      within(joonas).queryByText(pickerCopy.alreadyExpected),
+    ).toBeNull();
     expect(isDisabled(joonas)).toBe(true);
-    // And the seat being answered is refused for the other reason, which is the
-    // pair the map only ever holds.
+    // And the seat being answered keeps its own reason, which is the pair the
+    // map only ever holds.
     expect(within(pickerRow(SANNA)).getByText(pickerCopy.absentGedu)).not.toBeNull();
+  });
+
+  it("badges nobody as current where the request is still open", () => {
+    // Nothing is being replaced on an open request, so the flow names no
+    // current holder and every refusal reads as itself.
+    renderEditor({
+      gedus: TWO_SEATS,
+      requests: [openRequest(SANNA, "Sanna")],
+    });
+
+    choose(copy.setSubstitute);
+    fireEvent.click(screen.getByRole("radio", { name: /Sanna/ }));
+    fireEvent.click(button(messages.common.continue));
+
+    expect(screen.queryByText(pickerCopy.current)).toBeNull();
+    expect(
+      within(pickerRow(PETRA)).getByText(pickerCopy.alreadyExpected),
+    ).not.toBeNull();
   });
 
   it("carries an optional reason and note into the write", async () => {
@@ -372,15 +393,16 @@ describe("the admin session staffing editor", () => {
     expect(menuItems()).toEqual([copy.setSubstitute, copy.withdrawRequest]);
   });
 
-  it("offers no menu at all when nobody is due and nobody has filed", () => {
-    // There is no action to put in it, and an empty panel is a promise the
-    // card cannot keep — the line saying why stands on its own.
-    renderEditor({ gedus: [] });
+  it("renders nothing at all when nobody is due and nobody has filed", () => {
+    // No action to put in a menu, so no menu — and nothing else either. The
+    // editor draws into the card's header cluster now, so anything it left
+    // behind would be a mark on an admin's card that a gedu's does not carry.
+    const { container } = renderEditor({ gedus: [] });
 
     expect(
       screen.queryByRole("button", { name: copy.menuLabel }),
     ).toBeNull();
-    expect(screen.getByText(copy.nobodyExpectedHint)).not.toBeNull();
+    expect(container.innerHTML).toBe("");
   });
 
   it("names every seat's own row where two gedus are away", () => {

@@ -189,13 +189,12 @@ export function SessionStaffingEditor({
     });
   }
 
+  // **No wrapper of its own.** This lands in the card header's trailing
+  // cluster, beside Edit, exactly where a gedu's `⋯` lands — a box around it
+  // would be the one thing that made an admin's card look different from the
+  // card the same session draws for the gedu who runs it.
   return (
-    <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-2 gap-y-1">
-      {noSeat && (
-        <span className="text-xs text-muted-foreground">
-          {t("nobodyExpectedHint")}
-        </span>
-      )}
+    <>
       <SessionCardMenu label={t("menuLabel")} items={items} />
 
       {flow !== null && (
@@ -219,7 +218,7 @@ export function SessionStaffingEditor({
           }
         />
       )}
-    </div>
+    </>
   );
 }
 
@@ -371,6 +370,14 @@ function SetSubFlowOverlays({
         title={t("pickerTitle")}
         description={t("pickerDescription", { name: absent?.firstName ?? "" })}
         unavailable={buildUnavailability(staffing, absent?.id ?? null)}
+        // **Whoever is being replaced is "Current", not a clash.** A seated
+        // substitute is one of the session's expected gedus, so the map below
+        // refuses them like anybody else already due — and read as "Already at
+        // this session" that is a lie about the one person this flow is about.
+        // The sheet's own precedence is current-wins, one reason at a time, so
+        // naming them here is the whole fix: the row still cannot be picked,
+        // and it now says why it is there *(owner, 2026-09)*.
+        highlightId={currentSubstituteId(absent)}
         onSelect={(gedu) =>
           setFlow({
             step: "confirm",
@@ -406,6 +413,19 @@ function SetSubFlowOverlays({
       </Dialog>
     </>
   );
+}
+
+/**
+ * Who is filling this seat right now, where anybody is.
+ *
+ * `undefined` on an open request and on a seat nobody has filed against — the
+ * Set-a-substitute flow has no current person, so nothing is badged.
+ */
+function currentSubstituteId(seat: AbsentSeat | null): string | undefined {
+  const request = seat?.request;
+  if (request === undefined || request === null) return undefined;
+  if (request.status !== "substituted") return undefined;
+  return request.substituteId?.id;
 }
 
 /**

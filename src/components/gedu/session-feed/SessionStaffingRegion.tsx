@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { Fragment, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -18,36 +18,29 @@ interface SessionStaffingRegionProps {
    * open until the write settles, so a refusal is read before the gedu leaves
    * the card believing they are free.
    *
-   * Absent on a surface that is not a gedu looking at their own session — the
-   * admin shell supplies {@link staffingEditor} in this slot instead — and the
-   * action is then not rendered at all.
+   * Absent on a surface that is not a gedu looking at their own session — an
+   * admin shell hands the card its own menu instead, and the action is then
+   * not rendered at all.
    */
   onWithdrawSubstitutionRequest?: (requestId: string) => void | Promise<void>;
-  /**
-   * The staffing editor this surface supplies for this session, or nothing.
-   *
-   * **The surface decides by what it supplies**, exactly as the site panel's
-   * saves already decide who may write a site's record: a gedu shell hands over
-   * the withdraw callback and no editor, and an admin shell hands over the
-   * editor and no callback. Neither is a role flag, and the body branches on
-   * neither.
-   */
-  staffingEditor?: ReactNode;
 }
 
 /**
  * Everything one session card says about **who is running it**, once there is
  * something to say.
  *
- * Three things share the region: the staffing line says who is expected and
- * what is outstanding, the viewer's own request — where they hold one — is
- * stated loudly with the way to take it back, and the editor slot is where a
- * shell with more power than a gedu puts its own.
+ * Two things share the region: the staffing line says who is expected and what
+ * is outstanding, and the viewer's own request — where they hold one — is
+ * stated loudly with the way to take it back.
  *
- * **Filing is not here.** The action that *starts* an absence lives in the
- * card header's overflow menu, because it is rare and belongs out of the way
- * (`SessionSubstitutionMenu`). A request that exists is the opposite kind of
- * fact — it is the most important thing on the card, and the reader must not
+ * **No action starts here, whoever is looking.** A gedu's "I need to cancel"
+ * and an admin's own actions are both rows in the card header's `⋯`, which is
+ * what makes the two roles' cards the same card *(owner, 2026-09)*: an admin
+ * looking at a session sees what the gedu sees, and the only difference is what
+ * the menu holds.
+ *
+ * Filing is rare and belongs out of the way, which is why it sits in that
+ * menu. A request that exists is the opposite kind of fact — it is the most important thing on the card, and the reader must not
  * have to open anything to find it — so it is drawn here as a panel rather than
  * as a line of small print *(owner, 2026-09)*.
  *
@@ -70,7 +63,6 @@ interface SessionStaffingRegionProps {
 export function SessionStaffingRegion({
   staffing,
   onWithdrawSubstitutionRequest,
-  staffingEditor = null,
 }: SessionStaffingRegionProps) {
   const t = useTranslations("gedu.sessionFeed");
   const [withdrawOpen, setWithdrawOpen] = useState(false);
@@ -106,9 +98,10 @@ export function SessionStaffingRegion({
   ];
   const promoted = colleagueRequests.length > 0;
 
-  if (!showLine && staffingEditor === null) {
-    return null;
-  }
+  // Nothing to say, no band: the border and its padding belong to the facts,
+  // so a card with none is exactly as tall as one that never had any — which
+  // is what makes an admin's card and a gedu's the same card.
+  if (!showLine) return null;
 
   return (
     <div className="mt-3 space-y-3 border-t border-border pt-3">
@@ -116,20 +109,12 @@ export function SessionStaffingRegion({
         <StaffingNote staffing={staffing} requests={colleagueRequests} />
       )}
 
-      {/* The facts on the left, the editor right-packed on the right — the
-          trailing-group shape, so a control that only some cards carry grows
-          the group leftward into the row's own slack instead of displacing
-          what is already painted. The row is dropped entirely where it would
-          hold neither, so the column's own spacing never opens a gap around
-          nothing. */}
-      {(staffingEditor !== null || (showLine && !promoted)) && (
-        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
-          <div className="min-w-0 space-y-0.5 text-xs text-muted-foreground">
-            {showLine && !promoted && <ExpectedLine staffing={staffing} />}
-          </div>
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-            {staffingEditor}
-          </div>
+      {/* The quiet form of the same facts, for a card whose only request is
+          the viewer's own: their panel below says it in the second person, so
+          the note is not promoted and this line is all that is left. */}
+      {!promoted && (
+        <div className="min-w-0 space-y-0.5 text-xs text-muted-foreground">
+          <ExpectedLine staffing={staffing} />
         </div>
       )}
 
@@ -186,23 +171,31 @@ function ExpectedLine({ staffing }: { staffing: SessionStaffing }) {
   const roleLabel = (role: GeduAssignmentRole) =>
     role === "primary" ? t("substitutionRolePrimary") : t("substitutionRoleAssistant");
 
+  if (staffing.expected.length === 0) {
+    return <p>{t("staffingNobodyExpected")}</p>;
+  }
+
   return (
     <p>
-      {staffing.expected.length === 0
-        ? t("staffingNobodyExpected")
-        : t("staffingExpected", {
-            // A comma-space join is punctuation between translated names, not
-            // copy of its own — the same reasoning the assignment card's
-            // separator is a pseudo-element for.
-            names: staffing.expected
-              .map((gedu) =>
-                t("staffingWithRole", {
-                  name: gedu.firstName,
-                  role: roleLabel(gedu.role),
-                }),
-              )
-              .join(", "),
-          })}
+      {t("staffingExpectedLabel")}{" "}
+      {staffing.expected.map((gedu, index) => (
+        <Fragment key={gedu.id}>
+          {/* **Never a comma.** A display name may contain one — the seeded
+              "Suhina, Susanna Hiltunen" does — and a comma-joined run then
+              reads as two people. The card already separates facts with a
+              middle dot, so the run borrows it; it is punctuation between
+              translated names rather than copy, so it is not a string. */}
+          {index > 0 && <span className="px-1">{NAME_SEPARATOR}</span>}
+          {/* Each person is one unbreakable unit, so a wrap falls between
+              people rather than inside a name or before a separator. */}
+          <span className="whitespace-nowrap">
+            {t("staffingWithRole", {
+              name: gedu.firstName,
+              role: roleLabel(gedu.role),
+            })}
+          </span>
+        </Fragment>
+      ))}
     </p>
   );
 }
@@ -337,3 +330,12 @@ function ViewerRequestBlock({
     </Alert>
   );
 }
+
+/**
+ * What stands between two people in a run of names.
+ *
+ * A middle dot, because it is what the card's header already puts between
+ * facts — and because the one thing it may not be is a comma: a display name
+ * can contain one, and a comma-joined run then reads as two people.
+ */
+const NAME_SEPARATOR = "·";

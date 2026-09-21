@@ -162,11 +162,17 @@ interface SessionFeedItemProps {
   /** Take the viewer's own open request back. Awaited, like the save. */
   onWithdrawSubstitutionRequest?: (requestId: string) => void | Promise<void>;
   /**
-   * The staffing editor this surface supplies for this entry, or nothing —
-   * rendered in the same region as the gedu's own action, because it is the
-   * other answer to the same question.
+   * This surface's own overflow menu for this entry, or nothing.
+   *
+   * **One slot, in the header's trailing cluster, for whoever is looking.** A
+   * gedu's card fills it from `onRequestSubstitution` below; an admin's is
+   * handed this node, which draws the same `⋯` over the office's actions and
+   * renders its flows behind it. The two are mutually exclusive — a surface
+   * supplies one or the other — so the cluster never holds two menus, and an
+   * admin's card is exactly the gedu's card with different rows in it
+   * *(owner, 2026-09)*.
    */
-  staffingEditor?: ReactNode;
+  sessionMenu?: ReactNode;
   /** Open this entry's editor (or close it if it is already open). */
   onToggleEdit: () => void;
   onCancelEdit: () => void;
@@ -306,7 +312,7 @@ export function SessionFeedItem({
   registerEditButton,
   onRequestSubstitution,
   onWithdrawSubstitutionRequest,
-  staffingEditor = null,
+  sessionMenu = null,
   onToggleEdit,
   onCancelEdit,
   onSave,
@@ -406,7 +412,6 @@ export function SessionFeedItem({
     <SessionStaffingRegion
       staffing={entry.staffing}
       onWithdrawSubstitutionRequest={onWithdrawSubstitutionRequest}
-      staffingEditor={staffingEditor}
     />
   );
 
@@ -607,6 +612,9 @@ export function SessionFeedItem({
           {fileSubstitution !== undefined && (
             <SessionSubstitutionMenu onRequestSubstitution={fileSubstitution} />
           )}
+          {/* The other role's menu, in the very same place: a surface supplies
+              this or the callback above, never both. */}
+          {sessionMenu}
         </div>
       </div>
 

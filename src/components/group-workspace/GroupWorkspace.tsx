@@ -335,7 +335,7 @@ interface GroupWorkspaceProps {
    *
    * Omitted, no card offers the action — which is the admin shell's answer, and
    * a preview scene's. It is one half of the pair below; see
-   * {@link renderStaffingEditor}.
+   * {@link renderSessionMenu}.
    */
   onRequestSubstitution?: (
     entry: SessionFeedEntry,
@@ -355,7 +355,7 @@ interface GroupWorkspaceProps {
    * it lands in the same region as the gedu action, because the two are
    * different answers to one question.
    */
-  renderStaffingEditor?: (entry: SessionFeedEntry) => ReactNode;
+  renderSessionMenu?: (entry: SessionFeedEntry) => ReactNode;
   /**
    * Save a roster member's game username, on whichever platform this product's
    * topic is about. A gedu is the person who finds out a name is wrong —
@@ -472,7 +472,7 @@ export function GroupWorkspace({
   onRemovePhoto,
   onRequestSubstitution,
   onWithdrawSubstitutionRequest,
-  renderStaffingEditor,
+  renderSessionMenu,
   onSaveGameUsername,
   gameStatuses,
   robloxAvatarUrls,
@@ -811,7 +811,7 @@ export function GroupWorkspace({
               photoConsents={photoConsents}
               onRequestSubstitution={onRequestSubstitution}
               onWithdrawSubstitutionRequest={onWithdrawSubstitutionRequest}
-              renderStaffingEditor={renderStaffingEditor}
+              renderSessionMenu={renderSessionMenu}
             />
           ) : (
             <Card>
