@@ -24,12 +24,12 @@ in the product's zone or the reader's, and how a background arrival may change l
 *Measured* means someone ran the query and the date and instrument are given — the
 production numbers below were pulled 2026-08-25 against the `sogverse` Vercel project
 (`vercel metrics`/`vercel usage`, production environment), independently re-run to
-confirm an earlier same-day session's pull; the code-mechanism claims were verified by
-reading the installed `next@16.2.12` source, not its documentation, and re-verified
-against it on 2026-09-21. *Arithmetic* means computed from measured inputs with the
-assumptions stated. *Inferred* means an
-explanation that fits the evidence but was not directly observed — each inferred claim
-comes with the probe that would settle it.
+confirm an earlier same-day session's pull. *Read in the installed source* is its own
+category, not a measurement, and covers every code-mechanism claim here: verified against
+`next@16.2.12` as installed rather than against its documentation, and re-verified there
+on 2026-09-21. *Arithmetic* means computed from measured inputs with the assumptions
+stated. *Inferred* means an explanation that fits the evidence but was not directly
+observed — each inferred claim comes with the probe that would settle it.
 
 ## The system, named
 
@@ -153,7 +153,7 @@ costs nothing.* Attempts to break it:
   as stale as the page. Only hover-time prefetch could warm just-in-time, and
   `prefetch={false}` disables viewport **and** hover: a link mounted with prefetching
   disabled is never registered in the structure the hover/touchstart intent handler looks
-  it up in, so the intent path returns early (*measured*, the client link implementation).
+  it up in, so the intent path returns early (read in the installed source, 2026-09-21).
   The app therefore never had a just-in-time warming path to lose. The click-latency
   control below is the falsifier.
 - **"It warms the database."** No component renders, so no page query runs. The only
@@ -228,15 +228,15 @@ sat in every server-side traffic query this investigation ran, and will sit in e
 future one. (Web Analytics pageviews and Speed Insights are browser beacons and are
 unaffected — see "What prefetch pollutes" below.)
 
-**The F8 tension, assessed: real but second-order.** F8's planning rule says
-pre-register families; a pre-registered cohort arrives signed in and fires the signed-in
-prefetch fan-out in the opening minute, so the rule does trade GoTrue load for request
-volume. But the two sides land on different machines: the registrations land on the
-2-core Supabase VM (the thing that saturates), while the pre-registered cohort's
-prefetches land on Vercel and — being PIN-verified customers — mostly skip the one query
-that touches the shared box. The levers pull in opposite directions on the *request
-count*, not materially on the *incident path*. F8's rule survives unamended; it deserves
-one sentence noting the fan-out is Vercel-side (proposed edit below). With remedy (a)
+**The F8 tension, assessed: real but second-order, and now closed.** F8's planning rule
+says pre-register families; while the default held, a pre-registered cohort arrived signed
+in and fired the signed-in prefetch fan-out in the opening minute, so the rule traded
+GoTrue load for request volume. But the two sides landed on different machines: the
+registrations on the 2-core Supabase VM (the thing that saturates), while the cohort's
+prefetches landed on Vercel and — being PIN-verified customers — mostly skipped the one
+query that touches the shared box. The levers pulled in opposite directions on the
+*request count*, not materially on the *incident path*. F8's rule survives unamended and
+now carries the sentence recording that its trade was Vercel-side; with remedy (a)
 shipped, the tension is closed.
 
 ## Remedies
@@ -388,7 +388,7 @@ new page in whole — zero loading state, zero shift, and nothing visible until 
 lands. The app also gives no click acknowledgement at all today (no pending state on any
 link), so the wait reads as the click not registering.
 
-**Next's three prefetch modes** (*measured*: the installed typings and router source).
+**Next's three prefetch modes** (read in the installed typings and router source).
 
 | Value | Static target | Dynamic target |
 |---|---|---|
@@ -427,9 +427,10 @@ per viewport). The app sat in the incoherent third state — dynamic, no boundar
 prefetch on — and (a) moves it into the second. The framework's own trajectory points the
 same way: early 13 prefetched full dynamic routes and rolled it back; 14 limited it to the
 boundary; 15 zeroed the dynamic lifetime; 16's cache components move the value into static
-shells. One navigation module is one primitive, one default, greppable call sites, opt-in
-per link — the correctness-by-mechanism shape the root rules ask for. What *would* make it
-a patch is stopping there.
+shells. One navigation module means one default in one place, opt-in per link, and every
+`<Link>` in the app resolves through it today — a single default held by convention, since
+nothing stops a future file importing `next/link` directly and rendering outside it. What
+*would* make it a patch is stopping there.
 
 **F1 stands; only the revert was wrong.** Disabling prefetch would not have been the
 quick fix for the auth incidents. Before F1 every protected request paid three network
@@ -596,12 +597,14 @@ near.
 (everything except the $20 Pro seat and the $10 Speed Insights base), all of it absorbed
 by the plan's credit — amount due was the two base fees, $20.93. September's first seven
 days ran $5.53 metered, a weekday floor of roughly $1.00 a day against $0.10 on a weekend
-day, which projects to about $23 for the month: a term-time month plausibly overruns the
-credit by single-digit dollars. The prefetch-attributable share of the metered lines is
-roughly $1.50 a week — 85% of the invocation line, about 57% of observability events
-(billed per request, prefetch or not), and a thin slice of CPU, memory and origin
-transfer, since an empty prefetch response is cheap to compute and to send — so remedy
-(a) is worth about $5–7 in a term-time month, roughly the size of the projected overrun.
+day, which projected about $23 for the month: a term-time month plausibly overruns the
+credit by single-digit dollars. That projection was taken before (a) shipped and has not
+been re-read since; `vercel usage` is the read. The prefetch-attributable share of the
+metered lines is roughly $1.50 a week — 85% of the invocation line, about 57% of
+observability events (billed per request, prefetch or not), and a thin slice of CPU,
+memory and origin transfer, since an empty prefetch response is cheap to compute and to
+send — so remedy (a) is worth about $5–7 in a term-time month, roughly the size of the
+projected overrun.
 The pageview-driven lines (Speed Insights events, Web Analytics events) are the larger
 term and are untouched by it. Urgency on money alone: none; the case for (a) is
 coherence and alert noise, not the bill.

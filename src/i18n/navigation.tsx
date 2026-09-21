@@ -49,8 +49,11 @@ export { redirect, usePathname, useRouter, getPathname };
  * parts in a single stream regardless. Same navigation, same speed; the
  * requests were pure cost.
  *
- * A call site that knows better opts back in with `prefetch={true}` (or
- * `prefetch="auto"`), and that is worth doing exactly where the target can
+ * A call site that knows better opts back in with `prefetch={true}` — and only
+ * that value. `"auto"` and `null` are spellings of the framework default, so
+ * they re-add the short-circuited request this default exists to stop rather
+ * than opting out of it; `true` is the one value that asks for the whole tree,
+ * static and dynamic. It is worth spending exactly where the target can
  * deliver something ahead of the click.
  *
  * Expect the default to flip back for routes that gain a static shell — a
@@ -62,8 +65,11 @@ export { redirect, usePathname, useRouter, getPathname };
  * server components, and a `"use client"` here would break them.
  */
 export function Link({
-  prefetch = false,
+  prefetch,
   ...props
 }: ComponentProps<typeof LocalizedLink>) {
-  return <LocalizedLink prefetch={prefetch} {...props} />;
+  // `?? false`, not a destructuring default: that fires only on `undefined`, so
+  // an explicit `null` — Next's own "no preference", and what a spread of these
+  // props can carry — would pass straight through and restore the default.
+  return <LocalizedLink prefetch={prefetch ?? false} {...props} />;
 }

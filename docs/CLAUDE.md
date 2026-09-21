@@ -47,5 +47,12 @@ investigation.
 - **Status headers on anything time-bound.** An investigation, record, or other
   point-in-time doc opens with a bolded status line and a date, so a reader knows what
   to re-verify before trusting it.
+- **A measured number carries the date it was taken, how to re-pull it, and the decision
+  it is evidence for.** Before writing one, ask whether a future session reading it would
+  be helped or confused — a bare magnitude reads as current however old it is, so it gets
+  quoted into a plan long after it stopped being true. Annotate a figure that has gone
+  stale rather than deleting it: a dated number a reader can calibrate against beats a
+  re-pull instruction they may never run. This is the rule above applied *inside* a living
+  doc, which has no status header to date its contents.
 - **Filenames are kebab-case, named for the subject**; point-in-time docs carry their
   date (`security-audit-2026-03.md`).
