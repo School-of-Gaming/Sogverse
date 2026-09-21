@@ -225,8 +225,8 @@ async function loadPreset() {
         `  or --pages <path> for one of your own.`,
     );
   }
-  const module = await import(pathToFileURL(file).href);
-  const preset = module.default;
+  const mod = await import(pathToFileURL(file).href);
+  const preset = mod.default;
   if (!preset?.groups) {
     fail(`${file} has no default export with a \`groups\` array.`);
   }
@@ -579,6 +579,7 @@ function themeColors() {
       "utf8",
     );
     const read = (name, or) =>
+      // eslint-disable-next-line security/detect-non-literal-regexp -- `name` is a literal passed by the calls just below, never operator input; the pattern is fixed apart from that token.
       new RegExp(`--color-${name}:\\s*(#[0-9a-fA-F]{3,8})`).exec(css)?.[1] ?? or;
     return {
       background: read("background", fallback.background),
@@ -1132,7 +1133,7 @@ const failed = results.filter((r) => r.state === "failed").length;
 
 const { branch, sha } = gitMeta();
 const composites = await buildComposites(results, OUT);
-const indexPath = writeIndex(OUT, composites, {
+writeIndex(OUT, composites, {
   title: preset.title,
   preset: PRESET_NAME,
   date: DATE,

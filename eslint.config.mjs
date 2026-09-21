@@ -1186,6 +1186,62 @@ const eslintConfig = defineConfig([
       "no-restricted-syntax": "off",
     },
   },
+  {
+    // Operational scripts are plain ESM that Node runs directly. They are not
+    // in any tsconfig project, so the type-aware parser above cannot read them
+    // at all — without this block every one of them fails to parse and the
+    // directory silently drops out of lint. Rules that need type information
+    // have nothing to work from here and are turned off explicitly; what
+    // remains is the check that actually earns its place on a run-once script,
+    // an undefined identifier in a branch the one manual run never took.
+    files: ["**/*.mjs"],
+    languageOptions: {
+      parserOptions: { project: false },
+      globals: {
+        process: "readonly",
+        console: "readonly",
+        Buffer: "readonly",
+        URL: "readonly",
+        URLSearchParams: "readonly",
+        TextEncoder: "readonly",
+        TextDecoder: "readonly",
+        fetch: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
+        structuredClone: "readonly",
+      },
+    },
+    rules: {
+      "no-undef": "error",
+      "@typescript-eslint/no-unnecessary-condition": "off",
+      "@typescript-eslint/no-unsafe-type-assertion": "off",
+      "@typescript-eslint/no-unnecessary-type-assertion": "off",
+      "@typescript-eslint/no-floating-promises": "off",
+      "@typescript-eslint/no-misused-promises": "off",
+      "@typescript-eslint/await-thenable": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+    },
+  },
+  {
+    // The security plugin's filename rule is written for a server handling
+    // untrusted input, where a computed path is how a request reaches a file it
+    // should not. An operational script is the opposite case: it is run from a
+    // terminal by someone who already has the filesystem, every path it builds
+    // comes from its own arguments or the repo, and reading and writing files
+    // at computed paths is the entire job. Left on it fires fifty times here and
+    // says nothing, which is worse than silence — it trains the next reader to
+    // scroll past the category. It stays on everywhere else.
+    files: ["scripts/**/*.{mjs,ts}"],
+    rules: {
+      "security/detect-non-literal-fs-filename": "off",
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

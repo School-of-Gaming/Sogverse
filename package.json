@@ -11,7 +11,7 @@
     "dev:stripe": "concurrently --names next,stripe --prefix-colors blue,magenta \"next dev --turbopack\" \"stripe listen --forward-to localhost:3000/api/webhooks/stripe/products\"",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint src/ tests/ services/ packages/",
+    "lint": "eslint src/ scripts/ tests/ services/ packages/",
     "type-check": "tsc --noEmit && npm run type-check --workspaces --if-present",
     "portal:dev": "npm run dev --workspace=sogverse-bedrock-portal",
     "portal:start": "npm run start --workspace=sogverse-bedrock-portal",

@@ -117,9 +117,11 @@ const groups = TOPICS.map((topic) => {
   return { label, entries };
 });
 
-export default {
+const preset = {
   title: "Topic copy review",
   description:
     "Every topic's About card and \"Before the first session\" guide, in each locale at two widths.",
   groups,
 };
+
+export default preset;
