@@ -2319,7 +2319,7 @@ export type Database = {
             foreignKeyName: "session_cover_offers_gedu_id_fkey"
             columns: ["gedu_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -2389,7 +2389,7 @@ export type Database = {
             foreignKeyName: "session_cover_requests_approved_by_fkey"
             columns: ["approved_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -2403,7 +2403,7 @@ export type Database = {
             foreignKeyName: "session_cover_requests_covered_by_fkey"
             columns: ["covered_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -2424,7 +2424,7 @@ export type Database = {
             foreignKeyName: "session_cover_requests_requested_by_fkey"
             columns: ["requested_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
