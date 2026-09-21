@@ -300,6 +300,17 @@ approval, in words, on the row. The criminal-record stamp is children's-safety d
 a contractor, and it is not emitted to a surface that does not act on it — the RPC stopped
 sending it, not just the UI.
 
+**Approving asks first, and holds the question open until the write settles.** It seats a
+person on a session and opens the group's workspace — roster, game accounts, notes — to
+them 48 hours before it starts, which is not something one press should do; and the write
+is refusable four ways, each of which an admin can act on differently, so the answer has
+to arrive where the question was asked. It is the same shared holding dialog the gedu's
+own "Offer to substitute" uses. **The four refusals are told apart by SQLSTATE and, for
+the three that share `check_violation`, by a fragment of the message the migration
+raises** — anything unmatched falls to the generic line, because the server's own words
+are untranslated and name UUIDs. There is no "the session has already started" refusal:
+that check is on the gedu's offer write and not on the approval.
+
 **The page sorts by the session's own start; the read cannot.** No instants travel on any
 substitution surface, so SQL orders by the calendar date and the client resolves each
 request's occurrence from the slots that ride with it. Two products meeting on one day in

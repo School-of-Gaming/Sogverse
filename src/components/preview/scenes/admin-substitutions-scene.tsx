@@ -89,16 +89,21 @@ export function AdminSubstitutionsScene({
    * hands over — it is what the RPC takes — so the request it settles is found
    * here rather than being carried alongside it, the way the live path finds it
    * by simply not returning it again.
+   *
+   * **It takes about as long as the real one**, so the confirm dialog's held
+   * moment — the disabled buttons and the spinner it owns — is on show rather
+   * than skipped in a frame, which is the half of this flow a preview is opened
+   * to look at.
    */
   const handleApproveOffer = useCallback(
-    (offerId: string) => {
+    async (offerId: string) => {
+      await new Promise((resolve) => setTimeout(resolve, 600));
       const request = requests.find((candidate) =>
         candidate.offers.some((offer) => offer.id === offerId),
       );
       if (request !== undefined) {
         setSubstituted((current) => new Set(current).add(request.id));
       }
-      return Promise.resolve();
     },
     [requests],
   );

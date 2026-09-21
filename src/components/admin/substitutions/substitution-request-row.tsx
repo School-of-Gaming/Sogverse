@@ -1,10 +1,9 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { ArrowUpRight, CalendarDays, Clock, Users } from "lucide-react";
 import { Link } from "@/i18n/navigation";
-import { StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PersonChip } from "@/components/ui/person-chip";
@@ -50,24 +49,17 @@ import type {
  * orphaned request claims no urgency at all, because it has no start to be
  * urgent about.
  *
- * **Approve is per offer, and one in flight disables the others.** Approving
- * settles the whole request — the other offers are simply not selected — so a
- * second press on the same card is either a duplicate of the write already
- * running or a decision the admin has not been given the chance to see the
- * outcome of. The flag is set synchronously before the write, and cleared on
- * settle whichever way it settles.
- *
- * **It is cleared on success because this card can survive its own approval.**
- * The usual outcome is that the refetched document has dropped the request and
- * the list unmounts it, which needs no clear — but the list deliberately
- * tolerates a request the source is still offering after an approval, which is
- * what a second admin clearing the sub in between produces, and it hands the
- * card back rather than filtering it out on a receipt that is no longer true. A
- * flag left set there would leave every offer on a live request permanently
- * unpressable. The clear costs no re-enabled frame in the ordinary case: the
- * promise resolves only once the write has landed *and* the document behind it
- * has come back, so the state that unmounts the card is already queued when
- * this one is.
+ * **Approve asks first, and this card holds none of that.** Approving seats a
+ * person on a session and opens the group's workspace — its roster, its
+ * children — to them, which is a decision somebody should be asked to confirm
+ * rather than one press away; and the write is refusable, so its answer is
+ * news the admin needs before they move on. Both are what the shared confirm
+ * dialog's holding mode is for, and the dialog owns the latch, the disabled
+ * buttons and the refusal line. The press here only says *which* offer: the
+ * dialog that opens is modal, so nothing on this card is reachable while the
+ * write is in the air and there is no second press to guard against, and no
+ * state here means the card's height cannot change while the dialog is over
+ * it.
  *
  * **A request with no offers is not a failure state and is not tinted as one.**
  * Nobody has volunteered *yet*, and what an admin does about it is on the
@@ -82,33 +74,17 @@ export function SubstitutionRequestRow({
   request: SubstitutionRequest;
   /** The page's pinned clock — what the relative phrase is measured against. */
   now: Date;
-  /** Approve one offer. Resolves once the write landed; rejects if it did not. */
-  onApproveOffer: (offerId: string) => Promise<void>;
+  /** Ask about one offer — the dialog above owns everything after the press. */
+  onApproveOffer: (offer: SubstitutionOffer) => void;
 }) {
   const t = useTranslations("admin.substitutions");
   const tRole = useTranslations("admin.geduRole");
   const tType = useTranslations("admin.products.types");
   const format = useFormatter();
   const offersLabelId = useId();
-  const [committingOfferId, setCommittingOfferId] = useState<string | null>(
-    null,
-  );
-  const [failedOfferId, setFailedOfferId] = useState<string | null>(null);
 
   const presentation = PRODUCT_TYPE_PRESENTATION[request.productType];
   const TypeIcon = presentation.icon;
-
-  function approve(offerId: string) {
-    setCommittingOfferId(offerId);
-    setFailedOfferId(null);
-    void onApproveOffer(offerId)
-      .catch(() => {
-        setFailedOfferId(offerId);
-      })
-      .finally(() => {
-        setCommittingOfferId(null);
-      });
-  }
 
   return (
     <Card
@@ -222,13 +198,7 @@ export function SubstitutionRequestRow({
             >
               {request.offers.map((offer) => (
                 <li key={offer.id}>
-                  <OfferRow
-                    offer={offer}
-                    committing={committingOfferId === offer.id}
-                    disabled={committingOfferId !== null}
-                    failed={failedOfferId === offer.id}
-                    onApprove={() => approve(offer.id)}
-                  />
+                  <OfferRow offer={offer} onApprove={() => onApproveOffer(offer)} />
                 </li>
               ))}
             </ul>
@@ -240,34 +210,28 @@ export function SubstitutionRequestRow({
 }
 
 /**
- * One volunteer, and the press that seats them — a row inside the request's
- * card, told from its neighbours by a divider rather than by a box of its own.
+ * One volunteer, and the press that opens the question about them — a row
+ * inside the request's card, told from its neighbours by a divider rather than
+ * by a box of its own.
  *
  * **A name and nothing else.** The row used to carry the certification queue's
  * two standings — certified, and whether an extract had been recorded — and
  * both are gone: the database refuses an offer from anybody who may not
  * substitute, certification included, so the chip stated something that was
  * true by construction, and an extract date is children's-safety data about a
- * contractor on a surface that does not act on it. The one case the chips could
- * have caught — somebody de-certified after offering — is refused at approval,
- * and the refusal is the line below.
+ * contractor on a surface that does not act on it.
  *
- * The button is right-packed so the column a reader presses is the same column
- * on every row, and the failure takes the full width beneath it rather than
- * squeezing the name beside it.
+ * **It holds no state at all.** The press opens a modal dialog that owns the
+ * latch, the spinner and the refusal line, so there is nothing here to disable
+ * and nothing here that can change the row's height while the dialog is over
+ * it. The button is right-packed so the column a reader presses is the same
+ * column on every row.
  */
 function OfferRow({
   offer,
-  committing,
-  disabled,
-  failed,
   onApprove,
 }: {
   offer: SubstitutionOffer;
-  committing: boolean;
-  /** Another offer on this request is being approved — the whole card is settled. */
-  disabled: boolean;
-  failed: boolean;
   onApprove: () => void;
 }) {
   const t = useTranslations("admin.substitutions");
@@ -277,23 +241,8 @@ function OfferRow({
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <PersonChip id={offer.geduId} name={offer.name ?? t("unnamed")} />
       </div>
-      {/* Only rendered once a write has failed, and it takes the full row width
-          so it lands under the button rather than squeezing the name beside it.
-          Nothing reserves space for it: before the first failure there is
-          nothing here to move, and the row it appears in is one the admin just
-          acted on. */}
-      {failed && (
-        <StatusLine status="destructive" size="xs" className="order-last w-full">
-          {t("failed")}
-        </StatusLine>
-      )}
-      <Button
-        type="button"
-        size="sm"
-        onClick={onApprove}
-        disabled={disabled || committing}
-      >
-        {committing ? t("approving") : t("approve")}
+      <Button type="button" size="sm" onClick={onApprove}>
+        {t("approve")}
       </Button>
     </div>
   );

@@ -11,21 +11,27 @@ import { ROUTES } from "@/lib/constants";
  * The admin Substitutions page's queue panel, and the claims that are only true
  * of the rendered list.
  *
- * 1. **Approve posts the OFFER's id.** The row names a session and a person,
- *    and the id that has to reach the RPC is neither of those — it is the offer
- *    joining them. Handing over the request or the gedu would look identical on
- *    screen and approve nothing.
- * 2. **A row leaves only when both halves agree**: the write resolved *and* the
+ * 1. **Approve asks first, and the press writes nothing.** Approving seats a
+ *    person on a session and opens the group's workspace — its roster, its
+ *    children — to them, so it goes through the shared confirm dialog in its
+ *    holding mode: the dialog owns the latch, the disabled buttons and the
+ *    refusal line, and the panel owns nothing but which offer is being asked
+ *    about.
+ * 2. **The confirm posts the OFFER's id.** The row names a session and a
+ *    person, and the id that has to reach the RPC is neither of those — it is
+ *    the offer joining them. Handing over the request or the gedu would look
+ *    identical on screen and approve nothing.
+ * 3. **A row leaves only when both halves agree**: the write resolved *and* the
  *    list it was given stopped offering that request. The second half is what
  *    protects the panel from a receipt that outlives its own fact — a second
  *    admin clearing the sub puts the request back, and the row has to come with
  *    it. A panel that dropped the row on the resolution alone would filter it
  *    out of a list that is still offering it, with nothing left to act on.
- * 3. **The requests are the cards; the list is a heading over a stack.** Each
+ * 4. **The requests are the cards; the list is a heading over a stack.** Each
  *    request is a peer with an action of its own, and nothing inside one is
  *    boxed — the offers are divider-separated rows under a muted label. Empty
  *    is a line under the heading, not a card holding a line.
- * 4. **Urgency is a tint, not a re-ordering**, and it is carried by the row it
+ * 5. **Urgency is a tint, not a re-ordering**, and it is carried by the row it
  *    belongs to rather than recomputed from the clock in the component.
  *
  * Translations echo their keys, so nothing here depends on English wording, and
@@ -232,76 +238,95 @@ describe("the admin Substitutions page's queue panel", () => {
     expect(screen.queryByText(/\d\d:\d\d/)).toBeNull();
   });
 
-  it("approves the offer that was pressed, by the offer's own id", async () => {
+  /**
+   * Approving seats a person on a session and opens a group's workspace — its
+   * roster, its children — to them, so it asks first. The press must reach
+   * nothing at all: a dialog the admin can still cancel is not a decision.
+   */
+  it("opens the dialog on the press and writes nothing", async () => {
     const approve = vi.fn(() => Promise.resolve());
-    renderPanel([WITH_OFFERS], approve);
+    const { container } = renderPanel([WITH_OFFERS], approve);
 
-    const second = screen
-      .getAllByRole("button", { name: "admin.substitutions.approve" })
-      .at(1);
-    await act(async () => second?.click());
+    await act(async () => pressApprove(container, 0));
+
+    expect(dialog(container)).not.toBeNull();
+    expect(
+      screen.getByText("admin.substitutions.approveConfirmTitle"),
+    ).toBeTruthy();
+    expect(approve).not.toHaveBeenCalled();
+  });
+
+  it("writes nothing when the dialog is cancelled", async () => {
+    const approve = vi.fn(() => Promise.resolve());
+    const { container } = renderPanel([WITH_OFFERS], approve);
+
+    await act(async () => pressApprove(container, 0));
+    await act(async () => dialogButton(container, "common.cancel").click());
+
+    expect(dialog(container)).toBeNull();
+    expect(approve).not.toHaveBeenCalled();
+    expect(screen.getByText("Minecraft-klubi Espoo")).toBeTruthy();
+  });
+
+  it("writes once for the pressed offer, however fast the confirm is pressed twice", async () => {
+    const approve = vi.fn(() => new Promise<void>(() => {}));
+    const { container } = renderPanel([WITH_OFFERS], approve);
+
+    // The second offer, so a handler taking the request or the gedu instead of
+    // the offer would be caught — on screen the two are indistinguishable.
+    await act(async () => pressApprove(container, 1));
+    await act(async () => {
+      const confirm = dialogButton(container, "admin.substitutions.approve");
+      confirm.click();
+      confirm.click();
+    });
 
     expect(approve).toHaveBeenCalledTimes(1);
     expect(approve).toHaveBeenCalledWith("offer-b");
   });
 
-  it("keeps the row, and gives up the receipt, while the list is still offering the request", async () => {
-    renderPanel([WITH_OFFERS], () => Promise.resolve());
+  it("holds the dialog open with both buttons disabled while the write is in the air", async () => {
+    const approve = vi.fn(() => new Promise<void>(() => {}));
+    const { container } = renderPanel([WITH_OFFERS], approve);
 
+    await act(async () => pressApprove(container, 0));
     await act(async () =>
-      screen
-        .getAllByRole("button", { name: "admin.substitutions.approve" })[0]
-        .click(),
+      dialogButton(container, "admin.substitutions.approve").click(),
     );
 
-    // The write landed, but this document still carries the request — a second
-    // admin clearing the sub looks exactly like this. The source wins: the row
-    // stays and the receipt is surrendered rather than standing for a fact that
-    // is no longer true.
+    expect(dialog(container)).not.toBeNull();
+    expect(
+      dialogButton(container, "admin.substitutions.approve").disabled,
+    ).toBe(true);
+    expect(dialogButton(container, "common.cancel").disabled).toBe(true);
+    // The row is untouched behind it — the dialog is modal, so there is nothing
+    // for the card to disable and nothing on it that can change height.
     expect(screen.getByText("Minecraft-klubi Espoo")).toBeTruthy();
-    expect(screen.queryByText("admin.substitutions.justNow")).toBeNull();
   });
 
-  it("hands every offer back on a row that survived its own approval", async () => {
-    renderPanel([WITH_OFFERS], () => Promise.resolve());
-
-    const pressed = screen.getAllByRole("button", {
-      name: "admin.substitutions.approve",
-    })[0];
-    await act(async () => pressed.click());
-
-    // The row is the one the case above describes: approved, and offered again
-    // by the source. It is the *same* component instance — the panel keys the
-    // list item by the request id — so the committing flag it set on the click
-    // is still the one deciding whether anything here may be pressed. Left set,
-    // every offer on a live request would be unpressable for the rest of the
-    // sitting, with no second admin around to undo it.
-    const buttons = screen.getAllByRole<HTMLButtonElement>("button", {
-      name: "admin.substitutions.approve",
-    });
-    expect(buttons).toHaveLength(2);
-    for (const button of buttons) expect(button.disabled).toBe(false);
-  });
-
-  it("keeps the receipt on screen after the last request collapses the panel", async () => {
-    // The live ordering, reproduced: the refetch behind the write lands first —
-    // which is what the shell's awaited invalidation buys — and the promise
-    // settles after it. A deferred promise is the only way to put the two in
-    // that order here.
+  /**
+   * The resolution is what closes the dialog, and the handler only resolves
+   * once the queue has been read again — so by the time it closes, the list
+   * behind it has already dropped the request. A deferred promise is the only
+   * way to put those in that order here.
+   */
+  it("closes and drops the request once the write and the refetch have both landed", async () => {
     let land: () => void = () => {};
-    const approve = () =>
-      new Promise<void>((resolve) => {
-        land = resolve;
-      });
-
-    const { rerender } = renderPanel([WITH_OFFERS], approve);
-
-    act(() =>
-      screen
-        .getAllByRole("button", { name: "admin.substitutions.approve" })[0]
-        .click(),
+    const approve = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          land = resolve;
+        }),
     );
 
+    const { container, rerender } = renderPanel([WITH_OFFERS], approve);
+
+    await act(async () => pressApprove(container, 0));
+    await act(async () =>
+      dialogButton(container, "admin.substitutions.approve").click(),
+    );
+
+    // The refetch lands first, as the shell's awaited invalidation arranges.
     rerender(
       <SubstitutionRequestsPanel
         requests={[]}
@@ -311,41 +336,105 @@ describe("the admin Substitutions page's queue panel", () => {
     );
     await act(async () => land());
 
+    expect(dialog(container)).toBeNull();
     expect(screen.queryByText("Minecraft-klubi Espoo")).toBeNull();
-    // The receipt survives the collapse, which is why the panel rather than the
-    // list holds it: a list rendered only while it has rows would have taken the
-    // confirmation away at the moment there was most to confirm.
+    // The receipt survives the list emptying, which is why the panel rather
+    // than the row holds it: it is recorded on the resolution, so it stands for
+    // a fact that landed rather than for a press that was made.
     expect(screen.getByText("admin.substitutions.justNow")).toBeTruthy();
     expect(screen.getByText("admin.substitutions.allClear")).toBeTruthy();
   });
 
-  it("collapses to an all-clear row when nothing needs a sub", () => {
-    renderPanel([], () => Promise.resolve());
+  /**
+   * Every refusal the RPC raises, in the words an admin reads. They are told
+   * apart because an admin can act on the difference — and anything unmatched
+   * falls to the generic line rather than to the server's own English, which is
+   * untranslated and names UUIDs.
+   */
+  it.each([
+    [
+      "the offer was taken back",
+      { code: "P0002", message: "Substitution offer not found" },
+      "admin.substitutions.approveFailedOfferGone",
+    ],
+    [
+      "another admin settled it",
+      {
+        code: "23514",
+        message: "this substitution request is already substituted",
+      },
+      "admin.substitutions.approveFailedAlreadySettled",
+    ],
+    [
+      "the absent gedu lost the seat",
+      {
+        code: "23514",
+        message: "gedu 1 no longer holds a seat on group 2 (2026-08-17)",
+      },
+      "admin.substitutions.approveFailedSeatGone",
+    ],
+    [
+      "the volunteer went stale",
+      {
+        code: "23514",
+        message: "gedu 3 can no longer substitute on group 2 on 2026-08-17",
+      },
+      "admin.substitutions.approveFailedIneligible",
+    ],
+    ["something nobody mapped", new Error("boom"), "admin.substitutions.failed"],
+  ])(
+    "keeps the dialog open and names the refusal when %s",
+    async (_case, error, line) => {
+      const approve = vi.fn(() => Promise.reject(error));
+      const { container } = renderPanel([WITH_OFFERS], approve);
 
-    expect(screen.getByText("admin.substitutions.allClear")).toBeTruthy();
-    // A line under the heading, not a list and not a card holding one.
-    expect(screen.queryByRole("list")).toBeNull();
-    // The heading survives the empty state — it is what holds the stack, so it
-    // is the one thing on this panel that is never conditional.
-    expect(
-      screen.getByRole("heading", { name: "admin.substitutions.listLabel" }),
-    ).toBeTruthy();
-  });
+      await act(async () => pressApprove(container, 0));
+      await act(async () =>
+        dialogButton(container, "admin.substitutions.approve").click(),
+      );
 
-  it("shows a failure on the row that failed and leaves it pressable", async () => {
-    renderPanel([WITH_OFFERS], () => Promise.reject(new Error("nope")));
-
-    const approve = screen.getAllByRole("button", {
-      name: "admin.substitutions.approve",
-    })[0];
-    await act(async () => approve.click());
-
-    expect(screen.getByText("admin.substitutions.failed")).toBeTruthy();
-    expect(screen.getByText("Minecraft-klubi Espoo")).toBeTruthy();
-    expect(
-      screen.getAllByRole<HTMLButtonElement>("button", {
-        name: "admin.substitutions.approve",
-      })[0].disabled,
-    ).toBe(false);
-  });
+      expect(dialog(container)).not.toBeNull();
+      expect(screen.getByText(line)).toBeTruthy();
+      // The buttons come back, and the row behind is exactly as it was.
+      expect(
+        dialogButton(container, "admin.substitutions.approve").disabled,
+      ).toBe(false);
+      expect(screen.getByText("Minecraft-klubi Espoo")).toBeTruthy();
+      expect(screen.queryByText("admin.substitutions.justNow")).toBeNull();
+    },
+  );
 });
+
+/**
+ * The nth Approve button **on the list**, which is what opens the question.
+ *
+ * Scoped to the harness's own container because the dialog it opens carries an
+ * Approve of its own with the very same label — the confirm and the press that
+ * summons it are deliberately the same word.
+ */
+function pressApprove(container: HTMLElement, index: number) {
+  within(container)
+    .getAllByRole<HTMLButtonElement>("button", {
+      name: "admin.substitutions.approve",
+    })
+    [index].click();
+}
+
+/**
+ * The open dialog, or `null`.
+ *
+ * It is a portal into `document.body` and carries no ARIA role of its own, so
+ * it is found as the body child that is not the harness's container — which is
+ * how the shared dialog's own suite scopes it too.
+ */
+function dialog(container: HTMLElement): HTMLElement | null {
+  const root = [...document.body.children].find((el) => el !== container);
+  return root instanceof HTMLElement ? root : null;
+}
+
+/** A button inside the open dialog. */
+function dialogButton(container: HTMLElement, name: string): HTMLButtonElement {
+  const root = dialog(container);
+  if (root === null) throw new Error("the dialog is not open");
+  return within(root).getByRole<HTMLButtonElement>("button", { name });
+}

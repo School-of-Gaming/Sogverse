@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { BadgeCheck } from "lucide-react";
-import type { SubstitutionRequest } from "./admin-substitutions-data";
+import type {
+  SubstitutionOffer,
+  SubstitutionRequest,
+} from "./admin-substitutions-data";
+import { ApproveOfferDialog } from "./approve-offer-dialog";
 import { SubstitutionRequestRow } from "./substitution-request-row";
 
 /**
@@ -40,10 +44,27 @@ export function SubstitutionRequestsPanel({
   requests: readonly SubstitutionRequest[];
   /** The page's pinned clock, passed down to each row's relative phrase. */
   now: Date;
-  /** Approve one offer. Resolves once the write landed; rejects if it did not. */
+  /**
+   * Approve one offer. **Resolves only once the queue has been read again**,
+   * because that is when the dialog closes and the list behind it is looked at;
+   * a rejection is what the dialog reads out, so this one does not swallow its
+   * own refusals.
+   */
   onApproveOffer: (offerId: string) => Promise<void>;
 }) {
   const t = useTranslations("admin.substitutions");
+  /**
+   * Which offer is being confirmed, and on which request, or `null`.
+   *
+   * One dialog for the whole list rather than one per card: only one can ever
+   * be open, and a dialog per card would mount the confirm tree once per
+   * request to show none of them. It holds the rows rather than ids because the
+   * dialog names the session, the absent gedu and the volunteer.
+   */
+  const [confirming, setConfirming] = useState<{
+    request: SubstitutionRequest;
+    offer: SubstitutionOffer;
+  } | null>(null);
   const [approvedIds, setApprovedIds] = useState<ReadonlySet<string>>(
     new Set(),
   );
@@ -101,17 +122,30 @@ export function SubstitutionRequestsPanel({
               <SubstitutionRequestRow
                 request={request}
                 now={now}
-                onApproveOffer={(offerId) =>
-                  onApproveOffer(offerId).then(() => {
-                    setApprovedIds((current) =>
-                      new Set(current).add(request.id),
-                    );
-                  })
-                }
+                onApproveOffer={(offer) => setConfirming({ request, offer })}
               />
             </li>
           ))}
         </ul>
+      )}
+
+      {/* Mounted only while it is open, so its copy is built from rows that are
+          definitely there and its footer children are settled before the first
+          frame. The receipt is recorded on the resolution rather than on the
+          press, which is what keeps it standing for a fact that landed. */}
+      {confirming !== null && (
+        <ApproveOfferDialog
+          request={confirming.request}
+          offer={confirming.offer}
+          onClose={() => setConfirming(null)}
+          onConfirm={() =>
+            onApproveOffer(confirming.offer.id).then(() => {
+              setApprovedIds((current) =>
+                new Set(current).add(confirming.request.id),
+              );
+            })
+          }
+        />
       )}
     </section>
   );

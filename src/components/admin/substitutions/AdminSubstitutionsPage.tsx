@@ -58,8 +58,9 @@ export function AdminSubstitutionsPage({
   /**
    * Seat the gedu behind one offer, and wait for the page to agree.
    *
-   * `mutateAsync` because the panel drops a row on the resolution and shows a
-   * retry on the rejection, and a fire-and-forget call could tell it neither.
+   * `mutateAsync` because the confirm dialog holds itself open until this
+   * settles — it closes on the resolution and reads the refusal out in place on
+   * the rejection — and a fire-and-forget call could tell it neither.
    * The awaited invalidation is the other half of that contract: the mutation's
    * own `onSuccess` fires its fan-out without waiting for any of it, which is
    * right for the documents nothing on this page is reading, and not enough for

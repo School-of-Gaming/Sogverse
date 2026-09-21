@@ -1326,10 +1326,15 @@
       "noOffers": "Ei vielä tarjouksia.",
       "openGroup": "Avaa ryhmä",
       "approve": "Hyväksy",
-      "approving": "Hyväksytään…",
       "failed": "Hyväksyntä epäonnistui – yritä uudelleen.",
       "loadError": "Tuurauksia ei voitu ladata.",
-      "loadErrorWithReason": "Tuurauksia ei voitu ladata: {reason}"
+      "loadErrorWithReason": "Tuurauksia ei voitu ladata: {reason}",
+      "approveConfirmTitle": "Hyväksytäänkö {name} tuuraajaksi?",
+      "approveConfirmBody": "{name} ottaa kerran {product} — {group} {when}, {absent}:n tilalla. Kerta näkyy hänen Tuuraukset-sivullaan ja My SOG -näkymässä heti, ja ryhmän työtila avautuu hänelle 48 tuntia ennen kerran alkua. Kenellekään ei lähetetä ilmoitusta: kerta poistuu muiden tarjoutuneiden listalta, ja sen kortilla lukee nyt, että {name} tuuraa henkilöä {absent}.",
+      "approveFailedOfferGone": "{name} on perunut tarjouksensa, joten hyväksyttävää ei ole.",
+      "approveFailedAlreadySettled": "Joku muu on jo hoitanut tämän kerran.",
+      "approveFailedSeatGone": "{absent} ei ole enää tässä kerrassa, joten tuurattavaa ei ole.",
+      "approveFailedIneligible": "{name} ei voi enää ottaa tätä kertaa."
     }
   },
   "auth": {

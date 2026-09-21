@@ -1326,10 +1326,15 @@
       "noOffers": "Aucune proposition pour l’instant.",
       "openGroup": "Ouvrir le groupe",
       "approve": "Valider",
-      "approving": "Validation…",
       "failed": "La validation a échoué – réessayez.",
       "loadError": "Impossible de charger les remplacements.",
-      "loadErrorWithReason": "Impossible de charger les remplacements : {reason}"
+      "loadErrorWithReason": "Impossible de charger les remplacements : {reason}",
+      "approveConfirmTitle": "Valider {name} pour ce remplacement ?",
+      "approveConfirmBody": "{name} prend {product} — {group} le {when}, à la place de {absent}. La séance apparaît aussitôt sur sa page Remplacements et sur My SOG, et l’espace de travail du groupe lui est ouvert 48 heures avant le début. Personne n’est prévenu : la séance disparaît de la liste des autres volontaires, et sa fiche indique désormais que {name} remplace {absent}.",
+      "approveFailedOfferGone": "{name} a retiré sa proposition, il n’y a donc rien à valider.",
+      "approveFailedAlreadySettled": "Quelqu’un d’autre a déjà réglé cette séance.",
+      "approveFailedSeatGone": "{absent} n’a plus cette séance, il n’y a donc personne à remplacer.",
+      "approveFailedIneligible": "{name} ne peut plus prendre cette séance."
     }
   },
   "auth": {

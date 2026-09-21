@@ -1370,10 +1370,15 @@
       "noOffers": "nob tu’lu’be’ DaH.",
       "openGroup": "ghom’a’ yIpoS",
       "approve": "yIlaj",
-      "approving": "lajlI’…",
       "failed": "lajlu’be’ – yInID.",
       "loadError": "lIwmey laDlaHbe’.",
-      "loadErrorWithReason": "lIwmey laDlaHbe’: {reason}"
+      "loadErrorWithReason": "lIwmey laDlaHbe’: {reason}",
+      "approveConfirmTitle": "{name} lIwwI' 'oH 'e' DalajlaH'a'?",
+      "approveConfirmBody": "{product} — {group} may' {when} tlhap {name}, {absent} qaStaHvIS. DaH Hoch lIwmey ghItlhDaj My SOG je luchaw'. may' 'oH 'e' bIH 48 rep pa' ghom pa' poSmoH. vay' ja'be'lu': latlh tlhobwI'pu' tetlhvo' may' mej, 'ej DaH ja' may' 'echleth: {absent} lIw {name}.",
+      "approveFailedOfferGone": "nobDaj teq {name}. lajmeH pagh tu'lu'.",
+      "approveFailedAlreadySettled": "latlh vay' may'vam rIntaH.",
+      "approveFailedSeatGone": "may'vam ghaj {absent} 'e' mev. lIwmeH pagh tu'lu'.",
+      "approveFailedIneligible": "may'vam tlhaplaHbe' {name} DaH."
     }
   },
   "auth": {

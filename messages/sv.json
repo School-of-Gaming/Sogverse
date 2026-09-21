@@ -1326,10 +1326,15 @@
       "noOffers": "Inga erbjudanden än.",
       "openGroup": "Öppna gruppen",
       "approve": "Godkänn",
-      "approving": "Godkänner…",
       "failed": "Godkännandet misslyckades – försök igen.",
       "loadError": "Vikariaten kunde inte laddas.",
-      "loadErrorWithReason": "Vikariaten kunde inte laddas: {reason}"
+      "loadErrorWithReason": "Vikariaten kunde inte laddas: {reason}",
+      "approveConfirmTitle": "Godkänn {name} som vikarie?",
+      "approveConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på My SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Ingen får något meddelande: tillfället försvinner från de andra frivilligas lista, och på kortet står nu att {name} vikarierar för {absent}.",
+      "approveFailedOfferGone": "{name} har tagit tillbaka sitt erbjudande, så det finns inget att godkänna.",
+      "approveFailedAlreadySettled": "Någon annan har redan löst det här tillfället.",
+      "approveFailedSeatGone": "{absent} har inte längre det här tillfället, så det finns inget att vikariera för.",
+      "approveFailedIneligible": "{name} kan inte längre ta det här tillfället."
     }
   },
   "auth": {

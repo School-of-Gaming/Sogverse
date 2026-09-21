@@ -1326,10 +1326,15 @@
       "noOffers": "No offers yet.",
       "openGroup": "Open the group",
       "approve": "Approve",
-      "approving": "Approving…",
       "failed": "Could not approve — try again.",
       "loadError": "The substitutions could not be loaded.",
-      "loadErrorWithReason": "The substitutions could not be loaded: {reason}"
+      "loadErrorWithReason": "The substitutions could not be loaded: {reason}",
+      "approveConfirmTitle": "Approve {name} as the substitute?",
+      "approveConfirmBody": "{name} takes {product} — {group} on {when}, in {absent}’s place. They see the session on their Substitutions page and on My SOG straight away, and the group’s workspace opens to them 48 hours before it starts. Nobody is notified: the session leaves the other volunteers’ list, and its card now says {name} is substituting for {absent}.",
+      "approveFailedOfferGone": "{name} has taken their offer back, so there is nobody to approve.",
+      "approveFailedAlreadySettled": "This session has already been settled by someone else.",
+      "approveFailedSeatGone": "{absent} no longer has this session, so there is nothing to substitute for.",
+      "approveFailedIneligible": "{name} can no longer take this session."
     }
   },
   "auth": {
