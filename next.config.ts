@@ -48,6 +48,16 @@ function bucketPattern(bucket: string) {
 }
 
 const nextConfig: NextConfig = {
+  // `next dev` otherwise writes a managed `nextjs-agent-rules` block into
+  // `CLAUDE.md` and `AGENTS.md` whenever it detects a coding agent, pointing it
+  // at the version-matched docs vendored in `node_modules/next/dist/docs/`.
+  // Those docs are worth reading — they are what identified `partialPrefetching`
+  // as the App Shell mechanism this app's `<Link>` prefetch default is waiting
+  // on (`src/i18n/navigation.tsx`) — but they are worth reading at the moment a
+  // version-specific question comes up, from the package, not as standing
+  // instructions committed to the repo. Left on, the block reappears in
+  // `git status` after every `next dev` and rewrites itself on every upgrade.
+  agentRules: false,
   // `sharp` is a native module: it loads a platform-specific binary at require
   // time, which a bundler cannot trace and must not try to inline. Naming it
   // here leaves it as a plain runtime `require` in the two upload routes that
