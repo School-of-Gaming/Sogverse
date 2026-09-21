@@ -295,7 +295,7 @@ export const PREVIEW_SCENES = [
         slug: "default",
         label: "Working dashboard",
         description:
-          "The working dashboard: all three type nouns and every card state that can share a page — a cover card among them — over a populated cover queue, under an unsigned contract band.",
+          "The working dashboard: all three type nouns and every card state that can share a page — two cover cards among them, one open and one whose workspace has not opened yet — over a populated cover queue, under an unsigned contract band.",
       },
       {
         slug: "clubs-only",

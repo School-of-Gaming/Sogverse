@@ -40,16 +40,38 @@ function cardHtml(cover: GeduCoverSummary): string {
   );
 }
 
-/** The working dashboard's own cover, so no shape is invented here. */
-function fixtureCover(): GeduCoverSummary {
+/**
+ * The working dashboard's own covers, so no shape is invented here — and it
+ * carries one of each state, soonest first: an open cover tomorrow, and one six
+ * days out whose workspace has not opened.
+ */
+function fixtureCovers(): GeduCoverSummary[] {
   const { covers } = buildGeduDashboardFixture(NOW, "default", "en", TIME_ZONE);
-  if (covers.length === 0) {
-    throw new Error("the default scenario stopped carrying a cover");
+  if (covers.length < 2) {
+    throw new Error("the default scenario stopped carrying both cover states");
   }
-  return covers[0];
+  return covers;
+}
+
+function fixtureCover(): GeduCoverSummary {
+  return fixtureCovers()[0];
+}
+
+function fixtureLockedCover(): GeduCoverSummary {
+  return fixtureCovers()[1];
 }
 
 const copy = messages.gedu.cover;
+
+/** The literal words before the first placeholder, so copy edits are caught. */
+const OPENS_AT = copy.accessOpens.split("{")[0].trim();
+
+/** A real destination, so "the link is gone" is a claim with something to lose. */
+const WORKSPACE = {
+  pathname: "/gedu/clubs/[id]",
+  params: { id: "product-1" },
+  query: { groupId: "sibling-group" },
+} as const;
 
 describe("GeduCoverCard", () => {
   it("names itself a cover, beside the product and the group", () => {
@@ -64,8 +86,53 @@ describe("GeduCoverCard", () => {
   // it — so the server's markup and the client's tree part ways and the whole
   // dashboard fails hydration. Rendering to a string never parses, so nothing
   // else here would notice.
-  it("nests no div inside a paragraph", () => {
-    expect(cardHtml(fixtureCover())).not.toMatch(/<p[\s>](?:(?!<\/p>)[^])*<div/);
+  it("nests no div inside a paragraph, open or locked", () => {
+    for (const cover of fixtureCovers()) {
+      expect(cardHtml(cover)).not.toMatch(/<p[\s>](?:(?!<\/p>)[^])*<div/);
+    }
+  });
+
+  it("locks a cover whose workspace has not opened yet", () => {
+    // The whole of the locked state, asserted on one render: a sub is told
+    // which session and when they get in, and neither way in leads anywhere.
+    // A live link would land them on the workspace's "not assigned" empty
+    // state — a sub who IS covering, told they are not.
+    const cover: GeduCoverSummary = {
+      ...fixtureLockedCover(),
+      openHref: WORKSPACE,
+      // Forced on, though the live read cannot produce it: a locked cover is a
+      // session that has not run. It is what makes the badge's own link
+      // assertable at all.
+      attentionCount: 1,
+    };
+    expect(cover.accessOpensAt).not.toBeNull();
+    expect(cover.accessOpensAt!.getTime()).toBeGreaterThan(NOW.getTime());
+
+    const html = cardHtml(cover);
+    // Still reads as the session it is about.
+    expect(html).toContain(cover.productName);
+    expect(html).toContain(OPENS_AT);
+    // Neither the card nor the corner badge goes anywhere.
+    expect(html).not.toContain("/gedu/clubs/product-1");
+    expect(html).toContain(
+      copy.cardLockedLabel.replace("{product}", cover.productName),
+    );
+    // No Join, on a remote cover that would otherwise render one: there is no
+    // room to promise before the workspace opens, and a card must not say the
+    // same thing two ways.
+    expect(html).not.toMatch(/<button/);
+  });
+
+  it("links the same cover once its workspace has opened", () => {
+    const opened: GeduCoverSummary = {
+      ...fixtureLockedCover(),
+      openHref: WORKSPACE,
+      accessOpensAt: new Date(NOW.getTime() - 60_000),
+    };
+    const html = cardHtml(opened);
+    expect(html).toContain("/gedu/clubs/product-1");
+    expect(html).toContain("groupId=sibling-group");
+    expect(html).not.toContain(OPENS_AT);
   });
 
   it("states the covered session's date and clock face", () => {
@@ -121,10 +188,17 @@ describe("GeduCoverCard", () => {
       ...fixtureCover(),
       startsAt: null,
       endsAt: null,
+      accessOpensAt: null,
       coveredDate: "2026-02-17",
+      openHref: WORKSPACE,
     };
     const html = cardHtml(orphan);
     expect(html).toContain("Feb");
     expect(html).toContain("17");
+    // And it stays LINKED. An orphaned date has no start to count 48 hours back
+    // from, so there is no lock to apply — the database falls open on one for
+    // the same reason, because the sub may still owe that session a write-up.
+    expect(html).toContain("/gedu/clubs/product-1");
+    expect(html).not.toContain(OPENS_AT);
   });
 });

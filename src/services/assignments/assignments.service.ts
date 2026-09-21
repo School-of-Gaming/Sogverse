@@ -65,7 +65,10 @@ export interface MyAssignedProductSessionRow {
   /**
    * The date a `cover` row covers, product-local `YYYY-MM-DD`; null on an
    * `assignment` row. It is the other half of a cover card's identity — one
-   * card per covered date, lasting as long as that cover's access window.
+   * card per covered date, standing from the moment the cover is approved
+   * until it expires. The *workspace* the card links to opens later, 48 hours
+   * before the covered session; a card that waited for it would hide from a sub
+   * the afternoon they had agreed to take.
    */
   coveredDate: string | null;
   /** Total number of groups in the product (every `product_groups` row). */

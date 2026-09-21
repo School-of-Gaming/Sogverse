@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, ChevronRight, MapPin } from "lucide-react";
+import { CalendarClock, ChevronRight, Lock, MapPin } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import type { GeduCoverSummary } from "@/lib/gedu-assignment-rollup";
 import { useNow, useTimezone } from "@/providers";
 import { runLiveness } from "@/lib/product-run";
 import {
+  cn,
   formatDate,
   formatDateOnly,
   formatTimeRange,
@@ -46,6 +47,20 @@ import {
  * session owes, counted over a set of one — so the corner mark is the one every
  * other card wears, and a sub who has not sent their report finds it in the
  * same sweep.
+ *
+ * **A cover that has not opened yet is LOCKED, not absent.** The workspace
+ * opens 48 hours before the covered session, and until then every gate behind
+ * this card refuses — so the card states the session and says when it opens,
+ * and its two ways in (the stretched link and the corner badge) are inert. A
+ * link that led to the workspace's "not assigned" empty state would be the
+ * worst of both: a sub who *is* covering, told they are not.
+ *
+ * **The footer holds one answer, and while the card is locked the answer is
+ * when.** That zone asks "how do I get to this session" — a Join on a remote
+ * product, the building on an in-person one — and until the workspace opens the
+ * honest reply is neither of those. It is the same reserved height either way,
+ * so the card does not move when the answer changes, and the site or the Join
+ * is back well before the session.
  */
 export function GeduCoverCard({ cover }: { cover: GeduCoverSummary }) {
   const t = useTranslations("gedu.cover");
@@ -62,12 +77,24 @@ export function GeduCoverCard({ cover }: { cover: GeduCoverSummary }) {
     coveredDate,
     startsAt,
     endsAt,
+    accessOpensAt,
     hasVoiceRoom,
     voiceHref,
     siteName,
     openHref,
     attentionCount,
   } = cover;
+
+  /**
+   * Whether the group is still shut to this sub.
+   *
+   * Asked of the same clock the Join below reads, deliberately: two clocks in
+   * one card is a card that can say the room is open while claiming the group
+   * is not. An orphaned date has no `accessOpensAt` and is never locked, which
+   * is the database's own answer on one — it falls open rather than shut.
+   */
+  const locked = accessOpensAt !== null && now < accessOpensAt;
+  const href = locked ? INERT_HREF : openHref;
 
   /**
    * Whether the room is open, from the same shared derivation the assignment
@@ -96,7 +123,15 @@ export function GeduCoverCard({ cover }: { cover: GeduCoverSummary }) {
     // The same shell the assignment card uses: a `relative` wrapper so the
     // corner badge can hang off a card that clips its own overflow.
     <div className="relative h-full">
-      <Card className="group relative h-full cursor-pointer overflow-hidden border-l-2 transition-[box-shadow,transform,border-color] hover:shadow-lg focus-within:shadow-lg">
+      <Card
+        className={cn(
+          "group relative h-full overflow-hidden border-l-2 transition-[box-shadow,transform,border-color]",
+          // A locked card leads nowhere, so it does not offer itself as a
+          // control either — the geometry is untouched, which is what keeps the
+          // grid from moving when the lock lifts.
+          !locked && "cursor-pointer hover:shadow-lg focus-within:shadow-lg",
+        )}
+      >
         <CardContent className="flex h-full flex-col gap-3 p-5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 space-y-1">
@@ -134,12 +169,37 @@ export function GeduCoverCard({ cover }: { cover: GeduCoverSummary }) {
             <span className="min-w-0 tabular-nums">{when}</span>
           </p>
 
-          {/* The same footer question the assignment card asks — where is this
-              happening — with the same two exclusive answers and the same
-              reserved button height, so a cover card and an assignment card in
-              one grid row are the same height without either holding a gap. */}
+          {/* The same footer question the assignment card asks — how do I get
+              to this — with one answer at a time and the same reserved button
+              height, so a cover card and an assignment card in one grid row are
+              the same height without either holding a gap. While the workspace
+              is shut the answer is when it opens; the room or the building take
+              the zone back the moment it does, and the height never moves. */}
           <div className="mt-auto flex min-h-9 items-center justify-center">
-            {hasVoiceRoom && startsAt !== null && (
+            {locked && (
+              // The same words and the same lock the Join wears when its room
+              // is shut, because a sub reading one has already read the other.
+              <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+                <Lock className="h-4 w-4 shrink-0" aria-hidden />
+                <span className="min-w-0">
+                  {t("accessOpens", {
+                    date: formatDate(accessOpensAt, locale, {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                      timeZone,
+                    }),
+                    time: formatDate(accessOpensAt, locale, {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
+                      timeZone,
+                    }),
+                  })}
+                </span>
+              </span>
+            )}
+            {!locked && hasVoiceRoom && startsAt !== null && (
               <span className="relative z-10">
                 <JoinVoiceButton
                   voiceIsOpen={voiceIsOpen}
@@ -163,7 +223,7 @@ export function GeduCoverCard({ cover }: { cover: GeduCoverSummary }) {
                 />
               </span>
             )}
-            {!hasVoiceRoom && siteName !== null && (
+            {!locked && !hasVoiceRoom && siteName !== null && (
               <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4 shrink-0" aria-hidden />
                 <span className="truncate">{siteName}</span>
@@ -173,8 +233,12 @@ export function GeduCoverCard({ cover }: { cover: GeduCoverSummary }) {
         </CardContent>
 
         <MaybeInertLink
-          href={openHref}
-          aria-label={t("cardOpenLabel", { product: productName })}
+          href={href}
+          aria-label={
+            locked
+              ? t("cardLockedLabel", { product: productName })
+              : t("cardOpenLabel", { product: productName })
+          }
           className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act"
         />
       </Card>
@@ -182,7 +246,7 @@ export function GeduCoverCard({ cover }: { cover: GeduCoverSummary }) {
       <SessionFeedAlertBadge
         count={attentionCount}
         variant="corner"
-        href={openHref}
+        href={href}
       />
     </div>
   );

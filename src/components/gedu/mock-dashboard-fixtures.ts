@@ -153,6 +153,8 @@ const EVENT_PRODUCT_ID = "mock-dashboard-lan-event";
 const ENDED_CLUB_PRODUCT_ID = "mock-dashboard-splatoon-club";
 /** The club this gedu is covering one session of, rather than teaching. */
 const COVER_PRODUCT_ID = "mock-dashboard-zelda-club";
+/** A second cover, far enough out that its workspace has not opened yet. */
+const LOCKED_COVER_PRODUCT_ID = "mock-dashboard-pokemon-club";
 
 /**
  * The covered session's own backlog: one, because that is the only non-zero a
@@ -408,14 +410,28 @@ export function buildGeduDashboardFixture(
   ];
 
   /**
-   * One session this gedu is covering for somebody else — a club they do not
-   * teach, two days out.
+   * The two sessions this gedu is covering for somebody else — clubs they do
+   * not teach — and **the two states a cover card has**, side by side.
    *
-   * **Remote, so the card renders a Join**, which is the half of the cover
-   * card's footer that has to be seen beside the assignment cards' own: the two
-   * kinds of card share a grid row and must come out the same height without
-   * either of them holding a gap. It carries a backlog of one, which is the
-   * only count a cover can ever have — a cover owes one session, not a term.
+   * A cover card appears the moment the cover is approved, but the group's
+   * workspace behind it opens 48 hours before the covered session. So the two
+   * are deliberately placed either side of that boundary and nowhere near it:
+   * **tomorrow**, whose workspace opened yesterday, and **six days out**, whose
+   * workspace opens in four. Neither can drift into the other's state whatever
+   * hour the scene is opened, which the single two-day-out cover this replaced
+   * could not say — it sat within hours of the boundary and showed whichever
+   * state the afternoon happened to fall on.
+   *
+   * **Both remote, so the pair differs in exactly one thing.** The open one
+   * renders the locked Join every other future card renders; the locked one
+   * renders no Join at all, because until the workspace opens there is no room
+   * to promise and the footer's one answer is when it opens. Reading them
+   * together is how you see that the height is held either way.
+   *
+   * The open one carries a backlog of one, which is the only non-zero a cover
+   * can have. The locked one carries none, and that is not a choice: a cover
+   * still locked is still in the future, and nothing is owed until a session
+   * has been run.
    */
   const coverRows: GeduAssignmentRow[] = [
     assignmentRow({
@@ -424,7 +440,7 @@ export function buildGeduDashboardFixture(
       name: "Zelda Explorers Club",
       productType: "consumer_club",
       isRemote: true,
-      slots: [futureSlot(now, 2, "16:00", 90, SESSION_FEED_TIMEZONE)],
+      slots: [futureSlot(now, 1, "16:00", 90, SESSION_FEED_TIMEZONE)],
       startedDaysAgo: 28,
       endsInDays: null,
       groupCount: 2,
@@ -432,7 +448,23 @@ export function buildGeduDashboardFixture(
       groupName: "Wednesday A",
       groupParticipantCount: 6,
       kind: "cover",
-      coveredDate: calendarDate(now, 2, SESSION_FEED_TIMEZONE),
+      coveredDate: calendarDate(now, 1, SESSION_FEED_TIMEZONE),
+    }),
+    assignmentRow({
+      now,
+      id: LOCKED_COVER_PRODUCT_ID,
+      name: "Pokémon GO Club",
+      productType: "consumer_club",
+      isRemote: true,
+      slots: [futureSlot(now, 6, "17:30", 90, SESSION_FEED_TIMEZONE)],
+      startedDaysAgo: 40,
+      endsInDays: null,
+      groupCount: 1,
+      participantCount: 9,
+      groupName: "Explorers",
+      groupParticipantCount: 9,
+      kind: "cover",
+      coveredDate: calendarDate(now, 6, SESSION_FEED_TIMEZONE),
     }),
   ];
 
@@ -474,12 +506,16 @@ export function buildGeduDashboardFixture(
   const covers = rollUpGeduCovers({
     rows,
     locale,
-    attentionByCover: Object.fromEntries(
-      coverRows.map((row) => [
-        geduCoverKey(row.groupId, row.coveredDate!),
-        COVER_ATTENTION,
-      ]),
-    ),
+    // The backlog is on the OPEN cover alone. A cover whose workspace has not
+    // opened is a session that has not run, and nothing is owed for one of
+    // those — a badge on the locked card would be the fixture showing a state
+    // the live page cannot produce.
+    attentionByCover: {
+      [geduCoverKey(
+        `${COVER_PRODUCT_ID}-group-a`,
+        calendarDate(now, 1, SESSION_FEED_TIMEZONE),
+      )]: COVER_ATTENTION,
+    },
     hrefByAssignment,
     voiceHrefByAssignment: {},
   });

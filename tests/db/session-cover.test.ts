@@ -59,6 +59,10 @@ import { deleteTestProducts } from "./product-helpers";
  *   - SITE_PRODUCT (in-person, at its own SITE) carries GROUP_SITE, so the
  *     location-shaped cover arm of `set_site_notes` has a building to be about.
  *   - OFF_PRODUCT carries GROUP_OFF, which nobody here teaches or covers.
+ *   - LATE_PRODUCT (GROUP_LATE) and ORPHAN_PRODUCT (GROUP_ORPHAN) are the pair
+ *     the window's NEAR edge is measured against: an evening slot in a zone
+ *     where it is currently midday (see MIDDAY_ZONE), identical but for the one
+ *     weekday ORPHAN_PRODUCT's schedule skips.
  *   - SUB and THIRD are minted gedus, certified, torn down with the file.
  */
 
@@ -70,9 +74,28 @@ const SITE = "00000000-0000-0000-0000-000000000814";
 const GROUP_SITE = "00000000-0000-0000-0000-000000000815";
 const OFF_PRODUCT = "00000000-0000-0000-0000-000000000816";
 const GROUP_OFF = "00000000-0000-0000-0000-000000000817";
+/** The evening club the 48-hour start is measured against — see MIDDAY_ZONE. */
+const LATE_PRODUCT = "00000000-0000-0000-0000-000000000818";
+const GROUP_LATE = "00000000-0000-0000-0000-000000000819";
+/** Its twin, minus the one weekday, so the same date is an orphan on it. */
+const ORPHAN_PRODUCT = "00000000-0000-0000-0000-00000000081a";
+const GROUP_ORPHAN = "00000000-0000-0000-0000-00000000081b";
 
-const ALL_PRODUCTS = [PRODUCT, SITE_PRODUCT, OFF_PRODUCT];
-const ALL_GROUPS = [GROUP_A, GROUP_B, GROUP_SITE, GROUP_OFF];
+const ALL_PRODUCTS = [
+  PRODUCT,
+  SITE_PRODUCT,
+  OFF_PRODUCT,
+  LATE_PRODUCT,
+  ORPHAN_PRODUCT,
+];
+const ALL_GROUPS = [
+  GROUP_A,
+  GROUP_B,
+  GROUP_SITE,
+  GROUP_OFF,
+  GROUP_LATE,
+  GROUP_ORPHAN,
+];
 
 /** The canonical forbidden SQLSTATE every guard primitive raises. */
 const FORBIDDEN = "42501";
@@ -91,6 +114,54 @@ function utcDate(offset: number): string {
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset),
   );
   return day.toISOString().slice(0, 10);
+}
+
+/**
+ * **A zone in which it is currently about midday, picked from the clock rather
+ * than fixed.**
+ *
+ * The 48-hour start is counted back from the session's own START, and the thing
+ * it must not be counted back from is product-local midnight of the session
+ * date — the two differ by the slot's time of day, so a case telling them apart
+ * has to put "now" between the two answers. There is no clock injection in SQL,
+ * so the only free variable is where the product's day begins: in a zone where
+ * it is midday, a session at 20:00 two local days out opens in about eight
+ * hours while that date's local midnight passed about twelve hours ago, and the
+ * two rules disagree by the width of the day whatever hour CI started at.
+ *
+ * A FIXED zone would put the boundary under the assertion for two hours out of
+ * every twenty-four, which is a test that fails on its own schedule.
+ *
+ * `Etc/GMT` names invert their sign (`Etc/GMT-14` is UTC+14), which is why the
+ * two branches read backwards.
+ */
+const MIDDAY_OFFSET_HOURS = 12 - new Date().getUTCHours();
+const MIDDAY_ZONE =
+  MIDDAY_OFFSET_HOURS === 0
+    ? "UTC"
+    : MIDDAY_OFFSET_HOURS > 0
+      ? `Etc/GMT-${MIDDAY_OFFSET_HOURS}`
+      : `Etc/GMT+${-MIDDAY_OFFSET_HOURS}`;
+
+/** The evening slot those two products carry, product-local. */
+const LATE_SLOT = "20:00";
+
+/** A calendar date `offset` days from today **as MIDDAY_ZONE is living it**. */
+function middayDate(offset: number): string {
+  const local = new Date(Date.now() + MIDDAY_OFFSET_HOURS * 3_600_000);
+  const day = new Date(
+    Date.UTC(
+      local.getUTCFullYear(),
+      local.getUTCMonth(),
+      local.getUTCDate() + offset,
+    ),
+  );
+  return day.toISOString().slice(0, 10);
+}
+
+/** `schedule_slots.weekday` (0 = Monday) for a bare date, read UTC-pinned. */
+function weekdayOf(date: string): number {
+  return (new Date(`${date}T00:00:00.000Z`).getUTCDay() + 6) % 7;
 }
 
 /** The scheduled instants for a date, matching the 10:00–11:00 UTC slot. */
@@ -270,6 +341,28 @@ describe("session covers", () => {
         max_age: 18,
         seat_count: null,
       },
+      // The two evening clubs the start bound is measured against. They differ
+      // in one thing only — whether their schedule projects the weekday the
+      // cases below cover — so a difference in the answer is a difference in
+      // that and nothing else.
+      ...[LATE_PRODUCT, ORPHAN_PRODUCT].map((id) => ({
+        id,
+        product_type: "consumer_club" as const,
+        billing_mode: "free" as const,
+        topic: "minecraft_java" as const,
+        spoken_language_code: "en" as const,
+        is_remote: true,
+        location_id: null,
+        timezone: MIDDAY_ZONE,
+        registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+        is_visible: true,
+        created_by: TEST_IDS.ADMIN,
+        start_date: middayDate(-60),
+        end_date: middayDate(60),
+        min_age: 8,
+        max_age: 18,
+        seat_count: null,
+      })),
     ]);
 
     await admin
@@ -291,11 +384,35 @@ describe("session covers", () => {
       ),
     );
 
+    // The evening clubs' schedules, and the whole of what tells them apart: the
+    // one covered below runs on every weekday, its twin on every weekday BUT
+    // the one that date falls on — so on that twin the same date names a day
+    // the schedule does not project, which is the orphan case.
+    const orphanedWeekday = weekdayOf(middayDate(2));
+    await admin.from("schedule_slots").insert([
+      ...[0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
+        product_id: LATE_PRODUCT,
+        weekday,
+        start_time: LATE_SLOT,
+        duration_minutes: 60,
+      })),
+      ...[0, 1, 2, 3, 4, 5, 6]
+        .filter((weekday) => weekday !== orphanedWeekday)
+        .map((weekday) => ({
+          product_id: ORPHAN_PRODUCT,
+          weekday,
+          start_time: LATE_SLOT,
+          duration_minutes: 60,
+        })),
+    ]);
+
     await admin.from("product_groups").insert([
       { id: GROUP_A, product_id: PRODUCT, name: "Cohort A" },
       { id: GROUP_B, product_id: PRODUCT, name: "Cohort B" },
       { id: GROUP_SITE, product_id: SITE_PRODUCT, name: "Hall Cohort" },
       { id: GROUP_OFF, product_id: OFF_PRODUCT, name: "Elsewhere" },
+      { id: GROUP_LATE, product_id: LATE_PRODUCT, name: "Evening Cohort" },
+      { id: GROUP_ORPHAN, product_id: ORPHAN_PRODUCT, name: "Moved Cohort" },
     ]);
 
     await admin.from("gedu_group_assignments").insert([
@@ -467,6 +584,13 @@ describe("session covers", () => {
         "reads assignment ROWS for a parent whose child is on the product. A read of the rows, not a gate on them.",
     };
 
+    /**
+     * What counts as having been through the cover question. The fourth
+     * predicate — the one asking only whether a cover has expired — is
+     * deliberately NOT here: it is what the dashboard reads ask so a sub can
+     * SEE a cover they cannot yet open, and a gate satisfied by it would be a
+     * gate that had dropped the 48-hour start without anything noticing.
+     */
     const COVER_BRANCH = [
       "session_cover_requests",
       "gedu_covers_group",
@@ -887,6 +1011,133 @@ describe("session covers", () => {
       await seedRequest({ date: utcDate(-3), coveredBy: subId });
       expect(await coversGroup(subAuth, GROUP_B)).toBe(false);
       expect(await coversGroup(subAuth, GROUP_OFF)).toBe(false);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // 3b. The window's near edge: 48 hours before the session starts
+  // -------------------------------------------------------------------------
+
+  describe("the cover access window opens 48 hours before the session", () => {
+    it("is shut three days out and open one day out", async () => {
+      // The near boundary, walked rather than asserted at one point, exactly as
+      // the far one is: a body that always answered true would pass either half
+      // alone. This product runs at 10:00 UTC every weekday, so the opening for
+      // a date three days out is tomorrow at 10:00 — still ahead whatever hour
+      // this runs at — and the opening for one day out was yesterday at 10:00,
+      // which is behind it for the same reason.
+      const id = await seedRequest({ date: utcDate(3), coveredBy: subId });
+      expect(await coversGroup(subAuth)).toBe(false);
+
+      await admin
+        .from("session_cover_requests")
+        .update({ session_date: utcDate(1) })
+        .eq("id", id);
+      expect(await coversGroup(subAuth)).toBe(true);
+    });
+
+    it("counts back from the session's own START, not from product-local midnight", async () => {
+      // The two rules differ by the slot's time of day, and this club is in a
+      // zone where it is currently midday with a 20:00 slot — so for a date two
+      // local days out the session opens in about eight hours while that date's
+      // local midnight passed about twelve hours ago. A midnight-based window
+      // would already be open; the real one is not.
+      await seedRequest({
+        groupId: GROUP_LATE,
+        date: middayDate(2),
+        absent: thirdId,
+        coveredBy: subId,
+      });
+      expect(await coversGroup(subAuth, GROUP_LATE)).toBe(false);
+    });
+
+    it("falls OPEN on a date the schedule no longer projects", async () => {
+      // The same zone, the same 20:00 schedule and the same date as the case
+      // above — on a club whose slots skip that weekday, which is what an admin
+      // moving a group's day leaves behind. There is no start to count back
+      // from, so the fallback is product-local midnight and the cover is open.
+      // It has to be: the sub may have run that afternoon and still owe its
+      // write-up, and no schedule edit afterwards may take the workspace away
+      // from them.
+      await seedRequest({
+        groupId: GROUP_ORPHAN,
+        date: middayDate(2),
+        absent: thirdId,
+        coveredBy: subId,
+      });
+      expect(await coversGroup(subAuth, GROUP_ORPHAN)).toBe(true);
+    });
+
+    it("opens a retroactive cover on a past session at once", async () => {
+      // The office-arranged path: an admin records a substitution that already
+      // happened, and the sub needs the workspace now — the register and the
+      // write-up are what they are being given it for. Every past date is past
+      // its own opening by construction, so nothing about the start bound
+      // reaches this case, which is the property worth pinning.
+      const { error } = await adminAuth.rpc("set_session_cover", {
+        p_group_id: GROUP_A,
+        p_session_date: utcDate(-5),
+        p_absent_gedu_id: TEST_IDS.GEDU,
+        p_sub_gedu_id: subId,
+      });
+      expect(error).toBeNull();
+      expect(await coversGroup(subAuth)).toBe(true);
+    });
+
+    it("shows a sub a cover they cannot yet open, and opens nothing else", async () => {
+      // The whole feature in one case. A cover ten days out is on the sub's My
+      // SOG — both reads behind the card return it — and every gate that
+      // reaches the group refuses, because the workspace opens eight days from
+      // now. The two halves are the point: a card with no page behind it yet,
+      // rather than no card at all.
+      const date = utcDate(10);
+      await seedRequest({ date, coveredBy: subId });
+      await seedRequest({ groupId: GROUP_SITE, date, coveredBy: subId });
+
+      const rows = await subAuth.rpc("get_my_assigned_products");
+      expect(rows.error).toBeNull();
+      expect(
+        (rows.data ?? []).filter((row) => row.group_id === GROUP_A),
+      ).toEqual([
+        expect.objectContaining({ kind: "cover", covered_date: date }),
+      ]);
+
+      const summaries = await subAuth.rpc("get_my_gedu_assignment_summaries", {
+        p_epoch_date: utcDate(-3),
+      });
+      expect(summaries.error).toBeNull();
+      const mine = assignmentSummaries
+        .parse(summaries.data)
+        .filter((row) => row.group_id === GROUP_A);
+      expect(mine.length).toBe(1);
+      expect(mine[0].kind).toBe("cover");
+      expect(mine[0].covered_date).toBe(date);
+      // A session that has not run owes nothing, whoever is holding it.
+      expect(mine[0].attention_count).toBe(0);
+
+      const feed = await subAuth.rpc("get_gedu_group_feed", {
+        p_group_id: GROUP_A,
+      });
+      expect(feed.error?.code).toBe(FORBIDDEN);
+
+      const workspace = await subAuth.rpc("get_gedu_assigned_product", {
+        p_product_id: PRODUCT,
+        p_group_id: GROUP_A,
+      });
+      expect(workspace.error?.code).toBe(FORBIDDEN);
+
+      const member = await subAuth.rpc("is_voice_group_member", {
+        p_group_id: GROUP_A,
+      });
+      expect(member.error).toBeNull();
+      expect(member.data).toBe(false);
+
+      const notes = await subAuth.rpc("set_site_notes", {
+        p_location_id: SITE,
+        p_public_note: "too early",
+        p_gedu_note: "too early",
+      });
+      expect(notes.error?.code).toBe(FORBIDDEN);
     });
   });
 

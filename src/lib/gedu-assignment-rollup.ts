@@ -376,6 +376,27 @@ export interface GeduCoverSummary {
    */
   startsAt: Date | null;
   endsAt: Date | null;
+  /**
+   * When the group's workspace opens to this sub — the covered session's start
+   * less 48 hours — or `null` on an orphaned date, which has no start to count
+   * back from.
+   *
+   * **The card outlives the lock.** A cover is on My SOG from the moment it is
+   * approved, so a sub can see the afternoon they agreed to take; what waits
+   * until this instant is the *workspace* behind it, and the database applies
+   * the same 48 hours to every gate that reaches the group. So a card whose
+   * `accessOpensAt` is still ahead is drawn locked rather than withheld.
+   *
+   * `null` means the lock does not apply: a date the schedule no longer
+   * projects has no start, and the database's own predicate falls open on it
+   * rather than shut — a sub must not be locked out of a session they ran and
+   * still owe a report for.
+   *
+   * Computed on the instant, never by stepping a date string: 48 hours before
+   * a Monday 17:00 is a Saturday 17:00 in real time, whatever a calendar
+   * subtraction of two days would say across a DST transition.
+   */
+  accessOpensAt: Date | null;
   /** Whether there is a room at all — true only on a remote product. */
   hasVoiceRoom: boolean;
   /** Where the Join navigates. `"#"` keeps it inert. */
@@ -400,6 +421,16 @@ export interface GeduCoverSummary {
   attentionCount: number;
 }
 
+/**
+ * How long before a covered session the group's workspace opens to the sub.
+ *
+ * This is the client's half of a bound the **database** enforces — every gate
+ * that lets a cover reach the group applies the same lead against the same
+ * session start — so it exists here only to tell a sub when their card will
+ * unlock, and moving it is a migration and this line together.
+ */
+const COVER_ACCESS_LEAD_MS = 48 * 60 * 60 * 1000;
+
 export interface CoverRollUpArgs {
   rows: readonly GeduAssignmentRow[];
   locale: SupportedLocale;
@@ -421,13 +452,19 @@ export interface CoverRollUpArgs {
 }
 
 /**
- * Roll the caller's live covers up into one card each, **soonest covered date
+ * Roll the caller's covers up into one card each, **soonest covered date
  * first**, with a date the schedule no longer projects last.
  *
- * No clock: a cover card lasts exactly as long as the access window behind it,
- * and the database is what decides that — a row is returned while the window is
- * open and gone once it closes. Filtering again here against a second clock
- * would be a card disagreeing with the access the page behind it actually has.
+ * No clock: a cover card stands from the moment the cover is approved until the
+ * cover expires, and the database is what decides that — a row is returned
+ * while the cover is the caller's and gone once it is not. Filtering again here
+ * against a second clock would be a card disagreeing with the rows the page
+ * actually has.
+ *
+ * The card's *lock* is a different question and is not decided here either:
+ * every card carries the instant its workspace opens, and whether that instant
+ * has passed is asked of the viewer's clock at render, where the rest of the
+ * card's liveness already is.
  */
 export function rollUpGeduCovers({
   rows,
@@ -461,6 +498,10 @@ export function rollUpGeduCovers({
         timezone: row.product.timezone,
         startsAt: occurrence?.start ?? null,
         endsAt: occurrence?.end ?? null,
+        accessOpensAt:
+          occurrence === null
+            ? null
+            : new Date(occurrence.start.getTime() - COVER_ACCESS_LEAD_MS),
         hasVoiceRoom,
         voiceHref: hasVoiceRoom
           ? (voiceHrefByAssignment?.[key] ?? INERT_HREF)

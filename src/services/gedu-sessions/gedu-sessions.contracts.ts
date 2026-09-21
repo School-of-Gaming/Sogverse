@@ -377,9 +377,11 @@ export const geduAssignmentSummary = z.object({
   /**
    * Which kind of seat this row is (00272). An `assignment` row is one per
    * standing assignment, exactly as this read always returned; a `cover` row is
-   * one per **live covered date** — covered, the holder still certified, the
-   * access window still open — so a sub gets a card that lasts as long as their
-   * access does and no longer.
+   * one per **unexpired covered date** — covered, the holder still certified,
+   * the window not yet closed — so a sub gets a card from the moment the cover
+   * is theirs. The group's workspace opens later, 48 hours before the covered
+   * session, and a card that waited for it would hide the afternoon a sub had
+   * agreed to take.
    *
    * The rollup keys on (product, group) rather than on product because of it: a
    * cover's identity is (group, date), and one gedu may cover a sibling group

@@ -1976,6 +1976,8 @@
     "cover": {
       "cardEyebrow": "Remplacement",
       "cardOpenLabel": "{product} — séance que vous assurez en remplacement",
+      "cardLockedLabel": "{product} — séance que vous assurez en remplacement. L’espace de travail du groupe ouvre 48 heures avant son début.",
+      "accessOpens": "L’espace de travail ouvre le {date} à {time}",
       "poolHeading": "Séances cherchant un remplacement",
       "poolAllClear": "Aucune séance ne cherche de remplacement pour le moment.",
       "poolRemote": "En ligne",

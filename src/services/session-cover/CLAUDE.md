@@ -135,11 +135,26 @@ the client owns the calendar math, exactly as both feeds do.
 
 ## Access, and the two places it is narrower
 
-From approval, a cover has everything the group's gedus have — the workspace, the feed,
-notes, roster, member flair, the game-account editor, the site notes — until 24 hours
-after the session's report is sent, or 15 product-local days after the session date if it
-never is, and only while they are still certified. That window has **one definition**, in
-SQL; nothing in this directory restates it.
+A cover is **visible** from approval and **reachable** from 48 hours before the covered
+session. On My SOG the sub sees the afternoon they took the moment it is theirs; the
+group's own surfaces — the workspace, the feed, notes, roster, member flair, the
+game-account editor, the site notes — open at that session's start less 48 hours, and
+stay open until 24 hours after the session's report is sent, or 15 product-local days
+after the session date if it never is, and only while they are still certified.
+
+Each of those two bounds has **one definition**, in SQL, in the predicate that owns it;
+nothing in this directory restates either. The dashboard reads that draw the card ask
+only whether the cover has expired, which is why the card outlives the lock rather than
+appearing with it.
+
+Two consequences worth knowing before reading a surface:
+
+- **A date the schedule no longer projects has no start, and fails OPEN.** An admin
+  moving a group's weekday must not lock a sub out of an afternoon they actually ran and
+  still owe a report for.
+- **The group-wide surfaces are group-wide in both directions.** A sub holding two covers
+  on one group reaches it from the earlier of the two openings, exactly as they keep it
+  until the later of the two closings.
 
 Two surfaces admit a cover for the covered **date** only, never for the group's other
 dates: the **voice room** (both database predicates and the voice token route, which

@@ -1976,6 +1976,8 @@
     "cover": {
       "cardEyebrow": "Tuuraus",
       "cardOpenLabel": "{product} – tuuraamasi kerta",
+      "cardLockedLabel": "{product} – tuuraamasi kerta. Ryhmän työtila avautuu 48 tuntia ennen kerran alkua.",
+      "accessOpens": "Työtila avautuu {date} klo {time}",
       "poolHeading": "Kerrat, jotka tarvitsevat tuuraajan",
       "poolAllClear": "Yksikään kerta ei tarvitse juuri nyt tuuraajaa.",
       "poolRemote": "Etänä",

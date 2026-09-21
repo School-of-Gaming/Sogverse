@@ -2016,6 +2016,8 @@
     "cover": {
       "cardEyebrow": "lIw",
       "cardOpenLabel": "{product} — may’ DalIwbogh",
+      "cardLockedLabel": "{product} — may’ DalIwbogh. may’ qaSpa’ loSmaH chorgh rep poSmoH Qu’meH pa’.",
+      "accessOpens": "{date} {time}Daq poSmoH Qu’meH pa’",
       "poolHeading": "lIw poQbogh may’mey",
       "poolAllClear": "DaH lIw poQbogh may’ tu’lu’be’.",
       "poolRemote": "HeHDaq",

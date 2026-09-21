@@ -573,6 +573,28 @@ describe("rollUpGeduCovers", () => {
     expect(cover.endsAt?.toISOString()).toBe("2026-02-16T16:00:00.000Z");
   });
 
+  it("opens the workspace 48 hours before the covered session's own start", () => {
+    // Not 48 hours before the covered DAY: the card has to name the instant the
+    // database's own gates open, and those count back from the session's start.
+    const [cover] = rollUpCovers([
+      coverRow({ id: "p1", name: "Club", coveredDate: "2026-02-16" }),
+    ]);
+    expect(cover.accessOpensAt?.toISOString()).toBe("2026-02-14T14:30:00.000Z");
+    expect(
+      cover.startsAt!.getTime() - cover.accessOpensAt!.getTime(),
+    ).toBe(48 * 60 * 60 * 1000);
+  });
+
+  it("has no opening instant on a date the schedule no longer projects", () => {
+    // Nothing to count back from, and the database falls OPEN on one rather
+    // than shut — a sub must not be locked out of a session they ran and still
+    // owe a report for. `null` is what the card reads as "not locked".
+    const [cover] = rollUpCovers([
+      coverRow({ id: "p1", name: "Club", coveredDate: "2026-02-17" }),
+    ]);
+    expect(cover.accessOpensAt).toBeNull();
+  });
+
   it("carries a date the schedule no longer projects, with no instants", () => {
     // A Tuesday, on a club whose only slot is a Monday — an orphaned request,
     // which is history rather than a fault and must not take the card away.

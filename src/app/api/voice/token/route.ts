@@ -357,13 +357,16 @@ function sessionDatesToAdmit(
  * certified — de-certifying an educator ends their cover access at once, which
  * is why it is asked here rather than only at approval time. The fourth, the
  * access window, is **not**, and that is deliberate rather than an omission:
- * the window closes 24 hours after the session's report was mailed or 15
- * product-local days after the session date, and the dates asked about here are
- * today, yesterday, or the session currently in progress — a report mailed
- * within the last day is less than a day old and midnight fifteen days out has
- * not arrived, so both arms are open by construction. Restating the arithmetic
- * would be a second definition of a window that has exactly one, and it could
- * only ever disagree with it.
+ * the dates asked about here are today, yesterday, or the session currently in
+ * progress, and **both** of the window's bounds are open on all three by
+ * construction. It opens 48 hours before the session's own start, and a session
+ * dated today or yesterday started no later than the end of today, so that
+ * instant is at least a day behind us; a room whose window is open is closer
+ * still. It closes 24 hours after the session's report was mailed or 15
+ * product-local days after the session date, and a report mailed within the
+ * last day is less than a day old while midnight fifteen days out has not
+ * arrived. Restating either arm would be a second definition of a bound that
+ * has exactly one, and it could only ever disagree with it.
  *
  * Dates are read in the product's zone, never the runtime's: a club in Helsinki
  * and one in Los Angeles each get their own calendar.

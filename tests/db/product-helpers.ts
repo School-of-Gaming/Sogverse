@@ -282,6 +282,16 @@ import { TEST_IDS } from "./constants";
  *                  seeded site would race the gedu feed's suite in a parallel
  *                  worker; and the club 816 with group 817 that neither gedu
  *                  touches, so a refusal there is the ACTOR half alone)
+ *   818-81b        session-cover.test.ts again, for the window's NEAR edge: the
+ *                  evening club 818 with group 819 and its twin 81a with group
+ *                  81b. Both sit in a timezone the suite picks from the clock
+ *                  so that it is currently midday there, which is what lets a
+ *                  20:00 slot tell "48 hours before the session starts" apart
+ *                  from "48 hours before that date's local midnight" at any
+ *                  hour CI runs. The twins differ in one thing only — 81a's
+ *                  schedule skips the weekday the cases cover — so the same
+ *                  date is an ordinary session on one and an orphan on the
+ *                  other
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

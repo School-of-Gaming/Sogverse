@@ -1976,6 +1976,8 @@
     "cover": {
       "cardEyebrow": "Cover",
       "cardOpenLabel": "{product} — session you’re covering",
+      "cardLockedLabel": "{product} — session you’re covering. The group’s workspace opens 48 hours before it starts.",
+      "accessOpens": "Workspace opens {date} at {time}",
       "poolHeading": "Sessions needing cover",
       "poolAllClear": "No sessions need cover right now.",
       "poolRemote": "Remote",

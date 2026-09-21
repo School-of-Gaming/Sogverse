@@ -1976,6 +1976,8 @@
     "cover": {
       "cardEyebrow": "Vikariat",
       "cardOpenLabel": "{product} – tillfälle du vikarierar på",
+      "cardLockedLabel": "{product} – tillfälle du vikarierar på. Gruppens arbetsyta öppnar 48 timmar innan det börjar.",
+      "accessOpens": "Arbetsytan öppnar {date} kl. {time}",
       "poolHeading": "Tillfällen som behöver en vikarie",
       "poolAllClear": "Inga tillfällen behöver en vikarie just nu.",
       "poolRemote": "På distans",
