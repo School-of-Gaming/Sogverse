@@ -283,6 +283,10 @@ const themeCss = readFileSync(
 
 const themeNamespace = (namespace) => [
   ...new Set(
+    // `namespace` is a literal at both call sites just below ("color", "text"),
+    // the rest of the pattern is fixed, and nothing here reads operator or
+    // request input.
+    // eslint-disable-next-line security/detect-non-literal-regexp -- the interpolated token is a literal from the two call sites below, never input.
     [...themeCss.matchAll(new RegExp(String.raw`--${namespace}-([a-z0-9-]+)\s*:`, "g"))]
       .map((match) => match[1])
       .filter((name) => !name.includes("--")),
@@ -1187,14 +1191,15 @@ const eslintConfig = defineConfig([
     },
   },
   {
-    // Operational scripts are plain ESM that Node runs directly. They are not
-    // in any tsconfig project, so the type-aware parser above cannot read them
+    // Operational scripts and the repo's own root config files are plain ESM
+    // that Node runs directly. They are in no tsconfig project, so the
+    // type-aware parser above cannot read them
     // at all — without this block every one of them fails to parse and the
     // directory silently drops out of lint. Rules that need type information
     // have nothing to work from here and are turned off explicitly; what
     // remains is the check that actually earns its place on a run-once script,
     // an undefined identifier in a branch the one manual run never took.
-    files: ["scripts/**/*.mjs"],
+    files: ["scripts/**/*.mjs", "*.mjs"],
     languageOptions: {
       parserOptions: { project: false },
       globals: {
