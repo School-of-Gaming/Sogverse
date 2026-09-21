@@ -105,6 +105,16 @@ CREATE TYPE public.gamer_sign_in AS ENUM (
 
 
 --
+-- Name: gedu_assignment_role; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.gedu_assignment_role AS ENUM (
+    'primary',
+    'assistant'
+);
+
+
+--
 -- Name: gender_type; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -246,6 +256,27 @@ COMMENT ON TYPE public.spoken_language IS 'A human language a club is delivered 
 
 
 --
+-- Name: substitution_reason; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.substitution_reason AS ENUM (
+    'sick',
+    'other'
+);
+
+
+--
+-- Name: substitution_request_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.substitution_request_status AS ENUM (
+    'open',
+    'substituted',
+    'withdrawn'
+);
+
+
+--
 -- Name: user_role; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -314,6 +345,29 @@ CREATE FUNCTION public._list_function_authorization_surface() RETURNS TABLE(func
     -- RPC-access view this replaces used.
     AND p.prorettype <> 'pg_catalog.trigger'::pg_catalog.regtype;
 $$;
+
+
+--
+-- Name: _list_policy_expressions(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public._list_policy_expressions() RETURNS TABLE(table_name text, policy_name text, expression text)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT p.tablename::text,
+         p.policyname::text,
+         COALESCE(p.qual, '') || ' ' || COALESCE(p.with_check, '')
+    FROM pg_catalog.pg_policies p
+   WHERE p.schemaname = 'public';
+$$;
+
+
+--
+-- Name: FUNCTION _list_policy_expressions(); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public._list_policy_expressions() IS 'Every RLS policy in the public schema with its expression text — USING and WITH CHECK concatenated, since every caller asks whether a policy REFERENCES something rather than in which half. The policy-side twin of _list_function_authorization_surface(), and it exists because pg_policies is a catalog view the DB tests have no path to: they speak to PostgREST, which answers RPC calls, so a catalog question needs a function to ask it through. Read only by the DB test suite — the assignment-gate completeness check in tests/db/session-substitution.test.ts is the first caller — which is why it is service_role only: policy text describes the security model and no client role has business reading it.';
 
 
 --
@@ -1181,6 +1235,11 @@ DECLARE
   v_gedu_id         UUID;
   v_gedu_id_text    TEXT;
   v_temp_map        JSONB := '{}'::jsonb;
+  v_inline_gedu     JSONB;
+  v_role            public.gedu_assignment_role;
+  v_removed_group   UUID;
+  v_removed_gedu    UUID;
+  v_orphan_date     DATE;
 BEGIN
   PERFORM public.assert_admin();
 
@@ -1191,9 +1250,37 @@ BEGIN
 
   -- Removes first so an admin can move a Gedu from group A to B in one batch.
   FOR v_assignment IN SELECT * FROM jsonb_array_elements(p_gedu_assignments_removed) LOOP
+    v_removed_group := (v_assignment->>'groupId')::UUID;
+    v_removed_gedu  := (v_assignment->>'geduId')::UUID;
+
     DELETE FROM gedu_group_assignments
-     WHERE group_id = (v_assignment->>'groupId')::UUID
-       AND gedu_id  = (v_assignment->>'geduId')::UUID;
+     WHERE group_id = v_removed_group
+       AND gedu_id  = v_removed_gedu;
+
+    -- REMOVING AN ASSIGNMENT IS AN UNSEATING, and every other write that can
+    -- unseat somebody already sweeps the substitution requests it orphans. This one
+    -- is the odd case because it unseats WITHOUT touching a substitution row at all:
+    -- a gedu removed from the group while they have a live request for Tuesday
+    -- leaves that request open, and an admin answering it would seat a sub to
+    -- substitute for nobody — and hand them the group's workspace for the date.
+    --
+    -- Only the dates the removed gedu has a LIVE REQUEST on are swept, because
+    -- those are the only ones this removal can have orphaned; the sweep itself
+    -- is the same fixpoint every other unseating runs, so a chain that starts
+    -- here unwinds exactly as it does there. A date they merely SUBSTITUTE on is not
+    -- swept and must not be: a substitution is a seat of its own, and it does not
+    -- depend on the assignment this statement just deleted.
+    FOR v_orphan_date IN
+      SELECT DISTINCT r.session_date
+        FROM session_substitution_requests r
+       WHERE r.group_id     = v_removed_group
+         AND r.requested_by = v_removed_gedu
+         AND r.status <> 'withdrawn'::public.substitution_request_status
+    LOOP
+      PERFORM public.cascade_withdraw_orphaned_substitution_requests(
+                v_removed_group, v_orphan_date
+              );
+    END LOOP;
   END LOOP;
 
   IF array_length(p_deleted_group_ids, 1) > 0 THEN
@@ -1216,10 +1303,33 @@ BEGIN
 
     v_temp_map := v_temp_map || jsonb_build_object(v_group->>'tempId', v_new_id::TEXT);
 
+    -- An added group's educators now arrive as objects carrying a ROLE:
+    -- `gedus: [{ geduId, role }]`. Every assignment has a role as of this
+    -- migration, and the column's DEFAULT is the backfill, so an element that
+    -- omits `role` lands as a primary.
+    IF jsonb_typeof(v_group->'gedus') = 'array' THEN
+      FOR v_inline_gedu IN SELECT * FROM jsonb_array_elements(v_group->'gedus') LOOP
+        INSERT INTO gedu_group_assignments (group_id, gedu_id, product_id, role)
+        VALUES (
+          v_new_id,
+          (v_inline_gedu->>'geduId')::UUID,
+          p_product_id,
+          COALESCE((v_inline_gedu->>'role')::public.gedu_assignment_role, 'primary')
+        );
+      END LOOP;
+    END IF;
+
+    -- The legacy shape, still read for the deploy window: a bare array of ids,
+    -- every one of them a primary. The old app posts this; the new one posts
+    -- `gedus` above. Both are accepted, and a caller sending both gets both
+    -- (the primary-key conflict on a repeated pair is silenced by the ON
+    -- CONFLICT below, not here, so a duplicate inside ONE batch would still
+    -- raise — which is the caller's bug rather than a state to absorb).
     IF jsonb_typeof(v_group->'geduIds') = 'array' THEN
       FOR v_gedu_id_text IN SELECT jsonb_array_elements_text(v_group->'geduIds') LOOP
-        INSERT INTO gedu_group_assignments (group_id, gedu_id, product_id)
-        VALUES (v_new_id, v_gedu_id_text::UUID, p_product_id);
+        INSERT INTO gedu_group_assignments (group_id, gedu_id, product_id, role)
+        VALUES (v_new_id, v_gedu_id_text::UUID, p_product_id, 'primary')
+        ON CONFLICT (group_id, gedu_id) DO NOTHING;
       END LOOP;
     END IF;
   END LOOP;
@@ -1227,8 +1337,11 @@ BEGIN
   -- Explicit conflict target so the (gedu_id, product_id) UNIQUE violation
   -- propagates as an error (an admin trying to assign the same Gedu to two
   -- groups in one product should fail). Only the (group_id, gedu_id)
-  -- primary-key conflict — the caller redundantly listing a pair already
-  -- covered by the inline gedus above — is silenced.
+  -- primary-key conflict is handled here — and as of this migration it UPDATES
+  -- the role rather than doing nothing, which is what makes a role change ONE
+  -- add rather than a remove plus an add. Re-adding a pair that is already
+  -- there is therefore no longer a no-op: it restates the role, which is
+  -- exactly what the panel's role select posts.
   FOR v_assignment IN SELECT * FROM jsonb_array_elements(p_gedu_assignments_added) LOOP
     IF v_temp_map ? (v_assignment->>'groupId') THEN
       v_resolved_group := (v_temp_map->>(v_assignment->>'groupId'))::UUID;
@@ -1237,10 +1350,15 @@ BEGIN
     END IF;
 
     v_gedu_id := (v_assignment->>'geduId')::UUID;
+    v_role    := COALESCE(
+                   (v_assignment->>'role')::public.gedu_assignment_role,
+                   'primary'
+                 );
 
-    INSERT INTO gedu_group_assignments (group_id, gedu_id, product_id)
-    VALUES (v_resolved_group, v_gedu_id, p_product_id)
-    ON CONFLICT (group_id, gedu_id) DO NOTHING;
+    INSERT INTO gedu_group_assignments (group_id, gedu_id, product_id, role)
+    VALUES (v_resolved_group, v_gedu_id, p_product_id, v_role)
+    ON CONFLICT (group_id, gedu_id) DO UPDATE
+      SET role = EXCLUDED.role;
   END LOOP;
 
   FOR v_move IN SELECT * FROM jsonb_array_elements(p_participation_moves) LOOP
@@ -1261,6 +1379,13 @@ BEGIN
   RETURN jsonb_build_object('tempMap', v_temp_map);
 END;
 $$;
+
+
+--
+-- Name: FUNCTION apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb) IS 'The admin groups panel''s whole batch, applied in one transaction: remove assignments, delete groups, rename groups, add groups (each with its educators inline), add assignments, and move participations between groups. Admin-only, guard-first, and it takes the PRODUCT row''s lock first so two admins editing one product''s groups serialize rather than interleave. Removes run BEFORE adds so moving an educator from group A to group B is one batch — the (gedu_id, product_id) UNIQUE would otherwise refuse the add. Newly added groups are addressed by a client-minted `tempId` and the returned `tempMap` hands back the real ids, which is what lets one batch create a group and move members into it. Since 00272 an assignment carries a ROLE: an added assignment element is { groupId, geduId, role } and upserts ON CONFLICT (group_id, gedu_id) DO UPDATE SET role, so a role change is ONE add rather than a remove plus an add — which also means re-adding an existing pair is no longer a no-op, it restates the role. An added GROUP''s educators arrive as gedus: [{ geduId, role }]; the legacy geduIds array of bare ids is still read for the deploy window and lands every one of them as a primary. An omitted role is a primary, which is also the column''s default. This function is DELIBERATELY ASSIGNMENT-ONLY with respect to session substitutions, and is annotated as such in the completeness check: it is the writer of the permanent relationship, not a gate on it. Since 00276 removing an assignment also sweeps the substitution requests it orphans: for every date the removed gedu held a live request on, the same fixpoint every other unseating runs. It remains ASSIGNMENT-ONLY as a GATE — it still gates on nothing and still writes no substitution row — but a writer that can unseat somebody has to leave the derivation consistent, or an admin could answer a request filed by a person who is no longer expected at the session.';
 
 
 --
@@ -1315,6 +1440,102 @@ $$;
 --
 
 COMMENT ON FUNCTION public.apply_product_image_path() IS 'BEFORE INSERT OR UPDATE on products: image_path is derived from the linked product_images entry, and is NULL whenever image_id is. Since 00198 there is no branch that preserves an app-supplied path, so this function is the column''s ONLY writer — which is what carries the invariant that a served path is a catalogue path, and why there is deliberately no foreign key on image_path (a second relationship between products and product_images makes every PostgREST embed ambiguous; see 00198''s header). Carries no column list on the trigger deliberately, so no statement can name image_path and win.';
+
+
+--
+-- Name: approve_session_substitution_offer(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.approve_session_substitution_offer(p_offer_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_caller     uuid := (SELECT auth.uid());
+  v_request_id uuid;
+  v_sub_id     uuid;
+  v_group_id   uuid;
+  v_row        public.session_substitution_requests;
+BEGIN
+  PERFORM public.assert_admin();
+
+  SELECT o.request_id, o.gedu_id INTO v_request_id, v_sub_id
+    FROM public.session_substitution_offers o
+   WHERE o.id = p_offer_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Substitution offer not found' USING ERRCODE = 'P0002';
+  END IF;
+
+  SELECT r.group_id INTO v_group_id
+    FROM public.session_substitution_requests r
+   WHERE r.id = v_request_id;
+
+  -- The (group, date) serialization point, taken first by every admin write.
+  PERFORM 1 FROM public.product_groups g WHERE g.id = v_group_id FOR UPDATE;
+
+  SELECT * INTO v_row
+    FROM public.session_substitution_requests r
+   WHERE r.id = v_request_id
+     FOR UPDATE;
+
+  IF v_row.status <> 'open'::public.substitution_request_status THEN
+    RAISE EXCEPTION 'this substitution request is already %', v_row.status
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- THE ABSENT GEDU MUST STILL HOLD THE SEAT THEY FILED AGAINST. An admin can
+  -- remove a gedu from a group through the groups panel while a request of
+  -- theirs is open, and approving an offer on an orphaned request would seat a
+  -- sub to substitute for nobody — and hand them the group's workspace for it. The panel
+  -- now sweeps the requests it orphans, so this is the second line of defence
+  -- rather than the first, and it is asked under the lock this function already
+  -- holds, beside the offer's own staleness check.
+  --
+  -- A REFUSAL rather than a withdraw-and-refuse, and that is forced rather than
+  -- chosen: the RAISE aborts the transaction, so a withdraw written first would
+  -- be rolled back with it. An admin who wants the row gone withdraws it
+  -- explicitly, which is what the queue's own Withdraw action does.
+  IF NOT public.gedu_holds_seat_at_session(
+           v_row.requested_by, v_row.group_id, v_row.session_date
+         ) THEN
+    RAISE EXCEPTION 'gedu % no longer holds a seat on group % (%), so there is nothing to substitute for',
+                    v_row.requested_by, v_row.group_id, v_row.session_date
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- Re-asked under the lock, because an offer can go stale between being made
+  -- and being approved: the offerer may since have been assigned to the group,
+  -- been seated as somebody else's sub on the same date, filed an absence of
+  -- their own, or been de-certified.
+  IF NOT public.gedu_may_substitute_session(
+           v_sub_id, v_row.group_id, v_row.session_date, v_row.requested_by
+         ) THEN
+    RAISE EXCEPTION 'gedu % can no longer substitute on group % on %',
+                    v_sub_id, v_row.group_id, v_row.session_date
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- The other offers are deliberately untouched: "not selected" is derived from
+  -- the request being substituted by somebody else.
+  UPDATE public.session_substitution_requests
+     SET status      = 'substituted'::public.substitution_request_status,
+         substitute_id  = v_sub_id,
+         approved_by = v_caller,
+         approved_at = now()
+   WHERE id = v_row.id
+  RETURNING * INTO v_row;
+
+  RETURN public.substitution_request_document(v_row, true, v_caller);
+END;
+$$;
+
+
+--
+-- Name: FUNCTION approve_session_substitution_offer(p_offer_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.approve_session_substitution_offer(p_offer_id uuid) IS 'An admin picks one offer, and its gedu becomes the substitute: `open` -> `substituted`, stamping substitute_id, approved_by = the acting admin, and approved_at. Takes the group row''s lock and then the request''s FOR UPDATE, so two admins approving two offers on one session serialize and the second is refused; and re-asks gedu_may_substitute_session UNDER THAT LOCK, because an offer goes stale (the offerer gets assigned to the group, gets seated as somebody else''s sub on the same date, files an absence of their own, or is de-certified). The OTHER OFFERS ARE NOT TOUCHED: "not selected" is derived from the request being substituted by somebody else, and which offer was approved is the substituting gedu''s own offer row — which is why no approved_offer_id exists. Since 00276 it also re-asks, under the lock it already takes, whether the ABSENT gedu still holds a seat at the session (gedu_holds_seat_at_session): an admin can remove a gedu from the group through the groups panel while a request of theirs is open, and approving an offer on an orphaned request would seat a sub to substitute for nobody and hand them the group''s workspace for it. A refusal rather than a withdraw-and-refuse, because the RAISE would roll a withdraw back with the rest of the transaction.';
 
 
 --
@@ -1487,6 +1708,44 @@ BEGIN
   );
 END;
 $$;
+
+
+--
+-- Name: cascade_withdraw_orphaned_substitution_requests(uuid, date); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cascade_withdraw_orphaned_substitution_requests(p_group_id uuid, p_session_date date) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_changed integer;
+BEGIN
+  LOOP
+    UPDATE public.session_substitution_requests r
+       SET status      = 'withdrawn'::public.substitution_request_status,
+           substitute_id  = NULL,
+           approved_by = NULL,
+           approved_at = NULL
+     WHERE r.group_id     = p_group_id
+       AND r.session_date = p_session_date
+       AND r.status <> 'withdrawn'::public.substitution_request_status
+       AND NOT public.gedu_holds_seat_at_session(
+                 r.requested_by, p_group_id, p_session_date
+               );
+
+    GET DIAGNOSTICS v_changed = ROW_COUNT;
+    EXIT WHEN v_changed = 0;
+  END LOOP;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION cascade_withdraw_orphaned_substitution_requests(p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.cascade_withdraw_orphaned_substitution_requests(p_group_id uuid, p_session_date date) IS 'Internal: after an admin edit that can unseat somebody — clear, withdraw, or the replace inside set_session_substitution — withdraw every non-withdrawn request on that (group, date) whose requester no longer holds a seat there, meaning neither assigned nor the substitute_id of a live substituted request. A FIXPOINT sweep rather than one statement, because unseating cascades: clearing X''s substitution withdraws X''s own request, which unseats whoever was substituting that, and so on until a pass changes nothing. Withdrawing a substituted row blanks its three substitution columns — chk_substitution_state forbids a withdrawn row from carrying a sub — which is deliberate: an admin unwinding a mistake leaves no phantom substitution behind for invoicing to bill. Withdrawing a request whose requester was meanwhile unassigned restores nobody and is allowed. Not granted to `authenticated`; called only from inside the admin RPCs. Since 00276 "no longer holds a seat" is gedu_holds_seat_at_session rather than two inline NOT EXISTS clauses, and apply_group_changes joins the callers: removing a gedu from a group through the admin groups panel unseats them without touching a substitution row, so that writer now sweeps every date the removed gedu held a live request on.';
 
 
 --
@@ -1703,7 +1962,20 @@ BEGIN
     CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
   );
 
-  IF NOT public.is_admin() AND NOT public.gedu_teaches_group(p_group_id) THEN
+  -- The assignment half is spelled out INLINE here rather than through
+  -- gedu_teaches_group, and that is the whole point of this migration's edit to
+  -- this function. gedu_teaches_group now admits a live substitution on ANY of the
+  -- group's dates; the family report mail is at-most-once and has no resend, so
+  -- a sub must not be able to send the mail for a session they did not run.
+  -- The substitution arm is therefore DATE-SCOPED to the session being claimed.
+  IF NOT public.is_admin()
+     AND NOT EXISTS (
+           SELECT 1
+             FROM public.gedu_group_assignments ga
+            WHERE ga.group_id = p_group_id
+              AND ga.gedu_id  = (SELECT auth.uid())
+         )
+     AND NOT public.gedu_substitutes_session(p_group_id, p_session_date) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 
@@ -1762,7 +2034,74 @@ $$;
 -- Name: FUNCTION claim_group_session_report_email(p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.claim_group_session_report_email(p_group_id uuid, p_session_date date) IS 'Claim the one send of a session report to the group''s families, and hand back the row it claimed. Open to an ADMIN or to the gedu assigned to the group (00200), exactly as the session-notes writer is. Takes the row''s lock, then refuses with SQLSTATE P0021 when there is no report to send (no row, or a report that is empty after the same whitespace trim the summaries SQL applies) and with P0022 when report_emailed_at is already set — both bind an admin identically; otherwise stamps report_emailed_at = now() and report_emailed_by = auth.uid(). The claim is the FIRST write of the send and is also its authorization: succeeding proves the caller may send for this group, which is what lets the route resolve recipients with the service role afterwards. Releasing a claim is the route''s job and happens only when every single mail failed.';
+COMMENT ON FUNCTION public.claim_group_session_report_email(p_group_id uuid, p_session_date date) IS 'Claim the one send of a session report to the group''s families, and hand back the row it claimed. Open to an ADMIN or to the gedu assigned to the group (00200), exactly as the session-notes writer is. Takes the row''s lock, then refuses with SQLSTATE P0021 when there is no report to send (no row, or a report that is empty after the same whitespace trim the summaries SQL applies) and with P0022 when report_emailed_at is already set — both bind an admin identically; otherwise stamps report_emailed_at = now() and report_emailed_by = auth.uid(). The claim is the FIRST write of the send and is also its authorization: succeeding proves the caller may send for this group, which is what lets the route resolve recipients with the service role afterwards. Releasing a claim is the route''s job and happens only when every single mail failed. Since 00272 the assignment half is spelled out INLINE here instead of calling gedu_teaches_group, and that is a security decision rather than a refactor: gedu_teaches_group now admits a live substitution on ANY of the group''s dates, while this mail is at-most-once with no resend, so a sub must not be able to send the families a write-up of a session they did not run. The substitution arm here is therefore DATE-SCOPED to the session being claimed — one of exactly two places on this surface that is, the other being the voice room.';
+
+
+--
+-- Name: clear_session_substitution(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.clear_session_substitution(p_request_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_caller       uuid := (SELECT auth.uid());
+  v_group_id     uuid;
+  v_session_date date;
+  v_row          public.session_substitution_requests;
+BEGIN
+  PERFORM public.assert_admin();
+
+  SELECT r.group_id, r.session_date INTO v_group_id, v_session_date
+    FROM public.session_substitution_requests r
+   WHERE r.id = p_request_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Substitution request not found' USING ERRCODE = 'P0002';
+  END IF;
+
+  -- Group first, then the row: one lock order across all four admin writes.
+  PERFORM 1 FROM public.product_groups g WHERE g.id = v_group_id FOR UPDATE;
+
+  SELECT * INTO v_row
+    FROM public.session_substitution_requests r
+   WHERE r.id = p_request_id
+     FOR UPDATE;
+
+  IF v_row.status <> 'substituted'::public.substitution_request_status THEN
+    RAISE EXCEPTION 'this substitution request is % and has no substitute to clear', v_row.status
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- Back to `open`, so the session returns to the pool and to the admin queue.
+  -- The offers are left alone: they are still people who said they could come.
+  UPDATE public.session_substitution_requests
+     SET status      = 'open'::public.substitution_request_status,
+         substitute_id  = NULL,
+         approved_by = NULL,
+         approved_at = NULL
+   WHERE id = p_request_id
+  RETURNING * INTO v_row;
+
+  PERFORM public.cascade_withdraw_orphaned_substitution_requests(v_group_id, v_session_date);
+
+  -- Re-read: the sweep can have withdrawn THIS row too, when its own requester
+  -- was themselves a sub who has just been unseated.
+  SELECT * INTO v_row
+    FROM public.session_substitution_requests r
+   WHERE r.id = p_request_id;
+
+  RETURN public.substitution_request_document(v_row, true, v_caller);
+END;
+$$;
+
+
+--
+-- Name: FUNCTION clear_session_substitution(p_request_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.clear_session_substitution(p_request_id uuid) IS '"That sub is not coming": `substituted` -> `open`, blanking substitute_id, approved_by and approved_at, so the session returns to the pool list and to the admin queue. The offers are left alone — they are still people who said they could come. Then the fixpoint cascade runs over that (group, date), which is what withdraws the cleared sub''s OWN request if they had filed one: they no longer hold a seat there to be absent from. The cascade can also withdraw THIS row, when its requester was themselves a sub who has just been unseated, which is why the document is re-read before it is returned.';
 
 
 --
@@ -2919,6 +3258,233 @@ $$;
 
 
 --
+-- Name: gedu_holds_seat_at_session(uuid, uuid, date); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.gedu_holds_seat_at_session(p_gedu_id uuid, p_group_id uuid, p_session_date date) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT p_gedu_id IS NOT NULL
+     AND p_group_id IS NOT NULL
+     AND p_session_date IS NOT NULL
+     -- "…they are either assigned to the group…"
+     AND (
+           EXISTS (
+             SELECT 1
+               FROM public.gedu_group_assignments a
+              WHERE a.group_id = p_group_id
+                AND a.gedu_id  = p_gedu_id
+           )
+           -- "…or hold a `substituted` request for it." No window test and no
+           -- certification test, for the same reason its parent predicate makes
+           -- neither: this answers WHO IS DOING THE JOB, a staffing fact, and
+           -- conflating it with access would make a past session's staffing
+           -- silently change fifteen days later.
+           OR EXISTS (
+             SELECT 1
+               FROM public.session_substitution_requests r
+              WHERE r.group_id     = p_group_id
+                AND r.session_date = p_session_date
+                AND r.substitute_id   = p_gedu_id
+                AND r.status       = 'substituted'::public.substitution_request_status
+           )
+         );
+$$;
+
+
+--
+-- Name: FUNCTION gedu_holds_seat_at_session(p_gedu_id uuid, p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.gedu_holds_seat_at_session(p_gedu_id uuid, p_group_id uuid, p_session_date date) IS 'Internal predicate: does this gedu still hold a SEAT at (group, date) — assigned to the group, or the substitute_id of a live `substituted` request for it? The second half of the derivation sentence, lifted out because three callers ask it: gedu_is_expected_at_session (which is this AND holding no live request of your own), the orphan sweep (which withdraws every request whose requester no longer passes this), and approve_session_substitution_offer (which refuses to seat a sub for somebody who no longer passes it). Makes NO access-window and NO certification test, exactly as its parent does not: it answers who is DOING THE JOB, a staffing fact, where gedu_substitutes_session answers who may REACH the group. Takes the gedu as an argument rather than reading auth.uid(), because every caller asks it about somebody else. Not granted to `authenticated`.';
+
+
+--
+-- Name: gedu_holds_unexpired_substitution(uuid, date); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.gedu_holds_unexpired_substitution(p_group_id uuid, p_session_date date) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.session_substitution_requests r
+      JOIN public.product_groups g  ON g.id = r.group_id
+      JOIN public.products p        ON p.id = g.product_id
+      JOIN public.gedu_profiles gp  ON gp.user_id = r.substitute_id
+      -- The session row is LAZILY materialized, so there may be none — which is
+      -- exactly the case the 15-day arm of the COALESCE is for.
+      LEFT JOIN public.group_sessions gs
+             ON gs.group_id     = r.group_id
+            AND gs.session_date = r.session_date
+     WHERE r.group_id     = p_group_id
+       AND r.session_date = p_session_date
+       AND r.status       = 'substituted'::public.substitution_request_status
+       AND r.substitute_id   = (SELECT auth.uid())
+       -- Still certified. De-certifying an educator ends their substitution access
+       -- mid-window, which is the point of checking it here rather than only at
+       -- approval time.
+       AND gp.certified
+       -- 24 hours after the report was mailed, or 15 days after the session date
+       -- if it never was. The fallback is compared against PRODUCT-LOCAL
+       -- midnight, so a club in Helsinki and one in Los Angeles both get fifteen
+       -- of their own days.
+       AND now() < COALESCE(
+                     gs.report_emailed_at + interval '24 hours',
+                     ((r.session_date + 15)::timestamp AT TIME ZONE p.timezone)
+                   )
+  );
+$$;
+
+
+--
+-- Name: FUNCTION gedu_holds_unexpired_substitution(p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.gedu_holds_unexpired_substitution(p_group_id uuid, p_session_date date) IS 'Internal predicate: does the CALLER still hold this (group, date) substitution at all? True when they are the substitute_id of a `substituted` request for it, are still certified, and it has not EXPIRED — now() < COALESCE(report_emailed_at + 24 hours, product-local midnight 15 days after the session date). The single definition of the window''s END. It makes NO start test, which is what separates it from gedu_substitutes_session: this one answers whether the substitution is still the caller''s to SEE, and the gedu dashboard''s two reads ask it so that an accepted substitution appears on My SOG from approval rather than from the moment its workspace opens. Not granted to `authenticated`.';
+
+
+--
+-- Name: gedu_is_expected_at_session(uuid, uuid, date); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.gedu_is_expected_at_session(p_gedu_id uuid, p_group_id uuid, p_session_date date) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT p_gedu_id IS NOT NULL
+     AND p_group_id IS NOT NULL
+     AND p_session_date IS NOT NULL
+     -- "…they hold no non-withdrawn request for it…" — an open request and a
+     -- substituted one both mean the same thing about the person who FILED it: they
+     -- are not coming.
+     AND NOT EXISTS (
+           SELECT 1
+             FROM public.session_substitution_requests r
+            WHERE r.group_id     = p_group_id
+              AND r.session_date = p_session_date
+              AND r.requested_by = p_gedu_id
+              AND r.status <> 'withdrawn'::public.substitution_request_status
+         )
+     AND public.gedu_holds_seat_at_session(p_gedu_id, p_group_id, p_session_date);
+$$;
+
+
+--
+-- Name: FUNCTION gedu_is_expected_at_session(p_gedu_id uuid, p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.gedu_is_expected_at_session(p_gedu_id uuid, p_group_id uuid, p_session_date date) IS 'Internal predicate, and the derivation the whole feature rests on: a gedu is expected at (group, date) iff they hold no non-withdrawn request for it, AND they are either assigned to the group or hold a `substituted` request for it. That one sentence handles the sub-of-sub chain, an open sub-of-sub request and a cleared substitution alike, which is why nothing stores "who is running this session" anywhere. Takes the gedu as an argument rather than reading auth.uid(), because every writer asks it about somebody else. Deliberately makes NO access-window and NO certification test: it answers who is DOING THE JOB, a staffing fact, where gedu_substitutes_session answers who may REACH the group, an access fact — conflating them would make a past session''s staffing silently change fifteen days later. Where a gedu is both assigned and holds a substitution on the same group (only an admin edit can produce that), the assignment supplies the role. Not granted to `authenticated`. Since 00276 the second half of that sentence — "assigned to the group, or holding a substituted request for it" — is gedu_holds_seat_at_session, which this composes rather than restates: three callers now ask that question and it had been written out twice. Behaviour is unchanged.';
+
+
+--
+-- Name: gedu_may_substitute_session(uuid, uuid, date, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.gedu_may_substitute_session(p_gedu_id uuid, p_group_id uuid, p_session_date date, p_absent_gedu_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT p_gedu_id IS NOT NULL
+     AND p_group_id IS NOT NULL
+     AND p_session_date IS NOT NULL
+     -- (1) Not the absent gedu. Also a CHECK on the table, and stated here so
+     -- the refusal reads the same as the other three at every call site.
+     AND p_gedu_id IS DISTINCT FROM p_absent_gedu_id
+     -- (2) A CERTIFIED gedu. This is the third thing gedu_profiles.certified
+     -- gates, and the only eligibility test there is: no coverage area, no
+     -- language match, no schedule-clash check. Those are follow-ups.
+     AND EXISTS (
+           SELECT 1
+             FROM public.profiles pr
+             JOIN public.gedu_profiles gp ON gp.user_id = pr.id
+            WHERE pr.id   = p_gedu_id
+              AND pr.role = 'gedu'::public.user_role
+              AND gp.certified
+         )
+     -- (3) NOT ALREADY EXPECTED at that session. Stops one person holding two
+     -- seats on one session, which would make "who did which job" unanswerable.
+     AND NOT public.gedu_is_expected_at_session(p_gedu_id, p_group_id, p_session_date)
+     -- (4) Holding no non-withdrawn request of their own on that (group, date).
+     -- Stops a sub substituting their own substitute — the person who said they
+     -- cannot be there cannot be the answer to somebody else's absence on the
+     -- same day.
+     AND NOT EXISTS (
+           SELECT 1
+             FROM public.session_substitution_requests r
+            WHERE r.group_id     = p_group_id
+              AND r.session_date = p_session_date
+              AND r.requested_by = p_gedu_id
+              AND r.status <> 'withdrawn'::public.substitution_request_status
+         );
+$$;
+
+
+--
+-- Name: FUNCTION gedu_may_substitute_session(p_gedu_id uuid, p_group_id uuid, p_session_date date, p_absent_gedu_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.gedu_may_substitute_session(p_gedu_id uuid, p_group_id uuid, p_session_date date, p_absent_gedu_id uuid) IS 'Internal predicate: may this gedu be seated as the sub for this (group, date)? Four refusals, and the last two are the interesting ones: (1) not the absent gedu, (2) a certified gedu — the ONLY eligibility test there is, with coverage area, language and schedule clash all deliberately left to follow-ups, (3) not already expected at that session, and (4) holding no non-withdrawn request of their own on that (group, date). Together (3) and (4) stop a sub covering their own substitute and stop two seats collapsing onto one person, which would make "who did which job" unanswerable. Asked by offer_session_substitution, again by approve_session_substitution_offer under the request''s lock, by set_session_substitution, and by get_open_substitution_requests as its exclusion — the pool list shows a gedu exactly the requests they could actually take. Not granted to `authenticated`.';
+
+
+--
+-- Name: gedu_substitutes_group(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.gedu_substitutes_group(p_group_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.session_substitution_requests r
+     WHERE r.group_id   = p_group_id
+       AND r.substitute_id = (SELECT auth.uid())
+       AND r.status     = 'substituted'::public.substitution_request_status
+       AND public.gedu_substitutes_session(r.group_id, r.session_date)
+  );
+$$;
+
+
+--
+-- Name: FUNCTION gedu_substitutes_group(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.gedu_substitutes_group(p_group_id uuid) IS 'Internal-by-intent predicate: does the CALLER hold a live substitution on ANY date of this group? One EXISTS over gedu_substitutes_session, so the access window has exactly one definition. This is the arm added to every GROUP-WIDE gate on gedu_group_assignments — the workspace, the feed, notes, roster, member flair, the game-account editors and the site notes — on the owner''s rule that a sub sees everything the main gedu sees for as long as their window is open. It is NOT the arm used by the two date-scoped exceptions (the voice room and the family report mail), which call gedu_substitutes_session directly. EXPOSED TO `authenticated`, unlike the other three substitution predicates, and for one reason: the gedus_read_assigned_groups policy on product_groups calls it, and an RLS policy is evaluated as the querying role, so it cannot call a private helper. Inlining the EXISTS instead would have needed a table SELECT grant AND a read policy on session_substitution_requests — strictly more Data API surface than one boolean — which is the same trade the three sibling policies on that table already made with has_active_participation_in_group. Self-scoping: it answers only about the caller, no argument can name a different asker, and it is total, so a USING clause is never handed a three-valued answer.';
+
+
+--
+-- Name: gedu_substitutes_session(uuid, date); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.gedu_substitutes_session(p_group_id uuid, p_session_date date) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT public.gedu_holds_unexpired_substitution(p_group_id, p_session_date)
+     AND EXISTS (
+       SELECT 1
+         FROM public.product_groups g
+         JOIN public.products p ON p.id = g.product_id
+        WHERE g.id = p_group_id
+          AND now() >= COALESCE(
+                         lower(public.derive_group_session_window(g.id, p_session_date)),
+                         (p_session_date::timestamp AT TIME ZONE p.timezone)
+                       ) - interval '48 hours'
+     );
+$$;
+
+
+--
+-- Name: FUNCTION gedu_substitutes_session(p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.gedu_substitutes_session(p_group_id uuid, p_session_date date) IS 'Internal predicate: may the CALLER reach this group for this exact date? Their substitution is unexpired (gedu_holds_unexpired_substitution, which carries the window''s END) AND the session has come within 48 hours — now() >= the session''s own scheduled start, derived from the current schedule, minus 48 hours. The single definition of the window''s START; every other substitution access test reaches both bounds through here or through gedu_substitutes_group. A date the schedule no longer projects has no start, and falls back to product-local midnight of the session date, which opens EARLIER than any real session that day would: an orphaned date must not lock a sub out of a session they ran and still owe a report for. Not granted to `authenticated`: it is called from inside SECURITY DEFINER functions only, the two voice predicates among them.';
+
+
+--
 -- Name: gedu_teaches_gamer(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2957,7 +3523,15 @@ CREATE FUNCTION public.gedu_teaches_group(p_group_id uuid) RETURNS boolean
       FROM public.gedu_group_assignments ga
      WHERE ga.group_id = p_group_id
        AND ga.gedu_id  = (SELECT auth.uid())
-  );
+  )
+  -- The substitution branch: a live, certified substitution on this group reaches everything
+  -- the group's assigned gedus reach, for as long as their access window is
+  -- open. Group-wide rather than per-date on purpose — the workspace, the
+  -- roster, the notes and the report are all one surface, and a sub who may
+  -- write the report has to be able to open the page it is written on. The two
+  -- date-scoped exceptions (the voice room and the report MAIL) do not go
+  -- through this predicate; see their own bodies.
+  OR public.gedu_substitutes_group(p_group_id);
 $$;
 
 
@@ -2965,7 +3539,7 @@ $$;
 -- Name: FUNCTION gedu_teaches_group(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.gedu_teaches_group(p_group_id uuid) IS 'Internal predicate: is the caller assigned to this group? Not exposed to authenticated — it is called from inside the SECURITY DEFINER gedu RPCs.';
+COMMENT ON FUNCTION public.gedu_teaches_group(p_group_id uuid) IS 'Internal predicate: may the caller act as staff on this group — assigned to it, OR holding a live substitution on it (gedu_substitutes_group, which carries the certification test and the access window). The single gate behind the group workspace, the session notes and report, the register, the session photos and their delete check, and the group notes; gedu_teaches_gamer composes it too, which is why that predicate needed no edit of its own. NOT the gate behind the voice room or the family report mail — both of those are DATE-scoped and call gedu_substitutes_session directly, because a sub has no business in the group''s other sessions and the report mail is at-most-once with no resend. Not exposed to authenticated: it is called from inside the SECURITY DEFINER gedu RPCs.';
 
 
 --
@@ -2985,7 +3559,13 @@ CREATE FUNCTION public.gedu_teaches_group_product(p_group_id uuid) RETURNS boole
       JOIN public.gedu_group_assignments a ON a.product_id = g.product_id
      WHERE g.id = p_group_id
        AND a.gedu_id = (SELECT auth.uid())
-  );
+  )
+  -- The substitution branch is deliberately GROUP-ONLY, not product-wide. An
+  -- assignment is a standing relationship with a product, which is what earns
+  -- the cross-group mobility above; a substitution is one date on one group, and
+  -- widening it to the product would hand a sub the member flair of every
+  -- sibling group they were never asked to stand in for.
+  OR public.gedu_substitutes_group(p_group_id);
 $$;
 
 
@@ -2993,7 +3573,7 @@ $$;
 -- Name: FUNCTION gedu_teaches_group_product(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.gedu_teaches_group_product(p_group_id uuid) IS 'Internal predicate: is the caller a gedu assigned to ANY group of this group''s product? The same question gedu_teaches_group asks, widened from one group to the whole product — which is the cross-group mobility the member-flair RPCs need, because a substitute standing in for another group is exactly the person who needs the note. Gedu-only and composed with is_admin() at each call site, the dominant pattern in this schema. NOT exposed to authenticated: it is called from inside SECURITY DEFINER RPCs and from nowhere else — in particular from no RLS policy, which is what lets it stay private, since a policy predicate is evaluated as the querying role and would have forced a grant. is_voice_group_moderator computes the same thing with is_admin() folded in; it is deliberately left alone rather than reused or renamed, because the voice_zones and voice_private_zone_occupants policies reference it and its name would make a note read look like a voice concern.';
+COMMENT ON FUNCTION public.gedu_teaches_group_product(p_group_id uuid) IS 'Internal predicate: is the caller a gedu assigned to ANY group of this group''s product? The same question gedu_teaches_group asks, widened from one group to the whole product — which is the cross-group mobility the member-flair RPCs need, because a substitute standing in for another group is exactly the person who needs the note. Gedu-only and composed with is_admin() at each call site, the dominant pattern in this schema. NOT exposed to authenticated: it is called from inside SECURITY DEFINER RPCs and from nowhere else — in particular from no RLS policy, which is what lets it stay private, since a policy predicate is evaluated as the querying role and would have forced a grant. is_voice_group_moderator computes the same thing with is_admin() folded in; it is deliberately left alone rather than reused or renamed, because the voice_zones and voice_private_zone_occupants policies reference it and its name would make a note read look like a voice concern. Since 00272 it additionally admits a LIVE SUBSTITUTION on the group, and the substitution arm is deliberately GROUP-only rather than product-wide: an assignment is a standing relationship with a product, which is what earns the cross-group mobility above, while a substitution is one date on one group, and widening it to the product would hand a sub the member flair of every sibling group they were never asked to stand in for.';
 
 
 --
@@ -3629,6 +4209,7 @@ DECLARE
   v_product jsonb;
   v_site    jsonb;
   v_groups  jsonb;
+  v_viewer  uuid := (SELECT auth.uid());
 BEGIN
   PERFORM public.assert_admin();
 
@@ -3763,6 +4344,35 @@ BEGIN
                  ) ORDER BY s.session_date DESC)
             FROM public.group_sessions s
            WHERE s.group_id = g.id
+        ), '[]'::jsonb),
+
+        -- The group's staff, with roles — the first input the session card's
+        -- staffing line needs, in the same shape get_gedu_group_feed emits it,
+        -- because one card component renders both documents.
+        'gedus', COALESCE((
+          SELECT jsonb_agg(jsonb_build_object(
+                   'id',         pr.id,
+                   'first_name', pr.first_name,
+                   'role',       ga.role
+                 ) ORDER BY pr.first_name)
+            FROM public.gedu_group_assignments ga
+            JOIN public.profiles pr ON pr.id = ga.gedu_id
+           WHERE ga.group_id = g.id
+        ), '[]'::jsonb),
+
+        -- Every non-withdrawn substitution request on the group, in the gedu feed's
+        -- shape verbatim and for the same reason the session shape is: one card
+        -- component renders both. `reason` and `reason_note` DO travel here —
+        -- this document is admin-only end to end, and the reason is what the
+        -- staffing editor shows beside the request.
+        'substitutions', COALESCE((
+          SELECT jsonb_agg(
+                   public.substitution_request_document(r, true, v_viewer)
+                   ORDER BY r.session_date DESC, r.created_at, r.id
+                 )
+            FROM public.session_substitution_requests r
+           WHERE r.group_id = g.id
+             AND r.status <> 'withdrawn'::public.substitution_request_status
         ), '[]'::jsonb)
       ) AS entry
         FROM public.product_groups g
@@ -3782,7 +4392,97 @@ $$;
 -- Name: FUNCTION get_admin_product_sessions(p_product_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_admin_product_sessions(p_product_id uuid) IS 'One round trip behind the admin product page''s Sessions panel: the product''s schedule parameters, its venue and site notes on an in-person product, and every group on it with its standing notes, its register roster and every stored session row with a sparse attendance map and, since 00223, its photos. Admin-only, guard-first on assert_admin. Product-keyed rather than group-keyed because the page shows one product and puts a group selector in front of the feed; asking per group would send the product shell and the site over the wire once per group. Contains no schedule expansion — the client owns the calendar math, exactly as it does for the gedu feed. The SESSION shape is get_gedu_group_feed''s verbatim, because one card component renders both and the two must not disagree about what a session is — which is why `images` ({id, width, height} per photo, ordered by (created_at, id), never the uploader) arrives here in the same shape and needs no versioned name: this document''s reader shares the gedu session''s tolerant schema, and only the strict family one needed get_my_family_product_feed_v2. The ROSTER deliberately is not the gedu feed''s — it carries participant_id and first_name alone, since the only thing this surface does with it is take the register, and the groups panel on the same page already answers who these people are.';
+COMMENT ON FUNCTION public.get_admin_product_sessions(p_product_id uuid) IS 'One round trip behind the admin product page''s Sessions panel: the product''s schedule parameters, its venue and site notes on an in-person product, and every group on it with its standing notes, its register roster and every stored session row with a sparse attendance map and, since 00223, its photos. Admin-only, guard-first on assert_admin. Product-keyed rather than group-keyed because the page shows one product and puts a group selector in front of the feed; asking per group would send the product shell and the site over the wire once per group. Contains no schedule expansion — the client owns the calendar math, exactly as it does for the gedu feed. The SESSION shape is get_gedu_group_feed''s verbatim, because one card component renders both and the two must not disagree about what a session is — which is why `images` ({id, width, height} per photo, ordered by (created_at, id), never the uploader) arrives here in the same shape and needs no versioned name: this document''s reader shares the gedu session''s tolerant schema, and only the strict family one needed get_my_family_product_feed_v2. The ROSTER deliberately is not the gedu feed''s — it carries participant_id and first_name alone, since the only thing this surface does with it is take the register, and the groups panel on the same page already answers who these people are. Since 00272 each group additionally carries `gedus` ({id, first_name, role}) and `substitutions` (every non-withdrawn substitution request on the group), both byte for byte get_gedu_group_feed''s — one card component renders the session cards of both documents, and the staffing line and the Set-a-sub / Clear-sub / Withdraw-request editor are drawn from exactly these two arrays. `reason` and `reason_note` DO travel here: this document is admin-only end to end, and the reason is what the editor shows beside the request.';
+
+
+--
+-- Name: get_admin_substitution_requests(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_admin_substitution_requests() RETURNS jsonb
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  PERFORM public.assert_admin();
+
+  RETURN COALESCE((
+    SELECT jsonb_agg(q.doc ORDER BY q.session_date, q.product_id, q.id)
+      FROM (
+        SELECT r.id,
+               r.session_date,
+               p.id AS product_id,
+               jsonb_build_object(
+                 'id',           r.id,
+                 'group_id',     r.group_id,
+                 'group_name',   g.name,
+                 'session_date', r.session_date,
+                 'role',         r.role,
+                 'reason',       r.reason,
+                 'reason_note',  r.reason_note,
+                 'created_at',   r.created_at,
+                 'requested_by', r.requested_by,
+                 'requested_by_first_name', rq.first_name,
+                 'requested_by_last_name',  rq.last_name,
+                 'product', jsonb_build_object(
+                   'id',           p.id,
+                   'product_type', p.product_type,
+                   'timezone',     p.timezone,
+                   'is_remote',    p.is_remote,
+                   'translations', COALESCE((
+                     SELECT jsonb_agg(
+                              jsonb_build_object('locale', pt.locale, 'name', pt.name)
+                              ORDER BY pt.locale
+                            )
+                       FROM public.product_translations pt
+                      WHERE pt.product_id = p.id
+                   ), '[]'::jsonb),
+                   'schedule_slots', COALESCE((
+                     SELECT jsonb_agg(
+                              jsonb_build_object(
+                                'weekday',          ss.weekday,
+                                'start_time',       to_char(ss.start_time, 'HH24:MI'),
+                                'duration_minutes', ss.duration_minutes
+                              )
+                              ORDER BY ss.weekday, ss.start_time
+                            )
+                       FROM public.schedule_slots ss
+                      WHERE ss.product_id = p.id
+                   ), '[]'::jsonb)
+                 ),
+                 'offers', COALESCE((
+                   SELECT jsonb_agg(
+                            jsonb_build_object(
+                              'id',         o.id,
+                              'gedu_id',    o.gedu_id,
+                              'first_name', op.first_name,
+                              'last_name',  op.last_name,
+                              'created_at', o.created_at
+                            )
+                            ORDER BY o.created_at, o.id
+                          )
+                     FROM public.session_substitution_offers o
+                     JOIN public.profiles op ON op.id = o.gedu_id
+                    WHERE o.request_id = r.id
+                 ), '[]'::jsonb)
+               ) AS doc
+          FROM public.session_substitution_requests r
+          JOIN public.product_groups g ON g.id = r.group_id
+          JOIN public.products p       ON p.id = g.product_id
+          JOIN public.profiles rq      ON rq.id = r.requested_by
+         WHERE r.status = 'open'::public.substitution_request_status
+           AND r.session_date >= (now() AT TIME ZONE p.timezone)::date
+      ) q
+  ), '[]'::jsonb);
+END;
+$$;
+
+
+--
+-- Name: FUNCTION get_admin_substitution_requests(); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.get_admin_substitution_requests() IS 'The admin Substitutions page: a bare ARRAY of every OPEN request dated today or later in its product''s timezone, ordered by date then product then id, each with the group, the product shell (type, timezone, remote flag, translations and schedule_slots), the requester''s name, the role being substituted, the reason and note, and every offer with its offerer''s NAME AND NOTHING ELSE. An empty array is the all-clear. A request whose date has PASSED drops out on its own, because "unfilled" is a derived state of an open request and not something an admin can still act on; a request the schedule no longer projects stays in, because this orders by DATE and never by a derived instant. An offer carries NO certified flag and NO criminal_record_check_at, and that is about the data rather than the design: an uncertified gedu cannot hold an offer, because gedu_may_substitute_session requires `certified` and guards every path that creates one, approve_session_substitution_offer re-asks it under the request''s lock and set_session_substitution asks it too — so a "certified" chip was true by construction, and the one case it could have caught (an offerer de-certified after offering) is refused at approval with a message the admin reads. The extract stamp is children''s-safety data about a contractor and is not emitted to a surface that does not act on it. A bare array rather than an object of members, exactly as the gedu''s own pool read returns one. Admin-only, guard-first. SLOTS and not an instant: the client owns the calendar maths on every substitution surface, exactly as both session feeds do. This is the ONLY gedu-visible-reason surface besides the admin session document — a `sick` category is health data about a contractor.';
 
 
 --
@@ -3818,10 +4518,10 @@ COMMENT ON FUNCTION public.get_chat_channel_roster(p_channel_id uuid) IS 'The ac
 
 
 --
--- Name: get_gedu_assigned_product(uuid); Type: FUNCTION; Schema: public; Owner: -
+-- Name: get_gedu_assigned_product(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.get_gedu_assigned_product(p_product_id uuid) RETURNS jsonb
+CREATE FUNCTION public.get_gedu_assigned_product(p_product_id uuid, p_group_id uuid DEFAULT NULL::uuid) RETURNS jsonb
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
@@ -3833,12 +4533,44 @@ DECLARE
 BEGIN
   PERFORM public.assert_role('gedu');
 
-  SELECT group_id
-    INTO v_my_group_id
-    FROM gedu_group_assignments
-   WHERE product_id = p_product_id
-     AND gedu_id    = v_caller_id
-   LIMIT 1;
+  -- This RPC is the door to the whole workspace, so its gate and its "which
+  -- group is mine" resolution are ONE question and are answered together. A
+  -- substitution has no assignment row to resolve a group from, which is why the
+  -- resolution had to be widened alongside the gate rather than only the gate.
+  IF p_group_id IS NOT NULL THEN
+    -- An explicit group: the substitution card's link carries one, so a gedu substituting
+    -- a SIBLING group of a product they already teach lands in the right
+    -- workspace instead of their own group's. It must belong to this product
+    -- and be one the caller is assigned to or substitutes on — gedu_teaches_group is
+    -- exactly that pair of questions since this migration.
+    SELECT g.id
+      INTO v_my_group_id
+      FROM product_groups g
+     WHERE g.id         = p_group_id
+       AND g.product_id = p_product_id
+       AND public.gedu_teaches_group(g.id);
+  ELSE
+    SELECT group_id
+      INTO v_my_group_id
+      FROM gedu_group_assignments
+     WHERE product_id = p_product_id
+       AND gedu_id    = v_caller_id
+     LIMIT 1;
+
+    -- No assignment on this product: a pure substitution. Resolve the substituted group,
+    -- deterministically ordered so two live substitutions on one product answer the
+    -- same way every call. (The card always sends p_group_id, so this arm is
+    -- the fallback for a bare link rather than the normal path.)
+    IF v_my_group_id IS NULL THEN
+      SELECT g.id
+        INTO v_my_group_id
+        FROM product_groups g
+       WHERE g.product_id = p_product_id
+         AND public.gedu_substitutes_group(g.id)
+       ORDER BY g.created_at, g.id
+       LIMIT 1;
+    END IF;
+  END IF;
 
   IF v_my_group_id IS NULL THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
@@ -3913,11 +4645,16 @@ BEGIN
            WHERE part.group_id = pg.id
              AND part.status   = 'active'
         ),
+        -- Each educator now carries their assignment ROLE — primary or
+        -- assistant. Every read that LISTS a group's staff carries it, because
+        -- "who is on this group" and "in what capacity" are one answer, and the
+        -- role is a pay CLASS rather than a figure.
         'gedus', COALESCE((
           SELECT jsonb_agg(
                    jsonb_build_object(
                      'id',         gp.id,
-                     'first_name', gp.first_name
+                     'first_name', gp.first_name,
+                     'role',       ga.role
                    )
                    ORDER BY gp.first_name
                  )
@@ -4008,10 +4745,10 @@ $$;
 
 
 --
--- Name: FUNCTION get_gedu_assigned_product(p_product_id uuid); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION get_gedu_assigned_product(p_product_id uuid, p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid) IS 'One round trip for a gedu opening a product they are assigned to: the product shell, which group is theirs, and every group on the product with its participant_count and gedus. The roster rides only on the caller''s own group and is keyed by participant_id (00175) — the same shape get_gedu_group_feed serves, kept in parity on purpose even though the rendered roster always comes from the feed''s fresher copy. Since 00195 the shell carries the product''s topic (which decides whether a game identity is shown at all, and which one) and each roster entry carries roblox_username/roblox_user_id beside the Minecraft pair. Since 00203 each roster entry also carries the staff-only flair — group_joined_at, note and note_updated_by_first_name — emitted unconditionally, because the join stamp is a fact and the clubs-only newcomer rule is applied by the client. Since 00227 each roster entry carries `creations` too (always an array, [] when there is no row) and the shell carries requires_gamer_creations, both in parity with get_gedu_group_feed for the same reason every other field is: the page composes both documents, and a field on one shell and not the other is exactly the drift the parity exists to prevent.';
+COMMENT ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid, p_group_id uuid) IS 'One round trip for a gedu opening a product they have a seat on: the product shell, which group is theirs, and every group on the product with its participant_count and gedus. The roster rides only on the caller''s own group and is keyed by participant_id (00175) — the same shape get_gedu_group_feed serves, kept in parity on purpose even though the rendered roster always comes from the feed''s fresher copy. Since 00195 the shell carries the product''s topic (which decides whether a game identity is shown at all, and which one) and each roster entry carries roblox_username/roblox_user_id beside the Minecraft pair. Since 00203 each roster entry also carries the staff-only flair — group_joined_at, note and note_updated_by_first_name — emitted unconditionally, because the join stamp is a fact and the clubs-only newcomer rule is applied by the client. Since 00227 each roster entry carries `creations` too (always an array, [] when there is no row) and the shell carries requires_gamer_creations, both in parity with get_gedu_group_feed for the same reason every other field is: the page composes both documents. SINCE 00272 this is THE DOOR A SUBSTITUTION COMES THROUGH, so both halves of it were widened rather than only the gate: p_group_id is optional and, when given, must name a group of this product that the caller is assigned to or substitutes on — which is what lets a gedu substituting a SIBLING group of a product they already teach land in the right workspace instead of their own group''s. Without it the assignment group is resolved as before, and a caller with no assignment on the product falls back to their substituted group, deterministically ordered. A caller with neither is refused with 42501, as they always were. Each entry of `gedus` additionally carries the assignment `role`.';
 
 
 --
@@ -4029,6 +4766,10 @@ DECLARE
   v_site       jsonb;
   v_roster     jsonb;
   v_sessions   jsonb;
+  v_gedus      jsonb;
+  v_substitutions     jsonb;
+  v_viewer     uuid    := (SELECT auth.uid());
+  v_is_admin   boolean;
 BEGIN
   -- Guard-first, in the shape set_group_notes established and the authorization
   -- spine reads: the role half admits an admin or a gedu and refuses everyone
@@ -4046,7 +4787,9 @@ BEGIN
   -- on a product the caller is assigned to" is a change to this predicate alone,
   -- and nothing downstream assumes the caller teaches the group they are
   -- reading, which is exactly what the admin path above now relies on.
-  IF NOT public.is_admin()
+  v_is_admin := public.is_admin();
+
+  IF NOT v_is_admin
      AND NOT public.gedu_teaches_group(p_group_id) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
@@ -4275,12 +5018,56 @@ BEGIN
        WHERE s.group_id = p_group_id
     ) AS session_rows;
 
+  -- The group's STAFF, with roles. The client's staffing derivation needs two
+  -- inputs — who is assigned and in what role, and the non-withdrawn requests
+  -- for the date — and this is the first of them. First name only, exactly as
+  -- every other staff list on this surface: a workspace names colleagues, it
+  -- does not carry their records.
+  SELECT COALESCE(jsonb_agg(entry ORDER BY entry->>'first_name'), '[]'::jsonb)
+    INTO v_gedus
+    FROM (
+      SELECT jsonb_build_object(
+        'id',         pr.id,
+        'first_name', pr.first_name,
+        'role',       ga.role
+      ) AS entry
+        FROM public.gedu_group_assignments ga
+        JOIN public.profiles pr ON pr.id = ga.gedu_id
+       WHERE ga.group_id = p_group_id
+    ) AS gedu_rows;
+
+  -- Every NON-WITHDRAWN substitution request on the group, unbounded — exactly as this
+  -- document already returns every stored session row. A withdrawn request is
+  -- history that changes nothing about who is expected, so it is the one status
+  -- that does not travel. The client merges these onto its entries by date; a
+  -- projected date with no session row carries its requests like any other.
+  --
+  -- `reason` and `reason_note` ride only for an ADMIN. This document is served
+  -- to an admin too (the admin group details page renders the gedu workspace's
+  -- body), so the flag is the CALLER's role rather than a property of the RPC —
+  -- which is what keeps a `sick` category, which is health data about a
+  -- contractor, off a colleague's screen while the one document stays one
+  -- document.
+  SELECT COALESCE(
+           jsonb_agg(
+             public.substitution_request_document(r, v_is_admin, v_viewer, true)
+             ORDER BY r.session_date DESC, r.created_at, r.id
+           ),
+           '[]'::jsonb
+         )
+    INTO v_substitutions
+    FROM public.session_substitution_requests r
+   WHERE r.group_id = p_group_id
+     AND r.status <> 'withdrawn'::public.substitution_request_status;
+
   RETURN jsonb_build_object(
     'product',  v_product,
     'group',    v_group,
     'site',     v_site,
     'roster',   v_roster,
-    'sessions', v_sessions
+    'sessions', v_sessions,
+    'gedus',    v_gedus,
+    'substitutions',   v_substitutions
   );
 END;
 $$;
@@ -4290,7 +5077,7 @@ $$;
 -- Name: FUNCTION get_gedu_group_feed(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) IS 'One round trip for a group workspace: product shell (with the gedu-only material link, read from product_staff_details), group notes, site notes on in-person products, the current roster, and every stored session row with its sparse attendance map and, since 00222, its photos. Contains no schedule expansion — the client owns the calendar math. Open since 00204 to an ADMIN as well as to the assigned gedu, guard-first on assert_role with the ownership question as a second 42501 — the same shape set_group_notes uses. The admin caller is the product page''s per-group GROUP DETAILS page, which renders the gedu workspace''s page body unchanged: one body fed by one document is what keeps the two surfaces one surface, where a second admin-shaped RPC would have started drifting field by field. An admin passes the ownership half outright; a gedu is still shown only their OWN group''s feed, and a customer or a gamer is still refused on the first statement, which is what keeps the material link and the three staff notes off every family surface. Each roster row is keyed by participant_id (00175 — whoever holds the seat, child or adult), carries both game identities since 00195 (minecraft_username/minecraft_uuid and roblox_username/roblox_user_id, independent of each other and drawn according to the product''s topic, which this document does not carry), and carries two contact fields and never both: parent_email for a child (their linked parent), participant_email for an adult seat (their own address, NULL on child rows because a gamer profile''s email is a synthetic non-mailbox). Since 00203 each roster row also carries the staff-only flair — group_joined_at (when the seat entered THIS group, as against signed_up_at, which is when it was taken on the product), note and note_updated_by_first_name — in deliberate parity with get_gedu_assigned_product''s roster, which is the parity the page depends on because it renders this copy. Since 00227 each roster row additionally carries `creations` (always an array, [] when there is no row) — the one roster field that is NOT staff-only, since the member''s own family reads the same list — and the product shell carries requires_gamer_creations, because the final session''s fourth completeness condition is derived on the CLIENT from that flag, the schedule and this roster''s creations; no document carries an "owed" field. Each session row carries report_emailed_at since 00197 — when its report was mailed to the families, NULL until it was — and never report_emailed_by, which is audit and renders nowhere. Since 00222 each session row also carries `images`: {id, width, height} per photo, ordered by (created_at, id), with the uploader deliberately off the wire for the same reason the sender is. Widened IN PLACE rather than under a versioned name because the gedu contracts schema is tolerant of unknown keys.';
+COMMENT ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) IS 'One round trip for a group workspace: product shell (with the gedu-only material link, read from product_staff_details), group notes, site notes on in-person products, the current roster, and every stored session row with its sparse attendance map and, since 00222, its photos. Contains no schedule expansion — the client owns the calendar math. Open since 00204 to an ADMIN as well as to the assigned gedu, guard-first on assert_role with the ownership question as a second 42501 — the same shape set_group_notes uses. The admin caller is the product page''s per-group GROUP DETAILS page, which renders the gedu workspace''s page body unchanged: one body fed by one document is what keeps the two surfaces one surface, where a second admin-shaped RPC would have started drifting field by field. An admin passes the ownership half outright; a gedu is still shown only their OWN group''s feed, and a customer or a gamer is still refused on the first statement, which is what keeps the material link and the three staff notes off every family surface. Each roster row is keyed by participant_id (00175 — whoever holds the seat, child or adult), carries both game identities since 00195 (minecraft_username/minecraft_uuid and roblox_username/roblox_user_id, independent of each other and drawn according to the product''s topic, which this document does not carry), and carries two contact fields and never both: parent_email for a child (their linked parent), participant_email for an adult seat (their own address, NULL on child rows because a gamer profile''s email is a synthetic non-mailbox). Since 00203 each roster row also carries the staff-only flair — group_joined_at (when the seat entered THIS group, as against signed_up_at, which is when it was taken on the product), note and note_updated_by_first_name — in deliberate parity with get_gedu_assigned_product''s roster, which is the parity the page depends on because it renders this copy. Since 00227 each roster row additionally carries `creations` (always an array, [] when there is no row) — the one roster field that is NOT staff-only, since the member''s own family reads the same list — and the product shell carries requires_gamer_creations, because the final session''s fourth completeness condition is derived on the CLIENT from that flag, the schedule and this roster''s creations; no document carries an "owed" field. Each session row carries report_emailed_at since 00197 — when its report was mailed to the families, NULL until it was — and never report_emailed_by, which is audit and renders nowhere. Since 00222 each session row also carries `images`: {id, width, height} per photo, ordered by (created_at, id), with the uploader deliberately off the wire for the same reason the sender is. Widened IN PLACE rather than under a versioned name because the gedu contracts schema is tolerant of unknown keys. Since 00272 the document carries two more members, both of them inputs to the client-side staffing derivation rather than answers from it: `gedus`, the group''s assignments as {id, first_name, role}; and `substitutions`, every NON-WITHDRAWN substitution request on the group, unbounded, in the one shape substitution_request_document defines and every substitution write returns. Withdrawn is the one status that does not travel, because it changes nothing about who is expected. The client merges substitutions onto its entries by date, and a projected date with no session row carries its requests like any other. `reason` and `reason_note` ride for an ADMIN caller only — this document is served to an admin too, so the flag is the CALLER''s role rather than a property of the RPC, which is what keeps a `sick` category off a colleague''s screen while the one document stays one document. `offer_count` rides for an admin and for the requester themselves. The GATE is unchanged in shape and widened in reach: gedu_teaches_group now admits a live substitution on the group, so a sub opens the workspace they are substituting. Since 00276 it is the ONE caller that asks substitution_request_document to reveal the requester explicitly. The workspace is reached only by staff on the group and its session card''s staffing line names who is away; the REASON still rides on the admin flag alone, so a colleague learns that somebody is absent and never that it was `sick`.';
 
 
 --
@@ -4381,7 +5168,7 @@ COMMENT ON FUNCTION public.get_group_staff_overlay(p_group_id uuid) IS 'The staf
 -- Name: get_my_assigned_products(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.get_my_assigned_products() RETURNS TABLE(product_id uuid, group_id uuid, timezone text, start_date date, end_date date, is_remote boolean, product_type public.product_type, product_translations jsonb, schedule_slots jsonb, group_count integer, participant_count integer)
+CREATE FUNCTION public.get_my_assigned_products() RETURNS TABLE(product_id uuid, group_id uuid, timezone text, start_date date, end_date date, is_remote boolean, product_type public.product_type, product_translations jsonb, schedule_slots jsonb, group_count integer, participant_count integer, kind text, substitution_date date)
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
@@ -4390,6 +5177,12 @@ DECLARE
 BEGIN
   PERFORM public.assert_role('gedu');
 
+  -- Two arms, discriminated by `kind`, because a gedu's dashboard now has two
+  -- kinds of thing on it: a standing ASSIGNMENT (one row per assignment, as
+  -- before, `substitution_date` null) and an unexpired SUBSTITUTION (one row per substituted
+  -- date, `substitution_date` set). They share every product-shell column, which is why
+  -- they are one RPC rather than two — the card the dashboard draws differs in
+  -- its chrome, not in the facts it needs.
   RETURN QUERY
   SELECT
     p.id            AS product_id,
@@ -4432,10 +5225,79 @@ BEGIN
         FROM participations part
        WHERE part.product_id = p.id
          AND part.status     = 'active'
-    ) AS participant_count
+    ) AS participant_count,
+    'assignment'::text AS kind,
+    NULL::date         AS substitution_date
   FROM gedu_group_assignments a
   JOIN products p ON p.id = a.product_id
-  WHERE a.gedu_id = v_gedu_id;
+  WHERE a.gedu_id = v_gedu_id
+
+  UNION ALL
+
+  -- The caller's UNEXPIRED substitutions: one row per substituted (group, date) the caller
+  -- still holds. `gedu_holds_unexpired_substitution` carries the whole of that — it is
+  -- keyed to auth.uid(), requires the holder to still be certified, and applies
+  -- the window's END — so nothing here restates any of it. The status test
+  -- beside it is not redundant either: it is what makes the join read as "a
+  -- substituted request", and the predicate then decides whether it is still
+  -- current.
+  --
+  -- Deliberately NOT gedu_substitutes_session, which would also require the session
+  -- to be within 48 hours: this is the row the substitution card on My SOG is drawn
+  -- from, and a sub has to see the afternoon they accepted from the moment it
+  -- is theirs, not from the moment they can open the group. The workspace the
+  -- card links to is the thing that stays shut, and it is gated on
+  -- gedu_substitutes_session like every other access surface.
+  SELECT
+    p.id            AS product_id,
+    r.group_id      AS group_id,
+    p.timezone      AS timezone,
+    p.start_date    AS start_date,
+    p.end_date      AS end_date,
+    p.is_remote     AS is_remote,
+    p.product_type  AS product_type,
+    COALESCE((
+      SELECT jsonb_agg(
+               jsonb_build_object(
+                 'locale',      pt.locale,
+                 'name',        pt.name,
+                 'description', pt.short_description
+               )
+             )
+        FROM product_translations pt
+       WHERE pt.product_id = p.id
+    ), '[]'::jsonb) AS product_translations,
+    COALESCE((
+      SELECT jsonb_agg(
+               jsonb_build_object(
+                 'weekday',          ss.weekday,
+                 'start_time',       to_char(ss.start_time, 'HH24:MI:SS'),
+                 'duration_minutes', ss.duration_minutes
+               )
+               ORDER BY ss.weekday, ss.start_time
+             )
+        FROM schedule_slots ss
+       WHERE ss.product_id = p.id
+    ), '[]'::jsonb) AS schedule_slots,
+    (
+      SELECT COUNT(*)::INTEGER
+        FROM product_groups pg
+       WHERE pg.product_id = p.id
+    ) AS group_count,
+    (
+      SELECT COUNT(*)::INTEGER
+        FROM participations part
+       WHERE part.product_id = p.id
+         AND part.status     = 'active'
+    ) AS participant_count,
+    'substitution'::text   AS kind,
+    r.session_date  AS substitution_date
+  FROM session_substitution_requests r
+  JOIN product_groups g ON g.id = r.group_id
+  JOIN products p       ON p.id = g.product_id
+  WHERE r.substitute_id = v_gedu_id
+    AND r.status     = 'substituted'::public.substitution_request_status
+    AND public.gedu_holds_unexpired_substitution(r.group_id, r.session_date);
 END;
 $$;
 
@@ -4444,7 +5306,7 @@ $$;
 -- Name: FUNCTION get_my_assigned_products(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_my_assigned_products() IS 'Every product the calling gedu is assigned to, one row per assignment, with the product shell, its schedule slots, how many groups it has and how many active seats (participant_count — renamed from gamer_count in 00175, because a seat may be held by an adult since 00173). Gedu-gated on its first statement.';
+COMMENT ON FUNCTION public.get_my_assigned_products() IS 'Every product the calling gedu has a seat on, one row per seat, with the product shell, its schedule slots, how many groups it has and how many active seats (participant_count — renamed from gamer_count in 00175, because a seat may be held by an adult since 00173). Gedu-gated on its first statement. TWO KINDS OF SEAT since 00272, discriminated by `kind`: an `assignment` row per gedu_group_assignments row, with `substitution_date` null, exactly as this function always returned; and a `substitution` row per UNEXPIRED substitution date, with `substitution_date` set — a `substituted` request whose holder is still certified and whose window has not closed, which is the whole of what gedu_holds_unexpired_substitution decides. That predicate rather than gedu_substitutes_session, and the difference is the point: this read draws the substitution CARD on My SOG, which stands from approval, where the workspace the card links to opens 48 hours before the substituted session. A substitution row therefore reaches a sub who cannot yet open the group, and carries nothing that would not be theirs to read then: names, a type, a date, the schedule, and two head counts. One RPC rather than two because the two kinds share every product-shell column and the dashboard card differs in its chrome rather than in the facts it needs.';
 
 
 --
@@ -4812,11 +5674,54 @@ BEGIN
   PERFORM public.assert_role('gedu');
 
   RETURN COALESCE((
+    -- The caller's SEATS on groups, of which there are now two kinds. The union
+    -- is the whole of the change to this function: everything below it is
+    -- written against a (product, group) pair and a possible substitution DATE, and
+    -- does not care which arm produced them.
+    --
+    --   * `assignment` — one row per gedu_group_assignments row, exactly as
+    --     before, with `substitution_date` null.
+    --   * `substitution`      — one row per UNEXPIRED substitution date.
+    --     gedu_holds_unexpired_substitution carries the whole of that: keyed to
+    --     auth.uid(), the holder still certified, and the window's END not yet
+    --     passed. Deliberately not gedu_substitutes_session, which would also
+    --     require the session to be within 48 hours — this arm feeds the substitution
+    --     card a sub reads on My SOG, which exists from approval, where the
+    --     workspace it links to opens at T-48h.
+    --
+    -- `gedu_id` is carried through rather than dropped so the closing
+    -- `WHERE a.gedu_id = v_uid` still reads as the statement it always was.
+    WITH seat AS (
+      SELECT a0.product_id,
+             a0.group_id,
+             a0.gedu_id,
+             'assignment'::text AS kind,
+             NULL::date         AS substitution_date
+        FROM public.gedu_group_assignments a0
+       WHERE a0.gedu_id = v_uid
+      UNION ALL
+      SELECT g0.product_id,
+             r0.group_id,
+             r0.substitute_id AS gedu_id,
+             'substitution'::text  AS kind,
+             r0.session_date AS substitution_date
+        FROM public.session_substitution_requests r0
+        JOIN public.product_groups g0 ON g0.id = r0.group_id
+       WHERE r0.substitute_id = v_uid
+         AND r0.status     = 'substituted'::public.substitution_request_status
+         AND public.gedu_holds_unexpired_substitution(r0.group_id, r0.session_date)
+    )
     SELECT jsonb_agg(
              jsonb_build_object(
                'product_id',              a.product_id,
                'group_id',                a.group_id,
                'group_name',              g.name,
+               -- Which kind of seat this row is, and on which date when it is a
+               -- substitution. The dashboard rollup keys on (product, group) and a
+               -- substitution card's identity is (group, date) — one card per substituted
+               -- date, standing from approval until the substitution expires.
+               'kind',                    a.kind,
+               'substitution_date',            a.substitution_date,
                -- Renamed from group_gamer_count in 00175: the count is every
                -- active seat on the group, and since 00173 one of those can be
                -- an adult.
@@ -4830,9 +5735,9 @@ BEGIN
                'site_name',               site.name,
                'attention_count',         COALESCE(owed.owed_count, 0)
              )
-             ORDER BY g.name
+             ORDER BY g.name, a.kind, a.substitution_date
            )
-      FROM public.gedu_group_assignments a
+      FROM seat a
       JOIN public.product_groups g ON g.id = a.group_id
       JOIN public.products p       ON p.id = a.product_id
 
@@ -4989,6 +5894,28 @@ BEGIN
           ) AS expected
 
          WHERE roster.roster_size > 0
+           -- A SUBSTITUTION row owes ONE date: the one it substitutes for. The four conditions
+           -- below are untouched and simply see a set of one occurrence, which
+           -- is what "the same code path, restricted to that date" means — no
+           -- second computation, and in particular the creations condition (4)
+           -- fires for a substitution only when the substitution date really is the run's
+           -- final occurrence. An ASSIGNMENT row sees every occurrence, as
+           -- before.
+           AND (a.substitution_date IS NULL OR occurrence.session_date = a.substitution_date)
+           -- A date the caller holds a NON-WITHDRAWN request on is not their
+           -- work, whichever kind of seat this row is: they have said they
+           -- cannot be there. The badge must not count it, whether the request
+           -- is still open, already substituted, or a sub-of-sub chain's second
+           -- link. This has a TWIN IN TYPESCRIPT (see the comment below on the
+           -- four conditions) and the twin learns the same rule.
+           AND NOT EXISTS (
+             SELECT 1
+               FROM public.session_substitution_requests rq
+              WHERE rq.group_id     = g.id
+                AND rq.session_date = occurrence.session_date
+                AND rq.requested_by = v_uid
+                AND rq.status <> 'withdrawn'::public.substitution_request_status
+           )
            -- "Needs attention" is FOUR questions joined by OR, and any one
            -- alone keeps the session on the list.
            --
@@ -5139,7 +6066,7 @@ $$;
 -- Name: FUNCTION get_my_gedu_assignment_summaries(p_epoch_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date) IS 'One row per gedu assignment for the dashboard cards: group name, that group''s participant count (renamed from group_gamer_count in 00175 — an active seat may be held by an adult since 00173), the venue name on in-person products, and how many past sessions still need attention. A finished session on or after the epoch counts until ALL of: the register is in, a family-facing report is written, the mail telling the families it is there has been sent (00197), and — since 00227, on the run''s FINAL session of a product with requires_gamer_creations set — every current roster member has at least one creation. Since 00243 the register condition is scoped to the members who had JOINED the group before that occurrence ended: both the marks counted and the size they are compared against, off participations.group_joined_at against an end instant resolved once per occurrence (the stored row''s ends_at, else the min slot end for that weekday, which is the same instant the "has it finished" test already used). group_participant_count and the empty-roster guard deliberately keep measuring the WHOLE current roster — a card''s headcount and the empty-group exemption are not per-occurrence questions. The report and mail conditions are unscoped because a session owes those whoever was in the room. The creations condition carries the SAME join-date scoping as the register condition, on the owner''s principle that a gedu owes a creation for every gamer who was in the group at the time of the last session — so a seat placed into the group after the final session ended owes nothing, and one occurrence cannot answer "who was this for" two different ways. Only the JOIN half of that principle is expressible: a member who has since LEFT owes nothing, because the roster is active seats and a departure leaves no trace. The final session is the last occurrence the schedule projects on or before end_date, derived here rather than stored; an open-ended product (end_date NULL) has none and therefore never owes creations, which is documented behaviour rather than an error. The badge''s unit is unchanged: it counts SESSIONS needing attention, and the final one simply has one more way to need it. The enforcement epoch travels in as an argument because it is a code constant, not a column. This count has a twin in TypeScript — the gedu feed''s entry-state derivation, which answers the same question for one card — and the two must be changed together, on all four conditions and on who a session is for, which now scopes two of them.';
+COMMENT ON FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date) IS 'One row per gedu assignment for the dashboard cards: group name, that group''s participant count (renamed from group_gamer_count in 00175 — an active seat may be held by an adult since 00173), the venue name on in-person products, and how many past sessions still need attention. A finished session on or after the epoch counts until ALL of: the register is in, a family-facing report is written, the mail telling the families it is there has been sent (00197), and — since 00227, on the run''s FINAL session of a product with requires_gamer_creations set — every current roster member has at least one creation. Since 00243 the register condition is scoped to the members who had JOINED the group before that occurrence ended: both the marks counted and the size they are compared against, off participations.group_joined_at against an end instant resolved once per occurrence (the stored row''s ends_at, else the min slot end for that weekday, which is the same instant the "has it finished" test already used). group_participant_count and the empty-roster guard deliberately keep measuring the WHOLE current roster — a card''s headcount and the empty-group exemption are not per-occurrence questions. The report and mail conditions are unscoped because a session owes those whoever was in the room. The creations condition carries the SAME join-date scoping as the register condition, on the owner''s principle that a gedu owes a creation for every gamer who was in the group at the time of the last session — so a seat placed into the group after the final session ended owes nothing, and one occurrence cannot answer "who was this for" two different ways. Only the JOIN half of that principle is expressible: a member who has since LEFT owes nothing, because the roster is active seats and a departure leaves no trace. The final session is the last occurrence the schedule projects on or before end_date, derived here rather than stored; an open-ended product (end_date NULL) has none and therefore never owes creations, which is documented behaviour rather than an error. The badge''s unit is unchanged: it counts SESSIONS needing attention, and the final one simply has one more way to need it. The enforcement epoch travels in as an argument because it is a code constant, not a column. This count has a twin in TypeScript — the gedu feed''s entry-state derivation, which answers the same question for one card — and the two must be changed together, on all four conditions and on who a session is for, which now scopes two of them. SINCE 00272 a second kind of seat feeds the same machinery: a `substitution` row per substitution date, carrying `kind` and `substitution_date`, whose owed count is the same four conditions applied to a set of one occurrence — so it is 0 or 1 and never a term''s worth. Since 00278 that arm asks gedu_holds_unexpired_substitution rather than gedu_substitutes_session: the card stands from approval, where the workspace behind it opens 48 hours before the substituted session, and a card that waited for the workspace would hide from a sub the afternoon they had agreed to take. A substitution still locked owes nothing by construction, because every occurrence this count ranges over has already ended.';
 
 
 --
@@ -5216,6 +6143,126 @@ COMMENT ON FUNCTION public.get_my_waitlist_positions() IS 'Every waitlist positi
 
 
 --
+-- Name: get_open_substitution_requests(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_open_substitution_requests() RETURNS jsonb
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_caller uuid := (SELECT auth.uid());
+BEGIN
+  PERFORM public.assert_role('gedu');
+
+  -- The pool list: every open request the caller could actually take. The
+  -- exclusion is the `may substitute` predicate itself rather than a hand-written
+  -- copy of its clauses, so the list and the offer button can never disagree —
+  -- a session the gedu is expected at, one they have their own request on, and
+  -- their own absence are all out by construction.
+  --
+  -- The ABSENT GEDU IS NOT NAMED. Naming them half-reveals a private reason
+  -- (everybody knows who is off sick), and the seat being substituted belongs to the
+  -- group rather than to a person the volunteer needs to know about.
+  --
+  -- Bounded to the next 60 days, which is a list bound and not a rule: a request
+  -- further out than that exists and is staffable from the admin queue.
+  --
+  -- The client owns the calendar math, exactly as both feeds do — this emits the
+  -- date plus the product's slots and timezone and computes no instant.
+  RETURN COALESCE((
+    SELECT jsonb_agg(
+             jsonb_build_object(
+               'request_id',   r.id,
+               'group_id',     r.group_id,
+               'group_name',   g.name,
+               'session_date', r.session_date,
+               'role',         r.role,
+               -- The fee for THIS role, and null when the product has not set
+               -- one. Null is a blank field rather than a volunteer session: the
+               -- surface shows nothing and flags nothing, which is the existing
+               -- treatment of a missing assistant fee.
+               'fee_cents',
+                 CASE r.role
+                   WHEN 'primary'::public.gedu_assignment_role
+                     THEN p.primary_gedu_fee_cents
+                   ELSE p.assistant_gedu_fee_cents
+                 END,
+               'has_offered', EXISTS (
+                 SELECT 1
+                   FROM public.session_substitution_offers o
+                  WHERE o.request_id = r.id
+                    AND o.gedu_id    = v_caller
+               ),
+               'product', jsonb_build_object(
+                 'id',                   p.id,
+                 'product_type',         p.product_type,
+                 'topic',                p.topic,
+                 'spoken_language_code', p.spoken_language_code,
+                 'timezone',             p.timezone,
+                 'is_remote',            p.is_remote,
+                 'start_date',           p.start_date,
+                 'end_date',             p.end_date,
+                 -- The venue, on in-person products only — the same test every
+                 -- other read on this surface makes, because a remote
+                 -- municipality club carries a location_id (a municipality, by
+                 -- CHECK) and has no building.
+                 'site_name', (
+                   SELECT l.name
+                     FROM public.locations l
+                    WHERE l.id = p.location_id
+                      AND p.is_remote = false
+                 ),
+                 'translations', COALESCE((
+                   SELECT jsonb_agg(
+                            jsonb_build_object(
+                              'locale',      pt.locale,
+                              'name',        pt.name,
+                              'description', pt.short_description
+                            )
+                            ORDER BY pt.locale
+                          )
+                     FROM public.product_translations pt
+                    WHERE pt.product_id = p.id
+                 ), '[]'::jsonb),
+                 'schedule_slots', COALESCE((
+                   SELECT jsonb_agg(
+                            jsonb_build_object(
+                              'weekday',          ss.weekday,
+                              'start_time',       to_char(ss.start_time, 'HH24:MI:SS'),
+                              'duration_minutes', ss.duration_minutes
+                            )
+                            ORDER BY ss.weekday, ss.start_time
+                          )
+                     FROM public.schedule_slots ss
+                    WHERE ss.product_id = p.id
+                 ), '[]'::jsonb)
+               )
+             )
+             ORDER BY r.session_date, p.id, g.name, r.id
+           )
+      FROM public.session_substitution_requests r
+      JOIN public.product_groups g ON g.id = r.group_id
+      JOIN public.products p       ON p.id = g.product_id
+     WHERE r.status = 'open'::public.substitution_request_status
+       AND r.session_date >= (now() AT TIME ZONE p.timezone)::date
+       AND r.session_date <= (now() AT TIME ZONE p.timezone)::date + 60
+       AND public.gedu_may_substitute_session(
+             v_caller, r.group_id, r.session_date, r.requested_by
+           )
+  ), '[]'::jsonb);
+END;
+$$;
+
+
+--
+-- Name: FUNCTION get_open_substitution_requests(); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.get_open_substitution_requests() IS 'The gedu dashboard''s "Sessions needing a substitute": every `open` request dated today or later in the product''s timezone, within the next 60 days, that the CALLER could actually take. The exclusion is gedu_may_substitute_session itself rather than a copy of its clauses, so this list and the offer button can never disagree. Each line carries the product shell (type, topic, spoken language, timezone, remote flag or site name, term dates, translations, schedule slots), the group name, the date, the role and THAT ROLE''s fee (null when the product has not set one — a blank field, not a volunteer session), and whether the caller has already offered. The ABSENT GEDU IS DELIBERATELY NOT NAMED: naming them half-reveals a private reason, and the seat belongs to the group. Contains no schedule expansion — the client owns the calendar math, exactly as both feeds do. Gedu-gated on its first statement; an uncertified gedu gets an empty list, because certification is one of the predicate''s four refusals.';
+
+
+--
 -- Name: get_product_groups_with_details(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -5241,12 +6288,17 @@ BEGIN
         'id',            pg.id,
         'name',          pg.name,
         'created_at',    pg.created_at,
+        -- The assignment ROLE rides each pill, which is what the groups panel's
+        -- role select reads and writes back through apply_group_changes. This
+        -- panel is the permanent-assignment editor; the session-card staffing
+        -- editor is a different tool and deliberately does not link to it.
         'gedus', COALESCE((
           SELECT jsonb_agg(
                    jsonb_build_object(
                      'id',         gp.id,
                      'first_name', gp.first_name,
-                     'email',      gp.email
+                     'email',      gp.email,
+                     'role',       ga.role
                    )
                    ORDER BY ga.created_at, gp.id
                  )
@@ -5508,7 +6560,7 @@ $$;
 -- Name: FUNCTION get_product_groups_with_details(p_product_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_product_groups_with_details(p_product_id uuid) IS 'Admin-gated snapshot behind the product Groups panel: groups with their gedus and active members, the unassigned actives, and the waitlist in derived (waitlisted_at, id) order. Every participation object carries the same fields, including the two the panel''s refusal dialogs are keyed to: has_live_subscription (a real read on ALL THREE branches since 00170 — a LEFT JOIN to family_subscriptions excluding status ''cancelled'', so it means live rather than ever-existed) and has_payment_marker (a real read of stripe_checkout_session_id — money once arrived for this seat, which demotion does not clear). Both are resolved here so the panel decides a drag from one snapshot rather than asking per chip. Since 00175 the person keys are participant_* (whoever holds the seat) and the contact behind a child''s seat is parent_first_name/parent_last_name; an adult seat names none of those and carries participant_email — its own address — instead. Since 00195 each chip also carries participant_roblox_username/participant_roblox_user_id beside the Minecraft pair, so the panel can show whichever identity the product''s topic is about; the topic itself is NOT emitted here, because the page already holds the product row. Since 00203 all three branches also carry the staff-only flair — group_joined_at, note and note_updated_by_first_name — from one identical LEFT JOIN, which comes back NULL on the two group-less branches because that is the truth and because one expression is what keeps the three shapes one shape. The groups panel draws neither mark, and no admin surface reads either of them from THIS document today — the group details page renders both and reads them off get_gedu_group_feed, the copy a note write invalidates — so all three fields ride here for shape parity across the three roster readers rather than for a reader of this one. Since 00207 all three branches also carry seat_offer_sent_at and seat_offer_expiry_notified_at, on exactly the same terms: only the WAITLIST branch can hold a non-NULL value (a CHECK forbids an offer stamp on any other status) and only the waitlist card reads them, but the expression is identical in all three so the shape stays one shape. Whether an offer is LIVE is derived on the reader''s side from sent_at plus the five-day window.';
+COMMENT ON FUNCTION public.get_product_groups_with_details(p_product_id uuid) IS 'Admin-gated snapshot behind the product Groups panel: groups with their gedus and active members, the unassigned actives, and the waitlist in derived (waitlisted_at, id) order. Every participation object carries the same fields, including the two the panel''s refusal dialogs are keyed to: has_live_subscription (a real read on ALL THREE branches since 00170 — a LEFT JOIN to family_subscriptions excluding status ''cancelled'', so it means live rather than ever-existed) and has_payment_marker (a real read of stripe_checkout_session_id — money once arrived for this seat, which demotion does not clear). Both are resolved here so the panel decides a drag from one snapshot rather than asking per chip. Since 00175 the person keys are participant_* (whoever holds the seat) and the contact behind a child''s seat is parent_first_name/parent_last_name; an adult seat names none of those and carries participant_email — its own address — instead. Since 00195 each chip also carries participant_roblox_username/participant_roblox_user_id beside the Minecraft pair, so the panel can show whichever identity the product''s topic is about; the topic itself is NOT emitted here, because the page already holds the product row. Since 00203 all three branches also carry the staff-only flair — group_joined_at, note and note_updated_by_first_name — from one identical LEFT JOIN, which comes back NULL on the two group-less branches because that is the truth and because one expression is what keeps the three shapes one shape. The groups panel draws neither mark, and no admin surface reads either of them from THIS document today — the group details page renders both and reads them off get_gedu_group_feed, the copy a note write invalidates — so all three fields ride here for shape parity across the three roster readers rather than for a reader of this one. Since 00207 all three branches also carry seat_offer_sent_at and seat_offer_expiry_notified_at, on exactly the same terms: only the WAITLIST branch can hold a non-NULL value (a CHECK forbids an offer stamp on any other status) and only the waitlist card reads them, but the expression is identical in all three so the shape stays one shape. Whether an offer is LIVE is derived on the reader''s side from sent_at plus the five-day window. Since 00272 each entry of a group''s `gedus` carries the assignment `role` — primary or assistant — which is what the panel''s per-pill role select reads and writes back through apply_group_changes. This panel remains the PERMANENT assignment editor; the session card''s staffing editor is a different tool, and nothing links the two, deliberately.';
 
 
 --
@@ -6001,8 +7053,46 @@ CREATE FUNCTION public.is_voice_group_member(p_group_id uuid) RETURNS boolean
       join public.gedu_group_assignments a on a.product_id = g.product_id
       where g.id = p_group_id
         and a.gedu_id = (select auth.uid())
+    )
+    -- The substitution branch, and the one place on this surface where it is DATE-
+    -- SCOPED: a sub reaches the room on the dates they are substituting and on no
+    -- other date of the group. It ADDS to the assignment arm above rather than
+    -- narrowing it — a gedu assigned to the product keeps the product-wide
+    -- mobility they already had.
+    --
+    -- "The session in question" is TODAY OR YESTERDAY in the PRODUCT's
+    -- timezone, evaluated at call time because the predicate is handed a group
+    -- and nothing else. Yesterday is not slack, it is the calendar: a session
+    -- dated Monday that runs to 00:30 is still Monday's session at 00:10 on
+    -- Tuesday, and asking only about today ejected its substitute from the room and
+    -- from the chat at local midnight — while a session starting at 00:10
+    -- refused them for its whole pre-window, which falls on the day before.
+    -- The cost is a few hours in which a substitute could rejoin the PREVIOUS day's
+    -- room, and the voice window itself is only open around a session, so there
+    -- is nothing there to rejoin. gedu_substitutes_session still applies the access
+    -- window and the certification test to whichever date matches.
+    or exists (
+      select 1
+      from public.product_groups g2
+      join public.products p2 on p2.id = g2.product_id
+      where g2.id = p_group_id
+        and (
+          public.gedu_substitutes_session(
+            p_group_id, (now() at time zone p2.timezone)::date
+          )
+          or public.gedu_substitutes_session(
+               p_group_id, ((now() at time zone p2.timezone)::date - 1)
+             )
+        )
     );
 $$;
+
+
+--
+-- Name: FUNCTION is_voice_group_member(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.is_voice_group_member(p_group_id uuid) IS 'Who may be in this group''s voice room, and therefore — through is_chat_channel_member — in its in-call chat: an admin, an active seat-holder of the group, a gedu assigned to ANY group of the group''s product, or a live substitution ON TODAY''S DATE in the product''s timezone. The substitution arm is the one thing on this surface that is date-scoped rather than group-wide, and it is the narrower of the two deliberate exceptions to "a sub sees everything the main gedu sees": a sub belongs in the room on the date they are substituting and on no other date of the group. "The session in question" is evaluated at CALL TIME because the predicate is handed a group and nothing else. The substitution arm ADDS to the assignment arm and narrows nothing — a gedu assigned to the product keeps the product-wide mobility they already had. Total boolean; consumed by the voice_zones and chat policies, which is why it is granted to `authenticated` despite being a predicate. Since 00276 the substitution arm accepts a substitution dated TODAY OR YESTERDAY in the product''s timezone rather than today alone. A session dated Monday that runs past local midnight is still Monday''s session at 00:30 on Tuesday, and a session starting at 00:10 has its whole pre-window on the day before; asking only about today ejected the substitute from the room and the chat at midnight, and refused them before a small-hours start. The access window inside gedu_substitutes_session is unchanged and still applies to whichever date matches.';
 
 
 --
@@ -6021,8 +7111,36 @@ CREATE FUNCTION public.is_voice_group_moderator(p_group_id uuid) RETURNS boolean
       join public.gedu_group_assignments a on a.product_id = g.product_id
       where g.id = p_group_id
         and a.gedu_id = (select auth.uid())
+    )
+    -- Date-scoped, exactly as the membership predicate beside it is and for the
+    -- same reason: a sub moderates the room on the dates they are substituting, not
+    -- on the group's other dates. The two move together — the chat channel is
+    -- gated by this pair, so a substitute is in the channel on their own date only,
+    -- and a cross-midnight session that dropped one predicate at 00:00 would
+    -- drop the other with it. Today OR yesterday in the product's timezone; the
+    -- membership predicate above carries the whole reasoning.
+    or exists (
+      select 1
+      from public.product_groups g2
+      join public.products p2 on p2.id = g2.product_id
+      where g2.id = p_group_id
+        and (
+          public.gedu_substitutes_session(
+            p_group_id, (now() at time zone p2.timezone)::date
+          )
+          or public.gedu_substitutes_session(
+               p_group_id, ((now() at time zone p2.timezone)::date - 1)
+             )
+        )
     );
 $$;
+
+
+--
+-- Name: FUNCTION is_voice_group_moderator(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.is_voice_group_moderator(p_group_id uuid) IS 'Who MODERATES this group''s voice room and its chat: an admin, a gedu assigned to any group of the group''s product, or a live substitution on today''s date in the product''s timezone. A POSITIVE allow-list, never an exclusion — the room learned that the expensive way, a "not a gamer" test having been one parent-seat release away from handing moderation to parents. Date-scoped on its substitution arm exactly as is_voice_group_member is, and for the same reason: the two move together, because the chat channel is gated by the pair and a substitute must be in the channel on their own date only. Since 00276 its substitution arm accepts today OR yesterday in the product''s timezone, moving with is_voice_group_member as it always must: the chat channel is gated by the pair, so a cross-midnight session that dropped one would keep a substitute in the room with no moderation, or in the chat with none.';
 
 
 --
@@ -6371,6 +7489,69 @@ $$;
 --
 
 COMMENT ON FUNCTION public.mark_chat_image_stored(p_id uuid) IS 'Record that the caller''s OWN image message''s object has landed, stamping image_stored_at (idempotently — a standing stamp is returned, never moved). Called by the upload route on the uploader''s own client the moment the storage write returns; the resulting realtime UPDATE is the event that tells every subscriber the picture is fetchable. Ownership is the whole guard: no membership, lock or hidden check, because this completes a send that send_chat_image_message already authorized, and none of those landing mid-upload may strand a legitimate picture as permanently blank. A missing row and somebody else''s row are refused identically with 42501; a text message with check_violation. Returns image_stored_at.';
+
+
+--
+-- Name: offer_session_substitution(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.offer_session_substitution(p_request_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_caller   uuid := (SELECT auth.uid());
+  v_timezone text;
+  v_row      public.session_substitution_requests;
+BEGIN
+  PERFORM public.assert_role('gedu');
+
+  SELECT * INTO v_row
+    FROM public.session_substitution_requests r
+   WHERE r.id = p_request_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  IF v_row.status <> 'open'::public.substitution_request_status THEN
+    RAISE EXCEPTION 'this substitution request is % and is no longer taking offers', v_row.status
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  SELECT p.timezone INTO v_timezone
+    FROM public.product_groups g
+    JOIN public.products p ON p.id = g.product_id
+   WHERE g.id = v_row.group_id;
+
+  IF v_row.session_date < (now() AT TIME ZONE v_timezone)::date THEN
+    RAISE EXCEPTION 'this session (%) is in the past', v_row.session_date
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF NOT public.gedu_may_substitute_session(
+           v_caller, v_row.group_id, v_row.session_date, v_row.requested_by
+         ) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- Idempotent on the unique key: offering twice is one offer, and a double-tap
+  -- is not an error worth surfacing.
+  INSERT INTO public.session_substitution_offers (request_id, gedu_id)
+  VALUES (p_request_id, v_caller)
+  ON CONFLICT (request_id, gedu_id) DO NOTHING;
+
+  -- CONCEALED, explicitly: a volunteer never learns whose absence this is.
+  RETURN public.substitution_request_document(v_row, false, v_caller, false);
+END;
+$$;
+
+
+--
+-- Name: FUNCTION offer_session_substitution(p_request_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.offer_session_substitution(p_request_id uuid) IS '"Offer to substitute", from the gedu dashboard''s pool list. Guarded on gedu_may_substitute_session — certified, not the absent gedu, not already expected at that session, and holding no non-withdrawn request of their own on that (group, date) — plus the request being `open` and dated today or later in the product''s timezone. Idempotent on (request, gedu): offering twice is one offer. There is deliberately no ranking, no eligibility beyond certification, and no notification on any channel; the office decides, and auto-approving the first offer was rejected because the admin step IS the product. Returns the request document, which carries no offer_count for an offerer — who else volunteered is not their business. Since 00276 the document it returns CONCEALS the absent gedu — requested_by and requested_by_first_name arrive as JSON null. Before that, offering was a way to unmask the absent person on any pool row, which made the pool''s own "names the session, never the person" rule one button-press deep.';
 
 
 --
@@ -7070,6 +8251,101 @@ $$;
 --
 
 COMMENT ON FUNCTION public.request_my_verification_email() IS 'Self-scoping rate-limit gate for the verification-email send: takes no argument and writes a verification_email_requests row for auth.uid(), refusing with false once the caller has six rows in the trailing hour. Prunes the caller''s expired rows on the way past, because nothing reads them but its own count. The route maps false to 429.';
+
+
+--
+-- Name: request_session_substitution(uuid, date, public.substitution_reason, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.request_session_substitution(p_group_id uuid, p_session_date date, p_reason public.substitution_reason DEFAULT NULL::public.substitution_reason, p_reason_note text DEFAULT NULL::text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_caller   uuid := (SELECT auth.uid());
+  v_timezone text;
+  v_role     public.gedu_assignment_role;
+  v_note     text;
+  v_row      public.session_substitution_requests;
+BEGIN
+  PERFORM public.assert_role('gedu');
+
+  -- The authorization IS the derivation: you may file an absence only for a
+  -- session you are expected at. That admits an assigned gedu and an approved
+  -- sub alike — which is the whole of "a sub can ask for a sub" — and refuses
+  -- somebody who already has a live request, so filing twice is impossible
+  -- before the unique index has to say so.
+  IF NOT public.gedu_is_expected_at_session(v_caller, p_group_id, p_session_date) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  IF p_reason IS NULL THEN
+    RAISE EXCEPTION 'a substitution request needs a reason category'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF NOT public.group_session_date_is_writable(p_group_id, p_session_date) THEN
+    RAISE EXCEPTION 'No scheduled session on % for this group', p_session_date
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  SELECT p.timezone INTO v_timezone
+    FROM public.product_groups g
+    JOIN public.products p ON p.id = g.product_id
+   WHERE g.id = p_group_id;
+
+  -- Today or later in the PRODUCT's timezone. Date granularity on purpose: the
+  -- handbook's own norm is same-day filing, and a date comparison needs no
+  -- schedule expansion. This is deliberately LOOSER than the card, which hides
+  -- the action once the session's end has passed — same posture as every other
+  -- write validator here.
+  IF p_session_date < (now() AT TIME ZONE v_timezone)::date THEN
+    RAISE EXCEPTION 'a substitution request cannot be filed for a past session (%)', p_session_date
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- The role being substituted: the filer's assignment role, or — when the filer is
+  -- themselves a sub — the role stored on the substitution they hold.
+  SELECT a.role INTO v_role
+    FROM public.gedu_group_assignments a
+   WHERE a.group_id = p_group_id
+     AND a.gedu_id  = v_caller;
+
+  IF v_role IS NULL THEN
+    SELECT r.role INTO v_role
+      FROM public.session_substitution_requests r
+     WHERE r.group_id     = p_group_id
+       AND r.session_date = p_session_date
+       AND r.substitute_id   = v_caller
+       AND r.status       = 'substituted'::public.substitution_request_status
+     LIMIT 1;
+  END IF;
+
+  -- Unreachable while the derivation holds — being expected means one of the two
+  -- reads above found something — and stated so the NOT NULL column cannot fail
+  -- with a constraint name instead of a sentence.
+  IF v_role IS NULL THEN
+    RAISE EXCEPTION 'no role to substitute for gedu % on group % (%)', v_caller, p_group_id, p_session_date
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  v_note := NULLIF(btrim(COALESCE(p_reason_note, '')), '');
+
+  INSERT INTO public.session_substitution_requests
+    (group_id, session_date, requested_by, role, reason, reason_note)
+  VALUES (p_group_id, p_session_date, v_caller, v_role, p_reason, v_note)
+  RETURNING * INTO v_row;
+
+  RETURN public.substitution_request_document(v_row, false, v_caller);
+END;
+$$;
+
+
+--
+-- Name: FUNCTION request_session_substitution(p_group_id uuid, p_session_date date, p_reason public.substitution_reason, p_reason_note text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.request_session_substitution(p_group_id uuid, p_session_date date, p_reason public.substitution_reason, p_reason_note text) IS '"I cannot make this session", filed by a gedu from a future session''s card. The AUTHORIZATION IS THE DERIVATION: the caller must be EXPECTED at that session, which admits an assigned gedu and an approved sub alike (that is the whole of "a sub can ask for a sub") and refuses anyone who already holds a live request. The reason category is required here and only here — an admin recording an off-platform substitution may not know it. The date must pass the ordinary writable-date check AND be today or later in the PRODUCT''s timezone; date granularity is deliberate, the handbook''s own norm being same-day filing, and it is deliberately looser than the card, which hides the action once the session''s end has passed. The role substituted is snapshotted from the caller''s assignment role, or from the role on the substitution they hold when the caller is themselves a sub. reason_note is trimmed, nulled when empty, and capped at 500 characters by the table''s own CHECK. Returns the request document without reason or reason_note: the filer''s own words come back from the form, and every other gedu-facing document keeps them off the wire.';
 
 
 --
@@ -8204,6 +9480,19 @@ BEGIN
      WHERE part.participant_id = p_participant_id
        AND part.status   = 'active'::public.participation_status
        AND ga.gedu_id    = (SELECT auth.uid())
+  )
+  -- The substitution branch: the participant sits in a group the caller holds a live
+  -- substitution on. Group-wide within the window, exactly as the assignment arm is
+  -- product-wide within the assignment — a sub who is running the session is
+  -- the person who has the child in front of them and can read the handle off
+  -- their screen.
+  AND NOT EXISTS (
+    SELECT 1
+      FROM public.participations part2
+     WHERE part2.participant_id = p_participant_id
+       AND part2.status = 'active'::public.participation_status
+       AND part2.group_id IS NOT NULL
+       AND public.gedu_substitutes_group(part2.group_id)
   ) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
@@ -8250,7 +9539,7 @@ $$;
 -- Name: FUNCTION set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text) IS 'Set a group member''s Minecraft username + resolved UUID, scoped to participants actively enrolled in a group the calling gedu teaches. The Mojang lookup happens in the calling route, so a successful edit lands verified. In practice this is always a child: an adult seat carries no linked game account and the roster row shows that slot empty by design. Open since 00205 to an ADMIN as well as to the assigned gedu, guard-first on assert_role with the group question as a second 42501 — the same shape the session writers took in 00200 and the group feed in 00204. The admin caller is the product page''s per-group GROUP DETAILS page, which renders the gedu workspace''s roster body unchanged, inline editor included; an admin already holds this exact edit on /admin/users/[id], so the widening aligns two surfaces on one action rather than granting a power. An admin passes the group half outright and is exempt from nothing else: the target must still be a gamer (23514), and a customer or a gamer is still refused on the first statement.';
+COMMENT ON FUNCTION public.set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text) IS 'Set a group member''s Minecraft username + resolved UUID, scoped to participants actively enrolled in a group the calling gedu teaches. The Mojang lookup happens in the calling route, so a successful edit lands verified. In practice this is always a child: an adult seat carries no linked game account and the roster row shows that slot empty by design. Open since 00205 to an ADMIN as well as to the assigned gedu, guard-first on assert_role with the group question as a second 42501 — the same shape the session writers took in 00200 and the group feed in 00204. The admin caller is the product page''s per-group GROUP DETAILS page, which renders the gedu workspace''s roster body unchanged, inline editor included; an admin already holds this exact edit on /admin/users/[id], so the widening aligns two surfaces on one action rather than granting a power. An admin passes the group half outright and is exempt from nothing else: the target must still be a gamer (23514), and a customer or a gamer is still refused on the first statement. Since 00272 the group half also admits a LIVE SUBSTITUTION: the participant sits in a group the caller holds a substitution on, window open and certification intact. A sub running the session is the person with the child in front of them and is exactly who can read a handle off their screen.';
 
 
 --
@@ -8282,6 +9571,17 @@ BEGIN
      WHERE part.participant_id = p_participant_id
        AND part.status   = 'active'::public.participation_status
        AND ga.gedu_id    = (SELECT auth.uid())
+  )
+  -- The substitution branch, byte for byte the Minecraft twin's — one roster editor
+  -- serves both platforms, so widening one alone would ship a control that
+  -- saves on a Minecraft group and refuses on a Roblox one.
+  AND NOT EXISTS (
+    SELECT 1
+      FROM public.participations part2
+     WHERE part2.participant_id = p_participant_id
+       AND part2.status = 'active'::public.participation_status
+       AND part2.group_id IS NOT NULL
+       AND public.gedu_substitutes_group(part2.group_id)
   ) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
@@ -8330,7 +9630,7 @@ $$;
 -- Name: FUNCTION set_group_member_roblox(p_participant_id uuid, p_roblox_username text, p_roblox_user_id bigint); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_group_member_roblox(p_participant_id uuid, p_roblox_username text, p_roblox_user_id bigint) IS 'Set a group member''s Roblox username + resolved account id, scoped to participants actively enrolled in a group the calling gedu teaches. The Roblox twin of set_group_member_minecraft, and identical to it in every respect but the key''s type: Roblox''s id is an int64, so the account-id parameter is a DEFAULTed bigint rather than a text column carrying an '''' sentinel, and omitting it is how an unverified save is expressed. The Roblox lookup happens in the calling route (neither Roblox API is reachable from a browser), so an id arriving here was resolved server-side and its presence is the whole of "verified". Clearing the username clears the id with it. In practice the target is always a child: an adult seat carries no linked game account and the roster row shows that slot empty by design. Open since 00205 to an ADMIN as well as to the assigned gedu, in the same change and the same shape as its Minecraft twin — the admin group details page renders one roster editor serving both platforms, so widening one alone would have shipped a control that works on a Minecraft group and refuses on a Roblox one. An admin passes the group half outright and is exempt from nothing else.';
+COMMENT ON FUNCTION public.set_group_member_roblox(p_participant_id uuid, p_roblox_username text, p_roblox_user_id bigint) IS 'Set a group member''s Roblox username + resolved account id, scoped to participants actively enrolled in a group the calling gedu teaches. The Roblox twin of set_group_member_minecraft, and identical to it in every respect but the key''s type: Roblox''s id is an int64, so the account-id parameter is a DEFAULTed bigint rather than a text column carrying an '''' sentinel, and omitting it is how an unverified save is expressed. The Roblox lookup happens in the calling route (neither Roblox API is reachable from a browser), so an id arriving here was resolved server-side and its presence is the whole of "verified". Clearing the username clears the id with it. In practice the target is always a child: an adult seat carries no linked game account and the roster row shows that slot empty by design. Open since 00205 to an ADMIN as well as to the assigned gedu, in the same change and the same shape as its Minecraft twin — the admin group details page renders one roster editor serving both platforms, so widening one alone would have shipped a control that works on a Minecraft group and refuses on a Roblox one. An admin passes the group half outright and is exempt from nothing else. Since 00272 the group half also admits a LIVE SUBSTITUTION, in the same change and the same shape as its Minecraft twin — one roster editor serves both platforms, so widening one alone would ship a control that saves on a Minecraft group and refuses on a Roblox one.';
 
 
 --
@@ -8655,6 +9955,140 @@ COMMENT ON FUNCTION public.set_product_required_consents(p_product_id uuid, p_sl
 
 
 --
+-- Name: set_session_substitution(uuid, date, uuid, uuid, public.substitution_reason, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_session_substitution(p_group_id uuid, p_session_date date, p_absent_gedu_id uuid, p_sub_gedu_id uuid, p_reason public.substitution_reason DEFAULT NULL::public.substitution_reason, p_reason_note text DEFAULT NULL::text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_caller uuid := (SELECT auth.uid());
+  v_row    public.session_substitution_requests;
+  v_exists boolean;
+  v_role   public.gedu_assignment_role;
+  v_note   text;
+BEGIN
+  PERFORM public.assert_admin();
+
+  IF p_group_id IS NULL OR p_session_date IS NULL
+     OR p_absent_gedu_id IS NULL OR p_sub_gedu_id IS NULL THEN
+    RAISE EXCEPTION 'set_session_substitution needs a group, a date, an absent gedu and a sub'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  PERFORM 1 FROM public.product_groups g WHERE g.id = p_group_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Group not found' USING ERRCODE = 'P0002';
+  END IF;
+
+  -- The ordinary writable-date check and NOTHING MORE: there is deliberately no
+  -- today-or-later requirement here. This is the retroactive path — an
+  -- off-platform substitution that has already happened has to be recordable, because
+  -- gedu invoicing reads these rows.
+  IF NOT public.group_session_date_is_writable(p_group_id, p_session_date) THEN
+    RAISE EXCEPTION 'No scheduled session on % for this group', p_session_date
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  v_note := NULLIF(btrim(COALESCE(p_reason_note, '')), '');
+
+  SELECT * INTO v_row
+    FROM public.session_substitution_requests r
+   WHERE r.group_id     = p_group_id
+     AND r.session_date = p_session_date
+     AND r.requested_by = p_absent_gedu_id
+     AND r.status <> 'withdrawn'::public.substitution_request_status
+     FOR UPDATE;
+  v_exists := FOUND;
+
+  IF NOT v_exists THEN
+    -- No request: the admin is filing one on the absent gedu's behalf, so the
+    -- absent gedu has to actually be expected at the session.
+    IF NOT public.gedu_is_expected_at_session(
+             p_absent_gedu_id, p_group_id, p_session_date
+           ) THEN
+      RAISE EXCEPTION 'gedu % is not expected at group % on %',
+                      p_absent_gedu_id, p_group_id, p_session_date
+        USING ERRCODE = 'check_violation';
+    END IF;
+
+    SELECT a.role INTO v_role
+      FROM public.gedu_group_assignments a
+     WHERE a.group_id = p_group_id
+       AND a.gedu_id  = p_absent_gedu_id;
+
+    IF v_role IS NULL THEN
+      SELECT r2.role INTO v_role
+        FROM public.session_substitution_requests r2
+       WHERE r2.group_id     = p_group_id
+         AND r2.session_date = p_session_date
+         AND r2.substitute_id   = p_absent_gedu_id
+         AND r2.status       = 'substituted'::public.substitution_request_status
+       LIMIT 1;
+    END IF;
+
+    IF v_role IS NULL THEN
+      RAISE EXCEPTION 'no role to substitute for gedu % on group % (%)',
+                      p_absent_gedu_id, p_group_id, p_session_date
+        USING ERRCODE = 'check_violation';
+    END IF;
+  END IF;
+
+  IF NOT public.gedu_may_substitute_session(
+           p_sub_gedu_id, p_group_id, p_session_date, p_absent_gedu_id
+         ) THEN
+    RAISE EXCEPTION 'gedu % cannot substitute on group % on %',
+                    p_sub_gedu_id, p_group_id, p_session_date
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF v_exists THEN
+    -- An OPEN request becomes substituted — which is what "set a sub" reads as when
+    -- the absent gedu has already asked. A request that is ALREADY SUBSTITUTED is
+    -- RE-POINTED at the new sub, so replacing a sub is one action rather than a
+    -- clear followed by a set. `approved_by` is the acting admin either way.
+    -- Reason and note are only overwritten when this call supplies them, so an
+    -- admin replacing a sub does not blank what the gedu wrote.
+    UPDATE public.session_substitution_requests
+       SET status      = 'substituted'::public.substitution_request_status,
+           substitute_id  = p_sub_gedu_id,
+           approved_by = v_caller,
+           approved_at = now(),
+           reason      = COALESCE(p_reason, reason),
+           reason_note = COALESCE(v_note, reason_note)
+     WHERE id = v_row.id
+    RETURNING * INTO v_row;
+  ELSE
+    INSERT INTO public.session_substitution_requests
+      (group_id, session_date, requested_by, role, reason, reason_note,
+       status, substitute_id, approved_by, approved_at)
+    VALUES (p_group_id, p_session_date, p_absent_gedu_id, v_role, p_reason, v_note,
+            'substituted'::public.substitution_request_status, p_sub_gedu_id, v_caller, now())
+    RETURNING * INTO v_row;
+  END IF;
+
+  -- The replace case can UNSEAT the sub who was there, and a displaced sub who
+  -- had filed their own absence no longer holds a seat to be absent from.
+  PERFORM public.cascade_withdraw_orphaned_substitution_requests(p_group_id, p_session_date);
+
+  SELECT * INTO v_row
+    FROM public.session_substitution_requests r
+   WHERE r.id = v_row.id;
+
+  RETURN public.substitution_request_document(v_row, true, v_caller);
+END;
+$$;
+
+
+--
+-- Name: FUNCTION set_session_substitution(p_group_id uuid, p_session_date date, p_absent_gedu_id uuid, p_sub_gedu_id uuid, p_reason public.substitution_reason, p_reason_note text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.set_session_substitution(p_group_id uuid, p_session_date date, p_absent_gedu_id uuid, p_sub_gedu_id uuid, p_reason public.substitution_reason, p_reason_note text) IS 'The office-arranged path: an admin names the absent gedu and the sub outright, with no offer involved. Three shapes in one function. With NO request for that seat it files one on the absent gedu''s behalf, created already `substituted` — and the absent gedu must actually be EXPECTED at the session, with the role taken from their assignment or from the substitution they hold. With an OPEN request it marks that request `substituted`, which is what the admin queue''s approve reads as. With an ALREADY SUBSTITUTED one it RE-POINTS the substitution, so replacing a sub is one action rather than a clear and a set, and the displaced sub''s own absence is then swept by the cascade. There is deliberately NO today-or-later requirement — this is the retroactive path, and an off-platform substitution that already happened has to be recordable because gedu invoicing reads these rows. The date still passes the ordinary writable-date check. Reason is optional and is only overwritten when supplied, so an admin replacing a sub does not blank what the gedu wrote. approved_by is the acting admin on every admin path.';
+
+
+--
 -- Name: set_site_notes(uuid, text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -8680,6 +10114,20 @@ BEGIN
      WHERE ga.gedu_id     = (SELECT auth.uid())
        AND p.location_id  = p_location_id
        AND p.is_remote    = false
+  )
+  -- The substitution branch, shaped like the assignment one above rather than borrowed
+  -- from a group predicate: the question this function asks is about a BUILDING,
+  -- so the substitution arm is "I hold a live substitution on some group of an in-person
+  -- product at this site". The owner's rule is that a sub sees everything the
+  -- main gedu sees, and a site note is low-risk enough not to earn a special
+  -- case of its own.
+  AND NOT EXISTS (
+    SELECT 1
+      FROM public.product_groups g
+      JOIN public.products p2 ON p2.id = g.product_id
+     WHERE p2.location_id = p_location_id
+       AND p2.is_remote   = false
+       AND public.gedu_substitutes_group(g.id)
   ) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
@@ -8714,7 +10162,7 @@ $$;
 -- Name: FUNCTION set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text) IS 'Write a site''s shared family note and its gedu note. The venue ADDRESS is not a parameter and is never touched — it belongs to the location record and is an admin''s to edit through the location itself. Open to an ADMIN, or to a gedu who teaches on an in-person product at that site (00200). Last-write-wins on the notes, across products.';
+COMMENT ON FUNCTION public.set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text) IS 'Write a site''s shared family note and its gedu note. The venue ADDRESS is not a parameter and is never touched — it belongs to the location record and is an admin''s to edit through the location itself. Open to an ADMIN, or to a gedu who teaches on an in-person product at that site (00200). Last-write-wins on the notes, across products. Since 00272 a live SUBSTITUTION on any group of an in-person product at that site passes the site half too. The arm is location-shaped like the assignment one beside it rather than borrowed from a group predicate, because the question this function asks is about a BUILDING. It is the owner''s "a sub sees everything the main gedu sees" applied to the lowest-risk write on the surface, which is one fewer special case than carving it out would have been.';
 
 
 --
@@ -8825,6 +10273,135 @@ $$;
 --
 
 COMMENT ON FUNCTION public.submit_my_feedback(p_message text) IS 'Self-scoping feedback submission: writes a feedback_submissions row for auth.uid(), rate-limited and length-bounded. Returns false when rate-limited.';
+
+
+--
+-- Name: session_substitution_requests; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.session_substitution_requests (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    group_id uuid NOT NULL,
+    session_date date NOT NULL,
+    requested_by uuid NOT NULL,
+    role public.gedu_assignment_role NOT NULL,
+    reason public.substitution_reason,
+    reason_note text,
+    status public.substitution_request_status DEFAULT 'open'::public.substitution_request_status NOT NULL,
+    substitute_id uuid,
+    approved_by uuid,
+    approved_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT chk_substitution_not_self CHECK ((substitute_id IS DISTINCT FROM requested_by)),
+    CONSTRAINT chk_substitution_reason_note_length CHECK ((char_length(reason_note) <= 500)),
+    CONSTRAINT chk_substitution_state CHECK (((status = 'substituted'::public.substitution_request_status) = ((substitute_id IS NOT NULL) AND (approved_by IS NOT NULL) AND (approved_at IS NOT NULL))))
+);
+
+
+--
+-- Name: TABLE session_substitution_requests; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.session_substitution_requests IS 'One row per (group, session date, ABSENT GEDU): "I cannot make this session", and — once an admin has answered it — who is standing in. The seat is the PERSON rather than the role, because two primaries of one group may both be out the same day and "who did which job" has to stay answerable. There is no separate substitutions table: every substitution exists because somebody was absent, so the request IS the row, and an admin setting a sub with no request files one on the absent gedu''s behalf, created already `substituted`. WITHDRAWN ROWS ARE HISTORY and do not block a new request for the same seat — the live-seat unique index is partial on exactly that. A request nobody substitutes on becomes UNFILLED once its date is past, which is a DERIVED state of an open request and not a stored one: the date already says it, and a stored status would need a clock. The SUB-OF-SUB CHAIN needs no column either — a gedu appearing as one row''s substitute_id and another row''s requested_by on the same (group, date) IS the link. Nothing here materializes a group_sessions row, deliberately: a substitution set on a PAST date would write a past-dated row, and municipality invoicing reads a past-dated row as "the session ran". Neither `authenticated` nor `anon` holds any grant — every read and write goes through the SECURITY DEFINER RPCs below, the same posture as group_sessions.';
+
+
+--
+-- Name: COLUMN session_substitution_requests.role; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.session_substitution_requests.role IS 'The role being substituted, snapshotted at filing time from the requester''s assignment role — or, when the requester is themselves a sub, from the role on the substituted request they hold. Snapshotted rather than joined because invoicing asks what job was done on the day, and an admin editing the permanent assignment months later must not rewrite that answer.';
+
+
+--
+-- Name: COLUMN session_substitution_requests.reason; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.session_substitution_requests.reason IS 'Why the gedu is away — `sick` or `other` — and ADMIN-VISIBLE ONLY: it reaches the admin Substitutions page and the admin session document, and every gedu-facing document emits it as null. A `sick` category is health-related data about a contractor; the Discord tickets it replaces carry the same, so nothing new is disclosed, but no retention rule exists for either yet. Nullable because the gedu path requires it (RPC-enforced) and the admin''s off-platform-substitution path cannot.';
+
+
+--
+-- Name: COLUMN session_substitution_requests.substitute_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.session_substitution_requests.substitute_id IS 'The sub, once an admin has approved one — and null in every other state, by the chk_substitution_state CHECK. Clearing a substitution or withdrawing a substituted request blanks it, so this column answers "who is substituting" and never "who once was"; the latter is not a question the platform promises to answer, because an admin correcting a mistake should leave no phantom substitution behind for invoicing to bill.';
+
+
+--
+-- Name: substitution_request_document(public.session_substitution_requests, boolean, uuid, boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.substitution_request_document(p_request public.session_substitution_requests, p_include_reason boolean, p_viewer_id uuid, p_reveal_requester boolean DEFAULT false) RETURNS jsonb
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT jsonb_build_object(
+    'id',           p_request.id,
+    'group_id',     p_request.group_id,
+    'session_date', p_request.session_date,
+    'role',         p_request.role,
+    'status',       p_request.status,
+    'created_at',   p_request.created_at,
+    -- WHO IS ABSENT travels for three readers and no others: an admin
+    -- (p_include_reason, which every admin path already passes), the requester
+    -- themselves, and a caller that has explicitly asked to reveal it because
+    -- its own reader is staff on the group — which is the gedu workspace feed
+    -- and nothing else. A volunteer answering the pool gets JSON null here,
+    -- because the pool names the session and never the person.
+    --
+    -- Emitted as null rather than omitted, exactly as reason and offer_count
+    -- are: the document keeps ONE shape for every reader, so no client schema
+    -- branches on which keys arrived.
+    'requested_by',
+      CASE WHEN p_include_reason
+                OR p_reveal_requester
+                OR p_request.requested_by = p_viewer_id
+           THEN p_request.requested_by
+      END,
+    'requested_by_first_name',
+      CASE WHEN p_include_reason
+                OR p_reveal_requester
+                OR p_request.requested_by = p_viewer_id
+           THEN (
+             SELECT pr.first_name
+               FROM public.profiles pr
+              WHERE pr.id = p_request.requested_by
+           )
+      END,
+    'substitute_id',   p_request.substitute_id,
+    'substitute_first_name', (
+      SELECT pr.first_name FROM public.profiles pr WHERE pr.id = p_request.substitute_id
+    ),
+    'approved_at',  p_request.approved_at,
+    -- Whether the VIEWER is the absent gedu. The card shows a status line and a
+    -- Withdraw button off this, and nothing else needs it.
+    'is_requester', COALESCE(p_request.requested_by = p_viewer_id, false),
+    -- How many offers are waiting — for the REQUESTER (their own status line)
+    -- and for an admin (the queue). A colleague sees null: how many people
+    -- volunteered for somebody else's absence is not their business, and
+    -- offerers never learn who else offered.
+    'offer_count',
+      CASE WHEN p_include_reason OR p_request.requested_by = p_viewer_id
+           THEN (
+             SELECT count(*)::integer
+               FROM public.session_substitution_offers o
+              WHERE o.request_id = p_request.id
+           )
+      END,
+    -- Admin-only, and emitted as JSON null rather than omitted so the document
+    -- keeps ONE shape for both readers — a client schema that had to branch on
+    -- which keys are present would be a second place the rule lives.
+    'reason',      CASE WHEN p_include_reason THEN p_request.reason END,
+    'reason_note', CASE WHEN p_include_reason THEN p_request.reason_note END
+  );
+$$;
+
+
+--
+-- Name: FUNCTION substitution_request_document(p_request public.session_substitution_requests, p_include_reason boolean, p_viewer_id uuid, p_reveal_requester boolean); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.substitution_request_document(p_request public.session_substitution_requests, p_include_reason boolean, p_viewer_id uuid, p_reveal_requester boolean) IS 'Internal: the ONE wire shape of a substitution request. Every substitution write returns it and both staff feeds'' `substitutions` arrays are built from it, so no surface can drift about what a request is. Takes the ROW rather than an id, so a feed aggregates it over a query and a writer hands over the row it just wrote. THREE fields are keyed to the reader rather than to the RPC, and all three are emitted as JSON null when the reader is not entitled to them rather than omitted, so the document keeps one shape for every reader and no client schema branches on which keys arrived. `reason`/`reason_note` travel on p_include_reason, the ADMIN flag, alone. `offer_count` travels for an admin and for the requester themselves, because how many people volunteered for a colleague''s absence is not their business. And WHO IS ABSENT — requested_by with its first name — travels for an admin, for a viewer who IS the requester, and for a caller that passed p_reveal_requester because its own reader is staff on the group; that flag DEFAULTS TO FALSE, so a caller added later that forgets it conceals, and the only caller passing it today is get_gedu_group_feed, whose reader reached the group''s workspace and whose session card''s staffing line names who is away. The two offer RPCs pass false explicitly: a volunteer decides on the session and never on the person, which is the same rule the pool list keeps by never naming them at all. Not granted to `authenticated`.';
 
 
 --
@@ -9517,6 +11094,183 @@ $_$;
 --
 
 COMMENT ON FUNCTION public.verify_pin_for_any(p_user_ids uuid[], p_pin text) IS 'Does this PIN match ANY of these users? Answers with exactly one of `valid`, `invalid` or `not_set` — never NULL, and never a raise, not even on malformed input, because it sits on a credential path where a throw would become a 500 for a mistyped digit. `not_set` means nobody in the set holds a PIN at all, which the account-switch route answers by sending the family to set one rather than by telling a child their PIN was wrong; that distinction is why this returns text and not a boolean. The comparison is the same bcrypt one verify_my_pin uses. The set exists because a child may be linked to more than one parent and any of their PINs opens the gate. service_role ONLY: no argument is checked against auth.uid(), so reachable by `authenticated` this would be a PIN oracle pointable at any family — entitlement to ask about these particular users is established by the route that calls it.';
+
+
+--
+-- Name: withdraw_session_substitution_offer(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.withdraw_session_substitution_offer(p_request_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_caller uuid := (SELECT auth.uid());
+  v_row    public.session_substitution_requests;
+BEGIN
+  PERFORM public.assert_role('gedu');
+
+  SELECT * INTO v_row
+    FROM public.session_substitution_requests r
+   WHERE r.id = p_request_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- Keyed on the REQUEST rather than the offer, because the pool list's button
+  -- knows which request it is looking at and an offer id would be a second
+  -- identifier for the caller's one row. Refused only when the caller is the
+  -- approved substitute — taking back an offer somebody already staffed you on is a
+  -- new absence, not an un-offer. Withdrawing a LOSING offer on a request
+  -- substituted by somebody else is allowed and does nothing visible.
+  IF v_row.status = 'substituted'::public.substitution_request_status
+     AND v_row.substitute_id = v_caller THEN
+    RAISE EXCEPTION 'you are the approved substitute for this session; file a substitution request instead'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  DELETE FROM public.session_substitution_offers o
+   WHERE o.request_id = p_request_id
+     AND o.gedu_id    = v_caller;
+
+  -- A withdraw that deletes nothing is not a withdraw: it is a READ of somebody
+  -- else's absence wearing a write's clothes, and before this it was the
+  -- cheapest one on the surface — any certified gedu could hand this function a
+  -- request id they had never offered on and be told who was away. It is a
+  -- write or it is a refusal, and 42501 is the same answer an unknown id gets,
+  -- so it cannot be used to tell a real request from an invented one either.
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- CONCEALED, explicitly: see offer_session_substitution above.
+  RETURN public.substitution_request_document(v_row, false, v_caller, false);
+END;
+$$;
+
+
+--
+-- Name: FUNCTION withdraw_session_substitution_offer(p_request_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.withdraw_session_substitution_offer(p_request_id uuid) IS 'Deletes the caller''s offer on one request — an offer nobody accepted is not a fact worth keeping, so there is no withdrawn state for one. Keyed on the REQUEST rather than the offer, because the button knows which request it is looking at and an offer id would be a second identifier for the caller''s one row. Refused only when the caller IS the approved substitute: taking back an offer somebody has already been staffed on is a new absence, which is request_session_substitution''s job. Withdrawing a LOSING offer on a request substituted by somebody else is allowed and changes nothing visible. Since 00276 it REFUSES a caller who holds no offer on the request (42501, the same answer an unknown id gets) instead of deleting nothing and returning the document anyway — which had made it the cheapest read on the surface, a lookup of who is away keyed by request id. The document it returns conceals the absent gedu, as offer_session_substitution''s does.';
+
+
+--
+-- Name: withdraw_session_substitution_request(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.withdraw_session_substitution_request(p_request_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_caller uuid := (SELECT auth.uid());
+  v_row    public.session_substitution_requests;
+BEGIN
+  PERFORM public.assert_role('gedu');
+
+  SELECT * INTO v_row
+    FROM public.session_substitution_requests r
+   WHERE r.id = p_request_id
+     FOR UPDATE;
+
+  -- A request that is not there and a request that is somebody else's are
+  -- refused identically, so this cannot be used as an oracle for real ids.
+  IF NOT FOUND OR v_row.requested_by IS DISTINCT FROM v_caller THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- `open` only. The requester cannot withdraw after approval — once an admin
+  -- has staffed the session, changing it back is the admin's call, which is what
+  -- the session-card editor is for.
+  IF v_row.status <> 'open'::public.substitution_request_status THEN
+    RAISE EXCEPTION 'this substitution request is % and can no longer be withdrawn by its requester', v_row.status
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  UPDATE public.session_substitution_requests
+     SET status = 'withdrawn'::public.substitution_request_status
+   WHERE id = v_row.id
+  RETURNING * INTO v_row;
+
+  RETURN public.substitution_request_document(v_row, false, v_caller);
+END;
+$$;
+
+
+--
+-- Name: FUNCTION withdraw_session_substitution_request(p_request_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.withdraw_session_substitution_request(p_request_id uuid) IS '"I can make it after all", while the request is still `open`. Caller must be the requester, and a request that is somebody else''s is refused exactly as one that does not exist is, so this cannot be used as an oracle for real ids. Refused once an admin has approved a substitution: after that, unwinding it is the admin''s call through clear_session_substitution or withdraw_session_substitution_request_as_admin, because somebody has been told they are working. A withdrawn row is history and does not block a fresh request for the same seat — the live-seat unique index is partial on exactly that.';
+
+
+--
+-- Name: withdraw_session_substitution_request_as_admin(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.withdraw_session_substitution_request_as_admin(p_request_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_caller       uuid := (SELECT auth.uid());
+  v_group_id     uuid;
+  v_session_date date;
+  v_row          public.session_substitution_requests;
+BEGIN
+  PERFORM public.assert_admin();
+
+  SELECT r.group_id, r.session_date INTO v_group_id, v_session_date
+    FROM public.session_substitution_requests r
+   WHERE r.id = p_request_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Substitution request not found' USING ERRCODE = 'P0002';
+  END IF;
+
+  PERFORM 1 FROM public.product_groups g WHERE g.id = v_group_id FOR UPDATE;
+
+  SELECT * INTO v_row
+    FROM public.session_substitution_requests r
+   WHERE r.id = p_request_id
+     FOR UPDATE;
+
+  IF v_row.status = 'withdrawn'::public.substitution_request_status THEN
+    RAISE EXCEPTION 'this substitution request is already withdrawn'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- "The absent gedu is attending after all." The three substitution columns are
+  -- blanked with the status because chk_substitution_state forbids a withdrawn row from
+  -- carrying a sub — so withdrawing a SUBSTITUTED request unwinds the substitution
+  -- rather than freezing it, and the cascade then cleans up after the sub.
+  UPDATE public.session_substitution_requests
+     SET status      = 'withdrawn'::public.substitution_request_status,
+         substitute_id  = NULL,
+         approved_by = NULL,
+         approved_at = NULL
+   WHERE id = p_request_id
+  RETURNING * INTO v_row;
+
+  PERFORM public.cascade_withdraw_orphaned_substitution_requests(v_group_id, v_session_date);
+
+  SELECT * INTO v_row
+    FROM public.session_substitution_requests r
+   WHERE r.id = p_request_id;
+
+  RETURN public.substitution_request_document(v_row, true, v_caller);
+END;
+$$;
+
+
+--
+-- Name: FUNCTION withdraw_session_substitution_request_as_admin(p_request_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.withdraw_session_substitution_request_as_admin(p_request_id uuid) IS '"The absent gedu is attending after all": any non-withdrawn request -> `withdrawn`, from the admin session-card editor. The three substitution columns are blanked with the status, because chk_substitution_state forbids a withdrawn row from carrying a sub — so withdrawing a SUBSTITUTED request unwinds the substitution rather than freezing it, and the same fixpoint cascade as clear_session_substitution then cleans up after the displaced sub. Distinct from withdraw_session_substitution_request, which is the gedu''s own and works on an `open` request only.';
 
 
 --
@@ -10232,8 +11986,16 @@ CREATE TABLE public.gedu_group_assignments (
     group_id uuid NOT NULL,
     gedu_id uuid NOT NULL,
     product_id uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    role public.gedu_assignment_role DEFAULT 'primary'::public.gedu_assignment_role NOT NULL
 );
+
+
+--
+-- Name: COLUMN gedu_group_assignments.role; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gedu_group_assignments.role IS 'Which capacity this educator holds the group in: `primary` or `assistant`. A group holds ANY NUMBER of each — there is deliberately no exactly-one-primary rule, and an `assistant` on a product whose assistant fee is unset is allowed (the fee simply reads as not set wherever a fee is shown, and the admin attention queue goes on treating a missing assistant fee as "no assistant role" rather than as a defect). The ONLY thing the role decides is PAY: products carry a per-session fee for each. Readable wherever assignments already are, parents included through the existing policy, because it is a pay CLASS label and not a figure — the fee columns on `products` are already public. Written only by apply_group_changes, where a role change is one add that upserts this column.';
 
 
 --
@@ -10267,7 +12029,7 @@ CREATE TABLE public.gedu_profiles (
 -- Name: COLUMN gedu_profiles.certified; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.gedu_profiles.certified IS 'Whether an admin has vouched for this educator. Gates two things and nothing else: group assignment (UI-only, because assignment is admin-driven) and instant-voice-room moderation (server-side, because it is gedu-initiated). An uncertified gedu still has broad platform access by design. Distinct from profiles.email_verified_at, which is about an address rather than a person; this column was called "verified" until 00187.';
+COMMENT ON COLUMN public.gedu_profiles.certified IS 'Whether an admin has vouched for this educator. Gates three things and nothing else: group assignment (UI-only, because assignment is admin-driven), instant-voice-room moderation (server-side, because it is gedu-initiated), and — since 00272 — OFFERING AND HOLDING A SESSION SUBSTITUTION (server-side, twice over: gedu_may_substitute_session refuses an uncertified offerer or sub, and gedu_substitutes_session re-checks this column on every access test, so de-certifying an educator ends a live substitution''s reach into the group mid-window rather than only barring the next one). It is the ONLY eligibility test the substitution pool applies — coverage area, language and schedule clash are deliberately follow-ups — which is why an uncertified gedu sees an empty "Sessions needing a substitute" list rather than a refusal. An uncertified gedu still has broad platform access by design. Distinct from profiles.email_verified_at, which is about an address rather than a person; this column was called "verified" until 00187.';
 
 
 --
@@ -11291,6 +13053,25 @@ COMMENT ON CONSTRAINT chk_session_feedback_answers_shape ON public.session_feedb
 
 
 --
+-- Name: session_substitution_offers; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.session_substitution_offers (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    request_id uuid NOT NULL,
+    gedu_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE session_substitution_offers; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.session_substitution_offers IS '"Offer to substitute" — one row per (request, offering gedu). Offering is idempotent on the unique key and WITHDRAWING AN OFFER DELETES THE ROW, because an offer nobody accepted is not a fact worth keeping. Approving one offer does not touch the others: "not selected" is DERIVED from the request being substituted by somebody else, and which offer was approved is the substituting gedu''s own row — which is why there is no approved_offer_id anywhere. Offerers never learn who else offered; only the admin queue reads this table, and it reads it through get_admin_substitution_requests. No updated_at and no trigger: a row is created and deleted, never edited. Nothing is granted to `authenticated` or `anon`.';
+
+
+--
 -- Name: site_details; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -11973,6 +13754,30 @@ ALTER TABLE ONLY public.session_feedback
 
 
 --
+-- Name: session_substitution_offers session_substitution_offers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session_substitution_offers
+    ADD CONSTRAINT session_substitution_offers_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: session_substitution_offers session_substitution_offers_request_id_gedu_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session_substitution_offers
+    ADD CONSTRAINT session_substitution_offers_request_id_gedu_id_key UNIQUE (request_id, gedu_id);
+
+
+--
+-- Name: session_substitution_requests session_substitution_requests_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session_substitution_requests
+    ADD CONSTRAINT session_substitution_requests_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: site_details site_details_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -12395,6 +14200,20 @@ CREATE INDEX idx_schedule_slots_product ON public.schedule_slots USING btree (pr
 
 
 --
+-- Name: idx_session_substitution_requests_group_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_session_substitution_requests_group_date ON public.session_substitution_requests USING btree (group_id, session_date);
+
+
+--
+-- Name: idx_session_substitution_requests_substitute_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_session_substitution_requests_substitute_id ON public.session_substitution_requests USING btree (substitute_id) WHERE (status = 'substituted'::public.substitution_request_status);
+
+
+--
 -- Name: idx_verification_email_requests_user_created; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -12434,6 +14253,13 @@ CREATE INDEX session_attendance_participant_idx ON public.session_attendance USI
 --
 
 CREATE INDEX session_attendance_session_idx ON public.session_attendance USING btree (session_id);
+
+
+--
+-- Name: session_substitution_requests_live_seat; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX session_substitution_requests_live_seat ON public.session_substitution_requests USING btree (group_id, session_date, requested_by) WHERE (status <> 'withdrawn'::public.substitution_request_status);
 
 
 --
@@ -12595,6 +14421,13 @@ CREATE TRIGGER schedule_slots_updated_at BEFORE UPDATE ON public.schedule_slots 
 --
 
 CREATE TRIGGER session_feedback_updated_at BEFORE UPDATE ON public.session_feedback FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- Name: session_substitution_requests session_substitution_requests_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER session_substitution_requests_updated_at BEFORE UPDATE ON public.session_substitution_requests FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 
 --
@@ -13441,6 +15274,54 @@ ALTER TABLE ONLY public.session_feedback
 
 
 --
+-- Name: session_substitution_offers session_substitution_offers_gedu_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session_substitution_offers
+    ADD CONSTRAINT session_substitution_offers_gedu_id_fkey FOREIGN KEY (gedu_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: session_substitution_offers session_substitution_offers_request_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session_substitution_offers
+    ADD CONSTRAINT session_substitution_offers_request_id_fkey FOREIGN KEY (request_id) REFERENCES public.session_substitution_requests(id) ON DELETE CASCADE;
+
+
+--
+-- Name: session_substitution_requests session_substitution_requests_approved_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session_substitution_requests
+    ADD CONSTRAINT session_substitution_requests_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+
+--
+-- Name: session_substitution_requests session_substitution_requests_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session_substitution_requests
+    ADD CONSTRAINT session_substitution_requests_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.product_groups(id) ON DELETE CASCADE;
+
+
+--
+-- Name: session_substitution_requests session_substitution_requests_requested_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session_substitution_requests
+    ADD CONSTRAINT session_substitution_requests_requested_by_fkey FOREIGN KEY (requested_by) REFERENCES public.profiles(id) ON DELETE RESTRICT;
+
+
+--
+-- Name: session_substitution_requests session_substitution_requests_substitute_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session_substitution_requests
+    ADD CONSTRAINT session_substitution_requests_substitute_id_fkey FOREIGN KEY (substitute_id) REFERENCES public.profiles(id) ON DELETE RESTRICT;
+
+
+--
 -- Name: site_details site_details_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -13701,6 +15582,20 @@ CREATE POLICY admin_full_access_roblox_accounts ON public.roblox_accounts TO aut
 --
 
 CREATE POLICY admin_full_access_schedule_slots ON public.schedule_slots TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
+
+
+--
+-- Name: session_substitution_offers admin_full_access_session_substitution_offers; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY admin_full_access_session_substitution_offers ON public.session_substitution_offers TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
+
+
+--
+-- Name: session_substitution_requests admin_full_access_session_substitution_requests; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY admin_full_access_session_substitution_requests ON public.session_substitution_requests TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
@@ -14113,9 +16008,9 @@ CREATE POLICY gedu_read_site_staff_details ON public.site_staff_details FOR SELE
 -- Name: product_groups gedus_read_assigned_groups; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY gedus_read_assigned_groups ON public.product_groups FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'gedu'::public.user_role) AND (id IN ( SELECT gedu_group_assignments.group_id
-   FROM public.gedu_group_assignments
-  WHERE (gedu_group_assignments.gedu_id = auth.uid())))));
+CREATE POLICY gedus_read_assigned_groups ON public.product_groups FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'gedu'::public.user_role) AND ((id IN ( SELECT ga.group_id
+   FROM public.gedu_group_assignments ga
+  WHERE (ga.gedu_id = ( SELECT auth.uid() AS uid)))) OR ( SELECT public.gedu_substitutes_group(product_groups.id) AS gedu_substitutes_group))));
 
 
 --
@@ -14451,6 +16346,18 @@ CREATE POLICY session_feedback_update ON public.session_feedback FOR UPDATE TO a
 
 
 --
+-- Name: session_substitution_offers; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.session_substitution_offers ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: session_substitution_requests; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.session_substitution_requests ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: gedu_contract_versions signed_in_reads_gedu_contract_versions; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -14648,6 +16555,14 @@ GRANT ALL ON FUNCTION public._list_function_authorization_surface() TO service_r
 
 
 --
+-- Name: FUNCTION _list_policy_expressions(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public._list_policy_expressions() FROM PUBLIC;
+GRANT ALL ON FUNCTION public._list_policy_expressions() TO service_role;
+
+
+--
 -- Name: FUNCTION _list_replicated_tables(); Type: ACL; Schema: public; Owner: -
 --
 
@@ -14767,6 +16682,15 @@ GRANT ALL ON FUNCTION public.apply_product_image_path() TO service_role;
 
 
 --
+-- Name: FUNCTION approve_session_substitution_offer(p_offer_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.approve_session_substitution_offer(p_offer_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.approve_session_substitution_offer(p_offer_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.approve_session_substitution_offer(p_offer_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION assert_admin(); Type: ACL; Schema: public; Owner: -
 --
 
@@ -14820,6 +16744,14 @@ GRANT ALL ON FUNCTION public.cancel_participation(p_participation_id uuid, p_rea
 
 
 --
+-- Name: FUNCTION cascade_withdraw_orphaned_substitution_requests(p_group_id uuid, p_session_date date); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.cascade_withdraw_orphaned_substitution_requests(p_group_id uuid, p_session_date date) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.cascade_withdraw_orphaned_substitution_requests(p_group_id uuid, p_session_date date) TO service_role;
+
+
+--
 -- Name: FUNCTION chat_body_mentions_are_roster(p_channel_id uuid, p_body text); Type: ACL; Schema: public; Owner: -
 --
 
@@ -14858,6 +16790,15 @@ GRANT ALL ON FUNCTION public.claim_expired_seat_offer_notifications(p_participat
 REVOKE ALL ON FUNCTION public.claim_group_session_report_email(p_group_id uuid, p_session_date date) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.claim_group_session_report_email(p_group_id uuid, p_session_date date) TO authenticated;
 GRANT ALL ON FUNCTION public.claim_group_session_report_email(p_group_id uuid, p_session_date date) TO service_role;
+
+
+--
+-- Name: FUNCTION clear_session_substitution(p_request_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.clear_session_substitution(p_request_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.clear_session_substitution(p_request_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.clear_session_substitution(p_request_id uuid) TO service_role;
 
 
 --
@@ -14987,6 +16928,55 @@ GRANT ALL ON FUNCTION public.ensure_product_keeps_at_least_one_translation() TO 
 
 
 --
+-- Name: FUNCTION gedu_holds_seat_at_session(p_gedu_id uuid, p_group_id uuid, p_session_date date); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.gedu_holds_seat_at_session(p_gedu_id uuid, p_group_id uuid, p_session_date date) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.gedu_holds_seat_at_session(p_gedu_id uuid, p_group_id uuid, p_session_date date) TO service_role;
+
+
+--
+-- Name: FUNCTION gedu_holds_unexpired_substitution(p_group_id uuid, p_session_date date); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.gedu_holds_unexpired_substitution(p_group_id uuid, p_session_date date) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.gedu_holds_unexpired_substitution(p_group_id uuid, p_session_date date) TO service_role;
+
+
+--
+-- Name: FUNCTION gedu_is_expected_at_session(p_gedu_id uuid, p_group_id uuid, p_session_date date); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.gedu_is_expected_at_session(p_gedu_id uuid, p_group_id uuid, p_session_date date) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.gedu_is_expected_at_session(p_gedu_id uuid, p_group_id uuid, p_session_date date) TO service_role;
+
+
+--
+-- Name: FUNCTION gedu_may_substitute_session(p_gedu_id uuid, p_group_id uuid, p_session_date date, p_absent_gedu_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.gedu_may_substitute_session(p_gedu_id uuid, p_group_id uuid, p_session_date date, p_absent_gedu_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.gedu_may_substitute_session(p_gedu_id uuid, p_group_id uuid, p_session_date date, p_absent_gedu_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION gedu_substitutes_group(p_group_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.gedu_substitutes_group(p_group_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.gedu_substitutes_group(p_group_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.gedu_substitutes_group(p_group_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION gedu_substitutes_session(p_group_id uuid, p_session_date date); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.gedu_substitutes_session(p_group_id uuid, p_session_date date) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.gedu_substitutes_session(p_group_id uuid, p_session_date date) TO service_role;
+
+
+--
 -- Name: FUNCTION gedu_teaches_gamer(p_gamer_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
@@ -15039,6 +17029,15 @@ GRANT ALL ON FUNCTION public.get_admin_product_sessions(p_product_id uuid) TO se
 
 
 --
+-- Name: FUNCTION get_admin_substitution_requests(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.get_admin_substitution_requests() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.get_admin_substitution_requests() TO authenticated;
+GRANT ALL ON FUNCTION public.get_admin_substitution_requests() TO service_role;
+
+
+--
 -- Name: FUNCTION get_chat_channel_roster(p_channel_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
@@ -15048,12 +17047,12 @@ GRANT ALL ON FUNCTION public.get_chat_channel_roster(p_channel_id uuid) TO servi
 
 
 --
--- Name: FUNCTION get_gedu_assigned_product(p_product_id uuid); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION get_gedu_assigned_product(p_product_id uuid, p_group_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid) TO authenticated;
-GRANT ALL ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid) TO service_role;
+REVOKE ALL ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid, p_group_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid, p_group_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid, p_group_id uuid) TO service_role;
 
 
 --
@@ -15185,6 +17184,15 @@ GRANT ALL ON FUNCTION public.get_my_participation_subscription_states() TO servi
 REVOKE ALL ON FUNCTION public.get_my_waitlist_positions() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.get_my_waitlist_positions() TO authenticated;
 GRANT ALL ON FUNCTION public.get_my_waitlist_positions() TO service_role;
+
+
+--
+-- Name: FUNCTION get_open_substitution_requests(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.get_open_substitution_requests() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.get_open_substitution_requests() TO authenticated;
+GRANT ALL ON FUNCTION public.get_open_substitution_requests() TO service_role;
 
 
 --
@@ -15397,6 +17405,15 @@ GRANT ALL ON FUNCTION public.mark_chat_image_stored(p_id uuid) TO service_role;
 
 
 --
+-- Name: FUNCTION offer_session_substitution(p_request_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.offer_session_substitution(p_request_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.offer_session_substitution(p_request_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.offer_session_substitution(p_request_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION participation_state(p_status public.participation_status, p_group_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
@@ -15485,6 +17502,15 @@ GRANT ALL ON FUNCTION public.request_gamer_verification_email(p_gamer_id uuid) T
 
 REVOKE ALL ON FUNCTION public.request_my_verification_email() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.request_my_verification_email() TO authenticated;
+
+
+--
+-- Name: FUNCTION request_session_substitution(p_group_id uuid, p_session_date date, p_reason public.substitution_reason, p_reason_note text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.request_session_substitution(p_group_id uuid, p_session_date date, p_reason public.substitution_reason, p_reason_note text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.request_session_substitution(p_group_id uuid, p_session_date date, p_reason public.substitution_reason, p_reason_note text) TO authenticated;
+GRANT ALL ON FUNCTION public.request_session_substitution(p_group_id uuid, p_session_date date, p_reason public.substitution_reason, p_reason_note text) TO service_role;
 
 
 --
@@ -15676,6 +17702,15 @@ GRANT ALL ON FUNCTION public.set_product_required_consents(p_product_id uuid, p_
 
 
 --
+-- Name: FUNCTION set_session_substitution(p_group_id uuid, p_session_date date, p_absent_gedu_id uuid, p_sub_gedu_id uuid, p_reason public.substitution_reason, p_reason_note text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.set_session_substitution(p_group_id uuid, p_session_date date, p_absent_gedu_id uuid, p_sub_gedu_id uuid, p_reason public.substitution_reason, p_reason_note text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.set_session_substitution(p_group_id uuid, p_session_date date, p_absent_gedu_id uuid, p_sub_gedu_id uuid, p_reason public.substitution_reason, p_reason_note text) TO authenticated;
+GRANT ALL ON FUNCTION public.set_session_substitution(p_group_id uuid, p_session_date date, p_absent_gedu_id uuid, p_sub_gedu_id uuid, p_reason public.substitution_reason, p_reason_note text) TO service_role;
+
+
+--
 -- Name: FUNCTION set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text); Type: ACL; Schema: public; Owner: -
 --
 
@@ -15705,6 +17740,21 @@ REVOKE ALL ON FUNCTION public.submit_feedback(p_user_id uuid, p_message text) FR
 REVOKE ALL ON FUNCTION public.submit_my_feedback(p_message text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.submit_my_feedback(p_message text) TO authenticated;
 GRANT ALL ON FUNCTION public.submit_my_feedback(p_message text) TO service_role;
+
+
+--
+-- Name: TABLE session_substitution_requests; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON TABLE public.session_substitution_requests TO service_role;
+
+
+--
+-- Name: FUNCTION substitution_request_document(p_request public.session_substitution_requests, p_include_reason boolean, p_viewer_id uuid, p_reveal_requester boolean); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.substitution_request_document(p_request public.session_substitution_requests, p_include_reason boolean, p_viewer_id uuid, p_reveal_requester boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.substitution_request_document(p_request public.session_substitution_requests, p_include_reason boolean, p_viewer_id uuid, p_reveal_requester boolean) TO service_role;
 
 
 --
@@ -15823,6 +17873,33 @@ GRANT ALL ON FUNCTION public.verify_my_pin(p_pin text) TO service_role;
 
 REVOKE ALL ON FUNCTION public.verify_pin_for_any(p_user_ids uuid[], p_pin text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.verify_pin_for_any(p_user_ids uuid[], p_pin text) TO service_role;
+
+
+--
+-- Name: FUNCTION withdraw_session_substitution_offer(p_request_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.withdraw_session_substitution_offer(p_request_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.withdraw_session_substitution_offer(p_request_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.withdraw_session_substitution_offer(p_request_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION withdraw_session_substitution_request(p_request_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.withdraw_session_substitution_request(p_request_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.withdraw_session_substitution_request(p_request_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.withdraw_session_substitution_request(p_request_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION withdraw_session_substitution_request_as_admin(p_request_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.withdraw_session_substitution_request_as_admin(p_request_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.withdraw_session_substitution_request_as_admin(p_request_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.withdraw_session_substitution_request_as_admin(p_request_id uuid) TO service_role;
 
 
 --
@@ -16231,6 +18308,13 @@ GRANT ALL ON TABLE public.session_attendance TO service_role;
 
 GRANT SELECT,INSERT,UPDATE ON TABLE public.session_feedback TO authenticated;
 GRANT ALL ON TABLE public.session_feedback TO service_role;
+
+
+--
+-- Name: TABLE session_substitution_offers; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON TABLE public.session_substitution_offers TO service_role;
 
 
 --
