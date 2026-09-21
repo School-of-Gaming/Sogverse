@@ -175,24 +175,32 @@ function ExpectedLine({ staffing }: { staffing: SessionStaffing }) {
     return <p>{t("staffingNobodyExpected")}</p>;
   }
 
+  const last = staffing.expected.length - 1;
+
   return (
     <p>
       {t("staffingExpectedLabel")}{" "}
       {staffing.expected.map((gedu, index) => (
         <Fragment key={gedu.id}>
-          {/* **Never a comma.** A display name may contain one — the seeded
+          {/* **The one breakable spot in the run**, and it has to be an actual
+              space: JSX drops the newline-only whitespace between two elements,
+              and a middle dot offers a renderer no break opportunity of its
+              own, so without this the whole run is a single unbreakable box
+              that overflows a 360px card. */}
+          {index > 0 && NAME_GAP}
+          {/* One person, their role, and the separator that follows them, as
+              **one unbreakable unit** — the separator rides the name before it
+              so a wrap can never start a line with a dangling dot, and the
+              non-breaking space inside {@link NAME_SEPARATOR} is what keeps it
+              there. Never a comma: a display name may contain one — the seeded
               "Suhina, Susanna Hiltunen" does — and a comma-joined run then
-              reads as two people. The card already separates facts with a
-              middle dot, so the run borrows it; it is punctuation between
-              translated names rather than copy, so it is not a string. */}
-          {index > 0 && <span className="px-1">{NAME_SEPARATOR}</span>}
-          {/* Each person is one unbreakable unit, so a wrap falls between
-              people rather than inside a name or before a separator. */}
+              reads as two people. */}
           <span className="whitespace-nowrap">
             {t("staffingWithRole", {
               name: gedu.firstName,
               role: roleLabel(gedu.role),
             })}
+            {index < last && NAME_SEPARATOR}
           </span>
         </Fragment>
       ))}
@@ -332,10 +340,14 @@ function ViewerRequestBlock({
 }
 
 /**
- * What stands between two people in a run of names.
+ * What closes a person's entry in a run of names: a non-breaking space and a
+ * middle dot, which is what the card's header already puts between facts.
  *
- * A middle dot, because it is what the card's header already puts between
- * facts — and because the one thing it may not be is a comma: a display name
- * can contain one, and a comma-joined run then reads as two people.
+ * The one thing it may not be is a comma — a display name can contain one, and
+ * a comma-joined run then reads as two people. The space is non-breaking so the
+ * dot stays with the name it follows rather than opening the next line.
  */
-const NAME_SEPARATOR = "·";
+const NAME_SEPARATOR = " ·";
+
+/** The ordinary space after it, where a line may break. */
+const NAME_GAP = " ";

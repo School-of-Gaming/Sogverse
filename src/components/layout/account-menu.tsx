@@ -16,6 +16,7 @@ import { StatusLine } from "@/components/ui/alert";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { NavChevron } from "@/components/ui/nav-chevron";
+import { hasOwnNavItem } from "@/components/layout/own-nav-item";
 import { useClickOutside } from "@/hooks/use-click-outside";
 import { trackDashboardNav } from "@/lib/analytics";
 import { ROLE_DASHBOARD_PATHS, ROUTES, type UserRole } from "@/lib/constants";
@@ -325,15 +326,11 @@ export function AccountMenu({
   const provenance = useSessionProvenance({ enabled: wantsFamily });
 
   const dashboardPath = ROLE_DASHBOARD_PATHS[role];
-  // The dashboard and the pages beneath it — except Substitutions, which sits
-  // under the gedu dashboard's path for its role gate and has a nav item of its
-  // own, so it is not "on My SOG" (the header's logo draws the same line).
+  // The dashboard and the pages beneath it, less the ones with a nav item of
+  // their own — the header's logo draws the same line, out of the same helper.
   const isOnDashboard =
     (pathname === dashboardPath || pathname.startsWith(dashboardPath + "/")) &&
-    !(
-      pathname === ROUTES.gedu.substitutions ||
-      pathname.startsWith(ROUTES.gedu.substitutions + "/")
-    );
+    !hasOwnNavItem(pathname);
   /**
    * Whether this menu carries About — the one nav row here, and the other half
    * of a decision the header makes.

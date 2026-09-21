@@ -160,6 +160,19 @@ describe("the admin Substitutions page's queue panel", () => {
    * it, so a reader scanning a run of deadlines must not have to subtract a
    * clock face from a date to find the next one.
    */
+  it("collapses to an all-clear line when no session needs a substitute", () => {
+    renderPanel([], () => Promise.resolve());
+
+    expect(screen.getByText("admin.substitutions.allClear")).toBeTruthy();
+    // A line under the heading, not a list and not a card holding one.
+    expect(screen.queryByRole("list")).toBeNull();
+    // The heading survives the empty state — it is what holds the stack, so
+    // the panel would otherwise be a sentence nothing introduces.
+    expect(
+      screen.getByRole("heading", { name: "admin.substitutions.listLabel" }),
+    ).toBeTruthy();
+  });
+
   it("says how long until the session starts, and marks the urgent row", () => {
     renderPanel([WITH_OFFERS, WITHOUT_OFFERS], () => Promise.resolve());
 

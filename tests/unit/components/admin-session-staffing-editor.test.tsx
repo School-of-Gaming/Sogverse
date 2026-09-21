@@ -137,9 +137,14 @@ function button(name: string | RegExp) {
   return screen.getByRole("button", { name });
 }
 
+/** The `⋯` in the card header's trailing cluster. */
+function menuTrigger(): HTMLElement {
+  return screen.getByRole("button", { name: copy.menuLabel });
+}
+
 /** Open the card's menu, which is where every admin action lives now. */
 function openMenu() {
-  fireEvent.click(screen.getByRole("button", { name: copy.menuLabel }));
+  fireEvent.click(menuTrigger());
 }
 
 /** The menu's rows, in the order an admin reads them. */
@@ -147,10 +152,15 @@ function menuItems(): (string | null)[] {
   return screen.getAllByRole("menuitem").map((item) => item.textContent);
 }
 
+/** Press one row of a menu that is already open. */
+function pick(name: string | RegExp) {
+  fireEvent.click(screen.getByRole("menuitem", { name }));
+}
+
 /** Open the menu and choose one row by its label. */
 function choose(name: string | RegExp) {
   openMenu();
-  fireEvent.click(screen.getByRole("menuitem", { name }));
+  pick(name);
 }
 
 /**
@@ -255,7 +265,7 @@ describe("the admin session staffing editor", () => {
       requests: [substitutedRequest(SANNA, "Sanna", JOONAS, "Joonas")],
     });
 
-    // One absence on the card, so the row names it and the picker opens on
+    // One absence on the card, so the row needs no name and goes straight to
     // Sanna's seat with no question in between.
     choose(copy.changeSubstitute);
 
@@ -427,17 +437,77 @@ describe("the admin session staffing editor", () => {
     ]);
   });
 
-  it("says change rather than set where the one seat already has a substitute", () => {
-    renderEditor({
+  it("still offers to set a substitute once the one seat is answered", async () => {
+    // Joonas is substituting Sanna, so he is the session's expected gedu now —
+    // and he can be away too. An earlier build replaced the generic row with
+    // "Change substitute" the moment one seat was answered, and the office then
+    // had no way to record the substitute's own absence from this card.
+    const { onSetSubstitution } = renderEditor({
       gedus: ONE_PRIMARY,
       requests: [substitutedRequest(SANNA, "Sanna", JOONAS, "Joonas")],
     });
 
     openMenu();
     expect(menuItems()).toEqual([
+      copy.setSubstitute,
       copy.changeSubstitute,
       copy.clearSubstitute,
     ]);
+
+    // One settable seat — Joonas's — so there is still no question to ask.
+    // The menu is already open above; pressing the ⋯ again would close it.
+    pick(copy.setSubstitute);
+    expect(screen.queryByText(copy.absentStepTitle)).toBeNull();
+
+    fireEvent.click(pickerRow(PETRA));
+    chooseReason();
+    await act(async () => {
+      fireEvent.click(button(copy.confirmAction));
+    });
+
+    expect(onSetSubstitution).toHaveBeenCalledWith({
+      absentGeduId: JOONAS,
+      subGeduId: PETRA,
+      reason: "sick",
+    });
+  });
+
+  it("asks only about the seats nobody is covering yet", async () => {
+    // Sanna is covered by Joonas; Petra and Joonas are the two gedus the
+    // session now expects, and either can be the next one away. Sanna is not
+    // offered again — her seat has a Change row of its own.
+    const { onSetSubstitution } = renderEditor({
+      gedus: TWO_SEATS,
+      requests: [substitutedRequest(SANNA, "Sanna", JOONAS, "Joonas")],
+    });
+
+    openMenu();
+    expect(menuItems()).toEqual([
+      copy.setSubstitute,
+      copy.changeSubstitute,
+      copy.clearSubstitute,
+    ]);
+
+    pick(copy.setSubstitute);
+    expect(screen.getByText(copy.absentStepTitle)).not.toBeNull();
+    expect(
+      screen.getAllByRole("radio").map((radio) => radio.getAttribute("value")),
+    ).toEqual([JOONAS, PETRA]);
+
+    fireEvent.click(screen.getByRole("radio", { name: /Petra/ }));
+    fireEvent.click(button(messages.common.continue));
+
+    fireEvent.click(pickerRow(SANNA));
+    chooseReason();
+    await act(async () => {
+      fireEvent.click(button(copy.confirmAction));
+    });
+
+    expect(onSetSubstitution).toHaveBeenCalledWith({
+      absentGeduId: PETRA,
+      subGeduId: SANNA,
+      reason: "sick",
+    });
   });
 
   it("offers set and withdraw on a single seat's open request", () => {
@@ -445,6 +515,37 @@ describe("the admin session staffing editor", () => {
 
     openMenu();
     expect(menuItems()).toEqual([copy.setSubstitute, copy.withdrawRequest]);
+  });
+
+  it("leaves the card alone when a named row's picker is closed", () => {
+    // "Change substitute" goes straight to one seat's picker on a card that has
+    // three seats, so the seat count cannot say where closing it goes back to —
+    // and an earlier build used exactly that, landing the admin on a question
+    // they never asked.
+    renderEditor({
+      gedus: TWO_SEATS,
+      requests: [substitutedRequest(SANNA, "Sanna", JOONAS, "Joonas")],
+    });
+
+    choose(copy.changeSubstitute);
+    expect(screen.getByText(copy.pickerTitle)).not.toBeNull();
+
+    fireEvent.click(button(messages.common.close));
+
+    expect(screen.queryByText(copy.absentStepTitle)).toBeNull();
+    expect(menuTrigger()).not.toBeNull();
+  });
+
+  it("goes back to the question when the picker it asked for is closed", () => {
+    renderEditor({ gedus: TWO_SEATS });
+
+    choose(copy.setSubstitute);
+    fireEvent.click(screen.getByRole("radio", { name: /Petra/ }));
+    fireEvent.click(button(messages.common.continue));
+
+    fireEvent.click(button(messages.common.close));
+
+    expect(screen.getByText(copy.absentStepTitle)).not.toBeNull();
   });
 
   it("waits for a reason before the confirm will commit", () => {
@@ -485,9 +586,14 @@ describe("the admin session staffing editor", () => {
 
     choose(copy.setSubstitute);
     fireEvent.click(pickerRow(PETRA));
+    // The reason first, or the button is disabled because nothing was chosen
+    // and this case asserts the very thing it failed to test.
+    chooseReason();
     fireEvent.click(button(copy.confirmAction));
 
+    expect(onSetSubstitution).toHaveBeenCalledTimes(1);
     expect(isDisabled(button(copy.confirmAction))).toBe(true);
+    expect(isDisabled(button(messages.common.cancel))).toBe(true);
     await act(async () => {
       settle();
     });
@@ -530,6 +636,28 @@ describe("the admin session staffing editor", () => {
     await act(async () => {
       settle();
     });
+  });
+
+  /**
+   * Every row here opens an overlay, and the row goes with the panel that held
+   * it — so without a hand-back, closing one lands focus on `<body>` and the
+   * next Tab restarts at the top of the page. The menu owns the return, which
+   * is what gives the gedu's card the same behaviour from the same place.
+   */
+  it.each([
+    ["the seat question", copy.setSubstitute, () => messages.common.cancel],
+    ["the picker", copy.changeSubstitute, () => messages.common.close],
+    ["the clear confirm", copy.clearSubstitute, () => messages.common.cancel],
+  ])("hands focus back to the menu when %s closes", (_label, row, dismiss) => {
+    renderEditor({
+      gedus: TWO_SEATS,
+      requests: [substitutedRequest(SANNA, "Sanna", JOONAS, "Joonas")],
+    });
+
+    choose(row);
+    fireEvent.click(button(dismiss()));
+
+    expect(document.activeElement).toBe(menuTrigger());
   });
 
   it("names a refused withdraw in front of the button that caused it", async () => {

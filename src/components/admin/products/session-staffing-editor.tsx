@@ -91,14 +91,23 @@ export interface SessionStaffingEditorProps {
  * replaces spent a band of every admin card on actions that are rare even for
  * the office, and the card is shorter for losing them.
  *
- * **The names ride the labels where a session has more than one empty seat.**
+ * **The names ride the labels where more than one seat has been filed on.**
  * The staffing note prints who is away, but a menu row reading "Clear
  * substitute" on a card with two absent gedus could not say whose, so with more
- * than one seat every row names its own.
+ * than one live request every row names its own. The generic "Set a substitute"
+ * needs no name at any count: it is the way in to the seats *nothing* has been
+ * filed on, and it names the one it lands on at its destination.
  *
- * Where nobody is due and nobody has filed there is no action to offer, so the
- * menu is absent and the line saying why stands alone — an admin pressing it
- * would have reached a dialog that could not name an absent gedu.
+ * **A seat that already has a substitute does not stop the office recording the
+ * next absence.** A seated sub is themselves one of the session's expected
+ * gedus, so a group whose primary is covered can still lose its assistant — or
+ * the substitute — and the generic row stands for as long as any seat is still
+ * settable. Without it a card fell back to Change/Clear on the one answered
+ * seat and the second absence could not be recorded here at all.
+ *
+ * Where nobody is due and nobody has filed there is nothing to act on, so the
+ * card draws no `⋯` at all — and this component renders nothing whatsoever, so
+ * an admin's card is exactly the card the gedu who runs it sees.
  */
 export function SessionStaffingEditor({
   staffing,
@@ -112,9 +121,8 @@ export function SessionStaffingEditor({
   const [pending, setPending] = useState<PendingRequestAction | null>(null);
 
   const seats = absentSeats(staffing);
-  const noSeat = seats.length === 0;
   const openPicker = (seat: AbsentSeat) =>
-    setFlow({ step: "picker", absent: seat, sub: null });
+    setFlow({ step: "picker", absent: seat, sub: null, askedWhichSeat: false });
 
   /**
    * The seats something has actually been filed on — which is what decides
@@ -129,52 +137,51 @@ export function SessionStaffingEditor({
   const live = seats.filter((seat) => seat.request !== null);
   const named = live.length > 1;
   /**
-   * The one seat whose substitute the top row would change: where a single
-   * request has been answered, that row says so rather than offering to set a
-   * substitute the session already has.
+   * The seats a substitute could still be **set** for, which is every seat
+   * except one already filled.
+   *
+   * An *open* request is in here on purpose: seating somebody on it is how the
+   * office approves it, and it is the only way to do that from the card. A
+   * *substituted* seat is not, because it has its own Change row — offering it
+   * twice would put the same destination in the menu under two verbs.
    */
-  const onlyAnswered =
-    live.length === 1 && live[0].request?.status === "substituted"
-      ? live[0]
-      : null;
+  const settable = seats.filter(
+    (seat) => seat.request === null || seat.request.status !== "substituted",
+  );
 
   const items: SessionCardMenuItem[] = [];
-  if (!noSeat) {
-    items.push(
-      onlyAnswered !== null
-        ? {
-            key: "set",
-            label: t("changeSubstitute"),
-            onSelect: () => openPicker(onlyAnswered),
-          }
-        : {
-            key: "set",
-            label: t("setSubstitute"),
-            // One seat is not a question — the flow's first step exists only
-            // to name which of several is empty, and with one it is known.
-            onSelect: () =>
-              setFlow(
-                seats.length === 1
-                  ? { step: "picker", absent: seats[0], sub: null }
-                  : { step: "absent", absent: null, sub: null },
-              ),
-          },
-    );
+  if (settable.length > 0) {
+    items.push({
+      key: "set",
+      label: t("setSubstitute"),
+      // One settable seat is not a question — the flow's first step exists
+      // only to name which of several is empty, and with one it is known, so
+      // the picker names it in its own description instead.
+      onSelect: () =>
+        setFlow(
+          settable.length === 1
+            ? {
+                step: "picker",
+                absent: settable[0],
+                sub: null,
+                askedWhichSeat: false,
+              }
+            : { step: "absent", absent: null, sub: null, askedWhichSeat: true },
+        ),
+    });
   }
   for (const seat of live) {
     const request = seat.request;
     if (request === null) continue;
     const name = seat.firstName;
     if (request.status === "substituted") {
-      // Where several seats are out, each needs its own way straight to the
-      // picker; where one is, the row above is already that way in.
-      if (named) {
-        items.push({
-          key: `change:${request.id}`,
-          label: t("changeSubstituteFor", { name }),
-          onSelect: () => openPicker(seat),
-        });
-      }
+      items.push({
+        key: `change:${request.id}`,
+        label: named
+          ? t("changeSubstituteFor", { name })
+          : t("changeSubstitute"),
+        onSelect: () => openPicker(seat),
+      });
       items.push({
         key: `clear:${request.id}`,
         label: named ? t("clearSubstituteFor", { name }) : t("clearSubstitute"),
@@ -195,14 +202,18 @@ export function SessionStaffingEditor({
   // card the same session draws for the gedu who runs it.
   return (
     <>
-      <SessionCardMenu label={t("menuLabel")} items={items} />
+      <SessionCardMenu
+        label={t("menuLabel")}
+        items={items}
+        flowOpen={flow !== null || pending !== null}
+      />
 
       {flow !== null && (
         <SetSubFlowOverlays
           flow={flow}
           setFlow={setFlow}
           staffing={staffing}
-          seats={seats}
+          settable={settable}
           sessionDate={sessionDate}
           onSetSubstitution={onSetSubstitution}
         />
@@ -292,13 +303,22 @@ interface SetSubFlow {
   absent: AbsentSeat | null;
   /** The chosen sub, once the picker has closed on a selection. */
   sub: { id: string; firstName: string } | null;
+  /**
+   * Whether this walk started by **asking** which seat is empty — which is the
+   * only thing that says where closing the picker goes back to.
+   *
+   * It cannot be inferred from the seat count: a named row goes straight to one
+   * seat's picker on a card that has several, so "more than one seat" would
+   * push Escape into a question the admin never asked.
+   */
+  askedWhichSeat: boolean;
 }
 
 function SetSubFlowOverlays({
   flow,
   setFlow,
   staffing,
-  seats,
+  settable,
   sessionDate,
   onSetSubstitution,
 }: {
@@ -310,7 +330,8 @@ function SetSubFlowOverlays({
    */
   setFlow: Dispatch<SetStateAction<SetSubFlow | null>>;
   staffing: SessionStaffing;
-  seats: readonly AbsentSeat[];
+  /** The seats the question may offer: those a substitute could still be set for. */
+  settable: readonly AbsentSeat[];
   sessionDate: string;
   onSetSubstitution: (draft: SetSessionSubstitutionDraft) => Promise<void>;
 }) {
@@ -339,12 +360,17 @@ function SetSubFlowOverlays({
         }}
       >
         <AbsentGeduStep
-          seats={seats}
+          seats={settable}
           sessionDate={sessionDate}
           initialId={absent?.id ?? null}
           onCancel={() => setFlow(null)}
           onChoose={(gedu) =>
-            setFlow({ step: "picker", absent: gedu, sub: flow.sub })
+            setFlow({
+              step: "picker",
+              absent: gedu,
+              sub: flow.sub,
+              askedWhichSeat: true,
+            })
           }
         />
       </Dialog>
@@ -360,11 +386,15 @@ function SetSubFlowOverlays({
           // undo the very choice that triggered it.
           //
           // A genuine close goes back to the question it came from, and cancels
-          // outright where there was no question: a single-seat session opens
-          // the picker directly, so there is nothing behind it.
+          // outright where there was no question — a named row and a single
+          // settable seat both open the picker directly, and on a card with
+          // several seats the seat count cannot tell those from a walk that
+          // did ask.
           setFlow((current) => {
             if (current === null || current.step !== "picker") return current;
-            return seats.length > 1 ? { ...current, step: "absent" } : null;
+            return current.askedWhichSeat
+              ? { ...current, step: "absent" }
+              : null;
           });
         }}
         title={t("pickerTitle")}
@@ -380,6 +410,7 @@ function SetSubFlowOverlays({
         highlightId={currentSubstituteId(absent)}
         onSelect={(gedu) =>
           setFlow({
+            ...flow,
             step: "confirm",
             absent,
             sub: { id: gedu.id, firstName: gedu.first_name },

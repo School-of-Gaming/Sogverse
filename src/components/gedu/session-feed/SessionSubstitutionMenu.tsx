@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { substitutionRequestFailureKey } from "@/services/session-substitution";
 import { SessionCardMenu } from "./SessionCardMenu";
@@ -39,13 +39,6 @@ import {
  * size. Growing the glyph instead would make the quietest control on the card
  * the loudest thing in the row.
  *
- * **There is no dropdown primitive in the kit**, so this follows the account
- * menu's idiom exactly (`src/components/layout/CLAUDE.md`): a `relative`
- * wrapper, `useClickOutside`, an absolutely-positioned `role="menu"` panel,
- * Escape closing it with focus handed back to the trigger, and arrow keys
- * moving across the rows. Two call sites shared nothing but `useClickOutside`
- * before this one, and a third is not yet a primitive — extracting one is a
- * decision about the menu's *shape*, which nobody has made.
  */
 export function SessionSubstitutionMenu({
   onRequestSubstitution,
@@ -76,11 +69,6 @@ export function SessionSubstitutionMenu({
    */
   const [committing, setCommitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  /**
-   * The wrapper the menu drew, so the dialog can hand focus back to its trigger
-   * on the way out — the row that opened it went with the panel.
-   */
-  const menuRef = useRef<HTMLDivElement>(null);
 
   const fileSubstitution = async (draft: SessionSubstitutionRequestDraft) => {
     setError(null);
@@ -110,36 +98,25 @@ export function SessionSubstitutionMenu({
     },
   ];
 
-  /**
-   * The `⋯` the menu drew, while it is still on the card.
-   *
-   * The row that opened the dialog went with the panel, so closing it would
-   * otherwise land focus on `<body>` and restart the next Tab at the top of the
-   * page. A successful write takes this whole control off the card, and then
-   * there is nothing to hand focus back to.
-   */
-  const trigger = () =>
-    menuRef.current?.querySelector<HTMLElement>(MENU_TRIGGER_SELECTOR) ?? null;
-
   return (
-    // The dialog is a **sibling** of the menu wrapper, never a child of it: a
-    // portal still bubbles its events through the React tree it was rendered
-    // into, so a dialog mounted inside would hand every arrow key typed at the
-    // form to this menu's own key handler.
+    // The dialog is a **sibling** of the menu, never a child of it: a portal
+    // still bubbles its events through the React tree it was rendered into, so
+    // a dialog mounted inside would hand every arrow key typed at the form to
+    // the menu's own key handler.
     <>
-      <div ref={menuRef}>
-        <SessionCardMenu label={t("substitutionMenuLabel")} items={items} />
-      </div>
+      <SessionCardMenu
+        label={t("substitutionMenuLabel")}
+        items={items}
+        // The row that opened the dialog went with the panel, so the menu is
+        // what hands focus back on the way out.
+        flowOpen={requestOpen}
+      />
 
       <SessionSubstitutionRequestDialog
         open={requestOpen}
         onOpenChange={(next) => {
           if (committing) return;
           setRequestOpen(next);
-          // Focus goes back where the reader was two clicks ago — see
-          // `trigger` above for why it can be gone.
-          const back = trigger();
-          if (!next && back?.isConnected === true) back.focus();
         }}
         committing={committing}
         error={error}
@@ -151,6 +128,3 @@ export function SessionSubstitutionMenu({
 
 /** React's key for the one row — never rendered, never read by anybody. */
 const MENU_ITEM_KEY = "request";
-
-/** How the wrapper finds the `⋯` the menu drew inside it. */
-const MENU_TRIGGER_SELECTOR = '[aria-haspopup="menu"]';

@@ -27,12 +27,26 @@ export interface SessionCardMenuItem {
  * nothing a reader can see while the tap target is the full size.
  *
  * **There is no dropdown primitive in the kit**, so this follows the account
- * menu's idiom exactly (`src/components/layout/CLAUDE.md`): a `relative`
- * wrapper, `useClickOutside` at the call site's wrapper, an
+ * menu's idiom (`src/components/layout/CLAUDE.md`): a `relative` wrapper, an
  * absolutely-positioned `role="menu"` panel, Escape closing it with focus
  * handed back to the trigger, and arrow keys moving across the rows. The panel
  * and the rows take that menu's classes to the character, so the two cannot
  * drift apart.
+ *
+ * **The outside-click listener is attached only while the panel is open, and
+ * that is the one place this departs from the account menu.** There is one
+ * account menu per document and there are as many of these as there are cards
+ * in a feed — fifty is ordinary — so the shared `useClickOutside`, which holds
+ * a document listener for the whole life of its caller, would put fifty
+ * always-live mousedown handlers on a page where at most one menu is ever open.
+ * The behaviour is the same; what changes is that nothing listens for the
+ * overwhelmingly common closed case.
+ *
+ * **Focus comes back from whatever a row opened.** The row that opened a dialog
+ * or a sheet went with the panel, so without this the close lands focus on
+ * `<body>` and the next Tab restarts at the top of the page. The caller says
+ * when its flow is up, because only the caller knows — the menu is long closed
+ * by then.
  *
  * **No row carries a destructive tint, and that is the account menu's rule
  * rather than an omission**: sign-out is styled like every other row there,
@@ -51,10 +65,16 @@ export interface SessionCardMenuItem {
 export function SessionCardMenu({
   label,
   items,
+  flowOpen = false,
 }: {
   /** The trigger's and the panel's accessible name, already translated. */
   label: string;
   items: readonly SessionCardMenuItem[];
+  /**
+   * Whether an overlay one of the rows opened is currently up. On its way back
+   * down, focus returns to the `⋯` this menu drew.
+   */
+  flowOpen?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -95,6 +115,26 @@ export function SessionCardMenu({
       document.removeEventListener("keydown", onKey);
     };
   }, [open]);
+
+  /**
+   * Whether a flow this menu opened has been up since the last time focus was
+   * handed back — so the effect below fires on the way *down* only, and a card
+   * that simply renders with nothing open never steals focus.
+   */
+  const flowWasOpenRef = useRef(false);
+  useEffect(() => {
+    if (flowOpen) {
+      flowWasOpenRef.current = true;
+      return;
+    }
+    if (!flowWasOpenRef.current) return;
+    flowWasOpenRef.current = false;
+    const trigger = triggerRef.current;
+    // A successful write can take the whole control off the card — a gedu who
+    // has filed is no longer offered the row — and then there is nothing to
+    // hand focus back to.
+    if (trigger !== null && trigger.isConnected) trigger.focus();
+  }, [flowOpen]);
 
   useEffect(() => {
     if (!open) return;

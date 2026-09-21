@@ -19,6 +19,7 @@ import {
 } from "@/lib/constants";
 import { AccountMenu } from "@/components/layout/account-menu";
 import { LocalePicker } from "@/components/layout/locale-picker";
+import { hasOwnNavItem } from "@/components/layout/own-nav-item";
 import { SiteHeaderShell } from "@/components/layout/site-header-shell";
 import { trackDashboardNav } from "@/lib/analytics";
 
@@ -103,9 +104,7 @@ export function Header({ navRole }: HeaderProps) {
    * role has a page to send here.
    */
   const showsSubstitutions = navFor === "gedu";
-  const isOnSubstitutions =
-    pathname === ROUTES.gedu.substitutions ||
-    pathname.startsWith(ROUTES.gedu.substitutions + "/");
+  const isOnSubstitutions = hasOwnNavItem(pathname);
 
   const isHome = pathname === ROUTES.home;
 
@@ -118,10 +117,9 @@ export function Header({ navRole }: HeaderProps) {
   // Signed-out visitors go home.
   const logoHref = user && dashboardPath ? dashboardPath : ROUTES.home;
   // The visual "you're here" state for the logo follows whatever it links to —
-  // its dashboard and the pages beneath it — except a page beneath it that has
-  // a nav item of its own. Substitutions lives under the gedu dashboard's path
-  // because that prefix is what role-gates it, and without this carve-out the
-  // strip lit two places at once and named the reader's position twice.
+  // its dashboard and the pages beneath it — less a page beneath it that has a
+  // nav item of its own, or the strip would light two places at once and name
+  // the reader's position twice. The account menu draws the same line.
   const isOnLogoTarget =
     logoHref === ROUTES.home
       ? isHome

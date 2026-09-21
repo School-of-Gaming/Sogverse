@@ -1,17 +1,20 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import en from "@/../messages/en.json";
 import { Header } from "@/components/layout/header";
 
 /**
- * Where the header says the reader is.
+ * Where the chrome says the reader is.
  *
  * Substitutions lives under the gedu dashboard's path, because that prefix is
- * what role-gates it — and the logo marks itself current on its dashboard and
- * everything beneath it. Left alone the two rules light two places at once, so
- * a page with a nav item of its own is carved out of the logo's claim. The
- * shared setup pins the pathname to "/", so this file brings its own.
+ * what role-gates it — and two places mark themselves current on the dashboard
+ * and everything beneath it: the header's logo and the account menu's My SOG
+ * row. Left alone each lights a second place, so a page with a nav item of its
+ * own is carved out of both claims, by one shared predicate. **Both consumers
+ * are exercised here**, because a carve-out applied in one of them is exactly
+ * the bug this file exists to catch. The shared setup pins the pathname to
+ * "/", so this file brings its own.
  */
 
 const mockPathname = vi.hoisted(() => vi.fn<() => string>());
@@ -34,10 +37,14 @@ vi.mock("@/i18n/navigation", async () => {
 
 vi.mock("@/providers", () => ({ useAuth: () => mockAuth() }));
 
-vi.mock("@/components/layout/account-menu", async () => {
-  const { createElement } = await import("react");
-  return { AccountMenu: () => createElement("button", { type: "button" }) };
-});
+// The real account menu, because it is the second consumer of the carve-out.
+// A gedu never reads the family list (`/api/family/list` is gated to customers
+// and gamers), so these two stubs are asked for nothing and answer nothing.
+vi.mock("@/services/family/family.queries", () => ({
+  useFamily: () => ({ data: undefined, isPending: false }),
+  useSessionProvenance: () => ({ data: undefined, isPending: false }),
+  familyKeys: { all: ["family"], list: () => ["family", "list"] },
+}));
 
 vi.mock("@/components/layout/locale-picker", async () => {
   const { createElement } = await import("react");
@@ -89,5 +96,35 @@ describe("Header — where a gedu is told they are", () => {
   it("marks Substitutions alone on its page, never My SOG beside it", () => {
     renderAt("/gedu/substitutions");
     expect(currentLinks()).toEqual([en.header.nav.substitutions]);
+  });
+
+  it("carves the same page out of a nested path beneath it", () => {
+    renderAt("/gedu/substitutions/abc");
+    expect(currentLinks()).toEqual([en.header.nav.substitutions]);
+  });
+});
+
+/**
+ * The account menu draws the same line from the same predicate, and it is the
+ * consumer a carve-out written twice would be forgotten in.
+ */
+describe("the account menu's My SOG row", () => {
+  function dashboardRow(): HTMLElement {
+    fireEvent.click(
+      screen.getByRole("button", { name: /Mikko/ }),
+    );
+    return screen.getByRole("menuitem", {
+      name: en.dashboardSections.pageTitle,
+    });
+  }
+
+  it("is current on the dashboard and the pages beneath it", () => {
+    renderAt("/gedu/clubs/abc");
+    expect(dashboardRow().getAttribute("aria-current")).toBe("page");
+  });
+
+  it("is not current on a page with a nav item of its own", () => {
+    renderAt("/gedu/substitutions");
+    expect(dashboardRow().getAttribute("aria-current")).toBeNull();
   });
 });

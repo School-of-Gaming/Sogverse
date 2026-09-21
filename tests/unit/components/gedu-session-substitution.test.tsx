@@ -89,14 +89,18 @@ const PAST_DATE = "2026-03-09";
 const PAST_START = new Date("2026-03-09T14:30:00.000Z");
 const PAST_END = new Date("2026-03-09T16:00:00.000Z");
 
-function futureEntry(requests: readonly SubstitutionRequestInput[], viewerId: string) {
+function futureEntry(
+  requests: readonly SubstitutionRequestInput[],
+  viewerId: string,
+  gedus: readonly StaffingAssignment[] = GEDUS,
+) {
   return {
     kind: "future",
     id: `group-1:${FUTURE_DATE}`,
     startsAt: FUTURE_START,
     endsAt: FUTURE_END,
     staffing: deriveSessionStaffing({
-      gedus: GEDUS,
+      gedus,
       requests,
       sessionDate: FUTURE_DATE,
       viewerId,
@@ -184,13 +188,27 @@ function renderFeed({
 
 const copy = messages.gedu.sessionFeed;
 
-/** The staffing line's text, which is a run of nodes rather than one string. */
-function expectedLineText(): string {
+/** The middle dot the run separates people with, and the space that binds it. */
+const DOT = "\u00b7";
+const SEPARATOR = `\u00a0${DOT}`;
+
+/** The staffing line itself — a run of nodes rather than one string. */
+function expectedLine(): HTMLParagraphElement {
   const line = [...document.querySelectorAll("p")].find((p) =>
     p.textContent.startsWith(copy.staffingExpectedLabel),
   );
   if (line === undefined) throw new Error("no staffing line on this card");
-  return line.textContent.replace(/\s+/g, " ").trim();
+  return line;
+}
+
+/** The same line's text, with its whitespace normalised. */
+function expectedLineText(): string {
+  return expectedLine().textContent.replace(/\s+/g, " ").trim();
+}
+
+/** The one-person-and-their-role units the run is built from. */
+function nameUnits(): HTMLElement[] {
+  return [...expectedLine().querySelectorAll<HTMLElement>(".whitespace-nowrap")];
 }
 
 /** The `⋯` button in the card header — the only way to reach the filing form. */
@@ -429,6 +447,24 @@ describe("the card's overflow menu", () => {
     // the keyboard cannot reach.
     expect(menuItem()).toBeNull();
   });
+
+  it("hands focus back to the trigger when the form is dismissed", () => {
+    // The row that opened the dialog went with the panel, so without the
+    // hand-back focus lands on <body> and the next Tab restarts at the top of
+    // the page. The menu owns it, which is what gives the admin's card the
+    // same behaviour from the same place.
+    renderFeed({ entries: [futureEntry([], SANNA)] });
+    const trigger = menuTrigger();
+    openRequestDialog();
+
+    // The card's own note editor has a Cancel too, behind the modal; this one
+    // is the dialog's, which is the last to mount.
+    const cancels = screen.getAllByRole("button", { name: messages.common.cancel });
+    fireEvent.click(cancels[cancels.length - 1]);
+
+    expect(screen.queryByText(copy.substitutionRequestDialogTitle)).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+  });
 });
 
 describe("the staffing line", () => {
@@ -480,6 +516,48 @@ describe("the staffing line", () => {
     expect(line).not.toContain(",");
   });
 
+  it("leaves a place for a narrow card to break the run", () => {
+    // Each person is unbreakable and a middle dot is no break opportunity of
+    // its own, so without a real space between the units the whole run is one
+    // box — and at 360px it left the card rather than wrapping inside it.
+    const THIRD = "3d2a5f48-3d0f-4b8f-8b1d-1f2d2a0f9c54";
+    renderFeed({
+      entries: [
+        futureEntry(
+          [
+            openRequest({
+              id: "0f1a1a3c-5c44-4d3a-93f2-4e3a7f6a1b22",
+              firstName: "Mikko",
+            }),
+          ],
+          SANNA,
+          [
+            ...GEDUS,
+            { id: THIRD, firstName: "Joonas", role: "assistant" },
+          ],
+        ),
+      ],
+    });
+
+    const units = nameUnits();
+    expect(units).toHaveLength(3);
+
+    // The separator rides the name before it, so no line can open with a
+    // dangling dot — and the last person carries none at all.
+    expect(units.slice(0, -1).map((unit) => unit.textContent.slice(-2))).toEqual([
+      SEPARATOR,
+      SEPARATOR,
+    ]);
+    expect(units[2].textContent).not.toContain(DOT);
+
+    // And what stands between two units is an ordinary space: the one place a
+    // renderer is allowed to break this line.
+    for (const unit of units.slice(0, -1)) {
+      const gap = unit.nextSibling;
+      expect(gap === null ? null : gap.nodeValue).toBe(" ");
+    }
+  });
+
   it("keeps a name with a comma in it as one unbreakable unit", () => {
     renderFeed({
       entries: [
@@ -499,13 +577,13 @@ describe("the staffing line", () => {
       ],
     });
 
-    const units = [...document.querySelectorAll(".whitespace-nowrap")].map(
-      (unit) => unit.textContent,
-    );
     // One node holds the whole name, comma included, so no wrap can fall
     // inside it and no reader can take it for two people.
     // The role is the one the request was filed for, which is what the sub is
     // paid as — Petra's primary seat, not her own assignment's class.
+    const units = nameUnits().map((unit) =>
+      unit.textContent.replace(SEPARATOR, ""),
+    );
     expect(units).toContain("Suhina, Susanna Hiltunen (Primary)");
   });
 
