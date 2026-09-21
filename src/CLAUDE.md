@@ -46,9 +46,11 @@ is the one UI rule this file keeps. What is adopted so far, and in what order th
 follows, is `packages/sog-ui/docs/adoption.md`. For a construct not yet adopted, the rule
 written below for it still governs Sogverse's code exactly as written; the adoption that
 retires the construct deletes its rule from this file in the same change. No new UI rule
-is added here: a new opinion goes to SOG-UI, and the construct joins the adoption order.
-The UI sections below (layout and scrolling, loading and disabled state, button order, the
-headings rule, the UI component reference and preview scenes) are that
+is added here: a new opinion goes to SOG-UI, and the construct joins the adoption order —
+except where the owner places one here because the library has no home for it yet, and
+such a rule leaves with its adoption like the rest.
+The UI sections below (layout and scrolling, loading and disabled state, button order,
+cards, the headings rule, the UI component reference and preview scenes) are that
 transitional state.
 
 Colour and the faces have already left: the tokens, the grounds, the one-theme rule, the
@@ -163,6 +165,23 @@ The pattern stays inline per screen — **do not extract it into a shared `useCo
 **A button followed by a muted text link is not a pair, and must not be col-reversed.** A submit button with a quiet "Back to login" beneath it is one primary action plus an escape hatch — the link is typographically subordinate, not the other half of a choice — so it stays DOM `[affirmative, link]` under plain `flex-col` with the link below, which is where a reader expects the way out. The rule engages when both halves are *buttons*; a future sweep that flips these on pattern alone would be reversing them wrongly.
 
 **In an emailed button row the *position* carries over unconditionally; the emphasis is decided per mail, inside what the row's type allows.** A mail's two-button row is a fixed 50/50 table that is a row at every width, so there is nothing for `col-reverse` to do and the affirmative goes in the right-hand cell, reading the way the app has already taught. What the type forbids is the *primary* brand button, so a row can never hold two amber (act) cells competing for the same click (two violet `secondary` halves still compile; the type does not reach them) — but the right-hand half may still carry the emphasis the row does allow, wherever one of the two actions is genuinely the thing being asked for: the seat-offer mail fills Accept and outlines Decline. Where the halves are equal alternatives with no ask between them — the welcome mail's shop-or-My-SOG pair — both stay outlined and neither is weighted. Position is settled by the convention; emphasis is settled by whether the mail is asking a question.
+
+## Cards
+
+**Rule: a card does not contain a card.** A card's edge says *this is one thing*. Put bordered things inside it and the reader can no longer tell which box is the object, and every level spends a border and two paddings — width a 360px screen does not have. Inside a card, group with spacing, a heading, a divider or a tinted row.
+
+**Which level keeps its edge follows what the reader acts on.** Where the items are peers, each with an action or a destination of its own — a queue of requests, a grid of groups — the *items* are the cards and what holds them is a heading over a grid or a stack, with no edge of its own. Where the items are facts about one thing, that thing is the card and the items are rows in it, told apart by dividers. The test for an outer edge is to take it away: if the heading and the spacing already say "these belong together", it was saying nothing.
+
+**A list of repeated items inside a card is the case this rule exists for, not an exception to it.** Boxing each row of a list that is already inside a box is how the pattern usually arrives, one reasonable-looking step at a time.
+
+**The exceptions are boxes doing a different job from a card's, and each has to look like that job rather than like a card:**
+
+- **An overlay starts a new layer.** A dialog, sheet, popover or menu sits above the page, so a card inside one is first-level on its own layer. Nesting inside the overlay is still nesting.
+- **An audience boundary.** An inset region marking *who can see this* rather than *what belongs together* — staff-only notes inside a family-visible card. It reads as a well: dashed or tinted, never lifted, and it says whose it is.
+- **A state message.** An alert or status panel inside a card is a message, not a container: it wears a status colour and it is there only while the state is.
+- **A boxed control.** Inputs, selects, chips, and rows a reader chooses among — a radio group drawn as boxes is a control, and its edge is the control's affordance.
+- **Framed content.** An image, a map, a quoted message, a file preview, a code block: the frame belongs to the content and would travel with it.
+- **An object moved between containers.** Where a reader drags things from one container to another, the container is a drop zone and the thing is an object, and each needs its edge for the gesture to be legible.
 
 ## Date & Time Formatting
 
