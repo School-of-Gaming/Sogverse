@@ -1398,9 +1398,11 @@ describe("session substitutions", () => {
       expect(moderator.error).toBeNull();
       expect(moderator.data).toBe(false);
 
-      // …while the group-wide gate is wide open on the same fixture, which is
-      // what makes this case about the DATE and not about the substitution.
-      expect(await substitutesGroup(subAuth)).toBe(true);
+      // A week out the group-wide gate is shut as well: the access window only
+      // opens 48 hours before the session starts. The case above, two days
+      // back with that gate open, is the one that separates the DATE arm from
+      // the window; this one pins that a future substitution reaches neither.
+      expect(await substitutesGroup(subAuth)).toBe(false);
     });
 
     it("admits a substitution on today", async () => {
@@ -2171,7 +2173,10 @@ describe("session substitutions", () => {
     });
 
     it("the gedu feed gives an ADMIN caller the reason and withholds it from a colleague", async () => {
-      const date = utcDate(5);
+      // Today, so the substitute's window is open: the feed is behind the
+      // group-wide gate, and that opens 48 hours before the session starts. A
+      // run straddling midnight leaves the row dated yesterday, still inside it.
+      const date = utcDate(0);
       await seedRequest({ date, substituteId: subId });
       await admin
         .from("session_substitution_requests")
@@ -2188,7 +2193,7 @@ describe("session substitutions", () => {
       expect(adminSubstitutions[0].reason_note).toBe("private");
       expect(adminSubstitutions[0].offer_count).toBe(0);
 
-      // The SUBSTITUTION is a colleague on this document, not the requester.
+      // The SUBSTITUTE is a colleague on this document, not the requester.
       const asSub = await subAuth.rpc("get_gedu_group_feed", {
         p_group_id: GROUP_A,
       });
