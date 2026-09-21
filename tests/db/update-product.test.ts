@@ -789,7 +789,14 @@ describe("update_product", () => {
   // tag has, which is what makes the last case here a live footgun rather than
   // a curiosity.
 
-  /** Base arguments for a save that leaves the requirement set alone to vary. */
+  /**
+   * Base arguments for a save that leaves the requirement set alone to vary.
+   *
+   * `p_start_date` is passed although the parameter is defaulted: the column is
+   * NOT NULL, so omitting it fails the write with 23502 rather than leaving the
+   * date alone — and the compiler cannot see that, because the argument is
+   * optional on the wire.
+   */
   function consentUpdateArgs(name: string) {
     return {
       p_id: PRODUCT_ID,
@@ -804,6 +811,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_seat_count: 10,
     };
   }
