@@ -543,7 +543,7 @@ export const PREVIEW_SCENES = [
     surface: "admin-substitutions",
     title: "Admin substitutions",
     description:
-      "The /admin/substitutions page over fixtures, pinned to the same Monday morning as the dashboard: the staffing queue soonest-first with the sessions inside the day marked, and the fortnight it has already settled. A Stockholm club puts the viewer's zone on the page and makes the sort visible; Approve works against local state.",
+      "The /admin/substitutions page over fixtures, pinned to the same Monday morning as the dashboard: the staffing queue soonest-first, with the sessions inside the day marked. A Stockholm club puts the viewer's zone on the page and makes the sort visible; Approve works against local state.",
     chrome: "admin",
     scenarios: [
       {

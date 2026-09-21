@@ -358,6 +358,16 @@ describe("the card's overflow menu", () => {
     expect(document.activeElement).toBe(menuItem());
   });
 
+  it("takes no focus when it is opened with the pointer", () => {
+    // The row's focus treatment is a filled ground, so focusing the only row
+    // on every open drew a permanently-selected box inside the panel — and a
+    // second fill on top of it as soon as the pointer arrived. Focus on open
+    // belongs to the keyboard, which is where the account menu puts it.
+    renderFeed({ entries: [futureEntry([], SANNA)] });
+    const item = openMenu();
+    expect(document.activeElement).not.toBe(item);
+  });
+
   it("closes on Escape and hands focus back to the trigger", () => {
     renderFeed({ entries: [futureEntry([], SANNA)] });
     const trigger = menuTrigger();

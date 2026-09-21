@@ -261,11 +261,27 @@ function renderEntry({
   );
 }
 
-function pickerRows(): HTMLElement[] {
+/** The session rows on screen, in DOM order across the weeks. */
+function pickerRows(): HTMLButtonElement[] {
+  return [...document.querySelectorAll<HTMLButtonElement>("[data-session-key]")];
+}
+
+/** The week headings on screen, in order. */
+function weekHeadings(): string[] {
   return screen
-    .getAllByRole("listitem")
-    .map((item) => item.querySelector("button"))
-    .filter((button): button is HTMLButtonElement => button !== null);
+    .getAllByRole("heading", { level: 3 })
+    .map((heading) => heading.textContent);
+}
+
+function openPicker() {
+  fireEvent.click(screen.getByRole("button", { name: copy.fileAction }));
+}
+
+/** One group's worth of the fixture — the gedu who teaches a single club. */
+function oneGroup(
+  sessions: ReturnType<typeof entryFixture>["upcomingSessions"],
+) {
+  return sessions.filter((session) => session.groupId === sessions[0].groupId);
 }
 
 describe("the page's file-an-absence entry", () => {
@@ -304,7 +320,7 @@ describe("the page's file-an-absence entry", () => {
     expect(container.textContent).toBe("");
   });
 
-  it("lists the viewer's own sessions, soonest first", () => {
+  it("opens on this week and next, in the order the sessions run", () => {
     const sessions = entryFixture().upcomingSessions;
     // The order is the builder's; what this asserts is that the picker draws it
     // and that the builder really is ascending.
@@ -312,22 +328,89 @@ describe("the page's file-an-absence entry", () => {
     expect(starts).toEqual([...starts].sort((a, b) => a - b));
 
     renderEntry({ sessions });
-    fireEvent.click(screen.getByRole("button", { name: copy.fileAction }));
+    openPicker();
 
+    // Five weekly clubs and a camp is a term of rows; what opens is the
+    // fortnight almost every absence is in.
     const rows = pickerRows();
-    expect(rows).toHaveLength(sessions.length);
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.length).toBeLessThan(sessions.length);
+    expect(weekHeadings()).toEqual([copy.filePickWeekThis, copy.filePickWeekNext]);
     rows.forEach((row, index) => {
       expect(row.textContent).toContain(sessions[index].productName);
     });
+    expect(
+      screen.getByRole("button", { name: copy.filePickShowLater }),
+    ).toBeTruthy();
   });
 
-  it("disables a session already asked for and says why", () => {
+  it("reveals the rest below, and hands focus to the first new row", () => {
+    const sessions = entryFixture().upcomingSessions;
+    renderEntry({ sessions });
+    openPicker();
+
+    const before = pickerRows();
+    fireEvent.click(
+      screen.getByRole("button", { name: copy.filePickShowLater }),
+    );
+
+    const after = pickerRows();
+    expect(after.length).toBe(sessions.length);
+    // Appended below: every row that was on screen is still where it was.
+    expect(after.slice(0, before.length).map((row) => row.dataset.sessionKey)).toEqual(
+      before.map((row) => row.dataset.sessionKey),
+    );
+    // The control has nothing left to do and goes.
+    expect(
+      screen.queryByRole("button", { name: copy.filePickShowLater }),
+    ).toBeNull();
+    // The keyboard lands on the first row that was not there a moment ago,
+    // rather than back at the top of the dialog.
+    expect(document.activeElement).toBe(after[before.length]);
+    expect(weekHeadings().length).toBeGreaterThan(2);
+  });
+
+  it("filters to one group, with every week of it and no gate", () => {
+    const sessions = entryFixture().upcomingSessions;
+    renderEntry({ sessions });
+    openPicker();
+
+    const group = sessions[0].groupId;
+    const mine = sessions.filter((session) => session.groupId === group);
+    expect(mine.length).toBeGreaterThan(2);
+
+    fireEvent.change(screen.getByLabelText(copy.filePickGroupLabel), {
+      target: { value: group },
+    });
+
+    // One club's term is a dozen rows — a scroll rather than a wall — so the
+    // whole of it is on screen and there is nothing left to reveal.
+    expect(pickerRows().map((row) => row.dataset.sessionKey)).toEqual(
+      mine.map((session) => session.key),
+    );
+    expect(
+      screen.queryByRole("button", { name: copy.filePickShowLater }),
+    ).toBeNull();
+  });
+
+  it("has no filter for a gedu who teaches one group", () => {
+    renderEntry({ sessions: oneGroup(entryFixture().upcomingSessions) });
+    openPicker();
+    expect(screen.queryByLabelText(copy.filePickGroupLabel)).toBeNull();
+    // And no gate either: one group is never long enough to need one.
+    expect(
+      screen.queryByRole("button", { name: copy.filePickShowLater }),
+    ).toBeNull();
+  });
+
+  it("disables a session already asked for and says why, inside its week", () => {
     const sessions = entryFixture().upcomingSessions;
     const filed = sessions[1];
     renderEntry({ sessions, filedSessionKeys: [filed.key] });
-    fireEvent.click(screen.getByRole("button", { name: copy.fileAction }));
+    openPicker();
 
     const rows = pickerRows();
+    expect(rows[1].dataset.sessionKey).toBe(filed.key);
     expect(rows[1].hasAttribute("disabled")).toBe(true);
     expect(rows[1].textContent).toContain(copy.fileAlreadyRequested);
     expect(rows[0].hasAttribute("disabled")).toBe(false);

@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { GeduAssignmentRow } from "@/lib/gedu-assignment-rollup";
 import {
-  GEDU_UPCOMING_SESSION_HORIZON_DAYS,
   buildGeduUpcomingSessions,
+  groupSessionsByWeek,
+  initiallyShownWeeks,
+  viewerWeekStart,
+  weekHeadingKind,
+  type GeduUpcomingSession,
 } from "@/lib/gedu-upcoming-sessions";
+import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
 
 /**
  * **What the Substitutions page's picker is a list of**: the sessions the
@@ -13,8 +18,9 @@ import {
  * has, so what is worth pinning is not the walk — that has its own tests — but
  * the four decisions made around it:
  *
- * - the **horizon**, which is the pool's own sixty-day window, because an
- *   absence filed beyond it would sit in a queue nobody can see;
+ * - the **horizon**, which is not this module's own: it is the app's forward
+ *   rule, an open-ended run projecting the shared next-eight and a dated one
+ *   running to its end date;
  * - a **finished** session is not offered, which is the card's rule too;
  * - a **substitution** seat contributes the one afternoon it covers, because a
  *   sub asking for a sub is a case the write accepts;
@@ -70,24 +76,66 @@ function weekly(weekday: number, startTime: string, durationMinutes = 90) {
 }
 
 describe("the gedu's own upcoming sessions", () => {
-  it("stops at the horizon the pool's own window stops at", () => {
+  it("projects an open-ended run to the shared next-eight and no further", () => {
     const sessions = buildGeduUpcomingSessions({
       rows: [row({ productId: "p", groupId: "g", slots: weekly(0, "17:00") })],
       locale: "en",
       now: NOW,
     });
+    // The number is the app's, imported rather than restated — a second copy
+    // of it here would let the picker and the feed drift apart quietly.
+    expect(sessions).toHaveLength(OPEN_ENDED_OCCURRENCE_CAP);
+  });
 
-    const horizon =
-      NOW.getTime() + GEDU_UPCOMING_SESSION_HORIZON_DAYS * 24 * 60 * 60 * 1000;
-    expect(sessions.length).toBeGreaterThan(0);
-    for (const session of sessions) {
-      expect(session.startsAt.getTime()).toBeLessThanOrEqual(horizon);
-    }
-    // Weekly, so the count is the window in weeks — and one more or one fewer
-    // depending on where `now` falls inside the week.
-    expect(sessions.length).toBeLessThanOrEqual(
-      Math.ceil(GEDU_UPCOMING_SESSION_HORIZON_DAYS / 7) + 1,
-    );
+  it("projects a dated run to its end date, however far that is", () => {
+    // Six Mondays to the end date, which is more than the open-ended cap
+    // would have allowed and fewer than an unbounded walk would emit.
+    const sessions = buildGeduUpcomingSessions({
+      rows: [
+        row({
+          productId: "p",
+          groupId: "g",
+          slots: weekly(0, "17:00"),
+          endDate: "2026-04-27",
+        }),
+      ],
+      locale: "en",
+      now: NOW,
+    });
+    expect(sessions.map((session) => session.sessionDate)).toEqual([
+      "2026-03-23",
+      "2026-03-30",
+      "2026-04-06",
+      "2026-04-13",
+      "2026-04-20",
+      "2026-04-27",
+    ]);
+  });
+
+  it("applies each seat's own rule when a gedu holds both kinds", () => {
+    const sessions = buildGeduUpcomingSessions({
+      rows: [
+        row({ productId: "open", groupId: "gopen", slots: weekly(0, "17:00") }),
+        row({
+          productId: "dated",
+          groupId: "gdated",
+          slots: weekly(1, "17:00"),
+          endDate: "2026-03-31",
+        }),
+      ],
+      locale: "en",
+      now: NOW,
+    });
+    const byGroup = (groupId: string) =>
+      sessions.filter((session) => session.groupId === groupId);
+    expect(byGroup("gopen")).toHaveLength(OPEN_ENDED_OCCURRENCE_CAP);
+    // Today's own session is still running at NOW, so the dated run has this
+    // Tuesday, the next two, and then its end date stops it.
+    expect(byGroup("gdated").map((session) => session.sessionDate)).toEqual([
+      "2026-03-17",
+      "2026-03-24",
+      "2026-03-31",
+    ]);
   });
 
   it("offers the session in progress and never one that has finished", () => {
@@ -199,5 +247,134 @@ describe("the gedu's own upcoming sessions", () => {
     const starts = sessions.map((session) => session.startsAt.getTime());
     expect(starts).toEqual([...starts].sort((a, b) => a - b));
     expect(sessions[0].groupId).toBe("gwed");
+  });
+});
+
+/**
+ * ============================================================================
+ * Weeks
+ * ============================================================================
+ *
+ * Five weekly clubs over a term is sixty-odd rows, so the list is grouped by
+ * week and opens on the two that hold almost every absence. Three things here
+ * are decisions rather than consequences, and none of them is visible from the
+ * component:
+ *
+ * - **the week is the viewer's**, so a session at 23:30 on a Sunday belongs to
+ *   the week that Sunday ends and one at 00:30 on the Monday to the next;
+ * - **a week is found by bare-date arithmetic**, which is exact across the two
+ *   transition weekends a zoned 168-hour step gets wrong;
+ * - **the opening weeks are this one and the next**, unless neither has
+ *   anything — a term that starts in a fortnight opens on its first two weeks
+ *   rather than on nothing.
+ */
+const HELSINKI = "Europe/Helsinki";
+
+function session(key: string, startsAt: string): GeduUpcomingSession {
+  const start = new Date(startsAt);
+  return {
+    key,
+    groupId: `group-${key}`,
+    sessionDate: key,
+    startsAt: start,
+    endsAt: new Date(start.getTime() + 90 * 60_000),
+    timezone: HELSINKI,
+    productId: `product-${key}`,
+    productName: `Product ${key}`,
+    productType: "consumer_club",
+    groupName: "A",
+    isRemote: true,
+    siteName: null,
+  };
+}
+
+describe("the week a session falls in", () => {
+  it("is the one the viewer is living in, not UTC's", () => {
+    // 22:30 UTC on Sunday 22 March is 00:30 on Monday the 23rd in Helsinki, so
+    // for a Helsinki reader this session is next week's and for a UTC one it
+    // is this week's.
+    expect(viewerWeekStart(new Date("2026-03-22T22:30:00Z"), HELSINKI)).toBe(
+      "2026-03-23",
+    );
+    expect(viewerWeekStart(new Date("2026-03-22T22:30:00Z"), "UTC")).toBe(
+      "2026-03-16",
+    );
+  });
+
+  it("puts a late Sunday and an early Monday in different weeks", () => {
+    expect(viewerWeekStart(new Date("2026-03-22T21:30:00Z"), HELSINKI)).toBe(
+      "2026-03-16",
+    );
+    expect(viewerWeekStart(new Date("2026-03-23T04:30:00Z"), HELSINKI)).toBe(
+      "2026-03-23",
+    );
+  });
+
+  it("is exact across the weekend the clocks go forward", () => {
+    // Helsinki springs forward at 03:00 on Sunday 29 March 2026, so that week
+    // is 167 hours long — which is what a flat seven-day instant step gets
+    // wrong and bare-date arithmetic cannot.
+    expect(viewerWeekStart(new Date("2026-03-28T10:00:00Z"), HELSINKI)).toBe(
+      "2026-03-23",
+    );
+    expect(viewerWeekStart(new Date("2026-03-30T10:00:00Z"), HELSINKI)).toBe(
+      "2026-03-30",
+    );
+  });
+});
+
+describe("grouping the list into weeks", () => {
+  it("keeps the order and renders no empty week", () => {
+    const weeks = groupSessionsByWeek(
+      [
+        session("a", "2026-03-17T15:00:00Z"),
+        session("b", "2026-03-19T15:00:00Z"),
+        // Nothing at all in the week of the 23rd — that week is simply absent
+        // rather than a heading standing over no rows.
+        session("c", "2026-03-31T15:00:00Z"),
+      ],
+      HELSINKI,
+    );
+    expect(weeks.map((week) => week.weekStart)).toEqual([
+      "2026-03-16",
+      "2026-03-30",
+    ]);
+    expect(weeks[0].sessions.map((s) => s.key)).toEqual(["a", "b"]);
+  });
+
+  it("opens on this week and next", () => {
+    const weeks = groupSessionsByWeek(
+      [
+        session("a", "2026-03-19T15:00:00Z"),
+        session("b", "2026-03-24T15:00:00Z"),
+        session("c", "2026-03-31T15:00:00Z"),
+      ],
+      HELSINKI,
+    );
+    expect(initiallyShownWeeks(weeks, NOW, HELSINKI)).toEqual([
+      "2026-03-16",
+      "2026-03-23",
+    ]);
+  });
+
+  it("opens on the first two weeks that have anything when those are empty", () => {
+    const weeks = groupSessionsByWeek(
+      [
+        session("a", "2026-04-07T15:00:00Z"),
+        session("b", "2026-04-14T15:00:00Z"),
+        session("c", "2026-04-21T15:00:00Z"),
+      ],
+      HELSINKI,
+    );
+    expect(initiallyShownWeeks(weeks, NOW, HELSINKI)).toEqual([
+      "2026-04-06",
+      "2026-04-13",
+    ]);
+  });
+
+  it("names the three kinds of week", () => {
+    expect(weekHeadingKind("2026-03-16", NOW, HELSINKI)).toBe("this");
+    expect(weekHeadingKind("2026-03-23", NOW, HELSINKI)).toBe("next");
+    expect(weekHeadingKind("2026-03-30", NOW, HELSINKI)).toBe("later");
   });
 });

@@ -189,10 +189,25 @@ divergence would survive.
 ## What the picker can and cannot know
 
 **The picker lists the viewer's own upcoming sessions, expanded on the client
-from the seats they already hold**, inside the same sixty-day window the pool's
-read applies. The window is not a taste about list length: an absence filed
-beyond it would sit in a queue nobody can see until it drifted into range, so
-moving one bound means moving the other.
+from the seats they already hold**, under the app's one forward-looking rule and
+not a horizon of its own: an open-ended product projects its next eight
+occurrences and a dated one projects everything to its end date, which is what
+every other list of what is coming shows. The session card carries the same
+action under the same rule by construction rather than by a second test — a card
+exists only for an entry the feed projected.
+
+**A request filed beyond the queue's own window is not lost.** The gedus' pool
+reads open requests dated **today or inside the next sixty days**, while the
+admin page's queue has a lower bound and no upper one — so an absence filed
+further ahead reaches the office immediately and joins the gedus' queue when its
+date comes into range.
+
+**A term of weekly clubs is a long list, so the picker is grouped by week** — the
+viewer's week, Monday to Sunday — and opens on this week and next, which is
+where nearly every absence is; the rest is one press away and reveals *below*
+what is already on screen. Where the list spans more than one group it carries a
+group filter, and a list that is one group's is never gated: a single club's
+term is a scroll, not a wall.
 
 **What no read on that page carries is which of those dates the viewer has
 already filed on.** The assignment rows are per seat and the summaries are per
@@ -266,24 +281,24 @@ voice window is only open around a session, so there is nothing to rejoin on the
 day. The membership and moderator predicates move together, always — the chat channel is
 gated by the pair.
 
-## The office has a page, and it is one read
+## The office has a page
 
 `/admin/substitutions` is where an absence is answered — a sidebar entry of its own, not a
 band on the admin dashboard, because every row is work somebody finishes today and a
 session with nobody teaching it is too easy to scroll past on a board of standing
-information. Its read, `get_admin_substitution_requests`, returns the page **whole**:
-`open`, the queue, and `recent`, the requests settled in the last fortnight. One document
-rather than two, so a single approval moves a row from one list to the other with no frame
-in which it is in neither or in both.
+information. Its read, `get_admin_substitution_requests`, returns a bare array of the open
+requests, exactly as the gedu's own pool read returns one.
 
-`recent` exists because **"who stood in on Tuesday?" has no other home.** An approved
-request leaves the queue, and the only surface still naming its substitute is the group's
-own page, which an admin has to already know the group to reach. It carries withdrawals
-too — "nobody had to stand in after all" is equally an answer — and it is bounded by the
-**session date** rather than by when the row was resolved, because `approved_at` exists
-only on a substituted row and a withdrawal stamps nothing, so the date is the one key both
-statuses share. It stops at today: a settled *future* session is staffing the group page
-owns.
+**An offer on it carries the offerer's name and nothing else.** It used to carry the
+certification queue's two standings so the page could draw the same chips, and they are
+gone for a reason about the data rather than the design: *an uncertified gedu cannot hold
+an offer.* The may-substitute predicate requires certification and guards every path that
+creates one, approval re-asks it under the request's lock, and the office-arranged write
+asks it too — so a "certified" chip stated something true by construction, and the one
+case it could have caught (an offerer de-certified *after* offering) is refused at
+approval, in words, on the row. The criminal-record stamp is children's-safety data about
+a contractor, and it is not emitted to a surface that does not act on it — the RPC stopped
+sending it, not just the UI.
 
 **The page sorts by the session's own start; the read cannot.** No instants travel on any
 substitution surface, so SQL orders by the calendar date and the client resolves each

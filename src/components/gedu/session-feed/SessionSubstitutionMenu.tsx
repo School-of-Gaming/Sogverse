@@ -11,8 +11,14 @@ import {
 } from "./SessionSubstitutionRequestDialog";
 
 /**
- * The card's overflow menu, and the one thing in it: "I can't make this
- * session".
+ * The card's overflow menu, and the one thing in it: **"I need to cancel"**.
+ *
+ * **The row and the dialog it opens say different things on purpose.** The row
+ * is the gedu's own words for what they are doing — cancelling *their*
+ * attendance — and it is short because it sits in a menu. The dialog is titled
+ * "I can't make this session" and its first sentence says the session still
+ * runs and the office looks for a substitute, which is what stops the shorter
+ * row being read as cancelling the session itself *(owner, 2026-09)*.
  *
  * **Filing an absence is deliberately quiet.** It is rare — most gedus will
  * never press it — and a full-width control repeating that offer on every
@@ -71,6 +77,18 @@ export function SessionSubstitutionMenu({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const itemRef = useRef<HTMLButtonElement>(null);
+  /**
+   * Set when the menu is opened *by an arrow key*, which has to land focus on
+   * the row — but the panel is not in the DOM until the open renders, so the
+   * intent is parked here and spent by the effect below.
+   *
+   * **A mouse open focuses nothing**, which is the account menu's convention
+   * and the fix for a panel that looked permanently selected: the row's focus
+   * treatment is a filled ground, and auto-focusing the only row on every open
+   * painted that fill the instant the panel appeared — then doubled it the
+   * moment the pointer landed on the row it was already sitting on.
+   */
+  const focusOnOpenRef = useRef(false);
 
   useClickOutside(wrapperRef, () => setOpen(false));
 
@@ -101,9 +119,10 @@ export function SessionSubstitutionMenu({
     event.preventDefault();
     if (!open) {
       if (key === "Home" || key === "End") return;
+      // The panel is not in the DOM until this open renders, so the intent is
+      // parked and spent by the effect below.
+      focusOnOpenRef.current = true;
       setOpen(true);
-      // The panel is not in the DOM until this open renders, so the focus is
-      // spent by the effect below rather than here.
       return;
     }
     itemRef.current?.focus();
@@ -111,6 +130,8 @@ export function SessionSubstitutionMenu({
 
   useEffect(() => {
     if (!open) return;
+    if (!focusOnOpenRef.current) return;
+    focusOnOpenRef.current = false;
     itemRef.current?.focus();
   }, [open]);
 
@@ -160,7 +181,12 @@ export function SessionSubstitutionMenu({
           <div
             role="menu"
             aria-label={t("substitutionMenuLabel")}
-            className="absolute right-0 z-50 mt-1 w-56 rounded-md border border-border bg-card py-1 shadow-lg"
+            // The account menu's panel, to the class: same width, radius,
+            // border, ground, shadow and 4px of vertical padding. The clip is
+            // its `overflow-y-auto` in the one form a single-row panel can take
+            // — without it a row's square fill paints over the panel's own
+            // rounded corners, which is the second half of what looked wrong.
+            className="absolute right-0 z-50 mt-1 w-56 overflow-hidden rounded-md border border-border bg-card py-1 shadow-lg"
           >
             <button
               ref={itemRef}
@@ -171,7 +197,10 @@ export function SessionSubstitutionMenu({
                 setError(null);
                 setRequestOpen(true);
               }}
-              className="flex w-full items-center px-3 py-2 text-left text-sm transition-colors hover:bg-hover hover:text-foreground focus:bg-lifted focus:text-foreground focus:outline-none"
+              // The account menu's row, to the class — the fill tokens, the
+              // focus ground, the padding and the text size all come from
+              // there, so the two menus in this app cannot drift apart.
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-hover hover:text-foreground focus:bg-lifted focus:text-foreground focus:outline-none"
             >
               {t("substitutionRequestAction")}
             </button>

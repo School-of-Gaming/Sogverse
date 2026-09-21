@@ -118,15 +118,6 @@ export interface GeduDashboardFixture {
    * has no seats of any kind.
    */
   substitutions: GeduSubstitutionSummary[];
-  /**
-   * The seat rows both roll-ups above were built from.
-   *
-   * Handed out because a *second* scene derives from the same seats: the
-   * Substitutions page's picker is the viewer's own upcoming sessions, expanded
-   * from these rows by the same helper the live page uses. Sharing the rows is
-   * what keeps the two scenes describing one gedu rather than two.
-   */
-  rows: GeduAssignmentRow[];
   certified: boolean;
   /** Whether the contract band is on the page. */
   contractAccepted: boolean;
@@ -516,7 +507,6 @@ export function buildGeduDashboardFixture(
 
   return {
     substitutions,
-    rows,
     assignments: assignments.map((assignment) => {
       const row = rowsById.get(assignment.productId);
       return {

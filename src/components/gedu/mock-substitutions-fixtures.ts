@@ -2,7 +2,10 @@ import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { calendarDate, futureSlot } from "@/components/preview/fixture-clock";
 import { SESSION_FEED_TIMEZONE } from "@/components/gedu/session-feed/mock-fixtures";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import type { GeduSubstitutionSummary } from "@/lib/gedu-assignment-rollup";
+import type {
+  GeduAssignmentRow,
+  GeduSubstitutionSummary,
+} from "@/lib/gedu-assignment-rollup";
 import {
   buildSubstitutionPoolRows,
   type SubstitutionPoolRow,
@@ -59,10 +62,9 @@ export interface GeduSubstitutionsFixture {
    * The viewer's **own** upcoming sessions — what the "Can't make a session?"
    * picker is a list of.
    *
-   * Expanded from the dashboard fixture's seat rows by the live helper, so the
-   * scene shows the real schedule walk (a weekly club's run of Mondays, a
-   * camp's consecutive days, a substituted afternoon among them) rather than a
-   * hand-written list that could not be wrong.
+   * Expanded from the seats below by the live helper, so the scene shows the
+   * real schedule walk — a term of five weekly clubs, one of them stopping at
+   * its end date — rather than a hand-written list that could not be wrong.
    */
   upcomingSessions: GeduUpcomingSession[];
   /**
@@ -81,7 +83,7 @@ export function buildGeduSubstitutionsFixture(
 ): GeduSubstitutionsFixture {
   const dashboard = buildGeduDashboardFixture(now, "default", locale, timeZone);
   const upcomingSessions = buildGeduUpcomingSessions({
-    rows: dashboard.rows,
+    rows: pickerSeats(now),
     locale,
     now,
   });
@@ -110,6 +112,122 @@ export function buildGeduSubstitutionsFixture(
     // first is left pickable, because the scene's write has to be reachable.
     filedSessionKeys: upcomingSessions.slice(1, 2).map((s) => s.key),
   };
+}
+
+/**
+ * The seats the picker is a list of — **a working gedu's week, at the size the
+ * owner asked this list to survive**: five weekly clubs and a camp.
+ *
+ * The mix is what the forward rule is judged on. Three clubs are open-ended, so
+ * each projects the app's next-eight and stops; one runs to an end date ten
+ * days out and therefore contributes two rows and then nothing, which is the
+ * case a horizon expressed in days would have got wrong; one runs to a date far
+ * enough out that the cap never applies; and the camp's two weekend blocks put
+ * two sessions in one week from one seat.
+ *
+ * Deliberately not the dashboard fixture's rows: that set is composed to show
+ * every *card* state (an ended run, a substitution, a locked one), which is a
+ * different question from what a term of weekly clubs does to a list.
+ */
+function pickerSeats(now: Date): GeduAssignmentRow[] {
+  const slot = (daysAhead: number, startTime: string, minutes: number) => [
+    futureSlot(now, daysAhead, startTime, minutes, SESSION_FEED_TIMEZONE),
+  ];
+
+  const seat = (opts: {
+    id: string;
+    name: string;
+    group: string;
+    slots: GeduAssignmentRow["slots"];
+    endsInDays: number | null;
+    isRemote: boolean;
+    siteName?: string | null;
+    productType?: GeduAssignmentRow["product"]["productType"];
+  }): GeduAssignmentRow => ({
+    product: {
+      id: opts.id,
+      timezone: SESSION_FEED_TIMEZONE,
+      startDate: calendarDate(now, -40, SESSION_FEED_TIMEZONE),
+      endDate:
+        opts.endsInDays === null
+          ? null
+          : calendarDate(now, opts.endsInDays, SESSION_FEED_TIMEZONE),
+      isRemote: opts.isRemote,
+      productType: opts.productType ?? "consumer_club",
+      translations: [{ locale: "en", name: opts.name, description: "" }],
+    },
+    groupId: `${opts.id}-group`,
+    kind: "assignment",
+    substitutionDate: null,
+    groupCount: 2,
+    participantCount: 9,
+    groupName: opts.group,
+    groupParticipantCount: 9,
+    siteName: opts.siteName ?? null,
+    slots: opts.slots,
+  });
+
+  return [
+    seat({
+      id: "mock-picker-monday",
+      name: "Minecraft Redstone Club",
+      group: "Redstone A",
+      slots: slot(1, "16:30", 90),
+      endsInDays: null,
+      isRemote: true,
+    }),
+    seat({
+      id: "mock-picker-tuesday",
+      name: "Roblox Builders Club",
+      group: "Builders B",
+      slots: slot(2, "17:00", 90),
+      endsInDays: null,
+      isRemote: true,
+    }),
+    seat({
+      id: "mock-picker-wednesday",
+      name: "Fortnite Creative Club",
+      group: "Creative C",
+      // The run that stops early — its last session is inside a fortnight, so
+      // its rows simply run out while the others go on.
+      slots: slot(3, "16:00", 90),
+      endsInDays: 10,
+      isRemote: false,
+      siteName: "Sello Library, Espoo",
+    }),
+    seat({
+      id: "mock-picker-thursday",
+      name: "Creator Studio Club",
+      group: "Studio A",
+      slots: slot(4, "15:30", 90),
+      endsInDays: 80,
+      isRemote: true,
+    }),
+    seat({
+      id: "mock-picker-friday",
+      name: "Minecraft Bedrock Club",
+      group: "Bedrock D",
+      slots: slot(5, "17:30", 90),
+      endsInDays: null,
+      isRemote: false,
+      siteName: "Kaapelitehdas, Helsinki",
+    }),
+    seat({
+      id: "mock-picker-camp",
+      name: "Winter Build Camp",
+      group: "Reds",
+      productType: "camp",
+      // Two blocks in one weekend, which is what puts two sessions from one
+      // seat in a single week heading.
+      slots: [
+        ...slot(6, "10:00", 180),
+        ...slot(7, "10:00", 180),
+      ],
+      endsInDays: 20,
+      isRemote: false,
+      siteName: "Sello Library, Espoo",
+    }),
+  ];
 }
 
 /**

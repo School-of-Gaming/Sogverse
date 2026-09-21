@@ -1,8 +1,10 @@
+import { formatInTimeZone } from "date-fns-tz";
+import { addCalendarDays, mondayOf } from "@/lib/calendar-date";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { occurrenceOnDate } from "@/lib/session-date-occurrence";
 import {
-  earlierBoundary,
+  OPEN_ENDED_OCCURRENCE_CAP,
   endDateToCutoff,
   enumerateRowOccurrences,
   productLocalDate,
@@ -55,27 +57,21 @@ export interface GeduUpcomingSession {
 }
 
 /**
- * How far ahead the picker looks.
- *
- * **Sixty days, because that is the window the queue reads.**
- * `get_open_substitution_requests` returns open requests dated inside the next
- * sixty days, so an absence filed further out than that would sit in a queue
- * nobody can see it in until it drifted into range — a request nobody is told
- * about is the one thing this feature must not produce. The bound is therefore
- * a property of the pool rather than a taste about list length, and moving it
- * means moving the SQL window with it.
- */
-export const GEDU_UPCOMING_SESSION_HORIZON_DAYS = 60;
-
-/**
  * The viewer's own upcoming sessions, **soonest first**.
  *
+ * **How far ahead is not this module's decision.** It is the app's one
+ * forward-looking rule, the one every list of what is coming already uses: an
+ * open-ended product projects its next {@link OPEN_ENDED_OCCURRENCE_CAP}
+ * occurrences and a dated one projects everything up to its end date. The cap
+ * is imported rather than restated, so the picker cannot drift from the feed
+ * whose cards carry the same action.
+ *
  * Both kinds of seat are walked, because both are seats the viewer is expected
- * at and can file against: a standing **assignment** contributes every
- * occurrence its schedule projects inside the horizon, and a live
- * **substitution** contributes the one afternoon it covers. That is the same
- * pair the card's own condition admits — a sub asking for a sub is the case —
- * so the picker and the cards offer the same set.
+ * at and can file against: a standing **assignment** contributes the
+ * occurrences that rule projects, and a live **substitution** contributes the
+ * one afternoon it covers. That is the same pair the card's own condition
+ * admits — a sub asking for a sub is the case — so the picker and the cards
+ * offer the same set.
  *
  * A session already finished is not in the list: the walk carries no window
  * past an occurrence's end (`windowCloseMs: 0`), which is the card's rule too —
@@ -97,29 +93,27 @@ export function buildGeduUpcomingSessions({
   locale: SupportedLocale;
   now: Date;
 }): GeduUpcomingSession[] {
-  const horizon = new Date(
-    now.getTime() + GEDU_UPCOMING_SESSION_HORIZON_DAYS * 24 * 60 * 60 * 1000,
-  );
   const bySession = new Map<string, GeduUpcomingSession>();
 
   for (const row of rows) {
     const timezone = row.product.timezone;
     const occurrences =
       row.kind === "substitution"
-        ? substitutionOccurrence(row, now, horizon)
+        ? substitutionOccurrence(row, now)
         : enumerateRowOccurrences({
             slots: row.slots,
             timezone,
             now,
             startBoundary: startDateToCutoff(row.product.startDate, timezone),
-            // The product's own last day, or the horizon, whichever comes
-            // first — and there is always one, which is what makes the
-            // uncapped walk terminate.
-            endBoundary: earlierBoundary(
-              endDateToCutoff(row.product.endDate, timezone),
-              horizon,
-            ),
-            cap: Number.POSITIVE_INFINITY,
+            endBoundary: endDateToCutoff(row.product.endDate, timezone),
+            // The app's forward-looking rule, both halves of it: a run with a
+            // last day is walked to that day, and an open-ended one stops at
+            // the cap — which is also what stops the uncapped walk from being
+            // an unbounded one.
+            cap:
+              row.product.endDate === null
+                ? OPEN_ENDED_OCCURRENCE_CAP
+                : Number.POSITIVE_INFINITY,
             // No grace after the end: a session that has finished is not one
             // anybody can be absent from, and the card stops offering at the
             // same instant.
@@ -161,8 +155,12 @@ export function buildGeduUpcomingSessions({
 }
 
 /**
- * The one afternoon a substitution seat covers, if it is still ahead and inside
- * the horizon — otherwise nothing.
+ * The one afternoon a substitution seat covers, if it is still ahead —
+ * otherwise nothing.
+ *
+ * It is one dated seat rather than a schedule, so the forward rule above has
+ * nothing to say about it: what bounds it is the substitution's own date, and
+ * the database stopped returning the seat once it expired.
  *
  * A date the schedule no longer projects resolves to no occurrence at all, and
  * such a seat is left out rather than offered dateless: the write is refused
@@ -172,7 +170,6 @@ export function buildGeduUpcomingSessions({
 function substitutionOccurrence(
   row: GeduAssignmentRow,
   now: Date,
-  horizon: Date,
 ): Array<{ start: Date; end: Date }> {
   if (row.substitutionDate === null) return [];
   const occurrence = occurrenceOnDate({
@@ -182,7 +179,6 @@ function substitutionOccurrence(
   });
   if (occurrence === null) return [];
   if (occurrence.end.getTime() <= now.getTime()) return [];
-  if (occurrence.start.getTime() > horizon.getTime()) return [];
   return [occurrence];
 }
 
@@ -193,4 +189,101 @@ function bySoonest(a: GeduUpcomingSession, b: GeduUpcomingSession): number {
   const byName = a.productName.localeCompare(b.productName);
   if (byName !== 0) return byName;
   return a.key < b.key ? -1 : a.key > b.key ? 1 : 0;
+}
+
+/**
+ * ============================================================================
+ * Weeks
+ * ============================================================================
+ *
+ * Five weekly clubs over a term is sixty-odd rows, and a reader who is ill
+ * tomorrow should not scroll a term to say so. So the list is grouped by the
+ * week each session falls in **in the viewer's own zone**, and the surface
+ * opens on the two weeks almost every absence is in.
+ */
+
+/** One week's worth of the list, in the order the sessions run. */
+export interface GeduUpcomingSessionWeek {
+  /** The Monday the week starts on, as a bare `YYYY-MM-DD`. */
+  weekStart: string;
+  sessions: GeduUpcomingSession[];
+}
+
+/**
+ * The Monday of the week an instant falls in, **for a reader in `timeZone`**.
+ *
+ * Two steps, and the split is the point: the instant becomes a calendar date in
+ * the *viewer's* zone (which is what decides whether a 23:30 Sunday session is
+ * this week or next for them), and the Monday is then found by bare-date
+ * arithmetic, which is UTC-pinned and therefore exact across a DST week. Doing
+ * the week step on a zoned clock instead is the arithmetic the date rules ban:
+ * a local week is 168 hours except twice a year.
+ */
+export function viewerWeekStart(instant: Date, timeZone: string): string {
+  return mondayOf(formatInTimeZone(instant, timeZone, "yyyy-MM-dd"));
+}
+
+/**
+ * The sessions grouped into weeks, ascending, **with empty weeks absent**.
+ *
+ * A gap between two weeks is a gap in the schedule, and a heading over nothing
+ * is furniture claiming there is something under it. The sessions arrive
+ * ordered, so each week's own order is inherited rather than re-sorted.
+ */
+export function groupSessionsByWeek(
+  sessions: readonly GeduUpcomingSession[],
+  timeZone: string,
+): GeduUpcomingSessionWeek[] {
+  const weeks = new Map<string, GeduUpcomingSession[]>();
+  for (const session of sessions) {
+    const weekStart = viewerWeekStart(session.startsAt, timeZone);
+    const bucket = weeks.get(weekStart);
+    if (bucket === undefined) weeks.set(weekStart, [session]);
+    else bucket.push(session);
+  }
+  return [...weeks.entries()]
+    .map(([weekStart, weekSessions]) => ({ weekStart, sessions: weekSessions }))
+    .sort((a, b) => (a.weekStart < b.weekStart ? -1 : 1));
+}
+
+/**
+ * Which weeks the picker opens on: **this one and the next**.
+ *
+ * That is where an absence almost always is — somebody is ill tomorrow, or has
+ * something on next Tuesday — and it is the shortest list that answers the
+ * common case without a scroll. A holiday six weeks out is the other case and
+ * it is one press away.
+ *
+ * **A term that has not started yet would otherwise open on nothing**, so where
+ * neither of those two weeks carries a session the first two weeks that do are
+ * shown instead. The answer is always a prefix of the list: weeks are
+ * ascending, and revealing the rest appends below what is already on screen.
+ */
+export function initiallyShownWeeks(
+  weeks: readonly GeduUpcomingSessionWeek[],
+  now: Date,
+  timeZone: string,
+): string[] {
+  const thisWeek = viewerWeekStart(now, timeZone);
+  const nextWeek = addCalendarDays(thisWeek, 7);
+  const near = weeks
+    .filter((week) => week.weekStart === thisWeek || week.weekStart === nextWeek)
+    .map((week) => week.weekStart);
+  if (near.length > 0) return near;
+  return weeks.slice(0, 2).map((week) => week.weekStart);
+}
+
+/**
+ * Which of the three headings a week takes, so the component names it and this
+ * module never holds a translated word.
+ */
+export function weekHeadingKind(
+  weekStart: string,
+  now: Date,
+  timeZone: string,
+): "this" | "next" | "later" {
+  const thisWeek = viewerWeekStart(now, timeZone);
+  if (weekStart === thisWeek) return "this";
+  if (weekStart === addCalendarDays(thisWeek, 7)) return "next";
+  return "later";
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { MapPin, Radio } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
@@ -19,9 +19,14 @@ import {
 } from "@/components/gedu/session-feed";
 import { Link } from "@/i18n/navigation";
 import type { AppHrefObject } from "@/lib/constants/routes";
-import type { GeduUpcomingSession } from "@/lib/gedu-upcoming-sessions";
-import { useTimezone } from "@/providers";
-import { cn, formatDate, formatTimeRange } from "@/lib/utils";
+import {
+  groupSessionsByWeek,
+  initiallyShownWeeks,
+  weekHeadingKind,
+  type GeduUpcomingSession,
+} from "@/lib/gedu-upcoming-sessions";
+import { useNow, useTimezone } from "@/providers";
+import { cn, formatDate, formatDateOnly, formatTimeRange } from "@/lib/utils";
 
 /**
  * **"Can't make a session?"** — the Substitutions page's way into filing an
@@ -108,6 +113,18 @@ export function GeduFileAbsenceEntry({
    * and being offered Monday again.
    */
   const [filedHere, setFiledHere] = useState<readonly string[]>([]);
+  /**
+   * Which group the picker is narrowed to, and whether the weeks past the
+   * opening two have been revealed.
+   *
+   * **Held here rather than inside the picker**, which unmounts while step two
+   * is up: a gedu who picked the wrong session and pressed Back would otherwise
+   * come back to an unfiltered, re-collapsed list and have to find their way
+   * down it again. Both are cleared when the dialog closes, which is where the
+   * task ends.
+   */
+  const [groupFilter, setGroupFilter] = useState("");
+  const [showingLater, setShowingLater] = useState(false);
 
   if (sessions.length === 0) return null;
 
@@ -118,6 +135,8 @@ export function GeduFileAbsenceEntry({
     setOpen(false);
     setPicked(null);
     setError(null);
+    setGroupFilter("");
+    setShowingLater(false);
   };
 
   const file = async (draft: SessionSubstitutionRequestDraft) => {
@@ -130,6 +149,8 @@ export function GeduFileAbsenceEntry({
       setFiledHere((was) => [...was, picked.key]);
       setOpen(false);
       setPicked(null);
+      setGroupFilter("");
+      setShowingLater(false);
     } catch {
       setError(t("fileFailed"));
     } finally {
@@ -166,30 +187,27 @@ export function GeduFileAbsenceEntry({
 
       <Dialog open={open} onOpenChange={(next) => (next ? setOpen(true) : close())}>
         {picked === null ? (
-          <DialogContent>
+          // The body is what scrolls, not the dialog: the height cap and the
+          // column are what keep Cancel on screen at 360×740 while a term's
+          // worth of sessions runs past behind it.
+          <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col">
             <DialogHeader>
               <DialogTitle>{t("filePickTitle")}</DialogTitle>
               <DialogDescription>{t("filePickBody")}</DialogDescription>
             </DialogHeader>
 
-            <ul className="mt-4 max-h-[50vh] space-y-2 overflow-y-auto">
-              {sessions.map((session) => (
-                <li key={session.key}>
-                  <SessionPickerRow
-                    session={session}
-                    reason={
-                      unavailable.has(session.key)
-                        ? t("fileAlreadyRequested")
-                        : null
-                    }
-                    onPick={() => {
-                      setError(null);
-                      setPicked(session);
-                    }}
-                  />
-                </li>
-              ))}
-            </ul>
+            <SessionPicker
+              sessions={sessions}
+              unavailable={unavailable}
+              groupFilter={groupFilter}
+              onGroupFilter={setGroupFilter}
+              showingLater={showingLater}
+              onShowLater={() => setShowingLater(true)}
+              onPick={(session) => {
+                setError(null);
+                setPicked(session);
+              }}
+            />
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={close}>
@@ -219,6 +237,189 @@ export function GeduFileAbsenceEntry({
   );
 }
 
+/**
+ * The list itself: a filter where there is more than one group, the sessions
+ * under week headings, and the way to the weeks that are not shown yet.
+ *
+ * **Five weekly clubs over a term is sixty-odd rows, and almost every absence
+ * is in the next fortnight** — somebody is ill tomorrow, or has something on
+ * next Tuesday. So the list opens on this week and next, and the rest is one
+ * press away *(owner, 2026-09)*. The reveal appends **below** what is already
+ * on screen, which is the one direction the layout rule asks nothing for, and
+ * nothing about it is animated.
+ *
+ * **The weeks are groups, not boxes.** The rows are boxed because they are a
+ * control a reader chooses among; a border around each week as well would be
+ * the card-in-card the card rule is about, so a week is a heading and some
+ * spacing and nothing else.
+ */
+function SessionPicker({
+  sessions,
+  unavailable,
+  groupFilter,
+  onGroupFilter,
+  showingLater,
+  onShowLater,
+  onPick,
+}: {
+  sessions: readonly GeduUpcomingSession[];
+  /** Session keys that cannot be picked, by {@link GeduUpcomingSession.key}. */
+  unavailable: ReadonlySet<string>;
+  /** The group id the list is narrowed to, or `""` for all of them. */
+  groupFilter: string;
+  onGroupFilter: (groupId: string) => void;
+  showingLater: boolean;
+  onShowLater: () => void;
+  onPick: (session: GeduUpcomingSession) => void;
+}) {
+  const t = useTranslations("gedu.substitution");
+  const locale = useLocale();
+  const timeZone = useTimezone();
+  const now = useNow();
+  const filterId = useId();
+  const listRef = useRef<HTMLDivElement>(null);
+  /**
+   * The row the reveal has to hand focus to — the first one that was not on
+   * screen a moment ago.
+   *
+   * Parked rather than focused on the spot, because at the moment of the click
+   * that row is not rendered yet. The effect below spends it once it is.
+   */
+  const revealFocusRef = useRef<string | null>(null);
+
+  const groups = pickerGroups(sessions);
+  const filtered =
+    groupFilter === ""
+      ? sessions
+      : sessions.filter((session) => session.groupId === groupFilter);
+  const weeks = groupSessionsByWeek(filtered, timeZone);
+  const opening = initiallyShownWeeks(weeks, now, timeZone);
+  /**
+   * **A list that is one group's is never gated**, whether it is one group
+   * because the reader narrowed to it or because that is all they teach. A
+   * single club's term is a dozen rows, which is a scroll rather than a wall,
+   * and the gate is there for the five-clubs-times-a-term case.
+   */
+  const gated = groups.length > 1 && groupFilter === "" && !showingLater;
+  const shown = gated
+    ? weeks.filter((week) => opening.includes(week.weekStart))
+    : weeks;
+  const hidden = weeks.length - shown.length;
+
+  /** Which of the three headings a week takes, already translated. */
+  const weekHeading = (weekStart: string) => {
+    const kind = weekHeadingKind(weekStart, now, timeZone);
+    if (kind === "this") return t("filePickWeekThis");
+    if (kind === "next") return t("filePickWeekNext");
+    return t("filePickWeekOf", {
+      // The Monday is a bare calendar date, so it renders UTC-pinned like
+      // every other zoneless date rather than re-anchored to a viewer's zone.
+      date: formatDateOnly(weekStart, locale, {
+        day: "numeric",
+        month: "short",
+      }),
+    });
+  };
+
+  useEffect(() => {
+    const key = revealFocusRef.current;
+    if (key === null) return;
+    revealFocusRef.current = null;
+    listRef.current
+      ?.querySelector<HTMLElement>(`[data-session-key="${key}"]`)
+      ?.focus();
+  }, [showingLater]);
+
+  return (
+    <div className="mt-4 flex min-h-0 flex-1 flex-col gap-3">
+      {/* Absent for a gedu with one group: a filter over one value is a control
+          that can only ever say what the list already says. */}
+      {groups.length > 1 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <label
+            htmlFor={filterId}
+            className="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            {t("filePickGroupLabel")}
+          </label>
+          <select
+            id={filterId}
+            value={groupFilter}
+            onChange={(event) => onGroupFilter(event.target.value)}
+            className="h-9 min-w-0 flex-1 rounded-md border border-border bg-background px-2 text-sm text-foreground"
+          >
+            <option value="">{t("filePickAllGroups")}</option>
+            {groups.map((group) => (
+              <option key={group.groupId} value={group.groupId}>
+                {group.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* The scroll lives here so the footer never moves: the dialog is a
+          column, this is the part of it that is allowed to overflow. */}
+      <div ref={listRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto">
+        {shown.map((week) => (
+          <section key={week.weekStart} className="space-y-2">
+            <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {weekHeading(week.weekStart)}
+            </h3>
+            {week.sessions.map((session) => (
+              <SessionPickerRow
+                key={session.key}
+                session={session}
+                reason={
+                  unavailable.has(session.key)
+                    ? t("fileAlreadyRequested")
+                    : null
+                }
+                onPick={() => onPick(session)}
+              />
+            ))}
+          </section>
+        ))}
+
+        {hidden > 0 && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="w-full"
+            onClick={() => {
+              // The first row of the first week about to appear — parked for
+              // the effect, because it does not exist until this render lands.
+              revealFocusRef.current =
+                weeks[shown.length]?.sessions[0]?.key ?? null;
+              onShowLater();
+            }}
+          >
+            {t("filePickShowLater")}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** The groups the filter offers, in the order their next session runs. */
+function pickerGroups(
+  sessions: readonly GeduUpcomingSession[],
+): Array<{ groupId: string; label: string }> {
+  const seen = new Map<string, string>();
+  for (const session of sessions) {
+    if (seen.has(session.groupId)) continue;
+    seen.set(
+      session.groupId,
+      session.groupName === null
+        ? session.productName
+        : `${session.productName} — ${session.groupName}`,
+    );
+  }
+  return [...seen.entries()].map(([groupId, label]) => ({ groupId, label }));
+}
+
 /** One session, as the picker offers it — or refuses it. */
 function SessionPickerRow({
   session,
@@ -235,6 +436,7 @@ function SessionPickerRow({
   return (
     <button
       type="button"
+      data-session-key={session.key}
       disabled={reason !== null}
       onClick={onPick}
       className={cn(
