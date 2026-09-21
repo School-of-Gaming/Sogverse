@@ -747,8 +747,11 @@ BEGIN
   END IF;
 
   -- --- (g) The comment still carries both branches' sentences. -------------
+  -- Each half is a phrase only that branch's own migration wrote. The sentence
+  -- appended above names missing_invoice_customer itself, so looking for that
+  -- token would pass on a comment that had lost the flag's own sentence.
   IF v_comment IS NULL
-     OR position('missing_invoice_customer' IN v_comment) = 0
+     OR position('Since 00269' IN v_comment) = 0
      OR position('schedule_slots' IN v_comment) = 0 THEN
     RAISE EXCEPTION
       'get_admin_dashboard''s comment lost one of the two branches it describes';

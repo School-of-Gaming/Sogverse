@@ -65,7 +65,7 @@ describe("GeduCoverCard", () => {
   // dashboard fails hydration. Rendering to a string never parses, so nothing
   // else here would notice.
   it("nests no div inside a paragraph", () => {
-    expect(cardHtml(fixtureCover())).not.toMatch(/<p[\s>](?:(?!<\/p>).)*<div/s);
+    expect(cardHtml(fixtureCover())).not.toMatch(/<p[\s>](?:(?!<\/p>)[^])*<div/);
   });
 
   it("states the covered session's date and clock face", () => {

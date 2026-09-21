@@ -35,10 +35,10 @@ const SENTINEL_ROOT_MARGIN = "400px 0px";
  *
  * The sheet owns two refusals of its own and neither is in this list: the
  * person already filling the slot, and an uncertified account, which it reads
- * off the row it is drawing. Everything else is a property
- * of what the caller is staffing, and the caller is the only side that can
- * answer it — so it arrives as a reason rather than as a bare id, and the row
- * says *which* rule refused it rather than being silently unpressable.
+ * off the row it is drawing. Everything else is a property of what the caller
+ * is staffing, and the caller is the only side that can answer it — so it
+ * arrives as a reason rather than as a bare id, and the row says *which* rule
+ * refused it rather than being silently unpressable.
  *
  * - `assigned` — already on a group of this product. The permanent assignment
  *   editor's rule: a Gedu holds at most one group per product.
