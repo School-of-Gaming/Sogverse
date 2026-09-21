@@ -144,12 +144,20 @@ export function SessionStaffingRegion({
 
 /**
  * Who is expected, and what is outstanding — one line for the staffing and one
- * per live request on the date.
+ * per live request on the date, **except the viewer's own**.
  *
  * The absent gedu is named here and nowhere else on this feed: these are their
  * own colleagues reading a card about a group they all teach, and the seat's
  * identity is the person. What is *not* here is the reason, which is admin-only
  * and never reaches this document for a gedu caller at all.
+ *
+ * **The viewer's own request is left out because the block below says it in the
+ * second person.** "Substitute needed for Sanna" one line above "You've asked
+ * for a substitute for this session" is the same fact twice, the first time in
+ * the third person about the reader — noise, and the kind that makes the loud
+ * part quieter *(owner, 2026-09)*. Every *other* absent gedu still gets their
+ * line, so a colleague's card is unchanged and a session two people are away
+ * from still names the one the reader is not.
  */
 function StaffingLine({ staffing }: { staffing: SessionStaffing }) {
   const t = useTranslations("gedu.sessionFeed");
@@ -175,16 +183,20 @@ function StaffingLine({ staffing }: { staffing: SessionStaffing }) {
                 .join(", "),
             })}
       </p>
-      {staffing.requests.map((request) => (
-        <p key={request.id}>
-          {request.status === "substituted" && request.substituteId !== null
-            ? t("staffingSubstitutedBy", {
-                sub: request.substituteId.firstName,
-                name: request.requestedBy.firstName,
-              })
-            : t("staffingSubstitutionNeeded", { name: request.requestedBy.firstName })}
-        </p>
-      ))}
+      {staffing.requests
+        .filter((request) => !request.isViewers)
+        .map((request) => (
+          <p key={request.id}>
+            {request.status === "substituted" && request.substituteId !== null
+              ? t("staffingSubstitutedBy", {
+                  sub: request.substituteId.firstName,
+                  name: request.requestedBy.firstName,
+                })
+              : t("staffingSubstitutionNeeded", {
+                  name: request.requestedBy.firstName,
+                })}
+          </p>
+        ))}
     </>
   );
 }

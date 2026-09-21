@@ -425,6 +425,74 @@ describe("the staffing line", () => {
     });
     expect(screen.getByText(copy.staffingNobodyExpected)).toBeTruthy();
   });
+
+  /**
+   * **The viewer is never written about in the third person.** The status block
+   * says it to them directly, and "Substitute needed for Sanna" one line above
+   * "You've asked for a substitute…" is the same fact twice — the second time
+   * about a stranger who turns out to be you.
+   */
+  it("leaves the viewer's own open request off the line", () => {
+    renderFeed({
+      entries: [futureEntry([openRequest({ id: SANNA, firstName: "Sanna" })], SANNA)],
+    });
+    expect(screen.queryByText("Substitute needed for Sanna.")).toBeNull();
+    // Still the line's own job: who is left running it.
+    expect(screen.getByText(/Running this session/)).toBeTruthy();
+    // And the block still says it, in the second person.
+    expect(
+      screen.getByRole("status").textContent,
+    ).toContain(copy.substitutionRequestStatusOpen);
+  });
+
+  it("leaves the viewer's own substituted request off the line too", () => {
+    renderFeed({
+      entries: [
+        futureEntry(
+          [
+            {
+              ...openRequest({ id: SANNA, firstName: "Sanna" }),
+              status: "substituted",
+              substituteId: { id: JOONAS, firstName: "Joonas" },
+            },
+          ],
+          SANNA,
+        ),
+      ],
+    });
+    expect(screen.queryByText("Joonas is substituting for Sanna.")).toBeNull();
+    expect(screen.getByRole("status").textContent).toContain(
+      "Joonas is substituting for you.",
+    );
+  });
+
+  it("still names every other absent gedu on the same session", () => {
+    // Two people away from one session: the reader's own row goes, the
+    // colleague's stays exactly as a colleague's card has always drawn it.
+    renderFeed({
+      entries: [
+        futureEntry(
+          [
+            openRequest({ id: SANNA, firstName: "Sanna" }),
+            openRequest({ id: PETRA, firstName: "Petra" }),
+          ],
+          SANNA,
+        ),
+      ],
+    });
+    expect(screen.getByText("Substitute needed for Petra.")).toBeTruthy();
+    expect(screen.queryByText("Substitute needed for Sanna.")).toBeNull();
+  });
+
+  it("is unchanged for a colleague looking at the same card", () => {
+    // Petra's card, Sanna's absence: nothing about this viewer makes the line
+    // drop a row, which is what keeps the change a viewer-only one.
+    renderFeed({
+      entries: [futureEntry([openRequest({ id: SANNA, firstName: "Sanna" })], PETRA)],
+    });
+    expect(screen.getByText("Substitute needed for Sanna.")).toBeTruthy();
+    expect(screen.queryByRole("status")).toBeNull();
+  });
 });
 
 describe("the staffing editor slot", () => {
