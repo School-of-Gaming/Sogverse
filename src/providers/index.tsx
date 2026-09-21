@@ -37,9 +37,8 @@ interface ProvidersProps {
   /**
    * The sanitised UTM attribution from this request's `x-utm` header — three
    * fields, each a value or null. Seeds `UtmProvider` once and is never
-   * re-synced — the root layout re-runs mid-session (a locale change calls
-   * `router.refresh()`) against a URL that no longer carries the params. See
-   * `src/providers/utm-provider.tsx`.
+   * re-synced — a language switch re-runs the document layout against a URL
+   * that no longer carries the params. See `src/providers/utm-provider.tsx`.
    */
   initialUtm: UtmAttribution;
   /**
@@ -60,9 +59,9 @@ interface ProvidersProps {
    * Not `initial*`, unlike its neighbours: those seed mutable client state that
    * legitimately diverges from the server's value afterwards (the timezone
    * provider re-detects, the clock ticks, the UTM attribution has to survive a
-   * refresh that no longer carries the params). This is a stable per-request
-   * fact with nothing to diverge from — a locale change calls `router.refresh()`,
-   * which re-runs the root layout against the same request headers and computes
+   * layout re-run against a URL that no longer carries the params). This is a
+   * stable per-request fact with nothing to diverge from — a language switch
+   * re-runs the document layout against the same request headers and computes
    * the same value again.
    */
   detectedLocale: DetectedLocale;

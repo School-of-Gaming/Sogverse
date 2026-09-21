@@ -19,7 +19,7 @@ The two are fully independent: a Finnish-speaking parent can have `locale = "fi"
 
 - `routing.ts` — the routing contract (`defineRouting`): locales derived from `SUPPORTED_LOCALES`, `localePrefix: "always"`, next-intl's own detection, locale cookie and alternate-links header all off, and the pathnames map.
 - `pathnames.ts` — every route in the app keyed by its internal pathname, with the slug each locale serves it under. See "Routes: the pathnames map" below.
-- `navigation.ts` — the locale-aware `Link`, `redirect`, `usePathname`, `useRouter` and `getPathname` (`createNavigation`). Use these, not `next/link` / `next/navigation`, wherever a route is named.
+- `navigation.tsx` — the locale-aware `Link`, `redirect`, `usePathname`, `useRouter` and `getPathname` (`createNavigation`). Use these, not `next/link` / `next/navigation`, wherever a route is named.
 - `request.ts` — next-intl request config (SSR/RSC). Resolves the per-request locale and loads its messages.
 - `messages.ts` — `Messages` type (derived from `en.json`) and `loadMessages(locale)`, a static import map of `messages/<code>.json`. Static imports so a moved/deleted message file fails the build, not runtime. The `tlh` entry is the one that merges — it is the English-fallback mechanism described under the legal-copy rule below.
 - `types.ts` — module augmentation that registers `Messages` as next-intl's `AppConfig["Messages"]`, giving compile-time key validation and autocomplete in `useTranslations()`/`getTranslations()`.

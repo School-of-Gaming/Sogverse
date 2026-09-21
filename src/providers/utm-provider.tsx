@@ -19,9 +19,10 @@ import type { UtmAttribution } from "@/lib/utm";
  *
  * **`useState(initial)` seeds once, and the prop must never be synced into
  * state afterwards.** This is a live requirement, not a guard against a
- * hypothetical: the root layout *does* re-execute during a session — the locale
- * provider calls `router.refresh()` on a locale change, which refetches the
- * route tree and re-runs this layout against the current URL, which by then
+ * hypothetical: the document layout *does* re-execute during a session. An
+ * ordinary in-app navigation preserves it, but a language switch re-issues the
+ * current route under the new locale prefix, and that changes the segment the
+ * layout is parameterised by — so it runs again, against a URL that by then
  * usually carries no UTM params and so passes an empty attribution. A
  * `useEffect` syncing the prop into state would wipe the values the first time
  * anyone switched language.

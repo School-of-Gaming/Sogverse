@@ -101,7 +101,6 @@ export function ConsentBannerView({
               link: (chunks) => (
                 <Link
                   href={ROUTES.privacy}
-                  prefetch={false}
                   className="underline underline-offset-4 transition-colors hover:text-foreground"
                 >
                   {chunks}
