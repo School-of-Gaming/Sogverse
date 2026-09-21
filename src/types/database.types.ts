@@ -2288,7 +2288,7 @@ export type Database = {
           },
         ]
       }
-      session_cover_offers: {
+      session_substitution_offers: {
         Row: {
           created_at: string
           gedu_id: string
@@ -2309,119 +2309,119 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "session_cover_offers_gedu_id_fkey"
+            foreignKeyName: "session_substitution_offers_gedu_id_fkey"
             columns: ["gedu_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "session_cover_offers_gedu_id_fkey"
+            foreignKeyName: "session_substitution_offers_gedu_id_fkey"
             columns: ["gedu_id"]
             isOneToOne: false
             referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "session_cover_offers_request_id_fkey"
+            foreignKeyName: "session_substitution_offers_request_id_fkey"
             columns: ["request_id"]
             isOneToOne: false
-            referencedRelation: "session_cover_requests"
+            referencedRelation: "session_substitution_requests"
             referencedColumns: ["id"]
           },
         ]
       }
-      session_cover_requests: {
+      session_substitution_requests: {
         Row: {
           approved_at: string | null
           approved_by: string | null
-          covered_by: string | null
+          substitute_id: string | null
           created_at: string
           group_id: string
           id: string
-          reason: Database["public"]["Enums"]["cover_reason"] | null
+          reason: Database["public"]["Enums"]["substitution_reason"] | null
           reason_note: string | null
           requested_by: string
           role: Database["public"]["Enums"]["gedu_assignment_role"]
           session_date: string
-          status: Database["public"]["Enums"]["cover_request_status"]
+          status: Database["public"]["Enums"]["substitution_request_status"]
           updated_at: string
         }
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
-          covered_by?: string | null
+          substitute_id?: string | null
           created_at?: string
           group_id: string
           id?: string
-          reason?: Database["public"]["Enums"]["cover_reason"] | null
+          reason?: Database["public"]["Enums"]["substitution_reason"] | null
           reason_note?: string | null
           requested_by: string
           role: Database["public"]["Enums"]["gedu_assignment_role"]
           session_date: string
-          status?: Database["public"]["Enums"]["cover_request_status"]
+          status?: Database["public"]["Enums"]["substitution_request_status"]
           updated_at?: string
         }
         Update: {
           approved_at?: string | null
           approved_by?: string | null
-          covered_by?: string | null
+          substitute_id?: string | null
           created_at?: string
           group_id?: string
           id?: string
-          reason?: Database["public"]["Enums"]["cover_reason"] | null
+          reason?: Database["public"]["Enums"]["substitution_reason"] | null
           reason_note?: string | null
           requested_by?: string
           role?: Database["public"]["Enums"]["gedu_assignment_role"]
           session_date?: string
-          status?: Database["public"]["Enums"]["cover_request_status"]
+          status?: Database["public"]["Enums"]["substitution_request_status"]
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "session_cover_requests_approved_by_fkey"
+            foreignKeyName: "session_substitution_requests_approved_by_fkey"
             columns: ["approved_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "session_cover_requests_approved_by_fkey"
+            foreignKeyName: "session_substitution_requests_approved_by_fkey"
             columns: ["approved_by"]
             isOneToOne: false
             referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "session_cover_requests_covered_by_fkey"
-            columns: ["covered_by"]
+            foreignKeyName: "session_substitution_requests_substitute_id_fkey"
+            columns: ["substitute_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "session_cover_requests_covered_by_fkey"
-            columns: ["covered_by"]
+            foreignKeyName: "session_substitution_requests_substitute_id_fkey"
+            columns: ["substitute_id"]
             isOneToOne: false
             referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "session_cover_requests_group_id_fkey"
+            foreignKeyName: "session_substitution_requests_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "product_groups"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "session_cover_requests_requested_by_fkey"
+            foreignKeyName: "session_substitution_requests_requested_by_fkey"
             columns: ["requested_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "session_cover_requests_requested_by_fkey"
+            foreignKeyName: "session_substitution_requests_requested_by_fkey"
             columns: ["requested_by"]
             isOneToOne: false
             referencedRelation: "user_list_entries"
@@ -2990,7 +2990,7 @@ export type Database = {
         }
         Returns: Json
       }
-      approve_session_cover_offer: {
+      approve_session_substitution_offer: {
         Args: { p_offer_id: string }
         Returns: Json
       }
@@ -3009,7 +3009,7 @@ export type Database = {
         Args: { p_participation_id: string; p_reason: string }
         Returns: Json
       }
-      cascade_withdraw_orphaned_cover_requests: {
+      cascade_withdraw_orphaned_substitution_requests: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: undefined
       }
@@ -3033,7 +3033,7 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: Json
       }
-      clear_session_cover: { Args: { p_request_id: string }; Returns: Json }
+      clear_session_substitution: { Args: { p_request_id: string }; Returns: Json }
       confirm_paid_participation: {
         Args: {
           p_checkout_session_id: string
@@ -3044,10 +3044,10 @@ export type Database = {
         Returns: Json
       }
       count_active_seats: { Args: { p_product_id: string }; Returns: number }
-      cover_request_document: {
+      substitution_request_document: {
         Args: {
           p_include_reason: boolean
-          p_request: Database["public"]["Tables"]["session_cover_requests"]["Row"]
+          p_request: Database["public"]["Tables"]["session_substitution_requests"]["Row"]
           p_reveal_requester?: boolean
           p_viewer_id: string
         }
@@ -3170,8 +3170,8 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: string
       }
-      gedu_covers_group: { Args: { p_group_id: string }; Returns: boolean }
-      gedu_covers_session: {
+      gedu_substitutes_group: { Args: { p_group_id: string }; Returns: boolean }
+      gedu_substitutes_session: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: boolean
       }
@@ -3183,7 +3183,7 @@ export type Database = {
         Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
         Returns: boolean
       }
-      gedu_may_cover_session: {
+      gedu_may_substitute_session: {
         Args: {
           p_absent_gedu_id: string
           p_gedu_id: string
@@ -3224,7 +3224,7 @@ export type Database = {
       get_my_assigned_products: {
         Args: never
         Returns: {
-          covered_date: string
+          substitution_date: string
           end_date: string
           group_count: number
           group_id: string
@@ -3316,7 +3316,7 @@ export type Database = {
           waitlist_position: number
         }[]
       }
-      get_open_cover_requests: { Args: never; Returns: Json }
+      get_open_substitution_requests: { Args: never; Returns: Json }
       get_product_groups_with_details: {
         Args: { p_product_id: string }
         Returns: Json
@@ -3396,7 +3396,7 @@ export type Database = {
       }
       location_search_separator: { Args: never; Returns: string }
       mark_chat_image_stored: { Args: { p_id: string }; Returns: string }
-      offer_session_cover: { Args: { p_request_id: string }; Returns: Json }
+      offer_session_substitution: { Args: { p_request_id: string }; Returns: Json }
       participation_state: {
         Args: {
           p_group_id: string
@@ -3461,10 +3461,10 @@ export type Database = {
         Returns: boolean
       }
       request_my_verification_email: { Args: never; Returns: boolean }
-      request_session_cover: {
+      request_session_substitution: {
         Args: {
           p_group_id: string
-          p_reason?: Database["public"]["Enums"]["cover_reason"]
+          p_reason?: Database["public"]["Enums"]["substitution_reason"]
           p_reason_note?: string
           p_session_date: string
         }
@@ -3587,11 +3587,11 @@ export type Database = {
         Args: { p_product_id: string; p_slugs: string[] }
         Returns: undefined
       }
-      set_session_cover: {
+      set_session_substitution: {
         Args: {
           p_absent_gedu_id: string
           p_group_id: string
-          p_reason?: Database["public"]["Enums"]["cover_reason"]
+          p_reason?: Database["public"]["Enums"]["substitution_reason"]
           p_reason_note?: string
           p_session_date: string
           p_sub_gedu_id: string
@@ -3669,15 +3669,15 @@ export type Database = {
         Args: { p_pin: string; p_user_ids: string[] }
         Returns: string
       }
-      withdraw_session_cover_offer: {
+      withdraw_session_substitution_offer: {
         Args: { p_request_id: string }
         Returns: Json
       }
-      withdraw_session_cover_request: {
+      withdraw_session_substitution_request: {
         Args: { p_request_id: string }
         Returns: Json
       }
-      withdraw_session_cover_request_as_admin: {
+      withdraw_session_substitution_request_as_admin: {
         Args: { p_request_id: string }
         Returns: Json
       }
@@ -3685,8 +3685,8 @@ export type Database = {
     Enums: {
       billing_mode: "paid" | "free" | "external_contract"
       chat_channel_type: "group_session"
-      cover_reason: "sick" | "other"
-      cover_request_status: "open" | "covered" | "withdrawn"
+      substitution_reason: "sick" | "other"
+      substitution_request_status: "open" | "substituted" | "withdrawn"
       effective_product_status: "pending" | "running" | "completed" | "expired"
       gamer_photo_consent_type: "lynx_educate"
       gamer_sign_in: "parent" | "username" | "email"
@@ -3846,8 +3846,8 @@ export const Constants = {
     Enums: {
       billing_mode: ["paid", "free", "external_contract"],
       chat_channel_type: ["group_session"],
-      cover_reason: ["sick", "other"],
-      cover_request_status: ["open", "covered", "withdrawn"],
+      substitution_reason: ["sick", "other"],
+      substitution_request_status: ["open", "substituted", "withdrawn"],
       effective_product_status: ["pending", "running", "completed", "expired"],
       gamer_photo_consent_type: ["lynx_educate"],
       gamer_sign_in: ["parent", "username", "email"],

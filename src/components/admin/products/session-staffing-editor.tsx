@@ -22,25 +22,25 @@ import { Field } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { StatusLine } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
-import { COVER_REASON_NOTE_MAX_LENGTH } from "@/services/session-cover";
+import { SUBSTITUTION_REASON_NOTE_MAX_LENGTH } from "@/services/session-substitution";
 import type {
-  CoverRequestState,
+  SubstitutionRequestState,
   GeduAssignmentRole,
   SessionStaffing,
 } from "@/lib/session-staffing";
 import { cn, formatDateOnly } from "@/lib/utils";
-import { Constants, type CoverReason } from "@/types";
+import { Constants, type SubstitutionReason } from "@/types";
 import {
   GeduPickerSheet,
   type GeduPickerUnavailability,
 } from "./gedu-picker-sheet";
 
-/** What an admin decided, in the shape {@link SessionStaffingEditorProps.onSetCover} takes. */
-export interface SetSessionCoverDraft {
+/** What an admin decided, in the shape {@link SessionStaffingEditorProps.onSetSubstitution} takes. */
+export interface SetSessionSubstitutionDraft {
   absentGeduId: string;
   subGeduId: string;
   /** Omitted rather than nulled — the RPC's parameter carries a default. */
-  reason?: CoverReason;
+  reason?: SubstitutionReason;
   reasonNote?: string;
 }
 
@@ -55,9 +55,9 @@ export interface SessionStaffingEditorProps {
    * committing flag without re-enabling over stale staffing; rejects if the
    * write did not land.
    */
-  onSetCover: (draft: SetSessionCoverDraft) => Promise<void>;
+  onSetSubstitution: (draft: SetSessionSubstitutionDraft) => Promise<void>;
   /** Unseat one request's sub. Resolves and rejects on the same terms. */
-  onClearCover: (requestId: string) => Promise<void>;
+  onClearSubstitution: (requestId: string) => Promise<void>;
   /** "Attending after all." Resolves and rejects on the same terms. */
   onWithdrawRequest: (requestId: string) => Promise<void>;
 }
@@ -75,7 +75,7 @@ export interface SessionStaffingEditorProps {
  * editor and no callbacks.
  *
  * **Every entry gets one, past and future alike.** The retroactive path is the
- * point of the admin editor: an off-platform cover on a session that already
+ * point of the admin editor: an off-platform substitution on a session that already
  * ran has to be recordable, because gedu invoicing reads who actually worked.
  * So nothing here consults a clock — the database's admin writers carry no
  * today-or-later guard, and a second date test in the browser would only be a
@@ -95,8 +95,8 @@ export interface SessionStaffingEditorProps {
 export function SessionStaffingEditor({
   staffing,
   sessionDate,
-  onSetCover,
-  onClearCover,
+  onSetSubstitution,
+  onClearSubstitution,
   onWithdrawRequest,
 }: SessionStaffingEditorProps) {
   const t = useTranslations("admin.products.staffing");
@@ -153,7 +153,7 @@ export function SessionStaffingEditor({
           staffing={staffing}
           seats={seats}
           sessionDate={sessionDate}
-          onSetCover={onSetCover}
+          onSetSubstitution={onSetSubstitution}
         />
       )}
 
@@ -163,7 +163,7 @@ export function SessionStaffingEditor({
           sessionDate={sessionDate}
           onClose={() => setPending(null)}
           onConfirm={
-            pending.kind === "clear" ? onClearCover : onWithdrawRequest
+            pending.kind === "clear" ? onClearSubstitution : onWithdrawRequest
           }
         />
       )}
@@ -177,7 +177,7 @@ function RequestActions({
   onClear,
   onWithdraw,
 }: {
-  request: CoverRequestState;
+  request: SubstitutionRequestState;
   onClear: () => void;
   onWithdraw: () => void;
 }) {
@@ -188,7 +188,7 @@ function RequestActions({
       <span className="text-xs text-muted-foreground">
         {request.requestedBy.firstName}
       </span>
-      {request.status === "covered" && (
+      {request.status === "substituted" && (
         <Button type="button" variant="ghost" size="sm" onClick={onClear}>
           {t("clearSub")}
         </Button>
@@ -203,7 +203,7 @@ function RequestActions({
 /** Which of the two per-request writes is being confirmed, and on what. */
 interface PendingRequestAction {
   kind: "clear" | "withdraw";
-  request: CoverRequestState;
+  request: SubstitutionRequestState;
 }
 
 /**
@@ -229,7 +229,7 @@ function RequestActionDialog({
   const date = useSessionDateLabel(sessionDate);
 
   const { kind, request } = pending;
-  const sub = request.coveredBy?.firstName ?? "";
+  const sub = request.substituteId?.firstName ?? "";
 
   return (
     <ConfirmDialog
@@ -278,7 +278,7 @@ function SetSubFlowOverlays({
   staffing,
   seats,
   sessionDate,
-  onSetCover,
+  onSetSubstitution,
 }: {
   flow: SetSubFlow;
   /**
@@ -290,7 +290,7 @@ function SetSubFlowOverlays({
   staffing: SessionStaffing;
   seats: readonly AbsentSeat[];
   sessionDate: string;
-  onSetCover: (draft: SetSessionCoverDraft) => Promise<void>;
+  onSetSubstitution: (draft: SetSessionSubstitutionDraft) => Promise<void>;
 }) {
   const t = useTranslations("admin.products.staffing");
   /**
@@ -304,7 +304,7 @@ function SetSubFlowOverlays({
    * the draft seeds itself cleanly for the next session's card without anything
    * clearing it.
    */
-  const [reason, setReason] = useState<CoverReason | null>(null);
+  const [reason, setReason] = useState<SubstitutionReason | null>(null);
   const [note, setNote] = useState("");
   const absent = flow.absent;
 
@@ -375,7 +375,7 @@ function SetSubFlowOverlays({
             onChangeSub={() => setFlow({ ...flow, step: "picker" })}
             onCancel={() => setFlow(null)}
             onConfirm={async (draft) => {
-              await onSetCover(draft);
+              await onSetSubstitution(draft);
               setFlow(null);
             }}
           />
@@ -389,7 +389,7 @@ function SetSubFlowOverlays({
  * **Why the picker will not take a candidate, for this session.**
  *
  * Two reasons and no more, which is exactly the shape the sheet's own prop
- * takes: the gedu being covered is `absent`, and anybody else already due at
+ * takes: the gedu being substituted is `absent`, and anybody else already due at
  * this session is `expected` — seating one of them as somebody else's sub would
  * collapse two seats onto one person and make "who did which job" unanswerable.
  * Certification is the sheet's own refusal and is not restated here.
@@ -420,15 +420,15 @@ function buildUnavailability(
  * or by replacing the sub already in it. So the seats are the expected gedus
  * *plus* everyone holding a live request, which is precisely the set the
  * database's own writer accepts: it demands the absent gedu be expected only
- * where there is no request to cover in place.
+ * where there is no substitution request in place.
  */
 interface AbsentSeat {
   id: string;
   firstName: string;
-  /** The pay class the cover is for — the assignment's, or the request's. */
+  /** The pay class the substitution is for — the assignment's, or the request's. */
   role: GeduAssignmentRole;
   /** The live request on this seat, where one has been filed. */
-  request: CoverRequestState | null;
+  request: SubstitutionRequestState | null;
 }
 
 function absentSeats(staffing: SessionStaffing): readonly AbsentSeat[] {
@@ -544,17 +544,17 @@ function AbsentGeduStep({
 }
 
 /**
- * The last step: who is covering whom, why, and what this press does to what is
+ * The last step: who is substituting whom, why, and what this press does to what is
  * already recorded.
  *
  * **It says what it is replacing.** An absent gedu with an open request is
- * being approved rather than filed for — the write covers that request in
- * place, so a second row is never created — and one already covered is having
+ * being approved rather than filed for — the write substitutions that request in
+ * place, so a second row is never created — and one already substituted is having
  * their sub swapped. Neither is something an admin should discover from the
  * card afterwards.
  *
  * The reason is optional here and required on the gedu's own path, and that
- * asymmetry is the retroactive case: an office recording an off-platform cover
+ * asymmetry is the retroactive case: an office recording an off-platform substitution
  * from three weeks ago may simply not know why somebody was away, and inventing
  * `other` for them would put a fact in the row that nobody stated.
  */
@@ -574,13 +574,13 @@ function ConfirmSubStep({
   sub: { id: string; firstName: string };
   sessionDate: string;
   /** `null` is "not stated", which is a real answer on the retroactive path. */
-  reason: CoverReason | null;
-  onReasonChange: (reason: CoverReason | null) => void;
+  reason: SubstitutionReason | null;
+  onReasonChange: (reason: SubstitutionReason | null) => void;
   note: string;
   onNoteChange: (note: string) => void;
   onChangeSub: () => void;
   onCancel: () => void;
-  onConfirm: (draft: SetSessionCoverDraft) => Promise<void>;
+  onConfirm: (draft: SetSessionSubstitutionDraft) => Promise<void>;
 }) {
   const t = useTranslations("admin.products.staffing");
   const c = useTranslations("common");
@@ -592,7 +592,7 @@ function ConfirmSubStep({
   const [committing, setCommitting] = useState(false);
   const [failed, setFailed] = useState(false);
 
-  const remaining = COVER_REASON_NOTE_MAX_LENGTH - note.length;
+  const remaining = SUBSTITUTION_REASON_NOTE_MAX_LENGTH - note.length;
   const trimmedNote = note.trim();
 
   const run = () => {
@@ -647,10 +647,10 @@ function ConfirmSubStep({
 
         {absent.request !== null && (
           <p className="text-xs text-muted-foreground">
-            {absent.request.status === "covered" &&
-            absent.request.coveredBy !== null
+            {absent.request.status === "substituted" &&
+            absent.request.substituteId !== null
               ? t("replacesCurrentSub", {
-                  name: absent.request.coveredBy.firstName,
+                  name: absent.request.substituteId.firstName,
                 })
               : t("approvesOpenRequest")}
           </p>
@@ -705,7 +705,7 @@ function ConfirmSubStep({
           <Textarea
             id={noteId}
             rows={2}
-            maxLength={COVER_REASON_NOTE_MAX_LENGTH}
+            maxLength={SUBSTITUTION_REASON_NOTE_MAX_LENGTH}
             disabled={committing}
             placeholder={t("notePlaceholder")}
             value={note}
@@ -750,9 +750,9 @@ function ConfirmSubStep({
  * than retyped, with "not stated" leading because it is the honest answer on
  * the retroactive path this editor exists for.
  */
-const REASON_CHOICES: readonly (CoverReason | null)[] = [
+const REASON_CHOICES: readonly (SubstitutionReason | null)[] = [
   null,
-  ...Constants.public.Enums.cover_reason,
+  ...Constants.public.Enums.substitution_reason,
 ];
 
 /**

@@ -128,7 +128,7 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
  *
  * Mounted by the primitive only while the dialog is open, which is what makes
  * both of them seed themselves cleanly on every open without anything clearing
- * them — the same reasoning the cover-request form is built on. Holding them in
+ * them — the same reasoning the substitution-request form is built on. Holding them in
  * the component above and resetting them in an effect was the other way to get
  * it, and it is the cascading-render shape React asks callers not to write.
  */

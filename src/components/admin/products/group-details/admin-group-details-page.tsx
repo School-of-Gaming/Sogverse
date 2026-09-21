@@ -23,7 +23,7 @@ import {
 import { showsNewcomerBadge } from "@/components/member-flair";
 import {
   SessionStaffingEditor,
-  type SetSessionCoverDraft,
+  type SetSessionSubstitutionDraft,
 } from "@/components/admin/products/session-staffing-editor";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
 import { sessionEntryId } from "@/lib/session-occurrence";
@@ -63,10 +63,10 @@ import {
   useUpdateGroupMemberRoblox,
 } from "@/services/roblox";
 import {
-  useClearSessionCover,
-  useSetSessionCover,
-  useWithdrawSessionCoverRequestAsAdmin,
-} from "@/services/session-cover";
+  useClearSessionSubstitution,
+  useSetSessionSubstitution,
+  useWithdrawSessionSubstitutionRequestAsAdmin,
+} from "@/services/session-substitution";
 import type {
   GeduAssignedProduct,
   ProductGroupsSnapshot,
@@ -381,13 +381,13 @@ function Workspace({
   // member's flair, so an edit here relights the button on the gedu's page too.
   const setGamerNote = useSetGamerGroupNote(groupId);
   const setGamerCreations = useSetGamerGroupCreations(groupId);
-  // The three admin cover writes. They are the one capability this shell holds
+  // The three admin substitution writes. They are the one capability this shell holds
   // that the gedu shell does not, and they are bound here for the same reason
   // every other write on this page is: which document has to be read again
   // afterwards is the shell's knowledge, not the shared body's.
-  const setSessionCover = useSetSessionCover();
-  const clearSessionCover = useClearSessionCover();
-  const withdrawCoverRequest = useWithdrawSessionCoverRequestAsAdmin();
+  const setSessionSubstitution = useSetSessionSubstitution();
+  const clearSessionSubstitution = useClearSessionSubstitution();
+  const withdrawSubstitutionRequest = useWithdrawSessionSubstitutionRequestAsAdmin();
 
   /**
    * The account ids whose Roblox figure this roster needs — verified rows only,
@@ -424,7 +424,7 @@ function Workspace({
         // document's own copy of them — same shapes as the gedu feed's, because
         // one card component renders both.
         gedus: group.gedus,
-        covers: group.covers,
+        substitutions: group.substitutions,
         // **No viewer.** An admin is not a member of the group's staff, so
         // there is nobody here for "am I expected" to be about: the shell
         // supplies the staffing editor in that slot instead, as it already does
@@ -432,7 +432,7 @@ function Workspace({
         viewerId: null,
         now,
       }),
-    [groupId, sessions.product, group.sessions, group.gedus, group.covers, now],
+    [groupId, sessions.product, group.sessions, group.gedus, group.substitutions, now],
   );
 
   // The attendance checklist takes id + first name and the instant from which
@@ -662,39 +662,39 @@ function Workspace({
    * own document again.
    *
    * **The awaited invalidation is the half the mutation cannot supply.** Every
-   * cover write invalidates five roots in its `onSuccess` without waiting for
+   * substitution write invalidates five roots in its `onSuccess` without waiting for
    * any of them, which is right for the four documents this page is not reading
    * and not enough for the one it is: the editor holds its committing flag
    * until the promise it is given settles, so a promise that resolved on the
    * receipt would re-enable a control over the staffing the write has just
    * changed. Awaiting the admin-sessions key means the card is already rebuilt
-   * from the new `covers` by the time the editor lets go.
+   * from the new `substitutions` by the time the editor lets go.
    */
-  const settleCoverWrite = async () => {
+  const settleSubstitutionWrite = async () => {
     await queryClient.invalidateQueries({ queryKey: adminSessionKeys.all });
   };
 
-  const handleSetCover = async (
+  const handleSetSubstitution = async (
     sessionDate: string,
-    draft: SetSessionCoverDraft,
+    draft: SetSessionSubstitutionDraft,
   ) => {
-    await setSessionCover.mutateAsync({ groupId, sessionDate, ...draft });
-    await settleCoverWrite();
+    await setSessionSubstitution.mutateAsync({ groupId, sessionDate, ...draft });
+    await settleSubstitutionWrite();
   };
 
-  const handleClearCover = async (requestId: string) => {
-    await clearSessionCover.mutateAsync({ requestId });
-    await settleCoverWrite();
+  const handleClearSubstitution = async (requestId: string) => {
+    await clearSessionSubstitution.mutateAsync({ requestId });
+    await settleSubstitutionWrite();
   };
 
   const handleWithdrawRequest = async (requestId: string) => {
-    await withdrawCoverRequest.mutateAsync({ requestId });
-    await settleCoverWrite();
+    await withdrawSubstitutionRequest.mutateAsync({ requestId });
+    await settleSubstitutionWrite();
   };
 
   /**
    * The staffing editor this shell draws on every card — **past sessions
-   * included**, because recording an off-platform cover after the fact is what
+   * included**, because recording an off-platform substitution after the fact is what
    * the admin path exists for.
    *
    * The date is read back off the entry's id rather than re-derived from its
@@ -708,8 +708,8 @@ function Workspace({
       <SessionStaffingEditor
         staffing={entry.staffing}
         sessionDate={sessionDate}
-        onSetCover={(draft) => handleSetCover(sessionDate, draft)}
-        onClearCover={handleClearCover}
+        onSetSubstitution={(draft) => handleSetSubstitution(sessionDate, draft)}
+        onClearSubstitution={handleClearSubstitution}
         onWithdrawRequest={handleWithdrawRequest}
       />
     );
@@ -785,7 +785,7 @@ function Workspace({
       onRemovePhoto={removePhoto}
       onSaveGameUsername={handleSaveGameUsername}
       // The admin shell's one extra power over the gedu's, and the body learns
-      // it by being handed one: an editor, and neither of the two cover
+      // it by being handed one: an editor, and neither of the two substitution
       // callbacks a gedu speaks for their own seat with.
       renderStaffingEditor={renderStaffingEditor}
       gameStatuses={gameStatuses}

@@ -2,25 +2,25 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { Constants, type Database } from "@/types";
-import { adminDashboardCoverRequest } from "@/services/admin-dashboard/admin-dashboard.contracts";
+import { adminDashboardSubstitutionRequest } from "@/services/admin-dashboard/admin-dashboard.contracts";
 import {
-  anonymousCoverRequestDocument,
-  coverRequestDocument,
-  openCoverRequests,
+  anonymousSubstitutionRequestDocument,
+  substitutionRequestDocument,
+  openSubstitutionRequests,
   sessionStaffGedu,
-} from "@/services/session-cover/session-cover.contracts";
+} from "@/services/session-substitution/session-substitution.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
 
 /**
- * Session covers (00272): who is absent, who stood in, who may reach what, and
+ * Session substitutions (00272): who is absent, who stood in, who may reach what, and
  * the mechanical check that keeps the access surface complete.
  *
  * Four things about this file are decisions rather than convenience, and each
  * would otherwise read as a gap:
  *
- * 1. **The derivation and the may-cover guard are exercised through the ADMIN
+ * 1. **The derivation and the may-substitute guard are exercised through the ADMIN
  *    client, on purpose.** Both predicates take the gedu as an ARGUMENT rather
  *    than reading `auth.uid()`, because every writer has to ask them about
  *    somebody else, and both are granted to `service_role` alone. So the cases
@@ -28,24 +28,24 @@ import { deleteTestProducts } from "./product-helpers";
  *    readable: "is A expected on this date" is the claim, not "am I".
  *
  * 2. **The ACCESS predicates are exercised as the gedu, because they answer only
- *    about the caller.** `gedu_covers_group` is the one cover predicate granted
+ *    about the caller.** `gedu_substitutes_group` is the one substitution predicate granted
  *    to `authenticated` (the `gedus_read_assigned_groups` policy calls it, and a
  *    policy is evaluated as the querying role), so it is asked through each
- *    gedu's own client. Its sibling `gedu_covers_session` is internal and is
+ *    gedu's own client. Its sibling `gedu_substitutes_session` is internal and is
  *    observed through the two surfaces that are date-scoped: the voice
  *    predicates and the report-mail claim.
  *
  * 3. **The window fixtures are written straight to the table, not through the
- *    RPCs.** A cover twenty days in the past is exactly the state the window has
+ *    RPCs.** A substitution twenty days in the past is exactly the state the window has
  *    to close on, and no RPC will create one (the gedu path refuses a past date
  *    and the admin path still requires a schedule weekday). Writing the row is
  *    how the boundary gets tested rather than argued about.
  *
  * 4. **Nothing asserts on "today" at a boundary that could move mid-test.** The
  *    two voice predicates hardcode "today in the product's timezone", so a case
- *    that seeded a cover on today and read the predicate a second later would
+ *    that seeded a substitution on today and read the predicate a second later would
  *    flip if the run crossed UTC midnight. The admitting case therefore seeds
- *    covers on today AND tomorrow — whichever the database calls today, one
+ *    substitutions on today AND tomorrow — whichever the database calls today, one
  *    matches — and the refusing case seeds one a week out, which no reading of
  *    "today" can reach. Every other date in this file is at least three days
  *    from a boundary.
@@ -54,11 +54,11 @@ import { deleteTestProducts } from "./product-helpers";
  *   - PRODUCT (remote club, UTC, a slot on every weekday so any date is
  *     writable) carries GROUP_A — assigned to the seeded GEDU, with GAMER on its
  *     roster — and GROUP_B, its sister group with no educator. Two groups
- *     because the whole point of the model is that a gedu may cover a group of a
+ *     because the whole point of the model is that a gedu may substitute on a group of a
  *     product they already teach, and one group cannot be both.
  *   - SITE_PRODUCT (in-person, at its own SITE) carries GROUP_SITE, so the
- *     location-shaped cover arm of `set_site_notes` has a building to be about.
- *   - OFF_PRODUCT carries GROUP_OFF, which nobody here teaches or covers.
+ *     location-shaped substitution arm of `set_site_notes` has a building to be about.
+ *   - OFF_PRODUCT carries GROUP_OFF, which nobody here teaches or substitutions.
  *   - LATE_PRODUCT (GROUP_LATE) and ORPHAN_PRODUCT (GROUP_ORPHAN) are the pair
  *     the window's NEAR edge is measured against: an evening slot in a zone
  *     where it is currently midday (see MIDDAY_ZONE), identical but for the one
@@ -180,20 +180,20 @@ function slotInstants(date: string): { starts_at: string; ends_at: string } {
 // client reader — the catalog rows the completeness check reads — are local.
 // ---------------------------------------------------------------------------
 
-const geduFeedCoverHalves = z.object({
+const geduFeedSubstitutionHalves = z.object({
   gedus: z.array(sessionStaffGedu),
-  covers: z.array(coverRequestDocument),
+  substitutions: z.array(substitutionRequestDocument),
 });
 
-const dashboardCoverRequests = z.array(adminDashboardCoverRequest);
+const dashboardSubstitutionRequests = z.array(adminDashboardSubstitutionRequest);
 
 const assignmentSummaries = z.array(
   z.object({
     product_id: z.string(),
     group_id: z.string(),
     group_name: z.string(),
-    kind: z.enum(["assignment", "cover"]),
-    covered_date: z.string().nullable(),
+    kind: z.enum(["assignment", "substitution"]),
+    substitution_date: z.string().nullable(),
     attention_count: z.number(),
   }),
 );
@@ -209,7 +209,7 @@ const policyExpressions = z.array(
   }),
 );
 
-describe("session covers", () => {
+describe("session substitutions", () => {
   let admin: SupabaseClient<Database>;
   let adminAuth: SupabaseClient<Database>;
   let geduAuth: SupabaseClient<Database>;
@@ -235,8 +235,8 @@ describe("session covers", () => {
     // happen.
     const stamp = Date.now();
     const accounts = [
-      { email: `cover-sub-${stamp}@test.local`, first: "Saku", last: "Substitute" },
-      { email: `cover-third-${stamp}@test.local`, first: "Kolme", last: "Thirdson" },
+      { email: `substitution-sub-${stamp}@test.local`, first: "Saku", last: "Substitute" },
+      { email: `substitution-third-${stamp}@test.local`, first: "Kolme", last: "Thirdson" },
     ];
     const ids: string[] = [];
     for (const account of accounts) {
@@ -252,7 +252,7 @@ describe("session covers", () => {
       ids.push(id);
       // handle_new_user lands every signup as a customer; the gedu role and the
       // extension row are an admin's doing, exactly as in the real flow. Both are
-      // CERTIFIED, because certification is one of the four may-cover refusals
+      // CERTIFIED, because certification is one of the four may-substitute refusals
       // and the cases that need it absent take it away deliberately.
       await admin.from("profiles").update({ role: "gedu" }).eq("id", id);
       await admin.from("customer_profiles").delete().eq("user_id", id);
@@ -269,13 +269,13 @@ describe("session covers", () => {
     // database — so a reset of that row would stomp its window. Nothing below
     // depends on the seeded gedu being certified: they file absences (which
     // needs no certification) and hold assignments (likewise), and every case
-    // that needs a certified COVER uses one of the two minted accounts.
+    // that needs a certified SUBSTITUTION uses one of the two minted accounts.
 
     await deleteTestProducts(admin, ALL_PRODUCTS);
     await admin.from("locations").delete().eq("id", SITE);
     await admin.from("locations").insert({
       id: SITE,
-      name: "Cover Hall",
+      name: "Substitution Hall",
       type: "site",
       parent_id: TEST_IDS.LOCATION_MUNICIPALITY,
       country_code: "FI",
@@ -343,7 +343,7 @@ describe("session covers", () => {
       },
       // The two evening clubs the start bound is measured against. They differ
       // in one thing only — whether their schedule projects the weekday the
-      // cases below cover — so a difference in the answer is a difference in
+      // cases below substitution — so a difference in the answer is a difference in
       // that and nothing else.
       ...[LATE_PRODUCT, ORPHAN_PRODUCT].map((id) => ({
         id,
@@ -368,7 +368,7 @@ describe("session covers", () => {
     await admin
       .from("product_translations")
       .insert([
-        { product_id: PRODUCT, locale: "en", name: "Cover Club", short_description: "x" },
+        { product_id: PRODUCT, locale: "en", name: "Substitution Club", short_description: "x" },
       ]);
 
     // A slot on every weekday, so `group_session_date_is_writable` accepts any
@@ -385,7 +385,7 @@ describe("session covers", () => {
     );
 
     // The evening clubs' schedules, and the whole of what tells them apart: the
-    // one covered below runs on every weekday, its twin on every weekday BUT
+    // one substituted below runs on every weekday, its twin on every weekday BUT
     // the one that date falls on — so on that twin the same date names a day
     // the schedule does not project, which is the orphan case.
     const orphanedWeekday = weekdayOf(middayDate(2));
@@ -438,10 +438,10 @@ describe("session covers", () => {
 
   afterAll(async () => {
     await admin.from("participations").delete().in("product_id", ALL_PRODUCTS);
-    // Assignments hold ON DELETE RESTRICT onto profiles, and so do a cover
+    // Assignments hold ON DELETE RESTRICT onto profiles, and so do a substitution
     // request's two people — but requests cascade with their group, which
     // cascades with its product, so deleting the products is the whole of the
-    // cover cleanup. The assignments still have to go before the accounts do.
+    // substitution cleanup. The assignments still have to go before the accounts do.
     await admin.from("gedu_group_assignments").delete().in("gedu_id", [subId, thirdId]);
     await deleteTestProducts(admin, ALL_PRODUCTS);
     await admin.from("site_details").delete().eq("location_id", SITE);
@@ -453,7 +453,7 @@ describe("session covers", () => {
 
   /** Nothing recorded: every block starts from an unstaffed, uncovered group. */
   beforeEach(async () => {
-    await admin.from("session_cover_requests").delete().in("group_id", ALL_GROUPS);
+    await admin.from("session_substitution_requests").delete().in("group_id", ALL_GROUPS);
     await admin.from("group_sessions").delete().in("group_id", ALL_GROUPS);
     await admin
       .from("gedu_profiles")
@@ -470,22 +470,22 @@ describe("session covers", () => {
     groupId?: string;
     date: string;
     absent?: string;
-    coveredBy?: string | null;
-    status?: Database["public"]["Enums"]["cover_request_status"];
+    substituteId?: string | null;
+    status?: Database["public"]["Enums"]["substitution_request_status"];
     role?: Database["public"]["Enums"]["gedu_assignment_role"];
   }): Promise<string> {
-    const covered = input.coveredBy ?? null;
+    const substituted = input.substituteId ?? null;
     const { data, error } = await admin
-      .from("session_cover_requests")
+      .from("session_substitution_requests")
       .insert({
         group_id: input.groupId ?? GROUP_A,
         session_date: input.date,
         requested_by: input.absent ?? TEST_IDS.GEDU,
         role: input.role ?? "primary",
-        status: input.status ?? (covered ? "covered" : "open"),
-        covered_by: covered,
-        approved_by: covered ? TEST_IDS.ADMIN : null,
-        approved_at: covered ? new Date().toISOString() : null,
+        status: input.status ?? (substituted ? "substituted" : "open"),
+        substitute_id: substituted,
+        approved_by: substituted ? TEST_IDS.ADMIN : null,
+        approved_at: substituted ? new Date().toISOString() : null,
       })
       .select("id")
       .single();
@@ -503,13 +503,13 @@ describe("session covers", () => {
     return data;
   }
 
-  async function mayCover(
+  async function maySubstitute(
     gedu: string,
     date: string,
     absent: string,
     group = GROUP_A,
   ) {
-    const { data, error } = await admin.rpc("gedu_may_cover_session", {
+    const { data, error } = await admin.rpc("gedu_may_substitute_session", {
       p_gedu_id: gedu,
       p_group_id: group,
       p_session_date: date,
@@ -519,11 +519,11 @@ describe("session covers", () => {
     return data;
   }
 
-  async function coversGroup(
+  async function substitutesGroup(
     client: SupabaseClient<Database>,
     group = GROUP_A,
   ) {
-    const { data, error } = await client.rpc("gedu_covers_group", {
+    const { data, error } = await client.rpc("gedu_substitutes_group", {
       p_group_id: group,
     });
     expect(error).toBeNull();
@@ -532,8 +532,8 @@ describe("session covers", () => {
 
   async function statusOf(requestId: string) {
     const { data, error } = await admin
-      .from("session_cover_requests")
-      .select("status, covered_by, approved_by, approved_at")
+      .from("session_substitution_requests")
+      .select("status, substitute_id, approved_by, approved_at")
       .eq("id", requestId)
       .single();
     expect(error).toBeNull();
@@ -550,8 +550,8 @@ describe("session covers", () => {
      * with the reason it is not. The enumeration is a QUERY, not a snapshot: a
      * seventh gate added next year is found by the catalogs, not by memory.
      *
-     * A member carrying a cover branch — a reference to `session_cover_requests`,
-     * `gedu_covers_group` or `gedu_covers_session` — must NOT appear here, and
+     * A member carrying a substitution branch — a reference to `session_substitution_requests`,
+     * `gedu_substitutes_group` or `gedu_substitutes_session` — must NOT appear here, and
      * the second assertion below is what polices that: an annotation left behind
      * on a member that has since been widened reads as coverage while covering
      * nothing, which is how every allowlist design fails.
@@ -575,9 +575,9 @@ describe("session covers", () => {
      */
     const ASSIGNMENT_ONLY: Record<string, string> = {
       "function:chat_channel_roster_ids":
-        "LISTS who a channel can name rather than gating on it. Its own comment carries the decision: a covering gedu becomes mentionable once they send.",
+        "LISTS who a channel can name rather than gating on it. Its own comment carries the decision: a substituting gedu becomes mentionable once they send.",
       "function:get_my_family_product_feed":
-        "LISTS the group's gedus by first name for a FAMILY. The report attribution chip already names whoever wrote a report, so a family learns nothing new from a cover — and this is the app's one STRICT client schema, so a widened document would fail the old app's parse rather than be stripped by it.",
+        "LISTS the group's gedus by first name for a FAMILY. The report attribution chip already names whoever wrote a report, so a family learns nothing new from a substitution — and this is the app's one STRICT client schema, so a widened document would fail the old app's parse rather than be stripped by it.",
       "function:get_product_groups_with_details":
         "LISTS a group's gedus for the admin groups panel, which is the PERMANENT assignment editor. Admin-gated, and the list is exactly what that panel edits.",
       "policy:gedu_group_assignments.customers_read_assignments_via_gamers":
@@ -585,16 +585,16 @@ describe("session covers", () => {
     };
 
     /**
-     * What counts as having been through the cover question. The fourth
-     * predicate — the one asking only whether a cover has expired — is
+     * What counts as having been through the substitution question. The fourth
+     * predicate — the one asking only whether a substitution has expired — is
      * deliberately NOT here: it is what the dashboard reads ask so a sub can
-     * SEE a cover they cannot yet open, and a gate satisfied by it would be a
+     * SEE a substitution they cannot yet open, and a gate satisfied by it would be a
      * gate that had dropped the 48-hour start without anything noticing.
      */
-    const COVER_BRANCH = [
-      "session_cover_requests",
-      "gedu_covers_group",
-      "gedu_covers_session",
+    const SUBSTITUTION_BRANCH = [
+      "session_substitution_requests",
+      "gedu_substitutes_group",
+      "gedu_substitutes_session",
     ];
 
     /**
@@ -630,12 +630,12 @@ describe("session covers", () => {
       );
     }
 
-    it("every gate on gedu_group_assignments carries a cover branch or is annotated", async () => {
+    it("every gate on gedu_group_assignments carries a substitution branch or is annotated", async () => {
       const unbranched = [
         ...new Set(
           (await members())
             .filter(
-              (row) => !COVER_BRANCH.some((name) => row.expression.includes(name)),
+              (row) => !SUBSTITUTION_BRANCH.some((name) => row.expression.includes(name)),
             )
             .map((row) => row.key),
         ),
@@ -644,8 +644,8 @@ describe("session covers", () => {
       expect(
         unbranched,
         "a function body or policy expression that references gedu_group_assignments " +
-          "must either reference the cover branch (session_cover_requests, " +
-          "gedu_covers_group or gedu_covers_session) or be annotated in " +
+          "must either reference the substitution branch (session_substitution_requests, " +
+          "gedu_substitutes_group or gedu_substitutes_session) or be annotated in " +
           "ASSIGNMENT_ONLY above with the reason its reference is not a gate",
       ).toEqual(Object.keys(ASSIGNMENT_ONLY).sort());
     });
@@ -661,14 +661,14 @@ describe("session covers", () => {
         .filter((key) => {
           const expression = byKey.get(key);
           if (expression === undefined) return true;
-          return COVER_BRANCH.some((name) => expression.includes(name));
+          return SUBSTITUTION_BRANCH.some((name) => expression.includes(name));
         })
         .sort();
 
       expect(
         stale,
         "an annotation is stale: its member either no longer references " +
-          "gedu_group_assignments at all, or has since gained a cover branch — " +
+          "gedu_group_assignments at all, or has since gained a substitution branch — " +
           "delete the entry in the same change",
       ).toEqual([]);
     });
@@ -690,7 +690,7 @@ describe("session covers", () => {
       // gedu_group_assignments, so a helper that names it and is annotated
       // "not a gate" takes its callers out of the set with it: they reference
       // the helper, not the table, so they are never members and never have to
-      // carry a cover branch — and one of them may be exactly the gate the
+      // carry a substitution branch — and one of them may be exactly the gate the
       // annotation said this one was not.
       //
       // The rule is therefore: an annotated member is a LEAF, or its composers
@@ -718,19 +718,19 @@ describe("session covers", () => {
       }
     });
 
-    it("every widened gate names the cover branch", async () => {
+    it("every widened gate names the substitution branch", async () => {
       // Named positively as well, so a gate that was widened and later reverted
       // fails here rather than quietly rejoining the annotated list.
       const branched = new Set(
         (await members())
-          .filter((row) => COVER_BRANCH.some((name) => row.expression.includes(name)))
+          .filter((row) => SUBSTITUTION_BRANCH.some((name) => row.expression.includes(name)))
           .map((row) => row.key),
       );
 
       for (const key of [
         // Not a gate — the assignment writer, which was annotated as such until
         // 00276 gave it the orphan SWEEP: removing an assignment unseats
-        // somebody, and every other unseating already withdraws the cover
+        // somebody, and every other unseating already withdraws the substitution
         // requests it orphans. The reference is real, so the honest answer is
         // that it is branched; it is named here rather than annotated so that
         // losing the sweep fails loudly instead of quietly rejoining the
@@ -747,7 +747,7 @@ describe("session covers", () => {
         "function:get_gedu_assigned_product",
         "policy:product_groups.gedus_read_assigned_groups",
       ]) {
-        expect(branched.has(key), `${key} has lost its cover branch`).toBe(true);
+        expect(branched.has(key), `${key} has lost its substitution branch`).toBe(true);
       }
     });
   });
@@ -762,7 +762,7 @@ describe("session covers", () => {
    *   too. None of the three is a read or a write of rows, but REFERENCES lets a
    *   grantee build a foreign key onto the table (an existence oracle, and a
    *   lock on deletes) and TRIGGER lets them attach code to it. The sweep below
-   *   covers all seven, and proves it can SEE all seven rather than asserting an
+   *   substitutions all seven, and proves it can SEE all seven rather than asserting an
    *   empty list against a helper that might only ever report four.
    * - **Its role-backfill assertion is vacuous on a fresh database.** "No
    *   assignment has a role other than primary" is true and worth asserting, and
@@ -771,7 +771,7 @@ describe("session covers", () => {
    *   DEFAULT — which is what makes the backfill correct — is asserted from
    *   `information_schema` in the same block and is not vacuous.
    */
-  describe("the two cover tables are off the Data API", () => {
+  describe("the two substitution tables are off the Data API", () => {
     /** Every privilege `information_schema` can report on a table. */
     const TABLE_PRIVILEGES = [
       "SELECT",
@@ -782,9 +782,9 @@ describe("session covers", () => {
       "REFERENCES",
       "TRIGGER",
     ];
-    const COVER_TABLES = ["session_cover_requests", "session_cover_offers"];
+    const SUBSTITUTION_TABLES = ["session_substitution_requests", "session_substitution_offers"];
 
-    async function coverTableGrants(grantee: string) {
+    async function substitutionTableGrants(grantee: string) {
       const { data, error } = await admin.rpc("_list_table_grants", {
         p_grantee: grantee,
       });
@@ -792,14 +792,14 @@ describe("session covers", () => {
       return z
         .array(z.object({ table_name: z.string(), privilege_type: z.string() }))
         .parse(data)
-        .filter((row) => COVER_TABLES.includes(row.table_name));
+        .filter((row) => SUBSTITUTION_TABLES.includes(row.table_name));
     }
 
     it("neither authenticated nor anon holds any grant on them", async () => {
       for (const grantee of ["authenticated", "anon"]) {
         expect(
-          await coverTableGrants(grantee),
-          `${grantee} can reach a cover table directly — every read and write ` +
+          await substitutionTableGrants(grantee),
+          `${grantee} can reach a substitution table directly — every read and write ` +
             "goes through a SECURITY DEFINER RPC, the same posture as group_sessions",
         ).toEqual([]);
       }
@@ -810,9 +810,9 @@ describe("session covers", () => {
       // helper that only ever reported the four DML privileges would return an
       // empty list for a table granted TRUNCATE and look like proof. service_role
       // holds GRANT ALL on both tables, so all seven must come back for each.
-      const granted = await coverTableGrants("service_role");
+      const granted = await substitutionTableGrants("service_role");
 
-      for (const table of COVER_TABLES) {
+      for (const table of SUBSTITUTION_TABLES) {
         expect(
           granted
             .filter((row) => row.table_name === table)
@@ -830,7 +830,7 @@ describe("session covers", () => {
       await seedRequest({ date });
 
       const { data, error } = await geduAuth
-        .from("session_cover_requests")
+        .from("session_substitution_requests")
         .select("id");
 
       // No grant at all, so PostgREST refuses rather than returning an empty set
@@ -860,18 +860,18 @@ describe("session covers", () => {
       expect(await isExpected(TEST_IDS.GEDU, utcDate(6))).toBe(true);
     });
 
-    it("a COVERED request puts the sub in and keeps the requester out", async () => {
+    it("a SUBSTITUTED request puts the sub in and keeps the requester out", async () => {
       const date = utcDate(5);
-      await seedRequest({ date, coveredBy: subId });
+      await seedRequest({ date, substituteId: subId });
       expect(await isExpected(TEST_IDS.GEDU, date)).toBe(false);
       expect(await isExpected(subId, date)).toBe(true);
     });
 
     it("a CHAIN names only the last sub", async () => {
       const date = utcDate(5);
-      // A is out, SUB covers; SUB is then out too, THIRD covers.
-      await seedRequest({ date, coveredBy: subId });
-      await seedRequest({ date, absent: subId, coveredBy: thirdId });
+      // A is out, SUB substitutions; SUB is then out too, THIRD substitutions.
+      await seedRequest({ date, substituteId: subId });
+      await seedRequest({ date, absent: subId, substituteId: thirdId });
 
       expect(await isExpected(TEST_IDS.GEDU, date)).toBe(false);
       expect(await isExpected(subId, date)).toBe(false);
@@ -880,7 +880,7 @@ describe("session covers", () => {
 
     it("an OPEN sub-of-sub request leaves nobody expected", async () => {
       const date = utcDate(5);
-      await seedRequest({ date, coveredBy: subId });
+      await seedRequest({ date, substituteId: subId });
       await seedRequest({ date, absent: subId });
 
       expect(await isExpected(TEST_IDS.GEDU, date)).toBe(false);
@@ -892,21 +892,21 @@ describe("session covers", () => {
       const date = utcDate(5);
       const id = await seedRequest({ date });
       await admin
-        .from("session_cover_requests")
+        .from("session_substitution_requests")
         .update({ status: "withdrawn" })
         .eq("id", id);
 
       expect(await isExpected(TEST_IDS.GEDU, date)).toBe(true);
     });
 
-    it("a cleared cover leaves the absence standing", async () => {
-      // The distinction the whole model rests on: clearing a cover reopens the
+    it("a cleared substitution leaves the absence standing", async () => {
+      // The distinction the whole model rests on: clearing a substitution reopens the
       // REQUEST, it does not cancel the ABSENCE. Nobody is expected, which is
       // exactly "back in the queue".
       const date = utcDate(5);
-      const id = await seedRequest({ date, coveredBy: subId });
+      const id = await seedRequest({ date, substituteId: subId });
 
-      const { error } = await adminAuth.rpc("clear_session_cover", {
+      const { error } = await adminAuth.rpc("clear_session_substitution", {
         p_request_id: id,
       });
       expect(error).toBeNull();
@@ -917,8 +917,8 @@ describe("session covers", () => {
 
     it("answers about the group and the date it was asked about", async () => {
       const date = utcDate(5);
-      await seedRequest({ date, coveredBy: subId });
-      // A cover on GROUP_A says nothing about GROUP_B, and nothing about
+      await seedRequest({ date, substituteId: subId });
+      // A substitution on GROUP_A says nothing about GROUP_B, and nothing about
       // another date of GROUP_A.
       expect(await isExpected(subId, date, GROUP_B)).toBe(false);
       expect(await isExpected(subId, utcDate(6))).toBe(false);
@@ -929,34 +929,34 @@ describe("session covers", () => {
   // 3. The access window
   // -------------------------------------------------------------------------
 
-  describe("the cover access window", () => {
+  describe("the substitution access window", () => {
     it("is open before the report is mailed, inside the 15-day fallback", async () => {
-      await seedRequest({ date: utcDate(-3), coveredBy: subId });
-      expect(await coversGroup(subAuth)).toBe(true);
+      await seedRequest({ date: utcDate(-3), substituteId: subId });
+      expect(await substitutesGroup(subAuth)).toBe(true);
     });
 
     it("has closed 15 days after the session when no report was ever mailed", async () => {
-      await seedRequest({ date: utcDate(-20), coveredBy: subId });
-      expect(await coversGroup(subAuth)).toBe(false);
+      await seedRequest({ date: utcDate(-20), substituteId: subId });
+      expect(await substitutesGroup(subAuth)).toBe(false);
     });
 
     it("is still open on the 14th day and shut on the 16th", async () => {
       // The boundary, walked rather than asserted at one point — the predicate
       // has to be shown FLIPPING, or a body that always answered true would pass
       // the case above.
-      const id = await seedRequest({ date: utcDate(-14), coveredBy: subId });
-      expect(await coversGroup(subAuth)).toBe(true);
+      const id = await seedRequest({ date: utcDate(-14), substituteId: subId });
+      expect(await substitutesGroup(subAuth)).toBe(true);
 
       await admin
-        .from("session_cover_requests")
+        .from("session_substitution_requests")
         .update({ session_date: utcDate(-16) })
         .eq("id", id);
-      expect(await coversGroup(subAuth)).toBe(false);
+      expect(await substitutesGroup(subAuth)).toBe(false);
     });
 
     it("closes 24 hours after the report is mailed, however early that is", async () => {
       const date = utcDate(-3);
-      await seedRequest({ date, coveredBy: subId });
+      await seedRequest({ date, substituteId: subId });
       await admin.from("group_sessions").insert({
         group_id: GROUP_A,
         session_date: date,
@@ -967,7 +967,7 @@ describe("session covers", () => {
 
       // One hour after the send: the 24 hours have not run out, and the mail
       // arm — not the 15-day fallback — is what is deciding.
-      expect(await coversGroup(subAuth)).toBe(true);
+      expect(await substitutesGroup(subAuth)).toBe(true);
 
       await admin
         .from("group_sessions")
@@ -980,37 +980,37 @@ describe("session covers", () => {
       // Twenty-five hours after the send, and still eleven days inside the
       // fallback: the mail arm overrides it, which is the whole point of the
       // COALESCE reading the mail stamp first.
-      expect(await coversGroup(subAuth)).toBe(false);
+      expect(await substitutesGroup(subAuth)).toBe(false);
     });
 
     it("shuts the moment the holder is de-certified, mid-window", async () => {
-      await seedRequest({ date: utcDate(-3), coveredBy: subId });
-      expect(await coversGroup(subAuth)).toBe(true);
+      await seedRequest({ date: utcDate(-3), substituteId: subId });
+      expect(await substitutesGroup(subAuth)).toBe(true);
 
       await admin
         .from("gedu_profiles")
         .update({ certified: false })
         .eq("user_id", subId);
 
-      expect(await coversGroup(subAuth)).toBe(false);
+      expect(await substitutesGroup(subAuth)).toBe(false);
     });
 
     it("answers only about the caller", async () => {
-      // The spine classifies gedu_covers_group as self-scoping, and this is the
+      // The spine classifies gedu_substitutes_group as self-scoping, and this is the
       // scope test it names: the same group id, three callers, three answers.
-      await seedRequest({ date: utcDate(-3), coveredBy: subId });
+      await seedRequest({ date: utcDate(-3), substituteId: subId });
 
-      expect(await coversGroup(subAuth)).toBe(true);
-      expect(await coversGroup(thirdAuth)).toBe(false);
-      // The ABSENT gedu does not cover their own absence, even though they are
-      // the group's assigned educator — this predicate is about covers alone.
-      expect(await coversGroup(geduAuth)).toBe(false);
+      expect(await substitutesGroup(subAuth)).toBe(true);
+      expect(await substitutesGroup(thirdAuth)).toBe(false);
+      // The ABSENT gedu does not substitute for their own absence, even though they are
+      // the group's assigned educator — this predicate is about substitutions alone.
+      expect(await substitutesGroup(geduAuth)).toBe(false);
     });
 
-    it("says nothing about a group the cover is not on", async () => {
-      await seedRequest({ date: utcDate(-3), coveredBy: subId });
-      expect(await coversGroup(subAuth, GROUP_B)).toBe(false);
-      expect(await coversGroup(subAuth, GROUP_OFF)).toBe(false);
+    it("says nothing about a group the substitution is not on", async () => {
+      await seedRequest({ date: utcDate(-3), substituteId: subId });
+      expect(await substitutesGroup(subAuth, GROUP_B)).toBe(false);
+      expect(await substitutesGroup(subAuth, GROUP_OFF)).toBe(false);
     });
   });
 
@@ -1018,7 +1018,7 @@ describe("session covers", () => {
   // 3b. The window's near edge: 48 hours before the session starts
   // -------------------------------------------------------------------------
 
-  describe("the cover access window opens 48 hours before the session", () => {
+  describe("the substitution access window opens 48 hours before the session", () => {
     it("is shut three days out and open one day out", async () => {
       // The near boundary, walked rather than asserted at one point, exactly as
       // the far one is: a body that always answered true would pass either half
@@ -1026,14 +1026,14 @@ describe("session covers", () => {
       // a date three days out is tomorrow at 10:00 — still ahead whatever hour
       // this runs at — and the opening for one day out was yesterday at 10:00,
       // which is behind it for the same reason.
-      const id = await seedRequest({ date: utcDate(3), coveredBy: subId });
-      expect(await coversGroup(subAuth)).toBe(false);
+      const id = await seedRequest({ date: utcDate(3), substituteId: subId });
+      expect(await substitutesGroup(subAuth)).toBe(false);
 
       await admin
-        .from("session_cover_requests")
+        .from("session_substitution_requests")
         .update({ session_date: utcDate(1) })
         .eq("id", id);
-      expect(await coversGroup(subAuth)).toBe(true);
+      expect(await substitutesGroup(subAuth)).toBe(true);
     });
 
     it("counts back from the session's own START, not from product-local midnight", async () => {
@@ -1046,16 +1046,16 @@ describe("session covers", () => {
         groupId: GROUP_LATE,
         date: middayDate(2),
         absent: thirdId,
-        coveredBy: subId,
+        substituteId: subId,
       });
-      expect(await coversGroup(subAuth, GROUP_LATE)).toBe(false);
+      expect(await substitutesGroup(subAuth, GROUP_LATE)).toBe(false);
     });
 
     it("falls OPEN on a date the schedule no longer projects", async () => {
       // The same zone, the same 20:00 schedule and the same date as the case
       // above — on a club whose slots skip that weekday, which is what an admin
       // moving a group's day leaves behind. There is no start to count back
-      // from, so the fallback is product-local midnight and the cover is open.
+      // from, so the fallback is product-local midnight and the substitution is open.
       // It has to be: the sub may have run that afternoon and still owe its
       // write-up, and no schedule edit afterwards may take the workspace away
       // from them.
@@ -1063,43 +1063,43 @@ describe("session covers", () => {
         groupId: GROUP_ORPHAN,
         date: middayDate(2),
         absent: thirdId,
-        coveredBy: subId,
+        substituteId: subId,
       });
-      expect(await coversGroup(subAuth, GROUP_ORPHAN)).toBe(true);
+      expect(await substitutesGroup(subAuth, GROUP_ORPHAN)).toBe(true);
     });
 
-    it("opens a retroactive cover on a past session at once", async () => {
+    it("opens a retroactive substitution on a past session at once", async () => {
       // The office-arranged path: an admin records a substitution that already
       // happened, and the sub needs the workspace now — the register and the
       // write-up are what they are being given it for. Every past date is past
       // its own opening by construction, so nothing about the start bound
       // reaches this case, which is the property worth pinning.
-      const { error } = await adminAuth.rpc("set_session_cover", {
+      const { error } = await adminAuth.rpc("set_session_substitution", {
         p_group_id: GROUP_A,
         p_session_date: utcDate(-5),
         p_absent_gedu_id: TEST_IDS.GEDU,
         p_sub_gedu_id: subId,
       });
       expect(error).toBeNull();
-      expect(await coversGroup(subAuth)).toBe(true);
+      expect(await substitutesGroup(subAuth)).toBe(true);
     });
 
-    it("shows a sub a cover they cannot yet open, and opens nothing else", async () => {
-      // The whole feature in one case. A cover ten days out is on the sub's My
+    it("shows a sub a substitution they cannot yet open, and opens nothing else", async () => {
+      // The whole feature in one case. A substitution ten days out is on the sub's My
       // SOG — both reads behind the card return it — and every gate that
       // reaches the group refuses, because the workspace opens eight days from
       // now. The two halves are the point: a card with no page behind it yet,
       // rather than no card at all.
       const date = utcDate(10);
-      await seedRequest({ date, coveredBy: subId });
-      await seedRequest({ groupId: GROUP_SITE, date, coveredBy: subId });
+      await seedRequest({ date, substituteId: subId });
+      await seedRequest({ groupId: GROUP_SITE, date, substituteId: subId });
 
       const rows = await subAuth.rpc("get_my_assigned_products");
       expect(rows.error).toBeNull();
       expect(
         (rows.data ?? []).filter((row) => row.group_id === GROUP_A),
       ).toEqual([
-        expect.objectContaining({ kind: "cover", covered_date: date }),
+        expect.objectContaining({ kind: "substitution", substitution_date: date }),
       ]);
 
       const summaries = await subAuth.rpc("get_my_gedu_assignment_summaries", {
@@ -1110,8 +1110,8 @@ describe("session covers", () => {
         .parse(summaries.data)
         .filter((row) => row.group_id === GROUP_A);
       expect(mine.length).toBe(1);
-      expect(mine[0].kind).toBe("cover");
-      expect(mine[0].covered_date).toBe(date);
+      expect(mine[0].kind).toBe("substitution");
+      expect(mine[0].substitution_date).toBe(date);
       // A session that has not run owes nothing, whoever is holding it.
       expect(mine[0].attention_count).toBe(0);
 
@@ -1142,7 +1142,7 @@ describe("session covers", () => {
   });
 
   // -------------------------------------------------------------------------
-  // 4. May cover: the four refusals
+  // 4. May substitution: the four refusals
   // -------------------------------------------------------------------------
 
   describe("who may be seated as a sub", () => {
@@ -1150,37 +1150,37 @@ describe("session covers", () => {
 
     it("refuses the absent gedu themselves", async () => {
       await seedRequest({ date });
-      expect(await mayCover(TEST_IDS.GEDU, date, TEST_IDS.GEDU)).toBe(false);
+      expect(await maySubstitute(TEST_IDS.GEDU, date, TEST_IDS.GEDU)).toBe(false);
     });
 
     it("refuses an uncertified gedu", async () => {
       await seedRequest({ date });
-      expect(await mayCover(subId, date, TEST_IDS.GEDU)).toBe(true);
+      expect(await maySubstitute(subId, date, TEST_IDS.GEDU)).toBe(true);
 
       await admin
         .from("gedu_profiles")
         .update({ certified: false })
         .eq("user_id", subId);
 
-      expect(await mayCover(subId, date, TEST_IDS.GEDU)).toBe(false);
+      expect(await maySubstitute(subId, date, TEST_IDS.GEDU)).toBe(false);
     });
 
     it("refuses somebody already expected at that session", async () => {
       await seedRequest({ date });
-      // SUB is seated as the cover, so SUB is now expected — and cannot also be
+      // SUB is seated as the substitution, so SUB is now expected — and cannot also be
       // the answer to a second seat on the same session.
       await admin
-        .from("session_cover_requests")
+        .from("session_substitution_requests")
         .update({
-          status: "covered",
-          covered_by: subId,
+          status: "substituted",
+          substitute_id: subId,
           approved_by: TEST_IDS.ADMIN,
           approved_at: new Date().toISOString(),
         })
         .eq("group_id", GROUP_A)
         .eq("session_date", date);
 
-      expect(await mayCover(subId, date, TEST_IDS.GEDU)).toBe(false);
+      expect(await maySubstitute(subId, date, TEST_IDS.GEDU)).toBe(false);
 
       // An ASSIGNED gedu is expected too, and is refused for the same reason
       // rather than for a different one.
@@ -1190,32 +1190,32 @@ describe("session covers", () => {
         product_id: PRODUCT,
         role: "assistant",
       });
-      expect(await mayCover(thirdId, date, TEST_IDS.GEDU)).toBe(false);
+      expect(await maySubstitute(thirdId, date, TEST_IDS.GEDU)).toBe(false);
     });
 
     it("refuses somebody holding a non-withdrawn request of their own", async () => {
-      await seedRequest({ date, coveredBy: subId });
-      // SUB, now the cover, files their own absence. They may no longer be the
+      await seedRequest({ date, substituteId: subId });
+      // SUB, now the substitution, files their own absence. They may no longer be the
       // answer to anybody else's absence on that date either.
       await seedRequest({ date, absent: subId });
-      expect(await mayCover(subId, date, TEST_IDS.GEDU)).toBe(false);
+      expect(await maySubstitute(subId, date, TEST_IDS.GEDU)).toBe(false);
 
       // Withdraw it and they are a candidate again — the refusal is about a LIVE
       // request, and a withdrawn row is history.
       await admin
-        .from("session_cover_requests")
+        .from("session_substitution_requests")
         .update({ status: "withdrawn" })
         .eq("requested_by", subId)
         .eq("session_date", date);
-      // …still refused, because they remain the covered_by of a live cover and
+      // …still refused, because they remain the substitute_id of a live substitution and
       // are therefore expected. This is condition (3) taking over from (4),
       // which is what the two of them together are for.
-      expect(await mayCover(subId, date, TEST_IDS.GEDU)).toBe(false);
+      expect(await maySubstitute(subId, date, TEST_IDS.GEDU)).toBe(false);
     });
 
     it("admits a clean candidate", async () => {
       await seedRequest({ date });
-      expect(await mayCover(thirdId, date, TEST_IDS.GEDU)).toBe(true);
+      expect(await maySubstitute(thirdId, date, TEST_IDS.GEDU)).toBe(true);
     });
   });
 
@@ -1223,9 +1223,9 @@ describe("session covers", () => {
   // 5. The widened workspace gate
   // -------------------------------------------------------------------------
 
-  describe("the workspace a cover reaches", () => {
-    it("admits a live cover to the group feed, and shuts again when the window does", async () => {
-      const id = await seedRequest({ date: utcDate(-3), coveredBy: subId });
+  describe("the workspace a substitute reaches", () => {
+    it("admits a live substitution to the group feed, and shuts again when the window does", async () => {
+      const id = await seedRequest({ date: utcDate(-3), substituteId: subId });
 
       const open = await subAuth.rpc("get_gedu_group_feed", {
         p_group_id: GROUP_A,
@@ -1234,7 +1234,7 @@ describe("session covers", () => {
       expect(open.data).not.toBeNull();
 
       await admin
-        .from("session_cover_requests")
+        .from("session_substitution_requests")
         .update({ session_date: utcDate(-20) })
         .eq("id", id);
 
@@ -1244,15 +1244,15 @@ describe("session covers", () => {
       expect(shut.error?.code).toBe(FORBIDDEN);
     });
 
-    it("refuses a gedu with no cover and no assignment", async () => {
+    it("refuses a gedu with no substitution and no assignment", async () => {
       const { error } = await thirdAuth.rpc("get_gedu_group_feed", {
         p_group_id: GROUP_A,
       });
       expect(error?.code).toBe(FORBIDDEN);
     });
 
-    it("resolves the covered group when the caller has no assignment on the product", async () => {
-      await seedRequest({ groupId: GROUP_B, date: utcDate(-3), coveredBy: subId });
+    it("resolves the substituted group when the caller has no assignment on the product", async () => {
+      await seedRequest({ groupId: GROUP_B, date: utcDate(-3), substituteId: subId });
 
       const { data, error } = await subAuth.rpc("get_gedu_assigned_product", {
         p_product_id: PRODUCT,
@@ -1263,9 +1263,9 @@ describe("session covers", () => {
       );
     });
 
-    it("takes p_group_id so a cover on a SISTER group lands in the right workspace", async () => {
-      // A gedu assigned to GROUP_A who covers GROUP_B. Without the parameter the
-      // assignment wins, which is exactly why the cover card's link carries the
+    it("takes p_group_id so a substitution on a SISTER group lands in the right workspace", async () => {
+      // A gedu assigned to GROUP_A who substitutions GROUP_B. Without the parameter the
+      // assignment wins, which is exactly why the substitution card's link carries the
       // group id. The MINTED account holds both roles here rather than the seeded
       // one, so the case depends on no certification this file does not own.
       await admin.from("gedu_group_assignments").insert({
@@ -1278,7 +1278,7 @@ describe("session covers", () => {
         groupId: GROUP_B,
         date: utcDate(-3),
         absent: thirdId,
-        coveredBy: subId,
+        substituteId: subId,
       });
 
       const withoutGroup = await subAuth.rpc("get_gedu_assigned_product", {
@@ -1299,7 +1299,7 @@ describe("session covers", () => {
       ).toBe(GROUP_B);
     });
 
-    it("refuses a p_group_id the caller neither teaches nor covers", async () => {
+    it("refuses a p_group_id the caller neither teaches nor substitutions", async () => {
       const { error } = await geduAuth.rpc("get_gedu_assigned_product", {
         p_product_id: PRODUCT,
         p_group_id: GROUP_B,
@@ -1307,11 +1307,11 @@ describe("session covers", () => {
       expect(error?.code).toBe(FORBIDDEN);
     });
 
-    it("admits a live cover to the site notes of an in-person product at that site", async () => {
+    it("admits a live substitution to the site notes of an in-person product at that site", async () => {
       await seedRequest({
         groupId: GROUP_SITE,
         date: utcDate(-3),
-        coveredBy: subId,
+        substituteId: subId,
       });
 
       const { error } = await subAuth.rpc("set_site_notes", {
@@ -1334,7 +1334,7 @@ describe("session covers", () => {
   // 6. The two date-scoped exceptions
   // -------------------------------------------------------------------------
 
-  describe("the voice room admits a cover on the covered date only", () => {
+  describe("the voice room admits a substitution on the substitution date only", () => {
     async function voiceArms() {
       const member = await subAuth.rpc("is_voice_group_member", {
         p_group_id: GROUP_A,
@@ -1347,10 +1347,10 @@ describe("session covers", () => {
       return { member: member.data, moderator: moderator.data };
     }
 
-    it("admits a cover dated YESTERDAY, so a session running past midnight keeps it", async () => {
+    it("admits a substitution dated YESTERDAY, so a session running past midnight keeps it", async () => {
       // A session dated Monday that runs to 00:30 is still Monday's session at
       // 00:10 on Tuesday, and a 00:10 start has its whole pre-window on Monday.
-      // Asking only about today ejected the cover from the room and the chat at
+      // Asking only about today ejected the substitute from the room and the chat at
       // local midnight; the predicates now take today OR yesterday.
       //
       // TWO ROWS, and the second one is not slack — it is what makes this case
@@ -1361,29 +1361,29 @@ describe("session covers", () => {
       // the case still passes rather than flaking; the two-days-back case below
       // is deterministic under either reading and is what proves the window is
       // exactly two days wide.
-      await seedRequest({ date: utcDate(-1), coveredBy: subId });
-      await seedRequest({ date: utcDate(1), coveredBy: subId });
+      await seedRequest({ date: utcDate(-1), substituteId: subId });
+      await seedRequest({ date: utcDate(1), substituteId: subId });
 
       expect(await voiceArms()).toEqual({ member: true, moderator: true });
     });
 
-    it("refuses a cover dated TWO DAYS ago, so the overlap is one day and not a week", async () => {
+    it("refuses a substitution dated TWO DAYS ago, so the overlap is one day and not a week", async () => {
       // Deterministic however the run straddles midnight: two days back reads as
       // two or three days back, and neither is admitted.
-      await seedRequest({ date: utcDate(-2), coveredBy: subId });
+      await seedRequest({ date: utcDate(-2), substituteId: subId });
 
       expect(await voiceArms()).toEqual({ member: false, moderator: false });
 
       // …while the group-wide gate is open on the same fixture — the access
       // window runs fifteen days — which is what makes this case about the DATE
-      // arm rather than about the cover having expired.
-      expect(await coversGroup(subAuth)).toBe(true);
+      // arm rather than about the substitution having expired.
+      expect(await substitutesGroup(subAuth)).toBe(true);
     });
 
-    it("refuses a cover whose date is not today", async () => {
+    it("refuses a substitution whose date is not today", async () => {
       // A week out, so no reading of "today" can reach it however the run
       // straddles UTC midnight.
-      await seedRequest({ date: utcDate(7), coveredBy: subId });
+      await seedRequest({ date: utcDate(7), substituteId: subId });
 
       const member = await subAuth.rpc("is_voice_group_member", {
         p_group_id: GROUP_A,
@@ -1398,17 +1398,17 @@ describe("session covers", () => {
       expect(moderator.data).toBe(false);
 
       // …while the group-wide gate is wide open on the same fixture, which is
-      // what makes this case about the DATE and not about the cover.
-      expect(await coversGroup(subAuth)).toBe(true);
+      // what makes this case about the DATE and not about the substitution.
+      expect(await substitutesGroup(subAuth)).toBe(true);
     });
 
-    it("admits a cover on today", async () => {
+    it("admits a substitution on today", async () => {
       // Seeded on today AND tomorrow: whichever date the database calls today,
       // one of the two rows matches, so this cannot flake at a midnight
       // boundary. Two rows on two dates are legal — the live-seat key is per
       // (group, date, person).
-      await seedRequest({ date: utcDate(0), coveredBy: subId });
-      await seedRequest({ date: utcDate(1), coveredBy: subId });
+      await seedRequest({ date: utcDate(0), substituteId: subId });
+      await seedRequest({ date: utcDate(1), substituteId: subId });
 
       const member = await subAuth.rpc("is_voice_group_member", {
         p_group_id: GROUP_A,
@@ -1424,7 +1424,7 @@ describe("session covers", () => {
     });
 
     it("leaves the assignment arm product-wide", async () => {
-      // The cover branch ADDS to the existing mobility rather than narrowing it:
+      // The substitution branch ADDS to the existing mobility rather than narrowing it:
       // the seeded gedu is assigned to GROUP_A and reaches GROUP_B's room on any
       // date, as they always did.
       const { data, error } = await geduAuth.rpc("is_voice_group_member", {
@@ -1435,15 +1435,15 @@ describe("session covers", () => {
     });
   });
 
-  describe("the family report mail admits a cover on the covered date only", () => {
-    it("refuses the claim for a date the cover is not on", async () => {
-      const covered = utcDate(-3);
+  describe("the family report mail admits a substitution on the substitution date only", () => {
+    it("refuses the claim for a date the substitution is not on", async () => {
+      const substituted = utcDate(-3);
       const other = utcDate(-4);
-      await seedRequest({ date: covered, coveredBy: subId });
+      await seedRequest({ date: substituted, substituteId: subId });
 
       // A report exists on BOTH dates, so the refusal cannot be the "nothing to
       // send" arm standing in for the authorization one.
-      for (const date of [covered, other]) {
+      for (const date of [substituted, other]) {
         await admin.from("group_sessions").insert({
           group_id: GROUP_A,
           session_date: date,
@@ -1460,7 +1460,7 @@ describe("session covers", () => {
 
       const rightDate = await subAuth.rpc("claim_group_session_report_email", {
         p_group_id: GROUP_A,
-        p_session_date: covered,
+        p_session_date: substituted,
       });
       expect(rightDate.error).toBeNull();
     });
@@ -1481,11 +1481,11 @@ describe("session covers", () => {
       expect(error).toBeNull();
     });
 
-    it("lets a cover write the report on any date of the group", async () => {
+    it("lets a substitution write the report on any date of the group", async () => {
       // Writing is group-wide and only the MAIL is date-scoped, which is the
       // asymmetry the plan is explicit about: a sub may fix a typo, and may not
       // announce a session they did not run.
-      await seedRequest({ date: utcDate(-3), coveredBy: subId });
+      await seedRequest({ date: utcDate(-3), substituteId: subId });
 
       const { error } = await subAuth.rpc("set_group_session_notes", {
         p_group_id: GROUP_A,
@@ -1504,7 +1504,7 @@ describe("session covers", () => {
   describe("filing, withdrawing and offering", () => {
     it("files a request with the filer's assignment role and a trimmed note", async () => {
       const date = utcDate(5);
-      const { data, error } = await geduAuth.rpc("request_session_cover", {
+      const { data, error } = await geduAuth.rpc("request_session_substitution", {
         p_group_id: GROUP_A,
         p_session_date: date,
         p_reason: "sick",
@@ -1512,7 +1512,7 @@ describe("session covers", () => {
       });
       expect(error).toBeNull();
 
-      const doc = coverRequestDocument.parse(data);
+      const doc = substitutionRequestDocument.parse(data);
       expect(doc.status).toBe("open");
       expect(doc.role).toBe("primary");
       expect(doc.requested_by).toBe(TEST_IDS.GEDU);
@@ -1523,7 +1523,7 @@ describe("session covers", () => {
       expect(doc.reason_note).toBeNull();
 
       const { data: row } = await admin
-        .from("session_cover_requests")
+        .from("session_substitution_requests")
         .select("reason, reason_note")
         .eq("id", doc.id)
         .single();
@@ -1538,13 +1538,13 @@ describe("session covers", () => {
         .eq("group_id", GROUP_A)
         .eq("gedu_id", TEST_IDS.GEDU);
 
-      const { data, error } = await geduAuth.rpc("request_session_cover", {
+      const { data, error } = await geduAuth.rpc("request_session_substitution", {
         p_group_id: GROUP_A,
         p_session_date: utcDate(5),
         p_reason: "other",
       });
       expect(error).toBeNull();
-      expect(coverRequestDocument.parse(data).role).toBe("assistant");
+      expect(substitutionRequestDocument.parse(data).role).toBe("assistant");
 
       await admin
         .from("gedu_group_assignments")
@@ -1554,7 +1554,7 @@ describe("session covers", () => {
     });
 
     it("refuses a gedu who is not expected at that session", async () => {
-      const { error } = await subAuth.rpc("request_session_cover", {
+      const { error } = await subAuth.rpc("request_session_substitution", {
         p_group_id: GROUP_A,
         p_session_date: utcDate(5),
         p_reason: "sick",
@@ -1562,37 +1562,37 @@ describe("session covers", () => {
       expect(error?.code).toBe(FORBIDDEN);
     });
 
-    it("lets an approved cover file their own absence, with the covered role", async () => {
+    it("lets an approved substitute file their own absence, with the substituted role", async () => {
       const date = utcDate(5);
-      await seedRequest({ date, coveredBy: subId, role: "assistant" });
+      await seedRequest({ date, substituteId: subId, role: "assistant" });
 
-      const { data, error } = await subAuth.rpc("request_session_cover", {
+      const { data, error } = await subAuth.rpc("request_session_substitution", {
         p_group_id: GROUP_A,
         p_session_date: date,
         p_reason: "other",
       });
       expect(error).toBeNull();
-      const doc = coverRequestDocument.parse(data);
+      const doc = substitutionRequestDocument.parse(data);
       expect(doc.requested_by).toBe(subId);
       expect(doc.role).toBe("assistant");
     });
 
     it("refuses a past date, a missing reason, and an unscheduled one", async () => {
-      const past = await geduAuth.rpc("request_session_cover", {
+      const past = await geduAuth.rpc("request_session_substitution", {
         p_group_id: GROUP_A,
         p_session_date: utcDate(-5),
         p_reason: "sick",
       });
       expect(past.error?.code).toBe(CHECK_VIOLATION);
 
-      const noReason = await geduAuth.rpc("request_session_cover", {
+      const noReason = await geduAuth.rpc("request_session_substitution", {
         p_group_id: GROUP_A,
         p_session_date: utcDate(5),
       });
       expect(noReason.error?.code).toBe(CHECK_VIOLATION);
 
       // Beyond the term's end date, so the writable-date check refuses it.
-      const outsideTerm = await geduAuth.rpc("request_session_cover", {
+      const outsideTerm = await geduAuth.rpc("request_session_substitution", {
         p_group_id: GROUP_A,
         p_session_date: utcDate(120),
         p_reason: "sick",
@@ -1604,19 +1604,19 @@ describe("session covers", () => {
       const date = utcDate(5);
       const mine = await seedRequest({ date });
 
-      const stranger = await subAuth.rpc("withdraw_session_cover_request", {
+      const stranger = await subAuth.rpc("withdraw_session_substitution_request", {
         p_request_id: mine,
       });
       expect(stranger.error?.code).toBe(FORBIDDEN);
 
-      const { data, error } = await geduAuth.rpc("withdraw_session_cover_request", {
+      const { data, error } = await geduAuth.rpc("withdraw_session_substitution_request", {
         p_request_id: mine,
       });
       expect(error).toBeNull();
-      expect(coverRequestDocument.parse(data).status).toBe("withdrawn");
+      expect(substitutionRequestDocument.parse(data).status).toBe("withdrawn");
 
       // And a withdrawn row does not block a fresh request for the same seat.
-      const again = await geduAuth.rpc("request_session_cover", {
+      const again = await geduAuth.rpc("request_session_substitution", {
         p_group_id: GROUP_A,
         p_session_date: date,
         p_reason: "sick",
@@ -1624,9 +1624,9 @@ describe("session covers", () => {
       expect(again.error).toBeNull();
     });
 
-    it("refuses to withdraw a request an admin has already covered", async () => {
-      const id = await seedRequest({ date: utcDate(5), coveredBy: subId });
-      const { error } = await geduAuth.rpc("withdraw_session_cover_request", {
+    it("refuses to withdraw a request an admin has already substituted", async () => {
+      const id = await seedRequest({ date: utcDate(5), substituteId: subId });
+      const { error } = await geduAuth.rpc("withdraw_session_substitution_request", {
         p_request_id: id,
       });
       expect(error?.code).toBe(CHECK_VIOLATION);
@@ -1636,62 +1636,62 @@ describe("session covers", () => {
       const id = await seedRequest({ date: utcDate(5) });
 
       for (let i = 0; i < 2; i += 1) {
-        const { error } = await subAuth.rpc("offer_session_cover", {
+        const { error } = await subAuth.rpc("offer_session_substitution", {
           p_request_id: id,
         });
         expect(error).toBeNull();
       }
       const { count } = await admin
-        .from("session_cover_offers")
+        .from("session_substitution_offers")
         .select("id", { count: "exact", head: true })
         .eq("request_id", id);
       expect(count).toBe(1);
 
       // The absent gedu cannot offer on their own absence.
-      const own = await geduAuth.rpc("offer_session_cover", { p_request_id: id });
+      const own = await geduAuth.rpc("offer_session_substitution", { p_request_id: id });
       expect(own.error?.code).toBe(FORBIDDEN);
     });
 
-    it("refuses an offer on a past session and on a covered request", async () => {
+    it("refuses an offer on a past session and on a substituted request", async () => {
       const past = await seedRequest({ date: utcDate(-5) });
-      const pastOffer = await subAuth.rpc("offer_session_cover", {
+      const pastOffer = await subAuth.rpc("offer_session_substitution", {
         p_request_id: past,
       });
       expect(pastOffer.error?.code).toBe(CHECK_VIOLATION);
 
-      const taken = await seedRequest({ date: utcDate(5), coveredBy: thirdId });
-      const takenOffer = await subAuth.rpc("offer_session_cover", {
+      const taken = await seedRequest({ date: utcDate(5), substituteId: thirdId });
+      const takenOffer = await subAuth.rpc("offer_session_substitution", {
         p_request_id: taken,
       });
       expect(takenOffer.error?.code).toBe(CHECK_VIOLATION);
     });
 
-    it("withdraws an offer, and refuses once the caller IS the cover", async () => {
+    it("withdraws an offer, and refuses once the caller IS the substitution", async () => {
       const id = await seedRequest({ date: utcDate(5) });
-      await subAuth.rpc("offer_session_cover", { p_request_id: id });
+      await subAuth.rpc("offer_session_substitution", { p_request_id: id });
 
-      const { error } = await subAuth.rpc("withdraw_session_cover_offer", {
+      const { error } = await subAuth.rpc("withdraw_session_substitution_offer", {
         p_request_id: id,
       });
       expect(error).toBeNull();
       const { count } = await admin
-        .from("session_cover_offers")
+        .from("session_substitution_offers")
         .select("id", { count: "exact", head: true })
         .eq("request_id", id);
       expect(count).toBe(0);
 
-      await subAuth.rpc("offer_session_cover", { p_request_id: id });
+      await subAuth.rpc("offer_session_substitution", { p_request_id: id });
       await admin
-        .from("session_cover_requests")
+        .from("session_substitution_requests")
         .update({
-          status: "covered",
-          covered_by: subId,
+          status: "substituted",
+          substitute_id: subId,
           approved_by: TEST_IDS.ADMIN,
           approved_at: new Date().toISOString(),
         })
         .eq("id", id);
 
-      const late = await subAuth.rpc("withdraw_session_cover_offer", {
+      const late = await subAuth.rpc("withdraw_session_substitution_offer", {
         p_request_id: id,
       });
       expect(late.error?.code).toBe(CHECK_VIOLATION);
@@ -1704,16 +1704,16 @@ describe("session covers", () => {
       // attack, and it worked on any open request in the pool.
       const id = await seedRequest({ date: utcDate(5) });
       await admin
-        .from("session_cover_requests")
+        .from("session_substitution_requests")
         .update({ reason: "sick", reason_note: "private" })
         .eq("id", id);
 
-      const { data, error } = await subAuth.rpc("offer_session_cover", {
+      const { data, error } = await subAuth.rpc("offer_session_substitution", {
         p_request_id: id,
       });
       expect(error).toBeNull();
 
-      const doc = anonymousCoverRequestDocument.parse(data);
+      const doc = anonymousSubstitutionRequestDocument.parse(data);
       expect(doc.requested_by).toBeNull();
       expect(doc.requested_by_first_name).toBeNull();
       expect(doc.is_requester).toBe(false);
@@ -1733,7 +1733,7 @@ describe("session covers", () => {
       const id = await seedRequest({ date: utcDate(5) });
 
       const { data, error } = await thirdAuth.rpc(
-        "withdraw_session_cover_offer",
+        "withdraw_session_substitution_offer",
         { p_request_id: id },
       );
 
@@ -1743,14 +1743,14 @@ describe("session covers", () => {
 
     it("conceals the absent gedu on a withdraw that does delete an offer", async () => {
       const id = await seedRequest({ date: utcDate(5) });
-      await subAuth.rpc("offer_session_cover", { p_request_id: id });
+      await subAuth.rpc("offer_session_substitution", { p_request_id: id });
 
-      const { data, error } = await subAuth.rpc("withdraw_session_cover_offer", {
+      const { data, error } = await subAuth.rpc("withdraw_session_substitution_offer", {
         p_request_id: id,
       });
       expect(error).toBeNull();
 
-      const doc = anonymousCoverRequestDocument.parse(data);
+      const doc = anonymousSubstitutionRequestDocument.parse(data);
       expect(doc.requested_by).toBeNull();
       expect(doc.requested_by_first_name).toBeNull();
       expect(JSON.stringify(doc)).not.toContain(TEST_IDS.GEDU);
@@ -1758,18 +1758,18 @@ describe("session covers", () => {
 
     it("lets a losing offerer withdraw from a request somebody else took", async () => {
       const id = await seedRequest({ date: utcDate(5) });
-      await thirdAuth.rpc("offer_session_cover", { p_request_id: id });
+      await thirdAuth.rpc("offer_session_substitution", { p_request_id: id });
       await admin
-        .from("session_cover_requests")
+        .from("session_substitution_requests")
         .update({
-          status: "covered",
-          covered_by: subId,
+          status: "substituted",
+          substitute_id: subId,
           approved_by: TEST_IDS.ADMIN,
           approved_at: new Date().toISOString(),
         })
         .eq("id", id);
 
-      const { error } = await thirdAuth.rpc("withdraw_session_cover_offer", {
+      const { error } = await thirdAuth.rpc("withdraw_session_substitution_offer", {
         p_request_id: id,
       });
       expect(error).toBeNull();
@@ -1781,9 +1781,9 @@ describe("session covers", () => {
       const date = utcDate(7);
       const id = await seedRequest({ date });
 
-      const { data, error } = await subAuth.rpc("get_open_cover_requests");
+      const { data, error } = await subAuth.rpc("get_open_substitution_requests");
       expect(error).toBeNull();
-      const rows = openCoverRequests.parse(data);
+      const rows = openSubstitutionRequests.parse(data);
       const mine = rows.find((row) => row.request_id === id);
 
       expect(mine).toBeDefined();
@@ -1801,8 +1801,8 @@ describe("session covers", () => {
 
     it("reports the assistant fee for an assistant seat", async () => {
       const id = await seedRequest({ date: utcDate(7), role: "assistant" });
-      const { data } = await subAuth.rpc("get_open_cover_requests");
-      const row = openCoverRequests
+      const { data } = await subAuth.rpc("get_open_substitution_requests");
+      const row = openSubstitutionRequests
         .parse(data)
         .find((entry) => entry.request_id === id);
       expect(row?.fee_cents).toBe(3000);
@@ -1810,30 +1810,30 @@ describe("session covers", () => {
 
     it("flips has_offered once the caller has offered", async () => {
       const id = await seedRequest({ date: utcDate(7) });
-      await subAuth.rpc("offer_session_cover", { p_request_id: id });
+      await subAuth.rpc("offer_session_substitution", { p_request_id: id });
 
-      const { data } = await subAuth.rpc("get_open_cover_requests");
-      const row = openCoverRequests
+      const { data } = await subAuth.rpc("get_open_substitution_requests");
+      const row = openSubstitutionRequests
         .parse(data)
         .find((entry) => entry.request_id === id);
       expect(row?.has_offered).toBe(true);
     });
 
-    it("excludes the caller's own absence, a covered request and a past one", async () => {
+    it("excludes the caller's own absence, a substituted request and a past one", async () => {
       const own = await seedRequest({ date: utcDate(7) });
       const taken = await seedRequest({
         groupId: GROUP_B,
         date: utcDate(7),
         absent: thirdId,
-        coveredBy: subId,
+        substituteId: subId,
       });
       const past = await seedRequest({
         groupId: GROUP_SITE,
         date: utcDate(-7),
       });
 
-      const { data } = await geduAuth.rpc("get_open_cover_requests");
-      const ids = openCoverRequests.parse(data).map((row) => row.request_id);
+      const { data } = await geduAuth.rpc("get_open_substitution_requests");
+      const ids = openSubstitutionRequests.parse(data).map((row) => row.request_id);
       expect(ids).not.toContain(own);
       expect(ids).not.toContain(taken);
       expect(ids).not.toContain(past);
@@ -1846,13 +1846,13 @@ describe("session covers", () => {
         .update({ certified: false })
         .eq("user_id", subId);
 
-      const { data, error } = await subAuth.rpc("get_open_cover_requests");
+      const { data, error } = await subAuth.rpc("get_open_substitution_requests");
       expect(error).toBeNull();
       // Scoped to this file's own groups: another worker's fixtures are not this
       // case's business, and an uncertified gedu could only ever see them by the
       // same predicate failing.
       expect(
-        openCoverRequests
+        openSubstitutionRequests
           .parse(data)
           .filter((row) => ALL_GROUPS.includes(row.group_id)),
       ).toEqual([]);
@@ -1866,30 +1866,30 @@ describe("session covers", () => {
   describe("the admin staffing editor", () => {
     it("approves one offer and leaves the others standing", async () => {
       const id = await seedRequest({ date: utcDate(5) });
-      await subAuth.rpc("offer_session_cover", { p_request_id: id });
-      await thirdAuth.rpc("offer_session_cover", { p_request_id: id });
+      await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      await thirdAuth.rpc("offer_session_substitution", { p_request_id: id });
 
       const { data: offers } = await admin
-        .from("session_cover_offers")
+        .from("session_substitution_offers")
         .select("id, gedu_id")
         .eq("request_id", id);
       const chosen = offers?.find((offer) => offer.gedu_id === subId);
       expect(chosen).toBeDefined();
 
-      const { data, error } = await adminAuth.rpc("approve_session_cover_offer", {
+      const { data, error } = await adminAuth.rpc("approve_session_substitution_offer", {
         p_offer_id: chosen?.id ?? "",
       });
       expect(error).toBeNull();
 
-      const doc = coverRequestDocument.parse(data);
-      expect(doc.status).toBe("covered");
-      expect(doc.covered_by).toBe(subId);
+      const doc = substitutionRequestDocument.parse(data);
+      expect(doc.status).toBe("substituted");
+      expect(doc.substitute_id).toBe(subId);
       expect(doc.approved_at).not.toBeNull();
       // The admin document carries the reason and the offer count.
       expect(doc.offer_count).toBe(2);
 
       const { count } = await admin
-        .from("session_cover_offers")
+        .from("session_substitution_offers")
         .select("id", { count: "exact", head: true })
         .eq("request_id", id);
       expect(count).toBe(2);
@@ -1897,10 +1897,10 @@ describe("session covers", () => {
 
     it("refuses a second approval on the same request", async () => {
       const id = await seedRequest({ date: utcDate(5) });
-      await subAuth.rpc("offer_session_cover", { p_request_id: id });
-      await thirdAuth.rpc("offer_session_cover", { p_request_id: id });
+      await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      await thirdAuth.rpc("offer_session_substitution", { p_request_id: id });
       const { data: offers } = await admin
-        .from("session_cover_offers")
+        .from("session_substitution_offers")
         .select("id, gedu_id")
         .eq("request_id", id);
 
@@ -1908,10 +1908,10 @@ describe("session covers", () => {
       const second = offers?.find((offer) => offer.gedu_id === thirdId)?.id ?? "";
 
       expect(
-        (await adminAuth.rpc("approve_session_cover_offer", { p_offer_id: first }))
+        (await adminAuth.rpc("approve_session_substitution_offer", { p_offer_id: first }))
           .error,
       ).toBeNull();
-      const again = await adminAuth.rpc("approve_session_cover_offer", {
+      const again = await adminAuth.rpc("approve_session_substitution_offer", {
         p_offer_id: second,
       });
       expect(again.error?.code).toBe(CHECK_VIOLATION);
@@ -1920,14 +1920,14 @@ describe("session covers", () => {
     it("refuses to seat a sub for a requester who no longer holds a seat", async () => {
       // The second line of defence behind the groups panel's own sweep: a
       // request whose requester has been unassigned by any route at all is not
-      // an absence anybody can cover, and approving it would put a stranger in
+      // an absence anybody can substitute for, and approving it would put a stranger in
       // the group's workspace to stand in for nobody. The row is emptied here
       // by deleting the assignment directly, which is the state the sweep is
       // meant to make impossible — this asserts what happens if it ever is not.
       const id = await seedRequest({ date: utcDate(5) });
-      await subAuth.rpc("offer_session_cover", { p_request_id: id });
+      await subAuth.rpc("offer_session_substitution", { p_request_id: id });
       const { data: offers } = await admin
-        .from("session_cover_offers")
+        .from("session_substitution_offers")
         .select("id")
         .eq("request_id", id);
 
@@ -1937,7 +1937,7 @@ describe("session covers", () => {
         .eq("group_id", GROUP_A)
         .eq("gedu_id", TEST_IDS.GEDU);
 
-      const refused = await adminAuth.rpc("approve_session_cover_offer", {
+      const refused = await adminAuth.rpc("approve_session_substitution_offer", {
         p_offer_id: offers?.[0]?.id ?? "",
       });
       expect(refused.error?.code).toBe(CHECK_VIOLATION);
@@ -1955,7 +1955,7 @@ describe("session covers", () => {
 
     it("sets a sub on a PAST session with no request at all", async () => {
       const date = utcDate(-5);
-      const { data, error } = await adminAuth.rpc("set_session_cover", {
+      const { data, error } = await adminAuth.rpc("set_session_substitution", {
         p_group_id: GROUP_A,
         p_session_date: date,
         p_absent_gedu_id: TEST_IDS.GEDU,
@@ -1963,43 +1963,43 @@ describe("session covers", () => {
       });
       expect(error).toBeNull();
 
-      const doc = coverRequestDocument.parse(data);
-      expect(doc.status).toBe("covered");
+      const doc = substitutionRequestDocument.parse(data);
+      expect(doc.status).toBe("substituted");
       expect(doc.requested_by).toBe(TEST_IDS.GEDU);
-      expect(doc.covered_by).toBe(subId);
+      expect(doc.substitute_id).toBe(subId);
       expect(doc.role).toBe("primary");
       expect(doc.reason).toBeNull();
     });
 
-    it("covers an OPEN request rather than filing a second one", async () => {
+    it("substitutions an OPEN request rather than filing a second one", async () => {
       const date = utcDate(5);
       const id = await seedRequest({ date });
 
-      const { data, error } = await adminAuth.rpc("set_session_cover", {
+      const { data, error } = await adminAuth.rpc("set_session_substitution", {
         p_group_id: GROUP_A,
         p_session_date: date,
         p_absent_gedu_id: TEST_IDS.GEDU,
         p_sub_gedu_id: subId,
       });
       expect(error).toBeNull();
-      expect(coverRequestDocument.parse(data).id).toBe(id);
+      expect(substitutionRequestDocument.parse(data).id).toBe(id);
 
       const { count } = await admin
-        .from("session_cover_requests")
+        .from("session_substitution_requests")
         .select("id", { count: "exact", head: true })
         .eq("group_id", GROUP_A)
         .eq("session_date", date);
       expect(count).toBe(1);
     });
 
-    it("RE-POINTS an existing cover, and sweeps the displaced sub's own absence", async () => {
+    it("RE-POINTS an existing substitution, and sweeps the displaced sub's own absence", async () => {
       const date = utcDate(5);
-      const first = await seedRequest({ date, coveredBy: subId });
+      const first = await seedRequest({ date, substituteId: subId });
       // The seated sub files their own absence, which only makes sense while they
       // hold the seat.
       const chain = await seedRequest({ date, absent: subId });
 
-      const { data, error } = await adminAuth.rpc("set_session_cover", {
+      const { data, error } = await adminAuth.rpc("set_session_substitution", {
         p_group_id: GROUP_A,
         p_session_date: date,
         p_absent_gedu_id: TEST_IDS.GEDU,
@@ -2007,15 +2007,15 @@ describe("session covers", () => {
       });
       expect(error).toBeNull();
 
-      const doc = coverRequestDocument.parse(data);
+      const doc = substitutionRequestDocument.parse(data);
       expect(doc.id).toBe(first);
-      expect(doc.covered_by).toBe(thirdId);
+      expect(doc.substitute_id).toBe(thirdId);
 
       // SUB no longer holds a seat there, so their own request is withdrawn and
-      // is stripped of any cover it carried.
+      // is stripped of any substitution it carried.
       const swept = await statusOf(chain);
       expect(swept?.status).toBe("withdrawn");
-      expect(swept?.covered_by).toBeNull();
+      expect(swept?.substitute_id).toBeNull();
 
       expect(await isExpected(thirdId, date)).toBe(true);
       expect(await isExpected(subId, date)).toBe(false);
@@ -2023,21 +2023,21 @@ describe("session covers", () => {
 
     it("does not overwrite the gedu's reason when the admin supplies none", async () => {
       const date = utcDate(5);
-      const { data: seeded } = await geduAuth.rpc("request_session_cover", {
+      const { data: seeded } = await geduAuth.rpc("request_session_substitution", {
         p_group_id: GROUP_A,
         p_session_date: date,
         p_reason: "sick",
         p_reason_note: "a note",
       });
-      expect(coverRequestDocument.parse(seeded).status).toBe("open");
+      expect(substitutionRequestDocument.parse(seeded).status).toBe("open");
 
-      const { data } = await adminAuth.rpc("set_session_cover", {
+      const { data } = await adminAuth.rpc("set_session_substitution", {
         p_group_id: GROUP_A,
         p_session_date: date,
         p_absent_gedu_id: TEST_IDS.GEDU,
         p_sub_gedu_id: subId,
       });
-      const doc = coverRequestDocument.parse(data);
+      const doc = substitutionRequestDocument.parse(data);
       expect(doc.reason).toBe("sick");
       expect(doc.reason_note).toBe("a note");
     });
@@ -2045,7 +2045,7 @@ describe("session covers", () => {
     it("refuses a sub the guard turns down and an absent gedu who is not expected", async () => {
       const date = utcDate(5);
 
-      const notExpected = await adminAuth.rpc("set_session_cover", {
+      const notExpected = await adminAuth.rpc("set_session_substitution", {
         p_group_id: GROUP_A,
         p_session_date: date,
         p_absent_gedu_id: subId,
@@ -2053,42 +2053,42 @@ describe("session covers", () => {
       });
       expect(notExpected.error?.code).toBe(CHECK_VIOLATION);
 
-      const selfCover = await adminAuth.rpc("set_session_cover", {
+      const selfSubstitution = await adminAuth.rpc("set_session_substitution", {
         p_group_id: GROUP_A,
         p_session_date: date,
         p_absent_gedu_id: TEST_IDS.GEDU,
         p_sub_gedu_id: TEST_IDS.GEDU,
       });
-      expect(selfCover.error?.code).toBe(CHECK_VIOLATION);
+      expect(selfSubstitution.error?.code).toBe(CHECK_VIOLATION);
     });
 
-    it("clears a cover back to open and withdraws the cleared sub's own request", async () => {
+    it("clears a substitution back to open and withdraws the cleared sub's own request", async () => {
       const date = utcDate(5);
-      const first = await seedRequest({ date, coveredBy: subId });
-      const chain = await seedRequest({ date, absent: subId, coveredBy: thirdId });
+      const first = await seedRequest({ date, substituteId: subId });
+      const chain = await seedRequest({ date, absent: subId, substituteId: thirdId });
 
-      const { data, error } = await adminAuth.rpc("clear_session_cover", {
+      const { data, error } = await adminAuth.rpc("clear_session_substitution", {
         p_request_id: first,
       });
       expect(error).toBeNull();
 
-      const doc = coverRequestDocument.parse(data);
+      const doc = substitutionRequestDocument.parse(data);
       expect(doc.status).toBe("open");
-      expect(doc.covered_by).toBeNull();
+      expect(doc.substitute_id).toBeNull();
 
       // The fixpoint: SUB lost their seat, so SUB's own request goes — and with
-      // it THIRD's cover, which existed only to answer it.
+      // it THIRD's substitution, which existed only to answer it.
       const swept = await statusOf(chain);
       expect(swept?.status).toBe("withdrawn");
-      expect(swept?.covered_by).toBeNull();
+      expect(swept?.substitute_id).toBeNull();
       expect(await isExpected(thirdId, date)).toBe(false);
       expect(await isExpected(subId, date)).toBe(false);
       expect(await isExpected(TEST_IDS.GEDU, date)).toBe(false);
     });
 
-    it("refuses to clear a request that has no cover", async () => {
+    it("refuses to clear a request that has no substitution", async () => {
       const id = await seedRequest({ date: utcDate(5) });
-      const { error } = await adminAuth.rpc("clear_session_cover", {
+      const { error } = await adminAuth.rpc("clear_session_substitution", {
         p_request_id: id,
       });
       expect(error?.code).toBe(CHECK_VIOLATION);
@@ -2096,18 +2096,18 @@ describe("session covers", () => {
 
     it("withdraws a request as admin and unwinds the substitution", async () => {
       const date = utcDate(5);
-      const first = await seedRequest({ date, coveredBy: subId });
+      const first = await seedRequest({ date, substituteId: subId });
       const chain = await seedRequest({ date, absent: subId });
 
       const { data, error } = await adminAuth.rpc(
-        "withdraw_session_cover_request_as_admin",
+        "withdraw_session_substitution_request_as_admin",
         { p_request_id: first },
       );
       expect(error).toBeNull();
 
-      const doc = coverRequestDocument.parse(data);
+      const doc = substitutionRequestDocument.parse(data);
       expect(doc.status).toBe("withdrawn");
-      expect(doc.covered_by).toBeNull();
+      expect(doc.substitute_id).toBeNull();
 
       expect((await statusOf(chain))?.status).toBe("withdrawn");
       // The absence is off, so the assigned gedu is expected again.
@@ -2117,12 +2117,12 @@ describe("session covers", () => {
     it("refuses to withdraw an already-withdrawn request", async () => {
       const id = await seedRequest({ date: utcDate(5) });
       await admin
-        .from("session_cover_requests")
+        .from("session_substitution_requests")
         .update({ status: "withdrawn" })
         .eq("id", id);
 
       const { error } = await adminAuth.rpc(
-        "withdraw_session_cover_request_as_admin",
+        "withdraw_session_substitution_request_as_admin",
         { p_request_id: id },
       );
       expect(error?.code).toBe(CHECK_VIOLATION);
@@ -2133,8 +2133,8 @@ describe("session covers", () => {
       // assigned gedu always holds one, so their own request survives every
       // cascade — which is what stops a clear from cancelling the absence.
       const date = utcDate(5);
-      const id = await seedRequest({ date, coveredBy: subId });
-      await adminAuth.rpc("clear_session_cover", { p_request_id: id });
+      const id = await seedRequest({ date, substituteId: subId });
+      await adminAuth.rpc("clear_session_substitution", { p_request_id: id });
       expect((await statusOf(id))?.status).toBe("open");
     });
   });
@@ -2144,12 +2144,12 @@ describe("session covers", () => {
   // -------------------------------------------------------------------------
 
   describe("the documents the surfaces read", () => {
-    it("the gedu feed carries the group's gedus with roles and its non-withdrawn covers", async () => {
+    it("the gedu feed carries the group's gedus with roles and its non-withdrawn substitutions", async () => {
       const date = utcDate(5);
       const open = await seedRequest({ date });
       const gone = await seedRequest({ date: utcDate(6) });
       await admin
-        .from("session_cover_requests")
+        .from("session_substitution_requests")
         .update({ status: "withdrawn" })
         .eq("id", gone);
 
@@ -2158,22 +2158,22 @@ describe("session covers", () => {
       });
       expect(error).toBeNull();
 
-      const halves = geduFeedCoverHalves.parse(data);
+      const halves = geduFeedSubstitutionHalves.parse(data);
       expect(halves.gedus).toEqual([
         { id: TEST_IDS.GEDU, first_name: expect.any(String), role: "primary" },
       ]);
-      expect(halves.covers.map((cover) => cover.id)).toEqual([open]);
+      expect(halves.substitutions.map((substitution) => substitution.id)).toEqual([open]);
       // The requester sees their own offer count and no reason.
-      expect(halves.covers[0].is_requester).toBe(true);
-      expect(halves.covers[0].offer_count).toBe(0);
-      expect(halves.covers[0].reason).toBeNull();
+      expect(halves.substitutions[0].is_requester).toBe(true);
+      expect(halves.substitutions[0].offer_count).toBe(0);
+      expect(halves.substitutions[0].reason).toBeNull();
     });
 
     it("the gedu feed gives an ADMIN caller the reason and withholds it from a colleague", async () => {
       const date = utcDate(5);
-      await seedRequest({ date, coveredBy: subId });
+      await seedRequest({ date, substituteId: subId });
       await admin
-        .from("session_cover_requests")
+        .from("session_substitution_requests")
         .update({ reason: "sick", reason_note: "private" })
         .eq("group_id", GROUP_A)
         .eq("session_date", date);
@@ -2182,34 +2182,34 @@ describe("session covers", () => {
         p_group_id: GROUP_A,
       });
       expect(asAdmin.error).toBeNull();
-      const adminCovers = geduFeedCoverHalves.parse(asAdmin.data).covers;
-      expect(adminCovers[0].reason).toBe("sick");
-      expect(adminCovers[0].reason_note).toBe("private");
-      expect(adminCovers[0].offer_count).toBe(0);
+      const adminSubstitutions = geduFeedSubstitutionHalves.parse(asAdmin.data).substitutions;
+      expect(adminSubstitutions[0].reason).toBe("sick");
+      expect(adminSubstitutions[0].reason_note).toBe("private");
+      expect(adminSubstitutions[0].offer_count).toBe(0);
 
-      // The COVER is a colleague on this document, not the requester.
+      // The SUBSTITUTION is a colleague on this document, not the requester.
       const asSub = await subAuth.rpc("get_gedu_group_feed", {
         p_group_id: GROUP_A,
       });
       expect(asSub.error).toBeNull();
-      const subCovers = geduFeedCoverHalves.parse(asSub.data).covers;
-      expect(subCovers[0].reason).toBeNull();
-      expect(subCovers[0].is_requester).toBe(false);
-      expect(subCovers[0].offer_count).toBeNull();
+      const substitutionsAsSub = geduFeedSubstitutionHalves.parse(asSub.data).substitutions;
+      expect(substitutionsAsSub[0].reason).toBeNull();
+      expect(substitutionsAsSub[0].is_requester).toBe(false);
+      expect(substitutionsAsSub[0].offer_count).toBeNull();
 
       // …and STILL NAMES WHO IS AWAY, to the colleague as much as to the admin.
       // This is the one document that reveals the requester to a non-admin, and
       // it is the line the pool's anonymity is not about: the workspace is
       // reached only by staff on the group, and the session card says "X is
-      // away, Y is covering". Withholding the name here would leave the
+      // away, Y is substituting". Withholding the name here would leave the
       // staffing line undrawable — which is exactly what happened when the
       // concealment was first written against the admin flag alone.
-      expect(subCovers[0].requested_by).toBe(TEST_IDS.GEDU);
-      expect(subCovers[0].requested_by_first_name).toBeTruthy();
-      expect(adminCovers[0].requested_by).toBe(TEST_IDS.GEDU);
+      expect(substitutionsAsSub[0].requested_by).toBe(TEST_IDS.GEDU);
+      expect(substitutionsAsSub[0].requested_by_first_name).toBeTruthy();
+      expect(adminSubstitutions[0].requested_by).toBe(TEST_IDS.GEDU);
     });
 
-    it("the admin product-session document carries roles and covers per group", async () => {
+    it("the admin product-session document carries roles and substitutions per group", async () => {
       const date = utcDate(5);
       await seedRequest({ date });
 
@@ -2230,7 +2230,7 @@ describe("session covers", () => {
                   role: z.enum(Constants.public.Enums.gedu_assignment_role),
                 }),
               ),
-              covers: z.array(coverRequestDocument),
+              substitutions: z.array(substitutionRequestDocument),
             }),
           ),
         })
@@ -2239,27 +2239,27 @@ describe("session covers", () => {
       const a = groups.find((group) => group.id === GROUP_A);
       const b = groups.find((group) => group.id === GROUP_B);
       expect(a?.gedus.map((gedu) => gedu.role)).toEqual(["primary"]);
-      expect(a?.covers.length).toBe(1);
+      expect(a?.substitutions.length).toBe(1);
       // Admin-only end to end, so the reason travels here unconditionally.
-      expect(a?.covers[0].offer_count).toBe(0);
+      expect(a?.substitutions[0].offer_count).toBe(0);
       expect(b?.gedus).toEqual([]);
-      expect(b?.covers).toEqual([]);
+      expect(b?.substitutions).toEqual([]);
     });
 
     it("the admin dashboard queues the open request with its offers and their standing", async () => {
       const date = utcDate(7);
       const id = await seedRequest({ date });
       await admin
-        .from("session_cover_requests")
+        .from("session_substitution_requests")
         .update({ reason: "sick", reason_note: "flu" })
         .eq("id", id);
-      await subAuth.rpc("offer_session_cover", { p_request_id: id });
+      await subAuth.rpc("offer_session_substitution", { p_request_id: id });
 
       const { data, error } = await adminAuth.rpc("get_admin_dashboard");
       expect(error).toBeNull();
 
-      const queue = dashboardCoverRequests.parse(
-        z.object({ cover_requests: z.unknown() }).parse(data).cover_requests,
+      const queue = dashboardSubstitutionRequests.parse(
+        z.object({ substitution_requests: z.unknown() }).parse(data).substitution_requests,
       );
       const mine = queue.find((row) => row.id === id);
       expect(mine).toBeDefined();
@@ -2293,15 +2293,15 @@ describe("session covers", () => {
     it("the admin dashboard drops a request whose date has passed", async () => {
       const id = await seedRequest({ date: utcDate(-7) });
       const { data } = await adminAuth.rpc("get_admin_dashboard");
-      const queue = dashboardCoverRequests.parse(
-        z.object({ cover_requests: z.unknown() }).parse(data).cover_requests,
+      const queue = dashboardSubstitutionRequests.parse(
+        z.object({ substitution_requests: z.unknown() }).parse(data).substitution_requests,
       );
       expect(queue.map((row) => row.id)).not.toContain(id);
     });
 
-    it("get_my_assigned_products discriminates a cover row from an assignment row", async () => {
+    it("get_my_assigned_products discriminates a substitution row from an assignment row", async () => {
       const date = utcDate(-3);
-      await seedRequest({ date, coveredBy: subId });
+      await seedRequest({ date, substituteId: subId });
 
       // Scoped to this file's own product throughout: CI runs the db files in
       // parallel workers against ONE database, and several of them assign the
@@ -2312,29 +2312,29 @@ describe("session covers", () => {
       expect(
         (mine.data ?? [])
           .filter((row) => row.product_id === PRODUCT)
-          .map((row) => ({ kind: row.kind, covered_date: row.covered_date })),
-      ).toEqual([{ kind: "assignment", covered_date: null }]);
+          .map((row) => ({ kind: row.kind, substitution_date: row.substitution_date })),
+      ).toEqual([{ kind: "assignment", substitution_date: null }]);
 
       const theirs = await subAuth.rpc("get_my_assigned_products");
       expect(theirs.error).toBeNull();
       expect((theirs.data ?? []).filter((row) => row.group_id === GROUP_A)).toEqual([
         expect.objectContaining({
-          kind: "cover",
-          covered_date: date,
+          kind: "substitution",
+          substitution_date: date,
           group_id: GROUP_A,
           product_id: PRODUCT,
         }),
       ]);
     });
 
-    it("get_my_assigned_products drops a cover whose window has closed", async () => {
-      await seedRequest({ date: utcDate(-20), coveredBy: subId });
+    it("get_my_assigned_products drops a substitution whose window has closed", async () => {
+      await seedRequest({ date: utcDate(-20), substituteId: subId });
       const { data, error } = await subAuth.rpc("get_my_assigned_products");
       expect(error).toBeNull();
       expect((data ?? []).filter((row) => row.group_id === GROUP_A)).toEqual([]);
     });
 
-    it("the summaries carry a cover row for the covered date and stop counting the absent gedu's", async () => {
+    it("the summaries carry a substitution row for the substitution date and stop counting the absent gedu's", async () => {
       const date = utcDate(-3);
       const epoch = utcDate(-3);
 
@@ -2353,11 +2353,11 @@ describe("session covers", () => {
         .parse(before.data)
         .find((row) => row.group_id === GROUP_A);
       expect(baseline?.kind).toBe("assignment");
-      expect(baseline?.covered_date).toBeNull();
+      expect(baseline?.substitution_date).toBeNull();
       // Three finished occurrences at least, and possibly today's fourth.
       expect(baseline?.attention_count).toBeGreaterThanOrEqual(3);
 
-      await seedRequest({ date, coveredBy: subId });
+      await seedRequest({ date, substituteId: subId });
       for (const other of [utcDate(-2), utcDate(-1), utcDate(0)]) {
         await seedRequest({ date: other });
       }
@@ -2375,14 +2375,14 @@ describe("session covers", () => {
         p_epoch_date: epoch,
       });
       expect(theirs.error).toBeNull();
-      const cover = assignmentSummaries
+      const substitution = assignmentSummaries
         .parse(theirs.data)
         .filter((row) => row.group_id === GROUP_A);
-      expect(cover.length).toBe(1);
-      expect(cover[0].kind).toBe("cover");
-      expect(cover[0].covered_date).toBe(date);
+      expect(substitution.length).toBe(1);
+      expect(substitution[0].kind).toBe("substitution");
+      expect(substitution[0].substitution_date).toBe(date);
       // One date's worth of work, not the group's whole history.
-      expect(cover[0].attention_count).toBe(1);
+      expect(substitution[0].attention_count).toBe(1);
     });
 
     it("the product-groups snapshot carries each pill's role", async () => {
@@ -2470,12 +2470,12 @@ describe("session covers", () => {
     });
 
     it("withdraws the live requests a REMOVAL orphans", async () => {
-      // Removing a gedu from a group unseats them without touching a cover row,
+      // Removing a gedu from a group unseats them without touching a substitution row,
       // which is what made this the one unseating that left live requests
       // behind: an open request by somebody who is no longer expected, ready for
       // an admin to answer with a sub for nobody.
       const open = await seedRequest({ date: utcDate(5) });
-      const covered = await seedRequest({ date: utcDate(6), coveredBy: subId });
+      const substituted = await seedRequest({ date: utcDate(6), substituteId: subId });
 
       const { error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT,
@@ -2485,13 +2485,13 @@ describe("session covers", () => {
       });
       expect(error).toBeNull();
 
-      // Both go, and the covered one is emptied rather than merely closed: a
+      // Both go, and the substituted one is emptied rather than merely closed: a
       // withdrawn row carries no sub, so invoicing finds no phantom
       // substitution for a session nobody was absent from.
       expect((await statusOf(open))?.status).toBe("withdrawn");
-      const swept = await statusOf(covered);
+      const swept = await statusOf(substituted);
       expect(swept?.status).toBe("withdrawn");
-      expect(swept?.covered_by).toBeNull();
+      expect(swept?.substitute_id).toBeNull();
       expect(swept?.approved_by).toBeNull();
       expect(swept?.approved_at).toBeNull();
 
@@ -2548,10 +2548,10 @@ describe("session covers", () => {
         p_added_groups: [
           {
             tempId: "tmp-roles",
-            name: "Cover Roles",
+            name: "Substitution Roles",
             gedus: [{ geduId: subId, role: "assistant" }],
           },
-          { tempId: "tmp-legacy", name: "Cover Legacy", geduIds: [thirdId] },
+          { tempId: "tmp-legacy", name: "Substitution Legacy", geduIds: [thirdId] },
         ],
       });
       expect(error).toBeNull();

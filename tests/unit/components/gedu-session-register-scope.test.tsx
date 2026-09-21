@@ -50,8 +50,8 @@ vi.mock("@/components/ui/rich-text-editor", () =>
  * old session and presses Save. So this test mounts the real card, opens the
  * real editor, presses the real Save, and reads the draft that came out.
  *
- * **Do not delete this as redundant with the unit-level test.** The two cover
- * different failures: that one covers the function, this one covers everything
+ * **Do not delete this as redundant with the unit-level test.** The two substitution
+ * different failures: that one substitutions the function, this one substitutions everything
  * between the props and the function.
  */
 

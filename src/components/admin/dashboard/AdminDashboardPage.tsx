@@ -13,7 +13,7 @@ import {
 } from "@/services/admin-dashboard";
 import { useSetGeduCertified } from "@/services/gedu";
 import { useSeatOfferSweepOnMount } from "@/services/participations";
-import { useApproveSessionCoverOffer } from "@/services/session-cover";
+import { useApproveSessionSubstitutionOffer } from "@/services/session-substitution";
 import { AdminDashboardPageBody } from "./admin-dashboard-page-body";
 import {
   buildAdminDashboardData,
@@ -105,7 +105,7 @@ export function AdminDashboardPage({
     enabled: sweepSettled,
   });
   const setCertified = useSetGeduCertified();
-  const approveCoverOffer = useApproveSessionCoverOffer();
+  const approveSubstitutionOffer = useApproveSessionSubstitutionOffer();
 
   const viewerDay = formatInTimeZone(now, timeZone, "yyyy-MM-dd");
 
@@ -215,19 +215,19 @@ export function AdminDashboardPage({
    * leaves once, rather than leaving on the receipt and coming back for a
    * frame when the old document re-renders.
    */
-  const handleApproveCoverOffer = useCallback(
+  const handleApproveSubstitutionOffer = useCallback(
     async (offerId: string) => {
-      await approveCoverOffer.mutateAsync({ offerId });
+      await approveSubstitutionOffer.mutateAsync({ offerId });
       await queryClient.invalidateQueries({ queryKey: adminDashboardKeys.all });
     },
-    [approveCoverOffer, queryClient],
+    [approveSubstitutionOffer, queryClient],
   );
 
   return (
     <AdminDashboardPageBody
       data={data}
       onCertifyGedu={handleCertifyGedu}
-      onApproveCoverOffer={handleApproveCoverOffer}
+      onApproveSubstitutionOffer={handleApproveSubstitutionOffer}
     />
   );
 }

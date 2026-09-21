@@ -1,7 +1,7 @@
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { occurrenceOnDate } from "@/lib/session-date-occurrence";
-import type { OpenCoverRequest } from "@/services/session-cover";
+import type { OpenSubstitutionRequest } from "@/services/session-substitution";
 import type {
   GeduAssignmentRole,
   ProductTopic,
@@ -10,7 +10,7 @@ import type {
 } from "@/types";
 
 /**
- * The pool a certified gedu picks a cover out of — the wire rows turned into
+ * The pool a certified gedu picks a substitution out of — the wire rows turned into
  * what one line of it actually shows.
  *
  * **The calendar maths is here because it is not in SQL.** The read emits the
@@ -21,7 +21,7 @@ import type {
  *
  * **What is deliberately not here is the absent gedu.** The read does not name
  * them and never will: naming the person half-reveals a private reason —
- * everybody knows who is off sick — and the seat being covered belongs to the
+ * everybody knows who is off sick — and the seat being substituted belongs to the
  * group rather than to somebody the volunteer needs to know about. What a
  * volunteer decides on is the session: when it is, where, what it is about,
  * which language, and what the role pays.
@@ -33,14 +33,14 @@ import type {
  */
 
 /** One offerable session, in the shape the section renders it. */
-export interface CoverPoolRow {
+export interface SubstitutionPoolRow {
   requestId: string;
   groupId: string;
   groupName: string;
   /** Product-local `YYYY-MM-DD`, kept because it is the row's own identity. */
   sessionDate: string;
   /**
-   * When the covered session runs, or `null` where the schedule no longer
+   * When the substituted session runs, or `null` where the schedule no longer
    * projects that weekday — an orphaned request, which the queue still carries
    * because it orders by date and never by a derived instant.
    */
@@ -56,7 +56,7 @@ export interface CoverPoolRow {
   isRemote: boolean;
   /** The venue on an in-person product; `null` on a remote one. */
   siteName: string | null;
-  /** The role being covered — the absent gedu's, never the volunteer's. */
+  /** The role being substituted — the absent gedu's, never the volunteer's. */
   role: GeduAssignmentRole;
   /**
    * What this role pays per session, or `null` where the product has not set
@@ -77,10 +77,10 @@ export interface CoverPoolRow {
  * than a comparator that could drift from it, and re-sorting here would be a
  * second answer to a settled question.
  */
-export function buildCoverPoolRows(
-  requests: readonly OpenCoverRequest[],
+export function buildSubstitutionPoolRows(
+  requests: readonly OpenSubstitutionRequest[],
   locale: SupportedLocale,
-): CoverPoolRow[] {
+): SubstitutionPoolRow[] {
   return requests.map((request) => {
     const occurrence = occurrenceOnDate({
       sessionDate: request.session_date,
@@ -110,6 +110,6 @@ export function buildCoverPoolRows(
       role: request.role,
       feeCents: request.fee_cents,
       hasOffered: request.has_offered,
-    } satisfies CoverPoolRow;
+    } satisfies SubstitutionPoolRow;
   });
 }

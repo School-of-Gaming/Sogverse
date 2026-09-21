@@ -65,17 +65,17 @@ const occupantSelect = vi.fn();
 // produce the same empty identity, and only this can tell them apart.
 const gameAccountReads: string[] = [];
 
-// Every session date the route looked a cover up under, in order. The
+// Every session date the route looked a substitution up under, in order. The
 // cross-midnight cases are claims about *which date* is asked for, and a 200
 // cannot distinguish "asked for the session's date" from "asked for today and
 // the two happened to match".
-const coverDatesAsked: string[] = [];
+const substitutionDatesAsked: string[] = [];
 
 /**
  * A calendar date in the fixture product's zone.
  *
  * Computed with the route's own helper rather than restated, because the whole
- * claim of the cover cases is that the date is the *product's* rather than the
+ * claim of the substitution cases is that the date is the *product's* rather than the
  * runtime's: a hardcoded string would pass on a Helsinki machine and fail on a
  * UTC runner for eleven hours of every day.
  */
@@ -89,9 +89,9 @@ function dateInProductZone(
 /**
  * Make the window mock report an open session starting at `sessionStart`.
  *
- * The cover cases derive the date they seed **from this same instant**, so
+ * The substitution cases derive the date they seed **from this same instant**, so
  * nothing in them is keyed to the wall clock: a run that crossed local midnight
- * between seeding a cover and reading the route would otherwise flip, which is
+ * between seeding a substitution and reading the route would otherwise flip, which is
  * a real non-determinism rather than a flake to re-run.
  */
 function openWindowFor(sessionStart: Date) {
@@ -140,13 +140,13 @@ function mockTables(opts: {
   participation?: { id: string } | null;
   geduAssignment?: { group_id: string } | null;
   /**
-   * The gedu's live cover on this group, if any, keyed by the session date the
+   * The gedu's live substitution on this group, if any, keyed by the session date the
    * route asks for. The mock answers a row only when the route's own `eq`
    * chain asked about a date in this map — which is what makes "admitted on the
-   * covered date, refused on every other" a real assertion rather than a
+   * substitution date, refused on every other" a real assertion rather than a
    * constant.
    */
-  coversByDate?: Record<string, boolean>;
+  substitutionsByDate?: Record<string, boolean>;
   /** Whether the joining gedu is still certified. Defaults to true. */
   certified?: boolean;
   minecraftAccount?: { minecraft_username: string | null; minecraft_uuid: string | null } | null;
@@ -209,11 +209,11 @@ function mockTables(opts: {
         }),
       };
     }
-    if (table === "session_cover_requests") {
-      // The route's chain is .select().eq(group).in(dates).eq(covered_by)
+    if (table === "session_substitution_requests") {
+      // The route's chain is .select().eq(group).in(dates).eq(substitute_id)
       // .eq(status).limit().maybeSingle(). The dates arrive as one `in`, which
       // the mock captures — both to answer from the map and to record on
-      // `coverDatesAsked`, because *which* dates the route asked about is the
+      // `substitutionDatesAsked`, because *which* dates the route asked about is the
       // claim of the cross-midnight cases and not something a 200 alone proves.
       let askedDates: string[] = [];
       const chain = {
@@ -224,11 +224,11 @@ function mockTables(opts: {
         },
         limit: () => ({
           maybeSingle: () => {
-            coverDatesAsked.push(...askedDates);
+            substitutionDatesAsked.push(...askedDates);
             return Promise.resolve(
               mockSupabaseSuccess(
-                askedDates.some((date) => opts.coversByDate?.[date] === true)
-                  ? { id: "cover-1" }
+                askedDates.some((date) => opts.substitutionsByDate?.[date] === true)
+                  ? { id: "substitution-1" }
                   : null,
               ),
             );
@@ -289,7 +289,7 @@ describe("POST /api/voice/token", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     gameAccountReads.length = 0;
-    coverDatesAsked.length = 0;
+    substitutionDatesAsked.length = 0;
     // Rebuild the prune chain each test (clearAllMocks wipes return values).
     placementLt.mockResolvedValue({ error: null });
     placementEq.mockReturnValue({ lt: placementLt });
@@ -410,7 +410,7 @@ describe("POST /api/voice/token", () => {
       expect(data.error).toBe("You are not assigned to this group");
     });
 
-    it("admits a sub holding a live cover on the session being joined", async () => {
+    it("admits a sub holding a live substitution on the session being joined", async () => {
       // No assignment anywhere on the product — the acceptance case is a gedu
       // who only ever met this group as somebody's substitute.
       const sessionStart = new Date();
@@ -419,7 +419,7 @@ describe("POST /api/voice/token", () => {
       mockTables({
         group: {},
         geduAssignment: null,
-        coversByDate: { [dateInProductZone(sessionStart)]: true },
+        substitutionsByDate: { [dateInProductZone(sessionStart)]: true },
       });
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
       expect(res.status).toBe(200);
@@ -428,15 +428,15 @@ describe("POST /api/voice/token", () => {
       );
     });
 
-    it("refuses a sub whose cover is on another date of the same group", async () => {
-      // The cover arm is DATE-SCOPED where the assignment arm is not: covering
+    it("refuses a sub whose substitution is on another date of the same group", async () => {
+      // The substitution arm is DATE-SCOPED where the assignment arm is not: substituting
       // next Monday buys nothing on this Monday's room. Any date but the
       // session's own is absent from the map, so the lookup finds nothing.
       authAs("sub-id", { role: "gedu", first_name: "Joonas" });
       mockTables({
         group: {},
         geduAssignment: null,
-        coversByDate: { "2019-01-01": true },
+        substitutionsByDate: { "2019-01-01": true },
       });
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
       const data = await res.json();
@@ -444,9 +444,9 @@ describe("POST /api/voice/token", () => {
       expect(data.error).toBe("You are not assigned to this group");
     });
 
-    it("keeps a cover in a session that runs past local midnight", async () => {
+    it("keeps a substitution in a session that runs past local midnight", async () => {
       // A Monday 23:30 Helsinki session, read at 00:10 on Tuesday: the room is
-      // still Monday's. Asking "does this gedu cover TODAY", which is what this
+      // still Monday's. Asking "does this gedu substitution TODAY", which is what this
       // route used to ask, would look Tuesday up and eject them at midnight —
       // so the assertion is on the DATE ASKED FOR, not only on the 200.
       const sessionStart = new Date("2026-03-09T21:30:00.000Z"); // 23:30 Helsinki
@@ -455,16 +455,16 @@ describe("POST /api/voice/token", () => {
       mockTables({
         group: {},
         geduAssignment: null,
-        coversByDate: { "2026-03-09": true },
+        substitutionsByDate: { "2026-03-09": true },
       });
 
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
 
       expect(res.status).toBe(200);
-      expect(coverDatesAsked).toEqual(["2026-03-09"]);
+      expect(substitutionDatesAsked).toEqual(["2026-03-09"]);
     });
 
-    it("admits the cover of a session that STARTS after local midnight, during its pre-window", async () => {
+    it("admits the substitution of a session that STARTS after local midnight, during its pre-window", async () => {
       // The mirror case, and the one a today-only lookup got wrong in the other
       // direction: a 00:10 Tuesday start opens its window at 23:55 on Monday,
       // when "today" is still Monday and the session is dated Tuesday.
@@ -474,13 +474,13 @@ describe("POST /api/voice/token", () => {
       mockTables({
         group: {},
         geduAssignment: null,
-        coversByDate: { "2026-03-10": true },
+        substitutionsByDate: { "2026-03-10": true },
       });
 
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
 
       expect(res.status).toBe(200);
-      expect(coverDatesAsked).toEqual(["2026-03-10"]);
+      expect(substitutionDatesAsked).toEqual(["2026-03-10"]);
     });
 
     it("falls back to today and yesterday when no slot is open, and still refuses on the window", async () => {
@@ -500,7 +500,7 @@ describe("POST /api/voice/token", () => {
       mockTables({
         group: {},
         geduAssignment: null,
-        coversByDate: { [today]: true },
+        substitutionsByDate: { [today]: true },
       });
 
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
@@ -508,18 +508,18 @@ describe("POST /api/voice/token", () => {
 
       expect(res.status).toBe(403);
       expect(data.error).toBe("Room is not open yet");
-      expect(coverDatesAsked).toHaveLength(2);
-      expect(coverDatesAsked[0]).toBe(today);
+      expect(substitutionDatesAsked).toHaveLength(2);
+      expect(substitutionDatesAsked[0]).toBe(today);
       // Yesterday, derived from the product-local calendar rather than from a
       // flat 24-hour step — which lands back on today the day a clock goes back.
       const [year, month, day] = today.split("-").map(Number);
-      expect(coverDatesAsked[1]).toBe(
+      expect(substitutionDatesAsked[1]).toBe(
         new Date(Date.UTC(year, month - 1, day - 1)).toISOString().slice(0, 10),
       );
     });
 
     it("refuses a sub who has since been de-certified", async () => {
-      // Certification gates holding a cover, so losing it ends the access
+      // Certification gates holding a substitution, so losing it ends the access
       // mid-window rather than only at approval time.
       const sessionStart = new Date();
       openWindowFor(sessionStart);
@@ -527,21 +527,21 @@ describe("POST /api/voice/token", () => {
       mockTables({
         group: {},
         geduAssignment: null,
-        coversByDate: { [dateInProductZone(sessionStart)]: true },
+        substitutionsByDate: { [dateInProductZone(sessionStart)]: true },
         certified: false,
       });
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
       expect(res.status).toBe(403);
     });
 
-    it("does not narrow an assigned gedu to their covered dates", async () => {
-      // The cover arm ADDS to the product-wide assignment mobility. An assigned
-      // gedu with no cover at all still joins, and the route never asks.
+    it("does not narrow an assigned gedu to their substitution dates", async () => {
+      // The substitution arm ADDS to the product-wide assignment mobility. An assigned
+      // gedu with no substitution at all still joins, and the route never asks.
       authAs("gedu-id", { role: "gedu", first_name: "Edu" });
       mockTables({
         group: {},
         geduAssignment: { group_id: GROUP_ID },
-        coversByDate: {},
+        substitutionsByDate: {},
       });
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
       expect(res.status).toBe(200);

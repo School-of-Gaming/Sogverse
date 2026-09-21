@@ -2,7 +2,7 @@ import { z } from "zod";
 import { Constants } from "@/types";
 
 /**
- * Wire contracts for session covers — "I can't make this session", the offers
+ * Wire contracts for session substitutions — "I can't make this session", the offers
  * that answer it, and the sub an admin seats.
  *
  * Every function behind these is `SECURITY DEFINER` returning `jsonb`, which
@@ -12,17 +12,17 @@ import { Constants } from "@/types";
  * schemas in CI — so Postgres and TypeScript cannot drift apart quietly.
  */
 
-/** The pay class an assignment or a cover carries. */
+/** The pay class an assignment or a substitution carries. */
 export const geduAssignmentRole = z.enum(
   Constants.public.Enums.gedu_assignment_role,
 );
 
 /** Why the absent gedu cannot be there. Admin-visible only. */
-export const coverReason = z.enum(Constants.public.Enums.cover_reason);
+export const substitutionReason = z.enum(Constants.public.Enums.substitution_reason);
 
-/** `open` → `covered` (an admin seated a sub) or `withdrawn` (history). */
-export const coverRequestStatus = z.enum(
-  Constants.public.Enums.cover_request_status,
+/** `open` → `substituted` (an admin seated a sub) or `withdrawn` (history). */
+export const substitutionRequestStatus = z.enum(
+  Constants.public.Enums.substitution_request_status,
 );
 
 /**
@@ -36,12 +36,12 @@ export const coverRequestStatus = z.enum(
  * through would get a `check_violation` and no row. Two copies of one bound,
  * and this comment is the reason they have to move together.
  */
-export const COVER_REASON_NOTE_MAX_LENGTH = 500;
+export const SUBSTITUTION_REASON_NOTE_MAX_LENGTH = 500;
 
 /**
- * **One cover request, in the one shape every surface reads it in.**
+ * **One substitution request, in the one shape every surface reads it in.**
  *
- * Every write returns this document and both staff feeds' `covers` arrays are
+ * Every write returns this document and both staff feeds' `substitutions` arrays are
  * built from it, because the database builds all of them from a single
  * function. A second schema here would be a second description of that one
  * function, and the two would disagree the first time a field was added.
@@ -62,38 +62,38 @@ export const COVER_REASON_NOTE_MAX_LENGTH = 500;
  * - `requested_by` / `requested_by_first_name` — **who is absent** — travel for
  *   an admin, for the requester themselves, and for staff on the group, whose
  *   session card draws a staffing line naming them. They do **not** travel to a
- *   volunteer answering the pool: see {@link anonymousCoverRequestDocument}.
+ *   volunteer answering the pool: see {@link anonymousSubstitutionRequestDocument}.
  *
  * This schema is the **named** shape, used everywhere the requester is
  * disclosed, and it is deliberately strict about it: `requested_by_first_name`
  * is non-null because the requester is a `NOT NULL` column under an
  * `ON DELETE RESTRICT` foreign key, so the profile behind it cannot go — a
  * parse failure here would mean that invariant stopped holding, which is worth
- * failing loudly over. `covered_by_first_name` is null exactly when
- * `covered_by` is; the pair travels together.
+ * failing loudly over. `substitute_first_name` is null exactly when
+ * `substitute_id` is; the pair travels together.
  */
-export const coverRequestDocument = z.object({
+export const substitutionRequestDocument = z.object({
   id: z.string(),
   group_id: z.string(),
   /** Product-local calendar date, `YYYY-MM-DD`. The seat's real identity. */
   session_date: z.string(),
-  /** The role being covered — the absent gedu's, never their sub's. */
+  /** The role being substituted — the absent gedu's, never their sub's. */
   role: geduAssignmentRole,
-  status: coverRequestStatus,
+  status: substitutionRequestStatus,
   created_at: z.string(),
   requested_by: z.string(),
   requested_by_first_name: z.string(),
-  covered_by: z.string().nullable(),
-  covered_by_first_name: z.string().nullable(),
+  substitute_id: z.string().nullable(),
+  substitute_first_name: z.string().nullable(),
   approved_at: z.string().nullable(),
   /** Whether the caller is the absent gedu — the Withdraw action's gate. */
   is_requester: z.boolean(),
   offer_count: z.number().nullable(),
-  reason: coverReason.nullable(),
+  reason: substitutionReason.nullable(),
   reason_note: z.string().nullable(),
 });
 
-export type CoverRequestDocument = z.infer<typeof coverRequestDocument>;
+export type SubstitutionRequestDocument = z.infer<typeof substitutionRequestDocument>;
 
 /**
  * **The same document with the absent gedu withheld** — what the two offer RPCs
@@ -114,24 +114,24 @@ export type CoverRequestDocument = z.infer<typeof coverRequestDocument>;
  * theirs to have. The keys are still present and still null, exactly as every
  * other withheld field on this document is.
  */
-export const anonymousCoverRequestDocument = coverRequestDocument.extend({
+export const anonymousSubstitutionRequestDocument = substitutionRequestDocument.extend({
   requested_by: z.string().nullable(),
   requested_by_first_name: z.string().nullable(),
 });
 
-export type AnonymousCoverRequestDocument = z.infer<
-  typeof anonymousCoverRequestDocument
+export type AnonymousSubstitutionRequestDocument = z.infer<
+  typeof anonymousSubstitutionRequestDocument
 >;
 
 /** One recurring slot, as the pool list emits it for the client's calendar walk. */
-const coverScheduleSlot = z.object({
+const substitutionScheduleSlot = z.object({
   weekday: z.number(),
   start_time: z.string(),
   duration_minutes: z.number(),
 });
 
 /** One product name and teaser, in one locale. */
-const coverProductTranslation = z.object({
+const substitutionProductTranslation = z.object({
   locale: z.string(),
   name: z.string(),
   description: z.string(),
@@ -142,7 +142,7 @@ const coverProductTranslation = z.object({
  *
  * **The absent gedu is not named, and neither is their reason.** Naming them
  * half-reveals a private reason (everybody knows who is off sick), and the seat
- * being covered belongs to the group rather than to a person the volunteer
+ * being substituted belongs to the group rather than to a person the volunteer
  * needs to know about. What a volunteer decides on is the session: when it is,
  * where, what it is about, which language, and what the role pays.
  *
@@ -154,7 +154,7 @@ const coverProductTranslation = z.object({
  * set one. Null is a blank field rather than a volunteer session: nothing flags
  * it, which is the existing treatment of a missing assistant fee.
  */
-export const openCoverRequest = z.object({
+export const openSubstitutionRequest = z.object({
   request_id: z.string(),
   group_id: z.string(),
   group_name: z.string(),
@@ -174,14 +174,14 @@ export const openCoverRequest = z.object({
     end_date: z.string().nullable(),
     /** The venue, on in-person products only; null on anything remote. */
     site_name: z.string().nullable(),
-    translations: z.array(coverProductTranslation),
-    schedule_slots: z.array(coverScheduleSlot),
+    translations: z.array(substitutionProductTranslation),
+    schedule_slots: z.array(substitutionScheduleSlot),
   }),
 });
 
-export type OpenCoverRequest = z.infer<typeof openCoverRequest>;
+export type OpenSubstitutionRequest = z.infer<typeof openSubstitutionRequest>;
 
-export const openCoverRequests = z.array(openCoverRequest);
+export const openSubstitutionRequests = z.array(openSubstitutionRequest);
 
 /**
  * One gedu on a group, with the role they hold — the staffing derivation's

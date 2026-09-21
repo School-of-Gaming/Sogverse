@@ -21,7 +21,7 @@ import type { ProductGroupsSnapshot } from "@/types";
  *
  * The add flow deliberately has no role step — an add assigns as `primary` and
  * the select is where the other value is chosen — so there is nothing to assert
- * about the picker here, and the picker's own file covers what it does refuse.
+ * about the picker here, and the picker's own file substitutions what it does refuse.
  *
  * Translations echo their keys, so nothing depends on English wording.
  */

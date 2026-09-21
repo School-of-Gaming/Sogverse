@@ -11,7 +11,7 @@ import { formatDate, formatDateOnly } from "@/lib/utils";
 import type {
   AdminDashboardAttentionProduct,
   AdminDashboardCertificationCandidate,
-  AdminDashboardCoverRequest,
+  AdminDashboardSubstitutionRequest,
   AdminDashboardScheduleProduct,
   AdminDashboardSnapshot,
   AdminDashboardUserStat,
@@ -23,8 +23,8 @@ import type {
   ComingUpCohort,
   ComingUpDay,
   ComingUpItem,
-  CoverOffer,
-  CoverRequest,
+  SubstitutionOffer,
+  SubstitutionRequest,
   ProductAttention,
   ProductIssue,
   ScheduleChip,
@@ -163,8 +163,8 @@ export function buildAdminDashboardData({
       toProductAttention(product, locale),
     ),
     users: orderUsers(snapshot.users),
-    coverRequests: snapshot.cover_requests.map((request) =>
-      toCoverRequest(request, locale, viewerTimeZone),
+    substitutionRequests: snapshot.substitution_requests.map((request) =>
+      toSubstitutionRequest(request, locale, viewerTimeZone),
     ),
     weeks,
     currentWeekIndex,
@@ -393,14 +393,14 @@ export function relativeWait(
 }
 
 // ---------------------------------------------------------------------------
-// The cover queue
+// The substitution queue
 // ---------------------------------------------------------------------------
 
 /**
- * One open cover request as the panel renders it.
+ * One open substitution request as the panel renders it.
  *
  * **Day-granular, so it rides with the schedule rather than with the ticking
- * clock.** Nothing on a cover row ages while the page sits open: a session date
+ * clock.** Nothing on a substitution row ages while the page sits open: a session date
  * is a calendar fact and an extract's date is one too. What drops a row off the
  * list is the read no longer returning it, which the invalidation behind an
  * approval already arranges.
@@ -421,11 +421,11 @@ export function relativeWait(
  * only absence left is "no slot names this weekday", which is the orphaned
  * request, and `null` is how it reaches the row.
  */
-function toCoverRequest(
-  request: AdminDashboardCoverRequest,
+function toSubstitutionRequest(
+  request: AdminDashboardSubstitutionRequest,
   locale: SupportedLocale,
   viewerTimeZone: string,
-): CoverRequest {
+): SubstitutionRequest {
   const occurrence = occurrenceOnDate({
     sessionDate: request.session_date,
     slots: request.product.schedule_slots.map((slot) => ({
@@ -466,7 +466,7 @@ function toCoverRequest(
       request.product.id,
       request.group_id,
     ),
-    offers: request.offers.map((offer): CoverOffer => ({
+    offers: request.offers.map((offer): SubstitutionOffer => ({
       id: offer.id,
       geduId: offer.gedu_id,
       name: personName(offer.first_name, offer.last_name),
@@ -510,7 +510,7 @@ export function clockFace(
  * The absence travels as `null` rather than as a stand-in string because the
  * stand-in is translated copy and this module has no locale for copy — only for
  * `Intl`. Shared by the two queues that name people, so "unnamed" means the
- * same thing on a certification row and on a cover offer.
+ * same thing on a certification row and on a substitution offer.
  */
 function personName(first: string, last: string): string | null {
   const name = [first, last].filter((part) => part.trim().length > 0).join(" ");

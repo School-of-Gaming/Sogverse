@@ -18,14 +18,14 @@ import {
 import type { SupportedLocale } from "@/lib/constants/locales";
 import {
   geduAssignmentKey,
-  geduCoverKey,
+  geduSubstitutionKey,
   rollUpGeduAssignments,
-  rollUpGeduCovers,
+  rollUpGeduSubstitutions,
   type GeduAssignmentRow,
-  type GeduCoverSummary,
+  type GeduSubstitutionSummary,
 } from "@/lib/gedu-assignment-rollup";
-import { buildCoverPoolRows, type CoverPoolRow } from "@/lib/gedu-cover-pool";
-import type { OpenCoverRequest } from "@/services/session-cover";
+import { buildSubstitutionPoolRows, type SubstitutionPoolRow } from "@/lib/gedu-substitution-pool";
+import type { OpenSubstitutionRequest } from "@/services/session-substitution";
 
 /**
  * Fixtures for the gedu dashboard preview scene — a plausible week for a gedu
@@ -73,7 +73,7 @@ import type { OpenCoverRequest } from "@/services/session-cover";
  *    it.
  *
  * It also carries the two things a **sub** sees, because neither can be looked
- * at anywhere else and both coexist with everything above: the **cover card**,
+ * at anywhere else and both coexist with everything above: the **substitution card**,
  * one dated afternoon of a club this gedu does not teach, sitting at the head of
  * the Clubs grid where it has to be told apart from the four recurring cards
  * beside it; and the **pool section** above the whole page, with its rows
@@ -98,7 +98,7 @@ import type { OpenCoverRequest } from "@/services/session-cover";
  * therefore doubles as the empty-state scenario — the unheaded section with the
  * "when you're assigned to a group" line, which no other scenario can show. It
  * is also the page with **no pool section at all**, heading and nav entry
- * included: certification is what gates offering a cover too.
+ * included: certification is what gates offering to substitute too.
  */
 export const GEDU_DASHBOARD_SCENARIOS = [
   "default",
@@ -116,15 +116,15 @@ export interface GeduDashboardFixture {
   /** One roll-up card per assignment, soonest next session first. */
   assignments: GeduAssignmentCardData[];
   /**
-   * One card per live cover — a single session this gedu is standing in for,
-   * soonest covered date first.
+   * One card per live substitution — a single session this gedu is standing in for,
+   * soonest substitution date first.
    *
    * Non-empty on the `default` scenario alone: it is the composition worth
-   * looking at (a cover card beside the recurring cards it must not be mistaken
+   * looking at (a substitution card beside the recurring cards it must not be mistaken
    * for), and it cannot coexist with the uncertified page, which by definition
    * has no seats of any kind.
    */
-  covers: GeduCoverSummary[];
+  substitutions: GeduSubstitutionSummary[];
   /**
    * The pool the section above the cards lists, or `null` for the page that
    * does not render the section at all.
@@ -134,7 +134,7 @@ export interface GeduDashboardFixture {
    * — a fixture that authored its own start and end instants would be the one
    * place a wrong weekday could not show up.
    */
-  coverPool: CoverPoolRow[] | null;
+  substitutionPool: SubstitutionPoolRow[] | null;
   certified: boolean;
   /** Whether the contract band is on the page. */
   contractAccepted: boolean;
@@ -151,19 +151,19 @@ const CAMP_PRODUCT_ID = "mock-dashboard-roblox-camp";
 const UPCOMING_CLUB_PRODUCT_ID = "mock-dashboard-fortnite-club";
 const EVENT_PRODUCT_ID = "mock-dashboard-lan-event";
 const ENDED_CLUB_PRODUCT_ID = "mock-dashboard-splatoon-club";
-/** The club this gedu is covering one session of, rather than teaching. */
-const COVER_PRODUCT_ID = "mock-dashboard-zelda-club";
-/** A second cover, far enough out that its workspace has not opened yet. */
-const LOCKED_COVER_PRODUCT_ID = "mock-dashboard-pokemon-club";
+/** The club this gedu is substituting one session of, rather than teaching. */
+const SUBSTITUTION_PRODUCT_ID = "mock-dashboard-zelda-club";
+/** A second substitution, far enough out that its workspace has not opened yet. */
+const LOCKED_SUBSTITUTION_PRODUCT_ID = "mock-dashboard-pokemon-club";
 
 /**
- * The covered session's own backlog: one, because that is the only non-zero a
- * cover can have. A cover owes the session it covers and nothing else, so the
+ * The substituted session's own backlog: one, because that is the only non-zero a
+ * substitution can have. A substitution owes the session it substitutes for and nothing else, so the
  * badge is either absent or reads `1` — and `1` is the interesting one, since
  * the whole argument for putting the badge on this card is that a sub's
  * write-up is as owed as anybody's.
  */
-const COVER_ATTENTION = 1;
+const SUBSTITUTION_ATTENTION = 1;
 
 /**
  * The site the one-day event runs at.
@@ -410,15 +410,15 @@ export function buildGeduDashboardFixture(
   ];
 
   /**
-   * The two sessions this gedu is covering for somebody else — clubs they do
-   * not teach — and **the two states a cover card has**, side by side.
+   * The two sessions this gedu is substituting for somebody else — clubs they do
+   * not teach — and **the two states a substitution card has**, side by side.
    *
-   * A cover card appears the moment the cover is approved, but the group's
-   * workspace behind it opens 48 hours before the covered session. So the two
+   * A substitution card appears the moment the substitution is approved, but the group's
+   * workspace behind it opens 48 hours before the substituted session. So the two
    * are deliberately placed either side of that boundary and nowhere near it:
    * **tomorrow**, whose workspace opened yesterday, and **six days out**, whose
    * workspace opens in four. Neither can drift into the other's state whatever
-   * hour the scene is opened, which the single two-day-out cover this replaced
+   * hour the scene is opened, which the single two-day-out substitution this replaced
    * could not say — it sat within hours of the boundary and showed whichever
    * state the afternoon happened to fall on.
    *
@@ -428,15 +428,15 @@ export function buildGeduDashboardFixture(
    * to promise and the footer's one answer is when it opens. Reading them
    * together is how you see that the height is held either way.
    *
-   * The open one carries a backlog of one, which is the only non-zero a cover
-   * can have. The locked one carries none, and that is not a choice: a cover
+   * The open one carries a backlog of one, which is the only non-zero a substitution
+   * can have. The locked one carries none, and that is not a choice: a substitution
    * still locked is still in the future, and nothing is owed until a session
    * has been run.
    */
-  const coverRows: GeduAssignmentRow[] = [
+  const substitutionRows: GeduAssignmentRow[] = [
     assignmentRow({
       now,
-      id: COVER_PRODUCT_ID,
+      id: SUBSTITUTION_PRODUCT_ID,
       name: "Zelda Explorers Club",
       productType: "consumer_club",
       isRemote: true,
@@ -447,12 +447,12 @@ export function buildGeduDashboardFixture(
       participantCount: 12,
       groupName: "Wednesday A",
       groupParticipantCount: 6,
-      kind: "cover",
-      coveredDate: calendarDate(now, 1, SESSION_FEED_TIMEZONE),
+      kind: "substitution",
+      substitutionDate: calendarDate(now, 1, SESSION_FEED_TIMEZONE),
     }),
     assignmentRow({
       now,
-      id: LOCKED_COVER_PRODUCT_ID,
+      id: LOCKED_SUBSTITUTION_PRODUCT_ID,
       name: "Pokémon GO Club",
       productType: "consumer_club",
       isRemote: true,
@@ -463,8 +463,8 @@ export function buildGeduDashboardFixture(
       participantCount: 9,
       groupName: "Explorers",
       groupParticipantCount: 9,
-      kind: "cover",
-      coveredDate: calendarDate(now, 6, SESSION_FEED_TIMEZONE),
+      kind: "substitution",
+      substitutionDate: calendarDate(now, 6, SESSION_FEED_TIMEZONE),
     }),
   ];
 
@@ -476,11 +476,11 @@ export function buildGeduDashboardFixture(
       ? []
       : scenario === "clubs-only"
         ? [...clubRows, ...extraClubRows]
-        : [...clubRows, ...endedRows, ...otherRows, ...coverRows];
+        : [...clubRows, ...endedRows, ...otherRows, ...substitutionRows];
 
   // Every per-seat map is keyed by (product, group), the same key the live
   // dashboard builds — a product id alone stopped being unique the moment one
-  // gedu could hold an assignment on one group and a cover on another.
+  // gedu could hold an assignment on one group and a substitution on another.
   const hrefByAssignment = Object.fromEntries(
     Object.entries(SCENE_BY_PRODUCT).map(([productId, sceneScenario]) => [
       geduAssignmentKey(productId, `${productId}-group-a`),
@@ -503,18 +503,18 @@ export function buildGeduDashboardFixture(
     voiceHrefByAssignment: {},
   });
 
-  const covers = rollUpGeduCovers({
+  const substitutions = rollUpGeduSubstitutions({
     rows,
     locale,
-    // The backlog is on the OPEN cover alone. A cover whose workspace has not
+    // The backlog is on the OPEN substitution alone. A substitution whose workspace has not
     // opened is a session that has not run, and nothing is owed for one of
     // those — a badge on the locked card would be the fixture showing a state
     // the live page cannot produce.
-    attentionByCover: {
-      [geduCoverKey(
-        `${COVER_PRODUCT_ID}-group-a`,
+    attentionBySubstitution: {
+      [geduSubstitutionKey(
+        `${SUBSTITUTION_PRODUCT_ID}-group-a`,
         calendarDate(now, 1, SESSION_FEED_TIMEZONE),
-      )]: COVER_ATTENTION,
+      )]: SUBSTITUTION_ATTENTION,
     },
     hrefByAssignment,
     voiceHrefByAssignment: {},
@@ -523,20 +523,20 @@ export function buildGeduDashboardFixture(
   const rowsById = new Map(rows.map((row) => [row.product.id, row]));
 
   return {
-    covers,
-    // Withheld on the scenario whose account may cover nothing, which is what
+    substitutions,
+    // Withheld on the scenario whose account may substitute for nothing, which is what
     // the live page does with it — there is no section, no heading and no nav
     // entry for an uncertified gedu.
     // Three scenarios, three answers, because no two of them can share a
     // render: the populated queue, the all-clear line a certified gedu with
     // nothing outstanding reads, and no section at all for the account that may
-    // cover nothing.
-    coverPool:
+    // substitute for nothing.
+    substitutionPool:
       scenario === "uncertified"
         ? null
         : scenario === "clubs-only"
           ? []
-          : buildCoverPoolRows(coverPoolRequests(now), locale),
+          : buildSubstitutionPoolRows(substitutionPoolRequests(now), locale),
     assignments: assignments.map((assignment) => {
       const row = rowsById.get(assignment.productId);
       return {
@@ -667,7 +667,7 @@ function keyedByAssignment(
  * and a fee not set, and one row the caller has **already offered** on — which
  * is the only way to see the button's offered state beside its offer state.
  */
-function coverPoolRequests(now: Date): OpenCoverRequest[] {
+function substitutionPoolRequests(now: Date): OpenSubstitutionRequest[] {
   const slot = (daysAhead: number, startTime: string, minutes: number) => {
     const built = futureSlot(now, daysAhead, startTime, minutes, SESSION_FEED_TIMEZONE);
     return [
@@ -785,8 +785,8 @@ function assignmentRow(opts: {
    * otherwise, because the recurring card is what most of these are about.
    */
   kind?: GeduAssignmentRow["kind"];
-  /** The covered date, on a `cover` row — product-local `YYYY-MM-DD`. */
-  coveredDate?: string;
+  /** The substitution date, on a `substitution` row — product-local `YYYY-MM-DD`. */
+  substitutionDate?: string;
 }): GeduAssignmentRow {
   return {
     product: {
@@ -803,10 +803,10 @@ function assignmentRow(opts: {
     },
     groupId: `${opts.id}-group-a`,
     // A standing assignment unless a fixture says otherwise — the recurring
-    // card these fixtures are mostly about. A live cover is its own small card
+    // card these fixtures are mostly about. A live substitution is its own small card
     // with its own date, and the pair of fields below is what makes one.
     kind: opts.kind ?? "assignment",
-    coveredDate: opts.coveredDate ?? null,
+    substitutionDate: opts.substitutionDate ?? null,
     groupCount: opts.groupCount,
     participantCount: opts.participantCount,
     groupName: opts.groupName,

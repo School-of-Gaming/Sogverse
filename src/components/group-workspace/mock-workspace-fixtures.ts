@@ -18,7 +18,7 @@ import { platformForTopic } from "@/lib/products/topics";
 import { sessionEntryId } from "@/lib/session-occurrence";
 import {
   deriveSessionStaffing,
-  type CoverRequestInput,
+  type SubstitutionRequestInput,
   type StaffingAssignment,
 } from "@/lib/session-staffing";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
@@ -194,7 +194,7 @@ export interface GroupWorkspaceFixture {
    */
   photoConsentRows: readonly GamerPhotoConsent[] | null;
   /**
-   * The group's cover requests as **stored rows**, and the other two inputs the
+   * The group's substitution requests as **stored rows**, and the other two inputs the
    * staffing derivation takes.
    *
    * The entries above already carry the staffing derived from them, so a scene
@@ -204,7 +204,7 @@ export interface GroupWorkspaceFixture {
    * than a state the scene toggled. A fixture that handed over only the
    * finished staffing could not show that at all.
    */
-  coverRequests: readonly CoverRequestInput[];
+  substitutionRequests: readonly SubstitutionRequestInput[];
   staffingGedus: readonly StaffingAssignment[];
   /** Whose workspace this is — the viewer every card's action is offered to. */
   viewerId: string;
@@ -747,15 +747,15 @@ function yearlongSpecs(): readonly EntrySpec[] {
     [10, "partial"],
   ]);
   /**
-   * The weeks Petra covered. Sanna has the group and writes most of it up; a
+   * The weeks Petra substituted. Sanna has the group and writes most of it up; a
    * scattered handful are Petra's, which is what a regular-plus-stand-in group
    * looks like — and it puts a second face down the scrollback without the
    * chips reading as an alternating pattern. Named indices rather than a
    * modulo, because who ran a given week is a fact about that week.
    */
-  const COVERED_BY_PETRA_AT = new Set([3, 11, 19, 26, 41]);
+  const SUBSTITUTED_BY_PETRA_AT = new Set([3, 11, 19, 26, 41]);
   const editorAt = (index: number) =>
-    COVERED_BY_PETRA_AT.has(index)
+    SUBSTITUTED_BY_PETRA_AT.has(index)
       ? SESSION_FEED_EDITORS.petra
       : SESSION_FEED_EDITORS.sanna;
   /**
@@ -1030,7 +1030,7 @@ function clubMemberFlair(now: Date): MemberFlairFixture {
  * **One of them is signed by a Gedu who teaches a different group of this camp**,
  * which is the cross-group mobility the note's authorization actually grants: any
  * Gedu on the *product* may read and write any of its notes, because the
- * substitute covering a session is precisely the person who needs one. The rail
+ * substitute substituting a session is precisely the person who needs one. The rail
  * beside this roster names him on Builders green, so the two halves agree.
  */
 function campMemberFlair(): MemberFlairFixture {
@@ -1615,7 +1615,7 @@ export function buildGroupWorkspaceFixture(
   }));
 
   /**
-   * The group's cover requests, and the per-date staffing derived from them.
+   * The group's substitution requests, and the per-date staffing derived from them.
    *
    * **Derived rather than authored**, through the very function both staff
    * feeds' builder calls: the rule that decides who is expected — and therefore
@@ -1623,12 +1623,12 @@ export function buildGroupWorkspaceFixture(
    * under review, so a fixture that wrote the answers down would be asserting
    * it instead of exercising it. What the fixture supplies is the rows.
    */
-  const covers = coverRequestsFor(scenario, rekeyed, dateOf);
+  const substitutions = substitutionRequestsFor(scenario, rekeyed, dateOf);
   const entries = rekeyed.map((entry) => ({
     ...entry,
     staffing: deriveSessionStaffing({
       gedus: ASSIGNED_GROUP_GEDUS,
-      requests: covers,
+      requests: substitutions,
       sessionDate: dateOf(entry.startsAt),
       viewerId: VIEWER_GEDU_ID,
     }),
@@ -1748,14 +1748,14 @@ export function buildGroupWorkspaceFixture(
     photoConsentRows: config.asksGamerPhotoConsent
       ? SESSION_FEED_PHOTO_CONSENTS
       : null,
-    coverRequests: covers,
+    substitutionRequests: substitutions,
     staffingGedus: ASSIGNED_GROUP_GEDUS,
     viewerId: VIEWER_GEDU_ID,
   };
 }
 
 /**
- * The group's cover requests — **the club's alone**, and three of them, because
+ * The group's substitution requests — **the club's alone**, and three of them, because
  * three is what it takes to put every state of the card's staffing region on one
  * page.
  *
@@ -1765,9 +1765,9 @@ export function buildGroupWorkspaceFixture(
  * 1. the **viewer's own** open request, with two offers waiting — the status
  *    line and the Withdraw beside it, and the one card where the action is
  *    *absent* because somebody who has filed an absence is no longer expected;
- * 2. a colleague's request **covered** by a third gedu, which names the sub on
+ * 2. a colleague's request **substituted** by a third gedu, which names the sub on
  *    the staffing line for everybody;
- * 3. a colleague's request still **open** — "Cover needed", the state the queue
+ * 3. a colleague's request still **open** — "Substitute needed", the state the queue
  *    on the dashboard is fed from.
  *
  * Every other card on every scenario carries no request and therefore no
@@ -1779,11 +1779,11 @@ export function buildGroupWorkspaceFixture(
  * only one a gedu is entitled to it on — on somebody else's it is `null`, which
  * is "not disclosed" rather than zero.
  */
-function coverRequestsFor(
+function substitutionRequestsFor(
   scenario: GroupWorkspaceScenario,
   entries: readonly SessionFeedEntry[],
   dateOf: (startsAt: Date) => string,
-): CoverRequestInput[] {
+): SubstitutionRequestInput[] {
   if (scenario !== "club") return [];
 
   // The feed is strictly descending, so the future block's *last* entries are
@@ -1797,30 +1797,30 @@ function coverRequestsFor(
 
   return [
     {
-      id: "mock-cover-request-mine",
+      id: "mock-substitution-request-mine",
       sessionDate: dateOf(next.startsAt),
       requestedBy: { id: GEDU_IDS.sanna, firstName: "Sanna" },
       role: "primary",
       status: "open",
-      coveredBy: null,
+      substituteId: null,
       offerCount: 2,
     },
     {
-      id: "mock-cover-request-covered",
+      id: "mock-substitution-request-substituted",
       sessionDate: dateOf(second.startsAt),
       requestedBy: { id: GEDU_IDS.petra, firstName: "Petra" },
       role: "primary",
-      status: "covered",
-      coveredBy: { id: GEDU_IDS.joonas, firstName: "Joonas" },
+      status: "substituted",
+      substituteId: { id: GEDU_IDS.joonas, firstName: "Joonas" },
       offerCount: null,
     },
     {
-      id: "mock-cover-request-open",
+      id: "mock-substitution-request-open",
       sessionDate: dateOf(third.startsAt),
       requestedBy: { id: GEDU_IDS.petra, firstName: "Petra" },
       role: "primary",
       status: "open",
-      coveredBy: null,
+      substituteId: null,
       offerCount: null,
     },
   ];

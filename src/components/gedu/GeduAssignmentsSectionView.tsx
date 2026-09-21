@@ -1,10 +1,10 @@
 "use client";
 
 import { GeduAssignmentCard } from "./GeduAssignmentCard";
-import { GeduCoverCard } from "./GeduCoverCard";
+import { GeduSubstitutionCard } from "./GeduSubstitutionCard";
 import type {
   GeduAssignmentSummary,
-  GeduCoverSummary,
+  GeduSubstitutionSummary,
 } from "@/lib/gedu-assignment-rollup";
 
 export interface GeduAssignmentCardData {
@@ -18,18 +18,18 @@ export interface GeduAssignmentCardData {
  *
  * A gedu's week is one week whichever kind of seat put a session in it, so the
  * two share a grid rather than each getting a section: splitting them would put
- * the same Monday in two places on one page and give a gedu with a single cover
+ * the same Monday in two places on one page and give a gedu with a single substitution
  * a whole heading for one card. The tag is what lets one list carry both
  * without either card growing a branch on the other's fields.
  */
 export type GeduDashboardCard =
   | { kind: "assignment"; item: GeduAssignmentCardData }
-  | { kind: "cover"; item: GeduCoverSummary };
+  | { kind: "substitution"; item: GeduSubstitutionSummary };
 
 interface GeduAssignmentsSectionViewProps {
   /**
    * One type noun's worth of cards, already rolled up and ordered by the page:
-   * the covers first, by covered date, then the assignments by soonest next
+   * the substitutions first, by substitution date, then the assignments by soonest next
    * session. The view sorts nothing and fetches nothing.
    */
   items: readonly GeduDashboardCard[];
@@ -73,12 +73,12 @@ export function GeduAssignmentsSectionView({
   return (
     <div className="grid items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {items.map((card) =>
-        card.kind === "cover" ? (
-          // A cover's identity is (group, covered date) — a sub may hold two
+        card.kind === "substitution" ? (
+          // A substitution's identity is (group, substitution date) — a sub may hold two
           // Mondays of one group, and nothing else tells those two cards apart.
-          <GeduCoverCard
-            key={`cover-${card.item.groupId}-${card.item.coveredDate}`}
-            cover={card.item}
+          <GeduSubstitutionCard
+            key={`substitution-${card.item.groupId}-${card.item.substitutionDate}`}
+            substitution={card.item}
           />
         ) : (
           <GeduAssignmentCard

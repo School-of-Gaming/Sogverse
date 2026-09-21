@@ -14,7 +14,7 @@ import { StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PersonChip } from "@/components/ui/person-chip";
 import { cn } from "@/lib/utils";
-import type { CoverOffer, CoverRequest } from "./admin-dashboard-data";
+import type { SubstitutionOffer, SubstitutionRequest } from "./admin-dashboard-data";
 import { PRODUCT_TYPE_PRESENTATION } from "./product-type-presentation";
 
 /**
@@ -54,15 +54,15 @@ import { PRODUCT_TYPE_PRESENTATION } from "./product-type-presentation";
  * group's own page, where a sub can be seated outright — so the row says so
  * plainly and points there.
  */
-export function CoverRequestRow({
+export function SubstitutionRequestRow({
   request,
   onApproveOffer,
 }: {
-  request: CoverRequest;
+  request: SubstitutionRequest;
   /** Approve one offer. Resolves once the write landed; rejects if it did not. */
   onApproveOffer: (offerId: string) => Promise<void>;
 }) {
-  const t = useTranslations("admin.dashboard.cover");
+  const t = useTranslations("admin.dashboard.substitution");
   const tRole = useTranslations("admin.geduRole");
   const tType = useTranslations("admin.products.types");
   const [committingOfferId, setCommittingOfferId] = useState<string | null>(
@@ -190,7 +190,7 @@ export function CoverRequestRow({
  * one would leave the admin reading half of a fact they are deciding on. Only a
  * missing standing is tinted — the one worth catching an eye that is scanning a
  * column — and neither gates the press, because the database has already
- * refused anybody who may not cover.
+ * refused anybody who may not substitute.
  */
 function OfferRow({
   offer,
@@ -199,14 +199,14 @@ function OfferRow({
   failed,
   onApprove,
 }: {
-  offer: CoverOffer;
+  offer: SubstitutionOffer;
   committing: boolean;
   /** Another offer on this request is being approved — the whole row is settled. */
   disabled: boolean;
   failed: boolean;
   onApprove: () => void;
 }) {
-  const t = useTranslations("admin.dashboard.cover");
+  const t = useTranslations("admin.dashboard.substitution");
   const certification = useTranslations("admin.users.certification");
   const check = useTranslations("admin.geduCriminalRecordCheck");
 

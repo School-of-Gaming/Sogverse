@@ -14,7 +14,7 @@ import {
 } from "@/lib/session-occurrence";
 import {
   deriveSessionStaffing,
-  type CoverRequestInput,
+  type SubstitutionRequestInput,
   type SessionStaffing,
   type StaffingAssignment,
 } from "@/lib/session-staffing";
@@ -24,9 +24,9 @@ import type {
 } from "@/components/gedu/session-feed";
 import type { GeduFeedSession } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import type {
-  CoverRequestDocument,
+  SubstitutionRequestDocument,
   SessionStaffGedu,
-} from "@/services/session-cover/session-cover.contracts";
+} from "@/services/session-substitution/session-substitution.contracts";
 
 /**
  * Turning one group's stored session rows and its product's weekly schedule
@@ -83,12 +83,12 @@ export interface GeduSessionFeedArgs {
    */
   gedus: readonly SessionStaffGedu[];
   /**
-   * Every non-withdrawn cover request on the group, any date, as either staff
+   * Every non-withdrawn substitution request on the group, any date, as either staff
    * document emits them. The whole array reaches every entry and the derivation
    * picks out the date it was asked about, which is what lets a projected date
    * with no stored row carry its requests like any other.
    */
-  covers: readonly CoverRequestDocument[];
+  substitutions: readonly SubstitutionRequestDocument[];
   /**
    * The signed-in gedu, where the surface has one. `null` on the admin shell
    * and in the preview scenes, which is the honest answer rather than a guess:
@@ -125,7 +125,7 @@ export function buildGeduSessionFeed(
     endDate,
     sessions,
     gedus,
-    covers,
+    substitutions,
     viewerId = null,
     now,
     epoch = SESSION_RECORDING_EPOCH,
@@ -140,7 +140,7 @@ export function buildGeduSessionFeed(
     firstName: gedu.first_name,
     role: gedu.role,
   }));
-  const staffingRequests: CoverRequestInput[] = covers.map(toCoverRequestInput);
+  const staffingRequests: SubstitutionRequestInput[] = substitutions.map(toSubstitutionRequestInput);
 
   const startBoundary = startDateToCutoff(startDate, timezone);
   const endBoundary = endDateToCutoff(endDate, timezone);
@@ -189,7 +189,7 @@ export function buildGeduSessionFeed(
     sessions.map((session) => [session.session_date, session]),
   );
 
-  // A cover request contributes no date of its own, deliberately. One filed
+  // A substitution request contributes no date of its own, deliberately. One filed
   // against a date the schedule no longer projects and that nobody recorded
   // against has no instants to render with — an orphaned request is history,
   // and the admin queue is where it is cleared, because that list orders by
@@ -366,7 +366,7 @@ function toReportEmailedAt(row: GeduFeedSession | undefined): Date | null {
 }
 
 /**
- * One cover request, from the shape the database emits into the shape the
+ * One substitution request, from the shape the database emits into the shape the
  * derivation takes.
  *
  * The two differ only in casing and in nesting the two people into objects, and
@@ -380,7 +380,7 @@ function toReportEmailedAt(row: GeduFeedSession | undefined): Date | null {
  * the question for the caller it was served to, and an explicit id, where the
  * surface has one, is the stronger answer and wins.
  */
-function toCoverRequestInput(request: CoverRequestDocument): CoverRequestInput {
+function toSubstitutionRequestInput(request: SubstitutionRequestDocument): SubstitutionRequestInput {
   return {
     id: request.id,
     sessionDate: request.session_date,
@@ -390,12 +390,12 @@ function toCoverRequestInput(request: CoverRequestDocument): CoverRequestInput {
     },
     role: request.role,
     status: request.status,
-    coveredBy:
-      request.covered_by === null || request.covered_by_first_name === null
+    substituteId:
+      request.substitute_id === null || request.substitute_first_name === null
         ? null
         : {
-            id: request.covered_by,
-            firstName: request.covered_by_first_name,
+            id: request.substitute_id,
+            firstName: request.substitute_first_name,
           },
     offerCount: request.offer_count,
     isMine: request.is_requester,

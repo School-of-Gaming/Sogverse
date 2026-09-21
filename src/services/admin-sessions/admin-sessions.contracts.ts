@@ -5,9 +5,9 @@ import {
   scheduleSlotSummary,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import {
-  coverRequestDocument,
+  substitutionRequestDocument,
   sessionStaffGedu,
-} from "@/services/session-cover/session-cover.contracts";
+} from "@/services/session-substitution/session-substitution.contracts";
 
 /**
  * Wire contract for the admin product's session document.
@@ -52,7 +52,7 @@ export const adminSessionGroup = z.object({
   roster: z.array(adminSessionRosterEntry),
   sessions: z.array(geduFeedSession),
   /**
-   * The group's staff with their roles, and every non-withdrawn cover request
+   * The group's staff with their roles, and every non-withdrawn substitution request
    * on it — the staffing derivation's two inputs, in the gedu feed's shapes
    * verbatim.
    *
@@ -67,7 +67,7 @@ export const adminSessionGroup = z.object({
    * beside a request.
    */
   gedus: z.array(sessionStaffGedu),
-  covers: z.array(coverRequestDocument),
+  substitutions: z.array(substitutionRequestDocument),
 });
 
 /**

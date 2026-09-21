@@ -1,59 +1,46 @@
--- The dashboard keeps the cover queue AND the invoice-customer flag.
+-- The substitution queue says WHEN the session is, not only which day.
 --
 -- WHY
 --
--- Two branches replaced `get_admin_dashboard` in the same fortnight, and each
--- wrote its new body over a copy taken before the other's landed. 00269 added
--- the seventh kind of wrong to the attention queue — `missing_invoice_customer`,
--- a municipality club naming no Fennoa buyer — over the body 00256 left. The
--- cover-request work added the fifth member, `cover_requests`, and then its
--- schedule slots, over the same 00256 body. Neither replacement is wrong on its
--- own; together, the one that runs LAST wins the whole body, and that is 00275.
+-- 00272 gave the admin dashboard its fifth member, `substitution_requests`, and shipped
+-- each row's product as { id, product_type, timezone, is_remote, translations }.
+-- That is a timezone with nothing to convert: the row states a calendar date and
+-- no clock face, so an admin staffing a group that meets twice on a Friday
+-- cannot tell from the queue which of the two is short-staffed, and the page's
+-- own schedule two panels below states a time for every other occurrence it
+-- draws.
 --
--- So in every database built from `migrations/` in order — CI's DB tests, and
--- the production release — 00275 silently reverts 00269, the dashboard document
--- comes back without `missing_invoice_customer`, and the client contract that
--- REQUIRES the field fails the whole page with "Could not load the dashboard".
--- Nothing catches it earlier: the two migrations touch no common line, so
--- neither merge nor a diff of them says anything, and only a from-scratch build
--- runs both.
+-- The missing input is the SLOTS. The plan's rule for every substitution surface is
+-- that the database emits the date plus the product's slots and timezone and the
+-- client computes the instants — which is what `get_open_substitution_requests` (the
+-- gedu pool) already does, and what both session feeds have always done. The
+-- dashboard's member is the one that was written without them.
 --
--- WHAT THIS MIGRATION IS
+-- WHY NOT JOIN IN THE BROWSER
 --
--- The merge, as a new migration, because an applied migration is never edited
--- (supabase/CLAUDE.md, "Never amend a pushed migration"). The body below is
--- 00275's verbatim with exactly the two things 00269 added to the attention
--- queue put back into it, derived by diffing 00269 against 00256 — the body it
--- replaced — rather than retyped:
+-- The same document already carries `schedule_products`, each with its slots, so
+-- the panel could in principle look the product up there. It must not, and the
+-- reason is the one case this queue exists to tolerate: an ORPHANED request — an
+-- admin moved the schedule's weekday after the request was filed — is deliberately
+-- still in the list, and `schedule_products` is a DIFFERENT set (it is bounded by
+-- its own -30-day/+4-month window and drops cancelled and completed products), so
+-- a browser-side join would silently print a time for some rows, nothing for
+-- others, and no row would say which it was. Carrying the slots on the request's
+-- own product shell makes "no slot names this weekday" the only absence there is,
+-- and that absence is exactly the orphan.
 --
---   * `missing_invoice_customer` beside `missing_municipality_fee` in each
---     attention candidate's document, and
---   * the matching test in the candidate FILTER, so a club whose ONLY problem is
---     the missing buyer is in the list rather than merely flagged once something
---     else has already put it there.
+-- WHY A SEPARATE MIGRATION
 --
--- Nothing else moves. Every other line is 00275's, and the grants and the
--- comment are restated because a recreated function can come back
--- PUBLIC-executable and the REVOKE is what closes that.
+-- 00272 is applied to staging, and an applied migration is never edited
+-- (supabase/CLAUDE.md, "Never amend a pushed migration"): the CLI matches on
+-- version, so an edit there would never run on staging and only CI's
+-- fresh-from-migrations database would ever see it.
 --
--- A NOTE ON THE NUMBERS THIS FILE AND ITS NEIGHBOURS CITE
---
--- The five cover migrations were renumbered when this branch was rebased, so
--- that they sort above everything `dev`, `main` and staging already held —
--- 00260 → 00272, 00261 → 00273, 00262 → 00274, 00264 → 00275 and 00265 → 00276,
--- with their SQL untouched. Their header comments and the sentences they append
--- to this function's COMMENT therefore still say 00260 and 00264, and those
--- names mean the files that are now 00272 and 00275. Renumbering is also why
--- this migration is needed and not merely tidy: moving the cover work above
--- 00269 is exactly what guarantees 00275 runs after it.
---
--- Any later change to this function starts from the body below, which is the
--- only one that carries both branches' work.
-
--- ---------------------------------------------------------------------------
--- 1. The dashboard read: the cover queue's body, with the seventh kind of
---    wrong put back into the attention queue.
--- ---------------------------------------------------------------------------
+-- The body below is 00272's verbatim, with one key added to one jsonb object and
+-- the paragraph in section 5 that explains it. The GRANTs are re-issued because
+-- the rule does not ask which kind of recreation happened: a recreated function
+-- can come back PUBLIC-executable, so a migration that touches one pairs its
+-- per-role GRANTs with an explicit REVOKE.
 
 CREATE OR REPLACE FUNCTION public.get_admin_dashboard() RETURNS jsonb
     LANGUAGE plpgsql STABLE SECURITY DEFINER
@@ -64,7 +51,7 @@ DECLARE
   v_queue     jsonb;
   v_attention jsonb;
   v_schedule  jsonb;
-  v_covers    jsonb;
+  v_substitutions    jsonb;
 BEGIN
   PERFORM public.assert_admin();
 
@@ -185,8 +172,8 @@ BEGIN
   -- ---------------------------------------------------------------------------
   -- 3. The attention queue: live products with at least one thing wrong.
   --
-  -- Seven kinds of wrong, and each is stated as the fact rather than as a
-  -- sentence — the page words them, because the wording is translated copy.
+  -- Six kinds of wrong, and each is stated as the fact rather than as a sentence
+  -- — the page words them, because the wording is translated copy.
   --
   --   * `unassigned_count`  — active seats sitting in no group. A child enrolled
   --                           and nobody looking after them is the worst of these.
@@ -209,13 +196,6 @@ BEGIN
   --                           means "no assistant", which is the ordinary case.
   --   * `missing_municipality_fee` — municipality clubs only; the CHECK already
   --                           forbids the column elsewhere.
-  --   * `missing_invoice_customer` — municipality clubs only, on the same terms
-  --                           as the fee beside it: the link is nullable because
-  --                           a club is created before anybody has agreed who
-  --                           pays for it, and by the time it starts both the
-  --                           fee and the buyer are meant to be set. A club with
-  --                           neither is one nobody can raise an invoice for, so
-  --                           the omission belongs in the same queue as the fee's.
   --
   -- A product with none of them is not in the list at all.
   -- ---------------------------------------------------------------------------
@@ -251,10 +231,7 @@ BEGIN
                'missing_gedu_fee', (c.primary_gedu_fee_cents IS NULL),
                'missing_municipality_fee',
                  (c.product_type = 'municipality_club'
-                  AND c.municipality_fee_cents IS NULL),
-               'missing_invoice_customer',
-                 (c.product_type = 'municipality_club'
-                  AND c.invoice_customer_id IS NULL)
+                  AND c.municipality_fee_cents IS NULL)
              ) AS doc
         FROM candidate c
         CROSS JOIN LATERAL (
@@ -352,8 +329,6 @@ BEGIN
           OR c.primary_gedu_fee_cents IS NULL
           OR (c.product_type = 'municipality_club'
               AND c.municipality_fee_cents IS NULL)
-          OR (c.product_type = 'municipality_club'
-              AND c.invoice_customer_id IS NULL)
     ) a;
 
   -- ---------------------------------------------------------------------------
@@ -423,7 +398,7 @@ BEGIN
     ) s;
 
   -- ---------------------------------------------------------------------------
-  -- 5. The cover queue: open cover requests an admin has to staff.
+  -- 5. The substitution queue: open substitution requests an admin has to staff.
   --
   -- Dated TODAY OR LATER in the product's own timezone — a request whose date
   -- has passed is UNFILLED, which is a derived state of an open request and not
@@ -447,14 +422,14 @@ BEGIN
   -- same shape the schedule set above emits them, because a row that states a
   -- date and no clock face cannot tell an admin which of Friday's two sessions
   -- is short-staffed. Slots rather than a start INSTANT, for the reason every
-  -- other cover surface emits them: the client owns the calendar maths, exactly
+  -- other substitution surface emits them: the client owns the calendar maths, exactly
   -- as both session feeds do, and SQL holds no expansion. It is also what keeps
   -- the orphan case honest — a date the schedule no longer projects resolves to
   -- no slot at all on the client, which falls back to the bare date rather than
   -- printing a time the schedule would not produce.
   -- ---------------------------------------------------------------------------
   SELECT COALESCE(jsonb_agg(q.doc ORDER BY q.session_date, q.product_id, q.id), '[]'::jsonb)
-    INTO v_covers
+    INTO v_substitutions
     FROM (
       SELECT r.id,
              r.session_date,
@@ -510,17 +485,17 @@ BEGIN
                           )
                           ORDER BY o.created_at, o.id
                         )
-                   FROM public.session_cover_offers o
+                   FROM public.session_substitution_offers o
                    JOIN public.profiles op ON op.id = o.gedu_id
                    LEFT JOIN public.gedu_profiles ogp ON ogp.user_id = o.gedu_id
                   WHERE o.request_id = r.id
                ), '[]'::jsonb)
              ) AS doc
-        FROM public.session_cover_requests r
+        FROM public.session_substitution_requests r
         JOIN public.product_groups g ON g.id = r.group_id
         JOIN public.products p       ON p.id = g.product_id
         JOIN public.profiles rq      ON rq.id = r.requested_by
-       WHERE r.status = 'open'::public.cover_request_status
+       WHERE r.status = 'open'::public.substitution_request_status
          AND r.session_date >= (now() AT TIME ZONE p.timezone)::date
     ) q;
 
@@ -529,34 +504,19 @@ BEGIN
     'certification_queue', v_queue,
     'attention_products', v_attention,
     'schedule_products',  v_schedule,
-    'cover_requests',     v_covers
+    'substitution_requests',     v_substitutions
   );
 END;
 $$;
-
--- ---------------------------------------------------------------------------
--- 2. The grants, restated.
--- ---------------------------------------------------------------------------
--- CREATE OR REPLACE keeps the existing ACL, so these are a re-assertion rather
--- than a change. They are written out anyway because a recreated function has
--- been observed coming back PUBLIC-executable, and this one is SECURITY
--- DEFINER: the REVOKE is the load-bearing line.
 
 REVOKE EXECUTE ON FUNCTION public.get_admin_dashboard() FROM PUBLIC, anon;
 GRANT  EXECUTE ON FUNCTION public.get_admin_dashboard() TO authenticated;
 GRANT  EXECUTE ON FUNCTION public.get_admin_dashboard() TO service_role;
 
--- ---------------------------------------------------------------------------
--- 3. The comment, extended rather than restated.
--- ---------------------------------------------------------------------------
--- The comment this function carries when this migration runs is already the sum
--- of both branches: the last full restatement wrote the invoice-customer
--- sentence, and each cover migration appended its own to whatever it found. A
--- CREATE OR REPLACE keeps it, so the merge has nothing to repair there and one
--- sentence to add. Restating several hundred words by hand is the failure
--- supabase/CLAUDE.md names; the read is from the catalog and the write is one
--- format(). The assertion below proves both branches' sentences survived.
-
+-- Extended rather than restated, for the reason 00272 gives where it does the
+-- same thing: this comment runs to several hundred words, every sentence of
+-- which is still true, and supabase/CLAUDE.md names the exact failure a hand
+-- copy invites. The read is from the catalog and the write is one format().
 DO $$
 DECLARE
   v_existing text;
@@ -576,112 +536,57 @@ BEGIN
   EXECUTE format(
     'COMMENT ON FUNCTION public.get_admin_dashboard() IS %L',
     v_existing ||
-    ' Since 00277 this body is the MERGE of two replacements that were each'
-    ' written over a copy of the same older body: the one that added'
-    ' missing_invoice_customer to the attention queue, and the one that added the'
-    ' cover queue and its schedule slots. Run in order the later of the two'
-    ' reverted the earlier, so the flag is restored here beside everything the'
-    ' cover work added, and every sentence above describes this one body.');
+    ' Since 00275 each substitution request''s product shell additionally carries'
+    ' schedule_slots — {weekday, start_time, duration_minutes}, byte for byte the'
+    ' schedule set''s own — so the queue can state a session''s clock face and not'
+    ' only its date. Slots and not an instant: the client owns the calendar maths'
+    ' on every substitution surface, exactly as both session feeds do. They ride on the'
+    ' REQUEST''s product rather than being looked up in schedule_products, which'
+    ' is a different and narrower set: an orphaned request may name a product that'
+    ' set has dropped, and the one absence worth reading is "no slot names this'
+    ' weekday".');
 END $$;
 
 -- ---------------------------------------------------------------------------
--- 4. Assert the end state.
--- ---------------------------------------------------------------------------
--- Section 1 replaced the whole body, so the invariants of BOTH migrations this
--- one supersedes are re-derived below from the body as this file leaves it —
--- and a superseded migration's DO block is otherwise the last place its
--- invariants were ever checked. From the invoice-customer replacement: the
--- function's posture (guard-first, not STRICT, SECURITY DEFINER, STABLE, empty
--- search_path), the flag emitted AND tested in the candidate filter, every key
--- the client contract parses, the contract-BASE and live-seat-offer clauses
--- that no key name would reveal, the dropped product_status column, and the
--- grants. From the cover-queue replacement: two emitted schedule_slots keys
--- from two reads of the slots table, the fifth top-level member, and the same
--- grants.
+-- What this migration asserts about its own end state
 --
--- plpgsql bodies are not validated at DDL time, so a body naming a column that
--- is not there compiles fine here and fails in front of an admin. That is
--- exactly what a merge of two bodies risks, which is why the checks below are
--- counts and not existence tests wherever a half-done merge would still leave
--- one occurrence standing.
+-- Structural, because the behavioural proof cannot be made from here: the
+-- function is guard-first on assert_admin and there is no session to be an admin
+-- in, and a staging database holding no open request would make any query over
+-- its output pass vacuously. The behaviour is proved in CI instead —
+-- tests/db/session-substitution.test.ts parses this document's real output through the
+-- client's own zod contract, which is where the key being present and shaped
+-- right is a failing test rather than a missing sentence.
+-- ---------------------------------------------------------------------------
 
 DO $$
 DECLARE
-  v_sig    constant text := 'public.get_admin_dashboard()';
-  v_needle constant text := 'AND c.invoice_customer_id IS NULL';
-  v_src     text;
-  v_comment text;
-  v_prov    "char";
-  v_strict  boolean;
-  v_secdef  boolean;
-  v_config  text[];
-  v_key     text;
-  v_hits    integer;
-  v_slots   integer;
-  v_joins   integer;
+  v_src   text;
+  v_slots integer;
+  v_joins integer;
 BEGIN
-  SELECT pr.prosrc, pr.provolatile, pr.proisstrict, pr.prosecdef, pr.proconfig,
-         obj_description(pr.oid, 'pg_proc')
-    INTO v_src, v_prov, v_strict, v_secdef, v_config, v_comment
-    FROM pg_proc pr JOIN pg_namespace n ON n.oid = pr.pronamespace
-   WHERE n.nspname = 'public' AND pr.proname = 'get_admin_dashboard';
+  SELECT p.prosrc INTO v_src
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+   WHERE n.nspname = 'public'
+     AND p.proname = 'get_admin_dashboard';
 
   IF v_src IS NULL THEN
-    RAISE EXCEPTION 'get_admin_dashboard is missing after being replaced';
+    RAISE EXCEPTION 'get_admin_dashboard is missing';
   END IF;
 
-  IF (SELECT count(*) FROM pg_proc pr JOIN pg_namespace n ON n.oid = pr.pronamespace
-       WHERE n.nspname = 'public' AND pr.proname = 'get_admin_dashboard') <> 1 THEN
-    RAISE EXCEPTION 'get_admin_dashboard is overloaded — a call would be ambiguous';
+  -- Exactly one of it. A signature that had moved would leave the old function
+  -- behind and PostgREST would resolve a call by argument names in a way nobody
+  -- wrote down.
+  IF (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+       WHERE n.nspname = 'public' AND p.proname = 'get_admin_dashboard') <> 1 THEN
+    RAISE EXCEPTION 'get_admin_dashboard has been overloaded rather than replaced';
   END IF;
 
-  -- --- (a) Guard-first, and the posture the guard depends on. --------------
-  -- The guard has to precede every read, which for this body means the first
-  -- SELECT: everything it does after the PERFORM is a query against a table an
-  -- ordinary caller has no business reading.
-  IF position('PERFORM public.assert_admin();' IN v_src) = 0
-     OR position('PERFORM public.assert_admin();' IN v_src) > position('SELECT' IN v_src) THEN
-    RAISE EXCEPTION 'get_admin_dashboard does not gate on assert_admin before anything else';
-  END IF;
-
-  IF v_strict THEN
-    RAISE EXCEPTION 'get_admin_dashboard is STRICT — it would skip its body, and its guard';
-  END IF;
-
-  IF NOT v_secdef THEN
-    RAISE EXCEPTION 'get_admin_dashboard is not SECURITY DEFINER — it reads every role''s rows on an admin''s behalf';
-  END IF;
-
-  IF v_prov <> 's' THEN
-    RAISE EXCEPTION 'get_admin_dashboard is not STABLE';
-  END IF;
-
-  IF v_config IS NULL OR NOT (v_config @> ARRAY['search_path=""']) THEN
-    RAISE EXCEPTION 'get_admin_dashboard does not pin an empty search_path';
-  END IF;
-
-  -- --- (b) The flag the later replacement dropped, emitted again. ----------
-  IF position('''missing_invoice_customer''' IN v_src) = 0 THEN
-    RAISE EXCEPTION 'get_admin_dashboard does not emit missing_invoice_customer';
-  END IF;
-
-  -- --- (c) And the candidate filter asks the same question. ----------------
-  -- Two occurrences: the one that builds the flag, and the one in the WHERE
-  -- that decides whether the product is in the list at all. One occurrence is
-  -- precisely the half-done state this check exists to refuse — and a merge of
-  -- two bodies is the likeliest way to reach it.
-  v_hits := (length(v_src) - length(replace(v_src, v_needle, ''))) / length(v_needle);
-  IF v_hits < 2 THEN
-    RAISE EXCEPTION
-      'get_admin_dashboard tests invoice_customer_id % time(s) — the emitted flag and the candidate filter both have to ask',
-      v_hits;
-  END IF;
-
-  -- --- (d) The cover queue the other replacement added. --------------------
   -- TWO emitted schedule_slots keys, from TWO reads of the slots table: the
-  -- schedule set's and the cover queue's. One would mean the cover queue's key
-  -- was lost in the merge; one would equally mean it landed by displacing the
-  -- schedule set's, which is the shape a careless copy takes.
+  -- schedule set's and, new here, the substitution queue's. One would mean this
+  -- migration's key never landed; one would equally mean it landed by displacing
+  -- the schedule set's, which is the shape a careless copy of the body takes.
   v_slots := (length(v_src) - length(replace(v_src, '''schedule_slots''', ''))) / length('''schedule_slots''');
   v_joins := (length(v_src) - length(replace(v_src, 'public.schedule_slots', ''))) / length('public.schedule_slots');
 
@@ -691,89 +596,12 @@ BEGIN
       v_slots, v_joins;
   END IF;
 
-  -- --- (e) Every key the client contract parses. ---------------------------
-  -- Derived from the zod schemas the db tests parse live output through, and
-  -- spanning both branches on purpose: this is the list a future replacement
-  -- copying one branch's stale body would come up short against.
-  FOREACH v_key IN ARRAY ARRAY['''users''', '''certification_queue''',
-                               '''attention_products''', '''schedule_products''',
-                               '''cover_requests''',
-                               '''contract_accepted_at''',
-                               '''criminal_record_check_at''',
-                               '''unassigned_count''', '''groups_without_gedu''',
-                               '''empty_groups_without_gedu''',
-                               '''live_offer_count''', '''missing_gedu_fee''',
-                               '''missing_municipality_fee''',
-                               '''missing_invoice_customer''',
-                               '''schedule_slots''', '''timezone''',
-                               '''session_date''', '''offers''',
-                               '''reason''', '''reason_note'''] LOOP
-    IF position(v_key IN v_src) = 0 THEN
-      RAISE EXCEPTION
-        'get_admin_dashboard no longer emits %, which the client parses', v_key;
-    END IF;
-  END LOOP;
-
-  -- --- (f) The clauses no key name would reveal. ---------------------------
-  -- None of these is visible as a key, which is what makes them the easiest
-  -- things in this body to lose to a copy from a stale source: a dropped BASE
-  -- comparison reads as an educator who never signed, a dropped min() as an
-  -- error on the one educator who signed twice, and a dropped seat-offer
-  -- subtraction as a waitlist flag nobody can clear.
-  IF position('split_part(ca.contract_version' IN v_src) = 0 THEN
-    RAISE EXCEPTION 'get_admin_dashboard no longer compares contract BASES';
+  IF has_function_privilege('anon', 'public.get_admin_dashboard()', 'EXECUTE') THEN
+    RAISE EXCEPTION 'get_admin_dashboard is reachable by anon';
   END IF;
 
-  IF position('min(ca.accepted_at)' IN v_src) = 0 THEN
-    RAISE EXCEPTION 'get_admin_dashboard would error on a gedu holding both contract languages';
-  END IF;
-
-  IF position('seat_offer_sent_at' IN v_src) = 0 THEN
-    RAISE EXCEPTION 'get_admin_dashboard lost the live seat-offer subtraction';
-  END IF;
-
-  -- The cover queue drops a request whose date has passed, in the product's own
-  -- timezone, and that comparison is the whole clock the queue has.
-  IF position('r.session_date >= (now() AT TIME ZONE p.timezone)::date' IN v_src) = 0 THEN
-    RAISE EXCEPTION 'get_admin_dashboard no longer bounds the cover queue at today in the product''s zone';
-  END IF;
-
-  -- Word-anchored, so the effective_product_status this body legitimately never
-  -- names is not what trips it. A replacement is precisely where a body copied
-  -- from a source predating the column's removal would reintroduce it, and
-  -- plpgsql would not notice until an admin opened the page.
-  IF v_src ~ '\mproduct_status\M' THEN
-    RAISE EXCEPTION 'get_admin_dashboard names product_status — the column no longer exists';
-  END IF;
-
-  -- --- (g) The comment still carries both branches' sentences. -------------
-  -- Each half is a phrase only that branch's own migration wrote. The sentence
-  -- appended above names missing_invoice_customer itself, so looking for that
-  -- token would pass on a comment that had lost the flag's own sentence.
-  IF v_comment IS NULL
-     OR position('Since 00269' IN v_comment) = 0
-     OR position('schedule_slots' IN v_comment) = 0 THEN
-    RAISE EXCEPTION
-      'get_admin_dashboard''s comment lost one of the two branches it describes';
-  END IF;
-
-  -- --- (h) Reachable by an admin's own session, and by nobody's anon one. ---
-  IF NOT has_function_privilege('authenticated', v_sig, 'EXECUTE')
-     OR NOT has_function_privilege('service_role', v_sig, 'EXECUTE') THEN
-    RAISE EXCEPTION 'get_admin_dashboard lost a grant it needs';
-  END IF;
-
-  IF has_function_privilege('anon', v_sig, 'EXECUTE') THEN
-    RAISE EXCEPTION 'get_admin_dashboard is executable by anon';
-  END IF;
-
-  IF EXISTS (
-    SELECT 1 FROM pg_proc pr
-      JOIN pg_namespace n ON n.oid = pr.pronamespace
-      CROSS JOIN LATERAL aclexplode(pr.proacl) acl
-     WHERE n.nspname = 'public' AND pr.proname = 'get_admin_dashboard'
-       AND acl.grantee = 0
-  ) THEN
-    RAISE EXCEPTION 'get_admin_dashboard is executable by PUBLIC';
+  IF NOT has_function_privilege('authenticated', 'public.get_admin_dashboard()', 'EXECUTE')
+     OR NOT has_function_privilege('service_role', 'public.get_admin_dashboard()', 'EXECUTE') THEN
+    RAISE EXCEPTION 'get_admin_dashboard lost a grant it is called through';
   END IF;
 END $$;

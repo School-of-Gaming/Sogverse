@@ -15,10 +15,10 @@ import {
 import { Field } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { COVER_REASON_NOTE_MAX_LENGTH } from "@/services/session-cover";
+import { SUBSTITUTION_REASON_NOTE_MAX_LENGTH } from "@/services/session-substitution";
 import { cn } from "@/lib/utils";
-import { Constants, type CoverReason } from "@/types";
-import type { SessionCoverRequestDraft } from "./SessionStaffingRegion";
+import { Constants, type SubstitutionReason } from "@/types";
+import type { SessionSubstitutionRequestDraft } from "./SessionStaffingRegion";
 
 /**
  * "I can't make this session" — the whole form, which is two questions long.
@@ -48,7 +48,7 @@ import type { SessionCoverRequestDraft } from "./SessionStaffingRegion";
  * effect was the other way to get that, and it is the cascading-render shape
  * React asks callers not to write.
  */
-export function SessionCoverRequestDialog({
+export function SessionSubstitutionRequestDialog({
   open,
   onOpenChange,
   committing,
@@ -63,11 +63,11 @@ export function SessionCoverRequestDialog({
    * before anybody knew whether it had been stored.
    */
   committing: boolean;
-  onConfirm: (draft: SessionCoverRequestDraft) => void;
+  onConfirm: (draft: SessionSubstitutionRequestDraft) => void;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <CoverRequestForm
+      <SubstitutionRequestForm
         committing={committing}
         onCancel={() => onOpenChange(false)}
         onConfirm={onConfirm}
@@ -82,41 +82,41 @@ export function SessionCoverRequestDialog({
  * Mounted by the primitive only while the dialog is open, which is what makes
  * the fields seed themselves cleanly every time without anything clearing them.
  */
-function CoverRequestForm({
+function SubstitutionRequestForm({
   committing,
   onCancel,
   onConfirm,
 }: {
   committing: boolean;
   onCancel: () => void;
-  onConfirm: (draft: SessionCoverRequestDraft) => void;
+  onConfirm: (draft: SessionSubstitutionRequestDraft) => void;
 }) {
   const t = useTranslations("gedu.sessionFeed");
   const c = useTranslations("common");
   const groupName = useId();
   const noteId = useId();
 
-  const [reason, setReason] = useState<CoverReason>("sick");
+  const [reason, setReason] = useState<SubstitutionReason>("sick");
   const [note, setNote] = useState("");
 
-  const remaining = COVER_REASON_NOTE_MAX_LENGTH - note.length;
+  const remaining = SUBSTITUTION_REASON_NOTE_MAX_LENGTH - note.length;
 
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>{t("coverRequestDialogTitle")}</DialogTitle>
-        <DialogDescription>{t("coverRequestDialogBody")}</DialogDescription>
+        <DialogTitle>{t("substitutionRequestDialogTitle")}</DialogTitle>
+        <DialogDescription>{t("substitutionRequestDialogBody")}</DialogDescription>
       </DialogHeader>
 
       <div className="mt-4 space-y-4">
         <div className="flex flex-col gap-2.5">
-          <Label id={`${groupName}-label`}>{t("coverReasonLabel")}</Label>
+          <Label id={`${groupName}-label`}>{t("substitutionReasonLabel")}</Label>
           <div
             role="radiogroup"
             aria-labelledby={`${groupName}-label`}
             className="flex flex-col gap-2"
           >
-            {COVER_REASONS.map((value) => {
+            {SUBSTITUTION_REASONS.map((value) => {
               const selected = reason === value;
               return (
                 <label
@@ -138,8 +138,8 @@ function CoverRequestForm({
                   />
                   <span className="min-w-0 flex-1 font-medium">
                     {value === "sick"
-                      ? t("coverReasonSick")
-                      : t("coverReasonOther")}
+                      ? t("substitutionReasonSick")
+                      : t("substitutionReasonOther")}
                   </span>
                 </label>
               );
@@ -148,17 +148,17 @@ function CoverRequestForm({
         </div>
 
         <Field
-          label={t("coverNoteLabel")}
+          label={t("substitutionNoteLabel")}
           htmlFor={noteId}
           optional
-          hint={t("coverNoteRemaining", { count: Math.max(remaining, 0) })}
+          hint={t("substitutionNoteRemaining", { count: Math.max(remaining, 0) })}
         >
           <Textarea
             id={noteId}
             rows={3}
-            maxLength={COVER_REASON_NOTE_MAX_LENGTH}
+            maxLength={SUBSTITUTION_REASON_NOTE_MAX_LENGTH}
             disabled={committing}
-            placeholder={t("coverNotePlaceholder")}
+            placeholder={t("substitutionNotePlaceholder")}
             value={note}
             onChange={(event) => setNote(event.target.value)}
           />
@@ -183,7 +183,7 @@ function CoverRequestForm({
           {committing && (
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
           )}
-          {t("coverRequestConfirm")}
+          {t("substitutionRequestConfirm")}
         </Button>
       </DialogFooter>
     </DialogContent>
@@ -197,4 +197,4 @@ function CoverRequestForm({
  * because it is what the handbook's same-day rule is written for and what most
  * of these are.
  */
-const COVER_REASONS = Constants.public.Enums.cover_reason;
+const SUBSTITUTION_REASONS = Constants.public.Enums.substitution_reason;

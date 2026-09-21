@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   geduAssignmentKey,
-  geduCoverKey,
+  geduSubstitutionKey,
   rollUpGeduAssignments,
-  rollUpGeduCovers,
+  rollUpGeduSubstitutions,
   type GeduAssignmentRow,
 } from "@/lib/gedu-assignment-rollup";
 // The roll-up's output is what the card asks its run-state questions of, so the
@@ -46,9 +46,9 @@ function row(over: {
     },
     groupId: `${over.id}-group`,
     // A standing assignment: the rollup this suite is about is the recurring
-    // card's, and a live cover is its own small card keyed to one date.
+    // card's, and a live substitution is its own small card keyed to one date.
     kind: "assignment",
-    coveredDate: null,
+    substitutionDate: null,
     groupCount: 2,
     participantCount: 14,
     groupName: `${over.name} A`,
@@ -420,11 +420,11 @@ describe("rollUpGeduAssignments", () => {
   });
 
   /**
-   * **The key moved from product to (product, group), and a cover is why.**
+   * **The key moved from product to (product, group), and a substitution is why.**
    *
    * A gedu holds at most one assignment per product, which is what made a
    * product id look like a key. It stops being one the moment the same gedu can
-   * also cover a *sibling* group of that product: under a product key the two
+   * also substitution a *sibling* group of that product: under a product key the two
    * seats share a badge count, a workspace link and a voice room, and whichever
    * the caller wrote last wins.
    */
@@ -479,11 +479,11 @@ describe("rollUpGeduAssignments", () => {
     });
   });
 
-  it("ignores cover rows — a cover is one afternoon, not a run", () => {
+  it("ignores substitution rows — a substitution is one afternoon, not a run", () => {
     const summaries = rollUp(
       [
         row({ id: "p1", name: "Club" }),
-        { ...row({ id: "p2", name: "Covered Club" }), kind: "cover" as const, coveredDate: "2026-02-16" },
+        { ...row({ id: "p2", name: "Substituted Club" }), kind: "substitution" as const, substitutionDate: "2026-02-16" },
       ],
       now,
     );
@@ -493,23 +493,23 @@ describe("rollUpGeduAssignments", () => {
 
 /**
  * ============================================================================
- * The cover roll-up
+ * The substitution roll-up
  * ============================================================================
  *
- * A cover is one dated afternoon, so what has to hold is the opposite of the
+ * A substitution is one dated afternoon, so what has to hold is the opposite of the
  * assignment roll-up's contract: no schedule walk, no run state, one card per
- * covered date, and a workspace link that names the group — because a sub has
+ * substitution date, and a workspace link that names the group — because a sub has
  * no assignment row for one to be resolved from.
  */
-describe("rollUpGeduCovers", () => {
-  // No clock: the database decides how long a cover card lasts (the access
+describe("rollUpGeduSubstitutions", () => {
+  // No clock: the database decides how long a substitution card lasts (the access
   // window), so this roll-up takes no `now` and there is none to pin here.
 
-  function coverRow(over: {
+  function substitutionRow(over: {
     id: string;
     name: string;
     groupId?: string;
-    coveredDate: string;
+    substitutionDate: string;
     isRemote?: boolean;
     siteName?: string | null;
     weekday?: number;
@@ -523,16 +523,16 @@ describe("rollUpGeduCovers", () => {
         siteName: over.siteName ?? null,
       }),
       groupId: over.groupId ?? `${over.id}-group`,
-      kind: "cover",
-      coveredDate: over.coveredDate,
+      kind: "substitution",
+      substitutionDate: over.substitutionDate,
     };
   }
 
-  function rollUpCovers(
+  function rollUpSubstitutions(
     rows: GeduAssignmentRow[],
-    extra: Partial<Parameters<typeof rollUpGeduCovers>[0]> = {},
+    extra: Partial<Parameters<typeof rollUpGeduSubstitutions>[0]> = {},
   ) {
-    return rollUpGeduCovers({
+    return rollUpGeduSubstitutions({
       rows,
       locale: "en",
       hrefByAssignment: Object.fromEntries(
@@ -545,43 +545,43 @@ describe("rollUpGeduCovers", () => {
     });
   }
 
-  it("emits one card per covered date and skips assignment rows", () => {
-    const covers = rollUpCovers([
+  it("emits one card per substitution date and skips assignment rows", () => {
+    const substitutions = rollUpSubstitutions([
       row({ id: "mine", name: "My Club" }),
       // 16 Feb 2026 is a Monday, which is the weekday `row` slots by default.
-      coverRow({ id: "p1", name: "Covered Club", coveredDate: "2026-02-16" }),
-      coverRow({
+      substitutionRow({ id: "p1", name: "Substituted Club", substitutionDate: "2026-02-16" }),
+      substitutionRow({
         id: "p1",
-        name: "Covered Club",
+        name: "Substituted Club",
         groupId: "p1-group-b",
-        coveredDate: "2026-02-23",
+        substitutionDate: "2026-02-23",
       }),
     ]);
-    expect(covers).toHaveLength(2);
-    expect(covers.map((c) => c.coveredDate)).toEqual([
+    expect(substitutions).toHaveLength(2);
+    expect(substitutions.map((c) => c.substitutionDate)).toEqual([
       "2026-02-16",
       "2026-02-23",
     ]);
   });
 
-  it("resolves the covered session's instants from the date and the slots", () => {
-    const [cover] = rollUpCovers([
-      coverRow({ id: "p1", name: "Club", coveredDate: "2026-02-16" }),
+  it("resolves the substituted session's instants from the date and the slots", () => {
+    const [substitution] = rollUpSubstitutions([
+      substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-16" }),
     ]);
     // 16:30 Helsinki on 16 Feb is 14:30 UTC; the slot runs 90 minutes.
-    expect(cover.startsAt?.toISOString()).toBe("2026-02-16T14:30:00.000Z");
-    expect(cover.endsAt?.toISOString()).toBe("2026-02-16T16:00:00.000Z");
+    expect(substitution.startsAt?.toISOString()).toBe("2026-02-16T14:30:00.000Z");
+    expect(substitution.endsAt?.toISOString()).toBe("2026-02-16T16:00:00.000Z");
   });
 
-  it("opens the workspace 48 hours before the covered session's own start", () => {
-    // Not 48 hours before the covered DAY: the card has to name the instant the
+  it("opens the workspace 48 hours before the substituted session's own start", () => {
+    // Not 48 hours before the substituted DAY: the card has to name the instant the
     // database's own gates open, and those count back from the session's start.
-    const [cover] = rollUpCovers([
-      coverRow({ id: "p1", name: "Club", coveredDate: "2026-02-16" }),
+    const [substitution] = rollUpSubstitutions([
+      substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-16" }),
     ]);
-    expect(cover.accessOpensAt?.toISOString()).toBe("2026-02-14T14:30:00.000Z");
+    expect(substitution.accessOpensAt?.toISOString()).toBe("2026-02-14T14:30:00.000Z");
     expect(
-      cover.startsAt!.getTime() - cover.accessOpensAt!.getTime(),
+      substitution.startsAt!.getTime() - substitution.accessOpensAt!.getTime(),
     ).toBe(48 * 60 * 60 * 1000);
   });
 
@@ -589,81 +589,81 @@ describe("rollUpGeduCovers", () => {
     // Nothing to count back from, and the database falls OPEN on one rather
     // than shut — a sub must not be locked out of a session they ran and still
     // owe a report for. `null` is what the card reads as "not locked".
-    const [cover] = rollUpCovers([
-      coverRow({ id: "p1", name: "Club", coveredDate: "2026-02-17" }),
+    const [substitution] = rollUpSubstitutions([
+      substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-17" }),
     ]);
-    expect(cover.accessOpensAt).toBeNull();
+    expect(substitution.accessOpensAt).toBeNull();
   });
 
   it("carries a date the schedule no longer projects, with no instants", () => {
     // A Tuesday, on a club whose only slot is a Monday — an orphaned request,
     // which is history rather than a fault and must not take the card away.
-    const [cover] = rollUpCovers([
-      coverRow({ id: "p1", name: "Club", coveredDate: "2026-02-17" }),
+    const [substitution] = rollUpSubstitutions([
+      substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-17" }),
     ]);
-    expect(cover.coveredDate).toBe("2026-02-17");
-    expect(cover.startsAt).toBeNull();
-    expect(cover.endsAt).toBeNull();
+    expect(substitution.substitutionDate).toBe("2026-02-17");
+    expect(substitution.startsAt).toBeNull();
+    expect(substitution.endsAt).toBeNull();
   });
 
   it("puts the group on the workspace link", () => {
-    const [cover] = rollUpCovers([
-      coverRow({
+    const [substitution] = rollUpSubstitutions([
+      substitutionRow({
         id: "p1",
         name: "Club",
         groupId: "sibling-group",
-        coveredDate: "2026-02-16",
+        substitutionDate: "2026-02-16",
       }),
     ]);
-    expect(cover.openHref).toEqual({
+    expect(substitution.openHref).toEqual({
       pathname: "/gedu/clubs/[id]",
       params: { id: "p1" },
       query: { groupId: "sibling-group" },
     });
   });
 
-  it("keys the attention count by (group, covered date)", () => {
-    const covers = rollUpCovers(
+  it("keys the attention count by (group, substitution date)", () => {
+    const substitutions = rollUpSubstitutions(
       [
-        coverRow({ id: "p1", name: "Club", coveredDate: "2026-02-16" }),
-        coverRow({ id: "p1", name: "Club", coveredDate: "2026-02-23" }),
+        substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-16" }),
+        substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-23" }),
       ],
       {
-        attentionByCover: {
-          [geduCoverKey("p1-group", "2026-02-16")]: 1,
+        attentionBySubstitution: {
+          [geduSubstitutionKey("p1-group", "2026-02-16")]: 1,
         },
       },
     );
-    const byDate = new Map(covers.map((c) => [c.coveredDate, c.attentionCount]));
+    const byDate = new Map(substitutions.map((c) => [c.substitutionDate, c.attentionCount]));
     expect(byDate.get("2026-02-16")).toBe(1);
     expect(byDate.get("2026-02-23")).toBe(0);
   });
 
   it("sorts soonest first and sinks an orphaned date to the foot", () => {
-    const covers = rollUpCovers([
-      coverRow({ id: "c", name: "Later", coveredDate: "2026-02-23" }),
-      coverRow({ id: "b", name: "Orphan", coveredDate: "2026-02-17" }),
-      coverRow({ id: "a", name: "Sooner", coveredDate: "2026-02-16" }),
+    const substitutions = rollUpSubstitutions([
+      substitutionRow({ id: "c", name: "Later", substitutionDate: "2026-02-23" }),
+      substitutionRow({ id: "b", name: "Orphan", substitutionDate: "2026-02-17" }),
+      substitutionRow({ id: "a", name: "Sooner", substitutionDate: "2026-02-16" }),
     ]);
-    expect(covers.map((c) => c.productName)).toEqual([
+    expect(substitutions.map((c) => c.productName)).toEqual([
       "Sooner",
       "Later",
       "Orphan",
     ]);
   });
 
-  it("gives an in-person cover its site and no room", () => {
-    const [cover] = rollUpCovers([
-      coverRow({
+  it("gives an in-person substitution its site and no room", () => {
+    const [substitution] = rollUpSubstitutions([
+      substitutionRow({
         id: "p1",
         name: "Camp",
-        coveredDate: "2026-02-16",
+        substitutionDate: "2026-02-16",
         isRemote: false,
         siteName: "Sello Library, Espoo",
       }),
     ]);
-    expect(cover.hasVoiceRoom).toBe(false);
-    expect(cover.siteName).toBe("Sello Library, Espoo");
-    expect(cover.voiceHref).toBe(INERT_HREF);
+    expect(substitution.hasVoiceRoom).toBe(false);
+    expect(substitution.siteName).toBe("Sello Library, Espoo");
+    expect(substitution.voiceHref).toBe(INERT_HREF);
   });
 });

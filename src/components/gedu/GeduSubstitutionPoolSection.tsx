@@ -4,17 +4,17 @@ import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
-import { buildCoverPoolRows } from "@/lib/gedu-cover-pool";
+import { buildSubstitutionPoolRows } from "@/lib/gedu-substitution-pool";
 import {
-  sessionCoverKeys,
-  useOfferSessionCover,
-  useWithdrawSessionCoverOffer,
-  type OpenCoverRequest,
-} from "@/services/session-cover";
-import { GeduCoverPoolSectionView } from "./GeduCoverPoolSectionView";
+  sessionSubstitutionKeys,
+  useOfferSessionSubstitution,
+  useWithdrawSessionSubstitutionOffer,
+  type OpenSubstitutionRequest,
+} from "@/services/session-substitution";
+import { GeduSubstitutionPoolSectionView } from "./GeduSubstitutionPoolSectionView";
 
 /**
- * The **Sessions needing cover** section: the pool's two writes, over rows the
+ * The **Sessions needing a substitute** section: the pool's two writes, over rows the
  * page has already read.
  *
  * **The read is the page's, not this component's**, and that is what lets the
@@ -36,7 +36,7 @@ import { GeduCoverPoolSectionView } from "./GeduCoverPoolSectionView";
  * receipt, and the one document this section draws from is read again here
  * before the flag drops.
  */
-export function GeduCoverPoolSection({
+export function GeduSubstitutionPoolSection({
   requests,
 }: {
   /**
@@ -44,9 +44,9 @@ export function GeduCoverPoolSection({
    * list is the all-clear line; "no answer yet" is not a value this component
    * can be in, because the page renders none of it until there is one.
    */
-  requests: readonly OpenCoverRequest[];
+  requests: readonly OpenSubstitutionRequest[];
 }) {
-  const t = useTranslations("gedu.cover");
+  const t = useTranslations("gedu.substitution");
   const locale = resolveLocale(useLocale());
   const [committingRequestId, setCommittingRequestId] = useState<string | null>(
     null,
@@ -56,12 +56,12 @@ export function GeduCoverPoolSection({
     message: string;
   } | null>(null);
 
-  const offerCover = useOfferSessionCover();
-  const withdrawOffer = useWithdrawSessionCoverOffer();
+  const offerSubstitution = useOfferSessionSubstitution();
+  const withdrawOffer = useWithdrawSessionSubstitutionOffer();
   const queryClient = useQueryClient();
 
   const rows = useMemo(
-    () => buildCoverPoolRows(requests, locale),
+    () => buildSubstitutionPoolRows(requests, locale),
     [requests, locale],
   );
 
@@ -73,7 +73,7 @@ export function GeduCoverPoolSection({
       // The half the mutation does not supply: this section's own read, waited
       // on, so the row is already redrawn in its new state by the time every
       // button on the section comes back.
-      await queryClient.invalidateQueries({ queryKey: sessionCoverKeys.all });
+      await queryClient.invalidateQueries({ queryKey: sessionSubstitutionKeys.all });
     } catch {
       // The row is still in the pool and the gedu may try again, so the refusal
       // is named on it.
@@ -84,12 +84,12 @@ export function GeduCoverPoolSection({
   };
 
   return (
-    <GeduCoverPoolSectionView
+    <GeduSubstitutionPoolSectionView
       rows={rows}
       committingRequestId={committingRequestId}
       error={error}
       onOffer={(requestId) =>
-        void run(requestId, () => offerCover.mutateAsync({ requestId }))
+        void run(requestId, () => offerSubstitution.mutateAsync({ requestId }))
       }
       onWithdraw={(requestId) =>
         void run(requestId, () => withdrawOffer.mutateAsync({ requestId }))

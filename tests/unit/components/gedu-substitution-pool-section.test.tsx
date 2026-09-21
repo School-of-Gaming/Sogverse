@@ -3,13 +3,13 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
-import { GeduCoverPoolSection } from "@/components/gedu/GeduCoverPoolSection";
+import { GeduSubstitutionPoolSection } from "@/components/gedu/GeduSubstitutionPoolSection";
 import { TimezoneProvider } from "@/providers/timezone-provider";
-import type { OpenCoverRequest } from "@/services/session-cover";
+import type { OpenSubstitutionRequest } from "@/services/session-substitution";
 
 /**
  * ============================================================================
- * Sessions needing cover: what the section is like once a write lands
+ * Sessions needing a substitute: what the section is like once a write lands
  * ============================================================================
  *
  * One `committingRequestId` holds **every** button on the section, because the
@@ -38,24 +38,24 @@ function armOffer(): void {
 
 /**
  * The two writes, stubbed; the key factory and the contracts are kept real —
- * the section awaits an invalidation on `sessionCoverKeys.all` after every
+ * the section awaits an invalidation on `sessionSubstitutionKeys.all` after every
  * write, and a stubbed key would let a rename through.
  */
-vi.mock("@/services/session-cover", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/services/session-cover")>()),
-  useOfferSessionCover: () => ({
+vi.mock("@/services/session-substitution", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/session-substitution")>()),
+  useOfferSessionSubstitution: () => ({
     mutateAsync: () => offerDeferred.promise ?? Promise.resolve(),
   }),
-  useWithdrawSessionCoverOffer: () => ({
+  useWithdrawSessionSubstitutionOffer: () => ({
     mutateAsync: () => offerDeferred.promise ?? Promise.resolve(),
   }),
 }));
 
-const copy = messages.gedu.cover;
+const copy = messages.gedu.substitution;
 const TIME_ZONE = "Europe/Helsinki";
 
 /** One open request, enough of a product for the row to draw itself. */
-function request(id: string, name: string): OpenCoverRequest {
+function request(id: string, name: string): OpenSubstitutionRequest {
   return {
     request_id: id,
     group_id: `group-${id}`,
@@ -82,12 +82,12 @@ function request(id: string, name: string): OpenCoverRequest {
   };
 }
 
-function renderSection(requests: readonly OpenCoverRequest[]) {
+function renderSection(requests: readonly OpenSubstitutionRequest[]) {
   return render(
     <QueryClientProvider client={new QueryClient()}>
       <NextIntlClientProvider locale="en" messages={messages}>
         <TimezoneProvider initialTimezone={TIME_ZONE}>
-          <GeduCoverPoolSection requests={requests} />
+          <GeduSubstitutionPoolSection requests={requests} />
         </TimezoneProvider>
       </NextIntlClientProvider>
     </QueryClientProvider>,
@@ -102,7 +102,7 @@ function isDisabled(element: HTMLElement): boolean {
   return element.hasAttribute("disabled");
 }
 
-describe("the cover pool section", () => {
+describe("the substitution pool section", () => {
   it("gives every row back once the offer has landed", async () => {
     armOffer();
     renderSection([request("a", "Redstone Club"), request("b", "Builders")]);
@@ -141,7 +141,7 @@ describe("the cover pool section", () => {
     for (const button of offerButtons()) expect(isDisabled(button)).toBe(false);
   });
 
-  it("says nothing needs cover when the answer is an empty pool", () => {
+  it("says nothing needs a substitute when the answer is an empty pool", () => {
     renderSection([]);
     expect(screen.getByText(copy.poolAllClear)).toBeTruthy();
   });

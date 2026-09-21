@@ -45,7 +45,7 @@ const SENTINEL_ROOT_MARGIN = "400px 0px";
  * - `expected` — already due at the session being staffed. Seating them as
  *   somebody else's sub would collapse two seats onto one person and make "who
  *   did which job" unanswerable.
- * - `absent` — the Gedu being covered. Nobody subs for themselves.
+ * - `absent` — the Gedu being substituted for. Nobody subs for themselves.
  */
 export type GeduPickerUnavailability = "assigned" | "expected" | "absent";
 

@@ -17,7 +17,7 @@ export const assignmentKeys = {
    * of it**.
    *
    * The group id is part of the key rather than a detail of the call because
-   * the answer genuinely differs by it: a gedu covering a sibling group of a
+   * the answer genuinely differs by it: a gedu substituting a sibling group of a
    * product they already teach asks the same RPC for a different workspace, and
    * two documents sharing one cache entry would hand whichever arrived first to
    * whichever page asked second. `null` is the ordinary case — no group named,

@@ -81,11 +81,11 @@ interface SessionFeedEntryBase {
    *
    * **On the base, so every kind carries it**, including a `no_record` gap: a
    * request is filed against a (group, date) and a date the schedule projects
-   * with nothing stored on it is as coverable as any other. An entry whose
+   * with nothing stored on it is as substitutable as any other. An entry whose
    * group has no assignments and no requests carries an empty staffing rather
    * than none, so no renderer has to decide what a missing one would mean.
    *
-   * It is derived from the group's assignments and its cover requests, not
+   * It is derived from the group's assignments and its substitution requests, not
    * stored anywhere: the feed's builder attaches it per date from the two lists
    * the document carries. A surface with no signed-in gedu — the admin shell,
    * the preview scenes — gets honest `false`/`null` viewer fields rather than a

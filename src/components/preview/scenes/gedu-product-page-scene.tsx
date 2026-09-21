@@ -23,7 +23,7 @@ import { ATTACHABLE_GAMER_PHOTO_CONSENT_TYPES } from "@/lib/constants/gamer-phot
 import { productLocalDate } from "@/lib/session-occurrence";
 import {
   deriveSessionStaffing,
-  type CoverRequestInput,
+  type SubstitutionRequestInput,
 } from "@/lib/session-staffing";
 import { useNow } from "@/providers";
 import { resolveGamerPhotoConsents } from "@/services/gamer-photo-consents";
@@ -191,15 +191,15 @@ export function GeduProductPageScene({
     Record<string, readonly GamerCreation[]>
   >(() => fixture.memberFlair.creations);
   /**
-   * The group's cover requests as stored rows, live against local state.
+   * The group's substitution requests as stored rows, live against local state.
    *
    * Held as the **rows** rather than as the finished staffing, because that is
    * what filing an absence actually changes: the derivation below runs again on
    * the new list, and the card's action turning into a status line is that
    * derivation rather than a flag this scene flipped.
    */
-  const [covers, setCovers] = useState<readonly CoverRequestInput[]>(
-    () => fixture.coverRequests,
+  const [substitutions, setSubstitutions] = useState<readonly SubstitutionRequestInput[]>(
+    () => fixture.substitutionRequests,
   );
 
   /**
@@ -216,12 +216,12 @@ export function GeduProductPageScene({
         ...entry,
         staffing: deriveSessionStaffing({
           gedus: fixture.staffingGedus,
-          requests: covers,
+          requests: substitutions,
           sessionDate: productLocalDate(entry.startsAt, fixture.sourceTimeZone),
           viewerId: fixture.viewerId,
         }),
       })),
-    [entries, covers, fixture],
+    [entries, substitutions, fixture],
   );
 
   /**
@@ -424,32 +424,32 @@ export function GeduProductPageScene({
    * It adds a row to the same list the fixture seeded, and the staffing above
    * is derived again from it — so the card's action really does turn into a
    * status line with a Withdraw beside it, and the staffing line really does
-   * grow a "Cover needed" entry, both through the derivation the live page
+   * grow a "Substitute needed" entry, both through the derivation the live page
    * runs. Nothing is stored; a reload puts the scene back.
    *
    * The count is `null`, not a number: a request nobody has offered on yet and
    * a request whose count the reader is not entitled to are different facts,
    * and the seeded one already shows what an offered request reads like.
    */
-  const handleRequestCover = (entry: SessionFeedEntry) => {
+  const handleRequestSubstitution = (entry: SessionFeedEntry) => {
     const sessionDate = productLocalDate(entry.startsAt, fixture.sourceTimeZone);
-    setCovers((prev) => [
+    setSubstitutions((prev) => [
       ...prev,
       {
-        id: `scene-cover-${sessionDate}`,
+        id: `scene-substitution-${sessionDate}`,
         sessionDate,
         requestedBy: { id: fixture.viewerId, firstName: VIEWER_FIRST_NAME },
         role: "primary",
         status: "open",
-        coveredBy: null,
+        substituteId: null,
         offerCount: null,
       },
     ]);
   };
 
   /** Take one back — withdrawn rather than removed, as the database does it. */
-  const handleWithdrawCoverRequest = (requestId: string) => {
-    setCovers((prev) =>
+  const handleWithdrawSubstitutionRequest = (requestId: string) => {
+    setSubstitutions((prev) =>
       prev.map((request) =>
         request.id === requestId
           ? { ...request, status: "withdrawn" as const }
@@ -657,8 +657,8 @@ export function GeduProductPageScene({
       // the shell a gedu meets, so it supplies the two callbacks and no
       // staffing editor. No editor appears anywhere on these scenes as a
       // result, which is itself the thing to check.
-      onRequestCover={handleRequestCover}
-      onWithdrawCoverRequest={handleWithdrawCoverRequest}
+      onRequestSubstitution={handleRequestSubstitution}
+      onWithdrawSubstitutionRequest={handleWithdrawSubstitutionRequest}
       onSaveGameUsername={handleSaveGameUsername}
       gameStatuses={gameStatuses}
       // Every scenario has one, because the page requires one. Passed whole at

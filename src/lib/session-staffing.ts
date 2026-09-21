@@ -1,10 +1,10 @@
 /**
  * Who is expected to run one session, derived from the group's assignments and
- * that date's cover requests.
+ * that date's substitution requests.
  *
  * **The rule is one sentence, and it is the whole module:** *a gedu is expected
  * at (group, date) iff they hold no non-withdrawn request for it, and they are
- * either assigned to the group or hold a `covered` request for it.* The SQL says
+ * either assigned to the group or hold a `substituted` request for it.* The SQL says
  * the same thing in a predicate; this is its TypeScript twin, and the two are
  * meant to be read against each other — a behaviour the DB suite tests and this
  * module does not is a divergence, not a simplification.
@@ -16,7 +16,7 @@
  *   half, whatever the second half says about them — so A → B → C leaves only C,
  *   and B's request going open again leaves the seat empty rather than handing it
  *   back to anybody.
- * - **A cleared cover.** The request is `open`, so its sub holds no covered
+ * - **A cleared substitution.** The request is `open`, so its sub holds no substituted
  *   request and its requester still holds a live one: nobody is expected for that
  *   seat, which is exactly what puts the session back in the queue.
  * - **A withdrawn request.** It is absent from the derivation entirely, so the
@@ -35,7 +35,7 @@
  * onto them — so nothing here depends on the generated database types.
  */
 
-/** The pay class an assignment or a cover carries. */
+/** The pay class an assignment or a substitution carries. */
 export type GeduAssignmentRole = "primary" | "assistant";
 
 /** A gedu assigned to the group, as the feeds list them. */
@@ -52,21 +52,21 @@ export interface StaffingPerson {
 }
 
 /**
- * A stored cover request, as the feeds' `covers` list carries it.
+ * A stored substitution request, as the feeds' `substitutions` list carries it.
  *
  * The list is the whole group's, unbounded, so `sessionDate` is what scopes a
  * row to the session being derived; a caller hands the same array to every entry
  * and this module picks out the date it was asked about.
  */
-export interface CoverRequestInput {
+export interface SubstitutionRequestInput {
   id: string;
   /** Product-local `YYYY-MM-DD`, the session's own key. */
   sessionDate: string;
   requestedBy: StaffingPerson;
   /** The role the absent gedu held when they filed — not their sub's. */
   role: GeduAssignmentRole;
-  status: "open" | "covered" | "withdrawn";
-  coveredBy: StaffingPerson | null;
+  status: "open" | "substituted" | "withdrawn";
+  substituteId: StaffingPerson | null;
   /**
    * How many gedus have offered, where the reader is allowed to know: the
    * requester on their own request, and an admin on any. `null` or absent is
@@ -91,16 +91,16 @@ export interface ExpectedGedu {
 }
 
 /** A withdrawn request is history; only these two states render. */
-export type LiveCoverRequestStatus = "open" | "covered";
+export type LiveSubstitutionRequestStatus = "open" | "substituted";
 
 /** One live request on this date, in the shape a card renders it. */
-export interface CoverRequestState {
+export interface SubstitutionRequestState {
   id: string;
-  status: LiveCoverRequestStatus;
+  status: LiveSubstitutionRequestStatus;
   requestedBy: StaffingPerson;
   role: GeduAssignmentRole;
-  /** The sub, on a `covered` request; `null` while it is open. */
-  coveredBy: StaffingPerson | null;
+  /** The sub, on a `substituted` request; `null` while it is open. */
+  substituteId: StaffingPerson | null;
   /** Offers waiting, or `null` where the reader is not told. */
   offerCount: number | null;
   /** Whether the viewer filed this one — the Withdraw action's gate. */
@@ -111,7 +111,7 @@ export interface SessionStaffing {
   /** Primaries first, then assistants; stable within each. */
   expected: ExpectedGedu[];
   /** Every non-withdrawn request on this date, in the same stable order. */
-  requests: CoverRequestState[];
+  requests: SubstitutionRequestState[];
   /**
    * Whether the viewer is one of `expected` — what gates the "I can't make this
    * session" action. `false` with no viewer, which is the honest answer for the
@@ -123,7 +123,7 @@ export interface SessionStaffing {
    * line and the Withdraw action; a viewer holding one can never also be
    * expected, so the two fields are never both set.
    */
-  viewerRequest: CoverRequestState | null;
+  viewerRequest: SubstitutionRequestState | null;
 }
 
 /**
@@ -145,8 +145,8 @@ export const NO_SESSION_STAFFING: Readonly<SessionStaffing> = Object.freeze({
 export interface SessionStaffingArgs {
   /** The group's assignments, with roles, in any order. */
   gedus: readonly StaffingAssignment[];
-  /** The group's cover requests, any date, any status, in any order. */
-  requests: readonly CoverRequestInput[];
+  /** The group's substitution requests, any date, any status, in any order. */
+  requests: readonly SubstitutionRequestInput[];
   /** Product-local `YYYY-MM-DD` — the session being staffed. */
   sessionDate: string;
   /** The signed-in gedu, where there is one. */
@@ -168,7 +168,7 @@ export function deriveSessionStaffing(
   );
 
   // The first half of the sentence, and it is applied to everybody: an absent
-  // gedu is absent whether their seat came from an assignment or from a cover,
+  // gedu is absent whether their seat came from an assignment or from a substitution,
   // which is what makes the chain fall out rather than needing a walk.
   const absent = new Set(live.map((request) => request.requestedBy.id));
 
@@ -182,13 +182,13 @@ export function deriveSessionStaffing(
     });
   }
   for (const request of live) {
-    const sub = request.status === "covered" ? request.coveredBy : null;
+    const sub = request.status === "substituted" ? request.substituteId : null;
     if (sub === null || absent.has(sub.id)) continue;
     // Assignments were laid down first and are not overwritten: where a gedu is
-    // both assigned and covering somebody on the same group — only an admin edit
+    // both assigned and substituting somebody on the same group — only an admin edit
     // produces it — the assignment supplies the role, the same way the SQL
-    // predicate resolves it. Two covers by one person cannot arise (the *may
-    // cover* guard refuses anyone already expected), and if one ever did, the
+    // predicate resolves it. Two substitutions by one person cannot arise (the *may
+    // substitution* guard refuses anyone already expected), and if one ever did, the
     // first is kept rather than the seat being doubled.
     if (expected.has(sub.id)) continue;
     expected.set(sub.id, {
@@ -222,8 +222,8 @@ export function deriveSessionStaffing(
  * Exported rather than re-derived there so the rule has one home, which is what
  * the assignment-summaries RPC's comment asks of its TypeScript twin.
  */
-export function holdsLiveCoverRequest(
-  requests: readonly CoverRequestInput[],
+export function holdsLiveSubstitutionRequest(
+  requests: readonly SubstitutionRequestInput[],
   sessionDate: string,
   geduId: string,
 ): boolean {
@@ -236,18 +236,18 @@ export function holdsLiveCoverRequest(
 }
 
 function toRequestState(
-  request: CoverRequestInput,
+  request: SubstitutionRequestInput,
   viewerId: string | null,
-): CoverRequestState {
-  // `covered` is the only status that names a sub, so an open request renders
-  // `null` even if a stale `covered_by` ever rode along on the row.
-  const covered = request.status === "covered";
+): SubstitutionRequestState {
+  // `substituted` is the only status that names a sub, so an open request renders
+  // `null` even if a stale `substitute_id` ever rode along on the row.
+  const substituted = request.status === "substituted";
   return {
     id: request.id,
-    status: covered ? "covered" : "open",
+    status: substituted ? "substituted" : "open",
     requestedBy: request.requestedBy,
     role: request.role,
-    coveredBy: covered ? request.coveredBy : null,
+    substituteId: substituted ? request.substituteId : null,
     offerCount: request.offerCount ?? null,
     isViewers:
       viewerId !== null
@@ -276,8 +276,8 @@ function compareExpected(a: ExpectedGedu, b: ExpectedGedu): number {
 
 /** The same key, read off the absent gedu each request is filed for. */
 function compareRequestStates(
-  a: CoverRequestState,
-  b: CoverRequestState,
+  a: SubstitutionRequestState,
+  b: SubstitutionRequestState,
 ): number {
   return (
     compareRoles(a.role, b.role) ||

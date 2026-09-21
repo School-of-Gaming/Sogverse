@@ -1,13 +1,13 @@
 import { ROUTES } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { formatDate, formatDateOnly } from "@/lib/utils";
-import type { CoverReason, GeduAssignmentRole, ProductType } from "@/types";
+import type { SubstitutionReason, GeduAssignmentRole, ProductType } from "@/types";
 import type {
   AdminDashboardData,
   ComingUpCohort,
   ComingUpDay,
   ComingUpItem,
-  CoverRequest,
+  SubstitutionRequest,
   ProductAttention,
   ProductIssue,
   ProductIssueFact,
@@ -131,9 +131,9 @@ const PERSON_IDS = {
   iidaLehtonen: "e979b9eb-39a2-4b71-9aa1-3d991969dadc",
   onniRantanen: "66076d29-cdcb-4337-aa06-6cbb8e1b39de",
   helmiKoskinen: "4889fea4-0602-438f-adfe-2cef72d485ff",
-  // The cover queue's people — three gedus who cannot make a session and three
+  // The substitution queue's people — three gedus who cannot make a session and three
   // who have offered to take one. Kept distinct from the five above on purpose:
-  // an account waiting on certification cannot hold a cover, so a fixture that
+  // an account waiting on certification cannot hold a substitution, so a fixture that
   // reused one would be showing a state the database refuses.
   miloKorhonen: "dc5d2ed1-5498-450a-8db1-dad9701d10cd",
   siiriLaine: "174ab045-c53d-45e0-86e2-7281d1a7fe24",
@@ -861,11 +861,11 @@ function uncertifiedGedus(locale: SupportedLocale): UncertifiedGedu[] {
 }
 
 // ---------------------------------------------------------------------------
-// The cover queue
+// The substitution queue
 // ---------------------------------------------------------------------------
 
 /**
- * Three sessions somebody cannot make, covering every state a row can be in:
+ * Three sessions somebody cannot make, substituting every state a row can be in:
  * offers waiting on a decision, and nobody having volunteered yet.
  *
  * They sit in one scenario rather than three because the panel can show all of
@@ -886,14 +886,14 @@ function uncertifiedGedus(locale: SupportedLocale): UncertifiedGedu[] {
  * request was filed — and the scene shows it beside two rows that do state a
  * time, which is the only way the difference is visible as a difference.
  */
-const COVER_REQUEST_SPECS: readonly {
+const SUBSTITUTION_REQUEST_SPECS: readonly {
   id: string;
   productId: string;
   groupId: string;
   groupName: string;
   sessionDate: string;
   role: GeduAssignmentRole;
-  reason: CoverReason | null;
+  reason: SubstitutionReason | null;
   reasonNote: string | null;
   requesterId: string;
   requesterName: string;
@@ -907,7 +907,7 @@ const COVER_REQUEST_SPECS: readonly {
   }[];
 }[] = [
   {
-    id: "cover-request-1",
+    id: "substitution-request-1",
     productId: "consumer-club-1",
     groupId: "group-espoo-a",
     groupName: "Ryhmä A",
@@ -919,7 +919,7 @@ const COVER_REQUEST_SPECS: readonly {
     requesterName: "Milo Korhonen",
     offers: [
       {
-        id: "cover-offer-1",
+        id: "substitution-offer-1",
         geduId: PERSON_IDS.eeliVirtanen,
         name: "Eeli Virtanen",
         certified: true,
@@ -929,7 +929,7 @@ const COVER_REQUEST_SPECS: readonly {
       // nothing — exactly as it does in the certification queue — so the row
       // is pressable and only the missing half is tinted.
       {
-        id: "cover-offer-2",
+        id: "substitution-offer-2",
         geduId: PERSON_IDS.saanaNieminen,
         name: "Saana Nieminen",
         certified: true,
@@ -938,7 +938,7 @@ const COVER_REQUEST_SPECS: readonly {
     ],
   },
   {
-    id: "cover-request-2",
+    id: "substitution-request-2",
     productId: "municipality-club-3",
     groupId: "group-leppavaara-b",
     groupName: "Ryhmä B",
@@ -954,7 +954,7 @@ const COVER_REQUEST_SPECS: readonly {
       // refuses an uncertified caller — and it is the whole reason the flag
       // rides on the offer rather than being assumed from the offer existing.
       {
-        id: "cover-offer-3",
+        id: "substitution-offer-3",
         geduId: PERSON_IDS.aaroHeikkila,
         name: "Aaro Heikkilä",
         certified: false,
@@ -963,7 +963,7 @@ const COVER_REQUEST_SPECS: readonly {
     ],
   },
   {
-    id: "cover-request-3",
+    id: "substitution-request-3",
     productId: "camp-2",
     groupId: "group-roblox-camp-1",
     groupName: "Ryhmä 1",
@@ -977,11 +977,11 @@ const COVER_REQUEST_SPECS: readonly {
   },
 ];
 
-function coverRequests(
+function substitutionRequests(
   byId: ReadonlyMap<string, ProductSpec>,
   locale: SupportedLocale,
-): CoverRequest[] {
-  return COVER_REQUEST_SPECS.map((spec) => {
+): SubstitutionRequest[] {
+  return SUBSTITUTION_REQUEST_SPECS.map((spec) => {
     const product = byId.get(spec.productId);
     if (product === undefined) {
       // A queue naming a product the catalogue does not hold would render a row
@@ -1253,7 +1253,7 @@ export function buildAdminDashboardFixture(
     // Empty in `quiet` for the reason the certification list is: the collapsed
     // all-clear row is a state a platform with three sessions to staff has no
     // way to reach.
-    coverRequests: quiet ? [] : coverRequests(byId, locale),
+    substitutionRequests: quiet ? [] : substitutionRequests(byId, locale),
     // Empty on both sides in `quiet`: certification is its own section now, so
     // it needs its own empty state, and this is the only scenario that can show
     // one.

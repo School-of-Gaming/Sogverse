@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { Constants } from "@/types";
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
-import { sessionStaffGedu } from "@/services/session-cover/session-cover.contracts";
+import { sessionStaffGedu } from "@/services/session-substitution/session-substitution.contracts";
 
 /**
  * Runtime contracts for the gedu assignment RPCs. The generated types can't
@@ -41,13 +41,13 @@ export const myAssignedProductRows = z.array(
     schedule_slots: z.array(scheduleSlotSummary),
     /**
      * Which kind of seat the row is (00272): a standing `assignment`, or a live
-     * `cover` on one date. Two arms of one RPC because they share every
+     * `substitution` on one date. Two arms of one RPC because they share every
      * product-shell column and the dashboard card differs in its chrome rather
      * than in the facts it needs.
      */
-    kind: z.enum(["assignment", "cover"]),
-    /** The covered date on a `cover` row; null on an `assignment` row. */
-    covered_date: z.string().nullable(),
+    kind: z.enum(["assignment", "substitution"]),
+    /** The substitution date on a `substitution` row; null on an `assignment` row. */
+    substitution_date: z.string().nullable(),
   })
 );
 

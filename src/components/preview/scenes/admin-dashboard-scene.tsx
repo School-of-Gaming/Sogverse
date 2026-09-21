@@ -54,12 +54,12 @@ export function AdminDashboardScene({
 
   const [certified, setCertified] = useState<ReadonlySet<string>>(new Set());
   /**
-   * The cover queue's half of the same trick, keyed by **request** rather than
+   * The substitution queue's half of the same trick, keyed by **request** rather than
    * by offer: approving one offer settles the request, and what leaves the list
    * is the request. The panel's own receipt prunes itself against whatever this
    * scene goes on offering, exactly as it does against a refetched snapshot.
    */
-  const [covered, setCovered] = useState<ReadonlySet<string>>(new Set());
+  const [substituted, setSubstituted] = useState<ReadonlySet<string>>(new Set());
 
   /**
    * Certifications belong to the scenario they were made in. The two scenarios
@@ -73,7 +73,7 @@ export function AdminDashboardScene({
   if (shownScenario !== scenario) {
     setShownScenario(scenario);
     setCertified(new Set());
-    setCovered(new Set());
+    setSubstituted(new Set());
   }
 
   const data = useMemo(
@@ -82,11 +82,11 @@ export function AdminDashboardScene({
       uncertifiedGedus: fixture.uncertifiedGedus.filter(
         (gedu) => !certified.has(gedu.id),
       ),
-      coverRequests: fixture.coverRequests.filter(
-        (request) => !covered.has(request.id),
+      substitutionRequests: fixture.substitutionRequests.filter(
+        (request) => !substituted.has(request.id),
       ),
     }),
-    [fixture, certified, covered],
+    [fixture, certified, substituted],
   );
 
   const handleCertify = useCallback((geduId: string) => {
@@ -101,13 +101,13 @@ export function AdminDashboardScene({
    * is found here rather than being carried alongside it, the way the live path
    * finds it by simply not returning it again.
    */
-  const handleApproveCover = useCallback(
+  const handleApproveSubstitution = useCallback(
     (offerId: string) => {
-      const request = fixture.coverRequests.find((candidate) =>
+      const request = fixture.substitutionRequests.find((candidate) =>
         candidate.offers.some((offer) => offer.id === offerId),
       );
       if (request !== undefined) {
-        setCovered((current) => new Set(current).add(request.id));
+        setSubstituted((current) => new Set(current).add(request.id));
       }
       return Promise.resolve();
     },
@@ -118,7 +118,7 @@ export function AdminDashboardScene({
     <AdminDashboardPageBody
       data={data}
       onCertifyGedu={handleCertify}
-      onApproveCoverOffer={handleApproveCover}
+      onApproveSubstitutionOffer={handleApproveSubstitution}
     />
   );
 }

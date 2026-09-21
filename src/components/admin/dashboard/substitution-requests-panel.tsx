@@ -4,11 +4,11 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { BadgeCheck, CircleCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { CoverRequest } from "./admin-dashboard-data";
-import { CoverRequestRow } from "./cover-request-row";
+import type { SubstitutionRequest } from "./admin-dashboard-data";
+import { SubstitutionRequestRow } from "./substitution-request-row";
 
 /**
- * **Sessions somebody cannot make, and the offers to cover them.**
+ * **Sessions somebody cannot make, and the offers to stand in.**
  *
  * It sits between the attention queue and the certification section, and the
  * placement is the whole framing: this *is* work an admin can do today — a
@@ -17,7 +17,7 @@ import { CoverRequestRow } from "./cover-request-row";
  * information about people waiting on somebody who is not in this building. It
  * is a second queue rather than a section of the first because the attention
  * queue is about *products* and every one of its cards is a link out to the
- * product that owns the problem; a cover request is about a session and is
+ * product that owns the problem; a substitution request is about a session and is
  * answered here, without leaving the page.
  *
  * **Empty collapses the panel to one row**, like the attention panel, because
@@ -41,15 +41,15 @@ import { CoverRequestRow } from "./cover-request-row";
  * nothing here re-sorts it: it is the order the RPC promises and a second
  * ranking in the browser could only disagree with it.
  */
-export function CoverRequestsPanel({
+export function SubstitutionRequestsPanel({
   requests,
   onApproveOffer,
 }: {
-  requests: readonly CoverRequest[];
+  requests: readonly SubstitutionRequest[];
   /** Approve one offer. Resolves once the write landed; rejects if it did not. */
   onApproveOffer: (offerId: string) => Promise<void>;
 }) {
-  const t = useTranslations("admin.dashboard.cover");
+  const t = useTranslations("admin.dashboard.substitution");
   const [approvedIds, setApprovedIds] = useState<ReadonlySet<string>>(
     new Set(),
   );
@@ -90,7 +90,7 @@ export function CoverRequestsPanel({
   if (waiting.length === 0) {
     return (
       <Card>
-        {/* The all-clear row. The title stays — "Cover requests · nothing needs
+        {/* The all-clear row. The title stays — "Substitution requests · nothing needs
             a sub" reads as a report, where the attention panel's "Needs
             attention · all clear" would have read as a heading denying itself,
             which is why that one replaces its title instead. The line, the
@@ -123,7 +123,7 @@ export function CoverRequestsPanel({
         <ul aria-label={t("listLabel")} className="space-y-2">
           {waiting.map((request) => (
             <li key={request.id}>
-              <CoverRequestRow
+              <SubstitutionRequestRow
                 request={request}
                 onApproveOffer={(offerId) =>
                   onApproveOffer(offerId).then(() => {

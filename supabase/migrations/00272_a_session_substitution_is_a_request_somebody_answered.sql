@@ -1,17 +1,17 @@
--- A session cover is a request somebody answered.
+-- A session substitution is a request somebody answered.
 --
 -- WHAT THIS IS FOR
 --
 -- A gedu who cannot attend a session tells the office by a Discord ticket and
 -- the office finds a replacement by hand. Nothing in Sogverse records that the
--- session was covered or by whom, and two things break because of that: the
--- cover gets the group's workspace only by being PERMANENTLY assigned to the
+-- session was substituted or by whom, and two things break because of that: the
+-- substitute gets the group's workspace only by being PERMANENTLY assigned to the
 -- group — a fiction in the data nobody cleans up — and gedu invoicing, next on
 -- the roadmap, cannot say who actually ran each session or in which role.
 --
 -- This migration is the whole database half: roles on assignments, the request
 -- and offer tables, the derivation of who is expected at a session, the access
--- window a cover holds, the widening of every gate that asked "are you assigned
+-- window a substitute holds, the widening of every gate that asked "are you assigned
 -- to this group", and the RPCs the three surfaces call.
 --
 -- THE MODEL, IN FIVE SENTENCES
@@ -28,9 +28,9 @@
 --   4. WHO IS EXPECTED AT A SESSION IS DERIVED, NEVER STORED. In one sentence:
 --      a gedu is expected at (group, date) iff they hold no non-withdrawn
 --      request for it, AND they are either assigned to the group or hold a
---      `covered` request for it. That one sentence handles the sub-of-sub chain,
---      an open sub-of-sub request, and a cleared cover alike.
---   5. A cover holds everything the group's gedus hold — workspace, feed, notes,
+--      `substituted` request for it. That one sentence handles the sub-of-sub chain,
+--      an open sub-of-sub request, and a cleared substitution alike.
+--   5. A substitute holds everything the group's gedus hold — workspace, feed, notes,
 --      roster, member flair, game accounts, site notes — until 24 hours after
 --      the session's report is mailed, or 15 days after the session date if it
 --      never is, and only while they are still certified.
@@ -38,24 +38,24 @@
 -- TWO THINGS ARE NARROWER THAN THAT, ON PURPOSE
 --
 -- The VOICE ROOM (and therefore the in-call chat, which is gated by the same
--- pair of predicates) and the FAMILY REPORT MAIL admit a cover for the COVERED
+-- pair of predicates) and the FAMILY REPORT MAIL admit a substitute for the SUBSTITUTED
 -- DATE alone. The room because a sub has no business in the group's other
 -- sessions; the mail because it is at-most-once with no resend, so a sub must
 -- not be able to send the families a write-up of a session they did not run.
 --
--- WHY THERE IS NO `session_covers` TABLE, AND NO CHAIN COLUMN
+-- WHY THERE IS NO `session_substitutions` TABLE, AND NO CHAIN COLUMN
 --
--- Every cover exists because somebody was absent, so the REQUEST is the natural
+-- Every substitution exists because somebody was absent, so the REQUEST is the natural
 -- row — "set a sub with no request" is a request the admin files on the absent
--- gedu's behalf, created already covered. And the sub-of-sub chain needs no
--- column: a gedu appearing as one row's `covered_by` and another row's
+-- gedu's behalf, created already substituted. And the sub-of-sub chain needs no
+-- column: a gedu appearing as one row's `substitute_id` and another row's
 -- `requested_by` on the same (group, date) IS the link, so a
 -- `supersedes_request_id` would be a second, staleable expression of a relation
 -- the rows already encode.
 --
 -- WHY NO SESSION ROW IS MATERIALIZED
 --
--- A cover set on a PAST date would otherwise write a past-dated `group_sessions`
+-- A substitution set on a PAST date would otherwise write a past-dated `group_sessions`
 -- row, and municipality invoicing counts a past-dated row as "the session ran".
 -- Requests key on (group, date) like every other session record and create no
 -- row at all.
@@ -65,21 +65,21 @@
 -- The thing to widen is not a list of predicate names — it is EVERY function
 -- body and EVERY policy expression that references `gedu_group_assignments`.
 -- The block at the foot of this file enumerates that set from the catalogs and
--- requires each member either to carry a cover branch (a reference to
--- `session_cover_requests`, `gedu_covers_group` or `gedu_covers_session`) or to
+-- requires each member either to carry a substitution branch (a reference to
+-- `session_substitution_requests`, `gedu_substitutes_group` or `gedu_substitutes_session`) or to
 -- appear in its annotated assignment-only list. The same check is the permanent
--- one in tests/db/session-cover.test.ts; this copy asserts this migration's own
+-- one in tests/db/session-substitution.test.ts; this copy asserts this migration's own
 -- end state, which is what catches a member added between authoring and merge.
 --
--- WHY THE COVER PREDICATE IS GRANTED TO `authenticated` (a deviation, recorded)
+-- WHY THE SUBSTITUTION PREDICATE IS GRANTED TO `authenticated` (a deviation, recorded)
 --
--- The plan said the cover EXISTS would be INLINED into the
+-- The plan said the substitution EXISTS would be INLINED into the
 -- `gedus_read_assigned_groups` policy so the predicate could stay internal. It
 -- cannot: a policy expression is evaluated as the QUERYING ROLE, so an inlined
--- read of `session_cover_requests` would need both a table SELECT grant for
+-- read of `session_substitution_requests` would need both a table SELECT grant for
 -- `authenticated` AND a read policy on the table — strictly more Data API
 -- surface than one boolean, and the opposite of the intent behind keeping the
--- table ungranted. So `gedu_covers_group` is SECURITY DEFINER, granted EXECUTE
+-- table ungranted. So `gedu_substitutes_group` is SECURITY DEFINER, granted EXECUTE
 -- to `authenticated`, and classified self-scoping in the authorization spine —
 -- which is exactly what the three sibling policies on this same table already do
 -- with `has_active_participation_in_group`, and what `gedu_teaches_gamer`'s own
@@ -116,10 +116,10 @@ COMMENT ON COLUMN public.gedu_group_assignments.role IS
 -- 2. The request and the offer
 -- ---------------------------------------------------------------------------
 
-CREATE TYPE public.cover_reason AS ENUM ('sick', 'other');
-CREATE TYPE public.cover_request_status AS ENUM ('open', 'covered', 'withdrawn');
+CREATE TYPE public.substitution_reason AS ENUM ('sick', 'other');
+CREATE TYPE public.substitution_request_status AS ENUM ('open', 'substituted', 'withdrawn');
 
-CREATE TABLE public.session_cover_requests (
+CREATE TABLE public.session_substitution_requests (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   group_id      uuid NOT NULL REFERENCES public.product_groups(id) ON DELETE CASCADE,
   session_date  date NOT NULL,
@@ -129,77 +129,77 @@ CREATE TABLE public.session_cover_requests (
   requested_by  uuid NOT NULL REFERENCES public.profiles(id) ON DELETE RESTRICT,
   role          public.gedu_assignment_role NOT NULL,
   -- Required on the GEDU path and enforced there by the RPC rather than by a
-  -- NOT NULL, because an admin recording an off-platform cover for invoicing may
+  -- NOT NULL, because an admin recording an off-platform substitution for invoicing may
   -- genuinely not know why the gedu was away. A column that admitted no unknown
   -- would be filled with a guess.
-  reason        public.cover_reason,
+  reason        public.substitution_reason,
   reason_note   text,
-  status        public.cover_request_status NOT NULL DEFAULT 'open',
-  covered_by    uuid REFERENCES public.profiles(id) ON DELETE RESTRICT,
+  status        public.substitution_request_status NOT NULL DEFAULT 'open',
+  substitute_id    uuid REFERENCES public.profiles(id) ON DELETE RESTRICT,
   approved_by   uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
   approved_at   timestamptz,
   created_at    timestamptz NOT NULL DEFAULT now(),
   updated_at    timestamptz NOT NULL DEFAULT now(),
 
-  -- The status and the three cover columns are one fact stated twice, and this
-  -- is what keeps them in step in BOTH directions: `covered` cannot lack a sub,
-  -- an approver or a stamp, and a row that is not `covered` cannot carry any of
+  -- The status and the three substitution columns are one fact stated twice, and this
+  -- is what keeps them in step in BOTH directions: `substituted` cannot lack a sub,
+  -- an approver or a stamp, and a row that is not `substituted` cannot carry any of
   -- them. The second direction is the one with teeth — it is why clearing a
-  -- cover and withdrawing a covered request have to blank the three columns,
+  -- substitution and withdrawing a substituted request have to blank the three columns,
   -- and therefore why a withdrawn row is history about an ABSENCE rather than
   -- about a substitution.
-  CONSTRAINT chk_cover_state CHECK (
-    (status = 'covered'::public.cover_request_status)
-    = (covered_by IS NOT NULL AND approved_by IS NOT NULL AND approved_at IS NOT NULL)
+  CONSTRAINT chk_substitution_state CHECK (
+    (status = 'substituted'::public.substitution_request_status)
+    = (substitute_id IS NOT NULL AND approved_by IS NOT NULL AND approved_at IS NOT NULL)
   ),
-  -- Nobody covers their own absence. The `may cover` predicate refuses it too;
+  -- Nobody substitutes for their own absence. The `may substitute` predicate refuses it too;
   -- this is the constraint that makes the refusal a property of the data rather
   -- than of the one code path that happens to check.
-  CONSTRAINT chk_cover_not_self CHECK (covered_by IS DISTINCT FROM requested_by),
+  CONSTRAINT chk_substitution_not_self CHECK (substitute_id IS DISTINCT FROM requested_by),
   -- The cap the constraint owns, so no client re-measures it differently.
-  CONSTRAINT chk_cover_reason_note_length CHECK (char_length(reason_note) <= 500)
+  CONSTRAINT chk_substitution_reason_note_length CHECK (char_length(reason_note) <= 500)
 );
 
-COMMENT ON TABLE public.session_cover_requests IS
+COMMENT ON TABLE public.session_substitution_requests IS
   'One row per (group, session date, ABSENT GEDU): "I cannot make this session", '
   'and — once an admin has answered it — who is standing in. The seat is the '
   'PERSON rather than the role, because two primaries of one group may both be '
   'out the same day and "who did which job" has to stay answerable. There is no '
-  'separate covers table: every cover exists because somebody was absent, so the '
+  'separate substitutions table: every substitution exists because somebody was absent, so the '
   'request IS the row, and an admin setting a sub with no request files one on '
-  'the absent gedu''s behalf, created already `covered`. WITHDRAWN ROWS ARE '
+  'the absent gedu''s behalf, created already `substituted`. WITHDRAWN ROWS ARE '
   'HISTORY and do not block a new request for the same seat — the live-seat '
-  'unique index is partial on exactly that. A request nobody covers becomes '
+  'unique index is partial on exactly that. A request nobody substitutes on becomes '
   'UNFILLED once its date is past, which is a DERIVED state of an open request '
   'and not a stored one: the date already says it, and a stored status would need '
   'a clock. The SUB-OF-SUB CHAIN needs no column either — a gedu appearing as one '
-  'row''s covered_by and another row''s requested_by on the same (group, date) IS '
+  'row''s substitute_id and another row''s requested_by on the same (group, date) IS '
   'the link. Nothing here materializes a group_sessions row, deliberately: a '
-  'cover set on a PAST date would write a past-dated row, and municipality '
+  'substitution set on a PAST date would write a past-dated row, and municipality '
   'invoicing reads a past-dated row as "the session ran". Neither `authenticated` '
   'nor `anon` holds any grant — every read and write goes through the SECURITY '
   'DEFINER RPCs below, the same posture as group_sessions.';
 
-COMMENT ON COLUMN public.session_cover_requests.role IS
-  'The role being covered, snapshotted at filing time from the requester''s '
+COMMENT ON COLUMN public.session_substitution_requests.role IS
+  'The role being substituted, snapshotted at filing time from the requester''s '
   'assignment role — or, when the requester is themselves a sub, from the role '
-  'on the covered request they hold. Snapshotted rather than joined because '
+  'on the substituted request they hold. Snapshotted rather than joined because '
   'invoicing asks what job was done on the day, and an admin editing the '
   'permanent assignment months later must not rewrite that answer.';
 
-COMMENT ON COLUMN public.session_cover_requests.reason IS
+COMMENT ON COLUMN public.session_substitution_requests.reason IS
   'Why the gedu is away — `sick` or `other` — and ADMIN-VISIBLE ONLY: it reaches '
   'the admin dashboard and the admin session document, and every gedu-facing '
   'document emits it as null. A `sick` category is health-related data about a '
   'contractor; the Discord tickets it replaces carry the same, so nothing new is '
   'disclosed, but no retention rule exists for either yet. Nullable because the '
-  'gedu path requires it (RPC-enforced) and the admin''s off-platform-cover path '
+  'gedu path requires it (RPC-enforced) and the admin''s off-platform-substitution path '
   'cannot.';
 
-COMMENT ON COLUMN public.session_cover_requests.covered_by IS
+COMMENT ON COLUMN public.session_substitution_requests.substitute_id IS
   'The sub, once an admin has approved one — and null in every other state, by '
-  'the chk_cover_state CHECK. Clearing a cover or withdrawing a covered request '
-  'blanks it, so this column answers "who is covering" and never "who once was"; '
+  'the chk_substitution_state CHECK. Clearing a substitution or withdrawing a substituted request '
+  'blanks it, so this column answers "who is substituting" and never "who once was"; '
   'the latter is not a question the platform promises to answer, because an admin '
   'correcting a mistake should leave no phantom substitution behind for invoicing '
   'to bill.';
@@ -207,42 +207,42 @@ COMMENT ON COLUMN public.session_cover_requests.covered_by IS
 -- One LIVE request per absent person per session. Partial on status because a
 -- withdrawn row is history: a gedu who withdraws and files again is not fighting
 -- their own past row for the key.
-CREATE UNIQUE INDEX session_cover_requests_live_seat
-  ON public.session_cover_requests (group_id, session_date, requested_by)
-  WHERE status <> 'withdrawn'::public.cover_request_status;
+CREATE UNIQUE INDEX session_substitution_requests_live_seat
+  ON public.session_substitution_requests (group_id, session_date, requested_by)
+  WHERE status <> 'withdrawn'::public.substitution_request_status;
 
 -- The feeds' read: every non-withdrawn request on one group, and the derivation's
 -- read: everything about one (group, date).
-CREATE INDEX idx_session_cover_requests_group_date
-  ON public.session_cover_requests (group_id, session_date);
+CREATE INDEX idx_session_substitution_requests_group_date
+  ON public.session_substitution_requests (group_id, session_date);
 
--- The dashboard's "my live covers" read, and the access predicate's.
-CREATE INDEX idx_session_cover_requests_covered_by
-  ON public.session_cover_requests (covered_by)
-  WHERE status = 'covered'::public.cover_request_status;
+-- The dashboard's "my live substitutions" read, and the access predicate's.
+CREATE INDEX idx_session_substitution_requests_substitute_id
+  ON public.session_substitution_requests (substitute_id)
+  WHERE status = 'substituted'::public.substitution_request_status;
 
-CREATE TRIGGER session_cover_requests_updated_at
-  BEFORE UPDATE ON public.session_cover_requests
+CREATE TRIGGER session_substitution_requests_updated_at
+  BEFORE UPDATE ON public.session_substitution_requests
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
-ALTER TABLE public.session_cover_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.session_substitution_requests ENABLE ROW LEVEL SECURITY;
 
 -- The admin arm, and the ONLY policy either new table carries. It decides
 -- nothing today, because `authenticated` holds no grant on the table and so
 -- never reaches a policy at all — it is written now so that if a Data API grant
 -- is ever added, the table fails closed for everyone but an admin rather than
 -- opening wholesale. Every other reader goes through a SECURITY DEFINER RPC.
-CREATE POLICY admin_full_access_session_cover_requests
-  ON public.session_cover_requests
+CREATE POLICY admin_full_access_session_substitution_requests
+  ON public.session_substitution_requests
   TO authenticated
   USING ((SELECT public.is_admin()))
   WITH CHECK ((SELECT public.is_admin()));
 
-GRANT ALL ON TABLE public.session_cover_requests TO service_role;
+GRANT ALL ON TABLE public.session_substitution_requests TO service_role;
 
-CREATE TABLE public.session_cover_offers (
+CREATE TABLE public.session_substitution_offers (
   id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  request_id uuid NOT NULL REFERENCES public.session_cover_requests(id) ON DELETE CASCADE,
+  request_id uuid NOT NULL REFERENCES public.session_substitution_requests(id) ON DELETE CASCADE,
   -- CASCADE rather than RESTRICT, unlike the request's two people: an offer is
   -- an intention, not a record of work done, so an account going away should
   -- take its unanswered offers with it.
@@ -251,36 +251,36 @@ CREATE TABLE public.session_cover_offers (
   UNIQUE (request_id, gedu_id)
 );
 
-COMMENT ON TABLE public.session_cover_offers IS
-  '"I can cover this" — one row per (request, offering gedu). Offering is '
+COMMENT ON TABLE public.session_substitution_offers IS
+  '"Offer to substitute" — one row per (request, offering gedu). Offering is '
   'idempotent on the unique key and WITHDRAWING AN OFFER DELETES THE ROW, '
   'because an offer nobody accepted is not a fact worth keeping. Approving one '
   'offer does not touch the others: "not selected" is DERIVED from the request '
-  'being covered by somebody else, and which offer was approved is the covering '
+  'being substituted by somebody else, and which offer was approved is the substituting '
   'gedu''s own row — which is why there is no approved_offer_id anywhere. '
   'Offerers never learn who else offered; only the admin queue reads this table, '
   'and it reads it through get_admin_dashboard. No updated_at and no trigger: a '
   'row is created and deleted, never edited. Nothing is granted to '
   '`authenticated` or `anon`.';
 
-ALTER TABLE public.session_cover_offers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.session_substitution_offers ENABLE ROW LEVEL SECURITY;
 
 -- The same inert admin arm as the requests table above, for the same reason.
-CREATE POLICY admin_full_access_session_cover_offers
-  ON public.session_cover_offers
+CREATE POLICY admin_full_access_session_substitution_offers
+  ON public.session_substitution_offers
   TO authenticated
   USING ((SELECT public.is_admin()))
   WITH CHECK ((SELECT public.is_admin()));
 
-GRANT ALL ON TABLE public.session_cover_offers TO service_role;
+GRANT ALL ON TABLE public.session_substitution_offers TO service_role;
 
 -- ---------------------------------------------------------------------------
 -- 3. The four predicates
 -- ---------------------------------------------------------------------------
 
--- The access window, in one place. Everything that asks "may this cover reach
+-- The access window, in one place. Everything that asks "may this substitute reach
 -- this group" reaches it through here, so the window expression exists once.
-CREATE FUNCTION public.gedu_covers_session(p_group_id uuid, p_session_date date)
+CREATE FUNCTION public.gedu_substitutes_session(p_group_id uuid, p_session_date date)
 RETURNS boolean
 LANGUAGE sql
 STABLE
@@ -289,10 +289,10 @@ SET search_path TO ''
 AS $$
   SELECT EXISTS (
     SELECT 1
-      FROM public.session_cover_requests r
+      FROM public.session_substitution_requests r
       JOIN public.product_groups g  ON g.id = r.group_id
       JOIN public.products p        ON p.id = g.product_id
-      JOIN public.gedu_profiles gp  ON gp.user_id = r.covered_by
+      JOIN public.gedu_profiles gp  ON gp.user_id = r.substitute_id
       -- The session row is LAZILY materialized, so there may be none — which is
       -- exactly the case the 15-day arm of the COALESCE is for.
       LEFT JOIN public.group_sessions gs
@@ -300,9 +300,9 @@ AS $$
             AND gs.session_date = r.session_date
      WHERE r.group_id     = p_group_id
        AND r.session_date = p_session_date
-       AND r.status       = 'covered'::public.cover_request_status
-       AND r.covered_by   = (SELECT auth.uid())
-       -- Still certified. De-certifying an educator ends their cover access
+       AND r.status       = 'substituted'::public.substitution_request_status
+       AND r.substitute_id   = (SELECT auth.uid())
+       -- Still certified. De-certifying an educator ends their substitution access
        -- mid-window, which is the point of checking it here rather than only at
        -- approval time.
        AND gp.certified
@@ -317,10 +317,10 @@ AS $$
   );
 $$;
 
--- "Covers this group" is "covers any of its dates". Written as one EXISTS over
+-- "Substitutes on this group" is "substitutes on any of its dates". Written as one EXISTS over
 -- the date predicate rather than as a second copy of the window arithmetic:
 -- there is exactly one definition of the window, and this is not it.
-CREATE FUNCTION public.gedu_covers_group(p_group_id uuid)
+CREATE FUNCTION public.gedu_substitutes_group(p_group_id uuid)
 RETURNS boolean
 LANGUAGE sql
 STABLE
@@ -329,18 +329,18 @@ SET search_path TO ''
 AS $$
   SELECT EXISTS (
     SELECT 1
-      FROM public.session_cover_requests r
+      FROM public.session_substitution_requests r
      WHERE r.group_id   = p_group_id
-       AND r.covered_by = (SELECT auth.uid())
-       AND r.status     = 'covered'::public.cover_request_status
-       AND public.gedu_covers_session(r.group_id, r.session_date)
+       AND r.substitute_id = (SELECT auth.uid())
+       AND r.status     = 'substituted'::public.substitution_request_status
+       AND public.gedu_substitutes_session(r.group_id, r.session_date)
   );
 $$;
 
 -- The derivation sentence, as one predicate. It takes the gedu as an ARGUMENT
 -- rather than reading auth.uid(), because every writer has to ask it about
 -- somebody else: an admin asks whether the absent gedu is expected, and the
--- `may cover` predicate asks whether the proposed sub is NOT.
+-- `may substitute` predicate asks whether the proposed sub is NOT.
 CREATE FUNCTION public.gedu_is_expected_at_session(
   p_gedu_id uuid,
   p_group_id uuid,
@@ -355,15 +355,15 @@ AS $$
      AND p_group_id IS NOT NULL
      AND p_session_date IS NOT NULL
      -- "…they hold no non-withdrawn request for it…" — an open request and a
-     -- covered one both mean the same thing about the person who FILED it: they
+     -- substituted one both mean the same thing about the person who FILED it: they
      -- are not coming.
      AND NOT EXISTS (
            SELECT 1
-             FROM public.session_cover_requests r
+             FROM public.session_substitution_requests r
             WHERE r.group_id     = p_group_id
               AND r.session_date = p_session_date
               AND r.requested_by = p_gedu_id
-              AND r.status <> 'withdrawn'::public.cover_request_status
+              AND r.status <> 'withdrawn'::public.substitution_request_status
          )
      -- "…and they are either assigned to the group…"
      AND (
@@ -373,24 +373,24 @@ AS $$
               WHERE a.group_id = p_group_id
                 AND a.gedu_id  = p_gedu_id
            )
-           -- "…or hold a `covered` request for it." No window test and no
+           -- "…or hold a `substituted` request for it." No window test and no
            -- certification test here: this predicate answers WHO IS DOING THE
            -- JOB, which is a staffing fact, not an access one. The access
-           -- question is gedu_covers_session's, and conflating the two would
+           -- question is gedu_substitutes_session's, and conflating the two would
            -- make a session's staffing silently change fifteen days later.
            OR EXISTS (
              SELECT 1
-               FROM public.session_cover_requests r2
+               FROM public.session_substitution_requests r2
               WHERE r2.group_id     = p_group_id
                 AND r2.session_date = p_session_date
-                AND r2.covered_by   = p_gedu_id
-                AND r2.status       = 'covered'::public.cover_request_status
+                AND r2.substitute_id   = p_gedu_id
+                AND r2.status       = 'substituted'::public.substitution_request_status
            )
          );
 $$;
 
 -- The four refusals every path that seats a sub has to make, in one place.
-CREATE FUNCTION public.gedu_may_cover_session(
+CREATE FUNCTION public.gedu_may_substitute_session(
   p_gedu_id uuid,
   p_group_id uuid,
   p_session_date date,
@@ -422,16 +422,16 @@ AS $$
      -- seats on one session, which would make "who did which job" unanswerable.
      AND NOT public.gedu_is_expected_at_session(p_gedu_id, p_group_id, p_session_date)
      -- (4) Holding no non-withdrawn request of their own on that (group, date).
-     -- Stops a sub covering their own substitute — the person who said they
+     -- Stops a sub substituting their own substitute — the person who said they
      -- cannot be there cannot be the answer to somebody else's absence on the
      -- same day.
      AND NOT EXISTS (
            SELECT 1
-             FROM public.session_cover_requests r
+             FROM public.session_substitution_requests r
             WHERE r.group_id     = p_group_id
               AND r.session_date = p_session_date
               AND r.requested_by = p_gedu_id
-              AND r.status <> 'withdrawn'::public.cover_request_status
+              AND r.status <> 'withdrawn'::public.substitution_request_status
          );
 $$;
 
@@ -439,15 +439,15 @@ $$;
 -- 4. One document shape for a request, and one cascade
 -- ---------------------------------------------------------------------------
 
--- Every write returns this, and both staff feeds' `covers` element is this. One
+-- Every write returns this, and both staff feeds' `substitutions` element is this. One
 -- definition, because six copies of a jsonb_build_object is how six surfaces
--- come to disagree about what a cover request is.
+-- come to disagree about what a substitution request is.
 --
 -- Takes the ROW rather than an id, so a feed aggregates it over a query and a
 -- writer passes the row it just wrote — no re-read, and no way for the two to
 -- drift apart.
-CREATE FUNCTION public.cover_request_document(
-  p_request public.session_cover_requests,
+CREATE FUNCTION public.substitution_request_document(
+  p_request public.session_substitution_requests,
   p_include_reason boolean,
   p_viewer_id uuid
 ) RETURNS jsonb
@@ -467,9 +467,9 @@ AS $$
     'requested_by_first_name', (
       SELECT pr.first_name FROM public.profiles pr WHERE pr.id = p_request.requested_by
     ),
-    'covered_by',   p_request.covered_by,
-    'covered_by_first_name', (
-      SELECT pr.first_name FROM public.profiles pr WHERE pr.id = p_request.covered_by
+    'substitute_id',   p_request.substitute_id,
+    'substitute_first_name', (
+      SELECT pr.first_name FROM public.profiles pr WHERE pr.id = p_request.substitute_id
     ),
     'approved_at',  p_request.approved_at,
     -- Whether the VIEWER is the absent gedu. The card shows a status line and a
@@ -483,7 +483,7 @@ AS $$
       CASE WHEN p_include_reason OR p_request.requested_by = p_viewer_id
            THEN (
              SELECT count(*)::integer
-               FROM public.session_cover_offers o
+               FROM public.session_substitution_offers o
               WHERE o.request_id = p_request.id
            )
       END,
@@ -496,20 +496,20 @@ AS $$
 $$;
 
 -- The sweep that runs after every admin edit which can UNSEAT somebody: clear,
--- withdraw, and the replace inside set_session_cover.
+-- withdraw, and the replace inside set_session_substitution.
 --
 -- It is a FIXPOINT, not a single statement, and the chain is why: clearing X's
--- cover unseats X, which withdraws X's own request, which unseats whoever was
--- covering THAT, and so on. Each pass withdraws every non-withdrawn request
+-- substitution unseats X, which withdraws X's own request, which unseats whoever was
+-- substituting THAT, and so on. Each pass withdraws every non-withdrawn request
 -- whose requester no longer holds a seat on that (group, date) — neither
--- assigned nor the covered_by of a live covered request — and the loop stops
+-- assigned nor the substitute_id of a live substituted request — and the loop stops
 -- when a pass changes nothing.
 --
--- Withdrawing a COVERED row blanks its three cover columns, because
--- chk_cover_state forbids a withdrawn row from carrying a sub. That is the
+-- Withdrawing a SUBSTITUTED row blanks its three substitution columns, because
+-- chk_substitution_state forbids a withdrawn row from carrying a sub. That is the
 -- deliberate consequence of the bidirectional CHECK: an admin unwinding a
 -- mistake leaves no phantom substitution behind for invoicing to find.
-CREATE FUNCTION public.cascade_withdraw_orphaned_cover_requests(
+CREATE FUNCTION public.cascade_withdraw_orphaned_substitution_requests(
   p_group_id uuid,
   p_session_date date
 ) RETURNS void
@@ -521,14 +521,14 @@ DECLARE
   v_changed integer;
 BEGIN
   LOOP
-    UPDATE public.session_cover_requests r
-       SET status      = 'withdrawn'::public.cover_request_status,
-           covered_by  = NULL,
+    UPDATE public.session_substitution_requests r
+       SET status      = 'withdrawn'::public.substitution_request_status,
+           substitute_id  = NULL,
            approved_by = NULL,
            approved_at = NULL
      WHERE r.group_id     = p_group_id
        AND r.session_date = p_session_date
-       AND r.status <> 'withdrawn'::public.cover_request_status
+       AND r.status <> 'withdrawn'::public.substitution_request_status
        AND NOT EXISTS (
              SELECT 1
                FROM public.gedu_group_assignments a
@@ -537,11 +537,11 @@ BEGIN
            )
        AND NOT EXISTS (
              SELECT 1
-               FROM public.session_cover_requests r2
+               FROM public.session_substitution_requests r2
               WHERE r2.group_id     = p_group_id
                 AND r2.session_date = p_session_date
-                AND r2.status       = 'covered'::public.cover_request_status
-                AND r2.covered_by   = r.requested_by
+                AND r2.status       = 'substituted'::public.substitution_request_status
+                AND r2.substitute_id   = r.requested_by
            );
 
     GET DIAGNOSTICS v_changed = ROW_COUNT;
@@ -550,47 +550,47 @@ BEGIN
 END;
 $$;
 
-REVOKE EXECUTE ON FUNCTION public.gedu_covers_session(uuid, date) FROM PUBLIC, anon, authenticated;
-GRANT  EXECUTE ON FUNCTION public.gedu_covers_session(uuid, date) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.gedu_substitutes_session(uuid, date) FROM PUBLIC, anon, authenticated;
+GRANT  EXECUTE ON FUNCTION public.gedu_substitutes_session(uuid, date) TO service_role;
 
 -- The one predicate of the four that IS granted to `authenticated`, because the
 -- gedus_read_assigned_groups policy calls it and a policy is evaluated as the
 -- querying role. See this file's header for why that beats inlining the EXISTS.
 -- Classified self-scoping in the authorization spine: it answers only about the
 -- caller, no argument can name a different asker, and it is total.
-REVOKE EXECUTE ON FUNCTION public.gedu_covers_group(uuid) FROM PUBLIC, anon;
-GRANT  EXECUTE ON FUNCTION public.gedu_covers_group(uuid) TO authenticated;
-GRANT  EXECUTE ON FUNCTION public.gedu_covers_group(uuid) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.gedu_substitutes_group(uuid) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.gedu_substitutes_group(uuid) TO authenticated;
+GRANT  EXECUTE ON FUNCTION public.gedu_substitutes_group(uuid) TO service_role;
 
 REVOKE EXECUTE ON FUNCTION public.gedu_is_expected_at_session(uuid, uuid, date) FROM PUBLIC, anon, authenticated;
 GRANT  EXECUTE ON FUNCTION public.gedu_is_expected_at_session(uuid, uuid, date) TO service_role;
 
-REVOKE EXECUTE ON FUNCTION public.gedu_may_cover_session(uuid, uuid, date, uuid) FROM PUBLIC, anon, authenticated;
-GRANT  EXECUTE ON FUNCTION public.gedu_may_cover_session(uuid, uuid, date, uuid) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.gedu_may_substitute_session(uuid, uuid, date, uuid) FROM PUBLIC, anon, authenticated;
+GRANT  EXECUTE ON FUNCTION public.gedu_may_substitute_session(uuid, uuid, date, uuid) TO service_role;
 
-REVOKE EXECUTE ON FUNCTION public.cover_request_document(public.session_cover_requests, boolean, uuid) FROM PUBLIC, anon, authenticated;
-GRANT  EXECUTE ON FUNCTION public.cover_request_document(public.session_cover_requests, boolean, uuid) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.substitution_request_document(public.session_substitution_requests, boolean, uuid) FROM PUBLIC, anon, authenticated;
+GRANT  EXECUTE ON FUNCTION public.substitution_request_document(public.session_substitution_requests, boolean, uuid) TO service_role;
 
-REVOKE EXECUTE ON FUNCTION public.cascade_withdraw_orphaned_cover_requests(uuid, date) FROM PUBLIC, anon, authenticated;
-GRANT  EXECUTE ON FUNCTION public.cascade_withdraw_orphaned_cover_requests(uuid, date) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.cascade_withdraw_orphaned_substitution_requests(uuid, date) FROM PUBLIC, anon, authenticated;
+GRANT  EXECUTE ON FUNCTION public.cascade_withdraw_orphaned_substitution_requests(uuid, date) TO service_role;
 
-COMMENT ON FUNCTION public.gedu_covers_session(p_group_id uuid, p_session_date date) IS
-  'Internal predicate: does the CALLER hold a live cover on this exact (group, date)? True when they are the covered_by of a `covered` request for it, are still certified, and the access window is open — now() < COALESCE(report_emailed_at + 24 hours, product-local midnight 15 days after the session date). The SINGLE definition of that window; every other cover access test reaches it through here or through gedu_covers_group. Not granted to `authenticated`: it is called from inside SECURITY DEFINER functions only, the two voice predicates among them.';
+COMMENT ON FUNCTION public.gedu_substitutes_session(p_group_id uuid, p_session_date date) IS
+  'Internal predicate: does the CALLER hold a live substitution on this exact (group, date)? True when they are the substitute_id of a `substituted` request for it, are still certified, and the access window is open — now() < COALESCE(report_emailed_at + 24 hours, product-local midnight 15 days after the session date). The SINGLE definition of that window; every other substitution access test reaches it through here or through gedu_substitutes_group. Not granted to `authenticated`: it is called from inside SECURITY DEFINER functions only, the two voice predicates among them.';
 
-COMMENT ON FUNCTION public.gedu_covers_group(p_group_id uuid) IS
-  'Internal-by-intent predicate: does the CALLER hold a live cover on ANY date of this group? One EXISTS over gedu_covers_session, so the access window has exactly one definition. This is the arm added to every GROUP-WIDE gate on gedu_group_assignments — the workspace, the feed, notes, roster, member flair, the game-account editors and the site notes — on the owner''s rule that a sub sees everything the main gedu sees for as long as their window is open. It is NOT the arm used by the two date-scoped exceptions (the voice room and the family report mail), which call gedu_covers_session directly. EXPOSED TO `authenticated`, unlike the other three cover predicates, and for one reason: the gedus_read_assigned_groups policy on product_groups calls it, and an RLS policy is evaluated as the querying role, so it cannot call a private helper. Inlining the EXISTS instead would have needed a table SELECT grant AND a read policy on session_cover_requests — strictly more Data API surface than one boolean — which is the same trade the three sibling policies on that table already made with has_active_participation_in_group. Self-scoping: it answers only about the caller, no argument can name a different asker, and it is total, so a USING clause is never handed a three-valued answer.';
+COMMENT ON FUNCTION public.gedu_substitutes_group(p_group_id uuid) IS
+  'Internal-by-intent predicate: does the CALLER hold a live substitution on ANY date of this group? One EXISTS over gedu_substitutes_session, so the access window has exactly one definition. This is the arm added to every GROUP-WIDE gate on gedu_group_assignments — the workspace, the feed, notes, roster, member flair, the game-account editors and the site notes — on the owner''s rule that a sub sees everything the main gedu sees for as long as their window is open. It is NOT the arm used by the two date-scoped exceptions (the voice room and the family report mail), which call gedu_substitutes_session directly. EXPOSED TO `authenticated`, unlike the other three substitution predicates, and for one reason: the gedus_read_assigned_groups policy on product_groups calls it, and an RLS policy is evaluated as the querying role, so it cannot call a private helper. Inlining the EXISTS instead would have needed a table SELECT grant AND a read policy on session_substitution_requests — strictly more Data API surface than one boolean — which is the same trade the three sibling policies on that table already made with has_active_participation_in_group. Self-scoping: it answers only about the caller, no argument can name a different asker, and it is total, so a USING clause is never handed a three-valued answer.';
 
 COMMENT ON FUNCTION public.gedu_is_expected_at_session(p_gedu_id uuid, p_group_id uuid, p_session_date date) IS
-  'Internal predicate, and the derivation the whole feature rests on: a gedu is expected at (group, date) iff they hold no non-withdrawn request for it, AND they are either assigned to the group or hold a `covered` request for it. That one sentence handles the sub-of-sub chain, an open sub-of-sub request and a cleared cover alike, which is why nothing stores "who is running this session" anywhere. Takes the gedu as an argument rather than reading auth.uid(), because every writer asks it about somebody else. Deliberately makes NO access-window and NO certification test: it answers who is DOING THE JOB, a staffing fact, where gedu_covers_session answers who may REACH the group, an access fact — conflating them would make a past session''s staffing silently change fifteen days later. Where a gedu is both assigned and holds a cover on the same group (only an admin edit can produce that), the assignment supplies the role. Not granted to `authenticated`.';
+  'Internal predicate, and the derivation the whole feature rests on: a gedu is expected at (group, date) iff they hold no non-withdrawn request for it, AND they are either assigned to the group or hold a `substituted` request for it. That one sentence handles the sub-of-sub chain, an open sub-of-sub request and a cleared substitution alike, which is why nothing stores "who is running this session" anywhere. Takes the gedu as an argument rather than reading auth.uid(), because every writer asks it about somebody else. Deliberately makes NO access-window and NO certification test: it answers who is DOING THE JOB, a staffing fact, where gedu_substitutes_session answers who may REACH the group, an access fact — conflating them would make a past session''s staffing silently change fifteen days later. Where a gedu is both assigned and holds a substitution on the same group (only an admin edit can produce that), the assignment supplies the role. Not granted to `authenticated`.';
 
-COMMENT ON FUNCTION public.gedu_may_cover_session(p_gedu_id uuid, p_group_id uuid, p_session_date date, p_absent_gedu_id uuid) IS
-  'Internal predicate: may this gedu be seated as the sub for this (group, date)? Four refusals, and the last two are the interesting ones: (1) not the absent gedu, (2) a certified gedu — the ONLY eligibility test there is, with coverage area, language and schedule clash all deliberately left to follow-ups, (3) not already expected at that session, and (4) holding no non-withdrawn request of their own on that (group, date). Together (3) and (4) stop a sub covering their own substitute and stop two seats collapsing onto one person, which would make "who did which job" unanswerable. Asked by offer_session_cover, again by approve_session_cover_offer under the request''s lock, by set_session_cover, and by get_open_cover_requests as its exclusion — the pool list shows a gedu exactly the requests they could actually take. Not granted to `authenticated`.';
+COMMENT ON FUNCTION public.gedu_may_substitute_session(p_gedu_id uuid, p_group_id uuid, p_session_date date, p_absent_gedu_id uuid) IS
+  'Internal predicate: may this gedu be seated as the sub for this (group, date)? Four refusals, and the last two are the interesting ones: (1) not the absent gedu, (2) a certified gedu — the ONLY eligibility test there is, with coverage area, language and schedule clash all deliberately left to follow-ups, (3) not already expected at that session, and (4) holding no non-withdrawn request of their own on that (group, date). Together (3) and (4) stop a sub covering their own substitute and stop two seats collapsing onto one person, which would make "who did which job" unanswerable. Asked by offer_session_substitution, again by approve_session_substitution_offer under the request''s lock, by set_session_substitution, and by get_open_substitution_requests as its exclusion — the pool list shows a gedu exactly the requests they could actually take. Not granted to `authenticated`.';
 
-COMMENT ON FUNCTION public.cover_request_document(p_request public.session_cover_requests, p_include_reason boolean, p_viewer_id uuid) IS
-  'Internal: the ONE wire shape of a cover request. Every cover write returns it and both staff feeds'' `covers` arrays are built from it, so no surface can drift about what a request is. Takes the ROW rather than an id, so a feed aggregates it over a query and a writer hands over the row it just wrote. `p_include_reason` is the ADMIN flag — reason and reason_note travel only when it is true, and are emitted as JSON null otherwise rather than omitted, so the document keeps one shape for both readers. `offer_count` travels for an admin and for the requester themselves and is null for anybody else, because how many people volunteered for a colleague''s absence is not their business. Not granted to `authenticated`.';
+COMMENT ON FUNCTION public.substitution_request_document(p_request public.session_substitution_requests, p_include_reason boolean, p_viewer_id uuid) IS
+  'Internal: the ONE wire shape of a substitution request. Every substitution write returns it and both staff feeds'' `substitutions` arrays are built from it, so no surface can drift about what a request is. Takes the ROW rather than an id, so a feed aggregates it over a query and a writer hands over the row it just wrote. `p_include_reason` is the ADMIN flag — reason and reason_note travel only when it is true, and are emitted as JSON null otherwise rather than omitted, so the document keeps one shape for both readers. `offer_count` travels for an admin and for the requester themselves and is null for anybody else, because how many people volunteered for a colleague''s absence is not their business. Not granted to `authenticated`.';
 
-COMMENT ON FUNCTION public.cascade_withdraw_orphaned_cover_requests(p_group_id uuid, p_session_date date) IS
-  'Internal: after an admin edit that can unseat somebody — clear, withdraw, or the replace inside set_session_cover — withdraw every non-withdrawn request on that (group, date) whose requester no longer holds a seat there, meaning neither assigned nor the covered_by of a live covered request. A FIXPOINT sweep rather than one statement, because unseating cascades: clearing X''s cover withdraws X''s own request, which unseats whoever was covering that, and so on until a pass changes nothing. Withdrawing a covered row blanks its three cover columns — chk_cover_state forbids a withdrawn row from carrying a sub — which is deliberate: an admin unwinding a mistake leaves no phantom substitution behind for invoicing to bill. Withdrawing a request whose requester was meanwhile unassigned restores nobody and is allowed. Not granted to `authenticated`; called only from inside the admin RPCs.';
+COMMENT ON FUNCTION public.cascade_withdraw_orphaned_substitution_requests(p_group_id uuid, p_session_date date) IS
+  'Internal: after an admin edit that can unseat somebody — clear, withdraw, or the replace inside set_session_substitution — withdraw every non-withdrawn request on that (group, date) whose requester no longer holds a seat there, meaning neither assigned nor the substitute_id of a live substituted request. A FIXPOINT sweep rather than one statement, because unseating cascades: clearing X''s substitution withdraws X''s own request, which unseats whoever was substituting that, and so on until a pass changes nothing. Withdrawing a substituted row blanks its three substitution columns — chk_substitution_state forbids a withdrawn row from carrying a sub — which is deliberate: an admin unwinding a mistake leaves no phantom substitution behind for invoicing to bill. Withdrawing a request whose requester was meanwhile unassigned restores nobody and is allowed. Not granted to `authenticated`; called only from inside the admin RPCs.';
 
 -- ---------------------------------------------------------------------------
 -- 5. Every gate on gedu_group_assignments, widened
@@ -600,23 +600,23 @@ COMMENT ON FUNCTION public.cascade_withdraw_orphaned_cover_requests(p_group_id u
 -- the foot of this file enumerates that set from the catalogs; what follows is
 -- the decision for each member that IS a gate.
 --
--- Group-wide, window-boxed (`assigned OR gedu_covers_group`):
+-- Group-wide, window-boxed (`assigned OR gedu_substitutes_group`):
 --   * gedu_teaches_group          — and therefore every writer and reader that
 --                                   composes it: the session notes, the register,
 --                                   the session photos and their delete check,
 --                                   the group notes, and the group feed itself.
---   * gedu_teaches_group_product  — cover arm GROUP-only, not product-wide; and
+--   * gedu_teaches_group_product  — substitution arm GROUP-only, not product-wide; and
 --                                   therefore the member flair and the voice
 --                                   room's staff overlay.
 --   * gedu_teaches_gamer          — needs no edit: it is COMPOSED from
 --                                   gedu_teaches_group, which is the whole
 --                                   reason it was written that way.
 --   * the two game-account writers on group members.
---   * set_site_notes              — with a LOCATION-shaped cover arm of its own.
+--   * set_site_notes              — with a LOCATION-shaped substitution arm of its own.
 --   * gedus_read_assigned_groups  — the policy, below.
 --   * get_gedu_assigned_product   — gate AND "which group is mine", further down.
 --
--- Date-scoped (`assigned OR gedu_covers_session`):
+-- Date-scoped (`assigned OR gedu_substitutes_session`):
 --   * is_voice_group_member, is_voice_group_moderator — and therefore the chat
 --     channel, which is gated by the same pair.
 --   * claim_group_session_report_email — which is why it stops calling
@@ -631,10 +631,10 @@ COMMENT ON FUNCTION public.cascade_withdraw_orphaned_cover_requests(p_group_id u
 -- ---------------------------------------------------------------------------
 
 -- The policy is replaced rather than altered so the whole expression reads as
--- one thing. The cover arm CALLS the predicate rather than inlining an EXISTS
--- over session_cover_requests, and that is a considered deviation from the plan:
+-- one thing. The substitution arm CALLS the predicate rather than inlining an EXISTS
+-- over session_substitution_requests, and that is a considered deviation from the plan:
 -- a policy is evaluated as the querying role, so an inlined read would need a
--- table SELECT grant AND a read policy on session_cover_requests — more Data API
+-- table SELECT grant AND a read policy on session_substitution_requests — more Data API
 -- surface, not less. The three sibling policies on this same table already
 -- compose a granted SECURITY DEFINER predicate for exactly this reason.
 DROP POLICY gedus_read_assigned_groups ON public.product_groups;
@@ -651,7 +651,7 @@ CREATE POLICY gedus_read_assigned_groups
           FROM public.gedu_group_assignments ga
          WHERE ga.gedu_id = (SELECT auth.uid())
       )
-      OR (SELECT public.gedu_covers_group(product_groups.id))
+      OR (SELECT public.gedu_substitutes_group(product_groups.id))
     )
   );
 
@@ -665,14 +665,14 @@ CREATE OR REPLACE FUNCTION public.gedu_teaches_group(p_group_id uuid) RETURNS bo
      WHERE ga.group_id = p_group_id
        AND ga.gedu_id  = (SELECT auth.uid())
   )
-  -- The cover branch: a live, certified cover on this group reaches everything
+  -- The substitution branch: a live, certified substitution on this group reaches everything
   -- the group's assigned gedus reach, for as long as their access window is
   -- open. Group-wide rather than per-date on purpose — the workspace, the
   -- roster, the notes and the report are all one surface, and a sub who may
   -- write the report has to be able to open the page it is written on. The two
   -- date-scoped exceptions (the voice room and the report MAIL) do not go
   -- through this predicate; see their own bodies.
-  OR public.gedu_covers_group(p_group_id);
+  OR public.gedu_substitutes_group(p_group_id);
 $$;
 CREATE OR REPLACE FUNCTION public.gedu_teaches_group_product(p_group_id uuid) RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER
@@ -688,12 +688,12 @@ CREATE OR REPLACE FUNCTION public.gedu_teaches_group_product(p_group_id uuid) RE
      WHERE g.id = p_group_id
        AND a.gedu_id = (SELECT auth.uid())
   )
-  -- The cover branch is deliberately GROUP-ONLY, not product-wide. An
+  -- The substitution branch is deliberately GROUP-ONLY, not product-wide. An
   -- assignment is a standing relationship with a product, which is what earns
-  -- the cross-group mobility above; a cover is one date on one group, and
+  -- the cross-group mobility above; a substitution is one date on one group, and
   -- widening it to the product would hand a sub the member flair of every
   -- sibling group they were never asked to stand in for.
-  OR public.gedu_covers_group(p_group_id);
+  OR public.gedu_substitutes_group(p_group_id);
 $$;
 CREATE OR REPLACE FUNCTION public.is_voice_group_member(p_group_id uuid) RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER
@@ -715,8 +715,8 @@ CREATE OR REPLACE FUNCTION public.is_voice_group_member(p_group_id uuid) RETURNS
       where g.id = p_group_id
         and a.gedu_id = (select auth.uid())
     )
-    -- The cover branch, and the one place on this surface where it is DATE-
-    -- SCOPED: a sub reaches the room on the date they are covering and on no
+    -- The substitution branch, and the one place on this surface where it is DATE-
+    -- SCOPED: a sub reaches the room on the date they are substituting and on no
     -- other date of the group. "The session in question" is today in the
     -- PRODUCT's timezone, evaluated at call time, because the predicate is
     -- handed a group and nothing else. It ADDS to the assignment arm above
@@ -727,7 +727,7 @@ CREATE OR REPLACE FUNCTION public.is_voice_group_member(p_group_id uuid) RETURNS
       from public.product_groups g2
       join public.products p2 on p2.id = g2.product_id
       where g2.id = p_group_id
-        and public.gedu_covers_session(
+        and public.gedu_substitutes_session(
               p_group_id, (now() at time zone p2.timezone)::date
             )
     );
@@ -746,15 +746,15 @@ CREATE OR REPLACE FUNCTION public.is_voice_group_moderator(p_group_id uuid) RETU
         and a.gedu_id = (select auth.uid())
     )
     -- Date-scoped, exactly as the membership predicate beside it is and for the
-    -- same reason: a sub moderates the room on the date they are covering, not
+    -- same reason: a sub moderates the room on the date they are substituting, not
     -- on the group's other dates. The two move together — the chat channel is
-    -- gated by this pair, so a cover is in the channel on their own date only.
+    -- gated by this pair, so a substitute is in the channel on their own date only.
     or exists (
       select 1
       from public.product_groups g2
       join public.products p2 on p2.id = g2.product_id
       where g2.id = p_group_id
-        and public.gedu_covers_session(
+        and public.gedu_substitutes_session(
               p_group_id, (now() at time zone p2.timezone)::date
             )
     );
@@ -776,10 +776,10 @@ BEGIN
 
   -- The assignment half is spelled out INLINE here rather than through
   -- gedu_teaches_group, and that is the whole point of this migration's edit to
-  -- this function. gedu_teaches_group now admits a live cover on ANY of the
+  -- this function. gedu_teaches_group now admits a live substitution on ANY of the
   -- group's dates; the family report mail is at-most-once and has no resend, so
   -- a sub must not be able to send the mail for a session they did not run.
-  -- The cover arm is therefore DATE-SCOPED to the session being claimed.
+  -- The substitution arm is therefore DATE-SCOPED to the session being claimed.
   IF NOT public.is_admin()
      AND NOT EXISTS (
            SELECT 1
@@ -787,7 +787,7 @@ BEGIN
             WHERE ga.group_id = p_group_id
               AND ga.gedu_id  = (SELECT auth.uid())
          )
-     AND NOT public.gedu_covers_session(p_group_id, p_session_date) THEN
+     AND NOT public.gedu_substitutes_session(p_group_id, p_session_date) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 
@@ -870,8 +870,8 @@ BEGIN
        AND part.status   = 'active'::public.participation_status
        AND ga.gedu_id    = (SELECT auth.uid())
   )
-  -- The cover branch: the participant sits in a group the caller holds a live
-  -- cover on. Group-wide within the window, exactly as the assignment arm is
+  -- The substitution branch: the participant sits in a group the caller holds a live
+  -- substitution on. Group-wide within the window, exactly as the assignment arm is
   -- product-wide within the assignment — a sub who is running the session is
   -- the person who has the child in front of them and can read the handle off
   -- their screen.
@@ -881,7 +881,7 @@ BEGIN
      WHERE part2.participant_id = p_participant_id
        AND part2.status = 'active'::public.participation_status
        AND part2.group_id IS NOT NULL
-       AND public.gedu_covers_group(part2.group_id)
+       AND public.gedu_substitutes_group(part2.group_id)
   ) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
@@ -948,7 +948,7 @@ BEGIN
        AND part.status   = 'active'::public.participation_status
        AND ga.gedu_id    = (SELECT auth.uid())
   )
-  -- The cover branch, byte for byte the Minecraft twin's — one roster editor
+  -- The substitution branch, byte for byte the Minecraft twin's — one roster editor
   -- serves both platforms, so widening one alone would ship a control that
   -- saves on a Minecraft group and refuses on a Roblox one.
   AND NOT EXISTS (
@@ -957,7 +957,7 @@ BEGIN
      WHERE part2.participant_id = p_participant_id
        AND part2.status = 'active'::public.participation_status
        AND part2.group_id IS NOT NULL
-       AND public.gedu_covers_group(part2.group_id)
+       AND public.gedu_substitutes_group(part2.group_id)
   ) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
@@ -1023,9 +1023,9 @@ BEGIN
        AND p.location_id  = p_location_id
        AND p.is_remote    = false
   )
-  -- The cover branch, shaped like the assignment one above rather than borrowed
+  -- The substitution branch, shaped like the assignment one above rather than borrowed
   -- from a group predicate: the question this function asks is about a BUILDING,
-  -- so the cover arm is "I hold a live cover on some group of an in-person
+  -- so the substitution arm is "I hold a live substitution on some group of an in-person
   -- product at this site". The owner's rule is that a sub sees everything the
   -- main gedu sees, and a site note is low-risk enough not to earn a special
   -- case of its own.
@@ -1035,7 +1035,7 @@ BEGIN
       JOIN public.products p2 ON p2.id = g.product_id
      WHERE p2.location_id = p_location_id
        AND p2.is_remote   = false
-       AND public.gedu_covers_group(g.id)
+       AND public.gedu_substitutes_group(g.id)
   ) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
@@ -1076,14 +1076,14 @@ $$;
 -- The admin writes take the GROUP ROW's lock before touching anything, and all
 -- four take it in the same order. That is the serialization point for a whole
 -- (group, date): without it two admins approving two different requests for one
--- session could each pass `may cover` for the same sub and seat one person in two
+-- session could each pass `may substitute` for the same sub and seat one person in two
 -- seats, which is precisely the state the derivation cannot describe.
 -- ---------------------------------------------------------------------------
 
-CREATE FUNCTION public.request_session_cover(
+CREATE FUNCTION public.request_session_substitution(
   p_group_id uuid,
   p_session_date date,
-  p_reason public.cover_reason,
+  p_reason public.substitution_reason,
   p_reason_note text
 ) RETURNS jsonb
 LANGUAGE plpgsql
@@ -1095,7 +1095,7 @@ DECLARE
   v_timezone text;
   v_role     public.gedu_assignment_role;
   v_note     text;
-  v_row      public.session_cover_requests;
+  v_row      public.session_substitution_requests;
 BEGIN
   PERFORM public.assert_role('gedu');
 
@@ -1109,7 +1109,7 @@ BEGIN
   END IF;
 
   IF p_reason IS NULL THEN
-    RAISE EXCEPTION 'a cover request needs a reason category'
+    RAISE EXCEPTION 'a substitution request needs a reason category'
       USING ERRCODE = 'check_violation';
   END IF;
 
@@ -1129,12 +1129,12 @@ BEGIN
   -- the action once the session's end has passed — same posture as every other
   -- write validator here.
   IF p_session_date < (now() AT TIME ZONE v_timezone)::date THEN
-    RAISE EXCEPTION 'a cover request cannot be filed for a past session (%)', p_session_date
+    RAISE EXCEPTION 'a substitution request cannot be filed for a past session (%)', p_session_date
       USING ERRCODE = 'check_violation';
   END IF;
 
-  -- The role being covered: the filer's assignment role, or — when the filer is
-  -- themselves a sub — the role stored on the cover they hold.
+  -- The role being substituted: the filer's assignment role, or — when the filer is
+  -- themselves a sub — the role stored on the substitution they hold.
   SELECT a.role INTO v_role
     FROM public.gedu_group_assignments a
    WHERE a.group_id = p_group_id
@@ -1142,11 +1142,11 @@ BEGIN
 
   IF v_role IS NULL THEN
     SELECT r.role INTO v_role
-      FROM public.session_cover_requests r
+      FROM public.session_substitution_requests r
      WHERE r.group_id     = p_group_id
        AND r.session_date = p_session_date
-       AND r.covered_by   = v_caller
-       AND r.status       = 'covered'::public.cover_request_status
+       AND r.substitute_id   = v_caller
+       AND r.status       = 'substituted'::public.substitution_request_status
      LIMIT 1;
   END IF;
 
@@ -1154,22 +1154,22 @@ BEGIN
   -- reads above found something — and stated so the NOT NULL column cannot fail
   -- with a constraint name instead of a sentence.
   IF v_role IS NULL THEN
-    RAISE EXCEPTION 'no role to cover for gedu % on group % (%)', v_caller, p_group_id, p_session_date
+    RAISE EXCEPTION 'no role to substitute for gedu % on group % (%)', v_caller, p_group_id, p_session_date
       USING ERRCODE = 'check_violation';
   END IF;
 
   v_note := NULLIF(btrim(COALESCE(p_reason_note, '')), '');
 
-  INSERT INTO public.session_cover_requests
+  INSERT INTO public.session_substitution_requests
     (group_id, session_date, requested_by, role, reason, reason_note)
   VALUES (p_group_id, p_session_date, v_caller, v_role, p_reason, v_note)
   RETURNING * INTO v_row;
 
-  RETURN public.cover_request_document(v_row, false, v_caller);
+  RETURN public.substitution_request_document(v_row, false, v_caller);
 END;
 $$;
 
-CREATE FUNCTION public.withdraw_session_cover_request(p_request_id uuid)
+CREATE FUNCTION public.withdraw_session_substitution_request(p_request_id uuid)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -1177,12 +1177,12 @@ SET search_path TO ''
 AS $$
 DECLARE
   v_caller uuid := (SELECT auth.uid());
-  v_row    public.session_cover_requests;
+  v_row    public.session_substitution_requests;
 BEGIN
   PERFORM public.assert_role('gedu');
 
   SELECT * INTO v_row
-    FROM public.session_cover_requests r
+    FROM public.session_substitution_requests r
    WHERE r.id = p_request_id
      FOR UPDATE;
 
@@ -1195,21 +1195,21 @@ BEGIN
   -- `open` only. The requester cannot withdraw after approval — once an admin
   -- has staffed the session, changing it back is the admin's call, which is what
   -- the session-card editor is for.
-  IF v_row.status <> 'open'::public.cover_request_status THEN
-    RAISE EXCEPTION 'this cover request is % and can no longer be withdrawn by its requester', v_row.status
+  IF v_row.status <> 'open'::public.substitution_request_status THEN
+    RAISE EXCEPTION 'this substitution request is % and can no longer be withdrawn by its requester', v_row.status
       USING ERRCODE = 'check_violation';
   END IF;
 
-  UPDATE public.session_cover_requests
-     SET status = 'withdrawn'::public.cover_request_status
+  UPDATE public.session_substitution_requests
+     SET status = 'withdrawn'::public.substitution_request_status
    WHERE id = v_row.id
   RETURNING * INTO v_row;
 
-  RETURN public.cover_request_document(v_row, false, v_caller);
+  RETURN public.substitution_request_document(v_row, false, v_caller);
 END;
 $$;
 
-CREATE FUNCTION public.offer_session_cover(p_request_id uuid)
+CREATE FUNCTION public.offer_session_substitution(p_request_id uuid)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -1218,20 +1218,20 @@ AS $$
 DECLARE
   v_caller   uuid := (SELECT auth.uid());
   v_timezone text;
-  v_row      public.session_cover_requests;
+  v_row      public.session_substitution_requests;
 BEGIN
   PERFORM public.assert_role('gedu');
 
   SELECT * INTO v_row
-    FROM public.session_cover_requests r
+    FROM public.session_substitution_requests r
    WHERE r.id = p_request_id;
 
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 
-  IF v_row.status <> 'open'::public.cover_request_status THEN
-    RAISE EXCEPTION 'this cover request is % and is no longer taking offers', v_row.status
+  IF v_row.status <> 'open'::public.substitution_request_status THEN
+    RAISE EXCEPTION 'this substitution request is % and is no longer taking offers', v_row.status
       USING ERRCODE = 'check_violation';
   END IF;
 
@@ -1245,7 +1245,7 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
 
-  IF NOT public.gedu_may_cover_session(
+  IF NOT public.gedu_may_substitute_session(
            v_caller, v_row.group_id, v_row.session_date, v_row.requested_by
          ) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
@@ -1253,15 +1253,15 @@ BEGIN
 
   -- Idempotent on the unique key: offering twice is one offer, and a double-tap
   -- is not an error worth surfacing.
-  INSERT INTO public.session_cover_offers (request_id, gedu_id)
+  INSERT INTO public.session_substitution_offers (request_id, gedu_id)
   VALUES (p_request_id, v_caller)
   ON CONFLICT (request_id, gedu_id) DO NOTHING;
 
-  RETURN public.cover_request_document(v_row, false, v_caller);
+  RETURN public.substitution_request_document(v_row, false, v_caller);
 END;
 $$;
 
-CREATE FUNCTION public.withdraw_session_cover_offer(p_request_id uuid)
+CREATE FUNCTION public.withdraw_session_substitution_offer(p_request_id uuid)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -1269,12 +1269,12 @@ SET search_path TO ''
 AS $$
 DECLARE
   v_caller uuid := (SELECT auth.uid());
-  v_row    public.session_cover_requests;
+  v_row    public.session_substitution_requests;
 BEGIN
   PERFORM public.assert_role('gedu');
 
   SELECT * INTO v_row
-    FROM public.session_cover_requests r
+    FROM public.session_substitution_requests r
    WHERE r.id = p_request_id;
 
   IF NOT FOUND THEN
@@ -1284,24 +1284,24 @@ BEGIN
   -- Keyed on the REQUEST rather than the offer, because the pool list's button
   -- knows which request it is looking at and an offer id would be a second
   -- identifier for the caller's one row. Refused only when the caller is the
-  -- approved cover — taking back an offer somebody already staffed you on is a
+  -- approved substitute — taking back an offer somebody already staffed you on is a
   -- new absence, not an un-offer. Withdrawing a LOSING offer on a request
-  -- covered by somebody else is allowed and does nothing visible.
-  IF v_row.status = 'covered'::public.cover_request_status
-     AND v_row.covered_by = v_caller THEN
-    RAISE EXCEPTION 'you are the approved cover for this session; file a cover request instead'
+  -- substituted by somebody else is allowed and does nothing visible.
+  IF v_row.status = 'substituted'::public.substitution_request_status
+     AND v_row.substitute_id = v_caller THEN
+    RAISE EXCEPTION 'you are the approved substitute for this session; file a substitution request instead'
       USING ERRCODE = 'check_violation';
   END IF;
 
-  DELETE FROM public.session_cover_offers o
+  DELETE FROM public.session_substitution_offers o
    WHERE o.request_id = p_request_id
      AND o.gedu_id    = v_caller;
 
-  RETURN public.cover_request_document(v_row, false, v_caller);
+  RETURN public.substitution_request_document(v_row, false, v_caller);
 END;
 $$;
 
-CREATE FUNCTION public.get_open_cover_requests()
+CREATE FUNCTION public.get_open_substitution_requests()
 RETURNS jsonb
 LANGUAGE plpgsql
 STABLE
@@ -1314,13 +1314,13 @@ BEGIN
   PERFORM public.assert_role('gedu');
 
   -- The pool list: every open request the caller could actually take. The
-  -- exclusion is the `may cover` predicate itself rather than a hand-written
+  -- exclusion is the `may substitute` predicate itself rather than a hand-written
   -- copy of its clauses, so the list and the offer button can never disagree —
   -- a session the gedu is expected at, one they have their own request on, and
   -- their own absence are all out by construction.
   --
   -- The ABSENT GEDU IS NOT NAMED. Naming them half-reveals a private reason
-  -- (everybody knows who is off sick), and the seat being covered belongs to the
+  -- (everybody knows who is off sick), and the seat being substituted belongs to the
   -- group rather than to a person the volunteer needs to know about.
   --
   -- Bounded to the next 60 days, which is a list bound and not a rule: a request
@@ -1348,7 +1348,7 @@ BEGIN
                  END,
                'has_offered', EXISTS (
                  SELECT 1
-                   FROM public.session_cover_offers o
+                   FROM public.session_substitution_offers o
                   WHERE o.request_id = r.id
                     AND o.gedu_id    = v_caller
                ),
@@ -1399,20 +1399,20 @@ BEGIN
              )
              ORDER BY r.session_date, p.id, g.name, r.id
            )
-      FROM public.session_cover_requests r
+      FROM public.session_substitution_requests r
       JOIN public.product_groups g ON g.id = r.group_id
       JOIN public.products p       ON p.id = g.product_id
-     WHERE r.status = 'open'::public.cover_request_status
+     WHERE r.status = 'open'::public.substitution_request_status
        AND r.session_date >= (now() AT TIME ZONE p.timezone)::date
        AND r.session_date <= (now() AT TIME ZONE p.timezone)::date + 60
-       AND public.gedu_may_cover_session(
+       AND public.gedu_may_substitute_session(
              v_caller, r.group_id, r.session_date, r.requested_by
            )
   ), '[]'::jsonb);
 END;
 $$;
 
-CREATE FUNCTION public.approve_session_cover_offer(p_offer_id uuid)
+CREATE FUNCTION public.approve_session_substitution_offer(p_offer_id uuid)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -1423,32 +1423,32 @@ DECLARE
   v_request_id uuid;
   v_sub_id     uuid;
   v_group_id   uuid;
-  v_row        public.session_cover_requests;
+  v_row        public.session_substitution_requests;
 BEGIN
   PERFORM public.assert_admin();
 
   SELECT o.request_id, o.gedu_id INTO v_request_id, v_sub_id
-    FROM public.session_cover_offers o
+    FROM public.session_substitution_offers o
    WHERE o.id = p_offer_id;
 
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'Cover offer not found' USING ERRCODE = 'P0002';
+    RAISE EXCEPTION 'Substitution offer not found' USING ERRCODE = 'P0002';
   END IF;
 
   SELECT r.group_id INTO v_group_id
-    FROM public.session_cover_requests r
+    FROM public.session_substitution_requests r
    WHERE r.id = v_request_id;
 
   -- The (group, date) serialization point, taken first by every admin write.
   PERFORM 1 FROM public.product_groups g WHERE g.id = v_group_id FOR UPDATE;
 
   SELECT * INTO v_row
-    FROM public.session_cover_requests r
+    FROM public.session_substitution_requests r
    WHERE r.id = v_request_id
      FOR UPDATE;
 
-  IF v_row.status <> 'open'::public.cover_request_status THEN
-    RAISE EXCEPTION 'this cover request is already %', v_row.status
+  IF v_row.status <> 'open'::public.substitution_request_status THEN
+    RAISE EXCEPTION 'this substitution request is already %', v_row.status
       USING ERRCODE = 'check_violation';
   END IF;
 
@@ -1456,34 +1456,34 @@ BEGIN
   -- and being approved: the offerer may since have been assigned to the group,
   -- been seated as somebody else's sub on the same date, filed an absence of
   -- their own, or been de-certified.
-  IF NOT public.gedu_may_cover_session(
+  IF NOT public.gedu_may_substitute_session(
            v_sub_id, v_row.group_id, v_row.session_date, v_row.requested_by
          ) THEN
-    RAISE EXCEPTION 'gedu % can no longer cover group % on %',
+    RAISE EXCEPTION 'gedu % can no longer substitute on group % on %',
                     v_sub_id, v_row.group_id, v_row.session_date
       USING ERRCODE = 'check_violation';
   END IF;
 
   -- The other offers are deliberately untouched: "not selected" is derived from
-  -- the request being covered by somebody else.
-  UPDATE public.session_cover_requests
-     SET status      = 'covered'::public.cover_request_status,
-         covered_by  = v_sub_id,
+  -- the request being substituted by somebody else.
+  UPDATE public.session_substitution_requests
+     SET status      = 'substituted'::public.substitution_request_status,
+         substitute_id  = v_sub_id,
          approved_by = v_caller,
          approved_at = now()
    WHERE id = v_row.id
   RETURNING * INTO v_row;
 
-  RETURN public.cover_request_document(v_row, true, v_caller);
+  RETURN public.substitution_request_document(v_row, true, v_caller);
 END;
 $$;
 
-CREATE FUNCTION public.set_session_cover(
+CREATE FUNCTION public.set_session_substitution(
   p_group_id uuid,
   p_session_date date,
   p_absent_gedu_id uuid,
   p_sub_gedu_id uuid,
-  p_reason public.cover_reason,
+  p_reason public.substitution_reason,
   p_reason_note text
 ) RETURNS jsonb
 LANGUAGE plpgsql
@@ -1492,7 +1492,7 @@ SET search_path TO ''
 AS $$
 DECLARE
   v_caller uuid := (SELECT auth.uid());
-  v_row    public.session_cover_requests;
+  v_row    public.session_substitution_requests;
   v_exists boolean;
   v_role   public.gedu_assignment_role;
   v_note   text;
@@ -1501,7 +1501,7 @@ BEGIN
 
   IF p_group_id IS NULL OR p_session_date IS NULL
      OR p_absent_gedu_id IS NULL OR p_sub_gedu_id IS NULL THEN
-    RAISE EXCEPTION 'set_session_cover needs a group, a date, an absent gedu and a sub'
+    RAISE EXCEPTION 'set_session_substitution needs a group, a date, an absent gedu and a sub'
       USING ERRCODE = 'check_violation';
   END IF;
 
@@ -1512,7 +1512,7 @@ BEGIN
 
   -- The ordinary writable-date check and NOTHING MORE: there is deliberately no
   -- today-or-later requirement here. This is the retroactive path — an
-  -- off-platform cover that has already happened has to be recordable, because
+  -- off-platform substitution that has already happened has to be recordable, because
   -- gedu invoicing reads these rows.
   IF NOT public.group_session_date_is_writable(p_group_id, p_session_date) THEN
     RAISE EXCEPTION 'No scheduled session on % for this group', p_session_date
@@ -1522,11 +1522,11 @@ BEGIN
   v_note := NULLIF(btrim(COALESCE(p_reason_note, '')), '');
 
   SELECT * INTO v_row
-    FROM public.session_cover_requests r
+    FROM public.session_substitution_requests r
    WHERE r.group_id     = p_group_id
      AND r.session_date = p_session_date
      AND r.requested_by = p_absent_gedu_id
-     AND r.status <> 'withdrawn'::public.cover_request_status
+     AND r.status <> 'withdrawn'::public.substitution_request_status
      FOR UPDATE;
   v_exists := FOUND;
 
@@ -1548,39 +1548,39 @@ BEGIN
 
     IF v_role IS NULL THEN
       SELECT r2.role INTO v_role
-        FROM public.session_cover_requests r2
+        FROM public.session_substitution_requests r2
        WHERE r2.group_id     = p_group_id
          AND r2.session_date = p_session_date
-         AND r2.covered_by   = p_absent_gedu_id
-         AND r2.status       = 'covered'::public.cover_request_status
+         AND r2.substitute_id   = p_absent_gedu_id
+         AND r2.status       = 'substituted'::public.substitution_request_status
        LIMIT 1;
     END IF;
 
     IF v_role IS NULL THEN
-      RAISE EXCEPTION 'no role to cover for gedu % on group % (%)',
+      RAISE EXCEPTION 'no role to substitute for gedu % on group % (%)',
                       p_absent_gedu_id, p_group_id, p_session_date
         USING ERRCODE = 'check_violation';
     END IF;
   END IF;
 
-  IF NOT public.gedu_may_cover_session(
+  IF NOT public.gedu_may_substitute_session(
            p_sub_gedu_id, p_group_id, p_session_date, p_absent_gedu_id
          ) THEN
-    RAISE EXCEPTION 'gedu % cannot cover group % on %',
+    RAISE EXCEPTION 'gedu % cannot substitute on group % on %',
                     p_sub_gedu_id, p_group_id, p_session_date
       USING ERRCODE = 'check_violation';
   END IF;
 
   IF v_exists THEN
-    -- An OPEN request becomes covered — which is what "set a sub" reads as when
-    -- the absent gedu has already asked. A request that is ALREADY COVERED is
+    -- An OPEN request becomes substituted — which is what "set a sub" reads as when
+    -- the absent gedu has already asked. A request that is ALREADY SUBSTITUTED is
     -- RE-POINTED at the new sub, so replacing a sub is one action rather than a
     -- clear followed by a set. `approved_by` is the acting admin either way.
     -- Reason and note are only overwritten when this call supplies them, so an
     -- admin replacing a sub does not blank what the gedu wrote.
-    UPDATE public.session_cover_requests
-       SET status      = 'covered'::public.cover_request_status,
-           covered_by  = p_sub_gedu_id,
+    UPDATE public.session_substitution_requests
+       SET status      = 'substituted'::public.substitution_request_status,
+           substitute_id  = p_sub_gedu_id,
            approved_by = v_caller,
            approved_at = now(),
            reason      = COALESCE(p_reason, reason),
@@ -1588,27 +1588,27 @@ BEGIN
      WHERE id = v_row.id
     RETURNING * INTO v_row;
   ELSE
-    INSERT INTO public.session_cover_requests
+    INSERT INTO public.session_substitution_requests
       (group_id, session_date, requested_by, role, reason, reason_note,
-       status, covered_by, approved_by, approved_at)
+       status, substitute_id, approved_by, approved_at)
     VALUES (p_group_id, p_session_date, p_absent_gedu_id, v_role, p_reason, v_note,
-            'covered'::public.cover_request_status, p_sub_gedu_id, v_caller, now())
+            'substituted'::public.substitution_request_status, p_sub_gedu_id, v_caller, now())
     RETURNING * INTO v_row;
   END IF;
 
   -- The replace case can UNSEAT the sub who was there, and a displaced sub who
   -- had filed their own absence no longer holds a seat to be absent from.
-  PERFORM public.cascade_withdraw_orphaned_cover_requests(p_group_id, p_session_date);
+  PERFORM public.cascade_withdraw_orphaned_substitution_requests(p_group_id, p_session_date);
 
   SELECT * INTO v_row
-    FROM public.session_cover_requests r
+    FROM public.session_substitution_requests r
    WHERE r.id = v_row.id;
 
-  RETURN public.cover_request_document(v_row, true, v_caller);
+  RETURN public.substitution_request_document(v_row, true, v_caller);
 END;
 $$;
 
-CREATE FUNCTION public.clear_session_cover(p_request_id uuid)
+CREATE FUNCTION public.clear_session_substitution(p_request_id uuid)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -1618,54 +1618,54 @@ DECLARE
   v_caller       uuid := (SELECT auth.uid());
   v_group_id     uuid;
   v_session_date date;
-  v_row          public.session_cover_requests;
+  v_row          public.session_substitution_requests;
 BEGIN
   PERFORM public.assert_admin();
 
   SELECT r.group_id, r.session_date INTO v_group_id, v_session_date
-    FROM public.session_cover_requests r
+    FROM public.session_substitution_requests r
    WHERE r.id = p_request_id;
 
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'Cover request not found' USING ERRCODE = 'P0002';
+    RAISE EXCEPTION 'Substitution request not found' USING ERRCODE = 'P0002';
   END IF;
 
   -- Group first, then the row: one lock order across all four admin writes.
   PERFORM 1 FROM public.product_groups g WHERE g.id = v_group_id FOR UPDATE;
 
   SELECT * INTO v_row
-    FROM public.session_cover_requests r
+    FROM public.session_substitution_requests r
    WHERE r.id = p_request_id
      FOR UPDATE;
 
-  IF v_row.status <> 'covered'::public.cover_request_status THEN
-    RAISE EXCEPTION 'this cover request is % and has no cover to clear', v_row.status
+  IF v_row.status <> 'substituted'::public.substitution_request_status THEN
+    RAISE EXCEPTION 'this substitution request is % and has no substitute to clear', v_row.status
       USING ERRCODE = 'check_violation';
   END IF;
 
   -- Back to `open`, so the session returns to the pool and to the admin queue.
   -- The offers are left alone: they are still people who said they could come.
-  UPDATE public.session_cover_requests
-     SET status      = 'open'::public.cover_request_status,
-         covered_by  = NULL,
+  UPDATE public.session_substitution_requests
+     SET status      = 'open'::public.substitution_request_status,
+         substitute_id  = NULL,
          approved_by = NULL,
          approved_at = NULL
    WHERE id = p_request_id
   RETURNING * INTO v_row;
 
-  PERFORM public.cascade_withdraw_orphaned_cover_requests(v_group_id, v_session_date);
+  PERFORM public.cascade_withdraw_orphaned_substitution_requests(v_group_id, v_session_date);
 
   -- Re-read: the sweep can have withdrawn THIS row too, when its own requester
   -- was themselves a sub who has just been unseated.
   SELECT * INTO v_row
-    FROM public.session_cover_requests r
+    FROM public.session_substitution_requests r
    WHERE r.id = p_request_id;
 
-  RETURN public.cover_request_document(v_row, true, v_caller);
+  RETURN public.substitution_request_document(v_row, true, v_caller);
 END;
 $$;
 
-CREATE FUNCTION public.withdraw_session_cover_request_as_admin(p_request_id uuid)
+CREATE FUNCTION public.withdraw_session_substitution_request_as_admin(p_request_id uuid)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -1675,114 +1675,114 @@ DECLARE
   v_caller       uuid := (SELECT auth.uid());
   v_group_id     uuid;
   v_session_date date;
-  v_row          public.session_cover_requests;
+  v_row          public.session_substitution_requests;
 BEGIN
   PERFORM public.assert_admin();
 
   SELECT r.group_id, r.session_date INTO v_group_id, v_session_date
-    FROM public.session_cover_requests r
+    FROM public.session_substitution_requests r
    WHERE r.id = p_request_id;
 
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'Cover request not found' USING ERRCODE = 'P0002';
+    RAISE EXCEPTION 'Substitution request not found' USING ERRCODE = 'P0002';
   END IF;
 
   PERFORM 1 FROM public.product_groups g WHERE g.id = v_group_id FOR UPDATE;
 
   SELECT * INTO v_row
-    FROM public.session_cover_requests r
+    FROM public.session_substitution_requests r
    WHERE r.id = p_request_id
      FOR UPDATE;
 
-  IF v_row.status = 'withdrawn'::public.cover_request_status THEN
-    RAISE EXCEPTION 'this cover request is already withdrawn'
+  IF v_row.status = 'withdrawn'::public.substitution_request_status THEN
+    RAISE EXCEPTION 'this substitution request is already withdrawn'
       USING ERRCODE = 'check_violation';
   END IF;
 
-  -- "The absent gedu is attending after all." The three cover columns are
-  -- blanked with the status because chk_cover_state forbids a withdrawn row from
-  -- carrying a sub — so withdrawing a COVERED request unwinds the substitution
+  -- "The absent gedu is attending after all." The three substitution columns are
+  -- blanked with the status because chk_substitution_state forbids a withdrawn row from
+  -- carrying a sub — so withdrawing a SUBSTITUTED request unwinds the substitution
   -- rather than freezing it, and the cascade then cleans up after the sub.
-  UPDATE public.session_cover_requests
-     SET status      = 'withdrawn'::public.cover_request_status,
-         covered_by  = NULL,
+  UPDATE public.session_substitution_requests
+     SET status      = 'withdrawn'::public.substitution_request_status,
+         substitute_id  = NULL,
          approved_by = NULL,
          approved_at = NULL
    WHERE id = p_request_id
   RETURNING * INTO v_row;
 
-  PERFORM public.cascade_withdraw_orphaned_cover_requests(v_group_id, v_session_date);
+  PERFORM public.cascade_withdraw_orphaned_substitution_requests(v_group_id, v_session_date);
 
   SELECT * INTO v_row
-    FROM public.session_cover_requests r
+    FROM public.session_substitution_requests r
    WHERE r.id = p_request_id;
 
-  RETURN public.cover_request_document(v_row, true, v_caller);
+  RETURN public.substitution_request_document(v_row, true, v_caller);
 END;
 $$;
 
-REVOKE EXECUTE ON FUNCTION public.request_session_cover(uuid, date, public.cover_reason, text) FROM PUBLIC, anon;
-GRANT  EXECUTE ON FUNCTION public.request_session_cover(uuid, date, public.cover_reason, text) TO authenticated;
-GRANT  EXECUTE ON FUNCTION public.request_session_cover(uuid, date, public.cover_reason, text) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.request_session_substitution(uuid, date, public.substitution_reason, text) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.request_session_substitution(uuid, date, public.substitution_reason, text) TO authenticated;
+GRANT  EXECUTE ON FUNCTION public.request_session_substitution(uuid, date, public.substitution_reason, text) TO service_role;
 
-REVOKE EXECUTE ON FUNCTION public.withdraw_session_cover_request(uuid) FROM PUBLIC, anon;
-GRANT  EXECUTE ON FUNCTION public.withdraw_session_cover_request(uuid) TO authenticated;
-GRANT  EXECUTE ON FUNCTION public.withdraw_session_cover_request(uuid) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.withdraw_session_substitution_request(uuid) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.withdraw_session_substitution_request(uuid) TO authenticated;
+GRANT  EXECUTE ON FUNCTION public.withdraw_session_substitution_request(uuid) TO service_role;
 
-REVOKE EXECUTE ON FUNCTION public.offer_session_cover(uuid) FROM PUBLIC, anon;
-GRANT  EXECUTE ON FUNCTION public.offer_session_cover(uuid) TO authenticated;
-GRANT  EXECUTE ON FUNCTION public.offer_session_cover(uuid) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.offer_session_substitution(uuid) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.offer_session_substitution(uuid) TO authenticated;
+GRANT  EXECUTE ON FUNCTION public.offer_session_substitution(uuid) TO service_role;
 
-REVOKE EXECUTE ON FUNCTION public.withdraw_session_cover_offer(uuid) FROM PUBLIC, anon;
-GRANT  EXECUTE ON FUNCTION public.withdraw_session_cover_offer(uuid) TO authenticated;
-GRANT  EXECUTE ON FUNCTION public.withdraw_session_cover_offer(uuid) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.withdraw_session_substitution_offer(uuid) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.withdraw_session_substitution_offer(uuid) TO authenticated;
+GRANT  EXECUTE ON FUNCTION public.withdraw_session_substitution_offer(uuid) TO service_role;
 
-REVOKE EXECUTE ON FUNCTION public.get_open_cover_requests() FROM PUBLIC, anon;
-GRANT  EXECUTE ON FUNCTION public.get_open_cover_requests() TO authenticated;
-GRANT  EXECUTE ON FUNCTION public.get_open_cover_requests() TO service_role;
+REVOKE EXECUTE ON FUNCTION public.get_open_substitution_requests() FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.get_open_substitution_requests() TO authenticated;
+GRANT  EXECUTE ON FUNCTION public.get_open_substitution_requests() TO service_role;
 
-REVOKE EXECUTE ON FUNCTION public.approve_session_cover_offer(uuid) FROM PUBLIC, anon;
-GRANT  EXECUTE ON FUNCTION public.approve_session_cover_offer(uuid) TO authenticated;
-GRANT  EXECUTE ON FUNCTION public.approve_session_cover_offer(uuid) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.approve_session_substitution_offer(uuid) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.approve_session_substitution_offer(uuid) TO authenticated;
+GRANT  EXECUTE ON FUNCTION public.approve_session_substitution_offer(uuid) TO service_role;
 
-REVOKE EXECUTE ON FUNCTION public.set_session_cover(uuid, date, uuid, uuid, public.cover_reason, text) FROM PUBLIC, anon;
-GRANT  EXECUTE ON FUNCTION public.set_session_cover(uuid, date, uuid, uuid, public.cover_reason, text) TO authenticated;
-GRANT  EXECUTE ON FUNCTION public.set_session_cover(uuid, date, uuid, uuid, public.cover_reason, text) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.set_session_substitution(uuid, date, uuid, uuid, public.substitution_reason, text) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.set_session_substitution(uuid, date, uuid, uuid, public.substitution_reason, text) TO authenticated;
+GRANT  EXECUTE ON FUNCTION public.set_session_substitution(uuid, date, uuid, uuid, public.substitution_reason, text) TO service_role;
 
-REVOKE EXECUTE ON FUNCTION public.clear_session_cover(uuid) FROM PUBLIC, anon;
-GRANT  EXECUTE ON FUNCTION public.clear_session_cover(uuid) TO authenticated;
-GRANT  EXECUTE ON FUNCTION public.clear_session_cover(uuid) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.clear_session_substitution(uuid) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.clear_session_substitution(uuid) TO authenticated;
+GRANT  EXECUTE ON FUNCTION public.clear_session_substitution(uuid) TO service_role;
 
-REVOKE EXECUTE ON FUNCTION public.withdraw_session_cover_request_as_admin(uuid) FROM PUBLIC, anon;
-GRANT  EXECUTE ON FUNCTION public.withdraw_session_cover_request_as_admin(uuid) TO authenticated;
-GRANT  EXECUTE ON FUNCTION public.withdraw_session_cover_request_as_admin(uuid) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.withdraw_session_substitution_request_as_admin(uuid) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.withdraw_session_substitution_request_as_admin(uuid) TO authenticated;
+GRANT  EXECUTE ON FUNCTION public.withdraw_session_substitution_request_as_admin(uuid) TO service_role;
 
-COMMENT ON FUNCTION public.request_session_cover(p_group_id uuid, p_session_date date, p_reason public.cover_reason, p_reason_note text) IS
-  '"I cannot make this session", filed by a gedu from a future session''s card. The AUTHORIZATION IS THE DERIVATION: the caller must be EXPECTED at that session, which admits an assigned gedu and an approved sub alike (that is the whole of "a sub can ask for a sub") and refuses anyone who already holds a live request. The reason category is required here and only here — an admin recording an off-platform cover may not know it. The date must pass the ordinary writable-date check AND be today or later in the PRODUCT''s timezone; date granularity is deliberate, the handbook''s own norm being same-day filing, and it is deliberately looser than the card, which hides the action once the session''s end has passed. The role covered is snapshotted from the caller''s assignment role, or from the role on the cover they hold when the caller is themselves a sub. reason_note is trimmed, nulled when empty, and capped at 500 characters by the table''s own CHECK. Returns the request document without reason or reason_note: the filer''s own words come back from the form, and every other gedu-facing document keeps them off the wire.';
+COMMENT ON FUNCTION public.request_session_substitution(p_group_id uuid, p_session_date date, p_reason public.substitution_reason, p_reason_note text) IS
+  '"I cannot make this session", filed by a gedu from a future session''s card. The AUTHORIZATION IS THE DERIVATION: the caller must be EXPECTED at that session, which admits an assigned gedu and an approved sub alike (that is the whole of "a sub can ask for a sub") and refuses anyone who already holds a live request. The reason category is required here and only here — an admin recording an off-platform substitution may not know it. The date must pass the ordinary writable-date check AND be today or later in the PRODUCT''s timezone; date granularity is deliberate, the handbook''s own norm being same-day filing, and it is deliberately looser than the card, which hides the action once the session''s end has passed. The role substituted is snapshotted from the caller''s assignment role, or from the role on the substitution they hold when the caller is themselves a sub. reason_note is trimmed, nulled when empty, and capped at 500 characters by the table''s own CHECK. Returns the request document without reason or reason_note: the filer''s own words come back from the form, and every other gedu-facing document keeps them off the wire.';
 
-COMMENT ON FUNCTION public.withdraw_session_cover_request(p_request_id uuid) IS
-  '"I can make it after all", while the request is still `open`. Caller must be the requester, and a request that is somebody else''s is refused exactly as one that does not exist is, so this cannot be used as an oracle for real ids. Refused once an admin has approved a cover: after that, unwinding it is the admin''s call through clear_session_cover or withdraw_session_cover_request_as_admin, because somebody has been told they are working. A withdrawn row is history and does not block a fresh request for the same seat — the live-seat unique index is partial on exactly that.';
+COMMENT ON FUNCTION public.withdraw_session_substitution_request(p_request_id uuid) IS
+  '"I can make it after all", while the request is still `open`. Caller must be the requester, and a request that is somebody else''s is refused exactly as one that does not exist is, so this cannot be used as an oracle for real ids. Refused once an admin has approved a substitution: after that, unwinding it is the admin''s call through clear_session_substitution or withdraw_session_substitution_request_as_admin, because somebody has been told they are working. A withdrawn row is history and does not block a fresh request for the same seat — the live-seat unique index is partial on exactly that.';
 
-COMMENT ON FUNCTION public.offer_session_cover(p_request_id uuid) IS
-  '"I can cover this", from the gedu dashboard''s pool list. Guarded on gedu_may_cover_session — certified, not the absent gedu, not already expected at that session, and holding no non-withdrawn request of their own on that (group, date) — plus the request being `open` and dated today or later in the product''s timezone. Idempotent on (request, gedu): offering twice is one offer. There is deliberately no ranking, no eligibility beyond certification, and no notification on any channel; the office decides, and auto-approving the first offer was rejected because the admin step IS the product. Returns the request document, which carries no offer_count for an offerer — who else volunteered is not their business.';
+COMMENT ON FUNCTION public.offer_session_substitution(p_request_id uuid) IS
+  '"Offer to substitute", from the gedu dashboard''s pool list. Guarded on gedu_may_substitute_session — certified, not the absent gedu, not already expected at that session, and holding no non-withdrawn request of their own on that (group, date) — plus the request being `open` and dated today or later in the product''s timezone. Idempotent on (request, gedu): offering twice is one offer. There is deliberately no ranking, no eligibility beyond certification, and no notification on any channel; the office decides, and auto-approving the first offer was rejected because the admin step IS the product. Returns the request document, which carries no offer_count for an offerer — who else volunteered is not their business.';
 
-COMMENT ON FUNCTION public.withdraw_session_cover_offer(p_request_id uuid) IS
-  'Deletes the caller''s offer on one request — an offer nobody accepted is not a fact worth keeping, so there is no withdrawn state for one. Keyed on the REQUEST rather than the offer, because the button knows which request it is looking at and an offer id would be a second identifier for the caller''s one row. Refused only when the caller IS the approved cover: taking back an offer somebody has already been staffed on is a new absence, which is request_session_cover''s job. Withdrawing a LOSING offer on a request covered by somebody else is allowed and changes nothing visible.';
+COMMENT ON FUNCTION public.withdraw_session_substitution_offer(p_request_id uuid) IS
+  'Deletes the caller''s offer on one request — an offer nobody accepted is not a fact worth keeping, so there is no withdrawn state for one. Keyed on the REQUEST rather than the offer, because the button knows which request it is looking at and an offer id would be a second identifier for the caller''s one row. Refused only when the caller IS the approved substitute: taking back an offer somebody has already been staffed on is a new absence, which is request_session_substitution''s job. Withdrawing a LOSING offer on a request substituted by somebody else is allowed and changes nothing visible.';
 
-COMMENT ON FUNCTION public.get_open_cover_requests() IS
-  'The gedu dashboard''s "Sessions needing cover": every `open` request dated today or later in the product''s timezone, within the next 60 days, that the CALLER could actually take. The exclusion is gedu_may_cover_session itself rather than a copy of its clauses, so this list and the offer button can never disagree. Each line carries the product shell (type, topic, spoken language, timezone, remote flag or site name, term dates, translations, schedule slots), the group name, the date, the role and THAT ROLE''s fee (null when the product has not set one — a blank field, not a volunteer session), and whether the caller has already offered. The ABSENT GEDU IS DELIBERATELY NOT NAMED: naming them half-reveals a private reason, and the seat belongs to the group. Contains no schedule expansion — the client owns the calendar math, exactly as both feeds do. Gedu-gated on its first statement; an uncertified gedu gets an empty list, because certification is one of the predicate''s four refusals.';
+COMMENT ON FUNCTION public.get_open_substitution_requests() IS
+  'The gedu dashboard''s "Sessions needing a substitute": every `open` request dated today or later in the product''s timezone, within the next 60 days, that the CALLER could actually take. The exclusion is gedu_may_substitute_session itself rather than a copy of its clauses, so this list and the offer button can never disagree. Each line carries the product shell (type, topic, spoken language, timezone, remote flag or site name, term dates, translations, schedule slots), the group name, the date, the role and THAT ROLE''s fee (null when the product has not set one — a blank field, not a volunteer session), and whether the caller has already offered. The ABSENT GEDU IS DELIBERATELY NOT NAMED: naming them half-reveals a private reason, and the seat belongs to the group. Contains no schedule expansion — the client owns the calendar math, exactly as both feeds do. Gedu-gated on its first statement; an uncertified gedu gets an empty list, because certification is one of the predicate''s four refusals.';
 
-COMMENT ON FUNCTION public.approve_session_cover_offer(p_offer_id uuid) IS
-  'An admin picks one offer, and its gedu becomes the cover: `open` -> `covered`, stamping covered_by, approved_by = the acting admin, and approved_at. Takes the group row''s lock and then the request''s FOR UPDATE, so two admins approving two offers on one session serialize and the second is refused; and re-asks gedu_may_cover_session UNDER THAT LOCK, because an offer goes stale (the offerer gets assigned to the group, gets seated as somebody else''s sub on the same date, files an absence of their own, or is de-certified). The OTHER OFFERS ARE NOT TOUCHED: "not selected" is derived from the request being covered by somebody else, and which offer was approved is the covering gedu''s own offer row — which is why no approved_offer_id exists.';
+COMMENT ON FUNCTION public.approve_session_substitution_offer(p_offer_id uuid) IS
+  'An admin picks one offer, and its gedu becomes the substitute: `open` -> `substituted`, stamping substitute_id, approved_by = the acting admin, and approved_at. Takes the group row''s lock and then the request''s FOR UPDATE, so two admins approving two offers on one session serialize and the second is refused; and re-asks gedu_may_substitute_session UNDER THAT LOCK, because an offer goes stale (the offerer gets assigned to the group, gets seated as somebody else''s sub on the same date, files an absence of their own, or is de-certified). The OTHER OFFERS ARE NOT TOUCHED: "not selected" is derived from the request being substituted by somebody else, and which offer was approved is the substituting gedu''s own offer row — which is why no approved_offer_id exists.';
 
-COMMENT ON FUNCTION public.set_session_cover(p_group_id uuid, p_session_date date, p_absent_gedu_id uuid, p_sub_gedu_id uuid, p_reason public.cover_reason, p_reason_note text) IS
-  'The office-arranged path: an admin names the absent gedu and the sub outright, with no offer involved. Three shapes in one function. With NO request for that seat it files one on the absent gedu''s behalf, created already `covered` — and the absent gedu must actually be EXPECTED at the session, with the role taken from their assignment or from the cover they hold. With an OPEN request it covers that request, which is what the admin queue''s approve reads as. With an ALREADY COVERED one it RE-POINTS the cover, so replacing a sub is one action rather than a clear and a set, and the displaced sub''s own absence is then swept by the cascade. There is deliberately NO today-or-later requirement — this is the retroactive path, and an off-platform cover that already happened has to be recordable because gedu invoicing reads these rows. The date still passes the ordinary writable-date check. Reason is optional and is only overwritten when supplied, so an admin replacing a sub does not blank what the gedu wrote. approved_by is the acting admin on every admin path.';
+COMMENT ON FUNCTION public.set_session_substitution(p_group_id uuid, p_session_date date, p_absent_gedu_id uuid, p_sub_gedu_id uuid, p_reason public.substitution_reason, p_reason_note text) IS
+  'The office-arranged path: an admin names the absent gedu and the sub outright, with no offer involved. Three shapes in one function. With NO request for that seat it files one on the absent gedu''s behalf, created already `substituted` — and the absent gedu must actually be EXPECTED at the session, with the role taken from their assignment or from the substitution they hold. With an OPEN request it marks that request `substituted`, which is what the admin queue''s approve reads as. With an ALREADY SUBSTITUTED one it RE-POINTS the substitution, so replacing a sub is one action rather than a clear and a set, and the displaced sub''s own absence is then swept by the cascade. There is deliberately NO today-or-later requirement — this is the retroactive path, and an off-platform substitution that already happened has to be recordable because gedu invoicing reads these rows. The date still passes the ordinary writable-date check. Reason is optional and is only overwritten when supplied, so an admin replacing a sub does not blank what the gedu wrote. approved_by is the acting admin on every admin path.';
 
-COMMENT ON FUNCTION public.clear_session_cover(p_request_id uuid) IS
-  '"That sub is not coming": `covered` -> `open`, blanking covered_by, approved_by and approved_at, so the session returns to the pool list and to the admin queue. The offers are left alone — they are still people who said they could come. Then the fixpoint cascade runs over that (group, date), which is what withdraws the cleared sub''s OWN request if they had filed one: they no longer hold a seat there to be absent from. The cascade can also withdraw THIS row, when its requester was themselves a sub who has just been unseated, which is why the document is re-read before it is returned.';
+COMMENT ON FUNCTION public.clear_session_substitution(p_request_id uuid) IS
+  '"That sub is not coming": `substituted` -> `open`, blanking substitute_id, approved_by and approved_at, so the session returns to the pool list and to the admin queue. The offers are left alone — they are still people who said they could come. Then the fixpoint cascade runs over that (group, date), which is what withdraws the cleared sub''s OWN request if they had filed one: they no longer hold a seat there to be absent from. The cascade can also withdraw THIS row, when its requester was themselves a sub who has just been unseated, which is why the document is re-read before it is returned.';
 
-COMMENT ON FUNCTION public.withdraw_session_cover_request_as_admin(p_request_id uuid) IS
-  '"The absent gedu is attending after all": any non-withdrawn request -> `withdrawn`, from the admin session-card editor. The three cover columns are blanked with the status, because chk_cover_state forbids a withdrawn row from carrying a sub — so withdrawing a COVERED request unwinds the substitution rather than freezing it, and the same fixpoint cascade as clear_session_cover then cleans up after the displaced sub. Distinct from withdraw_session_cover_request, which is the gedu''s own and works on an `open` request only.';
+COMMENT ON FUNCTION public.withdraw_session_substitution_request_as_admin(p_request_id uuid) IS
+  '"The absent gedu is attending after all": any non-withdrawn request -> `withdrawn`, from the admin session-card editor. The three substitution columns are blanked with the status, because chk_substitution_state forbids a withdrawn row from carrying a sub — so withdrawing a SUBSTITUTED request unwinds the substitution rather than freezing it, and the same fixpoint cascade as clear_session_substitution then cleans up after the displaced sub. Distinct from withdraw_session_substitution_request, which is the gedu''s own and works on an `open` request only.';
 
 -- ---------------------------------------------------------------------------
 -- 7. The reads, widened in place
@@ -1810,7 +1810,7 @@ DECLARE
   v_queue     jsonb;
   v_attention jsonb;
   v_schedule  jsonb;
-  v_covers    jsonb;
+  v_substitutions    jsonb;
 BEGIN
   PERFORM public.assert_admin();
 
@@ -2157,7 +2157,7 @@ BEGIN
     ) s;
 
   -- ---------------------------------------------------------------------------
-  -- 5. The cover queue: open cover requests an admin has to staff.
+  -- 5. The substitution queue: open substitution requests an admin has to staff.
   --
   -- Dated TODAY OR LATER in the product's own timezone — a request whose date
   -- has passed is UNFILLED, which is a derived state of an open request and not
@@ -2178,7 +2178,7 @@ BEGIN
   -- other and an admin can clear it.
   -- ---------------------------------------------------------------------------
   SELECT COALESCE(jsonb_agg(q.doc ORDER BY q.session_date, q.product_id, q.id), '[]'::jsonb)
-    INTO v_covers
+    INTO v_substitutions
     FROM (
       SELECT r.id,
              r.session_date,
@@ -2222,17 +2222,17 @@ BEGIN
                           )
                           ORDER BY o.created_at, o.id
                         )
-                   FROM public.session_cover_offers o
+                   FROM public.session_substitution_offers o
                    JOIN public.profiles op ON op.id = o.gedu_id
                    LEFT JOIN public.gedu_profiles ogp ON ogp.user_id = o.gedu_id
                   WHERE o.request_id = r.id
                ), '[]'::jsonb)
              ) AS doc
-        FROM public.session_cover_requests r
+        FROM public.session_substitution_requests r
         JOIN public.product_groups g ON g.id = r.group_id
         JOIN public.products p       ON p.id = g.product_id
         JOIN public.profiles rq      ON rq.id = r.requested_by
-       WHERE r.status = 'open'::public.cover_request_status
+       WHERE r.status = 'open'::public.substitution_request_status
          AND r.session_date >= (now() AT TIME ZONE p.timezone)::date
     ) q;
 
@@ -2241,7 +2241,7 @@ BEGIN
     'certification_queue', v_queue,
     'attention_products', v_attention,
     'schedule_products',  v_schedule,
-    'cover_requests',     v_covers
+    'substitution_requests',     v_substitutions
   );
 END;
 $$;
@@ -2257,7 +2257,7 @@ DECLARE
   v_roster     jsonb;
   v_sessions   jsonb;
   v_gedus      jsonb;
-  v_covers     jsonb;
+  v_substitutions     jsonb;
   v_viewer     uuid    := (SELECT auth.uid());
   v_is_admin   boolean;
 BEGIN
@@ -2526,7 +2526,7 @@ BEGIN
        WHERE ga.group_id = p_group_id
     ) AS gedu_rows;
 
-  -- Every NON-WITHDRAWN cover request on the group, unbounded — exactly as this
+  -- Every NON-WITHDRAWN substitution request on the group, unbounded — exactly as this
   -- document already returns every stored session row. A withdrawn request is
   -- history that changes nothing about who is expected, so it is the one status
   -- that does not travel. The client merges these onto its entries by date; a
@@ -2540,15 +2540,15 @@ BEGIN
   -- document.
   SELECT COALESCE(
            jsonb_agg(
-             public.cover_request_document(r, v_is_admin, v_viewer)
+             public.substitution_request_document(r, v_is_admin, v_viewer)
              ORDER BY r.session_date DESC, r.created_at, r.id
            ),
            '[]'::jsonb
          )
-    INTO v_covers
-    FROM public.session_cover_requests r
+    INTO v_substitutions
+    FROM public.session_substitution_requests r
    WHERE r.group_id = p_group_id
-     AND r.status <> 'withdrawn'::public.cover_request_status;
+     AND r.status <> 'withdrawn'::public.substitution_request_status;
 
   RETURN jsonb_build_object(
     'product',  v_product,
@@ -2557,7 +2557,7 @@ BEGIN
     'roster',   v_roster,
     'sessions', v_sessions,
     'gedus',    v_gedus,
-    'covers',   v_covers
+    'substitutions',   v_substitutions
   );
 END;
 $$;
@@ -2720,19 +2720,19 @@ BEGIN
            WHERE ga.group_id = g.id
         ), '[]'::jsonb),
 
-        -- Every non-withdrawn cover request on the group, in the gedu feed's
+        -- Every non-withdrawn substitution request on the group, in the gedu feed's
         -- shape verbatim and for the same reason the session shape is: one card
         -- component renders both. `reason` and `reason_note` DO travel here —
         -- this document is admin-only end to end, and the reason is what the
         -- staffing editor shows beside the request.
-        'covers', COALESCE((
+        'substitutions', COALESCE((
           SELECT jsonb_agg(
-                   public.cover_request_document(r, true, v_viewer)
+                   public.substitution_request_document(r, true, v_viewer)
                    ORDER BY r.session_date DESC, r.created_at, r.id
                  )
-            FROM public.session_cover_requests r
+            FROM public.session_substitution_requests r
            WHERE r.group_id = g.id
-             AND r.status <> 'withdrawn'::public.cover_request_status
+             AND r.status <> 'withdrawn'::public.substitution_request_status
         ), '[]'::jsonb)
       ) AS entry
         FROM public.product_groups g
@@ -2765,13 +2765,13 @@ BEGIN
 
   -- This RPC is the door to the whole workspace, so its gate and its "which
   -- group is mine" resolution are ONE question and are answered together. A
-  -- cover has no assignment row to resolve a group from, which is why the
+  -- substitution has no assignment row to resolve a group from, which is why the
   -- resolution had to be widened alongside the gate rather than only the gate.
   IF p_group_id IS NOT NULL THEN
-    -- An explicit group: the cover card's link carries one, so a gedu covering
+    -- An explicit group: the substitution card's link carries one, so a gedu substituting
     -- a SIBLING group of a product they already teach lands in the right
     -- workspace instead of their own group's. It must belong to this product
-    -- and be one the caller is assigned to or covers — gedu_teaches_group is
+    -- and be one the caller is assigned to or substitutes on — gedu_teaches_group is
     -- exactly that pair of questions since this migration.
     SELECT g.id
       INTO v_my_group_id
@@ -2787,8 +2787,8 @@ BEGIN
        AND gedu_id    = v_caller_id
      LIMIT 1;
 
-    -- No assignment on this product: a pure cover. Resolve the covered group,
-    -- deterministically ordered so two live covers on one product answer the
+    -- No assignment on this product: a pure substitution. Resolve the substituted group,
+    -- deterministically ordered so two live substitutions on one product answer the
     -- same way every call. (The card always sends p_group_id, so this arm is
     -- the fallback for a bare link rather than the normal path.)
     IF v_my_group_id IS NULL THEN
@@ -2796,7 +2796,7 @@ BEGIN
         INTO v_my_group_id
         FROM product_groups g
        WHERE g.product_id = p_product_id
-         AND public.gedu_covers_group(g.id)
+         AND public.gedu_substitutes_group(g.id)
        ORDER BY g.created_at, g.id
        LIMIT 1;
     END IF;
@@ -2978,7 +2978,7 @@ $$;
 -- the deploy window costs nothing on the read side.
 DROP FUNCTION IF EXISTS public.get_my_assigned_products();
 
-CREATE FUNCTION public.get_my_assigned_products() RETURNS TABLE(product_id uuid, group_id uuid, timezone text, start_date date, end_date date, is_remote boolean, product_type public.product_type, product_translations jsonb, schedule_slots jsonb, group_count integer, participant_count integer, kind text, covered_date date)
+CREATE FUNCTION public.get_my_assigned_products() RETURNS TABLE(product_id uuid, group_id uuid, timezone text, start_date date, end_date date, is_remote boolean, product_type public.product_type, product_translations jsonb, schedule_slots jsonb, group_count integer, participant_count integer, kind text, substitution_date date)
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
@@ -2989,8 +2989,8 @@ BEGIN
 
   -- Two arms, discriminated by `kind`, because a gedu's dashboard now has two
   -- kinds of thing on it: a standing ASSIGNMENT (one row per assignment, as
-  -- before, `covered_date` null) and a live COVER (one row per covered date,
-  -- `covered_date` set). They share every product-shell column, which is why
+  -- before, `substitution_date` null) and a live SUBSTITUTION (one row per substitution date,
+  -- `substitution_date` set). They share every product-shell column, which is why
   -- they are one RPC rather than two — the card the dashboard draws differs in
   -- its chrome, not in the facts it needs.
   RETURN QUERY
@@ -3037,19 +3037,19 @@ BEGIN
          AND part.status     = 'active'
     ) AS participant_count,
     'assignment'::text AS kind,
-    NULL::date         AS covered_date
+    NULL::date         AS substitution_date
   FROM gedu_group_assignments a
   JOIN products p ON p.id = a.product_id
   WHERE a.gedu_id = v_gedu_id
 
   UNION ALL
 
-  -- The caller's LIVE covers: one row per covered (group, date) whose access
-  -- window is still open. `gedu_covers_session` carries the whole of "live" —
+  -- The caller's LIVE substitutions: one row per substituted (group, date) whose access
+  -- window is still open. `gedu_substitutes_session` carries the whole of "live" —
   -- it is keyed to auth.uid(), requires the holder to still be certified, and
   -- applies the window expression — so nothing here restates any of it. The
   -- status test beside it is not redundant either: it is what makes the join
-  -- read as "a covered request", and the predicate then decides whether it is
+  -- read as "a substituted request", and the predicate then decides whether it is
   -- still current.
   SELECT
     p.id            AS product_id,
@@ -3093,14 +3093,14 @@ BEGIN
        WHERE part.product_id = p.id
          AND part.status     = 'active'
     ) AS participant_count,
-    'cover'::text   AS kind,
-    r.session_date  AS covered_date
-  FROM session_cover_requests r
+    'substitution'::text   AS kind,
+    r.session_date  AS substitution_date
+  FROM session_substitution_requests r
   JOIN product_groups g ON g.id = r.group_id
   JOIN products p       ON p.id = g.product_id
-  WHERE r.covered_by = v_gedu_id
-    AND r.status     = 'covered'::public.cover_request_status
-    AND public.gedu_covers_session(r.group_id, r.session_date);
+  WHERE r.substitute_id = v_gedu_id
+    AND r.status     = 'substituted'::public.substitution_request_status
+    AND public.gedu_substitutes_session(r.group_id, r.session_date);
 END;
 $$;
 CREATE OR REPLACE FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date DEFAULT NULL::date) RETURNS jsonb
@@ -3115,12 +3115,12 @@ BEGIN
   RETURN COALESCE((
     -- The caller's SEATS on groups, of which there are now two kinds. The union
     -- is the whole of the change to this function: everything below it is
-    -- written against a (product, group) pair and a possible covered DATE, and
+    -- written against a (product, group) pair and a possible substitution DATE, and
     -- does not care which arm produced them.
     --
     --   * `assignment` — one row per gedu_group_assignments row, exactly as
-    --     before, with `covered_date` null.
-    --   * `cover`      — one row per LIVE covered date. gedu_covers_session
+    --     before, with `substitution_date` null.
+    --   * `substitution`      — one row per LIVE substitution date. gedu_substitutes_session
     --     carries the whole of "live": keyed to auth.uid(), the holder still
     --     certified, and the access window still open.
     --
@@ -3131,20 +3131,20 @@ BEGIN
              a0.group_id,
              a0.gedu_id,
              'assignment'::text AS kind,
-             NULL::date         AS covered_date
+             NULL::date         AS substitution_date
         FROM public.gedu_group_assignments a0
        WHERE a0.gedu_id = v_uid
       UNION ALL
       SELECT g0.product_id,
              r0.group_id,
-             r0.covered_by AS gedu_id,
-             'cover'::text  AS kind,
-             r0.session_date AS covered_date
-        FROM public.session_cover_requests r0
+             r0.substitute_id AS gedu_id,
+             'substitution'::text  AS kind,
+             r0.session_date AS substitution_date
+        FROM public.session_substitution_requests r0
         JOIN public.product_groups g0 ON g0.id = r0.group_id
-       WHERE r0.covered_by = v_uid
-         AND r0.status     = 'covered'::public.cover_request_status
-         AND public.gedu_covers_session(r0.group_id, r0.session_date)
+       WHERE r0.substitute_id = v_uid
+         AND r0.status     = 'substituted'::public.substitution_request_status
+         AND public.gedu_substitutes_session(r0.group_id, r0.session_date)
     )
     SELECT jsonb_agg(
              jsonb_build_object(
@@ -3152,11 +3152,11 @@ BEGIN
                'group_id',                a.group_id,
                'group_name',              g.name,
                -- Which kind of seat this row is, and on which date when it is a
-               -- cover. The dashboard rollup keys on (product, group) and a
-               -- cover card's identity is (group, date) — one card per covered
+               -- substitution. The dashboard rollup keys on (product, group) and a
+               -- substitution card's identity is (group, date) — one card per substituted
                -- date, lasting exactly as long as its access window.
                'kind',                    a.kind,
-               'covered_date',            a.covered_date,
+               'substitution_date',            a.substitution_date,
                -- Renamed from group_gamer_count in 00175: the count is every
                -- active seat on the group, and since 00173 one of those can be
                -- an adult.
@@ -3170,7 +3170,7 @@ BEGIN
                'site_name',               site.name,
                'attention_count',         COALESCE(owed.owed_count, 0)
              )
-             ORDER BY g.name, a.kind, a.covered_date
+             ORDER BY g.name, a.kind, a.substitution_date
            )
       FROM seat a
       JOIN public.product_groups g ON g.id = a.group_id
@@ -3329,27 +3329,27 @@ BEGIN
           ) AS expected
 
          WHERE roster.roster_size > 0
-           -- A COVER row owes ONE date: the one it covers. The four conditions
+           -- A SUBSTITUTION row owes ONE date: the one it substitutes for. The four conditions
            -- below are untouched and simply see a set of one occurrence, which
            -- is what "the same code path, restricted to that date" means — no
            -- second computation, and in particular the creations condition (4)
-           -- fires for a cover only when the covered date really is the run's
+           -- fires for a substitution only when the substitution date really is the run's
            -- final occurrence. An ASSIGNMENT row sees every occurrence, as
            -- before.
-           AND (a.covered_date IS NULL OR occurrence.session_date = a.covered_date)
+           AND (a.substitution_date IS NULL OR occurrence.session_date = a.substitution_date)
            -- A date the caller holds a NON-WITHDRAWN request on is not their
            -- work, whichever kind of seat this row is: they have said they
            -- cannot be there. The badge must not count it, whether the request
-           -- is still open, already covered, or a sub-of-sub chain's second
+           -- is still open, already substituted, or a sub-of-sub chain's second
            -- link. This has a TWIN IN TYPESCRIPT (see the comment below on the
            -- four conditions) and the twin learns the same rule.
            AND NOT EXISTS (
              SELECT 1
-               FROM public.session_cover_requests rq
+               FROM public.session_substitution_requests rq
               WHERE rq.group_id     = g.id
                 AND rq.session_date = occurrence.session_date
                 AND rq.requested_by = v_uid
-                AND rq.status <> 'withdrawn'::public.cover_request_status
+                AND rq.status <> 'withdrawn'::public.substitution_request_status
            )
            -- "Needs attention" is FOUR questions joined by OR, and any one
            -- alone keeps the session on the list.
@@ -3993,13 +3993,13 @@ GRANT  EXECUTE ON FUNCTION public.apply_group_changes(uuid, jsonb, jsonb, uuid[]
 
 COMMENT ON FUNCTION public.gedu_teaches_group(p_group_id uuid) IS
   'Internal predicate: may the caller act as staff on this group — assigned to '
-  'it, OR holding a live cover on it (gedu_covers_group, which carries the '
+  'it, OR holding a live substitution on it (gedu_substitutes_group, which carries the '
   'certification test and the access window). The single gate behind the group '
   'workspace, the session notes and report, the register, the session photos and '
   'their delete check, and the group notes; gedu_teaches_gamer composes it too, '
   'which is why that predicate needed no edit of its own. NOT the gate behind '
   'the voice room or the family report mail — both of those are DATE-scoped and '
-  'call gedu_covers_session directly, because a sub has no business in the '
+  'call gedu_substitutes_session directly, because a sub has no business in the '
   'group''s other sessions and the report mail is at-most-once with no resend. '
   'Not exposed to authenticated: it is called from inside the SECURITY DEFINER '
   'gedu RPCs.';
@@ -4008,12 +4008,12 @@ COMMENT ON FUNCTION public.is_voice_group_member(p_group_id uuid) IS
   'Who may be in this group''s voice room, and therefore — through '
   'is_chat_channel_member — in its in-call chat: an admin, an active seat-holder '
   'of the group, a gedu assigned to ANY group of the group''s product, or a live '
-  'cover ON TODAY''S DATE in the product''s timezone. The cover arm is the one '
+  'substitution ON TODAY''S DATE in the product''s timezone. The substitution arm is the one '
   'thing on this surface that is date-scoped rather than group-wide, and it is '
   'the narrower of the two deliberate exceptions to "a sub sees everything the '
-  'main gedu sees": a sub belongs in the room on the date they are covering and '
+  'main gedu sees": a sub belongs in the room on the date they are substituting and '
   'on no other date of the group. "The session in question" is evaluated at CALL '
-  'TIME because the predicate is handed a group and nothing else. The cover arm '
+  'TIME because the predicate is handed a group and nothing else. The substitution arm '
   'ADDS to the assignment arm and narrows nothing — a gedu assigned to the '
   'product keeps the product-wide mobility they already had. Total boolean; '
   'consumed by the voice_zones and chat policies, which is why it is granted to '
@@ -4021,25 +4021,25 @@ COMMENT ON FUNCTION public.is_voice_group_member(p_group_id uuid) IS
 
 COMMENT ON FUNCTION public.is_voice_group_moderator(p_group_id uuid) IS
   'Who MODERATES this group''s voice room and its chat: an admin, a gedu '
-  'assigned to any group of the group''s product, or a live cover on today''s '
+  'assigned to any group of the group''s product, or a live substitution on today''s '
   'date in the product''s timezone. A POSITIVE allow-list, never an exclusion — '
   'the room learned that the expensive way, a "not a gamer" test having been one '
   'parent-seat release away from handing moderation to parents. Date-scoped on '
-  'its cover arm exactly as is_voice_group_member is, and for the same reason: '
+  'its substitution arm exactly as is_voice_group_member is, and for the same reason: '
   'the two move together, because the chat channel is gated by the pair and a '
-  'cover must be in the channel on their own date only.';
+  'substitute must be in the channel on their own date only.';
 
 COMMENT ON FUNCTION public.get_my_assigned_products() IS
   'Every product the calling gedu has a seat on, one row per seat, with the '
   'product shell, its schedule slots, how many groups it has and how many active '
   'seats (participant_count — renamed from gamer_count in 00175, because a seat '
   'may be held by an adult since 00173). Gedu-gated on its first statement. '
-  'TWO KINDS OF SEAT since 00260, discriminated by `kind`: an `assignment` row '
-  'per gedu_group_assignments row, with `covered_date` null, exactly as this '
-  'function always returned; and a `cover` row per LIVE covered date, with '
-  '`covered_date` set — live meaning a `covered` request whose holder is still '
+  'TWO KINDS OF SEAT since 00272, discriminated by `kind`: an `assignment` row '
+  'per gedu_group_assignments row, with `substitution_date` null, exactly as this '
+  'function always returned; and a `substitution` row per LIVE substitution date, with '
+  '`substitution_date` set — live meaning a `substituted` request whose holder is still '
   'certified and whose access window is open, which is the whole of what '
-  'gedu_covers_session decides. One RPC rather than two because the two share '
+  'gedu_substitutes_session decides. One RPC rather than two because the two share '
   'every product-shell column and the dashboard card differs in its chrome '
   'rather than in the facts it needs. Widening a RETURNS TABLE is a DROP and a '
   'CREATE, so the two new columns arrive with a re-GRANT; an older client''s '
@@ -4061,13 +4061,13 @@ COMMENT ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid, p_group_
   '`creations` too (always an array, [] when there is no row) and the shell '
   'carries requires_gamer_creations, both in parity with get_gedu_group_feed for '
   'the same reason every other field is: the page composes both documents. '
-  'SINCE 00260 this is THE DOOR A COVER COMES THROUGH, so both halves of it were '
+  'SINCE 00272 this is THE DOOR A SUBSTITUTION COMES THROUGH, so both halves of it were '
   'widened rather than only the gate: p_group_id is optional and, when given, '
-  'must name a group of this product that the caller is assigned to or covers — '
-  'which is what lets a gedu covering a SIBLING group of a product they already '
+  'must name a group of this product that the caller is assigned to or substitutes on — '
+  'which is what lets a gedu substituting a SIBLING group of a product they already '
   'teach land in the right workspace instead of their own group''s. Without it '
   'the assignment group is resolved as before, and a caller with no assignment '
-  'on the product falls back to their covered group, deterministically ordered. '
+  'on the product falls back to their substituted group, deterministically ordered. '
   'A caller with neither is refused with 42501, as they always were. Each entry '
   'of `gedus` additionally carries the assignment `role`.';
 
@@ -4085,38 +4085,38 @@ BEGIN
     SELECT *
       FROM (VALUES
         ('gedu_teaches_group_product', 'gedu_teaches_group_product(uuid)',
-         ' Since 00260 it additionally admits a LIVE COVER on the group, and the'
-         ' cover arm is deliberately GROUP-only rather than product-wide: an'
+         ' Since 00272 it additionally admits a LIVE SUBSTITUTION on the group, and the'
+         ' substitution arm is deliberately GROUP-only rather than product-wide: an'
          ' assignment is a standing relationship with a product, which is what'
-         ' earns the cross-group mobility above, while a cover is one date on one'
+         ' earns the cross-group mobility above, while a substitution is one date on one'
          ' group, and widening it to the product would hand a sub the member'
          ' flair of every sibling group they were never asked to stand in for.'),
 
         ('claim_group_session_report_email', 'claim_group_session_report_email(uuid, date)',
-         ' Since 00260 the assignment half is spelled out INLINE here instead of'
+         ' Since 00272 the assignment half is spelled out INLINE here instead of'
          ' calling gedu_teaches_group, and that is a security decision rather'
-         ' than a refactor: gedu_teaches_group now admits a live cover on ANY of'
+         ' than a refactor: gedu_teaches_group now admits a live substitution on ANY of'
          ' the group''s dates, while this mail is at-most-once with no resend, so'
          ' a sub must not be able to send the families a write-up of a session'
-         ' they did not run. The cover arm here is therefore DATE-SCOPED to the'
+         ' they did not run. The substitution arm here is therefore DATE-SCOPED to the'
          ' session being claimed — one of exactly two places on this surface that'
          ' is, the other being the voice room.'),
 
         ('set_group_member_minecraft', 'set_group_member_minecraft(uuid, text, text)',
-         ' Since 00260 the group half also admits a LIVE COVER: the participant'
-         ' sits in a group the caller holds a cover on, window open and'
+         ' Since 00272 the group half also admits a LIVE SUBSTITUTION: the participant'
+         ' sits in a group the caller holds a substitution on, window open and'
          ' certification intact. A sub running the session is the person with the'
          ' child in front of them and is exactly who can read a handle off their'
          ' screen.'),
 
         ('set_group_member_roblox', 'set_group_member_roblox(uuid, text, bigint)',
-         ' Since 00260 the group half also admits a LIVE COVER, in the same'
+         ' Since 00272 the group half also admits a LIVE SUBSTITUTION, in the same'
          ' change and the same shape as its Minecraft twin — one roster editor'
          ' serves both platforms, so widening one alone would ship a control that'
          ' saves on a Minecraft group and refuses on a Roblox one.'),
 
         ('set_site_notes', 'set_site_notes(uuid, text, text)',
-         ' Since 00260 a live COVER on any group of an in-person product at that'
+         ' Since 00272 a live SUBSTITUTION on any group of an in-person product at that'
          ' site passes the site half too. The arm is location-shaped like the'
          ' assignment one beside it rather than borrowed from a group predicate,'
          ' because the question this function asks is about a BUILDING. It is the'
@@ -4125,11 +4125,11 @@ BEGIN
          ' carving it out would have been.'),
 
         ('get_admin_dashboard', 'get_admin_dashboard()',
-         ' Since 00260 the document carries a FIFTH top-level member,'
-         ' cover_requests: every OPEN session cover request dated today or later'
+         ' Since 00272 the document carries a FIFTH top-level member,'
+         ' substitution_requests: every OPEN session substitution request dated today or later'
          ' in its product''s timezone, ordered by date then product then id, with'
          ' the group, the product shell and its translations, the requester''s'
-         ' name, the role being covered, the reason and note, and every offer with'
+         ' name, the role being substituted, the reason and note, and every offer with'
          ' its offerer''s name, certified flag and criminal_record_check_at — the'
          ' certification queue''s own two standing facts, so the panel draws the'
          ' same chips rather than inventing a second vocabulary for them. An'
@@ -4142,13 +4142,13 @@ BEGIN
          ' document: a `sick` category is health data about a contractor.'),
 
         ('get_gedu_group_feed', 'get_gedu_group_feed(uuid)',
-         ' Since 00260 the document carries two more members, both of them inputs'
+         ' Since 00272 the document carries two more members, both of them inputs'
          ' to the client-side staffing derivation rather than answers from it:'
          ' `gedus`, the group''s assignments as {id, first_name, role}; and'
-         ' `covers`, every NON-WITHDRAWN cover request on the group, unbounded,'
-         ' in the one shape cover_request_document defines and every cover write'
+         ' `substitutions`, every NON-WITHDRAWN substitution request on the group, unbounded,'
+         ' in the one shape substitution_request_document defines and every substitution write'
          ' returns. Withdrawn is the one status that does not travel, because it'
-         ' changes nothing about who is expected. The client merges covers onto'
+         ' changes nothing about who is expected. The client merges substitutions onto'
          ' its entries by date, and a projected date with no session row carries'
          ' its requests like any other. `reason` and `reason_note` ride for an'
          ' ADMIN caller only — this document is served to an admin too, so the'
@@ -4156,12 +4156,12 @@ BEGIN
          ' what keeps a `sick` category off a colleague''s screen while the one'
          ' document stays one document. `offer_count` rides for an admin and for'
          ' the requester themselves. The GATE is unchanged in shape and widened in'
-         ' reach: gedu_teaches_group now admits a live cover on the group, so a'
-         ' sub opens the workspace they are covering.'),
+         ' reach: gedu_teaches_group now admits a live substitution on the group, so a'
+         ' sub opens the workspace they are substituting.'),
 
         ('get_admin_product_sessions', 'get_admin_product_sessions(uuid)',
-         ' Since 00260 each group additionally carries `gedus` ({id, first_name,'
-         ' role}) and `covers` (every non-withdrawn cover request on the group),'
+         ' Since 00272 each group additionally carries `gedus` ({id, first_name,'
+         ' role}) and `substitutions` (every non-withdrawn substitution request on the group),'
          ' both byte for byte get_gedu_group_feed''s — one card component renders'
          ' the session cards of both documents, and the staffing line and the'
          ' Set-a-sub / Clear-sub / Withdraw-request editor are drawn from exactly'
@@ -4170,22 +4170,22 @@ BEGIN
          ' shows beside the request.'),
 
         ('get_my_gedu_assignment_summaries', 'get_my_gedu_assignment_summaries(date)',
-         ' Since 00260 the rows are the caller''s SEATS rather than their'
+         ' Since 00272 the rows are the caller''s SEATS rather than their'
          ' assignments, discriminated by `kind`: an `assignment` row per'
-         ' assignment with `covered_date` null, as before, and a `cover` row per'
-         ' LIVE covered date (still certified, window still open) with'
-         ' `covered_date` set. A cover row''s owed computation is THE SAME CODE'
+         ' assignment with `substitution_date` null, as before, and a `substitution` row per'
+         ' LIVE substitution date (still certified, window still open) with'
+         ' `substitution_date` set. A substitution row''s owed computation is THE SAME CODE'
          ' PATH restricted to that one date — no second computation, and in'
-         ' particular the creations condition fires for a cover only when the'
-         ' covered date really is the run''s final occurrence. And on every row,'
+         ' particular the creations condition fires for a substitution only when the'
+         ' substitution date really is the run''s final occurrence. And on every row,'
          ' of either kind, a date the caller holds a NON-WITHDRAWN request on is'
          ' no longer counted: they have said they cannot be there, so the badge'
-         ' must not ask them for it, whether the request is open, covered, or the'
+         ' must not ask them for it, whether the request is open, substituted, or the'
          ' second link of a sub-of-sub chain. The TypeScript twin named above'
          ' learns that same rule in the same change.'),
 
         ('get_product_groups_with_details', 'get_product_groups_with_details(uuid)',
-         ' Since 00260 each entry of a group''s `gedus` carries the assignment'
+         ' Since 00272 each entry of a group''s `gedus` carries the assignment'
          ' `role` — primary or assistant — which is what the panel''s per-pill'
          ' role select reads and writes back through apply_group_changes. This'
          ' panel remains the PERMANENT assignment editor; the session card''s'
@@ -4224,7 +4224,7 @@ COMMENT ON FUNCTION public.apply_group_changes(uuid, jsonb, jsonb, uuid[], jsonb
   'batch — the (gedu_id, product_id) UNIQUE would otherwise refuse the add. '
   'Newly added groups are addressed by a client-minted `tempId` and the returned '
   '`tempMap` hands back the real ids, which is what lets one batch create a '
-  'group and move members into it. Since 00260 an assignment carries a ROLE: an '
+  'group and move members into it. Since 00272 an assignment carries a ROLE: an '
   'added assignment element is { groupId, geduId, role } and upserts ON CONFLICT '
   '(group_id, gedu_id) DO UPDATE SET role, so a role change is ONE add rather '
   'than a remove plus an add — which also means re-adding an existing pair is no '
@@ -4232,7 +4232,7 @@ COMMENT ON FUNCTION public.apply_group_changes(uuid, jsonb, jsonb, uuid[], jsonb
   'gedus: [{ geduId, role }]; the legacy geduIds array of bare ids is still read '
   'for the deploy window and lands every one of them as a primary. An omitted '
   'role is a primary, which is also the column''s default. This function is '
-  'DELIBERATELY ASSIGNMENT-ONLY with respect to session covers, and is annotated '
+  'DELIBERATELY ASSIGNMENT-ONLY with respect to session substitutions, and is annotated '
   'as such in the completeness check: it is the writer of the permanent '
   'relationship, not a gate on it.';
 
@@ -4242,14 +4242,14 @@ COMMENT ON COLUMN public.gedu_profiles.certified IS
   'Whether an admin has vouched for this educator. Gates three things and '
   'nothing else: group assignment (UI-only, because assignment is '
   'admin-driven), instant-voice-room moderation (server-side, because it is '
-  'gedu-initiated), and — since 00260 — OFFERING AND HOLDING A SESSION COVER '
-  '(server-side, twice over: gedu_may_cover_session refuses an uncertified '
-  'offerer or sub, and gedu_covers_session re-checks this column on every access '
-  'test, so de-certifying an educator ends a live cover''s reach into the group '
+  'gedu-initiated), and — since 00272 — OFFERING AND HOLDING A SESSION SUBSTITUTION '
+  '(server-side, twice over: gedu_may_substitute_session refuses an uncertified '
+  'offerer or sub, and gedu_substitutes_session re-checks this column on every access '
+  'test, so de-certifying an educator ends a live substitution''s reach into the group '
   'mid-window rather than only barring the next one). It is the ONLY eligibility '
-  'test the cover pool applies — coverage area, language and schedule clash are '
+  'test the substitution pool applies — coverage area, language and schedule clash are '
   'deliberately follow-ups — which is why an uncertified gedu sees an empty '
-  '"Sessions needing cover" list rather than a refusal. An uncertified gedu '
+  '"Sessions needing a substitute" list rather than a refusal. An uncertified gedu '
   'still has broad platform access by design. Distinct from '
   'profiles.email_verified_at, which is about an address rather than a person; '
   'this column was called "verified" until 00187.';
@@ -4257,7 +4257,7 @@ COMMENT ON COLUMN public.gedu_profiles.certified IS
 -- ---------------------------------------------------------------------------
 -- 10. What this migration asserts about its own end state
 --
--- The completeness check below is the same one tests/db/session-cover.test.ts
+-- The completeness check below is the same one tests/db/session-substitution.test.ts
 -- carries as the PERMANENT home of the rule. It is duplicated here on purpose:
 -- the test catches a gate added next year, and this block catches one added
 -- between the moment this file was authored and the moment it runs.
@@ -4266,22 +4266,22 @@ COMMENT ON COLUMN public.gedu_profiles.certified IS
 DO $$
 DECLARE
   -- Members whose reference to gedu_group_assignments is NOT a gate, each with
-  -- the reason it is not. A member that carries neither a cover branch nor an
+  -- the reason it is not. A member that carries neither a substitution branch nor an
   -- entry here fails; and an entry here for a member that has SINCE gained a
-  -- cover branch, or vanished, fails too — a stale annotation reads as coverage
-  -- while covering nothing.
+  -- substitution branch, or vanished, fails too — a stale annotation reads as
+  -- coverage while covering nothing.
   --
   --   apply_group_changes            — the assignment WRITER. It creates and
   --                                    removes the permanent relationship; a
-  --                                    cover is not a thing it can write.
+  --                                    substitution is not a thing it can write.
   --   chat_channel_roster_ids        — LISTS who a channel can name. Its own
-  --                                    comment already says a covering gedu
+  --                                    comment already says a substituting gedu
   --                                    becomes mentionable once they send, which
   --                                    is the decision, not an oversight.
   --   get_my_family_product_feed     — LISTS the group's gedus by first name for
   --                                    a FAMILY. The report attribution chip
   --                                    already names whoever wrote it, so a
-  --                                    family learns nothing new from a cover;
+  --                                    family learns nothing new from a substitution;
   --                                    and this is the app's one STRICT client
   --                                    schema, so widening it would break the
   --                                    old app's parse rather than be stripped.
@@ -4325,14 +4325,14 @@ BEGIN
              AND (COALESCE(pol.qual, '') LIKE '%gedu_group_assignments%'
                   OR COALESCE(pol.with_check, '') LIKE '%gedu_group_assignments%')
         ) m
-       WHERE m.expr NOT LIKE '%session_cover_requests%'
-         AND m.expr NOT LIKE '%gedu_covers_group%'
-         AND m.expr NOT LIKE '%gedu_covers_session%'
+       WHERE m.expr NOT LIKE '%session_substitution_requests%'
+         AND m.expr NOT LIKE '%gedu_substitutes_group%'
+         AND m.expr NOT LIKE '%gedu_substitutes_session%'
     ) d;
 
   IF COALESCE(v_unbranched, ARRAY[]::text[]) IS DISTINCT FROM v_annotated THEN
     RAISE EXCEPTION
-      'the gates on gedu_group_assignments carrying no cover branch are % rather than % — widen the new one, or annotate it here and in tests/db/session-cover.test.ts with a reason',
+      'the gates on gedu_group_assignments carrying no substitution branch are % rather than % — widen the new one, or annotate it here and in tests/db/session-substitution.test.ts with a reason',
       COALESCE(v_unbranched::text, '{}'), v_annotated::text;
   END IF;
 
@@ -4342,10 +4342,10 @@ BEGIN
       FROM pg_class c
       JOIN pg_namespace n ON n.oid = c.relnamespace
      WHERE n.nspname = 'public'
-       AND c.relname IN ('session_cover_requests', 'session_cover_offers')
+       AND c.relname IN ('session_substitution_requests', 'session_substitution_offers')
        AND NOT c.relrowsecurity
   ) THEN
-    RAISE EXCEPTION 'a session-cover table is missing RLS';
+    RAISE EXCEPTION 'a session-substitution table is missing RLS';
   END IF;
 
   -- has_table_privilege rather than information_schema: the information_schema
@@ -4353,13 +4353,13 @@ BEGIN
   -- makes them the wrong instrument for asking about somebody else's privileges.
   IF EXISTS (
     SELECT 1
-      FROM (VALUES ('session_cover_requests'), ('session_cover_offers')) AS t(tbl),
+      FROM (VALUES ('session_substitution_requests'), ('session_substitution_offers')) AS t(tbl),
            (VALUES ('authenticated'), ('anon')) AS r(role_name),
            (VALUES ('SELECT'), ('INSERT'), ('UPDATE'), ('DELETE')) AS pv(priv)
      WHERE has_table_privilege(r.role_name, ('public.' || t.tbl)::regclass, pv.priv)
   ) THEN
     RAISE EXCEPTION
-      'a session-cover table is reachable from the Data API — every read and write goes through a SECURITY DEFINER RPC';
+      'a session-substitution table is reachable from the Data API — every read and write goes through a SECURITY DEFINER RPC';
   END IF;
 
   -- The live-seat key is PARTIAL, which is what makes a withdrawn row history
@@ -4369,7 +4369,7 @@ BEGIN
     SELECT 1
       FROM pg_indexes i
      WHERE i.schemaname = 'public'
-       AND i.indexname = 'session_cover_requests_live_seat'
+       AND i.indexname = 'session_substitution_requests_live_seat'
        AND i.indexdef LIKE '%WHERE%withdrawn%'
   ) THEN
     RAISE EXCEPTION 'the live-seat unique index is missing or is not partial on status';
@@ -4400,12 +4400,12 @@ BEGIN
   -- not be, or the build would fail on an unclassified function — which is the
   -- check working, but it is cheaper to say so here.
   FOREACH v_name IN ARRAY ARRAY[
-    'request_session_cover', 'withdraw_session_cover_request',
-    'offer_session_cover', 'withdraw_session_cover_offer',
-    'get_open_cover_requests', 'approve_session_cover_offer',
-    'set_session_cover', 'clear_session_cover',
-    'withdraw_session_cover_request_as_admin',
-    'gedu_covers_group'
+    'request_session_substitution', 'withdraw_session_substitution_request',
+    'offer_session_substitution', 'withdraw_session_substitution_offer',
+    'get_open_substitution_requests', 'approve_session_substitution_offer',
+    'set_session_substitution', 'clear_session_substitution',
+    'withdraw_session_substitution_request_as_admin',
+    'gedu_substitutes_group'
   ] LOOP
     IF NOT EXISTS (
       SELECT 1
@@ -4435,9 +4435,9 @@ BEGIN
   END IF;
 
   FOREACH v_name IN ARRAY ARRAY[
-    'gedu_covers_session', 'gedu_is_expected_at_session',
-    'gedu_may_cover_session', 'cover_request_document',
-    'cascade_withdraw_orphaned_cover_requests'
+    'gedu_substitutes_session', 'gedu_is_expected_at_session',
+    'gedu_may_substitute_session', 'substitution_request_document',
+    'cascade_withdraw_orphaned_substitution_requests'
   ] LOOP
     IF EXISTS (
       SELECT 1
@@ -4462,10 +4462,10 @@ BEGIN
       FROM pg_proc p
       JOIN pg_namespace n ON n.oid = p.pronamespace
      WHERE n.nspname = 'public'
-       AND p.proname LIKE '%cover%'
+       AND p.proname LIKE '%substitut%'
        AND p.proisstrict
        AND has_function_privilege('authenticated', p.oid, 'EXECUTE')
   ) THEN
-    RAISE EXCEPTION 'an exposed session-cover function is STRICT, so its guard would never run';
+    RAISE EXCEPTION 'an exposed session-substitution function is STRICT, so its guard would never run';
   END IF;
 END $$;

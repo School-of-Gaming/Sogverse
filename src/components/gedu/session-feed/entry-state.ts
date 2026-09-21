@@ -298,7 +298,7 @@ export type SessionCompleteness = "needs_attention" | "complete";
  *
  * **A session the viewer has filed an absence for is nobody's warning to them.**
  * A gedu who said they cannot make a date is not the person who owes its
- * write-up, whether the session is still waiting for a cover, already covered,
+ * write-up, whether the session is still waiting for a substitution, already substituted,
  * or the second link of a sub-of-sub chain — so the warning is withheld from
  * *that* viewer while the request stands, and returns if they withdraw it. It
  * is read off the entry's own staffing rather than re-derived, so the date the
@@ -330,7 +330,7 @@ export function entryCompleteness(
   if (finished) return "complete";
   // The viewer said they cannot be there, so this session is not their work
   // outstanding — whoever ends up running it, and whether the request is still
-  // open, already covered, or the second link of a sub-of-sub chain. The green
+  // open, already substituted, or the second link of a sub-of-sub chain. The green
   // check is deliberately NOT withheld the same way: a session somebody else
   // finished is finished, and the absent gedu seeing so is the truth.
   //

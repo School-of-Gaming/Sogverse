@@ -1,39 +1,39 @@
--- A cover is visible from approval and reachable from 48 hours out.
+-- A substitution is visible from approval and reachable from 48 hours out.
 --
 -- WHAT THIS CHANGES
 --
--- 00272 gave a cover an access window with an END and no START: approval
+-- 00272 gave a substitution an access window with an END and no START: approval
 -- handed the sub the group's workspace immediately, however far out the
 -- session was. The owner's rule is now that the workspace opens 48 hours
 -- before the session the sub is standing in for — and that the sub must still
--- see the cover they accepted on My SOG the whole time, from approval, even
+-- see the substitution they accepted on My SOG the whole time, from approval, even
 -- while they cannot open it.
 --
 -- Those are two different questions about one row, so there are now two
 -- predicates rather than one:
 --
---   gedu_holds_unexpired_cover — the caller holds this cover and it has not
+--   gedu_holds_unexpired_substitution — the caller holds this substitution and it has not
 --     EXPIRED. This is 00272's predicate, body unchanged, under its own name.
---     It answers "is this cover still mine to see", which is what the two
+--     It answers "is this substitution still mine to see", which is what the two
 --     dashboard reads ask.
---   gedu_covers_session        — the caller may REACH the group for this date:
+--   gedu_substitutes_session        — the caller may REACH the group for this date:
 --     the above, AND the session has come within 48 hours. Every access gate
 --     goes on calling this one and none of them changed.
 --
 -- THE WINDOW STILL HAS ONE DEFINITION OF EACH BOUND
 --
 -- The END expression exists in exactly one place in the schema (the sibling's
--- body) and the START in exactly one (gedu_covers_session's). gedu_covers_group
--- is still one EXISTS over gedu_covers_session and restates neither — which is
+-- body) and the START in exactly one (gedu_substitutes_session's). gedu_substitutes_group
+-- is still one EXISTS over gedu_substitutes_session and restates neither — which is
 -- also what gives the group-wide surfaces the right answer for a sub holding
--- two covers on one group: the workspace opens at the EARLIER of the two
+-- two substitutions on one group: the workspace opens at the EARLIER of the two
 -- T-48h instants and closes at the later of the two ends.
 --
 -- WHY THE TWO DASHBOARD READS MOVE AND NOTHING ELSE DOES
 --
--- `get_my_assigned_products`' cover arm and `get_my_gedu_assignment_summaries`'
--- cover arm are the rows the /gedu cover card is drawn from. Left on
--- gedu_covers_session they would have made an accepted cover VANISH from My SOG
+-- `get_my_assigned_products`' substitution arm and `get_my_gedu_assignment_summaries`'
+-- substitution arm are the rows the /gedu substitution card is drawn from. Left on
+-- gedu_substitutes_session they would have made an accepted substitution VANISH from My SOG
 -- until T-48h, which is the opposite of the requirement. They now ask the
 -- sibling, so the card appears at approval and lasts until the window closes,
 -- while the workspace behind it stays shut until T-48h. Both functions are
@@ -41,28 +41,28 @@
 --
 -- WHAT A LOCKED CARD IS ALLOWED TO CARRY
 --
--- Those two reads were checked against that: a cover row carries the product
--- and group names, the product type, the covered date, the slots and timezone,
+-- Those two reads were checked against that: a substitution row carries the product
+-- and group names, the product type, the substitution date, the slots and timezone,
 -- the in-person site NAME, and two head COUNTS (the product's active
--- participations, and the covered group's roster size). No child is named,
+-- participations, and the substituted group's roster size). No child is named,
 -- aged or contactable through either row — the roster itself is behind
 -- get_gedu_group_feed / get_gedu_assigned_product, which are gated by
--- gedu_covers_session and stay shut. The counts are left ungated deliberately:
+-- gedu_substitutes_session and stay shut. The counts are left ungated deliberately:
 -- an approved sub is already the session's staff from the moment of approval
 -- (that is what gedu_is_expected_at_session says about them), and "how many
 -- children am I teaching" is the prep fact a sub has to have before the
--- workspace opens. The owed count on the summaries arm is 0 for a locked cover
+-- workspace opens. The owed count on the summaries arm is 0 for a locked substitution
 -- by construction rather than by a rule — it counts occurrences that have
--- already ENDED, and a cover that is still locked is still in the future.
+-- already ENDED, and a substitution that is still locked is still in the future.
 
 -- ---------------------------------------------------------------------------
 -- 1. The two predicates
 -- ---------------------------------------------------------------------------
 
--- "The caller holds this cover and it has not expired." 00272's
--- gedu_covers_session body, verbatim, under the name of the question it
+-- "The caller holds this substitution and it has not expired." 00272's
+-- gedu_substitutes_session body, verbatim, under the name of the question it
 -- actually answers. The END of the window lives here and nowhere else.
-CREATE FUNCTION public.gedu_holds_unexpired_cover(p_group_id uuid, p_session_date date)
+CREATE FUNCTION public.gedu_holds_unexpired_substitution(p_group_id uuid, p_session_date date)
 RETURNS boolean
 LANGUAGE sql
 STABLE
@@ -71,10 +71,10 @@ SET search_path TO ''
 AS $$
   SELECT EXISTS (
     SELECT 1
-      FROM public.session_cover_requests r
+      FROM public.session_substitution_requests r
       JOIN public.product_groups g  ON g.id = r.group_id
       JOIN public.products p        ON p.id = g.product_id
-      JOIN public.gedu_profiles gp  ON gp.user_id = r.covered_by
+      JOIN public.gedu_profiles gp  ON gp.user_id = r.substitute_id
       -- The session row is LAZILY materialized, so there may be none — which is
       -- exactly the case the 15-day arm of the COALESCE is for.
       LEFT JOIN public.group_sessions gs
@@ -82,9 +82,9 @@ AS $$
             AND gs.session_date = r.session_date
      WHERE r.group_id     = p_group_id
        AND r.session_date = p_session_date
-       AND r.status       = 'covered'::public.cover_request_status
-       AND r.covered_by   = (SELECT auth.uid())
-       -- Still certified. De-certifying an educator ends their cover access
+       AND r.status       = 'substituted'::public.substitution_request_status
+       AND r.substitute_id   = (SELECT auth.uid())
+       -- Still certified. De-certifying an educator ends their substitution access
        -- mid-window, which is the point of checking it here rather than only at
        -- approval time.
        AND gp.certified
@@ -99,7 +99,7 @@ AS $$
   );
 $$;
 
--- The access window: the cover is still the caller's AND the session has come
+-- The access window: the substitution is still the caller's AND the session has come
 -- within 48 hours. The START of the window lives here and nowhere else.
 --
 -- The start instant is the session's OWN, derived from the current schedule by
@@ -116,14 +116,14 @@ $$;
 -- stands in, which opens the window at midnight-minus-48h — earlier than any
 -- real session on that date would have, so the fallback can only ever admit
 -- sooner and never later.
-CREATE OR REPLACE FUNCTION public.gedu_covers_session(p_group_id uuid, p_session_date date)
+CREATE OR REPLACE FUNCTION public.gedu_substitutes_session(p_group_id uuid, p_session_date date)
 RETURNS boolean
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path TO ''
 AS $$
-  SELECT public.gedu_holds_unexpired_cover(p_group_id, p_session_date)
+  SELECT public.gedu_holds_unexpired_substitution(p_group_id, p_session_date)
      AND EXISTS (
        SELECT 1
          FROM public.product_groups g
@@ -138,19 +138,19 @@ $$;
 
 -- A recreated function comes back PUBLIC-executable, so both are re-revoked and
 -- re-granted rather than left to inherit. Both are internal: they are called
--- from inside SECURITY DEFINER bodies only, and `gedu_covers_group` remains the
--- one cover predicate `authenticated` may execute.
-REVOKE EXECUTE ON FUNCTION public.gedu_holds_unexpired_cover(uuid, date) FROM PUBLIC, anon, authenticated;
-GRANT  EXECUTE ON FUNCTION public.gedu_holds_unexpired_cover(uuid, date) TO service_role;
+-- from inside SECURITY DEFINER bodies only, and `gedu_substitutes_group` remains the
+-- one substitution predicate `authenticated` may execute.
+REVOKE EXECUTE ON FUNCTION public.gedu_holds_unexpired_substitution(uuid, date) FROM PUBLIC, anon, authenticated;
+GRANT  EXECUTE ON FUNCTION public.gedu_holds_unexpired_substitution(uuid, date) TO service_role;
 
-REVOKE EXECUTE ON FUNCTION public.gedu_covers_session(uuid, date) FROM PUBLIC, anon, authenticated;
-GRANT  EXECUTE ON FUNCTION public.gedu_covers_session(uuid, date) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.gedu_substitutes_session(uuid, date) FROM PUBLIC, anon, authenticated;
+GRANT  EXECUTE ON FUNCTION public.gedu_substitutes_session(uuid, date) TO service_role;
 
-COMMENT ON FUNCTION public.gedu_holds_unexpired_cover(p_group_id uuid, p_session_date date) IS
-  'Internal predicate: does the CALLER still hold this (group, date) cover at all? True when they are the covered_by of a `covered` request for it, are still certified, and it has not EXPIRED — now() < COALESCE(report_emailed_at + 24 hours, product-local midnight 15 days after the session date). The single definition of the window''s END. It makes NO start test, which is what separates it from gedu_covers_session: this one answers whether the cover is still the caller''s to SEE, and the gedu dashboard''s two reads ask it so that an accepted cover appears on My SOG from approval rather than from the moment its workspace opens. Not granted to `authenticated`.';
+COMMENT ON FUNCTION public.gedu_holds_unexpired_substitution(p_group_id uuid, p_session_date date) IS
+  'Internal predicate: does the CALLER still hold this (group, date) substitution at all? True when they are the substitute_id of a `substituted` request for it, are still certified, and it has not EXPIRED — now() < COALESCE(report_emailed_at + 24 hours, product-local midnight 15 days after the session date). The single definition of the window''s END. It makes NO start test, which is what separates it from gedu_substitutes_session: this one answers whether the substitution is still the caller''s to SEE, and the gedu dashboard''s two reads ask it so that an accepted substitution appears on My SOG from approval rather than from the moment its workspace opens. Not granted to `authenticated`.';
 
-COMMENT ON FUNCTION public.gedu_covers_session(p_group_id uuid, p_session_date date) IS
-  'Internal predicate: may the CALLER reach this group for this exact date? Their cover is unexpired (gedu_holds_unexpired_cover, which carries the window''s END) AND the session has come within 48 hours — now() >= the session''s own scheduled start, derived from the current schedule, minus 48 hours. The single definition of the window''s START; every other cover access test reaches both bounds through here or through gedu_covers_group. A date the schedule no longer projects has no start, and falls back to product-local midnight of the session date, which opens EARLIER than any real session that day would: an orphaned date must not lock a sub out of a session they ran and still owe a report for. Not granted to `authenticated`: it is called from inside SECURITY DEFINER functions only, the two voice predicates among them.';
+COMMENT ON FUNCTION public.gedu_substitutes_session(p_group_id uuid, p_session_date date) IS
+  'Internal predicate: may the CALLER reach this group for this exact date? Their substitution is unexpired (gedu_holds_unexpired_substitution, which carries the window''s END) AND the session has come within 48 hours — now() >= the session''s own scheduled start, derived from the current schedule, minus 48 hours. The single definition of the window''s START; every other substitution access test reaches both bounds through here or through gedu_substitutes_group. A date the schedule no longer projects has no start, and falls back to product-local midnight of the session date, which opens EARLIER than any real session that day would: an orphaned date must not lock a sub out of a session they ran and still owe a report for. Not granted to `authenticated`: it is called from inside SECURITY DEFINER functions only, the two voice predicates among them.';
 
 -- ---------------------------------------------------------------------------
 -- 2. The two dashboard reads ask the sibling
@@ -159,7 +159,7 @@ COMMENT ON FUNCTION public.gedu_covers_session(p_group_id uuid, p_session_date d
 -- Restated whole from their 00272 definitions — 00273-00277 did not touch
 -- either — with one call changed in each and nothing else. Neither signature
 -- moves, so both are a plain replace.
-CREATE OR REPLACE FUNCTION public.get_my_assigned_products() RETURNS TABLE(product_id uuid, group_id uuid, timezone text, start_date date, end_date date, is_remote boolean, product_type public.product_type, product_translations jsonb, schedule_slots jsonb, group_count integer, participant_count integer, kind text, covered_date date)
+CREATE OR REPLACE FUNCTION public.get_my_assigned_products() RETURNS TABLE(product_id uuid, group_id uuid, timezone text, start_date date, end_date date, is_remote boolean, product_type public.product_type, product_translations jsonb, schedule_slots jsonb, group_count integer, participant_count integer, kind text, substitution_date date)
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
@@ -170,8 +170,8 @@ BEGIN
 
   -- Two arms, discriminated by `kind`, because a gedu's dashboard now has two
   -- kinds of thing on it: a standing ASSIGNMENT (one row per assignment, as
-  -- before, `covered_date` null) and an unexpired COVER (one row per covered
-  -- date, `covered_date` set). They share every product-shell column, which is why
+  -- before, `substitution_date` null) and an unexpired SUBSTITUTION (one row per substituted
+  -- date, `substitution_date` set). They share every product-shell column, which is why
   -- they are one RPC rather than two — the card the dashboard draws differs in
   -- its chrome, not in the facts it needs.
   RETURN QUERY
@@ -218,27 +218,27 @@ BEGIN
          AND part.status     = 'active'
     ) AS participant_count,
     'assignment'::text AS kind,
-    NULL::date         AS covered_date
+    NULL::date         AS substitution_date
   FROM gedu_group_assignments a
   JOIN products p ON p.id = a.product_id
   WHERE a.gedu_id = v_gedu_id
 
   UNION ALL
 
-  -- The caller's UNEXPIRED covers: one row per covered (group, date) the caller
-  -- still holds. `gedu_holds_unexpired_cover` carries the whole of that — it is
+  -- The caller's UNEXPIRED substitutions: one row per substituted (group, date) the caller
+  -- still holds. `gedu_holds_unexpired_substitution` carries the whole of that — it is
   -- keyed to auth.uid(), requires the holder to still be certified, and applies
   -- the window's END — so nothing here restates any of it. The status test
   -- beside it is not redundant either: it is what makes the join read as "a
-  -- covered request", and the predicate then decides whether it is still
+  -- substituted request", and the predicate then decides whether it is still
   -- current.
   --
-  -- Deliberately NOT gedu_covers_session, which would also require the session
-  -- to be within 48 hours: this is the row the cover card on My SOG is drawn
+  -- Deliberately NOT gedu_substitutes_session, which would also require the session
+  -- to be within 48 hours: this is the row the substitution card on My SOG is drawn
   -- from, and a sub has to see the afternoon they accepted from the moment it
   -- is theirs, not from the moment they can open the group. The workspace the
   -- card links to is the thing that stays shut, and it is gated on
-  -- gedu_covers_session like every other access surface.
+  -- gedu_substitutes_session like every other access surface.
   SELECT
     p.id            AS product_id,
     r.group_id      AS group_id,
@@ -281,14 +281,14 @@ BEGIN
        WHERE part.product_id = p.id
          AND part.status     = 'active'
     ) AS participant_count,
-    'cover'::text   AS kind,
-    r.session_date  AS covered_date
-  FROM session_cover_requests r
+    'substitution'::text   AS kind,
+    r.session_date  AS substitution_date
+  FROM session_substitution_requests r
   JOIN product_groups g ON g.id = r.group_id
   JOIN products p       ON p.id = g.product_id
-  WHERE r.covered_by = v_gedu_id
-    AND r.status     = 'covered'::public.cover_request_status
-    AND public.gedu_holds_unexpired_cover(r.group_id, r.session_date);
+  WHERE r.substitute_id = v_gedu_id
+    AND r.status     = 'substituted'::public.substitution_request_status
+    AND public.gedu_holds_unexpired_substitution(r.group_id, r.session_date);
 END;
 $$;
 CREATE OR REPLACE FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date DEFAULT NULL::date) RETURNS jsonb
@@ -303,16 +303,16 @@ BEGIN
   RETURN COALESCE((
     -- The caller's SEATS on groups, of which there are now two kinds. The union
     -- is the whole of the change to this function: everything below it is
-    -- written against a (product, group) pair and a possible covered DATE, and
+    -- written against a (product, group) pair and a possible substitution DATE, and
     -- does not care which arm produced them.
     --
     --   * `assignment` — one row per gedu_group_assignments row, exactly as
-    --     before, with `covered_date` null.
-    --   * `cover`      — one row per UNEXPIRED covered date.
-    --     gedu_holds_unexpired_cover carries the whole of that: keyed to
+    --     before, with `substitution_date` null.
+    --   * `substitution`      — one row per UNEXPIRED substitution date.
+    --     gedu_holds_unexpired_substitution carries the whole of that: keyed to
     --     auth.uid(), the holder still certified, and the window's END not yet
-    --     passed. Deliberately not gedu_covers_session, which would also
-    --     require the session to be within 48 hours — this arm feeds the cover
+    --     passed. Deliberately not gedu_substitutes_session, which would also
+    --     require the session to be within 48 hours — this arm feeds the substitution
     --     card a sub reads on My SOG, which exists from approval, where the
     --     workspace it links to opens at T-48h.
     --
@@ -323,20 +323,20 @@ BEGIN
              a0.group_id,
              a0.gedu_id,
              'assignment'::text AS kind,
-             NULL::date         AS covered_date
+             NULL::date         AS substitution_date
         FROM public.gedu_group_assignments a0
        WHERE a0.gedu_id = v_uid
       UNION ALL
       SELECT g0.product_id,
              r0.group_id,
-             r0.covered_by AS gedu_id,
-             'cover'::text  AS kind,
-             r0.session_date AS covered_date
-        FROM public.session_cover_requests r0
+             r0.substitute_id AS gedu_id,
+             'substitution'::text  AS kind,
+             r0.session_date AS substitution_date
+        FROM public.session_substitution_requests r0
         JOIN public.product_groups g0 ON g0.id = r0.group_id
-       WHERE r0.covered_by = v_uid
-         AND r0.status     = 'covered'::public.cover_request_status
-         AND public.gedu_holds_unexpired_cover(r0.group_id, r0.session_date)
+       WHERE r0.substitute_id = v_uid
+         AND r0.status     = 'substituted'::public.substitution_request_status
+         AND public.gedu_holds_unexpired_substitution(r0.group_id, r0.session_date)
     )
     SELECT jsonb_agg(
              jsonb_build_object(
@@ -344,11 +344,11 @@ BEGIN
                'group_id',                a.group_id,
                'group_name',              g.name,
                -- Which kind of seat this row is, and on which date when it is a
-               -- cover. The dashboard rollup keys on (product, group) and a
-               -- cover card's identity is (group, date) — one card per covered
-               -- date, standing from approval until the cover expires.
+               -- substitution. The dashboard rollup keys on (product, group) and a
+               -- substitution card's identity is (group, date) — one card per substituted
+               -- date, standing from approval until the substitution expires.
                'kind',                    a.kind,
-               'covered_date',            a.covered_date,
+               'substitution_date',            a.substitution_date,
                -- Renamed from group_gamer_count in 00175: the count is every
                -- active seat on the group, and since 00173 one of those can be
                -- an adult.
@@ -362,7 +362,7 @@ BEGIN
                'site_name',               site.name,
                'attention_count',         COALESCE(owed.owed_count, 0)
              )
-             ORDER BY g.name, a.kind, a.covered_date
+             ORDER BY g.name, a.kind, a.substitution_date
            )
       FROM seat a
       JOIN public.product_groups g ON g.id = a.group_id
@@ -521,27 +521,27 @@ BEGIN
           ) AS expected
 
          WHERE roster.roster_size > 0
-           -- A COVER row owes ONE date: the one it covers. The four conditions
+           -- A SUBSTITUTION row owes ONE date: the one it substitutes for. The four conditions
            -- below are untouched and simply see a set of one occurrence, which
            -- is what "the same code path, restricted to that date" means — no
            -- second computation, and in particular the creations condition (4)
-           -- fires for a cover only when the covered date really is the run's
+           -- fires for a substitution only when the substitution date really is the run's
            -- final occurrence. An ASSIGNMENT row sees every occurrence, as
            -- before.
-           AND (a.covered_date IS NULL OR occurrence.session_date = a.covered_date)
+           AND (a.substitution_date IS NULL OR occurrence.session_date = a.substitution_date)
            -- A date the caller holds a NON-WITHDRAWN request on is not their
            -- work, whichever kind of seat this row is: they have said they
            -- cannot be there. The badge must not count it, whether the request
-           -- is still open, already covered, or a sub-of-sub chain's second
+           -- is still open, already substituted, or a sub-of-sub chain's second
            -- link. This has a TWIN IN TYPESCRIPT (see the comment below on the
            -- four conditions) and the twin learns the same rule.
            AND NOT EXISTS (
              SELECT 1
-               FROM public.session_cover_requests rq
+               FROM public.session_substitution_requests rq
               WHERE rq.group_id     = g.id
                 AND rq.session_date = occurrence.session_date
                 AND rq.requested_by = v_uid
-                AND rq.status <> 'withdrawn'::public.cover_request_status
+                AND rq.status <> 'withdrawn'::public.substitution_request_status
            )
            -- "Needs attention" is FOUR questions joined by OR, and any one
            -- alone keeps the session on the list.
@@ -707,15 +707,15 @@ COMMENT ON FUNCTION public.get_my_assigned_products() IS
   'product shell, its schedule slots, how many groups it has and how many active '
   'seats (participant_count — renamed from gamer_count in 00175, because a seat '
   'may be held by an adult since 00173). Gedu-gated on its first statement. '
-  'TWO KINDS OF SEAT since 00260, discriminated by `kind`: an `assignment` row '
-  'per gedu_group_assignments row, with `covered_date` null, exactly as this '
-  'function always returned; and a `cover` row per UNEXPIRED covered date, with '
-  '`covered_date` set — a `covered` request whose holder is still certified and '
+  'TWO KINDS OF SEAT since 00272, discriminated by `kind`: an `assignment` row '
+  'per gedu_group_assignments row, with `substitution_date` null, exactly as this '
+  'function always returned; and a `substitution` row per UNEXPIRED substitution date, with '
+  '`substitution_date` set — a `substituted` request whose holder is still certified and '
   'whose window has not closed, which is the whole of what '
-  'gedu_holds_unexpired_cover decides. That predicate rather than '
-  'gedu_covers_session, and the difference is the point: this read draws the '
-  'cover CARD on My SOG, which stands from approval, where the workspace the '
-  'card links to opens 48 hours before the covered session. A cover row '
+  'gedu_holds_unexpired_substitution decides. That predicate rather than '
+  'gedu_substitutes_session, and the difference is the point: this read draws the '
+  'substitution CARD on My SOG, which stands from approval, where the workspace the '
+  'card links to opens 48 hours before the substituted session. A substitution row '
   'therefore reaches a sub who cannot yet open the group, and carries nothing '
   'that would not be theirs to read then: names, a type, a date, the schedule, '
   'and two head counts. One RPC rather than two because the two kinds share '
@@ -758,14 +758,14 @@ COMMENT ON FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date) I
   'feed''s entry-state derivation, which answers the same question for one '
   'card — and the two must be changed together, on all four conditions and on '
   'who a session is for, which now scopes two of them. SINCE 00272 a second '
-  'kind of seat feeds the same machinery: a `cover` row per covered date, '
-  'carrying `kind` and `covered_date`, whose owed count is the same four '
+  'kind of seat feeds the same machinery: a `substitution` row per substitution date, '
+  'carrying `kind` and `substitution_date`, whose owed count is the same four '
   'conditions applied to a set of one occurrence — so it is 0 or 1 and never a '
-  'term''s worth. Since 00278 that arm asks gedu_holds_unexpired_cover rather '
-  'than gedu_covers_session: the card stands from approval, where the workspace '
-  'behind it opens 48 hours before the covered session, and a card that waited '
+  'term''s worth. Since 00278 that arm asks gedu_holds_unexpired_substitution rather '
+  'than gedu_substitutes_session: the card stands from approval, where the workspace '
+  'behind it opens 48 hours before the substituted session, and a card that waited '
   'for the workspace would hide from a sub the afternoon they had agreed to '
-  'take. A cover still locked owes nothing by construction, because every '
+  'take. A substitution still locked owes nothing by construction, because every '
   'occurrence this count ranges over has already ended.';
 
 -- ---------------------------------------------------------------------------
@@ -797,9 +797,9 @@ BEGIN
    WHERE n.nspname = 'public'
      AND p.prosrc LIKE '%' || v_end || '%';
 
-  IF v_owners IS DISTINCT FROM ARRAY['gedu_holds_unexpired_cover'] THEN
+  IF v_owners IS DISTINCT FROM ARRAY['gedu_holds_unexpired_substitution'] THEN
     RAISE EXCEPTION
-      'the window''s END is written in % rather than in gedu_holds_unexpired_cover alone', v_owners::text;
+      'the window''s END is written in % rather than in gedu_holds_unexpired_substitution alone', v_owners::text;
   END IF;
 
   SELECT array_agg(p.proname::text ORDER BY p.proname COLLATE "C")
@@ -809,14 +809,14 @@ BEGIN
    WHERE n.nspname = 'public'
      AND p.prosrc LIKE '%' || v_start || '%';
 
-  IF v_owners IS DISTINCT FROM ARRAY['gedu_covers_session'] THEN
+  IF v_owners IS DISTINCT FROM ARRAY['gedu_substitutes_session'] THEN
     RAISE EXCEPTION
-      'the window''s START is written in % rather than in gedu_covers_session alone', v_owners::text;
+      'the window''s START is written in % rather than in gedu_substitutes_session alone', v_owners::text;
   END IF;
 
   -- Who may ask the unexpired question rather than the access one. Three
   -- bodies, and each for a stated reason: the access predicate builds on it,
-  -- and the two gedu dashboard reads draw the cover card from it. A fourth
+  -- and the two gedu dashboard reads draw the substitution card from it. A fourth
   -- caller is a surface that has quietly stopped applying the 48-hour start,
   -- which is the one way this split can go wrong, so it fails here.
   SELECT array_agg(p.proname::text ORDER BY p.proname COLLATE "C")
@@ -824,21 +824,21 @@ BEGIN
     FROM pg_proc p
     JOIN pg_namespace n ON n.oid = p.pronamespace
    WHERE n.nspname = 'public'
-     AND p.proname <> 'gedu_holds_unexpired_cover'
-     AND p.prosrc LIKE '%gedu_holds_unexpired_cover%';
+     AND p.proname <> 'gedu_holds_unexpired_substitution'
+     AND p.prosrc LIKE '%gedu_holds_unexpired_substitution%';
 
   IF v_callers IS DISTINCT FROM ARRAY[
-       'gedu_covers_session', 'get_my_assigned_products',
+       'gedu_substitutes_session', 'get_my_assigned_products',
        'get_my_gedu_assignment_summaries'
      ] THEN
     RAISE EXCEPTION
-      'gedu_holds_unexpired_cover is called by % — every ACCESS gate must call gedu_covers_session, which is the one that applies the 48-hour start', v_callers::text;
+      'gedu_holds_unexpired_substitution is called by % — every ACCESS gate must call gedu_substitutes_session, which is the one that applies the 48-hour start', v_callers::text;
   END IF;
 
-  -- The cover arm of each dashboard read still reads the requests table, which
-  -- is what keeps both of them inside the swept cover branch on
+  -- The substitution arm of each dashboard read still reads the requests table, which
+  -- is what keeps both of them inside the swept substitution branch on
   -- gedu_group_assignments (the sweep itself is 00272's and the permanent one
-  -- in tests/db/session-cover.test.ts).
+  -- in tests/db/session-substitution.test.ts).
   FOREACH v_name IN ARRAY ARRAY[
     'get_my_assigned_products', 'get_my_gedu_assignment_summaries'
   ] LOOP
@@ -848,21 +848,21 @@ BEGIN
         JOIN pg_namespace n ON n.oid = p.pronamespace
        WHERE n.nspname = 'public'
          AND p.proname = v_name
-         AND p.prosrc LIKE '%session_cover_requests%'
+         AND p.prosrc LIKE '%session_substitution_requests%'
          AND has_function_privilege('authenticated', p.oid, 'EXECUTE')
          AND NOT has_function_privilege('anon', p.oid, 'EXECUTE')
          AND NOT p.proisstrict
     ) THEN
       RAISE EXCEPTION
-        '% has lost its cover arm, its authenticated grant, or has become STRICT or anon-reachable', v_name;
+        '% has lost its substitution arm, its authenticated grant, or has become STRICT or anon-reachable', v_name;
     END IF;
   END LOOP;
 
-  -- Both window predicates are internal. gedu_covers_group stays the one cover
+  -- Both window predicates are internal. gedu_substitutes_group stays the one substitution
   -- predicate `authenticated` may execute, because the gedus_read_assigned_groups
   -- policy calls it and a policy is evaluated as the querying role.
   FOREACH v_name IN ARRAY ARRAY[
-    'gedu_holds_unexpired_cover', 'gedu_covers_session'
+    'gedu_holds_unexpired_substitution', 'gedu_substitutes_session'
   ] LOOP
     IF EXISTS (
       SELECT 1
@@ -883,10 +883,10 @@ BEGIN
       FROM pg_proc p
       JOIN pg_namespace n ON n.oid = p.pronamespace
      WHERE n.nspname = 'public'
-       AND p.proname = 'gedu_covers_group'
+       AND p.proname = 'gedu_substitutes_group'
        AND has_function_privilege('authenticated', p.oid, 'EXECUTE')
        AND NOT has_function_privilege('anon', p.oid, 'EXECUTE')
   ) THEN
-    RAISE EXCEPTION 'gedu_covers_group has lost its authenticated grant, or gained an anon one';
+    RAISE EXCEPTION 'gedu_substitutes_group has lost its authenticated grant, or gained an anon one';
   END IF;
 END $$;

@@ -13,7 +13,7 @@ import {
   type GeduAssignmentCardData,
   type GeduDashboardCard,
 } from "./GeduAssignmentsSectionView";
-import type { GeduCoverSummary } from "@/lib/gedu-assignment-rollup";
+import type { GeduSubstitutionSummary } from "@/lib/gedu-assignment-rollup";
 import { UncertifiedToolsNotice } from "./uncertified-notice";
 
 /**
@@ -60,8 +60,8 @@ import { UncertifiedToolsNotice } from "./uncertified-notice";
  */
 export function GeduDashboardPageBody({
   assignments,
-  covers = [],
-  coverPool = null,
+  substitutions = [],
+  substitutionPool = null,
   certified,
   contractAccepted,
   criminalRecordCheckPassed,
@@ -72,30 +72,30 @@ export function GeduDashboardPageBody({
   /** One roll-up per assignment, already sorted soonest-first. */
   assignments: readonly GeduAssignmentCardData[];
   /**
-   * One summary per **live cover** — a single session this gedu is standing in
-   * for — already sorted by covered date ascending.
+   * One summary per **live substitution** — a single session this gedu is standing in
+   * for — already sorted by substitution date ascending.
    *
    * A second list rather than a widened first one, because the two reduce
    * differently and the cards answer different questions; they are merged into
-   * the type-noun sections below, covers first, because a gedu's week is one
+   * the type-noun sections below, substitutions first, because a gedu's week is one
    * week whichever kind of seat put a session in it.
    */
-  covers?: readonly GeduCoverSummary[];
+  substitutions?: readonly GeduSubstitutionSummary[];
   /**
-   * The **Sessions needing cover** section's body, or `null` for a gedu who has
+   * The **Sessions needing a substitute** section's body, or `null` for a gedu who has
    * no business seeing it.
    *
    * A node rather than rows, like the two tool panels and the help form: the
    * pool is a self-contained thing with two backend writes behind it, so a
    * shell hands it over finished and a preview scene hands over the same
    * component over fixtures. `null` withholds the heading and the nav entry as
-   * well as the body, and it covers two cases the page treats alike: an
-   * uncertified gedu, who may cover nothing and would be reading an all-clear
+   * well as the body, and it substitutions two cases the page treats alike: an
+   * uncertified gedu, who may substitute for nothing and would be reading an all-clear
    * about a queue they are not in, and a read that has not answered yet — a
    * heading painted ahead of its own body would be a card arriving above the
    * reader on data's own schedule. Heading and body appear together.
    */
-  coverPool?: React.ReactNode | null;
+  substitutionPool?: React.ReactNode | null;
   /**
    * Has this gedu accepted the contract version in force? `false` puts the
    * notice band above everything else on the page.
@@ -150,7 +150,7 @@ export function GeduDashboardPageBody({
   helpForm: React.ReactNode;
 }) {
   const t = useTranslations("dashboardSections");
-  const c = useTranslations("gedu.cover");
+  const c = useTranslations("gedu.substitution");
   const h = useTranslations("helpSection");
 
   /**
@@ -161,18 +161,18 @@ export function GeduDashboardPageBody({
    */
   const activitySections = activityTypeSections<GeduDashboardCard>(
     [
-      // Covers lead their section: they are dated, one-off and the thing most
+      // Substitutions lead their section: they are dated, one-off and the thing most
       // easily forgotten, where an assignment recurs and will be there again
       // next week. Each list arrives already ordered, so this is a
       // concatenation rather than a sort.
-      ...covers.map((cover) => ({ kind: "cover" as const, item: cover })),
+      ...substitutions.map((substitution) => ({ kind: "substitution" as const, item: substitution })),
       ...assignments.map((assignment) => ({
         kind: "assignment" as const,
         item: assignment,
       })),
     ],
     (card) =>
-      card.kind === "cover"
+      card.kind === "substitution"
         ? card.item.productType
         : card.item.assignment.productType,
   );
@@ -195,9 +195,9 @@ export function GeduDashboardPageBody({
   const sections: DashboardSection[] = [
     // First, and only for a gedu who can act on it: the pool is other people's
     // sessions, and it sits above this gedu's own because it is the one thing
-    // on the page that expires — a session somebody else covers is gone from
-    // it, and a session nobody covers has nobody in the room.
-    ...(coverPool === null ? [] : [{ id: "cover-pool", label: t("coverPool") }]),
+    // on the page that expires — a session somebody else substitutions is gone from
+    // it, and a session nobody substitutions has nobody in the room.
+    ...(substitutionPool === null ? [] : [{ id: "substitution-pool", label: t("substitutionPool") }]),
     ...activitySections.map((group) => ({
       id: ACTIVITY_HEADING_KEY[group.type],
       label: t(ACTIVITY_HEADING_KEY[group.type]),
@@ -258,17 +258,17 @@ export function GeduDashboardPageBody({
               above it: this is another run of this week's sessions, not a
               different kind of section, so it takes the tight gap the type
               nouns take rather than the wide one Tools does. */}
-          {coverPool !== null && (
+          {substitutionPool !== null && (
             <section
-              id="cover-pool"
-              aria-labelledby="cover-pool-heading"
+              id="substitution-pool"
+              aria-labelledby="substitution-pool-heading"
               className="scroll-mt-32"
             >
               <div className="mx-auto max-w-5xl space-y-6">
-                <h2 id="cover-pool-heading" className="text-3xl font-bold">
+                <h2 id="substitution-pool-heading" className="text-3xl font-bold">
                   {c("poolHeading")}
                 </h2>
-                {coverPool}
+                {substitutionPool}
               </div>
             </section>
           )}

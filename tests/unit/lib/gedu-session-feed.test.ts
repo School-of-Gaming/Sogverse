@@ -8,7 +8,7 @@ import {
   UNDATED_PRODUCT_PAST_HORIZON_DAYS,
 } from "@/lib/session-occurrence";
 import type { GeduFeedSession } from "@/services/gedu-sessions";
-import type { CoverRequestDocument } from "@/services/session-cover";
+import type { SubstitutionRequestDocument } from "@/services/session-substitution";
 import type { SessionFeedEntry } from "@/components/gedu/session-feed";
 
 /**
@@ -43,18 +43,18 @@ const GEDU_B = {
   role: "primary" as const,
 };
 
-/** The sub — not on the group at all, seated only by a covered request. */
+/** The sub — not on the group at all, seated only by a substituted request. */
 const SUB = {
   id: "cccc3333-3333-4333-8333-333333333333",
   firstName: "Joonas",
 };
 
-function cover(
+function substitution(
   sessionDate: string,
-  fields: Partial<CoverRequestDocument> = {},
-): CoverRequestDocument {
+  fields: Partial<SubstitutionRequestDocument> = {},
+): SubstitutionRequestDocument {
   return {
-    id: `cover-${sessionDate}`,
+    id: `substitution-${sessionDate}`,
     group_id: GROUP,
     session_date: sessionDate,
     role: "primary",
@@ -62,8 +62,8 @@ function cover(
     created_at: `${sessionDate}T08:00:00.000Z`,
     requested_by: GEDU_A.id,
     requested_by_first_name: GEDU_A.first_name,
-    covered_by: null,
-    covered_by_first_name: null,
+    substitute_id: null,
+    substitute_first_name: null,
     approved_at: null,
     is_requester: false,
     offer_count: null,
@@ -82,10 +82,10 @@ function build(overrides: Partial<Parameters<typeof buildGeduSessionFeed>[0]> = 
     endDate: null,
     sessions: [],
     // Staffed by one primary and nobody absent, which is what most cases here
-    // are about: they test the calendar merge, and a case about covers says so
+    // are about: they test the calendar merge, and a case about substitutions says so
     // by overriding one or both.
     gedus: [GEDU_A],
-    covers: [],
+    substitutions: [],
     now: NOW,
     epoch: EPOCH,
     ...overrides,
@@ -437,7 +437,7 @@ describe("buildGeduSessionFeed — the in-progress session", () => {
       endDate: null,
       sessions: [],
       gedus: [GEDU_A],
-      covers: [],
+      substitutions: [],
       now,
       epoch: EPOCH,
     });
@@ -503,7 +503,7 @@ describe("buildGeduSessionFeed — the in-progress session", () => {
       endDate: null,
       sessions: [],
       gedus: [GEDU_A],
-      covers: [],
+      substitutions: [],
       // 14:00 Helsinki - six hours in, nine hours to go.
       now: new Date("2026-03-16T12:00:00.000Z"),
       epoch: EPOCH,
@@ -590,7 +590,7 @@ describe("buildGeduSessionFeed — staffing", () => {
       // A pre-epoch date with nothing recorded on it is the `no_record` kind,
       // and it carries a staffing like the other two: a request is filed
       // against a (group, date), and a projected date with no row is as
-      // coverable as any other. The stored row on the last Monday is what makes
+      // substitutable as any other. The stored row on the last Monday is what makes
       // the third kind appear beside it.
       epoch: "2026-03-17",
       sessions: [row(PAST)],
@@ -610,7 +610,7 @@ describe("buildGeduSessionFeed — staffing", () => {
     // One array in for the whole group; the derivation picks its own date out.
     const entries = build({
       gedus: [GEDU_A, GEDU_B],
-      covers: [cover(FUTURE, { requested_by: GEDU_B.id, requested_by_first_name: GEDU_B.first_name })],
+      substitutions: [substitution(FUTURE, { requested_by: GEDU_B.id, requested_by_first_name: GEDU_B.first_name })],
     });
 
     expect(byDate(entries, FUTURE)?.staffing.expected).toEqual([
@@ -624,11 +624,11 @@ describe("buildGeduSessionFeed — staffing", () => {
 
   it("seats an approved sub in the absent gedu's place", () => {
     const entries = build({
-      covers: [
-        cover(FUTURE, {
-          status: "covered",
-          covered_by: SUB.id,
-          covered_by_first_name: SUB.firstName,
+      substitutions: [
+        substitution(FUTURE, {
+          status: "substituted",
+          substitute_id: SUB.id,
+          substitute_first_name: SUB.firstName,
         }),
       ],
     });
@@ -640,7 +640,7 @@ describe("buildGeduSessionFeed — staffing", () => {
 
   it("answers the viewer's own questions from the viewer id", () => {
     const entries = build({
-      covers: [cover(FUTURE)],
+      substitutions: [substitution(FUTURE)],
       viewerId: GEDU_A.id,
     });
 
@@ -659,7 +659,7 @@ describe("buildGeduSessionFeed — staffing", () => {
     // The admin shell, and the preview scenes. The document's own
     // `is_requester` was computed for whoever it was served to, so with no
     // viewer named it is the fallback — and for an admin it is false.
-    const entries = build({ covers: [cover(FUTURE)] });
+    const entries = build({ substitutions: [substitution(FUTURE)] });
     const staffing = byDate(entries, FUTURE)!.staffing;
     expect(staffing.viewerIsExpected).toBe(false);
     expect(staffing.viewerRequest).toBeNull();
@@ -669,7 +669,7 @@ describe("buildGeduSessionFeed — staffing", () => {
   it("renders no entry for a request on a date the schedule no longer projects", () => {
     // An orphaned request — a Thursday on a Monday club — is history: it has no
     // instants to render with, and the admin queue is where it is cleared.
-    const entries = build({ covers: [cover("2026-03-19")] });
+    const entries = build({ substitutions: [substitution("2026-03-19")] });
     expect(dates(entries)).not.toContain("2026-03-19");
   });
 });

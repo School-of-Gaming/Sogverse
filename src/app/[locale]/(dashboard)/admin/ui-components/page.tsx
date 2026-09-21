@@ -800,7 +800,7 @@ function ConfirmDialogDemo() {
         <ConfirmDialog
           open
           onOpenChange={(open) => !open && setWrite(null)}
-          title="Withdraw the cover request"
+          title="Withdraw the substitution request"
           description="Every offer your colleagues have made is dropped."
           confirmLabel="Withdraw"
           confirmVariant="default"
@@ -813,7 +813,7 @@ function ConfirmDialogDemo() {
         <ConfirmDialog
           open
           onOpenChange={(open) => !open && setWrite(null)}
-          title="Withdraw the cover request"
+          title="Withdraw the substitution request"
           description="Every offer your colleagues have made is dropped."
           confirmLabel="Withdraw"
           confirmVariant="default"

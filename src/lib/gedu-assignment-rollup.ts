@@ -44,19 +44,19 @@ import { INERT_HREF } from "@/lib/constants/routes";
  * only the assignment-shaped roll-up and its ordering are the gedu's own.
  *
  * **There are two roll-ups here, over one list of rows.** Since 00272 the
- * assignment read returns a second kind of seat — a live **cover**, one row per
- * covered date — and the two reduce differently: an assignment collapses a
- * schedule to its next occurrence, a cover *is* one occurrence and collapses to
+ * assignment read returns a second kind of seat — a live **substitution**, one row per
+ * substitution date — and the two reduce differently: an assignment collapses a
+ * schedule to its next occurrence, a substitution *is* one occurrence and collapses to
  * nothing. So they emit different summaries and draw different cards, and each
  * roll-up ignores the other's rows.
  *
  * **Every per-seat fact is keyed by (product, group), never by product alone.**
  * A gedu holds at most one assignment per product, which is what made a product
- * id look like a key — but a cover is on a *group*, and one gedu may cover a
+ * id look like a key — but a substitution is on a *group*, and one gedu may substitute on a
  * sibling group of a product they already teach. Under a product key those two
  * cards would have shared a badge count, a workspace link and a voice room.
- * {@link geduAssignmentKey} is that key; a cover's own identity is (group,
- * date), which is {@link geduCoverKey}.
+ * {@link geduAssignmentKey} is that key; a substitution's own identity is (group,
+ * date), which is {@link geduSubstitutionKey}.
  */
 
 /**
@@ -85,8 +85,8 @@ export interface GeduAssignmentRow extends MyAssignedProductSessionRow {
  * The key every per-seat fact is looked up by — a product and the gedu's group
  * in it, together.
  *
- * Product alone was the key until covers existed, and it was wrong the moment
- * they did: two seats on one product (an assignment on one group, a cover on
+ * Product alone was the key until substitutions existed, and it was wrong the moment
+ * they did: two seats on one product (an assignment on one group, a substitution on
  * another) would have collided on every one of the three maps below, so one
  * card would have drawn the other's badge and linked to the other's workspace.
  */
@@ -95,13 +95,13 @@ export function geduAssignmentKey(productId: string, groupId: string): string {
 }
 
 /**
- * A cover's own identity: the group, and the product-local date it covers.
+ * A substitution's own identity: the group, and the product-local date it substitutions.
  *
- * One card per covered date — a sub who covers two Mondays of one group holds
+ * One card per substitution date — a sub who substitutions two Mondays of one group holds
  * two seats, and they are told apart by nothing else.
  */
-export function geduCoverKey(groupId: string, coveredDate: string): string {
-  return `${groupId}:${coveredDate}`;
+export function geduSubstitutionKey(groupId: string, substitutionDate: string): string {
+  return `${groupId}:${substitutionDate}`;
 }
 
 /** One rolled-up card: an assignment, its next session, and its backlog. */
@@ -217,7 +217,7 @@ export function rollUpGeduAssignments({
   const windowCloseMs = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
 
   const summaries = rows
-    // Cover rows are the other roll-up's: a cover is one dated afternoon, and
+    // Substitution rows are the other roll-up's: a substitution is one dated afternoon, and
     // running it through the schedule walk would draw a sub a recurring card
     // claiming they teach the club every week.
     .filter((row) => row.kind === "assignment")
@@ -344,31 +344,31 @@ function bySoonestSession(
 }
 
 /**
- * One **cover** card: a single afternoon a sub is holding, and the workspace it
+ * One **substitution** card: a single afternoon a sub is holding, and the workspace it
  * opens.
  *
  * It is deliberately not a {@link GeduAssignmentSummary} with a date bolted on.
  * Almost every field on that one answers a question about a *run* — the next
  * session, the cadence, whether the run has ended, how many children are in the
- * group week after week — and none of those is a question about one covered
+ * group week after week — and none of those is a question about one substituted
  * Monday. What a sub needs is where and when, and the way in.
  */
-export interface GeduCoverSummary {
+export interface GeduSubstitutionSummary {
   groupId: string;
   /** Product-local `YYYY-MM-DD` — the other half of this card's identity. */
-  coveredDate: string;
+  substitutionDate: string;
   productId: string;
   /** Translated product name. */
   productName: string;
   productType: ProductType;
   groupName: string | null;
-  /** The product's own zone, which `coveredDate` is a date in. */
+  /** The product's own zone, which `substitutionDate` is a date in. */
   timezone: string;
   /**
-   * The covered session's start and end, or `null` when the schedule no longer
+   * The substituted session's start and end, or `null` when the schedule no longer
    * projects that weekday.
    *
-   * `null` is a real answer rather than a failure: a cover keys on (group,
+   * `null` is a real answer rather than a failure: a substitution keys on (group,
    * date) like every session record, so an admin moving the schedule's weekday
    * afterwards leaves a row naming a day the schedule has stopped producing.
    * The card then shows the date alone rather than disappearing, which is what
@@ -377,11 +377,11 @@ export interface GeduCoverSummary {
   startsAt: Date | null;
   endsAt: Date | null;
   /**
-   * When the group's workspace opens to this sub — the covered session's start
+   * When the group's workspace opens to this sub — the substituted session's start
    * less 48 hours — or `null` on an orphaned date, which has no start to count
    * back from.
    *
-   * **The card outlives the lock.** A cover is on My SOG from the moment it is
+   * **The card outlives the lock.** A substitution is on My SOG from the moment it is
    * approved, so a sub can see the afternoon they agreed to take; what waits
    * until this instant is the *workspace* behind it, and the database applies
    * the same 48 hours to every gate that reaches the group. So a card whose
@@ -406,7 +406,7 @@ export interface GeduCoverSummary {
   /**
    * The workspace this card opens — **carrying the group as a query param**.
    *
-   * A sub has no assignment row to resolve a group from, and one covering a
+   * A sub has no assignment row to resolve a group from, and one substituting a
    * sibling group of a product they already teach would otherwise land in their
    * own group's workspace: the right product, the wrong roster. The param is
    * what the workspace route reads to answer "which group is mine".
@@ -422,28 +422,28 @@ export interface GeduCoverSummary {
 }
 
 /**
- * How long before a covered session the group's workspace opens to the sub.
+ * How long before a substituted session the group's workspace opens to the sub.
  *
  * This is the client's half of a bound the **database** enforces — every gate
- * that lets a cover reach the group applies the same lead against the same
+ * that lets a substitution reach the group applies the same lead against the same
  * session start — so it exists here only to tell a sub when their card will
  * unlock, and moving it is a migration and this line together.
  */
-const COVER_ACCESS_LEAD_MS = 48 * 60 * 60 * 1000;
+const SUBSTITUTION_ACCESS_LEAD_MS = 48 * 60 * 60 * 1000;
 
-export interface CoverRollUpArgs {
+export interface SubstitutionRollUpArgs {
   rows: readonly GeduAssignmentRow[];
   locale: SupportedLocale;
   /**
-   * Outstanding work per cover, keyed by {@link geduCoverKey}; missing means
+   * Outstanding work per substitution, keyed by {@link geduSubstitutionKey}; missing means
    * none.
    */
-  attentionByCover?: Readonly<Record<string, number>>;
+  attentionBySubstitution?: Readonly<Record<string, number>>;
   /**
    * Where each seat's workspace lives, keyed by {@link geduAssignmentKey} —
-   * **the same map the assignment roll-up takes**, because a cover's workspace
+   * **the same map the assignment roll-up takes**, because a substitution's workspace
    * is its product's and its group's like any other. The group query param is
-   * added here rather than by the caller, so the rule that a cover's link
+   * added here rather than by the caller, so the rule that a substitution's link
    * carries its group has one home.
    */
   hrefByAssignment: Readonly<Record<string, AppHrefObject>>;
@@ -452,12 +452,12 @@ export interface CoverRollUpArgs {
 }
 
 /**
- * Roll the caller's covers up into one card each, **soonest covered date
+ * Roll the caller's substitutions up into one card each, **soonest substitution date
  * first**, with a date the schedule no longer projects last.
  *
- * No clock: a cover card stands from the moment the cover is approved until the
- * cover expires, and the database is what decides that — a row is returned
- * while the cover is the caller's and gone once it is not. Filtering again here
+ * No clock: a substitution card stands from the moment the substitution is approved until the
+ * substitution expires, and the database is what decides that — a row is returned
+ * while the substitution is the caller's and gone once it is not. Filtering again here
  * against a second clock would be a card disagreeing with the rows the page
  * actually has.
  *
@@ -466,22 +466,22 @@ export interface CoverRollUpArgs {
  * has passed is asked of the viewer's clock at render, where the rest of the
  * card's liveness already is.
  */
-export function rollUpGeduCovers({
+export function rollUpGeduSubstitutions({
   rows,
   locale,
-  attentionByCover,
+  attentionBySubstitution,
   hrefByAssignment,
   voiceHrefByAssignment,
-}: CoverRollUpArgs): GeduCoverSummary[] {
-  const covers = rows.flatMap((row) => {
-    // Both halves are what makes the row a cover, and the type only guarantees
-    // the first — so a `cover` row with no date is dropped rather than drawn as
+}: SubstitutionRollUpArgs): GeduSubstitutionSummary[] {
+  const substitutions = rows.flatMap((row) => {
+    // Both halves are what makes the row a substitution, and the type only guarantees
+    // the first — so a `substitution` row with no date is dropped rather than drawn as
     // a card with nothing to say about when it is.
-    if (row.kind !== "cover" || row.coveredDate === null) return [];
+    if (row.kind !== "substitution" || row.substitutionDate === null) return [];
 
     const key = geduAssignmentKey(row.product.id, row.groupId);
     const occurrence = occurrenceOnDate({
-      sessionDate: row.coveredDate,
+      sessionDate: row.substitutionDate,
       slots: row.slots,
       timezone: row.product.timezone,
     });
@@ -489,7 +489,7 @@ export function rollUpGeduCovers({
     return [
       {
         groupId: row.groupId,
-        coveredDate: row.coveredDate,
+        substitutionDate: row.substitutionDate,
         productId: row.product.id,
         productName:
           resolveTranslation(row.product.translations, locale)?.name ?? "",
@@ -501,29 +501,29 @@ export function rollUpGeduCovers({
         accessOpensAt:
           occurrence === null
             ? null
-            : new Date(occurrence.start.getTime() - COVER_ACCESS_LEAD_MS),
+            : new Date(occurrence.start.getTime() - SUBSTITUTION_ACCESS_LEAD_MS),
         hasVoiceRoom,
         voiceHref: hasVoiceRoom
           ? (voiceHrefByAssignment?.[key] ?? INERT_HREF)
           : INERT_HREF,
         siteName: hasVoiceRoom ? null : row.siteName,
-        openHref: coverWorkspaceHref(hrefByAssignment[key], row.groupId),
+        openHref: substitutionWorkspaceHref(hrefByAssignment[key], row.groupId),
         attentionCount:
-          attentionByCover?.[geduCoverKey(row.groupId, row.coveredDate)] ?? 0,
-      } satisfies GeduCoverSummary,
+          attentionBySubstitution?.[geduSubstitutionKey(row.groupId, row.substitutionDate)] ?? 0,
+      } satisfies GeduSubstitutionSummary,
     ];
   });
 
-  covers.sort(byCoveredMoment);
-  return covers;
+  substitutions.sort(bySubstitutionMoment);
+  return substitutions;
 }
 
 /**
- * A cover's workspace link: the seat's own destination with the group added, or
+ * A substitution's workspace link: the seat's own destination with the group added, or
  * the inert href when the caller named no destination for that seat.
  *
  * The group rides as a query param because a sub has no assignment row for one
- * to be resolved from — and one covering a *sibling* group of a product they
+ * to be resolved from — and one substituting a *sibling* group of a product they
  * already teach would otherwise land on their own group's workspace, which is
  * the right product and the wrong roster.
  *
@@ -531,7 +531,7 @@ export function rollUpGeduCovers({
  * parameter type: an index signature says every key is present, and the seat a
  * preview supplied no link for is exactly the case this has to answer.
  */
-function coverWorkspaceHref(
+function substitutionWorkspaceHref(
   workspace: AppHrefObject | undefined,
   groupId: string,
 ): MaybeInertHref {
@@ -540,22 +540,22 @@ function coverWorkspaceHref(
 }
 
 /**
- * Soonest covered session first; an orphaned date — one the schedule no longer
+ * Soonest substituted session first; an orphaned date — one the schedule no longer
  * projects — sorts last, by its own date, then by product name.
  *
  * The orphan has no instant to be ordered against and is history rather than
  * work, so it goes to the foot of the run for the same reason a finished
  * assignment does.
  */
-function byCoveredMoment(a: GeduCoverSummary, b: GeduCoverSummary): number {
+function bySubstitutionMoment(a: GeduSubstitutionSummary, b: GeduSubstitutionSummary): number {
   if ((a.startsAt === null) !== (b.startsAt === null)) {
     return a.startsAt === null ? 1 : -1;
   }
   if (a.startsAt !== null && b.startsAt !== null) {
     const byStart = a.startsAt.getTime() - b.startsAt.getTime();
     if (byStart !== 0) return byStart;
-  } else if (a.coveredDate !== b.coveredDate) {
-    return a.coveredDate < b.coveredDate ? -1 : 1;
+  } else if (a.substitutionDate !== b.substitutionDate) {
+    return a.substitutionDate < b.substitutionDate ? -1 : 1;
   }
   return a.productName.localeCompare(b.productName);
 }

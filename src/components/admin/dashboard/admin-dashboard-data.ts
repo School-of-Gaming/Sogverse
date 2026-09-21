@@ -1,5 +1,5 @@
 import type {
-  CoverReason,
+  SubstitutionReason,
   GeduAssignmentRole,
   ProductType,
   UserRole,
@@ -317,17 +317,17 @@ export interface ComingUpDay {
 }
 
 /**
- * One gedu who has volunteered to cover a session, and the two standings an
+ * One gedu who has volunteered to substitute at a session, and the two standings an
  * admin weighs before seating them.
  *
  * They are the certification queue's two standings in the certification
  * queue's own shape, deliberately: an admin choosing a sub is asking what they
  * ask when certifying somebody, and a second vocabulary for "certified" and
  * "extract recorded" would be a second thing to keep in step. Neither gates the
- * action — the database has already refused anybody who may not cover — so both
+ * action — the database has already refused anybody who may not substitute — so both
  * inform and nothing here is disabled by them.
  */
-export interface CoverOffer {
+export interface SubstitutionOffer {
   /**
    * The **offer's** id, not the gedu's: it is what Approve posts, because the
    * approval is of one offer on one request rather than of a person.
@@ -351,7 +351,7 @@ export interface CoverOffer {
 }
 
 /**
- * One open cover request an admin has to staff.
+ * One open substitution request an admin has to staff.
  *
  * **The date is the product's and the clock face is the reader's**, and the two
  * are deliberately not resolved into one zone. The date is the request's own
@@ -372,7 +372,7 @@ export interface CoverOffer {
  * is health-related data about a contractor, and this surface is the one it was
  * collected for.
  */
-export interface CoverRequest {
+export interface SubstitutionRequest {
   id: string;
   groupId: string;
   groupName: string;
@@ -392,9 +392,9 @@ export interface CoverRequest {
    * they are being asked.
    */
   sessionTime: string | null;
-  /** The role being covered — the absent gedu's, and what the sub is paid as. */
+  /** The role being substituted — the absent gedu's, and what the sub is paid as. */
   role: GeduAssignmentRole;
-  reason: CoverReason | null;
+  reason: SubstitutionReason | null;
   reasonNote: string | null;
   /** The absent gedu's account id — the identicon's input, so a real UUID. */
   requesterId: string;
@@ -403,7 +403,7 @@ export interface CoverRequest {
   /** The group's own admin page — where a request with no offers is dealt with. */
   groupHref: AppHref;
   /** As delivered: the RPC orders by date then product, and so does the panel. */
-  offers: readonly CoverOffer[];
+  offers: readonly SubstitutionOffer[];
 }
 
 /** Everything the draft body renders. */
@@ -434,10 +434,10 @@ export interface AdminDashboardData {
   /** Products needing an admin. Empty means nothing is wrong with any of them. */
   products: readonly ProductAttention[];
   /**
-   * Open cover requests, dated today or later, in the order the read delivered
+   * Open substitution requests, dated today or later, in the order the read delivered
    * them (date, then product). Empty is the all-clear.
    */
-  coverRequests: readonly CoverRequest[];
+  substitutionRequests: readonly SubstitutionRequest[];
   /** Gedu accounts waiting on a certification decision. */
   uncertifiedGedus: readonly UncertifiedGedu[];
   users: readonly AdminUserRoleStat[];

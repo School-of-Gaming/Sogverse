@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { GameAccountStatus } from "@/components/game-account";
 import {
   resolveInGroupSince,
-  type SessionCoverRequestDraft,
+  type SessionSubstitutionRequestDraft,
   type SessionFeedEntry,
   type SessionFeedGamer,
 } from "@/components/gedu/session-feed";
@@ -40,9 +40,9 @@ import {
 } from "@/services/member-flair";
 import { useUpdateGroupMemberMinecraft } from "@/services/minecraft";
 import {
-  useRequestSessionCover,
-  useWithdrawSessionCoverRequest,
-} from "@/services/session-cover";
+  useRequestSessionSubstitution,
+  useWithdrawSessionSubstitutionRequest,
+} from "@/services/session-substitution";
 import {
   useRobloxRenders,
   useUpdateGroupMemberRoblox,
@@ -249,12 +249,12 @@ function Workspace({
   const setGamerNote = useSetGamerGroupNote(groupId);
   const setGamerCreations = useSetGamerGroupCreations(groupId);
   // The two writes a gedu may make about their own seat. Both invalidate the
-  // five documents a cover moves — this page's feed among them — so the card
+  // five documents a substitution moves — this page's feed among them — so the card
   // that filed the absence redraws itself with nothing here refetching by hand.
-  const requestSessionCover = useRequestSessionCover();
-  const withdrawSessionCoverRequest = useWithdrawSessionCoverRequest();
-  // Only the two cover writes above use it, and only to wait on this page's own
-  // document after them — see `settleCoverWrite`.
+  const requestSessionSubstitution = useRequestSessionSubstitution();
+  const withdrawSessionSubstitutionRequest = useWithdrawSessionSubstitutionRequest();
+  // Only the two substitution writes above use it, and only to wait on this page's own
+  // document after them — see `settleSubstitutionWrite`.
   const queryClient = useQueryClient();
 
   /**
@@ -303,11 +303,11 @@ function Workspace({
         // the sessions come from — and the viewer, which is what decides whether
         // a card offers "I can't make this session" at all.
         gedus: feed.gedus,
-        covers: feed.covers,
+        substitutions: feed.substitutions,
         viewerId,
         now,
       }),
-    [groupId, feed.product, feed.sessions, feed.gedus, feed.covers, viewerId, now],
+    [groupId, feed.product, feed.sessions, feed.gedus, feed.substitutions, viewerId, now],
   );
 
   /**
@@ -500,21 +500,21 @@ function Workspace({
     });
 
   /**
-   * The half of a cover write the mutation does not supply: this page's own
+   * The half of a substitution write the mutation does not supply: this page's own
    * document, read again before the card lets go of its committing flag.
    *
-   * Every cover write invalidates five roots in its `onSuccess` without waiting
+   * Every substitution write invalidates five roots in its `onSuccess` without waiting
    * for any of them, which is right for the four documents this page is not
    * reading and not enough for the one it is. The card holds its flag until the
    * promise it is given settles, and the card **survives** the write — the feed
    * keys an entry by (group, date) — so a promise resolving on the receipt
    * would hand back a control over staffing the write has just changed, or
    * leave the flag set for ever on a card that never unmounts. Awaiting the
-   * gedu-sessions key means the card is already rebuilt from the new `covers`
+   * gedu-sessions key means the card is already rebuilt from the new `substitutions`
    * by the time the region clears. It is the same shape the admin shell's
    * staffing editor uses, one key over.
    */
-  const settleCoverWrite = async () => {
+  const settleSubstitutionWrite = async () => {
     await queryClient.invalidateQueries({ queryKey: geduSessionKeys.all });
   };
 
@@ -534,23 +534,23 @@ function Workspace({
    * Awaited, and its rejection is allowed through: the dialog holds the
    * committing flag and hands its own control back on a refusal.
    */
-  const handleRequestCover = async (
+  const handleRequestSubstitution = async (
     entry: SessionFeedEntry,
-    draft: SessionCoverRequestDraft,
+    draft: SessionSubstitutionRequestDraft,
   ) => {
     const note = draft.note.trim();
-    await requestSessionCover.mutateAsync({
+    await requestSessionSubstitution.mutateAsync({
       groupId,
       sessionDate: productLocalDate(entry.startsAt, feed.product.timezone),
       reason: draft.reason,
       ...(note.length > 0 ? { reasonNote: note } : {}),
     });
-    await settleCoverWrite();
+    await settleSubstitutionWrite();
   };
 
-  const handleWithdrawCoverRequest = async (requestId: string) => {
-    await withdrawSessionCoverRequest.mutateAsync({ requestId });
-    await settleCoverWrite();
+  const handleWithdrawSubstitutionRequest = async (requestId: string) => {
+    await withdrawSessionSubstitutionRequest.mutateAsync({ requestId });
+    await settleSubstitutionWrite();
   };
 
   const handleSaveGroupNotes = async (draft: GroupNotesDraft) => {
@@ -638,8 +638,8 @@ function Workspace({
       // The gedu half of the staffing pair: a gedu may speak for their own
       // seat and for nothing else, so this shell supplies the two callbacks and
       // no staffing editor. The admin shell does the opposite.
-      onRequestCover={handleRequestCover}
-      onWithdrawCoverRequest={handleWithdrawCoverRequest}
+      onRequestSubstitution={handleRequestSubstitution}
+      onWithdrawSubstitutionRequest={handleWithdrawSubstitutionRequest}
       onSaveGameUsername={handleSaveGameUsername}
       gameStatuses={gameStatuses}
       robloxAvatarUrls={robloxAvatarUrls}

@@ -6,7 +6,7 @@ import {
 } from "@/components/admin/dashboard/build-admin-dashboard-data";
 import type {
   AdminDashboardAttentionProduct,
-  AdminDashboardCoverRequest,
+  AdminDashboardSubstitutionRequest,
   AdminDashboardScheduleProduct,
   AdminDashboardSnapshot,
 } from "@/types";
@@ -80,9 +80,9 @@ function snapshot(
     certification_queue: [],
     attention_products: [],
     schedule_products: [],
-    // The all-clear: the cover queue is a member of this document, and an empty
+    // The all-clear: the substitution queue is a member of this document, and an empty
     // array is what nothing-to-staff looks like on the wire.
-    cover_requests: [],
+    substitution_requests: [],
     ...overrides,
   };
 }
@@ -165,7 +165,7 @@ describe("the week window", () => {
       false,
     );
     expect(data.weeks[0].weekStart).toBe("2026-07-27");
-    // And the first week that *is* offered is fully covered.
+    // And the first week that *is* offered is fully substituted.
     expect(week(data, "2026-07-27").chips).toHaveLength(1);
   });
 
@@ -699,7 +699,7 @@ describe("the certification queue", () => {
           last_name: "Salminen",
           created_at: "2026-08-15T09:20:00+03:00",
           // One candidate has signed the current contract and one has not, so
-          // the fixture pair covers both standings a queue card can show.
+          // the fixture pair substitutions both standings a queue card can show.
           contract_accepted_at: "2026-08-16T10:00:00+03:00",
           criminal_record_check_at: null,
         },
@@ -827,8 +827,8 @@ describe("the certification queue", () => {
   });
 });
 
-describe("the cover queue", () => {
-  const request: AdminDashboardCoverRequest = {
+describe("the substitution queue", () => {
+  const request: AdminDashboardSubstitutionRequest = {
     id: "request-1",
     group_id: "group-1",
     group_name: "Ryhmä A",
@@ -870,7 +870,7 @@ describe("the cover queue", () => {
   };
 
   it("names the product in the reader's locale and links at the group's own page", () => {
-    const [row] = build(snapshot({ cover_requests: [request] })).coverRequests;
+    const [row] = build(snapshot({ substitution_requests: [request] })).substitutionRequests;
 
     expect(row.productName).toBe("Roblox camp");
     expect(row.groupName).toBe("Ryhmä A");
@@ -892,15 +892,15 @@ describe("the cover queue", () => {
    * conversion would get wrong.
    */
   it("renders the session date as itself, in every viewer's zone", () => {
-    const helsinki = build(snapshot({ cover_requests: [request] }), HELSINKI);
+    const helsinki = build(snapshot({ substitution_requests: [request] }), HELSINKI);
     const losAngeles = build(
-      snapshot({ cover_requests: [request] }),
+      snapshot({ substitution_requests: [request] }),
       LOS_ANGELES,
     );
 
-    expect(helsinki.coverRequests[0].sessionDate).toBe("Fri, Aug 21");
-    expect(losAngeles.coverRequests[0].sessionDate).toBe(
-      helsinki.coverRequests[0].sessionDate,
+    expect(helsinki.substitutionRequests[0].sessionDate).toBe("Fri, Aug 21");
+    expect(losAngeles.substitutionRequests[0].sessionDate).toBe(
+      helsinki.substitutionRequests[0].sessionDate,
     );
   });
 
@@ -911,15 +911,15 @@ describe("the cover queue", () => {
    * abbreviation discloses.
    */
   it("resolves the session's start and end from the product's slots, in the viewer's zone", () => {
-    const helsinki = build(snapshot({ cover_requests: [request] }), HELSINKI);
+    const helsinki = build(snapshot({ substitution_requests: [request] }), HELSINKI);
     const losAngeles = build(
-      snapshot({ cover_requests: [request] }),
+      snapshot({ substitution_requests: [request] }),
       LOS_ANGELES,
     );
 
-    expect(helsinki.coverRequests[0].sessionTime).toBe("17:00–18:30");
+    expect(helsinki.substitutionRequests[0].sessionTime).toBe("17:00–18:30");
     // 17:00 Helsinki on an August Friday is 07:00 the same morning in LA.
-    expect(losAngeles.coverRequests[0].sessionTime).toBe("07:00–08:30");
+    expect(losAngeles.substitutionRequests[0].sessionTime).toBe("07:00–08:30");
   });
 
   /**
@@ -931,7 +931,7 @@ describe("the cover queue", () => {
   it("states no time for a date the schedule no longer projects", () => {
     const [row] = build(
       snapshot({
-        cover_requests: [
+        substitution_requests: [
           {
             ...request,
             product: {
@@ -944,7 +944,7 @@ describe("the cover queue", () => {
           },
         ],
       }),
-    ).coverRequests;
+    ).substitutionRequests;
 
     expect(row.sessionDate).toBe("Fri, Aug 21");
     expect(row.sessionTime).toBeNull();
@@ -953,12 +953,12 @@ describe("the cover queue", () => {
   /**
    * A product meeting twice on one day — a camp's morning and afternoon block —
    * is "that day's session" at the earlier of the two, which is the rule the
-   * shared occurrence helper states and every cover surface inherits.
+   * shared occurrence helper states and every substitution surface inherits.
    */
   it("takes the earliest of two slots on the same weekday", () => {
     const [row] = build(
       snapshot({
-        cover_requests: [
+        substitution_requests: [
           {
             ...request,
             product: {
@@ -971,32 +971,32 @@ describe("the cover queue", () => {
           },
         ],
       }),
-    ).coverRequests;
+    ).substitutionRequests;
 
     expect(row.sessionTime).toBe("09:00–12:00");
   });
 
   /** The offerer's extract IS an instant, so it converts — unlike the date above. */
   it("converts each offer's record-check stamp into the viewer's zone", () => {
-    const helsinki = build(snapshot({ cover_requests: [request] }), HELSINKI);
+    const helsinki = build(snapshot({ substitution_requests: [request] }), HELSINKI);
     const losAngeles = build(
-      snapshot({ cover_requests: [request] }),
+      snapshot({ substitution_requests: [request] }),
       LOS_ANGELES,
     );
 
-    expect(helsinki.coverRequests[0].offers[0].criminalRecordCheckOn).toBe(
+    expect(helsinki.substitutionRequests[0].offers[0].criminalRecordCheckOn).toBe(
       "May 4, 2026",
     );
-    expect(losAngeles.coverRequests[0].offers[0].criminalRecordCheckOn).toBe(
+    expect(losAngeles.substitutionRequests[0].offers[0].criminalRecordCheckOn).toBe(
       "May 4, 2026",
     );
-    expect(helsinki.coverRequests[0].offers[0].certified).toBe(true);
+    expect(helsinki.substitutionRequests[0].offers[0].certified).toBe(true);
   });
 
   it("hands an unnamed account over as null, for the row to word", () => {
     const [row] = build(
       snapshot({
-        cover_requests: [
+        substitution_requests: [
           {
             ...request,
             requested_by_first_name: "",
@@ -1007,22 +1007,22 @@ describe("the cover queue", () => {
           },
         ],
       }),
-    ).coverRequests;
+    ).substitutionRequests;
 
     expect(row.requesterName).toBeNull();
     expect(row.offers[0].name).toBeNull();
   });
 
   it("keeps the read's own order — date, then product — without re-sorting", () => {
-    const later: AdminDashboardCoverRequest = {
+    const later: AdminDashboardSubstitutionRequest = {
       ...request,
       id: "request-2",
       session_date: "2026-08-28",
       product: { ...request.product, translations: [{ locale: "en", name: "A club" }] },
     };
-    const data = build(snapshot({ cover_requests: [request, later] }));
+    const data = build(snapshot({ substitution_requests: [request, later] }));
 
-    expect(data.coverRequests.map((row) => row.id)).toEqual([
+    expect(data.substitutionRequests.map((row) => row.id)).toEqual([
       "request-1",
       "request-2",
     ]);
@@ -1033,7 +1033,7 @@ describe("an empty platform", () => {
   it("still offers a full week window, with nothing in it", () => {
     const data = build(snapshot());
 
-    expect(data.coverRequests).toEqual([]);
+    expect(data.substitutionRequests).toEqual([]);
     expect(data.products).toEqual([]);
     expect(buildCertificationQueue([], "en", NOW, HELSINKI)).toEqual([]);
     expect(data.comingUp).toEqual([]);

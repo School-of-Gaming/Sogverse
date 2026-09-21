@@ -13,7 +13,7 @@ import type {
 
 /**
  * Fixture feeds for the `/admin/ui-components` style guide and the full-page
- * preview scenes: realistic groups, deep enough to cover every entry state the
+ * preview scenes: realistic groups, deep enough to substitution every entry state the
  * feed can render.
  *
  * Everything is computed from a `now` handed in by the caller (callers pass
@@ -1003,10 +1003,10 @@ function emailedAtForSpec(
  *
  * The three shorthands map onto the three shapes a real sheet can be in: a
  * `partial` names only the children somebody got to, `absent`/`allPresent`
- * cover the whole roster, and a spec with none of them is a session nobody has
+ * substitution the whole roster, and a spec with none of them is a session nobody has
  * touched — an empty map, not a roster of invented absences.
  *
- * **The whole-roster shorthands cover the members this session EXPECTED**, off
+ * **The whole-roster shorthands substitution the members this session EXPECTED**, off
  * the same predicate the register reads, so a fully-marked old session carries
  * no mark for somebody who had not joined yet. A fixture that marked her would
  * be asserting she was in a room she was not in — and it would leave a stored

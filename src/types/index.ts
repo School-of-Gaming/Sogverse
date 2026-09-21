@@ -435,34 +435,34 @@ export type GeduGroupAssignmentInsert = Database["public"]["Tables"]["gedu_group
 export type GeduAssignmentRole = Database["public"]["Enums"]["gedu_assignment_role"];
 
 // ---------------------------------------------------------------------------
-// session covers (00272) — "I can't make this session", and who stood in
+// session substitutions (00272) — "I can't make this session", and who stood in
 // ---------------------------------------------------------------------------
 
-// session_cover_requests — one row per (group, session date, ABSENT GEDU). The
+// session_substitution_requests — one row per (group, session date, ABSENT GEDU). The
 // seat is the person rather than the role, because two primaries of one group
 // may both be out the same day. Neither table grants anything to
 // `authenticated`: every read and write goes through the SECURITY DEFINER RPCs
-// in src/services/session-cover/, so these aliases serve the service-role side
+// in src/services/session-substitution/, so these aliases serve the service-role side
 // (db tests, admin tooling) rather than browser queries — the same posture as
 // GroupSession above.
-export type SessionCoverRequest = Database["public"]["Tables"]["session_cover_requests"]["Row"];
-export type SessionCoverRequestInsert = Database["public"]["Tables"]["session_cover_requests"]["Insert"];
-export type SessionCoverRequestUpdate = Database["public"]["Tables"]["session_cover_requests"]["Update"];
+export type SessionSubstitutionRequest = Database["public"]["Tables"]["session_substitution_requests"]["Row"];
+export type SessionSubstitutionRequestInsert = Database["public"]["Tables"]["session_substitution_requests"]["Insert"];
+export type SessionSubstitutionRequestUpdate = Database["public"]["Tables"]["session_substitution_requests"]["Update"];
 
-// session_cover_offers — "I can cover this", one row per (request, gedu).
+// session_substitution_offers — "Offer to substitute", one row per (request, gedu).
 // Withdrawing an offer DELETES the row, so there is no status column and no
 // Update alias worth having.
-export type SessionCoverOffer = Database["public"]["Tables"]["session_cover_offers"]["Row"];
-export type SessionCoverOfferInsert = Database["public"]["Tables"]["session_cover_offers"]["Insert"];
+export type SessionSubstitutionOffer = Database["public"]["Tables"]["session_substitution_offers"]["Row"];
+export type SessionSubstitutionOfferInsert = Database["public"]["Tables"]["session_substitution_offers"]["Insert"];
 
 // Why the gedu is away — admin-visible only, and nullable on the row because
 // the gedu path requires it (RPC-enforced) while an admin recording an
-// off-platform cover may not know it.
-export type CoverReason = Database["public"]["Enums"]["cover_reason"];
-// `open` -> `covered` (an admin approved someone) or `withdrawn` (the absence is
+// off-platform substitution may not know it.
+export type SubstitutionReason = Database["public"]["Enums"]["substitution_reason"];
+// `open` -> `substituted` (an admin approved someone) or `withdrawn` (the absence is
 // off). "Unfilled" is deliberately NOT a value: it is a derived state of an open
 // request whose date has passed, and the date already says it.
-export type CoverRequestStatus = Database["public"]["Enums"]["cover_request_status"];
+export type SubstitutionRequestStatus = Database["public"]["Enums"]["substitution_request_status"];
 
 // ---------------------------------------------------------------------------
 // products — session records (the gedu session feed)
@@ -622,8 +622,8 @@ export type {
 export type {
   AdminDashboardAttentionProduct,
   AdminDashboardCertificationCandidate,
-  AdminDashboardCoverOffer,
-  AdminDashboardCoverRequest,
+  AdminDashboardSubstitutionOffer,
+  AdminDashboardSubstitutionRequest,
   AdminDashboardGroupWithoutGedu,
   AdminDashboardScheduleProduct,
   AdminDashboardScheduleSlot,
@@ -819,23 +819,23 @@ export type MyAssignedProductRow = Omit<
   | "product_translations"
   | "schedule_slots"
   | "kind"
-  | "covered_date"
+  | "substitution_date"
 > & {
   start_date: string | null;
   end_date: string | null;
   /**
    * Which kind of seat this row is (00272). An `assignment` row is one per
-   * `gedu_group_assignments` row, exactly as this RPC always returned; a `cover`
-   * row is one per live covered date. Narrowed from the generated `string`
+   * `gedu_group_assignments` row, exactly as this RPC always returned; a `substitution`
+   * row is one per live substitution date. Narrowed from the generated `string`
    * because the RPC emits a closed pair and every consumer branches on it.
    */
-  kind: "assignment" | "cover";
+  kind: "assignment" | "substitution";
   /**
-   * The date a `cover` row covers, and null on an `assignment` row — which the
+   * The date a `substitution` row is for, and null on an `assignment` row — which the
    * generator cannot see, because a RETURNS TABLE column is typed from the
    * column type alone.
    */
-  covered_date: string | null;
+  substitution_date: string | null;
   product_translations: Array<{
     locale: string;
     name: string;

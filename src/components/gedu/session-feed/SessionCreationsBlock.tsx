@@ -54,7 +54,7 @@ import type { SessionFeedEntry, SessionFeedGamer } from "./types";
  *
  * **An empty expected set renders nothing at all**, which is the same exemption
  * the completeness derivation makes: there is nobody to owe, so there is
- * nothing to say and no space to hold for it. That now covers a second case —
+ * nothing to say and no space to hold for it. That now substitutions a second case —
  * a group formed entirely after its final session ran — and it should, for the
  * same reason.
  */

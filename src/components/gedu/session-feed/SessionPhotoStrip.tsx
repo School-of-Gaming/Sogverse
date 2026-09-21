@@ -138,7 +138,7 @@ interface SessionPhotoStripProps extends SessionPhotoEditing {
  * diff.** A save that half-lands empties the staged set as it goes, and the
  * stored `photos` do not change until the feed refetches — so the row is derived
  * from the staged set *and* the record of what has already landed, which between
- * them cover that window. Without the second half a landed deletion would put
+ * them substitution that window. Without the second half a landed deletion would put
  * its tile back and a landed upload would take its own away, at the exact moment
  * a refusal line is asking the gedu to look at the row and decide what to retry.
  *
@@ -479,7 +479,7 @@ export function SessionPhotoStrip({
  *
  * The ✕ sits *inside* the picture's top-right corner rather than hanging off
  * it. Hanging controls overlap the neighbouring tile at this gap, and a row
- * whose photos each half-cover the one before is not a row anybody can aim at.
+ * whose photos each half-substitution the one before is not a row anybody can aim at.
  *
  * **One tile, whatever is behind it.** A stored photo and one picked a moment
  * ago look and behave identically here, because after Save they are the same

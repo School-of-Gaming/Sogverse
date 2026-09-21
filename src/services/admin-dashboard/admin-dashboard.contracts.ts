@@ -200,7 +200,7 @@ export const adminDashboardScheduleProduct = z.object({
 });
 
 /**
- * One gedu who has offered to cover a session, with the two standing facts the
+ * One gedu who has offered to substitute at a session, with the two standing facts the
  * certification queue ships on its own rows.
  *
  * They are the same two questions in the same shape on purpose: an admin
@@ -213,7 +213,7 @@ export const adminDashboardScheduleProduct = z.object({
  * Who else offered is never shown to an offerer; this list exists on the admin
  * document alone.
  */
-export const adminDashboardCoverOffer = z.object({
+export const adminDashboardSubstitutionOffer = z.object({
   id: z.string(),
   gedu_id: z.string(),
   first_name: z.string(),
@@ -224,7 +224,7 @@ export const adminDashboardCoverOffer = z.object({
 });
 
 /**
- * One open cover request an admin has to staff, dated today or later in the
+ * One open substitution request an admin has to staff, dated today or later in the
  * product's own timezone.
  *
  * **A request whose date has passed is *unfilled*, and it drops out on its
@@ -241,15 +241,15 @@ export const adminDashboardCoverOffer = z.object({
  * orders by date and never by a derived instant, so such a row sorts like any
  * other and an admin can clear it.
  */
-export const adminDashboardCoverRequest = z.object({
+export const adminDashboardSubstitutionRequest = z.object({
   id: z.string(),
   group_id: z.string(),
   group_name: z.string(),
   /** Product-local calendar date, `YYYY-MM-DD`. */
   session_date: z.string(),
-  /** The role being covered — the absent gedu's, and what it will be paid as. */
+  /** The role being substituted — the absent gedu's, and what it will be paid as. */
   role: z.enum(Constants.public.Enums.gedu_assignment_role),
-  reason: z.enum(Constants.public.Enums.cover_reason).nullable(),
+  reason: z.enum(Constants.public.Enums.substitution_reason).nullable(),
   reason_note: z.string().nullable(),
   created_at: z.string(),
   requested_by: z.string(),
@@ -276,7 +276,7 @@ export const adminDashboardCoverRequest = z.object({
      */
     schedule_slots: z.array(adminDashboardScheduleSlot),
   }),
-  offers: z.array(adminDashboardCoverOffer),
+  offers: z.array(adminDashboardSubstitutionOffer),
 });
 
 /** The whole document `get_admin_dashboard` returns. */
@@ -286,11 +286,11 @@ export const adminDashboardSnapshot = z.object({
   attention_products: z.array(adminDashboardAttentionProduct),
   schedule_products: z.array(adminDashboardScheduleProduct),
   /**
-   * The cover queue — a fifth top-level member, ordered by date then product.
+   * The substitution queue — a fifth top-level member, ordered by date then product.
    * An empty array is the all-clear, exactly as the attention queue reads its
    * own.
    */
-  cover_requests: z.array(adminDashboardCoverRequest),
+  substitution_requests: z.array(adminDashboardSubstitutionRequest),
 });
 
 /**
@@ -317,10 +317,10 @@ export type AdminDashboardScheduleSlot = z.infer<
 export type AdminDashboardScheduleProduct = z.infer<
   typeof adminDashboardScheduleProduct
 >;
-export type AdminDashboardCoverOffer = z.infer<
-  typeof adminDashboardCoverOffer
+export type AdminDashboardSubstitutionOffer = z.infer<
+  typeof adminDashboardSubstitutionOffer
 >;
-export type AdminDashboardCoverRequest = z.infer<
-  typeof adminDashboardCoverRequest
+export type AdminDashboardSubstitutionRequest = z.infer<
+  typeof adminDashboardSubstitutionRequest
 >;
 export type AdminDashboardSnapshot = z.infer<typeof adminDashboardSnapshot>;

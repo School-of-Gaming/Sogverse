@@ -31,7 +31,7 @@ vi.mock("@/components/ui/rich-text-editor", () =>
  * ============================================================================
  *
  * The body is shared and is tested where it lives; the marks themselves are
- * pure and covered in `member-flair-newcomer.test.ts`. What only this shell can
+ * pure and substituted in `member-flair-newcomer.test.ts`. What only this shell can
  * get wrong is the seam it owns — **four documents folded into the one shape
  * that body takes**:
  *
@@ -113,7 +113,7 @@ vi.mock("@/services/products", () => ({
 }));
 
 // The hooks are stubbed and the key factory is kept real: the shell awaits an
-// invalidation on it after every cover write, and a stubbed key would let a
+// invalidation on it after every substitution write, and a stubbed key would let a
 // rename through.
 vi.mock("@/services/admin-sessions", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/services/admin-sessions")>()),
@@ -159,14 +159,14 @@ vi.mock("@/services/roblox", () => ({
   useRobloxRenders: () => ({ data: undefined }),
 }));
 
-// The three admin cover writes the staffing editor is bound to. Nothing here
+// The three admin substitution writes the staffing editor is bound to. Nothing here
 // opens that editor — the feed is empty below, so there is no card to draw one
 // on — but the shell binds all three on every render.
-vi.mock("@/services/session-cover", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/services/session-cover")>()),
-  useSetSessionCover: noopMutation,
-  useClearSessionCover: noopMutation,
-  useWithdrawSessionCoverRequestAsAdmin: noopMutation,
+vi.mock("@/services/session-substitution", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/session-substitution")>()),
+  useSetSessionSubstitution: noopMutation,
+  useClearSessionSubstitution: noopMutation,
+  useWithdrawSessionSubstitutionRequestAsAdmin: noopMutation,
 }));
 
 vi.mock("@/services/member-flair", () => ({
@@ -326,7 +326,7 @@ function adminSessions(): AdminProductSessions {
         // The staffing derivation's two inputs. Empty: this suite is about the
         // admin shell's wiring, not about who is running the sessions.
         gedus: [],
-        covers: [],
+        substitutions: [],
       },
       {
         id: IDS.peerGroup,
@@ -339,7 +339,7 @@ function adminSessions(): AdminProductSessions {
         // The staffing derivation's two inputs. Empty: this suite is about the
         // admin shell's wiring, not about who is running the sessions.
         gedus: [],
-        covers: [],
+        substitutions: [],
       },
     ],
   };
@@ -378,7 +378,7 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
     ],
     sessions: [],
     gedus: [],
-    covers: [],
+    substitutions: [],
   };
 }
 
@@ -406,7 +406,7 @@ function renderPage(productType: ProductType) {
   reads.feed = groupFeed(productType);
   reads.snapshot = groupsSnapshot();
 
-  // A real client, because the shell reads one: every cover write finishes by
+  // A real client, because the shell reads one: every substitution write finishes by
   // awaiting an invalidation on the admin-sessions key, and an empty cache
   // settles that immediately.
   const queryClient = new QueryClient();

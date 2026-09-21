@@ -43,7 +43,7 @@ vi.mock("@/components/ui/rich-text-editor", () =>
  * ============================================================================
  *
  * The marks themselves are settled and tested elsewhere: `newcomerDaysIn` and
- * `showsNewcomerBadge` are pure and exhaustively covered in
+ * `showsNewcomerBadge` are pure and exhaustively substituted in
  * `member-flair-newcomer.test.ts`, and the badge and the dialog are components
  * with no wiring of their own. What no amount of that catches is the seam this
  * file is about — the **shell** turning a roster document into the one flair
@@ -177,12 +177,12 @@ vi.mock("@/services/roblox", () => ({
 // The two writes a gedu may make about their own seat. Stubbed for the same
 // reason every other mutation here is: this suite is about the roster's flair,
 // and an unstubbed hook reaches for a QueryClient this tree does not provide.
-// Everything else is kept real — the note-length cap the cover dialog reads is
+// Everything else is kept real — the note-length cap the substitution dialog reads is
 // a constant of this module, and a wholesale mock makes it `undefined` here.
-vi.mock("@/services/session-cover", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/services/session-cover")>()),
-  useRequestSessionCover: noopMutation,
-  useWithdrawSessionCoverRequest: noopMutation,
+vi.mock("@/services/session-substitution", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/session-substitution")>()),
+  useRequestSessionSubstitution: noopMutation,
+  useWithdrawSessionSubstitutionRequest: noopMutation,
 }));
 
 vi.mock("@/services/member-flair", () => ({
@@ -318,7 +318,7 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
     // than a placeholder — a group with one gedu and no absences reads the
     // same way to everything under test here.
     gedus: [],
-    covers: [],
+    substitutions: [],
   };
 }
 
@@ -335,7 +335,7 @@ function renderPage(
 
   return render(
     // A real client, unmocked: the page holds one only to wait on its own
-    // document after a cover write, and there is nothing in here for it to
+    // document after a substitution write, and there is nothing in here for it to
     // invalidate — but the hook that reaches for it still needs a provider.
     <QueryClientProvider client={new QueryClient()}>
       <NextIntlClientProvider locale="en" messages={messages}>
@@ -918,7 +918,7 @@ function renderEndedRun(
 
   return render(
     // A real client, unmocked: the page holds one only to wait on its own
-    // document after a cover write, and there is nothing in here for it to
+    // document after a substitution write, and there is nothing in here for it to
     // invalidate — but the hook that reaches for it still needs a provider.
     <QueryClientProvider client={new QueryClient()}>
       <NextIntlClientProvider locale="en" messages={messages}>
@@ -1055,7 +1055,7 @@ function renderUpcomingRun(): ReturnType<typeof render> {
 
   return render(
     // A real client, unmocked: the page holds one only to wait on its own
-    // document after a cover write, and there is nothing in here for it to
+    // document after a substitution write, and there is nothing in here for it to
     // invalidate — but the hook that reaches for it still needs a provider.
     <QueryClientProvider client={new QueryClient()}>
       <NextIntlClientProvider locale="en" messages={messages}>

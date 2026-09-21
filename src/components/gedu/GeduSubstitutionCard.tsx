@@ -8,7 +8,7 @@ import { MaybeInertLink } from "@/components/ui/maybe-inert-link";
 import { SessionFeedAlertBadge } from "@/components/gedu/session-feed";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import { INERT_HREF } from "@/lib/constants/routes";
-import type { GeduCoverSummary } from "@/lib/gedu-assignment-rollup";
+import type { GeduSubstitutionSummary } from "@/lib/gedu-assignment-rollup";
 import { useNow, useTimezone } from "@/providers";
 import { runLiveness } from "@/lib/product-run";
 import {
@@ -19,41 +19,41 @@ import {
 } from "@/lib/utils";
 
 /**
- * One card per **live cover** — a single afternoon this gedu is standing in
+ * One card per **live substitution** — a single afternoon this gedu is standing in
  * for, beside the groups they actually hold.
  *
  * **Its own card rather than an assignment card with a date on it.** An
  * assignment card answers questions about a *run*: what the cadence is, when
  * the next one is, how many children are in the group week after week, whether
- * the run has ended. A cover has none of those — it is one session — and a card
+ * the run has ended. A substitution has none of those — it is one session — and a card
  * that answered them would be telling a sub they teach the club every week. So
  * this one says only what a sub needs: which product and group, when it is,
  * where it is or how to get in, and whether the write-up is still owed.
  *
  * **It lives in the same grid as the assignment cards, at the head of its type
- * noun's section.** A cover is one of the things a gedu runs this week, so
+ * noun's section.** A substitution is one of the things a gedu runs this week, so
  * splitting it into a section of its own would put the same week's work in two
- * places and give a gedu with one cover a whole heading for one card. Covers
+ * places and give a gedu with one substitution a whole heading for one card. Substitutions
  * lead their section because they are dated, one-off, and the thing most easily
  * forgotten — an assignment recurs and will be there again next week.
  *
  * **The link carries the group.** A sub has no assignment row to resolve a
- * group from, and one covering a sibling group of a product they already teach
+ * group from, and one substituting a sibling group of a product they already teach
  * would otherwise land on their own group's workspace: the right product, the
  * wrong roster. The query param is built in the roll-up, so this card simply
  * renders whichever href it was handed.
  *
- * **The badge is the badge**. What a cover owes is the same four things every
+ * **The badge is the badge**. What a substitution owes is the same four things every
  * session owes, counted over a set of one — so the corner mark is the one every
  * other card wears, and a sub who has not sent their report finds it in the
  * same sweep.
  *
- * **A cover that has not opened yet is LOCKED, not absent.** The workspace
- * opens 48 hours before the covered session, and until then every gate behind
+ * **A substitution that has not opened yet is LOCKED, not absent.** The workspace
+ * opens 48 hours before the substituted session, and until then every gate behind
  * this card refuses — so the card states the session and says when it opens,
  * and its two ways in (the stretched link and the corner badge) are inert. A
  * link that led to the workspace's "not assigned" empty state would be the
- * worst of both: a sub who *is* covering, told they are not.
+ * worst of both: a sub who *is* substituting, told they are not.
  *
  * **The footer holds one answer, and while the card is locked the answer is
  * when.** That zone asks "how do I get to this session" — a Join on a remote
@@ -62,8 +62,8 @@ import {
  * so the card does not move when the answer changes, and the site or the Join
  * is back well before the session.
  */
-export function GeduCoverCard({ cover }: { cover: GeduCoverSummary }) {
-  const t = useTranslations("gedu.cover");
+export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubstitutionSummary }) {
+  const t = useTranslations("gedu.substitution");
   const p = useTranslations("productType");
   const d = useTranslations("gedu.sessionDetails");
   const locale = useLocale();
@@ -74,7 +74,7 @@ export function GeduCoverCard({ cover }: { cover: GeduCoverSummary }) {
     productName,
     productType,
     groupName,
-    coveredDate,
+    substitutionDate,
     startsAt,
     endsAt,
     accessOpensAt,
@@ -83,7 +83,7 @@ export function GeduCoverCard({ cover }: { cover: GeduCoverSummary }) {
     siteName,
     openHref,
     attentionCount,
-  } = cover;
+  } = substitution;
 
   /**
    * Whether the group is still shut to this sub.
@@ -98,8 +98,8 @@ export function GeduCoverCard({ cover }: { cover: GeduCoverSummary }) {
 
   /**
    * Whether the room is open, from the same shared derivation the assignment
-   * card asks — against the covered session's own instants rather than a
-   * schedule walk, because a cover *is* one occurrence.
+   * card asks — against the substituted session's own instants rather than a
+   * schedule walk, because a substitution *is* one occurrence.
    *
    * An orphaned date (one the schedule no longer projects) has no instants and
    * is therefore never live, which is right: there is no session to walk into.
@@ -117,7 +117,7 @@ export function GeduCoverCard({ cover }: { cover: GeduCoverSummary }) {
           month: "short",
           timeZone,
         })}, ${formatTimeRange(startsAt, endsAt, locale, timeZone)}`
-      : formatDateOnly(coveredDate, locale);
+      : formatDateOnly(substitutionDate, locale);
 
   return (
     // The same shell the assignment card uses: a `relative` wrapper so the
@@ -162,7 +162,7 @@ export function GeduCoverCard({ cover }: { cover: GeduCoverSummary }) {
             />
           </div>
 
-          {/* The one date this card is about — not a cadence, because a cover
+          {/* The one date this card is about — not a cadence, because a substitution
               has none. */}
           <p className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
             <CalendarClock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
@@ -171,7 +171,7 @@ export function GeduCoverCard({ cover }: { cover: GeduCoverSummary }) {
 
           {/* The same footer question the assignment card asks — how do I get
               to this — with one answer at a time and the same reserved button
-              height, so a cover card and an assignment card in one grid row are
+              height, so a substitution card and an assignment card in one grid row are
               the same height without either holding a gap. While the workspace
               is shut the answer is when it opens; the room or the building take
               the zone back the moment it does, and the height never moves. */}
@@ -216,7 +216,7 @@ export function GeduCoverCard({ cover }: { cover: GeduCoverSummary }) {
                     hour12: false,
                     timeZone,
                   })}
-                  // Leaving the room lands on the covered group's workspace,
+                  // Leaving the room lands on the substituted group's workspace,
                   // which is where the write-up happens — the same href the
                   // card itself opens, so the two agree by construction.
                   backHref={openHref === INERT_HREF ? undefined : openHref}

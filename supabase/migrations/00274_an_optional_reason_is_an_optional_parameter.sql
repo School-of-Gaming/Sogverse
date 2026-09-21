@@ -2,13 +2,13 @@
 --
 -- WHY
 --
--- `reason` and `reason_note` are nullable on `session_cover_requests`, and both
--- write paths 00260 shipped are meant to accept their absence: a gedu may file a
--- request with no note, and an admin recording an off-platform cover may know
+-- `reason` and `reason_note` are nullable on `session_substitution_requests`, and both
+-- write paths 00272 shipped are meant to accept their absence: a gedu may file a
+-- request with no note, and an admin recording an off-platform substitution may know
 -- neither the category nor a note. But the two functions declared the parameters
 -- with no DEFAULT, which makes them REQUIRED — and the type generator never
 -- types an RPC argument as nullable, so the generated `Args` read
--- `p_reason: cover_reason; p_reason_note: string`. A caller with nothing to send
+-- `p_reason: substitution_reason; p_reason_note: string`. A caller with nothing to send
 -- has no way to say so: passing `null` is a type error, and omitting a parameter
 -- with no default is a PostgREST error. The only way through would have been a
 -- cast at every call site, which is exactly the suppression the code-style rule
@@ -22,7 +22,7 @@
 --
 -- WHY A SEPARATE MIGRATION
 --
--- 00260 is applied to staging, and an applied migration is never edited
+-- 00272 is applied to staging, and an applied migration is never edited
 -- (supabase/CLAUDE.md, "Never amend a pushed migration"): the CLI matches on
 -- version, so an edit there would never run on staging and only CI's
 -- fresh-from-migrations database would ever see it.
@@ -34,12 +34,12 @@
 -- PUBLIC-executable, so a migration that touches one pairs its per-role GRANTs
 -- with an explicit REVOKE.
 --
--- The bodies below are 00260's verbatim, with the two parameter lines changed.
+-- The bodies below are 00272's verbatim, with the two parameter lines changed.
 
-CREATE OR REPLACE FUNCTION public.request_session_cover(
+CREATE OR REPLACE FUNCTION public.request_session_substitution(
   p_group_id uuid,
   p_session_date date,
-  p_reason public.cover_reason DEFAULT NULL,
+  p_reason public.substitution_reason DEFAULT NULL,
   p_reason_note text DEFAULT NULL
 ) RETURNS jsonb
 LANGUAGE plpgsql
@@ -51,7 +51,7 @@ DECLARE
   v_timezone text;
   v_role     public.gedu_assignment_role;
   v_note     text;
-  v_row      public.session_cover_requests;
+  v_row      public.session_substitution_requests;
 BEGIN
   PERFORM public.assert_role('gedu');
 
@@ -65,7 +65,7 @@ BEGIN
   END IF;
 
   IF p_reason IS NULL THEN
-    RAISE EXCEPTION 'a cover request needs a reason category'
+    RAISE EXCEPTION 'a substitution request needs a reason category'
       USING ERRCODE = 'check_violation';
   END IF;
 
@@ -85,12 +85,12 @@ BEGIN
   -- the action once the session's end has passed — same posture as every other
   -- write validator here.
   IF p_session_date < (now() AT TIME ZONE v_timezone)::date THEN
-    RAISE EXCEPTION 'a cover request cannot be filed for a past session (%)', p_session_date
+    RAISE EXCEPTION 'a substitution request cannot be filed for a past session (%)', p_session_date
       USING ERRCODE = 'check_violation';
   END IF;
 
-  -- The role being covered: the filer's assignment role, or — when the filer is
-  -- themselves a sub — the role stored on the cover they hold.
+  -- The role being substituted: the filer's assignment role, or — when the filer is
+  -- themselves a sub — the role stored on the substitution they hold.
   SELECT a.role INTO v_role
     FROM public.gedu_group_assignments a
    WHERE a.group_id = p_group_id
@@ -98,11 +98,11 @@ BEGIN
 
   IF v_role IS NULL THEN
     SELECT r.role INTO v_role
-      FROM public.session_cover_requests r
+      FROM public.session_substitution_requests r
      WHERE r.group_id     = p_group_id
        AND r.session_date = p_session_date
-       AND r.covered_by   = v_caller
-       AND r.status       = 'covered'::public.cover_request_status
+       AND r.substitute_id   = v_caller
+       AND r.status       = 'substituted'::public.substitution_request_status
      LIMIT 1;
   END IF;
 
@@ -110,26 +110,26 @@ BEGIN
   -- reads above found something — and stated so the NOT NULL column cannot fail
   -- with a constraint name instead of a sentence.
   IF v_role IS NULL THEN
-    RAISE EXCEPTION 'no role to cover for gedu % on group % (%)', v_caller, p_group_id, p_session_date
+    RAISE EXCEPTION 'no role to substitute for gedu % on group % (%)', v_caller, p_group_id, p_session_date
       USING ERRCODE = 'check_violation';
   END IF;
 
   v_note := NULLIF(btrim(COALESCE(p_reason_note, '')), '');
 
-  INSERT INTO public.session_cover_requests
+  INSERT INTO public.session_substitution_requests
     (group_id, session_date, requested_by, role, reason, reason_note)
   VALUES (p_group_id, p_session_date, v_caller, v_role, p_reason, v_note)
   RETURNING * INTO v_row;
 
-  RETURN public.cover_request_document(v_row, false, v_caller);
+  RETURN public.substitution_request_document(v_row, false, v_caller);
 END;
 $$;
-CREATE OR REPLACE FUNCTION public.set_session_cover(
+CREATE OR REPLACE FUNCTION public.set_session_substitution(
   p_group_id uuid,
   p_session_date date,
   p_absent_gedu_id uuid,
   p_sub_gedu_id uuid,
-  p_reason public.cover_reason DEFAULT NULL,
+  p_reason public.substitution_reason DEFAULT NULL,
   p_reason_note text DEFAULT NULL
 ) RETURNS jsonb
 LANGUAGE plpgsql
@@ -138,7 +138,7 @@ SET search_path TO ''
 AS $$
 DECLARE
   v_caller uuid := (SELECT auth.uid());
-  v_row    public.session_cover_requests;
+  v_row    public.session_substitution_requests;
   v_exists boolean;
   v_role   public.gedu_assignment_role;
   v_note   text;
@@ -147,7 +147,7 @@ BEGIN
 
   IF p_group_id IS NULL OR p_session_date IS NULL
      OR p_absent_gedu_id IS NULL OR p_sub_gedu_id IS NULL THEN
-    RAISE EXCEPTION 'set_session_cover needs a group, a date, an absent gedu and a sub'
+    RAISE EXCEPTION 'set_session_substitution needs a group, a date, an absent gedu and a sub'
       USING ERRCODE = 'check_violation';
   END IF;
 
@@ -158,7 +158,7 @@ BEGIN
 
   -- The ordinary writable-date check and NOTHING MORE: there is deliberately no
   -- today-or-later requirement here. This is the retroactive path — an
-  -- off-platform cover that has already happened has to be recordable, because
+  -- off-platform substitution that has already happened has to be recordable, because
   -- gedu invoicing reads these rows.
   IF NOT public.group_session_date_is_writable(p_group_id, p_session_date) THEN
     RAISE EXCEPTION 'No scheduled session on % for this group', p_session_date
@@ -168,11 +168,11 @@ BEGIN
   v_note := NULLIF(btrim(COALESCE(p_reason_note, '')), '');
 
   SELECT * INTO v_row
-    FROM public.session_cover_requests r
+    FROM public.session_substitution_requests r
    WHERE r.group_id     = p_group_id
      AND r.session_date = p_session_date
      AND r.requested_by = p_absent_gedu_id
-     AND r.status <> 'withdrawn'::public.cover_request_status
+     AND r.status <> 'withdrawn'::public.substitution_request_status
      FOR UPDATE;
   v_exists := FOUND;
 
@@ -194,39 +194,39 @@ BEGIN
 
     IF v_role IS NULL THEN
       SELECT r2.role INTO v_role
-        FROM public.session_cover_requests r2
+        FROM public.session_substitution_requests r2
        WHERE r2.group_id     = p_group_id
          AND r2.session_date = p_session_date
-         AND r2.covered_by   = p_absent_gedu_id
-         AND r2.status       = 'covered'::public.cover_request_status
+         AND r2.substitute_id   = p_absent_gedu_id
+         AND r2.status       = 'substituted'::public.substitution_request_status
        LIMIT 1;
     END IF;
 
     IF v_role IS NULL THEN
-      RAISE EXCEPTION 'no role to cover for gedu % on group % (%)',
+      RAISE EXCEPTION 'no role to substitute for gedu % on group % (%)',
                       p_absent_gedu_id, p_group_id, p_session_date
         USING ERRCODE = 'check_violation';
     END IF;
   END IF;
 
-  IF NOT public.gedu_may_cover_session(
+  IF NOT public.gedu_may_substitute_session(
            p_sub_gedu_id, p_group_id, p_session_date, p_absent_gedu_id
          ) THEN
-    RAISE EXCEPTION 'gedu % cannot cover group % on %',
+    RAISE EXCEPTION 'gedu % cannot substitute on group % on %',
                     p_sub_gedu_id, p_group_id, p_session_date
       USING ERRCODE = 'check_violation';
   END IF;
 
   IF v_exists THEN
-    -- An OPEN request becomes covered — which is what "set a sub" reads as when
-    -- the absent gedu has already asked. A request that is ALREADY COVERED is
+    -- An OPEN request becomes substituted — which is what "set a sub" reads as when
+    -- the absent gedu has already asked. A request that is ALREADY SUBSTITUTED is
     -- RE-POINTED at the new sub, so replacing a sub is one action rather than a
     -- clear followed by a set. `approved_by` is the acting admin either way.
     -- Reason and note are only overwritten when this call supplies them, so an
     -- admin replacing a sub does not blank what the gedu wrote.
-    UPDATE public.session_cover_requests
-       SET status      = 'covered'::public.cover_request_status,
-           covered_by  = p_sub_gedu_id,
+    UPDATE public.session_substitution_requests
+       SET status      = 'substituted'::public.substitution_request_status,
+           substitute_id  = p_sub_gedu_id,
            approved_by = v_caller,
            approved_at = now(),
            reason      = COALESCE(p_reason, reason),
@@ -234,33 +234,33 @@ BEGIN
      WHERE id = v_row.id
     RETURNING * INTO v_row;
   ELSE
-    INSERT INTO public.session_cover_requests
+    INSERT INTO public.session_substitution_requests
       (group_id, session_date, requested_by, role, reason, reason_note,
-       status, covered_by, approved_by, approved_at)
+       status, substitute_id, approved_by, approved_at)
     VALUES (p_group_id, p_session_date, p_absent_gedu_id, v_role, p_reason, v_note,
-            'covered'::public.cover_request_status, p_sub_gedu_id, v_caller, now())
+            'substituted'::public.substitution_request_status, p_sub_gedu_id, v_caller, now())
     RETURNING * INTO v_row;
   END IF;
 
   -- The replace case can UNSEAT the sub who was there, and a displaced sub who
   -- had filed their own absence no longer holds a seat to be absent from.
-  PERFORM public.cascade_withdraw_orphaned_cover_requests(p_group_id, p_session_date);
+  PERFORM public.cascade_withdraw_orphaned_substitution_requests(p_group_id, p_session_date);
 
   SELECT * INTO v_row
-    FROM public.session_cover_requests r
+    FROM public.session_substitution_requests r
    WHERE r.id = v_row.id;
 
-  RETURN public.cover_request_document(v_row, true, v_caller);
+  RETURN public.substitution_request_document(v_row, true, v_caller);
 END;
 $$;
 
-REVOKE EXECUTE ON FUNCTION public.request_session_cover(uuid, date, public.cover_reason, text) FROM PUBLIC, anon;
-GRANT  EXECUTE ON FUNCTION public.request_session_cover(uuid, date, public.cover_reason, text) TO authenticated;
-GRANT  EXECUTE ON FUNCTION public.request_session_cover(uuid, date, public.cover_reason, text) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.request_session_substitution(uuid, date, public.substitution_reason, text) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.request_session_substitution(uuid, date, public.substitution_reason, text) TO authenticated;
+GRANT  EXECUTE ON FUNCTION public.request_session_substitution(uuid, date, public.substitution_reason, text) TO service_role;
 
-REVOKE EXECUTE ON FUNCTION public.set_session_cover(uuid, date, uuid, uuid, public.cover_reason, text) FROM PUBLIC, anon;
-GRANT  EXECUTE ON FUNCTION public.set_session_cover(uuid, date, uuid, uuid, public.cover_reason, text) TO authenticated;
-GRANT  EXECUTE ON FUNCTION public.set_session_cover(uuid, date, uuid, uuid, public.cover_reason, text) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.set_session_substitution(uuid, date, uuid, uuid, public.substitution_reason, text) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.set_session_substitution(uuid, date, uuid, uuid, public.substitution_reason, text) TO authenticated;
+GRANT  EXECUTE ON FUNCTION public.set_session_substitution(uuid, date, uuid, uuid, public.substitution_reason, text) TO service_role;
 
 DO $$
 DECLARE
@@ -273,13 +273,13 @@ BEGIN
     FROM pg_proc p
     JOIN pg_namespace n ON n.oid = p.pronamespace
    WHERE n.nspname = 'public'
-     AND ((p.proname = 'request_session_cover' AND p.pronargs = 4)
-       OR (p.proname = 'set_session_cover'     AND p.pronargs = 6))
+     AND ((p.proname = 'request_session_substitution' AND p.pronargs = 4)
+       OR (p.proname = 'set_session_substitution'     AND p.pronargs = 6))
      AND p.pronargdefaults = 2;
 
   IF v_defaults <> 2 THEN
     RAISE EXCEPTION
-      'expected both cover writers to carry two trailing defaults on their original arity, found % ',
+      'expected both substitution writers to carry two trailing defaults on their original arity, found % ',
       v_defaults;
   END IF;
 
@@ -287,17 +287,17 @@ BEGIN
   -- leave the old overload behind, and PostgREST would then resolve a call by
   -- argument names in a way nobody wrote down.
   IF (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
-       WHERE n.nspname = 'public' AND p.proname IN ('request_session_cover', 'set_session_cover')) <> 2 THEN
-    RAISE EXCEPTION 'a cover writer has been overloaded rather than replaced';
+       WHERE n.nspname = 'public' AND p.proname IN ('request_session_substitution', 'set_session_substitution')) <> 2 THEN
+    RAISE EXCEPTION 'a substitution writer has been overloaded rather than replaced';
   END IF;
 
-  IF has_function_privilege('anon', 'public.request_session_cover(uuid, date, public.cover_reason, text)', 'EXECUTE')
-     OR has_function_privilege('anon', 'public.set_session_cover(uuid, date, uuid, uuid, public.cover_reason, text)', 'EXECUTE') THEN
-    RAISE EXCEPTION 'a cover writer is reachable by anon';
+  IF has_function_privilege('anon', 'public.request_session_substitution(uuid, date, public.substitution_reason, text)', 'EXECUTE')
+     OR has_function_privilege('anon', 'public.set_session_substitution(uuid, date, uuid, uuid, public.substitution_reason, text)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'a substitution writer is reachable by anon';
   END IF;
 
-  IF NOT has_function_privilege('authenticated', 'public.request_session_cover(uuid, date, public.cover_reason, text)', 'EXECUTE')
-     OR NOT has_function_privilege('authenticated', 'public.set_session_cover(uuid, date, uuid, uuid, public.cover_reason, text)', 'EXECUTE') THEN
-    RAISE EXCEPTION 'a cover writer lost its authenticated grant';
+  IF NOT has_function_privilege('authenticated', 'public.request_session_substitution(uuid, date, public.substitution_reason, text)', 'EXECUTE')
+     OR NOT has_function_privilege('authenticated', 'public.set_session_substitution(uuid, date, uuid, uuid, public.substitution_reason, text)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'a substitution writer lost its authenticated grant';
   END IF;
 END $$;

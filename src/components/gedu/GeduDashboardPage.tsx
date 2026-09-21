@@ -13,11 +13,11 @@ import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import {
   geduAssignmentKey,
-  geduCoverKey,
+  geduSubstitutionKey,
   rollUpGeduAssignments,
-  rollUpGeduCovers,
+  rollUpGeduSubstitutions,
   type GeduAssignmentRow,
-  type GeduCoverSummary,
+  type GeduSubstitutionSummary,
 } from "@/lib/gedu-assignment-rollup";
 import { useNow, useTimezone } from "@/providers";
 import {
@@ -29,10 +29,10 @@ import {
   type GeduAssignmentSummary,
 } from "@/services/gedu-sessions";
 import {
-  useOpenCoverRequests,
-  type OpenCoverRequest,
-} from "@/services/session-cover";
-import { GeduCoverPoolSection } from "./GeduCoverPoolSection";
+  useOpenSubstitutionRequests,
+  type OpenSubstitutionRequest,
+} from "@/services/session-substitution";
+import { GeduSubstitutionPoolSection } from "./GeduSubstitutionPoolSection";
 import { GeduDashboardPageBody } from "./gedu-dashboard-page-body";
 import { GeduDashboardSkeleton } from "./GeduDashboardSkeleton";
 import type { GeduAssignmentCardData } from "./GeduAssignmentsSectionView";
@@ -67,7 +67,7 @@ import type { GeduAssignmentCardData } from "./GeduAssignmentsSectionView";
 export function GeduDashboardPage({
   initialRows,
   initialSummaries,
-  initialCoverRequests,
+  initialSubstitutionRequests,
   certified,
   contractAccepted,
   criminalRecordCheckPassed,
@@ -84,12 +84,12 @@ export function GeduDashboardPage({
    * The pool, prefetched by the route — or `null` when that read failed or was
    * never made (an uncertified gedu asks nothing).
    *
-   * `null` is "ask from the browser", not "nothing needs cover": the section —
+   * `null` is "ask from the browser", not "nothing needs a substitute": the section —
    * heading, nav chip and body alike — is withheld whole until an answer
    * arrives, rather than telling a gedu the queue is clear on the strength of a
    * failed read.
    */
-  initialCoverRequests: OpenCoverRequest[] | null;
+  initialSubstitutionRequests: OpenSubstitutionRequest[] | null;
   certified: boolean;
   /**
    * Has this gedu accepted the contract version in force? Resolved by the
@@ -119,15 +119,15 @@ export function GeduDashboardPage({
    * *whether there is a section at all* is this page's decision and the answer
    * is what settles it.
    *
-   * `enabled` is certification: an uncertified caller may cover nothing and
+   * `enabled` is certification: an uncertified caller may substitute for nothing and
    * every write behind the section refuses them server-side, so the honest
    * answer is not to ask. `undefined` therefore means two things at once, and
    * both want the same treatment — nobody to ask for, or nobody has answered
    * yet — so neither renders a heading.
    */
-  const { data: coverRequests } = useOpenCoverRequests({
+  const { data: substitutionRequests } = useOpenSubstitutionRequests({
     enabled: certified,
-    initialData: initialCoverRequests ?? undefined,
+    initialData: initialSubstitutionRequests ?? undefined,
   });
 
   const cards = useMemo(
@@ -150,17 +150,17 @@ export function GeduDashboardPage({
   return (
     <GeduDashboardPageBody
       assignments={cards.assignments}
-      covers={cards.covers}
+      substitutions={cards.substitutions}
       // `null` for an uncertified gedu, and `null` until the read answers —
       // both withhold the heading and the nav entry as well as the body.
-      // Certification is what gates offering and holding a cover, server-side,
+      // Certification is what gates offering and holding a substitution, server-side,
       // so an all-clear line there would be a promise about a queue this
       // account is not in; and a heading painted before its body has one means
       // the card arrives above what the reader is already looking at, on data's
       // own schedule. Heading and body appear together or not at all.
-      coverPool={
-        coverRequests === undefined ? null : (
-          <GeduCoverPoolSection requests={coverRequests} />
+      substitutionPool={
+        substitutionRequests === undefined ? null : (
+          <GeduSubstitutionPoolSection requests={substitutionRequests} />
         )
       }
       certified={certified}
@@ -177,12 +177,12 @@ export function GeduDashboardPage({
 
 /**
  * Join the two reads and roll them up into the cards this page draws — one per
- * standing assignment, and one per live cover.
+ * standing assignment, and one per live substitution.
  *
- * **The join is on (group, kind, covered date), because that is what a seat
+ * **The join is on (group, kind, substitution date), because that is what a seat
  * is.** A gedu holds at most one *assignment* per product, which is what used
- * to make group id alone sufficient; since covers exist, one group can be both
- * somebody's assignment and somebody's covered Monday, and two covered Mondays
+ * to make group id alone sufficient; since substitutions exist, one group can be both
+ * somebody's assignment and somebody's substituted Monday, and two substituted Mondays
  * of one group are two rows. A row with no matching summary still renders — a
  * card missing its group name is a worse answer than no card only if you think
  * the gedu came here for the group name, and they came for the next session —
@@ -194,16 +194,16 @@ function buildDashboardCards(args: {
   locale: ReturnType<typeof resolveLocale>;
   timeZone: string;
   now: Date;
-}): { assignments: GeduAssignmentCardData[]; covers: GeduCoverSummary[] } {
+}): { assignments: GeduAssignmentCardData[]; substitutions: GeduSubstitutionSummary[] } {
   const { rows, summaries, locale, timeZone, now } = args;
 
   const summaryBySeat = new Map(
-    summaries.map((s) => [seatKey(s.kind, s.group_id, s.covered_date), s]),
+    summaries.map((s) => [seatKey(s.kind, s.group_id, s.substitution_date), s]),
   );
 
   const seatRows: GeduAssignmentRow[] = rows.map((row) => {
     const summary = summaryBySeat.get(
-      seatKey(row.kind, row.groupId, row.coveredDate),
+      seatKey(row.kind, row.groupId, row.substitutionDate),
     );
     return {
       ...row,
@@ -216,7 +216,7 @@ function buildDashboardCards(args: {
     };
   });
 
-  // Every per-seat map is keyed by (product, group): a gedu covering a sibling
+  // Every per-seat map is keyed by (product, group): a gedu substituting a sibling
   // group of a product they already teach holds two seats on one product, and
   // under a product key they would have shared a badge, a workspace link and a
   // voice room.
@@ -246,16 +246,16 @@ function buildDashboardCards(args: {
     voiceHrefByAssignment,
   });
 
-  const covers = rollUpGeduCovers({
+  const substitutions = rollUpGeduSubstitutions({
     rows: seatRows,
     locale,
-    // A cover's count is scoped to the one date it covers, so its key is the
-    // cover's own identity rather than the seat's.
-    attentionByCover: Object.fromEntries(
+    // A substitution's count is scoped to the one date it substitutions, so its key is the
+    // substitution's own identity rather than the seat's.
+    attentionBySubstitution: Object.fromEntries(
       summaries
-        .filter((s) => s.kind === "cover" && s.covered_date !== null)
+        .filter((s) => s.kind === "substitution" && s.substitution_date !== null)
         .map((s) => [
-          geduCoverKey(s.group_id, s.covered_date!),
+          geduSubstitutionKey(s.group_id, s.substitution_date!),
           s.attention_count,
         ]),
     ),
@@ -296,23 +296,23 @@ function buildDashboardCards(args: {
     };
   });
 
-  return { assignments: assignmentCards, covers };
+  return { assignments: assignmentCards, substitutions };
 }
 
 /**
  * Which seat a row or a summary is about: the kind, the group, and — for a
- * cover — the date it covers.
+ * substitution — the date it substitutions.
  *
  * Group id alone was the join key while every seat was an assignment. It stops
  * being unique the moment one group can be both somebody's standing assignment
- * and somebody's covered Monday, and two covered Mondays of one group are two
+ * and somebody's substituted Monday, and two substituted Mondays of one group are two
  * seats with two counts; joining on the group alone would hand one of them the
  * other's badge.
  */
 function seatKey(
-  kind: "assignment" | "cover",
+  kind: "assignment" | "substitution",
   groupId: string,
-  coveredDate: string | null,
+  substitutionDate: string | null,
 ): string {
-  return `${kind}:${groupId}:${coveredDate ?? ""}`;
+  return `${kind}:${groupId}:${substitutionDate ?? ""}`;
 }

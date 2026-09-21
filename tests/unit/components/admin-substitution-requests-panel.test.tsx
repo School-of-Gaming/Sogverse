@@ -1,14 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
-import { CoverRequestsPanel } from "@/components/admin/dashboard/cover-requests-panel";
+import { SubstitutionRequestsPanel } from "@/components/admin/dashboard/substitution-requests-panel";
 import type {
-  CoverOffer,
-  CoverRequest,
+  SubstitutionOffer,
+  SubstitutionRequest,
 } from "@/components/admin/dashboard/admin-dashboard-data";
 import { ROUTES } from "@/lib/constants";
 
 /**
- * The admin dashboard's cover queue, and the three claims that are only true
+ * The admin dashboard's substitution queue, and the three claims that are only true
  * of the rendered panel.
  *
  * 1. **Approve posts the OFFER's id.** The row names a session and a person,
@@ -43,7 +43,7 @@ const IDS = {
   offererB: "ea0111ac-09ed-438c-85ef-f9f138b00209",
 } as const;
 
-function offer(id: string, geduId: string, name: string): CoverOffer {
+function offer(id: string, geduId: string, name: string): SubstitutionOffer {
   return {
     id,
     geduId,
@@ -53,7 +53,7 @@ function offer(id: string, geduId: string, name: string): CoverOffer {
   };
 }
 
-const WITH_OFFERS: CoverRequest = {
+const WITH_OFFERS: SubstitutionRequest = {
   id: "request-with-offers",
   groupId: "group-a",
   groupName: "Ryhmä A",
@@ -77,7 +77,7 @@ const WITH_OFFERS: CoverRequest = {
   ],
 };
 
-const WITHOUT_OFFERS: CoverRequest = {
+const WITHOUT_OFFERS: SubstitutionRequest = {
   ...WITH_OFFERS,
   id: "request-without-offers",
   groupId: "group-b",
@@ -93,10 +93,10 @@ const WITHOUT_OFFERS: CoverRequest = {
   offers: [],
 };
 
-describe("the admin dashboard's cover requests panel", () => {
+describe("the admin dashboard's substitution requests panel", () => {
   it("renders one row per request, with the session, the absent gedu and every offer", () => {
     render(
-      <CoverRequestsPanel
+      <SubstitutionRequestsPanel
         requests={[WITH_OFFERS, WITHOUT_OFFERS]}
         onApproveOffer={() => Promise.resolve()}
       />,
@@ -106,7 +106,7 @@ describe("the admin dashboard's cover requests panel", () => {
     // over the whole subtree would count its items as rows too.
     const rows = [
       ...screen.getByRole("list", {
-        name: "admin.dashboard.cover.listLabel",
+        name: "admin.dashboard.substitution.listLabel",
       }).children,
     ].filter((child): child is HTMLElement => child instanceof HTMLElement);
     expect(rows).toHaveLength(2);
@@ -130,18 +130,18 @@ describe("the admin dashboard's cover requests panel", () => {
 
   it("says nobody has offered and points at the group page", () => {
     render(
-      <CoverRequestsPanel
+      <SubstitutionRequestsPanel
         requests={[WITHOUT_OFFERS]}
         onApproveOffer={() => Promise.resolve()}
       />,
     );
 
     expect(
-      screen.getByText("admin.dashboard.cover.noOffers"),
+      screen.getByText("admin.dashboard.substitution.noOffers"),
     ).toBeTruthy();
     expect(
       screen
-        .getByRole("link", { name: /admin.dashboard.cover.openGroup/ })
+        .getByRole("link", { name: /admin.dashboard.substitution.openGroup/ })
         .getAttribute("href"),
     ).toBe("/admin/camps/camp-2/groups/group-b");
     // Nothing to approve, so nothing is pressable on this row.
@@ -156,7 +156,7 @@ describe("the admin dashboard's cover requests panel", () => {
    */
   it("renders a request the schedule no longer projects with its date and no time", () => {
     render(
-      <CoverRequestsPanel
+      <SubstitutionRequestsPanel
         requests={[WITHOUT_OFFERS]}
         onApproveOffer={() => Promise.resolve()}
       />,
@@ -169,11 +169,11 @@ describe("the admin dashboard's cover requests panel", () => {
   it("approves the offer that was pressed, by the offer's own id", async () => {
     const approve = vi.fn(() => Promise.resolve());
     render(
-      <CoverRequestsPanel requests={[WITH_OFFERS]} onApproveOffer={approve} />,
+      <SubstitutionRequestsPanel requests={[WITH_OFFERS]} onApproveOffer={approve} />,
     );
 
     const second = screen
-      .getAllByRole("button", { name: "admin.dashboard.cover.approve" })
+      .getAllByRole("button", { name: "admin.dashboard.substitution.approve" })
       .at(1);
     await act(async () => second?.click());
 
@@ -183,7 +183,7 @@ describe("the admin dashboard's cover requests panel", () => {
 
   it("keeps the row, and gives up the receipt, while the list is still offering the request", async () => {
     render(
-      <CoverRequestsPanel
+      <SubstitutionRequestsPanel
         requests={[WITH_OFFERS]}
         onApproveOffer={() => Promise.resolve()}
       />,
@@ -191,7 +191,7 @@ describe("the admin dashboard's cover requests panel", () => {
 
     await act(async () =>
       screen
-        .getAllByRole("button", { name: "admin.dashboard.cover.approve" })[0]
+        .getAllByRole("button", { name: "admin.dashboard.substitution.approve" })[0]
         .click(),
     );
 
@@ -200,19 +200,19 @@ describe("the admin dashboard's cover requests panel", () => {
     // stays and the receipt is surrendered rather than standing for a fact that
     // is no longer true.
     expect(screen.getByText("Minecraft-klubi Espoo")).toBeTruthy();
-    expect(screen.queryByText("admin.dashboard.cover.justNow")).toBeNull();
+    expect(screen.queryByText("admin.dashboard.substitution.justNow")).toBeNull();
   });
 
   it("hands every offer back on a row that survived its own approval", async () => {
     render(
-      <CoverRequestsPanel
+      <SubstitutionRequestsPanel
         requests={[WITH_OFFERS]}
         onApproveOffer={() => Promise.resolve()}
       />,
     );
 
     const pressed = screen.getAllByRole("button", {
-      name: "admin.dashboard.cover.approve",
+      name: "admin.dashboard.substitution.approve",
     })[0];
     await act(async () => pressed.click());
 
@@ -223,7 +223,7 @@ describe("the admin dashboard's cover requests panel", () => {
     // every offer on a live request would be unpressable for the rest of the
     // sitting, with no second admin around to undo it.
     const buttons = screen.getAllByRole<HTMLButtonElement>("button", {
-      name: "admin.dashboard.cover.approve",
+      name: "admin.dashboard.substitution.approve",
     });
     expect(buttons).toHaveLength(2);
     for (const button of buttons) expect(button.disabled).toBe(false);
@@ -241,55 +241,55 @@ describe("the admin dashboard's cover requests panel", () => {
       });
 
     const { rerender } = render(
-      <CoverRequestsPanel requests={[WITH_OFFERS]} onApproveOffer={approve} />,
+      <SubstitutionRequestsPanel requests={[WITH_OFFERS]} onApproveOffer={approve} />,
     );
 
     act(() =>
       screen
-        .getAllByRole("button", { name: "admin.dashboard.cover.approve" })[0]
+        .getAllByRole("button", { name: "admin.dashboard.substitution.approve" })[0]
         .click(),
     );
 
-    rerender(<CoverRequestsPanel requests={[]} onApproveOffer={approve} />);
+    rerender(<SubstitutionRequestsPanel requests={[]} onApproveOffer={approve} />);
     await act(async () => land());
 
     expect(screen.queryByText("Minecraft-klubi Espoo")).toBeNull();
     // The receipt survives the collapse, which is why the panel rather than the
     // list holds it: a list rendered only while it has rows would have taken the
     // confirmation away at the moment there was most to confirm.
-    expect(screen.getByText("admin.dashboard.cover.justNow")).toBeTruthy();
-    expect(screen.getByText("admin.dashboard.cover.allClear")).toBeTruthy();
+    expect(screen.getByText("admin.dashboard.substitution.justNow")).toBeTruthy();
+    expect(screen.getByText("admin.dashboard.substitution.allClear")).toBeTruthy();
   });
 
   it("collapses to an all-clear row when nothing needs a sub", () => {
     render(
-      <CoverRequestsPanel requests={[]} onApproveOffer={() => Promise.resolve()} />,
+      <SubstitutionRequestsPanel requests={[]} onApproveOffer={() => Promise.resolve()} />,
     );
 
     expect(
-      screen.getByText("admin.dashboard.cover.allClear"),
+      screen.getByText("admin.dashboard.substitution.allClear"),
     ).toBeTruthy();
     expect(screen.queryByRole("list")).toBeNull();
   });
 
   it("shows a failure on the row that failed and leaves it pressable", async () => {
     render(
-      <CoverRequestsPanel
+      <SubstitutionRequestsPanel
         requests={[WITH_OFFERS]}
         onApproveOffer={() => Promise.reject(new Error("nope"))}
       />,
     );
 
     const approve = screen.getAllByRole("button", {
-      name: "admin.dashboard.cover.approve",
+      name: "admin.dashboard.substitution.approve",
     })[0];
     await act(async () => approve.click());
 
-    expect(screen.getByText("admin.dashboard.cover.failed")).toBeTruthy();
+    expect(screen.getByText("admin.dashboard.substitution.failed")).toBeTruthy();
     expect(screen.getByText("Minecraft-klubi Espoo")).toBeTruthy();
     expect(
       screen.getAllByRole<HTMLButtonElement>("button", {
-        name: "admin.dashboard.cover.approve",
+        name: "admin.dashboard.substitution.approve",
       })[0].disabled,
     ).toBe(false);
   });

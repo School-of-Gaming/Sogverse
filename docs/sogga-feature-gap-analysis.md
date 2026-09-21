@@ -73,24 +73,24 @@ exists.
 
 **SOGGA had:** Materialised lesson rows per club group with date, time, status, notes and
 assignment codes; batch creation for a whole period; a per-lesson status workflow; and
-substitution tracking when another educator covers.
+substitution tracking when another educator substitutes.
 
 **Sogverse has:** Sessions projected from a group's recurring schedule slots,
 materialised lazily as `group_sessions` when a gedu first writes to one.
 Batch creation is replaced by design — the projection *is* the semester. Per-session
 staff writes (report, photos, attendance) exist. **Substitution tracking is built**, as
-cover requests rather than reassignment: a gedu files one against a single (group, date),
-every certified gedu can offer, an admin approves one, and the cover holds that group's
+substitution requests rather than reassignment: a gedu files one against a single (group, date),
+every certified gedu can offer, an admin approves one, and the substitute holds that group's
 workspace for a bounded window instead of being permanently assigned to it. An admin can
 also set, clear or withdraw a session's staffing directly — including on past dates, so an
-off-platform cover is recordable for pay. Every assignment carries a primary/assistant
+off-platform substitution is recordable for pay. Every assignment carries a primary/assistant
 role, so who ran a given session, in which role, is answerable per date.
 
 **Still missing:** A per-session status, and cancelling or rescheduling a single
 occurrence. `did_not_run` / `needs_substitute` columns were added in migration 00138 and
 deliberately dropped in 00151; `cancel_session` and `reschedule_session` are reserved
 names only, and cancellation is where the occurrence expansion first gains a subtraction
-(substitution needed none). The cover flow is also **in-app only** — the `ROADMAP.md`
+(substitution needed none). The substitution flow is also **in-app only** — the `ROADMAP.md`
 WhatsApp / Discord / email fan-out on **Auto substitution** is not built.
 
 **Priority:** `Medium` (down from High — substitution shipped; cancellation is what is left)
@@ -143,7 +143,7 @@ user detail page.
 **SOGGA had:** A filtered search for educators available in a weekday / time window,
 by languages, qualifications, skills, attendance types and municipalities.
 
-**Sogverse has:** The **cover-request flow shipped as a broadcast**, which answers the need
+**Sogverse has:** The **substitution-request flow shipped as a broadcast**, which answers the need
 without a search in the common case: an open request appears on every certified gedu's
 dashboard, any of them can offer, and an admin approves one. The office-arranged path uses
 the group-assignment gedu picker — name + email text and a single spoken-language chip,
@@ -174,7 +174,7 @@ Invoiced), gedu self-service views and admin management.
 **Sogverse has:** Every input and no consumer — per-session gedu fees on `products`
 (`primary_gedu_fee_cents`, `assistant_gedu_fee_cents`), per-session attendance
 (`session_attendance`), and, since substitution landed, who was expected at each (group,
-date) and in which role, covers included (see item 5). No period, line-item or status objects, no routes, no UI.
+date) and in which role, substitutions included (see item 5). No period, line-item or status objects, no routes, no UI.
 **Educators are still marking sessions done in SOGGA to get paid**: the in-repo gedu
 handbook (`src/data/gedu-docs/`) instructs it, and describes the Truster collective
 invoicing that follows.

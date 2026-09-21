@@ -332,7 +332,7 @@ describe("isPlannableEntry", () => {
     }
   });
 
-  it("covers every entry between them — nothing opens no editor at all", () => {
+  it("substitutions every entry between them — nothing opens no editor at all", () => {
     const cases: [SessionFeedEntry, Date][] = [
       [future("u"), BEFORE_START],
       [future("live"), MID_SESSION],
@@ -920,7 +920,7 @@ describe("entryCompleteness — a session the viewer has filed an absence for", 
    * state. Built through the real derivation rather than hand-shaped, so a case
    * here cannot assert against a staffing the module would never produce.
    */
-  function absentViewer(status: "open" | "covered") {
+  function absentViewer(status: "open" | "substituted") {
     return deriveSessionStaffing({
       gedus: [{ id: VIEWER, firstName: "Sanna", role: "primary" }],
       requests: [
@@ -930,8 +930,8 @@ describe("entryCompleteness — a session the viewer has filed an absence for", 
           requestedBy: { id: VIEWER, firstName: "Sanna" },
           role: "primary",
           status,
-          coveredBy:
-            status === "covered" ? { id: OTHER, firstName: "Joonas" } : null,
+          substituteId:
+            status === "substituted" ? { id: OTHER, firstName: "Joonas" } : null,
         },
       ],
       sessionDate: "2026-03-16",
@@ -939,7 +939,7 @@ describe("entryCompleteness — a session the viewer has filed an absence for", 
     });
   }
 
-  it("withholds the warning while the request stands, open or covered", () => {
+  it("withholds the warning while the request stands, open or substituted", () => {
     // The gedu said they cannot be there. Whoever ends up running it, an
     // unfinished register on that date is not this viewer's work outstanding —
     // which is the same date the SQL badge drops out of its own count.
@@ -947,7 +947,7 @@ describe("entryCompleteness — a session the viewer has filed an absence for", 
       entryCompleteness(past("p", { staffing: absentViewer("open") }), ROSTER),
     ).toBeNull();
     expect(
-      entryCompleteness(past("p", { staffing: absentViewer("covered") }), ROSTER),
+      entryCompleteness(past("p", { staffing: absentViewer("substituted") }), ROSTER),
     ).toBeNull();
     // And the same entry with nobody absent is flagged, so the case above is
     // about the request rather than about anything else on the entry.
@@ -960,7 +960,7 @@ describe("entryCompleteness — a session the viewer has filed an absence for", 
     // silence.
     expect(
       entryCompleteness(
-        sentPast("p", { staffing: absentViewer("covered") }),
+        sentPast("p", { staffing: absentViewer("substituted") }),
         ROSTER,
       ),
     ).toBe("complete");
@@ -978,7 +978,7 @@ describe("entryCompleteness — a session the viewer has filed an absence for", 
           requestedBy: { id: VIEWER, firstName: "Sanna" },
           role: "primary",
           status: "open",
-          coveredBy: null,
+          substituteId: null,
           isMine: false,
         },
       ],

@@ -10,7 +10,7 @@ import { GeduProductWorkspace } from "@/components/gedu/session-details/GeduProd
 // URLs without forking the rendering.
 //
 // `?groupId=` rides along unparsed: it names which group of the product to open
-// — what a cover card's link carries — and the workspace component owns the one
+// — what a substitution card's link carries — and the workspace component owns the one
 // copy of the rule for reading it, so the three routes stay identical.
 
 export async function generateMetadata(): Promise<Metadata> {

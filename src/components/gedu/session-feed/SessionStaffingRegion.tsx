@@ -7,15 +7,15 @@ import { Button } from "@/components/ui/button";
 import { StatusLine } from "@/components/ui/alert";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type {
-  CoverRequestState,
+  SubstitutionRequestState,
   GeduAssignmentRole,
   SessionStaffing,
 } from "@/lib/session-staffing";
-import type { CoverReason } from "@/types";
-import { SessionCoverRequestDialog } from "./SessionCoverRequestDialog";
+import type { SubstitutionReason } from "@/types";
+import { SessionSubstitutionRequestDialog } from "./SessionSubstitutionRequestDialog";
 
-export interface SessionCoverRequestDraft {
-  reason: CoverReason;
+export interface SessionSubstitutionRequestDraft {
+  reason: SubstitutionReason;
   /** Trimmed by the caller's RPC; empty means no note at all. */
   note: string;
 }
@@ -31,7 +31,7 @@ interface SessionStaffingRegionProps {
    * whole feed shares, and a component asking again would be a second answer
    * free to disagree with the tag two inches above it.
    */
-  canRequestCover: boolean;
+  canRequestSubstitution: boolean;
   /**
    * File "I can't make this session". **Awaited**: the dialog holds its own
    * committing flag from the click until this settles, and closes only when it
@@ -42,15 +42,15 @@ interface SessionStaffingRegionProps {
    * admin shell supplies {@link staffingEditor} in this slot instead — and the
    * action is then not rendered at all.
    */
-  onRequestCover?: (draft: SessionCoverRequestDraft) => void | Promise<void>;
+  onRequestSubstitution?: (draft: SessionSubstitutionRequestDraft) => void | Promise<void>;
   /** Take an open request back. Awaited on the same terms. */
-  onWithdrawCoverRequest?: (requestId: string) => void | Promise<void>;
+  onWithdrawSubstitutionRequest?: (requestId: string) => void | Promise<void>;
   /**
    * The staffing editor this surface supplies for this session, or nothing.
    *
    * **The surface decides by what it supplies**, exactly as the site panel's
    * saves already decide who may write a site's record: a gedu shell hands over
-   * the two cover callbacks and no editor, and an admin shell hands over the
+   * the two substitution callbacks and no editor, and an admin shell hands over the
    * editor and no callbacks. Neither is a role flag, and the body branches on
    * neither.
    */
@@ -88,9 +88,9 @@ interface SessionStaffingRegionProps {
  */
 export function SessionStaffingRegion({
   staffing,
-  canRequestCover,
-  onRequestCover,
-  onWithdrawCoverRequest,
+  canRequestSubstitution,
+  onRequestSubstitution,
+  onWithdrawSubstitutionRequest,
   staffingEditor = null,
 }: SessionStaffingRegionProps) {
   const t = useTranslations("gedu.sessionFeed");
@@ -121,27 +121,27 @@ export function SessionStaffingRegion({
   const viewerRequest = staffing.viewerRequest;
   const showLine = staffing.requests.length > 0;
   const canFile =
-    canRequestCover && staffing.viewerIsExpected && onRequestCover !== undefined;
+    canRequestSubstitution && staffing.viewerIsExpected && onRequestSubstitution !== undefined;
   const canWithdraw =
     viewerRequest !== null &&
     viewerRequest.status === "open" &&
-    onWithdrawCoverRequest !== undefined;
+    onWithdrawSubstitutionRequest !== undefined;
 
   if (!showLine && !canFile && viewerRequest === null && staffingEditor === null) {
     return null;
   }
 
-  const fileCover = async (draft: SessionCoverRequestDraft) => {
-    if (onRequestCover === undefined) return;
+  const fileSubstitution = async (draft: SessionSubstitutionRequestDraft) => {
+    if (onRequestSubstitution === undefined) return;
     setError(null);
     setCommitting(true);
     try {
-      await onRequestCover(draft);
+      await onRequestSubstitution(draft);
       setRequestOpen(false);
     } catch {
       // A refusal keeps the dialog up with the reason and the note where the
       // gedu left them, and names what went wrong.
-      setError(t("coverRequestFailed"));
+      setError(t("substitutionRequestFailed"));
     } finally {
       setCommitting(false);
     }
@@ -174,7 +174,7 @@ export function SessionStaffingRegion({
               className="gap-1.5"
             >
               <UserMinus className="h-3.5 w-3.5" aria-hidden />
-              {t("coverRequestAction")}
+              {t("substitutionRequestAction")}
             </Button>
           )}
           {canWithdraw && (
@@ -188,7 +188,7 @@ export function SessionStaffingRegion({
                 setWithdrawOpen(true);
               }}
             >
-              {t("coverWithdrawAction")}
+              {t("substitutionWithdrawAction")}
             </Button>
           )}
           {staffingEditor}
@@ -202,14 +202,14 @@ export function SessionStaffingRegion({
       )}
 
       {canFile && (
-        <SessionCoverRequestDialog
+        <SessionSubstitutionRequestDialog
           open={requestOpen}
           onOpenChange={(next) => {
             if (committing) return;
             setRequestOpen(next);
           }}
           committing={committing}
-          onConfirm={(draft) => void fileCover(draft)}
+          onConfirm={(draft) => void fileSubstitution(draft)}
         />
       )}
       {canWithdraw && (
@@ -225,14 +225,14 @@ export function SessionStaffingRegion({
         <ConfirmDialog
           open={withdrawOpen}
           onOpenChange={setWithdrawOpen}
-          title={t("coverWithdrawTitle")}
-          description={t("coverWithdrawBody")}
-          confirmLabel={t("coverWithdrawConfirm")}
+          title={t("substitutionWithdrawTitle")}
+          description={t("substitutionWithdrawBody")}
+          confirmLabel={t("substitutionWithdrawConfirm")}
           confirmVariant="default"
           holdWhileCommitting
-          describeError={() => t("coverWithdrawFailed")}
+          describeError={() => t("substitutionWithdrawFailed")}
           onConfirm={async () => {
-            await onWithdrawCoverRequest(viewerRequest.id);
+            await onWithdrawSubstitutionRequest(viewerRequest.id);
           }}
         />
       )}
@@ -252,7 +252,7 @@ export function SessionStaffingRegion({
 function StaffingLine({ staffing }: { staffing: SessionStaffing }) {
   const t = useTranslations("gedu.sessionFeed");
   const roleLabel = (role: GeduAssignmentRole) =>
-    role === "primary" ? t("coverRolePrimary") : t("coverRoleAssistant");
+    role === "primary" ? t("substitutionRolePrimary") : t("substitutionRoleAssistant");
 
   return (
     <>
@@ -275,12 +275,12 @@ function StaffingLine({ staffing }: { staffing: SessionStaffing }) {
       </p>
       {staffing.requests.map((request) => (
         <p key={request.id}>
-          {request.status === "covered" && request.coveredBy !== null
-            ? t("staffingCoveredBy", {
-                sub: request.coveredBy.firstName,
+          {request.status === "substituted" && request.substituteId !== null
+            ? t("staffingSubstitutedBy", {
+                sub: request.substituteId.firstName,
                 name: request.requestedBy.firstName,
               })
-            : t("staffingCoverNeeded", { name: request.requestedBy.firstName })}
+            : t("staffingSubstitutionNeeded", { name: request.requestedBy.firstName })}
         </p>
       ))}
     </>
@@ -289,28 +289,28 @@ function StaffingLine({ staffing }: { staffing: SessionStaffing }) {
 
 /**
  * The viewer's own request, in the three things it can be: open with nothing
- * disclosed, open with a count, or covered.
+ * disclosed, open with a count, or substituted.
  *
  * **A null count is not zero.** `offerCount` is "not disclosed" wherever the
  * reader is not entitled to it, and nobody offering and nobody being told are
  * different facts — so the no-count line says only that the request is open
  * rather than inventing a number for it.
  */
-function ViewerRequestStatus({ request }: { request: CoverRequestState }) {
+function ViewerRequestStatus({ request }: { request: SubstitutionRequestState }) {
   const t = useTranslations("gedu.sessionFeed");
 
-  if (request.status === "covered" && request.coveredBy !== null) {
+  if (request.status === "substituted" && request.substituteId !== null) {
     return (
       <p className="font-medium text-foreground">
-        {t("coverRequestStatusCovered", { name: request.coveredBy.firstName })}
+        {t("substitutionRequestStatusSubstituted", { name: request.substituteId.firstName })}
       </p>
     );
   }
   return (
     <p className="font-medium text-foreground">
       {request.offerCount === null
-        ? t("coverRequestStatusOpen")
-        : t("coverRequestStatusOffers", { count: request.offerCount })}
+        ? t("substitutionRequestStatusOpen")
+        : t("substitutionRequestStatusOffers", { count: request.offerCount })}
     </p>
   );
 }

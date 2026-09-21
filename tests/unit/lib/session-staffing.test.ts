@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   deriveSessionStaffing,
-  holdsLiveCoverRequest,
-  type CoverRequestInput,
+  holdsLiveSubstitutionRequest,
+  type SubstitutionRequestInput,
   type GeduAssignmentRole,
   type StaffingAssignment,
 } from "@/lib/session-staffing";
@@ -10,10 +10,10 @@ import {
 /**
  * The derivation sentence, case by case: *a gedu is expected at (group, date) iff
  * they hold no non-withdrawn request for it, and they are either assigned to the
- * group or hold a `covered` request for it.*
+ * group or hold a `substituted` request for it.*
  *
  * These are the same cases the DB suite runs against the SQL predicate —
- * assigned, open request, covered, the chain, cleared, withdrawn — so a
+ * assigned, open request, substituted, the chain, cleared, withdrawn — so a
  * divergence between the two shows up as one suite passing and the other failing
  * on a case with the same name.
  *
@@ -53,36 +53,36 @@ function assigned(
 function request(
   id: string,
   requestedBy: string,
-  fields: Partial<CoverRequestInput> = {},
-): CoverRequestInput {
+  fields: Partial<SubstitutionRequestInput> = {},
+): SubstitutionRequestInput {
   return {
     id,
     sessionDate: DATE,
     requestedBy: person(requestedBy),
     role: "primary",
     status: "open",
-    coveredBy: null,
+    substituteId: null,
     ...fields,
   };
 }
 
-/** A request already covered by `sub`. */
-function covered(
+/** A request already substituted by `sub`. */
+function substituted(
   id: string,
   requestedBy: string,
   sub: string,
-  fields: Partial<CoverRequestInput> = {},
-): CoverRequestInput {
+  fields: Partial<SubstitutionRequestInput> = {},
+): SubstitutionRequestInput {
   return request(id, requestedBy, {
-    status: "covered",
-    coveredBy: person(sub),
+    status: "substituted",
+    substituteId: person(sub),
     ...fields,
   });
 }
 
 function derive(args: {
   gedus?: StaffingAssignment[];
-  requests?: CoverRequestInput[];
+  requests?: SubstitutionRequestInput[];
   sessionDate?: string;
   viewerId?: string | null;
 }) {
@@ -138,7 +138,7 @@ describe("deriveSessionStaffing — an open request", () => {
         status: "open",
         requestedBy: person(GEDU.amina),
         role: "primary",
-        coveredBy: null,
+        substituteId: null,
         offerCount: null,
         isViewers: false,
       },
@@ -160,12 +160,12 @@ describe("deriveSessionStaffing — an open request", () => {
   });
 });
 
-describe("deriveSessionStaffing — covered", () => {
+describe("deriveSessionStaffing — substituted", () => {
   it("expects the sub in the requester's role and not the requester", () => {
     const staffing = derive({
       gedus: [assigned(GEDU.amina, "assistant")],
       requests: [
-        covered("r1", GEDU.amina, GEDU.bo, {
+        substituted("r1", GEDU.amina, GEDU.bo, {
           role: "assistant",
           offerCount: 1,
         }),
@@ -178,20 +178,20 @@ describe("deriveSessionStaffing — covered", () => {
     expect(staffing.requests).toEqual([
       {
         id: "r1",
-        status: "covered",
+        status: "substituted",
         requestedBy: person(GEDU.amina),
         role: "assistant",
-        coveredBy: person(GEDU.bo),
+        substituteId: person(GEDU.bo),
         offerCount: 1,
         isViewers: false,
       },
     ]);
   });
 
-  it("gives an admin-recorded cover on a group with no assignment row its seat", () => {
+  it("gives an admin-recorded substitution on a group with no assignment row its seat", () => {
     const staffing = derive({
       gedus: [],
-      requests: [covered("r1", GEDU.amina, GEDU.bo)],
+      requests: [substituted("r1", GEDU.amina, GEDU.bo)],
     });
 
     expect(expectedIds(staffing)).toEqual([GEDU.bo]);
@@ -199,12 +199,12 @@ describe("deriveSessionStaffing — covered", () => {
 });
 
 describe("deriveSessionStaffing — the chain", () => {
-  it("expects only the last sub when A → B → C are all covered", () => {
+  it("expects only the last sub when A → B → C are all substituted", () => {
     const staffing = derive({
       gedus: [assigned(GEDU.amina)],
       requests: [
-        covered("r1", GEDU.amina, GEDU.bo),
-        covered("r2", GEDU.bo, GEDU.cai),
+        substituted("r1", GEDU.amina, GEDU.bo),
+        substituted("r2", GEDU.bo, GEDU.cai),
       ],
     });
 
@@ -215,28 +215,28 @@ describe("deriveSessionStaffing — the chain", () => {
   it("leaves the seat empty while the sub's own request is open", () => {
     const staffing = derive({
       gedus: [assigned(GEDU.amina)],
-      requests: [covered("r1", GEDU.amina, GEDU.bo), request("r2", GEDU.bo)],
+      requests: [substituted("r1", GEDU.amina, GEDU.bo), request("r2", GEDU.bo)],
     });
 
     expect(staffing.expected).toEqual([]);
     expect(staffing.requests.map((state) => state.status)).toEqual([
-      "covered",
+      "substituted",
       "open",
     ]);
   });
 });
 
 describe("deriveSessionStaffing — cleared and withdrawn", () => {
-  it("expects nobody for a seat whose cover was cleared back to open", () => {
+  it("expects nobody for a seat whose substitution was cleared back to open", () => {
     const staffing = derive({
       gedus: [assigned(GEDU.amina)],
-      requests: [request("r1", GEDU.amina, { coveredBy: person(GEDU.bo) })],
+      requests: [request("r1", GEDU.amina, { substituteId: person(GEDU.bo) })],
     });
 
     expect(staffing.expected).toEqual([]);
-    // The row's `covered_by` is cleared by the RPC; the state refuses to name a
+    // The row's `substitute_id` is cleared by the RPC; the state refuses to name a
     // sub on an open request even if one rode along.
-    expect(staffing.requests[0]?.coveredBy).toBeNull();
+    expect(staffing.requests[0]?.substituteId).toBeNull();
   });
 
   it("treats a withdrawn request as absent, so the requester is expected again", () => {
@@ -244,8 +244,8 @@ describe("deriveSessionStaffing — cleared and withdrawn", () => {
       gedus: [assigned(GEDU.amina), assigned(GEDU.bo, "assistant")],
       requests: [
         request("r1", GEDU.amina, { status: "withdrawn" }),
-        // A withdrawn cover is history too: the sub it named is not expected.
-        covered("r2", GEDU.bo, GEDU.cai, { status: "withdrawn" }),
+        // A withdrawn substitution is history too: the sub it named is not expected.
+        substituted("r2", GEDU.bo, GEDU.cai, { status: "withdrawn" }),
       ],
     });
 
@@ -255,17 +255,17 @@ describe("deriveSessionStaffing — cleared and withdrawn", () => {
 });
 
 describe("deriveSessionStaffing — two primaries both out", () => {
-  it("keeps the seats apart: one covered, one still open", () => {
+  it("keeps the seats apart: one substituted, one still open", () => {
     const staffing = derive({
       gedus: [assigned(GEDU.amina), assigned(GEDU.bo)],
-      requests: [covered("r1", GEDU.amina, GEDU.cai), request("r2", GEDU.bo)],
+      requests: [substituted("r1", GEDU.amina, GEDU.cai), request("r2", GEDU.bo)],
     });
 
     expect(expectedIds(staffing)).toEqual([GEDU.cai]);
     expect(
       staffing.requests.map((state) => [state.requestedBy.id, state.status]),
     ).toEqual([
-      [GEDU.amina, "covered"],
+      [GEDU.amina, "substituted"],
       [GEDU.bo, "open"],
     ]);
   });
@@ -275,7 +275,7 @@ describe("deriveSessionStaffing — a sub who is also assigned", () => {
   it("resolves the role from the assignment, not the request", () => {
     const staffing = derive({
       gedus: [assigned(GEDU.amina), assigned(GEDU.bo, "assistant")],
-      requests: [covered("r1", GEDU.amina, GEDU.bo, { role: "primary" })],
+      requests: [substituted("r1", GEDU.amina, GEDU.bo, { role: "primary" })],
     });
 
     expect(staffing.expected).toEqual([
@@ -286,7 +286,7 @@ describe("deriveSessionStaffing — a sub who is also assigned", () => {
   it("seats such a gedu once, whatever order the rows arrive in", () => {
     const staffing = derive({
       gedus: [assigned(GEDU.bo, "assistant"), assigned(GEDU.amina)],
-      requests: [covered("r1", GEDU.amina, GEDU.bo)],
+      requests: [substituted("r1", GEDU.amina, GEDU.bo)],
     });
 
     expect(expectedIds(staffing)).toEqual([GEDU.bo]);
@@ -307,7 +307,7 @@ describe("deriveSessionStaffing — the viewer", () => {
       status: "open",
       requestedBy: person(GEDU.amina),
       role: "primary",
-      coveredBy: null,
+      substituteId: null,
       offerCount: 3,
       isViewers: true,
     });
@@ -316,7 +316,7 @@ describe("deriveSessionStaffing — the viewer", () => {
   it("expects the sub and gives them no request of their own", () => {
     const staffing = derive({
       gedus: [assigned(GEDU.amina)],
-      requests: [covered("r1", GEDU.amina, GEDU.bo)],
+      requests: [substituted("r1", GEDU.amina, GEDU.bo)],
       viewerId: GEDU.bo,
     });
 
@@ -413,23 +413,23 @@ describe("deriveSessionStaffing — ordering", () => {
   });
 });
 
-describe("holdsLiveCoverRequest", () => {
+describe("holdsLiveSubstitutionRequest", () => {
   const requests = [
     request("r1", GEDU.amina),
-    covered("r2", GEDU.bo, GEDU.cai),
+    substituted("r2", GEDU.bo, GEDU.cai),
     request("r3", GEDU.dara, { status: "withdrawn" }),
     request("r4", GEDU.cai, { sessionDate: OTHER_DATE }),
   ];
 
-  it("is true for an open and for a covered request on that date", () => {
-    expect(holdsLiveCoverRequest(requests, DATE, GEDU.amina)).toBe(true);
-    expect(holdsLiveCoverRequest(requests, DATE, GEDU.bo)).toBe(true);
+  it("is true for an open and for a substituted request on that date", () => {
+    expect(holdsLiveSubstitutionRequest(requests, DATE, GEDU.amina)).toBe(true);
+    expect(holdsLiveSubstitutionRequest(requests, DATE, GEDU.bo)).toBe(true);
   });
 
   it("is false for a withdrawn one, another date, a sub, and a gedu with none", () => {
-    expect(holdsLiveCoverRequest(requests, DATE, GEDU.dara)).toBe(false);
-    expect(holdsLiveCoverRequest(requests, DATE, GEDU.cai)).toBe(false);
-    expect(holdsLiveCoverRequest(requests, OTHER_DATE, GEDU.amina)).toBe(false);
-    expect(holdsLiveCoverRequest(requests, OTHER_DATE, GEDU.cai)).toBe(true);
+    expect(holdsLiveSubstitutionRequest(requests, DATE, GEDU.dara)).toBe(false);
+    expect(holdsLiveSubstitutionRequest(requests, DATE, GEDU.cai)).toBe(false);
+    expect(holdsLiveSubstitutionRequest(requests, OTHER_DATE, GEDU.amina)).toBe(false);
+    expect(holdsLiveSubstitutionRequest(requests, OTHER_DATE, GEDU.cai)).toBe(true);
   });
 });

@@ -50,11 +50,11 @@ export function useMyAssignedProducts(options: {
  *
  * **`groupId` says which group of the product is "mine" (00272)**, and it is
  * part of the cache key because it genuinely changes the answer: a gedu
- * covering a sibling group of a product they already teach asks this same RPC
+ * substituting a sibling group of a product they already teach asks this same RPC
  * for a different workspace, and the two documents must not share an entry.
  * `null` — the ordinary case — resolves the caller's assignment group as it
  * always did. It reaches the page from the URL's `?groupId=`, which is what a
- * cover card's link carries.
+ * substitution card's link carries.
  */
 export function useGeduAssignedProduct(
   productId: string | undefined,

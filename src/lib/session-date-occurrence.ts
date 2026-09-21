@@ -6,8 +6,8 @@ import { parseTime } from "@/lib/utils";
  * every feed makes.
  *
  * Every other occurrence derivation in the app goes forwards: it is handed a
- * schedule and a clock and enumerates the dates the slots project. The cover
- * surfaces start from the other end — a request, a cover and a queue row all
+ * schedule and a clock and enumerates the dates the slots project. The substitution
+ * surfaces start from the other end — a request, a substitution and a queue row all
  * carry a product-local `YYYY-MM-DD` and no instant, because the database emits
  * the date plus the product's slots and timezone and leaves the calendar maths
  * to the client, exactly as both session feeds already do. So the one thing

@@ -12,7 +12,7 @@ import {
   type SessionFeedRowContext,
 } from "@/components/session-feed";
 import { SessionFeedItem } from "./SessionFeedItem";
-import type { SessionCoverRequestDraft } from "./SessionStaffingRegion";
+import type { SessionSubstitutionRequestDraft } from "./SessionStaffingRegion";
 import {
   entryCompleteness,
   entryOwesCreations,
@@ -168,12 +168,12 @@ interface SessionFeedProps {
    * is then not rendered at all. That is the whole gate: no role flag reaches
    * this component, and the surface decides by what it supplies.
    */
-  onRequestCover?: (
+  onRequestSubstitution?: (
     entry: SessionFeedEntry,
-    draft: SessionCoverRequestDraft,
+    draft: SessionSubstitutionRequestDraft,
   ) => void | Promise<void>;
   /** Take the viewer's own open request back. Awaited on the same terms. */
-  onWithdrawCoverRequest?: (requestId: string) => void | Promise<void>;
+  onWithdrawSubstitutionRequest?: (requestId: string) => void | Promise<void>;
   /**
    * The staffing editor to draw on each card, in the same region as the gedu's
    * own action — the admin shell's half of the pair above.
@@ -274,8 +274,8 @@ export function SessionFeed({
   onAddPhoto,
   onRemovePhoto,
   photoConsents = null,
-  onRequestCover,
-  onWithdrawCoverRequest,
+  onRequestSubstitution,
+  onWithdrawSubstitutionRequest,
   renderStaffingEditor,
   className,
 }: SessionFeedProps) {
@@ -313,7 +313,7 @@ export function SessionFeed({
    * which is what stops a second press repeating an operation — and is also what
    * makes it a bad render source on its own, because the `entries` prop the
    * stored photos come from does not move until the feed refetches. This record
-   * covers exactly that window; see its own note for the shape of the strip
+   * substitutions exactly that window; see its own note for the shape of the strip
    * without it.
    *
    * **Cleared when an editor is opened, not when one closes.** A fresh editor
@@ -821,13 +821,13 @@ export function SessionFeed({
             creations={creationsFor(entry)}
             // Bound to this entry here rather than in the card, so the card
             // never has to turn its own id back into the (group, date) pair a
-            // cover request is keyed by — the same split the save already has.
-            onRequestCover={
-              onRequestCover === undefined
+            // substitution request is keyed by — the same split the save already has.
+            onRequestSubstitution={
+              onRequestSubstitution === undefined
                 ? undefined
-                : (draft) => onRequestCover(entry, draft)
+                : (draft) => onRequestSubstitution(entry, draft)
             }
-            onWithdrawCoverRequest={onWithdrawCoverRequest}
+            onWithdrawSubstitutionRequest={onWithdrawSubstitutionRequest}
             staffingEditor={renderStaffingEditor?.(entry) ?? null}
             registerEditButton={(node) => {
               if (node === null) editButtons.current.delete(entry.id);

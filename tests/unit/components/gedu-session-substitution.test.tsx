@@ -14,7 +14,7 @@ import type {
 import {
   deriveSessionStaffing,
   NO_SESSION_STAFFING,
-  type CoverRequestInput,
+  type SubstitutionRequestInput,
   type StaffingAssignment,
 } from "@/lib/session-staffing";
 
@@ -43,7 +43,7 @@ vi.mock("@/components/ui/rich-text-editor", () =>
  * carrying a request. A fifty-week feed that printed its staffing on every card
  * would repeat what the rail already says fifty times and bury the handful of
  * dates where something is outstanding — so its absence on an ordinary card is
- * as much the behaviour as its presence on a covered one.
+ * as much the behaviour as its presence on a substituted one.
  *
  * Everything is driven through the real feed rather than the region alone: what
  * decides whether the action is offered is the entry's *kind*, and only the feed
@@ -79,7 +79,7 @@ const PAST_DATE = "2026-03-09";
 const PAST_START = new Date("2026-03-09T14:30:00.000Z");
 const PAST_END = new Date("2026-03-09T16:00:00.000Z");
 
-function futureEntry(requests: readonly CoverRequestInput[], viewerId: string) {
+function futureEntry(requests: readonly SubstitutionRequestInput[], viewerId: string) {
   return {
     kind: "future",
     id: `group-1:${FUTURE_DATE}`,
@@ -99,7 +99,7 @@ function futureEntry(requests: readonly CoverRequestInput[], viewerId: string) {
   } satisfies FutureSessionFeedEntry;
 }
 
-function pastEntry(requests: readonly CoverRequestInput[], viewerId: string) {
+function pastEntry(requests: readonly SubstitutionRequestInput[], viewerId: string) {
   return {
     kind: "past",
     id: `group-1:${PAST_DATE}`,
@@ -122,14 +122,14 @@ function pastEntry(requests: readonly CoverRequestInput[], viewerId: string) {
 }
 
 /** An open request somebody filed on the future session. */
-function openRequest(by: { id: string; firstName: string }): CoverRequestInput {
+function openRequest(by: { id: string; firstName: string }): SubstitutionRequestInput {
   return {
     id: `request-${by.id}`,
     sessionDate: FUTURE_DATE,
     requestedBy: by,
     role: "primary",
     status: "open",
-    coveredBy: null,
+    substituteId: null,
     offerCount: null,
   };
 }
@@ -140,7 +140,7 @@ function renderFeed({
   renderStaffingEditor,
 }: {
   entries: readonly (FutureSessionFeedEntry | PastSessionFeedEntry)[];
-  /** Whether this surface supplies the gedu's two cover callbacks. */
+  /** Whether this surface supplies the gedu's two substitution callbacks. */
   withCallbacks?: boolean;
   renderStaffingEditor?: () => React.ReactNode;
 }) {
@@ -159,8 +159,8 @@ function renderFeed({
             onSendReport={() => Promise.resolve({ sent: 0, failed: 0, skipped: 0 })}
             onAddPhoto={() => Promise.resolve("")}
             onRemovePhoto={() => Promise.resolve()}
-            onRequestCover={withCallbacks ? () => {} : undefined}
-            onWithdrawCoverRequest={withCallbacks ? () => {} : undefined}
+            onRequestSubstitution={withCallbacks ? () => {} : undefined}
+            onWithdrawSubstitutionRequest={withCallbacks ? () => {} : undefined}
             renderStaffingEditor={renderStaffingEditor}
           />
         </NowProvider>
@@ -172,11 +172,11 @@ function renderFeed({
 const copy = messages.gedu.sessionFeed;
 
 function actionButton() {
-  return screen.queryByRole("button", { name: copy.coverRequestAction });
+  return screen.queryByRole("button", { name: copy.substitutionRequestAction });
 }
 
 function withdrawButton() {
-  return screen.queryByRole("button", { name: copy.coverWithdrawAction });
+  return screen.queryByRole("button", { name: copy.substitutionWithdrawAction });
 }
 
 describe("the session card's staffing region", () => {
@@ -209,26 +209,26 @@ describe("the session card's staffing region", () => {
     });
     // `null` is "not disclosed", which is a different fact from zero — so the
     // line says the request is open and invents no number for it.
-    expect(screen.getByText(copy.coverRequestStatusOpen)).toBeTruthy();
+    expect(screen.getByText(copy.substitutionRequestStatusOpen)).toBeTruthy();
     expect(screen.queryByText(/offers waiting/)).toBeNull();
   });
 
-  it("names the sub on a covered request, for everybody", () => {
+  it("names the sub on a substituted request, for everybody", () => {
     renderFeed({
       entries: [
         futureEntry(
           [
             {
               ...openRequest({ id: PETRA, firstName: "Petra" }),
-              status: "covered",
-              coveredBy: { id: JOONAS, firstName: "Joonas" },
+              status: "substituted",
+              substituteId: { id: JOONAS, firstName: "Joonas" },
             },
           ],
           SANNA,
         ),
       ],
     });
-    expect(screen.getByText("Joonas is covering for Petra.")).toBeTruthy();
+    expect(screen.getByText("Joonas is substituting for Petra.")).toBeTruthy();
   });
 
   it("offers nothing to a viewer who is neither expected nor a requester", () => {
@@ -264,7 +264,7 @@ describe("the staffing line", () => {
       entries: [futureEntry([openRequest({ id: PETRA, firstName: "Petra" })], SANNA)],
     });
     expect(screen.getByText(/Running this session/)).toBeTruthy();
-    expect(screen.getByText("Cover needed for Petra.")).toBeTruthy();
+    expect(screen.getByText("Substitute needed for Petra.")).toBeTruthy();
   });
 
   it("names who is expected, with the role each is paid for", () => {
@@ -330,17 +330,17 @@ describe("the staffing editor slot", () => {
  * until the document behind the card has been re-read, so the region is looking
  * at the new staffing by the time it lets go.
  */
-function CoverHarness({
+function SubstitutionHarness({
   settleFile,
   settleWithdraw,
   initialRequests = [],
 }: {
   settleFile?: Promise<void>;
   settleWithdraw?: Promise<void>;
-  initialRequests?: readonly CoverRequestInput[];
+  initialRequests?: readonly SubstitutionRequestInput[];
 }) {
   const [requests, setRequests] =
-    useState<readonly CoverRequestInput[]>(initialRequests);
+    useState<readonly SubstitutionRequestInput[]>(initialRequests);
 
   return (
     <NextIntlClientProvider locale="en" messages={messages}>
@@ -359,11 +359,11 @@ function CoverHarness({
             }
             onAddPhoto={() => Promise.resolve("")}
             onRemovePhoto={() => Promise.resolve()}
-            onRequestCover={async () => {
+            onRequestSubstitution={async () => {
               await settleFile;
               setRequests([openRequest({ id: SANNA, firstName: "Sanna" })]);
             }}
-            onWithdrawCoverRequest={async () => {
+            onWithdrawSubstitutionRequest={async () => {
               await settleWithdraw;
               setRequests([]);
             }}
@@ -390,16 +390,16 @@ function isDisabled(element: HTMLElement | null): boolean {
 describe("the staffing region after a write lands", () => {
   it("hands back the Withdraw the file itself put on screen", async () => {
     const file = deferred();
-    render(<CoverHarness settleFile={file.promise} />);
+    render(<SubstitutionHarness settleFile={file.promise} />);
 
-    fireEvent.click(screen.getByRole("button", { name: copy.coverRequestAction }));
+    fireEvent.click(screen.getByRole("button", { name: copy.substitutionRequestAction }));
     fireEvent.click(
-      screen.getByRole("button", { name: copy.coverRequestConfirm }),
+      screen.getByRole("button", { name: copy.substitutionRequestConfirm }),
     );
 
     // Still in the air: nothing on the card may be pressed.
     expect(
-      isDisabled(screen.getByRole("button", { name: copy.coverRequestConfirm })),
+      isDisabled(screen.getByRole("button", { name: copy.substitutionRequestConfirm })),
     ).toBe(true);
 
     await act(async () => {
@@ -417,20 +417,20 @@ describe("the staffing region after a write lands", () => {
   it("hands back the file action the withdraw itself put on screen", async () => {
     const withdraw = deferred();
     render(
-      <CoverHarness
+      <SubstitutionHarness
         settleWithdraw={withdraw.promise}
         initialRequests={[openRequest({ id: SANNA, firstName: "Sanna" })]}
       />,
     );
 
     fireEvent.click(
-      screen.getByRole("button", { name: copy.coverWithdrawAction }),
+      screen.getByRole("button", { name: copy.substitutionWithdrawAction }),
     );
     fireEvent.click(
-      screen.getByRole("button", { name: copy.coverWithdrawConfirm }),
+      screen.getByRole("button", { name: copy.substitutionWithdrawConfirm }),
     );
     expect(
-      isDisabled(screen.getByRole("button", { name: copy.coverWithdrawConfirm })),
+      isDisabled(screen.getByRole("button", { name: copy.substitutionWithdrawConfirm })),
     ).toBe(true);
 
     await act(async () => {
@@ -461,24 +461,24 @@ describe("the staffing region after a write lands", () => {
               }
               onAddPhoto={() => Promise.resolve("")}
               onRemovePhoto={() => Promise.resolve()}
-              onRequestCover={() => Promise.reject(new Error("nope"))}
-              onWithdrawCoverRequest={() => {}}
+              onRequestSubstitution={() => Promise.reject(new Error("nope"))}
+              onWithdrawSubstitutionRequest={() => {}}
             />
           </NowProvider>
         </TimezoneProvider>
       </NextIntlClientProvider>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: copy.coverRequestAction }));
+    fireEvent.click(screen.getByRole("button", { name: copy.substitutionRequestAction }));
     await act(async () => {
       fireEvent.click(
-        screen.getByRole("button", { name: copy.coverRequestConfirm }),
+        screen.getByRole("button", { name: copy.substitutionRequestConfirm }),
       );
     });
 
-    expect(screen.getByText(copy.coverRequestFailed)).toBeTruthy();
+    expect(screen.getByText(copy.substitutionRequestFailed)).toBeTruthy();
     expect(
-      isDisabled(screen.getByRole("button", { name: copy.coverRequestConfirm })),
+      isDisabled(screen.getByRole("button", { name: copy.substitutionRequestConfirm })),
     ).toBe(false);
   });
 
@@ -505,8 +505,8 @@ describe("the staffing region after a write lands", () => {
               }
               onAddPhoto={() => Promise.resolve("")}
               onRemovePhoto={() => Promise.resolve()}
-              onRequestCover={() => {}}
-              onWithdrawCoverRequest={() => Promise.reject(new Error("nope"))}
+              onRequestSubstitution={() => {}}
+              onWithdrawSubstitutionRequest={() => Promise.reject(new Error("nope"))}
             />
           </NowProvider>
         </TimezoneProvider>
@@ -514,19 +514,19 @@ describe("the staffing region after a write lands", () => {
     );
 
     fireEvent.click(
-      screen.getByRole("button", { name: copy.coverWithdrawAction }),
+      screen.getByRole("button", { name: copy.substitutionWithdrawAction }),
     );
     await act(async () => {
       fireEvent.click(
-        screen.getByRole("button", { name: copy.coverWithdrawConfirm }),
+        screen.getByRole("button", { name: copy.substitutionWithdrawConfirm }),
       );
     });
 
-    expect(screen.getByText(copy.coverWithdrawFailed)).toBeTruthy();
+    expect(screen.getByText(copy.substitutionWithdrawFailed)).toBeTruthy();
     // The feed is the harness's own DOM; the dialog is a portal out of it.
-    expect(container.textContent).not.toContain(copy.coverWithdrawFailed);
+    expect(container.textContent).not.toContain(copy.substitutionWithdrawFailed);
     expect(
-      isDisabled(screen.getByRole("button", { name: copy.coverWithdrawConfirm })),
+      isDisabled(screen.getByRole("button", { name: copy.substitutionWithdrawConfirm })),
     ).toBe(false);
   });
 });

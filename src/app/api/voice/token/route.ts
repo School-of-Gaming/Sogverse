@@ -30,10 +30,10 @@ import { voiceTokenResponse } from "@/services/voice/voice.contracts";
  * Gates:
  *   1. Membership — participants (a gamer, or a parent holding their own seat
  *      on a for-parents product) via an active participation, gedus via a
- *      product-level assignment (cross-group voice mobility) **or a live cover
+ *      product-level assignment (cross-group voice mobility) **or a live substitution
  *      on this group for the session being joined**, admins pass through. The
- *      cover arm is date-scoped where the assignment arm is not: a sub joins
- *      the room on the session they are covering and on none of the group's
+ *      substitution arm is date-scoped where the assignment arm is not: a sub joins
+ *      the room on the session they are substituting and on none of the group's
  *      other sessions.
  *   2. Session window — at least one slot's window must be open right now.
  *
@@ -41,7 +41,7 @@ import { voiceTokenResponse } from "@/services/voice/voice.contracts";
  * non-member is refused whether or not a session is running, so this route
  * cannot be used to probe which groups are in session. The open slot is
  * *computed* before gate 1 all the same, because gate 1 needs the date of the
- * session being joined to look a cover up under; nothing is decided by it until
+ * session being joined to look a substitution up under; nothing is decided by it until
  * gate 2.
  *
  * Notably absent: there is no "did you enroll before this session started?"
@@ -106,7 +106,7 @@ export const POST = defineRoute({
     // (and end up with distinct Daily room names below), so checking each slot
     // independently is correct.
     //
-    // Computed here rather than after the membership gate because the cover arm
+    // Computed here rather than after the membership gate because the substitution arm
     // of that gate needs the SESSION DATE, and the open slot is what knows it.
     // Nothing is refused on it yet — the gates still answer in their documented
     // order below.
@@ -168,15 +168,15 @@ export const POST = defineRoute({
         .limit(1)
         .maybeSingle();
 
-      // A cover reaches the room on the session they are covering and on no
+      // A substitute reaches the room on the session they are substituting and on no
       // other session of the group — the one place on this surface where the
-      // cover arm is DATE-SCOPED. It *adds* to the assignment arm above rather
+      // substitution arm is DATE-SCOPED. It *adds* to the assignment arm above rather
       // than narrowing it: a gedu assigned to the product keeps the
       // product-wide mobility they already had.
-      const coverDates = sessionDatesToAdmit(openSlot, productTimezone);
+      const substitutionDates = sessionDatesToAdmit(openSlot, productTimezone);
       if (
         !assignment &&
-        !(await holdsCoverOn(admin, groupId, coverDates, user.id))
+        !(await holdsSubstitutionOn(admin, groupId, substitutionDates, user.id))
       ) {
         return NextResponse.json(
           { error: "You are not assigned to this group" },
@@ -302,13 +302,13 @@ export const POST = defineRoute({
 });
 
 /**
- * Which session date(s) a cover may be admitted for on this join.
+ * Which session date(s) a substitution may be admitted for on this join.
  *
  * **The open slot knows the answer, so it is asked first.** A session dated
  * Monday that runs to 00:30 is still Monday's session at 00:10 on Tuesday, and
  * a session starting at 00:10 has its whole pre-window on the day before — so
  * "today in the product's timezone", which is what this route used to ask, drops
- * a cover out of the room at local midnight and refuses them before a
+ * a substitute out of the room at local midnight and refuses them before a
  * small-hours start. The open slot carries the session's own start instant, and
  * the product-local date of *that* is the session's date however the window
  * straddles midnight.
@@ -342,19 +342,19 @@ function sessionDatesToAdmit(
 }
 
 /**
- * Does this gedu hold a live cover on this group for one of these session
+ * Does this gedu hold a live substitution on this group for one of these session
  * dates?
  *
- * The TypeScript twin of the database's own date-scoped cover predicate, which
+ * The TypeScript twin of the database's own date-scoped substitution predicate, which
  * the two voice predicates call with the same dates. It is written out here
  * rather than called because this route runs on the **service-role** client,
  * which bypasses RLS and carries no `auth.uid()` for a SECURITY DEFINER
  * predicate to read — so a predicate call from here would be asking the
  * database about nobody.
  *
- * Three of the predicate's four conditions are restated: the covered request on
+ * Three of the predicate's four conditions are restated: the substituted request on
  * that (group, date), the caller being its sub, and the holder still being
- * certified — de-certifying an educator ends their cover access at once, which
+ * certified — de-certifying an educator ends their substitution access at once, which
  * is why it is asked here rather than only at approval time. The fourth, the
  * access window, is **not**, and that is deliberate rather than an omission:
  * the dates asked about here are today, yesterday, or the session currently in
@@ -371,29 +371,29 @@ function sessionDatesToAdmit(
  * Dates are read in the product's zone, never the runtime's: a club in Helsinki
  * and one in Los Angeles each get their own calendar.
  */
-async function holdsCoverOn(
+async function holdsSubstitutionOn(
   admin: ReturnType<typeof createAdminClient>,
   groupId: string,
   sessionDates: string[],
   userId: string,
 ): Promise<boolean> {
-  const { data: cover } = await admin
-    .from("session_cover_requests")
+  const { data: substitution } = await admin
+    .from("session_substitution_requests")
     .select("id")
     .eq("group_id", groupId)
     .in("session_date", sessionDates)
-    .eq("covered_by", userId)
-    .eq("status", "covered")
+    .eq("substitute_id", userId)
+    .eq("status", "substituted")
     .limit(1)
     .maybeSingle();
 
-  if (!cover) return false;
+  if (!substitution) return false;
 
-  // A second round trip rather than an embed: `covered_by` points at
+  // A second round trip rather than an embed: `substitute_id` points at
   // `profiles`, and `gedu_profiles` hangs off `profiles` too, so there is no
   // foreign key for PostgREST to walk between the two — an embed here would
   // fail at runtime rather than at compile time. It is only reached when a
-  // cover row was actually found.
+  // substitution row was actually found.
   const { data: gedu } = await admin
     .from("gedu_profiles")
     .select("certified")

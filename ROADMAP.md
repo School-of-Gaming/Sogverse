@@ -63,7 +63,7 @@ gantt
 - **Session notes** — Parent-facing session notes, plus private Gedu and Admin session notes.
 - **Attendance** — Gamer attendance tracking per session.
 - **Cancellations** — Session cancellation by a Gedu.
-- **Auto substitution** — When a Gedu cancels, a cover request goes out via WhatsApp, Discord, email, or in-app notification; an admin reviews the offers and approves a replacement.
+- **Auto substitution** — When a Gedu cancels, a substitution request goes out via WhatsApp, Discord, email, or in-app notification; an admin reviews the offers and approves a replacement.
 - **Gedu Academy** — Sogverse system to recruit, train, and evaluate Gedus.
 - **AI Gedu Guru** — AI bot that answers Gedu questions, brought natively into Sogverse (already running on Discord).
 

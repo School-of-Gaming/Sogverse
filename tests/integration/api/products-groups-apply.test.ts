@@ -7,7 +7,7 @@ import type { GroupChangeSet } from "@/services/groups";
 // validates auth, parses the JSON body, and forwards the change set to the RPC.
 // Email notification + Daily.co provisioning live on the legacy route and stay
 // out of scope here. These tests verify auth gating, body parsing, and
-// error code mapping; the RPC's behavior is covered in db tests.
+// error code mapping; the RPC's behavior is substituted in db tests.
 
 const mockRequireRole = vi.fn();
 vi.mock("@/lib/auth", () => ({

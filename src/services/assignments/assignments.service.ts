@@ -49,28 +49,28 @@ export interface MyAssignedProductSessionRow {
      */
     translations: MyAssignedProductRow["product_translations"];
   };
-  /** The gedu's group on this product — assigned, or the one they cover. */
+  /** The gedu's group on this product — assigned, or the one they substitute on. */
   groupId: string;
   /**
    * Which kind of seat this row is (00272): a standing `assignment`, or one
-   * live `cover` on one date.
+   * live `substitution` on one date.
    *
    * Two arms of one read because they share every product-shell fact and
-   * differ only in the card's chrome — a cover is its own small card, named as
-   * a cover and dated, rather than the recurring assignment card. A consumer
-   * that ignored this would render a sub's one covered afternoon as though they
+   * differ only in the card's chrome — a substitution is its own small card, named as
+   * a substitution and dated, rather than the recurring assignment card. A consumer
+   * that ignored this would render a sub's one substituted afternoon as though they
    * taught the club every week.
    */
-  kind: "assignment" | "cover";
+  kind: "assignment" | "substitution";
   /**
-   * The date a `cover` row covers, product-local `YYYY-MM-DD`; null on an
-   * `assignment` row. It is the other half of a cover card's identity — one
-   * card per covered date, standing from the moment the cover is approved
+   * The date a `substitution` row is for, product-local `YYYY-MM-DD`; null on an
+   * `assignment` row. It is the other half of a substitution card's identity — one
+   * card per substitution date, standing from the moment the substitution is approved
    * until it expires. The *workspace* the card links to opens later, 48 hours
-   * before the covered session; a card that waited for it would hide from a sub
+   * before the substituted session; a card that waited for it would hide from a sub
    * the afternoon they had agreed to take.
    */
-  coveredDate: string | null;
+  substitutionDate: string | null;
   /** Total number of groups in the product (every `product_groups` row). */
   groupCount: number;
   /** Active participations summed across every group in the product. */
@@ -108,10 +108,10 @@ export class AssignmentsService {
    *
    * **`groupId` names which group of the product is "mine" (00272).** Without
    * one the answer is the caller's assignment group, as it always was; with one
-   * they are assigned to or covering, that group is. A sub has no assignment
-   * row to resolve a group from, and a gedu covering a *sibling* group of a
+   * they are assigned to or substituting on, that group is. A sub has no assignment
+   * row to resolve a group from, and a gedu substituting a *sibling* group of a
    * product they already teach would otherwise be sent to their own group's
-   * workspace — so the cover card's link carries the group, and this is what it
+   * workspace — so the substitution card's link carries the group, and this is what it
    * carries it to.
    */
   async getAssignedProductDetail(
@@ -153,7 +153,7 @@ function toMyAssignedProductSessionRow(
     },
     groupId: row.group_id,
     kind: row.kind,
-    coveredDate: row.covered_date,
+    substitutionDate: row.substitution_date,
     groupCount: row.group_count,
     participantCount: row.participant_count,
     slots: row.schedule_slots.map((s) => ({

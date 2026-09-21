@@ -507,7 +507,7 @@ describe("chat RPCs", () => {
 
     it("admits somebody who is in the channel only because they sent", async () => {
       // The third clause of the roster, and what it buys: an admin dropping in,
-      // or a covering gedu outside the assignment, becomes nameable and
+      // or a substituting gedu outside the assignment, becomes nameable and
       // mentionable the moment they speak — and a departed member's name keeps
       // rendering on the words they left behind.
       expect(initialRoster.map((entry) => entry.id)).not.toContain(

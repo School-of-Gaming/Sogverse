@@ -5,7 +5,7 @@ import messages from "@/../messages/en.json";
 import { SessionStaffingEditor } from "@/components/admin/products/session-staffing-editor";
 import {
   deriveSessionStaffing,
-  type CoverRequestInput,
+  type SubstitutionRequestInput,
   type StaffingAssignment,
 } from "@/lib/session-staffing";
 import type { UserListEntry } from "@/services/users";
@@ -18,7 +18,7 @@ import type { UserListEntry } from "@/services/users";
  * The editor is the one surface that seats a sub with no offer behind it, and
  * the three writes it makes are the whole of what an admin may do to a
  * session's staffing. What is worth holding still here is not the markup but
- * the **arguments**: a set-cover that named the wrong seat, or a clear that
+ * the **arguments**: a set-substitution that named the wrong seat, or a clear that
  * named the wrong request, is a write nothing downstream can tell from a
  * correct one.
  *
@@ -28,7 +28,7 @@ import type { UserListEntry } from "@/services/users";
  * - **The first step exists only where there is a question.** One expected gedu
  *   is not a choice, so the dialog goes straight to the picker.
  * - **The picker's refusals are the caller's**, and they are two: the gedu
- *   being covered, and anybody else already due at that session. Seating one of
+ *   being substituted, and anybody else already due at that session. Seating one of
  *   the latter would collapse two seats onto one person.
  */
 
@@ -93,7 +93,7 @@ const pickerCopy = messages.admin.products.geduPicker;
 
 function staffingOf(
   gedus: readonly StaffingAssignment[],
-  requests: readonly CoverRequestInput[] = [],
+  requests: readonly SubstitutionRequestInput[] = [],
 ) {
   return deriveSessionStaffing({ gedus, requests, sessionDate: SESSION_DATE });
 }
@@ -109,14 +109,14 @@ const TWO_SEATS: readonly StaffingAssignment[] = [
 function renderEditor({
   gedus,
   requests = [],
-  onSetCover = vi.fn(() => Promise.resolve()),
-  onClearCover = vi.fn(() => Promise.resolve()),
+  onSetSubstitution = vi.fn(() => Promise.resolve()),
+  onClearSubstitution = vi.fn(() => Promise.resolve()),
   onWithdrawRequest = vi.fn(() => Promise.resolve()),
 }: {
   gedus: readonly StaffingAssignment[];
-  requests?: readonly CoverRequestInput[];
-  onSetCover?: ReturnType<typeof vi.fn>;
-  onClearCover?: ReturnType<typeof vi.fn>;
+  requests?: readonly SubstitutionRequestInput[];
+  onSetSubstitution?: ReturnType<typeof vi.fn>;
+  onClearSubstitution?: ReturnType<typeof vi.fn>;
   onWithdrawRequest?: ReturnType<typeof vi.fn>;
 }) {
   const view = render(
@@ -124,13 +124,13 @@ function renderEditor({
       <SessionStaffingEditor
         staffing={staffingOf(gedus, requests)}
         sessionDate={SESSION_DATE}
-        onSetCover={onSetCover}
-        onClearCover={onClearCover}
+        onSetSubstitution={onSetSubstitution}
+        onClearSubstitution={onClearSubstitution}
         onWithdrawRequest={onWithdrawRequest}
       />
     </NextIntlClientProvider>,
   );
-  return { ...view, onSetCover, onClearCover, onWithdrawRequest };
+  return { ...view, onSetSubstitution, onClearSubstitution, onWithdrawRequest };
 }
 
 function button(name: string | RegExp) {
@@ -151,7 +151,7 @@ function isDisabled(element: HTMLElement): boolean {
 
 describe("the admin session staffing editor", () => {
   it("goes straight to the picker when only one gedu is expected", async () => {
-    const { onSetCover } = renderEditor({ gedus: ONE_PRIMARY });
+    const { onSetSubstitution } = renderEditor({ gedus: ONE_PRIMARY });
 
     fireEvent.click(button(copy.setSub));
 
@@ -163,15 +163,15 @@ describe("the admin session staffing editor", () => {
       fireEvent.click(button(copy.confirmAction));
     });
 
-    expect(onSetCover).toHaveBeenCalledTimes(1);
-    expect(onSetCover).toHaveBeenCalledWith({
+    expect(onSetSubstitution).toHaveBeenCalledTimes(1);
+    expect(onSetSubstitution).toHaveBeenCalledWith({
       absentGeduId: SANNA,
       subGeduId: PETRA,
     });
   });
 
   it("asks which gedu is away when more than one is expected", async () => {
-    const { onSetCover } = renderEditor({ gedus: TWO_SEATS });
+    const { onSetSubstitution } = renderEditor({ gedus: TWO_SEATS });
 
     fireEvent.click(button(copy.setSub));
     expect(screen.getByText(copy.absentStepTitle)).not.toBeNull();
@@ -186,7 +186,7 @@ describe("the admin session staffing editor", () => {
       fireEvent.click(button(copy.confirmAction));
     });
 
-    expect(onSetCover).toHaveBeenCalledWith({
+    expect(onSetSubstitution).toHaveBeenCalledWith({
       absentGeduId: PETRA,
       subGeduId: JOONAS,
     });
@@ -212,16 +212,16 @@ describe("the admin session staffing editor", () => {
     expect(isDisabled(joonas)).toBe(false);
   });
 
-  it("refuses the sub already filling a covered request, as one more expected gedu", () => {
+  it("refuses the sub already filling a substituted request, as one more expected gedu", () => {
     // Petra is nobody’s assignment here — she is on this session only because
-    // she is covering Sanna — and the picker still has to refuse her: seating
+    // she is substituting Sanna — and the picker still has to refuse her: seating
     // her as somebody else’s sub would collapse two seats onto one person.
     // Nothing in the picker’s caller says so specially, and nothing needs to:
-    // the derivation puts a covered request’s sub into `expected`, which is the
+    // the derivation puts a substituted request’s sub into `expected`, which is the
     // set the refusal is built from. This case is what keeps that true.
     renderEditor({
       gedus: TWO_SEATS,
-      requests: [coveredRequest(SANNA, "Sanna", JOONAS, "Joonas")],
+      requests: [substitutedRequest(SANNA, "Sanna", JOONAS, "Joonas")],
     });
 
     fireEvent.click(button(copy.setSub));
@@ -237,7 +237,7 @@ describe("the admin session staffing editor", () => {
   });
 
   it("carries an optional reason and note into the write", async () => {
-    const { onSetCover } = renderEditor({ gedus: ONE_PRIMARY });
+    const { onSetSubstitution } = renderEditor({ gedus: ONE_PRIMARY });
 
     fireEvent.click(button(copy.setSub));
     fireEvent.click(pickerRow(PETRA));
@@ -252,7 +252,7 @@ describe("the admin session staffing editor", () => {
       fireEvent.click(button(copy.confirmAction));
     });
 
-    expect(onSetCover).toHaveBeenCalledWith({
+    expect(onSetSubstitution).toHaveBeenCalledWith({
       absentGeduId: SANNA,
       subGeduId: PETRA,
       reason: "sick",
@@ -263,8 +263,8 @@ describe("the admin session staffing editor", () => {
   it("offers a seat that has already filed, and says the set approves its request", async () => {
     // Sanna has filed, so the derivation no longer expects her — and her seat
     // is still the one an admin answers. The database agrees: it demands the
-    // absent gedu be expected only where there is no request to cover in place.
-    const { onSetCover } = renderEditor({
+    // absent gedu be expected only where there is no substitution request in place.
+    const { onSetSubstitution } = renderEditor({
       gedus: ONE_PRIMARY,
       requests: [openRequest(SANNA, "Sanna")],
     });
@@ -276,19 +276,19 @@ describe("the admin session staffing editor", () => {
     await act(async () => {
       fireEvent.click(button(copy.confirmAction));
     });
-    expect(onSetCover).toHaveBeenCalledWith({
+    expect(onSetSubstitution).toHaveBeenCalledWith({
       absentGeduId: SANNA,
       subGeduId: PETRA,
     });
   });
 
-  it("says a set on a covered seat replaces the sub filling it", () => {
+  it("says a set on a substituted seat replaces the sub filling it", () => {
     renderEditor({
       gedus: ONE_PRIMARY,
-      requests: [coveredRequest(SANNA, "Sanna", PETRA, "Petra")],
+      requests: [substitutedRequest(SANNA, "Sanna", PETRA, "Petra")],
     });
 
-    // Two seats: Sanna's, which is covered, and Petra's, who now holds it — so
+    // Two seats: Sanna's, which is substituted, and Petra's, who now holds it — so
     // the walk starts at the question.
     fireEvent.click(button(copy.setSub));
     fireEvent.click(screen.getByRole("radio", { name: /Sanna/ }));
@@ -303,8 +303,8 @@ describe("the admin session staffing editor", () => {
   });
 
   it("clears one request's sub through the hook, by request id", async () => {
-    const request = coveredRequest(SANNA, "Sanna", JOONAS, "Joonas");
-    const { onClearCover } = renderEditor({
+    const request = substitutedRequest(SANNA, "Sanna", JOONAS, "Joonas");
+    const { onClearSubstitution } = renderEditor({
       gedus: TWO_SEATS,
       requests: [request],
     });
@@ -314,7 +314,7 @@ describe("the admin session staffing editor", () => {
       fireEvent.click(button(copy.clearConfirm));
     });
 
-    expect(onClearCover).toHaveBeenCalledWith(request.id);
+    expect(onClearSubstitution).toHaveBeenCalledWith(request.id);
   });
 
   it("withdraws one request through the hook, by request id", async () => {
@@ -348,13 +348,13 @@ describe("the admin session staffing editor", () => {
 
   it("keeps the confirm button disabled while the write is in the air", async () => {
     let settle: () => void = () => {};
-    const onSetCover = vi.fn(
+    const onSetSubstitution = vi.fn(
       () =>
         new Promise<void>((resolve) => {
           settle = resolve;
         }),
     );
-    renderEditor({ gedus: ONE_PRIMARY, onSetCover });
+    renderEditor({ gedus: ONE_PRIMARY, onSetSubstitution });
 
     fireEvent.click(button(copy.setSub));
     fireEvent.click(pickerRow(PETRA));
@@ -367,8 +367,8 @@ describe("the admin session staffing editor", () => {
   });
 
   it("hands the control back and names the failure when the write is refused", async () => {
-    const onSetCover = vi.fn(() => Promise.reject(new Error("nope")));
-    renderEditor({ gedus: ONE_PRIMARY, onSetCover });
+    const onSetSubstitution = vi.fn(() => Promise.reject(new Error("nope")));
+    renderEditor({ gedus: ONE_PRIMARY, onSetSubstitution });
 
     fireEvent.click(button(copy.setSub));
     fireEvent.click(pickerRow(PETRA));
@@ -382,7 +382,7 @@ describe("the admin session staffing editor", () => {
 
   it("keeps the clear confirm disabled while that write is in the air", async () => {
     let settle: () => void = () => {};
-    const onClearCover = vi.fn(
+    const onClearSubstitution = vi.fn(
       () =>
         new Promise<void>((resolve) => {
           settle = resolve;
@@ -390,8 +390,8 @@ describe("the admin session staffing editor", () => {
     );
     renderEditor({
       gedus: TWO_SEATS,
-      requests: [coveredRequest(SANNA, "Sanna", JOONAS, "Joonas")],
-      onClearCover,
+      requests: [substitutedRequest(SANNA, "Sanna", JOONAS, "Joonas")],
+      onClearSubstitution,
     });
 
     fireEvent.click(button(copy.clearSub));
@@ -426,28 +426,28 @@ describe("the admin session staffing editor", () => {
 });
 
 /** An open request somebody filed on this session. */
-function openRequest(id: string, firstName: string): CoverRequestInput {
+function openRequest(id: string, firstName: string): SubstitutionRequestInput {
   return {
     id: `request-${id}`,
     sessionDate: SESSION_DATE,
     requestedBy: { id, firstName },
     role: "primary",
     status: "open",
-    coveredBy: null,
+    substituteId: null,
     offerCount: null,
   };
 }
 
 /** The same request, answered. */
-function coveredRequest(
+function substitutedRequest(
   id: string,
   firstName: string,
   subId: string,
   subName: string,
-): CoverRequestInput {
+): SubstitutionRequestInput {
   return {
     ...openRequest(id, firstName),
-    status: "covered",
-    coveredBy: { id: subId, firstName: subName },
+    status: "substituted",
+    substituteId: { id: subId, firstName: subName },
   };
 }

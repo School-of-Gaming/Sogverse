@@ -35,9 +35,9 @@ export async function GeduProductWorkspace({
    * The URL's `?groupId=`, exactly as Next hands it over — a string, a repeated
    * param's array, or nothing.
    *
-   * **A cover card's link is what carries it.** A gedu covering one afternoon
+   * **A substitution card's link is what carries it.** A gedu substituting one afternoon
    * of a group they are not assigned to has no assignment row to resolve a
-   * group from, and one covering a *sibling* group of a product they already
+   * group from, and one substituting a *sibling* group of a product they already
    * teach would otherwise be sent to their own group's workspace — the right
    * product, the wrong roster.
    *
@@ -45,7 +45,7 @@ export async function GeduProductWorkspace({
    * copy of the rule: anything that is not a single uuid is **ignored** rather
    * than rejected, because the path is what has to resolve and the param is a
    * lens over a page that exists. A uuid naming a group the caller can reach
-   * neither by assignment nor by a live cover is refused by the RPC, which
+   * neither by assignment nor by a live substitution is refused by the RPC, which
    * renders the ordinary not-yours state.
    */
   groupIdParam?: string | string[];

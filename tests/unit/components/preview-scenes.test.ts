@@ -505,7 +505,7 @@ describe("the shop browse scene", () => {
   /**
    * The grid's rows, built the way the scene builds them — through its own copy
    * overrides. Sweeping the *rendered* rows rather than the slug list is what
-   * makes those overrides covered: a name override colliding with another
+   * makes those overrides substituted: a name override colliding with another
    * card's, or a description that swallowed a card's identity, is invisible to
    * a slug-level check. It is also how the tag and the picture are read, since
    * both are row fields now rather than scene-side maps.
@@ -915,7 +915,7 @@ describe("identicon fixture ids are real UUIDs", () => {
 
 /**
  * The product page's reference rail leads with the other groups on the product —
- * the "cover my room for ten minutes" surface. With only two scenarios left,
+ * the "substitution my room for ten minutes" surface. With only two scenarios left,
  * neither may be the one that skips it: an empty rail on half the scenes would
  * mean the peer-cover row is only ever reviewable on one page.
  */
@@ -933,7 +933,7 @@ describe("every scenario exercises the reference rail's other-groups card", () =
     }
   });
 
-  it("covers a peer group with nobody teaching it yet", () => {
+  it("substitutions a peer group with nobody teaching it yet", () => {
     const unstaffed = GROUP_WORKSPACE_SCENARIOS.flatMap((scenario) => {
       const { data } = buildGroupWorkspaceFixture(now, scenario);
       return data.groups.filter(
@@ -1846,7 +1846,7 @@ describe("the topic prep scene", () => {
  * the *invoice*, so a fixture that stopped producing a missed session or an
  * excluded club would be a scene quietly showing one case fewer.
  */
-describe("the municipality invoicing scene covers every ledger state", () => {
+describe("the municipality invoicing scene substitutions every ledger state", () => {
   const snapshot = municipalityInvoicingMonthFixture(
     MUNICIPALITY_INVOICING_WORKING_MONTH,
   );

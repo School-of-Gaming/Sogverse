@@ -15,7 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { StatusLine } from "@/components/ui/alert";
 import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
-import type { CoverPoolRow } from "@/lib/gedu-cover-pool";
+import type { SubstitutionPoolRow } from "@/lib/gedu-substitution-pool";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { useTimezone } from "@/providers";
 import {
@@ -26,8 +26,8 @@ import {
   formatTimeRange,
 } from "@/lib/utils";
 
-export interface GeduCoverPoolSectionViewProps {
-  rows: readonly CoverPoolRow[];
+export interface GeduSubstitutionPoolSectionViewProps {
+  rows: readonly SubstitutionPoolRow[];
   /**
    * Which request's offer is in the air, or `null`. One id rather than a set:
    * every button on the section goes disabled while one write is running, so a
@@ -36,14 +36,14 @@ export interface GeduCoverPoolSectionViewProps {
   committingRequestId: string | null;
   /** Why the last offer or withdrawal was refused, and which row it was on. */
   error: { requestId: string; message: string } | null;
-  /** "I can cover this." */
+  /** "Offer to substitute." */
   onOffer: (requestId: string) => void;
   /** Take the offer back — keyed on the request, as this row knows it. */
   onWithdraw: (requestId: string) => void;
 }
 
 /**
- * **Sessions needing cover** — every open request this gedu could actually take,
+ * **Sessions needing a substitute** — every open request this gedu could actually take,
  * and the one action on each.
  *
  * A list rather than the card grid above it, and for a reason the grid cannot
@@ -68,17 +68,17 @@ export interface GeduCoverPoolSectionViewProps {
  * nothing here has been told that nothing is outstanding — which is a real
  * answer and the one they came for. The section is withheld outright only for
  * an *uncertified* gedu, and that is the container's decision rather than this
- * component's: an uncertified account may cover nothing, so the honest answer
+ * component's: an uncertified account may substitute for nothing, so the honest answer
  * is not to ask the question at all.
  */
-export function GeduCoverPoolSectionView({
+export function GeduSubstitutionPoolSectionView({
   rows,
   committingRequestId,
   error,
   onOffer,
   onWithdraw,
-}: GeduCoverPoolSectionViewProps) {
-  const t = useTranslations("gedu.cover");
+}: GeduSubstitutionPoolSectionViewProps) {
+  const t = useTranslations("gedu.substitution");
 
   if (rows.length === 0) {
     return (
@@ -95,7 +95,7 @@ export function GeduCoverPoolSectionView({
     <Card>
       <CardContent className="divide-y divide-border p-0">
         {rows.map((row) => (
-          <CoverPoolRowView
+          <SubstitutionPoolRowView
             key={row.requestId}
             row={row}
             committing={committingRequestId === row.requestId}
@@ -114,7 +114,7 @@ export function GeduCoverPoolSectionView({
   );
 }
 
-function CoverPoolRowView({
+function SubstitutionPoolRowView({
   row,
   committing,
   disabled,
@@ -122,14 +122,14 @@ function CoverPoolRowView({
   onOffer,
   onWithdraw,
 }: {
-  row: CoverPoolRow;
+  row: SubstitutionPoolRow;
   committing: boolean;
   disabled: boolean;
   error: string | null;
   onOffer: () => void;
   onWithdraw: () => void;
 }) {
-  const t = useTranslations("gedu.cover");
+  const t = useTranslations("gedu.substitution");
   const p = useTranslations("productType");
   const locale = useLocale();
   const timeZone = useTimezone();
@@ -185,7 +185,7 @@ function CoverPoolRowView({
           )}
         </p>
         {/* The facts a volunteer weighs rather than reads in order: the topic,
-            the language it is delivered in, the role being covered and what
+            the language it is delivered in, the role being substituted and what
             that role pays. A chip run rather than four more lines, because they
             are a set of small independent facts and a column of them would bury
             the date above. */}

@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import type { AdminDashboardData } from "./admin-dashboard-data";
-import { CoverRequestsPanel } from "./cover-requests-panel";
+import { SubstitutionRequestsPanel } from "./substitution-requests-panel";
 import { GeduCertificationPanel } from "./gedu-certification-panel";
 import { NeedsAttentionPanel } from "./needs-attention-panel";
 import { ProductTypeKeyRail } from "./product-type-key-rail";
@@ -65,16 +65,16 @@ import { UsersStrip } from "./users-strip";
 export function AdminDashboardPageBody({
   data,
   onCertifyGedu,
-  onApproveCoverOffer,
+  onApproveSubstitutionOffer,
 }: {
   data: AdminDashboardData;
   /** Certify one gedu. Resolves once the write landed; rejects if it did not. */
   onCertifyGedu: (geduId: string) => Promise<void>;
   /**
-   * Seat the gedu behind one cover offer. Resolves once the write landed *and*
+   * Seat the gedu behind one substitution offer. Resolves once the write landed *and*
    * the refetched snapshot has dropped the request; rejects if it did not.
    */
-  onApproveCoverOffer: (offerId: string) => Promise<void>;
+  onApproveSubstitutionOffer: (offerId: string) => Promise<void>;
 }) {
   const t = useTranslations("admin.dashboard");
 
@@ -114,9 +114,9 @@ export function AdminDashboardPageBody({
               waiting on somebody who is not in this building, and this one is
               not. Below the product queue because a child with nobody teaching
               them outranks a session with a volunteer already standing by. */}
-          <CoverRequestsPanel
-            requests={data.coverRequests}
-            onApproveOffer={onApproveCoverOffer}
+          <SubstitutionRequestsPanel
+            requests={data.substitutionRequests}
+            onApproveOffer={onApproveSubstitutionOffer}
           />
 
           {/* Directly under the queue, because the two are read together — what

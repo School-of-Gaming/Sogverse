@@ -13,7 +13,7 @@ import {
   entryOwesCreations,
   isExpectedOnEntry,
   type CreationsObligation,
-  type SessionCoverRequestDraft,
+  type SessionSubstitutionRequestDraft,
   type SessionEntryDraft,
   type SessionFeedEntry,
   type SessionFeedGamer,
@@ -337,12 +337,12 @@ interface GroupWorkspaceProps {
    * a preview scene's. It is one half of the pair below; see
    * {@link renderStaffingEditor}.
    */
-  onRequestCover?: (
+  onRequestSubstitution?: (
     entry: SessionFeedEntry,
-    draft: SessionCoverRequestDraft,
+    draft: SessionSubstitutionRequestDraft,
   ) => void | Promise<void>;
   /** Take the viewer's own open request back. Awaited on the same terms. */
-  onWithdrawCoverRequest?: (requestId: string) => void | Promise<void>;
+  onWithdrawSubstitutionRequest?: (requestId: string) => void | Promise<void>;
   /**
    * The staffing editor to draw on each session card, or nothing.
    *
@@ -470,8 +470,8 @@ export function GroupWorkspace({
   onSendReport,
   onAddPhoto,
   onRemovePhoto,
-  onRequestCover,
-  onWithdrawCoverRequest,
+  onRequestSubstitution,
+  onWithdrawSubstitutionRequest,
   renderStaffingEditor,
   onSaveGameUsername,
   gameStatuses,
@@ -809,8 +809,8 @@ export function GroupWorkspace({
               onAddPhoto={onAddPhoto}
               onRemovePhoto={onRemovePhoto}
               photoConsents={photoConsents}
-              onRequestCover={onRequestCover}
-              onWithdrawCoverRequest={onWithdrawCoverRequest}
+              onRequestSubstitution={onRequestSubstitution}
+              onWithdrawSubstitutionRequest={onWithdrawSubstitutionRequest}
               renderStaffingEditor={renderStaffingEditor}
             />
           ) : (

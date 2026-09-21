@@ -38,7 +38,7 @@ import { SessionRecordEditor } from "./SessionRecordEditor";
 import { SessionReportSend } from "./SessionReportSend";
 import {
   SessionStaffingRegion,
-  type SessionCoverRequestDraft,
+  type SessionSubstitutionRequestDraft,
 } from "./SessionStaffingRegion";
 import { StaffNoteBlock } from "./StaffNoteBlock";
 import type {
@@ -153,15 +153,15 @@ interface SessionFeedItemProps {
   /**
    * File "I can't make this session" for **this** session — bound to the entry
    * by the feed, so the card never has to turn its own id back into the (group,
-   * date) pair a cover request is keyed by.
+   * date) pair a substitution request is keyed by.
    *
    * Absent on a surface that is not a gedu looking at their own session, which
    * is what withholds the action; see the staffing region's own note on why the
    * surface decides by what it supplies.
    */
-  onRequestCover?: (draft: SessionCoverRequestDraft) => void | Promise<void>;
+  onRequestSubstitution?: (draft: SessionSubstitutionRequestDraft) => void | Promise<void>;
   /** Take the viewer's own open request back. Awaited, like the save. */
-  onWithdrawCoverRequest?: (requestId: string) => void | Promise<void>;
+  onWithdrawSubstitutionRequest?: (requestId: string) => void | Promise<void>;
   /**
    * The staffing editor this surface supplies for this entry, or nothing —
    * rendered in the same region as the gedu's own action, because it is the
@@ -305,8 +305,8 @@ export function SessionFeedItem({
   photoConsents,
   creations,
   registerEditButton,
-  onRequestCover,
-  onWithdrawCoverRequest,
+  onRequestSubstitution,
+  onWithdrawSubstitutionRequest,
   staffingEditor = null,
   onToggleEdit,
   onCancelEdit,
@@ -403,7 +403,7 @@ export function SessionFeedItem({
    * is open or not: staffing is a fact about the session rather than part of
    * anybody's draft, and nothing in it is committed by the editor's Save.
    *
-   * `canRequestCover` is the entry's kind and nothing else. The action is for a
+   * `canRequestSubstitution` is the entry's kind and nothing else. The action is for a
    * session dated **today or later in the product's zone**, and a `future`
    * entry is exactly that by construction: the kind flips at the session's
    * *end*, so a future entry has not finished, and a session that has not
@@ -414,9 +414,9 @@ export function SessionFeedItem({
   const staffingRegion = (
     <SessionStaffingRegion
       staffing={entry.staffing}
-      canRequestCover={entry.kind === "future"}
-      onRequestCover={onRequestCover}
-      onWithdrawCoverRequest={onWithdrawCoverRequest}
+      canRequestSubstitution={entry.kind === "future"}
+      onRequestSubstitution={onRequestSubstitution}
+      onWithdrawSubstitutionRequest={onWithdrawSubstitutionRequest}
       staffingEditor={staffingEditor}
     />
   );
@@ -470,7 +470,7 @@ export function SessionFeedItem({
             ordinary one it draws nothing at all: the line renders only on a
             date with a request, and no gedu can file one on a date this far in
             the past. What it is here for is the admin path, which may record an
-            off-platform cover on any date the schedule projects. */}
+            off-platform substitution on any date the schedule projects. */}
         {staffingRegion}
         {recordEditor}
       </div>
