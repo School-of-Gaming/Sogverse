@@ -28,7 +28,7 @@ import type {
   SessionStaffing,
 } from "@/lib/session-staffing";
 import { cn, formatDateOnly } from "@/lib/utils";
-import { Constants, type CoverReason, type Profile } from "@/types";
+import { Constants, type CoverReason } from "@/types";
 import {
   GeduPickerSheet,
   type GeduPickerUnavailability,
@@ -396,7 +396,7 @@ function SetSubFlowOverlays({
         title={t("pickerTitle")}
         description={t("pickerDescription", { name: absent?.firstName ?? "" })}
         unavailable={buildUnavailability(staffing, absent?.id ?? null)}
-        onSelect={(gedu: Profile) =>
+        onSelect={(gedu) =>
           setFlow({
             step: "confirm",
             absent,

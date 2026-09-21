@@ -8,7 +8,7 @@ import {
   type CoverRequestInput,
   type StaffingAssignment,
 } from "@/lib/session-staffing";
-import type { Profile } from "@/types";
+import type { UserListEntry } from "@/services/users";
 
 /**
  * ============================================================================
@@ -45,7 +45,7 @@ const NAMES: Record<string, string> = {
   [JOONAS]: "Joonas",
 };
 
-function profile(id: string): Profile {
+function candidate(id: string): UserListEntry {
   return {
     id,
     created_at: "2024-01-01T00:00:00.000Z",
@@ -63,26 +63,28 @@ function profile(id: string): Profile {
     utm_campaign: null,
     utm_medium: null,
     utm_source: null,
+    certified: true,
+    criminal_record_check_passed: true,
+    linked_gamers: [],
   };
 }
 
 /** Every gedu the picker may offer, and all of them certified. */
-const CANDIDATES = [profile(SANNA), profile(PETRA), profile(JOONAS)];
+const CANDIDATES = [candidate(SANNA), candidate(PETRA), candidate(JOONAS)];
 
+// The picker reads one page of the shared people list, and certification is a
+// column of it — so this one mock is the whole of what it asks for. Nothing left
+// to page through, so no sentinel is mounted and jsdom needs no
+// `IntersectionObserver`.
 vi.mock("@/services/users", () => ({
-  useUsersByRole: () => ({ data: CANDIDATES }),
-}));
-
-vi.mock("@/services/gedu", () => ({
-  useGeduCertificationMap: () => ({
-    map: new Map(
-      CANDIDATES.map((candidate) => [
-        candidate.id,
-        { user_id: candidate.id, certified: true },
-      ]),
-    ),
-    isError: false,
+  useUserList: () => ({
+    data: { pages: [{ rows: CANDIDATES, total: CANDIDATES.length }] },
     isPending: false,
+    isPlaceholderData: false,
+    hasNextPage: false,
+    isFetching: false,
+    isFetchingNextPage: false,
+    fetchNextPage: () => Promise.resolve(),
   }),
 }));
 

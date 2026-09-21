@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { GeduPickerSheet } from "@/components/admin/products/gedu-picker-sheet";
-import type { Profile, UserRole } from "@/types";
+import type { UserListEntry } from "@/services/users";
 
 /**
  * Who the gedu picker will not let an admin take, and — the part that matters —
@@ -17,8 +17,8 @@ import type { Profile, UserRole } from "@/types";
  *
  * Two refusals stay the sheet's own and are checked here alongside: the person
  * already filling the slot, and an uncertified account — which it can decide
- * because it holds the certification read, and which fails closed when that
- * read does not come back.
+ * off the row it is drawing, because certification is a column of the shared
+ * people read rather than a lookup of its own.
  *
  * Translations echo their keys, so nothing depends on English wording.
  */
@@ -43,14 +43,14 @@ const IDS = {
   uncertified: "7b3e9c22-1a4d-4b6f-8e2c-0d5a6f7b8c93",
 } as const;
 
-function profile(id: string, firstName: string): Profile {
+function gedu(id: string, firstName: string): UserListEntry {
   return {
     id,
     first_name: firstName,
     last_name: "Virtanen",
     email: `${firstName.toLowerCase()}@example.test`,
     email_verified_at: null,
-    role: "gedu" as UserRole,
+    role: "gedu",
     phone: null,
     currency: null,
     locale: null,
@@ -61,29 +61,33 @@ function profile(id: string, firstName: string): Profile {
     spoken_languages: [],
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
+    certified: id !== IDS.uncertified,
+    criminal_record_check_passed: true,
+    linked_gamers: [],
   };
 }
 
 const GEDUS = [
-  profile(IDS.free, "Aino"),
-  profile(IDS.assigned, "Eeli"),
-  profile(IDS.expected, "Saana"),
-  profile(IDS.absent, "Milo"),
-  profile(IDS.uncertified, "Onni"),
+  gedu(IDS.free, "Aino"),
+  gedu(IDS.assigned, "Eeli"),
+  gedu(IDS.expected, "Saana"),
+  gedu(IDS.absent, "Milo"),
+  gedu(IDS.uncertified, "Onni"),
 ];
 
+// One page of the shared people read is the whole fixture: certification rides
+// on the row, so there is no second lookup to stand in for. `hasNextPage: false`
+// keeps the sentinel unmounted, which is what leaves jsdom's missing
+// `IntersectionObserver` out of these cases — paging has its own suite.
 vi.mock("@/services/users", () => ({
-  useUsersByRole: () => ({ data: GEDUS, isLoading: false }),
-}));
-
-vi.mock("@/services/gedu", () => ({
-  useGeduCertificationMap: () => ({
-    map: new Map(
-      GEDUS.filter((gedu) => gedu.id !== IDS.uncertified).map((gedu) => [
-        gedu.id,
-        { certified: true },
-      ]),
-    ),
+  useUserList: () => ({
+    data: { pages: [{ rows: GEDUS, total: GEDUS.length }] },
+    isPending: false,
+    isPlaceholderData: false,
+    hasNextPage: false,
+    isFetching: false,
+    isFetchingNextPage: false,
+    fetchNextPage: () => Promise.resolve(),
   }),
 }));
 
