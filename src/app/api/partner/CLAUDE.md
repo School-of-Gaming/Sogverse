@@ -50,12 +50,18 @@ answer that is quietly wrong.
 module under `src/services/partner/`** — the query schema a route parses with, and the
 response schema it validates what it returns against before answering. A schema is never
 relaxed to let a read through: when a record fails its response schema, the read is what
-is wrong. Enum values come from the generated `Constants` wherever the vocabulary is the
-database's — the product states are exactly that — and the tuples that are the API's own
-invention say so in a comment. A tuple narrowing a database enum to the states the API
-describes, such as the enrolment states without `reserving`, is the API's own too: it is
-written out with a `satisfies` against the generated type, and a record whose value falls
-outside it throws rather than being mapped onto a value the page states.
+is wrong. Enum values come from the generated `Constants` wherever the vocabulary is
+genuinely the database's, and the tuples that are the API's own invention say so in a
+comment. A tuple narrowing a database enum to the states the API describes — the enrolment
+states without `reserving`, and the product states — is the API's own too, and stays
+written out even where it happens to name every value the enum holds: what the partner
+reads changes when somebody decides to change it, never because a migration widened an
+internal enum underneath it. Such a tuple is written with a `satisfies` against the
+generated type, so a rename fails to compile, and a record whose value falls outside it
+throws rather than being mapped onto a value the page states. The documentation page
+renders such a tuple rather than restating its values, and a test holds the rendered row
+and the tuple together — so widening the contract is one edit, in one place, and a value
+left out of it reaches neither the page nor the wire.
 
 **Rule: an empty answer is a well-formed answer.** A record-returning resource answers
 `{ "data": [], "next_cursor": null }` — a last page, not an error — and an aggregate

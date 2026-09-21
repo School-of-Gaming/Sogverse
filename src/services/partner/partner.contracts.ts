@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Constants } from "@/types";
-import type { ParticipationStatus } from "@/types";
+import type { EffectiveProductStatusDB, ParticipationStatus } from "@/types";
 
 /**
  * The wire contracts of the Lynx Educate partner API — one query schema and one
@@ -15,11 +15,14 @@ import type { ParticipationStatus } from "@/types";
  *
  * The partner is an outside caller with its own client, so the feature has no
  * service class and no query hooks: the reads behind the routes are server-only
- * modules beside this file, and nothing here is imported by the app's UI.
+ * modules beside this file. What the app's own pages take from here is the
+ * published vocabulary and nothing else, so the documentation page renders the
+ * values the schemas accept rather than a second copy of them.
  *
  * Enum values come from the generated `Constants` wherever the vocabulary is
- * the database's. Where it is the API's own — an invented word the database
- * does not hold — the tuple is written out and says so.
+ * genuinely the database's. Where it is the API's own — an invented word the
+ * database does not hold, or a tuple narrowing a database enum to the states
+ * the API describes — it is written out and says so.
  */
 
 // ---------------------------------------------------------------------------
@@ -75,12 +78,24 @@ export const ENROLMENT_STATUS = [
 ] as const satisfies readonly ParticipationStatus[];
 
 /**
- * The product states the API reports, generated: `effective_product_status`.
- * The lifecycle a product moves through before, from and after its dates, and
- * the API describes all of it — nothing is stored, so every value is one a
+ * The product states the API reports: the lifecycle a product moves through
+ * before, from and after its dates. Nothing is stored, so every value is one a
  * reader derives from the two dates.
+ *
+ * The tuple is the API's own rather than the database enum it narrows, because
+ * a published contract changes when somebody decides to change it and never as
+ * a side effect of an internal migration — a state added to the enum reaches
+ * the partner only by being written here, which is a decision somebody takes.
+ * The `satisfies` is what keeps the narrowing honest: a rename in the generated
+ * enum fails to compile rather than silently leaving the API describing a state
+ * that no longer exists, and a product deriving a state outside the tuple
+ * throws rather than being published under a value the page never states.
  */
-export const PRODUCT_STATUS = Constants.public.Enums.effective_product_status;
+export const PRODUCT_STATUS = [
+  "pending",
+  "running",
+  "completed",
+] as const satisfies readonly EffectiveProductStatusDB[];
 
 /** The product kinds, generated: `product_type`. */
 const PRODUCT_TYPE = Constants.public.Enums.product_type;
@@ -325,7 +340,7 @@ const partnerProduct = z.object({
     ),
   location: place.nullable(),
   status: z.enum(PRODUCT_STATUS),
-  start_date: isoDate.nullable(),
+  start_date: isoDate,
   end_date: isoDate.nullable(),
   timezone: z.string(),
   /** Null exactly when the audience admits no gamers, as the database holds it. */
@@ -462,16 +477,19 @@ const partnerResearchRow = z.object({
   roblox_user_id: z.number().int().nullable(),
   country_code: z.string().length(2).nullable(),
   city: z.string().nullable(),
-  /** The child's age in whole years on the start date, as a range. */
-  age: z
-    .object({ min: z.number().int(), max: z.number().int() })
-    .nullable(),
+  /**
+   * The child's age in whole years on the start date, as a range. Always
+   * present: the product names the day it starts, and a seat held by a gamer
+   * with no profile to read a birth date from throws rather than reporting an
+   * age it does not know.
+   */
+  age: z.object({ min: z.number().int(), max: z.number().int() }),
   activity: z.object({
     product_id: uuid,
     name: z.string(),
     type: z.enum(PRODUCT_TYPE),
     delivery: z.enum(DELIVERY),
-    start_date: isoDate.nullable(),
+    start_date: isoDate,
   }),
   published_game_url: z.string().nullable(),
 });

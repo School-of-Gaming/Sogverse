@@ -5,6 +5,7 @@ import { z } from "zod";
 import { readPartnerPage } from "@/lib/api/partner-cursor.server";
 import { chunkKeys, walkPages } from "@/lib/supabase/paging";
 import {
+  PRODUCT_STATUS,
   type PartnerProduct,
   type PartnerProductStatus,
   type PartnerProductsQuery,
@@ -111,7 +112,16 @@ export async function readPartnerProducts(
         if (derived === undefined) {
           throw new Error(`partner products: product ${id} has no effective status`);
         }
-        return derived;
+        // The database may derive a state the published tuple does not name.
+        // Such a record is one the contract cannot describe, so it throws here
+        // rather than reaching the partner under a neighbouring value.
+        const published = PRODUCT_STATUS.find((status) => status === derived);
+        if (published === undefined) {
+          throw new Error(
+            `partner products: product ${id} derives ${derived}, which the API does not describe`,
+          );
+        }
+        return published;
       };
       const kept = rows.filter(
         (row) => query.status === undefined || statusOf(row.id) === query.status,
