@@ -6,7 +6,7 @@ import {
   type Dispatch,
   type SetStateAction,
 } from "react";
-import { Loader2, UserPlus } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +30,10 @@ import type {
 } from "@/lib/session-staffing";
 import { cn, formatDateOnly } from "@/lib/utils";
 import { Constants, type SubstitutionReason } from "@/types";
+import {
+  SessionCardMenu,
+  type SessionCardMenuItem,
+} from "@/components/gedu/session-feed";
 import {
   GeduPickerSheet,
   type GeduPickerUnavailability,
@@ -81,16 +85,20 @@ export interface SessionStaffingEditorProps {
  * today-or-later guard, and a second date test in the browser would only be a
  * second answer free to disagree with it.
  *
- * **It is compact, because it rides a card that is already dense.** One "Set a
- * sub" button for the session, and one small row per live request carrying that
- * request's own two actions. Where a session has no requests and nobody
- * expected, the button is all there is, disabled, with the reason beside it —
- * an admin pressing it would reach a dialog that could not name an absent gedu.
+ * **It is the same `⋯` a gedu's card carries**, and that is the owner's
+ * decision rather than a convenience *(owner, 2026-09)*: one idiom for "what
+ * else can I do with this session", whoever is looking. The visible buttons it
+ * replaces spent a band of every admin card on actions that are rare even for
+ * the office, and the card is shorter for losing them.
  *
- * **The names are restated on the action rows.** The region prints the staffing
- * line on the left of the card and these controls on the right, and the line is
- * a different component's; with two seats out on one date, a bare pair of
- * buttons on the right could not say which request they belonged to.
+ * **The names ride the labels where a session has more than one empty seat.**
+ * The staffing note prints who is away, but a menu row reading "Clear
+ * substitute" on a card with two absent gedus could not say whose, so with more
+ * than one seat every row names its own.
+ *
+ * Where nobody is due and nobody has filed there is no action to offer, so the
+ * menu is absent and the line saying why stands alone — an admin pressing it
+ * would have reached a dialog that could not name an absent gedu.
  */
 export function SessionStaffingEditor({
   staffing,
@@ -105,46 +113,90 @@ export function SessionStaffingEditor({
 
   const seats = absentSeats(staffing);
   const noSeat = seats.length === 0;
+  const openPicker = (seat: AbsentSeat) =>
+    setFlow({ step: "picker", absent: seat, sub: null });
 
-  const startSetSub = () => {
-    // One seat is not a question — the dialog's first step exists only to name
-    // which of several is empty, and with one the answer is already in.
-    setFlow(
-      seats.length === 1
-        ? { step: "picker", absent: seats[0], sub: null }
-        : { step: "absent", absent: null, sub: null },
+  /**
+   * The seats something has actually been filed on — which is what decides
+   * whether a row has to name the person it acts on.
+   *
+   * **It is the requests rather than the seats.** A seated substitute is
+   * themselves expected, so a session with one absence has two seats and would
+   * otherwise name every row on a card with only one thing going on. What a
+   * reader can confuse is two *rows* acting on two different people, and that
+   * is exactly when there is more than one live request.
+   */
+  const live = seats.filter((seat) => seat.request !== null);
+  const named = live.length > 1;
+  /**
+   * The one seat whose substitute the top row would change: where a single
+   * request has been answered, that row says so rather than offering to set a
+   * substitute the session already has.
+   */
+  const onlyAnswered =
+    live.length === 1 && live[0].request?.status === "substituted"
+      ? live[0]
+      : null;
+
+  const items: SessionCardMenuItem[] = [];
+  if (!noSeat) {
+    items.push(
+      onlyAnswered !== null
+        ? {
+            key: "set",
+            label: t("changeSubstitute"),
+            onSelect: () => openPicker(onlyAnswered),
+          }
+        : {
+            key: "set",
+            label: t("setSubstitute"),
+            // One seat is not a question — the flow's first step exists only
+            // to name which of several is empty, and with one it is known.
+            onSelect: () =>
+              setFlow(
+                seats.length === 1
+                  ? { step: "picker", absent: seats[0], sub: null }
+                  : { step: "absent", absent: null, sub: null },
+              ),
+          },
     );
-  };
+  }
+  for (const seat of live) {
+    const request = seat.request;
+    if (request === null) continue;
+    const name = seat.firstName;
+    if (request.status === "substituted") {
+      // Where several seats are out, each needs its own way straight to the
+      // picker; where one is, the row above is already that way in.
+      if (named) {
+        items.push({
+          key: `change:${request.id}`,
+          label: t("changeSubstituteFor", { name }),
+          onSelect: () => openPicker(seat),
+        });
+      }
+      items.push({
+        key: `clear:${request.id}`,
+        label: named ? t("clearSubstituteFor", { name }) : t("clearSubstitute"),
+        onSelect: () => setPending({ kind: "clear", request }),
+      });
+      continue;
+    }
+    items.push({
+      key: `withdraw:${request.id}`,
+      label: named ? t("withdrawRequestFor", { name }) : t("withdrawRequest"),
+      onSelect: () => setPending({ kind: "withdraw", request }),
+    });
+  }
 
   return (
-    <div className="flex min-w-0 flex-col items-end gap-1.5">
-      <div className="flex flex-wrap items-center justify-end gap-x-2 gap-y-1">
-        {noSeat && (
-          <span className="text-xs text-muted-foreground">
-            {t("nobodyExpectedHint")}
-          </span>
-        )}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={noSeat}
-          onClick={startSetSub}
-          className="gap-1.5"
-        >
-          <UserPlus className="h-3.5 w-3.5" aria-hidden />
-          {t("setSub")}
-        </Button>
-      </div>
-
-      {staffing.requests.map((request) => (
-        <RequestActions
-          key={request.id}
-          request={request}
-          onClear={() => setPending({ kind: "clear", request })}
-          onWithdraw={() => setPending({ kind: "withdraw", request })}
-        />
-      ))}
+    <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-2 gap-y-1">
+      {noSeat && (
+        <span className="text-xs text-muted-foreground">
+          {t("nobodyExpectedHint")}
+        </span>
+      )}
+      <SessionCardMenu label={t("menuLabel")} items={items} />
 
       {flow !== null && (
         <SetSubFlowOverlays
@@ -167,35 +219,6 @@ export function SessionStaffingEditor({
           }
         />
       )}
-    </div>
-  );
-}
-
-/** One live request's own two actions, named for the seat they act on. */
-function RequestActions({
-  request,
-  onClear,
-  onWithdraw,
-}: {
-  request: SubstitutionRequestState;
-  onClear: () => void;
-  onWithdraw: () => void;
-}) {
-  const t = useTranslations("admin.products.staffing");
-
-  return (
-    <div className="flex flex-wrap items-center justify-end gap-x-2 gap-y-1">
-      <span className="text-xs text-muted-foreground">
-        {request.requestedBy.firstName}
-      </span>
-      {request.status === "substituted" && (
-        <Button type="button" variant="ghost" size="sm" onClick={onClear}>
-          {t("clearSub")}
-        </Button>
-      )}
-      <Button type="button" variant="ghost" size="sm" onClick={onWithdraw}>
-        {t("withdraw")}
-      </Button>
     </div>
   );
 }
@@ -573,9 +596,9 @@ function ConfirmSubStep({
   absent: AbsentSeat;
   sub: { id: string; firstName: string };
   sessionDate: string;
-  /** `null` is "not stated", which is a real answer on the retroactive path. */
+  /** `null` until the admin has chosen one, which the confirm waits for. */
   reason: SubstitutionReason | null;
-  onReasonChange: (reason: SubstitutionReason | null) => void;
+  onReasonChange: (reason: SubstitutionReason) => void;
   note: string;
   onNoteChange: (note: string) => void;
   onChangeSub: () => void;
@@ -601,9 +624,10 @@ function ConfirmSubStep({
     void onConfirm({
       absentGeduId: absent.id,
       subGeduId: sub.id,
-      // Omitted rather than nulled, both of them: the RPC's two reason
-      // parameters carry trailing defaults precisely so a caller with nothing
-      // to send can leave them out.
+      // The note is omitted rather than nulled where it is empty: the RPC's
+      // parameter carries a trailing default precisely so a caller with
+      // nothing to send can leave it out. The reason is never absent — the
+      // button is disabled until one is chosen.
       ...(reason === null ? {} : { reason }),
       ...(trimmedNote === "" ? {} : { reasonNote: trimmedNote }),
     }).catch(() => {
@@ -640,7 +664,7 @@ function ConfirmSubStep({
               disabled={committing}
               onClick={onChangeSub}
             >
-              {t("changeSub")}
+              {t("changeChoice")}
             </Button>
           </div>
         </dl>
@@ -663,11 +687,11 @@ function ConfirmSubStep({
             aria-labelledby={`${groupName}-label`}
             className="flex flex-wrap gap-2"
           >
-            {REASON_CHOICES.map((value) => {
+            {SUBSTITUTION_REASONS.map((value) => {
               const selected = reason === value;
               return (
                 <label
-                  key={value ?? "unset"}
+                  key={value}
                   className={cn(
                     "flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-sm transition-colors",
                     selected && "border-act",
@@ -677,18 +701,14 @@ function ConfirmSubStep({
                   <input
                     type="radio"
                     name={groupName}
-                    value={value ?? "unset"}
+                    value={value}
                     className="h-4 w-4 shrink-0 accent-act"
                     checked={selected}
                     disabled={committing}
                     onChange={() => onReasonChange(value)}
                   />
                   <span className="font-medium">
-                    {value === null
-                      ? t("reasonUnset")
-                      : value === "sick"
-                        ? t("reasonSick")
-                        : t("reasonOther")}
+                    {value === "sick" ? t("reasonSick") : t("reasonOther")}
                   </span>
                 </label>
               );
@@ -731,7 +751,11 @@ function ConfirmSubStep({
         </Button>
         <Button
           type="button"
-          disabled={committing}
+          // **Nothing is chosen to begin with, and the press waits for a
+          // choice.** A pre-selected "Sick" would write health data about a
+          // contractor that nobody stated, which is the one direction this
+          // field must not fail in.
+          disabled={committing || reason === null}
           onClick={run}
           className="gap-1.5"
         >
@@ -746,14 +770,15 @@ function ConfirmSubStep({
 }
 
 /**
- * The reason categories an admin may state, read off the generated enum rather
- * than retyped, with "not stated" leading because it is the honest answer on
- * the retroactive path this editor exists for.
+ * The categories, read off the generated enum rather than retyped — the same
+ * two, in the same order, the gedu's own dialog offers.
+ *
+ * **There is no "not stated" any more** *(owner, 2026-09)*: an admin seating a
+ * substitute states why, exactly as a gedu filing an absence does. The database
+ * still accepts a null reason, which is what keeps every row filed before this
+ * change readable; the interface simply never sends one.
  */
-const REASON_CHOICES: readonly (SubstitutionReason | null)[] = [
-  null,
-  ...Constants.public.Enums.substitution_reason,
-];
+const SUBSTITUTION_REASONS = Constants.public.Enums.substitution_reason;
 
 /**
  * The session's own calendar date, in words.

@@ -298,6 +298,18 @@ function noteField(): HTMLTextAreaElement {
   return field;
 }
 
+/**
+ * Answer the reason form's one required question.
+ *
+ * Nothing is selected when it opens — a pre-selected "Sick" would record health
+ * data nobody stated — so the confirm stays disabled until this runs.
+ */
+function chooseReason() {
+  fireEvent.click(
+    screen.getByRole("radio", { name: feedCopy.substitutionReasonSick }),
+  );
+}
+
 /** The session rows on screen, in DOM order across the weeks. */
 function pickerRows(): HTMLButtonElement[] {
   return [...document.querySelectorAll<HTMLButtonElement>("[data-session-key]")];
@@ -461,6 +473,7 @@ describe("the page's file-an-absence entry", () => {
 
     fireEvent.click(screen.getByRole("button", { name: copy.fileAction }));
     fireEvent.click(pickerRows()[0]);
+    chooseReason();
 
     // The card's own dialog, reached the other way round: same title, same
     // questions, same confirm.
@@ -507,6 +520,7 @@ describe("the page's file-an-absence entry", () => {
 
     openPicker();
     fireEvent.click(pickerRows()[0]);
+    chooseReason();
     await act(async () => {
       fireEvent.click(
         screen.getByRole("button", { name: feedCopy.substitutionRequestConfirm }),
@@ -524,6 +538,7 @@ describe("the page's file-an-absence entry", () => {
 
     openPicker();
     fireEvent.click(pickerRows()[0]);
+    chooseReason();
     await act(async () => {
       fireEvent.click(
         screen.getByRole("button", { name: feedCopy.substitutionRequestConfirm }),
@@ -542,6 +557,7 @@ describe("the page's file-an-absence entry", () => {
 
     fireEvent.click(screen.getByRole("button", { name: copy.fileAction }));
     fireEvent.click(pickerRows()[0]);
+    chooseReason();
     await act(async () => {
       fireEvent.click(
         screen.getByRole("button", { name: feedCopy.substitutionRequestConfirm }),
@@ -563,6 +579,7 @@ describe("the page's file-an-absence entry", () => {
 
     fireEvent.click(screen.getByRole("button", { name: copy.fileAction }));
     fireEvent.click(pickerRows()[0]);
+    chooseReason();
     await act(async () => {
       fireEvent.click(
         screen.getByRole("button", { name: feedCopy.substitutionRequestConfirm }),
@@ -628,6 +645,8 @@ describe("the page's file-an-absence entry", () => {
 
       openPicker();
       fireEvent.click(pickerRows()[0]);
+      chooseReason();
+    chooseReason();
       // A note typed before the press, so "the draft survives" is a claim with
       // something to lose.
       const note = noteField();
@@ -666,6 +685,7 @@ describe("the page's file-an-absence entry", () => {
 
     openPicker();
     fireEvent.click(pickerRows()[0]);
+    chooseReason();
     await act(async () => {
       fireEvent.click(
         screen.getByRole("button", { name: feedCopy.substitutionRequestConfirm }),
@@ -691,6 +711,7 @@ describe("the page's file-an-absence entry", () => {
 
     openPicker();
     fireEvent.click(pickerRows()[0]);
+    chooseReason();
     await act(async () => {
       fireEvent.click(
         screen.getByRole("button", { name: feedCopy.substitutionRequestConfirm }),

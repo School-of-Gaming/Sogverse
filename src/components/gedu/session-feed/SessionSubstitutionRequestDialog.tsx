@@ -131,7 +131,14 @@ export function SessionSubstitutionRequestForm({
   const groupName = useId();
   const noteId = useId();
 
-  const [reason, setReason] = useState<SubstitutionReason>("sick");
+  /**
+   * **Nothing is chosen to begin with, and the confirm waits for a choice.**
+   * `sick` led the list and was pre-selected, which meant a gedu who pressed
+   * straight through recorded health data about themselves that they had never
+   * stated — and the admin's own confirm step now asks the same question the
+   * same way *(owner, 2026-09)*.
+   */
+  const [reason, setReason] = useState<SubstitutionReason | null>(null);
   const [note, setNote] = useState("");
 
   const remaining = SUBSTITUTION_REASON_NOTE_MAX_LENGTH - note.length;
@@ -221,8 +228,11 @@ export function SessionSubstitutionRequestForm({
         </Button>
         <Button
           type="button"
-          disabled={committing}
-          onClick={() => onConfirm({ reason, note })}
+          disabled={committing || reason === null}
+          onClick={() => {
+            if (reason === null) return;
+            onConfirm({ reason, note });
+          }}
           className="gap-1.5"
         >
           {committing && (

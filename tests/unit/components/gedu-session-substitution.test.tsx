@@ -204,6 +204,19 @@ function openRequestDialog() {
   fireEvent.click(openMenu());
 }
 
+/**
+ * Answer the dialog's one required question.
+ *
+ * Nothing is selected when the form opens — a pre-selected "Sick" would record
+ * health data about a gedu that nobody stated — so the confirm stays disabled
+ * until this runs.
+ */
+function chooseReason() {
+  fireEvent.click(
+    screen.getByRole("radio", { name: copy.substitutionReasonSick }),
+  );
+}
+
 function withdrawButton() {
   return screen.queryByRole("button", { name: copy.substitutionWithdrawAction });
 }
@@ -391,6 +404,7 @@ describe("the card's overflow menu", () => {
   it("opens the request form when the action is chosen", () => {
     renderFeed({ entries: [futureEntry([], SANNA)] });
     openRequestDialog();
+    chooseReason();
     expect(screen.getByText(copy.substitutionRequestDialogTitle)).toBeTruthy();
     expect(
       screen.getByRole("button", { name: copy.substitutionRequestConfirm }),
@@ -740,6 +754,7 @@ describe("the staffing region after a write lands", () => {
     render(<SubstitutionHarness settleFile={file.promise} />);
 
     openRequestDialog();
+    chooseReason();
     fireEvent.click(
       screen.getByRole("button", { name: copy.substitutionRequestConfirm }),
     );
@@ -818,6 +833,7 @@ describe("the staffing region after a write lands", () => {
     );
 
     openRequestDialog();
+    chooseReason();
     await act(async () => {
       fireEvent.click(
         screen.getByRole("button", { name: copy.substitutionRequestConfirm }),
@@ -879,6 +895,7 @@ describe("the staffing region after a write lands", () => {
       });
 
       openRequestDialog();
+    chooseReason();
       const note = document.querySelector("textarea");
       if (note === null) throw new Error("the request form has no note field");
       fireEvent.change(note, { target: { value: "back on Thursday" } });

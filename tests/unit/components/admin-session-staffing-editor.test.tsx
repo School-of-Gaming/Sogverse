@@ -137,6 +137,33 @@ function button(name: string | RegExp) {
   return screen.getByRole("button", { name });
 }
 
+/** Open the card's menu, which is where every admin action lives now. */
+function openMenu() {
+  fireEvent.click(screen.getByRole("button", { name: copy.menuLabel }));
+}
+
+/** The menu's rows, in the order an admin reads them. */
+function menuItems(): (string | null)[] {
+  return screen.getAllByRole("menuitem").map((item) => item.textContent);
+}
+
+/** Open the menu and choose one row by its label. */
+function choose(name: string | RegExp) {
+  openMenu();
+  fireEvent.click(screen.getByRole("menuitem", { name }));
+}
+
+/**
+ * Answer the confirm step's one required question.
+ *
+ * Nothing is selected when it opens — an admin seating a substitute states why,
+ * exactly as a gedu filing an absence does, and a pre-selected "Sick" would
+ * record health data about a contractor that nobody stated.
+ */
+function chooseReason() {
+  fireEvent.click(screen.getByRole("radio", { name: copy.reasonSick }));
+}
+
 /** The picker's row for one candidate, badge text and all. */
 function pickerRow(id: string): HTMLElement {
   return screen.getByRole("button", {
@@ -153,12 +180,13 @@ describe("the admin session staffing editor", () => {
   it("goes straight to the picker when only one gedu is expected", async () => {
     const { onSetSubstitution } = renderEditor({ gedus: ONE_PRIMARY });
 
-    fireEvent.click(button(copy.setSub));
+    choose(copy.setSubstitute);
 
     // No question to ask: with one seat, who is away is already known.
     expect(screen.queryByText(copy.absentStepTitle)).toBeNull();
 
     fireEvent.click(pickerRow(PETRA));
+    chooseReason();
     await act(async () => {
       fireEvent.click(button(copy.confirmAction));
     });
@@ -167,13 +195,14 @@ describe("the admin session staffing editor", () => {
     expect(onSetSubstitution).toHaveBeenCalledWith({
       absentGeduId: SANNA,
       subGeduId: PETRA,
+      reason: "sick",
     });
   });
 
   it("asks which gedu is away when more than one is expected", async () => {
     const { onSetSubstitution } = renderEditor({ gedus: TWO_SEATS });
 
-    fireEvent.click(button(copy.setSub));
+    choose(copy.setSubstitute);
     expect(screen.getByText(copy.absentStepTitle)).not.toBeNull();
 
     // The seats are offered with their roles, which is what tells two people on
@@ -182,6 +211,7 @@ describe("the admin session staffing editor", () => {
     fireEvent.click(button(messages.common.continue));
 
     fireEvent.click(pickerRow(JOONAS));
+    chooseReason();
     await act(async () => {
       fireEvent.click(button(copy.confirmAction));
     });
@@ -189,13 +219,14 @@ describe("the admin session staffing editor", () => {
     expect(onSetSubstitution).toHaveBeenCalledWith({
       absentGeduId: PETRA,
       subGeduId: JOONAS,
+      reason: "sick",
     });
   });
 
   it("refuses the absent gedu and everyone else expected, each with its reason", () => {
     renderEditor({ gedus: TWO_SEATS });
 
-    fireEvent.click(button(copy.setSub));
+    choose(copy.setSubstitute);
     fireEvent.click(screen.getByRole("radio", { name: /Sanna/ }));
     fireEvent.click(button(messages.common.continue));
 
@@ -212,7 +243,7 @@ describe("the admin session staffing editor", () => {
     expect(isDisabled(joonas)).toBe(false);
   });
 
-  it("refuses the sub already filling a substituted request, as one more expected gedu", () => {
+  it("refuses the substitute already filling a request, as one more expected gedu", () => {
     // Petra is nobody’s assignment here — she is on this session only because
     // she is substituting Sanna — and the picker still has to refuse her: seating
     // her as somebody else’s sub would collapse two seats onto one person.
@@ -224,9 +255,9 @@ describe("the admin session staffing editor", () => {
       requests: [substitutedRequest(SANNA, "Sanna", JOONAS, "Joonas")],
     });
 
-    fireEvent.click(button(copy.setSub));
-    fireEvent.click(screen.getByRole("radio", { name: /Sanna/ }));
-    fireEvent.click(button(messages.common.continue));
+    // One absence on the card, so the row names it and the picker opens on
+    // Sanna's seat with no question in between.
+    choose(copy.changeSubstitute);
 
     const joonas = pickerRow(JOONAS);
     expect(within(joonas).getByText(pickerCopy.alreadyExpected)).not.toBeNull();
@@ -239,7 +270,7 @@ describe("the admin session staffing editor", () => {
   it("carries an optional reason and note into the write", async () => {
     const { onSetSubstitution } = renderEditor({ gedus: ONE_PRIMARY });
 
-    fireEvent.click(button(copy.setSub));
+    choose(copy.setSubstitute);
     fireEvent.click(pickerRow(PETRA));
 
     fireEvent.click(screen.getByRole("radio", { name: copy.reasonSick }));
@@ -248,6 +279,7 @@ describe("the admin session staffing editor", () => {
     fireEvent.change(screen.getByRole("textbox", { name: /Note for the office/ }), {
       target: { value: "  Called in at 8am  " },
     });
+    chooseReason();
     await act(async () => {
       fireEvent.click(button(copy.confirmAction));
     });
@@ -263,36 +295,37 @@ describe("the admin session staffing editor", () => {
   it("offers a seat that has already filed, and says the set approves its request", async () => {
     // Sanna has filed, so the derivation no longer expects her — and her seat
     // is still the one an admin answers. The database agrees: it demands the
-    // absent gedu be expected only where there is no substitution request in place.
+    // absent gedu be expected only where there is no substitution request in
+    // place. Nothing has been seated yet, so the row still offers to set one.
     const { onSetSubstitution } = renderEditor({
       gedus: ONE_PRIMARY,
       requests: [openRequest(SANNA, "Sanna")],
     });
 
-    fireEvent.click(button(copy.setSub));
+    choose(copy.setSubstitute);
     fireEvent.click(pickerRow(PETRA));
 
     expect(screen.getByText(copy.approvesOpenRequest)).not.toBeNull();
+    chooseReason();
     await act(async () => {
       fireEvent.click(button(copy.confirmAction));
     });
     expect(onSetSubstitution).toHaveBeenCalledWith({
       absentGeduId: SANNA,
       subGeduId: PETRA,
+      reason: "sick",
     });
   });
 
-  it("says a set on a substituted seat replaces the sub filling it", () => {
+  it("says a change on a substituted seat replaces the substitute filling it", () => {
     renderEditor({
       gedus: ONE_PRIMARY,
       requests: [substitutedRequest(SANNA, "Sanna", PETRA, "Petra")],
     });
 
-    // Two seats: Sanna's, which is substituted, and Petra's, who now holds it — so
-    // the walk starts at the question.
-    fireEvent.click(button(copy.setSub));
-    fireEvent.click(screen.getByRole("radio", { name: /Sanna/ }));
-    fireEvent.click(button(messages.common.continue));
+    // One absence, so the row names what it will do and goes straight to the
+    // picker: asking which seat would be asking a question already answered.
+    choose(copy.changeSubstitute);
     fireEvent.click(pickerRow(JOONAS));
 
     expect(
@@ -309,7 +342,7 @@ describe("the admin session staffing editor", () => {
       requests: [request],
     });
 
-    fireEvent.click(button(copy.clearSub));
+    choose(copy.clearSubstitute);
     await act(async () => {
       fireEvent.click(button(copy.clearConfirm));
     });
@@ -324,7 +357,7 @@ describe("the admin session staffing editor", () => {
       requests: [request],
     });
 
-    fireEvent.click(button(copy.withdraw));
+    choose(copy.withdrawRequest);
     await act(async () => {
       fireEvent.click(button(copy.withdrawConfirm));
     });
@@ -332,18 +365,90 @@ describe("the admin session staffing editor", () => {
     expect(onWithdrawRequest).toHaveBeenCalledWith(request.id);
   });
 
-  it("offers no Clear on an open request — there is no sub to unseat", () => {
+  it("offers no clear on an open request — there is no substitute to unseat", () => {
     renderEditor({ gedus: TWO_SEATS, requests: [openRequest(SANNA, "Sanna")] });
 
-    expect(screen.queryByRole("button", { name: copy.clearSub })).toBeNull();
-    expect(screen.queryByRole("button", { name: copy.withdraw })).not.toBeNull();
+    openMenu();
+    expect(menuItems()).toEqual([copy.setSubstitute, copy.withdrawRequest]);
   });
 
-  it("disables Set a sub with a reason when nobody is expected", () => {
+  it("offers no menu at all when nobody is due and nobody has filed", () => {
+    // There is no action to put in it, and an empty panel is a promise the
+    // card cannot keep — the line saying why stands on its own.
     renderEditor({ gedus: [] });
 
-    expect(isDisabled(button(copy.setSub))).toBe(true);
+    expect(
+      screen.queryByRole("button", { name: copy.menuLabel }),
+    ).toBeNull();
     expect(screen.getByText(copy.nobodyExpectedHint)).not.toBeNull();
+  });
+
+  it("names every seat's own row where two gedus are away", () => {
+    renderEditor({
+      gedus: TWO_SEATS,
+      requests: [
+        substitutedRequest(SANNA, "Sanna", JOONAS, "Joonas"),
+        openRequest(PETRA, "Petra"),
+      ],
+    });
+
+    openMenu();
+    // One way in to the flow that asks which seat, then each seat's own
+    // actions — named, because a bare "Clear substitute" could not say whose.
+    // The seats are in the order the staffing note prints them, so the rows
+    // follow the names a reader has just read rather than a second order.
+    expect(menuItems()).toEqual([
+      copy.setSubstitute,
+      "Withdraw request for Petra",
+      "Change substitute for Sanna",
+      "Clear substitute for Sanna",
+    ]);
+  });
+
+  it("says change rather than set where the one seat already has a substitute", () => {
+    renderEditor({
+      gedus: ONE_PRIMARY,
+      requests: [substitutedRequest(SANNA, "Sanna", JOONAS, "Joonas")],
+    });
+
+    openMenu();
+    expect(menuItems()).toEqual([
+      copy.changeSubstitute,
+      copy.clearSubstitute,
+    ]);
+  });
+
+  it("offers set and withdraw on a single seat's open request", () => {
+    renderEditor({ gedus: ONE_PRIMARY, requests: [openRequest(SANNA, "Sanna")] });
+
+    openMenu();
+    expect(menuItems()).toEqual([copy.setSubstitute, copy.withdrawRequest]);
+  });
+
+  it("waits for a reason before the confirm will commit", () => {
+    renderEditor({ gedus: ONE_PRIMARY });
+
+    choose(copy.setSubstitute);
+    fireEvent.click(pickerRow(PETRA));
+
+    // Nothing is chosen, so the press is refused — an admin seating a
+    // substitute states why, and a pre-selected "Sick" would invent it.
+    expect(isDisabled(button(copy.confirmAction))).toBe(true);
+    chooseReason();
+    expect(isDisabled(button(copy.confirmAction))).toBe(false);
+  });
+
+  it("offers no reason anybody has to read as unstated", () => {
+    renderEditor({ gedus: ONE_PRIMARY });
+
+    choose(copy.setSubstitute);
+    fireEvent.click(pickerRow(PETRA));
+
+    // The two the gedu's own dialog offers, in the same words and no third.
+    expect(
+      screen.getAllByRole("radio").map((radio) => radio.getAttribute("value")),
+    ).toEqual(["sick", "other"]);
+    expect(screen.queryByText("Not stated")).toBeNull();
   });
 
   it("keeps the confirm button disabled while the write is in the air", async () => {
@@ -356,7 +461,7 @@ describe("the admin session staffing editor", () => {
     );
     renderEditor({ gedus: ONE_PRIMARY, onSetSubstitution });
 
-    fireEvent.click(button(copy.setSub));
+    choose(copy.setSubstitute);
     fireEvent.click(pickerRow(PETRA));
     fireEvent.click(button(copy.confirmAction));
 
@@ -370,8 +475,9 @@ describe("the admin session staffing editor", () => {
     const onSetSubstitution = vi.fn(() => Promise.reject(new Error("nope")));
     renderEditor({ gedus: ONE_PRIMARY, onSetSubstitution });
 
-    fireEvent.click(button(copy.setSub));
+    choose(copy.setSubstitute);
     fireEvent.click(pickerRow(PETRA));
+    chooseReason();
     await act(async () => {
       fireEvent.click(button(copy.confirmAction));
     });
@@ -394,7 +500,7 @@ describe("the admin session staffing editor", () => {
       onClearSubstitution,
     });
 
-    fireEvent.click(button(copy.clearSub));
+    choose(copy.clearSubstitute);
     fireEvent.click(button(copy.clearConfirm));
 
     expect(isDisabled(button(copy.clearConfirm))).toBe(true);
@@ -412,7 +518,7 @@ describe("the admin session staffing editor", () => {
       onWithdrawRequest,
     });
 
-    fireEvent.click(button(copy.withdraw));
+    choose(copy.withdrawRequest);
     await act(async () => {
       fireEvent.click(button(copy.withdrawConfirm));
     });
