@@ -2288,6 +2288,58 @@ export type Database = {
           },
         ]
       }
+      session_feedback: {
+        Row: {
+          answers: Json
+          created_at: string
+          group_id: string
+          note: string
+          participant_id: string
+          session_opens_at: string
+          updated_at: string
+        }
+        Insert: {
+          answers?: Json
+          created_at?: string
+          group_id: string
+          note?: string
+          participant_id: string
+          session_opens_at: string
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          group_id?: string
+          note?: string
+          participant_id?: string
+          session_opens_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_feedback_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_feedback_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_feedback_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_substitution_offers: {
         Row: {
           created_at: string
@@ -2335,7 +2387,6 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
-          substitute_id: string | null
           created_at: string
           group_id: string
           id: string
@@ -2345,12 +2396,12 @@ export type Database = {
           role: Database["public"]["Enums"]["gedu_assignment_role"]
           session_date: string
           status: Database["public"]["Enums"]["substitution_request_status"]
+          substitute_id: string | null
           updated_at: string
         }
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
-          substitute_id?: string | null
           created_at?: string
           group_id: string
           id?: string
@@ -2360,12 +2411,12 @@ export type Database = {
           role: Database["public"]["Enums"]["gedu_assignment_role"]
           session_date: string
           status?: Database["public"]["Enums"]["substitution_request_status"]
+          substitute_id?: string | null
           updated_at?: string
         }
         Update: {
           approved_at?: string | null
           approved_by?: string | null
-          substitute_id?: string | null
           created_at?: string
           group_id?: string
           id?: string
@@ -2375,6 +2426,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["gedu_assignment_role"]
           session_date?: string
           status?: Database["public"]["Enums"]["substitution_request_status"]
+          substitute_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2388,20 +2440,6 @@ export type Database = {
           {
             foreignKeyName: "session_substitution_requests_approved_by_fkey"
             columns: ["approved_by"]
-            isOneToOne: false
-            referencedRelation: "user_list_entries"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "session_substitution_requests_substitute_id_fkey"
-            columns: ["substitute_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "session_substitution_requests_substitute_id_fkey"
-            columns: ["substitute_id"]
             isOneToOne: false
             referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
@@ -2427,54 +2465,16 @@ export type Database = {
             referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      session_feedback: {
-        Row: {
-          answers: Json
-          created_at: string
-          group_id: string
-          note: string
-          participant_id: string
-          session_opens_at: string
-          updated_at: string
-        }
-        Insert: {
-          answers?: Json
-          created_at?: string
-          group_id: string
-          note?: string
-          participant_id: string
-          session_opens_at: string
-          updated_at?: string
-        }
-        Update: {
-          answers?: Json
-          created_at?: string
-          group_id?: string
-          note?: string
-          participant_id?: string
-          session_opens_at?: string
-          updated_at?: string
-        }
-        Relationships: [
           {
-            foreignKeyName: "session_feedback_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "product_groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "session_feedback_participant_id_fkey"
-            columns: ["participant_id"]
+            foreignKeyName: "session_substitution_requests_substitute_id_fkey"
+            columns: ["substitute_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "session_feedback_participant_id_fkey"
-            columns: ["participant_id"]
+            foreignKeyName: "session_substitution_requests_substitute_id_fkey"
+            columns: ["substitute_id"]
             isOneToOne: false
             referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
@@ -3033,7 +3033,10 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: Json
       }
-      clear_session_substitution: { Args: { p_request_id: string }; Returns: Json }
+      clear_session_substitution: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
       confirm_paid_participation: {
         Args: {
           p_checkout_session_id: string
@@ -3044,15 +3047,6 @@ export type Database = {
         Returns: Json
       }
       count_active_seats: { Args: { p_product_id: string }; Returns: number }
-      substitution_request_document: {
-        Args: {
-          p_include_reason: boolean
-          p_request: Database["public"]["Tables"]["session_substitution_requests"]["Row"]
-          p_reveal_requester?: boolean
-          p_viewer_id: string
-        }
-        Returns: Json
-      }
       create_gamer: {
         Args: {
           p_date_of_birth: string
@@ -3170,13 +3164,12 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: string
       }
-      gedu_substitutes_group: { Args: { p_group_id: string }; Returns: boolean }
-      gedu_substitutes_session: {
-        Args: { p_group_id: string; p_session_date: string }
-        Returns: boolean
-      }
       gedu_holds_seat_at_session: {
         Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
+        Returns: boolean
+      }
+      gedu_holds_unexpired_substitution: {
+        Args: { p_group_id: string; p_session_date: string }
         Returns: boolean
       }
       gedu_is_expected_at_session: {
@@ -3190,6 +3183,11 @@ export type Database = {
           p_group_id: string
           p_session_date: string
         }
+        Returns: boolean
+      }
+      gedu_substitutes_group: { Args: { p_group_id: string }; Returns: boolean }
+      gedu_substitutes_session: {
+        Args: { p_group_id: string; p_session_date: string }
         Returns: boolean
       }
       gedu_teaches_gamer: { Args: { p_gamer_id: string }; Returns: boolean }
@@ -3225,7 +3223,6 @@ export type Database = {
       get_my_assigned_products: {
         Args: never
         Returns: {
-          substitution_date: string
           end_date: string
           group_count: number
           group_id: string
@@ -3237,6 +3234,7 @@ export type Database = {
           product_type: Database["public"]["Enums"]["product_type"]
           schedule_slots: Json
           start_date: string
+          substitution_date: string
           timezone: string
         }[]
       }
@@ -3397,7 +3395,10 @@ export type Database = {
       }
       location_search_separator: { Args: never; Returns: string }
       mark_chat_image_stored: { Args: { p_id: string }; Returns: string }
-      offer_session_substitution: { Args: { p_request_id: string }; Returns: Json }
+      offer_session_substitution: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
       participation_state: {
         Args: {
           p_group_id: string
@@ -3612,6 +3613,15 @@ export type Database = {
         Returns: boolean
       }
       submit_my_feedback: { Args: { p_message: string }; Returns: boolean }
+      substitution_request_document: {
+        Args: {
+          p_include_reason: boolean
+          p_request: Database["public"]["Tables"]["session_substitution_requests"]["Row"]
+          p_reveal_requester?: boolean
+          p_viewer_id: string
+        }
+        Returns: Json
+      }
       toggle_chat_reaction: {
         Args: { p_code: string; p_message_id: string }
         Returns: boolean
@@ -3686,8 +3696,6 @@ export type Database = {
     Enums: {
       billing_mode: "paid" | "free" | "external_contract"
       chat_channel_type: "group_session"
-      substitution_reason: "sick" | "other"
-      substitution_request_status: "open" | "substituted" | "withdrawn"
       effective_product_status: "pending" | "running" | "completed" | "expired"
       gamer_photo_consent_type: "lynx_educate"
       gamer_sign_in: "parent" | "username" | "email"
@@ -3717,6 +3725,8 @@ export type Database = {
         | "game_studio"
       product_type: "consumer_club" | "municipality_club" | "camp" | "event"
       spoken_language: "fi" | "sv" | "en" | "fr"
+      substitution_reason: "sick" | "other"
+      substitution_request_status: "open" | "substituted" | "withdrawn"
       user_role: "admin" | "customer" | "gamer" | "gedu"
     }
     CompositeTypes: {
@@ -3847,8 +3857,6 @@ export const Constants = {
     Enums: {
       billing_mode: ["paid", "free", "external_contract"],
       chat_channel_type: ["group_session"],
-      substitution_reason: ["sick", "other"],
-      substitution_request_status: ["open", "substituted", "withdrawn"],
       effective_product_status: ["pending", "running", "completed", "expired"],
       gamer_photo_consent_type: ["lynx_educate"],
       gamer_sign_in: ["parent", "username", "email"],
@@ -3880,6 +3888,8 @@ export const Constants = {
       ],
       product_type: ["consumer_club", "municipality_club", "camp", "event"],
       spoken_language: ["fi", "sv", "en", "fr"],
+      substitution_reason: ["sick", "other"],
+      substitution_request_status: ["open", "substituted", "withdrawn"],
       user_role: ["admin", "customer", "gamer", "gedu"],
     },
   },
