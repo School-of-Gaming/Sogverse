@@ -43,7 +43,7 @@ import { INERT_HREF } from "@/lib/constants/routes";
  * modules beside this one (`product-run`, `activity-type`) and are consumed here;
  * only the assignment-shaped roll-up and its ordering are the gedu's own.
  *
- * **There are two roll-ups here, over one list of rows.** Since 00260 the
+ * **There are two roll-ups here, over one list of rows.** Since 00272 the
  * assignment read returns a second kind of seat — a live **cover**, one row per
  * covered date — and the two reduce differently: an assignment collapses a
  * schedule to its next occurrence, a cover *is* one occurrence and collapses to

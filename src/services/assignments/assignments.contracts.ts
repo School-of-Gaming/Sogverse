@@ -40,7 +40,7 @@ export const myAssignedProductRows = z.array(
     product_translations: z.array(productTranslationSummary),
     schedule_slots: z.array(scheduleSlotSummary),
     /**
-     * Which kind of seat the row is (00260): a standing `assignment`, or a live
+     * Which kind of seat the row is (00272): a standing `assignment`, or a live
      * `cover` on one date. Two arms of one RPC because they share every
      * product-shell column and the dashboard card differs in its chrome rather
      * than in the facts it needs.
@@ -88,7 +88,7 @@ export const geduAssignedProduct = z.object({
       is_my_group: z.boolean(),
       participant_count: z.number(),
       /**
-       * The group's educators, each with the assignment role they hold (00260)
+       * The group's educators, each with the assignment role they hold (00272)
        * — primary or assistant. Every staff read that *lists* a group's gedus
        * carries it, because "who is on this group" and "in what capacity" are
        * one answer and the role is a pay class rather than a figure.

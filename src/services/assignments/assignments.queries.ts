@@ -48,7 +48,7 @@ export function useMyAssignedProducts(options: {
  * this hook through the cache rather than through the call site, which is what
  * lets the route also seed the *second*, group-keyed read it unlocks.
  *
- * **`groupId` says which group of the product is "mine" (00260)**, and it is
+ * **`groupId` says which group of the product is "mine" (00272)**, and it is
  * part of the cache key because it genuinely changes the answer: a gedu
  * covering a sibling group of a product they already teach asks this same RPC
  * for a different workspace, and the two documents must not share an entry.

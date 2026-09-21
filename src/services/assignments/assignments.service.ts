@@ -52,7 +52,7 @@ export interface MyAssignedProductSessionRow {
   /** The gedu's group on this product — assigned, or the one they cover. */
   groupId: string;
   /**
-   * Which kind of seat this row is (00260): a standing `assignment`, or one
+   * Which kind of seat this row is (00272): a standing `assignment`, or one
    * live `cover` on one date.
    *
    * Two arms of one read because they share every product-shell fact and
@@ -103,7 +103,7 @@ export class AssignmentsService {
    * the product, which we surface as `null` so the route can render a clean
    * "not your session" empty state instead of throwing.
    *
-   * **`groupId` names which group of the product is "mine" (00260).** Without
+   * **`groupId` names which group of the product is "mine" (00272).** Without
    * one the answer is the caller's assignment group, as it always was; with one
    * they are assigned to or covering, that group is. A sub has no assignment
    * row to resolve a group from, and a gedu covering a *sibling* group of a

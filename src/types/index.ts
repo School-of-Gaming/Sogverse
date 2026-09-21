@@ -429,13 +429,13 @@ export type ProductGroupUpdate = Database["public"]["Tables"]["product_groups"][
 export type GeduGroupAssignment = Database["public"]["Tables"]["gedu_group_assignments"]["Row"];
 export type GeduGroupAssignmentInsert = Database["public"]["Tables"]["gedu_group_assignments"]["Insert"];
 
-// Which capacity an educator holds a group in (00260). A group holds any number
+// Which capacity an educator holds a group in (00272). A group holds any number
 // of each, and the only thing the role decides is pay — the product carries a
 // per-session fee for each.
 export type GeduAssignmentRole = Database["public"]["Enums"]["gedu_assignment_role"];
 
 // ---------------------------------------------------------------------------
-// session covers (00260) — "I can't make this session", and who stood in
+// session covers (00272) — "I can't make this session", and who stood in
 // ---------------------------------------------------------------------------
 
 // session_cover_requests — one row per (group, session date, ABSENT GEDU). The
@@ -712,7 +712,7 @@ export interface GeduAssignedProductGroupGedu {
   id: string;
   first_name: string;
   /**
-   * The assignment role this educator holds on the group (00260) — primary or
+   * The assignment role this educator holds on the group (00272) — primary or
    * assistant. Every staff read that lists a group's gedus carries it, and the
    * rail's peer-group chips are one of them.
    */
@@ -824,7 +824,7 @@ export type MyAssignedProductRow = Omit<
   start_date: string | null;
   end_date: string | null;
   /**
-   * Which kind of seat this row is (00260). An `assignment` row is one per
+   * Which kind of seat this row is (00272). An `assignment` row is one per
    * `gedu_group_assignments` row, exactly as this RPC always returned; a `cover`
    * row is one per live covered date. Narrowed from the generated `string`
    * because the RPC emits a closed pair and every consumer branches on it.

@@ -145,7 +145,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // exactly as it is for the two RPCs above.
   admin_move_participation: { permittedRoles: ["admin"] },
 
-  // --- the admin half of session covers (00260) -----------------------------
+  // --- the admin half of session covers (00272) -----------------------------
   //
   // The office's four staffing actions. All four are assertable on BOTH halves
   // of the matrix with no fixture, which is unusual on this surface and worth
@@ -251,7 +251,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // than a refusal.
   get_my_gedu_assignment_summaries: { permittedRoles: ["gedu"] },
 
-  // --- the gedu half of session covers (00260) ------------------------------
+  // --- the gedu half of session covers (00272) ------------------------------
   //
   // Four writes and one read. The read is the assertable one, for the same
   // reason the summaries RPC above is: it takes no id, so a gedu with nothing to
@@ -545,7 +545,7 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/exposed-function-scope.test.ts",
     why: "boolean about the caller's own moderator standing in a voice group",
   },
-  // The one cover predicate of the four that is exposed (00260), and it is here
+  // The one cover predicate of the four that is exposed (00272), and it is here
   // for the reason gedu_teaches_gamer below is: the gedus_read_assigned_groups
   // policy on product_groups calls it, and an RLS policy is evaluated as the
   // querying role, so a policy cannot call a private helper. The plan had this

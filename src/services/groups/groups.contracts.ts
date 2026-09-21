@@ -11,7 +11,7 @@ import { Constants } from "@/types";
  */
 
 /**
- * The pay class an assignment carries (00260). Every assignment has one, and
+ * The pay class an assignment carries (00272). Every assignment has one, and
  * the panel's per-pill select is what writes it.
  */
 export const geduAssignmentRole = z.enum(

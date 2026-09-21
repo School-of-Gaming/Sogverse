@@ -375,7 +375,7 @@ export const geduAssignmentSummary = z.object({
   group_id: z.string(),
   group_name: z.string(),
   /**
-   * Which kind of seat this row is (00260). An `assignment` row is one per
+   * Which kind of seat this row is (00272). An `assignment` row is one per
    * standing assignment, exactly as this read always returned; a `cover` row is
    * one per **live covered date** — covered, the holder still certified, the
    * access window still open — so a sub gets a card that lasts as long as their
