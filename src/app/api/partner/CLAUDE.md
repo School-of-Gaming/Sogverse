@@ -51,9 +51,9 @@ module under `src/services/partner/`** — the query schema a route parses with,
 response schema it validates what it returns against before answering. A schema is never
 relaxed to let a read through: when a record fails its response schema, the read is what
 is wrong. Enum values come from the generated `Constants` wherever the vocabulary is the
-database's, and the tuples that are the API's own invention say so in a comment. A
-tuple narrowing a database enum to the states the API describes — the enrolment states
-without `reserving`, the product states without `expired` — is the API's own too: it is
+database's — the product states are exactly that — and the tuples that are the API's own
+invention say so in a comment. A tuple narrowing a database enum to the states the API
+describes, such as the enrolment states without `reserving`, is the API's own too: it is
 written out with a `satisfies` against the generated type, and a record whose value falls
 outside it throws rather than being mapped onto a value the page states.
 

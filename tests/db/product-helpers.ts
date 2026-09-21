@@ -327,12 +327,20 @@ export interface ProductOptions {
 }
 
 /**
- * Tomorrow as a calendar date. Read in UTC, which is `createTestProduct`'s
- * default timezone, so the date the helper writes is the date the product's own
- * zone reads back.
+ * Tomorrow as a calendar date, read in the product's OWN zone. `start_date` is
+ * a calendar date in that zone and `effective_status` compares it against today
+ * there, so a date derived in UTC would land on the product's *current* day —
+ * and derive `running` rather than the `pending` this default promises — for a
+ * fixture in a zone ahead of UTC late in the UTC day.
  */
-function tomorrow(): string {
-  return new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+function tomorrow(timeZone: string): string {
+  // en-CA renders ISO-8601 (YYYY-MM-DD), which is the shape a date column wants.
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(Date.now() + 86_400_000));
 }
 
 /**
@@ -350,6 +358,9 @@ export async function createTestProduct(
 ): Promise<string> {
   const productId = options.id ?? crypto.randomUUID();
   const forGamers = options.forGamers ?? true;
+  // Resolved once: the default start date is a calendar date in this zone, so
+  // the two cannot be allowed to disagree about which zone that is.
+  const timezone = options.timezone ?? "UTC";
 
   const { error } = await admin.from("products").insert({
     id: productId,
@@ -357,12 +368,12 @@ export async function createTestProduct(
     product_type: options.productType ?? "consumer_club",
     billing_mode: options.billingMode ?? "paid",
     seat_count: options.seatCount === undefined ? 1 : options.seatCount,
-    start_date: options.startDate ?? options.endDate ?? tomorrow(),
+    start_date: options.startDate ?? options.endDate ?? tomorrow(timezone),
     end_date: options.endDate ?? null,
     location_id: options.locationId ?? null,
     registration_opens_at:
       options.registrationOpensAt ?? new Date(Date.now() - 60_000).toISOString(),
-    timezone: options.timezone ?? "UTC",
+    timezone,
     waitlist_enabled: options.waitlistEnabled ?? true,
     is_visible: options.isVisible ?? true,
     is_remote: true,

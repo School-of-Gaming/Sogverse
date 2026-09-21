@@ -100,8 +100,9 @@ describe("product audience", () => {
     // FREE consumer clubs: the free branch of create_participation writes the
     // row immediately, so a gate's verdict is observable without Stripe, and
     // admin_enroll_participant accepts them (it refuses only PAID consumer clubs,
-    // whose seat needs a subscription it cannot create). No dates, so nothing
-    // here depends on how effective_status reads a calendar.
+    // whose seat needs a subscription it cannot create). The helper's default
+    // start date is in the future, so these derive as `pending` and the gate
+    // under test is the only thing that can refuse them.
     const common = {
       productType: "consumer_club" as const,
       billingMode: "free" as const,
