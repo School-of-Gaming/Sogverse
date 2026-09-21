@@ -21,84 +21,39 @@ command having failed.
 
 ## Phase 1 — Set up
 
-Run these from the **main checkout** — the repository root, not a worktree. If the
+Run from the **main checkout** — the repository root, not a worktree. If the
 session is already inside a worktree, stop and say so: a worktree-isolated
 session cannot create or modify another worktree, and the guard will refuse.
 
-1. **Verify the base — the latest `dev`, unless the user has said otherwise for
-   this piece of work.** That is a standing repo rule (see the Branching section of the
-   root `CLAUDE.md`), and this is the step that actually enforces it: no setting
-   can, because no setting fetches. `git fetch origin dev`, confirm local `dev`
-   matches `origin/dev`, fast-forward if behind. Never `main` — it trails `dev` by
-   hundreds of commits.
-
-   If they have named a different base, use it and say back which base you used,
-   so a deliberate choice and a mistake never look the same in the transcript.
-
-2. **Create the worktree**, branching from `dev` explicitly:
+1. **Create the worktree** — one call, from the PowerShell tool:
 
    ```
-   git worktree add .claude/worktrees/<short-name> -b feat/<kebab-summary> dev
+   .claude\scripts\worktree-setup.ps1 -Name <short-name>
    ```
 
-   `.claude/worktrees/` is the only correct location. It is gitignored, and
-   because it sits *inside* the checkout, Node resolves `node_modules` upward
-   from the parent — **so do not run `npm install`**, it is not needed and costs
-   several minutes and a gigabyte.
+   It verifies the base, creates the worktree at `.claude/worktrees/<short-name>`
+   on branch `feat/<short-name>`, junctions any nested install, and copies
+   `.env.local` in. **Do not run `npm install`** — the worktree resolves
+   `node_modules` upward from the parent checkout, so an install costs several
+   minutes and a gigabyte for nothing. The script's header carries the reasoning
+   for all of it, including the one case it cannot cover: a branch that *will*
+   change dependencies needs `npm install` inside the worktree after that change
+   lands, and only then.
 
-   Three things make the nested location safe, and only the first two are
-   visible from here: it is gitignored; lint and tests target explicit
-   directories that never reach into `.claude/`; and the root `tsconfig.json`
-   lists `".claude"` in its `exclude` — without that, the parent checkout
-   type-checks worktree files against its *own* branch's `@/*` resolution and
-   reports phantom errors at `.claude/worktrees/...` paths. If such errors
-   ever appear on a clean parent branch, that exclude has been dropped —
-   restore it rather than debugging the worktree.
+   **The base is the latest `dev` unless the user has said otherwise for this
+   piece of work.** That is a standing repo rule (the Branching section of the
+   root `CLAUDE.md`), and this is the step that enforces it, because no setting
+   fetches. Pass `-Base` for anything else and say back which base was used, so a
+   deliberate choice and a mistake never look alike in the transcript. Never
+   `main` — it trails `dev` by hundreds of commits.
 
-   **The one exception: a branch that changes dependencies.** Upward resolution
-   hands the worktree the *main checkout's* install, so a branch that edits
-   `package.json` / `package-lock.json` runs against the wrong dependency tree,
-   and the failures that follow do not look like this. If the work will change
-   deps, run `npm install` in the worktree after the change — and only then.
+   If type-check ever reports phantom errors at `.claude/worktrees/...` paths on
+   a clean parent branch, the root `tsconfig.json` has lost `".claude"` from its
+   `exclude` — restore it rather than debugging the worktree.
 
-   **Upward resolution stops at the root, so link the nested installs.** A
-   workspace package that pins a dependency at a different version from the
-   root gets its own copy under `packages/<name>/node_modules` (or
-   `services/<name>/node_modules`), and the worktree has no such folder — so
-   from inside it Node walks straight past to the root's copy, the wrong
-   version. It fails only where that package is loaded, and it looks like a
-   code error rather than an environment one — a missing export, from a
-   symbol the main checkout and CI both resolve fine. **No package pins a
-   split version today**, so this step is insurance against the next one
-   rather than a live fault; run it anyway, because the day one appears is
-   the day the failure it produces is hardest to read. Junction every nested
-   install into the worktree — run from the main checkout, in PowerShell,
-   before entering it:
-
-   ```
-   Get-ChildItem packages, services -Directory |
-     Where-Object { Test-Path (Join-Path $_.FullName "node_modules") } |
-     ForEach-Object {
-       New-Item -ItemType Junction `
-         -Path ".claude/worktrees/<short-name>/$($_.Parent.Name)/$($_.Name)/node_modules" `
-         -Target (Join-Path $_.FullName "node_modules") | Out-Null
-     }
-   ```
-
-   It finds nothing when no package has a nested install, which is the
-   intended end state; it errors harmlessly on a junction that already
-   exists. A junction is a link into the main checkout's real folder, so it
-   is removed by unlinking and never by `rm -rf` — Phase 5 says how.
-
-   Branch prefix is `feat/`. (`feature/` and bare names in the history are drift.)
-
-3. **Enter it** — `EnterWorktree` with `path` set to the absolute path just
-   created. Do not use `name`: that branches from `worktree.baseRef`, which is
+2. **Enter it** — `EnterWorktree` with `path` set to the absolute path the script
+   printed. Do not use `name`: that branches from `worktree.baseRef`, which is
    unset and defaults to `origin/main`.
-
-4. **Copy `.env.local`** from the main checkout into the worktree. It is
-   gitignored, so without it the app boots and silently cannot reach Supabase.
-
 ---
 
 ## Phase 2 — Build (interactive)
@@ -223,11 +178,25 @@ cadence was chosen and why at the moment the first build agent launches** — a
 silent deviation from "review each piece" is indistinguishable from forgetting
 to review at all, and the user can only veto a decision they can see.
 
-Run `/code-review` against the branch — but check first whether `dev` has moved
-since Phase 1. It usually has, on a session long enough to need this command,
-and a diff against moved `dev` pollutes the review with other work inverted.
-Diff from the merge-base (`git merge-base dev HEAD`) instead; the review is of
-this branch's commits, not of the gap between two moving points.
+**Launch the `code-reviewer` agent**, from inside this worktree, passing model
+`opus`. Naming the agent type is what makes the review brief arrive: it loads
+with the agent, in full, every time. A hand-written reviewer prompt carries only
+what the session happened to remember, which is how a review quietly loses its
+diff base or its security pass.
+
+So the brief already covers *how* to review — the merge-base diff, the
+twin-commit check, what to look for, and the `mechanical`/`fork` marking. The
+prompt carries only what the agent cannot know:
+
+- that it is already in the right directory, and must not `cd` or re-enter a
+  worktree — an agent inherits the session's worktree as its write root and
+  cannot be redirected into another one, even by calling `EnterWorktree` first;
+- what the change is for, and the decisions already settled with the user —
+  stated as decisions it may still challenge on the merits, never as findings it
+  is forbidden to make. Independence is the entire point of running it out of
+  process, and a prompt that fences off the contentious parts hands that back;
+- its reading list: the changed files, and any plan or convention passages
+  quoted inline rather than pointed at.
 
 **A branch that is the last stage of a plan landed in stages is reviewed
 together with the stages before it.** The plan records each landed stage's
@@ -250,37 +219,25 @@ text, and the defects it is least able to see are precisely the ones its own
 reasoning produced. A fresh agent meets the diff as the diff. Reviewing in the
 session does not produce a weaker review — it produces the same mind marking its
 own work, which is not a review at all, however long the output is.
-
-**Launch that agent from inside this worktree** — an agent inherits the
-session's worktree as its write root and cannot be redirected into another one,
-even by calling `EnterWorktree` first. Tell it explicitly that it is already in
-the right directory, and that it must not edit, stage or commit anything.
-
-Give it the branch's context and the decisions already settled with the user, so
-it spends its attention on defects rather than re-litigating choices — but state
-those as decisions it may still challenge on the merits, never as findings it is
-forbidden to make. Independence is the entire point of running it out of
-process; a prompt that fences off the contentious parts hands that back.
-
-Hand it the diff base and the changed-file list outright rather than leaving it to
-work them out, and quote the settled decisions and any plan context inline. Phase
-2's reading-list rule applies here for the same reason and with more force: a
-reviewer told only to review a branch is the agent most likely to open a
-repository's worth of files looking for the few that matter.
-
 Then **assess the findings before relaying them**. Say which you accept, which
 you think are wrong and why, and which are judgement calls for the user. A review
 relayed without an opinion has moved the work no further forward.
 
 **Findings accepted with no meaningful judgment call left open — mechanical
 correctness fixes, guard/assertion strengthening, test pinning, doc corrections,
-housekeeping merges — are applied immediately and reported as applied.** (This
-flow's rule, not `/code-review`'s ad-hoc default of waiting for the user to
-pick.) Surface, and wait on, only findings that create a real fork: anything
-touching product behavior, money/auth semantics, schema shape, user-facing copy,
-or the plan's step boundaries. The test is fork-ness, not confidence — if the
+housekeeping merges — are applied immediately and reported as applied.**
+Surface, and wait on, only findings that create a real fork: anything touching
+product behavior, money/auth semantics, schema shape, user-facing copy, or the
+plan's step boundaries. The test is fork-ness, not confidence — if the
 justification has to weigh two defensible options, it is the user's call
-however strongly the session prefers one of them. The triage is always shown
+however strongly the session prefers one of them.
+
+The reviewer marks each finding `mechanical` or `fork` on this same test, having
+just read the code. Take the marking as a starting sort, not a verdict: promoting
+one to a fork is cheap and always allowed, and a finding the reviewer called
+mechanical that turns out to foreclose a product decision is exactly what the
+session's own judgment is for. Demote sparingly, and never to avoid an
+interruption. The triage is always shown
 either way (applied findings in the past tense), and the Phase 5 merge gate
 remains the user's backstop: nothing reaches `dev` without their explicit
 instruction.
@@ -463,12 +420,9 @@ hatch it must not have, and the build rule inherits a rigidity it does not need.
   sweep is easy and expensive to hold; an intricate fix in an open file is hard
   and nearly free. Judge by what the work costs to *hold*, not to *solve*, and
   see Phase 2 for the full statement.
-- **The review is always delegated. No threshold, no exception.** This one is
-  not about context at all — it is about whether the review means anything. The
-  session that wrote the code knows what each line was for and reads intent
-  instead of text, so the defects it is least equipped to find are exactly the
-  ones its own reasoning introduced. Freshness is the property being bought, and
-  a review run in the authoring context has not bought it.
+- **The review is always delegated. No threshold, no exception.** Not for
+  context economy but for validity — Phase 4 carries the argument, and the two
+  rules are stated apart precisely because they are not interchangeable.
 
 Delegated work runs on **Opus**: pass `model` explicitly on every agent launch,
 because an agent silently inherits the session's model when none is passed, and
