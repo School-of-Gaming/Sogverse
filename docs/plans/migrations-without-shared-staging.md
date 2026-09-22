@@ -109,8 +109,7 @@ made over sixty bot commits to keep `schema.sql` current.
    branch's full CI is advisory, as it is today. Branches without migrations land exactly
    as today.
 9. **An unlanded migration is mutable; a landed one is not.** No shared database has
-   applied an unlanded file, so an agent edits it instead of stacking fix-ups. (Until
-   step 2 lands, a pushed file is the exception; see step 1.)
+   applied an unlanded file, so an agent edits it instead of stacking fix-ups.
 10. **A feature that changes the schema gets its own local Supabase stack, and the agent
     manages it.** It costs nothing to run, so it has the lifecycle the worktree's dev
     server already has: no owner switch, no asking first, and an agent may start one to
@@ -221,11 +220,7 @@ land (see there).
    types, so the rule ships with one named exception, the existing push-then-generate
    workflow, and step 2 deletes the exception with the workflow. This step gates step 3:
    CI must not own staging while the documented workflow still tells agents to push
-   there. As built, the amend rule treats a migration pushed to staging as landed for as
-   long as the push-then-generate exception stands, and the rule sends an agent's own
-   writes to a seed file only, since no local database exists yet; step 2 removes the
-   first with the exception and adds "or a local database" to the second, in
-   `supabase/CLAUDE.md`, the root `CLAUDE.md` tripwire and the `remote-supabase` skill.
+   there.
 2. **The local database script, generation, and the comparison**, for the types. One
    script under `scripts/`, exposed as an npm script, is the only thing that knows the
    database lives in WSL; every caller, agent or flow, uses it and never the distro
@@ -278,7 +273,8 @@ land (see there).
    rich seed, and the DB tests' whole-table claims are written against the minimal one.
    **Steps 2 and 3 land back to back.** In between, nothing pushes to staging
    automatically, so whoever lands a migration on `dev` pushes `dev`'s migrations to
-   staging by hand, which is the same command CI is about to run.
+   staging by hand, which is the same command CI is about to run. Measured on 2026-09-22:
+   the from-migrations output also gains a trailing blank line; still boilerplate only.
 3. **CI pushes `dev` to staging.** A job on push to `dev`, with no `needs`, a
    `concurrency` group so two pushes never run `db push` against staging at once, and
    only the CLI installed. It connects as the prod job does (`supabase link`, then

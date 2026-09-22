@@ -101,9 +101,15 @@ nothing. `TODO.md` holds the plan for a real browser suite against a local Supab
 
 ## DB tests run in CI, not locally
 
-DB tests hit a **real Postgres** and we don't run a local stack (no Docker). They run in
-remote CI against a fresh database — so the way to exercise them is to push your branch
-and let CI run `test:db`, not to run them on this machine. Their setup
+DB tests hit a **real Postgres**, and nothing wires the test runner to a local one. They
+run in remote CI against a fresh database — so the way to exercise them is to push your
+branch and let CI run `test:db`, not to run them on this machine. Improvising a stack in
+the meantime is worse than it looks: run against the repo's own `supabase/` directory, the
+CLI leaves an untracked `.branches/` directory there that nothing gitignores, and takes
+its service versions from the linked project's pins in `.temp/` — different images from
+the ones CI builds on. This stays true once per-feature local stacks exist, because a
+stack carries the rich example seed while the whole-table claims below are written against
+the minimal `supabase/seed.sql`. Their setup
 (`tests/db/setup.ts`) fails fast if `SUPABASE_SERVICE_ROLE_KEY` is unset, which is the
 expected outcome locally.
 

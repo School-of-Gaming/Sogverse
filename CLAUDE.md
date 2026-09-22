@@ -146,8 +146,8 @@ patterns, and the access-control rules; that file auto-loads when you work under
 `supabase/`. The always-on tripwires:
 
 - **Agents never write to staging or prod on their own initiative** — a write a piece of
-  work needs goes to a seed file. The rule and the two things that authorize a write are
-  in `supabase/CLAUDE.md`.
+  work needs goes to a seed file or to a local database. The rule and what authorizes a
+  write are in `supabase/CLAUDE.md`.
 - **`database.types.ts` is purely auto-generated — never hand-edit it.** Convenience
   aliases (`Profile`, `UserRole`, …) live in `src/types/index.ts`; after regenerating, add
   aliases for any new tables/enums.

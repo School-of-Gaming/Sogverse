@@ -9,22 +9,17 @@ move in lockstep with what's here.
 ## Agents do not write to staging or prod
 
 **Rule: an agent never writes to staging or production on its own initiative. It reads
-them to investigate; every write a piece of work needs goes to a seed file.** A shared
-mutable database makes one branch's write everybody's problem, and the failures are
-silent ones: two branches claim the same migration version and the second is skipped
-without a word; a version recorded on staging whose file lives on an unmerged branch
-makes `db push` refuse for everyone; a migration applied there before the code that
+them to investigate; every write a piece of work needs goes to a seed file or to a local
+database.** A shared mutable database makes one branch's write everybody's problem, and
+the failures are silent ones: two branches claim the same migration version and the second
+is skipped without a word; a version recorded on staging whose file lives on an unmerged
+branch makes `db push` refuse for everyone; a migration applied there before the code that
 needs it breaks staging for every other branch until that code deploys.
 
-Two things authorize a write, and nothing else:
-
-- **A procedure skill in `.claude/skills/`, run at the owner's explicit instruction** —
-  creating an admin account, correcting an email, putting test data on staging. The
-  instruction is the authorization; the skill is how the write is carried out safely.
-- **The migration workflow below**, which pushes to staging because that is the only way
-  to regenerate `database.types.ts`. The collision remedies in that section (applying
-  your own files with psql and recording them with `migration repair`) are that push
-  done by hand, and sit inside this exception with it.
+One thing authorizes a write, and nothing else: **a procedure skill in `.claude/skills/`,
+run at the owner's explicit instruction** — creating an admin account, correcting an
+email, putting test data on staging. The instruction is the authorization; the skill is
+how the write is carried out safely.
 
 ## Current state lives in snapshot files, not migrations
 
@@ -63,7 +58,7 @@ snapshot.
 
 Building from `migrations/` removes the class entirely. The file cannot record anything a
 migration did not do, so neither a hand-edit nor an unmerged branch has a path into it.
-CI regenerates it on every run and commits the result on `dev`, which is why step 4 of
+CI regenerates it on every run and commits the result on `dev`, which is why step 3 of
 the workflow below is "do nothing".
 
 What that deliberately does *not* answer is whether a hosted database matches — the
@@ -106,8 +101,8 @@ gets revived — when in doubt, the rule in this file wins over any example in
 `migrations/`.
 
 **Important:** `database.types.ts` is purely auto-generated — **never** hand-edit it,
-even as a shortcut when the remote DB hasn't been updated yet: regenerate it by the
-migration workflow below. After regenerating, check whether new tables or enums need
+even as a shortcut when a hosted database hasn't been updated yet: regenerate it with
+`npm run db -- generate`. After regenerating, check whether new tables or enums need
 aliases added to `src/types/index.ts`.
 
 ### Objects that live outside `public` (not in `schema.sql`)
@@ -142,78 +137,84 @@ npx supabase link --project-ref "$(grep '^SUPABASE_PROJECT_REF=' .env.local | cu
 # Enter the password from SUPABASE_DB_PASSWORD in .env.local when prompted.
 ```
 
-`SUPABASE_DB_PASSWORD` and `SUPABASE_PROJECT_REF` (used by the commands below) are in
-`.env.local`, alongside the Supabase/Stripe/Daily.co keys.
+`SUPABASE_DB_PASSWORD` and `SUPABASE_PROJECT_REF` are in `.env.local`, alongside the
+Supabase/Stripe/Daily.co keys.
 
 ## Migration workflow
 
-**Rule: When a migration adds or modifies functions/tables, push it to remote and
-regenerate types before committing.** DB tests and type-check depend on
-`database.types.ts` matching the schema. This avoids a chicken-and-egg problem where
-tests reference functions that aren't in the generated types yet.
+**Rule: a migration that adds or modifies functions or tables is committed together with
+the regenerated types.** DB tests and type-check depend on `database.types.ts` matching
+the schema, so a migration committed on its own leaves tests referencing functions the
+generated types do not have.
 
-The workflow is the same in a worktree as on `dev` directly; a worktree carries its own
-`.env.local`. The steps (run via the Bash tool):
+The workflow is the same in a worktree as on `dev` directly. The steps (run via the Bash
+tool):
 
 1. Write the migration SQL file in `migrations/`.
-2. Push to remote:
+2. Regenerate the types:
    ```bash
-   npx supabase db push -p "$(grep '^SUPABASE_DB_PASSWORD=' .env.local | cut -d= -f2-)"
+   npm run db -- generate
    ```
-3. Regenerate types:
-   ```bash
-   npx supabase gen types typescript --project-id "$(grep '^SUPABASE_PROJECT_REF=' .env.local | cut -d= -f2-)" --schema public 2>/dev/null > src/types/database.types.ts
-   ```
-   `2>/dev/null` swallows the CLI's "new version available" notice so it doesn't end up
-   in the output file. `cut -d= -f2-` (note the trailing `-`) keeps any `=` characters
-   inside the value itself.
+   It builds a database from *this checkout's* `migrations/` inside the WSL distro,
+   generates `src/types/database.types.ts` from it, and removes the database again. It
+   needs Docker in the distro and takes about a minute; nothing else in the repo is
+   touched.
 
-   **`--schema public` is load-bearing, not decoration.** Omitted, the flag has no default:
-   the CLI asks the Management API for types without naming a schema, and the server
-   answers with every schema the project's Data API currently exposes — a *dashboard
-   setting*, not anything in this repo. So the generated file starts depending on a toggle
-   nobody can see in a diff, and a regeneration arrives carrying an unrelated schema block
-   (`graphql_public` is the one that showed up). Naming the schema makes regeneration
-   depend only on the migrations, which is what lets "push, then regenerate, then diff"
-   mean anything. If the app ever genuinely needs a second schema, add it here explicitly
-   rather than dropping the flag.
-
-   This surfaced the day the CLI was pinned as a devDependency: before the pin, a bare
-   `supabase` resolved to whatever was installed globally (2.78.1 here), which defaulted
-   the omitted flag to `public`; `npx` then resolved the pin (2.106.0), which does not.
-   Every committed regeneration before that point was made by the older binary — the
-   reason the block had never appeared despite the command never carrying the flag.
-
-   **There is deliberately no npm script for this.** One existed and was wrong in three
-   ways at once — bare `supabase` instead of `npx`, no `--schema`, and `--local` against a
-   stack this project does not run — so it silently produced a different file than the
-   documented command. A second call site for a command whose correctness depends on this
-   many details is a liability; run the command above.
-4. **Do nothing about `supabase/schema.sql`.** It is machine-maintained: CI regenerates it
+   **`--schema public` is load-bearing, not decoration**, and the script passes it.
+   Without a schema named, the CLI asks the database for every schema its Data API
+   exposes and the generated file gains a block for each — `graphql_public` is the one
+   that shows up. Naming the schema makes the output depend only on `migrations/`, which
+   is what lets the comparison below mean anything. If the app ever genuinely needs a
+   second schema, add it there explicitly rather than dropping the flag.
+3. **Do nothing about `supabase/schema.sql`.** It is machine-maintained: CI regenerates it
    from `migrations/` and commits it to `dev` after merge. Do not dump it, do not edit it,
    and do not include it in a feature branch — if you do, the next `dev` build overwrites
    it anyway.
-5. Check `src/types/index.ts` — add convenience aliases for any new tables/enums.
-6. Commit migration + updated types + tests together. `schema.sql` is not part of it.
+4. Check `src/types/index.ts` — add convenience aliases for any new tables/enums.
+5. Commit migration + updated types + tests together. `schema.sql` is not part of it.
+
+### CI compares the committed types against `migrations/`
+
+CI's database job generates `database.types.ts` from `migrations/` with the same command,
+fails the build when the committed file differs — printing the diff — and uploads what it
+generated as the artifact `database-types-from-migrations` on every run, pass or fail.
+**When local output and CI's disagree, CI's is the authority**: it is built from the
+branch's migrations alone, with nothing of this machine in the path.
+
+**A red comparison is triaged in this order**, on a branch or on `dev`:
+
+1. **Regenerate locally and compare again.** The committed file was stale or hand-edited,
+   and the regenerated one is the fix.
+2. **Where git merged or conflicted in a generated file, inspect before committing
+   anything — never hand-edit it.** Take the regenerated output, then read both sides'
+   changes to the object in question and confirm each survives in it. When both survive,
+   commit the regenerated file; when one is missing, write the migration that combines
+   them, and regenerate. This holds on `dev` as much as on a branch: committing
+   regenerated output unread accepts the last writer and turns the build green over a lost
+   change.
+3. **Where local output still differs from CI's for an object nobody changed**, the two
+   generators have drifted — usually the CLI pin moved. Commit CI's artifact and fix the
+   script.
+
+**When the local database will not start**, push the branch and take CI's output instead:
+the run's page on GitHub lists it under Artifacts, or
+`gh run download <run-id> -n database-types-from-migrations` fetches it
+(`gh run list --branch <branch>` finds the run). The file inside is `database.types.ts` —
+copy it to `src/types/database.types.ts`.
 
 ### Never amend a landed migration
 
-**Rule: once a migration has landed on `dev` — or, for as long as the push-then-generate
-workflow above stands, has been pushed to staging, merged or not — it is never edited:
-every change ships as a NEW numbered migration applied with a plain `npx supabase db
-push`. A migration that is neither is still yours: fix the file in place rather than
-stacking a fix-up on it.** The CLI tracks applied migrations by version, so an edited
+**Rule: once a migration has landed on `dev` it is never edited: every change ships as a
+NEW numbered migration. A migration that has not landed is still yours: fix the file in
+place rather than stacking a fix-up on it.** The CLI tracks applied migrations by version, so an edited
 file that a database has already applied gets "Remote database is up to date" and its
 new statements **never execute there** — only a fresh-from-`migrations/` build ever runs
 them. That silently turns "I added an assertion" into "I added an assertion that has
 never executed anywhere"; if the addition is assertion-only, a wrong assertion can even
-pass CI vacuously. The edit-then-hand-apply-via-psql workaround was used for a while and worked, but the manual
-apply is the fragile step and its failure mode is exactly the staging-vs-files drift the
-migration system exists to prevent — hence the ruling (2026-08-27). Accepted costs:
-fix-up migrations in history, and a replacement function's assertion block must
-deliberately re-assert the invariants of the migration it supersedes (re-derive them; a
-hand-copy dropped a clause once). psql remains the right tool for *checking* staging
-state and reconciling drift that already happened — just not as a workflow.
+pass CI vacuously. Accepted costs: fix-up migrations in history, and a replacement
+function's assertion block must deliberately re-assert the invariants of the migration it
+supersedes (re-derive them; a hand-copy dropped a clause once). psql remains the right
+tool for *checking* staging state and reconciling drift that already happened.
 
 The same version-matching behaviour has a second edge: a new file whose **version
 number already exists in remote history is silently treated as applied** — the name is
