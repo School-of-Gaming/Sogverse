@@ -201,6 +201,105 @@ jobs:
       - name: Start local Supabase
         run: supabase start -x edge-runtime,studio,imgproxy,vector,logflare,realtime,postgres-meta,mailpit --ignore-health-check
 
+      # src/types/database.types.ts is committed, and what it must equal is whatever
+      # migrations/ produce — so it is generated here, from the stack `supabase start`
+      # just built out of migrations/, and compared below on every branch. The local
+      # `npm run db -- generate` runs the identical command against an identical stack;
+      # it is the fast path, not a second source of truth, and when the two disagree
+      # this job's output is the authority.
+      #
+      # This runs BEFORE the database tests on purpose. The artifact uploaded below is
+      # the escape hatch for a machine whose local database will not start, and a red
+      # test run is exactly when someone needs it — generated after the tests, it would
+      # not exist on the runs that matter.
+      - name: Generate types from migrations
+        run: |
+          set -euo pipefail
+          # `supabase start` exposes the database on this port (supabase/config.toml,
+          # [db] port). The CLI's `--local` form is broken in the pinned version, so the
+          # URL is spelled out; the same string is what the local script uses.
+          DB_PORT=54322
+          DB_URL="postgresql://postgres:postgres@127.0.0.1:${DB_PORT}/postgres"
+
+          # Prove something is answering there rather than assuming it. A stack that
+          # came up without a reachable database would otherwise surface as a failed
+          # generation — or worse, as a schema difference in the comparison below —
+          # instead of as the boot problem it is. pg_isready ships with the runner
+          # image, but the fallback keeps this step from depending on that.
+          if command -v pg_isready > /dev/null; then
+            db_ready() { pg_isready -h 127.0.0.1 -p "$DB_PORT" -U postgres -q; }
+          else
+            db_ready() { (exec 3<> "/dev/tcp/127.0.0.1/$DB_PORT") 2> /dev/null; }
+          fi
+          tries=0
+          until db_ready; do
+            tries=$((tries + 1))
+            if [ "$tries" -ge 30 ]; then
+              echo "::error::nothing is answering on 127.0.0.1:$DB_PORT — the local database did not come up, so types cannot be generated from migrations"
+              exit 1
+            fi
+            sleep 1
+          done
+          echo "database reachable on 127.0.0.1:$DB_PORT"
+
+          # --schema public is load-bearing: without it the CLI asks the database for
+          # every schema its Data API exposes, which drags in the graphql_public block
+          # (see supabase/CLAUDE.md). stderr goes to a file, not the output: the CLI
+          # writes its "new version available" notice there, and anything on the stream
+          # would otherwise end up inside the TypeScript. It is echoed afterwards so the
+          # notice is still readable in the log.
+          supabase gen types typescript --db-url "$DB_URL" --schema public \
+            > /tmp/database.types.ts 2> /tmp/gen-types.stderr || {
+              echo "::error::supabase gen types failed"
+              cat /tmp/gen-types.stderr
+              exit 1
+            }
+          if [ -s /tmp/gen-types.stderr ]; then
+            echo "supabase CLI stderr:"
+            cat /tmp/gen-types.stderr
+          fi
+
+          # Cheap guard against chatter that came out on stdout instead: the generated
+          # file always opens with the Json type alias, so anything else at the top is
+          # the CLI talking, not types.
+          if ! head -5 /tmp/database.types.ts | grep -q '^export type Json'; then
+            echo "::error::generated file does not start with the expected 'export type Json' preamble — the CLI wrote something other than TypeScript to stdout"
+            head -20 /tmp/database.types.ts
+            exit 1
+          fi
+          echo "wrote $(wc -l < /tmp/database.types.ts) lines"
+
+      # Uploaded before the comparison, and if: always() on top of that, so the file
+      # exists however the run ends: this artifact is what an agent commits verbatim
+      # when the comparison fails, or on a day the owner's local database will not
+      # start. The two together cover both orderings — a failing comparison below, and
+      # a generation step above that died before writing anything.
+      - name: Upload types generated from migrations
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: database-types-from-migrations
+          path: /tmp/database.types.ts
+          retention-days: 30
+          # When generation itself failed the file never appeared, and a
+          # missing-file warning stacked on top of the real failure only obscures it.
+          if-no-files-found: ignore
+
+      # One behaviour on every branch: a committed types file that disagrees with
+      # migrations/ is stale wherever it is found, and catching it on the feature
+      # branch is the point — a warning here would let it land and fail on dev.
+      - name: Check committed types match migrations
+        run: |
+          set -euo pipefail
+          if diff -q /tmp/database.types.ts src/types/database.types.ts > /dev/null; then
+            echo "src/types/database.types.ts matches what migrations/ generate"
+            exit 0
+          fi
+          echo "committed types differ from the types generated from migrations/ (first 200 diff lines):"
+          diff -u src/types/database.types.ts /tmp/database.types.ts | head -200 || true
+          echo "::error::src/types/database.types.ts does not match the types generated from migrations/. Regenerate with 'npm run db -- generate' and commit the result — or, if the local database will not start, download the 'database-types-from-migrations' artifact from this run and commit it as src/types/database.types.ts."
+          exit 1
+
       - name: Run database tests
         run: npm run test:db
         env:

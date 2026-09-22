@@ -20,6 +20,7 @@
     "test:db": "vitest --run --config vitest.config.db.mts",
     "test:smoke": "playwright test",
     "check-translations": "node scripts/check-translations.mjs",
+    "db": "node scripts/local-db.mjs",
     "gates": "node scripts/gates.mjs",
     "perf:insights": "node scripts/speed-insights.mjs"
   },
