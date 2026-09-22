@@ -293,8 +293,11 @@ every command does — the things its usage text does not say:
   rich seed reuses — and the families and educators `supabase/rich-seed.sql` adds, all on
   the one test password its header names. The trimmed service set has no mail catcher, so
   nothing emailed can be read on a stack; the seeded accounts are the way in.
-- **The DB tests never run against a stack** — `tests/CLAUDE.md`, "DB tests run in CI, not
-  locally".
+- **A stack can host the DB tests, but only one built with `up --no-rich-seed`.**
+  `npm run test:db:local` runs the `tests/db/` suite against this checkout's stack, taking
+  its URL and keys from the stack rather than from `.env.local`, and refuses a stack
+  carrying the rich seed, because the tests' whole-table claims are written against
+  `supabase/seed.sql` alone — `tests/CLAUDE.md`, "DB tests need a real Postgres".
 
 ## Generated nullability can lie
 

@@ -99,20 +99,28 @@ redirects; it was deleted in August 2026 for churning on every copy edit while c
 nothing. `TODO.md` holds the plan for a real browser suite against a local Supabase stack
 — that would be a new category, not an addition to this one.
 
-## DB tests run in CI, not locally
+## DB tests need a real Postgres
 
-DB tests hit a **real Postgres**, and nothing wires the test runner to a local one. They
-run in remote CI against a fresh database — so the way to exercise them is to push your
-branch and let CI run `test:db`, not to run them on this machine. Improvising a stack in
-the meantime is worse than it looks: run against the repo's own `supabase/` directory, the
-CLI leaves an untracked `.branches/` directory there that nothing gitignores, and takes
-its service versions from the linked project's pins in `.temp/` — different images from
-the ones CI builds on. A worktree's own stack (`npm run db -- up`) is no exception, and it
-is not one of these hazards but a different one: a stack carries the rich example seed on
-top of `supabase/seed.sql`, while the whole-table claims below are written against that
-minimal fixture set alone. Their setup
-(`tests/db/setup.ts`) fails fast if `SUPABASE_SERVICE_ROLE_KEY` is unset, which is the
-expected outcome locally.
+DB tests hit a **real Postgres**, so one has to be pointed at them. CI is the authority:
+every push builds a database from `migrations/` plus `supabase/seed.sql` and runs
+`test:db` against it. The same suite runs locally against this checkout's own stack with
+`npm run test:db:local`, which resolves the stack, takes its URL and both keys from the
+stack itself rather than from `.env.local` — a file `npm run db -- up` rewrites and a dev
+server is reading — and hands vitest the three variables CI's step sets. Extra arguments
+go through (`npm run test:db:local -- tests/db/chat-rpcs.test.ts`). A bare `npm run
+test:db` is the CI invocation and reaches nothing on its own: `tests/db/setup.ts` fails
+fast when `SUPABASE_SERVICE_ROLE_KEY` is unset.
+
+**The stack has to carry `supabase/seed.sql` alone.** `npm run db -- up` applies
+`supabase/rich-seed.sql` on top of it, and the whole-table claims below are written
+against the minimal fixture set — so a stack holding the rich catalogue fails them for
+reasons that are not bugs. `up --no-rich-seed` builds one without it, and
+`test:db:local` refuses a stack carrying it rather than let those failures be read as
+findings.
+
+**A rerun needs no reset.** The suite cleans up after itself: two full runs back to back
+against one database both pass, and the database is left holding exactly `seed.sql`'s
+rows.
 
 Because they run against a real DB, they're also where the schema-side guarantees get
 verified: the access-control catalog checks, and the zod RPC-result schemas from each
