@@ -47,3 +47,9 @@ src/lib/locations/catalog/*.json linguist-generated=true
 # commit after normalization, and fails forever. The file is CI-written and never
 # hand-edited, so storing it byte-exact costs nothing.
 supabase/schema.sql -text linguist-generated=true
+
+# The same dump, cut into one file per object — same reasons, so the same two
+# attributes: CI-written and never hand-edited, so collapse it in diffs, and
+# exempt from eol normalization because the carriage return described above
+# lives in one of these files now.
+supabase/schema/** -text linguist-generated=true
