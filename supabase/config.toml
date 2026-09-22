@@ -10,7 +10,11 @@ schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 # Fail-closed is the design: a new object gets no Data API access until a migration
-# grants it. The CLI's own default flipped to true in 2.116, so this pins ours.
+# grants it. What enforces that everywhere is the baseline migration's `ALTER DEFAULT
+# PRIVILEGES … REVOKE`, which travels with the schema — a hosted project never reads
+# this file. The CLI's own default flipped to true in 2.116, so this pin is defence in
+# depth: it keeps a fresh local or CI stack from carrying the permissive defaults over
+# the window between bootstrap and the baseline applying.
 auto_expose_new_tables = false
 
 [db]
