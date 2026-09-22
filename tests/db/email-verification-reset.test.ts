@@ -5,7 +5,7 @@ import { createAdminTestClient } from "./helpers";
 import { TEST_IDS } from "./constants";
 
 /**
- * `trg_reset_email_verification` (00186) — the half of the email-verification
+ * `trg_reset_email_verification` — the half of the email-verification
  * design that no application code can be trusted with.
  *
  * `profiles.email_verified_at` is a claim about ONE address, not about the
@@ -23,8 +23,8 @@ import { TEST_IDS } from "./constants";
  * un-verify a family for nothing.
  *
  * Everything runs on the admin client: the column has no UPDATE grant to
- * `authenticated` or `anon` at any level (00186 asserts that from the catalog at
- * apply time), so service-role is the only writer there is.
+ * `authenticated` or `anon` at any level (the schema asserts that from the
+ * catalog at apply time), so service-role is the only writer there is.
  */
 
 /**

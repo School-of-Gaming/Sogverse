@@ -14,7 +14,7 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
 
 /**
- * Session substitutions (00272): who is absent, who stood in, who may reach what, and
+ * Session substitutions: who is absent, who stood in, who may reach what, and
  * the mechanical check that keeps the access surface complete.
  *
  * Four things about this file are decisions rather than convenience, and each
@@ -558,7 +558,7 @@ describe("session substitutions", () => {
      * `validate_gedu_assignment_product` is a member of the same set and is
      * deliberately absent: it is a TRIGGER function, and the catalog helper
      * excludes those by design (PostgREST cannot invoke one, so it is not a
-     * callable surface). 00272's own end-of-migration block, which reads pg_proc
+     * callable surface). The schema's own end-state block, which reads pg_proc
      * directly, does name it.
      *
      * **Two blind spots this check cannot see, and neither is theoretical.** A
@@ -729,9 +729,9 @@ describe("session substitutions", () => {
       );
 
       for (const key of [
-        // Not a gate — the assignment writer, which was annotated as such until
-        // 00276 gave it the orphan SWEEP: removing an assignment unseats
-        // somebody, and every other unseating already withdraws the substitution
+        // Not a gate — the assignment writer, which carries the orphan SWEEP:
+        // removing an assignment unseats
+        // somebody, and every other unseating withdraws the substitution
         // requests it orphans. The reference is real, so the honest answer is
         // that it is branched; it is named here rather than annotated so that
         // losing the sweep fails loudly instead of quietly rejoining the
@@ -754,8 +754,8 @@ describe("session substitutions", () => {
   });
 
   /**
-   * The PERMANENT home of the access-posture checks 00272 also asserts at the
-   * foot of itself. Two things about that migration's copy are worth knowing
+   * The PERMANENT home of the access-posture checks the schema also asserts in
+   * its own end-state block. Two things about that copy are worth knowing
    * here, because this is the copy that runs on every build:
    *
    * - **Its grant sweep asks about four privileges** — SELECT, INSERT, UPDATE
@@ -1701,10 +1701,10 @@ describe("session substitutions", () => {
     });
 
     it("never names the absent gedu to the gedu who offers", async () => {
-      // The pool list omits the absent person on purpose, and before 00276 the
-      // offer that followed it handed them over: the document every write
-      // returns always carried requested_by. One button-press was the whole
-      // attack, and it worked on any open request in the pool.
+      // The pool list omits the absent person on purpose, and the offer that
+      // follows must not hand them over: a document carrying requested_by on
+      // every write would make one button-press the whole
+      // attack, on any open request in the pool.
       const id = await seedRequest({ date: utcDate(5) });
       await admin
         .from("session_substitution_requests")

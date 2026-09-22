@@ -422,7 +422,7 @@ export class LocationsService {
   }
 
   // `locations` writes go through the admin API. `authenticated` holds INSERT
-  // and UPDATE on the table (migration 00123) and the admin_manage_locations
+  // and UPDATE on the table and the admin_manage_locations
   // policy decides who may use them — the route re-checks the role and then
   // writes on the caller's own server-side client, so the route's answer and
   // the database's have to agree. The injected `supabase` client is unused by

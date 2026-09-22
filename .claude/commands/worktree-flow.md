@@ -156,6 +156,29 @@ to start a second one.
 - Start it backgrounded: `npx next dev --turbopack -p <port>`.
 - Report the specific URLs worth opening, not just the root.
 
+**A branch that also adds migrations previews against its own database.** `git diff
+--name-only --diff-filter=A origin/dev...HEAD -- supabase/migrations/` — non-empty
+output means `npm run db -- up` (about 50s) runs *before* the server, and it runs
+without asking: a stack is free, owner-less and per-checkout, exactly like this dev
+server. It repoints this worktree's `.env.local` at the stack — the three values the
+app reads, nothing else — so the server has to start after it, and a server already
+running has to be restarted to see it. A schema change with nothing to look at gets
+no stack: `npm run db -- generate` is all that kind of branch needs.
+
+- **Sign in as the rich seed's accounts.** `up` builds the stack on
+  `supabase/rich-seed.sql` alone — `seed.sql` is the DB tests' fixture set and never
+  runs on a rich stack — and that file's header lists the educators, parents and
+  children it creates. Sign in as `admin@example.com`, `parent@example.com` (PIN 1111)
+  or `gedu@example.com`, password `password`; every other seeded account is on
+  `testpassword123`. A trimmed stack runs no mail catcher, so nothing emailed — a magic
+  link, a reset — can be read on it; the seed's accounts are the only way in.
+- `npm run db -- list` shows every stack on the machine with its memory (a settled
+  one holds about 660 MB). Two beside the user's own work are comfortable, three
+  tight.
+- **Added a migration** with the stack up: `npm run db -- migrate` (a second).
+  **Edited one:** `npm run db -- reset` (about 45s) — the CLI only ever runs a version
+  once, so an edited file reaches a running stack no other way.
+
 ---
 
 ## Phase 4 — Review (skip only for a change that could not be wrong)
@@ -275,7 +298,38 @@ belong in one call — and prefer the script wherever one exists.
    gate exists to catch changes, not to ritualise. Any commit since, however
    small, voids it.
 
-2. **Stop the dev server first, if Phase 3 started one — by port, with a tree
+2. **A branch carrying migrations lands synced.** `git fetch origin dev`, then
+   `git diff --name-only --diff-filter=A origin/dev...HEAD --
+   supabase/migrations/` — empty output means land exactly as today, so skip the
+   rest of this step. Otherwise, in the worktree, on the branch:
+
+   1. `git merge origin/dev` — resolve conflicts as usual, except in
+      `database.types.ts` and under `supabase/schema/`, which are never
+      hand-edited: regenerate and inspect (`supabase/CLAUDE.md`, "CI compares
+      the committed generated files against `migrations/`"). If this worktree's
+      stack is up, `npm run db -- reset` it after the merge — never `migrate`,
+      which would put the merged migrations on top of the branch's own.
+   2. `node scripts/restamp-migrations.mjs` — renames this branch's own
+      migrations to fresh timestamps, relative order kept, so they sort above
+      everything `dev` holds. Landing is serialised through one human, so the
+      stamp taken here is the queue position and two branches can never claim
+      one version. `--dry-run` shows the renames without making them.
+   3. `npm run db -- generate` — about a minute.
+   4. `git status` must show the renames and, at most, regenerated files
+      (`database.types.ts`, `supabase/schema/`) whose every hunk you can account
+      for. A difference in an object both sides touched is the conflict case
+      again: read both sides' changes and confirm each survives in the
+      regenerated output; where one is missing, write the migration that
+      combines them and regenerate.
+   5. Commit, and re-run the gates if the merge brought more than the renames.
+      **Do not push the branch again** — the regenerate-and-compare you just ran
+      is the gate, and `dev`'s own CI run follows the merge. The one exception is
+      the no-local-database path: push the synced branch, because CI is then the
+      generator, and commit both its artifacts —
+      `database-types-from-migrations` as `src/types/database.types.ts`, and
+      `schema-from-migrations` in place of `supabase/schema/`.
+
+3. **Stop the dev server first, if Phase 3 started one — by port, with a tree
    kill. Every time; this is the procedure, not a recovery.** On Windows,
    stopping the background task kills only the wrapper shell and the Next child
    *always* survives it holding the port (deterministic, not a race) — left
@@ -290,17 +344,22 @@ belong in one call — and prefer the script wherever one exists.
       whole process tree (route workers included), where `Stop-Process` has no
       tree mode and can leave grandchildren behind.
    5. Re-check the port is free, and that the user's own ports are still up.
+   6. `npm run db -- park` if Phase 3 brought a stack up — **a stack is parked
+      whenever its dev server is not running.** It keeps the data and frees the
+      memory, `.env.local` goes on pointing at it, and `up` brings it back in
+      about 30s, so a branch can wait for review at no cost. Step 6's teardown
+      script runs `npm run db -- down` for you, which is what removes it.
 
    A server whose wrapper died but whose child survived serves broken pages
    ("Jest worker encountered 2 child process exceptions, exceeding retry
    limit"). That is the wounded server, not an app bug: kill it and start
    clean rather than debugging the page.
 
-3. **Leave the worktree** — `ExitWorktree` with `keep`, which returns the session
+4. **Leave the worktree** — `ExitWorktree` with `keep`, which returns the session
    to the main checkout. `remove` will refuse here, because the worktree was
    created by hand rather than by `EnterWorktree`.
 
-4. **Merge and push**, from the main checkout — one call:
+5. **Merge and push**, from the main checkout — one call:
 
    ```
    [ "$(git branch --show-current)" = dev ] &&
@@ -318,16 +377,17 @@ belong in one call — and prefer the script wherever one exists.
    The main checkout's home branch is `dev` — start there, end there, and
    deviate only when the user explicitly says to. The subject is house style,
    not git's default text. If `dev` gained commits since Phase 1, the push publishes a union CI
-   has not seen — that is accepted; CI on `dev` judges it (step 6).
+   has not seen — that is accepted; CI on `dev` judges it (step 7).
 
-5. **Tear the worktree down and delete the branch** — one call, from the
+6. **Tear the worktree down and delete the branch** — one call, from the
    PowerShell tool, in the main checkout:
 
    ```
    .claude\scripts\worktree-teardown.ps1 -Worktree <short-name> -DeleteRemote
    ```
 
-   It unlinks any nested-install junction Phase 1 created, refuses to run
+   It removes the worktree's local Supabase stack if it has one (a no-op when it
+   does not), unlinks any nested-install junction Phase 1 created, refuses to run
    anything recursive while one is still standing, removes the worktree —
    falling back to a recursive delete and a prune when git objects to
    `node_modules` or `.next` — and deletes the branch. Pass `-DeleteRemote`
@@ -346,7 +406,7 @@ belong in one call — and prefer the script wherever one exists.
    folder behind it, and that has cost this repo its `node_modules` once. If
    the script refuses, read what it refused about — that is the guard working.
 
-6. **Report** what landed, confirm the worktree, branch and server are all
+7. **Report** what landed, confirm the worktree, branch and server are all
    actually gone, and confirm the main checkout is back on `dev`. **Do not
    watch the CI run the push triggers** — the user watches `dev` CI themselves
    and will flag a failure; a session that sits polling it is spending the

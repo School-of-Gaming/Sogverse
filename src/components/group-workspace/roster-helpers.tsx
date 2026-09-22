@@ -23,8 +23,8 @@ import type { GeduAssignedProductGroup } from "@/types";
  * "Copy all contact emails (7)" — one comma-separated list the gedu can paste
  * straight into Gmail.
  *
- * It is **every** address on the roster, which since 00173 means an adult
- * participant's own address alongside the children's parents. The whole point
+ * It is **every** address on the roster, which means an adult participant's
+ * own address alongside the children's parents. The whole point
  * of the button is "mail this group", and a group mail that silently omits the
  * one member who is their own contact is worse than no button — the gedu would
  * have no way to notice.

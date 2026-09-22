@@ -616,13 +616,13 @@ describe("get_product_groups_with_details", () => {
       TEST_IDS.GAMER,
     ]);
     expect(result.unassigned.map((p) => p.participant_id)).toEqual([TEST_IDS.GAMER_2]);
-    // 00166's per-participation flag, on the two branches that actually read
+    // The per-participation subscription flag, on the two branches that read
     // family_subscriptions. Neither seat has a subscription behind it, so both
     // report false; the true case and the waitlist branch's constant false are
     // pinned in waitlist-admin.test.ts.
     expect(result.groups[0].participations[0].has_live_subscription).toBe(false);
     expect(result.unassigned[0].has_live_subscription).toBe(false);
-    // 00167's payment marker, on the same two branches. These seats were
+    // The payment marker, on the same two branches. These seats were
     // written straight into the table with no Checkout Session behind them —
     // the shape a free enrollment or a comp-enrollment produces — so no money
     // ever arrived for them and the marker is false. The true case lives on the
@@ -693,9 +693,10 @@ describe("get_product_groups_with_details", () => {
   });
 
   it("carries the staff-only flair identically on the grouped and group-less arms", async () => {
-    // 00203's three fields, on the groups-snapshot reader. No admin surface
-    // draws them from this document today — the admin group details page reads
-    // both marks off the group feed — so what is asserted here is the shape
+    // The staff-only flair's three fields, on the groups-snapshot reader. No
+    // admin surface draws them from this document today — the admin group
+    // details page reads both marks off the group feed — so what is asserted
+    // here is the shape
     // parity itself. The two arms are the point: one shared
     // LEFT JOIN feeds all three participation arms, so a seat in a group can
     // carry a note and a seat in none comes back null throughout — which is the

@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-  Tear down a /worktree-flow worktree: unlink nested-install junctions, remove the
-  worktree, prune, delete the branch.
+  Tear down a /worktree-flow worktree: remove its local Supabase stack, unlink
+  nested-install junctions, remove the worktree, prune, delete the branch.
 
 .DESCRIPTION
   This is the *how* for Phase 5's teardown; worktree-flow states the obligation and
-  when to run it. It exists as a script for two reasons.
+  when to run it. It exists as a script for three reasons.
 
   Safety. A nested-install junction is a link into the main checkout's real
   node_modules. A recursive delete follows it and empties the folder behind it —
@@ -16,6 +16,11 @@
   Cost. Teardown is the last thing a worktree session does, so it runs at that
   session's largest context, where every turn is the most expensive turn of the
   run. Nine steps of shell became nine of those turns. One call is one turn.
+
+  Completeness. A worktree that carried migrations may own a local Supabase stack,
+  and the stack outlives the directory that owns it: removing the tree first strands
+  its containers and their several hundred megabytes, with nothing left on disk to
+  run `down` from. So the stack goes before anything is deleted.
 
   Everything destructive is guarded and announced. Nothing outside the named
   worktree is touched, and the remote branch is deleted only when -DeleteRemote is
@@ -150,11 +155,60 @@ if ((Test-Path $envMain) -and (Test-Path $envWt)) {
   }
 }
 
-# --- Step 1: unlink nested-install junctions ---------------------------------
+# --- Step 1: remove the worktree's local Supabase stack ----------------------
+# A worktree that carried migrations may run its own stack (supabase/CLAUDE.md, "A
+# schema-changing worktree runs its own stack"). `down` removes the containers and
+# their data and restores the three .env.local values `up` replaced.
+#
+# It must be the WORKTREE's copy of the script: local-db.mjs derives which stack it
+# owns from its own location, so the main checkout's copy would address the main
+# checkout's stack instead.
+#
+# It runs before anything is deleted, because once the tree is gone there is
+# nothing left to run `down` from, and the aside copy of the original .env.local
+# values dies with it — leaving containers that only `npm run db -- list` will ever
+# mention, as a stack whose worktree is missing. Safe when there is no stack:
+# `down` says so and exits 0.
+#
+# Its two failures are not the same failure, so they are not treated alike:
+#
+#   exit 1  `down` ran and refused, or failed part-way through — an outcome about
+#           a stack that exists. The teardown stops; the stack is fixed and the
+#           teardown rerun.
+#   exit 2  `down` could not run at all (no distro, wsl.exe would not spawn, a
+#           missing flock). Nothing was inspected, so there is nothing to fix
+#           here and no reason to hold a worktree hostage to a broken distro.
+#           The teardown warns and carries on.
+Write-Host "1. Local Supabase stack"
+$localDb = Join-Path $target 'scripts\local-db.mjs'
+if (-not (Test-Path -LiteralPath $localDb)) {
+  Step "no scripts\local-db.mjs in this worktree - nothing to remove"
+}
+elseif ($DryRun) {
+  Step "would: node $localDb down"
+}
+else {
+  Step "node scripts\local-db.mjs down"
+  node $localDb down
+  if ($LASTEXITCODE -eq 2) {
+    Warn "'npm run db -- down' could not run in the worktree (exit 2) - nothing was inspected or removed."
+    Warn "If this worktree had a stack, it stays behind: 'npm run db -- list' will show it as one"
+    Warn "whose worktree is gone, and the copy of the original .env.local values that 'down' would"
+    Warn "have put back dies with the worktree. Carrying on with the teardown."
+  }
+  elseif ($LASTEXITCODE -ne 0) {
+    Die "'npm run db -- down' failed in the worktree (exit $LASTEXITCODE). Nothing has been removed; fix the stack, then rerun."
+  }
+  else {
+    Ok "stack removed (or there was none)"
+  }
+}
+
+# --- Step 2: unlink nested-install junctions ---------------------------------
 # Phase 1 junctions live at <worktree>\<packages|services>\<name>\node_modules.
 # Enumerated by that exact shape rather than by a recursive walk, because a
 # recursive walk is itself capable of descending the link we are here to remove.
-Write-Host "1. Nested-install junctions"
+Write-Host "2. Nested-install junctions"
 $links = @()
 foreach ($group in @('packages', 'services')) {
   $groupDir = Join-Path $target $group
@@ -189,10 +243,10 @@ foreach ($l in $links) {
   }
 }
 
-# --- Step 2: assert nothing linked remains -----------------------------------
+# --- Step 3: assert nothing linked remains -----------------------------------
 # The load-bearing check. Anything recursive below this line runs only once every
 # reparse point under the worktree is gone.
-Write-Host "2. Reparse-point sweep"
+Write-Host "3. Reparse-point sweep"
 $remaining = @()
 foreach ($depth in @('*', '*\*', '*\*\*')) {
   $remaining += Get-ChildItem -LiteralPath $target -Filter $depth -Force -ErrorAction SilentlyContinue |
@@ -204,8 +258,8 @@ if ($remaining.Count -gt 0) {
 }
 Ok "clear - recursive deletion is safe from here"
 
-# --- Step 3: remove the worktree ---------------------------------------------
-Write-Host "3. Remove the worktree"
+# --- Step 4: remove the worktree ---------------------------------------------
+Write-Host "4. Remove the worktree"
 if ($DryRun) {
   Step "would: git worktree remove $target  (falling back to recursive delete + prune)"
 }
@@ -222,8 +276,8 @@ else {
   Ok "removed"
 }
 
-# --- Step 4: delete the branch -----------------------------------------------
-Write-Host "4. Branch"
+# --- Step 5: delete the branch -----------------------------------------------
+Write-Host "5. Branch"
 if ($KeepBranch -or -not $Branch) {
   Step "keeping $Branch"
 }
@@ -247,7 +301,7 @@ else {
   }
 }
 
-# --- Step 5: report -----------------------------------------------------------
+# --- Step 6: report -----------------------------------------------------------
 Write-Host ""
 Write-Host "Final state" -ForegroundColor Cyan
 Write-Host "  worktree present   $(Test-Path -LiteralPath $target)"

@@ -184,6 +184,10 @@ const SUPABASE_HOST = (() => {
     return "https://*.supabase.co";
   }
 })();
+// The same origin with a websocket scheme, for Realtime. Against a hosted
+// project both are inside the wildcards below; against a worktree's local stack
+// (an http://127.0.0.1 origin) they are the only entries that admit it.
+const SUPABASE_WS_HOST = SUPABASE_HOST.replace(/^http/, "ws");
 
 function buildCspHeader(nonce: string): string {
   const isProd = process.env.NODE_ENV === "production";
@@ -216,7 +220,7 @@ function buildCspHeader(nonce: string): string {
     // covered by `strict-dynamic`, so both branches need it. Our own
     // server-side reports go to graph.facebook.com and are named nowhere here:
     // they leave a route handler, not the document.
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io https://www.facebook.com",
+    `connect-src 'self' ${SUPABASE_HOST} ${SUPABASE_WS_HOST} https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io https://www.facebook.com`,
     "frame-src 'self' https://*.daily.co https://*.stripe.com",
     // blob: workers used by Daily.co for WebRTC media processing
     "worker-src 'self' blob:",

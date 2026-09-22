@@ -10,7 +10,7 @@ import { createParticipationRpcResult } from "@/services/participations/particip
  * create_participation for municipality clubs (billing_mode =
  * 'external_contract'). These are invoiced off-platform, so registration is
  * instant — active on the spot, no Stripe — mirroring the 'free' branch but gated
- * on the external billing mode. See migration 00115.
+ * on the external billing mode.
  *
  * Product UUIDs in the 5b8–5b9 sub-range (see product-helpers allocation
  * registry). The muni product points at the seeded LOCATION_MUNICIPALITY to

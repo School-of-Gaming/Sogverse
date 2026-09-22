@@ -175,8 +175,8 @@ function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
 // relationship between these two tables. A second foreign key — an FK on the
 // derived `image_path` column is the tempting one — makes this embed ambiguous
 // and PostgREST refuses the whole query with PGRST201, which the admin product
-// page shows as "product not found". The header of the migration that chose
-// not to add that key (supabase/migrations/00198) records the reasoning.
+// page shows as "product not found". That is why `image_path` carries no FK of
+// its own — see `src/services/product-images/CLAUDE.md`.
 function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
@@ -320,7 +320,8 @@ export type CreateProductInput = {
    * behind it re-checks: a location the blocked party can rewrite in their own
    * settings is not something a server-side gate could actually guarantee. A
    * family already enrolled keeps its seat if it later moves. Known and
-   * accepted — see the column comment in migration 00193.
+   * accepted — see the column's own comment in
+   * `supabase/schema/tables/products.sql`.
    */
   region_lock_country: string | null;
   /**

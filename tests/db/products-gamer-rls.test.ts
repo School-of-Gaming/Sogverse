@@ -24,7 +24,7 @@ import {
  * all three.
  *
  * **What this file used to be, and why it is smaller now.** It pinned an
- * *enrolled-gamer carve-out* (migration 00067) against a public read that
+ * *enrolled-gamer carve-out* against a public read that
  * closed when a term ended, and its negative controls were half the point: a
  * `reserving` row, no participation, and an anonymous visitor each had to come
  * back empty. There is no carve-out to pin any more — every product stays

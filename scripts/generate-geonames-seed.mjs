@@ -82,28 +82,32 @@ import {
 } from "./lib/geonames/cutover.mjs";
 import { ingestCountry, nameResolutionCrossCheck } from "./lib/geonames/ingest.mjs";
 import { locationInsert, sqlBigint, sqlEscaped, sqlJsonb, sqlText } from "./lib/geonames/sql.mjs";
+import { migrationPath } from "./lib/migration-version.mjs";
 
 /**
- * The migration each country's seed lands in, per mode. Deliberately literals:
- * migrations are append-only history, so a file name is chosen once by a human
- * — against the remote migration history, since an already-used version number
- * is silently treated as applied — and never inferred from a directory listing,
- * which would mint a second file on a rerun. Adding a country adds a line.
+ * The migration each country's seed lands in, per mode — named by what the
+ * migration does, with no version. Deliberately literals: migrations are
+ * append-only history, so a rerun has to land back in the file it wrote before
+ * rather than mint a second one beside it, and the name is therefore chosen
+ * once, by a human, per country. Adding a country adds a line.
  *
- * A country appears under `cutover` when it had a tree before GeoNames did:
- * Finland and France were seeded from Tilastokeskus and the COG, and their one
- * migration replaces that tree with this one. Every country after them is a
- * plain `seed`.
+ * The version is left out because it is not ours to know: a migration's version
+ * is a timestamp assigned when its branch lands, so the file this generator
+ * creates today is on every database under a number chosen later. The
+ * descriptive half is the half that survives, so that is the half we key on.
+ *
+ * A country appears under `cutover` when it had a tree before GeoNames did: its
+ * one migration replaces that tree with this one. A country with no
+ * pre-GeoNames tree is a plain `seed`.
+ *
+ * Both maps are empty, and that is the record: every country seeded so far is
+ * in the baseline migration, its seed file squashed away with the rest of the
+ * numbered history. An empty entry is what stops this generator writing a
+ * second copy of a tree the database already holds.
  */
 const MIGRATIONS = {
-  seed: {
-    SE: "00158_seed_sweden_geonames.sql",
-    GB: "00161_seed_uk_geonames.sql",
-  },
-  cutover: {
-    FI: "00159_cutover_finland_geonames.sql",
-    FR: "00160_cutover_france_geonames.sql",
-  },
+  seed: {},
+  cutover: {},
 };
 
 /** Human-readable country names for the migration header. */
@@ -127,6 +131,15 @@ const PLURALS = {
 };
 
 const MIGRATIONS_DIR = join(import.meta.dirname, "..", "supabase", "migrations");
+
+/** The shared resolver, with a duplicate name reported the way this script reports everything else. */
+function namedMigration(name) {
+  try {
+    return migrationPath(MIGRATIONS_DIR, name);
+  } catch (error) {
+    return fail(error.message);
+  }
+}
 
 /** One allowance entry, for prose in the emitted header and the run report. */
 function describeAllowance(entry) {
@@ -152,8 +165,8 @@ if (unknownFlag) fail(`Unknown flag ${unknownFlag}. The only flag is --cutover.`
 if (!iso) fail("Usage: node scripts/generate-geonames-seed.mjs <CC> [--cutover]   (e.g. SE, or FI --cutover)");
 
 const mode = args.includes("--cutover") ? "cutover" : "seed";
-const migrationFile = MIGRATIONS[mode][iso];
-if (!migrationFile) {
+const migrationName = MIGRATIONS[mode][iso];
+if (!migrationName) {
   const other = mode === "seed" ? "cutover" : "seed";
   if (MIGRATIONS[other][iso]) {
     fail(
@@ -162,9 +175,13 @@ if (!migrationFile) {
     );
   }
   fail(
-    `No ${mode} migration file name recorded for ${iso}. Pick the next free migration number — ` +
-      `checked against remote migration history first — and add it to MIGRATIONS in ` +
-      `scripts/generate-geonames-seed.mjs.`,
+    `No ${mode} migration is recorded for ${iso}. If ${iso} was seeded before the migration ` +
+      `history was squashed, its tree is already in the baseline migration and this generator ` +
+      `would write a second copy of it: a tree that is already there is refreshed by a new ` +
+      `migration saying what changed, never by re-running the seed. If ${iso} is genuinely new, ` +
+      `add its name — what the migration does, no version — to MIGRATIONS in ` +
+      `scripts/generate-geonames-seed.mjs; the file itself is created on this run and restamped ` +
+      `when the branch lands.`,
   );
 }
 
@@ -573,7 +590,7 @@ const sql = [
   "COMMIT;\n",
 ].join("\n");
 
-const file = join(MIGRATIONS_DIR, migrationFile);
+const file = namedMigration(migrationName);
 writeFileSync(file, sql, "utf8");
 
 /* ------------------------------------------------------------------- report */

@@ -35,7 +35,7 @@ import { notifyExpiredSeatOffers } from "@/services/participations/seat-offer-em
  *
  * **A late DECLINE is honoured, and only a late ACCEPT is refused.** The window
  * exists to stop a seat being claimed after we have offered it elsewhere, so it
- * binds one direction (00208), and it is why the short-circuit below reads
+ * binds one direction, and it is why the short-circuit below reads
  * `body.accept` before it decides anything. What the answer then owes staff —
  * the declined arm's mail, and the sweep a lapsed one triggers — is settled
  * with the in-app route's, in `seat-offer-answer.server.ts`.
@@ -82,8 +82,8 @@ export const POST = defineRoute({
     }
 
     // The instant the token was signed over, back as an ISO string. It survives
-    // the round trip only because the stamp was truncated to milliseconds when
-    // it was written — see migration 00207. The staff mail reads the same value
+    // the round trip only because `send_seat_offer` truncates the stamp to
+    // milliseconds when it writes it. The staff mail reads the same value
     // for the line an admin places the offer by.
     const sentAt = new Date(claims.sentAtMs).toISOString();
 

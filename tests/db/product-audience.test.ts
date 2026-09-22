@@ -20,8 +20,7 @@ import {
 } from "./product-helpers";
 
 /**
- * A product's AUDIENCE, and the seat a parent may take on their own account
- * (00173).
+ * A product's AUDIENCE, and the seat a parent may take on their own account.
  *
  * Three things are settled here, and they fail in different ways:
  *
@@ -170,9 +169,8 @@ describe("product audience", () => {
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
       },
-      // The self seat: participant IS the customer. Before 00173 this row could
-      // not exist — chk_participations_no_self_signup forbade it — so its
-      // presence here is also the proof that the CHECK is gone.
+      // The self seat: participant IS the customer. No CHECK forbids it, and
+      // its presence here is the proof of that.
       {
         product_id: PRODUCT_ROSTER,
         group_id: GROUP_ROSTER,
@@ -372,7 +370,7 @@ describe("product audience", () => {
 
     it("refuses enrolling another adult, on any audience", async () => {
       // The parent-link requirement is what makes this impossible, and it is
-      // unchanged by 00173 — an unlinked adult fails it exactly as an unlinked
+      // the same for an adult seat — an unlinked adult fails it exactly as an unlinked
       // child does. Asserted on the for-parents product, where the audience
       // itself would not have stopped them.
       const { error } = await signup(
@@ -478,8 +476,8 @@ describe("product audience", () => {
     /**
      * The gates test "self" with plain `=`, chosen over IS NOT DISTINCT FROM
      * precisely so that a NULL id falls through to the parent-link arm and is
-     * refused, instead of two NULLs reading as a self seat (00173 documents
-     * the choice at the gate itself). These cases make that operator swap fail
+     * refused, instead of two NULLs reading as a self seat (the gate itself
+     * documents the choice). These cases make that operator swap fail
      * loudly: under IS NOT DISTINCT FROM, both calls below would pass the
      * audience gate as "self seats" rather than raising the parent-link
      * refusal asserted here. Typed clients and the routes already forbid null
@@ -571,7 +569,7 @@ describe("product audience", () => {
         p_product_id: PRODUCT_GAMERS,
         p_participant_id: TEST_IDS.CUSTOMER,
         p_customer_id: TEST_IDS.CUSTOMER,
-        p_checkout_session_id: "cs_test_audience_00173",
+        p_checkout_session_id: "cs_test_audience_self_seat",
       });
       expect(error).toBeNull();
       expect(data).toMatchObject({ kind: "confirmed", idempotent: false });
@@ -653,13 +651,13 @@ describe("product audience", () => {
     });
 
     /**
-     * 00177: the email arm keys on the ROLE, not on id equality alone.
+     * The email arm keys on the ROLE, not on id equality alone.
      *
      * The manual Stripe-sub-adoption process writes participation rows by hand,
      * so a gamer's id transposed into customer_id is a real input the typed
      * writers cannot produce. Such a row satisfies participant_id = customer_id,
-     * and before 00177 the arm inferred "adult seat" from exactly that equality
-     * and emitted the gamer's OWN profile email — the synthetic
+     * so an arm inferring "adult seat" from exactly that equality
+     * would emit the gamer's OWN profile email — the synthetic
      * @gamer.sogverse.internal handle, which is not a mailbox — straight into a
      * gedu's copy-all-emails. The role check turns that leak into a NULL, and
      * this transposes the fixture's child row to prove it.
@@ -670,7 +668,7 @@ describe("product audience", () => {
         .select("email, role")
         .eq("id", TEST_IDS.GAMER)
         .single();
-      // The value the pre-00177 arm WOULD have leaked: a synthetic handle.
+      // The value an equality-only arm WOULD leak: a synthetic handle.
       expect(gamerProfile?.role).toBe("gamer");
       expect(gamerProfile?.email).toContain("@gamer.sogverse.internal");
 
@@ -704,16 +702,16 @@ describe("product audience", () => {
   });
 
   // -------------------------------------------------------------------------
-  // The gedu game-account writers refuse a non-gamer target (00177 / 00195)
+  // The gedu game-account writers refuse a non-gamer target
   // -------------------------------------------------------------------------
 
   /**
    * The adult sits on GROUP_ROSTER and the gedu teaches it, so the scope check
-   * passes and the new role guard is the only thing left standing. A
+   * passes and the target-role guard is the only thing left standing. A
    * minecraft_accounts row keyed to a customer is an orphan no surface renders
-   * and the admin twin already refuses — before 00177 this write went through.
+   * and the admin twin refuses it too.
    *
-   * The Roblox writer (00195) carries the same guard over the same fixture, and
+   * The Roblox writer carries the same guard over the same fixture, and
    * is asserted beside it rather than in the Roblox feature's own file: the two
    * refusals are one rule about who may hold a game identity, and splitting
    * them is how one of them ends up quietly relaxed.
@@ -779,7 +777,7 @@ describe("product audience", () => {
       });
       expect(marked.error).toBeNull();
       // Parsed through the app's own contract, which is what makes this file
-      // coverage for 00175's renamed result key rather than for the write alone.
+      // coverage for the result key's name rather than for the write alone.
       const result = attendanceMarkResult.parse(marked.data);
       expect(result.participant_id).toBe(TEST_IDS.CUSTOMER);
       expect(result.status).toBe("present");

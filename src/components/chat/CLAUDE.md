@@ -440,8 +440,8 @@ downloads the object ON THE VIEWER'S OWN session — so membership, the family t
 (a participant can read a channel only around its own session window; staff have none,
 because after-the-fact review is the point of keeping the rows) and the hidden state are
 all enforced by one predicate, re-answered on every fetch, on a path nobody has to
-remember to call. **No signed URLs exist on this surface** *(owner decision, 2026-09-01,
-recorded in migration 00233)*: a signed URL is a bearer token any viewer could copy out of
+remember to call. **No signed URLs exist on this surface** *(owner decision, 2026-09-01)*:
+a signed URL is a bearer token any viewer could copy out of
 devtools and share for its whole lifetime, which is why the bytes are read through the
 authenticated route instead. The route's path is a pure function of the message id, with
 immutable bytes behind it, so a re-render, a remount or a reload costs nothing — but the

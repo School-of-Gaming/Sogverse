@@ -527,7 +527,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/auth/register/route.ts": {
     adminClient:
-      "Auth Admin API (self-registration creates the auth user before any session exists), plus the optional home-location write onto the profile that same request creates, plus the registration marketing-consent write — record_registration_marketing_consent (00221) is granted to service_role alone, because it takes the customer as a parameter (no session exists yet) and hardcodes the 'registration' source that set_marketing_consent refuses, so that provenance can only be claimed from here, plus the account-consent write — record_account_consents (00249) is granted to service_role alone for the same reason, and records what the account was opened under (the terms; the guardian declaration moved to create_gamer in 00250, where it is a statement about one named child) against the version that was current",
+      "Auth Admin API (self-registration creates the auth user before any session exists), plus the optional home-location write onto the profile that same request creates, plus the registration marketing-consent write — record_registration_marketing_consent is granted to service_role alone, because it takes the customer as a parameter (no session exists yet) and hardcodes the 'registration' source that set_marketing_consent refuses, so that provenance can only be claimed from here, plus the account-consent write — record_account_consents is granted to service_role alone for the same reason, and records what the account was opened under (the terms; the guardian declaration belongs to create_gamer, where it is a statement about one named child) against the version that was current",
     handlers: {
       POST: {
         posture: {
@@ -799,7 +799,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/gamers/create/route.ts": {
     adminClient:
-      "Auth Admin API (user creation, with delete-on-failure compensation), plus the promote-and-link RPC — create_gamer (00250) is granted to service_role alone because it takes both the gamer and the parent as parameters (the child has no session and the parent's own client cannot promote a profile), and it is what records the parent's guardian declaration about this child in the same transaction",
+      "Auth Admin API (user creation, with delete-on-failure compensation), plus the promote-and-link RPC — create_gamer is granted to service_role alone because it takes both the gamer and the parent as parameters (the child has no session and the parent's own client cannot promote a profile), and it is what records the parent's guardian declaration about this child in the same transaction",
     handlers: {
       POST: {
         posture: { kind: "role-gated", roles: ["customer"] },
@@ -829,14 +829,14 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // a group that caller is assigned to — so the gamer id in the path names a
   // target and grants nothing.
   //
-  // `admin` joined the roles in 00205, when the admin group details page began
-  // rendering the gedu workspace's roster body unchanged, inline username
+  // `admin` is among the roles because the admin group details page
+  // renders the gedu workspace's roster body unchanged, inline username
   // editor included: a surface that shows the control has to serve it. This
   // aligns two surfaces rather than granting a power — an admin already holds
   // this exact edit on /admin/users/[id], so nothing here is reachable to them
-  // that was not reachable before. The RPC is still the authorization: an admin
+  // that is not reachable elsewhere. The RPC is still the authorization: an admin
   // passes its "and you teach this group" half by role, exactly as they do on
-  // the session writers widened in 00200, and every other refusal in the
+  // the session writers, and every other refusal in the
   // function — the target must be a gamer, a customer or a gamer is refused on
   // the first statement — binds them identically.
   "src/app/api/gedu/gamers/[gamerId]/minecraft/route.ts": {
@@ -852,9 +852,9 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // The Roblox twin of the route above, and the same reasoning applies verbatim:
   // the role gate says "an educator or an admin", and `set_group_member_roblox`
   // says which children that caller may touch, re-deriving them from auth.uid()
-  // and letting an admin past the group half alone. Widened alongside its twin
-  // in 00205 — the editor the admin page renders is one component serving both
-  // platforms, so one of the two routes admitting an admin would have shipped a
+  // and letting an admin past the group half alone. It admits an admin alongside
+  // its twin — the editor the admin page renders is one component serving both
+  // platforms, so one of the two routes admitting an admin would ship a
   // control that works on Minecraft groups and 403s on Roblox ones.
   "src/app/api/gedu/gamers/[gamerId]/roblox/route.ts": {
     handlers: {
@@ -895,10 +895,10 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // auth.uid(), refuses a gedu a group they do not teach, and refuses anybody a
   // session with no report or one already sent.
   //
-  // `admin` joined the roles in 00200, when the same session panel arrived on
+  // `admin` is among the roles because the same session panel sits on
   // the admin product page over the same feed component and the same claim. The
   // claim is still the authorization: an admin passes its group half by role,
-  // exactly as they now do on the four other session writers, and every other
+  // exactly as they do on the four other session writers, and every other
   // refusal binds them identically.
   "src/app/api/gedu/sessions/email-report/route.ts": {
     adminClient:
@@ -971,7 +971,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: {
           kind: "public",
           reason:
-            "the educator registration page asks an applicant where they can work before any account exists, so search cannot require a session. It reads two tables of public reference data — `locations` and, since 00165, `postal_codes` — and every row of both is already SELECTable by anon directly, under identical policies, so the route narrows that surface rather than widening it, and bounds the needle length and page size on the way in. It reads no session at all, which is what lets its answer be cached and shared",
+            "the educator registration page asks an applicant where they can work before any account exists, so search cannot require a session. It reads two tables of public reference data — `locations` and `postal_codes` — and every row of both is already SELECTable by anon directly, under identical policies, so the route narrows that surface rather than widening it, and bounds the needle length and page size on the way in. It reads no session at all, which is what lets its answer be cached and shared",
         },
         body: { kind: "none" },
         test: TESTS.locationsSearch,
@@ -1142,7 +1142,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: {
           kind: "public",
           reason:
-            "a family answers a seat offer from the link in their inbox, and the person clicking has no usable session: on a shared family tablet a parent is as likely to be signed in as their own child as as themselves, and bouncing them would simply lose the link. The signed token names one participation and one exact offer instant, both HMAC'd under PIN_COOKIE_SECRET with a `seat-offer:` domain prefix, and the RPC behind it compares that instant against the row before writing — so possession of the link authorizes exactly one answer to exactly one offer. THE DISCLOSURE BOUNDARY IS THE SIGNATURE, and this route is deliberately less uniform than it looks: a token whose HMAC does not verify is answered `invalid` and told nothing else, which is what keeps an unauthenticated prober from confirming that any participation id exists. A token whose HMAC does verify is one we minted for one exact offer, so its holder may be told that offer is spent — every consumed shape (accepted, admin-promoted, declined, withdrawn, superseded by a re-offer) comes back as the single `used`, which never says WHICH, and the page points at My SOG rather than narrating a family's history from a page with no session on it. Nothing acts on a GET: the emailed buttons land on a page that only renders, and this POST is what that page's own buttons call, so a mail scanner following the link cannot take a seat. Note the token's expiry now gates ACCEPT alone — a decline is honoured for as long as the row exists (00208), and a late one deliberately mails nobody",
+            "a family answers a seat offer from the link in their inbox, and the person clicking has no usable session: on a shared family tablet a parent is as likely to be signed in as their own child as as themselves, and bouncing them would simply lose the link. The signed token names one participation and one exact offer instant, both HMAC'd under PIN_COOKIE_SECRET with a `seat-offer:` domain prefix, and the RPC behind it compares that instant against the row before writing — so possession of the link authorizes exactly one answer to exactly one offer. THE DISCLOSURE BOUNDARY IS THE SIGNATURE, and this route is deliberately less uniform than it looks: a token whose HMAC does not verify is answered `invalid` and told nothing else, which is what keeps an unauthenticated prober from confirming that any participation id exists. A token whose HMAC does verify is one we minted for one exact offer, so its holder may be told that offer is spent — every consumed shape (accepted, admin-promoted, declined, withdrawn, superseded by a re-offer) comes back as the single `used`, which never says WHICH, and the page points at My SOG rather than narrating a family's history from a page with no session on it. Nothing acts on a GET: the emailed buttons land on a page that only renders, and this POST is what that page's own buttons call, so a mail scanner following the link cannot take a seat. Note the token's expiry now gates ACCEPT alone — a decline is honoured for as long as the row exists, and a late one deliberately mails nobody",
         },
         body: { kind: "json", schema: "seatOfferRespondBody" },
         test: TESTS.seatOfferRespond,

@@ -4,10 +4,10 @@ import { z } from "zod";
  * Wire shapes for the seat offer: an admin invites one waitlisted family to a
  * seat that has opened, and they answer from their inbox or from My SOG.
  *
- * The RPC-result schemas here are written from the function bodies that are
- * currently the last word on each function — 00207 for `send_seat_offer`, 00208
- * for `claim_expired_seat_offer_notifications`, 00209 for `respond_seat_offer`
- * — all of which return `Json` in codegen. The db tests parse real RPC output
+ * The RPC-result schemas here are written from the function bodies in
+ * `supabase/schema/functions/` — `send_seat_offer`,
+ * `claim_expired_seat_offer_notifications` and `respond_seat_offer`, all of
+ * which return `Json` in codegen. The db tests parse real RPC output
  * through them in CI.
  */
 
@@ -64,8 +64,7 @@ export type SendSeatOfferRpcResult = z.infer<typeof sendSeatOfferRpcResult>;
  *   evidence of it with it. The family reads the same thank-you either way, so
  *   neither flag crosses the public wire.
  * - `expired` — the five days ran out and the answer was ACCEPT. A decline is
- *   honoured however late it is (00208), so this kind can no longer come back
- *   from one.
+ *   honoured however late it is, so this kind never comes back from one.
  * - `stale` — the stamp no longer matches: already answered, superseded by a
  *   re-offer, or an old link. Deliberately one kind rather than three, because
  *   the family-facing answer is the same sentence.
@@ -189,8 +188,8 @@ export type SeatOfferRespondResponse = z.infer<typeof seatOfferRespondResponse>;
  * one generic `invalid`, so nothing here lets a caller ask which participation
  * ids exist.
  *
- * `expired` is on both lists and is no longer terminal on either: since 00208 a
- * lapsed offer can still be declined, so the page it names is a question rather
+ * `expired` is on both lists and is terminal on neither: a lapsed offer can
+ * still be declined, so the page it names is a question rather
  * than a full stop.
  */
 export const emailedSeatOfferRespondResponse = z.object({

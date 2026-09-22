@@ -256,11 +256,11 @@ export function resolveDrop(
 // ---------------------------------------------------------------------------
 
 /**
- * Re-exported, not defined here. The predicate moved to
- * `src/lib/constants/billing.ts` beside `isNoChargeBillingMode` when the admin
- * club switch (00245) gave it a SQL twin and a second caller outside this panel:
- * a rule kept in lockstep with the database belongs with the other one, not in a
- * panel's rule file. Every existing importer keeps reading it from here.
+ * Re-exported, not defined here. The predicate lives in
+ * `src/lib/constants/billing.ts` beside `isNoChargeBillingMode`, because it has
+ * a SQL twin and a caller outside this panel — the admin club switch — and a
+ * rule kept in lockstep with the database belongs with the other one, not in a
+ * panel's rule file. Importers may keep reading it from here.
  */
 export { isSubscriptionShaped };
 

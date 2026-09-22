@@ -14,16 +14,16 @@ import {
  * ============================================================================
  *
  * An acceptance row records WHICH VERSION of a document the person was shown,
- * and the version labels are published by migration (00249, 00250 and whatever
- * comes after them). The texts they name live elsewhere — the terms page
+ * and the version labels are published by migration. The texts they name live
+ * elsewhere — the terms page
  * carries its own "last updated" date, and the guardian declaration *is* the
  * sentence beside the add-gamer form's checkbox — and nothing in the type
  * system ties the two together. So this file does: change either text and this
  * fails until a migration publishes a new version row and the constants below
  * are moved to match.
  *
- * Why the terms date is a version at all: 00210 chose the page's own
- * "last updated" date as the label for every document it published, so a
+ * Why the terms date is a version at all: a document's label is the page's own
+ * "last updated" date, so a
  * migration bumping the date and a page edit changing the text are one
  * change, not two. A terms edit with no date change is a typo fix and needs
  * no new version; a date change with no migration is the failure this file
@@ -31,7 +31,7 @@ import {
  *
  * The two documents are accepted at different moments and against different
  * subjects — the terms once per account at registration, the declaration once
- * per CHILD as that child is created (00250) — which is why the sets they come
+ * per CHILD as that child is created — which is why the sets they come
  * from are two constants rather than one. What they share is this file's rule.
  */
 
@@ -115,12 +115,17 @@ async function readPublishedPairs(): Promise<ReadonlySet<string>> {
  * loosely across the file: a two-element tuple is an ordinary shape in SQL, and
  * a match taken from some other table's INSERT would let a version pass as
  * published that nothing ever published.
+ *
+ * A tuple's first two values are the slug and the version; what follows them is
+ * not the scan's business. A hand-written statement names those two columns and
+ * stops there, while a statement dumped out of a database carries every column
+ * positionally — so a tuple is read up to its second value and no further.
  */
 function pairsIn(sql: string): string[] {
   const statements =
     sql.match(/INSERT\s+INTO\s+public\.consent_document_versions\b[^;]*;/gi) ?? [];
   return statements.flatMap((statement) =>
-    [...statement.matchAll(/\(\s*'([^']+)'\s*,\s*'([^']+)'\s*\)/g)].map(
+    [...statement.matchAll(/\(\s*'([^']+)'\s*,\s*'([^']+)'\s*[,)]/g)].map(
       ([, slug, version]) => `${slug}@${version}`,
     ),
   );
@@ -168,10 +173,10 @@ describe("the self-service documents' versions", () => {
   });
 
   it("no longer asks for the declaration at registration", () => {
-    // 00250 moved it to the child it is about. The register label is pinned
-    // negatively rather than exactly, because it is no longer a versioned
-    // document text — what matters is that the account-level tick has stopped
-    // claiming to be a declaration about anybody.
+    // The declaration belongs to the child it is about. The register label is
+    // pinned negatively rather than exactly, because it is not a versioned
+    // document text — what matters is that the account-level tick does not
+    // claim to be a declaration about anybody.
     expect(REGISTRATION_CONSENT_DOCUMENTS).not.toContain("guardian-declaration");
     expect(en.auth.register.termsLabel).not.toMatch(/guardian/i);
   });

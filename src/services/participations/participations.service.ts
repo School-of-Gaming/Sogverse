@@ -489,7 +489,7 @@ export class ParticipationsService {
       audience === "customer" ? "customer_id" : "participant_id";
 
     // Fetch the sessions and the subscription-state signals concurrently. The
-    // signals come from `get_my_participation_subscription_states` (00093)
+    // signals come from `get_my_participation_subscription_states`
     // rather than a `family_subscriptions` embed because gamers have no SELECT
     // access to that table — the RPC self-scopes via auth.uid() and returns
     // only participation id + status + period end (no money), so it works

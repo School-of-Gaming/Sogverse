@@ -15,8 +15,8 @@ import {
  * Optional text fields are sent through as-is and the `register_gedu` RPC
  * NULLIFs them server-side; the form simply omits a field nobody filled in.
  * Location ids are validated for *shape* here — the locations FK is the source
- * of truth for whether a row exists. Spoken languages are different since
- * 00199: the vocabulary is a Postgres enum, so this schema checks the values
+ * of truth for whether a row exists. Spoken languages are different: the
+ * vocabulary is a Postgres enum, so this schema checks the values
  * themselves against codegen and the RPC's argument type is that same enum.
  */
 export const registerGeduBody = z.object({

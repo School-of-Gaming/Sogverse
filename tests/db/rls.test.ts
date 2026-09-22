@@ -304,7 +304,7 @@ describe("Row Level Security", () => {
    * feedback-submission.test.ts, which is also the scope test the §3.4 spine
    * names for it.
    *
-   * What is pinned here is the grant posture migration 00126 established. The
+   * What is pinned here is the engine's grant posture. The
    * engine takes the user id as a parameter, so any role that can execute it
    * can attribute feedback to anyone; since Phase 3 no role can. The wrapper is
    * SECURITY DEFINER and reaches the engine through ownership, so it keeps

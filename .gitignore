@@ -62,6 +62,10 @@ next-env.d.ts
 .supabase/
 supabase/.temp/
 
+# The generate command's staging directory, removed on every ordinary exit; ignored so a
+# run killed without its trap cannot leave something a landing commit sweeps in.
+supabase/.schema.new/
+
 # IDE
 .idea/
 .vscode/
@@ -71,12 +75,13 @@ supabase/.temp/
 # claude code (agent worktrees are local scratch checkouts)
 .claude/worktrees/
 
-# Reconciliation migrations emitted by scripts/diff-geonames.mjs. They land here
-# rather than in supabase/migrations/ precisely because they carry no version
-# number yet — the number is picked against remote history when the migration is
-# pushed, and the file is renamed and moved then. Until that happens it is a
-# working artifact, and committing one from this staging area would commit a
-# migration nobody can order.
+# Reconciliation migrations emitted by scripts/diff-geonames.mjs. The differ writes them
+# here, already timestamped, because a reconciliation is read by a human before it can
+# apply anywhere — it is a diff against live data, not something a generator can be
+# trusted to have got right. Once read, the file moves into supabase/migrations/ exactly
+# as it is, and its version is restamped at landing like every other migration's. Until
+# then it is a working artifact, and committing one from this staging area would commit a
+# migration nobody has looked at.
 supabase/reconciliations/
 
 # Working artifacts of every script, each under scripts/output/<script-name>/

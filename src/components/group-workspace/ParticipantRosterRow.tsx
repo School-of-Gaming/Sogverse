@@ -150,8 +150,8 @@ interface ParticipantRosterRowProps {
 }
 
 /**
- * One person on the assigned-group roster — a child, or since 00173 an adult
- * holding a seat of their own.
+ * One person on the assigned-group roster — a child, or an adult holding a
+ * seat of their own.
  *
  * **Two lines, and the split is the whole design.** Line one is identity —
  * identicon, first name, age/gender, game username. Line two is the

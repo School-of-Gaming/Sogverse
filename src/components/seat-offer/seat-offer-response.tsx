@@ -102,7 +102,7 @@ interface SeatOfferResponseProps {
  * reasoning reaches a family telling us they cannot come, and that is the one
  * piece of news we most want. So the expired panel is a step of this component
  * rather than a terminal card, carrying the decline and not the accept, and the
- * database honours it (00208). It is also where an accept that lost the race
+ * database honours it. It is also where an accept that lost the race
  * lands: the server answers `expired`, and the family is put in front of the
  * one answer still open to them instead of a dead end.
  */

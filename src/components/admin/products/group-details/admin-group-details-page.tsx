@@ -369,10 +369,10 @@ function Workspace({
   // returns.
   //
   // **Both of these work for an admin.** The routes and the RPCs behind them are
-  // gedu-or-admin since 00205 — an admin already held exactly this edit on the
-  // admin users page, on any user and with no group involved at all, so the
-  // narrower posture here was the odd one out rather than a boundary. What did
-  // not move is the target-role check: a game account belongs to a child, so a
+  // gedu-or-admin — an admin already holds exactly this edit on the
+  // admin users page, on any user and with no group involved at all, so a
+  // narrower posture here would be the odd one out rather than a boundary. The
+  // target-role check still binds: a game account belongs to a child, so a
   // row keyed to an adult seat is refused for gedu and admin alike.
   const updateMinecraft = useUpdateGroupMemberMinecraft(groupId);
   const updateRoblox = useUpdateGroupMemberRoblox(groupId);

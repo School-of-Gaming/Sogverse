@@ -20,14 +20,14 @@ import {
 } from "./product-helpers";
 
 /**
- * The admin session surface (00200): one product-keyed read of its own, and the
- * five session writers that now admit an admin beside the assigned gedu.
+ * The admin session surface: one product-keyed read of its own, and the
+ * five session writers that admit an admin beside the assigned gedu.
  *
- * **What this file exists to pin is a privilege boundary that moved.** Before
- * 00200 the only way an admin could read a session report was to create a
+ * **What this file exists to pin is a privilege boundary.** The dishonest way
+ * for an admin to read a session report is to create a
  * second gedu account, assign it to the group, and leave it there — so the
- * question this file answers is whether the honest version of that grants
- * exactly what the dishonest one did and nothing more. Three claims:
+ * question this file answers is whether the honest version grants
+ * exactly what the dishonest one would and nothing more. Three claims:
  *
  *   1. **An admin reads and writes the record without teaching anything.** The
  *      admin here is assigned to no group on either fixture product, which is
@@ -381,7 +381,7 @@ describe("admin product sessions", () => {
     it("refuses every non-admin caller", async () => {
       // The gedu is in here on purpose. This read answers a question about a
       // PRODUCT — every group on it — which is not a question a gedu's own
-      // workspace asks. The widening runs one way only: 00204 let an admin read
+      // workspace asks. The widening runs one way only: an admin may read
       // get_gedu_group_feed, so the admin page can render one group through the
       // gedu page's body, but nothing lets a gedu read across a whole product.
       for (const client of [geduAuth, customerAuth, gamerAuth]) {

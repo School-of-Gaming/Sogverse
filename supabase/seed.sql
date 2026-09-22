@@ -195,9 +195,8 @@ UPDATE profiles SET role = 'admin' WHERE id = '00000000-0000-0000-0000-000000000
 DELETE FROM customer_profiles WHERE user_id = '00000000-0000-0000-0000-000000000001';
 
 -- Promote gedu: update role, swap extension tables. Seed the gedu_profiles row
--- as certified (mirrors the 00111 backfill that marked pre-existing gedus
--- trusted) — the migration backfill ran before this account was seeded. The
--- columns were called verified* until 00187.
+-- as certified, so the account is trusted from its first sign-in rather than
+-- waiting on an admin to certify it.
 UPDATE profiles SET role = 'gedu' WHERE id = '00000000-0000-0000-0000-000000000003';
 DELETE FROM customer_profiles WHERE user_id = '00000000-0000-0000-0000-000000000003';
 INSERT INTO gedu_profiles (user_id, certified, certified_at)
@@ -241,9 +240,9 @@ INSERT INTO parent_gamer (id, parent_id, gamer_id) VALUES (
 -- Finland -> Uusimaa (region) -> Helsinki (municipality) -> Test School (site).
 -- The site is the leaf referenced by product-location tests.
 
--- name_i18n mirrors the migrations: regions/municipalities carry their official
--- Swedish name (00110), and the country carries its native name plus the
--- published translations (00140). Sites fall back to `name` — a site has one
+-- name_i18n mirrors the seeded classification: regions/municipalities carry
+-- their official Swedish name, and the country carries its native name plus the
+-- published translations. Sites fall back to `name` — a site has one
 -- name, whoever is reading.
 --
 -- These are their own rows, not the seeded classification: the country here is

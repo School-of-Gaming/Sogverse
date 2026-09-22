@@ -12,7 +12,7 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  * What we cover:
  *   - admin happy path: parent fields update; child sets (translations,
  *     prices, schedule slots) wipe-and-replace.
- *   - the design tag (00178) round-trips, and an OMITTED p_tag clears it —
+ *   - the design tag round-trips, and an OMITTED p_tag clears it —
  *     the defaulted-parameter half that has no CHECK behind it.
  *   - non-admin denied (customer client gets 42501).
  *   - product_type is NOT mutable through this RPC.
@@ -20,11 +20,11 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  *     fine); empty translation set is rejected.
  *   - translation BEFORE-DELETE trigger doesn't trip on wipe-and-replace
  *     (the upsert-then-delete-leftovers ordering is the load-bearing
- *     piece — see migration 00046 header comment).
- *   - the required-consent set (00210) replaces, clears on an empty array, and
+ *     piece).
+ *   - the required-consent set replaces, clears on an empty array, and
  *     clears on an OMITTED argument too — the tag's defaulted-parameter footgun
  *     landing on a legally-loaded field, recorded as such.
- *   - turning the waitlist off deletes the queue behind it (00171), with the
+ *   - turning the waitlist off deletes the queue behind it, with the
  *     live-subscription carve-out that stops the delete cascading a
  *     subscription Stripe still bills.
  */
@@ -34,7 +34,7 @@ const PRODUCT_ID = "00000000-0000-0000-0000-0000000005f1";
 // is meaningless on the consumer-club PRODUCT_ID and rejected by the muni-only
 // constraint). Muni clubs need a location, so it points at the seeded one.
 const MUNI_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f2";
-// Its own product for the 00171 waitlist-deletion cases: they seed
+// Its own product for the waitlist-deletion cases: they seed
 // participations (and, in two of them, a family_subscriptions row), which the
 // wipe-and-replace cases above have no business seeing.
 const WAITLIST_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f7";
@@ -46,14 +46,14 @@ const WAITLIST_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f7";
 // predicate that lost its product scoping — one uncap wiping every queue in
 // the database — would pass the migration's own assertions and every test.
 const DECOY_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f8";
-// The two consent documents 00210 seeded. Written out rather than imported from
+// The two seeded consent documents. Written out rather than imported from
 // the app's registry map: what these cases assert is that the RPC stored the
 // slug it was handed, and a constant shared with the code under test would let a
 // renamed slug pass on both sides at once.
 const CONSENT_TERMS = "roblox-programme-terms";
 const CONSENT_PRIVACY = "roblox-privacy-policy";
 /**
- * The Fennoa invoice customer (00268) the municipality club is pointed at.
+ * The Fennoa invoice customer the municipality club is pointed at.
  *
  * Its own row and its own Fennoa number rather than a shared fixture: that
  * column is UNIQUE, so two files sharing a value would race on an insert rather
@@ -68,7 +68,7 @@ describe("update_product", () => {
   /**
    * The RPC caller. It has to be a *signed-in* admin, not the service-role
    * client: the guard reads the caller's live role via get_user_role(), and
-   * since 00121 a caller with no profiles row (which is what a service-role
+   * a caller with no profiles row (which is what a service-role
    * connection is) is refused rather than waved through.
    */
   let adminAuth: SupabaseClient<Database>;
@@ -133,8 +133,7 @@ describe("update_product", () => {
       seat_count: 10,
       waitlist_enabled: false,
       // chk_products_non_consumer_has_end_date: a municipality club needs one,
-      // always. (Until 00169 a 'draft' row was exempt; that value and its escape
-      // hatch are both gone, and so is the stored status they belonged to.)
+      // always — there is no stored status that exempts a row from it.
       end_date: "2099-12-31",
       is_visible: false,
       created_by: TEST_IDS.ADMIN,
@@ -442,7 +441,7 @@ describe("update_product", () => {
     // Direct insert — admin bypasses RLS but not the CHECK. NULL is how a
     // locale says it has no long description, so a whitespace-only string
     // would be a second spelling of the same thing that every reader would
-    // then have to know about. The constraint (00183) refuses it, and the
+    // then have to know about. The constraint refuses it, and the
     // admin form folds a cleared editor to NULL rather than sending one.
     const { error } = await admin.from("product_translations").insert({
       product_id: PRODUCT_ID,
@@ -454,7 +453,7 @@ describe("update_product", () => {
     expect(error?.code).toBe("23514"); // check_violation
   });
 
-  // Per-session fees (00112). The RPC threads the three columns through; the
+  // Per-session fees. The RPC threads the three columns through; the
   // table CHECKs are the backstop the client form also enforces (gedu >= 0,
   // muni > 0 and muni-only).
   it("round-trips per-session fees through update_product", async () => {
@@ -538,7 +537,7 @@ describe("update_product", () => {
     expect(zero.error?.code).toBe("23514"); // check_violation
   });
 
-  // The Fennoa invoice customer (00268) — the municipality fee's neighbour, and
+  // The Fennoa invoice customer — the municipality fee's neighbour, and
   // `tag`'s shape: a DEFAULTED parameter the RPC assigns on every call, so
   // omitting it unlinks the club rather than leaving it alone.
   it("round-trips an invoice customer through update_product, and unlinks on omission", async () => {
@@ -583,7 +582,7 @@ describe("update_product", () => {
     expect(error?.code).toBe("23514"); // check_violation
   });
 
-  // Design tag (00178). One nullable enum column, threaded through the RPC the
+  // Design tag. One nullable enum column, threaded through the RPC the
   // same way the fees above are — with one difference that earns its own case
   // below: `p_tag` is DEFAULTED, so omitting it is not "leave it alone", it is
   // "clear it".
@@ -658,7 +657,7 @@ describe("update_product", () => {
     expect(row?.tag).toBeNull();
   });
 
-  // Region lock (00193). Another nullable column on the defaulted tail, so it
+  // Region lock. Another nullable column on the defaulted tail, so it
   // has the tag's three cases — set it, read it back, clear it by omission —
   // plus one the tag cannot have: the column carries a CHECK, and a value that
   // is not an alpha-2 code has to fail loudly rather than be stored.
@@ -781,7 +780,7 @@ describe("update_product", () => {
   });
 
   // -------------------------------------------------------------------------
-  // 00210 — the consent documents enrolling on the product requires
+  // The consent documents enrolling on the product requires
   // -------------------------------------------------------------------------
   //
   // A child SET rather than a column, so it has the wipe-and-replace shape the
@@ -890,7 +889,7 @@ describe("update_product", () => {
   });
 
   // -------------------------------------------------------------------------
-  // 00171 — turning the waitlist off deletes the queue behind it
+  // Turning the waitlist off deletes the queue behind it
   // -------------------------------------------------------------------------
   //
   // The flag goes off two ways in the admin form, and the RPC sees only one of
@@ -1104,11 +1103,11 @@ describe("update_product", () => {
     });
 
     it("deletes a waitlisted row whose subscription is cancelled", async () => {
-      // 00170's liveness predicate, applied to the carve-out: `cancelled` is
+      // The liveness predicate, applied to the carve-out: `cancelled` is
       // terminal (a dunning-dead subscription is stored that way and never
       // fires subscription.deleted), so such a row is not protected — otherwise
-      // a dead subscription would strand a queue entry forever, which is the
-      // failure 00170 removed from the two admin refusals.
+      // a dead subscription would strand a queue entry forever, the same
+      // failure the two admin refusals avoid.
       await freshWaitlistProduct();
       const ids = await seedParticipations([
         { gamerId: TEST_IDS.GAMER, status: "waitlisted" },

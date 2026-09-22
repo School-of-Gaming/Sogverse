@@ -54,8 +54,9 @@ pinned to an old API version, so `search` calls take `--stripe-version 2020-08-2
   them and the profile lands as `New User`. The parent sets their PIN on first sign-in.
 - **Gamer:** the same create call (a synthetic `g<16hex>@gamer.sogverse.internal` email and
   a password), then **one `create_gamer` RPC call does the whole promotion
-  transactionally**. Read its current signature from `supabase/schema.sql` and mirror the
-  gamer-create API route rather than a remembered sequence. If the RPC fails, delete the
+  transactionally**. Read its current signature from
+  `supabase/schema/functions/create_gamer.sql` and mirror the gamer-create API route
+  rather than a remembered sequence. If the RPC fails, delete the
   auth user through the Admin API before retrying — the trigger already made a `customer`
   profile, and a retry collides with it.
 - **DOB:** the UI stores month and year as `YYYY-MM-01`. **Never infer a birth date** — a

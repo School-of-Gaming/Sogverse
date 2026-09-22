@@ -4,7 +4,7 @@ import { ROUTES } from "./routes";
  * **The consent-document registry, app side.**
  *
  * A product may require a parent to agree to specific published documents
- * before enrolling (migration 00210). The database owns the *set* — which slugs
+ * before enrolling. The database owns the *set* — which slugs
  * exist, which versions have been published, which products point at which — and
  * this map owns the two things the database has no business knowing: where the
  * document is published on our own site, and which message key names it.
@@ -88,8 +88,7 @@ export const CONSENT_DOCUMENTS: Readonly<Record<string, ConsentDocumentMeta>> = 
 };
 
 /**
- * **What opening an account commits the account holder to** (migrations 00249,
- * 00250).
+ * **What opening an account commits the account holder to.**
  *
  * One checkbox on the parent sign-up form, and it is about the terms alone: the
  * person agrees to School of Gaming's Terms and Conditions, having been given
@@ -97,12 +96,12 @@ export const CONSENT_DOCUMENTS: Readonly<Record<string, ConsentDocumentMeta>> = 
  * that was current, so a later question about a specific text is answerable
  * about that text alone.
  *
- * **The guardian declaration used to be in this array and is deliberately not
- * any more** (00250). Ticked at registration it said "this account holder is a
+ * **The guardian declaration is deliberately NOT in this array.** Ticked at
+ * registration it would say "this account holder is a
  * parent or guardian of somebody", which is not what has to be shown: consent
  * on behalf of a child must come from the holder of parental responsibility FOR
  * THAT CHILD, and an account that adds a second child a year later never said
- * anything about the second one. It is now asked where the child is named — the
+ * anything about the second one. It is asked where the child is named — the
  * add-gamer form — and recorded per gamer, inside the same transaction that
  * creates the gamer. See `GAMER_CONSENT_DOCUMENTS`.
  *
@@ -114,7 +113,7 @@ export const CONSENT_DOCUMENTS: Readonly<Record<string, ConsentDocumentMeta>> = 
 export const REGISTRATION_CONSENT_DOCUMENTS = ["terms-and-conditions"] as const;
 
 /**
- * **What adding a child commits the adult to, about that child** (00250).
+ * **What adding a child commits the adult to, about that child.**
  *
  * One document today, and the surface is the add-gamer form's single required
  * box: the adult states that this child is theirs or that they are the child's

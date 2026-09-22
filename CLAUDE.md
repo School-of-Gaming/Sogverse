@@ -1,5 +1,26 @@
 # CLAUDE.md
 
+**The next release owes production's migration history repair, before the release merge.**
+The numbered migration history has been squashed into two baseline files, `00266` and
+`00267`. Production already ran every migration they replace, so none of their SQL may run
+there — instead the history table is edited to say so. Until that is done, `main` still
+holds the old files, and the first `db push` from `main` after the squash lands would try
+to replay the whole numbered history against a database that has it.
+
+In the same sitting as the release, immediately before the merge: assert that the numbered
+versions production records as applied are exactly the numbered files being squashed, with
+`npx supabase migration list --linked`; then `npx supabase migration repair --status
+reverted <every version below 00266>`, leaving `00266` and `00267` applied. The rollback is
+`npx supabase migration repair --status applied` over the same list. The baselines
+deliberately take over `00266` and `00267`, two version numbers production had already
+applied under other names, so after the repair production's history goes on recording those
+two rows with the old files' names and statements while the repo holds the baselines under
+the same numbers: that mismatch is expected, not a fault to chase.
+
+A release that skips this fails safe rather than corrupting anything: production's `db push`
+refuses, and the production promotion is held until the repair is run. **The release that
+pays this deletes this notice.**
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Commands
@@ -14,6 +35,8 @@ npm run gates            # All landing gates: lint + type-check + translations +
 npm run test             # Vitest unit tests
 npm run test:ui          # Vitest with UI
 npm run test:smoke       # Build + smoke check (serves a production build, asserts headers/CSP)
+npm run db -- generate   # Regenerate database.types.ts and supabase/schema/ from this checkout's migrations
+npm run db               # The local database commands (up, park, down, reset, migrate, list) — supabase/CLAUDE.md
 ```
 
 **When served output disagrees with the source, the `.next` cache is stale — delete it.**
@@ -138,19 +161,23 @@ All env vars are in `.env.local`. Keys for Supabase, Stripe, and Daily.co — in
 
 ## Database
 
-Migrations in `supabase/migrations/`. The migration workflow (push → regenerate types —
-`schema.sql` is CI-maintained and must not be dumped or edited by hand), the "read
-current state from `schema.sql`/`database.types.ts`, not migrations" rule, the
-generated-nullability fix patterns, and the access-control rules
-all live in **`supabase/CLAUDE.md`** (auto-loads when you work under `supabase/`). The
-always-on tripwires:
+Migrations in `supabase/migrations/`. The migration workflow, the same in a worktree as
+on `dev` directly, lives in **`supabase/CLAUDE.md`**, together with `supabase/schema/`
+(one file per object, generated alongside the types and committed by the branch that
+changed it, never hand-edited), the "read current state from
+`supabase/schema/`/`database.types.ts`, not migrations" rule, the generated-nullability fix
+patterns, and the access-control rules; that file auto-loads when you work under
+`supabase/`. The always-on tripwires:
 
-- **`database.types.ts` is purely auto-generated — never hand-edit it.** Push the
-  migration first, then regenerate. Convenience aliases (`Profile`, `UserRole`, …) live
-  in `src/types/index.ts`; after regenerating, add aliases for any new tables/enums.
-- **A migration that adds/modifies functions or tables must be pushed and types
-  regenerated before committing** — DB tests and type-check depend on
-  `database.types.ts` matching the schema.
+- **Agents never write to staging or prod on their own initiative** — a write a piece of
+  work needs goes to a seed file or to a local database. The rule and what authorizes a
+  write are in `supabase/CLAUDE.md`.
+- **`database.types.ts` is purely auto-generated — never hand-edit it.** Convenience
+  aliases (`Profile`, `UserRole`, …) live in `src/types/index.ts`; after regenerating, add
+  aliases for any new tables/enums.
+- **A migration that adds/modifies functions or tables regenerates `database.types.ts`
+  before committing, by the workflow in `supabase/CLAUDE.md`** — DB tests and type-check
+  depend on the generated file matching the schema.
 - **Every new object (table, view, sequence, function) needs an explicit `GRANT`** — no
   Data API access by default, not even for `service_role`. Grant per role. A function
   exposed to `authenticated`/`anon` additionally has to be **classified in the DB test
@@ -173,9 +200,9 @@ route-handler mocking, unit setup) live in **`tests/CLAUDE.md`** (auto-loads whe
 work under `tests/`). Two things worth knowing from anywhere:
 
 - **`npm run test` runs `unit/` + `integration/`** (node by default, jsdom for `.tsx`
-  component tests — see `tests/CLAUDE.md`). DB tests need a real Postgres
-  and run in **CI only** — we have no local stack — so exercise them by pushing your
-  branch, not locally.
+  component tests — see `tests/CLAUDE.md`). DB tests need a real Postgres: CI is the
+  authority on every push, and `npm run test:db:local` runs them against this
+  checkout's `--no-rich-seed` stack (`tests/CLAUDE.md` has the details).
 - **Shared mock factories live in `tests/mocks/`** — add new mocks there rather than
   duplicating across files.
 - **`smoke/` is the only CI job that builds the app**, and it asserts security headers
@@ -224,3 +251,14 @@ is changing, and changing one half never obliges the other.
 4. **Ship the primitive that makes conforming the cheapest path** — a guard function, a wrapper, a canonical template, giving step 3 a single greppable call site to require.
 
 The first two without the last two is an audit, not a fix: prose decays, a failing test doesn't, and fixing instances leaves the class alive. Keep the scope to one surface and one bug class per pass. Three standing instances show the shape: DB grants + RLS presence (the access-control DB test), DB function bodies (the authorization spine — `docs/architecture/db-authorization.md`), and the HTTP route layer (the posture registry — `docs/architecture/route-boundary.md`).
+
+### A comment describes current behaviour, never a migration number
+
+**Rule: a comment — in TypeScript, in SQL, or on a database object — says what the thing
+does now and why, and never cites a migration by number.** A number names a file that
+records one day's change, which is what git history is for; it also rots, because the
+numbered files are periodically squashed into a new baseline and the citation then points
+at nothing. Cite a decision by its date and ruling, or by the `docs/records/` entry that
+tells the story; cite a rule by the `CLAUDE.md` that holds it. A unit test sweeps the
+source tree, the schema dump and the seeds for five-digit migration citations and fails on
+any it finds.

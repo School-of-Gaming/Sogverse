@@ -14,20 +14,19 @@ import {
 import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
 
 /**
- * Admin waitlist read + promote/demote, and the self-position RPC (migration
- * 00118). Covers:
+ * Admin waitlist read + promote/demote, and the self-position RPC. Covers:
  *  - get_product_groups_with_details surfaces the waitlist in derived order
  *    (waitlisted_at, id), parsed through the productGroupsSnapshot contract,
  *    carrying both per-participation money flags the admin panel decides a
- *    drag from: has_live_subscription (00166, made a real read on the waitlist
- *    branch and status-filtered by 00170) and has_payment_marker (00167).
+ *    drag from: has_live_subscription (a real read on the waitlist branch,
+ *    status-filtered) and has_payment_marker.
  *  - promote_from_waitlist seats a waitlisted gamer (capacity override, group
  *    placement, noop on a non-waitlisted row).
  *  - demote_to_waitlist sends an active gamer to the back of the waitlist, and
  *    refuses a participation carrying a live Stripe subscription — on any
- *    product type (migration 00166 re-keyed 00132's consumer-club refusal to
- *    the subscription it was standing in for). "Live" means status is anything
- *    but `cancelled` (00170): past_due still refuses, a dunning-dead row does
+ *    product type (the refusal keys on the subscription itself, not on the
+ *    product type standing in for it). "Live" means status is anything
+ *    but `cancelled`: past_due still refuses, a dunning-dead row does
  *    not, because otherwise the seat could never be freed at all.
  *  - get_waitlist_position returns the owner's 1-based position and NULL for a
  *    non-owner.
@@ -35,9 +34,9 @@ import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
  *
  * Product UUIDs 5c7, 5f6 (see product-helpers allocation registry). The muni
  * product points at LOCATION_MUNICIPALITY to satisfy the online-muni location
- * constraints; the club is a FREE consumer_club — the shape 00132's type rule
- * would have wrongly refused, and the reason that rule was re-keyed. Both
- * seeded gamers (GAMER, GAMER_2) are children of CUSTOMER.
+ * constraints; the club is a FREE consumer_club — the shape a product-type
+ * rule would wrongly refuse, and the reason the refusal keys on the
+ * subscription. Both seeded gamers (GAMER, GAMER_2) are children of CUSTOMER.
  */
 
 const PRODUCT_MUNI = "00000000-0000-0000-0000-0000000005c7";
@@ -106,8 +105,8 @@ describe("waitlist — admin read + promote/demote + self position", () => {
   /**
    * Adds a gamer to the waitlist; returns the participation id.
    *
-   * Goes through the guarded wrapper rather than the engine: migration 00126
-   * revoked service_role EXECUTE on join_waitlist, so the admin client cannot
+   * Goes through the guarded wrapper rather than the engine: service_role holds
+   * no EXECUTE on join_waitlist, so the admin client cannot
    * reach it. CUSTOMER is the parent of both seeded gamers, which is what the
    * engine's parent-of-gamer check wants.
    */
@@ -155,7 +154,7 @@ describe("waitlist — admin read + promote/demote + self position", () => {
     expect(snapshot.unassigned).toHaveLength(0);
     expect(snapshot.waitlist.every((p) => p.status === "waitlisted")).toBe(true);
     // False because neither row has a subscription behind it — not because the
-    // branch says so. Since 00170 the waitlist branch is a real read like the
+    // branch says so. The waitlist branch is a real read like the
     // other two; the test below is the one that proves it can answer true.
     expect(snapshot.waitlist.every((p) => !p.has_live_subscription)).toBe(true);
   });
@@ -209,7 +208,7 @@ describe("waitlist — admin read + promote/demote + self position", () => {
     });
     // Neither seat went through Checkout — they were written straight into the
     // table, the shape a free club's enrollment produces — so no money ever
-    // arrived for either and 00167's marker is false on both.
+    // arrived for either and the payment marker is false on both.
     expect(snapshot.unassigned.every((p) => !p.has_payment_marker)).toBe(true);
   });
 
@@ -246,7 +245,7 @@ describe("waitlist — admin read + promote/demote + self position", () => {
   });
 
   it("get_product_groups_with_details reads has_live_subscription on the WAITLIST branch too", async () => {
-    // Until 00170 this branch returned a constant false, on the reasoning that
+    // A constant false here would rest on the reasoning that
     // demote_to_waitlist refuses a subscribed row so the state cannot exist.
     // It can: the products webhook inserts family_subscriptions after a Stripe
     // round trip WITHOUT holding the product gate lock, so a demote landing in
@@ -278,10 +277,10 @@ describe("waitlist — admin read + promote/demote + self position", () => {
   });
 
   it("get_product_groups_with_details treats a cancelled subscription as not live", async () => {
-    // The other half of 00170. A dunning-exhausted subscription (Stripe
-    // `unpaid`) is stored as `cancelled` and never fires subscription.deleted,
-    // so the row outlives anything Stripe will ever bill. Reporting it as live
-    // is what made the seat unmovable and unremovable.
+    // The other half of the status filter. A dunning-exhausted subscription
+    // (Stripe `unpaid`) is stored as `cancelled` and never fires
+    // subscription.deleted, so the row outlives anything Stripe will ever bill.
+    // Reporting it as live would make the seat unmovable and unremovable.
     const { data: seeded } = await admin
       .from("participations")
       .insert({
@@ -407,10 +406,10 @@ describe("waitlist — admin read + promote/demote + self position", () => {
     // via leave_my_waitlist_spot, cascading family_subscriptions and leaving
     // the subscription billing with nothing in the database to cancel it.
     //
-    // Deliberately staged on the MUNI product: 00132 refused this by product
-    // type, which meant a subscription attached to anything else walked
-    // straight through. 00166 keys the refusal to the subscription itself, so
-    // the type here is exactly the one the old rule would have waved past.
+    // Deliberately staged on the MUNI product: a refusal keyed on product
+    // type would let a subscription attached to anything else walk
+    // straight through. The refusal keys on the subscription itself, so
+    // the type here is exactly the one a type rule would wave past.
     const active = await registerActive(TEST_IDS.GAMER);
     await admin.from("family_subscriptions").insert({
       participation_id: active,
@@ -439,7 +438,7 @@ describe("waitlist — admin read + promote/demote + self position", () => {
   });
 
   it("demote_to_waitlist still refuses a past_due subscription — dunning is not death", async () => {
-    // 00170 narrowed the refusal to "not cancelled", and past_due is the value
+    // The refusal is "not cancelled", and past_due is the value
     // most likely to be mistaken for dead. It is not: Stripe is still retrying,
     // the subscription can recover on the next attempt, and demoting it would
     // put a billable subscription on a row the parent can delete outright.
@@ -467,11 +466,11 @@ describe("waitlist — admin read + promote/demote + self position", () => {
   });
 
   it("demote_to_waitlist allows a participation whose subscription is cancelled", async () => {
-    // The bug 00170 fixes. The webhook UPDATES status in place rather than
-    // deleting the row, and a subscription Stripe gave up dunning (`unpaid`)
-    // lands as `cancelled` without ever firing subscription.deleted. Under the
-    // old row-existence test that dead row refused the demote forever, so the
-    // seat could never be freed for anybody else.
+    // The bug the status test avoids. The webhook UPDATES status in place rather
+    // than deleting the row, and a subscription Stripe gave up dunning
+    // (`unpaid`) lands as `cancelled` without ever firing subscription.deleted.
+    // A plain row-existence test would let that dead row refuse the demote
+    // forever, so the seat could never be freed for anybody else.
     const active = await registerActive(TEST_IDS.GAMER);
     await admin.from("family_subscriptions").insert({
       participation_id: active,
@@ -501,8 +500,8 @@ describe("waitlist — admin read + promote/demote + self position", () => {
   it("demote_to_waitlist demotes a free-club member, which the old type rule refused", async () => {
     // A free club enrolls through create_participation's free branch, exactly
     // as a free event does — instant active row, no Stripe, so no subscription
-    // to orphan. 00132 would have refused this purely for being a consumer
-    // club; there is nothing here to protect and the drag now goes through.
+    // to orphan. A product-type rule would refuse this purely for being a
+    // consumer club; there is nothing here to protect and the drag goes through.
     const enrolled = await admin.rpc("create_participation", {
       p_product_id: PRODUCT_FREE_CLUB,
       p_participant_id: TEST_IDS.GAMER,
@@ -565,7 +564,7 @@ describe("waitlist — admin read + promote/demote + self position", () => {
   });
 
   /**
-   * The grant posture migration 00126 established. join_waitlist takes the
+   * The engine's grant posture. join_waitlist takes the
    * customer id as a parameter, so any role that can execute it can enqueue a
    * gamer on someone else's behalf; since Phase 3 no role can. The wrapper
    * (join_product_waitlist) is SECURITY DEFINER and reaches the engine through

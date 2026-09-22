@@ -44,8 +44,8 @@ import { INERT_HREF } from "@/lib/constants/routes";
  * modules beside this one (`product-run`, `activity-type`) and are consumed here;
  * only the assignment-shaped roll-up and its ordering are the gedu's own.
  *
- * **There are two roll-ups here, over one list of rows.** Since 00272 the
- * assignment read returns a second kind of seat — a live **substitution**, one row per
+ * **There are two roll-ups here, over one list of rows.** The
+ * assignment read returns two kinds of seat — the second a live **substitution**, one row per
  * substitution date — and the two reduce differently: an assignment collapses a
  * schedule to its next occurrence, a substitution *is* one occurrence and collapses to
  * nothing. So they emit different summaries and draw different cards, and each

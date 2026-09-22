@@ -13,28 +13,27 @@ how authorization is enforced in the database.
 Before touching anything it describes:
 
 1. **Re-verify current state.** Snapshots in this doc were verified against the live
-   schema in 2026-07 and will drift. Current state lives in `supabase/schema.sql`
-   (function bodies, grants, policies) and the DB test suite's classifications — never
-   in migration history. Regenerate the route list with
-   `git grep -l createAdminClient src/`. Note the corollary, which **inverted** in
-   2026-07: `schema.sql` used to be a dump of a *hosted* database, so anything created
-   outside a migration landed in it. It is now built from `migrations/` by CI, so it
-   cannot record an object no migration creates — but the exposure runs the other way
-   instead. A hosted database can drift *away* from `schema.sql`, and nothing standing
-   watches for that; a `pg_dump` of the database you care about, diffed against
-   `schema.sql`, is how to check.
-2. **Follow the migration workflow in CLAUDE.md** (push migration → regenerate types →
-   check type aliases → commit together). `schema.sql` is not part of it — CI
-   regenerates and commits that on `dev`.
-3. **DB tests run in CI** against a local Supabase stack started by the workflow. Do
-   not run them locally or against the remote DB — push the branch and let CI run them.
-4. **A migration reaches the shared database the moment it is pushed; the code running
-   against that database does not change until the PR merges and deploys.** So any
-   change to a policy, a grant, or a guard has to be behaviour-equivalent for the
-   *currently deployed* code, or it breaks the shared environment for the whole window.
-   The reliable shapes are: add a new object beside the old one, or rewrite a policy so
-   it can only ever admit more than before, never less. A rewrite that cannot be argued
-   to one of those does not ship — it gets recorded and sequenced behind a deploy.
+   schema in 2026-07 and will drift. Current state lives in `supabase/schema/`
+   (function bodies, grants, policies — one file per object) and the DB test suite's
+   classifications — never in migration history. Regenerate the route list with
+   `git grep -l createAdminClient src/`. Note the corollary: those files are generated
+   from `migrations/`, so they cannot record an object no migration creates, and a hosted
+   database can drift *away* from what they describe with nothing standing watching for
+   it; a `pg_dump` of the database you care about, diffed against `supabase/schema/`, is
+   how to check.
+2. **Follow the migration workflow in `supabase/CLAUDE.md`.** The regenerated types and
+   schema files are committed with the migration.
+3. **DB tests run in CI** against a database built from `migrations/`, and locally
+   against a worktree's own rich-seed-free stack with `npm run test:db:local`. Never
+   against the remote DB.
+4. **A migration reaches staging the moment it lands on `dev`, about a minute before the
+   code it landed with deploys there; it reaches prod through the release pipeline, which
+   holds the production promotion until the migration job has succeeded.** So any change
+   to a policy, a grant, or a guard has to be behaviour-equivalent for the code already
+   running, or it breaks the shared environment for that window. The reliable shapes are:
+   add a new object beside the old one, or rewrite a policy so it can only ever admit more
+   than before, never less. A rewrite the live app breaks under does not ship as one
+   migration — it gets recorded and sequenced behind the deploy that makes it safe.
 
 ---
 
@@ -85,13 +84,17 @@ the next instance of that class fails a test before it ships.
 
 **Platform regime change (2026-06):** Supabase no longer auto-grants Data API privileges
 (`anon`/`authenticated`/`service_role`) to new `public`-schema objects — on local stacks
-since CLI v2.106.0, and on our hosted DBs since `00099` proactively revoked the legacy
-`FOR ROLE postgres` default privileges (ahead of Supabase's own 2026-10-30 platform
-flip; the transition asymmetry had already produced one CI-invisible exposure, repaired
-in `00098`). Layer 1 now fails closed identically everywhere: a new table or function is
+since CLI v2.106.0, and on our hosted DBs since a migration proactively revoked the
+legacy `FOR ROLE postgres` default privileges (ahead of Supabase's own 2026-10-30
+platform flip; the transition asymmetry had already produced one CI-invisible exposure,
+which a follow-up repaired). That revoke now stands at the top of the baseline schema
+migration, ahead of every object the baseline creates, because a fresh database is born
+with the legacy defaults and the dump below it cannot take back a grant it never wrote.
+Layer 1 now fails closed identically everywhere: a new table or function is
 unreachable, even by `service_role`, until a migration explicitly `GRANT`s it. The
-pre-existing surface was backfilled verbatim from `schema.sql` (the explicit-grants
-migration); any phase of this refactor that creates objects must write its own grants,
+pre-existing surface was backfilled verbatim from the committed schema (the
+explicit-grants migration); any phase of this refactor that creates objects must write
+its own grants,
 and the §3.5 template's `REVOKE` line is now redundant for new functions (kept in the
 template as harmless documentation of intent). This is the platform converging on
 §3.3's posture — it strengthens the grant layer but verifies nothing about function
@@ -144,7 +147,7 @@ access-control test's allowlist) fall into four kinds. The taxonomy matters beca
 the verification spine treats each kind differently:
 
 - **Role-gated RPCs** (a handful): plpgsql, first statement is a §3.1 guard
-  assertion, which raises `ERRCODE '42501'`. Find them by grepping `schema.sql`
+  assertion, which raises `ERRCODE '42501'`. Find them by grepping `supabase/schema/`
   for `42501` (which also finds the assertions themselves).
 - **Self-scoping helpers** (the majority): every read/write keyed to `auth.uid()`;
   no raise block, by design. The `get_my_*` family, the PIN functions.
@@ -198,7 +201,7 @@ per-product seat counts. The subscription-price catalog has no `authenticated`
 grant at all. When adding a table that holds money, seats, or enrollment state,
 grant-lock it by default.
 
-**`anon` holds zero table write grants, everywhere** (since `00097`). The 2026-03
+**`anon` holds zero table write grants, everywhere.** The 2026-03
 audit's lockdown revoked writes from `authenticated` only, leaving `anon`'s
 auto-expose-era write grants standing on 27 tables — inert (no anon write policy
 exists, default-deny blocked everything) but one unscoped `CREATE POLICY` (no `TO`
@@ -515,7 +518,7 @@ boundary."
 ### Phase 1 — guard primitives + ownership predicates — **landed**
 
 Added the §3.1 assertions and §3.2 predicates, and converted the existing role-gated RPC
-bodies (the small `42501` set — regrep `schema.sql` to enumerate) to call them. No
+bodies (the small `42501` set — regrep `supabase/schema/` to enumerate) to call them. No
 policy rewrites in this phase — the predicates exist but no policy composes from them
 until Phase 4, so they carry no `authenticated` grant yet.
 
@@ -536,7 +539,7 @@ Three judgment calls worth carrying forward:
   the `SECURITY DEFINER` ones.** `create_product` is `SECURITY INVOKER` and would have
   escaped the narrower reading, which is why the guard primitives carry an
   `authenticated` grant in the first place. (Its cousin `update_product` was the second
-  such function until 00171 elevated it so it could delete a switched-off product's
+  such function until it was elevated so it could delete a switched-off product's
   waitlist — a table the caller has no write grant on.) The partition is
   "role-gated or self-scoping", and it is the same partition check 5 enforces.
 - **The matrix asserts both directions.** For a disallowed (role, RPC) pair the call
@@ -852,7 +855,7 @@ piece of work it left, is written up under it.
   shape" property fails on those two tables, the un-wrapped duplicate re-evaluates its
   predicate per row, and the committed snapshot describes neither database completely.
 
-  **Repaired in `00127`**, which converges both catalogs onto the migration-history names.
+  **Repaired by a convergence migration**, which puts both catalogs onto the migration-history names.
   Because the two databases genuinely differ, it cannot assert either starting state: it
   walks the six (legacy name, canonical name) pairs and drops the legacy policy when both
   exist, renames it when only the legacy one does, and does nothing when already converged.

@@ -122,7 +122,7 @@ export function useChatHistory(
  * an edit or a tombstone it carries wins.
  *
  * **The `image_stored_at` merge is sound because the column is MONOTONE.**
- * Nothing ever sets it back to NULL (00233 — the object is immutable and never
+ * Nothing ever sets it back to NULL (the object is immutable and never
  * deleted), so a fetched NULL against a cached value can only mean the
  * snapshot predates the flag's commit, and taking `cached ?? fetched` is
  * exactly right. Without this, a stale refetch resolving just after the flag's

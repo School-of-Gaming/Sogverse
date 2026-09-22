@@ -419,7 +419,7 @@ function mockGedu(overrides?: Record<string, unknown>) {
 }
 
 /**
- * The same send, made by an admin from the product page (00200).
+ * The same send, made by an admin from the product page.
  *
  * Deliberately given an address that is ALSO in the admin list, because that is
  * the real shape: every admin is in the CC, so the sender is in it too unless
@@ -1043,7 +1043,7 @@ describe("POST /api/gedu/sessions/email-report", () => {
     }
   });
 
-  // -- The staff copy when an ADMIN pressed the button (00200) --
+  // -- The staff copy when an ADMIN pressed the button --
   //
   // Three things follow the sender rather than the role, and each of them is
   // wrong in a way somebody would notice if it were left as the gedu case.

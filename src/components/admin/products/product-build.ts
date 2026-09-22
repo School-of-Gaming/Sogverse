@@ -440,7 +440,7 @@ function buildSharedFields(
   // admin toggling Unlimited and back finds their tick still there.
   //
   // What sending `false` here does, server-side: `update_product` DELETES every
-  // waitlisted participation on the product (00171), sparing only a row that
+  // waitlisted participation on the product, sparing only a row that
   // carries a live subscription. Silently — no confirmation, no email — by
   // owner decision, on the reasoning that the same edit opens seats, so a
   // dropped family can sign up again through the front door. Both branches of

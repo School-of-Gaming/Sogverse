@@ -27,7 +27,7 @@ import { z } from "zod";
  * **This is the single definition of the accept list in application code — and
  * the database holds the other copy.** The routes reach it through
  * `resolveProductImageExtension` below; a CHECK on `product_images.path`
- * (migration 00198) requires the stored key to be `<sha256>.<ext>` with `ext`
+ * requires the stored key to be `<sha256>.<ext>` with `ext`
  * drawn from this same set *minus* `jpeg`, which is accepted on upload and
  * normalised to `jpg` before anything is stored. The two must be widened in
  * one change: an extension this map accepts and the CHECK refuses is an upload

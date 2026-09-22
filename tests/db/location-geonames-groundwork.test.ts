@@ -7,7 +7,7 @@ import { createAdminTestClient, createAnonTestClient } from "./helpers";
 import { TEST_IDS } from "./constants";
 
 /**
- * The GeoNames groundwork columns (migration 00154) and what each read does
+ * The GeoNames groundwork columns and what each read does
  * with them.
  *
  * Three things are verified here that nothing else can verify:
@@ -327,7 +327,7 @@ describe("locations GeoNames groundwork", () => {
   it("carries the parent's country code on every site", async () => {
     // Denormalized purely so country filtering needs no recursion, which makes
     // the parent's code the only value that can be right. The create route
-    // derives it server-side; 00154 backfilled the rows written before it did.
+    // derives it server-side, and the schema backfills any row it did not.
     const { data, error } = await admin
       .from("locations")
       .select("id, name, country_code, parent:parent_id(country_code)")

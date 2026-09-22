@@ -233,7 +233,7 @@ describe("POST /api/seat-offer/respond", () => {
   });
 
   /**
-   * The other half of the same token, and the whole of 00208 seen from the
+   * The other half of the same token, seen from the
    * route: the short-circuit above is scoped to `accept`, so a NO past the
    * deadline is not answered locally at all — it goes to the RPC, which
    * honours it and deletes the row.

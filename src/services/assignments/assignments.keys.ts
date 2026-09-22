@@ -13,8 +13,7 @@ export const assignmentKeys = {
   myAssignedProducts: () =>
     [...assignmentKeys.all, "my-assigned-products"] as const,
   /**
-   * The workspace document for one product — and, since 00272, for **one group
-   * of it**.
+   * The workspace document for one product — and for **one group of it**.
    *
    * The group id is part of the key rather than a detail of the call because
    * the answer genuinely differs by it: a gedu substituting a sibling group of a

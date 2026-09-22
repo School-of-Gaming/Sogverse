@@ -10,8 +10,8 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
 /**
  * RLS coverage for site_details. The table holds the member-visible
- * site address + notes. Migration 00030 originally made it anon-readable;
- * 00038 tightened it to admin + gedu only. This test pins the new
+ * site address + notes, readable by admin + gedu only and by nobody
+ * anonymous. This test pins that
  * behaviour so a future migration that loosens the policy fails CI
  * instead of silently leaking street addresses.
  *

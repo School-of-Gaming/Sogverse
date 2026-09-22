@@ -19,8 +19,8 @@ import {
 import { getStringRecord } from "../helpers/json";
 
 /**
- * The chat surface's ten RPCs and two membership predicates (00228 / 00229,
- * plus 00233's mark_chat_image_stored).
+ * The chat surface's ten RPCs and two membership predicates, plus
+ * mark_chat_image_stored.
  *
  * This file is the **scope test** every chat entry in the authorization spine's
  * self-scoping allowlist names, and that classification is why it looks the way
@@ -758,7 +758,7 @@ describe("chat RPCs", () => {
   // mark_chat_image_stored
   // -------------------------------------------------------------------------
   //
-  // The completion half of the image send (00233): the upload route flips
+  // The completion half of the image send: the upload route flips
   // image_stored_at on the caller's own client once the object lands, and the
   // flag's realtime UPDATE is what tells every viewer the bytes exist.
   // Ownership is the WHOLE guard, and the absences are the point — no

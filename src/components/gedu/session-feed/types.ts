@@ -44,11 +44,10 @@ export interface SessionFeedGamer {
    * The instant from which this member counts as being in this group — the
    * floor the register's expectations are measured from.
    *
-   * It is `participations.group_joined_at` (00203) and nothing else. Every seat
-   * that holds a group carries one: the trigger stamps every write path, and
-   * the seats placed before the column existed were backfilled from their own
-   * product signup in the migration that introduced this rule — a *data* fix,
-   * argued on its own merits there, rather than a fallback smuggled into every
+   * It is `participations.group_joined_at` and nothing else. Every seat
+   * that holds a group carries one: a trigger stamps every write path, and any
+   * seat that predates the column was backfilled from its own product signup
+   * as a *data* fix, rather than by a fallback smuggled into every
    * reader.
    *
    * Non-nullable on purpose, which is what keeps that guarantee from

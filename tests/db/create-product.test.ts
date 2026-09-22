@@ -22,7 +22,7 @@ import { deleteTestProducts } from "./product-helpers";
  */
 
 /**
- * The two consent documents 00210 seeded. Named here rather than imported from
+ * The two seeded consent documents. Named here rather than imported from
  * the app's registry map on purpose: what this file asserts is that the RPC
  * wrote the slug it was handed, and a constant shared with the code under test
  * would make a renamed slug pass on both sides at once.
@@ -31,7 +31,7 @@ const CONSENT_TERMS = "roblox-programme-terms";
 const CONSENT_PRIVACY = "roblox-privacy-policy";
 
 /**
- * The Fennoa invoice customer this file points a municipality club at (00268).
+ * The Fennoa invoice customer this file points a municipality club at.
  *
  * The one fixture UUID this file reserves, and it is not a product: the RPC
  * under test mints its own product ids and accepts none, but a customer has to
@@ -93,7 +93,7 @@ describe("create_product", () => {
    * `p_tag` and `p_region_lock_country` are the arguments each case varies —
    * the two defaulted, CHECK-less columns whose absence from the INSERT list
    * would look exactly like the ordinary "untagged and unlocked" product.
-   * `p_required_consent_slugs` (00210) is a third of the same kind, and the one
+   * `p_required_consent_slugs` is a third of the same kind, and the one
    * that does not land on the parent row at all: it is delegated to
    * set_product_required_consents, so a create that stopped calling that writer
    * would look exactly like the ordinary product requiring nothing.

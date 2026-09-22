@@ -20,7 +20,7 @@ import {
 } from "./product-helpers";
 
 /**
- * Gamer creations (00227): the write RPC, the four documents that carry the
+ * Gamer creations: the write RPC, the four documents that carry the
  * list, and the fourth condition it adds to a gedu's owed count.
  *
  * Four things about this file are decisions rather than convenience, and each
@@ -113,9 +113,9 @@ const FINAL_SESSION_ENDS_AT = `${TODAY}T00:00:00.000Z`;
  * month before the run ended.
  *
  * **A fixture written before the rule existed does not get to be the rule's
- * counter-example.** `group_joined_at` is stamped `now()` by 00203's trigger, so
+ * counter-example.** `group_joined_at` is stamped `now()` by its trigger, so
  * an unadorned insert puts every seat in the group TODAY — strictly after the
- * final occurrence ended at midnight — and since 00243 a seat that joined after
+ * final occurrence ended at midnight — and a seat that joined after
  * a session ended is not expected on it. The creations condition would then
  * find nobody to ask, and the block below would assert zero for a reason that
  * has nothing to do with what it is testing.
@@ -124,8 +124,8 @@ const FINAL_SESSION_ENDS_AT = `${TODAY}T00:00:00.000Z`;
  * who was in the group for the whole run is what the fixture always meant, and
  * the predicate refusing to bill somebody who was not is the branch working.
  * The table comment's standing "do not set group_joined_at by hand" is aimed at
- * application code — the column has one writer in production, and 00243's own
- * backfill is the other statement that legitimately names it. An UPDATE that
+ * application code — the column has one writer in production, and a schema-side
+ * backfill is the only other statement that legitimately names it. An UPDATE that
  * does not name `group_id` never fires the stamping trigger, so this write
  * stands.
  */
@@ -264,7 +264,7 @@ describe("gamer creations", () => {
 
     // Backdate every seat's join stamp to the products' start date. See
     // JOINED_AT_BACKDATE: left at the trigger's `now()`, each of these seats
-    // joins its group today, which since 00243 makes it unexpected on every
+    // joins its group today, which makes it unexpected on every
     // session that has already finished — and the creations block at the foot
     // of this file is entirely about sessions that have already finished.
     // Doing it for all of them, rather than only the seat that needs it, keeps
@@ -813,11 +813,11 @@ describe("gamer creations", () => {
     });
 
     /**
-     * Who the final session was FOR — the join-date scoping 00243 added to this
+     * Who the final session was FOR — the join-date scoping on this
      * condition, asserted from both sides.
      *
-     * Until these two existed the predicate had no semantic coverage at all:
-     * the migration's end-state block greps its own source for the column name,
+     * These two are the predicate's only semantic coverage: the schema's
+     * end-state block greps its own source for the column name,
      * which a `>=` typo or a comparison against the wrong instant would sail
      * straight through. The direction that would regress silently is the second
      * one — a member placed into the group after the run finished being billed
@@ -863,8 +863,8 @@ describe("gamer creations", () => {
         await setJoinedAt(FINAL_SESSION_ENDS_AT);
         expect(await owedCount()).toBe(1);
 
-        // One millisecond past it, and the run is square. This is the whole of
-        // what 00243 changed here — before it, this same seat was billed for a
+        // One millisecond past it, and the run is square. Without the join-date
+        // scoping this same seat would be billed for a
         // creation on a session it postdates, on a card that does not even draw
         // it a register row.
         await setJoinedAt(`${TODAY}T00:00:00.001Z`);

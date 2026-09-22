@@ -20,10 +20,10 @@ import { SPOKEN_LANGUAGES } from "@/lib/constants/spoken-languages";
  * in. It is excluded by name rather than by a "novelty" flag because it is the
  * only one, and a second novelty locale should be a deliberate decision here.
  *
- * **This lives in unit, not db, and that is the whole point of 00199.** The
- * languages used to be rows in a reference table, so the claim could only be
- * checked against a running database; they are now a Postgres enum reaching
- * TypeScript through codegen, so a locale added without its migration fails
+ * **This lives in unit, not db, and that is deliberate.** The
+ * languages are a Postgres enum reaching
+ * TypeScript through codegen rather than rows in a reference table, so a
+ * locale added without its migration fails
  * here — in the fast suite, on a laptop, with no Postgres anywhere.
  */
 describe("UI locale ↔ spoken-language parity", () => {

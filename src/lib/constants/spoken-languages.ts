@@ -18,8 +18,8 @@
 // list can quietly start deriving from the other. See the "Locale vs. Spoken
 // Language" rule in CLAUDE.md.
 //
-// **The vocabulary is codegen's, not this file's.** It was a reference table
-// read over the wire until 00199 made it a Postgres enum; the values now reach
+// **The vocabulary is codegen's, not this file's.** It is the
+// `spoken_language` Postgres enum, whose values reach
 // TypeScript through `Constants`, so nothing here is hand-maintained and a
 // language added by migration appears everywhere the moment types are
 // regenerated. Adding one is still a code change as well: the flag map in
@@ -27,9 +27,9 @@
 // without an entry.
 //
 // Display names are deliberately absent. A language's name is resolved in the
-// *reader's* locale by `useLanguageNames` (src/hooks/), never stored — which is
-// what the retired reference table's single English `name` column could never
-// do.
+// *reader's* locale by `useLanguageNames` (src/hooks/), never stored — a stored
+// name would be one English string every reader got, whatever they read the app
+// in.
 
 import { Constants, type SpokenLanguageCode } from "@/types";
 

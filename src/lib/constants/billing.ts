@@ -23,8 +23,8 @@
 // is involved at all.
 //
 // Lockstep: the same predicate exists in Postgres as
-// `public.is_no_charge(public.billing_mode)`, introduced in migration 00206 and
-// called by the enrollment writers. The two are one rule in two languages —
+// `public.is_no_charge(public.billing_mode)`, called by the enrollment
+// writers. The two are one rule in two languages —
 // widen one and you must widen the other in the same change, or the admin panel
 // and the database start disagreeing about where a seat lands.
 
@@ -67,8 +67,8 @@ export function isNoChargeBillingMode(mode: BillingMode): boolean {
 //
 // Lockstep: the same predicate exists in Postgres as
 // `public.is_subscription_shaped(public.product_type, public.billing_mode)`,
-// introduced in migration 00245 and asked by the admin club-switch RPC of every
-// switch target. The two are one rule in two languages — widen one and you must
+// asked by the admin club-switch RPC of every switch target. The two are one
+// rule in two languages — widen one and you must
 // widen the other in the same change, or the admin panel and the database start
 // disagreeing about which products can be switched between.
 

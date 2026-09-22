@@ -10,7 +10,7 @@ import {
 } from "@/services/participations/participations.contracts";
 
 /**
- * Automatic placement into a product's single group (migration 00206).
+ * Automatic placement into a product's single group.
  *
  * The rule under test is one predicate with two halves, and every case below
  * moves exactly one of them: the product charges nothing (billing_mode 'free'
@@ -38,7 +38,7 @@ import {
  * business earning. So its truth table is pinned through behaviour instead, and
  * the matrix below covers the whole enum: 'free' and 'external_contract' each
  * place a seat, 'paid' leaves one in the inbox. Nothing here asserts the missing
- * grant either — 00206's own end-state DO block calls the helper across
+ * grant either — the schema's own end-state block calls the helper across
  * `enum_range` and checks that no Data API role can execute it, which runs
  * against every database built from migrations, this suite's included, and is
  * not at the mercy of how PostgREST words a refusal.
@@ -77,7 +77,7 @@ const ALL_PRODUCTS = [
 // effective-status gate reads the product as completed and refuses signups.
 const FAR_FUTURE = "2099-12-31";
 
-describe("automatic placement into a single group (00206)", () => {
+describe("automatic placement into a single group", () => {
   let admin: SupabaseClient<Database>;
   let adminAuth: SupabaseClient<Database>;
 
@@ -101,7 +101,7 @@ describe("automatic placement into a single group (00206)", () => {
 
     await deleteTestProducts(admin, ALL_PRODUCTS);
 
-    // Free consumer clubs — the shape 00166 unlocked, and the cheapest product
+    // Free consumer clubs — a shape comp-enrollment allows, and the cheapest product
     // to build three times over. seatCount null so no case can be answered by
     // the seat cap instead of by the placement rule.
     for (const id of [FREE_ONE_GROUP, FREE_NO_GROUPS, FREE_TWO_GROUPS]) {

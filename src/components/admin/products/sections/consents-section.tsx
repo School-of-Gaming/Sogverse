@@ -135,7 +135,7 @@ export function ConsentsSection({
   // A document accepted outside an enrolment is excluded for a different reason
   // than a bundled one, which is why it is a second predicate rather than a
   // widened first. A bundled slug is offered, just through its bundle; one
-  // accepted once for the account (00249) or once for a child (00250) is not
+  // accepted once for the account or once for a child is not
   // offered at all, because it is already on file and asking again per product
   // would record a second answer against a seat the agreement does not
   // condition.

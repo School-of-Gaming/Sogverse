@@ -493,9 +493,9 @@ describe("validate", () => {
     });
 
     it("allows a paid consumer club to be uncapped (no seat count)", () => {
-      // Seat caps are now orthogonal to billing — any type may opt out of a
-      // seat count, not just free events. (DB constraint
-      // chk_products_seat_count_null_requires_free was dropped in 00083.)
+      // Seat caps are orthogonal to billing — any type may opt out of a
+      // seat count, not just free events, and no DB constraint ties a null
+      // seat count to a free product.
       const s = validConsumerState();
       s.uncapped = true;
       s.seatCount = "";

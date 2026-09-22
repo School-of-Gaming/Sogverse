@@ -23,10 +23,10 @@ on:
   pull_request:
   workflow_dispatch:
 
-# Read-only by default so the write grant on test-db (for the dev-only schema
-# snapshot commit) is an actual narrowing. Without this the repository default
-# applies to every job, and on a repo set to "read and write" the lint, test,
-# build-smoke and deploy jobs would each hold contents:write for no reason.
+# Read-only, and no job below widens it: nothing in this workflow writes to the
+# repository. Without this the repository default applies to every job, and on a
+# repo set to "read and write" the lint, test, build-smoke and deploy jobs would
+# each hold contents:write for no reason.
 permissions:
   contents: read
 
@@ -40,6 +40,10 @@ env:
   # upgraded (keep CI == what we run migrations against locally); check the newest
   # stable with `gh api repos/supabase/cli/releases/latest`.
   SUPABASE_CLI_VERSION: "2.106.0"
+  # The postgres-meta image the pinned CLI's `gen types --db-url` runs on demand,
+  # pre-pulled in the database job so it never pulls from a rate-limited registry.
+  # Read it off a local `npm run db -- generate` after every CLI bump.
+  GEN_TYPES_POSTGRES_META_TAG: "v0.96.1"
 
   # `npm ci` installs every workspace, including services/bedrock-portal, whose
   # bedrock-protocol -> raknet-native dependency resolves prebuilds by
@@ -70,6 +74,19 @@ jobs:
         with:
           node-version: "24"
           cache: "npm"
+
+      - name: Check the CLI pin matches package.json
+        env:
+          # Via env rather than inline `${{ }}`: the value lands in the script as data.
+          WORKFLOW_PIN: ${{ env.SUPABASE_CLI_VERSION }}
+        run: |
+          set -euo pipefail
+          DECLARED=$(node -p "require('./package.json').devDependencies.supabase")
+          if [ "$DECLARED" != "$WORKFLOW_PIN" ]; then
+            echo "::error::package.json pins the Supabase CLI at $DECLARED, the workflow's SUPABASE_CLI_VERSION is $WORKFLOW_PIN. The two must move in one commit: local generation runs the devDependency and every job here runs SUPABASE_CLI_VERSION, and the committed generated files are only comparable when both sides run the same CLI."
+            exit 1
+          fi
+          echo "Supabase CLI pinned at $DECLARED in both package.json and the workflow"
 
       - name: Install dependencies
         run: npm ci
@@ -150,9 +167,6 @@ jobs:
   test-db:
     name: Database Tests
     runs-on: ubuntu-latest
-    # Needed only by the dev-only snapshot commit at the end of this job.
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v5
 
@@ -181,8 +195,8 @@ jobs:
       #   flake: supabase/cli #3775, #2893, #4535) and fails the whole job on a
       #   container the tests never touch. --ignore-health-check is the documented
       #   backstop for that 502; the kept containers come up fine.
-      # - realtime, postgres-meta, mailpit, studio, imgproxy, vector, logflare are
-      #   simply unused. Mailpit is safe to drop because local auth autoconfirms
+      # - realtime, mailpit, studio, imgproxy, vector, logflare are simply
+      #   unused. Mailpit is safe to drop because local auth autoconfirms
       #   (enable_confirmations = false in supabase/config.toml), so GoTrue never
       #   contacts SMTP on any path a test exercises. imgproxy stays out with
       #   storage-api in: it serves image *transformations*, which nothing here
@@ -201,6 +215,212 @@ jobs:
       - name: Start local Supabase
         run: supabase start -x edge-runtime,studio,imgproxy,vector,logflare,realtime,postgres-meta,mailpit --ignore-health-check
 
+      # `gen types --db-url` below runs a postgres-meta container on demand and
+      # pulls it from public.ecr.aws whatever SUPABASE_INTERNAL_IMAGE_REGISTRY says,
+      # and that registry rate-limits anonymous pulls from shared runners
+      # ("toomanyrequests", twice on 2026-09-22 after green runs). It is not the
+      # postgres-meta the stack would run (`supabase start` pins a later one), so the
+      # exact tag is pulled here from ghcr.io, which does not rate-limit us, and
+      # given the name the on-demand path looks for; that path then finds it locally
+      # and never pulls. The tag moves with the CLI pin: after a bump, run
+      # `npm run db -- generate` locally and read the image its gen types pulls.
+      - name: Pre-pull the postgres-meta image gen types runs
+        env:
+          POSTGRES_META_TAG: ${{ env.GEN_TYPES_POSTGRES_META_TAG }}
+        run: |
+          set -euo pipefail
+          docker pull "ghcr.io/supabase/postgres-meta:$POSTGRES_META_TAG"
+          docker tag "ghcr.io/supabase/postgres-meta:$POSTGRES_META_TAG" "public.ecr.aws/supabase/postgres-meta:$POSTGRES_META_TAG"
+          echo "public.ecr.aws/supabase/postgres-meta:$POSTGRES_META_TAG is present locally"
+
+      # Two files are committed that migrations/ alone decide the contents of:
+      # src/types/database.types.ts and the schema directory supabase/schema/. Both are
+      # generated here from the stack `supabase start` just built out of migrations/,
+      # uploaded as artifacts, and compared against what is committed — on every branch,
+      # because a committed file that disagrees with migrations/ is stale wherever it is
+      # found, and catching it on the feature branch is the point. The local
+      # `npm run db -- generate` runs the identical commands against an identical stack;
+      # it is the fast path, not a second source of truth, and when the two disagree
+      # this job's output is the authority.
+      #
+      # Neither is generated from a long-lived database, and that is the whole point: a
+      # hosted database can be (and has been) edited outside migrations, and generating
+      # from one lets that drift into the committed files, where it then reads as
+      # authoritative. Built from migrations, both are faithful by construction.
+      #
+      # All of this runs BEFORE the database tests on purpose. The artifacts are the
+      # escape hatch for a machine whose local database will not start, and a red test
+      # run is exactly when someone needs them — generated after the tests, they would
+      # not exist on the runs that matter.
+      #
+      # Both generations run before either comparison, for the same reason. A branch
+      # that forgot to regenerate has BOTH files stale and needs BOTH artifacts, so a
+      # failing types check must not skip the schema generation that would produce the
+      # second one. Keeping the two checks adjacent also means one run reports both
+      # diffs instead of one per push.
+      - name: Generate types from migrations
+        env:
+          # Not a credential, and nothing is ever sent with it. The pinned CLI
+          # builds its Management API client before `gen types` looks at which
+          # flag it was given, so the command demands a token even on --db-url,
+          # which never calls that API (a --debug run of this exact command logs
+          # no HTTP request at all). On a developer's machine the demand is
+          # invisible: the CLI is a Bun binary, Bun reads .env.local out of the
+          # working directory, and a checkout's .env.local carries a real access
+          # token — which is why this only ever failed here. The local script
+          # pins the same value (scripts/local-db/lib.sh) rather than let a real
+          # token answer for it, so both generators run one command under one
+          # set of conditions.
+          SUPABASE_ACCESS_TOKEN: not-a-token-gen-types-makes-no-api-call
+        run: |
+          set -euo pipefail
+          # `supabase start` exposes the database on this port (supabase/config.toml,
+          # [db] port). The CLI's `--local` form is broken in the pinned version, so the
+          # URL is spelled out; the same string is what the local script uses.
+          DB_PORT=54322
+          DB_URL="postgresql://postgres:postgres@127.0.0.1:${DB_PORT}/postgres"
+
+          # Prove something is answering there rather than assuming it. A stack that
+          # came up without a reachable database would otherwise surface as a failed
+          # generation — or worse, as a schema difference in the comparison below —
+          # instead of as the boot problem it is. pg_isready ships with the runner
+          # image, but the fallback keeps this step from depending on that.
+          if command -v pg_isready > /dev/null; then
+            db_ready() { pg_isready -h 127.0.0.1 -p "$DB_PORT" -U postgres -q; }
+          else
+            db_ready() { (exec 3<> "/dev/tcp/127.0.0.1/$DB_PORT") 2> /dev/null; }
+          fi
+          tries=0
+          until db_ready; do
+            tries=$((tries + 1))
+            if [ "$tries" -ge 30 ]; then
+              echo "::error::nothing is answering on 127.0.0.1:$DB_PORT — the local database did not come up, so types cannot be generated from migrations"
+              exit 1
+            fi
+            sleep 1
+          done
+          echo "database reachable on 127.0.0.1:$DB_PORT"
+
+          # --schema public is load-bearing: without it the CLI asks the database for
+          # every schema its Data API exposes, which drags in the graphql_public block
+          # (see supabase/CLAUDE.md). stderr goes to a file, not the output: the CLI
+          # writes its "new version available" notice there, and anything on the stream
+          # would otherwise end up inside the TypeScript. It is echoed afterwards so the
+          # notice is still readable in the log.
+          supabase gen types typescript --db-url "$DB_URL" --schema public \
+            > /tmp/database.types.ts 2> /tmp/gen-types.stderr || {
+              echo "::error::supabase gen types failed"
+              cat /tmp/gen-types.stderr
+              exit 1
+            }
+          if [ -s /tmp/gen-types.stderr ]; then
+            echo "supabase CLI stderr:"
+            cat /tmp/gen-types.stderr
+          fi
+
+          # Cheap guard against chatter that came out on stdout instead: the generated
+          # file always opens with the Json type alias, so anything else at the top is
+          # the CLI talking, not types.
+          if ! head -5 /tmp/database.types.ts | grep -q '^export type Json'; then
+            echo "::error::generated file does not start with the expected 'export type Json' preamble — the CLI wrote something other than TypeScript to stdout"
+            head -20 /tmp/database.types.ts
+            exit 1
+          fi
+          echo "wrote $(wc -l < /tmp/database.types.ts) lines"
+
+      # Uploaded before the comparison, and if: always() on top of that, so the file
+      # exists however the run ends: this artifact is what an agent commits verbatim
+      # when the comparison fails, or on a day the owner's local database will not
+      # start. The two together cover both orderings — a failing comparison below, and
+      # a generation step above that died before writing anything.
+      - name: Upload types generated from migrations
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: database-types-from-migrations
+          path: /tmp/database.types.ts
+          retention-days: 30
+          # When generation itself failed the file never appeared, and a
+          # missing-file warning stacked on top of the real failure only obscures it.
+          if-no-files-found: ignore
+
+      # pg_dump runs INSIDE the database container, for two reasons. Its client version
+      # then always matches the server the CLI booted (a host pg_dump older than the
+      # server refuses to run at all, and the runner's version is not ours to pin). And
+      # it is raw pg_dump: `supabase db dump` silently emits no CREATE TRIGGER at all —
+      # verified, 0 against 26 — so using it would quietly drop every trigger while
+      # leaving policies, grants and functions intact enough to look right.
+      #
+      # The dump is cut into one file per object by the checked-out splitter, run with
+      # the flags the local command uses, so a single script does the cutting in both
+      # places. --strict fails the run on an entry it cannot attribute to an object:
+      # that is a rule the splitter is missing, not a note for stderr.
+      - name: Generate the schema directory from migrations
+        run: |
+          # pipefail matters here specifically: the dump is a pipeline into grep, and
+          # without it the exit status is grep's. A pg_dump that dies mid-stream would
+          # still "succeed" so long as one line reached the filter. The splitter carries
+          # the guard against that: it refuses a dump holding no TABLE, POLICY, TRIGGER
+          # or ACL entry, since a dump missing a whole object class is never a real
+          # schema change. Truncation trips it, because grants and policies come late.
+          set -euo pipefail
+          CONTAINER=$(docker ps --filter "name=supabase_db_" --format '{{.Names}}' | head -1)
+          if [ -z "$CONTAINER" ]; then
+            echo "::error::supabase db container not found; cannot generate the schema directory"
+            exit 1
+          fi
+          echo "dumping from $CONTAINER"
+          docker exec "$CONTAINER" pg_dump -U postgres -d postgres \
+            --schema=public --schema-only --no-owner \
+            | grep -vE '^[\](un)?restrict ' > /tmp/schema-from-migrations.sql
+          echo "dumped $(wc -l < /tmp/schema-from-migrations.sql) lines"
+          python3 scripts/local-db/split-schema.py --strict \
+            /tmp/schema-from-migrations /tmp/schema-from-migrations.sql
+
+          # The same catalog rendering the local command runs, from the same
+          # checked-out script and into the same subdirectory of the tree that is
+          # compared below — so what a dump of `public` cannot see (extensions,
+          # the auth.users trigger, the storage.objects policies, the bucket and
+          # cron rows, the realtime publication) is covered by the existing
+          # comparison and artifact with nothing else to keep in step.
+          python3 scripts/local-db/outside-public.py "$CONTAINER" \
+            /tmp/schema-from-migrations/outside-public
+
+      - name: Upload the schema directory generated from migrations
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: schema-from-migrations
+          path: /tmp/schema-from-migrations
+          retention-days: 30
+          # When generation itself failed the directory never appeared, and a
+          # missing-file warning stacked on top of the real failure only obscures it.
+          if-no-files-found: ignore
+
+      - name: Check committed types match migrations
+        run: |
+          set -euo pipefail
+          if diff -q /tmp/database.types.ts src/types/database.types.ts > /dev/null; then
+            echo "src/types/database.types.ts matches what migrations/ generate"
+            exit 0
+          fi
+          echo "committed types differ from the types generated from migrations/ (first 200 diff lines):"
+          diff -u src/types/database.types.ts /tmp/database.types.ts | head -200 || true
+          echo "::error::src/types/database.types.ts does not match the types generated from migrations/. Regenerate with 'npm run db -- generate' and commit the result — or, if the local database will not start, download the 'database-types-from-migrations' artifact from this run and commit it as src/types/database.types.ts."
+          exit 1
+
+      - name: Check the committed schema directory matches migrations
+        run: |
+          set -euo pipefail
+          if diff -qr /tmp/schema-from-migrations supabase/schema > /dev/null; then
+            echo "supabase/schema/ matches what migrations/ generate"
+            exit 0
+          fi
+          echo "committed schema differs from the schema generated from migrations/ (first 200 diff lines):"
+          diff -ru supabase/schema /tmp/schema-from-migrations | head -200 || true
+          echo "::error::supabase/schema/ does not match the schema generated from migrations/. Regenerate with 'npm run db -- generate' and commit the result — or, if the local database will not start, download the 'schema-from-migrations' artifact from this run and replace supabase/schema/ with it."
+          exit 1
+
       - name: Run database tests
         run: npm run test:db
         env:
@@ -208,108 +428,137 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
           SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
 
-      # supabase/schema.sql is regenerated here, from the stack `supabase start`
-      # just built out of migrations/ — not dumped from any long-lived database.
-      # That is the whole point: a hosted database can be (and has been) edited
-      # outside migrations, and dumping the snapshot from one lets that drift into
-      # the committed file, where it then reads as authoritative. Built from
-      # migrations, the snapshot is faithful by construction.
-      #
-      # pg_dump runs INSIDE the database container, for two reasons. Its client
-      # version then always matches the server the CLI booted (a host pg_dump older
-      # than the server refuses to run at all, and the runner's version is not ours
-      # to pin). And it is raw pg_dump: `supabase db dump` silently emits no
-      # CREATE TRIGGER at all — verified, 0 against 26 — so using it would have
-      # quietly dropped every trigger from the snapshot while leaving policies,
-      # grants and functions intact enough to look right.
-      - name: Regenerate schema snapshot from migrations
-        run: |
-          # pipefail matters here specifically: the dump is a pipeline into grep, and
-          # without it the exit status is grep's. A pg_dump that dies mid-stream would
-          # still "succeed" so long as one line reached the file — and on dev this file
-          # is committed unattended. The object-class guard below catches the usual
-          # shape of that (policies and grants are emitted late, so truncation trips
-          # it), but it is a backstop, not the check.
-          set -euo pipefail
-          CONTAINER=$(docker ps --filter "name=supabase_db_" --format '{{.Names}}' | head -1)
-          if [ -z "$CONTAINER" ]; then
-            echo "::error::supabase db container not found; cannot regenerate the schema snapshot"
-            exit 1
-          fi
-          echo "dumping from $CONTAINER"
-          docker exec "$CONTAINER" pg_dump -U postgres -d postgres \
-            --schema=public --schema-only --no-owner \
-            | grep -vE '^[\](un)?restrict ' > /tmp/schema-from-migrations.sql
-          echo "wrote $(wc -l < /tmp/schema-from-migrations.sql) lines"
-          # Cheap guard against a dump that "succeeds" but lost an object class.
-          for obj in "CREATE TABLE" "CREATE POLICY" "CREATE TRIGGER" "GRANT"; do
-            n=$(grep -c "^$obj" /tmp/schema-from-migrations.sql || true)
-            echo "$obj: $n"
-            if [ "$n" -eq 0 ]; then
-              echo "::error::regenerated snapshot contains no '$obj' statements — refusing to treat it as authoritative"
-              exit 1
-            fi
-          done
+      # No `supabase stop`: the runner is ephemeral and gets destroyed right after
+      # this job, so tearing the stack down (~19s) protected nothing.
 
-      - name: Upload regenerated snapshot
-        if: always()
-        uses: actions/upload-artifact@v6
+  # Migrations reach staging the moment they land on dev. The job runs only on
+  # dev, so it is neither a required check on main nor a Vercel deployment check
+  # and the two outside-the-repo edits in the header above do not apply to it.
+  push-staging:
+    name: Push migrations to staging
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    # No `needs`, deliberately unlike deploy below: staging's schema should trail
+    # the code landing with it by the minute this job takes, not by a whole CI
+    # run. The migrations are already proven — test-db applied them to a real
+    # database on the branch before this landed.
+    concurrency:
+      # Two landings in quick succession would otherwise run `db push` against the
+      # same database at once. `cancel-in-progress: false` because cancelling a run
+      # mid-push is the one outcome worse than waiting for it.
+      group: push-staging
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5
+
+      # No Node setup and no `npm ci`: nothing here runs but the CLI.
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v2
         with:
-          name: schema-from-migrations
-          path: /tmp/schema-from-migrations.sql
-          retention-days: 30
-          # When the tests fail the dump never runs, and a missing-file warning
-          # stacked on top of the real failure only obscures it.
-          if-no-files-found: ignore
+          version: ${{ env.SUPABASE_CLI_VERSION }}
 
-      # schema.sql is machine-maintained: nobody writes it by hand, so CI commits it
-      # rather than failing and asking someone to. Only on dev, and deliberately not
-      # on feature branches — a branch that regenerated it would put a 6000-line
-      # generated file into every migration diff, and two branches doing so would
-      # conflict on it constantly. Keeping it to dev also means the file tracks
-      # *merged* migrations, so an unmerged branch's objects never leak into it.
-      #
-      # The commit message carries a skip-ci marker so it does not trigger another
-      # run; that run would have nothing to do, since the next pass finds the file
-      # already matching.
-      #
-      # The commit is built on whatever dev is at *now*, not on the SHA this job
-      # checked out. Pushes to dev are direct and frequent here, and a job that
-      # committed onto its own checkout would be rejected as a non-fast-forward
-      # whenever anything landed during the two-to-four minutes it was running —
-      # surfacing as a red Database Tests job with every test passing, which is the
-      # kind of failure people learn to ignore. Re-basing is not available: the
-      # checkout is shallow (fetch-depth 1), so there is no history to rebase onto.
-      # Fetching dev and committing onto FETCH_HEAD sidesteps both problems.
-      #
-      # If it still loses a race, that is not fatal and must not fail the job: the
-      # file is regenerated from scratch on every run, so the next schema-changing
-      # push to dev repairs it. It warns instead, so a persistent failure is still
-      # visible rather than silent.
-      - name: Commit the regenerated snapshot (dev only)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+      # When this step fails, each migration is its own transaction, so staging
+      # holds every migration before the failing one and dev's run stays red until
+      # the fix lands. Fix forward with a new migration; never by editing staging,
+      # which leaves its migration history disagreeing with dev's files and makes
+      # the next `db push` refuse outright.
+      - name: Push migrations to Supabase
+        run: |
+          supabase link --project-ref ${{ secrets.SUPABASE_STAGING_PROJECT_REF }}
+          supabase db push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_STAGING_DB_PASSWORD }}
+
+  # Migration versions are timestamps assigned at landing, so every migration a
+  # push adds must sort above every version dev already had. This job is the only
+  # gate that covers work committed straight onto dev: merges into dev are local
+  # and open no PR, so nothing else inspects them. It therefore fires after the
+  # fact — the push has already happened — and that is enough, because the file it
+  # catches is one no environment has applied: push-staging's `db push` refuses an
+  # out-of-order version for the same reason prod's would. The remedy is a
+  # follow-up commit renaming the file to a fresh timestamp.
+  #
+  # Checkout only, no Node: this reads git history and nothing else.
+  migration-order:
+    name: Migration order on dev
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    # No `needs`: an out-of-order migration is worth reporting whatever the test
+    # jobs are doing, and this job depends on none of their work.
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Assert added migrations sort above dev's
+        env:
+          # Via env, not inline `${{ }}`: the values land in the script as data.
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
         run: |
           set -euo pipefail
-          git fetch --depth=1 origin dev
-          if diff -q <(git show FETCH_HEAD:supabase/schema.sql) /tmp/schema-from-migrations.sql > /dev/null; then
-            echo "schema.sql on dev already matches migrations — nothing to commit"
+
+          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "::warning::dev has no previous head (branch creation), so there is no order to check against."
             exit 0
           fi
-          echo "schema.sql on dev is out of date with migrations; updating it"
-          diff -u <(git show FETCH_HEAD:supabase/schema.sql) /tmp/schema-from-migrations.sql || true
-          git checkout -B snapshot-update FETCH_HEAD
-          cp /tmp/schema-from-migrations.sql supabase/schema.sql
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add supabase/schema.sql
-          git commit -m "chore(db): regenerate schema.sql from migrations [skip ci]"
-          if ! git push origin snapshot-update:dev; then
-            echo "::warning::lost a race pushing the regenerated schema.sql to dev; the next schema-changing push will regenerate it"
+
+          # checkout fetches one commit, so dev's previous head has to be asked for
+          # by SHA. A force-push or a dropped commit makes it unfetchable; there is
+          # then no before-state to judge against, and a red run would say nothing.
+          if ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null && ! git fetch --depth=1 --no-tags origin "$BEFORE"; then
+            echo "::warning::dev's previous head $BEFORE is unreachable (force-push, or the commit was dropped), so this push cannot be compared against it."
+            exit 0
           fi
 
-      # No `supabase stop`: the runner is ephemeral and gets destroyed right after
-      # this job, so tearing the stack down (~19s) protected nothing. The schema
-      # snapshot above is dumped while the stack is still up either way.
+          # --no-renames: a rename must read as the delete plus the add it is, so
+          # the squash below is recognised and a restamped file is judged on its
+          # new version rather than slipping through as a rename.
+          added=$(git diff --name-only --diff-filter=A --no-renames "$BEFORE" "$AFTER" -- 'supabase/migrations/*.sql')
+          deleted=$(git diff --name-only --diff-filter=D --no-renames "$BEFORE" "$AFTER" -- 'supabase/migrations/*.sql')
+
+          if [ -z "$added" ]; then
+            echo "This push adds no migrations."
+            exit 0
+          fi
+
+          # String comparison is the CLI's own ordering, which is also why the
+          # original 5-digit versions sort below every timestamp.
+          highest=$(git ls-tree --name-only "$BEFORE" -- supabase/migrations/ | sed 's#.*/##; s#_.*##' | sort | tail -n 1)
+
+          failed=
+          numbered=
+          while IFS= read -r file; do
+            [ -n "$file" ] || continue
+            version=$(basename "$file"); version=${version%%_*}
+            case "$version" in
+              [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9])
+                if [[ "$version" > "$highest" ]]; then continue; fi
+                echo "::error file=$file::$version does not sort above $highest, which dev already had. A database applies migrations in version order and refuses one below a version it has already applied, so staging's db push should have refused this file. Confirm that first - npx supabase migration list --linked is a read - and if staging does not hold $version, rename the file to a fresh timestamp (the format npx supabase migration new produces) in a follow-up commit, the one case in which a landed migration file is renamed. If staging did apply it, the rename would leave staging recording a version with no file: that is a reconciliation to run as a procedure skill at the owner's instruction, not a rename."
+                failed=1
+                ;;
+              [0-9][0-9][0-9][0-9][0-9])
+                numbered="$numbered $file"
+                ;;
+              *)
+                echo "::error file=$file::version '$version' is neither a timestamp nor one of the original 5-digit numbers. New migrations come from npx supabase migration new."
+                failed=1
+                ;;
+            esac
+          done <<< "$added"
+
+          if [ -n "$numbered" ]; then
+            if echo "$deleted" | grep -qE '/[0-9]{5}_'; then
+              echo "::notice::This push both adds and deletes 5-digit migrations, which is the squash; the numbered files are allowed to move."
+            else
+              for file in $numbered; do
+                echo "::error file=$file::a 5-digit version is only ever added by the migration squash, which deletes the numbered files it replaces - this push deletes none. Create the file with npx supabase migration new so it carries a timestamp."
+              done
+              failed=1
+            fi
+          fi
+
+          [ -z "$failed" ] || exit 1
+          echo "Every migration this push adds sorts above the versions dev already had."
 
   # Deploy job only runs on push to main, after CI passes
   # Vercel handles preview/staging deploys for dev automatically via GitHub integration

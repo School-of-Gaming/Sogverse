@@ -69,7 +69,7 @@ const JPEG_SOI = [0xff, 0xd8, 0xff];
  * keeps every other viewer honest about them: the row reaches every subscriber
  * over realtime the instant it exists, while its bytes are still in flight, so
  * after the storage write returns this route flips `image_stored_at` through
- * `mark_chat_image_stored` (00233) on the same caller client the insert ran
+ * `mark_chat_image_stored` on the same caller client the insert ran
  * on. That UPDATE's realtime arrival is the event that tells each viewer the
  * picture is fetchable — by then the object provably exists, because the flag
  * was committed strictly after it, in the same database the read route asks.
@@ -194,21 +194,19 @@ export const POST = defineRoute({
      * write a lock leaves, so this compensation cannot itself be refused by a
      * lock that landed mid-upload.
      *
-     * **One interleaving leaves a row that is flagged AND swept, and it is
-     * worth stating here because 00233's header does not admit it.** That
-     * header says the compensation runs only when the flag was never set,
-     * which holds for every outcome this route can *observe* — but not for the
-     * one where `mark_chat_image_stored` commits and its response never comes
-     * back (a dropped connection, a timeout, a function killed mid-flight).
+     * **One interleaving leaves a row that is flagged AND swept, and this
+     * comment is the one place it is written down.** The compensation is meant
+     * for the outcomes where the flag was never set, which is every outcome
+     * this route can *observe* — but not for the one where
+     * `mark_chat_image_stored` commits and its response never comes back
+     * (a dropped connection, a timeout, a function killed mid-flight).
      * The route sees a failure, sweeps the object and hides the row, and what
      * stands is a flagged, hidden, objectless message. Every participant draws
      * the ordinary tombstone; a moderator opening the dimmed original fetches
      * an object that is gone and meets the broken-image state their renderer
-     * already handles. Accepted, and the same shape 00233's own backfill note
-     * already accepts for a swept tombstone marked stored — the flag stays
-     * monotone either way, so nothing downstream of it is put wrong. It is
-     * recorded in this comment rather than in the migration because a pushed
-     * migration is immutable.
+     * already handles. Accepted, and the same shape as any swept tombstone
+     * whose flag was already set — the flag stays monotone either way, so
+     * nothing downstream of it is put wrong.
      */
     const failSend = async (failure: string): Promise<never> => {
       const { error: sweepError } = await bucket.remove([upload.fields.id]);

@@ -37,7 +37,7 @@ import { gamerCreationList } from "@/services/member-flair/member-flair.contract
  * that would actually carry a leaked field — wide open.
  *
  * **Every staff-authored field a family may read is justified here in writing,
- * and `creations` (00227) is the one that needed the most.** It is the only
+ * and `creations` is the one that needed the most.** It is the only
  * staff-authored family-facing field in the product that carries LINKS —
  * session reports are deliberately link-free, because a write-up sent to one
  * family is this platform pointing them somewhere it does not control, and the
@@ -239,9 +239,9 @@ export const familyProductFeed = z
      * reachable by URL, so it cannot rely on having been opened from a
      * dashboard card that already knew the name.
      *
-     * **Spelled for the participant since 00174**, when a parent first became
-     * able to occupy a seat: a key called `gamer` carrying a parent's own name
-     * would have been the wire telling every reader the wrong thing about who
+     * **Spelled for the participant**, because a parent may occupy a seat
+     * themselves: a key called `gamer` carrying a parent's own name
+     * would be the wire telling every reader the wrong thing about who
      * this page is for.
      */
     participant: familyFeedPerson,
@@ -279,7 +279,7 @@ export const familyProductFeed = z
     gedus: z.array(familyFeedPerson),
     /**
      * THIS participant's own creations in THIS group, in the order staff
-     * arranged them, and nobody else's (00227).
+     * arranged them, and nobody else's.
      *
      * **A flat array, not a map keyed by participant — and that type choice is
      * the privacy guarantee**, the same move `attendance` makes below where the
