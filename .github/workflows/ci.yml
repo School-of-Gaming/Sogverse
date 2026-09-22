@@ -260,17 +260,12 @@ jobs:
       # diffs instead of one per push.
       - name: Generate types from migrations
         env:
-          # Not a credential, and nothing is ever sent with it. The pinned CLI
-          # builds its Management API client before `gen types` looks at which
-          # flag it was given, so the command demands a token even on --db-url,
-          # which never calls that API (a --debug run of this exact command logs
-          # no HTTP request at all). On a developer's machine the demand is
-          # invisible: the CLI is a Bun binary, Bun reads .env.local out of the
-          # working directory, and a checkout's .env.local carries a real access
-          # token — which is why this only ever failed here. The local script
-          # pins the same value (scripts/local-db/lib.sh) rather than let a real
-          # token answer for it, so both generators run one command under one
-          # set of conditions.
+          # Not a credential, and nothing is ever sent with it: `gen types
+          # --db-url` makes no Management API call. The pin is what stops the
+          # Bun-based CLI reading a checkout's real access token out of
+          # .env.local into a run that needs none; the local script
+          # (scripts/local-db/lib.sh) pins the same value, so both generators run
+          # one command under one set of conditions.
           SUPABASE_ACCESS_TOKEN: not-a-token-gen-types-makes-no-api-call
         run: |
           set -euo pipefail

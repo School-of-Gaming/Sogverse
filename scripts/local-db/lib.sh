@@ -16,15 +16,10 @@ export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 HOME=$(getent passwd "$(id -u)" | cut -d: -f6)
 export HOME
 
-# The pinned CLI builds its Management API client before `gen types` looks at
-# which flag it was given, and that client refuses to exist without an access
-# token — so the command asks for one even on --db-url, which never calls the
-# API. The CLI is a Bun binary and Bun reads .env/.env.local out of the working
-# directory, so in a checkout it silently answers that demand with the real
-# personal access token in .env.local and the demand is invisible. Pinning a
-# value that is not a credential answers it with nothing, and a variable set
-# here beats the file. CI's generate step pins the same value, so both
-# generators run the command under the same conditions.
+# `gen types --db-url` makes no Management API call, but the CLI is a Bun binary
+# that reads .env/.env.local out of the working directory — so in a checkout the
+# real personal access token would answer for it. This non-credential, which beats
+# the file, keeps it out of the run; CI's generate step pins the same value.
 export SUPABASE_ACCESS_TOKEN=not-a-token-gen-types-makes-no-api-call
 
 # Everything this script makes lives in the distro's own filesystem: the CLI,
