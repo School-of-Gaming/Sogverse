@@ -114,7 +114,8 @@ trap this rule exists to avoid.
 
 **Rule: always invoke the CLI as `npx supabase` — never a bare/global `supabase`.** The
 CLI is a pinned exact devDependency, and CI pins the same version
-(`SUPABASE_CLI_VERSION` in the workflow); the two move together in one commit, always.
+(`SUPABASE_CLI_VERSION` in the workflow); the two move together in one commit, and the
+lint job checks they match.
 The pin is load-bearing twice over: local-stack security semantics changed at v2.106.0
 (no more auto-granted Data API privileges — the fail-closed regime the access-control
 tests assume), and `gen types` / dump output formats drift across versions, so an
@@ -123,6 +124,12 @@ unpinned CLI turns every regeneration into spurious diffs. A globally installed
 it irrelevant.
 
 ## Linking (first time only)
+
+Linking is for the operator commands that address the hosted project by ref — `npx
+supabase migration list --linked`, `migration repair` during the squash's history step,
+and `supabase inspect` in the database-inspection skill. Nothing in the migration
+workflow below needs it: `generate` builds in a shadow workdir, so a linked checkout's
+`.temp/` pins never reach it.
 
 ```bash
 npx supabase link --project-ref "$(grep '^SUPABASE_PROJECT_REF=' .env.local | cut -d= -f2-)"
@@ -208,9 +215,12 @@ touched is the conflict case above. `/worktree-flow` Phase 5 has the commands.
 
 A push to `dev` that adds a migration sorting below one `dev` already had fails the
 `migration-order` job — the gate for work committed straight onto `dev`, which opens no
-PR. Nothing has applied the file, because staging's `db push` refuses an out-of-order
-version for the same reason prod's would: rename it to a fresh timestamp in a follow-up
-commit, which is the one case a landed migration file is renamed.
+PR. Staging's `db push` should have refused the file, for the same reason prod's would,
+so confirm that before touching it: `npx supabase migration list --linked` is a read. If
+the version is not in staging's history, rename the file to a fresh timestamp in a
+follow-up commit, which is the one case a landed migration file is renamed. If staging
+did apply it, renaming would leave staging recording a version no file carries — a
+reconciliation, run as a procedure skill at the owner's instruction.
 
 ### Landing on `dev` applies the migrations to staging
 
@@ -236,7 +246,7 @@ never executed anywhere"; if the addition is assertion-only, a wrong assertion c
 pass CI vacuously. Accepted costs: fix-up migrations in history, and a replacement
 function's assertion block must deliberately re-assert the invariants of the migration it
 supersedes (re-derive them; a hand-copy dropped a clause once). psql remains the right
-tool for *checking* staging state and reconciling drift that already happened.
+tool for *checking* staging state.
 
 ## Generated nullability can lie
 

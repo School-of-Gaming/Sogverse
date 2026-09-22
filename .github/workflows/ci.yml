@@ -71,6 +71,19 @@ jobs:
           node-version: "24"
           cache: "npm"
 
+      - name: Check the CLI pin matches package.json
+        env:
+          # Via env rather than inline `${{ }}`: the value lands in the script as data.
+          WORKFLOW_PIN: ${{ env.SUPABASE_CLI_VERSION }}
+        run: |
+          set -euo pipefail
+          DECLARED=$(node -p "require('./package.json').devDependencies.supabase")
+          if [ "$DECLARED" != "$WORKFLOW_PIN" ]; then
+            echo "::error::package.json pins the Supabase CLI at $DECLARED, the workflow's SUPABASE_CLI_VERSION is $WORKFLOW_PIN. The two must move in one commit: local generation runs the devDependency and every job here runs SUPABASE_CLI_VERSION, and the committed generated files are only comparable when both sides run the same CLI."
+            exit 1
+          fi
+          echo "Supabase CLI pinned at $DECLARED in both package.json and the workflow"
+
       - name: Install dependencies
         run: npm ci
 
@@ -217,6 +230,12 @@ jobs:
       # escape hatch for a machine whose local database will not start, and a red test
       # run is exactly when someone needs them — generated after the tests, they would
       # not exist on the runs that matter.
+      #
+      # Both generations run before either comparison, for the same reason. A branch
+      # that forgot to regenerate has BOTH files stale and needs BOTH artifacts, so a
+      # failing types check must not skip the schema generation that would produce the
+      # second one. Keeping the two checks adjacent also means one run reports both
+      # diffs instead of one per push.
       - name: Generate types from migrations
         env:
           # Not a credential, and nothing is ever sent with it. The pinned CLI
@@ -303,18 +322,6 @@ jobs:
           # missing-file warning stacked on top of the real failure only obscures it.
           if-no-files-found: ignore
 
-      - name: Check committed types match migrations
-        run: |
-          set -euo pipefail
-          if diff -q /tmp/database.types.ts src/types/database.types.ts > /dev/null; then
-            echo "src/types/database.types.ts matches what migrations/ generate"
-            exit 0
-          fi
-          echo "committed types differ from the types generated from migrations/ (first 200 diff lines):"
-          diff -u src/types/database.types.ts /tmp/database.types.ts | head -200 || true
-          echo "::error::src/types/database.types.ts does not match the types generated from migrations/. Regenerate with 'npm run db -- generate' and commit the result — or, if the local database will not start, download the 'database-types-from-migrations' artifact from this run and commit it as src/types/database.types.ts."
-          exit 1
-
       # pg_dump runs INSIDE the database container, for two reasons. Its client version
       # then always matches the server the CLI booted (a host pg_dump older than the
       # server refuses to run at all, and the runner's version is not ours to pin). And
@@ -358,6 +365,18 @@ jobs:
           # When generation itself failed the directory never appeared, and a
           # missing-file warning stacked on top of the real failure only obscures it.
           if-no-files-found: ignore
+
+      - name: Check committed types match migrations
+        run: |
+          set -euo pipefail
+          if diff -q /tmp/database.types.ts src/types/database.types.ts > /dev/null; then
+            echo "src/types/database.types.ts matches what migrations/ generate"
+            exit 0
+          fi
+          echo "committed types differ from the types generated from migrations/ (first 200 diff lines):"
+          diff -u src/types/database.types.ts /tmp/database.types.ts | head -200 || true
+          echo "::error::src/types/database.types.ts does not match the types generated from migrations/. Regenerate with 'npm run db -- generate' and commit the result — or, if the local database will not start, download the 'database-types-from-migrations' artifact from this run and commit it as src/types/database.types.ts."
+          exit 1
 
       - name: Check the committed schema directory matches migrations
         run: |
@@ -483,7 +502,7 @@ jobs:
             case "$version" in
               [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9])
                 if [[ "$version" > "$highest" ]]; then continue; fi
-                echo "::error file=$file::$version does not sort above $highest, which dev already had. A database applies migrations in version order and refuses one below a version it has already applied, so staging's db push refused this file and no environment has it. Rename it to a fresh timestamp (the format npx supabase migration new produces) in a follow-up commit - the one case in which a landed migration file is renamed."
+                echo "::error file=$file::$version does not sort above $highest, which dev already had. A database applies migrations in version order and refuses one below a version it has already applied, so staging's db push should have refused this file. Confirm that first - npx supabase migration list --linked is a read - and if staging does not hold $version, rename the file to a fresh timestamp (the format npx supabase migration new produces) in a follow-up commit, the one case in which a landed migration file is renamed. If staging did apply it, the rename would leave staging recording a version with no file: that is a reconciliation to run as a procedure skill at the owner's instruction, not a rename."
                 failed=1
                 ;;
               [0-9][0-9][0-9][0-9][0-9])

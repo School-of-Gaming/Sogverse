@@ -565,7 +565,7 @@ def main(argv):
     args = [a for a in argv[1:] if not a.startswith("--")]
     flags = set(a for a in argv[1:] if a.startswith("--"))
     if (
-        flags - {"--verify", "--no-verify", "--quiet", "--strict"}
+        flags - {"--no-verify", "--quiet", "--strict"}
         or not args
         or len(args) > 2
     ):

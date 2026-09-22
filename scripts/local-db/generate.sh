@@ -20,6 +20,23 @@ project=$2
 port_base=$3
 cli_version=$4
 
+# One generate at a time per checkout. Two runs of this checkout share the
+# project id, the ports, the shadow workdir and the staging directory below, so
+# a second run would tear the first's database down underneath it and the two
+# would overwrite each other's half-written output. The lock is held for the
+# life of the script and released by the kernel however it ends, so a killed
+# run leaves nothing to unlock by hand.
+if ! command -v flock >/dev/null 2>&1; then
+  echo "flock is missing from this distro; it ships in util-linux (sudo apt-get install util-linux)." >&2
+  exit 1
+fi
+mkdir -p "$STATE_DIR"
+exec 9>"$STATE_DIR/$project.lock"
+if ! flock -n 9; then
+  echo "Another generate is running for this checkout ($project). Wait for it to finish." >&2
+  exit 1
+fi
+
 # Where the new schema directory waits to be swapped in. It sits beside its
 # target rather than in the distro so the swap is a rename on one filesystem,
 # and the cleanup trap below removes it however the run ends, so a failure
@@ -40,6 +57,15 @@ cleanup() {
   exit "$status"
 }
 trap cleanup EXIT INT TERM
+
+# The slate is cleared first, every run, whether or not anything is there. A run
+# killed without its trap — SIGKILL, a reboot, Docker restarting under it —
+# leaves this checkout's container behind with its volume, and `supabase start`
+# reuses an existing container rather than building a new one. Migrations apply
+# when the database is created, not when it is restarted, so the reused
+# container would hand back the PREVIOUS run's schema: generated files
+# describing migrations that are no longer the ones on disk, with a zero exit.
+stop_stack "$cli" "$work" "$project"
 
 # Database container only. The names below are the ones the CLI's own warning
 # prints — its help text lists a different set, and an invalid name is ignored

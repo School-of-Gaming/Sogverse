@@ -281,25 +281,28 @@ belong in one call — and prefer the script wherever one exists.
    rest of this step. Otherwise, in the worktree, on the branch:
 
    1. `git merge origin/dev` — resolve conflicts as usual, except in
-      `database.types.ts`, which is never hand-edited: regenerate it and inspect
-      (`supabase/CLAUDE.md`, "CI compares the committed types against
-      `migrations/`").
+      `database.types.ts` and under `supabase/schema/`, which are never
+      hand-edited: regenerate and inspect (`supabase/CLAUDE.md`, "CI compares
+      the committed generated files against `migrations/`").
    2. `node scripts/restamp-migrations.mjs` — renames this branch's own
       migrations to fresh timestamps, relative order kept, so they sort above
       everything `dev` holds. Landing is serialised through one human, so the
       stamp taken here is the queue position and two branches can never claim
       one version. `--dry-run` shows the renames without making them.
    3. `npm run db -- generate` — about a minute.
-   4. `git status` must show the renames and, at most, a regenerated
-      `database.types.ts` whose every hunk you can account for. A difference in
-      an object both sides touched is the conflict case again: read both sides'
-      changes and confirm each survives in the regenerated output; where one is
-      missing, write the migration that combines them and regenerate.
+   4. `git status` must show the renames and, at most, regenerated files
+      (`database.types.ts`, `supabase/schema/`) whose every hunk you can account
+      for. A difference in an object both sides touched is the conflict case
+      again: read both sides' changes and confirm each survives in the
+      regenerated output; where one is missing, write the migration that
+      combines them and regenerate.
    5. Commit, and re-run the gates if the merge brought more than the renames.
       **Do not push the branch again** — the regenerate-and-compare you just ran
       is the gate, and `dev`'s own CI run follows the merge. The one exception is
       the no-local-database path: push the synced branch, because CI is then the
-      generator, and commit its `database-types-from-migrations` artifact.
+      generator, and commit both its artifacts —
+      `database-types-from-migrations` as `src/types/database.types.ts`, and
+      `schema-from-migrations` in place of `supabase/schema/`.
 
 3. **Stop the dev server first, if Phase 3 started one — by port, with a tree
    kill. Every time; this is the procedure, not a recovery.** On Windows,

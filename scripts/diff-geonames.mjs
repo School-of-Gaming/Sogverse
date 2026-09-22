@@ -105,6 +105,7 @@ import { fail } from "./lib/geonames/cache.mjs";
 import { countryConfig } from "./lib/geonames/config.mjs";
 import { ingestCountry } from "./lib/geonames/ingest.mjs";
 import { commentSafe, locationInsert, sqlBigint, sqlJsonb, sqlText } from "./lib/geonames/sql.mjs";
+import { stamp } from "./lib/migration-version.mjs";
 
 const ROOT = join(import.meta.dirname, "..");
 const OUT_DIR = join(ROOT, "supabase", "reconciliations");
@@ -145,9 +146,6 @@ if (!iso) {
     "Usage: node scripts/diff-geonames.mjs <CC> [--unretire] [--out <path>] [--from-migration <path>]",
   );
 }
-
-/** `YYYYMMDDHHMMSS` in UTC — the version format `supabase migration new` mints. */
-const stamp = () => new Date().toISOString().replace(/\D/g, "").slice(0, 14);
 
 const emitUnretire = args.includes("--unretire");
 const fromMigration = flagValue("--from-migration");

@@ -25,7 +25,7 @@ Two invariants everything below serves:
    git show --format= --name-only --diff-filter=A <sha1> <sha2> ... -- supabase/migrations/
    ```
 
-   Take each file's version — the digits before the first `_` — and compare them as strings, which is how the CLI orders them. **Stop** when the first list holds a version lower than any version in the second and its file is not in the second list. Prod applies migrations in version order and refuses a version below one it has already applied, so the hotfix would apply the higher one and the next full release's `db push` would then refuse the older one still waiting on `dev` — a red release that only a renamed, landed migration can clear. Name the stranded file and let the user choose: add its commit to the pick, or ship the full release instead.
+   Take each file's version — the digits before the first `_` — and compare them as strings, which is how the CLI orders them. **Stop** when the first list holds a version lower than the highest version in the second list, and its file is not in the second list. Prod applies migrations in version order and refuses a version below one it has already applied, so the hotfix would apply the higher one and the next full release's `db push` would then refuse the older one still waiting on `dev` — a red release that only a renamed, landed migration can clear. Name the stranded file and let the user choose: add its commit to the pick, or ship the full release instead.
 
 ## Step 2 — Branch & cherry-pick
 

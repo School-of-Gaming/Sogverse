@@ -42,7 +42,7 @@
  * It is history the moment it is pushed. A newer source is a NEW migration —
  * which for this table is cheap precisely because nothing references it.
  */
-import { readdirSync, statSync, writeFileSync } from "node:fs";
+import { statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { fail } from "./lib/geonames/cache.mjs";
@@ -50,6 +50,7 @@ import { countryConfig } from "./lib/geonames/config.mjs";
 import { ingestCountry } from "./lib/geonames/ingest.mjs";
 import { ingestPostal } from "./lib/geonames/postal.mjs";
 import { sqlEscaped, sqlText } from "./lib/geonames/sql.mjs";
+import { migrationPath } from "./lib/migration-version.mjs";
 
 /**
  * The migration each country's postal seed lands in, named by what it does and
@@ -69,22 +70,13 @@ const TITLES = { FI: "Finland", FR: "France", SE: "Sweden", GB: "the United King
 
 const MIGRATIONS_DIR = join(import.meta.dirname, "..", "supabase", "migrations");
 
-/** `YYYYMMDDHHMMSS` in UTC — the version format `supabase migration new` mints. */
-const stamp = () => new Date().toISOString().replace(/\D/g, "").slice(0, 14);
-
-/**
- * Where a named migration already is, or the path a new one takes. Matched on
- * everything after the version, since the version is reassigned when the branch
- * lands and a regeneration months later still has to find the file it wrote.
- * Two files claiming one name is a question for a human, not something to pick
- * a winner from.
- */
-function migrationPath(name) {
-  const existing = readdirSync(MIGRATIONS_DIR).filter(
-    (file) => /^\d+_/.test(file) && file.slice(file.indexOf("_") + 1) === `${name}.sql`,
-  );
-  if (existing.length > 1) fail(`Two migrations are named ${name}: ${existing.join(", ")}.`);
-  return join(MIGRATIONS_DIR, existing[0] ?? `${stamp()}_${name}.sql`);
+/** The shared resolver, with a duplicate name reported the way this script reports everything else. */
+function namedMigration(name) {
+  try {
+    return migrationPath(MIGRATIONS_DIR, name);
+  } catch (error) {
+    return fail(error.message);
+  }
 }
 
 /**
@@ -347,7 +339,7 @@ const sql = [
   "COMMIT;\n",
 ].join("\n");
 
-const file = migrationPath(migrationName);
+const file = namedMigration(migrationName);
 writeFileSync(file, sql, "utf8");
 
 /* ------------------------------------------------------------------- report */

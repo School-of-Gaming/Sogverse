@@ -34,6 +34,8 @@ import { existsSync, renameSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { stamp } from './lib/migration-version.mjs';
+
 const MIGRATIONS_DIR = 'supabase/migrations';
 
 const scriptsDir = path.dirname(fileURLToPath(import.meta.url));
@@ -115,8 +117,15 @@ if (branchAdds.length === 0) {
 
 /* --------------------------------------------------------------- the stamps */
 
-/** `YYYYMMDDHHMMSS` in UTC, the version format `supabase migration new` mints. */
-const stampAt = (millis) => new Date(millis).toISOString().replace(/\D/g, '').slice(0, 14);
+/**
+ * The highest version `origin/dev` already holds, which every stamp minted
+ * below has to sort above. String comparison is the CLI's own ordering, which
+ * is also why the original five-digit versions sort below every timestamp.
+ */
+const devHighest = lines(git('ls-tree', '--name-only', 'origin/dev', '--', `${MIGRATIONS_DIR}/`))
+  .map((file) => path.basename(file).split('_')[0])
+  .filter((version) => /^\d+$/.test(version))
+  .reduce((highest, version) => (version > highest ? version : highest), '');
 
 // Sorted by the name each file carries today, which is the order the CLI would
 // apply them in, then handed a second each so that order survives the rename.
@@ -132,8 +141,22 @@ const renames = ordered.map((file, index) => {
   if (underscore <= 0) {
     fail(`${file} has no descriptive part to keep — a migration is named <version>_<what it does>.sql.`);
   }
-  return { from: file, to: `${MIGRATIONS_DIR}/${stampAt(startedAt + index * 1000)}_${name.slice(underscore + 1)}` };
+  return { from: file, to: `${MIGRATIONS_DIR}/${stamp(startedAt + index * 1000)}_${name.slice(underscore + 1)}` };
 });
+
+// A clock behind dev's newest stamp mints versions that land *below* history,
+// and nothing here would notice: the branch would merge, staging would refuse
+// the file, and only the migration-order job would say so — after the merge. So
+// the first stamp is checked against dev before anything is renamed.
+const firstStamp = path.basename(renames[0].to).split('_')[0];
+if (devHighest !== '' && !(firstStamp > devHighest)) {
+  fail(
+    `The first landing stamp would be ${firstStamp}, which does not sort above ${devHighest} — the highest\n` +
+      "version origin/dev already holds. This machine's clock is behind dev's newest stamp, so the renamed\n" +
+      'migrations would sort below history: a database applies migrations in version order, staging would\n' +
+      'refuse them, and only the migration-order job would report it, after the merge. Nothing was renamed.',
+  );
+}
 
 const collisions = renames
   .map((rename) => rename.to)

@@ -18,8 +18,8 @@
 --
 -- against a local database that has already been seeded. It assumes `seed.sql`
 -- has run (it reuses that file's admin account) and it is written to be applied
--- ONCE to a fresh database: a second run fails on the duplicate accounts, which
--- is the honest answer rather than a half-applied catalogue.
+-- ONCE to a fresh database: the guard below refuses a second run, or a run
+-- against any populated database, before a single row is written.
 --
 -- PRICES ONLY HAVE TO RENDER. A local stack's users do not exist in Stripe's
 -- test mode, so this seed creates NOTHING in Stripe: the paid seats below are
@@ -49,6 +49,42 @@
 \set ON_ERROR_STOP on
 
 SET client_encoding TO 'UTF8';
+
+-- =============================================================================
+-- 0. Where this may run
+-- =============================================================================
+-- A freshly seeded local database, and nowhere else. Three cheap facts say so:
+-- seed.sql's admin is present with the admin role (so seed.sql has run and this
+-- file has an actor), the database holds only a handful of users (so it is not
+-- a real environment), and this file's own first account is absent (so this is
+-- not a second run — its 34 accounts leave the count well under the limit
+-- below, so the count alone would not notice). Any of the three failing stops
+-- the script before its first write.
+
+DO $$
+DECLARE
+  users bigint;
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM profiles
+    WHERE id = '00000000-0000-0000-0000-000000000001' AND role = 'admin'
+  ) THEN
+    RAISE EXCEPTION
+      'rich-seed.sql is for a freshly seeded local database only: seed.sql''s admin account is not here, so seed.sql has not run against this database.';
+  END IF;
+
+  SELECT count(*) INTO users FROM auth.users;
+  IF users >= 50 THEN
+    RAISE EXCEPTION
+      'rich-seed.sql is for a freshly seeded local database only: this database already holds % users.', users;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM auth.users WHERE id = '11111111-1111-4111-8111-000000000001') THEN
+    RAISE EXCEPTION
+      'rich-seed.sql is for a freshly seeded local database only: its accounts are already here, so this is a second run. Reset the database and seed it again.';
+  END IF;
+END
+$$;
 
 -- =============================================================================
 -- 1. Accounts
