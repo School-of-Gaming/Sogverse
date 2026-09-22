@@ -213,6 +213,19 @@ jobs:
       # test run is exactly when someone needs it — generated after the tests, it would
       # not exist on the runs that matter.
       - name: Generate types from migrations
+        env:
+          # Not a credential, and nothing is ever sent with it. The pinned CLI
+          # builds its Management API client before `gen types` looks at which
+          # flag it was given, so the command demands a token even on --db-url,
+          # which never calls that API (a --debug run of this exact command logs
+          # no HTTP request at all). On a developer's machine the demand is
+          # invisible: the CLI is a Bun binary, Bun reads .env.local out of the
+          # working directory, and a checkout's .env.local carries a real access
+          # token — which is why this only ever failed here. The local script
+          # pins the same value (scripts/local-db/lib.sh) rather than let a real
+          # token answer for it, so both generators run one command under one
+          # set of conditions.
+          SUPABASE_ACCESS_TOKEN: not-a-token-gen-types-makes-no-api-call
         run: |
           set -euo pipefail
           # `supabase start` exposes the database on this port (supabase/config.toml,
