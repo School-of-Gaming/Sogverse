@@ -234,6 +234,12 @@ keeps the ones that ran before the failure and `dev`'s run stays red until a new
 corrects it — never by editing staging, which leaves its history disagreeing with the
 files on `dev`.
 
+Good to know, not a fault: Vercel builds a preview for every pushed branch against
+staging's database, and staging only ever holds `dev`'s migrations. A branch that adds
+one therefore previews its new code on the old schema, and the parts that need the
+migration break there until the branch lands. Look at those parts on the worktree's own
+stack instead.
+
 ### Never amend a landed migration
 
 **Rule: once a migration has landed on `dev` it is never edited — every change ships as a
