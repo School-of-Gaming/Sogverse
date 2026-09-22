@@ -2,7 +2,6 @@
 -- Generated from the database by `npm run db -- generate`; never hand-edited.
 
 CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA pg_catalog;  -- 1.6.4
-CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;  -- 0.20.3
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements WITH SCHEMA extensions;  -- 1.11
 CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA extensions;  -- 1.6
 CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;  -- 1.3

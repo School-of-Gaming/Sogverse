@@ -72,9 +72,11 @@ stop_stack "$cli" "$work" "$project"
 
 db_port=$(shadow_db_port "$work")
 
-# Pointed at the database URL, not `--local`: the `--local` form fails in the
-# pinned CLI with a password authentication error against a database that
-# accepts the same credentials directly. `--schema public` is load-bearing —
+# Pointed at the database URL, not `--local`: the `--local` form fails with a
+# password authentication error against a database that accepts the same
+# credentials directly — observed on 2.106 and still on 2.117, where it connects
+# to `db:5432` on the stack's own network rather than the port the workdir
+# declares. `--schema public` is load-bearing —
 # without it a local database's exposed-schema list brings back a
 # `graphql_public` block that has no business in the committed file.
 #

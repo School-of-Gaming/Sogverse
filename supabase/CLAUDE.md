@@ -137,14 +137,16 @@ it irrelevant.
 
 **Rule: the pin moves on purpose, as its own small branch, a few times a year — never
 as a stray version change.** A bump changes the images every local stack runs and can
-change the generated files, so the branch does four things: moves both pins, runs
-`npm run db -- generate` and reads the diff of the generated files as a change under
-review, updates the `postgres-meta` tag the CI workflow pre-pulls (read it off that
-`generate`'s output: the image its `gen types` step pulls), and prunes the old images
-in the distro with `docker image prune -a` — each bump otherwise leaves the previous
-set, about 6 GB, that nothing runs. The distro's virtual disk does not shrink when
-they go; compacting it needs the distro stopped, which is a by-hand step at a moment
-nothing else runs there.
+change the generated files, so the branch does five things: moves both pins, re-reads
+`[api].auto_expose_new_tables = false` in `config.toml` against the new version's own
+default (the CLI's flipped to `true` in 2.116; the lint job asserts our pin is still
+there), runs `npm run db -- generate` and reads the diff of the generated files as a
+change under review, updates the `postgres-meta` tag the CI workflow pre-pulls (read
+it off that `generate`'s output: the image its `gen types` step pulls), and prunes the
+old images in the distro with `docker image prune -a` — each bump otherwise leaves the
+previous set, about 6 GB, that nothing runs. The distro's virtual disk does not shrink
+when they go; compacting it needs the distro stopped, which is a by-hand step at a
+moment nothing else runs there.
 
 ## Linking (first time only)
 

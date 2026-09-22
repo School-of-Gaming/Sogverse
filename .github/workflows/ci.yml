@@ -39,11 +39,11 @@ env:
   # CLAUDE.md "Function & Table Access Control"). Bump it when the local dev CLI is
   # upgraded (keep CI == what we run migrations against locally); check the newest
   # stable with `gh api repos/supabase/cli/releases/latest`.
-  SUPABASE_CLI_VERSION: "2.106.0"
+  SUPABASE_CLI_VERSION: "2.117.0"
   # The postgres-meta image the pinned CLI's `gen types --db-url` runs on demand,
   # pre-pulled in the database job so it never pulls from a rate-limited registry.
   # Read it off a local `npm run db -- generate` after every CLI bump.
-  GEN_TYPES_POSTGRES_META_TAG: "v0.96.1"
+  GEN_TYPES_POSTGRES_META_TAG: "v0.99.0"
 
   # `npm ci` installs every workspace, including services/bedrock-portal, whose
   # bedrock-protocol -> raknet-native dependency resolves prebuilds by
@@ -87,6 +87,17 @@ jobs:
             exit 1
           fi
           echo "Supabase CLI pinned at $DECLARED in both package.json and the workflow"
+
+          # The other half of a bump: from 2.116 the CLI's own default for
+          # [api].auto_expose_new_tables is true, so a config.toml that stops carrying
+          # the pin silently hands every new table Data API access on a fresh local or
+          # CI stack. Asserted here rather than left to the bump checklist — a prose
+          # step is exactly what a bump forgets.
+          if ! grep -qE '^auto_expose_new_tables = false' supabase/config.toml; then
+            echo "::error::supabase/config.toml no longer pins auto_expose_new_tables = false under [api]. That pin is the fail-closed regime's local half: without it the CLI's own default (true since 2.116) exposes every new table over the Data API on a fresh local or CI stack."
+            exit 1
+          fi
+          echo "supabase/config.toml pins auto_expose_new_tables = false"
 
       - name: Install dependencies
         run: npm ci
@@ -218,12 +229,13 @@ jobs:
       # `gen types --db-url` below runs a postgres-meta container on demand and
       # pulls it from public.ecr.aws whatever SUPABASE_INTERNAL_IMAGE_REGISTRY says,
       # and that registry rate-limits anonymous pulls from shared runners
-      # ("toomanyrequests", twice on 2026-09-22 after green runs). It is not the
-      # postgres-meta the stack would run (`supabase start` pins a later one), so the
-      # exact tag is pulled here from ghcr.io, which does not rate-limit us, and
-      # given the name the on-demand path looks for; that path then finds it locally
-      # and never pulls. The tag moves with the CLI pin: after a bump, run
-      # `npm run db -- generate` locally and read the image its gen types pulls.
+      # ("toomanyrequests", twice on 2026-09-22 after green runs). Nothing else on
+      # this runner brings the image in — postgres-meta is in the exclusion list the
+      # stack starts with above — so the exact tag is pulled here from ghcr.io, which
+      # does not rate-limit us, and given the name the on-demand path looks for; that
+      # path then finds it locally and never pulls. The tag moves with the CLI pin:
+      # after a bump, run `npm run db -- generate` locally and read the image its gen
+      # types pulls.
       - name: Pre-pull the postgres-meta image gen types runs
         env:
           POSTGRES_META_TAG: ${{ env.GEN_TYPES_POSTGRES_META_TAG }}
@@ -260,23 +272,20 @@ jobs:
       # diffs instead of one per push.
       - name: Generate types from migrations
         env:
-          # Not a credential, and nothing is ever sent with it. The pinned CLI
-          # builds its Management API client before `gen types` looks at which
-          # flag it was given, so the command demands a token even on --db-url,
-          # which never calls that API (a --debug run of this exact command logs
-          # no HTTP request at all). On a developer's machine the demand is
-          # invisible: the CLI is a Bun binary, Bun reads .env.local out of the
-          # working directory, and a checkout's .env.local carries a real access
-          # token — which is why this only ever failed here. The local script
-          # pins the same value (scripts/local-db/lib.sh) rather than let a real
-          # token answer for it, so both generators run one command under one
-          # set of conditions.
+          # Not a credential, and the pinned CLI asks for none: `gen types --db-url`
+          # makes no Management API call, and this runner holds no access token for
+          # it to find. The placeholder is set anyway so this step and the local
+          # `npm run db -- generate` run the identical command under identical
+          # conditions — scripts/local-db/lib.sh exports the same value, and its own
+          # comment says why a checkout needs it to.
           SUPABASE_ACCESS_TOKEN: not-a-token-gen-types-makes-no-api-call
         run: |
           set -euo pipefail
           # `supabase start` exposes the database on this port (supabase/config.toml,
-          # [db] port). The CLI's `--local` form is broken in the pinned version, so the
-          # URL is spelled out; the same string is what the local script uses.
+          # [db] port). The CLI's `--local` form is spelled out as a URL instead: that
+          # form fails with a password authentication error against a database that
+          # accepts the same credentials directly — observed on 2.106 and still on
+          # 2.117. The same string is what the local script uses.
           DB_PORT=54322
           DB_URL="postgresql://postgres:postgres@127.0.0.1:${DB_PORT}/postgres"
 
