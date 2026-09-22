@@ -3,14 +3,22 @@
 # `up` — bring this checkout's local Supabase stack up and point the checkout's
 # dev server at it.
 #
-#   up.sh <checkout-path> <project-id> <port-base> <cli-version>
+#   up.sh <checkout-path> <project-id> <port-base> <cli-version> [--no-rich-seed]
 #
 # Arguments are bare words on purpose; see lib.sh for what the boundary mangles.
 #
 # The first `up` creates the database, which is when the CLI applies the
-# migrations and seed.sql, and when the rich seed goes on top. Every later `up`
-# is a resume of a parked stack: the containers and their volumes are still
-# there, so nothing is replayed and the data from before is intact.
+# migrations and seed.sql, and when the rich seed and its product images go on
+# top. Every later `up` is a resume of a parked stack: the containers and their
+# volumes are still there, so nothing is replayed and the data from before is
+# intact.
+#
+# `--no-rich-seed` builds a stack on seed.sql alone — no rich catalogue and no
+# images. That is what the DB tests want, because their whole-table claims are
+# written against seed.sql's fixtures and nothing else. The choice is RECORDED
+# rather than re-read from the flag: a resume takes no flags of its own, and a
+# stack that was built without the rich seed must not acquire one the next time
+# somebody types `up`.
 set -euo pipefail
 here=$(dirname "$0")
 . "$here/lib.sh"
@@ -19,6 +27,7 @@ checkout=$1
 project=$2
 port_base=$3
 cli_version=$4
+rich_seed_flag=${5:-}
 
 take_lock "$project"
 
@@ -125,18 +134,11 @@ trap cleanup EXIT INT TERM
 api_port=$(shadow_api_port "$work")
 db_port=$(shadow_db_port "$work")
 
-# The rich seed refuses a second application, so whether it has run is recorded
-# rather than rediscovered: on a resume it must not run, and after a `reset` it
-# must.
-if [ ! -f "$state/rich-seed-applied" ]; then
-  echo "Applying supabase/rich-seed.sql…"
-  apply_rich_seed "$checkout" "$project"
-  : > "$state/rich-seed-applied"
-fi
-
 # The URL and keys come from the CLI rather than from the well-known local
 # defaults, so that a CLI whose defaults move cannot leave .env.local holding a
-# key the stack no longer honours.
+# key the stack no longer honours. Read before the seeding below rather than
+# after it, because the image step uploads through the same API with the same
+# service-role key.
 "$cli" status --workdir "$work" -o env > "$work/status.env"
 api_url=$(status_value "$work/status.env" API_URL)
 anon_key=$(status_value "$work/status.env" ANON_KEY)
@@ -146,6 +148,34 @@ rm -f "$work/status.env"
 if [ -z "$api_url" ] || [ -z "$anon_key" ] || [ -z "$service_key" ]; then
   echo "supabase status did not report a URL and both keys; leaving .env.local alone." >&2
   exit 1
+fi
+
+# The rich seed refuses a second application, so whether it has run is recorded
+# rather than rediscovered: on a resume it must not run, and after a `reset` it
+# must. `--no-rich-seed` writes the other marker, which is what makes the choice
+# stick across every later resume and reset of this stack.
+if [ "$rich_seed_flag" = "--no-rich-seed" ] && [ ! -f "$state/rich-seed-applied" ]; then
+  : > "$state/rich-seed-skipped"
+fi
+
+rich_seed_state=skipped
+if [ -f "$state/rich-seed-skipped" ]; then
+  if [ "$rich_seed_flag" != "--no-rich-seed" ]; then
+    echo "This stack was built with --no-rich-seed, so the rich seed stays off."
+    echo "\`npm run db -- down\` and \`up\` without the flag to get it."
+  fi
+elif [ -f "$state/rich-seed-applied" ]; then
+  rich_seed_state=applied
+  if [ "$rich_seed_flag" = "--no-rich-seed" ]; then
+    echo "This stack already carries the rich seed; --no-rich-seed cannot take it back."
+    echo "\`npm run db -- down\` and \`up --no-rich-seed\` to build one without it."
+  fi
+else
+  echo "Applying supabase/rich-seed.sql…"
+  apply_rich_seed "$checkout" "$project"
+  : > "$state/rich-seed-applied"
+  bash "$here/rich-images.sh" "$checkout" "$project" "$api_url" "$service_key"
+  rich_seed_state=applied
 fi
 
 if [ ! -f "$state/env-aside" ]; then
@@ -169,6 +199,15 @@ echo "  .env.local   NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY and
 echo "               SUPABASE_SERVICE_ROLE_KEY now point here. Everything else in the"
 echo "               file, staging included, is untouched. Restart the dev server."
 echo "  database     postgresql://postgres:postgres@127.0.0.1:$db_port/postgres"
+if [ "$rich_seed_state" = "applied" ]; then
+  echo "  data         seed.sql + supabase/rich-seed.sql, with product images in the"
+  echo "               product-images bucket. Sign in as admin@example.com,"
+  echo "               parent@example.com (PIN 1111) or gedu@example.com, password"
+  echo "               \"password\"; every other seeded account is testpassword123."
+else
+  echo "  data         seed.sql only — no rich catalogue and no product images"
+  echo "               (--no-rich-seed). Sign in as seed.sql's own fixtures."
+fi
 echo "  memory       $(stack_memory_mib "$project") MiB"
 
 report_running

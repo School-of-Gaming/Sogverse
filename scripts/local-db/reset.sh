@@ -12,6 +12,11 @@
 #
 # The containers, the ports and .env.local are untouched, so the dev server
 # needs no restart — and resetting one stack leaves every other one alone.
+#
+# A reset rebuilds the stack it was given: one built with the rich seed gets it
+# back, and one built with `up --no-rich-seed` stays on seed.sql alone. It takes
+# no flag of its own, because "which seeds this stack has" is a property of the
+# stack rather than of one command — `down` and `up` again to change it.
 set -euo pipefail
 here=$(dirname "$0")
 . "$here/lib.sh"
@@ -41,10 +46,36 @@ cli=$(cli_bin "$cli_version")
 # own guard accepts.
 "$cli" db reset --workdir "$work" --local --yes
 
+migrations=$(ls "$checkout/supabase/migrations" | wc -l)
+
+if [ -f "$state/rich-seed-skipped" ]; then
+  echo "Database rebuilt from $migrations migrations and seed.sql (this stack was built with --no-rich-seed)."
+  report_running
+  exit 0
+fi
+
 echo "Applying supabase/rich-seed.sql…"
 apply_rich_seed "$checkout" "$project"
 : > "$state/rich-seed-applied"
 
-echo "Database rebuilt from $(ls "$checkout/supabase/migrations" | wc -l) migrations, seed.sql and the rich seed."
+# The pictures go back on too: `db reset` empties the catalogue table with the
+# rest of the database, so every product would come back on its placeholder.
+# The upload half is a no-op for bytes the bucket still holds — an object named
+# for its own sha256 cannot be stale — and the API URL and key are read here the
+# same way `up` reads them.
+"$cli" status --workdir "$work" -o env > "$work/status.env"
+api_url=$(status_value "$work/status.env" API_URL)
+service_key=$(status_value "$work/status.env" SERVICE_ROLE_KEY)
+rm -f "$work/status.env"
+
+if [ -z "$api_url" ] || [ -z "$service_key" ]; then
+  echo "supabase status did not report a URL and a service-role key, so the product images were not applied." >&2
+  report_running
+  exit 1
+fi
+
+bash "$here/rich-images.sh" "$checkout" "$project" "$api_url" "$service_key"
+
+echo "Database rebuilt from $migrations migrations, seed.sql, the rich seed and its product images."
 
 report_running

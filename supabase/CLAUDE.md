@@ -289,15 +289,31 @@ every command does — the things its usage text does not say:
 - **Memory:** about 660 MB settled, in a distro capped at 12 GB and shared with everything
   else running on this machine. Two stacks are comfortable, three tight; `list` shows them
   all with their memory.
-- **The accounts are the two seeds'**: `seed.sql`'s fixtures — including the admin the
-  rich seed reuses — and the families and educators `supabase/rich-seed.sql` adds, all on
-  the one test password its header names. The trimmed service set has no mail catcher, so
-  nothing emailed can be read on a stack; the seeded accounts are the way in.
+- **The accounts are the two seeds'.** `seed.sql`'s fixtures stay on the password its
+  header names; `supabase/rich-seed.sql` adds the families and educators around three
+  accounts meant to be signed in as — `admin@example.com`, `parent@example.com` (parent
+  PIN 1111) and `gedu@example.com`, all on the password `password`, with every other
+  account it creates on `seed.sql`'s. Each account's id is generated rather than written
+  out, because the avatar identicon derives its pattern from the id's bytes and a
+  hand-written one draws a face nobody will ever see in production. The trimmed service
+  set has no mail catcher, so nothing emailed can be read on a stack; the seeded accounts
+  are the way in.
+- **The rich seed's products carry pictures, and they are not in the SQL.** A
+  `product_images` row names a storage object by the sha256 of its bytes, so the bytes
+  have to be uploaded first: `scripts/local-db/rich-images.sh` uploads
+  `supabase/seed-images/` to the `product-images` bucket with the service-role key and
+  then writes the catalogue rows and the `products.image_id` links under the admin's
+  claims, which is the split the real upload route makes. `up` and `reset` run it after
+  the seed. A file is named for a `product_topic` value, so which picture a product gets
+  follows its topic; a topic with no file fails the step by name rather than leaving a
+  stack with holes in it.
 - **A stack can host the DB tests, but only one built with `up --no-rich-seed`.**
   `npm run test:db:local` runs the `tests/db/` suite against this checkout's stack, taking
   its URL and keys from the stack rather than from `.env.local`, and refuses a stack
   carrying the rich seed, because the tests' whole-table claims are written against
-  `supabase/seed.sql` alone — `tests/CLAUDE.md`, "DB tests need a real Postgres".
+  `supabase/seed.sql` alone — `tests/CLAUDE.md`, "DB tests need a real Postgres". The
+  choice is recorded on the stack, so a later `up` resumes it and `reset` rebuilds it the
+  same way; `down` and `up` again is how a stack changes its mind.
 
 ## Generated nullability can lie
 

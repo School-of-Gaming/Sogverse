@@ -4,6 +4,9 @@
  *
  *   npm run db -- up          # build/resume this checkout's Supabase stack and
  *                             # point its dev server at it
+ *   npm run db -- up --no-rich-seed
+ *                             # ...on seed.sql alone, with no rich catalogue
+ *                             # and no product images
  *   npm run db -- migrate     # apply new migration files to the running stack
  *   npm run db -- reset       # rebuild the running stack's database in place
  *   npm run db -- park        # stop the stack, keeping its data
@@ -85,17 +88,23 @@ const SENTINEL = '::localdb ';
 const COULD_NOT_RUN = 2;
 
 /**
- * The command surface. `summary` is the usage text; a command with
+ * The command surface. `summary` is the usage text; `flags` is the whole set of
+ * words a command accepts after its name, and anything else is refused here
+ * rather than passed into the distro to be ignored; a command with
  * `ownsGenerateId` runs against the second identity described under `portBase`
  * rather than the stack's.
  */
 const COMMANDS = {
   up: {
+    flags: ['--no-rich-seed'],
     summary: [
       'Build this checkout\'s local Supabase stack from supabase/migrations/,',
-      'seed.sql and supabase/rich-seed.sql, and point this checkout\'s',
-      '.env.local at it. Resumes a parked stack without replaying anything.',
-      'Already running: prints the URL and changes nothing.',
+      'seed.sql, supabase/rich-seed.sql and its product images, and point this',
+      'checkout\'s .env.local at it. Resumes a parked stack without replaying',
+      'anything. Already running: prints the URL and changes nothing.',
+      '--no-rich-seed builds it from seed.sql alone, with no rich catalogue',
+      'and no images — what the DB tests are written against. The choice is',
+      'remembered, so a later `up` or `reset` of that stack keeps it.',
     ],
   },
   migrate: {
@@ -109,8 +118,8 @@ const COMMANDS = {
   reset: {
     summary: [
       'Rebuild the running stack\'s database in place from migrations/ and',
-      'both seeds (about a minute). This is what an EDITED migration needs.',
-      'Other stacks are untouched.',
+      'whichever seeds it was built with (about a minute). This is what an',
+      'EDITED migration needs. Other stacks are untouched.',
     ],
   },
   park: {
@@ -206,7 +215,7 @@ if (!command || !Object.hasOwn(COMMANDS, command)) {
   const names = Object.keys(COMMANDS);
   const width = Math.max(...names.map((name) => name.length));
   fail(
-    `Usage: npm run db -- <${names.join('|')}>\n\n` +
+    `Usage: npm run db -- <${names.join('|')}> [flags]\n\n` +
       names
         .map((name) =>
           COMMANDS[name].summary
@@ -220,6 +229,23 @@ if (!command || !Object.hasOwn(COMMANDS, command)) {
 const spec = COMMANDS[command];
 const runProjectId = spec.ownsGenerateId ? `${projectId}-gen` : projectId;
 const runPortBase = spec.ownsGenerateId ? portBase + GENERATE_PORT_OFFSET : portBase;
+
+/**
+ * The flags this command was given, checked here so a typo is a refusal rather
+ * than a word the shell file silently ignores — a mistyped `--no-rich-seed` is
+ * a stack built with data the caller did not want. Deduplicated, so the shell
+ * file reads one optional argument and never has to count.
+ */
+const flags = [...new Set(process.argv.slice(3))];
+const allowedFlags = spec.flags ?? [];
+const unknownFlags = flags.filter((flag) => !allowedFlags.includes(flag));
+if (unknownFlags.length > 0) {
+  fail(
+    allowedFlags.length > 0
+      ? `${command} takes ${allowedFlags.join(', ')}; it was given ${unknownFlags.join(' ')}.`
+      : `${command} takes no flags; it was given ${unknownFlags.join(' ')}.`,
+  );
+}
 
 /**
  * A stream of a child's output, forwarded line by line with the noise dropped
@@ -379,6 +405,7 @@ const { code, message, running, started } = await runInDistro(`${command}.sh`, [
   runProjectId,
   String(runPortBase),
   cliVersion,
+  ...flags,
 ]);
 const seconds = ((Date.now() - startedAt) / 1000).toFixed(0);
 

@@ -27,11 +27,27 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
  * same variable for Supabase itself (the URL resolver throws on it too), so
  * there is no tooling context that legitimately loads it without one.
  *
- * **If this ever points at a local stack (`http://127.0.0.1:54321`), every
- * banner 400s**: the optimizer refuses to fetch a local-IP origin unless
- * `images.dangerouslyAllowLocalIP` is set, and the error names neither this
- * file nor the flag. No local stack exists today, so the flag is not set here.
+ * **Pointed at a local stack (`http://127.0.0.1:61023`), every banner 400s
+ * unless `images.dangerouslyAllowLocalIP` is set**, and the error names neither
+ * this file nor the flag. `npm run db -- up` writes exactly such a URL into
+ * `.env.local`, and the rich seed puts a picture on every product, so the flag
+ * is set — see `supabaseIsLocal` below for the one condition under which.
  */
+/**
+ * Is the configured Supabase a local stack? Loopback and nothing else — a name
+ * that resolves to one is not covered and does not need to be, because the
+ * local-stack script writes a literal `http://127.0.0.1:<port>`.
+ *
+ * Missing env is `false` rather than a throw: `bucketPattern` below already
+ * fails the build loudly on it, and one failure is enough.
+ */
+function supabaseIsLocal() {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!base) return false;
+  const { hostname } = new URL(base);
+  return hostname === "127.0.0.1" || hostname === "localhost" || hostname === "[::1]";
+}
+
 function bucketPattern(bucket: string) {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!base) {
@@ -106,6 +122,11 @@ const nextConfig: NextConfig = {
     "/opengraph-images/**": ["./src/assets/fonts/*.ttf"],
   },
   images: {
+    // Derived from the configured URL, never from NODE_ENV: what decides
+    // whether the optimizer may fetch a loopback origin is whether the bucket
+    // it is pointed at IS one. A deployment's URL is a public hostname, so this
+    // is false everywhere but a checkout running against `npm run db -- up`.
+    dangerouslyAllowLocalIP: supabaseIsLocal(),
     remotePatterns: [
       bucketPattern("product-images"),
       // Gedu session-report photos. They go through the optimizer for the same

@@ -16,10 +16,11 @@
 --
 --     psql -v ON_ERROR_STOP=1 -f supabase/rich-seed.sql
 --
--- against a local database that has already been seeded. It assumes `seed.sql`
--- has run (it reuses that file's admin account) and it is written to be applied
--- ONCE to a fresh database: the guard below refuses a second run, or a run
--- against any populated database, before a single row is written.
+-- against a local database that has already been seeded. It expects `seed.sql`
+-- to have run — not for anything it borrows, but because a database without
+-- those fixtures is not the local database this file is for — and it is written
+-- to be applied ONCE to a fresh one: the guard below refuses a second run, or a
+-- run against any populated database, before a single row is written.
 --
 -- PRICES ONLY HAVE TO RENDER. A local stack's users do not exist in Stripe's
 -- test mode, so this seed creates NOTHING in Stripe: the paid seats below are
@@ -30,20 +31,32 @@
 -- family and gedu RPCs under impersonated claims, never a hand-INSERT — so when
 -- one of those contracts changes, bringing a stack up fails loudly here and is
 -- fixed then. Accounts are the one exception: they are direct `auth.users` /
--- `auth.identities` inserts exactly as `seed.sql` does them, with the same
--- shared test password.
+-- `auth.identities` inserts exactly as `seed.sql` does them.
 --
--- NO PICTURES. A product's picture is a `product_images` catalogue entry, and
--- every such entry names a file in storage by its sha256 — there is no way to
--- mint one without uploading the image first, and a row pointing at a file that
--- is not there renders worse than no picture at all. So the catalogue below has
--- none, and every product falls back to its placeholder.
+-- THE PICTURES ARE NOT IN HERE. A product's picture is a `product_images`
+-- catalogue entry naming an object in the `product-images` storage bucket by
+-- the sha256 of its bytes, so no amount of SQL can mint one — the bytes have to
+-- be uploaded first. `scripts/local-db/rich-images.sh` does that, and the local
+-- stack runs it straight after this file. Applying this file by hand leaves
+-- every product on its placeholder.
 --
--- IDS. Every account this file creates sits in its own uuid range, well clear of
--- the `00000000-0000-0000-0000-0000000000xx` fixtures the DB tests name:
--- educators are `11111111-…`, parents `22222222-…`, children `33333333-…`.
+-- SIGNING IN. Three accounts are the ones to look at the app through, and they
+-- share the password `password`:
 --
--- ALL TEST USERS SHARE ONE PASSWORD: testpassword123
+--     admin@example.com    Admin Example    the admin who owns the catalogue
+--     parent@example.com   Parent Example   three children, PIN 1111
+--     gedu@example.com     Gedu Example     certified, the busiest teaching load
+--
+-- Every other account this file creates exists to fill lists, and they all
+-- share `seed.sql`'s password, `testpassword123`. `seed.sql`'s own fixtures are
+-- untouched and keep theirs.
+--
+-- IDS ARE GENERATED, NEVER WRITTEN OUT. Every account gets `gen_random_uuid()`,
+-- because the avatar identicon derives its pattern from the id's hex bytes and
+-- a hand-written id — all ones, all twos — draws a degenerate face that is not
+-- what anyone will see in production. Nothing here may therefore name an
+-- account by id: the email is the handle, and an id is read back out of
+-- `public.profiles` wherever one is needed.
 -- =============================================================================
 
 \set ON_ERROR_STOP on
@@ -54,12 +67,15 @@ SET client_encoding TO 'UTF8';
 -- 0. Where this may run
 -- =============================================================================
 -- A freshly seeded local database, and nowhere else. Three cheap facts say so:
--- seed.sql's admin is present with the admin role (so seed.sql has run and this
--- file has an actor), the database holds only a handful of users (so it is not
--- a real environment), and this file's own first account is absent (so this is
--- not a second run — its 34 accounts leave the count well under the limit
+-- seed.sql's admin is present with the admin role (so seed.sql has run against
+-- this database), the database holds only a handful of users (so it is not a
+-- real environment), and this file's own admin account is absent (so this is
+-- not a second run — its 40 accounts leave the count well under the limit
 -- below, so the count alone would not notice). Any of the three failing stops
 -- the script before its first write.
+--
+-- The second-run check is on the EMAIL, not on an id: this file writes no id it
+-- could recognise later, which is the point of the header's ids rule.
 
 DO $$
 DECLARE
@@ -79,7 +95,7 @@ BEGIN
       'rich-seed.sql is for a freshly seeded local database only: this database already holds % users.', users;
   END IF;
 
-  IF EXISTS (SELECT 1 FROM auth.users WHERE id = '11111111-1111-4111-8111-000000000001') THEN
+  IF EXISTS (SELECT 1 FROM auth.users WHERE email = 'admin@example.com') THEN
     RAISE EXCEPTION
       'rich-seed.sql is for a freshly seeded local database only: its accounts are already here, so this is a second run. Reset the database and seed it again.';
   END IF;
@@ -91,12 +107,17 @@ $$;
 -- =============================================================================
 -- Direct auth inserts, the way seed.sql does them: the handle_new_user()
 -- trigger turns each one into a `customer` profile, and the RPCs below promote
--- it. The acting admin is seed.sql's own — admin@test.local,
--- 00000000-0000-0000-0000-000000000001 — so this file mints no second admin.
+-- it. The one account promoted by hand is the admin — no RPC mints one, so the
+-- `create-admin-account` skill's shape is what this follows: an auth user, then
+-- the profile promoted over psql.
+--
+-- The id is the helper's to choose and nobody else's. Callers pass an email.
 
 CREATE FUNCTION pg_temp.account(
-  p_id uuid, p_email text, p_first text, p_last text
+  p_email text, p_first text, p_last text, p_password text DEFAULT 'testpassword123'
 ) RETURNS uuid LANGUAGE plpgsql AS $$
+DECLARE
+  v_id uuid := gen_random_uuid();
 BEGIN
   INSERT INTO auth.users (
     id, instance_id, aud, role, email,
@@ -105,10 +126,10 @@ BEGIN
     confirmation_token, email_change, email_change_token_new, recovery_token,
     created_at, updated_at
   ) VALUES (
-    p_id,
+    v_id,
     '00000000-0000-0000-0000-000000000000',
     'authenticated', 'authenticated', p_email,
-    extensions.crypt('testpassword123', extensions.gen_salt('bf')),
+    extensions.crypt(p_password, extensions.gen_salt('bf')),
     now(), now(),
     '{"provider":"email","providers":["email"]}',
     jsonb_build_object('first_name', p_first, 'last_name', p_last),
@@ -120,55 +141,73 @@ BEGIN
     id, user_id, identity_data, provider, provider_id,
     last_sign_in_at, created_at, updated_at
   ) VALUES (
-    p_id, p_id,
-    jsonb_build_object('sub', p_id::text, 'email', p_email),
-    'email', p_id::text,
+    v_id, v_id,
+    jsonb_build_object('sub', v_id::text, 'email', p_email),
+    'email', v_id::text,
     now(), now(), now()
   );
 
-  RETURN p_id;
+  RETURN v_id;
 END;
 $$;
 
 BEGIN;
 
--- Educators. Four are certified below, two are not: a brand-new hire whose
--- record check is in and an applicant with nothing recorded yet.
+-- The owner's admin. Everything admin-gated below runs as this account, so the
+-- catalogue, the venues, the groups and the comped seats all read as its work
+-- rather than as the DB tests' fixture admin's.
+DO $$
+DECLARE v_admin uuid := pg_temp.account('admin@example.com', 'Admin', 'Example', 'password');
+BEGIN
+  UPDATE public.profiles SET role = 'admin', email_verified_at = now()
+   WHERE id = v_admin;
+  DELETE FROM public.customer_profiles WHERE user_id = v_admin;
+END;
+$$;
+
+-- Educators. Five are certified below, two are not: a brand-new hire whose
+-- record check is in and an applicant with nothing recorded yet. The owner's
+-- gedu is first and carries the heaviest teaching load.
 DO $$
 DECLARE r record;
 BEGIN
   FOR r IN SELECT * FROM (VALUES
-    ('11111111-1111-4111-8111-000000000001'::uuid, 'aino.virtanen@example.com',  'Aino',   'Virtanen'),
-    ('11111111-1111-4111-8111-000000000002'::uuid, 'mikko.lehtinen@example.com', 'Mikko',  'Lehtinen'),
-    ('11111111-1111-4111-8111-000000000003'::uuid, 'sofia.nieminen@example.com', 'Sofia',  'Nieminen'),
-    ('11111111-1111-4111-8111-000000000004'::uuid, 'lucas.moreau@example.com',   'Lucas',  'Moreau'),
-    ('11111111-1111-4111-8111-000000000005'::uuid, 'emma.koskinen@example.com',  'Emma',   'Koskinen'),
-    ('11111111-1111-4111-8111-000000000006'::uuid, 'oliver.grant@example.com',   'Oliver', 'Grant')
-  ) AS t(id, email, first_name, last_name)
+    ('gedu@example.com',           'Gedu',   'Example',   'password'),
+    ('aino.virtanen@example.com',  'Aino',   'Virtanen',  'testpassword123'),
+    ('mikko.lehtinen@example.com', 'Mikko',  'Lehtinen',  'testpassword123'),
+    ('sofia.nieminen@example.com', 'Sofia',  'Nieminen',  'testpassword123'),
+    ('lucas.moreau@example.com',   'Lucas',  'Moreau',    'testpassword123'),
+    ('emma.koskinen@example.com',  'Emma',   'Koskinen',  'testpassword123'),
+    ('oliver.grant@example.com',   'Oliver', 'Grant',     'testpassword123')
+  ) AS t(email, first_name, last_name, password)
   LOOP
-    PERFORM pg_temp.account(r.id, r.email, r.first_name, r.last_name);
+    PERFORM pg_temp.account(r.email, r.first_name, r.last_name, r.password);
   END LOOP;
 END;
 $$;
 
--- Parents.
+-- Parents. The owner's is first, and is the one with children on the most
+-- products.
 DO $$
-DECLARE r record;
+DECLARE
+  r      record;
+  v_id   uuid;
 BEGIN
   FOR r IN SELECT * FROM (VALUES
-    ('22222222-2222-4222-8222-000000000001'::uuid, 'laura.korhonen@example.com',  'Laura',   'Korhonen',  'fi', ARRAY['fi','en']::public.spoken_language[], '358401000001'),
-    ('22222222-2222-4222-8222-000000000002'::uuid, 'petri.makinen@example.com',   'Petri',   'Mäkinen',   'fi', ARRAY['fi']::public.spoken_language[],      '358401000002'),
-    ('22222222-2222-4222-8222-000000000003'::uuid, 'hanna.salminen@example.com',  'Hanna',   'Salminen',  'fi', ARRAY['fi','sv']::public.spoken_language[], '358401000003'),
-    ('22222222-2222-4222-8222-000000000004'::uuid, 'jussi.heikkinen@example.com', 'Jussi',   'Heikkinen', 'fi', ARRAY['fi']::public.spoken_language[],      '358401000004'),
-    ('22222222-2222-4222-8222-000000000005'::uuid, 'marika.laine@example.com',    'Marika',  'Laine',     'fi', ARRAY['fi','en']::public.spoken_language[], '358401000005'),
-    ('22222222-2222-4222-8222-000000000006'::uuid, 'anna.jarvinen@example.com',   'Anna',    'Järvinen',  'fi', ARRAY['fi']::public.spoken_language[],      '358401000006'),
-    ('22222222-2222-4222-8222-000000000007'::uuid, 'camille.dubois@example.com',  'Camille', 'Dubois',    'fr', ARRAY['fr','en']::public.spoken_language[], '358401000007'),
-    ('22222222-2222-4222-8222-000000000008'::uuid, 'james.whitfield@example.com', 'James',   'Whitfield', 'en', ARRAY['en']::public.spoken_language[],      '358401000008'),
-    ('22222222-2222-4222-8222-000000000009'::uuid, 'satu.rantanen@example.com',   'Satu',    'Rantanen',  'fi', ARRAY['fi','en']::public.spoken_language[], '358401000009'),
-    ('22222222-2222-4222-8222-000000000010'::uuid, 'tomi.hakala@example.com',     'Tomi',    'Hakala',    'fi', ARRAY['fi']::public.spoken_language[],      '358401000010')
-  ) AS t(id, email, first_name, last_name, locale, languages, phone)
+    ('parent@example.com',          'Parent',  'Example',   'password',        'en', ARRAY['en','fi']::public.spoken_language[], '358401000000'),
+    ('laura.korhonen@example.com',  'Laura',   'Korhonen',  'testpassword123', 'fi', ARRAY['fi','en']::public.spoken_language[], '358401000001'),
+    ('petri.makinen@example.com',   'Petri',   'Mäkinen',   'testpassword123', 'fi', ARRAY['fi']::public.spoken_language[],      '358401000002'),
+    ('hanna.salminen@example.com',  'Hanna',   'Salminen',  'testpassword123', 'fi', ARRAY['fi','sv']::public.spoken_language[], '358401000003'),
+    ('jussi.heikkinen@example.com', 'Jussi',   'Heikkinen', 'testpassword123', 'fi', ARRAY['fi']::public.spoken_language[],      '358401000004'),
+    ('marika.laine@example.com',    'Marika',  'Laine',     'testpassword123', 'fi', ARRAY['fi','en']::public.spoken_language[], '358401000005'),
+    ('anna.jarvinen@example.com',   'Anna',    'Järvinen',  'testpassword123', 'fi', ARRAY['fi']::public.spoken_language[],      '358401000006'),
+    ('camille.dubois@example.com',  'Camille', 'Dubois',    'testpassword123', 'fr', ARRAY['fr','en']::public.spoken_language[], '358401000007'),
+    ('james.whitfield@example.com', 'James',   'Whitfield', 'testpassword123', 'en', ARRAY['en']::public.spoken_language[],      '358401000008'),
+    ('satu.rantanen@example.com',   'Satu',    'Rantanen',  'testpassword123', 'fi', ARRAY['fi','en']::public.spoken_language[], '358401000009'),
+    ('tomi.hakala@example.com',     'Tomi',    'Hakala',    'testpassword123', 'fi', ARRAY['fi']::public.spoken_language[],      '358401000010')
+  ) AS t(email, first_name, last_name, password, locale, languages, phone)
   LOOP
-    PERFORM pg_temp.account(r.id, r.email, r.first_name, r.last_name);
+    v_id := pg_temp.account(r.email, r.first_name, r.last_name, r.password);
 
     -- The fields the registration form collects and no RPC owns. Done here
     -- rather than later because create_gamer copies the parent's locale onto
@@ -176,43 +215,58 @@ BEGIN
     UPDATE public.profiles
        SET locale = r.locale, spoken_languages = r.languages, phone = r.phone,
            email_verified_at = now()
-     WHERE id = r.id;
+     WHERE id = v_id;
   END LOOP;
 END;
 $$;
 
 -- Children. Only the auth user is made here; create_gamer promotes it in
--- section 4, once the family has a PIN.
+-- section 4, once the family has a PIN. Their addresses sit under
+-- `@gamer.example.com`, which is what tells a child's account from a parent's
+-- wherever this file selects one set or the other.
 DO $$
 DECLARE r record;
 BEGIN
   FOR r IN SELECT * FROM (VALUES
-    ('33333333-3333-4333-8333-000000000001'::uuid, 'elias@gamer.example.com',   'Elias',  'Korhonen'),
-    ('33333333-3333-4333-8333-000000000002'::uuid, 'venla@gamer.example.com',   'Venla',  'Korhonen'),
-    ('33333333-3333-4333-8333-000000000003'::uuid, 'onni@gamer.example.com',    'Onni',   'Mäkinen'),
-    ('33333333-3333-4333-8333-000000000004'::uuid, 'aada@gamer.example.com',    'Aada',   'Salminen'),
-    ('33333333-3333-4333-8333-000000000005'::uuid, 'vaino@gamer.example.com',   'Väinö',  'Salminen'),
-    ('33333333-3333-4333-8333-000000000006'::uuid, 'sanni@gamer.example.com',   'Sanni',  'Salminen'),
-    ('33333333-3333-4333-8333-000000000007'::uuid, 'eino@gamer.example.com',    'Eino',   'Heikkinen'),
-    ('33333333-3333-4333-8333-000000000008'::uuid, 'iida@gamer.example.com',    'Iida',   'Laine'),
-    ('33333333-3333-4333-8333-000000000009'::uuid, 'leevi@gamer.example.com',   'Leevi',  'Laine'),
-    ('33333333-3333-4333-8333-000000000010'::uuid, 'oskari@gamer.example.com',  'Oskari', 'Järvinen'),
-    ('33333333-3333-4333-8333-000000000011'::uuid, 'lea@gamer.example.com',     'Léa',    'Dubois'),
-    ('33333333-3333-4333-8333-000000000012'::uuid, 'hugo@gamer.example.com',    'Hugo',   'Dubois'),
-    ('33333333-3333-4333-8333-000000000013'::uuid, 'olivia@gamer.example.com',  'Olivia', 'Whitfield'),
-    ('33333333-3333-4333-8333-000000000014'::uuid, 'noah@gamer.example.com',    'Noah',   'Whitfield'),
-    ('33333333-3333-4333-8333-000000000015'::uuid, 'pihla@gamer.example.com',   'Pihla',  'Rantanen'),
-    ('33333333-3333-4333-8333-000000000016'::uuid, 'aarne@gamer.example.com',   'Aarne',  'Rantanen'),
-    ('33333333-3333-4333-8333-000000000017'::uuid, 'rasmus@gamer.example.com',  'Rasmus', 'Hakala'),
-    ('33333333-3333-4333-8333-000000000018'::uuid, 'sointu@gamer.example.com',  'Sointu', 'Hakala')
-  ) AS t(id, email, first_name, last_name)
+    ('milo@gamer.example.com',   'Milo',   'Example'),
+    ('nea@gamer.example.com',    'Nea',    'Example'),
+    ('otso@gamer.example.com',   'Otso',   'Example'),
+    ('elias@gamer.example.com',  'Elias',  'Korhonen'),
+    ('venla@gamer.example.com',  'Venla',  'Korhonen'),
+    ('onni@gamer.example.com',   'Onni',   'Mäkinen'),
+    ('aada@gamer.example.com',   'Aada',   'Salminen'),
+    ('vaino@gamer.example.com',  'Väinö',  'Salminen'),
+    ('sanni@gamer.example.com',  'Sanni',  'Salminen'),
+    ('eino@gamer.example.com',   'Eino',   'Heikkinen'),
+    ('iida@gamer.example.com',   'Iida',   'Laine'),
+    ('leevi@gamer.example.com',  'Leevi',  'Laine'),
+    ('oskari@gamer.example.com', 'Oskari', 'Järvinen'),
+    ('lea@gamer.example.com',    'Léa',    'Dubois'),
+    ('hugo@gamer.example.com',   'Hugo',   'Dubois'),
+    ('olivia@gamer.example.com', 'Olivia', 'Whitfield'),
+    ('noah@gamer.example.com',   'Noah',   'Whitfield'),
+    ('pihla@gamer.example.com',  'Pihla',  'Rantanen'),
+    ('aarne@gamer.example.com',  'Aarne',  'Rantanen'),
+    ('rasmus@gamer.example.com', 'Rasmus', 'Hakala'),
+    ('sointu@gamer.example.com', 'Sointu', 'Hakala')
+  ) AS t(email, first_name, last_name)
   LOOP
-    PERFORM pg_temp.account(r.id, r.email, r.first_name, r.last_name);
+    PERFORM pg_temp.account(r.email, r.first_name, r.last_name);
   END LOOP;
 END;
 $$;
 
 COMMIT;
+
+-- The acting admin's claims, spelled once here and pasted at the top of every
+-- transaction below that writes through an admin-gated RPC. It is a `SELECT`
+-- rather than a literal because the id was generated a moment ago and this file
+-- never writes one out.
+--
+--   SELECT set_config('request.jwt.claims',
+--     json_build_object('sub', (SELECT id::text FROM public.profiles
+--                                WHERE email = 'admin@example.com'),
+--                       'role', 'authenticated')::text, true);
 
 -- =============================================================================
 -- 2. Educators — registered, certified, record-checked, contract signed
@@ -225,6 +279,7 @@ BEGIN;
 SET LOCAL ROLE service_role;
 DO $$
 DECLARE
+  r          record;
   v_helsinki uuid := (SELECT id FROM public.locations
                        WHERE country_code = 'FI' AND type = 'municipality'
                          AND name = 'Helsinki' AND geonames_id IS NOT NULL LIMIT 1);
@@ -235,79 +290,81 @@ DECLARE
                        WHERE country_code = 'FI' AND type = 'municipality'
                          AND name = 'Tampere' AND geonames_id IS NOT NULL LIMIT 1);
 BEGIN
-  PERFORM public.register_gedu('11111111-1111-4111-8111-000000000001', 'Aino', 'Virtanen',
-    'fi', '358501000001', ARRAY['fi','en']::public.spoken_language[],
-    ARRAY[v_helsinki, v_espoo], 'AinoBuilds', '', '', '');
-  PERFORM public.register_gedu('11111111-1111-4111-8111-000000000002', 'Mikko', 'Lehtinen',
-    'fi', '358501000002', ARRAY['fi']::public.spoken_language[],
-    ARRAY[v_helsinki], 'MikkoMC', '', 'MikkoBuilds', '');
-  PERFORM public.register_gedu('11111111-1111-4111-8111-000000000003', 'Sofia', 'Nieminen',
-    'fi', '358501000003', ARRAY['fi','sv','en']::public.spoken_language[],
-    ARRAY[v_tampere], '', '', 'SofiaStudio', '');
-  PERFORM public.register_gedu('11111111-1111-4111-8111-000000000004', 'Lucas', 'Moreau',
-    'en', '358501000004', ARRAY['fr','en']::public.spoken_language[],
-    ARRAY[]::uuid[], '', '', '', '');
-  PERFORM public.register_gedu('11111111-1111-4111-8111-000000000005', 'Emma', 'Koskinen',
-    'fi', '358501000005', ARRAY['fi','en']::public.spoken_language[],
-    ARRAY[v_espoo], '', '', '', '');
-  PERFORM public.register_gedu('11111111-1111-4111-8111-000000000006', 'Oliver', 'Grant',
-    'en', '358501000006', ARRAY['en']::public.spoken_language[],
-    ARRAY[]::uuid[], '', '', '', '');
+  FOR r IN SELECT * FROM (VALUES
+    ('gedu@example.com',           'Gedu',   'Example',   'en', '358501000000', ARRAY['en','fi']::public.spoken_language[], ARRAY[v_helsinki, v_espoo], 'GeduExample', '',            ''),
+    ('aino.virtanen@example.com',  'Aino',   'Virtanen',  'fi', '358501000001', ARRAY['fi','en']::public.spoken_language[], ARRAY[v_helsinki, v_espoo], 'AinoBuilds',  '',            ''),
+    ('mikko.lehtinen@example.com', 'Mikko',  'Lehtinen',  'fi', '358501000002', ARRAY['fi']::public.spoken_language[],      ARRAY[v_helsinki],          'MikkoMC',     'MikkoBuilds', ''),
+    ('sofia.nieminen@example.com', 'Sofia',  'Nieminen',  'fi', '358501000003', ARRAY['fi','sv','en']::public.spoken_language[], ARRAY[v_tampere],      '',            'SofiaStudio', ''),
+    ('lucas.moreau@example.com',   'Lucas',  'Moreau',    'en', '358501000004', ARRAY['fr','en']::public.spoken_language[], ARRAY[]::uuid[],            '',            '',            ''),
+    ('emma.koskinen@example.com',  'Emma',   'Koskinen',  'fi', '358501000005', ARRAY['fi','en']::public.spoken_language[], ARRAY[v_espoo],             '',            '',            ''),
+    ('oliver.grant@example.com',   'Oliver', 'Grant',     'en', '358501000006', ARRAY['en']::public.spoken_language[],      ARRAY[]::uuid[],            '',            '',            '')
+  ) AS t(email, first_name, last_name, locale, phone, languages, coverage, minecraft, roblox, roblox_id)
+  LOOP
+    PERFORM public.register_gedu(
+      (SELECT id FROM public.profiles WHERE email = r.email),
+      r.first_name, r.last_name, r.locale, r.phone, r.languages, r.coverage,
+      r.minecraft, '', r.roblox, r.roblox_id);
+  END LOOP;
 END;
 $$;
 COMMIT;
 
 -- Certification and the record check, both admin-only and both stamped
--- server-side. Four certified; Emma has her record extract in but is not
+-- server-side. Five certified; Emma has her record extract in but is not
 -- certified yet; Oliver has neither.
 BEGIN;
 SELECT set_config('request.jwt.claims',
-  json_build_object('sub', '00000000-0000-0000-0000-000000000001',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
                     'role', 'authenticated')::text, true);
 SET LOCAL ROLE authenticated;
 DO $$
 DECLARE g uuid;
 BEGIN
-  FOREACH g IN ARRAY ARRAY[
-    '11111111-1111-4111-8111-000000000001'::uuid,
-    '11111111-1111-4111-8111-000000000002'::uuid,
-    '11111111-1111-4111-8111-000000000003'::uuid,
-    '11111111-1111-4111-8111-000000000004'::uuid
-  ] LOOP
+  FOR g IN SELECT id FROM public.profiles WHERE email IN (
+    'gedu@example.com', 'aino.virtanen@example.com', 'mikko.lehtinen@example.com',
+    'sofia.nieminen@example.com', 'lucas.moreau@example.com')
+  LOOP
     PERFORM public.set_gedu_criminal_record_check(g, true);
     PERFORM public.set_gedu_certified(g, true);
   END LOOP;
 
   PERFORM public.set_gedu_criminal_record_check(
-    '11111111-1111-4111-8111-000000000005'::uuid, true);
+    (SELECT id FROM public.profiles WHERE email = 'emma.koskinen@example.com'), true);
 END;
 $$;
 COMMIT;
 
 -- The contract each educator signs for themselves. Which version exists is
 -- reference data a migration publishes, so the newest is read rather than
--- named. Four sign: three certified educators and the one still awaiting
+-- named. Five sign: four certified educators and the one still awaiting
 -- certification. Lucas is certified and has NOT signed, and Oliver has neither
 -- — signing and certifying are independent facts, and the admin user list has
 -- to show every combination of them.
+--
+-- The signers are resolved under the admin's claims BEFORE any gedu's claims go
+-- on: a gedu has no policy that would let them read another account's row.
 BEGIN;
+SELECT set_config('request.jwt.claims',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
+                    'role', 'authenticated')::text, true);
 SET LOCAL ROLE authenticated;
 DO $$
 DECLARE
   g uuid;
   v_version text := (SELECT version FROM public.gedu_contract_versions
                       WHERE version LIKE '%/fi' ORDER BY created_at DESC LIMIT 1);
+  v_signers uuid[] := ARRAY(
+    SELECT id FROM public.profiles WHERE email IN (
+      'gedu@example.com', 'aino.virtanen@example.com', 'mikko.lehtinen@example.com',
+      'sofia.nieminen@example.com', 'emma.koskinen@example.com'));
 BEGIN
   IF v_version IS NULL THEN
     RETURN;
   END IF;
 
-  FOREACH g IN ARRAY ARRAY[
-    '11111111-1111-4111-8111-000000000001'::uuid,
-    '11111111-1111-4111-8111-000000000002'::uuid,
-    '11111111-1111-4111-8111-000000000003'::uuid,
-    '11111111-1111-4111-8111-000000000005'::uuid
-  ] LOOP
+  FOREACH g IN ARRAY v_signers LOOP
     PERFORM set_config('request.jwt.claims',
       json_build_object('sub', g::text, 'role', 'authenticated')::text, true);
     PERFORM public.accept_gedu_contract(v_version);
@@ -321,16 +378,23 @@ COMMIT;
 -- =============================================================================
 -- A family may not acquire a child before it holds a PIN — create_gamer refuses
 -- with PIN_REQUIRED otherwise — so this runs before section 4.
+--
+-- Which profiles are the parents, without naming eleven addresses: at this
+-- point the admin and the educators have been promoted out of `customer` and
+-- the children are still under `@gamer.example.com`, so a customer with an
+-- `@example.com` address is a parent this file made and nothing else is.
 
 BEGIN;
 SET LOCAL ROLE service_role;
 DO $$
 DECLARE p record;
 BEGIN
-  FOR p IN SELECT id FROM public.profiles
-            WHERE id::text LIKE '22222222-2222-4222-8222-%' ORDER BY id
+  FOR p IN SELECT id, email FROM public.profiles
+            WHERE role = 'customer' AND email LIKE '%@example.com' ORDER BY email
   LOOP
-    PERFORM public.set_pin_for_user(p.id, '1234');
+    PERFORM public.set_pin_for_user(
+      p.id,
+      CASE WHEN p.email = 'parent@example.com' THEN '1111' ELSE '1234' END);
   END LOOP;
 END;
 $$;
@@ -351,28 +415,33 @@ DO $$
 DECLARE r record;
 BEGIN
   FOR r IN SELECT * FROM (VALUES
-    ('33333333-3333-4333-8333-000000000001'::uuid, '22222222-2222-4222-8222-000000000001'::uuid, 'Elias',  'Korhonen',  9,  'boy',        'EliasCraft',  NULL),
-    ('33333333-3333-4333-8333-000000000002'::uuid, '22222222-2222-4222-8222-000000000001'::uuid, 'Venla',  'Korhonen',  12, 'girl',       NULL,          'VenlaBuilds'),
-    ('33333333-3333-4333-8333-000000000003'::uuid, '22222222-2222-4222-8222-000000000002'::uuid, 'Onni',   'Mäkinen',   7,  'boy',        'OnniMC',      NULL),
-    ('33333333-3333-4333-8333-000000000004'::uuid, '22222222-2222-4222-8222-000000000003'::uuid, 'Aada',   'Salminen',  10, 'girl',       NULL,          NULL),
-    ('33333333-3333-4333-8333-000000000005'::uuid, '22222222-2222-4222-8222-000000000003'::uuid, 'Väinö',  'Salminen',  13, 'boy',        'VainoV',      NULL),
-    ('33333333-3333-4333-8333-000000000006'::uuid, '22222222-2222-4222-8222-000000000003'::uuid, 'Sanni',  'Salminen',  8,  'girl',       NULL,          NULL),
-    ('33333333-3333-4333-8333-000000000007'::uuid, '22222222-2222-4222-8222-000000000004'::uuid, 'Eino',   'Heikkinen', 11, 'boy',        'EinoH',       NULL),
-    ('33333333-3333-4333-8333-000000000008'::uuid, '22222222-2222-4222-8222-000000000005'::uuid, 'Iida',   'Laine',     14, 'girl',       NULL,          'IidaL'),
-    ('33333333-3333-4333-8333-000000000009'::uuid, '22222222-2222-4222-8222-000000000005'::uuid, 'Leevi',  'Laine',     10, 'boy',        'LeeviL',      NULL),
-    ('33333333-3333-4333-8333-000000000010'::uuid, '22222222-2222-4222-8222-000000000006'::uuid, 'Oskari', 'Järvinen',  9,  'boy',        NULL,          NULL),
-    ('33333333-3333-4333-8333-000000000011'::uuid, '22222222-2222-4222-8222-000000000007'::uuid, 'Léa',    'Dubois',    12, 'girl',       NULL,          'LeaD'),
-    ('33333333-3333-4333-8333-000000000012'::uuid, '22222222-2222-4222-8222-000000000007'::uuid, 'Hugo',   'Dubois',    8,  'boy',        'HugoD',       NULL),
-    ('33333333-3333-4333-8333-000000000013'::uuid, '22222222-2222-4222-8222-000000000008'::uuid, 'Olivia', 'Whitfield', 11, 'girl',       NULL,          NULL),
-    ('33333333-3333-4333-8333-000000000014'::uuid, '22222222-2222-4222-8222-000000000008'::uuid, 'Noah',   'Whitfield', 15, 'boy',        'NoahW',       NULL),
-    ('33333333-3333-4333-8333-000000000015'::uuid, '22222222-2222-4222-8222-000000000009'::uuid, 'Pihla',  'Rantanen',  6,  'girl',       NULL,          NULL),
-    ('33333333-3333-4333-8333-000000000016'::uuid, '22222222-2222-4222-8222-000000000009'::uuid, 'Aarne',  'Rantanen',  13, 'boy',        'AarneR',      NULL),
-    ('33333333-3333-4333-8333-000000000017'::uuid, '22222222-2222-4222-8222-000000000010'::uuid, 'Rasmus', 'Hakala',    12, 'boy',        NULL,          'RasmusH'),
-    ('33333333-3333-4333-8333-000000000018'::uuid, '22222222-2222-4222-8222-000000000010'::uuid, 'Sointu', 'Hakala',    9,  'non_binary', NULL,          NULL)
-  ) AS t(id, parent_id, first_name, last_name, age, gender, minecraft, roblox)
+    ('milo@gamer.example.com',   'parent@example.com',          'Milo',   'Example',   10, 'boy',        'MiloBuilds',  NULL),
+    ('nea@gamer.example.com',    'parent@example.com',          'Nea',    'Example',   13, 'girl',       NULL,          'NeaMakes'),
+    ('otso@gamer.example.com',   'parent@example.com',          'Otso',   'Example',   8,  'boy',        'OtsoMC',      NULL),
+    ('elias@gamer.example.com',  'laura.korhonen@example.com',  'Elias',  'Korhonen',  9,  'boy',        'EliasCraft',  NULL),
+    ('venla@gamer.example.com',  'laura.korhonen@example.com',  'Venla',  'Korhonen',  12, 'girl',       NULL,          'VenlaBuilds'),
+    ('onni@gamer.example.com',   'petri.makinen@example.com',   'Onni',   'Mäkinen',   7,  'boy',        'OnniMC',      NULL),
+    ('aada@gamer.example.com',   'hanna.salminen@example.com',  'Aada',   'Salminen',  10, 'girl',       NULL,          NULL),
+    ('vaino@gamer.example.com',  'hanna.salminen@example.com',  'Väinö',  'Salminen',  13, 'boy',        'VainoV',      NULL),
+    ('sanni@gamer.example.com',  'hanna.salminen@example.com',  'Sanni',  'Salminen',  8,  'girl',       NULL,          NULL),
+    ('eino@gamer.example.com',   'jussi.heikkinen@example.com', 'Eino',   'Heikkinen', 11, 'boy',        'EinoH',       NULL),
+    ('iida@gamer.example.com',   'marika.laine@example.com',    'Iida',   'Laine',     14, 'girl',       NULL,          'IidaL'),
+    ('leevi@gamer.example.com',  'marika.laine@example.com',    'Leevi',  'Laine',     10, 'boy',        'LeeviL',      NULL),
+    ('oskari@gamer.example.com', 'anna.jarvinen@example.com',   'Oskari', 'Järvinen',  9,  'boy',        NULL,          NULL),
+    ('lea@gamer.example.com',    'camille.dubois@example.com',  'Léa',    'Dubois',    12, 'girl',       NULL,          'LeaD'),
+    ('hugo@gamer.example.com',   'camille.dubois@example.com',  'Hugo',   'Dubois',    8,  'boy',        'HugoD',       NULL),
+    ('olivia@gamer.example.com', 'james.whitfield@example.com', 'Olivia', 'Whitfield', 11, 'girl',       NULL,          NULL),
+    ('noah@gamer.example.com',   'james.whitfield@example.com', 'Noah',   'Whitfield', 15, 'boy',        'NoahW',       NULL),
+    ('pihla@gamer.example.com',  'satu.rantanen@example.com',   'Pihla',  'Rantanen',  6,  'girl',       NULL,          NULL),
+    ('aarne@gamer.example.com',  'satu.rantanen@example.com',   'Aarne',  'Rantanen',  13, 'boy',        'AarneR',      NULL),
+    ('rasmus@gamer.example.com', 'tomi.hakala@example.com',     'Rasmus', 'Hakala',    12, 'boy',        NULL,          'RasmusH'),
+    ('sointu@gamer.example.com', 'tomi.hakala@example.com',     'Sointu', 'Hakala',    9,  'non_binary', NULL,          NULL)
+  ) AS t(email, parent_email, first_name, last_name, age, gender, minecraft, roblox)
   LOOP
     PERFORM public.create_gamer(
-      r.id, r.parent_id, r.first_name, r.last_name,
+      (SELECT id FROM public.profiles WHERE email = r.email),
+      (SELECT id FROM public.profiles WHERE email = r.parent_email),
+      r.first_name, r.last_name,
       (current_date - make_interval(years => r.age, days => 40))::date,
       r.gender::public.gender_type,
       r.minecraft, NULL, r.roblox, NULL,
@@ -393,28 +462,33 @@ COMMIT;
 
 BEGIN;
 SELECT set_config('request.jwt.claims',
-  json_build_object('sub', '00000000-0000-0000-0000-000000000001',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
                     'role', 'authenticated')::text, true);
 SET LOCAL ROLE authenticated;
 
-INSERT INTO public.locations (id, name, type, parent_id, country_code)
-SELECT v.id, v.name, 'site'::public.location_type, m.id, 'FI'
+INSERT INTO public.locations (name, type, parent_id, country_code)
+SELECT v.name, 'site'::public.location_type, m.id, 'FI'
   FROM (VALUES
-    ('44444444-4444-4444-8444-000000000001'::uuid, 'Sogverse-studio, Kamppi', 'Helsinki'),
-    ('44444444-4444-4444-8444-000000000002'::uuid, 'Sellon kirjasto',         'Espoo'),
-    ('44444444-4444-4444-8444-000000000003'::uuid, 'Nuorisotila Monitoimi',   'Tampere')
-  ) AS v(id, name, municipality)
+    ('Sogverse-studio, Kamppi', 'Helsinki'),
+    ('Sellon kirjasto',         'Espoo'),
+    ('Nuorisotila Monitoimi',   'Tampere')
+  ) AS v(name, municipality)
   JOIN public.locations m
     ON m.name = v.municipality AND m.type = 'municipality'
    AND m.country_code = 'FI' AND m.geonames_id IS NOT NULL;
 
-INSERT INTO public.site_details (location_id, address, notes) VALUES
-  ('44444444-4444-4444-8444-000000000001', 'Urho Kekkosen katu 1, 00100 Helsinki',
-   'Third floor. Ring the intercom; the lift needs a key card after 17.00.'),
-  ('44444444-4444-4444-8444-000000000002', 'Leppävaarankatu 9, 02600 Espoo',
-   'Group room 2, behind the children''s section.'),
-  ('44444444-4444-4444-8444-000000000003', 'Hämeenpuisto 14, 33210 Tampere',
-   'Entrance from the courtyard. Machines are booked through the youth worker.');
+INSERT INTO public.site_details (location_id, address, notes)
+SELECT l.id, v.address, v.notes
+  FROM (VALUES
+    ('Sogverse-studio, Kamppi', 'Urho Kekkosen katu 1, 00100 Helsinki',
+     'Third floor. Ring the intercom; the lift needs a key card after 17.00.'),
+    ('Sellon kirjasto', 'Leppävaarankatu 9, 02600 Espoo',
+     'Group room 2, behind the children''s section.'),
+    ('Nuorisotila Monitoimi', 'Hämeenpuisto 14, 33210 Tampere',
+     'Entrance from the courtyard. Machines are booked through the youth worker.')
+  ) AS v(name, address, notes)
+  JOIN public.locations l ON l.name = v.name AND l.type = 'site';
 
 COMMIT;
 
@@ -428,19 +502,29 @@ COMMIT;
 -- and exist to render; no Stripe object stands behind any of them.
 --
 -- A product is looked up again later by its English title, which is unique here.
+--
+-- A NAME CARRIES NEITHER ITS DAY NOR ITS PLACE. The schedule slots say which
+-- weekday a product runs and the location says where, so a name repeating
+-- either is the same fact stored twice — and the copy in the name is the one
+-- that goes stale when a term moves or a venue changes. Names here therefore
+-- say what the product IS and nothing about when or where it happens.
 
 BEGIN;
 SELECT set_config('request.jwt.claims',
-  json_build_object('sub', '00000000-0000-0000-0000-000000000001',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
                     'role', 'authenticated')::text, true);
 SET LOCAL ROLE authenticated;
 
 DO $$
 DECLARE
   v_tz       text := 'Europe/Helsinki';
-  v_helsinki uuid := '44444444-4444-4444-8444-000000000001';
-  v_espoo    uuid := '44444444-4444-4444-8444-000000000002';
-  v_tampere  uuid := '44444444-4444-4444-8444-000000000003';
+  v_helsinki uuid := (SELECT id FROM public.locations
+                       WHERE type = 'site' AND name = 'Sogverse-studio, Kamppi');
+  v_espoo    uuid := (SELECT id FROM public.locations
+                       WHERE type = 'site' AND name = 'Sellon kirjasto');
+  v_tampere  uuid := (SELECT id FROM public.locations
+                       WHERE type = 'site' AND name = 'Nuorisotila Monitoimi');
   -- A day camp runs every day it is open, so one slot per weekday.
   v_daily    jsonb := (SELECT jsonb_agg(jsonb_build_object(
                          'weekday', d, 'start_time', '10:00', 'duration_minutes', 300))
@@ -451,12 +535,12 @@ BEGIN
   PERFORM public.create_product(
     'consumer_club', 'paid',
     jsonb_build_array(
-      jsonb_build_object('locale','en','name','Minecraft Java Club (Tuesdays)',
+      jsonb_build_object('locale','en','name','Minecraft Java Club',
         'short_description','A weekly online club for building, redstone and survival.',
-        'long_description','Every Tuesday our educators run a small online group on our own Java server.\n\n- Building and redstone projects the children choose themselves\n- A closed server with no strangers on it\n- Voice chat moderated by the educator throughout'),
-      jsonb_build_object('locale','fi','name','Minecraft Java -kerho (tiistaisin)',
+        'long_description','Every week our educators run a small online group on our own Java server.\n\n- Building and redstone projects the children choose themselves\n- A closed server with no strangers on it\n- Voice chat moderated by the educator throughout'),
+      jsonb_build_object('locale','fi','name','Minecraft Java -kerho',
         'short_description','Viikoittainen verkkokerho rakentamiseen, redstoneen ja selviytymiseen.',
-        'long_description','Ohjaajamme vetävät joka tiistai pienen verkkoryhmän omalla Java-palvelimellamme.\n\n- Rakennus- ja redstone-projektit lapset valitsevat itse\n- Suljettu palvelin, jolle ei pääse ulkopuolisia\n- Ohjaaja moderoi puhekanavaa koko ajan')
+        'long_description','Ohjaajamme vetävät joka viikko pienen verkkoryhmän omalla Java-palvelimellamme.\n\n- Rakennus- ja redstone-projektit lapset valitsevat itse\n- Suljettu palvelin, jolle ei pääse ulkopuolisia\n- Ohjaaja moderoi puhekanavaa koko ajan')
     ),
     'minecraft_java', 'fi', true, v_tz,
     now() - interval '90 days', true, false,
@@ -474,11 +558,11 @@ BEGIN
   PERFORM public.create_product(
     'consumer_club', 'paid',
     jsonb_build_array(
-      jsonb_build_object('locale','en','name','Roblox Studio Club (Thursdays)',
-        'short_description','Make your own Roblox game, one Thursday at a time.',
+      jsonb_build_object('locale','en','name','Roblox Studio Club',
+        'short_description','Make your own Roblox game, one session at a time.',
         'long_description','A term of Roblox Studio for children who want to build rather than only play. We start from a template and finish with a game each child can share with their family.'),
-      jsonb_build_object('locale','fi','name','Roblox Studio -kerho (torstaisin)',
-        'short_description','Tee oma Roblox-pelisi, torstai kerrallaan.',
+      jsonb_build_object('locale','fi','name','Roblox Studio -kerho',
+        'short_description','Tee oma Roblox-pelisi, kerta kerrallaan.',
         'long_description','Robloxin pelinteon kausi lapsille, jotka haluavat rakentaa eivätkä vain pelata. Aloitamme pohjasta ja lopetamme peliin, jonka jokainen voi jakaa perheelleen.')
     ),
     'roblox_studio', 'fi', false, v_tz,
@@ -499,10 +583,10 @@ BEGIN
   PERFORM public.create_product(
     'consumer_club', 'paid',
     jsonb_build_array(
-      jsonb_build_object('locale','en','name','Fortnite Creative Club (Mondays)',
+      jsonb_build_object('locale','en','name','Fortnite Creative Club',
         'short_description','Level design and teamwork in Fortnite Creative.',
         'long_description','Registration opens shortly. The club builds maps together and plays them at the end of each session.'),
-      jsonb_build_object('locale','fi','name','Fortnite Creative -kerho (maanantaisin)',
+      jsonb_build_object('locale','fi','name','Fortnite Creative -kerho',
         'short_description','Kenttäsuunnittelua ja yhteistyötä Fortnite Creativessa.',
         'long_description','Ilmoittautuminen avautuu pian. Kerhossa rakennetaan karttoja yhdessä ja pelataan ne jokaisen kerran lopuksi.')
     ),
@@ -521,10 +605,10 @@ BEGIN
   PERFORM public.create_product(
     'consumer_club', 'free',
     jsonb_build_array(
-      jsonb_build_object('locale','en','name','Creator Studio Club (Wednesdays)',
+      jsonb_build_object('locale','en','name','Creator Studio Club',
         'short_description','A free, calm club for making videos, thumbnails and streams.',
         'long_description','Small groups, a predictable structure every week, and no pressure to be on camera. Designed with neurodivergent children in mind.'),
-      jsonb_build_object('locale','fi','name','Sisällöntuotannon kerho (keskiviikkoisin)',
+      jsonb_build_object('locale','fi','name','Sisällöntuotannon kerho',
         'short_description','Maksuton ja rauhallinen kerho videoiden, kansikuvien ja striimien tekoon.',
         'long_description','Pienet ryhmät, joka viikko sama rakenne eikä painetta näkyä kameralla. Suunniteltu erityisesti neuroepätyypillisiä lapsia ajatellen.')
     ),
@@ -568,10 +652,10 @@ BEGIN
   PERFORM public.create_product(
     'municipality_club', 'external_contract',
     jsonb_build_array(
-      jsonb_build_object('locale','en','name','Espoo Schools Game Club',
+      jsonb_build_object('locale','en','name','Schools Game Club',
         'short_description','An after-school club run with the city of Espoo. Free to families.',
         'long_description','Minecraft Education in a school library, one afternoon a week, paid for by the city.'),
-      jsonb_build_object('locale','fi','name','Espoon koulujen pelikerho',
+      jsonb_build_object('locale','fi','name','Koulujen pelikerho',
         'short_description','Espoon kaupungin kanssa järjestettävä iltapäiväkerho. Perheille maksuton.',
         'long_description','Minecraft Educationia koulun kirjastossa kerran viikossa iltapäivällä, kaupungin kustantamana.')
     ),
@@ -592,10 +676,10 @@ BEGIN
   PERFORM public.create_product(
     'municipality_club', 'external_contract',
     jsonb_build_array(
-      jsonb_build_object('locale','en','name','Tampere Autumn Term Game Club',
+      jsonb_build_object('locale','en','name','Autumn Term Game Club',
         'short_description','Last autumn''s club with the city of Tampere. Finished.',
         'long_description','A full term of Minecraft Bedrock at a youth centre, invoiced to the city at the end of the term.'),
-      jsonb_build_object('locale','fi','name','Tampereen syyskauden pelikerho',
+      jsonb_build_object('locale','fi','name','Syyskauden pelikerho',
         'short_description','Viime syksyn kerho Tampereen kaupungin kanssa. Päättynyt.',
         'long_description','Kokonainen kausi Minecraft Bedrockia nuorisotilassa. Kaupungilta laskutettiin kauden lopussa.')
     ),
@@ -616,10 +700,10 @@ BEGIN
   PERFORM public.create_product(
     'camp', 'paid',
     jsonb_build_array(
-      jsonb_build_object('locale','en','name','Minecraft Summer Camp, Helsinki',
+      jsonb_build_object('locale','en','name','Minecraft Summer Camp',
         'short_description','Five days of building, from ten in the morning to three.',
         'long_description','A week in our Kamppi studio. Bring lunch; snacks and drinks are provided. Each day ends with the group showing what they built.'),
-      jsonb_build_object('locale','fi','name','Minecraft-kesäleiri, Helsinki',
+      jsonb_build_object('locale','fi','name','Minecraft-kesäleiri',
         'short_description','Viisi päivää rakentamista kello kymmenestä kolmeen.',
         'long_description','Viikko Kampin studiollamme. Ota omat eväät mukaan, välipala ja juotavat saat meiltä. Jokainen päivä päättyy siihen, että ryhmä esittelee rakentamansa.')
     ),
@@ -639,10 +723,10 @@ BEGIN
   PERFORM public.create_product(
     'camp', 'paid',
     jsonb_build_array(
-      jsonb_build_object('locale','en','name','Roblox Winter Camp, Tampere',
+      jsonb_build_object('locale','en','name','Roblox Winter Camp',
         'short_description','The winter holiday camp. Finished.',
         'long_description','Four days of Roblox Studio over the winter holiday.'),
-      jsonb_build_object('locale','fi','name','Roblox-talvileiri, Tampere',
+      jsonb_build_object('locale','fi','name','Roblox-talvileiri',
         'short_description','Talvilomaleiri. Päättynyt.',
         'long_description','Neljä päivää Roblox Studiota talviloman aikana.')
     ),
@@ -742,31 +826,35 @@ COMMIT;
 
 BEGIN;
 SELECT set_config('request.jwt.claims',
-  json_build_object('sub', '00000000-0000-0000-0000-000000000001',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
                     'role', 'authenticated')::text, true);
 SET LOCAL ROLE authenticated;
 
 DO $$
 DECLARE
   r          record;
-  v_aino     uuid := '11111111-1111-4111-8111-000000000001';
-  v_mikko    uuid := '11111111-1111-4111-8111-000000000002';
-  v_sofia    uuid := '11111111-1111-4111-8111-000000000003';
-  v_lucas    uuid := '11111111-1111-4111-8111-000000000004';
-  v_emma     uuid := '11111111-1111-4111-8111-000000000005';
+  -- The owner's gedu takes the three clubs with history behind them, so the
+  -- account they sign in as is the one with rosters, sessions and reports.
+  v_gedu     uuid := (SELECT id FROM public.profiles WHERE email = 'gedu@example.com');
+  v_aino     uuid := (SELECT id FROM public.profiles WHERE email = 'aino.virtanen@example.com');
+  v_mikko    uuid := (SELECT id FROM public.profiles WHERE email = 'mikko.lehtinen@example.com');
+  v_sofia    uuid := (SELECT id FROM public.profiles WHERE email = 'sofia.nieminen@example.com');
+  v_lucas    uuid := (SELECT id FROM public.profiles WHERE email = 'lucas.moreau@example.com');
+  v_emma     uuid := (SELECT id FROM public.profiles WHERE email = 'emma.koskinen@example.com');
 BEGIN
   FOR r IN SELECT * FROM (VALUES
-    ('Minecraft Java Club (Tuesdays)',           'Tiistai A',  v_aino,  'primary',   'Tiistai B', v_mikko),
-    ('Roblox Studio Club (Thursdays)',           'Torstai A',  v_sofia, 'primary',   NULL,        NULL),
-    ('Fortnite Creative Club (Mondays)',         'Monday Crew', v_lucas, 'primary',  NULL,        NULL),
-    ('Creator Studio Club (Wednesdays)',         'Keskiviikko', v_mikko, 'primary',  NULL,        NULL),
-    ('Espoo Schools Game Club',                  'Ryhmä 1',    v_aino,  'primary',   NULL,        NULL),
-    ('Tampere Autumn Term Game Club',            'Ryhmä 1',    v_sofia, 'primary',   NULL,        NULL),
-    ('Minecraft Summer Camp, Helsinki',          'Camp Group A', v_lucas, 'primary', 'Camp Group B', v_emma),
-    ('Roblox Winter Camp, Tampere',              'Camp Group A', v_mikko, 'primary', NULL,        NULL),
-    ('AI and Game Design Camp',                  'AI Camp',    v_lucas, 'primary',   NULL,        NULL),
-    ('Parents'' Evening: Gaming and Screen Time','Webinaari',  v_sofia, 'primary',   NULL,        NULL),
-    ('Family Game Jam',                          'Game Jam',   v_aino,  'primary',   NULL,        NULL)
+    ('Minecraft Java Club',                      'Ryhmä A',      v_gedu,  'primary', 'Ryhmä B',      v_aino),
+    ('Roblox Studio Club',                       'Ryhmä A',      v_sofia, 'primary', NULL,           NULL),
+    ('Fortnite Creative Club',                   'Crew A',       v_lucas, 'primary', NULL,           NULL),
+    ('Creator Studio Club',                      'Ryhmä A',      v_gedu,  'primary', NULL,           NULL),
+    ('Schools Game Club',                        'Ryhmä 1',      v_gedu,  'primary', NULL,           NULL),
+    ('Autumn Term Game Club',                    'Ryhmä 1',      v_sofia, 'primary', NULL,           NULL),
+    ('Minecraft Summer Camp',                    'Camp Group A', v_lucas, 'primary', 'Camp Group B', v_emma),
+    ('Roblox Winter Camp',                       'Camp Group A', v_mikko, 'primary', NULL,           NULL),
+    ('AI and Game Design Camp',                  'AI Camp',      v_lucas, 'primary', NULL,           NULL),
+    ('Parents'' Evening: Gaming and Screen Time','Webinaari',    v_sofia, 'primary', NULL,           NULL),
+    ('Family Game Jam',                          'Game Jam',     v_mikko, 'primary', NULL,           NULL)
   ) AS t(product_name, group_a, gedu_a, role_a, group_b, gedu_b)
   LOOP
     PERFORM public.apply_group_changes(
@@ -789,19 +877,19 @@ BEGIN
     );
   END LOOP;
 
-  -- The second educator on the Tuesday club is an assistant, not a primary, and
+  -- The second educator on the Minecraft Java club is an assistant, not a primary, and
   -- she is the one still awaiting certification — the pairing an admin actually
   -- uses while somebody is being trained up.
   PERFORM public.apply_group_changes(
     (SELECT product_id FROM public.product_translations
-      WHERE locale = 'en' AND name = 'Minecraft Java Club (Tuesdays)'),
+      WHERE locale = 'en' AND name = 'Minecraft Java Club'),
     p_gedu_assignments_added => jsonb_build_array(
       jsonb_build_object(
         'groupId', (SELECT g.id FROM public.product_groups g
                       JOIN public.product_translations t
                         ON t.product_id = g.product_id AND t.locale = 'en'
-                     WHERE t.name = 'Minecraft Java Club (Tuesdays)'
-                       AND g.name = 'Tiistai A'),
+                     WHERE t.name = 'Minecraft Java Club'
+                       AND g.name = 'Ryhmä A'),
         'geduId', v_emma, 'role', 'assistant'))
   );
 END;
@@ -837,39 +925,46 @@ DECLARE
 BEGIN
   FOR r IN SELECT * FROM (VALUES
     -- product title, child email, purchase shape
-    ('Minecraft Java Club (Tuesdays)', 'elias@gamer.example.com',  'subscription_monthly'),
-    ('Minecraft Java Club (Tuesdays)', 'onni@gamer.example.com',   'subscription_monthly'),
-    ('Minecraft Java Club (Tuesdays)', 'sanni@gamer.example.com',  'subscription_monthly'),
-    ('Minecraft Java Club (Tuesdays)', 'oskari@gamer.example.com', 'subscription_monthly'),
-    ('Minecraft Java Club (Tuesdays)', 'hugo@gamer.example.com',   'subscription_monthly'),
-    ('Minecraft Java Club (Tuesdays)', 'aada@gamer.example.com',   'subscription_monthly'),
-    ('Minecraft Java Club (Tuesdays)', 'leevi@gamer.example.com',  'subscription_monthly'),
-    ('Roblox Studio Club (Thursdays)', 'venla@gamer.example.com',  'subscription_monthly'),
-    ('Roblox Studio Club (Thursdays)', 'eino@gamer.example.com',   'subscription_monthly'),
-    ('Roblox Studio Club (Thursdays)', 'lea@gamer.example.com',    'subscription_monthly'),
-    ('Roblox Studio Club (Thursdays)', 'rasmus@gamer.example.com', 'subscription_monthly'),
-    ('Creator Studio Club (Wednesdays)', 'sointu@gamer.example.com', 'free'),
-    ('Creator Studio Club (Wednesdays)', 'pihla@gamer.example.com',  'free'),
-    ('Creator Studio Club (Wednesdays)', 'onni@gamer.example.com',   'free'),
-    ('Creator Studio Club (Wednesdays)', 'oskari@gamer.example.com', 'free'),
-    ('Creator Studio Club (Wednesdays)', 'hugo@gamer.example.com',   'free'),
-    ('Creator Studio Club (Wednesdays)', 'aada@gamer.example.com',   'free'),
-    ('Espoo Schools Game Club', 'elias@gamer.example.com',  'external'),
-    ('Espoo Schools Game Club', 'venla@gamer.example.com',  'external'),
-    ('Espoo Schools Game Club', 'aada@gamer.example.com',   'external'),
-    ('Espoo Schools Game Club', 'vaino@gamer.example.com',  'external'),
-    ('Espoo Schools Game Club', 'eino@gamer.example.com',   'external'),
-    ('Espoo Schools Game Club', 'leevi@gamer.example.com',  'external'),
-    ('Espoo Schools Game Club', 'oskari@gamer.example.com', 'external'),
-    ('Espoo Schools Game Club', 'lea@gamer.example.com',    'external'),
-    ('Espoo Schools Game Club', 'olivia@gamer.example.com', 'external'),
-    ('Espoo Schools Game Club', 'rasmus@gamer.example.com', 'external'),
-    ('Minecraft Summer Camp, Helsinki', 'elias@gamer.example.com',  'single_payment'),
-    ('Minecraft Summer Camp, Helsinki', 'sanni@gamer.example.com',  'single_payment'),
-    ('Minecraft Summer Camp, Helsinki', 'onni@gamer.example.com',   'single_payment'),
-    ('Minecraft Summer Camp, Helsinki', 'hugo@gamer.example.com',   'single_payment'),
-    ('Minecraft Summer Camp, Helsinki', 'oskari@gamer.example.com', 'single_payment'),
-    ('Minecraft Summer Camp, Helsinki', 'leevi@gamer.example.com',  'single_payment'),
+    ('Minecraft Java Club', 'milo@gamer.example.com',   'subscription_monthly'),
+    ('Minecraft Java Club', 'elias@gamer.example.com',  'subscription_monthly'),
+    ('Minecraft Java Club', 'onni@gamer.example.com',   'subscription_monthly'),
+    ('Minecraft Java Club', 'sanni@gamer.example.com',  'subscription_monthly'),
+    ('Minecraft Java Club', 'oskari@gamer.example.com', 'subscription_monthly'),
+    ('Minecraft Java Club', 'hugo@gamer.example.com',   'subscription_monthly'),
+    ('Minecraft Java Club', 'aada@gamer.example.com',   'subscription_monthly'),
+    ('Minecraft Java Club', 'leevi@gamer.example.com',  'subscription_monthly'),
+    ('Roblox Studio Club', 'nea@gamer.example.com',    'subscription_monthly'),
+    ('Roblox Studio Club', 'venla@gamer.example.com',  'subscription_monthly'),
+    ('Roblox Studio Club', 'eino@gamer.example.com',   'subscription_monthly'),
+    ('Roblox Studio Club', 'lea@gamer.example.com',    'subscription_monthly'),
+    ('Roblox Studio Club', 'rasmus@gamer.example.com', 'subscription_monthly'),
+    ('Creator Studio Club', 'otso@gamer.example.com',   'free'),
+    ('Creator Studio Club', 'nea@gamer.example.com',    'free'),
+    ('Creator Studio Club', 'sointu@gamer.example.com', 'free'),
+    ('Creator Studio Club', 'pihla@gamer.example.com',  'free'),
+    ('Creator Studio Club', 'onni@gamer.example.com',   'free'),
+    ('Creator Studio Club', 'oskari@gamer.example.com', 'free'),
+    ('Creator Studio Club', 'hugo@gamer.example.com',   'free'),
+    ('Creator Studio Club', 'aada@gamer.example.com',   'free'),
+    ('Schools Game Club', 'milo@gamer.example.com',   'external'),
+    ('Schools Game Club', 'elias@gamer.example.com',  'external'),
+    ('Schools Game Club', 'venla@gamer.example.com',  'external'),
+    ('Schools Game Club', 'aada@gamer.example.com',   'external'),
+    ('Schools Game Club', 'vaino@gamer.example.com',  'external'),
+    ('Schools Game Club', 'eino@gamer.example.com',   'external'),
+    ('Schools Game Club', 'leevi@gamer.example.com',  'external'),
+    ('Schools Game Club', 'oskari@gamer.example.com', 'external'),
+    ('Schools Game Club', 'lea@gamer.example.com',    'external'),
+    ('Schools Game Club', 'olivia@gamer.example.com', 'external'),
+    ('Schools Game Club', 'rasmus@gamer.example.com', 'external'),
+    ('Minecraft Summer Camp', 'milo@gamer.example.com',   'single_payment'),
+    ('Minecraft Summer Camp', 'otso@gamer.example.com',   'single_payment'),
+    ('Minecraft Summer Camp', 'elias@gamer.example.com',  'single_payment'),
+    ('Minecraft Summer Camp', 'sanni@gamer.example.com',  'single_payment'),
+    ('Minecraft Summer Camp', 'onni@gamer.example.com',   'single_payment'),
+    ('Minecraft Summer Camp', 'hugo@gamer.example.com',   'single_payment'),
+    ('Minecraft Summer Camp', 'oskari@gamer.example.com', 'single_payment'),
+    ('Minecraft Summer Camp', 'leevi@gamer.example.com',  'single_payment'),
     ('AI and Game Design Camp', 'iida@gamer.example.com',   'free'),
     ('AI and Game Design Camp', 'noah@gamer.example.com',   'free'),
     ('AI and Game Design Camp', 'aarne@gamer.example.com',  'free'),
@@ -913,9 +1008,9 @@ DECLARE
                        AND name = 'Parents'' Evening: Gaming and Screen Time');
 BEGIN
   FOR r IN SELECT id FROM public.profiles
-            WHERE email IN ('laura.korhonen@example.com', 'hanna.salminen@example.com',
-                            'camille.dubois@example.com', 'james.whitfield@example.com',
-                            'tomi.hakala@example.com')
+            WHERE email IN ('parent@example.com', 'laura.korhonen@example.com',
+                            'hanna.salminen@example.com', 'camille.dubois@example.com',
+                            'james.whitfield@example.com', 'tomi.hakala@example.com')
   LOOP
     v_result := public.create_participation(v_event, r.id, r.id, 'single_payment', 'eur');
     IF v_result->>'kind' = 'validated' THEN
@@ -928,33 +1023,35 @@ $$;
 
 COMMIT;
 
--- The queue on the small free camp: four seats are gone, so these three wait.
+-- The queue on the small free camp: four seats are gone, so these four wait.
 -- The waitlist engine has no grant of its own — the guarded wrapper is the only
 -- door — so each parent joins the queue for their own child, as they would.
 BEGIN;
 SELECT set_config('request.jwt.claims',
-  json_build_object('sub', '00000000-0000-0000-0000-000000000001',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
                     'role', 'authenticated')::text, true);
 SET LOCAL ROLE authenticated;
 
 DO $$
 DECLARE
-  r       record;
+  r             record;
+  v_admin_claims text := json_build_object(
+    'sub', (SELECT id::text FROM public.profiles WHERE email = 'admin@example.com'),
+    'role', 'authenticated')::text;
   v_camp  uuid := (SELECT product_id FROM public.product_translations
                     WHERE locale = 'en' AND name = 'AI and Game Design Camp');
 BEGIN
   FOR r IN SELECT p.id AS gamer_id, pg.parent_id
              FROM public.profiles p
              JOIN public.parent_gamer pg ON pg.gamer_id = p.id
-            WHERE p.email IN ('vaino@gamer.example.com', 'olivia@gamer.example.com',
-                              'rasmus@gamer.example.com')
+            WHERE p.email IN ('nea@gamer.example.com', 'vaino@gamer.example.com',
+                              'olivia@gamer.example.com', 'rasmus@gamer.example.com')
   LOOP
     PERFORM set_config('request.jwt.claims',
       json_build_object('sub', r.parent_id::text, 'role', 'authenticated')::text, true);
     PERFORM public.join_product_waitlist(v_camp, r.gamer_id);
-    PERFORM set_config('request.jwt.claims',
-      json_build_object('sub', '00000000-0000-0000-0000-000000000001',
-                        'role', 'authenticated')::text, true);
+    PERFORM set_config('request.jwt.claims', v_admin_claims, true);
   END LOOP;
 END;
 $$;
@@ -965,7 +1062,8 @@ COMMIT;
 -- municipality club and last winter's camp, both comped through the admin RPC.
 BEGIN;
 SELECT set_config('request.jwt.claims',
-  json_build_object('sub', '00000000-0000-0000-0000-000000000001',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
                     'role', 'authenticated')::text, true);
 SET LOCAL ROLE authenticated;
 
@@ -973,25 +1071,31 @@ DO $$
 DECLARE r record;
 BEGIN
   FOR r IN SELECT * FROM (VALUES
-    ('Tampere Autumn Term Game Club', 'elias@gamer.example.com'),
-    ('Tampere Autumn Term Game Club', 'aada@gamer.example.com'),
-    ('Tampere Autumn Term Game Club', 'sanni@gamer.example.com'),
-    ('Tampere Autumn Term Game Club', 'eino@gamer.example.com'),
-    ('Tampere Autumn Term Game Club', 'leevi@gamer.example.com'),
-    ('Tampere Autumn Term Game Club', 'oskari@gamer.example.com'),
-    ('Tampere Autumn Term Game Club', 'hugo@gamer.example.com'),
-    ('Tampere Autumn Term Game Club', 'pihla@gamer.example.com'),
-    ('Roblox Winter Camp, Tampere',   'venla@gamer.example.com'),
-    ('Roblox Winter Camp, Tampere',   'vaino@gamer.example.com'),
-    ('Roblox Winter Camp, Tampere',   'iida@gamer.example.com'),
-    ('Roblox Winter Camp, Tampere',   'lea@gamer.example.com'),
-    ('Roblox Winter Camp, Tampere',   'aarne@gamer.example.com'),
-    ('Family Game Jam',               'elias@gamer.example.com'),
-    ('Family Game Jam',               'venla@gamer.example.com'),
-    ('Family Game Jam',               'onni@gamer.example.com'),
-    ('Family Game Jam',               'sointu@gamer.example.com'),
-    ('Family Game Jam',               'laura.korhonen@example.com'),
-    ('Family Game Jam',               'petri.makinen@example.com')
+    ('Autumn Term Game Club', 'milo@gamer.example.com'),
+    ('Autumn Term Game Club', 'otso@gamer.example.com'),
+    ('Autumn Term Game Club', 'elias@gamer.example.com'),
+    ('Autumn Term Game Club', 'aada@gamer.example.com'),
+    ('Autumn Term Game Club', 'sanni@gamer.example.com'),
+    ('Autumn Term Game Club', 'eino@gamer.example.com'),
+    ('Autumn Term Game Club', 'leevi@gamer.example.com'),
+    ('Autumn Term Game Club', 'oskari@gamer.example.com'),
+    ('Autumn Term Game Club', 'hugo@gamer.example.com'),
+    ('Autumn Term Game Club', 'pihla@gamer.example.com'),
+    ('Roblox Winter Camp',   'venla@gamer.example.com'),
+    ('Roblox Winter Camp',   'vaino@gamer.example.com'),
+    ('Roblox Winter Camp',   'iida@gamer.example.com'),
+    ('Roblox Winter Camp',   'lea@gamer.example.com'),
+    ('Roblox Winter Camp',   'aarne@gamer.example.com'),
+    ('Family Game Jam',      'milo@gamer.example.com'),
+    ('Family Game Jam',      'nea@gamer.example.com'),
+    ('Family Game Jam',      'otso@gamer.example.com'),
+    ('Family Game Jam',      'parent@example.com'),
+    ('Family Game Jam',      'elias@gamer.example.com'),
+    ('Family Game Jam',      'venla@gamer.example.com'),
+    ('Family Game Jam',      'onni@gamer.example.com'),
+    ('Family Game Jam',      'sointu@gamer.example.com'),
+    ('Family Game Jam',      'laura.korhonen@example.com'),
+    ('Family Game Jam',      'petri.makinen@example.com')
   ) AS t(product_name, participant_email)
   LOOP
     PERFORM public.admin_enroll_participant(
@@ -1004,7 +1108,7 @@ $$;
 
 -- Paid seats land in the unassigned inbox by design, so an admin still has to
 -- place them. This is that placement, through the same batch RPC the panel uses:
--- alternate children between the Tuesday club's two groups, and put everybody
+-- alternate children between the Minecraft Java club's two groups, and put everybody
 -- else in their product's only group.
 DO $$
 DECLARE
@@ -1046,14 +1150,16 @@ COMMIT;
 
 BEGIN;
 SELECT set_config('request.jwt.claims',
-  json_build_object('sub', '00000000-0000-0000-0000-000000000001',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
                     'role', 'authenticated')::text, true);
 SET LOCAL ROLE authenticated;
 
 DO $$
 DECLARE
   v_admin_claims text := json_build_object(
-    'sub', '00000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text;
+    'sub', (SELECT id::text FROM public.profiles WHERE email = 'admin@example.com'),
+    'role', 'authenticated')::text;
   grp      record;
   d        date;
   v_dates  date[];
@@ -1130,19 +1236,23 @@ COMMIT;
 
 BEGIN;
 SELECT set_config('request.jwt.claims',
-  json_build_object('sub', '00000000-0000-0000-0000-000000000001',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
                     'role', 'authenticated')::text, true);
 SET LOCAL ROLE authenticated;
 
 DO $$
 DECLARE
   v_admin_claims text := json_build_object(
-    'sub', '00000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text;
+    'sub', (SELECT id::text FROM public.profiles WHERE email = 'admin@example.com'),
+    'role', 'authenticated')::text;
   r      record;
   v_id   uuid;
 BEGIN
   FOR r IN SELECT * FROM (VALUES
-    ('laura.korhonen@example.com',  'Elias looks forward to Tuesdays all week. The report after each session is genuinely useful — thank you.'),
+    ('parent@example.com',          'Three children on three different clubs and one calendar that keeps them straight. The seat offers arriving by email are the part that changed our week.'),
+    ('nea@gamer.example.com',       'im on the waiting list for the ai camp, is there a way to see how far up i am?'),
+    ('laura.korhonen@example.com',  'Elias looks forward to his club all week. The report after each session is genuinely useful — thank you.'),
     ('hanna.salminen@example.com',  'Could the calendar show the session times in a slightly larger font? On a phone I keep mis-reading them.'),
     ('camille.dubois@example.com',  'Would it be possible to see the club materials in French as well? Léa reads English fine but I do not.'),
     ('venla@gamer.example.com',     'the roblox club is the best part of my week, can we do more scripting next time please'),
@@ -1168,7 +1278,8 @@ COMMIT;
 -- The lookups run under the admin's claims; the filing runs under the gedu's.
 BEGIN;
 SELECT set_config('request.jwt.claims',
-  json_build_object('sub', '00000000-0000-0000-0000-000000000001',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
                     'role', 'authenticated')::text, true);
 SET LOCAL ROLE authenticated;
 
@@ -1177,16 +1288,16 @@ DECLARE
   v_group uuid := (SELECT g.id FROM public.product_groups g
                      JOIN public.product_translations t
                        ON t.product_id = g.product_id AND t.locale = 'en'
-                    WHERE t.name = 'Minecraft Java Club (Tuesdays)'
-                      AND g.name = 'Tiistai A');
+                    WHERE t.name = 'Minecraft Java Club'
+                      AND g.name = 'Ryhmä A');
+  v_gedu  uuid := (SELECT id FROM public.profiles WHERE email = 'gedu@example.com');
   v_date  date := (SELECT dd::date
                      FROM generate_series(current_date, current_date + 14, interval '1 day') dd
                     WHERE EXTRACT(ISODOW FROM dd) = 2
                     ORDER BY dd LIMIT 1);
 BEGIN
   PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', '11111111-1111-4111-8111-000000000001',
-                      'role', 'authenticated')::text, true);
+    json_build_object('sub', v_gedu::text, 'role', 'authenticated')::text, true);
   PERFORM public.request_session_substitution(
     v_group, v_date, 'sick'::public.substitution_reason,
     'Down with flu, should be back the following week.');
@@ -1199,7 +1310,8 @@ COMMIT;
 -- product, which is what makes her eligible.
 BEGIN;
 SELECT set_config('request.jwt.claims',
-  json_build_object('sub', '00000000-0000-0000-0000-000000000001',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
                     'role', 'authenticated')::text, true);
 SET LOCAL ROLE authenticated;
 
@@ -1208,8 +1320,8 @@ DECLARE
   v_group uuid := (SELECT g.id FROM public.product_groups g
                      JOIN public.product_translations t
                        ON t.product_id = g.product_id AND t.locale = 'en'
-                    WHERE t.name = 'Minecraft Java Club (Tuesdays)'
-                      AND g.name = 'Tiistai A');
+                    WHERE t.name = 'Minecraft Java Club'
+                      AND g.name = 'Ryhmä A');
   -- The same date the request above was filed for, derived the same way: the
   -- requests table carries no read grant for `authenticated`, so there is
   -- nothing to look the answer up in.
@@ -1221,8 +1333,8 @@ BEGIN
   IF v_date IS NOT NULL THEN
     PERFORM public.set_session_substitution(
       v_group, v_date,
-      '11111111-1111-4111-8111-000000000001',
-      '11111111-1111-4111-8111-000000000003');
+      (SELECT id FROM public.profiles WHERE email = 'gedu@example.com'),
+      (SELECT id FROM public.profiles WHERE email = 'sofia.nieminen@example.com'));
   END IF;
 END;
 $$;
