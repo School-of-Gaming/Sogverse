@@ -375,6 +375,15 @@ jobs:
           python3 scripts/local-db/split-schema.py --strict \
             /tmp/schema-from-migrations /tmp/schema-from-migrations.sql
 
+          # The same catalog rendering the local command runs, from the same
+          # checked-out script and into the same subdirectory of the tree that is
+          # compared below — so what a dump of `public` cannot see (extensions,
+          # the auth.users trigger, the storage.objects policies, the bucket and
+          # cron rows, the realtime publication) is covered by the existing
+          # comparison and artifact with nothing else to keep in step.
+          python3 scripts/local-db/outside-public.py "$CONTAINER" \
+            /tmp/schema-from-migrations/outside-public
+
       - name: Upload the schema directory generated from migrations
         if: always()
         uses: actions/upload-artifact@v6

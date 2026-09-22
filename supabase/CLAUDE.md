@@ -35,8 +35,9 @@ hold the live state, and between them they cover almost everything:
   `tables/<table>.sql` (the table with its indexes, constraints, policies, triggers,
   grants and comments), `views/<view>.sql` (the view with its grants and comments),
   `functions/<function>.sql` (definition, grants, comment — an overload gets a suffixed
-  file), `types/enums-and-types.sql`, and `misc/schema.sql` for the schema's own block
-  and default privileges.
+  file), `types/enums-and-types.sql`, `misc/schema.sql` for the schema's own block
+  and default privileges, and `outside-public/` for everything a dump of `public`
+  cannot reach (below).
 
 Both are written by `npm run db -- generate` from a database built out of *this
 checkout's* `migrations/`, never reconstructed by hand, and both are committed by the
@@ -96,20 +97,30 @@ even as a shortcut when a hosted database hasn't been updated yet: regenerate it
 `npm run db -- generate`. After regenerating, check whether new tables or enums need
 aliases added to `src/types/index.ts`.
 
-### Objects that live outside `public` (not in `supabase/schema/`)
+### Objects that live outside `public` (`supabase/schema/outside-public/`)
 
-A few objects live **outside** the `public` schema and are therefore **not** in
-`supabase/schema/` — so you have to be aware they exist or you'll assume the directory is
-the whole story when it isn't. These are: extensions the migrations create, triggers
-attached to `auth.users` (e.g. the new-user → profile handler), RLS policies on
-`storage.objects`, the tables in the `supabase_realtime` publication, and the rows that
-define storage buckets and pg_cron jobs (those last aren't even DDL — they're rows in
-`storage.buckets`/`cron.job` — so no dump captures them). This is a small, stable set
-that rarely changes. For *only* these,
-current state lives in migration history: grep **every** migration touching the object
-and trust the **newest** one. Do not hardcode a migration version for them
-anywhere — the correct file moves the moment one is superseded, which is the staleness
-trap this rule exists to avoid.
+The bulk of `supabase/schema/` is a dump of the `public` schema, which cannot see
+anything a migration created elsewhere. Those objects are read out of the catalog by the
+same `generate` command and land in `supabase/schema/outside-public/`, one file per
+class — read them as you read the rest of the directory:
+
+| File | What it holds |
+|---|---|
+| `extensions.sql` | every installed extension, its schema and version |
+| `auth-users-triggers.sql` | triggers on `auth.users` — the new-user → profile handler |
+| `storage-objects-policies.sql` | the RLS policies on `storage.objects` |
+| `storage-buckets.sql` | the storage buckets |
+| `cron-jobs.sql` | the scheduled pg_cron jobs |
+| `realtime-publication.sql` | the tables in the `supabase_realtime` publication |
+
+Buckets and cron jobs are **rows**, in `storage.buckets` and `cron.job` — no dump of any
+schema carries them, so those two files render the rows as the statements that would put
+them back.
+
+**These files list everything the catalog holds, the platform's objects as well as
+ours.** Nothing can tell an extension a migration installed from one the image was born
+with, and guessing is what kept this content out of the directory in the first place. So
+a CLI version bump moves these files, and that is exactly when they should move.
 
 ## CLI version
 

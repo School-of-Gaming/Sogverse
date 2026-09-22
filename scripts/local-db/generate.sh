@@ -110,6 +110,14 @@ docker exec "supabase_db_$project" pg_dump -U postgres -d postgres \
 # either way, so the message can be read against the files it produced.
 python3 "$here/split-schema.py" --strict "$work/schema" "$work/schema.sql"
 
+# What the dump of `public` cannot see: the extensions, the trigger on
+# auth.users, the policies on storage.objects, the bucket and cron rows, and the
+# realtime publication's membership. Read out of the catalog of the same
+# database the dump came from, and written into the same staging tree, so the
+# swap below carries them with the rest. CI runs this identical script against
+# its own stack.
+python3 "$here/outside-public.py" "supabase_db_$project" "$work/schema/outside-public"
+
 cp "$work/database.types.ts" "$checkout/src/types/database.types.ts"
 
 # Replaced rather than written over: an object dropped by a migration has to
