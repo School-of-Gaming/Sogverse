@@ -27,7 +27,7 @@ BEGIN
   -- @gamer.sogverse.internal handle nobody will ever click a link in, so "0
   -- verified" would report a problem that does not exist. A gamer in mode
   -- `email` holds a real mailbox and counts exactly like everyone else — which
-  -- is why the test below is the ADDRESS and not the role (00235). `certified`
+  -- is why the test below is the ADDRESS and not the role. `certified`
   -- is the same NULL-means-no-meaning shape for a simpler reason: only an
   -- educator can be certified.
   --
@@ -80,18 +80,18 @@ BEGIN
   -- row that is not there. Missing means excluded; the queue is for accounts that
   -- exist and are waiting.
   --
-  -- `contract_accepted_at` (00201) is the candidate's standing against the
+  -- `contract_accepted_at` is the candidate's standing against the
   -- CURRENT contract version, or NULL. It informs the certification decision and
   -- does not gate it — an unsigned candidate is still certifiable, and the admin
   -- is the one who decides what to make of the gap.
   --
-  -- Standing is judged on the BASE version (00202): a version string is
+  -- Standing is judged on the BASE version: a version string is
   -- `<base>/<language>` and the languages of one version are the same agreement,
   -- so signing either makes a candidate current. min() because a candidate may
   -- hold both languages' rows — the first signature is the moment they agreed,
   -- and a scalar subquery would error rather than answer.
   --
-  -- `criminal_record_check_at` (00213) is when an admin recorded seeing this
+  -- `criminal_record_check_at` is when an admin recorded seeing this
   -- candidate's criminal record extract, or NULL if none has been recorded. The
   -- flag beside it is deliberately not shipped: the stamp is non-NULL exactly
   -- when the flag is true, so a second field could only ever contradict the
@@ -141,14 +141,13 @@ BEGIN
   --                           seats have not all been offered to somebody. Only
   --                           meaningful on a capped product with the queue
   --                           switched on. NULL when there is nothing to say.
-  --   * `empty_groups_without_gedu` (00241) — a group with no educator AND no
-  --                           active member. An admin pre-building next term's
-  --                           groups has not made a mistake, which is why this is
-  --                           a SEPARATE and LOWER-ranked kind rather than part
+  --   * `empty_groups_without_gedu` — a group with no educator AND no active
+  --                           member. An admin pre-building next term's groups
+  --                           has not made a mistake, which is why this is a
+  --                           SEPARATE and LOWER-ranked kind rather than part
   --                           of the one above — but it is still a loose end
-  --                           somebody has to come back to, so it is named rather
-  --                           than carved out of the group check, which is what
-  --                           it was before this migration.
+  --                           somebody has to come back to, so it is named
+  --                           rather than carved out of the group check.
   --   * `missing_gedu_fee`  — NULL, not zero. Zero is a volunteer session, which
   --                           is a decision somebody made; NULL is a blank field.
   --                           The assistant fee is never flagged — NULL there
@@ -187,7 +186,7 @@ BEGIN
                              'waitlist_count',   wl.waitlist_count,
                              'open_seats',       wl.open_seats,
                              -- How many of those open seats already have a
-                             -- family thinking about them (00207). Emitted so
+                             -- family thinking about them. Emitted so
                              -- the page can say why the number of open seats
                              -- and the size of the queue do not by themselves
                              -- explain the flag.
@@ -238,8 +237,8 @@ BEGIN
                           )
                  ), '[]'::jsonb) AS items
         ) gw
-        -- The same question asked of the OTHER half of the unstaffed groups
-        -- (00241): no educator, and nobody in it either. Deliberately a second
+        -- The same question asked of the OTHER half of the unstaffed groups:
+        -- no educator, and nobody in it either. Deliberately a second
         -- lateral with an inverted membership test rather than a flag on the one
         -- above, because the page ranks the two differently and one wire fact per
         -- kind of wrong is what its ranking maps over. The EXISTS / NOT EXISTS
@@ -264,7 +263,7 @@ BEGIN
                  ), '[]'::jsonb) AS items
         ) eg
         -- The waitlist flag asks "is there something for an admin to do here",
-        -- not "is this product in an interesting state" (00207). An open seat
+        -- not "is this product in an interesting state". An open seat
         -- that has already been offered to a family is being dealt with, so it
         -- is subtracted before the comparison; a product whose every open seat
         -- carries a live offer drops out of the queue entirely. When that family

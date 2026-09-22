@@ -11,7 +11,7 @@ DECLARE
   v_missing  text[];
 BEGIN
   -- FIRST, before anything reads the product: an array carrying a NULL element
-  -- is refused outright (00211). A NULL is not a slug, so it can never be an
+  -- is refused outright. A NULL is not a slug, so it can never be an
   -- agreement to a document, and the only thing it has ever been good for is
   -- turning the membership test below into a three-valued expression that
   -- answers "nothing is missing" for a caller who agreed to nothing.
@@ -41,8 +41,8 @@ BEGIN
   -- who sent an empty array are making the same claim, and both must be refused
   -- with the same message naming what is missing.
   --
-  -- NOT EXISTS rather than 00210's `NOT (r = ANY (...))` (00211): the ANY form
-  -- is three-valued and a NULL element makes it answer NULL instead of false for
+  -- NOT EXISTS rather than `NOT (r = ANY (...))`: the ANY form is three-valued
+  -- and a NULL element makes it answer NULL instead of false for
   -- every required document, which drops every row from this ARRAY() and
   -- reports that nothing is missing. This form is two-valued — a NULL element
   -- fails `c = r` and contributes nothing — so a required document with no

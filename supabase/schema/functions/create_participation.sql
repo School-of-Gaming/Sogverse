@@ -110,7 +110,7 @@ BEGIN
     END IF;
   END IF;
 
-  -- THE ENROLMENT CONDITIONS (00210). Every gate above has passed and a seat is
+  -- THE ENROLMENT CONDITIONS. Every gate above has passed and a seat is
   -- available, so this signup is one the platform will accept — which is
   -- precisely when the product's required consents bind. Raises check_violation
   -- naming any document the caller did not agree to; otherwise writes one
@@ -120,7 +120,7 @@ BEGIN
   -- here. A no-op for the overwhelming majority of products, which require
   -- nothing.
   --
-  -- The customer is BOTH the agreeing party and the actor on this path (00212):
+  -- The customer is BOTH the agreeing party and the actor on this path:
   -- a parent enrolling their own child ticked the boxes themselves, which is
   -- exactly what distinguishes these rows from the ones an admin writes through
   -- admin_enroll_participant.
@@ -129,7 +129,7 @@ BEGIN
     p_consented_documents
   );
 
-  -- AUTOMATIC PLACEMENT (00206), for the two branches below that seat somebody
+  -- AUTOMATIC PLACEMENT, for the two branches below that seat somebody
   -- on the spot. A no-charge product with exactly one group has no placement
   -- decision left in it, so the seat goes straight into that group instead of
   -- into the unassigned inbox; zero groups has nowhere to put anyone, and two

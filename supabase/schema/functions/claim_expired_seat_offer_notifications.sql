@@ -51,8 +51,9 @@ BEGIN
   -- again next time while everybody behind them waits a second round for an
   -- answer that never comes.
   --
-  -- `clock_timestamp()`, NOT `now()`, and that is the 00117 rule rather than a
-  -- preference: `waitlisted_at` is the key that ORDERS ROWS AGAINST EACH OTHER,
+  -- `clock_timestamp()`, NOT `now()`, which is this schema's rule for every
+  -- cross-transaction ordering key rather than a preference: `waitlisted_at`
+  -- is the key that ORDERS ROWS AGAINST EACH OTHER,
   -- and `now()` is frozen at transaction start — so a platform-wide sweep
   -- claiming three lapsed offers in one statement would stamp all three
   -- identically and leave their new order to the `id` tiebreaker rather than to

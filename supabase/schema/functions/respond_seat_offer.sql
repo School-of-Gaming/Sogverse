@@ -28,8 +28,8 @@ BEGIN
   -- The same gate lock, so an admin drag-promoting this very row and a parent
   -- pressing Accept cannot both write it. The id is selected rather than any
   -- column of interest because the lock is the whole point of the statement:
-  -- since 00256 there is no stored status to carry back, the product's lifecycle
-  -- being derived from dates nobody is racing us to write.
+  -- there is no stored status to carry back, the product's lifecycle being
+  -- derived from dates nobody is racing us to write.
   SELECT id INTO v_locked_product_id
     FROM public.products WHERE id = v_product_id FOR UPDATE;
 

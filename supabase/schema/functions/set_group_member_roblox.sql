@@ -18,7 +18,7 @@ BEGIN
 
   -- Actor AND target: the participant must be actively participating in a group
   -- the caller is assigned to. A gedu may fix a username for the people they
-  -- teach and for nobody else. An admin passes it outright (00205) — see the
+  -- teach and for nobody else. An admin passes it outright — see the
   -- Minecraft twin above for why.
   IF NOT public.is_admin() AND NOT EXISTS (
     SELECT 1
@@ -42,7 +42,7 @@ BEGIN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 
-  -- Target must be a GAMER (00177). A game account is a child's; an adult seat
+  -- Target must be a GAMER. A game account is a child's; an adult seat
   -- carries none and the roster renders that slot empty by design, so a row
   -- keyed to a customer would be an orphan the admin twin already refuses to
   -- write. The scope check above does not care about the target's role, so this

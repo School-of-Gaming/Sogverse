@@ -20,7 +20,7 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
 
-  -- image_path is absent from this INSERT on purpose (00198): a product's
+  -- image_path is absent from this INSERT on purpose: a product's
   -- picture is the catalogue entry it points at, the route writes image_id in
   -- its own statement after this one, and the trigger on products derives the
   -- served path from it.
@@ -47,7 +47,7 @@ BEGIN
     -- NOT coalesced: the column is NOT NULL, so an explicit null is refused
     -- loudly rather than silently becoming false.
     p_requires_gamer_creations,
-    -- The Fennoa customer (00268). Null is the ordinary state and the CHECK
+    -- The Fennoa customer. Null is the ordinary state and the CHECK
     -- refuses one on any product that is not a municipality club.
     p_invoice_customer_id
   )
@@ -102,7 +102,7 @@ BEGIN
     END LOOP;
   END IF;
 
-  -- The enrolment conditions (00210). Delegated rather than written inline
+  -- The enrolment conditions. Delegated rather than written inline
   -- because this function is SECURITY INVOKER and product_required_consents
   -- carries no write grant for `authenticated` — the guarded DEFINER writer is
   -- what makes that possible. Unconditional: NULL means "requires nothing",

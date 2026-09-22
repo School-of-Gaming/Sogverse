@@ -22,9 +22,8 @@ BEGIN
   -- No caller, no answer. This function is scoped entirely to auth.uid(); with
   -- no uid there is nobody for it to be scoped TO, so there is no correct
   -- document to return and the only safe reply is a refusal. Checked FIRST and
-  -- on its own, rather than folded into the predicate below, because the whole
-  -- failure 00152 exists to fix was a NULL uid disappearing into a larger
-  -- boolean expression.
+  -- on its own, rather than folded into the predicate below, where a NULL uid
+  -- would disappear into a larger boolean expression instead of refusing.
   IF v_uid IS NULL THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
@@ -79,7 +78,7 @@ BEGIN
   -- The product shell. Names live in product_translations, not on `products`,
   -- so the translations array IS the name. `material_url` lives on
   -- product_staff_details and this query does not join it. The requirement flag
-  -- (00227) is not selected either, and its absence here is the enforcement: it
+  -- is not selected either, and its absence here is the enforcement: it
   -- is staff-facing, and a family sees nothing different on a flagged product.
   SELECT jsonb_build_object(
     'id',           p.id,
@@ -153,7 +152,7 @@ BEGIN
        WHERE ga.group_id = v_group_id
     ) AS gedu_rows;
 
-  -- THIS participant's creations in THIS group, and nobody else's (00227). A
+  -- THIS participant's creations in THIS group, and nobody else's. A
   -- flat array on the document rather than a map keyed by participant, so
   -- another child's work has nowhere to live here BY TYPE — the same move
   -- `attendance` makes below, where the gedu feed carries a map and this
@@ -170,7 +169,8 @@ BEGIN
 
   -- The group's whole stored history, newest first — including sessions that
   -- predate this participant's enrolment, and including rows the schedule no
-  -- longer projects. See 00151's header for why there is no window here.
+  -- longer projects. There is deliberately no window here: what is stored is
+  -- what travels.
   --
   -- `report` and nothing else of the two note fields. `attendance` is ONE
   -- answer — this participant's — rather than the gedu feed's map over the
@@ -178,7 +178,7 @@ BEGIN
   -- rather than merely unrendered. NULL means unmarked, which is a third state
   -- and not the same claim as 'absent'.
   --
-  -- The two `updated_by*` keys are 00194's widening, and the name travels per
+  -- The two `updated_by*` keys ride on every session, and the name travels per
   -- session rather than being resolved against `gedus` above because the sets
   -- genuinely differ: the gedu who wrote up September may not teach the group in
   -- November, and resolving against the current list would leave the oldest
@@ -186,7 +186,7 @@ BEGIN
   -- author — an attendance mark moves it — which is a limitation this document
   -- states rather than hides.
   --
-  -- `images` is 00222's. Same shape as the gedu and admin documents' —
+  -- `images` has the same shape as the gedu and admin documents' —
   -- {id, width, height}, ordered by (created_at, id) — because one shared
   -- gallery component renders them all. The uploader does not travel: it is
   -- safeguarding audit, and a family surface is the last place for it.

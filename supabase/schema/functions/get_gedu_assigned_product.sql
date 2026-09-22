@@ -71,7 +71,7 @@ BEGIN
     'start_date',   p.start_date,
     'end_date',     p.end_date,
     'is_remote',    p.is_remote,
-    -- 00227, in shell parity with get_gedu_group_feed's for the same reason the
+    -- In shell parity with get_gedu_group_feed's, for the same reason the
     -- rosters are in parity: the page composes both documents.
     'requires_gamer_creations', p.requires_gamer_creations,
     'translations', COALESCE((
@@ -117,9 +117,9 @@ BEGIN
         'name',          pg.name,
         'created_at',    pg.created_at,
         'is_my_group',   (pg.id = v_my_group_id),
-        -- Every active seat on the group, whoever holds it. Spelled for a gamer
-        -- until 00175, at which point counting an adult parent under that name
-        -- became a lie the badge repeated on screen.
+        -- Every active seat on the group, whoever holds it — named for the
+        -- participant rather than for a gamer, because an adult parent can hold
+        -- one and a gamer-shaped name would be a lie the badge repeats on screen.
         'participant_count',   (
           SELECT COUNT(*)::INTEGER
             FROM participations part
@@ -170,23 +170,23 @@ BEGIN
                          -- deliberately rather than left out: one roster shape
                          -- with two definitions is how the two drift, and the
                          -- next reader would delete the wrong one. Do not
-                         -- remove this as unused. The role check (00177) keeps
-                         -- it in step with the feed: an id transposition yields
-                         -- NULL rather than a gamer's synthetic handle.
+                         -- remove this as unused. The role check keeps it in
+                         -- step with the feed: an id transposition yields NULL
+                         -- rather than a gamer's synthetic handle.
                          'participant_email',
                            CASE WHEN part.participant_id = part.customer_id
                                  AND gmp.role = 'customer'
                                 THEN gmp.email END,
-                         -- The staff-only flair (00203). Emitted for every
-                         -- roster row, note or no note, stamp or no stamp. The
+                         -- The staff-only flair. Emitted for every roster row,
+                         -- note or no note, stamp or no stamp. The
                          -- join stamp is a FACT and the clubs-only newcomer
                          -- rule is a PRESENTATION rule applied client-side, so
                          -- nothing here is nulled out by product type.
                          'group_joined_at',            part.group_joined_at,
                          'note',                       gn.note,
                          'note_updated_by_first_name', ned.first_name,
-                         -- 00227, in parity with the feed's roster. Always an
-                         -- array, never null.
+                         -- In parity with the feed's roster. Always an array,
+                         -- never null.
                          'creations',                  COALESCE(gc.creations, '[]'::jsonb)
                        )
                        ORDER BY gmp.first_name

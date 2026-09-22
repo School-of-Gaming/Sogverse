@@ -69,7 +69,7 @@ BEGIN
                      -- shows an address instead. NULL on every child row: a
                      -- gamer profile's email is the synthetic
                      -- @gamer.sogverse.internal handle, not a mailbox. The role
-                     -- check (00177) makes "adult seat" the ROLE, not the id
+                     -- check makes "adult seat" the ROLE, not the id
                      -- equality alone — a transposed id yields NULL, not a leak.
                      'participant_email',
                        CASE WHEN p.participant_id = p.customer_id
@@ -82,17 +82,17 @@ BEGIN
                      -- The join below excludes dead subscriptions, so this is
                      -- "live", not "ever existed".
                      'has_live_subscription',          (fs.id IS NOT NULL),
-                     -- The promote dialog's condition (00167): money once
-                     -- arrived for this seat.
+                     -- The promote dialog's condition: money once arrived for
+                     -- this seat.
                      'has_payment_marker',             (p.stripe_checkout_session_id IS NOT NULL),
-                     -- The staff-only flair (00203), identical in all three
+                     -- The staff-only flair, identical in all three
                      -- arms. The groups PANEL draws neither mark — a chip there
                      -- is a drag handle — so these ride for shape parity across
                      -- the three roster readers, not for a reader of this one.
                      'group_joined_at',                p.group_joined_at,
                      'note',                           gn.note,
                      'note_updated_by_first_name',     ned.first_name,
-                     -- The seat-offer stamps (00207), identical in all three
+                     -- The seat-offer stamps, identical in all three
                      -- arms for the same reason. NULL here and on the
                      -- unassigned arm by construction — the CHECK forbids an
                      -- offer stamp on anything but a waitlisted row — and read
@@ -207,9 +207,9 @@ BEGIN
   -- client-side — never stored. waitlisted_at drives ORDER BY but is omitted
   -- from the object so the row shape stays identical to a group/unassigned chip.
   --
-  -- has_live_subscription is a REAL READ here as of 00170. It used to be a
-  -- constant FALSE, resting on "demote_to_waitlist refuses a subscribed row, so
-  -- this cannot exist". It can: the webhook inserts family_subscriptions after a
+  -- has_live_subscription is a REAL READ here, not the constant FALSE that
+  -- "demote_to_waitlist refuses a subscribed row, so this cannot exist" would
+  -- allow. It can exist: the webhook inserts family_subscriptions after a
   -- Stripe round trip without taking the product gate lock, so a demote landing
   -- in that window creates exactly this row — and the manual sub-adoption
   -- process writes one directly. A snapshot asserting FALSE about a seat that
@@ -221,7 +221,7 @@ BEGIN
   -- family that paid and was later demoted is distinguishable here from one
   -- that only ever queued.
   --
-  -- The two seat-offer stamps (00207) are the same story one step further on:
+  -- The two seat-offer stamps are the same story one step further on:
   -- this is the ONLY arm where either can be non-NULL, and the waitlist card is
   -- the only reader of them. They ride on the other two arms for shape parity.
   SELECT COALESCE(jsonb_agg(

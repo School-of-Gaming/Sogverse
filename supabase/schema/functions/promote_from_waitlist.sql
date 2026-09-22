@@ -42,7 +42,7 @@ BEGIN
   -- they leave the waitlist ordering. The uq_participations_active_or_waitlisted
   -- index already guaranteed no other in-set row exists for this (product,gamer).
   --
-  -- The two offer stamps go with it (00207). An admin dragging a row that
+  -- The two offer stamps go with it. An admin dragging a row that
   -- carries a live offer is answering it on the family's behalf — granting
   -- exactly the seat the offer asked about — so the offer is over, and the
   -- emailed link stops validating on its own because it no longer matches. The

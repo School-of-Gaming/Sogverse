@@ -35,7 +35,7 @@ matched AS (
          h.match_rank
     FROM (
       -- ARM 1 — the stored fold: canonical name, name_i18n alternates, official
-      -- code. Unchanged from 00155.
+      -- code.
       SELECT
         l.id, l.name, l.name_i18n, l.type, l.parent_id, l.country_code,
         l.external_code, l.depth,

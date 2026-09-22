@@ -63,7 +63,8 @@ BEGIN
   END IF;
 
   -- Back of the line: clock_timestamp() under the gate lock is monotonic with
-  -- real ordering (00117 rule). Clear group_id — waitlisted gamers aren't grouped.
+  -- real ordering, the rule for every cross-transaction ordering key. Clear
+  -- group_id — waitlisted gamers aren't grouped.
   v_now := clock_timestamp();
   UPDATE public.participations
      SET status = 'waitlisted',

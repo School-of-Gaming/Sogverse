@@ -81,7 +81,7 @@ BEGIN
     );
   END IF;
 
-  -- THE ENROLMENT CONDITIONS (00210), below the idempotency return so a replay
+  -- THE ENROLMENT CONDITIONS, below the idempotency return so a replay
   -- records nothing: the same enrolment agreed once. Raises check_violation
   -- naming any required document the caller did not agree to; otherwise writes
   -- one acceptance row per required document at its current version. Joining a
@@ -89,7 +89,7 @@ BEGIN
   -- first time at promotion would ask a family to agree at the moment they are
   -- least able to decline.
   --
-  -- The customer is both the agreeing party and the actor (00212), for the
+  -- The customer is both the agreeing party and the actor, for the
   -- reason create_participation states.
   PERFORM public.record_required_consents(
     p_product_id, p_customer_id, p_participant_id, p_customer_id,

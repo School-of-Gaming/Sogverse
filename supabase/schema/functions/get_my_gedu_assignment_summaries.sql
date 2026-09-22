@@ -60,9 +60,9 @@ BEGIN
                -- date, standing from approval until the substitution expires.
                'kind',                    a.kind,
                'substitution_date',            a.substitution_date,
-               -- Renamed from group_gamer_count in 00175: the count is every
-               -- active seat on the group, and since 00173 one of those can be
-               -- an adult.
+               -- The count is every active seat on the group, and one of those
+               -- can be an adult — which is why it is named for the
+               -- participant rather than for a gamer.
                --
                -- It is the WHOLE current roster and stays that way. "How many
                -- gamers are in my group" is a fact about the group today, not
@@ -93,7 +93,7 @@ BEGIN
            AND part.status   = 'active'::public.participation_status
       ) AS roster
 
-      -- The run's FINAL computed occurrence (00227), which is the only session
+      -- The run's FINAL computed occurrence, which is the only session
       -- the creations condition below can attach to. NULL for an open-ended
       -- product, and NULL for a run whose schedule projects nothing at all;
       -- either way the equality below never holds and nothing ever owes.
@@ -262,8 +262,8 @@ BEGIN
            -- from the feed document — and the two must agree, or the dashboard
            -- badge counts a session the card calls finished. Changing either
            -- half means changing both, in the same commit. That includes the
-           -- CREATIONS condition (4) below — which, since 00243, is scoped by
-           -- the same join-date test (1) is — and which members a session is
+           -- CREATIONS condition (4) below — which is scoped by the same
+           -- join-date test (1) is — and which members a session is
            -- FOR at all: the TS side asks the same question of the same
            -- instant, with the same inclusive boundary, in both conditions.
            AND (
@@ -273,12 +273,12 @@ BEGIN
              -- occurrence ended, and they are compared against how many such
              -- members there are.
              --
-             -- Before 00243 this compared every mark against the whole current
-             -- roster, so placing a member into a group reopened every session
-             -- in its history and the only way to clear the alert was to record
-             -- an absence that never happened. The reasoning was that nobody
-             -- had yet said whether that child was there; there was no question
-             -- to answer, because they were not in the group.
+             -- Comparing every mark against the whole current roster instead
+             -- would mean that placing a member into a group reopens every
+             -- session in its history, with no way to clear the alert but to
+             -- record an absence that never happened: nobody had yet said
+             -- whether that child was there, because they were not in the
+             -- group.
              --
              -- Still measured against the CURRENT roster rather than the stored
              -- map's keys, which is a different rule and unchanged: a member
@@ -311,7 +311,7 @@ BEGIN
                   AND gs3.session_date = occurrence.session_date
                   AND btrim(COALESCE(gs3.report, ''), E' \t\r\n\v\f') <> ''
              )
-             -- (3) The families have not been told it is there (00197).
+             -- (3) The families have not been told it is there.
              -- Writing the report is half the job; a report nobody was mailed
              -- about is a report nobody reads, so a session stays owed until
              -- the send has been claimed.
@@ -327,7 +327,7 @@ BEGIN
                   AND gs4.report_emailed_at IS NOT NULL
              )
              -- (4) The FINAL session of a product that requires creations, with
-             -- somebody on the current roster who has none (00227). Creations
+             -- somebody on the current roster who has none. Creations
              -- are part of the last session's work, so this fires on exactly one
              -- occurrence per run and only once that occurrence has finished —
              -- which is free, because every member of this set has finished.

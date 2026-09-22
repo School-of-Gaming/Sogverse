@@ -132,7 +132,10 @@ made over sixty bot commits to keep `schema.sql` current.
     section; `seed.sql` is the default, and stays the default). A second,
     rich example seed builds a realistic catalogue for previews through the admin RPCs;
     only the local stack script applies it. It exists to help a human review UI, so
-    CI never touches it.
+    CI never touches it. (Owner ruling, 2026-09-22: the two are never layered. A stack
+    carries one or the other — the rich seed alone by default, `seed.sql` alone with
+    `up --no-rich-seed` — because what a DB test wants in its data and what a human
+    wants in an example are different things.)
 12. **The numbered history is squashed into a baseline**, once, right after a release,
     covering exactly the migrations prod has applied. On prod and staging only the
     migration history table is edited; no SQL of the baseline runs on either.

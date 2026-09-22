@@ -9,12 +9,12 @@ CREATE FUNCTION public.admin_set_product_gamer_photo_consents(p_product_id uuid,
 BEGIN
   PERFORM public.assert_admin();
 
-  -- A NULL element is refused BEFORE the replacing DELETE, which is 00211's
-  -- lesson carried over verbatim: `NOT (col = ANY (array))` is three-valued, so
-  -- an array holding a NULL makes the predicate match nothing and quietly
-  -- degrades a wipe-and-replace into a merge. `unnest(NULL::…[])` yields no
-  -- rows, so an omitted array — the ordinary "asks nothing" shape — passes
-  -- straight through here.
+  -- A NULL element is refused BEFORE the replacing DELETE, the rule every
+  -- array-replacing writer in this schema follows: `NOT (col = ANY (array))`
+  -- is three-valued, so an array holding a NULL makes the predicate match
+  -- nothing and quietly degrades a wipe-and-replace into a merge.
+  -- `unnest(NULL::…[])` yields no rows, so an omitted array — the ordinary
+  -- "asks nothing" shape — passes straight through here.
   IF EXISTS (
     SELECT 1 FROM unnest(p_consent_types) AS c WHERE c IS NULL
   ) THEN

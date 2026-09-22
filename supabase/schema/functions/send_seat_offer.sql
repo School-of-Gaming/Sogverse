@@ -49,14 +49,12 @@ BEGIN
   -- nothing: free products, and the municipality clubs we invoice the
   -- municipality for.
   --
-  -- Asked through `public.is_no_charge` (00206) rather than spelled out as an
-  -- IN-list, so the two-versus-paid question has ONE spelling in this database:
-  -- widening the no-charge set must not leave this gate behind. 00206 sorts
-  -- before this file, so the helper exists by the time a from-scratch build runs
-  -- this line — there is no ordering hazard, and none of the other seat-offer
-  -- functions needs the helper (`respond_seat_offer` deliberately never reads
-  -- billing mode at all — see the header — and the dashboard's live-offer read
-  -- asks about offers, not about price).
+  -- Asked through `public.is_no_charge` rather than spelled out as an IN-list,
+  -- so the two-versus-paid question has ONE spelling in this database:
+  -- widening the no-charge set must not leave this gate behind. None of the
+  -- other seat-offer functions needs the helper (`respond_seat_offer`
+  -- deliberately never reads billing mode at all — see the header — and the
+  -- dashboard's live-offer read asks about offers, not about price).
   IF NOT public.is_no_charge(v_product.billing_mode) THEN
     RAISE EXCEPTION 'seat offers are only made on no-charge products'
       USING ERRCODE = 'check_violation';

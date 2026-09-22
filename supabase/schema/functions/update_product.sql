@@ -34,32 +34,31 @@ BEGIN
   -- Every editable column is assigned on every call, which is why a new column
   -- has to reach this statement in the same change that adds it — a column this
   -- function does not know about is nulled by the next admin edit. `tag` is the
-  -- one 00178 added, and it is the case that shows why the rule needs stating:
-  -- its parameter is defaulted, so an omitting caller clears the tag silently
-  -- and legally. That is the intended way to clear one; what stops it happening
-  -- by accident is the wire schema demanding the field on every update.
-  -- `region_lock_country` (00193) is the same shape for the same reasons, and a
-  -- region lock is editable for a product's whole life on purpose: it gates
-  -- future enrolments only and never revisits an existing seat.
-  -- `requires_gamer_creations` (00227) obeys the same rule with one difference:
-  -- its parameter defaults FALSE, not null, because the column is NOT NULL — so
-  -- an omitting caller UNFLAGS the product rather than failing, which is the
-  -- same "omission clears it" semantics `tag` has, and the same required wire
-  -- field is what keeps it deliberate.
-  -- `invoice_customer_id` (00268) is `tag`'s shape exactly: a defaulted
-  -- parameter whose omission clears the club's Fennoa customer, kept deliberate
-  -- by a required-nullable wire field. Editable for a club's whole life, because
-  -- who buys a club can genuinely change between terms.
+  -- case that shows why the rule needs stating: its parameter is defaulted, so
+  -- an omitting caller clears the tag silently and legally. That is the
+  -- intended way to clear one; what stops it happening by accident is the wire
+  -- schema demanding the field on every update.
+  -- `region_lock_country` is the same shape for the same reasons, and a region
+  -- lock is editable for a product's whole life on purpose: it gates future
+  -- enrolments only and never revisits an existing seat.
+  -- `requires_gamer_creations` obeys the same rule with one difference: its
+  -- parameter defaults FALSE, not null, because the column is NOT NULL — so an
+  -- omitting caller UNFLAGS the product rather than failing, which is the same
+  -- "omission clears it" semantics `tag` has, and the same required wire field
+  -- is what keeps it deliberate.
+  -- `invoice_customer_id` is `tag`'s shape exactly: a defaulted parameter whose
+  -- omission clears the club's Fennoa customer, kept deliberate by a
+  -- required-nullable wire field. Editable for a club's whole life, because who
+  -- buys a club can genuinely change between terms.
   --
   -- `start_date` is the one editable column omission cannot clear: the column
-  -- is NOT NULL (00279), so an omitting caller is refused by the column rather
-  -- than quietly blanking the date on a club that is already running.
+  -- is NOT NULL, so an omitting caller is refused by the column rather than
+  -- quietly blanking the date on a club that is already running.
   --
   -- `image_path` is the one editable-looking column this statement must NOT
-  -- name, and 00198 removed the assignment along with the parameter that fed
-  -- it. It is derived from image_id by trg_products_apply_image_path, which
-  -- runs on this very UPDATE; assigning it here only ever wrote a value the
-  -- trigger overwrote a moment later.
+  -- name: it is derived from image_id by trg_products_apply_image_path, which
+  -- runs on this very UPDATE, so assigning it here would only ever write a
+  -- value the trigger overwrote a moment later.
   UPDATE public.products SET
     billing_mode             = p_billing_mode,
     topic                    = p_topic,
@@ -108,8 +107,8 @@ BEGIN
   -- anything at all on the product clears it.
   --
   -- THE CARVE-OUT: never delete a row that carries a LIVE subscription
-  -- (00170's predicate — a family_subscriptions row with status <>
-  -- 'cancelled'; a dunning-dead one is not live and does not protect the row).
+  -- (a family_subscriptions row with status <> 'cancelled'; a dunning-dead one
+  -- is not live and does not protect the row).
   -- The FK is ON DELETE CASCADE, so dropping such a row would delete our only
   -- record of a subscription Stripe keeps billing — the exact hazard
   -- demote_to_waitlist and admin_remove_participation refuse for. A waitlisted
@@ -206,7 +205,7 @@ BEGIN
     END LOOP;
   END IF;
 
-  -- product_required_consents — wipe and replace (00210), through the join
+  -- product_required_consents — wipe and replace, through the join
   -- table's single guarded writer. NULL clears the set, which is the only
   -- expressible way to clear one and is why the wire schema demands the field
   -- on every update. Existing consent_acceptances are untouched: dropping a

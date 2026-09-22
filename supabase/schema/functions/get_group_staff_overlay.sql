@@ -51,8 +51,8 @@ BEGIN
            'group_joined_at',            part.group_joined_at,
            'note',                       n.note,
            'note_updated_by_first_name', ed.first_name,
-           -- 00227. Always an array, never null: absence of a row means an
-           -- empty list, and the reader should not have to know that.
+           -- Always an array, never null: absence of a row means an empty
+           -- list, and the reader should not have to know that.
            'creations',                  COALESCE(cr.creations, '[]'::jsonb)
          )), '{}'::jsonb)
     INTO v_members

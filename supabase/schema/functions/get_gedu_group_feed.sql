@@ -54,7 +54,7 @@ BEGIN
     -- Gedu-only, and stored somewhere only this function and an admin can
     -- reach. This document is never served to a parent or a gamer.
     'material_url', psd.material_url,
-    -- 00227. Staff-facing only, and the one thing a client needs before it can
+    -- Staff-facing only, and the one thing a client needs before it can
     -- decide that the final session owes creations: the condition is derived on
     -- the client from this flag, the schedule and the roster's creations, so no
     -- document carries an "owed" field of its own.
@@ -114,18 +114,18 @@ BEGIN
   -- so the client can tell someone who joined last week from one who has been
   -- here all term.
   --
-  -- The identity key is `participant_id` as of 00175. Every row on this roster
-  -- is whoever holds the seat, and since 00173 that can be an adult — the
+  -- The identity key is `participant_id`. Every row on this roster is whoever
+  -- holds the seat, and that can be an adult — the
   -- date_of_birth / gender / game-account columns below simply come back NULL
   -- for one, which is the deliberate empty the row renders rather than a gap.
   --
-  -- Both platforms travel (00195), and neither implies the other: a child may
+  -- Both platforms travel, and neither implies the other: a child may
   -- have given one handle, both, or none. Which one a surface draws is decided
   -- by the product's topic, which this document does not carry — the page takes
   -- it from get_gedu_assigned_product.
   --
   -- `signed_up_at` and `group_joined_at` answer two different questions and
-  -- both travel (00203): the first is when this seat was taken on the PRODUCT,
+  -- both travel: the first is when this seat was taken on the PRODUCT,
   -- the second when it entered THIS GROUP, and a member moved between two
   -- groups of one product has a fresh second and an unchanged first.
   SELECT COALESCE(jsonb_agg(entry ORDER BY entry->>'first_name'), '[]'::jsonb)
@@ -142,10 +142,9 @@ BEGIN
         'roblox_username',    rba.roblox_username,
         'roblox_user_id',     rba.roblox_user_id,
         -- Every gamer account is created by a parent who signed up with an
-        -- email, so on a CHILD row this is non-null in practice and the wire
-        -- contract said so until 00173. An ADULT row has no parent link at all,
-        -- so it is NULL there and the contract now allows it — the address for
-        -- that row is the one below.
+        -- email, so on a CHILD row this is non-null in practice. An ADULT row
+        -- has no parent link at all, so it is NULL there and the wire contract
+        -- allows it — the address for that row is the one below.
         'parent_email', (
           SELECT pp.email
             FROM public.parent_gamer pgm
@@ -158,20 +157,20 @@ BEGIN
         -- not "the participant's email whoever they are": a gamer's profile
         -- email is the synthetic @gamer.sogverse.internal handle, which is not
         -- a mailbox and must never reach a copy-email affordance. The role
-        -- check (00177) is what makes "adult seat" mean the ROLE, not id
+        -- check is what makes "adult seat" mean the ROLE, not id
         -- equality alone: a hand-written row with a gamer's id transposed into
         -- customer_id satisfies the equality but is not a customer, and yields
         -- NULL here rather than leaking the synthetic handle.
         'participant_email',
           CASE WHEN part.participant_id = part.customer_id
                 AND gmp.role = 'customer' THEN gmp.email END,
-        -- The staff-only flair (00203), in parity with
+        -- The staff-only flair, in parity with
         -- get_gedu_assigned_product's roster — the two shapes are kept
         -- identical on purpose, and this is the copy the page renders.
         'group_joined_at',            part.group_joined_at,
         'note',                       gn.note,
         'note_updated_by_first_name', ned.first_name,
-        -- 00227, and the one field on this roster that is NOT staff-only: the
+        -- The one field on this roster that is NOT staff-only: the
         -- member's own family reads the same list on their product page. It
         -- rides here because the roster is where the per-gamer dialog is opened
         -- from, and because the client derives the final session's fourth
@@ -215,7 +214,7 @@ BEGIN
         'created_by',       s.created_by,
         'updated_by',       s.updated_by,
         -- When this session's report was mailed to the group's families, and
-        -- NULL until it has been (00197). The card renders the sent line from
+        -- NULL until it has been. The card renders the sent line from
         -- it and decides whether to offer the button, so it has to travel with
         -- the session rather than be read separately.
         --
@@ -238,7 +237,7 @@ BEGIN
             FROM public.profiles pr
            WHERE pr.id = s.updated_by
         ),
-        -- The session's photos (00222). `created_by` is deliberately NOT on the
+        -- The session's photos. `created_by` is deliberately NOT on the
         -- wire — it is safeguarding audit, it gates nothing and nothing renders
         -- it, exactly like report_emailed_by above. Ordered by (created_at, id):
         -- the stamp is clock_timestamp() taken under the session row's lock and

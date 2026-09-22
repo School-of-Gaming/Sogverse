@@ -8,7 +8,7 @@ CREATE FUNCTION public.validate_profile_spoken_languages() RETURNS trigger
     AS $$
 BEGIN
   IF array_length(NEW.spoken_languages, 1) IS NOT NULL THEN
-    -- Membership is the column type's job since 00199. Uniqueness is not:
+    -- Membership is the column type's job. Uniqueness is not:
     -- public.spoken_language[] is perfectly happy to hold ARRAY['fi','fi'],
     -- and every reader of this column treats it as a set.
     IF (SELECT count(DISTINCT v) FROM unnest(NEW.spoken_languages) v)

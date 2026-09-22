@@ -19,10 +19,10 @@ DECLARE
 BEGIN
   PERFORM public.assert_admin();
 
-  -- FOR UPDATE since 00206: the automatic placement below counts this product's
-  -- groups, and the lock is what stops that count from being taken against a
-  -- group list another admin is in the middle of changing. Same lock, same
-  -- order (product, then participations) as every other participation writer.
+  -- FOR UPDATE: the automatic placement below counts this product's groups, and
+  -- the lock is what stops that count from being taken against a group list
+  -- another admin is in the middle of changing. Same lock, same order (product,
+  -- then participations) as every other participation writer.
   SELECT product_type, billing_mode, for_gamers, for_parents
     INTO v_product_type, v_billing_mode, v_for_gamers, v_for_parents
     FROM public.products WHERE id = p_product_id FOR UPDATE;
@@ -33,8 +33,7 @@ BEGIN
 
   -- The one shape whose seat cannot exist without a Stripe subscription, which
   -- comp-enrollment has no way to create. Every other combination — free clubs
-  -- included, since 00166 — is the free camp and free event this function has
-  -- always written.
+  -- included — is the free camp and free event this function writes.
   IF v_product_type = 'consumer_club' AND v_billing_mode = 'paid' THEN
     RAISE EXCEPTION 'admin enrollment is not supported for subscription-billed consumer clubs'
       USING ERRCODE = 'check_violation';
@@ -78,8 +77,8 @@ BEGIN
     END IF;
   END IF;
 
-  -- AUTOMATIC PLACEMENT (00206). A no-charge product with exactly one group has
-  -- no placement decision left in it. A paid camp or event still lands in the
+  -- AUTOMATIC PLACEMENT. A no-charge product with exactly one group has no
+  -- placement decision left in it. A paid camp or event still lands in the
   -- unassigned inbox — money on the seat is what separates the two, and this
   -- function serves both.
   IF public.is_no_charge(v_billing_mode) THEN
@@ -103,7 +102,7 @@ BEGIN
   VALUES (p_product_id, p_participant_id, v_customer_id, 'active', v_auto_group_id)
   RETURNING id INTO v_participation_id;
 
-  -- THE ENROLMENT CONDITIONS (00212). The seat exists, so the product's
+  -- THE ENROLMENT CONDITIONS. The seat exists, so the product's
   -- required consents bind to it exactly as they would on a family signup —
   -- but the admin is not prompted and is never refused. Every required slug is
   -- supplied automatically from the product's own requirement set, so the gate

@@ -154,7 +154,7 @@ BEGIN
 
     v_group_id := p_group_id;
   ELSE
-    -- THE SHARED PLACEMENT RULE (00206), applied to the TARGET, and still the
+    -- THE SHARED PLACEMENT RULE, applied to the TARGET, and still the
     -- answer whenever the admin names no group. A no-charge product with
     -- exactly one group has no placement decision left in it; anything else
     -- lands in the unassigned inbox. A paid target — which the refusal above
@@ -185,7 +185,9 @@ BEGIN
   --
   -- If the participant already holds a row on the target in any status the
   -- partial unique index covers — active, waitlisted or completed — this raises
-  -- 23505, which is the answer. See the header of 00245.
+  -- 23505, which is the answer: the collision is deliberately not pre-checked
+  -- here, and the commit route pre-flights it with a plain read before it
+  -- touches Stripe.
   UPDATE public.participations
      SET product_id = p_target_product_id,
          group_id   = v_group_id

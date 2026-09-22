@@ -74,7 +74,9 @@ BEGIN
         'gedu_note',   g.gedu_note,
 
         -- Register-shaped and nothing more: who may be marked, and what to call
-        -- them. See 00200's header for why it is not the group feed's roster.
+        -- them. Deliberately NOT the group feed's roster — taking the register
+        -- is all this surface does with it, and the groups panel on the same
+        -- page already answers who these people are.
         'roster', COALESCE((
           SELECT jsonb_agg(jsonb_build_object(
                    'participant_id', part.participant_id,
@@ -114,8 +116,8 @@ BEGIN
                        FROM public.profiles pr
                       WHERE pr.id = s.updated_by
                    ),
-                   -- The session's photos (00222, reaching this document in
-                   -- 00223). Byte-for-byte the gedu feed's aggregate, because
+                   -- The session's photos. Byte-for-byte the gedu feed's
+                   -- aggregate, because
                    -- one card component renders both: {id, width, height} per
                    -- photo, ordered by (created_at, id) — the stamp is
                    -- clock_timestamp() taken under the session row's lock and

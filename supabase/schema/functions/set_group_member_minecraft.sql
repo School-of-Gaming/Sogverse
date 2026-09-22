@@ -20,7 +20,7 @@ BEGIN
   -- the caller is assigned to. A gedu may fix a username for the people they
   -- teach and for nobody else.
   --
-  -- An admin passes this outright (00205). The admin group details page renders
+  -- An admin passes this outright. The admin group details page renders
   -- the gedu workspace's roster body — this editor included — for any group of
   -- any product, and an admin already holds the same edit on /admin/users/[id],
   -- so the group question was never a statement about them.
@@ -48,7 +48,7 @@ BEGIN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 
-  -- Target must be a GAMER (00177). A Minecraft link is a child's; an adult
+  -- Target must be a GAMER. A Minecraft link is a child's; an adult
   -- seat carries no game account and the roster renders that slot empty by
   -- design, so a row keyed to a customer would be an orphan the admin twin
   -- already refuses to write. The scope check above does not care about the
