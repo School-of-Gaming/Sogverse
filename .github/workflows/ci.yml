@@ -191,8 +191,8 @@ jobs:
       #   flake: supabase/cli #3775, #2893, #4535) and fails the whole job on a
       #   container the tests never touch. --ignore-health-check is the documented
       #   backstop for that 502; the kept containers come up fine.
-      # - realtime, postgres-meta, mailpit, studio, imgproxy, vector, logflare are
-      #   simply unused. Mailpit is safe to drop because local auth autoconfirms
+      # - realtime, mailpit, studio, imgproxy, vector, logflare are simply
+      #   unused. Mailpit is safe to drop because local auth autoconfirms
       #   (enable_confirmations = false in supabase/config.toml), so GoTrue never
       #   contacts SMTP on any path a test exercises. imgproxy stays out with
       #   storage-api in: it serves image *transformations*, which nothing here
@@ -205,11 +205,31 @@ jobs:
       #   time bound, and a hidden picture's retraction, all on pictures of
       #   children — has no automated coverage at all.
       #
+      # - postgres-meta is kept, and not because the tests use it: `gen types
+      #   --db-url` below runs the same image on demand, pulling it from
+      #   public.ecr.aws whatever SUPABASE_INTERNAL_IMAGE_REGISTRY says, and that
+      #   registry rate-limits anonymous pulls from shared runners
+      #   ("toomanyrequests", seen 2026-09-22 after three green runs). Starting the
+      #   container here pulls the image from ghcr.io through the CLI's own path;
+      #   the retag after start gives it the name the on-demand path looks for, so
+      #   that path finds it locally and never pulls.
+      #
       # Together the exclusions cut boot well below the ~5 min full stack; the
       # baseline and per-container drift move around with runner weather, so treat
       # the step's own timing in the run as the current number.
       - name: Start local Supabase
-        run: supabase start -x edge-runtime,studio,imgproxy,vector,logflare,realtime,postgres-meta,mailpit --ignore-health-check
+        run: supabase start -x edge-runtime,studio,imgproxy,vector,logflare,realtime,mailpit --ignore-health-check
+
+      - name: Give the postgres-meta image the name gen types pulls it under
+        run: |
+          set -euo pipefail
+          image=$(docker images --format '{{.Repository}}:{{.Tag}}' | grep '/supabase/postgres-meta:' | head -1)
+          if [ -z "$image" ]; then
+            echo "::error::no postgres-meta image after supabase start; gen types would pull it from public.ecr.aws on demand"
+            exit 1
+          fi
+          docker tag "$image" "public.ecr.aws/supabase/${image#*/supabase/}"
+          echo "tagged $image as public.ecr.aws/supabase/${image#*/supabase/}"
 
       # Two files are committed that migrations/ alone decide the contents of:
       # src/types/database.types.ts and the schema directory supabase/schema/. Both are
