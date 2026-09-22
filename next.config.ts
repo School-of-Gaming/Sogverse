@@ -33,21 +33,6 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
  * `.env.local`, and the rich seed puts a picture on every product, so the flag
  * is set — see `supabaseIsLocal` below for the one condition under which.
  */
-/**
- * Is the configured Supabase a local stack? Loopback and nothing else — a name
- * that resolves to one is not covered and does not need to be, because the
- * local-stack script writes a literal `http://127.0.0.1:<port>`.
- *
- * Missing env is `false` rather than a throw: `bucketPattern` below already
- * fails the build loudly on it, and one failure is enough.
- */
-function supabaseIsLocal() {
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!base) return false;
-  const { hostname } = new URL(base);
-  return hostname === "127.0.0.1" || hostname === "localhost" || hostname === "[::1]";
-}
-
 function bucketPattern(bucket: string) {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!base) {
@@ -63,6 +48,21 @@ function bucketPattern(bucket: string) {
     port,
     pathname: `/storage/v1/object/public/${bucket}/**`,
   };
+}
+
+/**
+ * Is the configured Supabase a local stack? Loopback and nothing else — a name
+ * that resolves to one is not covered and does not need to be, because the
+ * local-stack script writes a literal `http://127.0.0.1:<port>`.
+ *
+ * Missing env is `false` rather than a throw: `bucketPattern` above already
+ * fails the build loudly on it, and one failure is enough.
+ */
+function supabaseIsLocal() {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!base) return false;
+  const { hostname } = new URL(base);
+  return hostname === "127.0.0.1" || hostname === "localhost" || hostname === "[::1]";
 }
 
 /**

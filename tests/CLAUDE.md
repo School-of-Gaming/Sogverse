@@ -111,12 +111,14 @@ go through (`npm run test:db:local -- tests/db/chat-rpcs.test.ts`). A bare `npm 
 test:db` is the CI invocation and reaches nothing on its own: `tests/db/setup.ts` fails
 fast when `SUPABASE_SERVICE_ROLE_KEY` is unset.
 
-**The stack has to carry `supabase/seed.sql` alone.** `npm run db -- up` applies
-`supabase/rich-seed.sql` on top of it, and the whole-table claims below are written
-against the minimal fixture set — so a stack holding the rich catalogue fails them for
-reasons that are not bugs. `up --no-rich-seed` builds one without it, and
-`test:db:local` refuses a stack carrying it rather than let those failures be read as
-findings.
+**The stack has to carry `supabase/seed.sql` alone.** A stack gets one seed or the
+other and never both: `npm run db -- up` builds one on `supabase/rich-seed.sql`, with
+the CLI's own seeding switched off so `seed.sql` never runs on it, and `up
+--no-rich-seed` builds one on `seed.sql` alone. The whole-table claims below are
+written against that minimal fixture set, so on a rich stack they fail for reasons that
+are not bugs — and the fixture rows themselves are not merely buried under a catalogue,
+they are absent, so the deterministic `TEST_IDS` resolve to nothing. `test:db:local`
+refuses a rich stack rather than let either kind of failure be read as a finding.
 
 **A rerun needs no reset.** The suite cleans up after itself: two full runs back to back
 against one database both pass, and the database is left holding exactly `seed.sql`'s

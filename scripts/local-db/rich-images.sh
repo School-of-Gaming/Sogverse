@@ -108,13 +108,18 @@ while IFS=$'\t' read -r topic sha ext file; do
     200 | 201)
       uploaded=$((uploaded + 1))
       ;;
+    409)
+      # Storage's duplicate status as an HTTP status, for the day it sends one.
+      ;;
     *)
       # "Already there" is not reliably an HTTP 409: storage answers the second
       # upload of an existing key with a 400 whose BODY carries
-      # `"statusCode":"409"` and `Duplicate`. So the body decides, exactly as
-      # the upload route's own duplicate test does — it reads the error's
-      # statusCode and falls back to matching the message.
-      if grep -qE '"statusCode" *: *"?409"?|Duplicate|already exists' "$work/upload.out"; then
+      # `"statusCode":"409"`. That one shape is what counts as a duplicate here,
+      # and nothing else in the body is read: matching a bare `Duplicate` or
+      # `already exists` anywhere in it would also swallow an unrelated failure
+      # whose message happened to contain the words, and a picture silently not
+      # uploaded is the failure this step exists to make loud.
+      if grep -qE '"statusCode" *: *"?409"?' "$work/upload.out"; then
         continue
       fi
       echo "Uploading $(basename "$file") to the $bucket bucket failed ($status):" >&2
@@ -163,14 +168,35 @@ awk -F'\t' '{
   echo "  JOIN public.product_images i ON i.sha256 = s.sha"
   echo " WHERE p.topic::text = s.topic;"
   echo
+  # The completeness check runs as the session role rather than as
+  # `authenticated`, because it reads storage.objects: the bucket carries no
+  # policy a signed-in admin could pass, so under the impersonated claims above
+  # every object would read as absent and the check would fail on every run.
+  echo "RESET ROLE;"
+  echo
   echo "DO \$\$"
   echo "DECLARE v_missing text;"
+  echo "        v_absent text;"
   echo "BEGIN"
   echo "  SELECT string_agg(DISTINCT p.topic::text, ', ') INTO v_missing"
   echo "    FROM public.products p WHERE p.image_id IS NULL;"
   echo "  IF v_missing IS NOT NULL THEN"
   echo "    RAISE EXCEPTION"
   echo "      'No seed image for product topic(s) %. Add supabase/seed-images/<topic>.png for each and bring the stack up again.', v_missing;"
+  echo "  END IF;"
+  # A linked row is only half a picture. The row is written over psql and the
+  # bytes go up over HTTP, so a run whose upload half quietly did nothing would
+  # leave every product linked to an object the bucket does not hold — which
+  # renders as a broken image, not as a placeholder, and nothing else would say
+  # so.
+  echo "  SELECT string_agg(DISTINCT i.path, ', ') INTO v_absent"
+  echo "    FROM public.products p"
+  echo "    JOIN public.product_images i ON i.id = p.image_id"
+  echo "   WHERE NOT EXISTS (SELECT 1 FROM storage.objects o"
+  echo "                      WHERE o.bucket_id = '$bucket' AND o.name = i.path);"
+  echo "  IF v_absent IS NOT NULL THEN"
+  echo "    RAISE EXCEPTION"
+  echo "      'The $bucket bucket holds no object for %. The upload half of this step did not land; bring the stack up again.', v_absent;"
   echo "  END IF;"
   echo "  RAISE NOTICE 'rich-seed images: % catalogue entries over % products',"
   echo "    (SELECT count(*) FROM public.product_images),"

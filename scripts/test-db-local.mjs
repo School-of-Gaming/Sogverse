@@ -59,6 +59,12 @@ const toWslPath = (windowsPath) => {
 };
 
 const checkoutWsl = toWslPath(checkout);
+if (/\s/.test(checkoutWsl)) {
+  // An argument with a space cannot be quoted reliably through wsl.exe, and a
+  // half-quoted path would land as two arguments and fail somewhere deep in a
+  // shell file. Better to say so here.
+  fail(`This checkout's path contains a space, which cannot be passed into the distro:\n  ${checkout}`);
+}
 
 const pkg = JSON.parse(readFileSync(path.join(checkout, 'package.json'), 'utf8'));
 const cliVersion = pkg.devDependencies?.supabase;

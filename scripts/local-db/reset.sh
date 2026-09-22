@@ -40,13 +40,28 @@ fi
 ensure_cli "$cli_version"
 cli=$(cli_bin "$cli_version")
 
+# Which seed this stack carries, read off the marker `up` wrote when it created
+# the stack. Exactly one of the two is there, so the absence of both is not a
+# rich stack — it is a stack whose record is gone, and guessing would rebuild it
+# on the wrong seed, which is the one thing a reset must not do quietly.
+if [ -f "$state/rich-seed-skipped" ]; then
+  rich=0
+elif [ -f "$state/rich-seed-applied" ]; then
+  rich=1
+else
+  echo "This stack has no record of which seed it was built with, so a reset would have to guess." >&2
+  echo "\`npm run db -- down\` it and then \`up\` (or \`up --no-rich-seed\`), which records the choice." >&2
+  report_running
+  exit 1
+fi
+
 # The CLI's reset replays the migrations and whichever seed the workdir's
 # config.toml names — which is seed.sql on a --no-rich-seed stack and nothing at
 # all on a rich one. That line is written here from the stack's recorded choice
 # and not merely trusted, because the workdir outlives the run that made it, and
 # a rebuild that picked up the other seed would put the DB tests' fixtures into
 # the lists this stack exists to show.
-if [ -f "$state/rich-seed-skipped" ]; then
+if [ "$rich" -eq 0 ]; then
   set_shadow_seed "$work" true
 else
   set_shadow_seed "$work" false
@@ -56,7 +71,7 @@ fi
 
 migrations=$(ls "$checkout/supabase/migrations" | wc -l)
 
-if [ -f "$state/rich-seed-skipped" ]; then
+if [ "$rich" -eq 0 ]; then
   echo "Database rebuilt from $migrations migrations and seed.sql (this stack was built with --no-rich-seed)."
   report_running
   exit 0
@@ -66,7 +81,6 @@ echo "Applying supabase/rich-seed.sql…"
 # Against a database that is once again empty of accounts, which is the only
 # state the rich seed's own guard accepts.
 apply_rich_seed "$checkout" "$project"
-: > "$state/rich-seed-applied"
 
 # The pictures go back on too: `db reset` empties the catalogue table with the
 # rest of the database, so every product would come back on its placeholder.

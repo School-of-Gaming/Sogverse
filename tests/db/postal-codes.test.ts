@@ -68,7 +68,7 @@ describe("postal codes", () => {
   // -------------------------------------------------------------------------
 
   describe("resolving a code to its municipality", () => {
-    it("reaches Helsinki from 00100, by the kunta code in the GeoNames dump", async () => {
+    it("reaches Helsinki from postcode 00100, by the kunta code in the GeoNames dump", async () => {
       const rows = await service.getMunicipalitiesByPostalCode("FI", "00100");
 
       expect(rows).toHaveLength(1);

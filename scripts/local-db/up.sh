@@ -93,6 +93,12 @@ mkdir -p "$state"
 # records it; every later run reads the record back, and a flag that disagrees
 # with it is answered further down. The flag cannot take the rich seed back off
 # a stack that already has it, which is what the second condition says.
+#
+# The choice is written down as exactly ONE of the two markers, here, before
+# the database exists — never both and never neither, because `reset` and every
+# later `up` read a stack's seed off them and have nothing else to read it off.
+# `rich-seed-applied` therefore records the CHOICE rather than a completed seed
+# step; whether the seeding still has to run is `first_start` below.
 if [ "$rich_seed_flag" = "--no-rich-seed" ] && [ ! -f "$state/rich-seed-applied" ]; then
   : > "$state/rich-seed-skipped"
 fi
@@ -100,6 +106,7 @@ fi
 if [ -f "$state/rich-seed-skipped" ]; then
   cli_seed=true
 else
+  : > "$state/rich-seed-applied"
   cli_seed=false
 fi
 
@@ -169,16 +176,18 @@ if [ -z "$api_url" ] || [ -z "$anon_key" ] || [ -z "$service_key" ]; then
   exit 1
 fi
 
-# The rich seed refuses a database that has any account in it, so whether it has
-# run is recorded rather than rediscovered: on a resume it must not run, and
-# after a `reset` it must.
+# The rich seed refuses a database that has any account in it, so whether it
+# still has to run is the FIRST START rather than the marker above — which
+# records the choice and is already on disk by now. On a resume the seed must
+# not run again; after a `reset`, which empties the database under a stack that
+# keeps its marker, it must, and `reset` runs it itself.
 rich_seed_state=skipped
 if [ -f "$state/rich-seed-skipped" ]; then
   if [ "$rich_seed_flag" != "--no-rich-seed" ]; then
     echo "This stack was built with --no-rich-seed, so the rich seed stays off."
     echo "\`npm run db -- down\` and \`up\` without the flag to get it."
   fi
-elif [ -f "$state/rich-seed-applied" ]; then
+elif [ "$first_start" -eq 0 ]; then
   rich_seed_state=applied
   if [ "$rich_seed_flag" = "--no-rich-seed" ]; then
     echo "This stack already carries the rich seed; --no-rich-seed cannot take it back."
@@ -187,7 +196,6 @@ elif [ -f "$state/rich-seed-applied" ]; then
 else
   echo "Applying supabase/rich-seed.sql…"
   apply_rich_seed "$checkout" "$project"
-  : > "$state/rich-seed-applied"
   bash "$here/rich-images.sh" "$checkout" "$project" "$api_url" "$service_key"
   rich_seed_state=applied
 fi

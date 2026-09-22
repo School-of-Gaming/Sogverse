@@ -200,9 +200,9 @@ route-handler mocking, unit setup) live in **`tests/CLAUDE.md`** (auto-loads whe
 work under `tests/`). Two things worth knowing from anywhere:
 
 - **`npm run test` runs `unit/` + `integration/`** (node by default, jsdom for `.tsx`
-  component tests — see `tests/CLAUDE.md`). DB tests need a real Postgres
-  and run in **CI only** — we have no local stack — so exercise them by pushing your
-  branch, not locally.
+  component tests — see `tests/CLAUDE.md`). DB tests need a real Postgres: CI is the
+  authority on every push, and `npm run test:db:local` runs them against this
+  checkout's `--no-rich-seed` stack (`tests/CLAUDE.md` has the details).
 - **Shared mock factories live in `tests/mocks/`** — add new mocks there rather than
   duplicating across files.
 - **`smoke/` is the only CI job that builds the app**, and it asserts security headers

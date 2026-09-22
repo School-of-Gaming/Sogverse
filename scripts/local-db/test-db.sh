@@ -48,9 +48,10 @@ fi
 # catalogue on top of them fails those sweeps for reasons that are not bugs.
 #
 # Two signals, because they fail differently. The marker is what `up` writes
-# when it applies the seed, so it is the answer for a stack this tooling built;
-# the row is the database's own answer, and it is the one that catches a rich
-# seed applied to a stack by hand. Either is enough to refuse.
+# when it creates a stack that is getting the rich seed, so it is the answer for
+# a stack this tooling built; the row is the database's own answer, and it is
+# the one that catches a rich seed applied to a stack by hand. Either is enough
+# to refuse.
 rich_seed=
 if [ -f "$state/rich-seed-applied" ]; then
   rich_seed="the stack records that \`up\` applied it"

@@ -49,6 +49,7 @@ const ROOTS: readonly { readonly label: string; readonly paths: readonly string[
   { label: "src/", paths: ["src"] },
   { label: "tests/", paths: ["tests"] },
   { label: "scripts/", paths: ["scripts"] },
+  { label: "packages/", paths: ["packages"] },
   { label: "supabase/schema/", paths: ["supabase/schema"] },
   {
     label: "the seeds",
@@ -59,12 +60,22 @@ const ROOTS: readonly { readonly label: string; readonly paths: readonly string[
 /** The text files a citation can hide in: source, SQL, shell and prose. */
 const SWEPT = /\.(?:ts|tsx|mts|cts|js|jsx|mjs|cjs|sql|md|sh|py)$/;
 
-/** Directories a walk never descends into. */
-const SKIPPED_DIRECTORIES = new Set(["node_modules", ".next", "dist", "coverage"]);
+/**
+ * Directories a walk never descends into. `output` is `scripts/output/`, the
+ * gitignored folder a script writes its working artifacts to — a run's log or
+ * dump can carry a five-digit number for reasons nobody authored, and it exists
+ * on one machine and not in CI, so a match there would be a test that fails for
+ * one person and passes for everyone else. By this repo's rule that is a broken
+ * test, not a finding.
+ */
+const SKIPPED_DIRECTORIES = new Set(["node_modules", ".next", "dist", "coverage", "output"]);
 
 /**
- * A migration version as this repo writes them: five digits, the first two
- * being zeroes, not part of a longer run of digits or letters.
+ * The two shapes a migration citation takes, swept together so both report the
+ * same way.
+ *
+ * **Five digits, the first two being zeroes**, not part of a longer run of
+ * digits or letters — a migration version as this repo writes them.
  *
  * **The boundary is asymmetric on purpose.** A citation is as often the whole
  * file name as the bare number, and `_` is a word character — so a symmetric
@@ -78,8 +89,18 @@ const SKIPPED_DIRECTORIES = new Set(["node_modules", ".next", "dist", "coverage"
  * the citations actually take — a bare number in parentheses — and every
  * narrowing is a hole nobody can see from a call site. The exclusions are
  * classified instead, one by one, each with the reason it is not a citation.
+ *
+ * **Fourteen digits beginning `20`, followed by `_` and a letter** — a
+ * timestamped migration's file name, which is how the CLI names one and
+ * therefore how a citation of one is written. The trailing `_<letter>` is the
+ * whole of the arm's precision, and it is why it needs no exclusion of its
+ * own: a bare fourteen-digit number is NOT swept, because a date rendered
+ * without separators and an id of that width are legitimate fixture values,
+ * while nothing in this repo writes one immediately followed by a lowercase
+ * word. The digits alone are the match, so the file name's stem is what a
+ * failure prints.
  */
-const MIGRATION_NUMBER = /(?<![0-9A-Za-z])00[0-9]{3}(?![0-9])/g;
+const MIGRATION_CITATION = /(?<![0-9A-Za-z])00[0-9]{3}(?![0-9])|(?<![0-9])20[0-9]{12}(?=_[a-z])/g;
 
 /**
  * The one thing in this repo that is genuinely five digits beginning `00`: a
@@ -140,9 +161,8 @@ const EXCLUSIONS: readonly {
   {
     id: "postcode-beside-the-postal-vocabulary",
     reason:
-      "A code named in a comment or a test title whose own sentence is about postal codes — `postal`, `postcode` or `zip` within a line of it. That vocabulary never appears near a migration citation in this repo, and the `migration` guard keeps it that way.",
-    applies: ({ neighbourhood }) =>
-      POSTAL_VOCABULARY.test(neighbourhood) && !/migration/i.test(neighbourhood),
+      "A code named in a comment or a test title that says on that same line what it is — `postal`, `postcode` or `zip`. The line rather than its neighbours, because a neighbouring line's subject is not this line's: a paragraph that happens to mention postcodes would otherwise exempt every five-digit run beside it. That vocabulary never appears on a line carrying a migration citation, and the `migration` guard keeps it that way.",
+    applies: ({ line }) => POSTAL_VOCABULARY.test(line) && !/migration/i.test(line),
   },
   {
     id: "postcode-block-written-as-a-span",
@@ -176,11 +196,6 @@ interface MatchContext {
    * decoration is stripped first so the town is the first word seen.
    */
   readonly follows: string;
-  /**
-   * The line with its immediate neighbours, which is the unit a sentence
-   * wrapped by the formatter actually occupies.
-   */
-  readonly neighbourhood: string;
 }
 
 /** A line's comment decoration, so a wrapped sentence reads as one sentence. */
@@ -212,7 +227,7 @@ function matchesIn(file: string): (MatchContext & { readonly number: number })[]
   // eslint-disable-next-line security/detect-non-literal-fs-filename -- reads a file discovered by the fixed in-repo walk above
   const lines = readFileSync(join(repoRoot, file), "utf8").split(/\r?\n/);
   return lines.flatMap((line, index) =>
-    [...line.matchAll(MIGRATION_NUMBER)].map((match) => {
+    [...line.matchAll(MIGRATION_CITATION)].map((match) => {
       const after = line.slice(match.index + match[0].length);
       return {
         file,
@@ -221,7 +236,6 @@ function matchesIn(file: string): (MatchContext & { readonly number: number })[]
         before: line.slice(0, match.index),
         after,
         follows: after.trim() === "" ? `${after} ${undecorate(lines[index + 1] ?? "")}` : after,
-        neighbourhood: [lines[index - 1] ?? "", line, lines[index + 1] ?? ""].join("\n"),
       };
     }),
   );
