@@ -97,7 +97,25 @@ for (const line of lines(git('status', '--porcelain', '--', `${MIGRATIONS_DIR}/`
   else suspect.push(...paths.map((p) => `${code.trim() || '??'}  ${p}`));
 }
 
-const branchAdds = [...new Set([...committed, ...uncommitted])].filter((file) => file.endsWith('.sql'));
+const allAdds = [...new Set([...committed, ...uncommitted])].filter((file) => file.endsWith('.sql'));
+
+/**
+ * The squash is the one branch that adds five-digit files on purpose: a
+ * baseline keeps the versions of the files it replaces, so every environment
+ * that applied the old history already records them. It is recognised the way
+ * the `migration-order` job recognises it, by the numbered files the same
+ * branch deletes, and its numbered adds are left alone; restamping a baseline
+ * to a timestamp would put it above the migrations it is meant to precede.
+ */
+const deletesNumbered = lines(
+  git('diff', '--name-only', '--diff-filter=D', '--no-renames', 'origin/dev...HEAD', '--', `${MIGRATIONS_DIR}/`),
+).some((file) => /\/\d{5}_[^/]+\.sql$/.test(file));
+const isNumbered = (file) => /\/\d{5}_[^/]+\.sql$/.test(file);
+const baselines = deletesNumbered ? allAdds.filter(isNumbered) : [];
+for (const file of baselines) {
+  console.log(`  ${path.basename(file)}  kept as the squash's baseline (numbered files are deleted alongside it)`);
+}
+const branchAdds = allAdds.filter((file) => !baselines.includes(file));
 
 // A modification of a file this branch adds itself is ordinary work in
 // progress; a modification of anything else under migrations/ is not.
