@@ -462,6 +462,96 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_STAGING_DB_PASSWORD }}
 
+  # Migration versions are timestamps assigned at landing, so every migration a
+  # push adds must sort above every version dev already had. This job is the only
+  # gate that covers work committed straight onto dev: merges into dev are local
+  # and open no PR, so nothing else inspects them. It therefore fires after the
+  # fact — the push has already happened — and that is enough, because the file it
+  # catches is one no environment has applied: push-staging's `db push` refuses an
+  # out-of-order version for the same reason prod's would. The remedy is a
+  # follow-up commit renaming the file to a fresh timestamp.
+  #
+  # Checkout only, no Node: this reads git history and nothing else.
+  migration-order:
+    name: Migration order on dev
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    # No `needs`: an out-of-order migration is worth reporting whatever the test
+    # jobs are doing, and this job depends on none of their work.
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Assert added migrations sort above dev's
+        env:
+          # Via env, not inline `${{ }}`: the values land in the script as data.
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "::warning::dev has no previous head (branch creation), so there is no order to check against."
+            exit 0
+          fi
+
+          # checkout fetches one commit, so dev's previous head has to be asked for
+          # by SHA. A force-push or a dropped commit makes it unfetchable; there is
+          # then no before-state to judge against, and a red run would say nothing.
+          if ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null && ! git fetch --depth=1 --no-tags origin "$BEFORE"; then
+            echo "::warning::dev's previous head $BEFORE is unreachable (force-push, or the commit was dropped), so this push cannot be compared against it."
+            exit 0
+          fi
+
+          # --no-renames: a rename must read as the delete plus the add it is, so
+          # the squash below is recognised and a restamped file is judged on its
+          # new version rather than slipping through as a rename.
+          added=$(git diff --name-only --diff-filter=A --no-renames "$BEFORE" "$AFTER" -- 'supabase/migrations/*.sql')
+          deleted=$(git diff --name-only --diff-filter=D --no-renames "$BEFORE" "$AFTER" -- 'supabase/migrations/*.sql')
+
+          if [ -z "$added" ]; then
+            echo "This push adds no migrations."
+            exit 0
+          fi
+
+          # String comparison is the CLI's own ordering, which is also why the
+          # original 5-digit versions sort below every timestamp.
+          highest=$(git ls-tree --name-only "$BEFORE" -- supabase/migrations/ | sed 's#.*/##; s#_.*##' | sort | tail -n 1)
+
+          failed=
+          numbered=
+          while IFS= read -r file; do
+            [ -n "$file" ] || continue
+            version=$(basename "$file"); version=${version%%_*}
+            case "$version" in
+              [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9])
+                if [[ "$version" > "$highest" ]]; then continue; fi
+                echo "::error file=$file::$version does not sort above $highest, which dev already had. A database applies migrations in version order and refuses one below a version it has already applied, so staging's db push refused this file and no environment has it. Rename it to a fresh timestamp (the format npx supabase migration new produces) in a follow-up commit - the one case in which a landed migration file is renamed."
+                failed=1
+                ;;
+              [0-9][0-9][0-9][0-9][0-9])
+                numbered="$numbered $file"
+                ;;
+              *)
+                echo "::error file=$file::version '$version' is neither a timestamp nor one of the original 5-digit numbers. New migrations come from npx supabase migration new."
+                failed=1
+                ;;
+            esac
+          done <<< "$added"
+
+          if [ -n "$numbered" ]; then
+            if echo "$deleted" | grep -qE '/[0-9]{5}_'; then
+              echo "::notice::This push both adds and deletes 5-digit migrations, which is the squash; the numbered files are allowed to move."
+            else
+              for file in $numbered; do
+                echo "::error file=$file::a 5-digit version is only ever added by the migration squash, which deletes the numbered files it replaces - this push deletes none. Create the file with npx supabase migration new so it carries a timestamp."
+              done
+              failed=1
+            fi
+          fi
+
+          [ -z "$failed" ] || exit 1
+          echo "Every migration this push adds sorts above the versions dev already had."
+
   # Deploy job only runs on push to main, after CI passes
   # Vercel handles preview/staging deploys for dev automatically via GitHub integration
   deploy:

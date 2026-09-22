@@ -90,7 +90,7 @@ be superseded.
 **The same staleness trap applies to *conventions*, not just object bodies.** When you
 need a template for how to author a new migration — grant boilerplate, `SECURITY
 DEFINER` + `SET search_path` headers, header-comment style, ordering-key stamping — model
-it on the **highest-numbered** migrations, never an arbitrary or early one. Conventions
+it on the **newest** migrations, never an arbitrary or early one. Conventions
 have evolved and old migrations preserve the superseded version: explicit per-role
 `GRANT`s replaced blanket/auto-expose grants (`00095`/`00099`), `clock_timestamp()`
 replaced `now()` for cross-transaction ordering keys (`00117`), and `SET search_path TO
@@ -114,7 +114,7 @@ new-user → profile handler), RLS policies on `storage.objects`, and pg_cron jo
 last two aren't even DDL — they're rows in `storage.buckets`/`cron.job` — so no dump
 captures them). This is a small, stable set that rarely changes. For *only* these,
 current state lives in migration history: grep **every** migration touching the object
-and trust the **highest-numbered** one. Do not hardcode a migration number for them
+and trust the **newest** one. Do not hardcode a migration version for them
 anywhere — the correct file moves the moment one is superseded, which is the staleness
 trap this rule exists to avoid.
 
@@ -150,7 +150,10 @@ generated types do not have.
 The workflow is the same in a worktree as on `dev` directly. The steps (run via the Bash
 tool):
 
-1. Write the migration SQL file in `migrations/`.
+1. Create the file with `npx supabase migration new <descriptive_name>`, which writes
+   `migrations/<YYYYMMDDHHMMSS>_<descriptive_name>.sql`, and write the SQL into it. The
+   timestamp is restamped when the branch lands, so nothing may key on it — the
+   descriptive half is the stable name.
 2. Regenerate the types:
    ```bash
    npm run db -- generate
@@ -202,6 +205,22 @@ the run's page on GitHub lists it under Artifacts, or
 (`gh run list --branch <branch>` finds the run). The file inside is `database.types.ts` —
 copy it to `src/types/database.types.ts`.
 
+### A branch carrying migrations lands synced
+
+**Rule: before merging into `dev`, merge `origin/dev` into the branch, restamp the
+branch's own migrations to now with `node scripts/restamp-migrations.mjs`, regenerate,
+and require the output to equal the working tree — then merge `--no-ff`.** Landing is
+serialised through one human, so the stamp taken at landing is the branch's queue
+position and two branches can never claim one version. The regenerate is what proves the
+merged migrations and the committed types agree; a difference in an object both sides
+touched is the conflict case above. `/worktree-flow` Phase 5 has the commands.
+
+A push to `dev` that adds a migration sorting below one `dev` already had fails the
+`migration-order` job — the gate for work committed straight onto `dev`, which opens no
+PR. Nothing has applied the file, because staging's `db push` refuses an out-of-order
+version for the same reason prod's would: rename it to a fresh timestamp in a follow-up
+commit, which is the one case a landed migration file is renamed.
+
 ### Landing on `dev` applies the migrations to staging
 
 CI runs `db push` against the staging project on every push to `dev`, without waiting for
@@ -215,8 +234,9 @@ files on `dev`.
 
 ### Never amend a landed migration
 
-**Rule: once a migration has landed on `dev` it is never edited: every change ships as a
-NEW numbered migration. A migration that has not landed is still yours: fix the file in
+**Rule: once a migration has landed on `dev` it is never edited — every change ships as a
+NEW migration, and the only thing a landed file ever suffers is the `migration-order`
+rename above. A migration that has not landed is still yours: fix the file in
 place rather than stacking a fix-up on it.** The CLI tracks applied migrations by version, so an edited
 file that a database has already applied gets "Remote database is up to date" and its
 new statements **never execute there** — only a fresh-from-`migrations/` build ever runs
@@ -226,40 +246,6 @@ pass CI vacuously. Accepted costs: fix-up migrations in history, and a replaceme
 function's assertion block must deliberately re-assert the invariants of the migration it
 supersedes (re-derive them; a hand-copy dropped a clause once). psql remains the right
 tool for *checking* staging state and reconciling drift that already happened.
-
-The same version-matching behaviour has a second edge: a new file whose **version
-number already exists in remote history is silently treated as applied** — the name is
-ignored, its SQL never runs, and `migration list` looks fine. Verify candidate numbers
-against `supabase_migrations.schema_migrations` via psql at push time (see the
-collision rules below), and if it has already happened: psql-verify the objects
-positively AND negatively, apply the file directly with `psql -f` where idempotent,
-and renumber it to a unique version before it merges.
-
-### Staging is shared, and migration numbers are contended
-
-Two branches pushing to staging in the same week collide in two distinct ways, and a
-long-running branch should expect both:
-
-- **A version number verified free in the morning can be taken by afternoon.** Another
-  branch's push claims it on the remote, and a version already in remote history is
-  silently treated as applied — your migration under that number would be skipped
-  without a word. Re-verify against `supabase_migrations.schema_migrations` at *push*
-  time, not just at authoring time, and renumber around a newcomer rather than
-  contesting it (their number is applied history the moment it lands in the table).
-- **Once remote history holds a version with no local file, `db push` refuses
-  outright** — it wants the other branch's migration file, which exists only on their
-  unmerged branch. Do not "fix" this with `migration repair --status reverted` on their
-  version (that rewrites shared history under a branch that is still live) and do not
-  invent a local placeholder file (CI builds a database from `migrations/`, and a
-  placeholder ships a lie into it). The working pathway: apply your own files directly
-  with `psql -v ON_ERROR_STOP=1 -f <file>`, in order, then record them with
-  `npx supabase migration repair --status applied <versions…>`, then verify the history
-  table shows them. That is `db push`'s own two steps done by hand, skipping only the
-  local-file completeness check that the other branch's absence fails.
-
-The collision resolves itself when both branches land on `dev` — the files reunite and
-from-scratch builds see the full set. Until then, treat the history table as the truth
-and the CLI's refusal as a prompt to check it, not an obstacle to force past.
 
 ## Generated nullability can lie
 

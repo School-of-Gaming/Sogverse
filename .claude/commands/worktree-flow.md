@@ -275,7 +275,33 @@ belong in one call — and prefer the script wherever one exists.
    gate exists to catch changes, not to ritualise. Any commit since, however
    small, voids it.
 
-2. **Stop the dev server first, if Phase 3 started one — by port, with a tree
+2. **A branch carrying migrations lands synced.** `git fetch origin dev`, then
+   `git diff --name-only --diff-filter=A origin/dev...HEAD --
+   supabase/migrations/` — empty output means land exactly as today, so skip the
+   rest of this step. Otherwise, in the worktree, on the branch:
+
+   1. `git merge origin/dev` — resolve conflicts as usual, except in
+      `database.types.ts`, which is never hand-edited: regenerate it and inspect
+      (`supabase/CLAUDE.md`, "CI compares the committed types against
+      `migrations/`").
+   2. `node scripts/restamp-migrations.mjs` — renames this branch's own
+      migrations to fresh timestamps, relative order kept, so they sort above
+      everything `dev` holds. Landing is serialised through one human, so the
+      stamp taken here is the queue position and two branches can never claim
+      one version. `--dry-run` shows the renames without making them.
+   3. `npm run db -- generate` — about a minute.
+   4. `git status` must show the renames and, at most, a regenerated
+      `database.types.ts` whose every hunk you can account for. A difference in
+      an object both sides touched is the conflict case again: read both sides'
+      changes and confirm each survives in the regenerated output; where one is
+      missing, write the migration that combines them and regenerate.
+   5. Commit, and re-run the gates if the merge brought more than the renames.
+      **Do not push the branch again** — the regenerate-and-compare you just ran
+      is the gate, and `dev`'s own CI run follows the merge. The one exception is
+      the no-local-database path: push the synced branch, because CI is then the
+      generator, and commit its `database-types-from-migrations` artifact.
+
+3. **Stop the dev server first, if Phase 3 started one — by port, with a tree
    kill. Every time; this is the procedure, not a recovery.** On Windows,
    stopping the background task kills only the wrapper shell and the Next child
    *always* survives it holding the port (deterministic, not a race) — left
@@ -296,11 +322,11 @@ belong in one call — and prefer the script wherever one exists.
    limit"). That is the wounded server, not an app bug: kill it and start
    clean rather than debugging the page.
 
-3. **Leave the worktree** — `ExitWorktree` with `keep`, which returns the session
+4. **Leave the worktree** — `ExitWorktree` with `keep`, which returns the session
    to the main checkout. `remove` will refuse here, because the worktree was
    created by hand rather than by `EnterWorktree`.
 
-4. **Merge and push**, from the main checkout — one call:
+5. **Merge and push**, from the main checkout — one call:
 
    ```
    [ "$(git branch --show-current)" = dev ] &&
@@ -318,9 +344,9 @@ belong in one call — and prefer the script wherever one exists.
    The main checkout's home branch is `dev` — start there, end there, and
    deviate only when the user explicitly says to. The subject is house style,
    not git's default text. If `dev` gained commits since Phase 1, the push publishes a union CI
-   has not seen — that is accepted; CI on `dev` judges it (step 6).
+   has not seen — that is accepted; CI on `dev` judges it (step 7).
 
-5. **Tear the worktree down and delete the branch** — one call, from the
+6. **Tear the worktree down and delete the branch** — one call, from the
    PowerShell tool, in the main checkout:
 
    ```
@@ -346,7 +372,7 @@ belong in one call — and prefer the script wherever one exists.
    folder behind it, and that has cost this repo its `node_modules` once. If
    the script refuses, read what it refused about — that is the guard working.
 
-6. **Report** what landed, confirm the worktree, branch and server are all
+7. **Report** what landed, confirm the worktree, branch and server are all
    actually gone, and confirm the main checkout is back on `dev`. **Do not
    watch the CI run the push triggers** — the user watches `dev` CI themselves
    and will flag a failure; a session that sits polling it is spending the

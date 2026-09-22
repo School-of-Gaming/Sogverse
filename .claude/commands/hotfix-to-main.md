@@ -18,6 +18,14 @@ Two invariants everything below serves:
 4. Validate every candidate commit:
    - It is reachable from `origin/dev` (`git merge-base --is-ancestor <sha> origin/dev`).
    - It is not already on `main` by content: `git cherry origin/main <sha>^..<sha>` — a `-` row means an equivalent change already landed; drop it from the list and tell the user.
+5. **Refuse a migration that would strand an older one (mandatory gate).** When any picked commit adds a file under `supabase/migrations/`, compare the two sets:
+
+   ```
+   git diff --name-only --diff-filter=A origin/main...origin/dev -- supabase/migrations/
+   git show --format= --name-only --diff-filter=A <sha1> <sha2> ... -- supabase/migrations/
+   ```
+
+   Take each file's version — the digits before the first `_` — and compare them as strings, which is how the CLI orders them. **Stop** when the first list holds a version lower than any version in the second and its file is not in the second list. Prod applies migrations in version order and refuses a version below one it has already applied, so the hotfix would apply the higher one and the next full release's `db push` would then refuse the older one still waiting on `dev` — a red release that only a renamed, landed migration can clear. Name the stranded file and let the user choose: add its commit to the pick, or ship the full release instead.
 
 ## Step 2 — Branch & cherry-pick
 
