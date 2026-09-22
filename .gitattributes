@@ -49,3 +49,9 @@ src/lib/locations/catalog/*.json linguist-generated=true
 # it. These files are machine-written and never hand-edited, so storing them
 # byte-exact costs nothing.
 supabase/schema/** -text linguist-generated=true
+
+# The baseline schema migration, for the same reason: it is a pg_dump of the
+# public schema, so it holds the same carriage return inside the same CHECK
+# constraint's string literal. Normalize it away and every fresh database gets a
+# constraint one byte different from the one production runs.
+supabase/migrations/00266_baseline_schema.sql -text

@@ -115,12 +115,17 @@ async function readPublishedPairs(): Promise<ReadonlySet<string>> {
  * loosely across the file: a two-element tuple is an ordinary shape in SQL, and
  * a match taken from some other table's INSERT would let a version pass as
  * published that nothing ever published.
+ *
+ * A tuple's first two values are the slug and the version; what follows them is
+ * not the scan's business. A hand-written statement names those two columns and
+ * stops there, while a statement dumped out of a database carries every column
+ * positionally — so a tuple is read up to its second value and no further.
  */
 function pairsIn(sql: string): string[] {
   const statements =
     sql.match(/INSERT\s+INTO\s+public\.consent_document_versions\b[^;]*;/gi) ?? [];
   return statements.flatMap((statement) =>
-    [...statement.matchAll(/\(\s*'([^']+)'\s*,\s*'([^']+)'\s*\)/g)].map(
+    [...statement.matchAll(/\(\s*'([^']+)'\s*,\s*'([^']+)'\s*[,)]/g)].map(
       ([, slug, version]) => `${slug}@${version}`,
     ),
   );

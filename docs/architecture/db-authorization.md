@@ -83,10 +83,13 @@ the next instance of that class fails a test before it ships.
 
 **Platform regime change (2026-06):** Supabase no longer auto-grants Data API privileges
 (`anon`/`authenticated`/`service_role`) to new `public`-schema objects — on local stacks
-since CLI v2.106.0, and on our hosted DBs since `00099` proactively revoked the legacy
-`FOR ROLE postgres` default privileges (ahead of Supabase's own 2026-10-30 platform
-flip; the transition asymmetry had already produced one CI-invisible exposure, repaired
-in `00098`). Layer 1 now fails closed identically everywhere: a new table or function is
+since CLI v2.106.0, and on our hosted DBs since a migration proactively revoked the
+legacy `FOR ROLE postgres` default privileges (ahead of Supabase's own 2026-10-30
+platform flip; the transition asymmetry had already produced one CI-invisible exposure,
+which a follow-up repaired). That revoke now stands at the top of the baseline schema
+migration, ahead of every object the baseline creates, because a fresh database is born
+with the legacy defaults and the dump below it cannot take back a grant it never wrote.
+Layer 1 now fails closed identically everywhere: a new table or function is
 unreachable, even by `service_role`, until a migration explicitly `GRANT`s it. The
 pre-existing surface was backfilled verbatim from the committed schema (the
 explicit-grants migration); any phase of this refactor that creates objects must write
@@ -197,7 +200,7 @@ per-product seat counts. The subscription-price catalog has no `authenticated`
 grant at all. When adding a table that holds money, seats, or enrollment state,
 grant-lock it by default.
 
-**`anon` holds zero table write grants, everywhere** (since `00097`). The 2026-03
+**`anon` holds zero table write grants, everywhere.** The 2026-03
 audit's lockdown revoked writes from `authenticated` only, leaving `anon`'s
 auto-expose-era write grants standing on 27 tables — inert (no anon write policy
 exists, default-deny blocked everything) but one unscoped `CREATE POLICY` (no `TO`
@@ -535,7 +538,7 @@ Three judgment calls worth carrying forward:
   the `SECURITY DEFINER` ones.** `create_product` is `SECURITY INVOKER` and would have
   escaped the narrower reading, which is why the guard primitives carry an
   `authenticated` grant in the first place. (Its cousin `update_product` was the second
-  such function until 00171 elevated it so it could delete a switched-off product's
+  such function until it was elevated so it could delete a switched-off product's
   waitlist — a table the caller has no write grant on.) The partition is
   "role-gated or self-scoping", and it is the same partition check 5 enforces.
 - **The matrix asserts both directions.** For a disallowed (role, RPC) pair the call
@@ -851,7 +854,7 @@ piece of work it left, is written up under it.
   shape" property fails on those two tables, the un-wrapped duplicate re-evaluates its
   predicate per row, and the committed snapshot describes neither database completely.
 
-  **Repaired in `00127`**, which converges both catalogs onto the migration-history names.
+  **Repaired by a convergence migration**, which puts both catalogs onto the migration-history names.
   Because the two databases genuinely differ, it cannot assert either starting state: it
   walks the six (legacy name, canonical name) pairs and drops the legacy policy when both
   exist, renames it when only the legacy one does, and does nothing when already converged.

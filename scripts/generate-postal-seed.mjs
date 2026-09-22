@@ -60,11 +60,13 @@ import { migrationPath } from "./lib/migration-version.mjs";
  * The version is left out because it is assigned when the branch lands, which
  * means the file this generator creates is on every database under a number
  * chosen later — the descriptive half is the half that survives.
+ *
+ * The map is empty, and that is the record: every country seeded so far has its
+ * postal codes in the baseline migration, its seed file squashed away with the
+ * rest of the numbered history. An empty entry is what stops this generator
+ * writing a second copy of codes the database already holds.
  */
-const MIGRATIONS = {
-  FI: "seed_finland_postal_codes",
-  FR: "seed_france_postal_codes",
-};
+const MIGRATIONS = {};
 
 const TITLES = { FI: "Finland", FR: "France", SE: "Sweden", GB: "the United Kingdom" };
 
@@ -99,9 +101,13 @@ if (!iso) fail("Usage: node scripts/generate-postal-seed.mjs <CC>   (e.g. FI, FR
 const migrationName = MIGRATIONS[iso];
 if (!migrationName) {
   fail(
-    `No postal migration recorded for ${iso}. Add its name — what the migration does, no ` +
-      `version — to MIGRATIONS in scripts/generate-postal-seed.mjs. The file itself is ` +
-      `created on this run and restamped when the branch lands.`,
+    `No postal migration is recorded for ${iso}. If ${iso} was seeded before the migration ` +
+      `history was squashed, its codes are already in the baseline migration and this generator ` +
+      `would write a second copy of them: codes that are already there are refreshed by a new ` +
+      `migration saying what changed, never by re-running the seed. If ${iso} is genuinely new, ` +
+      `add its name — what the migration does, no version — to MIGRATIONS in ` +
+      `scripts/generate-postal-seed.mjs; the file itself is created on this run and restamped ` +
+      `when the branch lands.`,
   );
 }
 

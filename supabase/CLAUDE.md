@@ -83,9 +83,11 @@ DEFINER` + `SET search_path` headers, header-comment style, ordering-key stampin
 it on the **newest** migrations, never an arbitrary or early one. Conventions
 have evolved and old migrations preserve the superseded version: explicit per-role
 `GRANT`s replaced blanket/auto-expose grants, `clock_timestamp()` replaced `now()` for
-cross-transaction ordering keys, and `SET search_path TO ''` is the current default. The *rules* are written out in this file (grants, RLS,
-nullability, `now()` vs `clock_timestamp()` below); the newest migrations are their
-freshest worked examples. Pattern-matching on an old migration is how a dead convention
+cross-transaction ordering keys, and `SET search_path TO ''` is the current default. The
+*rules* are written out in this file (grants, RLS, nullability, `now()` vs
+`clock_timestamp()` below); the newest migrations are their freshest worked examples.
+The baseline migration is a dump of a database, not authored SQL — it is the starting
+state, never a model for a new migration. Pattern-matching on an old migration is how a dead convention
 gets revived — when in doubt, the rule in this file wins over any example in
 `migrations/`.
 
@@ -315,7 +317,10 @@ sequences, and functions have no Data API access by default, not even for
 `service_role`.** This holds identically in every environment: fresh local stacks since
 CLI v2.106.0, and hosted DBs since a migration revoked the legacy auto-expose default
 privileges (ahead of Supabase's 2026-10-30 platform flip) after an earlier one backfilled
-explicit grants for everything older. Grant deliberately per role —
+explicit grants for everything older. That revoke stands at the top of the baseline
+schema migration, ahead of every object it creates: a fresh database is born with the
+legacy defaults, and a schema dump can only add a grant, never take one back. Grant
+deliberately per role —
 `GRANT EXECUTE ... TO authenticated` for browser-called RPCs, `TO service_role` for
 admin-client-called ones — and classify any function exposed to `authenticated`/`anon`
 in the DB test suite's authorization spine (see below). A forgotten grant fails closed as

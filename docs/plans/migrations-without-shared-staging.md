@@ -433,6 +433,104 @@ land (see there).
      migration ("as 00127 does", "model it on the highest-numbered migrations") so it
      states its rule without the number.
 
+   **As built, 2026-09-22.** The baseline covers `origin/main`'s 253 files, verified
+   equal to production's applied history as `version|name` pairs in both directions. Its
+   versions are therefore `00266` (`00266_baseline_schema.sql`) and `00267`
+   (`00267_baseline_reference_data.sql`); the eleven files `00268`–`00280` that had
+   landed on `dev` by then stay as they are and apply after the baseline.
+
+   Decisions the build had to make, each forced by something it hit:
+
+   - **The data file holds `INSERT`s, not `COPY`.** The CLI splits a migration into
+     statements and sends them one at a time, so a `COPY … FROM stdin` block
+     desynchronises the wire protocol and the connection dies mid-file
+     (`08P01`, observed). Rows are grouped a thousand to a statement; the file is 10.5 MB
+     against 8.4 MB for the same rows in `COPY` form, and the schema file is 0.74 MB —
+     11.2 MB of baseline against 9.5 MB of squashed history.
+   - **The default-privilege revoke is hoisted to the top of the schema file.** A fresh
+     Supabase database grants `anon`, `authenticated` and `service_role` a share of every
+     table `postgres` creates, and a `pg_dump` writes the grants an object should have,
+     never the ones it should not. Without the revoke running *first*, every table in the
+     baseline was born with `REFERENCES, TRIGGER, TRUNCATE, MAINTAIN` for those roles —
+     which is also what the later migration asserting its view carries no write
+     privileges caught, failing the build outright.
+   - **`ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin` is dropped from the dump.**
+     Platform furniture that every Supabase database is born with, and `postgres` is
+     refused when it tries to set it.
+   - **One CHECK constraint is written the way its migration wrote it.** `x BETWEEN 1 AND
+     2000 AND y` stores a nested `AND` that prints as `((a AND b) AND c)`; re-parsing that
+     print flattens it, and the schema directory would have differed on that one line for
+     no reason a reader could act on.
+   - **`supabase/migrations/00266_baseline_schema.sql` is `-text` in `.gitattributes`,**
+     for the reason `supabase/schema/**` already is: the long-description CHECK holds a
+     literal carriage return, and normalisation deletes it. Confirmed rather than assumed
+     — the same bytes hash to two different blobs under `-text` and under `text=auto`.
+   - **No cron job is carried.** Both jobs that were ever scheduled were unscheduled
+     before the baseline's cut, and production's `cron.job` is empty. `pg_cron` is still
+     installed, because a function in `public` reads `cron.job`.
+
+   **The proof.** Four databases, built in the distro from scratch with seeds disabled,
+   database container only: (A) `main`'s 253 files, (B) the two baseline files, (C) `dev`'s
+   264, (D) baseline plus the eleven. Before each data dump the `locations` heap is
+   clustered on `(depth, id)`, so row order is a property of the data rather than of how it
+   got there.
+
+   A and B are byte-identical on all four artifacts:
+
+   | artifact | A and B |
+   |---|---|
+   | `database.types.ts` | `f275fdc8960c311b43d7225678e925ede6ca477780260c19072c1891fb7c6121` |
+   | schema directory | `0b85269c7c6d4abb00256ccb94267799c51a378341cc0758d2bceb528b84682a` |
+   | data-only dump of `public` | `6050c2821f4cb2cfd632a4af19b9595b97793fa5c30a6032b16be5c04f66da5c` |
+   | objects outside `public` | `5d62dd093b7c35143f37bbcf100f2113945150f8d17ccae98aa1c60ceec8bd5b` |
+
+   C and D are byte-identical on the types
+   (`1579b3b9be89a9b7ec95c935720479e5caf8cc773af8d72676036e69aabf398b`), the schema
+   directory (`e3cc9f8abe2ed9b38c77d81172dea29bd93c6a1602428a7dc4da54f17e988314`) and the
+   outside-`public` listing (the same hash as A and B: the eleven later migrations add
+   nothing outside `public`). Their data dumps differ, and cannot not differ: `locations.id`
+   is `gen_random_uuid()` and `created_at` is a clock read, so replaying the seeds mints a
+   different set of identifiers every time, while the baseline carries one frozen set.
+   Compared by natural key — each location rewritten as its country, type, external code,
+   GeoNames id, name, translations, retirement and depth, its parent the same way, postal
+   codes naming their location the same way, timestamps masked — the two are equal:
+   `2b2b02aaaab8aec108daceb50e07eb0427ccf73970936c7c1cd0240f7ae184e5` from both, over the
+   same five tables, 35,853 locations and 38,944 postal codes. Freezing the identifiers is
+   a gain, not a loss: they were arbitrary per `db reset` before, and on production and
+   staging the file never runs.
+
+   **The history repair, staging.** Run just before this merges into `dev`. Assert first —
+   `npx supabase migration list --linked` against staging must record exactly the 253
+   numbered versions being squashed — then mark the 251 below the baseline reverted:
+
+   ```
+   npx supabase migration repair --status reverted \
+     00001 00002 00003 00004 00005 00006 00007 00008 00009 00010 00011 00012 00013 00014 \
+     00015 00016 00017 00018 00019 00020 00021 00022 00023 00024 00025 00026 00027 00028 \
+     00029 00030 00031 00032 00033 00034 00035 00036 00037 00038 00039 00040 00041 00042 \
+     00043 00044 00045 00046 00047 00048 00049 00050 00051 00052 00053 00054 00055 00056 \
+     00057 00058 00059 00060 00061 00062 00063 00064 00065 00066 00067 00068 00069 00070 \
+     00071 00072 00073 00074 00075 00076 00077 00078 00079 00080 00081 00082 00083 00084 \
+     00085 00086 00087 00088 00089 00090 00091 00092 00093 00094 00095 00096 00097 00098 \
+     00099 00100 00101 00102 00103 00104 00105 00106 00107 00108 00109 00110 00111 00112 \
+     00113 00114 00115 00116 00117 00118 00119 00120 00121 00122 00123 00124 00125 00126 \
+     00127 00128 00129 00130 00131 00132 00133 00134 00135 00136 00137 00138 00139 00140 \
+     00141 00142 00143 00145 00146 00147 00148 00149 00150 00151 00152 00153 00154 00155 \
+     00157 00158 00159 00160 00161 00162 00163 00164 00165 00166 00167 00168 00169 00170 \
+     00171 00172 00173 00174 00175 00176 00177 00178 00179 00180 00181 00182 00183 00184 \
+     00185 00186 00187 00188 00189 00190 00191 00192 00193 00194 00195 00196 00197 00198 \
+     00199 00200 00201 00202 00203 00204 00205 00206 00207 00208 00209 00210 00211 00212 \
+     00213 00214 00220 00221 00222 00223 00224 00225 00226 00227 00228 00229 00230 00231 \
+     00232 00233 00234 00235 00236 00237 00238 00239 00240 00241 00242 00243 00244 00245 \
+     00246 00247 00248 00249 00250 00251 00252 00253 00254 00255 00256 00257 00258
+   ```
+
+   `00266` and `00267` stay applied, and so do the timestamped versions above them.
+   The rollback is the same list with `--status applied`. Production runs the identical
+   list, in the same sitting as the release that carries the squash, immediately before
+   the release merge — which is what the notice at the top of the root `CLAUDE.md` is
+   there to collect.
+
 ## Acceptance criteria
 
 - A migration written in a worktree reaches a green branch CI, on its first push, with

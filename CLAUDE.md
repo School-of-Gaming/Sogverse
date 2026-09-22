@@ -1,5 +1,22 @@
 # CLAUDE.md
 
+**The next release owes production's migration history repair, before the release merge.**
+The numbered migration history has been squashed into two baseline files, `00266` and
+`00267`. Production already ran every migration they replace, so none of their SQL may run
+there — instead the history table is edited to say so. Until that is done, `main` still
+holds the old files, and the first `db push` from `main` after the squash lands would try
+to replay the whole numbered history against a database that has it.
+
+In the same sitting as the release, immediately before the merge: assert that the numbered
+versions production records as applied are exactly the numbered files being squashed, with
+`npx supabase migration list --linked`; then `npx supabase migration repair --status
+reverted <every version below 00266>`, leaving `00266` and `00267` applied. The rollback is
+`npx supabase migration repair --status applied` over the same list.
+
+A release that skips this fails safe rather than corrupting anything: production's `db push`
+refuses, and the production promotion is held until the repair is run. **The release that
+pays this deletes this notice.**
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Commands
@@ -14,6 +31,8 @@ npm run gates            # All landing gates: lint + type-check + translations +
 npm run test             # Vitest unit tests
 npm run test:ui          # Vitest with UI
 npm run test:smoke       # Build + smoke check (serves a production build, asserts headers/CSP)
+npm run db -- generate   # Regenerate database.types.ts and supabase/schema/ from this checkout's migrations
+npm run db               # The local database commands (up, park, down, reset, migrate, list) — supabase/CLAUDE.md
 ```
 
 **When served output disagrees with the source, the `.next` cache is stale — delete it.**

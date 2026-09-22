@@ -56,7 +56,7 @@ const CACHE_CONTROL =
 export const GET = defineRoute({
   posture: "public",
   reason:
-    "the educator registration page asks an applicant where they can work before any account exists, so search cannot require a session. It reads two tables of public reference data — `locations` and, since 00165, `postal_codes` — and every row of both is already SELECTable by anon directly, under identical policies, so the route narrows that surface rather than widening it, and bounds the needle length and page size on the way in",
+    "the educator registration page asks an applicant where they can work before any account exists, so search cannot require a session. It reads two tables of public reference data — `locations` and `postal_codes` — and every row of both is already SELECTable by anon directly, under identical policies, so the route narrows that surface rather than widening it, and bounds the needle length and page size on the way in",
   query: searchLocationsQuery,
 
   handler: async ({ query }) => {

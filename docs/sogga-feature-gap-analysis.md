@@ -87,8 +87,9 @@ off-platform substitution is recordable for pay. Every assignment carries a prim
 role, so who ran a given session, in which role, is answerable per date.
 
 **Still missing:** A per-session status, and cancelling or rescheduling a single
-occurrence. `did_not_run` / `needs_substitute` columns were added in migration 00138 and
-deliberately dropped in 00151; `cancel_session` and `reschedule_session` are reserved
+occurrence. `did_not_run` / `needs_substitute` columns were added with the gedu session
+feed and deliberately dropped when the family feed replaced it; `cancel_session` and
+`reschedule_session` are reserved
 names only, and cancellation is where the occurrence expansion first gains a subtraction
 (substitution needed none). The substitution flow is also **in-app only** — the `ROADMAP.md`
 WhatsApp / Discord / email fan-out on **Auto substitution** is not built.

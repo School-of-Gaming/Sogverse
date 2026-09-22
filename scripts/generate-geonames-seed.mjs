@@ -96,20 +96,18 @@ import { migrationPath } from "./lib/migration-version.mjs";
  * creates today is on every database under a number chosen later. The
  * descriptive half is the half that survives, so that is the half we key on.
  *
- * A country appears under `cutover` when it had a tree before GeoNames did:
- * Finland and France were seeded from Tilastokeskus and the COG, and their one
- * migration replaces that tree with this one. Every country after them is a
- * plain `seed`.
+ * A country appears under `cutover` when it had a tree before GeoNames did: its
+ * one migration replaces that tree with this one. A country with no
+ * pre-GeoNames tree is a plain `seed`.
+ *
+ * Both maps are empty, and that is the record: every country seeded so far is
+ * in the baseline migration, its seed file squashed away with the rest of the
+ * numbered history. An empty entry is what stops this generator writing a
+ * second copy of a tree the database already holds.
  */
 const MIGRATIONS = {
-  seed: {
-    SE: "seed_sweden_geonames",
-    GB: "seed_uk_geonames",
-  },
-  cutover: {
-    FI: "cutover_finland_geonames",
-    FR: "cutover_france_geonames",
-  },
+  seed: {},
+  cutover: {},
 };
 
 /** Human-readable country names for the migration header. */
@@ -177,9 +175,13 @@ if (!migrationName) {
     );
   }
   fail(
-    `No ${mode} migration recorded for ${iso}. Add its name — what the migration does, no ` +
-      `version — to MIGRATIONS in scripts/generate-geonames-seed.mjs. The file itself is ` +
-      `created on this run and restamped when the branch lands.`,
+    `No ${mode} migration is recorded for ${iso}. If ${iso} was seeded before the migration ` +
+      `history was squashed, its tree is already in the baseline migration and this generator ` +
+      `would write a second copy of it: a tree that is already there is refreshed by a new ` +
+      `migration saying what changed, never by re-running the seed. If ${iso} is genuinely new, ` +
+      `add its name — what the migration does, no version — to MIGRATIONS in ` +
+      `scripts/generate-geonames-seed.mjs; the file itself is created on this run and restamped ` +
+      `when the branch lands.`,
   );
 }
 
