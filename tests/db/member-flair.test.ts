@@ -10,7 +10,7 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
 
 /**
- * The two staff-only marks a gedu meets before a session starts (00203): the
+ * The two staff-only marks a gedu meets before a session starts: the
  * newcomer badge's clock — `participations.group_joined_at`, wound by a trigger
  * and by nothing else — and the per-(group, member) note, read through
  * `get_group_staff_overlay` and written through `set_gamer_group_note`.

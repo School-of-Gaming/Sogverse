@@ -299,7 +299,7 @@ describe("search_locations", () => {
     it("answers a service-role caller too, not only anon", async () => {
       // SECURITY INVOKER means the arm reads `postal_codes` as whoever called,
       // and `service_role` may execute this function — so it needs the SELECT
-      // grant 00165 adds, or the postal arm raises permission denied on a path
+      // grant on that table, or the postal arm raises permission denied on a path
       // no anonymous test would ever exercise.
       const privileged = await search(admin, { p_query: "00100" });
 
@@ -347,12 +347,12 @@ describe("search_locations", () => {
       expect(names(result)).toEqual(expect.arrayContaining(["Lillebonne"]));
     });
 
-    // The regression migration 00141 was written for, now ranked by the stored
-    // `depth` instead of a hardcoded per-type CASE. "haute" matches dozens of
+    // The regression the stored `depth` ranking exists to prevent, rather than
+    // a hardcoded per-type CASE. "haute" matches dozens of
     // communes and nine départements; ordering by the location_type enum's
-    // declaration order put every commune first, and since search does not
-    // paginate past the default page of 20, Haute-Savoie and its siblings were
-    // unreachable by search at all. `depth` says a French département is
+    // declaration order puts every commune first, and since search does not
+    // paginate past the default page of 20, that leaves Haute-Savoie and its
+    // siblings unreachable by search at all. `depth` says a French département is
     // shallower than a commune without anyone spelling out France's shape.
     it("reaches France's départements on the default page of a broad needle", async () => {
       const result = await search(anon, { p_query: "haute", p_limit: 20 });

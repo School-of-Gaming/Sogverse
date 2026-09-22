@@ -10,8 +10,9 @@ import {
 } from "@/services/admin-dashboard/admin-dashboard.contracts";
 
 /**
- * `get_admin_dashboard` (migration 00191) — the single JSONB document behind the
- * admin dashboard, parsed through the `adminDashboardSnapshot` contract that the
+ * `get_admin_dashboard` (`supabase/schema/functions/`) — the single JSONB
+ * document behind the admin dashboard, parsed through the
+ * `adminDashboardSnapshot` contract that the
  * service parses through in the browser. That parse is half the point of this
  * file: the schema is the wire contract's only definition, and CI is where it
  * meets real Postgres.
@@ -30,9 +31,8 @@ import {
  *     municipality-only flags are false on every other product type
  *   - the two unstaffed-group arrays, which are disjoint: a group somebody is in
  *     is in the first, a group nobody is in is in the second, and a group
- *     somebody teaches is in neither. Until 00241 the empty one was not reported
- *     at all, so the cases below are what keep the two halves from collapsing
- *     back into one
+ *     somebody teaches is in neither. The cases below are what keep the two
+ *     halves from collapsing into one
  *   - a live product with nothing wrong is absent from the queue entirely
  *   - a run that ended months ago is in neither product section
  *
@@ -53,7 +53,7 @@ const P_WAITLIST = "00000000-0000-0000-0000-000000000623";
 const P_MUNI = "00000000-0000-0000-0000-000000000624";
 const P_CLEAN = "00000000-0000-0000-0000-000000000625";
 /**
- * The product whose ONLY problem is an empty unstaffed group (00241). Its fee is
+ * The product whose ONLY problem is an empty unstaffed group. Its fee is
  * set and it has no queue, so if it is in the attention list at all, it is there
  * for the one reason this fixture exists to prove.
  */
@@ -62,16 +62,15 @@ const GROUP_EMPTY = "00000000-0000-0000-0000-000000000627";
 const P_ENDED = "00000000-0000-0000-0000-000000000628";
 /**
  * A group on P_CLEAN with an educator assigned and nobody in it. It is what
- * keeps P_CLEAN clean *for a reason* — before 00241 an empty group was ignored
- * whatever its staffing, so a fixture that left this one unassigned would go on
- * passing while saying nothing.
+ * keeps P_CLEAN clean *for a reason* — an empty group is excused by its
+ * staffing and nothing else, so a fixture that left this one unassigned would
+ * go on passing while saying nothing.
  */
 const GROUP_STAFFED = "00000000-0000-0000-0000-000000000629";
 /**
  * A municipality club whose fees are both set and which names no invoice
- * customer (00269). Its presence in the queue is the missing buyer and nothing
- * else — which is the whole behaviour change, because before 00269 this club was
- * absent from the list.
+ * customer. Its presence in the queue is the missing buyer and nothing
+ * else, which is what this fixture exists to prove.
  */
 const P_MUNI_NO_CUSTOMER = "00000000-0000-0000-0000-00000000080d";
 /**
@@ -95,7 +94,7 @@ const INVOICE_CUSTOMER_NUMBER = "F980F";
  * from becoming the current version for every other test running against the
  * same database — current is the greatest `created_at`, and nothing is older
  * than this. It carries a language suffix because every version string does
- * (00202), and its BASE is shape-impossible for the same reason the fixture ids
+ * and its BASE is shape-impossible for the same reason the fixture ids
  * are: the whitelist holds document labels, and no document is labelled this.
  */
 const OLD_CONTRACT_VERSION = "not-a-version-1970-0000/fi";
@@ -260,7 +259,7 @@ describe("get_admin_dashboard", () => {
       startDate: utcDay(-200),
       endDate: utcDay(-100),
     });
-    // The invoice-customer pair (00269): two municipality clubs identical in
+    // The invoice-customer pair: two municipality clubs identical in
     // every respect the queue reads except the buyer. One cannot be both, which
     // is why there are two.
     for (const id of [P_MUNI_NO_CUSTOMER, P_MUNI_INVOICEABLE]) {
@@ -419,7 +418,7 @@ describe("get_admin_dashboard", () => {
     // of "current", and that wants acceptances with chosen timestamps and
     // chosen versions. The RPC's own behaviour is gedu-contract.test.ts's job.
     //
-    // A version string is `<base>/<language>` (00202), and the languages of one
+    // A version string is `<base>/<language>`, and the languages of one
     // base are the same agreement published twice — so "current" is a BASE, and
     // both of its texts are it. The rows are read in the RPC's own order, which
     // is what lets the cases below speak of "the language the queue's pick
@@ -530,7 +529,7 @@ describe("get_admin_dashboard", () => {
     });
 
     it("reports a verification stat wherever the role holds real addresses", async () => {
-      // Since 00235 the test is the ADDRESS, not the role. A gamer in sign-in
+      // The test is the ADDRESS, not the role. A gamer in sign-in
       // mode `parent` or `username` carries a synthetic
       // @gamer.sogverse.internal handle nobody will ever click a link in, so "0
       // verified" would report a problem that does not exist and NULL says the
@@ -683,10 +682,9 @@ describe("get_admin_dashboard", () => {
     });
 
     it("names an empty group with no educator, in its own array", () => {
-      // Until 00241 this group was reported nowhere: the group check skipped it
-      // for having no members, on the reasoning that an admin building next
-      // term's groups has not made a mistake. That reasoning now sets the line's
-      // rank on the page instead of hiding the group.
+      // An empty group is reported rather than skipped for having no members:
+      // the reasoning that an admin building next term's groups has not made a
+      // mistake sets the line's rank on the page instead of hiding the group.
       const product = attention(P_EMPTY_GROUP);
       expect(product?.empty_groups_without_gedu).toEqual([
         { id: GROUP_EMPTY, name: "Empty group" },
@@ -696,8 +694,7 @@ describe("get_admin_dashboard", () => {
 
     it("puts a product in the queue for an empty unstaffed group alone", () => {
       // Its fee is set, it has no cap and no queue, and nobody is enrolled on
-      // it — so its presence here is the empty group and nothing else. This is
-      // the whole behaviour change: before 00241 this product was absent.
+      // it — so its presence here is the empty group and nothing else.
       const product = attention(P_EMPTY_GROUP);
       expect(product).toBeDefined();
       expect(product?.unassigned_count).toBe(0);
@@ -711,7 +708,7 @@ describe("get_admin_dashboard", () => {
         waitlist_count: 1,
         open_seats: 2,
         // No offer has been sent in this fixture, so the seat-offer work
-        // (00207) contributes a zero: every open seat still needs an admin.
+        // contributes a zero: every open seat still needs an admin.
         live_offer_count: 0,
       });
     });
@@ -728,8 +725,7 @@ describe("get_admin_dashboard", () => {
     it("puts a municipality club in the queue for a missing invoice customer alone", () => {
       // Both fees are set, it has no cap, no queue, no groups and nobody
       // enrolled — so the buyer is the only thing it lacks, and its presence
-      // here is the whole of what 00269 changed: before it, this club was
-      // absent from the list.
+      // here is that and nothing else.
       const product = attention(P_MUNI_NO_CUSTOMER);
       expect(product).toBeDefined();
       expect(product?.missing_invoice_customer).toBe(true);
@@ -764,8 +760,8 @@ describe("get_admin_dashboard", () => {
 
     it("says nothing about a live product with nothing wrong", () => {
       // P_CLEAN has a fee, no queue, no unassigned seats — and one group that is
-      // empty but ASSIGNED, which is the case both group arrays exclude. Since
-      // 00241 that assignment is load-bearing: an empty group with no educator
+      // empty but ASSIGNED, which is the case both group arrays exclude. That
+      // assignment is load-bearing: an empty group with no educator
       // would put this product in the queue.
       expect(attention(P_CLEAN)).toBeUndefined();
     });

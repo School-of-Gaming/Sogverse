@@ -17,8 +17,8 @@ import { TEST_CREDENTIALS } from "./constants";
  * on who asks", and reading it as an unauthenticated visitor is the only way to
  * prove that. `postal_codes` carries no **write** grant for anybody,
  * service_role included — rows land through data migrations, which run as the
- * database owner and need no Data API privilege at all. It gained a service_role
- * *read* grant in `00165`, and for one reason only: `search_locations` is
+ * database owner and need no Data API privilege at all. It carries a service_role
+ * *read* grant, and for one reason only: `search_locations` is
  * SECURITY INVOKER, reads this table for its postal match arm, and is executable
  * by that role, so a role holding EXECUTE on the function has to hold the reads
  * the function makes.
@@ -324,7 +324,7 @@ describe("postal codes", () => {
     });
 
     it("is readable on the privileged client, because the search RPC reads it as its caller", async () => {
-      // The one grant `00165` added, and the narrowest reason for it:
+      // The one grant it carries, and the narrowest reason for it:
       // `search_locations` is SECURITY INVOKER and `service_role` may execute
       // it, so the postal match arm reads this table as service_role. Without
       // the grant that call raises `permission denied` on a path no anonymous

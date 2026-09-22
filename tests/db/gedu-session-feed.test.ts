@@ -34,30 +34,29 @@ import {
  * "who may write what" is actually settled. Three separate authorizations are
  * pinned, because they fail differently:
  *
- *   1. **Role** — a gedu passes, and since 00200 so does an ADMIN on the five
- *      session writers, which the admin product page now drives from the same
- *      components. Since 00204 an admin passes `get_gedu_group_feed` too: the
+ *   1. **Role** — a gedu passes, and so does an ADMIN on the five
+ *      session writers, which the admin product page drives from the same
+ *      components. An admin passes `get_gedu_group_feed` too: the
  *      product page's per-group GROUP DETAILS page renders this workspace's
  *      page body unchanged, so it is fed the same document rather than an
  *      admin-shaped copy that would drift from it field by field. The other
  *      READ stays gedu-only — `get_my_gedu_assignment_summaries` answers "what
- *      do *I* owe", which is a question an admin cannot coherently ask. Since
- *      00205 an admin passes the two GAME-USERNAME writers as well: the group
+ *      do *I* owe", which is a question an admin cannot coherently ask. An
+ *      admin passes the two GAME-USERNAME writers as well: the group
  *      details page renders this workspace's roster body unchanged, inline
  *      username editor included, and an admin already holds that same edit on
  *      /admin/users/[id] — so serving it here aligns two surfaces rather than
- *      granting a power. Everybody else is refused on the first statement, as
- *      before.
+ *      granting a power. Everybody else is refused on the first statement.
  *   2. **Assignment (the actor)** — a gedu may only touch, or read, groups they
  *      teach. This is the half, and the only half, an admin is exempt from.
  *   3. **Roster membership (the target)** — an assigned gedu may only mark, or
  *      edit a game username of, children actually in that group. Both platforms
- *      are substituted: `set_group_member_minecraft` and, since 00195, its Roblox
+ *      are substituted: `set_group_member_minecraft` and its Roblox
  *      twin, which is the same guard over a bigint key instead of a text one. A test
  *      where the attacker fails the role check as well proves much less than
  *      one where only the target check stands between them and the row.
  *
- * Since 00197 there is a fourth write on the surface and it is a different kind
+ * A fourth write on the surface is a different kind
  * of thing: `claim_group_session_report_email` does not record what happened in
  * the room, it CLAIMS the one send of the report to the group's families. It
  * carries the same role and assignment gates as the rest, and two refusals of
@@ -122,9 +121,9 @@ const TODAY = dayOffset(0);
  * every fixture occurrence in this file falls inside their membership.
  *
  * **This has to be said out loud, because the default is wrong here.**
- * `group_joined_at` is stamped `now()` by 00203's trigger, which puts an
+ * `group_joined_at` is stamped `now()` by its trigger, which puts an
  * unadorned fixture seat into its group TODAY — after every past occurrence
- * these tests talk about. Since 00243 the register is only FOR the members who
+ * these tests talk about. The register is only FOR the members who
  * had joined before a session ended, on both halves of the derivation, so a
  * seat stamped today is expected on none of them and the summaries' first
  * condition can never fire: nought marks against nought expected members is a
@@ -138,7 +137,7 @@ const TODAY = dayOffset(0);
  *
  * Written directly rather than through a placement RPC because an UPDATE that
  * does not name `group_id` never fires the stamping trigger, which is the same
- * property 00243's own backfill relies on.
+ * property the schema's own join-date backfill relies on.
  */
 const JOINED_AT_BACKDATE = `${dayOffset(-30)}T00:00:00.000Z`;
 const YESTERDAY = dayOffset(-1);
@@ -280,7 +279,7 @@ describe("gedu session feed", () => {
 
   describe("role gate", () => {
     it("refuses a customer and a gamer on the feed read", async () => {
-      // Admin is deliberately absent from this loop since 00204 — the admin
+      // Admin is deliberately absent from this loop — the admin
       // group details page reads this exact document, and the positive case is
       // pinned in the get_gedu_group_feed block below. What stays refused is
       // what matters: this document carries the gedu-only material link, the
@@ -304,9 +303,9 @@ describe("gedu session feed", () => {
     });
 
     it("refuses a customer and a gamer on every write path", async () => {
-      // Admin is deliberately absent from this loop since 00200 — the five
+      // Admin is deliberately absent from this loop — the five
       // session writers admit one, and the test below is where that is pinned.
-      // The two game-username writers still refuse an admin, and keep their own
+      // The two game-username writers refuse an admin here, and keep their own
       // loop underneath for exactly that reason.
       for (const client of [customerAuth, gamerAuth]) {
         const notes = await client.rpc("set_group_session_notes", {
@@ -348,9 +347,9 @@ describe("gedu session feed", () => {
     });
 
     it("refuses a customer and a gamer on the game-username writers", async () => {
-      // The family half, and the half that has never moved. An admin was in
-      // this loop until 00205, when the group details page began rendering this
-      // workspace's roster body — editor included — and a control that is drawn
+      // The family half, and the half that has never moved. An admin is not in
+      // this loop: the group details page renders this workspace's roster body
+      // — editor included — and a control that is drawn
       // has to be served; their positive path is in the target-authorization
       // block below. Kept as its own loop all the same, so a future widening of
       // the session writers cannot quietly widen these by sharing a list.
@@ -570,10 +569,10 @@ describe("gedu session feed", () => {
     });
 
     /**
-     * **The admin half of the target check (00205).** The admin holds no
+     * **The admin half of the target check.** The admin holds no
      * assignment on any fixture product in this file, so a pass here is a pass
-     * by ROLE — which is the whole of what the widening granted. Both platforms
-     * are asserted, because one roster editor serves both and a widening that
+     * by ROLE — which is the whole of what the role gate grants. Both platforms
+     * are asserted, because one roster editor serves both and a gate that
      * reached one alone would ship a control that saves on a Minecraft group
      * and refuses on a Roblox one.
      */
@@ -617,7 +616,7 @@ describe("gedu session feed", () => {
     /**
      * **And the rule an admin is NOT exempt from.** A game account belongs to a
      * child: an adult seat carries none and the roster renders that slot empty
-     * by design, so the target-role check (00177) is about the integrity of the
+     * by design, so the target-role check is about the integrity of the
      * row rather than about who is looking. It answers 23514 — a different
      * error from the group half's 42501, which is what proves the admin got
      * past the group half and was stopped by this one instead.
@@ -967,7 +966,7 @@ describe("gedu session feed", () => {
     });
 
     it("hands an admin the identical document the assigned gedu reads", async () => {
-      // 00204. The admin product page's per-group GROUP DETAILS page renders
+      // The admin product page's per-group GROUP DETAILS page renders
       // the gedu workspace's page body unchanged, so the two surfaces stay one
       // surface only while they are fed one document. Equality is therefore the
       // assertion, not "an admin gets something back": a document that merely
@@ -1154,8 +1153,9 @@ describe("gedu session feed", () => {
     });
 
     it("carries the staff-only flair on the roster, with a note and without one", async () => {
-      // 00203's three fields, parsed through the same contract as everything
-      // else here — a widened schema with no substituting db test is exactly the
+      // The staff-only flair's three fields, parsed through the same contract
+      // as everything else here — a widened schema with no substituting db test
+      // is exactly the
       // gap the contracts convention exists to close.
       //
       // One member, read twice, rather than two members: GROUP_MINE's roster is
@@ -1313,8 +1313,8 @@ describe("gedu session feed", () => {
     });
 
     /**
-     * The trimmed test, not a NULL test — 00150 exists because a whitespace-only
-     * report once counted as one. The write path collapses such a value back to
+     * The trimmed test, not a NULL test — a whitespace-only report is no
+     * report. The write path collapses such a value back to
      * NULL, so the row has to be planted with the service role; the two rows
      * substitution different whitespace classes for the same reason the summaries test
      * does, since bare `btrim()` strips spaces alone.
@@ -1474,7 +1474,7 @@ describe("gedu session feed", () => {
     });
 
     /**
-     * The third half, added in 00197, and the one this block used to end on.
+     * The third half: the send.
      *
      * A session marked to the last child and written up in full is still not
      * finished: a report nobody was told about is a report nobody reads, which
@@ -1549,8 +1549,8 @@ describe("gedu session feed", () => {
      *
      * The two rows deliberately substitution different whitespace classes: plain
      * spaces, and a newline/tab mixture. Space-only is the one class bare
-     * btrim() strips, so a test using only spaces would keep passing if 00150's
-     * character-list form regressed to 00149's — the newline row is the pin
+     * btrim() strips, so a test using only spaces would keep passing if the
+     * trim lost its character list — the newline row is the pin
      * that holds the SQL to JavaScript's String.trim().
      */
     it("treats a whitespace-only report as no report at all", async () => {
@@ -1858,8 +1858,8 @@ describe("gedu session feed", () => {
   // 10. The last editor, by id and by first name
   // -------------------------------------------------------------------------
   //
-  // The feed has always carried `updated_by`; 00194 put the first name beside
-  // it so a card can sign itself without a second lookup. What this block
+  // The feed carries `updated_by` and the first name beside
+  // it, so a card can sign itself without a second lookup. What this block
   // settles is the SEMANTIC, because it is the part a reader is most likely to
   // guess wrong: the pair names whoever last touched the session in any
   // recorded way, which is not necessarily whoever wrote the report.

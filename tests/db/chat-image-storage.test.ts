@@ -15,7 +15,7 @@ import {
 import { getStringRecord } from "../helpers/json";
 
 /**
- * The `chat-images` storage policy (00231) — the one read boundary the bytes
+ * The `chat-images` storage policy — the one read boundary the bytes
  * have.
  *
  * **Reading the object requires SELECT on it under storage RLS**, which is
@@ -26,7 +26,7 @@ import { getStringRecord } from "../helpers/json";
  * it. Every case below downloads the object on a real caller's own client,
  * which is the production read path itself: the read route calls
  * `storage.download` on the viewer's session and serves what comes back (no
- * signed URL is minted anywhere since 00233), so what these cases exercise is
+ * signed URL is minted anywhere), so what these cases exercise is
  * the same call the app makes, one HTTP hop earlier.
  *
  * The object is written with the service-role client, as the upload route

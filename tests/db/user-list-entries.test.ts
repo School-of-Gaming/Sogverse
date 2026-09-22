@@ -11,9 +11,9 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
  * `user_list_entries` — the one paged read behind the admin users page, the
  * participant picker and the gedu picker.
  *
- * It replaced `user_search_index` in 00270, and this file replaced that view's
+ * It replaced `user_search_index`, and this file replaced that view's
  * own test. What it exists to prove is the half of those three surfaces that
- * lives outside the application, and there is more of it than there used to be:
+ * lives outside the application:
  * not only that a person is findable by the artifacts an admin is handed, but
  * that a *family* is one row, that the row carries what its children render, and
  * that `security_invoker` still makes the caller's own RLS the only thing

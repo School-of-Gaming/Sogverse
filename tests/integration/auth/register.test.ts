@@ -42,7 +42,7 @@ vi.mock("@/lib/supabase/admin", () => ({
     },
     // One table and no more: the profile, for the optional home location and
     // the locale. The marketing-consent pair used to be reachable here too and
-    // deliberately is not any more — those two writes are one RPC now (00221),
+    // deliberately is not — those two writes are one RPC,
     // so a `from("marketing_consents")` reappearing is the non-atomic pair
     // coming back and this mock fails on it.
     from: (table: string) => {
@@ -60,7 +60,7 @@ vi.mock("@/lib/supabase/admin", () => ({
       if (fn === "record_registration_marketing_consent") {
         return mockConsentRpc(args);
       }
-      // The account-level record of what this account was opened under (00249).
+      // The account-level record of what this account was opened under.
       // Service-role only for the same reason the marketing writer is: it names
       // its subject in an argument because no session exists yet.
       if (fn === "record_account_consents") {
@@ -544,7 +544,7 @@ describe("POST /api/auth/register", () => {
     expect(response.status).toBe(200);
     expect(mockConsentRpc).toHaveBeenCalledTimes(1);
     // The route names the customer and the answer, and nothing else. Neither
-    // the consent type nor the `registration` source is a parameter — 00221
+    // the consent type nor the `registration` source is a parameter — the RPC
     // hardcodes both, so this route cannot stamp that provenance onto the
     // partner's list and nothing a client can reach can claim it at all.
     expect(mockConsentRpc).toHaveBeenCalledWith({

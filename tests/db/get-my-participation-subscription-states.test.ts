@@ -6,9 +6,9 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
 
 /**
- * Behavior of get_my_participation_subscription_states (SECURITY DEFINER,
- * 00093 — supersedes get_my_payment_problem_participations). It powers both
- * dashboard subscription badges (payment-problem and access-until). The
+ * Behavior of get_my_participation_subscription_states (SECURITY DEFINER).
+ * It powers both dashboard subscription badges (payment-problem and
+ * access-until). The
  * contract the UI leans on:
  *   * Returns only the caller's OWN participations — scoped to
  *     customer_id = auth.uid() OR participant_id = auth.uid(). A parent and the

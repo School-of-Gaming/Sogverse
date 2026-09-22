@@ -119,7 +119,7 @@ describe("handle_new_user() role assignment", () => {
     expect(data!.user_id).toBe(user.id);
   });
 
-  // -- utm_source / utm_medium / utm_campaign (00234) --
+  // -- utm_source / utm_medium / utm_campaign --
   //
   // The trigger sanitises these three keys in its own body rather than letting
   // the CHECKs decide, and that is the whole subject here. handle_new_user
@@ -158,9 +158,9 @@ describe("handle_new_user() role assignment", () => {
     });
 
     it("preserves case rather than folding it", async () => {
-      // The trap 00184 had the opposite of: that column lowercased, and this
-      // one must not, because Vercel reports UTM values case-sensitively and
-      // folding would make our numbers disagree with theirs.
+      // The opposite of the email column beside it: that one lowercases, and
+      // this one must not, because Vercel reports UTM values case-sensitively
+      // and folding would make our numbers disagree with theirs.
       const user = await createTestUser({
         email: "utm-case@test.local",
         user_metadata: {
@@ -372,7 +372,7 @@ describe("handle_new_user() role assignment", () => {
     });
 
     it("still cannot influence the assigned role", async () => {
-      // The suite's standing subject, re-run against the keys 00234 added:
+      // The suite's standing subject, re-run against the UTM keys:
       // three more caller-supplied values reaching the most sensitive function
       // in the schema must widen nothing but three nullable text columns.
       const user = await createTestUser({

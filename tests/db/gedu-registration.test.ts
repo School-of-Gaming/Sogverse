@@ -5,7 +5,7 @@ import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
 /**
- * Coverage for the gedu self-registration RPCs (migration 00111):
+ * Coverage for the gedu self-registration RPCs:
  *   - register_gedu: atomic promotion of a freshly-created customer profile
  *     into a fully-populated, uncertified gedu (service_role only).
  *   - set_gedu_certified: admin-only certify / de-certify, stamping the audit
@@ -30,8 +30,8 @@ describe("gedu registration + certification RPCs", () => {
 
   afterAll(async () => {
     // Restore the seeded gedu to its certified baseline in case a test flipped
-    // it. Through the signed-in admin, not the service-role client: since 00121
-    // the RPC's guard refuses a caller with no profiles row.
+    // it. Through the signed-in admin, not the service-role client: the RPC's
+    // guard refuses a caller with no profiles row.
     await adminClient.rpc("set_gedu_certified", {
       p_gedu_id: TEST_IDS.GEDU,
       p_certified: true,
@@ -238,9 +238,9 @@ describe("gedu registration + certification RPCs", () => {
     });
 
     it("rejects a non-admin caller with the canonical 42501", async () => {
-      // 00121 moved this RPC onto assert_admin(), so its refusal now carries the
-      // same forbidden ERRCODE as every other role-gated RPC instead of a
-      // generic raise. That is what let the role × RPC matrix pick it up.
+      // This RPC guards with assert_admin(), so its refusal carries the
+      // same forbidden ERRCODE as every other role-gated RPC rather than a
+      // generic raise. That is what lets the role × RPC matrix pick it up.
       const { error } = await geduClient.rpc("set_gedu_certified", {
         p_gedu_id: TEST_IDS.GEDU,
         p_certified: false,

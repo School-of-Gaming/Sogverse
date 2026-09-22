@@ -778,7 +778,7 @@ describe("rollUpFamilyEnrollments — the parent's own seat", () => {
     });
   }
 
-  /** A row whose participant is the parent — the shape 00173 made possible. */
+  /** A row whose participant is the parent — an adult holding their own seat. */
   const selfSeat = sessionRow({
     participationId: "parents-evening",
     participant: { id: PARENT, firstName: "Sanna" },

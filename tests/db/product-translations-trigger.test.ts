@@ -10,10 +10,9 @@ import {
 /**
  * Coverage for the BEFORE-DELETE trigger on product_translations.
  *
- * Rule (post-migration 00047): every product must keep ≥1 translation
- * row in any locale. The previous rule required ≥1 of (en, fi); this
- * suite locks in the relaxed behavior so a future tightening doesn't
- * silently regress.
+ * Rule: every product must keep ≥1 translation row in any locale — not
+ * ≥1 of (en, fi). This suite locks in the relaxed behavior so a future
+ * tightening doesn't silently regress.
  */
 
 const PRODUCT_ID = "00000000-0000-0000-0000-0000000005f3";
@@ -66,9 +65,8 @@ describe("ensure_product_keeps_at_least_one_translation trigger", () => {
   });
 
   it("allows deleting the last en/fi row when another locale remains (relaxed rule)", async () => {
-    // Pre-00047 this delete would have been rejected because no en/fi
-    // row would remain. Under the new rule "≥1 row of any locale" is
-    // sufficient — sv is enough.
+    // A stricter rule would reject this delete because no en/fi row would
+    // remain. Under "≥1 row of any locale" it is allowed — sv is enough.
     await freshProductWithTranslations(["en", "sv"]);
 
     const { error } = await admin

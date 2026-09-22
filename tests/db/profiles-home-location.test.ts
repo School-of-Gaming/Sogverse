@@ -5,7 +5,7 @@ import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
 /**
- * `profiles.home_location_id` — the parent's own place (migration 00137).
+ * `profiles.home_location_id` — the parent's own place.
  *
  * Three things are worth proving here and are not proved anywhere else. The
  * column-grant audit in `authorization-spine.test.ts` says `authenticated` may
@@ -18,7 +18,7 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
  *  2. the foreign key is real, so a client-supplied id cannot store a dangling
  *     reference, and
  *  3. the referential action is SET NULL rather than RESTRICT — the deliberate
- *     trade in 00137, and the one that would be silently reversed by a future
+ *     trade, and the one that would be silently reversed by a future
  *     migration recreating the constraint without thinking about it.
  */
 describe("profiles.home_location_id", () => {
@@ -128,7 +128,7 @@ describe("profiles.home_location_id", () => {
   });
 
   it("deleting the referenced location clears the reference (ON DELETE SET NULL)", async () => {
-    // The judgement call in 00137, asserted from the outside: a location a
+    // The judgement call behind that action, asserted from the outside: a location a
     // parent points at must never be undeletable, because reconciling an annual
     // classification release means retiring merged rows and profile data must
     // not hold that hostage. The cost — the parent's pick is silently emptied —

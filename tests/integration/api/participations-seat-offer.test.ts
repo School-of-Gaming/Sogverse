@@ -322,8 +322,8 @@ describe("POST /api/participations/seat-offer", () => {
   /**
    * The lapsed block in My SOG keeps its Decline button live, because a family
    * telling us they cannot come is news we want whenever it arrives and the
-   * database honours it (00208). Whether staff hear about it is decided by
-   * whether they have heard about this offer at all (00209) — and the two
+   * database honours it. Whether staff hear about it is decided by
+   * whether they have heard about this offer at all — and the two
    * halves are asserted as a PAIR, because either alone passes while the rule
    * is half implemented.
    *

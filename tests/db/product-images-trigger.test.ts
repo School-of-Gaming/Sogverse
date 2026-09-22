@@ -7,8 +7,8 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
 
 /**
  * Coverage for the product image catalogue's schema half — the `product_images`
- * table (00196), the `products.image_id` FK and its trigger (00196), and the
- * invariants 00198 moved out of application code and into the database.
+ * table, the `products.image_id` FK and its trigger, and the
+ * invariants the database holds rather than application code.
  *
  * The single claim this file exists to prove is that **`image_path` cannot
  * disagree with `image_id`**. Everything downstream — every shop card, the
@@ -16,13 +16,11 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  * `image_path` and knows nothing about the catalogue, so if that column can
  * drift from the link, the whole design is decorative.
  *
- * Since 00198 the claim is total: `image_path` is the linked entry's path when
+ * The claim is total: `image_path` is the linked entry's path when
  * there is a link and NULL when there is not, on INSERT and UPDATE alike, and
- * whatever the statement itself said about the column. 00196 had one exception
- * — a product with no entry kept whatever path it carried — because it shipped
- * ahead of the code that created the links and had to leave ~110 pre-catalogue
- * pictures alone. That fold-in is done, and the cases below assert the
- * exception is gone rather than that it exists.
+ * whatever the statement itself said about the column. There is no exception
+ * for an unlinked product carrying a path of its own, and the cases below
+ * assert that rather than assuming it.
  *
  * Three of the cases are worth naming:
  *
@@ -31,8 +29,8 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  *     runs and blanks the path. That is load-bearing rather than incidental —
  *     "remove from catalogue" is implemented as a row delete and nothing else.
  *   - **`update_product` cannot influence `image_path` at all.** It used to
- *     assign the column from a `p_image_path` parameter and lose to the
- *     trigger; 00198 dropped both. The case below saves a linked product
+ *     name the column at all: it takes no image parameter and assigns none,
+ *     so the case below saves a linked product
  *     through the RPC and requires its picture to survive untouched.
  *   - **The table CHECKs its own shape.** `sha256` is 64 lowercase hex
  *     characters and `path` is that hash plus a stored extension, so a row
@@ -47,8 +45,8 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  * column list: every statement naming `image_path` is overwritten before any
  * constraint could be consulted, with the entry's path for a linked product
  * and with NULL for an unlinked one. The cases below are what prove that, and
- * 00198's end-state block asserts the one-relationship rule when CI builds the
- * database from `migrations/`.
+ * the schema's end-state block asserts the one-relationship rule when CI builds
+ * the database from `migrations/`.
  */
 
 /** A valid catalogue hash: 64 lowercase hex characters, from an 8-char seed. */
@@ -68,7 +66,7 @@ const ENTRIES = [ENTRY_A, ENTRY_B, ENTRY_DOOMED, ENTRY_RPC];
 
 /**
  * Catalogue fixtures. `sha256` and `path` are both UNIQUE table-wide *and*
- * CHECKed for shape since 00198, so these are real-shaped hashes built from
+ * CHECKed for shape, so these are real-shaped hashes built from
  * repeating hex words — valid to the constraint, and not something a real
  * file's digest will ever collide with.
  */
@@ -246,11 +244,9 @@ describe("product_images and the image_path trigger", () => {
   });
 
   describe("a product with no entry has no picture", () => {
-    // 00196's one exception, inverted by 00198. It preserved an app-supplied
-    // path for an unlinked product so that pre-catalogue pictures survived a
-    // migration released ahead of the code that linked them; none is left, and
-    // the branch was the only way `image_path` could still hold something the
-    // catalogue does not name.
+    // No exception preserves an app-supplied path for an unlinked product:
+    // such a branch would be the only way `image_path` could hold something
+    // the catalogue does not name.
 
     it("blanks a path written to an unlinked product on UPDATE", async () => {
       await deleteTestProducts(admin, [LEGACY_PRODUCT]);
@@ -343,9 +339,8 @@ describe("product_images and the image_path trigger", () => {
   });
 
   it("leaves a linked product's picture untouched across an update_product call", async () => {
-    // update_product used to assign `image_path = p_image_path` on every call
-    // and lose to the trigger; 00198 dropped the parameter and the assignment
-    // together, so the RPC has no way to name the column at all. A product save
+    // update_product takes no image parameter and assigns the column nothing,
+    // so the RPC has no way to name it at all. A product save
     // that changes everything else therefore cannot move the picture — which is
     // what the admin form relies on, since it sends no image field to the RPC.
     await deleteTestProducts(admin, [RPC_PRODUCT]);
@@ -441,7 +436,7 @@ describe("product_images and the image_path trigger", () => {
     });
 
     it("refuses a sha256 that is not 64 lowercase hex characters", async () => {
-      // The column IS a picture's identity (00198). A value that is not a hash
+      // The column IS a picture's identity. A value that is not a hash
       // is a row the bytes it claims to name can never find again, which
       // silently breaks dedup rather than breaking anything visible.
       const cases = [

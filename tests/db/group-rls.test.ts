@@ -214,7 +214,7 @@ describe("product_groups + gedu_group_assignments RLS", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Non-active participations don't grant ongoing visibility (00051).
+// Non-active participations don't grant ongoing visibility.
 // The participation_status enum is ('reserving', 'active', 'waitlisted',
 // 'completed') — no 'cancelled', and 'reserving' is retired. The realistic leak
 // is a former participant

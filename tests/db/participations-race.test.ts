@@ -45,7 +45,7 @@ const ALL_TEST_PRODUCTS = [
 
 describe("participations race + idempotency", () => {
   let admin: SupabaseClient<Database>;
-  // The waitlist engine is not callable by service_role (migration 00126); the
+  // The waitlist engine is not callable by service_role; the
   // waitlist block below goes through the guarded wrapper as CUSTOMER, who is
   // the parent of both seeded gamers.
   let customer: SupabaseClient<Database>;
@@ -465,10 +465,10 @@ describe("participations race + idempotency", () => {
   // ---------------------------------------------------------------------------
   //
   // The schema permits any product, free included, to carry an explicit
-  // seat_count (seat_count is optional for every billing mode). Before 00043,
-  // create_participation's free path INSERTed an active row before any
-  // seat-count check, so a free product with seat_count=1 silently accepted
-  // the second signup. The gate now sits above the free branch.
+  // seat_count (seat_count is optional for every billing mode). The gate sits
+  // ABOVE create_participation's free branch: a free path that INSERTed an
+  // active row before the seat-count check would let a free product with
+  // seat_count=1 silently accept the second signup.
 
   describe("create_participation — free product with seat_count enforces cap", () => {
     beforeAll(async () => {
@@ -517,7 +517,7 @@ describe("participations race + idempotency", () => {
   // write happen in one locked transaction, so the cap cannot be exceeded. This
   // block is the executable statement of the other half — deliberate policy,
   // not an oversight. `confirm_paid_participation` never re-checks the cap
-  // (00139's explicit design), because a refusal *after* the parent has paid is
+  // deliberately, because a refusal *after* the parent has paid is
   // worse than one visible oversold seat: the alternative is an automated
   // refund path the platform does not have. The window is a Stripe Checkout
   // session that opened while a seat was still free and completed after it

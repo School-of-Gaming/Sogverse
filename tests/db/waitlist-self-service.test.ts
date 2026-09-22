@@ -11,7 +11,7 @@ import {
 } from "@/services/participations/participations.contracts";
 
 /**
- * The parent/gamer side of the waitlist (migration 00131): the set-valued
+ * The parent/gamer side of the waitlist: the set-valued
  * position read behind the dashboard band, and the owner-authorized leave.
  *
  * Both are self-scoping — no role gate, every answer keyed to `auth.uid()` —

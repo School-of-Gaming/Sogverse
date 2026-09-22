@@ -6,7 +6,7 @@ import { INVISIBLE_ONLY_NAME } from "../../helpers/invisible-characters";
 
 /**
  * PATCH /api/gedu/gamers/[gamerId]/roblox — a gedu fixing a group member's
- * Roblox username, and since 00205 an admin making the same fix from the admin
+ * Roblox username, and an admin making the same fix from the admin
  * group details page. The Minecraft twin beside this file is the same edit on
  * the other platform, and the two suites are deliberately the same shape.
  *
@@ -70,7 +70,7 @@ function mockAuthenticatedGedu() {
   });
 }
 
-/** The same edit, made by an admin from the group details page (00205). */
+/** The same edit, made by an admin from the group details page. */
 function mockAuthenticatedAdmin() {
   mockRequireRole.mockResolvedValue({
     user: { id: "admin-1" },

@@ -7,7 +7,7 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
 import { getStringRecord } from "../helpers/json";
 
 /**
- * RLS coverage for voice_zones and voice_private_zone_occupants (00103, 00108).
+ * RLS coverage for voice_zones and voice_private_zone_occupants.
  *
  * The persisted half of the discrete-zone voice model. The security contract
  * (see src/components/voice/CLAUDE.md):

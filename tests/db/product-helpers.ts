@@ -38,7 +38,7 @@ import { TEST_IDS } from "./constants";
  *   5e5–5e8        products-purchaser-rls.test.ts (5e7 and 5e8 are FREE, for
  *                  the same reason as 5e3 and 5e4)
  *   5f1, 5f2, 5f7, 5f8, 5ff
- *                  update-product.test.ts (5f7 is the product its 00171
+ *                  update-product.test.ts (5f7 is the product its
  *                  waitlist-deletion cases seed participations on, kept apart
  *                  from 5f1 so the wipe-and-replace cases never see them;
  *                  5f8 is the decoy whose queue pins the delete's product
@@ -46,7 +46,7 @@ import { TEST_IDS } from "./constants";
  *   5f3            product-translations-trigger.test.ts
  *   5f4, 5f5       waitlist-self-service.test.ts
  *   5f6            waitlist-admin.test.ts (its FREE consumer_club product, for
- *                  the demote that 00132's type rule wrongly refused; the
+ *                  the demote a product-type rule would wrongly refuse; the
  *                  file's muni product is 5c7)
  *
  * The 5xx block has no tidy sub-range left below 5ff, so allocation continues
@@ -249,7 +249,7 @@ import { TEST_IDS } from "./constants";
  *                  assertions live there rather than beside the table's own
  *                  cases in invoice-customers.test.ts, which shares a database
  *                  with that club and so could not call the RPC at all
- *   80d-80f        admin-dashboard.test.ts's invoice-customer pair (00269): two
+ *   80d-80f        admin-dashboard.test.ts's invoice-customer pair: two
  *                  municipality clubs identical in everything the attention
  *                  queue reads except the buyer — 80d names none and 80e names
  *                  80f, which is an `invoice_customers` row rather than a
@@ -334,8 +334,8 @@ export interface ProductOptions {
   waitlistEnabled?: boolean;
   isVisible?: boolean;
   /**
-   * Audience. Defaults to gamers-only, which is what every product was before
-   * 00173 and what the whole existing suite assumes.
+   * Audience. Defaults to gamers-only, which is what the whole existing suite
+   * assumes.
    *
    * The age range follows `forGamers` rather than being separately settable,
    * because `chk_products_ages_iff_for_gamers` gives it no freedom: 8–18 when

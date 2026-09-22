@@ -7,7 +7,7 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
 import { adminMoveParticipationRpcResult } from "@/services/participations/participations.contracts";
 
 /**
- * `admin_move_participation` (00245) — the database half of the admin club
+ * `admin_move_participation` — the database half of the admin club
  * switch: an active, subscribed seat is repointed at another paid consumer club
  * and its subscription row is stamped with the price the route has already moved
  * the Stripe subscription onto.
