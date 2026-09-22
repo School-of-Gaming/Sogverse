@@ -11,7 +11,11 @@ on this one.
 - Pooler host is `aws-1-eu-north-1.pooler.supabase.com` (NOT `aws-0` — aws-0 answers
   "tenant/user not found"). **Both** staging and prod live in North EU / Stockholm on
   `aws-1`.
-- Port `6543`, user `postgres.<project-ref>`, db `postgres`.
+- Port `6543`, user `postgres.<project-ref>`, db `postgres`. That port is the
+  transaction-mode pooler, which refuses prepared statements: the Supabase CLI's
+  `db push` (a dry run included) fails on it with `prepared statement … already exists`
+  and works on the session-mode port `5432`, same host and user (seen 2026-09-22).
+  `migration repair` runs fine on either.
 - Use the `PGPASSWORD` env var (single `%` survives in single quotes), not a connection
   string (where `%` must be URL-encoded). Read the password from `.env.local` so it
   never lands in chat or shell history:
