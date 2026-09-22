@@ -20,22 +20,18 @@ project=$2
 port_base=$3
 cli_version=$4
 
-# One generate at a time per checkout. Two runs of this checkout share the
-# project id, the ports, the shadow workdir and the staging directory below, so
-# a second run would tear the first's database down underneath it and the two
-# would overwrite each other's half-written output. The lock is held for the
-# life of the script and released by the kernel however it ends, so a killed
-# run leaves nothing to unlock by hand.
-if ! command -v flock >/dev/null 2>&1; then
-  echo "flock is missing from this distro; it ships in util-linux (sudo apt-get install util-linux)." >&2
-  exit 1
-fi
-mkdir -p "$STATE_DIR"
-exec 9>"$STATE_DIR/$project.lock"
-if ! flock -n 9; then
-  echo "Another generate is running for this checkout ($project). Wait for it to finish." >&2
-  exit 1
-fi
+# The id and ports arriving here are `generate`'s own, distinct from the ones
+# this checkout's long-lived stack uses — the Node side derives both. It has to
+# be that way: this script clears the slate by removing the database under its
+# project id before it starts, so sharing an id with a running stack would
+# quietly destroy it and its data. Refusing to run while a stack is up would
+# also have been safe, but generating types is exactly what you do just after
+# adding a migration, which is exactly when a stack is up.
+#
+# The two blocks are halves of the same hundred ports this checkout already
+# owns, so a second id costs no extra room and cannot collide with any other
+# checkout's.
+take_lock "$project"
 
 # Where the new schema directory waits to be swapped in. It sits beside its
 # target rather than in the distro so the swap is a rename on one filesystem,
@@ -45,7 +41,7 @@ staged="$checkout/supabase/.schema.new"
 
 ensure_cli "$cli_version"
 cli=$(cli_bin "$cli_version")
-work=$(build_shadow "$checkout" "$project" "$port_base")
+work=$(build_shadow "$checkout" "$project" "$port_base" false)
 
 # The database is removed whatever happens, including a failure part-way
 # through the start, so a crashed run never leaves a container behind holding
@@ -126,3 +122,5 @@ rm -rf "$checkout/supabase/schema"
 mv "$staged" "$checkout/supabase/schema"
 
 echo "Wrote src/types/database.types.ts and supabase/schema/ from a database built off $(ls "$checkout/supabase/migrations" | wc -l) migrations."
+
+report_running
