@@ -40,6 +40,10 @@ env:
   # upgraded (keep CI == what we run migrations against locally); check the newest
   # stable with `gh api repos/supabase/cli/releases/latest`.
   SUPABASE_CLI_VERSION: "2.106.0"
+  # The postgres-meta image the pinned CLI's `gen types --db-url` runs on demand,
+  # pre-pulled in the database job so it never pulls from a rate-limited registry.
+  # Read it off a local `npm run db -- generate` after every CLI bump.
+  GEN_TYPES_POSTGRES_META_TAG: "v0.96.1"
 
   # `npm ci` installs every workspace, including services/bedrock-portal, whose
   # bedrock-protocol -> raknet-native dependency resolves prebuilds by
@@ -205,31 +209,29 @@ jobs:
       #   time bound, and a hidden picture's retraction, all on pictures of
       #   children — has no automated coverage at all.
       #
-      # - postgres-meta is kept, and not because the tests use it: `gen types
-      #   --db-url` below runs the same image on demand, pulling it from
-      #   public.ecr.aws whatever SUPABASE_INTERNAL_IMAGE_REGISTRY says, and that
-      #   registry rate-limits anonymous pulls from shared runners
-      #   ("toomanyrequests", seen 2026-09-22 after three green runs). Starting the
-      #   container here pulls the image from ghcr.io through the CLI's own path;
-      #   the retag after start gives it the name the on-demand path looks for, so
-      #   that path finds it locally and never pulls.
-      #
       # Together the exclusions cut boot well below the ~5 min full stack; the
       # baseline and per-container drift move around with runner weather, so treat
       # the step's own timing in the run as the current number.
       - name: Start local Supabase
-        run: supabase start -x edge-runtime,studio,imgproxy,vector,logflare,realtime,mailpit --ignore-health-check
+        run: supabase start -x edge-runtime,studio,imgproxy,vector,logflare,realtime,postgres-meta,mailpit --ignore-health-check
 
-      - name: Give the postgres-meta image the name gen types pulls it under
+      # `gen types --db-url` below runs a postgres-meta container on demand and
+      # pulls it from public.ecr.aws whatever SUPABASE_INTERNAL_IMAGE_REGISTRY says,
+      # and that registry rate-limits anonymous pulls from shared runners
+      # ("toomanyrequests", twice on 2026-09-22 after green runs). It is not the
+      # postgres-meta the stack would run (`supabase start` pins a later one), so the
+      # exact tag is pulled here from ghcr.io, which does not rate-limit us, and
+      # given the name the on-demand path looks for; that path then finds it locally
+      # and never pulls. The tag moves with the CLI pin: after a bump, run
+      # `npm run db -- generate` locally and read the image its gen types pulls.
+      - name: Pre-pull the postgres-meta image gen types runs
+        env:
+          POSTGRES_META_TAG: ${{ env.GEN_TYPES_POSTGRES_META_TAG }}
         run: |
           set -euo pipefail
-          image=$(docker images --format '{{.Repository}}:{{.Tag}}' | grep '/supabase/postgres-meta:' | head -1)
-          if [ -z "$image" ]; then
-            echo "::error::no postgres-meta image after supabase start; gen types would pull it from public.ecr.aws on demand"
-            exit 1
-          fi
-          docker tag "$image" "public.ecr.aws/supabase/${image#*/supabase/}"
-          echo "tagged $image as public.ecr.aws/supabase/${image#*/supabase/}"
+          docker pull "ghcr.io/supabase/postgres-meta:$POSTGRES_META_TAG"
+          docker tag "ghcr.io/supabase/postgres-meta:$POSTGRES_META_TAG" "public.ecr.aws/supabase/postgres-meta:$POSTGRES_META_TAG"
+          echo "public.ecr.aws/supabase/postgres-meta:$POSTGRES_META_TAG is present locally"
 
       # Two files are committed that migrations/ alone decide the contents of:
       # src/types/database.types.ts and the schema directory supabase/schema/. Both are
