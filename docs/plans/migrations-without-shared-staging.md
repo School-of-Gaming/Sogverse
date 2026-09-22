@@ -109,7 +109,8 @@ made over sixty bot commits to keep `schema.sql` current.
    branch's full CI is advisory, as it is today. Branches without migrations land exactly
    as today.
 9. **An unlanded migration is mutable; a landed one is not.** No shared database has
-   applied an unlanded file, so an agent edits it instead of stacking fix-ups.
+   applied an unlanded file, so an agent edits it instead of stacking fix-ups. (Until
+   step 2 lands, a pushed file is the exception; see step 1.)
 10. **A feature that changes the schema gets its own local Supabase stack, and the agent
     manages it.** It costs nothing to run, so it has the lifecycle the worktree's dev
     server already has: no owner switch, no asking first, and an agent may start one to
@@ -221,8 +222,10 @@ land (see there).
    workflow, and step 2 deletes the exception with the workflow. This step gates step 3:
    CI must not own staging while the documented workflow still tells agents to push
    there. As built, the amend rule treats a migration pushed to staging as landed for as
-   long as the push-then-generate exception stands; step 2 removes that sentence with the
-   exception.
+   long as the push-then-generate exception stands, and the rule sends an agent's own
+   writes to a seed file only, since no local database exists yet; step 2 removes the
+   first with the exception and adds "or a local database" to the second, in
+   `supabase/CLAUDE.md`, the root `CLAUDE.md` tripwire and the `remote-supabase` skill.
 2. **The local database script, generation, and the comparison**, for the types. One
    script under `scripts/`, exposed as an npm script, is the only thing that knows the
    database lives in WSL; every caller, agent or flow, uses it and never the distro

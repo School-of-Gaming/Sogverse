@@ -138,22 +138,21 @@ All env vars are in `.env.local`. Keys for Supabase, Stripe, and Daily.co — in
 
 ## Database
 
-Migrations in `supabase/migrations/`. The migration procedure — one procedure, the same
-in a worktree as on `dev` directly — lives in **`supabase/CLAUDE.md`**, together with
-`schema.sql`'s CI-maintained status (never dumped or edited by hand), the "read current
-state from `schema.sql`/`database.types.ts`, not migrations" rule, the
-generated-nullability fix patterns, and the access-control rules; that file auto-loads
-when you work under `supabase/`. The always-on tripwires:
+Migrations in `supabase/migrations/`. The migration workflow, the same in a worktree as
+on `dev` directly, lives in **`supabase/CLAUDE.md`**, together with `schema.sql`'s
+CI-maintained status (never dumped or edited by hand), the "read current state from
+`schema.sql`/`database.types.ts`, not migrations" rule, the generated-nullability fix
+patterns, and the access-control rules; that file auto-loads when you work under
+`supabase/`. The always-on tripwires:
 
-- **Agents never write to staging or prod on their own initiative** — reading them to
-  investigate is fine, and every write a piece of work needs goes to a seed file or to a
-  local database. The rule and the two things that authorise a write are in
-  `supabase/CLAUDE.md`.
+- **Agents never write to staging or prod on their own initiative** — a write a piece of
+  work needs goes to a seed file. The rule and the two things that authorize a write are
+  in `supabase/CLAUDE.md`.
 - **`database.types.ts` is purely auto-generated — never hand-edit it.** Convenience
   aliases (`Profile`, `UserRole`, …) live in `src/types/index.ts`; after regenerating, add
   aliases for any new tables/enums.
 - **A migration that adds/modifies functions or tables regenerates `database.types.ts`
-  before committing, by the procedure in `supabase/CLAUDE.md`** — DB tests and type-check
+  before committing, by the workflow in `supabase/CLAUDE.md`** — DB tests and type-check
   depend on the generated file matching the schema.
 - **Every new object (table, view, sequence, function) needs an explicit `GRANT`** — no
   Data API access by default, not even for `service_role`. Grant per role. A function

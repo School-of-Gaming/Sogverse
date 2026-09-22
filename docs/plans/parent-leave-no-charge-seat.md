@@ -108,7 +108,7 @@ cancellation already has.**
    is a returned kind, never a raise**, exactly as the model RPC does, so no status code
    leaks whether a row exists; the delegate's `noop` maps to `not_found`, and its
    Stripe subscription id is dropped here and never reaches a parent. Grant EXECUTE to
-   `authenticated` only. Comment the function. Land it by the migration procedure in
+   `authenticated` only. Comment the function. Land it by the migration workflow in
    `supabase/CLAUDE.md`.
 2. **Contracts, service, mutation.** Body and response schemas beside the waitlist
    ones — the wire response is `{ kind: "left" | "not_found" | "refused" }`; a service

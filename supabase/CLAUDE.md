@@ -9,20 +9,22 @@ move in lockstep with what's here.
 ## Agents do not write to staging or prod
 
 **Rule: an agent never writes to staging or production on its own initiative. It reads
-them to investigate; every write a piece of work needs goes to a seed file or to a local
-database.** A shared mutable database makes one branch's write everybody's problem, and
-the failures are silent ones: two branches claim the same migration version and the
-second is skipped without a word; a version recorded on staging whose file lives on an
-unmerged branch makes `db push` refuse for everyone; a migration applied there before the
-code that needs it breaks staging for every other branch until that code deploys.
+them to investigate; every write a piece of work needs goes to a seed file.** A shared
+mutable database makes one branch's write everybody's problem, and the failures are
+silent ones: two branches claim the same migration version and the second is skipped
+without a word; a version recorded on staging whose file lives on an unmerged branch
+makes `db push` refuse for everyone; a migration applied there before the code that
+needs it breaks staging for every other branch until that code deploys.
 
-Two things authorise a write, and nothing else:
+Two things authorize a write, and nothing else:
 
 - **A procedure skill in `.claude/skills/`, run at the owner's explicit instruction** —
   creating an admin account, correcting an email, putting test data on staging. The
-  instruction is the authorisation; the skill is how the write is carried out safely.
+  instruction is the authorization; the skill is how the write is carried out safely.
 - **The migration workflow below**, which pushes to staging because that is the only way
-  to regenerate `database.types.ts`.
+  to regenerate `database.types.ts`. The collision remedies in that section (applying
+  your own files with psql and recording them with `migration repair`) are that push
+  done by hand, and sit inside this exception with it.
 
 ## Current state lives in snapshot files, not migrations
 
@@ -150,9 +152,8 @@ regenerate types before committing.** DB tests and type-check depend on
 `database.types.ts` matching the schema. This avoids a chicken-and-egg problem where
 tests reference functions that aren't in the generated types yet.
 
-**This is the one migration procedure, and it is the same whether the work sits in a
-worktree or on `dev` directly** — a worktree carries its own `.env.local`, so the
-commands below do not change. The steps (run via the Bash tool):
+The workflow is the same in a worktree as on `dev` directly; a worktree carries its own
+`.env.local`. The steps (run via the Bash tool):
 
 1. Write the migration SQL file in `migrations/`.
 2. Push to remote:
@@ -197,19 +198,16 @@ commands below do not change. The steps (run via the Bash tool):
 
 ### Never amend a landed migration
 
-**Rule: once a migration has landed on `dev` it is never edited — every change ships as a
-NEW numbered migration applied with a plain `npx supabase db push`. An unlanded migration
-is still yours: fix the file in place rather than stacking a fix-up on it.** The CLI
-tracks applied migrations by version, so an edited file that a database has already
-applied gets "Remote database is up to date" and its new statements **never execute
-there** — only a fresh-from-`migrations/` build ever runs them. That silently turns "I
-added an assertion" into "I added an assertion that has never executed anywhere"; if the
-addition is assertion-only, a wrong assertion can even pass CI vacuously.
-
-**While the push-then-generate workflow above stands, a migration already pushed to
-staging counts as landed for this rule**, merged or not: staging has recorded its
-version, so an edit to it is skipped there for exactly the reason above. The
-edit-then-hand-apply-via-psql workaround was used for a while and worked, but the manual
+**Rule: once a migration has landed on `dev` — or, for as long as the push-then-generate
+workflow above stands, has been pushed to staging, merged or not — it is never edited:
+every change ships as a NEW numbered migration applied with a plain `npx supabase db
+push`. A migration that is neither is still yours: fix the file in place rather than
+stacking a fix-up on it.** The CLI tracks applied migrations by version, so an edited
+file that a database has already applied gets "Remote database is up to date" and its
+new statements **never execute there** — only a fresh-from-`migrations/` build ever runs
+them. That silently turns "I added an assertion" into "I added an assertion that has
+never executed anywhere"; if the addition is assertion-only, a wrong assertion can even
+pass CI vacuously. The edit-then-hand-apply-via-psql workaround was used for a while and worked, but the manual
 apply is the fragile step and its failure mode is exactly the staging-vs-files drift the
 migration system exists to prevent — hence the ruling (2026-08-27). Accepted costs:
 fix-up migrations in history, and a replacement function's assertion block must

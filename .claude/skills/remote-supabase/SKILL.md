@@ -17,8 +17,8 @@ on this one.
   never lands in chat or shell history:
   `PGPASSWORD=$(grep '^SUPABASE_PROD_DB_PASSWORD=' .env.local | cut -d= -f2-)`.
 - **A hand write here happens only at the owner's explicit instruction**, through a
-  procedure skill; on an agent's own initiative the write goes to a seed file or to a
-  local database instead. The rule and its reasons are in `supabase/CLAUDE.md`.
+  procedure skill; on an agent's own initiative the write goes to a seed file instead.
+  The rule and its reasons are in `supabase/CLAUDE.md`.
 - **Writes: the session can open with `default_transaction_read_only = on`** (seen on
   staging 2026-08-18 — `cannot execute UPDATE in a read-only transaction`). Prefix write
   statements with `SET default_transaction_read_only = off;` and wrap them in an
