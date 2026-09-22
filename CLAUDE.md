@@ -138,19 +138,23 @@ All env vars are in `.env.local`. Keys for Supabase, Stripe, and Daily.co — in
 
 ## Database
 
-Migrations in `supabase/migrations/`. The migration workflow (push → regenerate types —
-`schema.sql` is CI-maintained and must not be dumped or edited by hand), the "read
-current state from `schema.sql`/`database.types.ts`, not migrations" rule, the
-generated-nullability fix patterns, and the access-control rules
-all live in **`supabase/CLAUDE.md`** (auto-loads when you work under `supabase/`). The
-always-on tripwires:
+Migrations in `supabase/migrations/`. The migration procedure — one procedure, the same
+in a worktree as on `dev` directly — lives in **`supabase/CLAUDE.md`**, together with
+`schema.sql`'s CI-maintained status (never dumped or edited by hand), the "read current
+state from `schema.sql`/`database.types.ts`, not migrations" rule, the
+generated-nullability fix patterns, and the access-control rules; that file auto-loads
+when you work under `supabase/`. The always-on tripwires:
 
-- **`database.types.ts` is purely auto-generated — never hand-edit it.** Push the
-  migration first, then regenerate. Convenience aliases (`Profile`, `UserRole`, …) live
-  in `src/types/index.ts`; after regenerating, add aliases for any new tables/enums.
-- **A migration that adds/modifies functions or tables must be pushed and types
-  regenerated before committing** — DB tests and type-check depend on
-  `database.types.ts` matching the schema.
+- **Agents never write to staging or prod on their own initiative** — reading them to
+  investigate is fine, and every write a piece of work needs goes to a seed file or to a
+  local database. The rule and the two things that authorise a write are in
+  `supabase/CLAUDE.md`.
+- **`database.types.ts` is purely auto-generated — never hand-edit it.** Convenience
+  aliases (`Profile`, `UserRole`, …) live in `src/types/index.ts`; after regenerating, add
+  aliases for any new tables/enums.
+- **A migration that adds/modifies functions or tables regenerates `database.types.ts`
+  before committing, by the procedure in `supabase/CLAUDE.md`** — DB tests and type-check
+  depend on the generated file matching the schema.
 - **Every new object (table, view, sequence, function) needs an explicit `GRANT`** — no
   Data API access by default, not even for `service_role`. Grant per role. A function
   exposed to `authenticated`/`anon` additionally has to be **classified in the DB test

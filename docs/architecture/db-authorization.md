@@ -23,9 +23,8 @@ Before touching anything it describes:
    instead. A hosted database can drift *away* from `schema.sql`, and nothing standing
    watches for that; a `pg_dump` of the database you care about, diffed against
    `schema.sql`, is how to check.
-2. **Follow the migration workflow in CLAUDE.md** (push migration → regenerate types →
-   check type aliases → commit together). `schema.sql` is not part of it — CI
-   regenerates and commits that on `dev`.
+2. **Follow the migration procedure in `supabase/CLAUDE.md`.** `schema.sql` is not part
+   of it — CI regenerates and commits that on `dev`.
 3. **DB tests run in CI** against a local Supabase stack started by the workflow. Do
    not run them locally or against the remote DB — push the branch and let CI run them.
 4. **A migration reaches the shared database the moment it is pushed; the code running

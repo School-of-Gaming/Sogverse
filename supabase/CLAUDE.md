@@ -6,6 +6,24 @@ generated TypeScript that mirrors the schema lives outside this dir at
 `src/types/database.types.ts`, with convenience aliases in `src/types/index.ts` — they
 move in lockstep with what's here.
 
+## Agents do not write to staging or prod
+
+**Rule: an agent never writes to staging or production on its own initiative. It reads
+them to investigate; every write a piece of work needs goes to a seed file or to a local
+database.** A shared mutable database makes one branch's write everybody's problem, and
+the failures are silent ones: two branches claim the same migration version and the
+second is skipped without a word; a version recorded on staging whose file lives on an
+unmerged branch makes `db push` refuse for everyone; a migration applied there before the
+code that needs it breaks staging for every other branch until that code deploys.
+
+Two things authorise a write, and nothing else:
+
+- **A procedure skill in `.claude/skills/`, run at the owner's explicit instruction** —
+  creating an admin account, correcting an email, putting test data on staging. The
+  instruction is the authorisation; the skill is how the write is carried out safely.
+- **The migration workflow below**, which pushes to staging because that is the only way
+  to regenerate `database.types.ts`.
+
 ## Current state lives in snapshot files, not migrations
 
 **Rule: To understand the current schema — or to copy any existing object's definition
@@ -86,8 +104,8 @@ gets revived — when in doubt, the rule in this file wins over any example in
 `migrations/`.
 
 **Important:** `database.types.ts` is purely auto-generated — **never** hand-edit it,
-even as a shortcut when the remote DB hasn't been updated yet. Always push the migration
-first, then regenerate. After regenerating, check whether new tables or enums need
+even as a shortcut when the remote DB hasn't been updated yet: regenerate it by the
+migration workflow below. After regenerating, check whether new tables or enums need
 aliases added to `src/types/index.ts`.
 
 ### Objects that live outside `public` (not in `schema.sql`)
@@ -130,8 +148,11 @@ npx supabase link --project-ref "$(grep '^SUPABASE_PROJECT_REF=' .env.local | cu
 **Rule: When a migration adds or modifies functions/tables, push it to remote and
 regenerate types before committing.** DB tests and type-check depend on
 `database.types.ts` matching the schema. This avoids a chicken-and-egg problem where
-tests reference functions that aren't in the generated types yet. The full workflow for
-a migration PR (run via the Bash tool):
+tests reference functions that aren't in the generated types yet.
+
+**This is the one migration procedure, and it is the same whether the work sits in a
+worktree or on `dev` directly** — a worktree carries its own `.env.local`, so the
+commands below do not change. The steps (run via the Bash tool):
 
 1. Write the migration SQL file in `migrations/`.
 2. Push to remote:
@@ -172,24 +193,28 @@ a migration PR (run via the Bash tool):
    and do not include it in a feature branch — if you do, the next `dev` build overwrites
    it anyway.
 5. Check `src/types/index.ts` — add convenience aliases for any new tables/enums.
-6. Commit migration + updated types + tests together in the PR. `schema.sql` is not part
-   of it.
+6. Commit migration + updated types + tests together. `schema.sql` is not part of it.
 
-### Never amend a pushed migration
+### Never amend a landed migration
 
-**Rule: once a migration has been pushed to staging, it is never edited — every change
-ships as a NEW numbered migration applied with a plain `npx supabase db push`.** The
-CLI tracks applied migrations by version, so an edited already-pushed file gets
-"Remote database is up to date" and its new statements **never execute on staging** —
-only CI's fresh-from-`migrations/` database ever runs them. That silently turns "I
-added an assertion" into "I added an assertion that has never executed anywhere"; if
-the addition is assertion-only, a wrong assertion can even pass CI vacuously. The
-edit-then-hand-apply-via-psql workaround was used for a while and worked, but the
-manual apply is the fragile step and its failure mode is exactly the staging-vs-files
-drift the migration system exists to prevent — hence the ruling (2026-08-27). Accepted
-costs: fix-up migrations in history, and a replacement function's assertion block must
-deliberately re-assert the invariants of the migration it supersedes (re-derive them;
-a hand-copy dropped a clause once). psql remains the right tool for *checking* staging
+**Rule: once a migration has landed on `dev` it is never edited — every change ships as a
+NEW numbered migration applied with a plain `npx supabase db push`. An unlanded migration
+is still yours: fix the file in place rather than stacking a fix-up on it.** The CLI
+tracks applied migrations by version, so an edited file that a database has already
+applied gets "Remote database is up to date" and its new statements **never execute
+there** — only a fresh-from-`migrations/` build ever runs them. That silently turns "I
+added an assertion" into "I added an assertion that has never executed anywhere"; if the
+addition is assertion-only, a wrong assertion can even pass CI vacuously.
+
+**While the push-then-generate workflow above stands, a migration already pushed to
+staging counts as landed for this rule**, merged or not: staging has recorded its
+version, so an edit to it is skipped there for exactly the reason above. The
+edit-then-hand-apply-via-psql workaround was used for a while and worked, but the manual
+apply is the fragile step and its failure mode is exactly the staging-vs-files drift the
+migration system exists to prevent — hence the ruling (2026-08-27). Accepted costs:
+fix-up migrations in history, and a replacement function's assertion block must
+deliberately re-assert the invariants of the migration it supersedes (re-derive them; a
+hand-copy dropped a clause once). psql remains the right tool for *checking* staging
 state and reconciling drift that already happened — just not as a workflow.
 
 The same version-matching behaviour has a second edge: a new file whose **version

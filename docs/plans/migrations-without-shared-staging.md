@@ -220,7 +220,9 @@ land (see there).
    types, so the rule ships with one named exception, the existing push-then-generate
    workflow, and step 2 deletes the exception with the workflow. This step gates step 3:
    CI must not own staging while the documented workflow still tells agents to push
-   there.
+   there. As built, the amend rule treats a migration pushed to staging as landed for as
+   long as the push-then-generate exception stands; step 2 removes that sentence with the
+   exception.
 2. **The local database script, generation, and the comparison**, for the types. One
    script under `scripts/`, exposed as an npm script, is the only thing that knows the
    database lives in WSL; every caller, agent or flow, uses it and never the distro
