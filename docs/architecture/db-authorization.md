@@ -27,13 +27,14 @@ Before touching anything it describes:
    of it — CI regenerates and commits that on `dev`.
 3. **DB tests run in CI** against a local Supabase stack started by the workflow. Do
    not run them locally or against the remote DB — push the branch and let CI run them.
-4. **A migration reaches the shared database the moment it is pushed; the code running
-   against that database does not change until the PR merges and deploys.** So any
-   change to a policy, a grant, or a guard has to be behaviour-equivalent for the
-   *currently deployed* code, or it breaks the shared environment for the whole window.
-   The reliable shapes are: add a new object beside the old one, or rewrite a policy so
-   it can only ever admit more than before, never less. A rewrite that cannot be argued
-   to one of those does not ship — it gets recorded and sequenced behind a deploy.
+4. **A migration reaches staging the moment it lands on `dev`, about a minute before the
+   code it landed with deploys there; it reaches prod through the release pipeline, which
+   holds the production promotion until the migration job has succeeded.** So any change
+   to a policy, a grant, or a guard has to be behaviour-equivalent for the code already
+   running, or it breaks the shared environment for that window. The reliable shapes are:
+   add a new object beside the old one, or rewrite a policy so it can only ever admit more
+   than before, never less. A rewrite the live app breaks under does not ship as one
+   migration — it gets recorded and sequenced behind the deploy that makes it safe.
 
 ---
 

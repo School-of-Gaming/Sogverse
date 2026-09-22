@@ -202,6 +202,17 @@ the run's page on GitHub lists it under Artifacts, or
 (`gh run list --branch <branch>` finds the run). The file inside is `database.types.ts` —
 copy it to `src/types/database.types.ts`.
 
+### Landing on `dev` applies the migrations to staging
+
+CI runs `db push` against the staging project on every push to `dev`, without waiting for
+the test jobs, so staging's schema trails the code that landed with it by about a minute.
+Nothing is run by hand.
+
+**A failed push is fixed forward.** Each migration is its own transaction, so staging
+keeps the ones that ran before the failure and `dev`'s run stays red until a new migration
+corrects it — never by editing staging, which leaves its history disagreeing with the
+files on `dev`.
+
 ### Never amend a landed migration
 
 **Rule: once a migration has landed on `dev` it is never edited: every change ships as a
