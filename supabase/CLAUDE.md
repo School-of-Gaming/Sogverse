@@ -135,6 +135,17 @@ unpinned CLI turns every regeneration into spurious diffs. A globally installed
 `supabase` on the machine may be any version; `npx` resolves the devDependency and makes
 it irrelevant.
 
+**Rule: the pin moves on purpose, as its own small branch, a few times a year — never
+as a stray version change.** A bump changes the images every local stack runs and can
+change the generated files, so the branch does four things: moves both pins, runs
+`npm run db -- generate` and reads the diff of the generated files as a change under
+review, updates the `postgres-meta` tag the CI workflow pre-pulls (read it off that
+`generate`'s output: the image its `gen types` step pulls), and prunes the old images
+in the distro with `docker image prune -a` — each bump otherwise leaves the previous
+set, about 6 GB, that nothing runs. The distro's virtual disk does not shrink when
+they go; compacting it needs the distro stopped, which is a by-hand step at a moment
+nothing else runs there.
+
 ## Linking (first time only)
 
 Linking is for the operator commands that address the hosted project by ref — `npx
