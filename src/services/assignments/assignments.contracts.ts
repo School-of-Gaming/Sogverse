@@ -9,7 +9,7 @@ import { sessionStaffGedu } from "@/services/session-substitution/session-substi
  * (every column non-nullable from the column type alone, jsonb degraded to
  * `Json`) and `get_gedu_assigned_product` is a JSONB document (`Json`) — so
  * these schemas are the source of the structure, written from the RPC bodies
- * in supabase/schema.sql. The db tests parse real RPC output through the
+ * in supabase/schema/functions/. The db tests parse real RPC output through the
  * same schemas, so CI verifies they stay true to Postgres.
  */
 

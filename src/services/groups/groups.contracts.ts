@@ -222,8 +222,8 @@ export const productGroupWithDetails = z.object({
 /**
  * The `get_product_groups_with_details` JSONB document backing the admin
  * Groups panel. The RPC returns `Json`; this schema is the structure,
- * written from the function body in supabase/schema.sql and re-verified
- * against real Postgres by the db tests that parse through it.
+ * written from the function body in supabase/schema/functions/ and
+ * re-verified against real Postgres by the db tests that parse through it.
  */
 export const productGroupsSnapshot = z.object({
   product_id: z.string(),

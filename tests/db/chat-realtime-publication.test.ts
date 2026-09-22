@@ -11,8 +11,8 @@ import { callServiceRoleRpcRaw } from "./helpers";
  * in no other artifact:
  *
  * 1. **Publication membership.** `pg_dump` does not emit `ALTER PUBLICATION`
- *    for the platform's own `supabase_realtime`, so `supabase/schema.sql` — the
- *    file every other schema-side guarantee is read from — says nothing about
+ *    for the platform's own `supabase_realtime`, so `supabase/schema/` — the
+ *    tree every other schema-side guarantee is read from — says nothing about
  *    it. A table left out of the publication does not error, does not warn and
  *    does not fail any existing test: every client still renders its own
  *    optimistic echo, and nothing anybody else sends ever arrives. The bug

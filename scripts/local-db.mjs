@@ -3,7 +3,8 @@
  * The local database, for the checkout this file sits in.
  *
  *   npm run db -- generate    # build a DB from migrations/, regenerate
- *                             # src/types/database.types.ts, remove the DB
+ *                             # src/types/database.types.ts and
+ *                             # supabase/schema/, remove the DB
  *
  * The database runs in the WSL distro, because that is where Docker lives on
  * this machine. **This script is the only thing that knows that.** Every
@@ -20,9 +21,10 @@
  * words are passed across.
  *
  * Nothing it builds touches the repo: the CLI, the shadow workdir and the
- * generation output all live in the distro's own filesystem. The one file
- * written on the Windows side is database.types.ts, written from inside the
- * distro so no Windows shell text handling ever sees it.
+ * generation output all live in the distro's own filesystem. The only things
+ * written on the Windows side are the generated files themselves —
+ * database.types.ts and supabase/schema/ — written from inside the distro so no
+ * Windows shell text handling ever sees them.
  *
  * **Never restart WSL to fix a failure here.** The distro is shared with other
  * long-running work that a shutdown destroys. Restart the Docker service or
@@ -102,7 +104,8 @@ if (!command || !COMMANDS.includes(command)) {
   fail(
     `Usage: npm run db -- <${COMMANDS.join('|')}>\n\n` +
       `  generate   Start a database from supabase/migrations/, write\n` +
-      `             src/types/database.types.ts from it, remove the database.`,
+      `             src/types/database.types.ts and supabase/schema/ from it,\n` +
+      `             remove the database.`,
   );
 }
 

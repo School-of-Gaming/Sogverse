@@ -71,7 +71,7 @@ phone numbers; it degrades gracefully (oldest-idle contacts drop) but is still w
 
 - Walk both reads through the shared primitive. Total orders: creation time plus the
   table's primary key for the messages; last-message time plus the primary key (the phone
-  number) for contacts. Check `supabase/schema.sql` for the actual key columns.
+  number) for contacts. Check `supabase/schema/tables/` for the actual key columns.
 - Consumers keep receiving plain arrays; no UI change. Fixing the read fixes the realtime
   path for free (hooks only invalidate — a repo rule — so the refetch is the same read).
 - Unit tests per the users-service pattern: order params in the requested URL, the exact

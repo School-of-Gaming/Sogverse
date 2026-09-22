@@ -25,8 +25,8 @@ Gotchas:
 
 - `product_prices.currency` CHECK wants **lowercase** (`eur`, not `EUR`).
 - Schedule-slot weekday is 0=Mon..6=Sun.
-- **Read the RPC's real signature from `supabase/schema.sql`, not from memory** —
-  staging can be ahead of the local branch.
+- **Read the RPC's real signature from its file in `supabase/schema/functions/`, not
+  from memory.**
 - Verifying Stripe-side outcomes in **test mode** works directly with curl + the plain
   `STRIPE_SECRET_KEY` from `.env.local` (that one is the test-mode key).
 - Empirical fact settled 2026-08-12: a subscription created via Checkout with

@@ -13,18 +13,16 @@ how authorization is enforced in the database.
 Before touching anything it describes:
 
 1. **Re-verify current state.** Snapshots in this doc were verified against the live
-   schema in 2026-07 and will drift. Current state lives in `supabase/schema.sql`
-   (function bodies, grants, policies) and the DB test suite's classifications — never
-   in migration history. Regenerate the route list with
-   `git grep -l createAdminClient src/`. Note the corollary, which **inverted** in
-   2026-07: `schema.sql` used to be a dump of a *hosted* database, so anything created
-   outside a migration landed in it. It is now built from `migrations/` by CI, so it
-   cannot record an object no migration creates — but the exposure runs the other way
-   instead. A hosted database can drift *away* from `schema.sql`, and nothing standing
-   watches for that; a `pg_dump` of the database you care about, diffed against
-   `schema.sql`, is how to check.
-2. **Follow the migration workflow in `supabase/CLAUDE.md`.** `schema.sql` is not part
-   of it — CI regenerates and commits that on `dev`.
+   schema in 2026-07 and will drift. Current state lives in `supabase/schema/`
+   (function bodies, grants, policies — one file per object) and the DB test suite's
+   classifications — never in migration history. Regenerate the route list with
+   `git grep -l createAdminClient src/`. Note the corollary: those files are generated
+   from `migrations/`, so they cannot record an object no migration creates, and a hosted
+   database can drift *away* from what they describe with nothing standing watching for
+   it; a `pg_dump` of the database you care about, diffed against `supabase/schema/`, is
+   how to check.
+2. **Follow the migration workflow in `supabase/CLAUDE.md`.** The regenerated types and
+   schema files are committed with the migration.
 3. **DB tests run in CI** against a local Supabase stack started by the workflow. Do
    not run them locally or against the remote DB — push the branch and let CI run them.
 4. **A migration reaches staging the moment it lands on `dev`, about a minute before the
@@ -90,8 +88,9 @@ since CLI v2.106.0, and on our hosted DBs since `00099` proactively revoked the 
 flip; the transition asymmetry had already produced one CI-invisible exposure, repaired
 in `00098`). Layer 1 now fails closed identically everywhere: a new table or function is
 unreachable, even by `service_role`, until a migration explicitly `GRANT`s it. The
-pre-existing surface was backfilled verbatim from `schema.sql` (the explicit-grants
-migration); any phase of this refactor that creates objects must write its own grants,
+pre-existing surface was backfilled verbatim from the committed schema (the
+explicit-grants migration); any phase of this refactor that creates objects must write
+its own grants,
 and the §3.5 template's `REVOKE` line is now redundant for new functions (kept in the
 template as harmless documentation of intent). This is the platform converging on
 §3.3's posture — it strengthens the grant layer but verifies nothing about function
@@ -144,7 +143,7 @@ access-control test's allowlist) fall into four kinds. The taxonomy matters beca
 the verification spine treats each kind differently:
 
 - **Role-gated RPCs** (a handful): plpgsql, first statement is a §3.1 guard
-  assertion, which raises `ERRCODE '42501'`. Find them by grepping `schema.sql`
+  assertion, which raises `ERRCODE '42501'`. Find them by grepping `supabase/schema/`
   for `42501` (which also finds the assertions themselves).
 - **Self-scoping helpers** (the majority): every read/write keyed to `auth.uid()`;
   no raise block, by design. The `get_my_*` family, the PIN functions.
@@ -515,7 +514,7 @@ boundary."
 ### Phase 1 — guard primitives + ownership predicates — **landed**
 
 Added the §3.1 assertions and §3.2 predicates, and converted the existing role-gated RPC
-bodies (the small `42501` set — regrep `schema.sql` to enumerate) to call them. No
+bodies (the small `42501` set — regrep `supabase/schema/` to enumerate) to call them. No
 policy rewrites in this phase — the predicates exist but no policy composes from them
 until Phase 4, so they carry no `authenticated` grant yet.
 

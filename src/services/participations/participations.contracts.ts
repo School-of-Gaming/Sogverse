@@ -114,12 +114,12 @@ export type JoinWaitlistResponse = z.infer<typeof joinWaitlistResponse>;
 
 /**
  * `create_participation` RPC result (Json in codegen; structure from
- * supabase/schema.sql). `validated` is the paid outcome: every rule passed, but
- * no row was written — a paid participation is created at payment confirmation,
- * so an abandoned checkout leaves nothing behind. The no-charge shapes still
- * come back with a row. `participation_id` stays optional because the route
- * turns its absence into a controlled 500 per kind — the schema checks
- * structure, the route checks the per-kind invariants.
+ * supabase/schema/functions/). `validated` is the paid outcome: every rule
+ * passed, but no row was written — a paid participation is created at payment
+ * confirmation, so an abandoned checkout leaves nothing behind. The no-charge
+ * shapes still come back with a row. `participation_id` stays optional because
+ * the route turns its absence into a controlled 500 per kind — the schema
+ * checks structure, the route checks the per-kind invariants.
  */
 export const createParticipationRpcResult = z.object({
   kind: z.enum(["free_active", "external_active", "validated", "full"]),
@@ -128,11 +128,11 @@ export const createParticipationRpcResult = z.object({
 
 /**
  * `confirm_paid_participation` RPC result (Json in codegen; structure from
- * supabase/schema.sql). Called from the Stripe webhook once payment lands:
- * `confirmed` carries the row it just created, `duplicate_payment` names the row
- * that was already there — the parent paid twice for one (product, gamer), and
- * the route records the charge and cancels a live subscription rather than
- * writing a second seat.
+ * supabase/schema/functions/). Called from the Stripe webhook once payment
+ * lands: `confirmed` carries the row it just created, `duplicate_payment` names
+ * the row that was already there — the parent paid twice for one (product,
+ * gamer), and the route records the charge and cancels a live subscription
+ * rather than writing a second seat.
  *
  * `idempotent` is the axis a replay is told apart on, and it is why it is
  * modelled here rather than dropped as noise. Stripe redelivers, and both
@@ -156,7 +156,8 @@ export const confirmPaidParticipationRpcResult = z.discriminatedUnion("kind", [
 ]);
 
 /**
- * `join_waitlist` RPC result (Json in codegen; structure from schema.sql).
+ * `join_waitlist` RPC result (Json in codegen; structure from
+ * supabase/schema/functions/).
  *
  * `idempotent` is the same axis, with the same polarity, as
  * `confirm_paid_participation`'s above, and for the same reason: the RPC returns
@@ -236,10 +237,10 @@ export const myWaitlistPositions = z.array(
 
 /**
  * `leave_my_waitlist_spot` RPC result (Json in codegen; structure from
- * schema.sql). `left` when the row was waitlisted and is now gone; `noop` when
- * it had already moved on (an admin promotion landing first); `not_found` when
- * no row with that id belongs to the caller — deliberately the same answer for
- * a stranger's id and a nonexistent one.
+ * supabase/schema/functions/). `left` when the row was waitlisted and is now
+ * gone; `noop` when it had already moved on (an admin promotion landing first);
+ * `not_found` when no row with that id belongs to the caller — deliberately the
+ * same answer for a stranger's id and a nonexistent one.
  */
 export const leaveWaitlistRpcResult = z.discriminatedUnion("kind", [
   z.object({
@@ -253,9 +254,9 @@ export const leaveWaitlistRpcResult = z.discriminatedUnion("kind", [
 
 /**
  * `promote_from_waitlist` RPC result (Json in codegen; structure from
- * schema.sql). `promoted` on success; `noop` when the row wasn't waitlisted
- * (already seated / cancelled) — the admin UI treats both as success and lets
- * the snapshot refetch reconcile.
+ * supabase/schema/functions/). `promoted` on success; `noop` when the row
+ * wasn't waitlisted (already seated / cancelled) — the admin UI treats both as
+ * success and lets the snapshot refetch reconcile.
  */
 export const promoteFromWaitlistRpcResult = z.discriminatedUnion("kind", [
   z.object({
@@ -268,7 +269,8 @@ export const promoteFromWaitlistRpcResult = z.discriminatedUnion("kind", [
 ]);
 
 /**
- * `demote_to_waitlist` RPC result (Json in codegen; structure from schema.sql).
+ * `demote_to_waitlist` RPC result (Json in codegen; structure from
+ * supabase/schema/functions/).
  * `demoted` on success; `noop` when the row was already waitlisted.
  */
 export const demoteToWaitlistRpcResult = z.discriminatedUnion("kind", [
@@ -282,9 +284,10 @@ export const demoteToWaitlistRpcResult = z.discriminatedUnion("kind", [
 
 /**
  * `admin_enroll_participant` RPC result (Json in codegen; structure from
- * schema.sql). The customer id is resolved inside the function — from the
- * child's parent link, or from the participant themselves on an adult's own
- * seat — so the route learns it from the result rather than looking it up.
+ * supabase/schema/functions/). The customer id is resolved inside the
+ * function — from the child's parent link, or from the participant themselves
+ * on an adult's own seat — so the route learns it from the result rather than
+ * looking it up.
  */
 export const adminEnrollParticipantRpcResult = z.object({
   participation_id: z.string(),

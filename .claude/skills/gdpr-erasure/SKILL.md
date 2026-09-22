@@ -23,8 +23,8 @@ auto-mode classifier blocks it. Counts and ids are enough to plan the delete.
 
 ## 2. Inventory — counts first, then a full scan
 
-**Counts over the FKs.** The FKs to `public.profiles` in `supabase/schema.sql` are the
-list; count the account's rows in each. Most are `ON DELETE CASCADE`. The ones that
+**Counts over the FKs.** The FKs to `public.profiles` in `supabase/schema/tables/` are
+the list; count the account's rows in each. Most are `ON DELETE CASCADE`. The ones that
 change the plan:
 
 - **`payments` and `family_subscriptions` are `RESTRICT`**, and so is

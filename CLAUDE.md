@@ -139,9 +139,10 @@ All env vars are in `.env.local`. Keys for Supabase, Stripe, and Daily.co — in
 ## Database
 
 Migrations in `supabase/migrations/`. The migration workflow, the same in a worktree as
-on `dev` directly, lives in **`supabase/CLAUDE.md`**, together with `schema.sql`'s
-CI-maintained status (never dumped or edited by hand), the "read current state from
-`schema.sql`/`database.types.ts`, not migrations" rule, the generated-nullability fix
+on `dev` directly, lives in **`supabase/CLAUDE.md`**, together with `supabase/schema/`
+(one file per object, generated alongside the types and committed by the branch that
+changed it, never hand-edited), the "read current state from
+`supabase/schema/`/`database.types.ts`, not migrations" rule, the generated-nullability fix
 patterns, and the access-control rules; that file auto-loads when you work under
 `supabase/`. The always-on tripwires:
 

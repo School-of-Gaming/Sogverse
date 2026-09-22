@@ -1,18 +1,30 @@
 #!/usr/bin/env bash
 #
 # `generate` — build a database from the checkout's migrations, write
-# src/types/database.types.ts from it, and take the database away again.
+# src/types/database.types.ts and supabase/schema/ from it, and take the
+# database away again.
 #
 #   generate.sh <checkout-path> <project-id> <port-base> <cli-version>
 #
 # Arguments are bare words on purpose; see lib.sh for what the boundary mangles.
+#
+# Both outputs are produced into the shadow workdir first and copied into the
+# checkout only once both have succeeded, so a run that fails part-way never
+# leaves the checkout holding one half of a schema.
 set -euo pipefail
-. "$(dirname "$0")/lib.sh"
+here=$(dirname "$0")
+. "$here/lib.sh"
 
 checkout=$1
 project=$2
 port_base=$3
 cli_version=$4
+
+# Where the new schema directory waits to be swapped in. It sits beside its
+# target rather than in the distro so the swap is a rename on one filesystem,
+# and the cleanup trap below removes it however the run ends, so a failure
+# leaves nothing untracked in the checkout.
+staged="$checkout/supabase/.schema.new"
 
 ensure_cli "$cli_version"
 cli=$(cli_bin "$cli_version")
@@ -24,7 +36,7 @@ work=$(build_shadow "$checkout" "$project" "$port_base")
 cleanup() {
   status=$?
   stop_stack "$cli" "$work" "$project"
-  rm -rf "$work"
+  rm -rf "$work" "$staged"
   exit "$status"
 }
 trap cleanup EXIT INT TERM
@@ -45,7 +57,9 @@ db_port=$(shadow_db_port "$work")
 # `graphql_public` block that has no business in the committed file.
 #
 # The file is written from in here rather than handed back across the boundary,
-# so no Windows shell text handling ever touches it.
+# so no Windows shell text handling ever touches it. The same holds for the
+# schema directory below: both generated artifacts are written by Linux tools
+# and only ever copied, never piped through a Windows shell.
 "$cli" gen types typescript \
   --db-url "postgresql://postgres:postgres@127.0.0.1:$db_port/postgres" \
   --schema public > "$work/database.types.ts"
@@ -55,5 +69,34 @@ if [ ! -s "$work/database.types.ts" ]; then
   exit 1
 fi
 
+# The schema directory. pg_dump runs INSIDE the database container so its
+# client version always matches the server the CLI booted, and it is raw
+# pg_dump rather than `supabase db dump`, which silently emits no CREATE
+# TRIGGER at all. CI dumps with this same command against its own stack, so the
+# two produce the same bytes.
+#
+# `set -o pipefail` is on from the top of this file, which this pipeline needs:
+# without it the status would be grep's, and a pg_dump that died mid-stream
+# would still "succeed" so long as one line reached the filter.
+docker exec "supabase_db_$project" pg_dump -U postgres -d postgres \
+  --schema=public --schema-only --no-owner \
+  | grep -vE '^[\](un)?restrict ' > "$work/schema.sql"
+
+# --strict: an entry the splitter cannot attribute to an object is a rule the
+# splitter is missing, so it fails the run rather than settling into
+# misc/schema.sql behind a warning nobody reads. The directory is written
+# either way, so the message can be read against the files it produced.
+python3 "$here/split-schema.py" --strict "$work/schema" "$work/schema.sql"
+
 cp "$work/database.types.ts" "$checkout/src/types/database.types.ts"
-echo "Wrote src/types/database.types.ts from a database built off $(ls "$checkout/supabase/migrations" | wc -l) migrations."
+
+# Replaced rather than written over: an object dropped by a migration has to
+# lose its file, which an overlay would leave behind. The copy lands beside the
+# target first and the swap is then a rename of a finished directory, so the
+# window in which the checkout holds neither is a single rename long.
+rm -rf "$staged"
+cp -r "$work/schema" "$staged"
+rm -rf "$checkout/supabase/schema"
+mv "$staged" "$checkout/supabase/schema"
+
+echo "Wrote src/types/database.types.ts and supabase/schema/ from a database built off $(ls "$checkout/supabase/migrations" | wc -l) migrations."

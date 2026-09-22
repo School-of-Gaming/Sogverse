@@ -2,7 +2,8 @@
 """Split a raw pg_dump of the public schema into one file per object.
 
 Usage:
-    split-schema.py <out-dir> [dump-file]      # dump-file defaults to stdin ("-")
+    split-schema.py [--strict] <out-dir> [dump-file]   # dump-file defaults to
+                                                       # stdin ("-")
 
 The dump is the output of
 
@@ -44,6 +45,13 @@ Exit status is non-zero on any structural anomaly: a preamble that is not
 boilerplate, an entry count that does not survive the split, a byte-level
 reconstruction mismatch, two objects whose file names collide, or a dump that
 lost an entire object class.
+
+An entry the script cannot attribute to an object lands in misc/schema.sql and
+is reported as a warning. Under --strict, which both callers pass, that warning
+is a failure: an unattributable entry means the dump grew a shape this script
+does not know, and the rule it is missing has to be written rather than left to
+a line of stderr nobody reads. The directory is written first and the failure
+comes after it, so the warning can be read against the files it produced.
 """
 
 from __future__ import annotations
@@ -556,9 +564,14 @@ def verify_from_disk(out_dir, entries, written):
 def main(argv):
     args = [a for a in argv[1:] if not a.startswith("--")]
     flags = set(a for a in argv[1:] if a.startswith("--"))
-    if flags - {"--verify", "--no-verify", "--quiet"} or not args or len(args) > 2:
+    if (
+        flags - {"--verify", "--no-verify", "--quiet", "--strict"}
+        or not args
+        or len(args) > 2
+    ):
         sys.stderr.write(
-            "usage: split-schema.py [--no-verify] [--quiet] <out-dir> [dump-file]\n"
+            "usage: split-schema.py [--strict] [--no-verify] [--quiet] "
+            "<out-dir> [dump-file]\n"
         )
         return 2
 
@@ -622,6 +635,18 @@ def main(argv):
                 len(splitter.warnings),
             )
         )
+
+    if "--strict" in flags and splitter.warnings:
+        # After the write, never instead of it: the reader needs to see where
+        # the entry actually landed to work out which rule is missing.
+        sys.stderr.write(
+            "split-schema: error: %d entr%s could not be attributed to an "
+            "object and went to misc/schema.sql. Under --strict that is a "
+            "failure, not a note: teach the splitter the rule this dump needs.\n"
+            % (len(splitter.warnings), "y" if len(splitter.warnings) == 1 else "ies")
+        )
+        return 1
+
     return 0
 
 

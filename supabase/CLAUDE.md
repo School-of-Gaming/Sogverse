@@ -1,7 +1,8 @@
 # Database (Supabase / Postgres)
 
 This directory holds everything that defines the database: `migrations/` (append-only
-history), `schema.sql` and `seed.sql` (current-state snapshots), and `config.toml`. The
+history), `schema/` (the current schema, one file per object), `seed.sql`, and
+`config.toml`. The
 generated TypeScript that mirrors the schema lives outside this dir at
 `src/types/database.types.ts`, with convenience aliases in `src/types/index.ts` — they
 move in lockstep with what's here.
@@ -21,71 +22,60 @@ run at the owner's explicit instruction** — creating an admin account, correct
 email, putting test data on staging. The instruction is the authorization; the skill is
 how the write is carried out safely.
 
-## Current state lives in snapshot files, not migrations
+## Current state lives in the generated files, not migrations
 
 **Rule: To understand the current schema — or to copy any existing object's definition
-into a new migration — read the committed current-state files, not migrations.** Two
-files hold the live state, and between them they cover almost everything:
+into a new migration — read the committed generated files, not migrations.** Two of them
+hold the live state, and between them they cover almost everything:
 
 - **`src/types/database.types.ts` + `src/types/index.ts`** — table/column/function
-  *shapes* (types, signatures, enums). Auto-generated from the live schema.
-- **`supabase/schema.sql`** — the things the type generator can't see: function bodies,
-  RLS policies, triggers, grants, constraints. Dumped from a database built **purely from
-  `migrations/`**, by the `test-db` job in `.github/workflows/ci.yml`; the reasoning is
-  in "Why the snapshot is built from migrations" below.
+  *shapes* (types, signatures, enums).
+- **`supabase/schema/`** — the things the type generator can't see: function bodies, RLS
+  policies, triggers, grants, constraints. One file per object:
+  `tables/<table>.sql` (the table with its indexes, constraints, policies, triggers,
+  grants and comments), `views/<view>.sql` (the view with its grants and comments),
+  `functions/<function>.sql` (definition, grants, comment — an overload gets a suffixed
+  file), `types/enums-and-types.sql`, and `misc/schema.sql` for the schema's own block
+  and default privileges.
 
-Neither is reconstructed by hand. `database.types.ts` reflects the database you generate
-it against; `schema.sql` reflects **migrations merged to `dev`**.
+Both are written by `npm run db -- generate` from a database built out of *this
+checkout's* `migrations/`, never reconstructed by hand, and both are committed by the
+branch that changed them — so they describe the branch you are on, including its own
+unmerged work. CI generates both the same way and fails when a committed file differs.
 
-**That last distinction has one sharp edge, and it is the one thing this arrangement
-costs you.** On a branch that has added migrations, `schema.sql` does not contain them
-yet — it is still describing `dev`. So for any object *your own unmerged branch* has
-touched, `schema.sql` is stale by exactly your own work, and the "copy the body from
-`schema.sql`" rule below would hand you back the pre-branch version and silently revert
-you. For those objects, your branch's own migration files are the truth. For everything
-else — which is nearly all of it — `schema.sql` remains the right thing to read.
+**A file per object is what turns two branches editing one object into a git conflict**,
+raised when the later branch syncs with `dev` — including an edit racing a drop — rather
+than a silent last-writer-wins. Wherever git conflicted in a generated file, or the
+regenerated output differs from what git merged: never hand-edit it. Take the regenerated
+output, then read both sides' changes to that object and confirm each survives in it.
 
-**Why the snapshot is built from migrations and not dumped from a hosted database.** It
-used to be dumped from the linked project, and the decisive problem is that **staging is
-shared and mutable**: migrations land there from branches that have not merged, so a dump
-taken at any moment is the union of everyone's in-flight work. Committing that produces a
-`schema.sql` describing a schema which exists nowhere — and an agent reading it will write
-code against columns that are not on `dev` or in production. Hand-edits compound it (a
-reformatted function body, comments stripped from others, `COMMENT ON` statements
-belonging to no migration have all been found there), but the shared-environment problem
-alone is enough: no amount of tidying staging makes it a valid source for one branch's
-snapshot.
+**Why they are generated from `migrations/` and not dumped from a hosted database.**
+**Staging is shared and mutable**: migrations land there from branches that have not
+merged, so a dump taken at any moment is the union of everyone's in-flight work — a
+schema which exists nowhere, and an agent reading it will write code against columns that
+are not on `dev` or in production. Staging also carries known cosmetic drift, deliberately
+left alone: a reformatted function body, comments stripped from a few others, two
+`COMMENT ON` statements belonging to no migration, and a column dropped and re-added so
+its ordinal moved. None of it behavioural, and the ordinal cannot be corrected without
+rebuilding the table.
 
-Building from `migrations/` removes the class entirely. The file cannot record anything a
-migration did not do, so neither a hand-edit nor an unmerged branch has a path into it.
-CI regenerates it on every run and commits the result on `dev`, which is why step 3 of
-the workflow below is "do nothing".
-
-What that deliberately does *not* answer is whether a hosted database matches — the
-snapshot is a statement about `migrations/`, not about any live system. There is no
-standing check for that, on purpose. Production was compared against migration source on
-2026-07-29 and matched it exactly, and no instance of production being edited by hand has
-ever been found; the one prod discrepancy on record was a *migration* whose `IF EXISTS`
-condition matched on one database and not the other, taking a branch its author did not
-expect. A migration that asserts its own end state — as `00127` does — catches that at the
-moment it runs, which is both earlier and more specific than any periodic dump diff. If a
-hosted database ever does drift, `pg_dump` against it and diff the result against
-`schema.sql`; that is a debugging step, not something worth running on a timer.
-
-**Staging carries known cosmetic drift** and is deliberately left alone: a reformatted
-function body, comments stripped from a few others, two `COMMENT ON` statements belonging
-to no migration, and a column dropped and re-added so its ordinal moved. None of it
-behavioural, and the ordinal cannot be corrected without rebuilding the table. It stopped
-mattering when the snapshot stopped being sourced from it. If staging ever drifts in a way
-that changes *behaviour*, that shows up as tests passing there and failing against
-production, which is a louder signal than a dump diff.
+Generating from `migrations/` has one boundary of its own: the files cannot record
+anything a migration did not do, so an object created outside one is absent rather than
+wrong. What they deliberately do *not* answer is whether a hosted database matches — they
+are a statement about `migrations/`, not about any live system, and there is no standing
+check for that, on purpose. A migration that asserts its own end state catches a
+divergence at the moment it runs, which is both earlier and more specific than a periodic
+dump diff, and behavioural drift shows up as tests passing on staging and failing against
+production. If a hosted database ever does drift, `pg_dump --schema public` against it and
+compare the object you care about with its file under `supabase/schema/`; that is a
+debugging step, not something worth running on a timer.
 
 Migrations are append-only history — a later one can supersede
 an earlier one (drop a constraint, rewrite a function, relax a rule), which is exactly
 why eyeballing them for current state goes wrong. So when a migration must drop and
 recreate an object — e.g. a function, to repoint it at a changed type — copy its body
-from `schema.sql`, never from the migration that first defined it; that copy may already
-be superseded.
+from its file under `supabase/schema/functions/`, never from the migration that first
+defined it; that copy may already be superseded.
 
 **The same staleness trap applies to *conventions*, not just object bodies.** When you
 need a template for how to author a new migration — grant boilerplate, `SECURITY
@@ -105,14 +95,16 @@ even as a shortcut when a hosted database hasn't been updated yet: regenerate it
 `npm run db -- generate`. After regenerating, check whether new tables or enums need
 aliases added to `src/types/index.ts`.
 
-### Objects that live outside `public` (not in `schema.sql`)
+### Objects that live outside `public` (not in `supabase/schema/`)
 
 A few objects live **outside** the `public` schema and are therefore **not** in
-`schema.sql` — so you have to be aware they exist or you'll assume `schema.sql` is the
-whole story when it isn't. These are: triggers attached to `auth.users` (e.g. the
-new-user → profile handler), RLS policies on `storage.objects`, and pg_cron jobs (the
-last two aren't even DDL — they're rows in `storage.buckets`/`cron.job` — so no dump
-captures them). This is a small, stable set that rarely changes. For *only* these,
+`supabase/schema/` — so you have to be aware they exist or you'll assume the directory is
+the whole story when it isn't. These are: extensions the migrations create, triggers
+attached to `auth.users` (e.g. the new-user → profile handler), RLS policies on
+`storage.objects`, the tables in the `supabase_realtime` publication, and the rows that
+define storage buckets and pg_cron jobs (those last aren't even DDL — they're rows in
+`storage.buckets`/`cron.job` — so no dump captures them). This is a small, stable set
+that rarely changes. For *only* these,
 current state lives in migration history: grep **every** migration touching the object
 and trust the **newest** one. Do not hardcode a migration version for them
 anywhere — the correct file moves the moment one is superseded, which is the staleness
@@ -154,14 +146,14 @@ tool):
    `migrations/<YYYYMMDDHHMMSS>_<descriptive_name>.sql`, and write the SQL into it. The
    timestamp is restamped when the branch lands, so nothing may key on it — the
    descriptive half is the stable name.
-2. Regenerate the types:
+2. Regenerate:
    ```bash
    npm run db -- generate
    ```
    It builds a database from *this checkout's* `migrations/` inside the WSL distro,
-   generates `src/types/database.types.ts` from it, and removes the database again. It
-   needs Docker in the distro and takes about a minute; nothing else in the repo is
-   touched.
+   writes `src/types/database.types.ts` and `supabase/schema/` from it, and removes the
+   database again. It needs Docker in the distro and takes about a minute; nothing else
+   in the repo is touched.
 
    **`--schema public` is load-bearing, not decoration**, and the script passes it.
    Without a schema named, the CLI asks the database for every schema its Data API
@@ -169,20 +161,17 @@ tool):
    that shows up. Naming the schema makes the output depend only on `migrations/`, which
    is what lets the comparison below mean anything. If the app ever genuinely needs a
    second schema, add it there explicitly rather than dropping the flag.
-3. **Do nothing about `supabase/schema.sql`.** It is machine-maintained: CI regenerates it
-   from `migrations/` and commits it to `dev` after merge. Do not dump it, do not edit it,
-   and do not include it in a feature branch — if you do, the next `dev` build overwrites
-   it anyway.
-4. Check `src/types/index.ts` — add convenience aliases for any new tables/enums.
-5. Commit migration + updated types + tests together. `schema.sql` is not part of it.
+3. Check `src/types/index.ts` — add convenience aliases for any new tables/enums.
+4. Commit the migration, both regenerated things and the tests together.
 
-### CI compares the committed types against `migrations/`
+### CI compares the committed generated files against `migrations/`
 
-CI's database job generates `database.types.ts` from `migrations/` with the same command,
-fails the build when the committed file differs — printing the diff — and uploads what it
-generated as the artifact `database-types-from-migrations` on every run, pass or fail.
-**When local output and CI's disagree, CI's is the authority**: it is built from the
-branch's migrations alone, with nothing of this machine in the path.
+CI's database job generates `database.types.ts` and `supabase/schema/` from `migrations/`
+with the same command, fails the build when a committed file differs — printing the diff
+— and uploads what it generated as the artifacts `database-types-from-migrations` and
+`schema-from-migrations` on every run, pass or fail. **When local output and CI's
+disagree, CI's is the authority**: it is built from the branch's migrations alone, with
+nothing of this machine in the path.
 
 **A red comparison is triaged in this order**, on a branch or on `dev`:
 
@@ -190,7 +179,8 @@ branch's migrations alone, with nothing of this machine in the path.
    and the regenerated one is the fix.
 2. **Where git merged or conflicted in a generated file, inspect before committing
    anything — never hand-edit it.** Take the regenerated output, then read both sides'
-   changes to the object in question and confirm each survives in it. When both survive,
+   changes to the object in question and confirm each survives in it — most often a
+   schema file, where both sides rewrote one function body. When both survive,
    commit the regenerated file; when one is missing, write the migration that combines
    them, and regenerate. This holds on `dev` as much as on a branch: committing
    regenerated output unread accepts the last writer and turns the build green over a lost
@@ -200,10 +190,11 @@ branch's migrations alone, with nothing of this machine in the path.
    script.
 
 **When the local database will not start**, push the branch and take CI's output instead:
-the run's page on GitHub lists it under Artifacts, or
-`gh run download <run-id> -n database-types-from-migrations` fetches it
-(`gh run list --branch <branch>` finds the run). The file inside is `database.types.ts` —
-copy it to `src/types/database.types.ts`.
+the run's page on GitHub lists both under Artifacts, or
+`gh run download <run-id> -n database-types-from-migrations` and `-n
+schema-from-migrations` fetch them (`gh run list --branch <branch>` finds the run). The
+first holds `database.types.ts` — copy it to `src/types/database.types.ts`; the second
+holds the object tree — replace `supabase/schema/` with it.
 
 ### A branch carrying migrations lands synced
 
@@ -264,7 +255,7 @@ you reach for instead):
 
 - **`.rpc()` returns (wrong nullability or `Json`):** parse the result through a zod
   schema in the feature's `*.contracts.ts`, written from the function body in
-  `supabase/schema.sql`; the call site's declared return type checks the schema's
+  `supabase/schema/functions/`; the call site's declared return type checks the schema's
   output, and the db tests parse real RPC output through the same schema in CI. If the
   JOIN is ever relaxed, the parse fails loudly — unlike the old `Omit`+intersection alias
   casts this replaced, which went silently stale.
