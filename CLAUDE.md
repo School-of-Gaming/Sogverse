@@ -251,3 +251,14 @@ is changing, and changing one half never obliges the other.
 4. **Ship the primitive that makes conforming the cheapest path** — a guard function, a wrapper, a canonical template, giving step 3 a single greppable call site to require.
 
 The first two without the last two is an audit, not a fix: prose decays, a failing test doesn't, and fixing instances leaves the class alive. Keep the scope to one surface and one bug class per pass. Three standing instances show the shape: DB grants + RLS presence (the access-control DB test), DB function bodies (the authorization spine — `docs/architecture/db-authorization.md`), and the HTTP route layer (the posture registry — `docs/architecture/route-boundary.md`).
+
+### A comment describes current behaviour, never a migration number
+
+**Rule: a comment — in TypeScript, in SQL, or on a database object — says what the thing
+does now and why, and never cites a migration by number.** A number names a file that
+records one day's change, which is what git history is for; it also rots, because the
+numbered files are periodically squashed into a new baseline and the citation then points
+at nothing. Cite a decision by its date and ruling, or by the `docs/records/` entry that
+tells the story; cite a rule by the `CLAUDE.md` that holds it. A unit test sweeps the
+source tree, the schema dump and the seeds for five-digit migration citations and fails on
+any it finds.
