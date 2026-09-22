@@ -156,6 +156,27 @@ to start a second one.
 - Start it backgrounded: `npx next dev --turbopack -p <port>`.
 - Report the specific URLs worth opening, not just the root.
 
+**A branch that also adds migrations previews against its own database.** `git diff
+--name-only --diff-filter=A origin/dev...HEAD -- supabase/migrations/` — non-empty
+output means `npm run db -- up` (about 50s) runs *before* the server, and it runs
+without asking: a stack is free, owner-less and per-checkout, exactly like this dev
+server. It repoints this worktree's `.env.local` at the stack — the three values the
+app reads, nothing else — so the server has to start after it, and a server already
+running has to be restarted to see it. A schema change with nothing to look at gets
+no stack: `npm run db -- generate` is all that kind of branch needs.
+
+- **Sign in as the seeds' accounts.** `up` loads `supabase/seed.sql` and then
+  `supabase/rich-seed.sql`, whose header lists the educators, parents and children it
+  creates and names the one password they all share. A trimmed stack runs no mail
+  catcher, so nothing emailed — a magic link, a reset — can be read on it; the seeds'
+  accounts are the only way in.
+- `npm run db -- list` shows every stack on the machine with its memory (a settled
+  one holds about 660 MB). Two beside the user's own work are comfortable, three
+  tight.
+- **Added a migration** with the stack up: `npm run db -- migrate` (a second).
+  **Edited one:** `npm run db -- reset` (about 45s) — the CLI only ever runs a version
+  once, so an edited file reaches a running stack no other way.
+
 ---
 
 ## Phase 4 — Review (skip only for a change that could not be wrong)
@@ -319,6 +340,11 @@ belong in one call — and prefer the script wherever one exists.
       whole process tree (route workers included), where `Stop-Process` has no
       tree mode and can leave grandchildren behind.
    5. Re-check the port is free, and that the user's own ports are still up.
+   6. `npm run db -- park` if Phase 3 brought a stack up — **a stack is parked
+      whenever its dev server is not running.** It keeps the data and frees the
+      memory, `.env.local` goes on pointing at it, and `up` brings it back in
+      about 30s, so a branch can wait for review at no cost. Step 6's teardown
+      script runs `npm run db -- down` for you, which is what removes it.
 
    A server whose wrapper died but whose child survived serves broken pages
    ("Jest worker encountered 2 child process exceptions, exceeding retry
@@ -356,7 +382,8 @@ belong in one call — and prefer the script wherever one exists.
    .claude\scripts\worktree-teardown.ps1 -Worktree <short-name> -DeleteRemote
    ```
 
-   It unlinks any nested-install junction Phase 1 created, refuses to run
+   It removes the worktree's local Supabase stack if it has one (a no-op when it
+   does not), unlinks any nested-install junction Phase 1 created, refuses to run
    anything recursive while one is still standing, removes the worktree —
    falling back to a recursive delete and a prune when git objects to
    `node_modules` or `.next` — and deletes the branch. Pass `-DeleteRemote`

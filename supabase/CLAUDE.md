@@ -246,7 +246,35 @@ never executed anywhere"; if the addition is assertion-only, a wrong assertion c
 pass CI vacuously. Accepted costs: fix-up migrations in history, and a replacement
 function's assertion block must deliberately re-assert the invariants of the migration it
 supersedes (re-derive them; a hand-copy dropped a clause once). psql remains the right
-tool for *checking* staging state.
+tool for *checking* staging state. A local stack that has already applied the file you
+edited is the same trap on a smaller scale, and `npm run db -- reset` is its answer.
+
+## A schema-changing worktree runs its own stack
+
+**A migration that has to be looked at in the UI gets a local Supabase stack; a migration
+with nothing to look at needs only `generate`.** `npm run db` with no argument prints what
+every command does — the things its usage text does not say:
+
+- **`up` rewrites exactly three `.env.local` values** — the project URL, the anon key and
+  the service-role key — keeping the originals aside for `down` to put back. Everything
+  else in the file stays as it was, `SUPABASE_PROJECT_REF` and `SUPABASE_DB_PASSWORD`
+  included, so the `--linked` CLI commands, psql and the procedure skills in that worktree
+  go on meaning staging. The stack is what the *app* reads and nothing more. Restart the
+  dev server after `up`, or it keeps the old values.
+- **Lifecycle:** a stack is parked whenever its dev server is not running (`park` frees
+  the memory and keeps the data), and it goes `down` when the feature lands or its
+  worktree is torn down — `/worktree-flow` Phase 5's teardown script runs `down` for you.
+  If `down` never ran and the worktree is gone, the main checkout's `.env.local` is where
+  the three original values are recovered from.
+- **Memory:** about 660 MB settled, in a distro capped at 12 GB and shared with everything
+  else running on this machine. Two stacks are comfortable, three tight; `list` shows them
+  all with their memory.
+- **The accounts are the two seeds'**: `seed.sql`'s fixtures — including the admin the
+  rich seed reuses — and the families and educators `supabase/rich-seed.sql` adds, all on
+  the one test password its header names. The trimmed service set has no mail catcher, so
+  nothing emailed can be read on a stack; the seeded accounts are the way in.
+- **The DB tests never run against a stack** — `tests/CLAUDE.md`, "DB tests run in CI, not
+  locally".
 
 ## Generated nullability can lie
 
