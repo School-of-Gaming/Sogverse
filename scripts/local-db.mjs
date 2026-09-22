@@ -60,10 +60,29 @@ const NOISE = [/screen size is bogus/i, /A new version of Supabase CLI is availa
 
 /**
  * The prefix a shell file uses for a line meant for this script rather than for
- * the reader. There is exactly one such line, `running=<n>`, and it is what the
- * keep-alive below is decided on.
+ * the reader. There are two such lines: `started`, written when lib.sh is
+ * sourced, which is the only proof that bash inside the distro ever ran our
+ * file; and `running=<n>`, which the keep-alive below is decided on.
  */
 const SENTINEL = '::localdb ';
+
+/**
+ * The exit code this script uses for "the command could not be run at all" —
+ * wsl.exe would not spawn, the distro never answered, or the shell file stopped
+ * before it had read anything about the stack (a missing `flock`, which exits
+ * with this same status from inside the distro). Nothing was inspected and
+ * nothing was changed.
+ *
+ * It exists for one caller: the worktree teardown script, which carries on past
+ * it — a stack it could not even ask about is a stack `list` will show with its
+ * worktree missing — and stops on any other non-zero code, which means the
+ * command ran and refused or failed part-way.
+ *
+ * The two are separated by the `started` sentinel rather than by the child's
+ * exit status alone, because wsl.exe's own failures and bash's share the small
+ * numbers and cannot be told apart from outside.
+ */
+const COULD_NOT_RUN = 2;
 
 /**
  * The command surface. `summary` is the usage text; a command with
@@ -82,7 +101,9 @@ const COMMANDS = {
   migrate: {
     summary: [
       'Apply migration files the running stack has not seen to it, keeping',
-      'its data. This is what an ADDED migration needs.',
+      'its data. This is what an ADDED migration needs. A `git merge',
+      'origin/dev` that brings migrations needs `reset` instead: this puts',
+      'them on top, where every other database replays them underneath.',
     ],
   },
   reset: {
@@ -126,9 +147,9 @@ const scriptsDir = path.dirname(fileURLToPath(import.meta.url));
 // worktree or from the main checkout targets that checkout's supabase/.
 const checkout = path.dirname(scriptsDir);
 
-const fail = (message) => {
+const fail = (message, code = 1) => {
   console.error(message);
-  process.exit(1);
+  process.exit(code);
 };
 
 /** `C:\Users\…\repo` -> `/mnt/c/Users/…/repo`. */
@@ -242,10 +263,19 @@ const lineFilter = (sink, onSentinel) => {
  * mistaken for a live keep-alive after a reboot has reused the number; within
  * one boot, `tasklist` confirming the image is `wsl.exe` is what stands between
  * a stale pid and a terminal of the owner's being killed.
+ *
+ * The boot time is compared with a tolerance rather than exactly. It is derived
+ * from the clock minus the uptime, and both of those move: an NTP step or a
+ * suspend shifts the answer by seconds to minutes without the machine having
+ * rebooted. Compared exactly, the drift reads as a different boot, and the
+ * keep-alive it disowns is a `wsl.exe` nothing will ever release. A reboot
+ * moves this number by far more than the tolerance, so the check it exists for
+ * still holds.
  */
 const keepAliveDir = path.join(process.env.LOCALAPPDATA ?? os.tmpdir(), 'sogverse-local-db');
 const keepAlivePidFile = path.join(keepAliveDir, 'keepalive.pid');
-const bootTime = () => String(Math.round((Date.now() - os.uptime() * 1000) / 10_000));
+const bootTime = () => String(Math.round((Date.now() - os.uptime() * 1000) / 1000));
+const BOOT_TIME_TOLERANCE_SECONDS = 120;
 
 const readKeepAlive = () => {
   let contents;
@@ -255,7 +285,9 @@ const readKeepAlive = () => {
     return null;
   }
   const [pid, boot] = contents.trim().split(/\s+/);
-  if (!/^\d+$/.test(pid ?? '') || boot !== bootTime()) return null;
+  if (!/^\d+$/.test(pid ?? '')) return null;
+  const drift = Math.abs(Number(boot) - Number(bootTime()));
+  if (!Number.isFinite(drift) || drift > BOOT_TIME_TOLERANCE_SECONDS) return null;
   const listed = spawnSync('tasklist.exe', ['/FI', `PID eq ${pid}`, '/FO', 'CSV', '/NH'], {
     encoding: 'utf8',
     windowsHide: true,
@@ -270,7 +302,15 @@ const holdKeepAlive = () => {
     windowsHide: true,
     stdio: 'ignore',
   });
+  // A spawn failure arrives as an event, and on a detached child there is
+  // nothing to catch it: unhandled, it would throw out of the process long
+  // after the command it belongs to succeeded. The stack is up either way; the
+  // most that is lost is the guarantee that the distro outlives this shell.
+  child.on('error', (error) => {
+    console.error(`Could not hold the distro open (${error.message}); the stack may not outlive this shell.`);
+  });
   child.unref();
+  if (child.pid === undefined) return;
   mkdirSync(keepAliveDir, { recursive: true });
   writeFileSync(keepAlivePidFile, `${child.pid} ${bootTime()}\n`);
 };
@@ -288,6 +328,7 @@ const releaseKeepAlive = () => {
 const runInDistro = (shellFile, args) =>
   new Promise((resolve) => {
     let running = null;
+    let started = false;
 
     const child = spawn(
       'wsl.exe',
@@ -296,6 +337,10 @@ const runInDistro = (shellFile, args) =>
     );
 
     const onSentinel = (line) => {
+      if (line === 'started') {
+        started = true;
+        return;
+      }
       const match = /^running=(\d+)$/.exec(line);
       if (match) running = Number(match[1]);
     };
@@ -310,28 +355,32 @@ const runInDistro = (shellFile, args) =>
     }
 
     child.on('error', () =>
-      resolve({ code: 1, message: `Could not run wsl.exe. Is the ${DISTRO} distro installed?` }),
+      resolve({
+        code: COULD_NOT_RUN,
+        message: `Could not run wsl.exe. Is the ${DISTRO} distro installed?`,
+        started: false,
+      }),
     );
     child.on('close', (code) => {
       for (const [, filter] of streams) filter.flush();
-      resolve({ code: code ?? 1, running });
+      resolve({ code: code ?? 1, running, started });
     });
   });
 
-const started = Date.now();
+const startedAt = Date.now();
 if (command !== 'list') {
   console.log(
     `${command}: ${runProjectId} on ports ${runPortBase}-${runPortBase + 49} (Supabase CLI ${cliVersion})`,
   );
 }
 
-const { code, message, running } = await runInDistro(`${command}.sh`, [
+const { code, message, running, started } = await runInDistro(`${command}.sh`, [
   checkoutWsl,
   runProjectId,
   String(runPortBase),
   cliVersion,
 ]);
-const seconds = ((Date.now() - started) / 1000).toFixed(0);
+const seconds = ((Date.now() - startedAt) / 1000).toFixed(0);
 
 // Whatever the command did, the answer to "is anything of ours running" decides
 // whether the distro is held open. A run that failed before it could say leaves
@@ -342,12 +391,16 @@ if (running !== null && running !== undefined) {
 }
 
 if (code !== 0) {
+  // Either the shell file never started, or it started and exited with the
+  // status reserved for "could not run". Anything else is an outcome.
+  const exitCode = !started || code === COULD_NOT_RUN ? COULD_NOT_RUN : 1;
   fail(
     message ??
       `${command} failed after ${seconds}s.\n\n` +
         `If Docker itself is wedged, restart the Docker service inside the distro —\n` +
         `never restart WSL, which would kill whatever else is running in there:\n` +
         `  wsl -d ${DISTRO} -u root -- systemctl restart docker`,
+    exitCode,
   );
 }
 console.log(`${command}: done in ${seconds}s`);

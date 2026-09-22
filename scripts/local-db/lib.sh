@@ -262,11 +262,18 @@ set_env_line() {
   env_tmp="$env_file.localdb.tmp"
 
   LOCALDB_LINE=$3 awk -v key="$env_key" '
-    index($0, key "=") == 1 && !done { print ENVIRON["LOCALDB_LINE"]; done = 1; next }
+    index($0, key "=") == 1 { seen++; if (seen == 1) { print ENVIRON["LOCALDB_LINE"]; next } }
     { print }
     END {
-      if (!done) {
+      if (!seen) {
         print "No " key " line in .env.local to replace." > "/dev/stderr"
+        exit 1
+      }
+      # Rewriting the first of several would be worse than rewriting none: a
+      # dotenv reader takes the LAST assignment, so the file would go on
+      # meaning the old value while this reported success.
+      if (seen > 1) {
+        print ".env.local has " seen " " key " lines. The last one is the one that counts when the file is read, so remove the duplicates before running this again." > "/dev/stderr"
         exit 1
       }
     }
@@ -329,7 +336,10 @@ status_value() {
 take_lock() {
   if ! command -v flock >/dev/null 2>&1; then
     echo "flock is missing from this distro; it ships in util-linux (sudo apt-get install util-linux)." >&2
-    exit 1
+    # Not 1: nothing has been read or changed, so this is "the command could not
+    # run" rather than an outcome. The variable is defined below this function
+    # and set by the time anything calls it.
+    exit "$EXIT_COULD_NOT_RUN"
   fi
   mkdir -p "$STATE_DIR"
   exec 9>"$STATE_DIR/$1.lock"
@@ -344,6 +354,25 @@ take_lock() {
 # There is no `wsl --shutdown` or `wsl --terminate` anywhere in this script, and
 # there must not be. If Docker itself is wedged, restart the Docker service.
 stop_stack() {
-  "$1" stop --workdir "$2" --no-backup >/dev/null 2>&1 || true
+  # `--yes` is not decoration: this runs with stdin closed, so a stop that asks
+  # anything fails instead of answering, and the force-remove below would then
+  # be the only thing that happened — the database gone and every other service
+  # of the stack left holding its ports.
+  "$1" stop --workdir "$2" --no-backup --yes >/dev/null 2>&1 || true
   docker rm -f "supabase_db_$3" >/dev/null 2>&1 || true
 }
+
+# The exit status a command uses to say it could not run at all: wsl.exe would
+# not spawn, the distro never answered, or the script stopped before it had read
+# anything about the stack. Nothing was inspected and nothing was changed, so a
+# caller that has to decide whether to carry on — the worktree teardown script
+# is the one that does — may carry on past it, where any other non-zero status
+# is an outcome and stops it. The Node side maps this onto its own exit code;
+# see local-db.mjs.
+EXIT_COULD_NOT_RUN=2
+
+# The first thing the Node side hears from inside the distro, emitted when this
+# file is sourced: wsl.exe started bash and bash found the command script. The
+# absence of it is what tells the Node side that nothing ran, which no exit
+# status can — wsl.exe's own failures and bash's share the small numbers.
+printf '::localdb started\n'

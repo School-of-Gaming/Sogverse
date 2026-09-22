@@ -304,7 +304,9 @@ belong in one call — and prefer the script wherever one exists.
    1. `git merge origin/dev` — resolve conflicts as usual, except in
       `database.types.ts` and under `supabase/schema/`, which are never
       hand-edited: regenerate and inspect (`supabase/CLAUDE.md`, "CI compares
-      the committed generated files against `migrations/`").
+      the committed generated files against `migrations/`"). If this worktree's
+      stack is up, `npm run db -- reset` it after the merge — never `migrate`,
+      which would put the merged migrations on top of the branch's own.
    2. `node scripts/restamp-migrations.mjs` — renames this branch's own
       migrations to fresh timestamps, relative order kept, so they sort above
       everything `dev` holds. Landing is serialised through one human, so the

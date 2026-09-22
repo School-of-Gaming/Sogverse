@@ -164,11 +164,21 @@ if ((Test-Path $envMain) -and (Test-Path $envWt)) {
 # owns from its own location, so the main checkout's copy would address the main
 # checkout's stack instead.
 #
-# It runs before anything is deleted, and a failure stops the teardown: once the
-# tree is gone there is nothing left to run `down` from, and the aside copy of the
-# original .env.local values dies with it — leaving containers that only
-# `npm run db -- list` will ever mention, as a stack whose worktree is missing.
-# Safe when there is no stack: `down` says so and exits 0.
+# It runs before anything is deleted, because once the tree is gone there is
+# nothing left to run `down` from, and the aside copy of the original .env.local
+# values dies with it — leaving containers that only `npm run db -- list` will ever
+# mention, as a stack whose worktree is missing. Safe when there is no stack:
+# `down` says so and exits 0.
+#
+# Its two failures are not the same failure, so they are not treated alike:
+#
+#   exit 1  `down` ran and refused, or failed part-way through — an outcome about
+#           a stack that exists. The teardown stops; the stack is fixed and the
+#           teardown rerun.
+#   exit 2  `down` could not run at all (no distro, wsl.exe would not spawn, a
+#           missing flock). Nothing was inspected, so there is nothing to fix
+#           here and no reason to hold a worktree hostage to a broken distro.
+#           The teardown warns and carries on.
 Write-Host "1. Local Supabase stack"
 $localDb = Join-Path $target 'scripts\local-db.mjs'
 if (-not (Test-Path -LiteralPath $localDb)) {
@@ -180,10 +190,18 @@ elseif ($DryRun) {
 else {
   Step "node scripts\local-db.mjs down"
   node $localDb down
-  if ($LASTEXITCODE -ne 0) {
+  if ($LASTEXITCODE -eq 2) {
+    Warn "'npm run db -- down' could not run in the worktree (exit 2) - nothing was inspected or removed."
+    Warn "If this worktree had a stack, it stays behind: 'npm run db -- list' will show it as one"
+    Warn "whose worktree is gone, and the copy of the original .env.local values that 'down' would"
+    Warn "have put back dies with the worktree. Carrying on with the teardown."
+  }
+  elseif ($LASTEXITCODE -ne 0) {
     Die "'npm run db -- down' failed in the worktree (exit $LASTEXITCODE). Nothing has been removed; fix the stack, then rerun."
   }
-  Ok "stack removed (or there was none)"
+  else {
+    Ok "stack removed (or there was none)"
+  }
 }
 
 # --- Step 2: unlink nested-install junctions ---------------------------------

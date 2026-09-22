@@ -266,7 +266,9 @@ every command does — the things its usage text does not say:
   the memory and keeps the data), and it goes `down` when the feature lands or its
   worktree is torn down — `/worktree-flow` Phase 5's teardown script runs `down` for you.
   If `down` never ran and the worktree is gone, the main checkout's `.env.local` is where
-  the three original values are recovered from.
+  the three original values are recovered from. A `git merge origin/dev` that brings
+  migrations with it wants `reset`, not `migrate`: `migrate` applies them on top of what
+  the stack already has, where every other database replays them underneath.
 - **Memory:** about 660 MB settled, in a distro capped at 12 GB and shared with everything
   else running on this machine. Two stacks are comfortable, three tight; `list` shows them
   all with their memory.

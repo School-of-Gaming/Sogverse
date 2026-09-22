@@ -50,8 +50,16 @@ src/lib/locations/catalog/*.json linguist-generated=true
 # byte-exact costs nothing.
 supabase/schema/** -text linguist-generated=true
 
-# The baseline schema migration, for the same reason: it is a pg_dump of the
-# public schema, so it holds the same carriage return inside the same CHECK
-# constraint's string literal. Normalize it away and every fresh database gets a
-# constraint one byte different from the one production runs.
-supabase/migrations/00266_baseline_schema.sql -text
+# The two baseline migrations, which are the squashed numbered history: a
+# pg_dump of the public schema, and the reference data that went with it. Both
+# are machine-written and never hand-edited, and between them they are about
+# 91,000 lines — so, like the schema above, collapse them in diffs, or every
+# dev -> main release PR until they are behind `main` buries its real changes
+# under them.
+#
+# Only the schema half is exempt from eol normalization (-text), for the reason
+# the schema entry gives: it holds the same carriage return inside the same
+# CHECK constraint's string literal, and normalizing it away would give every
+# fresh database a constraint one byte different from the one production runs.
+supabase/migrations/00266_baseline_schema.sql -text linguist-generated=true
+supabase/migrations/00267_baseline_reference_data.sql linguist-generated=true

@@ -11,7 +11,11 @@ In the same sitting as the release, immediately before the merge: assert that th
 versions production records as applied are exactly the numbered files being squashed, with
 `npx supabase migration list --linked`; then `npx supabase migration repair --status
 reverted <every version below 00266>`, leaving `00266` and `00267` applied. The rollback is
-`npx supabase migration repair --status applied` over the same list.
+`npx supabase migration repair --status applied` over the same list. The baselines
+deliberately take over `00266` and `00267`, two version numbers production had already
+applied under other names, so after the repair production's history goes on recording those
+two rows with the old files' names and statements while the repo holds the baselines under
+the same numbers: that mismatch is expected, not a fault to chase.
 
 A release that skips this fails safe rather than corrupting anything: production's `db push`
 refuses, and the production promotion is held until the repair is run. **The release that

@@ -3,7 +3,7 @@
  *
  *   node scripts/diff-geonames.mjs GB
  *   node scripts/diff-geonames.mjs FI --unretire
- *   node scripts/diff-geonames.mjs GB --from-migration supabase/migrations/<version>_seed_uk_geonames.sql
+ *   node scripts/diff-geonames.mjs NO --from-migration supabase/migrations/<version>_seed_norway_geonames.sql
  *
  * One procedure for every country — Finland and France included since the
  * cutover, which is why there is no annual national-classification diff any
@@ -96,6 +96,12 @@
  * other, and this reads the SQL back and asserts the round trip is closed. The
  * parser is deliberately narrow — it reads only the shape this repository's
  * generator emits, and fails loudly on anything else.
+ *
+ * Which means the file it is pointed at is one `generate-geonames-seed.mjs` has
+ * just written, for a country genuinely new to the repo. Every country seeded
+ * before the numbered migration history was squashed is in the baseline
+ * migration instead — a pg_dump, not a shape this parser reads — and the
+ * generator refuses to write a second copy of a tree already sitting there.
  */
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";

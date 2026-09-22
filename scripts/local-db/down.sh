@@ -22,14 +22,17 @@ state=$(stack_state_dir "$project")
 work=$(shadow_workdir "$project")
 env_file="$checkout/.env.local"
 
-ensure_cli "$cli_version"
-cli=$(cli_bin "$cli_version")
-
 if [ -z "$(stack_containers_all "$project")" ] && [ ! -d "$state" ] && [ ! -d "$work" ]; then
   echo "This checkout has no stack. Nothing to remove."
   report_running
   exit 0
 fi
+
+# Below the check above, not before it: `stop_stack` is the only thing here that
+# wants the CLI, so a worktree that never ran `up` — the common case when a
+# teardown runs — must not need one cached or downloadable to be torn down.
+ensure_cli "$cli_version"
+cli=$(cli_bin "$cli_version")
 
 stop_stack "$cli" "$work" "$project"
 # Whatever the CLI left behind of the rest of the service set. `stop_stack`
