@@ -39,11 +39,11 @@ env:
   # CLAUDE.md "Function & Table Access Control"). Bump it when the local dev CLI is
   # upgraded (keep CI == what we run migrations against locally); check the newest
   # stable with `gh api repos/supabase/cli/releases/latest`.
-  SUPABASE_CLI_VERSION: "2.106.0"
+  SUPABASE_CLI_VERSION: "2.117.0"
   # The postgres-meta image the pinned CLI's `gen types --db-url` runs on demand,
   # pre-pulled in the database job so it never pulls from a rate-limited registry.
   # Read it off a local `npm run db -- generate` after every CLI bump.
-  GEN_TYPES_POSTGRES_META_TAG: "v0.96.1"
+  GEN_TYPES_POSTGRES_META_TAG: "v0.99.0"
 
   # `npm ci` installs every workspace, including services/bedrock-portal, whose
   # bedrock-protocol -> raknet-native dependency resolves prebuilds by
