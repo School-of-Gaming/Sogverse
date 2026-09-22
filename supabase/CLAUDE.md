@@ -82,9 +82,8 @@ need a template for how to author a new migration — grant boilerplate, `SECURI
 DEFINER` + `SET search_path` headers, header-comment style, ordering-key stamping — model
 it on the **newest** migrations, never an arbitrary or early one. Conventions
 have evolved and old migrations preserve the superseded version: explicit per-role
-`GRANT`s replaced blanket/auto-expose grants (`00095`/`00099`), `clock_timestamp()`
-replaced `now()` for cross-transaction ordering keys (`00117`), and `SET search_path TO
-''` is the current default. The *rules* are written out in this file (grants, RLS,
+`GRANT`s replaced blanket/auto-expose grants, `clock_timestamp()` replaced `now()` for
+cross-transaction ordering keys, and `SET search_path TO ''` is the current default. The *rules* are written out in this file (grants, RLS,
 nullability, `now()` vs `clock_timestamp()` below); the newest migrations are their
 freshest worked examples. Pattern-matching on an old migration is how a dead convention
 gets revived — when in doubt, the rule in this file wins over any example in
@@ -314,8 +313,8 @@ you reach for instead):
 **Rule: Migrations must explicitly `GRANT` every object they create — new tables, views,
 sequences, and functions have no Data API access by default, not even for
 `service_role`.** This holds identically in every environment: fresh local stacks since
-CLI v2.106.0, and hosted DBs since `00099` proactively revoked the legacy auto-expose
-default privileges (ahead of Supabase's 2026-10-30 platform flip); `00095` backfilled
+CLI v2.106.0, and hosted DBs since a migration revoked the legacy auto-expose default
+privileges (ahead of Supabase's 2026-10-30 platform flip) after an earlier one backfilled
 explicit grants for everything older. Grant deliberately per role —
 `GRANT EXECUTE ... TO authenticated` for browser-called RPCs, `TO service_role` for
 admin-client-called ones — and classify any function exposed to `authenticated`/`anon`
@@ -324,8 +323,8 @@ in the DB test suite's authorization spine (see below). A forgotten grant fails 
 grants or by re-adding auto-expose `ALTER DEFAULT PRIVILEGES` — the failure is the
 feature. The `REVOKE EXECUTE ... FROM PUBLIC` boilerplate is **not** historical — it is
 load-bearing: a created (or drop/recreated) function comes back `PUBLIC`-executable
-(observed on staging during `00172`, where a drop/recreate cycle briefly left
-service-role-only paid-seat writers callable by `anon` until re-revoked), so a migration
+(observed on staging when a drop/recreate cycle briefly left service-role-only paid-seat
+writers callable by `anon` until re-revoked), so a migration
 that creates or recreates a function must pair its per-role `GRANT`s with an explicit
 `REVOKE EXECUTE ... FROM PUBLIC`.
 Extra care with `SECURITY DEFINER` functions: they bypass RLS, so granting one broadly
