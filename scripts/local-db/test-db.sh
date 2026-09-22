@@ -60,7 +60,7 @@ else
   # status, and the answer would come back "no rich seed" because of how the
   # question was asked.
   rich_rows=$(docker exec "supabase_db_$project" psql -U postgres -d postgres -tAc \
-    "SELECT 1 FROM auth.users WHERE id = '11111111-1111-4111-8111-000000000001'" 2>/dev/null || true)
+    "SELECT 1 FROM auth.users WHERE email = 'admin@example.com'" 2>/dev/null || true)
   if [ -n "$rich_rows" ]; then
     rich_seed="its accounts are in auth.users"
   fi
