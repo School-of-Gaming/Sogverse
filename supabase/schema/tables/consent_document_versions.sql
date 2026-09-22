@@ -14,7 +14,7 @@ CREATE TABLE public.consent_document_versions (
 -- Name: TABLE consent_document_versions; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.consent_document_versions IS 'One row per published revision of a consent document. Rows arrive by MIGRATION only — no Data API role holds a write grant — because a version is a document that was published, not a value an app invents. The CURRENT version OF A SLUG is the row with the greatest created_at for that slug, the same derivation gedu_contract_versions uses (00201), and that is the version an enrolment records. Publishing a new revision is therefore one INSERT and touches no product: existing acceptances go on naming the version that was live when they were made, which is the whole point of storing a version rather than a boolean.';
+COMMENT ON TABLE public.consent_document_versions IS 'One row per published revision of a consent document. Rows arrive by MIGRATION only — no Data API role holds a write grant — because a version is a document that was published, not a value an app invents. The CURRENT version OF A SLUG is the row with the greatest created_at for that slug, the same derivation gedu_contract_versions uses, and that is the version an enrolment records. Publishing a new revision is therefore one INSERT and touches no product: existing acceptances go on naming the version that was live when they were made, which is the whole point of storing a version rather than a boolean.';
 
 
 --

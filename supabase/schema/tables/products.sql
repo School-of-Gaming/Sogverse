@@ -63,14 +63,14 @@ END),
 -- Name: COLUMN products.image_path; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.products.image_path IS 'The object key every reader paints. DERIVED, with no exceptions: trg_products_apply_image_path writes the linked entry''s path on every products write and NULLs the column whenever image_id is NULL, so an app-supplied value is always inert and this column has exactly one writer. It deliberately carries NO foreign key into product_images(path): a second relationship between these two tables makes every PostgREST embed of product_images ambiguous (PGRST201) unless every caller hints it, and the trigger already guarantees what such a key would check. See 00198''s header before adding one.';
+COMMENT ON COLUMN public.products.image_path IS 'The object key every reader paints. DERIVED, with no exceptions: trg_products_apply_image_path writes the linked entry''s path on every products write and NULLs the column whenever image_id is NULL, so an app-supplied value is always inert and this column has exactly one writer. It deliberately carries NO foreign key into product_images(path): a second relationship between these two tables makes every PostgREST embed of product_images ambiguous (PGRST201) unless every caller hints it, and the trigger already guarantees what such a key would check.';
 
 
 --
 -- Name: COLUMN products.for_gamers; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.products.for_gamers IS 'Children may occupy a seat on this product. Default true: every product that existed before 00173 is gamers-only, and stays so.';
+COMMENT ON COLUMN public.products.for_gamers IS 'Children may occupy a seat on this product. Default true, so a product is open to children unless somebody says otherwise.';
 
 
 --
@@ -84,14 +84,14 @@ COMMENT ON COLUMN public.products.for_parents IS 'Adults may occupy a seat on th
 -- Name: COLUMN products.tag; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.products.tag IS 'Optional design tag, NULL meaning untagged. Untagged is the ordinary state and renders nothing anywhere — no chip on the card, no chip on the detail hero, no explanation block — exactly as a gamers-only audience renders no badge. There is no default and no backfill: every product authored before 00178 is untagged because nobody has said otherwise.';
+COMMENT ON COLUMN public.products.tag IS 'Optional design tag, NULL meaning untagged. Untagged is the ordinary state and renders nothing anywhere — no chip on the card, no chip on the detail hero, no explanation block — exactly as a gamers-only audience renders no badge. There is no default: a product is untagged until somebody says otherwise.';
 
 
 --
 -- Name: COLUMN products.region_lock_country; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.products.region_lock_country IS 'Optional ISO 3166-1 alpha-2 country code this product is locked to; NULL (the state of every row before 00193) means not locked, and is the ordinary case. ENFORCEMENT IS UI-ONLY BY DESIGN: nothing in this database refuses a participation on a locked product. A family''s location is self-attested and editable by them at any time, so a server-side block would check a value the blocked party can rewrite — an obstacle, never a guarantee. The shop''s signup panel reads this column and tells a parent outside the country that the product is not for them; that is the whole mechanism. Two accepted consequences: a determined parent can restate their location and enrol, and a parent who moves after enroling keeps their seat, because the lock gates the enrolment decision and is never re-run against an existing one. The CHECK constrains the shape only (two uppercase letters). WHICH countries may be chosen is the seeded half of SUPPORTED_COUNTRIES in the application config, enforced by the write contract and the admin picker, because that list changes as location rows are seeded and an enum here would both need a migration per country and turn an already-stored lock into a violation the day one is un-seeded. Unrelated to the municipality-club country binding, which constrains a muni club''s location pickers and says nothing about who may enrol.';
+COMMENT ON COLUMN public.products.region_lock_country IS 'Optional ISO 3166-1 alpha-2 country code this product is locked to; NULL means not locked, and is the ordinary case. ENFORCEMENT IS UI-ONLY BY DESIGN: nothing in this database refuses a participation on a locked product. A family''s location is self-attested and editable by them at any time, so a server-side block would check a value the blocked party can rewrite — an obstacle, never a guarantee. The shop''s signup panel reads this column and tells a parent outside the country that the product is not for them; that is the whole mechanism. Two accepted consequences: a determined parent can restate their location and enrol, and a parent who moves after enroling keeps their seat, because the lock gates the enrolment decision and is never re-run against an existing one. The CHECK constrains the shape only (two uppercase letters). WHICH countries may be chosen is the seeded half of SUPPORTED_COUNTRIES in the application config, enforced by the write contract and the admin picker, because that list changes as location rows are seeded and an enum here would both need a migration per country and turn an already-stored lock into a violation the day one is un-seeded. Unrelated to the municipality-club country binding, which constrains a muni club''s location pickers and says nothing about who may enrol.';
 
 
 --

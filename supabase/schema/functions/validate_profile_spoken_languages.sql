@@ -27,7 +27,7 @@ $$;
 -- Name: FUNCTION validate_profile_spoken_languages(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.validate_profile_spoken_languages() IS 'BEFORE INSERT OR UPDATE OF profiles.spoken_languages. Its only remaining rule is that no language appears twice — public.spoken_language decides which values are legal, and did so from 00199. It stays a trigger rather than a CHECK on purpose: EXECUTE on a trigger function is checked when the trigger is created, so this never needs a grant to authenticated, and therefore never needs a classification in the authorization spine, for a rule no caller has any business invoking.';
+COMMENT ON FUNCTION public.validate_profile_spoken_languages() IS 'BEFORE INSERT OR UPDATE OF profiles.spoken_languages. Its only rule is that no language appears twice — public.spoken_language, the column''s own type, decides which values are legal. It stays a trigger rather than a CHECK on purpose: EXECUTE on a trigger function is checked when the trigger is created, so this never needs a grant to authenticated, and therefore never needs a classification in the authorization spine, for a rule no caller has any business invoking.';
 
 
 --

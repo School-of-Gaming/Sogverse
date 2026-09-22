@@ -18,7 +18,7 @@ CREATE TABLE public.gamer_photo_consent_events (
 -- Name: TABLE gamer_photo_consent_events; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.gamer_photo_consent_events IS 'APPEND-ONLY history: one row per CHANGE to a gamer photo consent, and the evidence behind whatever gamer_photo_consents currently says. Nothing updates or deletes a row here — no Data API role holds any write grant at all, and the only writer is set_gamer_photo_consent — because an event is a statement that something happened at an instant, and editing one would destroy the only thing the table is for. A repeat submission that changes nothing appends nothing, exactly as in marketing_consent_events (00220). Rows carry NO unique constraint: granting, revoking and granting again is the ordinary life of a revocable consent, and those three rows are history rather than duplicates. Readable by ADMINS ALONE, which is narrower than the state table beside it — a gedu needs today''s answer to decide whether to raise a camera, and has no business in the history of a family''s deliberations.';
+COMMENT ON TABLE public.gamer_photo_consent_events IS 'APPEND-ONLY history: one row per CHANGE to a gamer photo consent, and the evidence behind whatever gamer_photo_consents currently says. Nothing updates or deletes a row here — no Data API role holds any write grant at all, and the only writer is set_gamer_photo_consent — because an event is a statement that something happened at an instant, and editing one would destroy the only thing the table is for. A repeat submission that changes nothing appends nothing, exactly as in marketing_consent_events. Rows carry NO unique constraint: granting, revoking and granting again is the ordinary life of a revocable consent, and those three rows are history rather than duplicates. Readable by ADMINS ALONE, which is narrower than the state table beside it — a gedu needs today''s answer to decide whether to raise a camera, and has no business in the history of a family''s deliberations.';
 
 
 --
@@ -39,7 +39,7 @@ COMMENT ON COLUMN public.gamer_photo_consent_events.granted IS 'The state that w
 -- Name: COLUMN gamer_photo_consent_events.source; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.gamer_photo_consent_events.source IS 'Which surface the answer came from: `settings` (the card on the gamer''s page under the parent''s My SOG) or `enrolment` (the ask inside a product signup panel). There is deliberately NO `registration` value, which is the one place this CHECK differs from marketing_consent_events'' (00220): that source exists because a parent ticks a marketing box before their account exists, and no gamer exists at that moment for a photo consent to be about. A CHECK rather than an enum because the set is a list of our own surfaces, which move with the product rather than with the data model.';
+COMMENT ON COLUMN public.gamer_photo_consent_events.source IS 'Which surface the answer came from: `settings` (the card on the gamer''s page under the parent''s My SOG) or `enrolment` (the ask inside a product signup panel). There is deliberately NO `registration` value, which is the one place this CHECK differs from marketing_consent_events'': that source exists because a parent ticks a marketing box before their account exists, and no gamer exists at that moment for a photo consent to be about. A CHECK rather than an enum because the set is a list of our own surfaces, which move with the product rather than with the data model.';
 
 
 --

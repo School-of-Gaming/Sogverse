@@ -71,7 +71,7 @@ $$;
 -- Name: FUNCTION promote_from_waitlist(p_participation_id uuid, p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.promote_from_waitlist(p_participation_id uuid, p_group_id uuid) IS 'Admin-gated promotion of a waitlisted participation into a seat, under the product gate lock. No seat-count gate by design — promoting from a full waitlist is a deliberate capacity override. Clears waitlisted_at so the row leaves the queue ordering, and since 00207 clears the two seat-offer stamps with it: an admin dragging an invited row is honouring that offer by hand, which ends it, and the emailed link stops validating on its own because it no longer matches the row. The clear is unconditional because the CHECK forbids an offer stamp on a non-waitlisted row.';
+COMMENT ON FUNCTION public.promote_from_waitlist(p_participation_id uuid, p_group_id uuid) IS 'Admin-gated promotion of a waitlisted participation into a seat, under the product gate lock. No seat-count gate by design — promoting from a full waitlist is a deliberate capacity override. Clears waitlisted_at so the row leaves the queue ordering, and clears the two seat-offer stamps with it: an admin dragging an invited row is honouring that offer by hand, which ends it, and the emailed link stops validating on its own because it no longer matches the row. The clear is unconditional because the CHECK forbids an offer stamp on a non-waitlisted row.';
 
 
 --

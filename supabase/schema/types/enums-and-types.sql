@@ -56,7 +56,7 @@ CREATE TYPE public.gamer_photo_consent_type AS ENUM (
 -- Name: TYPE gamer_photo_consent_type; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TYPE public.gamer_photo_consent_type IS 'The photo permissions a parent can hold on behalf of a gamer. One value, lynx_educate: School of Gaming does not use children''s photographs on its own products and so does not ask, and the Roblox Programme delivered with Lynx Educate is the one place real photographs of children arise. Named for the PARTY exactly as marketing_consent_type (00220) is, rather than for the activity — because an enum value here is a standing permission over a child''s image and, like a marketing consent and unlike a consent DOCUMENT (00210), it has no text to version and no republication for a stored row to outlive. A future partner is a new value and a new sentence; what the enum buys is that a typo cannot become a permission nobody can find to revoke.';
+COMMENT ON TYPE public.gamer_photo_consent_type IS 'The photo permissions a parent can hold on behalf of a gamer. One value, lynx_educate: School of Gaming does not use children''s photographs on its own products and so does not ask, and the Roblox Programme delivered with Lynx Educate is the one place real photographs of children arise. Named for the PARTY exactly as marketing_consent_type is, rather than for the activity — because an enum value here is a standing permission over a child''s image and, like a marketing consent and unlike a consent DOCUMENT, it has no text to version and no republication for a stored row to outlive. A future partner is a new value and a new sentence; what the enum buys is that a typo cannot become a permission nobody can find to revoke.';
 
 
 --
@@ -118,7 +118,7 @@ CREATE TYPE public.marketing_consent_type AS ENUM (
 -- Name: TYPE marketing_consent_type; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TYPE public.marketing_consent_type IS 'The marketing permissions a parent can hold. school_of_gaming is our own mailing list, asked for at parent registration. lynx_educate is our partner''s, asked for only on products an admin has attached it to — see product_marketing_consents. An enum rather than a whitelist table because a marketing consent, unlike a consent DOCUMENT (00210), has no text to version and no republication for a stored row to outlive: it is a standing permission to mail, and the party it names is the whole of it.';
+COMMENT ON TYPE public.marketing_consent_type IS 'The marketing permissions a parent can hold. school_of_gaming is our own mailing list, asked for at parent registration. lynx_educate is our partner''s, asked for only on products an admin has attached it to — see product_marketing_consents. An enum rather than a whitelist table because a marketing consent, unlike a consent DOCUMENT, has no text to version and no republication for a stored row to outlive: it is a standing permission to mail, and the party it names is the whole of it.';
 
 
 --
@@ -137,7 +137,7 @@ CREATE TYPE public.participation_status AS ENUM (
 -- Name: TYPE participation_status; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TYPE public.participation_status IS 'Participation lifecycle. ''reserving'' is RETIRED (2026-08, migration 00139): paid participations are created at payment confirmation, so nothing writes it. PostgreSQL cannot drop an enum value, hence it remains listed.';
+COMMENT ON TYPE public.participation_status IS 'Participation lifecycle. ''reserving'' is RETIRED (2026-08): paid participations are created at payment confirmation, so nothing writes it. PostgreSQL cannot drop an enum value, hence it remains listed.';
 
 
 --
