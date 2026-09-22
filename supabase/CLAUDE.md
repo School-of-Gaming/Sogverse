@@ -289,11 +289,14 @@ every command does — the things its usage text does not say:
 - **Memory:** about 660 MB settled, in a distro capped at 12 GB and shared with everything
   else running on this machine. Two stacks are comfortable, three tight; `list` shows them
   all with their memory.
-- **The accounts are the two seeds'.** `seed.sql`'s fixtures stay on the password its
-  header names; `supabase/rich-seed.sql` adds the families and educators around three
-  accounts meant to be signed in as — `admin@example.com`, `parent@example.com` (parent
-  PIN 1111) and `gedu@example.com`, all on the password `password`, with every other
-  account it creates on `seed.sql`'s. Each account's id is generated rather than written
+- **A stack carries one seed, never both.** They serve different readers: `seed.sql` is
+  the DB tests' fixture set and `supabase/rich-seed.sql` is a catalogue for a human to
+  look at, so a stack getting the rich seed is created with the CLI's seed switched off
+  and `seed.sql` never runs on it, while `up --no-rich-seed` leaves it on and applies
+  nothing else. A rich stack's accounts are the rich seed's alone: families and educators
+  around three meant to be signed in as — `admin@example.com`, `parent@example.com`
+  (parent PIN 1111) and `gedu@example.com`, all on the password `password`, with every
+  other account it creates on `testpassword123`. Each id is generated rather than written
   out, because the avatar identicon derives its pattern from the id's bytes and a
   hand-written one draws a face nobody will ever see in production. The trimmed service
   set has no mail catcher, so nothing emailed can be read on a stack; the seeded accounts

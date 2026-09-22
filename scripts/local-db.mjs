@@ -99,7 +99,7 @@ const COMMANDS = {
     flags: ['--no-rich-seed'],
     summary: [
       'Build this checkout\'s local Supabase stack from supabase/migrations/,',
-      'seed.sql, supabase/rich-seed.sql and its product images, and point this',
+      'supabase/rich-seed.sql and its product images, and point this',
       'checkout\'s .env.local at it. Resumes a parked stack without replaying',
       'anything. Already running: prints the URL and changes nothing.',
       '--no-rich-seed builds it from seed.sql alone, with no rich catalogue',

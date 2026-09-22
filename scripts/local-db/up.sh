@@ -7,18 +7,20 @@
 #
 # Arguments are bare words on purpose; see lib.sh for what the boundary mangles.
 #
-# The first `up` creates the database, which is when the CLI applies the
-# migrations and seed.sql, and when the rich seed and its product images go on
-# top. Every later `up` is a resume of a parked stack: the containers and their
-# volumes are still there, so nothing is replayed and the data from before is
-# intact.
+# The first `up` creates the database, which is when the migrations are applied
+# and when this stack's seed goes on — supabase/rich-seed.sql and its product
+# images, or seed.sql. Every later `up` is a resume of a parked stack: the
+# containers and their volumes are still there, so nothing is replayed and the
+# data from before is intact.
 #
 # `--no-rich-seed` builds a stack on seed.sql alone — no rich catalogue and no
 # images. That is what the DB tests want, because their whole-table claims are
-# written against seed.sql's fixtures and nothing else. The choice is RECORDED
-# rather than re-read from the flag: a resume takes no flags of its own, and a
-# stack that was built without the rich seed must not acquire one the next time
-# somebody types `up`.
+# written against seed.sql's fixtures and nothing else. A stack gets one seed or
+# the other and never both: a rich stack is created with the CLI's own
+# `[db.seed]` switched off, so seed.sql's fixtures cannot turn up in the lists a
+# human is here to look at. The choice is RECORDED rather than re-read from the
+# flag: a resume takes no flags of its own, and a stack that was built without
+# the rich seed must not acquire one the next time somebody types `up`.
 set -euo pipefail
 here=$(dirname "$0")
 . "$here/lib.sh"
@@ -83,8 +85,25 @@ if [ "$first_start" -eq 1 ]; then
 fi
 
 mkdir -p "$state"
-# Seed ENABLED, unlike `generate`: a stack is for looking at the app.
-work=$(ensure_shadow "$checkout" "$project" "$port_base" true)
+
+# Which seed this stack gets, settled BEFORE the workdir is built, because the
+# choice shapes the config the CLI creates the database from: a rich stack has
+# `[db.seed]` off so seed.sql never runs on it, and a --no-rich-seed stack has
+# it on and that is the whole of its data. A first start takes the flag and
+# records it; every later run reads the record back, and a flag that disagrees
+# with it is answered further down. The flag cannot take the rich seed back off
+# a stack that already has it, which is what the second condition says.
+if [ "$rich_seed_flag" = "--no-rich-seed" ] && [ ! -f "$state/rich-seed-applied" ]; then
+  : > "$state/rich-seed-skipped"
+fi
+
+if [ -f "$state/rich-seed-skipped" ]; then
+  cli_seed=true
+else
+  cli_seed=false
+fi
+
+work=$(ensure_shadow "$checkout" "$project" "$port_base" "$cli_seed")
 
 cleanup() {
   status=$?
@@ -150,14 +169,9 @@ if [ -z "$api_url" ] || [ -z "$anon_key" ] || [ -z "$service_key" ]; then
   exit 1
 fi
 
-# The rich seed refuses a second application, so whether it has run is recorded
-# rather than rediscovered: on a resume it must not run, and after a `reset` it
-# must. `--no-rich-seed` writes the other marker, which is what makes the choice
-# stick across every later resume and reset of this stack.
-if [ "$rich_seed_flag" = "--no-rich-seed" ] && [ ! -f "$state/rich-seed-applied" ]; then
-  : > "$state/rich-seed-skipped"
-fi
-
+# The rich seed refuses a database that has any account in it, so whether it has
+# run is recorded rather than rediscovered: on a resume it must not run, and
+# after a `reset` it must.
 rich_seed_state=skipped
 if [ -f "$state/rich-seed-skipped" ]; then
   if [ "$rich_seed_flag" != "--no-rich-seed" ]; then
@@ -200,10 +214,11 @@ echo "               SUPABASE_SERVICE_ROLE_KEY now point here. Everything else i
 echo "               file, staging included, is untouched. Restart the dev server."
 echo "  database     postgresql://postgres:postgres@127.0.0.1:$db_port/postgres"
 if [ "$rich_seed_state" = "applied" ]; then
-  echo "  data         seed.sql + supabase/rich-seed.sql, with product images in the"
-  echo "               product-images bucket. Sign in as admin@example.com,"
-  echo "               parent@example.com (PIN 1111) or gedu@example.com, password"
-  echo "               \"password\"; every other seeded account is testpassword123."
+  echo "  data         supabase/rich-seed.sql alone, with product images in the"
+  echo "               product-images bucket — seed.sql's fixtures are not on a rich"
+  echo "               stack. Sign in as admin@example.com, parent@example.com"
+  echo "               (PIN 1111) or gedu@example.com, password \"password\"; every"
+  echo "               other seeded account is testpassword123."
 else
   echo "  data         seed.sql only — no rich catalogue and no product images"
   echo "               (--no-rich-seed). Sign in as seed.sql's own fixtures."

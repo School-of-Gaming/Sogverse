@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # `reset` — rebuild the running stack's database in place from the checkout's
-# migrations and both seeds.
+# migrations and this stack's seed.
 #
 #   reset.sh <checkout-path> <project-id> <port-base> <cli-version>
 #
@@ -40,10 +40,18 @@ fi
 ensure_cli "$cli_version"
 cli=$(cli_bin "$cli_version")
 
-# The CLI's reset replays the migrations and seed.sql. The rich seed is not
-# named in config.toml and no reset knows about it, so it goes back on by hand
-# — against a database that is once again fresh, which is the only state its
-# own guard accepts.
+# The CLI's reset replays the migrations and whichever seed the workdir's
+# config.toml names — which is seed.sql on a --no-rich-seed stack and nothing at
+# all on a rich one. That line is written here from the stack's recorded choice
+# and not merely trusted, because the workdir outlives the run that made it, and
+# a rebuild that picked up the other seed would put the DB tests' fixtures into
+# the lists this stack exists to show.
+if [ -f "$state/rich-seed-skipped" ]; then
+  set_shadow_seed "$work" true
+else
+  set_shadow_seed "$work" false
+fi
+
 "$cli" db reset --workdir "$work" --local --yes
 
 migrations=$(ls "$checkout/supabase/migrations" | wc -l)
@@ -55,6 +63,8 @@ if [ -f "$state/rich-seed-skipped" ]; then
 fi
 
 echo "Applying supabase/rich-seed.sql…"
+# Against a database that is once again empty of accounts, which is the only
+# state the rich seed's own guard accepts.
 apply_rich_seed "$checkout" "$project"
 : > "$state/rich-seed-applied"
 
@@ -76,6 +86,6 @@ fi
 
 bash "$here/rich-images.sh" "$checkout" "$project" "$api_url" "$service_key"
 
-echo "Database rebuilt from $migrations migrations, seed.sql, the rich seed and its product images."
+echo "Database rebuilt from $migrations migrations, the rich seed and its product images."
 
 report_running

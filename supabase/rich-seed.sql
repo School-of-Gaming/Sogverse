@@ -10,17 +10,23 @@
 -- with sessions, reports, attendance, feedback and a substitution. It exists so
 -- a human can look at the UI. Nothing asserts anything here.
 --
--- CI NEVER LOADS IT. It is not named in `config.toml` — `seed.sql` is the CLI's
--- default seed and stays the only one the CLI loads — and no CI job applies it.
--- The local stack script applies it after `seed.sql`; by hand that is
+-- THE TWO SEEDS NEVER SHARE A DATABASE. What makes a good fixture for a DB test
+-- — a handful of accounts at fixed ids, with whole-table claims written around
+-- them — is not what makes a good example for a human to look at, so a stack
+-- gets one seed or the other. The local stack script turns the CLI's `[db.seed]`
+-- off on a stack that is getting this file, so `seed.sql` never runs there;
+-- `up --no-rich-seed` leaves it on and applies nothing else. Everything below
+-- therefore stands on its own: nothing here reads a row `seed.sql` wrote.
+--
+-- CI NEVER LOADS IT. It is not named in `config.toml` — `seed.sql` is the only
+-- seed the CLI itself ever loads — and no CI job applies it. The local stack
+-- script applies it once the database is up; by hand that is
 --
 --     psql -v ON_ERROR_STOP=1 -f supabase/rich-seed.sql
 --
--- against a local database that has already been seeded. It expects `seed.sql`
--- to have run — not for anything it borrows, but because a database without
--- those fixtures is not the local database this file is for — and it is written
--- to be applied ONCE to a fresh one: the guard below refuses a second run, or a
--- run against any populated database, before a single row is written.
+-- against a database built from `migrations/` and nothing else. It is written to
+-- be applied ONCE to such a database: the guard below refuses anything else,
+-- before a single row is written.
 --
 -- PRICES ONLY HAVE TO RENDER. A local stack's users do not exist in Stripe's
 -- test mode, so this seed creates NOTHING in Stripe: the paid seats below are
@@ -48,8 +54,8 @@
 --     gedu@example.com     Gedu Example     certified, the busiest teaching load
 --
 -- Every other account this file creates exists to fill lists, and they all
--- share `seed.sql`'s password, `testpassword123`. `seed.sql`'s own fixtures are
--- untouched and keep theirs.
+-- share the password `testpassword123`. These are the only accounts a stack
+-- carrying this file has.
 --
 -- IDS ARE GENERATED, NEVER WRITTEN OUT. Every account gets `gen_random_uuid()`,
 -- because the avatar identicon derives its pattern from the id's hex bytes and
@@ -66,38 +72,26 @@ SET client_encoding TO 'UTF8';
 -- =============================================================================
 -- 0. Where this may run
 -- =============================================================================
--- A freshly seeded local database, and nowhere else. Three cheap facts say so:
--- seed.sql's admin is present with the admin role (so seed.sql has run against
--- this database), the database holds only a handful of users (so it is not a
--- real environment), and this file's own admin account is absent (so this is
--- not a second run — its 40 accounts leave the count well under the limit
--- below, so the count alone would not notice). Any of the three failing stops
--- the script before its first write.
+-- A database built from `migrations/` and holding no accounts at all, which is
+-- one fact: `auth.users` is empty. Everyone this file is for arrives that way —
+-- a local stack that gets the rich seed is created with the CLI's own seed
+-- switched off — and the single check covers all three ways of being somewhere
+-- else: a stack built for the DB tests carries seed.sql's fixtures, a second run
+-- finds this file's own 40 accounts, and any real environment has users in it.
+-- It stops the script before its first write.
 --
--- The second-run check is on the EMAIL, not on an id: this file writes no id it
--- could recognise later, which is the point of the header's ids rule.
+-- It is a count and not a lookup for an account this file writes, because this
+-- file writes no id it could recognise later and an email is a weaker fact than
+-- an empty table: a database is either untouched or it is not this file's.
 
 DO $$
 DECLARE
   users bigint;
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM profiles
-    WHERE id = '00000000-0000-0000-0000-000000000001' AND role = 'admin'
-  ) THEN
-    RAISE EXCEPTION
-      'rich-seed.sql is for a freshly seeded local database only: seed.sql''s admin account is not here, so seed.sql has not run against this database.';
-  END IF;
-
   SELECT count(*) INTO users FROM auth.users;
-  IF users >= 50 THEN
+  IF users > 0 THEN
     RAISE EXCEPTION
-      'rich-seed.sql is for a freshly seeded local database only: this database already holds % users.', users;
-  END IF;
-
-  IF EXISTS (SELECT 1 FROM auth.users WHERE email = 'admin@example.com') THEN
-    RAISE EXCEPTION
-      'rich-seed.sql is for a freshly seeded local database only: its accounts are already here, so this is a second run. Reset the database and seed it again.';
+      'rich-seed.sql wants a database built from migrations/ and seeded by nothing else, and this one already holds % account(s). A stack carrying this seed, a stack built with --no-rich-seed, and any real environment are all of them not that. Reset the database and apply it again.', users;
   END IF;
 END
 $$;
@@ -153,9 +147,9 @@ $$;
 
 BEGIN;
 
--- The owner's admin. Everything admin-gated below runs as this account, so the
--- catalogue, the venues, the groups and the comped seats all read as its work
--- rather than as the DB tests' fixture admin's.
+-- The owner's admin, and the first account on the database. Everything
+-- admin-gated below runs as it, so the catalogue, the venues, the groups and
+-- the comped seats all read as one person's work.
 DO $$
 DECLARE v_admin uuid := pg_temp.account('admin@example.com', 'Admin', 'Example', 'password');
 BEGIN

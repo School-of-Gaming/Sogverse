@@ -103,8 +103,11 @@ stack_state_dir() {
 # the copy holds exactly one rewritten file and can be thrown away.
 #
 # The fourth argument is whether the CLI loads seed.sql when it creates the
-# database: true for a stack, which wants data, false for `generate`, which
-# wants a schema and would only be slowed down by rows.
+# database. The two seeds never share one: a `--no-rich-seed` stack's data IS
+# seed.sql and passes true, while a stack getting supabase/rich-seed.sql passes
+# false so that the fixtures are never there to be mistaken for the catalogue —
+# as does `generate`, which wants a schema and would only be slowed down by
+# rows.
 build_shadow() {
   shadow_checkout=$1
   shadow_project=$2
@@ -166,6 +169,26 @@ ensure_shadow() {
     build_shadow "$1" "$2" "$3" "$4" >/dev/null
   fi
   printf '%s' "$ensure_work"
+}
+
+# The `[db.seed]` switch inside a workdir that already exists, set from the
+# stack's recorded seed choice. `build_shadow` writes the line once, when the
+# stack is created; `reset` writes it again before the CLI rebuilds the
+# database, because the workdir outlives the run that made it and a stack whose
+# recorded choice and config.toml disagreed would come back carrying the other
+# seed's data. Rewritten in place rather than by rebuilding the workdir: the
+# containers were created against this config, so the rest of it must not move.
+set_shadow_seed() {
+  seed_config="$1/supabase/config.toml"
+  awk -v want="$2" '
+    /^\[/ { section = $0 }
+    section == "[db.seed]" && /^[[:space:]]*enabled[[:space:]]*=/ {
+      print "enabled = " want
+      next
+    }
+    { print }
+  ' "$seed_config" > "$seed_config.new"
+  mv "$seed_config.new" "$seed_config"
 }
 
 # A port, read back out of the rewritten config rather than recomputed, so the
