@@ -554,7 +554,10 @@ the pinned CLI, unless noted.
 ## Owner decisions and actions
 
 - Add the two staging secrets to the repository (step 3).
-- Resolve any staging history versions that have no file on `dev` (step 3).
+- Resolve any staging history versions that have no file on `dev` (step 3). Checked
+  2026-09-22 against `dev` at `00280`: staging's history and `dev`'s files match one to
+  one, nothing to resolve; re-check only if a branch pushes to staging by hand before
+  the merge.
 - Approve each `migration repair` pass of the squash, staging and then prod (step 8).
   It rewrites the history table only, but it is prod.
 - What the rich seed's catalogue should look like, where the implementer's draft of it

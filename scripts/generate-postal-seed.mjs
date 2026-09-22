@@ -42,7 +42,7 @@
  * It is history the moment it is pushed. A newer source is a NEW migration —
  * which for this table is cheap precisely because nothing references it.
  */
-import { statSync, writeFileSync } from "node:fs";
+import { readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { fail } from "./lib/geonames/cache.mjs";
@@ -52,20 +52,40 @@ import { ingestPostal } from "./lib/geonames/postal.mjs";
 import { sqlEscaped, sqlText } from "./lib/geonames/sql.mjs";
 
 /**
- * The migration each country's postal seed lands in. Literals for the same
- * reason the geography generator's map is: a migration number is chosen once by
- * a human against *remote* migration history — an already-used version is
- * silently treated as applied — and never inferred from a directory listing,
- * which would mint a second file on a rerun.
+ * The migration each country's postal seed lands in, named by what it does and
+ * carrying no version. Literals for the same reason the geography generator's
+ * map is: a rerun has to land back in the file it wrote rather than mint a
+ * second one beside it, so the name is chosen once, by a human, per country.
+ * The version is left out because it is assigned when the branch lands, which
+ * means the file this generator creates is on every database under a number
+ * chosen later — the descriptive half is the half that survives.
  */
 const MIGRATIONS = {
-  FI: "00163_seed_finland_postal_codes.sql",
-  FR: "00164_seed_france_postal_codes.sql",
+  FI: "seed_finland_postal_codes",
+  FR: "seed_france_postal_codes",
 };
 
 const TITLES = { FI: "Finland", FR: "France", SE: "Sweden", GB: "the United Kingdom" };
 
 const MIGRATIONS_DIR = join(import.meta.dirname, "..", "supabase", "migrations");
+
+/** `YYYYMMDDHHMMSS` in UTC — the version format `supabase migration new` mints. */
+const stamp = () => new Date().toISOString().replace(/\D/g, "").slice(0, 14);
+
+/**
+ * Where a named migration already is, or the path a new one takes. Matched on
+ * everything after the version, since the version is reassigned when the branch
+ * lands and a regeneration months later still has to find the file it wrote.
+ * Two files claiming one name is a question for a human, not something to pick
+ * a winner from.
+ */
+function migrationPath(name) {
+  const existing = readdirSync(MIGRATIONS_DIR).filter(
+    (file) => /^\d+_/.test(file) && file.slice(file.indexOf("_") + 1) === `${name}.sql`,
+  );
+  if (existing.length > 1) fail(`Two migrations are named ${name}: ${existing.join(", ")}.`);
+  return join(MIGRATIONS_DIR, existing[0] ?? `${stamp()}_${name}.sql`);
+}
 
 /**
  * Rows per INSERT statement. Matches the geography generator's, and for the
@@ -84,12 +104,12 @@ if (unknownFlag) fail(`Unknown flag ${unknownFlag}. This generator takes a count
 const iso = args[0]?.toUpperCase();
 if (!iso) fail("Usage: node scripts/generate-postal-seed.mjs <CC>   (e.g. FI, FR)");
 
-const migrationFile = MIGRATIONS[iso];
-if (!migrationFile) {
+const migrationName = MIGRATIONS[iso];
+if (!migrationName) {
   fail(
-    `No postal migration file name recorded for ${iso}. Pick the next free migration number — ` +
-      `checked against remote migration history first — and add it to MIGRATIONS in ` +
-      `scripts/generate-postal-seed.mjs.`,
+    `No postal migration recorded for ${iso}. Add its name — what the migration does, no ` +
+      `version — to MIGRATIONS in scripts/generate-postal-seed.mjs. The file itself is ` +
+      `created on this run and restamped when the branch lands.`,
   );
 }
 
@@ -327,7 +347,7 @@ const sql = [
   "COMMIT;\n",
 ].join("\n");
 
-const file = join(MIGRATIONS_DIR, migrationFile);
+const file = migrationPath(migrationName);
 writeFileSync(file, sql, "utf8");
 
 /* ------------------------------------------------------------------- report */
