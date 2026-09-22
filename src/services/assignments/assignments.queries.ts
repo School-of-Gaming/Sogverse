@@ -48,12 +48,12 @@ export function useMyAssignedProducts(options: {
  * this hook through the cache rather than through the call site, which is what
  * lets the route also seed the *second*, group-keyed read it unlocks.
  *
- * **`groupId` says which group of the product is "mine" (00272)**, and it is
+ * **`groupId` says which group of the product is "mine"**, and it is
  * part of the cache key because it genuinely changes the answer: a gedu
  * substituting a sibling group of a product they already teach asks this same RPC
  * for a different workspace, and the two documents must not share an entry.
- * `null` — the ordinary case — resolves the caller's assignment group as it
- * always did. It reaches the page from the URL's `?groupId=`, which is what a
+ * `null` — the ordinary case — resolves the caller's assignment group.
+ * It reaches the page from the URL's `?groupId=`, which is what a
  * substitution card's link carries.
  */
 export function useGeduAssignedProduct(

@@ -44,15 +44,15 @@ export interface MyAssignedProductSessionRow {
     /**
      * Raw translation rows. Resolved at render time so a locale switch
      * doesn't refetch. The `description` key carries the short teaser — the
-     * gedu RPC keeps that output key even though the column was renamed to
-     * `short_description` (migration 00091).
+     * gedu RPC keeps that output key while the column itself is named
+     * `short_description`.
      */
     translations: MyAssignedProductRow["product_translations"];
   };
   /** The gedu's group on this product — assigned, or the one they substitute on. */
   groupId: string;
   /**
-   * Which kind of seat this row is (00272): a standing `assignment`, or one
+   * Which kind of seat this row is: a standing `assignment`, or one
    * live `substitution` on one date.
    *
    * Two arms of one read because they share every product-shell fact and
@@ -106,8 +106,8 @@ export class AssignmentsService {
    * the product, which we surface as `null` so the route can render a clean
    * "not your session" empty state instead of throwing.
    *
-   * **`groupId` names which group of the product is "mine" (00272).** Without
-   * one the answer is the caller's assignment group, as it always was; with one
+   * **`groupId` names which group of the product is "mine".** Without
+   * one the answer is the caller's assignment group; with one
    * they are assigned to or substituting on, that group is. A sub has no assignment
    * row to resolve a group from, and a gedu substituting a *sibling* group of a
    * product they already teach would otherwise be sent to their own group's

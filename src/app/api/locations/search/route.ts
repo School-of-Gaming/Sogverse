@@ -41,7 +41,7 @@ import type { Database } from "@/types/database.types";
  *     and two differently-scoped searches are never the same one.
  *
  * The client is built with the anon key and no cookies **on purpose**. The
- * search RPC is SECURITY INVOKER over `locations` and, since `00165`,
+ * search RPC is SECURITY INVOKER over `locations` and
  * `postal_codes` — two tables of public reference data whose policies grant
  * every row to `anon` and `authenticated` alike — so the answer is identical
  * for every caller; reading the session would change nothing except to make the

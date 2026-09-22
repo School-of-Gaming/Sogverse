@@ -128,8 +128,8 @@ export function GeduCertificationCard({
    */
   const recorderName = personName(data?.recorder);
   /**
-   * The moment the check was recorded, formatted once. Since 00214 a CHECK
-   * constraint makes it non-null exactly when the flag is true, so `null` here
+   * The moment the check was recorded, formatted once. A CHECK constraint
+   * makes it non-null exactly when the flag is true, so `null` here
    * alongside a true flag is a row the database would refuse — the copy still
    * has a line for it, because a claim printed with no date is better than a
    * crash.

@@ -32,7 +32,7 @@ const productName = z.object({
  * including roles nobody holds — a zero tile is a fact, a missing tile is a gap.
  *
  * `verified` is null rather than 0 where the stat has no meaning — and what
- * decides that is the ADDRESS, not the role (00235/00240). A gamer signing in
+ * decides that is the ADDRESS, not the role. A gamer signing in
  * through their parent or by username carries a synthetic
  * `@gamer.sogverse.internal` handle nobody will ever click a link in, so "0
  * verified" would report a problem that does not exist; a gamer whose parent
@@ -94,7 +94,7 @@ export const adminDashboardGroupWithoutGedu = z.object({
  * admin reads names both ("4 waitlisted · 2 seats open"). Null on a product
  * where the situation does not arise at all: no queue, no cap, or no free seat.
  *
- * Since 00207 there is a fourth way for it to be null, and it is the one worth
+ * There is a fourth way for it to be null, and it is the one worth
  * knowing about: **every open seat already carries a live seat offer.** The
  * attention queue is a list of things for an admin to do, and once the families
  * have been asked there is nothing to do but wait — so the product drops out,
@@ -130,7 +130,7 @@ export const adminDashboardAttentionProduct = z.object({
   /** Groups with at least one active member and no gedu assigned. */
   groups_without_gedu: z.array(adminDashboardGroupWithoutGedu),
   /**
-   * Groups with no gedu assigned and nobody in them either (00241).
+   * Groups with no gedu assigned and nobody in them either.
    *
    * A sibling key rather than a flag on the objects above, because the page
    * ranks the two differently — an empty unstaffed group is a loose end, not a
@@ -153,7 +153,7 @@ export const adminDashboardAttentionProduct = z.object({
   /** Municipality clubs only; false everywhere else by construction. */
   missing_municipality_fee: z.boolean(),
   /**
-   * The club names no invoice customer (00269). Municipality clubs only, on the
+   * The club names no invoice customer. Municipality clubs only, on the
    * same terms as the fee above — the column the flag reads is one the CHECK
    * forbids on every other product type.
    *

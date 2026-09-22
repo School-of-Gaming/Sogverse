@@ -111,7 +111,7 @@ export function settleSeatOfferAnswer({
       // nobody opened a page between the fifth day and this answer, nobody was
       // told; the delete has just removed the row that said so, and this answer
       // would be the quietest thing that ever happened to the offer. So both
-      // flags are read: in time, or nobody has heard yet (00209).
+      // flags are read: in time, or nobody has heard yet.
       if (parsed.data.within_window || !parsed.data.already_notified) {
         after(
           sendSeatOfferStaffEmail({
@@ -129,8 +129,8 @@ export function settleSeatOfferAnswer({
 
     case "expired":
       // The answer was rendered while the offer was live and ACCEPT was pressed
-      // after it was not — the only answer the window still refuses, since
-      // 00208 honours a decline for as long as the row exists.
+      // after it was not — the only answer the window refuses, because a
+      // decline is honoured for as long as the row exists.
       //
       // Reaching this is itself an observation that the offer lapsed, so it
       // does the sweep an admin opening a page would otherwise have done —

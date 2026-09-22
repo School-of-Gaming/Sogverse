@@ -40,12 +40,12 @@ import {
  * grants nothing, and a gedu aiming it at somebody else's child gets a 403 from
  * the database rather than from a check this route could forget to write.
  *
- * **`admin` joined the roles in 00205**, for the reason set out in full on the
+ * **`admin` is among the roles**, for the reason set out in full on the
  * Minecraft route beside this one and applying here verbatim: the admin group
  * details page renders the gedu workspace's roster body unchanged, editor
  * included, and an admin already holds this exact edit on /admin/users/[id], so
  * serving it here aligns two surfaces rather than granting a power. The RPC's
- * guard was widened in the same shape, and an admin is exempt from the "and you
+ * guard takes the same shape, and an admin is exempt from the "and you
  * teach this group" half alone.
  */
 export const PATCH = defineRoute({

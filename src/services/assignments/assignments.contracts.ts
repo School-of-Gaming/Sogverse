@@ -40,7 +40,7 @@ export const myAssignedProductRows = z.array(
     product_translations: z.array(productTranslationSummary),
     schedule_slots: z.array(scheduleSlotSummary),
     /**
-     * Which kind of seat the row is (00272): a standing `assignment`, or a live
+     * Which kind of seat the row is: a standing `assignment`, or a live
      * `substitution` on one date. Two arms of one RPC because they share every
      * product-shell column and the dashboard card differs in its chrome rather
      * than in the facts it needs.
@@ -69,8 +69,8 @@ export const geduAssignedProduct = z.object({
     end_date: z.string().nullable(),
     is_remote: z.boolean(),
     /**
-     * Does this product contractually require a creation from every member
-     * (00227)? Staff-facing only. Carried here in deliberate parity with the
+     * Does this product contractually require a creation from every
+     * member? Staff-facing only. Carried here in deliberate parity with the
      * gedu group feed's shell, for the reason every other field on this
      * document is: the page composes both, and a field on one shell and not the
      * other is exactly the drift that parity exists to prevent.
@@ -88,8 +88,8 @@ export const geduAssignedProduct = z.object({
       is_my_group: z.boolean(),
       participant_count: z.number(),
       /**
-       * The group's educators, each with the assignment role they hold (00272)
-       * — primary or assistant. Every staff read that *lists* a group's gedus
+       * The group's educators, each with the assignment role they hold —
+       * primary or assistant. Every staff read that *lists* a group's gedus
        * carries it, because "who is on this group" and "in what capacity" are
        * one answer and the role is a pay class rather than a figure.
        */
@@ -104,7 +104,7 @@ export const geduAssignedProduct = z.object({
             minecraft_username: z.string().nullable(),
             minecraft_uuid: z.string().nullable(),
             /**
-             * The Roblox pair (00195), independent of the Minecraft one: a
+             * The Roblox pair, independent of the Minecraft one: a
              * child may have given one, both or neither. The account id is a
              * number because Roblox's key is an int64 `bigint`, and its
              * presence is the whole of "verified".
@@ -122,7 +122,7 @@ export const geduAssignedProduct = z.object({
              */
             participant_email: z.string().nullable(),
             /**
-             * The staff-only flair (00203), emitted for every roster row — note
+             * The staff-only flair, emitted for every roster row — note
              * or no note, stamp or no stamp.
              *
              * `group_joined_at` is when this seat entered **this group**, as
@@ -146,7 +146,7 @@ export const geduAssignedProduct = z.object({
             note: z.string().nullable(),
             note_updated_by_first_name: z.string().nullable(),
             /**
-             * The member's creations (00227), always an array and never null.
+             * The member's creations, always an array and never null.
              * The one field on this roster that is not staff-only — the
              * member's own family reads the same list — and kept in parity with
              * the gedu feed's roster entry for the same reason the rest of this

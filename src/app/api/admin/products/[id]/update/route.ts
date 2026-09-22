@@ -57,8 +57,8 @@ function gamerPhotoConsentsWarning(err: { message: string }): string {
  * No storage, no file, no path. A product's picture is a catalogue entry it
  * points at, so the whole image half of this route is one `image_id` write
  * after the RPC; a trigger on `products` derives the served `image_path` from
- * it, and since migration 00198 the RPC has no image parameter at all —
- * nothing but that trigger writes the column.
+ * it, and the RPC has no image parameter at all — nothing but that trigger
+ * writes the column.
  */
 export const POST = defineRoute({
   posture: "role-gated",

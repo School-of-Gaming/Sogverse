@@ -13,12 +13,11 @@ import { CHAT_IMAGES_BUCKET } from "@/services/chat/chat.contracts";
  * and an `<img>` element cannot carry an Authorization header. A same-origin
  * fetch does carry the viewer's session cookies, so this route can do what the
  * browser cannot: call `storage.download` ON THE CALLER'S OWN client, so the
- * bucket's single SELECT policy (00231 — membership, the family time bound,
+ * bucket's single SELECT policy (membership, the family time bound,
  * hidden-only-for-moderators) authorizes every read, re-answered at fetch
  * time. No admin client appears anywhere on the read path, and no signed URL
  * exists: a signed URL is a bearer token a child could copy out of a share
- * sheet and pass on for its whole lifetime (owner decision, 2026-09-01,
- * recorded in 00233's header).
+ * sheet and pass on for its whole lifetime (owner decision, 2026-09-01).
  *
  * **Hiding a message therefore retracts its picture from the next fetch
  * onward.** What survives a hide is only what the viewer's browser profile

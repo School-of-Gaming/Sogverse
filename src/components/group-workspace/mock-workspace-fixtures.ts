@@ -1964,7 +1964,7 @@ function buildRoster(
         // mutually exclusive and this is the other side of that.
         parent_email: null,
         participant_email: "marja.korhonen@example.com",
-        // The staff-only flair (00203) is null-shaped on every roster entry
+        // The staff-only flair is null-shaped on every roster entry
         // here, on purpose: the scene feeds both marks through the page body's
         // own `RosterMemberFlair` prop, and rows do not read flair off a roster
         // entry. Filling these in would be a second source for one fact.

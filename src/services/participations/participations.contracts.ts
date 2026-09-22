@@ -195,7 +195,7 @@ export const adminEnrollParticipantBody = z.object({
  * drop target (`groupId` null = unassigned inbox); `demote` sends an active
  * gamer to the back of the waitlist (no target).
  *
- * `invite` is the seat offer (00207) and is a different kind of act, which is
+ * `invite` is the seat offer and is a different kind of act, which is
  * why it is a third action rather than a flag on `promote`: it grants nothing.
  * It asks a waitlisted family whether they can still come, and the seat moves
  * only if they say yes. It carries no target because the product it is allowed

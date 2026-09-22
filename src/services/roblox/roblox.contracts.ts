@@ -65,7 +65,7 @@ export const updateRobloxAccountBody = z.object({
 
 /**
  * Request body of the staff group-member Roblox edit — a gedu fixing the handle
- * of a child on their own roster, or (since 00205) an admin fixing it from the
+ * of a child on their own roster, or an admin fixing it from the
  * group details page, which renders that same roster editor.
  *
  * The same value schema as the self-serve route, because it is the same edit

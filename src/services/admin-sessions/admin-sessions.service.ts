@@ -16,8 +16,8 @@ import {
  * once per group as well, and would need a fan-in the page has no reason to
  * own.
  *
- * **The writes are not new, and are deliberately not reimplemented.** Since
- * 00200 the five RPCs behind a session record — the notes writer, the
+ * **The writes are not new, and are deliberately not reimplemented.** The
+ * five RPCs behind a session record — the notes writer, the
  * per-mark register, the send's claim, the group notes and the site notes —
  * admit an admin beside the assigned gedu, and the report-email route admits
  * one too. The two session-photo routes are the same shape again: role-gated to
