@@ -257,8 +257,8 @@ INSERT INTO locations (id, name, type, parent_id, country_code, name_i18n) VALUE
   ('00000000-0000-0000-0000-000000000203', 'Test School', 'site',         '00000000-0000-0000-0000-000000000202', 'FI', NULL);
 
 -- =============================================================================
--- 6. Feedback Submissions
+-- 6. Help Requests
 -- =============================================================================
 
-INSERT INTO feedback_submissions (user_id, message) VALUES
-  ('00000000-0000-0000-0000-000000000002', 'Test feedback from customer');
+INSERT INTO help_requests (user_id, message) VALUES
+  ('00000000-0000-0000-0000-000000000002', 'Test help request from customer');

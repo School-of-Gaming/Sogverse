@@ -302,7 +302,7 @@ export const PREVIEW_SCENES = [
     surface: "gedu-dashboard",
     title: "Gedu dashboard",
     description:
-      "The body /gedu renders, over fixtures: the next-step band, one roll-up card per group grouped by type noun, the Tools section beneath, and Help & feedback last. Badge counts are counted out of the feed each card links to.",
+      "The body /gedu renders, over fixtures: the next-step band, one roll-up card per group grouped by type noun, the Tools section beneath, and Help last. Badge counts are counted out of the feed each card links to.",
     chrome: "dashboard",
     navRole: "gedu",
     scenarios: [

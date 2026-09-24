@@ -23,7 +23,7 @@ export const HELP_MESSAGE_MAX_LENGTH = 2000;
  * fork. Naming it by register rather than by role is what keeps a fourth role
  * from arriving as a fourth variant.
  */
-export type HelpFeedbackAudience = "adult" | "gamer";
+export type HelpRequestAudience = "adult" | "gamer";
 
 /**
  * Why a submit did not land. Two cases, because the reader can only do two
@@ -34,10 +34,10 @@ export type HelpFeedbackAudience = "adult" | "gamer";
  * meant for a developer; showing it would put untranslated text on a French
  * family's dashboard.
  */
-export type HelpFeedbackFailure = "rateLimited" | "failed";
+export type HelpRequestFailure = "rateLimited" | "failed";
 
-export interface HelpFeedbackCardViewProps {
-  audience: HelpFeedbackAudience;
+export interface HelpRequestCardViewProps {
+  audience: HelpRequestAudience;
   /**
    * The message being written. Controlled by the caller so the live card can
    * clear it on success and a preview scene can let typing work while the
@@ -50,16 +50,16 @@ export interface HelpFeedbackCardViewProps {
   /** The last submit landed. Cleared the moment a new one starts. */
   succeeded: boolean;
   /** Why the last submit failed, or `null`. */
-  error: HelpFeedbackFailure | null;
+  error: HelpRequestFailure | null;
   onSubmit: () => void;
 }
 
 /**
- * Presentational core of the ask-for-help-or-send-feedback form, rendered
- * unchanged in the parent, gamer and gedu Help & feedback sections.
+ * Presentational core of the ask-for-help form, rendered unchanged in the
+ * parent, gamer and gedu help sections.
  *
  * **It carries no heading of its own.** Every surface that renders it puts it
- * under a section heading that already says "Help & feedback", and a card title
+ * under a section heading that already asks "Need help?", and a card title
  * repeating that in the next line is the same sentence twice. The lead
  * paragraph does the work a title would.
  *
@@ -84,7 +84,7 @@ export interface HelpFeedbackCardViewProps {
  * is a legitimate thing to want — so the button coming back is the correct end
  * state rather than a race.
  */
-export function HelpFeedbackCardView({
+export function HelpRequestCardView({
   audience,
   message,
   onMessageChange,
@@ -92,7 +92,7 @@ export function HelpFeedbackCardView({
   succeeded,
   error,
   onSubmit,
-}: HelpFeedbackCardViewProps) {
+}: HelpRequestCardViewProps) {
   const t = useTranslations("helpSection.form");
   const c = useTranslations("common");
   // Generated, never a literal: the style guide renders six of these cards on

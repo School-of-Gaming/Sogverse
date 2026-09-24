@@ -166,7 +166,6 @@ const TESTS = {
   checkout: "tests/integration/api/checkout-products-create.test.ts",
   discordInteractions: "tests/integration/api/discord-interactions.test.ts",
   familyList: "tests/integration/api/family-list.test.ts",
-  feedback: "tests/integration/api/feedback.test.ts",
   forgotPassword: "tests/integration/auth/forgot-password.test.ts",
   gamersCreate: "tests/integration/api/gamers-create.test.ts",
   gamersUpdate: "tests/integration/api/gamers-update.test.ts",
@@ -180,6 +179,7 @@ const TESTS = {
   geduSessionImageAdd: "tests/integration/api/gedu-session-image-add.test.ts",
   geduSessionImageRemove:
     "tests/integration/api/gedu-session-image-remove.test.ts",
+  helpRequests: "tests/integration/api/help-requests.test.ts",
   locationsSearch: "tests/integration/api/locations-search.test.ts",
   minecraftAccount: "tests/integration/api/minecraft-account.test.ts",
   minecraftPasswordReset:
@@ -746,7 +746,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
-  // --- Family and feedback -------------------------------------------------
+  // --- Family and help -----------------------------------------------------
 
   "src/app/api/family/list/route.ts": {
     adminClient:
@@ -764,7 +764,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
-  "src/app/api/feedback/route.ts": {
+  "src/app/api/help-requests/route.ts": {
     adminClient:
       "the submission write runs on the user client; the admin client survives only to resolve a gamer's reply-to (their parent's address), which is not in the submitter's view and must not be returnable",
     handlers: {
@@ -777,8 +777,8 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           kind: "role-gated",
           roles: ["admin", "customer", "gamer", "gedu"],
         },
-        body: { kind: "json", schema: "inline: feedbackSchema" },
-        test: TESTS.feedback,
+        body: { kind: "json", schema: "inline: helpRequestSchema" },
+        test: TESTS.helpRequests,
       },
     },
   },

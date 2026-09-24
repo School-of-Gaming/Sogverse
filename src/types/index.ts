@@ -184,12 +184,12 @@ export type RobloxAccountUpdate = Database["public"]["Tables"]["roblox_accounts"
 export type ParentGamer = Database["public"]["Tables"]["parent_gamer"]["Row"];
 export type ParentGamerInsert = Database["public"]["Tables"]["parent_gamer"]["Insert"];
 
-// feedback_submissions
-export type FeedbackSubmission = Database["public"]["Tables"]["feedback_submissions"]["Row"];
+// help_requests
+export type HelpRequest = Database["public"]["Tables"]["help_requests"]["Row"];
 
 // verification_email_requests — the rate-limit ledger behind the
 // verification-email send, and the sibling of the table above in every respect
-// but one: a feedback row is the feedback, while these rows exist only to be
+// but one: a help-request row is the request, while these rows exist only to be
 // counted by `request_my_verification_email` (which prunes its own expired ones
 // on the way past). No application surface reads them; the alias is here
 // because the DB test asserts against the row shape.

@@ -32,6 +32,7 @@
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -188,12 +189,14 @@ console.log('');
  *
  * vitest is spawned as its own JS entry rather than through npm: an npm child
  * on Windows means a shell, and a test path with a space in it would come apart
- * in the quoting.
+ * in the quoting. Its entry is resolved the way node resolves any import rather
+ * than joined onto the checkout: a worktree has no node_modules of its own and
+ * finds the parent checkout's by walking upward.
  */
 const vitest = spawn(
   process.execPath,
   [
-    path.join(checkout, 'node_modules', 'vitest', 'vitest.mjs'),
+    createRequire(path.join(checkout, 'package.json')).resolve('vitest/vitest.mjs'),
     '--run',
     '--config',
     'vitest.config.db.mts',

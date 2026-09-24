@@ -133,7 +133,7 @@ d. **Scope the per-municipality page server-side.** Today the page deliberately
 
 ### 4. Small hardenings — same pattern, minutes each
 
-- **Feedback notification recipients** (the feedback API route): builds the admin email
+- **Help-request notification recipients** (the help-request API route): builds the admin email
   recipient list from an uncapped profiles read. Bounded by admin headcount today; walk
   it anyway — it is an action-on-incomplete-data shape (an email send), and shape is what
   the ratchet will check.

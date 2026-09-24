@@ -234,10 +234,10 @@ export function ParentDashboardPageBody({
   /** The Stripe portal card. A node, so the shell owns its actions. */
   billingCard: React.ReactNode;
   /**
-   * The ask-for-help-or-send-feedback form. A node for the same reason the
-   * billing card is one: it is a self-contained panel with a backend action
-   * behind it, and nothing about this page's shape depends on it. Handing it in
-   * is what lets the preview scene render the real form with its submit inert —
+   * The help form. A node for the same reason the billing card is one: it is a
+   * self-contained panel with a backend action behind it, and nothing about this
+   * page's shape depends on it. Handing it in is what lets the preview scene
+   * render the real form with its submit inert —
    * a scene must never gain a live submit that emails the support inbox.
    */
   helpForm: React.ReactNode;
@@ -618,16 +618,12 @@ export function ParentDashboardPageBody({
           </div>
         </section>
 
-        {/* Help & feedback — the same two pieces every role's section is made
+        {/* Help — the same two pieces every role's section is made
             of, in the same order: the message form, and the role's own FAQ
             beneath it. The support address used to sit above the form in a card
             of its own; it is a sentence inside the form's lead paragraph now,
             so there is one place to write to us rather than a box saying it in
             a second grammar.
-
-            The heading says "Help & feedback" while the pill chip above says
-            just "Help": a chip is width-constrained and shares a bar with up to
-            three children's names, a heading has a line of its own.
 
             Last section gets viewport-height min so clicking its pill can
             actually scroll it to the top — without this the page bottoms out

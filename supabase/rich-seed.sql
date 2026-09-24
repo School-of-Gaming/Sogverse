@@ -1224,7 +1224,7 @@ $$;
 COMMIT;
 
 -- =============================================================================
--- 10. Feedback
+-- 10. Help requests
 -- =============================================================================
 -- Self-scoping: each row is written by the person it belongs to.
 
@@ -1256,7 +1256,7 @@ BEGIN
     v_id := (SELECT id FROM public.profiles WHERE email = r.email);
     PERFORM set_config('request.jwt.claims',
       json_build_object('sub', v_id::text, 'role', 'authenticated')::text, true);
-    PERFORM public.submit_my_feedback(r.message);
+    PERFORM public.submit_my_help_request(r.message);
     PERFORM set_config('request.jwt.claims', v_admin_claims, true);
   END LOOP;
 END;

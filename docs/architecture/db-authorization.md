@@ -196,7 +196,7 @@ large one.
 ### Sensitive tables (grant-locked today)
 
 Writes revoked from `authenticated`, `SELECT` granted only: participations, payments,
-family subscriptions, feedback submissions, gedu group assignments, product groups,
+family subscriptions, help requests, gedu group assignments, product groups,
 per-product seat counts. The subscription-price catalog has no `authenticated`
 grant at all. When adding a table that holds money, seats, or enrollment state,
 grant-lock it by default.
@@ -620,12 +620,12 @@ A, `none` for a module that reaches no database at all. Derive the tallies from 
 (`B`, `C`, `none`), **one** kept it for a narrowed purpose (`C+A`), **seventeen** are
 still Model A, and one is the factory itself (`-`). The eighteen still importing it —
 seventeen `A` plus the `C+A` partial — are exactly today's `createAdminClient` importers:
-fourteen routes, the feedback partial, and three non-route modules.
+fourteen routes, the help-request partial, and three non-route modules.
 
 ```csv
 module,model,shape,justification
 src/app/api/participations/waitlist/route.ts,C,1,customer waitlist-join now runs on the user client against a customer-guarded RPC that reads the actor from the session
-src/app/api/feedback/route.ts,C+A,1,the submission write moved to a self-scoping RPC on the user client; the admin client survives only for the notification's reply-to lookup (a gamer's parent's email) which is not in the submitter's RLS view and must not be returnable from an RPC
+src/app/api/help-requests/route.ts,C+A,1,the submission write moved to a self-scoping RPC on the user client; the admin client survives only for the notification's reply-to lookup (a gamer's parent's email) which is not in the submitter's RLS view and must not be returnable from an RPC
 src/app/api/admin/whatsapp/send/route.ts,B,3,contacts upsert + message insert run under the pre-existing admin-only policies; the message policy also pins direction to outbound
 src/app/api/auth/pin/forgot/route.ts,B,3,reads the caller's own PIN hash, already inside their RLS view
 src/app/api/minecraft/account/route.ts,B,3,self-write policies added; the row key comes from the session and never from the request
@@ -696,7 +696,7 @@ src/lib/supabase/admin.ts,-,-,the client factory itself
   voice session. A member-scoped prune RPC is the obvious way to finish this and is
   recorded as a Phase 4 candidate rather than forced here. (Phase 4 designed it and did
   not ship it either — for a sharper reason than this one; see its design note.)
-- **The feedback route is a partial conversion and is recorded as such.** Its write is
+- **The help-request route is a partial conversion and is recorded as such.** Its write is
   Model C; its notification stays Model A. Folding the reply-to lookup into the RPC
   would make a gamer's parent's email address readable by any authenticated caller who
   invoked that RPC directly, which is worse than the thing it would fix.
@@ -822,7 +822,7 @@ revoke landed the same day.** The second item found drift; what it found, and th
 piece of work it left, is written up under it.
 
 - **Revoke `service_role` EXECUTE from the two participation engines** — the three-argument
-  waitlist-join and the two-argument feedback-submission functions, which take the
+  waitlist-join and the two-argument help-request submission functions, which take the
   caller's identity as a parameter. Phase 3 put guarded entry points in front of them and
   no application code calls them directly any more, but staging's *deployed* code still
   does until this stack ships. Note they cannot be dropped, as Phase 3's note assumed:
@@ -832,7 +832,7 @@ piece of work it left, is written up under it.
 
   ```sql
   REVOKE EXECUTE ON FUNCTION public.join_waitlist(uuid, uuid, uuid) FROM service_role;
-  REVOKE EXECUTE ON FUNCTION public.submit_feedback(uuid, text) FROM service_role;
+  REVOKE EXECUTE ON FUNCTION public.submit_help_request(uuid, text) FROM service_role;
   ```
 
   Verify first that nothing outside the wrappers still calls them, then push the revoke

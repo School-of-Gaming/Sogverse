@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
-import { HelpFeedbackCardView } from "@/components/help/help-feedback-card-view";
+import { HelpRequestCardView } from "@/components/help/help-request-card-view";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 
 /**
  * **The support address is in the form's lead paragraph for an adult and
  * nowhere at all for a child, and that split is the whole of what varies
- * between the three Help & feedback sections.**
+ * between the three Help sections.**
  *
  * It used to be a card of its own above the form, rendered on the parent and
  * gedu dashboards and withheld from the gamer's. Folding it into the copy kept
@@ -26,7 +26,7 @@ import { SUPPORT_EMAIL } from "@/lib/constants";
 function formHtml(audience: "adult" | "gamer"): string {
   return renderToStaticMarkup(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <HelpFeedbackCardView
+      <HelpRequestCardView
         audience={audience}
         message=""
         onMessageChange={() => {}}
@@ -39,7 +39,7 @@ function formHtml(audience: "adult" | "gamer"): string {
   );
 }
 
-describe("the adult Help & feedback form", () => {
+describe("the adult Help form", () => {
   const html = formHtml("adult");
 
   it("offers the support address as a live mailto", () => {

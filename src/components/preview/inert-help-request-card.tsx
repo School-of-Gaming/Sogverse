@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import {
-  HelpFeedbackCardView,
-  type HelpFeedbackAudience,
-} from "@/components/help/help-feedback-card-view";
+  HelpRequestCardView,
+  type HelpRequestAudience,
+} from "@/components/help/help-request-card-view";
 
 /**
- * The real help/feedback form with its submit reaching nothing — what all three
+ * The real help form with its submit reaching nothing — what all three
  * dashboard scenes render in place of the live card.
  *
  * **This is the reason the form arrives at a page body as a node.** A scene
@@ -23,15 +23,15 @@ import {
  * reachable from here and have their own side-by-side section in the style
  * guide, which is where states are compared.
  */
-export function InertHelpFeedbackCard({
+export function InertHelpRequestCard({
   audience,
 }: {
-  audience: HelpFeedbackAudience;
+  audience: HelpRequestAudience;
 }) {
   const [message, setMessage] = useState("");
 
   return (
-    <HelpFeedbackCardView
+    <HelpRequestCardView
       audience={audience}
       message={message}
       onMessageChange={setMessage}

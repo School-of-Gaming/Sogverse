@@ -7,7 +7,7 @@ import {
   buildGeduDashboardFixture,
   type GeduDashboardScenario,
 } from "@/components/gedu/mock-dashboard-fixtures";
-import { InertHelpFeedbackCard } from "@/components/preview/inert-help-feedback-card";
+import { InertHelpRequestCard } from "@/components/preview/inert-help-request-card";
 import { MinecraftPasswordResetCardView } from "@/components/tools/minecraft-password-reset-card-view";
 import { CreateInstantRoomCardView } from "@/components/voice/instant/CreateInstantRoomCardView";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -76,7 +76,7 @@ export function GeduDashboardScene({
       }
       // Present on every scenario including the uncertified one, which is the
       // whole point of the section sitting outside the certification gate.
-      helpForm={<InertHelpFeedbackCard audience="adult" />}
+      helpForm={<InertHelpRequestCard audience="adult" />}
     />
   );
 }
