@@ -390,10 +390,11 @@ belong in one call — and prefer the script wherever one exists.
    ```
 
    It removes the worktree's local Supabase stack if it has one (a no-op when it
-   does not), unlinks any nested-install junction Phase 1 created, refuses to run
-   anything recursive while one is still standing, removes the worktree —
-   falling back to a recursive delete and a prune when git objects to
-   `node_modules` or `.next` — and deletes the branch. Pass `-DeleteRemote`
+   does not), unlinks every link inside the worktree — Phase 1's nested-install
+   junctions and the ones a build leaves under `.next` — refuses to run anything
+   recursive while one is still standing, deletes the worktree with a delete
+   that never follows a link, prunes it, checks the main checkout's
+   `node_modules` survived, and deletes the branch. Pass `-DeleteRemote`
    whenever the branch was pushed for CI: delete it now rather than leaving it
    to `cleanup-branches`, because the merge has just proved it safe to delete
    and that certainty decays.
@@ -403,11 +404,11 @@ belong in one call — and prefer the script wherever one exists.
    across first, since they die with the worktree otherwise. `-DryRun` reports
    the whole teardown without touching anything.
 
-   **Do not hand-roll this sequence when the script is in the way.** The
-   junction order is what it exists to enforce: a junction is a link into the
-   main checkout's real `node_modules`, `rm -rf` follows it and empties the
-   folder behind it, and that has cost this repo its `node_modules` once. If
-   the script refuses, read what it refused about — that is the guard working.
+   **Do not hand-roll this sequence when the script is in the way, and never
+   reach for `git worktree remove`.** A worktree's junctions are links into the
+   main checkout's real `node_modules`; `git worktree remove` follows them and
+   empties the packages behind them. If the script refuses, read what it
+   refused about — that is the guard working.
 
 7. **Report** what landed, confirm the worktree, branch and server are all
    actually gone, and confirm the main checkout is back on `dev`. **Do not

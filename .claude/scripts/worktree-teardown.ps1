@@ -1,17 +1,25 @@
 <#
 .SYNOPSIS
   Tear down a /worktree-flow worktree: remove its local Supabase stack, unlink
-  nested-install junctions, remove the worktree, prune, delete the branch.
+  every link inside it, delete it without following links, prune, delete the
+  branch.
 
 .DESCRIPTION
   This is the *how* for Phase 5's teardown; worktree-flow states the obligation and
   when to run it. It exists as a script for three reasons.
 
-  Safety. A nested-install junction is a link into the main checkout's real
-  node_modules. A recursive delete follows it and empties the folder behind it —
-  that has cost this repo its node_modules once. Prose can only ask the next
-  session to unlink first; this script refuses to delete anything recursive while a
-  reparse point is still standing, so the order cannot be got wrong.
+  Safety. A worktree holds links into the main checkout's real node_modules, from
+  two sources: the nested-install junctions setup creates at
+  <packages|services>\<name>\node_modules, and the ones a build makes under
+  .next — Turbopack links each server-external package it bundles around (sharp,
+  for one) as .next\node_modules\<name>-<hash>, and without Developer Mode Windows
+  makes that a junction. A recursive delete that follows either kind empties the
+  package behind it in the main checkout, and `git worktree remove` does follow.
+  So the script walks the whole tree without ever stepping through a link, unlinks
+  each one it finds, refuses to go on until a second walk finds none, deletes with
+  `rmdir /s /q`, which does not traverse a junction either, and then checks every
+  folder a link pointed at is still there. The mechanics are in
+  worktree-links.ps1.
 
   Cost. Teardown is the last thing a worktree session does, so it runs at that
   session's largest context, where every turn is the most expensive turn of the
@@ -82,6 +90,42 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $root = (git -C $scriptDir rev-parse --show-toplevel 2>$null)
 if (-not $root) { Die "not inside a git repository: $scriptDir" }
 $root = $root -replace '/', '\'
+
+# The walk, unlink and delete live in worktree-links.ps1 so they can be run
+# against a throwaway tree without the git and stack steps around them.
+. (Join-Path $scriptDir 'worktree-links.ps1')
+
+# The main checkout's canaries: the places worktree links point into (the
+# nested installs, and sharp as the package a build links from .next), read once
+# up front and checked again after every destructive step. They back up the
+# per-link check, which covers whatever the walk actually finds.
+function Get-MainCanaries {
+  $dirs = @()
+  foreach ($group in @('packages', 'services')) {
+    $groupDir = Join-Path $root $group
+    if (-not (Test-Path -LiteralPath $groupDir)) { continue }
+    foreach ($pkg in Get-ChildItem -LiteralPath $groupDir -Directory -ErrorAction SilentlyContinue) {
+      $nm = Join-Path $pkg.FullName 'node_modules'
+      if ((Get-EntryCount $nm) -gt 0) { $dirs += $nm }
+    }
+  }
+  [pscustomobject]@{
+    Dirs  = $dirs
+    Files = @(Join-Path $root 'node_modules\sharp\package.json' | Where-Object { Test-Path -LiteralPath $_ })
+  }
+}
+
+function Assert-MainIntact($canaries, $links, $when) {
+  $problems = @(Test-LinkTargets -Links $links)
+  foreach ($d in $canaries.Dirs) { if ((Get-EntryCount $d) -le 0) { $problems += "EMPTY    $d" } }
+  foreach ($f in $canaries.Files) { if (-not (Test-Path -LiteralPath $f)) { $problems += "MISSING  $f" } }
+  if ($problems.Count -gt 0) {
+    $problems | ForEach-Object { Write-Host "         $_" }
+    Die "the main checkout lost files $when (above). Stopping before anything else runs; the branch is untouched."
+  }
+  $n = @($links | Where-Object { $_.TargetOutside }).Count + $canaries.Dirs.Count + $canaries.Files.Count
+  Ok "main checkout intact $when ($n checks)"
+}
 
 # A worktree cannot tear down another worktree — git refuses, and the isolation
 # guard refuses first. Fail with the reason rather than the symptom.
@@ -204,80 +248,60 @@ else {
   }
 }
 
-# --- Step 2: unlink nested-install junctions ---------------------------------
-# Phase 1 junctions live at <worktree>\<packages|services>\<name>\node_modules.
-# Enumerated by that exact shape rather than by a recursive walk, because a
-# recursive walk is itself capable of descending the link we are here to remove.
-Write-Host "2. Nested-install junctions"
-$links = @()
-foreach ($group in @('packages', 'services')) {
-  $groupDir = Join-Path $target $group
-  if (-not (Test-Path -LiteralPath $groupDir)) { continue }
-  foreach ($pkg in Get-ChildItem -LiteralPath $groupDir -Directory -ErrorAction SilentlyContinue) {
-    $nm = Join-Path $pkg.FullName 'node_modules'
-    if (-not (Test-Path -LiteralPath $nm)) { continue }
-    $item = Get-Item -LiteralPath $nm -Force
-    if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
-      $links += [pscustomobject]@{
-        Link   = $nm
-        Mirror = Join-Path $root "$group\$($pkg.Name)\node_modules"
-      }
-    }
-    else {
-      Warn "$nm is a real directory, not a junction - leaving it to the recursive delete"
-    }
-  }
-}
+# --- Step 2: unlink every link inside the worktree ---------------------------
+# A full walk of the tree that never descends through a reparse point, so the
+# walk cannot itself wander into the main checkout. Each link it finds is unlinked
+# without being followed, then a second walk must come back clean before anything
+# recursive runs. The main checkout's canaries are read before and after.
+Write-Host "2. Links inside the worktree"
+$canaries = Get-MainCanaries
+try { $walk = Find-TreeLinks -Root $target } catch { Die $_.Exception.Message }
+$links = @($walk.Links)
 
-if ($links.Count -eq 0) { Step "none found (the intended end state)" }
+if ($links.Count -eq 0) { Step "none found" }
 foreach ($l in $links) {
-  Step "unlink $($l.Link)"
-  if ($DryRun) { continue }
-  # rmdir removes the link only; it never touches the folder on the other side.
-  cmd /c rmdir "$($l.Link)"
-  if (Test-Path -LiteralPath $l.Link) { Die "junction survived rmdir: $($l.Link)" }
-  if (Test-Path -LiteralPath $l.Mirror) {
-    $n = @(Get-ChildItem -LiteralPath $l.Mirror -Force -ErrorAction SilentlyContinue).Count
-    if ($n -eq 0) { Die "the main checkout's $($l.Mirror) is now EMPTY - stopping before anything else runs." }
-    Ok "main checkout intact: $($l.Mirror) ($n entries)"
-  }
+  $rel = $l.Path.Substring($target.Length).TrimStart('\')
+  $kind = if ($rel -like '.next\*') { 'build externals' }
+          elseif ($rel -match '^(packages|services)\\[^\\]+\\node_modules$') { 'nested install' }
+          else { 'other' }
+  $to = if ($l.Target) { $l.Target } else { '(target unreadable)' }
+  Step "$(if ($DryRun) { 'would unlink' } else { 'unlink' }) $rel  [$kind]"
+  Write-Host "         -> $to"
+}
+if ($walk.Unreadable.Count -gt 0) {
+  $walk.Unreadable | ForEach-Object { Write-Host "         $_" }
+  Block "directories the walk could not read (above) may hide a link. Fix their permissions, then rerun."
 }
 
-# --- Step 3: assert nothing linked remains -----------------------------------
-# The load-bearing check. Anything recursive below this line runs only once every
-# reparse point under the worktree is gone.
-Write-Host "3. Reparse-point sweep"
-$remaining = @()
-foreach ($depth in @('*', '*\*', '*\*\*')) {
-  $remaining += Get-ChildItem -LiteralPath $target -Filter $depth -Force -ErrorAction SilentlyContinue |
-    Where-Object { $_.Attributes -band [IO.FileAttributes]::ReparsePoint }
+if (-not $DryRun) {
+  try { Remove-TreeLinks -Root $target -Links $links } catch { Die "$($_.Exception.Message)`n  Nothing recursive has run. Unlink them, then rerun." }
+  Assert-MainIntact $canaries $links 'after unlinking'
+  Ok "no links remain - a second walk found none"
 }
-if ($remaining.Count -gt 0) {
-  $remaining | ForEach-Object { Write-Host "         $($_.FullName)" }
-  Die "reparse points still present (above). Unlink them before rerunning."
-}
-Ok "clear - recursive deletion is safe from here"
 
-# --- Step 4: remove the worktree ---------------------------------------------
-Write-Host "4. Remove the worktree"
+# --- Step 3: remove the worktree ---------------------------------------------
+# `rmdir /s /q` and then `git worktree prune`, not `git worktree remove`. Git for
+# Windows' remove recurses through a junction and empties its target, and whether
+# it does depends on the installed git, not on anything in this repo. rmdir /s
+# removes a junction it meets rather than traversing it, so the delete is safe
+# even against a link created after step 2's walk — a dev server or build still
+# running in the worktree. The walk and the delete are two independent guards;
+# either one alone would have held.
+Write-Host "3. Remove the worktree"
 if ($DryRun) {
-  Step "would: git worktree remove $target  (falling back to recursive delete + prune)"
+  Step "would: rmdir /s /q $target"
+  Step "would: git worktree prune"
 }
 else {
-  git -C $root worktree remove $target 2>$null
-  if (-not $?) {
-    # Expected whenever node_modules or .next are present; git refuses a worktree
-    # it considers unclean. Safe now that the sweep above passed.
-    Step "git refused (build artefacts present) - deleting recursively, then pruning"
-    Remove-Item -LiteralPath $target -Recurse -Force
-    git -C $root worktree prune
-  }
-  if (Test-Path -LiteralPath $target) { Die "the worktree directory is still present: $target" }
-  Ok "removed"
+  try { Remove-TreeNoFollow -Root $target }
+  catch { Die "$($_.Exception.Message)`n  A process in the worktree (dev server, build, editor) is probably holding a file. Stop it and rerun." }
+  git -C $root worktree prune
+  Ok "removed and pruned"
+  Assert-MainIntact $canaries $links 'after removal'
 }
 
-# --- Step 5: delete the branch -----------------------------------------------
-Write-Host "5. Branch"
+# --- Step 4: delete the branch -----------------------------------------------
+Write-Host "4. Branch"
 if ($KeepBranch -or -not $Branch) {
   Step "keeping $Branch"
 }
@@ -301,7 +325,7 @@ else {
   }
 }
 
-# --- Step 6: report -----------------------------------------------------------
+# --- Step 5: report -----------------------------------------------------------
 Write-Host ""
 Write-Host "Final state" -ForegroundColor Cyan
 Write-Host "  worktree present   $(Test-Path -LiteralPath $target)"
