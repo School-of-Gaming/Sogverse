@@ -71,23 +71,36 @@ Six knobs hold that promise, and all six are load-bearing:
   measurement, which reports page views, scrolls and outbound clicks from inside the tag.
   That switch lives in the analytics property, no code here can touch it, and it is the
   first of the constraints at the bottom of this file.
-- **The page identity the analytics library holds is pinned, alongside every page view we
-  report.** The blocklist reaches *triggers* and the loader's flag reaches the tag's own
-  automatic page view, but neither reaches the events the library **generates for
-  itself** — an engagement event on unload above all, which is nobody's tag, answers to no
-  trigger, and reads the live document at the moment it sends. So a container loaded on a
-  marketing page and then client-navigated into a private one names that private page; on
-  a child's page that is the child's record id, and the page title can be the child's
-  name. Each reported page view therefore also pins `page_location` and `page_title`
-  through a `set` command, whose values are **sticky** — they stand until the next reported
-  page view replaces them, and a page we refuse to report pins nothing, so what the library
-  holds is always the last page the app was willing to disclose. The title is pinned to a
-  fixed string rather than the document's own, because the router updates `document.title`
-  on its own schedule and reading it here can capture the *previous* page's — which is
-  precisely the private one. Pinning the same two fields through the container's
-  configuration settings instead does **not** work: they are honoured for the tags' own
-  sends and ignored for the generated events, which was tested on the wire before this
-  was built.
+- **The page identity the analytics library holds is pinned, from the moment the container
+  loads.** The blocklist reaches *triggers*, and the analytics tag's own automatic page
+  view is turned off where that switch lives — in the container's configuration, not in
+  any code here — but neither reaches the events the library **generates for itself**, an
+  engagement event on unload above all, which is nobody's tag, answers to no trigger, and
+  reads the live document at the moment it sends. So a container loaded on a marketing
+  page and then client-navigated into a private one names that private page; on a child's
+  page that is the child's record id, and the page title can be the child's name. The app
+  therefore pins `page_location` and `page_title` through a `set` command, whose values are
+  **sticky** — they stand until the next pin replaces them.
+
+  **The pin is not a report, and is deliberately not gated like one.** It goes in as soon
+  as the container has loaded, on the marketing path and the vetted query that authorised
+  that load, and *before* the checks that decide whether a page view may still be sent. A
+  visitor who navigates away mid-load gets no page view — but the library will still hold
+  *something*, and the only alternative to a page we chose is the page it reads for
+  itself. Refusing to pin is refusing to answer, and the default answer is the live
+  document, which is the worst value available rather than a neutral one. The cost is that
+  engagement time spent on a private page is attributed to the marketing page the visitor
+  came from, which is the right way round.
+
+  The pinned location keeps its query string, because that is the same allowlist that
+  permitted the report: the campaign keys and click ids may travel, the analytics platform
+  derives attribution from them, and stripping them would discard what the policy already
+  blessed while protecting nothing. The title is pinned to a fixed string rather than the
+  document's own, because the router updates `document.title` on its own schedule and
+  reading it here can capture the *previous* page's — which is precisely the private one.
+  Pinning the same two fields through the container's configuration settings instead does
+  **not** work: they are honoured for the tags' own sends and ignored for the generated
+  events, which was tested on the wire before this was built.
 - **`Referrer-Policy: strict-origin`** site-wide (set in `next.config.ts`), so a
   same-origin navigation — from a reset link to the login page, say — cannot hand the next
   document a referrer carrying the token.

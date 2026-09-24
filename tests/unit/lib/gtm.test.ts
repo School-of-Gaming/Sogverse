@@ -501,9 +501,12 @@ function pinnedPage(): unknown {
  * on. `set` writes the page into the data model every later event is read
  * against, including those, and it stands until it is written again.
  *
- * Stickiness is what makes the negatives below the load-bearing half: a pin on
- * a page we refused to report would be the same leak by another route, and it
- * would outlast the navigation that caused it.
+ * Stickiness is also why the pin is decided on different grounds from the
+ * report. Refusing to pin is not silence — it leaves the live document named —
+ * so once a container exists, the choice is only ever which page the
+ * unsuppressable events carry, and the answer is the marketing page the caller
+ * vetted. The cases below that assert nothing is pinned are therefore about the
+ * guards that run *before* a container is ever asked for, and they say so.
  */
 describe("the page pinned for gtag's own events", () => {
   it("pins the page alongside a reported page view", async () => {
@@ -516,6 +519,25 @@ describe("the page pinned for gtag's own events", () => {
       page_location: `${window.location.origin}/shop`,
       page_title: "Sogverse",
     });
+  });
+
+  // Queue order is the assertion, the same way it is for the fence and the
+  // consent state: the data model is read in order, so a `set` behind the page
+  // view would leave that page view read against whatever location the model
+  // held before it. The order is right today and nothing else states it, so a
+  // later reshuffle of the two pushes would change what the report means
+  // without changing what either line says.
+  it("pins the page before it pushes the page view, never after", async () => {
+    const report = gtm.reportGtmPageView(CONTAINER_ID, "/shop", GRANTED_BOTH);
+
+    containerArrives();
+    await report;
+
+    const pin = queue().findIndex((entry) => commandValues(entry)[0] === "set");
+    const view = queue().findIndex((entry) => hasEventName(entry, "page_view"));
+    expect(pin).toBeGreaterThanOrEqual(0);
+    expect(view).toBeGreaterThanOrEqual(0);
+    expect(pin).toBeLessThan(view);
   });
 
   // The same distinction the consent commands are held to, for the same
@@ -572,6 +594,25 @@ describe("the page pinned for gtag's own events", () => {
     });
   });
 
+  // The pinned location carries the query the allowlist approved, because that
+  // allowlist is the same one that permits the report at all — and the campaign
+  // parameters and click ids in it are what the analytics property derives its
+  // attribution from. A query-less pin would strip every later event of its
+  // campaign to protect a value the policy had already cleared, and it would
+  // show up only in a reporting property weeks later.
+  it("keeps an ad link's campaign parameters in the pinned location", async () => {
+    tabIsOn("/roblox?utm_source=lynx&utm_campaign=spring-clubs&gclid=abc123");
+    const report = gtm.reportGtmPageView(CONTAINER_ID, "/roblox", GRANTED_BOTH);
+
+    containerArrives();
+    await report;
+
+    expect(pinnedPage()).toEqual({
+      page_location: `${window.location.origin}/roblox?utm_source=lynx&utm_campaign=spring-clubs&gclid=abc123`,
+      page_title: "Sogverse",
+    });
+  });
+
   // A constant, not `document.title`: the report runs from an effect just after
   // the route changed, and the App Router updates the title on its own
   // schedule — so the title read here can still be the previous page's, and the
@@ -590,31 +631,47 @@ describe("the page pinned for gtag's own events", () => {
   });
 
   // The proxy's bounce for a signed-out parent: a marketing pathname whose
-  // query names a child. Refused for the report, and so refused for the pin.
-  it("pins nothing when the query may not travel", async () => {
+  // query names a child. A guard-placement regression test rather than pin
+  // coverage — the pin cannot exist here however it is written, because the
+  // refusal happens before a container is ever asked for, and the assertion is
+  // that the refusal stays that early.
+  it("asks for no container at all when the query may not travel", async () => {
     tabIsOn("/login?redirect=/en/parent/gamers/abc-123");
 
     await gtm.reportGtmPageView(CONTAINER_ID, "/login", GRANTED_BOTH);
 
+    expect(insertedScripts()).toHaveLength(0);
     expect(window.dataLayer).toBeUndefined();
   });
 
-  // The case the whole defect is about, arriving one step earlier: the visitor
-  // left the shop for a child's page while the container was still
-  // downloading. A pin here would name the shop while the tab is elsewhere —
-  // which is the intended behaviour once a page has been *reported*, and a
-  // fabrication for one that never was.
-  it("pins nothing when the tab moved on during the load", async () => {
+  // The case the whole defect is about, and the most valuable one here: the
+  // visitor left the shop for a child's page while the container was still
+  // downloading. The container is now loaded and gtag's engagement timer is
+  // running, so there is no such thing as not answering — pinning nothing
+  // leaves the child's URL as the page gtag will report on unload. So the pin
+  // is present and names the shop the visitor genuinely came from, while the
+  // page view is still refused: the tab moved, and a report is a claim about
+  // where the tab is.
+  it("pins the page it was authorised for when the tab moved on during the load", async () => {
     const report = gtm.reportGtmPageView(CONTAINER_ID, "/shop", GRANTED_BOTH);
     tabIsOn("/parent/gamers/abc-123");
 
     containerArrives();
     await report;
 
-    expect(setEntries()).toHaveLength(0);
+    expect(pinnedPage()).toEqual({
+      page_location: `${window.location.origin}/shop`,
+      page_title: "Sogverse",
+    });
+    expect(queue().some((entry) => hasEventName(entry, "page_view"))).toBe(
+      false,
+    );
   });
 
-  it("pins nothing for a URL that matches no route", async () => {
+  // The other guard that runs ahead of the load, and the same kind of test:
+  // what it holds in place is that an unknown URL is refused before a container
+  // is requested, not that the pin declined to name it.
+  it("asks for no container at all for a URL that matches no route", async () => {
     tabIsOn("/not-a-page-we-have");
 
     await gtm.reportGtmPageView(
@@ -623,17 +680,22 @@ describe("the page pinned for gtag's own events", () => {
       GRANTED_BOTH,
     );
 
+    expect(insertedScripts()).toHaveLength(0);
     expect(window.dataLayer).toBeUndefined();
   });
 
   // Nothing may be queued for a container that will never arrive — an ad
-  // blocker refused it, so the queue is a global array nothing will read.
-  it("pins nothing when the container never loads", async () => {
+  // blocker refused it, so the queue is a global array nothing will read. The
+  // container being asked for is asserted alongside: without it the empty list
+  // would be equally true of a build with no pin in it at all, and this case
+  // is the one that holds the pin behind the load rather than before it.
+  it("pins nothing when the container it asked for never loads", async () => {
     const report = gtm.reportGtmPageView(CONTAINER_ID, "/shop", GRANTED_BOTH);
 
     containerFails();
     await report;
 
+    expect(insertedScripts()).toHaveLength(1);
     expect(setEntries()).toHaveLength(0);
   });
 });
