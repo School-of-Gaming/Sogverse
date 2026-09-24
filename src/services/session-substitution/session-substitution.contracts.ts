@@ -236,13 +236,13 @@ const adminSubstitutionProduct = z.object({
 });
 
 /**
- * One open request an admin has to staff, dated today or later in the product's
- * own timezone.
+ * What every row of the admin document carries, open or substituted: which
+ * session, whose seat, and why they are away.
  *
- * **A request whose date has passed is *unfilled*, and it drops out on its
- * own.** Unfilled is a derived state of an open request rather than a stored
- * one, so nothing sweeps and no clock runs anywhere: the date says it, and the
- * read simply stops returning it.
+ * **A request whose date has passed drops out on its own.** An open one is
+ * *unfilled* by then — a derived state rather than a stored one, so nothing
+ * sweeps and no clock runs — and a past substitution is history the group's
+ * own page carries.
  *
  * **The whole reason travels here, category and note**, and this is the one
  * surface it was collected for — everywhere else it is admin-only or absent.
@@ -252,7 +252,7 @@ const adminSubstitutionProduct = z.object({
  * no longer projects. The read orders by date and never by a derived instant,
  * so such a row arrives like any other and an admin can clear it.
  */
-export const adminSubstitutionRequest = z.object({
+const adminSubstitutionRequestBase = z.object({
   id: z.string(),
   group_id: z.string(),
   group_name: z.string(),
@@ -270,11 +270,66 @@ export const adminSubstitutionRequest = z.object({
   offers: z.array(adminSubstitutionOffer),
 });
 
-export type AdminSubstitutionRequest = z.infer<typeof adminSubstitutionRequest>;
+/**
+ * A request nobody has been seated on yet, dated today or later in the
+ * product's own timezone — the queue the office still has to staff. The
+ * substitute and approver keys are present and null.
+ */
+const openAdminSubstitutionRequest = adminSubstitutionRequestBase.extend({
+  status: z.literal("open"),
+  substitute_id: z.null(),
+  substitute_first_name: z.null(),
+  substitute_last_name: z.null(),
+  approved_at: z.null(),
+  approved_by: z.null(),
+  approved_by_first_name: z.null(),
+  approved_by_last_name: z.null(),
+});
 
 /**
- * The whole document `get_admin_substitution_requests` returns — a bare array,
- * exactly as the gedu's own pool read returns one.
+ * A request an admin has already seated a substitute on, dated today or later
+ * — what an admin checks to see who they picked and who picked them.
+ *
+ * Every field here is non-null because the table's state CHECK sets the
+ * substitute, the approver and the approval instant together on every
+ * substituted row, and neither profile can be deleted out from under it; a
+ * parse failure would mean that invariant stopped holding. `offers` is always
+ * empty: the approval answered them.
+ */
+const substitutedAdminSubstitutionRequest = adminSubstitutionRequestBase.extend({
+  status: z.literal("substituted"),
+  substitute_id: z.string(),
+  substitute_first_name: z.string(),
+  substitute_last_name: z.string(),
+  approved_at: z.string(),
+  approved_by: z.string(),
+  approved_by_first_name: z.string(),
+  approved_by_last_name: z.string(),
+});
+
+/**
+ * One row of the admin Substitutions document, told apart by `status` — the
+ * page splits the one read into its two sections.
+ */
+export const adminSubstitutionRequest = z.discriminatedUnion("status", [
+  openAdminSubstitutionRequest,
+  substitutedAdminSubstitutionRequest,
+]);
+
+export type AdminSubstitutionRequest = z.infer<typeof adminSubstitutionRequest>;
+
+export type OpenAdminSubstitutionRequest = z.infer<
+  typeof openAdminSubstitutionRequest
+>;
+
+export type SubstitutedAdminSubstitutionRequest = z.infer<
+  typeof substitutedAdminSubstitutionRequest
+>;
+
+/**
+ * The whole document `get_admin_substitution_requests` returns — a bare array
+ * of open and substituted requests together, exactly as the gedu's own pool
+ * read returns one array.
  */
 export const adminSubstitutionRequests = z.array(adminSubstitutionRequest);
 

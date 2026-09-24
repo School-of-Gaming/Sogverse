@@ -8,7 +8,7 @@ CREATE TABLE public.session_substitution_requests (
     session_date date NOT NULL,
     requested_by uuid NOT NULL,
     role public.gedu_assignment_role NOT NULL,
-    reason public.substitution_reason,
+    reason public.substitution_reason NOT NULL,
     reason_note text,
     status public.substitution_request_status DEFAULT 'open'::public.substitution_request_status NOT NULL,
     substitute_id uuid,
@@ -40,7 +40,7 @@ COMMENT ON COLUMN public.session_substitution_requests.role IS 'The role being s
 -- Name: COLUMN session_substitution_requests.reason; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.session_substitution_requests.reason IS 'Why the gedu is away — `sick` or `other` — and ADMIN-VISIBLE ONLY: it reaches the admin Substitutions page and the admin session document, and every gedu-facing document emits it as null. A `sick` category is health-related data about a contractor; the Discord tickets it replaces carry the same, so nothing new is disclosed, but no retention rule exists for either yet. Nullable because the gedu path requires it (RPC-enforced) and the admin''s off-platform-substitution path cannot.';
+COMMENT ON COLUMN public.session_substitution_requests.reason IS 'Why the gedu is away — `sick` or `other` — and ADMIN-VISIBLE ONLY: it reaches the admin Substitutions page and the admin session document, and every gedu-facing document emits it as null. A `sick` category is health-related data about a contractor; the Discord tickets it replaces carry the same, so nothing new is disclosed, but no retention rule exists for either yet. Always present: a gedu filing an absence states one, and so does an admin filing on a gedu''s behalf.';
 
 
 --

@@ -1,4 +1,8 @@
-import type { AdminSubstitutionRequest } from "@/services/session-substitution";
+import type {
+  AdminSubstitutionRequest,
+  OpenAdminSubstitutionRequest,
+  SubstitutedAdminSubstitutionRequest,
+} from "@/services/session-substitution";
 
 /**
  * Fixtures for the Substitutions preview scene.
@@ -47,6 +51,17 @@ const PERSON_IDS = {
   eeliVirtanen: "2ca12e82-5101-4b6c-aa4d-85867c24fe4c",
   saanaNieminen: "ea0111ac-09ed-438c-85ef-f9f138b00209",
   aaroHeikkila: "6b6dd07a-63be-4292-a320-f4670784c45c",
+  ainoLehtonen: "276a69db-d46a-4682-b49d-ecb92a18464e",
+  onniMakela: "df521f6c-dbcb-41d6-af88-fa15a22d39fb",
+  /** The admin who approved the substitutes already seated. */
+  kaisaRantanen: "7a1c1b2d-19ae-4ce7-a3f2-6a92e09a7037",
+} as const;
+
+/** The previewing office's admin, who approves anything pressed in the scene too. */
+const APPROVER = {
+  id: PERSON_IDS.kaisaRantanen,
+  firstName: "Kaisa",
+  lastName: "Rantanen",
 } as const;
 
 /** 0 = Monday, the app's own convention. */
@@ -116,7 +131,7 @@ const VANTAA_CLUB = product({
  * The camp whose block runs Monday to Wednesday — which is what makes the
  * orphan an orphan rather than a hand-set flag: the request below is dated on a
  * Tuesday the schedule no longer names, so the occurrence resolves to nothing
- * and the row states its date alone.
+ * and the row sits under its day with no time.
  */
 const ROBLOX_CAMP = product({
   id: "camp-2",
@@ -134,7 +149,7 @@ function offer(args: {
   geduId: string;
   first: string;
   last: string;
-}): AdminSubstitutionRequest["offers"][number] {
+}): OpenAdminSubstitutionRequest["offers"][number] {
   return {
     id: args.id,
     gedu_id: args.geduId,
@@ -144,24 +159,40 @@ function offer(args: {
   };
 }
 
+/** What every open row carries where a substituted one names its sub. */
+const NOT_SUBSTITUTED = {
+  status: "open",
+  substitute_id: null,
+  substitute_first_name: null,
+  substitute_last_name: null,
+  approved_at: null,
+  approved_by: null,
+  approved_by_first_name: null,
+  approved_by_last_name: null,
+} as const;
+
 /**
  * Four sessions nobody is teaching, holding every state an open row can be in:
  * inside the urgent day and outside it, several offers and none at all, both
- * roles, and the orphan whose date the schedule no longer projects.
+ * roles, and the orphan whose date the schedule no longer projects — and two
+ * sessions that already have a substitute, on different days, one approved
+ * minutes ago and one the evening before.
  *
- * They sit in one scenario rather than four because the page shows all of them
- * at once, which is the whole reason a scene is worth opening: adjacent states
- * compare themselves, states behind separate links are compared from memory.
- * The only state that cannot coexist with these is the empty queue, and that is
- * what `all-clear` is.
+ * They sit in one scenario rather than several because the page shows all of
+ * them at once, which is the whole reason a scene is worth opening: adjacent
+ * states compare themselves, states behind separate links are compared from
+ * memory. The only state that cannot coexist with these is the empty page, and
+ * that is what `all-clear` is.
  *
  * **In the order the read delivers them** — session date, then product id, then
- * id — so the mapping's soonest-first sort has something real to do: the two
- * Monday sessions arrive Espoo-then-Solna and are shown the other way round,
- * because Solna's 15:00 is 16:00 where the reader is.
+ * id, open and substituted together — so the mapping's split and its
+ * soonest-first sort have something real to do: the two Monday sessions arrive
+ * Espoo-then-Solna and are shown the other way round, because Solna's 15:00 is
+ * 16:00 where the reader is.
  */
-const OPEN_REQUESTS: readonly AdminSubstitutionRequest[] = [
+const REQUESTS: readonly AdminSubstitutionRequest[] = [
   {
+    ...NOT_SUBSTITUTED,
     id: "substitution-request-1",
     group_id: "group-espoo-a",
     group_name: "Ryhmä A",
@@ -190,6 +221,7 @@ const OPEN_REQUESTS: readonly AdminSubstitutionRequest[] = [
     ],
   },
   {
+    ...NOT_SUBSTITUTED,
     id: "substitution-request-2",
     group_id: "group-solna-b",
     group_name: "Grupp B",
@@ -212,6 +244,30 @@ const OPEN_REQUESTS: readonly AdminSubstitutionRequest[] = [
     ],
   },
   {
+    id: "substitution-request-5",
+    status: "substituted",
+    group_id: "group-vantaa-c",
+    group_name: "Ryhmä C",
+    session_date: "2026-08-18",
+    role: "primary",
+    reason: "sick",
+    reason_note: null,
+    created_at: "2026-08-15T09:10:00+03:00",
+    requested_by: PERSON_IDS.onniMakela,
+    requested_by_first_name: "Onni",
+    requested_by_last_name: "Mäkelä",
+    substitute_id: PERSON_IDS.saanaNieminen,
+    substitute_first_name: "Saana",
+    substitute_last_name: "Nieminen",
+    approved_at: "2026-08-16T19:30:00+03:00",
+    approved_by: APPROVER.id,
+    approved_by_first_name: APPROVER.firstName,
+    approved_by_last_name: APPROVER.lastName,
+    product: VANTAA_CLUB,
+    offers: [],
+  },
+  {
+    ...NOT_SUBSTITUTED,
     id: "substitution-request-3",
     group_id: "group-vantaa-c",
     group_name: "Ryhmä C",
@@ -234,6 +290,30 @@ const OPEN_REQUESTS: readonly AdminSubstitutionRequest[] = [
     ],
   },
   {
+    id: "substitution-request-6",
+    status: "substituted",
+    group_id: "group-espoo-a",
+    group_name: "Ryhmä A",
+    session_date: "2026-08-24",
+    role: "assistant",
+    reason: "other",
+    reason_note: "Opintomatka.",
+    created_at: "2026-08-12T16:45:00+03:00",
+    requested_by: PERSON_IDS.ainoLehtonen,
+    requested_by_first_name: "Aino",
+    requested_by_last_name: "Lehtonen",
+    substitute_id: PERSON_IDS.aaroHeikkila,
+    substitute_first_name: "Aaro",
+    substitute_last_name: "Heikkilä",
+    approved_at: "2026-08-17T08:50:00+03:00",
+    approved_by: APPROVER.id,
+    approved_by_first_name: APPROVER.firstName,
+    approved_by_last_name: APPROVER.lastName,
+    product: ESPOO_CLUB,
+    offers: [],
+  },
+  {
+    ...NOT_SUBSTITUTED,
     id: "substitution-request-4",
     group_id: "group-roblox-camp-1",
     group_name: "Ryhmä 1",
@@ -254,8 +334,9 @@ const OPEN_REQUESTS: readonly AdminSubstitutionRequest[] = [
 /**
  * The document the read would have returned, for one scenario.
  *
- * `all-clear` is the empty queue — the one state a platform with four sessions
- * to staff has no way to reach.
+ * `all-clear` is the empty page — no session to staff and none with a
+ * substitute — the one state a platform with sessions on both lists has no way
+ * to reach.
  */
 export function buildAdminSubstitutionsFixture(
   scenario: AdminSubstitutionsScenario,
@@ -264,5 +345,32 @@ export function buildAdminSubstitutionsFixture(
   // Copied out rather than handed over: the document's own type is mutable (it
   // is a zod output), and a fixture that let a caller write into the module
   // constant would leak one scene's edits into the next one opened.
-  return [...OPEN_REQUESTS];
+  return [...REQUESTS];
+}
+
+/**
+ * An open fixture request as the read would return it once `sub` had been
+ * seated on it — from an offer or from the full list of gedus, which the
+ * database records identically: substituted, the scene's admin as approver at
+ * the scene's clock, the offers gone, and the reason the gedu gave kept.
+ *
+ * The scene's stand-in for the refetch, so a seat pressed in the preview moves
+ * the session into the second section exactly as the live page does.
+ */
+export function seatFixtureSubstitute(
+  request: OpenAdminSubstitutionRequest,
+  sub: { id: string; firstName: string; lastName: string },
+): SubstitutedAdminSubstitutionRequest {
+  return {
+    ...request,
+    status: "substituted",
+    substitute_id: sub.id,
+    substitute_first_name: sub.firstName,
+    substitute_last_name: sub.lastName,
+    approved_at: ADMIN_SUBSTITUTIONS_NOW.toISOString(),
+    approved_by: APPROVER.id,
+    approved_by_first_name: APPROVER.firstName,
+    approved_by_last_name: APPROVER.lastName,
+    offers: [],
+  };
 }

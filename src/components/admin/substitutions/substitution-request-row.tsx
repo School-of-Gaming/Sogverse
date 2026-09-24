@@ -1,18 +1,20 @@
 "use client";
 
 import { useId } from "react";
-import { useFormatter, useTranslations } from "next-intl";
-import { ArrowUpRight, CalendarDays, Clock, Users } from "lucide-react";
-import { Link } from "@/i18n/navigation";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PersonChip } from "@/components/ui/person-chip";
 import { cn } from "@/lib/utils";
-import { PRODUCT_TYPE_PRESENTATION } from "@/components/admin/dashboard/product-type-presentation";
 import type {
   SubstitutionOffer,
   SubstitutionRequest,
 } from "./admin-substitutions-data";
+import {
+  OpenGroupLink,
+  SubstitutionAwayLine,
+  SubstitutionSessionHeading,
+} from "./substitution-session-lines";
 
 /**
  * One open request: which session is short-staffed, how soon, who is away, why,
@@ -28,18 +30,9 @@ import type {
  * **The session comes first and the person second**, which is the reverse of
  * the certification queue on the dashboard. There the row *is* a person and the
  * decision is about them; here the decision is about a session — this Friday's
- * group needs a primary — and who is away is a fact about it, carried at the
- * density the reason beside it reads at. It is also the half an admin is least
- * entitled to dwell on: the reason is health-related data about a contractor,
- * shown because the office has to plan around it and nowhere else on the
- * platform.
- *
- * **How soon it is, is the card's own sentence.** The list is sorted by it, so
- * the reader is scanning a run of deadlines and the deadline has to be legible
- * without arithmetic over a date and a clock face. It is said in words —
- * "tomorrow", "in 3 hours" — because a relative phrase is the one form that
- * needs no zone at all, which is precisely what the date-in-the-product's-zone
- * and clock-face-in-the-viewer's pair beside it cannot claim.
+ * group needs a primary — and who is away is a fact about it. Both lines are
+ * the ones the substituted-session card opens with too, so the two sections
+ * state one session in the same words.
  *
  * **The urgency treatment is one tint and one rule, and it fires inside a
  * day.** A session starting within 24 hours wears `warning` on this card's own
@@ -62,29 +55,33 @@ import type {
  * it.
  *
  * **A request with no offers is not a failure state and is not tinted as one.**
- * Nobody has volunteered *yet*, and what an admin does about it is on the
- * group's own page, where a sub can be seated outright — so the card says so
- * plainly, in the slot the offers would have filled, and points there.
+ * Nobody has volunteered *yet*, so the card says so plainly, in the slot the
+ * offers would have filled.
+ *
+ * **Every request can be answered with somebody who did not offer**, from the
+ * card itself: "Seat someone else" sits in the offers slot — beside the
+ * no-offers line, or under the offers — as a quiet control, because the offers
+ * are what the card is asking the admin to look at first. The card already
+ * knows the group, the date and whose seat it is, so the press opens the full
+ * gedu picker directly; the panel owns what follows, as it does for an
+ * approval.
  */
 export function SubstitutionRequestRow({
   request,
   now,
   onApproveOffer,
+  onSeatSomeoneElse,
 }: {
   request: SubstitutionRequest;
   /** The page's pinned clock — what the relative phrase is measured against. */
   now: Date;
   /** Ask about one offer — the dialog above owns everything after the press. */
   onApproveOffer: (offer: SubstitutionOffer) => void;
+  /** Open the picker for this request's seat — the panel owns everything after. */
+  onSeatSomeoneElse: () => void;
 }) {
   const t = useTranslations("admin.substitutions");
-  const tRole = useTranslations("admin.geduRole");
-  const tType = useTranslations("admin.products.types");
-  const format = useFormatter();
   const offersLabelId = useId();
-
-  const presentation = PRODUCT_TYPE_PRESENTATION[request.productType];
-  const TypeIcon = presentation.icon;
 
   return (
     <Card
@@ -98,77 +95,12 @@ export function SubstitutionRequestRow({
       )}
     >
       <CardContent className="space-y-3 p-4">
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-          {/* The eyebrow is the tinted type glyph the admin surfaces speak in —
-              the dashboard's attention cards, its schedule chips and its key
-              all wear it, and the rail at the side of that page is what
-              explains it. */}
-          <TypeIcon
-            className={cn("h-4 w-4 shrink-0 translate-y-0.5", presentation.text)}
-            aria-label={tType(`${presentation.i18nKey}.label`)}
-          />
-          {/* Wraps rather than truncates, as it does on an attention card: a
-              product's name is how an admin knows which of five Minecraft clubs
-              this is. */}
-          <span className="text-sm font-medium leading-snug">
-            {request.productName}
-          </span>
-          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Users className="h-3 w-3 shrink-0" aria-hidden />
-            {request.groupName}
-          </span>
-          {/* The date and, where the schedule still projects one, the clock face
-              — in the schedule chips' own tabular numerals, because the admin
-              surfaces state the same sessions in several places and a reader
-              comparing them is comparing numbers. A request the schedule no
-              longer projects states the date alone; that orphan is the case the
-              queue exists to tolerate, and a card that guessed a time for it
-              would be inventing one. */}
-          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <CalendarDays className="h-3 w-3 shrink-0" aria-hidden />
-            {request.sessionDate}
-            {request.sessionTime !== null && (
-              <span className="font-medium tabular-nums">
-                {request.sessionTime}
-              </span>
-            )}
-          </span>
-          {request.startsAt !== null && (
-            <span
-              className={cn(
-                "flex items-center gap-1 text-xs",
-                request.urgent
-                  ? "font-medium text-warning"
-                  : "text-muted-foreground",
-              )}
-            >
-              <Clock className="h-3 w-3 shrink-0" aria-hidden />
-              {format.relativeTime(request.startsAt, now)}
-            </span>
-          )}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-          <span className="text-muted-foreground">{t("away")}</span>
-          <PersonChip
-            id={request.requesterId}
-            name={request.requesterName ?? t("unnamed")}
-            size="compact"
-          />
-          <span className="text-muted-foreground">
-            {tRole(request.role)}
-            {request.reason !== null && ` · ${t(`reason.${request.reason}`)}`}
-          </span>
-          {/* The note is the absent gedu's own words, capped at 500 characters
-              by the writer and plain text end to end. It wraps rather than being
-              clamped: an admin planning around somebody's absence is entitled to
-              the whole of the sentence they wrote. */}
-          {request.reasonNote !== null && (
-            <span className="w-full text-muted-foreground">
-              {request.reasonNote}
-            </span>
-          )}
-        </div>
+        <SubstitutionSessionHeading
+          session={request}
+          urgent={request.urgent}
+          now={now}
+        />
+        <SubstitutionAwayLine session={request} />
 
         {/* One slot, two states. A request nobody has answered says so on the
             line the offers would have used, rather than leaving an empty box
@@ -180,32 +112,50 @@ export function SubstitutionRequestRow({
           {request.offers.length === 0 ? (
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <p className="text-xs text-muted-foreground">{t("noOffers")}</p>
-              <Link
-                href={request.groupHref}
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "sm" }),
-                  "h-7 gap-1 px-2 text-xs",
-                )}
-              >
-                {t("openGroup")}
-                <ArrowUpRight className="h-3 w-3" aria-hidden />
-              </Link>
+              <OpenGroupLink href={request.groupHref} />
+              <SeatSomeoneElseButton onPress={onSeatSomeoneElse} />
             </div>
           ) : (
-            <ul
-              aria-labelledby={offersLabelId}
-              className="divide-y divide-border"
-            >
-              {request.offers.map((offer) => (
-                <li key={offer.id}>
-                  <OfferRow offer={offer} onApprove={() => onApproveOffer(offer)} />
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul
+                aria-labelledby={offersLabelId}
+                className="divide-y divide-border"
+              >
+                {request.offers.map((offer) => (
+                  <li key={offer.id}>
+                    <OfferRow offer={offer} onApprove={() => onApproveOffer(offer)} />
+                  </li>
+                ))}
+              </ul>
+              <div className="pt-1">
+                <SeatSomeoneElseButton onPress={onSeatSomeoneElse} />
+              </div>
+            </>
           )}
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * The way to seat a gedu who did not offer — in the register and at the size
+ * of "Open the group" beside it, so the offers keep the card's one filled
+ * button.
+ */
+function SeatSomeoneElseButton({ onPress }: { onPress: () => void }) {
+  const t = useTranslations("admin.substitutions");
+
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className="h-7 px-2 text-xs"
+      onClick={onPress}
+    >
+      {t("seatSomeoneElse")}
+    </Button>
   );
 }
 

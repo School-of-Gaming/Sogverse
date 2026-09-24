@@ -472,6 +472,7 @@ describe("session substitutions", () => {
     substituteId?: string | null;
     status?: Database["public"]["Enums"]["substitution_request_status"];
     role?: Database["public"]["Enums"]["gedu_assignment_role"];
+    reason?: Database["public"]["Enums"]["substitution_reason"];
   }): Promise<string> {
     const substituted = input.substituteId ?? null;
     const { data, error } = await admin
@@ -481,6 +482,7 @@ describe("session substitutions", () => {
         session_date: input.date,
         requested_by: input.absent ?? TEST_IDS.GEDU,
         role: input.role ?? "primary",
+        reason: input.reason ?? "other",
         status: input.status ?? (substituted ? "substituted" : "open"),
         substitute_id: substituted,
         approved_by: substituted ? TEST_IDS.ADMIN : null,
@@ -1080,6 +1082,7 @@ describe("session substitutions", () => {
         p_session_date: utcDate(-5),
         p_absent_gedu_id: TEST_IDS.GEDU,
         p_sub_gedu_id: subId,
+        p_reason: "other",
       });
       expect(error).toBeNull();
       expect(await substitutesGroup(subAuth)).toBe(true);
@@ -1963,6 +1966,7 @@ describe("session substitutions", () => {
         p_session_date: date,
         p_absent_gedu_id: TEST_IDS.GEDU,
         p_sub_gedu_id: subId,
+        p_reason: "sick",
       });
       expect(error).toBeNull();
 
@@ -1971,7 +1975,43 @@ describe("session substitutions", () => {
       expect(doc.requested_by).toBe(TEST_IDS.GEDU);
       expect(doc.substitute_id).toBe(subId);
       expect(doc.role).toBe("primary");
-      expect(doc.reason).toBeNull();
+      expect(doc.reason).toBe("sick");
+    });
+
+    it("refuses a filing with no reason, and keeps the row's reason on a re-point", async () => {
+      // Filing on a gedu's behalf states why, exactly as the gedu's own filing
+      // does; the refusal is the function's own, raised before any row exists.
+      const refusedDate = utcDate(5);
+      const refused = await adminAuth.rpc("set_session_substitution", {
+        p_group_id: GROUP_A,
+        p_session_date: refusedDate,
+        p_absent_gedu_id: TEST_IDS.GEDU,
+        p_sub_gedu_id: subId,
+      });
+      expect(refused.error?.code).toBe(CHECK_VIOLATION);
+      expect(refused.error?.message).toContain("filing one needs a reason");
+      const { count } = await admin
+        .from("session_substitution_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("group_id", GROUP_A)
+        .eq("session_date", refusedDate);
+      expect(count).toBe(0);
+
+      // A re-point is not a filing: the seat's request already says why, and an
+      // omitted reason keeps it.
+      const date = utcDate(6);
+      const id = await seedRequest({ date, substituteId: subId, reason: "sick" });
+      const { data, error } = await adminAuth.rpc("set_session_substitution", {
+        p_group_id: GROUP_A,
+        p_session_date: date,
+        p_absent_gedu_id: TEST_IDS.GEDU,
+        p_sub_gedu_id: thirdId,
+      });
+      expect(error).toBeNull();
+      const doc = substitutionRequestDocument.parse(data);
+      expect(doc.id).toBe(id);
+      expect(doc.substitute_id).toBe(thirdId);
+      expect(doc.reason).toBe("sick");
     });
 
     it("fills an OPEN request rather than filing a second one", async () => {
@@ -2053,6 +2093,7 @@ describe("session substitutions", () => {
         p_session_date: date,
         p_absent_gedu_id: subId,
         p_sub_gedu_id: thirdId,
+        p_reason: "other",
       });
       expect(notExpected.error?.code).toBe(CHECK_VIOLATION);
 
@@ -2061,6 +2102,7 @@ describe("session substitutions", () => {
         p_session_date: date,
         p_absent_gedu_id: TEST_IDS.GEDU,
         p_sub_gedu_id: TEST_IDS.GEDU,
+        p_reason: "other",
       });
       expect(selfSubstitution.error?.code).toBe(CHECK_VIOLATION);
     });
@@ -2270,6 +2312,11 @@ describe("session substitutions", () => {
         .parse(data)
         .find((row) => row.id === id);
       expect(mine).toBeDefined();
+      // An open row keeps the document's one shape: the substitute and approver
+      // keys are present and null.
+      expect(mine?.status).toBe("open");
+      expect(mine?.substitute_id).toBeNull();
+      expect(mine?.approved_by).toBeNull();
       expect(mine?.group_name).toBe("Cohort A");
       expect(mine?.reason).toBe("sick");
       expect(mine?.reason_note).toBe("flu");
@@ -2342,11 +2389,13 @@ describe("session substitutions", () => {
     });
 
     /**
-     * The read answers open requests and only those. A substituted or withdrawn
-     * request is history the group's own page carries; this page is the work
-     * still to be done.
+     * The read answers open AND substituted requests — the page's two sections
+     * — and never a withdrawn one, which is history the group's own page
+     * carries. A substituted row names its substitute and the admin who seated
+     * them, which is what an admin reads to check whom they picked, and carries
+     * no offers: the approval answered them.
      */
-    it("the admin queue carries no settled request", async () => {
+    it("the admin document carries an upcoming substituted request with its substitute and approver, and no withdrawn one", async () => {
       const substituted = await seedRequest({
         date: utcDate(5),
         substituteId: subId,
@@ -2357,11 +2406,33 @@ describe("session substitutions", () => {
         status: "withdrawn",
       });
 
-      const { data } = await adminAuth.rpc("get_admin_substitution_requests");
-      const ids = adminSubstitutionRequests.parse(data).map((row) => row.id);
+      const { data, error } = await adminAuth.rpc(
+        "get_admin_substitution_requests",
+      );
+      expect(error).toBeNull();
+      const rows = adminSubstitutionRequests.parse(data);
 
-      expect(ids).not.toContain(substituted);
-      expect(ids).not.toContain(withdrawn);
+      expect(rows.map((row) => row.id)).not.toContain(withdrawn);
+
+      const mine = rows.find((row) => row.id === substituted);
+      expect(mine?.status).toBe("substituted");
+      if (mine?.status !== "substituted") return;
+      expect(mine.substitute_id).toBe(subId);
+      expect(mine.substitute_first_name).toBeTruthy();
+      expect(mine.approved_by).toBe(TEST_IDS.ADMIN);
+      expect(mine.approved_by_first_name).toBeTruthy();
+      expect(mine.approved_at).toBeTruthy();
+      expect(mine.requested_by).toBe(TEST_IDS.GEDU);
+      expect(mine.offers).toEqual([]);
+    });
+
+    it("the admin document drops a substituted request whose date has passed", async () => {
+      const id = await seedRequest({ date: utcDate(-7), substituteId: subId });
+      const { data } = await adminAuth.rpc("get_admin_substitution_requests");
+      // A past substitution is history the group's own page carries.
+      expect(
+        adminSubstitutionRequests.parse(data).map((row) => row.id),
+      ).not.toContain(id);
     });
 
     it("get_my_assigned_products discriminates a substitution row from an assignment row", async () => {

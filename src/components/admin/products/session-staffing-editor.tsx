@@ -68,8 +68,8 @@ export interface SessionStaffingEditorProps {
 
 /**
  * The staffing an **admin** may edit on one session card — the office's half of
- * the substitution model, and the only surface where a sub is seated without an
- * offer.
+ * the substitution model, and the one surface that can file an absence on a
+ * gedu's behalf, change a seated sub or clear one.
  *
  * It is the node the admin group shell hands the shared session card through
  * `renderStaffingEditor`, and it lands in the same region as the gedu's own "I
@@ -618,8 +618,8 @@ function AbsentGeduStep({
 }
 
 /**
- * The last step: who is substituting whom, why, and what this press does to what is
- * already recorded.
+ * The last step: who is substituting whom, what this press does to what is
+ * already recorded, and — only where nothing is recorded yet — why.
  *
  * **It says what it is replacing.** An absent gedu with an open request is
  * being approved rather than filed for — the write fills that request in
@@ -627,10 +627,13 @@ function AbsentGeduStep({
  * their sub swapped. Neither is something an admin should discover from the
  * card afterwards.
  *
- * The reason is optional here and required on the gedu's own path, and that
- * asymmetry is the retroactive case: an office recording an off-platform substitution
- * from three weeks ago may simply not know why somebody was away, and inventing
- * `other` for them would put a fact in the row that nobody stated.
+ * **The reason is asked only when filing on the gedu's behalf** *(owner,
+ * 2026-09)*: a seat with no live request. Where a request exists its reason is
+ * already on the row, and asking the admin for it again read to a tester as
+ * the form forgetting what the gedu had told it — so the step asks nothing,
+ * sends neither field, and the write keeps what is recorded. The reason itself
+ * does not ride on a card's staffing, so the step says it is kept rather than
+ * showing it.
  */
 function ConfirmSubStep({
   absent,
@@ -660,14 +663,13 @@ function ConfirmSubStep({
   const c = useTranslations("common");
   const date = useSessionDateLabel(sessionDate);
   const roleLabel = useRoleLabel();
-  const groupName = useId();
-  const noteId = useId();
 
   const [committing, setCommitting] = useState(false);
   const [failed, setFailed] = useState(false);
 
-  const remaining = SUBSTITUTION_REASON_NOTE_MAX_LENGTH - note.length;
   const trimmedNote = note.trim();
+  /** No live request on this seat, so this press files one — and asks why. */
+  const filing = absent.request === null;
 
   const run = () => {
     setFailed(false);
@@ -675,12 +677,13 @@ function ConfirmSubStep({
     void onConfirm({
       absentGeduId: absent.id,
       subGeduId: sub.id,
-      // The note is omitted rather than nulled where it is empty: the RPC's
-      // parameter carries a trailing default precisely so a caller with
-      // nothing to send can leave it out. The reason is never absent — the
-      // button is disabled until one is chosen.
-      ...(reason === null ? {} : { reason }),
-      ...(trimmedNote === "" ? {} : { reasonNote: trimmedNote }),
+      // Omitted rather than nulled: the RPC's parameters carry trailing
+      // defaults precisely so a caller with nothing to send can leave them
+      // out, and the write then keeps what the row already says. Only a
+      // filing sends either — and there the reason is never absent, because
+      // the button is disabled until one is chosen.
+      ...(filing && reason !== null ? { reason } : {}),
+      ...(filing && trimmedNote !== "" ? { reasonNote: trimmedNote } : {}),
     }).catch(() => {
       setCommitting(false);
       setFailed(true);
@@ -721,68 +724,28 @@ function ConfirmSubStep({
         </dl>
 
         {absent.request !== null && (
-          <p className="text-xs text-muted-foreground">
-            {absent.request.status === "substituted" &&
-            absent.request.substituteId !== null
-              ? t("replacesCurrentSub", {
-                  name: absent.request.substituteId.firstName,
-                })
-              : t("approvesOpenRequest")}
-          </p>
+          <div className="space-y-1 text-xs text-muted-foreground">
+            <p>
+              {absent.request.status === "substituted" &&
+              absent.request.substituteId !== null
+                ? t("replacesCurrentSub", {
+                    name: absent.request.substituteId.firstName,
+                  })
+                : t("approvesOpenRequest")}
+            </p>
+            <p>{t("reasonKept")}</p>
+          </div>
         )}
 
-        <div className="flex flex-col gap-2.5">
-          <Label id={`${groupName}-label`}>{t("reasonLabel")}</Label>
-          <div
-            role="radiogroup"
-            aria-labelledby={`${groupName}-label`}
-            className="flex flex-wrap gap-2"
-          >
-            {SUBSTITUTION_REASONS.map((value) => {
-              const selected = reason === value;
-              return (
-                <label
-                  key={value}
-                  className={cn(
-                    "flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-sm transition-colors",
-                    selected && "border-act",
-                    committing && "cursor-not-allowed opacity-50",
-                  )}
-                >
-                  <input
-                    type="radio"
-                    name={groupName}
-                    value={value}
-                    className="h-4 w-4 shrink-0 accent-act"
-                    checked={selected}
-                    disabled={committing}
-                    onChange={() => onReasonChange(value)}
-                  />
-                  <span className="font-medium">
-                    {value === "sick" ? t("reasonSick") : t("reasonOther")}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </div>
-
-        <Field
-          label={t("noteLabel")}
-          htmlFor={noteId}
-          optional
-          hint={t("noteRemaining", { count: Math.max(remaining, 0) })}
-        >
-          <Textarea
-            id={noteId}
-            rows={2}
-            maxLength={SUBSTITUTION_REASON_NOTE_MAX_LENGTH}
-            disabled={committing}
-            placeholder={t("notePlaceholder")}
-            value={note}
-            onChange={(event) => onNoteChange(event.target.value)}
+        {filing && (
+          <ReasonFields
+            reason={reason}
+            onReasonChange={onReasonChange}
+            note={note}
+            onNoteChange={onNoteChange}
+            committing={committing}
           />
-        </Field>
+        )}
 
         {failed && (
           <StatusLine status="destructive" size="xs" role="alert">
@@ -802,11 +765,11 @@ function ConfirmSubStep({
         </Button>
         <Button
           type="button"
-          // **Nothing is chosen to begin with, and the press waits for a
+          // **Nothing is chosen to begin with, and a filing waits for a
           // choice.** A pre-selected "Sick" would write health data about a
           // contractor that nobody stated, which is the one direction this
           // field must not fail in.
-          disabled={committing || reason === null}
+          disabled={committing || (filing && reason === null)}
           onClick={run}
           className="gap-1.5"
         >
@@ -821,13 +784,98 @@ function ConfirmSubStep({
 }
 
 /**
+ * The two questions a filing asks: the category, and an optional note for the
+ * office.
+ */
+function ReasonFields({
+  reason,
+  onReasonChange,
+  note,
+  onNoteChange,
+  committing,
+}: {
+  reason: SubstitutionReason | null;
+  onReasonChange: (reason: SubstitutionReason) => void;
+  note: string;
+  onNoteChange: (note: string) => void;
+  committing: boolean;
+}) {
+  const t = useTranslations("admin.products.staffing");
+  const groupName = useId();
+  const noteId = useId();
+  const remaining = SUBSTITUTION_REASON_NOTE_MAX_LENGTH - note.length;
+
+  return (
+    <>
+      <div className="flex flex-col gap-2.5">
+        <Label id={`${groupName}-label`}>{t("reasonLabel")}</Label>
+        <div
+          role="radiogroup"
+          aria-labelledby={`${groupName}-label`}
+          className="flex flex-wrap gap-2"
+        >
+          {SUBSTITUTION_REASONS.map((value) => {
+            const selected = reason === value;
+            return (
+              <label
+                key={value}
+                className={cn(
+                  "flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-sm transition-colors",
+                  selected && "border-act",
+                  committing && "cursor-not-allowed opacity-50",
+                )}
+              >
+                <input
+                  type="radio"
+                  name={groupName}
+                  value={value}
+                  className="h-4 w-4 shrink-0 accent-act"
+                  checked={selected}
+                  disabled={committing}
+                  onChange={() => onReasonChange(value)}
+                />
+                <span className="font-medium">
+                  {value === "sick" ? t("reasonSick") : t("reasonOther")}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+
+      <Field
+        label={t("noteLabel")}
+        htmlFor={noteId}
+        optional
+        hint={t("noteRemaining", { count: Math.max(remaining, 0) })}
+      >
+        <Textarea
+          id={noteId}
+          rows={2}
+          maxLength={SUBSTITUTION_REASON_NOTE_MAX_LENGTH}
+          disabled={committing}
+          placeholder={t("notePlaceholder")}
+          value={note}
+          onChange={(event) => onNoteChange(event.target.value)}
+        />
+      </Field>
+    </>
+  );
+}
+
+/**
  * The categories, read off the generated enum rather than retyped — the same
  * two, in the same order, the gedu's own dialog offers.
  *
- * **There is no "not stated" any more** *(owner, 2026-09)*: an admin seating a
- * substitute states why, exactly as a gedu filing an absence does. The database
- * still accepts a null reason, which is what keeps every row filed before this
- * change readable; the interface simply never sends one.
+ * **There is no "not stated" any more** *(owner, 2026-09)*: an admin filing an
+ * absence on a gedu's behalf states why, exactly as a gedu filing one does.
+ * That is the only case that asks — a seat whose request already exists keeps
+ * the reason on it and is never asked for it again *(owner, 2026-09)*. The
+ * database refuses a filing with no reason, so the one race left is refused
+ * rather than recorded: the write is keyed by the seat, and if the gedu
+ * withdraws their request while the dialog for a seat that had one is open,
+ * the write reads it as a filing on their behalf without the reason that
+ * dialog never asked.
  */
 const SUBSTITUTION_REASONS = Constants.public.Enums.substitution_reason;
 

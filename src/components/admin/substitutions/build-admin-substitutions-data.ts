@@ -7,11 +7,17 @@ import {
   type SessionDateOccurrence,
 } from "@/lib/session-date-occurrence";
 import { formatDateOnly } from "@/lib/utils";
-import type { AdminSubstitutionRequest } from "@/services/session-substitution";
+import type {
+  AdminSubstitutionRequest,
+  OpenAdminSubstitutionRequest,
+  SubstitutedAdminSubstitutionRequest,
+} from "@/services/session-substitution";
 import type {
   AdminSubstitutionsData,
+  SubstitutedSession,
   SubstitutionOffer,
   SubstitutionRequest,
+  SubstitutionSession,
 } from "./admin-substitutions-data";
 
 /**
@@ -26,7 +32,11 @@ import type {
  * **The occurrence is resolved from each request's own product**, from the
  * slots that travel with it, so the only absence left is "no slot names this
  * weekday" — the orphaned request — which reaches the row as `null` and renders
- * as a bare date rather than a time the schedule would not produce.
+ * under its day with no time, rather than a time the schedule would not produce.
+ *
+ * **One read, two lists.** The document carries open and substituted requests
+ * together, and they are split here by status; both lists are sorted by the
+ * same rule, and the zone line is asked of every row on the page.
  */
 export function buildAdminSubstitutionsData({
   requests,
@@ -39,15 +49,21 @@ export function buildAdminSubstitutionsData({
   viewerTimeZone: string;
   now: Date;
 }): AdminSubstitutionsData {
+  const open: SubstitutionRequest[] = [];
+  const substituted: SubstitutedSession[] = [];
+  for (const row of requests) {
+    if (row.status === "open") {
+      open.push(toSubstitutionRequest(row, locale, viewerTimeZone, now));
+    } else {
+      substituted.push(toSubstitutedSession(row, locale, viewerTimeZone));
+    }
+  }
+
   return {
     now,
     timeZoneAbbrev: viewerZoneAbbrev(requests, viewerTimeZone, locale, now),
-    open: sortBySoonest(
-      requests.map((request) => ({
-        row: request,
-        request: toSubstitutionRequest(request, locale, viewerTimeZone, now),
-      })),
-    ),
+    open: sortBySoonest(open),
+    substituted: sortBySoonest(substituted),
   };
 }
 
@@ -79,12 +95,8 @@ const URGENT_WITHIN_MS = 24 * 60 * 60 * 1000;
  * which is a stable sort's guarantee and is what makes this list not reshuffle
  * between two renders of the same document.
  */
-function sortBySoonest(
-  rows: readonly { row: AdminSubstitutionRequest; request: SubstitutionRequest }[],
-): SubstitutionRequest[] {
-  return [...rows]
-    .sort((a, b) => sortKey(a) - sortKey(b))
-    .map((entry) => entry.request);
+function sortBySoonest<T extends SubstitutionSession>(rows: readonly T[]): T[] {
+  return [...rows].sort((a, b) => sortKey(a) - sortKey(b));
 }
 
 /**
@@ -95,22 +107,71 @@ function sortBySoonest(
  * day rather than ahead of all of them — the day is the only thing it can
  * honestly claim, and the middle of it is the least wrong place to say so.
  */
-function sortKey(entry: {
-  row: AdminSubstitutionRequest;
-  request: SubstitutionRequest;
-}): number {
-  const { startsAt } = entry.request;
+function sortKey(session: SubstitutionSession): number {
+  const { startsAt } = session;
   if (startsAt !== null) return startsAt.getTime();
-  return new Date(`${entry.row.session_date}T12:00:00.000Z`).getTime();
+  return new Date(`${session.sessionDay}T12:00:00.000Z`).getTime();
 }
 
-/** One open request as the list renders it. */
+/** One open request as the queue renders it. */
 function toSubstitutionRequest(
-  request: AdminSubstitutionRequest,
+  request: OpenAdminSubstitutionRequest,
   locale: SupportedLocale,
   viewerTimeZone: string,
   now: Date,
 ): SubstitutionRequest {
+  const session = toSubstitutionSession(request, locale, viewerTimeZone);
+  const { startsAt } = session;
+
+  return {
+    ...session,
+    // Strictly in the future as well as within the day: a session that has
+    // already begun is not something an admin can still staff, and shouting
+    // about it would be shouting about the past.
+    urgent:
+      startsAt !== null &&
+      startsAt.getTime() > now.getTime() &&
+      startsAt.getTime() - now.getTime() <= URGENT_WITHIN_MS,
+    offers: request.offers.map(
+      (offer): SubstitutionOffer => ({
+        id: offer.id,
+        geduId: offer.gedu_id,
+        name: personName(offer.first_name, offer.last_name),
+      }),
+    ),
+  };
+}
+
+/** One substituted request as the second section renders it. */
+function toSubstitutedSession(
+  request: SubstitutedAdminSubstitutionRequest,
+  locale: SupportedLocale,
+  viewerTimeZone: string,
+): SubstitutedSession {
+  return {
+    ...toSubstitutionSession(request, locale, viewerTimeZone),
+    substituteId: request.substitute_id,
+    substituteName: personName(
+      request.substitute_first_name,
+      request.substitute_last_name,
+    ),
+    approvedAt: new Date(request.approved_at),
+    approverFirstName: request.approved_by_first_name,
+  };
+}
+
+/**
+ * What both sections state about a session: which one, when, and whose seat.
+ *
+ * Urgency is not among them: it belongs to the open request alone, because it
+ * marks a session still to staff, and a substituted session claims none since
+ * there is nothing left to do about it.
+ */
+function toSubstitutionSession(
+  request: AdminSubstitutionRequest,
+  locale: SupportedLocale,
+  viewerTimeZone: string,
+): SubstitutionSession {
   const occurrence = occurrenceFor(request);
 
   return {
@@ -119,6 +180,7 @@ function toSubstitutionRequest(
     groupName: request.group_name,
     productName: productName(request.product.translations, locale),
     productType: request.product.product_type,
+    sessionDay: request.session_date,
     // A weekday beside the date, because what an admin is staffing is a
     // *session* and "Friday" is how the office talks about one; the year is
     // left off because the queue only ever holds dates from today forward
@@ -131,13 +193,6 @@ function toSubstitutionRequest(
     sessionTime:
       occurrence === null ? null : clockFace(occurrence, viewerTimeZone),
     startsAt: occurrence?.start ?? null,
-    // Strictly in the future as well as within the day: a session that has
-    // already begun is not something an admin can still staff, and shouting
-    // about it would be shouting about the past.
-    urgent:
-      occurrence !== null &&
-      occurrence.start.getTime() > now.getTime() &&
-      occurrence.start.getTime() - now.getTime() <= URGENT_WITHIN_MS,
     role: request.role,
     reason: request.reason,
     reasonNote: request.reason_note,
@@ -150,13 +205,6 @@ function toSubstitutionRequest(
       request.product.product_type,
       request.product.id,
       request.group_id,
-    ),
-    offers: request.offers.map(
-      (offer): SubstitutionOffer => ({
-        id: offer.id,
-        geduId: offer.gedu_id,
-        name: personName(offer.first_name, offer.last_name),
-      }),
     ),
   };
 }

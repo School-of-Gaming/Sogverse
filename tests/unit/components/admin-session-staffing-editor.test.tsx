@@ -30,6 +30,10 @@ import type { UserListEntry } from "@/services/users";
  * - **The picker's refusals are the caller's**, and they are two: the gedu
  *   being substituted, and anybody else already due at that session. Seating one of
  *   the latter would collapse two seats onto one person.
+ * - **The reason is asked only when filing on the gedu's behalf.** A seat with
+ *   a live request — open, or substituted and being re-pointed — already has
+ *   the gedu's reason, so the confirm asks nothing and the draft carries
+ *   neither field, which is what keeps the write from touching the row's own.
  */
 
 /** Real generated UUIDs — an id that reaches an identicon is never a stub. */
@@ -164,11 +168,12 @@ function choose(name: string | RegExp) {
 }
 
 /**
- * Answer the confirm step's one required question.
+ * Answer the confirm step's one required question, on a seat nothing has been
+ * filed on.
  *
- * Nothing is selected when it opens — an admin seating a substitute states why,
- * exactly as a gedu filing an absence does, and a pre-selected "Sick" would
- * record health data about a contractor that nobody stated.
+ * Nothing is selected when it opens — an admin filing on a gedu's behalf states
+ * why, exactly as a gedu filing an absence does, and a pre-selected "Sick"
+ * would record health data about a contractor that nobody stated.
  */
 function chooseReason() {
   fireEvent.click(screen.getByRole("radio", { name: copy.reasonSick }));
@@ -323,7 +328,7 @@ describe("the admin session staffing editor", () => {
     });
   });
 
-  it("offers a seat that has already filed, and says the set approves its request", async () => {
+  it("offers a seat that has already filed, approves its request, and asks no reason", async () => {
     // Sanna has filed, so the derivation no longer expects her — and her seat
     // is still the one an admin answers. The database agrees: it demands the
     // absent gedu be expected only where there is no substitution request in
@@ -337,19 +342,31 @@ describe("the admin session staffing editor", () => {
     fireEvent.click(pickerRow(PETRA));
 
     expect(screen.getByText(copy.approvesOpenRequest)).not.toBeNull();
-    chooseReason();
+    // Sanna already said why when she asked, so nothing is asked again: no
+    // category, no note, and the press is live straight away.
+    expect(screen.getByText(copy.reasonKept)).not.toBeNull();
+    expect(screen.queryByRole("radio")).toBeNull();
+    expect(
+      screen.queryByRole("textbox", { name: /Note for the office/ }),
+    ).toBeNull();
+    expect(isDisabled(button(copy.confirmAction))).toBe(false);
+
     await act(async () => {
       fireEvent.click(button(copy.confirmAction));
     });
+    // Neither key at all — omitted, never nulled — so the write keeps hers.
     expect(onSetSubstitution).toHaveBeenCalledWith({
       absentGeduId: SANNA,
       subGeduId: PETRA,
-      reason: "sick",
     });
+    expect(Object.keys(onSetSubstitution.mock.calls[0][0]).sort()).toEqual([
+      "absentGeduId",
+      "subGeduId",
+    ]);
   });
 
-  it("says a change on a substituted seat replaces the substitute filling it", () => {
-    renderEditor({
+  it("says a change on a substituted seat replaces the substitute, and asks no reason", async () => {
+    const { onSetSubstitution } = renderEditor({
       gedus: ONE_PRIMARY,
       requests: [substitutedRequest(SANNA, "Sanna", PETRA, "Petra")],
     });
@@ -363,6 +380,35 @@ describe("the admin session staffing editor", () => {
       screen.getByText(
         copy.replacesCurrentSub.replace("{name}", "Petra"),
       ),
+    ).not.toBeNull();
+    expect(screen.getByText(copy.reasonKept)).not.toBeNull();
+    expect(screen.queryByRole("radio")).toBeNull();
+
+    await act(async () => {
+      fireEvent.click(button(copy.confirmAction));
+    });
+    expect(onSetSubstitution).toHaveBeenCalledWith({
+      absentGeduId: SANNA,
+      subGeduId: JOONAS,
+    });
+    expect(Object.keys(onSetSubstitution.mock.calls[0][0]).sort()).toEqual([
+      "absentGeduId",
+      "subGeduId",
+    ]);
+  });
+
+  it("asks the reason when filing on the gedu's behalf, and says nothing is kept", () => {
+    renderEditor({ gedus: ONE_PRIMARY });
+
+    choose(copy.setSubstitute);
+    fireEvent.click(pickerRow(PETRA));
+
+    // No request on the seat, so this press files one — and there is no
+    // reason on record to keep.
+    expect(screen.queryByText(copy.reasonKept)).toBeNull();
+    expect(screen.getByText(copy.reasonLabel)).not.toBeNull();
+    expect(
+      screen.getByRole("textbox", { name: /Note for the office/ }),
     ).not.toBeNull();
   });
 

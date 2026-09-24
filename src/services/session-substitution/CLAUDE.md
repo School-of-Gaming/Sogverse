@@ -23,7 +23,8 @@ day. One row answers everything the feature needs to say:
   taken at filing time and never recomputed: it is what the session will be *paid* as,
   and a later change to somebody's standing role must not rewrite a past afternoon's pay
   class.
-- **Why** — a category and an optional note, **visible to admins only**. A `sick`
+- **Why** — a category, always present, and an optional note, **visible to admins
+  only**. An admin filing on a gedu's behalf states the category exactly as a gedu does. A `sick`
   category is health-related data about a contractor, so it rides on a document only when
   the reader is entitled to it (see "One shape, two readers" below).
 - **Who stood in** — the substitute, and the admin who approved them.
@@ -84,6 +85,11 @@ swallowed into `null` is a button that did nothing and said nothing.
 never types an RPC argument as nullable, so the writers carry trailing SQL defaults and a
 caller with nothing to say leaves the key out of the payload. Passing `null` does not
 compile; passing an empty string stores one.
+
+**An admin states a reason only when filing on a gedu's behalf** — seating somebody on a
+seat with no live request. Wherever a request exists, open or already substituted and
+being re-pointed, the gedu has said why: the admin is not asked again, and the seating
+write is sent neither parameter, which it reads as "keep what is on the row".
 
 ## One shape, two readers
 
@@ -316,8 +322,25 @@ gated by the pair.
 `/admin/substitutions` is where an absence is answered — a sidebar entry of its own, not a
 band on the admin dashboard, because every row is work somebody finishes today and a
 session with nobody teaching it is too easy to scroll past on a board of standing
-information. Its read, `get_admin_substitution_requests`, returns a bare array of the open
-requests, exactly as the gedu's own pool read returns one.
+information. It has two sections: the open queue, and below it the upcoming sessions that
+already have a substitute — where an admin checks whom they approved and knows whom to
+tell. Both come from one read, `get_admin_substitution_requests`, a bare array of open and
+substituted requests dated today or later that the client splits by status, so an
+approval moves a session from one section to the other in a single refetch. The second
+section has **no actions**: changing or clearing a sub belongs to the group's page, where
+the whole session's staffing is in view, so its cards link there and nothing else.
+
+**An open request can be answered from its own card with somebody who did not offer.** The
+card already names the seat — group, date, absent gedu — so the press opens the full gedu
+picker directly and the confirm asks no reason. The picker can refuse only the absent gedu,
+because this page's read does not carry the group's staffing; a colleague already due at
+the session is refused by the write, read out in the holding dialog as an approval's
+refusals are. That write is keyed by the seat rather than the request. A request the gedu
+withdrew while the dialog was open reads to it as a fresh filing on their behalf, and a
+filing needs the reason this confirm never asked, so the write refuses and the dialog says
+the request was withdrawn. A request another admin settled meanwhile is not refused: the
+write re-points the substitution they made at this sub. Closing that half means the write
+taking the request's id — a database change not yet made.
 
 **An offer on it carries the offerer's name and nothing else.** It used to carry the
 certification queue's two standings so the page could draw the same chips, and they are
@@ -347,6 +370,11 @@ request's occurrence from the slots that ride with it. Two products meeting on o
 two zones would otherwise sit in an order saying nothing about which is next, on a list an
 admin reads as a run of deadlines. An orphaned request — one whose weekday the schedule no
 longer names — has no start, sorts on its day, and claims no urgency.
+
+**Both sections are grouped by day, so the order is legible.** Each request sits under a label for
+its product-local session date — never a date derived from its start, or the orphan would
+have nowhere to go — soonest day first, and the cards therefore carry the clock face but not
+the date.
 
 ## Invalidation reaches four roots
 

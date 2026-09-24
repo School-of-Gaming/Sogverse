@@ -52,7 +52,9 @@ export class SessionSubstitutionService {
   }
 
   /**
-   * The admin Substitutions page: every open request, with its offers.
+   * The admin Substitutions page: every open request with its offers, and
+   * every upcoming substituted request with its substitute and approver, in
+   * one array the page splits by status.
    *
    * Each offer carries the offerer's name and nothing else — an uncertified
    * gedu cannot hold one, so a certification chip would have been true by

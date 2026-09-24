@@ -4,10 +4,16 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { BadgeCheck } from "lucide-react";
 import type {
+  SeatSubstituteDraft,
   SubstitutionOffer,
   SubstitutionRequest,
 } from "./admin-substitutions-data";
 import { ApproveOfferDialog } from "./approve-offer-dialog";
+import {
+  SeatSubstituteFlow,
+  type SeatSubstituteFlowState,
+} from "./seat-substitute-flow";
+import { SubstitutionDayList } from "./substitution-day-list";
 import { SubstitutionRequestRow } from "./substitution-request-row";
 
 /**
@@ -29,17 +35,20 @@ import { SubstitutionRequestRow } from "./substitution-request-row";
  * away at the moment there is most to confirm. The state therefore belongs to
  * the component that survives the collapse.
  *
- * **The write is the shell's, the ordering is the mapping's.** `onApproveOffer`
- * resolves once the approval has landed *and* the refetched document has
- * dropped the request, so a row leaves only when both halves agree. A row that
+ * **The writes are the shell's, the ordering is the mapping's.** An approval
+ * and a seating from the card both resolve once the write has landed *and* the
+ * refetched document has dropped the request, so a row leaves only when both
+ * halves agree — and either counts toward the receipt. A row that
  * left optimistically would have nowhere to put a failure, and the admin would
  * be told nothing at all. The order is soonest-session-first and is settled
- * before the list is handed over; nothing here re-sorts it.
+ * before the list is handed over; nothing here re-sorts it, and the day list
+ * below only groups it.
  */
 export function SubstitutionRequestsPanel({
   requests,
   now,
   onApproveOffer,
+  onSeatSubstitute,
 }: {
   requests: readonly SubstitutionRequest[];
   /** The page's pinned clock, passed down to each row's relative phrase. */
@@ -51,6 +60,11 @@ export function SubstitutionRequestsPanel({
    * own refusals.
    */
   onApproveOffer: (offerId: string) => Promise<void>;
+  /**
+   * Seat a gedu who did not offer, on the request's own seat. Resolves and
+   * rejects on the same terms as an approval.
+   */
+  onSeatSubstitute: (draft: SeatSubstituteDraft) => Promise<void>;
 }) {
   const t = useTranslations("admin.substitutions");
   /**
@@ -65,9 +79,14 @@ export function SubstitutionRequestsPanel({
     request: SubstitutionRequest;
     offer: SubstitutionOffer;
   } | null>(null);
+  /** The walk behind one card's "Seat someone else", or `null`. One per page, like the dialog. */
+  const [seating, setSeating] = useState<SeatSubstituteFlowState | null>(null);
   const [approvedIds, setApprovedIds] = useState<ReadonlySet<string>>(
     new Set(),
   );
+  /** Record a request this sitting has staffed, once its write has landed. */
+  const recordStaffed = (requestId: string) =>
+    setApprovedIds((current) => new Set(current).add(requestId));
 
   /**
    * Which requests this sitting has staffed, minus any the read is offering
@@ -116,17 +135,20 @@ export function SubstitutionRequestsPanel({
       {waiting.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("allClear")}</p>
       ) : (
-        <ul aria-label={t("listLabel")} className="space-y-3">
-          {waiting.map((request) => (
-            <li key={request.id}>
-              <SubstitutionRequestRow
-                request={request}
-                now={now}
-                onApproveOffer={(offer) => setConfirming({ request, offer })}
-              />
-            </li>
-          ))}
-        </ul>
+        <SubstitutionDayList
+          requests={waiting}
+          label={t("listLabel")}
+          renderRequest={(request) => (
+            <SubstitutionRequestRow
+              request={request}
+              now={now}
+              onApproveOffer={(offer) => setConfirming({ request, offer })}
+              onSeatSomeoneElse={() =>
+                setSeating({ step: "picker", request, sub: null })
+              }
+            />
+          )}
+        />
       )}
 
       {/* Mounted only while it is open, so its copy is built from rows that are
@@ -139,11 +161,19 @@ export function SubstitutionRequestsPanel({
           offer={confirming.offer}
           onClose={() => setConfirming(null)}
           onConfirm={() =>
-            onApproveOffer(confirming.offer.id).then(() => {
-              setApprovedIds((current) =>
-                new Set(current).add(confirming.request.id),
-              );
-            })
+            onApproveOffer(confirming.offer.id).then(() =>
+              recordStaffed(confirming.request.id),
+            )
+          }
+        />
+      )}
+
+      {seating !== null && (
+        <SeatSubstituteFlow
+          flow={seating}
+          setFlow={setSeating}
+          onConfirm={(draft) =>
+            onSeatSubstitute(draft).then(() => recordStaffed(draft.request.id))
           }
         />
       )}

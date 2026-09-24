@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  seatSubstituteFailureKey,
   substitutionRequestFailureKey,
   substitutionRequestRefusalMeansAlreadyFiled,
 } from "@/services/session-substitution";
@@ -106,5 +107,32 @@ describe("substitutionRequestRefusalMeansAlreadyFiled", () => {
     expect(
       substitutionRequestRefusalMeansAlreadyFiled("substitutionRequestFailed"),
     ).toBe(false);
+  });
+});
+
+describe("seatSubstituteFailureKey", () => {
+  it("reads a request withdrawn under the dialog as its own line", () => {
+    // The write is keyed by the seat, so a request withdrawn while the dialog
+    // was open arrives as a filing with no reason — and the absent gedu still
+    // holds the seat, so this is not the "no longer has this session" line.
+    expect(
+      seatSubstituteFailureKey(
+        refusal(
+          "23514",
+          "seat has no substitution request, and filing one needs a reason",
+        ),
+      ),
+    ).toBe("seatFailedRequestWithdrawn");
+    expect(
+      seatSubstituteFailureKey(
+        refusal(
+          "23514",
+          "gedu 00000000-0000-0000-0000-000000000001 is not expected at group 00000000-0000-0000-0000-000000000002 on 2026-10-01",
+        ),
+      ),
+    ).toBe("seatFailedSeatGone");
+    expect(seatSubstituteFailureKey(new Error("Failed to fetch"))).toBe(
+      "seatFailed",
+    );
   });
 });
