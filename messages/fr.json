@@ -2128,7 +2128,7 @@
       "substitutionRolePrimary": "Gedu principal",
       "substitutionRoleAssistant": "Gedu assistant",
       "substitutionMenuLabel": "Plus d’actions pour cette séance",
-      "substitutionRequestAction": "Je dois me désister",
+      "substitutionRequestAction": "J’ai besoin d’un remplacement",
       "substitutionRequestDialogTitle": "Je ne peux pas assurer cette séance",
       "substitutionRequestDialogBody": "La séance a bien lieu — le bureau cherche un remplacement pour vous. Votre motif et votre note ne sont visibles que par les admins.",
       "substitutionReasonLabel": "Motif",

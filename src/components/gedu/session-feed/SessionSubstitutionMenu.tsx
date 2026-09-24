@@ -10,7 +10,7 @@ import {
 } from "./SessionSubstitutionRequestDialog";
 
 /**
- * The gedu's own row in the card's overflow menu: **"I need to cancel"**, and
+ * The gedu's own row in the card's overflow menu: **"I need a substitute"**, and
  * the dialog behind it.
  *
  * The menu itself is `SessionCardMenu`, shared with the admin card — this is
@@ -18,11 +18,11 @@ import {
  * committing state that form needs.
  *
  * **The row and the dialog it opens say different things on purpose.** The row
- * is the gedu's own words for what they are doing — cancelling *their*
- * attendance — and it is short because it sits in a menu. The dialog is titled
- * "I can't make this session" and its first sentence says the session still
- * runs and the office looks for a substitute, which is what stops the shorter
- * row being read as cancelling the session itself *(owner, 2026-09)*.
+ * names what the gedu is asking for — a substitute — and never says "cancel",
+ * because a row reading as cancelling was read as cancelling the session itself
+ * *(owner, 2026-09)*. It is short because it sits in a menu. The dialog names
+ * the absence instead: it is titled "I can't make this session" and its first
+ * sentence says the session still runs and the office looks for a substitute.
  *
  * **Filing an absence is deliberately quiet.** It is rare — most gedus will
  * never press it — and a full-width control repeating that offer on every
