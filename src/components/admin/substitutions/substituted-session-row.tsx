@@ -3,7 +3,6 @@
 import { useFormatter, useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { PersonChip } from "@/components/ui/person-chip";
-import { cn } from "@/lib/utils";
 import type { SubstitutedSession } from "./admin-substitutions-data";
 import {
   OpenGroupLink,
@@ -17,8 +16,8 @@ import {
  *
  * It opens with the open card's own two lines, so a session reads the same
  * before and after it is staffed, and an admin checking what they approved
- * finds it by the words they approved it under. The urgency edge is the same
- * rule as well.
+ * finds it by the words they approved it under. It wears no urgency treatment,
+ * though: a staffed session has nothing left to do about it.
  *
  * **No actions.** Changing or clearing a substitute is the group page's job,
  * where the whole session's staffing is in view, so this card carries only the
@@ -36,9 +35,9 @@ export function SubstitutedSessionRow({
   const format = useFormatter();
 
   return (
-    <Card className={cn(session.urgent && "border-l-4 border-l-warning")}>
+    <Card>
       <CardContent className="space-y-3 p-4">
-        <SubstitutionSessionHeading session={session} now={now} />
+        <SubstitutionSessionHeading session={session} urgent={false} now={now} />
         <SubstitutionAwayLine session={session} />
 
         <div className="space-y-1">

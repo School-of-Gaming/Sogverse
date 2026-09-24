@@ -26,12 +26,19 @@ import type { SubstitutionSession } from "./admin-substitutions-data";
  * needs no zone at all, which is precisely what the date-in-the-product's-zone
  * heading above the card and the clock face in the viewer's zone beside the
  * phrase cannot claim.
+ *
+ * **The warning tint on that phrase is the caller's to ask for**, and only the
+ * open queue does: it marks a session still to staff, which a session with a
+ * substitute is not.
  */
 export function SubstitutionSessionHeading({
   session,
+  urgent,
   now,
 }: {
   session: SubstitutionSession;
+  /** Whether the phrase wears the warning tint of a session still to staff. */
+  urgent: boolean;
   /** The page's pinned clock — what the relative phrase is measured against. */
   now: Date;
 }) {
@@ -76,7 +83,7 @@ export function SubstitutionSessionHeading({
         <span
           className={cn(
             "flex items-center gap-1 text-xs",
-            session.urgent ? "font-medium text-warning" : "text-muted-foreground",
+            urgent ? "font-medium text-warning" : "text-muted-foreground",
           )}
         >
           <Clock className="h-3 w-3 shrink-0" aria-hidden />

@@ -321,10 +321,11 @@ describe("the admin Substitutions mapping", () => {
     expect(session.substituteName).toBe("Saana Nieminen");
     expect(session.approverFirstName).toBe("Kaisa");
     expect(session.approvedAt.toISOString()).toBe("2026-08-16T16:30:00.000Z");
-    // The session half is the queue's own: the same clock face, the same
-    // urgency rule, the same person away.
+    // The session half is the queue's own — the same clock face, the same
+    // person away — but a session that is staffed claims no urgency, however
+    // soon it starts: there is nothing left to do about it.
     expect(session.sessionTime).toBe("17:00–18:00");
-    expect(session.urgent).toBe(true);
+    expect("urgent" in session).toBe(false);
     expect(session.requesterName).toBe("Milo Korhonen");
   });
 

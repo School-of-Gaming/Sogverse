@@ -17,6 +17,8 @@ import { ROUTES } from "@/lib/constants";
  *    them** — what an admin reads to check they picked the right person.
  * 3. **It has no actions.** Changing or clearing a sub is the group page's job,
  *    so the card carries the way there and nothing to press on this page.
+ * 4. **It wears no urgency treatment**, however soon the session: a staffed
+ *    session has nothing left to do about it.
  *
  * Translations echo their keys (with their arguments, where the key takes
  * any), and the relative-time formatter echoes a fixed phrase.
@@ -59,7 +61,6 @@ const SUBSTITUTED: SubstitutedSession = {
   sessionDate: "Tue 18 Aug",
   sessionTime: "16:00–17:30",
   startsAt: new Date("2026-08-18T16:00:00+03:00"),
-  urgent: false,
   role: "primary",
   reason: "sick",
   reasonNote: null,
@@ -137,6 +138,27 @@ describe("the admin Substitutions page's sessions with a substitute", () => {
     expect(card.queryByRole("button")).toBeNull();
     const link = card.getByRole("link", { name: /admin\.substitutions\.openGroup/ });
     expect(link.getAttribute("href")).toContain("group-c");
+  });
+
+  it("wears no urgency treatment, even for a session within the hour", () => {
+    renderBody([
+      {
+        ...SUBSTITUTED,
+        sessionDay: "2026-08-17",
+        sessionDate: "Mon 17 Aug",
+        sessionTime: "10:00–11:30",
+        startsAt: new Date("2026-08-17T10:00:00+03:00"),
+      },
+    ]);
+    const list = within(section()).getByRole("list", {
+      name: "admin.substitutions.substitutedLabel",
+    });
+
+    expect(list.querySelector(".border-l-warning")).toBeNull();
+    expect(list.querySelector(".text-warning")).toBeNull();
+    expect(within(list).getByText("in 3 hours").className).toContain(
+      "text-muted-foreground",
+    );
   });
 
   it("says so in a line when no upcoming session has a substitute", () => {

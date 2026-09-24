@@ -96,15 +96,6 @@ export interface SubstitutionSession {
    * only a formatter in the component has.
    */
   startsAt: Date | null;
-  /**
-   * The session begins within a day, and the row says so more loudly.
-   *
-   * Decided in the mapping rather than in the row because it is a fact about
-   * the page's pinned `now` and the session's own start, and a component
-   * recomputing it from the same two values would be a second definition of
-   * "soon".
-   */
-  urgent: boolean;
   /** The role being substituted — the absent gedu's, and what the sub is paid as. */
   role: GeduAssignmentRole;
   reason: SubstitutionReason | null;
@@ -122,6 +113,16 @@ export interface SubstitutionSession {
 
 /** One open request: the session, and who has volunteered to stand in. */
 export interface SubstitutionRequest extends SubstitutionSession {
+  /**
+   * The session begins within a day and is still to staff, and the card says
+   * so more loudly.
+   *
+   * Decided in the mapping rather than in the card because it is a fact about
+   * the page's pinned `now` and the session's own start, and a component
+   * recomputing it from the same two values would be a second definition of
+   * "soon".
+   */
+  urgent: boolean;
   /** As delivered: the read orders by date then product, and so does the list. */
   offers: readonly SubstitutionOffer[];
 }

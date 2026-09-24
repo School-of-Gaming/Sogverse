@@ -55,7 +55,7 @@ export function buildAdminSubstitutionsData({
     if (row.status === "open") {
       open.push(toSubstitutionRequest(row, locale, viewerTimeZone, now));
     } else {
-      substituted.push(toSubstitutedSession(row, locale, viewerTimeZone, now));
+      substituted.push(toSubstitutedSession(row, locale, viewerTimeZone));
     }
   }
 
@@ -120,8 +120,18 @@ function toSubstitutionRequest(
   viewerTimeZone: string,
   now: Date,
 ): SubstitutionRequest {
+  const session = toSubstitutionSession(request, locale, viewerTimeZone);
+  const { startsAt } = session;
+
   return {
-    ...toSubstitutionSession(request, locale, viewerTimeZone, now),
+    ...session,
+    // Strictly in the future as well as within the day: a session that has
+    // already begun is not something an admin can still staff, and shouting
+    // about it would be shouting about the past.
+    urgent:
+      startsAt !== null &&
+      startsAt.getTime() > now.getTime() &&
+      startsAt.getTime() - now.getTime() <= URGENT_WITHIN_MS,
     offers: request.offers.map(
       (offer): SubstitutionOffer => ({
         id: offer.id,
@@ -137,10 +147,9 @@ function toSubstitutedSession(
   request: SubstitutedAdminSubstitutionRequest,
   locale: SupportedLocale,
   viewerTimeZone: string,
-  now: Date,
 ): SubstitutedSession {
   return {
-    ...toSubstitutionSession(request, locale, viewerTimeZone, now),
+    ...toSubstitutionSession(request, locale, viewerTimeZone),
     substituteId: request.substitute_id,
     substituteName: personName(
       request.substitute_first_name,
@@ -154,15 +163,14 @@ function toSubstitutedSession(
 /**
  * What both sections state about a session: which one, when, and whose seat.
  *
- * The urgency rule is the same for both. On the open queue it marks a session
- * still to staff; on a substituted one it marks the session whose substitute an
- * admin would have to reach today if anything changed.
+ * Urgency is not among them: it belongs to the open request alone, because it
+ * marks a session still to staff, and a substituted session claims none since
+ * there is nothing left to do about it.
  */
 function toSubstitutionSession(
   request: AdminSubstitutionRequest,
   locale: SupportedLocale,
   viewerTimeZone: string,
-  now: Date,
 ): SubstitutionSession {
   const occurrence = occurrenceFor(request);
 
@@ -185,13 +193,6 @@ function toSubstitutionSession(
     sessionTime:
       occurrence === null ? null : clockFace(occurrence, viewerTimeZone),
     startsAt: occurrence?.start ?? null,
-    // Strictly in the future as well as within the day: a session that has
-    // already begun is not something an admin can still staff, and shouting
-    // about it would be shouting about the past.
-    urgent:
-      occurrence !== null &&
-      occurrence.start.getTime() > now.getTime() &&
-      occurrence.start.getTime() - now.getTime() <= URGENT_WITHIN_MS,
     role: request.role,
     reason: request.reason,
     reasonNote: request.reason_note,

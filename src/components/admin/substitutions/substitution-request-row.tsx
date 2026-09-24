@@ -95,7 +95,11 @@ export function SubstitutionRequestRow({
       )}
     >
       <CardContent className="space-y-3 p-4">
-        <SubstitutionSessionHeading session={request} now={now} />
+        <SubstitutionSessionHeading
+          session={request}
+          urgent={request.urgent}
+          now={now}
+        />
         <SubstitutionAwayLine session={request} />
 
         {/* One slot, two states. A request nobody has answered says so on the
