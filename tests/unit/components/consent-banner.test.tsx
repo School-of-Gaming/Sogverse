@@ -233,3 +233,114 @@ describe("ConsentBanner", () => {
     }
   });
 });
+
+/**
+ * ============================================================================
+ * The provider's standing invariant: no advertising cookie without marketing.
+ * ============================================================================
+ *
+ * The withdrawal above is best-effort by construction — it runs while the
+ * scripts it is clearing up after are still in the document, and a tag
+ * container writes its session cookie on the way out, after the deletion and
+ * before the reload lands. What makes a withdrawal *stick* is this: a document
+ * where marketing is not granted clears the advertising cookies on mount, where
+ * neither vendor has any code running to put them back.
+ *
+ * So the case that matters most is the property-suffixed `_ga_<id>`, the one
+ * shape that survived the pre-reload clearing on a real browser; and the case
+ * that would be a defect is clearing under a granted answer, because those
+ * scripts are about to run in that very document.
+ */
+describe("ConsentProvider", () => {
+  /** Nothing to render: the invariant is the provider's, not the strip's. */
+  function mount(initial: ConsentState | null) {
+    return render(
+      <ConsentProvider initial={initial}>
+        <span>body</span>
+      </ConsentProvider>,
+    );
+  }
+
+  /** What a container leaves behind: the client id and the session state. */
+  function seedGoogleCookies() {
+    document.cookie = "_ga=GA1.1.1234567890.1790250509;path=/";
+    document.cookie =
+      "_ga_0Q531TML1G=GS2.1.s1790250509$o1$g1$t1790250522;path=/";
+  }
+
+  it("clears the session cookie a container rewrote on its way out", () => {
+    seedGoogleCookies();
+    document.cookie = "_fbp=fb.1.abc;path=/";
+    window.localStorage.setItem("multiFbc", "[]");
+    // Ours, and the reader's own: an invariant about the advertisers' state
+    // must not reach past it.
+    document.cookie = `${CONSENT_COOKIE_NAME}=stored;path=/`;
+    window.localStorage.setItem("sog-theme", "dark");
+
+    mount({
+      analytics: true,
+      marketing: false,
+      decidedAt: "2026-09-01T08:00:00.000Z",
+    });
+
+    expect(document.cookie).not.toContain("_ga_0Q531TML1G");
+    expect(document.cookie).not.toContain("_ga=");
+    expect(document.cookie).not.toContain("_fbp");
+    expect(window.localStorage.getItem("multiFbc")).toBeNull();
+    expect(document.cookie).toContain(CONSENT_COOKIE_NAME);
+    expect(window.localStorage.getItem("sog-theme")).toBe("dark");
+  });
+
+  // A visitor who has never answered is the same case as a refusal: whatever is
+  // on the document was not put there by anything this app was allowed to load.
+  it("clears when no answer has been given at all", () => {
+    seedGoogleCookies();
+
+    mount(null);
+
+    expect(document.cookie).not.toContain("_ga_0Q531TML1G");
+    expect(document.cookie).not.toContain("_ga=");
+  });
+
+  // The one case where clearing would itself be the defect: the gated
+  // components are loading those scripts into this very document, and React
+  // has already run their effects by the time the provider's runs.
+  it("leaves everything alone where marketing is granted", () => {
+    seedGoogleCookies();
+    window.localStorage.setItem("multiFbc", "[]");
+
+    mount(GRANTED_BOTH);
+
+    expect(document.cookie).toContain("_ga_0Q531TML1G");
+    expect(document.cookie).toContain("_ga=");
+    expect(window.localStorage.getItem("multiFbc")).toBe("[]");
+  });
+
+  // Reading `window.localStorage` throws outright where site data is blocked.
+  // The cookies are the half that matters and they go first, so such a browser
+  // still gets the whole of the invariant it is able to have.
+  it("clears the cookies even where local storage cannot be read", () => {
+    seedGoogleCookies();
+    const own = Object.getOwnPropertyDescriptor(window, "localStorage");
+    const reported = vi.spyOn(console, "error").mockImplementation(() => {});
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      get() {
+        throw new DOMException("site data blocked", "SecurityError");
+      },
+    });
+
+    try {
+      expect(() => mount(null)).not.toThrow();
+      expect(document.cookie).not.toContain("_ga_0Q531TML1G");
+      expect(reported).toHaveBeenCalled();
+    } finally {
+      // jsdom keeps `localStorage` on the prototype, so there may be no own
+      // descriptor to put back — leaving the throwing one in place would break
+      // every case after this.
+      if (own) Object.defineProperty(window, "localStorage", own);
+      else Reflect.deleteProperty(window, "localStorage");
+      reported.mockRestore();
+    }
+  });
+});
