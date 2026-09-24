@@ -105,17 +105,26 @@ export function advertisingCookieNames(cookies: string): string[] {
 }
 
 /**
- * What the advertising libraries keep in `localStorage`, removed on withdrawal
+ * What the advertising libraries keep in web storage, removed on withdrawal
  * beside the cookies above.
  *
  * Easy to miss, and the reason it matters is that none of these is a cookie: a
  * click id deleted from `_gcl_aw` or `_fbp` and left behind here is the same
  * click id, and it makes the device re-identifiable the moment the scripts are
- * allowed to run again. Both vendors keep such a twin — Google writes the raw
- * `gclid` into `_gcl_ls`, Meta writes the `fbclid` into `multiFbc` — so a list
- * covering one vendor is half a list. Meta’s prefixed entries are matched
- * rather than named because the library appends a pixel id and a purpose to each
- * key, and Google’s are matched on the prefix its cookies already use.
+ * allowed to run again. Both vendors keep such a twin - Google writes the raw
+ * `gclid` into `_gcl_ls`, Meta writes the `fbclid` into `multiFbc` - so a list
+ * covering one vendor is half a list.
+ *
+ * `lastExternalReferrer` and `lastExternalReferrerTime` are the pixel's as
+ * well, recording where the visitor arrived from and when. They read like
+ * nobody's in particular, which is the only reason they are worth a sentence:
+ * web storage is per-origin, so the only writers here are these two libraries
+ * and our own code, and our own code writes neither. Both are named in full,
+ * being fixed names that carry no id.
+ *
+ * The prefixed entries are matched rather than named: Meta appends a pixel id
+ * and a purpose to each of its keys, and Google's are taken on the prefix its
+ * cookies already use.
  */
 const ADVERTISING_STORAGE_KEYS = [
   "multiFbc",

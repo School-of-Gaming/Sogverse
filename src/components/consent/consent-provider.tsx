@@ -47,12 +47,17 @@ const ConsentContext = createContext<ConsentContextValue | undefined>(
 
 /**
  * Take away everything an advertising script left on this browser: its cookies,
- * and what either vendor keeps in local storage.
+ * and what either vendor keeps in web storage.
+ *
+ * Both stores are swept although only one of them has ever been seen to hold
+ * anything. They are blocked together, cleared together and cost one call
+ * each, so sweeping the pair is what stops the empty one from being a standing
+ * promise to go and look at a real browser again.
  *
  * Both callers below hand it the same job, so it is one function rather than
  * two copies — and the failure is owned here because it is the same failure
- * either way. Reading `window.localStorage` **throws outright** where site data
- * is blocked, which is a browser that has nothing stored to clear anyway, so the
+ * either way. Reading either store **throws outright** where site data is
+ * blocked, which is a browser that has nothing stored to clear anyway, so the
  * cookies above it are already done by the time it can fail and nothing either
  * caller does depends on it.
  */
@@ -64,8 +69,12 @@ function clearAdvertisingTraces(): void {
   }
   try {
     clearAdvertisingStorage(window.localStorage);
+    clearAdvertisingStorage(window.sessionStorage);
   } catch (error) {
-    console.error("[consent] could not clear the advertising scripts' storage", error);
+    console.error(
+      "[consent] could not clear the advertising scripts' storage",
+      error,
+    );
   }
 }
 

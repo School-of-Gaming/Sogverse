@@ -171,8 +171,8 @@ each script is handed the new answer as it loads.
 **Revoking one is not the mirror image of that, and no message can stand in for it.** A
 script that has already installed itself on the document goes on running whatever it has
 installed, and what it has already sent has already been sent — so a withdrawal deletes
-the advertising scripts' own cookies, clears what either of them keeps in local storage,
-and reloads. The new document has neither script in it, and starts from everything denied like
+the advertising scripts' own cookies, clears what either of them keeps in web storage, and
+reloads. The new document has neither script in it, and starts from everything denied like
 any other.
 
 **There is deliberately no way to tell a running script that the answer grew**, and it is
@@ -191,18 +191,16 @@ names, decided in the Tag Manager UI and unknowable here. A cookie that survives
 withdrawal goes on identifying the same browser to the same platform — including from our
 own server-side reports, which read these back off a later request.
 
-**Local storage is not a second copy of the cookie list, and it cannot be derived from
+**Web storage is not a second copy of the cookie list, and it cannot be derived from
 it.** Both vendors keep a storage twin of a click id they also write to a cookie, under a
-name the cookie list would never predict, so the two halves are separate lists that have
-to be kept separately — and the storage half has to be read as covering *both* vendors.
-Covering one of them is the failure mode, because a list naming only the pixel's keys
-looks complete: every entry in it is right, nothing in it is stale, and the names it is
-missing belong to the other vendor entirely. What that costs is exact — a click id deleted
-from the cookie and left in storage is the same click id, so the device is re-identifiable
-the moment the scripts are allowed to run again, which is the whole thing a withdrawal is
-for. This half is therefore checked against a browser rather than reasoned about: the keys
-are whatever the two libraries were observed to write on a granted visit that arrived on
-an ad link, and that observation is what the tests pin.
+name the cookie list would never predict, so the two halves are separate lists kept
+separately, and the storage half spans both vendors rather than the pixel alone. A click
+id deleted from the cookie and left in storage is the same click id, and leaves the device
+re-identifiable the moment the scripts are allowed to run again — which is the whole of
+what a withdrawal is for. So this half is pinned to a browser rather than reasoned out:
+the keys are whatever the two libraries were observed to write on a granted visit arriving
+from an ad, both stores are swept because an observation cannot say the empty one will
+stay empty, and the tests pin what was seen.
 
 **And the clearing happens in two places, which is not belt and braces but two different
 jobs.** Deleting before the reload races a script that is still running: the analytics

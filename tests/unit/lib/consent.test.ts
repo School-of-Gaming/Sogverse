@@ -224,14 +224,20 @@ describe("clearAdvertisingStorage", () => {
     ).filter((key): key is string => key !== null);
   }
 
+  // The six advertising keys are the set a real browser held after a granted
+  // visit that arrived on an ad link carrying both vendors' click ids, with
+  // their values as observed: this half of the withdrawal cannot be derived
+  // from our own source, because the names belong to code we neither ship nor
+  // wrote. The last two entries are the controls - one of ours, and one whose
+  // name merely resembles the pixel's.
   it("removes what the libraries wrote and nothing else", () => {
     const storage = fakeStorage({
-      multiFbc: "[]",
+      multiFbc: "fb.1.1790253052194.FbRehearsal456",
       "fbevents^$last_event^$1234567890": "1757500000000",
       "pixel_mutex:1234567890": "held",
-      _gcl_ls: '{"schema":"gcl"}',
+      _gcl_ls: '{"schema":"gcl","version":1,"gclid":{"value":"abc123"}}',
       lastExternalReferrer: "empty",
-      lastExternalReferrerTime: "1757500000000",
+      lastExternalReferrerTime: "1790253052187",
       "sog-theme": "dark",
       fbp: "not-ours-either",
     });
@@ -239,25 +245,6 @@ describe("clearAdvertisingStorage", () => {
     clearAdvertisingStorage(storage);
 
     expect(keysOf(storage)).toEqual(["sog-theme", "fbp"]);
-  });
-
-  // The exact set a granted visit leaves behind, read off a real browser after
-  // arriving on an ad link carrying both vendors' click ids. It is one case
-  // rather than three because the gap it closes was a list that covered one
-  // vendor and looked complete: every key here was observed together, and two
-  // of them hold a click id that also has a cookie the old list did delete.
-  it("removes every key a real granted visit leaves behind", () => {
-    const storage = fakeStorage({
-      _gcl_ls: '{"schema":"gcl","version":1,"gclid":{"value":"abc123"}}',
-      lastExternalReferrer: "empty",
-      lastExternalReferrerTime: "1790253052187",
-      multiFbc: "fb.1.1790253052194.FbRehearsal456",
-      "sog-theme": "dark",
-    });
-
-    clearAdvertisingStorage(storage);
-
-    expect(keysOf(storage)).toEqual(["sog-theme"]);
   });
 
   // The bug a remove-while-walking implementation has: deleting a key shifts
@@ -276,7 +263,7 @@ describe("clearAdvertisingStorage", () => {
     expect(keysOf(storage)).toEqual(["keep"]);
   });
 
-  it("does nothing to a storage the pixel never touched", () => {
+  it("does nothing to a storage the libraries never touched", () => {
     const storage = fakeStorage({ "sog-theme": "dark" });
 
     clearAdvertisingStorage(storage);
