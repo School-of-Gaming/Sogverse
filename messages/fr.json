@@ -2034,7 +2034,7 @@
       "fileFiled": "Remplacement demandé pour {product} le {when}. Il apparaît maintenant sur la fiche de cette séance.",
       "fileFiledLink": "Ouvrir l’espace de travail du groupe",
       "offerConfirmTitle": "Proposer un remplacement ?",
-      "offerConfirmBody": "Vous proposez d’assurer {product} le {when}. School of Gaming choisit qui remplace, donc une proposition ne vous engage pas tant qu’elle n’est pas approuvée — vous pouvez la retirer jusque-là. Une fois approuvée, l’espace de travail du groupe s’ouvre à vous 48 heures avant le début de la séance."
+      "offerConfirmBody": "Vous proposez d’assurer {product} le {when}. School of Gaming choisit qui remplace, et vous pouvez retirer votre proposition tant qu’elle n’est pas approuvée. Une fois approuvée, la séance relève de votre contrat Gedu, exactement comme vos propres séances, et vous ne pouvez plus vous retirer : si vous ne pouvez finalement pas l’assurer, demandez vous-même un remplacement, comme pour toutes vos séances. L’espace de travail du groupe s’ouvre à vous 48 heures avant le début de la séance."
     },
     "coverage": {
       "title": "Zones où vous pouvez animer",
@@ -2143,7 +2143,7 @@
       "substitutionRolePrimary": "Gedu principal",
       "substitutionRoleAssistant": "Gedu assistant",
       "substitutionMenuLabel": "Plus d’actions pour cette séance",
-      "substitutionRequestAction": "Je dois me désister",
+      "substitutionRequestAction": "J’ai besoin d’un remplacement",
       "substitutionRequestDialogTitle": "Je ne peux pas assurer cette séance",
       "substitutionRequestDialogBody": "La séance a bien lieu — le bureau cherche un remplacement pour vous. Votre motif et votre note ne sont visibles que par les admins.",
       "substitutionReasonLabel": "Motif",

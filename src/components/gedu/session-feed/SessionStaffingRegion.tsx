@@ -33,7 +33,7 @@ interface SessionStaffingRegionProps {
  * is outstanding, and the viewer's own request — where they hold one — is
  * stated loudly with the way to take it back.
  *
- * **No action starts here, whoever is looking.** A gedu's "I need to cancel"
+ * **No action starts here, whoever is looking.** A gedu's "I need a substitute"
  * and an admin's own actions are both rows in the card header's `⋯`, which is
  * what makes the two roles' cards the same card *(owner, 2026-09)*: an admin
  * looking at a session sees what the gedu sees, and the only difference is what

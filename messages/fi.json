@@ -2034,7 +2034,7 @@
       "fileFiled": "Tuuraajaa pyydetty: {product} {when}. Pyyntö näkyy nyt kyseisen kerran kortilla.",
       "fileFiledLink": "Avaa ryhmän työtila",
       "offerConfirmTitle": "Tarjoudutko tuuraajaksi?",
-      "offerConfirmBody": "Tarjoudut vetämään kerran {product} {when}. School of Gaming valitsee tuuraajan, joten tarjous ei sido sinua ennen kuin se on hyväksytty — siihen asti voit perua sen. Hyväksynnän jälkeen ryhmän työtila avautuu sinulle 48 tuntia ennen kerran alkua."
+      "offerConfirmBody": "Tarjoudut vetämään kerran {product} {when}. School of Gaming valitsee tuuraajan, ja voit perua tarjouksesi siihen asti, kun se hyväksytään. Hyväksynnän jälkeen kerta on Gedu-sopimuksesi nojalla sinun vastuullasi aivan kuten omat kertasi, etkä voi enää perua tarjoustasi: jos et sittenkään pääse paikalle, pyydä itsellesi tuuraaja samoin kuin mille tahansa kerrallesi. Ryhmän työtila avautuu sinulle 48 tuntia ennen kerran alkua."
     },
     "coverage": {
       "title": "Kattamasi alueet",
@@ -2143,7 +2143,7 @@
       "substitutionRolePrimary": "Vastaava Gedu",
       "substitutionRoleAssistant": "Avustava Gedu",
       "substitutionMenuLabel": "Lisää toimintoja tälle kerralle",
-      "substitutionRequestAction": "Joudun perumaan",
+      "substitutionRequestAction": "Tarvitsen tuuraajan",
       "substitutionRequestDialogTitle": "En pääse tälle kerralle",
       "substitutionRequestDialogBody": "Kerta järjestetään silti – toimisto etsii tilallesi tuuraajan. Syyn ja viestin näkevät vain ylläpitäjät.",
       "substitutionReasonLabel": "Syy",

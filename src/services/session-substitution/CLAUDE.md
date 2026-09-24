@@ -268,7 +268,9 @@ in several registers at once is a queue nobody reads.
 **Offering asks a confirm question and holds it open until the write settles; withdrawing
 an offer does not ask at all.** Offering is refusable — the request may have been filled,
 the session may have started — and the refusal is news the volunteer needs before they
-move on, which is what the holding mode is for. Withdrawing is the undo of a decision
+move on, which is what the holding mode is for. The question is also where the volunteer
+learns the offer's weight: once approved, the session is theirs under their gedu contract and
+there is no taking it back, so its wording states that plainly. Withdrawing is the undo of a decision
 already made, so a question in front of it would be a question about a question.
 
 ## Access, and the two places it is narrower

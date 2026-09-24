@@ -2034,7 +2034,7 @@
       "fileFiled": "Vikarie efterfrågad för {product} den {when}. Det syns nu på det tillfällets kort.",
       "fileFiledLink": "Öppna gruppens arbetsyta",
       "offerConfirmTitle": "Erbjuda dig att vikariera?",
-      "offerConfirmBody": "Du erbjuder dig att hålla {product} {when}. School of Gaming väljer vikarien, så ett erbjudande binder dig inte förrän det har godkänts — fram till dess kan du dra tillbaka det. Efter godkännandet öppnas gruppens arbetsyta för dig 48 timmar innan tillfället börjar."
+      "offerConfirmBody": "Du erbjuder dig att hålla {product} {when}. School of Gaming väljer vikarien, och du kan dra tillbaka ditt erbjudande tills det har godkänts. När det har godkänts är tillfället ditt enligt ditt Gedu-avtal, precis som dina egna tillfällen, och du kan inte längre dra dig ur: kan du ändå inte vara med får du själv be om en vikarie, som för alla dina tillfällen. Gruppens arbetsyta öppnas för dig 48 timmar innan tillfället börjar."
     },
     "coverage": {
       "title": "Områden du täcker",
@@ -2143,7 +2143,7 @@
       "substitutionRolePrimary": "Huvud-Gedu",
       "substitutionRoleAssistant": "Assisterande Gedu",
       "substitutionMenuLabel": "Fler åtgärder för det här tillfället",
-      "substitutionRequestAction": "Jag måste lämna återbud",
+      "substitutionRequestAction": "Jag behöver en vikarie",
       "substitutionRequestDialogTitle": "Jag kan inte vara med på det här tillfället",
       "substitutionRequestDialogBody": "Tillfället hålls ändå – kontoret letar efter en vikarie som tar din plats. Din orsak och din notering syns bara för administratörer.",
       "substitutionReasonLabel": "Orsak",
