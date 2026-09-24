@@ -178,3 +178,33 @@ export type RegisterParentBody = z.infer<typeof registerParentBody>;
  * attaches: a `code` beside the English `error`, which stays for the logs.
  */
 export const REGISTER_WEAK_PASSWORD = "WEAK_PASSWORD";
+
+/**
+ * Request body for finishing a parent registration that began with Google
+ * (`POST /api/auth/complete-registration`): everything the register form asks
+ * except the credential and the address, which the Google account already
+ * supplied. Picked from `registerParentBody` so the two forms of one
+ * registration hold every shared field to the same rule, the terms tick
+ * included.
+ */
+export const completeParentRegistrationBody = registerParentBody.pick({
+  firstName: true,
+  lastName: true,
+  homeLocationId: true,
+  locale: true,
+  utm: true,
+  marketingConsent: true,
+  acceptedTerms: true,
+});
+
+export type CompleteParentRegistrationBody = z.infer<
+  typeof completeParentRegistrationBody
+>;
+
+/**
+ * The code both registration-completion routes answer their 409 with: the
+ * caller's account is not one that owes a registration — it finished already,
+ * or it is not a customer. The finish form reads it as "sign in again", which
+ * lands the account wherever it now belongs.
+ */
+export const REGISTRATION_ALREADY_COMPLETE = "REGISTRATION_ALREADY_COMPLETE";

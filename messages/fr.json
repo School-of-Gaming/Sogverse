@@ -1437,6 +1437,16 @@
       "or": "ou",
       "failed": "La connexion avec Google n’a pas pu démarrer. Veuillez réessayer.",
       "finishNote": "Avec Google, vous finalisez votre compte School of Gaming à la page suivante."
+    },
+    "completeRegistration": {
+      "title": "Finalisez votre compte School of Gaming",
+      "geduTitle": "Finalisez votre compte Gedu chez School of Gaming",
+      "description": "Votre compte Google vous a connecté. Les informations ci-dessous finalisent votre compte School of Gaming.",
+      "notYou": "Ce n’est pas vous ?",
+      "signOut": "Se déconnecter",
+      "submit": "Terminer",
+      "finishing": "Finalisation...",
+      "alreadyComplete": "Ce compte est déjà configuré. Reconnectez-vous pour continuer."
     }
   },
   "pin": {

@@ -1,6 +1,11 @@
 import { ROUTES } from "@/lib/constants";
 import { resolveInternalPath } from "@/lib/navigation/internal-path";
 import { toInternalPathname } from "@/lib/navigation/locale-path";
+import {
+  readUtmFromSearchParams,
+  utmQueryParams,
+  type UtmAttribution,
+} from "@/lib/utm";
 
 /**
  * Where a sign-in may land when the caller named the destination: the one
@@ -79,16 +84,27 @@ export function resolveSafeRedirect(
  */
 export const COMPLETE_REGISTRATION_GEDU_QUERY = { as: "gedu" } as const;
 
+/** The finish page's parts, as the callback rebuilds its address from them. */
+export interface CompleteRegistrationTarget {
+  pathname: string;
+  asGedu: boolean;
+  /**
+   * The landing link's attribution, carried across the Google round trip,
+   * which unloads the tab that held it in memory. Sanitised on the way in.
+   */
+  utm: UtmAttribution;
+}
+
 /**
  * The finish page a safe `next` names, split into the raw (locale-prefixed)
- * pathname and whether it asked for the Gedu variant — or `null` when `next`
- * is some other page. The callback rebuilds the destination from these two
- * parts rather than forwarding the query, so nothing else a caller appended
- * survives the trip.
+ * pathname, whether it asked for the Gedu variant and the attribution it
+ * carried — or `null` when `next` is some other page. The callback rebuilds
+ * the destination from these parts rather than forwarding the query, so
+ * nothing else a caller appended survives the trip.
  */
 export function readCompleteRegistrationTarget(
   safePath: string,
-): { pathname: string; asGedu: boolean } | null {
+): CompleteRegistrationTarget | null {
   const url = new URL(safePath, SENTINEL);
   if (toInternalPathname(url.pathname) !== ROUTES.completeRegistration) {
     return null;
@@ -97,5 +113,24 @@ export function readCompleteRegistrationTarget(
     pathname: url.pathname,
     asGedu:
       url.searchParams.get("as") === COMPLETE_REGISTRATION_GEDU_QUERY.as,
+    utm: readUtmFromSearchParams(url.searchParams),
+  };
+}
+
+/**
+ * The finish page's query: the Gedu variant when asked for, then the
+ * attribution — the whole of what its address may carry. Shared by the
+ * register pages that build `next` and the callback that rebuilds it.
+ */
+export function completeRegistrationQuery({
+  asGedu,
+  utm,
+}: {
+  asGedu: boolean;
+  utm: UtmAttribution;
+}): Record<string, string> {
+  return {
+    ...(asGedu ? COMPLETE_REGISTRATION_GEDU_QUERY : {}),
+    ...utmQueryParams(utm),
   };
 }

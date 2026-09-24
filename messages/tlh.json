@@ -1481,6 +1481,16 @@
       "or": "pagh",
       "failed": "Google ’el Qapbe’. yInIDqa’!",
       "finishNote": "Google Dalo’chugh, School of Gaming account-lIj DarInmoH paq veb Daq."
+    },
+    "completeRegistration": {
+      "title": "School of Gaming account-lIj yIrInmoH",
+      "geduTitle": "noH Quj yejHaD Gedu account-lIj yIrInmoH",
+      "description": "Google account-lIj Dalo’ ’ej Dayel. School of Gaming account-lIj DarInmoH De’vammo’.",
+      "notYou": "SoHbe’’a’?",
+      "signOut": "yImej",
+      "submit": "yIrInmoH",
+      "finishing": "vIrInmoH...",
+      "alreadyComplete": "account’vam rInta’. yI’el’qa’ ’ej yItaH."
     }
   },
   "pin": {

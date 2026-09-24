@@ -1437,6 +1437,16 @@
       "or": "tai",
       "failed": "Google-kirjautumista ei voitu aloittaa. Yritä uudelleen.",
       "finishNote": "Google-tiliä käyttäessäsi viimeistelet School of Gaming -tilisi seuraavalla sivulla."
+    },
+    "completeRegistration": {
+      "title": "Viimeistele School of Gaming -tilisi",
+      "geduTitle": "Viimeistele School of Gaming -pelikasvattajatilisi",
+      "description": "Kirjauduit sisään Google-tililläsi. Alla olevilla tiedoilla viimeistelet School of Gaming -tilisi.",
+      "notYou": "Väärä tili?",
+      "signOut": "Kirjaudu ulos",
+      "submit": "Viimeistele",
+      "finishing": "Viimeistellään...",
+      "alreadyComplete": "Tämä tili on jo valmis. Kirjaudu uudelleen sisään jatkaaksesi."
     }
   },
   "pin": {

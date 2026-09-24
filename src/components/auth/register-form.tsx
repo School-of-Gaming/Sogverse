@@ -21,6 +21,7 @@ import { REGISTER_WEAK_PASSWORD } from "@/services/users/parent-registration.con
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth, useUtm } from "@/providers";
+import { completeRegistrationQuery } from "@/lib/navigation/post-auth-redirect";
 import { ContinueWithGoogle } from "./continue-with-google";
 
 const registerSchema = z.object({
@@ -433,9 +434,17 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
           </Button>
           {/* A Google account arrives with no name, terms or consents, so it
               lands on the finish page, in the language this page is read in —
-              the ticks above are this form's and do not travel with it. */}
+              the ticks above are this form's and do not travel with it. The
+              visit's attribution does, on the address: the round trip through
+              Google unloads the tab that holds it. */}
           <ContinueWithGoogle
-            next={getPathname({ href: ROUTES.completeRegistration, locale })}
+            next={getPathname({
+              href: {
+                pathname: ROUTES.completeRegistration,
+                query: completeRegistrationQuery({ asGedu: false, utm }),
+              },
+              locale,
+            })}
             disabled={isLoading}
             onBegin={() => {
               setError(null);

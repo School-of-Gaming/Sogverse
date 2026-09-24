@@ -25,7 +25,7 @@ import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth, useUtm } from "@/providers";
 import { readErrorMessage } from "@/lib/api/json-response";
 import type { SpokenLanguageCode } from "@/types";
-import { COMPLETE_REGISTRATION_GEDU_QUERY } from "@/lib/navigation/post-auth-redirect";
+import { completeRegistrationQuery } from "@/lib/navigation/post-auth-redirect";
 import { ContinueWithGoogle } from "./continue-with-google";
 
 /**
@@ -329,12 +329,14 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
             {status ?? (isLoading ? t("registerGedu.creatingAccount") : c("createAccount"))}
           </Button>
           {/* The finish page's Gedu variant, in this page's language: a
-              Google account arrives with none of the fields above. */}
+              Google account arrives with none of the fields above. The visit's
+              attribution rides on the address, since the round trip through
+              Google unloads the tab that holds it. */}
           <ContinueWithGoogle
             next={getPathname({
               href: {
                 pathname: ROUTES.completeRegistration,
-                query: COMPLETE_REGISTRATION_GEDU_QUERY,
+                query: completeRegistrationQuery({ asGedu: true, utm }),
               },
               locale,
             })}

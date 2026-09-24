@@ -1437,6 +1437,16 @@
       "or": "eller",
       "failed": "Inloggningen med Google kunde inte startas. Försök igen.",
       "finishNote": "Med Google slutför du ditt School of Gaming-konto på nästa sida."
+    },
+    "completeRegistration": {
+      "title": "Slutför ditt School of Gaming-konto",
+      "geduTitle": "Slutför ditt spelfostrarkonto hos School of Gaming",
+      "description": "Du loggade in med ditt Google-konto. Uppgifterna nedan slutför ditt School of Gaming-konto.",
+      "notYou": "Inte du?",
+      "signOut": "Logga ut",
+      "submit": "Slutför",
+      "finishing": "Slutförs...",
+      "alreadyComplete": "Det här kontot är redan klart. Logga in igen för att fortsätta."
     }
   },
   "pin": {

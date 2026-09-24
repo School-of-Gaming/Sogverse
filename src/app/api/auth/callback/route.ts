@@ -6,7 +6,7 @@ import { isSupportedLocale } from "@/lib/constants/locales";
 import { getOrigin } from "@/lib/url";
 import type { OAuthLoginError } from "@/lib/google-sign-in";
 import {
-  COMPLETE_REGISTRATION_GEDU_QUERY,
+  completeRegistrationQuery,
   readCompleteRegistrationTarget,
   resolveSafeRedirect,
 } from "@/lib/navigation/post-auth-redirect";
@@ -91,12 +91,14 @@ export async function GET(request: Request) {
     // **An account that still owes its registration goes to the finish page,
     // whatever `next` said.** Google hands over no name, terms or consents, so
     // nothing else is useful until they are given. The page keeps the locale
-    // the register page was read in when `next` carried one, and the Gedu
-    // variant only when the Gedu register page asked for it.
+    // the register page was read in when `next` carried one, the Gedu variant
+    // only when the Gedu register page asked for it, and the landing link's
+    // attribution, which the round trip through Google would otherwise lose.
     const pathname = finishTarget?.pathname ?? ROUTES.completeRegistration;
-    redirectPath = finishTarget?.asGedu
-      ? `${pathname}?${new URLSearchParams(COMPLETE_REGISTRATION_GEDU_QUERY)}`
-      : pathname;
+    const query = finishTarget
+      ? new URLSearchParams(completeRegistrationQuery(finishTarget)).toString()
+      : "";
+    redirectPath = query ? `${pathname}?${query}` : pathname;
   } else if (next && !finishTarget) {
     redirectPath = next;
   } else {

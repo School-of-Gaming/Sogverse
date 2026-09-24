@@ -210,6 +210,35 @@ describe("GET /api/auth/callback", () => {
       expect(destination(response)).toBe("/sv/complete-registration?as=gedu");
     });
 
+    // The Google round trip unloads the tab that held the landing link's
+    // attribution in memory, so the register page puts it on `next` and the
+    // callback carries it onto the finish page — sanitised, and nothing else.
+    it("carries the landing link's attribution, sanitised", async () => {
+      const response = await GET(
+        createCallbackRequest({
+          code: "valid-code",
+          next: "/fi/complete-registration?utm_source=Lynx&utm_medium=%3Dformula&utm_campaign=lynx-summer-a&extra=1",
+        }),
+      );
+
+      expect(destination(response)).toBe(
+        "/fi/complete-registration?utm_source=Lynx&utm_campaign=lynx-summer-a",
+      );
+    });
+
+    it("puts the Gedu variant ahead of the attribution", async () => {
+      const response = await GET(
+        createCallbackRequest({
+          code: "valid-code",
+          next: "/complete-registration?utm_campaign=recruit&as=gedu",
+        }),
+      );
+
+      expect(destination(response)).toBe(
+        "/complete-registration?as=gedu&utm_campaign=recruit",
+      );
+    });
+
     it("ignores any other next", async () => {
       const response = await GET(
         createCallbackRequest({ code: "valid-code", next: "/shop/abc-123" }),

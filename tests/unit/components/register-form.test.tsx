@@ -387,3 +387,35 @@ describe("RegisterForm", () => {
     expect(form.button().disabled).toBe(false);
   });
 });
+
+describe("the parent register page's Google button", () => {
+  // The round trip through Google unloads the tab holding the visit's
+  // attribution in memory, so it travels on the finish page's address — the
+  // parent variant, so no `as`.
+  it("sends the finish page, carrying the visit's attribution, as next", async () => {
+    vi.mocked(mockSupabaseClient.auth.signInWithOAuth).mockResolvedValue({
+      data: { provider: "google", url: "https://accounts.google.test" },
+      error: null,
+    });
+    const view = render(<RegisterForm redirect={null} />);
+    const button = [...view.container.querySelectorAll("button")].find(
+      (candidate) => candidate.textContent.includes("continue"),
+    );
+    if (!button) throw new Error("no Google button");
+
+    await act(async () => {
+      fireEvent.click(button);
+    });
+
+    const [args] = vi.mocked(mockSupabaseClient.auth.signInWithOAuth).mock
+      .calls[0];
+    const next = new URL(args.options?.redirectTo ?? "").searchParams.get("next");
+    if (!next) throw new Error("no next");
+    const nextUrl = new URL(next, "https://internal.invalid");
+    expect(nextUrl.pathname).toBe(ROUTES.completeRegistration);
+    expect(nextUrl.searchParams.has("as")).toBe(false);
+    expect(nextUrl.searchParams.get("utm_source")).toBe("Lynx");
+    expect(nextUrl.searchParams.get("utm_campaign")).toBe("lynx-summer-a");
+    expect(nextUrl.searchParams.has("utm_medium")).toBe(false);
+  });
+});

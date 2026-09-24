@@ -164,6 +164,7 @@ const TESTS = {
   chatImageRead: "tests/integration/api/chat-image-read.test.ts",
   chatImageUpload: "tests/integration/api/chat-image-upload.test.ts",
   checkout: "tests/integration/api/checkout-products-create.test.ts",
+  completeRegistration: "tests/integration/auth/complete-registration.test.ts",
   discordInteractions: "tests/integration/api/discord-interactions.test.ts",
   familyList: "tests/integration/api/family-list.test.ts",
   feedback: "tests/integration/api/feedback.test.ts",
@@ -174,6 +175,8 @@ const TESTS = {
     "tests/integration/api/gamers-verification-send.test.ts",
   geduGamerMinecraft: "tests/integration/api/gedu-gamer-minecraft.test.ts",
   geduGamerRoblox: "tests/integration/api/gedu-gamer-roblox.test.ts",
+  geduCompleteRegistration:
+    "tests/integration/api/gedu-complete-registration.test.ts",
   geduRegister: "tests/integration/api/gedu-register.test.ts",
   geduSessionEmailReport:
     "tests/integration/api/gedu-session-email-report.test.ts",
@@ -501,6 +504,25 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         },
         body: { kind: "none" },
         test: TESTS.callback,
+      },
+    },
+  },
+
+  "src/app/api/auth/complete-registration/route.ts": {
+    adminClient:
+      "finishes a registration begun with Google, on the caller's own profile and only while it still owes one: the profile columns authenticated has no UPDATE grant on — the three utm_* columns (their one consent-gated write, since a provider-created row has no signup metadata), email_verified_at (when Google verified the same address) and registration_completed_at (the stamp, written last); the auth user read (getUserById) for the Google identity's verification; and the two consent writes the register route makes for the same reason it makes them — record_account_consents and record_registration_marketing_consent are granted to service_role alone, because they take the customer as a parameter and claim the 'registration' provenance",
+    handlers: {
+      POST: {
+        posture: {
+          kind: "role-gated",
+          roles: ["customer"],
+          // A fresh Google account has no PIN yet: the finish page stands in
+          // the PIN gate's place. The handler's own guard is the narrowing —
+          // it writes nothing unless registration_completed_at is still NULL.
+          allowUnverified: true,
+        },
+        body: { kind: "json", schema: "completeParentRegistrationBody" },
+        test: TESTS.completeRegistration,
       },
     },
   },
@@ -867,6 +889,25 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   },
 
   // --- Educator self-registration ------------------------------------------
+
+  "src/app/api/gedu/complete-registration/route.ts": {
+    adminClient:
+      "finishes an educator registration begun with Google, on the caller's own account and only while it still owes one: register_gedu (service_role only, because it grants the gedu role) promotes it exactly as the register route does, then the profile columns authenticated has no UPDATE grant on — the three utm_* columns (their one consent-gated write), email_verified_at (when Google verified the same address) and registration_completed_at (the stamp, written last) — plus the auth user read (getUserById) for the Google identity's verification. It never deletes the user: the account is the person's own, and a failed promotion leaves it owing registration for a retry",
+    handlers: {
+      POST: {
+        posture: {
+          kind: "role-gated",
+          roles: ["customer"],
+          // The caller is still the customer the new-user trigger made; a
+          // fresh Google account has no PIN yet, and the handler's guard on
+          // registration_completed_at is the narrowing.
+          allowUnverified: true,
+        },
+        body: { kind: "json", schema: "completeGeduRegistrationBody" },
+        test: TESTS.geduCompleteRegistration,
+      },
+    },
+  },
 
   "src/app/api/gedu/register/route.ts": {
     adminClient:

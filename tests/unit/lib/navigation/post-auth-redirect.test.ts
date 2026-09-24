@@ -106,13 +106,27 @@ describe("resolveSafeRedirect with the finish page allowed", () => {
 });
 
 describe("readCompleteRegistrationTarget", () => {
+  const NO_UTM = { source: null, medium: null, campaign: null };
+
   it("splits the raw pathname from the Gedu flag", () => {
     expect(readCompleteRegistrationTarget("/fr/complete-registration")).toEqual(
-      { pathname: "/fr/complete-registration", asGedu: false },
+      { pathname: "/fr/complete-registration", asGedu: false, utm: NO_UTM },
     );
     expect(
       readCompleteRegistrationTarget("/fi/complete-registration?as=gedu&x=1"),
-    ).toEqual({ pathname: "/fi/complete-registration", asGedu: true });
+    ).toEqual({ pathname: "/fi/complete-registration", asGedu: true, utm: NO_UTM });
+  });
+
+  it("reads the attribution through the sanitiser", () => {
+    expect(
+      readCompleteRegistrationTarget(
+        "/complete-registration?utm_source=Lynx&utm_medium=%3Dx&utm_campaign=a&utm_campaign=b",
+      ),
+    ).toEqual({
+      pathname: "/complete-registration",
+      asGedu: false,
+      utm: { source: "Lynx", medium: null, campaign: null },
+    });
   });
 
   it("is null for any other page", () => {

@@ -21,6 +21,10 @@
 --    so it sits after family_search_blob rather than beside the other profile
 --    columns; the view's security_invoker flag is restated, because a replace
 --    sets the view's options to exactly what it names.
+-- 5. The comments on profiles.email_verified_at and profiles.utm_source name
+--    the registration-completion routes as the second service-role writer
+--    each column now has. utm_medium and utm_campaign defer to utm_source's
+--    rules, so theirs stand.
 --
 -- WHAT DID NOT CHANGE
 --
@@ -178,3 +182,10 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+-- Two columns gain a second service-role writer: the routes that complete a
+-- registration begun with Google. Their comments say so.
+
+COMMENT ON COLUMN public.profiles.email_verified_at IS 'When the address in profiles.email was last proven to reach this account''s owner, or NULL for "not verified" — the resting state for gamer rows, whose synthetic <token>@gamer.sogverse.internal address no inbox answers. Written only by service_role: the route that validates a signed verification link, and the registration-completion routes when the identity provider that created the account reports the same address verified. There is deliberately no UPDATE grant at any level for authenticated or anon, because a marker its own subject can set proves nothing. Reset to NULL by trg_reset_email_verification whenever profiles.email changes — the value is a claim about one address, not about the account.';
+
+COMMENT ON COLUMN public.profiles.utm_source IS 'Optional marketing provenance: the utm_source from the link this account arrived through, or NULL (the large majority). Written once and never updatable — there is deliberately no UPDATE grant, at any level, for any role but service_role. The one write is handle_new_user() from the signup metadata, except for an account created by an identity provider (Google), whose round trip carries no signup metadata: there it is the registration-completion route that makes it. Case is preserved, because Vercel reports UTM values case-sensitively. Labels only: it grants nothing, is never used for profiling or to decide what anyone is shown or charged, and gamer rows always hold NULL.';

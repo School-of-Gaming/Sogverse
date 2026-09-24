@@ -21,12 +21,18 @@ vi.mock("next-intl", () => ({
   useLocale: () => "fi",
 }));
 
+let mockUtm: { source: string | null; medium: string | null; campaign: string | null } = {
+  source: null,
+  medium: null,
+  campaign: null,
+};
+
 vi.mock("@/providers", () => ({
   useAuth: () => ({
     freezeUntilNavigation: vi.fn(),
     unfreezeAuthState: vi.fn(),
   }),
-  useUtm: () => ({ source: null, medium: null, campaign: null }),
+  useUtm: () => mockUtm,
 }));
 
 vi.mock("@/hooks/use-auth-redirect", () => ({
@@ -63,6 +69,7 @@ const signInWithOAuth = vi.mocked(mockSupabaseClient.auth.signInWithOAuth);
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockUtm = { source: null, medium: null, campaign: null };
   signInWithOAuth.mockResolvedValue({
     data: { provider: "google", url: "https://accounts.google.test" },
     error: null,
@@ -89,6 +96,26 @@ describe("the Gedu register page's Google button", () => {
     const nextUrl = new URL(next, "https://internal.invalid");
     expect(nextUrl.pathname).toBe("/complete-registration");
     expect(nextUrl.searchParams.get("as")).toBe("gedu");
+  });
+
+  // The round trip through Google unloads the tab holding the visit's
+  // attribution in memory, so it travels on the finish page's address.
+  it("carries the visit's attribution on next", async () => {
+    mockUtm = { source: "recruit", medium: null, campaign: "gedu-autumn" };
+    render(<RegisterGeduForm redirect={null} />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "continue" }));
+    });
+
+    const [args] = signInWithOAuth.mock.calls[0];
+    const next = new URL(args.options.redirectTo).searchParams.get("next");
+    if (!next) throw new Error("no next");
+    const nextUrl = new URL(next, "https://internal.invalid");
+    expect(nextUrl.searchParams.get("as")).toBe("gedu");
+    expect(nextUrl.searchParams.get("utm_source")).toBe("recruit");
+    expect(nextUrl.searchParams.get("utm_campaign")).toBe("gedu-autumn");
+    expect(nextUrl.searchParams.has("utm_medium")).toBe(false);
   });
 
   it("says the account is finished on the next page", () => {

@@ -51,9 +51,20 @@ Then the **client** signs in with the password and does a full-page nav to `/ged
 (`admin.createUser` doesn't sign the browser in; full-page nav is required after any auth
 change — see `src/CLAUDE.md`).
 
+**The Google path starts from an account that already exists.** The Gedu register page's
+Google button creates a customer account owing its registration, and the finish page's
+Gedu variant posts the same fields minus address and password to
+`POST /api/gedu/complete-registration`. That route refuses an account that has finished
+registering, resolves the handles and calls `register_gedu` through the same shared
+helpers as the register route, then writes the consent-gated attribution, Google's
+verification of the address and the registration stamp in one statement, and sends the
+welcome mail — without a verification link when Google verified the address. **A failed
+promotion is a 500 and no `deleteUser`**: the account is the person's own, the RPC is one
+transaction, so it is left a customer still owing registration, and they retry.
+
 **Rule: `register_gedu` is `service_role` only.** It grants the gedu role, so it must
-never be reachable by `authenticated`/`anon`. The API route (admin client) is the only
-caller. It guards that the target is a freshly-created `customer` profile so it can't
+never be reachable by `authenticated`/`anon`. The two registration routes (admin client)
+are its only callers. It guards that the target is a freshly-created `customer` profile so it can't
 mutate an established account.
 
 **Rule: callers pass `''`/`[]` for absent optional fields, not null.** The generated RPC

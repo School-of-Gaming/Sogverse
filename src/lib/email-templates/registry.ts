@@ -774,9 +774,19 @@ const feedbackParamsSchema = z.object({
   gamerOwnMailbox: z.boolean(),
 });
 
+/**
+ * The welcome mails' verification link, or the typed `none` for an address
+ * that is already verified — an account created through Google, whose mail
+ * then asks for nothing.
+ */
+const welcomeVerificationUrlParam = z
+  .string()
+  .transform((value) => noneOrText(value) ?? undefined)
+  .pipe(z.string().url().optional());
+
 const welcomeParentParamsSchema = z.object({
   firstName: z.string().min(1),
-  verificationUrl: z.string().url(),
+  verificationUrl: welcomeVerificationUrlParam,
   dashboardUrl: z.string().url(),
   shopUrl: z.string().url(),
   settingsUrl: z.string().url(),
@@ -784,7 +794,7 @@ const welcomeParentParamsSchema = z.object({
 
 const welcomeGeduParamsSchema = z.object({
   firstName: z.string().min(1),
-  verificationUrl: z.string().url(),
+  verificationUrl: welcomeVerificationUrlParam,
   dashboardUrl: z.string().url(),
   settingsUrl: z.string().url(),
 });
@@ -1410,7 +1420,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
   passwordReset: defineTemplate({
     label: "Password Reset",
     fields: [
-      { key: "resetLink", label: "Reset Link", placeholder: "https://sogverse.sog.gg/api/auth/callback?next=/reset-password&code=abc123" },
+      { key: "resetLink", label: "Reset Link", placeholder: "https://sogverse.sog.gg/reset-password?token_hash=abc123&type=recovery&email=jane%40example.com" },
     ],
     schema: passwordResetParamsSchema,
     build: (p, t, locale) => buildPasswordResetEmail(t, p.resetLink, locale),
@@ -1478,7 +1488,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     label: "Welcome (Parent)",
     fields: [
       { key: "firstName", label: "First Name", placeholder: "Jane" },
-      { key: "verificationUrl", label: "Verification URL", placeholder: "https://sogverse.sog.gg/verify-email?token=abc123" },
+      { key: "verificationUrl", label: `Verification URL (\`${FORM_NONE_TOKEN}\` for an address Google already verified)`, placeholder: "https://sogverse.sog.gg/verify-email?token=abc123" },
       { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/parent" },
       { key: "shopUrl", label: "Shop URL", placeholder: "https://sogverse.sog.gg/shop" },
       { key: "settingsUrl", label: "Settings URL", placeholder: "https://sogverse.sog.gg/settings" },
@@ -1491,7 +1501,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     label: "Welcome (Gedu)",
     fields: [
       { key: "firstName", label: "First Name", placeholder: "Alice" },
-      { key: "verificationUrl", label: "Verification URL", placeholder: "https://sogverse.sog.gg/verify-email?token=abc123" },
+      { key: "verificationUrl", label: `Verification URL (\`${FORM_NONE_TOKEN}\` for an address Google already verified)`, placeholder: "https://sogverse.sog.gg/verify-email?token=abc123" },
       { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/gedu" },
       { key: "settingsUrl", label: "Settings URL", placeholder: "https://sogverse.sog.gg/settings" },
     ],

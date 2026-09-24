@@ -187,6 +187,20 @@ describe("buildWelcomeParentEmail", () => {
     expect(html).not.toContain("<script>xss</script>");
     expect(html).toContain("&lt;script&gt;xss&lt;/script&gt;");
   });
+
+  /**
+   * An address Google already verified is not asked about again: the verify
+   * sentence and its button go together, and the pair of doors stays.
+   */
+  it("asks for no verification when there is no link to verify with", () => {
+    const html = buildWelcomeParentEmail(t, "en", { ...params, verificationUrl: undefined });
+    expect(html).not.toContain("Verify your email address");
+    expect(html).not.toContain("/verify-email");
+    expect(html).not.toContain(`href="${SETTINGS_URL}"`);
+    expect(html).toContain(`href="${SHOP_URL}"`);
+    expect(html).toContain(`href="${DASHBOARD_URL}"`);
+    expect(html).toContain("Sogverse is School of Gaming’s platform");
+  });
 });
 
 describe("buildWelcomeGeduEmail", () => {
@@ -261,5 +275,19 @@ describe("buildWelcomeGeduEmail", () => {
     const html = buildWelcomeGeduEmail(t, "en", { ...params, firstName: "<b>A</b>" });
     expect(html).not.toContain("<b>A</b>");
     expect(html).toContain("&lt;b&gt;A&lt;/b&gt;");
+  });
+
+  /**
+   * An address Google already verified is not asked about again, and My SOG is
+   * then the only place the mail offers, so it takes the fill.
+   */
+  it("asks for no verification when there is no link, and fills My SOG", () => {
+    const withLink = buildWelcomeGeduEmail(t, "en", params);
+    const html = buildWelcomeGeduEmail(t, "en", { ...params, verificationUrl: undefined });
+    expect(html).not.toContain("/verify-email");
+    expect(html).not.toContain(`href="${SETTINGS_URL}"`);
+    expect(html).toContain(`href="${params.dashboardUrl}"`);
+    expect(html).toContain("cta-on-brand");
+    expect(withLink.split("cta-on-brand").length).toBe(html.split("cta-on-brand").length);
   });
 });
