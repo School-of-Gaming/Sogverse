@@ -1853,15 +1853,14 @@
     "loadingAssignments": "Ladataan kerhojasi, leirejäsi ja tapahtumiasi."
   },
   "helpSection": {
-    "heading": "Apu",
-    "gamerHeading": "Tarvitsetko apua?",
+    "heading": "Tarvitsetko apua?",
     "faqHeading": "Usein kysytyt kysymykset",
     "form": {
       "messageLabel": "Viesti",
       "charactersNeeded": "{count} merkkiä vielä tarvitaan",
       "submit": "Lähetä viesti",
       "adult": {
-        "description": "Pyydä meiltä apua – jokainen viesti tulee School of Gamingin tiimille. Autamme mielellämme kaikessa oikean kerhon valinnasta siihen, miten kaikki toimii, tai voit lähettää meille sähköpostia osoitteeseen <link>{email}</link>.",
+        "description": "Pyydä meiltä apua – jokainen viesti tulee School of Gamingin tiimille. Voit myös lähettää meille sähköpostia osoitteeseen <link>{email}</link>.",
         "placeholder": "Missä voimme auttaa?",
         "thankYou": "Kiitos – viestisi on perillä, ja on hienoa, että kirjoitit.",
         "failed": "Viestin lähettäminen epäonnistui. Yritä uudelleen.",

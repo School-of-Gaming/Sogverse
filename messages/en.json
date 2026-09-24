@@ -1853,15 +1853,14 @@
     "loadingAssignments": "Loading your clubs, camps and events."
   },
   "helpSection": {
-    "heading": "Help",
-    "gamerHeading": "Need help?",
+    "heading": "Need help?",
     "faqHeading": "Frequently asked questions",
     "form": {
       "messageLabel": "Message",
       "charactersNeeded": "{count} more characters needed",
       "submit": "Send message",
       "adult": {
-        "description": "Ask us for help — every message reaches the School of Gaming team. We’re happy to help with anything from picking the right club to questions about how it all works, or you can email us at <link>{email}</link>.",
+        "description": "Ask us for help — every message reaches the School of Gaming team. You can also email us at <link>{email}</link>.",
         "placeholder": "What can we help with?",
         "thankYou": "Thank you — your message is with us, and we’re glad you wrote.",
         "failed": "We could not send your message. Please try again.",

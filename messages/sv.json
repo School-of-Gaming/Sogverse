@@ -1853,15 +1853,14 @@
     "loadingAssignments": "Laddar dina klubbar, läger och evenemang."
   },
   "helpSection": {
-    "heading": "Hjälp",
-    "gamerHeading": "Behöver du hjälp?",
+    "heading": "Behöver du hjälp?",
     "faqHeading": "Vanliga frågor",
     "form": {
       "messageLabel": "Meddelande",
       "charactersNeeded": "{count} tecken till behövs",
       "submit": "Skicka meddelande",
       "adult": {
-        "description": "Be oss om hjälp — varje meddelande når teamet på School of Gaming. Vi hjälper gärna till med allt från att välja rätt klubb till frågor om hur det hela fungerar, eller så kan du mejla oss på <link>{email}</link>.",
+        "description": "Be oss om hjälp — varje meddelande når teamet på School of Gaming. Du kan också mejla oss på <link>{email}</link>.",
         "placeholder": "Vad kan vi hjälpa till med?",
         "thankYou": "Tack — ditt meddelande är hos oss, och vi är glada att du hörde av dig.",
         "failed": "Vi kunde inte skicka ditt meddelande. Försök igen.",

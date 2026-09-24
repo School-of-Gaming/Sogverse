@@ -1853,15 +1853,14 @@
     "loadingAssignments": "Chargement de vos clubs, stages et événements."
   },
   "helpSection": {
-    "heading": "Aide",
-    "gamerHeading": "Besoin d’aide ?",
+    "heading": "Besoin d’aide ?",
     "faqHeading": "Questions fréquentes",
     "form": {
       "messageLabel": "Message",
       "charactersNeeded": "Encore {count} caractères requis",
       "submit": "Envoyer le message",
       "adult": {
-        "description": "Demandez-nous de l’aide — chaque message arrive à l’équipe School of Gaming. Nous vous aidons volontiers, du choix du bon club aux questions sur la façon dont tout cela fonctionne, ou vous pouvez nous écrire à <link>{email}</link>.",
+        "description": "Demandez-nous de l’aide — chaque message arrive à l’équipe School of Gaming. Vous pouvez aussi nous écrire à <link>{email}</link>.",
         "placeholder": "Comment pouvons-nous vous aider ?",
         "thankYou": "Merci — votre message nous est bien parvenu, et nous sommes contents que vous nous ayez écrit.",
         "failed": "Nous n’avons pas pu envoyer votre message. Veuillez réessayer.",

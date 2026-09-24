@@ -59,7 +59,7 @@ export interface HelpRequestCardViewProps {
  * parent, gamer and gedu help sections.
  *
  * **It carries no heading of its own.** Every surface that renders it puts it
- * under a section heading that already says "Help", and a card title
+ * under a section heading that already asks "Need help?", and a card title
  * repeating that in the next line is the same sentence twice. The lead
  * paragraph does the work a title would.
  *

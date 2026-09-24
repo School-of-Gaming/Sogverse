@@ -1897,15 +1897,14 @@
     "loadingAssignments": "ghom’a’meyraj raghmeyraj Qu’meyraj je laDlu’…"
   },
   "helpSection": {
-    "heading": "boQ",
-    "gamerHeading": "boQ DaneH’a’?",
+    "heading": "boQ DaneH’a’?",
     "faqHeading": "qaSchuq SeghHommey",
     "form": {
       "messageLabel": "QIn",
       "charactersNeeded": "{count} mu’mey Daj nIS",
       "submit": "QIn yIngeH",
       "adult": {
-        "description": "boQ yItlhob — QIn Hoch SIchbej noH Quj yejHaD ghom. ghom’a’ QaQ wIvmeH, qoj Hoch mIw DaghojmeH, batlh maQaH. jabbI’ID DangeHlaH je: <link>{email}</link>.",
+        "description": "boQ yItlhob — QIn Hoch SIchbej noH Quj yejHaD ghom. jabbI’ID DangeHlaH je: <link>{email}</link>.",
         "placeholder": "nuq DaneH’a’?",
         "thankYou": "qatlho’ — QInlIj wISuqpu’. bIqonpu’ ’e’ wItIv!",
         "failed": "QIn ngeH Dabe’lu’. yIboq.",
