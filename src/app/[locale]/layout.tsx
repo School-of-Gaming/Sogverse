@@ -21,6 +21,7 @@ import { siteJsonLd } from "@/lib/seo/organization";
 import {
   AnalyticsScripts,
   ConsentBanner,
+  GoogleTagManager,
   MetaPixel,
 } from "@/components/consent";
 import "../globals.css";
@@ -261,6 +262,7 @@ export default async function LocaleLayout({
           <ConsentBanner />
           <AnalyticsScripts />
           <MetaPixel />
+          <GoogleTagManager />
         </Providers>
       </body>
     </html>

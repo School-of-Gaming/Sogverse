@@ -4378,7 +4378,8 @@
           "Roblox — receives your child’s Roblox account id, so we can confirm the account, and your browser fetches their avatar picture from Roblox directly.",
           "Mojang (Microsoft) — receives your child’s Minecraft username, so we can confirm the account.",
           "mc-heads.net — your browser fetches the picture of your child’s Minecraft character from it directly, using their Minecraft username, which is public in the game. It is a free public service rather than a contractor of ours, and it sees only that request.",
-          "Meta (Facebook and Instagram) — through the Meta Pixel in your browser and reports from our servers, sees how you use our site, so we can show you our ads there and measure how they perform. Only if you allow marketing cookies."
+          "Meta (Facebook and Instagram) — through the Meta Pixel in your browser and reports from our servers, sees how you use our site, so we can show you our ads there and measure how they perform. Only if you allow marketing cookies.",
+          "Google (Analytics and Ads) — through a tag manager in your browser, sees which of our public pages you visit and what you signed up for, so we can measure how our advertising performs and show you our ads. Only if you allow marketing cookies — not analytics: the analytics you can switch on is Vercel’s alone."
         ]
       },
       "partners": {
@@ -4410,7 +4411,7 @@
         ],
         "bullets": [
           "Analytics — Vercel’s, and only if you choose it. It counts visits, measures how quickly pages load, and receives a few anonymous events about how the site is used: how someone reached their My SOG, when someone changes the language. It can’t see who you are, and we never hand it to advertisers.",
-          "Marketing — advertising cookies, only if you choose them. They let the advertising platforms named above — today, Meta — see how you use our site, so they can show you our ads and we can tell which ads work. If you create an account during a visit, the campaign tag on the link you arrived from is stored on it too. They never run while a gamer is signed in. Switching marketing off deletes these cookies, and the small amount of data Meta’s script keeps in your browser alongside them, but not what the platforms already hold — you can ask them to delete it in your settings with them."
+          "Marketing — advertising cookies, only if you choose them. They let the advertising platforms named above — today, Meta and Google — see how you use our site, so they can show you our ads and we can tell which ads work. Google’s tags reach your browser through a tag manager, which lets us and the partner who runs our campaigns add or remove a platform without changing the site; whichever platforms it carries are named in the list above, and that list carries a date. If you create an account during a visit, the campaign tag on the link you arrived from is stored on it too. They never run while a gamer is signed in. Switching marketing off deletes these cookies, and the small amount of data these scripts keep in your browser alongside them, but not what the platforms already hold — you can ask them to delete it in your settings with them."
         ]
       },
       "voice": {

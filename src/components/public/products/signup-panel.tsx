@@ -10,6 +10,9 @@ import type {
 import { AddGamerDialog } from "@/components/family";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { ROUTES } from "@/lib/constants";
+import { pushGtmEvent } from "@/lib/gtm";
+import { GTM_EVENTS } from "@/lib/gtm-events";
+import { isAdvertisedProduct } from "@/lib/marketing-events";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { useAuth } from "@/providers/auth-provider";
 import { useSetMarketingConsent } from "@/services/marketing-consents";
@@ -179,6 +182,38 @@ export function SignupPanel({
   const purchaseShape = purchaseShapeFor(fields.pricingOption);
 
   /**
+   * Where the marketing events say they happened: this product's own page, as a
+   * concrete internal path rather than the `/shop/[id]` template.
+   *
+   * The event carries no product of its own, so the path is the only place the
+   * product travels — collapsed to the template, every enrolment the shop has
+   * ever taken arrives as one undifferentiated row, and the first question
+   * anyone asks of the numbers ("which products are families signing up for?")
+   * has no answer in them. It is also the shape our servers already state for
+   * the same moments on the advertising side. And it is the shape `page_path`
+   * is defined to carry, which every push obeys — a funnel is only drawn across
+   * events that name their page the same way, so it forks at whichever step
+   * decides for itself.
+   *
+   * That definition — which path, stated by whom, and why a product page is one
+   * an event may name — is written once on `page_path` in `gtm-events.ts`.
+   */
+  const productPagePath = ROUTES.shopProductPath(product.id);
+
+  /**
+   * Whether this is a product we advertise — decided by the product's own two
+   * columns, which the panel already holds as props.
+   *
+   * **It travels with the event and never suppresses it.** An advertising
+   * platform is told only about advertised products, because a conversion for a
+   * product nobody advertised is noise a campaign would be optimised against;
+   * analytics is told about all of them, because leaving them out would make the
+   * numbers disagree with our own database. Which vendor acts on the flag is a
+   * per-tag decision in the container.
+   */
+  const advertised = isAdvertisedProduct(product);
+
+  /**
    * The documents the parent agreed to, in the product's own order.
    *
    * The panel groups the required slugs into rows and asks about each row, but
@@ -282,6 +317,24 @@ export function SignupPanel({
     createMutation.mutate(input, {
       onSuccess: (response) => {
         if (response.status === "redirect") {
+          // Handed to Stripe, and reported as exactly that. It is deliberately
+          // not the enrolment event: a name is what an ad platform optimises on,
+          // so reporting an abandoned checkout as an enrolment would teach it to
+          // find people who *start* paying.
+          //
+          // The push itself is synchronous and lands before the assignment
+          // below, so the event is in the queue whatever happens next. What a
+          // tag then does with it is the tag's own business, and only one shape
+          // of that survives an unload: a request sent with `sendBeacon`, which
+          // is what GA4's tag uses. A tag that sends an ordinary fetch from here
+          // may lose its leg to the navigation — a property of how the container
+          // is configured, not something this call site can fix.
+          pushGtmEvent({
+            event: GTM_EVENTS.checkout,
+            outcome: "sent_to_checkout",
+            advertised,
+            page_path: productPagePath,
+          });
           window.location.href = response.checkoutUrl;
           return;
         }
@@ -296,6 +349,29 @@ export function SignupPanel({
           // the same confirmation page the paid flow lands on. Keep
           // `committing` set so the CTA stays disabled through the navigation
           // (the panel unmounts on push).
+          //
+          // **Both halves push, and neither is reported to an advertising
+          // platform** — which looks like a contradiction and is the whole
+          // point of the flag. Our servers tell an ad platform about neither a
+          // municipality club nor anything invoiced off-platform, because a
+          // conversion for a product nobody advertised is noise a campaign
+          // would be optimised against. Analytics is a different question: both
+          // halves are seats in our own database, and a count that quietly
+          // dropped one of them would disagree with it. The two outcomes differ
+          // only in how the council is invoiced, so reporting one and not the
+          // other would under-count municipality enrolments for no reason a
+          // reader of the numbers could ever discover. So the enrolment goes
+          // out either way and `advertised` travels with it, and it is the
+          // container that decides which tags read it.
+          //
+          // This path is a soft navigation, so the document survives the push
+          // and a tag has as long as it likes.
+          pushGtmEvent({
+            event: GTM_EVENTS.enrolment,
+            outcome: "enrolled",
+            advertised,
+            page_path: productPagePath,
+          });
           router.push(ROUTES.shopConfirmation(response.participationId));
           return;
         }
@@ -327,6 +403,29 @@ export function SignupPanel({
       },
       {
         onSuccess: (response) => {
+          // A place in the queue is a family committing to a product, which is
+          // what the enrolment event names — reported under the same word as a
+          // seat and told apart by its outcome.
+          //
+          // **Gated on exactly what the route gates its own reporting on**, and
+          // that is the whole reason the flag crosses the wire. The RPC is
+          // idempotent and answers a replay with the existing row, shape for
+          // shape: a stale tab resubmitting, a browser retrying, or a second
+          // parent joining a gamer who already holds a place all come back
+          // looking like a fresh join. Pushing on those would count one place in
+          // line several times over, and it would count exactly the cases the
+          // server already refuses to report. The status check is the server's
+          // other half: a fresh insert that comes back as anything but
+          // `waitlisted` is a seat rather than a queue place, and must not be
+          // reported as one.
+          if (response.status === "waitlisted" && !response.idempotent) {
+            pushGtmEvent({
+              event: GTM_EVENTS.enrolment,
+              outcome: "waitlisted",
+              advertised,
+              page_path: productPagePath,
+            });
+          }
           // Mirror the free-signup branch: land the parent on the summary
           // (waitlist variant). Keep `committing` set — the panel unmounts on nav.
           router.push(ROUTES.shopConfirmation(response.participationId));
