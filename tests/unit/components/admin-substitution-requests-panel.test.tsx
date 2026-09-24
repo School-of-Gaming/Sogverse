@@ -356,7 +356,7 @@ describe("the admin Substitutions page's queue panel", () => {
     // The write the shell makes from it: the request's group, its own
     // product-local date and its absent gedu — and no reason or note key at
     // all, so the gedu's own stays on the row.
-    expect(seatSubstituteWrite(draft)).toEqual({
+    expect(seatSubstituteWrite(draft)).toStrictEqual({
       groupId: "group-b",
       sessionDate: "2026-08-25",
       absentGeduId: IDS.requester,

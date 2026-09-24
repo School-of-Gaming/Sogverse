@@ -872,7 +872,11 @@ function ReasonFields({
  * That is the only case that asks — a seat whose request already exists keeps
  * the reason on it and is never asked for it again *(owner, 2026-09)*. The
  * database still accepts a null reason, which is what keeps every row filed
- * before this change readable; the interface simply never sends one.
+ * before this change readable; the interface never asks for one except when
+ * filing. The one way a filing still lands without a reason is a race: the
+ * write is keyed by the seat, so if the gedu withdraws their request while the
+ * dialog for a seat that had one is open, the seat is filed afresh on their
+ * behalf with the reason that dialog never asked.
  */
 const SUBSTITUTION_REASONS = Constants.public.Enums.substitution_reason;
 

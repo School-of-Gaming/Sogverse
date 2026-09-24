@@ -334,7 +334,9 @@ because this page's read does not carry the group's staffing; a colleague alread
 the session is refused by the write, read out in the holding dialog as an approval's
 refusals are. That write is keyed by the seat rather than the request, so a request
 withdrawn or settled by another admin while the dialog was open is not refused: the seat is
-filed afresh on the gedu's behalf, or re-pointed. Closing that means the write taking the
+filed afresh on the gedu's behalf, or re-pointed. A seat filed afresh this way carries no
+reason, because the confirm asked none: it is the one path by which an on-behalf filing
+exists without one. Closing that means the write taking the
 request's id — a database change not yet made.
 
 **An offer on it carries the offerer's name and nothing else.** It used to carry the

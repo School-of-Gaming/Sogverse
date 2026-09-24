@@ -359,6 +359,10 @@ describe("the admin session staffing editor", () => {
       absentGeduId: SANNA,
       subGeduId: PETRA,
     });
+    expect(Object.keys(onSetSubstitution.mock.calls[0][0]).sort()).toEqual([
+      "absentGeduId",
+      "subGeduId",
+    ]);
   });
 
   it("says a change on a substituted seat replaces the substitute, and asks no reason", async () => {
@@ -387,6 +391,10 @@ describe("the admin session staffing editor", () => {
       absentGeduId: SANNA,
       subGeduId: JOONAS,
     });
+    expect(Object.keys(onSetSubstitution.mock.calls[0][0]).sort()).toEqual([
+      "absentGeduId",
+      "subGeduId",
+    ]);
   });
 
   it("asks the reason when filing on the gedu's behalf, and says nothing is kept", () => {
