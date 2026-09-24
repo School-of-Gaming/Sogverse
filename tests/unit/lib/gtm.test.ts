@@ -475,3 +475,165 @@ describe("reportGtmPageView", () => {
     );
   });
 });
+
+/** Every `set` command in the queue, as it was pushed. */
+function setEntries(): unknown[] {
+  return queue().filter((entry) => commandValues(entry)[0] === "set");
+}
+
+/** The single pinned page, or `undefined` if nothing was pinned. */
+function pinnedPage(): unknown {
+  const entries = setEntries();
+  expect(entries).toHaveLength(1);
+  return commandValues(entries[0])[1];
+}
+
+/**
+ * ============================================================================
+ * The page gtag names in the events it generates for itself.
+ * ============================================================================
+ *
+ * Our own events state their `page_path`, so no tag of ours reads the address
+ * bar — but gtag emits events that reach no tag at all, `user_engagement` above
+ * all, and fills those from the live document. A container outlives the
+ * marketing page that authorised it, because a client navigation builds no new
+ * document, so an unpinned container reports whatever private URL the tab ended
+ * on. `set` writes the page into the data model every later event is read
+ * against, including those, and it stands until it is written again.
+ *
+ * Stickiness is what makes the negatives below the load-bearing half: a pin on
+ * a page we refused to report would be the same leak by another route, and it
+ * would outlast the navigation that caused it.
+ */
+describe("the page pinned for gtag's own events", () => {
+  it("pins the page alongside a reported page view", async () => {
+    const report = gtm.reportGtmPageView(CONTAINER_ID, "/shop", GRANTED_BOTH);
+
+    containerArrives();
+    await report;
+
+    expect(pinnedPage()).toEqual({
+      page_location: `${window.location.origin}/shop`,
+      page_title: "Sogverse",
+    });
+  });
+
+  // The same distinction the consent commands are held to, for the same
+  // reason: an array of the same values is merged into the data model as
+  // numbered keys and the command is never seen, which on the wire is
+  // indistinguishable from a container that was never told the page.
+  it("pins as an arguments object, never an array", async () => {
+    const report = gtm.reportGtmPageView(CONTAINER_ID, "/shop", GRANTED_BOTH);
+
+    containerArrives();
+    await report;
+
+    const [entry] = setEntries();
+    expect(isArgumentsObject(entry)).toBe(true);
+    expect(Array.isArray(entry)).toBe(false);
+  });
+
+  // The pinned location names the same page the view does: origin plus the
+  // internal path, not the translated, locale-prefixed one in the address bar.
+  it("pins the internal path of a locale-prefixed page, not the address bar's", async () => {
+    tabIsOn("/sv/butik");
+    const report = gtm.reportGtmPageView(
+      CONTAINER_ID,
+      "/sv/butik",
+      GRANTED_BOTH,
+    );
+
+    containerArrives();
+    await report;
+
+    expect(pinnedPage()).toEqual({
+      page_location: `${window.location.origin}/shop`,
+      page_title: "Sogverse",
+    });
+  });
+
+  // A dynamic route keeps the record's own id, exactly as the page view does:
+  // a product page is a public URL naming a product, and collapsing it to its
+  // template would name every product at once.
+  it("keeps a dynamic route's own id in the pinned location", async () => {
+    tabIsOn("/fi/kauppa/abc-123");
+    const report = gtm.reportGtmPageView(
+      CONTAINER_ID,
+      "/fi/kauppa/abc-123",
+      GRANTED_BOTH,
+    );
+
+    containerArrives();
+    await report;
+
+    expect(pinnedPage()).toEqual({
+      page_location: `${window.location.origin}/shop/abc-123`,
+      page_title: "Sogverse",
+    });
+  });
+
+  // A constant, not `document.title`: the report runs from an effect just after
+  // the route changed, and the App Router updates the title on its own
+  // schedule — so the title read here can still be the previous page's, and the
+  // previous page may have been a private one naming a child.
+  it("pins a constant title, whatever the document currently says", async () => {
+    document.title = "My SOG | School of Gaming";
+    const report = gtm.reportGtmPageView(CONTAINER_ID, "/shop", GRANTED_BOTH);
+
+    containerArrives();
+    await report;
+
+    expect(pinnedPage()).toEqual({
+      page_location: `${window.location.origin}/shop`,
+      page_title: "Sogverse",
+    });
+  });
+
+  // The proxy's bounce for a signed-out parent: a marketing pathname whose
+  // query names a child. Refused for the report, and so refused for the pin.
+  it("pins nothing when the query may not travel", async () => {
+    tabIsOn("/login?redirect=/en/parent/gamers/abc-123");
+
+    await gtm.reportGtmPageView(CONTAINER_ID, "/login", GRANTED_BOTH);
+
+    expect(window.dataLayer).toBeUndefined();
+  });
+
+  // The case the whole defect is about, arriving one step earlier: the visitor
+  // left the shop for a child's page while the container was still
+  // downloading. A pin here would name the shop while the tab is elsewhere —
+  // which is the intended behaviour once a page has been *reported*, and a
+  // fabrication for one that never was.
+  it("pins nothing when the tab moved on during the load", async () => {
+    const report = gtm.reportGtmPageView(CONTAINER_ID, "/shop", GRANTED_BOTH);
+    tabIsOn("/parent/gamers/abc-123");
+
+    containerArrives();
+    await report;
+
+    expect(setEntries()).toHaveLength(0);
+  });
+
+  it("pins nothing for a URL that matches no route", async () => {
+    tabIsOn("/not-a-page-we-have");
+
+    await gtm.reportGtmPageView(
+      CONTAINER_ID,
+      "/not-a-page-we-have",
+      GRANTED_BOTH,
+    );
+
+    expect(window.dataLayer).toBeUndefined();
+  });
+
+  // Nothing may be queued for a container that will never arrive — an ad
+  // blocker refused it, so the queue is a global array nothing will read.
+  it("pins nothing when the container never loads", async () => {
+    const report = gtm.reportGtmPageView(CONTAINER_ID, "/shop", GRANTED_BOTH);
+
+    containerFails();
+    await report;
+
+    expect(setEntries()).toHaveLength(0);
+  });
+});

@@ -224,6 +224,82 @@ const gtagCommand: (
   signals: ConsentSignals,
 ) => IArguments = gtagArguments;
 
+/** The two fields gtag reads for the page when it builds an event of its own. */
+interface PinnedPage {
+  page_location: string;
+  page_title: string;
+}
+
+/**
+ * The same typed front door for the `set` command, which writes into the data
+ * model that every later event is read against. It is a second alias rather
+ * than a widening of the one above because the arity and the field shape
+ * differ; the function it reaches is still the zero-parameter one, so what
+ * lands in the queue is a real `arguments` object either way.
+ */
+const gtagSet: (command: "set", page: PinnedPage) => IArguments = gtagArguments;
+
+/**
+ * The title pinned with every page view: a constant, deliberately, rather than
+ * `document.title`.
+ *
+ * The report below is made from an effect that runs just after the route
+ * changed, while the App Router updates the document title on a schedule of its
+ * own — so reading the title here can capture the *previous* page's, and the
+ * previous page may have been a private one naming a child. A constant cannot
+ * be wrong at any moment. What it costs is the page-title dimension in
+ * analytics, which is a price worth paying: `page_path` is our authoritative
+ * identity for a page, and a title could only ever restate it.
+ */
+const PINNED_PAGE_TITLE = "Sogverse";
+
+/**
+ * Pin the page gtag will name in the events it generates for itself.
+ *
+ * **The defect this prevents.** Every event this app pushes states its own
+ * `page_path`, so no tag of ours needs the address bar — but gtag also emits
+ * events that pass through no tag at all, `user_engagement` above all, and it
+ * fills those from `document.location` and `document.title` at the moment it
+ * sends them. A container lives as long as its document, and this app
+ * client-navigates without building a new one, so a visitor who arrives on a
+ * marketing page and then walks into a signed-in area leaves a loaded container
+ * sitting on a private URL. On unload gtag reports the page the tab ended on —
+ * which on a gamer page is a child's record id, under a title carrying a
+ * child's first name.
+ *
+ * **Why `set` and not the container's configuration.** Pinning the same two
+ * fields in the Google tag's configuration settings was tried on the wire: the
+ * settings published correctly and gtag went on reading the live document for
+ * its automatic events. `set` writes into the shared data model that every
+ * subsequent event is read against, including the ones gtag generates itself,
+ * which is the difference between the two.
+ *
+ * **Sticky by design, which is what decides where it is called from.** A value
+ * written here stands until it is written again, so the pin belongs beside the
+ * page views we report and nowhere else: a page we refused to report is a page
+ * we never pin, and the last authorised marketing page stays named. gtag can
+ * then only ever report a page this app put there, whatever the tab moved on
+ * to — so there is nothing to push on a navigation we are not reporting, and
+ * nothing to undo.
+ *
+ * Gated on `armed` like every other push: a value queued for a container that
+ * will never arrive is a record of the visit sitting in a global for any later
+ * script to read.
+ */
+function pinGtmPage(internalPath: string): void {
+  if (typeof window === "undefined") return;
+  if (!armed) return;
+  window.dataLayer?.push(
+    gtagSet("set", {
+      // Built from the internal path — the same value the page view states —
+      // against the document's own origin, so staging and production are one
+      // piece of code and no host is written down here.
+      page_location: new URL(internalPath, window.location.origin).href,
+      page_title: PINNED_PAGE_TITLE,
+    }),
+  );
+}
+
 /**
  * Install the container and initialise it for `containerId`. Idempotent: a
  * second call returns the first call's promise, so a caller may load on every
@@ -333,6 +409,10 @@ export function pushGtmEvent(event: GtmEvent): void {
  * **internal path** — locale prefix removed and the slug untranslated, with the
  * record's own id kept — which is the value every other event states too, so a
  * view and the enrolment that followed it name one page rather than two.
+ *
+ * Reporting a page is also what pins it for gtag's own events, which is why the
+ * pin sits behind the same checks rather than beside the navigation that
+ * triggered them — `pinGtmPage` above says what that buys.
  */
 export async function reportGtmPageView(
   containerId: string,
@@ -358,5 +438,9 @@ export async function reportGtmPageView(
   const authorised = new URL(pathname, window.location.origin).pathname;
   if (window.location.pathname !== authorised) return;
   if (!isReportableQuery(window.location.search)) return;
+  // One act in two pushes: the page gtag may name in the events it generates
+  // for itself, and the page view we are reporting. Both state the same
+  // internal path, and neither happens for a page refused above.
+  pinGtmPage(internalPath);
   pushGtmEvent({ event: GTM_EVENTS.pageView, page_path: internalPath });
 }
