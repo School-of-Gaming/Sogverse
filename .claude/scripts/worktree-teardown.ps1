@@ -294,7 +294,7 @@ if ($DryRun) {
 }
 else {
   try { Remove-TreeNoFollow -Root $target }
-  catch { Die "$($_.Exception.Message)`n  A process in the worktree (dev server, build, editor) is probably holding a file. Stop it and rerun." }
+  catch { Die "$($_.Exception.Message)`n  Something stopped the delete: a running process holding a file (dev server, build, editor), a path too long to remove, or denied access. Stop any process in the worktree and rerun." }
   git -C $root worktree prune
   Ok "removed and pruned"
   Assert-MainIntact $canaries $links 'after removal'

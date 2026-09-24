@@ -45,8 +45,8 @@ switch, or a Turbopack panic on every page ("creating new process … 0xc0000142
 server died mid-write. Restarting the server does not clear it, and a stale and a fresh
 build can serve the same chunk URL, so compare chunk contents against the source, never the
 URL. To prove the source innocent first, compile `src/app/globals.css` standalone through
-`postcss` with `@tailwindcss/postcss` from the repo root. Delete it with
-`cmd /c rmdir /s /q .next`, which never follows a link: a build leaves junctions into
+`postcss` with `@tailwindcss/postcss` from the repo root. Delete it from
+PowerShell with `cmd /c rmdir /s /q .next`, which never follows a link: a build leaves junctions into
 `node_modules` under `.next`, and a delete that follows one empties the real package.
 After deleting, hard-reload the browser.
 

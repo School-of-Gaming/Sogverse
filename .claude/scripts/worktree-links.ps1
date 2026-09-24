@@ -36,10 +36,31 @@ function Get-EntryCount([string]$Path) {
 }
 
 function Get-LinkTarget([string]$Path) {
-  try { $t = @((Get-Item -LiteralPath $Path -Force).Target)[0] } catch { return $null }
-  if (-not $t) { return $null }
-  if (-not [IO.Path]::IsPathRooted($t)) { $t = Join-Path (Split-Path -Parent $Path) $t }
-  [IO.Path]::GetFullPath($t)
+  # $null (an unreadable or unresolvable target, such as a \??\Volume{...} one)
+  # still gets the link unlinked; it only goes without the survival check.
+  try {
+    $t = @((Get-Item -LiteralPath $Path -Force).Target)[0]
+    if (-not $t) { return $null }
+    if (-not [IO.Path]::IsPathRooted($t)) { $t = Join-Path (Split-Path -Parent $Path) $t }
+    [IO.Path]::GetFullPath($t)
+  }
+  catch { return $null }
+}
+
+function Assert-CmdSafePath([string]$Path) {
+  # PowerShell 5.1 quotes a native argument only when it holds a space or tab,
+  # so any of these would reach cmd bare and could split or rewrite the command.
+  if ($Path -match '[&|<>^%"()]') {
+    throw "refusing to hand cmd a path containing any of & | < > ^ % `" ( ): $Path  Remove it by hand."
+  }
+}
+
+function Invoke-Rmdir([string[]]$Arguments) {
+  # A native command's stderr under 'Stop' throws on its first line in 5.1; the
+  # callers decide failure by checking the path afterwards, so let it through.
+  $ErrorActionPreference = 'Continue'
+  # /d skips cmd's AutoRun, so nothing but this rmdir runs.
+  cmd /d /c rmdir @Arguments 2>&1 | ForEach-Object { "$_" }
 }
 
 function Find-TreeLinks {
@@ -89,7 +110,8 @@ function Remove-TreeLink {
   param([Parameter(Mandatory = $true)]$Link)
   if ($Link.IsDirectory) {
     # rmdir without /s removes the link itself; it never reads the folder behind it.
-    $out = cmd /c rmdir "$($Link.Path)" 2>&1
+    Assert-CmdSafePath $Link.Path
+    $out = Invoke-Rmdir @($Link.Path)
   }
   else {
     [IO.File]::Delete($Link.Path)
@@ -117,7 +139,8 @@ function Remove-TreeLinks {
 
 function Remove-TreeNoFollow {
   param([Parameter(Mandatory = $true)][string]$Root)
-  $out = cmd /c rmdir /s /q "$Root" 2>&1
+  Assert-CmdSafePath $Root
+  $out = Invoke-Rmdir @('/s', '/q', $Root)
   if (Test-FsEntry $Root) { throw "directory still present after rmdir /s /q: $Root $out" }
 }
 
