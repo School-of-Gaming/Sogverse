@@ -230,51 +230,51 @@ describe("Row Level Security", () => {
   });
 
   // =========================================================================
-  // Feedback Submissions
+  // Help Requests
   // =========================================================================
 
-  describe("feedback_submissions", () => {
-    const FEEDBACK_ID_1 = "00000000-0000-0000-0000-000000000050";
-    const FEEDBACK_ID_2 = "00000000-0000-0000-0000-000000000051";
+  describe("help_requests", () => {
+    const HELP_REQUEST_ID_1 = "00000000-0000-0000-0000-000000000050";
+    const HELP_REQUEST_ID_2 = "00000000-0000-0000-0000-000000000051";
 
     beforeAll(async () => {
-      // Insert test feedback via admin client (bypasses RLS)
-      await admin.from("feedback_submissions").insert([
-        { id: FEEDBACK_ID_1, user_id: TEST_IDS.CUSTOMER, message: "Feedback from customer 1" },
-        { id: FEEDBACK_ID_2, user_id: TEST_IDS.CUSTOMER_2, message: "Feedback from customer 2" },
+      // Insert test help requests via admin client (bypasses RLS)
+      await admin.from("help_requests").insert([
+        { id: HELP_REQUEST_ID_1, user_id: TEST_IDS.CUSTOMER, message: "Help request from customer 1" },
+        { id: HELP_REQUEST_ID_2, user_id: TEST_IDS.CUSTOMER_2, message: "Help request from customer 2" },
       ]);
     });
 
     afterAll(async () => {
       await admin
-        .from("feedback_submissions")
+        .from("help_requests")
         .delete()
-        .in("id", [FEEDBACK_ID_1, FEEDBACK_ID_2]);
+        .in("id", [HELP_REQUEST_ID_1, HELP_REQUEST_ID_2]);
     });
 
-    it("customer can read own feedback submissions", async () => {
+    it("customer can read own help requests", async () => {
       const { data, error } = await customerClient
-        .from("feedback_submissions")
+        .from("help_requests")
         .select("id, message")
         .eq("user_id", TEST_IDS.CUSTOMER);
 
       expect(error).toBeNull();
       expect(data!.length).toBeGreaterThanOrEqual(1);
-      expect(data!.some((f) => f.id === FEEDBACK_ID_1)).toBe(true);
+      expect(data!.some((f) => f.id === HELP_REQUEST_ID_1)).toBe(true);
     });
 
-    it("customer cannot read another customer's feedback", async () => {
+    it("customer cannot read another customer's help requests", async () => {
       const { data } = await customerClient
-        .from("feedback_submissions")
+        .from("help_requests")
         .select("id")
         .eq("user_id", TEST_IDS.CUSTOMER_2);
 
       expect(data).toEqual([]);
     });
 
-    it("customer cannot insert a feedback_submission directly", async () => {
+    it("customer cannot insert a help request directly", async () => {
       const { error } = await customerClient
-        .from("feedback_submissions")
+        .from("help_requests")
         .insert({
           user_id: TEST_IDS.CUSTOMER,
           message: "Should be denied by grant revocation",
@@ -283,11 +283,11 @@ describe("Row Level Security", () => {
       expect(error).not.toBeNull();
     });
 
-    it("admin can read all feedback submissions", async () => {
+    it("admin can read all help requests", async () => {
       const { data, error } = await adminClient
-        .from("feedback_submissions")
+        .from("help_requests")
         .select("id")
-        .in("id", [FEEDBACK_ID_1, FEEDBACK_ID_2]);
+        .in("id", [HELP_REQUEST_ID_1, HELP_REQUEST_ID_2]);
 
       expect(error).toBeNull();
       expect(data).toHaveLength(2);
@@ -295,24 +295,24 @@ describe("Row Level Security", () => {
   });
 
   // =========================================================================
-  // submit_feedback engine — reachable only through its guarded wrapper
+  // submit_help_request engine — reachable only through its guarded wrapper
   // =========================================================================
 
   /**
    * What the engine *does* — insert, attribution, the six-per-hour rate limit,
    * the length bounds — is covered through the wrapper in
-   * feedback-submission.test.ts, which is also the scope test the §3.4 spine
+   * help-request.test.ts, which is also the scope test the §3.4 spine
    * names for it.
    *
    * What is pinned here is the engine's grant posture. The
    * engine takes the user id as a parameter, so any role that can execute it
-   * can attribute feedback to anyone; since Phase 3 no role can. The wrapper is
+   * can attribute a help request to anyone; since Phase 3 no role can. The wrapper is
    * SECURITY DEFINER and reaches the engine through ownership, so it keeps
    * working while both callable roles are shut out.
    */
-  describe("submit_feedback engine grants", () => {
-    it("authenticated users cannot call submit_feedback directly", async () => {
-      const { error } = await customerClient.rpc("submit_feedback", {
+  describe("submit_help_request engine grants", () => {
+    it("authenticated users cannot call submit_help_request directly", async () => {
+      const { error } = await customerClient.rpc("submit_help_request", {
         p_user_id: TEST_IDS.CUSTOMER,
         p_message: "Should be denied",
       });
@@ -321,8 +321,8 @@ describe("Row Level Security", () => {
       expect(error!.message).toMatch(/permission denied/i);
     });
 
-    it("service_role cannot call submit_feedback directly either", async () => {
-      const { error } = await admin.rpc("submit_feedback", {
+    it("service_role cannot call submit_help_request directly either", async () => {
+      const { error } = await admin.rpc("submit_help_request", {
         p_user_id: TEST_IDS.CUSTOMER_2,
         p_message: "Should be denied",
       });

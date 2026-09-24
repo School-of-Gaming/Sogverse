@@ -516,42 +516,6 @@ export type Database = {
           },
         ]
       }
-      feedback_submissions: {
-        Row: {
-          created_at: string
-          id: string
-          message: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          message: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          message?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "feedback_submissions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "feedback_submissions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_list_entries"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       gamer_consent_acceptances: {
         Row: {
           accepted_at: string
@@ -1206,6 +1170,42 @@ export type Database = {
           {
             foreignKeyName: "group_sessions_updated_by_fkey"
             columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      help_requests: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "help_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "help_requests_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
@@ -3599,11 +3599,11 @@ export type Database = {
         }
         Returns: Json
       }
-      submit_feedback: {
+      submit_help_request: {
         Args: { p_message: string; p_user_id: string }
         Returns: boolean
       }
-      submit_my_feedback: { Args: { p_message: string }; Returns: boolean }
+      submit_my_help_request: { Args: { p_message: string }; Returns: boolean }
       substitution_request_document: {
         Args: {
           p_include_reason: boolean

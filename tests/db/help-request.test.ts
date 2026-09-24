@@ -5,7 +5,7 @@ import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 
 /**
- * Scope test for `submit_my_feedback` — the self-scoping classification it
+ * Scope test for `submit_my_help_request` — the self-scoping classification it
  * carries in the §3.4 spine's allowlist (authorization-spine.test.ts, check 5).
  *
  * The function takes no user parameter at all: the row it writes is keyed to
@@ -20,10 +20,10 @@ import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
  * throttling is now bypassable by calling PostgREST directly.
  */
 
-const MESSAGE = "Seeded by feedback-submission.test.ts — scope probe";
+const MESSAGE = "Seeded by help-request.test.ts — scope probe";
 
 /**
- * Every assertion below filters to these three, so a feedback row belonging to
+ * Every assertion below filters to these three, so a help request belonging to
  * some other fixture can neither mask a leak nor fail an exact-match assertion.
  */
 const SCOPED_USERS: string[] = [
@@ -32,15 +32,15 @@ const SCOPED_USERS: string[] = [
   TEST_IDS.GAMER,
 ];
 
-describe("submit_my_feedback", () => {
+describe("submit_my_help_request", () => {
   let admin: SupabaseClient<Database>;
   let customer: SupabaseClient<Database>;
   let customer2: SupabaseClient<Database>;
   let gamer: SupabaseClient<Database>;
 
-  async function clearFeedback() {
+  async function clearHelpRequests() {
     await admin
-      .from("feedback_submissions")
+      .from("help_requests")
       .delete()
       .in("user_id", SCOPED_USERS);
   }
@@ -59,14 +59,14 @@ describe("submit_my_feedback", () => {
       TEST_CREDENTIALS.GAMER.email,
       TEST_CREDENTIALS.GAMER.password,
     );
-    await clearFeedback();
+    await clearHelpRequests();
   });
 
-  afterEach(clearFeedback);
-  afterAll(clearFeedback);
+  afterEach(clearHelpRequests);
+  afterAll(clearHelpRequests);
 
   it("attributes the row to the caller, not to any argument", async () => {
-    const { data, error } = await customer.rpc("submit_my_feedback", {
+    const { data, error } = await customer.rpc("submit_my_help_request", {
       p_message: MESSAGE,
     });
 
@@ -74,7 +74,7 @@ describe("submit_my_feedback", () => {
     expect(data).toBe(true);
 
     const { data: rows } = await admin
-      .from("feedback_submissions")
+      .from("help_requests")
       .select("user_id, message")
       .in("user_id", SCOPED_USERS);
 
@@ -84,20 +84,20 @@ describe("submit_my_feedback", () => {
   });
 
   it("attributes identical text from a different caller to that caller", async () => {
-    await customer2.rpc("submit_my_feedback", { p_message: MESSAGE });
+    await customer2.rpc("submit_my_help_request", { p_message: MESSAGE });
 
     const { data: rows } = await admin
-      .from("feedback_submissions")
+      .from("help_requests")
       .select("user_id")
       .in("user_id", SCOPED_USERS);
 
     expect(rows).toEqual([{ user_id: TEST_IDS.CUSTOMER_2 }]);
   });
 
-  it("is open to every role — a gamer may submit feedback", async () => {
+  it("is open to every role — a gamer may ask for help", async () => {
     // No role gate by design: this is why the function is classified
     // self-scoping rather than role-gated.
-    const { data, error } = await gamer.rpc("submit_my_feedback", {
+    const { data, error } = await gamer.rpc("submit_my_help_request", {
       p_message: MESSAGE,
     });
 
@@ -105,14 +105,14 @@ describe("submit_my_feedback", () => {
     expect(data).toBe(true);
   });
 
-  it("does not let one caller read another's feedback row", async () => {
-    await customer.rpc("submit_my_feedback", { p_message: MESSAGE });
+  it("does not let one caller read another's help request", async () => {
+    await customer.rpc("submit_my_help_request", { p_message: MESSAGE });
 
     const { data: own } = await customer
-      .from("feedback_submissions")
+      .from("help_requests")
       .select("user_id");
     const { data: other } = await customer2
-      .from("feedback_submissions")
+      .from("help_requests")
       .select("user_id");
 
     expect(own).toEqual([{ user_id: TEST_IDS.CUSTOMER }]);
@@ -120,10 +120,10 @@ describe("submit_my_feedback", () => {
   });
 
   it("refuses a message outside the length bounds", async () => {
-    const tooShort = await customer.rpc("submit_my_feedback", {
+    const tooShort = await customer.rpc("submit_my_help_request", {
       p_message: "short",
     });
-    const tooLong = await customer.rpc("submit_my_feedback", {
+    const tooLong = await customer.rpc("submit_my_help_request", {
       p_message: "x".repeat(2001),
     });
 
@@ -131,7 +131,7 @@ describe("submit_my_feedback", () => {
     expect(tooLong.error?.code).toBe("23514");
 
     const { data: rows } = await admin
-      .from("feedback_submissions")
+      .from("help_requests")
       .select("user_id")
       .in("user_id", SCOPED_USERS);
     expect(rows).toEqual([]);
@@ -139,21 +139,21 @@ describe("submit_my_feedback", () => {
 
   it("rate-limits the caller after six submissions in an hour", async () => {
     for (let i = 0; i < 6; i++) {
-      const { data } = await customer.rpc("submit_my_feedback", {
+      const { data } = await customer.rpc("submit_my_help_request", {
         p_message: `${MESSAGE} ${i}`,
       });
       expect(data).toBe(true);
     }
 
     // Returns false rather than raising — the route maps it to 429.
-    const { data: seventh, error } = await customer.rpc("submit_my_feedback", {
+    const { data: seventh, error } = await customer.rpc("submit_my_help_request", {
       p_message: `${MESSAGE} 6`,
     });
     expect(error).toBeNull();
     expect(seventh).toBe(false);
 
     // The limit is per caller, not global.
-    const { data: otherCaller } = await customer2.rpc("submit_my_feedback", {
+    const { data: otherCaller } = await customer2.rpc("submit_my_help_request", {
       p_message: MESSAGE,
     });
     expect(otherCaller).toBe(true);
