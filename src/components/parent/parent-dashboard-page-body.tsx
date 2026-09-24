@@ -234,10 +234,10 @@ export function ParentDashboardPageBody({
   /** The Stripe portal card. A node, so the shell owns its actions. */
   billingCard: React.ReactNode;
   /**
-   * The help form. A node for the same reason the
-   * billing card is one: it is a self-contained panel with a backend action
-   * behind it, and nothing about this page's shape depends on it. Handing it in
-   * is what lets the preview scene render the real form with its submit inert —
+   * The help form. A node for the same reason the billing card is one: it is a
+   * self-contained panel with a backend action behind it, and nothing about this
+   * page's shape depends on it. Handing it in is what lets the preview scene
+   * render the real form with its submit inert —
    * a scene must never gain a live submit that emails the support inbox.
    */
   helpForm: React.ReactNode;

@@ -2,10 +2,9 @@
 
 **Status: investigation, not committed.** Researched 7 September 2026; a second pass on
 8 September 2026 measured what prod actually does, which turned *placement* into a real
-question the first pass had assumed away. Nothing here is built — no session-feedback table
-or route exists, and the product's only other free-text form is the help card and
-its rate-limited submit path; the one built piece, the online gamer screen, has left this
-file (see the dated line below). The claims about our own code were checked against the
+question the first pass had assumed away. The one built piece, the online gamer screen and
+the table behind it, has left this file (see the dated line below); nothing else here is
+built. The help card, with its rate-limited submit path, is a help form, not feedback. The claims about our own code were checked against the
 repo on those dates. **The traffic and database figures below cover 30- and 90-day windows ending
 8 September 2026 — the very start of the autumn term.** The two windows return almost the
 same counts, so there is nearly no history behind them: re-pull after a full term rather

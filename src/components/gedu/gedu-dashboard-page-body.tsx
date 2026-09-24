@@ -126,8 +126,9 @@ export function GeduDashboardPageBody({
    */
   instantRoomCard: React.ReactNode;
   /**
-   * The help form, shown to every gedu — certified or not. A node for the same reason the two tool panels are: it is a
-   * self-contained panel with a backend action behind it, and handing it in is
+   * The help form, shown to every gedu — certified or not. A node for the same
+   * reason the two tool panels are: it is a self-contained panel with a backend
+   * action behind it, and handing it in is
    * what lets the preview scene render the real form with the submit inert.
    */
   helpForm: React.ReactNode;
