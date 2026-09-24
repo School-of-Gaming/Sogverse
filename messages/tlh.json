@@ -1897,7 +1897,7 @@
     "loadingAssignments": "ghom’a’meyraj raghmeyraj Qu’meyraj je laDlu’…"
   },
   "helpSection": {
-    "heading": "boQ QIn je",
+    "heading": "boQ",
     "gamerHeading": "boQ DaneH’a’?",
     "faqHeading": "qaSchuq SeghHommey",
     "form": {
@@ -1905,14 +1905,14 @@
       "charactersNeeded": "{count} mu’mey Daj nIS",
       "submit": "QIn yIngeH",
       "adult": {
-        "description": "boQ yItlhob, qoj qech Qagh ghap yIngeH — QIn Hoch SIchbej noH Quj yejHaD ghom. ghom’a’ QaQ wIvmeH, qoj Hoch mIw DaghojmeH, batlh maQaH. jabbI’ID DangeHlaH je: <link>{email}</link>.",
+        "description": "boQ yItlhob — QIn Hoch SIchbej noH Quj yejHaD ghom. ghom’a’ QaQ wIvmeH, qoj Hoch mIw DaghojmeH, batlh maQaH. jabbI’ID DangeHlaH je: <link>{email}</link>.",
         "placeholder": "nuq DaneH’a’?",
         "thankYou": "qatlho’ — QInlIj wISuqpu’. bIqonpu’ ’e’ wItIv!",
         "failed": "QIn ngeH Dabe’lu’. yIboq.",
         "tooManyRequests": "law’ QInmey DangeHpu’. yIloS ’ej yIboq."
       },
       "gamer": {
-        "description": "bIQamchoH’a’? ngoQ Daghaj’a’? naDev yIqon — wIlaD.",
+        "description": "bIQamchoH’a’? naDev yIqon — maQaH.",
         "replyNote": "majangchugh, SoSlI’ vavlI’ ghap jabbI’ID wIngeH.",
         "placeholder": "nuq DaneH’a’?",
         "thankYou": "QaH! QInlIj wISuqpu’.",
@@ -2297,7 +2297,7 @@
       "items": {
         "certification": {
           "question": "nuq ’oH patlh’e’, ’ej patlh Hutlh nuq vIta’laHbe’?",
-          "answer": "<p>patlh: puqpu’ tlhej Qu’meH ghuHpu’ accountlIj ’e’ ’ol che’wI’. cha’ Doch nIHpa’ qaS: Gedu Qu’ chut ghItlh Dalaj, ’ej puqpu’ qIHmeH HeS ta’ ghItlh (rikosrekisteriote) Dacha’ — jav maSmey qanbe’nIS. yejquv qumvo’ SoH yISuq. ghItlh nav wIpolbe’ ’ej ghItlhvo’ pagh wIqon — cha’lu’pu’ ’e’ neH ’ej ghorgh ’e’ neH. Qu’ chut ghItlh HalDaq cha’ Doch patlh legh.</p><p>patlh Hutlh: ghomDaq lanlu’be’, ’ej SoQtaH janmeylIj ’ay’: tugh ghogh pa’ poSmoHlaHbe’, Minecraft Education mu’ peghmey chu’moHlaHbe’. may’ De’ qorDu’pu’vaD ngeHlaHbe’, De’vaD mIlloghmey chellaHbe’ je.</p><p>latlh Hoch poStaH DaH: bI’el, jIH SOG, profilelIj, So’ DaqmeylIj, ’ej Qu’ chut ghItlh DalaD Dalaj je. boQ QIn je: patlh Daghajchugh, Daghajbe’chugh je, naDev ’oHtaH — bIloStaHvIS ’ej Daq DaSovnISchugh, Dung ghItlh nav yIlo’.</p>"
+          "answer": "<p>patlh: puqpu’ tlhej Qu’meH ghuHpu’ accountlIj ’e’ ’ol che’wI’. cha’ Doch nIHpa’ qaS: Gedu Qu’ chut ghItlh Dalaj, ’ej puqpu’ qIHmeH HeS ta’ ghItlh (rikosrekisteriote) Dacha’ — jav maSmey qanbe’nIS. yejquv qumvo’ SoH yISuq. ghItlh nav wIpolbe’ ’ej ghItlhvo’ pagh wIqon — cha’lu’pu’ ’e’ neH ’ej ghorgh ’e’ neH. Qu’ chut ghItlh HalDaq cha’ Doch patlh legh.</p><p>patlh Hutlh: ghomDaq lanlu’be’, ’ej SoQtaH janmeylIj ’ay’: tugh ghogh pa’ poSmoHlaHbe’, Minecraft Education mu’ peghmey chu’moHlaHbe’. may’ De’ qorDu’pu’vaD ngeHlaHbe’, De’vaD mIlloghmey chellaHbe’ je.</p><p>latlh Hoch poStaH DaH: bI’el, jIH SOG, profilelIj, So’ DaqmeylIj, ’ej Qu’ chut ghItlh DalaD Dalaj je. boQ: patlh Daghajchugh, Daghajbe’chugh je, naDev ’oHtaH — bIloStaHvIS ’ej Daq DaSovnISchugh, Dung ghItlh nav yIlo’.</p>"
         },
         "groupAssignment": {
           "question": "chay’ ghomDaq vIlanlu’?",
@@ -3403,10 +3403,10 @@
       "ignore": "PIN chovmoH DatlhobHa’chugh, QIn yIleghQo’. PIN choHbe’lu’.",
       "button": "PIN yIchoH"
     },
-    "feedback": {
-      "subject": "QaH poQ pagh QIn Do’ ngeH {displayName} ({role})",
-      "heading": "QaH poQ pagh QIn Do’ chu’",
-      "intro": "QaH poQ vay’, pagh QIn Do’ ngeHta’. QIn’vam yIjang — bIngDaq QIn ghoS jangmeylIj.",
+    "helpRequest": {
+      "subject": "QaH poQ {displayName} ({role})",
+      "heading": "QaH poQ chu’",
+      "intro": "QaH poQ vay’. QIn’vam yIjang — bIngDaq QIn ghoS jangmeylIj.",
       "from": "vo’",
       "role": "Qu’",
       "replyToLabel": "jangmeH QIn",

@@ -63,7 +63,7 @@ export function GamerDashboardPageBody({
    */
   prepDismissed: ReadonlySet<string>;
   /**
-   * The ask-for-help-or-send-feedback form, in its child-facing wording. A node
+   * The help form, in its child-facing wording. A node
    * so the shell owns the POST behind it and a preview scene can hand over an
    * inert one — a scene must never gain a live submit that emails the support
    * inbox.

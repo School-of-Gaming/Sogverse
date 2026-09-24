@@ -45,7 +45,7 @@ import { hasRealEmail } from "@/lib/gamer-sign-in";
  * special-cased no-op would only teach the client to distinguish two outcomes
  * that are the same outcome.
  *
- * **Rate-limited in the database, exactly as feedback is.** Sending yourself
+ * **Rate-limited in the database, exactly as a help request is.** Sending yourself
  * mail reaches nobody else's data, but every send spends one message from the
  * shared Brevo quota — the same quota password-reset mail draws on — so a
  * caller leaning on the button degrades other people's ability to get back into

@@ -1853,7 +1853,7 @@
     "loadingAssignments": "Chargement de vos clubs, stages et événements."
   },
   "helpSection": {
-    "heading": "Aide et retours",
+    "heading": "Aide",
     "gamerHeading": "Besoin d’aide ?",
     "faqHeading": "Questions fréquentes",
     "form": {
@@ -1861,14 +1861,14 @@
       "charactersNeeded": "Encore {count} caractères requis",
       "submit": "Envoyer le message",
       "adult": {
-        "description": "Demandez-nous de l’aide, ou envoyez-nous une suggestion ou un signalement de bug — chaque message arrive à l’équipe School of Gaming. Nous vous aidons volontiers, du choix du bon club aux questions sur la façon dont tout cela fonctionne, ou vous pouvez nous écrire à <link>{email}</link>.",
+        "description": "Demandez-nous de l’aide — chaque message arrive à l’équipe School of Gaming. Nous vous aidons volontiers, du choix du bon club aux questions sur la façon dont tout cela fonctionne, ou vous pouvez nous écrire à <link>{email}</link>.",
         "placeholder": "Comment pouvons-nous vous aider ?",
         "thankYou": "Merci — votre message nous est bien parvenu, et nous sommes contents que vous nous ayez écrit.",
         "failed": "Nous n’avons pas pu envoyer votre message. Veuillez réessayer.",
         "tooManyRequests": "Vous nous avez déjà envoyé plusieurs messages. Veuillez réessayer un peu plus tard."
       },
       "gamer": {
-        "description": "Tu bloques sur quelque chose, ou tu as une idée pour nous ? Écris-la ici, on la lira.",
+        "description": "Tu bloques sur quelque chose ? Écris-nous ici, on t’aidera.",
         "replyNote": "Si on te répond, on enverra un e-mail à ton parent.",
         "placeholder": "Sur quoi as-tu besoin d’aide ?",
         "thankYou": "Merci — on a bien reçu ton message.",
@@ -2257,7 +2257,7 @@
       "items": {
         "certification": {
           "question": "Que signifie la certification, et que ne puis-je pas faire avant ?",
-          "answer": "<p>La certification, c’est un administrateur qui confirme que votre compte est prêt pour travailler auprès d’enfants. Deux choses la précèdent : accepter votre contrat de Gedu, et présenter un extrait de casier judiciaire pour le travail auprès d’enfants (rikosrekisteriote) datant de moins de six mois. Vous demandez cet extrait vous-même au Centre finlandais des registres judiciaires. Nous n’en conservons aucune copie et n’en enregistrons rien — seulement qu’un extrait acceptable a été présenté, et à quelle date. Votre page de contrat indique où en sont l’un et l’autre.</p><p>Tant que vous n’êtes pas certifié, vous ne pouvez pas être affecté à un groupe, et votre section Outils reste fermée : vous ne pouvez pas ouvrir de salle vocale immédiate, ni réinitialiser des mots de passe Minecraft Education. Vous ne pouvez pas non plus envoyer un compte rendu de séance aux familles par e-mail, ni y ajouter des photos.</p><p>Tout le reste est ouvert dès maintenant : la connexion, Mon SOG, votre profil et vos zones d’intervention, et la lecture et l’acceptation du contrat. Aide et retours reste accessible que vous soyez certifié ou non — utilisez le formulaire ci-dessus si vous attendez et souhaitez savoir où vous en êtes.</p>"
+          "answer": "<p>La certification, c’est un administrateur qui confirme que votre compte est prêt pour travailler auprès d’enfants. Deux choses la précèdent : accepter votre contrat de Gedu, et présenter un extrait de casier judiciaire pour le travail auprès d’enfants (rikosrekisteriote) datant de moins de six mois. Vous demandez cet extrait vous-même au Centre finlandais des registres judiciaires. Nous n’en conservons aucune copie et n’en enregistrons rien — seulement qu’un extrait acceptable a été présenté, et à quelle date. Votre page de contrat indique où en sont l’un et l’autre.</p><p>Tant que vous n’êtes pas certifié, vous ne pouvez pas être affecté à un groupe, et votre section Outils reste fermée : vous ne pouvez pas ouvrir de salle vocale immédiate, ni réinitialiser des mots de passe Minecraft Education. Vous ne pouvez pas non plus envoyer un compte rendu de séance aux familles par e-mail, ni y ajouter des photos.</p><p>Tout le reste est ouvert dès maintenant : la connexion, Mon SOG, votre profil et vos zones d’intervention, et la lecture et l’acceptation du contrat. L’aide reste accessible que vous soyez certifié ou non — utilisez le formulaire ci-dessus si vous attendez et souhaitez savoir où vous en êtes.</p>"
         },
         "groupAssignment": {
           "question": "Comment suis-je affecté à un groupe ?",
@@ -3363,10 +3363,10 @@
       "ignore": "Si vous n’avez pas demandé de réinitialisation du code PIN, vous pouvez ignorer cet e-mail sans crainte. Votre code PIN ne sera pas modifié.",
       "button": "Réinitialiser le code PIN"
     },
-    "feedback": {
-      "subject": "Aide ou retour de {displayName} ({role})",
-      "heading": "Nouveau message d’aide ou de retour",
-      "intro": "Quelqu’un a demandé de l’aide ou envoyé un retour. Répondez à cet e-mail pour lui écrire — votre réponse ira à l’adresse ci-dessous.",
+    "helpRequest": {
+      "subject": "Demande d’aide de {displayName} ({role})",
+      "heading": "Nouvelle demande d’aide",
+      "intro": "Quelqu’un a demandé de l’aide. Répondez à cet e-mail pour lui écrire — votre réponse ira à l’adresse ci-dessous.",
       "from": "De",
       "role": "Rôle",
       "replyToLabel": "Répondre à",

@@ -4,13 +4,13 @@ import { useState } from "react";
 import {
   HELP_MESSAGE_MAX_LENGTH,
   HELP_MESSAGE_MIN_LENGTH,
-  HelpFeedbackCardView,
-  type HelpFeedbackAudience,
-  type HelpFeedbackFailure,
-} from "./help-feedback-card-view";
+  HelpRequestCardView,
+  type HelpRequestAudience,
+  type HelpRequestFailure,
+} from "./help-request-card-view";
 
 /**
- * Data half of the help/feedback form: one POST, and nothing else. The markup
+ * Data half of the help form: one POST, and nothing else. The markup
  * lives in the view beside it, which takes the whole card state as props.
  *
  * **A `fetch` rather than a service or a React Query mutation, deliberately.**
@@ -28,16 +28,16 @@ import {
  * here rather than inside the view: the view has to be drivable from a preview
  * scene's own state with the submit inert.
  */
-export function HelpFeedbackCard({
+export function HelpRequestCard({
   audience,
 }: {
   /** Which register the copy is written in — see the view's own note. */
-  audience: HelpFeedbackAudience;
+  audience: HelpRequestAudience;
 }) {
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [succeeded, setSucceeded] = useState(false);
-  const [error, setError] = useState<HelpFeedbackFailure | null>(null);
+  const [error, setError] = useState<HelpRequestFailure | null>(null);
 
   async function handleSubmit() {
     // The button is disabled outside the range; this is the guard that keeps a
@@ -53,7 +53,7 @@ export function HelpFeedbackCard({
     setError(null);
 
     try {
-      const response = await fetch("/api/feedback", {
+      const response = await fetch("/api/help-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message }),
@@ -74,7 +74,7 @@ export function HelpFeedbackCard({
   }
 
   return (
-    <HelpFeedbackCardView
+    <HelpRequestCardView
       audience={audience}
       message={message}
       onMessageChange={setMessage}

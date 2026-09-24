@@ -1853,7 +1853,7 @@
     "loadingAssignments": "Laddar dina klubbar, läger och evenemang."
   },
   "helpSection": {
-    "heading": "Hjälp och feedback",
+    "heading": "Hjälp",
     "gamerHeading": "Behöver du hjälp?",
     "faqHeading": "Vanliga frågor",
     "form": {
@@ -1861,14 +1861,14 @@
       "charactersNeeded": "{count} tecken till behövs",
       "submit": "Skicka meddelande",
       "adult": {
-        "description": "Be oss om hjälp, eller skicka ett förslag eller en felanmälan — varje meddelande når teamet på School of Gaming. Vi hjälper gärna till med allt från att välja rätt klubb till frågor om hur det hela fungerar, eller så kan du mejla oss på <link>{email}</link>.",
+        "description": "Be oss om hjälp — varje meddelande når teamet på School of Gaming. Vi hjälper gärna till med allt från att välja rätt klubb till frågor om hur det hela fungerar, eller så kan du mejla oss på <link>{email}</link>.",
         "placeholder": "Vad kan vi hjälpa till med?",
         "thankYou": "Tack — ditt meddelande är hos oss, och vi är glada att du hörde av dig.",
         "failed": "Vi kunde inte skicka ditt meddelande. Försök igen.",
         "tooManyRequests": "Du har redan skickat flera meddelanden. Försök igen om en stund."
       },
       "gamer": {
-        "description": "Har du fastnat på något, eller fått en idé till oss? Skriv den här så läser vi den.",
+        "description": "Har du fastnat på något? Skriv till oss här så hjälper vi dig.",
         "replyNote": "Om vi svarar skickar vi ett mejl till din förälder.",
         "placeholder": "Vad behöver du hjälp med?",
         "thankYou": "Tack — vi har fått ditt meddelande.",
@@ -2257,7 +2257,7 @@
       "items": {
         "certification": {
           "question": "Vad innebär certifiering, och vad kan jag inte göra fram till dess?",
-          "answer": "<p>Certifiering är att en administratör bekräftar att ditt konto är redo att arbeta med barn. Två saker kommer före den: att godkänna ditt Gedu-avtal, och att uppvisa ett straffregisterutdrag för arbete med barn (rikosrekisteriote) som är högst sex månader gammalt. Utdraget beställer du själv från Rättsregistercentralen. Vi behåller ingen kopia av det och antecknar ingenting ur det — bara att ett godtagbart utdrag har visats, och när. Din avtalssida visar hur det står till med båda.</p><p>Tills du är certifierad kan du inte tilldelas en grupp, och din Verktyg-sektion förblir stängd: du kan inte starta ett direkt röstrum, och du kan inte återställa lösenord för Minecraft Education. Du kan inte heller mejla en rapport om ett tillfälle till familjerna eller lägga till bilder i en.</p><p>Allt annat är öppet redan nu: att logga in, Min SOG, din profil och dina områden, och att läsa och godkänna avtalet. Hjälp och feedback finns här oavsett om du är certifierad eller inte — använd formuläret ovan om du väntar och vill veta var du står.</p>"
+          "answer": "<p>Certifiering är att en administratör bekräftar att ditt konto är redo att arbeta med barn. Två saker kommer före den: att godkänna ditt Gedu-avtal, och att uppvisa ett straffregisterutdrag för arbete med barn (rikosrekisteriote) som är högst sex månader gammalt. Utdraget beställer du själv från Rättsregistercentralen. Vi behåller ingen kopia av det och antecknar ingenting ur det — bara att ett godtagbart utdrag har visats, och när. Din avtalssida visar hur det står till med båda.</p><p>Tills du är certifierad kan du inte tilldelas en grupp, och din Verktyg-sektion förblir stängd: du kan inte starta ett direkt röstrum, och du kan inte återställa lösenord för Minecraft Education. Du kan inte heller mejla en rapport om ett tillfälle till familjerna eller lägga till bilder i en.</p><p>Allt annat är öppet redan nu: att logga in, Min SOG, din profil och dina områden, och att läsa och godkänna avtalet. Hjälp finns här oavsett om du är certifierad eller inte — använd formuläret ovan om du väntar och vill veta var du står.</p>"
         },
         "groupAssignment": {
           "question": "Hur blir jag tilldelad en grupp?",
@@ -3363,10 +3363,10 @@
       "ignore": "Om du inte begärde en PIN-återställning kan du ignorera detta e-postmeddelande. Din PIN-kod kommer inte att ändras.",
       "button": "Återställ PIN-kod"
     },
-    "feedback": {
-      "subject": "Hjälp eller feedback från {displayName} ({role})",
-      "heading": "Nytt meddelande om hjälp eller feedback",
-      "intro": "Någon har bett om hjälp eller skickat feedback. Svara på det här mejlet för att svara personen – ditt svar går till adressen nedan.",
+    "helpRequest": {
+      "subject": "Hjälpförfrågan från {displayName} ({role})",
+      "heading": "Ny hjälpförfrågan",
+      "intro": "Någon har bett om hjälp. Svara på det här mejlet för att svara personen – ditt svar går till adressen nedan.",
       "from": "Från",
       "role": "Roll",
       "replyToLabel": "Svarsadress",

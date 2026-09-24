@@ -3,7 +3,7 @@
 **Status: investigation, not committed.** Researched 7 September 2026; a second pass on
 8 September 2026 measured what prod actually does, which turned *placement* into a real
 question the first pass had assumed away. Nothing here is built — no session-feedback table
-or route exists, and the only other feedback in the product is the free-text help card and
+or route exists, and the product's only other free-text form is the help card and
 its rate-limited submit path; the one built piece, the online gamer screen, has left this
 file (see the dated line below). The claims about our own code were checked against the
 repo on those dates. **The traffic and database figures below cover 30- and 90-day windows ending

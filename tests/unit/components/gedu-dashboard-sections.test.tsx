@@ -124,7 +124,7 @@ describe("the gedu dashboard's empty state", () => {
 });
 
 /**
- * **Help & feedback is a sibling of Tools, not a card inside it — which is the
+ * **Help is a sibling of Tools, not a card inside it — which is the
  * whole reason it survives the certification gate.**
  *
  * The gedu who most needs a way to ask what happens next is the one waiting for
@@ -137,14 +137,11 @@ describe("the gedu dashboard's empty state", () => {
 describe("a gedu still awaiting certification", () => {
   const html = dashboardHtml([], { certified: false });
 
-  it("still gets the Help & feedback section and its pill chip", () => {
+  it("still gets the Help section and its pill chip", () => {
     expect(html).toContain('id="help"');
     expect(html).toContain('href="#help"');
-    // The heading carries an ampersand, which React escapes on the way out —
-    // compare against the catalogue's own words rather than a retyped literal.
-    expect(html).toContain(
-      `>${messages.helpSection.heading.replace("&", "&amp;")}</h2>`,
-    );
+    // Compare against the catalogue's own words rather than a retyped literal.
+    expect(html).toContain(`>${messages.helpSection.heading}</h2>`);
   });
 
   it("still gets the message form, which is the point of the section", () => {

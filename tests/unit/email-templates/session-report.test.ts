@@ -461,7 +461,7 @@ describe("the photos under the report", () => {
    * grounds: the bare one on a phone, the card above the breakpoint. So the
    * same cell is card-toned inline and ground-toned inside the shell's own
    * wide-viewport rule, which reaches it through the shared "step" class — the
-   * same one the staff feedback mail's quoted box takes, so this is one
+   * same one the staff help-request mail's quoted box takes, so this is one
    * mechanism rather than a rule the photo module owns.
    *
    * It is a re-tone rather than a layout the stylesheet holds up: strip the

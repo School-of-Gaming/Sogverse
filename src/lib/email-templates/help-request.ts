@@ -19,14 +19,14 @@ import { defuseAutolinks, escapeHtml, groundFill, heading, paragraph } from "./u
 const QUOTE_GROUND = groundFill("step");
 import type { EmailTranslator } from "./translator";
 
-export interface FeedbackEmailOptions {
+export interface HelpRequestEmailOptions {
   userName: string;
   userRole: UserRole;
   /**
    * The address on the submitter's own account — a gamer's included, which
    * under the switch-only and username sign-ins is the platform-internal handle
    * nobody reads. It is not necessarily where a reply goes: see
-   * `feedbackReplyToAddress` below for which of the two addresses does.
+   * `helpRequestReplyToAddress` below for which of the two addresses does.
    */
   userEmail: string;
   message: string;
@@ -61,27 +61,19 @@ export interface FeedbackEmailOptions {
  * broken row rather than a state to design a reply-to for, and the mail says
  * exactly what the header carries.
  */
-export function feedbackReplyToAddress({
+export function helpRequestReplyToAddress({
   isGamer,
   parentEmail,
   userEmail,
-}: Pick<FeedbackEmailOptions, "isGamer" | "parentEmail" | "userEmail">): string {
+}: Pick<HelpRequestEmailOptions, "isGamer" | "parentEmail" | "userEmail">): string {
   return isGamer && parentEmail ? parentEmail : userEmail;
 }
 
 /**
- * Builds the HTML email body for a help-or-feedback submission.
- *
- * One form now carries both — a family or a gedu asking for help, and anyone
- * telling us something — so the mail says so rather than calling every message
- * feedback. An admin opening it has to be able to tell which it is from the
- * message itself, which is why the copy names both and claims neither.
- *
- * The `email.feedback.*` namespace and the route keep their names: renaming
- * either ripples into the route posture registry and its tests for no reader's
- * benefit, and it is the mail's content that was wrong.
+ * Builds the HTML email body for a help request: the message someone wrote in
+ * the help form at the bottom of their My SOG, delivered to the support inbox.
  */
-export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: FeedbackEmailOptions): string {
+export function buildHelpRequestEmail(t: EmailTranslator, locale: string, opts: HelpRequestEmailOptions): string {
   const escapedMessage = escapeHtml(opts.message).replace(/\n/g, "<br/>");
   const escapedName = escapeHtml(opts.userName);
   const roleKey = ROLE_LABEL_KEYS[opts.userRole];
@@ -96,7 +88,7 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
   // value is: one shared resolver picks it, so on a gamer's submission this is
   // their linked parent's address, not the child's own. Labelling it "Email"
   // was the one line in the mail that could be read as false.
-  const escapedEmail = defuseAutolinks(escapeHtml(feedbackReplyToAddress(opts)));
+  const escapedEmail = defuseAutolinks(escapeHtml(helpRequestReplyToAddress(opts)));
 
   // One note for a gamer's message, never two. The facts a staff reader needs
   // are that the message came from a child's account and whether that child has
@@ -109,7 +101,7 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
         <td style="padding:12px 0 0;color:${DARK_THEME.mutedFg};font-size:13px;font-style:italic;">
           ${
             opts.gamerOwnMailbox
-              ? t("feedback.gamerNoteOwnMailbox", {
+              ? t("helpRequest.gamerNoteOwnMailbox", {
                   firstName: escapedName,
                   // Defused like the reply-to address above: a displayed address
                   // a client turns into its own link is a link we did not write,
@@ -117,7 +109,7 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
                   // makes it the worse of the two to get wrong.
                   gamerEmail: defuseAutolinks(escapeHtml(opts.userEmail)),
                 })
-              : t("feedback.gamerNoteNoMailbox", { firstName: escapedName })
+              : t("helpRequest.gamerNoteNoMailbox", { firstName: escapedName })
           }
         </td>
       </tr>`
@@ -130,26 +122,26 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
   // four single words wanted from the setting that used to be passed. The block
   // carries its own bottom margin, so the cell holding it adds none.
   const facts = factList([
-    [t("feedback.from"), escapedName],
-    [t("feedback.role"), escapedRole],
-    [t("feedback.replyToLabel"), escapedEmail],
-    [t("feedback.sent"), escapeHtml(opts.sentAt)],
+    [t("helpRequest.from"), escapedName],
+    [t("helpRequest.role"), escapedRole],
+    [t("helpRequest.replyToLabel"), escapedEmail],
+    [t("helpRequest.sent"), escapeHtml(opts.sentAt)],
   ]);
 
   const content = `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
-        <td>${heading(t("feedback.heading"))}</td>
+        <td>${heading(t("helpRequest.heading"))}</td>
       </tr>
       <tr>
-        <td>${paragraph(t("feedback.intro"))}</td>
+        <td>${paragraph(t("helpRequest.intro"))}</td>
       </tr>
       <tr>
         <td>${facts}</td>
       </tr>
       <tr>
         <td style="font-size:14px;font-weight:bold;color:${DARK_THEME.foreground};padding-bottom:8px;">
-          ${t("feedback.message")}
+          ${t("helpRequest.message")}
         </td>
       </tr>
       <tr>
@@ -160,5 +152,5 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
       ${gamerNote}
     </table>`;
 
-  return wrapInLayout({ title: t("feedback.heading"), content, locale, t });
+  return wrapInLayout({ title: t("helpRequest.heading"), content, locale, t });
 }

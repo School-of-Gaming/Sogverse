@@ -11,7 +11,7 @@ import {
   buildParentDashboardFixture,
   type ParentDashboardScenario,
 } from "@/components/parent/mock-dashboard-fixtures";
-import { InertHelpFeedbackCard } from "@/components/preview/inert-help-feedback-card";
+import { InertHelpRequestCard } from "@/components/preview/inert-help-request-card";
 import { NO_TOPIC_PREP_READY } from "@/components/topic-prep/topic-prep-cookie";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useNow, useTimezone } from "@/providers";
@@ -63,7 +63,7 @@ export function ParentDashboardScene({
       // live roll-up runs.
       prepDismissed={NO_TOPIC_PREP_READY}
       billingCard={<FixtureBillingCard accounts={fixture.accounts} />}
-      helpForm={<InertHelpFeedbackCard audience="adult" />}
+      helpForm={<InertHelpRequestCard audience="adult" />}
       onAddGamer={noop}
       onOpenPortal={noop}
       // Both are inert *handlers* rather than omitted props, and the difference

@@ -1,7 +1,7 @@
 "use client";
 
 import { useGamerEnrollments } from "@/components/family/use-family-enrollments";
-import { HelpFeedbackCard } from "@/components/help/help-feedback-card";
+import { HelpRequestCard } from "@/components/help/help-request-card";
 import type {
   MyUpcomingSessionRow,
   MyWaitlistRow,
@@ -62,7 +62,7 @@ export function GamerDashboardShell({
       prepDismissed={prepDismissed}
       // The child-facing wording, and the only variant the form has: a reply to
       // a gamer resolves to their linked parent's mailbox, which the copy says.
-      helpForm={<HelpFeedbackCard audience="gamer" />}
+      helpForm={<HelpRequestCard audience="gamer" />}
     />
   );
 }
