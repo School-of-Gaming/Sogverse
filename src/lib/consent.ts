@@ -105,35 +105,46 @@ export function advertisingCookieNames(cookies: string): string[] {
 }
 
 /**
- * What Meta's library keeps in `localStorage`, removed on withdrawal beside the
- * cookies above.
+ * What the advertising libraries keep in `localStorage`, removed on withdrawal
+ * beside the cookies above.
  *
- * Easy to miss, and the reason it matters is that it is *not* a cookie: clearing
- * `_fbp` while `multiFbc` still holds the click ids, and the library's own
- * `fbevents^$…` and `pixel_mutex:…` entries still hold its state, leaves the
- * device re-identifiable the moment the pixel is allowed to run again. The
- * prefixes are matched rather than listed because the library appends a pixel id
- * and a purpose to each key.
+ * Easy to miss, and the reason it matters is that none of these is a cookie: a
+ * click id deleted from `_gcl_aw` or `_fbp` and left behind here is the same
+ * click id, and it makes the device re-identifiable the moment the scripts are
+ * allowed to run again. Both vendors keep such a twin — Google writes the raw
+ * `gclid` into `_gcl_ls`, Meta writes the `fbclid` into `multiFbc` — so a list
+ * covering one vendor is half a list. Meta’s prefixed entries are matched
+ * rather than named because the library appends a pixel id and a purpose to each
+ * key, and Google’s are matched on the prefix its cookies already use.
  */
-const PIXEL_STORAGE_KEYS = ["multiFbc"] as const;
-const PIXEL_STORAGE_PREFIXES = ["fbevents^$", "pixel_mutex:"] as const;
+const ADVERTISING_STORAGE_KEYS = [
+  "multiFbc",
+  "lastExternalReferrer",
+  "lastExternalReferrerTime",
+] as const;
+const ADVERTISING_STORAGE_PREFIXES = [
+  "fbevents^$",
+  "pixel_mutex:",
+  "_gcl_",
+] as const;
 
 /**
- * Remove everything Meta's library has stored in the given `Storage`.
+ * Remove everything the advertising libraries have stored in the given
+ * `Storage`.
  *
  * Takes the storage rather than reaching for `window`, which keeps it testable
  * and keeps this module isomorphic. The caller owns the failure: reading
  * `window.localStorage` throws outright where site data is blocked, so the one
  * call site wraps both the access and this call.
  */
-export function clearPixelStorage(storage: Storage): void {
+export function clearAdvertisingStorage(storage: Storage): void {
   const doomed: string[] = [];
   for (let index = 0; index < storage.length; index++) {
     const key = storage.key(index);
     if (key === null) continue;
     if (
-      (PIXEL_STORAGE_KEYS as readonly string[]).includes(key) ||
-      PIXEL_STORAGE_PREFIXES.some((prefix) => key.startsWith(prefix))
+      (ADVERTISING_STORAGE_KEYS as readonly string[]).includes(key) ||
+      ADVERTISING_STORAGE_PREFIXES.some((prefix) => key.startsWith(prefix))
     ) {
       doomed.push(key);
     }

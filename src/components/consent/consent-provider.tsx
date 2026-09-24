@@ -14,7 +14,7 @@ import {
   advertisingCookieNames,
   CONSENT_COOKIE_NAME,
   CONSENT_MAX_AGE_SECONDS,
-  clearPixelStorage,
+  clearAdvertisingStorage,
   consentForChoice,
   isWithdrawal,
   serialiseConsent,
@@ -47,14 +47,14 @@ const ConsentContext = createContext<ConsentContextValue | undefined>(
 
 /**
  * Take away everything an advertising script left on this browser: its cookies,
- * and what the pixel keeps in local storage.
+ * and what either vendor keeps in local storage.
  *
  * Both callers below hand it the same job, so it is one function rather than
  * two copies — and the failure is owned here because it is the same failure
  * either way. Reading `window.localStorage` **throws outright** where site data
- * is blocked, which is a browser that has nothing of Meta's to clear anyway, so
- * the cookies above it are already done by the time it can fail and nothing
- * either caller does depends on it.
+ * is blocked, which is a browser that has nothing stored to clear anyway, so the
+ * cookies above it are already done by the time it can fail and nothing either
+ * caller does depends on it.
  */
 function clearAdvertisingTraces(): void {
   // Read back off the document rather than expired from a fixed list: the
@@ -63,9 +63,9 @@ function clearAdvertisingTraces(): void {
     deleteCookie(name);
   }
   try {
-    clearPixelStorage(window.localStorage);
+    clearAdvertisingStorage(window.localStorage);
   } catch (error) {
-    console.error("[consent] could not clear the pixel's storage", error);
+    console.error("[consent] could not clear the advertising scripts' storage", error);
   }
 }
 

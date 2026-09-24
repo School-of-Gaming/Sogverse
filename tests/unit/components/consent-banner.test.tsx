@@ -183,7 +183,7 @@ describe("ConsentBanner", () => {
     expect(reload).not.toHaveBeenCalled();
   });
 
-  it("withdrawing a granted purpose clears what the pixel left and reloads", () => {
+  it("withdrawing a granted purpose clears what both vendors left and reloads", () => {
     document.cookie = "_fbp=fb.1.abc;path=/";
     document.cookie = "_fbc=fb.1.abc.IwAR;path=/";
     document.cookie = "_fbleid=lead-1;path=/";
@@ -193,6 +193,9 @@ describe("ConsentBanner", () => {
     window.localStorage.setItem("multiFbc", "[]");
     window.localStorage.setItem("fbevents^$last_event^$123", "1757500000000");
     window.localStorage.setItem("pixel_mutex:123", "held");
+    // Google keeps a storage twin of the click id it also writes to `_gcl_aw`.
+    window.localStorage.setItem("_gcl_ls", '{"schema":"gcl"}');
+    window.localStorage.setItem("lastExternalReferrer", "empty");
     window.localStorage.setItem("sog-theme", "dark");
 
     render(<Harness initial={GRANTED_BOTH} />);
@@ -212,6 +215,8 @@ describe("ConsentBanner", () => {
     expect(window.localStorage.getItem("multiFbc")).toBeNull();
     expect(window.localStorage.getItem("fbevents^$last_event^$123")).toBeNull();
     expect(window.localStorage.getItem("pixel_mutex:123")).toBeNull();
+    expect(window.localStorage.getItem("_gcl_ls")).toBeNull();
+    expect(window.localStorage.getItem("lastExternalReferrer")).toBeNull();
     // Ours is left alone: a withdrawal clears the advertiser's state, not the
     // reader's own preferences.
     expect(window.localStorage.getItem("sog-theme")).toBe("dark");
@@ -272,6 +277,9 @@ describe("ConsentProvider", () => {
     seedGoogleCookies();
     document.cookie = "_fbp=fb.1.abc;path=/";
     window.localStorage.setItem("multiFbc", "[]");
+    // The click id Google keeps outside the cookie jar. Deleting `_gcl_aw` and
+    // leaving this is deleting one copy of the same value.
+    window.localStorage.setItem("_gcl_ls", '{"schema":"gcl"}');
     // Ours, and the reader's own: an invariant about the advertisers' state
     // must not reach past it.
     document.cookie = `${CONSENT_COOKIE_NAME}=stored;path=/`;
@@ -287,6 +295,7 @@ describe("ConsentProvider", () => {
     expect(document.cookie).not.toContain("_ga=");
     expect(document.cookie).not.toContain("_fbp");
     expect(window.localStorage.getItem("multiFbc")).toBeNull();
+    expect(window.localStorage.getItem("_gcl_ls")).toBeNull();
     expect(document.cookie).toContain(CONSENT_COOKIE_NAME);
     expect(window.localStorage.getItem("sog-theme")).toBe("dark");
   });
