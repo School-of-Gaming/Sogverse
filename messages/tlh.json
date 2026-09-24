@@ -2059,7 +2059,7 @@
       "fileFiled": "lIw tlhobta’lu’: {product}, {when}. DaH may’vam ngoqDaq ’angchoHlu’.",
       "fileFiledLink": "ghom vumtaHghach yIpoSmoH",
       "offerConfirmTitle": "bIlIwqang’a’?",
-      "offerConfirmBody": "{when} {product} may’ DalIwqang. lIwwI’ wIv School of Gaming, vaj chaw’lu’pa’ bIbaghbe’ — chaw’lu’pa’ nob yInatlh net chaw’. chaw’lu’DI’, may’ qaSpa’ loSmaH chorgh rep poSmoH Qu’meH pa’."
+      "offerConfirmBody": "{when} {product} may’ DalIwqang. lIwwI’ wIv School of Gaming; chaw’lu’pa’ nob DanatlhlaH. chaw’lu’DI’, Gedu quv chut tlhIH SoH may’ ’oH, SoHvaD may’ DaneHbogh rur, ’ej nob DanatlhlaHbe’: DaghoSlaHbe’chugh, lIwwI’ yItlhob. may’ qaSpa’ loSmaH chorgh rep poSmoH Qu’meH pa’."
     },
     "coverage": {
       "title": "So’ Daqmey",
@@ -2168,7 +2168,7 @@
       "substitutionRolePrimary": "Gedu wa’DIch",
       "substitutionRoleAssistant": "Gedu boQwI’",
       "substitutionMenuLabel": "may’vamvaD latlh vumghachmey",
-      "substitutionRequestAction": "jIHaw’nIS",
+      "substitutionRequestAction": "lIw vIpoQ",
       "substitutionRequestDialogTitle": "may’vamDaq jIpawlaHbe’",
       "substitutionRequestDialogBody": "qaStaH may’. lIw nej yaH. meq qonta’ je lulegh che’wI’pu’ neH.",
       "substitutionReasonLabel": "meq",

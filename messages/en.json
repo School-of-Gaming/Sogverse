@@ -2019,7 +2019,7 @@
       "fileFiled": "Substitute requested for {product} on {when}. It now shows on that session’s card.",
       "fileFiledLink": "Open the group’s workspace",
       "offerConfirmTitle": "Offer to substitute?",
-      "offerConfirmBody": "You’re offering to run {product} on {when}. School of Gaming chooses who substitutes, so an offer is not a commitment until it is approved — you can withdraw it until then. Once it is approved, the group’s workspace opens to you 48 hours before the session starts."
+      "offerConfirmBody": "You’re offering to run {product} on {when}. School of Gaming chooses who substitutes, and you can withdraw your offer until it is approved. Once it is approved, the session is yours under your Gedu contract, exactly like one of your own, and you can no longer withdraw: if you then can’t make it, ask for a substitute yourself, as for any of your sessions. The group’s workspace opens to you 48 hours before the session starts."
     },
     "coverage": {
       "title": "Coverage areas",
@@ -2128,7 +2128,7 @@
       "substitutionRolePrimary": "Primary",
       "substitutionRoleAssistant": "Assistant",
       "substitutionMenuLabel": "More actions for this session",
-      "substitutionRequestAction": "I need to cancel",
+      "substitutionRequestAction": "I need a substitute",
       "substitutionRequestDialogTitle": "I can’t make this session",
       "substitutionRequestDialogBody": "The session still runs — the office looks for a substitute to take your place. Your reason and note are shown to admins only.",
       "substitutionReasonLabel": "Reason",
