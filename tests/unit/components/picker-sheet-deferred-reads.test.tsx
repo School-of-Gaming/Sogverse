@@ -206,7 +206,7 @@ describe("GeduPickerSheet — reads wait for the first open", () => {
 
     rerender(<GeduPickerSheet open {...props} />);
 
-    expect(await screen.findByText("Anna")).toBeTruthy();
+    expect(await screen.findByText("Anna Virtanen")).toBeTruthy();
     // One request, not two: the filtered query and the unfiltered one behind
     // the count line are the same question while nothing is typed and no chip
     // is chosen, so they share a cache entry.
@@ -215,7 +215,7 @@ describe("GeduPickerSheet — reads wait for the first open", () => {
 
     rerender(<GeduPickerSheet open={false} {...props} />);
 
-    expect(screen.getByText("Anna")).toBeTruthy();
+    expect(screen.getByText("Anna Virtanen")).toBeTruthy();
     expect(listRequests()).toHaveLength(1);
   });
 });

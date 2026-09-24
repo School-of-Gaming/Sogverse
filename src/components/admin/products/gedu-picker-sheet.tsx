@@ -338,6 +338,12 @@ function GeduRow({
   onClick,
 }: GeduRowProps) {
   const t = useTranslations("admin.products.geduPicker");
+  // The surname is what tells three Mikkos apart, so the row carries it — and
+  // falls back to the first name alone when none is on file.
+  const name = [gedu.first_name, gedu.last_name]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(" ");
   return (
     <button
       type="button"
@@ -354,7 +360,7 @@ function GeduRow({
       </Avatar>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="truncate font-medium">{gedu.first_name}</p>
+          <p className="truncate font-medium">{name}</p>
           {isCurrent && (
             <Badge variant="outline" className="shrink-0">
               <Check className="mr-1 h-3 w-3" />
