@@ -97,6 +97,7 @@ export function substitutionRequestRefusalMeansAlreadyFiled(
 export type SeatSubstituteFailureKey =
   | "seatFailedIneligible"
   | "seatFailedSeatGone"
+  | "seatFailedRequestWithdrawn"
   | "seatFailedNotScheduled"
   | "seatFailed";
 
@@ -107,10 +108,16 @@ export type SeatSubstituteFailureKey =
  * That surface cannot pre-mark the colleagues already due at the session — its
  * document does not carry the group's staffing — so this write's refusal is the
  * backstop for them, and it has to say so rather than "try again". The same two
- * signals as the filing mapper above, in the same order; the three refusals
+ * signals as the filing mapper above, in the same order; the four refusals
  * worth telling apart all raise `check_violation` and differ only by a phrase
  * of the message. Anything else — the group being gone, a network failure —
  * falls to the generic line.
+ *
+ * **A request withdrawn under the dialog is its own line.** The write is keyed
+ * by the seat, so when the gedu withdraws while the dialog is open it reads as
+ * a fresh filing on their behalf, and a filing needs the reason this surface
+ * never asks. The gedu still holds the seat — they are coming after all — so
+ * the "no longer has this session" line would be untrue.
  */
 export function seatSubstituteFailureKey(
   error: unknown,
@@ -126,6 +133,9 @@ export function seatSubstituteFailureKey(
       message.includes("no role to substitute")
     ) {
       return "seatFailedSeatGone";
+    }
+    if (message.includes("filing one needs a reason")) {
+      return "seatFailedRequestWithdrawn";
     }
     if (message.includes("No scheduled session on")) {
       return "seatFailedNotScheduled";

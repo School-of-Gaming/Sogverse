@@ -1351,6 +1351,7 @@
       "seatFailed": "Tuuraajan asettaminen epäonnistui – yritä uudelleen.",
       "seatFailedIneligible": "{name} ei voi ottaa tätä kertaa – hän on jo merkitty sille tai ei voi enää tuurata.",
       "seatFailedSeatGone": "{absent} ei ole enää tässä kerrassa, joten tuurattavaa ei ole.",
+      "seatFailedRequestWithdrawn": "{absent} on perunut tuurauspyyntönsä, joten tuurattavaa ei ole.",
       "seatFailedNotScheduled": "Ryhmällä ei ole enää kertaa tänä päivänä."
     }
   },

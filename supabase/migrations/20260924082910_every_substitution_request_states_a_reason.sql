@@ -1,8 +1,39 @@
+-- Every substitution request states a reason.
 --
--- Name: set_session_substitution(uuid, date, uuid, uuid, public.substitution_reason, text); Type: FUNCTION; Schema: public; Owner: -
+-- WHAT THIS CHANGES
 --
+-- The owner ruled (2026-09) that an admin filing an absence on a gedu's behalf
+-- states a reason exactly as a gedu filing one does, so a request's reason can
+-- no longer be null.
+--
+-- 1. Rows filed before the reason was required get `other`: the closest true
+--    thing for a reason nobody stated. The note is left as it was. The feature
+--    has never reached production, so this touches test rows on staging at most.
+-- 2. `reason` becomes NOT NULL, and its comment stops calling it optional.
+-- 3. set_session_substitution refuses a filing with no reason — no live request
+--    for the seat, so the admin is filing one on the absent gedu's behalf — with
+--    a check_violation of its own, raised before the insert rather than leaving
+--    the column's NOT NULL to answer. An admin surface reaches it only through a
+--    race: the gedu withdrew their request while a dialog that asks no reason,
+--    because the seat had one, was open. Approving an open request and
+--    re-pointing a substituted one still accept an omitted reason and keep the
+--    row's.
+--
+-- WHAT DID NOT CHANGE
+--
+-- The function's guard (assert_admin, first statement), its signature and
+-- parameter defaults, every other check, and its grants, restated below.
 
-CREATE FUNCTION public.set_session_substitution(p_group_id uuid, p_session_date date, p_absent_gedu_id uuid, p_sub_gedu_id uuid, p_reason public.substitution_reason DEFAULT NULL::public.substitution_reason, p_reason_note text DEFAULT NULL::text) RETURNS jsonb
+UPDATE public.session_substitution_requests
+   SET reason = 'other'::public.substitution_reason
+ WHERE reason IS NULL;
+
+ALTER TABLE public.session_substitution_requests
+  ALTER COLUMN reason SET NOT NULL;
+
+COMMENT ON COLUMN public.session_substitution_requests.reason IS 'Why the gedu is away — `sick` or `other` — and ADMIN-VISIBLE ONLY: it reaches the admin Substitutions page and the admin session document, and every gedu-facing document emits it as null. A `sick` category is health-related data about a contractor; the Discord tickets it replaces carry the same, so nothing new is disclosed, but no retention rule exists for either yet. Always present: a gedu filing an absence states one, and so does an admin filing on a gedu''s behalf.';
+
+CREATE OR REPLACE FUNCTION public.set_session_substitution(p_group_id uuid, p_session_date date, p_absent_gedu_id uuid, p_sub_gedu_id uuid, p_reason public.substitution_reason DEFAULT NULL::public.substitution_reason, p_reason_note text DEFAULT NULL::text) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -132,20 +163,8 @@ BEGIN
 END;
 $$;
 
+REVOKE ALL ON FUNCTION public.set_session_substitution(uuid, date, uuid, uuid, public.substitution_reason, text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.set_session_substitution(uuid, date, uuid, uuid, public.substitution_reason, text) TO authenticated;
+GRANT ALL ON FUNCTION public.set_session_substitution(uuid, date, uuid, uuid, public.substitution_reason, text) TO service_role;
 
---
--- Name: FUNCTION set_session_substitution(p_group_id uuid, p_session_date date, p_absent_gedu_id uuid, p_sub_gedu_id uuid, p_reason public.substitution_reason, p_reason_note text); Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON FUNCTION public.set_session_substitution(p_group_id uuid, p_session_date date, p_absent_gedu_id uuid, p_sub_gedu_id uuid, p_reason public.substitution_reason, p_reason_note text) IS 'The office-arranged path: an admin names the absent gedu and the sub outright, with no offer involved. Three shapes in one function. With NO request for that seat it files one on the absent gedu''s behalf, created already `substituted` — the filing needs a reason exactly as the gedu''s own does and is refused without one, and the absent gedu must actually be EXPECTED at the session, with the role taken from their assignment or from the substitution they hold. With an OPEN request it marks that request `substituted`, which is what the admin queue''s approve reads as. With an ALREADY SUBSTITUTED one it RE-POINTS the substitution, so replacing a sub is one action rather than a clear and a set, and the displaced sub''s own absence is then swept by the cascade. An approval or a re-point may omit the reason and keeps the row''s: reason and note are only overwritten when supplied, so an admin replacing a sub does not blank what the gedu wrote. There is deliberately NO today-or-later requirement — this is the retroactive path, and an off-platform substitution that already happened has to be recordable because gedu invoicing reads these rows. The date still passes the ordinary writable-date check. approved_by is the acting admin on every admin path.';
-
-
---
--- Name: FUNCTION set_session_substitution(p_group_id uuid, p_session_date date, p_absent_gedu_id uuid, p_sub_gedu_id uuid, p_reason public.substitution_reason, p_reason_note text); Type: ACL; Schema: public; Owner: -
---
-
-REVOKE ALL ON FUNCTION public.set_session_substitution(p_group_id uuid, p_session_date date, p_absent_gedu_id uuid, p_sub_gedu_id uuid, p_reason public.substitution_reason, p_reason_note text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.set_session_substitution(p_group_id uuid, p_session_date date, p_absent_gedu_id uuid, p_sub_gedu_id uuid, p_reason public.substitution_reason, p_reason_note text) TO authenticated;
-GRANT ALL ON FUNCTION public.set_session_substitution(p_group_id uuid, p_session_date date, p_absent_gedu_id uuid, p_sub_gedu_id uuid, p_reason public.substitution_reason, p_reason_note text) TO service_role;
-
-
+COMMENT ON FUNCTION public.set_session_substitution(uuid, date, uuid, uuid, public.substitution_reason, text) IS 'The office-arranged path: an admin names the absent gedu and the sub outright, with no offer involved. Three shapes in one function. With NO request for that seat it files one on the absent gedu''s behalf, created already `substituted` — the filing needs a reason exactly as the gedu''s own does and is refused without one, and the absent gedu must actually be EXPECTED at the session, with the role taken from their assignment or from the substitution they hold. With an OPEN request it marks that request `substituted`, which is what the admin queue''s approve reads as. With an ALREADY SUBSTITUTED one it RE-POINTS the substitution, so replacing a sub is one action rather than a clear and a set, and the displaced sub''s own absence is then swept by the cascade. An approval or a re-point may omit the reason and keeps the row''s: reason and note are only overwritten when supplied, so an admin replacing a sub does not blank what the gedu wrote. There is deliberately NO today-or-later requirement — this is the retroactive path, and an off-platform substitution that already happened has to be recordable because gedu invoicing reads these rows. The date still passes the ordinary writable-date check. approved_by is the acting admin on every admin path.';

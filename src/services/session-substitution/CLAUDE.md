@@ -23,7 +23,8 @@ day. One row answers everything the feature needs to say:
   taken at filing time and never recomputed: it is what the session will be *paid* as,
   and a later change to somebody's standing role must not rewrite a past afternoon's pay
   class.
-- **Why** — a category and an optional note, **visible to admins only**. A `sick`
+- **Why** — a category, always present, and an optional note, **visible to admins
+  only**. An admin filing on a gedu's behalf states the category exactly as a gedu does. A `sick`
   category is health-related data about a contractor, so it rides on a document only when
   the reader is entitled to it (see "One shape, two readers" below).
 - **Who stood in** — the substitute, and the admin who approved them.
@@ -332,12 +333,12 @@ card already names the seat — group, date, absent gedu — so the press opens 
 picker directly and the confirm asks no reason. The picker can refuse only the absent gedu,
 because this page's read does not carry the group's staffing; a colleague already due at
 the session is refused by the write, read out in the holding dialog as an approval's
-refusals are. That write is keyed by the seat rather than the request, so a request
-withdrawn or settled by another admin while the dialog was open is not refused: the seat is
-filed afresh on the gedu's behalf, or re-pointed. A seat filed afresh this way carries no
-reason, because the confirm asked none: it is the one path by which an on-behalf filing
-exists without one. Closing that means the write taking the
-request's id — a database change not yet made.
+refusals are. That write is keyed by the seat rather than the request. A request the gedu
+withdrew while the dialog was open reads to it as a fresh filing on their behalf, and a
+filing needs the reason this confirm never asked, so the write refuses and the dialog says
+the request was withdrawn. A request another admin settled meanwhile is not refused: the
+write re-points the substitution they made at this sub. Closing that half means the write
+taking the request's id — a database change not yet made.
 
 **An offer on it carries the offerer's name and nothing else.** It used to carry the
 certification queue's two standings so the page could draw the same chips, and they are

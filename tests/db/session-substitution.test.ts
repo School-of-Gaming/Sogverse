@@ -472,6 +472,7 @@ describe("session substitutions", () => {
     substituteId?: string | null;
     status?: Database["public"]["Enums"]["substitution_request_status"];
     role?: Database["public"]["Enums"]["gedu_assignment_role"];
+    reason?: Database["public"]["Enums"]["substitution_reason"];
   }): Promise<string> {
     const substituted = input.substituteId ?? null;
     const { data, error } = await admin
@@ -481,6 +482,7 @@ describe("session substitutions", () => {
         session_date: input.date,
         requested_by: input.absent ?? TEST_IDS.GEDU,
         role: input.role ?? "primary",
+        reason: input.reason ?? "other",
         status: input.status ?? (substituted ? "substituted" : "open"),
         substitute_id: substituted,
         approved_by: substituted ? TEST_IDS.ADMIN : null,
@@ -1080,6 +1082,7 @@ describe("session substitutions", () => {
         p_session_date: utcDate(-5),
         p_absent_gedu_id: TEST_IDS.GEDU,
         p_sub_gedu_id: subId,
+        p_reason: "other",
       });
       expect(error).toBeNull();
       expect(await substitutesGroup(subAuth)).toBe(true);
@@ -1963,6 +1966,7 @@ describe("session substitutions", () => {
         p_session_date: date,
         p_absent_gedu_id: TEST_IDS.GEDU,
         p_sub_gedu_id: subId,
+        p_reason: "sick",
       });
       expect(error).toBeNull();
 
@@ -1971,7 +1975,43 @@ describe("session substitutions", () => {
       expect(doc.requested_by).toBe(TEST_IDS.GEDU);
       expect(doc.substitute_id).toBe(subId);
       expect(doc.role).toBe("primary");
-      expect(doc.reason).toBeNull();
+      expect(doc.reason).toBe("sick");
+    });
+
+    it("refuses a filing with no reason, and keeps the row's reason on a re-point", async () => {
+      // Filing on a gedu's behalf states why, exactly as the gedu's own filing
+      // does; the refusal is the function's own, raised before any row exists.
+      const refusedDate = utcDate(5);
+      const refused = await adminAuth.rpc("set_session_substitution", {
+        p_group_id: GROUP_A,
+        p_session_date: refusedDate,
+        p_absent_gedu_id: TEST_IDS.GEDU,
+        p_sub_gedu_id: subId,
+      });
+      expect(refused.error?.code).toBe(CHECK_VIOLATION);
+      expect(refused.error?.message).toContain("filing one needs a reason");
+      const { count } = await admin
+        .from("session_substitution_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("group_id", GROUP_A)
+        .eq("session_date", refusedDate);
+      expect(count).toBe(0);
+
+      // A re-point is not a filing: the seat's request already says why, and an
+      // omitted reason keeps it.
+      const date = utcDate(6);
+      const id = await seedRequest({ date, substituteId: subId, reason: "sick" });
+      const { data, error } = await adminAuth.rpc("set_session_substitution", {
+        p_group_id: GROUP_A,
+        p_session_date: date,
+        p_absent_gedu_id: TEST_IDS.GEDU,
+        p_sub_gedu_id: thirdId,
+      });
+      expect(error).toBeNull();
+      const doc = substitutionRequestDocument.parse(data);
+      expect(doc.id).toBe(id);
+      expect(doc.substitute_id).toBe(thirdId);
+      expect(doc.reason).toBe("sick");
     });
 
     it("fills an OPEN request rather than filing a second one", async () => {
@@ -2053,6 +2093,7 @@ describe("session substitutions", () => {
         p_session_date: date,
         p_absent_gedu_id: subId,
         p_sub_gedu_id: thirdId,
+        p_reason: "other",
       });
       expect(notExpected.error?.code).toBe(CHECK_VIOLATION);
 
@@ -2061,6 +2102,7 @@ describe("session substitutions", () => {
         p_session_date: date,
         p_absent_gedu_id: TEST_IDS.GEDU,
         p_sub_gedu_id: TEST_IDS.GEDU,
+        p_reason: "other",
       });
       expect(selfSubstitution.error?.code).toBe(CHECK_VIOLATION);
     });

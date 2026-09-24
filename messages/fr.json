@@ -1351,6 +1351,7 @@
       "seatFailed": "Le remplacement n’a pas pu être enregistré – réessayez.",
       "seatFailedIneligible": "{name} ne peut pas prendre cette séance : cette personne y est déjà prévue ou ne peut plus assurer de remplacement.",
       "seatFailedSeatGone": "{absent} n’a plus cette séance, il n’y a donc personne à remplacer.",
+      "seatFailedRequestWithdrawn": "{absent} a retiré sa demande de remplacement, il n’y a donc personne à remplacer.",
       "seatFailedNotScheduled": "Le groupe n’a plus de séance à cette date."
     }
   },

@@ -2382,7 +2382,7 @@ export type Database = {
           created_at: string
           group_id: string
           id: string
-          reason: Database["public"]["Enums"]["substitution_reason"] | null
+          reason: Database["public"]["Enums"]["substitution_reason"]
           reason_note: string | null
           requested_by: string
           role: Database["public"]["Enums"]["gedu_assignment_role"]
@@ -2397,7 +2397,7 @@ export type Database = {
           created_at?: string
           group_id: string
           id?: string
-          reason?: Database["public"]["Enums"]["substitution_reason"] | null
+          reason: Database["public"]["Enums"]["substitution_reason"]
           reason_note?: string | null
           requested_by: string
           role: Database["public"]["Enums"]["gedu_assignment_role"]
@@ -2412,7 +2412,7 @@ export type Database = {
           created_at?: string
           group_id?: string
           id?: string
-          reason?: Database["public"]["Enums"]["substitution_reason"] | null
+          reason?: Database["public"]["Enums"]["substitution_reason"]
           reason_note?: string | null
           requested_by?: string
           role?: Database["public"]["Enums"]["gedu_assignment_role"]

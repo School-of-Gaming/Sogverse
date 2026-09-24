@@ -1351,6 +1351,7 @@
       "seatFailed": "Vikarien kunde inte sättas in – försök igen.",
       "seatFailedIneligible": "{name} kan inte ta det här tillfället – hen är redan med på det eller kan inte längre vikariera.",
       "seatFailedSeatGone": "{absent} har inte längre det här tillfället, så det finns inget att vikariera för.",
+      "seatFailedRequestWithdrawn": "{absent} har dragit tillbaka sin begäran om vikarie, så det finns inget att vikariera för.",
       "seatFailedNotScheduled": "Gruppen har inte längre något tillfälle det här datumet."
     }
   },

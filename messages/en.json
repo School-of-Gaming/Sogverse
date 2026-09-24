@@ -1351,6 +1351,7 @@
       "seatFailed": "The substitute could not be seated — try again.",
       "seatFailedIneligible": "{name} can’t take this session — they are already due at it, or can no longer substitute.",
       "seatFailedSeatGone": "{absent} no longer has this session, so there is nothing to substitute for.",
+      "seatFailedRequestWithdrawn": "{absent} has withdrawn their request, so there is no absence to cover.",
       "seatFailedNotScheduled": "The group no longer has a session on this date."
     }
   },

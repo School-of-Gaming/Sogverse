@@ -1395,6 +1395,7 @@
       "seatFailed": "lIwwI’ wIvlu’be’ – yInID.",
       "seatFailedIneligible": "may’vam tlhaplaHbe’ {name}: pa’ ghaHtaH pagh lIwlaHbe’ DaH.",
       "seatFailedSeatGone": "may’vam ghaj {absent} ’e’ mev. lIwmeH pagh tu’lu’.",
+      "seatFailedRequestWithdrawn": "tlhobghachDaj teq {absent}. lIwmeH pagh tu’lu’.",
       "seatFailedNotScheduled": "jajvam may’ ghajbe’ ghom DaH."
     }
   },
