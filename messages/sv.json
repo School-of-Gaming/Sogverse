@@ -1366,7 +1366,10 @@
         "passwordTooShort": "Lösenordet måste vara minst {count} tecken långt.",
         "invalidCredentials": "E-postadressen, användarnamnet eller lösenordet du angav är felaktigt.",
         "emailNotConfirmed": "Bekräfta din e-postadress innan du loggar in.",
-        "tooManyAttempts": "För många inloggningsförsök. Vänta en stund och försök igen."
+        "tooManyAttempts": "För många inloggningsförsök. Vänta en stund och försök igen.",
+        "oauthCancelled": "Inloggningen med Google avbröts. Du kan försöka igen eller logga in med ditt lösenord.",
+        "authCallbackError": "Inloggningen med Google slutfördes inte. Försök igen.",
+        "googleGamer": "Spelarkonton loggar in med ett användarnamn eller via en förälders konto, inte med Google. Fråga din förälder om du är osäker på hur det går till."
       },
       "identifierLabel": "E-postadress eller användarnamn",
       "identifierPlaceholder": "du@example.com eller ett användarnamn"
@@ -1428,6 +1431,12 @@
       "invalidPhone": "Ange ett giltigt telefonnummer",
       "creatingAccount": "Skapar konto...",
       "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>"
+    },
+    "google": {
+      "continue": "Fortsätt med Google",
+      "or": "eller",
+      "failed": "Inloggningen med Google kunde inte startas. Försök igen.",
+      "finishNote": "Med Google slutför du ditt School of Gaming-konto på nästa sida."
     }
   },
   "pin": {

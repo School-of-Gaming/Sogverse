@@ -497,7 +497,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: {
           kind: "session-mutating-public",
           reason:
-            "the OAuth redirect target: it exchanges the provider's code for a session, so it must be reachable before one exists. Returns only redirects, and its caller-supplied `next` is resolved to an internal path before use",
+            "the Google sign-in redirect target: it exchanges the provider's code for a session, so it must be reachable before one exists. Returns only redirects, on the trusted origin. Its caller-supplied `next` must resolve to an internal path and pass the post-auth allowlist (product pages, plus the registration finish page); a customer account that has not finished registering is sent to the finish page whatever `next` says, and a gamer account's freshly minted session is signed out and refused",
         },
         body: { kind: "none" },
         test: TESTS.callback,

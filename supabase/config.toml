@@ -70,7 +70,14 @@ enable_confirmations = false
 enabled = false
 
 [auth.external.google]
+# Off locally: the stack is started inside WSL, where nothing supplies these two variables,
+# and an enabled provider cannot work without them. To try Google sign-in
+# against the local stack, export both (a Google OAuth client whose redirect URI is
+# http://127.0.0.1:54321/auth/v1/callback) in the shell that starts it and flip this on.
+# `redirect_uri` stays unset: the CLI defaults it to that callback.
 enabled = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
 
 [analytics]
 enabled = false

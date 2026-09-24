@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Link } from "@/i18n/navigation";
+import { Link, getPathname } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -25,6 +25,8 @@ import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth, useUtm } from "@/providers";
 import { readErrorMessage } from "@/lib/api/json-response";
 import type { SpokenLanguageCode } from "@/types";
+import { COMPLETE_REGISTRATION_GEDU_QUERY } from "@/lib/navigation/post-auth-redirect";
+import { ContinueWithGoogle } from "./continue-with-google";
 
 /**
  * Literals rather than `useId()`s, because the other fields on this form name
@@ -75,6 +77,7 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
   );
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [googlePending, setGooglePending] = useState(false);
 
   const supabase = getClient();
 
@@ -322,9 +325,30 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full" disabled={isLoading || googlePending}>
             {status ?? (isLoading ? t("registerGedu.creatingAccount") : c("createAccount"))}
           </Button>
+          {/* The finish page's Gedu variant, in this page's language: a
+              Google account arrives with none of the fields above. */}
+          <ContinueWithGoogle
+            next={getPathname({
+              href: {
+                pathname: ROUTES.completeRegistration,
+                query: COMPLETE_REGISTRATION_GEDU_QUERY,
+              },
+              locale,
+            })}
+            disabled={isLoading}
+            onBegin={() => {
+              setError(null);
+              setGooglePending(true);
+            }}
+            onFailed={(message) => {
+              setGooglePending(false);
+              setError(message);
+            }}
+            note={t("google.finishNote")}
+          />
           <div className="space-y-2 text-center text-sm text-muted-foreground">
             <div>
               {t.rich("registerGedu.alreadyHaveAccount", {

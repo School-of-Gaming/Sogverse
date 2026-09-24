@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Link } from "@/i18n/navigation";
+import { Link, getPathname } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -21,6 +21,7 @@ import { REGISTER_WEAK_PASSWORD } from "@/services/users/parent-registration.con
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth, useUtm } from "@/providers";
+import { ContinueWithGoogle } from "./continue-with-google";
 
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -106,6 +107,7 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
   const [marketingConsent, setMarketingConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [googlePending, setGooglePending] = useState(false);
 
   const supabase = getClient();
 
@@ -426,9 +428,25 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
           />
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full" disabled={isLoading || googlePending}>
             {status ?? (isLoading ? t('register.creatingAccount') : c('createAccount'))}
           </Button>
+          {/* A Google account arrives with no name, terms or consents, so it
+              lands on the finish page, in the language this page is read in —
+              the ticks above are this form's and do not travel with it. */}
+          <ContinueWithGoogle
+            next={getPathname({ href: ROUTES.completeRegistration, locale })}
+            disabled={isLoading}
+            onBegin={() => {
+              setError(null);
+              setGooglePending(true);
+            }}
+            onFailed={(message) => {
+              setGooglePending(false);
+              setError(message);
+            }}
+            note={t('google.finishNote')}
+          />
           <div className="space-y-2 text-center text-sm text-muted-foreground">
             <div>
               {t.rich('register.alreadyHaveAccount', {

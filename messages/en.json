@@ -1366,7 +1366,10 @@
         "passwordTooShort": "Password must be at least {count} characters.",
         "invalidCredentials": "The email, username or password you entered is incorrect.",
         "emailNotConfirmed": "Please confirm your email address before signing in.",
-        "tooManyAttempts": "Too many sign-in attempts. Please wait a moment and try again."
+        "tooManyAttempts": "Too many sign-in attempts. Please wait a moment and try again.",
+        "oauthCancelled": "Google sign-in was cancelled. You can try again or sign in with your password.",
+        "authCallbackError": "Google sign-in did not complete. Please try again.",
+        "googleGamer": "Gamer accounts sign in with a username or through a parent’s account, not with Google. Ask your parent if you are not sure how."
       },
       "identifierLabel": "Email or username",
       "identifierPlaceholder": "you@example.com or a username"
@@ -1428,6 +1431,12 @@
       "invalidPhone": "Please enter a valid phone number",
       "creatingAccount": "Creating account...",
       "alreadyHaveAccount": "Already have an account? <link>Sign in</link>"
+    },
+    "google": {
+      "continue": "Continue with Google",
+      "or": "or",
+      "failed": "Google sign-in could not start. Please try again.",
+      "finishNote": "With Google, you finish your School of Gaming account on the next page."
     }
   },
   "pin": {

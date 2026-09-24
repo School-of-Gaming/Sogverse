@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { resolveSafeRedirect } from "@/hooks/use-auth-redirect";
+import {
+  readCompleteRegistrationTarget,
+  resolveSafeRedirect,
+} from "@/lib/navigation/post-auth-redirect";
 
 describe("resolveSafeRedirect", () => {
   it("returns null when no redirect is provided", () => {
@@ -68,5 +71,51 @@ describe("resolveSafeRedirect", () => {
     // A `..` that stays within /shop/ is harmless; it collapses and is
     // returned as the normalized path the browser would actually visit.
     expect(resolveSafeRedirect("/shop/x/../abc-123")).toBe("/shop/abc-123");
+  });
+});
+
+/**
+ * **The finish page is admitted only when the caller asks for it.** The OAuth
+ * callback does, because the register pages' Google buttons send it as their
+ * `next`; the login form's `?redirect=` never does, so a crafted link cannot
+ * route a password sign-in there.
+ */
+describe("resolveSafeRedirect with the finish page allowed", () => {
+  const allow = { allowCompleteRegistration: true };
+
+  it("is refused by default", () => {
+    expect(resolveSafeRedirect("/en/complete-registration")).toBe(null);
+  });
+
+  it("is admitted, locale prefix and all, when allowed", () => {
+    expect(resolveSafeRedirect("/fi/complete-registration", allow)).toBe(
+      "/fi/complete-registration",
+    );
+    expect(
+      resolveSafeRedirect("/sv/complete-registration?as=gedu", allow),
+    ).toBe("/sv/complete-registration?as=gedu");
+  });
+
+  it("does not widen the allowlist to anything else", () => {
+    expect(resolveSafeRedirect("/admin", allow)).toBe(null);
+    expect(resolveSafeRedirect("/complete-registration/../admin", allow)).toBe(
+      null,
+    );
+    expect(resolveSafeRedirect("/shop/abc-123", allow)).toBe("/shop/abc-123");
+  });
+});
+
+describe("readCompleteRegistrationTarget", () => {
+  it("splits the raw pathname from the Gedu flag", () => {
+    expect(readCompleteRegistrationTarget("/fr/complete-registration")).toEqual(
+      { pathname: "/fr/complete-registration", asGedu: false },
+    );
+    expect(
+      readCompleteRegistrationTarget("/fi/complete-registration?as=gedu&x=1"),
+    ).toEqual({ pathname: "/fi/complete-registration", asGedu: true });
+  });
+
+  it("is null for any other page", () => {
+    expect(readCompleteRegistrationTarget("/shop/abc-123")).toBe(null);
   });
 });
