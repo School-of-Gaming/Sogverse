@@ -314,8 +314,13 @@ gated by the pair.
 `/admin/substitutions` is where an absence is answered — a sidebar entry of its own, not a
 band on the admin dashboard, because every row is work somebody finishes today and a
 session with nobody teaching it is too easy to scroll past on a board of standing
-information. Its read, `get_admin_substitution_requests`, returns a bare array of the open
-requests, exactly as the gedu's own pool read returns one.
+information. It has two sections: the open queue, and below it the upcoming sessions that
+already have a substitute — where an admin checks whom they approved and knows whom to
+tell. Both come from one read, `get_admin_substitution_requests`, a bare array of open and
+substituted requests dated today or later that the client splits by status, so an
+approval moves a session from one section to the other in a single refetch. The second
+section has **no actions**: changing or clearing a sub belongs to the group's page, where
+the whole session's staffing is in view, so its cards link there and nothing else.
 
 **An offer on it carries the offerer's name and nothing else.** It used to carry the
 certification queue's two standings so the page could draw the same chips, and they are
@@ -346,7 +351,7 @@ two zones would otherwise sit in an order saying nothing about which is next, on
 admin reads as a run of deadlines. An orphaned request — one whose weekday the schedule no
 longer names — has no start, sorts on its day, and claims no urgency.
 
-**The queue is grouped by day, so the order is legible.** Each request sits under a label for
+**Both sections are grouped by day, so the order is legible.** Each request sits under a label for
 its product-local session date — never a date derived from its start, or the orphan would
 have nowhere to go — soonest day first, and the cards therefore carry the clock face but not
 the date.

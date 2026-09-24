@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { buildAdminSubstitutionsData } from "@/components/admin/substitutions/build-admin-substitutions-data";
-import type { AdminSubstitutionRequest } from "@/services/session-substitution";
+import type {
+  AdminSubstitutionRequest,
+  OpenAdminSubstitutionRequest,
+  SubstitutedAdminSubstitutionRequest,
+} from "@/services/session-substitution";
 
 /**
  * The Substitutions page's mapping: the four claims the page's whole reading
@@ -17,6 +21,9 @@ import type { AdminSubstitutionRequest } from "@/services/session-substitution";
  *    still work.
  * 4. **The zone line is about this document**, present only where something
  *    actually converted.
+ * 5. **One read, two lists.** The document carries open and substituted
+ *    requests together; the mapping splits them by status and sorts each by
+ *    the same rule.
  *
  * Everything is pinned to a fixed instant — the mapping takes `now` as an
  * argument, so there is no clock to control and nothing to leak between cases.
@@ -26,6 +33,8 @@ const NOW = new Date("2026-08-17T09:20:00+03:00");
 const VIEWER_ZONE = "Europe/Helsinki";
 
 const REQUESTER = "dc5d2ed1-5498-450a-8db1-dad9701d10cd";
+const SUBSTITUTE = "ea0111ac-09ed-438c-85ef-f9f138b00209";
+const APPROVER = "7a1c1b2d-19ae-4ce7-a3f2-6a92e09a7037";
 
 /** 0 = Monday, the app's own convention. */
 const MON = 0;
@@ -53,9 +62,17 @@ function openRequest(args: {
   id: string;
   sessionDate: string;
   product: AdminSubstitutionRequest["product"];
-}): AdminSubstitutionRequest {
+}): OpenAdminSubstitutionRequest {
   return {
     id: args.id,
+    status: "open",
+    substitute_id: null,
+    substitute_first_name: null,
+    substitute_last_name: null,
+    approved_at: null,
+    approved_by: null,
+    approved_by_first_name: null,
+    approved_by_last_name: null,
     group_id: `group-${args.id}`,
     group_name: `Group ${args.id}`,
     session_date: args.sessionDate,
@@ -68,6 +85,24 @@ function openRequest(args: {
     requested_by_last_name: "Korhonen",
     product: args.product,
     offers: [],
+  };
+}
+
+function substitutedRequest(args: {
+  id: string;
+  sessionDate: string;
+  product: AdminSubstitutionRequest["product"];
+}): SubstitutedAdminSubstitutionRequest {
+  return {
+    ...openRequest(args),
+    status: "substituted",
+    substitute_id: SUBSTITUTE,
+    substitute_first_name: "Saana",
+    substitute_last_name: "Nieminen",
+    approved_at: "2026-08-16T19:30:00+03:00",
+    approved_by: APPROVER,
+    approved_by_first_name: "Kaisa",
+    approved_by_last_name: "Rantanen",
   };
 }
 
@@ -242,6 +277,55 @@ describe("the admin Substitutions mapping", () => {
         }),
       ]);
     expect(away.timeZoneAbbrev).toBeTruthy();
+  });
+
+  it("splits the document by status and sorts both lists by the session's start", () => {
+    const data = build([
+      openRequest({
+        id: "open-helsinki",
+        sessionDate: "2026-08-17",
+        product: HELSINKI_EVENING,
+      }),
+      substitutedRequest({
+        id: "sub-helsinki",
+        sessionDate: "2026-08-17",
+        product: HELSINKI_EVENING,
+      }),
+      substitutedRequest({
+        id: "sub-stockholm",
+        sessionDate: "2026-08-17",
+        product: STOCKHOLM_AFTERNOON,
+      }),
+    ]);
+
+    expect(data.open.map((request) => request.id)).toEqual(["open-helsinki"]);
+    // Delivered Helsinki-then-Stockholm, shown the other way round: the same
+    // soonest-first rule as the queue.
+    expect(data.substituted.map((session) => session.id)).toEqual([
+      "sub-stockholm",
+      "sub-helsinki",
+    ]);
+  });
+
+  it("carries who stands in and who seated them on a substituted session", () => {
+    const data = build([
+      substitutedRequest({
+        id: "sub",
+        sessionDate: "2026-08-17",
+        product: HELSINKI_EVENING,
+      }),
+    ]);
+
+    const [session] = data.substituted;
+    expect(session.substituteId).toBe(SUBSTITUTE);
+    expect(session.substituteName).toBe("Saana Nieminen");
+    expect(session.approverFirstName).toBe("Kaisa");
+    expect(session.approvedAt.toISOString()).toBe("2026-08-16T16:30:00.000Z");
+    // The session half is the queue's own: the same clock face, the same
+    // urgency rule, the same person away.
+    expect(session.sessionTime).toBe("17:00–18:00");
+    expect(session.urgent).toBe(true);
+    expect(session.requesterName).toBe("Milo Korhonen");
   });
 
 });

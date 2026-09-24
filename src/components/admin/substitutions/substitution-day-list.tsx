@@ -6,7 +6,7 @@ import {
   MonthHeading,
   startsMonth,
 } from "@/components/admin/day-label";
-import type { SubstitutionRequest } from "./admin-substitutions-data";
+import type { SubstitutionSession } from "./admin-substitutions-data";
 
 /**
  * Requests grouped by the day their session falls on, soonest day first, each
@@ -23,18 +23,21 @@ import type { SubstitutionRequest } from "./admin-substitutions-data";
  * ordered by date here rather than trusted to arrive in runs, because a list
  * sorted by instant can interleave two dates: a session just after midnight in
  * one zone can start before a late-evening one on the previous date in another.
+ *
+ * Both sections of the page draw through it — the open queue and the sessions
+ * that already have a substitute — each with its own card.
  */
-export function SubstitutionDayList({
+export function SubstitutionDayList<T extends SubstitutionSession>({
   requests,
   label,
   renderRequest,
 }: {
   /** Sorted soonest-first; grouping keeps that order inside each day. */
-  requests: readonly SubstitutionRequest[];
+  requests: readonly T[];
   /** The list's accessible name — the heading that introduces it. */
   label: string;
   /** One request's card. */
-  renderRequest: (request: SubstitutionRequest) => ReactNode;
+  renderRequest: (request: T) => ReactNode;
 }) {
   const days = groupByDay(requests);
   const dates = days.map((day) => day.date);
@@ -55,14 +58,14 @@ export function SubstitutionDayList({
   );
 }
 
-function DayRow({
+function DayRow<T extends SubstitutionSession>({
   date,
   requests,
   renderRequest,
 }: {
   date: string;
-  requests: readonly SubstitutionRequest[];
-  renderRequest: (request: SubstitutionRequest) => ReactNode;
+  requests: readonly T[];
+  renderRequest: (request: T) => ReactNode;
 }) {
   const labelId = useId();
 
@@ -81,10 +84,10 @@ function DayRow({
 }
 
 /** The requests bucketed by day, days in date order, each day's in list order. */
-function groupByDay(
-  requests: readonly SubstitutionRequest[],
-): { date: string; requests: SubstitutionRequest[] }[] {
-  const byDay = new Map<string, SubstitutionRequest[]>();
+function groupByDay<T extends SubstitutionSession>(
+  requests: readonly T[],
+): { date: string; requests: T[] }[] {
+  const byDay = new Map<string, T[]>();
   for (const request of requests) {
     const bucket = byDay.get(request.sessionDay);
     if (bucket === undefined) byDay.set(request.sessionDay, [request]);

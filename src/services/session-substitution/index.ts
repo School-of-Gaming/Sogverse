@@ -35,6 +35,8 @@ export type {
   AdminSubstitutionOffer,
   AdminSubstitutionRequest,
   AnonymousSubstitutionRequestDocument,
+  OpenAdminSubstitutionRequest,
+  SubstitutedAdminSubstitutionRequest,
   SubstitutionRequestDocument,
   OpenSubstitutionRequest,
   SessionStaffGedu,

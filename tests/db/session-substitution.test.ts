@@ -2270,6 +2270,11 @@ describe("session substitutions", () => {
         .parse(data)
         .find((row) => row.id === id);
       expect(mine).toBeDefined();
+      // An open row keeps the document's one shape: the substitute and approver
+      // keys are present and null.
+      expect(mine?.status).toBe("open");
+      expect(mine?.substitute_id).toBeNull();
+      expect(mine?.approved_by).toBeNull();
       expect(mine?.group_name).toBe("Cohort A");
       expect(mine?.reason).toBe("sick");
       expect(mine?.reason_note).toBe("flu");
@@ -2342,11 +2347,13 @@ describe("session substitutions", () => {
     });
 
     /**
-     * The read answers open requests and only those. A substituted or withdrawn
-     * request is history the group's own page carries; this page is the work
-     * still to be done.
+     * The read answers open AND substituted requests — the page's two sections
+     * — and never a withdrawn one, which is history the group's own page
+     * carries. A substituted row names its substitute and the admin who seated
+     * them, which is what an admin reads to check whom they picked, and carries
+     * no offers: the approval answered them.
      */
-    it("the admin queue carries no settled request", async () => {
+    it("the admin document carries an upcoming substituted request with its substitute and approver, and no withdrawn one", async () => {
       const substituted = await seedRequest({
         date: utcDate(5),
         substituteId: subId,
@@ -2357,11 +2364,33 @@ describe("session substitutions", () => {
         status: "withdrawn",
       });
 
-      const { data } = await adminAuth.rpc("get_admin_substitution_requests");
-      const ids = adminSubstitutionRequests.parse(data).map((row) => row.id);
+      const { data, error } = await adminAuth.rpc(
+        "get_admin_substitution_requests",
+      );
+      expect(error).toBeNull();
+      const rows = adminSubstitutionRequests.parse(data);
 
-      expect(ids).not.toContain(substituted);
-      expect(ids).not.toContain(withdrawn);
+      expect(rows.map((row) => row.id)).not.toContain(withdrawn);
+
+      const mine = rows.find((row) => row.id === substituted);
+      expect(mine?.status).toBe("substituted");
+      if (mine?.status !== "substituted") return;
+      expect(mine.substitute_id).toBe(subId);
+      expect(mine.substitute_first_name).toBeTruthy();
+      expect(mine.approved_by).toBe(TEST_IDS.ADMIN);
+      expect(mine.approved_by_first_name).toBeTruthy();
+      expect(mine.approved_at).toBeTruthy();
+      expect(mine.requested_by).toBe(TEST_IDS.GEDU);
+      expect(mine.offers).toEqual([]);
+    });
+
+    it("the admin document drops a substituted request whose date has passed", async () => {
+      const id = await seedRequest({ date: utcDate(-7), substituteId: subId });
+      const { data } = await adminAuth.rpc("get_admin_substitution_requests");
+      // A past substitution is history the group's own page carries.
+      expect(
+        adminSubstitutionRequests.parse(data).map((row) => row.id),
+      ).not.toContain(id);
     });
 
     it("get_my_assigned_products discriminates a substitution row from an assignment row", async () => {

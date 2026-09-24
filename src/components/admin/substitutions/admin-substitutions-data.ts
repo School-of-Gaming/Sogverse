@@ -43,8 +43,9 @@ export interface SubstitutionOffer {
 }
 
 /**
- * One open request, sorted soonest-first and carrying what makes that sort
- * legible.
+ * One session somebody cannot make, as either section of the page states it:
+ * which session, how soon, whose seat and why — sorted soonest-first and
+ * carrying what makes that sort legible.
  *
  * **The date is the product's and the clock face is the reader's**, and the two
  * are deliberately not resolved into one zone. The date is the request's own
@@ -62,7 +63,7 @@ export interface SubstitutionOffer {
  * claimed. That is the case this page exists to tolerate: the read orders by
  * date and never by a derived instant.
  */
-export interface SubstitutionRequest {
+export interface SubstitutionSession {
   id: string;
   groupId: string;
   groupName: string;
@@ -112,10 +113,33 @@ export interface SubstitutionRequest {
   requesterId: string;
   /** `null` where the account carries no name; the row words the stand-in. */
   requesterName: string | null;
-  /** The group's own admin page — where a request with no offers is dealt with. */
+  /**
+   * The group's own admin page — where a request with no offers is dealt with,
+   * and where a seated substitute is changed or cleared.
+   */
   groupHref: AppHref;
+}
+
+/** One open request: the session, and who has volunteered to stand in. */
+export interface SubstitutionRequest extends SubstitutionSession {
   /** As delivered: the read orders by date then product, and so does the list. */
   offers: readonly SubstitutionOffer[];
+}
+
+/**
+ * One upcoming session that already has a substitute: the session, who stands
+ * in, and who seated them — what an admin reads to check they picked the right
+ * person and to know whom to tell.
+ */
+export interface SubstitutedSession extends SubstitutionSession {
+  /** The substitute's account id — the identicon's input, so a real UUID. */
+  substituteId: string;
+  /** `null` where the account carries no name; the card words the stand-in. */
+  substituteName: string | null;
+  /** When the approval landed — said as a relative phrase on the card. */
+  approvedAt: Date;
+  /** The approving admin's first name, which a profile always carries. */
+  approverFirstName: string;
 }
 
 /** Everything the page body renders. */
@@ -132,4 +156,9 @@ export interface AdminSubstitutionsData {
   timeZoneAbbrev: string | null;
   /** Open requests, soonest session first. Empty is the all-clear. */
   open: readonly SubstitutionRequest[];
+  /**
+   * Upcoming sessions that already have a substitute, soonest first by the
+   * same rule as `open`. Empty says no upcoming session has one.
+   */
+  substituted: readonly SubstitutedSession[];
 }
