@@ -134,8 +134,11 @@ Before reporting any piece of work complete:
   the script also checks the workspace packages, which a bare `tsc` silently
   skips.
 - Unit tests with `npx vitest run <file>`. Never `npm run test -- --run`.
-- DB tests are CI-only. If the change needs them, push the branch and let CI run
-  them — never attempt them locally.
+- DB tests, when the change touches the database, with `npm run test:db:local`
+  against this worktree's own stack built by `npm run db -- up --no-rich-seed`
+  (`tests/CLAUDE.md`). It refuses a rich stack, so a stack Phase 3 brought up
+  for previewing cannot serve it. CI runs the suite on every push and remains
+  the authority.
 
 Commit as the work reaches coherent points rather than in one lump at the end.
 Multiline commit messages go through the Bash tool with a heredoc and
