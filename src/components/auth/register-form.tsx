@@ -14,6 +14,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { HomeLocationField } from "@/components/locations/home-location-field";
 import { getClient } from "@/lib/supabase/client";
 import { readErrorMessage } from "@/lib/api/json-response";
+import { pushGtmEvent } from "@/lib/gtm";
+import { GTM_EVENTS } from "@/lib/gtm-events";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, SUPPORT_EMAIL } from "@/lib/constants";
 import { REGISTER_WEAK_PASSWORD } from "@/services/users/parent-registration.contracts";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
@@ -189,6 +191,24 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
         setIsLoading(false);
         return;
       }
+
+      // The account exists and nothing has been signed up *for* — which is
+      // exactly what `sign_up` names, and why it carries nothing but the page
+      // it happened on: nothing else is known at this moment.
+      //
+      // Pushed here rather than after the sign-in because here is where the
+      // outcome is certain and the document is certainly still ours. The
+      // `signInWithPassword` round trip below sits between this line and the
+      // navigation that unloads the page, so a tag reading this event has a
+      // full network leg of headroom before the document goes.
+      //
+      // No consent check belongs at this call site. `pushGtmEvent` decides for
+      // itself whether the container was ever armed, and a second opinion here
+      // could only disagree with it.
+      pushGtmEvent({
+        event: GTM_EVENTS.accountCreated,
+        page_path: ROUTES.register,
+      });
 
       // The account exists but this browser is not signed in — the route used
       // the admin client, so no session was ever issued here. Sign in now.

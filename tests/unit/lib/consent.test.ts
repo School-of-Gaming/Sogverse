@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  advertisingCookieNames,
   CONSENT_COOKIE_NAME,
   CONSENT_VERSION,
   clearPixelStorage,
@@ -257,5 +258,49 @@ describe("clearPixelStorage", () => {
     clearPixelStorage(storage);
 
     expect(keysOf(storage)).toEqual(["sog-theme"]);
+  });
+});
+
+/**
+ * The cookie half of a withdrawal, and the reason it reads the document rather
+ * than expiring a list of names: the container's analytics cookies carry a
+ * property id in their own names, which is decided in the Tag Manager UI and is
+ * unknowable from here. A name that survives a withdrawal goes on identifying
+ * the same browser to the same platform, including from our own server-side
+ * reports, which read these back off a later request.
+ */
+describe("advertisingCookieNames", () => {
+  it("finds what each advertising script wrote, whole names and per-property alike", () => {
+    expect(
+      advertisingCookieNames(
+        "_fbp=fb.1.1757; _fbc=fb.1.1757.IwAR0; _fbleid=lead-1; _ga=GA1.1.99; _ga_5WS8TXL4=GS1.1.1757; _gid=GA1.1.42; _gcl_au=1.1.222",
+      ),
+    ).toEqual([
+      "_fbp",
+      "_fbc",
+      "_fbleid",
+      "_ga",
+      "_ga_5WS8TXL4",
+      "_gid",
+      "_gcl_au",
+    ]);
+  });
+
+  it("leaves everything else alone", () => {
+    expect(
+      advertisingCookieNames(
+        "sog_consent=%7B%22v%22%3A1%7D; NEXT_LOCALE=fi; sb-access-token=abc; theme=dark",
+      ),
+    ).toEqual([]);
+  });
+
+  // A cookie value may hold anything, `=` and `;`-free padding included, so the
+  // name is whatever sits before the first `=` of each pair and nothing else.
+  it("reads a name as what precedes the first equals sign", () => {
+    expect(advertisingCookieNames("_gcl_au=1.1.a=b=c")).toEqual(["_gcl_au"]);
+  });
+
+  it("finds nothing in a document that has no cookies", () => {
+    expect(advertisingCookieNames("")).toEqual([]);
   });
 });

@@ -3690,7 +3690,8 @@
           "Roblox – vastaanottaa lapsesi Roblox-tilitunnisteen, jotta voimme varmistaa tilin, ja selaimesi hakee hänen hahmokuvansa suoraan Robloxilta.",
           "Mojang (Microsoft) – vastaanottaa lapsesi Minecraft-käyttäjätunnuksen, jotta voimme varmistaa tilin.",
           "mc-heads.net – selaimesi hakee kuvan lapsesi Minecraft-hahmosta suoraan siltä hänen Minecraft-käyttäjätunnuksensa perusteella, joka on pelissä julkinen. Se on ilmainen julkinen palvelu eikä meidän alihankkijamme, ja se näkee vain tämän pyynnön.",
-          "Meta (Facebook ja Instagram) – näkee selaimesi Meta-pikselin ja palvelimiltamme tulevien raporttien kautta, miten käytät sivustoamme, jotta voimme näyttää sinulle mainoksiamme siellä ja mitata, miten ne toimivat. Vain jos sallit markkinointievästeet."
+          "Meta (Facebook ja Instagram) – näkee selaimesi Meta-pikselin ja palvelimiltamme tulevien raporttien kautta, miten käytät sivustoamme, jotta voimme näyttää sinulle mainoksiamme siellä ja mitata, miten ne toimivat. Vain jos sallit markkinointievästeet.",
+          "Google (Analytics ja Ads) – näkee selaimeesi ladattavan tunnistehallinnan kautta, millä julkisilla sivuillamme käyt ja mihin olet ilmoittautunut, jotta voimme mitata mainontamme tuloksia ja näyttää sinulle mainoksiamme. Vain jos sallit markkinointievästeet – ei analytiikkaa: analytiikka, jonka voit ottaa käyttöön, on yksin Vercelin."
         ]
       },
       "partners": {
@@ -3722,7 +3723,7 @@
         ],
         "bullets": [
           "Analytiikka – Vercelin analytiikka, ja vain jos valitset sen. Se laskee käynnit, mittaa sivujen latausnopeuden ja vastaanottaa muutamia nimettömiä tapahtumia siitä, miten sivustoa käytetään: miten oma My SOG avataan ja milloin kieltä vaihdetaan. Se ei näe, kuka olet, emmekä anna sitä koskaan mainostajille.",
-          "Markkinointi – mainosevästeet, vain jos valitset ne. Niiden avulla yllä mainitut mainosalustat – tällä hetkellä Meta – näkevät, miten käytät sivustoamme, jotta ne voivat näyttää sinulle mainoksiamme ja me näemme, mitkä mainokset toimivat. Jos luot tilin käynnin aikana, myös sen linkin kampanjatunniste, jonka kautta saavuit, tallennetaan tilille. Ne eivät ole koskaan käytössä, kun pelaaja on kirjautuneena. Markkinoinnin poistaminen käytöstä poistaa nämä evästeet ja sen pienen tietomäärän, jota Metan skripti säilyttää selaimessasi niiden rinnalla, mutta ei sitä, mitä alustoilla jo on – voit pyytää niitä poistamaan sen omista asetuksistasi niissä."
+          "Markkinointi – mainosevästeet, vain jos valitset ne. Niiden avulla yllä mainitut mainosalustat – tällä hetkellä Meta ja Google – näkevät, miten käytät sivustoamme, jotta ne voivat näyttää sinulle mainoksiamme ja me näemme, mitkä mainokset toimivat. Googlen tunnisteet tulevat selaimeesi tunnistehallinnan kautta, jonka ansiosta me ja kampanjoitamme hoitava kumppani voimme lisätä tai poistaa alustan muuttamatta sivustoa; kulloinkin mukana olevat alustat on nimetty yllä olevassa luettelossa, ja luettelossa on päivämäärä. Jos luot tilin käynnin aikana, myös sen linkin kampanjatunniste, jonka kautta saavuit, tallennetaan tilille. Ne eivät ole koskaan käytössä, kun pelaaja on kirjautuneena. Markkinoinnin poistaminen käytöstä poistaa nämä evästeet ja sen pienen tietomäärän, jota nämä skriptit säilyttävät selaimessasi niiden rinnalla, mutta ei sitä, mitä alustoilla jo on – voit pyytää niitä poistamaan sen omista asetuksistasi niissä."
         ]
       },
       "voice": {

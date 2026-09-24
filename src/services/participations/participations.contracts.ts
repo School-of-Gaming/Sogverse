@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
-import type { PurchaseShape } from "@/types";
+import { Constants, type PurchaseShape } from "@/types";
 
 /**
  * Response of POST /api/checkout/products/create — the signup outcomes: paid
@@ -103,11 +103,32 @@ export const leaveWaitlistResponse = z.object({
 
 export type LeaveWaitlistResponse = z.infer<typeof leaveWaitlistResponse>;
 
-/** Response of POST /api/participations/waitlist. */
+/**
+ * Response of POST /api/participations/waitlist.
+ *
+ * `idempotent` is the RPC's own flag, relayed to the browser rather than kept
+ * on the server. The join is idempotent by design and answers a replay — a
+ * stale tab resubmitting, a browser retrying, a second parent joining a gamer
+ * who already holds a place — with the existing row, shape-identically to a
+ * fresh insert. So the flag is the only thing that tells the two apart, and
+ * anything the browser must do exactly once per place in line (the marketing
+ * push) has to see it or it counts the replays too. The route already gates its
+ * confirmation mail and its server-side conversion on the same flag; this is
+ * what lets the browser gate on the same fact rather than a weaker guess.
+ *
+ * `status` is the row's status and not necessarily `waitlisted` — a second
+ * parent joining a gamer who already holds a seat gets `active` back, at
+ * position 0. It is the generated enum rather than a bare string so that a
+ * caller branching on it is comparing against a member the compiler knows,
+ * which is what makes a mistyped branch a build failure instead of a condition
+ * that is quietly never true.
+ */
 export const joinWaitlistResponse = z.object({
   participationId: z.string(),
   waitlistPosition: z.number(),
-  status: z.string(),
+  status: z.enum(Constants.public.Enums.participation_status),
+  /** False when this call created the row; true when it recognised an existing one. */
+  idempotent: z.boolean(),
 });
 
 export type JoinWaitlistResponse = z.infer<typeof joinWaitlistResponse>;

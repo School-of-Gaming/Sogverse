@@ -3690,7 +3690,8 @@
           "Roblox – tar emot ditt barns Roblox-konto-id, så att vi kan bekräfta kontot, och din webbläsare hämtar barnets avatarbild direkt från Roblox.",
           "Mojang (Microsoft) – tar emot ditt barns Minecraft-användarnamn, så att vi kan bekräfta kontot.",
           "mc-heads.net – din webbläsare hämtar bilden av ditt barns Minecraft-figur direkt därifrån, utifrån barnets Minecraft-användarnamn, som är offentligt i spelet. Det är en gratis offentlig tjänst och inte en underleverantör till oss, och den ser bara den förfrågan.",
-          "Meta (Facebook och Instagram) – ser via Meta-pixeln i din webbläsare och rapporter från våra servrar hur du använder vår webbplats, så att vi kan visa dig våra annonser där och mäta hur de presterar. Bara om du tillåter cookies för marknadsföring."
+          "Meta (Facebook och Instagram) – ser via Meta-pixeln i din webbläsare och rapporter från våra servrar hur du använder vår webbplats, så att vi kan visa dig våra annonser där och mäta hur de presterar. Bara om du tillåter cookies för marknadsföring.",
+          "Google (Analytics och Ads) – ser, via en tagghanterare i din webbläsare, vilka av våra offentliga sidor du besöker och vad du har anmält dig till, så att vi kan mäta hur vår annonsering fungerar och visa dig våra annonser. Bara om du tillåter cookies för marknadsföring – inte analys: den analys du kan slå på är Vercels ensam."
         ]
       },
       "partners": {
@@ -3722,7 +3723,7 @@
         ],
         "bullets": [
           "Analys – Vercels, och bara om du väljer den. Den räknar besök, mäter hur snabbt sidorna laddas och tar emot några anonyma händelser om hur webbplatsen används: hur någon tar sig till sin My SOG och när språket byts. Den kan inte se vem du är, och vi lämnar den aldrig till annonsörer.",
-          "Marknadsföring – annonscookies, och bara om du väljer dem. De låter annonsplattformarna som nämns ovan – i dag Meta – se hur du använder vår webbplats, så att de kan visa dig våra annonser och vi kan se vilka annonser som fungerar. Om du skapar ett konto under ett besök sparas även kampanjkoden från länken du kom från på kontot. De är aldrig igång medan en spelare är inloggad. Att stänga av marknadsföring raderar dessa cookies, och den lilla mängd data som Metas skript sparar i din webbläsare vid sidan av dem, men inte det plattformarna redan har – du kan be dem radera det i dina inställningar hos dem."
+          "Marknadsföring – annonscookies, och bara om du väljer dem. De låter annonsplattformarna som nämns ovan – i dag Meta och Google – se hur du använder vår webbplats, så att de kan visa dig våra annonser och vi kan se vilka annonser som fungerar. Googles taggar når din webbläsare via en tagghanterare, som låter oss och den partner som sköter våra kampanjer lägga till eller ta bort en plattform utan att ändra webbplatsen; de plattformar den för tillfället bär står alltid namngivna i listan ovan, och den listan är daterad. Om du skapar ett konto under ett besök sparas även kampanjkoden från länken du kom från på kontot. De är aldrig igång medan en spelare är inloggad. Att stänga av marknadsföring raderar dessa cookies, och den lilla mängd data som dessa skript sparar i din webbläsare vid sidan av dem, men inte det plattformarna redan har – du kan be dem radera det i dina inställningar hos dem."
         ]
       },
       "voice": {
