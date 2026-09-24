@@ -131,6 +131,7 @@ export const PATHNAMES = {
   "/seat-offer": "/seat-offer",
   "/verify-email": "/verify-email",
   "/select-profile": "/select-profile",
+  "/complete-registration": "/complete-registration",
 
   // --- Shared ---------------------------------------------------------------
   "/settings": "/settings",

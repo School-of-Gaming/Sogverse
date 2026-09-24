@@ -89,13 +89,17 @@ function createNextRequest(
   return createBareRequest(url, cookie, extraHeaders);
 }
 
-function mockUser(role: string) {
+// A registered account unless told otherwise: every password account is
+// registered from the moment it exists, so that is the state the rest of the
+// suite is about. Pass `null` for an account created through Google that has
+// not been through the finish page yet.
+function mockUser(role: string, registrationCompletedAt: string | null = "2026-01-01T00:00:00+00:00") {
   mockGetClaims.mockResolvedValue({
     data: { claims: { sub: TEST_USER_ID, session_id: TEST_SESSION_ID } },
     error: null,
   });
   mockProfileQuery.mockResolvedValue({
-    data: { role },
+    data: { role, registration_completed_at: registrationCompletedAt },
     error: null,
   });
 }
@@ -519,6 +523,7 @@ describe("proxy", () => {
       "/reset-pin",
       "/forgot-password",
       "/reset-password",
+      "/complete-registration",
     ])(
       "exempts %s so a locked customer is not trapped",
       async (path) => {
@@ -563,6 +568,89 @@ describe("proxy", () => {
       mockUser("gamer");
       const response = await proxy(createNextRequest("/shop"));
       expect(response.status).toBe(200);
+    });
+  });
+
+  // --- Registration gate ---
+  //
+  // An account created through Google has no name, no terms acceptance and no
+  // consents until the finish page has them. It owes no PIN either — it has
+  // not chosen one — so the gate stands in for the PIN gate rather than
+  // stacking on it: an owing parent sent to the unlock pad would be asked for
+  // four digits that do not exist.
+
+  describe("registration gate", () => {
+    it.each(["/parent", "/parent/unlock", "/select-profile", "/settings", "/admin"])(
+      "sends an owing customer from %s to the finish page",
+      async (path) => {
+        mockUser("customer", null);
+        const response = await proxy(createNextRequest(path));
+        expect(response.status).toBe(307);
+        expect(getRedirectUrl(response).pathname).toBe("/en/complete-registration");
+      },
+    );
+
+    it("sends an owing customer off an auth route to the finish page, not the dashboard", async () => {
+      mockUser("customer", null);
+      const response = await proxy(createNextRequest("/login"));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/en/complete-registration");
+    });
+
+    it("keeps the bounce in the locale the request was made in", async () => {
+      mockUser("customer", null);
+      const response = await proxy(createNextRequest("/fi/parent"));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/fi/complete-registration");
+    });
+
+    it("lets an owing customer onto the finish page itself, past the PIN gate", async () => {
+      mockUser("customer", null);
+      const response = await proxy(createNextRequest("/complete-registration"));
+      expect(response.status).toBe(200);
+    });
+
+    it.each(["/shop", "/terms-and-conditions", "/privacy"])(
+      "leaves the public page %s readable, with no PIN bounce",
+      async (path) => {
+        // The finish page links to the terms it asks the parent to accept.
+        mockUser("customer", null);
+        const response = await proxy(createNextRequest(path));
+        expect(response.status).toBe(200);
+      },
+    );
+
+    it("never catches /api/*, so the sign-out form still works", async () => {
+      mockUser("customer", null);
+      const response = await proxy(createBareRequest("/api/auth/signout"));
+      expect(response.status).toBe(200);
+      expect(response.headers.get("location")).toBeNull();
+    });
+
+    it("leaves a registered customer to the PIN gate as before", async () => {
+      mockUser("customer");
+      const response = await proxy(createNextRequest("/parent"));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/en/parent/unlock");
+    });
+
+    it.each([
+      ["gedu", "/gedu"],
+      ["gamer", "/gamer"],
+      ["admin", "/admin"],
+    ])("gates only customers: a %s with no completion stamp reaches %s", async (role, path) => {
+      mockUser(role, null);
+      const response = await proxy(createNextRequest(path));
+      expect(response.status).toBe(200);
+    });
+
+    it("sends a signed-out visitor to login, as any protected page does", async () => {
+      mockNoUser();
+      const response = await proxy(createNextRequest("/complete-registration"));
+      expect(response.status).toBe(307);
+      const url = getRedirectUrl(response);
+      expect(url.pathname).toBe("/en/login");
+      expect(url.searchParams.get("redirect")).toBe("/en/complete-registration");
     });
   });
 

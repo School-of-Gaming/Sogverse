@@ -780,6 +780,11 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
   // says only that they wanted it to say something, so the column is written
   // exclusively by the service-role verify route.
   ["profiles", "email_verified_at"],
+  // Whether the account finished registering — named itself, accepted the
+  // terms, answered the consents. Writable, a Google-created parent could mark
+  // themselves done and walk past the finish page with none of it given; only
+  // the service-role completion routes write it after creation.
+  ["profiles", "registration_completed_at"],
   // Certification gates gedu group assignment and voice-room moderation; the
   // audit columns are stamped server-side by set_gedu_certified.
   ["gedu_profiles", "certified"],

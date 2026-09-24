@@ -15,6 +15,7 @@ DECLARE
   utm_source_value     TEXT;
   utm_medium_value     TEXT;
   utm_campaign_value   TEXT;
+  registration_value   TIMESTAMPTZ;
 BEGIN
   profile_first_name := COALESCE(
     NULLIF(NEW.raw_user_meta_data->>'first_name', ''),
@@ -64,13 +65,26 @@ BEGIN
     ELSE NULL
   END;
 
+  -- A password account arrives whole: every route that creates one supplies
+  -- the name, the terms acceptance and the consents in the same request, so it
+  -- is registered the moment it exists. Any other provider (Google) arrives
+  -- with none of that, and stays unregistered until a completion route has it.
+  -- The provider is read from app metadata, which only the auth server writes;
+  -- user metadata is the caller's and could claim anything.
+  registration_value := CASE
+    WHEN NEW.raw_app_meta_data->>'provider' = 'email' THEN now()
+    ELSE NULL
+  END;
+
   INSERT INTO public.profiles (
     id, email, role, first_name, last_name,
-    utm_source, utm_medium, utm_campaign
+    utm_source, utm_medium, utm_campaign,
+    registration_completed_at
   )
   VALUES (
     NEW.id, NEW.email, 'customer', profile_first_name, profile_last_name,
-    utm_source_value, utm_medium_value, utm_campaign_value
+    utm_source_value, utm_medium_value, utm_campaign_value,
+    registration_value
   );
 
   INSERT INTO public.customer_profiles (user_id) VALUES (NEW.id);

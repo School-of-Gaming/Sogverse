@@ -19,6 +19,7 @@ CREATE TABLE public.profiles (
     utm_source text,
     utm_medium text,
     utm_campaign text,
+    registration_completed_at timestamp with time zone,
     CONSTRAINT profiles_first_name_len CHECK (((char_length(first_name) >= 2) AND (char_length(first_name) <= 32))),
     CONSTRAINT profiles_last_name_len CHECK ((char_length(last_name) <= 32)),
     CONSTRAINT profiles_phone_e164 CHECK ((phone ~ '^\d{7,15}$'::text)),
@@ -82,6 +83,13 @@ COMMENT ON COLUMN public.profiles.utm_medium IS 'Optional marketing provenance: 
 --
 
 COMMENT ON COLUMN public.profiles.utm_campaign IS 'Optional marketing provenance: the utm_campaign from the link this account arrived through, or NULL. Same rules as utm_source. This is the single "utm parameter" a partner data export reports on, and campaigns issued to or for a partner are prefixed with the partner''s slug and a hyphen (lynx-summer-a, rblx-launch) — a naming convention, not a constraint, and one that cannot be retrofitted because the value is immutable once written.';
+
+
+--
+-- Name: COLUMN profiles.registration_completed_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.profiles.registration_completed_at IS 'When this account finished registering — gave its name, accepted the terms and answered the consents — or NULL while it still owes that. handle_new_user() sets it at creation for a password account, whose registration route supplies everything in the same request, and leaves it NULL for any other provider (Google), which arrives with none of it. After creation it is written only by service_role (the routes that complete a registration); there is deliberately no UPDATE grant at any level for authenticated or anon, because a parent able to set it could skip the terms. The proxy sends a customer whose value is NULL to the finish page from every protected page.';
 
 
 --

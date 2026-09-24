@@ -101,6 +101,10 @@ function isNonPagePath(pathname: string): boolean {
 // case rather than the edge one: the parent presses the button while unlocked,
 // then opens the mail an hour later, or on their phone, where the session has
 // re-locked or never existed.
+//
+// `completeRegistration` is exempt because the account standing on it has no
+// PIN yet: choosing one is part of what it is there to finish, so the unlock
+// gate would be asking for four digits that do not exist.
 function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
   if (isNonPagePath(pathname) || isAuthRoute) return true;
   const exempt = [
@@ -111,6 +115,7 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
     ROUTES.seatOffer,
     ROUTES.forgotPassword,
     ROUTES.resetPassword,
+    ROUTES.completeRegistration,
   ];
   return exempt.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 }
@@ -501,16 +506,35 @@ export async function proxy(request: NextRequest) {
     } else {
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role, registration_completed_at")
         .eq("id", userId)
         .single();
       if (!profileError) userRole = profile.role;
 
-      // Parent-PIN gate: a locked customer session may not act as the parent
-      // ANYWHERE — including public pages like /shop — so this runs before the
-      // public-route early return. The boundary is the session's state, not the
-      // route. API routes are gated separately in requireRole().
-      if (userRole === "customer" && !isPinExemptPath(pathname, isAuthRoute)) {
+      // Registration gate: an account created through Google owes its name,
+      // the terms and the consents until the finish page has them, and it is
+      // sent there from every protected page. Only a customer can owe — every
+      // account is born one, and completing is what promotes a gedu — and the
+      // unlock-cookie short-circuit above never skips an owing session, which
+      // cannot have entered a PIN it has not chosen yet. That is also why this
+      // runs instead of the PIN gate rather than after it. Public pages stay
+      // readable, because the finish page links to the terms it asks them to
+      // accept; `/api/*` is public here, so the sign-out form and the
+      // completion routes are never caught.
+      const registrationOwed =
+        !profileError &&
+        profile.role === "customer" &&
+        profile.registration_completed_at === null;
+
+      if (registrationOwed) {
+        if (!isPublicRoute && pathname !== ROUTES.completeRegistration) {
+          return redirect(localizedUrl(ROUTES.completeRegistration));
+        }
+      } else if (userRole === "customer" && !isPinExemptPath(pathname, isAuthRoute)) {
+        // Parent-PIN gate: a locked customer session may not act as the parent
+        // ANYWHERE — including public pages like /shop — so this runs before the
+        // public-route early return. The boundary is the session's state, not the
+        // route. API routes are gated separately in requireRole().
         const unlockUrl = localizedUrl(ROUTES.customer.unlock);
         // The **raw external** path — what was in the address bar — so a parent
         // bounced off `/fi/kauppa` returns to `/fi/kauppa`, not to English

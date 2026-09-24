@@ -90,6 +90,8 @@ Proxy (`src/proxy.ts`) refreshes tokens server-side on every request and enforce
 
 The canonical sign-out shape is an HTML `<form method="post" action="/api/auth/signout">` — the route calls `supabase.auth.signOut()` server-side and returns a 303, the browser follows it as a full-page GET. No client-side fetch, no React state transition on the outgoing page, no intermediate "sidebar gone but still on dashboard" frame.
 
+**`profiles.registration_completed_at` NULL means the account still owes its registration** — its name, the terms and the consents. Only an account created through Google starts that way (the new-user trigger stamps every password account at creation), only `service_role` writes it afterwards, and the proxy sends a customer who owes it to `/complete-registration` from every protected page in place of the PIN gate, since such an account has no PIN yet.
+
 **Rule: Never make Supabase data queries inside `onAuthStateChange` callbacks.** Only do synchronous React state updates in the callback.
 
 **Rule: Password changes go through the emailed reset flow.** Supabase dashboard config (not in this repo) sets `security_update_password_require_reauthentication = true`, and the gate keys on the session row's age, not token freshness — so a direct `updateUser({ password })` passes fresh-session testing and fails in production for any long-lived session. A completed reset also revokes every other session.
