@@ -101,6 +101,3 @@ logs
 
 .vercel
 .env*.local
-
-.vercel
-.env*
