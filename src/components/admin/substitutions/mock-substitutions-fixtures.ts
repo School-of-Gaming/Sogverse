@@ -116,7 +116,7 @@ const VANTAA_CLUB = product({
  * The camp whose block runs Monday to Wednesday — which is what makes the
  * orphan an orphan rather than a hand-set flag: the request below is dated on a
  * Tuesday the schedule no longer names, so the occurrence resolves to nothing
- * and the row states its date alone.
+ * and the row sits under its day with no time.
  */
 const ROBLOX_CAMP = product({
   id: "camp-2",

@@ -346,6 +346,11 @@ two zones would otherwise sit in an order saying nothing about which is next, on
 admin reads as a run of deadlines. An orphaned request — one whose weekday the schedule no
 longer names — has no start, sorts on its day, and claims no urgency.
 
+**The queue is grouped by day, so the order is legible.** Each request sits under a label for
+its product-local session date — never a date derived from its start, or the orphan would
+have nowhere to go — soonest day first, and the cards therefore carry the clock face but not
+the date.
+
 ## Invalidation reaches four roots
 
 A substitution write moves four roots, and the mutations invalidate all of them rather

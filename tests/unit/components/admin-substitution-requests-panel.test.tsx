@@ -6,6 +6,8 @@ import type {
   SubstitutionRequest,
 } from "@/components/admin/substitutions/admin-substitutions-data";
 import { ROUTES } from "@/lib/constants";
+import { formatDayMonth } from "@/lib/calendar-date";
+import { formatDateOnly } from "@/lib/utils";
 
 /**
  * The admin Substitutions page's queue panel, and the claims that are only true
@@ -33,6 +35,9 @@ import { ROUTES } from "@/lib/constants";
  *    is a line under the heading, not a card holding a line.
  * 5. **Urgency is a tint, not a re-ordering**, and it is carried by the row it
  *    belongs to rather than recomputed from the clock in the component.
+ * 6. **The queue is grouped by day**, one label per date, soonest day first,
+ *    each day's requests in the order they were handed over. The day comes
+ *    from the request's own calendar date, so the orphan still has one.
  *
  * Translations echo their keys, so nothing here depends on English wording, and
  * the relative-time formatter echoes a fixed phrase: what this file is about is
@@ -45,6 +50,7 @@ vi.mock("next-intl", () => ({
     return t;
   },
   useFormatter: () => ({ relativeTime: () => "in 3 hours" }),
+  useLocale: () => "en",
 }));
 
 // Real UUIDs, hardcoded: every chip draws an identicon out of the id's hex
@@ -73,6 +79,7 @@ const WITH_OFFERS: SubstitutionRequest = {
   groupName: "Ryhmä A",
   productName: "Minecraft-klubi Espoo",
   productType: "consumer_club",
+  sessionDay: "2026-08-17",
   sessionDate: "Mon 17 Aug",
   sessionTime: "17:00–18:30",
   startsAt: new Date("2026-08-17T17:00:00+03:00"),
@@ -100,6 +107,7 @@ const WITHOUT_OFFERS: SubstitutionRequest = {
   groupName: "Ryhmä B",
   productName: "Roblox Studio -leiri Espoo",
   productType: "camp",
+  sessionDay: "2026-08-25",
   sessionDate: "Tue 25 Aug",
   // The orphan: an admin moved the schedule's weekday after this request was
   // filed, so no slot names its date. It has no time and no claim about when it
@@ -129,22 +137,17 @@ describe("the admin Substitutions page's queue panel", () => {
   it("renders one row per request, with the session, the absent gedu and every offer", () => {
     renderPanel([WITH_OFFERS, WITHOUT_OFFERS], () => Promise.resolve());
 
-    // Direct children only: an offers list nests inside a request card, so a
-    // role query over the whole subtree would count its items as rows too.
-    const rows = [
-      ...screen.getByRole("list", {
-        name: "admin.substitutions.listLabel",
-      }).children,
-    ].filter((child): child is HTMLElement => child instanceof HTMLElement);
+    const rows = requestCards();
     expect(rows).toHaveLength(2);
 
     const staffed = within(rows[0]);
     expect(staffed.getByText("Minecraft-klubi Espoo")).toBeTruthy();
     expect(staffed.getByText("Ryhmä A")).toBeTruthy();
-    expect(staffed.getByText("Mon 17 Aug")).toBeTruthy();
-    // The clock face sits beside the date, so an admin staffing a group that
+    // The clock face stays on the card, so an admin staffing a group that
     // meets twice on one day knows which of the two is short-staffed.
     expect(staffed.getByText("17:00–18:30")).toBeTruthy();
+    // The date does not: the day label beside the card states it once.
+    expect(staffed.queryByText("Mon 17 Aug")).toBeNull();
     expect(staffed.getByText("Milo Korhonen")).toBeTruthy();
     expect(staffed.getByText("Flunssa.")).toBeTruthy();
     expect(staffed.getByText("Eeli Virtanen")).toBeTruthy();
@@ -176,11 +179,7 @@ describe("the admin Substitutions page's queue panel", () => {
   it("says how long until the session starts, and marks the urgent row", () => {
     renderPanel([WITH_OFFERS, WITHOUT_OFFERS], () => Promise.resolve());
 
-    const rows = [
-      ...screen.getByRole("list", {
-        name: "admin.substitutions.listLabel",
-      }).children,
-    ].filter((child): child is HTMLElement => child instanceof HTMLElement);
+    const rows = requestCards();
 
     expect(within(rows[0]).getByText("in 3 hours")).toBeTruthy();
     // The urgency treatment is the request CARD's own edge and nothing else —
@@ -244,11 +243,70 @@ describe("the admin Substitutions page's queue panel", () => {
    * which is the whole reason the read orders by date rather than by a derived
    * instant, and it states the date alone rather than a time nothing projects.
    */
-  it("renders a request the schedule no longer projects with its date and no time", () => {
+  it("renders a request the schedule no longer projects under its day, with no time", () => {
     renderPanel([WITHOUT_OFFERS], () => Promise.resolve());
 
-    expect(screen.getByText("Tue 25 Aug")).toBeTruthy();
+    expect(
+      within(dayList("2026-08-25")).getByText("Roblox Studio -leiri Espoo"),
+    ).toBeTruthy();
     expect(screen.queryByText(/\d\d:\d\d/)).toBeNull();
+  });
+
+  /**
+   * An admin could not tell how the list was ordered from the cards alone, so
+   * it is grouped by the day each session falls on — the order a reader scans
+   * is then legible from the labels.
+   */
+  it("groups the requests by day, soonest day first, in the order handed over within a day", () => {
+    const sameDayLater: SubstitutionRequest = {
+      ...WITH_OFFERS,
+      id: "request-same-day-later",
+      productName: "Roblox-klubben Solna",
+      startsAt: new Date("2026-08-17T19:00:00+03:00"),
+      urgent: false,
+    };
+    // Sorted by instant, a session just after midnight in one zone can come
+    // before a late one on the previous date in another; the day list still
+    // puts the earlier date first.
+    const nextDayEarly: SubstitutionRequest = {
+      ...WITH_OFFERS,
+      id: "request-next-day-early",
+      productName: "Fortnite-klubi Vantaa",
+      sessionDay: "2026-08-18",
+      startsAt: new Date("2026-08-17T21:30:00Z"),
+      urgent: false,
+    };
+    renderPanel(
+      [nextDayEarly, WITH_OFFERS, sameDayLater, WITHOUT_OFFERS],
+      () => Promise.resolve(),
+    );
+
+    const days = [...queue().children];
+    expect(days).toHaveLength(3);
+    expect(days[0].contains(dayList("2026-08-17"))).toBe(true);
+    expect(days[1].contains(dayList("2026-08-18"))).toBe(true);
+    expect(days[2].contains(dayList("2026-08-25"))).toBe(true);
+
+    // Within the day, the order handed over — soonest start first.
+    expect(
+      [...dayList("2026-08-17").children].map(
+        (card) => card.querySelector("span.font-medium")?.textContent,
+      ),
+    ).toEqual(["Minecraft-klubi Espoo", "Roblox-klubben Solna"]);
+  });
+
+  it("draws a month heading only where the month changes", () => {
+    const september: SubstitutionRequest = {
+      ...WITHOUT_OFFERS,
+      id: "request-september",
+      sessionDay: "2026-09-01",
+    };
+    renderPanel([WITH_OFFERS, WITHOUT_OFFERS, september], () =>
+      Promise.resolve(),
+    );
+
+    expect(screen.getAllByText("August 2026")).toHaveLength(1);
+    expect(screen.getAllByText("September 2026")).toHaveLength(1);
   });
 
   /**
@@ -417,6 +475,33 @@ describe("the admin Substitutions page's queue panel", () => {
     },
   );
 });
+
+/** The queue: one item per day. */
+function queue(): HTMLElement {
+  return screen.getByRole("list", { name: "admin.substitutions.listLabel" });
+}
+
+/**
+ * Every request card, across every day, in the order they render.
+ *
+ * Each day's list's direct children only: an offers list nests inside a
+ * request card, so a role query over the whole subtree would count its items
+ * as rows too.
+ */
+function requestCards(): HTMLElement[] {
+  return [...queue().querySelectorAll(":scope > li > div > ul > li")].filter(
+    (item): item is HTMLElement => item instanceof HTMLElement,
+  );
+}
+
+/** The list of one day's requests, found by the label that names it. */
+function dayList(date: string): HTMLElement {
+  const label = `${formatDateOnly(date, "en", { weekday: "short" })} ${formatDayMonth(date, "en")}`;
+  // Anchored at both ends of the date, so "8/1" cannot match "8/17".
+  return screen.getByRole("list", {
+    name: (name) => name.startsWith(label) && !/\d/.test(name.charAt(label.length)),
+  });
+}
 
 /**
  * The nth Approve button **on the list**, which is what opens the question.

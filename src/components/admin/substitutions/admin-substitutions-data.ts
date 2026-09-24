@@ -58,9 +58,9 @@ export interface SubstitutionOffer {
  *
  * An **orphaned** request (an admin moved the schedule's weekday after it was
  * filed) resolves to no occurrence at all and carries `sessionTime: null` and
- * `startsAt: null`, rendering as the bare date with no urgency claimed. That is
- * the case this page exists to tolerate: the read orders by date and never by a
- * derived instant.
+ * `startsAt: null`, rendering under its day with no time and no urgency
+ * claimed. That is the case this page exists to tolerate: the read orders by
+ * date and never by a derived instant.
  */
 export interface SubstitutionRequest {
   id: string;
@@ -69,7 +69,12 @@ export interface SubstitutionRequest {
   /** The product's name in the reader's locale — never truncated, as on a card. */
   productName: string;
   productType: ProductType;
-  /** The session's product-local calendar date, already formatted. */
+  /**
+   * The session's product-local calendar date, `YYYY-MM-DD` — what the list
+   * groups by. Never derived from `startsAt`, so the orphan still has a day.
+   */
+  sessionDay: string;
+  /** The same date, already formatted, for the approval dialog's sentence. */
   sessionDate: string;
   /**
    * When the session runs, as `HH:MM–HH:MM` in the **viewer's** zone — or

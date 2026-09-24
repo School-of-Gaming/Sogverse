@@ -26,7 +26,7 @@ import type {
  * **The occurrence is resolved from each request's own product**, from the
  * slots that travel with it, so the only absence left is "no slot names this
  * weekday" — the orphaned request — which reaches the row as `null` and renders
- * as a bare date rather than a time the schedule would not produce.
+ * under its day with no time, rather than a time the schedule would not produce.
  */
 export function buildAdminSubstitutionsData({
   requests,
@@ -119,6 +119,7 @@ function toSubstitutionRequest(
     groupName: request.group_name,
     productName: productName(request.product.translations, locale),
     productType: request.product.product_type,
+    sessionDay: request.session_date,
     // A weekday beside the date, because what an admin is staffing is a
     // *session* and "Friday" is how the office talks about one; the year is
     // left off because the queue only ever holds dates from today forward

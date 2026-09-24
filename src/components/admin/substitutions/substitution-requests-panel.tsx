@@ -8,6 +8,7 @@ import type {
   SubstitutionRequest,
 } from "./admin-substitutions-data";
 import { ApproveOfferDialog } from "./approve-offer-dialog";
+import { SubstitutionDayList } from "./substitution-day-list";
 import { SubstitutionRequestRow } from "./substitution-request-row";
 
 /**
@@ -34,7 +35,8 @@ import { SubstitutionRequestRow } from "./substitution-request-row";
  * dropped the request, so a row leaves only when both halves agree. A row that
  * left optimistically would have nowhere to put a failure, and the admin would
  * be told nothing at all. The order is soonest-session-first and is settled
- * before the list is handed over; nothing here re-sorts it.
+ * before the list is handed over; nothing here re-sorts it, and the day list
+ * below only groups it.
  */
 export function SubstitutionRequestsPanel({
   requests,
@@ -116,17 +118,17 @@ export function SubstitutionRequestsPanel({
       {waiting.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("allClear")}</p>
       ) : (
-        <ul aria-label={t("listLabel")} className="space-y-3">
-          {waiting.map((request) => (
-            <li key={request.id}>
-              <SubstitutionRequestRow
-                request={request}
-                now={now}
-                onApproveOffer={(offer) => setConfirming({ request, offer })}
-              />
-            </li>
-          ))}
-        </ul>
+        <SubstitutionDayList
+          requests={waiting}
+          label={t("listLabel")}
+          renderRequest={(request) => (
+            <SubstitutionRequestRow
+              request={request}
+              now={now}
+              onApproveOffer={(offer) => setConfirming({ request, offer })}
+            />
+          )}
+        />
       )}
 
       {/* Mounted only while it is open, so its copy is built from rows that are

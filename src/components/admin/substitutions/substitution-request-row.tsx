@@ -2,7 +2,7 @@
 
 import { useId } from "react";
 import { useFormatter, useTranslations } from "next-intl";
-import { ArrowUpRight, CalendarDays, Clock, Users } from "lucide-react";
+import { ArrowUpRight, Clock, Users } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,7 +39,8 @@ import type {
  * without arithmetic over a date and a clock face. It is said in words —
  * "tomorrow", "in 3 hours" — because a relative phrase is the one form that
  * needs no zone at all, which is precisely what the date-in-the-product's-zone
- * and clock-face-in-the-viewer's pair beside it cannot claim.
+ * heading above the card and the clock face in the viewer's zone beside the
+ * phrase cannot claim.
  *
  * **The urgency treatment is one tint and one rule, and it fires inside a
  * day.** A session starting within 24 hours wears `warning` on this card's own
@@ -117,22 +118,18 @@ export function SubstitutionRequestRow({
             <Users className="h-3 w-3 shrink-0" aria-hidden />
             {request.groupName}
           </span>
-          {/* The date and, where the schedule still projects one, the clock face
-              — in the schedule chips' own tabular numerals, because the admin
-              surfaces state the same sessions in several places and a reader
-              comparing them is comparing numbers. A request the schedule no
-              longer projects states the date alone; that orphan is the case the
-              queue exists to tolerate, and a card that guessed a time for it
-              would be inventing one. */}
-          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <CalendarDays className="h-3 w-3 shrink-0" aria-hidden />
-            {request.sessionDate}
-            {request.sessionTime !== null && (
-              <span className="font-medium tabular-nums">
-                {request.sessionTime}
-              </span>
-            )}
-          </span>
+          {/* The clock face, where the schedule still projects one — in the
+              schedule chips' own tabular numerals, because the admin surfaces
+              state the same sessions in several places and a reader comparing
+              them is comparing numbers. The date is the day heading's, above
+              the card. A request the schedule no longer projects states no
+              time; that orphan is the case the queue exists to tolerate, and a
+              card that guessed a time for it would be inventing one. */}
+          {request.sessionTime !== null && (
+            <span className="text-xs font-medium tabular-nums text-muted-foreground">
+              {request.sessionTime}
+            </span>
+          )}
           {request.startsAt !== null && (
             <span
               className={cn(
