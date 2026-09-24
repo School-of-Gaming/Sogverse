@@ -93,6 +93,47 @@ export function substitutionRequestRefusalMeansAlreadyFiled(
   );
 }
 
+/** The lines a refused seating can read as, all under `admin.substitutions`. */
+export type SeatSubstituteFailureKey =
+  | "seatFailedIneligible"
+  | "seatFailedSeatGone"
+  | "seatFailedNotScheduled"
+  | "seatFailed";
+
+/**
+ * Which refusal `set_session_substitution` raised, for an admin seating a
+ * substitute from a request's own card.
+ *
+ * That surface cannot pre-mark the colleagues already due at the session — its
+ * document does not carry the group's staffing — so this write's refusal is the
+ * backstop for them, and it has to say so rather than "try again". The same two
+ * signals as the filing mapper above, in the same order; the three refusals
+ * worth telling apart all raise `check_violation` and differ only by a phrase
+ * of the message. Anything else — the group being gone, a network failure —
+ * falls to the generic line.
+ */
+export function seatSubstituteFailureKey(
+  error: unknown,
+): SeatSubstituteFailureKey {
+  const { code, message } = wireError(error);
+
+  if (code === "23514") {
+    if (message.includes("cannot substitute on group")) {
+      return "seatFailedIneligible";
+    }
+    if (
+      message.includes("is not expected at group") ||
+      message.includes("no role to substitute")
+    ) {
+      return "seatFailedSeatGone";
+    }
+    if (message.includes("No scheduled session on")) {
+      return "seatFailedNotScheduled";
+    }
+  }
+  return "seatFailed";
+}
+
 /** The `code` and `message` off a Postgres error, or empty strings. */
 function wireError(error: unknown): { code: string; message: string } {
   if (typeof error !== "object" || error === null) {

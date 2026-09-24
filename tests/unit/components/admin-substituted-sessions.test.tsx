@@ -83,6 +83,7 @@ function renderBody(substituted: readonly SubstitutedSession[]) {
     <AdminSubstitutionsPageBody
       data={data}
       onApproveOffer={() => Promise.resolve()}
+      onSeatSubstitute={() => Promise.resolve()}
     />,
   );
 }

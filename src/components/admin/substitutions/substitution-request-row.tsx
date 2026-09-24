@@ -55,20 +55,30 @@ import {
  * it.
  *
  * **A request with no offers is not a failure state and is not tinted as one.**
- * Nobody has volunteered *yet*, and what an admin does about it is on the
- * group's own page, where a sub can be seated outright — so the card says so
- * plainly, in the slot the offers would have filled, and points there.
+ * Nobody has volunteered *yet*, so the card says so plainly, in the slot the
+ * offers would have filled.
+ *
+ * **Every request can be answered with somebody who did not offer**, from the
+ * card itself: "Seat someone else" sits in the offers slot — beside the
+ * no-offers line, or under the offers — as a quiet control, because the offers
+ * are what the card is asking the admin to look at first. The card already
+ * knows the group, the date and whose seat it is, so the press opens the full
+ * gedu picker directly; the panel owns what follows, as it does for an
+ * approval.
  */
 export function SubstitutionRequestRow({
   request,
   now,
   onApproveOffer,
+  onSeatSomeoneElse,
 }: {
   request: SubstitutionRequest;
   /** The page's pinned clock — what the relative phrase is measured against. */
   now: Date;
   /** Ask about one offer — the dialog above owns everything after the press. */
   onApproveOffer: (offer: SubstitutionOffer) => void;
+  /** Open the picker for this request's seat — the panel owns everything after. */
+  onSeatSomeoneElse: () => void;
 }) {
   const t = useTranslations("admin.substitutions");
   const offersLabelId = useId();
@@ -99,22 +109,49 @@ export function SubstitutionRequestRow({
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <p className="text-xs text-muted-foreground">{t("noOffers")}</p>
               <OpenGroupLink href={request.groupHref} />
+              <SeatSomeoneElseButton onPress={onSeatSomeoneElse} />
             </div>
           ) : (
-            <ul
-              aria-labelledby={offersLabelId}
-              className="divide-y divide-border"
-            >
-              {request.offers.map((offer) => (
-                <li key={offer.id}>
-                  <OfferRow offer={offer} onApprove={() => onApproveOffer(offer)} />
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul
+                aria-labelledby={offersLabelId}
+                className="divide-y divide-border"
+              >
+                {request.offers.map((offer) => (
+                  <li key={offer.id}>
+                    <OfferRow offer={offer} onApprove={() => onApproveOffer(offer)} />
+                  </li>
+                ))}
+              </ul>
+              <div className="pt-1">
+                <SeatSomeoneElseButton onPress={onSeatSomeoneElse} />
+              </div>
+            </>
           )}
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * The way to seat a gedu who did not offer — in the register and at the size
+ * of "Open the group" beside it, so the offers keep the card's one filled
+ * button.
+ */
+function SeatSomeoneElseButton({ onPress }: { onPress: () => void }) {
+  const t = useTranslations("admin.substitutions");
+
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className="h-7 px-2 text-xs"
+      onClick={onPress}
+    >
+      {t("seatSomeoneElse")}
+    </Button>
   );
 }
 

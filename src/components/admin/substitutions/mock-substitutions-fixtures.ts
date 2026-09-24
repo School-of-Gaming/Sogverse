@@ -349,30 +349,28 @@ export function buildAdminSubstitutionsFixture(
 }
 
 /**
- * An open fixture request as the read would return it once `offerId` had been
- * approved: substituted, the offerer seated, the scene's admin as approver at
- * the scene's clock, and the offers gone.
+ * An open fixture request as the read would return it once `sub` had been
+ * seated on it — from an offer or from the full list of gedus, which the
+ * database records identically: substituted, the scene's admin as approver at
+ * the scene's clock, the offers gone, and the reason the gedu gave kept.
  *
- * The scene's stand-in for the refetch, so an approval pressed in the preview
- * moves the session into the second section exactly as the live page does.
+ * The scene's stand-in for the refetch, so a seat pressed in the preview moves
+ * the session into the second section exactly as the live page does.
  */
-export function approveFixtureOffer(
+export function seatFixtureSubstitute(
   request: OpenAdminSubstitutionRequest,
-  offerId: string,
-): AdminSubstitutionRequest {
-  const offer = request.offers.find((candidate) => candidate.id === offerId);
-  if (offer === undefined) return request;
-  const substituted: SubstitutedAdminSubstitutionRequest = {
+  sub: { id: string; firstName: string; lastName: string },
+): SubstitutedAdminSubstitutionRequest {
+  return {
     ...request,
     status: "substituted",
-    substitute_id: offer.gedu_id,
-    substitute_first_name: offer.first_name,
-    substitute_last_name: offer.last_name,
+    substitute_id: sub.id,
+    substitute_first_name: sub.firstName,
+    substitute_last_name: sub.lastName,
     approved_at: ADMIN_SUBSTITUTIONS_NOW.toISOString(),
     approved_by: APPROVER.id,
     approved_by_first_name: APPROVER.firstName,
     approved_by_last_name: APPROVER.lastName,
     offers: [],
   };
-  return substituted;
 }

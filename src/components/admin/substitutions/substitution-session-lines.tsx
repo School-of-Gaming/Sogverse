@@ -127,8 +127,9 @@ export function SubstitutionAwayLine({
 }
 
 /**
- * The way to the group's own admin page, where a sub is seated outright,
- * changed or cleared — none of which this page does itself.
+ * The way to the group's own admin page, where a seated sub is changed or
+ * cleared with the whole session's staffing in view — which this page does not
+ * do itself.
  */
 export function OpenGroupLink({ href }: { href: AppHref }) {
   const t = useTranslations("admin.substitutions");

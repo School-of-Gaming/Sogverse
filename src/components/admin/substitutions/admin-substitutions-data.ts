@@ -114,8 +114,8 @@ export interface SubstitutionSession {
   /** `null` where the account carries no name; the row words the stand-in. */
   requesterName: string | null;
   /**
-   * The group's own admin page — where a request with no offers is dealt with,
-   * and where a seated substitute is changed or cleared.
+   * The group's own admin page — where the whole session's staffing is in
+   * view, and where a seated substitute is changed or cleared.
    */
   groupHref: AppHref;
 }
@@ -124,6 +124,20 @@ export interface SubstitutionSession {
 export interface SubstitutionRequest extends SubstitutionSession {
   /** As delivered: the read orders by date then product, and so does the list. */
   offers: readonly SubstitutionOffer[];
+}
+
+/**
+ * An admin's choice of substitute for one open request, made on its card from
+ * the full list of gedus rather than from an offer.
+ *
+ * It carries the request whole because the request *is* the seat — its group,
+ * its date and its absent gedu are the write's three keys — and the chosen
+ * gedu's name because the preview's stand-in for the refetch has to say who
+ * was seated. **It carries no reason**: the request already has one.
+ */
+export interface SeatSubstituteDraft {
+  request: SubstitutionRequest;
+  sub: { id: string; firstName: string; lastName: string };
 }
 
 /**

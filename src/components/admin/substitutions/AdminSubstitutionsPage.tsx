@@ -9,14 +9,17 @@ import {
   sessionSubstitutionKeys,
   useAdminSubstitutionQueue,
   useApproveSessionSubstitutionOffer,
+  useSetSessionSubstitution,
   type AdminSubstitutionRequest,
 } from "@/services/session-substitution";
+import type { SeatSubstituteDraft } from "./admin-substitutions-data";
 import { AdminSubstitutionsPageBody } from "./admin-substitutions-page-body";
 import { buildAdminSubstitutionsData } from "./build-admin-substitutions-data";
+import { seatSubstituteWrite } from "./seat-substitute-flow";
 
 /**
  * The Substitutions page's data shell: the read, the clock, the viewer's zone,
- * and the one write on the page.
+ * and the two writes on the page.
  *
  * **There is no loading state here and none below.** The route awaited the
  * document server-side and hydrated it, so the first paint is the finished
@@ -43,6 +46,7 @@ export function AdminSubstitutionsPage({
 
   const { data: requests } = useAdminSubstitutionQueue(initialRequests);
   const approveOffer = useApproveSessionSubstitutionOffer();
+  const setSubstitution = useSetSessionSubstitution();
 
   const data = useMemo(
     () =>
@@ -79,7 +83,26 @@ export function AdminSubstitutionsPage({
     [approveOffer, queryClient],
   );
 
+  /**
+   * Seat a gedu who did not offer, on the request's own seat, and wait for the
+   * page to agree — the approval's contract, for the same reasons. The write
+   * sends no reason: the request already has the gedu's own.
+   */
+  const handleSeatSubstitute = useCallback(
+    async (draft: SeatSubstituteDraft) => {
+      await setSubstitution.mutateAsync(seatSubstituteWrite(draft));
+      await queryClient.invalidateQueries({
+        queryKey: sessionSubstitutionKeys.adminQueue(),
+      });
+    },
+    [setSubstitution, queryClient],
+  );
+
   return (
-    <AdminSubstitutionsPageBody data={data} onApproveOffer={handleApproveOffer} />
+    <AdminSubstitutionsPageBody
+      data={data}
+      onApproveOffer={handleApproveOffer}
+      onSeatSubstitute={handleSeatSubstitute}
+    />
   );
 }

@@ -27,10 +27,14 @@ export {
   sessionStaffGedu,
 } from "./session-substitution.contracts";
 export {
+  seatSubstituteFailureKey,
   substitutionRequestFailureKey,
   substitutionRequestRefusalMeansAlreadyFiled,
 } from "./session-substitution.refusals";
-export type { SubstitutionRequestFailureKey } from "./session-substitution.refusals";
+export type {
+  SeatSubstituteFailureKey,
+  SubstitutionRequestFailureKey,
+} from "./session-substitution.refusals";
 export type {
   AdminSubstitutionOffer,
   AdminSubstitutionRequest,

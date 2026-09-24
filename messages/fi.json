@@ -1137,6 +1137,7 @@
         "confirmBody": "Merkitse, kuka pitää kerran {date} poissaolevan gedun sijasta.",
         "approvesOpenRequest": "Tämä hyväksyy avoimen pyynnön eikä luo uutta.",
         "replacesCurrentSub": "Tämä korvaa tuuraajan {name}, joka on nyt merkitty tälle kerralle.",
+        "reasonKept": "Poissaololle jo kirjattu syy säilyy ennallaan.",
         "reasonLabel": "Syy",
         "reasonSick": "Sairaana",
         "reasonOther": "Jokin muu",
@@ -1332,6 +1333,7 @@
       },
       "noOffers": "Ei vielä tarjouksia.",
       "openGroup": "Avaa ryhmä",
+      "seatSomeoneElse": "Valitse muu tuuraaja",
       "approve": "Hyväksy",
       "failed": "Hyväksyntä epäonnistui – yritä uudelleen.",
       "loadError": "Tuurauksia ei voitu ladata.",
@@ -1341,7 +1343,15 @@
       "approveFailedOfferGone": "{name} on perunut tarjouksensa, joten hyväksyttävää ei ole.",
       "approveFailedAlreadySettled": "Joku muu on jo hoitanut tämän kerran.",
       "approveFailedSeatGone": "{absent} ei ole enää tässä kerrassa, joten tuurattavaa ei ole.",
-      "approveFailedIneligible": "{name} ei voi enää ottaa tätä kertaa."
+      "approveFailedIneligible": "{name} ei voi enää ottaa tätä kertaa.",
+      "seatConfirmTitle": "Asetetaanko {name} tuuraajaksi?",
+      "seatConfirmBody": "{name} ottaa kerran {product} — {group} {when}, Gedun {absent} tilalla. Kerta näkyy hänen Tuuraukset-sivullaan ja My SOG -näkymässä heti, ja ryhmän työtila avautuu hänelle 48 tuntia ennen kerran alkua. Kenellekään ei lähetetä ilmoitusta: kerta poistuu listalta, jolta Gedut tarjoutuvat tuuraamaan, ja sen kortilla lukee nyt, että {name} tuuraa henkilöä {absent}.",
+      "seatConfirm": "Aseta tuuraaja",
+      "seatReasonLabel": "Ilmoitettu syy",
+      "seatFailed": "Tuuraajan asettaminen epäonnistui – yritä uudelleen.",
+      "seatFailedIneligible": "{name} ei voi ottaa tätä kertaa – hän on jo merkitty sille tai ei voi enää tuurata.",
+      "seatFailedSeatGone": "{absent} ei ole enää tässä kerrassa, joten tuurattavaa ei ole.",
+      "seatFailedNotScheduled": "Ryhmällä ei ole enää kertaa tänä päivänä."
     }
   },
   "auth": {

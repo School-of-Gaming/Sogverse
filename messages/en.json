@@ -1137,6 +1137,7 @@
         "confirmBody": "Record who runs the session on {date} in the absent Gedu’s place.",
         "approvesOpenRequest": "This approves the open request, rather than filing a second one.",
         "replacesCurrentSub": "This replaces {name}, who is substituting at the session at the moment.",
+        "reasonKept": "The reason already recorded for the absence is kept.",
         "reasonLabel": "Reason",
         "reasonSick": "Sick",
         "reasonOther": "Something else",
@@ -1332,6 +1333,7 @@
       },
       "noOffers": "No offers yet.",
       "openGroup": "Open the group",
+      "seatSomeoneElse": "Seat someone else",
       "approve": "Approve",
       "failed": "Could not approve — try again.",
       "loadError": "The substitutions could not be loaded.",
@@ -1341,7 +1343,15 @@
       "approveFailedOfferGone": "{name} has taken their offer back, so there is nobody to approve.",
       "approveFailedAlreadySettled": "This session has already been settled by someone else.",
       "approveFailedSeatGone": "{absent} no longer has this session, so there is nothing to substitute for.",
-      "approveFailedIneligible": "{name} can no longer take this session."
+      "approveFailedIneligible": "{name} can no longer take this session.",
+      "seatConfirmTitle": "Seat {name} as the substitute?",
+      "seatConfirmBody": "{name} takes {product} — {group} on {when}, in {absent}’s place. They see the session on their Substitutions page and on My SOG straight away, and the group’s workspace opens to them 48 hours before it starts. Nobody is notified: the session leaves the list Gedus offer from, and its card now says {name} is substituting for {absent}.",
+      "seatConfirm": "Seat the substitute",
+      "seatReasonLabel": "Reason given",
+      "seatFailed": "The substitute could not be seated — try again.",
+      "seatFailedIneligible": "{name} can’t take this session — they are already due at it, or can no longer substitute.",
+      "seatFailedSeatGone": "{absent} no longer has this session, so there is nothing to substitute for.",
+      "seatFailedNotScheduled": "The group no longer has a session on this date."
     }
   },
   "auth": {

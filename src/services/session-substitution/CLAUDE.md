@@ -85,6 +85,11 @@ never types an RPC argument as nullable, so the writers carry trailing SQL defau
 caller with nothing to say leaves the key out of the payload. Passing `null` does not
 compile; passing an empty string stores one.
 
+**An admin states a reason only when filing on a gedu's behalf** — seating somebody on a
+seat with no live request. Wherever a request exists, open or already substituted and
+being re-pointed, the gedu has said why: the admin is not asked again, and the seating
+write is sent neither parameter, which it reads as "keep what is on the row".
+
 ## One shape, two readers
 
 There is exactly one wire shape for a request, built by one database function, and every
@@ -321,6 +326,16 @@ substituted requests dated today or later that the client splits by status, so a
 approval moves a session from one section to the other in a single refetch. The second
 section has **no actions**: changing or clearing a sub belongs to the group's page, where
 the whole session's staffing is in view, so its cards link there and nothing else.
+
+**An open request can be answered from its own card with somebody who did not offer.** The
+card already names the seat — group, date, absent gedu — so the press opens the full gedu
+picker directly and the confirm asks no reason. The picker can refuse only the absent gedu,
+because this page's read does not carry the group's staffing; a colleague already due at
+the session is refused by the write, read out in the holding dialog as an approval's
+refusals are. That write is keyed by the seat rather than the request, so a request
+withdrawn or settled by another admin while the dialog was open is not refused: the seat is
+filed afresh on the gedu's behalf, or re-pointed. Closing that means the write taking the
+request's id — a database change not yet made.
 
 **An offer on it carries the offerer's name and nothing else.** It used to carry the
 certification queue's two standings so the page could draw the same chips, and they are

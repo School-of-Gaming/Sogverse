@@ -1,10 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import { SubstitutionRequestsPanel } from "@/components/admin/substitutions/substitution-requests-panel";
+import { seatSubstituteWrite } from "@/components/admin/substitutions/seat-substitute-flow";
 import type {
+  SeatSubstituteDraft,
   SubstitutionOffer,
   SubstitutionRequest,
 } from "@/components/admin/substitutions/admin-substitutions-data";
+import type { UserListEntry } from "@/services/users";
 import { ROUTES } from "@/lib/constants";
 import { formatDayMonth } from "@/lib/calendar-date";
 import { formatDateOnly } from "@/lib/utils";
@@ -38,6 +41,10 @@ import { formatDateOnly } from "@/lib/utils";
  * 6. **The queue is grouped by day**, one label per date, soonest day first,
  *    each day's requests in the order they were handed over. The day comes
  *    from the request's own calendar date, so the orphan still has one.
+ * 7. **Any request can be answered with somebody who did not offer**, from its
+ *    own card: the picker opens on the request's seat, the confirm asks no
+ *    reason and shows the gedu's own back, and the write names the request's
+ *    group, date and absent gedu and sends no reason at all.
  *
  * Translations echo their keys, so nothing here depends on English wording, and
  * the relative-time formatter echoes a fixed phrase: what this file is about is
@@ -60,7 +67,52 @@ const IDS = {
   requester: "3f8682f8-1994-4e4b-b849-73c4066efac4",
   offererA: "52cae3c1-b538-4513-9036-d22863bb8766",
   offererB: "ea0111ac-09ed-438c-85ef-f9f138b00209",
+  colleague: "c61f2a0e-5d8b-4b8e-9f2c-0a7c3e61d4b2",
 } as const;
+
+function candidate(id: string, firstName: string): UserListEntry {
+  return {
+    id,
+    created_at: "2024-01-01T00:00:00.000Z",
+    updated_at: "2024-01-01T00:00:00.000Z",
+    currency: null,
+    email: `${firstName.toLowerCase()}@example.com`,
+    email_verified_at: null,
+    first_name: firstName,
+    last_name: "Virtanen",
+    home_location_id: null,
+    locale: "fi",
+    phone: null,
+    role: "gedu",
+    spoken_languages: ["fi"],
+    utm_campaign: null,
+    utm_medium: null,
+    utm_source: null,
+    certified: true,
+    criminal_record_check_passed: true,
+    linked_gamers: [],
+  };
+}
+
+/** What the picker lists: the absent gedu themselves, and a colleague who did not offer. */
+const CANDIDATES = [
+  candidate(IDS.requester, "Milo"),
+  candidate(IDS.colleague, "Iida"),
+];
+
+// The picker reads one page of the shared people list; nothing left to page
+// through, so no sentinel is mounted.
+vi.mock("@/services/users", () => ({
+  useUserList: () => ({
+    data: { pages: [{ rows: CANDIDATES, total: CANDIDATES.length }] },
+    isPending: false,
+    isPlaceholderData: false,
+    hasNextPage: false,
+    isFetching: false,
+    isFetchingNextPage: false,
+    fetchNextPage: () => Promise.resolve(),
+  }),
+}));
 
 /** The panel's pinned clock. Nothing here reads it; every row carries it. */
 const NOW = new Date("2026-08-17T09:20:00+03:00");
@@ -123,12 +175,15 @@ const WITHOUT_OFFERS: SubstitutionRequest = {
 function renderPanel(
   requests: readonly SubstitutionRequest[],
   onApproveOffer: (offerId: string) => Promise<void>,
+  onSeatSubstitute: (draft: SeatSubstituteDraft) => Promise<void> = () =>
+    Promise.resolve(),
 ) {
   return render(
     <SubstitutionRequestsPanel
       requests={requests}
       now={NOW}
       onApproveOffer={onApproveOffer}
+      onSeatSubstitute={onSeatSubstitute}
     />,
   );
 }
@@ -233,9 +288,171 @@ describe("the admin Substitutions page's queue panel", () => {
         .getByRole("link", { name: /admin.substitutions.openGroup/ })
         .getAttribute("href"),
     ).toBe("/admin/camps/camp-2/groups/group-b");
-    // Nothing to approve, so nothing is pressable on this row.
-    expect(screen.queryByRole("button")).toBeNull();
+    // Nothing to approve, so the one press on this row is seating somebody
+    // who did not offer.
+    expect(
+      screen.getAllByRole("button").map((button) => button.textContent),
+    ).toEqual(["admin.substitutions.seatSomeoneElse"]);
   });
+
+  it("offers to seat someone else on every open request, with offers or without", () => {
+    renderPanel([WITH_OFFERS, WITHOUT_OFFERS], () => Promise.resolve());
+
+    for (const card of requestCards()) {
+      expect(
+        within(card).getByRole("button", {
+          name: "admin.substitutions.seatSomeoneElse",
+        }),
+      ).toBeTruthy();
+    }
+  });
+
+  it("opens the picker on the request's seat, refusing the absent gedu", async () => {
+    const seat = vi.fn(() => Promise.resolve());
+    const { container } = renderPanel([WITHOUT_OFFERS], approveNothing, seat);
+
+    await act(async () => pressSeat(container, 0));
+
+    // Straight to the full list: the card already knows whose seat it is, so
+    // there is no "who is away" question in between.
+    expect(
+      screen.getByText("admin.products.staffing.pickerTitle"),
+    ).toBeTruthy();
+    expect(pickerRow("Milo").hasAttribute("disabled")).toBe(true);
+    expect(pickerRow("Iida").hasAttribute("disabled")).toBe(false);
+    expect(seat).not.toHaveBeenCalled();
+  });
+
+  it("asks no reason, shows the gedu's own back, and seats on the request's own seat", async () => {
+    const seat = vi.fn((_draft: SeatSubstituteDraft) => Promise.resolve());
+    const { container } = renderPanel([WITHOUT_OFFERS], approveNothing, seat);
+
+    await act(async () => pressSeat(container, 0));
+    await act(async () => pickerRow("Iida").click());
+
+    expect(
+      screen.getByText("admin.substitutions.seatConfirmTitle"),
+    ).toBeTruthy();
+    // The reason the gedu gave, read-only — and nothing to choose.
+    expect(screen.getByText("admin.substitutions.seatReasonLabel")).toBeTruthy();
+    expect(screen.getByText("admin.substitutions.reason.sick")).toBeTruthy();
+    expect(screen.queryByRole("radio")).toBeNull();
+    expect(screen.queryByRole("textbox", { name: /note/i })).toBeNull();
+
+    await act(async () =>
+      screen
+        .getByRole("button", { name: "admin.substitutions.seatConfirm" })
+        .click(),
+    );
+
+    expect(seat).toHaveBeenCalledTimes(1);
+    const draft = seat.mock.calls[0][0];
+    expect(draft.request.id).toBe(WITHOUT_OFFERS.id);
+    expect(draft.sub).toEqual({
+      id: IDS.colleague,
+      firstName: "Iida",
+      lastName: "Virtanen",
+    });
+    // The write the shell makes from it: the request's group, its own
+    // product-local date and its absent gedu — and no reason or note key at
+    // all, so the gedu's own stays on the row.
+    expect(seatSubstituteWrite(draft)).toEqual({
+      groupId: "group-b",
+      sessionDate: "2026-08-25",
+      absentGeduId: IDS.requester,
+      subGeduId: IDS.colleague,
+    });
+  });
+
+  it("drops the request once the seat and the refetch have both landed", async () => {
+    let land: () => void = () => {};
+    const seat = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          land = resolve;
+        }),
+    );
+    const { container, rerender } = renderPanel(
+      [WITH_OFFERS],
+      approveNothing,
+      seat,
+    );
+
+    await act(async () => pressSeat(container, 0));
+    await act(async () => pickerRow("Iida").click());
+    await act(async () =>
+      screen
+        .getByRole("button", { name: "admin.substitutions.seatConfirm" })
+        .click(),
+    );
+
+    rerender(
+      <SubstitutionRequestsPanel
+        requests={[]}
+        now={NOW}
+        onApproveOffer={approveNothing}
+        onSeatSubstitute={seat}
+      />,
+    );
+    await act(async () => land());
+
+    expect(
+      screen.queryByText("admin.substitutions.seatConfirmTitle"),
+    ).toBeNull();
+    expect(screen.queryByText("Minecraft-klubi Espoo")).toBeNull();
+    // A seat from the card is receipted exactly as an approval is.
+    expect(screen.getByText("admin.substitutions.justNow")).toBeTruthy();
+  });
+
+  it.each([
+    [
+      "the chosen gedu is already due or cannot substitute",
+      {
+        code: "23514",
+        message: "gedu 3 cannot substitute on group 2 on 2026-08-25",
+      },
+      "admin.substitutions.seatFailedIneligible",
+    ],
+    [
+      "the absent gedu no longer holds the seat",
+      {
+        code: "23514",
+        message: "gedu 1 is not expected at group 2 on 2026-08-25",
+      },
+      "admin.substitutions.seatFailedSeatGone",
+    ],
+    [
+      "the schedule no longer has the date",
+      {
+        code: "23514",
+        message: "No scheduled session on 2026-08-25 for this group",
+      },
+      "admin.substitutions.seatFailedNotScheduled",
+    ],
+    ["something nobody mapped", new Error("boom"), "admin.substitutions.seatFailed"],
+  ])(
+    "keeps the seat dialog open and names the refusal when %s",
+    async (_case, error, line) => {
+      const seat = vi.fn(() => Promise.reject(error));
+      const { container } = renderPanel([WITHOUT_OFFERS], approveNothing, seat);
+
+      await act(async () => pressSeat(container, 0));
+      await act(async () => pickerRow("Iida").click());
+      await act(async () =>
+        screen
+          .getByRole("button", { name: "admin.substitutions.seatConfirm" })
+          .click(),
+      );
+
+      expect(screen.getByText(line)).toBeTruthy();
+      expect(
+        screen.getByRole<HTMLButtonElement>("button", {
+          name: "admin.substitutions.seatConfirm",
+        }).disabled,
+      ).toBe(false);
+      expect(screen.queryByText("admin.substitutions.justNow")).toBeNull();
+    },
+  );
 
   /**
    * An orphaned request — the schedule's weekday moved after it was filed —
@@ -403,6 +620,7 @@ describe("the admin Substitutions page's queue panel", () => {
         requests={[]}
         now={NOW}
         onApproveOffer={approve}
+        onSeatSubstitute={() => Promise.resolve()}
       />,
     );
     await act(async () => land());
@@ -475,6 +693,27 @@ describe("the admin Substitutions page's queue panel", () => {
     },
   );
 });
+
+/** An approval handler for cases that never approve. */
+function approveNothing(): Promise<void> {
+  return Promise.resolve();
+}
+
+/** The nth card's "Seat someone else" — on the list, not in an overlay. */
+function pressSeat(container: HTMLElement, index: number) {
+  within(container)
+    .getAllByRole<HTMLButtonElement>("button", {
+      name: "admin.substitutions.seatSomeoneElse",
+    })
+    [index].click();
+}
+
+/** The picker's row for one candidate, by first name. */
+function pickerRow(firstName: string): HTMLElement {
+  return screen.getByRole("button", {
+    name: (accessibleName) => accessibleName.includes(firstName),
+  });
+}
 
 /** The queue: one item per day. */
 function queue(): HTMLElement {
