@@ -3161,6 +3161,7 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: string
       }
+      forfeit_password: { Args: { p_user_id: string }; Returns: undefined }
       gedu_holds_seat_at_session: {
         Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
         Returns: boolean

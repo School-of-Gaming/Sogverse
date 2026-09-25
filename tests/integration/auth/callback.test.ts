@@ -31,8 +31,10 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 const mockAdminProfileUpdate = vi.fn();
+const mockAdminRpc = vi.fn();
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
+    rpc: (fn: string, args: Record<string, unknown>) => mockAdminRpc(fn, args),
     from: (table: string) => {
       if (table !== "profiles") {
         throw new Error(`Unexpected table in admin mock: ${table}`);
@@ -100,6 +102,7 @@ describe("GET /api/auth/callback", () => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_URL);
     mockSignOut.mockResolvedValue({ error: null });
     mockAdminProfileUpdate.mockResolvedValue({ error: null });
+    mockAdminRpc.mockResolvedValue({ data: null, error: null });
   });
 
   afterEach(() => {
@@ -539,7 +542,7 @@ describe("GET /api/auth/callback", () => {
    * password account can be opened under someone else's address, and Google
    * then links the real owner's identity to it. Such a sign-in into an account
    * whose address was never verified leaves the account holding only the
-   * prover's session, as a completed password reset does.
+   * prover's session and no password: the one it had may be a squatter's.
    */
   describe("an unverified address proven by Google", () => {
     const EMAIL = "owner@example.test";
@@ -566,13 +569,17 @@ describe("GET /api/auth/callback", () => {
       );
     }
 
-    it("revokes every other session and stamps the address verified", async () => {
+    it("revokes every other session, forfeits the password and stamps the address verified", async () => {
       unverifiedAccount(googleVerified);
 
       const response = await GET(createCallbackRequest({ code: "valid-code" }));
 
       expect(mockSignOut).toHaveBeenCalledTimes(1);
       expect(mockSignOut).toHaveBeenCalledWith({ scope: "others" });
+      expect(mockAdminRpc).toHaveBeenCalledTimes(1);
+      expect(mockAdminRpc).toHaveBeenCalledWith("forfeit_password", {
+        p_user_id: "user-123",
+      });
       expect(mockAdminProfileUpdate).toHaveBeenCalledTimes(1);
       const [{ row, column, value }] = mockAdminProfileUpdate.mock.calls[0];
       expect(Object.keys(row)).toEqual(["email_verified_at"]);
@@ -582,7 +589,7 @@ describe("GET /api/auth/callback", () => {
       expect(destination(response)).toBe("/select-profile");
     });
 
-    it("does neither for an address already verified", async () => {
+    it("does none of it for an address already verified", async () => {
       unverifiedAccount(googleVerified, {
         email_verified_at: "2026-09-01T12:00:00Z",
       });
@@ -590,10 +597,11 @@ describe("GET /api/auth/callback", () => {
       await GET(createCallbackRequest({ code: "valid-code" }));
 
       expect(mockSignOut).not.toHaveBeenCalled();
+      expect(mockAdminRpc).not.toHaveBeenCalled();
       expect(mockAdminProfileUpdate).not.toHaveBeenCalled();
     });
 
-    it("does neither when Google's address is a different one", async () => {
+    it("does none of it when Google's address is a different one", async () => {
       unverifiedAccount([
         {
           provider: "google",
@@ -604,10 +612,11 @@ describe("GET /api/auth/callback", () => {
       await GET(createCallbackRequest({ code: "valid-code" }));
 
       expect(mockSignOut).not.toHaveBeenCalled();
+      expect(mockAdminRpc).not.toHaveBeenCalled();
       expect(mockAdminProfileUpdate).not.toHaveBeenCalled();
     });
 
-    it("does neither when Google did not verify the address", async () => {
+    it("does none of it when Google did not verify the address", async () => {
       unverifiedAccount([
         {
           provider: "google",
@@ -618,6 +627,7 @@ describe("GET /api/auth/callback", () => {
       await GET(createCallbackRequest({ code: "valid-code" }));
 
       expect(mockSignOut).not.toHaveBeenCalled();
+      expect(mockAdminRpc).not.toHaveBeenCalled();
       expect(mockAdminProfileUpdate).not.toHaveBeenCalled();
     });
 
@@ -628,10 +638,11 @@ describe("GET /api/auth/callback", () => {
 
       expect(mockSignOut).toHaveBeenCalledWith({ scope: "local" });
       expect(mockSignOut).not.toHaveBeenCalledWith({ scope: "others" });
+      expect(mockAdminRpc).not.toHaveBeenCalled();
       expect(mockAdminProfileUpdate).not.toHaveBeenCalled();
     });
 
-    it("logs a failed revoke, skips the stamp, and still signs the owner in", async () => {
+    it("logs a failed revoke, skips the forfeit and the stamp, and still signs the owner in", async () => {
       const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
       unverifiedAccount(googleVerified);
       mockSignOut.mockResolvedValue({ error: { message: "gotrue down" } });
@@ -643,6 +654,28 @@ describe("GET /api/auth/callback", () => {
         expect.anything(),
       );
       // The stamp would stop the next Google sign-in retrying the revoke.
+      expect(mockAdminRpc).not.toHaveBeenCalled();
+      expect(mockAdminProfileUpdate).not.toHaveBeenCalled();
+      expect(destination(response)).toBe("/select-profile");
+      consoleError.mockRestore();
+    });
+
+    it("logs a failed forfeit, skips the stamp, and still signs the owner in", async () => {
+      const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+      unverifiedAccount(googleVerified);
+      mockAdminRpc.mockResolvedValue({ data: null, error: { message: "db down" } });
+
+      const response = await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(mockSignOut).toHaveBeenCalledWith({ scope: "others" });
+      expect(mockAdminRpc).toHaveBeenCalledWith("forfeit_password", {
+        p_user_id: "user-123",
+      });
+      expect(consoleError).toHaveBeenCalledWith(
+        expect.stringContaining("user-123"),
+        expect.anything(),
+      );
+      // The stamp would stop the next Google sign-in retrying the forfeit.
       expect(mockAdminProfileUpdate).not.toHaveBeenCalled();
       expect(destination(response)).toBe("/select-profile");
       consoleError.mockRestore();

@@ -108,9 +108,10 @@ export async function GET(request: Request) {
   // register a password account under an address that is not theirs, and
   // Google then links the real owner's identity to that account. Google has
   // just proven the address belongs to this person, so every other session —
-  // including a squatter's — is revoked, as a completed password reset
-  // revokes them, and the address is recorded verified. `others` scope keeps
-  // this session.
+  // including a squatter's — is revoked, the password is forfeited, leaving
+  // the account Google-only, and the address is recorded verified. A password
+  // comes back only through the reset email, which reaches the proven owner.
+  // `others` scope keeps this session.
   if (
     profile.email_verified_at === null &&
     hasGoogleVerifiedAddress(exchanged.user.identities, profile.email)
@@ -189,14 +190,21 @@ export async function GET(request: Request) {
 }
 
 /**
- * The two writes a Google-proven address earns an unverified account: every
- * other session revoked, and the verification stamp.
+ * The three writes a Google-proven address earns an unverified account: every
+ * other session revoked, the password forfeited, and the verification stamp.
  *
- * **Neither failure blocks the sign-in**, only logs: the person signing in has
+ * The password goes because it may be a squatter's: revoking their sessions
+ * alone would let them sign straight back in with it. It is set to NULL, not
+ * rotated — the account holds no password, exactly like one created through
+ * Google — and the owner who wants one sets it with the reset email.
+ *
+ * **No failure blocks the sign-in**, only logs: the person signing in has
  * proven the address either way, so refusing them would lock the owner out of
- * their own account while leaving a squatter's session exactly where it was.
- * A failed revoke is retried by the next Google sign-in, since the stamp that
- * would skip it is written after it and only on its success.
+ * their own account while leaving a squatter's session and password exactly
+ * where they were. The stamp is what stops the next Google sign-in from
+ * running the claim again, so it is written last and only when the revoke
+ * and the forfeit both succeeded: a failure of either leaves the account
+ * unverified, and the next Google sign-in retries the whole claim.
  */
 async function claimAddressProvenByGoogle(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -214,8 +222,22 @@ async function claimAddressProvenByGoogle(
     return;
   }
 
-  // email_verified_at has no authenticated UPDATE grant: service role only.
-  const { error: stampError } = await createAdminClient()
+  // Both remaining writes are service role only: the password lives in the
+  // auth schema, and email_verified_at has no authenticated UPDATE grant.
+  const admin = createAdminClient();
+
+  const { error: forfeitError } = await admin.rpc("forfeit_password", {
+    p_user_id: userId,
+  });
+  if (forfeitError) {
+    console.error(
+      `[auth/callback] could not forfeit the password for ${userId}`,
+      forfeitError,
+    );
+    return;
+  }
+
+  const { error: stampError } = await admin
     .from("profiles")
     .update({ email_verified_at: new Date().toISOString() })
     .eq("id", userId);
