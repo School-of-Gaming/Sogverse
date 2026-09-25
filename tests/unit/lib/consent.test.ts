@@ -3,7 +3,7 @@ import {
   advertisingCookieNames,
   CONSENT_COOKIE_NAME,
   CONSENT_VERSION,
-  clearPixelStorage,
+  clearAdvertisingStorage,
   consentForChoice,
   cookieValueFromHeader,
   isWithdrawal,
@@ -189,13 +189,15 @@ describe("cookieValueFromHeader", () => {
 });
 
 /**
- * Withdrawal has to clear what the pixel left in local storage as well as its
- * cookies, and that half is the one that is easy to forget: it is not a cookie,
- * so clearing the cookies alone leaves the device re-identifiable the moment the
- * pixel is allowed to run again. The keys are matched by prefix because the
- * library appends a pixel id and a purpose to each one.
+ * Withdrawal has to clear what the advertising libraries left in local storage
+ * as well as their cookies, and that half is the one that is easy to forget:
+ * none of it is a cookie, so clearing the cookies alone leaves the device
+ * re-identifiable the moment the scripts are allowed to run again. Both vendors
+ * keep a storage twin of a click id they also write to a cookie, so a list
+ * covering one of them is half a list. Some keys are matched by prefix because
+ * the libraries append a pixel id and a purpose to each one.
  */
-describe("clearPixelStorage", () => {
+describe("clearAdvertisingStorage", () => {
   function fakeStorage(entries: Record<string, string>): Storage {
     const map = new Map(Object.entries(entries));
     return {
@@ -222,16 +224,25 @@ describe("clearPixelStorage", () => {
     ).filter((key): key is string => key !== null);
   }
 
-  it("removes what the library wrote and nothing else", () => {
+  // The six advertising keys are the set a real browser held after a granted
+  // visit that arrived on an ad link carrying both vendors' click ids, with
+  // their values as observed: this half of the withdrawal cannot be derived
+  // from our own source, because the names belong to code we neither ship nor
+  // wrote. The last two entries are the controls - one of ours, and one whose
+  // name merely resembles the pixel's.
+  it("removes what the libraries wrote and nothing else", () => {
     const storage = fakeStorage({
-      multiFbc: "[]",
+      multiFbc: "fb.1.1790253052194.FbRehearsal456",
       "fbevents^$last_event^$1234567890": "1757500000000",
       "pixel_mutex:1234567890": "held",
+      _gcl_ls: '{"schema":"gcl","version":1,"gclid":{"value":"abc123"}}',
+      lastExternalReferrer: "empty",
+      lastExternalReferrerTime: "1790253052187",
       "sog-theme": "dark",
       fbp: "not-ours-either",
     });
 
-    clearPixelStorage(storage);
+    clearAdvertisingStorage(storage);
 
     expect(keysOf(storage)).toEqual(["sog-theme", "fbp"]);
   });
@@ -247,15 +258,15 @@ describe("clearPixelStorage", () => {
       keep: "yes",
     });
 
-    clearPixelStorage(storage);
+    clearAdvertisingStorage(storage);
 
     expect(keysOf(storage)).toEqual(["keep"]);
   });
 
-  it("does nothing to a storage the pixel never touched", () => {
+  it("does nothing to a storage the libraries never touched", () => {
     const storage = fakeStorage({ "sog-theme": "dark" });
 
-    clearPixelStorage(storage);
+    clearAdvertisingStorage(storage);
 
     expect(keysOf(storage)).toEqual(["sog-theme"]);
   });
