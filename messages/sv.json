@@ -1447,7 +1447,6 @@
       "submit": "Slutför",
       "finishing": "Slutförs...",
       "alreadyComplete": "Det här kontot är redan klart. Logga in igen för att fortsätta.",
-      "switchToGedu": "Registrerar du dig som spelfostrare? <link>Byt till spelfostrarformuläret</link>",
       "switchToParent": "Inte spelfostrare? <link>Skapa ett föräldrakonto i stället</link>"
     }
   },

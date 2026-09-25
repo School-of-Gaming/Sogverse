@@ -236,34 +236,29 @@ describe("CompleteRegistrationForm", () => {
     },
   );
 
-  function switchLink(view: ReturnType<typeof render>) {
-    const link = [...view.container.querySelectorAll("a")].find((anchor) =>
+  function findSwitchLink(view: ReturnType<typeof render>) {
+    return [...view.container.querySelectorAll("a")].find((anchor) =>
       anchor.textContent.startsWith("switchTo"),
     );
-    if (!link) throw new Error("no switch link");
-    return {
-      text: link.textContent,
-      url: new URL(link.getAttribute("href") ?? "", "https://internal.invalid"),
-    };
   }
 
-  it("offers the parent form a way to the Gedu one, keeping what it carries", () => {
+  it("gives the parent form no way to the Gedu one", () => {
+    // A Gedu registers from the Gedu registration page. Someone on the parent
+    // form started anywhere else, and the parent form is where they belong.
     const { view } = renderForm("parent", { redirect: "/shop/abc-123" });
 
-    const { text, url } = switchLink(view);
-    expect(text).toBe("switchToGedu");
-    expect(url.pathname).toBe(ROUTES.completeRegistration);
-    expect(url.searchParams.get("as")).toBe("gedu");
-    expect(url.searchParams.get("utm_source")).toBe("Lynx");
-    expect(url.searchParams.get("redirect")).toBe("/shop/abc-123");
+    expect(findSwitchLink(view)).toBeUndefined();
   });
 
   it("offers the Gedu form a way to the parent one, asked for outright", () => {
     // A bare address would fall back to the intent cookie, which says Gedu.
     const { view } = renderForm("gedu", { redirect: "/shop/abc-123" });
 
-    const { text, url } = switchLink(view);
-    expect(text).toBe("switchToParent");
+    const link = findSwitchLink(view);
+    if (!link) throw new Error("no switch link");
+    const url = new URL(link.getAttribute("href") ?? "", "https://internal.invalid");
+    expect(link.textContent).toBe("switchToParent");
+    expect(url.pathname).toBe(ROUTES.completeRegistration);
     expect(url.searchParams.get("as")).toBe("parent");
     expect(url.searchParams.get("utm_campaign")).toBe("lynx-summer-a");
     expect(url.searchParams.get("redirect")).toBe("/shop/abc-123");

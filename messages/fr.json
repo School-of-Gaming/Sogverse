@@ -1447,7 +1447,6 @@
       "submit": "Terminer",
       "finishing": "Finalisation...",
       "alreadyComplete": "Ce compte est déjà configuré. Reconnectez-vous pour continuer.",
-      "switchToGedu": "Vous vous inscrivez comme animateur ou animatrice (Gedu) ? <link>Passer au formulaire Gedu</link>",
       "switchToParent": "Vous n’êtes pas Gedu ? <link>Créer plutôt un compte parent</link>"
     }
   },

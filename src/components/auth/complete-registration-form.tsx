@@ -107,32 +107,29 @@ async function refusal(
 }
 
 /**
- * The line under the submit that swaps variants, keeping the attribution and
- * the product page. The parent form's link asks for the Gedu form; the Gedu
- * form's asks for the parent one outright, since an address that says nothing
- * falls back to the intent cookie, which says Gedu.
+ * The Gedu form's line under the submit, back to the parent form, keeping the
+ * attribution and the product page. It asks for the parent variant outright,
+ * since an address that says nothing falls back to the intent cookie, which
+ * says Gedu. The parent form has no line the other way: a Gedu is registered
+ * from the Gedu registration page, and a parent form is where someone who
+ * started anywhere else belongs.
  */
 function VariantSwitch({
-  to,
   utm,
   redirect,
 }: {
-  to: CompleteRegistrationFormProps["variant"];
   utm: UtmAttribution;
   redirect: string | null;
 }) {
   const t = useTranslations("auth.completeRegistration");
-  const query =
-    to === "gedu"
-      ? completeRegistrationQuery({ asGedu: true, utm, redirect })
-      : {
-          ...COMPLETE_REGISTRATION_PARENT_QUERY,
-          ...completeRegistrationQuery({ asGedu: false, utm, redirect }),
-        };
+  const query = {
+    ...COMPLETE_REGISTRATION_PARENT_QUERY,
+    ...completeRegistrationQuery({ asGedu: false, utm, redirect }),
+  };
 
   return (
     <p className="text-center text-sm text-muted-foreground">
-      {t.rich(to === "gedu" ? "switchToGedu" : "switchToParent", {
+      {t.rich("switchToParent", {
         link: (chunks) => (
           <Link
             href={{ pathname: ROUTES.completeRegistration, query }}
@@ -164,8 +161,8 @@ function CompletionShell({
   submitLabel: string;
   isLoading: boolean;
   onSubmit: (e: React.FormEvent) => void;
-  /** The way to the other variant, a muted line under the submit. */
-  variantSwitch: React.ReactNode;
+  /** The Gedu form's way back to the parent one, a muted line under the submit. */
+  variantSwitch?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const t = useTranslations("auth.completeRegistration");
@@ -378,7 +375,6 @@ function ParentCompletion({
       isLoading={isLoading}
       submitLabel={t("completeRegistration.submit")}
       onSubmit={handleSubmit}
-      variantSwitch={<VariantSwitch to="gedu" utm={utm} redirect={redirect} />}
       alert={
         <Alert variant="info">
           <div>
@@ -538,7 +534,7 @@ function GeduCompletion({
       isLoading={isLoading}
       submitLabel={t("completeRegistration.submit")}
       onSubmit={handleSubmit}
-      variantSwitch={<VariantSwitch to="parent" utm={utm} redirect={redirect} />}
+      variantSwitch={<VariantSwitch utm={utm} redirect={redirect} />}
       alert={
         <Alert variant="info">
           <div>
