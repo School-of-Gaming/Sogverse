@@ -5,7 +5,7 @@
       "site": {
         "alt": "School of Gaming: ruutuajasta laatuaikaa. Kerhoja, leirejä ja tapahtumia ammattipelikasvattajien johdolla.",
         "headline": "Ruutuajasta",
-        "headlineAccent": "Laatuaikaa",
+        "headlineAccent": "laatuaikaa",
         "subline": "Kerhoja, leirejä ja tapahtumia ammattipelikasvattajien johdolla"
       },
       "roblox": {
@@ -254,7 +254,7 @@
         },
         "cancellation": {
           "question": "Voinko perua, ja millainen palautuskäytäntönne on?",
-          "answer": "<p>Kerho on kuukausitilaus ilman määräaikaa, ja voit perua sen milloin tahansa maksutta Oma SOG -sivun Maksut ja laskutus -kortista, joka avaa Stripen suojatun laskutussivun. Lapsesi säilyttää paikkansa jo maksetun laskutusjakson loppuun asti – kerhon sivu näyttää hänen viimeisen kertansa päivämäärän, kun jäsenyys on päättymässä.</p><p>Jokaiseen kerhoon kuuluu myös 30 päivän tyytyväisyystakuu: jos kerho ei osoittaudukaan lapsellesi sopivaksi, lähetä sähköpostia osoitteeseen {supportEmail} 30 päivän kuluessa hänen ensimmäisestä kerrastaan, niin palautamme kaiken, mitä olet siitä kerhosta maksanut – lomaketta ei ole eikä syytä tarvitse kertoa.</p><p>Leirit varataan ja maksetaan kertamaksuna, joten ne toimivat toisin: jos peruut vähintään 14 päivää ennen leirin alkua, saat täyden palautuksen; 7–14 päivää ennen palautamme maksun 50 euron käsittelykulun vähennettynä; alle 7 päivää ennen emme voi palauttaa maksua, koska paikka on varattu ja valmisteltu lapsellesi – ellei kyseessä ole äkillinen sairaustapaus tai muu aidosti sinusta riippumaton syy. Jos lapsesi ei pääse mukaan sairauden vuoksi, lähetä meille lääkärintodistus osoitteeseen {supportEmail}, niin palautamme maksun.</p>"
+          "answer": "<p>Kerho on kuukausitilaus ilman määräaikaa, ja voit perua sen milloin tahansa maksutta Oma SOG -sivun Maksut ja laskutus -kortista, joka avaa Stripen suojatun laskutussivun. Lapsesi säilyttää paikkansa jo maksetun laskutusjakson loppuun asti – kerhon sivu näyttää hänen viimeisen kertansa päivämäärän, kun jäsenyys on päättymässä.</p><p>Jokaiseen kerhoon kuuluu myös 30 päivän rahat takaisin -takuu: jos kerho ei osoittaudukaan lapsellesi sopivaksi, lähetä sähköpostia osoitteeseen {supportEmail} 30 päivän kuluessa hänen ensimmäisestä kerrastaan, niin palautamme kaiken, mitä olet siitä kerhosta maksanut – lomaketta ei ole eikä syytä tarvitse kertoa.</p><p>Leirit varataan ja maksetaan kertamaksuna, joten ne toimivat toisin: jos peruut vähintään 14 päivää ennen leirin alkua, saat täyden palautuksen; 7–14 päivää ennen palautamme maksun 50 euron käsittelykulun vähennettynä; alle 7 päivää ennen emme voi palauttaa maksua, koska paikka on varattu ja valmisteltu lapsellesi – ellei kyseessä ole äkillinen sairaustapaus tai muu aidosti sinusta riippumaton syy. Jos lapsesi ei pääse mukaan sairauden vuoksi, lähetä meille lääkärintodistus osoitteeseen {supportEmail}, niin palautamme maksun.</p>"
         },
         "severalChildren": {
           "question": "Minulla on useita lapsia – miten tilit ja maksut toimivat?",
@@ -2830,13 +2830,13 @@
   },
   "home": {
     "hero": {
-      "title": "Ruutuajasta<br></br><act>Laatuaikaa</act>",
+      "title": "Ruutuajasta<br></br><act>laatuaikaa</act>",
       "subtitle": "Viikoittaiset kerhot 7–17-vuotiaille verkossa ja paikan päällä alkaen 59 € kuukaudessa: pelikasvattaja ohjaa jokaisen 90 minuutin kerran Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä."
     },
     "findClub": "Etsi kerho",
     "trust": {
       "cancel": "Peru milloin tahansa maksutta",
-      "guarantee": "30 päivän tyytyväisyystakuu"
+      "guarantee": "30 päivän rahat takaisin -takuu"
     },
     "testimonials": {
       "heading": "Mitä vanhemmat kertovat",
