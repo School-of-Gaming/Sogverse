@@ -200,14 +200,15 @@ function CompletionShell({
             </form>
           }
         >
-          {/* `readOnly`, not `disabled`, so the address can be tabbed to and
-              copied; `bg-lifted` is how every read-back field in the app says
-              it is not for editing. */}
+          {/* Drawn exactly as the settings page draws a parent's address:
+              disabled, on the lifted background. Nothing on this page changes
+              the address; the sign-out beside it is how a different one is
+              chosen. */}
           <Input
             id="email"
             type="email"
             value={email}
-            readOnly
+            disabled
             className="bg-lifted"
           />
         </Field>

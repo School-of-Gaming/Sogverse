@@ -134,13 +134,13 @@ beforeEach(() => {
 });
 
 describe("CompleteRegistrationForm", () => {
-  it("prefills the names Google gave, and shows the address read-only", () => {
+  it("prefills the names Google gave, and shows the address as settings does: disabled", () => {
     const { input } = renderForm("parent");
 
     expect(input("firstName").value).toBe("Marja");
     expect(input("lastName").value).toBe("Virtanen");
     expect(input("email").value).toBe("parent@example.test");
-    expect(input("email").readOnly).toBe(true);
+    expect(input("email").disabled).toBe(true);
   });
 
   it("offers a sign-out that is a form post of its own", () => {
