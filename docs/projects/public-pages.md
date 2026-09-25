@@ -79,8 +79,9 @@ The Finnish pages were captured but only checked for layout, not for copy.
 **Across all three pages, on a first visit:** the cookie banner is a fixed bottom bar
 covering 17% of a desktop screen (20% in Finnish) and **43% of a phone screen (48% in
 Finnish)**. On a phone it hides About's and the shop's first screen below the heading,
-and on the home page everything under the hero's button. What the banner must say is a privacy decision and is not this project's
-to cut, but how much of a phone it covers is a layout decision.
+and on the home page everything under the hero's button. What the banner must say is a
+privacy decision and is not this project's to cut, but how much of a phone it covers is a
+layout decision.
 
 ### Home
 
@@ -91,16 +92,19 @@ the features, safety, three more testimonials, "How it works", the closing card.
 **Works:**
 
 - **The hero states the offer in one sentence**: weekly clubs for ages 7–17, online and in
-  person, from €59 per month, a Game Educator leading every 90-minute lesson in Minecraft,
-  Roblox, Fortnite and more. Its one call to action is "Find a club", to the shop's clubs,
-  with the risk reversal directly under it: cancel any time at no cost, 30-day money-back
-  guarantee. The closing card repeats that button and line, so the page opens and closes on
+  person, from €59 per month, a Game Educator leading every lesson in Minecraft, Roblox,
+  Fortnite and more. Lesson length is left out because it is set per club, not
+  fixed. Its one call to action is "Find a club", to the shop's clubs, the same for every
+  reader signed in or not, with the risk reversal directly under it: cancel any time at
+  no cost, 30-day money-back guarantee. The closing card repeats that button and line, so the page opens and closes on
   the same ask.
 - **Proof:** T4 sits large under the hero; T13 and T12 sit beside the safety facts; T5, T3
   and T2 form a row further down. Role and country only, in the serif italic. Each quote
   takes an optional image beside it, so photos can arrive without restructuring.
-- **Safety is five checkable facts**, each worded from the About FAQ and linking to its
-  FAQ section: Gedus show a criminal record extract before certification; no private
+- **Safety is five checkable facts**, each worded from the About FAQ, and the section
+  links to the FAQ: we require every Gedu to show a criminal record extract before
+  certification (a requirement, not an enforced outcome: certification does not wait on
+  the check, and older Gedus were certified before it was recorded); no private
   messages, chat goes to the whole room; a voice room opens five minutes either side of
   its lesson, to its group, its Gedus and staff only; no voice or video of a lesson is
   recorded; buying anything or changing a child's account needs the parent PIN. "Nothing is
@@ -286,3 +290,6 @@ and has lost its rating digit to a missing glyph; the English card says a summer
 | 2026-09-25 | Home, About and the shop are treated as one set, reviewed and refined together; this doc opened. |
 | 2026-09-25 | Every look-and-feel change is judged at both desktop and phone widths (owner). |
 | 2026-09-25 | Testimonials may be published: consent confirmed, attributed by role and country, never by name (owner). |
+| 2026-09-25 | The home page states the criminal record check as a requirement, not as something every Gedu has done (owner). |
+| 2026-09-25 | The home page does not state a lesson length (owner). |
+| 2026-09-25 | "Find a club" is the home page's button for every reader, signed in or not (owner). |
