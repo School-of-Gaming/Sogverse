@@ -2831,8 +2831,41 @@
   "home": {
     "hero": {
       "title": "Du temps d’écran<br></br>au temps qui<br></br>fait<br></br><act>grandir</act>",
-      "subtitle": "Nos clubs, c’est le jeu vidéo tel qu’il devrait être : encadré, enrichissant, avec de vrais amis — sur Minecraft, Roblox, Fortnite et bien d’autres. Un animateur professionnel accompagne chaque session pour que les enfants apprennent, se lient d’amitié, et rentrent avec des choses à raconter.",
-      "aboutCta": "En savoir plus sur nous"
+      "subtitle": "Des clubs chaque semaine pour les 7 à 17 ans, en ligne et en présentiel, à partir de 59 € par mois : un animateur mène chaque séance de 90 minutes sur Minecraft, Roblox, Fortnite et bien d’autres."
+    },
+    "findClub": "Trouver un club",
+    "trust": {
+      "cancel": "Résiliable à tout moment, sans frais",
+      "guarantee": "Satisfait ou remboursé pendant 30 jours"
+    },
+    "testimonials": {
+      "heading": "Ce qu’en disent les parents",
+      "items": {
+        "highlightOfTheWeek": {
+          "quote": "« Le club est le moment fort de la semaine de mon fils. Chaque semaine, mon garçon calme et timide se transforme en un enfant rieur et bavard quand il retrouve des enfants qui lui ressemblent. Le contenu du club et le savoir-faire des animateurs m’ont agréablement surprise. »",
+          "attribution": "Maman, Finlande"
+        },
+        "sighWithHappiness": {
+          "quote": "« Rien d’autre, aucune activité ni aucun loisir, n’a jamais fait soupirer mon enfant de bonheur comme ça. »",
+          "attribution": "Maman, Finlande"
+        },
+        "largeGroups": {
+          "quote": "« Les grands groupes rendent notre enfant anxieux. C’est la façon idéale pour nous d’avoir un loisir et de nous faire de nouveaux amis. »",
+          "attribution": "Maman, Finlande"
+        },
+        "finnishImproved": {
+          "quote": "« Le finnois de ma fille a énormément progressé en un mois seulement ! Les animateurs ont été très compétents, bienveillants et patients. Ça marche vraiment ! »",
+          "attribution": "Maman, Norvège"
+        },
+        "funAndSupervised": {
+          "quote": "« Le jeu est amusant et encadré. Pas de harcèlement, pas de disputes, pas de mauvaise ambiance. »",
+          "attribution": "Maman, Finlande"
+        },
+        "positiveExperience": {
+          "quote": "« School of Gaming a été une expérience vraiment positive, pour l’enfant comme pour les parents. Les enfants ont vécu de super moments de jeu avec de nouveaux amis, dans un environnement de jeu sûr, avec des animateurs expérimentés – je recommande ! »",
+          "attribution": "Papa, Finlande"
+        }
+      }
     },
     "features": {
       "heading": "Le jeu vidéo, un vrai loisir",
@@ -2854,6 +2887,32 @@
         "description": "Vous n’êtes pas mis de côté. On vous tient au courant, on vous implique, et on vous donne les clés pour accompagner votre enfant dans son parcours de jeu."
       }
     },
+    "safety": {
+      "heading": "Comment mon enfant est-il protégé ?",
+      "facts": {
+        "vetted": {
+          "title": "Des animateurs contrôlés",
+          "description": "Chaque animateur nous présente un extrait de casier judiciaire pour le travail auprès d’enfants avant que nous le certifiions."
+        },
+        "noDirectMessages": {
+          "title": "Aucun message privé",
+          "description": "Il n’y a de messages privés nulle part : le chat d’une séance s’adresse à toute la salle, où l’animateur le voit."
+        },
+        "groupOnlyRooms": {
+          "title": "Réservé au groupe",
+          "description": "La salle vocale d’un club ouvre cinq minutes avant la séance et ferme cinq minutes après, et seuls le groupe, ses animateurs et notre équipe peuvent y entrer."
+        },
+        "notRecorded": {
+          "title": "Aucune séance enregistrée",
+          "description": "Rien n’enregistre, ne transcrit ni ne stocke le son ou l’image d’une séance."
+        },
+        "parentPin": {
+          "title": "Un code PIN avant tout achat",
+          "description": "Acheter quoi que ce soit ou modifier le compte de votre enfant exige un code PIN parent à quatre chiffres que vous seul connaissez."
+        }
+      },
+      "faqLink": "Lire les réponses complètes dans notre FAQ"
+    },
     "howItWorks": {
       "heading": "Apprendre en jouant.",
       "subheading": "Comment ça marche : rejoignez un club, un stage ou un événement en trois étapes simples.",
@@ -2872,8 +2931,7 @@
     },
     "cta": {
       "heading": "Prêt à transformer le temps d’écran en temps qui fait grandir ?",
-      "subheading": "Offrez à votre enfant un espace amusant et sécurisé pour jouer, apprendre et se faire de vrais amis, encadré par un animateur professionnel.",
-      "createFreeAccount": "Démarrer l’aventure"
+      "subheading": "Offrez à votre enfant un rendez-vous chaque semaine pour jouer, apprendre et se faire des amis, avec un animateur à chaque séance et aucun message privé."
     }
   },
   "locations": {

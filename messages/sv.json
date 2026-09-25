@@ -2831,8 +2831,41 @@
   "home": {
     "hero": {
       "title": "Där<br></br>skärmtid<br></br>blir<br></br><act>kvalitetstid</act>",
-      "subtitle": "Våra skickligt utformade klubbar främjar hälsosamt spelande som hobby — i Minecraft, Roblox, Fortnite och mer. Professionella spelfostrare gör varje session till en lekfull lärandeupplevelse där barn får nya vänner, utvecklar sina unika talanger och har roligt med det de älskar.",
-      "aboutCta": "Läs mer om oss"
+      "subtitle": "Klubbar varje vecka för 7–17-åringar, online och på plats, från 59 € per månad: en spelfostrare leder varje tillfälle på 90 minuter i Minecraft, Roblox, Fortnite och mer."
+    },
+    "findClub": "Hitta en klubb",
+    "trust": {
+      "cancel": "Säg upp när du vill, kostnadsfritt",
+      "guarantee": "30 dagars nöjd-kund-garanti"
+    },
+    "testimonials": {
+      "heading": "Det här säger föräldrar",
+      "items": {
+        "highlightOfTheWeek": {
+          "quote": "”Klubben är höjdpunkten i min sons vecka. Varje vecka förvandlas min tysta och blyga pojke till ett skrattande barn som pratar högt, när han får umgås med likasinnade barn. Klubbens innehåll och ledarnas kunnande har överraskat mig positivt.”",
+          "attribution": "Mamma, Finland"
+        },
+        "sighWithHappiness": {
+          "quote": "”Ingenting annat, ingen aktivitet eller hobby, har fått mitt barn att sucka av lycka så här.”",
+          "attribution": "Mamma, Finland"
+        },
+        "largeGroups": {
+          "quote": "”Stora grupper gör vårt barn oroligt. Det här är det perfekta sättet för oss att ha en hobby och få nya vänner.”",
+          "attribution": "Mamma, Finland"
+        },
+        "finnishImproved": {
+          "quote": "”Min dotters finska har blivit enormt mycket bättre på bara en månad! Spelfostrarna har varit väldigt skickliga, vänliga och tålmodiga. Det här fungerar verkligen!”",
+          "attribution": "Mamma, Norge"
+        },
+        "funAndSupervised": {
+          "quote": "”Spelandet är roligt och övervakat. Ingen mobbning, inga gräl och ingen dålig stämning.”",
+          "attribution": "Mamma, Finland"
+        },
+        "positiveExperience": {
+          "quote": "”School of Gaming har varit en riktigt positiv upplevelse för både barnet och föräldrarna. Barnen har fått fina spelupplevelser med nya vänner i en trygg spelmiljö med erfarna ledare – jag kan rekommendera det!”",
+          "attribution": "Pappa, Finland"
+        }
+      }
     },
     "features": {
       "heading": "Gör spelande till en fantastisk hobby",
@@ -2854,6 +2887,32 @@
         "description": "Spelfostran för föräldrar är lika viktig som själva klubbarna. Vi håller dig informerad, involverad och rustad att stötta ditt barns spelresa."
       }
     },
+    "safety": {
+      "heading": "Hur hålls mitt barn tryggt?",
+      "facts": {
+        "vetted": {
+          "title": "Granskade spelfostrare",
+          "description": "Varje Gedu visar oss ett straffregisterutdrag för arbete med barn innan vi certifierar hen."
+        },
+        "noDirectMessages": {
+          "title": "Inga direktmeddelanden",
+          "description": "Det finns inga privata meddelanden någonstans: chatten under ett tillfälle går till hela rummet, där Gedun ser den."
+        },
+        "groupOnlyRooms": {
+          "title": "Bara gruppen kommer in",
+          "description": "En klubbs röstrum öppnar fem minuter innan tillfället och stänger fem minuter efter det, och bara gruppen, dess Geduer och vår personal kan komma in."
+        },
+        "notRecorded": {
+          "title": "Tillfällena spelas inte in",
+          "description": "Ingenting spelar in, transkriberar eller lagrar ljudet eller bilden från ett tillfälle."
+        },
+        "parentPin": {
+          "title": "En PIN-kod före varje köp",
+          "description": "Att köpa något eller ändra ditt barns konto kräver en fyrsiffrig föräldra-PIN som bara du känner till."
+        }
+      },
+      "faqLink": "Läs hela svaren i vår FAQ"
+    },
     "howItWorks": {
       "heading": "Lärande genom spelande.",
       "subheading": "Så fungerar det: gå med i en klubb, ett läger eller ett evenemang i tre enkla steg.",
@@ -2872,8 +2931,7 @@
     },
     "cta": {
       "heading": "Redo att förvandla spelande till lärande?",
-      "subheading": "Ge ditt barn en rolig, trygg plats att spela, lära sig och få vänner — under ledning av en professionell spelfostrare.",
-      "createFreeAccount": "Skapa gratis konto"
+      "subheading": "Ge ditt barn en plats att spela, lära sig och få vänner varje vecka, med en spelfostrare vid varje tillfälle och inga direktmeddelanden någonstans."
     }
   },
   "locations": {

@@ -2831,8 +2831,41 @@
   "home": {
     "hero": {
       "title": "Where<br></br>Screen Time<br></br>Becomes<br></br><act>Quality Time</act>",
-      "subtitle": "Our skilfully designed clubs promote healthy gaming as a hobby, in Minecraft, Roblox, Fortnite and more. Professional Game Educators make every session a playful learning experience where children make new friends, develop their unique talents, and have fun doing what they love.",
-      "aboutCta": "Learn more about us"
+      "subtitle": "Weekly clubs for ages 7–17, online and in person, from €59 per month: a Game Educator leads every 90-minute lesson in Minecraft, Roblox, Fortnite and more."
+    },
+    "findClub": "Find a club",
+    "trust": {
+      "cancel": "Cancel any time, at no cost",
+      "guarantee": "30-day money-back guarantee"
+    },
+    "testimonials": {
+      "heading": "What parents tell us",
+      "items": {
+        "highlightOfTheWeek": {
+          "quote": "“The club is the highlight of my son’s week. Every week, my quiet and shy boy transforms into a laughing, loudly chatting child when he gets to interact with like-minded kids. The club’s content and the educators’ expertise have pleasantly surprised me.”",
+          "attribution": "Mum, Finland"
+        },
+        "sighWithHappiness": {
+          "quote": "“Nothing else, no activity or hobby, has made my child sigh with happiness like this.”",
+          "attribution": "Mum, Finland"
+        },
+        "largeGroups": {
+          "quote": "“Large groups make our child anxious. This is the perfect way for us to engage in a hobby and make new friends.”",
+          "attribution": "Mum, Finland"
+        },
+        "finnishImproved": {
+          "quote": "“My daughter’s Finnish has improved tremendously in just a month! The gaming educators have been very skilled, friendly, and patient. This really works!”",
+          "attribution": "Mum, Norway"
+        },
+        "funAndSupervised": {
+          "quote": "“Gaming is fun and supervised. No bullying, no arguing, or bad vibes.”",
+          "attribution": "Mum, Finland"
+        },
+        "positiveExperience": {
+          "quote": "“School of Gaming has been a really positive experience for both the child and the parents. The children have had great gaming experiences with new friends in a safe gaming environment with experienced instructors – I can recommend it!”",
+          "attribution": "Dad, Finland"
+        }
+      }
     },
     "features": {
       "heading": "Make gaming a great hobby",
@@ -2854,6 +2887,32 @@
         "description": "Parental game education is just as important as the clubs themselves. We keep you informed, involved, and equipped to support your child’s gaming journey."
       }
     },
+    "safety": {
+      "heading": "How is my child kept safe?",
+      "facts": {
+        "vetted": {
+          "title": "Vetted Game Educators",
+          "description": "Every Gedu shows us a criminal record extract for working with children before we certify them."
+        },
+        "noDirectMessages": {
+          "title": "No direct messages",
+          "description": "There are no private messages anywhere: chat in a lesson goes to the whole room, where the Gedu can see it."
+        },
+        "groupOnlyRooms": {
+          "title": "Only the group gets in",
+          "description": "A club’s voice room opens five minutes before the lesson and closes five minutes after it, and only that group, its Gedus and our staff can enter."
+        },
+        "notRecorded": {
+          "title": "Lessons are not recorded",
+          "description": "Nothing records, transcribes or stores the voice or video of a lesson."
+        },
+        "parentPin": {
+          "title": "A PIN before any spending",
+          "description": "Buying anything, or changing your child’s account, needs a four-digit parent PIN that only you know."
+        }
+      },
+      "faqLink": "Read the full answers in our FAQ"
+    },
     "howItWorks": {
       "heading": "Learning by Gaming.",
       "subheading": "How it works: join a club, camp or event in three simple steps.",
@@ -2872,8 +2931,7 @@
     },
     "cta": {
       "heading": "Ready to turn gaming into learning?",
-      "subheading": "Give your child a fun, safe place to play, learn, and make friends — guided by a professional Game Educator.",
-      "createFreeAccount": "Create Free Account"
+      "subheading": "Give your child a place to play, learn and make friends every week, with a Game Educator in every lesson and no direct messages anywhere."
     }
   },
   "roblox": {

@@ -2871,8 +2871,41 @@
   "home": {
     "hero": {
       "title": "naDev<br></br>Daq tIv<br></br>moj<br></br><act>Qap tIv</act>",
-      "subtitle": "po’taHvIS chenmoHlu’ ghom’a’meymaj: Quj QaQ Hob chenmoH — Minecraft, Roblox, Fortnite latlh je. Gedu’pu’ Dun Hoch qep ghojmoHmeH tIv chenmoH — jup chu’ luSuq puqpu’, laHmeychaj mojaq luchenmoH, ’ej muSHa’bogh lutIv.",
-      "aboutCta": "maH yIqel"
+      "subtitle": "Hoch Hogh ghom’a’mey, 7–17 ben puqpu’, De’wI’Daq naDevDaq je, 59 € jar Hoch vo’ Suq: Hoch 90-tup qep Gedu’ DevtaH — Minecraft, Roblox, Fortnite latlh je."
+    },
+    "findClub": "ghom’a’ yInej",
+    "trust": {
+      "cancel": "rInmoH Hoch poH, Huch Hutlh",
+      "guarantee": "30 jaj: Huch chegh lay’"
+    },
+    "testimonials": {
+      "heading": "vav/SoSmey jatlhbogh",
+      "items": {
+        "highlightOfTheWeek": {
+          "quote": "”Hogh Dun law’ ghom’a’. Hoch Hogh, puqloDwIj tam ’ej ghIjlu’bogh moj puq Hagh ’ej jach, puqpu’ rurbogh ghom. ghom’a’ Dol ’ej ghojmoHwI’pu’ laH, mupIvmoH.”",
+          "attribution": "SoS, Suomi"
+        },
+        "sighWithHappiness": {
+          "quote": "”pagh latlh Qu’, pagh latlh Hob — puqwIj Quch neH ’oH ghom’a’.”",
+          "attribution": "SoS, Suomi"
+        },
+        "largeGroups": {
+          "quote": "”ghom’a’mey tIn puqmaj bIt. ghom’a’vam Daq Hob maHoy ’ej jup chu’ maSuq.”",
+          "attribution": "SoS, Suomi"
+        },
+        "finnishImproved": {
+          "quote": "”wa’ jar neH — puqbe’wI’ Suomi Hol Dun law’! ghojmoHwI’pu’ val, QaQ, ’ej ghIQ. Qap!”",
+          "attribution": "SoS, Norway"
+        },
+        "funAndSupervised": {
+          "quote": "”Quj tlhab ’ej ghoS. qI’be’, ghobe’, ’ej pagh QoQ qab.”",
+          "attribution": "SoS, Suomi"
+        },
+        "positiveExperience": {
+          "quote": "”School of Gaming — puq vav/SoS je QaQ. jup chu’ tlhej Quj QaQ luSuq puqpu’ — QaQ Daq, ghojmoHwI’pu’ Qeq tlhej. vIQuvmoH!”",
+          "attribution": "vav, Suomi"
+        }
+      }
     },
     "features": {
       "heading": "toy’a’ QaQ Hob yIchenmoH",
@@ -2894,6 +2927,32 @@
         "description": "vav/SoS ghojmoHghach nIvbe’ ghom’a’mey. maH vav/SoSmey SoQ, tIqhom, je puq toy’a’ghach boqmoH."
       }
     },
+    "safety": {
+      "heading": "chay’ puqwIj Qanlu’?",
+      "facts": {
+        "vetted": {
+          "title": "Gedu’pu’ nuDlu’",
+          "description": "Hoch Gedu’ ghe’naQ De’ ’aghlu’ — wa’DIch luQaw’be’lu’."
+        },
+        "noDirectMessages": {
+          "title": "pegh QInmey tu’be’lu’",
+          "description": "pegh QIn tu’be’lu’ — qep QIn Hoch pa’ Qoy, Gedu’ legh."
+        },
+        "groupOnlyRooms": {
+          "title": "ghom neH ’el",
+          "description": "vagh tup qep tagh pa’ poSmoHlu’, vagh tup qep rIn pa’ SoQmoHlu’ — ghom neH, Gedu’pu’chaj, ’ej beqmaj ’el."
+        },
+        "notRecorded": {
+          "title": "qep qonlu’be’",
+          "description": "qep ghogh ’ej mIllogh pagh qon, pagh ghItlh, pagh pol."
+        },
+        "parentPin": {
+          "title": "Huch ngaSmeH PIN",
+          "description": "vay’ Daje’ pagh puqlI’ Account DachoHmeH, PIN loS mI’ DaSovbogh neH poQlu’."
+        }
+      },
+      "faqLink": "FAQ jangmey tIlaD"
+    },
     "howItWorks": {
       "heading": "QujtaHvIS ghojtaH.",
       "subheading": "chay’ qaS: wej mIwmey ngeD — ghom’a’, ragh, wanI’ ghap yImuv.",
@@ -2912,8 +2971,7 @@
     },
     "cta": {
       "heading": "toy’a’ ghojmoH DaneH’a’?",
-      "subheading": "puqvaH QaQ Daq toy’a’, ghojmoH, je jupwI’ Suq — Gedu’ tIqqu’ tI’ang.",
-      "createFreeAccount": "Account Huch Hutlh yIchenmoH"
+      "subheading": "Hoch Hogh puqlI’ Quj, ghoj, jup Suq je — Hoch qep Gedu’ tu’lu’, pegh QInmey tu’be’lu’."
     }
   },
   "locations": {
